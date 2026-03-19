@@ -27,12 +27,11 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import QcActions from 'src/stores/alt/actions/QcActions';
 import QcStore from 'src/stores/alt/stores/QcStore';
 
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import PubchemLcss from 'src/components/pubchem/PubchemLcss';
 import ElementReactionLabels from 'src/apps/mydb/elements/labels/ElementReactionLabels';
-import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
@@ -49,9 +48,7 @@ import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
-import ConfirmClose from 'src/components/common/ConfirmClose';
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
-import CopyElementModal from 'src/components/common/CopyElementModal';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
@@ -106,6 +103,28 @@ const rangeCheck = (field, sample) => {
   return true;
 };
 
+const sampleTitle = (sample) => {
+  const titleTooltip = formatTimeStampsOfElement(sample || {});
+  const inventoryLabel = sample.inventory_sample && sample.inventory_label ? sample.inventory_label : null;
+
+  return (
+    <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
+      <span>{inventoryLabel || sample.title()}</span>
+    </OverlayTrigger>
+  );
+};
+
+const sampleTitleAppendix = (sample, handleFastInput) => (
+  <>
+    <ShowUserLabels element={sample} />
+    <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+    <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+    <PubchemLabels element={sample} />
+    <HeaderCommentSection element={sample} />
+    {sample.isNew && !sample.isMixture() && <FastInput fnHandle={handleFastInput} />}
+  </>
+);
+
 export default class SampleDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
 
@@ -143,6 +162,7 @@ export default class SampleDetails extends React.Component {
       startExport: false,
       sfn: UIStore.getState().hasSfn,
       saveInventoryAction: false,
+      closeAfterInventorySave: false,
       isChemicalEdited: false,
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
@@ -443,8 +463,11 @@ export default class SampleDetails extends React.Component {
     this.setState({ sample });
   }
 
-  handleSubmitInventory() {
-    this.setState({ saveInventoryAction: true });
+  handleSubmitInventory(closeView = false) {
+    this.setState({
+      saveInventoryAction: true,
+      closeAfterInventorySave: !!closeView,
+    });
   }
 
   handleExportAnalyses(sample) {
@@ -483,28 +506,22 @@ export default class SampleDetails extends React.Component {
 
   sampleFooter() {
     const { sample, startExport } = this.state;
-    const belongToReaction = sample.belongTo && sample.belongTo.type === 'reaction';
     const hasAnalyses = !!(sample.analyses && sample.analyses.length > 0);
 
-    return (
-      <>
-        <Button variant="primary" onClick={() => DetailActions.close(sample)}>
-          Close
+    if (!sample.isNew && hasAnalyses) {
+      return (
+        <Button
+          variant="info"
+          disabled={!this.sampleIsValid()}
+          onClick={() => this.handleExportAnalyses(sample)}
+        >
+          Download Analysis
+          {startExport && <i className="fa fa-spin fa-spinner ms-1" />}
         </Button>
-        {this.saveBtn(sample)}
-        {!sample.isNew && belongToReaction && this.saveBtn(sample, true)}
-        {!sample.isNew && hasAnalyses && (
-          <Button
-            variant="info"
-            disabled={!this.sampleIsValid()}
-            onClick={() => this.handleExportAnalyses(sample)}
-          >
-            Download Analysis
-            {startExport && <i className="fa fa-spin fa-spinner ms-1" />}
-          </Button>
-        )}
-      </>
-    );
+      );
+    }
+
+    return null;
   }
 
   onSVGStructureError = (errorMessage) => {
@@ -540,11 +557,21 @@ export default class SampleDetails extends React.Component {
   saveSampleOrInventory(closeView) {
     const { activeTab, sample } = this.state;
     if (activeTab === 'inventory' && sample.inventory_sample) {
-      this.handleSubmitInventory();
+      this.handleSubmitInventory(closeView);
     } else {
       this.handleSubmit(closeView);
     }
   }
+
+  handleInventorySaveComplete = (didSave) => {
+    const { sample, closeAfterInventorySave } = this.state;
+
+    if (didSave && closeAfterInventorySave) {
+      DetailActions.close(sample, true);
+    }
+
+    this.setState({ closeAfterInventorySave: false });
+  };
 
   editChemical = (boolean) => {
     this.setState({ isChemicalEdited: boolean });
@@ -614,6 +641,7 @@ export default class SampleDetails extends React.Component {
             setSaveInventory={(v) => this.setState({ saveInventoryAction: v })}
             saveInventory={saveInventoryAction}
             editChemical={this.editChemical}
+            onInventorySaveComplete={this.handleInventorySaveComplete}
             key={`ChemicalTab${sample.id.toString()}`}
           />
         </ListGroupItem>
@@ -797,24 +825,6 @@ export default class SampleDetails extends React.Component {
   sampleIsValid() {
     const { sample, loadingMolecule, quickCreator } = this.state;
     return (sample.isValid && !loadingMolecule) || sample.is_scoped == true || quickCreator;
-  }
-
-  saveBtn(sample, closeView = false) {
-    let submitLabel = (sample && sample.isNew) ? 'Create' : 'Save';
-    const hasComponents = !sample.isMixture() || (sample.hasComponents());
-    const isDisabled = !sample.can_update || !hasComponents;
-    if (closeView) submitLabel += ' and close';
-
-    return (
-      <Button
-        id="submit-sample-btn"
-        variant="warning"
-        onClick={() => this.saveSampleOrInventory(closeView)}
-        disabled={!this.sampleIsValid() || isDisabled}
-      >
-        {submitLabel}
-      </Button>
-    );
   }
 
   elementalPropertiesItem(sample) {
@@ -1028,78 +1038,7 @@ export default class SampleDetails extends React.Component {
     this.setState({ sample });
   }
 
-  saveButton(sampleUpdateCondition, floppyTag, timesTag, boolean = false) {
-    return (
-      <Button
-        variant="warning"
-        size="xxsm"
-        onClick={() => this.saveSampleOrInventory(boolean)}
-        disabled={sampleUpdateCondition}
-      >
-        {floppyTag}
-        {timesTag || null}
-      </Button>
-    );
-  }
-
-  saveAndCloseSample(sample, saveBtnDisplay) {
-    const { activeTab, isChemicalEdited } = this.state;
-    const isChemicalTab = activeTab === 'inventory';
-    const floppyTag = (
-      <i className="fa fa-floppy-o" />
-    );
-    const timesTag = (
-      <i className="fa fa-times" />
-    );
-    const hasComponents = !sample.isMixture() || sample.hasComponents();
-    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update || !hasComponents;
-
-    const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
-    const saveAndClose = (saveBtnDisplay
-      && (
-      <OverlayTrigger
-        placement="bottom"
-        overlay={(
-          <Tooltip id="saveCloseSample">
-            {`Save and Close ${elementToSave}`}
-          </Tooltip>
-        )}
-      >
-        {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
-      </OverlayTrigger>
-      )
-    );
-    const save = (saveBtnDisplay
-      && (
-      <OverlayTrigger
-        placement="bottom"
-        overlay={(
-          <Tooltip id="saveSample">
-            {`Save ${elementToSave}`}
-          </Tooltip>
-        )}
-      >
-        {this.saveButton(sampleUpdateCondition, floppyTag)}
-      </OverlayTrigger>
-      )
-    );
-
-    const saveForChemical = isChemicalTab && isChemicalEdited ? save : null;
-    return (
-      <>
-        { isChemicalTab ? saveForChemical : save}
-        { isChemicalTab ? null : saveAndClose }
-        <ConfirmClose el={sample} />
-      </>
-    );
-  }
-
   sampleHeader(sample) {
-    const { isChemicalEdited, activeTab } = this.state;
-    const titleTooltip = formatTimeStampsOfElement(sample || {});
-    const isChemicalTab = activeTab === 'inventory';
-    const saveBtnDisplay = sample.isEdited || (isChemicalEdited && isChemicalTab);
-
     const inventorySample = (
       <Form.Check
         type="checkbox"
@@ -1121,8 +1060,6 @@ export default class SampleDetails extends React.Component {
         label="Decoupled"
       />
     ) : null;
-
-    const inventoryLabel = sample.inventory_sample && sample.inventory_label ? sample.inventory_label : null;
 
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage
@@ -1178,31 +1115,10 @@ export default class SampleDetails extends React.Component {
 
     return (
       <>
-        <div className="d-flex align-items-center flex-wrap">
-          <div className="d-flex align-items-center flex-wrap flex-grow-1 gap-2">
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-              <span className="flex-shrink-0">
-                <i className="icon-sample me-1" />
-                {inventoryLabel || sample.title()}
-              </span>
-            </OverlayTrigger>
-            <ShowUserLabels element={sample} />
-            <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-            {!sample.isNew && <ElementCollectionLabels element={sample} key={sample.id} placement="right" />}
-            <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
-            <PubchemLabels element={sample} />
-            <HeaderCommentSection element={sample} />
-            {sample.isNew && !sample.isMixture() && <FastInput fnHandle={this.handleFastInput} />}
-          </div>
-          <div className="d-flex align-items-center gap-2">
-            {decoupleCb}
-            {inventorySample}
-            {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
-            <PrintCodeButton element={sample} />
-            <CopyElementModal element={sample} />
-            {this.saveAndCloseSample(sample, saveBtnDisplay)}
-          </div>
-        </div>
+        {decoupleCb}
+        {inventorySample}
+        {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
+        <PrintCodeButton element={sample} />
         {messageBlock}
         {redirectWarningBlock}
       </>
@@ -1650,12 +1566,23 @@ export default class SampleDetails extends React.Component {
       && this.state.activeTab) || visible.get(0);
 
     const pendingToSave = sample.isPendingToSave || isChemicalEdited;
+    const isChemicalTab = activeTab === 'inventory';
+    const showSave = isChemicalTab ? isChemicalEdited : sample.isEdited;
+    const hasComponents = !sample.isMixture() || sample.hasComponents();
+    const saveDisabled = !this.sampleIsValid() || !sample.can_update || !hasComponents;
 
     return (
       <DetailCard
+        element={sample}
         isPendingToSave={pendingToSave}
-        header={this.sampleHeader(sample)}
-        footer={this.sampleFooter()}
+        headerToolbar={this.sampleHeader(sample)}
+        footerToolbar={this.sampleFooter()}
+        title={sampleTitle(sample)}
+        titleAppendix={sampleTitleAppendix(sample, this.handleFastInput)}
+        onSave={() => this.saveSampleOrInventory(false)}
+        onSaveClose={() => this.saveSampleOrInventory(true)}
+        showSave={showSave}
+        saveDisabled={saveDisabled}
       >
         {ketcherSVGError?.length > 0 && (
           <Alert

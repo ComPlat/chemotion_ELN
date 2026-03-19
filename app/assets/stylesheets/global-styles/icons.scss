@@ -216,3 +216,12 @@
     content: "\f02d";
   }
 }
+
+.fa.combi-icon-close {
+  @extend .flex-row;
+  @extend .w-auto;
+  @extend .gap-1;
+  &:after {
+    content: "\f00d";
+  }
+}

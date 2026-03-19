@@ -196,7 +196,7 @@ export default function ReportDetails({ report }) {
   return (
     <DetailCard
       element={report}
-      titleText="Report Generation"
+      title="Report Generation"
       headerToolbar={headerToolbar}
       footerToolbar={footerToolbar}
     >

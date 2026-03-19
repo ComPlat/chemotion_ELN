@@ -1,6 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Card, CloseButton, Button } from 'react-bootstrap';
+import {
+  Card,
+  CloseButton,
+  Button,
+  Overlay,
+  Tooltip,
+  ButtonToolbar,
+} from 'react-bootstrap';
 import ElementIcon from 'src/components/common/ElementIcon';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
@@ -14,7 +21,7 @@ export default function DetailCard({
   children,
   element,
   isPendingToSave,
-  titleText,
+  title,
   titleAppendix,
   headerToolbar,
   footerToolbar,
@@ -22,22 +29,24 @@ export default function DetailCard({
   onSave,
   onSaveClose,
   onCopy,
+  showSave,
   saveDisabled,
   saveLabel,
-  confirmOnHeaderClose,
 }) {
+  const [showCloseOverlay, setShowCloseOverlay] = React.useState(false);
+  const [closeOverlayTarget, setCloseOverlayTarget] = React.useState(null);
+  const [closeOverlayPlacement, setCloseOverlayPlacement] = React.useState('bottom');
   const pendingToSave = typeof isPendingToSave === 'boolean'
     ? isPendingToSave
     : !!(element && (element.isPendingToSave || element.changed));
   const className = `detail-card${pendingToSave ? ' detail-card--unsaved' : ''}`;
   const hasSave = typeof onSave === 'function';
-  const shouldConfirmOnHeaderClose = typeof confirmOnHeaderClose === 'boolean'
-    ? confirmOnHeaderClose
-    : hasSave;
   const inferredSaveLabel = saveLabel || (element && element.isNew ? 'Create' : 'Save');
   const canUseStandardCopy = !!(element && element.can_copy && !element.isNew);
+  const shouldShowSave = typeof showSave === 'boolean' ? showSave : hasSave;
 
   const handleClose = (forceClose = false) => {
+    setShowCloseOverlay(false);
     if (onClose) {
       onClose();
     }
@@ -47,6 +56,7 @@ export default function DetailCard({
   };
 
   const handleSaveClose = () => {
+    setShowCloseOverlay(false);
     if (onSaveClose) {
       onSaveClose();
       return;
@@ -65,6 +75,11 @@ export default function DetailCard({
     label: inferredSaveLabel,
   };
 
+  const footerSaveButtonProps = {
+    ...saveButtonProps,
+    disabled: !pendingToSave || saveDisabled,
+  };
+
   const saveCloseButtonProps = {
     onClick: handleSaveClose,
     disabled: saveDisabled,
@@ -73,19 +88,62 @@ export default function DetailCard({
   };
 
   const copyButtonProps = {
-    id: 'copy-element-btn',
     onClick: onCopy,
     iconClass: 'fa fa-clone',
+    label: 'Copy',
   };
+
+  const requestClose = (event, forceClose = false, placement = 'bottom') => {
+    if (pendingToSave && !forceClose) {
+      setCloseOverlayTarget(event.currentTarget);
+      setCloseOverlayPlacement(placement);
+      setShowCloseOverlay(true);
+      return;
+    }
+
+    handleClose(forceClose);
+  };
+
+  const closeOverlay = (
+    <Tooltip id="detail-card-close-overlay">
+      <div className="p2">
+        {hasSave ? 'You have unsaved changes. Save before closing?' : 'Unsaved data will be lost. Close anyway?'}
+        <ButtonToolbar className="justify-content-end mt-2">
+          <Button
+            variant="danger"
+            size="xsm"
+            onClick={() => handleClose(true)}
+          >
+            Discard
+          </Button>
+          <Button
+            variant="ghost"
+            size="xsm"
+            onClick={() => setShowCloseOverlay(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            size="xsm"
+            onClick={handleSaveClose}
+            disabled={saveDisabled}
+          >
+            Save and Close
+          </Button>
+        </ButtonToolbar>
+      </div>
+    </Tooltip>
+  );
 
   return (
     <Card className={className}>
       <Card.Header>
         <div className="d-flex align-items-center justify-content-between gap-2">
           <div className="d-flex align-items-center gap-2">
-            <div className="d-flex align-items-center gap-2">
+            <div className="d-flex align-items-center me-2">
               {element && <ElementIcon element={element} className="me-1" />}
-              <span>{titleText}</span>
+              <span>{title}</span>
             </div>
             {element && !element.isNew && <ElementCollectionLabels element={element} placement="right" />}
             {titleAppendix}
@@ -95,7 +153,7 @@ export default function DetailCard({
             {canUseStandardCopy && (
               <CopyElementModal element={element} onCopyComplete={onCopy} />
             )}
-            {hasSave && (
+            {shouldShowSave && (
               <>
                 {detailHeaderButton(saveCloseButtonProps)}
                 {detailHeaderButton(saveButtonProps)}
@@ -104,7 +162,7 @@ export default function DetailCard({
             {!canUseStandardCopy && typeof onCopy === 'function' && (
               detailHeaderButton(copyButtonProps)
             )}
-            <CloseButton onClick={() => handleClose(!shouldConfirmOnHeaderClose)} />
+            <CloseButton onClick={(event) => requestClose(event, false, 'bottom')} />
           </div>
         </div>
       </Card.Header>
@@ -116,19 +174,28 @@ export default function DetailCard({
           <Card.Footer className="py-3">
             <div className="d-flex justify-content-end gap-1">
               <Button
-                onClick={handleClose}
+                onClick={(event) => requestClose(event, false, 'top')}
                 variant="ghost"
               >
                 Close
               </Button>
               {hasSave && (
-                detailFooterButton(saveButtonProps)
+                detailFooterButton(footerSaveButtonProps)
               )}
               {footerToolbar}
             </div>
           </Card.Footer>
         )}
       </div>
+      <Overlay
+        target={closeOverlayTarget}
+        show={showCloseOverlay}
+        placement={closeOverlayPlacement}
+        rootClose
+        onHide={() => setShowCloseOverlay(false)}
+      >
+        {closeOverlay}
+      </Overlay>
     </Card>
   );
 }
@@ -154,7 +221,7 @@ DetailCard.propTypes = {
     }),
   }),
   isPendingToSave: PropTypes.bool,
-  titleText: PropTypes.string.isRequired,
+  title: PropTypes.node.isRequired,
   titleAppendix: PropTypes.node,
   headerToolbar: PropTypes.node,
   footerToolbar: PropTypes.node,
@@ -162,9 +229,9 @@ DetailCard.propTypes = {
   onSave: PropTypes.func,
   onSaveClose: PropTypes.func,
   onCopy: PropTypes.func,
+  showSave: PropTypes.bool,
   saveDisabled: PropTypes.bool,
   saveLabel: PropTypes.string,
-  confirmOnHeaderClose: PropTypes.bool,
 };
 
 DetailCard.defaultProps = {
@@ -177,7 +244,7 @@ DetailCard.defaultProps = {
   onSave: null,
   onSaveClose: null,
   onCopy: null,
+  showSave: undefined,
   saveDisabled: false,
   saveLabel: null,
-  confirmOnHeaderClose: undefined,
 };
