@@ -393,5 +393,4 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
 ReactionVariations.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   onReactionChange: PropTypes.func.isRequired,
-  isActive: PropTypes.bool.isRequired,
 };
