@@ -1325,12 +1325,14 @@ export default class Reaction extends Element {
    *
    * @method updateAllConcentrations
    * @memberof Reaction
+   * @param {Object} options - Optional update flags
+   * @param {boolean} options.includeProducts - Whether to also update products
    * @returns {void}
    */
-  updateAllConcentrations() {
+  updateAllConcentrations({ includeProducts = true } = {}) {
     const allMaterials = [
       ...this.allReactionMaterials,
-      ...(this.products || []),
+      ...(includeProducts ? (this.products || []) : []),
     ];
 
     allMaterials.forEach((material) => {
