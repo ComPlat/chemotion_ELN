@@ -10,6 +10,7 @@ import CollectionSelect from 'src/components/common/CollectionSelect';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import DetailCardButton from 'src/apps/mydb/elements/details/DetailCardButton';
 
 const Notification = (props) => (
   NotificationActions.add({
@@ -117,14 +118,7 @@ export default class CopyElementModal extends React.Component {
 
     return (
       <>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="CopyElement">Copy</Tooltip>}
-        >
-          <Button id="copy-element-btn" size="xxsm" variant="success" onClick={this.handleModalShow}>
-            <i className="fa fa-clone" />
-          </Button>
-        </OverlayTrigger>
+        <DetailCardButton onClick={this.handleModalShow} iconClass="fa fa-clone" label="Copy" />
 
         <Modal centered show={showModal} onHide={this.handleModalClose}>
           <Modal.Header closeButton>
