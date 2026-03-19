@@ -80,6 +80,7 @@ export default class ReactionDetailsScheme extends React.Component {
     this.updateVesselSize = this.updateVesselSize.bind(this);
     this.updateVesselSizeOnBlur = this.updateVesselSizeOnBlur.bind(this);
     this.changeVesselSizeUnit = this.changeVesselSizeUnit.bind(this);
+    this.changePhOperator = this.changePhOperator.bind(this);
     this.reactionVolume = this.reactionVolume.bind(this);
     this.updateVolume = this.updateVolume.bind(this);
     this.handleVolumeCheckboxChange = this.handleVolumeCheckboxChange.bind(this);
@@ -1884,6 +1885,15 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
+  changePhOperator() {
+    const { reaction, onInputChange } = this.props;
+    const operators = ['=', '<', '>'];
+    const currentIndex = operators.indexOf(reaction.ph_operator || '=');
+    const nextOperator = operators[(currentIndex + 1) % operators.length];
+
+    onInputChange('phOperator', nextOperator);
+  }
+
   // Ensure first mixture becomes the reference with Eq=1,
   // and subsequent mixtures get Eq based on amount_mol relative to the reference material
   setEquivalentForMixture(splitSample, tagGroup) {
@@ -2057,26 +2067,19 @@ export default class ReactionDetailsScheme extends React.Component {
     const operator = reaction.ph_operator || '=';
     const value = reaction.ph_value || '';
     const isDisabled = !permitOn(reaction);
-    const phOperatorOptions = [
-      { value: '=', label: '=' },
-      { value: '>', label: '>' },
-      { value: '<', label: '<' },
-    ];
 
     return (
       <Form.Group>
         <Form.Label>pH</Form.Label>
         <InputGroup>
-          <div className="reaction-ph-operator">
-            <Select
-              name="ph_operator"
-              isDisabled={isDisabled}
-              isClearable={false}
-              options={phOperatorOptions}
-              value={phOperatorOptions.find((item) => item.value === operator) || phOperatorOptions[0]}
-              onChange={(option) => onInputChange('phOperator', option?.value || '=')}
-            />
-          </div>
+          <Button
+            className="reaction-ph-operator"
+            disabled={isDisabled}
+            variant="primary"
+            onClick={() => this.changePhOperator()}
+          >
+            {operator}
+          </Button>
           <Form.Control
             type="text"
             value={value}

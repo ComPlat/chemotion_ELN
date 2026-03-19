@@ -9,10 +9,7 @@ import {
   Row,
   Form
 } from 'react-bootstrap';
-import { Select } from 'src/components/common/Select';
-import uuid from 'uuid';
 import Reaction from 'src/models/Reaction';
-import { statusOptions } from 'src/components/staticDropdownOptions/options';
 import LineChartContainer from 'src/components/lineChart/LineChartContainer';
 import EditableTable from 'src/components/lineChart/EditableTable';
 import { permitOn } from 'src/components/common/uis';
@@ -52,7 +49,9 @@ export default class ReactionDetailsMainProperties extends Component {
     const {
       reaction,
       onInputChange,
-      showPropertiesFields,
+      leadingField,
+      leadingFieldColSize,
+      temperatureColSize,
       showSchemeFields,
       phField,
       vesselSizeField,
@@ -60,45 +59,17 @@ export default class ReactionDetailsMainProperties extends Component {
     } = this.props;
     const { temperature } = reaction;
     const { showTemperatureChart } = this.state;
+    const rowClassName = showSchemeFields ? 'mt-3 mb-0' : 'my-3';
 
     return (
       <>
-        <Row className="my-3">
-          {showPropertiesFields && (
-            <>
-              <Col sm={6}>
-                <Form.Group>
-                  <Form.Label>Name</Form.Label>
-                  <Form.Control
-                    id={uuid.v4()}
-                    name="reaction_name"
-                    type="text"
-                    value={reaction.name || ''}
-                    placeholder="Name..."
-                    disabled={!permitOn(reaction) || reaction.isMethodDisabled('name')}
-                    onChange={(event) => onInputChange('name', event)}
-                  />
-                </Form.Group>
-              </Col>
-              <Col sm={3}>
-                <Form.Group>
-                  <Form.Label>Status</Form.Label>
-                  <Select
-                    name="status"
-                    isClearable
-                    options={statusOptions}
-                    value={statusOptions.find(({ value }) => value === reaction.status)}
-                    isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('status')}
-                    onChange={(option) => {
-                      const wrappedEvent = { target: { value: option?.value || null } };
-                      onInputChange('status', wrappedEvent);
-                    }}
-                  />
-                </Form.Group>
-              </Col>
-            </>
+        <Row className={rowClassName}>
+          {leadingField && (
+            <Col sm={leadingFieldColSize}>
+              {leadingField}
+            </Col>
           )}
-          <Col sm={3}>
+          <Col sm={temperatureColSize}>
             <Form.Group>
               <Form.Label>Temperature</Form.Label>
               <InputGroup>
@@ -175,7 +146,9 @@ ReactionDetailsMainProperties.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   reaction: PropTypes.object,
   onInputChange: PropTypes.func,
-  showPropertiesFields: PropTypes.bool,
+  leadingField: PropTypes.node,
+  leadingFieldColSize: PropTypes.number,
+  temperatureColSize: PropTypes.number,
   showSchemeFields: PropTypes.bool,
   phField: PropTypes.node,
   vesselSizeField: PropTypes.node,
@@ -185,7 +158,9 @@ ReactionDetailsMainProperties.propTypes = {
 ReactionDetailsMainProperties.defaultProps = {
   reaction: {},
   onInputChange: () => {},
-  showPropertiesFields: false,
+  leadingField: null,
+  leadingFieldColSize: 9,
+  temperatureColSize: 3,
   showSchemeFields: false,
   phField: null,
   vesselSizeField: null,

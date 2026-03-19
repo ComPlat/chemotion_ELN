@@ -50,7 +50,7 @@ export default class ReactionDetailsDuration extends Component {
       // the start/stop/duration workflow used for standard reactions.
       return (
         <Row className="mb-3">
-          <Col md={{ span: 3, offset: 9 }} sm={6}>
+          <Col md={3} sm={6}>
             <Form.Group>
               <Form.Label>Time (incubation)</Form.Label>
               <InputGroup>

@@ -170,12 +170,14 @@ table.reaction-scheme-solvent {
 
   &__title-text {
     min-width: 0;
+    font-weight: 400;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
 
-    &--placeholder {
+    &--empty {
       color: #6c757d;
     }
   }
@@ -184,11 +186,14 @@ table.reaction-scheme-solvent {
     width: clamp(120px, 16vw, 220px);
     min-width: 0;
     flex: 0 1 clamp(120px, 16vw, 220px);
-  }
-}
 
-.reaction-ph-operator {
-  min-width: 72px;
+    &:focus,
+    &:focus-visible {
+      border-color: $input-border-color;
+      box-shadow: none;
+      outline: 0;
+    }
+  }
 }
 
 /* Safari 4.0 - 8.0 */

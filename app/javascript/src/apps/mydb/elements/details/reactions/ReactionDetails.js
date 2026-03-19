@@ -530,7 +530,7 @@ export default class ReactionDetails extends Component {
             type="text"
             name="reaction_name"
             value={headerNameDraft}
-            placeholder="Reaction name..."
+            placeholder="Reaction name"
             className="reaction-details-header__title-input"
             onChange={this.handleHeaderNameDraftChange}
             onBlur={this.commitHeaderNameChange}
@@ -550,10 +550,10 @@ export default class ReactionDetails extends Component {
           >
             <span
               aria-hidden="true"
-              className={`reaction-details-header__title-text${reaction.name ? '' : ' reaction-details-header__title-text--placeholder'}`}
+              className={`reaction-details-header__title-text${reaction.name ? '' : ' reaction-details-header__title-text--empty'}`}
               onDoubleClick={this.openHeaderNameEditor}
             >
-              {reaction.name || 'Reaction name...'}
+              {reaction.name || 'Reaction name'}
             </span>
           </OverlayTrigger>
         )}

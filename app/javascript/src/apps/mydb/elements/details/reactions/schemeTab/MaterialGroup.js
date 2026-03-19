@@ -227,7 +227,7 @@ function GeneralMaterialGroup({
   }
 
   if (materialGroup === 'starting_materials' && isInteractionReaction) {
-    groupHeaders.group = 'Guest and host material';
+    groupHeaders.group = 'Guest and host';
   }
 
   const yieldConversionRateFields = () => {
