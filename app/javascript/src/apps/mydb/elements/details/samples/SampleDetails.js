@@ -104,14 +104,8 @@ const rangeCheck = (field, sample) => {
 };
 
 const sampleTitle = (sample) => {
-  const titleTooltip = formatTimeStampsOfElement(sample || {});
   const inventoryLabel = sample.inventory_sample && sample.inventory_label ? sample.inventory_label : null;
-
-  return (
-    <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-      <span>{inventoryLabel || sample.title()}</span>
-    </OverlayTrigger>
-  );
+  return inventoryLabel || sample.title();
 };
 
 const sampleTitleAppendix = (sample, handleFastInput) => (
@@ -1578,6 +1572,7 @@ export default class SampleDetails extends React.Component {
         headerToolbar={this.sampleHeader(sample)}
         footerToolbar={this.sampleFooter()}
         title={sampleTitle(sample)}
+        titleTooltip={formatTimeStampsOfElement(sample || {})}
         titleAppendix={sampleTitleAppendix(sample, this.handleFastInput)}
         onSave={() => this.saveSampleOrInventory(false)}
         onSaveClose={() => this.saveSampleOrInventory(true)}
