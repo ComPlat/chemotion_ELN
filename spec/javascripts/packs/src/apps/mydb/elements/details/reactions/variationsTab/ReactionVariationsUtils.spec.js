@@ -579,6 +579,17 @@ describe('ReactionVariationsUtils', () => {
   });
 
   describe('setLayout', () => {
+    let userStoreStub;
+
+    beforeEach(() => {
+      userStoreStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 7 } });
+    });
+
+    afterEach(() => {
+      userStoreStub.restore();
+      localStorage.clear();
+    });
+
     it('applies entries, displayUnits, and groupHeaderNames', () => {
       const columnDefinitions = [
         {
@@ -602,8 +613,9 @@ describe('ReactionVariationsUtils', () => {
         displayUnits: { 'startingMaterials.mat-1.amount': 'mmol' },
         groupHeaderNames: { 'startingMaterials.mat-1': 'H2O' },
       };
+      localStorage.setItem('user7-reaction42-reactionVariationsLayout', JSON.stringify(layout));
 
-      const result = setLayout(columnDefinitions, layout);
+      const result = setLayout(42, columnDefinitions);
       const subGroup = result[0].children[0];
       const leaf = subGroup.children[0];
       expect(leaf.hide).toBe(false);
@@ -629,7 +641,7 @@ describe('ReactionVariationsUtils', () => {
         }
       ];
 
-      const result = setLayout(columnDefinitions, {});
+      const result = setLayout(42, columnDefinitions);
       const leaf = result[0].children[0].children[0];
       expect(leaf.hide).toBe(true);
       expect(leaf.displayUnit).toBe('mol');
@@ -653,11 +665,14 @@ describe('ReactionVariationsUtils', () => {
         }
       ];
 
-      setLayout(columnDefinitions, {
+      const layout = {
         entries: { 'startingMaterials.mat-1.amount': false },
         displayUnits: { 'startingMaterials.mat-1.amount': 'mmol' },
         groupHeaderNames: { 'startingMaterials.mat-1': 'H2O' },
-      });
+      };
+      localStorage.setItem('user7-reaction42-reactionVariationsLayout', JSON.stringify(layout));
+
+      setLayout(42, columnDefinitions);
 
       expect(columnDefinitions[0].children[0].children[0].hide).toBe(true);
       expect(columnDefinitions[0].children[0].children[0].displayUnit).toBe('mol');

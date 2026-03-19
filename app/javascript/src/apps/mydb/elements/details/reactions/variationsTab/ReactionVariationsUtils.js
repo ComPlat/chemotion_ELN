@@ -865,7 +865,9 @@ function getLayout(columnDefinitions) {
   };
 }
 
-function setLayout(columnDefinitions, layout) {
+function setLayout(reactionId, columnDefinitions) {
+  const layout = getInitialLayout(reactionId);
+
   let updated = setEntryVisibility(columnDefinitions, layout.entries ?? {});
   updated = setEntryDisplayUnits(updated, layout.displayUnits ?? {});
   updated = setGroupHeaderNames(updated, layout.groupHeaderNames ?? {});
