@@ -2229,14 +2229,24 @@ export default class ReactionDetailsScheme extends React.Component {
           onInputChange={onInputChange}
           showSchemeFields
           phField={this.renderPhConditionProperty()}
-          vesselSizeField={this.reactionVesselSize()}
+          vesselSizeField={isInteractionReaction ? null : this.reactionVesselSize()}
+          durationField={isInteractionReaction ? (
+            <ReactionDetailsDuration
+              reaction={reaction}
+              onInputChange={onInputChange}
+              isInteractionReaction
+              inlineInteractionField
+            />
+          ) : null}
           reactionVolumeField={this.reactionVolume()}
         />
-        <ReactionDetailsDuration
-          reaction={reaction}
-          onInputChange={onInputChange}
-          isInteractionReaction={isInteractionReaction}
-        />
+        {!isInteractionReaction && (
+          <ReactionDetailsDuration
+            reaction={reaction}
+            onInputChange={onInputChange}
+            isInteractionReaction={isInteractionReaction}
+          />
+        )}
         {/* Interaction mode intentionally drops ontology and role fields from the scheme tab. */}
         {!isInteractionReaction && (
           <Row className="mb-3">

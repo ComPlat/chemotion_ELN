@@ -55,6 +55,7 @@ export default class ReactionDetailsMainProperties extends Component {
       showSchemeFields,
       phField,
       vesselSizeField,
+      durationField,
       reactionVolumeField,
     } = this.props;
     const { temperature } = reaction;
@@ -111,7 +112,7 @@ export default class ReactionDetailsMainProperties extends Component {
                 {phField}
               </Col>
               <Col sm={3}>
-                {vesselSizeField}
+                {durationField || vesselSizeField}
               </Col>
               <Col sm={3}>
                 {reactionVolumeField}
@@ -152,6 +153,7 @@ ReactionDetailsMainProperties.propTypes = {
   showSchemeFields: PropTypes.bool,
   phField: PropTypes.node,
   vesselSizeField: PropTypes.node,
+  durationField: PropTypes.node,
   reactionVolumeField: PropTypes.node,
 };
 
@@ -164,5 +166,6 @@ ReactionDetailsMainProperties.defaultProps = {
   showSchemeFields: false,
   phField: null,
   vesselSizeField: null,
+  durationField: null,
   reactionVolumeField: null,
 };

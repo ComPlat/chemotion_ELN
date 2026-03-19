@@ -41,41 +41,54 @@ export default class ReactionDetailsDuration extends Component {
   }
 
   render() {
-    const { reaction, onInputChange, isInteractionReaction } = this.props;
+    const {
+      reaction,
+      onInputChange,
+      isInteractionReaction,
+      inlineInteractionField,
+    } = this.props;
     const durationCalc = reaction && reaction.durationCalc();
     const timePlaceholder = 'DD/MM/YYYY hh:mm:ss';
 
     if (isInteractionReaction) {
       // Interaction reactions use a single incubation-time input instead of
       // the start/stop/duration workflow used for standard reactions.
+      const interactionField = (
+        <Form.Group>
+          <Form.Label>Time (incubation)</Form.Label>
+          <InputGroup>
+            <Form.Control
+              disabled={!permitOn(reaction) || reaction.gaseous}
+              type="text"
+              value={reaction.durationDisplay.dispValue || ''}
+              ref={this.refDuration}
+              placeholder="Input duration..."
+              onChange={(event) => this.handleDurationChange(event)}
+            />
+            <OverlayTrigger
+              placement="bottom"
+              overlay={<Tooltip id="switch_incubation_unit">switch duration unit</Tooltip>}
+            >
+              <Button
+                disabled={!permitOn(reaction) || reaction.gaseous}
+                variant="primary"
+                onClick={() => this.changeDurationUnit()}
+              >
+                {reaction.durationUnit}
+              </Button>
+            </OverlayTrigger>
+          </InputGroup>
+        </Form.Group>
+      );
+
+      if (inlineInteractionField) {
+        return interactionField;
+      }
+
       return (
         <Row className="mb-3">
           <Col md={3} sm={6}>
-            <Form.Group>
-              <Form.Label>Time (incubation)</Form.Label>
-              <InputGroup>
-                <Form.Control
-                  disabled={!permitOn(reaction) || reaction.gaseous}
-                  type="text"
-                  value={reaction.durationDisplay.dispValue || ''}
-                  ref={this.refDuration}
-                  placeholder="Input duration..."
-                  onChange={(event) => this.handleDurationChange(event)}
-                />
-                <OverlayTrigger
-                  placement="bottom"
-                  overlay={<Tooltip id="switch_incubation_unit">switch duration unit</Tooltip>}
-                >
-                  <Button
-                    disabled={!permitOn(reaction) || reaction.gaseous}
-                    variant="primary"
-                    onClick={() => this.changeDurationUnit()}
-                  >
-                    {reaction.durationUnit}
-                  </Button>
-                </OverlayTrigger>
-              </InputGroup>
-            </Form.Group>
+            {interactionField}
           </Col>
         </Row>
       );
@@ -175,10 +188,12 @@ ReactionDetailsDuration.propTypes = {
   reaction: PropTypes.object,
   onInputChange: PropTypes.func,
   isInteractionReaction: PropTypes.bool,
+  inlineInteractionField: PropTypes.bool,
 };
 
 ReactionDetailsDuration.defaultProps = {
   reaction: {},
   onInputChange: () => {},
   isInteractionReaction: false,
+  inlineInteractionField: false,
 };
