@@ -1,5 +1,5 @@
 import React from 'react';
-import { Popover, Form } from 'react-bootstrap';
+import { Popover, Form, Button } from 'react-bootstrap';
 
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
@@ -15,7 +15,8 @@ function TabItem({ item }) {
   const { genericEls = [] } = UserStore.getState();
   const genericElement = genericEls.find((el) => el.name === item);
 
-  let icon, label;
+  let icon; let
+    label;
   if (genericElement) {
     icon = genericElement.icon_name;
     label = genericElement.label;
@@ -29,8 +30,8 @@ function TabItem({ item }) {
       <i className={icon} />
       {label}
     </div>
-  )
-};
+  );
+}
 
 export default class ElementsTableSettings extends React.Component {
   constructor(props) {
@@ -44,9 +45,9 @@ export default class ElementsTableSettings extends React.Component {
       showSampleShortLabel: false,
       showSampleName: false,
       tableSchemePreviews: true
-    }
+    };
 
-    this.onToggleTabLayoutContainer = this.onToggleTabLayoutContainer.bind(this);
+    this.onTabLayoutClose = this.onTabLayoutClose.bind(this);
     this.handleToggleSampleExt = this.handleToggleSampleExt.bind(this);
     this.handleToggleSampleShortLabel = this.handleToggleSampleShortLabel.bind(this);
     this.handleToggleSampleName = this.handleToggleSampleName.bind(this);
@@ -88,7 +89,7 @@ export default class ElementsTableSettings extends React.Component {
   }
 
   onChangeUser(state) {
-    let { currentType } = this.state;
+    const { currentType } = this.state;
     if (state && state.profile) {
       this.setState({
         showSampleExternalLabel: state.profile.show_external_name,
@@ -101,7 +102,7 @@ export default class ElementsTableSettings extends React.Component {
     }
   }
 
-  onToggleTabLayoutContainer(show) {
+  onTabLayoutClose(show) {
     if (!show) {
       this.updateLayout();
 
@@ -163,7 +164,7 @@ export default class ElementsTableSettings extends React.Component {
       layout[value] = (index + 1);
     });
     hidden.forEach((value, index) => {
-      layout[value] = (- index - 1);
+      layout[value] = (-index - 1);
     });
 
     const userProfile = UserStore.getState().profile;
@@ -183,7 +184,7 @@ export default class ElementsTableSettings extends React.Component {
     } = this.state;
 
     const showSettings = (currentType === 'sample' || currentType === 'reaction');
-    const popoverSettings = (
+    const popoverSettings = ({ close }) => (
       <Popover className="d-flex popover-multi">
         {showSettings && (
           <div className="popover-multi-item">
@@ -219,8 +220,13 @@ export default class ElementsTableSettings extends React.Component {
           </div>
         )}
         <div className="popover-multi-item">
-          <Popover.Header>
+          <Popover.Header className="d-flex justify-content-between align-items-center">
             Tab Layout
+            <Button
+              variant="close"
+              aria-label="Close"
+              onClick={close}
+            />
           </Popover.Header>
           <Popover.Body>
             <TabLayoutEditor
@@ -237,7 +243,7 @@ export default class ElementsTableSettings extends React.Component {
     );
 
     return (
-      <ConfigOverlayButton popoverSettings={popoverSettings} onToggle={this.onToggleTabLayoutContainer} />
+      <ConfigOverlayButton popoverSettings={popoverSettings} onClose={() => this.onTabLayoutClose(false)} />
     );
   }
 }
