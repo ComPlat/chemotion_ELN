@@ -1289,7 +1289,7 @@ export default class ReactionDetailsScheme extends React.Component {
     if (!updatedSample
       || concentrationValue == null
       || !Number.isFinite(concentrationValue)
-      || concentrationValue < 0) {
+      || concentrationValue <= 0) {
       return reaction;
     }
 
@@ -1381,7 +1381,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // concentration; all others are recalculated from updated amounts/volume.
     if (lockEquivColumn) {
       this.resetPreservedConcentrationForOtherMaterials(updatedReaction, updatedSample);
-      updatedReaction.updateAllConcentrations();
+      updatedReaction.updateAllConcentrations({ includeProducts: false });
     }
 
     return updatedReaction;
@@ -1455,7 +1455,7 @@ export default class ReactionDetailsScheme extends React.Component {
   calculateAmountFromConcentration(sample, concentration, reaction) {
     const volumeL = reaction.reactionVolumeForConcentration();
 
-    if (!Number.isFinite(volumeL) || volumeL <= 0 || !Number.isFinite(concentration) || concentration < 0) {
+    if (!Number.isFinite(volumeL) || volumeL <= 0 || !Number.isFinite(concentration) || concentration <= 0) {
       return;
     }
 
@@ -2280,6 +2280,7 @@ export default class ReactionDetailsScheme extends React.Component {
             variant="primary"
             id="numInput_reaction_volume_l"
             disabled={reaction.isVolumeLocked}
+            disableUnitButtonPadding
             onChange={(e) => this.updateVolume(e)}
             onMetricsChange={(e) => this.updateVolume(e)}
           />

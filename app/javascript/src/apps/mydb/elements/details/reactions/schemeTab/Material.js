@@ -190,16 +190,24 @@ class Material extends Component {
    * Renders the concentration field for a material.
    * For mixtures, it finds the reference component and uses its concentration.
    * For regular materials, it uses the material's own concentration value.
+   * For SBMM materials, it shows the auto-calculated concentration as read-only.
    *
    * @param {Sample} material - The material sample to display concentration for
    * @returns {JSX.Element} A table cell containing the concentration input component
    */
   materialConcentration(material) {
-    const { reaction, lockEquivColumn } = this.props;
+    const { reaction, lockEquivColumn, materialGroup } = this.props;
+    const isSbmm = isSbmmSample(material);
     const metricMolConc = getMetricMolConc(material);
+    const disableProductConcentration = (
+      materialGroup === 'products'
+      && lockEquivColumn
+      && reaction.isVolumeLocked
+    );
+    const disableSchemeConcentration = reaction.gaseous || reaction.weight_percentage;
 
     // For SBMM samples, use concentration_rt_value directly (automatically calculated)
-    const concentrationValue = isSbmmSample(material)
+    const concentrationValue = isSbmm
       ? material.concentration_rt_value
       : material.concn;
 
@@ -211,7 +219,12 @@ class Material extends Component {
         metricPrefix={metricMolConc}
         metricPrefixes={metricPrefixesMolConc}
         precision={4}
-        disabled={!permitOn(reaction)}
+        disabled={
+          !permitOn(reaction)
+          || isSbmm
+          || disableProductConcentration
+          || disableSchemeConcentration
+        }
         onChange={(e) => this.handleConcentrationChange(e, concentrationValue)}
         onMetricsChange={this.handleMetricsChange}
         size="sm"
