@@ -105,9 +105,13 @@ export default class NumeralInputWithUnitsCompo extends Component {
   }
 
   _handleInputValueBlur() {
+    const { value } = this.props;
+    const { metricPrefix } = this.state;
     this.setState({
+      value,
       currentPrecision: this.props.precision,
       showString: false,
+      valueString: metPreConv(value, 'n', metricPrefix) || 0,
     }, () => this._onChangeCallback());
   }
 

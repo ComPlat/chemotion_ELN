@@ -250,11 +250,13 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       if (initial) {
         self.sequence_based_macromolecule_sample_checksum = sequence_based_macromolecule_sample._checksum;
       }
+      const keepChangedState = sequence_based_macromolecule_sample.changed === true;
       sequence_based_macromolecule_sample.changed = false;
       const sequenceBasedMacromoleculeSample = new SequenceBasedMacromoleculeSample(sequence_based_macromolecule_sample);
 
       if (sequenceBasedMacromoleculeSample.checksum() !== self.sequence_based_macromolecule_sample_checksum
-        || sequenceBasedMacromoleculeSample.isNew) {
+        || sequenceBasedMacromoleculeSample.isNew
+        || keepChangedState) {
         sequenceBasedMacromoleculeSample.changed = true;
       }
 
@@ -268,6 +270,13 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       let sequenceBasedMacromoleculeSample = { ...self.sequence_based_macromolecule_sample };
       const { lastObject, lastKey } = self.getLastObjectAndKeyByField(field, sequenceBasedMacromoleculeSample);
       lastObject[lastKey] = value;
+
+      // Keep purity in sync with its backing field so checksum-based edit detection
+      // also works for purity-only changes.
+      if (lastKey === 'purity') {
+        lastObject._purity = value;
+        sequenceBasedMacromoleculeSample.changed = true;
+      }
 
       if (lastKey === 'splitted_sequence') {
         lastObject['sequence'] = value.split(' ').join('');
