@@ -41,6 +41,7 @@ module Usecases
 
       private
 
+      # rubocop:disable Metrics/AbcSize
       def basic_scope
         return '' if @conditions[:error] != ''
 
@@ -53,10 +54,13 @@ module Usecases
         scope = @shared_methods.order_by_molecule(scope) if @conditions[:model_name] == Sample
         scope = scope.group("#{@conditions[:model_name].table_name}.id") if group_by_model_name
         scope = scope.group('samples.id, molecules.sum_formular') if @conditions[:model_name] == Sample
-        scope = @shared_methods.order_by_created_at_desc(scope, @conditions[:model_name]) if @conditions[:model_name] == Reaction
+        if @conditions[:model_name] == Reaction
+          scope = @shared_methods.order_by_created_at_desc(scope, @conditions[:model_name])
+        end
         scope = @shared_methods.order_and_group_for_sequence_based_macromolecule(scope) if is_sbmm_sample_model
         scope.pluck(:id)
       end
+      # rubocop:enable Metrics/AbcSize
 
       def basic_literature_scope
         return '' if @conditions[:error] != ''
