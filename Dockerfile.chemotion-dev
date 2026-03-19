@@ -64,3 +64,16 @@ USER ubuntu
 # COPY --chown=ubuntu:ubuntu ./prepare-asdf.sh .
 # COPY --chown=ubuntu:ubuntu ./.tool-versions .
 # RUN chmod +x prepare-asdf.sh && ./prepare-asdf.sh
+
+ARG ruby_version=2.7.8
+WORKDIR /tmp/ruby/${ruby_version}
+RUN ./prepare-asdf.sh
+RUN ./prepare-rubygems.sh
+
+ARG ruby_version=3.3.8
+WORKDIR /tmp/ruby/${ruby_version}
+RUN ./prepare-asdf.sh
+RUN ./prepare-rubygems.sh
+
+
+
