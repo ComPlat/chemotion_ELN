@@ -44,7 +44,6 @@ export default class CopyElementModal extends React.Component {
     this.copyElement = this.copyElement.bind(this);
     this.handleAmountsConfirm = this.handleAmountsConfirm.bind(this);
     this.handleAmountsConfirmClose = this.handleAmountsConfirmClose.bind(this);
-    this.notifyCopyComplete = this.notifyCopyComplete.bind(this);
   }
 
   handleModalShow() {
@@ -60,7 +59,6 @@ export default class CopyElementModal extends React.Component {
     const { element } = this.props;
     this.setState({ showAmountsConfirm: false });
     ElementActions.copyReaction(element, selectedCol, keepAmounts);
-    this.notifyCopyComplete();
   }
 
   handleAmountsConfirmClose() {
@@ -69,13 +67,6 @@ export default class CopyElementModal extends React.Component {
 
   onColSelectChange(e) {
     this.setState({ selectedCol: e });
-  }
-
-  notifyCopyComplete() {
-    const { onCopyComplete } = this.props;
-    if (typeof onCopyComplete === 'function') {
-      onCopyComplete();
-    }
   }
 
   copyElement() {
@@ -105,7 +96,6 @@ export default class CopyElementModal extends React.Component {
     }
 
     this.setState({ showModal: false });
-    this.notifyCopyComplete();
     return true;
   }
 
@@ -187,10 +177,5 @@ export default class CopyElementModal extends React.Component {
 
 CopyElementModal.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
-  element: PropTypes.object.isRequired,
-  onCopyComplete: PropTypes.func
-};
-
-CopyElementModal.defaultProps = {
-  onCopyComplete: null
+  element: PropTypes.object.isRequired
 };

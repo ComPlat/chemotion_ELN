@@ -28,7 +28,6 @@ export default function DetailCard({
   onClose,
   onSave,
   onSaveClose,
-  onCopy,
   showSave,
   saveDisabled,
   saveLabel,
@@ -42,7 +41,7 @@ export default function DetailCard({
   const className = `detail-card${pendingToSave ? ' detail-card--unsaved' : ''}`;
   const hasSave = typeof onSave === 'function';
   const inferredSaveLabel = saveLabel || (element && element.isNew ? 'Create' : 'Save');
-  const canUseStandardCopy = !!(element && element.can_copy && !element.isNew);
+  const canCopy = !!(element && element.can_copy && !element.isNew);
   const shouldShowSave = typeof showSave === 'boolean' ? showSave : hasSave;
 
   const handleClose = (forceClose = false) => {
@@ -85,12 +84,6 @@ export default function DetailCard({
     disabled: saveDisabled,
     label: `${inferredSaveLabel} and Close`,
     iconClass: 'fa fa-floppy-o combi-icon-close',
-  };
-
-  const copyButtonProps = {
-    onClick: onCopy,
-    iconClass: 'fa fa-clone',
-    label: 'Copy',
   };
 
   const requestClose = (event, forceClose = false, placement = 'bottom') => {
@@ -150,17 +143,14 @@ export default function DetailCard({
           </div>
           <div className="d-flex gap-1 align-items-center">
             {headerToolbar}
-            {canUseStandardCopy && (
-              <CopyElementModal element={element} onCopyComplete={onCopy} />
+            {canCopy && (
+              <CopyElementModal element={element} />
             )}
             {shouldShowSave && (
               <>
                 {detailHeaderButton(saveCloseButtonProps)}
                 {detailHeaderButton(saveButtonProps)}
               </>
-            )}
-            {!canUseStandardCopy && typeof onCopy === 'function' && (
-              detailHeaderButton(copyButtonProps)
             )}
             <CloseButton onClick={(event) => requestClose(event, false, 'bottom')} />
           </div>
@@ -228,7 +218,6 @@ DetailCard.propTypes = {
   onClose: PropTypes.func,
   onSave: PropTypes.func,
   onSaveClose: PropTypes.func,
-  onCopy: PropTypes.func,
   showSave: PropTypes.bool,
   saveDisabled: PropTypes.bool,
   saveLabel: PropTypes.string,
@@ -243,7 +232,6 @@ DetailCard.defaultProps = {
   onClose: null,
   onSave: null,
   onSaveClose: null,
-  onCopy: null,
   showSave: undefined,
   saveDisabled: false,
   saveLabel: null,
