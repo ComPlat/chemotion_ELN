@@ -329,7 +329,7 @@ export default class LiteratureDetails extends Component {
     return (
       <DetailCard
         element={this.props.literatureMap}
-        titleText="References for selected elements"
+        title="References for selected elements"
         headerToolbar={detailHeaderButton(copyButtonProps)}
         footerToolbar={detailFooterButton(copyButtonProps)}
       >
