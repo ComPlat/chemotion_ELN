@@ -48,9 +48,9 @@ function createAttachements(files) {
   });
 }
 
-function createAnalsesForSingelFiles(element, files, name) {
+function createAnalsesForSingelFiles(element, files, name, ontology = '') {
   const newContainer = addNewAnalyses(element);
-
+  newContainer.extended_metadata.kind = ontology;
   newContainer.name = `File: ${name}`;
   const datasetContainer = createDataset();
   const newAttachments = createAttachements(files);
