@@ -1,0 +1,6 @@
+%p= t('two_factor_auth_mailer.greeting', name: @user.name)
+
+%p= t('two_factor_auth_mailer.disable_mail.message')
+
+%p
+  %a.btn.btn-primary{ href: @link, style: "padding: 10px 20px; text-decoration: none; color: white; background-color: #ff5555; border-radius: 5px;" }= t('two_factor_auth_mailer.disable_mail.button')

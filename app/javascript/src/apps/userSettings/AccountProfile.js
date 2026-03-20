@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {
+  useState, useEffect, useCallback, useMemo
+} from 'react';
 import PropTypes from 'prop-types';
 import {
   Container, Card, Row, Col, Form, Button, Alert
@@ -9,17 +11,36 @@ import ScifinderCredential from 'src/apps/scifinderCredential/ScifinderCredentia
 import UserSetting from 'src/components/structureEditor/UserSetting';
 import OmniauthCredential from 'src/apps/omniauthCredential/OmniauthCredential';
 import UserCounter from 'src/apps/userCounter/UserCounter';
+import { TwoFactorSettings } from 'src/apps/userSettings/TwoFA';
+import { AccountSettings, DeleteSettings } from 'src/apps/userSettings/UserSettings';
+import Affiliations from 'src/apps/userSettings/Affiliations';
 
-function AccountProfile({ currentUser }) {
+function AuthenticationSettings({ currentUser }) {
+  return (
+    <Container className="my-3 d-flex flex-column gap-3">
+      <AccountSettings currentUser={currentUser} />
+      <TwoFactorSettings />
+      <DeleteSettings />
+    </Container>
+  );
+}
+
+AuthenticationSettings.propTypes = {
+  currentUser: PropTypes.shape({
+    email: PropTypes.string.isRequired,
+    unconfirmed_email: PropTypes.string.isRequired,
+  }).isRequired,
+};
+
+function ProfileSettings({ currentUser }) {
   const [reactionPrefix, setReactionPrefix] = useState(currentUser.reaction_name_prefix || '');
   const [reactionsCount, setReactionsCount] = useState(currentUser.counters?.reactions || 0);
   const [curation, setCuration] = useState(currentUser.profile?.curation || 1);
   const [nextLabel, setNextLabel] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [successPosition, setSuccessPosition] = useState(null);
-
   const nextReactionLabelCounter = parseInt(reactionsCount, 10) + 1;
-  const updatedNextReactionLabel  = nextReactionLabelCounter.toString().padStart(3, '0');
+  const updatedNextReactionLabel = nextReactionLabelCounter.toString().padStart(3, '0');
 
   useEffect(() => {
     setNextLabel(`${currentUser.initials}-${reactionPrefix}${updatedNextReactionLabel}`);
@@ -67,11 +88,8 @@ function AccountProfile({ currentUser }) {
     'No curation standard': 1,
     'Curation standard I: experimental organic chemistry': 2,
   };
-
   return (
     <Container className="my-3 d-flex flex-column gap-3">
-      <h1>Account &amp; Profile</h1>
-
       {currentUser.allocated_space > 0 && (
         <Card>
           <Card.Header>Quota</Card.Header>
@@ -131,7 +149,10 @@ function AccountProfile({ currentUser }) {
             <Row className="mb-3">
               <Col className="col-3 offset-3">
                 <Form.Label className="col-form-label">Next reaction label will be:</Form.Label>
-                <span> {nextLabel}</span>
+                <span>
+                  {' '}
+                  {nextLabel}
+                </span>
               </Col>
             </Row>
 
@@ -142,9 +163,9 @@ function AccountProfile({ currentUser }) {
             </Row>
           </Form>
           {successMessage && successPosition === 'reaction' && (
-          <Alert variant="success">
-            {successMessage}
-          </Alert>
+            <Alert variant="success">
+              {successMessage}
+            </Alert>
           )}
         </Card.Body>
       </Card>
@@ -180,24 +201,148 @@ function AccountProfile({ currentUser }) {
             </Row>
           </Form>
           {successMessage && successPosition === 'curation' && (
-          <Alert variant="success">
-            {successMessage}
-          </Alert>
+            <Alert variant="success">
+              {successMessage}
+            </Alert>
           )}
         </Card.Body>
       </Card>
-
-      <ScifinderCredential />
       <UserSetting />
-      <OmniauthCredential />
       <UserCounter />
-      <script src="/assets/pages.js" />
     </Container>
   );
 }
 
-AccountProfile.propTypes = {
+ProfileSettings.propTypes = {
   currentUser: PropTypes.shape({
+    initials: PropTypes.string.isRequired,
+    used_space: PropTypes.number.isRequired,
+    allocated_space: PropTypes.number.isRequired,
+    reaction_name_prefix: PropTypes.string.isRequired,
+    counters: PropTypes.shape({
+      reactions: PropTypes.number.isRequired,
+    }).isRequired,
+    profile: PropTypes.shape({
+      curation: PropTypes.number.isRequired,
+    }).isRequired,
+  }).isRequired,
+};
+
+function ExternalSettings() {
+  return (
+    <Container className="my-3 d-flex flex-column gap-3">
+
+      <ScifinderCredential />
+
+      <OmniauthCredential />
+
+    </Container>
+  );
+}
+
+function AffiliationsSettings() {
+  return (
+    <Container className="my-3 d-flex flex-column gap-3">
+      <Affiliations />
+    </Container>
+  );
+}
+function AccountProfile({ currentUser, closeSettings }) {
+  const [currentSettings, setCurrentSettings] = useState('account');
+
+  const renderMain = () => {
+    if (currentSettings === 'account') {
+      return <AuthenticationSettings currentUser={currentUser} />;
+    }
+    if (currentSettings === 'profile') {
+      return <ProfileSettings currentUser={currentUser} />;
+    }
+    if (currentSettings === 'external') {
+      return <ExternalSettings />;
+    }
+    if (currentSettings === 'affiliations') {
+      return <AffiliationsSettings />;
+    }
+    return null;
+  };
+
+  const buttonStyle = useMemo(() => ({
+    all: 'unset', // removes margin, padding, border, background
+    cursor: 'pointer', // make it clear it’s clickable
+    display: 'block', // full width
+    width: '100%',
+    padding: '2px', // optional for hit area
+  }), []);
+
+  return (
+    <div className="container-fluid d-flex flex-column" style={{ minHeight: '100vh' }}>
+      <div
+        className="bg-light"
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 5
+        }}
+      >
+        <h1 style={{
+          display: 'inline',
+        }}
+        >
+          Settings
+        </h1>
+
+        {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
+        <button type="button" onClick={closeSettings} className="m-2 mb-4 float-end btn-close" />
+      </div>
+      <div className="row flex-grow-1">
+        {/* Left column: stretch to bottom */}
+        <div
+          className="col-2 bg-light d-flex flex-column"
+          style={{ minHeight: '100%' }}
+        >
+
+          <ul className="list-unstyled p-3">
+            <li>
+              <button type="button" style={buttonStyle} onClick={() => setCurrentSettings('account')}>Account</button>
+            </li>
+            <li>
+              <button type="button" style={buttonStyle} onClick={() => setCurrentSettings('profile')}>Profile</button>
+            </li>
+            <li>
+              <button
+                type="button"
+                style={buttonStyle}
+                onClick={() => setCurrentSettings('external')}
+              >
+                3rd-party apps & SciFinder
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                style={buttonStyle}
+                onClick={() => setCurrentSettings('affiliations')}
+              >
+                Affiliations
+              </button>
+            </li>
+          </ul>
+        </div>
+        <Col>
+          {renderMain()}
+        </Col>
+      </div>
+
+      <script src="/assets/pages.js" />
+    </div>
+  );
+}
+
+AccountProfile.propTypes = {
+  closeSettings: PropTypes.func.isRequired,
+  currentUser: PropTypes.shape({
+    email: PropTypes.string.isRequired,
+    unconfirmed_email: PropTypes.string.isRequired,
     initials: PropTypes.string.isRequired,
     used_space: PropTypes.number.isRequired,
     allocated_space: PropTypes.number.isRequired,
