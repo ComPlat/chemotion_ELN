@@ -16,6 +16,7 @@ import {
 } from 'src/apps/mydb/elements/details/analyses/FileManager';
 import { FileTree, ToggleSwitch } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { AdvancedAnalysesList } from 'src/apps/mydb/elements/details/analyses/AdvancedComponents';
+import OlsTreeSelect from '../../../../../components/OlsComponent';
 import PropTypes from 'prop-types';
 
 async function handleZipFile(zipFile) {
@@ -181,7 +182,7 @@ FileListDisplay.propTypes = {
 };
 
 function UploadButton({
-  files, handleClose, element, setElement
+  files, handleClose, element, setElement, ontology = ''
 }) {
   if (!files.length) {
     return null;
@@ -189,7 +190,7 @@ function UploadButton({
 
   const singleFileHandle = useCallback(async () => {
     const file = await new ZipFileContainer(files).getFile();
-    createAnalsesForSingelFiles(element, [file], file.name);
+    createAnalsesForSingelFiles(element, [file], file.name, ontology);
     handleClose();
     setElement(element, () => {
     });
@@ -200,7 +201,7 @@ function UploadButton({
     // eslint-disable-next-line react/prop-types
     files.forEach((fileContainer) => {
       pList.push(fileContainer.getFile().then((file) => {
-        createAnalsesForSingelFiles(element, [file], file.name);
+        createAnalsesForSingelFiles(element, [file], file.name, ontology);
         return true;
       }));
     });
@@ -213,6 +214,7 @@ function UploadButton({
   const multiFileOneAnaHandle = useCallback(async () => {
     const pList = [];
     const newContainer = addNewAnalyses(element);
+    newContainer.extended_metadata.kind = ontology;
     files.forEach((fileContainer) => {
       pList.push(fileContainer.getFile().then((file) => {
         const datasetContainer = createDataset();
@@ -275,7 +277,8 @@ function UploadField({ disabled = false, element, setElement }) {
   };
 
   const [show, setShow] = useState(false);
-  const [isAdvanced, setisAdvanced] = useState(false);
+  const [ontology, setOntology] = useState('');
+  const [isAdvanced, setIsAdvanced] = useState(false);
   const [listedFiles, setListedFiles] = useState([]);
   const handleClose = useCallback(() => {
     setListedFiles([]);
@@ -286,7 +289,7 @@ function UploadField({ disabled = false, element, setElement }) {
   const handleChange = useCallback((items) => {
     if (items.length === 1) {
       if (items[0].isFile) {
-        createAnalsesForSingelFiles(element, [items[0].file], items[0].name);
+        createAnalsesForSingelFiles(element, [items[0].file], items[0].name, ontology);
         setShow(false);
         setElement(element, () => {
         });
@@ -300,7 +303,13 @@ function UploadField({ disabled = false, element, setElement }) {
     }
 
     setListedFiles(items);
-  }, []);
+  }, [ontology]);
+
+  const handlesSetOntology = useCallback((ev) => {
+    let kind = (ev || '');
+    kind = `${kind.split('|')[0].trim()} | ${(kind.split('|')[1] || '').trim()}`;
+    setOntology(kind);
+  });
 
   const content = () => {
     const [, setConsumedPaths] = useState([]);
@@ -359,8 +368,17 @@ function UploadField({ disabled = false, element, setElement }) {
         <Row className="justify-content-md-center">
           <Col lg={5}>
             <FolderDropzone handleChange={handleChange} />
+            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+            <label className="form-label">Type (Chemical Methods Ontology)</label>
+            <OlsTreeSelect
+              selectName="chmo"
+              selectedValue={ontology}
+              onSelectChange={handlesSetOntology}
+              selectedDisable={false}
+            />
             <UploadButton
               files={listedFiles}
+              ontology={ontology}
               handleClose={handleClose}
               element={element}
               setElement={wrappedSetElement}
@@ -399,7 +417,7 @@ function UploadField({ disabled = false, element, setElement }) {
           <ToggleSwitch
             disabled={listedFiles.length === 0}
             isChecked={isAdvanced}
-            setIsChecked={setisAdvanced}
+            setIsChecked={setIsAdvanced}
             label="Advanced mode"
           />
         </Modal.Footer>
