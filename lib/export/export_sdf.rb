@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'export_table'
+require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 module Export
   class ExportSdf < ExportTable
@@ -23,6 +24,7 @@ module Export
     def generate_sheet_with_samples(table, samples = nil)
       @samples = samples
       return if samples.nil? # || samples.count.zero?
+
       generate_headers(table, EXCLUDED_COLUMNS)
       @xfile[table] = Tempfile.new(["#{table}s_#{@t}_", '.sdf'], encoding: 'utf-8')
       samples.each do |sample|
@@ -33,7 +35,8 @@ module Export
     end
 
     def read
-      return nil if @xfile.size.zero?
+      return nil if @xfile.empty?
+
       file = stream_data
       file.rewind
       file.read
@@ -66,12 +69,12 @@ module Export
     def filter_with_permission_and_detail_level(sample)
       molfile = sdf_molfile_for(sample)
 
-      if sample['shared_sync'] == 'f' || sample['shared_sync'] == false
+      if ['f', false].include?(sample['shared_sync'])
         data = validate_molfile(molfile)
         return nil unless data.presence
 
         if sample['molfile_version'] =~ /^(V2000).*T9/
-          data = Chemotion::OpenBabelService.mofile_clear_coord_bonds(data, $1)
+          data = Chemotion::OpenBabelService.mofile_clear_coord_bonds(data, Regexp.last_match(1))
         end
         data = data.rstrip
         data += "\n"
@@ -93,7 +96,7 @@ module Export
         data = concatenate_data(sample, data, headers)
 
       end
-      data.concat("\$\$\$\$\n")
+      data.concat("$$$$\n")
     end
 
     def sdf_molfile_for(sample)
@@ -127,10 +130,18 @@ module Export
       ">  <#{field}>\n#{value}\n\n"
     end
 
+    # Keep only the CTAB (up to and including "M  END") when molfile has no PolymersList/TextNode.
+    # When PolymersList or TextNode blocks are present, keep the full molfile including those blocks and $$$$.
     def validate_molfile(molfile)
-      return ($`).concat('M  END') if molfile.to_s =~ /^M  END/
+      s = molfile.to_s
+      return s.rstrip if Chemotion::MolfilePolymerSupport.has_polymer_or_textnode_blocks?(s)
 
-      molfile
+      return s unless s.include?('M  END')
+
+      idx = s.index('M  END')
+      return s unless idx
+
+      s[0..(idx + 'M  END'.length - 1)].rstrip
     end
 
     def validate_value(value)
@@ -145,9 +156,11 @@ module Export
 
     def stream_data
       return @xfile.first[1] if @xfile.size == 1
+
       Zip::OutputStream.write_buffer do |zip|
         @xfile.each_pair do |table, file|
           next unless file
+
           file.rewind
           zip.put_next_entry "#{table}s_#{@t}_.sdf"
           zip.write file.read
