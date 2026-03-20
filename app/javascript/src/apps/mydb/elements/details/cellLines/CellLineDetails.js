@@ -16,6 +16,7 @@ import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/propertiesTab/GeneralProperties';
 import AnalysesContainer from 'src/apps/mydb/elements/details/cellLines/analysesTab/AnalysesContainer';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
+import ConfirmClose from 'src/components/common/ConfirmClose';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 
 class CellLineDetails extends React.Component {
@@ -61,6 +62,8 @@ class CellLineDetails extends React.Component {
   isReadOnly() {
     const { currentCollection, isSync } = UIStore.getState();
     const { currentUser } = UserStore.getState();
+
+    if (!currentCollection) { return false }
 
     return CollectionUtils.isReadOnly(
       currentCollection,
@@ -146,15 +149,7 @@ class CellLineDetails extends React.Component {
   renderCloseHeaderButton() {
     const { cellLineItem } = this.props;
 
-    return (
-      <Button
-        variant="danger"
-        size="xxsm"
-        onClick={() => { this.handleClose(cellLineItem); }}
-      >
-        <i className="fa fa-times" />
-      </Button>
-    );
+    return (<ConfirmClose el={cellLineItem} />);
   }
 
   renderSubmitButton() {
@@ -199,7 +194,7 @@ class CellLineDetails extends React.Component {
         footer={this.renderFooterContent()}
       >
         <div className="tabs-container--with-borders">
-          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="cell-line-details-tab">
+          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)}>
             <Tab eventKey="tab1" title="Properties" key="tab1">
               <GeneralProperties
                 item={cellLineItem}

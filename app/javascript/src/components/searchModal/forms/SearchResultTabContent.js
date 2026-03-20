@@ -143,6 +143,8 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
       if (object.xref && object.inventory_label) { infos.push(object.inventory_label); }
       if (object.xref && object.xref.cas) { infos.push(object.xref.cas); }
       names = [object.short_label, object.name].concat(infos);
+    } else if (object.type == 'cell_line') {
+      names = [object.short_label, object.itemName];
     } else {
       names = [object.short_label, object.name];
     }
@@ -225,19 +227,47 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     return (
       <div className="search-result-group">
         {header}
-        <div className="search-result-list-items">
-          <div className="search-result-tab-content-list-name">
-            <div className="d-flex align-items-center gap-2">
-              <Badge bg="info" className="border border-active bg-opacity-25 text-active rounded">
-                {badgeTitle}
-              </Badge>
-              {shortLabelWithMoreInfos(object)}
-            </div>
+        <div className="search-result-tab-content-list-name pt-3">
+          <div className="d-flex align-items-center gap-2">
+            <Badge bg="info" className="border border-active bg-opacity-25 text-active rounded">
+              {badgeTitle}
+            </Badge>
+            {shortLabelWithMoreInfos(object)}
           </div>
         </div>
       </div>
     );
   };
+
+  const cellLineList = (object, i, elements) => {
+    const previous = elements[i - 1];
+    const previousMaterial = previous ? `${previous.cellLineName} - ${previous.source}` : '';
+    const objectMaterial = `${object.cellLineName} - ${object.source}`;
+
+    const header = previousMaterial !== objectMaterial && (
+      <div className="search-result-group-header-content">
+        <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
+          <div
+            key={`${objectMaterial}-${i}`}
+            className="search-result-molecule align-items-center fw-bold fs-5"
+          >
+            {objectMaterial}
+          </div>
+        </div>
+      </div>
+    );
+
+    return (
+      <div className="search-result-group">
+        {header}
+        <div className="search-result-list-items">
+          <div className="search-result-tab-content-list-name">
+            {shortLabelWithMoreInfos(object)}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const tabContentList = () => {
     let contentList = <div key={list.index} className="search-result-tab-content-list-white">No results</div>;
@@ -248,8 +278,10 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
       contentList = tabResultByPage.elements.map((object, i, elements) => {
         if (['sample', 'reaction'].includes(object.type)) {
           return sampleAndReactionList(object, i, elements);
-        } if (object.type === 'sequence_based_macromolecule_sample') {
+        } else if (object.type === 'sequence_based_macromolecule_sample') {
           return sbmmList(object, i, elements);
+        } else if (object.type === 'cell_line') {
+          return cellLineList(object, i, elements);
         }
         return (
           <div className="search-result-group">
