@@ -174,6 +174,7 @@ module Chemotion
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
+        optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
         optional :weight_percentage, type: Boolean
       end
@@ -253,6 +254,7 @@ module Chemotion
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
+        optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
         optional :weight_percentage, type: Boolean
       end

@@ -1261,7 +1261,17 @@ describe('Sample', async () => {
         volume: 0.5,
         use_reaction_volume: false,
         calculateCombinedReactionVolume: () => 0.2,
-        solventVolume: 0.1
+        solventVolume: 0.1,
+        reactionVolumeForConcentration() {
+          if (this.use_reaction_volume) {
+            const reactionVolume = Number(this.volume);
+            if (Number.isFinite(reactionVolume) && reactionVolume > 0) {
+              return reactionVolume;
+            }
+          }
+
+          return this.calculateCombinedReactionVolume();
+        }
       };
     });
 
@@ -1368,6 +1378,32 @@ describe('Sample', async () => {
       sample.updateConcentrationFromSolvent(null);
 
       expect(sample.concn).toBe(null);
+    });
+
+    it('keeps manually-entered concentration when preserveConcentration is set', () => {
+      sample.concn = 1.23;
+      sample.preserveConcentration = true;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      sample.updateConcentrationFromSolvent(reaction);
+
+      expect(sample.concn).toBe(1.23);
+    });
+
+    it('resumes auto-updating concentration after preserveConcentration is cleared', () => {
+      sample.concn = 1.23;
+      sample.preserveConcentration = true;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      sample.updateConcentrationFromSolvent(reaction);
+      expect(sample.concn).toBe(1.23);
+
+      delete sample.preserveConcentration;
+      sample.updateConcentrationFromSolvent(reaction);
+
+      expect(sample.concn).toBeCloseTo(0.2, 5); // 0.1 mol / 0.5 L = 0.2 mol/L
     });
 
     context('when product coefficient is zero', () => {
