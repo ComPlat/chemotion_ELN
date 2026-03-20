@@ -115,6 +115,8 @@ export default class ModalExport extends React.Component {
           { value: 'required_date', text: 'required date', checked: false },
           { value: 'ordered_date', text: 'ordered date', checked: false },
           { value: 'expiration_date', text: 'expiration date', checked: false },
+          { value: 'delivery_date', text: 'delivery date', checked: false },
+          { value: 'opening_date', text: 'opening date', checked: false },
           { value: 'storage_temperature', text: 'storage temperature', checked: false },
           { value: 'required_by', text: 'required by', checked: false },
           {
