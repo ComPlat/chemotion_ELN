@@ -749,7 +749,7 @@ const DetailSearch = () => {
       case 'solvent_smiles':
         return '=';
       default:
-        return type == 'system-defined' ? searchStore.numeric_match : 'ILIKE';
+        return type == 'system-defined' ? searchStore.numeric_match : (type == 'select' ? '=' : 'ILIKE');
     }
   }
 

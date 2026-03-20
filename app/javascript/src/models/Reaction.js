@@ -386,8 +386,6 @@ export default class Reaction extends Element {
     // If userText is number only, treat as normal temperature value
     if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature.userText)) {
       temperature.userText = convertTemperature(temperature.userText, oldUnit, newUnit).toFixed(2);
-
-      return temperature;
     }
 
     temperature.data.forEach((data, index, theArray) => {

@@ -382,7 +382,7 @@ const PropertiesForm = ({ readonly }) => {
                       label="Purity"
                       disabled={disabled}
                       variant="light"
-                      onChange={(e) => formHelper.onChange('purity', e.value)}
+                      onChange={(e) => formHelper.onChange('purity', e?.value, 'number')}
                     />
                     {sbmmSample?.errors?.purity && (
                       <Form.Control.Feedback type="invalid" className="d-block">{sbmmSample.errors.purity}</Form.Control.Feedback>
