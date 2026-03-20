@@ -68,7 +68,7 @@ module Export
 
     def filter_with_permission_and_detail_level(sample)
       if ['f', false].include?(sample['shared_sync'])
-        data = validate_molfile(sample['molfile'])
+        data = validate_molfile(sdf_molfile_for(sample))
         return nil unless data.presence
 
         if sample['molfile_version'] =~ /^(V2000).*T9/
@@ -81,7 +81,7 @@ module Export
         # return no data if molfile not allowed
         return nil if sample['dl_s'].zero?
 
-        data = validate_molfile(molfile)
+        data = validate_molfile(sdf_molfile_for(sample))
         return nil unless data.presence
 
         data = data.rstrip
