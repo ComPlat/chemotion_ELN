@@ -19,6 +19,7 @@
 #  plain_text_observation :text
 #  purification           :string           default([]), is an Array
 #  reaction_svg_file      :string
+#  reaction_type          :string           default("standard"), not null
 #  rf_value               :string
 #  rinchi_long_key        :text
 #  rinchi_short_key       :string

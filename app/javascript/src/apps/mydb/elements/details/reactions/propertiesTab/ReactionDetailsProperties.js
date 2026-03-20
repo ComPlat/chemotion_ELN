@@ -46,7 +46,18 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   render() {
-    const { reaction } = this.props;
+    const { reaction, onInputChange } = this.props;
+    const typeField = (
+      <Form.Group className="mb-0">
+        <Form.Label>Type (Name Reaction Ontology)</Form.Label>
+        <OlsTreeSelect
+          selectName="rxno"
+          selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
+          onSelectChange={(event) => onInputChange('rxno', event.trim())}
+          selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
+        />
+      </Form.Group>
+    );
     const solventsItems = solventsTL.map((x, i) => {
       const val = Object.keys(x)[0];
       return (
@@ -66,17 +77,11 @@ export default class ReactionDetailsProperties extends Component {
       <Form>
         <ReactionDetailsMainProperties
           reaction={reaction}
-          onInputChange={(type, event) => this.props.onInputChange(type, event)}
+          onInputChange={(type, event) => onInputChange(type, event)}
+          leadingField={typeField}
+          leadingFieldColSize={9}
+          temperatureColSize={3}
         />
-        <Form.Group className="mx-1">
-          <Form.Label>Type (Name Reaction Ontology)</Form.Label>
-          <OlsTreeSelect
-            selectName="rxno"
-            selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-            onSelectChange={(event) => this.props.onInputChange('rxno', event.trim())}
-            selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
-          />
-        </Form.Group>
         <Form.Group className="mx-1 my-3">
           <Form.Label>Dangerous products</Form.Label>
           <Select
