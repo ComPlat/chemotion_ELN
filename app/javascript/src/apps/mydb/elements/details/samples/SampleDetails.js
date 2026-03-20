@@ -855,7 +855,7 @@ export default class SampleDetails extends React.Component {
     }
 
     const label = sample.contains_residues
-      ? 'Polymer section / Elemental composition'
+      ? 'Material Detail Section / Elemental composition'
       : 'Elemental composition';
 
     const { materialGroup } = this.state;

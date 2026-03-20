@@ -229,7 +229,7 @@ export default class SampleForm extends React.Component {
     // Using reference equality as the first check ensures that saves always refresh the list
     // even when the array was mutated in-place (same reference, same JSON).
     if (prevProps.sample !== this.props.sample
-        || JSON.stringify(prevComponents) !== JSON.stringify(nextComponents)) {
+      || JSON.stringify(prevComponents) !== JSON.stringify(nextComponents)) {
       this.setState({ components: flattenApiFormatComponents(nextComponents) });
     }
 
@@ -512,6 +512,7 @@ export default class SampleForm extends React.Component {
   moleculeInput() {
     const { sample } = this.props;
     const { isMolNameLoading, moleculeNameInputValue } = this.state;
+    const isMoleculeNameDisabled = !sample.can_update || sample.isHierarchicalMaterial();
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
@@ -545,9 +546,9 @@ export default class SampleForm extends React.Component {
           <CreatableSelect
             name="moleculeName"
             isClearable
-            isInputEditable
-            inputValue={moleculeNameInputValue}
-            isDisabled={!sample.can_update}
+            isInputEditable={!isMoleculeNameDisabled}
+            inputValue={isMoleculeNameDisabled ? undefined : moleculeNameInputValue}
+            isDisabled={isMoleculeNameDisabled}
             options={formattedOptions}
             onMenuOpen={() => this.openMolName(sample)}
             onChange={(selectedOption) => {
@@ -578,7 +579,7 @@ export default class SampleForm extends React.Component {
             placeholder="Enter or select a molecule name"
             allowCreateWhileLoading
             formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
-            className="flex-grow-1"
+            className={`flex-grow-1 ${isMoleculeNameDisabled ? 'molecule-name-select--disabled' : ''}`}
           />
           {this.structureEditorButton(!sample.can_update)}
         </InputGroup>
@@ -968,7 +969,7 @@ export default class SampleForm extends React.Component {
     const weightPercentageSample = sample.weight_percentage > 0;
     const overlayMessage = weightPercentageSample
       ? 'Amount field is disabled for samples that belong to reactions with weight percentage. '
-        + 'To change the amount, please edit the material sample amount field using weight percentage field in the reaction scheme tab and save the reaction.'
+      + 'To change the amount, please edit the material sample amount field using weight percentage field in the reaction scheme tab and save the reaction.'
       : null;
     let metric;
     if (unit === 'l') {

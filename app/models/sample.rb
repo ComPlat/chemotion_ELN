@@ -226,6 +226,7 @@ class Sample < ApplicationRecord
   }
 
   before_save :set_sample_type_hierarchical_if_polymers_list
+  before_create :set_residue_polymer_type_for_hierarchical_material
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :update_molecule_name
@@ -482,6 +483,16 @@ class Sample < ApplicationRecord
     return unless Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile)
 
     self.sample_type = SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+  end
+
+  def set_residue_polymer_type_for_hierarchical_material
+    return unless new_record?
+    return unless sample_type.to_s == SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+    return unless residues.first
+
+    residues.first.custom_info ||= {}
+    residues.first.custom_info['polymer_type'] = 'self_defined'
+    residues.first.custom_info.delete('surface_type')
   end
 
   def auto_set_molfile_to_molecules_molfile

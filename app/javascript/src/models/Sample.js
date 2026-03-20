@@ -138,7 +138,7 @@ export default class Sample extends Element {
         custom_info: {
           formula: 'CH',
           loading: null,
-          polymer_type: (this.decoupled ? 'self_defined' : 'polystyrene'),
+          polymer_type: ((this.decoupled || this.isHierarchicalMaterial()) ? 'self_defined' : 'polystyrene'),
           loading_type: 'external',
           external_loading: 0.0,
           reaction_product: (this.reaction_product ? true : null),
@@ -167,7 +167,7 @@ export default class Sample extends Element {
             custom_info: {
               formula: 'CH',
               loading: (residue.custom_info ? residue.custom_info.loading : null),
-              polymer_type: (this.decoupled ? 'self_defined' : 'polystyrene'),
+              polymer_type: ((this.decoupled || this.isHierarchicalMaterial()) ? 'self_defined' : 'polystyrene'),
               loading_type: 'external',
               external_loading: 0.0,
               reaction_product: (this.reaction_product ? true : null),
