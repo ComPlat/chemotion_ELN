@@ -193,7 +193,7 @@ export default class StructureEditorModal extends React.Component {
       const isValid = wtPercentRegex.test(s) || hyphenRegex.test(s);
       if (!isValid) collectSources.push(source);
     });
-    if (collectSources.length) {
+    if (false && collectSources.length) {
       NotificationActions.add({
         title: 'Invalid components labels',
         message: `Invalid sources: ${collectSources.join(', ')}. Please follow the format: "1wt.% Pd" or "Y-Ai204".`,
