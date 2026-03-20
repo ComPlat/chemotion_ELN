@@ -147,16 +147,7 @@ export default class GenericElDetails extends Component {
     el.name = el.name.trim();
 
     let ais = el.analysisContainers() || [];
-    ais = ais
-      .filter((x) => !x.is_deleted)
-      .map((x, i) => {
-        if (x.extended_metadata) {
-          x.extended_metadata.index = i;
-        } else {
-          x.extended_metadata = { index: i };
-        }
-        return x.id;
-      });
+    ais = ais.filter((x) => !x.is_deleted).map((x) => x.id);
     (Object.keys(el.properties.layers) || {}).forEach((key) => {
       if (el.properties.layers[key].ai) {
         el.properties.layers[key].ai = el.properties.layers[
