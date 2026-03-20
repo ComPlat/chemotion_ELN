@@ -259,13 +259,16 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
   const uniprotLogo = () => {
     const linkUniprot =
       sbmmSample.sequence_based_macromolecule.parent?.link_uniprot || sbmmSample.sequence_based_macromolecule?.link_uniprot;
-    if (!linkUniprot) { return null; }
 
-    return (
-      <a href={linkUniprot} className="pe-auto" target="_blank">
-        <img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo" />
-      </a>
-    );
+    if (linkUniprot) {
+      return (
+        <a href={linkUniprot} className="pe-auto" target="_blank">
+          <img src="/logos/uniprot-logo.svg" className="uniprot-logo" />
+        </a>
+      );
+    } else {
+      return (<img src="/logos/uniprot-logo.svg" className="uniprot-logo-gray" />);
+    }
   }
 
   // Handler for chemical save
@@ -389,7 +392,8 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
   // Footer logic: show save button for chemical if on inventory tab and isChemicalEdited, else show sbmm save
   const isChemicalTab = sbmmStore.active_tab_key === 'inventory';
   const chemicalSaveBtn = isChemicalTab && sbmmStore.isChemicalEdited;
-  const sampleSaveBtn = (sbmmSample.isEdited || sbmmSample.changed) && sbmmStore.active_tab_key !== 'inventory';
+  const isValid = Object.keys(sbmmSample.errors).length < 1
+  const sampleSaveBtn = (sbmmSample.isEdited || sbmmSample.changed) && sbmmStore.active_tab_key !== 'inventory' && isValid;
   const sbmmSampleFooter = () => (
     <>
       <Button variant="primary" onClick={() => DetailActions.close(sbmmSample)}>
