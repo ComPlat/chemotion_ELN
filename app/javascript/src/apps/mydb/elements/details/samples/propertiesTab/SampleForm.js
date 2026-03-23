@@ -139,6 +139,9 @@ function HierarchicalCompositionTable({ components, onFieldChange }) {
   const columnDefs = useCallback(() => buildCompositionColumnDefs(onFieldChange), [onFieldChange])();
   const { rowsData } = buildHierarchicalMaterialRows(components);
   const gridRowData = Array.isArray(rowsData) ? rowsData : [];
+  const fitColumnsToGrid = useCallback((params) => {
+    params.api.sizeColumnsToFit();
+  }, []);
 
   const getRowId = useCallback((params) => {
     const id = params.data?.index;
@@ -158,7 +161,9 @@ function HierarchicalCompositionTable({ components, onFieldChange }) {
           getRowId={getRowId}
           rowHeight="auto"
           domLayout="autoHeight"
-          autoSizeStrategy={{ type: 'fitGridWidth' }}
+          onGridReady={fitColumnsToGrid}
+          onGridSizeChanged={fitColumnsToGrid}
+          onFirstDataRendered={fitColumnsToGrid}
           singleClickEdit
           stopEditingWhenCellsLoseFocus
         />
