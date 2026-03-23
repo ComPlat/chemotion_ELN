@@ -20,6 +20,7 @@ import {
   literatureContent
 } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementIcon from 'src/components/common/ElementIcon';
 import {
   detailHeaderButton,
   detailFooterButton,
@@ -29,7 +30,6 @@ import LiteratureMap from 'src/models/LiteratureMap';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import ElementIcon from 'src/components/common/ElementIcon';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { copyToClipboard } from 'src/utilities/clipboard';
 import CreateButton from 'src/components/common/CreateButton';
@@ -328,7 +328,7 @@ export default class LiteratureDetails extends Component {
 
     return (
       <DetailCard
-        element={this.props.literatureMap}
+        titleIcon={<ElementIcon element={this.props.literatureMap} />}
         title="References for selected elements"
         headerToolbar={detailHeaderButton(copyButtonProps)}
         footerToolbar={detailFooterButton(copyButtonProps)}

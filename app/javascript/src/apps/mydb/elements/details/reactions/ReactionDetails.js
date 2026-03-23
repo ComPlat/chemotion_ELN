@@ -14,7 +14,7 @@ import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalyses
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
 import {
   REACTION_VARIATIONS_TAB_KEY
@@ -961,7 +961,7 @@ export default class ReactionDetails extends Component {
     const saveDisabled = !permitOn(reaction) || !this.reactionIsValid();
 
     return (
-      <DetailCard
+      <ElementDetailCard
         element={reaction}
         isPendingToSave={reaction.isPendingToSave}
         title={title}
@@ -1030,7 +1030,7 @@ export default class ReactionDetails extends Component {
           </Tabs>
           <CommentModal element={reaction} />
         </div>
-      </DetailCard>
+      </ElementDetailCard>
     );
   }
 }

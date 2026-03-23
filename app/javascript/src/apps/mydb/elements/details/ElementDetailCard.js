@@ -1,0 +1,227 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+import {
+  Button,
+  Overlay,
+  Tooltip,
+  ButtonToolbar,
+} from 'react-bootstrap';
+import ElementIcon from 'src/components/common/ElementIcon';
+import CopyElementModal from 'src/components/common/CopyElementModal';
+import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
+import {
+  detailHeaderButton,
+  detailFooterButton,
+} from 'src/apps/mydb/elements/details/DetailCardButton';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+
+export default function ElementDetailCard({
+  children,
+  element,
+  isPendingToSave,
+  title,
+  titleTooltip,
+  titleAppendix,
+  headerToolbar,
+  footerToolbar,
+  onClose,
+  onSave,
+  saveDisabled,
+}) {
+  const [showCloseOverlay, setShowCloseOverlay] = React.useState(false);
+  const [closeOverlayTarget, setCloseOverlayTarget] = React.useState(null);
+  const [closeOverlayPlacement, setCloseOverlayPlacement] = React.useState('bottom');
+
+  const pendingToSave = typeof isPendingToSave === 'boolean'
+    ? isPendingToSave
+    : !!(element.isPendingToSave || element.changed);
+
+  const inferredSaveLabel = element.isNew ? 'Create' : 'Save';
+  const canCopy = !!(element.can_copy && !element.isNew);
+
+  const handleClose = (forceClose = false) => {
+    setShowCloseOverlay(false);
+    if (onClose) {
+      onClose();
+    }
+    DetailActions.close(element, forceClose);
+  };
+
+  const handleSaveClose = () => {
+    setShowCloseOverlay(false);
+    onSave();
+    handleClose();
+  };
+
+  const saveButtonProps = {
+    iconClass: 'fa fa-floppy-o',
+    onClick: onSave,
+    variant: 'primary',
+    disabled: saveDisabled,
+    label: inferredSaveLabel,
+  };
+
+  const footerSaveButtonProps = {
+    ...saveButtonProps,
+    disabled: !pendingToSave || saveDisabled,
+  };
+
+  const saveCloseButtonProps = {
+    onClick: handleSaveClose,
+    disabled: saveDisabled,
+    label: `${inferredSaveLabel} and Close`,
+    iconClass: 'fa fa-floppy-o combi-icon-close',
+  };
+
+  const requestClose = (event, forceClose = false, placement = 'bottom') => {
+    if (pendingToSave && !forceClose) {
+      setCloseOverlayTarget(event.currentTarget);
+      setCloseOverlayPlacement(placement);
+      setShowCloseOverlay(true);
+      return;
+    }
+
+    handleClose(forceClose);
+  };
+
+  const closeOverlay = (
+    <Overlay
+      target={closeOverlayTarget}
+      show={showCloseOverlay}
+      placement={closeOverlayPlacement}
+      rootClose
+      onHide={() => setShowCloseOverlay(false)}
+    >
+      <Tooltip id="detail-card-close-overlay">
+        <div className="p2">
+          You have unsaved changes. Save before closing?
+          <ButtonToolbar className="justify-content-end mt-2">
+            <Button
+              variant="danger"
+              size="xsm"
+              onClick={() => handleClose(true)}
+            >
+              Discard
+            </Button>
+            <Button
+              variant="ghost"
+              size="xsm"
+              onClick={() => setShowCloseOverlay(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="xsm"
+              onClick={handleSaveClose}
+              disabled={saveDisabled}
+            >
+              Save and Close
+            </Button>
+          </ButtonToolbar>
+        </div>
+      </Tooltip>
+    </Overlay>
+  );
+
+  // Build title icon with ElementIcon
+  const titleIcon = <ElementIcon element={element} />;
+
+  // Build title appendix with element labels + original appendix
+  const elementTitleAppendix = (
+    <>
+      {!element.isNew && <ElementCollectionLabels element={element} placement="right" />}
+      {titleAppendix}
+    </>
+  );
+
+  // Build header toolbar with copy + save buttons + original toolbar
+  const elementHeaderToolbar = (
+    <>
+      {headerToolbar}
+      {canCopy && (
+        <CopyElementModal element={element} />
+      )}
+      {pendingToSave && (
+        <>
+          {detailHeaderButton(saveCloseButtonProps)}
+          {detailHeaderButton(saveButtonProps)}
+        </>
+      )}
+    </>
+  );
+
+  // Build footer toolbar with close + save buttons + original toolbar
+  const elementFooterToolbar = (footerToolbar || pendingToSave) ? (
+    <>
+      <Button
+        onClick={(event) => requestClose(event, false, 'top')}
+        variant="ghost"
+      >
+        Close
+      </Button>
+      {footerToolbar}
+      {pendingToSave && (
+        detailFooterButton(footerSaveButtonProps)
+      )}
+    </>
+  ) : null;
+
+  return (
+    <DetailCard
+      title={title}
+      titleIcon={titleIcon}
+      titleTooltip={titleTooltip}
+      titleAppendix={elementTitleAppendix}
+      headerToolbar={elementHeaderToolbar}
+      footerToolbar={elementFooterToolbar}
+      onClose={(event) => requestClose(event, false, 'bottom')}
+      className={pendingToSave ? 'detail-card--unsaved' : ''}
+    >
+      {children}
+      {closeOverlay}
+    </DetailCard>
+  );
+}
+
+ElementDetailCard.propTypes = {
+  children: PropTypes.node.isRequired,
+  element: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    type: PropTypes.string,
+    element_type: PropTypes.string,
+    icon_name: PropTypes.string,
+    changed: PropTypes.bool,
+    isPendingToSave: PropTypes.bool,
+    isNew: PropTypes.bool,
+    can_copy: PropTypes.bool,
+    tag: PropTypes.shape({
+      taggable_data: PropTypes.shape({
+        collection_labels: PropTypes.arrayOf(PropTypes.shape({})),
+      }),
+    }),
+    element_klass: PropTypes.shape({
+      icon_name: PropTypes.string,
+    }),
+  }).isRequired,
+  isPendingToSave: PropTypes.bool,
+  title: PropTypes.string.isRequired,
+  titleTooltip: PropTypes.string,
+  titleAppendix: PropTypes.node,
+  headerToolbar: PropTypes.node,
+  footerToolbar: PropTypes.node,
+  onClose: PropTypes.func,
+  onSave: PropTypes.func.isRequired,
+  saveDisabled: PropTypes.bool,
+};
+
+ElementDetailCard.defaultProps = {
+  isPendingToSave: undefined,
+  titleTooltip: null,
+  titleAppendix: null,
+  headerToolbar: null,
+  footerToolbar: null,
+  onClose: null,
+  saveDisabled: false,
+};
