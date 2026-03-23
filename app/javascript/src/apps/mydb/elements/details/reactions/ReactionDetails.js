@@ -27,7 +27,6 @@ import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/sche
 import ReactionDetailsProperties from 'src/apps/mydb/elements/details/reactions/propertiesTab/ReactionDetailsProperties';
 import GreenChemistry from 'src/apps/mydb/elements/details/reactions/greenChemistryTab/GreenChemistry';
 import Utils from 'src/utilities/Functions';
-import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -42,7 +41,6 @@ import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import Immutable from 'immutable';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
-import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
@@ -927,10 +925,6 @@ export default class ReactionDetails extends Component {
     const headerToolbar = (
       <>
         <HeaderCommentSection element={reaction} />
-        <PrintCodeButton element={reaction} />
-        {!reaction.isNew && (
-          <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />
-        )}
         <OverlayTrigger
           placement="bottom"
           overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
@@ -973,6 +967,8 @@ export default class ReactionDetails extends Component {
         onSaveClose={() => this.handleSubmit(true)}
         showSave={showSave}
         saveDisabled={saveDisabled}
+        showPrintCode
+        showCalendar
       >
         <ReactionSchemeGraphic
           key={`reaction-graphic-${reaction.id}-${this.state.reactionSvgVersion || 0}`}

@@ -44,7 +44,6 @@ import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
 import SampleForm from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleForm';
 import ComputedPropsContainer from 'src/components/computedProps/ComputedPropsContainer';
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
-import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
@@ -60,7 +59,6 @@ import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
 import { validateCas } from 'src/utilities/CasValidation';
 import ChemicalTab from 'src/components/chemicals/ChemicalTab';
-import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
@@ -1111,8 +1109,6 @@ export default class SampleDetails extends React.Component {
       <>
         {decoupleCb}
         {inventorySample}
-        {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
-        <PrintCodeButton element={sample} />
         {messageBlock}
         {redirectWarningBlock}
       </>
@@ -1578,6 +1574,8 @@ export default class SampleDetails extends React.Component {
         onSaveClose={() => this.saveSampleOrInventory(true)}
         showSave={showSave}
         saveDisabled={saveDisabled}
+        showPrintCode
+        showCalendar
       >
         {ketcherSVGError?.length > 0 && (
           <Alert

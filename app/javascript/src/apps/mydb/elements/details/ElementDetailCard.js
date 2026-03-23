@@ -9,6 +9,8 @@ import {
 import ElementIcon from 'src/components/common/ElementIcon';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import PrintCodeButton from 'src/components/common/PrintCodeButton';
+import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import {
   detailHeaderButton,
@@ -28,10 +30,41 @@ export default function ElementDetailCard({
   onClose,
   onSave,
   saveDisabled,
+  showPrintCode,
+  showCalendar,
 }) {
   const [showCloseOverlay, setShowCloseOverlay] = React.useState(false);
   const [closeOverlayTarget, setCloseOverlayTarget] = React.useState(null);
   const [closeOverlayPlacement, setCloseOverlayPlacement] = React.useState('bottom');
+
+  // Get the correct eventableType for calendar API
+  const getEventableType = (el) => {
+    // Map element types to calendar API eventableType values
+    const typeMap = {
+      sample: 'Sample',
+      reaction: 'Reaction',
+      screen: 'Screen',
+      wellplate: 'Wellplate',
+      research_plan: 'ResearchPlan',
+      cell_line: 'CellLine',
+      device: 'DeviceDescription',
+      // Generic elements use a different pattern
+    };
+
+    const elementType = el.type || el.element_type;
+
+    // Handle generic elements (Labimotion)
+    if (el.element_klass) {
+      return 'Labimotion::Element';
+    }
+
+    // Handle sequence-based macromolecule samples
+    if (elementType === 'sequence_based_macromolecule_sample') {
+      return 'SequenceBasedMacromoleculeSample';
+    }
+
+    return typeMap[elementType] || elementType;
+  };
 
   const pendingToSave = typeof isPendingToSave === 'boolean'
     ? isPendingToSave
@@ -136,10 +169,18 @@ export default function ElementDetailCard({
     </>
   );
 
-  // Build header toolbar with copy + save buttons + original toolbar
+  // Build header toolbar with print/calendar buttons + copy + save buttons + original toolbar
   const elementHeaderToolbar = (
     <>
       {headerToolbar}
+      {showPrintCode && <PrintCodeButton element={element} />}
+      {showCalendar && !element.isNew && (
+        <OpenCalendarButton
+          isPanelHeader
+          eventableId={element.id}
+          eventableType={getEventableType(element)}
+        />
+      )}
       {canCopy && (
         <CopyElementModal element={element} />
       )}
@@ -214,6 +255,8 @@ ElementDetailCard.propTypes = {
   onClose: PropTypes.func,
   onSave: PropTypes.func.isRequired,
   saveDisabled: PropTypes.bool,
+  showPrintCode: PropTypes.bool,
+  showCalendar: PropTypes.bool,
 };
 
 ElementDetailCard.defaultProps = {
@@ -224,4 +267,6 @@ ElementDetailCard.defaultProps = {
   footerToolbar: null,
   onClose: null,
   saveDisabled: false,
+  showPrintCode: false,
+  showCalendar: false,
 };
