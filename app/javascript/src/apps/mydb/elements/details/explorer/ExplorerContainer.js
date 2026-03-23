@@ -5,7 +5,7 @@ import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { CloseBtn } from './ExplorerComponent';
 
-function positionNodesByReaction(samples, reactions) {
+function positionNodesByReaction(samples, reactions, molecules = []) {
   const nodes = [];
   const edges = [];
 
@@ -16,6 +16,7 @@ function positionNodesByReaction(samples, reactions) {
   const MIN_ROW_GAP = 480;
 
   const sampleById = Object.fromEntries(samples.map((s) => [s.id, s]));
+  const moleculeById = Object.fromEntries(molecules.map((m) => [m.id, m]));
 
   const sortedReactions = [...reactions].sort((a, b) => {
     const aDate = new Date(a.updated_at || a.created_at || 0).getTime();
@@ -31,6 +32,21 @@ function positionNodesByReaction(samples, reactions) {
   const reactionSvgUrlFor = (r) => {
     const file = r.reaction_svg_file;
     return file ? `${window.location.origin}/images/reactions/${file}` : null;
+  };
+
+  const sampleSearchData = (sid) => {
+    const sample = sampleById[sid] || {};
+    const molecule = moleculeById[sample.molecule_id] || {};
+
+    return {
+      label: sample.short_label || 'Sample',
+      image: svgUrlFor(sid),
+      sampleName: sample.name || '',
+      sampleShortLabel: sample.short_label || '',
+      sampleIupacName: molecule.iupac_name || '',
+      sampleSmiles: molecule.cano_smiles || '',
+      sampleInchikey: molecule.inchikey || '',
+    };
   };
 
   const parentOf = {};
@@ -210,10 +226,7 @@ function positionNodesByReaction(samples, reactions) {
         id: `sample-${sid}`,
         type: 'sample',
         position: { x: startX + i * H_GAP, y: baseY },
-        data: {
-          label: sampleById[sid]?.short_label || 'Sample',
-          image: svgUrlFor(sid),
-        },
+        data: sampleSearchData(sid),
         style: { backgroundColor: '#fce5b3', border: '2px solid #eb9800' },
       });
 
@@ -262,10 +275,7 @@ function positionNodesByReaction(samples, reactions) {
           x: baseX + REAGENT_NEAR_OFFSET,
           y: reactionY,
         },
-        data: {
-          label: sampleById[sid]?.short_label || 'Reagent',
-          image: svgUrlFor(sid),
-        },
+        data: sampleSearchData(sid),
         style: { backgroundColor: '#dbeafe', border: '2px solid #3b82f6' },
       });
     } else if (reagents.length === 2) {
@@ -279,10 +289,7 @@ function positionNodesByReaction(samples, reactions) {
           x: baseX - REAGENT_NEAR_OFFSET,
           y: reactionY,
         },
-        data: {
-          label: sampleById[leftSid]?.short_label || 'Reagent',
-          image: svgUrlFor(leftSid),
-        },
+        data: sampleSearchData(leftSid),
         style: { backgroundColor: '#dbeafe', border: '2px solid #3b82f6' },
       });
 
@@ -293,10 +300,7 @@ function positionNodesByReaction(samples, reactions) {
           x: baseX + REAGENT_NEAR_OFFSET,
           y: reactionY,
         },
-        data: {
-          label: sampleById[rightSid]?.short_label || 'Reagent',
-          image: svgUrlFor(rightSid),
-        },
+        data: sampleSearchData(rightSid),
         style: { backgroundColor: '#dbeafe', border: '2px solid #3b82f6' },
       });
     } else {
@@ -308,10 +312,7 @@ function positionNodesByReaction(samples, reactions) {
             x: baseX + REAGENT_NEAR_OFFSET + i * REAGENT_STEP,
             y: reactionY,
           },
-          data: {
-            label: sampleById[sid]?.short_label || 'Reagent',
-            image: svgUrlFor(sid),
-          },
+          data: sampleSearchData(sid),
           style: { backgroundColor: '#dbeafe', border: '2px solid #3b82f6' },
         });
       });
@@ -324,10 +325,7 @@ function positionNodesByReaction(samples, reactions) {
         id: `sample-${sid}`,
         type: 'sample',
         position: { x: prodX + i * H_GAP, y: baseY + 2 * V_GAP },
-        data: {
-          label: sampleById[sid]?.short_label || 'Sample',
-          image: svgUrlFor(sid),
-        },
+        data: sampleSearchData(sid),
         style: { backgroundColor: '#fce5b3', border: '2px solid #eb9800' },
       });
 
@@ -356,6 +354,8 @@ function positionNodesByReaction(samples, reactions) {
   let y = 0;
   samples.forEach((s) => {
     if (!usedSamples.has(s.id)) {
+      const molecule = moleculeById[s.molecule_id] || {};
+
       nodes.push({
         id: `unused-${s.id}`,
         type: 'sample',
@@ -365,6 +365,9 @@ function positionNodesByReaction(samples, reactions) {
           image: s.sample_svg_file
             ? `${window.location.origin}/images/samples/${s.sample_svg_file}`
             : null,
+          sampleName: s.name || '',
+          sampleShortLabel: s.short_label || '',
+          sampleSmiles: molecule.cano_smiles || '',
         },
         style: { backgroundColor: '#e5e7eb', border: '1px solid #9ca3af' },
       });
@@ -391,7 +394,8 @@ export default class ExplorerContainer extends Component {
 
       const { nodes, edges } = positionNodesByReaction(
         res.samples,
-        res.reactions
+        res.reactions,
+        res.molecules
       );
 
       this.setState({ nodes, edges, isLoading: false });

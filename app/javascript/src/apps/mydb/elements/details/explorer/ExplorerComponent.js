@@ -119,14 +119,19 @@ export default function ExplorerComponent({ nodes, edges }) {
         .filter((n) => {
           const label = (n.data?.label || '').toLowerCase();
           const sampleName = (n.data?.sampleName || '').toLowerCase();
+          const sampleShortLabel = (n.data?.sampleShortLabel || '').toLowerCase();
+          const sampleSmiles = (n.data?.sampleSmiles || '').toLowerCase();
 
           return (
             matchesQuery(label, q) ||
-            matchesQuery(sampleName, q)
+            matchesQuery(sampleName, q) ||
+            matchesQuery(sampleShortLabel, q) ||
+            matchesQuery(sampleSmiles, q)
           );
         })
         .map((n) => n.id)
     );
+
 
     const highlightedNodeIds = new Set();
 
