@@ -88,20 +88,20 @@ const buildCompositionColumnDefs = (onFieldChange) => [
     },
   },
   {
-    headerName: 'Weight ratio calc./%',
+    headerName: 'Weight ratio (calc) / %',
     field: 'weightRatioCalcProcessed',
     minWidth: 110,
     cellClass: ['lh-base', 'border-end'],
   },
   {
-    headerName: 'weight ratio (calc)/molar mass',
+    headerName: 'Molar ratio (calc) / molar mass',
     field: 'molarRatioCalcMM',
     minWidth: 120,
     valueGetter: (p) => (p.data?.molarRatioCalcMM ?? '-'),
     cellClass: ['lh-base', 'border-end'],
   },
   {
-    headerName: 'molar ratio (calc)/molar mass',
+    headerName: 'Weight ratio (calc) / molar mass',
     field: 'weightRatioCalcMM',
     minWidth: 120,
     valueGetter: (p) => (p.data?.weightRatioCalcMM ?? '-'),
@@ -115,7 +115,7 @@ const buildCompositionColumnDefs = (onFieldChange) => [
     cellClass: ['lh-base', 'border-end'],
   },
   {
-    headerName: 'Molar ratio calc / %',
+    headerName: 'Molar ratio (calc) / %',
     field: 'molarRatioCalcPercent',
     minWidth: 120,
     valueGetter: (p) => (p.data?.molarRatioCalcPercent !== '-' ? (p.data?.molarRatioCalcPercent ?? '-') : '-'),
@@ -1410,6 +1410,7 @@ export default class SampleForm extends React.Component {
     } = this.props;
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
+    const isHierarchicalMaterial = sample.isHierarchicalMaterial();
     const polyDisabled = isPolymer || isDisabled;
     const { selectedSampleType } = this.state;
 
@@ -1573,12 +1574,14 @@ export default class SampleForm extends React.Component {
           </>
         )}
 
-        <Row>
-          <SampleDetailsSolvents
-            sample={sample}
-            onChange={handleSampleChanged}
-          />
-        </Row>
+        {!isHierarchicalMaterial && (
+          <Row>
+            <SampleDetailsSolvents
+              sample={sample}
+              onChange={handleSampleChanged}
+            />
+          </Row>
+        )}
 
         {this.sampleDescription(sample)}
         {customizableField()}
