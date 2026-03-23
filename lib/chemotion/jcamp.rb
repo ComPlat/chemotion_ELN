@@ -131,6 +131,7 @@ module Chemotion
           lcms_uvvis_wavelength: params[:lcms_uvvis_wavelength],
           lcms_mz_page: params[:lcms_mz_page],
           lcms_mz_page_data: params[:lcms_mz_page_data],
+          converter_url: Rails.configuration.try(:converter).try(:url),
         }
       end
 
@@ -229,7 +230,8 @@ module Chemotion
           response = HTTParty.post(
             api_endpoint,
             body: {
-              file: f
+              file: f,
+              converter_url: Rails.configuration.try(:converter).try(:url),
             },
             multipart: true,
           )
@@ -262,6 +264,7 @@ module Chemotion
               jcamp_idx: curve_idx,
               list_file_names: list_file_names,
               extras: extras,
+              converter_url: Rails.configuration.try(:converter).try(:url),
             },
             multipart: true,
           )
@@ -300,7 +303,8 @@ module Chemotion
             layout: layout,
             peaks: peaks,
             shift: shift,
-            spectrum: spectrum
+            spectrum: spectrum,
+            converter_url: Rails.configuration.try(:converter).try(:url),
           }
         end
 
@@ -333,7 +337,8 @@ module Chemotion
         def self.build_body(molfile, spectrum)
           {
             molfile: molfile,
-            spectrum: spectrum
+            spectrum: spectrum,
+            converter_url: Rails.configuration.try(:converter).try(:url),
           }
         end
 
@@ -368,7 +373,8 @@ module Chemotion
         def self.build_body(molfile, spectrum)
           {
             molfile: molfile,
-            spectrum: spectrum
+            spectrum: spectrum,
+            converter_url: Rails.configuration.try(:converter).try(:url),
           }
         end
 
@@ -414,6 +420,7 @@ module Chemotion
           file: file,
           molfile: molfile.size > 10 ? molfile : false,
           simulatenmr: true,
+          converter_url: Rails.configuration.try(:converter).try(:url),
         }
       end
 
@@ -465,7 +472,8 @@ module Chemotion
           response = HTTParty.post(
             api_endpoint,
             body: {
-              file: f
+              file: f,
+              converter_url: Rails.configuration.try(:converter).try(:url),
             },
             multipart: true,
           )
