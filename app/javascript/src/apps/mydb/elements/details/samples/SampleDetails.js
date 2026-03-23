@@ -31,7 +31,7 @@ import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalyses
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import PubchemLcss from 'src/components/pubchem/PubchemLcss';
 import ElementReactionLabels from 'src/apps/mydb/elements/labels/ElementReactionLabels';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
@@ -1566,7 +1566,7 @@ export default class SampleDetails extends React.Component {
     const saveDisabled = !this.sampleIsValid() || !sample.can_update || !hasComponents;
 
     return (
-      <DetailCard
+      <ElementDetailCard
         element={sample}
         isPendingToSave={pendingToSave}
         headerToolbar={this.sampleHeader(sample)}
@@ -1618,7 +1618,7 @@ export default class SampleDetails extends React.Component {
         {this.structureEditorModal(sample)}
         {this.renderMolfileModal()}
         <CommentModal element={sample} />
-      </DetailCard>
+      </ElementDetailCard>
     );
   }
 }

@@ -15,6 +15,7 @@ import ReportStore from 'src/stores/alt/stores/ReportStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementIcon from 'src/components/common/ElementIcon';
 import Setting from 'src/apps/mydb/elements/details/reports/Setting';
 import Previews from 'src/apps/mydb/elements/details/reports/Previews';
 import Orders from 'src/apps/mydb/elements/details/reports/Orders';
@@ -195,7 +196,7 @@ export default function ReportDetails({ report }) {
 
   return (
     <DetailCard
-      element={report}
+      titleIcon={<ElementIcon element={report} />}
       title="Report Generation"
       headerToolbar={headerToolbar}
       footerToolbar={footerToolbar}
