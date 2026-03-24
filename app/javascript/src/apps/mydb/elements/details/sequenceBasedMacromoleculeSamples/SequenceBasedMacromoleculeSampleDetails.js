@@ -13,6 +13,14 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
+import PropertiesForm
+  from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/propertiesTab/PropertiesForm';
+import AnalysesContainer
+  from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/analysesTab/AnalysesContainer';
+import AttachmentForm
+  from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/attachmentsTab/AttachmentForm';
+import ConflictModal
+  from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/ConflictModal';
 import Immutable from 'immutable';
 import { set } from 'lodash';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
@@ -28,13 +36,6 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 import ChemicalTab from 'src/components/chemicals/ChemicalTab';
-import PropertiesForm from
-  'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/propertiesTab/PropertiesForm';
-import ConflictModal from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/ConflictModal';
-import AttachmentForm from
-  'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/attachmentsTab/AttachmentForm';
-import AnalysesContainer from
-  'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/analysesTab/AnalysesContainer';
 
 function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
@@ -251,20 +252,16 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
   };
 
   const uniprotLogo = () => {
-    const linkUniprot = sbmmSample.sequence_based_macromolecule.parent?.link_uniprot
-      || sbmmSample.sequence_based_macromolecule?.link_uniprot;
-
+    const parentLink = sbmmSample.sequence_based_macromolecule.parent?.link_uniprot;
+    const linkUniprot = parentLink || sbmmSample.sequence_based_macromolecule?.link_uniprot;
     if (linkUniprot) {
       return (
-        <a href={linkUniprot} className="pe-auto" target="_blank" rel="noreferrer" aria-label="Open UniProt entry">
-          <img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo" alt="UniProt logo" />
+        <a href={linkUniprot} className="pe-auto" target="_blank" rel="noreferrer">
+          <img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo" alt="Uniprot" />
         </a>
       );
     }
-
-    return (
-      <img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo-gray" alt="UniProt logo unavailable" />
-    );
+    return <img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo-gray" alt="Uniprot" />;
   };
 
   // Handler for chemical save
@@ -279,6 +276,11 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
   const isValid = Object.keys(sbmmSample.errors).length < 1;
   const sampleSaveBtn = hasSampleChanges && sbmmStore.active_tab_key !== 'inventory' && isValid;
 
+  const onSave = () => {
+    if (chemicalSaveBtn) { handleSubmitChemical(); return; }
+    if (sampleSaveBtn) { handleSubmit(); }
+  };
+
   const headerToolbar = (
     <Form.Check
       type="checkbox"
@@ -289,16 +291,6 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
       label="Inventory"
     />
   );
-
-  const onSave = () => {
-    if (chemicalSaveBtn) {
-      handleSubmitChemical();
-      return;
-    }
-    if (sampleSaveBtn) {
-      handleSubmit();
-    }
-  };
 
   const titleAppendix = uniprotLogo();
 
