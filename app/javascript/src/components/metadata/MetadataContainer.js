@@ -1,12 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Button,
-  OverlayTrigger,
-  Tab,
-  Tabs,
-  Tooltip,
-} from 'react-bootstrap';
+import { Tab, Tabs } from 'react-bootstrap';
+import { detailFooterButton } from 'src/apps/mydb/elements/details/DetailCardButton';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import Metadata from 'src/models/Metadata';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -14,7 +9,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
-import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import MetadataGeneral from 'src/components/metadata/MetadataGeneral';
 import MetadataCreators from 'src/components/metadata/MetadataCreators';
 import MetadataContributors from 'src/components/metadata/MetadataContributors';
@@ -84,74 +79,25 @@ export default class MetadataContainer extends Component {
     DetailActions.close(metadata, true);
   }
 
-  renderHeader(title, saveBtnDisplay) {
-    const onSaveAndClose = () => {
-      this.handleSave();
-      this.handleClose();
-    };
-
-    return (
-      <div className="d-flex justify-content-between">
-        {title}
-        <div className="d-flex align-items-center gap-1">
-          {saveBtnDisplay && (
-            <>
-              <OverlayTrigger
-                placement="bottom"
-                overlay={<Tooltip id="saveMetadata">Save Metadata</Tooltip>}
-              >
-                <Button
-                  variant="warning"
-                  size="xxsm"
-                  onClick={this.handleSave}
-                >
-                  <i className="fa fa-floppy-o " />
-                </Button>
-              </OverlayTrigger>
-
-              <OverlayTrigger
-                placement="bottom"
-                overlay={<Tooltip id="saveCloseMetadata">Save and Close Metadata</Tooltip>}
-              >
-                <Button
-                  variant="warning"
-                  size="xxsm"
-                  onClick={onSaveAndClose}
-                >
-                  <i className="fa fa-floppy-o" />
-                  <i className="fa fa-times" />
-                </Button>
-              </OverlayTrigger>
-            </>
-          )}
-
-          <OverlayTrigger
-            placement="bottom"
-            key="closeMetadata"
-            overlay={<Tooltip id="closeMetadata">Close Metadata</Tooltip>}
-          >
-            <Button
-              variant="danger"
-              size="xxsm"
-              onClick={this.handleClose}
-            >
-              <i className="fa fa-times" />
-            </Button>
-          </OverlayTrigger>
-        </div>
-      </div>
-    );
-  }
-
   render() {
     const { activeTab, metadata } = this.state;
     const { currentCollection } = UIStore.getState();
     const title = currentCollection && `DataCite/RADAR Metadata for collection "${currentCollection.label}"`;
     const saveBtnDisplay = !!metadata.isEdited;
+    const footerToolbar = saveBtnDisplay
+      ? detailFooterButton({
+        label: 'Save',
+        iconClass: 'fa fa-floppy-o',
+        variant: 'primary',
+        onClick: this.handleSave,
+      })
+      : null;
 
     return (
       <DetailCard
-        header={this.renderHeader(title, saveBtnDisplay)}
+        title={title}
+        onClose={this.handleClose}
+        footerToolbar={footerToolbar}
       >
         <div className="tabs-container--with-borders">
           <Tabs
