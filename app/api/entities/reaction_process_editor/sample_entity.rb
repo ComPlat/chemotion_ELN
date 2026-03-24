@@ -21,6 +21,7 @@ module Entities
       private
 
       def intermediate_type
+        return "Ontology" if object.is_a?(::ReactionProcessEditor::Ontology)
         object.reactions_intermediate_samples.first&.intermediate_type
       end
 
