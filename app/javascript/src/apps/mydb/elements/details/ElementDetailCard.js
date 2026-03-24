@@ -9,6 +9,8 @@ import {
 import ElementIcon from 'src/components/common/ElementIcon';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import { ShowUserLabels } from 'src/components/UserLabels';
+import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -32,6 +34,8 @@ export default function ElementDetailCard({
   saveDisabled,
   showPrintCode,
   showCalendar,
+  showUserLabels,
+  showHeaderCommentSection,
 }) {
   const [showCloseOverlay, setShowCloseOverlay] = React.useState(false);
   const [closeOverlayTarget, setCloseOverlayTarget] = React.useState(null);
@@ -161,17 +165,19 @@ export default function ElementDetailCard({
   // Build title icon with ElementIcon
   const titleIcon = <ElementIcon element={element} />;
 
-  // Build title appendix with element labels + original appendix
+  // Build title appendix with element labels + user labels + original appendix
   const elementTitleAppendix = (
     <>
       {!element.isNew && <ElementCollectionLabels element={element} placement="right" />}
+      {showUserLabels && <ShowUserLabels element={element} />}
       {titleAppendix}
     </>
   );
 
-  // Build header toolbar with print/calendar buttons + copy + save buttons + original toolbar
+  // Build header toolbar with header comment + print/calendar buttons + copy + save buttons + original toolbar
   const elementHeaderToolbar = (
     <>
+      {showHeaderCommentSection && <HeaderCommentSection element={element} />}
       {headerToolbar}
       {showPrintCode && <PrintCodeButton element={element} />}
       {showCalendar && !element.isNew && (
@@ -194,7 +200,7 @@ export default function ElementDetailCard({
   );
 
   // Build footer toolbar with close + save buttons + original toolbar
-  const elementFooterToolbar = (footerToolbar || pendingToSave) ? (
+  const elementFooterToolbar = (
     <>
       <Button
         onClick={(event) => requestClose(event, false, 'top')}
@@ -203,11 +209,9 @@ export default function ElementDetailCard({
         Close
       </Button>
       {footerToolbar}
-      {pendingToSave && (
-        detailFooterButton(footerSaveButtonProps)
-      )}
+      {detailFooterButton(footerSaveButtonProps)}
     </>
-  ) : null;
+  );
 
   return (
     <DetailCard
@@ -257,6 +261,8 @@ ElementDetailCard.propTypes = {
   saveDisabled: PropTypes.bool,
   showPrintCode: PropTypes.bool,
   showCalendar: PropTypes.bool,
+  showUserLabels: PropTypes.bool,
+  showHeaderCommentSection: PropTypes.bool,
 };
 
 ElementDetailCard.defaultProps = {
@@ -269,4 +275,6 @@ ElementDetailCard.defaultProps = {
   saveDisabled: false,
   showPrintCode: false,
   showCalendar: false,
+  showUserLabels: true,
+  showHeaderCommentSection: true,
 };

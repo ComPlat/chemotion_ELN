@@ -47,7 +47,7 @@ import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
-import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
+import { EditUserLabels } from 'src/components/UserLabels';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
@@ -108,7 +108,6 @@ const sampleTitle = (sample) => {
 
 const sampleTitleAppendix = (sample, handleFastInput) => (
   <>
-    <ShowUserLabels element={sample} />
     <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
     <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
     <PubchemLabels element={sample} />
