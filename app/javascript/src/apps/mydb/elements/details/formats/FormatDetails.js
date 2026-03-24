@@ -1,8 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Card, Button } from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
-import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import { detailFooterButton } from 'src/apps/mydb/elements/details/DetailCardButton';
 
 const tryParse = function TryParseToJson(obj) {
   if (typeof obj === 'object') return obj;
@@ -72,51 +73,31 @@ ElementAnalyses.defaultProps = {
   idx: null
 };
 
-function FormatDetailsHeader({ onClose, onSave, onFormat }) {
-  return (
-    <div className="d-flex gap-1 align-items-baseline">
-      <span className="flex-grow-1">Analyses Formatting</span>
-      <Button
-        key="formatBtn"
-        onClick={onFormat}
-        variant="info"
-        size="xxsm"
-      >
-        <i className="fa fa-magic" />
-      </Button>
-      <Button
-        key="saveBtn"
-        onClick={onSave}
-        variant="warning"
-        size="xxsm"
-      >
-        <i className="fa fa-floppy-o" />
-      </Button>
-      <Button
-        key="closeBtn"
-        onClick={onClose}
-        variant="danger"
-        size="xxsm"
-      >
-        <i className="fa fa-times" />
-      </Button>
-    </div>
-  );
-}
-
-FormatDetailsHeader.propTypes = {
-  onSave: PropTypes.func.isRequired,
-  onFormat: PropTypes.func.isRequired,
-  onClose: PropTypes.func.isRequired
-};
-
 function FormatDetails({
   list, isPendingToSave, onSave, onFormat, onClose
 }) {
+  const footerToolbar = (
+    <>
+      {detailFooterButton({
+        label: 'Format',
+        iconClass: 'fa fa-magic',
+        onClick: onFormat,
+      })}
+      {detailFooterButton({
+        label: 'Save',
+        iconClass: 'fa fa-floppy-o',
+        variant: 'primary',
+        onClick: onSave,
+        disabled: !isPendingToSave,
+      })}
+    </>
+  );
+
   return (
     <DetailCard
-      isPendingToSave={isPendingToSave}
-      header={<FormatDetailsHeader onSave={onSave} onFormat={onFormat} onClose={onClose} />}
+      title="Analyses Formatting"
+      onClose={onClose}
+      footerToolbar={footerToolbar}
     >
       {list.map((el, idx) => (
         <ElementAnalyses key={el.id} element={el} idx={idx} />
