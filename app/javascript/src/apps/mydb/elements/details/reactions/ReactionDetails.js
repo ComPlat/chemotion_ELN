@@ -42,14 +42,12 @@ import Immutable from 'immutable';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
-import { ShowUserLabels } from 'src/components/UserLabels';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/ReactionSchemeGraphic';
@@ -917,34 +915,29 @@ export default class ReactionDetails extends Component {
         {!reaction.isNew && !isEmpty(reaction.research_plans) && (
           <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
         )}
-        <ShowUserLabels element={reaction} />
         <ElementAnalysesLabels element={reaction} key={`${reaction.id}_analyses`} />
       </>
     );
 
     const headerToolbar = (
-      <>
-        <HeaderCommentSection element={reaction} />
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
+      <OverlayTrigger
+        overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
+      >
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={reaction.changed || reaction.isNew}
+          title={(reaction.changed || reaction.isNew)
+            ? 'Report can be generated after reaction is saved.'
+            : 'Generate report for this reaction'}
+          onClick={() => Utils.downloadFile({
+            contents: `/api/v1/reports/docx?id=${reaction.id}`,
+            name: reaction.name
+          })}
         >
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={reaction.changed || reaction.isNew}
-            title={(reaction.changed || reaction.isNew)
-              ? 'Report can be generated after reaction is saved.'
-              : 'Generate report for this reaction'}
-            onClick={() => Utils.downloadFile({
-              contents: `/api/v1/reports/docx?id=${reaction.id}`,
-              name: reaction.name
-            })}
-          >
-            <i className="fa fa-cogs" />
-          </Button>
-        </OverlayTrigger>
-      </>
+          <i className="fa fa-cogs" />
+        </Button>
+      </OverlayTrigger>
     );
 
     const footerToolbar = !reaction.isNew && (
