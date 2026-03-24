@@ -5,17 +5,18 @@
 # Table name: ontologies
 #
 #  id               :uuid             not null, primary key
-#  ontology_id      :string
-#  name             :string
+#  active           :boolean          default(TRUE), not null
+#  detectors        :string           default([]), is an Array
 #  label            :string
 #  link             :string
+#  name             :string
+#  ontology_type    :string
 #  roles            :jsonb
-#  detectors        :string           default([]), is an Array
 #  solvents         :string           default([]), is an Array
-#  active           :boolean          default(TRUE), not null
+#  stationary_phase :string           is an Array
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
-#  stationary_phase :string           is an Array
+#  ontology_id      :string
 #
 
 module ReactionProcessEditor
@@ -26,7 +27,6 @@ module ReactionProcessEditor
 
     scope :active, -> { where(active: true) }
 
-    # alias_attribute :preferred_label, :label
     alias_attribute :short_label, :label
     alias_attribute :external_label, :label
 

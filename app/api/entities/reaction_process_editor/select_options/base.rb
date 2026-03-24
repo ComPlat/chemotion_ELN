@@ -15,9 +15,10 @@ module Entities
         end
 
         def pseudo_ontology_option_for(active:, role:, value:)
-          # Some ontologies (e.g. devices) define specific preselections for other fields but on.
-          # Therefore they needs to resemble an actual Ontology, i.e. be "active", have a proper ontology_id,
-          # and have their "role" defined (with no actual dependencies).
+          # Some ontology types (e.g. devices) define specific preselections for fields on other AR-models.
+          # Therefore these AR-models need to resemblea an Ontology for frontend UI handling and filtering.
+          # (I.e. be "active", have a proper ontology_id, have their "role" defined (with no actual dependencies)...)
+
           option_for(value).merge(
             { active: active,
               ontology_id: value,

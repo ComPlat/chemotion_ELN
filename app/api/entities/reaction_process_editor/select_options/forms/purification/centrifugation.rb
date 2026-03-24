@@ -7,7 +7,7 @@ module Entities
         module Purification
           class Centrifugation < Base
             def select_options
-              { }
+              {}
             end
           end
         end

@@ -237,6 +237,7 @@ class API < Grape::API
 
   namespace :reaction_process_editor do
     mount ::ReactionProcessEditor::EditorAPI
+    mount ::ReactionProcessEditor::OntologiesAPI
     mount ::ReactionProcessEditor::ReactionAPI
     mount ::ReactionProcessEditor::ReactionProcessAPI
     mount ::ReactionProcessEditor::ReactionProcessActivityAPI
