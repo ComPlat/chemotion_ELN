@@ -33,7 +33,6 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { EditUserLabels } from 'src/components/UserLabels';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
-import ElementIcon from 'src/components/common/ElementIcon';
 
 const onNaviClick = (type, id) => {
   const { currentCollection, isSync } = UIStore.getState();
