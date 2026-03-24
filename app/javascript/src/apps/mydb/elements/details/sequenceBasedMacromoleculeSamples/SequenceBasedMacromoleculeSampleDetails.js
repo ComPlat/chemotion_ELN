@@ -264,9 +264,7 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
     return <img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo-gray" alt="Uniprot" />;
   };
 
-  // Handler for chemical save
   const handleSubmitChemical = () => {
-    // Set saveInventoryAction to true, which triggers ChemicalTab to save
     sbmmStore.setSaveInventoryAction(true);
   };
 
@@ -277,8 +275,13 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
   const sampleSaveBtn = hasSampleChanges && sbmmStore.active_tab_key !== 'inventory' && isValid;
 
   const onSave = () => {
-    if (chemicalSaveBtn) { handleSubmitChemical(); return; }
-    if (sampleSaveBtn) { handleSubmit(); }
+    if (chemicalSaveBtn) {
+      handleSubmitChemical();
+      return;
+    }
+    if (sampleSaveBtn) {
+      handleSubmit();
+    }
   };
 
   const headerToolbar = (
