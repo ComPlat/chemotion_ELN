@@ -320,6 +320,7 @@ const elementShowOrNew = (e) => {
       break;
     case 'vessel_template':
       vesselTemplateShowOrNew(e);
+      break;
     case 'sequence_based_macromolecule_sample':
       sequenceBasedMacromoleculeSampleShowOrNew(e);
       break;
