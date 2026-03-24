@@ -13,7 +13,7 @@ function positionNodesByReaction(samples, reactions, molecules = []) {
   const V_GAP = 120;
   const H_GAP = 200;
   const BRANCH_X = 320;
-  const MIN_ROW_GAP = 480;
+  const BRANCH_SIBLING_GAP = 220;
 
   const sampleById = Object.fromEntries(samples.map((s) => [s.id, s]));
   const moleculeById = Object.fromEntries(molecules.map((m) => [m.id, m]));
@@ -23,6 +23,8 @@ function positionNodesByReaction(samples, reactions, molecules = []) {
     const bDate = new Date(b.updated_at || b.created_at || 0).getTime();
     return bDate - aDate;
   });
+
+  const reactionById = Object.fromEntries(sortedReactions.map((r) => [r.id, r]));
 
   const svgUrlFor = (sid) => {
     const file = sampleById[sid]?.sample_svg_file;
@@ -60,6 +62,16 @@ function positionNodesByReaction(samples, reactions, molecules = []) {
     }
   });
 
+  const getSampleSplitDepth = (sid) => {
+    let depth = 0;
+    let currentId = sid;
+    while (parentOf[currentId]) {
+      depth += 1;
+      currentId = parentOf[currentId];
+    }
+    return depth;
+  };
+
   const reactionSamples = {};
   sortedReactions.forEach((r) => {
     reactionSamples[r.id] = new Set([
@@ -68,61 +80,7 @@ function positionNodesByReaction(samples, reactions, molecules = []) {
     ]);
   });
 
-  const reactionParent = {};
-  sortedReactions.forEach((r) => {
-    const candidateIds = [
-      ...(r.starting_material_ids || []),
-      ...(r.product_ids || []),
-    ];
-
-    const splitSampleId = candidateIds.find((sid) => parentOf[sid]);
-    if (!splitSampleId) return;
-
-    const parentSampleId = parentOf[splitSampleId];
-
-    for (const other of sortedReactions) {
-      if (other.id === r.id) continue;
-      if (reactionSamples[other.id]?.has(parentSampleId)) {
-        reactionParent[r.id] = other.id;
-        break;
-      }
-    }
-  });
-
-  const childrenByParent = {};
-  sortedReactions.forEach((r) => {
-    const parentId = reactionParent[r.id];
-    if (!parentId) return;
-
-    if (!childrenByParent[parentId]) {
-      childrenByParent[parentId] = [];
-    }
-    childrenByParent[parentId].push(r.id);
-  });
-
-  const blockPos = {};
-
-  function resolveRowCollision(x, y, direction) {
-    let nextX = x;
-    let safe = false;
-
-    while (!safe) {
-      safe = true;
-      for (const otherId in blockPos) {
-        const p = blockPos[otherId];
-        if (p.y !== y) continue;
-        if (Math.abs(p.x - nextX) < MIN_ROW_GAP) {
-          safe = false;
-          nextX += direction * MIN_ROW_GAP;
-          break;
-        }
-      }
-    }
-
-    return nextX;
-  }
-
-  function getBranchDirection(parentReaction, splitSampleId) {
+  const getBranchDirection = (parentReaction, splitSampleId) => {
     let direction = -1;
 
     if (splitSampleId && parentReaction) {
@@ -142,7 +100,80 @@ function positionNodesByReaction(samples, reactions, molecules = []) {
     }
 
     return direction;
-  }
+  };
+
+  const reactionParent = {};
+  const splitInfoByReaction = {};
+
+  sortedReactions.forEach((r) => {
+    const candidateIds = [
+      ...(r.starting_material_ids || []),
+      ...(r.product_ids || []),
+    ];
+
+    const splitSampleIds = candidateIds.filter((sid) => parentOf[sid]);
+    if (splitSampleIds.length === 0) return;
+
+    const candidateInfos = [];
+
+    splitSampleIds.forEach((splitSampleId) => {
+      const splitParentSampleId = parentOf[splitSampleId];
+      const splitDepth = getSampleSplitDepth(splitSampleId);
+
+      sortedReactions.forEach((other) => {
+        if (other.id === r.id) return;
+        if (!reactionSamples[other.id]?.has(splitParentSampleId)) return;
+
+        candidateInfos.push({
+          splitSampleId,
+          splitParentSampleId,
+          splitDepth,
+          parentReactionId: other.id,
+        });
+      });
+    });
+
+    if (candidateInfos.length === 0) return;
+
+    candidateInfos.sort((a, b) => {
+      if (a.splitDepth !== b.splitDepth) {
+        return a.splitDepth - b.splitDepth;
+      }
+      return a.parentReactionId - b.parentReactionId;
+    });
+
+    const chosen = candidateInfos[0];
+    reactionParent[r.id] = chosen.parentReactionId;
+
+    splitInfoByReaction[r.id] = {
+      splitSampleId: chosen.splitSampleId,
+      splitParentSampleId: chosen.splitParentSampleId,
+      splitDepth: chosen.splitDepth,
+    };
+  });
+
+  const childrenByParent = {};
+  sortedReactions.forEach((r) => {
+    const parentId = reactionParent[r.id];
+    if (!parentId) return;
+
+    if (!childrenByParent[parentId]) {
+      childrenByParent[parentId] = [];
+    }
+    childrenByParent[parentId].push(r.id);
+  });
+
+  const siblingReactionGroups = {};
+  Object.entries(splitInfoByReaction).forEach(([reactionId, info]) => {
+    const parentId = reactionParent[reactionId];
+    if (!parentId) return;
+
+    const key = `${parentId}:${info.splitParentSampleId}`;
+    if (!siblingReactionGroups[key]) {
+      siblingReactionGroups[key] = [];
+    }
+    siblingReactionGroups[key].push(Number(reactionId));
+  });
 
   const subtreeHeightCache = {};
   function getSubtreeHeight(rid) {
@@ -159,31 +190,51 @@ function positionNodesByReaction(samples, reactions, molecules = []) {
     return height;
   }
 
+  const blockPos = {};
+
+  function getSiblingBranchOffset(siblingCount, siblingIndex, defaultDirection) {
+    if (siblingCount <= 1) {
+      return defaultDirection * BRANCH_X;
+    }
+
+    if (siblingCount === 2) {
+      return siblingIndex === 0 ? -BRANCH_X : BRANCH_X;
+    }
+
+    const lane = Math.floor(siblingIndex / 2) + 1;
+    const side = siblingIndex % 2 === 0 ? -1 : 1;
+    const offset = BRANCH_X + ((lane - 1) * BRANCH_SIBLING_GAP);
+    return side * offset;
+  }
+
   function placeReaction(rid) {
     if (blockPos[rid]) return;
 
     const parentId = reactionParent[rid];
-
-    if (!parentId) {
-      return;
-    }
+    if (!parentId) return;
 
     placeReaction(parentId);
 
     const parentPos = blockPos[parentId];
-    const parentReaction = sortedReactions.find((r) => r.id === parentId);
-    const currentReaction = sortedReactions.find((r) => r.id === rid);
+    const parentReaction = reactionById[parentId];
+    const currentSplitInfo = splitInfoByReaction[rid];
+    const splitSampleId = currentSplitInfo?.splitSampleId;
 
-    const splitSampleId = [
-      ...(currentReaction?.starting_material_ids || []),
-      ...(currentReaction?.product_ids || []),
-    ].find((sid) => parentOf[sid]);
+    if (!parentPos || !currentSplitInfo || !splitSampleId) return;
 
     const direction = getBranchDirection(parentReaction, splitSampleId);
     const y = parentPos.y + V_BLOCK;
-    let x = parentPos.x + direction * BRANCH_X;
-    x = resolveRowCollision(x, y, direction);
 
+    const siblingGroupKey = `${parentId}:${currentSplitInfo.splitParentSampleId}`;
+    const siblingIds = siblingReactionGroups[siblingGroupKey] || [rid];
+    const siblingIndex = siblingIds.indexOf(rid);
+    const branchOffset = getSiblingBranchOffset(
+      siblingIds.length,
+      siblingIndex,
+      direction
+    );
+
+    const x = parentPos.x + branchOffset;
     blockPos[rid] = { x, y };
   }
 
@@ -192,14 +243,11 @@ function positionNodesByReaction(samples, reactions, molecules = []) {
     if (reactionParent[r.id]) return;
 
     blockPos[r.id] = { x: 0, y: mainRow * V_BLOCK };
-    placeReaction(r.id);
     mainRow += getSubtreeHeight(r.id);
   });
 
   sortedReactions.forEach((r) => {
-    if (!blockPos[r.id]) {
-      placeReaction(r.id);
-    }
+    placeReaction(r.id);
   });
 
   const usedSamples = new Set();
@@ -225,7 +273,7 @@ function positionNodesByReaction(samples, reactions, molecules = []) {
       nodes.push({
         id: `sample-${sid}`,
         type: 'sample',
-        position: { x: startX + i * H_GAP, y: baseY },
+        position: { x: startX + (i * H_GAP), y: baseY },
         data: sampleSearchData(sid),
         style: { backgroundColor: '#fce5b3', border: '2px solid #eb9800' },
       });
@@ -309,7 +357,7 @@ function positionNodesByReaction(samples, reactions, molecules = []) {
           id: `sample-${sid}`,
           type: 'sample',
           position: {
-            x: baseX + REAGENT_NEAR_OFFSET + i * REAGENT_STEP,
+            x: baseX + REAGENT_NEAR_OFFSET + (i * REAGENT_STEP),
             y: reactionY,
           },
           data: sampleSearchData(sid),
@@ -324,7 +372,7 @@ function positionNodesByReaction(samples, reactions, molecules = []) {
       nodes.push({
         id: `sample-${sid}`,
         type: 'sample',
-        position: { x: prodX + i * H_GAP, y: baseY + 2 * V_GAP },
+        position: { x: prodX + (i * H_GAP), y: baseY + (2 * V_GAP) },
         data: sampleSearchData(sid),
         style: { backgroundColor: '#fce5b3', border: '2px solid #eb9800' },
       });
@@ -367,7 +415,9 @@ function positionNodesByReaction(samples, reactions, molecules = []) {
             : null,
           sampleName: s.name || '',
           sampleShortLabel: s.short_label || '',
+          sampleIupacName: molecule.iupac_name || '',
           sampleSmiles: molecule.cano_smiles || '',
+          sampleInchikey: molecule.inchikey || '',
         },
         style: { backgroundColor: '#e5e7eb', border: '1px solid #9ca3af' },
       });
@@ -425,4 +475,3 @@ export default class ExplorerContainer extends Component {
     );
   }
 }
-

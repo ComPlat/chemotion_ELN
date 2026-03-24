@@ -49,16 +49,13 @@ export default function ExplorerComponent({ nodes, edges }) {
     const looksLikeLabel = /[\d._\-/]/.test(q);
 
     if (looksLikeLabel) {
-      // strict token-boundary
       const boundaryPat = new RegExp(`(^|[\\s._\\-/])${escapeRegExp(q)}($|[\\s._\\-/])`, 'i');
       if (boundaryPat.test(v)) return true;
 
-      // suffix-after-separator: r5 -> pst-r5
       const suffixPat = new RegExp(`[\\s._\\-/]${escapeRegExp(q)}$`, 'i');
       return suffixPat.test(v);
     }
 
-    // plain text contains
     return v.includes(q);
   };
 
@@ -79,9 +76,9 @@ export default function ExplorerComponent({ nodes, edges }) {
     return rfEdges.filter((e) => {
       const s = nodeMap[e.source];
       const t = nodeMap[e.target];
-      return s && t &&
-        activeFilters.includes(s.type) &&
-        activeFilters.includes(t.type);
+      return s && t
+        && activeFilters.includes(s.type)
+        && activeFilters.includes(t.type);
     });
   }, [rfEdges, nodeMap, activeFilters]);
 
@@ -106,9 +103,9 @@ export default function ExplorerComponent({ nodes, edges }) {
           const label = (n.data?.label || '').toLowerCase();
 
           return (
-            matchesQuery(shortLabel, q) ||
-            matchesQuery(name, q) ||
-            matchesQuery(label, q)
+            matchesQuery(shortLabel, q)
+            || matchesQuery(name, q)
+            || matchesQuery(label, q)
           );
         })
         .map((n) => n.id)
@@ -120,27 +117,28 @@ export default function ExplorerComponent({ nodes, edges }) {
           const label = (n.data?.label || '').toLowerCase();
           const sampleName = (n.data?.sampleName || '').toLowerCase();
           const sampleShortLabel = (n.data?.sampleShortLabel || '').toLowerCase();
+          const sampleIupacName = (n.data?.sampleIupacName || '').toLowerCase();
           const sampleSmiles = (n.data?.sampleSmiles || '').toLowerCase();
+          const sampleInchikey = (n.data?.sampleInchikey || '').toLowerCase();
 
           return (
-            matchesQuery(label, q) ||
-            matchesQuery(sampleName, q) ||
-            matchesQuery(sampleShortLabel, q) ||
-            matchesQuery(sampleSmiles, q)
+            matchesQuery(label, q)
+            || matchesQuery(sampleName, q)
+            || matchesQuery(sampleShortLabel, q)
+            || matchesQuery(sampleIupacName, q)
+            || matchesQuery(sampleSmiles, q)
+            || matchesQuery(sampleInchikey, q)
           );
         })
         .map((n) => n.id)
     );
 
-
-    const highlightedNodeIds = new Set();
-
     const reactionToSamples = {};
     const sampleToReactions = {};
-    const splitChildren = {};
-    const splitParents = {};
-
+    const splitParentReactionByChildReaction = {};
+    const childReactionsByParentReaction = {};
     const reactionNodeById = {};
+
     reactionNodes.forEach((n) => {
       reactionNodeById[n.id] = n;
     });
@@ -166,14 +164,29 @@ export default function ExplorerComponent({ nodes, edges }) {
         if (!sampleToReactions[e.target]) sampleToReactions[e.target] = new Set();
         sampleToReactions[e.target].add(e.source);
       }
+    });
 
-      if (srcIsSample && tgtIsSample) {
-        if (!splitChildren[e.source]) splitChildren[e.source] = new Set();
-        splitChildren[e.source].add(e.target);
+    // Build parent/child reaction relation using split sample edges only one level.
+    filteredEdges.forEach((e) => {
+      const srcIsSample = e.source.startsWith('sample-');
+      const tgtIsSample = e.target.startsWith('sample-');
+      if (!(srcIsSample && tgtIsSample)) return;
 
-        if (!splitParents[e.target]) splitParents[e.target] = new Set();
-        splitParents[e.target].add(e.source);
-      }
+      const parentSampleNodeId = e.source;
+      const childSampleNodeId = e.target;
+
+      const parentReactionIds = sampleToReactions[parentSampleNodeId] || new Set();
+      const childReactionIds = sampleToReactions[childSampleNodeId] || new Set();
+
+      childReactionIds.forEach((childRid) => {
+        parentReactionIds.forEach((parentRid) => {
+          splitParentReactionByChildReaction[childRid] = parentRid;
+          if (!childReactionsByParentReaction[parentRid]) {
+            childReactionsByParentReaction[parentRid] = new Set();
+          }
+          childReactionsByParentReaction[parentRid].add(childRid);
+        });
+      });
     });
 
     Object.keys(reactionNodeById).forEach((rid) => {
@@ -184,72 +197,44 @@ export default function ExplorerComponent({ nodes, edges }) {
       });
     });
 
-    const expandedSampleIds = new Set();
-    const splitQueueSeed = [...matchedSampleIds];
+    const directlyMatchedReactionIds = new Set([...matchedReactionIds]);
 
-    while (splitQueueSeed.length > 0) {
-      const sid = splitQueueSeed.shift();
-      if (expandedSampleIds.has(sid)) continue;
-      expandedSampleIds.add(sid);
-
-      const children = splitChildren[sid] || new Set();
-      const parents = splitParents[sid] || new Set();
-
-      children.forEach((childSid) => {
-        if (!expandedSampleIds.has(childSid)) splitQueueSeed.push(childSid);
-      });
-
-      parents.forEach((parentSid) => {
-        if (!expandedSampleIds.has(parentSid)) splitQueueSeed.push(parentSid);
-      });
-    }
-
-    const reactionQueue = [...matchedReactionIds];
-
-    expandedSampleIds.forEach((sid) => {
-      const rset = sampleToReactions[sid] || new Set();
-      rset.forEach((rid) => reactionQueue.push(rid));
-      highlightedNodeIds.add(sid);
+    matchedSampleIds.forEach((sid) => {
+      const ownerReactions = sampleToReactions[sid] || new Set();
+      ownerReactions.forEach((rid) => directlyMatchedReactionIds.add(rid));
     });
 
-    const visitedReactions = new Set();
-    const visitedSplitSamples = new Set();
+    const expandedReactionIds = new Set();
 
-    while (reactionQueue.length > 0) {
-      const rid = reactionQueue.shift();
-      if (visitedReactions.has(rid)) continue;
+    directlyMatchedReactionIds.forEach((rid) => {
+      expandedReactionIds.add(rid);
 
-      visitedReactions.add(rid);
+      const parentRid = splitParentReactionByChildReaction[rid];
+      if (parentRid) {
+        expandedReactionIds.add(parentRid);
+      }
+
+      const childRids = childReactionsByParentReaction[rid] || new Set();
+      childRids.forEach((childRid) => expandedReactionIds.add(childRid));
+    });
+
+    const highlightedNodeIds = new Set();
+
+    matchedSampleIds.forEach((sid) => highlightedNodeIds.add(sid));
+
+    expandedReactionIds.forEach((rid) => {
       highlightedNodeIds.add(rid);
-
-      const reagentNodeIds = reactionNodeById[rid]?.data?.reactionReagentNodeIds || [];
-      reagentNodeIds.forEach((sid) => highlightedNodeIds.add(sid));
 
       const blockSamples = reactionToSamples[rid] || new Set();
       blockSamples.forEach((sid) => highlightedNodeIds.add(sid));
 
-      const splitQueue = [...blockSamples];
-      while (splitQueue.length > 0) {
-        const sid = splitQueue.shift();
-        if (visitedSplitSamples.has(sid)) continue;
-        visitedSplitSamples.add(sid);
-
-        const children = splitChildren[sid] || new Set();
-        children.forEach((childSid) => {
-          highlightedNodeIds.add(childSid);
-          splitQueue.push(childSid);
-
-          const childReactions = sampleToReactions[childSid] || new Set();
-          childReactions.forEach((crid) => {
-            if (!visitedReactions.has(crid)) reactionQueue.push(crid);
-          });
-        });
-      }
-    }
+      const reagentNodeIds = reactionNodeById[rid]?.data?.reactionReagentNodeIds || [];
+      reagentNodeIds.forEach((sid) => highlightedNodeIds.add(sid));
+    });
 
     return {
       hasSearch: true,
-      matchedReactionIds,
+      matchedReactionIds: directlyMatchedReactionIds,
       highlightedNodeIds,
     };
   }, [searchTerm, filteredNodes, filteredEdges]);
@@ -559,4 +544,3 @@ export default function ExplorerComponent({ nodes, edges }) {
     </div>
   );
 }
-
