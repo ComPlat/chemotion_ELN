@@ -89,7 +89,7 @@ gem 'puma', '< 6.0.0'
 
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
-gem 'rails', '~> 6.1.7.7'
+gem 'rails', '~> 7.0.10'
 gem 'rinchi-gem', git: 'https://github.com/ComPlat/rinchi-gem.git', branch: 'main'
 gem 'rmagick'
 gem 'roo'
