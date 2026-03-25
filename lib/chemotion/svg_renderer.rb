@@ -332,72 +332,42 @@ module Chemotion
       { scale_x: scale_x, scale_y: scale_y, multi: n >= 2 }
     end
 
-    def self.inject_polymer_shapes(svg, molfile, polymer_data)
-      polymers = polymer_data[:polymers]
-
-      return svg if svg.blank? || polymers.blank?
-
+    def self.sort_polymers_for_injection(molfile, polymers)
       # Ensure polymer order matches position order: positions are always top-to-bottom (ascending y).
       # Sort polymers by their atom's y (descending molfile y = top first) so polymer[i] -> position[i].
       atom_positions = parse_atom_positions(molfile)
-      polymers = if atom_positions.present?
-                   polymers.sort_by { |p| -(atom_positions[p[:atom_index]]&.[](1) || -Float::INFINITY) }
-                 else
-                   polymers.sort_by { |p| p[:atom_index] }
-                 end
-
-      # When Indigo renders R# as glyphs, replace <use> nodes with shapes+labels from molfile (position preserved by transform).
-      doc = Nokogiri::XML(svg)
-      r_glyph_id = find_r_glyph_id(doc)
-      if r_glyph_id && find_use_elements_referencing_glyph(doc, r_glyph_id).any?
-        return replace_r_glyph_uses_with_molfile_content(svg, molfile, polymer_data.merge(polymers: polymers))
+      if atom_positions.present?
+        polymers.sort_by do |p|
+          -(atom_positions[p[:atom_index]]&.[](1) || -Float::INFINITY)
+        end
+      else
+        polymers.sort_by { |p| p[:atom_index] }
       end
+    end
 
+    def self.positions_and_bounds_for_injection(svg, molfile, polymers)
       positions = extract_r_or_a_positions_from_svg(svg)
-      used_molfile_fallback = false
-      if positions.empty?
-        log_text_elements_snippet(svg)
-        # Fallback: use molfile atom coordinates when SVG has no R#/A text (e.g. Indigo renders R# as paths)
-        bounds = find_svg_bounds(svg)
-        unless bounds
-          return svg
-        end
-        positions = positions_from_molfile(molfile, polymers, bounds)
-        if positions.empty?
-          return svg
-        end
-        used_molfile_fallback = true
-      end
+      return [positions, false, nil] if positions.present?
 
-      doc = Nokogiri::XML(svg)
-      svg_root = doc.xpath('//*[local-name()="svg"]').first
-      unless svg_root
-        return svg
-      end
-
+      log_text_elements_snippet(svg)
       bounds = find_svg_bounds(svg)
-      unless bounds
-        return svg
-      end
+      return [nil, true, nil] unless bounds
 
-      template_lookup = load_surface_template_lookup
-      if template_lookup.empty?
-        return svg
-      end
+      positions = positions_from_molfile(molfile, polymers, bounds)
+      return [nil, true, bounds] if positions.blank?
 
-      svg_root['xmlns:xlink'] ||= 'http://www.w3.org/1999/xlink'
-      occupied = []
-      labels = polymer_data[:text_by_index] || {}
+      [positions, true, bounds]
+    end
 
-      factors = compute_polymer_scale_factors(polymers.size, labels.any?, bounds)
-      scale_x = factors[:scale_x]
-      scale_y = factors[:scale_y]
-
-      # Convert content coords to viewBox space (images are svg-root children; content is in g with transform)
-      margin_half = 10.0
-      positions_viewbox = positions.map do |p|
+    def self.positions_to_viewbox(positions, bounds, margin_half: 10.0)
+      positions.map do |p|
         { x: p[:x] - bounds[:min_x] + margin_half, y: p[:y] - bounds[:min_y] + margin_half }
       end
+    end
+
+    def self.inject_polymers_images(doc, svg_root, bounds:, polymer_data:, template_lookup:, polymers:, positions_viewbox:, scale_x:)
+      occupied = []
+      labels = polymer_data[:text_by_index] || {}
 
       # Map first polymer image to first R#/A, second to second, etc. (by vertical order)
       injected = 0
@@ -406,17 +376,14 @@ module Chemotion
         break unless pos
 
         template = template_lookup[polymer[:template_id]]
-        unless template
-          next
-        end
+        next unless template
 
         icon_data = load_template_svg_data_uri(template)
-        if icon_data.blank?
-          next
-        end
+        next if icon_data.blank?
 
         x = pos[:x]
         y = pos[:y]
+
         # Single scale preserves image ratio (e.g. 1:1 stays 1:1); base scale then +40% size.
         scale = scale_x * 9
         width = polymer[:width] * scale
@@ -433,8 +400,8 @@ module Chemotion
         image_node['xlink:href'] = icon_data
         image_node['href'] = icon_data
         svg_root.add_child(image_node)
-        injected += 1
 
+        injected += 1
         occupied << { x: img_x, y: img_y, width: width, height: height }
 
         label = labels[polymer[:atom_index]]
@@ -442,6 +409,60 @@ module Chemotion
 
         add_polymer_label(doc, svg_root, label, img_x, img_y, width, height, bounds, occupied, polymer_count: polymers.size)
       end
+
+      occupied
+    end
+
+    def self.inject_polymer_shapes(svg, molfile, polymer_data)
+      polymers = polymer_data[:polymers]
+
+      return svg if svg.blank? || polymers.blank?
+
+      polymers = sort_polymers_for_injection(molfile, polymers)
+
+      # When Indigo renders R# as glyphs, replace <use> nodes with shapes+labels from molfile (position preserved by transform).
+      doc = Nokogiri::XML(svg)
+      r_glyph_id = find_r_glyph_id(doc)
+      if r_glyph_id && find_use_elements_referencing_glyph(doc, r_glyph_id).any?
+        return replace_r_glyph_uses_with_molfile_content(svg, molfile, polymer_data.merge(polymers: polymers))
+      end
+
+      svg_root = doc.xpath('//*[local-name()="svg"]').first
+      unless svg_root
+        return svg
+      end
+
+      positions, used_molfile_fallback, fallback_bounds = positions_and_bounds_for_injection(svg, molfile, polymers)
+      return svg unless positions.present?
+
+      bounds = fallback_bounds || find_svg_bounds(svg)
+      return svg unless bounds
+
+      template_lookup = load_surface_template_lookup
+      if template_lookup.empty?
+        return svg
+      end
+
+      svg_root['xmlns:xlink'] ||= 'http://www.w3.org/1999/xlink'
+      labels = polymer_data[:text_by_index] || {}
+
+      factors = compute_polymer_scale_factors(polymers.size, labels.any?, bounds)
+      scale_x = factors[:scale_x]
+      scale_y = factors[:scale_y]
+
+      # Convert content coords to viewBox space (images are svg-root children; content is in g with transform)
+      positions_viewbox = positions_to_viewbox(positions, bounds, margin_half: 10.0)
+
+      occupied = inject_polymers_images(
+        doc,
+        svg_root,
+        bounds: bounds,
+        polymer_data: polymer_data,
+        template_lookup: template_lookup,
+        polymers: polymers,
+        positions_viewbox: positions_viewbox,
+        scale_x: scale_x,
+      )
 
       remove_r_or_a_placeholder_text(doc)
       remove_r_or_a_placeholder_glyphs(doc, occupied) if used_molfile_fallback && occupied.any?

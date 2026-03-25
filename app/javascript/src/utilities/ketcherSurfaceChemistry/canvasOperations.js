@@ -19,7 +19,7 @@ import {
   handleAddAtom,
   removeTextFromData
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
-import { findByKeyAndUpdateTextNodePosition } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import { findByKeyAndUpdateTextNodePosition, forTextNodeHeader } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
   imageNodeForTextNodeSetter,
   buttonClickForRectangleSelection,
@@ -175,29 +175,6 @@ const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z
   // Generate unique key for text node (similar to draft.js format)
   const generateKey = () => Math.random().toString(36).substring(2, 8);
   const textKey = generateKey();
-
-  // Import forTextNodeHeader from TextNode utility
-  const forTextNodeHeader = (key, description) => {
-    const text = (description || '').trim();
-    const len = text.length;
-    const fontSize = KET_TAGS.textNodeFontSize;
-    return JSON.stringify({
-      blocks: [
-        {
-          key,
-          text: description,
-          type: 'unstyled',
-          depth: 0,
-          inlineStyleRanges: len > 0
-            ? [{ style: `fontsize-${fontSize}`, offset: 0, length: len }]
-            : [],
-          entityRanges: [],
-          data: { fontSize },
-        }
-      ],
-      entityMap: {}
-    });
-  };
 
   // Create default pos array based on position
   const defaultPos = [

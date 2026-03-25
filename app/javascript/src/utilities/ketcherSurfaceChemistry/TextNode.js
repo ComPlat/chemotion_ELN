@@ -263,6 +263,7 @@ const filterTextList = async (_aliasDifferences, data) => {
 };
 
 export {
+  forTextNodeHeader,
   addTextNodes,
   isAliasConsistent,
   findByKeyAndUpdateTextNodePosition,
