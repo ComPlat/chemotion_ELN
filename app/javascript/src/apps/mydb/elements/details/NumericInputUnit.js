@@ -29,6 +29,10 @@ export default function NumericInputUnit(props) {
   }, [numericValue, unit]);
 
   const weightConversion = (value, multiplier) => value * multiplier;
+  const isValidNumber = (val) => (typeof val === 'string' || typeof val === 'number')
+    && !Number.isNaN(val)
+    && val !== null
+    && val !== undefined;
 
   const conversionMap = {
     g: { convertedUnit: 'mg', conversionFactor: 1000 },
@@ -55,6 +59,7 @@ export default function NumericInputUnit(props) {
         [convertedValue, convertedUnit] = convertValue(value, currentUnit);
         break;
       case 'flash_point':
+      case 'storage_temperature':
         [convertedValue, convertedUnit] = convertTemperature(value, currentUnit);
         break;
       default:
@@ -62,7 +67,8 @@ export default function NumericInputUnit(props) {
         convertedValue = parseFloat(value);
         break;
     }
-    if (!Number.isNaN(convertedValue)) {
+    // Check for invalid values (null, undefined, NaN)
+    if (isValidNumber(convertedValue)) {
       onInputChange(convertedValue, convertedUnit);
       setUnit(convertedUnit);
     }
@@ -70,8 +76,22 @@ export default function NumericInputUnit(props) {
 
   const handleInputValueChange = (event) => {
     const newInput = event.target.value;
-    onInputChange(newInput, unit);
+    if (newInput.trim() === '') {
+      onInputChange('', unit);
+      setValue('');
+      return;
+    }
+
+    // Allow only digits + optional decimal point
+    const isValidFormat = /^\d*\.?\d*$/.test(newInput);
+    if (!isValidFormat) {
+      return;
+    }
+
     setValue(newInput);
+    if (!Number.isNaN(newInput)) {
+      onInputChange(newInput, unit);
+    }
   };
 
   return (
