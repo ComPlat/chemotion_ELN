@@ -61,7 +61,7 @@ export default class SelectionShareModal extends React.Component {
       element.uncheckedIds.size == 0;
   }
 
-  isSelectionEmpty(uiState) {
+  isSelectionEmpty(uiState, klassArray = []) {
     let isSampleSelectionEmpty = this.isElementSelectionEmpty(uiState.sample);
     let isReactionSelectionEmpty = this.isElementSelectionEmpty(uiState.reaction);
     let isWellplateSelectionEmpty = this.isElementSelectionEmpty(uiState.wellplate);
@@ -71,16 +71,12 @@ export default class SelectionShareModal extends React.Component {
     let isDeviceDescriptionSelectionEmpty = this.isElementSelectionEmpty(uiState.device_description);
     let isSequenceBasedMacromoleculeSampleSelectionEmpty = this.isElementSelectionEmpty(uiState.sequence_based_macromolecule_sample);
 
-    let isElementSelectionEmpty = false;
+    let isElementSelectionEmpty = true;
 
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
     if (MatrixCheck(currentUser.matrix, 'genericElement')) {
-
-      // eslint-disable-next-line no-unused-expressions
-      elementNames(false).then((klassArray) => {
-        klassArray.forEach((klass) => {
-          isElementSelectionEmpty = isElementSelectionEmpty && this.isElementSelectionEmpty(uiState[`${klass}`]);
-        });
+      klassArray.forEach((klass) => {
+        isElementSelectionEmpty = isElementSelectionEmpty && (!uiState[`${klass}`] || this.isElementSelectionEmpty(uiState[`${klass}`]));
       });
     }
 
@@ -95,14 +91,14 @@ export default class SelectionShareModal extends React.Component {
       isElementSelectionEmpty;
   }
 
-  filterParamsWholeCollection(uiState) {
+  filterParamsWholeCollection(uiState, klassArray = []) {
     let collectionId = uiState.currentCollection.id;
 
     let filterParams = {
       currentSearchSelection: uiState.currentSearchSelection
     };
 
-    allElnElements.map((element) => {
+    allElnElements.forEach((element) => {
       filterParams[element] = {
         all: true,
         included_ids: [],
@@ -111,28 +107,26 @@ export default class SelectionShareModal extends React.Component {
       };
     });
 
-    elementNames(false).then((klassArray) => {
-      klassArray.forEach((klass) => {
-        filterParams[`${klass}`] = {
-          all: true,
-          included_ids: [],
-          excluded_ids: [],
-          collection_id: collectionId
-        };
-      });
+    klassArray.forEach((klass) => {
+      filterParams[`${klass}`] = {
+        all: true,
+        included_ids: [],
+        excluded_ids: [],
+        collection_id: collectionId
+      };
     });
 
     return filterParams;
   }
 
-  filterParamsFromUIState(uiState) {
+  filterParamsFromUIState(uiState, klassArray = []) {
     let collectionId = uiState.currentCollection.id;
 
     let filterParams = {
       currentSearchSelection: uiState.currentSearchSelection
     };
 
-    allElnElements.map((element) => {
+    allElnElements.forEach((element) => {
       filterParams[element] = {
         all: uiState[element].checkedAll,
         included_ids: uiState[element].checkedIds,
@@ -141,21 +135,19 @@ export default class SelectionShareModal extends React.Component {
       };
     });
 
-    elementNames(false).then((klassArray) => {
-      klassArray.forEach((klass) => {
-        filterParams[`${klass}`] = {
-          all: uiState[`${klass}`].checkedAll,
-          included_ids: uiState[`${klass}`].checkedIds,
-          excluded_ids: uiState[`${klass}`].uncheckedIds,
-          collection_id: collectionId
-        };
-      });
+    klassArray.forEach((klass) => {
+      filterParams[`${klass}`] = {
+        all: uiState[`${klass}`] ? uiState[`${klass}`].checkedAll : false,
+        included_ids: uiState[`${klass}`] ? uiState[`${klass}`].checkedIds : [],
+        excluded_ids: uiState[`${klass}`] ? uiState[`${klass}`].uncheckedIds : [],
+        collection_id: collectionId
+      };
     });
 
     return filterParams;
   }
 
-  handleSharing() {
+  async handleSharing() {
     const {
       permissionLevel, sampleDetailLevel, reactionDetailLevel,
       wellplateDetailLevel, screenDetailLevel, elementDetailLevel
@@ -176,10 +168,11 @@ export default class SelectionShareModal extends React.Component {
     if (this.props.collAction === "Create") {
       const uiState = UIStore.getState();
       const currentCollection = uiState.currentCollection;
-      const filterParams =
-        this.isSelectionEmpty(uiState)
-          ? this.filterParamsWholeCollection(uiState)
-          : this.filterParamsFromUIState(uiState);
+      const klassArray = await elementNames(false);
+      const selectionEmpty = this.isSelectionEmpty(uiState, klassArray);
+      const filterParams = selectionEmpty
+        ? this.filterParamsWholeCollection(uiState, klassArray)
+        : this.filterParamsFromUIState(uiState, klassArray);
       const fullParams = {
         ...params,
         elements_filter: filterParams,
