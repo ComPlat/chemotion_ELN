@@ -57,6 +57,7 @@
 #  index_samples_on_inventory_sample  (inventory_sample)
 #  index_samples_on_molecule_name_id  (molecule_name_id)
 #  index_samples_on_sample_id         (molecule_id)
+#  index_samples_on_short_label       (short_label)
 #  index_samples_on_user_id           (user_id)
 #
 require 'rails_helper'
