@@ -59,7 +59,6 @@ import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
 import { validateCas } from 'src/utilities/CasValidation';
 import ChemicalTab from 'src/components/chemicals/ChemicalTab';
-import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
@@ -111,7 +110,6 @@ const sampleTitleAppendix = (sample, handleFastInput) => (
     <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
     <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
     <PubchemLabels element={sample} />
-    <HeaderCommentSection element={sample} />
     {sample.isNew && !sample.isMixture() && <FastInput fnHandle={handleFastInput} />}
   </>
 );
