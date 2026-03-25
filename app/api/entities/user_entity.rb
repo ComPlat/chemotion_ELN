@@ -31,6 +31,7 @@ module Entities
     expose :matrix, documentation: { type: 'Integer', desc: "User's matrix" }
     expose :counters
     expose :generic_admin, documentation: { type: 'Hash', desc: 'Generic administrator' }
+    expose :otp_required_for_login, documentation: { type: 'Boolean', desc: 'If 2fa is enabled' }
 
     def samples_count
       object.counters['samples'].to_i

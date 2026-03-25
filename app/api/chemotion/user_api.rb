@@ -36,21 +36,11 @@ module Chemotion
 
         desc 'Enable 2FA by verifying OTP code'
         put do
-          # 1. Generate JWT
-          payload = {
-            user_id: current_user.id,
-            action: 'activate_2fa',
-          }
-          jwt = JsonWebToken.encode(payload, 30.minutes.from_now)
-
-          # 2. Generate verification link
-          url = Rails.application.config.root_url
-          # 3. Send email
           if current_user.otp_required_for_login
-            link = "#{url}/users/two_factor_auth/request_disable?jwt=#{jwt}"
+            link = OtpWebToken.disable_link(current_user)
             TwoFactorAuthMailer.disable_mail(current_user, link).deliver_now
           else
-            link = "#{url}/users/two_factor_auth/request_enable?jwt=#{jwt}"
+            link = OtpWebToken.enable_link(current_user)
             TwoFactorAuthMailer.enable_mail(current_user, link).deliver_now
           end
 
