@@ -4,12 +4,10 @@
 #
 # Table name: collections_sequence_based_macromolecule_samples
 #
-#  id                                     :integer          not null, primary key
+#  id                                     :bigint           not null, primary key
 #  deleted_at                             :datetime
-#  created_at                             :datetime         not null
-#  updated_at                             :datetime         not null
-#  collection_id                          :integer          not null
-#  sequence_based_macromolecule_sample_id :integer          not null
+#  collection_id                          :bigint
+#  sequence_based_macromolecule_sample_id :bigint
 #
 # Indexes
 #
@@ -20,8 +18,8 @@
 #
 # Foreign Keys
 #
-#  fk_rails_collection   (collection_id => collections.id)
-#  fk_rails_sbmm_sample  (sequence_based_macromolecule_sample_id => sequence_based_macromolecule_samples.id)
+#  fk_rails_...  (collection_id => collections.id)
+#  fk_rails_...  (sequence_based_macromolecule_sample_id => sequence_based_macromolecule_samples.id)
 #
 class CollectionsSequenceBasedMacromoleculeSample < ApplicationRecord
   acts_as_paranoid

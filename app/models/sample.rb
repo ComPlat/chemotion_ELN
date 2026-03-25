@@ -57,6 +57,7 @@
 #  index_samples_on_inventory_sample  (inventory_sample)
 #  index_samples_on_molecule_name_id  (molecule_name_id)
 #  index_samples_on_sample_id         (molecule_id)
+#  index_samples_on_short_label       (short_label)
 #  index_samples_on_user_id           (user_id)
 #
 
@@ -181,8 +182,17 @@ class Sample < ApplicationRecord
 
   scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
   scope :sample_or_startmat_or_products, lambda {
-    joins('left join reactions_samples rs on rs.sample_id = samples.id')
-      .where("rs.id isnull or rs.\"type\" in ('ReactionsProductSample', 'ReactionsStartingMaterialSample')")
+    where(<<~SQL)
+      NOT EXISTS (
+        SELECT 1 FROM reactions_samples rs
+        WHERE rs.sample_id = samples.id
+      )
+      OR EXISTS (
+        SELECT 1 FROM reactions_samples rs
+        WHERE rs.sample_id = samples.id
+          AND rs.type IN ('ReactionsProductSample', 'ReactionsStartingMaterialSample')
+      )
+    SQL
   }
 
   scope :search_by_fingerprint_sim, lambda { |molfile, threshold = 0.01|
@@ -622,7 +632,10 @@ class Sample < ApplicationRecord
     target_amount_condition = target_amount_value.nil? || target_amount_value.zero? || target_amount_unit.nil?
     real_amount_condition = real_amount_value.nil? || real_amount_value.zero? || real_amount_unit.nil?
 
-    return { 'value' => target_amount_value, 'unit' => target_amount_unit } if real_amount_condition && !target_amount_condition
+    if real_amount_condition && !target_amount_condition
+      return { 'value' => target_amount_value,
+               'unit' => target_amount_unit }
+    end
 
     { 'value' => real_amount_value, 'unit' => real_amount_unit }
   end
