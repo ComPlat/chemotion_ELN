@@ -84,7 +84,6 @@ export default class StructureEditorModal extends React.Component {
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
     this.ketcherRef = React.createRef();
-    this.alertForInvalidSources = this.alertForInvalidSources.bind(this);
   }
 
   async componentDidMount() {
@@ -180,28 +179,7 @@ export default class StructureEditorModal extends React.Component {
     );
   }
 
-  alertForInvalidSources(components) {
-    const wtPercentRegex = /^\d+(?:\.\d+)?wt\.%\s+[a-z]+$/;
-    const hyphenRegex = /^.+-.+$/;
-    const collectSources = [];
-    components.forEach(({ source }) => {
-      if (!source) {
-        collectSources.push(source);
-        return;
-      }
-      const s = source.trim().toLowerCase();
-      const isValid = wtPercentRegex.test(s) || hyphenRegex.test(s);
-      if (!isValid) collectSources.push(source);
-    });
-    if (false && collectSources.length) {
-      NotificationActions.add({
-        title: 'Invalid components labels',
-        message: `Invalid sources: ${collectSources.join(', ')}. Please follow the format: "1wt.% Pd" or "Y-Ai204".`,
-        level: 'error',
-        position: 'tc'
-      });
-    }
-  }
+
 
   postComponents(components) {
     return components?.map(
@@ -251,7 +229,6 @@ export default class StructureEditorModal extends React.Component {
         const components = componentsList ? this.postComponents(componentsList) : [];
         this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, components, textNodesFormula);
         if (shouldSvg) onSVGStructureError(svgFailedMessage);
-        this.alertForInvalidSources(components);
       } catch (error) {
         console.error('Error during save operation for Ketcher:', error);
       }

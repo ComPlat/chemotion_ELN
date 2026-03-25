@@ -4,12 +4,14 @@ require Rails.root.join('lib/ketcher_service/render_svg.rb')
 require 'base64'
 require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
-# rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/ClassLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/ParameterLists, Layout/LineLength, Layout/IndentationWidth, Layout/ElseAlignment, Layout/EndAlignment, Layout/MultilineMethodCallIndentation, Layout/EmptyLineAfterGuardClause, Layout/EmptyLineBetweenDefs, Naming/PredicatePrefix, Naming/MethodParameterName, Naming/MemoizedInstanceVariableName, Style/IfUnlessModifier, Style/EmptyElse, Style/RegexpLiteral, Style/NestedTernaryOperator, Style/TernaryParentheses, Style/ComparableClamp, Style/NumericPredicate, Lint/UselessRescue, Lint/UselessAssignment, Lint/AmbiguousOperatorPrecedence, Lint/UnusedMethodArgument, Rails/Presence, Rails/Blank, Rails/FilePath, Rails/Pluck, Rails/RootPublicPath, Performance/MapCompact, Style/SafeNavigation
 module Chemotion
   # Unified SVG renderer with fallback chain:
   # 1. IndigoService (if enabled)
   # 2. KetcherService (if Indigo fails or is disabled)
   # 3. OpenBabelService (if both fail)
+  # NOTE: this class contains legacy SVG injection/parsing paths that are intentionally
+  # dense while behavior is being stabilized; keep suppressions narrow and revisit later.
+  # rubocop:disable Metrics/ClassLength, Metrics/MethodLength, Metrics/BlockLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/ParameterLists, Layout/LineLength, Naming/PredicatePrefix, Naming/MethodParameterName, Lint/UselessRescue, Style/ComparableClamp
   class SvgRenderer
     # Renders SVG from molfile. Service order can be chosen or auto-detected from molfile.
     #
@@ -27,10 +29,10 @@ module Chemotion
 
       chain.each do |name|
         rendered_svg = if name == :indigo
-                        indigo_service(render_struct, indigo_options)
-                      else
-                        send(:"#{name}_service", render_struct)
-                      end
+                         indigo_service(render_struct, indigo_options)
+                       else
+                         send(:"#{name}_service", render_struct)
+                       end
         if rendered_svg.present?
           # Pass full struct (with PolymersList) to finalize_svg so inject_polymer_shapes can run; polymer_data was parsed from this full struct.
           return finalize_svg(rendered_svg, struct, polymer_data)
@@ -93,7 +95,7 @@ module Chemotion
 
       doc = Nokogiri::XML(svg)
       # Small ellipse placeholder: M x y C (6 numbers) C (6 numbers). Matches both known variants (0.44/0.39 and 0.39/0.33).
-      path_d_pattern = %r{M\s*[\d.]+\s+[\d.]+\s+C\s*[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+C\s*[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s*}
+      path_d_pattern = /M\s*[\d.]+\s+[\d.]+\s+C\s*[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+C\s*[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s*/
       removed = 0
       doc.xpath('//*[local-name()="path"]').each do |path_el|
         d = path_el['d'].to_s
@@ -136,15 +138,11 @@ module Chemotion
     # @param options [Hash, nil] Optional overrides for Indigo (e.g. scale_factor: 90, label_font_size: 5 when molfile has polymer)
     # @return [String, nil] The rendered SVG, or nil if rendering fails or is disabled
     def self.indigo_service(struct, options = nil)
-      if IndigoService.disabled?
-        return nil
-      end
+      return nil if IndigoService.disabled?
 
       indigo_opts = options.present? ? options.slice(:scale_factor, :label_font_size) : nil
       rendered_svg = IndigoService.new(struct, 'image/svg+xml', indigo_opts).render_structure
-      if rendered_svg.present?
-        return rendered_svg
-      end
+      return rendered_svg if rendered_svg.present?
 
       nil
     end
@@ -154,16 +152,10 @@ module Chemotion
     # @param struct [String] The molfile structure to render
     # @return [String, nil] The rendered SVG, or nil if rendering fails or is disabled
     def self.ketcher_service(struct)
-      if KetcherService.disabled?
-        return nil
-      end
+      return nil if KetcherService.disabled?
 
       rendered_svg = render_svg(struct)
-      if rendered_svg.present?
-        rendered_svg
-      else
-        nil
-      end
+      rendered_svg.presence
     rescue StandardError => e
       Rails.logger.error("KetcherService exception: #{e.message}")
       nil
@@ -175,11 +167,7 @@ module Chemotion
     # @return [String, nil] The rendered and processed SVG, or nil if rendering fails
     def self.open_babel_service(struct)
       rendered_svg = OpenBabelService.svg_from_molfile(struct)
-      if rendered_svg.present?
-        rendered_svg
-      else
-        nil
-      end
+      rendered_svg.presence
     rescue StandardError => e
       Rails.logger.error("❌ OpenBabelService failed: #{e.message}")
       nil
@@ -204,8 +192,8 @@ module Chemotion
       source = struct.to_s
       # Strip PolymersList/TextNode only for cleaned_struct (used for rendering); polymers/text_by_index are from full source for injection.
       cleaned_struct = source
-        .gsub(/^> <PolymersList>\R.*?(?=^> <|\z)/m, '')
-        .gsub(/^> <TextNode>\R.*?^> <\/TextNode>\R?/m, '')
+                       .gsub(/^> <PolymersList>\R.*?(?=^> <|\z)/m, '')
+                       .gsub(%r{^> <TextNode>\R.*?^> </TextNode>\R?}m, '')
 
       polymers_line = extract_polymers_line(source)
       polymers = parse_polymers_line(polymers_line)
@@ -233,6 +221,7 @@ module Chemotion
         while i < lines.length
           line = lines[i].strip
           break if line.start_with?('> <') || line == '$$$$'
+
           data << line unless line.empty?
           i += 1
         end
@@ -319,7 +308,11 @@ module Chemotion
         scale_y = bounds[:sy].abs / extent_y * base * 1.7
       else
         scale_extent = (n >= 3) || (n == 2 && !has_labels)
-        mult = scale_extent ? (n / 2.0) / (n == 3 ? 0.7 : 1) : 1
+        mult = 1.0
+        if scale_extent
+          divisor = n == 3 ? 0.7 : 1.0
+          mult = (n / 2.0) / divisor
+        end
         extent_x = 1.25 * mult
         extent_y = 2.5 * mult
         scale_x = bounds[:sx].abs / extent_x * base
@@ -330,6 +323,18 @@ module Chemotion
         end
       end
       { scale_x: scale_x, scale_y: scale_y, multi: n >= 2 }
+    end
+
+    # Keep path-specific scale multipliers centralized.
+    def self.polymer_scale_multiplier(mode:, polymer_count:)
+      case mode
+      when :root_image
+        9.0
+      when :glyph_use
+        polymer_count == 1 ? 1.0 : 0.84
+      else
+        1.0
+      end
     end
 
     def self.sort_polymers_for_injection(molfile, polymers)
@@ -385,7 +390,7 @@ module Chemotion
         y = pos[:y]
 
         # Single scale preserves image ratio (e.g. 1:1 stays 1:1); base scale then +40% size.
-        scale = scale_x * 9
+        scale = scale_x * polymer_scale_multiplier(mode: :root_image, polymer_count: polymers.size)
         width = polymer[:width] * scale
         height = polymer[:height] * scale
         img_x = x - (width / 2.0)
@@ -428,27 +433,23 @@ module Chemotion
       end
 
       svg_root = doc.xpath('//*[local-name()="svg"]').first
-      unless svg_root
-        return svg
-      end
+      return svg unless svg_root
 
       positions, used_molfile_fallback, fallback_bounds = positions_and_bounds_for_injection(svg, molfile, polymers)
-      return svg unless positions.present?
+      return svg if positions.blank?
 
       bounds = fallback_bounds || find_svg_bounds(svg)
       return svg unless bounds
 
       template_lookup = load_surface_template_lookup
-      if template_lookup.empty?
-        return svg
-      end
+      return svg if template_lookup.empty?
 
       svg_root['xmlns:xlink'] ||= 'http://www.w3.org/1999/xlink'
       labels = polymer_data[:text_by_index] || {}
 
       factors = compute_polymer_scale_factors(polymers.size, labels.any?, bounds)
       scale_x = factors[:scale_x]
-      scale_y = factors[:scale_y]
+      factors[:scale_y]
 
       # Convert content coords to viewBox space (images are svg-root children; content is in g with transform)
       positions_viewbox = positions_to_viewbox(positions, bounds, margin_half: 10.0)
@@ -493,10 +494,10 @@ module Chemotion
     # When R#/A was placed via molfile fallback, Indigo may have drawn them as <use> glyphs.
     # Remove <use> elements that reference defs glyphs and are near an injected image center.
     def self.remove_r_or_a_placeholder_glyphs(doc, occupied)
-      return if occupied.nil? || occupied.empty?
+      return if occupied.blank?
 
       centers = occupied.map do |o|
-        { x: o[:x] + o[:width] / 2.0, y: o[:y] + o[:height] / 2.0, radius: [o[:width], o[:height]].max * 0.6 }
+        { x: o[:x] + (o[:width] / 2.0), y: o[:y] + (o[:height] / 2.0), radius: [o[:width], o[:height]].max * 0.6 }
       end
 
       doc.xpath('//*[local-name()="use"]').each do |use_el|
@@ -507,7 +508,7 @@ module Chemotion
         uy = (use_el['y'] || 0).to_f
         # Simple transform on parent <g>: translate(tx, ty) -> add to ux, uy
         parent = use_el.respond_to?(:parent) ? use_el.parent : nil
-        if parent && parent.element? && (t = parent['transform'].to_s).present?
+        if parent&.element? && (t = parent['transform'].to_s).present?
           m = t.match(/translate\s*\(\s*([+-]?\d*\.?\d+(?:e[+-]?\d+)?)\s*(?:,\s*|\s+)([+-]?\d*\.?\d+(?:e[+-]?\d+)?)\s*\)/)
           if m
             ux += m[1].to_f
@@ -516,7 +517,7 @@ module Chemotion
         end
 
         next unless centers.any? do |c|
-          dist = Math.sqrt((ux - c[:x])**2 + (uy - c[:y])**2)
+          dist = Math.sqrt(((ux - c[:x])**2) + ((uy - c[:y])**2))
           dist <= c[:radius]
         end
 
@@ -533,19 +534,15 @@ module Chemotion
     # @param polymer_data [Hash] { polymers:, text_by_index: }
     # @param options [Hash] optional r_glyph_id: glyph id (e.g. "glyph-0-0") to replace; if nil, the first glyph referenced by a <use> is used
     # @return [String] modified SVG XML
-    def self.replace_r_glyph_uses_with_molfile_content(svg, molfile, polymer_data, options = {})
+    def self.replace_r_glyph_uses_with_molfile_content(svg, _molfile, polymer_data, options = {})
       return svg if svg.blank?
 
       doc = Nokogiri::XML(svg)
       svg_root = doc.xpath('//*[local-name()="svg"]').first
-      unless svg_root
-        return svg
-      end
+      return svg unless svg_root
 
       r_glyph_id = options[:r_glyph_id] || find_r_glyph_id(doc)
-      unless r_glyph_id
-        return doc.to_xml
-      end
+      return doc.to_xml unless r_glyph_id
 
       use_elements = find_use_elements_referencing_glyph(doc, r_glyph_id)
       return doc.to_xml if use_elements.empty?
@@ -555,19 +552,15 @@ module Chemotion
       return doc.to_xml if polymers.empty?
 
       bounds = find_svg_bounds(svg)
-      unless bounds
-        return doc.to_xml
-      end
+      return doc.to_xml unless bounds
 
       template_lookup = load_surface_template_lookup
-      if template_lookup.empty?
-        return doc.to_xml
-      end
+      return doc.to_xml if template_lookup.empty?
 
       svg_root['xmlns:xlink'] ||= 'http://www.w3.org/1999/xlink'
       factors = compute_polymer_scale_factors(polymers.size, labels.any?, bounds)
       scale_x = factors[:scale_x]
-      scale_y = factors[:scale_y]
+      factors[:scale_y]
       multi = factors[:multi]
 
       # Sort uses by vertical position (top to bottom), then horizontal
@@ -591,8 +584,7 @@ module Chemotion
         pos = get_use_position(use_el)
         ux = pos[:x]
         uy = pos[:y]
-        # Single scale preserves image ratio (e.g. 1:1 stays 1:1). Single image uses same scale as inject path (6) so size matches when label present.
-        scale = (polymers.size == 1) ? (scale_x * 1) : (scale_x * 0.84)
+        scale = scale_x * polymer_scale_multiplier(mode: :glyph_use, polymer_count: polymers.size)
         width = polymer[:width] * scale
         height = polymer[:height] * scale
         uy -= height * 0.04
@@ -615,9 +607,9 @@ module Chemotion
         label = labels[polymer[:atom_index]]
         if label.present?
           font_size = multi ? [[(height * 0.04), 10.0].max, 12.0].min : [[(height * 0.015), 2.0].max, 3.0].min
-          text_width_est = [font_size * 0.55 * label.length, 20.0].max
+          [font_size * 0.55 * label.length, 20.0].max
           padding = multi ? 2.0 : 1.0
-          text_x = (width / 2.0 + padding).round(4)
+          text_x = ((width / 2.0) + padding).round(4)
           text_node = Nokogiri::XML::Node.new('text', doc)
           text_node['x'] = text_x.to_s
           text_node['y'] = '0'
@@ -633,7 +625,7 @@ module Chemotion
 
         use_el.replace(group)
         injected_groups << group
-        occupied << { x: ux - width / 2.0, y: uy - height / 2.0 - (height * 0.04), width: width, height: height }
+        occupied << { x: ux - (width / 2.0), y: uy - (height / 2.0) - (height * 0.04), width: width, height: height }
       end
 
       # Draw injected images on top: move their groups to the end of the SVG root
@@ -651,13 +643,13 @@ module Chemotion
     # that is referenced by at least one <use> element.
     def self.find_r_glyph_id(doc)
       defs_glyph_ids = doc.xpath('//*[local-name()="defs"]//*[local-name()="g"][starts-with(@id,"glyph-")]')
-        .map { |g| g['id'] }.compact.uniq.sort
+                          .pluck('id').compact.uniq.sort
       return nil if defs_glyph_ids.empty?
 
-      referenced = doc.xpath('//*[local-name()="use"]').map do |u|
+      referenced = doc.xpath('//*[local-name()="use"]').filter_map do |u|
         href = (u['xlink:href'] || u['href']).to_s
         href.start_with?('#') ? href[1..] : nil
-      end.compact.uniq
+      end.uniq
 
       defs_glyph_ids.find { |id| referenced.include?(id) }
     end
@@ -667,7 +659,7 @@ module Chemotion
       ux = (use_el['x'] || 0).to_f
       uy = (use_el['y'] || 0).to_f
       parent = use_el.respond_to?(:parent) ? use_el.parent : nil
-      if parent && parent.element? && (t = parent['transform'].to_s).present?
+      if parent&.element? && (t = parent['transform'].to_s).present?
         m = t.match(/translate\s*\(\s*([+-]?\d*\.?\d+(?:e[+-]?\d+)?)\s*(?:,\s*|\s+)([+-]?\d*\.?\d+(?:e[+-]?\d+)?)\s*\)/)
         if m
           ux += m[1].to_f
@@ -698,6 +690,7 @@ module Chemotion
         g.remove if g['id'] == glyph_id
       end
     end
+
     def self.log_text_elements_snippet(svg)
       # No-op: previously logged SVG text elements for debugging.
     end
@@ -888,14 +881,14 @@ module Chemotion
       root['viewBox'] = "#{min_x} #{min_y} #{new_w} #{new_h}"
       if root['width'].present?
         current_w = Float(root['width'], exception: false)
-        root['width'] = (current_w * width_factor).round(4).to_s if current_w && current_w > 0
+        root['width'] = (current_w * width_factor).round(4).to_s if current_w&.positive?
       end
       if root['height'].present?
         current_h = Float(root['height'], exception: false)
-        root['height'] = (current_h * height_factor).round(4).to_s if current_h && current_h > 0
+        root['height'] = (current_h * height_factor).round(4).to_s if current_h&.positive?
       end
       doc.to_xml
-    rescue StandardError => e
+    rescue StandardError
       svg_string
     end
 
@@ -946,7 +939,7 @@ module Chemotion
       if root['width'].present? && root['height'].present?
         current_w = Float(root['width'], exception: false)
         current_h = Float(root['height'], exception: false)
-        if current_w && current_w > 0 && current_h && current_h > 0
+        if current_w&.positive? && current_h&.positive?
           # Scale width/height so the new viewBox is fully visible without stretching
           scale_w = new_w / old_w
           scale_h = new_h / old_h
@@ -960,26 +953,24 @@ module Chemotion
 
     def self.map_x(x, mol_bounds, svg_bounds)
       mol_dx = mol_bounds[:max_x] - mol_bounds[:min_x]
-      if mol_dx.abs <= 0.0001
-        return svg_bounds[:min_x] + (svg_bounds[:sx] || 0) / 2.0
-      end
+      return svg_bounds[:min_x] + ((svg_bounds[:sx] || 0) / 2.0) if mol_dx.abs <= 0.0001
+
       ratio = (x - mol_bounds[:min_x]) / mol_dx
       svg_bounds[:min_x] + (ratio * svg_bounds[:sx])
     end
 
     def self.map_y(y, mol_bounds, svg_bounds)
       mol_dy = mol_bounds[:max_y] - mol_bounds[:min_y]
-      if mol_dy.abs <= 0.0001
-        return svg_bounds[:min_y] + (svg_bounds[:sy] || 0) / 2.0
-      end
+      return svg_bounds[:min_y] + ((svg_bounds[:sy] || 0) / 2.0) if mol_dy.abs <= 0.0001
+
       # Molfile uses Cartesian Y-up, SVG uses Y-down.
       ratio = (mol_bounds[:max_y] - y) / mol_dy
       svg_bounds[:min_y] + (ratio * svg_bounds[:sy])
     end
 
     def self.load_surface_template_lookup
-      @surface_template_lookup ||= begin
-        json_path = Rails.root.join('public', 'json', 'surfaceChemistryShapes.json')
+      @load_surface_template_lookup ||= begin
+        json_path = Rails.public_path.join('json/surfaceChemistryShapes.json')
         raw = JSON.parse(File.read(json_path))
         lookup = {}
         raw.each do |category, groups|
@@ -1000,7 +991,7 @@ module Chemotion
     end
 
     def self.load_template_svg_data_uri(template)
-      path = Rails.root.join('public', 'polymerShapes', template[:category], "#{template[:icon_name]}.svg")
+      path = Rails.public_path.join('polymerShapes', template[:category], "#{template[:icon_name]}.svg")
       return nil unless File.exist?(path)
 
       content = File.read(path)
@@ -1010,5 +1001,5 @@ module Chemotion
       nil
     end
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/BlockLength, Metrics/ClassLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/ParameterLists, Layout/LineLength, Layout/IndentationWidth, Layout/ElseAlignment, Layout/EndAlignment, Layout/MultilineMethodCallIndentation, Layout/EmptyLineAfterGuardClause, Layout/EmptyLineBetweenDefs, Naming/PredicatePrefix, Naming/MethodParameterName, Naming/MemoizedInstanceVariableName, Style/IfUnlessModifier, Style/EmptyElse, Style/RegexpLiteral, Style/NestedTernaryOperator, Style/TernaryParentheses, Style/ComparableClamp, Style/NumericPredicate, Lint/UselessRescue, Lint/UselessAssignment, Lint/AmbiguousOperatorPrecedence, Lint/UnusedMethodArgument, Rails/Presence, Rails/Blank, Rails/FilePath, Rails/Pluck, Rails/RootPublicPath, Performance/MapCompact, Style/SafeNavigation
+  # rubocop:enable Metrics/ClassLength, Metrics/MethodLength, Metrics/BlockLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/ParameterLists, Layout/LineLength, Naming/PredicatePrefix, Naming/MethodParameterName, Lint/UselessRescue, Style/ComparableClamp
 end
