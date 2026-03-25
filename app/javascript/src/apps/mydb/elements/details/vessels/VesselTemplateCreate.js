@@ -1,17 +1,19 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import {
-  Form, Button, Row, Col, InputGroup, Tabs, Tab, ButtonToolbar
+  Form, Button, Row, Col, InputGroup, Tabs, Tab
 } from 'react-bootstrap';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import Aviator from 'aviator';
 import VesselSuggestProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselSuggestProperties';
 import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperty';
-import DetailCard from 'src/apps/mydb/elements/details/LegacyDetailCard';
+import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import { detailFooterButton } from 'src/apps/mydb/elements/details/DetailCardButton';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { getSnapshot } from 'mobx-state-tree';
+import PropTypes from 'prop-types';
 
 function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
   const { vesselDetailsStore } = useContext(StoreContext);
@@ -74,7 +76,7 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
 
   if (!vesselItem || !vesselDetailsStore) {
     return (
-      <DetailCard>
+      <DetailCard title="Create Vessel Template">
         <div>Loading Vessel Template...</div>
       </DetailCard>
     );
@@ -113,48 +115,56 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
     }
   };
 
-  const renderCloseHeaderButton = () => (
-    <Button
-      variant="danger"
-      size="xxsm"
-      onClick={() => { handleClose(); }}
-    >
-      <i className="fa fa-times" />
-    </Button>
-  );
-
   const handleVolumeChange = (e) => {
     vesselDetailsStore.changeVolumeAmount(vesselItem.id, parseFloat(e.target.value));
   };
 
   const handleUnitChange = () => {
     const currentUnit = vesselItem.volumeUnit || 'ml';
-    const nextUnit = currentUnit === 'ml' ? 'L' : currentUnit === 'L' ? 'μL' : 'ml';
+    let nextUnit = 'ml';
+    if (currentUnit === 'ml') {
+      nextUnit = 'L';
+    } else if (currentUnit === 'L') {
+      nextUnit = 'μL';
+    }
     vesselDetailsStore.changeVolumeUnit(vesselItem.id, nextUnit);
   };
 
-  const applyTemplateToStore = (templateData) => {
-    if (!templateData) return;
+  const applyTemplateToStore = (selectedTemplateData) => {
+    if (!selectedTemplateData) return;
 
-    vesselDetailsStore.changeDetails(vesselItem.id, templateData.details || '');
-    vesselDetailsStore.changeMaterialDetails(vesselItem.id, templateData.material_details || '');
-    vesselDetailsStore.changeMaterialType(vesselItem.id, templateData.material_type || '');
-    vesselDetailsStore.changeVesselType(vesselItem.id, templateData.vessel_type || '');
-    vesselDetailsStore.changeVolumeAmount(vesselItem.id, templateData.volume_amount || 0);
-    vesselDetailsStore.changeVolumeUnit(vesselItem.id, templateData.volume_unit || '');
+    vesselDetailsStore.changeDetails(vesselItem.id, selectedTemplateData.details || '');
+    vesselDetailsStore.changeMaterialDetails(vesselItem.id, selectedTemplateData.material_details || '');
+    vesselDetailsStore.changeMaterialType(vesselItem.id, selectedTemplateData.material_type || '');
+    vesselDetailsStore.changeVesselType(vesselItem.id, selectedTemplateData.vessel_type || '');
+    vesselDetailsStore.changeVolumeAmount(vesselItem.id, selectedTemplateData.volume_amount || 0);
+    vesselDetailsStore.changeVolumeUnit(vesselItem.id, selectedTemplateData.volume_unit || '');
   };
 
   const isSubmitDisabled = !vesselItem.vesselName || isDuplicate;
+  const footerToolbar = (
+    <>
+      <Button
+        onClick={handleClose}
+        variant="ghost"
+      >
+        Close
+      </Button>
+      {detailFooterButton({
+        label: 'Create',
+        iconClass: 'fa fa-floppy-o',
+        variant: 'primary',
+        disabled: isSubmitDisabled,
+        onClick: handleSubmit,
+      })}
+    </>
+  );
 
   return (
-    <DetailCard header={(
-      <div className="d-flex justify-content-between align-items-center">
-        <h5 className="mb-0">Create Vessel Template</h5>
-        <div className="d-flex align-items-center">
-          {renderCloseHeaderButton()}
-        </div>
-      </div>
-      )}
+    <DetailCard
+      title="Create Vessel Template"
+      onClose={handleClose}
+      footerToolbar={footerToolbar}
     >
       <div className="tabs-container--with-borders">
         <Tabs activeKey={activeTab} onSelect={handleTabChange} id="vessel-details-tab">
@@ -185,10 +195,10 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
                 readOnly={false}
                 isMismatch={isMismatch}
                 storeUpdater={(id, value) => vesselDetailsStore.changeCopiedFromName(id, value)}
-                onTemplateSelect={(vesselData) => {
-                  if (vesselData) {
-                    applyTemplateToStore(vesselData);
-                    setTemplateData(vesselData);
+                onTemplateSelect={(selectedTemplateData) => {
+                  if (selectedTemplateData) {
+                    applyTemplateToStore(selectedTemplateData);
+                    setTemplateData(selectedTemplateData);
                     setReadyToCompare(false);
                   }
                 }}
@@ -252,17 +262,19 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
           </Tab>
         </Tabs>
       </div>
-
-      <ButtonToolbar>
-        <Button variant="primary" onClick={() => handleClose()}>
-          Cancel
-        </Button>
-        <Button variant="warning" disabled={isSubmitDisabled} onClick={handleSubmit}>
-          Create Template
-        </Button>
-      </ButtonToolbar>
     </DetailCard>
   );
 }
+
+VesselTemplateCreate.propTypes = {
+  vesselItem: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    is_new: PropTypes.bool,
+  }),
+};
+
+VesselTemplateCreate.defaultProps = {
+  vesselItem: null,
+};
 
 export default observer(VesselTemplateCreate);
