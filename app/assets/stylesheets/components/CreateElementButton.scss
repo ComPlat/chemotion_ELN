@@ -1,7 +1,57 @@
 .create-element-button {
   @extend .position-fixed;
-  bottom: 1.5rem;
+  @extend .rounded-circle;
+  @extend .shadow;
   right: 1.5rem;
+  bottom: 1.5rem;
   z-index: 100;
   width: fit-content;
+  &.variant-0 {
+    @extend .rounded-circle;
+    padding: $input-btn-padding-y !important;
+    .create-element-button__label {
+      @extend .d-none;
+    }
+  }
+  &.variant-1 {
+    @extend .rounded-pill;
+    @extend .btn-lg;
+    padding: 12px 15px 12px 10px !important;
+    @extend .d-flex;
+    @extend .align-items-center;
+    .create-element-button__icon {
+      @extend .me-1;
+    }
+    .create-element-button__label {
+      @extend .d-block;
+    }
+  }
+  &.variant-2 {
+    @extend .rounded-pill;
+    @extend .d-flex;
+    padding: 8px 12px 8px 8px !important;
+    bottom: auto !important;
+    top: 3.5rem;
+    .create-element-button__icon {
+      @extend .me-1;
+    }
+    .create-element-button__label {
+      @extend .d-block;
+      @extend .text-uppercase;
+    }
+  }
+  &.variant-3 {
+    @extend .rounded-pill;
+    @extend .d-flex;
+    padding: 8px 12px 8px 8px !important;
+    right: 50% !important;
+    transform: translateX(calc(50% + 130px));
+    .create-element-button__icon {
+      @extend .me-1;
+    }
+    .create-element-button__label {
+      @extend .d-block;
+      @extend .text-uppercase;
+    }
+  }
 }

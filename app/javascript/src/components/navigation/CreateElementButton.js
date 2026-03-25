@@ -15,23 +15,25 @@ import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementIcon from 'src/components/common/ElementIcon';
 
-const CreateElementDropdownToggle = React.forwardRef(({ onClick }, ref) => (
+const CreateElementDropdownToggle = React.forwardRef(({ onClick, buttonClassName }, ref) => (
   <Button
     variant="create"
-    className="rounded-circle shadow"
+    className={buttonClassName}
     ref={ref}
     onClick={(e) => {
       e.preventDefault();
       onClick(e);
     }}
   >
-    <i className="fa fa-plus" />
+    <i className="fa fa-plus create-element-button__icon" />
+    <span className="create-element-button__label">Create</span>
   </Button>
 ));
 
 CreateElementDropdownToggle.displayName = 'CreateElementDropdownToggle';
 CreateElementDropdownToggle.propTypes = {
-  onClick: PropTypes.func.isRequired
+  onClick: PropTypes.func.isRequired,
+  buttonClassName: PropTypes.string.isRequired
 };
 
 export default class CreateElementButton extends React.Component {
@@ -120,7 +122,8 @@ export default class CreateElementButton extends React.Component {
         wellplateCount: 0
       },
       showCopyReactionModal: false,
-      pendingReactionId: null
+      pendingReactionId: null,
+      createButtonVariant: 'variant-0'
     };
 
     this.onUserStoreChange = this.onUserStoreChange.bind(this);
@@ -312,8 +315,12 @@ export default class CreateElementButton extends React.Component {
   }
 
   render() {
-    const { isDisabled, layout } = this.state;
+    const { isDisabled, layout, createButtonVariant } = this.state;
     const itemTables = [];
+    const createButtonClassName = [
+      'create-element-button',
+      createButtonVariant
+    ].filter(Boolean).join(' ');
     const sortedLayout = Object.entries(layout)
       .filter((o) => o[1] && o[1] > 0)
       .sort((a, b) => a[1] - b[1]);
@@ -344,6 +351,7 @@ export default class CreateElementButton extends React.Component {
         <Dropdown.Toggle
           as={CreateElementDropdownToggle}
           disabled={isDisabled}
+          buttonClassName={createButtonClassName}
         />
         <Dropdown.Menu className="shadow">
           {this.createWellplateModal()}
@@ -362,6 +370,32 @@ export default class CreateElementButton extends React.Component {
           <Dropdown.Item onClick={() => CreateElementButton.createVesselTemplate()}>
             <i className="me-1 icon-vessel" />
             Create Vessel Template
+          </Dropdown.Item>
+
+          <Dropdown.Divider />
+          <Dropdown.Item
+            active={createButtonVariant === 'variant-0'}
+            onClick={() => this.setState({ createButtonVariant: 'variant-0' })}
+          >
+            current Design
+          </Dropdown.Item>
+          <Dropdown.Item
+            active={createButtonVariant === 'variant-1'}
+            onClick={() => this.setState({ createButtonVariant: 'variant-1' })}
+          >
+            variant 1
+          </Dropdown.Item>
+          <Dropdown.Item
+            active={createButtonVariant === 'variant-2'}
+            onClick={() => this.setState({ createButtonVariant: 'variant-2' })}
+          >
+            variant 2
+          </Dropdown.Item>
+          <Dropdown.Item
+            active={createButtonVariant === 'variant-3'}
+            onClick={() => this.setState({ createButtonVariant: 'variant-3' })}
+          >
+            variant 3
           </Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown>
