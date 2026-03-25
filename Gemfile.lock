@@ -378,7 +378,7 @@ GEM
     logidze (1.4.1)
       activerecord (>= 6.0)
       railties (>= 6.0)
-    loofah (2.25.0)
+    loofah (2.25.1)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
     mail (2.8.1)
