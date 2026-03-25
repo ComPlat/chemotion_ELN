@@ -118,7 +118,7 @@ const VesselProperties = ({ item, readOnly }) => {
                 />
                 <Button
                   disabled
-                  variant="success"
+                  variant="light"
                   onClick={handleUnitChange}
                 >
                   {vesselItem?.volumeUnit || 'ml'}
@@ -186,7 +186,7 @@ const VesselProperties = ({ item, readOnly }) => {
                 />
                 <Button
                   disabled={readOnly}
-                  variant="success"
+                  variant="light"
                   onClick={() => {
                     const currentUnit = isCreateMode ? instance.weightUnit : vesselItem?.weightUnit;
                     const newUnit = currentUnit === 'g' ? 'kg' : 'g';

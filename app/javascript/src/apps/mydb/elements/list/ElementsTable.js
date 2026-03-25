@@ -395,7 +395,8 @@ export default class ElementsTable extends React.Component {
           <Button
             size="sm"
             onClick={this.toggleProductOnly}
-            variant={productOnly ? 'primary' : 'light'}
+            variant="light"
+            active={productOnly}
           >
             <i
               className="fa fa-product-hunt"

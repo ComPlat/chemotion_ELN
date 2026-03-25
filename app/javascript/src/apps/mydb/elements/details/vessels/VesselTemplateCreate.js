@@ -250,7 +250,7 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
                     />
                     <Button
                       disabled={!isCreateMode}
-                      variant="success"
+                      variant="light"
                       onClick={handleUnitChange}
                     >
                       {vesselItem?.volumeUnit || 'ml'}

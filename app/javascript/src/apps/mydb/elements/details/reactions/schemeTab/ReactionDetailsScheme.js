@@ -1923,7 +1923,7 @@ export default class ReactionDetailsScheme extends React.Component {
           />
           <Button
             disabled={false}
-            variant="primary"
+            variant="light"
             onClick={() => this.changeVesselSizeUnit()}
           >
             {reaction.vessel_size?.unit || 'ml'}
@@ -1958,7 +1958,7 @@ export default class ReactionDetailsScheme extends React.Component {
             metricPrefixes={metricPrefixes}
             precision={5}
             title="Reaction volume"
-            variant="primary"
+            active
             id="numInput_reaction_volume_l"
             onChange={(e) => this.updateVolume(e)}
             onMetricsChange={(e) => this.updateVolume(e)}

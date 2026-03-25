@@ -295,7 +295,7 @@ function VesselTemplateDetails({ vessels }) {
                   onChange={(e) => handleTemplateChange('volumeAmount', parseFloat(e.target.value) || 0)}
                 />
                 <Button
-                  variant="success"
+                  variant="light"
                   onClick={() => {
                     const currentUnit = templateStoreItem?.volumeUnit || 'ml';
                     const newUnit = currentUnit === 'ml' ? 'l' : 'ml';
@@ -365,7 +365,7 @@ function VesselTemplateDetails({ vessels }) {
                           onChange={(e) => handleInstanceChange(instance.id, 'weightAmount', e.target.value)}
                         />
                         <Button
-                          variant="success"
+                          variant="light"
                           size="sm"
                           onClick={() => {
                             const units = ['g', 'kg', 'mg'];
@@ -450,7 +450,7 @@ function VesselTemplateDetails({ vessels }) {
                         }}
                       />
                       <Button
-                        variant="success"
+                        variant="light"
                         size="sm"
                         onClick={() => {
                           const updated = [...newInstances];

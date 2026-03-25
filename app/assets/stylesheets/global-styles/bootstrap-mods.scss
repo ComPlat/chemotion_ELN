@@ -104,10 +104,10 @@ h6 {
 
 .btn-light {
   @include button-variant(
-    mix(map-get($silicon-shades, lighten5), $chemstrap-silicon, 98),
+    mix(map-get($silicon-shades, lighten5), $chemstrap-silicon, 85),
     map-get($carbon-shades, lighten3),
     $body-color,
-    mix(map-get($silicon-shades, lighten5), $chemstrap-silicon, 90),
+    mix(map-get($silicon-shades, lighten5), $chemstrap-silicon, 75),
     map-get($carbon-shades, lighten3),
     $body-color,
     $chemstrap-graphite,
