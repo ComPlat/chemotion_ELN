@@ -117,17 +117,13 @@ export default function ExplorerComponent({ nodes, edges }) {
           const label = (n.data?.label || '').toLowerCase();
           const sampleName = (n.data?.sampleName || '').toLowerCase();
           const sampleShortLabel = (n.data?.sampleShortLabel || '').toLowerCase();
-          const sampleIupacName = (n.data?.sampleIupacName || '').toLowerCase();
           const sampleSmiles = (n.data?.sampleSmiles || '').toLowerCase();
-          const sampleInchikey = (n.data?.sampleInchikey || '').toLowerCase();
 
           return (
             matchesQuery(label, q)
             || matchesQuery(sampleName, q)
             || matchesQuery(sampleShortLabel, q)
-            || matchesQuery(sampleIupacName, q)
             || matchesQuery(sampleSmiles, q)
-            || matchesQuery(sampleInchikey, q)
           );
         })
         .map((n) => n.id)

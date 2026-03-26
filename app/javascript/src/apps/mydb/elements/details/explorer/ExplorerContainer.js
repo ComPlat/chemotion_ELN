@@ -45,9 +45,7 @@ function positionNodesByReaction(samples, reactions, molecules = []) {
       image: svgUrlFor(sid),
       sampleName: sample.name || '',
       sampleShortLabel: sample.short_label || '',
-      sampleIupacName: molecule.iupac_name || '',
       sampleSmiles: molecule.cano_smiles || '',
-      sampleInchikey: molecule.inchikey || '',
     };
   };
 
@@ -415,9 +413,7 @@ function positionNodesByReaction(samples, reactions, molecules = []) {
             : null,
           sampleName: s.name || '',
           sampleShortLabel: s.short_label || '',
-          sampleIupacName: molecule.iupac_name || '',
           sampleSmiles: molecule.cano_smiles || '',
-          sampleInchikey: molecule.inchikey || '',
         },
         style: { backgroundColor: '#e5e7eb', border: '1px solid #9ca3af' },
       });
