@@ -753,7 +753,7 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
         Select Columns
       </Button>
 
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
+      <Modal show={showModal} onHide={() => setShowModal(false)} animation={false}>
         <Modal.Header closeButton>
           <Modal.Title>Column Selection</Modal.Title>
         </Modal.Header>
@@ -798,7 +798,7 @@ function RemoveVariationsModal({ onRemoveAll }) {
         Remove all variations
       </Button>
 
-      <Modal show={showModal} onHide={handleClose}>
+      <Modal show={showModal} onHide={handleClose} animation={false}>
         <Modal.Header closeButton>
           <Modal.Title>Confirm Removal</Modal.Title>
         </Modal.Header>
