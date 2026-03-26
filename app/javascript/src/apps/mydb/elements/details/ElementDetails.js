@@ -24,6 +24,7 @@ import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails'
 import VesselTemplateDetails from 'src/apps/mydb/elements/details/vessels/VesselTemplateDetails';
 import VesselTemplateCreate from 'src/apps/mydb/elements/details/vessels/VesselTemplateCreate';
 import SequenceBasedMacromoleculeSampleDetails from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleDetails';
+import ExplorerContainer from 'src/apps/mydb/elements/details/explorer/ExplorerContainer';
 
 const tabInfoHash = {
   metadata: {
@@ -43,6 +44,16 @@ const tabInfoHash = {
         <i className="fa fa-file-text-o" />
         &nbsp;&nbsp;
         <i className="fa fa-pencil" />
+      </span>
+    )
+  },
+  explorer: {
+    title: 'Explorer',
+    iconEl: (
+      <span>
+        <i className="fa fa-project-diagram" />
+        {/* &nbsp;&nbsp;
+        <i className="fa fa-pencil" /> */}
       </span>
     )
   },
@@ -154,6 +165,8 @@ export default class ElementDetails extends Component {
         return <MetadataContainer metadata={el} />;
       case 'report':
         return <ReportContainer report={el} />;
+      case 'explorer':
+        return <ExplorerContainer explorer={el} />;
       case 'prediction':
         //return <PredictionContainer prediction={el} />;
         console.warn('Attempting to show outdated PredictionContainer')
