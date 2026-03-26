@@ -287,13 +287,14 @@ export default class CreateElementButton extends React.Component {
     sortedLayout?.forEach(([sl]) => {
       const el = allElnElmentsWithLabel.concat(allGenericElements()).find((ael) => ael.name === sl);
       if (el) {
+        const iconClass = el.icon_name ? el.icon_name : `icon-${el.name}`;
         itemTables.push(
           <Dropdown.Item
             id={`create-${el.name}-button`}
             key={el.name}
             onClick={() => CreateElementButton.createElementOfType(el.name)}
           >
-            <i className={`me-1 icon-${el.name}`} />
+            <i className={`me-1 ${iconClass}`} />
             {`Create ${el.label}`}
           </Dropdown.Item>
         );
