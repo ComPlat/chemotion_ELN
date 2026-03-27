@@ -266,6 +266,7 @@ export default class ReactionDetails extends Component {
       || type === 'conditions'
       || type === 'volume'
       || type === 'useReactionVolumeForConcentration'
+      || type === 'lockReactionVolume'
       || type === 'weight_percentage'
       || type === 'default'
     ) {

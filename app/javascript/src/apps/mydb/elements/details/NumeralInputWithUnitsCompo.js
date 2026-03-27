@@ -151,7 +151,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
   render() {
     const {
       size, variant, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol, className,
-      overlayMessage
+      overlayMessage, disableUnitButtonPadding
     } = this.props;
     const {
       showString, value, metricPrefix, currentPrecision, valueString, block
@@ -185,7 +185,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
           onClick={() => { this.togglePrefix(unit); }}
           variant={variantBtnAfter}
           size={size}
-          className="px-1"
+          className={disableUnitButtonPadding ? '' : 'px-1'}
         >
           {mp + unit}
         </Button>
@@ -329,6 +329,7 @@ NumeralInputWithUnitsCompo.propTypes = {
   showInfoTooltipTotalVol: PropTypes.bool,
   showInfoTooltipRequiredVol: PropTypes.bool,
   overlayMessage: PropTypes.string,
+  disableUnitButtonPadding: PropTypes.bool,
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
@@ -343,4 +344,5 @@ NumeralInputWithUnitsCompo.defaultProps = {
   showInfoTooltipTotalVol: false,
   showInfoTooltipRequiredVol: false,
   overlayMessage: null,
+  disableUnitButtonPadding: false,
 };

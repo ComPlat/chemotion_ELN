@@ -151,6 +151,11 @@ describe('Reaction', () => {
       const emptyReaction = Reaction.buildEmpty(1);
       expect(emptyReaction.use_reaction_volume).toBe(false);
     });
+
+    it('should initialize lock_reaction_volume as false', () => {
+      const emptyReaction = Reaction.buildEmpty(1);
+      expect(emptyReaction.lock_reaction_volume).toBe(false);
+    });
   });
 
   describe('Reaction.serialize()', () => {
@@ -164,6 +169,12 @@ describe('Reaction', () => {
       reaction.use_reaction_volume = true;
       const serialized = reaction.serialize();
       expect(serialized.use_reaction_volume).toBe(true);
+    });
+
+    it('should include lock_reaction_volume in serialized output', () => {
+      reaction.lock_reaction_volume = true;
+      const serialized = reaction.serialize();
+      expect(serialized.lock_reaction_volume).toBe(true);
     });
   });
 
@@ -233,6 +244,38 @@ describe('Reaction', () => {
 
       const result = reaction.calculateCombinedReactionVolume();
       expect(result).toBeCloseTo(0.2, 5);
+    });
+  });
+
+  describe('Reaction.reactionVolumeForConcentration()', () => {
+    it('uses explicit reaction volume when enabled and valid', () => {
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+      reaction.calculateCombinedReactionVolume = () => 0.2;
+
+      const result = reaction.reactionVolumeForConcentration();
+
+      expect(result).toBe(0.5);
+    });
+
+    it('uses combined volume when explicit reaction volume is disabled', () => {
+      reaction.use_reaction_volume = false;
+      reaction.volume = 0.5;
+      reaction.calculateCombinedReactionVolume = () => 0.2;
+
+      const result = reaction.reactionVolumeForConcentration();
+
+      expect(result).toBe(0.2);
+    });
+
+    it('falls back to combined volume when explicit reaction volume is invalid', () => {
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0;
+      reaction.calculateCombinedReactionVolume = () => 0.2;
+
+      const result = reaction.reactionVolumeForConcentration();
+
+      expect(result).toBe(0.2);
     });
   });
 
