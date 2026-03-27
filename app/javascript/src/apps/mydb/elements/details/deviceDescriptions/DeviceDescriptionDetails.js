@@ -176,12 +176,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
               eventableType="DeviceDescription"
             />
           )}
-          {deviceDescription.can_copy && !deviceDescription.isNew && (
-            <CopyElementModal
-              element={deviceDescription}
-              defCol={defCol}
-            />
-          )}
+          <CopyElementModal element={deviceDescription} selectedCol={defCol} />
           {deviceDescription.isEdited && (
             <OverlayTrigger
               placement="bottom"
@@ -234,6 +229,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
           id="deviceDescriptionDetailsTab"
           mountOnEnter
           unmountOnExit
+          className="has-config-overlay"
         >
           {tabContents}
         </Tabs>

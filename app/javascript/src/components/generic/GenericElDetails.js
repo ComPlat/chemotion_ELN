@@ -14,7 +14,9 @@ import {
 import { cloneDeep, findIndex, merge } from 'lodash';
 import Immutable from 'immutable';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { GenInterface, GenToolbar, browseElement } from 'chem-generic-ui';
+import {
+  GenUIProvider, GenInterface, GenToolbar, browseElement
+} from 'chem-generic-ui';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -147,16 +149,7 @@ export default class GenericElDetails extends Component {
     el.name = el.name.trim();
 
     let ais = el.analysisContainers() || [];
-    ais = ais
-      .filter((x) => !x.is_deleted)
-      .map((x, i) => {
-        if (x.extended_metadata) {
-          x.extended_metadata.index = i;
-        } else {
-          x.extended_metadata = { index: i };
-        }
-        return x.id;
-      });
+    ais = ais.filter((x) => !x.is_deleted).map((x) => x.id);
     (Object.keys(el.properties.layers) || {}).forEach((key) => {
       if (el.properties.layers[key].ai) {
         el.properties.layers[key].ai = el.properties.layers[
@@ -343,16 +336,18 @@ export default class GenericElDetails extends Component {
     );
     return (
       <div>
-        <GenToolbar
-          generic={genericEl}
-          genericType="Element"
-          klass={genericEl.element_klass}
-          fnExport={this.handleExport}
-          fnReload={this.handleReload}
-          fnRetrieve={this.handleRetrieveRevision}
-          onExpandAll={this.handleExpandAll}
-        />
-        {layersLayout}
+        <GenUIProvider>
+          <GenToolbar
+            generic={genericEl}
+            genericType="Element"
+            klass={genericEl.element_klass}
+            fnExport={this.handleExport}
+            fnReload={this.handleReload}
+            fnRetrieve={this.handleRetrieveRevision}
+            onExpandAll={this.handleExpandAll}
+          />
+          {layersLayout}
+        </GenUIProvider>
         <EditUserLabels
           element={genericEl}
           fnCb={this.handleGenericElChanged}

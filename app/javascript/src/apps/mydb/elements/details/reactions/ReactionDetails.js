@@ -397,13 +397,6 @@ export default class ReactionDetails extends Component {
     const defCol = currentCollection && currentCollection.shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
-    const copyBtn = (reaction.can_copy === true && !reaction.isNew) && (
-      <CopyElementModal
-        element={reaction}
-        defCol={defCol}
-      />
-    );
-
     const colLabel = !reaction.isNew && (
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
     );
@@ -483,7 +476,7 @@ export default class ReactionDetails extends Component {
                   </OverlayTrigger>
                 </>
               )}
-            {copyBtn}
+            <CopyElementModal element={reaction} defCol={defCol} />
             <ConfirmClose el={reaction} />
           </ButtonToolbar>
         </div>
@@ -583,7 +576,7 @@ export default class ReactionDetails extends Component {
     this.isUpdatingGraphic = true;
     const materialsSvgPaths = {
       starting_materials: reaction.starting_materials.map((material) => material.svgPath),
-      reactants: reaction.reactants.map((material) => material.svgPath),
+      reactants: reaction.reactantsWithSbmm.map((material) => material.svgPath),
       products: reaction.products.map((material) => [material.svgPath, material.equivalent])
     };
 
@@ -1039,8 +1032,8 @@ export default class ReactionDetails extends Component {
         <ReactionSchemeGraphic
           key={`reaction-graphic-${reaction.id}-${this.state.reactionSvgVersion || 0}`}
           reaction={reaction}
-          onToggleLabel={(materialId) => {
-            reaction.toggleShowLabelForSample(materialId);
+          onToggleLabel={(materialId, isSbmm) => {
+            reaction.toggleShowLabelForSample(materialId, isSbmm);
             this.handleReactionChange(reaction, { updateGraphic: true });
           }}
           onRefresh={() => this.refreshGraphic()}
@@ -1086,6 +1079,7 @@ export default class ReactionDetails extends Component {
             onSelect={this.handleSelect}
             id="reaction-detail-tab"
             unmountOnExit
+            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>

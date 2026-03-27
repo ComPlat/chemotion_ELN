@@ -1,0 +1,6 @@
+.search-input__icon {
+  @extend .text-lighten1;
+  padding-left: $btn-padding-x-sm;
+  padding-right: $btn-padding-x-sm;
+  font-size: $btn-font-size-sm;
+}
