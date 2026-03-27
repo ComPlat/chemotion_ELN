@@ -15,7 +15,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
-const AnalysisHeader = ({ container, readonly }) => {
+function AnalysisHeader({ container, readonly }) {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const deviceDescription = deviceDescriptionsStore.device_description;
 
@@ -156,6 +156,26 @@ const AnalysisHeader = ({ container, readonly }) => {
     }),
   };
   const attachment = getAttachmentFromContainer(container);
+  // Build list of non-deleted attachment IDs
+  const allAttachments = container?.children?.flatMap((child) => (child.attachments || [])) || [];
+  // Filter: exclude deleted and is_new attachments (is_new don't have server IDs yet)
+  const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new);
+  const attachmentsIds = savedAttachments
+    .map((att) => Number(att.id))
+    .filter((id) => !Number.isNaN(id) && id > 0);
+  // Get current preferred thumbnail (reassignment is handled by ContainerDatasets on deletion)
+  const preferredThumbnail = container?.extended_metadata?.preferred_thumbnail || null;
+
+  const onChangePreferredThumbnail = (currentPreferredThumbnail) => {
+    if (currentPreferredThumbnail !== preferredThumbnail) {
+      // Handle the change of preferred thumbnail
+      container.extended_metadata = {
+        ...container.extended_metadata,
+        preferred_thumbnail: currentPreferredThumbnail,
+      };
+      deviceDescriptionsStore.changeAnalysisContainerContent(container);
+    }
+  };
 
   const orderClass = deviceDescriptionsStore.analysis_mode == 'order' ? 'order pe-2' : '';
   const deleted = container?.is_deleted || false;
@@ -164,13 +184,20 @@ const AnalysisHeader = ({ container, readonly }) => {
     <div className={`analysis-header w-100 d-flex gap-3 lh-base ${orderClass}`}>
       <div className="preview border d-flex align-items-center">
         {deleted
-          ? <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> 
-          : <ImageModal
+          ? <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" />
+          : (
+            <ImageModal
               attachment={attachment}
               popObject={{
                 title: container.name,
               }}
-          />
+              preferredThumbnail={preferredThumbnail}
+              ChildrenAttachmentsIds={attachmentsIds}
+              onChangePreferredThumbnail={(currentPreferredThumbnail) => onChangePreferredThumbnail(
+                currentPreferredThumbnail
+              )}
+            />
+          )
         }
       </div>
       <div className={"flex-grow-1" + (deleted ? "" : " analysis-header-fade")}>
