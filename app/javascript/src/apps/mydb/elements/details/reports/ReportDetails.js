@@ -11,6 +11,7 @@ import {
 } from 'src/apps/mydb/elements/details/DetailCardButton';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ReportStore from 'src/stores/alt/stores/ReportStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -87,6 +88,12 @@ export default function ReportDetails({ report }) {
     const reportPayload = paramize(stateRef.current);
     ReportActions.generateReport(reportPayload);
   }, []);
+
+  const handleClose = () => {
+    if (report) {
+      DetailActions.close(report, true);
+    }
+  };
 
   const unreadIds = useMemo(() => (
     state.archives
@@ -200,6 +207,7 @@ export default function ReportDetails({ report }) {
       title="Report Generation"
       headerToolbar={headerToolbar}
       footerToolbar={footerToolbar}
+      onClose={handleClose}
     >
       {alertTemplateNotFound && (
         <Alert variant="primary">
