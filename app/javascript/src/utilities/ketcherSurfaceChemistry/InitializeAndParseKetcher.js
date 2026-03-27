@@ -38,6 +38,7 @@ import {
 import {
   attachClickListeners
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const loadTemplates = async () => {
   fetch('/json/surfaceChemistryShapes.json').then((response) => {
@@ -165,8 +166,9 @@ const hasTextNodes = async (molfile) => {
 // Return molfile string up to and including M  END so Indigo only sees standard CTAB.
 const getStandardMolfileForIndigo = (molfile) => {
   if (!molfile || typeof molfile !== 'string') return molfile;
-  const lines = molfile.trim().split('\n');
-  const endIndex = lines.findIndex((line) => line && /^M\s+END/.test(line));
+  const normalized = molfile.replace(/\r\n/g, '\n');
+  const lines = normalized.split('\n');
+  const endIndex = lines.findIndex((line) => /^M\s+END/.test(line));
   if (endIndex === -1) return molfile;
   return lines.slice(0, endIndex + 1).join('\n');
 };
@@ -276,18 +278,31 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
     const polymerTagFromPasted = await hasKetcherData(initMol);
     const textNodes = await hasTextNodes(initMol);
     const molfileForIndigo = getStandardMolfileForIndigo(initMol);
-    const formatError = (err) => (err?.message != null ? err.message : (err && typeof err?.toString === 'function' ? err.toString() : String(err)));
+    const formatError = (err) => {
+      if (err?.message != null) return err.message;
+      if (err && typeof err?.toString === 'function') return err.toString();
+      return String(err);
+    };
+    const notifyMolfileError = (details, level = 'error') => {
+      NotificationActions.add({
+        title: 'Structure Editor error',
+        message: `${details}`,
+        level,
+        position: 'tc',
+        dismissible: 'button',
+        autoDismiss: 12,
+      });
+    };
+    const conversionErrors = [];
 
     let ketFile = await editor._structureDef.editor.indigo.convert(molfileForIndigo).catch((err) => {
-      console.error('invalid molfile. Please try again', formatError(err));
+      conversionErrors.push(`Ketcher/Indigo ${formatError(err)}`);
       return null;
     });
 
-    if (!ketFile?.struct && molfileForIndigo !== initMol) {
-      ketFile = await editor._structureDef.editor.indigo.convert(initMol).catch((err) => {
-        console.error('invalid molfile (fallback). Please try again', formatError(err));
-        return null;
-      });
+    if (conversionErrors.length > 0) {
+      const uniqueErrors = [...new Set(conversionErrors)];
+      notifyMolfileError(uniqueErrors.join(' | '), 'error');
     }
 
     if (!ketFile || !ketFile.struct) {
