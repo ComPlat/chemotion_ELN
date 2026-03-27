@@ -15,7 +15,6 @@ import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import OnEventListen from 'src/utilities/UserTemplatesHelpers';
-import CreateElementButton from 'src/components/navigation/CreateElementButton';
 
 class App extends Component {
   componentDidMount() {
@@ -107,7 +106,6 @@ class App extends Component {
         <ElementDragLayer />
         {this.renderContent()}
         {this.renderModals()}
-        <CreateElementButton />
       </>
     );
   }

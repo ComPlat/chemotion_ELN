@@ -18,14 +18,15 @@ import ElementIcon from 'src/components/common/ElementIcon';
 const CreateElementDropdownToggle = React.forwardRef(({ onClick }, ref) => (
   <Button
     variant="create"
-    className="rounded-circle shadow"
+    className="create-element-button"
     ref={ref}
     onClick={(e) => {
       e.preventDefault();
       onClick(e);
     }}
   >
-    <i className="fa fa-plus" />
+    <i className="fa fa-plus me-1 create-element-button__icon" />
+    <span className="create-element-button__label">Create</span>
   </Button>
 ));
 
@@ -336,10 +337,10 @@ export default class CreateElementButton extends React.Component {
 
     return (
       <Dropdown
+        className="create-element-dropdown"
         id="create-element-dropdown"
         drop="up"
         align="end"
-        className="create-element-button"
       >
         <Dropdown.Toggle
           as={CreateElementDropdownToggle}
