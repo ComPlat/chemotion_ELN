@@ -146,7 +146,7 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
           </div>
         </Modal.Body>
         <Modal.Footer className="border-0">
-          <ButtonToolbar className="gap-1">
+          <ButtonToolbar>
             <Button variant="warning" onClick={this.props.onHide}>
               Close
             </Button>

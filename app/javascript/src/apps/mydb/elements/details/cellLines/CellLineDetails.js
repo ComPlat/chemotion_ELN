@@ -1,7 +1,6 @@
 import React from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import PropTypes from 'prop-types';
@@ -10,13 +9,13 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip
+  Tabs, Tab
 } from 'react-bootstrap';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/propertiesTab/GeneralProperties';
 import AnalysesContainer from 'src/apps/mydb/elements/details/cellLines/analysesTab/AnalysesContainer';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
-import CopyElementModal from 'src/components/common/CopyElementModal';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 class CellLineDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -44,20 +43,17 @@ class CellLineDetails extends React.Component {
     mobXItem.setChanged(false);
   }
 
-  handleClose(cellLineItem) {
+  handleClose() {
+    const { cellLineItem } = this.props;
     const { cellLineDetailsStore } = this.context;
-    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
-    // eslint-disable-next-line no-alert
-    if (!mobXItem.changed || window.confirm('Unsaved data will be lost.Close sample?')) {
-      cellLineDetailsStore.removeCellLineFromStore(cellLineItem.id);
-      DetailActions.close(cellLineItem, true);
-    }
+    cellLineDetailsStore.removeCellLineFromStore(cellLineItem.id);
   }
 
   handleTabChange(eventKey) {
     this.setState({ activeTab: eventKey });
   }
 
+  // eslint-disable-next-line class-methods-use-this
   isReadOnly() {
     const { currentCollection, isSync } = UIStore.getState();
     const { currentUser } = UserStore.getState();
@@ -69,134 +65,31 @@ class CellLineDetails extends React.Component {
     );
   }
 
-  renderHeaderContent() {
-    const { cellLineItem } = this.props;
-
-    return (
-      <div className="d-flex align-items-center justify-content-between">
-        <div className="d-flex gap-2">
-          <span>
-            <i className="icon-cell_line me-1" />
-            {cellLineItem.short_label}
-          </span>
-          <ElementCollectionLabels
-            className="collection-label"
-            element={cellLineItem}
-            key={cellLineItem.id}
-            placement="right"
-          />
-        </div>
-        <div className="d-flex gap-1">
-          <CopyElementModal element={cellLineItem} />
-          {this.renderSaveButton(true)}
-          {this.renderSaveButton()}
-          {this.renderCloseHeaderButton()}
-        </div>
-      </div>
-    );
-  }
-
-  renderFooterContent() {
-    const { cellLineItem } = this.props;
-
-    return (
-      <>
-        <Button variant="primary" onClick={() => { this.handleClose(cellLineItem); }}>
-          Close
-        </Button>
-        {this.renderSubmitButton()}
-      </>
-    );
-  }
-
-  renderSaveButton(closeAfterClick = false) {
-    const { cellLineItem } = this.props;
-    const { cellLineDetailsStore } = this.context;
-    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
-    const validationInfo = cellLineDetailsStore.checkInputValidity(cellLineItem.id);
-    const disabled = validationInfo.length > 0 || !mobXItem.changed;
-    if (disabled) { return null; }
-
-    const action = closeAfterClick
-      ? () => { this.handleSubmit(cellLineItem); DetailActions.close(cellLineItem, true); }
-      : () => { this.handleSubmit(cellLineItem); };
-
-    const toolTipMessage = closeAfterClick ? 'Save and Close' : 'Save';
-    const icons = closeAfterClick
-      ? (
-        <div>
-          <i className="fa fa-floppy-o" />
-          <i className="fa fa-times" />
-        </div>
-      )
-      : <i className="fa fa-floppy-o" />;
-
-    return (
-      <OverlayTrigger
-        placement="bottom"
-        overlay={<Tooltip>{toolTipMessage}</Tooltip>}
-      >
-        <Button disabled={disabled} variant="warning" size="xxsm" onClick={action}>
-          {icons}
-        </Button>
-      </OverlayTrigger>
-    );
-  }
-
-  renderCloseHeaderButton() {
-    const { cellLineItem } = this.props;
-
-    return (
-      <Button
-        variant="danger"
-        size="xxsm"
-        onClick={() => { this.handleClose(cellLineItem); }}
-      >
-        <i className="fa fa-times" />
-      </Button>
-    );
-  }
-
-  renderSubmitButton() {
-    const { cellLineItem } = this.props;
-    const { cellLineDetailsStore } = this.context;
-    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
-    const validationInfo = cellLineDetailsStore.checkInputValidity(cellLineItem.id);
-    const disabled = validationInfo.length > 0 || !mobXItem.changed;
-    const buttonText = cellLineItem.is_new ? 'Create' : 'Save';
-    const disabledButton = (
-      <Button
-        variant="warning"
-        disabled
-        onClick={() => { this.handleSubmit(cellLineItem); }}
-      >
-        {buttonText}
-      </Button>
-    );
-    const enabledButton = (
-      <Button
-        variant="warning"
-        onClick={() => { this.handleSubmit(cellLineItem); }}
-      >
-        {buttonText}
-      </Button>
-    );
-
-    return disabled ? disabledButton : enabledButton;
-  }
-
   render() {
     const { cellLineItem } = this.props;
 
     if (!cellLineItem) { return (null); }
     // eslint-disable-next-line react/destructuring-assignment
     this.context.cellLineDetailsStore.convertCellLineToModel(cellLineItem);
+    // ElementDetailCard expects camelCase flags for built-in behavior.
+    cellLineItem.isNew = cellLineItem.is_new;
+
+    const { cellLineDetailsStore } = this.context;
+    const mobXItem = cellLineDetailsStore.cellLines(cellLineItem.id);
+    const validationInfo = cellLineDetailsStore.checkInputValidity(cellLineItem.id);
+    const saveDisabled = validationInfo.length > 0;
+    const isPendingToSave = !!mobXItem.changed;
     const { readOnly } = this.state;
     const { activeTab } = this.state;
     return (
-      <DetailCard
-        header={this.renderHeaderContent()}
-        footer={this.renderFooterContent()}
+      <ElementDetailCard
+        element={cellLineItem}
+        isPendingToSave={isPendingToSave}
+        title={cellLineItem.short_label}
+        titleTooltip={formatTimeStampsOfElement(cellLineItem || {})}
+        onClose={() => this.handleClose()}
+        onSave={() => this.handleSubmit(cellLineItem)}
+        saveDisabled={saveDisabled}
       >
         <div className="tabs-container--with-borders">
           <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="cell-line-details-tab">
@@ -221,7 +114,7 @@ class CellLineDetails extends React.Component {
             </Tab>
           </Tabs>
         </div>
-      </DetailCard>
+      </ElementDetailCard>
     );
   }
 }
@@ -235,6 +128,7 @@ CellLineDetails.propTypes = {
     cellLineName: PropTypes.string.isRequired,
     short_label: PropTypes.string.isRequired,
     is_new: PropTypes.bool.isRequired,
+    isNew: PropTypes.bool,
     // eslint-disable-next-line react/forbid-prop-types
     literatures: PropTypes.arrayOf(PropTypes.object),
     disease: PropTypes.string.isRequired

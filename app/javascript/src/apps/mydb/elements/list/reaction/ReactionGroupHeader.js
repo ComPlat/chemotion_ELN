@@ -19,7 +19,7 @@ function ReactionGroupHeader({ group, element }) {
   }, []);
 
   return (
-    <div>
+    <div className="reaction-group-header d-flex flex-grow-1 justify-content-center">
       {showPreviews && (
         <SvgWithPopover
           hasPop

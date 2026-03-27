@@ -202,7 +202,7 @@ class AnalysesContainer extends Component {
       <div className="analysis-container">
         <div className="d-flex justify-content-between mb-3">
           {this.renderModeButton()}
-          <ButtonToolbar className="gap-2">
+          <ButtonToolbar>
             <CommentButton
               toggleCommentBox={this.toggleCommentBox}
               isVisible={commentBoxVisible}

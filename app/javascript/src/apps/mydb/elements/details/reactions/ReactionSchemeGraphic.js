@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Popover, ButtonGroup, Button, OverlayTrigger, Tooltip
+  Popover, ButtonGroup, Button, OverlayTrigger, Tooltip,
+  ButtonToolbar
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan-latest';
@@ -173,7 +174,7 @@ export default function ReactionSchemeGraphic({
           {...svgProps}
         />
       </div>
-      <div className="Reaction-scheme-graphic__toolbar">
+      <ButtonToolbar className="Reaction-scheme-graphic__toolbar">
         <ConfigOverlayButton
           popperConfig={popperConfigAboveToolbar}
           popoverSettings={popoverSettings}
@@ -188,14 +189,13 @@ export default function ReactionSchemeGraphic({
             <Button
               size="xsm"
               variant="light"
-              className="m-1"
               onClick={onRefresh}
             >
               <i className={`fa fa-refresh ${isRefreshing ? 'fa-spin' : ''}`} />
             </Button>
           </OverlayTrigger>
         )}
-      </div>
+      </ButtonToolbar>
     </div>
   );
 }

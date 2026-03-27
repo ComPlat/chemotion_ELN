@@ -39,7 +39,8 @@ export default class NumeralInputWithUnitsCompo extends Component {
     const hasChanged = nextProps.value !== this.props.value
       || nextProps.block !== this.props.block
       || nextProps.metricPrefix !== this.props.metricPrefix
-      || nextProps.variant !== this.props.variant
+      || nextProps.active !== this.props.active
+      || nextProps.isError !== this.props.isError
       || nextProps.disabled !== this.props.disabled
       || nextState.value !== this.state.value
       || nextState.block !== this.state.block
@@ -150,8 +151,8 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   render() {
     const {
-      size, variant, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol, className,
-      overlayMessage
+      size, disabled, label, unit, name, showInfoTooltipTotalVol, showInfoTooltipRequiredVol, className,
+      overlayMessage, active, isError
     } = this.props;
     const {
       showString, value, metricPrefix, currentPrecision, valueString, block
@@ -176,14 +177,15 @@ export default class NumeralInputWithUnitsCompo extends Component {
       'l', 'ml', 'μl', 'mol/l', 'g/ml'
     ];
     const unitDisplayMode = alwaysAllowDisplayUnit.includes(unit) ? false : inputDisabled;
-    // BsStyle-s for Input and buttonAfter have differences
-    const variantBtnAfter = variant === 'error' ? 'danger' : variant;
+    const isActiveUnit = Boolean(active);
+    const hasErrorState = Boolean(isError);
     if (unit !== 'n') {
       const prefixSwitch = (
         <Button
           disabled={unitDisplayMode}
           onClick={() => { this.togglePrefix(unit); }}
-          variant={variantBtnAfter}
+          variant={hasErrorState ? 'danger' : 'light'}
+          active={isActiveUnit}
           size={size}
           className="px-1"
         >
@@ -249,7 +251,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
                 <Form.Control
                   type="text"
                   disabled={inputDisabled}
-                  variant={variant}
+                  variant={hasErrorState ? 'danger' : undefined}
                   size={size}
                   value={displayValue || ''}
                   onChange={event => this._handleInputValueChange(event)}
@@ -297,7 +299,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
           <Form.Control
             type="text"
             disabled={inputDisabled}
-            variant={variant}
+            variant={hasErrorState ? 'danger' : undefined}
             size={size}
             value={displayValue || ''}
             onChange={event => this._handleInputValueChange(event)}
@@ -323,12 +325,13 @@ NumeralInputWithUnitsCompo.propTypes = {
   precision: PropTypes.number,
   disabled: PropTypes.bool,
   label: PropTypes.node,
-  variant: PropTypes.string,
   size: PropTypes.string,
   name: PropTypes.string,
   showInfoTooltipTotalVol: PropTypes.bool,
   showInfoTooltipRequiredVol: PropTypes.bool,
   overlayMessage: PropTypes.string,
+  active: PropTypes.bool,
+  isError: PropTypes.bool,
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
@@ -338,9 +341,10 @@ NumeralInputWithUnitsCompo.defaultProps = {
   units: [],
   disabled: false,
   block: false,
-  variant: 'light',
   name: '',
   showInfoTooltipTotalVol: false,
   showInfoTooltipRequiredVol: false,
   overlayMessage: null,
+  active: false,
+  isError: false,
 };

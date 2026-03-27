@@ -47,7 +47,7 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
   renderButtons(node) {
     const schema = node.data;
     return (
-      <ButtonToolbar className=" justify-content-end gap-1">
+      <ButtonToolbar className=" justify-content-end">
         <Button variant="warning" size="sm" onClick={() => this.props.onUse(schema)}>
           Use
         </Button>

@@ -32,7 +32,6 @@ export default function ConfigOverlayButton({
         <Button
           size="xsm"
           variant="light"
-          className="m-1"
         >
           <i className="fa fa-sliders" />
         </Button>

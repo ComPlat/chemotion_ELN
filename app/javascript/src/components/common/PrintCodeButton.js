@@ -69,17 +69,15 @@ export default function PrintCodeButton({ element, analyses }) {
     <>
       {/* Overlay for the button */}
       <OverlayTrigger
-        placement="top"
-        delayShow={500}
         overlay={tooltip}
       >
         <Dropdown>
           <Dropdown.Toggle
-            variant="light"
+            variant="secondary"
             disabled={element.isNew}
-            size="xxsm"
+            size="sm"
           >
-            <i className="fa fa-barcode fa-lg" />
+            <i className="fa fa-barcode" />
           </Dropdown.Toggle>
 
           {createPortal(

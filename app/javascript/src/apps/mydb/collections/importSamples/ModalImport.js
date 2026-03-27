@@ -1035,7 +1035,7 @@ export default class ModalImport extends React.Component {
                 onCancel={(updatedRowData) => this.handleCancelValidation(updatedRowData)}
               />
             )}
-            <ButtonToolbar className="justify-content-end mt-2 gap-1">
+            <ButtonToolbar className="justify-content-end mt-2">
               <Button variant="light" onClick={() => onHide()}>Cancel</Button>
               <Button
                 variant="primary"
