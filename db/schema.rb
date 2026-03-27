@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_02_20_000002) do
+ActiveRecord::Schema.define(version: 2026_03_25_085008) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -172,7 +172,6 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.jsonb "log_data"
-    t.bigint "sequence_based_macromolecule_id"
     t.bigint "sequence_based_macromolecule_sample_id"
     t.index ["sequence_based_macromolecule_sample_id"], name: "idx_chemicals_sbmm_sample_id"
   end
@@ -187,30 +186,37 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
     t.index ["source", "source_id"], name: "index_code_logs_on_source_and_source_id"
   end
 
+  create_table "collection_shares", force: :cascade do |t|
+    t.bigint "collection_id"
+    t.bigint "shared_with_id", null: false
+    t.integer "permission_level", default: 0, null: false
+    t.integer "celllinesample_detail_level", default: 0, null: false
+    t.integer "devicedescription_detail_level", default: 0, null: false
+    t.integer "element_detail_level", default: 0, null: false
+    t.integer "reaction_detail_level", default: 0, null: false
+    t.integer "researchplan_detail_level", default: 0, null: false
+    t.integer "sample_detail_level", default: 0, null: false
+    t.integer "screen_detail_level", default: 0, null: false
+    t.integer "sequencebasedmacromoleculesample_detail_level", default: 0, null: false
+    t.integer "wellplate_detail_level", default: 0, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["collection_id"], name: "index_collection_shares_on_collection_id"
+    t.index ["shared_with_id"], name: "index_collection_shares_on_shared_with_id"
+  end
+
   create_table "collections", id: :serial, force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "ancestry", default: "/", null: false, collation: "C"
     t.text "label", null: false
-    t.integer "shared_by_id"
-    t.boolean "is_shared", default: false
-    t.integer "permission_level", default: 0
-    t.integer "sample_detail_level", default: 10
-    t.integer "reaction_detail_level", default: 10
-    t.integer "wellplate_detail_level", default: 10
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "position"
-    t.integer "screen_detail_level", default: 10
     t.boolean "is_locked", default: false
     t.datetime "deleted_at"
-    t.boolean "is_synchronized", default: false, null: false
-    t.integer "researchplan_detail_level", default: 10
-    t.integer "element_detail_level", default: 10
     t.jsonb "tabs_segment", default: {}
-    t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
-    t.integer "devicedescription_detail_level", default: 10
-    t.integer "sequencebasedmacromoleculesample_detail_level", default: 10
+    t.boolean "shared", default: false, null: false
     t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -285,6 +291,10 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
     t.bigint "collection_id"
     t.bigint "sequence_based_macromolecule_sample_id"
     t.datetime "deleted_at"
+    t.index ["collection_id", "sequence_based_macromolecule_sample_id"], name: "idx_collections_sbmm_sample_unique_joins", unique: true
+    t.index ["collection_id"], name: "idx_collections_sbmm_sample_collection"
+    t.index ["deleted_at"], name: "idx_collections_sbmm_sample_deleted_at"
+    t.index ["sequence_based_macromolecule_sample_id"], name: "idx_collections_sbmm_sample_sample"
   end
 
   create_table "collections_vessels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -972,6 +982,45 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
     t.index ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id"
   end
 
+  create_table "post_translational_modifications", force: :cascade do |t|
+    t.boolean "phosphorylation_enabled", default: false, null: false
+    t.boolean "phosphorylation_ser_enabled", default: false, null: false
+    t.string "phosphorylation_ser_details", default: ""
+    t.boolean "phosphorylation_thr_enabled", default: false, null: false
+    t.string "phosphorylation_thr_details", default: ""
+    t.boolean "phosphorylation_tyr_enabled", default: false, null: false
+    t.string "phosphorylation_tyr_details", default: ""
+    t.boolean "glycosylation_enabled", default: false, null: false
+    t.boolean "glycosylation_n_linked_asn_enabled", default: false, null: false
+    t.string "glycosylation_n_linked_asn_details", default: ""
+    t.boolean "glycosylation_o_linked_lys_enabled", default: false, null: false
+    t.string "glycosylation_o_linked_lys_details", default: ""
+    t.boolean "glycosylation_o_linked_ser_enabled", default: false, null: false
+    t.string "glycosylation_o_linked_ser_details", default: ""
+    t.boolean "glycosylation_o_linked_thr_enabled", default: false, null: false
+    t.string "glycosylation_o_linked_thr_details", default: ""
+    t.boolean "acetylation_enabled", default: false, null: false
+    t.float "acetylation_lysin_number"
+    t.boolean "hydroxylation_enabled", default: false, null: false
+    t.boolean "hydroxylation_lys_enabled", default: false, null: false
+    t.string "hydroxylation_lys_details", default: "t"
+    t.boolean "hydroxylation_pro_enabled", default: false, null: false
+    t.string "hydroxylation_pro_details", default: "t"
+    t.boolean "methylation_enabled", default: false, null: false
+    t.boolean "methylation_arg_enabled", default: false, null: false
+    t.string "methylation_arg_details", default: ""
+    t.boolean "methylation_glu_enabled", default: false, null: false
+    t.string "methylation_glu_details", default: ""
+    t.boolean "methylation_lys_enabled", default: false, null: false
+    t.string "methylation_lys_details", default: ""
+    t.boolean "other_modifications_enabled", default: false, null: false
+    t.string "other_modifications_details", default: ""
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["deleted_at"], name: "idx_sbmm_ptm_deleted_at"
+  end
+
   create_table "predictions", id: :serial, force: :cascade do |t|
     t.string "predictable_type"
     t.integer "predictable_id"
@@ -1005,6 +1054,25 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
     t.boolean "show_sample_short_label", default: false
     t.index ["deleted_at"], name: "index_profiles_on_deleted_at"
     t.index ["user_id"], name: "index_profiles_on_user_id"
+  end
+
+  create_table "protein_sequence_modifications", force: :cascade do |t|
+    t.boolean "modification_n_terminal", default: false, null: false
+    t.string "modification_n_terminal_details", default: ""
+    t.boolean "modification_c_terminal", default: false, null: false
+    t.string "modification_c_terminal_details", default: ""
+    t.boolean "modification_insertion", default: false, null: false
+    t.string "modification_insertion_details", default: ""
+    t.boolean "modification_deletion", default: false, null: false
+    t.string "modification_deletion_details", default: ""
+    t.boolean "modification_mutation", default: false, null: false
+    t.string "modification_mutation_details", default: ""
+    t.boolean "modification_other", default: false, null: false
+    t.string "modification_other_details", default: ""
+    t.datetime "deleted_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["deleted_at"], name: "idx_sbmm_psm_deleted_at"
   end
 
   create_table "reactions", id: :serial, force: :cascade do |t|
@@ -1042,9 +1110,9 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
     t.boolean "gaseous", default: false
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.jsonb "log_data"
+    t.boolean "weight_percentage", default: false
     t.decimal "volume", precision: 10, scale: 4
     t.boolean "use_reaction_volume", default: false, null: false
-    t.boolean "weight_percentage"
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1058,12 +1126,12 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
     t.integer "position"
     t.datetime "deleted_at"
     t.boolean "show_label", default: false, null: false
+    t.boolean "reference", default: false, null: false
     t.float "equivalent"
     t.float "weight_percentage"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.jsonb "log_data"
-    t.boolean "reference", default: false, null: false
     t.index ["deleted_at"], name: "idx_rxn_reactant_sbmm_on_deleted"
     t.index ["reaction_id"], name: "idx_rxn_reactant_sbmm_on_rxn_id"
     t.index ["sequence_based_macromolecule_sample_id"], name: "idx_rxn_reactant_sbmm_on_sbmm_id"
@@ -1089,6 +1157,7 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
     t.boolean "weight_percentage_reference", default: false
     t.float "weight_percentage"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
+    t.index ["sample_id", "type"], name: "index_reactions_samples_on_sample_id_type"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
 
@@ -1289,6 +1358,7 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
+    t.index ["short_label"], name: "index_samples_on_short_label"
     t.index ["user_id"], name: "index_samples_on_user_id"
   end
 
@@ -1450,11 +1520,9 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
     t.string "purification_method", default: ""
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.boolean "inventory_sample", default: false, null: false
-    t.float "equivalent"
-    t.float "weight_percentage"
     t.float "concentration_rt_value"
     t.string "concentration_rt_unit", default: "mol/L", null: false
+    t.boolean "inventory_sample", default: false, null: false
     t.index ["ancestry"], name: "idx_sbmm_samples_ancestry", opclass: :varchar_pattern_ops
     t.index ["deleted_at"], name: "idx_sbmm_samples_deleted_at"
     t.index ["inventory_sample"], name: "idx_sbmm_samples_inventory_sample"
@@ -1512,29 +1580,6 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["channel_id", "user_id"], name: "index_subscriptions_on_channel_id_and_user_id", unique: true
-  end
-
-  create_table "sync_collections_users", id: :serial, force: :cascade do |t|
-    t.integer "user_id"
-    t.integer "collection_id"
-    t.integer "shared_by_id"
-    t.integer "permission_level", default: 0
-    t.integer "sample_detail_level", default: 0
-    t.integer "reaction_detail_level", default: 0
-    t.integer "wellplate_detail_level", default: 0
-    t.integer "screen_detail_level", default: 0
-    t.string "fake_ancestry"
-    t.integer "researchplan_detail_level", default: 10
-    t.string "label"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.integer "element_detail_level", default: 10
-    t.integer "celllinesample_detail_level", default: 10
-    t.integer "devicedescription_detail_level", default: 10
-    t.integer "sequencebasedmacromoleculesample_detail_level", default: 10
-    t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
-    t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id"
-    t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"
   end
 
   create_table "text_templates", id: :serial, force: :cascade do |t|
@@ -1732,7 +1777,8 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
   end
 
   add_foreign_key "chemicals", "sequence_based_macromolecule_samples"
-  add_foreign_key "chemicals", "sequence_based_macromolecules"
+  add_foreign_key "collection_shares", "collections"
+  add_foreign_key "collection_shares", "users", column: "shared_with_id"
   add_foreign_key "collections", "inventories"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "collections"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "sequence_based_macromolecule_samples"
@@ -1744,6 +1790,8 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
+  add_foreign_key "sequence_based_macromolecule_samples", "sequence_based_macromolecules"
+  add_foreign_key "sequence_based_macromolecule_samples", "users"
   create_function :user_instrument, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
        RETURNS TABLE(instrument text)
@@ -2619,75 +2667,61 @@ ActiveRecord::Schema.define(version: 2026_02_20_000002) do
   SQL
 
 
-  create_trigger :logidze_on_attachments, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_chemicals, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_chemicals BEFORE INSERT OR UPDATE ON public.chemicals FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_components, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_components BEFORE INSERT OR UPDATE ON public.components FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_containers, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_containers BEFORE INSERT OR UPDATE ON public.containers FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_device_descriptions, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_device_descriptions BEFORE INSERT OR UPDATE ON public.device_descriptions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_elemental_compositions, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_elemental_compositions BEFORE INSERT OR UPDATE ON public.elemental_compositions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :lab_trg_layers_changes, sql_definition: <<-SQL
-      CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()
-  SQL
-  create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
-      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
-  SQL
   create_trigger :logidze_on_reactions, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_reactions BEFORE INSERT OR UPDATE ON public.reactions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_reactions_samples, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_reactions_samples BEFORE INSERT OR UPDATE ON public.reactions_samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_research_plan_metadata, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plan_metadata BEFORE INSERT OR UPDATE ON public.research_plan_metadata FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_research_plans, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plans BEFORE INSERT OR UPDATE ON public.research_plans FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_research_plans_wellplates, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_research_plans_wellplates BEFORE INSERT OR UPDATE ON public.research_plans_wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
-  SQL
-  create_trigger :logidze_on_residues, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_residues BEFORE INSERT OR UPDATE ON public.residues FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_samples, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_samples BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
-  create_trigger :logidze_on_screens, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  create_trigger :logidze_on_wells, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
   create_trigger :logidze_on_wellplates, sql_definition: <<-SQL
       CREATE TRIGGER logidze_on_wellplates BEFORE INSERT OR UPDATE ON public.wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
-  create_trigger :logidze_on_wells, sql_definition: <<-SQL
-      CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  create_trigger :logidze_on_screens, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_screens BEFORE INSERT OR UPDATE ON public.screens FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_residues, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_residues BEFORE INSERT OR UPDATE ON public.residues FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_elemental_compositions, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_elemental_compositions BEFORE INSERT OR UPDATE ON public.elemental_compositions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_containers, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_containers BEFORE INSERT OR UPDATE ON public.containers FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_attachments, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_attachments BEFORE INSERT OR UPDATE ON public.attachments FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_research_plans, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plans BEFORE INSERT OR UPDATE ON public.research_plans FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_reactions_samples, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_reactions_samples BEFORE INSERT OR UPDATE ON public.reactions_samples FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :update_users_matrix_trg, sql_definition: <<-SQL
+      CREATE TRIGGER update_users_matrix_trg AFTER INSERT OR UPDATE ON public.matrices FOR EACH ROW EXECUTE FUNCTION update_users_matrix()
+  SQL
+  create_trigger :logidze_on_research_plan_metadata, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plan_metadata BEFORE INSERT OR UPDATE ON public.research_plan_metadata FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_research_plans_wellplates, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_research_plans_wellplates BEFORE INSERT OR UPDATE ON public.research_plans_wellplates FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_chemicals, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_chemicals BEFORE INSERT OR UPDATE ON public.chemicals FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_device_descriptions, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_device_descriptions BEFORE INSERT OR UPDATE ON public.device_descriptions FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :logidze_on_components, sql_definition: <<-SQL
+      CREATE TRIGGER logidze_on_components BEFORE INSERT OR UPDATE ON public.components FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
+  SQL
+  create_trigger :lab_trg_layers_changes, sql_definition: <<-SQL
+      CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()
   SQL
 
-  create_view "v_samples_collections", sql_definition: <<-SQL
-      SELECT cols.id AS cols_id,
-      cols.user_id AS cols_user_id,
-      cols.sample_detail_level AS cols_sample_detail_level,
-      cols.wellplate_detail_level AS cols_wellplate_detail_level,
-      cols.shared_by_id AS cols_shared_by_id,
-      cols.is_shared AS cols_is_shared,
-      samples.id AS sams_id,
-      samples.name AS sams_name
-     FROM ((collections cols
-       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
-       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
-    WHERE (cols.deleted_at IS NULL);
-  SQL
   create_view "literal_groups", sql_definition: <<-SQL
       SELECT lits.element_type,
       lits.element_id,

@@ -10,7 +10,6 @@
 #  deleted_at                             :datetime
 #  updated_at                             :datetime
 #  sample_id                              :integer
-#  sequence_based_macromolecule_id        :bigint
 #  sequence_based_macromolecule_sample_id :bigint
 #
 # Indexes
@@ -19,7 +18,6 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (sequence_based_macromolecule_id => sequence_based_macromolecules.id)
 #  fk_rails_...  (sequence_based_macromolecule_sample_id => sequence_based_macromolecule_samples.id)
 #
 require 'rails_helper'
