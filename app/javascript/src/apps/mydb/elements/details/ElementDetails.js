@@ -25,6 +25,7 @@ import VesselTemplateCreate from 'src/apps/mydb/elements/details/vessels/VesselT
 import SequenceBasedMacromoleculeSampleDetails from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleDetails';
 import LiteratureDetails from 'src/apps/mydb/elements/details/literature/LiteratureDetails';
 import ElementIcon from 'src/components/common/ElementIcon';
+import CreateElementButton from '../../../../components/navigation/CreateElementButton';
 
 const tabInfoHash = {
   metadata: {
@@ -267,12 +268,15 @@ export default class ElementDetails extends Component {
       ));
 
     return (
-      <div className="tabs-container--with-full-height">
+      <div className="elements-details tabs-container--with-full-height">
+        <div className="d-flex justify-content-end">
+          <CreateElementButton />
+        </div>
         <Tabs
           id="elements-tabs"
           activeKey={activeKey}
           onSelect={DetailActions.select}
-          className="surface-tabs"
+          className="elements-details__tabs surface-tabs"
         >
           {selectedElements}
         </Tabs>
