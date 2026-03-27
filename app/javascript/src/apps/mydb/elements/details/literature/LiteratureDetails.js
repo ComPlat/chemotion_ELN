@@ -30,6 +30,7 @@ import LiteratureMap from 'src/models/LiteratureMap';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { copyToClipboard } from 'src/utilities/clipboard';
 import CreateButton from 'src/components/common/CreateButton';
@@ -305,6 +306,7 @@ export default class LiteratureDetails extends Component {
   }
 
   render() {
+    const { literatureMap } = this.props;
     const {
       selectedRefs,
       sortedIds,
@@ -328,10 +330,11 @@ export default class LiteratureDetails extends Component {
 
     return (
       <DetailCard
-        titleIcon={<ElementIcon element={this.props.literatureMap} />}
+        titleIcon={<ElementIcon element={literatureMap} />}
         title="References for selected elements"
         headerToolbar={detailHeaderButton(copyButtonProps)}
         footerToolbar={detailFooterButton(copyButtonProps)}
+        onClose={() => DetailActions.close(literatureMap, true)}
       >
         <Row className="mb-2 align-items-center">
           <Col xs={8}>
