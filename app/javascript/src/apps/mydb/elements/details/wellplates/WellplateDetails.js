@@ -1,15 +1,13 @@
-/* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import html2pdf from 'html2pdf.js/src';
 import PropTypes from 'prop-types';
 import {
-  Card, ListGroup, ListGroupItem, Button, ButtonToolbar, Tabs, Tab, Tooltip, OverlayTrigger
+  Card, ListGroup, ListGroupItem, Tabs, Tab
 } from 'react-bootstrap';
 import { findIndex } from 'lodash';
 import Immutable from 'immutable';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import Wellplate from 'src/apps/mydb/elements/details/wellplates/designerTab/Wellplate';
@@ -20,20 +18,18 @@ import WellplateDetailsContainers from
 // eslint-disable-next-line import/no-named-as-default
 import WellplateDetailsAttachments from
   'src/apps/mydb/elements/details/wellplates/attachmentsTab/WellplateDetailsAttachments';
-import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import Attachment from 'src/models/Attachment';
 import Utils from 'src/utilities/Functions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import ConfirmClose from 'src/components/common/ConfirmClose';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
+import DetailCardButton from 'src/apps/mydb/elements/details/DetailCardButton';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
-import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
@@ -42,9 +38,10 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import WellplateModel from 'src/models/Wellplate';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
-import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
+import { EditUserLabels } from 'src/components/UserLabels';
 
 export default class WellplateDetails extends Component {
+  /* eslint-disable react/destructuring-assignment */
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
 
@@ -241,65 +238,20 @@ export default class WellplateDetails extends Component {
     }
   }
 
-  wellplateHeader(wellplate) {
-    const displaySaveButton = wellplate.isEdited || wellplate.isNew
-    const datetp = formatTimeStampsOfElement(wellplate || {});
-
-    return (
-      <div className="d-flex justify-content-between">
-        <div className="d-flex justify-content-start gap-1">
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
-            <span>
-              <i className="icon-wellplate" />
-              <span className="mx-2">{wellplate.name}</span>
-            </span>
-          </OverlayTrigger>
-          <ShowUserLabels element={wellplate} />
-          <ElementCollectionLabels element={wellplate} placement="right" />
-          <HeaderCommentSection element={wellplate} />
-        </div>
-        <div className="d-flex justify-content-end gap-2">
-          <PrintCodeButton element={wellplate} />
-          {displaySaveButton &&
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
-              <Button
-                variant="warning"
-                size="xxsm"
-                onClick={() => this.handleSubmit()}
-              >
-                <i className="fa fa-floppy-o " />
-              </Button>
-            </OverlayTrigger>
-          }
-          <ConfirmClose el={wellplate} />
-        </div>
-      </div>
-    );
-  }
-
   wellplateFooter() {
     const { wellplate } = this.state;
-
     return (
       <>
-        <Button variant="primary" onClick={() => DetailActions.close(wellplate)}>Close</Button>
-        {wellplate.changed && (
-          <Button variant="warning" onClick={() => this.handleSubmit()}>
-            {wellplate.isNew ? 'Create' : 'Save'}
-          </Button>
-        )}
-
         {wellplate && !wellplate.isNew && (
           <ExportSamplesButton type="wellplate" id={wellplate.id} />
         )}
-
-        <Button
-          variant="primary"
+        <DetailCardButton
+          label="Print Wells"
+          iconClass="fa fa-print"
+          header={false}
           onClick={() => this.handlePrint()}
           disabled={wellplate.width > 12}
-        >
-          Print Wells
-        </Button>
+        />
       </>
     );
   }
@@ -420,10 +372,14 @@ export default class WellplateDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <DetailCard
+      <ElementDetailCard
+        element={wellplate}
         isPendingToSave={wellplate.isPendingToSave}
-        header={this.wellplateHeader(wellplate)}
-        footer={this.wellplateFooter()}
+        title={wellplate.name}
+        titleTooltip={formatTimeStampsOfElement(wellplate || {})}
+        footerToolbar={this.wellplateFooter()}
+        onSave={() => this.handleSubmit()}
+        showPrintCode
       >
         <div className="tabs-container--with-borders">
           <ElementDetailSortTab
@@ -444,7 +400,7 @@ export default class WellplateDetails extends Component {
           </Tabs>
           <CommentModal element={wellplate} />
         </div>
-      </DetailCard>
+      </ElementDetailCard>
     );
   }
 }
@@ -452,4 +408,8 @@ export default class WellplateDetails extends Component {
 WellplateDetails.propTypes = {
   wellplate: PropTypes.instanceOf(WellplateModel).isRequired,
   openedFromCollectionId: PropTypes.number,
+};
+
+WellplateDetails.defaultProps = {
+  openedFromCollectionId: null,
 };

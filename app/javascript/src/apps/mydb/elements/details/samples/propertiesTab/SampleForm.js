@@ -208,7 +208,7 @@ export default class SampleForm extends React.Component {
           </Tooltip>
         )}
       >
-        <Button>
+        <Button variant="light">
           <i className="fa fa-info" />
         </Button>
       </OverlayTrigger>
@@ -840,6 +840,10 @@ export default class SampleForm extends React.Component {
           metric = metricPrefixes.indexOf(prefixAmountL) > -1 ? prefixAmountL : 'm';
           break;
         }
+        case 'defined_part_amount': {
+          metric = 'm';
+          break;
+        }
         case 'molecular_mass': {
           metric = 'n';
           break;
@@ -863,7 +867,8 @@ export default class SampleForm extends React.Component {
         title={title}
         disabled={disabled || gasSample || feedstockSample}
         block={block}
-        variant={unit && sample.amount_unit === unit ? 'primary' : 'light'}
+        variant="light"
+        active={Boolean(unit && sample.amount_unit === unit)}
         onChange={(e) => this.handleFieldChanged(field, e)}
         onMetricsChange={(e) => this.handleMetricsChange(e)}
         id={`numInput_${field}`}
@@ -910,7 +915,8 @@ export default class SampleForm extends React.Component {
         title={title}
         disabled={disabled}
         block={block}
-        variant={unit && sample.amount_unit === unit ? 'primary' : 'light'}
+        variant="light"
+        active={Boolean(unit && sample.amount_unit === unit)}
         onChange={(e) => this.handleFieldChanged(field, e)}
       />
     );

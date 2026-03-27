@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 import PropTypes from 'prop-types';
 import React, { useState, useEffect } from 'react';
+import SVG from 'react-inlinesvg';
 import {
   Accordion, Button, Card, Form, Modal, Spinner
 } from 'react-bootstrap';
@@ -19,24 +20,6 @@ const SpecialCharacterPickerIcon = `
   <path d="M12 2C7.03 2 3 6.03 3 11H5C5 7.134 8.134 4 12 4C15.866 4 19 7.134 19 11C19 14.866 15.866 18 12 18C10.673 18 9.402 17.597 8.343 16.828L7 18.172C8.645 19.421 10.735 20 12.999 20C17.97 20 22 15.97 22 11C22 6.03 17.97 2 12 2Z" fill="currentColor"/>
 </svg>
 `;
-
-function InlineSVG({ src }) {
-  const [svgContent, setSvgContent] = useState(null);
-
-  useEffect(() => {
-    fetch(src)
-      .then((res) => res.text())
-      .then((text) => setSvgContent(text))
-      .catch((err) => console.error('SVG load error:', err));
-  }, [src]);
-
-  return (
-    <div
-      className="inline-svg"
-      dangerouslySetInnerHTML={{ __html: svgContent }}
-    />
-  );
-}
 
 function PolymerListModal({
   loading, onShapeSelection, title, onCloseClick
@@ -163,7 +146,7 @@ function PolymerListModal({
                                 }}
                               >
                                 <div className="flex flex-col items-center gap-2">
-                                  <InlineSVG src={`/polymerShapes/${category}/${shape.iconName}.svg`} />
+                                  <SVG src={`/polymerShapes/${category}/${shape.iconName}.svg`} title={shape.label || 'shape'} />
                                 </div>
                               </Button>
                             ))}

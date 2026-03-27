@@ -1,17 +1,18 @@
 # frozen_string_literal: true
 
 require 'roo'
+require 'digest'
+require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 # rubocop:disable Metrics/ClassLength
 module Import
-  # This class handles the import of sample data from Excel files.
-  # It processes the data and tracks any unprocessable entries.
   class ImportSamples
     attr_reader :xlsx, :sheet, :component_sheet, :header, :component_header, :sample_components_data,
                 :mandatory_check, :mandatory_component_check, :rows,
                 :unprocessable, :processed, :collection_id, :current_user_id, :file_name
 
     MOLARITY_UNIT = %r{m/L|mol/L|M}i.freeze
+
     DENSITY_UNIT = %r{g/mL|g/ml}i.freeze
     FLASH_POINT_UNIT = /°C|F|K/i.freeze
 
@@ -46,8 +47,8 @@ module Import
       rescue StandardError => e
         return error_required_fields(e.message)
       end
-      # a flag is set to determine which sheet (sample_component, sample, or chemical_sample) is under processing
-      xlsx.default_sheet = xlsx.sheets.include?('sample_components') ? xlsx.sheets.first : xlsx.default_sheet
+
+      xlsx.default_sheet = xlsx.sheets.include?('sample_components') ? @main_sheet_name : xlsx.default_sheet
 
       begin
         process_all_rows
@@ -61,37 +62,30 @@ module Import
       @xlsx = Roo::Spreadsheet.open(file, extension: @attachment.extname)
       set_main_sheet
       @header = sheet.row(1)
-
       load_component_sheet_if_exists
     end
 
-    # Select the primary sheet (sample or sample_chemicals)
     def set_main_sheet
-      @sheet = if xlsx.sheets.include?('sample')
-                 xlsx.sheet('sample')
-               elsif xlsx.sheets.include?('sample_chemicals')
-                 xlsx.sheet('sample_chemicals')
-               else
-                 xlsx.sheet(xlsx.sheets.first)
-               end
+      @main_sheet_name = if xlsx.sheets.include?('sample')
+                           'sample'
+                         elsif xlsx.sheets.include?('sample_chemicals')
+                           'sample_chemicals'
+                         else
+                           xlsx.sheets.first
+                         end
+      @sheet = xlsx.sheet(@main_sheet_name)
     end
 
-    # Load the component sheet and headers when present
     def load_component_sheet_if_exists
       return unless xlsx.sheets.include?('sample_components')
 
-      # Get the sheet containing the sample components, if it exists
       @component_sheet = xlsx.sheet('sample_components')
-      @component_header = component_sheet.row(1).map(&:to_s).map(&:strip)
-      # Extract unique sample names with components
+      @component_header = component_sheet.row(1).map { |c| c.to_s.strip }
       @sample_with_components = extract_sample_uuids_with_components
     end
 
     def extract_sample_uuids_with_components
-      # Find the column index for the header "sample uuid"
       sample_uuid_col = component_header.index('sample uuid') + 1
-
-      # Collect values from that column, skipping the header
       component_sheet.column(sample_uuid_col).drop(1).compact.uniq
     end
 
@@ -113,43 +107,27 @@ module Import
       return unless component_sheet_exists?
 
       @mandatory_component_check = {}
-
-      # List of required fields to check
       ['molfile', 'smiles', 'cano_smiles', 'canonical smiles'].each do |check|
-        # Check for the header matching exactly (ignoring case and surrounding spaces)
-        @mandatory_component_check[check] = true if component_header.any? do |e|
-                                                      /^\s*#{Regexp.escape(check)}\s*$/i =~ e
-                                                    end
+        @mandatory_component_check[check] = true if component_header.any? { |e| /^\s*#{Regexp.escape(check)}\s*$/i =~ e }
       end
-
-      message = 'Column headers in components sheet should have: molfile, or Smiles (or cano_smiles, canonical smiles)'
-      raise message if @mandatory_component_check.empty?
+      raise 'Column headers in components sheet should have: molfile, or Smiles (or cano_smiles, canonical smiles)' if @mandatory_component_check.empty?
     end
 
     def row_to_hash(row)
       padded_row = row.fill(nil, row.length...@component_header.length)
       raw_hash = @component_header.zip(padded_row).to_h
-
-      # Transform headers using the mapping
       mapped_hash = {}
       raw_hash.each do |key, value|
-        # Remove units from keys
-        clean_key = key.to_s.strip.downcase
-        clean_key = clean_key.gsub(/\s*\([^)]*\)/, '') # Remove anything in parentheses (units)
-        clean_key = clean_key.strip # Remove any extra spaces
-
-        # Convert to component attributes using the mapping
+        clean_key = key.to_s.strip.downcase.gsub(/\s*\([^)]*\)/, '').strip
         mapped_key = Import::ImportComponents::COMPONENT_HEADER_MAPPING[clean_key]
         mapped_hash[mapped_key] = value if mapped_key
       end
-
       mapped_hash
     end
 
     def parse_sample_components_data
       return unless component_sheet_exists?
 
-      # Set the default sheet to 'sample_components'
       xlsx.default_sheet = 'sample_components'
 
       current_sample_uuid = nil
@@ -160,51 +138,62 @@ module Import
         uuid_cell = row_values[sample_uuid_col].to_s.strip
 
         if uuid_cell.present?
-          # This is a new sample uuid
           current_sample_uuid = uuid_cell
           @sample_components_data[current_sample_uuid] = []
         end
 
-        next unless current_sample_uuid # skip rows until a sample uuid is found
+        next unless current_sample_uuid
 
         component_data = row_to_hash(row_values)
         next if component_data.empty?
 
-        # Avoid adding empty rows
         component_attributes = component_data.reject do |k, _|
           k.to_s.downcase.strip.in?(['sample name', 'sample external label', 'sample uuid'])
         end
 
-        if valid_component_data?(component_attributes)
-          @sample_components_data[current_sample_uuid] << component_attributes
-        end
+        @sample_components_data[current_sample_uuid] << component_attributes if valid_component_data?(component_attributes)
       end
     end
 
-    # Proceed only if the component_attributes hash contains at least one non-nil, non-empty value
-    # and the structure? method confirms that the hash has the required structure.
     def valid_component_data?(component_attributes)
       component_attributes.values.any? { |v| !v.nil? && v != '' } && structure?(component_attributes)
     end
 
     def extract_molfile_and_molecule(row, index)
       if molfile?(row)
-        get_data_from_molfile(row)
+        molecule, raw_molfile = get_data_from_molfile(row)
+        if molecule.present?
+          [molecule, raw_molfile]
+        elsif raw_molfile.to_s.include?(Chemotion::MolfilePolymerSupport::POLYMERS_LIST_TAG)
+          # Polymer molfile but molecule not created (e.g. inchikey blank); do not fall back to smiles or we get same dummy molecule for every row.
+          nil
+        elsif smiles?(row)
+          m, _molfile_coord, go_to_next = get_data_from_smiles(row, index)
+          return [m, raw_molfile] if m.present? && !go_to_next
+          nil
+        else
+          nil
+        end
       elsif smiles?(row)
         get_data_from_smiles(row, index)
+      else
+        nil
       end
     end
 
     def process_row(data)
-      row = [header, xlsx.row(data)].transpose.to_h
-      is_decoupled = row['decoupled']
+      raw_row = xlsx.row(data)
+      # Pad row to header length so transpose works when row has fewer columns than header
+      padded_row = raw_row.values_at(0...header.length)
+      row = [header, padded_row].transpose.to_h
+      is_decoupled = row_value_case_insensitive(row, 'decoupled')
       return unless structure?(row) || is_decoupled
 
       rows << row.each_pair { |k, v| v && row[k] = v.to_s }
     end
 
     def process_row_data(row, index)
-      is_decoupled = row['decoupled']
+      is_decoupled = row_value_case_insensitive(row, 'decoupled')
       return Molecule.find_or_create_dummy if is_decoupled && !structure?(row)
 
       molecule, molfile = extract_molfile_and_molecule(row, index)
@@ -235,10 +224,9 @@ module Import
               unprocessable_count += 1
               next
             end
-            sample_save(row, molfile, molecule)
+            sample_save(row, molfile, molecule, i)
           rescue StandardError => _e
             unprocessable_count += 1
-            # Only add to unprocessable if not already added by molecule_not_exist
             @unprocessable << { row: row, index: i } unless @unprocessable.any? { |u| u[:index] == i }
           end
         end
@@ -253,50 +241,89 @@ module Import
 
     def molfile?(row)
       check = determine_sheet(xlsx)
+      return false if check['molfile'].blank?
 
-      check['molfile'].present? && row['molfile'].present?
+      row_value_case_insensitive(row, 'molfile').to_s.present?
     end
 
     def smiles?(row)
       keys = ['smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles']
-
       header_present = keys.any? { |key| determine_sheet(xlsx)[key] }
-      cell_present = keys.any? { |key| row[key].to_s.present? }
-
+      cell_present = keys.any? { |key| row_value_case_insensitive(row, key).to_s.present? }
       header_present && cell_present
     end
 
-    def get_data_from_molfile_and_smiles(row)
-      molfile = row['molfile'].presence
-      if molfile
-        check = determine_sheet(xlsx)
-
-        babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
-        molfile_smiles = babel_info[:smiles]
-        molfile_smiles = Chemotion::OpenBabelService.canon_smiles_to_smiles molfile_smiles if check['smiles']
+    # When Open Babel returns blank inchikey for a PolymersList molfile, create a molecule with a synthetic
+    # inchikey so we can store the full molfile; SVG is generated in the common branch via svg_reprocess.
+    def find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
+      synthetic_inchikey = "POLYMER_#{Digest::SHA256.hexdigest(raw_molfile)}"
+      formula = babel_info[:formula].to_s.presence || ''
+      molecule = Molecule.find_by(inchikey: synthetic_inchikey, is_partial: true, sum_formular: formula)
+      if molecule
+        molecule.molfile = raw_molfile
+      else
+        molecule = Molecule.new(
+          inchikey: synthetic_inchikey,
+          is_partial: true,
+          sum_formular: formula,
+          molfile: raw_molfile,
+        )
       end
-      if molfile_smiles.blank? && (molfile_smiles != row['cano_smiles'] &&
-         molfile_smiles != row['smiles'] && molfile_smiles != row['canonical_smiles'])
-        @unprocessable << { row: row, index: i }
-        go_to_next = true
-      end
-      [go_to_next, molfile]
+      molecule.save!
+      molecule
     end
 
     def get_data_from_molfile(row)
-      molfile = row['molfile'].to_s.strip
-      molfile = "\n#{molfile}" unless molfile.start_with?("\n")
-      molfile = "#{molfile}\n" unless molfile.end_with?("\n")
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+      @polymer_svg_file_after_reprocess = nil
+      raw_molfile = row_value_case_insensitive(row, 'molfile').to_s.strip
+      raw_molfile = unescape_textnode_octal_in_molfile(raw_molfile)
+      # When molfile has > <PolymersList>, use full molfile and Molecule.svg_reprocess so polymers use SvgRenderer.
+      if raw_molfile.include?(Chemotion::MolfilePolymerSupport::POLYMERS_LIST_TAG)
+        # Remove PolymersList, TextNode and clean; then get inchikey from cleaned molfile. If it still fails, create with synthetic inchikey.
+        cleaned = Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
+        if cleaned.blank?
+          return [nil, raw_molfile]
+        end
+
+        molfile_for_babel = cleaned.dup
+        molfile_for_babel = "\n#{molfile_for_babel}" unless molfile_for_babel.start_with?("\n")
+        molfile_for_babel = "#{molfile_for_babel}\n" unless molfile_for_babel.end_with?("\n")
+        babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
+        inchikey = babel_info[:inchikey]
+
+        molecule = if inchikey.present?
+                     Molecule.find_or_create_by_molfile(raw_molfile, babel_info)
+                   else
+                     find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
+                   end
+        if molecule.present?
+          # Use raw_molfile (row's full molfile with PolymersList) for SVG so SvgRenderer can inject polymer images; molecule.molfile may be cleaned/truncated.
+          reprocessed_svg = Molecule.svg_reprocess(nil, raw_molfile, service: :indigo)
+
+          if reprocessed_svg.present?
+            molecule.attach_svg(reprocessed_svg)
+            molecule.molfile = raw_molfile if molecule.molfile.to_s != raw_molfile
+            molecule.save
+          end
+        end
+        return [molecule, raw_molfile]
+      end
+
+      sanitized = sanitize_molfile_for_import(raw_molfile)
+      molfile_for_babel = sanitized.dup
+      molfile_for_babel = "\n#{molfile_for_babel}" unless molfile_for_babel.start_with?("\n")
+      molfile_for_babel = "#{molfile_for_babel}\n" unless molfile_for_babel.end_with?("\n")
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
       inchikey = babel_info[:inchikey]
-      molecule = Molecule.find_or_create_by_molfile(molfile, babel_info) if inchikey.presence
-      [molecule, molfile]
+      molecule = Molecule.find_or_create_by_molfile(molfile_for_babel, babel_info) if inchikey.presence
+      [molecule, raw_molfile]
     end
 
     def assign_molecule_data(molfile_coord, babel_info, inchikey, _row, _index)
       if inchikey.blank?
         go_to_next = true
       else
+        go_to_next = false
         molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: false) do |molecul|
           pubchem_info =
             Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
@@ -310,15 +337,24 @@ module Import
     def get_data_from_smiles(row, index)
       check = determine_sheet(xlsx)
 
-      smiles = (check['smiles'] && row['smiles'].presence) ||
-               (check['cano_smiles'] && row['cano_smiles'].presence) ||
-               (check['canonical_smiles'] && row['canonical_smiles'].presence) ||
-               (check['canonical smiles'] && row['canonical smiles'].presence)
+      smiles = (check['smiles'] && row_value_case_insensitive(row, 'smiles').presence) ||
+               (check['cano_smiles'] && row_value_case_insensitive(row, 'cano_smiles').presence) ||
+               (check['canonical_smiles'] && row_value_case_insensitive(row, 'canonical_smiles').presence) ||
+               (check['canonical smiles'] && row_value_case_insensitive(row, 'canonical smiles').presence)
+      smiles = sanitize_smiles_for_ob(smiles)
+      return nil if smiles.blank?
 
-      inchikey = Chemotion::OpenBabelService.smiles_to_inchikey smiles
-      ori_molf = Chemotion::OpenBabelService.smiles_to_molfile smiles
+      inchikey = Chemotion::OpenBabelService.smiles_to_inchikey(smiles)
+      ori_molf = Chemotion::OpenBabelService.smiles_to_molfile(smiles)
+      return nil if ori_molf.blank?
+
+      ori_molf = "\n#{ori_molf}" unless ori_molf.start_with?("\n")
+      ori_molf = "#{ori_molf}\n" unless ori_molf.end_with?("\n")
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf)
       molfile_coord = Chemotion::OpenBabelService.add_molfile_coordinate(ori_molf)
+      inchikey = babel_info[:inchikey] if inchikey.blank? && babel_info.present?
+      return nil if inchikey.blank?
+
       assign_molecule_data(molfile_coord, babel_info, inchikey, row, index)
     end
 
@@ -348,11 +384,10 @@ module Import
       sample['solvent'] = solvent_column unless solvent_column.empty?
     end
 
-    # format row[field] for melting and boiling point
+    # Format melting/boiling point to interval syntax
     def format_to_interval_syntax(row_field)
       return "[#{-Float::INFINITY}, #{Float::INFINITY}]" if row_field.nil?
 
-      # Regex checks for a range of numbers that are separated by a dash, or a single number
       matches = row_field.scan(/^(-?\d+(?:[.,]\d+)?)(?:\s*-\s*(-?\d+(?:[.,]\d+)?))?$/).flatten.compact
       return "[#{-Float::INFINITY}, #{Float::INFINITY}]" if matches.empty?
 
@@ -466,14 +501,8 @@ module Import
     end
 
     def unit_regex_pattern(db_column)
-      units = {
-        'density' => DENSITY_UNIT,
-        'molarity' => MOLARITY_UNIT,
-        'flash_point' => FLASH_POINT_UNIT,
-      }
-
+      units = { 'density' => DENSITY_UNIT, 'molarity' => MOLARITY_UNIT, 'flash_point' => FLASH_POINT_UNIT }
       if db_column == 'flash_point'
-        # Create a regex pattern for matching the unit as a standalone word
         /(?<!\S)(#{units[db_column]})(?!\S)/
       else
         units[db_column]
@@ -544,7 +573,7 @@ module Import
       chemical.save!
     end
 
-    def validate_sample_and_save(sample, stereo, row)
+    def validate_sample_and_save(sample, stereo, row, index = nil)
       handle_sample_solvent_column(sample, row)
       sample.validate_stereo(stereo)
       sample.collections << @collection
@@ -555,16 +584,37 @@ module Import
       sample.save!
       save_chemical(chemical, sample) if @import_type == 'chemical'
       handle_sample_components(row, sample) if sample_has_components?(row)
+      create_polymer_residue_if_needed(sample, row)
       processed.push(sample)
     end
 
+    def create_polymer_residue_if_needed(sample, row)
+      return if sample.residues.any?
+
+      residue_type = row_value_case_insensitive(row, 'residue_type').to_s.strip
+      has_polymer_molfile = sample.molfile.to_s.include?('> <')
+      return unless residue_type == 'polymer' || has_polymer_molfile
+
+      polymer_type = row_value_case_insensitive(row, 'polymer_type').to_s.strip
+      loading = row_value_case_insensitive(row, 'loading').to_s.strip
+      loading_type = row_value_case_insensitive(row, 'loading_type').to_s.strip
+      custom_info = {}
+      custom_info['polymer_type'] = polymer_type if polymer_type.present?
+      custom_info['loading'] = loading if loading.present?
+      custom_info['loading_type'] = loading_type if loading_type.present?
+
+      sample.residues.create!(residue_type: 'polymer', custom_info: custom_info)
+    rescue StandardError
+      # ignore validation/creation errors
+    end
+
     def sample_has_components?(sample_row)
-      sample_uuid = sample_row['sample uuid']
+      sample_uuid = row_value_case_insensitive(sample_row, 'sample uuid')
       sample_uuid.present? && @sample_with_components.include?(sample_uuid)
     end
 
     def handle_sample_components(sample_row, sample)
-      sample_uuid = sample_row['sample uuid']
+      sample_uuid = row_value_case_insensitive(sample_row, 'sample uuid')
       sample_components_data = @sample_components_data.with_indifferent_access[sample_uuid]
       return if sample_components_data.blank?
 
@@ -597,6 +647,52 @@ module Import
       xlsx.default_sheet == 'sample_components' ? @mandatory_component_check : mandatory_check
     end
 
+    def row_value_case_insensitive(row, key)
+      key_str = key.to_s.strip
+      found = row.keys.find { |k| k.to_s.strip.casecmp(key_str).zero? }
+      row[found] if found
+    end
+
+    # Remove control chars and BOM so Open Babel accepts the SMILES string (e.g. from Excel).
+    def sanitize_smiles_for_ob(smiles)
+      return nil if smiles.nil?
+
+      s = smiles.to_s.encode('UTF-8', invalid: :replace, undef: :replace)
+      s = s.gsub(/\p{C}+/, ' ').strip
+      s.presence
+    end
+
+    # Remove PolymersList, TextNode and other SDF blocks, then keep only CTAB (up to M  END).
+    # Use this cleaned molfile to get inchikey from Open Babel; if it still fails, create molecule with synthetic inchikey.
+    def clean_molfile_for_inchikey(raw_molfile)
+      Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
+    end
+
+    # Keep only the CTAB (up to and including M END). Strip SDF blocks (e.g. > <...>) that can
+    # cause molecule_info_from_molfile to return blank inchikey.
+    def sanitize_molfile_for_import(molfile)
+      Chemotion::MolfilePolymerSupport.keep_only_ctab(molfile)
+    end
+
+    # Restore Unicode in TextNode labels: Excel/export can turn e.g. ∀ into literal \342\210\200
+    # (octal UTF-8 byte sequences). Convert them back to the actual UTF-8 characters.
+    # Only match the exact "> <TextNode>" ... "> </TextNode>" block so we do not alter "> <PolymersList>" or other SDF tags.
+    def unescape_textnode_octal_in_molfile(molfile)
+      return molfile if molfile.blank?
+
+      molfile = molfile.to_s
+      return molfile unless molfile.include?('> <TextNode>')
+
+      molfile.gsub(%r{> <TextNode>\s*([\s\S]*?)\s*> </TextNode>}i) do
+        content = Regexp.last_match(1)
+        converted = content.gsub(/(?:\\[0-7]{1,3})+/) do |seq|
+          bytes = seq.scan(/\\([0-7]{1,3})/).flatten.map { |o| o.to_i(8) }
+          bytes.pack('C*').force_encoding('UTF-8')
+        end
+        "> <TextNode>\n#{converted}\n> </TextNode>"
+      end
+    end
+
     def create_sample_and_assign_molecule(current_user_id, molfile, molecule)
       sample = Sample.new(created_by: current_user_id)
       sample.molfile = molfile
@@ -604,7 +700,7 @@ module Import
       sample
     end
 
-    def sample_save(row, molfile, molecule)
+    def sample_save(row, molfile, molecule, index = nil)
       sample = create_sample_and_assign_molecule(current_user_id, molfile, molecule)
       stereo = {}
       header.each do |field|
@@ -612,11 +708,12 @@ module Import
         map_column = ReportHelpers::EXP_MAP_ATTR[:sample].values.find { |e| e[1] == "\"#{field}\"" }
         process_fields(sample, map_column, field, row, molecule)
       end
-      validate_sample_and_save(sample, stereo, row)
+      validate_sample_and_save(sample, stereo, row, index)
     end
 
     def process_all_rows
-      (2..sheet.last_row).each do |data|
+      last_row = sheet.last_row
+      (2..last_row).each do |data|
         process_row(data)
       end
 
@@ -637,41 +734,9 @@ module Import
     end
 
     def excluded_fields
-      [
-        'id',
-        # 'name',
-        # 'target_amount_value',
-        # 'target_amount_unit',
-        'created_at',
-        'updated_at',
-        # 'description',
-        'molecule_id',
-        'molfile',
-        # 'purity',
-        # 'solvent',
-        'impurities',
-        # 'location',
-        # 'is_top_secret',
-        # 'dry_solvent',
-        'ancestry',
-        # 'external_label',
-        'created_by',
-        'short_label',
-        # 'real_amount_value',
-        # 'real_amount_unit',
-        # 'imported_readout',
-        'deleted_at',
-        'sample_svg_file',
-        'user_id',
-        'identifier',
-        # 'density',
-        # 'melting_point',
-        # 'boiling_point',
-        'fingerprint_id',
-        # 'xref',
-        # 'molarity_value',
-        # 'molarity_unit',
-        'molecule_name_id',
+      %w[
+        id created_at updated_at molecule_id molfile impurities ancestry created_by
+        short_label deleted_at sample_svg_file user_id identifier fingerprint_id molecule_name_id
       ]
     end
 

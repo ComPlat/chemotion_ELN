@@ -70,7 +70,7 @@ export default class ModalImportCollection extends React.Component {
     const { onHide } = this.props;
     const { processing } = this.state;
     const bStyle = processing === true ? 'danger' : 'warning';
-    const bClass = processing === true ? 'fa fa-spinner fa-pulse fa-fw' : 'fa fa-file-text-o';
+    const bClass = processing === true ? 'fa fa-spinner fa-pulse' : 'fa fa-file-text-o';
     const bTitle = processing === true ? 'Importing' : 'Import';
 
     return (
@@ -80,7 +80,7 @@ export default class ModalImportCollection extends React.Component {
         </Modal.Header>
         <Modal.Body>
           {this.dropzoneOrfilePreview()}
-          <ButtonToolbar className="mt-2 justify-content-end gap-1">
+          <ButtonToolbar className="mt-2 justify-content-end">
             <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
             <Button variant={bStyle} onClick={() => this.handleClick()} disabled={this.isDisabled()}>
               <i className={bClass} />

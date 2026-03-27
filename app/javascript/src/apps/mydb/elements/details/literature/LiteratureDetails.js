@@ -3,8 +3,6 @@ import PropTypes from 'prop-types';
 import {
   Table,
   Button,
-  ListGroup,
-  ListGroupItem,
   Row,
   Col
 } from 'react-bootstrap';
@@ -22,6 +20,11 @@ import {
   literatureContent
 } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementIcon from 'src/components/common/ElementIcon';
+import {
+  detailHeaderButton,
+  detailFooterButton,
+} from 'src/apps/mydb/elements/details/DetailCardButton';
 import Literature from 'src/models/Literature';
 import LiteratureMap from 'src/models/LiteratureMap';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
@@ -30,31 +33,33 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { copyToClipboard } from 'src/utilities/clipboard';
+import CreateButton from 'src/components/common/CreateButton';
 
 const Cite = require('citation-js');
 
 const ElementLink = ({ literature }) => {
   const {
-    external_label,
-    short_label,
+    external_label: externalLabel,
+    short_label: shortLabel,
     name,
-    element_type,
-    element_id,
+    element_id: elementId,
   } = literature;
-  const type = element_type && element_type.toLowerCase();
+
   return (
     <Button
-      title={`${external_label ? external_label.concat(' - ') : ''}${name}`}
+      title={`${externalLabel ? externalLabel.concat(' - ') : ''}${name}`}
+      variant="light"
       onClick={() => {
         const { uri } = Aviator.getCurrentRequest();
         const uriArray = uri.split(/\//);
-        if (type && element_id) {
-          Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${element_id}`);
+        const elementType = literature.element_type && literature.element_type.toLowerCase();
+        if (elementType && elementId) {
+          Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${elementType}/${elementId}`);
         }
       }}
     >
-      <i className={`me-2 ${element_type ? `icon-${type}` : ''}`} />
-      {short_label}
+      <ElementIcon element={literature} className="me-2" />
+      {shortLabel}
     </Button>
   );
 };
@@ -140,7 +145,6 @@ export default class LiteratureDetails extends Component {
       sortedIds: [],
       selectedRefs: new Immutable.Map()
     };
-    this.onClose = this.onClose.bind(this);
     this.handleUIStoreChange = this.handleUIStoreChange.bind(this);
     this.loadSelectedReferences = this.loadSelectedReferences.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -179,10 +183,6 @@ export default class LiteratureDetails extends Component {
 
   componentWillUnmount() {
     UIStore.unlisten(this.handleUIStoreChange);
-  }
-
-  onClose() {
-    DetailActions.close(this.props.literatureMap, true);
   }
 
   handleUIStoreChange(state) {
@@ -305,26 +305,8 @@ export default class LiteratureDetails extends Component {
     });
   }
 
-  literatureHeader() {
-    return (
-      <div className="d-flex justify-content-between">
-        <span>
-          <i className="fa fa-book me-1" />
-          References for selected elements
-        </span>
-        <Button
-          key="closeBtn"
-          onClick={this.onClose}
-          variant="danger"
-          size="xxsm"
-        >
-          <i className="fa fa-times" />
-        </Button>
-      </div>
-    );
-  }
-
   render() {
+    const { literatureMap } = this.props;
     const {
       selectedRefs,
       sortedIds,
@@ -339,8 +321,21 @@ export default class LiteratureDetails extends Component {
 
     const contentElements = uniqBy(elements).join('\n');
 
+    const copyButtonProps = {
+      onClick: () => copyToClipboard(contentElements),
+      iconClass: 'fa fa-clipboard',
+      label: 'Copy to Clipboard',
+      variant: 'primary',
+    };
+
     return (
-      <DetailCard header={this.literatureHeader()}>
+      <DetailCard
+        titleIcon={<ElementIcon element={literatureMap} />}
+        title="References for selected elements"
+        headerToolbar={detailHeaderButton(copyButtonProps)}
+        footerToolbar={detailFooterButton(copyButtonProps)}
+        onClose={() => DetailActions.close(literatureMap, true)}
+      >
         <Row className="mb-2 align-items-center">
           <Col xs={8}>
             <LiteratureInput
@@ -358,14 +353,11 @@ export default class LiteratureDetails extends Component {
             />
           </Col>
           <Col xs={1}>
-            <Button
-              variant="success"
+            <CreateButton
               onClick={this.fetchDOIMetadata}
               title="fetch metadata for this doi and add citation to selection"
               disabled={!doiValid(literature.doi)}
-            >
-              <i className="fa fa-plus" />
-            </Button>
+            />
           </Col>
         </Row>
         <Row className="mb-2 align-items-center">
@@ -404,15 +396,6 @@ export default class LiteratureDetails extends Component {
           removeCitation={this.handleLiteratureRemove}
           userId={currentUser.id}
         />
-        <div className="lmt-3 d-flex justify-content-end">
-          <Button
-            size="sm"
-            onClick={() => copyToClipboard(contentElements)}
-          >
-            <i className="fa fa-clipboard me-2" />
-            Copy References to Clipboard
-          </Button>
-        </div>
       </DetailCard>
     );
   }

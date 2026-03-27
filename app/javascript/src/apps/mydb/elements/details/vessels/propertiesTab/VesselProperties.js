@@ -9,7 +9,6 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperty';
 import VesselSuggestProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselSuggestProperties';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 
 const VesselProperties = ({ item, readOnly }) => {
   const { vesselDetailsStore } = useContext(StoreContext);
@@ -59,74 +58,76 @@ const VesselProperties = ({ item, readOnly }) => {
 
   return (
     <>
-      <DetailCard header="Template Properties">
-        <VesselSuggestProperties
-          id={vesselId}
-          label="Vessel name"
-          field="vessel_name"
-          value={vesselItem?.vesselName}
-            // readOnly under the assumption that template should not be changed once instance is created
-          readOnly={!isCreateMode}
-          storeUpdater={(id, value) => vesselDetailsStore.changeVesselName(id, value)}
-          onTemplateSelect={applyTemplate}
-        />
-        <VesselSuggestProperties
-          id={vesselId}
-          label="Details"
-          field="details"
-          value={vesselItem?.details || ''}
-          readOnly
-          storeUpdater={vesselDetailsStore.changeDetails}
-        />
-        <VesselSuggestProperties
-          id={vesselId}
-          label="Material Type"
-          field="material_type"
-          value={vesselItem?.materialType}
-          readOnly
-          storeUpdater={vesselDetailsStore.changeMaterialType}
-        />
-        <VesselSuggestProperties
-          id={vesselId}
-          label="Vessel Type"
-          field="vessel_type"
-          value={vesselItem?.vesselType || ''}
-          readOnly
-          storeUpdater={vesselDetailsStore.changeVesselType}
-        />
-        <VesselSuggestProperties
-          id={vesselId}
-          label="Material details"
-          field="material_details"
-          value={vesselItem?.materialDetails || ''}
-          readOnly
-          storeUpdater={vesselDetailsStore.changeMaterialDetails}
-        />
-        <Form.Group as={Row} className="mt-3">
-          <Form.Label column sm={3}>Volume</Form.Label>
-          <Col sm={6}>
-            <InputGroup>
-              <Form.Control
-                name="vessel volume"
-                type="number"
-                step="any"
-                value={vesselItem?.volumeAmount}
-                disabled
-                onChange={handleVolumeChange}
-                className="flex-grow-1"
-              />
-              <Button
-                disabled
-                variant="success"
-                onClick={handleUnitChange}
-              >
-                {vesselItem?.volumeUnit || 'ml'}
-              </Button>
-            </InputGroup>
-          </Col>
-        </Form.Group>
-      </DetailCard>
-
+      <div>
+        <div className="surface-tab__header">Template Properties</div>
+        <div className="p-2">
+          <VesselSuggestProperties
+            id={vesselId}
+            label="Vessel name"
+            field="vessel_name"
+            value={vesselItem?.vesselName}
+              // readOnly under the assumption that template should not be changed once instance is created
+            readOnly={!isCreateMode}
+            storeUpdater={(id, value) => vesselDetailsStore.changeVesselName(id, value)}
+            onTemplateSelect={applyTemplate}
+          />
+          <VesselSuggestProperties
+            id={vesselId}
+            label="Details"
+            field="details"
+            value={vesselItem?.details || ''}
+            readOnly
+            storeUpdater={vesselDetailsStore.changeDetails}
+          />
+          <VesselSuggestProperties
+            id={vesselId}
+            label="Material Type"
+            field="material_type"
+            value={vesselItem?.materialType}
+            readOnly
+            storeUpdater={vesselDetailsStore.changeMaterialType}
+          />
+          <VesselSuggestProperties
+            id={vesselId}
+            label="Vessel Type"
+            field="vessel_type"
+            value={vesselItem?.vesselType || ''}
+            readOnly
+            storeUpdater={vesselDetailsStore.changeVesselType}
+          />
+          <VesselSuggestProperties
+            id={vesselId}
+            label="Material details"
+            field="material_details"
+            value={vesselItem?.materialDetails || ''}
+            readOnly
+            storeUpdater={vesselDetailsStore.changeMaterialDetails}
+          />
+          <Form.Group as={Row} className="mt-3">
+            <Form.Label column sm={3}>Volume</Form.Label>
+            <Col sm={6}>
+              <InputGroup>
+                <Form.Control
+                  name="vessel volume"
+                  type="number"
+                  step="any"
+                  value={vesselItem?.volumeAmount}
+                  disabled
+                  onChange={handleVolumeChange}
+                  className="flex-grow-1"
+                />
+                <Button
+                  disabled
+                  variant="light"
+                  onClick={handleUnitChange}
+                >
+                  {vesselItem?.volumeUnit || 'ml'}
+                </Button>
+              </InputGroup>
+            </Col>
+          </Form.Group>
+        </div>
+      </div>
       {instances.map((instance, index) => (
         <div key={index} className="border-top pt-3 mt-3">
           <VesselProperty
@@ -185,7 +186,7 @@ const VesselProperties = ({ item, readOnly }) => {
                 />
                 <Button
                   disabled={readOnly}
-                  variant="success"
+                  variant="light"
                   onClick={() => {
                     const currentUnit = isCreateMode ? instance.weightUnit : vesselItem?.weightUnit;
                     const newUnit = currentUnit === 'g' ? 'kg' : 'g';

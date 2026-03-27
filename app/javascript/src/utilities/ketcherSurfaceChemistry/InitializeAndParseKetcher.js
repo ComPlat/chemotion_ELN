@@ -124,7 +124,8 @@ const initializeKetcherData = async (data) => {
   }
 };
 
-// helper function to examine the file coming ketcher rails
+// helper function to examine the file coming from ketcher/rails
+// Use the *first* PolymersList block so shape order is preserved on import (matches atom index order).
 const hasKetcherData = async (molfile) => {
   if (!molfile) {
     console.error('Invalid molfile source.');
@@ -133,11 +134,16 @@ const hasKetcherData = async (molfile) => {
 
   try {
     const lines = molfile.trim().split('\n');
-    const lastIndex = lines.map((line, i) => (line.includes(KET_TAGS.polymerIdentifier) ? i : -1))
-      .filter((i) => i >= 0)
-      .pop();
-    if (lastIndex == null) return null;
-    return lines[lastIndex + 1]?.trim() || null;
+    const firstIndex = lines.findIndex((line) => line.includes(KET_TAGS.polymerIdentifier));
+    if (firstIndex === -1) return null;
+    // Collect content lines after "> <PolymersList>" until next block tag (preserve order for shapes)
+    const contentLines = [];
+    for (let i = firstIndex + 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line.startsWith('> <')) break;
+      if (line.length > 0) contentLines.push(line);
+    }
+    return contentLines.length > 0 ? contentLines.join(' ') : null;
   } catch (err) {
     console.error('Error processing molfile');
     return null;
@@ -236,6 +242,21 @@ const getTemplateType = (polymerValue) => {
     return { type: templateSplits[1], size: templateSplits[2] || '1-1' };
   }
   return { type: binaryTemplates, size: templateSplits[1] || '1-1' };
+};
+
+// Parse polymer entry as atomIndex/templateId/size when present (e.g. "2/10/1.00-1.00").
+// Returns { atomIndex, type, size } or null when format is legacy (e.g. "0", "0s", "3/95/1.00-1.00" without leading index).
+const parsePolymerEntryByAtomIndex = (polymerValue) => {
+  const trimmed = (polymerValue || '').trim();
+  if (!trimmed || trimmed.includes('s')) return null;
+  const parts = trimmed.split('/');
+  if (parts.length < 3) return null;
+  const atomIndex = parseInt(parts[0], 10);
+  const templateId = parts[1];
+  if (Number.isNaN(atomIndex) || templateId === undefined) return null;
+  const templateIdNum = parseInt(templateId, 10);
+  if (Number.isNaN(templateIdNum)) return null;
+  return { atomIndex, type: templateId, size: parts[2] || '1-1' };
 };
 
 // Helper to create a bounding box for a template with atom location
@@ -375,6 +396,7 @@ export {
   hasKetcherData,
   hasTextNodes,
   getTemplateType,
+  parsePolymerEntryByAtomIndex,
   templateWithBoundingBox,
   fetchKetcherData,
   loadKetcherData,

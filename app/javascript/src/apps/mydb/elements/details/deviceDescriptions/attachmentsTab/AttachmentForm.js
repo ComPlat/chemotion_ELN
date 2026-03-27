@@ -150,7 +150,7 @@ function AttachmentForm({ readonly }) {
   };
 
   const attachmentRowActions = (attachment) => (
-    <ButtonToolbar className="gap-1">
+    <ButtonToolbar>
       {downloadButton(attachment)}
       <ThirdPartyAppButton attachment={attachment} options={thirdPartyApps} />
       <EditButton attachment={attachment} onChange={updateEditedAttachment} />

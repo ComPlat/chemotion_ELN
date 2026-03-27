@@ -68,7 +68,7 @@ export default {
   argTypes: {
     variant: {
       control: { type: 'select' },
-      options: ['light', 'primary', 'success', 'danger', 'plain', 'neat'],
+      options: ['light', 'primary', 'secondary', 'success', 'danger', 'plain', 'neat'],
       description: 'Visual style of the button',
       table: {
         type: { summary: 'string' },
@@ -118,6 +118,7 @@ export function ButtonVariants() {
     [
       { name: 'light', label: 'Default' },
       { name: 'primary', label: 'Main Action' },
+      { name: 'secondary', label: 'Default for card headers and footers' },
       { name: 'plain', label: 'plain' },
       { name: 'neat', label: 'no padding' }
     ],
@@ -132,11 +133,13 @@ ButtonVariants.parameters = {
   not helpful as the subjective and inconsistent use of color does not convey a clear meaning to the user.**
 
   With the exeption of create and destroy bottons (see semantic variants below) we recommend to stick to the
-  following two variants:<br />
+  following three variants:<br />
   The **light** variant is our default choice for most actions, providing good readability without being overly
   prominent.<br />
   Use **primary** variant is to be used for the main function within the given context (e.g. the submit or save
   button in a form).
+  The **secondary** variant is reserved for the headers and footers of cards and modals. It provides a good contrast to
+  the light blue background of these components sections.
 
   For a link like appearance with no background or border use the **plain** variant.<br />
   For buttons that require no padding (e.g. icon only buttons) use the **neat** variant.
@@ -176,7 +179,6 @@ SemanticVariants.parameters = {
 export function DeprecatedVariants() {
   return renderVariantsAndStates(
     [
-      { name: 'secondary', label: 'Deprecated' },
       { name: 'warning', label: 'Deprecated' },
       { name: 'info', label: 'Deprecated' }
     ]
@@ -187,11 +189,11 @@ DeprecatedVariants.parameters = {
   docs: {
     description: {
       story: `
-  The **secondary**, **warning** and **info** variants are built in Bootstrap variants but are not recommended
+  The **warning** and **info** variants are built in Bootstrap variants but are not recommended
   for buttons. As mentioned above these colors do not convey a clear meaning to the user. Please remove these
   variants from existing buttons and avoid using them in new code.
 
-  **Secondary**, **warning** and **info** variants or helper-classes might still be used for other components
+  **warning** and **info** variants or helper-classes might still be used for other components
   such as badges and alerts where they are more appropriate.
       `
     }

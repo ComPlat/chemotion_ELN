@@ -226,7 +226,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
           </Form.Group>
         </Modal.Body>
         <Modal.Footer className="modal-footer border-0">
-          <ButtonToolbar className="gap-1">
+          <ButtonToolbar>
             <Button variant="warning" onClick={onHide}>
               Cancel
             </Button>
