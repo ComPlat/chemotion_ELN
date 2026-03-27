@@ -19,14 +19,14 @@ function findCollectionLabelById(collections, collectionId) {
   return null;
 }
 
-const CollectionSubtreeFunctionsDropdownToggle = React.forwardRef(({ onClick }, ref) => (
+const CollectionSubtreeFunctionsDropdownToggle = React.forwardRef(({
+  onClick,
+}, ref) => (
   <Button
     variant="sidebar"
     className="rounded-circle"
     ref={ref}
     onClick={(e) => {
-      e.preventDefault();
-      e.stopPropagation();
       onClick(e);
     }}
     size="xsm"
@@ -37,7 +37,7 @@ const CollectionSubtreeFunctionsDropdownToggle = React.forwardRef(({ onClick }, 
 
 CollectionSubtreeFunctionsDropdownToggle.displayName = 'CollectionSubtreeFunctionsDropdownToggle';
 CollectionSubtreeFunctionsDropdownToggle.propTypes = {
-  onClick: PropTypes.func.isRequired
+  onClick: PropTypes.func.isRequired,
 };
 
 export default function CollectionSubtreeFunctions({ collection }) {
@@ -45,6 +45,7 @@ export default function CollectionSubtreeFunctions({ collection }) {
 
   const [showImportModal, setShowImportModal] = useState(false);
   const [showLiteratureModal, setShowLiteratureModal] = useState(false);
+  const [isLiteratureModalMounted, setIsLiteratureModalMounted] = useState(false);
 
   const collectionName = collection.label || 'Unknown Collection';
 
@@ -61,11 +62,16 @@ export default function CollectionSubtreeFunctions({ collection }) {
   const hideImportModal = () => setShowImportModal(false);
   const hideLiteratureModal = () => setShowLiteratureModal(false);
 
+  const onClickDropdown = (event) => {
+    event.stopPropagation();
+    setIsLiteratureModalMounted(true);
+  };
+
   return (
     <>
       <Dropdown
         id={`collection-subtree-functions-${collection.id}`}
-        onClick={(e) => e.stopPropagation()}
+        onClick={onClickDropdown}
         className="collection-subtree-functions"
       >
         <Dropdown.Toggle as={CollectionSubtreeFunctionsDropdownToggle} />
@@ -88,11 +94,13 @@ export default function CollectionSubtreeFunctions({ collection }) {
         onHide={hideImportModal}
       />
 
-      <LiteratureModal
-        collectionId={collection.id}
-        show={showLiteratureModal}
-        onHide={hideLiteratureModal}
-      />
+      {isLiteratureModalMounted && (
+        <LiteratureModal
+          collectionId={collection.id}
+          show={showLiteratureModal}
+          onHide={hideLiteratureModal}
+        />
+      )}
     </>
   );
 }
