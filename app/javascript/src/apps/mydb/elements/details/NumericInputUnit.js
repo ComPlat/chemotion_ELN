@@ -30,7 +30,7 @@ export default function NumericInputUnit(props) {
 
   const weightConversion = (value, multiplier) => value * multiplier;
   const isValidNumber = (val) => (typeof val === 'string' || typeof val === 'number')
-    && !Number.isNaN(val)
+    && (!Number.isNaN(Number(val)) || val === '')
     && val !== null
     && val !== undefined;
 
@@ -45,6 +45,9 @@ export default function NumericInputUnit(props) {
 
   const convertValue = (valueToFormat, currentUnit) => {
     const { convertedUnit, conversionFactor } = conversionMap[currentUnit];
+    if (valueToFormat === '' || !isValidNumber(valueToFormat)) {
+      return ['', convertedUnit];
+    }
     const decimalPlaces = 7;
     const formattedValue = weightConversion(valueToFormat, conversionFactor);
     const convertedValue = handleFloatNumbers(formattedValue, decimalPlaces);
@@ -77,25 +80,29 @@ export default function NumericInputUnit(props) {
   const handleInputValueChange = (event) => {
     const newInput = event.target.value;
     if (newInput.trim() === '') {
-      onInputChange('', unit);
+      onInputChange('', currentUnit);
       setValue('');
       return;
     }
 
-    // Allow only digits + optional decimal point
-    const isValidFormat = /^\d*\.?\d*$/.test(newInput);
+    // Allow optional leading minus, digits, and at most one decimal point
+    const isValidFormat = /^-?\d*\.?\d*$/.test(newInput);
     if (!isValidFormat) {
       return;
     }
 
     setValue(newInput);
-    if (!Number.isNaN(newInput)) {
-      onInputChange(newInput, unit);
+    // Only propagate when there's at least one digit and the value is parseable
+    if (/\d/.test(newInput)) {
+      const parsedValue = parseFloat(newInput);
+      if (!Number.isNaN(parsedValue)) {
+        onInputChange(parsedValue, currentUnit);
+      }
     }
   };
 
   return (
-    <div className={`numericInputWithUnit_${unit}`}>
+    <div className={`numericInputWithUnit_${currentUnit}`}>
       {label
         ? <Form.Label>{label}</Form.Label>
         : <Form.Label className="pt-2" />}

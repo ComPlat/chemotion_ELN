@@ -30,9 +30,6 @@ const handleFloatNumbers = (number, decimalPlaces) => {
 };
 
 const convertTemperature = (valueToFormat, currentUnit) => {
-  const numericValue = Number(valueToFormat);
-  if (Number.isNaN(numericValue) || valueToFormat === '') return [valueToFormat, currentUnit];
-
   const kelvinToCelsius = (value) => value - 273.15;
   const celsiusToFahrenheit = (value) => ((value * 9) / 5) + 32;
   const fahrenheitToKelvin = (value) => (((value - 32) * 5) / 9) + 273.15;
@@ -42,7 +39,7 @@ const convertTemperature = (valueToFormat, currentUnit) => {
   let convertedValue;
 
   const decimalPlaces = 4;
-  if (typeof valueToFormat === 'string') {
+  if (typeof valueToFormat === 'string' && valueToFormat !== '') {
     const regex = /(-?\d+\.\d+|-?\d+)(.*)/;
     const match = valueToFormat.match(regex);
     if (match) {
@@ -57,9 +54,12 @@ const convertTemperature = (valueToFormat, currentUnit) => {
     '°F': { convertedUnit: TEMPERATURE_UNITS.KELVIN, conversionFunc: fahrenheitToKelvin },
   };
   const { convertedUnit, conversionFunc } = conversions[currentUnit];
+  // Empty input: cycle the unit without converting the value.
+  if (valueToFormat === '' || valueToFormat == null || valueToFormat === undefined) {
+    return ['', convertedUnit];
+  }
   convertedValue = conversionFunc(formattedValue);
-  formattedValue = formattedValue !== '' ? convertedValue : '';
-  formattedValue = handleFloatNumbers(formattedValue, decimalPlaces);
+  formattedValue = handleFloatNumbers(convertedValue, decimalPlaces);
   convertedValue = `${formattedValue}${restOfString}`;
   return [convertedValue.trim(), convertedUnit];
 };
