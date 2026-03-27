@@ -74,9 +74,8 @@ const handleNotification = (nots, act, needCallback = true) => {
       NotificationActions.add(notification);
 
       const { currentPage, itemsPerPage } = InboxStore.getState();
-
       const { currentCollection } = UIStore.getState();
-      const currentCollectionId = currentCollection ? currentCollection.id : null;
+      const currentCollectionId = currentCollection?.id;
 
       switch (n.content.action) {
         case 'CollectionActions.fetchRemoteCollectionRoots':
@@ -113,9 +112,9 @@ const handleNotification = (nots, act, needCallback = true) => {
           );
           break;
         case 'RefreshSampleList':
-          if (currentCollectionId && currentCollectionId === n.content?.collection_id) {
+          if (currentCollectionId != null && currentCollectionId === n.content?.collection_id) {
             ElementActions.fetchSamplesByCollectionId(
-              parseInt(currentCollection.id, 10)
+              parseInt(currentCollectionId, 10)
             );
           }
           break;
