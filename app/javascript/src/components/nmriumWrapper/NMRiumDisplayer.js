@@ -298,16 +298,22 @@ export default class NMRiumDisplayer extends React.Component {
 
   findMatchingJcamp(spectrum, jcampSpectra) {
     const oldUrl = spectrum?.source?.jcampURL;
-    if (!oldUrl) return null;
     const baseFromUrl = this.getFileBaseName(oldUrl);
     const baseFromInfo = this.getFileBaseName(spectrum?.info?.name);
     const extFromUrl = this.getFileExtension(oldUrl);
-    return jcampSpectra.find((c) => {
+    const extFromInfo = this.getFileExtension(spectrum?.info?.name);
+    const targetBase = baseFromUrl || baseFromInfo;
+    const targetExt = extFromUrl || extFromInfo;
+    if (!targetBase) return null;
+
+    const match = jcampSpectra.find((c) => {
       const baseFromLabel = this.getFileBaseName(c.label);
       const extFromLabel = this.getFileExtension(c.label);
-      return baseFromLabel && (baseFromLabel === baseFromUrl || baseFromLabel === baseFromInfo)
-        && (!extFromUrl || extFromLabel === extFromUrl);
+      return baseFromLabel && baseFromLabel === targetBase
+        && (!targetExt || extFromLabel === targetExt);
     }) || null;
+
+    return match;
   }
 
   findMatchingZip(root, zipSpectra) {
@@ -336,7 +342,7 @@ export default class NMRiumDisplayer extends React.Component {
     const firstJcampMatch = !isZipBased && root.spectra.map((s) => this.findMatchingJcamp(s, jcampSpectra)).find(Boolean);
     const jdxUrlWithFile = firstJcampMatch
       ? `${firstJcampMatch.url}/file.${this.getFileExtension(firstJcampMatch.label) || 'jdx'}`
-      : undefined;
+      : (jdxUrl ? `${jdxUrl}/file.jdx` : undefined);
     const preferredUrl = (isZipBased ? zipUrlWithFile : jdxUrlWithFile) || zipUrlWithFile || jdxUrlWithFile;
     if (!preferredUrl) return;
 
@@ -348,10 +354,17 @@ export default class NMRiumDisplayer extends React.Component {
       if (!s) return;
 
       const oldUrl = s?.source?.jcampURL;
-      const match = !isZipBased && oldUrl ? this.findMatchingJcamp(s, jcampSpectra) : null;
+      const match = !isZipBased ? this.findMatchingJcamp(s, jcampSpectra) : null;
 
-      if (match && s.sourceSelector) delete s.sourceSelector.files;
-      if (match && s.source) s.source.jcampURL = `${match.url}/file.${this.getFileExtension(oldUrl) || this.getFileExtension(match.label) || 'jdx'}`;
+      if (!isZipBased && s.sourceSelector) delete s.sourceSelector.files;
+      if (!isZipBased) {
+        if (!s.source || typeof s.source !== 'object') s.source = {};
+        const ext = this.getFileExtension(oldUrl) || this.getFileExtension(match?.label) || 'jdx';
+        const fallbackJcampUrl = match
+          ? `${match.url}/file.${ext}`
+          : (jdxUrl ? `${jdxUrl}/file.${ext}` : jdxUrlWithFile);
+        if (fallbackJcampUrl) s.source.jcampURL = fallbackJcampUrl;
+      }
 
       if (sourceRoot?.entries?.[0]) {
         sourceRoot.entries[0].relativePath = relativePath;
