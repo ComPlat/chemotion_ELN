@@ -66,13 +66,18 @@ export default class ChemicalTab extends React.Component {
   }
 
   handleFieldChanged(parameter, value) {
-    const { chemical } = this.state;
+    let { chemical } = this.state;
     const { editChemical } = this.props;
-    if (chemical) {
-      chemical.buildChemical(parameter, value);
-      editChemical(chemical.isEdited);
+
+    if (!chemical) {
+      chemical = Chemical.buildEmpty();
     }
-    this.setState({ chemical });
+
+    chemical.buildChemical(parameter, value);
+
+    this.setState({ chemical }, () => {
+      editChemical(chemical.isEdited);
+    });
   }
 
   handleSubmitSave() {
@@ -246,6 +251,22 @@ export default class ChemicalTab extends React.Component {
 
   handleAdd() {
     this.setState({ showModal: true });
+  }
+
+  /**
+   * Returns a snapshot of the current chemical data so the parent can persist
+   * it after the sample is created (when ChemicalTab cannot save itself because
+   * the sample has no server-side ID yet).
+   * @returns {{ chemical_data: any, cas: string } | null}
+   */
+  getChemicalSnapshot() {
+    const { chemical } = this.state;
+    const { sample } = this.props;
+    if (!chemical) return null;
+    return {
+      chemical_data: chemical._chemical_data || null,
+      cas: sample?.xref?.cas ?? '',
+    };
   }
 
   querySafetySheets = () => {
@@ -1885,6 +1906,7 @@ ChemicalTab.propTypes = {
   saveInventory: PropTypes.bool.isRequired,
   setSaveInventory: PropTypes.func.isRequired,
   editChemical: PropTypes.func.isRequired,
+  getChemicalSnapshot: PropTypes.func.isRequired,
 };
 
 ChemicalTab.defaultProps = {

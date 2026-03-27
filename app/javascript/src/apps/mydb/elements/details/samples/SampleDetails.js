@@ -63,6 +63,7 @@ import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
 import { validateCas } from 'src/utilities/CasValidation';
 import ChemicalTab from 'src/components/chemicals/ChemicalTab';
+import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
@@ -76,6 +77,10 @@ import { copyToClipboard } from 'src/utilities/clipboard';
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 const MWPrecision = 6;
+
+// Module-level slot: holds chemical data to be created after a new sample is
+// persisted (survives the SampleDetails unmount/remount caused by navigateToNewElement).
+let _pendingChemicalCreate = null;
 
 const decoupleCheck = (sample) => {
   if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.isMixture()) {
@@ -178,6 +183,7 @@ export default class SampleDetails extends React.Component {
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
     this.splitSmiles = this.splitSmiles.bind(this);
     this.setComponentDeletionLoading = this.setComponentDeletionLoading.bind(this);
+    this.chemicalTabRef = React.createRef();
   }
 
   componentDidMount() {
@@ -191,6 +197,20 @@ export default class SampleDetails extends React.Component {
 
     if (MatrixCheck(currentUser.matrix, commentActivation) && !sample.isNew) {
       CommentActions.fetchComments(sample);
+    }
+
+    // After a new sample is created, carry out any pending chemical create that
+    // was snapshotted before the old SampleDetails instance was closed.
+    if (_pendingChemicalCreate && !sample.isNew) {
+      const snapshot = _pendingChemicalCreate;
+      _pendingChemicalCreate = null;
+      ChemicalFetcher.create({ sample_id: sample.id, ...snapshot })
+        .then(() => {
+          // Re-fetch chemical so ChemicalTab renders the newly-created record
+          // without requiring a page refresh.
+          this.chemicalTabRef.current?.fetchChemical(sample);
+        })
+        .catch((err) => console.log(err));
     }
 
     if (showRedirectWarning) {
@@ -443,10 +463,6 @@ export default class SampleDetails extends React.Component {
     this.setState({ sample });
   }
 
-  handleSubmitInventory() {
-    this.setState({ saveInventoryAction: true });
-  }
-
   handleExportAnalyses(sample) {
     this.setState({ startExport: true });
     AttachmentFetcher.downloadZipBySample(sample.id)
@@ -537,12 +553,31 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  saveSampleOrInventory(closeView) {
-    const { activeTab, sample } = this.state;
-    if (activeTab === 'inventory' && sample.inventory_sample) {
-      this.handleSubmitInventory();
-    } else {
-      this.handleSubmit(closeView);
+  saveSampleOrChemical(closeView = false) {
+    const { sample, isChemicalEdited } = this.state;
+    const needChemicalSave = isChemicalEdited && !sample.isNew;
+    const needChemicalCreate = isChemicalEdited && sample.isNew;
+
+    if (sample.isPendingToSave) {
+      // Snapshot chemical data BEFORE handleSubmit closes this instance.
+      // For new samples, navigateToNewElement mounts a fresh SampleDetails;
+      // componentDidMount on that new instance will consume _pendingChemicalCreate.
+      if (needChemicalCreate) {
+        _pendingChemicalCreate = this.chemicalTabRef.current?.getChemicalSnapshot() ?? null;
+      }
+
+      // When chemical also needs saving on an existing sample, avoid closing on
+      // the sample save so ChemicalTab stays mounted to receive saveInventoryAction.
+      this.handleSubmit(needChemicalSave ? false : closeView);
+    }
+
+    if (needChemicalSave) {
+      // Close (if requested) after the commit phase so ChemicalTab.componentDidUpdate
+      // fires and starts the API call before the panel is removed from the tree.
+      this.setState(
+        { saveInventoryAction: true },
+        closeView ? () => DetailActions.close(sample) : undefined
+      );
     }
   }
 
@@ -602,12 +637,13 @@ export default class SampleDetails extends React.Component {
     const { saveInventoryAction } = this.state;
 
     return (
-      <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`}>
+      <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`} unmountOnExit={false}>
         {
           !sample.isNew && <CommentSection section="sample_inventory" element={sample} />
         }
         <ListGroupItem>
           <ChemicalTab
+            ref={this.chemicalTabRef}
             sample={sample}
             type="sample"
             handleUpdateSample={(s) => this.setState({ sample: s })}
@@ -801,16 +837,21 @@ export default class SampleDetails extends React.Component {
 
   saveBtn(sample, closeView = false) {
     let submitLabel = (sample && sample.isNew) ? 'Create' : 'Save';
+    const { isChemicalEdited } = this.state;
     const hasComponents = !sample.isMixture() || (sample.hasComponents());
     const isDisabled = !sample.can_update || !hasComponents;
     if (closeView) submitLabel += ' and close';
+
+    const canSaveSample = this.sampleIsValid() && !isDisabled;
+    // Chemical can be saved independently of sample validity (requires existing sample)
+    const canSaveChemical = isChemicalEdited && !sample.isNew && sample.can_update;
 
     return (
       <Button
         id="submit-sample-btn"
         variant="warning"
-        onClick={() => this.saveSampleOrInventory(closeView)}
-        disabled={!this.sampleIsValid() || isDisabled}
+        onClick={() => this.saveSampleOrChemical(closeView)}
+        disabled={!canSaveSample && !canSaveChemical}
       >
         {submitLabel}
       </Button>
@@ -1033,7 +1074,7 @@ export default class SampleDetails extends React.Component {
       <Button
         variant="warning"
         size="xxsm"
-        onClick={() => this.saveSampleOrInventory(boolean)}
+        onClick={() => this.saveSampleOrChemical(boolean)}
         disabled={sampleUpdateCondition}
       >
         {floppyTag}
@@ -1043,8 +1084,7 @@ export default class SampleDetails extends React.Component {
   }
 
   saveAndCloseSample(sample, saveBtnDisplay) {
-    const { activeTab, isChemicalEdited } = this.state;
-    const isChemicalTab = activeTab === 'inventory';
+    const { isChemicalEdited } = this.state;
     const floppyTag = (
       <i className="fa fa-floppy-o" />
     );
@@ -1052,53 +1092,42 @@ export default class SampleDetails extends React.Component {
       <i className="fa fa-times" />
     );
     const hasComponents = !sample.isMixture() || sample.hasComponents();
-    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update || !hasComponents;
+    // Allow save when chemical is edited even if sample structure validity check fails
+    const canSaveChemical = isChemicalEdited && !sample.isNew && sample.can_update;
+    const sampleUpdateCondition = (!this.sampleIsValid() || !sample.can_update || !hasComponents)
+      && !canSaveChemical;
 
-    const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
-    const saveAndClose = (saveBtnDisplay
-      && (
+    const saveAndClose = saveBtnDisplay && (
       <OverlayTrigger
         placement="bottom"
-        overlay={(
-          <Tooltip id="saveCloseSample">
-            {`Save and Close ${elementToSave}`}
-          </Tooltip>
-        )}
+        overlay={<Tooltip id="saveCloseSample">Save and Close</Tooltip>}
       >
         {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
       </OverlayTrigger>
-      )
     );
-    const save = (saveBtnDisplay
-      && (
+    const save = saveBtnDisplay && (
       <OverlayTrigger
         placement="bottom"
-        overlay={(
-          <Tooltip id="saveSample">
-            {`Save ${elementToSave}`}
-          </Tooltip>
-        )}
+        overlay={<Tooltip id="saveSample">Save</Tooltip>}
       >
         {this.saveButton(sampleUpdateCondition, floppyTag)}
       </OverlayTrigger>
-      )
     );
 
-    const saveForChemical = isChemicalTab && isChemicalEdited ? save : null;
     return (
       <>
-        { isChemicalTab ? saveForChemical : save}
-        { isChemicalTab ? null : saveAndClose }
+        {save}
+        {saveAndClose}
         <ConfirmClose el={sample} />
       </>
     );
   }
 
   sampleHeader(sample) {
-    const { isChemicalEdited, activeTab } = this.state;
+    const { isChemicalEdited } = this.state;
     const titleTooltip = formatTimeStampsOfElement(sample || {});
-    const isChemicalTab = activeTab === 'inventory';
-    const saveBtnDisplay = sample.isEdited || (isChemicalEdited && isChemicalTab);
+    // Show header save button whenever sample or chemical has unsaved changes, regardless of active tab
+    const saveBtnDisplay = sample.isEdited || isChemicalEdited;
 
     const inventorySample = (
       <Form.Check
