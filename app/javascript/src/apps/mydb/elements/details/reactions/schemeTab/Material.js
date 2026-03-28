@@ -368,6 +368,10 @@ class Material extends Component {
   equivalentOrYield(material) {
     const { materialGroup, reaction, lockEquivColumn } = this.props;
     if (materialGroup === 'products') {
+      if (reaction.isInteractionReaction()) {
+        return null; // equivalent and yield not relevant for interaction reactions, and conversion rate is not applicable for products, so we return null to render an empty cell.
+        // return <div className="reaction-material__equivalent-data" />;
+      }
       return this.yieldOrConversionRate(material);
     }
     const isSbmm = isSbmmSample(material);

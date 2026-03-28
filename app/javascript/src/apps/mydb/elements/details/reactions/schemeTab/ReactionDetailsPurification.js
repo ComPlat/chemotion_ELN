@@ -98,40 +98,45 @@ export default class ReactionDetailsPurification extends Component {
       reaction,
       onInputChange,
       additionQuillRef,
-      onChange
+      onChange,
+      isInteractionReaction,
     } = this.props;
     return (
       <>
-        <Row className="mb-3">
-          <Col sm={12}>
-            <Form.Group>
-              <Form.Label>Purification</Form.Label>
-              <Select
-                name="purification"
-                isMulti
-                isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
-                options={purificationOptions}
-                onChange={this.handlePurificationChange}
-                value={purificationOptions.filter(({ value }) => reaction.purification.includes(value))}
-              />
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row className="mb-2">
-          <Col sm={12}>
-            <Form.Label>Purification solvents</Form.Label>
-            <MaterialGroup
-              reaction={reaction}
-              materialGroup="purification_solvents"
-              materials={reaction.purification_solvents}
-              dropMaterial={dummy}
-              deleteMaterial={this.deletePSolvent}
-              dropSample={this.dropPSolvent}
-              showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={onChange}
-            />
-          </Col>
-        </Row>
+        {!isInteractionReaction && (
+          <>
+            <Row className="mb-3">
+              <Col sm={12}>
+                <Form.Group>
+                  <Form.Label>Purification</Form.Label>
+                  <Select
+                    name="purification"
+                    isMulti
+                    isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
+                    options={purificationOptions}
+                    onChange={this.handlePurificationChange}
+                    value={purificationOptions.filter(({ value }) => reaction.purification.includes(value))}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row className="mb-2">
+              <Col sm={12}>
+                <Form.Label>Purification solvents</Form.Label>
+                <MaterialGroup
+                  reaction={reaction}
+                  materialGroup="purification_solvents"
+                  materials={reaction.purification_solvents}
+                  dropMaterial={dummy}
+                  deleteMaterial={this.deletePSolvent}
+                  dropSample={this.dropPSolvent}
+                  showLoadingColumn={!!reaction.hasPolymers()}
+                  onChange={onChange}
+                />
+              </Col>
+            </Row>
+          </>
+        )}
         <Row className="mb-3">
           <Col md={12}>
             <Form.Label>Additional information for publication and purification details</Form.Label>
@@ -165,6 +170,7 @@ ReactionDetailsPurification.propTypes = {
   onInputChange: PropTypes.func,
   additionQuillRef: PropTypes.object,
   onChange: PropTypes.func,
+  isInteractionReaction: PropTypes.bool,
 };
 
 ReactionDetailsPurification.defaultProps = {
@@ -172,5 +178,6 @@ ReactionDetailsPurification.defaultProps = {
   onReactionChange: () => {},
   onInputChange: () => {},
   onChange: () => {},
-  additionQuillRef: {}
+  additionQuillRef: {},
+  isInteractionReaction: false,
 };
