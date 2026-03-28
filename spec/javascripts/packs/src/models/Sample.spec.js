@@ -1106,7 +1106,17 @@ describe('Sample', async () => {
         volume: 0.5,
         use_reaction_volume: false,
         calculateCombinedReactionVolume: () => 0.2,
-        solventVolume: 0.1
+        solventVolume: 0.1,
+        reactionVolumeForConcentration() {
+          if (this.use_reaction_volume) {
+            const reactionVolume = Number(this.volume);
+            if (Number.isFinite(reactionVolume) && reactionVolume > 0) {
+              return reactionVolume;
+            }
+          }
+
+          return this.calculateCombinedReactionVolume();
+        }
       };
     });
 
