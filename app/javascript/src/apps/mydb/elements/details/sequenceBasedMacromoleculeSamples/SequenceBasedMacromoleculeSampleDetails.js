@@ -257,11 +257,11 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
     if (linkUniprot) {
       return (
         <a href={linkUniprot} className="pe-auto" target="_blank" rel="noreferrer">
-          <img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo" alt="Uniprot" />
+          <img src="/logos/uniprot-logo.svg" className="uniprot-logo" alt="Uniprot" />
         </a>
       );
     }
-    return <img src="/images/wild_card/uniprot-logo.svg" className="uniprot-logo-gray" alt="Uniprot" />;
+    return <img src="/logos/uniprot-logo-gray.svg" className="uniprot-logo-gray" alt="Uniprot" />;
   };
 
   // Handler for chemical save
