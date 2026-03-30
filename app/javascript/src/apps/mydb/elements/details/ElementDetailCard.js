@@ -179,7 +179,7 @@ export default function ElementDetailCard({
     <>
       {showHeaderCommentSection && <HeaderCommentSection element={element} />}
       {headerToolbar}
-      {showPrintCode && <PrintCodeButton element={element} />}
+      {showPrintCode && <PrintCodeButton element={element} size="sm" variant="secondary" />}
       {showCalendar && !element.isNew && (
         <OpenCalendarButton
           isPanelHeader
