@@ -663,6 +663,7 @@ function getColumnDefinitions(selectedColumns, materials, segments, gasMode) {
       sortable: false,
       cellDataType: false,
       rowDrag: true,
+      editable: false,
 
     },
     {
