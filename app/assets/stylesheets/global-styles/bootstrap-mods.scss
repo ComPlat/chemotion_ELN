@@ -286,8 +286,13 @@ button.btn-close {
   }
 }
 
+.popover-header {
+  line-height: calc(1.625rem + 2px); // force height of close button
+}
+
 .popover-multi-item {
-  &:not(:first-child) .popover-header {
+  // Remove top-left radius for every child after the second
+  &:nth-child(n+3) .popover-header {
     border-top-left-radius: 0;
   }
   &:not(:last-child) {
@@ -343,6 +348,10 @@ button.btn-close {
   &.accordion-button.sbmm-accordion-header.active {
     @extend .surface-lighten1;
   }
+}
+
+.dropdown {
+  line-height: 0;
 }
 
 .modal-header {
