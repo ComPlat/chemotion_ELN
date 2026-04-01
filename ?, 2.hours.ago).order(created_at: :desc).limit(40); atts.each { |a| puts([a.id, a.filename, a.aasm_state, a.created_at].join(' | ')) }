@@ -1,0 +1,10 @@
+connect_src: [:self, :https, :data, :wss, :blob, "https://commonchemistry.cas.org", "https://dx.doi.org", "https://doi.org", "https://api.crossref.org", "https://service.tib.eu", "http://localhost:3035", "http://webpacker:3035", "ws://localhost:3035"]
+Deleting all reccuring jobs: ["%InitCronJobsJob%", "%CollectDataFromMailJob%", "%CollectDataFromSftpJob%", "%CollectDataFromLocalJob%", "%CollectFileFromLocalJob%", "%CollectFileFromSftpJob%", "%PubchemCidJob%", "%PubchemLcssJob%", "%RefreshElementTagJob%", "%DiskUsageJob%", "%ChemrepoIdJob%"]
+Rescheduling reccuring jobs
+INFO - PG structure search rdkit-4.4.0: checking whether to enable the feature
+WARN - PG structure search rdkit-4.4.0: WARN PG cartridge extension not available - feature disabled
+Git Info:
+              describe --tags: v2.0.1-256-g98880ee1c
+               describe --all: heads/feat/LCMS-Layout
+                     rev-list: 98880ee1c2953edbed56f10d7b935d65dcd27fae
+  merge-base HEAD origin/main: c9476fe2d841188018447b5b95b3d901401d1fe0

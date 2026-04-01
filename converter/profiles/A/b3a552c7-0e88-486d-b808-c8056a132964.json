@@ -1,0 +1,309 @@
+{
+    "converter_version": "1.8.0",
+    "data": {
+        "metadata": {
+            "content_type": "text/csv",
+            "extension": ".csv",
+            "file_name": "test_file.csv",
+            "mime_type": "text/plain",
+            "reader": "AsciiReader",
+            "uploaded": "2026-03-11T11:49:05.869941+00:00"
+        },
+        "tables": [
+            {
+                "columns": [
+                    {
+                        "key": "0",
+                        "name": "Column #0"
+                    },
+                    {
+                        "key": "1",
+                        "name": "Column #1"
+                    },
+                    {
+                        "key": "2",
+                        "name": "Column #2"
+                    }
+                ],
+                "header": [
+                    "<A>",
+                    "<value>12</value>",
+                    "</A>",
+                    "<B>",
+                    "<value>14</value>",
+                    "</B>",
+                    "name,Max Muster",
+                    "email,max.muster@kit.edu",
+                    "date of brith,01.01.2000",
+                    "tel,+431535231",
+                    "address_street,Mainstreet",
+                    "address_zip,12345",
+                    "address_number,1",
+                    "address_city,Karlsruhe",
+                    "address_nationalety,Germen",
+                    "a,b",
+                    "Meta_a;1",
+                    "Meta_b;Test",
+                    "Meta_c;45",
+                    "Meta_d;45.4",
+                    "Meta_e;45,7",
+                    "Meta_f;45.7e14",
+                    "Meta_a;3",
+                    "Meta_g;m.starman@kit.edu",
+                    "Meta_a;1",
+                    "Meta_b;Test",
+                    "Meta_c;45",
+                    "Meta_d;45.4",
+                    "Meta_e;45,7",
+                    "Meta_f;45.7e14",
+                    "Meta_a;3",
+                    "Meta_g;m.starman@kit.edu",
+                    "Meta_a;1",
+                    "Meta_b;Test",
+                    "Meta_c;45",
+                    "Meta_d;45.4",
+                    "Meta_e;45,7",
+                    "Meta_f;45.7e14",
+                    "Meta_a;3",
+                    "Meta_g;m.starman@kit.edu",
+                    "",
+                    "Meta_f;45.7e14",
+                    "Meta_a;3",
+                    "Meta_g;m.starman@kit.edu",
+                    "Meta_a;1",
+                    "Meta_b;Test",
+                    "Meta_c;45",
+                    "Meta_d;45.4",
+                    "Meta_e;45,7",
+                    "Meta_f;45.7e14",
+                    "Meta_a;3",
+                    "Meta_g;m.starman@kit.edu"
+                ],
+                "metadata": {
+                    "columns": "3",
+                    "rows": "6"
+                },
+                "rows": [
+                    [
+                        "1",
+                        "2",
+                        "3"
+                    ],
+                    [
+                        "2",
+                        "3",
+                        "4"
+                    ],
+                    [
+                        "5",
+                        "6",
+                        "7"
+                    ],
+                    [
+                        "1",
+                        "2",
+                        "3"
+                    ],
+                    [
+                        "2",
+                        "3",
+                        "4"
+                    ],
+                    [
+                        "5",
+                        "6",
+                        "7"
+                    ]
+                ]
+            },
+            {
+                "columns": [
+                    {
+                        "key": "0",
+                        "name": "Column #0"
+                    },
+                    {
+                        "key": "1",
+                        "name": "Column #1"
+                    }
+                ],
+                "header": [],
+                "metadata": {
+                    "columns": "2",
+                    "rows": "6"
+                },
+                "rows": [
+                    [
+                        "1",
+                        "2"
+                    ],
+                    [
+                        "2",
+                        "3"
+                    ],
+                    [
+                        "5",
+                        "6"
+                    ],
+                    [
+                        "1",
+                        "2"
+                    ],
+                    [
+                        "2",
+                        "3"
+                    ],
+                    [
+                        "5",
+                        "6"
+                    ]
+                ]
+            },
+            {
+                "columns": [
+                    {
+                        "key": "0",
+                        "name": "Column #0"
+                    },
+                    {
+                        "key": "1",
+                        "name": "Column #1"
+                    },
+                    {
+                        "key": "2",
+                        "name": "Column #2"
+                    }
+                ],
+                "header": [],
+                "metadata": {
+                    "columns": "3",
+                    "rows": "6"
+                },
+                "rows": [
+                    [
+                        "1",
+                        "2",
+                        "3"
+                    ],
+                    [
+                        "2",
+                        "3",
+                        "4"
+                    ],
+                    [
+                        "5",
+                        "6",
+                        "7"
+                    ],
+                    [
+                        "1",
+                        "2",
+                        "3"
+                    ],
+                    [
+                        "2",
+                        "3",
+                        "4"
+                    ],
+                    [
+                        "5",
+                        "6",
+                        "7"
+                    ]
+                ]
+            },
+            {
+                "columns": [
+                    {
+                        "key": "0",
+                        "name": "Column #0"
+                    },
+                    {
+                        "key": "1",
+                        "name": "Column #1"
+                    }
+                ],
+                "header": [],
+                "metadata": {
+                    "columns": "2",
+                    "rows": "6"
+                },
+                "rows": [
+                    [
+                        "1",
+                        "2"
+                    ],
+                    [
+                        "2",
+                        "3"
+                    ],
+                    [
+                        "5",
+                        "6"
+                    ],
+                    [
+                        "1",
+                        "2"
+                    ],
+                    [
+                        "2",
+                        "3"
+                    ],
+                    [
+                        "5",
+                        "6"
+                    ]
+                ]
+            }
+        ]
+    },
+    "datatypes": [],
+    "description": "",
+    "devices": [],
+    "id": "b3a552c7-0e88-486d-b808-c8056a132964",
+    "identifiers": [],
+    "isDisabled": false,
+    "last_migration": "20260113143334",
+    "ols": null,
+    "ontology": "",
+    "predicates": [],
+    "rootOntology": {
+        "description": [
+            "A planned process that has the objective to produce information about a material entity (the evaluant) by examining it."
+        ],
+        "id": "OBI:property:http://purl.obolibrary.org/obo/OBI_0000070",
+        "iri": "http://purl.obolibrary.org/obo/OBI_0000070",
+        "label": "assay",
+        "namespace": "http://purl.obolibrary.org/obo/",
+        "obo_id": "OBI:0000070",
+        "ontology_name": "chmo",
+        "ontology_prefix": "CHMO",
+        "short_form": "OBI_0000070",
+        "type": "class"
+    },
+    "software": [],
+    "subjectInstances": {},
+    "subjects": [],
+    "tables": [
+        {
+            "header": {
+                "DATA CLASS": "XYPOINTS",
+                "DATA TYPE": "CIRCULAR DICHROISM SPECTROSCOPY",
+                "XUNITS": "%",
+                "YUNITS": "ABSORBANCE"
+            },
+            "loopType": "all",
+            "table": {
+                "xColumn": {
+                    "columnIndex": 0,
+                    "tableIndex": 0
+                },
+                "yColumn": {
+                    "columnIndex": 1,
+                    "tableIndex": 0
+                }
+            }
+        }
+    ],
+    "title": "## Nameless (11/03/2026 11:49:08)"
+}

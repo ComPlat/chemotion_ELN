@@ -1,0 +1,12 @@
+services:
+  app:
+    image: mstarman/chem-converter-standalone:0.0.2
+    env_file:
+      - ./.env.converter
+    ports:
+      - ${PROJECT_WEB_PORT:-8071}:80
+    volumes:
+      - ./converter/profiles:/var/share/profiles
+      - ./converter/datasets:/var/share/datasets
+      - ./converter/logs:/var/log/converter
+      - ./converter/htpasswd:/var/share/htpasswd
