@@ -1,16 +1,20 @@
 import expect from 'expect';
+import sinon from 'sinon';
 import {
-  convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow, updateColumnDefinitions,
+  convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow,
   removeObsoleteColumnsFromVariations, removeObsoleteColumnDefinitions, addMissingColumnDefinitions,
   addMissingColumnsToVariations, getVariationsColumns, convertGenericUnit, getColumnDefinitions,
-  getUserFacingEntryName, getSegmentData, formatReactionSegments
+  getUserFacingEntryName, getSegmentData, formatReactionSegments,
+  setGroupColDefAttribute, setLeafColDefAttribute, getInitialLayout,
+  getEntryVisibility, setEntryVisibility, getEntryDisplayUnits, setEntryDisplayUnits,
+  getGroupHeaderNames, setGroupHeaderNames, getLayout, setLayout,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import {
   getReactionMaterials, getMaterialColumnGroupChild
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   setUpReaction,
-  getColumnGroupChild,
   getSelectedColumns,
   getColumnDefinitionsMaterialIDs,
   getReactionMaterialsIDs
@@ -191,23 +195,6 @@ describe('ReactionVariationsUtils', () => {
       Object.values(updatedRow.products)[0].yield.value
     );
   });
-  it('updates the definition of a column', async () => {
-    const reaction = await setUpReaction();
-    const reactionMaterials = getReactionMaterials(reaction);
-    const field = `startingMaterials.${reactionMaterials.startingMaterials[0].id}`;
-    const columnDefinitions = Object.entries(reactionMaterials).map(([materialType, materials]) => ({
-      groupId: materialType,
-      children: materials.map((material) => getMaterialColumnGroupChild(material, materialType, false))
-    }));
-    expect(getColumnGroupChild(columnDefinitions, 'startingMaterials', field).cellDataType).toBe('material');
-    const updatedColumnDefinitions = updateColumnDefinitions(
-      columnDefinitions,
-      field,
-      'cellDataType',
-      'equivalent'
-    );
-    expect(getColumnGroupChild(updatedColumnDefinitions, 'startingMaterials', field).cellDataType).toBe('equivalent');
-  });
   it('gets column names from variations table', async () => {
     const reaction = await setUpReaction();
     const reactionMaterialsIDs = getReactionMaterialsIDs(getReactionMaterials(reaction));
@@ -235,13 +222,14 @@ describe('ReactionVariationsUtils', () => {
       ]
     };
     const columnDefinitions = getColumnDefinitions(selectedColumns, {}, reactionVariationSegments, false);
-    const segmentColumnDefinitions = columnDefinitions.find((colDef) => colDef.groupId === 'segments');
-    const segmentColumnChild = segmentColumnDefinitions.children[0];
-    const { entryDefs } = segmentColumnChild;
-    expect(Object.keys(entryDefs)).toEqual(Object.keys(reactionVariationSegments.foo));
-    expect(entryDefs['layer<layera>field<fielda>'].displayUnit).toBe('ng_l');
-    expect(entryDefs['layer<layera>field<fielda>'].units).toEqual(['ng_l', 'mg_l', 'g_l']);
-    expect(entryDefs['layer<layera>field<fieldb>'].units).toEqual([null]);
+    const segmentGroup = columnDefinitions.find((colDef) => colDef.groupId === 'segments');
+    const segmentSubGroup = segmentGroup.children[0];
+    const layerAfieldA = segmentSubGroup.children.find((child) => child.entry === 'layer<layera>field<fielda>');
+    const layerAfieldB = segmentSubGroup.children.find((child) => child.entry === 'layer<layera>field<fieldb>');
+
+    expect(layerAfieldA.displayUnit).toBe('ng_l');
+    expect(layerAfieldA.units).toEqual(['ng_l', 'mg_l', 'g_l']);
+    expect(layerAfieldB.units).toEqual([null]);
   });
   it('gets segment data', () => {
     const segmentDataFoo = getSegmentData(reactionVariationSegments.foo);
@@ -253,10 +241,442 @@ describe('ReactionVariationsUtils', () => {
   });
   it('formats entry names', () => {
     expect(getUserFacingEntryName('fooBar')).toBe('foo bar');
-    expect(getUserFacingEntryName('layer<foo>field<bar>')).toBe('layer: foo, field: bar');
+    expect(getUserFacingEntryName('layer<foo>field<bar>')).toBe('foo / bar');
   });
   it('formats reaction segments', () => {
     const formattedSegment = formatReactionSegments(reactionSegments);
     expect(formattedSegment).toEqual(reactionVariationSegments);
+  });
+
+  describe('setGroupColDefAttribute', () => {
+    const columnDefinitions = [
+      {
+        groupId: 'startingMaterials',
+        children: [
+          { groupId: 'mat-1', headerName: 'Water', children: [] },
+          { groupId: 'mat-2', headerName: 'Ethanol', children: [] },
+        ]
+      },
+      {
+        groupId: 'properties',
+        children: [
+          { groupId: 'temperature', headerName: 'T' },
+        ]
+      }
+    ];
+
+    it('sets an attribute on a nested subgroup', () => {
+      const result = setGroupColDefAttribute(columnDefinitions, 'startingMaterials', 'mat-1', 'headerName', 'H2O');
+      const subGroup = result.find((g) => g.groupId === 'startingMaterials').children.find((c) => c.groupId === 'mat-1');
+      expect(subGroup.headerName).toBe('H2O');
+    });
+
+    it('does not modify the original column definitions', () => {
+      setGroupColDefAttribute(columnDefinitions, 'startingMaterials', 'mat-1', 'headerName', 'H2O');
+      const subGroup = columnDefinitions.find((g) => g.groupId === 'startingMaterials').children.find((c) => c.groupId === 'mat-1');
+      expect(subGroup.headerName).toBe('Water');
+    });
+
+    it('returns column definitions unchanged when groupId is not a nested column group', () => {
+      const result = setGroupColDefAttribute(columnDefinitions, 'properties', 'temperature', 'headerName', 'Temp');
+      expect(result).toBe(columnDefinitions);
+    });
+  });
+
+  describe('setLeafColDefAttribute', () => {
+    const columnDefinitions = [
+      {
+        groupId: 'properties',
+        children: [
+          {
+            colId: 'properties.temperature',
+            field: 'properties.temperature',
+            displayUnit: '°C',
+          },
+          {
+            colId: 'properties.duration',
+            field: 'properties.duration',
+            displayUnit: 'Second(s)',
+          },
+        ]
+      },
+      {
+        groupId: 'startingMaterials',
+        children: [
+          {
+            groupId: 'mat-1',
+            children: [
+              { colId: 'startingMaterials.mat-1.amount', field: 'startingMaterials.mat-1', displayUnit: 'mol' }
+            ]
+          }
+        ]
+      }
+    ];
+
+    it('sets an attribute on a matching leaf column', () => {
+      const result = setLeafColDefAttribute(columnDefinitions, 'properties.temperature', 'displayUnit', 'K');
+      const leaf = result.find((g) => g.groupId === 'properties').children.find((c) => c.colId === 'properties.temperature');
+      expect(leaf.displayUnit).toBe('K');
+    });
+
+    it('does not affect non-matching leaves', () => {
+      const result = setLeafColDefAttribute(columnDefinitions, 'properties.temperature', 'displayUnit', 'K');
+      const leaf = result.find((g) => g.groupId === 'properties').children.find((c) => c.colId === 'properties.duration');
+      expect(leaf.displayUnit).toBe('Second(s)');
+    });
+
+    it('does not modify the original column definitions', () => {
+      setLeafColDefAttribute(columnDefinitions, 'properties.temperature', 'displayUnit', 'K');
+      const leaf = columnDefinitions.find((g) => g.groupId === 'properties').children.find((c) => c.colId === 'properties.temperature');
+      expect(leaf.displayUnit).toBe('°C');
+    });
+
+    it('sets an attribute on a deeply nested leaf', () => {
+      const result = setLeafColDefAttribute(columnDefinitions, 'startingMaterials.mat-1.amount', 'displayUnit', 'mmol');
+      const leaf = result
+        .find((g) => g.groupId === 'startingMaterials').children
+        .find((sg) => sg.groupId === 'mat-1').children
+        .find((c) => c.colId === 'startingMaterials.mat-1.amount');
+      expect(leaf.displayUnit).toBe('mmol');
+    });
+  });
+
+  describe('getInitialLayout', () => {
+    let userStoreStub;
+
+    beforeEach(() => {
+      userStoreStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 7 } });
+    });
+
+    afterEach(() => {
+      userStoreStub.restore();
+      localStorage.clear();
+    });
+
+    it('returns {} when no layout is stored', () => {
+      expect(getInitialLayout(42)).toEqual({});
+    });
+
+    it('returns the stored layout', () => {
+      const layout = { entries: { 'startingMaterials.mat-1.amount': false }, displayUnits: {}, groupHeaderNames: {} };
+      localStorage.setItem('user7-reaction42-reactionVariationsLayout', JSON.stringify(layout));
+      expect(getInitialLayout(42)).toEqual(layout);
+    });
+  });
+
+  describe('getEntryVisibility', () => {
+    const columnDefinitions = [
+      {
+        groupId: 'startingMaterials',
+        children: [
+          {
+            groupId: 'mat-1',
+            children: [
+              { entry: 'amount', colId: 'startingMaterials.mat-1.amount', hide: false },
+              { entry: 'mass', colId: 'startingMaterials.mat-1.mass', hide: true },
+              { entry: 'equivalent', colId: 'startingMaterials.mat-1.equivalent' },
+            ]
+          }
+        ]
+      },
+      {
+        groupId: 'properties',
+        children: [
+          { entry: 'temperature', colId: 'properties.temperature' }
+        ]
+      }
+    ];
+
+    it('returns visibility keyed by dot-separated path for nested column groups', () => {
+      const result = getEntryVisibility(columnDefinitions);
+      expect(result['startingMaterials.mat-1.amount']).toBe(false);
+      expect(result['startingMaterials.mat-1.mass']).toBe(true);
+    });
+
+    it('defaults to true when hide is not set on a nested group leaf', () => {
+      const result = getEntryVisibility(columnDefinitions);
+      expect(result['startingMaterials.mat-1.equivalent']).toBe(true);
+    });
+
+    it('does not include non-nested column groups', () => {
+      const result = getEntryVisibility(columnDefinitions);
+      expect(Object.keys(result).some((k) => k.startsWith('properties.'))).toBe(false);
+    });
+  });
+
+  describe('setEntryVisibility', () => {
+    const columnDefinitions = [
+      {
+        groupId: 'startingMaterials',
+        children: [
+          {
+            groupId: 'mat-1',
+            children: [
+              { entry: 'amount', colId: 'startingMaterials.mat-1.amount', hide: true },
+            ]
+          }
+        ]
+      }
+    ];
+
+    it('applies visibility from the map to matching leaf entries', () => {
+      const result = setEntryVisibility(columnDefinitions, { 'startingMaterials.mat-1.amount': false });
+      const leaf = result[0].children[0].children[0];
+      expect(leaf.hide).toBe(false);
+    });
+
+    it('does not modify the original column definitions', () => {
+      setEntryVisibility(columnDefinitions, { 'startingMaterials.mat-1.amount': false });
+      expect(columnDefinitions[0].children[0].children[0].hide).toBe(true);
+    });
+
+    it('ignores keys not present in the map', () => {
+      const result = setEntryVisibility(columnDefinitions, {});
+      const leaf = result[0].children[0].children[0];
+      expect(leaf.hide).toBe(true);
+    });
+  });
+
+  describe('getEntryDisplayUnits', () => {
+    const columnDefinitions = [
+      {
+        groupId: 'properties',
+        children: [
+          { entry: 'temperature', colId: 'properties.temperature', displayUnit: 'K' },
+          { entry: 'duration', colId: 'properties.duration' },
+        ]
+      },
+      {
+        groupId: 'startingMaterials',
+        children: [
+          {
+            groupId: 'mat-1',
+            children: [
+              { entry: 'amount', colId: 'startingMaterials.mat-1.amount', displayUnit: 'mmol' },
+            ]
+          }
+        ]
+      }
+    ];
+
+    it('collects displayUnit for all leaf entries that have one', () => {
+      const result = getEntryDisplayUnits(columnDefinitions);
+      expect(result['properties.temperature']).toBe('K');
+      expect(result['startingMaterials.mat-1.amount']).toBe('mmol');
+    });
+
+    it('omits leaf entries without a displayUnit', () => {
+      const result = getEntryDisplayUnits(columnDefinitions);
+      expect('properties.duration' in result).toBe(false);
+    });
+  });
+
+  describe('setEntryDisplayUnits', () => {
+    const columnDefinitions = [
+      {
+        groupId: 'properties',
+        children: [
+          { entry: 'temperature', colId: 'properties.temperature', displayUnit: '°C' },
+        ]
+      }
+    ];
+
+    it('applies displayUnit from the map to matching leaf entries', () => {
+      const result = setEntryDisplayUnits(columnDefinitions, { 'properties.temperature': 'K' });
+      expect(result[0].children[0].displayUnit).toBe('K');
+    });
+
+    it('does not modify the original column definitions', () => {
+      setEntryDisplayUnits(columnDefinitions, { 'properties.temperature': 'K' });
+      expect(columnDefinitions[0].children[0].displayUnit).toBe('°C');
+    });
+
+    it('ignores keys not present in the map', () => {
+      const result = setEntryDisplayUnits(columnDefinitions, {});
+      expect(result[0].children[0].displayUnit).toBe('°C');
+    });
+  });
+
+  describe('getGroupHeaderNames', () => {
+    const columnDefinitions = [
+      {
+        groupId: 'startingMaterials',
+        children: [
+          { groupId: 'mat-1', headerName: 'Water', children: [] },
+          { groupId: 'mat-2', headerName: 'Ethanol', children: [] },
+        ]
+      },
+      {
+        groupId: 'properties',
+        children: [
+          { groupId: 'temperature', headerName: 'T' },
+        ]
+      }
+    ];
+
+    it('returns header names keyed by groupId.subGroupId for nested column groups', () => {
+      const result = getGroupHeaderNames(columnDefinitions);
+      expect(result['startingMaterials.mat-1']).toBe('Water');
+      expect(result['startingMaterials.mat-2']).toBe('Ethanol');
+    });
+
+    it('does not include non-nested column groups', () => {
+      const result = getGroupHeaderNames(columnDefinitions);
+      expect('properties.temperature' in result).toBe(false);
+    });
+  });
+
+  describe('setGroupHeaderNames', () => {
+    const columnDefinitions = [
+      {
+        groupId: 'startingMaterials',
+        children: [
+          { groupId: 'mat-1', headerName: 'Water', children: [] },
+        ]
+      }
+    ];
+
+    it('applies header names from the map to matching subgroups', () => {
+      const result = setGroupHeaderNames(columnDefinitions, { 'startingMaterials.mat-1': 'H2O' });
+      expect(result[0].children[0].headerName).toBe('H2O');
+    });
+
+    it('does not modify the original column definitions', () => {
+      setGroupHeaderNames(columnDefinitions, { 'startingMaterials.mat-1': 'H2O' });
+      expect(columnDefinitions[0].children[0].headerName).toBe('Water');
+    });
+
+    it('ignores keys not present in the map', () => {
+      const result = setGroupHeaderNames(columnDefinitions, {});
+      expect(result[0].children[0].headerName).toBe('Water');
+    });
+  });
+
+  describe('getLayout', () => {
+    it('returns entries, displayUnits, and groupHeaderNames', () => {
+      const columnDefinitions = [
+        {
+          groupId: 'startingMaterials',
+          children: [
+            {
+              groupId: 'mat-1',
+              headerName: 'Water',
+              children: [
+                {
+                  entry: 'amount', colId: 'startingMaterials.mat-1.amount', hide: false, displayUnit: 'mmol'
+                },
+              ]
+            }
+          ]
+        }
+      ];
+
+      const layout = getLayout(columnDefinitions);
+      expect(layout.entries).toEqual({ 'startingMaterials.mat-1.amount': false });
+      expect(layout.displayUnits).toEqual({ 'startingMaterials.mat-1.amount': 'mmol' });
+      expect(layout.groupHeaderNames).toEqual({ 'startingMaterials.mat-1': 'Water' });
+    });
+  });
+
+  describe('setLayout', () => {
+    let userStoreStub;
+
+    beforeEach(() => {
+      userStoreStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 7 } });
+    });
+
+    afterEach(() => {
+      userStoreStub.restore();
+      localStorage.clear();
+    });
+
+    it('applies entries, displayUnits, and groupHeaderNames', () => {
+      const columnDefinitions = [
+        {
+          groupId: 'startingMaterials',
+          children: [
+            {
+              groupId: 'mat-1',
+              headerName: 'Water',
+              children: [
+                {
+                  entry: 'amount', colId: 'startingMaterials.mat-1.amount', hide: true, displayUnit: 'mol'
+                },
+              ]
+            }
+          ]
+        }
+      ];
+
+      const layout = {
+        entries: { 'startingMaterials.mat-1.amount': false },
+        displayUnits: { 'startingMaterials.mat-1.amount': 'mmol' },
+        groupHeaderNames: { 'startingMaterials.mat-1': 'H2O' },
+      };
+      localStorage.setItem('user7-reaction42-reactionVariationsLayout', JSON.stringify(layout));
+
+      const result = setLayout(42, columnDefinitions);
+      const subGroup = result[0].children[0];
+      const leaf = subGroup.children[0];
+      expect(leaf.hide).toBe(false);
+      expect(leaf.displayUnit).toBe('mmol');
+      expect(subGroup.headerName).toBe('H2O');
+    });
+
+    it('handles a partial layout gracefully', () => {
+      const columnDefinitions = [
+        {
+          groupId: 'startingMaterials',
+          children: [
+            {
+              groupId: 'mat-1',
+              headerName: 'Water',
+              children: [
+                {
+                  entry: 'amount', colId: 'startingMaterials.mat-1.amount', hide: true, displayUnit: 'mol'
+                },
+              ]
+            }
+          ]
+        }
+      ];
+
+      const result = setLayout(42, columnDefinitions);
+      const leaf = result[0].children[0].children[0];
+      expect(leaf.hide).toBe(true);
+      expect(leaf.displayUnit).toBe('mol');
+    });
+
+    it('does not modify the original column definitions', () => {
+      const columnDefinitions = [
+        {
+          groupId: 'startingMaterials',
+          children: [
+            {
+              groupId: 'mat-1',
+              headerName: 'Water',
+              children: [
+                {
+                  entry: 'amount', colId: 'startingMaterials.mat-1.amount', hide: true, displayUnit: 'mol'
+                },
+              ]
+            }
+          ]
+        }
+      ];
+
+      const layout = {
+        entries: { 'startingMaterials.mat-1.amount': false },
+        displayUnits: { 'startingMaterials.mat-1.amount': 'mmol' },
+        groupHeaderNames: { 'startingMaterials.mat-1': 'H2O' },
+      };
+      localStorage.setItem('user7-reaction42-reactionVariationsLayout', JSON.stringify(layout));
+
+      setLayout(42, columnDefinitions);
+
+      expect(columnDefinitions[0].children[0].children[0].hide).toBe(true);
+      expect(columnDefinitions[0].children[0].children[0].displayUnit).toBe('mol');
+      expect(columnDefinitions[0].children[0].headerName).toBe('Water');
+    });
   });
 });
