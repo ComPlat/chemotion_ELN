@@ -579,7 +579,7 @@ function MaterialOverlay({ value: cellData }) {
         <div>
           Molar mass:
           {' '}
-          {aux.molecularWeight.toPrecision(2)}
+          {aux.molecularWeight.toPrecision(4)}
           {' '}
           g/mol
         </div>
@@ -587,7 +587,13 @@ function MaterialOverlay({ value: cellData }) {
         {Object.entries(cellData).map(
           ([key, entry]) => (entry && typeof entry === 'object' && 'value' in entry ? (
             <div key={key}>
-              {`${getUserFacingEntryName(key)}: ${entry.value}${entry.unit ? ` ${entry.unit}` : ''}`}
+              {(() => {
+                const displayValue = typeof entry.value === 'number'
+                  ? parseFloat(entry.value.toPrecision(4))
+                  : entry.value;
+                const unit = entry.unit ? ` ${entry.unit}` : '';
+                return `${getUserFacingEntryName(key)}: ${displayValue}${unit}`;
+              })()}
             </div>
           ) : null)
         )}
