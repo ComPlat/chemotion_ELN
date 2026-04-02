@@ -10,7 +10,7 @@ import PropTypes from 'prop-types';
 import { cloneDeep, isEqual } from 'lodash';
 import {
   getVariationsRowName, convertUnit, getUserFacingUnit,
-  getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, sanitizeGroupEntry,
+  getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, sanitizeGroupEntry, DISPLAY_PRECISION,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
@@ -96,7 +96,7 @@ function convertGenericValueToDisplayUnit(entryData, displayUnit) {
   const { quantity, value, unit } = entryData;
   const valueInDisplayUnit = convertGenericUnit(value, unit, displayUnit, quantity);
 
-  return parseFloat(Number(valueInDisplayUnit).toPrecision(4));
+  return parseFloat(Number(valueInDisplayUnit).toPrecision(DISPLAY_PRECISION));
 }
 
 function SegmentParser({ oldValue: cellData, newValue, colDef }) {
@@ -192,7 +192,7 @@ SegmentSelectEditor.propTypes = {
 function convertValueToDisplayUnit(value, unit, displayUnit) {
   const valueInDisplayUnit = convertUnit(Number(value), unit, displayUnit);
 
-  return parseFloat(Number(valueInDisplayUnit).toPrecision(4));
+  return parseFloat(Number(valueInDisplayUnit).toPrecision(DISPLAY_PRECISION));
 }
 
 function PropertyFormatter({ value: cellData, colDef: { displayUnit } }) {
@@ -572,14 +572,14 @@ function MaterialOverlay({ value: cellData }) {
         <div>
           Coefficient:
           {' '}
-          {aux.coefficient.toPrecision(4)}
+          {aux.coefficient.toPrecision(DISPLAY_PRECISION)}
         </div>
         )}
         {aux?.molecularWeight !== null && (
         <div>
           Molar mass:
           {' '}
-          {aux.molecularWeight.toPrecision(4)}
+          {aux.molecularWeight.toPrecision(DISPLAY_PRECISION)}
           {' '}
           g/mol
         </div>
@@ -589,7 +589,7 @@ function MaterialOverlay({ value: cellData }) {
             <div key={key}>
               {(() => {
                 const displayValue = typeof entry.value === 'number'
-                  ? parseFloat(entry.value.toPrecision(4))
+                  ? parseFloat(entry.value.toPrecision(DISPLAY_PRECISION))
                   : entry.value;
                 const unit = entry.unit ? ` ${entry.unit}` : '';
                 return `${getUserFacingEntryName(key)}: ${displayValue}${unit}`;
