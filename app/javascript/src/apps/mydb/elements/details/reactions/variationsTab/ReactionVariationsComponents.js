@@ -585,7 +585,7 @@ function MaterialOverlay({ value: cellData }) {
         </div>
         )}
         {Object.entries(cellData).map(
-          ([key, entry]) => (entry && typeof entry === 'object' && 'value' in entry ? (
+          ([key, entry]) => (entry && typeof entry === 'object' && 'value' in entry && entry.value !== null ? (
             <div key={key}>
               {(() => {
                 const displayValue = typeof entry.value === 'number'
