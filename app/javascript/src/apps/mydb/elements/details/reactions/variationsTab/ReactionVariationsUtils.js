@@ -12,10 +12,10 @@ import {
 import {
   PropertyFormatter, PropertyParser,
   MaterialFormatter, MaterialParser,
-  GroupCellRenderer, GroupCellEditor, GroupHeader,
-  SegmentFormatter, SegmentParser, SegmentRenderer, SegmentSelectEditor,
+  GroupCellRenderer, GroupCellEditor,
+  SegmentFormatter, SegmentParser, SegmentSelectEditor,
   EquivalentParser, GasParser, FeedstockParser,
-  NoteCellRenderer, NoteCellEditor, MenuHeader, RowToolsCellRenderer, ToolHeader
+  NoteCellRenderer, NoteCellEditor, RowToolsCellRenderer, ToolHeader, EntrySelectionHeader, UnitToggleHeader,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { getGenSI } from 'chem-generic-ui';
@@ -29,11 +29,12 @@ const volumeUnits = ['l', 'ml', 'μl'];
 const amountUnits = ['mol', 'mmol'];
 const concentrationUnits = ['ppm'];
 const materialTypes = {
-  startingMaterials: { label: 'Starting materials', reactionAttributeName: 'starting_materials' },
+  startingMaterials: { label: 'Starting Materials', reactionAttributeName: 'starting_materials' },
   reactants: { label: 'Reactants', reactionAttributeName: 'reactants' },
   products: { label: 'Products', reactionAttributeName: 'products' },
   solvents: { label: 'Solvents', reactionAttributeName: 'solvents' }
 };
+const nestedColumnGroups = ['segments', ...Object.keys(materialTypes)];
 const cellDataTypes = {
   property: {
     extendsDataType: 'object',
@@ -250,38 +251,10 @@ function getCellDataType(entry, gasType = 'off') {
   }
 }
 
-function getEntryDefs(entries) {
-  return entries.reduce((defs, entry) => {
-    defs[entry] = {
-      isMain: entry === entries[0],
-      isSelected: entry === entries[0],
-      displayUnit: getStandardUnits(entry)[0],
-      units: getStandardUnits(entry),
-    };
-    return defs;
-  }, {});
-}
-
-function getGenericEntryDefs(segment) {
-  return Object.entries(segment).reduce((defs, [entryKey, entry]) => {
-    defs[entryKey] = {
-      isMain: entryKey === Object.keys(segment)[0],
-      isSelected: entryKey === Object.keys(segment)[0],
-      displayUnit: entry.value_system || null,
-      units: entry.type === 'system-defined' ? getGenericStandardUnits(entry.option_layers) : [null],
-    };
-    return defs;
-  }, {});
-}
-
-function getCurrentEntry(entryDefs) {
-  return Object.keys(entryDefs).find((key) => entryDefs[key].isMain) || null;
-}
-
 function getUserFacingEntryName(entry) {
   const genericEntryMatch = parseGenericEntryName(entry);
   if (genericEntryMatch) {
-    return `layer: ${genericEntryMatch.layer}, field: ${genericEntryMatch.field}`;
+    return `${genericEntryMatch.layer} / ${genericEntryMatch.field}`;
   }
 
   return entry.split(/(?=[A-Z])/).join(' ').toLowerCase(); // E.g., 'turnoverNumber' -> 'turnover number'
@@ -334,7 +307,7 @@ function getSegmentData(segment) {
         type: layerFieldData.type,
         label: layerFieldData.label,
         ...(layerFieldData.options && { options: layerFieldData.options.map((option) => option.label) }),
-        value: layerFieldData.options ? layerFieldData.options[0].label : null,
+        value: (layerFieldData.options && layerFieldData.options.length > 0) ? layerFieldData.options[0].label : null,
         unit: layerFieldData.value_system || null,
         quantity: layerFieldData.option_layers || null,
       }
@@ -484,7 +457,7 @@ function removeObsoleteColumnsFromVariations(variations, selectedColumns) {
   updatedVariations.forEach((row) => {
     Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
       row[columnGroupID] = Object.fromEntries(
-        Object.entries(row[columnGroupID]).filter(([key, value]) => columnGroupChildIDs.includes(key))
+        Object.entries(row[columnGroupID]).filter(([key]) => columnGroupChildIDs.includes(key))
       );
     });
   });
@@ -492,36 +465,37 @@ function removeObsoleteColumnsFromVariations(variations, selectedColumns) {
   return updatedVariations;
 }
 
-function getPropertyColumnGroupChild(propertyType, gasMode, externalEntryDefs = undefined) {
+function getPropertyColumnGroupChild(propertyType, gasMode) {
+  const field = `properties.${propertyType}`;
+  const cellDataType = getCellDataType(propertyType);
+  const units = getStandardUnits(propertyType);
+  const entry = propertyType;
+
   switch (propertyType) {
     case 'temperature':
       return {
-        field: 'properties.temperature',
-        cellDataType: getCellDataType('temperature'),
-        entryDefs: externalEntryDefs || getEntryDefs(['temperature']),
-        headerComponent: MenuHeader,
-        headerComponentParams: {
-          names: ['T'],
-        }
+        field,
+        colId: field,
+        cellDataType,
+        headerComponentParams: { innerHeaderComponent: UnitToggleHeader },
+        displayUnit: units[0],
+        units,
+        entry
       };
     case 'duration':
       return {
-        field: 'properties.duration',
-        cellDataType: getCellDataType('duration'),
+        field,
+        colId: field,
+        cellDataType,
+        headerComponentParams: { innerHeaderComponent: UnitToggleHeader },
+        displayUnit: units[0],
+        units,
+        entry,
         editable: !gasMode,
-        entryDefs: externalEntryDefs || getEntryDefs(['duration']),
-        headerComponent: MenuHeader,
-        headerComponentParams: {
-          names: ['t'],
-        }
       };
     default:
       return {};
   }
-}
-
-function groupNameAssembler(cellData) {
-  return `${cellData.group}.${cellData.subgroup}`;
 }
 
 function getMetadataColumnGroupChild(metadataType) {
@@ -548,8 +522,8 @@ function getMetadataColumnGroupChild(metadataType) {
       };
     case 'group':
       return {
-        headerComponent: GroupHeader,
         field: 'metadata.group',
+        headerName: 'Group',
         cellRenderer: GroupCellRenderer,
         cellEditor: GroupCellEditor,
         cellDataType: false,
@@ -566,9 +540,8 @@ function getMetadataColumnGroupChild(metadataType) {
   }
 }
 
-function getSegmentEditor({ colDef: { entryDefs }, value: cellData }) {
-  const currentEntry = getCurrentEntry(entryDefs);
-  switch (cellData[currentEntry].type) {
+function getSegmentEditor({ colDef: { entry }, value: cellData }) {
+  switch (cellData[entry].type) {
     case 'select':
       return { component: SegmentSelectEditor };
     case 'integer':
@@ -579,44 +552,57 @@ function getSegmentEditor({ colDef: { entryDefs }, value: cellData }) {
   }
 }
 
-function getSegmentColumnGroupChild(segmentLabel, segment, externalEntryDefs = undefined) {
+function getSegmentColumnGroupChild(segmentLabel, segment) {
   return {
-    field: `segments.${segmentLabel}`,
-    headerComponent: MenuHeader,
-    headerComponentParams: {
-      names: [segmentLabel],
-    },
-    entryDefs: externalEntryDefs || getGenericEntryDefs(segment),
-    cellDataType: 'segment',
-    cellRenderer: SegmentRenderer,
-    cellEditorSelector: (params) => getSegmentEditor(params),
+    headerGroupComponent: EntrySelectionHeader,
+    headerGroupComponentParams: { names: [] },
+    headerName: segmentLabel,
+    groupId: segmentLabel,
+    children: Object.entries(segment).reduce((_children, [entryKey, entry], index) => [
+      ..._children,
+      {
+        field: `segments.${segmentLabel}`,
+        colId: `segments.${segmentLabel}.${entryKey}`,
+        headerComponentParams: { innerHeaderComponent: UnitToggleHeader },
+        cellEditorSelector: (params) => getSegmentEditor(params),
+        cellDataType: 'segment',
+        displayUnit: entry.value_system || null,
+        units: entry.type === 'system-defined' ? getGenericStandardUnits(entry.option_layers) : [null],
+        entry: entryKey,
+        hide: index !== 0,
+      }
+    ], [])
+
   };
 }
 
 function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materials, segments, gasMode) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
-  Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
-    const columnGroup = updatedColumnDefinitions.find(
-      (currentColumnGroup) => currentColumnGroup.groupId === columnGroupID
-    );
-    columnGroupChildIDs.forEach((childID) => {
-      if (columnGroup.children.some((child) => child.field === `${columnGroupID}.${childID}`)) {
+  Object.entries(selectedColumns).forEach(([groupId, subGroupIds]) => {
+    const group = updatedColumnDefinitions.find((groupColDef) => groupColDef.groupId === groupId);
+
+    subGroupIds.forEach((subGroupId) => {
+      const subGroupIdExists = group.children.some(
+        (child) => (
+          nestedColumnGroups.includes(groupId)
+            ? (child.groupId === subGroupId)
+            : (child.field === `${groupId}.${subGroupId}`)
+        )
+      );
+      if (subGroupIdExists) {
         return;
       }
 
-      if (Object.keys(materialTypes).includes(columnGroupID)) {
-        const material = materials[columnGroupID].find((m) => m.id.toString() === childID.toString());
-        columnGroup.children.push(getMaterialColumnGroupChild(material, columnGroupID, gasMode));
-      }
-      if (columnGroupID === 'properties') {
-        columnGroup.children.push(getPropertyColumnGroupChild(childID, gasMode));
-      }
-      if (columnGroupID === 'metadata') {
-        columnGroup.children.push(getMetadataColumnGroupChild(childID));
-      }
-      if (columnGroupID === 'segments') {
-        columnGroup.children.push(getSegmentColumnGroupChild(childID, segments[childID]));
+      if (Object.keys(materialTypes).includes(groupId)) {
+        const material = materials[groupId].find((m) => m.id.toString() === subGroupId.toString());
+        group.children.push(getMaterialColumnGroupChild(material, groupId, gasMode));
+      } else if (groupId === 'properties') {
+        group.children.push(getPropertyColumnGroupChild(subGroupId, gasMode));
+      } else if (groupId === 'metadata') {
+        group.children.push(getMetadataColumnGroupChild(subGroupId));
+      } else if (groupId === 'segments') {
+        group.children.push(getSegmentColumnGroupChild(subGroupId, segments[subGroupId]));
       }
     });
   });
@@ -627,54 +613,57 @@ function addMissingColumnDefinitions(columnDefinitions, selectedColumns, materia
 function removeObsoleteColumnDefinitions(columnDefinitions, selectedColumns) {
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
-  Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
-    const columnGroup = updatedColumnDefinitions.find(
-      (currentColumnGroup) => currentColumnGroup.groupId === columnGroupID
+  const getChildId = (child) => child.field.split('.').slice(1).join('.');
+
+  Object.entries(selectedColumns).forEach(([groupId, subGroupIds]) => {
+    const group = updatedColumnDefinitions.find((groupColDef) => groupColDef.groupId === groupId);
+
+    const groupIsNested = nestedColumnGroups.includes(groupId);
+
+    group.children = group.children.filter(
+      (child) => subGroupIds.includes(groupIsNested ? child.groupId : getChildId(child))
     );
-
-    columnGroup.children = columnGroup.children.filter((child) => {
-      const childID = child.field.split('.').splice(1).join('.'); // Ensure that IDs that contain "." are handled correctly.
-      return columnGroupChildIDs.includes(childID);
-    });
   });
 
   return updatedColumnDefinitions;
 }
 
-function updateColumnDefinitions(columnDefinitions, field, property, newValue) {
+function setGroupColDefAttribute(columnDefinitions, groupId, subGroupId, attribute, update) {
+  if (!nestedColumnGroups.includes(groupId)) { return columnDefinitions; }
+
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
-
-  updatedColumnDefinitions.forEach((columnDefinition) => {
-    if (columnDefinition.groupId) {
-      // Column group.
-      if (columnDefinition.groupId === field) {
-        columnDefinition[property] = newValue;
-      } else {
-        columnDefinition.children.forEach((child) => {
-          if (child.field === field) {
-            child[property] = newValue;
-          }
-        });
-      }
-    } else if (columnDefinition.field === field) {
-      // Single column.
-      columnDefinition[property] = newValue;
-    }
-  });
+  const group = updatedColumnDefinitions.find((groupColDef) => groupColDef.groupId === groupId);
+  const subGroup = group.children.find((child) => child.groupId === subGroupId);
+  subGroup[attribute] = update;
 
   return updatedColumnDefinitions;
 }
 
-function getColumnDefinitions(selectedColumns, materials, segments, gasMode, externalEntryDefs = {}) {
+function setLeafColDefAttribute(columnDefinitions, colId, attribute, update) {
+  function updateLeaf(columns) {
+    return columns.some((col) => {
+      if (col.colId === colId) { col[attribute] = update; return true; }
+      return col.children && updateLeaf(col.children);
+    });
+  }
+
+  const updatedColumnDefinitions = cloneDeep(columnDefinitions);
+  updateLeaf(updatedColumnDefinitions);
+
+  return updatedColumnDefinitions;
+}
+
+function getColumnDefinitions(selectedColumns, materials, segments, gasMode) {
   return [
     {
       headerComponent: ToolHeader,
       cellRenderer: RowToolsCellRenderer,
+      colId: 'tools',
       lockPosition: 'left',
       sortable: false,
-      maxWidth: 100,
       cellDataType: false,
       rowDrag: true,
+      editable: false,
 
     },
     {
@@ -687,14 +676,14 @@ function getColumnDefinitions(selectedColumns, materials, segments, gasMode, ext
       groupId: 'properties',
       marryChildren: true,
       children: selectedColumns.properties.map(
-        (entry) => getPropertyColumnGroupChild(entry, gasMode, externalEntryDefs[`properties.${entry}`])
+        (entry) => getPropertyColumnGroupChild(entry, gasMode)
       )
     },
     {
-      headerName: 'Generic Segments',
+      headerName: 'Segments',
       groupId: 'segments',
       children: selectedColumns.segments.map(
-        (entry) => getSegmentColumnGroupChild(entry, segments[entry], externalEntryDefs[`segments.${entry}`])
+        (entry) => getSegmentColumnGroupChild(entry, segments[entry])
       )
     }
   ].concat(
@@ -702,14 +691,11 @@ function getColumnDefinitions(selectedColumns, materials, segments, gasMode, ext
       headerName: label,
       groupId: materialType,
       marryChildren: true,
-      autoHeaderHeight: true,
-      wrapHeaderText: true,
       children: selectedColumns[materialType].map(
         (materialID) => getMaterialColumnGroupChild(
           materials[materialType].find((material) => material.id.toString() === materialID),
           materialType,
           gasMode,
-          externalEntryDefs[`${materialType}.${materialID}`]
         )
       )
     }))
@@ -736,37 +722,164 @@ function getGridStateId(reactionId) {
   return `user${currentUser.id}-reaction${reactionId}-reactionVariationsGridState`;
 }
 
-function getEntryDefinitionsId(reactionId) {
-  const { currentUser } = UserStore.getState();
-  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsEntryDefinitions`;
-}
-
 function getInitialGridState(reactionId) {
   return JSON.parse(localStorage.getItem(getGridStateId(reactionId))) || {};
 }
 
-function getInitialEntryDefinitions(reactionId) {
-  return JSON.parse(localStorage.getItem(getEntryDefinitionsId(reactionId))) || {};
+function getLayoutId(reactionId) {
+  const { currentUser } = UserStore.getState();
+  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsLayout`;
+}
+
+function getInitialLayout(reactionId) {
+  return JSON.parse(localStorage.getItem(getLayoutId(reactionId))) || {};
+}
+
+function getRowOrderId(reactionId) {
+  const { currentUser } = UserStore.getState();
+  return `user${currentUser.id}-reaction${reactionId}-reactionVariationsRowOrder`;
+}
+
+function getInitialRowOrder(reactionId) {
+  return JSON.parse(localStorage.getItem(getRowOrderId(reactionId))) || null;
+}
+
+function persistRowOrder(reactionId, rowOrder) {
+  localStorage.setItem(getRowOrderId(reactionId), JSON.stringify(rowOrder));
+}
+
+function setRowOrder(reactionId, reactionVariations) {
+  const rowOrder = getInitialRowOrder(reactionId);
+  let updatedReactionVariations = cloneDeep(reactionVariations);
+
+  if (rowOrder) {
+    updatedReactionVariations = updatedReactionVariations.sort(
+      (a, b) => {
+        const indexA = rowOrder.indexOf(a.id);
+        const indexB = rowOrder.indexOf(b.id);
+        const posA = indexA === -1 ? Infinity : indexA;
+        const posB = indexB === -1 ? Infinity : indexB;
+        return posA - posB;
+      }
+    );
+  }
+
+  return updatedReactionVariations;
+}
+
+function traverseColDefs(colDef, callback, path = []) {
+  const { groupId } = colDef;
+  if (groupId) {
+    path.push(groupId);
+  }
+
+  if (colDef.children) {
+    colDef.children.forEach((child) => traverseColDefs(child, callback, [...path]));
+  } else if (colDef.entry) {
+    const key = [...path, colDef.entry].join('.');
+    callback(colDef, key);
+  }
+}
+
+function getEntryVisibility(columnDefinitions) {
+  const entryVisibility = {};
+
+  columnDefinitions
+    .filter((groupColDef) => nestedColumnGroups.includes(groupColDef.groupId))
+    .forEach((groupColDef) => traverseColDefs(groupColDef, (colDef, key) => {
+      entryVisibility[key] = colDef.hide ?? true;
+    }));
+
+  return entryVisibility;
+}
+
+function setEntryVisibility(columnDefinition, entryVisibility) {
+  const updatedColumnDefinition = cloneDeep(columnDefinition);
+  updatedColumnDefinition
+    .filter((groupColDef) => nestedColumnGroups.includes(groupColDef.groupId))
+    .forEach((groupColDef) => traverseColDefs(groupColDef, (colDef, key) => {
+      if (key in entryVisibility) {
+        colDef.hide = entryVisibility[key];
+      }
+    }));
+
+  return updatedColumnDefinition;
+}
+
+function getEntryDisplayUnits(columnDefinitions) {
+  const displayUnits = {};
+
+  columnDefinitions.forEach((groupColDef) => traverseColDefs(groupColDef, (colDef, key) => {
+    if (colDef.displayUnit !== undefined) {
+      displayUnits[key] = colDef.displayUnit;
+    }
+  }));
+
+  return displayUnits;
+}
+
+function setEntryDisplayUnits(columnDefinition, displayUnits) {
+  const updatedColumnDefinition = cloneDeep(columnDefinition);
+  updatedColumnDefinition.forEach((groupColDef) => traverseColDefs(groupColDef, (colDef, key) => {
+    if (key in displayUnits) {
+      colDef.displayUnit = displayUnits[key];
+    }
+  }));
+
+  return updatedColumnDefinition;
+}
+
+function getGroupHeaderNames(columnDefinitions) {
+  const headerNames = {};
+  columnDefinitions
+    .filter((groupColDef) => nestedColumnGroups.includes(groupColDef.groupId))
+    .forEach((groupColDef) => {
+      groupColDef.children.forEach((subGroup) => {
+        headerNames[`${groupColDef.groupId}.${subGroup.groupId}`] = subGroup.headerName;
+      });
+    });
+
+  return headerNames;
+}
+
+function setGroupHeaderNames(columnDefinition, headerNames) {
+  const updatedColumnDefinition = cloneDeep(columnDefinition);
+  updatedColumnDefinition
+    .filter((groupColDef) => nestedColumnGroups.includes(groupColDef.groupId))
+    .forEach((groupColDef) => {
+      groupColDef.children.forEach((subGroup) => {
+        const key = `${groupColDef.groupId}.${subGroup.groupId}`;
+        if (key in headerNames) {
+          subGroup.headerName = headerNames[key];
+        }
+      });
+    });
+
+  return updatedColumnDefinition;
+}
+
+function getLayout(columnDefinitions) {
+  return {
+    entries: getEntryVisibility(columnDefinitions),
+    displayUnits: getEntryDisplayUnits(columnDefinitions),
+    groupHeaderNames: getGroupHeaderNames(columnDefinitions),
+  };
+}
+
+function setLayout(reactionId, columnDefinitions) {
+  const layout = getInitialLayout(reactionId);
+
+  let updated = setEntryVisibility(columnDefinitions, layout.entries ?? {});
+  updated = setEntryDisplayUnits(updated, layout.displayUnits ?? {});
+  updated = setGroupHeaderNames(updated, layout.groupHeaderNames ?? {});
+
+  return updated;
 }
 
 const persistTableLayout = (reactionId, event, columnDefinitions) => {
   const { state: gridState } = event;
   localStorage.setItem(getGridStateId(reactionId), JSON.stringify(gridState));
-
-  const entryDefs = {};
-  function extractEntryDefs(items) {
-    items.forEach((item) => {
-      if (item.field) {
-        entryDefs[item.field] = item.entryDefs || {};
-      }
-      if (item.children && Array.isArray(item.children)) {
-        extractEntryDefs(item.children);
-      }
-    });
-  }
-  extractEntryDefs(columnDefinitions);
-
-  localStorage.setItem(getEntryDefinitionsId(reactionId), JSON.stringify(entryDefs));
+  localStorage.setItem(getLayoutId(reactionId), JSON.stringify(getLayout(columnDefinitions)));
 };
 
 function formatReactionSegments(segments) {
@@ -860,7 +973,6 @@ export {
   createVariationsRow,
   copyVariationsRow,
   updateVariationsRow,
-  updateColumnDefinitions,
   getColumnDefinitions,
   getCellDataType,
   getUserFacingUnit,
@@ -874,15 +986,25 @@ export {
   PLACEHOLDER_CELL_TEXT,
   REACTION_VARIATIONS_TAB_KEY,
   getInitialGridState,
-  getInitialEntryDefinitions,
+  getInitialLayout,
+  getInitialRowOrder,
+  persistRowOrder,
+  setRowOrder,
+  setLayout,
   persistTableLayout,
-  getEntryDefs,
-  getCurrentEntry,
   getUserFacingEntryName,
   getReactionSegments,
   parseGenericEntryName,
   getSegmentData,
   formatReactionSegments,
   sanitizeGroupEntry,
-  groupNameAssembler,
+  setGroupColDefAttribute,
+  setLeafColDefAttribute,
+  getEntryVisibility,
+  setEntryVisibility,
+  getEntryDisplayUnits,
+  setEntryDisplayUnits,
+  getGroupHeaderNames,
+  setGroupHeaderNames,
+  getLayout,
 };
