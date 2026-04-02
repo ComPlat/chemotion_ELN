@@ -567,17 +567,17 @@ function MaterialOverlay({ value: cellData }) {
   return (
     <div className="tooltip show">
       <div className="tooltip-inner text-start">
-        {aux?.isReference && <div>Reference</div>}
+        {aux?.isReference && <div>reference</div>}
         {aux?.coefficient !== null && (
         <div>
-          Coefficient:
+          coefficient:
           {' '}
           {aux.coefficient.toPrecision(DISPLAY_PRECISION)}
         </div>
         )}
         {aux?.molecularWeight !== null && (
         <div>
-          Molar mass:
+          molar mass:
           {' '}
           {aux.molecularWeight.toPrecision(DISPLAY_PRECISION)}
           {' '}
