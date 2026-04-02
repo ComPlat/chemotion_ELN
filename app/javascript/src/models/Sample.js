@@ -729,35 +729,38 @@ export default class Sample extends Element {
 
   /**
    * Updates the sample's concentration (`concn`) based on its total amount in moles
-   * and the combined volume of all reaction materials.
+   * and the reaction-level volume selected by `reaction.reactionVolumeForConcentration()`.
    *
-   * - For mixtures: calculates concentration as `amount_mol / combinedVolume`.
-   * - For non-mixtures: calculates concentration as `amount_mol / combinedVolume`.
+   * Volume selection is delegated to the reaction model and follows this priority:
+   * 1. Explicit reaction volume (`reaction.volume`) when `reaction.use_reaction_volume` is enabled
+   *    and the value is valid (> 0).
+   * 2. Otherwise, the combined reaction volume calculated from materials.
+   *
+   * - For mixtures: calculates concentration as `amount_mol / selectedReactionVolume`.
+   * - For non-mixtures: calculates concentration as `amount_mol / selectedReactionVolume`.
    * - If any required data is missing or invalid, `concn` is set to `null`.
    *
    * Formula:
-   *   concn = amount_mol / (reaction.solventVolume + volumes of all materials)
+    *   concn = amount_mol / reaction.reactionVolumeForConcentration()
    *
    * @method updateConcentrationFromSolvent
-   * @memberof Sample
-   * @param {Object} reaction - The reaction object containing the solvent volume.
+    * @memberof Sample
+    * @param {Object} reaction - The reaction object that resolves concentration volume.
    * @returns {void}
    */
   updateConcentrationFromSolvent(reaction) {
+    // Keep manually-entered concentration unchanged.
+    if (this.preserveConcentration) {
+      return;
+    }
+
     if (!reaction) {
       this.concn = null;
       return;
     }
 
-    // Determine which volume to use based on checkbox state
-    let volumeToUse = null;
-    if (reaction.use_reaction_volume && reaction.volume != null && reaction.volume > 0) {
-      // Use reaction volume input when checkbox is checked
-      volumeToUse = reaction.volume;
-    } else {
-      // Use sum of materials volume when checkbox is unchecked or default
-      volumeToUse = reaction.calculateCombinedReactionVolume();
-    }
+    // Determine which reaction-level volume to use for concentration calculations
+    const volumeToUse = reaction.reactionVolumeForConcentration();
 
     if (!volumeToUse || volumeToUse <= 0) {
       this.concn = null;
