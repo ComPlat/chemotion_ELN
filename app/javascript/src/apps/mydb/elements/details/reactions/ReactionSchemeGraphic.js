@@ -64,6 +64,7 @@ export default function ReactionSchemeGraphic({
 }) {
   const [svgProps, setSvgProps] = useState({});
   const tooltipContainer = typeof document !== 'undefined' ? document.body : undefined;
+  const isInteractionReaction = reaction.isInteractionReaction();
 
   useEffect(() => {
     // Use svgPath for both file URLs and data URIs (raw SVG is encoded as data URI in Reaction.svgPath)
@@ -134,19 +135,23 @@ export default function ReactionSchemeGraphic({
           onClick={close}
         />
       </Popover.Header>
-      <Popover.Body className="border-bottom py-1">
-        <h6 className="fs-9 fw-medium">Starting Materials</h6>
-        {reaction.starting_materials.map(
-          (material) => materialShowLabel(material, false, 'starting_materials')
-        )}
-      </Popover.Body>
-      <Popover.Body className="border-bottom py-1">
-        <h6 className="fs-9 fw-medium">Reactants</h6>
-        {reaction.reactants.map((material) => materialShowLabel(material, false, 'reactants'))}
-        {reaction.reactant_sbmm_samples.map(
-          (material) => materialShowLabel(material, true, 'sbmm_reactants')
-        )}
-      </Popover.Body>
+      {!isInteractionReaction && (
+        <>
+          <Popover.Body className="border-bottom py-1">
+            <h6 className="fs-9 fw-medium">Starting Materials</h6>
+            {reaction.starting_materials.map(
+              (material) => materialShowLabel(material, false, 'starting_materials')
+            )}
+          </Popover.Body>
+          <Popover.Body className="border-bottom py-1">
+            <h6 className="fs-9 fw-medium">Reactants</h6>
+            {reaction.reactants.map((material) => materialShowLabel(material, false, 'reactants'))}
+            {reaction.reactant_sbmm_samples.map(
+              (material) => materialShowLabel(material, true, 'sbmm_reactants')
+            )}
+          </Popover.Body>
+        </>
+      )}
       <Popover.Body className="py-1">
         <h6 className="fs-9 fw-medium">Products</h6>
         {reaction.products.map((material) => materialShowLabel(material, false, 'products'))}
@@ -175,6 +180,7 @@ export default function ReactionSchemeGraphic({
       </div>
       <div className="Reaction-scheme-graphic__toolbar">
         <ConfigOverlayButton
+          key={isInteractionReaction ? 'interaction' : 'standard'}
           popperConfig={popperConfigAboveToolbar}
           popoverSettings={popoverSettings}
           wrapperClassName=""
