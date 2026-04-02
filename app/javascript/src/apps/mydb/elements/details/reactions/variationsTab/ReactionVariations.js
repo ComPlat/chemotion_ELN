@@ -13,8 +13,9 @@ import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
-  removeObsoleteColumnDefinitions, getInitialGridState, getInitialEntryDefinitions, persistTableLayout, cellDataTypes,
-  getReactionSegments
+  removeObsoleteColumnDefinitions, getInitialGridState, persistRowOrder, setRowOrder,
+  setLayout, persistTableLayout, cellDataTypes,
+  getReactionSegments,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
@@ -31,7 +32,7 @@ import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
-export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
+export default function ReactionVariations({ reaction, onReactionChange }) {
   if (reaction.isNew) {
     return (
       <Alert variant="info">
@@ -64,26 +65,21 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const [asyncDataLoaded, setAsyncDataLoaded] = useState(false);
 
   useEffect(() => {
-    // Auto-size columns when the parent tab is (re-)entered.
-    if (isActive && gridRef.current?.api) {
-      gridRef.current.api.autoSizeAllColumns();
-    }
-  }, [isActive]);
-
-  useEffect(() => {
     const fetchData = async () => {
       const segments = await getReactionSegments(reaction);
       const updatedSelectedColumns = {
         ...selectedColumns, segments: selectedColumns.segments.filter((segment) => Object.hasOwn(segments, segment))
       };
-      const updatedReactionVariations = removeObsoleteColumnsFromVariations(reactionVariations, updatedSelectedColumns);
-      const updatedColumnDefinitions = getColumnDefinitions(
+      let updatedReactionVariations = removeObsoleteColumnsFromVariations(reactionVariations, updatedSelectedColumns);
+      let updatedColumnDefinitions = getColumnDefinitions(
         updatedSelectedColumns,
         reactionMaterials,
         segments,
         gasMode,
-        getInitialEntryDefinitions(reaction.id)
       );
+      updatedColumnDefinitions = setLayout(reaction.id, updatedColumnDefinitions);
+      updatedReactionVariations = setRowOrder(reaction.id, updatedReactionVariations);
+
       setReactionSegments(segments);
       setSelectedColumns(updatedSelectedColumns);
       setReactionVariations(updatedReactionVariations);
@@ -92,6 +88,13 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     };
     fetchData();
   }, []);
+
+  const handleRowDrag = (event) => {
+    const rowOrder = [];
+    event.api.forEachNode((node) => rowOrder.push(node.data.id));
+
+    persistRowOrder(reaction.id, rowOrder);
+  };
 
   const addRow = () => {
     setReactionVariations(
@@ -191,11 +194,6 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     </OverlayTrigger>
   );
 
-  const fitColumnToContent = (event) => {
-    const { column } = event;
-    gridRef.current.api.autoSizeColumns([column], false);
-  };
-
   /*
   What follows is a series of imperative state updates that keep the "Variations" tab in sync with the "Scheme" tab.
   This pattern isn't nice, but the best I could do according to
@@ -273,6 +271,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           return materials;
         }, {}),
         selectedColumns: updatedSelectedColumns,
+        segments: reactionSegments,
         gasMode
       }
     );
@@ -355,18 +354,27 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           initialState={initialGridState}
           rowData={reactionVariations}
           rowDragManaged
-          headerHeight={110}
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
           defaultColDef={{
             editable: true,
             sortable: true,
-            resizable: false,
+            resizable: true,
+            cellStyle: (params) => {
+              const { editable } = params.colDef;
+              const isEditable = typeof editable === 'function' ? editable(params) : editable;
+              return isEditable === false ? { backgroundColor: '#e9ecef' } : null;
+            },
+          }}
+          defaultColGroupDef={{
+            resizable: true,
           }}
           dataTypeDefinitions={cellDataTypes}
           tooltipShowDelay={0}
+          groupHeaderHeight={53}
           domLayout="autoHeight"
           maintainColumnOrder
+          suppressNoRowsOverlay
           context={{
             copyRow,
             removeRow,
@@ -383,12 +391,15 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           */
           readOnlyEdit
           onCellEditRequest={updateRow}
-          onCellValueChanged={(event) => fitColumnToContent(event)}
-          onColumnHeaderClicked={(event) => fitColumnToContent(event)}
           onGridPreDestroyed={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
           onStateUpdated={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
-          onFirstDataRendered={() => gridRef.current.api.autoSizeAllColumns()}
-          onComponentStateChanged={() => gridRef.current.api.autoSizeAllColumns()}
+          /*
+          We need to persist manual row sort (i.e., user changes row order by dragging rows),
+          since ag-grid does not persist manual row sort as part of the grid state.
+          In contrast to sort by column, we persist manual row sorting in the data, not in the grid state.
+          When the event fires, the grid has already mutated the row order, we just need to persist it.
+          */
+          onRowDragEnd={(event) => handleRowDrag(event)}
         />
       </div>
     </div>
@@ -398,5 +409,4 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
 ReactionVariations.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   onReactionChange: PropTypes.func.isRequired,
-  isActive: PropTypes.bool.isRequired,
 };

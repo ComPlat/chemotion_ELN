@@ -1,6 +1,5 @@
 import {
-  getCellDataType, updateColumnDefinitions, addMissingColumnDefinitions, removeObsoleteColumnDefinitions,
-  getColumnDefinitions, getCurrentEntry
+  addMissingColumnDefinitions, removeObsoleteColumnDefinitions, getColumnDefinitions, setGroupColDefAttribute, setLeafColDefAttribute,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 export default function columnDefinitionsReducer(columnDefinitions, action) {
@@ -19,25 +18,23 @@ export default function columnDefinitionsReducer(columnDefinitions, action) {
       );
       return updatedColumnDefinitions;
     }
-    case 'update_entry_defs': {
-      let updatedColumnDefinitions = updateColumnDefinitions(
+    case 'set_group_col_def_attribute': {
+      return setGroupColDefAttribute(
         columnDefinitions,
-        action.field,
-        'entryDefs',
-        action.entryDefs
+        action.groupId,
+        action.subGroupId,
+        action.attribute,
+        action.update
       );
-      updatedColumnDefinitions = updateColumnDefinitions(
-        updatedColumnDefinitions,
-        action.field,
-        'cellDataType',
-        getCellDataType(getCurrentEntry(action.entryDefs), action.gasType)
-      );
-      return updatedColumnDefinitions;
+    }
+    case 'set_leaf_col_def_attribute': {
+      return setLeafColDefAttribute(columnDefinitions, action.colId, action.attribute, action.update);
     }
     case 'toggle_gas_mode': {
       return getColumnDefinitions(
         action.selectedColumns,
         action.materials,
+        action.segments,
         action.gasMode
       );
     }

@@ -156,8 +156,8 @@ function AnalysesCellEditor({
   );
 
   const cellContent = (
-    <Modal centered show>
-      <Modal.Header>
+    <Modal centered show onHide={() => stopEditing()}>
+      <Modal.Header closeButton>
         {`Link analyses to ${getVariationsRowName(reactionShortLabel, row.id)}`}
       </Modal.Header>
       <Modal.Body>{analysesSelection}</Modal.Body>
