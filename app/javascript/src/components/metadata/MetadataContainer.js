@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Tabs, Tab } from 'react-bootstrap';
+import { Tab, Tabs } from 'react-bootstrap';
+import { detailFooterButton } from 'src/apps/mydb/elements/details/DetailCardButton';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import Metadata from 'src/models/Metadata';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -9,8 +10,6 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
-
-import MetadataHeader from 'src/components/metadata/MetadataHeader';
 import MetadataGeneral from 'src/components/metadata/MetadataGeneral';
 import MetadataCreators from 'src/components/metadata/MetadataCreators';
 import MetadataContributors from 'src/components/metadata/MetadataContributors';
@@ -81,27 +80,30 @@ export default class MetadataContainer extends Component {
   }
 
   render() {
-    const { metadata } = this.state;
+    const { activeTab, metadata } = this.state;
     const { currentCollection } = UIStore.getState();
     const title = currentCollection && `DataCite/RADAR Metadata for collection "${currentCollection.label}"`;
     const saveBtnDisplay = !!metadata.isEdited;
+    const footerToolbar = saveBtnDisplay
+      ? detailFooterButton({
+        label: 'Save',
+        iconClass: 'fa fa-floppy-o',
+        variant: 'primary',
+        onClick: this.handleSave,
+      })
+      : null;
 
     return (
       <DetailCard
-        header={(
-          <MetadataHeader
-            title={title}
-            saveBtnDisplay={saveBtnDisplay}
-            onSave={this.handleSave}
-            onClose={this.handleClose}
-          />
-        )}
+        title={title}
+        onClose={this.handleClose}
+        footerToolbar={footerToolbar}
       >
         <div className="tabs-container--with-borders">
           <Tabs
             id="metadata-tabs"
-            activeKey={this.state.activeTab}
-            onSelect={key => this.handleSelect(key)}
+            activeKey={activeTab}
+            onSelect={(key) => this.handleSelect(key)}
             className="metadata-tabs"
           >
             <Tab eventKey="general" title="General">

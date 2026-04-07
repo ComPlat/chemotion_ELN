@@ -1,3 +1,7 @@
 body {
   scrollbar-color: map-get($carbon-shades, lighten3) transparent;
 }
+button:disabled {
+  cursor: not-allowed !important;
+  pointer-events: auto !important;
+}

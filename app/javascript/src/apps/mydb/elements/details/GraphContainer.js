@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
 
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import { detailFooterButton } from 'src/apps/mydb/elements/details/DetailCardButton';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -19,6 +19,8 @@ export default class GraphContainer extends React.Component {
       defaultObjTags: { sampleIds: [], reactionIds: [] },
       selectedComputedProps: []
     };
+
+    this.graphRef = React.createRef();
 
     this.onChangeUI = this.onChangeUI.bind(this);
     this.onChangeRp = this.onChangeRp.bind(this);
@@ -72,33 +74,36 @@ export default class GraphContainer extends React.Component {
     });
   }
 
-  header() {
-    return (
-      <div className="d-flex align-items-baseline justify-content-between">
-        <div>
-          <i className="fa fa-area-chart me-1" />
-          Graph
-        </div>
-        <Button
-          key="closeBtn"
-          onClick={this.onClose}
-          variant="danger"
-          size="xxsm"
-        >
-          <i className="fa fa-times" />
-        </Button>
-      </div>
-    );
-  }
-
   render() {
     const { selectedComputedProps } = this.state;
 
+    const footer = (
+      <>
+        {detailFooterButton({
+          label: 'Delete Template',
+          iconClass: 'fa fa-trash',
+          variant: 'danger',
+          onClick: () => this.graphRef.current?.deleteTemplate(),
+        })}
+        {detailFooterButton({
+          label: 'Save Template',
+          iconClass: 'fa fa-floppy-o',
+          variant: 'primary',
+          onClick: () => this.graphRef.current?.saveTemplate(),
+        })}
+      </>
+    );
+
     return (
-      <DetailCard header={this.header()}>
+      <DetailCard
+        titleIcon={<i className="fa fa-area-chart" />}
+        title="Graph"
+        onClose={this.onClose}
+        footerToolbar={footer}
+      >
         <ComputedPropsGraphContainer
+          ref={this.graphRef}
           show
-          style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 303px)' }}
           graphData={selectedComputedProps}
         />
       </DetailCard>
@@ -107,5 +112,5 @@ export default class GraphContainer extends React.Component {
 }
 
 GraphContainer.propTypes = {
-  graph: PropTypes.object.isRequired
+  graph: PropTypes.shape({}).isRequired
 };

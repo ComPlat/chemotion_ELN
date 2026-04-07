@@ -16,7 +16,7 @@ export default class ModalReactionExport extends React.Component {
   buttonBar() {
     const { onHide } = this.props;
     return (
-      <ButtonToolbar className="justify-content-end gap-1">
+      <ButtonToolbar className="justify-content-end">
         <Button variant="primary" onClick={onHide}>Cancel</Button>
         <Button
           variant="warning"

@@ -150,7 +150,7 @@ const PropertiesForm = ({ readonly }) => {
     const searchOptionsVisible = sbmmStore.show_search_options[sbmmSample.id] ? false : true;
 
     return (
-      <Button variant="primary" onClick={() => sbmmStore.toggleSearchOptions(sbmmSample.id, searchOptionsVisible)}>
+      <Button variant="light" onClick={() => sbmmStore.toggleSearchOptions(sbmmSample.id, searchOptionsVisible)}>
         {buttonText} search options
       </Button>
     )

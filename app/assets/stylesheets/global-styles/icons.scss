@@ -12,25 +12,10 @@
 // 7. place your new svg source files in images/svg_icons for reference
 //
 
-@font-face {
-  font-family: "chemstrap-icons";
-  src: url("chemstrap-icons.eot");
-  src:
-    url("chemstrap-icons.eot?#iefix") format("embedded-opentype"),
-    url("chemstrap-icons.woff2") format("woff2"),
-    url("chemstrap-icons.woff") format("woff"),
-    url("chemstrap-icons.ttf") format("truetype"),
-    url("chemstrap-icons.svg#icons") format("svg");
-  font-weight: normal;
-  font-style: normal;
-}
+@include font-face("chemstrap-icons", normal, normal, "chemstrap-icons");
 
-@media screen and (-webkit-min-device-pixel-ratio: 0) {
-  @font-face {
-    font-family: "chemstrap-icons";
-    src: url("chemstrap-icons.svg#icons") format("svg");
-  }
-}
+// Override Font Awesome metrics globally to align icon centering across browsers.
+@include font-face("FontAwesome", normal, normal, "fontawesome-webfont");
 
 [data-icon]:before {
   content: attr(data-icon);
@@ -178,7 +163,7 @@
 //make .fa-fw work in flex containers
 
 .fa-fw {
-  min-width: 1.28571429em;
+  min-width: $input-btn-line-height;
 }
 
 // recontextualisation of standard icons
@@ -188,7 +173,10 @@
 .icon-vessel,
 .icon-vessel_template,
 .icon-sequence_based_macromolecule,
-.icon-sequence_based_macromolecule_sample {
+.icon-sequence_based_macromolecule_sample,
+.icon-report,
+.icon-literature,
+.icon-literature_map {
   font-style: inherit;
   &:before {
     font-family: FontAwesome;
@@ -211,12 +199,29 @@
   content: "\f0ae";
 }
 
-.icon-sequence_based_macromolecule:before,
-.icon-sequence_based_macromolecule_sample:before {
-  content: "\f0c1";
+.icon-sequence_based_macromolecule,
+.icon-sequence_based_macromolecule_sample {
+  &:before {
+    content: "\f0c1";
+  }
 }
 
-.square-icon {
-  min-width: 1em;
-  width: 1em;
+.icon-report:before {
+  content: "\f0f6";
+}
+
+.icon-literature,
+.icon-literature_map {
+  &:before {
+    content: "\f02d";
+  }
+}
+
+.fa.combi-icon-close {
+  @extend .flex-row;
+  @extend .w-auto;
+  @extend .gap-1;
+  &:after {
+    content: "\f00d";
+  }
 }

@@ -274,7 +274,7 @@ export default class ResearchPlanDetailsContainers extends Component {
         return (
           <div>
             <div className="my-2 mx-3 d-flex justify-content-end">
-              <ButtonToolbar className="gap-1">
+              <ButtonToolbar>
                 <div className="mt-2">
                   <CommentButton
                     toggleCommentBox={this.toggleCommentBox}
@@ -347,7 +347,7 @@ export default class ResearchPlanDetailsContainers extends Component {
         <div>
           <div className="d-flex align-items-center justify-content-between my-2 mx-3">
             <span className="ms-3"> There are currently no Analyses. </span>
-            <ButtonToolbar className="gap-2">
+            <ButtonToolbar>
               <div className="mt-2">
                 <CommentButton
                   toggleCommentBox={this.toggleCommentBox}
@@ -371,7 +371,7 @@ export default class ResearchPlanDetailsContainers extends Component {
       <div className="m-4">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <span>There are currently no Analyses.</span>
-          <ButtonToolbar className="gap-2">
+          <ButtonToolbar>
             <CommentButton
               toggleCommentBox={this.toggleCommentBox}
               isVisible={commentBoxVisible}

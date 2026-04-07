@@ -38,8 +38,8 @@ function OpenCalendarButton({ eventableType, eventableId, isPanelHeader }) {
   if (isPanelHeader) {
     return (
       <Button
-        size="xxsm"
-        variant="light"
+        size="sm"
+        variant="secondary"
         onClick={onClick}
       >
         <i className="fa fa-calendar" />

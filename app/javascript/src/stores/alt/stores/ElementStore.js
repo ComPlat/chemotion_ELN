@@ -272,7 +272,7 @@ class ElementStore {
           ElementActions.generateEmptyVessel,
           ElementActions.generateEmptyVesselTemplate,
           ElementActions.generateEmptySequenceBasedMacromoleculeSample,
-          ElementActions.showReportContainer,
+          ElementActions.showReportDetails,
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
           ElementActions.showComputedPropsTasks,
@@ -1240,12 +1240,33 @@ class ElementStore {
   }
 
   handleGenerateEmptyElement(element) {
-    const { currentElement } = this.state;
+    const { currentElement, selecteds } = this.state;
+    const selectionScopedTypes = ['report', 'literature_map'];
+    let nextElement = element;
 
-    const newElementOfSameTypeIsPresent =
-      currentElement && currentElement.isNew && currentElement.type === element.type;
+    if (element && selectionScopedTypes.includes(element.type)) {
+      const uiState = UIStore.getState();
+      const sampleIds = uiState?.sample?.checkedIds?.toArray ? uiState.sample.checkedIds.toArray() : [];
+      const selectionKey = `${uiState?.currentCollection?.id || 'none'}:${sampleIds.map(String).sort().join(',')}`;
+
+      nextElement = { ...element, selectionKey };
+      const existingIndex = selecteds.findIndex(
+        (el) => el?.type === nextElement.type && el?.selectionKey === selectionKey
+      );
+      if (existingIndex >= 0) {
+        this.state.activeKey = existingIndex;
+        this.state.currentElement = selecteds[existingIndex];
+        return;
+      }
+    }
+
+    const newElementOfSameTypeIsPresent = currentElement
+      && currentElement.isNew
+      && currentElement.type === nextElement.type
+      && (!selectionScopedTypes.includes(nextElement.type)
+      || currentElement.selectionKey === nextElement.selectionKey);
     if (!newElementOfSameTypeIsPresent) {
-      this.changeCurrentElement(element);
+      this.changeCurrentElement(nextElement);
     }
   }
 

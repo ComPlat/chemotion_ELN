@@ -124,10 +124,10 @@ const ModalExportCollection = ({ onHide }) => {
 
   const renderButtonBar = () => {
     const bStyle = processing === true ? 'danger' : 'warning';
-    const bClass = processing === true ? 'fa fa-spinner fa-pulse fa-fw me-2' : 'fa fa-file-text-o me-2';
+    const bClass = processing === true ? 'fa fa-spinner fa-pulse' : 'fa fa-file-text-o';
     const bTitle = processing === true ? 'Exporting' : 'Export ZIP';
     return (
-      <ButtonToolbar className="justify-content-end gap-1">
+      <ButtonToolbar className="justify-content-end">
         <Button variant="primary" onClick={onHide}>Cancel</Button>
         <Button
           variant={bStyle}

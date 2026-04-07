@@ -1253,7 +1253,7 @@ class ElementActions {
   }
 
   // -- Report --
-  showReportContainer() {
+  showReportDetails() {
     return Report.buildEmpty()
   }
 

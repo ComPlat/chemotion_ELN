@@ -185,12 +185,14 @@ export default class SelectionActions extends React.Component {
         <SelectionExportButton />
         <SelectionSplitButton />
         <Dropdown id="move-or-assign-btn">
-          <Dropdown.Toggle 
+          <Dropdown.Toggle
             variant="light"
             size="sm"
             disabled={assignDisabled && moveDisabled}
+            title="Transfer"
+            aria-label="Transfer"
           >
-            <i className="fa fa-exchange me-1" />
+            <i className="fa fa-exchange me-1" aria-hidden="true" />
             <span className="selection-action-text-label">Transfer</span>
           </Dropdown.Toggle>
           <Dropdown.Menu>
@@ -210,12 +212,14 @@ export default class SelectionActions extends React.Component {
         </Dropdown>
 
         <Dropdown id="remove-or-delete-btn">
-          <Dropdown.Toggle 
+          <Dropdown.Toggle
             variant="light"
             size="sm"
             disabled={removeDisabled && deleteDisabled}
+            title="Remove"
+            aria-label="Remove"
           >
-            <i className="fa fa-times-circle-o me-1" />
+            <i className="fa fa-times-circle-o me-1" aria-hidden="true" />
             <span className="selection-action-text-label">Remove</span>
           </Dropdown.Toggle>
           <Dropdown.Menu>
@@ -239,8 +243,10 @@ export default class SelectionActions extends React.Component {
           id="share-btn"
           disabled={shareDisabled}
           onClick={() => this.showModal('share')}
+          title="Share"
+          aria-label="Share"
         >
-          <i className="fa fa-share-alt me-1" />
+          <i className="fa fa-share-alt me-1" aria-hidden="true" />
           <span className="selection-action-text-label">Share</span>
         </Button>
         <Button
@@ -249,8 +255,10 @@ export default class SelectionActions extends React.Component {
           id="literature-btn"
           disabled={literatureDisabled}
           onClick={ElementActions.showLiteratureDetail}
+          title="References"
+          aria-label="References"
         >
-          <i className="fa fa-book me-1" />
+          <i className="fa fa-book me-1" aria-hidden="true" />
           <span className="selection-action-text-label">References</span>
         </Button>
         {this.renderModal()}
