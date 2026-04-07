@@ -29,6 +29,7 @@ const massUnits = ['g', 'mg', 'μg'];
 const volumeUnits = ['l', 'ml', 'μl'];
 const amountUnits = ['mol', 'mmol'];
 const concentrationUnits = ['ppm'];
+const yieldUnits = ['%'];
 const materialTypes = {
   startingMaterials: { label: 'Starting Materials', reactionAttributeName: 'starting_materials' },
   reactants: { label: 'Reactants', reactionAttributeName: 'reactants' },
@@ -138,6 +139,8 @@ function getStandardUnits(entry) {
       return durationUnits;
     case 'concentration':
       return concentrationUnits;
+    case 'yield':
+      return yieldUnits;
     default:
       return [null];
   }
