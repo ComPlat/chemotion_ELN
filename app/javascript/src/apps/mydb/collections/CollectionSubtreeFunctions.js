@@ -32,7 +32,7 @@ const CollectionSubtreeFunctionsDropdownToggle = React.forwardRef(({
     }}
     size="xsm"
   >
-    <i className="fa square-icon fa-ellipsis-v" />
+    <i className="fa fa-ellipsis-v" />
   </Button>
 ));
 
@@ -84,11 +84,11 @@ export default function CollectionSubtreeFunctions({ collectionId }) {
         <Dropdown.Toggle as={CollectionSubtreeFunctionsDropdownToggle} />
         <Dropdown.Menu renderOnMount popperConfig={{ strategy: 'fixed' }}>
           <Dropdown.Item onClick={handleShowLiterature}>
-            <i className="fa square-icon fa-book me-1" />
+            <i className="icon-report me-1" />
             Reference Report
           </Dropdown.Item>
           <Dropdown.Item onClick={handleImportSamples}>
-            <i className="icon-square icon-arrow-down-to-bracket me-1" />
+            <i className="icon-arrow-down-to-bracket me-1" />
             Import samples to collection
           </Dropdown.Item>
         </Dropdown.Menu>

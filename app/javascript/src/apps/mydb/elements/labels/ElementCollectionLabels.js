@@ -1,12 +1,42 @@
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable camelcase */
 import React from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import {
-  OverlayTrigger, Popover, Button
+  Button, Dropdown
 } from 'react-bootstrap';
 import Aviator from 'aviator';
 import UserStore from 'src/stores/alt/stores/UserStore';
+
+const CollectionToggle = React.forwardRef(({
+  onClick,
+  labelsCount,
+  totalSharedCollections,
+}, ref) => (
+  <Button
+    ref={ref}
+    size="xxsm"
+    variant="secondary"
+    onClick={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick(e);
+    }}
+  >
+    <i className="fa fa-list" />
+    {` ${labelsCount} `}
+    {' | '}
+    <i className="fa fa-share-alt" />
+    {`${totalSharedCollections} `}
+  </Button>
+));
+CollectionToggle.displayName = 'CollectionToggle';
+CollectionToggle.propTypes = {
+  onClick: PropTypes.func.isRequired,
+  labelsCount: PropTypes.number.isRequired,
+  totalSharedCollections: PropTypes.number.isRequired,
+};
 
 export default class ElementCollectionLabels extends React.Component {
   constructor(props) {
@@ -27,37 +57,27 @@ export default class ElementCollectionLabels extends React.Component {
     Aviator.navigate(url);
   }
 
-  labelStyle(label) {
-    return label.is_shared ? 'warning' : 'info';
-  }
-
-  formatLabels(labels, is_synchronized) {
-    return labels.map((label, index) => {
+  formatItems(labels, is_synchronized) {
+    return labels.map((label) => {
       if (is_synchronized && label.isOwner) {
         return (
-          <span className="d-inline-block m-1" key={index}>
-            <Button disabled variant="light" size="sm">
-              {label.name}
-            </Button>
-          </span>
+          <Dropdown.Item key={label.id}>{label.name}</Dropdown.Item>
         );
       }
       return (
-        <span className="d-inline-block m-1" key={index}>
-          <Button variant="light" size="sm" onClick={(e) => this.handleOnClick(label, e, is_synchronized)}>
-            {label.name}
-          </Button>
-        </span>
+        <Dropdown.Item key={label.id} onClick={(e) => this.handleOnClick(label, e, is_synchronized)}>
+          {label.name}
+        </Dropdown.Item>
       );
     });
   }
 
-  renderCollectionsLabels(collectionName, labels, is_synchronized = false) {
+  renderCollectionsItems(collectionName, labels, is_synchronized = false) {
     if (labels.length === 0) return null;
     return (
       <>
-        <Popover.Header>{collectionName}</Popover.Header>
-        <Popover.Body>{this.formatLabels(labels, is_synchronized)}</Popover.Body>
+        <Dropdown.Header>{collectionName}</Dropdown.Header>
+        {this.formatItems(labels, is_synchronized)}
       </>
     );
   }
@@ -98,34 +118,23 @@ export default class ElementCollectionLabels extends React.Component {
 
     if (labels.length === 0 && total_shared_collections === 0) { return (<span />); }
 
-    const collectionOverlay = (
-      <Popover className="scrollable-popover" id="element-collections">
-        {this.renderCollectionsLabels('My Collections', labels)}
-        {this.renderCollectionsLabels('Shared Collections', shared_labels)}
-        {this.renderCollectionsLabels('Synchronized Collections', sync_labels, true)}
-      </Popover>
-    );
-
     return (
-      <OverlayTrigger
-        trigger="click"
-        rootClose
-        placement={this.props.placement}
-        overlay={collectionOverlay}
-      >
-        <Button
-          key={element.id}
-          size="xxsm"
-          variant="light"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <i className="fa fa-list" />
-          {` ${labels.length} `}
-          {' - '}
-          {`${total_shared_collections} `}
-          <i className="fa fa-share-alt" />
-        </Button>
-      </OverlayTrigger>
+      <Dropdown>
+        <Dropdown.Toggle
+          as={CollectionToggle}
+          id="dropdown-custom-components"
+          labelsCount={labels.length}
+          totalSharedCollections={total_shared_collections}
+        />
+        {createPortal(
+          <Dropdown.Menu>
+            {this.renderCollectionsItems('My Collections', labels)}
+            {this.renderCollectionsItems('Shared Collections', shared_labels)}
+            {this.renderCollectionsItems('Synchronized Collections', sync_labels, true)}
+          </Dropdown.Menu>,
+          document.body
+        )}
+      </Dropdown>
     );
   }
 }
@@ -147,9 +156,4 @@ ElementCollectionLabels.propTypes = {
       }),
     }),
   }).isRequired,
-  placement: PropTypes.string,
-};
-
-ElementCollectionLabels.defaultProps = {
-  placement: 'left',
 };

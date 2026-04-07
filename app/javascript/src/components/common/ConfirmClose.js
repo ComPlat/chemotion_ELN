@@ -49,7 +49,7 @@ export default class ConfirmClose extends Component {
     const popover = (
       <Tooltip placement="left" className="in" id="tooltip-bottom">
         Unsaved data will be lost.<br /> Close {el.type}?<br />
-        <ButtonToolbar className="gap-2 justify-content-center">
+        <ButtonToolbar className="justify-content-center">
           <Button
             variant="danger"
             size="xxsm"

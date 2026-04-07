@@ -69,7 +69,7 @@ export default class ReactionDetailsProperties extends Component {
           onInputChange={(type, event) => this.props.onInputChange(type, event)}
         />
         <Form.Group className="mx-1">
-          <Form.Label>Type (Name Reaction Ontology)</Form.Label>
+          <Form.Label>Type (Name Reaction)</Form.Label>
           <OlsTreeSelect
             selectName="rxno"
             selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}

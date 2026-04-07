@@ -107,7 +107,7 @@ const DevicesList = () => {
         <Popover id="popover-clear-datacollector">
           <Popover.Header as="h3">Remove data collector settings of {device.name}</Popover.Header>
           <Popover.Body>
-            <ButtonToolbar className="gap-2">
+            <ButtonToolbar>
               <Button
                 size="sm"
                 variant="danger"
@@ -142,7 +142,7 @@ const DevicesList = () => {
         <Popover id="popover-clear-novnc">
           <Popover.Header as="h3">Remove Novnc settings of {device.name}</Popover.Header>
           <Popover.Body>
-            <ButtonToolbar className="gap-2">
+            <ButtonToolbar>
               <Button
                 size="sm"
                 variant="danger"
@@ -180,7 +180,7 @@ const DevicesList = () => {
       <Popover id="popover-delete-button">
         <Popover.Header as="h3">Remove {type}: {object.name}</Popover.Header>
         <Popover.Body>
-          <ButtonToolbar className="gap-2">
+          <ButtonToolbar>
             <Button
               size="sm"
               variant="danger"
@@ -211,7 +211,7 @@ const DevicesList = () => {
   const listActionButtons = (device, idx) => {
     return (
       <td>
-        <ButtonToolbar className="gap-2">
+        <ButtonToolbar>
           <OverlayTrigger placement="top" overlay={<Tooltip id="editDevice">Edit device</Tooltip>}>
             <Button
               size="sm"

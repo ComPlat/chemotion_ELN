@@ -82,8 +82,11 @@ export default class ChemicalTab extends React.Component {
       setSaveInventory,
       editChemical,
       type,
+      onInventorySaveComplete,
     } = this.props;
     if (!sample || !chemical) {
+      setSaveInventory(false);
+      if (onInventorySaveComplete) onInventorySaveComplete(false);
       return;
     }
     const chemicalData = chemical._chemical_data || null;
@@ -97,29 +100,41 @@ export default class ChemicalTab extends React.Component {
     } else {
       params.sample_id = sample.id;
     }
-    if (chemical.isNew) {
-      ChemicalFetcher.create(params).then((response) => {
-        if (response) {
-          this.setState({ chemical });
-        }
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+
+    const isNewChemical = chemical.isNew;
+    const saveRequest = isNewChemical
+      ? ChemicalFetcher.create(params)
+      : ChemicalFetcher.update(params);
+
+    if (isNewChemical) {
       chemical.isNew = false;
       editChemical(false);
       chemical.updateChecksum();
-    } else {
-      ChemicalFetcher.update(params).then((response) => {
-        if (response) {
-          editChemical(false);
-          chemical.updateChecksum();
-          this.setState({ chemical });
-        }
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
     }
-    setSaveInventory(false);
+
+    saveRequest
+      .then((response) => {
+        if (response) {
+          if (isNewChemical) {
+            this.setState({ chemical });
+          } else {
+            editChemical(false);
+            chemical.updateChecksum();
+            this.setState({ chemical });
+          }
+
+          if (onInventorySaveComplete) onInventorySaveComplete(true);
+        } else if (onInventorySaveComplete) {
+          onInventorySaveComplete(false);
+        }
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+        if (onInventorySaveComplete) onInventorySaveComplete(false);
+      })
+      .finally(() => {
+        setSaveInventory(false);
+      });
   }
 
   handleRemove(index, document) {
@@ -1248,7 +1263,7 @@ export default class ChemicalTab extends React.Component {
               {this.checkMarkButton(document)}
             </a>
           ) : null}
-          <ButtonToolbar className="gap-1">
+          <ButtonToolbar>
             {this.copyButton(document)}
             {this.saveSafetySheetsButton(document)}
             {this.removeButton(index, document)}
@@ -1885,8 +1900,10 @@ ChemicalTab.propTypes = {
   saveInventory: PropTypes.bool.isRequired,
   setSaveInventory: PropTypes.func.isRequired,
   editChemical: PropTypes.func.isRequired,
+  onInventorySaveComplete: PropTypes.func,
 };
 
 ChemicalTab.defaultProps = {
   handleUpdateSample: null,
+  onInventorySaveComplete: null,
 };

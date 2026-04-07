@@ -1,27 +1,26 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, {
+  useState, useEffect, useContext, useRef
+} from 'react';
 import PropTypes from 'prop-types';
 import {
-  Alert, Button, Form, Tabs, Tab, Tooltip, OverlayTrigger, ListGroupItem
+  Alert, Button, Form, Tabs, Tab, ListGroupItem
 } from 'react-bootstrap';
 
-import PropertiesForm from './propertiesTab/PropertiesForm';
-import AnalysesContainer from './analysesTab/AnalysesContainer';
-import AttachmentForm from './attachmentsTab/AttachmentForm';
-import ConflictModal from './ConflictModal';
-
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import ConfirmClose from 'src/components/common/ConfirmClose';
-import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
-import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
-import CopyElementModal from 'src/components/common/CopyElementModal';
+import PropertiesForm
+  from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/propertiesTab/PropertiesForm';
+import AnalysesContainer
+  from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/analysesTab/AnalysesContainer';
+import AttachmentForm
+  from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/attachmentsTab/AttachmentForm';
+import ConflictModal
+  from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/ConflictModal';
 import Immutable from 'immutable';
 import { set } from 'lodash';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
@@ -30,7 +29,6 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import DetailActions from 'src/stores/alt/actions/DetailActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -39,17 +37,16 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 
-const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => {
+function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
-  let sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
+  const sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
 
   const { currentCollection, isSync } = UIStore.getState();
   const { currentUser } = UserStore.getState();
 
   const [visibleTabs, setVisibleTabs] = useState(Immutable.List());
-
   const submitLabel = sbmmSample.isNew ? 'Create' : 'Save';
-  let tabContents = [];
+  const tabContents = [];
   const alertRef = useRef();
   const hasError = Object.keys(sbmmSample.errors).length >= 1;
 
@@ -64,11 +61,11 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
 
     if (hasError && Object.keys(items).length >= 1 && items.item(0) !== null) {
       setTimeout(() => {
-        items.item(0).scrollIntoView({ behavior: "smooth", block: "start" });
+        items.item(0).scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 500);
     } else if (hasError && alertRef.current !== undefined) {
       setTimeout(() => {
-        document.getElementById('sbmm-error-alert').scrollIntoView({ behavior: "smooth", block: "start" });
+        document.getElementById('sbmm-error-alert').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 500);
     }
   }, [alertRef.current]);
@@ -113,14 +110,12 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
       currentUser.id,
       isSync
     );
-  }
+  };
 
-  const disabled = (index) => {
-    return sbmmSample.isNew && index !== 0 ? true : false;
-  }
+  const disabled = (index) => (!!(sbmmSample.isNew && index !== 0));
 
   visibleTabs.forEach((key, i) => {
-    let title = tabTitles[key];
+    const title = tabTitles[key];
     if (key === 'inventory') {
       tabContents.push(sbmmInventoryTab(key));
     } else {
@@ -140,10 +135,10 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
   });
 
   const errorMessage = () => {
-    const conflict = sbmmSample.errors.conflict;
+    const { conflict } = sbmmSample.errors;
     const reason = conflict
       ? conflict.message
-      : 'This element cannot be ' + submitLabel.toLowerCase() + 'd because not all fields are filled in correctly.';
+      : `This element cannot be ${submitLabel.toLowerCase()}d because not all fields are filled in correctly.`;
     return (
       <>
         {reason}
@@ -158,11 +153,11 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
         )}
       </>
     );
-  }
+  };
 
   const onTabPositionChanged = (visible) => {
     setVisibleTabs(visible);
-  }
+  };
 
   const updateInventoryTabInCollection = (inventoryOrder) => {
     if (!currentCollection || currentCollection.is_sync_to_me) return;
@@ -210,7 +205,7 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
   };
 
   const handleInventorySample = (e) => {
-    const checked = e.target.checked;
+    const { checked } = e.target;
     sbmmStore.changeSequenceBasedMacromoleculeSample('inventory_sample', checked);
 
     if (checked) {
@@ -229,18 +224,18 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
 
   const handleTabChange = (key) => {
     sbmmStore.setActiveTabKey(key);
-  }
+  };
 
   const handleSubmit = () => {
     sbmmStore.saveSample(sbmmSample);
-  }
+  };
 
   const handleExportAnalyses = () => {
     sbmmStore.toggleAnalysisStartExport();
     AttachmentFetcher.downloadZipBySequenceBaseMacromoleculeSample(sbmmSample.id)
       .then(() => { sbmmStore.toggleAnalysisStartExport(); })
-      .catch((errorMessage) => { console.log(errorMessage); });
-  }
+      .catch((exportError) => { console.log(exportError); });
+  };
 
   const downloadAnalysisButton = () => {
     const hasNoAnalysis = sbmmSample.analyses?.length === 0 || sbmmSample.analyses?.length === undefined;
@@ -254,22 +249,20 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
         {sbmmStore.analysis_start_export && <i className="fa fa-spin fa-spinner ms-1" />}
       </Button>
     );
-  }
+  };
 
   const uniprotLogo = () => {
-    const linkUniprot =
-      sbmmSample.sequence_based_macromolecule.parent?.link_uniprot || sbmmSample.sequence_based_macromolecule?.link_uniprot;
-
+    const parentLink = sbmmSample.sequence_based_macromolecule.parent?.link_uniprot;
+    const linkUniprot = parentLink || sbmmSample.sequence_based_macromolecule?.link_uniprot;
     if (linkUniprot) {
       return (
-        <a href={linkUniprot} className="pe-auto" target="_blank">
-          <img src="/logos/uniprot-logo.svg" className="uniprot-logo" />
+        <a href={linkUniprot} className="pe-auto" target="_blank" rel="noreferrer">
+          <img src="/logos/uniprot-logo.svg" className="uniprot-logo" alt="Uniprot" />
         </a>
       );
-    } else {
-      return (<img src="/logos/uniprot-logo.svg" className="uniprot-logo-gray" />);
     }
-  }
+    return <img src="/logos/uniprot-logo-gray.svg" className="uniprot-logo-gray" alt="Uniprot" />;
+  };
 
   // Handler for chemical save
   const handleSubmitChemical = () => {
@@ -277,155 +270,45 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
     sbmmStore.setSaveInventoryAction(true);
   };
 
-  const saveButtonForChemical = () => (
-    <OverlayTrigger
-      placement="bottom"
-      overlay={<Tooltip id="saveChemicalforSBMM">Save chemical</Tooltip>}
-    >
-      <Button
-        variant="warning"
-        size="xxsm"
-        onClick={() => handleSubmitChemical()}
-      >
-        <i className="fa fa-floppy-o " />
-      </Button>
-    </OverlayTrigger>
-  );
-
-  // Save button for sbmm sample
-  const saveButtonForSbmm = () => (
-    <OverlayTrigger
-      placement="bottom"
-      overlay={<Tooltip id="saveSequenceBasedMacromolecule">Save sequence based macromolecule</Tooltip>}
-    >
-      <Button
-        variant="warning"
-        size="xxsm"
-        onClick={() => handleSubmit()}
-      >
-        <i className="fa fa-floppy-o " />
-      </Button>
-    </OverlayTrigger>
-  );
-
-  const sbmmSampleHeader = () => {
-    const titleTooltip = formatTimeStampsOfElement(sbmmSample || {});
-    const defCol = currentCollection && currentCollection.is_shared === false
-      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
-    const isChemicalTab = sbmmStore.active_tab_key === 'inventory';
-    const chemicalSaveBtn = isChemicalTab && sbmmStore.isChemicalEdited;
-    const hasSampleChanges = sbmmSample.isEdited || sbmmSample.changed;
-    const sampleSaveBtn = hasSampleChanges && sbmmStore.active_tab_key !== 'inventory';
-
-    return (
-      <div className="d-flex align-items-center justify-content-between">
-        <div className="d-flex align-items-center gap-2">
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="sbmmSampleDates">{titleTooltip}</Tooltip>}
-          >
-            <span>
-              <i className="icon-sequence_based_macromolecule me-1" />
-              {sbmmSample.title()}
-              {sbmmSample.sbmmShortLabelForHeader(true)}
-            </span>
-          </OverlayTrigger>
-          {
-            !sbmmSample.isNew && (
-              <ElementCollectionLabels element={sbmmSample} placement="right" />
-            )
-          }
-          <HeaderCommentSection element={sbmmSample} />
-          {uniprotLogo()}
-        </div>
-        <div className="d-flex align-items-center gap-1">
-          <Form.Check
-            type="checkbox"
-            id="sbmm-sample-inventory-header"
-            className="mx-2 sample-inventory-header"
-            checked={sbmmSample.inventory_sample || false}
-            onChange={(e) => handleInventorySample(e)}
-            label="Inventory"
-          />
-          <PrintCodeButton element={sbmmSample} />
-          {!sbmmSample.isNew &&
-            <OpenCalendarButton
-              isPanelHeader
-              eventableId={sbmmSample.id}
-              eventableType="SequenceBasedMacromoleculeSample"
-            />}
-          {sbmmSample.can_copy && !sbmmSample.isNew && (
-            <CopyElementModal
-              element={sbmmSample}
-              defCol={defCol}
-            />
-          )}
-          {hasSampleChanges && (
-            <OverlayTrigger
-              placement="bottom"
-              overlay={<Tooltip id="saveSequenceBasedMacromolecule">Save sequence based macromolecule</Tooltip>}
-            >
-              <Button
-                variant="warning"
-                size="xxsm"
-                onClick={() => handleSubmit()}
-              >
-                <i className="fa fa-floppy-o " />
-              </Button>
-            </OverlayTrigger>
-          )}
-          {(() => {
-            if (chemicalSaveBtn) {
-              return saveButtonForChemical();
-            }
-            if (sampleSaveBtn) {
-              return saveButtonForSbmm();
-            }
-            return null;
-          })()}
-          <ConfirmClose el={sbmmSample} />
-        </div>
-      </div>
-    );
-  };
-
-  // Footer logic: show save button for chemical if on inventory tab and isChemicalEdited, else show sbmm save
   const isChemicalTab = sbmmStore.active_tab_key === 'inventory';
   const chemicalSaveBtn = isChemicalTab && sbmmStore.isChemicalEdited;
-  const isValid = Object.keys(sbmmSample.errors).length < 1
-  const sampleSaveBtn = (sbmmSample.isEdited || sbmmSample.changed) && sbmmStore.active_tab_key !== 'inventory' && isValid;
-  const sbmmSampleFooter = () => (
-    <>
-      <Button variant="primary" onClick={() => DetailActions.close(sbmmSample)}>
-        Close
-      </Button>
-      {(() => {
-        if (chemicalSaveBtn) {
-          return (
-            <Button variant="warning" onClick={() => handleSubmitChemical()}>
-              {submitLabel}
-            </Button>
-          );
-        }
-        if (sampleSaveBtn) {
-          return (
-            <Button variant="warning" onClick={() => handleSubmit()}>
-              {submitLabel}
-            </Button>
-          );
-        }
-        return null;
-      })()}
-      {downloadAnalysisButton()}
-    </>
+  const hasSampleChanges = sbmmSample.isEdited || sbmmSample.changed;
+  const isValid = Object.keys(sbmmSample.errors).length < 1;
+  const sampleSaveBtn = hasSampleChanges && sbmmStore.active_tab_key !== 'inventory' && isValid;
+
+  const onSave = () => {
+    if (chemicalSaveBtn) { handleSubmitChemical(); return; }
+    if (sampleSaveBtn) { handleSubmit(); }
+  };
+
+  const headerToolbar = (
+    <Form.Check
+      type="checkbox"
+      id="sbmm-sample-inventory-header"
+      className="mx-2 sample-inventory-header"
+      checked={sbmmSample.inventory_sample || false}
+      onChange={(e) => handleInventorySample(e)}
+      label="Inventory"
+    />
   );
+
+  const titleAppendix = uniprotLogo();
+
   const isPendingToSave = sbmmSample.isPendingToSave || sbmmStore.isChemicalEdited;
 
   return (
-    <DetailCard
+    <ElementDetailCard
+      element={sbmmSample}
       isPendingToSave={isPendingToSave}
-      header={sbmmSampleHeader()}
-      footer={sbmmSampleFooter()}
+      title={`${sbmmSample.title()}${sbmmSample.sbmmShortLabelForHeader(true)}`}
+      titleTooltip={formatTimeStampsOfElement(sbmmSample || {})}
+      titleAppendix={titleAppendix}
+      headerToolbar={headerToolbar}
+      footerToolbar={downloadAnalysisButton()}
+      onSave={onSave}
+      saveDisabled={!chemicalSaveBtn && !sampleSaveBtn}
+      showPrintCode
+      showCalendar
     >
       <div className="tabs-container--with-borders">
         <ElementDetailSortTab
@@ -438,7 +321,7 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
         />
         <Tabs
           activeKey={sbmmStore.active_tab_key}
-          onSelect={key => handleTabChange(key)}
+          onSelect={(key) => handleTabChange(key)}
           id="sbmmSampleSampleDetailsTab"
           unmountOnExit
           className="has-config-overlay"
@@ -453,12 +336,16 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
         )
       }
       {sbmmStore.show_conflict_modal && <ConflictModal />}
-    </DetailCard>
+    </ElementDetailCard>
   );
 }
 
 SequenceBasedMacromoleculeSampleDetails.propTypes = {
   openedFromCollectionId: PropTypes.number,
+};
+
+SequenceBasedMacromoleculeSampleDetails.defaultProps = {
+  openedFromCollectionId: null,
 };
 
 export default observer(SequenceBasedMacromoleculeSampleDetails);

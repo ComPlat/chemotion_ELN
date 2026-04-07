@@ -25,6 +25,7 @@ import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { copyToClipboard } from 'src/utilities/clipboard';
+import ElementIcon from 'src/components/common/ElementIcon';
 
 const Cite = require('citation-js');
 
@@ -54,26 +55,27 @@ const resolveCollectionById = (collectionId) => {
 
 const ElementLink = ({ literature }) => {
   const {
-    external_label,
-    short_label,
+    external_label: externalLabel,
+    short_label: shortLabel,
     name,
-    element_type,
-    element_id,
+    element_id: elementId,
   } = literature;
-  const type = element_type && element_type.toLowerCase();
+
   return (
     <Button
-      title={`${external_label ? external_label.concat(' - ') : ''}${name}`}
+      title={`${externalLabel ? externalLabel.concat(' - ') : ''}${name}`}
+      variant="light"
       onClick={() => {
         const { uri } = Aviator.getCurrentRequest();
         const uriArray = uri.split(/\//);
-        if (type && element_id) {
-          Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${element_id}`);
+        const elementType = literature.element_type && literature.element_type.toLowerCase();
+        if (elementType && elementId) {
+          Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${elementType}/${elementId}`);
         }
       }}
     >
-      <i className={`me-2 ${element_type ? `icon-${type}` : ''}`} />
-      {short_label}
+      <ElementIcon element={literature} className="me-2" />
+      {shortLabel}
     </Button>
   );
 };

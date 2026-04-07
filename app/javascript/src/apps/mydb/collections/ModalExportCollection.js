@@ -191,10 +191,10 @@ export default class ModalExportCollection extends React.Component {
     const { onHide } = this.props;
     const { processing } = this.state;
     const bStyle = processing === true ? 'danger' : 'warning';
-    const bClass = processing === true ? 'fa fa-spinner fa-pulse fa-fw' : 'fa fa-file-text-o';
+    const bClass = processing === true ? 'fa fa-spinner fa-pulse' : 'fa fa-file-text-o';
     const bTitle = processing === true ? 'Exporting' : 'Export ZIP';
     return (
-      <ButtonToolbar className="justify-content-end gap-1">
+      <ButtonToolbar className="justify-content-end">
         <Button variant="primary" onClick={onHide}>Cancel</Button>
         <Button
           variant={bStyle}
