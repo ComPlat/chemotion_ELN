@@ -12,6 +12,10 @@
 #  sample_id                              :integer
 #  sequence_based_macromolecule_sample_id :bigint
 #
+# Indexes
+#
+#  idx_chemicals_sbmm_sample_id  (sequence_based_macromolecule_sample_id)
+#
 # Foreign Keys
 #
 #  fk_rails_...  (sequence_based_macromolecule_sample_id => sequence_based_macromolecule_samples.id)

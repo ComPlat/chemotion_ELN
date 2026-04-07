@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_02_19_120000) do
+ActiveRecord::Schema.define(version: 2026_02_20_000002) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -173,6 +173,8 @@ ActiveRecord::Schema.define(version: 2026_02_19_120000) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.jsonb "log_data"
+    t.bigint "sequence_based_macromolecule_sample_id"
+    t.index ["sequence_based_macromolecule_sample_id"], name: "idx_chemicals_sbmm_sample_id"
   end
 
   create_table "code_logs", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
@@ -1124,13 +1126,11 @@ ActiveRecord::Schema.define(version: 2026_02_19_120000) do
     t.bigint "sequence_based_macromolecule_sample_id", null: false
     t.integer "position"
     t.datetime "deleted_at"
-    t.boolean "reference", default: false, null: false
     t.boolean "show_label", default: false, null: false
-    t.float "equivalent"
-    t.float "weight_percentage"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.jsonb "log_data"
+    t.boolean "reference", default: false, null: false
     t.index ["deleted_at"], name: "idx_rxn_reactant_sbmm_on_deleted"
     t.index ["reaction_id"], name: "idx_rxn_reactant_sbmm_on_rxn_id"
     t.index ["sequence_based_macromolecule_sample_id"], name: "idx_rxn_reactant_sbmm_on_sbmm_id"
@@ -1521,8 +1521,10 @@ ActiveRecord::Schema.define(version: 2026_02_19_120000) do
     t.float "weight_percentage"
     t.float "concentration_rt_value"
     t.string "concentration_rt_unit", default: "mol/L", null: false
+    t.boolean "inventory_sample", default: false, null: false
     t.index ["ancestry"], name: "idx_sbmm_samples_ancestry", opclass: :varchar_pattern_ops
     t.index ["deleted_at"], name: "idx_sbmm_samples_deleted_at"
+    t.index ["inventory_sample"], name: "idx_sbmm_samples_inventory_sample"
     t.index ["sequence_based_macromolecule_id"], name: "idx_sbmm_samples_sbmm"
     t.index ["user_id"], name: "idx_sbmm_samples_user"
   end
@@ -1773,6 +1775,7 @@ ActiveRecord::Schema.define(version: 2026_02_19_120000) do
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
   end
 
+  add_foreign_key "chemicals", "sequence_based_macromolecule_samples"
   add_foreign_key "collection_shares", "collections"
   add_foreign_key "collection_shares", "users", column: "shared_with_id"
   add_foreign_key "collections", "inventories"
