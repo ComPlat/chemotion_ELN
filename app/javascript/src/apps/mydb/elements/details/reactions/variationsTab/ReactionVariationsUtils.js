@@ -152,23 +152,6 @@ function getGenericStandardUnits(genericQuantity) {
   return unitConfigs.map((config) => config.key);
 }
 
-function getUserFacingUnit(unit) {
-  switch (unit) {
-    case 'Second(s)':
-      return 's';
-    case 'Minute(s)':
-      return 'm';
-    case 'Hour(s)':
-      return 'h';
-    case 'Day(s)':
-      return 'd';
-    case 'Week(s)':
-      return 'w';
-    default:
-      return unit;
-  }
-}
-
 function getInternalUnit(unit) {
   switch (unit) {
     case 's':
@@ -979,7 +962,6 @@ export {
   updateVariationsRow,
   getColumnDefinitions,
   getCellDataType,
-  getUserFacingUnit,
   getStandardValue,
   addMissingColumnsToVariations,
   removeObsoleteColumnsFromVariations,

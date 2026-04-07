@@ -9,7 +9,7 @@ import {
 import PropTypes from 'prop-types';
 import { cloneDeep, isEqual } from 'lodash';
 import {
-  getVariationsRowName, convertUnit, getUserFacingUnit,
+  getVariationsRowName, convertUnit,
   getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, sanitizeGroupEntry, DISPLAY_PRECISION,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
@@ -828,7 +828,7 @@ function UnitToggleHeader({ column, context, api }) {
   const { setColumnDefinitions } = context;
   const [displayUnit, setDisplayUnit] = useState(() => column.getColDef().displayUnit);
   const entryLabel = getUserFacingEntryName(entry);
-  const unitLabel = displayUnit ? getUserFacingUnit(displayUnit) : null;
+  const unitLabel = displayUnit || null;
   const isToggleable = units && units.filter(Boolean).length > 1;
 
   const handleToggle = (e) => {
