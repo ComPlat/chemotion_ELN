@@ -145,9 +145,6 @@
     "storybook": "^9.1.19",
     "webpack-dev-server": "5"
   },
-  "resolutions": {
-    "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#6c2a7ee75e68d27b6fd922148f50f3e38977149a"
-  },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
     "test": "NODE_PATH=./spec/javascripts:./app/javascript yarn mocha --exit --require './spec/javascripts/setup.js' './spec/javascripts/**/*.spec.js'",
