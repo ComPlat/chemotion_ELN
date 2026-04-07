@@ -55,11 +55,6 @@
 #  idx_sbmm_samples_sbmm              (sequence_based_macromolecule_id)
 #  idx_sbmm_samples_user              (user_id)
 #
-# Foreign Keys
-#
-#  fk_rails_...  (sequence_based_macromolecule_id => sequence_based_macromolecules.id)
-#  fk_rails_...  (user_id => users.id)
-#
 class SequenceBasedMacromoleculeSample < ApplicationRecord
   acts_as_paranoid
 

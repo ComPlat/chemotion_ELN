@@ -23,9 +23,8 @@
 #
 # Indexes
 #
-#  index_reactions_samples_on_reaction_id     (reaction_id)
-#  index_reactions_samples_on_sample_id       (sample_id)
-#  index_reactions_samples_on_sample_id_type  (sample_id,type)
+#  index_reactions_samples_on_reaction_id  (reaction_id)
+#  index_reactions_samples_on_sample_id    (sample_id)
 #
 
 class ReactionsSolventSample < ReactionsSample
