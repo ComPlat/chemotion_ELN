@@ -94,6 +94,10 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     event.api.forEachNode((node) => rowOrder.push(node.data.id));
 
     persistRowOrder(reaction.id, rowOrder);
+    const reorderedVariations = rowOrder
+      .map((id) => reactionVariations.find((row) => row.id === id))
+      .filter(Boolean);
+    setReactionVariations(reorderedVariations);
   };
 
   const addRow = () => {
