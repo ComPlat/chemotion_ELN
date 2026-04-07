@@ -215,38 +215,69 @@ class ViewSpectraCompare extends React.Component {
     SpectraActions.ToggleCompareModal.defer(null);
   }
 
+  getSavePayloads(params) {
+    const spectraList = Array.isArray(params?.spectra_list) ? params.spectra_list : [];
+    if (spectraList.length > 0) return spectraList;
+    return [params];
+  }
+
+  resolveSpcInfo(spectraCompare, curveIdx, fallbackIdx) {
+    if (!Array.isArray(spectraCompare) || spectraCompare.length === 0) return null;
+    return spectraCompare[curveIdx] || spectraCompare[fallbackIdx] || spectraCompare[0] || null;
+  }
+
+  buildEditedDataSpectra(payload, curveIdx, si) {
+    const hasShiftArray = Array.isArray(payload?.shift?.shifts);
+    const fPeaks = payload?.peaks && hasShiftArray ? FN.rmRef(payload.peaks, payload.shift, curveIdx) : payload?.peaks;
+    const selectedShift = payload?.shift?.shifts ? payload.shift.shifts[curveIdx] : payload?.shift;
+    const selectedIntegration = payload?.integration?.integrations
+      ? payload.integration.integrations[curveIdx]
+      : payload?.integration;
+    const selectedMultiplicity = payload?.multiplicity?.multiplicities
+      ? payload.multiplicity.multiplicities[curveIdx]
+      : payload?.multiplicity;
+
+    return {
+      si,
+      peaksStr: FN.toPeakStr(fPeaks),
+      selectedShift,
+      scan: payload?.scan,
+      thres: payload?.thres,
+      integration: JSON.stringify(selectedIntegration),
+      multiplicity: JSON.stringify(selectedMultiplicity),
+      predict: JSON.stringify(rmRefreshed(payload?.analysis)),
+      keepPred: payload?.keepPred,
+      waveLengthStr: JSON.stringify(payload?.waveLength),
+      cyclicvolta: JSON.stringify(payload?.cyclicvoltaSt),
+      curveIdx,
+      simulatenmr: payload?.simulatenmr ?? false,
+      axesUnits: JSON.stringify(payload?.axesUnitsSt),
+      detector: JSON.stringify(payload?.detectorSt),
+      dscMetaData: JSON.stringify(payload?.dscMetaData),
+    };
+  }
+
   saveOp(params) {
     const { spectraCompare, container } = this.state;
-    const {
-      peaks, shift, scan, thres, analysis, keepPred,
-      integration, multiplicity, waveLength, cyclicvoltaSt, curveSt
-    } = params;
-
-    const { curveIdx } = curveSt;
     const { handleSubmit, handleSampleChanged, elementData, handleContainerChanged } = this.props;
 
-    const editedDataSpectra = spectraCompare.map((si, idx) => {
-      const selectedShift = shift.shifts[idx];
-      const selectedIntegration = integration.integrations[idx];
-      const selectedMultiplicity = multiplicity.multiplicities[idx];
+    const payloads = this.getSavePayloads(params);
+    if (!payloads.length) return;
 
-      const fPeaks = FN.rmRef(peaks, shift);
+    const targets = payloads.map((payload, idx) => {
+      const curveIdx = payload?.curveSt?.curveIdx ?? payload?.curveIdx ?? idx;
+      const si = this.resolveSpcInfo(spectraCompare, curveIdx, idx);
+      if (!si) return null;
+      return { payload, curveIdx, si };
+    }).filter(Boolean);
 
-      return {
-        si,
-        peaksStr: FN.toPeakStr(fPeaks),
-        selectedShift,
-        scan,
-        thres,
-        integration: JSON.stringify(selectedIntegration),
-        multiplicity: JSON.stringify(selectedMultiplicity),
-        predict: JSON.stringify(rmRefreshed(analysis)),
-        keepPred,
-        waveLengthStr: JSON.stringify(waveLength),
-        cyclicvolta: JSON.stringify(cyclicvoltaSt),
-        curveIdx
-      };
-    });
+    if (!targets.length) return;
+
+    const editedDataSpectra = targets.map((target) => (
+      this.buildEditedDataSpectra(target.payload, target.curveIdx, target.si)
+    ));
+
+    const frontCurveIdx = params?.curveSt?.curveIdx ?? targets[0].curveIdx;
 
     SpectraActions.ToggleCompareModal.defer(null);
 
@@ -344,7 +375,7 @@ class ViewSpectraCompare extends React.Component {
     SpectraActions.SaveMultiSpectraComparison(
       selectedFiles,
       targetContainerId,
-      curveIdx,
+      frontCurveIdx,
       editedDataSpectra,
       cb
     );

@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  OverlayTrigger, Button, Tooltip
-} from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
@@ -16,7 +14,6 @@ import {
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { UploadField } from 'src/apps/mydb/elements/details/analyses/UploadField';
-import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 import {
   addNewAnalyses,
   findAnalysesContainer,
@@ -65,7 +62,9 @@ export default class SampleDetailsContainers extends Component {
     if (!sample.container) {
       sample.container = Container.buildEmpty();
     }
+
     sample.container.description = e.target.value;
+
     this.handleChange();
   }
 
@@ -73,11 +72,23 @@ export default class SampleDetailsContainers extends Component {
     this.setState((prevState) => ({ commentBoxVisible: !prevState.commentBoxVisible }));
   }
 
-  handleChange() {
+  handleChange = (updatedContainer) => {
     const { sample, handleSampleChanged } = this.props;
-
+  
+    if (updatedContainer) {
+      const analysesRoot = sample.analysesContainers()[0];
+  
+      if (analysesRoot && Array.isArray(analysesRoot.children)) {
+        const idx = analysesRoot.children.findIndex(c => c.id === updatedContainer.id);
+  
+        if (idx !== -1) {
+          analysesRoot.children[idx] = updatedContainer;
+        }
+      }
+    }
+  
     handleSampleChanged(sample);
-  }
+  };
   
   onUIStoreChange(state) {
     const { activeAnalysis } = this.state;
@@ -160,20 +171,6 @@ export default class SampleDetailsContainers extends Component {
           element={sample}
           setElement={(sample, cb = null) => setState((prevState) => ({ ...prevState, sample }), cb)}
         />
-        <OverlayTrigger
-          placement="top"
-          overlay={<Tooltip id="annotate_tooltip">Create and add empty analyses.</Tooltip>}
-        >
-        <Button
-          size="sm"
-          variant="success"
-          onClick={() => this.handleAdd(true)}
-          disabled={!sample.can_update}
-        >
-          <i className="fa fa-plus me-1" />
-          Add comparisons
-        </Button>
-        </OverlayTrigger>
         <Button
           size="xsm"
           variant="success"
@@ -233,6 +230,7 @@ export default class SampleDetailsContainers extends Component {
             handleRemove={this.handleRemove}
             handleSubmit={handleSubmit}
             handleMove={this.handleMove}
+            handleAdd={this.handleAdd}
             handleAccordionOpen={this.handleAccordionOpen}
             handleUndo={this.handleUndo}
             toggleAddToReport={this.toggleAddToReport}
@@ -263,7 +261,6 @@ export default class SampleDetailsContainers extends Component {
         </div>
       );
     }
-
     return (
       <RndNoAnalyses
         addButton={this.addButton}

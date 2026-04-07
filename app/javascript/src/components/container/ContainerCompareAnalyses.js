@@ -322,6 +322,17 @@ export default class ContainerCompareAnalyses extends Component {
     const isComparison = container?.extended_metadata?.is_comparison;
     const attachments = container.attachments || [];
     const children = container.children || [];
+    const hasGeneratedComparisonData = (
+      isComparison && (
+        children.some((child) => (
+          !child.is_deleted
+          && child.container_type === 'dataset'
+          && Array.isArray(child.attachments)
+          && child.attachments.some((att) => !att.is_deleted)
+        ))
+        || (container?.comparable_info?.list_attachments?.length || 0) > 0
+      )
+    );
     // Map status value to react-select option object for controlled value
     let selectedStatus = null;
     if (container && container.extended_metadata && container.extended_metadata.status) {
@@ -396,7 +407,7 @@ export default class ContainerCompareAnalyses extends Component {
           <div style={{ marginBottom: 11 }}>
             <div className="d-flex align-items-center gap-3 mb-1">
               <FormLabel className="mb-1">Selection of datasets to be compared</FormLabel>
-              {(isComparison && children.length > 0) ? (
+              {hasGeneratedComparisonData ? (
                 <Button
                   variant="danger"
                   size="xsm"
@@ -430,7 +441,7 @@ export default class ContainerCompareAnalyses extends Component {
               treeData={menuItems}
               getPopupContainer={triggerNode => triggerNode.parentNode}
               onChange={this.handleChangeSelectAnalyses.bind(this, menuItems)}
-              disabled={disabled || (isComparison && children.length > 0)}
+              disabled={disabled || hasGeneratedComparisonData}
               maxTagCount={2}
             />
           </div>
