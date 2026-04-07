@@ -37,6 +37,52 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
+import Solar3DRenderer from 'src/components/generic/solarCell3d/GenericSolar3DRenderer';
+
+const initialLayers = [
+  {
+    id: 1,
+    name: 'Ag',
+    thickness: 40,
+    color: '#ffb300'
+  },
+  {
+    id: 2,
+    name: '[BMIM]BF4',
+    thickness: 20,
+    color: '#999999'
+  },
+  {
+    id: 3,
+    name: 'PCBM-60',
+    thickness: 25,
+    color: '#666666'
+  },
+  {
+    id: 4,
+    name: 'Perovskite',
+    thickness: 10,
+    color: '#ff0000'
+  },
+  {
+    id: 5,
+    name: 'NiO-c',
+    thickness: 10,
+    color: '#bbbbbb'
+  },
+  {
+    id: 6,
+    name: 'FTO',
+    thickness: 10,
+    color: '#aec6cf'
+  },
+  {
+    id: 7,
+    name: 'SLG',
+    thickness: 10,
+    color: '#9ecae1'
+  }
+];
 
 const onNaviClick = (type, id) => {
   const { currentCollection } = UIStore.getState();
@@ -59,6 +105,7 @@ export default class GenericElDetails extends Component {
       // List of all visible segment tabs.
       visible: Immutable.List(),
       expandAll: undefined,
+      dummySolar3DLayers: initialLayers
     };
     this.onChangeUI = this.onChangeUI.bind(this);
     this.onChangeElement = this.onChangeElement.bind(this);
@@ -252,10 +299,6 @@ export default class GenericElDetails extends Component {
     else this.setState({ genericEl });
   }
 
-  /**
-   * Changes the visible segment tabs
-   * @param visible {Array} List of all visible segment tabs
-   */
   onTabPositionChanged(visible) {
     this.setState({ visible });
   }
@@ -296,7 +339,7 @@ export default class GenericElDetails extends Component {
   }
 
   elementalPropertiesItem(genericEl) {
-    const { expandAll } = this.state;
+    const { expandAll, dummySolar3DLayers } = this.state;
     const options = [];
     options.push({
       generic: genericEl,
@@ -343,6 +386,7 @@ export default class GenericElDetails extends Component {
     );
     return (
       <div>
+        <Solar3DRenderer layers={dummySolar3DLayers} />
         <GenToolbar
           generic={genericEl}
           genericType="Element"
