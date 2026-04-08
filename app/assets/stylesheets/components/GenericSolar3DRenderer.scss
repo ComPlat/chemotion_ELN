@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: relative;
 }
 
 .solar3d-main-row {
@@ -130,6 +131,7 @@
   width: 100%;
   border: none;
   background: transparent;
+  border-radius: 4px;
   padding: 12px;
   text-align: left;
   font-weight: 700;
@@ -166,6 +168,23 @@
 .solar3d-toolbar {
   display: flex;
   justify-content: flex-end;
+}
+
+.solar3d-fullview-trigger {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #111827;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 4;
 }
 
 .solar3d-fullview-modal .modal-dialog {
@@ -205,11 +224,9 @@
   left: 12px;
   top: 12px;
   width: 250px;
-  background: rgba(1, 1, 1, 0.2);
+  background: transparent;
   color: #111827;
   z-index: 5;
-  border-radius: 8px;
-  backdrop-filter: blur(4px);
 }
 
 .solar3d-fullview-zoom-controls {
@@ -230,21 +247,8 @@
   justify-content: center;
 }
 
-.solar3d-fullview-device-params__toggle {
-  width: 100%;
-  border: none;
-  background: transparent;
-  padding: 8px 10px;
-  text-align: left;
-  font-weight: 700;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.solar3d-fullview-device-params__content {
-  padding: 4px 10px 8px;
-  background: transparent;
+.solar3d-fullview-device-params__layer-block {
+  margin-top: 14px;
 }
 
 .solar3d-config-panel {

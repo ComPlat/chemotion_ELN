@@ -5,7 +5,7 @@ import React, {
 import PropTypes from 'prop-types';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei/core/OrbitControls';
-import { Button, Modal } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
 import SolarCell from 'src/components/generic/solarCell3d/SolarCell';
 import LayerList from 'src/components/generic/solarCell3d/LayerList';
 import SidePanels from 'src/components/generic/solarCell3d/SidePanels';
@@ -35,6 +35,8 @@ function Solar3DRenderer({ layers }) {
   const [selectedLayerId, setSelectedLayerId] = useState(layers[0] ? layers[0].id : null);
   const [isDeviceParamsOpen, setIsDeviceParamsOpen] = useState(true);
   const [isLayerDetailsOpen, setIsLayerDetailsOpen] = useState(false);
+  const [modalIsDeviceParamsOpen, setModalIsDeviceParamsOpen] = useState(true);
+  const [modalIsLayerDetailsOpen, setModalIsLayerDetailsOpen] = useState(false);
   const [isFullViewOpen, setIsFullViewOpen] = useState(false);
   const [resetScrollToken, setResetScrollToken] = useState(0);
   const [fullViewZoom, setFullViewZoom] = useState(1);
@@ -62,6 +64,8 @@ function Solar3DRenderer({ layers }) {
     setSelectedLayerId(layerId);
     setIsDeviceParamsOpen(false);
     setIsLayerDetailsOpen(true);
+    setModalIsDeviceParamsOpen(false);
+    setModalIsLayerDetailsOpen(true);
   };
 
   const toggleDeviceParams = () => {
@@ -157,21 +161,13 @@ function Solar3DRenderer({ layers }) {
           )}
         </div>
         <SidePanels
+          onOpenFullView={() => setIsFullViewOpen(true)}
           isDeviceParamsOpen={isDeviceParamsOpen}
           isLayerDetailsOpen={isLayerDetailsOpen}
           selectedLayer={selectedLayer}
           toggleDeviceParams={toggleDeviceParams}
           toggleLayerDetails={toggleLayerDetails}
         />
-      </div>
-      <div className="solar3d-toolbar">
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => setIsFullViewOpen(true)}
-        >
-          Full View
-        </Button>
       </div>
       <LayerList
         layers={currentLayers}
@@ -230,23 +226,69 @@ function Solar3DRenderer({ layers }) {
                 </Canvas>
               </Suspense>
               <div className="solar3d-fullview-device-params">
-                <button
-                  type="button"
-                  onClick={toggleDeviceParams}
-                  className="solar3d-fullview-device-params__toggle"
-                >
-                  <span>Device Parameters</span>
-                  <i className={isDeviceParamsOpen ? 'fa fa-angle-down' : 'fa fa-angle-up'} aria-hidden="true" />
-                </button>
-                {isDeviceParamsOpen && (
-                  <div className="solar3d-fullview-device-params__content">
-                    <div>Efficiency = 14.1 %</div>
-                    <div>Voc = 1.0 volt</div>
-                    <div>Jsc = 18.6 milliampere / centimeter ** 2</div>
-                    <div>FF = 0.8 %</div>
+                <div className="solar3d-panel-card">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModalIsDeviceParamsOpen((prev) => {
+                        const next = !prev;
+                        if (next) setModalIsLayerDetailsOpen(false);
+                        return next;
+                      });
+                    }}
+                    className="solar3d-panel-toggle"
+                  >
+                    <span>Device Parameters</span>
+                    <i className={modalIsDeviceParamsOpen ? 'fa fa-angle-down' : 'fa fa-angle-up'} aria-hidden="true" />
+                  </button>
+                  {modalIsDeviceParamsOpen && (
+                    <div className="solar3d-panel-content">
+                      <div>Efficiency = 14.1 %</div>
+                      <div>Voc = 1.0 volt</div>
+                      <div>Jsc = 18.6 milliampere / centimeter ** 2</div>
+                      <div>FF = 0.8 %</div>
+                    </div>
+                  )}
+                </div>
+                {selectedLayer && (
+                  <div className="solar3d-panel-card solar3d-fullview-device-params__layer-block">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModalIsLayerDetailsOpen((prev) => {
+                          const next = !prev;
+                          if (next) setModalIsDeviceParamsOpen(false);
+                          return next;
+                        });
+                      }}
+                      className="solar3d-panel-toggle"
+                    >
+                      <span>Layer Details</span>
+                      <i
+                        className={modalIsLayerDetailsOpen ? 'fa fa-angle-down' : 'fa fa-angle-up'}
+                        aria-hidden="true"
+                      />
+                    </button>
+                    {modalIsLayerDetailsOpen && (
+                      <div className="solar3d-panel-content">
+                        <div>{`Name = ${selectedLayer.name}`}</div>
+                        <div>{`Thickness = ${selectedLayer.thickness} nm`}</div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
+              {canvasTooltip.visible && (
+                <div
+                  className="solar3d-tooltip"
+                  style={{
+                    left: canvasTooltip.x + 12,
+                    top: canvasTooltip.y + 12
+                  }}
+                >
+                  {canvasTooltip.text}
+                </div>
+              )}
             </div>
             <LayerConfigPanel
               layers={currentLayers}

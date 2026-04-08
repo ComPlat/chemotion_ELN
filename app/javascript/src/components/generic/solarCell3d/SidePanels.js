@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 export default function SidePanels({
+  onOpenFullView,
   isDeviceParamsOpen,
   isLayerDetailsOpen,
   selectedLayer,
@@ -10,6 +11,18 @@ export default function SidePanels({
 }) {
   return (
     <div className="solar3d-side-panels">
+      <div className="solar3d-panel-card">
+        <button
+          type="button"
+          onClick={onOpenFullView}
+          className="solar3d-panel-toggle"
+          aria-label="Open full view controls"
+          title="Open full view controls"
+        >
+          <span>View/Controls</span>
+          <i className="fa fa-sliders" aria-hidden="true" />
+        </button>
+      </div>
       <div className="solar3d-panel-card">
         <button
           type="button"
@@ -35,7 +48,6 @@ export default function SidePanels({
             type="button"
             onClick={toggleLayerDetails}
             className="solar3d-panel-toggle solar3d-panel-toggle--layer"
-            style={{ background: selectedLayer.color }}
           >
             <span>Layer Details</span>
             <i className={isLayerDetailsOpen ? 'fa fa-angle-down' : 'fa fa-angle-up'} aria-hidden="true" />
@@ -60,6 +72,7 @@ const selectedLayerShape = PropTypes.shape({
 });
 
 SidePanels.propTypes = {
+  onOpenFullView: PropTypes.func.isRequired,
   isDeviceParamsOpen: PropTypes.bool.isRequired,
   isLayerDetailsOpen: PropTypes.bool.isRequired,
   selectedLayer: selectedLayerShape,

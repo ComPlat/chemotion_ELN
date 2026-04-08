@@ -14,9 +14,11 @@ export default function SolarCell({
   onLayerClick
 }) {
   let currentY = 0;
+  const totalHeight = layers.reduce((sum, layer) => sum + (layer.thickness * SCALE), 0);
+  const centeredYOffset = -(totalHeight / 2);
 
   return (
-    <group position={[0, -0.5, 0]}>
+    <group position={[0, centeredYOffset, 0]}>
       {layers.map((layer) => {
         const yPos = currentY;
         currentY += layer.thickness * SCALE;
