@@ -1679,6 +1679,12 @@ ActiveRecord::Schema.define(version: 2026_03_25_085008) do
     t.jsonb "providers"
     t.bigint "used_space", default: 0
     t.bigint "allocated_space", default: 0
+    t.string "encrypted_otp_secret"
+    t.string "encrypted_otp_secret_iv"
+    t.string "encrypted_otp_secret_salt"
+    t.integer "consumed_timestep"
+    t.boolean "otp_required_for_login"
+    t.string "otp_backup_codes", array: true
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email"], name: "index_users_on_email", unique: true

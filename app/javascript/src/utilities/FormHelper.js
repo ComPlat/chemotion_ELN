@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   InputGroup, OverlayTrigger, Tooltip, Button, Form, Row, Col, ToggleButton, ButtonGroup,
   Collapse, AccordionContext, useAccordionButton,
@@ -90,7 +90,7 @@ const changeElement = (store, field, value, elementType) => {
 };
 
 const addRow = (store, element, field, rowFields) => {
-  let newRow = {};
+  const newRow = {};
   rowFields.map((f) => {
     newRow[f.value] = '';
   });
@@ -172,8 +172,7 @@ const initFormHelper = (element, store) => {
             isDisabled={disabled}
             required={required}
             classNames={{
-              control: (state) =>
-                !state.hasValue && errorMessage(element, field) ? 'border-danger' : '',
+              control: (state) => (!state.hasValue && errorMessage(element, field) ? 'border-danger' : ''),
             }}
             onChange={(event) => formHelper.onChange(field, (event?.value || event?.label || ''))}
           />
@@ -317,34 +316,30 @@ const initFormHelper = (element, store) => {
       );
     },
 
-    addRowButton: (field, rowFields) => {
-      return (
-        <Button
-          size="xxsm"
-          variant="primary"
-          onClick={() => addRow(store, element, field, rowFields)}
-          className="me-2 mb-2"
-        >
-          <i className="fa fa-plus" />
-        </Button>
-      );
-    },
+    addRowButton: (field, rowFields) => (
+      <Button
+        size="xxsm"
+        variant="primary"
+        onClick={() => addRow(store, element, field, rowFields)}
+        className="me-2 mb-2"
+      >
+        <i className="fa fa-plus" />
+      </Button>
+    ),
 
-    deleteRowButton: (field, i) => {
-      return (
-        <Button
-          size="sm"
-          variant="danger"
-          onClick={() => deleteRow(store, element, field, i)}
-          className="py-2"
-        >
-          <i className="fa fa-trash-o" />
-        </Button>
-      );
-    },
+    deleteRowButton: (field, i) => (
+      <Button
+        size="sm"
+        variant="danger"
+        onClick={() => deleteRow(store, element, field, i)}
+        className="py-2"
+      >
+        <i className="fa fa-trash-o" />
+      </Button>
+    ),
 
     toggleButton: (fieldPrefix, field, fieldSuffix, buttonGroups) => {
-      let groups = [];
+      const groups = [];
       const { lastObject, lastKey } = store.getLastObjectAndKeyByField(fieldPrefix, element);
 
       buttonGroups.map((group, i) => {
@@ -387,7 +382,7 @@ const initFormHelper = (element, store) => {
     multiToggleButtonsWithDetailField: (field, fieldPrefix, fieldSuffix, buttonGroups, headline, disabled) => {
       const buttons = formHelper.toggleButton(fieldPrefix, field, fieldSuffix, buttonGroups);
       const { lastObject, lastKey } = store.getLastObjectAndKeyByField(fieldPrefix, element);
-      let details = [];
+      const details = [];
 
       buttonGroups.map((group, i) => {
         group.options.map((option) => {
@@ -396,9 +391,7 @@ const initFormHelper = (element, store) => {
             details.push(
               <div className="mb-2" key={`detail-${ident}-${i}`}>
                 {
-                  formHelper.inputGroupTextOrNumericInput(
-                    `${fieldPrefix}.${field}_${ident}_${fieldSuffix}`, '', capitalizeWords(ident), 'text', disabled, ''
-                  )
+                  formHelper.inputGroupTextOrNumericInput(`${fieldPrefix}.${field}_${ident}_${fieldSuffix}`, '', capitalizeWords(ident), 'text', disabled, '')
                 }
               </div>
             );
@@ -425,14 +418,14 @@ const initFormHelper = (element, store) => {
     },
 
     multipleRowInput: (field, rowFields, headline, disabled) => {
-      let rows = [];
-      let headerCols = [];
-      let colWidth = Math.round(12 / rowFields.length);
+      const rows = [];
+      const headerCols = [];
+      const colWidth = Math.round(12 / rowFields.length);
       const fieldArray = elementField(element, field);
 
       if (fieldArray) {
         fieldArray.map((row, i) => {
-          let fields = [];
+          const fields = [];
 
           rowFields.map((entry, j) => {
             const col = j === 0 ? colWidth - 1 : colWidth;
@@ -473,13 +466,11 @@ const initFormHelper = (element, store) => {
       );
     },
 
-    dropzone: (field, onDrop) => {
-      return (
-        <Dropzone onDrop={() => onDrop(field)} className="attachment-dropzone">
-          Drop files here, or click to upload.
-        </Dropzone>
-      );
-    },
+    dropzone: (field, onDrop) => (
+      <Dropzone onDrop={() => onDrop(field)} className="attachment-dropzone">
+        Drop files here, or click to upload.
+      </Dropzone>
+    ),
 
     dropAreaForElement: (dropType, handleDrop, description) => {
       const [{ isOver, canDrop }, drop] = useDrop({
@@ -512,12 +503,14 @@ const initFormHelper = (element, store) => {
   return formHelper;
 };
 
-const ColoredAccordeonHeaderButton = ({ title, eventKey, bgColor, bgColorActive, callback }) => {
+function ColoredAccordeonHeaderButton({
+  title, eventKey, bgColor, bgColorActive, callback
+}) {
   const { activeEventKey } = useContext(AccordionContext);
   const isCurrentEventKey = activeEventKey === eventKey;
 
-  const backgroundColor = bgColor ? bgColor : 'surface-lighten3 text-body';
-  const backgroundColorActive = bgColorActive ? bgColorActive : 'surface-lighten1 text-body';
+  const backgroundColor = bgColor || 'surface-lighten3 text-body';
+  const backgroundColorActive = bgColorActive || 'surface-lighten1 text-body';
   const activeClass = isCurrentEventKey ? `active ${backgroundColorActive}` : `collapsed ${backgroundColor}`;
   const decoratedOnClick = useAccordionButton(eventKey, () => callback && callback(eventKey));
 
@@ -532,7 +525,9 @@ const ColoredAccordeonHeaderButton = ({ title, eventKey, bgColor, bgColorActive,
   );
 };
 
-const SecondaryCollapseContent = ({ children, title, eventKey, error, active, store }) => {
+function SecondaryCollapseContent({
+  children, title, eventKey, error, active, store
+}) {
   const activeClass = active ? 'active' : 'collapsed';
   const errorInCollapseClass = error ? 'border border-danger' : '';
 
@@ -556,4 +551,51 @@ const SecondaryCollapseContent = ({ children, title, eventKey, error, active, st
   );
 };
 
-export { initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent };
+function formValueHandler(startValues) {
+  const [form, setForm] = useState(startValues);
+  const handleChange = (e, val) => {
+    const {
+      name, value, type, checked
+    } = (() => {
+      if (e.target && val === undefined) {
+        return e.target;
+      }
+      if (typeof e === 'string') {
+        return {
+          name: e,
+          type: '',
+          value: val,
+          checked: true
+        };
+      }
+      return {};
+    })();
+
+    setForm({
+      ...form,
+      [name]: type === 'checkbox' ? checked : value
+    });
+  };
+
+  return [form, handleChange];
+}
+
+function submitAsForm({
+  url, method, form, prefix = null
+}) {
+  const makeKey = (key) => (prefix ? `${prefix}[${key}]` : key);
+  const formData = new FormData();
+  Object.entries(form).forEach(([key, val]) => {
+    formData.append(makeKey(key), val);
+  });
+
+  return fetch(url, {
+    method,
+    body: formData,
+    credentials: 'same-origin'
+  });
+}
+
+export {
+  initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent, formValueHandler, submitAsForm,
+};
