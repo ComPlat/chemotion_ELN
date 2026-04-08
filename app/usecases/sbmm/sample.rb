@@ -26,12 +26,11 @@ module Usecases
                                                                       .update_datamodel(params[:container])
           end
           sample.sequence_based_macromolecule = sbmm
-          target_collections(params).each do |collection|
-            sample.collections << collection
-          end
 
           sample.sequence_based_macromolecule.save!
           sample.save!
+
+          sample.collection_ids = target_collections(params).map(&:id).uniq
         end
 
         sample
@@ -73,6 +72,7 @@ module Usecases
           collections << Collection.get_all_collection_for_user(current_user.id)
         end
 
+        collections.uniq!(&:id)
         collections
       end
 
