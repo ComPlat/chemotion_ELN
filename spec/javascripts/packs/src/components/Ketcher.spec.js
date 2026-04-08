@@ -114,7 +114,10 @@ describe('Ketcher', () => {
   describe('On reading molfile', () => {
     it('should have rails polymer list', async () => {
       const railsList = await hasKetcherData(molfileWithPolymerList);
-      const list = railsList.split(' ');
+      const list = railsList
+        .trim()
+        .split(/\s+/)
+        .filter((entry) => entry && entry !== '$$$$');
       assert.strictEqual(list.length, 2, 'list of polymers should have length of 2');
     });
 
