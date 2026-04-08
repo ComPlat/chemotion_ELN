@@ -22,6 +22,7 @@ import { getGenSI } from 'chem-generic-ui';
 
 const PLACEHOLDER_CELL_TEXT = '_';
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
+const DISPLAY_PRECISION = 4;
 const temperatureUnits = ['°C', 'K', '°F'];
 const durationUnits = ['Second(s)', 'Minute(s)', 'Hour(s)', 'Day(s)', 'Week(s)'];
 const massUnits = ['g', 'mg', 'μg'];
@@ -51,13 +52,13 @@ const cellDataTypes = {
   equivalent: {
     extendsDataType: 'object',
     baseDataType: 'object',
-    valueFormatter: (params) => parseFloat(Number(params.value.equivalent.value).toPrecision(4)),
+    valueFormatter: (params) => parseFloat(Number(params.value.equivalent.value).toPrecision(DISPLAY_PRECISION)),
     valueParser: EquivalentParser,
   },
   yield: {
     extendsDataType: 'object',
     baseDataType: 'object',
-    valueFormatter: (params) => parseFloat(Number(params.value.yield.value).toPrecision(4)),
+    valueFormatter: (params) => parseFloat(Number(params.value.yield.value).toPrecision(DISPLAY_PRECISION)),
   },
   gas: {
     extendsDataType: 'object',
@@ -985,6 +986,7 @@ export {
   getPropertyColumnGroupChild,
   PLACEHOLDER_CELL_TEXT,
   REACTION_VARIATIONS_TAB_KEY,
+  DISPLAY_PRECISION,
   getInitialGridState,
   getInitialLayout,
   getInitialRowOrder,

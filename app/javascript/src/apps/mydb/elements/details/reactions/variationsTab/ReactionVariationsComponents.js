@@ -10,7 +10,7 @@ import PropTypes from 'prop-types';
 import { cloneDeep, isEqual } from 'lodash';
 import {
   getVariationsRowName, convertUnit, getUserFacingUnit,
-  getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, sanitizeGroupEntry,
+  getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, sanitizeGroupEntry, DISPLAY_PRECISION,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReferenceMaterial, getCatalystMaterial, getFeedstockMaterial, getMolFromGram, getGramFromMol,
@@ -96,7 +96,7 @@ function convertGenericValueToDisplayUnit(entryData, displayUnit) {
   const { quantity, value, unit } = entryData;
   const valueInDisplayUnit = convertGenericUnit(value, unit, displayUnit, quantity);
 
-  return parseFloat(Number(valueInDisplayUnit).toPrecision(4));
+  return parseFloat(Number(valueInDisplayUnit).toPrecision(DISPLAY_PRECISION));
 }
 
 function SegmentParser({ oldValue: cellData, newValue, colDef }) {
@@ -192,7 +192,7 @@ SegmentSelectEditor.propTypes = {
 function convertValueToDisplayUnit(value, unit, displayUnit) {
   const valueInDisplayUnit = convertUnit(Number(value), unit, displayUnit);
 
-  return parseFloat(Number(valueInDisplayUnit).toPrecision(4));
+  return parseFloat(Number(valueInDisplayUnit).toPrecision(DISPLAY_PRECISION));
 }
 
 function PropertyFormatter({ value: cellData, colDef: { displayUnit } }) {
@@ -567,27 +567,33 @@ function MaterialOverlay({ value: cellData }) {
   return (
     <div className="tooltip show">
       <div className="tooltip-inner text-start">
-        {aux?.isReference && <div>Reference</div>}
+        {aux?.isReference && <div>reference</div>}
         {aux?.coefficient !== null && (
         <div>
-          Coefficient:
+          coefficient:
           {' '}
-          {aux.coefficient.toPrecision(4)}
+          {aux.coefficient.toPrecision(DISPLAY_PRECISION)}
         </div>
         )}
         {aux?.molecularWeight !== null && (
         <div>
-          Molar mass:
+          molar mass:
           {' '}
-          {aux.molecularWeight.toPrecision(2)}
+          {aux.molecularWeight.toPrecision(DISPLAY_PRECISION)}
           {' '}
           g/mol
         </div>
         )}
         {Object.entries(cellData).map(
-          ([key, entry]) => (entry && typeof entry === 'object' && 'value' in entry ? (
+          ([key, entry]) => (entry && typeof entry === 'object' && 'value' in entry && entry.value !== null ? (
             <div key={key}>
-              {`${getUserFacingEntryName(key)}: ${entry.value}${entry.unit ? ` ${entry.unit}` : ''}`}
+              {(() => {
+                const displayValue = typeof entry.value === 'number'
+                  ? parseFloat(entry.value.toPrecision(DISPLAY_PRECISION))
+                  : entry.value;
+                const unit = entry.unit ? ` ${entry.unit}` : '';
+                return `${getUserFacingEntryName(key)}: ${displayValue}${unit}`;
+              })()}
             </div>
           ) : null)
         )}
