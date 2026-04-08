@@ -4,41 +4,47 @@
 #
 # Table name: users
 #
-#  id                     :integer          not null, primary key
-#  email                  :string           default(""), not null
-#  encrypted_password     :string           default(""), not null
-#  reset_password_token   :string
-#  reset_password_sent_at :datetime
-#  remember_created_at    :datetime
-#  sign_in_count          :integer          default(0), not null
-#  current_sign_in_at     :datetime
-#  last_sign_in_at        :datetime
-#  current_sign_in_ip     :inet
-#  last_sign_in_ip        :inet
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  name                   :string
-#  first_name             :string           not null
-#  last_name              :string           not null
-#  deleted_at             :datetime
-#  counters               :hstore           not null
-#  name_abbreviation      :string(12)
-#  type                   :string           default("Person")
-#  reaction_name_prefix   :string(3)        default("R")
-#  confirmation_token     :string
-#  confirmed_at           :datetime
-#  confirmation_sent_at   :datetime
-#  unconfirmed_email      :string
-#  layout                 :hstore           not null
-#  selected_device_id     :integer
-#  failed_attempts        :integer          default(0), not null
-#  unlock_token           :string
-#  locked_at              :datetime
-#  account_active         :boolean
-#  matrix                 :integer          default(0)
-#  providers              :jsonb
-#  used_space             :bigint           default(0)
-#  allocated_space        :bigint           default(0)
+#  id                        :integer          not null, primary key
+#  account_active            :boolean
+#  allocated_space           :bigint           default(0)
+#  confirmation_sent_at      :datetime
+#  confirmation_token        :string
+#  confirmed_at              :datetime
+#  consumed_timestep         :integer
+#  counters                  :hstore           not null
+#  current_sign_in_at        :datetime
+#  current_sign_in_ip        :inet
+#  deleted_at                :datetime
+#  email                     :string           default(""), not null
+#  encrypted_otp_secret      :string
+#  encrypted_otp_secret_iv   :string
+#  encrypted_otp_secret_salt :string
+#  encrypted_password        :string           default(""), not null
+#  failed_attempts           :integer          default(0), not null
+#  first_name                :string           not null
+#  last_name                 :string           not null
+#  last_sign_in_at           :datetime
+#  last_sign_in_ip           :inet
+#  layout                    :hstore           not null
+#  locked_at                 :datetime
+#  matrix                    :integer          default(0)
+#  name                      :string
+#  name_abbreviation         :string(12)
+#  otp_backup_codes          :string           is an Array
+#  otp_required_for_login    :boolean
+#  providers                 :jsonb
+#  reaction_name_prefix      :string(3)        default("R")
+#  remember_created_at       :datetime
+#  reset_password_sent_at    :datetime
+#  reset_password_token      :string
+#  sign_in_count             :integer          default(0), not null
+#  type                      :string           default("Person")
+#  unconfirmed_email         :string
+#  unlock_token              :string
+#  used_space                :bigint           default(0)
+#  created_at                :datetime         not null
+#  updated_at                :datetime         not null
+#  selected_device_id        :integer
 #
 # Indexes
 #
@@ -60,8 +66,14 @@ class User < ApplicationRecord
 
   acts_as_paranoid
   # Include default devise modules. Others available are: :timeoutable
+
   devise :database_authenticatable, :registerable, :confirmable,
-         :recoverable, :rememberable, :trackable, :validatable, :lockable, :omniauthable, authentication_keys: [:login]
+         :recoverable, :rememberable, :trackable, :validatable,
+         :lockable, :omniauthable,
+         :two_factor_authenticatable,
+         authentication_keys: [:login],
+         otp_secret_encryption_key: Rails.application.config.otp_secret_encryption_key
+
   has_one :profile, dependent: :destroy
   has_one :container, as: :containable
 
@@ -116,13 +128,13 @@ class User < ApplicationRecord
 
   # NB: only Persons and Admins can get a confirmation email and confirm their email.
   before_create :skip_confirmation_notification!, unless: proc { |user|
-                                                            %w[Person Admin].include?(user.type)
-                                                          }
+    %w[Person Admin].include?(user.type)
+  }
   # NB: option to skip devise confirmable for Admins and Persons
   before_create :skip_confirmation!, if: proc { |user|
-                                           %w[Person Admin].include?(user.type) &&
-                                             self.class.allow_unconfirmed_access_for.nil?
-                                         }
+    %w[Person Admin].include?(user.type) &&
+      self.class.allow_unconfirmed_access_for.nil?
+  }
   before_create :set_account_active, if: proc { |user| %w[Person].include?(user.type) }
 
   after_create :create_chemotion_public_collection
@@ -170,6 +182,23 @@ class User < ApplicationRecord
     @login || name_abbreviation || email
   end
 
+  # Optional: Generate QR code for the app
+  def generate_qr_code
+    issuer = 'Chemotion'
+    label = email
+    if otp_secret.blank?
+      self.otp_secret = User.generate_otp_secret
+      save!
+    end
+
+    uri = otp_provisioning_uri(label, issuer: issuer)
+
+    RQRCode::QRCode.new(uri).as_svg(module_size: 4)
+  end
+
+  def check_otp(otp_attempt)
+    validate_and_consume_otp!(otp_attempt)
+  end
   def self.find_first_by_auth_conditions(warden_conditions)
     conditions = warden_conditions.dup
     if (login = conditions.delete(:login))
@@ -491,7 +520,7 @@ class Person < User
   has_many :groups, through: :users_groups
 
   has_many :users_admins, dependent: :destroy, foreign_key: :admin_id
-  has_many :administrated_accounts,  through: :users_admins, source: :user
+  has_many :administrated_accounts, through: :users_admins, source: :user
 end
 
 class Group < User
