@@ -379,6 +379,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           domLayout="autoHeight"
           maintainColumnOrder
           suppressNoRowsOverlay
+          suppressDragLeaveHidesColumns
           context={{
             copyRow,
             removeRow,

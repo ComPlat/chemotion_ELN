@@ -29,6 +29,7 @@ const massUnits = ['g', 'mg', 'μg'];
 const volumeUnits = ['l', 'ml', 'μl'];
 const amountUnits = ['mol', 'mmol'];
 const concentrationUnits = ['ppm'];
+const yieldUnits = ['%'];
 const materialTypes = {
   startingMaterials: { label: 'Starting Materials', reactionAttributeName: 'starting_materials' },
   reactants: { label: 'Reactants', reactionAttributeName: 'reactants' },
@@ -138,6 +139,8 @@ function getStandardUnits(entry) {
       return durationUnits;
     case 'concentration':
       return concentrationUnits;
+    case 'yield':
+      return yieldUnits;
     default:
       return [null];
   }
@@ -147,23 +150,6 @@ function getGenericStandardUnits(genericQuantity) {
   const unitConfigs = getGenSI(genericQuantity);
   if (!unitConfigs || unitConfigs.length === 0) return [null];
   return unitConfigs.map((config) => config.key);
-}
-
-function getUserFacingUnit(unit) {
-  switch (unit) {
-    case 'Second(s)':
-      return 's';
-    case 'Minute(s)':
-      return 'm';
-    case 'Hour(s)':
-      return 'h';
-    case 'Day(s)':
-      return 'd';
-    case 'Week(s)':
-      return 'w';
-    default:
-      return unit;
-  }
 }
 
 function getInternalUnit(unit) {
@@ -976,7 +962,6 @@ export {
   updateVariationsRow,
   getColumnDefinitions,
   getCellDataType,
-  getUserFacingUnit,
   getStandardValue,
   addMissingColumnsToVariations,
   removeObsoleteColumnsFromVariations,
