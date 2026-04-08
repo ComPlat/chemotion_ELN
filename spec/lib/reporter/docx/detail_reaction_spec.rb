@@ -293,7 +293,7 @@ describe 'Reporter::Docx::DetailReaction' do
           { 'insert' => '{S1' },
           { 'insert' => '} ' },
           { 'attributes' => { 'bold' => false, 'font-size' => 12 }, 'insert' => sample4.preferred_label },
-          { 'insert' => ' (56 mL); ' },
+          { 'insert' => ' (56 ml); ' },
           { 'insert' => 'Yield ' },
           { 'insert' => '{P1|' },
           { 'attributes' => { 'bold' => 'true', 'font-size' => 12 }, 'insert' => serial },
