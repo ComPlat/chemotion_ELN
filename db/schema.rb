@@ -187,37 +187,30 @@ ActiveRecord::Schema.define(version: 2026_03_25_085008) do
     t.index ["source", "source_id"], name: "index_code_logs_on_source_and_source_id"
   end
 
-  create_table "collection_shares", force: :cascade do |t|
-    t.bigint "collection_id"
-    t.bigint "shared_with_id", null: false
-    t.integer "permission_level", default: 0, null: false
-    t.integer "celllinesample_detail_level", default: 0, null: false
-    t.integer "devicedescription_detail_level", default: 0, null: false
-    t.integer "element_detail_level", default: 0, null: false
-    t.integer "reaction_detail_level", default: 0, null: false
-    t.integer "researchplan_detail_level", default: 0, null: false
-    t.integer "sample_detail_level", default: 0, null: false
-    t.integer "screen_detail_level", default: 0, null: false
-    t.integer "sequencebasedmacromoleculesample_detail_level", default: 0, null: false
-    t.integer "wellplate_detail_level", default: 0, null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["collection_id"], name: "index_collection_shares_on_collection_id"
-    t.index ["shared_with_id"], name: "index_collection_shares_on_shared_with_id"
-  end
-
   create_table "collections", id: :serial, force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "ancestry", default: "/", null: false, collation: "C"
     t.text "label", null: false
+    t.integer "shared_by_id"
+    t.boolean "is_shared", default: false
+    t.integer "permission_level", default: 0
+    t.integer "sample_detail_level", default: 10
+    t.integer "reaction_detail_level", default: 10
+    t.integer "wellplate_detail_level", default: 10
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "position"
+    t.integer "screen_detail_level", default: 10
     t.boolean "is_locked", default: false
     t.datetime "deleted_at"
+    t.boolean "is_synchronized", default: false, null: false
+    t.integer "researchplan_detail_level", default: 10
+    t.integer "element_detail_level", default: 10
     t.jsonb "tabs_segment", default: {}
+    t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
-    t.boolean "shared", default: false, null: false
+    t.integer "devicedescription_detail_level", default: 10
+    t.integer "sequencebasedmacromoleculesample_detail_level", default: 10
     t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -1111,9 +1104,9 @@ ActiveRecord::Schema.define(version: 2026_03_25_085008) do
     t.boolean "gaseous", default: false
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.jsonb "log_data"
+    t.boolean "weight_percentage", default: false
     t.decimal "volume", precision: 10, scale: 4
     t.boolean "use_reaction_volume", default: false, null: false
-    t.boolean "weight_percentage", default: false
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
@@ -1127,10 +1120,12 @@ ActiveRecord::Schema.define(version: 2026_03_25_085008) do
     t.integer "position"
     t.datetime "deleted_at"
     t.boolean "show_label", default: false, null: false
+    t.boolean "reference", default: false, null: false
+    t.float "equivalent"
+    t.float "weight_percentage"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.jsonb "log_data"
-    t.boolean "reference", default: false, null: false
     t.index ["deleted_at"], name: "idx_rxn_reactant_sbmm_on_deleted"
     t.index ["reaction_id"], name: "idx_rxn_reactant_sbmm_on_rxn_id"
     t.index ["sequence_based_macromolecule_sample_id"], name: "idx_rxn_reactant_sbmm_on_sbmm_id"
@@ -1519,8 +1514,6 @@ ActiveRecord::Schema.define(version: 2026_03_25_085008) do
     t.string "purification_method", default: ""
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.float "equivalent"
-    t.float "weight_percentage"
     t.float "concentration_rt_value"
     t.string "concentration_rt_unit", default: "mol/L", null: false
     t.boolean "inventory_sample", default: false, null: false
@@ -1581,6 +1574,29 @@ ActiveRecord::Schema.define(version: 2026_03_25_085008) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["channel_id", "user_id"], name: "index_subscriptions_on_channel_id_and_user_id", unique: true
+  end
+
+  create_table "sync_collections_users", id: :serial, force: :cascade do |t|
+    t.integer "user_id"
+    t.integer "collection_id"
+    t.integer "shared_by_id"
+    t.integer "permission_level", default: 0
+    t.integer "sample_detail_level", default: 0
+    t.integer "reaction_detail_level", default: 0
+    t.integer "wellplate_detail_level", default: 0
+    t.integer "screen_detail_level", default: 0
+    t.string "fake_ancestry"
+    t.integer "researchplan_detail_level", default: 10
+    t.string "label"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer "element_detail_level", default: 10
+    t.integer "celllinesample_detail_level", default: 10
+    t.integer "devicedescription_detail_level", default: 10
+    t.integer "sequencebasedmacromoleculesample_detail_level", default: 10
+    t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
+    t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id"
+    t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"
   end
 
   create_table "text_templates", id: :serial, force: :cascade do |t|
@@ -1778,8 +1794,6 @@ ActiveRecord::Schema.define(version: 2026_03_25_085008) do
   end
 
   add_foreign_key "chemicals", "sequence_based_macromolecule_samples"
-  add_foreign_key "collection_shares", "collections"
-  add_foreign_key "collection_shares", "users", column: "shared_with_id"
   add_foreign_key "collections", "inventories"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "collections"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "sequence_based_macromolecule_samples"
@@ -2744,6 +2758,20 @@ ActiveRecord::Schema.define(version: 2026_03_25_085008) do
       CREATE TRIGGER lab_trg_layers_changes AFTER UPDATE ON public.layers FOR EACH ROW EXECUTE FUNCTION lab_record_layers_changes()
   SQL
 
+  create_view "v_samples_collections", sql_definition: <<-SQL
+      SELECT cols.id AS cols_id,
+      cols.user_id AS cols_user_id,
+      cols.sample_detail_level AS cols_sample_detail_level,
+      cols.wellplate_detail_level AS cols_wellplate_detail_level,
+      cols.shared_by_id AS cols_shared_by_id,
+      cols.is_shared AS cols_is_shared,
+      samples.id AS sams_id,
+      samples.name AS sams_name
+     FROM ((collections cols
+       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
+       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
+    WHERE (cols.deleted_at IS NULL);
+  SQL
   create_view "literal_groups", sql_definition: <<-SQL
       SELECT lits.element_type,
       lits.element_id,
