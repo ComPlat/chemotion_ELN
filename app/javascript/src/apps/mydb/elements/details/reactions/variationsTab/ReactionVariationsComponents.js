@@ -9,7 +9,7 @@ import {
 import PropTypes from 'prop-types';
 import { cloneDeep, isEqual } from 'lodash';
 import {
-  getVariationsRowName, convertUnit, getUserFacingUnit,
+  getVariationsRowName, convertUnit,
   getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, sanitizeGroupEntry, DISPLAY_PRECISION,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
@@ -660,7 +660,7 @@ function EntrySelectionHeader({
 
   return (
     <div>
-      <div className="d-flex flex-column w-100">
+      <div className="d-flex align-items-center w-100">
         <span
           className="ag-header-group-cell-label"
           onClick={() => handleNameChange(names[(names.indexOf(displayName) + 1) % names.length] ?? displayName)}
@@ -668,10 +668,11 @@ function EntrySelectionHeader({
           {`${displayName} ${gasType && gasType !== 'off' ? `(${gasType})` : ''}`}
         </span>
         <Button
-          size="xsm"
+          variant="link"
+          className="p-0 ms-1 lh-1"
           onClick={() => { setEntryColDefs(columnGroup.getColGroupDef().children); setShowModal(true); }}
         >
-          Entries
+          <i className="fa fa-pencil" />
         </Button>
       </div>
       <Modal show={showModal} onHide={handleApply} size="lg">
@@ -827,7 +828,7 @@ function UnitToggleHeader({ column, context, api }) {
   const { setColumnDefinitions } = context;
   const [displayUnit, setDisplayUnit] = useState(() => column.getColDef().displayUnit);
   const entryLabel = getUserFacingEntryName(entry);
-  const unitLabel = displayUnit ? getUserFacingUnit(displayUnit) : null;
+  const unitLabel = displayUnit || null;
   const isToggleable = units && units.filter(Boolean).length > 1;
 
   const handleToggle = (e) => {
