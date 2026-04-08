@@ -1,25 +1,25 @@
-.ag-theme-reaction-variations {
-  --ag-cell-horizontal-padding: 0 !important;
-}
-
 .ag-theme-reaction-variations .ag-body-horizontal-scroll {
   position: absolute !important;
 }
 
-.ag-theme-reaction-variations .ag-header-group-text,
-.ag-theme-reaction-variations .ag-header-cell-text {
-  &::before {
+.ag-theme-reaction-variations .ag-header-group-cell,
+.ag-theme-reaction-variations .ag-header-cell:not(.ag-column-first) {
+  &::after {
     content: '';
-    position: relative;
-    display: inline-block;
-    margin-right: 3px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
     width: 16px;
-    height: 16px;
-    @include drag-surface();
-    background-color: $chemstrap-blue-dull;
-    border: 3px solid $chemstrap-blue-dull;
+    border: 4px solid $chemstrap-blue-dull;
+    background-image:
+      linear-gradient($chemstrap-blue-dull calc(50% - 16px), transparent calc(50% - 16px), transparent calc(50% + 16px), $chemstrap-blue-dull calc(50% + 16px)),
+      radial-gradient($chemstrap-white 1px, $chemstrap-blue-dull 2px);
+    background-size: auto, 4px 4px;
+    background-repeat: no-repeat, round;
+    background-position: 0 0, 0 calc(50% + 2px);
   }
-  &:hover::before {
+  &:hover::after {
     cursor: all-scroll;
   }
 }

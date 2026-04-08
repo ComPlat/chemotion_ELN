@@ -134,7 +134,7 @@ GEM
     backport (1.2.0)
     barby (0.6.9)
     base64 (0.3.0)
-    bcrypt (3.1.20)
+    bcrypt (3.1.22)
     bcrypt_pbkdf (1.1.1)
     benchmark (0.4.1)
     better_errors (2.10.1)
@@ -370,7 +370,7 @@ GEM
       rexml (>= 3.3.9)
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
-    labimotion (2.1.0)
+    labimotion (2.1.1)
       caxlsx (~> 4.0)
       rails (>= 6.1, < 8.0)
     language_server-protocol (3.17.0.5)
@@ -387,7 +387,7 @@ GEM
     logidze (1.4.1)
       activerecord (>= 6.0)
       railties (>= 6.0)
-    loofah (2.25.0)
+    loofah (2.25.1)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
     mail (2.8.1)
@@ -876,7 +876,7 @@ DEPENDENCIES
   jwt
   kaminari
   kaminari-grape
-  labimotion (= 2.1.0)
+  labimotion (= 2.1.1)
   launchy
   listen
   logidze

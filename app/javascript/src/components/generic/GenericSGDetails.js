@@ -2,7 +2,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { GenInterface, GenToolbar } from 'chem-generic-ui';
+import { GenUIProvider, GenInterface, GenToolbar } from 'chem-generic-ui';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 class GenericSGDetails extends Component {
@@ -65,16 +65,18 @@ class GenericSGDetails extends Component {
     if (!uiCtrl || Object.keys(segment).length === 0) return null;
     return (
       <div>
-        <GenToolbar
-          generic={segment}
-          genericType="Segment"
-          klass={klass}
-          fnExport={this.handleExport}
-          fnReload={this.handleReload}
-          fnRetrieve={this.handleRetrieveRevision}
-          onExpandAll={this.handleExpandAll}
-        />
-        {this.elementalPropertiesItem(segment)}
+        <GenUIProvider>
+          <GenToolbar
+            generic={segment}
+            genericType="Segment"
+            klass={klass}
+            fnExport={this.handleExport}
+            fnReload={this.handleReload}
+            fnRetrieve={this.handleRetrieveRevision}
+            onExpandAll={this.handleExpandAll}
+          />
+          {this.elementalPropertiesItem(segment)}
+        </GenUIProvider>
       </div>
     );
   }

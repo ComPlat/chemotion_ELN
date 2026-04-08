@@ -287,10 +287,20 @@ export default class UserAuth extends Component {
 
   handleSettingsHide = () => {
     UserActions.fetchCurrentUser();
-    const { currentUser } = this.state;
-    UserActions.updateUserProfile(currentUser.profile);
     this.setState({ showSettings: false });
   };
+
+  renderAffiliations() {
+    const { showAffiliations } = this.state;
+    if (!showAffiliations) return null;
+
+    return (
+      <Affiliations
+        show={showAffiliations}
+        onHide={this.handleAffiliationsHide}
+      />
+    );
+  }
 
   renderSettings() {
     const { showSettings, currentUser } = this.state;
@@ -631,7 +641,7 @@ export default class UserAuth extends Component {
     return (
       <>
         <Dropdown>
-          <Dropdown.Toggle variant="light">
+          <Dropdown.Toggle variant="topbar">
             <i className="fa fa-user me-1" />
             {currentUser.name}
           </Dropdown.Toggle>

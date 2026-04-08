@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Dropdown } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -16,7 +17,12 @@ function ExternalItem({ title, href }) {
   );
 }
 
-export default function SupportMenuButton({ linkToEln = false }) {
+ExternalItem.propTypes = {
+  title: PropTypes.string.isRequired,
+  href: PropTypes.string.isRequired,
+};
+
+export default function SupportMenuButton({ linkToEln, variant }) {
   const [version, setVersion] = useState({});
   useEffect(() => {
     const onUiStoreChange = (state) => setVersion(state.version);
@@ -28,7 +34,7 @@ export default function SupportMenuButton({ linkToEln = false }) {
 
   return (
     <Dropdown>
-      <Dropdown.Toggle variant="light">
+      <Dropdown.Toggle variant={variant}>
         <i className="fa fa-info-circle me-1" />
         Info & Support
       </Dropdown.Toggle>
@@ -64,3 +70,13 @@ export default function SupportMenuButton({ linkToEln = false }) {
     </Dropdown>
   );
 }
+
+SupportMenuButton.propTypes = {
+  linkToEln: PropTypes.bool,
+  variant: PropTypes.string,
+};
+
+SupportMenuButton.defaultProps = {
+  linkToEln: false,
+  variant: 'topbar',
+};

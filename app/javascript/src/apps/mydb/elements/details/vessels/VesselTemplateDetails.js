@@ -1,15 +1,16 @@
 /* eslint-disable react/jsx-one-expression-per-line */
 /* eslint-disable arrow-parens */
 import React, {
-  useState, useContext, useEffect, useRef
+  useState, useContext, useEffect
 } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import PropTypes from 'prop-types';
 import { toJS } from 'mobx';
 import {
-  Button, Form, Row, Col, Table, OverlayTrigger, Popover, InputGroup, Modal, Card, Container
+  Button, Form, Row, Col, Table, InputGroup, Modal, Card, Container
 } from 'react-bootstrap';
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import { detailFooterButton } from 'src/apps/mydb/elements/details/DetailCardButton';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -21,13 +22,11 @@ import BulkInstanceModal from 'src/apps/mydb/elements/details/vessels/properties
 import { generateNextShortLabel, getNextVesselIndex } from 'src/utilities/VesselUtilities';
 
 function VesselTemplateDetails({ vessels }) {
-  const closeBtnRef = useRef(null);
   const { currentCollection } = UIStore.getState();
   const { currentUser } = UserStore.getState();
   const { vesselDetailsStore } = useContext(StoreContext);
 
   const [isTemplateUpdated, setIsTemplateUpdated] = useState(false);
-  const [showConfirmPopover, setShowConfirmPopover] = useState(false);
   const [newInstances, setNewInstances] = useState([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -76,74 +75,11 @@ function VesselTemplateDetails({ vessels }) {
   const handleClose = () => {
     const mobXItem = vesselDetailsStore.getVessel(templateId);
 
-    if (!mobXItem.changed) {
+    if (!mobXItem.changed || window.confirm('Unsaved data will be lost. Close sample?')) {
       getInstancesToRemoveFromStore().forEach(v => vesselDetailsStore.removeVesselFromStore(v.id));
       DetailActions.close(vessels, true);
-      return;
     }
-
-    setShowConfirmPopover(true);
   };
-
-  const confirmClose = () => {
-    getInstancesToRemoveFromStore().forEach(v => vesselDetailsStore.removeVesselFromStore(v.id));
-    DetailActions.close(vessels, true);
-    setShowConfirmPopover(false);
-  };
-
-  const cancelClose = () => {
-    setShowConfirmPopover(false);
-  };
-
-  const renderCloseHeaderButton = () => (
-    <OverlayTrigger
-      trigger="click"
-      show={showConfirmPopover}
-      placement="left"
-      target={closeBtnRef.current}
-      overlay={(
-        <Popover id="close-confirm-popover">
-          <Popover.Header as="h3">Confirm Close</Popover.Header>
-          <Popover.Body>
-            Unsaved data will be lost. Close anyway?
-            <div className="d-flex justify-content-end gap-2 mt-2">
-              <Button size="sm" variant="danger" onClick={confirmClose}>
-                Yes
-              </Button>
-              <Button size="sm" variant="secondary" onClick={cancelClose}>
-                No
-              </Button>
-            </div>
-          </Popover.Body>
-        </Popover>
-      )}
-      rootClose
-      onToggle={() => setShowConfirmPopover(false)}
-    >
-      <Button
-        ref={closeBtnRef}
-        variant="danger"
-        size="xxsm"
-        onClick={handleClose}
-      >
-        <i className="fa fa-times" />
-      </Button>
-    </OverlayTrigger>
-  );
-
-  const renderHeaderContent = () => (
-    <div className="d-flex align-items-center justify-content-between">
-      <div className="d-flex gap-2">
-        <span>
-          <i className="icon-vessel_template me-2" />
-          {templateStoreItem?.vesselName}
-        </span>
-      </div>
-      <div className="d-flex gap-1">
-        {renderCloseHeaderButton()}
-      </div>
-    </div>
-  );
 
   const syncTemplateAndInstances = (updatedVessels) => {
     vessels.forEach(v => vesselDetailsStore.removeVesselFromStore(v.id));
@@ -173,12 +109,12 @@ function VesselTemplateDetails({ vessels }) {
 
   const handleCreateNewInstance = (instance, index) => {
     const baseVessel = vessels[0];
-    const { vesselTemplateId } = baseVessel;
-    const collectionId = currentCollection.id;
+    const currentTemplateId = baseVessel.vesselTemplateId;
+    const currentCollectionId = currentCollection.id;
     const shortLabel = generateNextShortLabel();
 
     const vesselToCreate = {
-      collectionId,
+      collectionId: currentCollectionId,
       vesselTemplateId: baseVessel.vesselTemplateId,
       short_label: shortLabel,
       instances: [instance],
@@ -191,7 +127,7 @@ function VesselTemplateDetails({ vessels }) {
           ElementActions.refreshElements('vessel');
           ElementActions.refreshElements('vessel_template');
         }
-        return VesselsFetcher.fetchVesselTemplateById(vesselTemplateId, collectionId);
+        return VesselsFetcher.fetchVesselTemplateById(currentTemplateId, currentCollectionId);
       })
       .then((updatedVessels) => {
         syncTemplateAndInstances(updatedVessels);
@@ -241,7 +177,7 @@ function VesselTemplateDetails({ vessels }) {
     }
   };
 
-  const HandleDeleteInstance = (vesselId, vesselTemplateId) => {
+  const HandleDeleteInstance = (vesselId, selectedTemplateId) => {
     setDeleting(true);
 
     VesselsFetcher.deleteVesselInstance(vesselId)
@@ -249,7 +185,7 @@ function VesselTemplateDetails({ vessels }) {
         setDeleting(false);
         setShowConfirm(false);
 
-        return VesselsFetcher.fetchVesselTemplateById(vesselTemplateId, collectionId);
+        return VesselsFetcher.fetchVesselTemplateById(selectedTemplateId, collectionId);
       })
       .then((updatedVessels) => {
         syncTemplateAndInstances(updatedVessels);
@@ -257,7 +193,6 @@ function VesselTemplateDetails({ vessels }) {
   };
 
   const updateTemplate = () => {
-    const vesselToUpdate = vessels.find((v) => v.id === templateId);
     const updatedVessel = vesselDetailsStore.getVessel(templateId);
 
     VesselsFetcher.updateVesselTemplate(templateId, updatedVessel, collectionId)
@@ -300,10 +235,31 @@ function VesselTemplateDetails({ vessels }) {
       });
   };
 
+  const footerToolbar = (
+    <>
+      <Button
+        onClick={handleClose}
+        variant="ghost"
+      >
+        Close
+      </Button>
+      {detailFooterButton({
+        label: 'Save',
+        iconClass: 'fa fa-floppy-o',
+        variant: 'primary',
+        disabled: !isTemplateUpdated,
+        onClick: updateTemplate,
+      })}
+    </>
+  );
+
   return (
     <DetailCard
-      header={renderHeaderContent()}
-      isPendingToSave={templateStoreItem?.changed}
+      title={templateStoreItem?.vesselName || 'Vessel Template'}
+      titleIcon={<i className="icon-vessel_template" />}
+      onClose={handleClose}
+      footerToolbar={footerToolbar}
+      className={templateStoreItem?.changed ? 'detail-card--unsaved' : null}
     >
       <Container>
         <h5>Vessel Template Details</h5>
@@ -339,7 +295,7 @@ function VesselTemplateDetails({ vessels }) {
                   onChange={(e) => handleTemplateChange('volumeAmount', parseFloat(e.target.value) || 0)}
                 />
                 <Button
-                  variant="success"
+                  variant="light"
                   onClick={() => {
                     const currentUnit = templateStoreItem?.volumeUnit || 'ml';
                     const newUnit = currentUnit === 'ml' ? 'l' : 'ml';
@@ -351,17 +307,6 @@ function VesselTemplateDetails({ vessels }) {
               </InputGroup>
             </Col>
           </Form.Group>
-          <div>
-            <Button
-              variant="primary"
-              size="sm"
-              className="mt-2"
-              onClick={updateTemplate}
-              disabled={!isTemplateUpdated}
-            >
-              Update Template
-            </Button>
-          </div>
         </Form>
       </Container>
 
@@ -420,7 +365,7 @@ function VesselTemplateDetails({ vessels }) {
                           onChange={(e) => handleInstanceChange(instance.id, 'weightAmount', e.target.value)}
                         />
                         <Button
-                          variant="success"
+                          variant="light"
                           size="sm"
                           onClick={() => {
                             const units = ['g', 'kg', 'mg'];
@@ -476,7 +421,9 @@ function VesselTemplateDetails({ vessels }) {
                 </tr>
               ))}
               {newInstances.map((instance, index) => (
-                <tr key={`new-${index}`}>
+                <tr
+                  key={`new-${instance.vesselInstanceName || ''}-${instance.barCode || ''}-${instance.qrCode || ''}`}
+                >
                   {['vesselInstanceName', 'vesselInstanceDescription', 'barCode', 'qrCode'].map((field) => (
                     <td key={field} className="p-1">
                       <Form.Control
@@ -503,7 +450,7 @@ function VesselTemplateDetails({ vessels }) {
                         }}
                       />
                       <Button
-                        variant="success"
+                        variant="light"
                         size="sm"
                         onClick={() => {
                           const updated = [...newInstances];
@@ -523,6 +470,7 @@ function VesselTemplateDetails({ vessels }) {
                       <Button
                         variant="warning"
                         size="xxsm"
+                        aria-label="Create vessel instance"
                         onClick={() => handleCreateNewInstance(instance, index)}
                       >
                         <i className="fa fa-save" title="Save changes" />
@@ -530,6 +478,7 @@ function VesselTemplateDetails({ vessels }) {
                       <Button
                         variant="danger"
                         size="xxsm"
+                        aria-label="Delete new vessel instance"
                         onClick={() => {
                           const updated = [...newInstances];
                           updated.splice(index, 1);
@@ -560,8 +509,8 @@ function VesselTemplateDetails({ vessels }) {
 VesselTemplateDetails.propTypes = {
   vessels: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      vesselTemplateId: PropTypes.string.isRequired,
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      vesselTemplateId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     })
   ).isRequired,
 };

@@ -1,6 +1,6 @@
 $white: $chemstrap-white;
-$primary: $chemstrap-blue;
-$secondary: $chemstrap-silicon;
+$primary: $chemstrap-blue-dark;
+$secondary: $chemstrap-blue-dark;
 $success: $chemstrap-green;
 $info: #5bc0de; // to be removed application wide
 $warning: $chemstrap-orange;
@@ -30,9 +30,12 @@ $border-color: map-get($carbon-shades, lighten3);
 $border-radius: 0.3rem;
 $body-bg: $chemstrap-white;
 $body-color: $chemstrap-carbon;
+$link-color: $chemstrap-blue;
+
 $font-family-sans-serif: "Roboto", sans-serif;
 $font-size-root: clamp(12px, 0.95vw, 16px);
 $font-size-base: 1rem;
+
 $heading-color: $body-color;
 $h1-font-size: $font-size-base * 2;
 $h2-font-size: $font-size-base * 1.75;
@@ -53,17 +56,46 @@ $accordion-button-focus-box-shadow: inset 0
   calc(-1 * var(--bs-accordion-border-width)) 0 var(--bs-accordion-border-color); //same value as unfocused
 $accordion-body-padding-y: 0.5rem;
 $accordion-body-padding-x: 0.5rem;
-$accordion-icon-transition: transform 0.2s, padding-top 0.2s;
+$accordion-icon-transition:
+  transform 0.2s,
+  padding-top 0.2s;
+
 $modal-content-bg: $chemstrap-white;
+$modal-inner-padding: 0.75rem;
+$modal-header-padding: $modal-inner-padding $modal-inner-padding;
+
+$close-button-margin: $modal-inner-padding - 0.25rem; // -gap-1
+
 $list-group-bg: $chemstrap-white;
 $list-group-color: $body-color;
 
+$popover-header-bg: $chemstrap-silicon-active;
 $popover-bg: $chemstrap-white;
 $popover-body-color: $body-color;
 $popover-max-width: 50vw;
 $popover-body-padding-y: 0.5rem;
 
+$input-btn-line-height: (18 / 14) * 1em;
+$input-line-height: $input-btn-line-height;
+$btn-line-height: $input-btn-line-height;
 $input-btn-padding-y: 0.3rem;
+$input-padding-y: $input-btn-padding-y;
+$input-btn-padding-x-xsm: 5px;
+$input-btn-padding-y-xsm: 3px;
+$input-btn-padding-x-xxsm: 4px;
+$input-btn-padding-y-xxsm: 1px;
+$input-height: add(
+  $input-line-height,
+  add($input-padding-y * 2, $input-height-border, false)
+);
+$input-height-sm: add(
+  $input-line-height,
+  add($input-padding-y-sm * 2, $input-height-border, false)
+);
+$input-height-lg: add(
+  $input-line-height,
+  add($input-padding-y-lg * 2, $input-height-border, false)
+);
 $input-bg: $chemstrap-white;
 $input-border-color: $border-color;
 $form-select-bg: $input-bg;
@@ -71,6 +103,19 @@ $form-check-input-bg: $input-bg;
 $form-check-input-border: 1px solid $input-border-color;
 $form-check-input-width: 1.125em;
 $form-label-font-weight: $font-weight-bold;
+
+$box-shadow: 0 0.5rem 1.5rem rgba($black, 0.25);
+
+$btn-close-width: $input-btn-line-height;
+$btn-close-height: $input-btn-line-height;
+$btn-close-padding-x: $input-btn-padding-y-xsm;
+$btn-close-padding-y: $input-btn-padding-y-xsm;
+$btn-close-focus-shadow: none;
+$btn-close-opacity: 1;
+$btn-close-hover-opacity: 1;
+$btn-close-focus-opacity: 1;
+$btn-close-disabled-opacity: 1;
+$btn-close-white-filter: none;
 
 $modal-xxxl: 90vw;
 

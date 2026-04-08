@@ -12,6 +12,8 @@ module Entities
     expose! :function_or_application
     expose! :concentration_value
     expose! :concentration_unit
+    expose! :concentration_rt_value
+    expose! :concentration_rt_unit
     expose! :molarity_value
     expose! :molarity_unit
     expose! :activity_per_volume_value
@@ -29,6 +31,7 @@ module Entities
     expose! :type
     expose! :changed
     expose! :errors
+    expose! :inventory_sample
 
     expose! :heterologous_expression, if: ->(_object, _options) { !uniprot_protein? }
     expose! :organism, if: ->(_object, _options) { !uniprot_protein? }

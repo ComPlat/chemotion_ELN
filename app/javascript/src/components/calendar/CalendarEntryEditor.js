@@ -107,7 +107,7 @@ const CalendarEntryEditor = (props) => {
       <Popover id="popover-delete-entry">
         <Popover.Header as="h3">Are you sure you want to delete the calendar entry?</Popover.Header>
         <Popover.Body>
-          <ButtonToolbar className="gap-2">
+          <ButtonToolbar>
             <Button
               size="sm"
               variant="danger"
@@ -244,7 +244,7 @@ const CalendarEntryEditor = (props) => {
               Your access to {entry.element_name} was removed.
             </Alert>
           ) : null}
-          <ButtonToolbar className="d-flex align-items-center gap-2">
+          <ButtonToolbar>
             <div className="flex-grow-1">
               {(entry.eventable_type && accessible && entry.id !== undefined) ? (
                 <div>

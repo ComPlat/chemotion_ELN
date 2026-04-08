@@ -164,6 +164,18 @@ describe Export::ExportChemicals do
                                                      'product_link' => [] }]
         expect(result).to eq(resulting_columns_index)
       end
+
+      it 'constructs column name (delivery_date)' do
+        columns_index = { 'safety_sheet_link' => [], 'product_link' => [] }
+        result = described_class.construct_column_name('delivery_date', 5, columns_index)
+        expect(result).to eq(['delivery date', { 'safety_sheet_link' => [], 'product_link' => [] }])
+      end
+
+      it 'constructs column name (opening_date)' do
+        columns_index = { 'safety_sheet_link' => [], 'product_link' => [] }
+        result = described_class.construct_column_name('opening_date', 6, columns_index)
+        expect(result).to eq(['opening date', { 'safety_sheet_link' => [], 'product_link' => [] }])
+      end
     end
 
     describe '.format_chemical_results' do

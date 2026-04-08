@@ -32,6 +32,7 @@ module Entities
     expose :counters
     expose :generic_admin, documentation: { type: 'Hash', desc: 'Generic administrator' }
     expose :otp_required_for_login, documentation: { type: 'Boolean', desc: 'If 2fa is enabled' }
+    expose :profile
 
     def samples_count
       object.counters['samples'].to_i

@@ -59,7 +59,7 @@ gem 'jwt'
 gem 'kaminari'
 gem 'kaminari-grape'
 
-gem 'labimotion', '2.1.0'
+gem 'labimotion', '2.1.1'
 gem 'logidze'
 
 gem 'mimemagic', '0.3.10'

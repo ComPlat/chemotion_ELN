@@ -296,32 +296,74 @@ export default class NMRiumDisplayer extends React.Component {
     throw new Error('Unsupported .nmrium file format');
   }
 
+  findMatchingJcamp(spectrum, jcampSpectra) {
+    const oldUrl = spectrum?.source?.jcampURL;
+    const baseFromUrl = this.getFileBaseName(oldUrl);
+    const baseFromInfo = this.getFileBaseName(spectrum?.info?.name);
+    const extFromUrl = this.getFileExtension(oldUrl);
+    const extFromInfo = this.getFileExtension(spectrum?.info?.name);
+    const targetBase = baseFromUrl || baseFromInfo;
+    const targetExt = extFromUrl || extFromInfo;
+    if (!targetBase) return null;
+
+    const match = jcampSpectra.find((c) => {
+      const baseFromLabel = this.getFileBaseName(c.label);
+      const extFromLabel = this.getFileExtension(c.label);
+      return baseFromLabel && baseFromLabel === targetBase
+        && (!targetExt || extFromLabel === targetExt);
+    }) || null;
+
+    return match;
+  }
+
+  findMatchingZip(root, zipSpectra) {
+    if (!zipSpectra?.length) return null;
+    const nameInNmrium = root.spectra?.find((s) => s?.info?.name)?.info?.name;
+    const baseInNmrium = this.getFileBaseName(nameInNmrium);
+    if (!baseInNmrium) return zipSpectra[0];
+    return zipSpectra.find((z) => this.getFileBaseName(z.label) === baseInNmrium) || zipSpectra[0];
+  }
+
   patchZipAndJcampReference(nmriumObj, jdxUrl, zipUrl, zipLabel) {
-    if (!jdxUrl && !zipUrl) return;
-
-    const jdxUrlWithFile = jdxUrl !== undefined ? `${jdxUrl}/file.jdx` : undefined;
-    const zipUrlWithFile = zipUrl !== undefined ? `${zipUrl}/file.zip` : undefined;
-    const preferredUrl = jdxUrlWithFile !== undefined ? jdxUrlWithFile : zipUrlWithFile;
-
-    const u = new URL(preferredUrl);
-
-    let baseURL = u.origin;
-    let relativePath = u.pathname;
-
     const root = nmriumObj.data || nmriumObj;
     const sourceRoot = nmriumObj.source || root.source;
-
     if (!Array.isArray(root?.spectra)) return;
+
+    const fetchedSpectra = this.state.fetchedSpectra || [];
+    const jcampSpectra = fetchedSpectra.filter((s) => s.kind === 'jcamp' && s.url);
+    const zipSpectra = fetchedSpectra.filter((s) => s.kind === 'zip' && s.url);
+    const isZipBased = root.spectra.some((s) => s?.sourceSelector?.files?.some?.((f) => typeof f === 'string' && f.includes('/file.zip/')));
+    const matchingZip = isZipBased ? this.findMatchingZip(root, zipSpectra) : null;
+    const effectiveZipUrl = matchingZip?.url ?? zipUrl;
+    const effectiveZipLabel = matchingZip?.label ?? zipLabel;
+    if ((!jdxUrl && jcampSpectra.length === 0) && !effectiveZipUrl) return;
+
+    const zipUrlWithFile = effectiveZipUrl !== undefined ? `${effectiveZipUrl}/file.zip` : undefined;
+    const firstJcampMatch = !isZipBased && root.spectra.map((s) => this.findMatchingJcamp(s, jcampSpectra)).find(Boolean);
+    const jdxUrlWithFile = firstJcampMatch
+      ? `${firstJcampMatch.url}/file.${this.getFileExtension(firstJcampMatch.label) || 'jdx'}`
+      : (jdxUrl ? `${jdxUrl}/file.jdx` : undefined);
+    const preferredUrl = (isZipBased ? zipUrlWithFile : jdxUrlWithFile) || zipUrlWithFile || jdxUrlWithFile;
+    if (!preferredUrl) return;
+
+    const u = new URL(preferredUrl);
+    const baseURL = u.origin;
+    const relativePath = u.pathname;
 
     root.spectra.forEach((s) => {
       if (!s) return;
 
-      if (jdxUrl && s.sourceSelector) {
-        delete s.sourceSelector.files;
-      }
+      const oldUrl = s?.source?.jcampURL;
+      const match = !isZipBased ? this.findMatchingJcamp(s, jcampSpectra) : null;
 
-      if (jdxUrlWithFile && s.source) {
-        s.source.jcampURL = jdxUrlWithFile;
+      if (!isZipBased && s.sourceSelector) delete s.sourceSelector.files;
+      if (!isZipBased) {
+        if (!s.source || typeof s.source !== 'object') s.source = {};
+        const ext = this.getFileExtension(oldUrl) || this.getFileExtension(match?.label) || 'jdx';
+        const fallbackJcampUrl = match
+          ? `${match.url}/file.${ext}`
+          : (jdxUrl ? `${jdxUrl}/file.${ext}` : jdxUrlWithFile);
+        if (fallbackJcampUrl) s.source.jcampURL = fallbackJcampUrl;
       }
 
       if (sourceRoot?.entries?.[0]) {
@@ -329,18 +371,30 @@ export default class NMRiumDisplayer extends React.Component {
         sourceRoot.entries[0].baseURL = baseURL;
       }
 
-      if (zipUrl && s.info) {
-        s.info.name = zipLabel;
+      if (effectiveZipUrl && s.info) {
+        s.info.name = effectiveZipLabel;
       }
 
       // Patch the zip references in the nmrium data
-      if (zipUrl && Array.isArray(s?.sourceSelector?.files)) {
+      if (effectiveZipUrl && Array.isArray(s?.sourceSelector?.files)) {
         const marker = '/file.zip/';
         s.sourceSelector.files = s.sourceSelector.files.map(
           (f) => f.includes(marker) ? `${relativePath}/${f.split(marker)[1]}` : f
         );
       }
     });
+  }
+
+  getFileBaseName(pathLike) {
+    if (!pathLike || typeof pathLike !== 'string') return '';
+    return (pathLike.split('?')[0].split('#')[0].split('/').pop() || '').replace(/\.[^.]+$/, '').toLowerCase();
+  }
+
+  getFileExtension(pathLike) {
+    if (!pathLike || typeof pathLike !== 'string') return '';
+    const name = (pathLike.split('?')[0].split('#')[0].split('/').pop() || '');
+    const i = name.lastIndexOf('.');
+    return i < 0 ? '' : name.slice(i + 1).toLowerCase();
   }
 
   buildPatchedNmriumFile(label, contentObj) {

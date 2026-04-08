@@ -1,0 +1,7 @@
+.create-element-button {
+  padding: 8px 14px 8px 8px !important;
+  @extend .rounded-pill;
+  &__label {
+    @extend .text-uppercase;
+  }
+}

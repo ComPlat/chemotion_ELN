@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/control-has-associated-label */
 /* eslint-disable react/destructuring-assignment */
 import React from 'react';
 import Draggable from 'react-draggable';
@@ -313,7 +314,7 @@ export default class InboxModal extends React.Component {
         overlay={<Tooltip id="inbox_size_tooltip">{tooltipText}</Tooltip>}
       >
         <DropdownButton title="Size"
-          variant="info"
+          variant="light"
           size="sm"
           onSelect={(size) => this.handleSizingIconClick(size)}
         >
@@ -353,7 +354,7 @@ export default class InboxModal extends React.Component {
     return (
       <OverlayTrigger placement="bottom" overlay={sortTooltip}>
         <Button
-          variant="success"
+          variant="light"
           size="xsm"
           onClick={this.changeSortColumn}
         >
@@ -386,7 +387,7 @@ export default class InboxModal extends React.Component {
         >
           <Card className="cursor">
             <Card.Header
-              className="cursor handle draggable text-bg-primary"
+              className="cursor handle draggable border-gray-600 bg-gray-300"
               id="draggableInbox"
               onMouseDown={this.handleMouseDown}
             >
@@ -398,33 +399,32 @@ export default class InboxModal extends React.Component {
                     onClick={() => this.onClickInbox()}
                   >
                     <i className="fa fa-inbox" />
-                    <span className="ms-2 me-1 fw-bold text-white">Inbox</span>
+                    <span className="ms-2 me-1 fw-bold">Inbox</span>
                   </button>
                   {
                     numberOfAttachments > 0
                     && (
-                      <Badge bg="light" className="mx-1 text-primary">{numberOfAttachments}</Badge>
+                      <Badge className="mx-1" bg="warning">{numberOfAttachments}</Badge>
                     )
                   }
                 </div>
-                <ButtonToolbar className=" gap-1">
+                <ButtonToolbar>
                   {this.renderSortButton()}
                   {collectorAddress && this.collectorAddressInfoButton()}
                   {this.renderSizingIcon()}
                   <Button
-                    variant="success"
+                    variant="light"
                     size="xsm"
                     onClick={() => this.refreshInbox()}
                   >
                     <i className="fa fa-refresh" />
                   </Button>
-                  <Button
-                    variant="danger"
+                  <button
+                    type="button"
                     size="xsm"
+                    className="btn-close"
                     onClick={InboxActions.toggleInboxModal}
-                  >
-                    <i className="fa fa-close" />
-                  </Button>
+                  />
                 </ButtonToolbar>
               </div>
             </Card.Header>

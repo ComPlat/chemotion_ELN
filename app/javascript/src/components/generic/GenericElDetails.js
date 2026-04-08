@@ -4,17 +4,16 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button,
   ListGroupItem,
   Tabs,
   Tab,
-  OverlayTrigger,
-  Tooltip,
 } from 'react-bootstrap';
 import { cloneDeep, findIndex, merge } from 'lodash';
 import Immutable from 'immutable';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { GenInterface, GenToolbar, browseElement } from 'chem-generic-ui';
+import {
+  GenUIProvider, GenInterface, GenToolbar, browseElement
+} from 'chem-generic-ui';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -22,19 +21,16 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import ConfirmClose from 'src/components/common/ConfirmClose';
 import GenericElDetailsContainers from 'src/components/generic/GenericElDetailsContainers';
 import GenericEl from 'src/models/GenericEl';
 import Attachment from 'src/models/Attachment';
-import CopyElementModal from 'src/components/common/CopyElementModal';
 import { notification, renderFlowModal } from 'src/apps/generic/Utils';
 import GenericAttachments from 'src/components/generic/GenericAttachments';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
-import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
-import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
+import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import { EditUserLabels } from 'src/components/UserLabels';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 
@@ -70,10 +66,8 @@ export default class GenericElDetails extends Component {
     this.handleSegmentsChange = this.handleSegmentsChange.bind(this);
     this.handleRetrieveRevision = this.handleRetrieveRevision.bind(this);
     this.handleGenericElChanged = this.handleGenericElChanged.bind(this);
-    this.handleAttachmentUndoDelete =
-      this.handleAttachmentUndoDelete.bind(this);
-    this.handleAttachmentImportComplete =
-      this.handleAttachmentImportComplete.bind(this);
+    this.handleAttachmentUndoDelete = this.handleAttachmentUndoDelete.bind(this);
+    this.handleAttachmentImportComplete = this.handleAttachmentImportComplete.bind(this);
     this.handleElChanged = this.handleElChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleExport = this.handleExport.bind(this);
@@ -122,9 +116,7 @@ export default class GenericElDetails extends Component {
   }
 
   handleReload(genericEl) {
-    this.setState({ genericEl }, () =>
-      ElementActions.setCurrentElement(genericEl),
-    );
+    this.setState({ genericEl }, () => ElementActions.setCurrentElement(genericEl));
   }
 
   handleSubmit(closeView = false) {
@@ -147,16 +139,7 @@ export default class GenericElDetails extends Component {
     el.name = el.name.trim();
 
     let ais = el.analysisContainers() || [];
-    ais = ais
-      .filter((x) => !x.is_deleted)
-      .map((x, i) => {
-        if (x.extended_metadata) {
-          x.extended_metadata.index = i;
-        } else {
-          x.extended_metadata = { index: i };
-        }
-        return x.id;
-      });
+    ais = ais.filter((x) => !x.is_deleted).map((x) => x.id);
     (Object.keys(el.properties.layers) || {}).forEach((key) => {
       if (el.properties.layers[key].ai) {
         el.properties.layers[key].ai = el.properties.layers[
@@ -170,9 +153,9 @@ export default class GenericElDetails extends Component {
       ).map((f) => {
         const field = f;
         if (
-          field.type === 'text' &&
-          typeof field.value !== 'undefined' &&
-          field.value != null
+          field.type === 'text'
+          && typeof field.value !== 'undefined'
+          && field.value != null
         ) {
           field.value = field.value?.trim();
         }
@@ -223,9 +206,9 @@ export default class GenericElDetails extends Component {
   handleAttachmentEdit(attachment) {
     const { genericEl } = this.state;
     genericEl.changed = true;
-    genericEl.attachments.map((currentAttachment) => {
-      if (currentAttachment.id === attachment.id) return attachment;
-    });
+    genericEl.attachments = genericEl.attachments.map((currentAttachment) => (
+      currentAttachment.id === attachment.id ? attachment : currentAttachment
+    ));
     this.handleElChanged(genericEl);
     this.forceUpdate();
   }
@@ -264,9 +247,9 @@ export default class GenericElDetails extends Component {
     const { genericEl } = this.state;
     if (state.currentElement) {
       if (
-        state.currentElement !== genericEl &&
-        state.currentElement.klassType === 'GenericEl' &&
-        state.currentElement.type != null
+        state.currentElement !== genericEl
+        && state.currentElement.klassType === 'GenericEl'
+        && state.currentElement.type != null
       ) {
         this.setState({ genericEl: state.currentElement });
       }
@@ -287,9 +270,9 @@ export default class GenericElDetails extends Component {
   setAttachmentDeleted(attachment, isDeleted) {
     this.setState((prevState) => {
       const updatedGenericEl = cloneDeep(prevState.genericEl);
-      updatedGenericEl.attachments = updatedGenericEl.attachments.map((a) =>
-        a.id === attachment.id ? { ...a, is_deleted: isDeleted } : a,
-      );
+      updatedGenericEl.attachments = updatedGenericEl.attachments.map((a) => (
+        a.id === attachment.id ? { ...a, is_deleted: isDeleted } : a
+      ));
       updatedGenericEl.changed = true;
       return { genericEl: updatedGenericEl };
     });
@@ -305,10 +288,9 @@ export default class GenericElDetails extends Component {
       isRequire: false,
       field: 'name',
     });
-    const lys =
-      genericEl.properties && genericEl.properties.layers
-        ? Object.keys(genericEl.properties.layers)
-        : [];
+    const lys = genericEl.properties && genericEl.properties.layers
+      ? Object.keys(genericEl.properties.layers)
+      : [];
     const aiComs = {};
     lys.forEach((x) => {
       const ly = genericEl.properties.layers[x];
@@ -343,16 +325,18 @@ export default class GenericElDetails extends Component {
     );
     return (
       <div>
-        <GenToolbar
-          generic={genericEl}
-          genericType="Element"
-          klass={genericEl.element_klass}
-          fnExport={this.handleExport}
-          fnReload={this.handleReload}
-          fnRetrieve={this.handleRetrieveRevision}
-          onExpandAll={this.handleExpandAll}
-        />
-        {layersLayout}
+        <GenUIProvider>
+          <GenToolbar
+            generic={genericEl}
+            genericType="Element"
+            klass={genericEl.element_klass}
+            fnExport={this.handleExport}
+            fnReload={this.handleReload}
+            fnRetrieve={this.handleRetrieveRevision}
+            onExpandAll={this.handleExpandAll}
+          />
+          {layersLayout}
+        </GenUIProvider>
         <EditUserLabels
           element={genericEl}
           fnCb={this.handleGenericElChanged}
@@ -411,95 +395,9 @@ export default class GenericElDetails extends Component {
     );
   }
 
-  header(genericEl) {
-    const iconClass =
-      (genericEl.element_klass && genericEl.element_klass.icon_name) || '';
-    const { currentCollection } = UIStore.getState();
-    const defCol =
-      currentCollection &&
-      currentCollection.is_shared === false &&
-      currentCollection.is_locked === false &&
-      currentCollection.label !== 'All'
-        ? currentCollection.id
-        : null;
-    const copyBtn =
-      genericEl.can_copy && !genericEl.isNew ? (
-        <CopyElementModal element={genericEl} defCol={defCol} />
-      ) : null;
-
-    const saveBtnDisplay =
-      genericEl.changed && genericEl.can_update ? '' : 'none';
-    const datetp = `Created at: ${genericEl.created_at} \n Updated at: ${genericEl.updated_at}`;
-    return (
-      <div className="d-flex align-items-center justify-content-between">
-        <div className="d-flex align-items-center gap-2">
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="genericElDatesx">{datetp}</Tooltip>}
-          >
-            <span>
-              <i className={iconClass} />
-              &nbsp;
-              <span>{genericEl.short_label}</span>
-              &nbsp;
-            </span>
-          </OverlayTrigger>
-          {!genericEl.isNew && <ElementCollectionLabels element={genericEl} />}
-          <ShowUserLabels element={genericEl} />
-        </div>
-        <div className="d-flex align-items-center gap-2">
-          {!genericEl.isNew && (
-            <OpenCalendarButton
-              isPanelHeader
-              eventableId={genericEl.id}
-              eventableType="Labimotion::Element"
-            />
-          )}
-          {copyBtn}
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="saveScreen">Save</Tooltip>}
-          >
-            <Button
-              variant="warning"
-              size="xxsm"
-              onClick={() => this.handleSubmit()}
-              style={{ display: saveBtnDisplay }}
-            >
-              <i className="fa fa-floppy-o" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
-          <ConfirmClose el={genericEl} />
-        </div>
-      </div>
-    );
-  }
-
-  footer() {
-    const { genericEl } = this.state;
-    const showSaveButton =
-      genericEl &&
-      (genericEl.isNew || (genericEl.can_update && genericEl.changed));
-
-    return (
-      <>
-        <Button
-          variant="secondary"
-          onClick={() => DetailActions.close(genericEl, true)}
-        >
-          Close
-        </Button>
-        {showSaveButton && (
-          <Button variant="warning" onClick={() => this.handleSubmit()}>
-            {genericEl.isNew ? 'Create' : 'Save'}
-          </Button>
-        )}
-      </>
-    );
-  }
-
   render() {
     const { genericEl, visible } = this.state;
+    const { openedFromCollectionId } = this.props;
     /**
      *  tabContents is a object containing all (visible) segment tabs
      */
@@ -526,8 +424,8 @@ export default class GenericElDetails extends Component {
     let { activeTab } = this.state;
 
     if (
-      !tabKeyContentList.includes(activeTab) &&
-      tabKeyContentList.length > 0
+      !tabKeyContentList.includes(activeTab)
+      && tabKeyContentList.length > 0
     ) {
       activeTab = tabKeyContentList[0];
     }
@@ -543,17 +441,21 @@ export default class GenericElDetails extends Component {
           handleSampleChanged={this.handleElChanged}
           handleSubmit={this.handleSubmit}
         />
-        <DetailCard
+        <ElementDetailCard
+          element={genericEl}
           isPendingToSave={genericEl.isPendingToSave}
-          header={this.header(genericEl)}
-          footer={this.footer()}
+          title={genericEl.short_label}
+          titleTooltip={formatTimeStampsOfElement(genericEl || {})}
+          onSave={() => this.handleSubmit()}
+          saveDisabled={!genericEl.isNew && !genericEl.can_update}
+          showCalendar
         >
           <div className="tabs-container--with-borders">
             <ElementDetailSortTab
               type={genericEl.type}
               availableTabs={Object.keys(tabContents)}
               onTabPositionChanged={this.onTabPositionChanged}
-              openedFromCollectionId={this.props.openedFromCollectionId}
+              openedFromCollectionId={openedFromCollectionId}
             />
             <Tabs
               activeKey={activeTab}
@@ -563,7 +465,7 @@ export default class GenericElDetails extends Component {
               {tabContentList}
             </Tabs>
           </div>
-        </DetailCard>
+        </ElementDetailCard>
       </>
     );
   }
@@ -576,4 +478,5 @@ GenericElDetails.propTypes = {
 
 GenericElDetails.defaultProps = {
   genericEl: {},
+  openedFromCollectionId: null,
 };

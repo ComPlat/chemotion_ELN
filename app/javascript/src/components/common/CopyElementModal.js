@@ -9,9 +9,10 @@ import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import CollectionSelect from 'src/components/common/CollectionSelect';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import DetailCardButton from 'src/apps/mydb/elements/details/DetailCardButton';
 
-const Notification = props =>
-(
+const Notification = (props) => (
   NotificationActions.add({
     title: props.title,
     message: props.msg,
@@ -25,9 +26,16 @@ const Notification = props =>
 export default class CopyElementModal extends React.Component {
   constructor(props) {
     super(props);
+
+    // Determine default collection ID
+    const { currentCollection } = UIStore.getState();
+    const defCol = currentCollection && currentCollection.is_shared === false
+      && currentCollection.is_locked === false && currentCollection.label !== 'All'
+      ? currentCollection.id : null;
+
     this.state = {
       showModal: false,
-      selectedCol: props.defCol,
+      selectedCol: defCol,
       showAmountsConfirm: false
     };
     this.handleModalClose = this.handleModalClose.bind(this);
@@ -38,16 +46,27 @@ export default class CopyElementModal extends React.Component {
     this.handleAmountsConfirmClose = this.handleAmountsConfirmClose.bind(this);
   }
 
-  onColSelectChange(e) {
-    this.setState({ selectedCol: e });
-  }
-
-  handleModalShow(e) {
+  handleModalShow() {
     this.setState({ showModal: true });
   }
 
-  handleModalClose(e) {
+  handleModalClose() {
     this.setState({ showModal: false });
+  }
+
+  handleAmountsConfirm(keepAmounts) {
+    const { selectedCol } = this.state;
+    const { element } = this.props;
+    this.setState({ showAmountsConfirm: false });
+    ElementActions.copyReaction(element, selectedCol, keepAmounts);
+  }
+
+  handleAmountsConfirmClose() {
+    this.setState({ showAmountsConfirm: false });
+  }
+
+  onColSelectChange(e) {
+    this.setState({ selectedCol: e });
   }
 
   copyElement() {
@@ -68,6 +87,8 @@ export default class CopyElementModal extends React.Component {
       ElementActions.copyResearchPlan(element, selectedCol);
     } else if (element.type === 'device_description') {
       ClipboardActions.fetchDeviceDescriptionAndBuildCopy(element, selectedCol);
+    } else if (element.type === 'cell_line') {
+      ElementActions.copyCellLineFromId(element.id, selectedCol);
     } else if (element.type === 'sequence_based_macromolecule_sample') {
       ClipboardActions.fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(element, selectedCol);
     } else {
@@ -78,33 +99,16 @@ export default class CopyElementModal extends React.Component {
     return true;
   }
 
-  handleAmountsConfirm(keepAmounts) {
-    const { selectedCol } = this.state;
-    const { element } = this.props;
-    this.setState({ showAmountsConfirm: false });
-    ElementActions.copyReaction(element, selectedCol, keepAmounts);
-  }
-
-  handleAmountsConfirmClose() {
-    this.setState({ showAmountsConfirm: false });
-  }
-
   render() {
     const { element } = this.props;
     const { showModal, selectedCol, showAmountsConfirm } = this.state;
 
-    if (!element.can_copy) return null;
+    // Don't render if element can't be copied or is new
+    if (!element.can_copy || element.isNew) return null;
 
     return (
       <>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="CopyElement">Copy</Tooltip>}
-        >
-          <Button id="copy-element-btn" size="xxsm" variant="success" onClick={this.handleModalShow}>
-            <i className="fa fa-clone" />
-          </Button>
-        </OverlayTrigger>
+        <DetailCardButton onClick={this.handleModalShow} iconClass="fa fa-clone" label="Copy" />
 
         <Modal centered show={showModal} onHide={this.handleModalClose}>
           <Modal.Header closeButton>
@@ -173,11 +177,5 @@ export default class CopyElementModal extends React.Component {
 
 CopyElementModal.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
-  element: PropTypes.object.isRequired,
-  defCol: PropTypes.number
-};
-
-
-CopyElementModal.defaultProps = {
-  defCol: null
+  element: PropTypes.object.isRequired
 };

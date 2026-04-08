@@ -54,11 +54,14 @@ const optionsByRelatedField = (store, element, field, options) => {
   const relatedOptions = options.filter((o) => o.related !== undefined);
   if (relatedOptions.length < 1) { return options; }
 
-  const { lastObject, lastKey } = store.getLastObjectAndKeyByField(field, element);
+  const { lastObject } = store.getLastObjectAndKeyByField(field, element);
+  const relatedField = relatedOptions[0].related;
+  const relatedValue = lastObject?.[relatedField];
 
-  if (lastObject[relatedOptions[0].related] !== '' || lastObject[relatedOptions[0].related] !== undefined) {
-    return relatedOptions.filter((o) => o.only === lastObject[relatedOptions[0].related]);
+  if (relatedValue !== '' && relatedValue != null) {
+    return relatedOptions.filter((o) => o.only === relatedValue);
   }
+
   return options;
 };
 
@@ -80,8 +83,8 @@ const numberValue = (value) => {
   return changeToFloat ? parseFloat(cleanedValue) : cleanedValue;
 };
 
-const changeElement = (store, field, value, element_type) => {
-  if (element_type == 'sequence_based_macromolecule_sample') {
+const changeElement = (store, field, value, elementType) => {
+  if (elementType === 'sequence_based_macromolecule_sample') {
     store.changeSequenceBasedMacromoleculeSample(field, value);
   }
 };
@@ -154,7 +157,7 @@ const initFormHelper = (element, store) => {
     selectInput: (field, label, options, disabled, info, required = false) => {
       const elementValue = elementField(element, field);
       const relatedOptions = optionsByRelatedField(store, element, field, options);
-      let value = options.find((o) => o.value == elementValue);
+      let value = options.find((o) => o.value === elementValue);
       value = value === undefined ? '' : value;
 
       return (
@@ -240,7 +243,7 @@ const initFormHelper = (element, store) => {
 
     inputGroupTextOrNumericInput: (field, label, text, type, disabled, info, required = false) => {
       let value = elementField(element, field);
-      value = type == 'number' ? numberValue(value) : value || '';
+      value = type === 'number' ? numberValue(value) : value || '';
 
       return (
         <Form.Group key={`${store.key_prefix}-${label}`}>
@@ -281,7 +284,7 @@ const initFormHelper = (element, store) => {
         unitTextOrButton = (
           <Button
             key={`${units}-${field}-unit`}
-            variant="success"
+            variant="light"
             onClick={() => changeUnit(store, element, units, unitField, unitValue)}
           >
             {unitValue}
@@ -520,7 +523,7 @@ function ColoredAccordeonHeaderButton({
       {title}
     </Button>
   );
-}
+};
 
 function SecondaryCollapseContent({
   children, title, eventKey, error, active, store
@@ -546,7 +549,7 @@ function SecondaryCollapseContent({
       </Collapse>
     </div>
   );
-}
+};
 
 function formValueHandler(startValues) {
   const [form, setForm] = useState(startValues);

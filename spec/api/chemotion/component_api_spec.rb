@@ -26,7 +26,8 @@ describe Chemotion::ComponentAPI do
       expect(response).to have_http_status(:success)
       parsed_response = JSON.parse(response.body)
       expect(parsed_response.count).to eq(2)
-      expect(parsed_response.first['component_properties']['molecule']['id']).to eq(molecule.id)
+      molecule_ids = parsed_response.map { |c| c.dig('component_properties', 'molecule', 'id') }
+      expect(molecule_ids).to contain_exactly(molecule.id, molecule1.id)
     end
 
     it 'returns an empty array if no components exist' do

@@ -2,7 +2,7 @@
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Popover } from 'react-bootstrap';
+import { Popover, Button } from 'react-bootstrap';
 import Immutable from 'immutable';
 import _ from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -27,7 +27,6 @@ export default class ElementDetailSortTab extends Component {
 
     this.onChangeUser = this.onChangeUser.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
-    this.toggleTabLayoutContainer = this.toggleTabLayoutContainer.bind(this);
 
     UserActions.fetchCurrentUser();
   }
@@ -37,19 +36,28 @@ export default class ElementDetailSortTab extends Component {
     CollectionStore.listen(this.onChangeUI);
   }
 
+  componentDidUpdate(prevProps) {
+    if (prevProps.addInventoryTab !== this.props.addInventoryTab
+      || !_.isEqual(prevProps.availableTabs, this.props.availableTabs)) {
+      this.onChangeUI();
+    }
+  }
+
   componentWillUnmount() {
     UserStore.unlisten(this.onChangeUser);
     CollectionStore.unlisten(this.onChangeUI);
   }
 
   updateTabLayout(layout) {
-    const { addInventoryTab, availableTabs, type, onTabPositionChanged } = this.props;
+    const {
+      addInventoryTab, availableTabs, type, onTabPositionChanged
+    } = this.props;
 
     // Ensure default tabs exist in layout (for backward compatibility)
     if (layout && availableTabs) {
       const defaultTabs = ['properties', 'analyses'];
       const layoutKeys = Object.keys(layout);
-      const maxOrder = Math.max(0, ...layoutKeys.map(k => Math.abs(layout[k])));
+      const maxOrder = Math.max(0, ...layoutKeys.map((k) => Math.abs(layout[k])));
 
       defaultTabs.forEach((tab, idx) => {
         if (!layoutKeys.includes(tab) && availableTabs.includes(tab)) {
@@ -64,6 +72,8 @@ export default class ElementDetailSortTab extends Component {
 
   getOpenedFromCollection() {
     const { openedFromCollectionId } = this.props;
+    const uiCollection = UIStore.getState().currentCollection;
+    if (uiCollection && uiCollection.id == openedFromCollectionId) return uiCollection;
     const collectionState = CollectionStore.getState();
     const stack = [
       ...collectionState.unsharedRoots,
@@ -77,12 +87,12 @@ export default class ElementDetailSortTab extends Component {
       if (col.id == openedFromCollectionId) return col;
       if (col.children?.length > 0) stack.push(...col.children);
     }
-    return null;
+    return uiCollection;
   }
 
   onChangeUser(state) {
     const { type } = this.props;
-    const collection = this.getOpenedFromCollection() || UIStore.getState().currentCollection;
+    const collection = this.getOpenedFromCollection();
     const collectionTabs = collection?.tabs_segment;
     const layout = (!collectionTabs || _.isEmpty(collectionTabs[type]))
       ? state.profile?.data?.[`layout_detail_${type}`]
@@ -92,22 +102,13 @@ export default class ElementDetailSortTab extends Component {
 
   onChangeUI() {
     const { type } = this.props;
-    const collection = this.getOpenedFromCollection() || UIStore.getState().currentCollection;
+    const collection = this.getOpenedFromCollection();
     const collectionTabs = collection?.tabs_segment;
     const userProfile = UserStore.getState().profile;
     const layout = (!collectionTabs || _.isEmpty(collectionTabs[type]))
       ? userProfile?.data?.[`layout_detail_${type}`]
       : collectionTabs[type];
     this.updateTabLayout(layout);
-  }
-
-  toggleTabLayoutContainer(show) {
-    this.setState(
-      (state) => ({ ...state, showTabLayoutContainer: !state.showTabLayoutContainer }),
-      () => {
-        if (!show) this.updateLayout();
-      }
-    );
   }
 
   updateLayout() {
@@ -118,7 +119,7 @@ export default class ElementDetailSortTab extends Component {
 
     if (currentCollection && !currentCollection.is_sync_to_me) {
       CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
-      UIActions.selectCollection({ ...currentCollection, tabs_segment: tabSegment, clearSearch: true });
+      UIActions.selectCollectionWithoutUpdating({ ...currentCollection, tabs_segment: tabSegment });
     }
 
     const userProfile = UserStore.getState().profile;
@@ -132,16 +133,23 @@ export default class ElementDetailSortTab extends Component {
 
   render() {
     const { visible, hidden } = this.state;
-    const { tabTitles } = this.props;
+    const { tabTitles, onTabPositionChanged } = this.props;
 
-    const popoverSettings = (
+    const popoverSettings = ({ close }) => (
       <Popover>
-        <Popover.Header>Tab Layout</Popover.Header>
+        <Popover.Header className="d-flex justify-content-between align-items-center">
+          Tab Layout
+          <Button
+            variant="close"
+            aria-label="Close"
+            onClick={close}
+          />
+        </Popover.Header>
         <Popover.Body>
           <TabLayoutEditor
             visible={visible}
             hidden={hidden}
-            getItemComponent={({item}) => (<div>{tabTitles[item] ?? capitalizeWords(item)}</div>)}
+            getItemComponent={({ item }) => (<div>{tabTitles[item] ?? capitalizeWords(item)}</div>)}
             onLayoutChange={this.onLayoutChange}
           />
         </Popover.Body>
@@ -149,7 +157,13 @@ export default class ElementDetailSortTab extends Component {
     );
 
     return (
-      <ConfigOverlayButton onToggle={this.toggleTabLayoutContainer} popoverSettings={popoverSettings} />
+      <ConfigOverlayButton
+        popoverSettings={popoverSettings}
+        onClose={() => {
+          onTabPositionChanged(visible);
+          this.updateLayout();
+        }}
+      />
     );
   }
 }

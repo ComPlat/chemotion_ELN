@@ -16,7 +16,7 @@ const FocusNovnc = ({
   toggleDeviceList,
   isDeviceListVisible,
 }) => (
-  <ButtonToolbar className="gap-1">
+  <ButtonToolbar>
     <Button
       size="xxsm"
       variant="primary"
