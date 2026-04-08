@@ -172,6 +172,21 @@ module Chemotion
             { pwd: pwd, rp: rp, email: @user.email }
           end
 
+          namespace :otp do
+            desc 'Enable or disable 2FA (using a OTP)'
+            params do
+              requires :enable, type: Boolean, desc: 'is 2FA enabled'
+            end
+            put do
+              if params[:enable]
+                { link: OtpWebToken.enable_link(@user) }
+              else
+                @user.update!(otp_required_for_login: false)
+                present @user, with: Entities::UserEntity
+              end
+            end
+          end
+
           # desc: manage user roles saved in user profile
           namespace :profile do
             desc 'get user profile'
