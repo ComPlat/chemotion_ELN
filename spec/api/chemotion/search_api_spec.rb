@@ -5,6 +5,8 @@ require 'rails_helper'
 # rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations,  RSpec/NestedGroups
 # rubocop:disable RSpec/IndexedLet, Naming/VariableNumber
 describe Chemotion::SearchAPI do
+  subject(:do_request) { post url, params: params }
+
   include_context 'api request authorization context'
 
   let(:collection) { create(:collection, user: user) }
@@ -121,8 +123,6 @@ describe Chemotion::SearchAPI do
     CollectionsSequenceBasedMacromoleculeSample.create!(sequence_based_macromolecule_sample: sbmm_sample_modified,
                                                         collection: collection)
     CollectionsDeviceDescription.create!(device_description: device_description, collection: collection)
-
-    post url, params: params
   end
 
   describe 'POST /api/v1/search/elements' do
@@ -140,6 +140,10 @@ describe Chemotion::SearchAPI do
         },
         collection_id: collection.id,
       }
+    end
+
+    before do
+      do_request
     end
 
     context 'when searching a cell line sample in correct collection by cell line material name' do
@@ -175,6 +179,10 @@ describe Chemotion::SearchAPI do
         },
         collection_id: collection.id,
       }
+    end
+
+    before do
+      do_request
     end
 
     context 'when searching a cell line sample in correct collection by cell line material name' do
@@ -285,6 +293,10 @@ describe Chemotion::SearchAPI do
         per_page: 15,
         molecule_sort: true,
       }
+    end
+
+    before do
+      do_request
     end
 
     context 'when searching a name in samples in correct collection' do
@@ -458,6 +470,10 @@ describe Chemotion::SearchAPI do
         }
       end
 
+      before do
+        do_request
+      end
+
       context 'when molecule is too small' do
         let(:molfile) { sample_a.molfile }
 
@@ -494,6 +510,7 @@ describe Chemotion::SearchAPI do
           create_list(:sample, 2) do |sample, i|
             sample.molfile = aromatic_molfiles[i]
             sample.collections = [aromatic_collection]
+            sample.save!
           end
         end
         let(:params) do
@@ -510,6 +527,11 @@ describe Chemotion::SearchAPI do
             per_page: 15,
             molecule_sort: true,
           }
+        end
+
+        before do
+          aromatic_samples
+          do_request
         end
 
         it 'returns the proper samples' do
@@ -535,6 +557,10 @@ describe Chemotion::SearchAPI do
             per_page: 15,
             molecule_sort: true,
           }
+        end
+
+        before do
+          do_request
         end
 
         it 'returns the sample and all other objects referencing the sample from the requested collection' do
@@ -569,6 +595,10 @@ describe Chemotion::SearchAPI do
             per_page: 15,
             molecule_sort: true,
           }
+        end
+
+        before do
+          do_request
         end
 
         it 'returns nothing found' do
@@ -607,6 +637,10 @@ describe Chemotion::SearchAPI do
       }
     end
 
+    before do
+      do_request
+    end
+
     context 'when searching ids of search result in samples in correct collection' do
       let(:ids) { [sample_a.id, sample_b.id] }
 
@@ -619,6 +653,10 @@ describe Chemotion::SearchAPI do
 
   describe 'POST /api/v1/search/samples' do
     let(:url) { '/api/v1/search/samples' }
+
+    before do
+      do_request
+    end
 
     context 'when searching a sample in correct collection' do
       let(:search_term) { 'Water' }
@@ -670,6 +708,10 @@ describe Chemotion::SearchAPI do
         }
       end
 
+      before do
+        do_request
+      end
+
       it 'returns two sbmm samples' do
         expect(parsed_json_response.dig('sequence_based_macromolecule_samples', 'totalElements')).to eq 2
         expect(parsed_json_response.dig('sequence_based_macromolecule_samples',
@@ -680,6 +722,10 @@ describe Chemotion::SearchAPI do
 
   describe 'POST /api/v1/search/device_description_names' do
     let(:url) { '/api/v1/search/device_descriptions' }
+
+    before do
+      do_request
+    end
 
     context 'when searching sbmm samples' do
       let(:params) do
