@@ -21,7 +21,6 @@
 #  concentration_unit              :string           default("ng/L"), not null
 #  concentration_value             :float
 #  deleted_at                      :datetime
-#  equivalent                      :float
 #  external_label                  :string
 #  formulation                     :string           default("")
 #  function_or_application         :string
@@ -42,7 +41,6 @@
 #  tissue                          :string           default("")
 #  volume_as_used_unit             :string           default("L"), not null
 #  volume_as_used_value            :float
-#  weight_percentage               :float
 #  created_at                      :datetime         not null
 #  updated_at                      :datetime         not null
 #  sequence_based_macromolecule_id :bigint
