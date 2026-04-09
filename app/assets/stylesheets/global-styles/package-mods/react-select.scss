@@ -55,10 +55,6 @@
       border-color: $form-select-border-color;
     }
 
-    &--menu-is-open {
-      border-color: color("primary");
-    }
-
     &:focus,
     &--is-focused {
       border-color: $input-focus-border-color;
@@ -275,10 +271,6 @@
       border-color: $form-select-border-color;
     }
 
-    &--menu-is-open {
-      border-color: color("primary");
-    }
-
     &:focus,
     &--is-focused {
       border-color: $input-focus-border-color;
@@ -306,7 +298,7 @@
 
     &--is-selected,
     &--is-selected.chemotion-select__option--is-focused {
-      background-color: color("primary");
+      background-color: $primary;
     }
 
     &--is-focused {
