@@ -351,7 +351,9 @@ button.btn-close {
 }
 
 .dropdown {
-  line-height: 0;
+  > .btn {
+    line-height: 0;
+  }
 }
 
 .modal-header {
