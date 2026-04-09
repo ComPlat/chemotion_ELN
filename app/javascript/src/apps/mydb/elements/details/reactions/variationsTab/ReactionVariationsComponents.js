@@ -689,7 +689,7 @@ function EntrySelectionHeader({
             </thead>
             <tbody>
               {entryColDefs.map((entryColDef) => {
-                const { entry, hide } = entryColDef;
+                const { entry, hide, displayUnit } = entryColDef;
                 return (
                   <tr key={entry}>
                     <td className="text-center">
@@ -699,7 +699,10 @@ function EntrySelectionHeader({
                         onChange={() => handleEntrySelection(entry)}
                       />
                     </td>
-                    <td>{getUserFacingEntryName(entry)}</td>
+                    <td>
+                      {getUserFacingEntryName(entry)}
+                      {displayUnit && <span className="ms-1">{`(${displayUnit})`}</span>}
+                    </td>
                   </tr>
                 );
               })}
