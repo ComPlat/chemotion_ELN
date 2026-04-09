@@ -10,8 +10,7 @@ import CollectionSelect from 'src/components/common/CollectionSelect';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
-const Notification = props =>
-(
+const Notification = (props) => (
   NotificationActions.add({
     title: props.title,
     message: props.msg,
@@ -25,6 +24,8 @@ const Notification = props =>
 export default class CopyElementModal extends React.Component {
   constructor(props) {
     super(props);
+
+
     this.state = {
       showModal: false,
       selectedCol: props.defCol,
@@ -38,16 +39,27 @@ export default class CopyElementModal extends React.Component {
     this.handleAmountsConfirmClose = this.handleAmountsConfirmClose.bind(this);
   }
 
-  onColSelectChange(e) {
-    this.setState({ selectedCol: e });
-  }
-
-  handleModalShow(e) {
+  handleModalShow() {
     this.setState({ showModal: true });
   }
 
-  handleModalClose(e) {
+  handleModalClose() {
     this.setState({ showModal: false });
+  }
+
+  handleAmountsConfirm(keepAmounts) {
+    const { selectedCol } = this.state;
+    const { element } = this.props;
+    this.setState({ showAmountsConfirm: false });
+    ElementActions.copyReaction(element, selectedCol, keepAmounts);
+  }
+
+  handleAmountsConfirmClose() {
+    this.setState({ showAmountsConfirm: false });
+  }
+
+  onColSelectChange(e) {
+    this.setState({ selectedCol: e });
   }
 
   copyElement() {
@@ -68,6 +80,8 @@ export default class CopyElementModal extends React.Component {
       ElementActions.copyResearchPlan(element, selectedCol.id);
     } else if (element.type === 'device_description') {
       ClipboardActions.fetchDeviceDescriptionAndBuildCopy(element, selectedCol.id);
+    } else if (element.type === 'cell_line') {
+      ElementActions.copyCellLineFromId(element.id, selectedCol.id);
     } else if (element.type === 'sequence_based_macromolecule_sample') {
       ClipboardActions.fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(element, selectedCol.id);
     } else {
@@ -78,22 +92,12 @@ export default class CopyElementModal extends React.Component {
     return true;
   }
 
-  handleAmountsConfirm(keepAmounts) {
-    const { selectedCol } = this.state;
-    const { element } = this.props;
-    this.setState({ showAmountsConfirm: false });
-    ElementActions.copyReaction(element, selectedCol.id, keepAmounts);
-  }
-
-  handleAmountsConfirmClose() {
-    this.setState({ showAmountsConfirm: false });
-  }
-
   render() {
     const { element } = this.props;
     const { showModal, selectedCol, showAmountsConfirm } = this.state;
 
-    if (!element.can_copy) return null;
+    // Don't render if element can't be copied or is new
+    if (!element.can_copy || element.isNew) return null;
 
     return (
       <>

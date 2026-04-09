@@ -13,6 +13,7 @@ import MaterialCalculations from 'src/apps/mydb/elements/details/reactions/schem
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import SampleName from 'src/components/common/SampleName';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { SampleCode, isSbmmSample } from 'src/utilities/ElementUtils';
 import { formatDisplayValue, correctPrefix, validDigit } from 'src/utilities/MathUtils';
 import {
   getMetricMol, metricPrefixesMol, metricPrefixesMolConc, getMetricMolConc
@@ -31,7 +32,6 @@ import ReactionMaterialComponentsGroup
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import ComponentModel from 'src/models/Component';
 import FieldValueSelector from 'src/apps/mydb/elements/details/FieldValueSelector';
-import { SampleCode } from 'src/utilities/ElementUtils';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const notApplicableInput = (className) => (
@@ -46,28 +46,34 @@ const notApplicableInput = (className) => (
   </div>
 );
 
-const iupacNameTooltip = material => (
-  <Tooltip id="iupac_name_tooltip" className="left_tooltip">
-    <div>
-      <div className="d-flex">
-        <div>IUPAC&#58;&nbsp;</div>
-        <div style={{ wordBreak: 'break-all' }}>{material.molecule.iupac_name || ''}</div>
+const iupacNameTooltip = (material) => {
+  const isSbmm = isSbmmSample(material);
+
+  return (
+    <Tooltip id="iupac_name_tooltip" className="left_tooltip">
+      <div>
+        {!isSbmm && material.molecule && (
+          <div className="d-flex">
+            <div>IUPAC&#58;&nbsp;</div>
+            <div style={{ wordBreak: 'break-all' }}>{material.molecule.iupac_name || ''}</div>
+          </div>
+        )}
+        <div className="d-flex">
+          <div>Name&#58;&nbsp;</div>
+          <div style={{ wordBreak: 'break-all' }}>{material.name || ''}</div>
+        </div>
+        <div className="d-flex">
+          <div>Ext.Label&#58;&nbsp;</div>
+          <div style={{ wordBreak: 'break-all' }}>{material.external_label || ''}</div>
+        </div>
+        <div className="d-flex">
+          <div>Short Label&#58;&nbsp;</div>
+          <div style={{ wordBreak: 'break-all' }}>{material.short_label || ''}</div>
+        </div>
       </div>
-      <div className="d-flex">
-        <div>Name&#58;&nbsp;</div>
-        <div style={{ wordBreak: 'break-all' }}>{material.name || ''}</div>
-      </div>
-      <div className="d-flex">
-        <div>Ext.Label&#58;&nbsp;</div>
-        <div style={{ wordBreak: 'break-all' }}>{material.external_label || ''}</div>
-      </div>
-      <div className="d-flex">
-        <div>Short Label&#58;&nbsp;</div>
-        <div style={{ wordBreak: 'break-all' }}>{material.short_label || ''}</div>
-      </div>
-    </div>
-  </Tooltip>
-);
+    </Tooltip>
+  );
+};
 
 const refreshSvgTooltip = (
   <Tooltip id="refresh_svg_tooltip">Refresh reaction diagram</Tooltip>
@@ -89,6 +95,9 @@ class Material extends Component {
       mixtureComponentsLoading: false,
       fieldToShow: 'molar mass',
     };
+
+    // Compute isSbmm once and store as instance property to avoid repeated calls
+    this.isSbmm = isSbmmSample(props.material);
 
     this.createParagraph = this.createParagraph.bind(this);
     this.handleAmountUnitChange = this.handleAmountUnitChange.bind(this);
@@ -122,17 +131,28 @@ class Material extends Component {
 
   componentDidUpdate(prevProps) {
     const { material } = this.props;
+
     if (prevProps.material.id !== material.id) {
-      this.fetchMixtureComponentsIfNeeded(material);
-      this.restoreAccordionState(material);
+      // Update isSbmm when material changes
+      this.isSbmm = isSbmmSample(material);
+
+      if (material && material.isMixture && material.isMixture()) {
+        this.fetchMixtureComponentsIfNeeded(material);
+        this.restoreAccordionState(material);
+      }
     }
   }
 
   handleMaterialClick(sample) {
     const { reaction } = this.props;
+    const isSbmm = isSbmmSample(sample);
+
     aviatorNavigation(sample.type, sample.id, true, false);
-    sample.updateChecksum();
-    ElementActions.showReactionMaterial({ sample, reaction });
+    if (isSbmm) {
+    } else {
+      sample.updateChecksum();
+      ElementActions.showReactionMaterial({ sample, reaction });
+    }
   }
 
   materialLoading(material, showLoadingColumn) {
@@ -174,16 +194,21 @@ class Material extends Component {
   materialConcentration(material) {
     const metricMolConc = getMetricMolConc(material);
 
+    // For SBMM samples, use concentration_rt_value directly (automatically calculated)
+    const concentrationValue = isSbmmSample(material)
+      ? material.concentration_rt_value
+      : material.concn;
+
     return (
       <NumeralInputWithUnitsCompo
-        value={material.concn}
+        value={concentrationValue}
         className="reaction-material__concentration-data"
         unit="mol/l"
         metricPrefix={metricMolConc}
         metricPrefixes={metricPrefixesMolConc}
         precision={4}
         disabled
-        onChange={(e) => this.handleAmountUnitChange(e, material.concn)}
+        onChange={(e) => this.handleAmountUnitChange(e, concentrationValue)}
         onMetricsChange={this.handleMetricsChange}
         size="sm"
       />
@@ -192,30 +217,25 @@ class Material extends Component {
 
   materialRef(material) {
     const { materialGroup, reaction } = this.props;
+    if (materialGroup === 'products') {
+      return <div>{this.renderProductReference(material, reaction)}</div>;
+    }
+
+    if (reaction.weight_percentage && !isSbmmSample(material)) {
+      return <div>{this.renderNestedReferenceRadios(material, reaction)}</div>;
+    }
 
     return (
       <div>
-        {
-          materialGroup === 'products'
-            ? this.renderProductReference(material, reaction)
-            : (
-              <div>
-                {reaction.weight_percentage ? (
-                  this.renderNestedReferenceRadios(material, reaction)
-                ) : (
-                  <Form.Check
-                    type="radio"
-                    disabled={!permitOn(reaction)}
-                    name="reference"
-                    checked={material.reference}
-                    onChange={(e) => this.handleReferenceChange(e)}
-                    size="sm"
-                    className="m-1"
-                  />
-                )}
-              </div>
-            )
-        }
+        <Form.Check
+          type="radio"
+          disabled={!permitOn(reaction)}
+          name="reference"
+          checked={material.reference}
+          onChange={(e) => this.handleReferenceChange(e)}
+          size="sm"
+          className="m-1"
+        />
       </div>
     );
   }
@@ -266,7 +286,11 @@ class Material extends Component {
       calculateYield = 'n.a.';
     } else if (material.purity < 1 && isNumeric(material.equivalent) && material.equivalent > 1) {
       const stoichiometryCoeff = (material.coefficient || 1.0) / (refMaterial?.coefficient || 1.0);
-      const maxAmount = (refMaterial.amount_mol || 0) * stoichiometryCoeff * material.molecule_molecular_weight;
+      const isSbmm = isSbmmSample(material);
+      const molecularWeight = isSbmm
+        ? material.sequence_based_macromolecule?.molecular_weight
+        : material.molecule_molecular_weight;
+      const maxAmount = (refMaterial.amount_mol || 0) * stoichiometryCoeff * molecularWeight;
       const eq = maxAmount !== 0 ? (material.amount_g * (material.purity || 1)) / maxAmount : 0;
       calculateYield = `${(eq * 100).toFixed(1)}%`;
     } else if (isNumeric(material.equivalent)) {
@@ -317,7 +341,6 @@ class Material extends Component {
       return (
         <div>
           <OverlayTrigger
-            placement="top"
             overlay={(
               <Tooltip id="yield-tooltip">
                 {yieldMessage}
@@ -345,7 +368,8 @@ class Material extends Component {
     if (materialGroup === 'products') {
       return this.yieldOrConversionRate(material);
     }
-    return (reaction.weight_percentage ? this.customFieldValueSelector()
+    const isSbmm = isSbmmSample(material);
+    return (reaction.weight_percentage && !isSbmm ? this.customFieldValueSelector()
       : (
         <NumeralInputWithUnitsCompo
           className="reaction-material__equivalent-data"
@@ -435,7 +459,6 @@ class Material extends Component {
     return (
       (value === 'n.d' || !value) && !noSwitchUnits.includes(unit) ? (
         <OverlayTrigger
-          placement="top"
           overlay={<Tooltip id={`${field}-tooltip`}>{message}</Tooltip>}
         >
           <div>{inputComponent}</div>
@@ -535,6 +558,7 @@ class Material extends Component {
         materialGroup,
         sampleID: this.materialId(),
         value,
+        isSbmm: this.isSbmm,
       };
       onChange(event);
       this.setState({ fieldToShow: 'molar mass' });
@@ -609,14 +633,22 @@ class Material extends Component {
     );
 
     const metricPrefixes = ['m', 'n', 'u'];
-    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[1]) > -1)
-      ? material.metrics[1]
-      : 'm';
+    let metric = 'm';
+    if (isSbmmSample(material)) {
+      // SBMM stores explicit unit strings (e.g. L/mL/µL), so derive UI prefix from that unit.
+      metric = material.reactionSchemeMetricPrefix(material.volume_as_used_unit);
+    } else if (
+      material.metrics
+      && material.metrics.length > 2
+      && metricPrefixes.indexOf(material.metrics[1]) > -1
+    ) {
+      metric = material.metrics[1];
+    }
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
       && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
 
     return (
-      <OverlayTrigger placement="top" overlay={tooltip}>
+      <OverlayTrigger overlay={tooltip}>
         <div>
           <NumeralInputWithUnitsCompo
             className={className}
@@ -642,7 +674,10 @@ class Material extends Component {
 
   materialAmountMol(material) {
     const { reaction, materialGroup, lockEquivColumn } = this.props;
-    const metricMol = getMetricMol(material);
+    // Keep SBMM mol prefix synchronized with its dedicated mol unit field.
+    const metricMol = isSbmmSample(material)
+      ? material.reactionSchemeMetricPrefix(material.amount_as_used_mol_unit)
+      : getMetricMol(material);
 
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
       && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
@@ -664,6 +699,38 @@ class Material extends Component {
         onChange={(e) => this.handleAmountUnitChange(e, material.amount_mol, material.amountType)}
         onMetricsChange={this.handleMetricsChange}
         variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
+        size="sm"
+      />
+    );
+  }
+
+  materialActivity(material) {
+    const { reaction, materialGroup, lockEquivColumn } = this.props;
+
+    const isAmountDisabledByWeightPercentage = reaction.weight_percentage
+      && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
+
+    const isDisabled = !permitOn(reaction)
+      || isAmountDisabledByWeightPercentage
+      || (materialGroup === 'products'
+      || (!material.reference && lockEquivColumn));
+
+    // Check if activity is the active unit
+    // For SBMM samples: check if _amount_unit is 'U' (set when activity is the primary amount)
+    // For regular samples: check if amount_unit is 'U'
+    // eslint-disable-next-line no-underscore-dangle
+    const isActivityActive = (material._amount_unit === 'U') || (material.amount_unit === 'U');
+
+    return (
+      <NumeralInputWithUnitsCompo
+        value={material.activity_value}
+        className="reaction-material__activity-data"
+        unit={material.activity_unit || 'U'}
+        precision={4}
+        disabled={isDisabled}
+        onChange={(e) => this.handleAmountUnitChange(e, material.activity_value, material.amountType)}
+        onMetricsChange={this.handleMetricsChange}
+        variant={isActivityActive ? 'primary' : 'light'}
         size="sm"
       />
     );
@@ -792,6 +859,7 @@ class Material extends Component {
         materialGroup,
         sampleID: this.materialId(),
         amountType,
+        isSbmm: this.isSbmm,
       };
       onChange(event);
     }
@@ -799,6 +867,7 @@ class Material extends Component {
 
   handleMetricsChange(e) {
     const { materialGroup, onChange } = this.props;
+
     if (onChange && e) {
       const event = {
         metricUnit: e.metricUnit,
@@ -806,6 +875,7 @@ class Material extends Component {
         type: 'MetricsChanged',
         materialGroup,
         sampleID: this.materialId(),
+        isSbmm: this.isSbmm,
       };
       onChange(event);
     }
@@ -849,6 +919,7 @@ class Material extends Component {
         type: 'equivalentChanged',
         materialGroup,
         sampleID: this.materialId(),
+        isSbmm: this.isSbmm,
         equivalent,
         weightPercentageField: e.weightPercentageField || false,
       };
@@ -925,9 +996,15 @@ class Material extends Component {
 
   createParagraph(m) {
     const { materialGroup } = this.props;
-    let molName = m.molecule_name_hash.label;
-    if (!molName) { molName = m.molecule.iupac_name; }
-    if (!molName) { molName = m.molecule.sum_formular; }
+    const isSbmm = isSbmmSample(m);
+    let molName;
+    if (isSbmm) {
+      molName = m.name || m.short_label;
+    } else {
+      molName = m.molecule_name_hash.label;
+      if (!molName) { molName = m.molecule.iupac_name; }
+      if (!molName) { molName = m.molecule.sum_formular; }
+    }
 
     const gUnit = correctPrefix(m.amount_g, 3);
     const lUnit = correctPrefix(m.amount_l, 3);
@@ -1016,8 +1093,6 @@ class Material extends Component {
       && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
     return (
       <OverlayTrigger
-        delay="100"
-        placement="top"
         overlay={tooltip}
       >
         <div>
@@ -1078,11 +1153,16 @@ class Material extends Component {
 
     const massBsStyle = material.amount_unit === 'g' ? 'primary' : 'light';
     const metricPrefixes = ['m', 'n', 'u'];
-    const metric = (
+    let metric = 'm';
+    if (isSbmmSample(material)) {
+      metric = material.reactionSchemeMetricPrefix(material.amount_as_used_mass_unit);
+    } else if (
       material.metrics
       && material.metrics.length > 2
       && metricPrefixes.indexOf(material.metrics[0]) > -1
-    ) ? material.metrics[0] : 'm';
+    ) {
+      metric = material.metrics[0];
+    }
 
     const { showComponents, mixtureComponentsLoading } = this.state;
     const isMixture = material.isMixture && material.isMixture();
@@ -1105,38 +1185,48 @@ class Material extends Component {
           <div className="d-flex gap-2 align-items-start">
             {this.materialRef(material)}
             {this.switchTargetReal()}
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}
-            >
-              <div>
-                <NumeralInputWithUnitsCompo
-                  className="reaction-material__coefficient-data"
-                  size="sm"
-                  value={material.coefficient ?? 1}
-                  onChange={this.handleCoefficientChange}
-                  name="coefficient"
-                />
-              </div>
-            </OverlayTrigger>
+            {isSbmmSample(material) ? (
+              <div className="reaction-material__coefficient-data" />
+            ) : (
+              <OverlayTrigger
+                overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}
+              >
+                <div>
+                  <NumeralInputWithUnitsCompo
+                    className="reaction-material__coefficient-data"
+                    size="sm"
+                    value={material.coefficient ?? 1}
+                    onChange={this.handleCoefficientChange}
+                    name="coefficient"
+                  />
+                </div>
+              </OverlayTrigger>
+            )}
             <div className="reaction-material__amount-data">
               {this.massField(material, metricPrefixes, reaction, massBsStyle, metric)}
               {this.materialVolume(material, 'reaction-material__volume-data')}
               {this.materialAmountMol(material)}
             </div>
-            <div className="reaction-material__molar-mass-data">
-              <OverlayTrigger
-                placement="top"
-                overlay={<Tooltip id="molar-weight-details">{this.molarWeightValue(material, reaction)}</Tooltip>}
-              >
-                <span>{this.molarWeightValue(material, reaction, true)}</span>
-              </OverlayTrigger>
-            </div>
+            {isSbmmSample(material) ? (
+              <div className="reaction-material__molar-mass-data">
+                {this.materialActivity(material)}
+              </div>
+            ) : (
+              <div className="reaction-material__molar-mass-data">
+                <OverlayTrigger
+                  overlay={<Tooltip id="molar-weight-details">{this.molarWeightValue(material, reaction)}</Tooltip>}
+                >
+                  <span>{this.molarWeightValue(material, reaction, true)}</span>
+                </OverlayTrigger>
+              </div>
+            )}
             <div className="reaction-material__density-data">
               {material.has_density ? material.density : 'undefined'}
             </div>
             <div className="reaction-material__purity-data">
-              {material.purity}
+              {(material.purity === null || material.purity === undefined || material.purity === '')
+                ? 0
+                : material.purity}
             </div>
             {this.materialLoading(material, showLoadingColumn)}
             {this.materialConcentration(material)}
@@ -1194,10 +1284,19 @@ class Material extends Component {
 
   molarWeightValue(sample, reaction, formatted = false) {
     const isProduct = reaction.products.includes(sample);
-    let molecularWeight = sample.decoupled
-      ? sample.molecular_mass
-      : (sample.molecule && sample.molecule.molecular_weight);
-    if (sample.isMixture() && sample.reference_relative_molecular_weight) {
+    const isSbmm = isSbmmSample(sample);
+
+    let molecularWeight;
+    if (isSbmm) {
+      // SBMM samples have molecular_weight in sequence_based_macromolecule
+      molecularWeight = sample.sequence_based_macromolecule?.molecular_weight;
+    } else if (sample.decoupled) {
+      molecularWeight = sample.molecular_mass;
+    } else {
+      molecularWeight = sample.molecule && sample.molecule.molecular_weight;
+    }
+
+    if (sample.isMixture?.() && sample.reference_relative_molecular_weight) {
       molecularWeight = sample.reference_relative_molecular_weight.toFixed(4);
     }
     let theoreticalMassPart = '';
@@ -1228,14 +1327,17 @@ class Material extends Component {
       dropRef,
     } = this.props;
 
-    const mw = material.molecule && material.molecule.molecular_weight;
+    const isSbmm = isSbmmSample(material);
+    const mw = isSbmm
+      ? (material.sequence_based_macromolecule?.molecular_weight)
+      : (material.molecule && material.molecule.molecular_weight);
     const drySolvTooltip = <Tooltip>Dry Solvent</Tooltip>;
     return (
       <div ref={dropRef} className={this.rowClassNames()}>
         {this.dragHandle()}
         {this.materialNameWithIupac(material)}
         <div className="reaction-material__dry-solvent-data">
-          <OverlayTrigger placement="top" overlay={drySolvTooltip}>
+          <OverlayTrigger overlay={drySolvTooltip}>
             <Form.Check
               type="checkbox"
               checked={material.dry_solvent}
@@ -1247,7 +1349,6 @@ class Material extends Component {
         {this.switchTargetReal()}
         <InputGroup className="reaction-material__solvent-label-data">
           <OverlayTrigger
-            placement="top"
             overlay={(
               <Tooltip id="molecular-weight-info">
                 {material.amount_g}
@@ -1262,11 +1363,15 @@ class Material extends Component {
               type="text"
               size="sm"
               value={material.external_label}
-              placeholder={material.molecule.iupac_name}
+              placeholder={
+                isSbmmSample(material)
+                  ? (material.name || material.short_label || '')
+                  : (material.molecule?.iupac_name || '')
+              }
               onChange={(event) => this.handleExternalLabelChange(event)}
             />
           </OverlayTrigger>
-          <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
+          <OverlayTrigger overlay={refreshSvgTooltip}>
             <Button
               disabled={materialGroup === 'purification_solvents' || !permitOn(reaction)}
               onClick={(e) => this.handleExternalLabelCompleted(e)}
@@ -1324,6 +1429,10 @@ class Material extends Component {
   }
 
   gasType(material) {
+    const { materialGroup } = this.props;
+    const isSbmmGasSchemeUnavailable = this.isSbmm
+      && (materialGroup === 'reactants' || materialGroup === 'starting_materials');
+
     let gasTypeValue = material.gas_type || 'off';
     let tooltipText = 'This material is currently marked as non gaseous type';
     if (material.gas_type === 'off') {
@@ -1338,22 +1447,28 @@ class Material extends Component {
       gasTypeValue = 'CAT';
       tooltipText = 'Catalyst reference';
     }
+
+    if (isSbmmGasSchemeUnavailable) {
+      tooltipText = 'SBMM samples cannot be marked as gaseous type';
+    }
     const gasTypes = ['feedstock', 'catalyst', 'gas'];
     const gasTypeStatus = gasTypes.includes(material?.gas_type);
-    const feedstockStatus = gasTypeStatus ? '#009a4d' : 'grey';
+    const feedstockStatus = (gasTypeStatus && !isSbmmGasSchemeUnavailable) ? '#009a4d' : 'grey';
     const tooltip = <Tooltip id="feedstockGas">{tooltipText}</Tooltip>;
     return (
       <div className="pe-1">
-        <OverlayTrigger placement="bottom" overlay={tooltip}>
-          <Button
-            variant="primary"
-            size="xsm"
-            onClick={() => this.handleGasTypeChange('gasType', gasTypeValue)}
-            disabled={false}
-            style={{ backgroundColor: feedstockStatus }}
-          >
-            {gasTypeValue}
-          </Button>
+        <OverlayTrigger overlay={tooltip}>
+          <span className="d-inline-block" style={{ cursor: isSbmmGasSchemeUnavailable ? 'not-allowed' : 'pointer' }}>
+            <Button
+              variant="primary"
+              size="xsm"
+              onClick={() => this.handleGasTypeChange('gasType', gasTypeValue)}
+              disabled={isSbmmGasSchemeUnavailable}
+              style={{ backgroundColor: feedstockStatus, pointerEvents: isSbmmGasSchemeUnavailable ? 'none' : 'auto' }}
+            >
+              {gasTypeValue}
+            </Button>
+          </span>
         </OverlayTrigger>
       </div>
     );
@@ -1362,8 +1477,11 @@ class Material extends Component {
   materialNameWithIupac(material) {
     const { index, materialGroup, reaction } = this.props;
 
+    // Check if this is an SBMM sample
+    const isSbmm = isSbmmSample(material);
+
     // Check if the material is a mixture
-    const isMixture = material.isMixture();
+    const isMixture = material.isMixture && material.isMixture();
 
     // Skip shortLabel for reactants and solvents/purification_solvents, and mixtures
     const skipIupacName = (
@@ -1371,6 +1489,7 @@ class Material extends Component {
       || materialGroup === 'solvents'
       || materialGroup === 'purification_solvents'
       || isMixture
+      || isSbmm
     );
 
     let materialName = '';
@@ -1381,7 +1500,10 @@ class Material extends Component {
     let materialDisplayName = '';
 
     if (skipIupacName) {
-      if (isMixture) {
+      if (isSbmm) {
+        // For SBMM samples, show the short label or name
+        materialDisplayName = material.name || material.short_label;
+      } else if (isMixture) {
         // For mixtures, show the sample name or short label directly
         materialDisplayName = material.name || material.short_label;
       } else {
@@ -1396,7 +1518,7 @@ class Material extends Component {
           <SampleName sample={material} />
         );
       }
-      linkDisplayName = !!idCheck.test(material.id)
+      linkDisplayName = !!idCheck.test(material.id);
     } else {
       moleculeIupacName = material.molecule_iupac_name;
       materialDisplayName = material.title() === ''
@@ -1435,12 +1557,12 @@ class Material extends Component {
           <div className="d-flex align-items-center">
             {reaction.gaseous && materialGroup !== 'solvents'
               ? this.gasType(material) : null}
-            <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
+            <OverlayTrigger overlay={AddtoDescToolTip}>
               <Button variant="light" size="xsm" className="me-1" onClick={addToDesc} disabled={!permitOn(reaction)}>
                 {serialCode}
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material)}>
+            <OverlayTrigger overlay={iupacNameTooltip(material)}>
               <div className="reaction-material__link">
                 {materialName}
               </div>
@@ -1468,10 +1590,9 @@ class Material extends Component {
    */
   renderProductReference(material, reaction) {
     return (
-      reaction.weight_percentage ? (
+      reaction.weight_percentage && !isSbmmSample(material) ? (
         <div>
           <OverlayTrigger
-            placement="top"
             overlay={(
               <Tooltip id="weight-percentage-reference-tooltip">
                 Select as reference product for weight percentage
@@ -1559,7 +1680,6 @@ class Material extends Component {
 
     return (
       <OverlayTrigger
-        placement="top"
         overlay={(
           <Tooltip id="nested-reference-tooltip">
             Outer Circle: Select Weight % Reference

@@ -9,6 +9,7 @@ import ChevronIcon from 'src/components/common/ChevronIcon';
 import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import CollectionSubtreeFunctions from 'src/apps/mydb/collections/CollectionSubtreeFunctions';
 
 function CollectionSubtree({ root, sharedWithMe, isExpanded, level }) {
   const collectionsStore = useContext(StoreContext).collections;
@@ -55,26 +56,22 @@ function CollectionSubtree({ root, sharedWithMe, isExpanded, level }) {
 
   const handleClick = (node, e) => {
     const { currentElement } = ElementStore.getState();
-    // When currentElement is an array, use the first item (special handling for vessel templates)
     const element = Array.isArray(currentElement) && currentElement.length > 0 ? currentElement[0] : currentElement;
 
     if (uiState.showCollectionManagement) {
       UIActions.toggleCollectionManagement();
     }
-    
+
     if (node.is_locked) {
       toggleExpansion(e, node);
     } else {
       setVisible(visible || isVisible(node, uiState.currentCollection));
-
       aviatorNavigationWithCollectionId(node.id, element?.type, (element?.isNew ? 'new' : element?.id), true, true);
     }
   }
 
   const canTakeOwnership = () => {
     return false;
-    // const isTakeOwnershipAllowed = root.permission_level === 5;
-    // return sharedWithMe && isTakeOwnershipAllowed;
   }
 
   const toggleExpansion = (e, node) => {
@@ -85,7 +82,7 @@ function CollectionSubtree({ root, sharedWithMe, isExpanded, level }) {
     } else {
       collectionsStore.addToggledTreeItem(node.id, node.label);
     }
-    
+
     setVisible(!visible);
   }
 
@@ -102,8 +99,7 @@ function CollectionSubtree({ root, sharedWithMe, isExpanded, level }) {
             direction={visible ? 'down' : 'right'}
             onClick={(e) => toggleExpansion(e, root)}
           />
-        )
-          : (<i className="fa fa-fw" />)}
+        ) : (<i className="fa fa-fw" />)}
         <span className="tree-view_title">{root.label}</span>
         {root.inventory_prefix && (
           <OverlayTrigger
@@ -114,16 +110,14 @@ function CollectionSubtree({ root, sharedWithMe, isExpanded, level }) {
           </OverlayTrigger>
         )}
         {canTakeOwnership() && (
-          <i
-            className="fa fa-exchange"
-            onClick={() => handleTakeOwnership()}
-          />
+          <i className="fa fa-exchange" onClick={() => handleTakeOwnership()} />
         )}
         {(root.shared) && (
           <OverlayTrigger placement="top" overlay={<UserInfosTooltip collectionId={root.id} />}>
             <i className="fa fa-share-alt" />
           </OverlayTrigger>
         )}
+        <CollectionSubtreeFunctions collection={root} />
       </div>
       {visible && (
         <div className="tree-view">

@@ -38,11 +38,21 @@
   border-top: none !important;
 }
 
+.search-result-group:last-child {
+  @extend .border-lighten3;
+  @extend .border-bottom;
+}
+
+.search-result-tab-content-container .search-result-group:first-child .search-result-group-header-content:first-child .search-result-tab-content-list,
+.search-result-tab-content-container .search-result-group:first-child .search-result-tab-content-list-name:first-child {
+  border-top: none !important;
+}
+
 .search-result-tab-content-list {
   @extend .surface-lighten4;
   @extend .border-lighten3;
-  @extend .border-bottom;
-  padding: 0 1rem 1rem 1rem;
+  @extend .border-top;
+  padding: 0 1rem 0 1rem;
 }
 
 .search-result-tab-content-list:first-child {
@@ -76,7 +86,6 @@
 
 .search-result-molecule .preview-table {
   max-width: 140px;
-  min-height: 100px;
   margin-right: 0.75rem;
   margin-bottom: 0.75rem;
 }
@@ -86,10 +95,10 @@
 }
 
 .search-result-tab-content-list-name {
-  display: block;
-  margin: -1rem;
   padding: 0.6rem 1rem;
   background-color: var(--bs-white);
+  @extend .border-lighten3;
+  @extend .border-top;
 }
 
 .search-result-tab-content-list-name:hover, .search-result-tab-content-list-white div:hover {

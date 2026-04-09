@@ -473,7 +473,9 @@ export default class SampleForm extends React.Component {
   }
 
   handleFieldChanged(field, e, unit = null) {
-    const { sample, handleSampleChanged } = this.props;
+    const {
+      sample, handleSampleChanged, onDecoupleChanged, decoupleMolecule
+    } = this.props;
     if (field === 'purity' && (e.value < 0 || e.value > 1)) {
       e.value = 1;
       sample[field] = e.value;
@@ -506,19 +508,23 @@ export default class SampleForm extends React.Component {
     sample.formulaChanged = this.formulaChanged();
 
     if (field === 'decoupled') {
-      if (!sample[field]) {
-        sample.sum_formula = '';
+      if (onDecoupleChanged) {
+        onDecoupleChanged(e);
       } else {
-        if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
-        if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
-          sample.residues[0].custom_info.polymer_type = 'self_defined';
-          delete sample.residues[0].custom_info.surface_type;
+        sample[field] = e;
+        if (!sample[field]) {
+          sample.sum_formula = '';
+        } else {
+          if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
+          if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
+            delete sample.residues[0].custom_info.surface_type;
+          }
         }
-      }
-      if (!sample[field] && ((sample.molfile || '') === '')) {
-        handleSampleChanged(sample);
-      } else {
-        handleSampleChanged(sample, this.props.decoupleMolecule);
+        if (!sample[field] && ((sample.molfile || '') === '')) {
+          handleSampleChanged(sample);
+        } else {
+          handleSampleChanged(sample, decoupleMolecule);
+        }
       }
     } else { handleSampleChanged(sample); }
   }
@@ -1132,6 +1138,7 @@ export default class SampleForm extends React.Component {
    */
   mixtureComponentsList(sample) {
     const { enableComponentLabel, enableComponentPurity } = this.state;
+    const { setComponentDeletionLoading, setMoleculeLoading } = this.props;
 
     return (
       <Row className="mb-4">
@@ -1141,7 +1148,8 @@ export default class SampleForm extends React.Component {
             onChange={this.handleMixtureComponentChanged}
             enableComponentLabel={enableComponentLabel}
             enableComponentPurity={enableComponentPurity}
-            setComponentDeletionLoading={this.props.setComponentDeletionLoading}
+            setComponentDeletionLoading={setComponentDeletionLoading}
+            setMoleculeLoading={setMoleculeLoading}
           />
         </Col>
       </Row>
@@ -1335,8 +1343,14 @@ SampleForm.propTypes = {
   customizableField: PropTypes.func.isRequired,
   enableSampleDecoupled: PropTypes.bool,
   decoupleMolecule: PropTypes.func.isRequired,
+  onDecoupleChanged: PropTypes.func,
+  setComponentDeletionLoading: PropTypes.func,
+  setMoleculeLoading: PropTypes.func,
 };
 
 SampleForm.defaultProps = {
   enableSampleDecoupled: false,
+  onDecoupleChanged: null,
+  setComponentDeletionLoading: () => {},
+  setMoleculeLoading: () => {},
 };

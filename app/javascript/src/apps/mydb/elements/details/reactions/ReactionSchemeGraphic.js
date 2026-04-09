@@ -24,10 +24,46 @@ const popperConfigAboveToolbar = {
   ],
 };
 
+const buildSbmmMaterialNames = (material) => {
+  const materialNames = [];
+
+  if (material.short_label) {
+    materialNames.push(material.short_label);
+  } else if (material.name) {
+    materialNames.push(material.name);
+  }
+
+  if (material.name && material.name !== materialNames[0]) {
+    materialNames.push(material.name);
+  }
+
+  return materialNames;
+};
+
+const renderSbmmImageToggle = (materialId, imageToggleButton, tooltipContainer) => (
+  <OverlayTrigger
+    placement="top"
+    container={tooltipContainer}
+    popperConfig={popperConfigAboveToolbar}
+    overlay={
+      (
+        <Tooltip id={`sbmm-image-disabled-${materialId}`}>
+          Molecular structure is not available for sequenced-based macromolecule samples.
+        </Tooltip>
+      )
+    }
+  >
+    <span className="d-inline-block" style={{ cursor: 'not-allowed' }}>
+      {imageToggleButton}
+    </span>
+  </OverlayTrigger>
+);
+
 export default function ReactionSchemeGraphic({
   reaction, onToggleLabel, onRefresh, isRefreshing
 }) {
   const [svgProps, setSvgProps] = useState({});
+  const tooltipContainer = typeof document !== 'undefined' ? document.body : undefined;
 
   useEffect(() => {
     // Use svgPath for both file URLs and data URIs (raw SVG is encoded as data URI in Reaction.svgPath)
@@ -36,32 +72,49 @@ export default function ReactionSchemeGraphic({
 
   if (!reaction.svgPath || !reaction.hasMaterials()) return null;
 
-  const materialShowLabel = (material) => {
+  const materialShowLabel = (material, isSbmm = false, groupKey = 'sample') => {
     const materialNames = [];
-    if (material.short_label && material.short_label !== 'reactant') {
-      materialNames.push(material.short_label);
+
+    if (isSbmm) {
+      materialNames.push(...buildSbmmMaterialNames(material));
+    } else {
+      if (material.short_label && material.short_label !== 'reactant') {
+        materialNames.push(material.short_label);
+      }
+      if (material.molecule && material.molecule.iupac_name) {
+        materialNames.push(material.molecule.iupac_name);
+      }
     }
-    if (material.molecule.iupac_name) {
-      materialNames.push(material.molecule.iupac_name);
-    }
+
     materialNames.push('\u00A0'); // Non-breaking space for empty second line
+
+    const isImageActive = !material.show_label && !isSbmm;
+    const imageToggleButton = (
+      <ButtonGroupToggleButton
+        active={isImageActive}
+        onClick={() => onToggleLabel(material.id, isSbmm)}
+        size="xsm"
+        disabled={isSbmm}
+      >
+        <i className="fa fa-picture-o" />
+      </ButtonGroupToggleButton>
+    );
+
     return (
-      <div key={material.id} className="d-flex justify-content-between align-items-center gap-2">
+      <div key={`${groupKey}-${material.id}`} className="d-flex justify-content-between align-items-center gap-2">
         <div className="Reaction-scheme-graphic__material-name">
           <span className="Reaction-scheme-graphic__material-name-main">{materialNames[0]}</span>
           <span className="Reaction-scheme-graphic__material-name-subline">{materialNames[1]}</span>
         </div>
         <ButtonGroup>
-          <ButtonGroupToggleButton
-            active={!material.show_label}
-            onClick={() => onToggleLabel(material.id)}
-            size="xsm"
-          >
-            <i className="fa fa-picture-o" />
-          </ButtonGroupToggleButton>
+          {isSbmm ? (
+            renderSbmmImageToggle(material.id, imageToggleButton, tooltipContainer)
+          ) : (
+            imageToggleButton
+          )}
           <ButtonGroupToggleButton
             active={material.show_label}
-            onClick={() => onToggleLabel(material.id)}
+            onClick={() => onToggleLabel(material.id, isSbmm)}
             size="xsm"
           >
             <i className="icon-abc" />
@@ -99,15 +152,20 @@ export default function ReactionSchemeGraphic({
                 <Popover.Header>Graphic Settings</Popover.Header>
                 <Popover.Body className="border-bottom py-1">
                   <h6 className="fs-9 fw-medium">Starting Materials</h6>
-                  {reaction.starting_materials.map((material) => (materialShowLabel(material, 'starting_materials')))}
+                  {reaction.starting_materials.map(
+                    (material) => materialShowLabel(material, false, 'starting_materials')
+                  )}
                 </Popover.Body>
                 <Popover.Body className="border-bottom py-1">
                   <h6 className="fs-9 fw-medium">Reactants</h6>
-                  {reaction.reactants.map((material) => (materialShowLabel(material, 'reactants')))}
+                  {reaction.reactants.map((material) => materialShowLabel(material, false, 'reactants'))}
+                  {reaction.reactant_sbmm_samples.map(
+                    (material) => materialShowLabel(material, true, 'sbmm_reactants')
+                  )}
                 </Popover.Body>
                 <Popover.Body className="py-1">
                   <h6 className="fs-9 fw-medium">Products</h6>
-                  {reaction.products.map((material) => (materialShowLabel(material, 'products')))}
+                  {reaction.products.map((material) => materialShowLabel(material, false, 'products'))}
                 </Popover.Body>
               </Popover>
             )

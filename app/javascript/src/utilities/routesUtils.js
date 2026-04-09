@@ -69,10 +69,14 @@ const sampleShowOrNew = (e) => {
 };
 
 const cellLineShowOrNew = (e) => {
-  if (e.params.cell_lineID === 'new') {
+  const cellLineId = e.params.cell_lineID;
+
+  if (cellLineId === 'new') {
     ElementActions.generateEmptyCellLine(e.params.collectionID, e.params.cell_line_template);
-  } else {
-    ElementActions.tryFetchCellLineElById.defer(e.params.cell_lineID);
+    return;
+  }
+  if (cellLineId != null && String(cellLineId).trim()) {
+    ElementActions.tryFetchCellLineElById.defer(cellLineId);
   }
 };
 
@@ -316,6 +320,7 @@ const elementShowOrNew = (e) => {
       break;
     case 'vessel_template':
       vesselTemplateShowOrNew(e);
+      break;
     case 'sequence_based_macromolecule_sample':
       sequenceBasedMacromoleculeSampleShowOrNew(e);
       break;

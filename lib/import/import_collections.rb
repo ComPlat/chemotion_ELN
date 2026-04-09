@@ -709,6 +709,7 @@ module Import
           fields.slice(
             'element_type',
             'category',
+            'litype',
             'created_at',
             'updated_at',
           ).merge(

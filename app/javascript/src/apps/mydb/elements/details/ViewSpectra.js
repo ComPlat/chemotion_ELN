@@ -229,7 +229,7 @@ class ViewSpectra extends React.Component {
 
     const content = this.getContent();
     let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
-  
+
     if (!built) {
       const listMuliSpcs = content?.listMuliSpcs;
       if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
@@ -239,23 +239,23 @@ class ViewSpectra extends React.Component {
     }
     const entity = built?.entity;
     if (!entity) return [];
-  
+
     const features = entity?.features;
     const f0 = Array.isArray(features)
       ? features[0]
       : (features?.editPeak || features?.autoPeak || features) || {};
     const temperature = entity?.temperature;
-  
+
     let observeFrequency = Array.isArray(f0?.observeFrequency)
       ? f0.observeFrequency[0]
       : f0?.observeFrequency;
     const freq = Array.isArray(observeFrequency) ? observeFrequency[0] : observeFrequency;
     const freqStr = freq ? `${parseInt(freq, 10)} MHz, ` : '';
-  
+
     const boundary = (f0 && (typeof f0.maxY !== 'undefined') && (typeof f0.minY !== 'undefined'))
       ? { maxY: f0.maxY, minY: f0.minY }
       : undefined;
-  
+
     const mBody = body || FN.peaksBody({
       peaks,
       layout,
@@ -372,13 +372,50 @@ class ViewSpectra extends React.Component {
     ];
   }
 
-  writeCommon({
-    peaks, shift, scan, thres, analysis, layout, isAscend, decimal, body,
-    keepPred, isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt,
-    waveLength, axesUnitsSt, detectorSt, dscMetaData,
-  }, isMpy = false) {
+  resolveWriteParams(params) {
+    const curveIdx = params?.curveSt?.curveIdx ?? 0;
+    const spectraList = Array.isArray(params?.spectra_list) ? params.spectra_list : [];
+    const spectrum = spectraList[curveIdx] || spectraList[0] || {};
+
+    const peaks = spectrum.peaks ?? params.peaks;
+    const layout = spectrum.layout ?? params.layout;
+    const isAscend = spectrum.isAscend ?? params.isAscend;
+    const decimal = spectrum.decimal ?? params.decimal;
+    const isIntensity = spectrum.isIntensity ?? params.isIntensity;
+    const waveLength = spectrum.waveLength ?? params.waveLength;
+    const body = spectrum.body ?? params.body;
+    const cyclicvoltaSt = spectrum.cyclicvoltaSt ?? params.cyclicvoltaSt;
+
+    // Construct arrays indexed by curveIdx for formatPks/formatMpy compatibility
+    const shifts = [];
+    shifts[curveIdx] = spectrum.shift;
+    const shift = spectrum.shift ? { shifts } : params.shift;
+
+    const integrations = [];
+    integrations[curveIdx] = spectrum.integration;
+    const integration = spectrum.integration ? { integrations } : params.integration;
+
+    const multiplicities = [];
+    multiplicities[curveIdx] = spectrum.multiplicity;
+    const multiplicity = spectrum.multiplicity ? { multiplicities } : params.multiplicity;
+
+    // Preserve the curveIdx for downstream functions
+    const curveSt = { curveIdx };
+
+    return {
+      peaks, shift, layout, isAscend, decimal, body,
+      isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength,
+    };
+  }
+
+  writeCommon(params, isMpy = false) {
+    const {
+      peaks, shift, layout, isAscend, decimal, body,
+      isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength
+    } = this.resolveWriteParams(params);
+
     const { sample, handleSampleChanged } = this.props;
-    const si = this.getSpcInfo();
+    const si = this.getSpcInfo(curveSt?.curveIdx ?? 0);
     if (!si) return;
 
     let ops = [];
@@ -419,27 +456,35 @@ class ViewSpectra extends React.Component {
       });
     });
 
-    const cb = () => (
-      this.saveOp({
-        peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, cyclicvoltaSt, curveSt, layout, waveLength, axesUnitsSt, detectorSt, dscMetaData,
-      })
-    );
+    const cb = () => this.saveOp(params);
     handleSampleChanged(sample, cb);
   }
 
   notationVoltammetry(cyclicvoltaSt, curveSt, layout, sample, idDt) {
     const { spectraList } = cyclicvoltaSt;
-    const { curveIdx, listCurves } = curveSt;
-    const selectedVolta = spectraList[curveIdx];
-    const selectedCurve = listCurves[curveIdx];
-    const { feature } = selectedCurve;
-    const { scanRate } = feature;
+    const { curveIdx } = curveSt;
+    const selectedVolta = spectraList?.[curveIdx];
+    if (!selectedVolta) return [];
+
+    const content = this.getContent();
+    let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
+    if (!built) {
+      const spcs = content?.listMuliSpcs;
+      if (Array.isArray(spcs) && spcs.length) {
+        const spc = spcs[curveIdx] || spcs[0];
+        if (spc?.jcamp) built = FN.buildData(spc.jcamp);
+      }
+    }
+    const feature = built?.entity?.features?.[0] || built?.entity?.features || {};
+
+    const scanRate = feature?.scanRate;
+    const xyData = Array.isArray(feature?.data) ? feature.data[0] : { x: [], y: [] };
     const metadata = InlineMetadata(sample?.datasetContainers(), idDt);
     const data = {
       scanRate,
       voltaData: {
         listPeaks: selectedVolta.list,
-        xyData: feature.data[0],
+        xyData,
       },
       sampleName: sample.name,
     };
@@ -458,60 +503,166 @@ class ViewSpectra extends React.Component {
     this.writeCommon(params, isMpy);
   }
 
-  saveOp({
-    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr = false, layout, axesUnitsSt, detectorSt, dscMetaData,
-  }) {
-    const { handleSubmit } = this.props;
-    const { curveIdx } = curveSt;
-    const si = this.getSpcInfo(curveIdx);
-    if (!si) return;
-    const fPeaks = FN.rmRef(peaks, shift);
-    const peaksStr = FN.toPeakStr(fPeaks);
-    const predict = JSON.stringify(rmRefreshed(analysis));
-    const waveLengthStr = JSON.stringify(waveLength);
-    const cyclicvolta = JSON.stringify(cyclicvoltaSt);
-    const axesUnitsStr = JSON.stringify(axesUnitsSt);
-    const detector = JSON.stringify(detectorSt);
-
-    const { shifts } = shift;
-    const selectedShift = shifts[curveIdx];
-    const { integrations } = integration;
-    const selectedIntegration = integrations[curveIdx];
-    const { multiplicities } = multiplicity;
-    const selectedMutiplicity = multiplicities[curveIdx];
-
-    const isSaveCombined = FN.isCyclicVoltaLayout(layout);
-    const { spcInfos, arrSpcIdx } = this.state;
-    const previousSpcInfos = spcInfos.filter((spc) => (spc.idDt === si.idDt && arrSpcIdx.includes(spc.idx)));
-    LoadingActions.start.defer();
-    SpectraActions.SaveToFile.defer(
-      si,
-      peaksStr,
-      selectedShift,
-      scan,
-      thres,
-      JSON.stringify(selectedIntegration),
-      JSON.stringify(selectedMutiplicity),
-      predict,
-      handleSubmit,
-      keepPred,
-      waveLengthStr,
-      cyclicvolta,
-      curveIdx,
-      simulatenmr,
-      previousSpcInfos,
-      isSaveCombined,
-      axesUnitsStr,
-      detector,
-      JSON.stringify(dscMetaData),
-    );
+  getSavePayloads(params, overrideValues = {}) {
+    const spectraList = Array.isArray(params?.spectra_list) ? params.spectra_list : [];
+    return spectraList.map((payload) => ({
+      ...payload,
+      ...overrideValues,
+      simulatenmr: overrideValues.simulatenmr ?? payload?.simulatenmr ?? false,
+    }));
   }
 
-  refreshOp({
-    peaks, shift, scan, thres, analysis, keepPred, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt
-  }) {
+  buildSerializedPayload(payload, curveIdx) {
+    const hasShiftArray = Array.isArray(payload?.shift?.shifts);
+    const fPeaks = payload?.peaks && hasShiftArray ? FN.rmRef(payload.peaks, payload.shift, curveIdx) : payload?.peaks;
+    const selectedShift = payload.shift?.shifts ? payload.shift.shifts[curveIdx] : payload.shift;
+    const selectedIntegration = payload.integration?.integrations ? payload.integration.integrations[curveIdx] : payload.integration;
+    const selectedMultiplicity = payload.multiplicity?.multiplicities ? payload.multiplicity.multiplicities[curveIdx] : payload.multiplicity;
+
+    return {
+      peaksStr: FN.toPeakStr(fPeaks),
+      predict: JSON.stringify(rmRefreshed(payload.analysis)),
+      waveLengthStr: JSON.stringify(payload.waveLength),
+      cyclicvolta: JSON.stringify(payload.cyclicvoltaSt),
+      axesUnitsStr: JSON.stringify(payload.axesUnitsSt),
+      detector: JSON.stringify(payload.detectorSt),
+      dscMetaDataStr: JSON.stringify(payload.dscMetaData),
+      selectedShift,
+      integrationStr: JSON.stringify(selectedIntegration),
+      multiplicityStr: JSON.stringify(selectedMultiplicity),
+    };
+  }
+
+  async saveTarget(target, shouldCombineAfterBatch) {
+    const { spcInfos, arrSpcIdx } = this.state;
+    const previousSpcInfos = spcInfos.filter((spc) => (spc.idDt === target.si.idDt && arrSpcIdx.includes(spc.idx)));
+    const serialized = this.buildSerializedPayload(target.payload, target.curveIdx);
+    const isSaveCombined = FN.isCyclicVoltaLayout(target.payload.layout) && !shouldCombineAfterBatch;
+
+    return new Promise((resolve) => {
+      SpectraActions.SaveToFile.defer(
+        target.si,
+        serialized.peaksStr,
+        serialized.selectedShift,
+        target.payload.scan,
+        target.payload.thres,
+        serialized.integrationStr,
+        serialized.multiplicityStr,
+        serialized.predict,
+        null,
+        target.payload.keepPred,
+        serialized.waveLengthStr,
+        serialized.cyclicvolta,
+        target.curveIdx,
+        target.payload.simulatenmr,
+        previousSpcInfos,
+        isSaveCombined,
+        serialized.axesUnitsStr,
+        serialized.detector,
+        serialized.dscMetaDataStr,
+        (fetchedFiles, _spcInfo, errorMessage) => {
+          const newIds = (fetchedFiles?.files || []).map((file) => file.id).filter(Boolean);
+          resolve({ oldId: target.si.idx, newIds, errorMessage });
+        },
+      );
+    });
+  }
+
+  async combineBatchIfNeeded(saveResults, targets, combineCurveIdx) {
+    if (targets.length <= 1) return;
+    const layout = targets[0]?.payload?.layout;
+    if (!layoutsWillShowMulti.includes(layout)) return;
+
+    const { spcInfos, arrSpcIdx } = this.state;
+    const combineTarget = targets.find((target) => target.curveIdx === combineCurveIdx) || targets[0];
+    const combineIdDt = combineTarget?.si?.idDt;
+    const isSameDataset = !!combineIdDt && targets.every((target) => target.si?.idDt === combineIdDt);
+    if (!isSameDataset) return;
+
+    const replacedIds = saveResults
+      .filter((result) => result.newIds.length > 0)
+      .map((result) => result.oldId);
+    const keptIds = spcInfos
+      .filter((spc) => (spc.idDt === combineIdDt && arrSpcIdx.includes(spc.idx)))
+      .map((spc) => spc.idx)
+      .filter((id) => !replacedIds.includes(id));
+    const newIds = saveResults.flatMap((result) => result.newIds);
+    if (newIds.length === 0) return;
+
+    const combineIds = [...new Set([...keptIds, ...newIds])];
+    if (combineIds.length === 0) return;
+
+    const combineSerialized = this.buildSerializedPayload(combineTarget.payload, combineCurveIdx);
+    const combineExtras = {
+      attachmentId: combineTarget?.si?.idx,
+      peaksStr: combineSerialized.peaksStr,
+      shiftSelectX: combineSerialized.selectedShift?.peak?.x,
+      shiftRefName: combineSerialized.selectedShift?.ref?.name,
+      shiftRefValue: combineSerialized.selectedShift?.ref?.value,
+      scan: combineTarget.payload.scan,
+      thres: combineTarget.payload.thres,
+      integration: combineSerialized.integrationStr,
+      multiplicity: combineSerialized.multiplicityStr,
+      predict: combineSerialized.predict,
+      keepPred: combineTarget.payload.keepPred,
+      waveLength: combineSerialized.waveLengthStr,
+      cyclicvolta: combineSerialized.cyclicvolta,
+      curveIdx: combineCurveIdx,
+      simulatenmr: combineTarget.payload.simulatenmr,
+      axesUnits: combineSerialized.axesUnitsStr,
+      detector: combineSerialized.detector,
+      dscMetaData: combineSerialized.dscMetaDataStr,
+    };
+
+    await new Promise((resolve) => {
+      SpectraActions.CombineSpectra.defer(
+        combineIds,
+        combineCurveIdx,
+        combineExtras,
+        () => resolve(),
+      );
+    });
+  }
+
+  saveOp(params) {
+    const { handleSubmit } = this.props;
+    if (!Array.isArray(params?.spectra_list) || params.spectra_list.length === 0) {
+      console.warn('saveOp expects a non-empty spectra_list payload.'); // eslint-disable-line no-console
+      return;
+    }
+    const payloads = this.getSavePayloads(params);
+    const targets = payloads.map((payload, idx) => {
+      const curveIdx = payload.curveSt?.curveIdx ?? payload.curveIdx ?? idx;
+      const si = this.getSpcInfo(curveIdx);
+      if (!si) return null;
+      return { payload, curveIdx, si };
+    }).filter(Boolean);
+    if (targets.length === 0) return;
+
+    const combineCurveIdx = params.curveSt?.curveIdx ?? targets[0].curveIdx;
+    const shouldCombineAfterBatch = targets.length > 1
+      && layoutsWillShowMulti.includes(targets[0].payload.layout);
+
+    LoadingActions.start.defer();
+    (async () => {
+      const saveResults = [];
+      for (const target of targets) {
+        const result = await this.saveTarget(target, shouldCombineAfterBatch);
+        saveResults.push(result);
+      }
+      await this.combineBatchIfNeeded(saveResults, targets, combineCurveIdx);
+      handleSubmit();
+    })().catch((errorMessage) => {
+      console.log(errorMessage); // eslint-disable-line
+      handleSubmit();
+    });
+  }
+
+  refreshOp(params) {
+    const refreshPayloads = this.getSavePayloads(params, { simulatenmr: true });
     this.saveOp({
-      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, simulatenmr: true, layout, axesUnitsSt, detectorSt
+      ...params,
+      spectra_list: refreshPayloads,
     });
   }
 
@@ -536,12 +687,8 @@ class ViewSpectra extends React.Component {
     this.closeOp();
   }
 
-  saveCloseOp({
-    peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, dscMetaData,
-  }) {
-    this.saveOp({
-      peaks, shift, scan, thres, analysis, integration, multiplicity, waveLength, cyclicvoltaSt, curveSt, layout, axesUnitsSt, detectorSt, dscMetaData,
-    });
+  saveCloseOp(params) {
+    this.saveOp(params);
     this.closeOp();
   }
 

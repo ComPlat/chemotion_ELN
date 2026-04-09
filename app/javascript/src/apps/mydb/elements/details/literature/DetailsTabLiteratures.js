@@ -278,7 +278,7 @@ export default class DetailsTabLiteratures extends Component {
     const citationTypeMap = createCitationTypeMap(this.props.element.type);
     return (
       <>
-        <Row className='mb-4'>
+        <Row className="mb-2">
           <Col xs={8}>
             <LiteratureInput
               handleInputChange={this.handleInputChange}
@@ -299,7 +299,6 @@ export default class DetailsTabLiteratures extends Component {
           <Col xs={1}>
             <Button
               variant="success"
-              size="sm"
               onClick={this.fetchMetadata}
               title="fetch metadata for this doi or ISBN(open services) and add citation to selection"
               disabled={(isInvalidDoi && isInvalidIsbn) || readOnly}
@@ -308,12 +307,12 @@ export default class DetailsTabLiteratures extends Component {
             </Button>
           </Col>
         </Row>
-        <Row className='mb-4'>
+        <Row className="mb-2">
           <Col>
             <Citation literature={literature} />
           </Col>
         </Row>
-        <Row className='mb-4'>
+        <Row className="mb-2">
           <Col xs={7}>
             <LiteratureInput
               handleInputChange={this.handleInputChange}

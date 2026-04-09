@@ -148,7 +148,8 @@ export default class SampleDetails extends React.Component {
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
       casInputValue: '',
-      ketcherSVGError: null
+      ketcherSVGError: null,
+      previousSurfaceType: null
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
@@ -372,7 +373,7 @@ export default class SampleDetails extends React.Component {
     const fetchMolecule = (fetchFunction) => {
       fetchFunction()
         .then(fetchSuccess).catch(fetchError).finally(() => {
-          this.splitSmiles(editor, svgFile);
+          this.splitSmiles(editor);
           this.hideStructureEditor();
         });
     };
@@ -891,7 +892,9 @@ export default class SampleDetails extends React.Component {
           customizableField={this.customizableField}
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
+          onDecoupleChanged={this.decoupleChanged}
           setComponentDeletionLoading={this.setComponentDeletionLoading}
+          setMoleculeLoading={(loading) => this.setState({ loadingMolecule: loading })}
         />
         <div className="mb-2">
           {this.chemicalIdentifiersItem(sample)}
@@ -1102,13 +1105,6 @@ export default class SampleDetails extends React.Component {
     const defCol = currentCollection && currentCollection.shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
-    const copyBtn = (sample.can_copy && !sample.isNew) ? (
-      <CopyElementModal
-        element={sample}
-        defCol={defCol}
-      />
-    ) : null;
-
     const inventorySample = (
       <Form.Check
         type="checkbox"
@@ -1208,7 +1204,7 @@ export default class SampleDetails extends React.Component {
             {inventorySample}
             {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
             <PrintCodeButton element={sample} />
-            {copyBtn}
+            <CopyElementModal element={sample} defCol={defCol} />
             {this.saveAndCloseSample(sample, saveBtnDisplay)}
           </div>
         </div>
@@ -1459,22 +1455,35 @@ export default class SampleDetails extends React.Component {
   }
 
   /**
-   * Splits the canonical SMILES string of a mixture sample and updates the sample's molecules in the editor.
+   * Splits the canonical SMILES string of a mixture sample into individual
+   * components and updates the UI in two phases for fast feedback:
+   *   Phase 1 – splitSmilesToMolecule fetches molecules and adds Component
+   *             instances synchronously. setState shows the list immediately.
+   *   Phase 2 – updateMixtureMolecule fetches the combined molecule/SVG.
    *
-   * @param {string} editor - The editor identifier or instance to use for updating molecules.
-   * @param {string|null} svgFile - Optional SVG file content to use for rendering.
-   * @returns {void}
+   * @param {string} editor - The editor identifier used for molecule fetching.
+   * @returns {Promise<void>}
    */
-  splitSmiles(editor) {
+  async splitSmiles(editor) {
     const { sample } = this.state;
     if (!sample.isMixture() || !sample.molecule_cano_smiles || sample.molecule_cano_smiles === '') { return; }
 
     const mixtureSmiles = sample.molecule_cano_smiles.split('.');
-    if (mixtureSmiles) {
-      sample.splitSmilesToMolecule(mixtureSmiles, editor)
-        .then(() => {
-          this.setState({ sample });
-        });
+    if (!mixtureSmiles || mixtureSmiles.length === 0) return;
+
+    this.setState({ loadingMolecule: true });
+
+    try {
+      // Phase 1: Fetch individual molecules, create Components, add sync
+      await sample.splitSmilesToMolecule(mixtureSmiles, editor);
+      this.setState({ sample });
+
+      // Phase 2: Update combined molecule/SVG
+      await sample.updateMixtureMolecule();
+      this.setState({ sample, loadingMolecule: false });
+    } catch (error) {
+      console.log(error);
+      this.setState({ loadingMolecule: false });
     }
   }
 
@@ -1499,16 +1508,22 @@ export default class SampleDetails extends React.Component {
   }
 
   decoupleChanged(e) {
-    const { sample } = this.state;
-    sample.decoupled = e.target.checked;
+    const { sample, previousSurfaceType } = this.state;
+    const checked = typeof e === 'boolean' ? e : e.target.checked;
+    sample.decoupled = checked;
     if (!sample.decoupled) {
       sample.sum_formula = '';
       sample.molecular_mass = null;
+      if (sample.residues && sample.residues[0] && sample.residues[0].custom_info && previousSurfaceType != null) {
+        sample.residues[0].custom_info.surface_type = previousSurfaceType;
+        this.setState({ previousSurfaceType: null });
+      }
     } else {
       if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
       if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
-        sample.residues[0].custom_info.polymer_type = 'self_defined';
-        delete sample.residues[0].custom_info.surface_type;
+        const ci = sample.residues[0].custom_info;
+        this.setState({ previousSurfaceType: ci.surface_type || null });
+        delete ci.surface_type;
       }
     }
     if (!sample.decoupled && ((sample.molfile || '') === '')) {
@@ -1672,6 +1687,7 @@ export default class SampleDetails extends React.Component {
             activeKey={activeTab}
             onSelect={this.handleSelect}
             id="SampleDetailsXTab"
+            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>
