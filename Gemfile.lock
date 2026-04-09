@@ -327,7 +327,7 @@ GEM
       multi_xml (>= 0.5.2)
     i18n (1.14.8)
       concurrent-ruby (~> 1.0)
-    icalendar (2.11.2)
+    icalendar (2.12.2)
       base64
       ice_cube (~> 0.16)
       logger
@@ -479,7 +479,7 @@ GEM
       validate_url
       webfinger (~> 2.0)
     orm_adapter (0.5.0)
-    ostruct (0.6.2)
+    ostruct (0.6.3)
     package_json (0.2.0)
     pandoc-ruby (2.1.10)
     parallel (1.27.0)
