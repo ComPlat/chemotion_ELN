@@ -255,6 +255,10 @@ export default class GenericElDetails extends Component {
     else this.setState({ genericEl });
   }
 
+  /**
+   * Changes the visible segment tabs
+   * @param visible {Array} List of all visible segment tabs
+   */
   onTabPositionChanged(visible) {
     this.setState({ visible });
   }
