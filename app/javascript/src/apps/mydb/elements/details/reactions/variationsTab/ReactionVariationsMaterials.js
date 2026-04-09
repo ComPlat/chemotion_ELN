@@ -123,7 +123,7 @@ function getReactionMaterialsIDsToLabels(materials) {
     Object.entries(materials).map(([materialType, materialsOfType]) => [
       materialType,
       Object.fromEntries(
-        materialsOfType.map(({ id, short_label }) => [id, short_label || id.toString()])
+        materialsOfType.map(({ id, preferred_label }) => [id, preferred_label || id.toString()])
       )
     ])
   );
