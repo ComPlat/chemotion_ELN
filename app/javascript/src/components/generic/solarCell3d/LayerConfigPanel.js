@@ -2,6 +2,7 @@ import React, {
   useEffect, useMemo, useRef, useState
 } from 'react';
 import PropTypes from 'prop-types';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import LayerForm from 'src/components/generic/solarCell3d/LayerForm';
 
 export default function LayerConfigPanel({
@@ -17,6 +18,7 @@ export default function LayerConfigPanel({
   useEffect(() => {
     if (listRef.current) {
       listRef.current.scrollLeft = 0;
+      listRef.current.scrollTop = 0;
     }
   }, [resetScrollToken]);
 
@@ -36,7 +38,33 @@ export default function LayerConfigPanel({
 
   return (
     <div className={className}>
-      <h2>Layer Configuration</h2>
+      <div className="solar3d-config-panel__title-row">
+        <h2>Layer Configuration</h2>
+        <OverlayTrigger
+          placement="top"
+          overlay={(
+            <Tooltip id="solar3d-layer-config-help">
+              <ul className="solar3d-tooltip-list">
+                <li>Add new layers</li>
+                <li>Search layers by name</li>
+                <li>Edit properties of a layer</li>
+                <li>Delete layers</li>
+                <li>Click a layer to view details</li>
+                <li>Hover a layer to preview its name</li>
+                <li>Use full-view zoom controls</li>
+              </ul>
+            </Tooltip>
+          )}
+        >
+          <button
+            type="button"
+            className="solar3d-config-panel__help-btn"
+            aria-label="Layer configuration help"
+          >
+            <i className="fa fa-info-circle" aria-hidden="true" />
+          </button>
+        </OverlayTrigger>
+      </div>
       <div className="solar3d-config-panel__controls">
         <input
           type="text"
@@ -44,15 +72,25 @@ export default function LayerConfigPanel({
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search layer by name"
           className="solar3d-config-panel__search"
+          disabled={!layers.length}
         />
         {onAddLayer && (
-          <button
-            type="button"
-            onClick={onAddLayer}
-            className="btn btn-secondary btn-sm"
+          <OverlayTrigger
+            placement="top"
+            overlay={(
+              <Tooltip id="solar3d-add-layer-tip">
+                After adding a layer, update its properties as needed.
+              </Tooltip>
+            )}
           >
-            + Add New Layer
-          </button>
+            <button
+              type="button"
+              onClick={onAddLayer}
+              className="btn btn-secondary btn-sm solar3d-config-panel__add-btn"
+            >
+              + Add New Layer
+            </button>
+          </OverlayTrigger>
         )}
       </div>
       <div ref={listRef} className="solar3d-config-panel__list">

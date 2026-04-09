@@ -39,50 +39,13 @@ import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import Solar3DRenderer from 'src/components/generic/solarCell3d/GenericSolar3DRenderer';
 
-const initialLayers = [
-  {
-    id: 1,
-    name: 'Ag',
-    thickness: 40,
-    color: '#ffb300'
-  },
-  {
-    id: 2,
-    name: '[BMIM]BF4',
-    thickness: 20,
-    color: '#999999'
-  },
-  {
-    id: 3,
-    name: 'PCBM-60',
-    thickness: 25,
-    color: '#666666'
-  },
-  {
-    id: 4,
-    name: 'Perovskite',
-    thickness: 10,
-    color: '#ff0000'
-  },
-  {
-    id: 5,
-    name: 'NiO-c',
-    thickness: 10,
-    color: '#bbbbbb'
-  },
-  {
-    id: 6,
-    name: 'FTO',
-    thickness: 10,
-    color: '#aec6cf'
-  },
-  {
-    id: 7,
-    name: 'SLG',
-    thickness: 10,
-    color: '#9ecae1'
-  }
-];
+// {
+//   id: 1,
+//   name: 'Ag',
+//   thickness: 40,
+//   color: '#ffb300'
+// }
+const initialLayers = [];
 
 const onNaviClick = (type, id) => {
   const { currentCollection } = UIStore.getState();
