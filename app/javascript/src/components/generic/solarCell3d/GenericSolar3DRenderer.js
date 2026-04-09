@@ -206,7 +206,17 @@ function Solar3DRenderer({ layers }) {
             </Canvas>
           </Suspense>
           {!detailLayers.length && (
-            <div className="solar3d-canvas-empty-state">No layers yet. Go to View/Controls.</div>
+            <div className="solar3d-canvas-empty-state">
+              <span>No layers yet. Go to </span>
+              <button
+                type="button"
+                className="solar3d-empty-state-link"
+                onClick={handleOpenFullView}
+              >
+                View/Controls
+              </button>
+              <span>.</span>
+            </div>
           )}
           {canvasTooltip.visible && (
             <div
