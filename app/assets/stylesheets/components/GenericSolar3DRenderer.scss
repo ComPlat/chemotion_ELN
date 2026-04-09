@@ -1,0 +1,596 @@
+.solar3d-root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+}
+
+.solar3d-main-row {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  min-height: 340px;
+}
+
+.solar3d-canvas-wrap {
+  flex: 1;
+  background: #fff;
+  position: relative;
+}
+
+.solar3d-loading {
+  padding: 12px;
+}
+
+.solar3d-tooltip {
+  position: fixed;
+  background: #111827;
+  color: #f9fafb;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.solar3d-layer-list-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: auto;
+  scrollbar-color: #9ca3af #e5e7eb;
+}
+
+.solar3d-layer-list-scroll::-webkit-scrollbar {
+  height: 12px;
+}
+
+.solar3d-layer-list-scroll::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 999px;
+}
+
+.solar3d-layer-list-scroll::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 999px;
+  border: 3px solid #e5e7eb;
+}
+
+.solar3d-layer-list-scroll::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+.solar3d-canvas-empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  pointer-events: auto;
+  z-index: 3;
+}
+
+.solar3d-canvas-empty-state--modal {
+  z-index: 4;
+}
+
+.solar3d-empty-state-link {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.solar3d-layer-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-width: max-content;
+}
+
+.solar3d-layer-item {
+  min-width: 140px;
+  border-radius: 4px;
+  border: none;
+  transition: background-color 120ms ease;
+}
+
+.solar3d-layer-item.is-active {
+  background-color: #e5e7eb;
+  border: none;
+}
+
+.solar3d-layer-button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.solar3d-layer-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+}
+
+.solar3d-layer-name {
+  margin-left: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.solar3d-side-panels {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.solar3d-panel-card {
+  background: #f3f4f6;
+  border: none;
+  border-radius: 4px;
+  color: #111827;
+}
+
+.solar3d-panel-toggle {
+  width: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  padding: 12px;
+  text-align: left;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.solar3d-panel-actions {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+}
+
+.solar3d-panel-actions-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.solar3d-panel-actions--inside {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  justify-content: flex-start;
+}
+
+.solar3d-panel-info-btn {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border: none;
+  border-radius: 999px;
+  background: #d1d5db;
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  font-size: 11px;
+}
+
+.solar3d-panel-toggle--action {
+  width: 100%;
+  border-radius: 4px;
+}
+
+.solar3d-panel-card--controls {
+  flex: 1;
+}
+
+.solar3d-panel-toggle--layer {
+  color: #111827;
+}
+
+.solar3d-panel-content {
+  padding: 0 12px 12px;
+}
+
+.solar3d-panel-content--layer {
+  padding: 12px;
+}
+
+.solar3d-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.solar3d-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 6px;
+  border: 1px solid #9ca3af;
+}
+
+.solar3d-toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.solar3d-fullview-trigger {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #111827;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 4;
+}
+
+.solar3d-fullview-modal .modal-dialog {
+  max-width: 1200px;
+}
+
+.solar3d-fullview-modal .modal-content {
+  height: 84vh;
+  max-height: 84vh;
+}
+
+.solar3d-fullview-modal .modal-body {
+  overflow: hidden;
+  padding-bottom: 10px;
+}
+
+.solar3d-fullview-footer {
+  border-top: 1px solid #e5e7eb !important;
+  padding: 10px 16px !important;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.solar3d-fullview-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+}
+
+.solar3d-fullview-canvas {
+  flex: 0 0 70%;
+  max-width: 70%;
+  min-height: 560px;
+  background: #fff;
+  border: none;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.solar3d-fullview-device-params {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 250px;
+  background: transparent;
+  color: #111827;
+  z-index: 5;
+}
+
+.solar3d-fullview-zoom-controls {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 6;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.solar3d-fullview-zoom-controls .btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.solar3d-fullview-device-params__layer-block {
+  margin-top: 14px;
+}
+
+.solar3d-config-panel {
+  width: 320px;
+  background: #fff;
+  border-radius: 6px;
+  border: none;
+  padding: 16px;
+  color: #111827;
+  display: flex;
+  flex-direction: column;
+}
+
+.solar3d-config-panel h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.solar3d-config-panel__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+.solar3d-config-panel__title-row h2 {
+  margin: 0;
+}
+
+.solar3d-config-panel__help-btn {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 999px;
+  background: #d1d5db;
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  font-size: 11px;
+}
+
+.solar3d-tooltip-list {
+  margin: 0;
+  padding-left: 16px;
+  text-align: left;
+}
+
+.solar3d-config-panel__list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.solar3d-config-panel__controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.solar3d-config-panel__search {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 6px 8px;
+  color: #111827;
+}
+
+.solar3d-config-panel__search:disabled {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.solar3d-config-panel__add-btn {
+  height: 34px;
+  padding: 0 12px !important;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.solar3d-config-panel--fullview {
+  flex: 0 0 30%;
+  max-width: 30%;
+  width: 30%;
+  height: 100%;
+  min-height: 0;
+  padding: 12px;
+}
+
+.solar3d-config-panel--fullview .solar3d-config-panel__list {
+  margin-bottom: 0;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scrollbar-width: auto;
+  scrollbar-color: #9ca3af #e5e7eb;
+  min-height: 0;
+}
+
+.solar3d-config-panel--fullview .solar3d-config-panel__list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.solar3d-config-panel--fullview .solar3d-config-panel__list::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 999px;
+}
+
+.solar3d-config-panel--fullview .solar3d-config-panel__list::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 999px;
+}
+
+.solar3d-layer-form {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: none;
+}
+
+.solar3d-layer-form__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.solar3d-layer-form__visibility,
+.solar3d-layer-form__delete {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.solar3d-layer-form__visibility.is-visible {
+  background: #22c55e;
+}
+
+.solar3d-layer-form__visibility.is-hidden {
+  background: #ef4444;
+}
+
+.solar3d-layer-form__delete {
+  background: #dc2626;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 120ms ease, background-color 120ms ease;
+}
+
+.solar3d-layer-form__delete:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.solar3d-layer-form__name {
+  flex: 1;
+}
+
+.solar3d-layer-form__name,
+.solar3d-layer-form input[type='number'],
+.solar3d-layer-form__color-inputs input[type='text'] {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 8px;
+  color: #111827;
+}
+
+.solar3d-layer-form__row {
+  display: flex;
+  gap: 16px;
+}
+
+.solar3d-layer-form__field {
+  flex: 1;
+  min-width: 0;
+}
+
+.solar3d-layer-form__field--color {
+  flex: 1.15;
+}
+
+.solar3d-layer-form__field-label {
+  display: block;
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 4px;
+}
+
+.solar3d-layer-form__field label {
+  display: block;
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 4px;
+}
+
+.solar3d-layer-form__color-inputs {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.solar3d-layer-form__hidden-color-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.solar3d-layer-form__hex-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border-radius: 4px;
+  padding: 0 6px;
+}
+
+.solar3d-layer-form__hex-preview-btn {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.solar3d-layer-form__color-inputs input[type='text'] {
+  flex: 1;
+  min-width: 0;
+  padding-left: 0;
+}

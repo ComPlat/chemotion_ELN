@@ -39,6 +39,15 @@ import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSo
 import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
+import Solar3DRenderer from 'src/components/generic/solarCell3d/GenericSolar3DRenderer';
+
+// {
+//   id: 1,
+//   name: 'Ag',
+//   thickness: 40,
+//   color: '#ffb300'
+// }
+const initialLayers = [];
 
 const onNaviClick = (type, id) => {
   const { currentCollection } = UIStore.getState();
@@ -61,6 +70,7 @@ export default class GenericElDetails extends Component {
       // List of all visible segment tabs.
       visible: Immutable.List(),
       expandAll: undefined,
+      dummySolar3DLayers: initialLayers
     };
     this.onChangeUI = this.onChangeUI.bind(this);
     this.onChangeElement = this.onChangeElement.bind(this);
@@ -289,7 +299,7 @@ export default class GenericElDetails extends Component {
   }
 
   elementalPropertiesItem(genericEl) {
-    const { expandAll } = this.state;
+    const { expandAll, dummySolar3DLayers } = this.state;
     const options = [];
     options.push({
       generic: genericEl,
@@ -336,18 +346,17 @@ export default class GenericElDetails extends Component {
     );
     return (
       <div>
-        <GenUIProvider>
-          <GenToolbar
-            generic={genericEl}
-            genericType="Element"
-            klass={genericEl.element_klass}
-            fnExport={this.handleExport}
-            fnReload={this.handleReload}
-            fnRetrieve={this.handleRetrieveRevision}
-            onExpandAll={this.handleExpandAll}
-          />
-          {layersLayout}
-        </GenUIProvider>
+        <Solar3DRenderer layers={dummySolar3DLayers} />
+        <GenToolbar
+          generic={genericEl}
+          genericType="Element"
+          klass={genericEl.element_klass}
+          fnExport={this.handleExport}
+          fnReload={this.handleReload}
+          fnRetrieve={this.handleRetrieveRevision}
+          onExpandAll={this.handleExpandAll}
+        />
+        {layersLayout}
         <EditUserLabels
           element={genericEl}
           fnCb={this.handleGenericElChanged}
