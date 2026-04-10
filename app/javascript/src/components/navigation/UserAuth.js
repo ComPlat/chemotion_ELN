@@ -294,6 +294,15 @@ export default class UserAuth extends Component {
     this.setState({ showAffiliations: false });
   };
 
+  renderAffiliations() {
+    return this.state.showAffiliations ? (
+      <Affiliations
+        show={this.state.showAffiliations}
+        onHide={this.handleAffiliationsHide}
+      />
+    ) : null;
+  }
+
   // eslint-disable-next-line class-methods-use-this
   handleSettingsShow() {
     this.setState({ showSettings: true });
@@ -301,20 +310,10 @@ export default class UserAuth extends Component {
 
   handleSettingsHide = () => {
     UserActions.fetchCurrentUser();
+    const { currentUser } = this.state;
+    UserActions.updateUserProfile(currentUser.profile);
     this.setState({ showSettings: false });
   };
-
-  renderAffiliations() {
-    const { showAffiliations } = this.state;
-    if (!showAffiliations) return null;
-
-    return (
-      <Affiliations
-        show={showAffiliations}
-        onHide={this.handleAffiliationsHide}
-      />
-    );
-  }
 
   renderSettings() {
     const { showSettings, currentUser } = this.state;
@@ -648,7 +647,7 @@ export default class UserAuth extends Component {
     return (
       <>
         <Dropdown>
-          <Dropdown.Toggle variant="topbar">
+          <Dropdown.Toggle variant="light">
             <i className="fa fa-user me-1" />
             {currentUser.name}
           </Dropdown.Toggle>
@@ -659,6 +658,11 @@ export default class UserAuth extends Component {
             >
               Account &amp; Profile
             </Dropdown.Item>
+            {currentUser.is_templates_moderator && (
+              <Dropdown.Item eventKey="2" href="/ketcher/common_templates">
+                Template Management
+              </Dropdown.Item>
+            )}
             <Dropdown.Item eventKey="3" href="/users/edit">
               Change Password
             </Dropdown.Item>

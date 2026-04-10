@@ -1,10 +1,11 @@
 .omniauth-btn {
+    width: 18vh;
     text-align: left;
     img {
-      height: 1.5em;
+      position: absolute;
+      text-align: left;
+      height: 2vh;
       width: auto;
-      vertical-align: middle;
-      object-fit: contain;
     }
   }
 
@@ -15,10 +16,8 @@
     a {
       width: 100%;
       img {
-          height: 1.5em;
           width: auto;
-          vertical-align: middle;
-          object-fit: contain;
+          height: 3vh;
       }
     }
   }

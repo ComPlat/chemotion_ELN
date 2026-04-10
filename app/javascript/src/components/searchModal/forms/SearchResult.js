@@ -6,14 +6,16 @@ import {
 } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { elementShowOrNew } from 'src/utilities/routesUtils';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { allElnElementsForSearch } from 'src/apps/generic/Utils';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import Aviator from 'aviator';
 import SearchResultTabContent from 'src/components/searchModal/forms/SearchResultTabContent';
-import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 function SearchResult({ handleClear }) {
   const searchStore = useContext(StoreContext).search;
@@ -22,7 +24,6 @@ function SearchResult({ handleClear }) {
   const profile = userState.profile || {};
   const genericElements = userState.genericEls || [];
   const [visibleTabs, setVisibleTabs] = useState([]);
-  const { currentCollection } = UIStore.getState();
 
   useEffect(() => {
     if (typeof (profile) !== 'undefined' && profile
@@ -74,8 +75,21 @@ function SearchResult({ handleClear }) {
   };
 
   const adoptResultAndOpenDetail = (element) => {
+    const { currentCollection, isSync } = UIStore.getState();
     const { id, type } = element;
-    aviatorNavigation(type, id, true, true);
+    const uri = isSync
+      ? `/scollection/${currentCollection.id}/${type}/${id}`
+      : `/collection/${currentCollection.id}/${type}/${id}`;
+    Aviator.navigate(uri, { silent: true });
+
+    const e = { type, params: { collectionID: currentCollection.id } };
+    e.params[`${type}ID`] = id;
+
+    if (genericElements.find((el) => el.name === type)) {
+      e.klassType = 'GenericEl';
+    }
+
+    elementShowOrNew(e);
     handleAdoptResult();
 
     return null;
@@ -94,31 +108,22 @@ function SearchResult({ handleClear }) {
 
   const searchValuesList = () => {
     if (searchStore.searchResultVisible && searchStore.searchValues.length > 0) {
-      let structureSvg = '';
-      if (searchStore.structure_svg) {
-        const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(searchStore.structure_svg)}`;
-        structureSvg = <img src={dataUrl} style={{ maxHeight: '100px' }} />;
-      }
-
       return (
         <div className="search-value-list">
           <h4>Your Search</h4>
           {
-            searchStore.structure_svg && (
-              structureSvg
-            )
-          }
-          {!searchStore.structure_svg && (
             searchStore.searchValues.map((val, i) => {
               let cleanVal = val.replace(/\bILIKE\b/, 'LIKE');
+
               if (i === 0) {
                 cleanVal = cleanVal
                   .replace(/^AND\b\s*/, '')
                   .replace(/^OR\b\s*/, '')
                   .trim();
               }
+
               return <div key={i}>{cleanVal}</div>;
-            }))
+            })
           }
           {
             searchStore.searchResultsCount > 0 ? null : (
@@ -147,7 +152,7 @@ function SearchResult({ handleClear }) {
         <h4 className="search-result-number-of-results">
           {sum}
           {' '}
-          results for the collection "{currentCollection?.label}"
+          results
         </h4>
       </div>
     );
@@ -183,7 +188,7 @@ function SearchResult({ handleClear }) {
         <OverlayTrigger delayShow={500} placement="top" overlay={tooltip}>
           <div className="d-inline-flex align-items-center">
             <i className={`${iconClass} pe-1`} />
-            <span className="fs-6">
+            <span className="fs-3">
               ({tabResult.total_elements})
             </span>
           </div>
@@ -247,7 +252,7 @@ function SearchResult({ handleClear }) {
     if (searchStore.searchResultsCount === 0) { return null; }
 
     return (
-      <ButtonToolbar className="advanced-search-buttons results flex-shrink-0">
+      <ButtonToolbar className="advanced-search-buttons results">
         <Button variant="primary" onClick={() => searchStore.handleCancel()}>
           Cancel
         </Button>
@@ -263,7 +268,7 @@ function SearchResult({ handleClear }) {
 
   return (
     <>
-      <div className="result-content-header flex-shrink-0">
+      <div className="result-content-header">
         {searchValuesList()}
         {resultsCount()}
       </div>

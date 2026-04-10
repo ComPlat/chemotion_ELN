@@ -8,15 +8,12 @@ import 'moment-precise-range-plugin';
 
 import Element from 'src/models/Element';
 import Sample from 'src/models/Sample';
-import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import Component from 'src/models/Component';
 import Container from 'src/models/Container';
-import { isSbmmSample } from 'src/utilities/ElementUtils';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -139,7 +136,6 @@ export default class Reaction extends Element {
       purification: '',
       purification_solvents: [],
       reactants: [],
-      reactant_sbmm_samples: [],
       rf_value: 0.00,
       role: '',
       user_labels: [],
@@ -206,8 +202,7 @@ export default class Reaction extends Element {
         reactants: this.reactants.map((s) => s.serializeMaterial()),
         solvents: this.solvents.map((s) => s.serializeMaterial()),
         purification_solvents: this.purification_solvents.map((s) => s.serializeMaterial()),
-        products: this.products.map((s) => s.serializeMaterial()),
-        reactant_sbmm_samples: (this.reactant_sbmm_samples || []).map((s) => s.serializeSbmmMaterial())
+        products: this.products.map((s) => s.serializeMaterial())
       },
       name: this.name,
       observation: this.observation,
@@ -386,6 +381,8 @@ export default class Reaction extends Element {
     // If userText is number only, treat as normal temperature value
     if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature.userText)) {
       temperature.userText = convertTemperature(temperature.userText, oldUnit, newUnit).toFixed(2);
+
+      return temperature;
     }
 
     temperature.data.forEach((data, index, theArray) => {
@@ -443,14 +440,6 @@ export default class Reaction extends Element {
     this._reactants = this._coerceToSamples(samples);
   }
 
-  get reactant_sbmm_samples() {
-    return this._reactant_sbmm_samples || [];
-  }
-
-  set reactant_sbmm_samples(samples) {
-    this._reactant_sbmm_samples = this._coerceToSbmmSamples(samples);
-  }
-
   get products() {
     return this._products;
   }
@@ -469,64 +458,24 @@ export default class Reaction extends Element {
     ];
   }
 
-  // do not run any check based on ID on allReactionMaterials, as some sample materials may have the same ID as the SBMM samples
-  get allReactionMaterials() {
-    return [
-      ...this.starting_materials || [],
-      ...this.reactants || [],
-      ...this.reactant_sbmm_samples || [],
-    ];
-  }
-
-  // may have same ID for the reactant samples and SBMM samples
-  get reactantsWithSbmm() {
-    return [
-      ...this.reactants || [],
-      ...this.reactant_sbmm_samples || [],
-    ];
-  }
-
-  buildCopy(params = {}, keepAmounts = false) {
+  buildCopy(params = {}) {
     const copy = super.buildCopy();
     Object.assign(copy, params);
     copy.short_label = Reaction.buildReactionShortLabel();
     copy.starting_materials = this.starting_materials.map((sample) => {
       const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
-      if (!keepAmounts) {
-        copiedSample._real_amount_value = null;
-        if (!copiedSample._target_amount_value && !copiedSample.reference) {
-          copiedSample.equivalent = null;
-        }
-      }
-      return copiedSample;
-    });
-    copy.reactants = this.reactants.map((sample) => {
-      const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
-      if (!keepAmounts) {
-        copiedSample._real_amount_value = null;
-        if (!copiedSample._target_amount_value && !copiedSample.reference) {
-          copiedSample.equivalent = null;
-        }
-      }
-      return copiedSample;
-    });
-    copy.solvents = this.solvents.map((sample) => {
-      const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
-      if (!keepAmounts) {
-        copiedSample._real_amount_value = null;
-        if (!copiedSample._target_amount_value && !copiedSample.reference) {
-          copiedSample.equivalent = null;
-        }
-      }
-      return copiedSample;
-    });
-    copy.products = this.products.map((sample) => {
-      const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
       copiedSample._real_amount_value = null;
-      copiedSample._target_amount_value = null;
-      copiedSample.equivalent = null;
       return copiedSample;
     });
+    copy.reactants = this.reactants.map(
+      (sample) => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
+    );
+    copy.solvents = this.solvents.map(
+      (sample) => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
+    );
+    copy.products = this.products.map(
+      (sample) => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id, true, true, false)
+    );
 
     copy.rebuildProductName();
     copy.container = Container.init();
@@ -535,18 +484,18 @@ export default class Reaction extends Element {
     return copy;
   }
 
-  static copyFromReactionAndCollectionId(reaction, collection_id, keepAmounts = false) {
+  static copyFromReactionAndCollectionId(reaction, collection_id) {
     const target = Segment.buildCopy(reaction.segments);
     const params = {
       collection_id,
-      role: '',
+      role: 'parts',
       segments: target,
       timestamp_start: '',
       timestamp_stop: '',
       rf_value: 0.00,
       status: '',
     };
-    const copy = reaction.buildCopy(params, keepAmounts);
+    const copy = reaction.buildCopy(params);
     copy.origin = { id: reaction.id, short_label: reaction.short_label };
     copy.name = copy.nameFromRole(copy.role);
     return copy;
@@ -557,24 +506,7 @@ export default class Reaction extends Element {
     return this.name ? `${short_label} ${this.name}` : short_label;
   }
 
-  validateSbmmGroup(material, group) {
-    const isSbmm = isSbmmSample(material);
-    if (isSbmm && group !== 'reactants' && group !== 'reactant_sbmm_samples') {
-      NotificationActions.add({
-        title: 'Invalid Action',
-        message: 'SBMM samples can only be placed in the Reactants group.',
-        level: 'warning',
-        dismissible: 'button',
-        position: 'tr',
-      });
-      return false;
-    }
-    return true;
-  }
-
   addMaterial(material, group) {
-    if (!this.validateSbmmGroup(material, group)) return;
-
     const materials = this[group];
     const newMaterial = this.materialPolicy(material, null, group);
     this[group] = [...materials, newMaterial];
@@ -584,8 +516,6 @@ export default class Reaction extends Element {
   }
 
   addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef = false) {
-    if (!this.validateSbmmGroup(srcMaterial, tagGp)) return;
-
     const materials = this[tagGp];
     const idx = materials.indexOf(tagMaterial);
     const newSrcMaterial = this.materialPolicy(srcMaterial, srcGp, tagGp);
@@ -626,21 +556,15 @@ export default class Reaction extends Element {
       material.weight_percentage_reference = false;
       WeightPercentageReactionActions.setWeightPercentageReference(null);
       WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
-      const { allReactionMaterials } = this;
-      const refMaterial = allReactionMaterials.filter(
+      const refMaterial = [...this.starting_materials, ...this.reactants].filter(
         (m) => m.reference === true
       )[0];
-
-      const refAmountMol = refMaterial.amount_mol || 1;
-
       // reset all weight percentage to null, since there is no weight percentage reference assigned
-      allReactionMaterials.forEach((m) => {
+      [...this.starting_materials, ...this.reactants].forEach((m) => {
         m.weight_percentage = null;
-        const amountMol = m.amount_mol || 0;
-
         // assign equivalent based on reference material (guard against missing ref)
-        if (refMaterial && Number.isFinite(refAmountMol) && refAmountMol > 0 && Number.isFinite(amountMol)) {
-          m.equivalent = amountMol / refAmountMol;
+        if (refMaterial && Number.isFinite(refMaterial.amount_mol) && Number.isFinite(m.amount_mol)) {
+          m.equivalent = m.amount_mol / refMaterial.amount_mol;
         } else {
           m.equivalent = null;
         }
@@ -676,9 +600,6 @@ export default class Reaction extends Element {
     if (srcGp === tagGp) {
       this.swapMaterial(srcMaterial, tagMaterial, tagGp);
     } else {
-      // Validate before moving to prevent data loss if validation fails
-      if (!this.validateSbmmGroup(srcMaterial, tagGp)) return;
-
       const srcIsWeightPercentageRef = srcMaterial.weight_percentage_reference || false;
       this.deleteMaterial(srcMaterial, srcGp);
       this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp, srcIsWeightPercentageRef);
@@ -722,7 +643,6 @@ export default class Reaction extends Element {
       }
     } else if (
       newGroup === 'reactants'
-      || newGroup === 'reactant_sbmm_samples'
       || newGroup === 'solvents'
       || newGroup === 'purification_solvents'
     ) {
@@ -754,13 +674,6 @@ export default class Reaction extends Element {
   }
 
   shortLabelPolicy(material, oldGroup, newGroup) {
-    // For SBMM samples, preserve their original short_label (like starting_materials)
-    const isSbmm = isSbmmSample(material);
-    if (isSbmm && newGroup === 'reactant_sbmm_samples') {
-      // Preserve original short_label for SBMM samples - don't override it
-      return;
-    }
-
     if (oldGroup) {
       // Save previous short_label
       material[`short_label_${oldGroup}`] = material.short_label;
@@ -794,13 +707,6 @@ export default class Reaction extends Element {
   namePolicy(material, oldGroup, newGroup) {
     this.rebuildProductName();
 
-    // For SBMM samples, preserve their original name (like starting_materials)
-    const isSbmm = isSbmmSample(material);
-    if (isSbmm && newGroup === 'reactant_sbmm_samples') {
-      // Preserve original name for SBMM samples - don't override it
-      return;
-    }
-
     if (oldGroup && oldGroup === 'products') {
       // Blank name if FROM "products"
       material.name = '';
@@ -824,14 +730,11 @@ export default class Reaction extends Element {
   rebuildReference(material) {
     if (this.referenceMaterial) {
       const { referenceMaterial } = this;
-      let reference;
+      let reference = this.starting_materials.find((m) => referenceMaterial.id === m.id);
 
-      if (isSbmmSample(referenceMaterial)) {
-        reference = this.reactant_sbmm_samples.find((m) => m.id === referenceMaterial.id);
-      } else {
-        reference = this.starting_materials.find((m) => m.id === referenceMaterial.id);
-        if (!reference) reference = this.reactants.find((m) => m.id === referenceMaterial.id);
-      }
+      // if referenceMaterial exists,
+      // referenceMaterialGroup must be either 'starting_materials' or 'reactants'
+      if (!reference) reference = this.reactants.find((m) => m.id === referenceMaterial.id);
 
       if (!reference && this.starting_materials.length > 0) {
         this._setAsReferenceMaterial(this.starting_materials[0]);
@@ -849,72 +752,20 @@ export default class Reaction extends Element {
     return samples && samples.map((s) => new Sample(s)) || [];
   }
 
-  _coerceToSbmmSamples(samples) {
-    if (!samples) return [];
-
-    return samples.map((s) => {
-      if (s instanceof SequenceBasedMacromoleculeSample) {
-        return s;
-      }
-      return new SequenceBasedMacromoleculeSample(s);
-    });
-  }
-
   sampleById(sampleID) {
-    return this.samples.find((sample) => sample.id === sampleID);
+    return this.samples.find((sample) => sample.id == sampleID);
   }
 
-  findSbmmSample(sampleID) {
-    return this.reactant_sbmm_samples.find((s) => s.id === sampleID);
-  }
-
-  findReactionSample(sampleID, isSbmm = false) {
-    return isSbmm ? this.findSbmmSample(sampleID) : this.sampleById(sampleID);
-  }
-
-  /**
-   * Gets the reference material for the reaction (either regular sample or SBMM sample)
-   * @returns {Sample|SequenceBasedMacromoleculeSample|undefined} The reference material, or undefined if none exists
-   */
   get referenceMaterial() {
-    return this.allReactionMaterials.find((sample) => sample.reference);
+    return this.samples.find((sample) => sample.reference);
   }
 
   get sampleCount() {
     return this.samples.length;
   }
 
-  /**
-   * Marks a regular Sample (non-SBMM) as the reference material for the reaction.
-   * Clears the reference flag from all other samples in the reaction.
-   *
-   * @param {string|number} sampleID - The ID of the sample to mark as reference
-   * @returns {void}
-   */
   markSampleAsReference(sampleID) {
     this.samples.forEach((sample) => {
-      sample.reference = sample.id === sampleID;
-    });
-
-    this.reactant_sbmm_samples.forEach((sample) => {
-      sample.reference = false;
-    });
-  }
-
-  /**
-   * Marks a Sequence-Based Macromolecule Sample (SBMM) as the reference material for the reaction.
-   * Only affects SBMM samples; does not modify regular samples.
-   * Use this when setting an SBMM sample as reference to avoid ID collision issues.
-   *
-   * @param {string|number} sampleID - The ID of the SBMM sample to mark as reference
-   * @returns {void}
-   */
-  markSbmmSampleAsReference(sampleID) {
-    this.samples.forEach((sample) => {
-      sample.reference = false;
-    });
-
-    this.reactant_sbmm_samples.forEach((sample) => {
       sample.reference = sample.id === sampleID;
     });
   }
@@ -925,11 +776,9 @@ export default class Reaction extends Element {
     });
   }
 
-  toggleShowLabelForSample(sampleID, isSbmm = false) {
-    const sample = this.findReactionSample(sampleID, isSbmm);
-    if (!sample) return;
-
-    sample.show_label = isSbmm || (sample.decoupled && !sample.molfile) ? true : !sample.show_label;
+  toggleShowLabelForSample(sampleID) {
+    const sample = this.sampleById(sampleID);
+    sample.show_label = ((sample.decoupled && !sample.molfile) ? true : !sample.show_label);
   }
 
   _setAsReferenceMaterial(sample) {
@@ -938,28 +787,15 @@ export default class Reaction extends Element {
   }
 
   _updateEquivalentForMaterial(sample) {
-    const referenceAmountMol = this.referenceMaterial.amount_mol;
-    const sampleAmountMol = sample.amount_mol;
-
-    if (Number.isFinite(referenceAmountMol) && referenceAmountMol > 0 && Number.isFinite(sampleAmountMol)) {
-      sample.equivalent = sampleAmountMol / referenceAmountMol;
-    } else {
-      sample.equivalent = 0.0;
+    if (this.referenceMaterial && this.referenceMaterial.amount_mol) {
+      sample.equivalent = sample.amount_mol / this.referenceMaterial.amount_mol;
     }
   }
 
   get svgPath() {
     if (this.reaction_svg_file && this.reaction_svg_file != '***') {
       if (this.reaction_svg_file.includes('<svg')) {
-        // Raw SVG must be encoded as data URI - passing it directly causes react-inlinesvg
-        // to match embedded data URIs (e.g. in <image href="...">) and atob() invalid base64
-        try {
-          const base64 = btoa(unescape(encodeURIComponent(this.reaction_svg_file)));
-          return `data:image/svg+xml;base64,${base64}`;
-        } catch (e) {
-          console.warn('Failed to encode reaction SVG as data URI', e);
-          return 'images/wild_card/no_image_180.svg';
-        }
+        return this.reaction_svg_file;
       } if (this.reaction_svg_file.substr(this.reaction_svg_file.length - 4) === '.svg') {
         return `/images/reactions/${this.reaction_svg_file}`;
       }
@@ -978,7 +814,6 @@ export default class Reaction extends Element {
   hasMaterials() {
     return this.starting_materials.length > 0
       || this.reactants.length > 0
-      || this.reactant_sbmm_samples.length > 0
       || this.solvents.length > 0
       || this.products.length > 0;
   }
@@ -1035,16 +870,13 @@ export default class Reaction extends Element {
 
   refreshEquivalent(material, refreshCoefficient) {
     let matGroup;
-    const refMat = this.referenceMaterial;
-    const referenceAmountMol = refMat.amount_mol;
-
-    if (refMat && referenceAmountMol) {
+    const refMat = this.samples.find((sample) => sample.reference);
+    if (refMat && refMat.amount_mol) {
       ['_starting_materials', '_reactants', '_solvents', '_products'].forEach((g) => {
         matGroup = this[g];
         if (matGroup) {
           this[g] = matGroup.map((mat) => {
             const m = mat;
-            const amountMol = m.amount_mol;
             if (m.id === material.id) {
               if (refreshCoefficient && m.id === refreshCoefficient.sId) {
                 m.coefficient = refreshCoefficient.coefficient;
@@ -1052,9 +884,9 @@ export default class Reaction extends Element {
             }
             if (g === '_products' && m.gas_type !== 'gas') {
               const stoichiometryCoeff = (m.coefficient || 1.0) / (refMat?.coefficient || 1.0);
-              m.equivalent = amountMol / referenceAmountMol / stoichiometryCoeff;
+              m.equivalent = m.amount_mol / refMat.amount_mol / stoichiometryCoeff;
             } else {
-              m.equivalent = amountMol / referenceAmountMol;
+              m.equivalent = m.amount_mol / refMat.amount_mol;
             }
             return m;
           });
@@ -1261,8 +1093,7 @@ export default class Reaction extends Element {
   }
 
   /**
-   * Calculates the combined volume of all reaction materials
-   * (solvent + starting_materials + reactants + reactant_sbmm_samples).
+   * Calculates the combined volume of all reaction materials (solvent + starting_materials + reactants + products).
    *
    * @method calculateCombinedReactionVolume
    * @memberof Reaction
@@ -1276,9 +1107,13 @@ export default class Reaction extends Element {
       totalVolume += this.solventVolume;
     }
 
-    // Add volumes from all reaction materials (starting + reactants + SBMM reactants)
+    // Add volumes from starting materials, reactants
+    const allMaterials = [
+      ...(this.starting_materials || []),
+      ...(this.reactants || []),
+    ];
 
-    this.allReactionMaterials.forEach((material) => {
+    allMaterials.forEach((material) => {
       if (material && Number.isFinite(material.amount_l) && material.amount_l > 0) {
         totalVolume += material.amount_l;
       }
@@ -1297,7 +1132,8 @@ export default class Reaction extends Element {
    */
   updateAllConcentrations() {
     const allMaterials = [
-      ...this.allReactionMaterials,
+      ...(this.starting_materials || []),
+      ...(this.reactants || []),
       ...(this.products || []),
     ];
 

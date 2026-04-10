@@ -595,14 +595,19 @@ export default class AttachmentFetcher {
     isSaveCombined,
     axesUnitsStr,
     detector,
-    dscMetaData
+    dscMetaData,
+    lcmsPeaksStr,
+    lcmsIntegralsStr,
+    lcmsUvvisWavelength,
+    lcmsMzPage,
+    lcmsMzPageData
   ) {
     const params = {
       attachmentId: attId,
       peaksStr,
-      shiftSelectX: shift.peak.x,
-      shiftRefName: shift.ref.name,
-      shiftRefValue: shift.ref.value,
+      shiftSelectX: shift?.peak?.x,
+      shiftRefName: shift?.ref?.name,
+      shiftRefValue: shift?.ref?.value,
       scan,
       thres,
       integration,
@@ -615,19 +620,57 @@ export default class AttachmentFetcher {
       simulatenmr,
       axesUnits: axesUnitsStr,
       detector,
-      dscMetaData
+      dscMetaData,
+      lcmsPeaksStr,
+      lcmsIntegralsStr,
+      lcmsUvvisWavelength,
+      lcmsMzPage,
+      lcmsMzPageData
     };
+
+    const decamelized = decamelizeKeys(params);
+    const hasLcmsMzPageData = decamelized.lcms_mz_page_data != null;
+
+    let body;
+    let headers = { Accept: 'application/json' };
+    if (hasLcmsMzPageData) {
+      const formData = new FormData();
+      Object.keys(decamelized).forEach((key) => {
+        const value = decamelized[key];
+        if (value === undefined) return;
+        if (key === 'lcms_mz_page_data') {
+          formData.append(key, new Blob([JSON.stringify(value)], { type: 'application/json' }), 'lcms_mz_page_data.json');
+        } else {
+          const str = (value != null && typeof value === 'object') ? JSON.stringify(value) : value;
+          formData.append(key, str != null ? String(str) : '');
+        }
+      });
+      body = formData;
+    } else {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(decamelized);
+    }
 
     const promise = fetch('/api/v1/attachments/save_spectrum/', {
       credentials: 'same-origin',
       method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(decamelizeKeys(params)),
+      headers,
+      body,
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            throw new Error(`save_spectrum ${response.status}: ${text.slice(0, 200)}`);
+          });
+        }
+        const contentType = response.headers.get('Content-Type') || '';
+        if (!contentType.includes('application/json')) {
+          return response.text().then((text) => {
+            throw new Error(`save_spectrum: expected JSON, got ${contentType.slice(0, 50)} - ${text.slice(0, 200)}`);
+          });
+        }
+        return response.json();
+      })
       .then((json) => {
         if (!isSaveCombined) {
           return json;
@@ -742,7 +785,8 @@ export default class AttachmentFetcher {
     return promise;
   }
 
-  static combineSpectra(jcampIds, containerId, curveIdx, editedDataSpectra) {
+  static combineSpectra(jcampIds, curveIdx, extraParams = null) {
+    const extras = JSON.stringify(decamelizeKeys(extraParams))
     const promise = fetch(
       '/api/v1/chemspectra/file/combine_spectra',
       {
@@ -756,15 +800,12 @@ export default class AttachmentFetcher {
         body: JSON.stringify({
           spectra_ids: jcampIds,
           front_spectra_idx: curveIdx,
-          container_id: containerId,
-          edited_data_spectra: editedDataSpectra,
+          extras: extras,
         }),
       },
     )
       .then((response) => response.json())
-      .then((json) => {
-        return json;
-      })
+      .then((json) => json)
       .catch((errorMessage) => {
         console.log(errorMessage);
       });

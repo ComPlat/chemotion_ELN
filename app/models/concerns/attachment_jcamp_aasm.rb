@@ -3,7 +3,8 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # State machine for attachment Jcamp handle
 module AttachmentJcampAasm
-  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml mzxml raw cdf zip nmrium].freeze
+  FILE_EXT_SPECTRA = %w[dx jdx jcamp mzml mzxml raw cdf zip gz tar nmrium].freeze
+  LCMS_UVVIS_JDX_REGEX = /lcms.*[._]uvvis(\.(peak|edit))?\.jdx$/i.freeze
 
   extend ActiveSupport::Concern
 
@@ -30,7 +31,7 @@ module AttachmentJcampAasm
       end
 
       event :set_force_peaked do
-        transitions from: %i[queueing regenerating nmrium], to: :peaked
+        transitions from: %i[idle queueing regenerating nmrium], to: :peaked
       end
 
       event :set_edited do
@@ -87,13 +88,28 @@ module AttachmentJcampAasm
     return unless idle?
 
     _, extname = extension_parts
-    FILE_EXT_SPECTRA.include?(extname.downcase) ? set_queueing : set_non_jcamp
+    unless FILE_EXT_SPECTRA.include?(extname.downcase)
+      return set_non_jcamp
+    end
+
+    filename_lower = filename.to_s.downcase
+
+    if lcms_uvvis_raw?(filename_lower)
+      set_non_jcamp
+    else
+      set_queueing
+    end
   end
 
   def require_peaks_generation? # rubocop:disable all
     return if transferred?
 
     return unless belong_to_analysis?
+
+    filename_lower = filename.to_s.downcase
+    if lcms_uvvis_raw?(filename_lower)
+      return
+    end
 
     typname, extname = extension_parts
     return if peaked? || edited?
@@ -103,12 +119,31 @@ module AttachmentJcampAasm
     is_peak_edit = %w[peak edit].include?(typname)
     return generate_img_only(typname) if is_peak_edit
 
+    if queueing? && filename.to_s.downcase.match?(/lcms.*\.jdx$/i)
+      filename_lower = filename.to_s.downcase
+
+      is_uvvis_raw = lcms_uvvis_raw?(filename_lower)
+
+      if is_uvvis_raw
+        return
+      end
+      
+      set_force_peaked
+      return
+    end
+
     generate_spectrum(true, false) if queueing?
     generate_spectrum(true, true) if regenerating?
   end
 
   def belong_to_analysis?
     container&.parent&.container_type == 'analysis'
+  end
+
+  def lcms_uvvis_raw?(filename_lower)
+    filename_lower.match?(LCMS_UVVIS_JDX_REGEX) &&
+      !filename_lower.include?('peak') &&
+      !filename_lower.include?('edit')
   end
 end
 
@@ -117,6 +152,17 @@ end
 # rubocop:disable Metrics/ModuleLength
 module AttachmentJcampProcess
   extend ActiveSupport::Concern
+
+  def jcamp_files_already_present?
+    _first_part, extname = extension_parts
+    return true  if filename.include?('processed_')
+    return false if extname.casecmp('nmrium').zero?
+
+    attachments = Attachment.where(attachable_id: self[:attachable_id])
+    num = filename.match(/\.(\d+)_/)&.[](1)&.to_i
+    jcamp_attachments = file_match(attachments, num)
+    jcamp_attachments.any?
+  end
 
   # rubocop:disable Metrics/AbcSize
   # rubocop:disable Metrics/CyclomaticComplexity
@@ -127,28 +173,49 @@ module AttachmentJcampProcess
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
     att = Attachment.children_of(self[:id]).find_by(filename: meta_filename)
 
-    if att.nil?
-      att = Attachment.children_of(self[:id]).new(
-        filename: meta_filename,
-        con_state: Labimotion::ConState::READ,
-        file_path: meta_tmp.path,
-        created_by: created_by,
-        created_for: created_for,
-        key: SecureRandom.uuid,
-      )
-    end
-    att.save!
-    att.set_edited if ext != 'png' && to_edit
-    att.set_image if ext == 'png'
-    if ext == 'json'
-      att.set_json
-      att.thumb = false
-    end
-    att.set_csv if ext == 'csv'
-    att.set_nmrium if ext == 'nmrium'
-    att.update!(
-      attachable_id: attachable_id, attachable_type: 'Container'
+    att ||= Attachment.children_of(self[:id]).new(
+      filename:   meta_filename,
+      con_state:  Labimotion::ConState::READ,
+      file_path:  meta_tmp.path,
+      created_by: created_by,
+      created_for: created_for,
+      key:        SecureRandom.uuid,
     )
+    att.save!
+  
+    if ext != 'png'
+      if to_edit
+        att.set_edited
+      elsif addon == 'peak' || (addon.is_a?(String) && addon.include?('peak'))
+        att.set_force_peaked
+      elsif addon == 'edit' || (addon.is_a?(String) && addon.include?('edit'))
+        att.set_edited
+      else
+        filename_lower = att.filename.to_s.downcase
+        
+        if filename_lower.match?(/lcms.*[._]uvvis\.(peak|edit)\.jdx$/i)
+          if filename_lower.include?('.edit.')
+            att.set_edited if att.may_set_edited?
+          else
+            att.set_force_peaked if att.may_set_force_peaked?
+          end
+        elsif filename_lower.match?(/lcms.*\.jdx$/i) || filename_lower.match?(/.*[._](tic|mz|uvvis).*\.jdx$/i)
+          if lcms_uvvis_raw?(filename_lower)
+            att.set_non_jcamp if att.may_set_non_jcamp?
+          else
+            att.set_force_peaked if att.may_set_force_peaked?
+          end
+        end
+      end
+    else
+      att.set_image
+    end
+    att.set_json  if ext == 'json'
+    att.set_csv   if ext == 'csv'
+    att.set_nmrium if ext == 'nmrium'
+    att.thumb = false if ext == 'json'
+  
+    att.update!(attachable_id: attachable_id, attachable_type: 'Container')
     att
   end
   # rubocop:enable Metrics/AbcSize
@@ -199,6 +266,7 @@ module AttachmentJcampProcess
     generate_att(nmrium_tmp, addon, to_edit, 'nmrium')
   end
 
+  # app/models/concerns/attachment_jcamp_process.rb
   def build_params(params = {})
     _, extname = extension_parts
     params[:mass] = 0.0
@@ -207,15 +275,12 @@ module AttachmentJcampProcess
     if attachable&.root_element.is_a?(Sample)
       params[:mass] = attachable&.root_element&.molecule&.exact_molecular_weight || 0.0
       params[:sample_id] = attachable&.root_element.id
-
-      attachable.ancestors.each do |ancestor|
-        if ancestor.container_type == 'analysis'
-          params[:analysis_id] = ancestor.id
-        end
-      end
+      attachable.ancestors.each { |a| params[:analysis_id] = a.id if a.container_type == 'analysis' }
     end
-    params[:ext] = extname.downcase
+
+    params[:ext]  = extname.downcase
     params[:fname] = filename.to_s
+
     params
   end
 
@@ -275,13 +340,15 @@ module AttachmentJcampProcess
 
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
-    tmp_jcamp, tmp_img, _, _, arr_csv, arr_nmrium, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
+    tmp_jcamp, tmp_img, arr_jcamp, _arr_img, arr_csv, arr_nmrium, spc_type, invalid_molfile = generate_spectrum_data(params, is_regen)
 
     check_invalid_molfile(invalid_molfile)
 
+    tmp_jcamp ||= arr_jcamp&.first
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
-    jcamp_att.update_prediction(params, spc_type, is_regen)
-    img_att = generate_img_att(tmp_img, 'edit', true)
+    new_jcamp_created = !jcamp_att.nil?
+    jcamp_att.update_prediction(params, spc_type, is_regen) if jcamp_att
+    img_att = generate_img_att(tmp_img, 'edit', true) if tmp_img
 
     tmp_files_to_be_deleted = [tmp_jcamp, tmp_img]
 
@@ -302,9 +369,9 @@ module AttachmentJcampProcess
 
     set_backup
     delete_tmps(tmp_files_to_be_deleted)
-    delete_related_imgs(img_att)
-    delete_related_edit_peak(jcamp_att)
-    jcamp_att
+    delete_related_imgs(img_att) if img_att
+    delete_related_edit_peak(jcamp_att) if new_jcamp_created
+    jcamp_att || self
   end
 
   def check_invalid_molfile(invalid_molfile = false)
@@ -328,10 +395,44 @@ module AttachmentJcampProcess
         t_molfile.write(attachable.root_element.molecule.molfile)
         t_molfile.rewind
       end
+      file_paths = if lcms_related_file_paths.present? && (params[:lcms_mz_page_data].present? || params['lcms_mz_page_data'].present?)
+        abs_path
+      else
+        lcms_related_file_paths || abs_path
+      end
       Chemotion::Jcamp::Create.spectrum(
-        abs_path, t_molfile.path, is_regen, params
+        file_paths, t_molfile.path, is_regen, params
       )
     end
+  end
+
+  def lcms_related_file_paths
+    filename_lower = filename.to_s.downcase
+    return nil unless filename_lower.match?(/\.(jdx|dx|jcamp)\z/)
+    return nil unless filename_lower.match?(/(?:^|[._-])uvvis(?:[._-]|$)/)
+
+    base_scope = Attachment.where(attachable_id: attachable_id)
+    if respond_to?(:attachable_type) && attachable_type.present?
+      base_scope = base_scope.where(attachable_type: attachable_type)
+    end
+    sibs = base_scope.where.not(id: id)
+
+    tics = sibs.select do |a|
+      name = a.filename.to_s.downcase
+      name.match?(/\.(jdx|dx|jcamp)\z/) && name.match?(/(?:^|[._-])tic(?:[._-]|$)/)
+    end
+
+    mzs = sibs.select do |a|
+      name = a.filename.to_s.downcase
+      name.match?(/\.(jdx|dx|jcamp)\z/) && name.match?(/(?:^|[._-])(mz|ms)(?:[._-]|$)/)
+    end
+
+    return nil if tics.empty? || mzs.empty?
+
+    file_paths = ([abs_path] + tics.map(&:abs_path) + mzs.map(&:abs_path)).compact.uniq
+    return nil if file_paths.size < 3
+
+    file_paths
   end
 
   def generate_spectrum(is_create = false, is_regen = false, params = {})
@@ -339,19 +440,10 @@ module AttachmentJcampProcess
 
     is_create ? create_process(is_regen) : edit_process(is_regen, params)
   rescue StandardError => e
-    set_failure
+    set_failure if may_set_failure?
     Rails.logger.info('**** Jcamp Peaks Generation fails ***')
     Rails.logger.error(e)
-  end
-
-  def jcamp_files_already_present?
-    first_part, extname = extension_parts
-    return false if (extname.casecmp('nmrium').zero? || first_part['processed_']) # ignore when file is nmrium or preprocessed from Bruker NMR
-
-    attachments = Attachment.where(attachable_id: self[:attachable_id])
-    num = filename.match(/\.(\d+)_/)&.[](1)&.to_i
-    jcamp_attachments = file_match(attachments, num)
-    jcamp_attachments.any?
+    nil
   end
 
   def file_match(attachments, num)
@@ -370,25 +462,52 @@ module AttachmentJcampProcess
     jcamp_att = nil
     tmp_to_be_deleted = []
     tmp_img_to_deleted = []
+  
+    base = filename_parts.first
+
     arr_jcamp.each_with_index do |jcamp, idx|
-      file_name_to_generate = idx == 0 ? 'peak' : "processed_#{idx}"
-
-      curr_jcamp_att = generate_jcamp_att(jcamp, file_name_to_generate)
+      stem = original_stem(jcamp, base) || "#{base}_processed_#{idx}"
+      addon  = stem.sub(/^#{base}_/, '')
+  
+      curr_jcamp_att = generate_jcamp_att(jcamp, addon)
+      curr_jcamp_att.update!(filename: "#{stem}.jdx")
       curr_jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
-      jcamp_att = curr_jcamp_att if idx == 0
-
+      jcamp_att ||= curr_jcamp_att
+  
       curr_tmp_img = arr_img[idx]
-      img_att = generate_img_att(curr_tmp_img, file_name_to_generate)
-
-      tmp_to_be_deleted.push(jcamp, curr_tmp_img)
-      tmp_img_to_deleted.push(img_att)
+      if curr_tmp_img
+        img_stem = original_stem(curr_tmp_img, base) || stem
+        img_att = generate_img_att(curr_tmp_img, addon)
+        img_att.update!(filename: "#{img_stem}.png")
+        tmp_img_to_deleted << img_att
+        tmp_to_be_deleted << curr_tmp_img
+      end
+  
+      tmp_to_be_deleted << jcamp
     end
-
     set_done
     delete_tmps(tmp_to_be_deleted)
     delete_related_arr_img(tmp_img_to_deleted)
     delete_edit_peak_after_done
     jcamp_att
+  end
+
+  def original_stem(tmp_file, base_prefix)
+    return unless tmp_file.respond_to?(:original_filename)
+
+    original = tmp_file.original_filename.to_s
+    return if original.strip.empty?
+
+    original_name = File.basename(original)
+    ext = File.extname(original_name)
+    stem = File.basename(original_name, ext)
+
+    if base_prefix.present? && !stem.start_with?(base_prefix)
+      suffix = stem[/_(?:lcms_)?(?:uvvis|tic|mz).*/i]
+      return "#{base_prefix}#{suffix}" if suffix.present?
+    end
+
+    stem
   end
 
   def read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen, params)
@@ -483,12 +602,13 @@ module AttachmentJcampProcess
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = fname_wo_ext(self)
     atts.each do |att|
-      is_delete = (
-        (att.edited? || att.peaked?) &&
-          att.id != jcamp_att.id &&
-          valid_name == fname_wo_ext(att)
+      is_peak_file = att.filename_parts.include?('peak')
+      should_del   = (
+        (att.edited? || att.peaked? || is_peak_file) &&
+        att.id != jcamp_att.id &&
+        valid_name == fname_wo_ext(att)
       )
-      att.delete if is_delete
+      att.delete if should_del
     end
   end
 

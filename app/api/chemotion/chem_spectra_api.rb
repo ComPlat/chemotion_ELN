@@ -187,162 +187,45 @@ module Chemotion
         params do
           requires :spectra_ids, type: [Integer]
           requires :front_spectra_idx, type: Integer # index of front spectra
-          requires :container_id, type: Integer
           optional :extras, type: String
         end
         post 'combine_spectra' do
           pm = to_rails_snake_case(params)
 
-          extras = nil
-          if pm[:extras].present?
-            begin
-              extras = JSON.parse(pm[:extras])
-            rescue
-              extras = {}
-            end
-
-            if extras['deleted_attachment_ids'].present?
-              Attachment.where(id: extras['deleted_attachment_ids']).destroy_all
-            end
+          list_file = []
+          list_file_names = []
+          container_id = -1
+          combined_image_filename = ''
+          Attachment.where(id: pm[:spectra_ids]).each do |att|
+            container = att.container
+            combined_image_filename = "#{container.name}.new_combined.png"
+            container_id = att.attachable_id
+            list_file_names.push(att.filename)
+            list_file.push(att.abs_path)
           end
-
-          origin_container = Container.find_by(id: pm[:container_id])
-
-          dataset_container =
-            if origin_container.container_type == 'dataset'
-              origin_container
-            else
-              origin_container.children.find { |c| c.container_type == 'dataset' }
-            end
-
-          is_update_mode = dataset_container.present?
-
-          unless is_update_mode
-            holder =
-              if origin_container && origin_container.container_type == 'dataset'
-                origin_container.parent
-              else
-                origin_container
-              end
-
-            unless holder
-              error!({ error: 'Container not found' }, 404)
-            end
-
-            dataset_container = Container.create!(
-              name: "Comparison #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}",
-              container_type: 'dataset',
-              parent_id: holder.id
-            )
-
-            pm[:spectra_ids].each do |att_id|
-              att = Attachment.find_by(id: att_id)
-              next unless att
-
-              new_att = Attachment.new(
-                filename: att.filename,
-                created_by: current_user.id,
-                created_for: current_user.id,
-                attachable_type: 'Container',
-                attachable_id: dataset_container.id
-              )
-
-              if att.attachment.present?
-                temp = att.attachment.download
-                new_att.file_path = temp.path
-                new_att.save!
-                temp.close
-                temp.unlink
-              end
-            end
-          end
-
-          target_container_id = dataset_container.id
-
-          if is_update_mode && pm[:edited_data_spectra].present?
-            dataset_attachments = dataset_container.attachments.index_by(&:id)
-
-            pm[:edited_data_spectra].each do |data|
-              target_att = dataset_attachments[data.dig(:si, :idx)]
-              next unless target_att
-
-              mol = Tempfile.new(['mol', '.mol'])
-              begin
-                new_jcamp, _ = Chemotion::Jcamp::Create.spectrum(
-                  target_att.abs_path,
-                  mol.path,
-                  false,
-                  data
-                )
-
-                if new_jcamp && File.exist?(new_jcamp.path)
-                  FileUtils.cp(new_jcamp.path, target_att.abs_path)
-                end
-              rescue StandardError => e
-                Rails.logger.error "Failed to update spectrum #{target_att.id}: #{e.message}"
-              ensure
-                mol.close
-                mol.unlink
-              end
-            end
-          end
-
-          spectra_attachments = dataset_container.attachments.reject { |a| a.filename.to_s.downcase.end_with?('.png', '.jpg') }
 
           _, image = Chemotion::Jcamp::CombineImg.combine(
-            spectra_attachments.map(&:abs_path),
-            pm[:front_spectra_idx],
-            spectra_attachments.map(&:filename),
-            extras
+            list_file, pm[:front_spectra_idx], list_file_names, pm[:extras]
           )
 
-          if image
-            dataset_container.attachments.where(filename: 'combined_image.png').destroy_all
-
-            Attachment.create!(
-              filename: 'combined_image.png',
+          content_type('application/json')
+          unless image.nil?
+            att = Attachment.find_by(filename: combined_image_filename, attachable_id: container_id)
+            att.destroy! unless att.nil?
+            att = Attachment.new(
+              filename: combined_image_filename,
+              created_by: current_user.id,
+              created_for: current_user.id,
               file_path: image.path,
               attachable_type: 'Container',
-              attachable_id: dataset_container.id,
-              created_by: current_user.id,
-              created_for: current_user.id
+              attachable_id: container_id,
             )
+            att.save!
           end
 
-          final_attachments = dataset_container.attachments.reload
-          analyses_compared = final_attachments
-                                .reject { |a| a.filename.to_s.downcase.end_with?('.png') }
-                                .map do |a|
-                                  {
-                                    file: { id: a.id },
-                                    dataset: { id: dataset_container.id },
-                                    analysis: { id: dataset_container.id }
-                                  }
-                                end
-
-          dataset_container.update_column(
-            :extended_metadata,
-            {
-              is_comparison: true,
-              analyses_compared: analyses_compared
-            }
-          )
-
-          dataset_json = Entities::ContainerEntity.represent(dataset_container).as_json
-
-          {
-            status: true,
-            dataset_id: dataset_container.id,
-            dataset: dataset_json,
-            analyses_compared: analyses_compared
-          }
-        rescue StandardError => e
-          Rails.logger.error "Error in combine_spectra: #{e.message}"
-          Rails.logger.error e.backtrace.join("\n")
-          error!({ error: 'Server Error', message: e.message }, 500)
+          { status: true }
         end
       end
-
 
       resource :predict do
         desc 'Predict NMR by peaks'

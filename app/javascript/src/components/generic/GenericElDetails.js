@@ -14,9 +14,7 @@ import {
 import { cloneDeep, findIndex, merge } from 'lodash';
 import Immutable from 'immutable';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import {
-  GenUIProvider, GenInterface, GenToolbar, browseElement
-} from 'chem-generic-ui';
+import { GenInterface, GenToolbar, browseElement } from 'chem-generic-ui';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -41,9 +39,9 @@ import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 
 const onNaviClick = (type, id) => {
-  const { currentCollection } = UIStore.getState();
+  const { currentCollection, isSync } = UIStore.getState();
   const { genericEls = [] } = UserStore.getState();
-  const elementAction = browseElement(currentCollection, false, type, id, genericEls);
+  const elementAction = browseElement(currentCollection, isSync, type, id, genericEls);
   if (elementAction != null && ElementActions[elementAction]) {
     ElementActions[elementAction](id);
   }
@@ -149,7 +147,16 @@ export default class GenericElDetails extends Component {
     el.name = el.name.trim();
 
     let ais = el.analysisContainers() || [];
-    ais = ais.filter((x) => !x.is_deleted).map((x) => x.id);
+    ais = ais
+      .filter((x) => !x.is_deleted)
+      .map((x, i) => {
+        if (x.extended_metadata) {
+          x.extended_metadata.index = i;
+        } else {
+          x.extended_metadata = { index: i };
+        }
+        return x.id;
+      });
     (Object.keys(el.properties.layers) || {}).forEach((key) => {
       if (el.properties.layers[key].ai) {
         el.properties.layers[key].ai = el.properties.layers[
@@ -336,18 +343,16 @@ export default class GenericElDetails extends Component {
     );
     return (
       <div>
-        <GenUIProvider>
-          <GenToolbar
-            generic={genericEl}
-            genericType="Element"
-            klass={genericEl.element_klass}
-            fnExport={this.handleExport}
-            fnReload={this.handleReload}
-            fnRetrieve={this.handleRetrieveRevision}
-            onExpandAll={this.handleExpandAll}
-          />
-          {layersLayout}
-        </GenUIProvider>
+        <GenToolbar
+          generic={genericEl}
+          genericType="Element"
+          klass={genericEl.element_klass}
+          fnExport={this.handleExport}
+          fnReload={this.handleReload}
+          fnRetrieve={this.handleRetrieveRevision}
+          onExpandAll={this.handleExpandAll}
+        />
+        {layersLayout}
         <EditUserLabels
           element={genericEl}
           fnCb={this.handleGenericElChanged}
@@ -412,9 +417,9 @@ export default class GenericElDetails extends Component {
     const { currentCollection } = UIStore.getState();
     const defCol =
       currentCollection &&
-        currentCollection.shared === false &&
-        currentCollection.is_locked === false &&
-        currentCollection.label !== 'All'
+      currentCollection.is_shared === false &&
+      currentCollection.is_locked === false &&
+      currentCollection.label !== 'All'
         ? currentCollection.id
         : null;
     const copyBtn =
@@ -548,7 +553,6 @@ export default class GenericElDetails extends Component {
               type={genericEl.type}
               availableTabs={Object.keys(tabContents)}
               onTabPositionChanged={this.onTabPositionChanged}
-              openedFromCollectionId={this.props.openedFromCollectionId}
             />
             <Tabs
               activeKey={activeTab}
@@ -566,7 +570,6 @@ export default class GenericElDetails extends Component {
 
 GenericElDetails.propTypes = {
   genericEl: PropTypes.object,
-  openedFromCollectionId: PropTypes.number,
 };
 
 GenericElDetails.defaultProps = {

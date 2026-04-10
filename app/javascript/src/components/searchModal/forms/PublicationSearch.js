@@ -12,9 +12,8 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 const PublicationSearch = () => {
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
-  const accordionItemClass = searchStore.searchResultsCount > 0 ? ' with-result' : '';
-  const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? 'active' + accordionItemClass : '';
-  const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active with-result' : '';
+  const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? 'active' : '';
+  const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active' : '';
 
   useEffect(() => {
     let referenceValues = searchStore.publicationSearchValues;
@@ -55,7 +54,7 @@ const PublicationSearch = () => {
   return (
     <Accordion defaultActiveKey={0} activeKey={searchStore.search_accordion_active_key} className="search-modal" flush>
       <Accordion.Item eventKey={0} className={activeSearchAccordionClass}>
-        <h2 className="accordion-header flex-shrink-0">
+        <h2 className="accordion-header">
           <AccordeonHeaderButtonForSearchForm
             title={panelVars.searchTitle}
             eventKey={0}
@@ -75,7 +74,7 @@ const PublicationSearch = () => {
         </Accordion.Collapse>
       </Accordion.Item>
       <Accordion.Item eventKey={1} className={`${panelVars.invisibleClassName}${activeResultAccordionClass}`}>
-        <h2 className="accordion-header flex-shrink-0">
+        <h2 className="accordion-header">
           <AccordeonHeaderButtonForSearchForm
             title={panelVars.resultTitle}
             eventKey={1}
@@ -83,7 +82,7 @@ const PublicationSearch = () => {
             callback={togglePanel(searchStore)}
           />
         </h2>
-        <Accordion.Collapse eventKey={1} className="search-result-body">
+        <Accordion.Collapse eventKey={1}>
           <div className="accordion-body">
             <SearchResult
               handleClear={() => handleClear(searchStore)}

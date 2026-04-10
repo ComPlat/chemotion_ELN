@@ -9,7 +9,6 @@ import SelectFieldData from './SelectFieldData';
 import { mapperFields, unitMapperFields } from './SelectMapperData';
 import { statusOptions, temperatureOptions, durationOptions } from 'src/components/staticDropdownOptions/options';
 import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SelectOptions';
-import { deviceDescriptionSelectOptions } from 'src/apps/mydb/elements/details/deviceDescriptions/SelectOptions';
 
 const AdvancedSearchRow = ({ idx }) => {
   const searchStore = useContext(StoreContext).search;
@@ -18,7 +17,7 @@ const AdvancedSearchRow = ({ idx }) => {
   let mapperOptions = mapperFields;
   let fieldOptions = [];
 
-  if (['sequence_based_macromolecule_samples', 'device_descriptions'].includes(searchElement.table)) {
+  if (searchElement.table === 'sequence_based_macromolecule_samples') {
     fieldOptions = SelectFieldData[searchElement.table];
   } else {
     fieldOptions = SelectFieldData.fields[searchElement.table];
@@ -43,7 +42,6 @@ const AdvancedSearchRow = ({ idx }) => {
 
   const { rxnos } = UserStore.getState();
   const functionOrApplicationOptions = selectOptions['sample_function_or_application'];
-  const generalTagsOptions = deviceDescriptionSelectOptions['device_tags'];
 
   const formElementValue = (formElement, e) => {
     switch (formElement) {
@@ -221,19 +219,6 @@ const AdvancedSearchRow = ({ idx }) => {
               options={functionOrApplicationOptions}
               placeholder="Select function or application"
               value={functionOrApplicationOptions.filter(({ value }) => value == selection.value)}
-              isClearable={false}
-              onChange={onChange('value')}
-            />
-          </div>
-        );
-        break;
-      case 'general_tags':
-        return (
-          <div className="value-field-select">
-            <Select
-              options={generalTagsOptions}
-              placeholder="Select tags"
-              value={generalTagsOptions.filter(({ value }) => value == selection.value)}
               isClearable={false}
               onChange={onChange('value')}
             />

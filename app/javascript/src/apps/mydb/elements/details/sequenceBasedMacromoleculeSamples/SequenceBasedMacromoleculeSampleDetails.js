@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import PropTypes from 'prop-types';
 import {
   Alert, Button, Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
@@ -22,7 +21,6 @@ import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import CopyElementModal from 'src/components/common/CopyElementModal';
-import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 import Immutable from 'immutable';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
@@ -33,12 +31,13 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import CollectionUtils from 'src/models/collection/CollectionUtils';
 
-const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => {
+const SequenceBasedMacromoleculeSampleDetails = () => {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
   let sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
 
-  const { currentCollection } = UIStore.getState();
+  const { currentCollection, isSync } = UIStore.getState();
   const { currentUser } = UserStore.getState();
 
   const [visibleTabs, setVisibleTabs] = useState(Immutable.List());
@@ -80,7 +79,15 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
     attachments: 'Attachment',
   };
 
-  const isReadOnly = () => !collectionHasPermission(currentCollection, 0);
+  const isReadOnly = () => {
+    if (!currentCollection) { return false; }
+
+    return CollectionUtils.isReadOnly(
+      currentCollection,
+      currentUser.id,
+      isSync
+    );
+  }
 
   const disabled = (index) => {
     return sbmmSample.isNew && index !== 0 ? true : false;
@@ -171,6 +178,8 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
 
   const sbmmSampleHeader = () => {
     const titleTooltip = formatTimeStampsOfElement(sbmmSample || {});
+    const defCol = currentCollection && currentCollection.is_shared === false
+      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
     return (
       <div className="d-flex align-items-center justify-content-between">
@@ -201,7 +210,12 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
               eventableId={sbmmSample.id}
               eventableType="SequenceBasedMacromoleculeSample"
             />}
-          <CopyElementModal element={sbmmSample} />
+          {sbmmSample.can_copy && !sbmmSample.isNew && (
+            <CopyElementModal
+              element={sbmmSample}
+              defCol={defCol}
+            />
+          )}
           {sbmmSample.isEdited && (
             <OverlayTrigger
               placement="bottom"
@@ -246,14 +260,12 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
           availableTabs={Object.keys(tabContentComponents)}
           tabTitles={tabTitles}
           onTabPositionChanged={onTabPositionChanged}
-          openedFromCollectionId={openedFromCollectionId}
         />
         <Tabs
           activeKey={sbmmStore.active_tab_key}
           onSelect={key => handleTabChange(key)}
           id="sbmmSampleSampleDetailsTab"
           unmountOnExit
-          className="has-config-overlay"
         >
           {tabContents}
         </Tabs>
@@ -268,9 +280,5 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
     </DetailCard>
   );
 }
-
-SequenceBasedMacromoleculeSampleDetails.propTypes = {
-  openedFromCollectionId: PropTypes.number,
-};
 
 export default observer(SequenceBasedMacromoleculeSampleDetails);

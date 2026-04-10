@@ -11,5 +11,4 @@ export const CellLinePropTypeTableEntry = PropTypes.shape({
     bioSafetyLevel:PropTypes.string.isRequired,
     cryopreservationMedium:PropTypes.string.isRequired,
     gender:PropTypes.string.isRequired,
-    can_copy: PropTypes.bool,
-});
+})

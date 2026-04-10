@@ -142,7 +142,7 @@ class Sample < ApplicationRecord
   }
   scope :by_exact_name, lambda { |query|
                           sanitized_query = "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$"
-                          where('lower(samples.name) ~* lower(?) or lower(samples.external_label) ~* lower(?)',
+                          where('lower(name) ~* lower(?) or lower(external_label) ~* lower(?)',
                                 sanitized_query, sanitized_query)
                         }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
@@ -262,6 +262,7 @@ class Sample < ApplicationRecord
   has_many :residues, dependent: :destroy
   has_many :elemental_compositions, dependent: :destroy
 
+  has_many :sync_collections_users, through: :collections
   composed_of :amount, mapping: %w[amount_value amount_unit]
 
   has_ancestry orphan_strategy: :adopt
@@ -518,7 +519,6 @@ class Sample < ApplicationRecord
   def attach_svg(svg = sample_svg_file)
     return if svg.blank?
 
-    svg = File.basename(svg) if svg.include?('/')
     svg_file_name = "#{SecureRandom.hex(64)}.svg"
 
     if /\ATMPFILE[0-9a-f]{64}.svg\z/.match?(svg)
@@ -672,17 +672,10 @@ class Sample < ApplicationRecord
     filename = File.basename(svg_path)
     return { success: false, error: 'Invalid filename', status: 400 } if filename.match?(%r{\.\.|/|\\})
 
-    target_path = Rails.public_path.join('images', 'samples', filename)
-    if File.file?(target_path)
-      existing_svg = File.read(target_path)
-      if existing_svg.include?('<image') || existing_svg.include?('epam-ketcher-ssc')
-        return { success: true, filename: filename }
-      end
-    end
-
     svg = Molecule.svg_reprocess(nil, molfile)
     return { success: false, error: 'Failed to generate SVG from molfile', status: 422 } if svg.blank?
 
+    target_path = Rails.public_path.join('images', 'samples', filename)
     FileUtils.mkdir_p(File.dirname(target_path))
     File.write(target_path, svg)
     { success: true, filename: filename }

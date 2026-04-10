@@ -7,28 +7,7 @@ class SpectraActions {
     return null;
   }
 
-  ToggleCompareModal(container) {
-    return container;
-  }
-
-
   LoadSpectra(spcInfos) {
-    const idxs = spcInfos && spcInfos.map(si => si.idx);
-    if (idxs.length === 0) {
-      return null;
-    }
-
-    return (dispatch) => {
-      AttachmentFetcher.fetchFiles(idxs)
-        .then((fetchedFiles) => {
-          dispatch({ fetchedFiles, spcInfos });
-        }).catch((errorMessage) => {
-          console.log(errorMessage); // eslint-disable-line
-        });
-    };
-  }
-
-  LoadSpectraCompare(spcInfos) {
     const idxs = spcInfos && spcInfos.map(si => si.idx);
     if (idxs.length === 0) {
       return null;
@@ -56,9 +35,9 @@ class SpectraActions {
     };
   }
 
-  SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false, waveLengthStr, cyclicvolta, curveIdx = 0, simulatenmr = false, previousSpcInfos, isSaveCombined = false, axesUnitsStr, detector, dscMetaData, onSaved) {
+  SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false, waveLengthStr, cyclicvolta, curveIdx = 0, simulatenmr = false, previousSpcInfos, isSaveCombined = false, axesUnitsStr, detector, dscMetaData, lcmsPeaksStr, lcmsIntegralsStr, lcmsUvvisWavelength, lcmsMzPage, lcmsMzPageData, onSaved) {
     return (dispatch) => {
-      AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred, waveLengthStr, cyclicvolta, curveIdx, simulatenmr, previousSpcInfos, isSaveCombined, axesUnitsStr, detector, dscMetaData)
+      AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred, waveLengthStr, cyclicvolta, curveIdx, simulatenmr, previousSpcInfos, isSaveCombined, axesUnitsStr, detector, dscMetaData, lcmsPeaksStr, lcmsIntegralsStr, lcmsUvvisWavelength, lcmsMzPage, lcmsMzPageData)
         .then((fetchedFiles) => {
           dispatch({ fetchedFiles, spcInfo });
           if (onSaved) {
@@ -219,23 +198,6 @@ class SpectraActions {
         console.error('LoadSpectraForNMRDisplayer failed:', error);
       }
     };
-  }
-
-  SaveMultiSpectraComparison(jcampIds, containerId, curveIdx = 0, editedDataSpectra = [], cb = () => { }) {
-    return (dispatch) => {
-      AttachmentFetcher.combineSpectra(jcampIds, containerId, curveIdx, editedDataSpectra)
-        .then((response) => {
-          if (response && response.new_attachment_ids) {
-            dispatch(response);
-          } else {
-            dispatch({ new_attachment_ids: [] });
-          }
-          const datasetId = response && response.dataset_id ? response.dataset_id : null;
-          if (typeof cb === 'function') cb(response);
-        }).catch((errorMessage) => {
-          console.log(errorMessage); // eslint-disable-line
-        })
-    }
   }
 }
 

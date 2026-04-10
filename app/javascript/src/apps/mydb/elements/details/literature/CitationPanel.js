@@ -108,6 +108,7 @@ function CitationPanel(props) {
     <Accordion defaultActiveKey="0" className='mb-4'>
       <Accordion.Item eventKey="0">
         <Accordion.Header>
+          &bull;&nbsp;
           {citationMap.def}
         </Accordion.Header>
         <Accordion.Body>

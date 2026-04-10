@@ -1,67 +1,41 @@
 import {
   ListGroup, Button, ButtonToolbar, Form
 } from 'react-bootstrap';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 
 import { DatasetDropZone } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { FileContainer, ZipFileContainer } from 'src/apps/mydb/elements/details/analyses/FileManager';
 import ElementContainer from 'src/models/Container';
 import { addNewAnalyses, createDataset, createAttachements } from 'src/apps/mydb/elements/details/analyses/utils';
-import PropTypes from 'prop-types';
-import OlsTreeSelect from '../../../../../components/OlsComponent';
 
 class ContainerWrapper {
-  static newWrapper(name = 'New', kind = '') {
+  static newWarpper(name) {
     return new ContainerWrapper({
       id: null,
-      name,
+      name: name ?? 'New',
       description: '',
-      children: [],
-      extended_metadata: { kind }
+      children: []
     });
   }
 
   constructor({
-    id, name, description, children, files,
-    // eslint-disable-next-line camelcase
-    extended_metadata = {}
+    id, name, description, children, files
   }) {
     this.id = id ?? ElementContainer.buildID();
     this.name = name;
     this.description = description;
     this.files = files ?? [];
-    // eslint-disable-next-line camelcase
-    this.extended_metadata = extended_metadata;
-    this.children = children.filter((x) => x.container_type === 'dataset' || x instanceof ContainerWrapper)
-      .map((x) => (x instanceof ContainerWrapper ? x : new ContainerWrapper(x)));
+    this.children = children.filter((x) => x.container_type === 'dataset' || x instanceof ContainerWrapper).map((x) => (x instanceof ContainerWrapper ? x : new ContainerWrapper(x)));
   }
 
   addChild() {
-    this.children.push(ContainerWrapper.newWrapper());
+    this.children.push(ContainerWrapper.newWarpper());
   }
 }
 
 function AnalysisListItem({
   backgroundColor, container, setContainer, addContainer, removeContainer
 }) {
-  const handlesSetOntology = (ev) => {
-    let kind = (ev || '');
-    kind = `${kind.split('|')[0].trim()} | ${(kind.split('|')[1] || '').trim()}`;
-
-    setContainer((x) => {
-      let extendedMetadata = x.extended_metadata;
-      if (!extendedMetadata) {
-        extendedMetadata = {};
-      }
-      return {
-        ...x,
-        extended_metadata: {
-          ...extendedMetadata,
-          kind
-        }
-      };
-    });
-  };
   return (
     <ListGroup.Item
       style={{
@@ -77,7 +51,7 @@ function AnalysisListItem({
         style={{ overflow: 'hidden' }}
       >
         <Form.Group controlId="formName">
-          <h3>Analysis</h3>
+          <Form.Label>Analysis</Form.Label>
           <Button
             size="xsm"
             type="button"
@@ -88,24 +62,12 @@ function AnalysisListItem({
           >
             <i className="fa fa-trash" />
           </Button>
-        </Form.Group>
-        <Form.Group controlId="formName">
-          <Form.Label>Name</Form.Label>
           <Form.Control
             className="mt-1"
             type="text"
             placeholder="Name of the analysis"
             value={container.name}
             onChange={(e) => setContainer((x) => ({ ...x, name: e.target.value }))}
-          />
-        </Form.Group>
-        <Form.Group controlId="formOLS">
-          <Form.Label>Type (Chemical Methods Ontology)</Form.Label>
-          <OlsTreeSelect
-            selectName="chmo"
-            selectedValue={container.extended_metadata?.kind || ''}
-            onSelectChange={handlesSetOntology}
-            selectedDisable={false}
           />
         </Form.Group>
         <div className="label--bold">
@@ -121,19 +83,16 @@ function AnalysisListItem({
 
         </div>
         {container.children.map((ds) => (
-          <DatasetListItem
+          <DatasestListItem
             key={ds.id}
             dataset={ds}
             droppedPaths={ds.files}
             removeDataset={(datasetId) => setContainer((x) => {
-              const children = x.children.filter((child) => child.id !== datasetId).map((child, idx) => new ContainerWrapper({
-                ...child,
-                name: `Dataset #${idx + 1}`
-              }));
+              const children = x.children.filter((child) => child.id !== datasetId).map((child, idx) => new ContainerWrapper({ ...child, name: `Dataset #${idx + 1}` }));
               return { ...x, children };
             })}
             setDroppedPaths={(files) => setContainer((x) => {
-              const children = x.children.map((child) => {
+              const children = x.children.map((child, idx) => {
                 if (ds.id !== child.id) {
                   return child;
                 }
@@ -149,7 +108,7 @@ function AnalysisListItem({
   );
 }
 
-function DatasetListItem({
+function DatasestListItem({
   dataset, droppedPaths, setDroppedPaths, removeDataset
 }) {
   return (
@@ -172,81 +131,67 @@ function DatasetListItem({
   );
 }
 
-DatasetListItem.propTypes = {
-  dataset: PropTypes.func.isRequired,
-  setDroppedPaths: PropTypes.func.isRequired,
-  droppedPaths: PropTypes.arrayOf(PropTypes.string).isRequired,
-  removeDataset: PropTypes.func.isRequired
-};
-
 function AdvancedAnalysesList({
   handleClose, setConsumedPaths, listedFiles, setElement
 }) {
   const [analContainerList, setAnalContainer] = useState([]);
-  const wrapperSetAnaContainer = (val) => {
+  const wrapperSetAnaContiainer = (val) => {
     const changedVal = typeof val === 'function' ? val(analContainerList) : val;
     setAnalContainer(changedVal);
     setConsumedPaths(changedVal.map((ana) => ana.children.map((ds) => ds.files)).flat(Infinity));
   };
   const addAnalyses = useCallback(() => {
-    const newWrapper = ContainerWrapper.newWrapper();
-    newWrapper.children.push(ContainerWrapper.newWrapper('Dataset #1'));
-    wrapperSetAnaContainer((x) => [...x, newWrapper]);
-  }, [analContainerList]);
+    wrapperSetAnaContiainer((x) => [...x, ContainerWrapper.newWarpper()]);
+  });
 
   const emptyAnalyses = useCallback(() => {
-    wrapperSetAnaContainer(() => []);
-  }, []);
+    wrapperSetAnaContiainer((x) => []);
+  });
 
   const removeContainer = useCallback((toRemoveId) => {
-    wrapperSetAnaContainer((x) => x.filter((container) => container.id !== toRemoveId));
-  }, []);
+    wrapperSetAnaContiainer((x) => x.filter((container) => container.id !== toRemoveId));
+  });
 
   const execute = useCallback(() => {
     setElement((element) => {
-      const preprocessAnaContainer = analContainerList.map((ana) => {
+      const preprocesdAnaContainer = analContainerList.map((ana) => {
         const datasets = ana.children.filter((ds) => ds.files.length > 0);
-        if (datasets.length === 0) {
-          return null;
+        if (datasets.length == 0) {
+          return;
         }
         const anaContainer = addNewAnalyses(element);
         anaContainer.name = ana.name;
-        anaContainer.extended_metadata.kind = ana.extended_metadata.kind;
         anaContainer.id = ana.id;
         const newDsObj = datasets.map((ds) => {
           const fileObjs = ds.files.map((fp) => ({ fp, fa: FileContainer.pathAsArray(fp) })).map(({ fp, fa }) => {
             const findParentAndChild = (fl, fa, idx) => {
-              let fileList = fl;
-              let iteratorIdx = idx;
-              // eslint-disable-next-line no-constant-condition
               while (true) {
-                const loopIdx = iteratorIdx;
-                const newFileList = fl.filter((fileObj) => fileObj.fullPathArray[loopIdx] === fa[loopIdx]);
-                if (newFileList.length) {
-                  fileList = newFileList;
-                  iteratorIdx += 1;
+                const new_fl = fl.filter((fileObj) => fileObj.fullPathArray[idx] === fa[idx]);
+                if (new_fl.length) {
+                  fl = new_fl;
+                  idx += 1;
                 } else {
                   break;
                 }
 
-                if (iteratorIdx === fa.length) {
+                if (idx === fa.length) {
                   break;
                 }
               }
-              const child = fileList[0];
-              if (iteratorIdx >= fa.length) {
+              const child = fl[0];
+              if (idx >= fa.length) {
                 return { child };
               }
 
-              const result = findParentAndChild(child.subFiles, fa, iteratorIdx);
-              if (iteratorIdx === fa.length - 1) {
+              const result = findParentAndChild(child.subFiles, fa, idx);
+              if (idx === fa.length - 1) {
                 result.parent = child;
               }
               return result;
             };
             const { parent, child } = findParentAndChild(listedFiles, fa, 0);
             if (parent) {
-              parent.subFiles = parent.subFiles.filter((fileObj) => fileObj !== child);
+              parent.subFiles = parent.subFiles.filter((fileObj) => fileObj != child);
             }
 
             child.moveUpToRoot();
@@ -262,7 +207,7 @@ function AdvancedAnalysesList({
         return { anaContainer, newDsObj };
       });
 
-      preprocessAnaContainer.forEach(({ newDsObj }) => {
+      preprocesdAnaContainer.forEach(async ({ anaContainer, newDsObj }) => {
         newDsObj.forEach(async ({ datasetContainer, fileObjs }) => {
           let file = null;
 
@@ -273,14 +218,13 @@ function AdvancedAnalysesList({
           }
           const newAttachments = createAttachements([file]);
           datasetContainer.attachments.push(...newAttachments);
-          return true;
         });
       });
 
       return element;
     });
     handleClose();
-  }, [analContainerList]);
+  });
 
   return (
     <>
@@ -309,7 +253,7 @@ function AdvancedAnalysesList({
       >
         {analContainerList.map((anaContainer, index) => {
           const setContainer = (changedX) => {
-            wrapperSetAnaContainer((x) => {
+            wrapperSetAnaContiainer((x) => {
               let changedXVal = typeof changedX === 'function' ? changedX({ ...x[index] }) : changedX;
               changedXVal = changedXVal instanceof ContainerWrapper ? changedXVal : new ContainerWrapper(changedXVal);
               return x.map((item, i) => (i === index ? changedXVal : item));
@@ -318,7 +262,7 @@ function AdvancedAnalysesList({
 
           const addDataset = () => {
             setContainer((x) => {
-              const children = [...x.children, ContainerWrapper.newWrapper(`Dataset #${x.children.length + 1}`)];
+              const children = [...x.children, ContainerWrapper.newWarpper(`Dataset #${x.children.length + 1}`)];
               return { ...x, children };
             });
           };
@@ -339,14 +283,6 @@ function AdvancedAnalysesList({
   );
 }
 
-AdvancedAnalysesList.propTypes = {
-  handleClose: PropTypes.func.isRequired,
-  setConsumedPaths: PropTypes.func.isRequired,
-  listedFiles: PropTypes.arrayOf(FileContainer).isRequired,
-  setElement: PropTypes.func.isRequired
-};
-
 export {
-  // eslint-disable-next-line import/prefer-default-export
   AdvancedAnalysesList
 };

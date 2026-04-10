@@ -4,13 +4,14 @@ import {
   Form, Button, Row, Col, InputGroup, Tabs, Tab, ButtonToolbar
 } from 'react-bootstrap';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import Aviator from 'aviator';
 import VesselSuggestProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselSuggestProperties';
 import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperty';
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import { getSnapshot } from 'mobx-state-tree';
-import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
   const { vesselDetailsStore } = useContext(StoreContext);
@@ -86,11 +87,14 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
       if (!Array.isArray(group) || group.length === 0) return;
 
       const template = group[0];
+      const { currentCollection } = UIStore.getState();
+      const collectionId = currentCollection?.id;
+
       const snapshot = getSnapshot(vesselItem);
       const vesselWithType = { ...snapshot, type: 'vessel_template' };
       DetailActions.close(vesselWithType, true);
 
-      aviatorNavigation('vessel_template', template.vesselTemplateId, false, false);
+      Aviator.navigate(`/collection/${collectionId}/vessel_template/${template.vesselTemplateId}`);
     });
   };
 
@@ -150,7 +154,7 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
           {renderCloseHeaderButton()}
         </div>
       </div>
-    )}
+      )}
     >
       <div className="tabs-container--with-borders">
         <Tabs activeKey={activeTab} onSelect={handleTabChange} id="vessel-details-tab">
@@ -168,9 +172,9 @@ function VesselTemplateCreate({ vesselItem: initialVesselItem }) {
               />
 
               {nameFocused && isDuplicate && (
-                <div className="text-danger mb-3 ms-2">
-                  A vessel template with this name already exists. Please choose a unique name.
-                </div>
+              <div className="text-danger mb-3 ms-2">
+                A vessel template with this name already exists. Please choose a unique name.
+              </div>
               )}
 
               <VesselSuggestProperties

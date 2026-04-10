@@ -7,7 +7,6 @@ require 'digest'
 
 module Chemotion
   class AttachmentAPI < Grape::API # rubocop:disable Metrics/ClassLength
-    helpers ContainerHelpers
     helpers do
       def thumbnail_obj(att)
         { id: att.id, thumbnail: att.thumbnail_base64 }
@@ -41,6 +40,14 @@ module Chemotion
 
         old_att&.destroy
       end
+
+      def remove_generated_children(att)
+        Attachment.children_of(att.id).find_each do |child|
+          next unless writable?(child)
+
+          child.destroy
+        end
+      end
     end
 
     rescue_from ActiveRecord::RecordNotFound do |_error|
@@ -52,9 +59,9 @@ module Chemotion
       before do
         @container = Container.find_by(id: params[:container_id])
         element = @container.root.containable
-        policy = ElementPolicy.new(current_user, element)
-        can_read = policy.read?
-        can_dwnld = can_read && policy.read_dataset?
+        can_read = ElementPolicy.new(current_user, element).read?
+        can_dwnld = can_read &&
+                    ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
         error!('401 Unauthorized', 401) unless can_dwnld
       end
       desc 'Download the dataset attachment file'
@@ -78,7 +85,7 @@ module Chemotion
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
 
-        # rubocop:disable Performance/StringInclude, Metrics/BlockNesting
+        # rubocop:disable Performance/StringInclude
         case request.env['REQUEST_METHOD']
         when /delete/i
           error!('401 Unauthorized', 401) unless writable?(@attachment)
@@ -87,24 +94,23 @@ module Chemotion
           if /zip/.match?(request.url)
             @container = Container.find(params[:container_id])
             if (element = @container.root.containable)
-              policy = ElementPolicy.new(current_user, element)
-              can_read = policy.read?
+              can_read = ElementPolicy.new(current_user, element).read?
               can_dwnld = can_read &&
-                          policy.read_dataset?
+                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
           elsif /\bsample_analyses\b/.match?(request.url)
             @sample = Sample.find(params[:sample_id])
             if (element = @sample)
-              policy = ElementPolicy.new(current_user, element)
-              can_read = policy.read?
-              can_dwnld = can_read && policy.read_dataset?
+              can_read = ElementPolicy.new(current_user, element).read?
+              can_dwnld = can_read &&
+                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
           elsif /device_description_analyses/.match?(request.url)
             @device_description = DeviceDescription.find(params[:device_description_id])
             if (element = @device_description)
-              policy = ElementPolicy.new(current_user, element)
-              can_read = policy.read?
-              can_dwnld = can_read && policy.read_dataset?
+              can_read = ElementPolicy.new(current_user, element).read?
+              can_dwnld = can_read &&
+                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
           elsif /\bsequence_based_macromolecule_sample_analyses\b/.match?(request.url)
             @sequence_based_macromolecule_sample =
@@ -115,27 +121,24 @@ module Chemotion
                           ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
           elsif @attachment
+
             can_dwnld = @attachment.container_id.nil? && @attachment.created_for == current_user.id
 
             if !can_dwnld && (element = @attachment.container&.root&.containable || @attachment.attachable)
               can_dwnld = if element.is_a?(Container)
                             false
                           else
-                            # I have no idea on how to fix this code? a User is not an element so it
-                            # makes no sense to even try using ElementPolicy.
-                            # So I just replaced ElementPermissionProxy with ElementPolicy, so it won't crash
-                            policy = ElementPolicy.new(current_user, element)
                             (element.is_a?(User) && (element == current_user)) ||
                               (
-                                policy.read? &&
-                                policy.read_dataset?
+                                ElementPolicy.new(current_user, element).read? &&
+                              ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
                               )
                           end
             end
           end
           error!('401 Unauthorized', 401) unless can_dwnld
         end
-        # rubocop:enable Performance/StringInclude, Metrics/BlockNesting
+        # rubocop:enable Performance/StringInclude
       end
 
       desc 'Bulk Delete Attachments'
@@ -264,26 +267,7 @@ module Chemotion
           begin
             attach.save!
             attach_ary.push(attach.id)
-            match, variation = attach.resolve_unique_match
-
-            if match # auto assign to element
-              analysis_name = attach.filename.chomp(File.extname(attach.filename))
-              dataset = match.container.analyses_container.create_analysis_with_dataset!(name: analysis_name)
-              attach.update!(attachable: dataset)
-              type = match.model_name.singular
-              @link = "#{Rails.application.config.root_url}/mydb/collection/all/#{type}/#{match.id}"
-              match.assign_attachment_to_variation(variation, dataset.parent_id) if match.is_a?(Reaction)
-
-              Message.create_msg_notification(
-                channel_subject: Channel::ASSIGN_INBOX_TO_SAMPLE,
-                message_from: current_user.id,
-                data_args: { filename: attach.filename, info: "#{match.short_label} #{match.name}" },
-                url: @link,
-                level: 'success',
-              )
-            end
-          rescue StandardError => e
-            Rails.logger.error(e)
+          rescue StandardError
             status 413
           ensure
             tempfile.close
@@ -464,9 +448,8 @@ module Chemotion
           att = Attachment.find(a_id)
           can_dwnld = if att
                         element = att.container.root.containable
-                        policy = ElementPolicy.new(current_user, element)
-                        can_read = policy.read?
-                        can_read && policy.read_dataset?
+                        can_read = ElementPolicy.new(current_user, element).read?
+                        can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
                       end
           can_dwnld ? thumbnail_obj(att) : nil
         end
@@ -482,9 +465,8 @@ module Chemotion
           att = Attachment.find(a_id)
           can_dwnld = if att
                         element = att.container.root.containable
-                        policy = ElementPolicy.new(current_user, element)
-                        can_read = policy.read?
-                        can_read && policy.read_dataset?
+                        can_read = ElementPolicy.new(current_user, element).read?
+                        can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
                       end
           can_dwnld ? raw_file_obj(att) : nil
         end
@@ -508,6 +490,7 @@ module Chemotion
           next unless writable?(att)
 
           remove_duplicated(att)
+          remove_generated_children(att)
 
           att.set_regenerating
           att.save
@@ -538,18 +521,8 @@ module Chemotion
           result = Chemotion::Jcamp::RegenerateJcamp.spectrum(
             att.abs_path, t_molfile.path
           )
-          io = StringIO.new(result)
-          io.rewind
-
-          att.attachment_attacher.attach(
-            io,
-            metadata: {
-              'filename' => att.filename,
-              'mime_type' => att.content_type || 'chemical/x-jcamp-dx',
-            },
-          )
-
-          att.save!
+          att.file_data = result
+          att.rewrite_file_data!
         end
         t_molfile.close
         t_molfile.unlink
@@ -579,11 +552,25 @@ module Chemotion
         optional :axesUnits, type: String
         optional :detector, type: String
         optional :dscMetaData, type: String
+        optional :lcms_uvvis_wavelength, type: String
+        optional :lcms_mz_page, type: String
+        optional :lcms_mz_page_data
       end
       post 'save_spectrum' do
+        lcms_data = params[:lcms_mz_page_data]
+        if lcms_data.respond_to?(:read)
+          params[:lcms_mz_page_data] = lcms_data.read
+        elsif lcms_data.is_a?(Hash) && lcms_data[:tempfile]
+          params[:lcms_mz_page_data] = lcms_data[:tempfile].read
+        end
+
         jcamp_att = @attachment.generate_spectrum(
           false, false, params
         )
+        unless jcamp_att.is_a?(Attachment)
+          Rails.logger.error("save_spectrum failed for attachment #{@attachment&.id}: #{jcamp_att.inspect}")
+          error!({ error: 'Spectrum generation failed' }, 422)
+        end
         { files: [raw_file_obj(jcamp_att)] }
       end
 
@@ -611,6 +598,10 @@ module Chemotion
         jcamp_att = @attachment.generate_spectrum(
           false, false, params
         )
+        unless jcamp_att.is_a?(Attachment)
+          Rails.logger.error("infer_spectrum failed for attachment #{@attachment&.id}: #{jcamp_att.inspect}")
+          error!({ error: 'Spectrum generation failed' }, 422)
+        end
         { files: [raw_file_obj(jcamp_att)], predict: predict }
       end
 

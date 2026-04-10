@@ -4,7 +4,7 @@ import { compose } from 'redux';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions.js';
-import { aviatorNavigation } from 'src/utilities/routesUtils';
+import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
 
 const updRxnOriName = (oriRxn, sourceTag) => {
   const nextRxn = oriRxn;
@@ -48,7 +48,7 @@ const dndStyle = (canDrop, isOver) => {
 };
 
 const showReaction = (reaction) => {
-  aviatorNavigation(reaction.type, reaction.id, true, false);
+  UrlSilentNavigation(reaction);
   ElementActions.fetchReactionById(reaction.id);
 }
 

@@ -9,7 +9,9 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { handleFloatNumbers } from 'src/utilities/UnitsConversion';
 import moment from 'moment';
 import { v4 as uuid } from 'uuid';
-import { aviatorNavigation } from 'src/utilities/routesUtils';
+
+import { elementShowOrNew } from 'src/utilities/routesUtils';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 const valueByType = (type, event) => {
   let value = [];
@@ -186,7 +188,7 @@ const LinkedComponent = ({ element, entry }) => {
           tabIndex={0}
           variant="link"
           className="text-nowrap p-0"
-          onClick={() => aviatorNavigation('device_description', element.device_description_id, true, true)}
+          onClick={() => handleClickOnUrl('device_description', element.device_description_id)}
         >
           {element.url}
         </Button>  
@@ -240,6 +242,19 @@ const deleteComponentButton = (element, store, field, type, i) => {
       <i className="fa fa-trash-o" />
     </Button>
   );
+}
+
+const handleClickOnUrl = (type, id) => {
+  const { currentCollection, isSync } = UIStore.getState();
+  const uri = isSync
+    ? `/scollection/${currentCollection.id}/${type}/${id}`
+    : `/collection/${currentCollection.id}/${type}/${id}`;
+  Aviator.navigate(uri, { silent: true });
+  const e = { type, params: { collectionID: currentCollection.id } };
+  e.params[`${type}ID`] = id;
+  elementShowOrNew(e);
+
+  return null;
 }
 
 const componentInput = (element, store, label, field, type, rowFields, info) => {

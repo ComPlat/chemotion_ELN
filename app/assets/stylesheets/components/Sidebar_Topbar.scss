@@ -1,7 +1,8 @@
-$topbar-height: 35px;
+$sidebar-logo-height: 72px;
 
 .topbar {
-  background-color: $chemstrap-graphite;
+  min-height: $sidebar-logo-height;
+  @extend .surface-lighten4;
 }
 
 .sidebar {
@@ -13,11 +14,11 @@ $topbar-height: 35px;
     width: 44px;
     .sidebar-logo {
       @extend .justify-content-center;
-      margin-left: 0.25rem;
+      @extend .ms-0;
     }
   }
   &-logo {
-    height: 72px;
+    height: $sidebar-logo-height;
     margin-left: 0.75rem;
     @extend .d-flex;
     @extend .align-items-center;
@@ -30,7 +31,7 @@ $topbar-height: 35px;
     @extend .pb-4;
   }
   &-collapse-button-container {
-    margin-top: $topbar-height; //align under topbar
+    margin-top: $sidebar-logo-height; //hack to compensate header height
     @extend .d-flex;
     @extend .flex-column;
     @extend .justify-content-center;
@@ -51,9 +52,6 @@ $topbar-height: 35px;
     font-size: 16px;
     i {
       font-size: 18px;
-    }
-    &:first-child {
-      @extend .mt-0;
     }
     &__badge {
       font-size: 10px;
@@ -78,6 +76,19 @@ $topbar-height: 35px;
     $chemstrap-silicon-active2,
     $body-color
   );
+  &.sidebar-button--has-badge {
+    @include button-variant(
+      mix(map-get($silicon-shades, lighten4), shade-color($warning, 20), 85),
+      mix(map-get($silicon-shades, lighten4), shade-color($warning, 20), 85),
+      $body-color,
+      mix($chemstrap-silicon-hover2, shade-color($warning, 20), 85),
+      mix($chemstrap-silicon-hover2, shade-color($warning, 20), 85),
+      $body-color,
+      mix($chemstrap-silicon-active2, shade-color($warning, 20), 85),
+      mix($chemstrap-silicon-active2, shade-color($warning, 20), 85),
+      $body-color
+    );
+  }
   &.sidebar-button--expandable {
     .expand-icon {
       display: none;
@@ -95,22 +106,6 @@ $topbar-height: 35px;
       }
     }
   }
-}
-
-.btn-topbar {
-  @include button-variant(
-    transparent,
-    transparent,
-    $white,
-    $chemstrap-graphite-hover,
-    $chemstrap-graphite-hover,
-    $white,
-    $chemstrap-graphite-active,
-    $chemstrap-graphite-active,
-    $white
-  );
-  @extend .rounded-0;
-  height: $topbar-height;
 }
 
 .collection-management-button {

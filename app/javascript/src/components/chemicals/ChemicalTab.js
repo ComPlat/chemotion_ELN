@@ -1502,11 +1502,11 @@ export default class ChemicalTab extends React.Component {
           </Col>
         </Row>
         <Row className="mb-3">
-          <Col sm={3}>
+          <Col>
             {this.textInput(data, 'Person', 'person')}
           </Col>
-          <Col sm={6}>
-            <ButtonGroup className="flex-wrap" style={{ marginBottom: '0.79rem' }}>
+          <Col sm={4}>
+            <ButtonGroup className="mb-2">
               <ButtonGroupToggleButton
                 onClick={() => this.setState({ switchRequiredOrderedDate: 'required' })}
                 active={switchRequiredOrderedDate === 'required'}
@@ -1528,26 +1528,10 @@ export default class ChemicalTab extends React.Component {
               >
                 Expiration date
               </ButtonGroupToggleButton>
-              <ButtonGroupToggleButton
-                onClick={() => this.setState({ switchRequiredOrderedDate: 'delivery' })}
-                active={switchRequiredOrderedDate === 'delivery'}
-                size="xxsm"
-              >
-                Delivery date
-              </ButtonGroupToggleButton>
-              <ButtonGroupToggleButton
-                onClick={() => this.setState({ switchRequiredOrderedDate: 'opening' })}
-                active={switchRequiredOrderedDate === 'opening'}
-                size="xxsm"
-              >
-                Opening date
-              </ButtonGroupToggleButton>
             </ButtonGroup>
             {switchRequiredOrderedDate === 'required' && this.textInput(data, 'Date', 'required_date')}
             {switchRequiredOrderedDate === 'ordered' && this.textInput(data, 'Date', 'ordered_date')}
             {switchRequiredOrderedDate === 'expiration' && this.textInput(data, 'Date', 'expiration_date')}
-            {switchRequiredOrderedDate === 'delivery' && this.textInput(data, 'Date', 'delivery_date')}
-            {switchRequiredOrderedDate === 'opening' && this.textInput(data, 'Date', 'opening_date')}
           </Col>
           <Col sm={3}>
             {this.textInput(data, 'Required by', 'required_by')}

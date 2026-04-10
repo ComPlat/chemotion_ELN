@@ -66,12 +66,10 @@ const SearchModal = () => {
     });
   }
 
-  const minimizedClass = searchStore.searchModalMinimized ? ' minimized' : '';
-  const modalClass = minimizedClass ? `draggable-modal-dialog-xxxl${minimizedClass}` : 'modal-dialog-fullscreen';
-  const modalStyle = minimizedClass ? { transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)` } : '';
-  const searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : 'text-base';
-  const searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : 'text-base';
-  let searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : 'text-base';
+  let minimizedClass = searchStore.searchModalMinimized ? ' minimized' : '';
+  let searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : 'text-bg-paper';
+  let searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : 'text-bg-paper';
+  let searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : 'text-bg-paper';
 
   return (
     <Draggable handle=".modal-header" onDrag={handleDrag}>
@@ -81,14 +79,16 @@ const SearchModal = () => {
           onHide={() => searchStore.handleCancel()}
           backdrop={false}
           keyboard={false}
-          className={modalClass}
+          className={`draggable-modal-dialog-xxxl${minimizedClass}`}
           size="xxxl"
           dialogClassName="draggable-modal"
           contentClassName={`draggable-modal-content${minimizedClass}`}
-          style={modalStyle}
+          style={{
+            transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)`,
+          }}
         >
 
-          <Modal.Header className="ps-0 border-bottom border-gray-600 bg-gray-300" id="search-modal-header" closeButton>
+          <Modal.Header className="ps-0 border-bottom border-gray-600 bg-gray-300" closeButton>
             <Stack direction="horizontal" className="draggable-modal-stack" gap={3}>
               <Modal.Title className="draggable-modal-stack-title">
                 <i className="fa fa-arrows move" />
@@ -128,7 +128,7 @@ const SearchModal = () => {
             </Stack>
           </Modal.Header>
 
-          <Modal.Body className="p-0 d-flex flex-column overflow-hidden vh-100">
+          <Modal.Body className="p-0">
             <React.Suspense fallback={<Spinner />}>
               <div className={`draggable-modal-form-container${minimizedClass}`}>
                 {FormComponent(searchStore.searchModalSelectedForm)}

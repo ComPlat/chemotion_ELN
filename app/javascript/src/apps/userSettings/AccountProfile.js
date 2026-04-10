@@ -13,18 +13,13 @@ import UserCounter from 'src/apps/userCounter/UserCounter';
 function AccountProfile({ currentUser }) {
   const [reactionPrefix, setReactionPrefix] = useState(currentUser.reaction_name_prefix || '');
   const [reactionsCount, setReactionsCount] = useState(currentUser.counters?.reactions || 0);
-  const [inboxAuto, setInboxAuto] = useState(currentUser.profile?.data.inbox_auto !== false);
-  const [inboxManual, setInboxManual] = useState(currentUser.profile?.data.inbox_manual);
   const [curation, setCuration] = useState(currentUser.profile?.curation || 1);
   const [nextLabel, setNextLabel] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [successPosition, setSuccessPosition] = useState(null);
 
-  const nextReactionLabelCounter = parseInt(reactionsCount, 10) + 1;
-  const updatedNextReactionLabel  = nextReactionLabelCounter.toString().padStart(3, '0');
-
   useEffect(() => {
-    setNextLabel(`${currentUser.initials}-${reactionPrefix}${updatedNextReactionLabel}`);
+    setNextLabel(`${currentUser.initials}-${reactionPrefix}${reactionsCount}`);
   }, [currentUser, reactionPrefix, reactionsCount]);
 
   const handleUserSettingsSubmit = useCallback(
@@ -48,35 +43,11 @@ function AccountProfile({ currentUser }) {
     [reactionPrefix, reactionsCount]
   );
 
-  const handleProfileInboxSubmit = useCallback((e) => {
-    e.preventDefault();
-
-    const autoChanged = inboxAuto !== (currentUser.profile?.data.inbox_auto !== false);
-    const manualChanged = inboxManual !== currentUser.profile?.data.inbox_manual;
-    if (autoChanged || manualChanged) {
-      const payload = {
-        data: {
-          inbox_auto: inboxAuto,
-          inbox_manual: inboxManual,
-        }
-      };
-
-      UsersFetcher.updateUserProfile(payload)
-        .then(() => {
-          setSuccessMessage('Settings updated successfully!');
-          setSuccessPosition('inbox');
-        })
-        .catch((error) => {
-          console.error('Failed to update profile:', error);
-        });
-    }
-  }, [inboxAuto, inboxManual]);
-
   const handleProfileSubmit = useCallback((e) => {
     e.preventDefault();
 
     const payload = {
-      curation,
+      curation, // or whatever key your API expects (e.g., `curation_standard`)
     };
 
     UsersFetcher.updateUserProfile(payload)
@@ -157,7 +128,7 @@ function AccountProfile({ currentUser }) {
             <Row className="mb-3">
               <Col className="col-3 offset-3">
                 <Form.Label className="col-form-label">Next reaction label will be:</Form.Label>
-                <span> {nextLabel}</span>
+                <span>{nextLabel}</span>
               </Col>
             </Row>
 
@@ -176,51 +147,6 @@ function AccountProfile({ currentUser }) {
       </Card>
 
       <InventoryLabelSettings />
-
-      <Card>
-        <Card.Header>Inbox to Element</Card.Header>
-        <Card.Body>
-          <Form onSubmit={handleProfileInboxSubmit}>
-            <Row className="mb-3">
-              <Form.Label column className="col-form-label col-3 offset-3">
-                Enable Auto Transfer Inbox to Element (Sample, Reaction)
-              </Form.Label>
-              <Col className="col-4">
-                <Form.Check
-                  type="switch"
-                  id="inbox_auto"
-                  onChange={(e) => setInboxAuto(e.target.checked)}
-                  checked={inboxAuto}
-                />
-              </Col>
-            </Row>
-            <Row className="mb-3">
-              <Form.Label column className="col-form-label col-3 offset-3">
-                Enable Manual Transfer Inbox to Element (Sample, Reaction)
-              </Form.Label>
-              <Col className="col-4">
-                <Form.Check
-                  type="switch"
-                  id="inbox_manual"
-                  onChange={(e) => setInboxManual(e.target.checked)}
-                  checked={inboxManual}
-                />
-              </Col>
-            </Row>
-
-            <Row>
-              <Col className="offset-8">
-                <Button type="submit" variant="primary">Update user profiles</Button>
-              </Col>
-            </Row>
-          </Form>
-          {successMessage && successPosition === 'inbox' && (
-          <Alert variant="success">
-            {successMessage}
-          </Alert>
-          )}
-        </Card.Body>
-      </Card>
 
       <Card>
         <Card.Header>Curation</Card.Header>
@@ -278,10 +204,6 @@ AccountProfile.propTypes = {
     }).isRequired,
     profile: PropTypes.shape({
       curation: PropTypes.number.isRequired,
-      data: PropTypes.shape({
-        inbox_auto: PropTypes.bool,
-        inbox_manual: PropTypes.bool,
-      })
     }).isRequired,
   }).isRequired,
 };

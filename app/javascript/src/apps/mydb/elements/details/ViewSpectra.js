@@ -28,6 +28,7 @@ const layoutsWillShowMulti = [
   FN.LIST_LAYOUT.C13,
   FN.LIST_LAYOUT.UVVIS,
   FN.LIST_LAYOUT.HPLC_UVVIS,
+  FN.LIST_LAYOUT.LC_MS,
 ];
 
 class ViewSpectra extends React.Component {
@@ -117,10 +118,12 @@ class ViewSpectra extends React.Component {
 
   onDSSelectChange(e) {
     const { value } = e;
-    const { spcInfos } = this.state;
+    const { spcInfos, spcMetas } = this.state;
     const sis = spcInfos.filter(x => x.idDt === value);
-    const si = sis.length > 0 ? sis[0] : spcInfos[0];
-    SpectraActions.SelectIdx(si.idx, []);
+    const availableIdxs = new Set(spcMetas.map((spc) => spc.idx));
+    const datasetIdxs = sis.map((info) => info.idx).filter((idx) => availableIdxs.has(idx));
+    const nextIdx = datasetIdxs[0] || spcMetas[0]?.idx || 0;
+    SpectraActions.SelectIdx(nextIdx, datasetIdxs);
   }
 
   getDSList() {
@@ -145,7 +148,7 @@ class ViewSpectra extends React.Component {
     if (spcs && spcs.length > 0) {
       const spc = spcs[0];
       const { jcamp } = spc;
-      if (layoutsWillShowMulti.includes(jcamp.layout)) {
+      if (layoutsWillShowMulti.includes(jcamp.layout) && jcamp.layout !== FN.LIST_LAYOUT.LC_MS) {
         return true;
       }
     }
@@ -385,6 +388,20 @@ class ViewSpectra extends React.Component {
     const waveLength = spectrum.waveLength ?? params.waveLength;
     const body = spectrum.body ?? params.body;
     const cyclicvoltaSt = spectrum.cyclicvoltaSt ?? params.cyclicvoltaSt;
+    const scan = spectrum.scan ?? params.scan;
+    const thres = spectrum.thres ?? params.thres;
+    const analysis = spectrum.analysis ?? params.analysis;
+    const keepPred = spectrum.keepPred ?? params.keepPred;
+    const axesUnitsSt = spectrum.axesUnitsSt ?? params.axesUnitsSt;
+    const detectorSt = spectrum.detectorSt ?? params.detectorSt;
+    const dscMetaData = spectrum.dscMetaData ?? params.dscMetaData;
+    const simulatenmr = spectrum.simulatenmr ?? params.simulatenmr ?? false;
+    const lcms_peaks = spectrum.lcms_peaks ?? params.lcms_peaks;
+    const lcms_integrals = spectrum.lcms_integrals ?? params.lcms_integrals;
+    const lcms_uvvis_wavelength = spectrum.lcms_uvvis_wavelength ?? params.lcms_uvvis_wavelength;
+    const lcms_mz_page = spectrum.lcms_mz_page ?? params.lcms_mz_page;
+    const lcms_mz_page_data = spectrum.lcms_mz_page_data ?? params.lcms_mz_page_data;
+    const lcms_peaks_text = spectrum.lcms_peaks_text ?? params.lcms_peaks_text;
 
     // Construct arrays indexed by curveIdx for formatPks/formatMpy compatibility
     const shifts = [];
@@ -405,13 +422,16 @@ class ViewSpectra extends React.Component {
     return {
       peaks, shift, layout, isAscend, decimal, body,
       isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength,
+      scan, thres, analysis, keepPred, axesUnitsSt, detectorSt, dscMetaData, simulatenmr,
+      lcms_peaks, lcms_integrals, lcms_uvvis_wavelength, lcms_mz_page, lcms_mz_page_data, lcms_peaks_text,
     };
   }
 
   writeCommon(params, isMpy = false) {
+    console.log('[ViewSpectra] writeCommon payload', params); // eslint-disable-line no-console
     const {
       peaks, shift, layout, isAscend, decimal, body,
-      isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength
+      isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength, lcms_peaks_text
     } = this.resolveWriteParams(params);
 
     const { sample, handleSampleChanged } = this.props;
@@ -419,7 +439,31 @@ class ViewSpectra extends React.Component {
     if (!si) return;
 
     let ops = [];
-    if (['1H', '13C', '15N', '19F', '29Si', '31P'].includes(layout) && isMpy) {
+    if (layout === FN.LIST_LAYOUT.LC_MS) {
+      const lcmsBody = (lcms_peaks_text || '').trim().replace(/\.\s*$/, '');
+      if (lcmsBody) {
+        ops = [
+          { insert: lcmsBody },
+          { insert: '. ' },
+        ];
+      } else {
+        ops = this.formatPks({
+          peaks,
+          shift,
+          layout,
+          isAscend,
+          decimal,
+          body,
+          isIntensity,
+          integration,
+          curveSt,
+          waveLength
+        });
+        if (ops.length) {
+          ops = [...ops, { insert: '. ' }];
+        }
+      }
+    } else if (['1H', '13C', '15N', '19F', '29Si', '31P'].includes(layout) && isMpy) {
       ops = this.formatMpy({
         multiplicity, integration, shift, isAscend, decimal, layout, curveSt
       });
@@ -504,7 +548,9 @@ class ViewSpectra extends React.Component {
   }
 
   getSavePayloads(params, overrideValues = {}) {
-    const spectraList = Array.isArray(params?.spectra_list) ? params.spectra_list : [];
+    const spectraList = Array.isArray(params?.spectra_list) && params.spectra_list.length > 0
+      ? params.spectra_list
+      : [params];
     return spectraList.map((payload) => ({
       ...payload,
       ...overrideValues,
@@ -513,14 +559,39 @@ class ViewSpectra extends React.Component {
   }
 
   buildSerializedPayload(payload, curveIdx) {
+    const isLCMS = payload?.layout === FN.LIST_LAYOUT.LC_MS;
     const hasShiftArray = Array.isArray(payload?.shift?.shifts);
     const fPeaks = payload?.peaks && hasShiftArray ? FN.rmRef(payload.peaks, payload.shift, curveIdx) : payload?.peaks;
     const selectedShift = payload.shift?.shifts ? payload.shift.shifts[curveIdx] : payload.shift;
     const selectedIntegration = payload.integration?.integrations ? payload.integration.integrations[curveIdx] : payload.integration;
     const selectedMultiplicity = payload.multiplicity?.multiplicities ? payload.multiplicity.multiplicities[curveIdx] : payload.multiplicity;
+    const lcmsPeaks = payload?.lcms_peaks;
+    const lcmsIntegrals = payload?.lcms_integrals;
+
+    let peaksStr = FN.toPeakStr(fPeaks);
+    if (isLCMS && Array.isArray(lcmsPeaks)) {
+      const dict = {};
+      lcmsPeaks.forEach((peak) => {
+        const key = String(peak.wavelength);
+        if (!dict[key]) dict[key] = [];
+        dict[key].push({ x: peak.x, y: peak.y });
+      });
+      peaksStr = JSON.stringify(dict);
+    }
+
+    let integrationStr = JSON.stringify(selectedIntegration);
+    if (isLCMS && Array.isArray(lcmsIntegrals)) {
+      const dict = {};
+      lcmsIntegrals.forEach((integral) => {
+        const key = String(integral.wavelength);
+        if (!dict[key]) dict[key] = [];
+        dict[key].push([integral.from, integral.to, integral.value, integral.integral]);
+      });
+      integrationStr = JSON.stringify(dict);
+    }
 
     return {
-      peaksStr: FN.toPeakStr(fPeaks),
+      peaksStr,
       predict: JSON.stringify(rmRefreshed(payload.analysis)),
       waveLengthStr: JSON.stringify(payload.waveLength),
       cyclicvolta: JSON.stringify(payload.cyclicvoltaSt),
@@ -528,8 +599,13 @@ class ViewSpectra extends React.Component {
       detector: JSON.stringify(payload.detectorSt),
       dscMetaDataStr: JSON.stringify(payload.dscMetaData),
       selectedShift,
-      integrationStr: JSON.stringify(selectedIntegration),
+      integrationStr,
       multiplicityStr: JSON.stringify(selectedMultiplicity),
+      lcmsPeaksStr: JSON.stringify(lcmsPeaks),
+      lcmsIntegralsStr: JSON.stringify(lcmsIntegrals),
+      lcmsUvvisWavelength: payload?.lcms_uvvis_wavelength,
+      lcmsMzPage: payload?.lcms_mz_page,
+      lcmsMzPageData: payload?.lcms_mz_page_data
     };
   }
 
@@ -560,6 +636,11 @@ class ViewSpectra extends React.Component {
         serialized.axesUnitsStr,
         serialized.detector,
         serialized.dscMetaDataStr,
+        serialized.lcmsPeaksStr,
+        serialized.lcmsIntegralsStr,
+        serialized.lcmsUvvisWavelength,
+        serialized.lcmsMzPage,
+        serialized.lcmsMzPageData,
         (fetchedFiles, _spcInfo, errorMessage) => {
           const newIds = (fetchedFiles?.files || []).map((file) => file.id).filter(Boolean);
           resolve({ oldId: target.si.idx, newIds, errorMessage });
@@ -572,6 +653,7 @@ class ViewSpectra extends React.Component {
     if (targets.length <= 1) return;
     const layout = targets[0]?.payload?.layout;
     if (!layoutsWillShowMulti.includes(layout)) return;
+    if (FN.isLCMsLayout(layout)) return;
 
     const { spcInfos, arrSpcIdx } = this.state;
     const combineTarget = targets.find((target) => target.curveIdx === combineCurveIdx) || targets[0];
@@ -624,20 +706,78 @@ class ViewSpectra extends React.Component {
     });
   }
 
+  isUvvisSpectrumInfo(spcInfo) {
+    const label = spcInfo?.label?.toLowerCase?.() || '';
+    return /(?:^|[._-])uvvis(?:[._-]|$)/.test(label);
+  }
+
+  buildLcmsSingleTarget(targets, params) {
+    const lcmsTargets = targets.filter((target) => FN.isLCMsLayout(target?.payload?.layout));
+    if (lcmsTargets.length === 0) return null;
+
+    const selectedCurveIdx = params?.curveSt?.curveIdx;
+    const selectedTarget = lcmsTargets.find((target) => target.curveIdx === selectedCurveIdx) || lcmsTargets[0];
+    const selectedDatasetId = selectedTarget?.si?.idDt;
+    const uvvisTarget = lcmsTargets.find((target) => this.isUvvisSpectrumInfo(target.si));
+
+    let uvvisSpcInfo = uvvisTarget?.si;
+    if (!uvvisSpcInfo) {
+      const { spcInfos } = this.state;
+      uvvisSpcInfo = spcInfos.find((spc) => (
+        spc?.idDt === selectedDatasetId && this.isUvvisSpectrumInfo(spc)
+      ));
+    }
+    if (!uvvisSpcInfo) return null;
+
+    const sourcePayload = selectedTarget?.payload || uvvisTarget?.payload || {};
+    const uvvisPayload = uvvisTarget?.payload || sourcePayload;
+    const curveIdx = sourcePayload?.curveSt?.curveIdx ?? sourcePayload?.curveIdx ?? selectedTarget?.curveIdx ?? 0;
+    const mergedPayload = {
+      ...uvvisPayload,
+      ...sourcePayload,
+      layout: FN.LIST_LAYOUT.LC_MS,
+      curveSt: { curveIdx },
+      scan: sourcePayload.scan ?? uvvisPayload.scan ?? params?.scan,
+      thres: sourcePayload.thres ?? uvvisPayload.thres ?? params?.thres,
+      keepPred: sourcePayload.keepPred ?? uvvisPayload.keepPred ?? params?.keepPred,
+      simulatenmr: sourcePayload.simulatenmr ?? uvvisPayload.simulatenmr ?? params?.simulatenmr ?? false,
+      analysis: sourcePayload.analysis ?? uvvisPayload.analysis ?? params?.analysis,
+      peaks: sourcePayload.peaks ?? uvvisPayload.peaks ?? params?.peaks,
+      shift: sourcePayload.shift ?? uvvisPayload.shift ?? params?.shift,
+      integration: sourcePayload.integration ?? uvvisPayload.integration ?? params?.integration,
+      multiplicity: sourcePayload.multiplicity ?? uvvisPayload.multiplicity ?? params?.multiplicity,
+      waveLength: sourcePayload.waveLength ?? uvvisPayload.waveLength ?? params?.waveLength,
+      cyclicvoltaSt: sourcePayload.cyclicvoltaSt ?? uvvisPayload.cyclicvoltaSt ?? params?.cyclicvoltaSt,
+      axesUnitsSt: sourcePayload.axesUnitsSt ?? uvvisPayload.axesUnitsSt ?? params?.axesUnitsSt,
+      detectorSt: sourcePayload.detectorSt ?? uvvisPayload.detectorSt ?? params?.detectorSt,
+      dscMetaData: sourcePayload.dscMetaData ?? uvvisPayload.dscMetaData ?? params?.dscMetaData,
+      lcms_peaks: sourcePayload.lcms_peaks ?? uvvisPayload.lcms_peaks ?? params?.lcms_peaks,
+      lcms_integrals: sourcePayload.lcms_integrals ?? uvvisPayload.lcms_integrals ?? params?.lcms_integrals,
+      lcms_uvvis_wavelength: sourcePayload.lcms_uvvis_wavelength
+        ?? uvvisPayload.lcms_uvvis_wavelength
+        ?? params?.lcms_uvvis_wavelength,
+      lcms_mz_page: sourcePayload.lcms_mz_page ?? uvvisPayload.lcms_mz_page ?? params?.lcms_mz_page,
+      lcms_mz_page_data: sourcePayload.lcms_mz_page_data ?? uvvisPayload.lcms_mz_page_data ?? params?.lcms_mz_page_data,
+    };
+
+    return { payload: mergedPayload, curveIdx, si: uvvisSpcInfo };
+  }
+
   saveOp(params) {
     const { handleSubmit } = this.props;
-    if (!Array.isArray(params?.spectra_list) || params.spectra_list.length === 0) {
-      console.warn('saveOp expects a non-empty spectra_list payload.'); // eslint-disable-line no-console
-      return;
-    }
     const payloads = this.getSavePayloads(params);
-    const targets = payloads.map((payload, idx) => {
+    let targets = payloads.map((payload, idx) => {
       const curveIdx = payload.curveSt?.curveIdx ?? payload.curveIdx ?? idx;
       const si = this.getSpcInfo(curveIdx);
       if (!si) return null;
       return { payload, curveIdx, si };
     }).filter(Boolean);
     if (targets.length === 0) return;
+
+    const lcmsSingleTarget = this.buildLcmsSingleTarget(targets, params);
+    if (lcmsSingleTarget) {
+      targets = [lcmsSingleTarget];
+    }
 
     const combineCurveIdx = params.curveSt?.curveIdx ?? targets[0].curveIdx;
     const shouldCombineAfterBatch = targets.length > 1
@@ -759,7 +899,7 @@ class ViewSpectra extends React.Component {
         { name: 'write, save & close', value: this.saveCloseOp },
       ];
     }
-    const updatable = sample && sample.can_update;    
+    const updatable = sample && sample.can_update;
     let baseOps = updatable ? [
       { name: 'write peak & save', value: this.writePeakOp },
       { name: 'write peak, save & close', value: this.writeClosePeakOp },
@@ -779,6 +919,13 @@ class ViewSpectra extends React.Component {
           ...baseOps,
           { name: 'save', value: this.writeCommon },
           { name: 'save & close', value: this.writeCloseCommon },
+        ];
+      } else if (FN.isLCMsLayout(et.layout)) {
+        return [
+          { name: 'save', value: this.saveOp },
+          { name: 'save & close', value: this.saveCloseOp },
+          { name: 'write peak & save', value: this.writePeakOp },
+          { name: 'write peak, save & close', value: this.writeClosePeakOp },
         ];
       } else {
         baseOps = [
@@ -903,10 +1050,12 @@ class ViewSpectra extends React.Component {
   }
 
   renderTitle(idx) {
-    const { spcInfos, arrSpcIdx } = this.state;
+    const { spcInfos, arrSpcIdx, spcMetas } = this.state;
     const si = this.getSpcInfo();
     if (!si) return null;
     const modalTitle = si ? `Spectra Editor - ${si.title}` : '';
+    const currentSpc = spcMetas.find((x) => x.idx === idx) || spcMetas[0];
+    const isLcmsLayout = currentSpc?.jcamp?.layout === FN.LIST_LAYOUT.LC_MS;
     const options = spcInfos.filter((x) => x.idDt === si.idDt)
       .map((x) => ({ value: x.idx, label: x.label }));
     // const onSelectChange = e => SpectraActions.SelectIdx(e.value);
@@ -946,6 +1095,7 @@ class ViewSpectra extends React.Component {
             treeData={options}
             value={isShowMultiSelect ? arrSpcIdx : idx}
             treeCheckable={isShowMultiSelect}
+            disabled={isLcmsLayout}
             style={{ width: 500 }}
             maxTagCount={1}
             onChange={onSelectChange}

@@ -23,6 +23,7 @@ export default class LiteratureMap {
       researchPlanRefs: Immutable.List(),
       selectedRefs: Immutable.List(),
       collection_id: null,
+      is_sync: false
     });
   }
 
@@ -35,7 +36,7 @@ export default class LiteratureMap {
   }
 
   checksum(fieldsToOmit = []) {
-    return sha256(JSON.stringify(_.omitBy(_.omit(this,
+    return sha256(JSON.stringify(_.omit(_.omit(this,
       ['_checksum', ...fieldsToOmit],
     ), _.isEmpty)));
   }
@@ -86,8 +87,8 @@ export default class LiteratureMap {
       collection_id: this.collection_id
     };
     _.merge(params, extraParams);
-    const paramsWithoutNullEntries = _.omitBy(params, _.isNull);
-    const cleanParams = _.omitBy(paramsWithoutNullEntries, x => (x === '***'));
+    const paramsWithoutNullEntries = _.omit(params, _.isNull);
+    const cleanParams = _.omit(paramsWithoutNullEntries, x => (x === '***'));
     return cleanParams;
   }
 

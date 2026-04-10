@@ -4,8 +4,8 @@ import DeviceDescription from 'src/models/DeviceDescription';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 export default class DeviceDescriptionFetcher {
-  static fetchByCollectionId(id, queryParams = {}) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, 'device_descriptions', DeviceDescription);
+  static fetchByCollectionId(id, queryParams = {}, isSync = false) {
+    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'device_descriptions', DeviceDescription);
   }
 
   static fetchDeviceDescriptionsByUIStateAndLimit(params) {
@@ -47,6 +47,24 @@ export default class DeviceDescriptionFetcher {
           const deviceDescription = new DeviceDescription(json.device_description);
           deviceDescription._checksum = deviceDescription.checksum();
           return deviceDescription;
+        }
+      })
+      .catch(errorMessage => console.log(errorMessage));
+  }
+
+  static fetchSegmentKlassIdsByNewOntology(deviceDescriptionId, params) {
+    return fetch(
+      `/api/v1/device_descriptions/byontology/${deviceDescriptionId}`,
+      {
+        ...this._httpOptions('PUT'),
+        body: JSON.stringify(params)
+      }
+    ).then(response => response.json())
+      .then((json) => {
+        if (json.error) {
+          return [];
+        } else {
+          return json;
         }
       })
       .catch(errorMessage => console.log(errorMessage));

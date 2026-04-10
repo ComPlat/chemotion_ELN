@@ -8,7 +8,7 @@ module Chemotion
     helpers CellLineApiParamsHelpers
 
     rescue_from ActiveRecord::RecordNotFound do
-      error!('Resource not found', 404)
+      error!('Ressource not found', 401)
     end
     resource :cell_lines do
       desc 'return cell lines of a collection'
@@ -23,18 +23,22 @@ module Chemotion
       get do
         scope = if params[:collection_id]
                   begin
-                    Collection.accessible_for(current_user)
-                              .find(params[:collection_id])
-                              .cellline_samples
+                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                              .find(params[:collection_id]).cellline_samples
+                  rescue ActiveRecord::RecordNotFound
+                    CelllineSample.none
+                  end
+                elsif params[:sync_collection_id]
+                  begin
+                    current_user.all_sync_in_collections_users
+                                .find(params[:sync_collection_id])
+                                .collection
+                                .cellline_samples
                   rescue ActiveRecord::RecordNotFound
                     CelllineSample.none
                   end
                 else
                   # All collection of current_user
-                  # TODO: Question? Only own collections or shared as well?
-                  # TODO: Question 2: When using .none, why join at all? It does not return any records anyway
-                  # TODO: Other thought... having seen the "All collection of current_user" comment...
-                  #       is this maybe the case for displaying the "All" collection? Which has a collection id though
                   CelllineSample.none.joins(:collections).where(collections: { user_id: current_user.id }).distinct
                 end.order('created_at DESC')
 
@@ -65,10 +69,13 @@ module Chemotion
         requires :id, type: Integer, desc: 'id of cell line sample to load'
       end
       get ':id' do
-        cellline_sample = CelllineSample.find(params[:id])
-        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, cellline_sample).read?
-
-        present cellline_sample, with: Entities::CellLineSampleEntity
+        use_case = Usecases::CellLines::Load.new(params[:id], current_user)
+        begin
+          cell_line_sample = use_case.execute!
+        rescue StandardError => e
+          error!(e, 400)
+        end
+        return present cell_line_sample, with: Entities::CellLineSampleEntity
       end
 
       desc 'Create a new Cell line sample'
@@ -81,9 +88,7 @@ module Chemotion
         cell_line_sample = use_case.execute!
         cell_line_sample.container = update_datamodel(params[:container])
 
-        return present cell_line_sample,
-                       with: Entities::CellLineSampleEntity,
-                       policy: ElementPolicy.new(current_user, cell_line_sample)
+        return present cell_line_sample, with: Entities::CellLineSampleEntity
       end
       desc 'Update a Cell line sample'
       params do
@@ -93,9 +98,7 @@ module Chemotion
         use_case = Usecases::CellLines::Update.new(params, current_user)
         cell_line_sample = use_case.execute!
         cell_line_sample.container = update_datamodel(params[:container])
-        return present cell_line_sample,
-                       with: Entities::CellLineSampleEntity,
-                       policy: ElementPolicy.new(current_user, cell_line_sample)
+        return present cell_line_sample, with: Entities::CellLineSampleEntity
       end
 
       desc 'Copy a cell line'
@@ -108,7 +111,7 @@ module Chemotion
         post do
           cell_line_to_copy = @current_user.cellline_samples.where(id: [params[:id]]).reorder('id')
 
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).update_all?
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).update?
 
           begin
             use_case = Usecases::CellLines::Copy.new(cell_line_to_copy.first, @current_user, params[:collection_id])
@@ -117,9 +120,7 @@ module Chemotion
           rescue StandardError => e
             error!(e, 400)
           end
-          return present copied_cell_line_sample,
-                         with: Entities::CellLineSampleEntity,
-                         policy: ElementPolicy.new(current_user, copied_cell_line_sample)
+          return present copied_cell_line_sample, with: Entities::CellLineSampleEntity
         end
       end
 
@@ -133,7 +134,7 @@ module Chemotion
         post do
           cell_line_to_copy = @current_user.cellline_samples.where(id: [params[:id]]).reorder('id')
 
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).update_all?
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).update?
 
           begin
             use_case = Usecases::CellLines::Split.new(cell_line_to_copy.first, @current_user, params[:collection_id])
@@ -142,9 +143,7 @@ module Chemotion
           rescue StandardError => e
             error!(e, 400)
           end
-          return present splitted_cell_line_sample,
-                         with: Entities::CellLineSampleEntity,
-                         policy: ElementPolicy.new(current_user, splitted_cell_line_sample)
+          return present splitted_cell_line_sample, with: Entities::CellLineSampleEntity
         end
       end
 

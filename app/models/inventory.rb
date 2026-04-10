@@ -45,7 +45,7 @@ class Inventory < ApplicationRecord
     inventory
   end
 
-  def self.create_or_update_inventory_label(prefix, name, counter, collection_ids, user)
+  def self.create_or_update_inventory_label(prefix, name, counter, collection_ids, user_id)
     associations = compare_associations(collection_ids)
     ActiveRecord::Base.transaction do
       if associations
@@ -63,7 +63,7 @@ class Inventory < ApplicationRecord
         collection = Collection.find(id)
         collection.update(inventory_id: inventory.id)
       end
-      { inventory_collections: Collection.inventory_collections(user) }
+      { inventory_collections: Collection.inventory_collections(user_id) }
     end
   end
 

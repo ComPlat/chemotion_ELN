@@ -5,13 +5,7 @@ import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import ImageModal from 'src/components/common/ImageModal';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import {
-  BuildSpcInfos,
-  JcampIds,
-  BuildSpcInfosForNMRDisplayer,
-  isNMRKind,
-  BuildSpectraComparedInfos,
-} from 'src/utilities/SpectraHelper';
+import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -22,12 +16,10 @@ import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
-import SpectraCompareButton from 'src/components/common/SpectraCompareButton';
-import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 
 const qCheckPass = () => (
-  <i className="fa fa-check ms-1 text-success" />
+  <i className="fa fa-check ms-1 text-success"/>
 );
 
 const qCheckFail = (msg, kind, atomNum = '') => (
@@ -146,20 +138,11 @@ const headerBtnGroup = (
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
-  const spcCompareInfo = BuildSpectraComparedInfos(sample, container);
-  const toggleCompareModal = (e) => {
-    e.stopPropagation();
-    SpectraActions.ToggleCompareModal(container);
-    SpectraActions.LoadSpectraCompare.defer(spcCompareInfo);
-  };
-
-  const { spectraCompare } = SpectraStore.getState();
-
   return (deleted ?
     <Button
       size="xxsm"
       variant="danger"
-      onClick={() => { handleUndo(container) }}
+      onClick={() => {handleUndo(container)}}
     >
       <i className="fa fa-undo" />
     </Button> :
@@ -176,29 +159,18 @@ const headerBtnGroup = (
         className="mx-2"
       />
       <MolViewerListBtn el={sample} container={container} isPublic={false} disabled={!enableMoleculeViewer} />
-      {
-        container.extended_metadata.is_comparison ? (
-          <SpectraCompareButton
-            sample={sample}
-            spectraCompare={spectraCompare}
-            spcInfos={spcCompareInfo}
-            toggleSpectraModal={toggleCompareModal}
-          />
-        ) : (
-          <SpectraEditorButton
-            element={sample}
-            hasJcamp={hasJcamp}
-            spcInfos={spcInfos}
-            hasChemSpectra={hasChemSpectra}
-            hasEditedJcamp={hasEditedJcamp}
-            toggleSpectraModal={toggleSpectraModal}
-            confirmRegenerate={confirmRegenerate}
-            confirmRegenerateEdited={confirmRegenerateEdited}
-            toggleNMRDisplayerModal={toggleNMRDisplayerModal}
-            hasNMRium={hasNMRium}
-          />
-        )
-      }
+      <SpectraEditorButton
+        element={sample}
+        hasJcamp={hasJcamp}
+        spcInfos={spcInfos}
+        hasChemSpectra={hasChemSpectra}
+        hasEditedJcamp={hasEditedJcamp}
+        toggleSpectraModal={toggleSpectraModal}
+        confirmRegenerate={confirmRegenerate}
+        confirmRegenerateEdited={confirmRegenerateEdited}
+        toggleNMRDisplayerModal={toggleNMRDisplayerModal}
+        hasNMRium={hasNMRium}
+      />
       <PrintCodeButton
         element={sample}
         analyses={[container]}
@@ -233,31 +205,20 @@ const AnalysesHeader = ({
       return c;
     }),
   };
-
-  const attachment = getAttachmentFromContainer(container);
-  const is_comparison = container.extended_metadata && container.extended_metadata.is_comparison;
-  const comparisonLayout = container.extended_metadata.kind || '';
-  
-  const comparisonSpectraNames = container.comparable_info && container.comparable_info.list_attachments 
-    ? container.comparable_info.list_attachments
-        .filter(att => !att.filename.toLowerCase().match(/\.(png|jpg|jpeg|gif)$/i))
-        .map((attachment) => attachment.filename)
-        .join(', ') 
-    : '';
-
+   const attachment = getAttachmentFromContainer(container);
+ 
   return (
     <div className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}>
       <div className="preview border d-flex align-items-center">
         {deleted ?
           <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> :
           <ImageModal
-            key={attachment?.id}
             attachment={attachment}
             popObject={{
               title: container.name,
             }}
           />
-        }
+    }
       </div>
       <div className={"flex-grow-1" + (deleted ? "" : " analysis-header-fade")}>
         <div className="d-flex justify-content-between align-items-center">
@@ -269,40 +230,19 @@ const AnalysesHeader = ({
             )
           }
         </div>
-        {
-          is_comparison ? (
-            <>
-              <div className={deleted ? 'text-body-tertiary' : ''}>
-                Layout: {comparisonLayout}
-              </div>
-              <div className={deleted ? 'text-body-tertiary' : ''}>
-                Spectra: {comparisonSpectraNames}
-              </div>
-              <div className={deleted ? 'text-body-tertiary' : ''}>
-                Status: {status}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className={deleted ? 'text-body-tertiary' : ''}>
-                Type : {kind}
-                <br />
-                Statut :{' '}
-                <span className="me-4">
-                  {status} {qCheckMsg(sample, container)}
-                </span>
-                {insText}
-              </div>
-              {!deleted && (
-                <div className="d-flex gap-2">
-                  <span>Content:</span>
-                  <div className="flex-grow-1">
-                    <QuillViewer value={contentOneLine} className="p-0" />
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+        <div className={deleted ? "text-body-tertiary" : ""}>
+          Type: {kind}
+          <br />
+          Status: <span className='me-4'>{status} {qCheckMsg(sample, container)}</span>{insText}
+        </div>
+        {!deleted &&
+          <div className="d-flex gap-2">
+            <span>Content:</span>
+            <div className="flex-grow-1">
+              <QuillViewer value={contentOneLine} className="p-0"/>
+            </div>
+          </div>
+        }
       </div>
     </div>
   );

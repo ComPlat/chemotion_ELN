@@ -14,31 +14,29 @@ export default function CollectionManagementButton({ isCollapsed }) {
         show={showModal}
         onHide={() => setShowModal(false)}
       />
-      <div className="surface-base">
-        {isCollapsed ? (
-          <OverlayTrigger
-            placement="right"
-            overlay={<Tooltip>{label}</Tooltip>}
-          >
-            <Button
-              className="collection-management-button w-100"
-              variant="topbar"
-              onClick={() => setShowModal(true)}
-            >
-              <i className="fa fa-cog mx-auto" />
-            </Button>
-          </OverlayTrigger>
-        ) : (
+      {isCollapsed ? (
+        <OverlayTrigger
+          placement="right"
+          overlay={<Tooltip>{label}</Tooltip>}
+        >
           <Button
-            className="collection-management-button w-100 text-start"
-            variant="topbar"
+            className="collection-management-button w-100 text-body-secondary"
+            variant="sidebar"
             onClick={() => setShowModal(true)}
           >
-            <i className="fa fa-cog me-2" />
-            <span>{label}</span>
+            <i className="fa fa-cog mx-auto" />
           </Button>
-        )}
-      </div>
+        </OverlayTrigger>
+      ) : (
+        <Button
+          className="collection-management-button w-100 text-body-secondary text-start"
+          variant="sidebar"
+          onClick={() => setShowModal(true)}
+        >
+          <i className="fa fa-cog me-2" />
+          <span>{label}</span>
+        </Button>
+      )}
     </>
   );
 }

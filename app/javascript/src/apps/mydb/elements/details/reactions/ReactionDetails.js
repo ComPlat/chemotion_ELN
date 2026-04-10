@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable react/require-default-props */
 import React, { Component, createRef } from 'react';
+import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
   Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Modal, Overlay
@@ -32,7 +33,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
-import { aviatorNavigation } from 'src/utilities/routesUtils';
+import { sampleShowOrNew } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ConfirmClose from 'src/components/common/ConfirmClose';
@@ -61,18 +62,24 @@ import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercen
 import isEqual from 'lodash/isEqual';
 import DocumentationButton from 'src/components/common/DocumentationButton';
 
+const handleProductClick = (product) => {
+  const uri = Aviator.getCurrentURI();
+  const uriArray = uri.split(/\//);
+  Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/sample/${product.id}`, { silent: true });
+  sampleShowOrNew({ params: { sampleID: product.id } });
+};
+
 const productLink = (product, active) => (
   <span>
     {active && "Sample Analysis:"}
     <span
       aria-hidden="true"
       className="pseudo-link"
-      onClick={() => aviatorNavigation('sample', product.id, true, true)}
+      onClick={() => handleProductClick(product)}
       title="Open sample window"
     >
       <i className="icon-sample mx-1" />
       {product.title()}
-      hah
     </span>
   </span>
 );
@@ -391,11 +398,19 @@ export default class ReactionDetails extends Component {
   }
 
   reactionHeader(reaction) {
+    const hasChanged = reaction.changed ? '' : 'none';
     const titleTooltip = formatTimeStampsOfElement(reaction || {});
 
     const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.shared === false
+    const defCol = currentCollection && currentCollection.is_shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+
+    const copyBtn = (reaction.can_copy === true && !reaction.isNew) && (
+      <CopyElementModal
+        element={reaction}
+        defCol={defCol}
+      />
+    );
 
     const colLabel = !reaction.isNew && (
       <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
@@ -444,7 +459,7 @@ export default class ReactionDetails extends Component {
                 <i className="fa fa-cogs" />
               </Button>
             </OverlayTrigger>
-            {(reaction.changed || reaction.isNew === true)
+            {reaction.changed
               && (
                 <>
                   <OverlayTrigger
@@ -476,7 +491,7 @@ export default class ReactionDetails extends Component {
                   </OverlayTrigger>
                 </>
               )}
-            <CopyElementModal element={reaction} defCol={defCol} />
+            {copyBtn}
             <ConfirmClose el={reaction} />
           </ButtonToolbar>
         </div>
@@ -576,7 +591,7 @@ export default class ReactionDetails extends Component {
     this.isUpdatingGraphic = true;
     const materialsSvgPaths = {
       starting_materials: reaction.starting_materials.map((material) => material.svgPath),
-      reactants: reaction.reactantsWithSbmm.map((material) => material.svgPath),
+      reactants: reaction.reactants.map((material) => material.svgPath),
       products: reaction.products.map((material) => [material.svgPath, material.equivalent])
     };
 
@@ -1032,8 +1047,8 @@ export default class ReactionDetails extends Component {
         <ReactionSchemeGraphic
           key={`reaction-graphic-${reaction.id}-${this.state.reactionSvgVersion || 0}`}
           reaction={reaction}
-          onToggleLabel={(materialId, isSbmm) => {
-            reaction.toggleShowLabelForSample(materialId, isSbmm);
+          onToggleLabel={(materialId) => {
+            reaction.toggleShowLabelForSample(materialId);
             this.handleReactionChange(reaction, { updateGraphic: true });
           }}
           onRefresh={() => this.refreshGraphic()}
@@ -1071,7 +1086,6 @@ export default class ReactionDetails extends Component {
             type="reaction"
             availableTabs={Object.keys(tabContentsMap)}
             onTabPositionChanged={this.onTabPositionChanged}
-            openedFromCollectionId={this.props.openedFromCollectionId}
           />
           <Tabs
             mountOnEnter
@@ -1079,7 +1093,6 @@ export default class ReactionDetails extends Component {
             onSelect={this.handleSelect}
             id="reaction-detail-tab"
             unmountOnExit
-            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>
@@ -1093,5 +1106,4 @@ export default class ReactionDetails extends Component {
 ReactionDetails.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   reaction: PropTypes.object,
-  openedFromCollectionId: PropTypes.number,
 };

@@ -44,7 +44,7 @@ const getMoleculeName = (decoupled, sample) => {
 const getPolymerName = (polymerType, decoupled) => {
   if (decoupled && polymerType === 'self_defined') return '';
 
-  return `${polymerType.charAt(0).toUpperCase()}${polymerType.slice(1)} `.replace('_', '-');
+  return `${polymerType.charAt(0).toUpperCase()}${polymerType.slice(1)}`.replace('_', '-');
 };
 
 /**

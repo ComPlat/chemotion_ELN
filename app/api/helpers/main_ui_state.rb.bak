@@ -1,0 +1,210 @@
+# frozen_string_literal: true
+
+class CurrentCollection
+  attr_reader :value
+
+  def initialize(param)
+    @value = param
+  end
+
+  class << self
+    # @param [Hash] currentCollection
+    # @return [Hash]
+    def parse(value)
+      return nil if value.blank?
+
+      parsed_value = validate_current_collection(value)
+      return nil if parsed_value[:currentCollection].blank?
+
+      parsed_value
+    end
+
+    def parsed?(value)
+      value.is_a?(Hash) && value.key?(:id)
+    end
+
+    def coerce(value)
+      return value if value < Hash
+
+      raise Grape::Exceptions::Validation, params: ['current_collection'], message: 'Invalid'
+    end
+
+    def documentation
+      {
+        type: 'Hash of current collection',
+        desc: 'Current collection state',
+      }
+    end
+
+    private
+
+    # Validate current collection params
+    # @param [Hash] current_collection
+    # @return [Hash, nil]
+    # @raise [Grape::Exceptions::Validation]
+    def validate_current_collection(params)
+      coerced = {}
+      coerced[:id] = params[:id].to_i
+      if coerced[:id].blank?
+        raise Grape::Exceptions::Validation, params: ['currentCollection'],
+                                             message: 'Invalid current collection'
+      end
+
+      coerced[:is_sync_to_me] = coerce_boolean(params[:is_sync_to_me])
+      coerced[:is_shared] = coerce_boolean(params[:is_shared])
+      coerced
+    end
+
+    # Coerce input to boolean
+    # @param [String, Nil, Bolean] value
+    # @return [Boolean]
+    def coerce_boolean(value)
+      return false if value.blank?
+      return true if [true, 'true'].include?(value)
+      return false if [false, 'false'].include?(value)
+    end
+  end
+end
+
+
+
+class MainUiState
+  attr_reader :value
+
+  def initialize(uistate)
+    @value = uistate
+  end
+
+  class << self
+    # @param [Hash] ui_state
+    # @return [Hash]
+    def parse(value)
+      return nil if value.blank?
+
+      parsed_value = {}
+      collection_param = value.delete(:currentCollection)
+      parsed_value[:currentCollection] = CurrentCollection.parse(collection_param)
+      return nil unless CurrentCollection.parsed?(parsed_value[:currentCollection])
+
+      # TODO: cache available ElementKlass names
+      elements = API::ELEMENTS | Labimotion::ElementKlass.where(name: value.keys).pluck(:name)
+      elements.each do |element|
+        ui_state = value.delete(element)
+        ui_state = validate_and_coerce_ui_state(ui_state)
+        next if ui_state.blank?
+
+        parsed_value[element] = ui_state
+      end
+
+      return nil if parsed_value.keys.size < 2
+
+      parsed_value
+    end
+
+    def parsed?(value)
+      value.is_a?(Hash) && value.key?(:currentCollection)
+    end
+
+    def coerce(value)
+      return value if value < Hash
+
+      raise Grape::Exceptions::Validation, params: ['ui_state'], message: 'Invalid UI state'
+    end
+
+    def documentation
+      {
+        type: 'Hash of UI state',
+        desc: 'UI state',
+      }
+    end
+
+    private
+
+    # Validate current collection params
+    # @param [Hash] current_collection
+    # @return [Hash, nil]
+    # @raise [Grape::Exceptions::Validation]
+    def validate_current_collection(params)
+      coerced = {}
+      coerced[:id] = params[:id].to_i
+      if coerced[:id].blank?
+        raise Grape::Exceptions::Validation, params: ['currentCollection'],
+                                             message: 'Invalid current collection'
+      end
+
+      coerced[:is_sync_to_me] = coerce_boolean(params[:is_sync_to_me])
+      coerced[:is_shared] = coerce_boolean(params[:is_shared])
+      coerced
+    end
+
+    # Coerce input to boolean
+    # @param [String, Nil, Bolean] value
+    # @return [Boolean]
+    def coerce_boolean(value)
+      return false if value.blank?
+      return true if [true, 'true'].include?(value)
+      return false if [false, 'false'].include?(value)
+    end
+
+    # ui_state validation and coercion
+    # @param [Hash] ui_state
+    # @return [Hash, nil]
+    def validate_and_coerce_ui_state(ui_state)
+      return nil if ui_state.blank?
+
+      new_ui_state = {}
+      new_ui_state[:checked_all] = checked_all(ui_state)
+      new_ui_state[:checked_ids] = checked_ids(ui_state) unless new_ui_state[:checked_all]
+      return nil unless new_ui_state[:checked_all] || new_ui_state[:checked_ids].present?
+
+      new_ui_state[:unchecked_ids] = unchecked_ids(ui_state) if new_ui_state[:checked_all]
+      new_ui_state
+    end
+
+    # Infer checked_all from ui_state
+    # @param [Hash] ui_state
+    # @return [Boolean]
+    def checked_all(ui_state)
+      coerce_boolean(ui_state[:checkedAll] || ui_state[:all])
+    end
+
+    # Infer (un)checked ids from ui_state and return them as an array of Intergers
+    # @param [Hash] ui_state, eg:
+    #   { checked_all: true, included_ids: [1, 2, 3], excluded_ids: [4, 5, 6] }
+    #   { checkedAll: false, checkedIds: [1, 2, 3], uncheckedIds: [4, 5, 6] }
+    # @return [Array<Integer>] checked ids
+    def checked_ids(ui_state)
+      return [] if ui_state.blank?
+
+      choose_and_coerce_ids(ui_state[:checkedIds], ui_state[:included_ids])
+    end
+
+    # @see #checked_ids
+    def unchecked_ids(ui_state)
+      return [] if ui_state.blank?
+
+      choose_and_coerce_ids(ui_state[:uncheckedIds], ui_state[:excluded_ids])
+    end
+
+    # select firts non blank arg and coerce ids
+    # @param [Hash] ui_state
+    # @return [Array<Integer>, nil]
+    def choose_and_coerce_ids(option1, option2)
+      option = option1.presence || option2.presence
+      coerce_ids(option)
+    end
+
+    # coerce input into array of integers
+    # @param [Object] arr - input to coerce
+    # @return [Array<Integer>]
+    def coerce_ids(arr)
+      return [] if arr.blank?
+
+      arr = arr.split(',') if arr.is_a?(String)
+      arr.compact.map(&:to_i)
+    rescue StandardError => e
+      Rails.logger.error "Failed to coerce ids: #{arr} - #{e.message}"
+      []
+    end
+  end
+end

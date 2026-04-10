@@ -5,7 +5,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Form, InputGroup,
-  OverlayTrigger, Tooltip, Popover, Row, Col,
+  OverlayTrigger, Tooltip, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
 import { Select, CreatableSelect } from 'src/components/common/Select';
@@ -438,15 +438,6 @@ export default class SampleForm extends React.Component {
 
   fetchNextInventoryLabel() {
     const { currentCollection } = UIStore.getState();
-    const message = (
-      <div className="text-start">
-        <p className="mb-1">Could not find next inventory label.</p>
-        <p className="mb-1">
-          Please define an inventory label for this collection in the Account &amp; Profile page.
-          Select the collection and assign a name, prefix, and starting counter.
-        </p>
-      </div>
-    );
     if (this.matchSelectedCollection(currentCollection)) {
       InventoryFetcher.fetchInventoryOfCollection(currentCollection.id)
         .then((result) => {
@@ -456,7 +447,8 @@ export default class SampleForm extends React.Component {
             this.handleFieldChanged('xref_inventory_label', value);
           } else {
             NotificationActions.add({
-              message,
+              message: 'Could not find next inventory label. '
+                + 'Please assign a prefix and a counter for a valid collection first.',
               level: 'error'
             });
           }
@@ -473,9 +465,7 @@ export default class SampleForm extends React.Component {
   }
 
   handleFieldChanged(field, e, unit = null) {
-    const {
-      sample, handleSampleChanged, onDecoupleChanged, decoupleMolecule
-    } = this.props;
+    const { sample, handleSampleChanged } = this.props;
     if (field === 'purity' && (e.value < 0 || e.value > 1)) {
       e.value = 1;
       sample[field] = e.value;
@@ -508,23 +498,19 @@ export default class SampleForm extends React.Component {
     sample.formulaChanged = this.formulaChanged();
 
     if (field === 'decoupled') {
-      if (onDecoupleChanged) {
-        onDecoupleChanged(e);
+      if (!sample[field]) {
+        sample.sum_formula = '';
       } else {
-        sample[field] = e;
-        if (!sample[field]) {
-          sample.sum_formula = '';
-        } else {
-          if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
-          if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
-            delete sample.residues[0].custom_info.surface_type;
-          }
+        if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
+        if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
+          sample.residues[0].custom_info.polymer_type = 'self_defined';
+          delete sample.residues[0].custom_info.surface_type;
         }
-        if (!sample[field] && ((sample.molfile || '') === '')) {
-          handleSampleChanged(sample);
-        } else {
-          handleSampleChanged(sample, decoupleMolecule);
-        }
+      }
+      if (!sample[field] && ((sample.molfile || '') === '')) {
+        handleSampleChanged(sample);
+      } else {
+        handleSampleChanged(sample, this.props.decoupleMolecule);
       }
     } else { handleSampleChanged(sample); }
   }
@@ -664,89 +650,16 @@ export default class SampleForm extends React.Component {
   }
 
   /**
-   * Renders the info button for inventory label with tooltip explanation.
-   * @returns {JSX.Element} The rendered info button
-   */
-  inventoryLabelInfoButton() {
-    const infoPopover = (
-      <Popover id="inventoryLabelInfoPopover">
-        <Popover.Header as="h6">How to define a sample inventory label for a collection</Popover.Header>
-        <Popover.Body className="text-start">
-          <ul className="ps-3 mb-3">
-            <li>
-              Configure the Inventory Label settings by navigating to
-              <strong> the Sample Inventory Label section in the Account &amp; Profile page</strong>
-              .
-            </li>
-            <li>
-              Select one or multiple collections to assign a name, prefix, and starting counter.
-            </li>
-            <li>
-              New samples will automatically generate a label with the next available counter number.
-            </li>
-            <li>
-              For existing samples, click the
-              <strong> Auto-Generate Inventory Label button </strong>
-              next to this field.
-            </li>
-          </ul>
-          <a
-            href="https://chemotion.net/docs/eln/ui/first_steps#define-a-sample-inventory-label-and-adjust-the-counter-inventory-label-for-a-collection"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="d-block mt-2"
-          >
-            Learn more in the documentation
-          </a>
-        </Popover.Body>
-      </Popover>
-    );
-
-    return (
-      <OverlayTrigger
-        trigger="hover"
-        placement="top"
-        overlay={infoPopover}
-        delay={{ show: 250, hide: 650 }}
-        rootClose
-      >
-        <span
-          tabIndex={0}
-          role="button"
-          aria-label="Information about sample inventory label configuration"
-        >
-          <i className="ms-1 fa fa-info-circle" />
-        </span>
-      </OverlayTrigger>
-    );
-  }
-
-  /**
    * Renders the inventory label input section with the text input and next label button.
    * @param {Object} sample - The sample object
    * @returns {JSX.Element} The rendered inventory label section
    */
   inventoryLabelSection(sample) {
-    const updateValue = (sample.xref ? sample.xref.inventory_label : '') || '';
-
     return (
-      <Form.Group className="w-100">
-        <Form.Label>
-          Inventory label
-          {this.inventoryLabelInfoButton()}
-        </Form.Label>
-        <Form.Control
-          id="txinput_xref_inventory_label"
-          type="text"
-          value={updateValue}
-          onChange={(e) => {
-            const newValue = e.target.value;
-            this.handleFieldChanged('xref_inventory_label', newValue);
-          }}
-          disabled={!sample.can_update}
-          readOnly={!sample.can_update}
-        />
-      </Form.Group>
+      <>
+        {this.textInput(sample, 'xref_inventory_label', 'Inventory label')}
+        {this.nextInventoryLabel(sample)}
+      </>
     );
   }
 
@@ -1138,7 +1051,6 @@ export default class SampleForm extends React.Component {
    */
   mixtureComponentsList(sample) {
     const { enableComponentLabel, enableComponentPurity } = this.state;
-    const { setComponentDeletionLoading, setMoleculeLoading } = this.props;
 
     return (
       <Row className="mb-4">
@@ -1148,8 +1060,7 @@ export default class SampleForm extends React.Component {
             onChange={this.handleMixtureComponentChanged}
             enableComponentLabel={enableComponentLabel}
             enableComponentPurity={enableComponentPurity}
-            setComponentDeletionLoading={setComponentDeletionLoading}
-            setMoleculeLoading={setMoleculeLoading}
+            setComponentDeletionLoading={this.props.setComponentDeletionLoading}
           />
         </Col>
       </Row>
@@ -1192,7 +1103,6 @@ export default class SampleForm extends React.Component {
                 <Col>{this.textInput(sample, 'external_label', 'External label')}</Col>
                 <Col className="d-flex align-items-end">
                   {this.inventoryLabelSection(sample)}
-                  {this.nextInventoryLabel(sample)}
                 </Col>
                 <Col>{this.textInput(sample, 'location', 'Location')}</Col>
                 <Col xs={2}>{this.drySolventCheckbox(sample)}</Col>
@@ -1273,7 +1183,6 @@ export default class SampleForm extends React.Component {
                 </Col>
                 <Col md={4} className="d-flex align-items-end">
                   {this.inventoryLabelSection(sample)}
-                  {this.nextInventoryLabel(sample)}
                 </Col>
               </Row>
               <Row className="align-items-end mb-4">
@@ -1343,14 +1252,8 @@ SampleForm.propTypes = {
   customizableField: PropTypes.func.isRequired,
   enableSampleDecoupled: PropTypes.bool,
   decoupleMolecule: PropTypes.func.isRequired,
-  onDecoupleChanged: PropTypes.func,
-  setComponentDeletionLoading: PropTypes.func,
-  setMoleculeLoading: PropTypes.func,
 };
 
 SampleForm.defaultProps = {
   enableSampleDecoupled: false,
-  onDecoupleChanged: null,
-  setComponentDeletionLoading: () => {},
-  setMoleculeLoading: () => {},
 };

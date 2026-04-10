@@ -27,7 +27,6 @@ module Usecases
         @user_screens = Screen.by_collection_id(@collection_id)
         @user_research_plans = ResearchPlan.by_collection_id(@collection_id)
         @user_elements = Labimotion::Element.by_collection_id(@collection_id)
-        @structure_svg = ''
       end
 
       def perform!
@@ -36,8 +35,6 @@ module Usecases
         @shared_methods.serialization_by_elements_and_page(@elements, '')
 
         results = @shared_methods.serialization_by_elements_and_page(@elements, '')
-        results[:structure_svg] = @structure_svg
-
         results['cell_lines'] =
           { elements: [], ids: [], page: 1, perPage: params['per_page'], pages: 0, totalElements: 0, error: '' }
         results['sequence_based_macromolecule_samples'] =
@@ -54,7 +51,6 @@ module Usecases
 
         molfile = Fingerprint.standardized_molfile(@params[:selection][:molfile])
         threshold = @params[:selection][:tanimoto_threshold]
-        generate_svg_by_molfile(molfile)
 
         # TODO: implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
         scope =
@@ -65,13 +61,6 @@ module Usecases
           end
         scope = @shared_methods.order_by_molecule(scope)
         scope.pluck(:id)
-      end
-
-      def generate_svg_by_molfile(molfile)
-        processed_svg = Chemotion::SvgRenderer.render_svg_from_molfile(molfile)
-        return if processed_svg.blank?
-
-        @structure_svg = processed_svg
       end
 
       def elements_by_scope(scope)

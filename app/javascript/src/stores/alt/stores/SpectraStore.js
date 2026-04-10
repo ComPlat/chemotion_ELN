@@ -20,12 +20,9 @@ class SpectraStore {
     this.writing = false;
     this.others = [];
     this.showModalNMRDisplayer = false;
-    this.showCompareModal = false;
-    this.spectraCompare = [];
 
     this.bindListeners({
       handleToggleModal: SpectraActions.ToggleModal,
-      handleToggleCompareModal: SpectraActions.ToggleCompareModal,
       handleLoadSpectra: SpectraActions.LoadSpectra,
       handleSaveToFile: SpectraActions.SaveToFile,
       handleRegenerate: SpectraActions.Regenerate,
@@ -38,8 +35,6 @@ class SpectraStore {
       handleRegenerateEdited: SpectraActions.RegenerateEdited,
       handleToggleModalNMRDisplayer: SpectraActions.ToggleModalNMRDisplayer,
       handleLoadSpectraForNMRDisplayer: SpectraActions.LoadSpectraForNMRDisplayer,
-      handleLoadSpectraCompare: SpectraActions.LoadSpectraCompare,
-      handleSaveMultiSpectraComparison: SpectraActions.SaveMultiSpectraComparison,
     });
   }
 
@@ -71,7 +66,7 @@ class SpectraStore {
     if (returnFiles === null || returnFiles === undefined) {
       return [];
     }
-    return returnFiles.sort(function (a, b) {
+    return returnFiles.sort(function(a, b) {
       return b.idx - a.idx;
     });
   }
@@ -84,13 +79,6 @@ class SpectraStore {
       fetched: false,
       others: [],
     });
-  }
-
-  handleToggleCompareModal(container) {
-    this.setState({
-      showCompareModal: !this.showCompareModal,
-      container: container,
-    })
   }
 
   handleLoadSpectra({ fetchedFiles, spcInfos }) {
@@ -108,14 +96,24 @@ class SpectraStore {
       return sortedSpcIdxs.indexOf(a.idx) - sortedSpcIdxs.indexOf(b.idx);
     });
     let newArrSpcIdx = [];
+    let nextSpcIdx = spcMetas[0]?.idx || 0;
     if (spcMetas.length >= 1) {
-      const spcInfoWithLabel = sortedSpcInfo.find(
+      const currentInfo = sortedSpcInfo.find((info) => info.idx === spcMetas[0].idx);
+      const currentDatasetId = currentInfo?.idDt;
+      const datasetSpcInfos = currentDatasetId
+        ? sortedSpcInfo.filter((info) => info.idDt === currentDatasetId)
+        : sortedSpcInfo;
+      const datasetIdxs = datasetSpcInfos.map((info) => info.idx);
+      const datasetSpcMetas = spcMetas.filter((spc) => datasetIdxs.includes(spc.idx));
+      const spcInfoWithLabel = datasetSpcInfos.find(
         info => typeof info.label === "string" && info.label.toLowerCase().includes('processed')
       );
       if (spcInfoWithLabel) {
         newArrSpcIdx = [spcInfoWithLabel.idx];
+        nextSpcIdx = spcInfoWithLabel.idx;
       } else {
-        newArrSpcIdx = spcMetas.map(spc => spc.idx);
+        newArrSpcIdx = datasetSpcMetas.map((spc) => spc.idx);
+        nextSpcIdx = datasetSpcMetas[0]?.idx || nextSpcIdx;
       }
     }
 
@@ -123,26 +121,9 @@ class SpectraStore {
       spcInfos: sortedSpcInfo,
       spcMetas,
       fetched: true,
-      spcIdx: (spcMetas[0].idx || 0),
+      spcIdx: nextSpcIdx,
       others: [],
       arrSpcIdx: newArrSpcIdx,
-    });
-  }
-
-  handleLoadSpectraCompare(payload) {
-    if (!payload || !payload.fetchedFiles) {
-      this.setState({
-        spectraCompare: [],
-        fetched: true,
-      });
-      return;
-    }
-    const { fetchedFiles } = payload;
-    const spcMetas = this.decodeSpectra(fetchedFiles);
-
-    this.setState({
-      spectraCompare: spcMetas,
-      fetched: true,
     });
   }
 
@@ -170,7 +151,6 @@ class SpectraStore {
       spcIdx: fetchedIdx,
       others: [],
       arrSpcIdx: newArrSpcIdx,
-      prevIdx,
     });
   }
 
@@ -259,13 +239,7 @@ class SpectraStore {
     });
   }
 
-  handleSaveMultiSpectraComparison(response) {
-    if (response && response.new_attachment_ids) {
-      this.setState({
-        newAttachmentIds: response.new_attachment_ids,
-      });
-    }
-  }
+  
 }
 
 export default alt.createStore(SpectraStore, 'SpectraStore');

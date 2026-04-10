@@ -6,7 +6,8 @@ import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import { collectionHasPermission } from 'src/utilities/collectionUtilities';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import CollectionUtils from 'src/models/collection/CollectionUtils';
 
 import {
   Button, Tabs, Tab, OverlayTrigger, Tooltip
@@ -15,7 +16,6 @@ import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/propertiesTab/GeneralProperties';
 import AnalysesContainer from 'src/apps/mydb/elements/details/cellLines/analysesTab/AnalysesContainer';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
-import CopyElementModal from 'src/components/common/CopyElementModal';
 
 class CellLineDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -58,8 +58,14 @@ class CellLineDetails extends React.Component {
   }
 
   isReadOnly() {
-    const { currentCollection } = UIStore.getState();
-    return !collectionHasPermission(currentCollection, 0);
+    const { currentCollection, isSync } = UIStore.getState();
+    const { currentUser } = UserStore.getState();
+
+    return CollectionUtils.isReadOnly(
+      currentCollection,
+      currentUser.id,
+      isSync
+    );
   }
 
   renderHeaderContent() {
@@ -80,7 +86,6 @@ class CellLineDetails extends React.Component {
           />
         </div>
         <div className="d-flex gap-1">
-          <CopyElementModal element={cellLineItem} />
           {this.renderSaveButton(true)}
           {this.renderSaveButton()}
           {this.renderCloseHeaderButton()}

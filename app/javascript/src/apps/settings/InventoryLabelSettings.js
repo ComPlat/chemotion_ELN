@@ -328,7 +328,7 @@ function InventoryLabelSettings() {
               <Button
                 variant="primary"
                 onClick={() => { updateUserSettings(); }}
-                className="offset-4 w-100"
+                style={{ width: '180px' }}
                 disabled={resetSpinner}
               >
                 {updateSpinner
@@ -349,8 +349,8 @@ function InventoryLabelSettings() {
                 <Button
                   variant="danger"
                   onClick={handleResetConfirmation}
+                  style={{ minWidth: '180px' }}
                   disabled={updateSpinner}
-                  className="w-100"
                 >
                   {resetSpinner
                     ? (

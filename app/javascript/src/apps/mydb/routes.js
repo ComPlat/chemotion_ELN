@@ -15,6 +15,13 @@ const routes = {
     '/:collectionID': 'show'
   },
 
+  '/scollection': {
+    target: {
+      show: routesUtils.scollectionShow,
+    },
+    '/:collectionID': 'show'
+  },
+
   '/metadata': {
     target: {
       showMetadata: routesUtils.metadataShowOrNew

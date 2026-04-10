@@ -126,7 +126,7 @@ export default class ReactionDetailsMainProperties extends Component {
             <Col>
               <LineChartContainer
                 data={temperature}
-                xAxis="Time (h)"
+                xAxis="Time"
                 yAxis={`Temperature (${temperature.valueUnit})`}
               />
             </Col>

@@ -11,7 +11,7 @@ import {
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import { CreatableSelect } from 'src/components/common/Select';
-import { cloneDeep, findIndex, set } from 'lodash';
+import { cloneDeep, findIndex } from 'lodash';
 import uuid from 'uuid';
 import Immutable from 'immutable';
 
@@ -22,10 +22,8 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import UserActions from 'src/stores/alt/actions/UserActions';
 import QcActions from 'src/stores/alt/actions/QcActions';
 import QcStore from 'src/stores/alt/stores/QcStore';
-import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
@@ -71,11 +69,11 @@ import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
+import MolViewerBtn from 'src/components/viewer/MolViewerBtn';
+import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import { copyToClipboard } from 'src/utilities/clipboard';
-import { ProcessSampleWithComparisonAnalyses } from 'src/utilities/SpectraHelper';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
-import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const MWPrecision = 6;
 
@@ -110,7 +108,6 @@ const rangeCheck = (field, sample) => {
 
 export default class SampleDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
-  static contextType = StoreContext;
 
   constructor(props) {
     super(props);
@@ -150,13 +147,13 @@ export default class SampleDetails extends React.Component {
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
       casInputValue: '',
-      ketcherSVGError: null,
-      previousSurfaceType: null
+      ketcherSVGError: null
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
     this.enableSampleDecoupled = MatrixCheck(currentUser.matrix, 'sampleDecoupled');
     this.enableNmrSim = MatrixCheck(currentUser.matrix, 'nmrSim');
+    this.enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.isCASNumberValid = this.isCASNumberValid.bind(this);
@@ -210,8 +207,8 @@ export default class SampleDetails extends React.Component {
 
     const smileReadonly = !(
       (sample.isNew
-        && (typeof (sample.molfile) === 'undefined'
-          || (sample.molfile || '').length === 0)
+       && (typeof (sample.molfile) === 'undefined'
+        || (sample.molfile || '').length === 0)
       )
       || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
     );
@@ -299,28 +296,11 @@ export default class SampleDetails extends React.Component {
   }
 
   handleInventorySample(e) {
-    const { sample, visible } = this.state;
+    const { sample } = this.state;
     sample.inventory_sample = e.target.checked;
     this.handleSampleChanged(sample);
-
-    if (e.target.checked) {
-      // Add 'inventory' to visible tabs if not already present
-      if (!visible.includes('inventory')) {
-        this.setState({ visible: visible.push('inventory') });
-      }
-      // Persist inventory tab in collection layout if not already present
-      this.persistInventoryTabInCollection();
-    } else {
-      // Remove 'inventory' from visible tabs
-      this.setState({
-        visible: visible.filter((v) => v !== 'inventory'),
-      });
-      // switch to properties tab if current tab is inventory tab
-      if (this.state.activeTab === 'inventory') {
-        this.setState({
-          activeTab: 'properties'
-        });
-      }
+    if (!e.target.checked) {
+      this.setState({ activeTab: 'properties' });
     }
   }
 
@@ -375,7 +355,7 @@ export default class SampleDetails extends React.Component {
     const fetchMolecule = (fetchFunction) => {
       fetchFunction()
         .then(fetchSuccess).catch(fetchError).finally(() => {
-          this.splitSmiles(editor);
+          this.splitSmiles(editor, svgFile);
           this.hideStructureEditor();
         });
     };
@@ -427,9 +407,7 @@ export default class SampleDetails extends React.Component {
       ElementActions.createSample(sample, closeView);
     } else {
       sample.cleanBoilingMelting();
-      const spectraStore = SpectraStore.getState();
-      const newSample = ProcessSampleWithComparisonAnalyses(sample, spectraStore);
-      ElementActions.updateSample(newSample, closeView);
+      ElementActions.updateSample(new Sample(sample), closeView);
     }
 
     if (sample.is_new || closeView) {
@@ -554,44 +532,6 @@ export default class SampleDetails extends React.Component {
   editChemical = (boolean) => {
     this.setState({ isChemicalEdited: boolean });
   };
-
-  /**
-   * Persists the inventory tab into the current collection's tabs_segment
-   * and the user profile layout so it survives sample save/refresh.
-   * Only acts when the collection's sample layout does not already include
-   * the inventory tab; no-op for sync-to-me collections.
-   */
-  persistInventoryTabInCollection() {
-    const { currentCollection } = UIStore.getState();
-    if (!currentCollection || currentCollection.is_sync_to_me) return;
-
-    const sampleLayout = currentCollection?.tabs_segment?.sample;
-
-    // If the collection already tracks the inventory tab, nothing to do
-    if (sampleLayout && Object.prototype.hasOwnProperty.call(sampleLayout, 'inventory') && sampleLayout?.inventory > 0) {
-      return;
-    } 
-
-    // Resolve the effective layout: collection -> user profile -> fallback
-    const userProfile = UserStore.getState().profile;
-    const baseLayout = sampleLayout
-      || userProfile?.data?.layout_detail_sample;
-
-    if (!baseLayout) return;
-
-    // Append inventory as the next visible tab
-    const maxOrder = Math.max(0, ...Object.values(baseLayout).map((v) => Math.abs(v)));
-    const updatedLayout = { ...baseLayout, inventory: maxOrder + 1 };
-
-    // Persist to collection tabs_segment
-    const tabSegment = { ...currentCollection?.tabs_segment, sample: updatedLayout };
-    this.context.collections.updateCollection(currentCollection, tabSegment);
-
-    if (!userProfile) return;
-    // Persist to user profile
-    set(userProfile, 'data.layout_detail_sample', updatedLayout);
-    UserActions.updateUserProfile(userProfile);
-  }
 
   matchSelectedCollection(currentCollection) {
     const { sample } = this.props;
@@ -896,9 +836,7 @@ export default class SampleDetails extends React.Component {
           customizableField={this.customizableField}
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
-          onDecoupleChanged={this.decoupleChanged}
           setComponentDeletionLoading={this.setComponentDeletionLoading}
-          setMoleculeLoading={(loading) => this.setState({ loadingMolecule: loading })}
         />
         <div className="mb-2">
           {this.chemicalIdentifiersItem(sample)}
@@ -1062,38 +1000,38 @@ export default class SampleDetails extends React.Component {
     const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
     const saveAndClose = (saveBtnDisplay
       && (
-        <OverlayTrigger
-          placement="bottom"
-          overlay={(
-            <Tooltip id="saveCloseSample">
-              {`Save and Close ${elementToSave}`}
-            </Tooltip>
-          )}
-        >
-          {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
-        </OverlayTrigger>
+      <OverlayTrigger
+        placement="bottom"
+        overlay={(
+          <Tooltip id="saveCloseSample">
+            {`Save and Close ${elementToSave}`}
+          </Tooltip>
+        )}
+      >
+        {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
+      </OverlayTrigger>
       )
     );
     const save = (saveBtnDisplay
       && (
-        <OverlayTrigger
-          placement="bottom"
-          overlay={(
-            <Tooltip id="saveSample">
-              {`Save ${elementToSave}`}
-            </Tooltip>
-          )}
-        >
-          {this.saveButton(sampleUpdateCondition, floppyTag)}
-        </OverlayTrigger>
+      <OverlayTrigger
+        placement="bottom"
+        overlay={(
+          <Tooltip id="saveSample">
+            {`Save ${elementToSave}`}
+          </Tooltip>
+        )}
+      >
+        {this.saveButton(sampleUpdateCondition, floppyTag)}
+      </OverlayTrigger>
       )
     );
 
     const saveForChemical = isChemicalTab && isChemicalEdited ? save : null;
     return (
       <>
-        {isChemicalTab ? saveForChemical : save}
-        {isChemicalTab ? null : saveAndClose}
+        { isChemicalTab ? saveForChemical : save}
+        { isChemicalTab ? null : saveAndClose }
         <ConfirmClose el={sample} />
       </>
     );
@@ -1106,8 +1044,15 @@ export default class SampleDetails extends React.Component {
     const saveBtnDisplay = sample.isEdited || (isChemicalEdited && isChemicalTab);
 
     const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.shared === false
+    const defCol = currentCollection && currentCollection.is_shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
+
+    const copyBtn = (sample.can_copy && !sample.isNew) ? (
+      <CopyElementModal
+        element={sample}
+        defCol={defCol}
+      />
+    ) : null;
 
     const inventorySample = (
       <Form.Check
@@ -1136,28 +1081,28 @@ export default class SampleDetails extends React.Component {
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-      <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
-        <strong>Structure Alert</strong>
-        <Button
-          size="sm"
-          variant="outline-warning"
-          style={{ float: 'right' }}
-          onClick={() => this.setState({ pageMessage: null })}
-        >
-          Close Alert
-        </Button>
-        {
+        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+          <strong>Structure Alert</strong>
+          <Button
+            size="sm"
+            variant="outline-warning"
+            style={{ float: 'right' }}
+            onClick={() => this.setState({ pageMessage: null })}
+          >
+            Close Alert
+          </Button>
+          {
           pageMessage.error.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-        {
+          {
           pageMessage.warning.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-      </Alert>
-    ) : null;
+        </Alert>
+      ) : null;
 
     // warning message for redirection
     const redirectWarningBlock = this.state.showRedirectWarning ? (
@@ -1208,7 +1153,7 @@ export default class SampleDetails extends React.Component {
             {inventorySample}
             {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
             <PrintCodeButton element={sample} />
-            <CopyElementModal element={sample} defCol={defCol} />
+            {copyBtn}
             {this.saveAndCloseSample(sample, saveBtnDisplay)}
           </div>
         </div>
@@ -1220,6 +1165,7 @@ export default class SampleDetails extends React.Component {
 
   sampleInfo(sample) {
     const isMixture = sample.isMixture();
+    const style = { height: 'auto', marginBottom: '20px' };
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
@@ -1381,9 +1327,17 @@ export default class SampleDetails extends React.Component {
       ? '/images/wild_card/loading-bubbles.svg'
       : sample.svgPath;
 
-    const style = 'position-relative d-flex align-items-center justify-content-center';
+    const className = `position-relative ${svgPath ? 'svg-container' : 'svg-container-empty'}`;
 
-    const className = `${style} ${svgPath ? 'svg-container' : 'svg-container-empty'}`;
+    const molViewerBtn = (
+      <MolViewerBtn
+        className="structure-editor-container"
+        disabled={sample.isNew || !this.enableMoleculeViewer}
+        fileContent={sample.molfile}
+        isPublic={false}
+        viewType={`mol_${sample.id}`}
+      />
+    );
 
     return sample.can_update ? (
       <>
@@ -1393,13 +1347,15 @@ export default class SampleDetails extends React.Component {
           role="button"
           tabIndex="0"
         >
-          <i className="fa fa-pencil position-absolute top-0 end-0" />
+          <i className="fa fa-pencil position-absolute end-0" />
           <SVG key={svgPath} src={svgPath} className="molecule-mid" />
         </div>
+        {molViewerBtn}
       </>
     ) : (
       <div className={className}>
         <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+        {molViewerBtn}
       </div>
     );
   }
@@ -1459,35 +1415,22 @@ export default class SampleDetails extends React.Component {
   }
 
   /**
-   * Splits the canonical SMILES string of a mixture sample into individual
-   * components and updates the UI in two phases for fast feedback:
-   *   Phase 1 – splitSmilesToMolecule fetches molecules and adds Component
-   *             instances synchronously. setState shows the list immediately.
-   *   Phase 2 – updateMixtureMolecule fetches the combined molecule/SVG.
+   * Splits the canonical SMILES string of a mixture sample and updates the sample's molecules in the editor.
    *
-   * @param {string} editor - The editor identifier used for molecule fetching.
-   * @returns {Promise<void>}
+   * @param {string} editor - The editor identifier or instance to use for updating molecules.
+   * @param {string|null} svgFile - Optional SVG file content to use for rendering.
+   * @returns {void}
    */
-  async splitSmiles(editor) {
+  splitSmiles(editor) {
     const { sample } = this.state;
     if (!sample.isMixture() || !sample.molecule_cano_smiles || sample.molecule_cano_smiles === '') { return; }
 
     const mixtureSmiles = sample.molecule_cano_smiles.split('.');
-    if (!mixtureSmiles || mixtureSmiles.length === 0) return;
-
-    this.setState({ loadingMolecule: true });
-
-    try {
-      // Phase 1: Fetch individual molecules, create Components, add sync
-      await sample.splitSmilesToMolecule(mixtureSmiles, editor);
-      this.setState({ sample });
-
-      // Phase 2: Update combined molecule/SVG
-      await sample.updateMixtureMolecule();
-      this.setState({ sample, loadingMolecule: false });
-    } catch (error) {
-      console.log(error);
-      this.setState({ loadingMolecule: false });
+    if (mixtureSmiles) {
+      sample.splitSmilesToMolecule(mixtureSmiles, editor)
+        .then(() => {
+          this.setState({ sample });
+        });
     }
   }
 
@@ -1512,22 +1455,16 @@ export default class SampleDetails extends React.Component {
   }
 
   decoupleChanged(e) {
-    const { sample, previousSurfaceType } = this.state;
-    const checked = typeof e === 'boolean' ? e : e.target.checked;
-    sample.decoupled = checked;
+    const { sample } = this.state;
+    sample.decoupled = e.target.checked;
     if (!sample.decoupled) {
       sample.sum_formula = '';
       sample.molecular_mass = null;
-      if (sample.residues && sample.residues[0] && sample.residues[0].custom_info && previousSurfaceType != null) {
-        sample.residues[0].custom_info.surface_type = previousSurfaceType;
-        this.setState({ previousSurfaceType: null });
-      }
     } else {
       if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
       if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
-        const ci = sample.residues[0].custom_info;
-        this.setState({ previousSurfaceType: ci.surface_type || null });
-        delete ci.surface_type;
+        sample.residues[0].custom_info.polymer_type = 'self_defined';
+        delete sample.residues[0].custom_info.surface_type;
       }
     }
     if (!sample.decoupled && ((sample.molfile || '') === '')) {
@@ -1627,27 +1564,27 @@ export default class SampleDetails extends React.Component {
     const { pageMessage, ketcherSVGError } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-      <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
-        <strong>Structure Alert</strong>
-        <Button
-          size="sm"
-          variant="warning"
-          onClick={() => this.setState({ pageMessage: null })}
-        >
-          Close Alert
-        </Button>
-        {
+        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+          <strong>Structure Alert</strong>
+          <Button
+            size="sm"
+            variant="warning"
+            onClick={() => this.setState({ pageMessage: null })}
+          >
+            Close Alert
+          </Button>
+          {
           pageMessage.error.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-        {
+          {
           pageMessage.warning.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-      </Alert>
-    ) : null;
+        </Alert>
+      ) : null;
 
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);
@@ -1683,7 +1620,6 @@ export default class SampleDetails extends React.Component {
             tabTitles={tabTitlesMap}
             onTabPositionChanged={this.onTabPositionChanged}
             addInventoryTab={sample.inventory_sample}
-            openedFromCollectionId={this.props.openedFromCollectionId}
           />
           <Tabs
             mountOnEnter
@@ -1691,7 +1627,6 @@ export default class SampleDetails extends React.Component {
             activeKey={activeTab}
             onSelect={this.handleSelect}
             id="SampleDetailsXTab"
-            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>
@@ -1706,5 +1641,4 @@ export default class SampleDetails extends React.Component {
 
 SampleDetails.propTypes = {
   sample: PropTypes.object,
-  openedFromCollectionId: PropTypes.number,
 };

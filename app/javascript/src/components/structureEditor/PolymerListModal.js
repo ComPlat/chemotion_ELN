@@ -95,8 +95,7 @@ function PolymerListModal({
             aria-label="Category switch"
             style={{ display: 'flex', gap: 0 }}
           >
-            {shapesList && Object.keys(shapesList)
-              .map((categoryItem, index, arr) => {
+            {shapesList && Object.keys(shapesList).map((categoryItem, index, arr) => {
               const isActive = category === categoryItem;
               const isFirst = index === 0;
               const isLast = index === arr.length - 1;

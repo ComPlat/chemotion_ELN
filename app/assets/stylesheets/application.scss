@@ -8,7 +8,7 @@
  *= require_self
  */
 
-// file css rules that are used by multiple components under global-styles/utilities
+ // file css rules that are used by multiple components under global-styles/utilities
 @import "global-styles/chemstrap-tokens";
 @import "global-styles/bootstrap-config";
 @import "global-styles/bootstrap-mods";
@@ -21,7 +21,6 @@
 @import "components/AttachmentList";
 @import "components/ButtonGroupToggleButton";
 @import "components/CollectionTree";
-@import "components/CreateElementButton";
 @import "components/DragHandle";
 @import "components/ElementAllCheckbox";
 @import "components/ElementDragLayer";
@@ -41,16 +40,13 @@
 @import "components/Report";
 @import "components/ReorderableList";
 @import "components/SampleName";
-@import "components/SearchInput";
 @import "components/SearchModal";
 @import "components/SearchResult";
-@import "components/SelectionActions";
 @import "components/Sidebar_Topbar";
 @import "components/TabLayoutEditor";
 @import "components/CollectionTabLayoutEditor";
 @import "components/svg_with_popver";
 @import "components/FolderDropzone.module";
-@import "components/ReactionVariations";
 
 @import "legacy/miscellaneous";
 @import "legacy/AttachmentContainer";

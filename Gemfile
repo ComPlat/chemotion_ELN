@@ -57,7 +57,7 @@ gem 'jwt'
 gem 'kaminari'
 gem 'kaminari-grape'
 
-gem 'labimotion', '2.2.0.rc5'
+gem 'labimotion', '2.1.0'
 gem 'logidze'
 
 gem 'mimemagic', '0.3.10'
@@ -86,6 +86,7 @@ gem 'pg_search'
 gem 'prawn'
 gem 'prawn-svg'
 gem 'puma', '< 6.0.0'
+gem 'pundit'
 
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'

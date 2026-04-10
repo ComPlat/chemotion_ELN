@@ -7,9 +7,8 @@ module AttachmentHelpers
     element = attachment.root_element
     return true if element == user
 
-    policy = ElementPolicy.new(user, element)
-    read_access_on_element = policy.read?
-    read_access_on_dataset = policy.read_dataset?
+    read_access_on_element = ElementPolicy.new(user, element).read?
+    read_access_on_dataset = ElementPermissionProxy.new(user, element, [user.id]).read_dataset?
 
     read_access_on_element && read_access_on_dataset
   end
@@ -18,9 +17,8 @@ module AttachmentHelpers
     element = attachment.root_element
     return true if element == user
 
-    policy = ElementPolicy.new(user, element)
-    update_access_on_element = policy.update?
-    read_access_on_dataset = policy.read_dataset?
+    update_access_on_element = ElementPolicy.new(user, element).update?
+    read_access_on_dataset = ElementPermissionProxy.new(user, element, [user.id]).read_dataset?
 
     update_access_on_element && read_access_on_dataset
   end

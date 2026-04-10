@@ -15,10 +15,10 @@ export default class UIFetcher {
     return promise;
   }
 
-  static deleteElementsByUIState(params) {
+  static fetchByUIState(params, method = 'POST') {
     return fetch('/api/v1/ui_state/', {
       credentials: 'same-origin',
-      method: 'DELETE',
+      method,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
@@ -26,7 +26,10 @@ export default class UIFetcher {
       body: JSON.stringify(params)
     }).then(response => response.json())
       .then((json) => {
-        return json;
+        if (method === 'DELETE') { return json; }
+        const samples = json.samples.map(s => new Sample(s));
+        const reactions = json.reactions.map(r => new Reaction(r));
+        return { samples, reactions };
       })
       .catch((errorMessage) => { console.log(errorMessage); });
   }

@@ -36,6 +36,7 @@
 #  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
 #
 
+# rubocop:disable Metrics/ClassLength
 class Attachment < ApplicationRecord
   has_logidze
   acts_as_paranoid
@@ -73,6 +74,8 @@ class Attachment < ApplicationRecord
   after_create :reload
   after_destroy :delete_file_and_thumbnail
   after_save :attach_file
+  # TODO: rm this during legacy store cleaning
+  # after_save :add_checksum, if: :new_upload
 
   belongs_to :attachable, polymorphic: true, optional: true
   has_one :report_template, dependent: :nullify
@@ -121,6 +124,43 @@ class Attachment < ApplicationRecord
     attachment_attacher.url if attachment_attacher.file.present?
   end
 
+  def abs_prev_path
+    store.prev_path
+  end
+
+  def store
+    Storage.new_store(self)
+  end
+
+  def old_store(old_store = storage_was)
+    Storage.old_store(self, old_store)
+  end
+
+  # TODO: rm this during legacy store cleaning
+  def add_checksum
+    self.checksum = Digest::MD5.hexdigest(read_file) if attachment_attacher.file.present?
+    update_column('checksum', checksum) # rubocop:disable Rails/SkipsModelValidations
+  end
+
+  # Rewrite read attribute for checksum
+  def checksum
+    # read_attribute(:checksum).presence || attachment['md5']
+    attachment && attachment['md5']
+  end
+
+  # TODO: to be handled by shrine
+  def reset_checksum
+    add_checksum
+    update_column('checksum', checksum) if checksum_changed? # rubocop:disable Rails/SkipsModelValidations
+  end
+
+  def regenerate_thumbnail
+    return unless filesize <= 50 * 1024 * 1024
+
+    store.regenerate_thumbnail
+    update_column('thumb', thumb) if thumb_changed? # rubocop:disable Rails/SkipsModelValidations
+  end
+
   # @desc return the associated element {instance of ResearchPlan, Sample,.. or User , or nil}
   # @return [ApplicationRecord, nil] the associated element through direct attachable association
   #   or indirectly through the containers association (Attachment -> Container -> {Element|User})
@@ -166,12 +206,16 @@ class Attachment < ApplicationRecord
     for_container? ? attachable : nil
   end
 
-  def checksum
-    attachment&.metadata&.fetch('md5', nil)
-  end
-
   def update_research_plan!(c_id)
     update!(attachable_id: c_id, attachable_type: 'ResearchPlan')
+  end
+
+  def rewrite_file_data!
+    return if file_data.blank?
+
+    store.destroy
+    store.store_file
+    self
   end
 
   # Rewrite read attribute for filesize
@@ -263,35 +307,20 @@ class Attachment < ApplicationRecord
     available_extensions.include?(file_extension.downcase)
   end
 
-  def resolve_unique_match
-    return [nil, nil] unless inbox_auto_enabled?
-
-    samples = InboxSearchElements.call(
-      search_string: filename,
-      current_user: recipient,
-      element: :sample,
-    )
-
-    variation = filename[/-v(\d+)(?=[.-]|$)/i, 1]
-    search_string = filename.sub(/-v\d+.*$/i, '')
-
-    reactions = InboxSearchElements.call(
-      search_string: search_string,
-      current_user: recipient,
-      element: :reaction,
-    )
-
-    return [reactions.first, variation] if samples.empty? && reactions.one?
-    return [samples.first, nil]         if reactions.empty? && samples.one?
-
-    [nil, nil]
-  end
-
   private
 
   def generate_key
     self.key = SecureRandom.uuid unless key
     self.storage = 'local'
+  end
+
+  # TODO: rm this during legacy store cleaning
+  def new_upload
+    storage == 'tmp'
+  end
+
+  def store_changed
+    !duplicated && storage_changed?
   end
 
   def transferred?
@@ -337,13 +366,5 @@ class Attachment < ApplicationRecord
     raise "File #{File.basename(file_path)}
       cannot be uploaded. File size must be less than #{Rails.configuration.shrine_storage.maximum_size} MB"
   end
-
-  def inbox_auto_enabled?
-    return false unless recipient
-
-    data = recipient.profile&.data
-    return true unless data
-
-    data.fetch('inbox_auto', true)
-  end
 end
+# rubocop:enable Metrics/ClassLength

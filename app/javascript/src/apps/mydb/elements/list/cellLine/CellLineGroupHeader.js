@@ -2,8 +2,9 @@ import React, { Component } from 'react';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import PropTypes from 'prop-types';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { elementShowOrNew } from 'src/utilities/routesUtils';
 import { CellLinePropTypeTableEntry } from 'src/models/cellLine/CellLinePropTypes';
-import { aviatorNavigation } from 'src/utilities/routesUtils';
+import Aviator from 'aviator';
 
 export default class CellLineGroupHeader extends Component {
   constructor(props) {
@@ -70,18 +71,9 @@ export default class CellLineGroupHeader extends Component {
 
   renderCreateSubSampleButton() {
     const { cellLineItems } = this.props;
-    const { currentCollection } = UIStore.getState();
+    const { currentCollection, isSync } = UIStore.getState();
     if (currentCollection.label === 'All') { return null; }
     if (currentCollection.is_sync_to_me && currentCollection.permission_level === 0) { return null; }
-    const params = {
-      type: 'cell_line',
-      params:
-      {
-        collectionID: currentCollection.id,
-        cell_lineID: 'new',
-        cell_line_template: cellLineItems[0]
-      }
-    };
 
     return (
       <OverlayTrigger
@@ -94,7 +86,25 @@ export default class CellLineGroupHeader extends Component {
       >
         <Button
           size="sm"
-          onClick={() => aviatorNavigation('cell_line', 'new', true, true, params)}
+          onClick={(event) => {
+            event.stopPropagation();
+
+            const uri = isSync
+              ? `/scollection/${currentCollection.id}/cell_line/new`
+              : `/collection/${currentCollection.id}/cell_line/new`;
+            Aviator.navigate(uri, { silent: true });
+
+            const creationEvent = {
+              type: 'cell_line',
+              params:
+              {
+                collectionID: currentCollection.id,
+                cell_lineID: 'new',
+                cell_line_template: cellLineItems[0]
+              }
+            };
+            elementShowOrNew(creationEvent);
+          }}
         >
           <i className="fa fa-plus" aria-hidden="true" />
         </Button>

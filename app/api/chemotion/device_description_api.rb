@@ -139,6 +139,7 @@ module Chemotion
       # Return serialized device description by collection id
       params do
         optional :collection_id, type: Integer
+        optional :sync_collection_id, type: Integer
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
@@ -151,8 +152,15 @@ module Chemotion
         scope =
           if params[:collection_id]
             begin
-              Collection.accessible_for(current_user)
+              Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
                         .find(params[:collection_id]).device_descriptions
+            rescue ActiveRecord::RecordNotFound
+              DeviceDescription.none
+            end
+          elsif params[:sync_collection_id]
+            begin
+              current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
+                          .collection.device_descriptions
             rescue ActiveRecord::RecordNotFound
               DeviceDescription.none
             end
@@ -202,6 +210,25 @@ module Chemotion
         { errors: device_description.errors.messages }
       end
 
+      # get segment klass ids by new ontology
+      namespace :byontology do
+        params do
+          requires :id, type: Integer
+          requires :ontology, type: Hash do
+            optional :data, type: Hash
+            optional :paths, type: Array
+          end
+        end
+        put ':id' do
+          device_description = DeviceDescription.find(params[:id])
+          attributes = declared(params, include_missing: false)
+          segment_klass_ids =
+            Usecases::DeviceDescriptions::Update.new(attributes, device_description, current_user)
+                                                .segment_klass_ids_by_new_ontology
+          segment_klass_ids
+        end
+      end
+
       # get ontologies by segment klasses
       namespace :ontologies do
         get do
@@ -219,15 +246,16 @@ module Chemotion
             optional :from_date, type: Date
             optional :to_date, type: Date
             optional :collection_id, type: Integer
+            optional :is_sync_to_me, type: Boolean, default: false
           end
           optional :limit, type: Integer, desc: 'Limit number of device descriptions'
         end
 
         before do
-          collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
           @device_descriptions =
-            DeviceDescription.by_collection_id(collection.id).by_ui_state(params[:ui_state]).for_user(current_user.id)
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @device_descriptions).read_all?
+            DeviceDescription.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @device_descriptions).read?
         end
 
         post do

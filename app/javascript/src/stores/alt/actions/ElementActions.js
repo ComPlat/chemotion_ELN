@@ -240,9 +240,9 @@ class ElementActions {
   }
 
   // -- Generic --
-  fetchGenericElsByCollectionId(id, queryParams = {}, elementType) {
+  fetchGenericElsByCollectionId(id, queryParams = {}, collectionIsSync = false, elementType) {
     return (dispatch) => {
-      GenericElsFetcher.fetchByCollectionId(id, queryParams)
+      GenericElsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
         .then((result) => { dispatch({ result, type: elementType }); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
@@ -291,9 +291,10 @@ class ElementActions {
     };
   }
 
-  fetchSamplesByCollectionId(id, queryParams = {}, moleculeSort = false) {
+  fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
+    moleculeSort = false) {
     return (dispatch) => {
-      SamplesFetcher.fetchByCollectionId(id, queryParams, moleculeSort)
+      SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync, moleculeSort)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -302,9 +303,9 @@ class ElementActions {
     };
   }
 
-  fetchReactionsByCollectionId(id, queryParams = {}) {
+  fetchReactionsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
-      ReactionsFetcher.fetchByCollectionId(id, queryParams)
+      ReactionsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -313,9 +314,9 @@ class ElementActions {
     };
   }
 
-  fetchWellplatesByCollectionId(id, queryParams = {}) {
+  fetchWellplatesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
-      WellplatesFetcher.fetchByCollectionId(id, queryParams)
+      WellplatesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -324,9 +325,9 @@ class ElementActions {
     };
   }
 
-  fetchScreensByCollectionId(id, queryParams = {}) {
+  fetchScreensByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
-      ScreensFetcher.fetchByCollectionId(id, queryParams)
+      ScreensFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -335,9 +336,9 @@ class ElementActions {
     };
   }
 
-  fetchResearchPlansByCollectionId(id, queryParams = {}) {
+  fetchResearchPlansByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
-      ResearchPlansFetcher.fetchByCollectionId(id, queryParams)
+      ResearchPlansFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -346,9 +347,9 @@ class ElementActions {
     };
   }
 
-  fetchCellLinesByCollectionId(id, queryParams = {}) {
+  fetchCellLinesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
-      CellLinesFetcher.fetchByCollectionId(id, queryParams)
+      CellLinesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -357,9 +358,9 @@ class ElementActions {
     };
   }
 
-  fetchDeviceDescriptionsByCollectionId(id, queryParams = {}) {
+  fetchDeviceDescriptionsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
-      DeviceDescriptionFetcher.fetchByCollectionId(id, queryParams)
+      DeviceDescriptionFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -368,9 +369,9 @@ class ElementActions {
     };
   }
 
-  fetchVesselsByCollectionId(id, queryParams = {}) {
+  fetchVesselsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
     return (dispatch) => {
-      VesselsFetcher.fetchByCollectionId(id, queryParams)
+      VesselsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -379,9 +380,10 @@ class ElementActions {
     };
   }
 
-  fetchSequenceBasedMacromoleculeSamplesByCollectionId(id, queryParams = {}, listOrder = 'sbmm') {
+  fetchSequenceBasedMacromoleculeSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
+    listOrder = 'sbmm') {
     return (dispatch) => {
-      SequenceBasedMacromoleculeSamplesFetcher.fetchByCollectionId(id, queryParams, listOrder)
+      SequenceBasedMacromoleculeSamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync, listOrder)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -429,9 +431,9 @@ class ElementActions {
 
   handleSvgReactionChange(reaction) {
     const materialsSvgPaths = {
-      starting_materials: reaction.starting_materials.map((material) => material.svgPath),
-      reactants: reaction.reactantsWithSbmm.map((material) => material.svgPath),
-      products: reaction.products.map((material) => [material.svgPath, material.equivalent])
+      starting_materials: reaction.starting_materials.map(material => material.svgPath),
+      reactants: reaction.reactants.map(material => material.svgPath),
+      products: reaction.products.map(material => [material.svgPath, material.equivalent])
     };
 
     const solvents = reaction.solvents.map((s) => {
@@ -712,22 +714,22 @@ class ElementActions {
     return Reaction.buildEmpty(collection_id)
   }
 
-  copyReactionFromId(id, keepAmounts = false) {
+  copyReactionFromId(id) {
     return (dispatch) => {
       ReactionsFetcher.fetchById(id)
         .then((result) => {
-          dispatch({ reaction: result, keepAmounts });
+          dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
     };
   }
 
-  copyReaction(reaction, colId, keepAmounts = false) {
+  copyReaction(reaction, colId) {
     return (dispatch) => {
       ReactionsFetcher.fetchById(reaction.id)
         .then((result) => {
-          dispatch({ reaction: result, colId, keepAmounts });
+          dispatch({ reaction: result, colId: colId });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -1308,8 +1310,32 @@ class ElementActions {
   // - ...
   deleteElementsByUIState(params) {
     return (dispatch) => {
-      UIFetcher.deleteElementsByUIState(params)
+      UIFetcher.fetchByUIState(params, 'DELETE')
         .then((result) => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
+  updateElementsCollection(params) {
+    return (dispatch) => {
+      CollectionsFetcher.updateElementsCollection(params)
+        .then(() => { dispatch(); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
+  assignElementsCollection(params) {
+    return (dispatch) => {
+      CollectionsFetcher.assignElementsCollection(params)
+        .then(() => { dispatch(); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
+  removeElementsCollection(params) {
+    return (dispatch) => {
+      CollectionsFetcher.removeElementsCollection(params)
+        .then(() => { dispatch(); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
@@ -1350,10 +1376,6 @@ class ElementActions {
 
   refreshComputedProp(cprop) {
     return cprop;
-  }
-
-  refreshElementsAfterCollectionChanges(collectionId) {
-    return collectionId;
   }
 
   // -- Private Note --

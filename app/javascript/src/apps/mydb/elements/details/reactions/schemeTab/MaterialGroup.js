@@ -19,7 +19,6 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ReorderableMaterialContainer
   from 'src/apps/mydb/elements/details/reactions/schemeTab/ReorderableMaterialContainer';
 import CreateButton from 'src/components/common/CreateButton';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const headers = {
   ref: 'Ref',
@@ -40,7 +39,7 @@ const headers = {
 function MaterialGroup({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, headIndex,
-  dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
+  dropMaterial, dropSample, switchEquiv, lockEquivColumn, displayYieldField,
   switchYield
 }) {
   const getMaterialComponent = ({
@@ -77,21 +76,6 @@ function MaterialGroup({
     }
     if (item.type === DragDropItemTypes.MOLECULE) {
       dropSample(item.element, materials.at(index), materialGroup, null, true);
-    }
-    if (item.type === DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE) {
-      // Handle SBMM drop - only for reactants group
-      if (materialGroup === 'reactants' && dropSbmmSample) {
-        dropSbmmSample(item.element, materials.at(index), materialGroup);
-      } else {
-        // Show notification if trying to drop SBMM into other groups
-        NotificationActions.add({
-          title: 'Invalid Action',
-          message: 'SBMM samples can only be placed in the Reactants group.',
-          level: 'warning',
-          dismissible: 'button',
-          position: 'tr',
-        });
-      }
     }
   };
 
@@ -208,18 +192,6 @@ function GeneralMaterialGroup({
         placeholder="Add"
         onChange={createReagentForReaction}
         size="xsm"
-        styles={{
-          menu: (base) => ({
-            ...base,
-            minWidth: 800,
-            width: '800px',
-            maxWidth: '95vw',
-          }),
-          option: (base) => ({
-            ...base,
-            fontSize: '0.875rem',
-          }),
-        }}
       />
     );
   }

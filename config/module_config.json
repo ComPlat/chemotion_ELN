@@ -62,6 +62,12 @@
     }
   },
 
+  "CollectionStore": {
+    "state": {},
+    "listeners": {},
+    "handlers": {}
+  },
+
   "ElementStore": {
     "state": {},
     "listeners": {},

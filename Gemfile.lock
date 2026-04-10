@@ -361,7 +361,7 @@ GEM
       rexml (>= 3.3.9)
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
-    labimotion (2.2.0.rc5)
+    labimotion (2.1.0)
       caxlsx (~> 4.0)
       rails (>= 6.1, < 8.0)
     language_server-protocol (3.17.0.5)
@@ -509,9 +509,11 @@ GEM
     public_suffix (5.1.1)
     puma (5.6.9)
       nio4r (~> 2.0)
+    pundit (2.5.0)
+      activesupport (>= 3.0.0)
     raabro (1.4.0)
     racc (1.8.1)
-    rack (2.2.22)
+    rack (2.2.20)
     rack-accept (0.4.5)
       rack (>= 0.4)
     rack-contrib (2.5.0)
@@ -862,7 +864,7 @@ DEPENDENCIES
   jwt
   kaminari
   kaminari-grape
-  labimotion (= 2.2.0.rc5)
+  labimotion (= 2.1.0)
   launchy
   listen
   logidze
@@ -891,6 +893,7 @@ DEPENDENCIES
   pry-byebug
   pry-rails
   puma (< 6.0.0)
+  pundit
   rack
   rack-cors
   rails (~> 6.1.7.7)

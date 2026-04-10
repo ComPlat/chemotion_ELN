@@ -430,7 +430,6 @@ export default class WellplateDetails extends Component {
             type="wellplate"
             availableTabs={Object.keys(tabContentsMap)}
             onTabPositionChanged={this.onTabPositionChanged}
-            openedFromCollectionId={this.props.openedFromCollectionId}
           />
           <Tabs
             mountOnEnter
@@ -438,7 +437,6 @@ export default class WellplateDetails extends Component {
             activeKey={activeTab}
             onSelect={(event) => this.handleTabChange(event)}
             id="wellplateDetailsTab"
-            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>
@@ -451,5 +449,4 @@ export default class WellplateDetails extends Component {
 
 WellplateDetails.propTypes = {
   wellplate: PropTypes.instanceOf(WellplateModel).isRequired,
-  openedFromCollectionId: PropTypes.number,
 };

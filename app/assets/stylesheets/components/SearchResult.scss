@@ -1,10 +1,3 @@
-.modal.modal-dialog-fullscreen .search-result-body {
-  max-height: none;
-}
-.search-result-body {
-  max-height: 72vh;
-}
-
 .search-value-list {
   position: relative;
   max-height: 12vh;
@@ -13,10 +6,7 @@
 }
 
 .search-result-tabs {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
+  flex: 1 1 auto;
   margin-bottom: 1.5rem;
 }
 
@@ -27,32 +17,21 @@
   left: 1rem;
 }
 
-.search-result-tab-content {
-  @extend .border-lighten2;
-  @extend .rounded-bottom;
-  @extend .border;
-  flex: 1;
+.search-result-tab-content-container {
   overflow-y: auto;
   min-height: 150px;
+  max-height: calc(85vh - 485px);
+  height: 100vh;
   position: relative;
-  border-top: none !important;
-}
-
-.search-result-group:last-child {
-  @extend .border-lighten3;
-  @extend .border-bottom;
-}
-
-.search-result-tab-content-container .search-result-group:first-child .search-result-group-header-content:first-child .search-result-tab-content-list,
-.search-result-tab-content-container .search-result-group:first-child .search-result-tab-content-list-name:first-child {
-  border-top: none !important;
+  border: 1px solid var(--bs-gray-600);
+  border-top: none;
 }
 
 .search-result-tab-content-list {
-  @extend .surface-lighten4;
-  @extend .border-lighten3;
-  @extend .border-top;
-  padding: 0 1rem 0 1rem;
+  background-color: var(--bs-gray-200);
+  padding: 0 1rem 1rem 1rem;
+  border-bottom: 1px solid var(--bs-gray-500);
+  border-top: 1px solid var(--bs-gray-200);
 }
 
 .search-result-tab-content-list:first-child {
@@ -70,7 +49,7 @@
 
 .search-result-tab-content-list-white {
   background-color: var(--bs-white);
-  padding: 0.5rem 1rem;
+  padding: 1rem;
   border-bottom: 1px solid var(--bs-gray-200);
   border-top: 1px solid var(--bs-gray-100);
 }
@@ -85,7 +64,8 @@
 }
 
 .search-result-molecule .preview-table {
-  max-width: 140px;
+  max-width: 100px;
+  min-height: 100px;
   margin-right: 0.75rem;
   margin-bottom: 0.75rem;
 }
@@ -95,10 +75,10 @@
 }
 
 .search-result-tab-content-list-name {
+  display: block;
+  margin: -1rem;
   padding: 0.6rem 1rem;
   background-color: var(--bs-white);
-  @extend .border-lighten3;
-  @extend .border-top;
 }
 
 .search-result-tab-content-list-name:hover, .search-result-tab-content-list-white div:hover {
@@ -106,6 +86,6 @@
 }
 
 .search-result-pagination.pagination {
-  margin: 1.5rem 1rem 1rem 1rem !important;
+  margin-top: 1.5rem !important;
   margin-bottom: 0;
 }

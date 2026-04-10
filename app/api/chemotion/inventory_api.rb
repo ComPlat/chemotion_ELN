@@ -19,7 +19,7 @@ module Chemotion
               params[:name],
               params[:counter],
               collection_ids,
-              current_user,
+              current_user.id,
             )
           rescue StandardError => e
             error!({ error_type: e.class.name, error_message: e.message }, 500)
@@ -31,7 +31,7 @@ module Chemotion
         desc 'get inventories and collections for user'
         get do
           {
-            inventory_collections: Collection.inventory_collections(current_user),
+            inventory_collections: Collection.inventory_collections(current_user.id),
           }
         end
       end

@@ -29,22 +29,6 @@ export default class ImageModal extends Component {
     this.fetchImageThumbnail();
   }
 
-  shouldComponentUpdate(nextProps, nextState) {
-    if (this.props.attachment?.id !== nextProps.attachment?.id) {
-      return true;
-    }
-
-    if (
-      this.state.showModal !== nextState.showModal
-      || this.state.thumbnail !== nextState.thumbnail
-      || this.state.fetchSrc !== nextState.fetchSrc
-      || this.state.isPdf !== nextState.isPdf
-    ) {
-      return true;
-    }
-
-    return false;
-  }
   componentDidUpdate(prevProps) {
     if (this.props.attachment?.id !== prevProps.attachment?.id) {
       this.fetchImageThumbnail();

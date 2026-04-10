@@ -1962,26 +1962,10 @@ export default class Sample extends Element {
    * @param {Object} newComponent - The new component to add.
    */
   async addMixtureComponent(newComponent) {
-    this.addMixtureComponentSync(newComponent);
-    await this.updateMixtureMolecule();
-  }
-
-  /**
-   * Synchronously adds a new component to the mixture's component array.
-   * Does NOT fetch the combined molecule — call updateMixtureMolecule() afterwards
-   * to update the molecule/SVG via a network request.
-   * @param {Object} newComponent - The new component to add.
-   * @param {boolean} skipRecalculations - If true, skips expensive recalculations (for batch operations)
-   * @returns {boolean} True if the component was added, false if it was a duplicate.
-   */
-  addMixtureComponentSync(newComponent, skipRecalculations = false) {
     const tmpComponents = [...(this.components || [])];
-    // Check if this component is already present (including merged components, e.g. ionic compounds)
-    const isNew = !tmpComponents.some(
-      (component) => component.molecule.iupac_name === newComponent.molecule.iupac_name
-        || component.molecule.inchikey === newComponent.molecule.inchikey
-        || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)
-    );
+    const isNew = !tmpComponents.some((component) => component.molecule.iupac_name === newComponent.molecule.iupac_name
+                                || component.molecule.inchikey === newComponent.molecule.inchikey
+                                || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)); // check if this component is already part of a merged component (e.g. ionic compound)
 
     if (!newComponent.material_group) {
       newComponent.material_group = 'liquid';
@@ -1994,119 +1978,64 @@ export default class Sample extends Element {
     if (isNew) {
       tmpComponents.push(newComponent);
       this.components = tmpComponents;
-
-      if (!skipRecalculations) {
-        this.setComponentPositions();
-        this.calculateTotalMixtureMass();
-        this.updateMixtureComponentEquivalent();
-      }
-    }
-
-    return isNew;
-  }
-
-  /**
-   * Fetches the combined molecule for the current mixture components via a
-   * single network request and updates the molecule, molfile, and SVG.
-   * @async
-   */
-  async updateMixtureMolecule() {
-    const combinedSmiles = (this.components || [])
-      .map((c) => c.molecule_cano_smiles)
-      .filter(Boolean)
-      .join('.');
-
-    if (!combinedSmiles) return;
-
-    // Only fetch if the combined SMILES differs from current
-    if (combinedSmiles === this.molecule_cano_smiles) return;
-
-    const result = await MoleculesFetcher.fetchBySmi(combinedSmiles, null, this.molfile, 'ketcher');
-
-    // fetchBySmi swallows errors and returns undefined - exit cleanly if fetch failed
-    if (!result || !result.molfile) {
-      console.warn('updateMixtureMolecule: Failed to fetch molecule for combined SMILES:', combinedSmiles);
-      return;
-    }
-
-    // Re-validate after async fetch: components may have changed during the request.
-    // If they did, this response is stale and should be discarded to avoid race conditions.
-    const currentSmiles = (this.components || [])
-      .map((c) => c.molecule_cano_smiles)
-      .filter(Boolean)
-      .join('.');
-
-    if (!currentSmiles || combinedSmiles !== currentSmiles) {
-      return;
-    }
-
-    this.molecule = result;
-    this.molfile = result.molfile;
-
-    // Clear sample_svg_file after setting molecule, because the setter
-    // re-populates it from temp_svg.  For mixtures the permanent combined
-    // SVG (molecule.molecule_svg_file) should be used instead.
-    if (this.isMixture()) {
-      this.sample_svg_file = null;
-    }
-  }
-
-  /**
-   * Synchronously adds multiple new components to the mixture in a single batch.
-   * Does NOT fetch the combined molecule — call updateMixtureMolecule() afterwards.
-   * @param {Array<Object>} newComponents - The new components to add.
-   */
-  addMixtureComponentsSync(newComponents) {
-    if (!newComponents || newComponents.length === 0) return;
-
-    let hasNewComponents = false;
-    newComponents.forEach((c) => {
-      const isNew = this.addMixtureComponentSync(c, true); // Skip recalculations during batch
-      if (isNew) hasNewComponents = true;
-    });
-
-    // Only perform expensive recalculations once if we actually added new components
-    if (hasNewComponents) {
       this.setComponentPositions();
+
+      if (!this.molecule_cano_smiles
+        || !this.molecule_cano_smiles.split('.').some((smiles) => smiles === newComponent.molecule_cano_smiles)) {
+        const newSmiles = this.molecule_cano_smiles
+          ? `${this.molecule_cano_smiles}.${newComponent.molecule_cano_smiles}`
+          : newComponent.molecule_cano_smiles;
+
+        const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher');
+        this.molecule = result;
+        this.molfile = result.molfile;
+      }
+
       this.calculateTotalMixtureMass();
+
+      // Ensure reference and equivalents are consistent after add
       this.updateMixtureComponentEquivalent();
     }
   }
 
   /**
-   * Clears the molecule data (molecule, molfile, and SVG for mixtures).
-   * Used when all components have been removed from a mixture.
-   */
-  clearMoleculeData() {
-    this.molecule = null;
-    this.molfile = '';
-    if (this.isMixture()) {
-      this.sample_svg_file = null;
-    }
-  }
-
-  /**
-   * Deletes a component from the mixture.
-   * This only does fast synchronous operations (positions, mass, equivalents).
-   * Call updateMixtureMolecule() afterwards if you need to update the SVG.
+   * Deletes a component from the mixture and updates the molecule and molfile if needed.
+   * @async
    * @param {Object} componentToDelete - The component to delete.
    */
-  deleteMixtureComponent(componentToDelete) {
+  async deleteMixtureComponent(componentToDelete) {
     const tmpComponents = [...(this.components || [])];
     const filteredComponents = tmpComponents.filter(
       (comp) => comp !== componentToDelete
     );
     this.components = filteredComponents;
 
-    // Do the fast operations (positions, mass, equivalents)
-    this.setComponentPositions();
-    this.calculateTotalMixtureMass();
-    this.updateMixtureComponentEquivalent();
-
-    // If no components remain, clear the molecule and SVG
-    if (!this.hasComponents()) {
-      this.clearMoleculeData();
+    // Clear sample_svg_file for mixture samples to ensure combined molecule SVG is used
+    if (this.isMixture()) {
+      this.sample_svg_file = null;
     }
+
+    if (!this.molecule_cano_smiles || this.molecule_cano_smiles === '') {
+      this.molecule = null;
+      this.molfile = '';
+      return;
+    }
+
+    const smilesToRemove = componentToDelete.molecule_cano_smiles;
+    const newSmiles = this.molecule_cano_smiles
+      .split('.')
+      .filter((smiles) => smiles !== smilesToRemove && !smilesToRemove.split('.').includes(smiles))
+      .join('.');
+
+    if (newSmiles !== this.molecule_cano_smiles) {
+      const result = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher');
+      this.molecule = result;
+      this.molfile = result.molfile;
+    }
+    this.setComponentPositions();
+
+    // Recalculate total mixture mass after component deletion
+    this.calculateTotalMixtureMass();
   }
 
   /**
@@ -2274,8 +2203,8 @@ export default class Sample extends Element {
       const newComponent = Sample.buildNew(newMolecule, this.collection_id);
       newComponent.material_group = tagGroup;
 
-      this.deleteMixtureComponent(tagMat);
-      this.deleteMixtureComponent(srcMat);
+      await this.deleteMixtureComponent(tagMat);
+      await this.deleteMixtureComponent(srcMat);
       await this.addMixtureComponent(newComponent);
     } catch (error) {
       console.error('Error merging components:', error);
@@ -2292,57 +2221,20 @@ export default class Sample extends Element {
   }
 
   /**
-   * Fetches individual molecules for each SMILES in parallel, wraps them as
-   * Component instances, and adds them synchronously to the mixture.
-   *
-   * Does NOT call updateMixtureMolecule() — the caller is responsible for
-   * triggering the combined-molecule fetch (and any intermediate setState)
-   * so the UI can show components before the SVG update finishes.
-   *
+   * Splits a list of SMILES strings into molecules and adds them as subsamples/components.
    * @param {Array<string>} mixtureSmiles - Array of SMILES strings to split.
    * @param {string} editor - The editor to use for fetching molecules.
-   * @returns {Promise<void>} Resolves once components have been added.
+   * @returns {Promise<Array>} A promise that resolves when all molecules are processed.
    */
-  async splitSmilesToMolecule(mixtureSmiles, editor) {
-    const results = await Promise.all(
-      mixtureSmiles.map((smiles) => MoleculesFetcher.fetchBySmi(smiles, null, null, editor))
-    );
+  splitSmilesToMolecule(mixtureSmiles, editor) {
+    const promises = mixtureSmiles.map((smiles) => MoleculesFetcher.fetchBySmi(smiles, null, null, editor));
 
-    // Filter out failed fetches (undefined/null) and track which SMILES failed
-    const failedSmiles = [];
-    const molecules = [];
-    results.forEach((molecule, index) => {
-      if (molecule && molecule.id) {
-        molecules.push(molecule);
-      } else {
-        failedSmiles.push(mixtureSmiles[index]);
-      }
-    });
-
-    // Notify user if some molecules failed to resolve
-    if (failedSmiles.length > 0) {
-      NotificationActions.add({
-        title: 'Molecule Resolution Failed',
-        message: `Could not resolve ${failedSmiles.length} SMILES: ${failedSmiles.join(', ')}`,
-        level: 'warning',
-        position: 'tr',
-        autoDismiss: 10,
+    return Promise.all(promises)
+      .then((mixtureMolecules) => this.mixtureMoleculeToSubsample(mixtureMolecules))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+        return [];
       });
-    }
-
-    // If no valid molecules, exit early
-    if (molecules.length === 0) {
-      return;
-    }
-
-    const { default: Component } = await import('src/models/Component');
-
-    const newComponents = molecules.map((molecule) => {
-      const newSample = Sample.buildNew(molecule, this.collection_id);
-      return new Component(newSample);
-    });
-
-    this.addMixtureComponentsSync(newComponents);
   }
 
   /**
@@ -2359,11 +2251,21 @@ export default class Sample extends Element {
     try {
       const mixtureSmiles = this.molecule_cano_smiles.split('.');
       await this.splitSmilesToMolecule(mixtureSmiles, editor);
-      await this.updateMixtureMolecule();
       return true;
     } catch (err) {
       return false;
     }
+  }
+
+  /**
+   * Converts an array of mixture molecules into subsamples/components and adds them to the mixture.
+   * @param {Array<Object>} mixtureMolecules - The molecules to convert and add.
+   */
+  mixtureMoleculeToSubsample(mixtureMolecules) {
+    mixtureMolecules.map(async (molecule) => {
+      const newSample = Sample.buildNew(molecule, this.collection_id);
+      await this.addMixtureComponent(newSample);
+    });
   }
 
   initializeSampleDetails() {
@@ -2421,7 +2323,10 @@ export default class Sample extends Element {
   calculateTotalMixtureMass() {
     this.initializeSampleDetails();
 
-    if (!this.isMixture()) {
+    if (!this.isMixture() || !this.hasComponents()) {
+      this.sample_details.total_mixture_mass_g = 0;
+      this.setDensity({ value: 0 });
+
       return;
     }
 
@@ -2429,21 +2334,19 @@ export default class Sample extends Element {
     let totalLiquidComponentsMassG = 0;
 
     // --- Step 1: Calculate component masses and sum liquid component masses (with densities) ---
-    if (this.hasComponents()) {
-      this.components.forEach((component) => {
-        if (component.material_group === 'solid') {
-          // For solids, use amount_g (already in grams)
-          totalMass += parseFloat(component.amount_g) || 0;
-        } else if (component.material_group === 'liquid') {
-          // For liquids, use density * volume (ml)
-          const density = (component.density && component.density > 0) ? component.density : 1; // g/ml
-          const componentVolumeML = (parseFloat(component.amount_l) || 0) * 1000;
-          const componentMassG = density * componentVolumeML;
-          totalMass += componentMassG;
-          totalLiquidComponentsMassG += componentMassG;
-        }
-      });
-    }
+    this.components.forEach((component) => {
+      if (component.material_group === 'solid') {
+        // For solids, use amount_g (already in grams)
+        totalMass += parseFloat(component.amount_g) || 0;
+      } else if (component.material_group === 'liquid') {
+        // For liquids, use density * volume (ml)
+        const density = (component.density && component.density > 0) ? component.density : 1; // g/ml
+        const componentVolumeML = (parseFloat(component.amount_l) || 0) * 1000;
+        const componentMassG = density * componentVolumeML;
+        totalMass += componentMassG;
+        totalLiquidComponentsMassG += componentMassG;
+      }
+    });
 
     // --- Step 2: Determine total/solvent volume info ---
     // Use nullish coalescing to only fallback when total_mixture_volume_l is null/undefined, not when it's 0
@@ -2496,7 +2399,7 @@ export default class Sample extends Element {
    *    density = total_mass_g / total_volume_mL
    *
    * Steps:
-   * 1. Returns early if the sample is not a mixture.
+   * 1. Returns early if the sample is not a mixture or has no components.
    * 2. Initializes `sample_details` if missing.
    * 3. Retrieves total mixture mass (g) and total volume (L → converted to mL).
    * 4. If the mixture is liquid and volume > 0, computes and sets the density.
@@ -2505,7 +2408,7 @@ export default class Sample extends Element {
    * @returns {void}
    */
   updateMixtureDensity() {
-    if (!this.isMixture()) return;
+    if (!this.isMixture() || !this.hasComponents()) return;
 
     this.initializeSampleDetails();
 

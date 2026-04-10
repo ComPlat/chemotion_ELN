@@ -13,11 +13,14 @@ module ParamsHelpers
     optional :included_ids, type: Array, default: []
     optional :excluded_ids, type: Array, default: []
     optional :collection_id, type: Integer
+    optional :is_sync_to_me, type: Boolean, default: false
   end
 
   params :main_ui_state_params do
     requires :currentCollection, type: Hash do
       requires :id, type: Integer
+      optional :is_sync_to_me, type: Boolean, default: false
+      optional :is_shared, type: Boolean, default: false
     end
     optional :sample, type: Hash do
       use :ui_state_params
@@ -177,8 +180,6 @@ module ParamsHelpers
     optional :function_or_application, type: String
     optional :concentration_value, type: Float
     optional :concentration_unit, type: String, values: %w[ng/L mg/L g/L], default: 'ng/L'
-    optional :concentration_rt_value, type: Float
-    optional :concentration_rt_unit, type: String, values: %w[mol/L mmol/L µmol/L nmol/L pmol/L], default: 'mol/L'
     optional :molarity_value, type: Float
     optional :molarity_unit, type: String, values: %w[mol/L mmol/L µmol/L nmol/L pmol/L], default: 'mol/L'
     optional :activity_per_volume_value, type: Float

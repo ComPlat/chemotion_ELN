@@ -33,6 +33,7 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
+    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
 
     const selection = {
       elementType: 'by_ids',
@@ -49,7 +50,8 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
 
     searchStore.loadSearchResultTab({
       selection,
-      collectionId: collectionId,
+      collectionId,
+      isSync,
       page_size: tabResult.per_page,
       page: index,
       moleculeSort: true,
@@ -160,42 +162,31 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     const previousMolecule = previous?.molecule_formula;
 
     const showSampleHeader = object.type === 'sample' && previousMolecule !== object.molecule_formula;
-    const showReactionHeader = object.type === 'reaction' && previous?.rxno !== object?.rxno;
 
     return (
-      <div className="search-result-group">
-        {(showSampleHeader || showReactionHeader) && (
-          <div className="search-result-group-header-content">
-            <div
-              key={`${object.short_name}-${i}`}
-              className="search-result-tab-content-list"
-              onClick={copyToClipboard}
-            >
-              {/* Sample grouping header */}
-              {showSampleHeader && (
-                <div className="d-flex flex-grow-1 gap-5 pt-2">
-                  {svgPreview(object)}
-                  <div className="flex-grow-1">
-                    <SampleName sample={object} />
-                  </div>
-                </div>
-              )}
-
-              {/* Reaction SVG grouping header */}
-              {showReactionHeader && (
-                <div className="search-result-molecule">
-                  {svgPreview(object)}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-        
-        <div className="search-result-list-items">
-          <div className="search-result-tab-content-list-name">
-            {shortLabelWithMoreInfos(object)}
-          </div>
+      <div
+        key={`${object.short_name}-${i}`}
+        className="search-result-tab-content-list"
+        onClick={copyToClipboard}
+      >
+        {/* Sample grouping header */}
+        {showSampleHeader && (
+        <div className="search-result-molecule sample">
+          {svgPreview(object)}
+          <SampleName sample={object} />
         </div>
+        )}
+
+        {/* Reaction SVG — always */}
+        {object.type === 'reaction' && (
+        <div className="search-result-molecule reaction">
+          {svgPreview(object)}
+        </div>
+        )}
+
+        <span className="search-result-tab-content-list-name">
+          {shortLabelWithMoreInfos(object)}
+        </span>
       </div>
     );
   };
@@ -206,31 +197,25 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     const badgeTitle = object.sequence_based_macromolecule.uniprot_derivation.split('_').slice(-1)[0];
 
     const header = previousSbmm !== object.sequence_based_macromolecule.id && (
-      <div className="search-result-group-header-content">
-        <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
-          <div
-            key={`${object.sequence_based_macromolecule.short_name}-${i}`}
-            className="search-result-molecule align-items-center fw-bold fs-5"
-          >
-            {object.sbmmShortLabel()}
-            {' '}
-            {object.sequence_based_macromolecule.short_name}
-          </div>
-        </div>
+      <div
+        key={`${object.sequence_based_macromolecule.short_name}-${i}`}
+        className="search-result-molecule pt-2 fw-bold fs-5"
+      >
+        {object.sbmmShortLabel()}
+        {' '}
+        {object.sequence_based_macromolecule.short_name}
       </div>
     );
 
     return (
-      <div className="search-result-group">
+      <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
         {header}
-        <div className="search-result-list-items">
-          <div className="search-result-tab-content-list-name">
-            <div className="d-flex align-items-center gap-2">
-              <Badge bg="info" className="border border-active bg-opacity-25 text-active rounded">
-                {badgeTitle}
-              </Badge>
-              {shortLabelWithMoreInfos(object)}
-            </div>
+        <div className="search-result-tab-content-list-name">
+          <div className="d-flex align-items-center gap-2">
+            <Badge bg="info" className="border border-active bg-opacity-25 text-active rounded">
+              {badgeTitle}
+            </Badge>
+            {shortLabelWithMoreInfos(object)}
           </div>
         </div>
       </div>
@@ -250,11 +235,9 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
           return sbmmList(object, i, elements);
         }
         return (
-          <div className="search-result-group">
-            <div key={`${list.key}-${i}`} className="search-result-tab-content-list-name">
-              <div key={object.type}>
-                {shortLabelWithMoreInfos(object)}
-              </div>
+          <div key={`${list.key}-${i}`} className="search-result-tab-content-list-white">
+            <div key={object.type}>
+              {shortLabelWithMoreInfos(object)}
             </div>
           </div>
         );

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext } from 'react';
-import PropTypes from 'prop-types';
 import {
   Button, Tabs, Tab, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
@@ -29,7 +28,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import { collectionHasPermission } from 'src/utilities/collectionUtilities';
+import CollectionUtils from 'src/models/collection/CollectionUtils';
 import PropertiesForm from 'src/apps/mydb/elements/details/deviceDescriptions/propertiesTab/PropertiesForm';
 import AttachmentForm from 'src/apps/mydb/elements/details/deviceDescriptions/attachmentsTab/AttachmentForm';
 import AnalysesContainer from 'src/apps/mydb/elements/details/deviceDescriptions/analysesTab/AnalysesContainer';
@@ -38,12 +37,12 @@ import DetailsForm from 'src/apps/mydb/elements/details/deviceDescriptions/detai
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
-function DeviceDescriptionDetails({ openedFromCollectionId }) {
+function DeviceDescriptionDetails() {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const deviceDescription = deviceDescriptionsStore.device_description;
   deviceDescriptionsStore.setKeyPrefix('deviceDescription');
 
-  const { currentCollection } = UIStore.getState();
+  const { currentCollection, isSync } = UIStore.getState();
   const { currentUser } = UserStore.getState();
 
   const [visibleTabs, setVisibleTabs] = useState(Immutable.List());
@@ -85,7 +84,11 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
     history: 'History',
   };
 
-  const isReadOnly = () => !collectionHasPermission(currentCollection, 0);
+  const isReadOnly = () => CollectionUtils.isReadOnly(
+    currentCollection,
+    currentUser.id,
+    isSync
+  );
 
   const disabled = (index) => (!!(deviceDescription.isNew && index !== 0));
 
@@ -150,7 +153,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
 
   const deviceDescriptionHeader = () => {
     const titleTooltip = formatTimeStampsOfElement(deviceDescription || {});
-    const defCol = currentCollection && currentCollection.shared === false
+    const defCol = currentCollection && currentCollection.is_shared === false
       && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
 
     return (
@@ -176,7 +179,12 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
               eventableType="DeviceDescription"
             />
           )}
-          <CopyElementModal element={deviceDescription} selectedCol={defCol} />
+          {deviceDescription.can_copy && !deviceDescription.isNew && (
+            <CopyElementModal
+              element={deviceDescription}
+              defCol={defCol}
+            />
+          )}
           {deviceDescription.isEdited && (
             <OverlayTrigger
               placement="bottom"
@@ -221,7 +229,6 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
           availableTabs={Object.keys(tabContentComponents)}
           tabTitles={tabTitles}
           onTabPositionChanged={onTabPositionChanged}
-          openedFromCollectionId={openedFromCollectionId}
         />
         <Tabs
           activeKey={deviceDescriptionsStore.active_tab_key}
@@ -229,7 +236,6 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
           id="deviceDescriptionDetailsTab"
           mountOnEnter
           unmountOnExit
-          className="has-config-overlay"
         >
           {tabContents}
         </Tabs>
@@ -238,9 +244,5 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
     </DetailCard>
   );
 }
-
-DeviceDescriptionDetails.propTypes = {
-  openedFromCollectionId: PropTypes.number,
-};
 
 export default observer(DeviceDescriptionDetails);

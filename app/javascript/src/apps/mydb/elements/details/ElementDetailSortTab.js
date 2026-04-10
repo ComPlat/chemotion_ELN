@@ -4,19 +4,18 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Popover } from 'react-bootstrap';
 import Immutable from 'immutable';
-import { isEmpty, set } from 'lodash';
+import _ from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import UIActions from 'src/stores/alt/actions/UIActions';
+import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
-import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export default class ElementDetailSortTab extends Component {
-  static contextType = StoreContext;
-
   constructor(props) {
     super(props);
     this.state = {
@@ -26,6 +25,7 @@ export default class ElementDetailSortTab extends Component {
     };
 
     this.onChangeUser = this.onChangeUser.bind(this);
+    this.onChangeUI = this.onChangeUI.bind(this);
     this.toggleTabLayoutContainer = this.toggleTabLayoutContainer.bind(this);
 
     UserActions.fetchCurrentUser();
@@ -33,10 +33,12 @@ export default class ElementDetailSortTab extends Component {
 
   componentDidMount() {
     UserStore.listen(this.onChangeUser);
+    UIStore.listen(this.onChangeUI);
   }
 
   componentWillUnmount() {
     UserStore.unlisten(this.onChangeUser);
+    UIStore.unlisten(this.onChangeUI);
   }
 
   updateTabLayout(layout) {
@@ -59,32 +61,22 @@ export default class ElementDetailSortTab extends Component {
     this.setState({ visible, hidden }, () => onTabPositionChanged(visible));
   }
 
-  getOpenedFromCollection() {
-    const { openedFromCollectionId } = this.props;
-    const stack = [
-      this.context.collections.own_collection_tree,
-      this.context.collections.shared_with_me_collection_tree
-    ];
-    while (stack.length > 0) {
-      const col = stack.pop();
-      if (col.id == openedFromCollectionId) return col;
-      if (col.children?.length > 0) stack.push(...col.children);
-    }
-    return null;
-  }
-
   onChangeUser(state) {
     const { type } = this.props;
-    const collection = this.getOpenedFromCollection() || UIStore.getState().currentCollection;
-
-    const collectionTabs = typeof (collection?.tabs_segment) == 'string'
-      ? JSON.parse(collection?.tabs_segment)
-      : collection?.tabs_segment;
-
-    const layout = (!collectionTabs || isEmpty(collectionTabs[`${type}`]))
+    const { currentCollection } = UIStore.getState();
+    const collectionTabs = currentCollection?.tabs_segment;
+    const layout = (!collectionTabs || _.isEmpty(collectionTabs[type]))
       ? state.profile?.data?.[`layout_detail_${type}`]
-      : collectionTabs[`${type}`];
+      : collectionTabs[type];
     this.updateTabLayout(layout);
+  }
+
+  onChangeUI(uiState) {
+    const { type } = this.props;
+    const layout = uiState.currentCollection?.tabs_segment?.[type];
+    if (layout && !_.isEmpty(layout)) {
+      this.updateTabLayout(layout);
+    }
   }
 
   toggleTabLayoutContainer(show) {
@@ -102,10 +94,13 @@ export default class ElementDetailSortTab extends Component {
     const { type } = this.props;
     const tabSegment = { ...currentCollection?.tabs_segment, [type]: layout };
 
-    this.context.collections.updateCollection(currentCollection, tabSegment);
+    if (currentCollection && !currentCollection.is_sync_to_me) {
+      CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
+      UIActions.selectCollection({ ...currentCollection, tabs_segment: tabSegment, clearSearch: true });
+    }
 
     const userProfile = UserStore.getState().profile;
-    set(userProfile, `data.layout_detail_${type}`, layout);
+    _.set(userProfile, `data.layout_detail_${type}`, layout);
     UserActions.updateUserProfile(userProfile);
   }
 
@@ -116,10 +111,6 @@ export default class ElementDetailSortTab extends Component {
   render() {
     const { visible, hidden } = this.state;
     const { tabTitles } = this.props;
-    const { currentCollection } = UIStore.getState();
-    const isOwnCollection = this.context.collections.isOwnCollection(currentCollection?.id);
-    const allCollection = currentCollection?.is_locked && currentCollection.label === 'All';
-    if (!isOwnCollection && !allCollection) { return null; }
 
     const popoverSettings = (
       <Popover>
@@ -128,7 +119,7 @@ export default class ElementDetailSortTab extends Component {
           <TabLayoutEditor
             visible={visible}
             hidden={hidden}
-            getItemComponent={({ item }) => (<div>{tabTitles[item] ?? capitalizeWords(item)}</div>)}
+            getItemComponent={({item}) => (<div>{tabTitles[item] ?? capitalizeWords(item)}</div>)}
             onLayoutChange={this.onLayoutChange}
           />
         </Popover.Body>
@@ -147,7 +138,6 @@ ElementDetailSortTab.propTypes = {
   availableTabs: PropTypes.arrayOf(PropTypes.string).isRequired,
   tabTitles: PropTypes.object,
   addInventoryTab: PropTypes.bool,
-  openedFromCollectionId: PropTypes.number,
 };
 
 ElementDetailSortTab.defaultProps = {

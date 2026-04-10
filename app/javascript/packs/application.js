@@ -18,4 +18,3 @@ var GenericSegmentsAdmin = require('src/apps/generic/GenericSegmentsAdmin');
 var GenericDatasetsAdmin = require('src/apps/generic/GenericDatasetsAdmin');
 var InventoryLabelSettings = require('src/apps/settings/InventoryLabelSettings');
 var mydb = require('src/apps/mydb');
-var AgGridReact = require('src/agGridSetup');

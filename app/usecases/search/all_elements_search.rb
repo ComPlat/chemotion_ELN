@@ -7,7 +7,7 @@ module Usecases
         @term = term
         @collection_id = collection_id
         @user = user
-        @pg_elements = %w[sample reaction screen wellplate sequence_based_macromolecule_sample device_description]
+        @pg_elements = %w[sample reaction screen wellplate sequence_based_macromolecule_sample]
       end
 
       def search_by_substring
@@ -80,10 +80,6 @@ module Usecases
                                               .pluck(:id)
           end
           (sbmm_sample_ids + sbmm_sample_ids_by_sbmm).uniq
-        end
-
-        def device_description_ids
-          filter_results_ids_by_type('DeviceDescription')
         end
 
         def element_ids

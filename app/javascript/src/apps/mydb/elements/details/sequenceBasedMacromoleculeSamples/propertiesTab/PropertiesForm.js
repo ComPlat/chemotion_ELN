@@ -4,7 +4,6 @@ import { initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent 
 import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SelectOptions';
 import { useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
-import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import ReferenceAndModificationForm from './ReferenceAndModificationForm';
 import SearchResults from './SearchResults';
 
@@ -86,7 +85,7 @@ const PropertiesForm = ({ readonly }) => {
 
   const derivationLabelWithIcon = (
     <>
-      Existence
+      Existence in UniProt or reference
       <i className="text-danger ms-1 fa fa-exclamation-triangle" />
     </>
   );
@@ -104,11 +103,11 @@ const PropertiesForm = ({ readonly }) => {
   }
 
   const handleDrop = (item) => {
-    const droppedSbmm = item.element.sequence_based_macromolecule;
-
-    sbmmStore.setSbmmBySearchResultOrDND(droppedSbmm, 'full_sbmm', '');
+    const dropped_sbmm = item.element.sequence_based_macromolecule;
+    
+    sbmmStore.setSbmmBySearchResultOrDND(dropped_sbmm, 'full_sbmm', '');
     sbmmStore.toggleSearchOptions(sbmmSample.id, false);
-  };
+  }
 
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: DragDropItemTypes['SEQUENCE_BASED_MACROMOLECULE'],
@@ -197,8 +196,6 @@ const PropertiesForm = ({ readonly }) => {
             <ColoredAccordeonHeaderButton
               title="SBMM"
               eventKey={sbmmAccordionIdent}
-              bgColor="sbmm-accordion-header"
-              bgColorActive="sbmm-accordion-header"
             />
           </h2>
           <Accordion.Collapse eventKey={sbmmAccordionIdent}>
@@ -299,7 +296,7 @@ const PropertiesForm = ({ readonly }) => {
               </Accordion.Header>
               <Accordion.Body>
                 <h5 className="mb-3">Application</h5>
-                <Row className="mb-4 align-items-end">
+                <Row className="mb-4">
                   <Col>
                     {formHelper.textInput('name', 'Name', '')}
                   </Col>
@@ -373,17 +370,7 @@ const PropertiesForm = ({ readonly }) => {
                     )}
                   </Col>
                   <Col>
-                    <NumeralInputWithUnitsCompo
-                      value={sbmmSample.purity}
-                      unit="n"
-                      metricPrefix="n"
-                      metricPrefixes={['n']}
-                      precision={5}
-                      label="Purity"
-                      disabled={disabled}
-                      variant="light"
-                      onChange={(e) => formHelper.onChange('purity', e.value)}
-                    />
+                    {formHelper.unitInput('purity', 'Purity', 'purity', disabled, '')}
                   </Col>
                   <Col>
                     {formHelper.textInput('purity_detection', 'Purity detection', '')}
@@ -432,7 +419,7 @@ const PropertiesForm = ({ readonly }) => {
                       <Row className="mb-4 align-items-end">
                         <Col>{formHelper.textInput('strain', 'Strain', disabled, '')}</Col>
                         <Col>{formHelper.textInput('tissue', 'Tissue', disabled, '')}</Col>
-                        <Col>{formHelper.textInput('localisation', 'Localization', disabled, '')}</Col>
+                        <Col>{formHelper.textInput('localisation', 'Localisation', disabled, '')}</Col>
                       </Row>
                     </>
                   )

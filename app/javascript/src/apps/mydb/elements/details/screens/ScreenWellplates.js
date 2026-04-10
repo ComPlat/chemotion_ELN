@@ -2,9 +2,11 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Row, Col } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
+import Aviator from 'aviator';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import { wellplateShowOrNew } from 'src/utilities/routesUtils';
 import QuillViewer from 'src/components/QuillViewer';
-import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const target = {
   drop(props, monitor) {
@@ -29,6 +31,14 @@ const collect = (connect, monitor) => ({
 
 class ScreenWellplates extends Component {
   // eslint-disable-next-line class-methods-use-this
+  handleWellplateClick(wellplate) {
+    const { currentCollection, isSync } = UIStore.getState();
+    const wellplateID = wellplate.id;
+    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/wellplate/${wellplateID}`;
+    Aviator.navigate(uri, { silent: true });
+    wellplateShowOrNew({ params: { wellplateID } });
+  }
+
   renderDropZone() {
     const { isOver, canDrop, connectDropTarget } = this.props;
     const borderColor = isOver && canDrop ? 'dnd-zone-over' : '';
@@ -56,7 +66,7 @@ class ScreenWellplates extends Component {
               <Button
                 variant="link"
                 className="border-0 pt-3 px-0 text-decoration-none"
-                onClick={() => aviatorNavigation('wellplate', wellplate.id, true, true)}
+                onClick={() => this.handleWellplateClick(wellplate)}
               >
                 {wellplate.name}
               </Button>

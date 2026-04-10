@@ -1,5 +1,4 @@
 import SequenceBasedMacromoleculeSampleData from "./SequenceBasedMacromoleculeSampleData";
-import DeviceDescriptionData from "./DeviceDescriptionData";
 
 const basicElnElements = {
   fields: {
@@ -651,4 +650,4 @@ const basicElnElements = {
   }
 }
 
-export default Object.assign({}, basicElnElements, SequenceBasedMacromoleculeSampleData, DeviceDescriptionData);
+export default Object.assign({}, basicElnElements, SequenceBasedMacromoleculeSampleData);

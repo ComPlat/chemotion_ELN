@@ -87,7 +87,7 @@ export default class ContainerDatasetModal extends Component {
   render() {
     const {
       show, onHide, onChange, readOnly, disabled, kind, datasetContainer, rootContainer, element,
-      isContainerNew, canAdd
+      isContainerNew
     } = this.props;
 
     const { mode, instrumentIsEmpty } = this.state;
@@ -207,7 +207,6 @@ export default class ContainerDatasetModal extends Component {
               mode={mode}
               isNew={isNew}
               handleContainerSubmit={this.onHandleContainerSubmit}
-              canAdd={canAdd}
             />
           </Modal.Body>
           <Modal.Footer
@@ -265,7 +264,6 @@ ContainerDatasetModal.propTypes = {
   rootContainer: PropTypes.shape({
     id: PropTypes.number,
   }).isRequired,
-  canAdd: PropTypes.bool,
 };
 
 ContainerDatasetModal.defaultProps = {
@@ -273,5 +271,4 @@ ContainerDatasetModal.defaultProps = {
   disabled: false,
   kind: null,
   element: {},
-  canAdd: true,
 };

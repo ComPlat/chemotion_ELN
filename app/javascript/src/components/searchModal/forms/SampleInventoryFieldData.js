@@ -73,20 +73,6 @@ export default {
               type: 'text',
             },
             {
-              column: 'delivery_date',
-              label: 'Delivery date',
-              key: 'information',
-              table: 'chemicals',
-              type: 'text',
-            },
-            {
-              column: 'opening_date',
-              label: 'Opening date',
-              key: 'information',
-              table: 'chemicals',
-              type: 'text',
-            },
-            {
               column: 'required_by',
               label: 'Required by',
               key: 'information',

@@ -23,8 +23,6 @@ export let allTemplates = {}; // contains all templates
 export let templatesBaseHashWithTemplateId = {}; // contains all templates
 export let allowProcessing = true;
 export let upsertImageCalled = 0;
-// PolymersList line (after "> <PolymersList>") so we can extend it on paste instead of replace
-export let storedPolymersListLine = null;
 
 export const FILOStackSetter = async (data) => {
   FILOStack = data;
@@ -75,17 +73,14 @@ export const textListSetter = (data) => {
   textList = data;
 };
 
-export const storedPolymersListLineSetter = (line) => {
-  storedPolymersListLine = line != null && line !== '' ? String(line).trim() : null;
-};
-
 export const textNodeStructSetter = (data) => {
   textNodeStruct = { ...data };
 };
 
 // set templates dataset
 export const templateListSetter = async (data) => {
-  allTemplates = Object.values(data || {}).flat();
+  const keys = Object.keys(data);
+  allTemplates = [...data[keys[0]], ...data[keys[1]]];
 };
 
 // Set base64-encoded SVG templates by template_id
@@ -218,7 +213,6 @@ export const resetKetcherStore = () => {
   allowProcessing = true;
   imageListCopyContainer = [];
   textListCopyContainer = [];
-  storedPolymersListLine = null;
 };
 
 export const emptyKetcherStore = () => ({

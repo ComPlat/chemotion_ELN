@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 module Entities
-  class CellLineSampleEntity < ApplicationEntity
+  class CellLineSampleEntity < Grape::Entity
     expose :id
-    expose! :can_copy, unless: :displayed_in_list
     expose :amount
     expose :passage
     expose :contamination

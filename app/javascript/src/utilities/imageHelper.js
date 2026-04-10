@@ -35,28 +35,13 @@ const previewContainerImage = (
  */
 const getAttachmentFromContainer = (container) => {
   const datasetChildren = container.children?.filter((child) => child.container_type === 'dataset') || [];
-
-  const allRawAttachments = datasetChildren.flatMap((child) => child.attachments || []);
-  const attachments = allRawAttachments
+  const attachments = datasetChildren
+    .flatMap((child) => child.attachments || [])
     .filter((att) => att.thumb);
-  const combinedImageAttachment = attachments
-    .filter((att) => att.filename?.toLowerCase().includes('combined'))
-    .sort((a, b) => parseDateWithMoment(b.updated_at).valueOf() - parseDateWithMoment(a.updated_at).valueOf())[0];
-  if (combinedImageAttachment) return combinedImageAttachment;
+  const combinedImageAttachment = attachments.find((att) => att.filename?.toLowerCase().includes('combined'));
   const latestImageAttachment = attachments
     .sort((a, b) => parseDateWithMoment(b.updated_at).valueOf() - parseDateWithMoment(a.updated_at).valueOf())[0];
-  if (latestImageAttachment) return latestImageAttachment;
-
-  const preview = container.preview_img;
-  if (preview?.id) {
-    return {
-      id: preview.id,
-      filename: preview.filename,
-      thumb: true,
-    };
-  }
-
-  return null;
+  return combinedImageAttachment || latestImageAttachment || null;
 };
 
 /**
