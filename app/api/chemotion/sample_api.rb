@@ -94,7 +94,7 @@ module Chemotion
           col_id = ui_state[:currentCollectionId]
           sample_ids = Sample.for_user(current_user.id)
                              .for_ui_state_with_collection(ui_state[:sample], CollectionsSample, col_id)
-          Sample.where(id: sample_ids).each do |sample|
+          Sample.where(id: sample_ids).find_each do |sample|
             subsample = sample.create_subsample(current_user, col_id, true, 'sample')
           end
 
@@ -580,7 +580,7 @@ module Chemotion
           sum_formula: params[:sum_formula],
           sample_type: params[:sample_type],
           sample_details: (params[:sample_details] || {}).merge(
-            %w[color state height width length storage_condition].index_with { |k| params[k.to_sym] }
+            %w[color state height width length storage_condition].index_with { |k| params[k.to_sym] },
           ).compact,
         }
 
