@@ -50,7 +50,6 @@ import {
   onAddTextFromEditor,
 } from 'src/utilities/ketcherSurfaceChemistry/canvasOperations';
 import { handleEventCapture } from 'src/utilities/ketcherSurfaceChemistry/eventHandler';
-import { deltaToDraftContent } from 'src/utilities/ketcherSurfaceChemistry/deltaDraftContentConverter';
 import {
   ImagesToBeUpdatedSetter,
   imagesList,
@@ -194,7 +193,6 @@ const KetcherEditor = forwardRef((props, ref) => {
   const [showShapes, setShowShapes] = useState(false);
   const [addLabelPopup, setAddLabelPopup] = useState(false);
   const [selectedTextNodeContent, setSelectedTextNodeContent] = useState(null);
-  // const [showSpecialCharModal, setSpecialCharModal] = useState(false);
 
   const iframeRef = useRef();
   const eventCleanupRef = useRef(() => { });
@@ -625,9 +623,12 @@ const KetcherEditor = forwardRef((props, ref) => {
           setSelectedTextNodeContent(null);
         }}
         onApply={async (contents) => {
-          const draftContent = deltaToDraftContent(contents);
-          const contentStr = JSON.stringify(draftContent);
-          await onAddTextFromEditor(editor, contentStr, selectedImageForTextNode, selectedTextNodeContent !== null);
+          const plainText = ((contents?.ops || [])
+            .map((op) => (typeof op?.insert === 'string' ? op.insert : ''))
+            .join(''))
+            .replace(/\n+/g, ' ')
+            .trim();
+          await onAddTextFromEditor(editor, plainText, selectedImageForTextNode, selectedTextNodeContent !== null);
           // Update button state after text is added/updated
           await updateAddLabelButtonState(selectedImageForTextNode);
           setAddLabelPopup(false);
