@@ -97,14 +97,14 @@ export default class WellplateDetails extends Component {
     this.setState({ wellplate });
   }
 
-  handleSubmit() {
+  handleSubmit(closeView = false) {
     const { wellplate } = this.state;
     this.context.attachmentNotificationStore.clearMessages();
     LoadingActions.start();
     if (wellplate.isNew) {
       ElementActions.createWellplate(wellplate);
     } else {
-      ElementActions.updateWellplate(wellplate);
+      ElementActions.updateWellplate(wellplate, closeView);
     }
     if (wellplate.is_new) {
       const force = true;
@@ -378,7 +378,7 @@ export default class WellplateDetails extends Component {
         title={wellplate.name}
         titleTooltip={formatTimeStampsOfElement(wellplate || {})}
         footerToolbar={this.wellplateFooter()}
-        onSave={() => this.handleSubmit()}
+        onSave={(closeView) => this.handleSubmit(closeView)}
         showPrintCode
       >
         <div className="tabs-container--with-borders">

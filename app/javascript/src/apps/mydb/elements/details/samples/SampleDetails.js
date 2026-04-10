@@ -556,7 +556,7 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  saveSampleOrChemical() {
+  saveSampleOrChemical(closeView = false) {
     const { sample, isChemicalEdited } = this.state;
     const needChemicalSave = isChemicalEdited && !sample.isNew;
     const needChemicalCreate = isChemicalEdited && sample.isNew;
@@ -571,7 +571,7 @@ export default class SampleDetails extends React.Component {
 
       // When chemical also needs saving on an existing sample, don't close on
       // the sample save so ChemicalTab stays mounted to receive saveInventoryAction.
-      this.handleSubmit(needChemicalSave ? false : undefined);
+      this.handleSubmit(needChemicalSave ? false : closeView);
     }
 
     if (needChemicalSave) {
@@ -1596,7 +1596,7 @@ export default class SampleDetails extends React.Component {
         title={sampleTitle(sample)}
         titleTooltip={formatTimeStampsOfElement(sample || {})}
         titleAppendix={sampleTitleAppendix(sample, this.handleFastInput)}
-        onSave={() => this.saveSampleOrChemical()}
+        onSave={(closeView) => this.saveSampleOrChemical(closeView)}
         saveDisabled={saveDisabled}
         showPrintCode
         showCalendar

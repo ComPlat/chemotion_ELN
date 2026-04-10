@@ -837,11 +837,11 @@ class ElementActions {
     };
   }
 
-  updateWellplate(wellplate) {
+  updateWellplate(wellplate, closeView = false) {
     return (dispatch) => {
       WellplatesFetcher.update(wellplate)
         .then(result => {
-          dispatch(result);
+          dispatch({ element: result, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -924,11 +924,11 @@ class ElementActions {
     };
   }
 
-  updateScreen(params) {
+  updateScreen(params, closeView = false) {
     return (dispatch) => {
       ScreensFetcher.update(params)
         .then(result => {
-          dispatch(result);
+          dispatch({ element: result, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -948,22 +948,22 @@ class ElementActions {
     };
   }
 
-  updateCellLine(params) {
+  updateCellLine(params, closeView = false) {
     return (dispatch) => {
       CellLinesFetcher.update(params)
         .then((result) => {
-          dispatch(result);
+          dispatch({ element: result, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
     };
   }
 
-  updateResearchPlan(params) {
+  updateResearchPlan(params, closeView = false) {
     return (dispatch) => {
       ResearchPlansFetcher.update(params)
         .then((result) => {
-          dispatch(result);
+          dispatch({ element: result, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -1020,11 +1020,11 @@ class ElementActions {
     };
   }
 
-  updateDeviceDescription(params) {
+  updateDeviceDescription(params, closeView = false) {
     return (dispatch) => {
       DeviceDescriptionFetcher.updateDeviceDescription(params)
         .then((result) => {
-          dispatch(result);
+          dispatch({ element: result, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -1189,11 +1189,11 @@ class ElementActions {
     };
   }
 
-  updateSequenceBasedMacromoleculeSample(params) {
+  updateSequenceBasedMacromoleculeSample(params, closeView = false) {
     return (dispatch) => {
       SequenceBasedMacromoleculeSamplesFetcher.updateSequenceBasedMacromoleculeSample(params)
         .then((result) => {
-          dispatch(result);
+          dispatch({ element: result, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });

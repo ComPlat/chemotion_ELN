@@ -1596,50 +1596,62 @@ class ElementStore {
     }
   }
 
-  UpdateResearchPlanAttaches(updatedResearchPlan) {
+  UpdateResearchPlanAttaches(updatedResearchPlan, closeView = false) {
     const { selecteds } = this.state;
     ResearchPlansFetcher.fetchById(updatedResearchPlan.id)
       .then((result) => {
         result.mode = 'edit';
-        this.changeCurrentElement(result);
-        const index = this.elementIndex(selecteds, result);
-        const newSelecteds = this.updateElement(result, index);
-        this.setState({ selecteds: newSelecteds });
+        if (closeView) {
+          this.deleteCurrentElement(result);
+        } else {
+          this.changeCurrentElement(result);
+          const index = this.elementIndex(selecteds, result);
+          const newSelecteds = this.updateElement(result, index);
+          this.setState({ selecteds: newSelecteds });
+        }
       });
   }
 
-  handleUpdateResearchPlanAttaches(updatedResearchPlan) {
-    this.UpdateResearchPlanAttaches(updatedResearchPlan);
+  handleUpdateResearchPlanAttaches(updatedResearchPlan, closeView = false) {
+    this.UpdateResearchPlanAttaches(updatedResearchPlan, closeView);
   }
 
-  UpdateWellplateAttaches(updatedWellplate) {
+  UpdateWellplateAttaches(updatedWellplate, closeView = false) {
     const { selecteds } = this.state;
     WellplatesFetcher.fetchById(updatedWellplate.id)
       .then((result) => {
-        this.changeCurrentElement(result);
-        const index = this.elementIndex(selecteds, result);
-        const newSelecteds = this.updateElement(result, index);
-        this.setState({ selecteds: newSelecteds });
+        if (closeView) {
+          this.deleteCurrentElement(result);
+        } else {
+          this.changeCurrentElement(result);
+          const index = this.elementIndex(selecteds, result);
+          const newSelecteds = this.updateElement(result, index);
+          this.setState({ selecteds: newSelecteds });
+        }
       });
   }
 
-  handleUpdateWellplateAttaches(updatedWellplate) {
-    this.UpdateWellplateAttaches(updatedWellplate);
+  handleUpdateWellplateAttaches(updatedWellplate, closeView = false) {
+    this.UpdateWellplateAttaches(updatedWellplate, closeView);
   }
 
-  UpdateScreen(updatedScreen) {
+  UpdateScreen(updatedScreen, closeView = false) {
     const { selecteds } = this.state;
     ScreensFetcher.fetchById(updatedScreen.id)
       .then((result) => {
-        this.changeCurrentElement(result);
-        const index = this.elementIndex(selecteds, result);
-        const newSelecteds = this.updateElement(result, index);
-        this.setState({ selecteds: newSelecteds });
+        if (closeView) {
+          this.deleteCurrentElement(result);
+        } else {
+          this.changeCurrentElement(result);
+          const index = this.elementIndex(selecteds, result);
+          const newSelecteds = this.updateElement(result, index);
+          this.setState({ selecteds: newSelecteds });
+        }
       });
   }
 
-  handleUpdateScreen(updatedScreen) {
-    this.UpdateScreen(updatedScreen);
+  handleUpdateScreen(updatedScreen, closeView = false) {
+    this.UpdateScreen(updatedScreen, closeView);
   }
 
   handleUpdateMoleculeNames(updatedSample) {
@@ -1694,7 +1706,18 @@ class ElementStore {
     }
   }
 
-  handleUpdateElement(updatedElement) {
+  handleUpdateElement(payload) {
+    // Accept both the legacy shape (element) and the enriched shape ({ element, closeView }).
+    const isEnriched = payload && typeof payload === 'object' && 'element' in payload && !('type' in payload);
+    const updatedElement = isEnriched ? payload.element : payload;
+    const closeView = isEnriched ? !!payload.closeView : false;
+    const openOrClose = (el) => {
+      if (closeView) {
+        this.deleteCurrentElement(el);
+      } else {
+        this.changeCurrentElement(el);
+      }
+    };
     switch (updatedElement?.type) {
       case 'sample':
         fetchOls('sample');
@@ -1708,14 +1731,14 @@ class ElementStore {
       case 'screen':
         fetchOls('screen');
         this.handleRefreshElements('screen');
-        this.handleUpdateScreen(updatedElement);
+        this.handleUpdateScreen(updatedElement, closeView);
         break;
       case 'research_plan':
         this.handleRefreshElements('research_plan');
-        this.handleUpdateResearchPlanAttaches(updatedElement);
+        this.handleUpdateResearchPlanAttaches(updatedElement, closeView);
         break;
       case 'cell_line':
-        this.changeCurrentElement(updatedElement);
+        openOrClose(updatedElement);
         this.handleRefreshElements('cell_line');
         break;
       case 'vessel':
@@ -1730,16 +1753,16 @@ class ElementStore {
       case 'wellplate':
         fetchOls('wellplate');
         this.handleRefreshElements('wellplate');
-        this.handleUpdateWellplateAttaches(updatedElement);
+        this.handleUpdateWellplateAttaches(updatedElement, closeView);
         this.handleRefreshElements('sample');
         break;
       case 'device_description':
-        this.changeCurrentElement(updatedElement);
+        openOrClose(updatedElement);
         this.handleRefreshElements('device_description');
         break;
       case 'sequence_based_macromolecule_sample':
         this.handleUpdatedSbmmSample(updatedElement);
-        this.changeCurrentElement(updatedElement);
+        openOrClose(updatedElement);
         this.handleRefreshElements('sequence_based_macromolecule_sample');
         break;
       case 'genericEl':

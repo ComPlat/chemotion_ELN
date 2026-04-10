@@ -31,7 +31,6 @@ export default function ElementDetailCard({
   footerToolbar,
   onClose,
   onSave,
-  onSaveClose,
   saveDisabled,
   showPrintCode,
   showCalendar,
@@ -88,17 +87,12 @@ export default function ElementDetailCard({
 
   const handleSaveClose = () => {
     setShowCloseOverlay(false);
-    if (onSaveClose) {
-      onSaveClose();
-    } else {
-      onSave();
-      handleClose();
-    }
+    onSave(true);
   };
 
   const saveButtonProps = {
     iconClass: 'fa fa-floppy-o',
-    onClick: onSave,
+    onClick: () => onSave(false),
     variant: 'primary',
     disabled: saveDisabled,
     label: inferredSaveLabel,
@@ -263,7 +257,6 @@ ElementDetailCard.propTypes = {
   footerToolbar: PropTypes.node,
   onClose: PropTypes.func,
   onSave: PropTypes.func.isRequired,
-  onSaveClose: PropTypes.func,
   saveDisabled: PropTypes.bool,
   showPrintCode: PropTypes.bool,
   showCalendar: PropTypes.bool,
@@ -278,7 +271,6 @@ ElementDetailCard.defaultProps = {
   headerToolbar: null,
   footerToolbar: null,
   onClose: null,
-  onSaveClose: null,
   saveDisabled: false,
   showPrintCode: false,
   showCalendar: false,
