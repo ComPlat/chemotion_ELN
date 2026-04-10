@@ -109,10 +109,16 @@ module Import
       return unless component_sheet_exists?
 
       @mandatory_component_check = {}
-      ['molfile', 'smiles', 'cano_smiles', 'canonical smiles'].each do |check|
+      ['molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles'].each do |check|
         @mandatory_component_check[check] = true if component_header.any? { |e| /^\s*#{Regexp.escape(check)}\s*$/i =~ e }
       end
-      raise 'Column headers in components sheet should have: molfile, or Smiles (or cano_smiles, canonical smiles)' if @mandatory_component_check.empty?
+      if @mandatory_component_check.empty?
+        if component_sheet_has_only_sample_identity_columns?
+          return
+        end
+
+        raise 'Column headers in components sheet should have: molfile, or Smiles (or cano_smiles, canonical_smiles, canonical smiles)'
+      end
     end
 
     def row_to_hash(row)
@@ -155,6 +161,15 @@ module Import
 
         @sample_components_data[current_sample_uuid] << component_attributes if valid_component_data?(component_attributes)
       end
+    end
+
+    def component_sheet_has_only_sample_identity_columns?
+      normalized_headers = component_header.map { |h| h.to_s.strip.downcase }
+      identity_headers = ['sample name', 'sample external label', 'sample uuid']
+      return false unless (normalized_headers - identity_headers).empty?
+
+      # If there are no extra columns beyond sample identity, treat this sheet as informational only.
+      true
     end
 
     # Parses the sample_composition_table sheet (when present) into @composition_table_data.
@@ -559,7 +574,13 @@ module Import
     end
 
     def handle_default_fields(sample, db_column, value)
-      sample[db_column] = value || ''
+      if sample.has_attribute?(db_column)
+        sample[db_column] = value || ''
+      elsif %w[height width length state color storage_condition].include?(db_column)
+        # Backward compatibility: some DBs do not have dedicated hierarchical columns yet.
+        sample.sample_details ||= {}
+        sample.sample_details[db_column] = value || ''
+      end
     end
 
     # rubocop:disable Style/StringLiterals

@@ -720,12 +720,17 @@ class ElementStore {
               return new Component(sampleData);
             });
             await result.initialComponents(sampleComponents);
+            // Trigger store update after async component hydration so details UI
+            // (e.g. composition table) renders immediately on first open.
+            this.changeCurrentElement(result);
           })
           .catch((errorMessage) => {
             console.log(errorMessage);
+            this.changeCurrentElement(result);
           });
+      } else {
+        this.changeCurrentElement(result);
       }
-      this.changeCurrentElement(result);
     }
   }
 

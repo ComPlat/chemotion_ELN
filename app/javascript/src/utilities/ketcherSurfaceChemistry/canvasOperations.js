@@ -257,6 +257,22 @@ const onAddText = async (editor, selectedImageForTextNode) => {
   return true;
 };
 
+// Detect whether input is Draft.js raw content (object or JSON string form)
+const isDraftContent = (value) => {
+  try {
+    if (value == null) return false;
+    const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+    return Boolean(
+      parsed
+      && Array.isArray(parsed.blocks)
+      && parsed.blocks.length > 0
+      && typeof parsed.blocks[0] === 'object'
+    );
+  } catch (_e) {
+    return false;
+  }
+};
+
 // Function to add text node from Quill editor content (Delta format)
 const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode = null, isUpdate = false) => {
   try {
@@ -281,13 +297,31 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
     // Fetch latest data first to ensure we have current state
     await fetchKetcherData(editor);
 
+    const resolveSelectedImageAtom = async (selectedImageIndex) => {
+      if (Number.isNaN(selectedImageIndex)) return { atomLocation: null, alias: '' };
+      // Ketcher selection and alias sync can lag a tick; retry a few times.
+      for (let attempt = 0; attempt < 4; attempt++) {
+        // eslint-disable-next-line no-await-in-loop
+        const resolved = await findAtomByImageIndex(selectedImageIndex);
+        if (resolved?.atomLocation && resolved?.alias) return resolved;
+        // eslint-disable-next-line no-await-in-loop
+        await fetchKetcherData(editor);
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => {
+          setTimeout(() => resolve(), 40);
+        });
+      }
+      return { atomLocation: null, alias: '' };
+    };
+
     let textKey;
     let updatedTextList;
     let newTextNode;
 
     // If updating existing text, find and update it
     if (isUpdate && selectedImageForTextNode && selectedImageForTextNode.length > 0) {
-      const { alias } = await findAtomByImageIndex(selectedImageForTextNode[0]);
+      const selectedImageIndex = Number(selectedImageForTextNode[0]);
+      const { alias } = await resolveSelectedImageAtom(selectedImageIndex);
       if (alias && textNodeStruct[alias]) {
         // Find the existing text node with this key
         const existingKey = textNodeStruct[alias];
@@ -352,7 +386,8 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
 
     // If there's a selected image, associate text with that atom
     if (selectedImageForTextNode && selectedImageForTextNode.length > 0) {
-      const { atomLocation, alias } = await findAtomByImageIndex(selectedImageForTextNode[0]);
+      const selectedImageIndex = Number(selectedImageForTextNode[0]);
+      const { atomLocation, alias } = await resolveSelectedImageAtom(selectedImageIndex);
 
       if (atomLocation && alias) {
         // Find the atom in the latest data
