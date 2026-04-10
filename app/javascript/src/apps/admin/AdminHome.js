@@ -17,8 +17,7 @@ import DevicesList from 'src/apps/admin/devices/DevicesList';
 // import TemplateManagement from 'src/apps/admin/TemplateManagement';
 import ThirdPartyApp from 'src/apps/admin/ThirdPartyApp';
 import { IntlProvider, FormattedMessage } from 'react-intl';
-import messagesDE from 'src/apps/admin/i18n/de.json';
-import messagesEN from 'src/apps/admin/i18n/en.json';
+import I18NFetcher from 'src/fetchers/I18NFetcher';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -26,8 +25,14 @@ class AdminHome extends React.Component {
     this.state = {
       pageIndex: 0,
       locale: 'en',
+      messagesEN: null,
+      messagesDE: null,
     };
     this.handleSelect = this.handleSelect.bind(this);
+  }
+
+  componentDidMount() {
+    this.fetchMessages();
   }
 
   handleSelect(pageIndex) {
@@ -37,13 +42,27 @@ class AdminHome extends React.Component {
   }
 
   getMessages() {
-    const { locale } = this.state;
+    const { locale, messagesEN, messagesDE } = this.state;
+
     const locales = {
       en: messagesEN,
       de: messagesDE,
     };
 
     return { ...messagesEN, ...(locales[locale] || {}) };
+  }
+
+  fetchMessages() {
+    Promise.all([
+      I18NFetcher.fetchAdminMessages('en'),
+      I18NFetcher.fetchAdminMessages('de')
+    ])
+      .then(([EN, DE]) => {
+        this.setState({
+          messagesEN: EN,
+          messagesDE: DE
+        });
+      });
   }
 
   mainContent() {
