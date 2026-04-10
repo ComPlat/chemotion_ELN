@@ -24,6 +24,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import QcActions from 'src/stores/alt/actions/QcActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import QcStore from 'src/stores/alt/stores/QcStore';
 
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
@@ -67,7 +68,6 @@ import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElemen
 import { copyToClipboard } from 'src/utilities/clipboard';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
-import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const MWPrecision = 6;
 

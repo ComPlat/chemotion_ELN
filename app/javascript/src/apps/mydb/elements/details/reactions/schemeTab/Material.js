@@ -149,6 +149,7 @@ class Material extends Component {
 
     aviatorNavigation(sample.type, sample.id, true, false);
     if (isSbmm) {
+      ElementActions.fetchSequenceBasedMacromoleculeSampleById(sample.id);
     } else {
       sample.updateChecksum();
       ElementActions.showReactionMaterial({ sample, reaction });
