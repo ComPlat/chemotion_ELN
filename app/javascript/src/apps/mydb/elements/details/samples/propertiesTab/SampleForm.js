@@ -13,6 +13,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
+import { convertTemperatureBetween, nextTemperatureUnit } from 'src/utilities/UnitsConversion';
 import { SampleTypesOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -48,6 +49,7 @@ export default class SampleForm extends React.Component {
     this.updateStereoRel = this.updateStereoRel.bind(this);
     this.addMolName = this.addMolName.bind(this);
     this.handleRangeChanged = this.handleRangeChanged.bind(this);
+    this.handleTemperatureUnitToggle = this.handleTemperatureUnitToggle.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.fetchNextInventoryLabel = this.fetchNextInventoryLabel.bind(this);
     this.matchSelectedCollection = this.matchSelectedCollection.bind(this);
@@ -424,8 +426,33 @@ export default class SampleForm extends React.Component {
 
   handleRangeChanged(field, lower, upper) {
     const { sample } = this.props;
-    sample.updateRange(field, lower, upper);
+    const unitKey = `${field}_unit`;
+    const currentUnit = (sample.xref && sample.xref[unitKey]) || '°C';
+    const lowerC = lower !== '' ? convertTemperatureBetween(lower, currentUnit, '°C') : lower;
+    const upperC = upper !== '' ? convertTemperatureBetween(upper, currentUnit, '°C') : upper;
+    sample.updateRange(field, lowerC, upperC);
     this.props.handleSampleChanged(sample);
+  }
+
+  handleTemperatureUnitToggle(field) {
+    const { sample } = this.props;
+    const unitKey = `${field}_unit`;
+    const currentUnit = (sample.xref && sample.xref[unitKey]) || '°C';
+    const newUnit = nextTemperatureUnit(currentUnit);
+    sample.xref = { ...sample.xref, [unitKey]: newUnit };
+    this.props.handleSampleChanged(sample);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  convertRangeDisplay(display, fromUnit, toUnit) {
+    if (!display || fromUnit === toUnit) return display;
+    const parts = display.split(' – ');
+    const converted = parts.map((p) => {
+      const num = parseFloat(p.trim());
+      if (Number.isNaN(num)) return p;
+      return convertTemperatureBetween(num, fromUnit, toUnit);
+    });
+    return converted.join(' – ');
   }
 
   /* eslint-disable camelcase */
@@ -1242,27 +1269,39 @@ export default class SampleForm extends React.Component {
               </Row>
               <Row className="align-items-end mb-4">
                 <Col>
-                  <TextRangeWithAddon
-                    field="melting_point"
-                    label="Melting point"
-                    addon="°C"
-                    value={sample.melting_point_display}
-                    disabled={polyDisabled}
-                    onChange={this.handleRangeChanged}
-                    tipOnText="Use space-separated value to input a Temperature range"
-                  />
+                  {(() => {
+                    const meltingUnit = (sample.xref && sample.xref.melting_point_unit) || '°C';
+                    return (
+                      <TextRangeWithAddon
+                        field="melting_point"
+                        label="Melting point"
+                        addon={meltingUnit}
+                        value={this.convertRangeDisplay(sample.melting_point_display, '°C', meltingUnit)}
+                        disabled={polyDisabled}
+                        onChange={this.handleRangeChanged}
+                        onAddonClick={() => this.handleTemperatureUnitToggle('melting_point')}
+                        tipOnText="Use space-separated value to input a Temperature range"
+                      />
+                    );
+                  })()}
                 </Col>
 
                 <Col>
-                  <TextRangeWithAddon
-                    field="boiling_point"
-                    label="Boiling point"
-                    addon="°C"
-                    value={sample.boiling_point_display}
-                    disabled={polyDisabled}
-                    onChange={this.handleRangeChanged}
-                    tipOnText="Use space-separated value to input a Temperature range"
-                  />
+                  {(() => {
+                    const boilingUnit = (sample.xref && sample.xref.boiling_point_unit) || '°C';
+                    return (
+                      <TextRangeWithAddon
+                        field="boiling_point"
+                        label="Boiling point"
+                        addon={boilingUnit}
+                        value={this.convertRangeDisplay(sample.boiling_point_display, '°C', boilingUnit)}
+                        disabled={polyDisabled}
+                        onChange={this.handleRangeChanged}
+                        onAddonClick={() => this.handleTemperatureUnitToggle('boiling_point')}
+                        tipOnText="Use space-separated value to input a Temperature range"
+                      />
+                    );
+                  })()}
                 </Col>
                 <Col>{this.inputWithUnit(sample, 'xref_flash_point', 'Flash point')}</Col>
                 <Col>{this.textInput(sample, 'xref_refractive_index', 'Refractive index')}</Col>

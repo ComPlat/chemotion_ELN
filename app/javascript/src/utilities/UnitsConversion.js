@@ -64,6 +64,36 @@ const convertTemperature = (valueToFormat, currentUnit) => {
   return [convertedValue, convertedUnit];
 };
 
+const TEMPERATURE_CYCLE = {
+  K: TEMPERATURE_UNITS.CELSIUS,
+  '°K': TEMPERATURE_UNITS.CELSIUS,
+  '°C': TEMPERATURE_UNITS.FAHRENHEIT,
+  '°F': TEMPERATURE_UNITS.KELVIN,
+};
+
+const temperatureToKelvinFn = {
+  '°C': (v) => v + 273.15,
+  '°F': (v) => ((v - 32) * 5) / 9 + 273.15,
+  K: (v) => v,
+  '°K': (v) => v,
+};
+
+const kelvinToTemperatureFn = {
+  '°C': (v) => v - 273.15,
+  '°F': (v) => ((v - 273.15) * 9) / 5 + 32,
+  K: (v) => v,
+};
+
+const convertTemperatureBetween = (value, fromUnit, toUnit) => {
+  if (fromUnit === toUnit) return value;
+  const numVal = Number(value);
+  if (Number.isNaN(numVal)) return value;
+  const kelvin = temperatureToKelvinFn[fromUnit](numVal);
+  return handleFloatNumbers(kelvinToTemperatureFn[toUnit](kelvin), 4);
+};
+
+const nextTemperatureUnit = (currentUnit) => TEMPERATURE_CYCLE[currentUnit] || '°C';
+
 const convertTemperatureToKelvin = (temperature) => {
   const { unit, value } = temperature || {};
   const temperatureValue = parseFloat(value);
@@ -259,6 +289,8 @@ export {
   // eslint-disable-next-line import/prefer-default-export
   handleFloatNumbers,
   convertTemperature,
+  convertTemperatureBetween,
+  nextTemperatureUnit,
   convertTemperatureToKelvin,
   convertTime,
   calculateFeedstockVolume,
