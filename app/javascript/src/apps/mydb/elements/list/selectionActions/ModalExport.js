@@ -282,7 +282,7 @@ export default class ModalExport extends React.Component {
       || chemicalColumns.components.length !== 0;
 
     return (
-      <ButtonToolbar className="justify-content-end gap-1">
+      <ButtonToolbar className="justify-content-end">
         <Button variant="primary" onClick={onHide}>Cancel</Button>
         <DropdownButton
           drop="up"

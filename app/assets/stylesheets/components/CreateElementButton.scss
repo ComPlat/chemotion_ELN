@@ -1,7 +1,7 @@
 .create-element-button {
-  @extend .position-fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  z-index: 100;
-  width: fit-content;
+  padding: 8px 14px 8px 8px !important;
+  @extend .rounded-pill;
+  &__label {
+    @extend .text-uppercase;
+  }
 }

@@ -3,6 +3,7 @@ import { Modal, Button } from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import ElementIcon from 'src/components/common/ElementIcon';
 
 export default class GenericElementLabels extends React.Component {
   constructor(props) {
@@ -48,10 +49,13 @@ export default class GenericElementLabels extends React.Component {
     const elInfo = element.tag.taggable_data.element;
     const klasses = UserStore.getState().genericEls;
     const klass = (klasses && klasses.find(el => el.name === elInfo.type)) || {};
+    const iconElement = { ...klass, type: elInfo.type };
     const { showWarning, clicked } = this.state;
     return (
       <>
-        <i className={`${klass.icon_name}`} onClick={this.handleOnClick} key={element.id} />
+        <span onClick={this.handleOnClick} key={element.id}>
+          <ElementIcon element={iconElement} />
+        </span>
         <Modal centered show={showWarning && clicked} onHide={this.closeWarning}>
           <Modal.Header closeButton>
             <Modal.Title>No Access to Element</Modal.Title>

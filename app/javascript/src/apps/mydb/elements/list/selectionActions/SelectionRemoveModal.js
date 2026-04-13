@@ -24,7 +24,7 @@ const SelectionRemoveModal = ({ onHide }) => {
       </Modal.Header>
 
       <Modal.Body>
-        <ButtonToolbar className="gap-1">
+        <ButtonToolbar>
           <Button variant="primary" onClick={onHide}>Cancel</Button>
           <Button variant="warning" onClick={submit}>Remove</Button>
         </ButtonToolbar>

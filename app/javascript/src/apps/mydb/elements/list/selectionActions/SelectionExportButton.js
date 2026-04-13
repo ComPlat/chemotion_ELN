@@ -19,8 +19,8 @@ function SelectionExportButton() {
   return (
     <>
       <Dropdown id="export-dropdown">
-        <Dropdown.Toggle variant="light" size="sm">
-          <i className="icon-arrow-up-from-bracket me-1" />
+        <Dropdown.Toggle variant="light" size="sm" title="Export" aria-label="Export">
+          <i className="icon-arrow-up-from-bracket me-1" aria-hidden="true" />
           <span className="selection-action-text-label">Export</span>
         </Dropdown.Toggle>
         <Dropdown.Menu>

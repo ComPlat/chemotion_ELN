@@ -103,17 +103,17 @@
   .btn:first-child:active,
   .btn.active,
   .btn.show {
-    background-color: $chemstrap-silicon-active1 !important;
+    background-color: $chemstrap-silicon-active !important;
     color: $primary !important;
     &:hover {
-      @extend .text-body;;
+      @extend .text-body;
     }
   }
 
   .btn-check + .btn:hover,
   :not(.btn-check) + btn:hover {
     color: $primary !important;
-    @extend .surface-hover-on-white;
+    @extend .surface-hover;
   }
 
   i {

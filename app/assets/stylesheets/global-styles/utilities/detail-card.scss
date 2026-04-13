@@ -8,6 +8,9 @@
   & > .card-header {
     @extend .surface-tab__header;
     @extend .state-border;
+    .btn-close {
+      margin-left: $close-button-margin;
+    }
   }
 
   &.detail-card--unsaved > .card-header {
@@ -31,6 +34,9 @@
       @extend .justify-content-end;
       @extend .align-items-center;
       @extend .gap-2;
+      .btn-ghost {
+        margin-right: $close-button-margin;
+      }
     }
   }
 }

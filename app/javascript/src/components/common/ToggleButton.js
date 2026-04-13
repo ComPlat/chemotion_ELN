@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 export default function ToggleButton({
   isToggledInitial, onToggle, onChange, onLabel, offLabel,
-  tooltipOn, tooltipOff, buttonTitleClass, buttonClass, variant, size
+  tooltipOn, tooltipOff, buttonTitleClass, buttonClass, size
 }) {
   const [isToggled, setIsToggled] = useState(isToggledInitial);
 
@@ -27,7 +27,8 @@ export default function ToggleButton({
       overlay={<Tooltip id="toggle-button-tooltip">{toolTipMessage}</Tooltip>}
     >
       <Button
-        variant={variant}
+        variant="light"
+        active={isToggled}
         className={buttonClass}
         onClick={handleChange}
         size={size}
@@ -50,7 +51,6 @@ ToggleButton.propTypes = {
   tooltipOff: PropTypes.string,
   buttonTitleClass: PropTypes.string,
   buttonClass: PropTypes.string,
-  variant: PropTypes.string,
   size: PropTypes.string,
 };
 
@@ -63,6 +63,5 @@ ToggleButton.defaultProps = {
   tooltipOff: 'Click to switch on',
   buttonTitleClass: '',
   buttonClass: '',
-  variant: 'outline-secondary',
   size: 'sm',
 };

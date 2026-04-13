@@ -196,7 +196,7 @@ export default class ToolbarTemplateCreator extends React.Component {
       <>
         <Popover.Header as="h3">Custom toolbar</Popover.Header>
         <Popover.Body>
-          <ButtonToolbar className="gap-2">
+          <ButtonToolbar>
             <Button
               variant="success"
               onClick={this.saveUserTemplates}

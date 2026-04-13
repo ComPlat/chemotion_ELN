@@ -229,7 +229,7 @@ export default class ModalImportConfirm extends React.Component {
             />
           </div>
 
-          <ButtonToolbar className="mt-2 justify-content-end gap-1">
+          <ButtonToolbar className="mt-2 justify-content-end">
             <Button variant="primary" onClick={() => this.cancelImport()}>Cancel</Button>
             <Button variant="warning" onClick={() => this.handleClick()}>Import</Button>
           </ButtonToolbar>

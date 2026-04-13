@@ -49,7 +49,7 @@ const WarningBox = ({ handleCancelBtn, hideWarning }) => (
       <p>Are you sure?</p>
     </Card.Body>
     <Card.Footer className="d-flex justify-content-end">
-      <ButtonToolbar className="gap-1">
+      <ButtonToolbar>
         <Button variant="danger" onClick={handleCancelBtn}>
           Cancel
         </Button>
@@ -327,7 +327,7 @@ export default class StructureEditorModal extends React.Component {
         </Modal.Body>
         {!showWarning && (
           <Modal.Footer className="modal-footer border-0">
-            <ButtonToolbar className="gap-1">
+            <ButtonToolbar>
               <Button variant="warning" onClick={this.handleCancelBtn.bind(this)}>
                 {cancelBtnText}
               </Button>

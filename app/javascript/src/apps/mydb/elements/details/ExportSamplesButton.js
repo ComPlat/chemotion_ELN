@@ -23,7 +23,7 @@ export default class ExportSamplesButton extends Component {
     const { startExport } = this.state;
     return (
       <Button
-        variant="info"
+        variant="secondary"
         onClick={this.handleExport}
       >
         Export samples

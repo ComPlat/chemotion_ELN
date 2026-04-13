@@ -284,7 +284,7 @@ const initFormHelper = (element, store) => {
         unitTextOrButton = (
           <Button
             key={`${units}-${field}-unit`}
-            variant="success"
+            variant="light"
             onClick={() => changeUnit(store, element, units, unitField, unitValue)}
           >
             {unitValue}

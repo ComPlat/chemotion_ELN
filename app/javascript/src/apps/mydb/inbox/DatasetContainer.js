@@ -136,7 +136,7 @@ class DatasetContainer extends Component {
 
     return connectDragSource(
       <div>
-        <ButtonToolbar className="d-flex align-items-center gap-2 w-100">
+        <ButtonToolbar className="d-flex align-items-center w-100">
           {datasetCheckbox}
           {trash}
           <Button

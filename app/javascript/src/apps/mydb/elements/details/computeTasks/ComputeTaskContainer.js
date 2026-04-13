@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Table } from 'react-bootstrap';
+import { Table } from 'react-bootstrap';
 
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 
@@ -38,7 +38,8 @@ export default class ComputeTaskContainer extends React.Component {
   }
 
   onClose() {
-    DetailActions.close(this.props.task, true);
+    const { task } = this.props;
+    DetailActions.close(task, true);
   }
 
   onChangeComputeTask(state) {
@@ -64,28 +65,11 @@ export default class ComputeTaskContainer extends React.Component {
   }
   /* eslint-enable class-methods-use-this */
 
-  computeTaskHeader() {
-    return (
-      <div className="d-flex align-items-baseline justify-content-between">
-        Task
-        <Button
-          key="closeBtn"
-          onClick={this.onClose}
-          variant="danger"
-          size="xxsm"
-          className="ms-auto"
-        >
-          <i className="fa fa-times" />
-        </Button>
-      </div>
-    );
-  }
-
   render() {
     const { tasks } = this.state;
 
     return (
-      <DetailCard header={this.computeTaskHeader()}>
+      <DetailCard title="Task" onClose={this.onClose}>
         <Table striped condensed hover>
           <thead>
             <tr>
@@ -113,6 +97,5 @@ export default class ComputeTaskContainer extends React.Component {
 }
 
 ComputeTaskContainer.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
-  task: PropTypes.object.isRequired
+  task: PropTypes.shape({}).isRequired
 };

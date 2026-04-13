@@ -140,7 +140,7 @@ function KetcherRailsform() {
               {editor && <KetcherEditor editor={editor} molfile={""} iH={iframeHeight} iS={iframeStyle} />}
             </div>
             <div className="ketcher-buttons" id="ketcher-search-footer">
-              <ButtonToolbar className="gap-2">
+              <ButtonToolbar>
                 <Button variant="primary" onClick={() => searchStore.handleCancel()}>
                   Cancel
                 </Button>

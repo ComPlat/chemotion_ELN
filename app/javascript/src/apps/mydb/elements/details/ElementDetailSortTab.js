@@ -2,7 +2,7 @@
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Popover } from 'react-bootstrap';
+import { Popover, Button } from 'react-bootstrap';
 import Immutable from 'immutable';
 import { isEmpty, set } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -22,11 +22,9 @@ export default class ElementDetailSortTab extends Component {
     this.state = {
       visible: Immutable.List(),
       hidden: Immutable.List(),
-      showTabLayoutContainer: false
     };
 
     this.onChangeUser = this.onChangeUser.bind(this);
-    this.toggleTabLayoutContainer = this.toggleTabLayoutContainer.bind(this);
 
     UserActions.fetchCurrentUser();
   }
@@ -94,15 +92,6 @@ export default class ElementDetailSortTab extends Component {
     this.updateTabLayout(layout);
   }
 
-  toggleTabLayoutContainer(show) {
-    this.setState(
-      (state) => ({ ...state, showTabLayoutContainer: !state.showTabLayoutContainer }),
-      () => {
-        if (!show) this.updateLayout();
-      }
-    );
-  }
-
   updateLayout() {
     const layout = filterTabLayout(this.state);
     const { currentCollection } = UIStore.getState();
@@ -128,9 +117,16 @@ export default class ElementDetailSortTab extends Component {
     const allCollection = currentCollection?.is_locked && currentCollection.label === 'All';
     if (!isOwnCollection && !allCollection) { return null; }
 
-    const popoverSettings = (
+    const popoverSettings = ({ close }) => (
       <Popover>
-        <Popover.Header>Tab Layout</Popover.Header>
+        <Popover.Header className="d-flex justify-content-between align-items-center">
+          Tab Layout
+          <Button
+            variant="close"
+            aria-label="Close"
+            onClick={close}
+          />
+        </Popover.Header>
         <Popover.Body>
           <TabLayoutEditor
             visible={visible}
@@ -143,7 +139,10 @@ export default class ElementDetailSortTab extends Component {
     );
 
     return (
-      <ConfigOverlayButton onToggle={this.toggleTabLayoutContainer} popoverSettings={popoverSettings} />
+      <ConfigOverlayButton
+        popoverSettings={popoverSettings}
+        onClose={() => this.updateLayout()}
+      />
     );
   }
 }
