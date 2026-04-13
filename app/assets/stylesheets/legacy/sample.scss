@@ -186,3 +186,91 @@
     padding: 3px 0 0;
   }
 }
+
+// SampleForm composition table (hierarchical material) only - borderless, compact AG Grid
+.sample-form-composition-grid.ag-theme-alpine .ag-cell {
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-left: 6px;
+  padding-right: 4px;
+  border: none !important;
+  border-width: 0 !important;
+  display: flex;
+  align-items: center;
+}
+
+.sample-form-composition-grid.ag-theme-alpine .ag-cell-wrapper,
+.sample-form-composition-grid.ag-theme-alpine .ag-cell-value {
+  border: none !important;
+  border-width: 0 !important;
+}
+
+.sample-form-composition-grid.ag-theme-alpine .ag-cell.editable-cell .ag-cell-value {
+  width: 100%;
+  min-width: 0;
+}
+
+.sample-form-composition-grid.ag-theme-alpine .ag-cell-wrapper {
+  display: flex;
+  align-items: center;
+  min-height: 100%;
+  width: 100%;
+}
+
+.sample-form-composition-grid.ag-theme-alpine .ag-cell-wrapper .ag-cell-value {
+  width: 100%;
+}
+
+.sample-form-composition-grid.ag-theme-alpine .ag-input-field-input {
+  width: 100% !important;
+  min-height: 100% !important;
+  border: none !important;
+  border-width: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 0;
+  padding: 0 2px;
+  line-height: inherit;
+}
+
+.sample-form-composition-grid.ag-theme-alpine .ag-cell-edit-input .ag-input-wrapper,
+.sample-form-composition-grid.ag-theme-alpine .ag-cell-inline-editing .ag-input-wrapper {
+  width: 100%;
+  height: 100%;
+  min-height: 1.5em;
+  border: none !important;
+  border-width: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0;
+  padding: 0;
+  line-height: inherit;
+}
+
+.sample-form-composition-grid.ag-theme-alpine .ag-cell-edit-input,
+.sample-form-composition-grid.ag-theme-alpine .ag-cell-inline-editing {
+  padding: 2px 4px !important;
+}
+
+.sample-form-composition-grid .mt-2,
+.sample-form-composition-grid .editable-cell .ag-cell-value:not(:empty) {
+  margin-top: 0 !important;
+}
+
+// Row hover: editable cell area full width, no small white box
+.sample-form-composition-grid.ag-theme-alpine .ag-row-hover .ag-cell.editable-cell .ag-cell-wrapper,
+.sample-form-composition-grid.ag-theme-alpine .ag-row-hover .editable-cell .ag-cell-wrapper {
+  width: 100%;
+}
+
+.sample-form-composition-grid.ag-theme-alpine .ag-row-hover .ag-cell.editable-cell,
+.sample-form-composition-grid.ag-theme-alpine .ag-row-hover .editable-cell {
+  background: transparent !important;
+}
+
+.sample-form-composition-grid.ag-theme-alpine .ag-cell.editable-cell .ag-cell-wrapper {
+  background: transparent !important;
+}
+
+.sample-form-composition-grid.ag-theme-alpine .ag-cell.editable-cell {
+  background-color: transparent !important;
+}

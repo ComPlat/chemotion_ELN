@@ -95,6 +95,53 @@ RSpec.describe Sample do
     end
   end
 
+  describe 'hierarchical sample fields (state, color, storage_condition, height, width, length)' do
+    it 'persists and returns state when set on the column' do
+      sample = create(:sample, state: 'solid')
+      expect(sample.state).to eq('solid')
+      expect(sample.reload.state).to eq('solid')
+    end
+
+    it 'persists and returns color when set on the column' do
+      sample = create(:sample, color: 'red')
+      expect(sample.color).to eq('red')
+      expect(sample.reload.color).to eq('red')
+    end
+
+    it 'persists and returns storage_condition when set on the column' do
+      sample = create(:sample, storage_condition: 'room temperature')
+      expect(sample.storage_condition).to eq('room temperature')
+      expect(sample.reload.storage_condition).to eq('room temperature')
+    end
+
+    it 'persists and returns height, width, length when set on the column' do
+      sample = create(:sample, height: 2.5, width: 1.0, length: 3.0)
+      expect(sample.height).to eq(2.5)
+      expect(sample.width).to eq(1.0)
+      expect(sample.length).to eq(3.0)
+      sample.reload
+      expect(sample.height).to eq(2.5)
+      expect(sample.width).to eq(1.0)
+      expect(sample.length).to eq(3.0)
+    end
+
+    it 'falls back to sample_details when column is blank' do
+      sample = create(:sample, state: nil, sample_details: { 'state' => 'liquid', 'color' => 'blue' })
+      expect(sample.state).to eq('liquid')
+      expect(sample.color).to eq('blue')
+    end
+
+    it 'falls back to xref when column and sample_details are blank' do
+      sample = create(:sample, state: nil, sample_details: {}, xref: { 'state' => 'gas' })
+      expect(sample.state).to eq('gas')
+    end
+
+    it 'prefers column over sample_details and xref' do
+      sample = create(:sample, state: 'column', sample_details: { 'state' => 'details' }, xref: { 'state' => 'xref' })
+      expect(sample.state).to eq('column')
+    end
+  end
+
   describe 'deletion' do
     let(:sample) { create(:sample) }
     let(:starting_material_reaction) { create(:reaction) }
@@ -243,6 +290,106 @@ RSpec.describe Sample do
       expect(sample.save).to be(true)
       expect(sample.molecule).to eq(molecule)
       expect(sample.molecule.cano_smiles).to eq('')
+  describe 'molfiles with polymers' do
+    # 3 R# with bonds, PolymersList + TextNode
+    let(:molfile_three_r_with_bonds) do
+      <<~MOL
+        null
+          Ketcher  3162612562D 1   1.00000     0.00000     0
+
+          3  2  0  0  0  0  0  0  0  0999 V2000
+           14.7204   -8.4388    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+           12.9704   -5.8637    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+           16.0954   -5.1512    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+          2  1  1  0     0  0
+          3  1  1  0     0  0
+        M  END
+        > <PolymersList>
+        0/52/1.50-2.00 1/10/1.00-1.00 2/13/1.28-1.20
+        > <TextNode>
+        2#qcy9t7#t_13_2#2wt.% pdC02
+        1#lj5hkv#t_10_1#1wt.% pd
+        0#iuauh5#t_52_0#y-A2023
+        > </TextNode>
+        > <TextNodeMeta>
+        {blocks:{key:iuauh5,text:y-A2023,type:unstyled,depth:0,inlineStyleRanges:{style:fontsize-10,offset:0,length:7},entityRanges:,data:{fontSize:10}},entityMap:{}}
+        {blocks:{key:lj5hkv,text:1wt.% pd,type:unstyled,depth:0,inlineStyleRanges:{style:fontsize-10,offset:0,length:8},entityRanges:,data:{fontSize:10}},entityMap:{}}
+        {blocks:{key:qcy9t7,text:2wt.% pdC02,type:unstyled,depth:0,inlineStyleRanges:{style:fontsize-10,offset:0,length:11},entityRanges:,data:{fontSize:10}},entityMap:{}}
+        > </TextNodeMeta>
+        $$$$
+      MOL
+    end
+
+    # 3 R# no bonds
+    let(:molfile_three_r_no_bonds) do
+      <<~MOL
+        null
+          Ketcher  3162611212D 1   1.00000     0.00000     0
+
+          3  0  0  0  0  0  0  0  0  0999 V2000
+           10.7676   -9.1906    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+           10.6089   -6.9032    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+           11.1060   -4.6344    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+        M  END
+        > <PolymersList>
+        0/10/1.00-1.00 1/12/1.00-1.00 2/40/2.00-2.00
+        > <TextNode>
+        2#1p38o0#t_40_2#asasdfa
+        1#hlts8j#t_12_1#sgsfgsf
+        0#porj4w#t_10_0#asfasd
+        > </TextNode>
+        > <TextNodeMeta>
+        {"blocks":[{"key":"porj4w","text":"asfasd","type":"unstyled","depth":0,"inlineStyleRanges":[{"style":"fontsize-10","offset":0,"length":6}],"entityRanges":[],"data":{"fontSize":10}}],"entityMap":{}}
+        {"blocks":[{"key":"hlts8j","text":"sgsfgsf","type":"unstyled","depth":0,"inlineStyleRanges":[{"style":"fontsize-10","offset":0,"length":7}],"entityRanges":[],"data":{"fontSize":10}}],"entityMap":{}}
+        {"blocks":[{"key":"1p38o0","text":"asasdfa","type":"unstyled","depth":0,"inlineStyleRanges":[{"style":"fontsize-10","offset":0,"length":7}],"entityRanges":[],"data":{"fontSize":10}}],"entityMap":{}}
+        > </TextNodeMeta>
+        $$$$
+      MOL
+    end
+
+    # 1 R#
+    let(:molfile_one_r) do
+      <<~MOL
+        null
+          Ketcher  3112615482D 1   1.00000     0.00000     0
+
+          1  0  0  0  0  0  0  0  0  0999 V2000
+           18.8287   -6.8500    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+        M  END
+        > <PolymersList>
+        0/10/1.00-1.00
+        > <TextNode>
+        0#oee0kg#t_10_0#1wt.% pdpt
+        > </TextNode>
+        > <TextNodeMeta>
+        {"blocks":[{"key":"oee0kg","text":"1wt.% pdpt","type":"unstyled","depth":0,"inlineStyleRanges":[],"entityRanges":[],"data":{}}],"entityMap":{}}
+        > </TextNodeMeta>
+        $$$$
+      MOL
+    end
+
+    it 'recognizes molfile with 3 R# and bonds (PolymersList + TextNode)' do
+      expect(Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile_three_r_with_bonds)).to be true
+      expect(Chemotion::MolfilePolymerSupport.has_text_node_tag?(molfile_three_r_with_bonds)).to be true
+      payload = Chemotion::SvgRenderer.parse_polymer_payload(molfile_three_r_with_bonds)
+      expect(payload[:polymers].size).to eq(3)
+      expect(payload[:polymers][0]).to eq(atom_index: 0, template_id: 52, height: 1.5, width: 2.0)
+      expect(payload[:text_by_index]).to eq(0 => 'y-A2023', 1 => '1wt.% pd', 2 => '2wt.% pdC02')
+    end
+
+    it 'recognizes molfile with 3 R# and no bonds' do
+      expect(Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile_three_r_no_bonds)).to be true
+      payload = Chemotion::SvgRenderer.parse_polymer_payload(molfile_three_r_no_bonds)
+      expect(payload[:polymers].size).to eq(3)
+      expect(payload[:text_by_index]).to eq(0 => 'asfasd', 1 => 'sgsfgsf', 2 => 'asasdfa')
+    end
+
+    it 'recognizes molfile with single R#' do
+      expect(Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile_one_r)).to be true
+      payload = Chemotion::SvgRenderer.parse_polymer_payload(molfile_one_r)
+      expect(payload[:polymers].size).to eq(1)
+      expect(payload[:polymers][0]).to eq(atom_index: 0, template_id: 10, height: 1.0, width: 1.0)
+      expect(payload[:text_by_index]).to eq(0 => '1wt.% pdpt')
     end
   end
 

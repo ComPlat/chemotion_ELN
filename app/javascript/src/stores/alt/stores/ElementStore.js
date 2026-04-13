@@ -707,8 +707,8 @@ class ElementStore {
   // -- Samples --
 
   handleFetchSampleById(result) {
-    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
-      if (result.isMixture()) {
+    if (!this.state?.currentElement || this.state?.currentElement._checksum != result?._checksum) {
+      if (result.isMixture() || result.isHierarchicalMaterial()) {
         ComponentsFetcher.fetchComponentsBySampleId(result.id)
           .then(async (components) => {
             const sampleComponents = components.map((component) => {
@@ -720,17 +720,22 @@ class ElementStore {
               return new Component(sampleData);
             });
             await result.initialComponents(sampleComponents);
+            // Trigger store update after async component hydration so details UI
+            // (e.g. composition table) renders immediately on first open.
+            this.changeCurrentElement(result);
           })
           .catch((errorMessage) => {
             console.log(errorMessage);
+            this.changeCurrentElement(result);
           });
+      } else {
+        this.changeCurrentElement(result);
       }
-      this.changeCurrentElement(result);
     }
   }
 
   handleCreateSample({ element, closeView, components }) {
-    if (element.isMixture()) {
+    if (element.isMixture() || element.isHierarchicalMaterial()) {
       ComponentsFetcher.saveOrUpdateComponents(element, components)
         .then(async () => {
           await element.initialComponents(components);
@@ -749,7 +754,7 @@ class ElementStore {
 
   handleCreateSampleForReaction({ newSample, reaction, materialGroup, components }) {
     UserActions.fetchCurrentUser();
-    if (newSample.isMixture()) {
+    if (newSample.isMixture() || newSample.isHierarchicalMaterial()) {
       ComponentsFetcher.saveOrUpdateComponents(newSample, components)
         .then(async () => {
           await newSample.initialComponents(components);
@@ -795,11 +800,13 @@ class ElementStore {
   }
 
   handleUpdateLinkedElement({ element, closeView, components }) {
-    if (element instanceof Sample && element.isMixture()) {
+    if (element instanceof Sample && (element.isMixture() || element.isHierarchicalMaterial())) {
+      // Initialize components synchronously before rendering so changeCurrentElement
+      // receives an element with properly-structured components instead of API-format ones.
+      if (components?.length > 0) {
+        element.initialComponents(components);
+      }
       ComponentsFetcher.saveOrUpdateComponents(element, components)
-        .then(() => {
-          element.initialComponents(components);
-        })
         .catch((errorMessage) => {
           console.log(errorMessage);
         });

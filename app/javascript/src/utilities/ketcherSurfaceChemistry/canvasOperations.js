@@ -13,7 +13,10 @@ import {
   latestDataSetter
 } from 'src/components/structureEditor/KetcherEditor';
 import { ALIAS_PATTERNS, KET_TAGS, KET_DOM_TAG } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
+import {
+  fetchKetcherData,
+  loadKetcherData
+} from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   findAtomByImageIndex,
   handleAddAtom,
@@ -28,11 +31,11 @@ import {
 import {
   ImagesToBeUpdatedSetter,
   imagesList,
+  imagesListSetter,
   mols,
   textList,
   textListSetter,
   textNodeStruct,
-  textNodeStructSetter,
   deletedAtomsSetter,
   reloadCanvasSetter,
   imageListCopyContainer,
@@ -53,16 +56,23 @@ import {
 } from 'src/utilities/ketcherSurfaceChemistry/Ketcher2SurfaceChemistryUtils';
 import { findTemplateIdCategoryFromTemplates } from 'src/utilities/ketcherSurfaceChemistry/iconBaseProvider';
 
+// Use only CTAB (up to and including M  END) so we never duplicate > <PolymersList> when
+// the editor's molfile already contains a PolymersList section from a previous load.
+const ctabLinesOnly = (molfileString) => {
+  if (!molfileString || typeof molfileString !== 'string') return [];
+  const lines = molfileString.trim().split('\n');
+  const endIdx = lines.findIndex((line) => line && /^M\s+END/.test(line));
+  return endIdx >= 0 ? lines.slice(0, endIdx + 1) : lines;
+};
+
 // function when a canvas is saved using main "SAVE" button
-const arrangePolymers = async (canvasData, editor) => {
+// ketData: optional pre-fetched KET JSON to avoid a second getKet() call during save
+const arrangePolymers = async (canvasData, editor, ketData = null) => {
   // Do not add PolymersList tag when no polymer images are present
   if (!imagesList || imagesList.length === 0) {
     return canvasData.split('\n');
   }
-  // grab image index
-  // find index for alias
-  // on matching create a string to be attached with polymers sections
-  const data = JSON.parse(await editor.structureDef.editor.getKet());
+  const data = ketData ?? JSON.parse(await editor.structureDef.editor.getKet());
   const atomsWithAlias = mols
     .flatMap((item) => data[item]?.atoms ?? [])
     .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias));
@@ -70,12 +80,14 @@ const arrangePolymers = async (canvasData, editor) => {
   // Keep atom index order so PolymersList matches positions (0, 1, 2) and image sequence is correct after load
   const listOfAtomsWithAlias = atomsWithAlias.map((i) => i.alias);
   const processString = await templateAliasesPrepare(listOfAtomsWithAlias);
-  return [...canvasData.split('\n'), KET_TAGS.polymerIdentifier, processString];
+  const ctabLines = ctabLinesOnly(canvasData);
+  return [...ctabLines, KET_TAGS.polymerIdentifier, processString];
 };
 
 // helper function to arrange text nodes for formula
+// Use polymerIndex (0,1,2...) for the first number — matches PolymersList atom index, not raw atom index.
 const arrangeTextNodes = async (ket2Molfile) => {
-  let atomCount = 0;
+  let polymerIndex = 0;
   const assembleTextList = [];
 
   for (const item of mols) {
@@ -85,12 +97,12 @@ const arrangeTextNodes = async (ket2Molfile) => {
     for (const atom of atoms) {
       const textNodeKey = textNodeStruct[atom.alias];
 
-      if (textNodeKey) {
+      if (textNodeKey && ALIAS_PATTERNS.threeParts.test(atom.alias)) {
         for (const textItem of textList) {
           const block = JSON.parse(textItem.data.content).blocks[0];
           if (textNodeKey === block.key) {
             const line = [
-              atomCount,
+              polymerIndex,
               textSeparator,
               textNodeKey,
               textSeparator,
@@ -102,8 +114,8 @@ const arrangeTextNodes = async (ket2Molfile) => {
             assembleTextList.push({ line, y });
           }
         }
+        polymerIndex += 1;
       }
-      atomCount += 1;
     }
   }
 
@@ -118,6 +130,22 @@ const arrangeTextNodes = async (ket2Molfile) => {
     KET_TAGS.textNodeIdentifierClose
   );
 
+  return ket2Molfile;
+};
+
+// Appends a TextNodeMeta block containing the raw Draft.js content string for each
+// text node. One content entry per line, preserving the same order as TextNode lines.
+const arrangeTextNodeMeta = (ket2Molfile) => {
+  if (!textList?.length) return ket2Molfile;
+
+  const contentLines = textList.map((textItem) => textItem.data?.content).filter(Boolean);
+  if (!contentLines.length) return ket2Molfile;
+
+  ket2Molfile.push(
+    KET_TAGS.textNodeMeta,
+    ...contentLines,
+    KET_TAGS.textNodeMetaClose
+  );
   return ket2Molfile;
 };
 
@@ -229,6 +257,22 @@ const onAddText = async (editor, selectedImageForTextNode) => {
   return true;
 };
 
+// Detect whether input is Draft.js raw content (object or JSON string form)
+const isDraftContent = (value) => {
+  try {
+    if (value == null) return false;
+    const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+    return Boolean(
+      parsed
+      && Array.isArray(parsed.blocks)
+      && parsed.blocks.length > 0
+      && typeof parsed.blocks[0] === 'object'
+    );
+  } catch (_e) {
+    return false;
+  }
+};
+
 // Function to add text node from Quill editor content (Delta format)
 const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode = null, isUpdate = false) => {
   try {
@@ -237,12 +281,38 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
       return false;
     }
 
-    if (!textContent || !textContent.trim()) {
+    // Normalize: accept Draft content (object or JSON string) or plain string
+    const isEmpty = (v) => {
+      if (typeof v === 'string' && !isDraftContent(v)) return !v.trim();
+      if (isDraftContent(v)) {
+        const c = typeof v === 'string' ? JSON.parse(v) : v;
+        return !(c.blocks[0]?.text || '').trim();
+      }
+      return true;
+    };
+    if (isEmpty(textContent)) {
       return false;
     }
 
     // Fetch latest data first to ensure we have current state
     await fetchKetcherData(editor);
+
+    const resolveSelectedImageAtom = async (selectedImageIndex) => {
+      if (Number.isNaN(selectedImageIndex)) return { atomLocation: null, alias: '' };
+      // Ketcher selection and alias sync can lag a tick; retry a few times.
+      for (let attempt = 0; attempt < 4; attempt++) {
+        // eslint-disable-next-line no-await-in-loop
+        const resolved = await findAtomByImageIndex(selectedImageIndex);
+        if (resolved?.atomLocation && resolved?.alias) return resolved;
+        // eslint-disable-next-line no-await-in-loop
+        await fetchKetcherData(editor);
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => {
+          setTimeout(() => resolve(), 40);
+        });
+      }
+      return { atomLocation: null, alias: '' };
+    };
 
     let textKey;
     let updatedTextList;
@@ -250,7 +320,8 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
 
     // If updating existing text, find and update it
     if (isUpdate && selectedImageForTextNode && selectedImageForTextNode.length > 0) {
-      const { alias } = await findAtomByImageIndex(selectedImageForTextNode[0]);
+      const selectedImageIndex = Number(selectedImageForTextNode[0]);
+      const { alias } = await resolveSelectedImageAtom(selectedImageIndex);
       if (alias && textNodeStruct[alias]) {
         // Find the existing text node with this key
         const existingKey = textNodeStruct[alias];
@@ -265,11 +336,19 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         });
 
         if (existingNodeIndex !== -1) {
-          // Update the existing text node content
+          // Update the existing text node content (full Draft content, preserve key)
           const existingNode = updatedTextList[existingNodeIndex];
           const existingContent = JSON.parse(existingNode.data.content);
-          existingContent.blocks[0].text = textContent.trim();
-          existingNode.data.content = JSON.stringify(existingContent);
+          const existingKey = existingContent.blocks[0].key;
+          if (isDraftContent(textContent)) {
+            const newContent = typeof textContent === 'string' ? JSON.parse(textContent) : textContent;
+            newContent.blocks[0].key = existingKey;
+            existingNode.data.content = JSON.stringify(newContent);
+          } else {
+            existingContent.blocks[0].text = textContent.trim();
+            existingContent.blocks[0].inlineStyleRanges = existingContent.blocks[0].inlineStyleRanges || [];
+            existingNode.data.content = JSON.stringify(existingContent);
+          }
           textKey = existingKey;
           newTextNode = existingNode;
           textListSetter(updatedTextList);
@@ -307,7 +386,8 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
 
     // If there's a selected image, associate text with that atom
     if (selectedImageForTextNode && selectedImageForTextNode.length > 0) {
-      const { atomLocation, alias } = await findAtomByImageIndex(selectedImageForTextNode[0]);
+      const selectedImageIndex = Number(selectedImageForTextNode[0]);
+      const { atomLocation, alias } = await resolveSelectedImageAtom(selectedImageIndex);
 
       if (atomLocation && alias) {
         // Find the atom in the latest data
@@ -383,23 +463,7 @@ const onAddTextFromEditor = async (editor, textContent, selectedImageForTextNode
         ];
       }
 
-      // Save and update canvas - this will trigger onTemplateMove which handles positioning
-      // IMPORTANT: Store textList before saveMoveCanvas because fetchKetcherData might overwrite it
-      // if Ketcher hasn't processed the text node yet
-      const textListBeforeSave = [...textList];
-      const textNodeStructBeforeSave = { ...textNodeStruct };
-
       await saveMoveCanvas(editor, latestData, true, true, false);
-
-      // Restore textList if it was lost during fetchKetcherData
-      // This can happen if Ketcher hasn't processed the text node yet
-      if (textList.length < textListBeforeSave.length) {
-        textListSetter(textListBeforeSave);
-        textNodeStructSetter(textNodeStructBeforeSave);
-      }
-
-      // Ensure ImagesToBeUpdated is set to trigger rendering
-      // onTemplateMove already sets this, but we ensure it's set here too
       ImagesToBeUpdatedSetter(true);
     }
 
@@ -523,6 +587,24 @@ const removeAllColors = (svgElement) => {
   });
 };
 
+/**
+ * Dispatches a synthetic mousedown → mouseup → click sequence on the Ketcher
+ * intermediate canvas SVG so that any pending pointer-driven render flush is
+ * triggered before we read the canvas content.
+ * Must target the iframe's document, not the host page's document.
+ */
+const flushIntermediateCanvas = (iframeRef) => {
+  const iframeDocument = iframeRef?.current?.contentWindow?.document;
+  if (!iframeDocument) return;
+
+  const svg = iframeDocument.querySelector('.StructEditor-module_intermediateCanvas__fR3ws svg');
+  if (!svg) return;
+
+  ['mousedown', 'mouseup', 'click'].forEach((type) => {
+    svg.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window }));
+  });
+};
+
 // function to get SVG from canvas element without modification
 const getSvgFromCanvas = async (iframeRef) => {
   try {
@@ -575,32 +657,39 @@ const getSvgFromCanvas = async (iframeRef) => {
       });
     }
 
-    // Calculate bounding box from ORIGINAL canvas (getBBox needs DOM-attached elements)
-    let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let
-      maxY = -Infinity;
-    const visibleElements = canvasElement.querySelectorAll('path, image, text');
-    visibleElements.forEach((el) => {
-      // Skip layer placeholders and hidden elements
-      if (el.classList && layerClasses.some((cls) => el.classList.contains(cls))) return;
-      if (el.style.display === 'none') return;
-      try {
-        const elBbox = el.getBBox();
-        if (elBbox.width > 0 && elBbox.height > 0) {
-          minX = Math.min(minX, elBbox.x);
-          minY = Math.min(minY, elBbox.y);
-          maxX = Math.max(maxX, elBbox.x + elBbox.width);
-          maxY = Math.max(maxY, elBbox.y + elBbox.height);
-        }
-      } catch (e) { /* ignore elements that can't get bbox */ }
-    });
-
-    // Fallback if no valid bbox found
-    if (minX === Infinity || maxX === -Infinity) {
-      const fallbackBbox = canvasElement.getBBox();
-      minX = fallbackBbox.x;
-      minY = fallbackBbox.y;
-      maxX = fallbackBbox.x + fallbackBbox.width;
-      maxY = fallbackBbox.y + fallbackBbox.height;
+    // Single getBBox on clone (after layer removal) is much faster than N getBBox calls per element
+    let minX; let minY; let maxX; let maxY;
+    try {
+      const bbox = clonedCanvas.getBBox();
+      if (bbox && bbox.width > 0 && bbox.height > 0) {
+        minX = bbox.x;
+        minY = bbox.y;
+        maxX = bbox.x + bbox.width;
+        maxY = bbox.y + bbox.height;
+      }
+    } catch (_e) { /* clone not in DOM or getBBox not supported */ }
+    if (minX == null || maxX == null) {
+      // Fallback: compute from visible elements on original canvas (slower but correct)
+      minX = Infinity; minY = Infinity; maxX = -Infinity; maxY = -Infinity;
+      const visibleElements = canvasElement.querySelectorAll('path, image, text');
+      visibleElements.forEach((el) => {
+        if (el.classList && layerClasses.some((cls) => el.classList.contains(cls))) return;
+        if (el.style.display === 'none') return;
+        try {
+          const elBbox = el.getBBox();
+          if (elBbox.width > 0 && elBbox.height > 0) {
+            minX = Math.min(minX, elBbox.x);
+            minY = Math.min(minY, elBbox.y);
+            maxX = Math.max(maxX, elBbox.x + elBbox.width);
+            maxY = Math.max(maxY, elBbox.y + elBbox.height);
+          }
+        } catch (e) { /* ignore */ }
+      });
+      if (minX === Infinity || maxX === -Infinity) {
+        const fallbackBbox = canvasElement.getBBox();
+        minX = fallbackBbox.x; minY = fallbackBbox.y;
+        maxX = fallbackBbox.x + fallbackBbox.width; maxY = fallbackBbox.y + fallbackBbox.height;
+      }
     }
 
     const padding = 5;
@@ -679,7 +768,7 @@ const saveMoveCanvas = async (
   recenter = false,
   moveOptions = {}
 ) => {
-  const dataCopy = data || latestData;
+  let dataCopy = data || latestData;
   if (!editor || !editor.structureDef) {
     console.error('Editor is undefined');
     return;
@@ -689,23 +778,36 @@ const saveMoveCanvas = async (
     return;
   }
 
+  // Text nodes are non-standard and never returned by getKet(). Always inject the local
+  // textList into the payload so the editor renders them visually.
+  if (textList.length > 0) {
+    dataCopy = JSON.parse(JSON.stringify(dataCopy));
+    const nonText = (dataCopy.root?.nodes || []).filter((n) => n.type !== 'text');
+    dataCopy.root.nodes = [...nonText, ...textList];
+  }
+
+  // Preserve images from our payload before apply/fetch — getKet() often omits them.
+  // This ensures imagesList is correct when loadKetcherData receives no images from the editor.
+  const imagesFromPayload = (dataCopy.root?.nodes || []).filter((n) => n.type === 'image');
+  if (imagesFromPayload.length > 0) {
+    imagesListSetter(imagesFromPayload);
+  }
+
   if (isMoveRequired) {
     await applyCanvasDataToEditor(editor, dataCopy, recenter);
-
-    // IMPORTANT: Preserve textList from dataCopy before fetching
-    // Ketcher might not have processed the text node yet when we fetch back
-    const textNodesFromDataCopy = dataCopy?.root?.nodes?.filter((n) => n.type === 'text') || [];
-    const preservedTextList = textNodesFromDataCopy.length > 0 ? textNodesFromDataCopy : textList;
-
-    if (isFetchRequired) {
-      await fetchKetcherData(editor);
-
-      // Restore textList from dataCopy if it was lost during fetchKetcherData
-      if (preservedTextList.length > textList.length) {
-        textListSetter(preservedTextList);
+    const { syncImagesOnly = false } = moveOptions;
+    if (syncImagesOnly) {
+      // Use payload data for atom positions — avoid fetch overwriting with editor data
+      // that may omit images or alter positions on load/reopen.
+      latestDataSetter(dataCopy);
+      await loadKetcherData(dataCopy);
+      await onTemplateMove(editor, recenter, { ...moveOptions, skipFetch: true });
+    } else {
+      if (isFetchRequired) {
+        await fetchKetcherData(editor);
       }
+      await onTemplateMove(editor, recenter, moveOptions);
     }
-    await onTemplateMove(editor, recenter, moveOptions);
     return;
   }
 
@@ -733,21 +835,23 @@ const centerPositionCanvas = async (editor) => {
 
 const onTemplateMove = async (editor, recenter = false, options = {}) => {
   if (!editor || !editor.structureDef) return;
-  const { syncImagesOnly = false } = options;
+  const { syncImagesOnly = false, skipFetch = false } = options;
 
   // for tool bar button events - but skip recentering when only syncing images
   if (!recenter && !syncImagesOnly && (imageListCopyContainer.length || textListCopyContainer.length)) {
     recenter = true;
   }
-  // first fetch to save values
-  await fetchKetcherData(editor);
+  if (!skipFetch) {
+    await fetchKetcherData(editor);
+  }
 
   const molCopy = mols;
   const imageListCopy = imageListCopyContainer.length ? imageListCopyContainer : imagesList;
   const textListCopy = textListCopyContainer.length ? textListCopyContainer : textList;
 
-  // second fetch save and place
-  await fetchKetcherData(editor);
+  if (!skipFetch) {
+    await fetchKetcherData(editor);
+  }
 
   let imageNodes = [];
   if (syncImagesOnly) {
@@ -784,7 +888,20 @@ function processJsonMolecules(jsonData, verticalThreshold = 1) {
     .filter((n) => n.$ref && jsonData[n.$ref]?.type === 'molecule')
     .map((n) => n.$ref);
 
-  nodeRefs.forEach((ref, molIndex) => {
+  // Sort mol refs by their highest aliased-atom y value (descending) so visually
+  // higher molecules produce their connString earlier, giving the correct global order.
+  const sortedNodeRefs = nodeRefs.slice().sort((refA, refB) => {
+    const getMaxY = (ref) => {
+      const atoms = jsonData[ref]?.atoms || [];
+      const ys = atoms
+        .filter((a) => a.alias && a.alias.split('_').length >= 3)
+        .map((a) => a.location[1]);
+      return ys.length ? Math.max(...ys) : -Infinity;
+    };
+    return getMaxY(refB) - getMaxY(refA);
+  });
+
+  sortedNodeRefs.forEach((ref, molIndex) => {
     const mol = jsonData[ref];
     if (!mol || !mol.atoms) {
       result.push(`Mol ${molIndex + 1}: (no atoms)`);
@@ -954,8 +1071,9 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     }
     const ketFormatData = JSON.parse(await editor.structureDef.editor.getKet());
     await reArrangeImagesOnCanvas(iframeRef); // assemble image on the canvas
-    ket2Lines = await arrangePolymers(canvasDataMol, editor); // polymers added
+    ket2Lines = await arrangePolymers(canvasDataMol, editor, ketFormatData); // reuse KET data, no second getKet()
     ket2Lines = await arrangeTextNodes(ket2Lines); // text node
+    ket2Lines = arrangeTextNodeMeta(ket2Lines); // text node raw content metadata
     if (imagesList.length > 0) {
       ket2Lines = replaceAtomSymbolAWithRHashInAtomBlock(ket2Lines);
     }
@@ -969,6 +1087,8 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       textNodesFormula = replacedString;
     }
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
+
+    if (imagesList.length > 0) flushIntermediateCanvas(iframeRef);
 
     const svgElement = imagesList.length > 0 ? await getSvgFromCanvas(iframeRef) : await prepareSvg(editor);
     resetStore();
@@ -1032,6 +1152,7 @@ export {
   onAddAtom,
   onDeleteText,
   arrangeTextNodes,
+  arrangeTextNodeMeta,
   onAddText,
   onAddTextFromEditor,
   createTextNodeFromContent,

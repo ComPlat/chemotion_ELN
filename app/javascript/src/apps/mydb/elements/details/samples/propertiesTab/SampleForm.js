@@ -1,13 +1,14 @@
 /* eslint-disable max-len */
 /* eslint-disable react/sort-comp */
 /* eslint-disable react/forbid-prop-types */
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Form, InputGroup,
   OverlayTrigger, Tooltip, Popover, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
+import { AgGridReact } from 'ag-grid-react';
 import { Select, CreatableSelect } from 'src/components/common/Select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
@@ -21,6 +22,160 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
+import { SAMPLE_TYPE_HIERARCHICAL_MATERIAL } from 'src/models/Sample';
+import Component from 'src/models/Component';
+import buildHierarchicalMaterialRows from 'src/utilities/sampleHierarchicalCompositions';
+
+const stateOptions = [
+  { value: 'solid_powder', label: 'Solid Powder' },
+  { value: 'solid_pellet', label: 'Solid Pellet' },
+  { value: 'solid_monolith', label: 'Solid Monolith' },
+  { value: 'solid_shape', label: 'Solid Shape' },
+  { value: 'liquid_colloidal', label: 'Liquid Colloidal' },
+  { value: 'liquid_solution', label: 'Liquid Solution' }
+];
+
+/**
+ * Normalizes components that may be in API-format (with nested component_properties)
+ * to a flat format where source, molar_mass, weight_ratio_exp etc. are top-level fields.
+ * This handles the case where the backend returns components with nested component_properties
+ * before the async initialComponents() call has had a chance to flatten them.
+ */
+const flattenApiFormatComponents = (components) => (components || []).map((comp) => {
+  if (comp.component_properties && !comp.source) {
+    const { component_properties, ...rest } = comp;
+    return { ...rest, ...component_properties };
+  }
+  return comp;
+});
+
+const COMPOSITION_DEFAULT_COL_DEF = {
+  editable: false,
+  flex: 1,
+  wrapHeaderText: true,
+  autoHeaderHeight: true,
+  autoHeight: true,
+  sortable: false,
+  resizable: false,
+  suppressMovable: true,
+  cellClass: ['border-end'],
+  headerClass: ['border-end', 'px-2'],
+};
+
+const buildCompositionColumnDefs = (onFieldChange) => [
+  {
+    headerName: 'Source',
+    field: 'sourceAlias',
+    minWidth: 90,
+    cellClass: ['lh-base', 'border-end'],
+  },
+  {
+    headerName: 'Weight ratio exp.',
+    field: 'weight_ratio_exp',
+    editable: true,
+    cellClass: ['editable-cell', 'border-end'],
+    valueSetter: (params) => {
+      if (params.newValue != null) onFieldChange(params.data.index, 'weight_ratio_exp', params.newValue);
+    },
+  },
+  {
+    headerName: 'Molar Mass (g/mol)',
+    field: 'molar_mass',
+    editable: true,
+    cellClass: ['editable-cell', 'border-end'],
+    valueSetter: (params) => {
+      if (params.newValue != null) onFieldChange(params.data.index, 'molar_mass', params.newValue);
+    },
+  },
+  {
+    headerName: 'Weight ratio (calc) / %',
+    field: 'weightRatioCalcProcessed',
+    minWidth: 110,
+    cellClass: ['lh-base', 'border-end'],
+  },
+  {
+    headerName: 'Molar ratio (calc) / molar mass',
+    field: 'molarRatioCalcMM',
+    minWidth: 120,
+    valueGetter: (p) => (p.data?.molarRatioCalcMM ?? '-'),
+    cellClass: ['lh-base', 'border-end'],
+  },
+  {
+    headerName: 'Weight ratio (calc) / molar mass',
+    field: 'weightRatioCalcMM',
+    minWidth: 120,
+    valueGetter: (p) => (p.data?.weightRatioCalcMM ?? '-'),
+    cellClass: ['lh-base', 'border-end'],
+  },
+  {
+    headerName: 'Molar ratio exp / %',
+    field: 'molarRatioExpPercent',
+    minWidth: 110,
+    valueGetter: (p) => (p.data?.molarRatioExpPercent !== '-' ? (p.data?.molarRatioExpPercent ?? '-') : '-'),
+    cellClass: ['lh-base', 'border-end'],
+  },
+  {
+    headerName: 'Molar ratio (calc) / %',
+    field: 'molarRatioCalcPercent',
+    minWidth: 120,
+    valueGetter: (p) => (p.data?.molarRatioCalcPercent !== '-' ? (p.data?.molarRatioCalcPercent ?? '-') : '-'),
+    cellClass: ['lh-base', 'border-end'],
+  },
+];
+
+/**
+ * Renders the hierarchical material composition table using AG Grid.
+ * Mounted deferred (one animation frame) to avoid ResizeObserver loop errors
+ * when switching sample type during a heavy layout change.
+ */
+function HierarchicalCompositionTable({ components, onFieldChange }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const columnDefs = useCallback(() => buildCompositionColumnDefs(onFieldChange), [onFieldChange])();
+  const { rowsData } = buildHierarchicalMaterialRows(components);
+  const gridRowData = Array.isArray(rowsData) ? rowsData : [];
+  const fitColumnsToGrid = useCallback((params) => {
+    params.api.sizeColumnsToFit();
+  }, []);
+
+  const getRowId = useCallback((params) => {
+    const id = params.data?.index;
+    return id !== undefined && id !== null ? `component-${id}` : `row-${params.node?.rowIndex ?? 0}`;
+  }, []);
+
+  if (!mounted) return null;
+
+  return (
+    <>
+      <h5 className="mt-3">Composition table:</h5>
+      <div className="ag-theme-alpine sample-form-composition-grid mb-3">
+        <AgGridReact
+          columnDefs={columnDefs}
+          defaultColDef={COMPOSITION_DEFAULT_COL_DEF}
+          rowData={gridRowData}
+          getRowId={getRowId}
+          rowHeight="auto"
+          domLayout="autoHeight"
+          onGridReady={fitColumnsToGrid}
+          onGridSizeChanged={fitColumnsToGrid}
+          onFirstDataRendered={fitColumnsToGrid}
+          singleClickEdit
+          stopEditingWhenCellsLoseFocus
+        />
+      </div>
+    </>
+  );
+}
+
+HierarchicalCompositionTable.propTypes = {
+  components: PropTypes.array.isRequired, // eslint-disable-line react/forbid-prop-types
+  onFieldChange: PropTypes.func.isRequired,
+};
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -40,6 +195,7 @@ export default class SampleForm extends React.Component {
       enableComponentLabel: false,
       enableComponentPurity: false,
       moleculeNameInputValue: props.sample.molecule_name?.label || props.sample.molecule_name?.value || '',
+      components: flattenApiFormatComponents(props.sample.components),
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
@@ -57,6 +213,8 @@ export default class SampleForm extends React.Component {
     this.switchDensityMolarity = this.switchDensityMolarity.bind(this);
     this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
     this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
+    this.stateSelect = this.stateSelect.bind(this);
+    this.handleComponentFieldChanged = this.handleComponentFieldChanged.bind(this);
   }
 
   componentDidUpdate(prevProps) {
@@ -68,6 +226,17 @@ export default class SampleForm extends React.Component {
     // Sync moleculeNameInputValue when molecule_name changes
     const currentMoleculeName = this.props.sample?.molecule_name;
     const prevMoleculeName = prevProps.sample?.molecule_name;
+
+    const prevComponents = prevProps.sample?.components || [];
+    const nextComponents = this.props.sample?.components || [];
+    // Sync component state when the sample object reference changes (e.g. after save returns
+    // a fresh Sample from the API), or when the components data itself changes.
+    // Using reference equality as the first check ensures that saves always refresh the list
+    // even when the array was mutated in-place (same reference, same JSON).
+    if (prevProps.sample !== this.props.sample
+      || JSON.stringify(prevComponents) !== JSON.stringify(nextComponents)) {
+      this.setState({ components: flattenApiFormatComponents(nextComponents) });
+    }
 
     if (currentMoleculeName !== prevMoleculeName) {
       // Use the label for display if available, otherwise fall back to value
@@ -348,6 +517,7 @@ export default class SampleForm extends React.Component {
   moleculeInput() {
     const { sample } = this.props;
     const { isMolNameLoading, moleculeNameInputValue } = this.state;
+    const isMoleculeNameDisabled = !sample.can_update || sample.isHierarchicalMaterial();
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
     const newMolecule = !mno || sample._molecule.id !== mno.mid;
@@ -381,9 +551,9 @@ export default class SampleForm extends React.Component {
           <CreatableSelect
             name="moleculeName"
             isClearable
-            isInputEditable
-            inputValue={moleculeNameInputValue}
-            isDisabled={!sample.can_update}
+            isInputEditable={!isMoleculeNameDisabled}
+            inputValue={isMoleculeNameDisabled ? undefined : moleculeNameInputValue}
+            isDisabled={isMoleculeNameDisabled}
             options={formattedOptions}
             onMenuOpen={() => this.openMolName(sample)}
             onChange={(selectedOption) => {
@@ -414,7 +584,7 @@ export default class SampleForm extends React.Component {
             placeholder="Enter or select a molecule name"
             allowCreateWhileLoading
             formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
-            className="flex-grow-1"
+            className={`flex-grow-1 ${isMoleculeNameDisabled ? 'molecule-name-select--disabled' : ''}`}
           />
           {this.structureEditorButton(!sample.can_update)}
         </InputGroup>
@@ -810,7 +980,7 @@ export default class SampleForm extends React.Component {
     const weightPercentageSample = sample.weight_percentage > 0;
     const overlayMessage = weightPercentageSample
       ? 'Amount field is disabled for samples that belong to reactions with weight percentage. '
-        + 'To change the amount, please edit the material sample amount field using weight percentage field in the reaction scheme tab and save the reaction.'
+      + 'To change the amount, please edit the material sample amount field using weight percentage field in the reaction scheme tab and save the reaction.'
       : null;
     let metric;
     if (unit === 'l') {
@@ -846,6 +1016,12 @@ export default class SampleForm extends React.Component {
         }
         case 'molecular_mass': {
           metric = 'n';
+          break;
+        }
+        case 'defined_part_amount': {
+          const isDefinedPartValid = sample.metrics && sample.metrics.length > 2;
+          const prefixDefinedPart = isDefinedPartValid ? sample.metrics[0] : 'm';
+          metric = metricPrefixes.indexOf(prefixDefinedPart) > -1 ? prefixDefinedPart : 'm';
           break;
         }
         default:
@@ -1162,12 +1338,94 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  dimensionFieldGroup(sample) {
+    return (
+      <Row>
+        <Col>{this.textInput(sample, 'height', 'Height')}</Col>
+        <Col>{this.textInput(sample, 'width', 'Width')}</Col>
+        <Col>{this.textInput(sample, 'length', 'Length')}</Col>
+      </Row>
+    );
+  }
+
+  stateSelect(sample) {
+    return (
+      <Form.Group controlId="sampleDetailLevelSelect">
+        <Form.Label>State</Form.Label>
+        <Form.Select
+          onChange={(e) => {
+            this.handleFieldChanged('state', e.target.value);
+          }}
+          value={sample.state || ''}
+        >
+          <option value="">Select a state</option>
+          {stateOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </Form.Select>
+      </Form.Group>
+    );
+  }
+
+  hierarchicalMaterialComponentsList(sample) {
+    return (
+      <>
+        <h5 className="mt-4">Hierarchical material components:</h5>
+        <Row className="align-items-end mb-4">
+          <Col>{this.moleculeInput()}</Col>
+          <Col xs={4} className="d-flex align-items-end gap-2">
+            {this.infoButton()}
+            {this.sampleAmount(sample)}
+          </Col>
+        </Row>
+        <Row className="align-items-end mb-4">
+          <Col>{this.dimensionFieldGroup(sample)}</Col>
+        </Row>
+        <Row>
+          <Col>{this.stateSelect(sample)}</Col>
+          <Col>{this.textInput(sample, 'color', 'Color')}</Col>
+          <Col>{this.textInput(sample, 'storage_condition', 'Storage Conditions')}</Col>
+        </Row>
+        <Row>{this.hierarchicalMaterialTable(sample)}</Row>
+      </>
+    );
+  }
+
+  handleComponentFieldChanged(index, field, value) {
+    const { sample } = this.props;
+
+    this.setState(
+      (prevState) => {
+        const updated = [...prevState.components];
+        updated[index] = { ...updated[index], [field]: value };
+        return { components: updated };
+      },
+      () => {
+        sample.components = this.state.components.map((comp) => new Component(comp));
+        this.props.handleSampleChanged(sample);
+      }
+    );
+  }
+
+  hierarchicalMaterialTable() {
+    const { components } = this.state;
+    return (
+      <HierarchicalCompositionTable
+        components={components}
+        onFieldChange={this.handleComponentFieldChanged}
+      />
+    );
+  }
+
   render() {
     const {
       enableSampleDecoupled, sample = {}, customizableField, handleSampleChanged
     } = this.props;
     const isPolymer = (sample.molfile || '').indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
+    const isHierarchicalMaterial = sample.isHierarchicalMaterial();
     const polyDisabled = isPolymer || isDisabled;
     const { selectedSampleType } = this.state;
 
@@ -1177,7 +1435,7 @@ export default class SampleForm extends React.Component {
           {this.sampleTypeInput()}
         </Row>
         {
-          selectedSampleType?.value !== 'Mixture' ? (
+          selectedSampleType?.value !== 'Mixture' && selectedSampleType?.value !== SAMPLE_TYPE_HIERARCHICAL_MATERIAL ? (
             <>
               <Row className="align-items-end mb-4">
                 <Col>{this.moleculeInput()}</Col>
@@ -1237,7 +1495,7 @@ export default class SampleForm extends React.Component {
 
               <Row className="mb-4">
                 <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
-                <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
+                <Col>{this.textInput(sample, 'color', 'Color')}</Col>
                 <Col>{this.textInput(sample, 'xref_solubility', 'Soluble in')}</Col>
               </Row>
               <Row className="align-items-end mb-4">
@@ -1297,6 +1555,9 @@ export default class SampleForm extends React.Component {
           )
         }
 
+        {selectedSampleType?.value === SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+          && this.hierarchicalMaterialComponentsList(sample)}
+
         {selectedSampleType?.value === 'Mixture' && (
           <>
             <br />
@@ -1328,12 +1589,14 @@ export default class SampleForm extends React.Component {
           </>
         )}
 
-        <Row>
-          <SampleDetailsSolvents
-            sample={sample}
-            onChange={handleSampleChanged}
-          />
-        </Row>
+        {!isHierarchicalMaterial && (
+          <Row>
+            <SampleDetailsSolvents
+              sample={sample}
+              onChange={handleSampleChanged}
+            />
+          </Row>
+        )}
 
         {this.sampleDescription(sample)}
         {customizableField()}

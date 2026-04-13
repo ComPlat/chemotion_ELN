@@ -21,6 +21,7 @@ import {
   imagesList,
   textList,
   allAtoms,
+  allTemplates,
   deletedAtomsSetter
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import {
@@ -150,7 +151,13 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
     }
 
     if (useIndexedFormat && Object.keys(polymerByAtomIndex).length > 0) {
-      let maxAtomIndex = -1;
+      // IMPORTANT:
+      // PolymersList index (first segment) is the R-group sequence index (0,1,2...)
+      // and NOT the raw atom index in the molfile atom block.
+      // Example: if R# atoms are at atom indices 0 and 3, entries "0/.." and "1/.."
+      // should map to atom 0 and atom 3 respectively.
+      let rGroupSequenceIndex = 0;
+      let maxUsedImageIndex = -1;
       for (const molName of mols) {
         const molecule = data[molName];
         if (!molecule?.atoms) continue;
@@ -161,17 +168,24 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
             || atom.label === KET_TAGS.inspiredLabel
             || ALIAS_PATTERNS.threeParts.test(atom.alias)
           );
-          const entry = polymerByAtomIndex[atomIndex];
-          if (entry && aliasPass) {
-            const { type: templateType, size: templateSize } = { type: entry.type, size: entry.size };
-            data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, atomIndex);
-            const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
-            if (newTemplate) collectedImages.push(newTemplate);
-            if (atomIndex > maxAtomIndex) maxAtomIndex = atomIndex;
+          if (aliasPass) {
+            const entry = polymerByAtomIndex[rGroupSequenceIndex];
+            if (entry) {
+              const { type: templateType, size: templateSize } = { type: entry.type, size: entry.size };
+              data[molName].atoms[atomIndex] = updateAtom(
+                atom.location,
+                templateType,
+                rGroupSequenceIndex
+              );
+              const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
+              if (newTemplate) collectedImages.push(newTemplate);
+              if (rGroupSequenceIndex > maxUsedImageIndex) maxUsedImageIndex = rGroupSequenceIndex;
+            }
+            rGroupSequenceIndex += 1;
           }
         }
       }
-      imageUsedCounterSetter(maxAtomIndex >= 0 ? maxAtomIndex : 0);
+      imageUsedCounterSetter(maxUsedImageIndex >= 0 ? maxUsedImageIndex : 0);
     } else {
       // Legacy: assign in consumption order (no atom index in polymer entries)
       let visitedAtoms = 0;

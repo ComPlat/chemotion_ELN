@@ -22,10 +22,12 @@ import loadAndEncodeSVG from 'src/utilities/ketcherSurfaceChemistry/iconBaseProv
 
 // helper function to fetch list of all surface chemistry shape/image list
 const fetchSurfaceChemistryImageData = async (templateId) => {
+  const id = parseInt(templateId, 10);
+  if (Number.isNaN(id) || !Array.isArray(allTemplates)) return null;
   for (const tab of allTemplates) {
     for (const subTab of tab.subTabs) {
       for (const shape of subTab.shapes) {
-        if (shape.template_id === parseInt(templateId)) {
+        if (shape.template_id === id) {
           const constructImageObj = {
             type: 'image',
             format: 'image/svg+xml',
@@ -139,13 +141,18 @@ const placeAtomOnImage = async (mols_, imagesList_) => {
   }
 };
 
-const findTextNodesNotConnectedWithTemplates = (updatedTextList) => {
-  const values = Object.values(textNodeStruct);
+// Text nodes in textList that were not positioned (no matching atom, or positioning failed).
+// Include them so they still display with their default/existing position.
+const getUnpositionedTextNodes = (addedKeys) => {
   const list = [];
-  for (let i = 0; i < updatedTextList.length; i++) {
-    const block = JSON.parse(updatedTextList[i].data.content).blocks[0];
-    if (values.indexOf(block.key) === -1) {
-      list.push(updatedTextList[i]);
+  for (let i = 0; i < textList.length; i++) {
+    try {
+      const key = JSON.parse(textList[i].data.content).blocks[0]?.key;
+      if (key && !addedKeys.has(key)) {
+        list.push(textList[i]);
+      }
+    } catch (e) {
+      // skip malformed content
     }
   }
   return list;
@@ -155,19 +162,24 @@ const findTextNodesNotConnectedWithTemplates = (updatedTextList) => {
 const placeTextOnAtoms = async () => {
   try {
     const updatedTextList = [];
+    const addedKeys = new Set(); // avoid adding the same text node twice (e.g. single shape with one alias)
     for (const item of mols) {
       for (const atom of latestData[item].atoms) {
         const textNodeKey = textNodeStruct[atom.alias];
 
         if (atom && ALIAS_PATTERNS.threeParts.test(atom.alias) && textNodeKey) {
+          if (addedKeys.has(textNodeKey)) continue;
           const res = await findByKeyAndUpdateTextNodePosition(textNodeKey, atom);
-          if (res) updatedTextList.push(res);
+          if (res) {
+            addedKeys.add(textNodeKey);
+            updatedTextList.push(res);
+          }
         }
       }
     }
-    // findTextNodesNotConnectedWithTemplates should check ALL textList, not just updatedTextList
-    // It finds text nodes that are NOT in textNodeStruct (unassociated text nodes)
-    const otherTextNodes = await findTextNodesNotConnectedWithTemplates(textList); // extra text components without aliases
+    // Include text nodes that weren't positioned (alias mismatch, missing image, etc.)
+    // so they still display with their default/existing position
+    const otherTextNodes = getUnpositionedTextNodes(addedKeys);
     return [...removeTextFromData(latestData), ...updatedTextList, ...otherTextNodes];
   } catch (err) {
     console.error('placeTextOnAtoms', err.message);
@@ -225,15 +237,37 @@ const applySelectedStruct = async (editor, dataCopy) => {
   }
 };
 
-// find template from dataset by image base
-const findTemplateByPayload = async (targetPayload) => {
-  for (const [templateId, iconName] of Object.entries(templatesBaseHashWithTemplateId)) {
-    const base64 = await loadAndEncodeSVG(iconName);
-    if (base64 === targetPayload) {
-      return templateId;
-    }
+// Cache: payload (base64) -> templateId. Built once per save to avoid O(images × templates) SVG loads.
+let payloadToTemplateIdCache = null;
+let payloadToTemplateIdCacheKey = null;
+let buildPayloadToTemplateIdPromise = null;
+
+const buildPayloadToTemplateIdMap = async () => {
+  const key = Object.keys(templatesBaseHashWithTemplateId || {}).sort().join(',');
+  if (payloadToTemplateIdCache != null && payloadToTemplateIdCacheKey === key) {
+    return payloadToTemplateIdCache;
   }
-  return null;
+  if (buildPayloadToTemplateIdPromise) return buildPayloadToTemplateIdPromise;
+  buildPayloadToTemplateIdPromise = (async () => {
+    const map = new Map();
+    const entries = Object.entries(templatesBaseHashWithTemplateId || {});
+    for (const [templateId, iconName] of entries) {
+      const base64 = await loadAndEncodeSVG(iconName);
+      if (base64) map.set(base64, templateId);
+    }
+    payloadToTemplateIdCache = map;
+    payloadToTemplateIdCacheKey = key;
+    buildPayloadToTemplateIdPromise = null;
+    return map;
+  })();
+  return buildPayloadToTemplateIdPromise;
+};
+
+// Find template from dataset by image base. Uses a cache so one save does one pass over templates.
+const findTemplateByPayload = async (targetPayload) => {
+  if (!targetPayload) return null;
+  const map = await buildPayloadToTemplateIdMap();
+  return map.get(targetPayload) ?? null;
 };
 
 export {
