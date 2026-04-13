@@ -57,10 +57,8 @@ export default function DetailCard({
           {children}
         </Card.Body>
         {footerToolbar && (
-          <Card.Footer className="py-3">
-            <div className="d-flex justify-content-end gap-1">
-              {footerToolbar}
-            </div>
+          <Card.Footer>
+            {footerToolbar}
           </Card.Footer>
         )}
       </div>

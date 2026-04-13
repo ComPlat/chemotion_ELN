@@ -1,0 +1,8 @@
+.app-modal {
+  .modal-body {
+    @extend .pb-4;
+  }
+  .modal-footer {
+    @extend .widget-footer;
+  }
+}
