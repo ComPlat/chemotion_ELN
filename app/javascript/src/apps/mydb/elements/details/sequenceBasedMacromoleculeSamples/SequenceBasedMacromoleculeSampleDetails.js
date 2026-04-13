@@ -34,6 +34,11 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import ChemicalTab from 'src/components/chemicals/ChemicalTab';
+import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
+
+// Module-level slot: holds chemical data to be created after a new SBMM sample is
+// persisted (survives the component unmount/remount caused by navigateToNewElement).
+let _sbmmPendingChemicalCreate = null;
 
 function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
@@ -47,11 +52,26 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
   const submitLabel = sbmmSample.isNew ? 'Create' : 'Save';
   const tabContents = [];
   const alertRef = useRef();
+  const chemicalTabRef = useRef();
   const hasError = Object.keys(sbmmSample.errors).length >= 1;
 
   useEffect(() => {
     if (sbmmSample?.id && !sbmmSample.isNew && MatrixCheck(currentUser.matrix, commentActivation)) {
       CommentActions.fetchComments(sbmmSample);
+    }
+    // After a new SBMM is created, carry out any pending chemical create that
+    // was snapshotted before the old instance was closed.
+    if (_sbmmPendingChemicalCreate && sbmmSample?.id && !sbmmSample.isNew) {
+      const snapshot = _sbmmPendingChemicalCreate;
+      _sbmmPendingChemicalCreate = null;
+      ChemicalFetcher.create({
+        sequence_based_macromolecule_sample_id: sbmmSample.id,
+        ...snapshot,
+      }).then(() => {
+        // Re-fetch chemical so ChemicalTab renders the newly-created record
+        // without requiring a page refresh.
+        chemicalTabRef.current?.fetchChemical(sbmmSample);
+      }).catch((err) => console.log(err));
     }
   }, []);
 
@@ -70,12 +90,13 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
   }, [alertRef.current]);
 
   const sbmmInventoryTab = (eventKey) => (
-    <Tab eventKey={eventKey} title="Inventory" key={`Inventory${sbmmSample.id.toString()}`}>
+    <Tab eventKey={eventKey} title="Inventory" key={`Inventory${sbmmSample.id.toString()}`} unmountOnExit={false}>
       {
         !sbmmSample.isNew && <CommentSection section="sbmm_sample_inventory" element={sbmmSample} />
       }
       <ListGroupItem>
         <ChemicalTab
+          ref={chemicalTabRef}
           sample={sbmmSample}
           type="SBMM"
           setSaveInventory={(v) => sbmmStore.setSaveInventoryAction(v)}
@@ -220,6 +241,23 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
     sbmmStore.saveSample(sbmmSample);
   };
 
+  // Chain-save: save SBMM sample first (if changed and valid), then chemical (if edited)
+  const handleChainSave = () => {
+    const sbmmHasChanges = sbmmSample.isEdited || sbmmSample.changed;
+    // Snapshot chemical data BEFORE handleSubmit closes this instance.
+    // For new SBMM samples, navigateToNewElement mounts a fresh component;
+    // the useEffect on mount will consume _sbmmPendingChemicalCreate.
+    if (sbmmSample.isNew && sbmmStore.isChemicalEdited) {
+      _sbmmPendingChemicalCreate = chemicalTabRef.current?.getChemicalSnapshot() ?? null;
+    }
+    if (sbmmHasChanges && Object.keys(sbmmSample.errors).length < 1) {
+      handleSubmit();
+    }
+    if (sbmmStore.isChemicalEdited && !sbmmSample.isNew) {
+      handleSubmitChemical();
+    }
+  };
+
   const handleExportAnalyses = () => {
     sbmmStore.toggleAnalysisStartExport();
     AttachmentFetcher.downloadZipBySequenceBaseMacromoleculeSample(sbmmSample.id)
@@ -260,16 +298,10 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
     sbmmStore.setSaveInventoryAction(true);
   };
 
-  const isChemicalTab = sbmmStore.active_tab_key === 'inventory';
-  const chemicalSaveBtn = isChemicalTab && sbmmStore.isChemicalEdited;
   const hasSampleChanges = sbmmSample.isEdited || sbmmSample.changed;
   const isValid = Object.keys(sbmmSample.errors).length < 1;
-  const sampleSaveBtn = hasSampleChanges && sbmmStore.active_tab_key !== 'inventory' && isValid;
-
-  const onSave = () => {
-    if (chemicalSaveBtn) { handleSubmitChemical(); return; }
-    if (sampleSaveBtn) { handleSubmit(); }
-  };
+  const canSaveSample = hasSampleChanges && isValid;
+  const canSaveChemical = sbmmStore.isChemicalEdited;
 
   const headerToolbar = (
     <Form.Check
@@ -295,8 +327,8 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
       titleAppendix={titleAppendix}
       headerToolbar={headerToolbar}
       footerToolbar={downloadAnalysisButton()}
-      onSave={onSave}
-      saveDisabled={!chemicalSaveBtn && !sampleSaveBtn}
+      onSave={handleChainSave}
+      saveDisabled={!canSaveSample && !canSaveChemical}
       showPrintCode
       showCalendar
     >
