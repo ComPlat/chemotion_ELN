@@ -48,11 +48,11 @@ describe('NumericInputUnit component', () => {
 
   it('calls the onInputChange function when the value is changed and updates state of value, then convert unit', () => {
     const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
-    wrapper.find('FormControl').simulate('change', { target: { value: 3 } });
+    wrapper.find('FormControl').simulate('change', { target: { value: '3' } });
     expect(mockFn.calledWith(3, 'g')).toEqual(true);
     wrapper.find('Button').simulate('click');
     const inputComponent = wrapper.find('[name="chemical_amount_in_g"]');
-    inputComponent.simulate('change', { target: { value: 3000 } });
+    inputComponent.simulate('change', { target: { value: '3000' } });
     expect(mockFn.calledWith(3000, 'mg')).toEqual(true);
   });
 
@@ -60,12 +60,12 @@ describe('NumericInputUnit component', () => {
     const wrapper = createWrapper('Amount', 'g', 1, 'chemical_amount_in_g', false);
     wrapper.find('Button').simulate('click');
     let inputComponent = wrapper.find('[name="chemical_amount_in_g"]');
-    inputComponent.simulate('change', { target: { value: 1000 } });
+    inputComponent.simulate('change', { target: { value: '1000' } });
     expect(mockFn.calledWith(1000, 'mg')).toEqual(true);
 
     wrapper.find('Button').simulate('click');
     inputComponent = wrapper.find('[name="chemical_amount_in_g"]');
-    inputComponent.simulate('change', { target: { value: 1000000 } });
+    inputComponent.simulate('change', { target: { value: '1000000' } });
     expect(mockFn.calledWith(1000000, 'μg')).toEqual(true);
   });
 
@@ -75,26 +75,26 @@ describe('NumericInputUnit component', () => {
     let convertedUnit = wrapper.find('Button').children().text();
     expect(convertedUnit).toBe('°C');
     let inputComponent = wrapper.find('[name="flash_point"]');
-    inputComponent.simulate('change', { target: { value: 26.85 } });
+    inputComponent.simulate('change', { target: { value: '26.85' } });
     let convertedValue = wrapper.find('[name="flash_point"]').prop('value');
-    expect(convertedValue).toBe(26.85);
+    expect(convertedValue).toBe('26.85');
 
     wrapper.find('Button').simulate('click');
     convertedUnit = wrapper.find('Button').children().text();
     inputComponent = wrapper.find('[name="flash_point"]');
-    inputComponent.simulate('change', { target: { value: 80.33 } });
+    inputComponent.simulate('change', { target: { value: '80.33' } });
     convertedValue = wrapper.find('[name="flash_point"]').prop('value');
     expect(convertedUnit).toBe('°F');
-    expect(convertedValue).toBe(80.33);
+    expect(convertedValue).toBe('80.33');
   });
 
   it('toggles input unit for flash point from C to °F', () => {
     const wrapper = createWrapper('Flash Point', '°C', 25, 'flash_point', false);
     wrapper.find('Button').simulate('click');
     const inputComponent = wrapper.find('[name="flash_point"]');
-    inputComponent.simulate('change', { target: { value: 77 } });
+    inputComponent.simulate('change', { target: { value: '77' } });
     const convertedValue = wrapper.find('[name="flash_point"]').prop('value');
-    expect(convertedValue).toBe(77);
+    expect(convertedValue).toBe('77');
     const convertedUnit = wrapper.find('Button').children().text();
     expect(convertedUnit).toBe('°F');
   });

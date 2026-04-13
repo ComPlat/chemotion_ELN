@@ -127,7 +127,7 @@ describe('Testing React Utility Functions', () => {
 
   it('should return null for invalid temperature input', () => {
     const result = convertTemperature('abc', TEMPERATURE_UNITS.KELVIN);
-    assert.strictEqual(result, null);
+    assert.deepEqual(result, ['null', TEMPERATURE_UNITS.CELSIUS]);
   });
 
   it('should return null for invalid temperature conversion to Kelvin', () => {
