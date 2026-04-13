@@ -148,6 +148,9 @@
   "resolutions": {
     "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#a377008c4d427f4290f3e7def9c3c9c7cc42039a"
   },
+  "resolutions": {
+    "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#a377008c4d427f4290f3e7def9c3c9c7cc42039a"
+  },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
     "test": "NODE_PATH=./spec/javascripts:./app/javascript yarn mocha --exit --require './spec/javascripts/setup.js' './spec/javascripts/**/*.spec.js'",

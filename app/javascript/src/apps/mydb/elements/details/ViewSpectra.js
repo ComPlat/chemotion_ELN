@@ -29,6 +29,7 @@ const layoutsWillShowMulti = [
   FN.LIST_LAYOUT.UVVIS,
   FN.LIST_LAYOUT.HPLC_UVVIS,
   FN.LIST_LAYOUT.LC_MS,
+  FN.LIST_LAYOUT.LC_MS,
 ];
 
 class ViewSpectra extends React.Component {
@@ -119,7 +120,12 @@ class ViewSpectra extends React.Component {
   onDSSelectChange(e) {
     const { value } = e;
     const { spcInfos, spcMetas } = this.state;
+    const { spcInfos, spcMetas } = this.state;
     const sis = spcInfos.filter(x => x.idDt === value);
+    const availableIdxs = new Set(spcMetas.map((spc) => spc.idx));
+    const datasetIdxs = sis.map((info) => info.idx).filter((idx) => availableIdxs.has(idx));
+    const nextIdx = datasetIdxs[0] || spcMetas[0]?.idx || 0;
+    SpectraActions.SelectIdx(nextIdx, datasetIdxs);
     const availableIdxs = new Set(spcMetas.map((spc) => spc.idx));
     const datasetIdxs = sis.map((info) => info.idx).filter((idx) => availableIdxs.has(idx));
     const nextIdx = datasetIdxs[0] || spcMetas[0]?.idx || 0;
@@ -148,6 +154,7 @@ class ViewSpectra extends React.Component {
     if (spcs && spcs.length > 0) {
       const spc = spcs[0];
       const { jcamp } = spc;
+      if (layoutsWillShowMulti.includes(jcamp.layout) && jcamp.layout !== FN.LIST_LAYOUT.LC_MS) {
       if (layoutsWillShowMulti.includes(jcamp.layout) && jcamp.layout !== FN.LIST_LAYOUT.LC_MS) {
         return true;
       }
@@ -282,15 +289,18 @@ class ViewSpectra extends React.Component {
       : (features?.editPeak || features?.autoPeak || features) || {};
     const temperature = entity?.temperature;
 
+
     let observeFrequency = Array.isArray(f0?.observeFrequency)
       ? f0.observeFrequency[0]
       : f0?.observeFrequency;
     const freq = Array.isArray(observeFrequency) ? observeFrequency[0] : observeFrequency;
     const freqStr = freq ? `${parseInt(freq, 10)} MHz, ` : '';
 
+
     const boundary = (f0 && (typeof f0.maxY !== 'undefined') && (typeof f0.minY !== 'undefined'))
       ? { maxY: f0.maxY, minY: f0.minY }
       : undefined;
+
 
     const mBody = body || FN.peaksBody({
       peaks,
@@ -455,6 +465,7 @@ class ViewSpectra extends React.Component {
 
     const { sample, handleSampleChanged } = this.props;
     const si = this.getSpcInfo(curveSt?.curveIdx ?? 0);
+    const si = this.getSpcInfo(curveSt?.curveIdx ?? 0);
     if (!si) return;
 
     let ops = [];
@@ -517,6 +528,7 @@ class ViewSpectra extends React.Component {
     });
 
     const cb = () => this.saveOp(params);
+    const cb = () => this.saveOp(params);
     handleSampleChanged(sample, cb);
   }
 
@@ -539,11 +551,29 @@ class ViewSpectra extends React.Component {
 
     const scanRate = feature?.scanRate;
     const xyData = Array.isArray(feature?.data) ? feature.data[0] : { x: [], y: [] };
+    const { curveIdx } = curveSt;
+    const selectedVolta = spectraList?.[curveIdx];
+    if (!selectedVolta) return [];
+
+    const content = this.getContent();
+    let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
+    if (!built) {
+      const spcs = content?.listMuliSpcs;
+      if (Array.isArray(spcs) && spcs.length) {
+        const spc = spcs[curveIdx] || spcs[0];
+        if (spc?.jcamp) built = FN.buildData(spc.jcamp);
+      }
+    }
+    const feature = built?.entity?.features?.[0] || built?.entity?.features || {};
+
+    const scanRate = feature?.scanRate;
+    const xyData = Array.isArray(feature?.data) ? feature.data[0] : { x: [], y: [] };
     const metadata = InlineMetadata(sample?.datasetContainers(), idDt);
     const data = {
       scanRate,
       voltaData: {
         listPeaks: selectedVolta.list,
+        xyData,
         xyData,
       },
       sampleName: sample.name,
@@ -625,6 +655,12 @@ class ViewSpectra extends React.Component {
 
     return {
       peaksStr,
+      predict: JSON.stringify(rmRefreshed(payload.analysis)),
+      waveLengthStr: JSON.stringify(payload.waveLength),
+      cyclicvolta: JSON.stringify(payload.cyclicvoltaSt),
+      axesUnitsStr: JSON.stringify(payload.axesUnitsSt),
+      detector: JSON.stringify(payload.detectorSt),
+      dscMetaDataStr: JSON.stringify(payload.dscMetaData),
       predict: JSON.stringify(rmRefreshed(payload.analysis)),
       waveLengthStr: JSON.stringify(payload.waveLength),
       cyclicvolta: JSON.stringify(payload.cyclicvoltaSt),
@@ -777,6 +813,8 @@ class ViewSpectra extends React.Component {
     this.saveOp({
       ...params,
       spectra_list: refreshPayloads,
+      ...params,
+      spectra_list: refreshPayloads,
     });
   }
 
@@ -801,6 +839,8 @@ class ViewSpectra extends React.Component {
     this.closeOp();
   }
 
+  saveCloseOp(params) {
+    this.saveOp(params);
   saveCloseOp(params) {
     this.saveOp(params);
     this.closeOp();
@@ -873,7 +913,7 @@ class ViewSpectra extends React.Component {
         { name: 'write, save & close', value: this.saveCloseOp },
       ];
     }
-    const updatable = sample && sample.can_update;    
+    const updatable = sample && sample.can_update;
     let baseOps = updatable ? [
       { name: 'write peak & save', value: this.writePeakOp },
       { name: 'write peak, save & close', value: this.writeClosePeakOp },
@@ -893,6 +933,13 @@ class ViewSpectra extends React.Component {
           ...baseOps,
           { name: 'save', value: this.writeCommon },
           { name: 'save & close', value: this.writeCloseCommon },
+        ];
+      } else if (FN.isLCMsLayout(et.layout)) {
+        return [
+          { name: 'save', value: this.saveOp },
+          { name: 'save & close', value: this.saveCloseOp },
+          { name: 'write peak & save', value: this.writePeakOp },
+          { name: 'write peak, save & close', value: this.writeClosePeakOp },
         ];
       } else if (FN.isLCMsLayout(et.layout)) {
         return [
@@ -1028,9 +1075,12 @@ class ViewSpectra extends React.Component {
 
   renderTitle(idx) {
     const { spcInfos, arrSpcIdx, spcMetas } = this.state;
+    const { spcInfos, arrSpcIdx, spcMetas } = this.state;
     const si = this.getSpcInfo();
     if (!si) return null;
     const modalTitle = si ? `Spectra Editor - ${si.title}` : '';
+    const currentSpc = spcMetas.find((x) => x.idx === idx) || spcMetas[0];
+    const isLcmsLayout = currentSpc?.jcamp?.layout === FN.LIST_LAYOUT.LC_MS;
     const currentSpc = spcMetas.find((x) => x.idx === idx) || spcMetas[0];
     const isLcmsLayout = currentSpc?.jcamp?.layout === FN.LIST_LAYOUT.LC_MS;
     const options = spcInfos.filter((x) => x.idDt === si.idDt)
@@ -1076,6 +1126,7 @@ class ViewSpectra extends React.Component {
             treeData={options}
             value={isShowMultiSelect ? arrSpcIdx : idx}
             treeCheckable={isShowMultiSelect}
+            disabled={isLcmsLayout}
             disabled={isLcmsLayout}
             style={{ width: 500 }}
             maxTagCount={1}
