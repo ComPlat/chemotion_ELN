@@ -106,8 +106,27 @@ export default class Header extends React.Component {
 
   // eslint-disable-next-line class-methods-use-this
   renderImagePreview = () => {
-    const { container } = this.props;
+    const { container, handleChange } = this.props;
     const attachment = getAttachmentFromContainer(container);
+    // Build list of saved, non-deleted attachment IDs (exclude is_new which don't have server IDs yet)
+    const allAttachments = container?.children?.flatMap((child) => (child.attachments || [])) || [];
+    const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new);
+    const attachmentsIds = savedAttachments
+      .map((att) => Number(att.id))
+      .filter((id) => !Number.isNaN(id) && id > 0);
+    // Get current preferred thumbnail (reassignment is handled by ContainerDatasets on deletion)
+    const preferredThumbnail = container?.extended_metadata?.preferred_thumbnail || null;
+
+    const onChangePreferredThumbnail = (currentPreferredThumbnail) => {
+      if (currentPreferredThumbnail !== preferredThumbnail) {
+        // Handle the change of preferred thumbnail
+        container.extended_metadata = {
+          ...container.extended_metadata,
+          preferred_thumbnail: currentPreferredThumbnail,
+        };
+        handleChange(container);
+      }
+    };
 
     return (
       <ImageModal
@@ -115,6 +134,11 @@ export default class Header extends React.Component {
         popObject={{
           title: container.name,
         }}
+        preferredThumbnail={preferredThumbnail}
+        ChildrenAttachmentsIds={attachmentsIds}
+        onChangePreferredThumbnail={(currentPreferredThumbnail) => onChangePreferredThumbnail(
+          currentPreferredThumbnail
+        )}
       />
     );
   }

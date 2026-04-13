@@ -229,9 +229,14 @@ export class ContainerDatasetModalContent extends Component {
 
   handleAttachmentRemove(attachment) {
     const { datasetContainer } = this.state;
+    const { onChange } = this.props;
     const index = datasetContainer.attachments.indexOf(attachment);
     datasetContainer.attachments[index].is_deleted = true;
     this.setState({ datasetContainer });
+    // Propagate change immediately so parent can handle preferred thumbnail reassignment
+    if (onChange) {
+      onChange(datasetContainer);
+    }
   }
 
   handleAttachmentBackToInbox(attachment) {
