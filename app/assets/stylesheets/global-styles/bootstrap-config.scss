@@ -60,9 +60,13 @@ $accordion-icon-transition:
   transform 0.2s,
   padding-top 0.2s;
 
+$modal-header-border-width: 0;
 $modal-content-bg: $chemstrap-white;
 $modal-inner-padding: 0.75rem;
 $modal-header-padding: $modal-inner-padding $modal-inner-padding;
+$modal-footer-bg: $chemstrap-silicon-active;
+$modal-footer-margin-between: 0;
+$modal-footer-border-width: 0;
 
 $close-button-margin: $modal-inner-padding - 0.25rem; // -gap-1
 

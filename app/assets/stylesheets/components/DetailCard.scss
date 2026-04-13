@@ -28,15 +28,11 @@
     }
 
     .card-footer {
-      @extend .surface-tab__header;
+      @extend .widget-footer;
       @extend .border-0;
       @extend .d-flex;
       @extend .justify-content-end;
       @extend .align-items-center;
-      @extend .gap-2;
-      .btn-ghost {
-        margin-right: $close-button-margin;
-      }
     }
   }
 }
