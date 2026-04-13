@@ -59,6 +59,7 @@ import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
 import { validateCas } from 'src/utilities/CasValidation';
 import ChemicalTab from 'src/components/chemicals/ChemicalTab';
+import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
@@ -70,6 +71,10 @@ import { copyToClipboard } from 'src/utilities/clipboard';
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 const MWPrecision = 6;
+
+// Module-level slot: holds chemical data to be created after a new sample is
+// persisted (survives the SampleDetails unmount/remount caused by navigateToNewElement).
+let _pendingChemicalCreate = null;
 
 const decoupleCheck = (sample) => {
   if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.isMixture()) {
@@ -187,6 +192,7 @@ export default class SampleDetails extends React.Component {
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
     this.splitSmiles = this.splitSmiles.bind(this);
     this.setComponentDeletionLoading = this.setComponentDeletionLoading.bind(this);
+    this.chemicalTabRef = React.createRef();
   }
 
   componentDidMount() {
@@ -200,6 +206,20 @@ export default class SampleDetails extends React.Component {
 
     if (MatrixCheck(currentUser.matrix, commentActivation) && !sample.isNew) {
       CommentActions.fetchComments(sample);
+    }
+
+    // After a new sample is created, carry out any pending chemical create that
+    // was snapshotted before the old SampleDetails instance was closed.
+    if (_pendingChemicalCreate && !sample.isNew) {
+      const snapshot = _pendingChemicalCreate;
+      _pendingChemicalCreate = null;
+      ChemicalFetcher.create({ sample_id: sample.id, ...snapshot })
+        .then(() => {
+          // Re-fetch chemical so ChemicalTab renders the newly-created record
+          // without requiring a page refresh.
+          this.chemicalTabRef.current?.fetchChemical(sample);
+        })
+        .catch((err) => console.log(err));
     }
 
     if (showRedirectWarning) {
@@ -452,13 +472,6 @@ export default class SampleDetails extends React.Component {
     this.setState({ sample });
   }
 
-  handleSubmitInventory(closeView = false) {
-    this.setState({
-      saveInventoryAction: true,
-      closeAfterInventorySave: !!closeView,
-    });
-  }
-
   handleExportAnalyses(sample) {
     this.setState({ startExport: true });
     AttachmentFetcher.downloadZipBySample(sample.id)
@@ -543,12 +556,26 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  saveSampleOrInventory(closeView) {
-    const { activeTab, sample } = this.state;
-    if (activeTab === 'inventory' && sample.inventory_sample) {
-      this.handleSubmitInventory(closeView);
-    } else {
-      this.handleSubmit(closeView);
+  saveSampleOrChemical() {
+    const { sample, isChemicalEdited } = this.state;
+    const needChemicalSave = isChemicalEdited && !sample.isNew;
+    const needChemicalCreate = isChemicalEdited && sample.isNew;
+
+    if (sample.isPendingToSave) {
+      // Snapshot chemical data BEFORE handleSubmit closes this instance.
+      // For new samples, navigateToNewElement mounts a fresh SampleDetails;
+      // componentDidMount on that new instance will consume _pendingChemicalCreate.
+      if (needChemicalCreate) {
+        _pendingChemicalCreate = this.chemicalTabRef.current?.getChemicalSnapshot() ?? null;
+      }
+
+      // When chemical also needs saving on an existing sample, don't close on
+      // the sample save so ChemicalTab stays mounted to receive saveInventoryAction.
+      this.handleSubmit(needChemicalSave ? false : undefined);
+    }
+
+    if (needChemicalSave) {
+      this.setState({ saveInventoryAction: true });
     }
   }
 
@@ -618,12 +645,13 @@ export default class SampleDetails extends React.Component {
     const { saveInventoryAction } = this.state;
 
     return (
-      <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`}>
+      <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`} unmountOnExit={false}>
         {
           !sample.isNew && <CommentSection section="sample_inventory" element={sample} />
         }
         <ListGroupItem>
           <ChemicalTab
+            ref={this.chemicalTabRef}
             sample={sample}
             type="sample"
             handleUpdateSample={(s) => this.setState({ sample: s })}
@@ -1553,10 +1581,11 @@ export default class SampleDetails extends React.Component {
       && this.state.activeTab) || visible.get(0);
 
     const pendingToSave = sample.isPendingToSave || isChemicalEdited;
-    const isChemicalTab = activeTab === 'inventory';
-    const showSave = isChemicalTab ? isChemicalEdited : sample.isEdited;
     const hasComponents = !sample.isMixture() || sample.hasComponents();
-    const saveDisabled = !this.sampleIsValid() || !sample.can_update || !hasComponents;
+    // Chemical can be saved independently of sample validity (requires existing sample)
+    const canSaveChemical = isChemicalEdited && !sample.isNew && sample.can_update;
+    const saveDisabled = (!this.sampleIsValid() || !sample.can_update || !hasComponents)
+      && !canSaveChemical;
 
     return (
       <ElementDetailCard
@@ -1567,9 +1596,7 @@ export default class SampleDetails extends React.Component {
         title={sampleTitle(sample)}
         titleTooltip={formatTimeStampsOfElement(sample || {})}
         titleAppendix={sampleTitleAppendix(sample, this.handleFastInput)}
-        onSave={() => this.saveSampleOrInventory(false)}
-        onSaveClose={() => this.saveSampleOrInventory(true)}
-        showSave={showSave}
+        onSave={() => this.saveSampleOrChemical()}
         saveDisabled={saveDisabled}
         showPrintCode
         showCalendar
