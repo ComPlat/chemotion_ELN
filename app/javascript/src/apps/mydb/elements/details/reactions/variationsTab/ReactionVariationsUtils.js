@@ -15,7 +15,7 @@ import {
   GroupCellRenderer, GroupCellEditor,
   SegmentFormatter, SegmentParser, SegmentSelectEditor,
   EquivalentParser, GasParser, FeedstockParser,
-  NoteCellRenderer, NoteCellEditor, RowToolsCellRenderer, ToolHeader, EntrySelectionHeader, UnitToggleHeader,
+  NoteCellRenderer, NoteCellEditor, RowToolsCellRenderer, EntrySelectionHeader, UnitToggleHeader,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { getGenSI } from 'chem-generic-ui';
@@ -643,12 +643,11 @@ function setLeafColDefAttribute(columnDefinitions, colId, attribute, update) {
 function getColumnDefinitions(selectedColumns, materials, segments, gasMode) {
   return [
     {
-      headerComponent: ToolHeader,
+      headerName: 'Tools',
       cellRenderer: RowToolsCellRenderer,
       colId: 'tools',
+      field: 'id',
       lockPosition: 'left',
-      sortable: false,
-      cellDataType: false,
       rowDrag: true,
       editable: false,
 
