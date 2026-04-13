@@ -27,14 +27,8 @@ function RowToolsCellRenderer({
   const { reactionShortLabel, copyRow, removeRow } = context;
   return (
     <div>
+      <span className="me-1">{getVariationsRowName(reactionShortLabel, row.id)}</span>
       <ButtonGroup>
-        <Button
-          size="xsm"
-          variant="secondary"
-          className="reaction-variations__row-name-btn"
-        >
-          {getVariationsRowName(reactionShortLabel, row.id)}
-        </Button>
         <Button size="xsm" variant="success" onClick={() => copyRow(row)}>
           <i className="fa fa-clone" />
         </Button>
