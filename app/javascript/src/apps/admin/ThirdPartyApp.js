@@ -1,11 +1,11 @@
 import React from 'react';
 import {
-  Table, Button, Modal, Form, Tooltip, OverlayTrigger, ButtonToolbar
+  Table, Button, Form, Tooltip, OverlayTrigger, ButtonToolbar
 } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
 const editTip = <Tooltip id="edit_tpa_tooltip">edit third party app</Tooltip>;
-const newTip = <Tooltip id="new_tpa_tooltip">create new third party app</Tooltip>;
 const deleteTip = <Tooltip id="delete_tpa_tooltip">delete third party app</Tooltip>;
 
 export default class ThirdPartyApp extends React.Component {
@@ -55,8 +55,9 @@ export default class ThirdPartyApp extends React.Component {
   }
 
   edit(name, url, fileTypes) {
+    const { currentID } = this.state;
     return ThirdPartyAppFetcher.createOrUpdateThirdPartyApp(
-      this.state.currentID,
+      currentID,
       name,
       url,
       fileTypes
@@ -148,7 +149,7 @@ export default class ThirdPartyApp extends React.Component {
       return false;
     }
 
-    if (fileTypes.length == 0) {
+    if (fileTypes.length === 0) {
       this.setState({
         errorMessage: 'File type cannot be empty'
       });
@@ -182,32 +183,31 @@ export default class ThirdPartyApp extends React.Component {
   renderDeleteThirdPartyAppModal() {
     const { showMsgModalDelete, currentName, currentID } = this.state;
     return (
-      <Modal
+      <AppModal
         show={showMsgModalDelete}
         onHide={this.closeDeleteThirdPartyAppModal}
-        centered
+        title="Delete third party app"
+        primaryActionLabel="Delete"
+        onPrimaryAction={() => this.delete(currentID)}
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Delete third party app</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="overflow-auto" >
-          <p>
-            <strong>
-              {` Do you really want to delete ${currentName}?`}
-            </strong>
-          </p>
-
-          <OverlayTrigger placement="bottom" overlay={deleteTip}>
-            <Button variant="danger" size="sm" onClick={() => this.delete(currentID)}>
-              Delete
-            </Button>
-          </OverlayTrigger>
-        </Modal.Body>
-      </Modal>
+        <p>
+          <strong>
+            {` Do you really want to delete ${currentName}?`}
+          </strong>
+        </p>
+      </AppModal>
     );
   }
 
   renderEditThirdPartyAppModal() {
+    const {
+      showMsgModalEdit,
+      errorMessage,
+      currentName,
+      currentIP,
+      currentFileTypes,
+    } = this.state;
+
     let nameRef = null;
     let urlRef = null;
     let fileTypesRef = null;
@@ -228,97 +228,94 @@ export default class ThirdPartyApp extends React.Component {
     };
 
     const handleNameChange = (event) => {
+      const { errorMessage: currentErrorMessage } = this.state;
       // if current errorMessage start with Name, clear it
       const newState = { currentName: event.target.value };
-      if (this.state.errorMessage.startsWith('Name')) {
+      if (currentErrorMessage.startsWith('Name')) {
         newState.errorMessage = '';
       }
       this.setState(newState);
     };
 
     const handleIPChange = (event) => {
+      const { errorMessage: currentErrorMessage } = this.state;
       const newState = { currentIP: event.target.value };
-      if (this.state.errorMessage.startsWith('URL')) {
+      if (currentErrorMessage.startsWith('URL')) {
         newState.errorMessage = '';
       }
       this.setState(newState);
     };
 
     const handleFileTypesChange = (event) => {
+      const { errorMessage: currentErrorMessage } = this.state;
       const newFileTypes = event.target.value;
       const newState = { currentFileTypes: newFileTypes };
-      if (this.state.errorMessage && this.state.errorMessage.startsWith('FileTypes')) {
+      if (currentErrorMessage && currentErrorMessage.startsWith('FileTypes')) {
         newState.errorMessage = '';
       }
       this.setState(newState);
     };
 
     return (
-      <Modal
-        centered
-        show={this.state.showMsgModalEdit}
+      <AppModal
+        show={showMsgModalEdit}
         onHide={this.closeEditThirdPartyAppModal}
+        title="Edit third party app"
+        primaryActionLabel="Update"
+        onPrimaryAction={handleEdit}
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Edit third party app</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="overflow-auto">
-          <Form.Group controlId="formControlName" className="mb-2">
-            <Form.Label>
-              Name:
-            </Form.Label>
-            <Form.Control
-              type="text"
-              name="Name"
-              value={this.state.currentName}
-              onChange={handleNameChange}
-              ref={(ref) => { nameRef = ref; }}
-            />
-          </Form.Group>
+        <Form.Group controlId="formControlName" className="mb-2">
+          <Form.Label>
+            Name:
+          </Form.Label>
+          <Form.Control
+            type="text"
+            name="Name"
+            value={currentName}
+            onChange={handleNameChange}
+            ref={(ref) => { nameRef = ref; }}
+          />
+        </Form.Group>
 
-          <Form.Group controlId="formControlIPAdress" className="mb-2">
-            <Form.Label>
-              IP address:
-            </Form.Label>
-            <Form.Control
-              type="text"
-              name="IP address"
-              value={this.state.currentIP}
-              onChange={handleIPChange}
-              ref={(ref) => { urlRef = ref; }}
-            />
-          </Form.Group>
+        <Form.Group controlId="formControlIPAdress" className="mb-2">
+          <Form.Label>
+            IP address:
+          </Form.Label>
+          <Form.Control
+            type="text"
+            name="IP address"
+            value={currentIP}
+            onChange={handleIPChange}
+            ref={(ref) => { urlRef = ref; }}
+          />
+        </Form.Group>
 
-          <Form.Group controlId="formControlFileType" className="mb-2">
-            <Form.Label>
-              Compatible File types (MIME):
-            </Form.Label>
-            <Form.Control
-              type="text"
-              name="Mime types list"
-              value={this.state.currentFileTypes}
-              onChange={handleFileTypesChange}
-              ref={(ref) => { fileTypesRef = ref; }}
-              placeholder="* or comma separated list: image/png,text..."
-            />
-          </Form.Group>
+        <Form.Group controlId="formControlFileType" className="mb-2">
+          <Form.Label>
+            Compatible File types (MIME):
+          </Form.Label>
+          <Form.Control
+            type="text"
+            name="Mime types list"
+            value={currentFileTypes}
+            onChange={handleFileTypesChange}
+            ref={(ref) => { fileTypesRef = ref; }}
+            placeholder="* or comma separated list: image/png,text..."
+          />
+        </Form.Group>
 
-          <OverlayTrigger placement="bottom" overlay={editTip}>
-            <Button variant="primary" size="sm" onClick={handleEdit} className="mt-2">
-              Update
-            </Button>
-          </OverlayTrigger>
-        </Modal.Body>
-        <Modal.Footer>
-          <Form.Group controlId="formControlMessage" className="w-100">
-            <Form.Control type="text" readOnly name="messageNewUserModal" value={this.state.errorMessage} />
+        {errorMessage && (
+          <Form.Group controlId="formControlEditMessage">
+            <Form.Control type="text" readOnly name="messageNewUserModal" value={errorMessage} />
           </Form.Group>
-        </Modal.Footer>
-      </Modal>
+        )}
+      </AppModal>
     );
   }
 
   renderNewThirdPartyAppModal() {
+    const { showMsgModal, errorMessage } = this.state;
+
     let nameRef = null;
     let urlRef = null;
     let fileTypesRef = null;
@@ -334,59 +331,51 @@ export default class ThirdPartyApp extends React.Component {
     };
 
     return (
-      <Modal
-        show={this.state.showMsgModal}
+      <AppModal
+        show={showMsgModal}
         onHide={this.closeNewThirdPartyAppModal}
-        centered
+        title="Create new third party app"
+        primaryActionLabel="Create"
+        onPrimaryAction={handleCreate}
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Create new third party app</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="overflow-auto">
-          <Form.Group controlId="formControlName" className="mb-2">
-            <Form.Label>
-              Name:
-            </Form.Label>
-            <Form.Control type="text" name="Name" ref={(ref) => { nameRef = ref; }} />
+        <Form.Group controlId="formControlName" className="mb-2">
+          <Form.Label>
+            Name:
+          </Form.Label>
+          <Form.Control type="text" name="Name" ref={(ref) => { nameRef = ref; }} />
+        </Form.Group>
+
+        <Form.Group controlId="formControlIPAdress" className="mb-2">
+          <Form.Label>
+            IP address:
+          </Form.Label>
+          <Form.Control type="text" name="IP address" ref={(ref) => { urlRef = ref; }} />
+        </Form.Group>
+
+        <Form.Group controlId="formControlFileTypes" className="mb-2">
+          <Form.Label>
+            File types (MIME):
+          </Form.Label>
+          <Form.Control
+            type="text"
+            name="File types"
+            ref={(ref) => { fileTypesRef = ref; }}
+            placeholder="* or comma separated list: image/png,text..."
+          />
+        </Form.Group>
+
+        {errorMessage && (
+          <Form.Group controlId="formControlCreateMessage">
+            <Form.Control type="text" readOnly name="messageNewUserModal" value={errorMessage} />
           </Form.Group>
-
-          <Form.Group controlId="formControlIPAdress" className="mb-2">
-            <Form.Label>
-              IP address:
-            </Form.Label>
-            <Form.Control type="text" name="IP address" ref={(ref) => { urlRef = ref; }} />
-          </Form.Group>
-
-          <Form.Group controlId="formControlFileTypes" className="mb-2">
-            <Form.Label>
-              File types (MIME):
-            </Form.Label>
-            <Form.Control
-              type="text"
-              name="File types"
-              ref={(ref) => { fileTypesRef = ref; }}
-              placeholder="* or comma separated list: image/png,text..."
-            />
-          </Form.Group>
-
-          <OverlayTrigger placement="bottom" overlay={newTip}>
-            <Button variant="primary" size="sm" onClick={() => handleCreate()} className="mb-2">
-              Create
-              <i className="fa fa-plus ms-1" />
-            </Button>
-          </OverlayTrigger>
-
-          <Modal.Footer>
-            <Form.Group controlId="formControlMessage" className="w-100">
-              <Form.Control type="text" readOnly name="messageNewUserModal" value={this.state.errorMessage} />
-            </Form.Group>
-          </Modal.Footer>
-        </Modal.Body>
-      </Modal>
+        )}
+      </AppModal>
     );
   }
 
   render() {
+    const { thirdPartyApps, messageNewThirdPartyAppModal } = this.state;
+
     return (
       <div>
         <Button variant="primary" size="sm" onClick={() => this.showNewThirdPartyAppModal()}>
@@ -406,7 +395,7 @@ export default class ThirdPartyApp extends React.Component {
             </tr>
           </thead>
           <tbody>
-            {this.state.thirdPartyApps.map((entry) => (
+            {thirdPartyApps.map((entry) => (
               <tr key={entry.id}>
                 <td>
                   <ButtonToolbar>
@@ -434,7 +423,7 @@ export default class ThirdPartyApp extends React.Component {
         </Table>
         {this.renderEditThirdPartyAppModal()}
         {this.renderDeleteThirdPartyAppModal()}
-        <h2>{this.state.messageNewThirdPartyAppModal}</h2>
+        <h2>{messageNewThirdPartyAppModal}</h2>
 
       </div>
     );
