@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-expressions */
 import expect from 'expect';
 import sinon from 'sinon';
 import { describe, it } from 'mocha';
