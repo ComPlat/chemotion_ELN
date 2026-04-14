@@ -1,36 +1,34 @@
 import React, { Component, createRef } from 'react';
-import { Button, Tooltip, Overlay, OverlayTrigger, ButtonToolbar } from 'react-bootstrap';
+import { Button, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 
 export default class ConfirmClose extends Component {
-  static contextType = StoreContext;
-
   constructor(props) {
     super(props);
     this.state = {
-      showTooltip: false,
+      overlayTarget: null,
     };
+
+    this.buttonRef = createRef();
 
     this.closeElement = this.closeElement.bind(this);
     this.onClickButton = this.onClickButton.bind(this);
-  }
-
-  closeByContextType(el) {
-    if (el && el.type == 'device_description') {
-      this.context.deviceDescriptions.removeFromOpenDeviceDescriptions(el);
-    }
-    if (el && el.type == 'sequence_based_macromolecule_sample') {
-      this.context.sequenceBasedMacromoleculeSamples.removeFromOpenSequenceBasedMacromoleculeSamples(el);
-    }
+    this.hideOverlay = this.hideOverlay.bind(this);
   }
 
   onClickButton(el) {
+    const { forceClose } = this.props;
+
     this.setState(
-      prevState => ({ ...prevState, showTooltip: !prevState.showTooltip }),
-      () => DetailActions.close(el, this.props.forceClose)
+      (prevState) => ({
+        ...prevState,
+        overlayTarget: prevState.overlayTarget ? null : this.buttonRef.current,
+      }),
+      () => DetailActions.close(el, forceClose)
     );
 
     if (!el.isEdited) {
@@ -38,70 +36,74 @@ export default class ConfirmClose extends Component {
     }
   }
 
+  closeByContextType(el) {
+    const {
+      deviceDescriptions,
+      sequenceBasedMacromoleculeSamples,
+    } = this.context;
+
+    if (el && el.type === 'device_description') {
+      deviceDescriptions.removeFromOpenDeviceDescriptions(el);
+    }
+    if (el && el.type === 'sequence_based_macromolecule_sample') {
+      sequenceBasedMacromoleculeSamples.removeFromOpenSequenceBasedMacromoleculeSamples(el);
+    }
+  }
+
   closeElement(e) {
     const { el } = this.props;
+    this.hideOverlay();
     this.closeByContextType(el);
     DetailActions.confirmDelete(e);
   }
 
+  hideOverlay() {
+    this.setState({ overlayTarget: null });
+  }
+
   render() {
     const { el } = this.props;
-    const popover = (
-      <Tooltip placement="left" className="in" id="tooltip-bottom">
-        Unsaved data will be lost.<br /> Close {el.type}?<br />
-        <ButtonToolbar className="justify-content-center">
-          <Button
-            variant="danger"
-            size="xxsm"
-            onClick={(e) => this.closeElement(e)}
-          >
-            Yes
-          </Button>
-          <Button
-            variant="warning"
-            size="xxsm"
-            onClick={() => this.setState({ showTooltip: false })}
-          >
-            No
-          </Button>
-        </ButtonToolbar>
-      </Tooltip>
-    );
-
-    const buttonRef = createRef(null);
+    const { overlayTarget } = this.state;
+    const closeTooltip = `Close ${el.type}`;
 
     return (
       <>
         <OverlayTrigger
           placement="bottom"
           overlay={
-            <Tooltip id="closeSample">Close {el.type}</Tooltip>
+            <Tooltip id="closeSample">{closeTooltip}</Tooltip>
           }
         >
           <Button
             variant="danger"
             size="xxsm"
             onClick={() => this.onClickButton(el)}
-            ref={buttonRef}
+            ref={this.buttonRef}
           >
             <i className="fa fa-times" />
           </Button>
         </OverlayTrigger>
-        <Overlay
-          target={() => buttonRef.current}
-          show={this.state.showTooltip}
+        <ConfirmationOverlay
+          overlayTarget={overlayTarget}
           placement="bottom"
-          rootClose
-          onHide={() => this.setState({ showTooltip: false })}
-        >
-          {popover}
-        </Overlay>
+          warningText={`Unsaved data will be lost. Close ${el.type}?`}
+          destructiveAction={this.closeElement}
+          destructiveActionLabel="Yes"
+          hideAction={this.hideOverlay}
+          hideActionLabel="No"
+        />
       </>
     );
   }
 }
 
+ConfirmClose.contextType = StoreContext;
+
 ConfirmClose.propTypes = {
+  el: PropTypes.shape({
+    type: PropTypes.string.isRequired,
+    isEdited: PropTypes.bool,
+  }).isRequired,
   // el: PropTypes.oneOfType([
   //   PropTypes.instanceOf(ResearchPlan),
   //   PropTypes.instanceOf(Reaction),

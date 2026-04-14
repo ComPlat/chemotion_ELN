@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Form, Dropdown, Overlay, Popover
+  Button, Form, Dropdown
 } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -9,6 +9,7 @@ import readXlsxFile, { readSheetNames } from 'read-excel-file';
 import { parse as parseSdf } from 'sdf-parser';
 
 import AppModal from 'src/components/common/AppModal';
+import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ColumnMappingComponent from 'src/apps/mydb/collections/ColumnMappingComponent';
@@ -268,7 +269,6 @@ export default class ModalImport extends React.Component {
       fileFormat: null,
       isProcessing: false,
       mappedColumns: null,
-      showCancelConfirmation: false,
       cancelOverlayTarget: null,
       cancelOverlayPlacement: 'top',
       validationIsValidated: false,
@@ -505,7 +505,6 @@ export default class ModalImport extends React.Component {
     }
 
     this.setState({
-      showCancelConfirmation: true,
       cancelOverlayTarget: event?.currentTarget || null,
       cancelOverlayPlacement: placement,
     });
@@ -516,7 +515,6 @@ export default class ModalImport extends React.Component {
       rowData: [],
       showValidation: false,
       showColumnMapping: true,
-      showCancelConfirmation: false,
       cancelOverlayTarget: null,
       validationIsValidated: false,
       validationIsDataValid: false,
@@ -536,7 +534,6 @@ export default class ModalImport extends React.Component {
       rowData: [],
       columnDefs: [],
       mappedColumns: null,
-      showCancelConfirmation: false,
       cancelOverlayTarget: null,
       validationIsValidated: false,
       validationIsDataValid: false,
@@ -545,7 +542,6 @@ export default class ModalImport extends React.Component {
 
   dismissCancelConfirmation() {
     this.setState({
-      showCancelConfirmation: false,
       cancelOverlayTarget: null,
     });
   }
@@ -1046,7 +1042,6 @@ export default class ModalImport extends React.Component {
       columnDefs,
       isProcessing,
       mappedColumns,
-      showCancelConfirmation,
       cancelOverlayTarget,
       cancelOverlayPlacement,
       validationIsValidated,
@@ -1069,31 +1064,6 @@ export default class ModalImport extends React.Component {
     } else {
       importButtonText = 'Import';
     }
-
-    const cancelPopover = (
-      <Popover id="modal-import-cancel-confirmation">
-        <Popover.Header as="h5">Confirm Cancellation</Popover.Header>
-        <Popover.Body>
-          <p className="mb-3">
-            Any edits made during validation will not be preserved.
-          </p>
-          <p className="text-muted small mb-3">
-            Choose whether to abort the import entirely, return to column mapping, or continue validation.
-          </p>
-          <div className="d-flex flex-column gap-2">
-            <Button variant="danger" size="sm" onClick={() => this.abortImport()}>
-              Abort Import
-            </Button>
-            <Button variant="primary" size="sm" onClick={() => this.dismissCancelConfirmation()}>
-              Cancel
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => this.confirmCancelValidation()}>
-              Return to Mapping
-            </Button>
-          </div>
-        </Popover.Body>
-      </Popover>
-    );
 
     return (
       <>
@@ -1146,15 +1116,17 @@ export default class ModalImport extends React.Component {
               onValidationStateChange={this.handleValidationStateChange}
             />
           )}
-          <Overlay
-            target={cancelOverlayTarget}
-            show={showCancelConfirmation}
+          <ConfirmationOverlay
+            overlayTarget={cancelOverlayTarget}
             placement={cancelOverlayPlacement}
-            rootClose
-            onHide={() => this.dismissCancelConfirmation()}
-          >
-            {cancelPopover}
-          </Overlay>
+            warningText="Closing this dialog will abort your import."
+            destructiveAction={() => this.abortImport()}
+            destructiveActionLabel="Abort Import"
+            hideAction={() => this.dismissCancelConfirmation()}
+            hideActionLabel="Cancel"
+            primaryAction={() => this.confirmCancelValidation()}
+            primaryActionLabel="Return to Mapping"
+          />
         </AppModal>
       </>
     );
