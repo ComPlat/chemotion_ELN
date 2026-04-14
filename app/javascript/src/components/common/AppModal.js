@@ -6,6 +6,7 @@ import { Button, Modal } from 'react-bootstrap';
 function AppModal({
   show,
   onHide,
+  onRequestClose,
   title,
   children,
   extendedFooter,
@@ -14,6 +15,7 @@ function AppModal({
   primaryActionDisabled,
   closeLabel,
   className,
+  bodyClassName,
   // Modal-level props with sensible defaults
   centered,
   size,
@@ -22,6 +24,15 @@ function AppModal({
   dialogClassName,
   ...rest
 }) {
+  const handleRequestClose = (event, source) => {
+    if (onRequestClose) {
+      onRequestClose(event, source);
+      return;
+    }
+
+    onHide();
+  };
+
   return (
     <Modal
       centered={centered}
@@ -34,15 +45,21 @@ function AppModal({
       onHide={onHide}
       {...rest}
     >
-      <Modal.Header closeButton>
+      <Modal.Header className="d-flex justify-content-between align-items-center">
         <Modal.Title>{title}</Modal.Title>
+        <button
+          type="button"
+          className="btn-close"
+          aria-label="Close"
+          onClick={(event) => handleRequestClose(event, 'header')}
+        />
       </Modal.Header>
-      <Modal.Body>
+      <Modal.Body className={bodyClassName}>
         {children}
       </Modal.Body>
       {(extendedFooter !== undefined || (primaryActionLabel && onPrimaryAction)) && (
         <Modal.Footer>
-          <Button variant="ghost" onClick={onHide}>
+          <Button variant="ghost" onClick={(event) => handleRequestClose(event, 'footer')}>
             {closeLabel}
           </Button>
           {extendedFooter}
@@ -62,6 +79,8 @@ AppModal.propTypes = {
   show: PropTypes.bool.isRequired,
   /** Called when the modal requests to close (backdrop click, Escape, × button) */
   onHide: PropTypes.func.isRequired,
+  /** Optional click handler for the modal close controls (receives event and source: header|footer) */
+  onRequestClose: PropTypes.func,
   /** Text or element rendered inside Modal.Title */
   title: PropTypes.node.isRequired,
   /** Modal body content */
@@ -78,6 +97,8 @@ AppModal.propTypes = {
   closeLabel: PropTypes.string,
   /** Extra CSS class added to the root Modal element alongside app-modal */
   className: PropTypes.string,
+  /** Extra CSS class added to Modal.Body */
+  bodyClassName: PropTypes.string,
   // Forwarded Modal props
   centered: PropTypes.bool,
   size: PropTypes.string,
@@ -88,11 +109,13 @@ AppModal.propTypes = {
 
 AppModal.defaultProps = {
   extendedFooter: undefined,
+  onRequestClose: undefined,
   primaryActionLabel: undefined,
   onPrimaryAction: undefined,
   primaryActionDisabled: false,
   closeLabel: 'Cancel',
   className: undefined,
+  bodyClassName: undefined,
   centered: true,
   size: undefined,
   animation: true,

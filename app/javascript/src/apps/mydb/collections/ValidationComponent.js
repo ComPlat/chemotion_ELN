@@ -2,11 +2,12 @@ import React, {
   useState,
   useCallback,
   useEffect,
-  useRef
+  useRef,
+  useImperativeHandle
 } from 'react';
 import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
-import { Modal, Button, Alert } from 'react-bootstrap';
+import { Button, Alert } from 'react-bootstrap';
 import {
   validateRowUnified
 } from 'src/utilities/importDataValidations';
@@ -27,6 +28,7 @@ function DeleteButtonCellRenderer(props) {
       type="button"
       className="btn btn-sm btn-danger"
       onClick={onClick}
+      aria-label="Delete row"
     >
       <i className="fa fa-trash" />
     </button>
@@ -48,14 +50,13 @@ DeleteButtonCellRenderer.defaultProps = {
   onDelete: null
 };
 
-function ValidationComponent({
+const ValidationComponent = React.forwardRef(({
   rowData: initialRowData,
   columnDefs,
   onValidate,
-  onCancel,
   onRowDataChange,
-  onImport
-}) {
+  onValidationStateChange
+}, ref) => {
   const [gridApi, setGridApi] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
   const [conversionMessages, setConversionMessages] = useState([]);
@@ -74,7 +75,19 @@ function ValidationComponent({
       id: row.id || `row-${index + 1}`
     }));
     setCurrentRowData(dataWithIds);
+    setValidationErrors([]);
+    setConversionMessages([]);
+    setIsValidated(false);
+    setIsDataValid(false);
+    setShowMore(false);
   }, [initialRowData]);
+
+  useEffect(() => {
+    onValidationStateChange({
+      isValidated,
+      isDataValid
+    });
+  }, [isValidated, isDataValid, onValidationStateChange]);
 
   // Handler for the delete button click - simplified to work directly with row ID
   const handleDeleteRow = useCallback((rowId) => {
@@ -267,11 +280,9 @@ function ValidationComponent({
     onValidate(invalid, allRows);
   };
 
-  const handleImportData = () => {
-    if (onImport) {
-      onImport();
-    }
-  };
+  useImperativeHandle(ref, () => ({
+    validateData
+  }), [validateData]);
 
   const addNewRow = () => {
     // Generate a user-friendly row ID based on current data length
@@ -352,205 +363,179 @@ function ValidationComponent({
   const documentationLink = `${chemotionSaurusLink}#importing-data-with-column-mapping-and-validation`;
 
   return (
-    <Modal show size="xl" backdrop="static">
-      <Modal.Header>
-        <Modal.Title>Validate Data to import</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div className="mb-3">
-          <div className="d-flex justify-content-between align-items-start">
-            <div>
-              <p>
-                Review and edit your data before importing.
-                You can modify cell values directly, add new rows, or delete existing ones.
-              </p>
-              <p>Invalid rows will be highlighted in red after validation.</p>
-            </div>
-            <DocumentationButton
-              link={documentationLink}
-              overlayMessage="Click to open link to the documentation of the feature"
-              className="ms-3 flex-shrink-0"
-            />
+    <>
+      <div className="mb-3">
+        <div className="d-flex justify-content-between align-items-start">
+          <div>
+            <p>
+              Review and edit your data before importing.
+              You can modify cell values directly, add new rows, or delete existing ones.
+            </p>
+            <p>Invalid rows will be highlighted in red after validation.</p>
           </div>
-        </div>
-
-        <Alert variant="warning" className="mb-3">
-          <div className="d-flex align-items-center justify-content-between">
-            <div className="d-flex align-items-center">
-              <i className="fa fa-exclamation-triangle me-2" />
-              <strong>Important: Structure Validation Notice</strong>
-            </div>
-            <Button
-              variant="link"
-              size="sm"
-              onClick={() => setShowWarning(!showWarning)}
-              className="p-0 text-warning"
-            >
-              {showWarning ? (
-                <>
-                  <i className="fa fa-chevron-up me-1" />
-                  Hide Details
-                </>
-              ) : (
-                <>
-                  <i className="fa fa-chevron-down me-1" />
-                  Show Details
-                </>
-              )}
-            </Button>
-          </div>
-          {showWarning && (
-            <div className="mt-3 pt-3 border-top border-warning">
-              <p className="mb-2">
-                <strong>Please note:</strong>
-                {' '}
-                Data related to chemical structures like Canonical SMILES, molfile and other chemical
-                {' '}
-                identifiers cannot be validated at this step.
-                {' '}
-                If structure-related data is invalid, you will receive an informative notification message after the
-                {' '}
-                import process completes.
-              </p>
-            </div>
-          )}
-        </Alert>
-
-        {validationErrors.length > 0 && isValidated && (
-          <Alert variant="danger">
-            <Alert.Heading>Validation Errors</Alert.Heading>
-            <ul>
-              {validationErrors
-                .slice(0, showMore ? validationErrors.length : 5)
-                .map((error) => (
-                  <li key={`validation-error-${error}`}>{error}</li>
-                ))}
-            </ul>
-            {validationErrors.length > 5 && !showMore && (
-              <Button
-                variant="link"
-                onClick={() => setShowMore(true)}
-                className="p-0"
-              >
-                Show all
-                {' '}
-                {validationErrors.length}
-                {' '}
-                errors...
-              </Button>
-            )}
-          </Alert>
-        )}
-
-        {isValidated && isDataValid && (
-          <Alert variant="success" className="mr-5">
-            <div>
-              <Alert.Heading className="mb-0 me-3">
-                <i className="fa fa-check-circle me-1" />
-                Data is Valid:
-              </Alert.Heading>
-              <p className="mb-0 mt-1 ps-5">
-                All rows have passed validation successfully. You can now import the data.
-              </p>
-            </div>
-
-            {conversionMessages.length > 0 && (
-              <div className="mt-3 mb-3">
-                <strong>Unit Conversions Applied:</strong>
-                <ul className="mt-2 mb-0">
-                  {conversionMessages.map((message) => (
-                    <li key={`conversion-${message}`} className="text-info">
-                      {message}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="d-flex align-items-center">
-              <div className="mb-0 ps-5">
-                Click on
-                {' '}
-                <strong>Import Data</strong>
-                {' '}
-                button to import
-                {' '}
-                <strong>{currentRowData.length}</strong>
-                {' '}
-                rows
-              </div>
-              <Button
-                variant="success"
-                onClick={handleImportData}
-                className="ms-auto"
-              >
-                <i className="fa fa-upload me-1" />
-                Import Data
-              </Button>
-            </div>
-          </Alert>
-        )}
-
-        <div className="ag-theme-alpine" style={{ height: 400, width: '100%' }}>
-          <AgGridReact
-            ref={gridRef}
-            rowData={currentRowData}
-            columnDefs={gridColumnDefs}
-            pagination
-            paginationPageSize={20}
-            onGridReady={onGridReady}
-            getRowClass={getRowClass}
-            onCellValueChanged={onCellValueChanged}
-            defaultColDef={{
-              editable: true,
-              resizable: true,
-              sortable: true,
-              filter: true
-            }}
-            components={{
-              deleteButtonCellRenderer: DeleteButtonCellRenderer,
-              textAreaCellEditor: TextAreaCellEditor
-            }}
+          <DocumentationButton
+            link={documentationLink}
+            overlayMessage="Click to open link to the documentation of the feature"
+            className="ms-3 flex-shrink-0"
           />
         </div>
+      </div>
 
-        <div className="d-flex justify-content-between mt-3">
-          <div>
-            <Button
-              variant="success"
-              onClick={addNewRow}
-              className="me-2"
-            >
-              <i className="fa fa-plus me-1" />
-              Add Row
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                if (gridApi) {
-                  gridApi.paginationGoToPage(gridApi.paginationGetTotalPages() - 1);
-                }
-              }}
-            >
-              Show More Rows
-            </Button>
+      <Alert variant="warning" className="mb-3">
+        <div className="d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center">
+            <i className="fa fa-exclamation-triangle me-2" />
+            <strong>Important: Structure Validation Notice</strong>
           </div>
-          <div>
-            <Button
-              onClick={() => onCancel()}
-              className="me-2 btn-light"
-            >
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={validateData}>
-              Validate Data
-            </Button>
-          </div>
+          <Button
+            variant="link"
+            size="sm"
+            onClick={() => setShowWarning(!showWarning)}
+            className="p-0 text-warning"
+          >
+            {showWarning ? (
+              <>
+                <i className="fa fa-chevron-up me-1" />
+                Hide Details
+              </>
+            ) : (
+              <>
+                <i className="fa fa-chevron-down me-1" />
+                Show Details
+              </>
+            )}
+          </Button>
         </div>
-      </Modal.Body>
-    </Modal>
+        {showWarning && (
+          <div className="mt-3 pt-3 border-top border-warning">
+            <p className="mb-2">
+              <strong>Please note:</strong>
+              {' '}
+              Data related to chemical structures like Canonical SMILES, molfile and other chemical
+              {' '}
+              identifiers cannot be validated at this step.
+              {' '}
+              If structure-related data is invalid, you will receive an informative notification message after the
+              {' '}
+              import process completes.
+            </p>
+          </div>
+        )}
+      </Alert>
+
+      {validationErrors.length > 0 && isValidated && (
+        <Alert variant="danger">
+          <Alert.Heading>Validation Errors</Alert.Heading>
+          <ul>
+            {validationErrors
+              .slice(0, showMore ? validationErrors.length : 5)
+              .map((error) => (
+                <li key={`validation-error-${error}`}>{error}</li>
+              ))}
+          </ul>
+          {validationErrors.length > 5 && !showMore && (
+            <Button
+              variant="link"
+              onClick={() => setShowMore(true)}
+              className="p-0"
+            >
+              Show all
+              {' '}
+              {validationErrors.length}
+              {' '}
+              errors...
+            </Button>
+          )}
+        </Alert>
+      )}
+
+      {isValidated && isDataValid && (
+        <Alert variant="success" className="mr-5">
+          <div>
+            <Alert.Heading className="mb-0 me-3">
+              <i className="fa fa-check-circle me-1" />
+              Data is Valid:
+            </Alert.Heading>
+            <p className="mb-0 mt-1 ps-5">
+              All rows have passed validation successfully. You can now import the data.
+            </p>
+          </div>
+
+          {conversionMessages.length > 0 && (
+            <div className="mt-3 mb-3">
+              <strong>Unit Conversions Applied:</strong>
+              <ul className="mt-2 mb-0">
+                {conversionMessages.map((message) => (
+                  <li key={`conversion-${message}`} className="text-info">
+                    {message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="mb-0 ps-5">
+            Click on
+            {' '}
+            <strong>Import</strong>
+            {' '}
+            in the footer to import
+            {' '}
+            <strong>{currentRowData.length}</strong>
+            {' '}
+            rows.
+          </div>
+        </Alert>
+      )}
+
+      <div className="d-flex justify-content-start mb-3">
+        <Button
+          variant="success"
+          onClick={addNewRow}
+          className="me-2"
+        >
+          <i className="fa fa-plus me-1" />
+          Add Row
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            if (gridApi) {
+              gridApi.paginationGoToPage(gridApi.paginationGetTotalPages() - 1);
+            }
+          }}
+        >
+          Show More Rows
+        </Button>
+      </div>
+
+      <div className="ag-theme-alpine" style={{ height: 400, width: '100%' }}>
+        <AgGridReact
+          ref={gridRef}
+          rowData={currentRowData}
+          columnDefs={gridColumnDefs}
+          pagination
+          paginationPageSize={20}
+          onGridReady={onGridReady}
+          getRowClass={getRowClass}
+          onCellValueChanged={onCellValueChanged}
+          defaultColDef={{
+            editable: true,
+            resizable: true,
+            sortable: true,
+            filter: true
+          }}
+          components={{
+            deleteButtonCellRenderer: DeleteButtonCellRenderer,
+            textAreaCellEditor: TextAreaCellEditor
+          }}
+        />
+      </div>
+    </>
   );
-}
+});
+
+ValidationComponent.displayName = 'ValidationComponent';
 
 ValidationComponent.propTypes = {
   rowData: PropTypes.arrayOf(
@@ -565,9 +550,8 @@ ValidationComponent.propTypes = {
     })
   ).isRequired,
   onValidate: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired,
   onRowDataChange: PropTypes.func.isRequired,
-  onImport: PropTypes.func.isRequired,
+  onValidationStateChange: PropTypes.func.isRequired,
 };
 
 export default ValidationComponent;
