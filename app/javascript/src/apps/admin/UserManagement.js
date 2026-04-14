@@ -53,7 +53,7 @@ const loadUserByName = (input) => {
 const handleResetPassword = (id, random, handleShowAlert) => {
   AdminFetcher.resetUserPassword({ user_id: id, random })
     .then((result) => {
-      if (result.rp) {
+      if (result && result.rp) {
         let message = '';
         if (random) {
           message = result.pwd ? `Password reset for user ${id}! New password: \n ${result.pwd}`
@@ -64,8 +64,11 @@ const handleResetPassword = (id, random, handleShowAlert) => {
         }
         handleShowAlert(message);
       } else {
-        handleShowAlert(`Password reset fail: \n ${result.pwd}`);
+        handleShowAlert(`Password reset fail: \n ${result && result.pwd}`);
       }
+    })
+    .catch((err) => {
+      handleShowAlert(`Password reset failed: ${err.message || err}`);
     });
 };
 

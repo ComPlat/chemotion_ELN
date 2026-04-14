@@ -165,8 +165,15 @@ module Chemotion
             rp = if params[:password] || params[:random]
                    pwd = params[:password].presence || Devise.friendly_token.first(10)
                    @user.reset_password(pwd, pwd)
-                 else
-                   @user.respond_to?(:send_reset_password_instructions) && @user.send_reset_password_instructions
+                 elsif @user.respond_to?(:send_reset_password_instructions)
+                   begin
+                     @user.send_reset_password_instructions
+                   rescue Net::ReadTimeout, Net::OpenTimeout, Errno::ETIMEDOUT, IOError => e
+                     Rails.logger.warn(
+                       "resetPassword: SMTP post-delivery error for user #{@user.id}: #{e.class}: #{e.message}",
+                     )
+                     true
+                   end
                  end
             status(400) unless rp
             { pwd: pwd, rp: rp, email: @user.email }
