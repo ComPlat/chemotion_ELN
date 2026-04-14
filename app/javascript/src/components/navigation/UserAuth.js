@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import 'whatwg-fetch';
+import propType from 'prop-types';
 import {
   Card,
   Dropdown,
@@ -634,6 +635,7 @@ export default class UserAuth extends Component {
 
   render() {
     const { currentUser, showLabelModal, showSubscription } = this.state;
+    const { userMenuDropdownToggleVariant } = this.props;
     if (!currentUser) {
       return <i className="fa fa-spinner" />;
     }
@@ -641,7 +643,7 @@ export default class UserAuth extends Component {
     return (
       <>
         <Dropdown>
-          <Dropdown.Toggle variant="topbar">
+          <Dropdown.Toggle variant={userMenuDropdownToggleVariant}>
             <i className="fa fa-user me-1" />
             {currentUser.name}
           </Dropdown.Toggle>
@@ -688,3 +690,11 @@ export default class UserAuth extends Component {
     );
   }
 }
+
+UserAuth.propTypes = {
+  userMenuDropdownToggleVariant: propType.string,
+};
+
+UserAuth.defaultProps = {
+  userMenuDropdownToggleVariant: 'topbar',
+};
