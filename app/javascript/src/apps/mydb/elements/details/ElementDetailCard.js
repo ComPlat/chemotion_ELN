@@ -2,10 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button,
-  Overlay,
-  Tooltip,
-  ButtonToolbar,
 } from 'react-bootstrap';
+import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 import ElementIcon from 'src/components/common/ElementIcon';
 import CopyElementModal from 'src/components/common/CopyElementModal';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
@@ -38,7 +36,6 @@ export default function ElementDetailCard({
   showUserLabels,
   showHeaderCommentSection,
 }) {
-  const [showCloseOverlay, setShowCloseOverlay] = React.useState(false);
   const [closeOverlayTarget, setCloseOverlayTarget] = React.useState(null);
   const [closeOverlayPlacement, setCloseOverlayPlacement] = React.useState('bottom');
 
@@ -79,7 +76,7 @@ export default function ElementDetailCard({
   const canCopy = !!(element.can_copy && !element.isNew);
 
   const handleClose = (forceClose = false) => {
-    setShowCloseOverlay(false);
+    setCloseOverlayTarget(null);
     if (onClose) {
       onClose();
     }
@@ -87,7 +84,7 @@ export default function ElementDetailCard({
   };
 
   const handleSaveClose = () => {
-    setShowCloseOverlay(false);
+    setCloseOverlayTarget(null);
     if (onSaveClose) {
       onSaveClose();
     } else {
@@ -120,7 +117,6 @@ export default function ElementDetailCard({
     if (pendingToSave && !forceClose) {
       setCloseOverlayTarget(event.currentTarget);
       setCloseOverlayPlacement(placement);
-      setShowCloseOverlay(true);
       return;
     }
 
@@ -128,43 +124,17 @@ export default function ElementDetailCard({
   };
 
   const closeOverlay = (
-    <Overlay
-      target={closeOverlayTarget}
-      show={showCloseOverlay}
+    <ConfirmationOverlay
+      overlayTarget={closeOverlayTarget}
       placement={closeOverlayPlacement}
-      rootClose
-      onHide={() => setShowCloseOverlay(false)}
-    >
-      <Tooltip id="detail-card-close-overlay">
-        <div className="p2">
-          You have unsaved changes. Save before closing?
-          <ButtonToolbar className="justify-content-end mt-2">
-            <Button
-              variant="danger"
-              size="xsm"
-              onClick={() => handleClose(true)}
-            >
-              Discard
-            </Button>
-            <Button
-              variant="ghost"
-              size="xsm"
-              onClick={() => setShowCloseOverlay(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              size="xsm"
-              onClick={handleSaveClose}
-              disabled={saveDisabled}
-            >
-              Save and Close
-            </Button>
-          </ButtonToolbar>
-        </div>
-      </Tooltip>
-    </Overlay>
+      warningText="You have unsaved changes. Save before closing?"
+      destructiveAction={() => handleClose(true)}
+      destructiveActionLabel="Discard"
+      hideAction={() => setCloseOverlayTarget(null)}
+      hideActionLabel="Cancel"
+      primaryAction={handleSaveClose}
+      primaryActionLabel="Save and Close"
+    />
   );
 
   // Build title icon with ElementIcon
