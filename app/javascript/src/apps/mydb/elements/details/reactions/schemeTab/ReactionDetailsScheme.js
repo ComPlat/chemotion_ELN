@@ -259,7 +259,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   onChangeRole(e) {
     const { onInputChange } = this.props;
-    const value = e && e.value;
+    const value = e ? e.value : '';
     onInputChange('role', value);
   }
 
