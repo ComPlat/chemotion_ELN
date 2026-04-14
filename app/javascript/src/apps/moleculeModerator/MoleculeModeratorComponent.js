@@ -2,11 +2,12 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import SVG from 'react-inlinesvg';
 import {
-  Card, Container, Col, Button, Row, Table, Popover, ButtonGroup, Modal, OverlayTrigger, Tooltip, Form, InputGroup,
+  Card, Container, Col, Button, Row, Table, Popover, ButtonGroup, OverlayTrigger, Tooltip, Form, InputGroup,
   Alert
 } from 'react-bootstrap';
 import { findIndex } from 'lodash';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import AppModal from 'src/components/common/AppModal';
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
 
 export default class MoleculeModeratorComponent extends Component {
@@ -199,28 +200,28 @@ export default class MoleculeModeratorComponent extends Component {
   renderModal() {
     const { show, isNew, molName } = this.state;
     return (
-      <Modal centered show={show} onHide={this.handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>{isNew ? 'Create Molecule Name' : 'Edit Molecule Name'}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form horizontal className="input-form">
-            <Form.Group className="mb-3" controlId="formControlId">
-              <InputGroup>
-                <InputGroup.Text>Attr.</InputGroup.Text>
-                <Form.Control type="text" defaultValue={molName.description} readOnly />
-              </InputGroup>
-            </Form.Group>
-            <Form.Group className="mb-3" controlId="formControlName">
-              <InputGroup>
-                <InputGroup.Text>Molecule name</InputGroup.Text>
-                <Form.Control type="text" value={molName.name} onChange={this.handleMolNameChange} />
-              </InputGroup>
-            </Form.Group>
-          </Form>
-          <Button size="sm" type="button" onClick={() => this.onSaveName()}>Save</Button>
-        </Modal.Body>
-      </Modal>
+      <AppModal
+        show={show}
+        onHide={this.handleCloseModal}
+        title={isNew ? 'Create Molecule Name' : 'Edit Molecule Name'}
+        primaryActionLabel="Save"
+        onPrimaryAction={this.onSaveName}
+      >
+        <Form horizontal className="input-form">
+          <Form.Group className="mb-3" controlId="formControlId">
+            <InputGroup>
+              <InputGroup.Text>Attr.</InputGroup.Text>
+              <Form.Control type="text" defaultValue={molName.description} readOnly />
+            </InputGroup>
+          </Form.Group>
+          <Form.Group className="mb-3" controlId="formControlName">
+            <InputGroup>
+              <InputGroup.Text>Molecule name</InputGroup.Text>
+              <Form.Control type="text" value={molName.name} onChange={this.handleMolNameChange} />
+            </InputGroup>
+          </Form.Group>
+        </Form>
+      </AppModal>
     );
   }
 

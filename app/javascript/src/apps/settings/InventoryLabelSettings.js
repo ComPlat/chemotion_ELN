@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { TreeSelect } from 'antd';
 import {
-  Alert, Button, Card, Row, Col, Form, Modal, OverlayTrigger, Tooltip
+  Alert, Button, Card, Row, Col, Form, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import { find } from 'lodash';
 
@@ -374,23 +375,16 @@ function InventoryLabelSettings() {
         )}
       </Card.Body>
 
-      <Modal show={showResetConfirmation} onHide={handleResetCancel}>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Reset</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          You are about to delete the inventory label for selected collection(s).
-          Are you sure you want to delete the assigned prefix, name and counter?
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={handleResetCancel}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleResetConfirm}>
-            Yes, Reset
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <AppModal
+        show={showResetConfirmation}
+        onHide={handleResetCancel}
+        title="Confirm Reset"
+        primaryActionLabel="Yes, Reset"
+        onPrimaryAction={handleResetConfirm}
+      >
+        You are about to delete the inventory label for selected collection(s).
+        Are you sure you want to delete the assigned prefix, name and counter?
+      </AppModal>
     </Card>
   );
 }

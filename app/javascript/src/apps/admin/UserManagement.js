@@ -774,7 +774,6 @@ export default class UserManagement extends React.Component {
     const { selectedUsers } = this.state;
     return (
       <AppModal
-        centered
         show={this.state.showMsgModal}
         onHide={this.handleMsgClose}
         title="Send Message"
@@ -813,7 +812,6 @@ export default class UserManagement extends React.Component {
 
     return (
       <AppModal
-        centered
         show={this.state.showNewUserModal}
         onHide={this.handleNewUserClose}
         size="lg"
@@ -1039,7 +1037,6 @@ export default class UserManagement extends React.Component {
 
     return (
       <AppModal
-        centered
         show={showEditUserModal}
         onHide={this.handleEditUserClose}
         title="Edit user account"
@@ -1177,7 +1174,6 @@ export default class UserManagement extends React.Component {
   renderRestoreAccountModal() {
     return (
       <AppModal
-        centered
         show={this.state.showRestoreAccountModal}
         onHide={this.handleRestoreAccountClose}
         title="Restore account"

@@ -1,9 +1,10 @@
 import Quagga from 'quagga';
 import React from 'react';
 import {
-  Alert, Button, Form, Modal
+  Alert, Button, Form
 } from 'react-bootstrap';
 import QrReader from 'react-qr-reader';
+import AppModal from 'src/components/common/AppModal';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import 'whatwg-fetch';
 
@@ -131,47 +132,47 @@ export default class ScanCodeButton extends React.Component {
   scanModal() {
     const { showModal, showQrReader } = this.state;
     return (
-      <Modal centered show={showModal} onHide={this.close}>
-        <Modal.Header closeButton>
-          <Modal.Title>Scan barcode or QR code</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div id="code-scanner" style={{ maxHeight: '600px', overflow: 'hidden' }}>
-            <Form.Group>
-              <Form.Control
-                autoFocus
-                type="text"
-                ref={(m) => { this.codeInput = m; }}
-                onKeyPress={this.handleKeyPress}
-              />
-            </Form.Group>
-            <input
-              type="button"
-              style={{ display: 'none' }}
-              ref={(scanInput) => { this.scanInput = scanInput; }}
-              onClick={() => this.handleScan()}
-            />
-
-            {showQrReader
-              ? (
-                <QrReader
-                  previewStyle={{ width: 550 }}
-                  onScan={this.handleScan}
-                  onError={this.handleError}
-                />
-              )
-              : (
-                <div id="barcode-scanner" />
-              )}
-          </div>
-          <br />
-          {this.scanAlert()}
-        </Modal.Body>
-        <Modal.Footer>
+      <AppModal
+        show={showModal}
+        onHide={this.close}
+        title="Scan barcode or QR code"
+        primaryActionLabel="Start QR code scan"
+        onPrimaryAction={this.startQrCodeScan}
+        extendedFooter={(
           <Button onClick={this.startBarcodeScan}>Start barcode scan</Button>
-          <Button onClick={this.startQrCodeScan}>Start QR code scan</Button>
-        </Modal.Footer>
-      </Modal>
+        )}
+      >
+        <div id="code-scanner" style={{ maxHeight: '600px', overflow: 'hidden' }}>
+          <Form.Group>
+            <Form.Control
+              autoFocus
+              type="text"
+              ref={(m) => { this.codeInput = m; }}
+              onKeyPress={this.handleKeyPress}
+            />
+          </Form.Group>
+          <input
+            type="button"
+            style={{ display: 'none' }}
+            ref={(scanInput) => { this.scanInput = scanInput; }}
+            onClick={() => this.handleScan()}
+          />
+
+          {showQrReader
+            ? (
+              <QrReader
+                previewStyle={{ width: 550 }}
+                onScan={this.handleScan}
+                onError={this.handleError}
+              />
+            )
+            : (
+              <div id="barcode-scanner" />
+            )}
+        </div>
+        <br />
+        {this.scanAlert()}
+      </AppModal>
     );
   }
 
