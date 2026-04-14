@@ -12,7 +12,7 @@ const PICTOGRAMS = [
 
 const AMOUNT_UNITS = ['g', 'mg', 'μg'];
 const VOLUME_UNITS = ['ml', 'l', 'μl'];
-const TEMPERATURE_UNITS = ['°C'];
+const TEMPERATURE_UNITS = ['°C', '°F', 'K'];
 
 // Expected format for unit-based fields
 const EXPECTED_UNIT_FORMATS = {
