@@ -20,7 +20,6 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { UserLabelModal } from 'src/components/UserLabels';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
-import Affiliations from 'src/apps/userSettings/Affiliations';
 import AccountProfile from 'src/apps/userSettings/AccountProfile';
 
 export default class UserAuth extends Component {
@@ -32,9 +31,7 @@ export default class UserAuth extends Component {
       showLabelModal: false,
       currentGroups: [],
       currentDevices: [],
-      selectedUsers: null,
       showSubscription: false,
-      showAffiliations: false,
       showSettings: false,
       currentSubscriptions: [],
       showDeviceMetadataModal: false,
@@ -53,9 +50,6 @@ export default class UserAuth extends Component {
     this.handleSubscriptionClose = this.handleSubscriptionClose.bind(this);
     this.handleDeviceMetadataModalShow = this.handleDeviceMetadataModalShow.bind(this);
     this.handleDeviceMetadataModalClose = this.handleDeviceMetadataModalClose.bind(this);
-    this.handleAffiliationsShow = this.handleAffiliationsShow.bind(this);
-    this.handleAffiliationsHide = this.handleAffiliationsHide.bind(this);
-    this.renderAffiliations = this.renderAffiliations.bind(this);
     this.handleSettingsShow = this.handleSettingsShow.bind(this);
     this.handleSettingsHide = this.handleSettingsHide.bind(this);
     this.renderSettings = this.renderSettings.bind(this);
@@ -286,23 +280,6 @@ export default class UserAuth extends Component {
     });
   };
 
-  handleAffiliationsShow() {
-    this.setState({ showAffiliations: true });
-  }
-
-  handleAffiliationsHide = () => {
-    this.setState({ showAffiliations: false });
-  };
-
-  renderAffiliations() {
-    return this.state.showAffiliations ? (
-      <Affiliations
-        show={this.state.showAffiliations}
-        onHide={this.handleAffiliationsHide}
-      />
-    ) : null;
-  }
-
   // eslint-disable-next-line class-methods-use-this
   handleSettingsShow() {
     this.setState({ showSettings: true });
@@ -310,26 +287,43 @@ export default class UserAuth extends Component {
 
   handleSettingsHide = () => {
     UserActions.fetchCurrentUser();
-    const { currentUser } = this.state;
-    UserActions.updateUserProfile(currentUser.profile);
     this.setState({ showSettings: false });
   };
 
-  renderSettings() {
-    const { showSettings, currentUser } = this.state;
+  renderAffiliations() {
+    const { showAffiliations } = this.state;
+    if (!showAffiliations) return null;
 
     return (
-      <Modal
-        fullscreen
-        show={showSettings}
-        onHide={this.handleSettingsHide}
-        centered
+      <Affiliations
+        show={showAffiliations}
+        onHide={this.handleAffiliationsHide}
+      />
+    );
+  }
+
+  renderSettings() {
+    const { showSettings, currentUser } = this.state;
+    if (!showSettings) {
+      return;
+    }
+
+    return (
+      <div style={{
+        zIndex: 15,
+        background: 'white',
+        position: 'fixed',
+        left: 0,
+        width: '100vw',
+        top: 0,
+        bottom: 0,
+        margin: 0,
+        height: 'auto',
+        overflow: 'auto',
+      }}
       >
-        <Modal.Header closeButton />
-        <Modal.Body style={{ padding: 0 }}>
-          <AccountProfile currentUser={currentUser} />
-        </Modal.Body>
-      </Modal>
+        <AccountProfile currentUser={currentUser} closeSettings={this.handleSettingsHide} />
+      </div>
     );
   }
 
@@ -647,7 +641,7 @@ export default class UserAuth extends Component {
     return (
       <>
         <Dropdown>
-          <Dropdown.Toggle variant="light">
+          <Dropdown.Toggle variant="topbar">
             <i className="fa fa-user me-1" />
             {currentUser.name}
           </Dropdown.Toggle>
@@ -656,15 +650,7 @@ export default class UserAuth extends Component {
               eventKey="1"
               onClick={this.handleSettingsShow}
             >
-              Account &amp; Profile
-            </Dropdown.Item>
-            <Dropdown.Item eventKey="3" href="/users/edit">
-              Change Password
-            </Dropdown.Item>
-            <Dropdown.Item
-              onClick={this.handleAffiliationsShow}
-            >
-              My Affiliations
+              Settings
             </Dropdown.Item>
             <Dropdown.Item onClick={this.handleShow}>My Groups & Devices</Dropdown.Item>
             <Dropdown.Item onClick={this.handleLabelShow}>My Labels</Dropdown.Item>
@@ -691,7 +677,6 @@ export default class UserAuth extends Component {
         </Dropdown>
 
         {this.renderModal()}
-        {this.renderAffiliations()}
         {this.renderSettings()}
         <UserLabelModal
           showLabelModal={showLabelModal}

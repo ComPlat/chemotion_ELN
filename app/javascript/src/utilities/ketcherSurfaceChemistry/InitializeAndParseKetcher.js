@@ -38,6 +38,7 @@ import {
 import {
   attachClickListeners
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const loadTemplates = async () => {
   fetch('/json/surfaceChemistryShapes.json').then((response) => {
@@ -123,7 +124,8 @@ const initializeKetcherData = async (data) => {
   }
 };
 
-// helper function to examine the file coming ketcher rails
+// helper function to examine the file coming from ketcher/rails
+// Use the *first* PolymersList block so shape order is preserved on import (matches atom index order).
 const hasKetcherData = async (molfile) => {
   if (!molfile) {
     console.error('Invalid molfile source.');
@@ -132,11 +134,16 @@ const hasKetcherData = async (molfile) => {
 
   try {
     const lines = molfile.trim().split('\n');
-    const lastIndex = lines.map((line, i) => (line.includes(KET_TAGS.polymerIdentifier) ? i : -1))
-      .filter((i) => i >= 0)
-      .pop();
-    if (lastIndex == null) return null;
-    return lines[lastIndex + 1]?.trim() || null;
+    const firstIndex = lines.findIndex((line) => line.includes(KET_TAGS.polymerIdentifier));
+    if (firstIndex === -1) return null;
+    // Collect content lines after "> <PolymersList>" until next block tag (preserve order for shapes)
+    const contentLines = [];
+    for (let i = firstIndex + 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line.startsWith('> <')) break;
+      if (line.length > 0) contentLines.push(line);
+    }
+    return contentLines.length > 0 ? contentLines.join(' ') : null;
   } catch (err) {
     console.error('Error processing molfile');
     return null;
@@ -165,8 +172,9 @@ const hasTextNodes = async (molfile) => {
 // Return molfile string up to and including M  END so Indigo only sees standard CTAB.
 const getStandardMolfileForIndigo = (molfile) => {
   if (!molfile || typeof molfile !== 'string') return molfile;
-  const lines = molfile.trim().split('\n');
-  const endIndex = lines.findIndex((line) => line && /^M\s+END/.test(line));
+  const normalized = molfile.replace(/\r\n/g, '\n');
+  const lines = normalized.split('\n');
+  const endIndex = lines.findIndex((line) => /^M\s+END/.test(line));
   if (endIndex === -1) return molfile;
   return lines.slice(0, endIndex + 1).join('\n');
 };
@@ -236,6 +244,21 @@ const getTemplateType = (polymerValue) => {
   return { type: binaryTemplates, size: templateSplits[1] || '1-1' };
 };
 
+// Parse polymer entry as atomIndex/templateId/size when present (e.g. "2/10/1.00-1.00").
+// Returns { atomIndex, type, size } or null when format is legacy (e.g. "0", "0s", "3/95/1.00-1.00" without leading index).
+const parsePolymerEntryByAtomIndex = (polymerValue) => {
+  const trimmed = (polymerValue || '').trim();
+  if (!trimmed || trimmed.includes('s')) return null;
+  const parts = trimmed.split('/');
+  if (parts.length < 3) return null;
+  const atomIndex = parseInt(parts[0], 10);
+  const templateId = parts[1];
+  if (Number.isNaN(atomIndex) || templateId === undefined) return null;
+  const templateIdNum = parseInt(templateId, 10);
+  if (Number.isNaN(templateIdNum)) return null;
+  return { atomIndex, type: templateId, size: parts[2] || '1-1' };
+};
+
 // Helper to create a bounding box for a template with atom location
 const templateWithBoundingBox = async (templateType, atomLocation, templateSize) => {
   let template = await fetchSurfaceChemistryImageData(templateType);
@@ -276,18 +299,31 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
     const polymerTagFromPasted = await hasKetcherData(initMol);
     const textNodes = await hasTextNodes(initMol);
     const molfileForIndigo = getStandardMolfileForIndigo(initMol);
-    const formatError = (err) => (err?.message != null ? err.message : (err && typeof err?.toString === 'function' ? err.toString() : String(err)));
+    const formatError = (err) => {
+      if (err?.message != null) return err.message;
+      if (err && typeof err?.toString === 'function') return err.toString();
+      return String(err);
+    };
+    const notifyMolfileError = (details, level = 'error') => {
+      NotificationActions.add({
+        title: 'Structure Editor error',
+        message: `${details}`,
+        level,
+        position: 'tc',
+        dismissible: 'button',
+        autoDismiss: 12,
+      });
+    };
+    const conversionErrors = [];
 
     let ketFile = await editor._structureDef.editor.indigo.convert(molfileForIndigo).catch((err) => {
-      console.error('invalid molfile. Please try again', formatError(err));
+      conversionErrors.push(`Ketcher/Indigo ${formatError(err)}`);
       return null;
     });
 
-    if (!ketFile?.struct && molfileForIndigo !== initMol) {
-      ketFile = await editor._structureDef.editor.indigo.convert(initMol).catch((err) => {
-        console.error('invalid molfile (fallback). Please try again', formatError(err));
-        return null;
-      });
+    if (conversionErrors.length > 0) {
+      const uniqueErrors = [...new Set(conversionErrors)];
+      notifyMolfileError(uniqueErrors.join(' | '), 'error');
     }
 
     if (!ketFile || !ketFile.struct) {
@@ -360,6 +396,7 @@ export {
   hasKetcherData,
   hasTextNodes,
   getTemplateType,
+  parsePolymerEntryByAtomIndex,
   templateWithBoundingBox,
   fetchKetcherData,
   loadKetcherData,

@@ -1,12 +1,26 @@
 import { get, cloneDeep } from 'lodash';
 import {
   materialTypes, getStandardUnits, getCellDataType, getStandardValue, convertUnit,
-  getEntryDefs, getCurrentEntry
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  MaterialOverlay, MaterialRenderer, MenuHeader
+  MaterialOverlay, EntrySelectionHeader, UnitToggleHeader,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { calculateTON, calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
+
+function getVariationsSbmmID(id) {
+  return `sbmm:${id}`;
+}
+
+function normalizeSbmmForVariations(material) {
+  return {
+    ...material,
+    id: getVariationsSbmmID(material.id),
+    molecule_molecular_weight:
+      material.molecule_molecular_weight
+      ?? material.sequence_based_macromolecule?.molecular_weight
+      ?? null,
+  };
+}
 
 function getMolFromGram(gram, material) {
   if (material.aux.loading) {
@@ -91,7 +105,15 @@ function computePercentYieldGas(materialAmount, feedstockMaterial, vesselVolume)
 function getReactionMaterials(reaction) {
   const reactionCopy = cloneDeep(reaction);
   return Object.entries(materialTypes).reduce((materialsByType, [materialType, { reactionAttributeName }]) => {
-    materialsByType[materialType] = reactionCopy[reactionAttributeName].filter((material) => !material.isNew);
+    const materials = reactionCopy[reactionAttributeName] || [];
+    if (materialType === 'reactants') {
+      materialsByType[materialType] = [
+        ...materials,
+        ...(reactionCopy.reactant_sbmm_samples || []).map(normalizeSbmmForVariations)
+      ].filter((material) => !material.isNew);
+    } else {
+      materialsByType[materialType] = materials.filter((material) => !material.isNew);
+    }
     return materialsByType;
   }, {});
 }
@@ -168,8 +190,9 @@ function getMaterialEntries(materialType, gasType) {
 }
 
 function cellIsEditable(params) {
-  const entry = getCurrentEntry(params.colDef.entryDefs);
-  const cellData = get(params.data, params.colDef.field);
+  const { data, colDef } = params;
+  const { entry, field } = colDef;
+  const cellData = get(data, field);
   const { isReference, gasType, materialType } = cellData.aux;
 
   switch (entry) {
@@ -270,16 +293,10 @@ function getReactionMaterialsHashes(materials, gasMode, vesselVolume) {
   );
 }
 
-function getMaterialColumnGroupChild(material, materialType, gasMode, externalEntryDefs = undefined) {
+function getMaterialColumnGroupChild(material, materialType, gasMode) {
   const materialCopy = cloneDeep(material);
-
   const gasType = getMaterialGasType(materialCopy, gasMode);
-
-  const entryDefs = externalEntryDefs || getEntryDefs(getMaterialEntries(
-    materialType,
-    gasType
-  ));
-
+  const entries = getMaterialEntries(materialType, gasType);
   let names = new Set([]);
   ['short_label', 'external_label', 'name', 'molecule_formula', 'molecule_iupac_name'].forEach((name) => {
     if (materialCopy[name]) {
@@ -290,41 +307,45 @@ function getMaterialColumnGroupChild(material, materialType, gasMode, externalEn
   names = Array.from(names);
 
   return {
-    field: `${materialType}.${materialCopy.id}`, // Must be unique.
-    tooltipField: `${materialType}.${materialCopy.id}`,
-    tooltipComponent: MaterialOverlay,
-    entryDefs,
-    editable: (params) => cellIsEditable(params),
-    cellDataType: getCellDataType(getCurrentEntry(entryDefs), gasType),
-    headerComponent: MenuHeader,
-    headerComponentParams: {
-      names,
-      gasType,
-    },
-    cellRenderer: MaterialRenderer
+    headerGroupComponent: EntrySelectionHeader,
+    headerGroupComponentParams: { names, gasType },
+    headerName: names[0],
+    groupId: `${materialCopy.id}`,
+    children: entries.map((entry, index) => (
+      {
+        field: `${materialType}.${materialCopy.id}`, // Must be unique.
+        colId: `${materialType}.${materialCopy.id}.${entry}`,
+        headerComponentParams: { innerHeaderComponent: UnitToggleHeader },
+        tooltipField: `${materialType}.${materialCopy.id}`,
+        tooltipComponent: MaterialOverlay,
+        editable: (params) => cellIsEditable(params),
+        cellDataType: getCellDataType(entry, gasType),
+        displayUnit: getStandardUnits(entry)[0],
+        units: getStandardUnits(entry),
+        entry,
+        hide: index !== 0,
+      })),
   };
 }
 
 function updateColumnDefinitionsMaterialsOnAuxChange(columnDefinitions, materials, gasMode) {
-  const materialTypeKeys = Object.keys(materialTypes);
   const updatedColumnDefinitions = cloneDeep(columnDefinitions);
 
-  return updatedColumnDefinitions.map((parent) => {
-    if (parent.groupId && materialTypeKeys.includes(parent.groupId) && parent.children) {
-      parent.children = parent.children.map((child) => {
-        const [materialType, materialId] = child.field.split('.');
-        const material = materials[materialType].find((m) => m.id.toString() === materialId);
-        const gasType = getMaterialGasType(material, gasMode);
+  Object.keys(materialTypes).forEach((materialType) => {
+    const group = updatedColumnDefinitions.find((groupColDef) => groupColDef.groupId === materialType);
+    group.children = group.children.map((subGroup) => {
+      const material = materials[materialType].find((m) => m.id.toString() === subGroup.groupId);
+      const gasType = getMaterialGasType(material, gasMode);
 
-        if (gasType !== child.headerComponentParams.gasType) {
-          return getMaterialColumnGroupChild(material, materialType, gasMode);
-        }
+      if (gasType !== subGroup.headerGroupComponentParams.gasType) {
+        return getMaterialColumnGroupChild(material, materialType, gasMode);
+      }
 
-        return child;
-      });
-    }
-    return parent;
+      return subGroup;
+    });
   });
+
+  return updatedColumnDefinitions;
 }
 
 function removeObsoleteMaterialColumns(materials, columns) {

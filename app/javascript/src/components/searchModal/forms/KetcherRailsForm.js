@@ -62,7 +62,6 @@ function KetcherRailsform() {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
-    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
     let tanimoto = searchStore.ketcherRailsValues.tanimotoThreshold;
     if (tanimoto <= 0 || tanimoto > 1) {
       tanimoto = 0.3;
@@ -80,7 +79,6 @@ function KetcherRailsform() {
     searchStore.loadSearchResults({
       selection,
       collectionId,
-      isSync,
       moleculeSort: true,
     });
     searchStore.clearSearchAndTabResults();
@@ -142,7 +140,7 @@ function KetcherRailsform() {
               {editor && <KetcherEditor editor={editor} molfile={""} iH={iframeHeight} iS={iframeStyle} />}
             </div>
             <div className="ketcher-buttons" id="ketcher-search-footer">
-              <ButtonToolbar className="gap-2">
+              <ButtonToolbar>
                 <Button variant="primary" onClick={() => searchStore.handleCancel()}>
                   Cancel
                 </Button>

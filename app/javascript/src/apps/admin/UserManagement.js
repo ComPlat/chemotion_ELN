@@ -13,13 +13,16 @@ import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import GenericAdminModal from 'src/apps/admin/generic/GenericAdminModal';
 
-function MessageAlert({ message, onHide }) {
+function MessageAlert({ message, link = null, onHide }) {
   return (
     message?.length > 0 ? (
       <Alert variant="info" onDismiss={onHide} dismissible>
         <p>
           {message}
         </p>
+        {link && (
+          <a target="_blank" href={link} rel="noreferrer">{link}</a>
+        )}
       </Alert>
     ) : null
   );
@@ -27,10 +30,12 @@ function MessageAlert({ message, onHide }) {
 
 MessageAlert.propTypes = {
   message: propType.string,
+  link: propType.string,
   onHide: propType.func.isRequired,
 };
 MessageAlert.defaultProps = {
   message: '',
+  link: null,
 };
 
 const loadUserByName = (input) => {
@@ -78,6 +83,15 @@ const confirmEmailChangeTooltip = (email) => (
 );
 const disableTooltip = <Tooltip id="assign_button">Lock this account</Tooltip>;
 const enableTooltip = <Tooltip id="assign_button">Unlock this account</Tooltip>;
+
+function Disable2FATooltip() {
+  return <Tooltip id="assign_button">Enable 2FA (Two factor authentication)</Tooltip>;
+}
+
+function Enable2FATooltip() {
+  return <Tooltip id="assign_button">Disable 2FA (Two factor authentication)</Tooltip>;
+}
+
 const converterEnableTooltip = (
   <Tooltip id="assign_button">
     Enable Converter profiles editing for this user (currently disabled)
@@ -158,6 +172,7 @@ export default class UserManagement extends React.Component {
       messageRestoreAccountModal: '',
       processingSummaryUserFile: '',
       alertMessage: null,
+      alertMessageLink: null,
       filterCriteria: {}
     };
     this.handleFetchUsers = this.handleFetchUsers.bind(this);
@@ -260,14 +275,16 @@ export default class UserManagement extends React.Component {
     this.setState({ alertMessage: null });
   }
 
-  handleShowAlert(message) {
-    this.setState({ alertMessage: message });
+  handleShowAlert(message, link = null) {
+    this.setState({ alertMessage: message, alertMessageLink: link });
   }
 
   handleGenericAdminModalCb(user) {
     const { users } = this.state;
     const { id, error } = user;
-    if (error) { this.setState({ alertMessage: error }); }
+    if (error) {
+      this.setState({ alertMessage: error });
+    }
     this.setState({
       users: users.map((u) => (u.id === id ? user : u)),
       user,
@@ -290,6 +307,20 @@ export default class UserManagement extends React.Component {
   handleEnableDisableAccount(id, lockedAt) {
     const message = lockedAt !== null ? 'Account unlocked!' : 'Account locked! User can unlock it under condition'; //
     this.updateUser({ id, enable: lockedAt !== null }, message);
+  }
+
+  async handleEnableDisable2FA(id, name, current2Fa) {
+    const res = await AdminFetcher.enableDisableOtp({ id, enable: !current2Fa });
+    if (res.link) {
+      this.handleShowAlert('Link to enable 2FA:', res.link);
+    } else {
+      const { users } = this.state;
+      this.setState({
+        users: users.map((user) => (user.id === id ? res : user)),
+        user: res,
+        alertMessage: `${name}: 2FA has been disabled!`
+      });
+    }
   }
 
   handleConverterAdmin(id, isConverterAdmin) {
@@ -402,7 +433,8 @@ export default class UserManagement extends React.Component {
     if (!validateEmail(this.u_email.value.trim())) {
       this.setState({ messageEditUserModal: 'You have entered an invalid email address!' });
       return false;
-    } if (this.u_firstname.value.trim() === '' || this.u_lastname.value.trim()
+    }
+    if (this.u_firstname.value.trim() === '' || this.u_lastname.value.trim()
       === '' || this.u_abbr.value.trim() === '') {
       this.setState({ messageEditUserModal: 'please input first name, last name and name abbreviation!' });
       return false;
@@ -665,19 +697,24 @@ export default class UserManagement extends React.Component {
     if (this.email.value === '') { // also validated in backend
       this.setState({ messageNewUserModal: 'Please input email.' });
       return false;
-    } if (!validateEmail(this.email.value.trim())) { // also validated in backend
+    }
+    if (!validateEmail(this.email.value.trim())) { // also validated in backend
       this.setState({ messageNewUserModal: 'You have entered an invalid email address!' });
       return false;
-    } if (this.password.value.trim() === '' || this.passwordConfirm.value.trim() === '') {
+    }
+    if (this.password.value.trim() === '' || this.passwordConfirm.value.trim() === '') {
       this.setState({ messageNewUserModal: 'Please input password with correct format.' });
       return false;
-    } if (this.password.value.trim() !== this.passwordConfirm.value.trim()) {
+    }
+    if (this.password.value.trim() !== this.passwordConfirm.value.trim()) {
       this.setState({ messageNewUserModal: 'passwords do not mach!' });
       return false;
-    } if (this.password.value.trim().length < 8) { // also validated in backend
+    }
+    if (this.password.value.trim().length < 8) { // also validated in backend
       this.setState({ messageNewUserModal: 'Password is too short (minimum is 8 characters)' });
       return false;
-    } if (this.firstname.value.trim() === '' || this.lastname.value.trim() === ''
+    }
+    if (this.firstname.value.trim() === '' || this.lastname.value.trim() === ''
       || this.nameAbbr.value.trim() === '') { // also validated in backend
       this.setState({ messageNewUserModal: 'Please input First name, Last name and Name abbreviation' });
       return false;
@@ -742,7 +779,9 @@ export default class UserManagement extends React.Component {
                 as="textarea"
                 placeholder="Message..."
                 rows="20"
-                ref={(ref) => { this.myMessage = ref; }}
+                ref={(ref) => {
+                  this.myMessage = ref;
+                }}
               />
             </Form.Group>
             <Form.Group className="my-3">
@@ -792,7 +831,13 @@ export default class UserManagement extends React.Component {
                   <Form.Label>
                     Email:
                   </Form.Label>
-                  <Form.Control type="email" name="email" ref={(ref) => { this.email = ref; }} />
+                  <Form.Control
+                    type="email"
+                    name="email"
+                    ref={(ref) => {
+                      this.email = ref;
+                    }}
+                  />
                 </Form.Group>
                 <Form.Group
                   className="w-75 mb-3"
@@ -801,7 +846,13 @@ export default class UserManagement extends React.Component {
                   <Form.Label>
                     Password:
                   </Form.Label>
-                  <Form.Control type="password" name="password" ref={(ref) => { this.password = ref; }} />
+                  <Form.Control
+                    type="password"
+                    name="password"
+                    ref={(ref) => {
+                      this.password = ref;
+                    }}
+                  />
                 </Form.Group>
                 <Form.Group
                   className="w-75 mb-3"
@@ -810,7 +861,12 @@ export default class UserManagement extends React.Component {
                   <Form.Label>
                     Password Confirmation:
                   </Form.Label>
-                  <Form.Control type="password" ref={(ref) => { this.passwordConfirm = ref; }} />
+                  <Form.Control
+                    type="password"
+                    ref={(ref) => {
+                      this.passwordConfirm = ref;
+                    }}
+                  />
                 </Form.Group>
                 <Form.Group
                   className="w-75 mb-3"
@@ -819,7 +875,13 @@ export default class UserManagement extends React.Component {
                   <Form.Label>
                     First name:
                   </Form.Label>
-                  <Form.Control type="text" name="firstname" ref={(ref) => { this.firstname = ref; }} />
+                  <Form.Control
+                    type="text"
+                    name="firstname"
+                    ref={(ref) => {
+                      this.firstname = ref;
+                    }}
+                  />
                 </Form.Group>
                 <Form.Group
                   className="w-75 mb-3"
@@ -829,7 +891,13 @@ export default class UserManagement extends React.Component {
                     {' '}
                     Last name:
                   </Form.Label>
-                  <Form.Control type="text" name="lastname" ref={(ref) => { this.lastname = ref; }} />
+                  <Form.Control
+                    type="text"
+                    name="lastname"
+                    ref={(ref) => {
+                      this.lastname = ref;
+                    }}
+                  />
                 </Form.Group>
                 <Form.Group
                   className="w-75 mb-3"
@@ -838,7 +906,13 @@ export default class UserManagement extends React.Component {
                   <Form.Label>
                     Abbr (3) *:
                   </Form.Label>
-                  <Form.Control type="text" name="nameAbbr" ref={(ref) => { this.nameAbbr = ref; }} />
+                  <Form.Control
+                    type="text"
+                    name="nameAbbr"
+                    ref={(ref) => {
+                      this.nameAbbr = ref;
+                    }}
+                  />
                 </Form.Group>
                 <Form.Group
                   className="w-75 mb-3"
@@ -847,7 +921,10 @@ export default class UserManagement extends React.Component {
                   <Form.Label>
                     Type:
                   </Form.Label>
-                  <Form.Select ref={(ref) => { this.type = ref; }}>
+                  <Form.Select ref={(ref) => {
+                    this.type = ref;
+                  }}
+                  >
                     <option value="Person">Person</option>
                     <option value="Admin">Admin</option>
                   </Form.Select>
@@ -972,7 +1049,9 @@ export default class UserManagement extends React.Component {
                         type="email"
                         name="u_email"
                         defaultValue={user.email}
-                        ref={(ref) => { this.u_email = ref; }}
+                        ref={(ref) => {
+                          this.u_email = ref;
+                        }}
                         className="fs-6"
                       />
                     </Col>
@@ -986,7 +1065,9 @@ export default class UserManagement extends React.Component {
                         type="text"
                         name="u_firstname"
                         defaultValue={user.first_name}
-                        ref={(ref) => { this.u_firstname = ref; }}
+                        ref={(ref) => {
+                          this.u_firstname = ref;
+                        }}
                         className="fs-6"
                       />
                     </Col>
@@ -1000,7 +1081,9 @@ export default class UserManagement extends React.Component {
                         type="text"
                         name="u_lastname"
                         defaultValue={user.last_name}
-                        ref={(ref) => { this.u_lastname = ref; }}
+                        ref={(ref) => {
+                          this.u_lastname = ref;
+                        }}
                         className="fs-6"
                       />
                     </Col>
@@ -1014,7 +1097,9 @@ export default class UserManagement extends React.Component {
                         type="text"
                         name="u_abbr"
                         defaultValue={user.initials}
-                        ref={(ref) => { this.u_abbr = ref; }}
+                        ref={(ref) => {
+                          this.u_abbr = ref;
+                        }}
                         className="fs-6"
                       />
                     </Col>
@@ -1029,7 +1114,9 @@ export default class UserManagement extends React.Component {
                         min="1"
                         name="u_avail"
                         defaultValue={user.allocated_space === 0 ? '' : user.allocated_space / 1024 / 1024}
-                        ref={(ref) => { this.u_avail = ref; }}
+                        ref={(ref) => {
+                          this.u_avail = ref;
+                        }}
                         className="fs-6"
                       />
                     </Col>
@@ -1041,7 +1128,9 @@ export default class UserManagement extends React.Component {
                     <Col sm="7">
                       <Form.Select
                         defaultValue={user.type}
-                        ref={(ref) => { this.u_type = ref; }}
+                        ref={(ref) => {
+                          this.u_type = ref;
+                        }}
                         className="fs-6"
                       >
                         <option value="Person">Person</option>
@@ -1239,7 +1328,7 @@ export default class UserManagement extends React.Component {
               </Col>
             </Form.Group>
             {this.state.deletedUsers.length > 0
-                && renderDeletedUsersTable(this.state.deletedUsers)}
+              && renderDeletedUsersTable(this.state.deletedUsers)}
           </Form>
         </Modal.Body>
         <Modal.Footer className="modal-footer border-0">
@@ -1440,7 +1529,23 @@ export default class UserManagement extends React.Component {
               <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
             </Button>
           </OverlayTrigger>
-          <OverlayTrigger placement="bottom" overlay={(g.converter_admin === null || g.converter_admin === false) ? converterEnableTooltip : converterDisableTooltip}>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={g.otp_required_for_login ? Enable2FATooltip() : Disable2FATooltip()}
+          >
+            <Button
+              size="sm"
+              variant={g.otp_required_for_login ? 'light' : 'warning'}
+              onClick={() => this.handleEnableDisable2FA(g.id, g.name, g.otp_required_for_login)}
+              className="me-1"
+            >
+              <i className="fa fa-mobile" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={(g.converter_admin === null || g.converter_admin === false) ? converterEnableTooltip : converterDisableTooltip}
+          >
             <Button
               size="sm"
               variant={(g.converter_admin === null || g.converter_admin === false) ? 'light' : 'success'}
@@ -1450,7 +1555,10 @@ export default class UserManagement extends React.Component {
               <i className="fa fa-hourglass-half" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
-          <OverlayTrigger placement="bottom" overlay={(g.is_templates_moderator === null || g.is_templates_moderator === false) ? templateModeratorEnableTooltip : templateModeratorDisableTooltip}>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={(g.is_templates_moderator === null || g.is_templates_moderator === false) ? templateModeratorEnableTooltip : templateModeratorDisableTooltip}
+          >
             <Button
               size="sm"
               variant={(g.is_templates_moderator === null || g.is_templates_moderator === false) ? 'light' : 'success'}
@@ -1460,7 +1568,10 @@ export default class UserManagement extends React.Component {
               <i className="fa fa-book" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
-          <OverlayTrigger placement="bottom" overlay={(g.molecule_editor == null || g.molecule_editor === false) ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip}>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={(g.molecule_editor == null || g.molecule_editor === false) ? moleculeModeratorEnableTooltip : moleculeModeratorDisableTooltip}
+          >
             <Button
               size="sm"
               variant={(g.molecule_editor === null || g.molecule_editor === false) ? 'light' : 'success'}
@@ -1470,7 +1581,10 @@ export default class UserManagement extends React.Component {
               <i className="icon-sample" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>}>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>}
+          >
             <Button
               size="sm"
               variant={(g.generic_admin?.elements || g.generic_admin?.segments || g.generic_admin?.datasets) ? 'success' : 'light'}
@@ -1480,7 +1594,10 @@ export default class UserManagement extends React.Component {
               <i className="fa fa-empire" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
-          <OverlayTrigger placement="bottom" overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={!g.account_active ? accountActiveTooltip : accountInActiveTooltip}
+          >
             <Button
               size="sm"
               variant={g.account_active === true ? 'light' : 'danger'}
@@ -1519,14 +1636,20 @@ export default class UserManagement extends React.Component {
 
     return (
       <div>
-        <MessageAlert message={this.state.alertMessage} onHide={this.handleDismissAlert} />
+        <MessageAlert message={this.state.alertMessage} link={this.state.alertMessageLink} onHide={this.handleDismissAlert} />
         <Card>
           <Card.Body>
             <Button variant="warning" size="md" className="me-1" onClick={() => this.handleMsgShow()}>
               Send Message
               <i className="fa fa-commenting-o ms-1" />
             </Button>
-            <Button variant="primary" size="md" className="me-1" onClick={() => this.handleNewUserShow()} data-cy="create-user">
+            <Button
+              variant="primary"
+              size="md"
+              className="me-1"
+              onClick={() => this.handleNewUserShow()}
+              data-cy="create-user"
+            >
               New User
               <i className="fa fa-plus ms-1" />
             </Button>

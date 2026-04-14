@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_03_04_075700) do
+ActiveRecord::Schema.define(version: 2026_03_25_085008) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -172,6 +172,8 @@ ActiveRecord::Schema.define(version: 2026_03_04_075700) do
     t.datetime "updated_at"
     t.datetime "deleted_at"
     t.jsonb "log_data"
+    t.bigint "sequence_based_macromolecule_sample_id"
+    t.index ["sequence_based_macromolecule_sample_id"], name: "idx_chemicals_sbmm_sample_id"
   end
 
   create_table "code_logs", id: :uuid, default: -> { "uuid_generate_v4()" }, force: :cascade do |t|
@@ -184,30 +186,37 @@ ActiveRecord::Schema.define(version: 2026_03_04_075700) do
     t.index ["source", "source_id"], name: "index_code_logs_on_source_and_source_id"
   end
 
+  create_table "collection_shares", force: :cascade do |t|
+    t.bigint "collection_id"
+    t.bigint "shared_with_id", null: false
+    t.integer "permission_level", default: 0, null: false
+    t.integer "celllinesample_detail_level", default: 0, null: false
+    t.integer "devicedescription_detail_level", default: 0, null: false
+    t.integer "element_detail_level", default: 0, null: false
+    t.integer "reaction_detail_level", default: 0, null: false
+    t.integer "researchplan_detail_level", default: 0, null: false
+    t.integer "sample_detail_level", default: 0, null: false
+    t.integer "screen_detail_level", default: 0, null: false
+    t.integer "sequencebasedmacromoleculesample_detail_level", default: 0, null: false
+    t.integer "wellplate_detail_level", default: 0, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["collection_id"], name: "index_collection_shares_on_collection_id"
+    t.index ["shared_with_id"], name: "index_collection_shares_on_shared_with_id"
+  end
+
   create_table "collections", id: :serial, force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "ancestry", default: "/", null: false, collation: "C"
     t.text "label", null: false
-    t.integer "shared_by_id"
-    t.boolean "is_shared", default: false
-    t.integer "permission_level", default: 0
-    t.integer "sample_detail_level", default: 10
-    t.integer "reaction_detail_level", default: 10
-    t.integer "wellplate_detail_level", default: 10
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "position"
-    t.integer "screen_detail_level", default: 10
     t.boolean "is_locked", default: false
     t.datetime "deleted_at"
-    t.boolean "is_synchronized", default: false, null: false
-    t.integer "researchplan_detail_level", default: 10
-    t.integer "element_detail_level", default: 10
     t.jsonb "tabs_segment", default: {}
-    t.integer "celllinesample_detail_level", default: 10
     t.bigint "inventory_id"
-    t.integer "devicedescription_detail_level", default: 10
-    t.integer "sequencebasedmacromoleculesample_detail_level", default: 10
+    t.boolean "shared", default: false, null: false
     t.index ["ancestry"], name: "index_collections_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_collections_on_deleted_at"
     t.index ["inventory_id"], name: "index_collections_on_inventory_id"
@@ -1196,14 +1205,31 @@ ActiveRecord::Schema.define(version: 2026_03_04_075700) do
     t.boolean "gaseous", default: false
     t.jsonb "vessel_size", default: {"unit"=>"ml", "amount"=>nil}
     t.jsonb "log_data"
+    t.boolean "weight_percentage", default: false
     t.decimal "volume", precision: 10, scale: 4
     t.boolean "use_reaction_volume", default: false, null: false
-    t.boolean "weight_percentage", default: false
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
     t.index ["role"], name: "index_reactions_on_role"
     t.index ["rxno"], name: "index_reactions_on_rxno", order: :desc
+  end
+
+  create_table "reactions_reactant_sbmm_samples", force: :cascade do |t|
+    t.integer "reaction_id", null: false
+    t.bigint "sequence_based_macromolecule_sample_id", null: false
+    t.integer "position"
+    t.datetime "deleted_at"
+    t.boolean "show_label", default: false, null: false
+    t.boolean "reference", default: false, null: false
+    t.float "equivalent"
+    t.float "weight_percentage"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.jsonb "log_data"
+    t.index ["deleted_at"], name: "idx_rxn_reactant_sbmm_on_deleted"
+    t.index ["reaction_id"], name: "idx_rxn_reactant_sbmm_on_rxn_id"
+    t.index ["sequence_based_macromolecule_sample_id"], name: "idx_rxn_reactant_sbmm_on_sbmm_id"
   end
 
   create_table "reactions_samples", id: :serial, force: :cascade do |t|
@@ -1226,6 +1252,7 @@ ActiveRecord::Schema.define(version: 2026_03_04_075700) do
     t.boolean "weight_percentage_reference", default: false
     t.float "weight_percentage"
     t.index ["reaction_id"], name: "index_reactions_samples_on_reaction_id"
+    t.index ["sample_id", "type"], name: "index_reactions_samples_on_sample_id_type"
     t.index ["sample_id"], name: "index_reactions_samples_on_sample_id"
   end
 
@@ -1426,6 +1453,7 @@ ActiveRecord::Schema.define(version: 2026_03_04_075700) do
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
+    t.index ["short_label"], name: "index_samples_on_short_label"
     t.index ["user_id"], name: "index_samples_on_user_id"
   end
 
@@ -1587,8 +1615,12 @@ ActiveRecord::Schema.define(version: 2026_03_04_075700) do
     t.string "purification_method", default: ""
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.float "concentration_rt_value"
+    t.string "concentration_rt_unit", default: "mol/L", null: false
+    t.boolean "inventory_sample", default: false, null: false
     t.index ["ancestry"], name: "idx_sbmm_samples_ancestry", opclass: :varchar_pattern_ops
     t.index ["deleted_at"], name: "idx_sbmm_samples_deleted_at"
+    t.index ["inventory_sample"], name: "idx_sbmm_samples_inventory_sample"
     t.index ["sequence_based_macromolecule_id"], name: "idx_sbmm_samples_sbmm"
     t.index ["user_id"], name: "idx_sbmm_samples_user"
   end
@@ -1643,29 +1675,6 @@ ActiveRecord::Schema.define(version: 2026_03_04_075700) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["channel_id", "user_id"], name: "index_subscriptions_on_channel_id_and_user_id", unique: true
-  end
-
-  create_table "sync_collections_users", id: :serial, force: :cascade do |t|
-    t.integer "user_id"
-    t.integer "collection_id"
-    t.integer "shared_by_id"
-    t.integer "permission_level", default: 0
-    t.integer "sample_detail_level", default: 0
-    t.integer "reaction_detail_level", default: 0
-    t.integer "wellplate_detail_level", default: 0
-    t.integer "screen_detail_level", default: 0
-    t.string "fake_ancestry"
-    t.integer "researchplan_detail_level", default: 10
-    t.string "label"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.integer "element_detail_level", default: 10
-    t.integer "celllinesample_detail_level", default: 10
-    t.integer "devicedescription_detail_level", default: 10
-    t.integer "sequencebasedmacromoleculesample_detail_level", default: 10
-    t.index ["collection_id"], name: "index_sync_collections_users_on_collection_id"
-    t.index ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id"
-    t.index ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry"
   end
 
   create_table "text_templates", id: :serial, force: :cascade do |t|
@@ -1748,6 +1757,12 @@ ActiveRecord::Schema.define(version: 2026_03_04_075700) do
     t.jsonb "providers"
     t.bigint "used_space", default: 0
     t.bigint "allocated_space", default: 0
+    t.string "encrypted_otp_secret"
+    t.string "encrypted_otp_secret_iv"
+    t.string "encrypted_otp_secret_salt"
+    t.integer "consumed_timestep"
+    t.boolean "otp_required_for_login"
+    t.string "otp_backup_codes", array: true
     t.jsonb "tokens"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
@@ -1863,12 +1878,17 @@ ActiveRecord::Schema.define(version: 2026_03_04_075700) do
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
   end
 
+  add_foreign_key "chemicals", "sequence_based_macromolecule_samples"
+  add_foreign_key "collection_shares", "collections"
+  add_foreign_key "collection_shares", "users", column: "shared_with_id"
   add_foreign_key "collections", "inventories"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "collections"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "sequence_based_macromolecule_samples"
   add_foreign_key "components", "samples"
   add_foreign_key "layer_tracks", "layers", column: "identifier", primary_key: "identifier"
   add_foreign_key "literals", "literatures"
+  add_foreign_key "reactions_reactant_sbmm_samples", "reactions"
+  add_foreign_key "reactions_reactant_sbmm_samples", "sequence_based_macromolecule_samples"
   add_foreign_key "report_templates", "attachments"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
@@ -2804,20 +2824,6 @@ ActiveRecord::Schema.define(version: 2026_03_04_075700) do
       CREATE TRIGGER logidze_on_wells BEFORE INSERT OR UPDATE ON public.wells FOR EACH ROW WHEN ((COALESCE(current_setting('logidze.disabled'::text, true), ''::text) <> 'on'::text)) EXECUTE FUNCTION logidze_logger('null', 'updated_at')
   SQL
 
-  create_view "v_samples_collections", sql_definition: <<-SQL
-      SELECT cols.id AS cols_id,
-      cols.user_id AS cols_user_id,
-      cols.sample_detail_level AS cols_sample_detail_level,
-      cols.wellplate_detail_level AS cols_wellplate_detail_level,
-      cols.shared_by_id AS cols_shared_by_id,
-      cols.is_shared AS cols_is_shared,
-      samples.id AS sams_id,
-      samples.name AS sams_name
-     FROM ((collections cols
-       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
-       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
-    WHERE (cols.deleted_at IS NULL);
-  SQL
   create_view "literal_groups", sql_definition: <<-SQL
       SELECT lits.element_type,
       lits.element_id,

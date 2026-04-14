@@ -4,10 +4,9 @@ import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromolec
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 export default class SequenceBasedMacromoleculeSamplesFetcher {
-  static fetchByCollectionId(id, queryParams = {}, isSync = false, listOrder = 'sbmm') {
-    const updatedQueryParams = { ...queryParams, listOrder };
+  static fetchByCollectionId(id, queryParams = {}, listOrder = 'sbmm') {
     return BaseFetcher.fetchByCollectionId(
-      id, updatedQueryParams, isSync, 'sequence_based_macromolecule_samples', SequenceBasedMacromoleculeSample
+      id, { ...queryParams, listOrder }, 'sequence_based_macromolecule_samples', SequenceBasedMacromoleculeSample
     );
   }
 
@@ -128,6 +127,9 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
         } else if (json.sequence_based_macromolecule_sample) {
           const updatedSequenceBasedMacromoleculeSample =
             new SequenceBasedMacromoleculeSample(json.sequence_based_macromolecule_sample);
+          if (sequenceBasedMacromoleculeSample.belongTo) {
+            updatedSequenceBasedMacromoleculeSample.belongTo = sequenceBasedMacromoleculeSample.belongTo;
+          }
           updatedSequenceBasedMacromoleculeSample.updated = true;
           updatedSequenceBasedMacromoleculeSample.updateChecksum();
           return updatedSequenceBasedMacromoleculeSample;

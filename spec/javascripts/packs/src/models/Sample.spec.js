@@ -509,6 +509,161 @@ describe('Sample', async () => {
     });
   });
 
+  describe('Sample.clearMoleculeData()', () => {
+    it('clears molecule, molfile, and sample_svg_file for mixtures', () => {
+      const sample = new Sample();
+      sample.sample_type = 'Mixture';
+      sample.molecule = { id: 123 };
+      sample.molfile = 'molfile content';
+      sample.sample_svg_file = 'svg_file.svg';
+
+      sample.clearMoleculeData();
+
+      expect(sample.molecule).toBeNull();
+      expect(sample.molfile).toBe('');
+      expect(sample.sample_svg_file).toBeNull();
+    });
+
+    it('clears molecule and molfile but preserves sample_svg_file for non-mixtures', () => {
+      const sample = new Sample();
+      sample.sample_type = 'Micromolecule';
+      sample.molecule = { id: 123 };
+      sample.molfile = 'molfile content';
+      sample.sample_svg_file = 'svg_file.svg';
+
+      sample.clearMoleculeData();
+
+      expect(sample.molecule).toBeNull();
+      expect(sample.molfile).toBe('');
+      expect(sample.sample_svg_file).toBe('svg_file.svg');
+    });
+  });
+
+  describe('Sample.deleteMixtureComponent()', () => {
+    it('removes the specified component from components array', () => {
+      const sample = new Sample();
+      sample.sample_type = 'Mixture';
+      const comp1 = {
+        id: 1, material_group: 'solid', amount_g: 5, position: 0
+      };
+      const comp2 = {
+        id: 2, material_group: 'solid', amount_g: 10, position: 1
+      };
+      sample.components = [comp1, comp2];
+
+      sample.deleteMixtureComponent(comp1);
+
+      expect(sample.components.length).toBe(1);
+      expect(sample.components[0]).toBe(comp2);
+    });
+
+    it('updates component positions after deletion', () => {
+      const sample = new Sample();
+      sample.sample_type = 'Mixture';
+      const comp1 = {
+        id: 1, material_group: 'solid', amount_g: 5, position: 0, reference: true
+      };
+      const comp2 = {
+        id: 2, material_group: 'solid', amount_g: 10, position: 1
+      };
+      const comp3 = {
+        id: 3, material_group: 'solid', amount_g: 15, position: 2
+      };
+      sample.components = [comp1, comp2, comp3];
+
+      sample.deleteMixtureComponent(comp2);
+
+      expect(sample.components[0].position).toBe(0);
+      expect(sample.components[1].position).toBe(1);
+    });
+
+    it('recalculates total mixture mass after deletion', () => {
+      const sample = new Sample();
+      sample.sample_type = 'Mixture';
+      const comp1 = {
+        id: 1, material_group: 'solid', amount_g: 5, position: 0
+      };
+      const comp2 = {
+        id: 2, material_group: 'solid', amount_g: 10, position: 1
+      };
+      sample.components = [comp1, comp2];
+
+      sample.deleteMixtureComponent(comp1);
+
+      expect(sample.sample_details.total_mixture_mass_g).toBeCloseTo(10, 6);
+    });
+
+    it('clears molecule data when last component is deleted', () => {
+      const sample = new Sample();
+      sample.sample_type = 'Mixture';
+      sample.molecule = { id: 123 };
+      sample.molfile = 'test molfile';
+      sample.sample_svg_file = 'test.svg';
+      const comp1 = {
+        id: 1, material_group: 'solid', amount_g: 5, position: 0
+      };
+      sample.components = [comp1];
+
+      sample.deleteMixtureComponent(comp1);
+
+      expect(sample.components.length).toBe(0);
+      expect(sample.molecule).toBeNull();
+      expect(sample.molfile).toBe('');
+      expect(sample.sample_svg_file).toBeNull();
+    });
+
+    it('does not clear molecule data when other components remain', () => {
+      const sample = new Sample();
+      sample.sample_type = 'Mixture';
+      sample.molecule = { id: 123 };
+      sample.molfile = 'test molfile';
+      sample.sample_svg_file = 'test.svg';
+      const comp1 = {
+        id: 1, material_group: 'solid', amount_g: 5, position: 0, reference: true
+      };
+      const comp2 = {
+        id: 2, material_group: 'solid', amount_g: 10, position: 1
+      };
+      sample.components = [comp1, comp2];
+
+      sample.deleteMixtureComponent(comp1);
+
+      expect(sample.components.length).toBe(1);
+      expect(sample.molecule.id).toBe(123);
+      expect(sample.molfile).toBe('test molfile');
+      expect(sample.sample_svg_file).toBe('test.svg');
+    });
+
+    it('handles deletion when components array is empty', () => {
+      const sample = new Sample();
+      sample.sample_type = 'Mixture';
+      sample.components = [];
+      const comp1 = {
+        id: 1, material_group: 'solid', amount_g: 5
+      };
+
+      expect(() => sample.deleteMixtureComponent(comp1)).not.toThrow();
+      expect(sample.components.length).toBe(0);
+    });
+
+    it('handles deletion of non-existent component', () => {
+      const sample = new Sample();
+      sample.sample_type = 'Mixture';
+      const comp1 = {
+        id: 1, material_group: 'solid', amount_g: 5, position: 0
+      };
+      const comp2 = {
+        id: 2, material_group: 'solid', amount_g: 10, position: 1
+      };
+      const nonExistent = { id: 999 };
+      sample.components = [comp1, comp2];
+
+      sample.deleteMixtureComponent(nonExistent);
+
+      expect(sample.components.length).toBe(2);
+    });
+  });
+
   describe('Sample.isNoStructureSample()', () => {
     it('should return true when molecule has DUMMY inchikey and molfile is null', () => {
       const sample = new Sample();

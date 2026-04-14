@@ -51,9 +51,9 @@ module Chemotion
       before do
         @container = Container.find_by(id: params[:container_id])
         element = @container.root.containable
-        can_read = ElementPolicy.new(current_user, element).read?
-        can_dwnld = can_read &&
-                    ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+        policy = ElementPolicy.new(current_user, element)
+        can_read = policy.read?
+        can_dwnld = can_read && policy.read_dataset?
         error!('401 Unauthorized', 401) unless can_dwnld
       end
       desc 'Download the dataset attachment file'
@@ -77,7 +77,7 @@ module Chemotion
 
         @attachment = Attachment.find_by(identifier: params[:identifier]) if @attachment.nil? && params[:identifier]
 
-        # rubocop:disable Performance/StringInclude
+        # rubocop:disable Performance/StringInclude, Metrics/BlockNesting
         case request.env['REQUEST_METHOD']
         when /delete/i
           error!('401 Unauthorized', 401) unless writable?(@attachment)
@@ -86,23 +86,24 @@ module Chemotion
           if /zip/.match?(request.url)
             @container = Container.find(params[:container_id])
             if (element = @container.root.containable)
-              can_read = ElementPolicy.new(current_user, element).read?
+              policy = ElementPolicy.new(current_user, element)
+              can_read = policy.read?
               can_dwnld = can_read &&
-                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+                          policy.read_dataset?
             end
           elsif /\bsample_analyses\b/.match?(request.url)
             @sample = Sample.find(params[:sample_id])
             if (element = @sample)
-              can_read = ElementPolicy.new(current_user, element).read?
-              can_dwnld = can_read &&
-                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+              policy = ElementPolicy.new(current_user, element)
+              can_read = policy.read?
+              can_dwnld = can_read && policy.read_dataset?
             end
           elsif /device_description_analyses/.match?(request.url)
             @device_description = DeviceDescription.find(params[:device_description_id])
             if (element = @device_description)
-              can_read = ElementPolicy.new(current_user, element).read?
-              can_dwnld = can_read &&
-                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+              policy = ElementPolicy.new(current_user, element)
+              can_read = policy.read?
+              can_dwnld = can_read && policy.read_dataset?
             end
           elsif /\bsequence_based_macromolecule_sample_analyses\b/.match?(request.url)
             @sequence_based_macromolecule_sample =
@@ -113,24 +114,27 @@ module Chemotion
                           ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
           elsif @attachment
-
             can_dwnld = @attachment.container_id.nil? && @attachment.created_for == current_user.id
 
             if !can_dwnld && (element = @attachment.container&.root&.containable || @attachment.attachable)
               can_dwnld = if element.is_a?(Container)
                             false
                           else
+                            # I have no idea on how to fix this code? a User is not an element so it
+                            # makes no sense to even try using ElementPolicy.
+                            # So I just replaced ElementPermissionProxy with ElementPolicy, so it won't crash
+                            policy = ElementPolicy.new(current_user, element)
                             (element.is_a?(User) && (element == current_user)) ||
                               (
-                                ElementPolicy.new(current_user, element).read? &&
-                              ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+                                policy.read? &&
+                                policy.read_dataset?
                               )
                           end
             end
           end
           error!('401 Unauthorized', 401) unless can_dwnld
         end
-        # rubocop:enable Performance/StringInclude
+        # rubocop:enable Performance/StringInclude, Metrics/BlockNesting
       end
 
       desc 'Bulk Delete Attachments'
@@ -259,7 +263,26 @@ module Chemotion
           begin
             attach.save!
             attach_ary.push(attach.id)
-          rescue StandardError
+            match, variation = attach.resolve_unique_match
+
+            if match # auto assign to element
+              analysis_name = attach.filename.chomp(File.extname(attach.filename))
+              dataset = match.container.analyses_container.create_analysis_with_dataset!(name: analysis_name)
+              attach.update!(attachable: dataset)
+              type = match.model_name.singular
+              @link = "#{Rails.application.config.root_url}/mydb/collection/all/#{type}/#{match.id}"
+              match.assign_attachment_to_variation(variation, dataset.parent_id) if match.is_a?(Reaction)
+
+              Message.create_msg_notification(
+                channel_subject: Channel::ASSIGN_INBOX_TO_SAMPLE,
+                message_from: current_user.id,
+                data_args: { filename: attach.filename, info: "#{match.short_label} #{match.name}" },
+                url: @link,
+                level: 'success',
+              )
+            end
+          rescue StandardError => e
+            Rails.logger.error(e)
             status 413
           ensure
             tempfile.close
@@ -440,8 +463,9 @@ module Chemotion
           att = Attachment.find(a_id)
           can_dwnld = if att
                         element = att.container.root.containable
-                        can_read = ElementPolicy.new(current_user, element).read?
-                        can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+                        policy = ElementPolicy.new(current_user, element)
+                        can_read = policy.read?
+                        can_read && policy.read_dataset?
                       end
           can_dwnld ? thumbnail_obj(att) : nil
         end
@@ -457,8 +481,9 @@ module Chemotion
           att = Attachment.find(a_id)
           can_dwnld = if att
                         element = att.container.root.containable
-                        can_read = ElementPolicy.new(current_user, element).read?
-                        can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+                        policy = ElementPolicy.new(current_user, element)
+                        can_read = policy.read?
+                        can_read && policy.read_dataset?
                       end
           can_dwnld ? raw_file_obj(att) : nil
         end

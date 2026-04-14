@@ -10,9 +10,8 @@ module Usecases
 
       def execute!
         check_parameter
-        @cell_line_sample = @current_user.cellline_samples.find_by(id: @params[:cell_line_sample_id])
-        @cell_line_sample ||= fetch_cell_lines_from_shared_sync
-        raise 'no cell line sample found ' unless @cell_line_sample
+        @cell_line_sample = CelllineSample.find(@params[:cell_line_sample_id])
+        raise 'no cell line sample found ' unless ElementPolicy.new(@current_user, @cell_line_sample).read?
 
         @cell_line_sample.cellline_material = find_material || create_new_material
         update_sample_properties
@@ -29,19 +28,6 @@ module Usecases
           name: @params[:material_names],
           source: @params[:source],
         )
-      end
-
-      def fetch_cell_lines_from_shared_sync
-        shared_or_synced_celllines = @current_user.shared_collections.map do |col|
-          sync_collection_user = col.sync_collections_users.find_by(
-            collection_id: col.id,
-            user_id: @current_user.id,
-          )
-          return [] if sync_collection_user.permission_level.zero?
-
-          col.cellline_samples.find_by(id: @params[:cell_line_sample_id])
-        end
-        shared_or_synced_celllines.first
       end
 
       def create_new_material

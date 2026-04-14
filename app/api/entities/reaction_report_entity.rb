@@ -8,6 +8,7 @@ module Entities
       expose! :products,                                        using: 'Entities::ReactionMaterialReportEntity'
       expose! :purification_solvents,                           using: 'Entities::ReactionMaterialReportEntity'
       expose! :reactants,                                       using: 'Entities::ReactionMaterialReportEntity'
+      expose! :reactant_sbmm_samples,                           using: 'Entities::ReactionSbmmMaterialEntity'
       expose! :solvents,                                        using: 'Entities::ReactionMaterialReportEntity'
       expose! :starting_materials,                              using: 'Entities::ReactionMaterialReportEntity'
       expose! :temperature_display_with_unit
@@ -23,10 +24,11 @@ module Entities
     end
 
     def collections
-      Entities::CollectionEntity.represent(
-        object.collections,
-        current_user: current_user,
-      )
+      if object.collections.first.is_a?(CollectionShare)
+        Entities::SharedCollectionEntity.represent(object.collections, current_user: current_user)
+      else
+        Entities::OwnCollectionEntity.represent(object.collections, current_user: current_user)
+      end
     end
   end
 end

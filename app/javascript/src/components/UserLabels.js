@@ -335,7 +335,7 @@ class UserLabelModal extends Component {
         {showDetails
           && (
             <Modal.Footer>
-              <ButtonToolbar className="gap-1 mt-2">
+              <ButtonToolbar className="mt-2">
                 <Button variant="light" onClick={this.handleBackButton}>Back</Button>
                 <Button variant="primary" onClick={this.handleSaveLabel}>Save</Button>
               </ButtonToolbar>

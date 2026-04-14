@@ -43,6 +43,8 @@ module Entities
     expose :matrix, documentation: { type: 'Integer', desc: "User's matrix" }
     expose :counters
     expose :generic_admin, documentation: { type: 'Hash', desc: 'Generic administrator' }
+    expose :otp_required_for_login, documentation: { type: 'Boolean', desc: 'If 2fa is enabled' }
+    expose :profile
     expose :tokens, using: Entities::AuthTokenEntity do |user|
       user.tokens.values
     end

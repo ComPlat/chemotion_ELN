@@ -359,6 +359,36 @@ export default class UsersFetcher {
     return promise;
   }
 
+  static fetch2FAQR() {
+    return fetch('/api/v1/users/two_factor', {
+      credentials: 'same-origin',
+      method: 'get',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }).then((response) => response.json())
+      .catch((error) => {
+        console.error('Fetch error in updateReactionShortLabel:', error);
+        throw error;
+      });
+  }
+
+  static fetchEnable2FAQR() {
+    return fetch('/api/v1/users/two_factor', {
+      credentials: 'same-origin',
+      method: 'put',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+    }).then((response) => response.json())
+      .catch((error) => {
+        console.error('Fetch error in updateReactionShortLabel:', error);
+        throw error;
+      });
+  }
+
   static fetchRevokeAuthTokens(params) {
     return fetch('/api/v1/users/revoke_auth_token', {
       credentials: 'same-origin',

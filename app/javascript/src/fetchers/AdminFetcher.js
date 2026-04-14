@@ -82,6 +82,23 @@ export default class AdminFetcher {
       });
   }
 
+  static enableDisableOtp({ enable, id }) {
+    return fetch(`/api/v1/admin/users/${id}/otp`, {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ enable }),
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
   static updateUser(params) {
     const { id, ...otherParams } = params;
     return fetch(`/api/v1/admin/users/${id}`, {

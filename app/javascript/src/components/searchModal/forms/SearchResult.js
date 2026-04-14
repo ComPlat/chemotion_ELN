@@ -6,16 +6,14 @@ import {
 } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { allElnElementsForSearch } from 'src/apps/generic/Utils';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import Aviator from 'aviator';
 import SearchResultTabContent from 'src/components/searchModal/forms/SearchResultTabContent';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 function SearchResult({ handleClear }) {
   const searchStore = useContext(StoreContext).search;
@@ -24,6 +22,7 @@ function SearchResult({ handleClear }) {
   const profile = userState.profile || {};
   const genericElements = userState.genericEls || [];
   const [visibleTabs, setVisibleTabs] = useState([]);
+  const { currentCollection } = UIStore.getState();
 
   useEffect(() => {
     if (typeof (profile) !== 'undefined' && profile
@@ -75,21 +74,8 @@ function SearchResult({ handleClear }) {
   };
 
   const adoptResultAndOpenDetail = (element) => {
-    const { currentCollection, isSync } = UIStore.getState();
     const { id, type } = element;
-    const uri = isSync
-      ? `/scollection/${currentCollection.id}/${type}/${id}`
-      : `/collection/${currentCollection.id}/${type}/${id}`;
-    Aviator.navigate(uri, { silent: true });
-
-    const e = { type, params: { collectionID: currentCollection.id } };
-    e.params[`${type}ID`] = id;
-
-    if (genericElements.find((el) => el.name === type)) {
-      e.klassType = 'GenericEl';
-    }
-
-    elementShowOrNew(e);
+    aviatorNavigation(type, id, true, true);
     handleAdoptResult();
 
     return null;
@@ -161,7 +147,7 @@ function SearchResult({ handleClear }) {
         <h4 className="search-result-number-of-results">
           {sum}
           {' '}
-          results
+          results for the collection "{currentCollection?.label}"
         </h4>
       </div>
     );

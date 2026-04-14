@@ -57,6 +57,7 @@
 #  index_samples_on_inventory_sample  (inventory_sample)
 #  index_samples_on_molecule_name_id  (molecule_name_id)
 #  index_samples_on_sample_id         (molecule_id)
+#  index_samples_on_short_label       (short_label)
 #  index_samples_on_user_id           (user_id)
 #
 
@@ -142,7 +143,7 @@ class Sample < ApplicationRecord
   }
   scope :by_exact_name, lambda { |query|
                           sanitized_query = "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$"
-                          where('lower(name) ~* lower(?) or lower(external_label) ~* lower(?)',
+                          where('lower(samples.name) ~* lower(?) or lower(samples.external_label) ~* lower(?)',
                                 sanitized_query, sanitized_query)
                         }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
@@ -181,8 +182,17 @@ class Sample < ApplicationRecord
 
   scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
   scope :sample_or_startmat_or_products, lambda {
-    joins('left join reactions_samples rs on rs.sample_id = samples.id')
-      .where("rs.id isnull or rs.\"type\" in ('ReactionsProductSample', 'ReactionsStartingMaterialSample')")
+    where(<<~SQL)
+      NOT EXISTS (
+        SELECT 1 FROM reactions_samples rs
+        WHERE rs.sample_id = samples.id
+      )
+      OR EXISTS (
+        SELECT 1 FROM reactions_samples rs
+        WHERE rs.sample_id = samples.id
+          AND rs.type IN ('ReactionsProductSample', 'ReactionsStartingMaterialSample')
+      )
+    SQL
   }
 
   scope :search_by_fingerprint_sim, lambda { |molfile, threshold = 0.01|
@@ -211,7 +221,6 @@ class Sample < ApplicationRecord
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :update_molecule_name
-  before_save :check_molfile_polymer_section
   before_save :find_or_create_fingerprint
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
@@ -262,7 +271,6 @@ class Sample < ApplicationRecord
   has_many :residues, dependent: :destroy
   has_many :elemental_compositions, dependent: :destroy
 
-  has_many :sync_collections_users, through: :collections
   composed_of :amount, mapping: %w[amount_value amount_unit]
 
   has_ancestry orphan_strategy: :adopt
@@ -622,7 +630,10 @@ class Sample < ApplicationRecord
     target_amount_condition = target_amount_value.nil? || target_amount_value.zero? || target_amount_unit.nil?
     real_amount_condition = real_amount_value.nil? || real_amount_value.zero? || real_amount_unit.nil?
 
-    return { 'value' => target_amount_value, 'unit' => target_amount_unit } if real_amount_condition && !target_amount_condition
+    if real_amount_condition && !target_amount_condition
+      return { 'value' => target_amount_value,
+               'unit' => target_amount_unit }
+    end
 
     { 'value' => real_amount_value, 'unit' => real_amount_unit }
   end
@@ -688,7 +699,6 @@ class Sample < ApplicationRecord
     File.write(target_path, svg)
     { success: true, filename: filename }
   rescue StandardError => e
-    Rails.logger.error("Sample.refresh_svg_content: Error refreshing SVG for #{svg_path}: #{e.message}")
     { success: false, error: e.message, status: 500 }
   end
 
@@ -712,31 +722,6 @@ class Sample < ApplicationRecord
     end
   end
 
-  def check_molfile_polymer_section
-    return if decoupled || sample_type == SAMPLE_TYPE_MIXTURE
-    return unless molfile.include? 'R#'
-
-    lines = molfile.lines
-    polymers = []
-    m_end_index = nil
-    lines[4..].each_with_index do |line, index|
-      polymers << index if line.include? 'R#'
-      (m_end_index = index) && break if /M\s+END/.match?(line)
-    end
-
-    reg = /(> <PolymersList>[\W\w.\n]+\d+)/m
-    unless (lines[5 + m_end_index].to_s + lines[6 + m_end_index].to_s).match reg
-      if lines[5 + m_end_index].to_s.include? '> <PolymersList>'
-        lines.insert(6 + m_end_index, "#{polymers.join(' ')}\n")
-      else
-        lines.insert(4 + m_end_index, "> <PolymersList>\n")
-        lines.insert(5 + m_end_index, "#{polymers.join(' ')}\n")
-      end
-    end
-
-    self.molfile = lines.join
-    self.fingerprint_id = Fingerprint.find_or_create_by_molfile(molfile.clone)&.id
-  end
 
   def set_loading_from_ea
     return unless residues.first

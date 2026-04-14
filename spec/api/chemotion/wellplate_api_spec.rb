@@ -2,15 +2,26 @@
 
 require 'rails_helper'
 
+# rubocop:disable RSpec/MultipleMemoizedHelpers
 describe Chemotion::WellplateAPI do
   include_context 'api request authorization context'
 
-  let(:collection) { create(:collection, user_id: user.id, wellplate_detail_level: 10) }
-  let(:other_user_collection) { create(:collection, user_id: user.id + 1) }
-  let(:shared_collection) do
-    create(:collection, user_id: user.id, is_shared: true, permission_level: 3, wellplate_detail_level: 10)
+  let(:collection) { create(:collection, user: user) }
+  let(:empty_collection) { create(:collection, user: user) }
+  let(:other_user) { create(:person) }
+  let(:other_user_collection) { create(:collection, user: other_user) }
+  let(:collection_shared_with_user) do
+    create(:collection, user: other_user).tap do |collection|
+      create(
+        :collection_share,
+        collection: collection,
+        shared_with: user,
+        permission_level: 3,
+        wellplate_detail_level: 10,
+      )
+    end
   end
-  let(:wellplate) { create(:wellplate) }
+  let(:wellplate) { create(:wellplate, collections: [collection]) }
 
   describe 'POST /api/v1/wellplates/bulk' do
     let(:params) do
@@ -53,8 +64,6 @@ describe Chemotion::WellplateAPI do
     end
 
     before do
-      CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
-
       post '/api/v1/wellplates/ui_state/', params: params, as: :json
     end
 
@@ -64,11 +73,11 @@ describe Chemotion::WellplateAPI do
   end
 
   describe 'GET /api/v1/wellplates' do
-    before do
-      CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
-    end
-
     context 'when no error occurs' do
+      before do
+        wellplate
+      end
+
       it 'returns wellplates' do
         get '/api/v1/wellplates/'
         expect(JSON.parse(response.body)['wellplates'].size).to eq(1)
@@ -76,55 +85,28 @@ describe Chemotion::WellplateAPI do
     end
 
     context 'when collection_id is given' do
-      let(:params) do
-        { collection_id: collection.id }
+      before do
+        wellplate
       end
 
       it 'returns wellplates' do
+        params = { collection_id: collection.id }
+
         get '/api/v1/wellplates/', params: params
         expect(JSON.parse(response.body)['wellplates'].size).to eq(1)
       end
 
-      context 'when no wellplates found' do
-        it 'returns no wellplates' do
-          allow(Collection).to receive(:belongs_to_or_shared_by).and_raise(ActiveRecord::RecordNotFound)
-          get '/api/v1/wellplates/', params: params
-          expect(JSON.parse(response.body)['wellplates'].size).to eq(0)
-        end
-      end
-    end
+      it 'returns no wellplates for empty collections' do
+        params = { collection_id: empty_collection.id }
 
-    context 'when sync_collection_id is given' do
-      let(:sharer) { create(:person) }
-      let(:sync_collections_user) do
-        create(:sync_collections_user, collection: collection, user: user, sharer: sharer)
-      end
-      let(:params) do
-        { sync_collection_id: sync_collections_user.id }
-      end
-
-      it 'returns wellplates' do
         get '/api/v1/wellplates/', params: params
-        expect(JSON.parse(response.body)['wellplates'].size).to eq(1)
-      end
-
-      context 'when no wellplates found' do
-        let(:params) do
-          { sync_collection_id: sync_collections_user.id + 1 }
-        end
-
-        it 'returns no wellplates' do
-          get '/api/v1/wellplates/', params: params
-          expect(JSON.parse(response.body)['wellplates'].size).to eq(0)
-        end
+        expect(JSON.parse(response.body)['wellplates'].size).to eq(0)
       end
     end
   end
 
   describe 'GET /api/v1/wellplates/:id' do
     before do
-      CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
-
       get "/api/v1/wellplates/#{wellplate.id}"
     end
 
@@ -149,7 +131,7 @@ describe Chemotion::WellplateAPI do
     let(:wellplate) { create(:wellplate, name: 'test') }
 
     before do
-      CollectionsWellplate.create!(wellplate: wellplate, collection: shared_collection)
+      CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
     end
 
     it 'is able to delete a wellplate by id' do
@@ -172,7 +154,7 @@ describe Chemotion::WellplateAPI do
     end
 
     before do
-      CollectionsWellplate.create!(wellplate: wellplate, collection: shared_collection)
+      CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
       put "/api/v1/wellplates/#{wellplate.id}", params: params
     end
 
@@ -194,7 +176,7 @@ describe Chemotion::WellplateAPI do
       }
     end
 
-    let(:collection) { shared_collection }
+    let(:collection) { collection_shared_with_user }
     let(:container) { create(:root_container) }
     let(:wells) { [] }
     let(:height) { 8 }
@@ -289,16 +271,12 @@ describe Chemotion::WellplateAPI do
   end
 
   describe 'PUT /api/v1/wellplates/import_spreadsheet/:id' do
-    let(:collection) { shared_collection }
+    let(:collection) { collection_shared_with_user }
     let(:attachment) { create(:attachment) }
-    let(:wellplate) { create(:wellplate, name: 'test', attachments: [attachment]) }
+    let(:wellplate) { create(:wellplate, name: 'test', attachments: [attachment], collections: [collection]) }
     let(:params) { { wellplate_id: wellplate.id, attachment_id: attachment.id } }
 
     let(:mock) { instance_double(Import::ImportWellplateSpreadsheet, wellplate: wellplate) }
-
-    before do
-      CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
-    end
 
     context 'when no error occurs' do
       before do
@@ -374,3 +352,4 @@ describe Chemotion::WellplateAPI do
     end
   end
 end
+# rubocop:enable RSpec/MultipleMemoizedHelpers

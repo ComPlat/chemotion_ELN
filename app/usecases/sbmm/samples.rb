@@ -20,14 +20,9 @@ module Usecases
 
       def base_list_scope(params)
         if params[:collection_id]
-          Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+          Collection.accessible_for(current_user)
                     .find(params[:collection_id])
                     .sequence_based_macromolecule_samples
-        elsif params[:sync_collection_id]
-          current_user.all_sync_in_collections_users
-                      .find(params[:sync_collection_id])
-                      .collection
-                      .sequence_based_macromolecule_samples
         else
           SequenceBasedMacromoleculeSample.for_user(current_user.id).distinct
         end

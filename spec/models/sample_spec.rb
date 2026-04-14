@@ -57,6 +57,7 @@
 #  index_samples_on_inventory_sample  (inventory_sample)
 #  index_samples_on_molecule_name_id  (molecule_name_id)
 #  index_samples_on_sample_id         (molecule_id)
+#  index_samples_on_short_label       (short_label)
 #  index_samples_on_user_id           (user_id)
 #
 require 'rails_helper'
@@ -214,6 +215,35 @@ RSpec.describe Sample do
     #  .with('public/images/molecules/XLYOFNOQVPJJNP-UHFFFAOYSA-N.svg','w+').and_call_original
     #  sample.save
     # end
+  end
+
+  context 'when creating sample with multiple_R molfile and can failure' do
+    let(:multiple_r_molfile) { file_fixture('structures/molfiles/multiple_R.mol').read }
+    let(:sample) { build(:sample, molfile: multiple_r_molfile, molecule: nil) }
+    let(:molecule) { create(:molecule, cano_smiles: '') }
+    let(:babel_info) do
+      {
+        inchikey: 'KU141-INDEX-INCHIKEY',
+        is_partial: false,
+        version: 'V3000',
+        cano_smiles: '',
+      }
+    end
+
+    before do
+      sample.collections << build(:collection)
+      sample.creator = build(:person)
+      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfile).and_return(babel_info)
+      allow(Molecule).to receive(:find_or_create_by_molfile).and_return(molecule)
+      allow(Fingerprint).to receive(:find_or_create_by_molfile).and_return(nil)
+      allow(sample).to receive(:attach_svg)
+    end
+
+    it 'creates the sample and keeps canonical smiles empty' do
+      expect(sample.save).to be(true)
+      expect(sample.molecule).to eq(molecule)
+      expect(sample.molecule.cano_smiles).to eq('')
+    end
   end
 
   context 'when counting samples created by user' do

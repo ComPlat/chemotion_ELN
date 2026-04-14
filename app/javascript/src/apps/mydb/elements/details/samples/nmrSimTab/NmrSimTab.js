@@ -91,7 +91,7 @@ export default class NmrSimTab extends React.Component {
 
     return (
       <>
-        <ButtonToolbar className="gap-2">
+        <ButtonToolbar>
           <Button variant="primary"
             onClick={this.updateNmrdb.bind(this, '1H')}>
             predict 1H NMR

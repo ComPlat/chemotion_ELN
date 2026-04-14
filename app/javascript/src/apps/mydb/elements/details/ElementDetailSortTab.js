@@ -2,44 +2,46 @@
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Popover } from 'react-bootstrap';
+import { Popover, Button } from 'react-bootstrap';
 import Immutable from 'immutable';
-import _ from 'lodash';
+import { isEmpty, set } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UIActions from 'src/stores/alt/actions/UIActions';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export default class ElementDetailSortTab extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.state = {
       visible: Immutable.List(),
       hidden: Immutable.List(),
-      showTabLayoutContainer: false
     };
 
     this.onChangeUser = this.onChangeUser.bind(this);
-    this.onChangeUI = this.onChangeUI.bind(this);
-    this.toggleTabLayoutContainer = this.toggleTabLayoutContainer.bind(this);
 
     UserActions.fetchCurrentUser();
   }
 
   componentDidMount() {
     UserStore.listen(this.onChangeUser);
-    CollectionStore.listen(this.onChangeUI);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.addInventoryTab !== this.props.addInventoryTab
+      || !_.isEqual(prevProps.availableTabs, this.props.availableTabs)) {
+      this.onChangeUI();
+    }
   }
 
   componentWillUnmount() {
     UserStore.unlisten(this.onChangeUser);
-    CollectionStore.unlisten(this.onChangeUI);
   }
 
   updateTabLayout(layout) {
@@ -64,13 +66,9 @@ export default class ElementDetailSortTab extends Component {
 
   getOpenedFromCollection() {
     const { openedFromCollectionId } = this.props;
-    const collectionState = CollectionStore.getState();
     const stack = [
-      ...collectionState.unsharedRoots,
-      ...collectionState.sharedRoots,
-      ...collectionState.remoteRoots,
-      ...collectionState.syncInRoots,
-      ...collectionState.lockedRoots
+      this.context.collections.own_collection_tree,
+      this.context.collections.shared_with_me_collection_tree
     ];
     while (stack.length > 0) {
       const col = stack.pop();
@@ -83,31 +81,15 @@ export default class ElementDetailSortTab extends Component {
   onChangeUser(state) {
     const { type } = this.props;
     const collection = this.getOpenedFromCollection() || UIStore.getState().currentCollection;
-    const collectionTabs = collection?.tabs_segment;
-    const layout = (!collectionTabs || _.isEmpty(collectionTabs[type]))
+
+    const collectionTabs = typeof (collection?.tabs_segment) == 'string'
+      ? JSON.parse(collection?.tabs_segment)
+      : collection?.tabs_segment;
+
+    const layout = (!collectionTabs || isEmpty(collectionTabs[`${type}`]))
       ? state.profile?.data?.[`layout_detail_${type}`]
-      : collectionTabs[type];
+      : collectionTabs[`${type}`];
     this.updateTabLayout(layout);
-  }
-
-  onChangeUI() {
-    const { type } = this.props;
-    const collection = this.getOpenedFromCollection() || UIStore.getState().currentCollection;
-    const collectionTabs = collection?.tabs_segment;
-    const userProfile = UserStore.getState().profile;
-    const layout = (!collectionTabs || _.isEmpty(collectionTabs[type]))
-      ? userProfile?.data?.[`layout_detail_${type}`]
-      : collectionTabs[type];
-    this.updateTabLayout(layout);
-  }
-
-  toggleTabLayoutContainer(show) {
-    this.setState(
-      (state) => ({ ...state, showTabLayoutContainer: !state.showTabLayoutContainer }),
-      () => {
-        if (!show) this.updateLayout();
-      }
-    );
   }
 
   updateLayout() {
@@ -116,13 +98,10 @@ export default class ElementDetailSortTab extends Component {
     const { type } = this.props;
     const tabSegment = { ...currentCollection?.tabs_segment, [type]: layout };
 
-    if (currentCollection && !currentCollection.is_sync_to_me) {
-      CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
-      UIActions.selectCollection({ ...currentCollection, tabs_segment: tabSegment, clearSearch: true });
-    }
+    this.context.collections.updateCollection(currentCollection, tabSegment);
 
     const userProfile = UserStore.getState().profile;
-    _.set(userProfile, `data.layout_detail_${type}`, layout);
+    set(userProfile, `data.layout_detail_${type}`, layout);
     UserActions.updateUserProfile(userProfile);
   }
 
@@ -133,15 +112,26 @@ export default class ElementDetailSortTab extends Component {
   render() {
     const { visible, hidden } = this.state;
     const { tabTitles } = this.props;
+    const { currentCollection } = UIStore.getState();
+    const isOwnCollection = this.context.collections.isOwnCollection(currentCollection?.id);
+    const allCollection = currentCollection?.is_locked && currentCollection.label === 'All';
+    if (!isOwnCollection && !allCollection) { return null; }
 
-    const popoverSettings = (
+    const popoverSettings = ({ close }) => (
       <Popover>
-        <Popover.Header>Tab Layout</Popover.Header>
+        <Popover.Header className="d-flex justify-content-between align-items-center">
+          Tab Layout
+          <Button
+            variant="close"
+            aria-label="Close"
+            onClick={close}
+          />
+        </Popover.Header>
         <Popover.Body>
           <TabLayoutEditor
             visible={visible}
             hidden={hidden}
-            getItemComponent={({item}) => (<div>{tabTitles[item] ?? capitalizeWords(item)}</div>)}
+            getItemComponent={({ item }) => (<div>{tabTitles[item] ?? capitalizeWords(item)}</div>)}
             onLayoutChange={this.onLayoutChange}
           />
         </Popover.Body>
@@ -149,7 +139,10 @@ export default class ElementDetailSortTab extends Component {
     );
 
     return (
-      <ConfigOverlayButton onToggle={this.toggleTabLayoutContainer} popoverSettings={popoverSettings} />
+      <ConfigOverlayButton
+        popoverSettings={popoverSettings}
+        onClose={() => this.updateLayout()}
+      />
     );
   }
 }

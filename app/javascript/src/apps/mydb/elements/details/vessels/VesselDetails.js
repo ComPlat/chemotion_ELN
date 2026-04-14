@@ -1,15 +1,17 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { ButtonToolbar, Button, Tabs, Tab, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import {
+  Button, Tabs, Tab, Overlay, Tooltip, ButtonToolbar
+} from 'react-bootstrap';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import { detailHeaderButton, detailFooterButton } from 'src/apps/mydb/elements/details/DetailCardButton';
 import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import CollectionUtils from 'src/models/collection/CollectionUtils';
+import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
 
 function VesselDetails({ vesselItem }) {
@@ -17,17 +19,20 @@ function VesselDetails({ vesselItem }) {
     return null; // Render nothing if no vesselItem
   }
   const isReadOnly = () => {
-    const { currentCollection, isSync } = UIStore.getState();
-    const { currentUser } = UserStore.getState();
-    return CollectionUtils.isReadOnly(
-      currentCollection,
-      currentUser.id,
-      isSync
-    );
+    const { currentCollection } = UIStore.getState();
+    return !collectionHasPermission(currentCollection, 0);
   };
   const context = useContext(StoreContext);
   const [activeTab, setActiveTab] = useState('tab1');
   const [readOnly, setReadOnly] = useState(isReadOnly());
+  const [showCloseOverlay, setShowCloseOverlay] = useState(false);
+  const [closeOverlayTarget, setCloseOverlayTarget] = useState(null);
+  const [closeOverlayPlacement, setCloseOverlayPlacement] = useState('bottom');
+
+  const mobXItem = context.vesselDetailsStore.getVessel(vesselItem.id);
+  const isPendingToSave = !!mobXItem?.changed;
+  const isSubmitDisabled = !mobXItem || mobXItem.isDuplicateName || !mobXItem.changed;
+  const submitLabel = vesselItem.is_new ? 'Create' : 'Save';
 
   useEffect(() => {
     context.vesselDetailsStore.convertVesselToModel(vesselItem);
@@ -35,7 +40,6 @@ function VesselDetails({ vesselItem }) {
   }, [vesselItem]);
 
   const handleSubmit = () => {
-    const mobXItem = context.vesselDetailsStore.getVessel(vesselItem.id);
     vesselItem.adoptPropsFromMobXModel(mobXItem);
 
     if (vesselItem.is_new) {
@@ -49,7 +53,6 @@ function VesselDetails({ vesselItem }) {
 
   const handleClose = () => {
     const { vesselDetailsStore } = context;
-    const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
 
     if (!mobXItem.changed || window.confirm('Unsaved data will be lost. Close sample?')) {
       vesselDetailsStore.removeVesselFromStore(vesselItem.id);
@@ -57,101 +60,117 @@ function VesselDetails({ vesselItem }) {
     }
   };
 
+  const handleSaveClose = () => {
+    setShowCloseOverlay(false);
+    handleSubmit();
+    handleClose(true);
+  };
+
+  const requestClose = (event, forceClose = false, placement = 'bottom') => {
+    if (mobXItem?.changed && !forceClose) {
+      setCloseOverlayTarget(event?.currentTarget || null);
+      setCloseOverlayPlacement(placement);
+      setShowCloseOverlay(true);
+      return;
+    }
+    handleClose(forceClose);
+  };
+
   const handleTabChange = (eventKey) => {
     setActiveTab(eventKey);
   };
 
-  const renderSaveButton = (closeAfterClick = false) => {
-    const { vesselDetailsStore } = context;
-    const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
-    const disabled = !mobXItem || mobXItem.isDuplicateName || !mobXItem.changed;
-
-    const action = closeAfterClick
-      ? () => { handleSubmit(vesselItem); DetailActions.close(vesselItem, true); }
-      : () => { handleSubmit(vesselItem); };
-
-    const toolTipMessage = closeAfterClick ? 'save and close' : 'save';
-    const icons = closeAfterClick
-      ? (
-        <div>
-          <i className="fa fa-floppy-o" />
-          <i className="fa fa-times" />
-        </div>
-      )
-      : <i className="fa fa-floppy-o" />;
-
-    return (
-      <OverlayTrigger
-        placement="bottom"
-        overlay={<Tooltip>{toolTipMessage}</Tooltip>}
-      >
-        <Button
-          disabled={disabled}
-          variant="warning"
-          size="xxsm"
-          onClick={action}
-        >
-          {icons}
-        </Button>
-      </OverlayTrigger>
-    );
-  };
-
-  const renderCloseHeaderButton = () => (
-    <Button
-      variant="danger"
-      size="xxsm"
-      onClick={() => { handleClose(vesselItem); }}
-    >
-      <i className="fa fa-times" />
-    </Button>
-  );
-
-  const renderSubmitButton = () => {
-    const { vesselDetailsStore } = context;
-    const mobXItem = vesselDetailsStore.getVessel(vesselItem.id);
-    const disabled = !mobXItem || mobXItem.isDuplicateName || !mobXItem.changed;
-    const buttonText = vesselItem.is_new ? 'Create' : 'Save';
-
-    return (
-      <Button
-        variant="warning"
-        disabled={disabled}
-        onClick={() => { handleSubmit(vesselItem); }}
-      >
-        {buttonText}
-      </Button>
-    );
-  };
-
   if (!vesselItem) return null;
 
-  const renderHeaderContent = () => (
-    <div className="d-flex align-items-center justify-content-between">
-      <div className="d-flex gap-2">
-        <span>
-          <i className="icon-vessel me-1" />
-          {vesselItem.short_label}
-        </span>
-        <ElementCollectionLabels
-          className="collection-label"
-          element={vesselItem}
-          key={vesselItem.id}
-          placement="right"
-        />
-      </div>
-      <div className="d-flex gap-1">
-        {renderSaveButton(true)}
-        {renderSaveButton()}
-        {renderCloseHeaderButton()}
-      </div>
+  const titleAppendix = (
+    <ElementCollectionLabels
+      className="collection-label"
+      element={vesselItem}
+      key={vesselItem.id}
+      placement="right"
+    />
+  );
+
+  const headerToolbar = !isSubmitDisabled ? (
+    <div className="d-flex gap-1 align-items-center">
+      {detailHeaderButton({
+        label: `${submitLabel} and Close`,
+        iconClass: 'fa fa-floppy-o combi-icon-close',
+        onClick: handleSaveClose,
+      })}
+      {detailHeaderButton({
+        label: submitLabel,
+        iconClass: 'fa fa-floppy-o',
+        variant: 'primary',
+        onClick: handleSubmit,
+      })}
     </div>
+  ) : null;
+
+  const footerToolbar = (
+    <>
+      <Button variant="ghost" onClick={(event) => requestClose(event, false, 'top')}>
+        Close
+      </Button>
+      {detailFooterButton({
+        label: submitLabel,
+        iconClass: 'fa fa-floppy-o',
+        variant: 'primary',
+        disabled: isSubmitDisabled,
+        onClick: handleSubmit,
+      })}
+    </>
+  );
+
+  const closeOverlay = (
+    <Overlay
+      target={closeOverlayTarget}
+      show={showCloseOverlay}
+      placement={closeOverlayPlacement}
+      rootClose
+      onHide={() => setShowCloseOverlay(false)}
+    >
+      <Tooltip id="vessel-detail-close-overlay">
+        <div className="p2">
+          You have unsaved changes. Save before closing?
+          <ButtonToolbar className="justify-content-end mt-2">
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => handleClose(true)}
+            >
+              Discard
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowCloseOverlay(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleSaveClose}
+              disabled={isSubmitDisabled}
+            >
+              Save and Close
+            </Button>
+          </ButtonToolbar>
+        </div>
+      </Tooltip>
+    </Overlay>
   );
 
   return (
     <DetailCard
-      header={renderHeaderContent()}
-      isPendingToSave={context.vesselDetailsStore.getVessel(vesselItem.id)?.changed}
+      title={vesselItem.short_label}
+      titleIcon={<i className="icon-vessel" />}
+      titleAppendix={titleAppendix}
+      onClose={(event) => requestClose(event, false, 'bottom')}
+      headerToolbar={headerToolbar}
+      footerToolbar={footerToolbar}
+      className={isPendingToSave ? 'detail-card--unsaved' : null}
     >
       <div className="tabs-container--with-borders">
         <Tabs activeKey={activeTab} onSelect={handleTabChange} id="vessel-details-tab">
@@ -160,12 +179,7 @@ function VesselDetails({ vesselItem }) {
           </Tab>
         </Tabs>
       </div>
-      <ButtonToolbar className="d-flex gap-1">
-        <Button variant="primary" onClick={() => { handleClose(vesselItem); }}>
-          Close
-        </Button>
-        {renderSubmitButton()}
-      </ButtonToolbar>
+      {closeOverlay}
     </DetailCard>
   );
 }
@@ -177,6 +191,7 @@ VesselDetails.propTypes = {
     name: PropTypes.string.isRequired,
     short_label: PropTypes.string.isRequired,
     is_new: PropTypes.bool.isRequired,
+    adoptPropsFromMobXModel: PropTypes.func.isRequired,
   }).isRequired,
 };
 
