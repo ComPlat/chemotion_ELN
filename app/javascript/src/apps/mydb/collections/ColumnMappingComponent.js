@@ -162,7 +162,7 @@ function ColumnMappingComponent({
 
   // Render rows view
   const renderRowView = () => (
-    <div className="mapping-rows" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+    <div className="mapping-rows">
       {columnNames.map((name) => (
         <Row key={`row-view-${name}`} className="mb-2 align-items-center">
           <Col xs={4}>
