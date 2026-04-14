@@ -37,7 +37,7 @@ function AppModal({
       <Modal.Header closeButton>
         <Modal.Title>{title}</Modal.Title>
       </Modal.Header>
-      <Modal.Body className="app-modal__body">
+      <Modal.Body>
         {children}
       </Modal.Body>
       {(extendedFooter !== undefined || (primaryActionLabel && onPrimaryAction)) && (
@@ -80,7 +80,7 @@ AppModal.propTypes = {
   className: PropTypes.string,
   // Forwarded Modal props
   centered: PropTypes.bool,
-  size: PropTypes.oneOf(['sm', 'lg', 'xl']),
+  size: PropTypes.string,
   animation: PropTypes.bool,
   enforceFocus: PropTypes.bool,
   dialogClassName: PropTypes.string,
