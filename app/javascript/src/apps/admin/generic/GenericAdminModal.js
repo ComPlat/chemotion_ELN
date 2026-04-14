@@ -1,9 +1,10 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Modal } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { ALL_TYPES } from 'src/apps/generic/Utils';
+import AppModal from 'src/components/common/AppModal';
 
 export default class GenericAdminModal extends Component {
   constructor(props) {
@@ -53,17 +54,16 @@ export default class GenericAdminModal extends Component {
     const { user, fnShowModal } = this.props;
     const { elements, segments, datasets } = user.generic_admin || {};
     return (
-      <Modal centered show onHide={() => fnShowModal(false)} >
-        <Modal.Header closeButton>
-          <Modal.Title className='fs-5'>{`Grant/Revoke Generic Designer (user: ${user.name})`}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="d-flex flex-wrap ms-3">
-            {this.renderButton([elements, segments, datasets], user)}
-          </div>
-          <ul>{this.renderDescription([elements, segments, datasets])}</ul>
-        </Modal.Body>
-      </Modal>
+      <AppModal
+        show
+        onHide={() => fnShowModal(false)}
+        title={`Grant/Revoke Generic Designer (user: ${user.name})`}
+      >
+        <div className="d-flex flex-wrap ms-3">
+          {this.renderButton([elements, segments, datasets], user)}
+        </div>
+        <ul>{this.renderDescription([elements, segments, datasets])}</ul>
+      </AppModal>
     );
   }
 }

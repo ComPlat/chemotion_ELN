@@ -4,7 +4,7 @@
 import React, { Component, createRef } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Modal, Overlay
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Overlay
 } from 'react-bootstrap';
 import { findIndex, isEmpty } from 'lodash';
 
@@ -37,6 +37,7 @@ import { rfValueFormat } from 'src/utilities/ElementUtils';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
 import { permitOn } from 'src/components/common/uis';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
+import AppModal from 'src/components/common/AppModal';
 import Immutable from 'immutable';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
@@ -1010,32 +1011,30 @@ export default class ReactionDetails extends Component {
           onRefresh={() => this.refreshGraphic()}
           isRefreshing={this.state.isRefreshingGraphic || false}
         />
-        <Modal show={this.state.showWtInfoModal} onHide={this.closeWtInfoModal} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>Weight Percentage Reaction Scheme</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <p>
-              The weight percentage scheme lets you set a reference material and a
-              target mass. Other materials can be assigned a weight percentage
-              (wt%) in the interval [0,1], and their mass will be computed as equal to
-              target_mass * wt%.
-            </p>
-            <p>
-              <strong>Key points: </strong>
-              select a reference material, set its target amount, enter
-              wt% for desired starting materials/reactants, and the system will
-              automatically recalculate amounts of those materials.
-            </p>
-            <p>
-              For full details and examples see the
-              <a href={documentationLink} target="_blank" rel="noreferrer" className="ms-1">documentation</a>
-            </p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={this.closeWtInfoModal}>Close</Button>
-          </Modal.Footer>
-        </Modal>
+        <AppModal
+          show={this.state.showWtInfoModal}
+          onHide={this.closeWtInfoModal}
+          title="Weight Percentage Reaction Scheme"
+          showFooter
+          closeLabel="Close"
+        >
+          <p>
+            The weight percentage scheme lets you set a reference material and a
+            target mass. Other materials can be assigned a weight percentage
+            (wt%) in the interval [0,1], and their mass will be computed as equal to
+            target_mass * wt%.
+          </p>
+          <p>
+            <strong>Key points: </strong>
+            select a reference material, set its target amount, enter
+            wt% for desired starting materials/reactants, and the system will
+            automatically recalculate amounts of those materials.
+          </p>
+          <p>
+            For full details and examples see the
+            <a href={documentationLink} target="_blank" rel="noreferrer" className="ms-1">documentation</a>
+          </p>
+        </AppModal>
         {this.state.sfn && <ScifinderSearch el={reaction} />}
         <div className="tabs-container--with-borders">
           <ElementDetailSortTab

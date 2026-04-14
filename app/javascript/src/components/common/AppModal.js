@@ -9,6 +9,7 @@ function AppModal({
   onRequestClose,
   title,
   children,
+  showFooter,
   extendedFooter,
   primaryActionLabel,
   onPrimaryAction,
@@ -32,6 +33,8 @@ function AppModal({
 
     onHide();
   };
+
+  const shouldShowFooter = showFooter ?? (extendedFooter !== undefined || (primaryActionLabel && onPrimaryAction));
 
   return (
     <Modal
@@ -57,7 +60,7 @@ function AppModal({
       <Modal.Body className={bodyClassName}>
         {children}
       </Modal.Body>
-      {(extendedFooter !== undefined || (primaryActionLabel && onPrimaryAction)) && (
+      {shouldShowFooter && (
         <Modal.Footer>
           <Button variant="ghost" onClick={(event) => handleRequestClose(event, 'footer')}>
             {closeLabel}
@@ -85,6 +88,8 @@ AppModal.propTypes = {
   title: PropTypes.node.isRequired,
   /** Modal body content */
   children: PropTypes.node.isRequired,
+  /** Overrides automatic footer visibility when set */
+  showFooter: PropTypes.bool,
   /** Additional footer content */
   extendedFooter: PropTypes.node,
   /** Label for the standardized primary action button */
@@ -108,6 +113,7 @@ AppModal.propTypes = {
 };
 
 AppModal.defaultProps = {
+  showFooter: undefined,
   extendedFooter: undefined,
   onRequestClose: undefined,
   primaryActionLabel: undefined,
