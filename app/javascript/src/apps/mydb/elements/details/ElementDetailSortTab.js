@@ -10,7 +10,7 @@ import React, {
 import PropTypes from 'prop-types';
 import { Popover } from 'react-bootstrap';
 import Immutable from 'immutable';
-import { isEmpty, set } from 'lodash';
+import { isEmpty, isEqual, set } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
