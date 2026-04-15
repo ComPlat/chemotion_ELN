@@ -3,7 +3,7 @@
 module Usecases
   module CalendarEntries
     class Users
-      ALLOWED_TYPES = %w[Sample Reaction Element Wellplate Screen ResearchPlan].freeze
+      ALLOWED_TYPES = %w[Sample Reaction Element Wellplate Screen ResearchPlan DeviceDescription].freeze
 
       attr_accessor :params, :user
 
