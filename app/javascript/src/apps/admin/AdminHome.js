@@ -159,8 +159,12 @@ class AdminHome extends React.Component {
 
   render() {
     const { locale } = this.state;
+    const messages = this.getMessages();
+    if (!messages || Object.keys(messages).length === 0) {
+      return null;
+    }
     return (
-      <IntlProvider messages={this.getMessages()} locale={locale} defaultLocale="en">
+      <IntlProvider messages={messages} locale={locale} defaultLocale="en">
         <div>
           <Container fluid>
             <Row className="mb-3">
