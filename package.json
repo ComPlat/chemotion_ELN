@@ -189,7 +189,12 @@
       "@babel/plugin-transform-class-properties",
       "@babel/plugin-transform-classes",
       "@babel/plugin-transform-private-methods"
-    ]
+    ],
+    "env": {
+      "development": {
+        "plugins": ["react-refresh/babel"]
+      }
+    }
   },
   "packageManager": "yarn@1.22.22",
   "private": true,
