@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Popover, Button } from 'react-bootstrap';
 import Immutable from 'immutable';
-import { isEmpty, set } from 'lodash';
+import { isEmpty, isEqual, set } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
@@ -24,24 +24,24 @@ export default class ElementDetailSortTab extends Component {
       hidden: Immutable.List(),
     };
 
-    this.onChangeUser = this.onChangeUser.bind(this);
+    this.refreshTabLayout = this.refreshTabLayout.bind(this);
 
     UserActions.fetchCurrentUser();
   }
 
   componentDidMount() {
-    UserStore.listen(this.onChangeUser);
+    UserStore.listen(this.refreshTabLayout);
   }
 
   componentDidUpdate(prevProps) {
     if (prevProps.addInventoryTab !== this.props.addInventoryTab
-      || !_.isEqual(prevProps.availableTabs, this.props.availableTabs)) {
-      this.onChangeUI();
+      || !isEqual(prevProps.availableTabs, this.props.availableTabs)) {
+      this.refreshTabLayout(UserStore.getState());
     }
   }
 
   componentWillUnmount() {
-    UserStore.unlisten(this.onChangeUser);
+    UserStore.unlisten(this.refreshTabLayout);
   }
 
   updateTabLayout(layout) {
@@ -78,7 +78,7 @@ export default class ElementDetailSortTab extends Component {
     return null;
   }
 
-  onChangeUser(state) {
+  refreshTabLayout(state) {
     const { type } = this.props;
     const collection = this.getOpenedFromCollection() || UIStore.getState().currentCollection;
 
