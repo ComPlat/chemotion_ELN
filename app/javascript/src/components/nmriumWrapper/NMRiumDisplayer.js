@@ -2,7 +2,8 @@ import React from 'react';
 import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { Modal, Button } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
+import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 import UIFetcher from 'src/fetchers/UIFetcher';
 import Attachment from 'src/models/Attachment';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
@@ -21,6 +22,8 @@ export default class NMRiumDisplayer extends React.Component {
       nmriumData: null,
       is2D: false,
       molFile: null,
+      closeOverlayTarget: null,
+      closeOverlayPlacement: 'bottom',
     };
 
     this.hasSentToNMRium = false;
@@ -32,6 +35,10 @@ export default class NMRiumDisplayer extends React.Component {
     this.requestDataToBeSaved = this.requestDataToBeSaved.bind(this);
     this.savingNMRiumWrapperData = this.savingNMRiumWrapperData.bind(this);
     this.resetNMRiumState = this.resetNMRiumState.bind(this);
+    this.handleCloseRequest = this.handleCloseRequest.bind(this);
+    this.hideCloseOverlay = this.hideCloseOverlay.bind(this);
+    this.handleDiscard = this.handleDiscard.bind(this);
+    this.handleSaveAndClose = this.handleSaveAndClose.bind(this);
 
     this.buildPeaksBody = this.buildPeaksBody.bind(this);
     this.findDisplayingSpectra = this.findDisplayingSpectra.bind(this);
@@ -172,6 +179,31 @@ export default class NMRiumDisplayer extends React.Component {
       },
       '*'
     );
+  }
+
+  handleCloseRequest(event, source) {
+    this.setState({
+      closeOverlayTarget: event?.currentTarget || null,
+      closeOverlayPlacement: source === 'footer' ? 'top' : 'bottom',
+    });
+  }
+
+  hideCloseOverlay() {
+    this.setState({
+      closeOverlayTarget: null,
+      closeOverlayPlacement: 'bottom',
+    });
+  }
+
+  handleDiscard() {
+    this.hideCloseOverlay();
+    this.resetNMRiumState();
+    SpectraActions.ToggleModalNMRDisplayer.defer();
+  }
+
+  handleSaveAndClose() {
+    this.hideCloseOverlay();
+    this.requestDataToBeSaved();
   }
 
   async trySendUrlsToNMRium() {
@@ -604,46 +636,53 @@ export default class NMRiumDisplayer extends React.Component {
   }
 
   render() {
-    const { showModalNMRDisplayer, nmriumWrapperHost, nmriumData } = this.state;
+    const {
+      showModalNMRDisplayer,
+      nmriumWrapperHost,
+      nmriumData,
+      closeOverlayTarget,
+      closeOverlayPlacement,
+    } = this.state;
     const { sample } = this.props;
 
     const canSave = sample?.can_update && nmriumData;
 
     return (
-      <Modal centered show={showModalNMRDisplayer} size="xxxl" animation>
-        <Modal.Header className="gap-2 justify-content-end">
-
-          {canSave && (
-            <Button variant="success" size="sm" onClick={this.requestDataToBeSaved}>
-              <i className="fa fa-floppy-o me-1" />
-              Close with Save
-            </Button>
-          )}
-
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => {
-              this.resetNMRiumState();
-              SpectraActions.ToggleModalNMRDisplayer.defer();
-            }}
-          >
-            <i className="fa fa-times me-1" />
-            Close without Save
-          </Button>
-        </Modal.Header>
-
-        <Modal.Body>
+      <>
+        <AppModal
+          size="xxxl"
+          show={showModalNMRDisplayer}
+          onHide={this.hideCloseOverlay}
+          onRequestClose={this.handleCloseRequest}
+          title="NMRium"
+          closeLabel="Close"
+          primaryActionLabel={canSave ? 'Save' : undefined}
+          onPrimaryAction={canSave ? this.requestDataToBeSaved : undefined}
+          backdrop="static"
+          keyboard={false}
+        >
           <iframe
             id="nmrium_wrapper"
             className="spectra-editor"
+            title="NMRium spectra editor"
             src={nmriumWrapperHost}
             allowFullScreen
             ref={this.iframeRef}
             onLoad={this.handleIframeLoad}
           />
-        </Modal.Body>
-      </Modal>
+        </AppModal>
+        <ConfirmationOverlay
+          overlayTarget={closeOverlayTarget}
+          placement={closeOverlayPlacement}
+          warningText="Closing will discard current changes."
+          destructiveAction={this.handleDiscard}
+          destructiveActionLabel="Discard"
+          hideAction={this.hideCloseOverlay}
+          hideActionLabel="Cancel"
+          primaryAction={canSave ? this.handleSaveAndClose : undefined}
+          primaryActionLabel={canSave ? 'Save and Close' : undefined}
+        />
+      </>
     );
   }
 }
