@@ -46,7 +46,7 @@ module Entities
     expose :otp_required_for_login, documentation: { type: 'Boolean', desc: 'If 2fa is enabled' }
     expose :profile
     expose :tokens, using: Entities::AuthTokenEntity do |user|
-      user.tokens.values
+      user.tokens&.values || []
     end
 
     def samples_count

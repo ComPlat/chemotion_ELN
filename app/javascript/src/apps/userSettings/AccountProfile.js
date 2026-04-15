@@ -21,6 +21,7 @@ function AuthenticationSettings({ currentUser }) {
     <Container className="my-3 d-flex flex-column gap-3">
       <AccountSettings currentUser={currentUser} />
       <TwoFactorSettings />
+      <AuthToken currentUser={currentUser} />
       <DeleteSettings />
     </Container>
   );
@@ -281,7 +282,6 @@ function ProfileSettings({ currentUser }) {
       </Card>
       <UserSetting />
       <UserCounter />
-      <AuthToken currentUser={currentUser} />
     </Container>
   );
 }
@@ -308,7 +308,6 @@ ProfileSettings.propTypes = {
 function ExternalSettings() {
   return (
     <Container className="my-3 d-flex flex-column gap-3">
-
       <ScifinderCredential />
 
       <OmniauthCredential />
@@ -354,22 +353,31 @@ function AccountProfile({ currentUser, closeSettings }) {
   return (
     <div className="container-fluid d-flex flex-column" style={{ minHeight: '100vh' }}>
       <div
-        className="bg-light"
         style={{
           position: 'sticky',
           top: 0,
-          zIndex: 5
+          zIndex: 5,
+          padding: '0px 12px',
+          backgroundColor: '#4f6f7c',
+          color: 'white',
+          margin: '0 -15px'
         }}
       >
-        <h1 style={{
-          display: 'inline',
-        }}
+        <h4
+          className="btn-topbar"
+          style={{
+            display: 'inline-block',
+            padding: '0 5px',
+            margin: '7px 0 0 0',
+            height: 'fit-content'
+
+          }}
         >
           Settings
-        </h1>
+        </h4>
 
         {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
-        <button type="button" onClick={closeSettings} className="m-2 mb-4 float-end btn-close" />
+        <button type="button" onClick={closeSettings} className="m-2 float-end btn-close" />
       </div>
       <div className="row flex-grow-1">
         {/* Left column: stretch to bottom */}

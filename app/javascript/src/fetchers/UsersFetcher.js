@@ -7,6 +7,10 @@ class ResponseError extends Error {
     this.status = response.status;
     this.response = response;
   }
+
+  json() {
+    return this.response.json();
+  }
 }
 
 // TODO: SamplesFetcher also updates Samples and so on...naming?

@@ -153,6 +153,9 @@ module Chemotion
       namespace :auth_token do
         desc 'Generate Token'
         params do
+          optional :otp_attempt,
+                   type: String,
+                   desc: 'one time password'
           optional :expires_in_days,
                    type: Integer,
                    default: 160,
@@ -161,6 +164,15 @@ module Chemotion
           optional :name, type: String, desc: 'Name of the item'
         end
         post do
+          if current_user.otp_required_for_login
+            unless current_user.validate_and_consume_otp!(params[:otp_attempt])
+              error!({
+                       error: 'OTP Missing',
+                       otp_required: true,
+                       otp_wrong: !params[:otp_attempt].blank?
+                     }, 422)
+            end
+          end
           item_name = params[:name].to_s.strip
           item_name = nil if item_name.empty?
           token = Usecases::Public::BuildToken.execute!(params, item_name, current_user)
@@ -173,12 +185,23 @@ module Chemotion
       namespace :revoke_auth_token do
         desc 'Revoke user Auth Token'
         params do
+          optional :otp_attempt,
+                   type: String,
+                   desc: 'one time password'
           requires :expiration_date, type: Integer
           requires :name, type: String
         end
 
         post do
-
+          if current_user.otp_required_for_login
+            unless current_user.validate_and_consume_otp!(params[:otp_attempt])
+              error!({
+                       error: 'OTP Missing',
+                       otp_required: true,
+                       otp_wrong: !params[:otp_attempt].blank?
+                     }, 422)
+            end
+          end
           result = current_user.tokens.find do |_, token|
             token["name"] == params[:name] && token["expiration_date"] == params[:expiration_date]
           end

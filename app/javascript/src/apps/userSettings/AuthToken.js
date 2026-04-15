@@ -2,46 +2,90 @@ import {
   Alert, Button, Card, Col, Form, Row, Modal, InputGroup, Table
 } from 'react-bootstrap';
 import React, { useState, useCallback, useEffect } from 'react';
+import UserActions from 'src/stores/alt/actions/UserActions';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+import PropTypes from 'prop-types';
+import { OtpInput } from '../../components/common/AuthendifactionHelper';
+
+const tokensShape = PropTypes.arrayOf(
+  PropTypes.shape({
+    revoked: PropTypes.bool.isRequired,
+    name: PropTypes.string.isRequired,
+    expiration_date: PropTypes.number.isRequired,
+  })
+);
 
 function AuthToken({ currentUser }) {
   const [show, setShow] = useState(false);
   const [lastToken, setLastToken] = useState(null);
-  const [user, setUser] = useState(currentUser);
+  const [tokeToRevoke, setTokeToRevoke] = useState(null);
+  const [otpAttempt, setOtpAttempt] = useState('');
+  const [showOtpDel, setShowOtpDel] = useState(false);
+  const [isWrongOtp, setIsWrongOtp] = useState(false);
+
+  const closeOtpDel = useCallback(() => setShowOtpDel(false), []);
+  const onChangeOptAttempt = useCallback((e) => setOtpAttempt(e.target.value), []);
 
   const handleClose = useCallback(() => setShow(false), []);
   const handleShow = useCallback(() => setShow(true), []);
 
-  const updateUser = async () => {
-    const newUser = await UsersFetcher.fetchCurrentUser();
-    setUser(newUser.user);
+  const sendOnRevoke = (payload) => {
+    UsersFetcher.fetchRevokeAuthTokens(payload)
+      .then(() => {
+        UserActions.fetchCurrentUser();
+        setShowOtpDel(false);
+        setIsWrongOtp(false);
+        setTokeToRevoke(null);
+      })
+      .catch(async (error) => {
+        console.error('Failed to copy token.');
+
+        if (error.status === 422) {
+          // eslint-disable-next-line camelcase
+          const { otp_wrong = false, otp_required = false } = await error.json();
+          // eslint-disable-next-line camelcase
+          setShowOtpDel(otp_required || false);
+          // eslint-disable-next-line camelcase
+          setIsWrongOtp(otp_wrong || false);
+        } else {
+          setShowOtpDel(false);
+          setIsWrongOtp(false);
+          setTokeToRevoke(null);
+        }
+      });
   };
 
   const handleOnRevoke = useCallback((token) => {
-    UsersFetcher.fetchRevokeAuthTokens(token)
-      .then((res) => {
-        updateUser();
-      })
-      .catch((error) => {
-        console.error('Failed to create Auth token:', error);
-        if (error.status === 401) {
-          setErrorMessage('Incorrect password. Please try again.');
-        }
-      });
-  }, []);
+    setTokeToRevoke(token);
+    sendOnRevoke(token);
+  });
+  const handleOnWitOtpRevoke = useCallback(() => {
+    const payload = {
+      ...tokeToRevoke, otp_attempt: otpAttempt
+    };
+    sendOnRevoke(payload);
+  }, [tokeToRevoke, otpAttempt]);
 
   useEffect(() => {
     if (lastToken) {
-      updateUser();
+      UserActions.fetchCurrentUser();
     }
   }, [lastToken]);
 
   return (
     <>
+      <OtpInput
+        value={otpAttempt}
+        onOtpChange={onChangeOptAttempt}
+        closeOtpModal={closeOtpDel}
+        showOtpModal={showOtpDel}
+        handleSubmit={handleOnWitOtpRevoke}
+        isWrongOtp={isWrongOtp}
+      />
       <AuthTokenCard
         handleShow={handleShow}
         lastToken={lastToken}
-        currentTokens={user.tokens}
+        currentTokens={currentUser.tokens}
         onRevoke={handleOnRevoke}
       />
       <AuthTokenFormModal
@@ -52,6 +96,12 @@ function AuthToken({ currentUser }) {
     </>
   );
 }
+
+AuthToken.propTypes = {
+  currentUser: PropTypes.shape({
+    tokens: tokensShape.isRequired,
+  }).isRequired,
+};
 
 function AuthTokenCard({
   handleShow, lastToken, currentTokens, onRevoke
@@ -122,6 +172,17 @@ function AuthTokenCard({
   );
 }
 
+AuthTokenCard.propTypes = {
+  currentTokens: tokensShape.isRequired,
+  lastToken: PropTypes.string,
+  onRevoke: PropTypes.func.isRequired,
+  handleShow: PropTypes.func.isRequired,
+};
+
+AuthTokenCard.defaultProps = {
+  lastToken: null,
+};
+
 function AuthTokenFormModal({
   handleClose, show, setLastToken
 }) {
@@ -129,8 +190,13 @@ function AuthTokenFormModal({
   const [name, setName] = useState('');
   const [expireInDays, setExpireInDays] = useState(2);
   const [errorMessage, setErrorMessage] = useState('');
+  const [otpAttempt, setOtpAttempt] = useState('');
+  const [showOtpDel, setShowOtpDel] = useState(false);
+  const [isWrongOtp, setIsWrongOtp] = useState(false);
 
-  const handlePassword = useCallback((e) => setPass(e.target.value), []);
+  const closeOtpDel = useCallback(() => setShowOtpDel(false), []);
+  const onChangeOptAttempt = useCallback((e) => setOtpAttempt(e.target.value), []);
+
   const handleName = useCallback((e) => setName(e.target.value), []);
 
   const handleExpireInDays = useCallback((e) => {
@@ -144,7 +210,7 @@ function AuthTokenFormModal({
     e.preventDefault();
 
     const payload = {
-      expires_in_days: expireInDays, name
+      expires_in_days: expireInDays, name, otp_attempt: otpAttempt
     };
 
     UsersFetcher.fetchNewAuthToken(payload)
@@ -152,14 +218,24 @@ function AuthTokenFormModal({
         setLastToken(res.token);
         handleClose();
         setErrorMessage('');
+        setShowOtpDel(false);
       })
-      .catch((error) => {
+      .catch(async (error) => {
         console.error('Failed to create Auth token:', error);
-        if (error.status === 401) {
-          setErrorMessage('Incorrect password. Please try again.');
+
+        if (error.status === 422) {
+          // eslint-disable-next-line camelcase
+          const { otp_wrong = false, otp_required = false } = await error.json();
+          // eslint-disable-next-line camelcase
+          setShowOtpDel(otp_required || false);
+          // eslint-disable-next-line camelcase
+          setIsWrongOtp(otp_wrong || false);
+        } else {
+          setShowOtpDel(false);
+          setIsWrongOtp(false);
         }
       });
-  }, [pass, expireInDays, name]);
+  }, [pass, expireInDays, name, otpAttempt]);
 
   useEffect(() => {
     setPass('');
@@ -168,69 +244,85 @@ function AuthTokenFormModal({
   }, [show]);
 
   return (
-    <Modal show={show} onHide={handleClose}>
-      <Form onSubmit={handleUserSettingsSubmit}>
-        <Modal.Header>New authentification token</Modal.Header>
+    <>
+      <OtpInput
+        value={otpAttempt}
+        onOtpChange={onChangeOptAttempt}
+        closeOtpModal={closeOtpDel}
+        showOtpModal={showOtpDel}
+        handleSubmit={handleUserSettingsSubmit}
+        isWrongOtp={isWrongOtp}
+      />
+      <Modal show={show} onHide={handleClose}>
+        <Form onSubmit={handleUserSettingsSubmit}>
+          <Modal.Header>New authentification token</Modal.Header>
 
-        <Modal.Body>
-          <p>
-            An authentication token is used to securely access the API and related services.
-            This token acts as a password and should be treated as confidential information.
-          </p>
-          <ul>
-            <li>Do not share your token publicly.</li>
-            <li>Store it securely (e.g., environment variables or secure vault).</li>
-          </ul>
-          <p>
-            After generation, the token may only be shown once. Make sure to copy and store it securely.
-          </p>
-          {errorMessage && (
-            <Alert variant="danger">
-              {errorMessage}
-            </Alert>
-          )}
-          <Row className="mb-3">
-            <Form.Label column className="col-form-label col-3">
-              Token name
-            </Form.Label>
-            <Col className="col-9">
-              <Form.Control
-                id="auth-token-name"
-                value={name}
-                onChange={handleName}
-              />
-            </Col>
-          </Row>
+          <Modal.Body>
+            <p>
+              An authentication token is used to securely access the API and related services.
+              This token acts as a password and should be treated as confidential information.
+            </p>
+            <ul>
+              <li>Do not share your token publicly.</li>
+              <li>Store it securely (e.g., environment variables or secure vault).</li>
+            </ul>
+            <p>
+              After generation, the token may only be shown once. Make sure to copy and store it securely.
+            </p>
+            {errorMessage && (
+              <Alert variant="danger">
+                {errorMessage}
+              </Alert>
+            )}
+            <Row className="mb-3">
+              <Form.Label column className="col-form-label col-3">
+                Token name
+              </Form.Label>
+              <Col className="col-9">
+                <Form.Control
+                  id="auth-token-name"
+                  value={name}
+                  onChange={handleName}
+                />
+              </Col>
+            </Row>
 
-          <Row className="mb-3">
-            <Form.Label column className="col-form-label col-3">
-              Expire in days (1 - 600)
-            </Form.Label>
-            <Col className="col-9">
-              <Form.Control
-                type="number"
-                min={1}
-                max={600}
-                id="auth-token-expire"
-                value={expireInDays}
-                isInvalid={expireInDays < 1 || expireInDays > 600}
-                onChange={handleExpireInDays}
-              />
-            </Col>
-          </Row>
+            <Row className="mb-3">
+              <Form.Label column className="col-form-label col-3">
+                Expire in days (1 - 600)
+              </Form.Label>
+              <Col className="col-9">
+                <Form.Control
+                  type="number"
+                  min={1}
+                  max={600}
+                  id="auth-token-expire"
+                  value={expireInDays}
+                  isInvalid={expireInDays < 1 || expireInDays > 600}
+                  onChange={handleExpireInDays}
+                />
+              </Col>
+            </Row>
 
-        </Modal.Body>
+          </Modal.Body>
 
-        <Modal.Footer>
-          <Button type="button" variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
-          <Button type="submit" variant="primary">Generate token</Button>
-        </Modal.Footer>
-      </Form>
-    </Modal>
+          <Modal.Footer>
+            <Button type="button" variant="secondary" onClick={handleClose}>
+              Close
+            </Button>
+            <Button type="submit" variant="primary">Generate token</Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+    </>
   );
 }
+
+AuthTokenFormModal.propTypes = {
+  show: PropTypes.bool.isRequired,
+  setLastToken: PropTypes.func.isRequired,
+  handleClose: PropTypes.func.isRequired,
+};
 
 function TokenList({ tokens, onRevoke }) {
   const formatDate = (timestamp) => {
@@ -275,6 +367,11 @@ function TokenList({ tokens, onRevoke }) {
     </Table>
   );
 }
+
+TokenList.propTypes = {
+  tokens: tokensShape.isRequired,
+  onRevoke: PropTypes.func.isRequired,
+};
 
 export {
   AuthToken
