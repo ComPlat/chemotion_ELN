@@ -28,7 +28,9 @@
 }
 
 .rbc-time-view .rbc-event .rbc-event-label {
-  order: 2;
-  font-size: 0.75em;
-  opacity: 0.85;
+  display: none;
+}
+
+.rbc-day-slot .rbc-events-container{
+  margin-right: 3px;
 }

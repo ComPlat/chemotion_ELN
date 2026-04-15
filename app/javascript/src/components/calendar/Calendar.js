@@ -282,8 +282,6 @@ const Calendar = () => {
   }
 
   const newEventButton = () => {
-    if (calendarStore.current_view !== 'agenda') { return null; }
-
     const handleNewEvent = () => {
       const start = new Date();
       const end = new Date(start.getTime() + 60 * 60 * 1000);
@@ -297,8 +295,6 @@ const Calendar = () => {
       >
         <Button variant="light" onClick={handleNewEvent}>
           <i className="fa fa-plus" />
-          {' '}
-          New Event
         </Button>
       </OverlayTrigger>
     );
