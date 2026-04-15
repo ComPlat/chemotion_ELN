@@ -131,6 +131,8 @@ module Chemotion
           lcms_uvvis_wavelength: params[:lcms_uvvis_wavelength],
           lcms_mz_page: params[:lcms_mz_page],
           lcms_mz_page_data: params[:lcms_mz_page_data],
+          lcms_peaks_str: params[:lcms_peaks_str],
+          lcms_integrals_str: params[:lcms_integrals_str],
           converter_url: Rails.configuration.try(:converter).try(:url),
         }
       end

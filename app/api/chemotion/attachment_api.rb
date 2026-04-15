@@ -590,6 +590,8 @@ module Chemotion
         optional :lcms_uvvis_wavelength, type: String
         optional :lcms_mz_page, type: String
         optional :lcms_mz_page_data
+        optional :lcms_peaks_str, type: String
+        optional :lcms_integrals_str, type: String
       end
       post 'save_spectrum' do
         lcms_data = params[:lcms_mz_page_data]
