@@ -281,6 +281,29 @@ const Calendar = () => {
     return variant;
   }
 
+  const newEventButton = () => {
+    if (calendarStore.current_view !== 'agenda') { return null; }
+
+    const handleNewEvent = () => {
+      const start = new Date();
+      const end = new Date(start.getTime() + 60 * 60 * 1000);
+      selectSlotEvent({ start, end });
+    };
+
+    return (
+      <OverlayTrigger
+        placement="bottom"
+        overlay={<Tooltip id="new-calendar-event">New Event</Tooltip>}
+      >
+        <Button variant="light" onClick={handleNewEvent}>
+          <i className="fa fa-plus" />
+          {' '}
+          New Event
+        </Button>
+      </OverlayTrigger>
+    );
+  }
+
   const showEntriesButton = () => {
     const tooltip = calendarStore.eventable_type ? 'Show my entries' : 'Show shared collection entries';
     const icon = calendarStore.eventable_type ? 'fa fa-user-plus' : 'fa fa-files-o';
@@ -325,6 +348,7 @@ const Calendar = () => {
                 {headerDescription()}
               </Modal.Title>
               <ButtonGroup className="ms-5 ms-lg-auto me-lg-5 gap-2">
+                {newEventButton()}
                 {showEntriesButton()}
                 {modalPropertiesButtons()}
               </ButtonGroup>
@@ -345,7 +369,7 @@ const Calendar = () => {
                 selectable
                 resizable
                 onRangeChange={calendarStore.onRangeChange}
-                onView={() => {}} // prevent warning message in browser
+                onView={(view) => calendarStore.changeCurrentView(view)}
                 onSelectEvent={selectEntry}
                 onSelectSlot={selectSlotEvent}
                 onEventDrop={onHandleTimeUpdate}
