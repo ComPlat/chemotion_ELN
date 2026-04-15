@@ -205,6 +205,7 @@ export const CalendarStore = types
       event.preventDefault();
       if (self.eventable_type) {
         self.show_own_entries = !self.show_own_entries;
+        self.getEntries();
       } else {
         self.show_shared_collection_entries = !self.show_shared_collection_entries;
         self.getEntries();

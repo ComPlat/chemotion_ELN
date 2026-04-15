@@ -222,11 +222,14 @@ const Calendar = () => {
   }
 
   const filteredEntries = (entries) => {
-    if (!calendarStore.eventable_type || calendarStore.show_own_entries) { return entries; }
+    if (!calendarStore.eventable_type) { return entries; }
 
-    return entries.filter((e) => (
-      e.eventable_id === calendarStore.eventable_id && e.eventable_type === calendarStore.eventable_type
-    ));
+    // When viewing a device calendar and show_own_entries is false, exclude user's own entries
+    if (!calendarStore.show_own_entries) {
+      return entries.filter((e) => e.created_by !== currentUserId);
+    }
+
+    return entries;
   }
 
   const headerDescription = () => {
