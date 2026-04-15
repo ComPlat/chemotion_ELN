@@ -13,6 +13,7 @@ import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import GenericAdminModal from 'src/apps/admin/generic/GenericAdminModal';
 import AppModal from 'src/components/common/AppModal';
+import { injectIntl, FormattedMessage } from 'react-intl';
 
 function MessageAlert({ message, link = null, onHide }) {
   return (
@@ -156,7 +157,7 @@ const renderDeletedUsersTable = (deletedUsers) => (
   </Table>
 );
 
-export default class UserManagement extends React.Component {
+class UserManagement extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -772,6 +773,7 @@ export default class UserManagement extends React.Component {
 
   renderMessageModal() {
     const { selectedUsers } = this.state;
+    const { intl } = this.props;
     return (
       <AppModal
         show={this.state.showMsgModal}
@@ -785,7 +787,7 @@ export default class UserManagement extends React.Component {
             <Form.Label>Message</Form.Label>
             <Form.Control
               as="textarea"
-              placeholder="Message..."
+              placeholder={`${intl.formatMessage({ id: 'user_management-message' })}...`}
               rows="20"
               ref={(ref) => {
                 this.myMessage = ref;
@@ -797,7 +799,7 @@ export default class UserManagement extends React.Component {
               isMulti
               value={selectedUsers}
               matchProp="name"
-              placeholder="Select users"
+              placeholder={intl.formatMessage({ id: 'user_management-select_users' })}
               loadOptions={loadUserByName}
               onChange={this.handleSelectUser}
             />
@@ -809,25 +811,20 @@ export default class UserManagement extends React.Component {
 
   renderNewUserModal() {
     const { newUserTab } = this.state;
-
+    const { intl } = this.props;
     return (
       <AppModal
         show={this.state.showNewUserModal}
         onHide={this.handleNewUserClose}
         size="lg"
-        title="New User"
+        title={intl.formatMessage({ id: 'user_management-new_user' })}
         primaryActionLabel={newUserTab === 'singleUser' ? 'Create user' : 'Create users'}
         onPrimaryAction={newUserTab === 'singleUser'
           ? () => this.handleCreateNewUser()
           : () => this.handleCreateNewUsersFromFile()}
       >
-        <Tabs
-          id="createUserTabs"
-          activeKey={newUserTab}
-          className="fs-6"
-          onSelect={(eventKey) => this.setState({ newUserTab: eventKey })}
-        >
-          <Tab eventKey="singleUser" title="Single user">
+        <Tabs id="createUserTabs" className="fs-6">
+          <Tab eventKey="singleUser" title={intl.formatMessage({ id: 'user_management-single_user' })}>
             <Form
               className="ms-2 mt-2"
             >
@@ -836,7 +833,8 @@ export default class UserManagement extends React.Component {
                 controlId="formControlEmail"
               >
                 <Form.Label>
-                  Email:
+                  <FormattedMessage id="user_management-email" />
+                  :
                 </Form.Label>
                 <Form.Control
                   type="email"
@@ -851,7 +849,8 @@ export default class UserManagement extends React.Component {
                 controlId="formControlPassword"
               >
                 <Form.Label>
-                  Password:
+                  <FormattedMessage id="user_management-password" />
+                  :
                 </Form.Label>
                 <Form.Control
                   type="password"
@@ -866,7 +865,8 @@ export default class UserManagement extends React.Component {
                 controlId="formControlPasswordConfirmation"
               >
                 <Form.Label>
-                  Password Confirmation:
+                  <FormattedMessage id="user_management-password_confirmation" />
+                  :
                 </Form.Label>
                 <Form.Control
                   type="password"
@@ -880,7 +880,8 @@ export default class UserManagement extends React.Component {
                 controlId="formControlFirstName"
               >
                 <Form.Label>
-                  First name:
+                  <FormattedMessage id="user_management-first_name" />
+                  :
                 </Form.Label>
                 <Form.Control
                   type="text"
@@ -895,8 +896,8 @@ export default class UserManagement extends React.Component {
                 controlId="formControlLastName"
               >
                 <Form.Label>
-                  {' '}
-                  Last name:
+                  <FormattedMessage id="user_management-last_name" />
+                  :
                 </Form.Label>
                 <Form.Control
                   type="text"
@@ -911,7 +912,8 @@ export default class UserManagement extends React.Component {
                 controlId="formControlAbbr"
               >
                 <Form.Label>
-                  Abbr (3) *:
+                  <FormattedMessage id="user_management-abbr" />
+                  (3) *:
                 </Form.Label>
                 <Form.Control
                   type="text"
@@ -926,7 +928,8 @@ export default class UserManagement extends React.Component {
                 controlId="formControlsType"
               >
                 <Form.Label>
-                  Type:
+                  <FormattedMessage id="user_management-type" />
+                  :
                 </Form.Label>
                 <Form.Select ref={(ref) => {
                   this.type = ref;
@@ -937,11 +940,16 @@ export default class UserManagement extends React.Component {
                 </Form.Select>
               </Form.Group>
             </Form>
+            <Button variant="primary" className="mt-3 ms-2" onClick={() => this.handleCreateNewUser()}>
+              <FormattedMessage id="user_management-create_user" />
+              <i className="fa fa-plus ms-1" />
+            </Button>
+
           </Tab>
-          <Tab eventKey="multiUser" title="Multiple users from file">
+          <Tab eventKey="multiUser" title={intl.formatMessage({ id: 'user_management-multiple_users' })}>
             <Form className="my-3">
               <Form.Group>
-                <Form.Label>Please format the user file like the table below.</Form.Label>
+                <Form.Label><FormattedMessage id="user_management-create_users_hint" /></Form.Label>
                 <Table striped bordered hover className="mt-1">
                   <thead>
                     <tr>
@@ -983,13 +991,16 @@ export default class UserManagement extends React.Component {
                   className="my-1"
                 >
                   <span>
-                    Drop a CSV user file here or click to upload.
-                    The following column-delimiters are accepted: &apos;,&apos; or &apos;;&apos; or &apos;tab&apos;.
+                    <FormattedMessage id="user_management-multiple_users_table_desc" />
                   </span>
                 </CSVReader>
               </Form.Group>
+              <Button variant="primary" className="my-3" onClick={() => this.handleCreateNewUsersFromFile()}>
+                <FormattedMessage id="user_management-create_users" />
+                <i className="fa fa-plus ms-1" />
+              </Button>
               <Form.Group>
-                <Form.Label>Processing Summary</Form.Label>
+                <Form.Label><FormattedMessage id="user_management-multiple_users_summary" /></Form.Label>
                 <Form.Control
                   readOnly
                   as="textarea"
@@ -1001,9 +1012,7 @@ export default class UserManagement extends React.Component {
             </Form>
           </Tab>
         </Tabs>
-        <Form.Group controlId="formControlMessage" className="flex-grow-1 mt-2">
-          <Form.Control type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
-        </Form.Group>
+
       </AppModal>
     );
   }
@@ -1058,7 +1067,8 @@ export default class UserManagement extends React.Component {
         <Form>
           <Form.Group as={Row} className="mb-3 ms-5 mt-2" controlId="formControlEmail">
             <Form.Label column sm="3" className="fs-6">
-              Email:
+              <FormattedMessage id="user_management-email" />
+              :
             </Form.Label>
             <Col sm="7">
               <Form.Control
@@ -1074,7 +1084,8 @@ export default class UserManagement extends React.Component {
           </Form.Group>
           <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlFirstName">
             <Form.Label column sm="3" className="fs-6">
-              First name:
+              <FormattedMessage id="user_management-first_name" />
+              :
             </Form.Label>
             <Col sm="7">
               <Form.Control
@@ -1090,7 +1101,8 @@ export default class UserManagement extends React.Component {
           </Form.Group>
           <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlLastName">
             <Form.Label column sm="3" className="fs-6">
-              Last name:
+              <FormattedMessage id="user_management-last_name" />
+              :
             </Form.Label>
             <Col sm="7">
               <Form.Control
@@ -1106,7 +1118,8 @@ export default class UserManagement extends React.Component {
           </Form.Group>
           <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAbbr">
             <Form.Label column sm="3" className="fs-6">
-              Abbr:
+              <FormattedMessage id="user_management-abbr" />
+              :
             </Form.Label>
             <Col sm="7">
               <Form.Control
@@ -1139,7 +1152,8 @@ export default class UserManagement extends React.Component {
           </Form.Group>
           <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlsType">
             <Form.Label column sm="3" className="fs-6">
-              Type:
+              <FormattedMessage id="user_management-type" />
+              :
             </Form.Label>
             <Col sm="7">
               <Form.Select
@@ -1172,6 +1186,7 @@ export default class UserManagement extends React.Component {
   }
 
   renderRestoreAccountModal() {
+    const { intl } = this.props;
     return (
       <AppModal
         show={this.state.showRestoreAccountModal}
@@ -1180,17 +1195,21 @@ export default class UserManagement extends React.Component {
         primaryActionLabel="Restore"
         onPrimaryAction={() => this.handleRestoreAccount()}
       >
-        <Form className="w-75 mx-auto">
+        <Form className="w-75">
           <Form.Group controlId="formControlAbbr">
             <Row className="mb-3">
               <Col column sm={3}>
-                <Form.Label column sm={3} className=" fs-6">Abbr: </Form.Label>
+                <Form.Label column sm={3} className=" fs-6">
+                  <FormattedMessage id="user_management-abbr" />
+                  :
+                  {' '}
+                </Form.Label>
               </Col>
               <Col sm={9}>
                 <Form.Control
                   type="text"
                   name="nameAbbreviation"
-                  placeholder="Please enter the name abbreviation .."
+                  placeholder={intl.formatMessage({ id: 'user_management-enter_abbr' })}
                   className="flex-grow-1"
                   ref={(ref) => {
                     this.nameAbbreviation = ref;
@@ -1208,7 +1227,7 @@ export default class UserManagement extends React.Component {
                 <Form.Control
                   type="text"
                   name="id"
-                  placeholder=".. or enter the user ID"
+                  placeholder={intl.formatMessage({ id: 'user_management-enter_id' })}
                   defaultValue=""
                   onFocus={() => this.setState({ showError: false, showSuccess: false })}
                   ref={(ref) => {
@@ -1222,18 +1241,18 @@ export default class UserManagement extends React.Component {
           <Form.Group controlId="formControlMessage">
             <Col sm={12}>
               <Form.Control
-                className="mt-3"
                 type="text"
-                readOnly
-                name="messageRestoreAccountModal"
-                value={this.state.messageRestoreAccountModal}
-                isValid={this.state.showSuccess}
-                isInvalid={this.state.showError}
+                name="nameAbbreviation"
+                placeholder="Please enter the name abbreviation .."
+                className="flex-grow-1"
+                ref={(ref) => {
+                  this.nameAbbreviation = ref;
+                }}
               />
             </Col>
           </Form.Group>
           {this.state.deletedUsers.length > 0
-            && renderDeletedUsersTable(this.state.deletedUsers)}
+              && renderDeletedUsersTable(this.state.deletedUsers)}
         </Form>
       </AppModal>
     );
@@ -1254,6 +1273,7 @@ export default class UserManagement extends React.Component {
   }
 
   render() {
+    const { intl } = this.props;
     const renderConfirmButton = (show, userId) => {
       if (show) {
         return (
@@ -1305,13 +1325,13 @@ export default class UserManagement extends React.Component {
       <thead className="bg-gray-200">
         <tr className="align-middle fs-4 py-3">
           <th className="fs-4 py-3">#</th>
-          <th className="fs-4 py-3">Actions</th>
-          <th className="fs-4 py-3">Name</th>
-          <th className="fs-4 py-3">Abbr.</th>
-          <th className="fs-4 py-3">Email</th>
-          <th className="fs-4 py-3">Type</th>
-          <th className="fs-4 py-3">Disk Usage</th>
-          <th className="fs-4 py-3">Login at</th>
+          <th className="fs-4 py-3"><FormattedMessage id="actions" /></th>
+          <th className="fs-4 py-3"><FormattedMessage id="user_management-name" /></th>
+          <th className="fs-4 py-3"><FormattedMessage id="user_management-abbr" /></th>
+          <th className="fs-4 py-3"><FormattedMessage id="user_management-email" /></th>
+          <th className="fs-4 py-3"><FormattedMessage id="user_management-type" /></th>
+          <th className="fs-4 py-3"><FormattedMessage id="user_management-disk_usage" /></th>
+          <th className="fs-4 py-3"><FormattedMessage id="user_management-login_at" /></th>
           <th className="fs-4 py-3">ID</th>
         </tr>
         <tr>
@@ -1343,21 +1363,21 @@ export default class UserManagement extends React.Component {
           <th className="fs-6 py-3">
             <Form.Control
               type="text"
-              placeholder="Name"
+              placeholder={intl.formatMessage({ id: 'user_management-name' })}
               onChange={(e) => this.updateFilter('name', e.target.value)}
             />
           </th>
           <th className="fs-6 py-3">
             <Form.Control
               type="text"
-              placeholder="Abbr."
+              placeholder={intl.formatMessage({ id: 'user_management-abbr' })}
               onChange={(e) => this.updateFilter('initials', e.target.value)}
             />
           </th>
           <th className="fs-6 py-3">
             <Form.Control
               type="text"
-              placeholder="Email"
+              placeholder={intl.formatMessage({ id: 'user_management-email' })}
               onChange={(e) => this.updateFilter('email', e.target.value)}
             />
           </th>
@@ -1535,7 +1555,7 @@ export default class UserManagement extends React.Component {
         <Card>
           <Card.Body>
             <Button variant="warning" size="md" className="me-1" onClick={() => this.handleMsgShow()}>
-              Send Message
+              <FormattedMessage id="user_management-send_message" />
               <i className="fa fa-commenting-o ms-1" />
             </Button>
             <Button
@@ -1545,7 +1565,7 @@ export default class UserManagement extends React.Component {
               onClick={() => this.handleNewUserShow()}
               data-cy="create-user"
             >
-              New User
+              <FormattedMessage id="user_management-new_user" />
               <i className="fa fa-plus ms-1" />
             </Button>
             <Button
@@ -1555,7 +1575,7 @@ export default class UserManagement extends React.Component {
               data-cy="restore-user"
               className="me-1"
             >
-              Restore Account
+              <FormattedMessage id="user_management-restore_account" />
               <i className="fa fa-undo ms-1" />
             </Button>
           </Card.Body>
@@ -1577,3 +1597,10 @@ export default class UserManagement extends React.Component {
     );
   }
 }
+UserManagement.propTypes = {
+  intl: propType.shape({
+    formatMessage: propType.func.isRequired,
+  }).isRequired
+};
+
+export default injectIntl(UserManagement);
