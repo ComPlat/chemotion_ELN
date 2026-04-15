@@ -6,6 +6,15 @@ module Usecases
       ALLOWED_EVENTABLE_TYPES = %w[
         Sample Reaction Labimotion::Element Wellplate ResearchPlan Screen DeviceDescription
       ].freeze
+      EVENTABLE_TYPE_CLASS_MAP = {
+        'Sample' => Sample,
+        'Reaction' => Reaction,
+        'Labimotion::Element' => Labimotion::Element,
+        'Wellplate' => Wellplate,
+        'ResearchPlan' => ResearchPlan,
+        'Screen' => Screen,
+        'DeviceDescription' => DeviceDescription,
+      }.freeze
 
       attr_accessor :params, :user
 
@@ -40,7 +49,10 @@ module Usecases
                            .joins(:collections).where(collections: { id: collection_ids }).any?
         else
           # For other types, only show all entries if the user owns the collection
-          normalized_eventable_type.constantize.where(id: params[:eventable_id]).for_user(user.id).any?
+          eventable_class = EVENTABLE_TYPE_CLASS_MAP[normalized_eventable_type]
+          return false if eventable_class.nil?
+
+          eventable_class.where(id: params[:eventable_id]).for_user(user.id).any?
         end
       end
 
