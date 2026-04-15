@@ -133,6 +133,8 @@ module Chemotion
           lcms_mz_page_data: params[:lcms_mz_page_data],
           lcms_peaks_str: params[:lcms_peaks_str],
           lcms_integrals_str: params[:lcms_integrals_str],
+          lcms_polarity: params[:lcms_polarity],
+          lcms_trigger: params[:lcms_trigger],
           converter_url: Rails.configuration.try(:converter).try(:url),
         }
       end

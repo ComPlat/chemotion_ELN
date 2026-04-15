@@ -81,6 +81,10 @@ export default class AttachmentFetcher {
   }
 
   static fetchFiles(ids) {
+    console.log('[AttachmentFetcher.fetchFiles] request', { // eslint-disable-line no-console
+      idsCount: Array.isArray(ids) ? ids.length : 0,
+      ids,
+    });
     const promise = fetch('/api/v1/attachments/files/', {
       credentials: 'same-origin',
       method: 'POST',
@@ -106,7 +110,13 @@ export default class AttachmentFetcher {
           });
         }
         return response.json();
-      }).then((json) => json);
+      }).then((json) => {
+        console.log('[AttachmentFetcher.fetchFiles] response', { // eslint-disable-line no-console
+          filesCount: Array.isArray(json?.files) ? json.files.length : 0,
+          fileIds: Array.isArray(json?.files) ? json.files.map((f) => f.id) : [],
+        });
+        return json;
+      });
 
     return promise;
   }
@@ -688,6 +698,44 @@ export default class AttachmentFetcher {
       })
       .catch((errorMessage) => {
         console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
+  static fetchLcmsPage({
+    attachmentId, retentionTime, polarity, trigger, signal
+  }) {
+    const params = {
+      attachmentId,
+      retentionTime: retentionTime != null ? String(retentionTime) : '',
+      polarity,
+      trigger,
+    };
+    const promise = fetch('/api/v1/attachments/lcms_page/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      signal,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(decamelizeKeys(params)),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            throw new Error(`lcms_page ${response.status}: ${text.slice(0, 200)}`);
+          });
+        }
+        return response.json();
+      })
+      .then((json) => json)
+      .catch((errorMessage) => {
+        if (errorMessage?.name !== 'AbortError') {
+          console.log(errorMessage); // eslint-disable-line no-console
+        }
+        throw errorMessage;
       });
 
     return promise;

@@ -49,6 +49,12 @@ class SpectraStore {
     try {
       const raw = new TextDecoder("utf-8").decode(new Uint8Array([...(base64.decode(file))].map(ch => ch.charCodeAt(0))));
       const jcamp = FN.ExtractJcamp(raw);
+      const lcmsMzPageMatch = raw.match(/^##\$CSLCMSMZPAGE\s*=\s*"?([0-9.+\-Ee]+)"?/mi);
+      const lcmsMzPage = lcmsMzPageMatch ? Number(lcmsMzPageMatch[1]) : null;
+      if (Number.isFinite(lcmsMzPage) && !Number.isFinite(jcamp?.lcms_mz_page)) {
+        jcamp.lcms_mz_page = lcmsMzPage;
+        jcamp.lcmsMzPage = lcmsMzPage;
+      }
       if (!jcamp.spectra) return null;
       spectrum = Object.assign({}, spectrum, { jcamp });
     } catch (err) {

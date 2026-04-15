@@ -8,7 +8,32 @@ class SpectraActions {
   }
 
   LoadSpectra(spcInfos) {
-    const idxs = spcInfos && spcInfos.map(si => si.idx);
+    const infos = Array.isArray(spcInfos) ? spcInfos : [];
+    const groups = infos.reduce((acc, si) => {
+      const key = si?.idDt ?? 'unknown';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(si);
+      return acc;
+    }, {});
+
+    const selectedInfos = Object.values(groups).flatMap((datasetInfos) => {
+      const uvvis = datasetInfos.filter((si) => /(?:^|[._-])uvvis(?:[._-]|$)/.test((si?.label || '').toLowerCase()));
+      const tics = datasetInfos.filter((si) => /(?:^|[._-])tic(?:[._-]|$)/.test((si?.label || '').toLowerCase()));
+      const ms = datasetInfos.filter((si) => /(?:^|[._-])(mz|ms)(?:[._-]|$)/.test((si?.label || '').toLowerCase()));
+      const isLcmsDataset = uvvis.length > 0 && tics.length > 0 && ms.length > 0;
+      if (!isLcmsDataset) return datasetInfos;
+      // Bootstrap LCMS with UV/TIC only; MS pages are requested on-demand.
+      return [...uvvis, ...tics];
+    });
+
+    const uniqInfos = selectedInfos.filter((si, index, arr) => index === arr.findIndex((x) => x.idx === si.idx));
+    const idxs = uniqInfos.map(si => si.idx);
+    console.log('[SpectraActions.LoadSpectra] selected payload', { // eslint-disable-line no-console
+      totalInput: infos.length,
+      totalRequested: idxs.length,
+      requestedIds: idxs,
+      requestedLabels: uniqInfos.map((si) => si.label),
+    });
     if (idxs.length === 0) {
       return null;
     }
@@ -16,7 +41,7 @@ class SpectraActions {
     return (dispatch) => {
       AttachmentFetcher.fetchFiles(idxs)
         .then((fetchedFiles) => {
-          dispatch({ fetchedFiles, spcInfos });
+          dispatch({ fetchedFiles, spcInfos: infos });
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line
         });
