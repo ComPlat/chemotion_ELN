@@ -2,7 +2,7 @@
 /* eslint-disable react/require-default-props */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Popover, Button } from 'react-bootstrap';
+import { Popover } from 'react-bootstrap';
 import Immutable from 'immutable';
 import { isEmpty, isEqual, set } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -106,7 +106,9 @@ export default class ElementDetailSortTab extends Component {
   }
 
   onLayoutChange = (visible, hidden) => {
-    this.setState({ visible, hidden });
+    const { onTabPositionChanged } = this.props;
+
+    this.setState({ visible, hidden }, () => onTabPositionChanged(visible));
   };
 
   render() {
@@ -117,16 +119,9 @@ export default class ElementDetailSortTab extends Component {
     const allCollection = currentCollection?.is_locked && currentCollection.label === 'All';
     if (!isOwnCollection && !allCollection) { return null; }
 
-    const popoverSettings = ({ close }) => (
+    const popoverSettings = (
       <Popover>
-        <Popover.Header className="d-flex justify-content-between align-items-center">
-          Tab Layout
-          <Button
-            variant="close"
-            aria-label="Close"
-            onClick={close}
-          />
-        </Popover.Header>
+        <Popover.Header>Tab Layout</Popover.Header>
         <Popover.Body>
           <TabLayoutEditor
             visible={visible}
@@ -141,7 +136,9 @@ export default class ElementDetailSortTab extends Component {
     return (
       <ConfigOverlayButton
         popoverSettings={popoverSettings}
-        onClose={() => this.updateLayout()}
+        onToggle={(show) => {
+          if (!show) this.updateLayout();
+        }}
       />
     );
   }
