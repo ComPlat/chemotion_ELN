@@ -25,7 +25,11 @@ module Usecases
       def eventable?
         params[:eventable_id].present? &&
           params[:eventable_type].present? &&
-          params[:eventable_type].constantize.where(id: params[:eventable_id]).for_user(user.id).any?
+          normalized_eventable_type.constantize.where(id: params[:eventable_id]).for_user(user.id).any?
+      end
+
+      def normalized_eventable_type
+        params[:eventable_type].camelize
       end
 
       # find all calender entries (only own, own or shared for a specific event, own or shared by connected user)
@@ -36,7 +40,7 @@ module Usecases
           own_entries = all_entries_in_range.for_user(user.id)
 
           if eventable?
-            event_entries = all_entries_in_range.for_event(params[:eventable_id], params[:eventable_type])
+            event_entries = all_entries_in_range.for_event(params[:eventable_id], normalized_eventable_type)
             own_entries.or(event_entries)
           elsif params[:with_shared_collections]
             own_entries.or(shared_entries(all_entries_in_range))

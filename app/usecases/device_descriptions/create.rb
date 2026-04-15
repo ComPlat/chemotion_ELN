@@ -20,10 +20,12 @@ module Usecases
           CollectionsDeviceDescription.create(device_description: device_description, collection: collection)
 
           all_collection_of_collection_owner = Collection.get_all_collection_for_user(current_user)
-          CollectionsDeviceDescription.create(
-            device_description: device_description,
-            collection: all_collection_of_collection_owner,
-          )
+          if collection.id != all_collection_of_collection_owner.id
+            CollectionsDeviceDescription.create(
+              device_description: device_description,
+              collection: all_collection_of_collection_owner,
+            )
+          end
 
           device_description
         end
