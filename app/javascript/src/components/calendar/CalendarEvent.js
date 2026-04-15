@@ -22,7 +22,7 @@ const CalendarEvent = (props) => {
   const eventKind = (event) => {
     if (!event.kind) { return null; }
 
-    return ` - ${capitalizeWords(event.kind)}`;
+    return `${capitalizeWords(event.kind)}`;
   }
 
   const eventDetail = (event) => {
@@ -41,16 +41,14 @@ const CalendarEvent = (props) => {
   }
 
   return (
-    <div>
-      <div className={shortTitle ? 'my-2' : 'my-0'}>
-        {event.title}
-        {!shortTitle && (
-          <span className="fst-italic">
-            {eventDetail(event)}
-            {event.element_short_label}
-          </span>
-        )}
-      </div>
+    <div className={`${shortTitle ? 'my-2' : 'my-0'} mt-1 fw-bold text-capitalize`} style={{ fontSize: '0.75rem' }}>
+      <p className="mb-0" style={{ overflow: 'hidden', textOverflow: 'clip', whiteSpace: 'nowrap' }}>{event.title}</p>
+      {!shortTitle && (
+        <span className="d-block fw-normal" style={{ fontSize: '0.70rem' }}>
+          {eventDetail(event)}
+          {event.element_short_label}
+        </span>
+      )}
     </div>
   );
 }

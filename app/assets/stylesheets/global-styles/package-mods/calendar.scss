@@ -17,3 +17,20 @@
 .rbc-agenda-table {
   color: white;
 }
+
+.rbc-time-view .rbc-event {
+  display: flex;
+  flex-direction: column;
+}
+
+.rbc-time-view .rbc-event .rbc-event-content {
+  order: 1;
+}
+
+.rbc-time-view .rbc-event .rbc-event-label {
+  display: none;
+}
+
+.rbc-day-slot .rbc-events-container{
+  margin-right: 3px;
+}
