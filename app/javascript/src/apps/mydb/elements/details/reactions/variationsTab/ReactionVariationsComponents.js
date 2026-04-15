@@ -4,10 +4,11 @@ import React, {
 } from 'react';
 import Select from 'react-select';
 import {
-  Button, ButtonGroup, Modal, Form, OverlayTrigger, Tooltip, Table
+  Button, ButtonGroup, Form, OverlayTrigger, Tooltip, Table
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { cloneDeep, isEqual } from 'lodash';
+import AppModal from 'src/components/common/AppModal';
 import {
   getVariationsRowName, convertUnit,
   getUserFacingEntryName, convertGenericUnit, PLACEHOLDER_CELL_TEXT, sanitizeGroupEntry, DISPLAY_PRECISION,
@@ -27,8 +28,8 @@ function RowToolsCellRenderer({
   const { reactionShortLabel, copyRow, removeRow } = context;
   return (
     <div>
-      <span className="me-1">{getVariationsRowName(reactionShortLabel, row.id)}</span>
       <ButtonGroup>
+        <Button size="xsm" variant="secondary">{getVariationsRowName(reactionShortLabel, row.id)}</Button>
         <Button size="xsm" variant="success" onClick={() => copyRow(row)}>
           <i className="fa fa-clone" />
         </Button>
@@ -502,6 +503,17 @@ function NoteCellRenderer(props) {
   );
 }
 
+NoteCellRenderer.propTypes = {
+  data: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+  }).isRequired,
+  value: PropTypes.string,
+};
+
+NoteCellRenderer.defaultProps = {
+  value: '',
+};
+
 function NoteCellEditor({
   data: row,
   value,
@@ -523,27 +535,22 @@ function NoteCellEditor({
   };
 
   const cellContent = (
-    <Modal
+    <AppModal
       show
       onHide={onClose}
+      title={`Edit note for ${getVariationsRowName(reactionShortLabel, row.id)}`}
+      primaryActionLabel="Save"
+      onPrimaryAction={onSave}
       onEntered={() => textareaRef.current?.focus()}
     >
-      <Modal.Header closeButton>
-        {`Edit note for ${getVariationsRowName(reactionShortLabel, row.id)}`}
-      </Modal.Header>
-      <Modal.Body>
-        <Form.Control
-          as="textarea"
-          ref={textareaRef}
-          placeholder="Start typing your note..."
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-        />
-      </Modal.Body>
-      <Modal.Footer>
-        <Button onClick={onSave}>Save</Button>
-      </Modal.Footer>
-    </Modal>
+      <Form.Control
+        as="textarea"
+        ref={textareaRef}
+        placeholder="Start typing your note..."
+        value={note}
+        onChange={(event) => setNote(event.target.value)}
+      />
+    </AppModal>
   );
 
   return cellContent;
@@ -633,6 +640,10 @@ function EntrySelectionHeader({
     setShowModal(false);
   };
 
+  const handleClose = () => {
+    setShowModal(false);
+  };
+
   const handleEntrySelection = (entry) => {
     setEntryColDefs((prevEntryColDefs) => {
       const newColDefs = [...prevEntryColDefs];
@@ -661,12 +672,13 @@ function EntrySelectionHeader({
   return (
     <div>
       <div className="d-flex align-items-center w-100">
-        <span
-          className="ag-header-group-cell-label"
+        <button
+          type="button"
+          className="ag-header-group-cell-label btn btn-link p-0 text-start text-decoration-none"
           onClick={() => handleNameChange(names[(names.indexOf(displayName) + 1) % names.length] ?? displayName)}
         >
           {`${displayName} ${gasType && gasType !== 'off' ? `(${gasType})` : ''}`}
-        </span>
+        </button>
         <Button
           variant="link"
           className="p-0 ms-1 lh-1"
@@ -675,54 +687,74 @@ function EntrySelectionHeader({
           <i className="fa fa-pencil" />
         </Button>
       </div>
-      <Modal show={showModal} onHide={handleApply} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>{`Select entries for ${displayName}`}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Table striped bordered hover className="table-layout-fixed">
-            <thead>
-              <tr>
-                <th>Selected</th>
-                <th>Entry</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entryColDefs.map((entryColDef) => {
-                const { entry, hide, displayUnit } = entryColDef;
-                return (
-                  <tr key={entry}>
-                    <td className="text-center">
-                      <Form.Check
-                        type="checkbox"
-                        checked={!hide}
-                        onChange={() => handleEntrySelection(entry)}
-                      />
-                    </td>
-                    <td>
-                      {getUserFacingEntryName(entry)}
-                      {displayUnit && <span className="ms-1">{`(${displayUnit})`}</span>}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </Table>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleApply}>
-            Apply
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <AppModal
+        show={showModal}
+        onHide={handleClose}
+        title={`Select entries for ${displayName}`}
+        size="lg"
+        primaryActionLabel="Apply"
+        onPrimaryAction={handleApply}
+      >
+        <Table striped bordered hover className="table-layout-fixed">
+          <thead>
+            <tr>
+              <th>Selected</th>
+              <th>Entry</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entryColDefs.map((entryColDef) => {
+              const { entry, hide } = entryColDef;
+              return (
+                <tr key={entry}>
+                  <td className="text-center">
+                    <Form.Check
+                      type="checkbox"
+                      checked={!hide}
+                      onChange={() => handleEntrySelection(entry)}
+                    />
+                  </td>
+                  <td>{getUserFacingEntryName(entry)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
+      </AppModal>
     </div>
+  );
+}
+
+EntrySelectionHeader.propTypes = {
+  columnGroup: PropTypes.shape({
+    parent: PropTypes.shape({
+      groupId: PropTypes.string.isRequired,
+    }).isRequired,
+    groupId: PropTypes.string.isRequired,
+    getColGroupDef: PropTypes.func.isRequired,
+  }).isRequired,
+  names: PropTypes.arrayOf(PropTypes.string),
+  gasType: PropTypes.string,
+  context: PropTypes.shape({
+    setColumnDefinitions: PropTypes.func.isRequired,
+  }).isRequired,
+  displayName: PropTypes.string.isRequired,
+};
+
+EntrySelectionHeader.defaultProps = {
+  names: [],
+  gasType: '',
+};
+
+function ToolHeader() {
+  return (
+    <span>Tools</span>
   );
 }
 
 function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   const [showModal, setShowModal] = useState(false);
   const [currentColumns, setCurrentColumns] = useState(selectedColumns);
-  const [pendingDeselection, setPendingDeselection] = useState(null);
 
   useEffect(() => {
     // Remove currently selected columns that are no longer available.
@@ -744,27 +776,9 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   };
 
   const handleSelectChange = (key) => (selectedOptions) => {
-    const newValues = selectedOptions ? selectedOptions.map((option) => option.value) : [];
-    const currentValues = currentColumns[key] || [];
-    const deselectedLabels = currentValues
-      .filter((id) => !newValues.includes(id))
-      .map((id) => availableColumns[key][id]);
-
-    if (deselectedLabels.length > 0) {
-      setPendingDeselection({ key, newValues, deselectedLabels: deselectedLabels.join(', ') });
-    } else {
-      setCurrentColumns((prev) => ({ ...prev, [key]: newValues }));
-    }
-  };
-
-  const handleConfirmDeselection = () => {
-    const { key, newValues } = pendingDeselection;
-    setCurrentColumns((prev) => ({ ...prev, [key]: newValues }));
-    setPendingDeselection(null);
-  };
-
-  const handleCancelDeselection = () => {
-    setPendingDeselection(null);
+    const updatedCurrentColumns = { ...currentColumns };
+    updatedCurrentColumns[key] = selectedOptions ? selectedOptions.map((option) => option.value) : [];
+    setCurrentColumns(updatedCurrentColumns);
   };
 
   const splitCamelCase = (str) => str.replace(/([a-z])([A-Z])/g, '$1 $2');
@@ -776,56 +790,35 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
         Select Columns
       </Button>
 
-      <Modal show={showModal} onHide={() => setShowModal(false)} animation={false}>
-        <Modal.Header closeButton>
-          <Modal.Title>Column Selection</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {Object.entries(availableColumns).map(([columnGroup, columnIDsToLabels]) => (
-            <div key={columnGroup}>
-              <h5>{toUpperCase(splitCamelCase(columnGroup))}</h5>
-              <Select
-                isMulti
-                options={Object.entries(columnIDsToLabels).map(([id, label]) => ({ value: id, label }))}
-                value={currentColumns[columnGroup]?.map((id) => ({ value: id, label: columnIDsToLabels[id] })) || []}
-                onChange={handleSelectChange(columnGroup)}
-              />
-            </div>
-          ))}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleApply}>
-            Apply
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      <Modal show={pendingDeselection !== null} onHide={handleCancelDeselection} animation={false}>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm De-selection</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to de-select
-          {' '}
-          {pendingDeselection?.deselectedLabels}
-          ? De-selection results in the loss of data.
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCancelDeselection}>
-            Keep
-            {' '}
-            {pendingDeselection?.deselectedLabels}
-          </Button>
-          <Button variant="danger" onClick={handleConfirmDeselection}>
-            Remove
-            {' '}
-            {pendingDeselection?.deselectedLabels}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <AppModal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        animation={false}
+        title="Column Selection"
+        primaryActionLabel="Apply"
+        onPrimaryAction={handleApply}
+      >
+        {Object.entries(availableColumns).map(([columnGroup, columnIDsToLabels]) => (
+          <div key={columnGroup}>
+            <h5>{toUpperCase(splitCamelCase(columnGroup))}</h5>
+            <Select
+              isMulti
+              options={Object.entries(columnIDsToLabels).map(([id, label]) => ({ value: id, label }))}
+              value={currentColumns[columnGroup]?.map((id) => ({ value: id, label: columnIDsToLabels[id] })) || []}
+              onChange={handleSelectChange(columnGroup)}
+            />
+          </div>
+        ))}
+      </AppModal>
     </>
   );
 }
+
+ColumnSelection.propTypes = {
+  selectedColumns: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
+  availableColumns: PropTypes.objectOf(PropTypes.objectOf(PropTypes.string)).isRequired,
+  onApply: PropTypes.func.isRequired,
+};
 
 function RemoveVariationsModal({ onRemoveAll }) {
   const [showModal, setShowModal] = useState(false);
@@ -845,23 +838,24 @@ function RemoveVariationsModal({ onRemoveAll }) {
         Remove all variations
       </Button>
 
-      <Modal show={showModal} onHide={handleClose} animation={false}>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Removal</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>Are you sure you want to remove all variations?</Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Keep variations
-          </Button>
-          <Button variant="danger" onClick={handleConfirm}>
-            Remove variations
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <AppModal
+        show={showModal}
+        onHide={handleClose}
+        animation={false}
+        title="Confirm Removal"
+        closeLabel="Cancel"
+        primaryActionLabel="Remove variations"
+        onPrimaryAction={handleConfirm}
+      >
+        Are you sure you want to remove all variations?
+      </AppModal>
     </>
   );
 }
+
+RemoveVariationsModal.propTypes = {
+  onRemoveAll: PropTypes.func.isRequired,
+};
 
 function UnitToggleHeader({ column, context, api }) {
   const { units, entry } = column.getColDef();
@@ -922,6 +916,7 @@ export {
   NoteCellRenderer,
   NoteCellEditor,
   MaterialOverlay,
+  ToolHeader,
   ColumnSelection,
   SegmentFormatter,
   SegmentParser,
