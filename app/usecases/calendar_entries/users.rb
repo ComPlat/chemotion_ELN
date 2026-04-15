@@ -14,15 +14,19 @@ module Usecases
 
       def perform!
         return User.none unless params[:eventable_type].present? && params[:eventable_id].present?
-        return User.none unless ALLOWED_TYPES.include?(params[:eventable_type])
+        return User.none unless ALLOWED_TYPES.include?(normalized_eventable_type)
 
         User.where(id: user_ids).where.not(id: user.id)
       end
 
       private
 
+      def normalized_eventable_type
+        params[:eventable_type].camelize
+      end
+
       def user_ids
-        eventable = params[:eventable_type].constantize.find(params[:eventable_id])
+        eventable = normalized_eventable_type.constantize.find(params[:eventable_id])
         collections = eventable.collections
 
         ids = collections.map(&:user_id) # collection owners
