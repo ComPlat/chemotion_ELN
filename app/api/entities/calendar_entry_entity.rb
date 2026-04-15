@@ -75,7 +75,8 @@ module Entities
     def element
       return if eventable_type.nil?
 
-      @element ||= object.instance_variable_get(:@element) || eventable_type.camelize.constantize.find(object.eventable_id)
+      @element ||= object.instance_variable_get(:@element) ||
+                   eventable_type.camelize.constantize.find(object.eventable_id)
     end
 
     def element_klass
