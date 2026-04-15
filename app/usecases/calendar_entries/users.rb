@@ -3,7 +3,15 @@
 module Usecases
   module CalendarEntries
     class Users
-      ALLOWED_TYPES = %w[Sample Reaction Element Wellplate Screen ResearchPlan DeviceDescription].freeze
+      EVENTABLE_MODELS = {
+        'Sample' => Sample,
+        'Reaction' => Reaction,
+        'Element' => Element,
+        'Wellplate' => Wellplate,
+        'Screen' => Screen,
+        'ResearchPlan' => ResearchPlan,
+        'DeviceDescription' => DeviceDescription,
+      }.freeze
 
       attr_accessor :params, :user
 
@@ -14,7 +22,7 @@ module Usecases
 
       def perform!
         return User.none unless params[:eventable_type].present? && params[:eventable_id].present?
-        return User.none unless ALLOWED_TYPES.include?(normalized_eventable_type)
+        return User.none unless eventable_model.present?
 
         User.where(id: user_ids).where.not(id: user.id)
       end
@@ -25,8 +33,12 @@ module Usecases
         params[:eventable_type].camelize
       end
 
+      def eventable_model
+        EVENTABLE_MODELS[normalized_eventable_type]
+      end
+
       def user_ids
-        eventable = normalized_eventable_type.constantize.find(params[:eventable_id])
+        eventable = eventable_model.find(params[:eventable_id])
         collections = eventable.collections
 
         ids = collections.map(&:user_id) # collection owners
