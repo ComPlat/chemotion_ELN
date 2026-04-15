@@ -25,7 +25,7 @@ module Usecases
       def eventable?
         params[:eventable_id].present? &&
           params[:eventable_type].present? &&
-          normalized_eventable_type.constantize.where(id: params[:eventable_id]).for_user(user.id).any?
+          normalized_eventable_type.constantize.where(id: params[:eventable_id]).joins(:collections).where(collections: { id: collection_ids }).any?
       end
 
       def normalized_eventable_type
@@ -51,16 +51,26 @@ module Usecases
       end
 
       def shared_entries(entries)
-        entries.where(
-          eventable: [
-            Sample.joins(:collections).where(collections: { id: collection_ids }),
-            Reaction.joins(:collections).where(collections: { id: collection_ids }),
-            Labimotion::Element.joins(:collections).where(collections: { id: collection_ids }),
-            Wellplate.joins(:collections).where(collections: { id: collection_ids }),
-            ResearchPlan.joins(:collections).where(collections: { id: collection_ids }),
-            Screen.joins(:collections).where(collections: { id: collection_ids }),
-          ],
-        )
+        shared_eventables = build_shared_eventables_query
+        return entries.none if shared_eventables.empty?
+
+        query = shared_eventables.reduce(entries.none) do |result, (type, ids)|
+          result.or(entries.where(eventable_type: type, eventable_id: ids))
+        end
+
+        query
+      end
+
+      def build_shared_eventables_query
+        {
+          'Sample' => Sample.joins(:collections).where(collections: { id: collection_ids }).pluck(:id),
+          'Reaction' => Reaction.joins(:collections).where(collections: { id: collection_ids }).pluck(:id),
+          'Labimotion::Element' => Labimotion::Element.joins(:collections).where(collections: { id: collection_ids }).pluck(:id),
+          'Wellplate' => Wellplate.joins(:collections).where(collections: { id: collection_ids }).pluck(:id),
+          'ResearchPlan' => ResearchPlan.joins(:collections).where(collections: { id: collection_ids }).pluck(:id),
+          'Screen' => Screen.joins(:collections).where(collections: { id: collection_ids }).pluck(:id),
+          'DeviceDescription' => DeviceDescription.joins(:collections).where(collections: { id: collection_ids }).pluck(:id),
+        }.reject { |_type, ids| ids.empty? }
       end
 
       # load elements and element klasses here to reduce later n+1 queries in calendar entry entities
@@ -71,10 +81,11 @@ module Usecases
           entry_ids_grouped_by_type.each do |type, ids|
             next if type.nil?
 
-            elements[type] = if type == 'Labimotion::Element'
-                               type.constantize.where(id: ids).includes(:element_klass, :collections).index_by(&:id)
+            normalized_type = type.camelize
+            elements[type] = if normalized_type == 'Labimotion::Element'
+                               normalized_type.constantize.where(id: ids).includes(:element_klass, :collections).index_by(&:id)
                              else
-                               type.constantize.where(id: ids).includes(:collections).index_by(&:id)
+                               normalized_type.constantize.where(id: ids).includes(:collections).index_by(&:id)
                              end
           end
 
