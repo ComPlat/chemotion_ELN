@@ -11,7 +11,7 @@ import ScifinderCredential from 'src/apps/scifinderCredential/ScifinderCredentia
 import UserSetting from 'src/components/structureEditor/UserSetting';
 import OmniauthCredential from 'src/apps/omniauthCredential/OmniauthCredential';
 import UserCounter from 'src/apps/userCounter/UserCounter';
-import { AuthToken } from 'src/apps/userSettings/AuthToken';
+import AuthToken from 'src/apps/userSettings/AuthToken';
 import { TwoFactorSettings } from 'src/apps/userSettings/TwoFA';
 import { AccountSettings, DeleteSettings } from 'src/apps/userSettings/UserSettings';
 import Affiliations from 'src/apps/userSettings/Affiliations';

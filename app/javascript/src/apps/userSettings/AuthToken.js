@@ -72,6 +72,19 @@ function AuthToken({ currentUser }) {
     }
   }, [lastToken]);
 
+  if (!currentUser.otp_required_for_login) {
+    return (
+      <Card>
+        <Card.Header>Authentification Token</Card.Header>
+        <Alert className="m-2" variant="info">
+          For security reasons, it is not possible to create
+          authentication tokens unless two-factor authentication is enabled.
+        </Alert>
+        <Card.Body />
+      </Card>
+    );
+  }
+
   return (
     <>
       <OtpInput
@@ -99,6 +112,7 @@ function AuthToken({ currentUser }) {
 
 AuthToken.propTypes = {
   currentUser: PropTypes.shape({
+    otp_required_for_login: PropTypes.bool.isRequired,
     tokens: tokensShape.isRequired,
   }).isRequired,
 };
@@ -373,6 +387,4 @@ TokenList.propTypes = {
   onRevoke: PropTypes.func.isRequired,
 };
 
-export {
-  AuthToken
-};
+export default AuthToken;

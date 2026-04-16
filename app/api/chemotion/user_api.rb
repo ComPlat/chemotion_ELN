@@ -172,6 +172,8 @@ module Chemotion
                        otp_wrong: !params[:otp_attempt].blank?
                      }, 422)
             end
+          else
+            error!('2FA is needed', 401)
           end
           item_name = params[:name].to_s.strip
           item_name = nil if item_name.empty?
@@ -201,6 +203,8 @@ module Chemotion
                        otp_wrong: !params[:otp_attempt].blank?
                      }, 422)
             end
+          else
+            error!('2FA is needed', 401)
           end
           result = current_user.tokens.find do |_, token|
             token["name"] == params[:name] && token["expiration_date"] == params[:expiration_date]
