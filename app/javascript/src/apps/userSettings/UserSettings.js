@@ -3,7 +3,7 @@ import {
   Row, Form, Button, Alert, Card, Col
 } from 'react-bootstrap';
 import { formValueHandler, submitAsForm } from 'src/utilities/FormHelper';
-import { OtpInput } from 'src/components/common/AuthendifactionHelper';
+import { OtpInput } from 'src/components/common/OtpInput';
 import PropTypes from 'prop-types';
 
 function DeleteSettings() {
