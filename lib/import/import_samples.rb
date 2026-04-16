@@ -95,11 +95,11 @@ module Import
 
     def check_required_fields
       @mandatory_check = {}
-      header_fields = ['molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles', 'decoupled']
+      header_fields = ['molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles', 'decoupled', 'cas']
       header_fields.each do |check|
-        @mandatory_check[check] = true if header.find { |e| /^\s*#{check}?/i =~ e }
+      @mandatory_check[check] = true if header.find { |e| /^\s*#{check}?/i =~ e }
       end
-      message = 'Column headers should have: molfile, or Smiles (or cano_smiles, canonical smiles)'
+      message = 'Column headers should have: molfile, Smiles (or cano_smiles, canonical smiles), CAS, or decoupled'
       raise message if mandatory_check.empty?
     end
 
@@ -187,7 +187,7 @@ module Import
       padded_row = raw_row.values_at(0...header.length)
       row = [header, padded_row].transpose.to_h
       is_decoupled = row_value_case_insensitive(row, 'decoupled')
-      return unless structure?(row) || is_decoupled
+      return unless structure?(row) || is_decoupled || has_cas?(row)
 
       rows << row.each_pair { |k, v| v && row[k] = v.to_s }
     end
@@ -197,7 +197,14 @@ module Import
       return Molecule.find_or_create_dummy if is_decoupled && !structure?(row)
 
       molecule, molfile = extract_molfile_and_molecule(row, index)
-      return if molfile.nil? || molecule.nil?
+      
+      # CAS fallback: resolve molecule via CAS lookup when molfile/SMILES are missing
+      if (molfile.nil? || molecule.nil?) && has_cas?(row)
+        molecule = find_molecule_by_cas(row['cas'].to_s.strip)
+        molfile = molecule&.molfile
+      end
+      ## import sample as decoupled if no structure information is available
+      return Molecule.find_or_create_dummy if molfile.nil? || molecule.nil?
 
       [molecule, molfile]
     end
@@ -251,6 +258,34 @@ module Import
       header_present = keys.any? { |key| determine_sheet(xlsx)[key] }
       cell_present = keys.any? { |key| row_value_case_insensitive(row, key).to_s.present? }
       header_present && cell_present
+    end
+
+    def has_cas?(row)
+      cas = row['cas'].to_s.strip
+      cas.present? && cas.match?(/^\d+-\d+-\d+$/)
+    end
+
+    def find_molecule_by_cas(cas_nr)
+      return nil if cas_nr.blank?
+
+      @molecule_cas_cache ||= {}
+      return @molecule_cas_cache[cas_nr] if @molecule_cas_cache.key?(cas_nr)
+
+      begin
+      result = Chemotion::CasLookupService.fetch_by_cas(cas_nr)
+      smiles = result[:smiles]
+
+      if smiles.present?
+        molecule = Molecule.find_or_create_by_cano_smiles(smiles)
+        @molecule_cas_cache[cas_nr] = molecule
+        return molecule
+      end
+      rescue StandardError => e
+      Rails.logger.warn "CAS lookup failed for #{cas_nr}: #{e.message}"
+      end
+
+      @molecule_cas_cache[cas_nr] = nil
+      nil
     end
 
     # When Open Babel returns blank inchikey for a PolymersList molfile, create a molecule with a synthetic
