@@ -423,7 +423,6 @@ describe Chemotion::TextTemplateAPI do
         expect(response).to have_http_status(:unprocessable_entity)
       end
     end
-
   end
 
   describe 'DELETE /api/v1/text_templates/personal/:id' do
