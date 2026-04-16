@@ -122,6 +122,16 @@ const moleculeModeratorDisableTooltip = (
     Disable editing the representation of the global molecules for this user (currently enabled)
   </Tooltip>
 );
+const globalTextTemplateEditorEnableTooltip = (
+  <Tooltip id="assign_button">
+    Enable editing global text templates for this user (currently disabled)
+  </Tooltip>
+);
+const globalTextTemplateEditorDisableTooltip = (
+  <Tooltip id="assign_button">
+    Disable editing global text templates for this user (currently enabled)
+  </Tooltip>
+);
 const accountActiveTooltip = (
   <Tooltip id="assign_button">
     This user account is deactivated, click to [activate]
@@ -338,6 +348,11 @@ export default class UserManagement extends React.Component {
       ? 'Disable editing the representation of the global molecules for this user'
       : 'Enable editing the representation of the global molecules for this user';
     this.updateProfile({ user_id: id, molecule_editor: !isMoleculesEditor }, message);
+  }
+
+  handleGlobalTextTemplateEditor(id, isGlobalTextTemplateEditor) {
+    const message = `Global text template editing has been ${isGlobalTextTemplateEditor === true ? 'dis' : 'en'}abled for user ${id}`;
+    this.updateProfile({ user_id: id, global_text_template_editor: !isGlobalTextTemplateEditor }, message);
   }
 
   handleActiveInActiveAccount(id, isActive) {
@@ -1579,6 +1594,16 @@ export default class UserManagement extends React.Component {
               className="me-1"
             >
               <i className="icon-sample" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger placement="bottom" overlay={(g.global_text_template_editor === null || g.global_text_template_editor === false) ? globalTextTemplateEditorEnableTooltip : globalTextTemplateEditorDisableTooltip}>
+            <Button
+              size="sm"
+              variant={(g.global_text_template_editor === null || g.global_text_template_editor === false) ? 'light' : 'success'}
+              onClick={() => this.handleGlobalTextTemplateEditor(g.id, g.global_text_template_editor)}
+              className="me-1"
+            >
+              <i className="fa fa-file-text" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
           <OverlayTrigger

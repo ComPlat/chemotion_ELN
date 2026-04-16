@@ -126,7 +126,7 @@ describe Chemotion::TextTemplateAPI do
 
     before { template }
 
-    context 'when curent user is no admin' do
+    context 'when current user is a regular user without global_text_template_editor' do
       it 'returns a 401' do
         delete url
 
@@ -155,6 +155,21 @@ describe Chemotion::TextTemplateAPI do
         expect(PredefinedTextTemplate.where(id: template.id).exists?).to be false
       end
     end
+
+    context 'when current user has global_text_template_editor privilege' do
+      before do
+        template
+        profile = user.profile || user.create_profile
+        profile.update_columns(data: (profile.data || {}).merge('global_text_template_editor' => true)) # rubocop:disable Rails/SkipsModelValidations
+      end
+
+      it 'deletes the PredefinedTextTemplate of that name' do
+        delete url
+
+        expect(parsed_json_response).to eq expected_output
+        expect(PredefinedTextTemplate.exists?(id: template.id)).to be false
+      end
+    end
   end
 
   describe 'PUT /api/v1/text_templates/predefined_text_template' do
@@ -171,7 +186,7 @@ describe Chemotion::TextTemplateAPI do
     let(:new_name) { 'Barbaz' }
     let(:new_data) { { bar: :baz } }
 
-    context 'when current user is not an admin' do
+    context 'when current user is a regular user without global_text_template_editor' do
       it 'returns a 401' do
         put url, params: input
 
@@ -201,6 +216,24 @@ describe Chemotion::TextTemplateAPI do
         expect(parsed_json_response).to eq expected_output
       end
     end
+
+    context 'when user has global_text_template_editor privilege' do
+      before do
+        template
+        profile = user.profile || user.create_profile
+        profile.update_columns(data: (profile.data || {}).merge('global_text_template_editor' => true)) # rubocop:disable Rails/SkipsModelValidations
+      end
+
+      let(:expected_output) do
+        Entities::TextTemplateEntity.represent(template.reload).serializable_hash.deep_stringify_keys
+      end
+
+      it 'updates the PredefinedTextTemplate found by id' do
+        put url, params: input
+
+        expect(parsed_json_response).to eq expected_output
+      end
+    end
   end
 
   describe 'POST /api/v1/text_templates/predefined_text_template' do
@@ -214,7 +247,7 @@ describe Chemotion::TextTemplateAPI do
       }
     end
 
-    context 'when current user is not an admin' do
+    context 'when current user is a regular user without global_text_template_editor' do
       it 'returns a 401' do
         post url, params: input
 
@@ -234,6 +267,199 @@ describe Chemotion::TextTemplateAPI do
         post url, params: input
 
         expect(parsed_json_response).to eq expected_output
+      end
+    end
+
+    context 'when current user has global_text_template_editor privilege' do
+      before do
+        profile = user.profile || user.create_profile
+        profile.update_columns(data: (profile.data || {}).merge('global_text_template_editor' => true)) # rubocop:disable Rails/SkipsModelValidations
+      end
+
+      let(:expected_output) do
+        template = PredefinedTextTemplate.find_by(name: name, user_id: user.id)
+        Entities::TextTemplateEntity.represent(template).serializable_hash.deep_stringify_keys
+      end
+
+      it 'creates a PredefinedTextTemplate with the supplied data' do
+        post url, params: input
+
+        expect(parsed_json_response).to eq expected_output
+      end
+    end
+
+    context 'when a PredefinedTextTemplate with that name already exists' do
+      let(:user) { create(:admin) }
+
+      before { create(:predefined_text_template, name: name) }
+
+      it 'returns a 422' do
+        post url, params: input
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
+
+  describe 'GET /api/v1/text_templates/personal' do
+    let(:url) { '/api/v1/text_templates/personal' }
+
+    context 'when user has personal templates' do
+      let!(:templates) { create_list(:personal_text_template, 3, user: user) }
+      let(:expected_output) do
+        {
+          'text_templates' => templates.sort_by(&:id).reverse.map do |t|
+            Entities::TextTemplateEntity.represent(t).serializable_hash.deep_stringify_keys
+          end,
+        }
+      end
+
+      it 'returns only the current users personal templates' do
+        get url
+
+        expect(parsed_json_response).to eq expected_output
+      end
+
+      it 'does not return another users templates' do
+        other_template = create(:personal_text_template)
+        get url
+
+        ids = parsed_json_response['text_templates'].pluck('id')
+        expect(ids).not_to include(other_template.id)
+      end
+    end
+
+    context 'when user has no personal templates' do
+      it 'returns an empty list' do
+        get url
+
+        expect(parsed_json_response).to eq('text_templates' => [])
+      end
+    end
+  end
+
+  describe 'POST /api/v1/text_templates/personal' do
+    let(:url) { '/api/v1/text_templates/personal' }
+    let(:input) { { name: 'My Template', data: { foo: :bar } } }
+
+    it 'creates a personal template for the current user' do
+      expect { post url, params: input }.to change(PersonalTextTemplate, :count).by(1)
+
+      template = PersonalTextTemplate.find_by(name: 'My Template', user_id: user.id)
+      expect(template).to be_present
+      expect(template.data).to eq('foo' => 'bar')
+    end
+
+    it 'returns the created template' do
+      post url, params: input
+
+      template = PersonalTextTemplate.find_by(name: 'My Template', user_id: user.id)
+      expected = Entities::TextTemplateEntity.represent(template).serializable_hash.deep_stringify_keys
+      expect(parsed_json_response).to eq expected
+    end
+
+    context 'when name is blank' do
+      it 'returns a 422' do
+        post url, params: input.merge(name: '')
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+
+    context 'when a template with that name already exists for the user' do
+      before { create(:personal_text_template, name: 'My Template', user: user) }
+
+      it 'returns a 422' do
+        post url, params: input
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
+
+  describe 'PUT /api/v1/text_templates/personal/:id' do
+    let(:template) { create(:personal_text_template, user: user, name: 'Old Name', data: { a: 1 }) }
+    let(:url) { "/api/v1/text_templates/personal/#{template.id}" }
+    let(:input) { { id: template.id, name: 'New Name', data: { b: 2 } } }
+
+    it 'updates the template name and data' do
+      put url, params: input
+
+      template.reload
+      expect(template.name).to eq('New Name')
+      expect(template.data).to eq('b' => '2')
+    end
+
+    it 'returns the updated template' do
+      put url, params: input
+
+      expected = Entities::TextTemplateEntity.represent(template.reload).serializable_hash.deep_stringify_keys
+      expect(parsed_json_response).to eq expected
+    end
+
+    context 'when template belongs to another user' do
+      let(:other_template) { create(:personal_text_template, name: 'Other') }
+      let(:url) { "/api/v1/text_templates/personal/#{other_template.id}" }
+
+      it 'returns a 404' do
+        put url, params: input.merge(id: other_template.id)
+
+        expect(parsed_json_response).to eq('error' => '404 Not found')
+      end
+    end
+
+    context 'when template does not exist' do
+      let(:url) { "/api/v1/text_templates/personal/#{template.id + 9999}" }
+
+      it 'returns a 404' do
+        put url, params: input.merge(id: template.id + 9999)
+
+        expect(parsed_json_response).to eq('error' => '404 Not found')
+      end
+    end
+
+    context 'when renaming to a name already used by another of the users templates' do
+      before { create(:personal_text_template, user: user, name: 'New Name') }
+
+      it 'returns a 422' do
+        put url, params: input
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+
+  end
+
+  describe 'DELETE /api/v1/text_templates/personal/:id' do
+    let!(:template) { create(:personal_text_template, user: user, name: 'To Delete') }
+    let(:url) { "/api/v1/text_templates/personal/#{template.id}" }
+
+    it 'deletes the personal template' do
+      expect { delete url }.to change(PersonalTextTemplate, :count).by(-1)
+      expect(PersonalTextTemplate.exists?(id: template.id)).to be false
+    end
+
+    it 'returns the deleted template' do
+      expected = Entities::TextTemplateEntity.represent(template).serializable_hash.deep_stringify_keys
+      delete url
+
+      expect(parsed_json_response).to eq expected
+    end
+
+    context 'when template belongs to another user' do
+      let(:other_template) { create(:personal_text_template, name: 'Other') }
+      let(:url) { "/api/v1/text_templates/personal/#{other_template.id}" }
+
+      it 'returns a 404' do
+        delete url
+
+        expect(parsed_json_response).to eq('error' => '404 Not found')
+      end
+    end
+
+    context 'when template does not exist' do
+      let(:url) { "/api/v1/text_templates/personal/#{template.id + 9999}" }
+
+      it 'returns a 404' do
+        delete url
+
+        expect(parsed_json_response).to eq('error' => '404 Not found')
       end
     end
   end

@@ -72,6 +72,14 @@ en:
           attributes:
             color_code:
               invalid_hex_color: "Must be a valid hex color code, e.g. #FF0000"
+        personal_text_template:
+          attributes:
+            name:
+              taken: already exists in your personal templates
+        predefined_text_template:
+          attributes:
+            name:
+              taken: already exists in global templates
         device:
           attributes:
             name:

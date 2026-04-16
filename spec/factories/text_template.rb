@@ -24,5 +24,6 @@ FactoryBot.define do
     factory :screen_text_template, class: 'ScreenTextTemplate'
     factory :wellplate_text_template, class: 'WellplateTextTemplate'
     factory :device_description_text_template, class: 'DeviceDescriptionTextTemplate'
+    factory :personal_text_template, class: 'PersonalTextTemplate'
   end
 end

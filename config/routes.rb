@@ -41,6 +41,7 @@ Rails.application.routes.draw do
     get 'mydb/*any', to: 'pages#welcome'
     get 'mydb', to: 'pages#welcome'
     get 'molecule_moderator', to: 'pages#molecule_moderator'
+    get 'my_templates', to: 'pages#my_templates'
     get 'converter_admin', to: 'pages#converter_admin'
     get 'generic_elements_admin', to: 'pages#gea'
     get 'generic_segments_admin', to: 'pages#gsa'

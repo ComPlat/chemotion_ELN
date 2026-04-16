@@ -73,6 +73,8 @@ class DeviceDescriptionTextTemplate < TextTemplate
 end
 
 class PredefinedTextTemplate < TextTemplate
+  validates :name, presence: true, uniqueness: true
+
   def self.init_seeds
     filepath = Rails.root.join('db/seeds/json/text_template_seeds.json')
     predefined_template_seeds_path = File.join(filepath)

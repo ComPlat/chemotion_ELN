@@ -78,4 +78,41 @@ export default class TextTemplatesFetcher {
     }).then(response => response.json())
       .catch((errorMessage) => { console.log(errorMessage); });
   }
+
+  static fetchPersonalTemplates() {
+    return fetch('/api/v1/text_templates/personal', {
+      credentials: 'same-origin',
+    }).then(response => response.json())
+      .then(json => json.text_templates)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static createPersonalTemplate(template) {
+    return fetch('/api/v1/text_templates/personal', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(template)
+    }).then(response => response.json())
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static updatePersonalTemplate(template) {
+    return fetch(`/api/v1/text_templates/personal/${template.id}`, {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(template)
+    }).then(response => response.json())
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static deletePersonalTemplate(id) {
+    return fetch(`/api/v1/text_templates/personal/${id}`, {
+      credentials: 'same-origin',
+      method: 'DELETE',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    }).then(response => response.json())
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
 }

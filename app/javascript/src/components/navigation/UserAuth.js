@@ -667,6 +667,9 @@ export default class UserAuth extends Component {
             <Dropdown.Item eventKey="12" href="/converter_admin">
               Converter Profile
             </Dropdown.Item>
+            <Dropdown.Item href="/my_templates">
+              My Templates
+            </Dropdown.Item>
             <Dropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</Dropdown.Item>
 
             <Dropdown.Item onClick={() => UserActions.logout()}>
