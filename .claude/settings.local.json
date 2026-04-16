@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /home/martin/Develop/KIT/chemotion_ELN/app/javascript/src/apps/mydb/elements/details/reactions/*.js)",
+      "Bash(wc -l /home/martin/Develop/KIT/chemotion_ELN/app/javascript/src/apps/mydb/elements/details/reactions/*.js)"
+    ]
+  }
+}
