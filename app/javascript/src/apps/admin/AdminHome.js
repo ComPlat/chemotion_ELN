@@ -8,7 +8,7 @@ import GroupsDevices from 'src/apps/admin/GroupsDevices';
 import MessagePublish from 'src/apps/admin/MessagePublish';
 import OlsTerms from 'src/apps/admin/OlsTerms';
 import MatrixManagement from 'src/apps/admin/MatrixManagement';
-import TextTemplateContainer from 'src/apps/admin/textTemplates/TextTemplateContainer';
+// import TextTemplateContainer from 'src/apps/admin/textTemplates/TextTemplateContainer';
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
 import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
 import DevicesList from 'src/apps/admin/devices/DevicesList';
@@ -17,7 +17,7 @@ import ThirdPartyApp from 'src/apps/admin/ThirdPartyApp';
 
 class AdminHome extends React.Component {
   constructor(props) {
-    super();
+    super(props); // eslint-disable-line no-useless-constructor
     this.state = {
       pageIndex: 0,
     };
@@ -39,7 +39,7 @@ class AdminHome extends React.Component {
       case 4: return <GroupsDevices />;
       case 5: return <OlsTerms />;
       case 7: return <MatrixManagement />;
-      case 8: return <TextTemplateContainer />;
+      // case 8: return <TextTemplateContainer />; // Moved to My Templates page — accessible via navigation menu for all users
       case 9: return <DevicesList />;
       // case 12: return <TemplateManagement />;
       case 13: return <DelayedJobs />;
@@ -69,9 +69,9 @@ class AdminHome extends React.Component {
         <NavItem>
           <Nav.Link eventKey={7}>UI features</Nav.Link>
         </NavItem>
-        <NavItem>
+        {/* <NavItem>
           <Nav.Link eventKey={8}>Text Templates</Nav.Link>
-        </NavItem>
+        </NavItem> */}{/* Moved to My Templates page — accessible via navigation menu for all users */}
         <NavItem>
           <Nav.Link eventKey={2}>Message Publish</Nav.Link>
         </NavItem>

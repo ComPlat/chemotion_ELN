@@ -13,6 +13,7 @@ var ScifinderCredential = require('src/apps/scifinderCredential');
 var StructureEditorUserSetting = require('src/components/structureEditor/UserSetting');
 var LoginOptions = require('src/apps/omniauthCredential/LoginOptions');
 var ConverterAdmin = require('src/apps/converter/ConverterAdmin');
+var MyTemplates = require('src/apps/myTemplates');
 var GenericElementsAdmin = require('src/apps/generic/GenericElementsAdmin');
 var GenericSegmentsAdmin = require('src/apps/generic/GenericSegmentsAdmin');
 var GenericDatasetsAdmin = require('src/apps/generic/GenericDatasetsAdmin');

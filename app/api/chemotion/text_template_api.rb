@@ -46,7 +46,9 @@ module Chemotion
       end
 
       delete :by_name do
-        error!('401 Unauthorized', 401) unless Admin.exists?(id: current_user.id)
+        unless Admin.exists?(id: current_user.id) || current_user.global_text_template_editor
+          error!('401 Unauthorized', 401)
+        end
 
         template = PredefinedTextTemplate.where(name: params['name']).first
         error!('404 Not found', 404) if template.nil?
@@ -63,12 +65,14 @@ module Chemotion
         optional :data, type: Hash, desc: "Text template details"
       end
       put :predefined_text_template do
-        error!('401 Unauthorized', 401) unless Admin.exists?(id: current_user.id)
+        unless Admin.exists?(id: current_user.id) || current_user.global_text_template_editor
+          error!('401 Unauthorized', 401)
+        end
 
         template = PredefinedTextTemplate.find_by(id: params["id"])
         error!('404 Not found', 404) if template.nil?
 
-        template.update!(
+        error!(template.errors.full_messages.join(', '), 422) unless template.update(
           name: params["name"] || "",
           data: params["data"] || {}
         )
@@ -81,15 +85,68 @@ module Chemotion
         optional :data, type: Hash, desc: "Text template details"
       end
       post :predefined_text_template do
-        error!('401 Unauthorized', 401) unless Admin.exists?(current_user.id)
+        unless Admin.exists?(id: current_user.id) || current_user.global_text_template_editor
+          error!('401 Unauthorized', 401)
+        end
 
-        template = PredefinedTextTemplate.create(
+        template = PredefinedTextTemplate.new(
           name: params["name"],
           user_id: current_user.id,
           data: params["data"] || {}
         )
+        error!(template.errors.full_messages.join(', '), 422) unless template.save
 
         present template, with: Entities::TextTemplateEntity
+      end
+
+      # Personal text templates
+      resource :personal do
+        desc 'Get all personal templates for current user'
+        get do
+          templates = PersonalTextTemplate.where(user_id: current_user.id).order(id: :desc)
+          present templates, with: Entities::TextTemplateEntity, root: :text_templates
+        end
+
+        desc 'Create a personal text template'
+        params do
+          requires :name, type: String, desc: 'Template name'
+          optional :data, type: Hash, desc: 'Template data'
+        end
+        post do
+          template = PersonalTextTemplate.new(
+            user_id: current_user.id,
+            name: params[:name],
+            data: params[:data] || {},
+          )
+          error!(template.errors.full_messages.join(', '), 422) unless template.save
+          present template, with: Entities::TextTemplateEntity
+        end
+
+        desc 'Update a personal text template'
+        params do
+          requires :id, type: Integer, desc: 'Template ID'
+          requires :name, type: String, desc: 'Template name'
+          optional :data, type: Hash, desc: 'Template data'
+        end
+        put ':id' do
+          template = PersonalTextTemplate.find_by(id: params[:id], user_id: current_user.id)
+          error!('404 Not found', 404) if template.nil?
+
+          error!(template.errors.full_messages.join(', '), 422) unless template.update(
+            name: params[:name],
+            data: params[:data] || template.data,
+          )
+          present template, with: Entities::TextTemplateEntity
+        end
+
+        desc 'Delete a personal text template'
+        delete ':id' do
+          template = PersonalTextTemplate.find_by(id: params[:id], user_id: current_user.id)
+          error!('404 Not found', 404) if template.nil?
+
+          template.destroy
+          present template, with: Entities::TextTemplateEntity
+        end
       end
     end
   end

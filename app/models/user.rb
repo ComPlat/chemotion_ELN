@@ -349,6 +349,10 @@ class User < ApplicationRecord
     profile&.data&.fetch('converter_admin', false)
   end
 
+  def global_text_template_editor
+    profile&.data&.fetch('global_text_template_editor', false)
+  end
+
   def matrix_check_by_name(name)
     mx = Matrice.find_by(name: name)
     return false if mx.nil?
