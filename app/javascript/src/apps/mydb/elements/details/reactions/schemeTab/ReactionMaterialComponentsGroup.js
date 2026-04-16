@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Table, Form } from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
@@ -12,9 +12,14 @@ import {
 /**
  * Component to display the components of a mixture sample in a reaction
  */
-class ReactionMaterialComponentsGroup extends React.Component {
-  handleReferenceChange = (e, component) => {
-    const { onComponentReferenceChange } = this.props;
+function ReactionMaterialComponentsGroup({
+  sampleId,
+  onComponentReferenceChange,
+  onComponentMetricsChange,
+  components,
+  solvents,
+}) {
+  const handleReferenceChange = useCallback((e, component) => {
     if (onComponentReferenceChange) {
       onComponentReferenceChange({
         type: 'componentReferenceChanged',
@@ -22,10 +27,9 @@ class ReactionMaterialComponentsGroup extends React.Component {
         checked: e.target.checked,
       });
     }
-  };
+  }, [onComponentReferenceChange]);
 
-  handleComponentMetricsChange = (component, metricUnit, metricPrefix) => {
-    const { onComponentMetricsChange, sampleId } = this.props;
+  const handleComponentMetricsChange = useCallback((component, metricUnit, metricPrefix) => {
     if (onComponentMetricsChange) {
       onComponentMetricsChange({
         type: 'ComponentMetricsChanged',
@@ -35,11 +39,9 @@ class ReactionMaterialComponentsGroup extends React.Component {
         metricPrefix,
       });
     }
-  };
+  }, [onComponentMetricsChange, sampleId]);
 
-  renderComponentRow(component) {
-    const { sampleId } = this.props;
-
+  const renderComponentRow = useCallback((component) => {
     // Get metric prefixes using utility functions
     const metricMol = getMetricMol(component);
     const metricMolConc = getMetricMolConc(component);
@@ -54,7 +56,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
             name={`component_reference_${sampleId}`}
             value={component.id}
             checked={!!component.reference}
-            onChange={(e) => this.handleReferenceChange(e, component)}
+            onChange={(e) => handleReferenceChange(e, component)}
             size="xsm"
             className="m-0"
             aria-label={`Set ${component.id} as reference`}
@@ -84,7 +86,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
             precision={6}
             disabled
             size="sm"
-            onMetricsChange={(e) => this.handleComponentMetricsChange(component, e.metricUnit, e.metricPrefix)}
+            onMetricsChange={(e) => handleComponentMetricsChange(component, e.metricUnit, e.metricPrefix)}
           />
         </td>
         {/* Relative MW */}
@@ -107,7 +109,7 @@ class ReactionMaterialComponentsGroup extends React.Component {
             precision={6}
             disabled
             size="sm"
-            onMetricsChange={(e) => this.handleComponentMetricsChange(component, e.metricUnit, e.metricPrefix)}
+            onMetricsChange={(e) => handleComponentMetricsChange(component, e.metricUnit, e.metricPrefix)}
           />
         </td>
         {/* Ratio */}
@@ -121,10 +123,9 @@ class ReactionMaterialComponentsGroup extends React.Component {
         </td>
       </tr>
     );
-  }
+  }, [sampleId, handleReferenceChange, handleComponentMetricsChange]);
 
-  // eslint-disable-next-line class-methods-use-this
-  renderSolventRow(solvent) {
+  const renderSolventRow = useCallback((solvent) => {
     const metricPrefixes = ['m', 'n', 'u'];
     const hasValidMetrics = solvent.metrics && solvent.metrics.length > 2;
     const isValidPrefix = hasValidMetrics && metricPrefixes.includes(solvent.metrics[1]);
@@ -166,59 +167,55 @@ class ReactionMaterialComponentsGroup extends React.Component {
         <td>{solvent.vendor || ''}</td>
       </tr>
     );
-  }
+  }, []);
 
-  render() {
-    const { components, solvents } = this.props;
+  return (
+    <>
+      {/* Components Table */}
+      {components && components.length > 0 && (
+        <Table responsive className="mixture-components-table">
+          <thead>
+            <tr>
+              <th>Ref</th>
+              <th>Component</th>
+              <th>Amount</th>
+              <th>Rel. MW</th>
+              <th>Conc</th>
+              <th>Ratio</th>
+            </tr>
+          </thead>
+          <tbody>
+            {components.map((component) => renderComponentRow(component))}
+          </tbody>
+        </Table>
+      )}
 
-    return (
-      <>
-        {/* Components Table */}
-        {components && components.length > 0 && (
-          <Table responsive className="mixture-components-table">
+      {/* Solvents Table */}
+      {solvents && solvents.length > 0 && (
+        <>
+          <div className="mt-3 mb-2 fw-bold">Solvents</div>
+          <Table responsive className="mixture-solvents-table">
             <thead>
               <tr>
-                <th>Ref</th>
-                <th>Component</th>
-                <th>Amount</th>
-                <th>Rel. MW</th>
-                <th>Conc</th>
+                <th>Label</th>
+                <th>Volume</th>
                 <th>Ratio</th>
+                <th>Purity</th>
               </tr>
             </thead>
             <tbody>
-              {components.map((component) => this.renderComponentRow(component))}
+              {solvents.map((solvent) => renderSolventRow(solvent))}
             </tbody>
           </Table>
-        )}
+        </>
+      )}
 
-        {/* Solvents Table */}
-        {solvents && solvents.length > 0 && (
-          <>
-            <div className="mt-3 mb-2 fw-bold">Solvents</div>
-            <Table responsive className="mixture-solvents-table">
-              <thead>
-                <tr>
-                  <th>Label</th>
-                  <th>Volume</th>
-                  <th>Ratio</th>
-                  <th>Purity</th>
-                </tr>
-              </thead>
-              <tbody>
-                {solvents.map((solvent) => this.renderSolventRow(solvent))}
-              </tbody>
-            </Table>
-          </>
-        )}
-
-        {/* No data message */}
-        {(!components || components.length === 0) && (!solvents || solvents.length === 0) && (
-          <div className="text-center">No components or solvents found for this mixture.</div>
-        )}
-      </>
-    );
-  }
+      {/* No data message */}
+      {(!components || components.length === 0) && (!solvents || solvents.length === 0) && (
+        <div className="text-center">No components or solvents found for this mixture.</div>
+      )}
+    </>
+  );
 }
 
 ReactionMaterialComponentsGroup.propTypes = {

@@ -12,6 +12,9 @@ import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromolec
 import Component from 'src/models/Component';
 import Container from 'src/models/Container';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
+import { correctPrefix, validDigit, formatDisplayValue } from 'src/utilities/MathUtils';
+import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
+import { metPreConv } from 'src/utilities/metricPrefix';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
@@ -1334,5 +1337,336 @@ export default class Reaction extends Element {
       }
     }
     return result;
+  }
+
+  /**
+   * Calculate yield for a gas product based on feedstock reference.
+   *
+   * @param {Sample} material - The gas product sample
+   * @param {number} vesselVolume - The vessel volume in liters
+   * @returns {string|null} Yield as percentage string, 'n.a.', or null
+   */
+  calculateYieldForGasProduct(material, vesselVolume) {
+    const refMaterial = this.findFeedstockMaterial();
+    if (!refMaterial) return null;
+
+    const purity = refMaterial?.purity || 1;
+    const feedstockMolValue = calculateFeedstockMoles(vesselVolume, purity);
+    const result = material.amount_mol / feedstockMolValue;
+    if (!result) return 'n.a.';
+    return result > 1 ? '100%' : `${(result * 100).toFixed(0)}%`;
+  }
+
+  /**
+   * Calculate yield for a product material in this reaction.
+   *
+   * @param {Sample} material - The product sample
+   * @param {number} [vesselVolume] - Optional vessel volume for gas products
+   * @returns {string|undefined} Yield as percentage string, 'n.d.', 'n.a.', or undefined
+   */
+  calculateYield(material, vesselVolume) {
+    const refMaterial = this.getReferenceMaterial();
+    const isNumeric = (v) => Number.isFinite(Number(v));
+
+    if (material.gas_type === 'gas') {
+      return this.calculateYieldForGasProduct(material, vesselVolume);
+    }
+
+    if (this.hasPolymers()) {
+      if (isNumeric(material.equivalent)) {
+        const eq = material.equivalent <= 1 ? material.equivalent : 1;
+        return `${(eq * 100).toFixed(0)}%`;
+      }
+      return undefined;
+    }
+
+    if (refMaterial && (refMaterial.decoupled || material.decoupled)) {
+      return 'n.a.';
+    }
+
+    if (material.purity < 1 && isNumeric(material.equivalent) && material.equivalent > 1) {
+      const stoichiometryCoeff = (material.coefficient || 1.0) / (refMaterial?.coefficient || 1.0);
+      const isSbmm = isSbmmSample(material);
+      const molecularWeight = isSbmm
+        ? material.sequence_based_macromolecule?.molecular_weight
+        : material.molecule_molecular_weight;
+      const maxAmount = (refMaterial.amount_mol || 0) * stoichiometryCoeff * molecularWeight;
+      const eq = maxAmount !== 0 ? (material.amount_g * (material.purity || 1)) / maxAmount : 0;
+      return `${(eq * 100).toFixed(1)}%`;
+    }
+
+    if (isNumeric(material.equivalent)) {
+      const eq = material.equivalent <= 1 ? material.equivalent : 1;
+      return `${((eq || 0) * 100).toFixed(0)}%`;
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Build a text paragraph describing a material's quantities for the description field.
+   *
+   * @param {Sample} material - The material sample
+   * @param {string} materialGroup - The material group name
+   * @returns {string} Formatted paragraph string
+   */
+  buildMaterialParagraph(material, materialGroup) {
+    const isSbmm = isSbmmSample(material);
+    let molName;
+    if (isSbmm) {
+      molName = material.name || material.short_label;
+    } else {
+      molName = material.molecule_name_hash.label;
+      if (!molName) { molName = material.molecule.iupac_name; }
+      if (!molName) { molName = material.molecule.sum_formular; }
+    }
+
+    const gUnit = correctPrefix(material.amount_g, 3);
+    const lUnit = correctPrefix(material.amount_l, 3);
+    const molUnit = correctPrefix(material.amount_mol, 3);
+
+    const grm = gUnit ? `${gUnit}g, ` : '';
+    const vol = lUnit ? `${lUnit}L, ` : '';
+    const solVol = vol.slice(0, -2);
+    const mol = molUnit ? `${molUnit}mol, ` : '';
+    const mlt = material.molarity_value === 0.0
+      ? ''
+      : `${validDigit(material.molarity_value, 3)} ${material.molarity_unit}, `;
+    const eqv = `${validDigit(material.equivalent, 3)}`;
+    const yld = `${Math.round(material.equivalent * 100)}%`;
+
+    if (material.gas_type === 'gas') {
+      const ton = `TON: ${validDigit(material.gas_phase_data.turnover_number, 3)}, `;
+      const tofUnit = (material.gas_phase_data.turnover_frequency.unit).split('TON')[1];
+      const tofValue = material.gas_phase_data.turnover_frequency.value;
+      const tof = `TOF: ${validDigit(tofValue, 3)}${tofUnit}, `;
+      return `${molName} (${mol}${ton}${tof}${yld})`;
+    }
+
+    switch (materialGroup) {
+      case 'purification_solvents':
+      case 'solvents':
+        return `${molName} (${solVol})`;
+      case 'products':
+        return `${molName} (${grm}${vol}${mol}${mlt}${yld} yield)`;
+      default:
+        return `${molName} (${grm}${vol}${mol}${mlt}${eqv} equiv)`;
+    }
+  }
+
+  /**
+   * Get the molar weight display string for a sample in this reaction.
+   *
+   * @param {Sample} sample - The sample to get molar weight for
+   * @param {boolean} [formatted=false] - Whether to return formatted display value
+   * @returns {string} Molar weight string with unit and optional theoretical mass
+   */
+  getMolarWeightDisplay(sample, formatted = false) {
+    const isProduct = this.products.includes(sample);
+    const isSbmm = isSbmmSample(sample);
+
+    let molecularWeight;
+    if (isSbmm) {
+      molecularWeight = sample.sequence_based_macromolecule?.molecular_weight;
+    } else if (sample.decoupled) {
+      molecularWeight = sample.molecular_mass;
+    } else {
+      molecularWeight = sample.molecule && sample.molecule.molecular_weight;
+    }
+
+    if (sample.isMixture?.() && sample.reference_relative_molecular_weight) {
+      molecularWeight = sample.reference_relative_molecular_weight.toFixed(4);
+    }
+
+    let theoreticalMassPart = '';
+    if (isProduct && sample.maxAmount) {
+      theoreticalMassPart = `, max theoretical mass: ${Math.round(sample.maxAmount * 10000) / 10} mg`;
+    }
+
+    const metricPrefix = 'n';
+    const currentPrecision = 4;
+    const formattedValue = formatDisplayValue(
+      metPreConv(molecularWeight, metricPrefix, metricPrefix),
+      currentPrecision
+    );
+    return `${formatted ? formattedValue : molecularWeight} g/mol${formatted ? '' : theoreticalMassPart}`;
+  }
+
+  /**
+   * Calculate equivalent for a polymer product based on loading.
+   *
+   * @param {Sample} refMaterial - The reference material
+   * @param {Sample} updatedSample - The sample to calculate equivalent for
+   * @returns {number} The calculated equivalent (clamped 0-1)
+   */
+  static calculateEquivalentForPolymer(refMaterial, updatedSample) {
+    if (!refMaterial.contains_residues) {
+      NotificationActions.add({
+        message: 'Cannot perform calculations for loading and equivalent',
+        level: 'error'
+      });
+      return 1.0;
+    }
+
+    if (!refMaterial.loading) {
+      NotificationActions.add({
+        message: 'Please set non-zero starting material loading',
+        level: 'error'
+      });
+      return 0.0;
+    }
+
+    const loading = refMaterial.residues[0].custom_info.loading;
+    const massKoef = updatedSample.amount_g / refMaterial.amount_g;
+    const mwb = updatedSample.molecule.molecular_weight;
+    const mwa = refMaterial.molecule.molecular_weight;
+    const mwDiff = mwb - mwa;
+    let equivalent = (1000.0 / loading) * (massKoef - 1.0) / mwDiff;
+
+    if (equivalent < 0.0 || equivalent > 1.0 || isNaN(equivalent) || !isFinite(equivalent)) {
+      equivalent = 1.0;
+    }
+
+    return equivalent;
+  }
+
+  /**
+   * Check if experimental mass is valid for a molecule product.
+   * Sets maxAmount and error_mass on the sample.
+   *
+   * @param {Sample} referenceM - The reference material
+   * @param {Sample} updatedS - The product sample to check
+   * @returns {{ mFull: number, errorMsg: string|undefined }}
+   */
+  static checkMassMolecule(referenceM, updatedS) {
+    let errorMsg;
+    let mFull;
+    const mwb = updatedS.decoupled ? (updatedS.molecular_mass || 0) : updatedS.molecule.molecular_weight;
+
+    if (!updatedS.contains_residues) {
+      mFull = referenceM.amount_mol * mwb;
+      const maxTheoAmount = mFull * (updatedS.coefficient || 1.0 / referenceM.coefficient || 1.0);
+      if (updatedS.amount_g > maxTheoAmount) {
+        errorMsg = 'Experimental mass value is larger than possible\n'
+          + 'by 100% conversion! Please check your data.';
+      }
+    } else {
+      const mwa = referenceM.decoupled ? (referenceM.molecular_mass || 0) : referenceM.molecule.molecular_weight;
+      const deltaM = mwb - mwa;
+      const massA = referenceM.amount_g;
+      mFull = massA + (referenceM.amount_mol * deltaM);
+      const massExperimental = updatedS.amount_g;
+
+      if (deltaM > 0) {
+        if (massExperimental > mFull) {
+          errorMsg = 'Experimental mass value is larger than possible\n'
+            + 'by 100% conversion! Please check your data.';
+        } else if (massExperimental < massA) {
+          errorMsg = 'Material loss! '
+            + 'Experimental mass value is less than possible!\n'
+            + 'Please check your data.';
+        }
+      } else if (massExperimental < mFull) {
+        errorMsg = 'Experimental mass value is less than possible\n'
+          + 'by 100% conversion! Please check your data.';
+      }
+    }
+
+    updatedS.maxAmount = mFull;
+
+    if (errorMsg && !updatedS.decoupled) {
+      updatedS.error_mass = true;
+      NotificationActions.add({ message: errorMsg, level: 'error' });
+    } else {
+      updatedS.error_mass = false;
+    }
+
+    return { mFull, errorMsg };
+  }
+
+  /**
+   * Check and update polymer-specific loading and equivalent values.
+   *
+   * @param {Sample} referenceM - The reference material
+   * @param {Sample} updatedS - The polymer product sample
+   * @param {{ mFull: number, errorMsg: string|undefined }} massAnalyses - Result from checkMassMolecule
+   */
+  static checkMassPolymer(referenceM, updatedS, massAnalyses) {
+    const equivalent = Reaction.calculateEquivalentForPolymer(referenceM, updatedS);
+    updatedS.equivalent = equivalent;
+    const fconvLoading = referenceM.amount_mol / updatedS.amount_g * 1000.0;
+    updatedS.residues[0].custom_info.loading_full_conv = fconvLoading;
+    updatedS.residues[0].custom_info.loading_type = 'mass_diff';
+
+    let newAmountMol;
+
+    if (equivalent < 0.0 || equivalent > 1.0) {
+      updatedS.adjusted_equivalent = equivalent > 1.0 ? 1.0 : 0.0;
+      updatedS.adjusted_amount_mol = referenceM.amount_mol;
+      updatedS.adjusted_loading = fconvLoading;
+      updatedS.adjusted_amount_g = updatedS.amount_g;
+      newAmountMol = referenceM.amount_mol;
+    }
+
+    newAmountMol = referenceM.amount_mol * equivalent;
+    const newLoading = (newAmountMol / updatedS.amount_g) * 1000.0;
+
+    updatedS.residues[0].custom_info.loading = newLoading;
+  }
+
+  /**
+   * Notify the user about mass exceeding theoretical maximum (for non-decoupled samples).
+   *
+   * @param {boolean} isDecoupled - Whether the sample is decoupled
+   */
+  static triggerMassExceededNotification(isDecoupled) {
+    if (!isDecoupled) {
+      NotificationActions.add({
+        message: 'Experimental mass value is larger than possible\n'
+          + 'by 100% conversion! Please check your data.',
+        level: 'error',
+      });
+    }
+  }
+
+  /**
+   * Calculate numeric equivalent for a gas product (not a display string).
+   *
+   * @param {Sample} sample - The gas product sample
+   * @param {number} [vesselVolume] - Optional override for vessel volume
+   * @returns {number|null} The equivalent as a number, or null if not calculable
+   */
+  calculateEquivalentForGasProductNumeric(sample, vesselVolume) {
+    const refMaterial = this.findFeedstockMaterial();
+    if (!refMaterial || !vesselVolume) return null;
+
+    const { purity } = refMaterial;
+    const feedstockMolValue = calculateFeedstockMoles(vesselVolume, purity || 1);
+    return sample.amount_mol / feedstockMolValue;
+  }
+
+  /**
+   * Recalculate equivalent values for starting materials and reactants.
+   *
+   * @param {Sample} [referenceMaterialOverride] - Optional override for reference material
+   */
+  recalculateEquivalentsForMaterials(referenceMaterialOverride) {
+    const refMaterial = referenceMaterialOverride || this.referenceMaterial;
+    if (!refMaterial) return;
+
+    const materialsToUpdate = [
+      ...this.starting_materials,
+      ...this.reactants,
+    ];
+
+    materialsToUpdate.forEach((mat) => {
+      if (!mat.reference && mat.amount_mol) {
+        if (refMaterial.amount_mol === 0) {
+          mat.equivalent = 0;
+        } else {
+          mat.equivalent = mat.amount_mol / refMaterial.amount_mol;
+        }
+      }
+    });
   }
 }

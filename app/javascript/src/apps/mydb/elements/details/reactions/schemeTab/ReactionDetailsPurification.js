@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Row, Col, Form } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
@@ -15,29 +15,29 @@ import { EditUserLabels } from 'src/components/UserLabels';
 
 function dummy() { return true; }
 
-export default class ReactionDetailsPurification extends Component {
-  constructor(props) {
-    super(props);
-    this.handlePurificationChange = this.handlePurificationChange.bind(this);
-    this.handleOnReactionChange = this.handleOnReactionChange.bind(this);
-    this.handleOnSolventSelect = this.handleOnSolventSelect.bind(this);
-    this.deletePSolvent = this.deletePSolvent.bind(this);
-    this.dropPSolvent = this.dropPSolvent.bind(this);
-  }
+function ReactionDetailsPurification({
+  reaction,
+  onReactionChange,
+  onInputChange,
+  additionQuillRef,
+  onChange,
+}) {
+  const handleMultiselectChange = useCallback((type, selectedOptions) => {
+    const values = selectedOptions.map(option => option.value);
+    const wrappedEvent = { target: { value: values } };
+    onInputChange(type, wrappedEvent);
+  }, [onInputChange]);
 
-  handleOnReactionChange(reaction) {
-    const { onReactionChange } = this.props;
+  const handleOnReactionChange = useCallback((rxn) => {
+    onReactionChange(rxn);
+  }, [onReactionChange]);
 
-    onReactionChange(reaction);
-  }
-
-  handlePurificationChange(selected) {
+  const handlePurificationChange = useCallback((selected) => {
     if (selected.length === 0) {
-      return this.handleMultiselectChange('purification', []);
+      return handleMultiselectChange('purification', []);
     }
 
     const obs = observationPurification;
-    const { reaction } = this.props;
 
     const selectedVal = selected[selected.length - 1].value;
     const predefinedObs = obs.filter(x =>
@@ -53,35 +53,26 @@ export default class ReactionDetailsPurification extends Component {
       const predefined = predefinedObs[0][selectedVal.toLowerCase()];
       reaction.concat_text_observation(predefined);
 
-      this.handleOnReactionChange(reaction);
+      handleOnReactionChange(reaction);
     } else {
-      this.handleMultiselectChange('purification', selected);
+      handleMultiselectChange('purification', selected);
     }
-  }
+  }, [reaction, handleOnReactionChange, handleMultiselectChange]);
 
-  deletePSolvent(material) {
-    const { reaction, onReactionChange } = this.props;
+  const deletePSolvent = useCallback((material) => {
     reaction.deleteMaterial(material, 'purification_solvents');
     onReactionChange(reaction);
-  }
+  }, [reaction, onReactionChange]);
 
-  dropPSolvent(srcSample, tagMaterial, tagGroup, extLabel) {
-    const { reaction, onReactionChange } = this.props;
+  const dropPSolvent = useCallback((srcSample, tagMaterial, tagGroup, extLabel) => {
     const splitSample = Sample.buildNew(srcSample, reaction.collection_id, tagGroup);
     splitSample.short_label = tagGroup.slice(0, -1);
     splitSample.external_label = extLabel;
     reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
     onReactionChange(reaction, { updateGraphic: true });
-  }
+  }, [reaction, onReactionChange]);
 
-  handleMultiselectChange(type, selectedOptions) {
-    const values = selectedOptions.map(option => option.value);
-    const wrappedEvent = { target: { value: values } };
-    this.props.onInputChange(type, wrappedEvent);
-  }
-
-  handleOnSolventSelect(eventKey) {
-    const { reaction } = this.props;
+  const handleOnSolventSelect = useCallback((eventKey) => {
     let val;
     if (eventKey > solventsTL.length) {
       val = '';
@@ -90,73 +81,65 @@ export default class ReactionDetailsPurification extends Component {
       val = solventsTL[eventKey][key];
     }
     reaction.tlc_solvents = val;
-    this.handleOnReactionChange(reaction);
-  }
+    handleOnReactionChange(reaction);
+  }, [reaction, handleOnReactionChange]);
 
-  render() {
-    const {
-      reaction,
-      onInputChange,
-      additionQuillRef,
-      onChange
-    } = this.props;
-    return (
-      <>
-        <Row className="mb-3">
-          <Col sm={12}>
-            <Form.Group>
-              <Form.Label>Purification</Form.Label>
-              <Select
-                name="purification"
-                isMulti
-                isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
-                options={purificationOptions}
-                onChange={this.handlePurificationChange}
-                value={purificationOptions.filter(({ value }) => reaction.purification.includes(value))}
-              />
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row className="mb-2">
-          <Col sm={12}>
-            <Form.Label>Purification solvents</Form.Label>
-            <MaterialGroup
-              reaction={reaction}
-              materialGroup="purification_solvents"
-              materials={reaction.purification_solvents}
-              dropMaterial={dummy}
-              deleteMaterial={this.deletePSolvent}
-              dropSample={this.dropPSolvent}
-              showLoadingColumn={!!reaction.hasPolymers()}
-              onChange={onChange}
+  return (
+    <>
+      <Row className="mb-3">
+        <Col sm={12}>
+          <Form.Group>
+            <Form.Label>Purification</Form.Label>
+            <Select
+              name="purification"
+              isMulti
+              isDisabled={!permitOn(reaction) || reaction.isMethodDisabled('purification')}
+              options={purificationOptions}
+              onChange={handlePurificationChange}
+              value={purificationOptions.filter(({ value }) => reaction.purification.includes(value))}
             />
-          </Col>
-        </Row>
-        <Row className="mb-3">
-          <Col md={12}>
-            <Form.Label>Additional information for publication and purification details</Form.Label>
-            <div>
-              {
-                permitOn(reaction) ? (
-                  <QuillEditor
-                    ref={additionQuillRef}
-                    value={reaction.observation}
-                    height="100%"
-                    disabled={!permitOn(reaction) || reaction.isMethodDisabled('observation')}
-                    onChange={(event) => onInputChange('observation', event)}
-                  />
-                ) : <QuillViewer value={reaction.observation} />
-              }
-            </div>
-            <div className="mx-0 mt-2">
-              <EditUserLabels element={reaction} fnCb={this.handleOnReactionChange} />
-            </div>
-            <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />
-          </Col>
-        </Row>
-      </>
-    );
-  }
+          </Form.Group>
+        </Col>
+      </Row>
+      <Row className="mb-2">
+        <Col sm={12}>
+          <Form.Label>Purification solvents</Form.Label>
+          <MaterialGroup
+            reaction={reaction}
+            materialGroup="purification_solvents"
+            materials={reaction.purification_solvents}
+            dropMaterial={dummy}
+            deleteMaterial={deletePSolvent}
+            dropSample={dropPSolvent}
+            showLoadingColumn={!!reaction.hasPolymers()}
+            onChange={onChange}
+          />
+        </Col>
+      </Row>
+      <Row className="mb-3">
+        <Col md={12}>
+          <Form.Label>Additional information for publication and purification details</Form.Label>
+          <div>
+            {
+              permitOn(reaction) ? (
+                <QuillEditor
+                  ref={additionQuillRef}
+                  value={reaction.observation}
+                  height="100%"
+                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('observation')}
+                  onChange={(event) => onInputChange('observation', event)}
+                />
+              ) : <QuillViewer value={reaction.observation} />
+            }
+          </div>
+          <div className="mx-0 mt-2">
+            <EditUserLabels element={reaction} fnCb={handleOnReactionChange} />
+          </div>
+          <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />
+        </Col>
+      </Row>
+    </>
+  );
 }
 
 ReactionDetailsPurification.propTypes = {
@@ -174,3 +157,5 @@ ReactionDetailsPurification.defaultProps = {
   onChange: () => {},
   additionQuillRef: {}
 };
+
+export default ReactionDetailsPurification;
