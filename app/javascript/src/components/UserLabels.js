@@ -210,10 +210,10 @@ class UserLabelModal extends Component {
       },
       {
         headerName: "Action",
-        minWidth: 55,
-        maxWidth: 55,
+        minWidth: 85,
+        maxWidth: 85,
         cellRenderer: this.renderActions,
-        cellClass: ["p-2"],
+        cellClass: ["p-2", "d-flex", "justify-content-center", "align-items-center"],
       },
     ];
 

@@ -9,6 +9,7 @@ import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/Se
 import SelectionTransferModal from 'src/apps/mydb/elements/list/selectionActions/SelectionTransferModal';
 import SelectionDeleteModal from 'src/apps/mydb/elements/list/selectionActions/SelectionDeleteModal';
 import SelectionRemoveModal from 'src/apps/mydb/elements/list/selectionActions/SelectionRemoveModal';
+import SelectionUserLabelsModal from 'src/apps/mydb/elements/list/selectionActions/SelectionUserLabelsModal';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import SelectionSplitButton from 'src/apps/mydb/elements/list/selectionActions/SelectionSplitButton';
 import SelectionGenerateButton from 'src/apps/mydb/elements/list/selectionActions/SelectionGenerateButton';
@@ -158,6 +159,9 @@ export default class SelectionActions extends React.Component {
       case 'remove':
         return <SelectionRemoveModal onHide={this.hideModal} />;
 
+      case 'user_labels':
+        return <SelectionUserLabelsModal onHide={this.hideModal} />;
+
       case 'delete':
         return <SelectionDeleteModal onHide={this.hideModal} />;
 
@@ -260,6 +264,18 @@ export default class SelectionActions extends React.Component {
         >
           <i className="fa fa-book me-1" aria-hidden="true" />
           <span className="selection-action-text-label">References</span>
+        </Button>
+        <Button
+          variant="light"
+          size="sm"
+          id="user-labels-btn"
+          disabled={noSel}
+          onClick={() => this.showModal('user_labels')}
+          title="User labels"
+          aria-label="User labels"
+        >
+          <i className="fa fa-tags me-1" aria-hidden="true" />
+          <span className="selection-action-text-label">My labels</span>
         </Button>
         {this.renderModal()}
       </div>
