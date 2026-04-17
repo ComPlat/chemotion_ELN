@@ -1,8 +1,8 @@
 /* eslint-disable react/forbid-prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Modal } from 'react-bootstrap';
 import { MolViewer } from 'react-molviewer';
+import AppModal from 'src/components/common/AppModal';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
@@ -26,28 +26,20 @@ function MolViewerModal(props) {
   };
 
   return (
-    <Modal
-      animation
-      centered
-      className="modal-xxxl"
+    <AppModal
+      title={MolViewerSet.INFO}
       show={show}
+      size="xxxl"
       onHide={handleHide}
     >
-      <Modal.Header closeButton>
-        <Modal.Title>
-          {MolViewerSet.INFO}
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <MolViewer
-          molContent={fileContent}
-          viewType={viewType}
-          fnInit={() => LoadingActions.start()}
-          fnCb={() => LoadingActions.stop()}
-          src="/api/v1/converter/structure"
-        />
-      </Modal.Body>
-    </Modal>
+      <MolViewer
+        molContent={fileContent}
+        viewType={viewType}
+        fnInit={() => LoadingActions.start()}
+        fnCb={() => LoadingActions.stop()}
+        src="/api/v1/converter/structure"
+      />
+    </AppModal>
   );
 }
 
