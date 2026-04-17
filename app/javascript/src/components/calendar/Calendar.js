@@ -1,13 +1,14 @@
 import React, { useContext, useEffect } from 'react';
 import { Calendar as BaseCalendar, Views, momentLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
-import { OverlayTrigger, Button, ButtonGroup, Tooltip, Modal, Stack } from 'react-bootstrap';
+import { OverlayTrigger, Button, ButtonGroup, Tooltip, Modal, Stack, Dropdown, Form } from 'react-bootstrap';
 import Draggable from "react-draggable";
 import moment from 'moment';
 
 import CalendarEntryEditor from 'src/components/calendar/CalendarEntryEditor';
 import CalendarEvent from 'src/components/calendar/CalendarEvent';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import { capitalizeWords } from 'src/utilities/textHelper';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -222,11 +223,23 @@ const Calendar = () => {
   }
 
   const filteredEntries = (entries) => {
-    if (!calendarStore.eventable_type || calendarStore.show_own_entries) { return entries; }
+    let result = entries;
 
-    return entries.filter((e) => (
-      e.eventable_id === calendarStore.eventable_id && e.eventable_type === calendarStore.eventable_type
-    ));
+    if (calendarStore.eventable_type && !calendarStore.show_own_entries) {
+      result = result.filter((e) => (
+        e.eventable_id === calendarStore.eventable_id && e.eventable_type === calendarStore.eventable_type
+      ));
+    }
+
+    if (calendarStore.selected_eventable_types.length > 0) {
+      result = result.filter((e) => calendarStore.selected_eventable_types.includes(e.eventable_type));
+    }
+
+    if (calendarStore.selected_kinds.length > 0) {
+      result = result.filter((e) => calendarStore.selected_kinds.includes(e.kind));
+    }
+
+    return result;
   }
 
   const headerDescription = () => {
@@ -301,6 +314,114 @@ const Calendar = () => {
     );
   }
 
+  const typeFilterButton = () => {
+    const availableTypes = calendarStore.availableEventableTypes;
+    if (availableTypes.length === 0) { return null; }
+
+    const selectedCount = calendarStore.selected_eventable_types.length;
+    const variant = selectedCount > 0 ? 'success' : 'light';
+    const tooltip = selectedCount > 0
+      ? `Filtering by ${selectedCount} type(s)`
+      : 'Filter entries by type';
+
+    return (
+      <Dropdown autoClose="outside">
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="filter-by-type">{tooltip}</Tooltip>}>
+          <Dropdown.Toggle variant={variant} id="calendar-type-filter-toggle">
+            <i className="fa fa-filter" />
+          </Dropdown.Toggle>
+        </OverlayTrigger>
+        <Dropdown.Menu>
+          {availableTypes.map((type) => {
+            const iconClass = getEventableIcon(type);
+            const checked = calendarStore.selected_eventable_types.includes(type);
+            return (
+              <Dropdown.Item
+                key={type}
+                as="div"
+                onClick={(e) => { e.stopPropagation(); calendarStore.toggleEventableType(type); }}
+                className="d-flex align-items-center gap-2"
+              >
+                <Form.Check
+                  type="checkbox"
+                  id={`calendar-type-filter-${type}`}
+                  checked={checked}
+                  onChange={() => calendarStore.toggleEventableType(type)}
+                  onClick={(e) => e.stopPropagation()}
+                  label={(
+                    <span>
+                      {iconClass && <i className={`${iconClass} me-2`} />}
+                      {type}
+                    </span>
+                  )}
+                />
+              </Dropdown.Item>
+            );
+          })}
+          {selectedCount > 0 && (
+            <>
+              <Dropdown.Divider />
+              <Dropdown.Item onClick={() => calendarStore.clearSelectedTypes()}>
+                Clear
+              </Dropdown.Item>
+            </>
+          )}
+        </Dropdown.Menu>
+      </Dropdown>
+    );
+  }
+
+  const kindFilterButton = () => {
+    const availableKinds = calendarStore.availableKinds;
+    if (availableKinds.length === 0) { return null; }
+
+    const selectedCount = calendarStore.selected_kinds.length;
+    const variant = selectedCount > 0 ? 'success' : 'light';
+    const tooltip = selectedCount > 0
+      ? `Filtering by ${selectedCount} calendar type(s)`
+      : 'Filter entries by calendar type';
+
+    return (
+      <Dropdown autoClose="outside">
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="filter-by-kind">{tooltip}</Tooltip>}>
+          <Dropdown.Toggle variant={variant} id="calendar-kind-filter-toggle">
+            <i className="fa fa-tag" />
+          </Dropdown.Toggle>
+        </OverlayTrigger>
+        <Dropdown.Menu>
+          {availableKinds.map((kind) => {
+            const checked = calendarStore.selected_kinds.includes(kind);
+            return (
+              <Dropdown.Item
+                key={kind}
+                as="div"
+                onClick={(e) => { e.stopPropagation(); calendarStore.toggleKind(kind); }}
+                className="d-flex align-items-center gap-2"
+              >
+                <Form.Check
+                  type="checkbox"
+                  id={`calendar-kind-filter-${kind}`}
+                  checked={checked}
+                  onChange={() => calendarStore.toggleKind(kind)}
+                  onClick={(e) => e.stopPropagation()}
+                  label={capitalizeWords(kind)}
+                />
+              </Dropdown.Item>
+            );
+          })}
+          {selectedCount > 0 && (
+            <>
+              <Dropdown.Divider />
+              <Dropdown.Item onClick={() => calendarStore.clearSelectedKinds()}>
+                Clear
+              </Dropdown.Item>
+            </>
+          )}
+        </Dropdown.Menu>
+      </Dropdown>
+    );
+  }
+
   return (
     <Draggable handle=".modal-header" onDrag={handleDrag}>
       <div>
@@ -326,6 +447,8 @@ const Calendar = () => {
               </Modal.Title>
               <ButtonGroup className="ms-5 ms-lg-auto me-lg-5 gap-2">
                 {showEntriesButton()}
+                {typeFilterButton()}
+                {kindFilterButton()}
                 {modalPropertiesButtons()}
               </ButtonGroup>
             </Stack>

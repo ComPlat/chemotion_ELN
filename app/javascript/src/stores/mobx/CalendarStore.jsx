@@ -45,6 +45,8 @@ export const CalendarStore = types
     eventable_id: types.optional(types.maybeNull(types.number)),
     eventable_type: types.optional(types.maybeNull(types.string)),
     showSharedCollectionEntries: types.optional(types.boolean, false),
+    selected_eventable_types: types.optional(types.array(types.string), []),
+    selected_kinds: types.optional(types.array(types.string), []),
   })
   .actions(self => ({
     getEntries: flow(function* getEntries() {
@@ -210,6 +212,28 @@ export const CalendarStore = types
         self.getEntries();
       }
     },
+    toggleEventableType(type) {
+      const idx = self.selected_eventable_types.indexOf(type);
+      if (idx === -1) {
+        self.selected_eventable_types.push(type);
+      } else {
+        self.selected_eventable_types.splice(idx, 1);
+      }
+    },
+    clearSelectedTypes() {
+      self.selected_eventable_types.clear();
+    },
+    toggleKind(kind) {
+      const idx = self.selected_kinds.indexOf(kind);
+      if (idx === -1) {
+        self.selected_kinds.push(kind);
+      } else {
+        self.selected_kinds.splice(idx, 1);
+      }
+    },
+    clearSelectedKinds() {
+      self.selected_kinds.clear();
+    },
     onRangeChange(range, view) {
       let newRange = range;
 
@@ -279,4 +303,18 @@ export const CalendarStore = types
   .views(self => ({
     get calendarEntries() { return values(self.entries) },
     get collectionUsers() { return values(self.collection_users) },
+    get availableEventableTypes() {
+      const typesInEntries = new Set();
+      values(self.entries).forEach((entry) => {
+        if (entry.eventable_type) typesInEntries.add(entry.eventable_type);
+      });
+      return Array.from(typesInEntries).sort();
+    },
+    get availableKinds() {
+      const kindsInEntries = new Set();
+      values(self.entries).forEach((entry) => {
+        if (entry.kind) kindsInEntries.add(entry.kind);
+      });
+      return Array.from(kindsInEntries).sort();
+    },
   }));
