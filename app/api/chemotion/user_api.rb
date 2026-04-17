@@ -149,6 +149,81 @@ module Chemotion
       delete 'sign_out' do
         status 204
       end
+
+      namespace :auth_token do
+        desc 'Generate Token'
+        params do
+          optional :otp_attempt,
+                   type: String,
+                   desc: 'one time password'
+          optional :expires_in_days,
+                   type: Integer,
+                   default: 160,
+                   values: 1..600,
+                   desc: 'Token expiration in days (1–600)'
+          optional :name, type: String, desc: 'Name of the item'
+        end
+        post do
+          if current_user.otp_required_for_login
+            unless current_user.validate_and_consume_otp!(params[:otp_attempt])
+              error!({
+                       error: 'OTP Missing',
+                       otp_required: true,
+                       otp_wrong: !params[:otp_attempt].blank?
+                     }, 422)
+            end
+          else
+            error!('2FA is needed', 401)
+          end
+          item_name = params[:name].to_s.strip
+          item_name = nil if item_name.empty?
+          token = Usecases::Public::BuildToken.execute!(params, item_name, current_user)
+          error!('401 Unauthorized', 401) if token.blank?
+
+          { token: token }
+        end
+      end
+
+      namespace :revoke_auth_token do
+        desc 'Revoke user Auth Token'
+        params do
+          optional :otp_attempt,
+                   type: String,
+                   desc: 'one time password'
+          requires :expiration_date, type: Integer
+          requires :name, type: String
+        end
+
+        post do
+          if current_user.otp_required_for_login
+            unless current_user.validate_and_consume_otp!(params[:otp_attempt])
+              error!({
+                       error: 'OTP Missing',
+                       otp_required: true,
+                       otp_wrong: !params[:otp_attempt].blank?
+                     }, 422)
+            end
+          else
+            error!('2FA is needed', 401)
+          end
+          result = current_user.tokens.find do |_, token|
+            token["name"] == params[:name] && token["expiration_date"] == params[:expiration_date]
+          end
+
+          # Return error if not found
+          error!('Token not found', 404) unless result
+
+          key, token = result
+
+          # Mark as revoked
+          token["revoked"] = true
+
+          # Save the updated tokens back to the user
+          current_user.save!
+        end
+
+      end
+
     end
 
     resource :groups do

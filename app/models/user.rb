@@ -38,6 +38,7 @@
 #  reset_password_sent_at    :datetime
 #  reset_password_token      :string
 #  sign_in_count             :integer          default(0), not null
+#  tokens                    :jsonb
 #  type                      :string           default("Person")
 #  unconfirmed_email         :string
 #  unlock_token              :string
@@ -125,6 +126,8 @@ class User < ApplicationRecord
   validate :name_abbreviation_length, on: :create
   validate :name_abbreviation_format, on: :create
   validate :mail_checker
+  validate :validate_tokens
+  before_save :remove_expired_tokens
 
   # NB: only Persons and Admins can get a confirmation email and confirm their email.
   before_create :skip_confirmation_notification!, unless: proc { |user|
@@ -467,6 +470,33 @@ class User < ApplicationRecord
     default_admin.allocated_space
   end
 
+  # Add a new token
+  def add_token(name:, token:, expiration_date:)
+    self.tokens ||= {}
+    self.tokens[token] = {
+      "name" => name,
+      "expiration_date" => expiration_date.to_i,
+      "revoked" => false
+    }
+  end
+
+  # Remove a token
+  def remove_token(token)
+    self.tokens ||= {}
+    self.tokens.delete(token)
+  end
+
+  # Fetch an item by token
+  def get_token(token)
+    return nil if tokens.blank?          # handles nil or empty
+    tokens[token]
+  end
+
+  # Fetch an item by token
+  def revoke_token(token)
+    self.tokens[token]['revoked'] = true
+  end
+
   private
 
   # These user collections are locked, i.e., the user is not allowed to:
@@ -513,6 +543,44 @@ class User < ApplicationRecord
   def user_ids
     [id]
   end
+
+  def remove_expired_tokens
+    time_i = Time.now.to_i
+    tokens&.reject! { |_, item| time_i > item["expiration_date"] }
+  end
+
+  def validate_tokens
+    return if tokens.blank?
+
+    unless tokens.is_a?(Hash)
+      errors.add(:tokens, "must be an object/hash")
+      return
+    end
+
+    tokens.each do |token, item|
+      unless item.is_a?(Hash)
+        errors.add(:tokens, "item for token #{token} must be a hash")
+        next
+      end
+
+      # Required keys
+      ['name', 'expiration_date', 'revoked'].each do |key|
+        unless item.key?(key)
+          errors.add(:tokens, "item for token #{token} must have key #{key}")
+        end
+      end
+      errors.add(:tokens, "revoked for token #{token} must be a bool") unless [true, false].include?(item['revoked'])
+      errors.add(:tokens, "name for token #{token} must be a string") unless item['name']&.is_a?(String)
+      errors.add(:tokens, "expiration_date for token #{token} must be a timestamp (integer)") unless item['expiration_date']&.is_a?(Integer)
+
+
+      # Ensure token is string
+      unless token.is_a?(String)
+        errors.add(:tokens, "token key must be a string")
+      end
+    end
+  end
+
 end
 
 class Person < User

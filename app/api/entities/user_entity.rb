@@ -1,6 +1,18 @@
 # frozen_string_literal: true
 
 module Entities
+  class AuthTokenEntity < Grape::Entity
+    expose :name do |token_hash|
+      token_hash['name']
+    end
+    expose :expiration_date do |token_hash|
+      token_hash['expiration_date']
+    end
+    expose :revoked do |token_hash|
+      token_hash['revoked']
+    end
+  end
+
   class UserEntity < Grape::Entity
     expose :id, documentation: { type: 'Integer', desc: "User's unique id" }
     expose :name, documentation: { type: 'String', desc: "User's name" }
@@ -33,6 +45,9 @@ module Entities
     expose :generic_admin, documentation: { type: 'Hash', desc: 'Generic administrator' }
     expose :otp_required_for_login, documentation: { type: 'Boolean', desc: 'If 2fa is enabled' }
     expose :profile
+    expose :tokens, using: Entities::AuthTokenEntity do |user|
+      user.tokens&.values || []
+    end
 
     def samples_count
       object.counters['samples'].to_i

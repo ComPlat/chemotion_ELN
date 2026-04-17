@@ -1,6 +1,18 @@
 /* eslint-disable arrow-parens */
 import 'whatwg-fetch';
 
+class ResponseError extends Error {
+  constructor(response) {
+    super(`${response.status} ${response.statusText}`);
+    this.status = response.status;
+    this.response = response;
+  }
+
+  json() {
+    return this.response.json();
+  }
+}
+
 // TODO: SamplesFetcher also updates Samples and so on...naming?
 export default class UsersFetcher {
   static fetchElementKlasses(genericOnly = true) {
@@ -377,6 +389,52 @@ export default class UsersFetcher {
     }).then((response) => response.json())
       .catch((error) => {
         console.error('Fetch error in updateReactionShortLabel:', error);
+        throw error;
+      });
+  }
+
+  static fetchRevokeAuthTokens(params) {
+    return fetch('/api/v1/users/revoke_auth_token', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new ResponseError(response);
+        }
+
+        return response.json();
+      })
+      .catch((error) => {
+        console.error('Fetch error in users/revoke_auth_token:', error);
+        throw error;
+      });
+  }
+
+  static fetchNewAuthToken(params) {
+    return fetch('/api/v1/users/auth_token', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new ResponseError(response);
+        }
+
+        return response.json();
+      })
+      .catch((error) => {
+        console.error('Fetch error in public/token:', error);
         throw error;
       });
   }
