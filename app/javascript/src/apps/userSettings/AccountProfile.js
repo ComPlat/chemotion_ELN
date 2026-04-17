@@ -352,22 +352,19 @@ function AccountProfile({ currentUser, closeSettings }) {
   return (
     <div className="container-fluid d-flex flex-column" style={{ minHeight: '100vh' }}>
       <div
-        className="bg-light"
+        className="bg-primary text-white d-flex align-items-center justify-content-between px-3 py-2"
         style={{
           position: 'sticky',
           top: 0,
           zIndex: 5
         }}
       >
-        <h1 style={{
-          display: 'inline',
-        }}
-        >
+        <h4 className="m-0">
           Settings
-        </h1>
+        </h4>
 
         {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
-        <button type="button" onClick={closeSettings} className="m-2 mb-4 float-end btn-close" />
+        <button type="button" onClick={closeSettings} className="btn-close" aria-label="Close" />
       </div>
       <div className="row flex-grow-1">
         {/* Left column: stretch to bottom */}
