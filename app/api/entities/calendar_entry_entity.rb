@@ -20,6 +20,7 @@ module Entities
       :element_klass_name,
       :accessible,
       :notified_users,
+      :notify_user_ids,
     )
 
     delegate :eventable_type, :eventable_id, :creator, to: :object
@@ -75,7 +76,8 @@ module Entities
     def element
       return if eventable_type.nil?
 
-      @element ||= object.instance_variable_get(:@element) || eventable_type.constantize.find(object.eventable_id)
+      @element ||= object.instance_variable_get(:@element) ||
+                   eventable_type.camelize.constantize.find(object.eventable_id)
     end
 
     def element_klass
@@ -86,6 +88,10 @@ module Entities
 
     def accessible
       instance_variable_defined?(:@accessible) ? object.instance_variable_get(:@accessible) : true
+    end
+
+    def notify_user_ids
+      object.calendar_entry_notifications.pluck(:user_id)
     end
   end
 end

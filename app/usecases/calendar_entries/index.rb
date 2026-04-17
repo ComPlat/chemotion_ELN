@@ -3,6 +3,19 @@
 module Usecases
   module CalendarEntries
     class Index
+      ALLOWED_EVENTABLE_TYPES = %w[
+        Sample Reaction Labimotion::Element Wellplate ResearchPlan Screen DeviceDescription
+      ].freeze
+      EVENTABLE_TYPE_CLASS_MAP = {
+        'Sample' => Sample,
+        'Reaction' => Reaction,
+        'Labimotion::Element' => Labimotion::Element,
+        'Wellplate' => Wellplate,
+        'ResearchPlan' => ResearchPlan,
+        'Screen' => Screen,
+        'DeviceDescription' => DeviceDescription,
+      }.freeze
+
       attr_accessor :params, :user
 
       def initialize(params:, user:)
@@ -23,9 +36,28 @@ module Usecases
       end
 
       def eventable?
-        params[:eventable_id].present? &&
-          params[:eventable_type].present? &&
-          params[:eventable_type].constantize.where(id: params[:eventable_id]).for_user(user.id).any?
+        return false unless params[:eventable_id].present? && params[:eventable_type].present?
+        return false unless ALLOWED_EVENTABLE_TYPES.include?(normalized_eventable_type)
+
+        eventable_accessible?
+      end
+
+      def eventable_accessible?
+        if normalized_eventable_type == 'DeviceDescription'
+          # Device descriptions are shared booking calendars — show all entries to anyone with access
+          DeviceDescription.where(id: params[:eventable_id])
+                           .joins(:collections).where(collections: { id: collection_ids }).any?
+        else
+          # For other types, only show all entries if the user owns the collection
+          eventable_class = EVENTABLE_TYPE_CLASS_MAP[normalized_eventable_type]
+          return false if eventable_class.nil?
+
+          eventable_class.where(id: params[:eventable_id]).for_user(user.id).any?
+        end
+      end
+
+      def normalized_eventable_type
+        params[:eventable_type].camelize
       end
 
       # find all calender entries (only own, own or shared for a specific event, own or shared by connected user)
@@ -36,7 +68,7 @@ module Usecases
           own_entries = all_entries_in_range.for_user(user.id)
 
           if eventable?
-            event_entries = all_entries_in_range.for_event(params[:eventable_id], params[:eventable_type])
+            event_entries = all_entries_in_range.for_event(params[:eventable_id], normalized_eventable_type)
             own_entries.or(event_entries)
           elsif params[:with_shared_collections]
             own_entries.or(shared_entries(all_entries_in_range))
@@ -47,16 +79,20 @@ module Usecases
       end
 
       def shared_entries(entries)
-        entries.where(
-          eventable: [
-            Sample.joins(:collections).where(collections: { id: collection_ids }),
-            Reaction.joins(:collections).where(collections: { id: collection_ids }),
-            Labimotion::Element.joins(:collections).where(collections: { id: collection_ids }),
-            Wellplate.joins(:collections).where(collections: { id: collection_ids }),
-            ResearchPlan.joins(:collections).where(collections: { id: collection_ids }),
-            Screen.joins(:collections).where(collections: { id: collection_ids }),
-          ],
-        )
+        shared_eventables = build_shared_eventables_query
+        return entries.none if shared_eventables.empty?
+
+        shared_eventables.reduce(entries.none) do |result, (type, ids)|
+          result.or(entries.where(eventable_type: type, eventable_id: ids))
+        end
+      end
+
+      def build_shared_eventables_query
+        types = %w[Sample Reaction Labimotion::Element Wellplate ResearchPlan Screen DeviceDescription]
+        types.each_with_object({}) do |type, result|
+          ids = type.constantize.joins(:collections).where(collections: { id: collection_ids }).pluck(:id)
+          result[type] = ids if ids.any?
+        end
       end
 
       # load elements and element klasses here to reduce later n+1 queries in calendar entry entities
@@ -67,10 +103,12 @@ module Usecases
           entry_ids_grouped_by_type.each do |type, ids|
             next if type.nil?
 
-            elements[type] = if type == 'Labimotion::Element'
-                               type.constantize.where(id: ids).includes(:element_klass, :collections).index_by(&:id)
+            normalized_type = type.camelize
+            klass = normalized_type.constantize
+            elements[type] = if normalized_type == 'Labimotion::Element'
+                               klass.where(id: ids).includes(:element_klass, :collections).index_by(&:id)
                              else
-                               type.constantize.where(id: ids).includes(:collections).index_by(&:id)
+                               klass.where(id: ids).includes(:collections).index_by(&:id)
                              end
           end
 
@@ -92,7 +130,9 @@ module Usecases
           element = elements.dig(entry.eventable_type, entry.eventable_id)
 
           entry.instance_variable_set(:@element, element)
-          entry.instance_variable_set(:@element_klass, element&.element_klass) if entry.eventable_type == 'Labimotion::Element'
+          if entry.eventable_type == 'Labimotion::Element'
+            entry.instance_variable_set(:@element_klass, element&.element_klass)
+          end
           entry.instance_variable_set(:@accessible, (collection_ids & (element&.collection_ids || [])).any?)
           entry.instance_variable_set(:@notified_users, entry.notified_users)
         end

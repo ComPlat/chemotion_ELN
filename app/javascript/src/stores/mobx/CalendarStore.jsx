@@ -45,6 +45,7 @@ export const CalendarStore = types
     eventable_id: types.optional(types.maybeNull(types.number)),
     eventable_type: types.optional(types.maybeNull(types.string)),
     showSharedCollectionEntries: types.optional(types.boolean, false),
+    error: types.optional(types.maybeNull(types.string), null),
   })
   .actions(self => ({
     getEntries: flow(function* getEntries() {
@@ -199,12 +200,17 @@ export const CalendarStore = types
       self.current_entry = {};
       self.show_time_slot_editor = false;
       self.current_entry_editable = false;
+      self.error = null;
+    },
+    changeErrorMessage(message) {
+      self.error = message;
     },
     toggleEntries(event) {
       event.stopPropagation();
       event.preventDefault();
       if (self.eventable_type) {
         self.show_own_entries = !self.show_own_entries;
+        self.getEntries();
       } else {
         self.show_shared_collection_entries = !self.show_shared_collection_entries;
         self.getEntries();
@@ -259,6 +265,7 @@ export const CalendarStore = types
         accessible: entry.accessible,
         element_short_label: entry.element_short_label,
         notified_users: entry.notified_users,
+        notify_users: entry.notify_user_ids,
       }
     },
     transformEntryForApi(entry) {
@@ -272,7 +279,7 @@ export const CalendarStore = types
         created_by: entry.created_by,
         eventable_type: entry.eventable_type,
         eventable_id: entry.eventable_id,
-        notify_user_ids: entry.notify_users?.map((e) => e.value),
+        notify_user_ids: entry.notify_users,
       }
     },
   }))
