@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, Button, ListGroup, ButtonGroup, ButtonToolbar } from 'react-bootstrap';
+import { Button, ListGroup, ButtonGroup, ButtonToolbar } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import OntologySelect from './OntologySelect';
 import OntologySortableList from './OntologySortableList';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
@@ -65,45 +66,32 @@ const OntologiesList = ({ store, element }) => {
     const modalSize = store.show_ontology_form_selection ? 'lg' : 'md';
 
     return (
-      <Modal
-        backdrop="static"
+      <AppModal
+        title={ontologyModalTitle}
         show={store.show_ontology_modal}
         onHide={() => store.closeOntologyModal()}
         size={modalSize}
-        centered
+        showFooter={store.show_ontology_form_selection}
+        closeLabel="Close"
       >
-        <Modal.Header closeButton>
-          <Modal.Title>{ontologyModalTitle}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {
-            store.show_ontology_select && (
-              <OntologySelect store={store} element={element} />
-            )
-          }
-          {
-            store.show_ontology_form_selection && (
-              <div className="overflow-auto vh-70">
-                <OntologySegmentsList
-                  key="ontology-segments-list-form-selection"
-                  store={store}
-                  element={element}
-                  isSelection={true}
-                />
-              </div>
-            )
-          }
-        </Modal.Body>
         {
-          store.show_ontology_form_selection && (
-            <Modal.Footer className="justify-content-start">
-              <Button variant="primary" onClick={() => store.closeOntologyModal()}>
-                Close
-              </Button>
-            </Modal.Footer>
+          store.show_ontology_select && (
+            <OntologySelect store={store} element={element} />
           )
         }
-      </Modal>
+        {
+          store.show_ontology_form_selection && (
+            <div className="overflow-auto vh-70">
+              <OntologySegmentsList
+                key="ontology-segments-list-form-selection"
+                store={store}
+                element={element}
+                isSelection={true}
+              />
+            </div>
+          )
+        }
+      </AppModal>
     );
   }
 
