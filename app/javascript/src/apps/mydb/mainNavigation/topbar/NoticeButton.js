@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
-  Button, Modal, Card, Row, Col, Pagination, InputGroup, Form
+  Button, Modal, Card, Row, Col, Nav, Pagination, InputGroup, Form
 } from 'react-bootstrap';
 import 'whatwg-fetch';
 import _ from 'lodash';
@@ -181,7 +181,7 @@ export default function NoticeButton() {
   const [localVersion, setLocalVersion] = useState('');
   const [showAck, setShowAck] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const perPage = 3;
+  const perPage = 5;
   const [filterNotices, setFilterNotices] = useState('');
 
   // Render calculations
@@ -298,21 +298,14 @@ export default function NoticeButton() {
     MessagesFetcher.acknowledgedMessage(params).then((result) => {
       const ackIdSet = new Set(_.map(result.ack, 'id'));
 
-      setNewNotices((prevNewNotices) => {
-        const acknowledged = prevNewNotices.filter((o) => ackIdSet.has(o.id));
+      setNewNotices((prev) => prev
+        .filter((o) => !ackIdSet.has(o.id))
+        .sort((a, b) => b.id - a.id));
 
-        const remaining = prevNewNotices
-          .filter((o) => !ackIdSet.has(o.id))
-          .sort((a, b) => b.id - a.id);
-
-        // update ackNotices based on acknowledged
-        setAckNotices((prevAckNotices) => [
-          ...prevAckNotices,
-          ...acknowledged
-        ]);
-
-        return remaining;
-      });
+      setAckNotices((prev) => [
+        ...prev,
+        ...newNotices.filter((o) => ackIdSet.has(o.id)),
+      ]);
     });
   }, [newNotices]);
 
@@ -434,7 +427,7 @@ export default function NoticeButton() {
                           variant="danger"
                           onClick={() => messageArc(not.id)}
                         >
-                          <i className="fa fa-check me-1" aria-hidden="true" />
+                          <i className="fa fa-archive me-1" aria-hidden="true" />
                           Archive
                         </Button>
                       )}
@@ -478,35 +471,20 @@ export default function NoticeButton() {
       dialogClassName="modal-xl"
     >
       <Modal.Header closeButton>
-        <Modal.Title style={{ width: '100%' }}>
-          <Row>
-            {showAck ? (
-              <>
-                <Col xs="6">
-                  All Notifications
-                </Col>
-                <Col>
-                  <Button variant="info" onClick={() => setShowAck(false)}>
-                    Hide acknowledged
-                  </Button>
-                </Col>
-              </>
-            )
-              : (
-                <>
-                  <Col xs="6">
-                    Unread Notifications
-                  </Col>
-                  <Col>
-                    <Button variant="info" onClick={() => setShowAck(true)}>
-                      Show all
-                    </Button>
-                  </Col>
-                </>
-              )}
-          </Row>
-        </Modal.Title>
+        <Modal.Title>Notifications</Modal.Title>
       </Modal.Header>
+      <Nav variant="tabs" activeKey={showAck ? 'all' : 'unread'} className="px-3">
+        <Nav.Item>
+          <Nav.Link eventKey="unread" onClick={() => setShowAck(false)}>
+            {`Unread${newNotices.length > 0 ? ` (${newNotices.length})` : ''}`}
+          </Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="all" onClick={() => setShowAck(true)}>
+            All
+          </Nav.Link>
+        </Nav.Item>
+      </Nav>
       <Modal.Body className="vh-70 overflow-auto">
         {renderBody()}
       </Modal.Body>
