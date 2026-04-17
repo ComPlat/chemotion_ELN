@@ -221,10 +221,10 @@ function UserLabelModal({ showLabelModal, onHide }) {
     },
     {
       headerName: 'Action',
-      minWidth: 60,
-      maxWidth: 60,
+      minWidth: 85,
+      maxWidth: 85,
       cellRenderer: renderActions,
-      cellClass: ['p-2'],
+      cellClass: ['p-2', 'd-flex', 'justify-content-center', 'align-items-center'],
     },
   ]), [renderActions]);
 

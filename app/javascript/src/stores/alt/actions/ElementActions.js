@@ -15,6 +15,7 @@ import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
+import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SearchFetcher from 'src/fetchers/SearchFetcher';
@@ -1310,6 +1311,14 @@ class ElementActions {
     return (dispatch) => {
       UIFetcher.deleteElementsByUIState(params)
         .then((result) => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
+  bulkUpdateUserLabels(params) {
+    return (dispatch) => {
+      UserLabelsFetcher.bulkUpdate(params)
+        .then(() => { dispatch(); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
