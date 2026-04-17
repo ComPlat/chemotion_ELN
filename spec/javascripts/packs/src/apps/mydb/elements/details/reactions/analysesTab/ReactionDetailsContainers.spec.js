@@ -10,6 +10,7 @@ import { Button } from 'react-bootstrap';
 
 import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
+import AnalysesOrderRow from 'src/apps/mydb/elements/details/analyses/AnalysesOrderRow';
 import Reaction from 'src/models/Reaction';
 import Container from 'src/models/Container';
 
@@ -108,6 +109,55 @@ describe('ReactionDetailsContainers', () => {
       const hintText = wrapper.text();
       expect(hintText).toContain('This tab can be used for reaction-related data');
       expect(hintText).toContain('For sample data (e.g., characterization), use the sample analysis tab.');
+    });
+
+    it('renders analyses sorted by index in edit mode', () => {
+      const a1 = Container.buildAnalysis('other', 'First');
+      a1.extended_metadata.index = 1;
+      const a2 = Container.buildAnalysis('other', 'Second');
+      a2.extended_metadata.index = 0;
+      reaction.container.children[0].children.push(a1, a2);
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsContainers, { reaction, readOnly: false })
+      );
+
+      const headers = wrapper.find(AccordionHeaderWithButtons);
+      expect(shallow(headers.at(0).prop('children')).text()).toContain('Second');
+      expect(shallow(headers.at(1).prop('children')).text()).toContain('First');
+    });
+
+    it('renders AnalysesOrderRow in order mode', () => {
+      const analysis = Container.buildAnalysis();
+      reaction.container.children[0].children.push(analysis);
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsContainers, { reaction, readOnly: false })
+      );
+
+      wrapper.instance().handleToggleMode('order');
+      wrapper.update();
+
+      expect(wrapper.find(AnalysesOrderRow)).toHaveLength(1);
+    });
+
+    it('renders analyses sorted by index in order mode', () => {
+      const a1 = Container.buildAnalysis('other', 'First');
+      a1.extended_metadata.index = 1;
+      const a2 = Container.buildAnalysis('other', 'Second');
+      a2.extended_metadata.index = 0;
+      reaction.container.children[0].children.push(a1, a2);
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsContainers, { reaction, readOnly: false })
+      );
+
+      wrapper.instance().handleToggleMode('order');
+      wrapper.update();
+
+      const rows = wrapper.find(AnalysesOrderRow);
+      expect(rows.at(0).prop('container').name).toBe('Second');
+      expect(rows.at(1).prop('container').name).toBe('First');
     });
   });
 });
