@@ -19,6 +19,7 @@ const CalendarTypes = {
 
 const defaultDeltaPosition = { x: 0, y: 0 };
 
+// eslint-disable-next-line import/prefer-default-export
 export const CalendarStore = types
   .model({
     delta_position: types.optional(types.frozen({}), defaultDeltaPosition),
@@ -45,8 +46,11 @@ export const CalendarStore = types
     eventable_id: types.optional(types.maybeNull(types.number)),
     eventable_type: types.optional(types.maybeNull(types.string)),
     showSharedCollectionEntries: types.optional(types.boolean, false),
+    selected_eventable_types: types.optional(types.array(types.string), []),
+    selected_kinds: types.optional(types.array(types.string), []),
+    error: types.optional(types.maybeNull(types.string), null),
   })
-  .actions(self => ({
+  .actions((self) => ({
     getEntries: flow(function* getEntries() {
       const params = {
         start_time: self.start.toISOString(),
@@ -57,20 +61,20 @@ export const CalendarStore = types
         with_shared_collections: self.show_shared_collection_entries
       };
 
-      let result = yield CalendarEntryFetcher.getEntries(params);
+      const result = yield CalendarEntryFetcher.getEntries(params);
       if (result) {
         if (self.entries.length >= 1) { self.entries = []; }
-        result.forEach(entry => self.entries.push(self.transformEntryFromApi(entry)));
+        result.forEach((entry) => self.entries.push(self.transformEntryFromApi(entry)));
       }
     }),
     getCollectionUsers: flow(function* getCollectionUsers(params) {
-      let result = yield CalendarEntryFetcher.getEventableUsers(params);
+      const result = yield CalendarEntryFetcher.getEventableUsers(params);
       if (result) {
         self.collection_users = result;
       }
     }),
     createEntry: flow(function* createEntry(entry) {
-      let result = yield CalendarEntryFetcher.create(self.transformEntryForApi(entry));
+      const result = yield CalendarEntryFetcher.create(self.transformEntryForApi(entry));
       if (result) {
         if (result.error) {
           console.log(result);
@@ -81,13 +85,13 @@ export const CalendarStore = types
       }
     }),
     updateEntry: flow(function* updateEntry(entry) {
-      let result = yield CalendarEntryFetcher.update(self.transformEntryForApi(entry));
+      const result = yield CalendarEntryFetcher.update(self.transformEntryForApi(entry));
       if (result) {
         if (result.error) {
           console.log(result);
         } else {
-          const index = self.entries.findIndex(entry => entry.id === result.id);
-          let entries = [...self.entries];
+          const index = self.entries.findIndex((e) => e.id === result.id);
+          const entries = [...self.entries];
           if (index !== -1) {
             entries[index] = self.transformEntryFromApi(result);
           } else {
@@ -98,12 +102,12 @@ export const CalendarStore = types
       }
     }),
     deleteEntry: flow(function* deleteEntry(entry_id) {
-      let result = yield CalendarEntryFetcher.deleteById(entry_id);
+      const result = yield CalendarEntryFetcher.deleteById(entry_id);
       if (result) {
         if (result.error) {
           console.log(result);
         } else {
-          const index = self.entries.findIndex(entry => entry.id === result.id);
+          const index = self.entries.findIndex((entry) => entry.id === result.id);
           if (index !== -1) {
             self.entries.splice(index, 1);
           }
@@ -164,15 +168,15 @@ export const CalendarStore = types
     getOrClearCollectionUsers(eventable_type, eventable_id) {
       if (eventable_type) {
         self.getCollectionUsers({
-          eventable_type: eventable_type,
-          eventable_id: eventable_id
+          eventable_type,
+          eventable_id
         });
       } else {
         self.collection_users = [];
       }
     },
     changeCurrentEntry(key, value) {
-      let currentEntry = { ...self.current_entry };
+      const currentEntry = { ...self.current_entry };
       currentEntry[key] = value;
       self.current_entry = currentEntry;
     },
@@ -199,16 +203,43 @@ export const CalendarStore = types
       self.current_entry = {};
       self.show_time_slot_editor = false;
       self.current_entry_editable = false;
+      self.error = null;
+    },
+    changeErrorMessage(message) {
+      self.error = message;
     },
     toggleEntries(event) {
       event.stopPropagation();
       event.preventDefault();
       if (self.eventable_type) {
         self.show_own_entries = !self.show_own_entries;
+        self.getEntries();
       } else {
         self.show_shared_collection_entries = !self.show_shared_collection_entries;
         self.getEntries();
       }
+    },
+    toggleEventableType(type) {
+      const idx = self.selected_eventable_types.indexOf(type);
+      if (idx === -1) {
+        self.selected_eventable_types.push(type);
+      } else {
+        self.selected_eventable_types.splice(idx, 1);
+      }
+    },
+    clearSelectedTypes() {
+      self.selected_eventable_types.clear();
+    },
+    toggleKind(kind) {
+      const idx = self.selected_kinds.indexOf(kind);
+      if (idx === -1) {
+        self.selected_kinds.push(kind);
+      } else {
+        self.selected_kinds.splice(idx, 1);
+      }
+    },
+    clearSelectedKinds() {
+      self.selected_kinds.clear();
     },
     onRangeChange(range, view) {
       let newRange = range;
@@ -259,7 +290,7 @@ export const CalendarStore = types
         accessible: entry.accessible,
         element_short_label: entry.element_short_label,
         notified_users: entry.notified_users,
-      }
+      };
     },
     transformEntryForApi(entry) {
       return {
@@ -273,10 +304,24 @@ export const CalendarStore = types
         eventable_type: entry.eventable_type,
         eventable_id: entry.eventable_id,
         notify_user_ids: entry.notify_users?.map((e) => e.value),
-      }
+      };
     },
   }))
-  .views(self => ({
-    get calendarEntries() { return values(self.entries) },
-    get collectionUsers() { return values(self.collection_users) },
+  .views((self) => ({
+    get calendarEntries() { return values(self.entries); },
+    get collectionUsers() { return values(self.collection_users); },
+    get availableEventableTypes() {
+      const typesInEntries = new Set();
+      values(self.entries).forEach((entry) => {
+        if (entry.eventable_type) typesInEntries.add(entry.eventable_type);
+      });
+      return Array.from(typesInEntries).sort();
+    },
+    get availableKinds() {
+      const kindsInEntries = new Set();
+      values(self.entries).forEach((entry) => {
+        if (entry.kind) kindsInEntries.add(entry.kind);
+      });
+      return Array.from(kindsInEntries).sort();
+    },
   }));
