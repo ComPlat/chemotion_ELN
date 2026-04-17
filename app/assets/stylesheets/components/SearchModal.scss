@@ -321,3 +321,7 @@
 .result-error-message {
   margin-top: 1rem;
 }
+
+.input-group:has(#search-inner-dropdown ~ .dropdown-menu.show) {
+  z-index: 20 !important;
+}
