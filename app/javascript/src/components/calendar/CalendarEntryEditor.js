@@ -40,10 +40,6 @@ const CalendarEntryEditor = (props) => {
   }
 
   const saveEntry = () => {
-    if (!calendarStore.current_entry.title) {
-      calendarStore.changeErrorMessage('Please enter a title.');
-      return;
-    }
     if (calendarStore.current_entry.id) {
       calendarStore.updateEntry(calendarStore.current_entry);
     } else {
@@ -261,7 +257,16 @@ const CalendarEntryEditor = (props) => {
             </div>
             <Button variant="primary" onClick={closeEditor}>Cancel</Button>
             {deleteEntryButton()}
-            {(editable && accessible) ? <Button variant="warning" onClick={saveEntry}>Save</Button> : null}
+            {(editable && accessible) ? (
+              <Button
+                variant="warning"
+                onClick={saveEntry}
+                disabled={!calendarStore.current_entry.title}
+                title={!calendarStore.current_entry.title ? 'Please enter an event title' : ''}
+              >
+                Save
+              </Button>
+            ) : null}
           </ButtonToolbar>
         </Form>
       </Modal.Body>
