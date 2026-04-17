@@ -4,15 +4,16 @@ import { observer } from 'mobx-react';
 import {
   Accordion,
   Button,
-  ListGroup,
   ButtonToolbar
 } from 'react-bootstrap';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import Container from 'src/models/Container';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 import OrderModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/OrderModeRow';
 import EditModeRow from 'src/apps/mydb/elements/details/cellLines/analysesTab/EditModeRow';
 import PropTypes from 'prop-types';
 import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
+import AnalysisModeToggle from 'src/apps/mydb/elements/details/analyses/AnalysisModeToggle';
 
 class AnalysesContainer extends Component {
   // eslint-disable-next-line react/static-property-placement
@@ -48,13 +49,8 @@ class AnalysesContainer extends Component {
     });
   };
 
-  handleModeToggle = () => {
-    const { mode } = this.state;
-    if (mode === 'edit') {
-      this.setState({ mode: 'order' });
-    } else {
-      this.setState({ mode: 'edit' });
-    }
+  handleModeToggle = (mode) => {
+    this.setState({ mode });
   };
 
   handleHoverOver = (containerId) => {
@@ -107,27 +103,14 @@ class AnalysesContainer extends Component {
   renderModeButton = () => {
     const { mode } = this.state;
     const { readOnly } = this.props;
-    const buttonText = mode === 'order' ? 'Order mode' : 'Edit mode';
-    const buttonIcon = mode === 'order' ? 'fa fa-reorder' : 'fa fa-edit';
-    const variant = mode === 'order' ? 'success' : 'primary';
-    return (
-      <Button
-        disabled={readOnly}
-        size="sm"
-        variant={variant}
-        onClick={() => this.handleModeToggle()}
-      >
-        <i className={`me-1 ${buttonIcon}`} aria-hidden="true" />
-        {buttonText}
-      </Button>
-    );
+    return AnalysisModeToggle(mode, this.handleModeToggle, readOnly);
   }
 
   renderEditModeContainer = () => {
     const { currentElement } = ElementStore.getState();
     const { readOnly } = this.props;
 
-    const containers = currentElement.container.children[0].children;
+    const containers = ArrayUtils.sortArrByIndex(currentElement.container.children[0].children);
     const analysisRows = containers.map((container,i) => (
       <EditModeRow
         key={container.id}
@@ -137,6 +120,7 @@ class AnalysesContainer extends Component {
         readOnly={readOnly}
         rootContainer={currentElement.container}
         index={i}
+        isFirst={i === 0}
       />
     ));
 
@@ -153,7 +137,7 @@ class AnalysesContainer extends Component {
   renderOrderModeContainer = () => {
     const { currentElement } = ElementStore.getState();
     const { draggingContainer, lastHoveredContainer } = this.state;
-    const containers = currentElement.container.children[0].children;
+    const containers = ArrayUtils.sortArrByIndex(currentElement.container.children[0].children);
 
     const analysisRows = containers.map((container) => {
       const chosenElementClass = container.id === draggingContainer ? 'opacity-25' : '';
@@ -161,7 +145,7 @@ class AnalysesContainer extends Component {
       const styleClass = chosenElementClass + lastHoveredClass;
 
       return (
-        <ListGroup.Item className={`p-3 ${styleClass}`} key={container.id}>
+        <div className={styleClass} key={container.id}>
           <OrderModeRow
             updateFunction={(e) => { this.handleChange(e); }}
             startDragFunction={() => { this.handleStartDrag(container); }}
@@ -169,14 +153,14 @@ class AnalysesContainer extends Component {
             hoverOverItem={(e) => { this.handleHoverOver(e); }}
             container={container}
           />
-        </ListGroup.Item>
+        </div>
       );
     });
 
     return (
-      <ListGroup>
+      <div>
         {analysisRows}
-      </ListGroup>
+      </div>
     );
   }
 
