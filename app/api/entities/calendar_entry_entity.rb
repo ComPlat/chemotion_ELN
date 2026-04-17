@@ -20,6 +20,7 @@ module Entities
       :element_klass_name,
       :accessible,
       :notified_users,
+      :notify_user_ids,
     )
 
     delegate :eventable_type, :eventable_id, :creator, to: :object
@@ -87,6 +88,10 @@ module Entities
 
     def accessible
       instance_variable_defined?(:@accessible) ? object.instance_variable_get(:@accessible) : true
+    end
+
+    def notify_user_ids
+      object.calendar_entry_notifications.pluck(:user_id)
     end
   end
 end
