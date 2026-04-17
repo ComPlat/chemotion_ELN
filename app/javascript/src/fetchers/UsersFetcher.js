@@ -239,7 +239,7 @@ export default class UsersFetcher {
   }
 
   static listUserLabels() {
-    const promise = fetch('/api/v1/users/list_labels.json', {
+    const promise = fetch('/api/v1/user_labels/list_labels.json', {
       credentials: 'same-origin',
     })
       .then((response) => response.json())
@@ -251,7 +251,7 @@ export default class UsersFetcher {
   }
 
   static updateUserLabel(params = {}) {
-    const promise = fetch('/api/v1/users/save_label/', {
+    const promise = fetch('/api/v1/user_labels/save_label/', {
       credentials: 'same-origin',
       method: 'PUT',
       headers: {
