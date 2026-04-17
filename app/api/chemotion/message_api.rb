@@ -79,15 +79,9 @@ module Chemotion
         put do
           return if params[:ids].nil?
 
-          notifications = Notification.find(params[:ids])
-          params_arr = { is_ack: if params[:archive]
-                                   2
-                                 else
-                                   1
-                                 end }
+          notifications = Notification.where(id: params[:ids], user_id: current_user.id)
+          params_arr = { is_ack: params[:archive] ? 2 : 1 }
           notifications.each do |notif|
-            next if notif.user_id != current_user.id
-
             notif.update!(params_arr)
           end
 

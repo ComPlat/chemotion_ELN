@@ -181,11 +181,11 @@ export default function NoticeButton() {
   const [localVersion, setLocalVersion] = useState('');
   const [showAck, setShowAck] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(3);
+  const perPage = 3;
   const [filterNotices, setFilterNotices] = useState('');
 
   // Render calculations
-  const noticeNum = Object.keys(newNotices).length;
+  const noticeNum = newNotices.length;
   const btnIcon = noticeNum > 0 ? 'fa-bell' : 'fa-bell-o';
 
   // Stable: reads from ref, never needs to change
@@ -269,10 +269,16 @@ export default function NoticeButton() {
   }, [messageFetch, startPolling]);
 
   const handleShow = useCallback(() => {
-    MessagesFetcher.fetchMessages(1).then((result) => {
-      result.messages.sort((a, b) => b.id - a.id);
+    Promise.all([
+      MessagesFetcher.fetchMessages(1), // acknowledged
+      MessagesFetcher.fetchMessages(0), // unread
+    ]).then(([ackResult, unreadResult]) => {
+      const ackMessages = ackResult.messages.sort((a, b) => b.id - a.id);
+      const unreadMessages = unreadResult.messages.sort((a, b) => b.id - a.id);
+
+      setAckNotices(ackMessages);
+      setNewNotices(unreadMessages);
       setShowModal(true);
-      setAckNotices(result.messages);
     });
   }, []);
 
