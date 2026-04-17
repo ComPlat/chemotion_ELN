@@ -57,12 +57,7 @@ export default class AdminFetcher {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(otherParams),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    }).then((response) => response.json());
   }
 
   static createUserAccount(params) {
