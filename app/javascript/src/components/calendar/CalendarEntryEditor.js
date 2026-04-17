@@ -140,12 +140,9 @@ const CalendarEntryEditor = (props) => {
       show={calendarStore.show_time_slot_editor}
       onHide={closeEditor}
       data-type="calendar-editor"
-      style={{
-        transform: `translate(${calendarStore.delta_position_editor.x}px, ${calendarStore.delta_position_editor.y}px)`,
-        maxWidth: '500px'
-      }}
+      centered
     >
-      <Modal.Body>
+      <Modal.Body style={{ maxHeight: '90vh', overflowY: 'auto' }}>
         {createdBy()}
         {linkToElement()}
         {calendarStore.error ? (
@@ -197,7 +194,7 @@ const CalendarEntryEditor = (props) => {
               isClearable
               isMulti
               value={notifyUserList.filter(({value}) => entry.notify_users?.includes(value))}
-              onChange={(list) => updateEntry('notify_users', list)}
+              onChange={(list) => updateEntry('notify_users', list?.map(({ value }) => value) || [])}
               options={notifyUserList}
             />
           </Form.Group>
