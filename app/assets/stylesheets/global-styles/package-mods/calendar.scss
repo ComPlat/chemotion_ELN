@@ -1,3 +1,8 @@
+.calendar-editor-shadow .modal-content {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.16);
+  border: none;
+}
+
 .rbc-allday-cell {
   height: 0px !important;
 }
@@ -16,4 +21,14 @@
 
 .rbc-agenda-table {
   color: white;
+}
+
+.react-datetime-picker__wrapper {
+  border: $input-border-width solid $input-border-color !important;
+  border-radius: $input-border-radius !important;
+}
+
+.react-datetime-picker:focus-within .react-datetime-picker__wrapper {
+  border-color: $input-focus-border-color !important;
+  box-shadow: $form-select-focus-box-shadow !important;
 }
