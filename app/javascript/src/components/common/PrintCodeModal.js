@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Modal } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import Utils from 'src/utilities/Functions';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
 
 // Component that allows users to print a PDF.
-export default function PrintCodeModal({ element, showModal, handleModalClose, selectedConfig, analyses }) {
+export default function PrintCodeModal({
+  element,
+  showModal,
+  handleModalClose,
+  selectedConfig,
+  analyses,
+}) {
   // State for the modal and preview
   const [preview, setPreview] = useState(null);
   const [urlError, setUrlError] = useState([]);
@@ -56,9 +62,10 @@ export default function PrintCodeModal({ element, showModal, handleModalClose, s
 
   // Builds the URL for fetching the PDF.
   const buildURL = async () => {
-    const ids = analyses.length > 0 ? analyses.map(e => e.id) : [];
+    const ids = analyses.length > 0 ? analyses.map((entry) => entry.id) : [];
     let newUrl = analyses.length > 0
-      ? `/api/v1/code_logs/print_analyses_codes?element_type=${element.type}&id=${element.id}&analyses_ids[]=${ids}&size=${selectedConfig}`
+      ? `/api/v1/code_logs/print_analyses_codes?element_type=${element.type}`
+        + `&id=${element.id}&analyses_ids[]=${ids}&size=${selectedConfig}`
       : `/api/v1/code_logs/print_codes?element_type=${element.type}&ids[]=${element.id}`;
 
     if (analyses.length === 0) {
@@ -101,46 +108,41 @@ export default function PrintCodeModal({ element, showModal, handleModalClose, s
 
   // Render the component
   return (
-    <>
-      {/* Modal for the PDF options */}
-      <Modal
-        centered
-        size="lg"
-        show={showModal}
-        onHide={handleModalClose}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Print a QR Code/Bar Code</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div>
-            <h3>Preview</h3>
-            <div>{displayUrlErrorMessage()}</div>
-            <div style={{ height: '400px' }}>
-              {preview && (
-                <embed src={`${preview}#view=FitV`} className="w-100 h-100" />
-              )}
-            </div>
-          </div>
-        </Modal.Body>
-        <Modal.Footer className="justify-content-start">
-          <Button variant="primary" onClick={handleModalClose}>Close</Button>
-          <Button
-            id="submit-copy-element-btn"
-            variant="success"
-            onClick={() => Utils.downloadFile({ contents: preview, name: `print_codes_${element.id}.pdf` })}
-          >
-            Print
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </>
+    <AppModal
+      title="Print a QR Code/Bar Code"
+      size="lg"
+      show={showModal}
+      onHide={handleModalClose}
+      closeLabel="Close"
+      primaryActionLabel="Print"
+      onPrimaryAction={() => Utils.downloadFile({ contents: preview, name: `print_codes_${element.id}.pdf` })}
+    >
+      <div>
+        <h3>Preview</h3>
+        <div>{displayUrlErrorMessage()}</div>
+        <div style={{ height: '400px' }}>
+          {preview && (
+            <embed src={`${preview}#view=FitV`} className="w-100 h-100" />
+          )}
+        </div>
+      </div>
+    </AppModal>
   );
 }
 
 PrintCodeModal.propTypes = {
-  element: PropTypes.object.isRequired,
+  element: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    type: PropTypes.string.isRequired,
+  }).isRequired,
   showModal: PropTypes.bool.isRequired,
   handleModalClose: PropTypes.func.isRequired,
   selectedConfig: PropTypes.string.isRequired,
+  analyses: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  })),
+};
+
+PrintCodeModal.defaultProps = {
+  analyses: [],
 };
