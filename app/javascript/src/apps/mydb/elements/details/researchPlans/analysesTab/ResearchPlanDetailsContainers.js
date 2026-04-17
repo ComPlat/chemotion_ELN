@@ -7,6 +7,11 @@ import {
   ButtonToolbar
 } from 'react-bootstrap';
 import Container from 'src/models/Container';
+import ArrayUtils from 'src/utilities/ArrayUtils';
+import { reOrderArr } from 'src/utilities/DndControl';
+import { indexedContainers } from 'src/apps/mydb/elements/details/analyses/utils';
+import AnalysisModeToggle from 'src/apps/mydb/elements/details/analyses/AnalysisModeToggle';
+import AnalysesOrderRow from 'src/apps/mydb/elements/details/analyses/AnalysesOrderRow';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
 import ImageModal from 'src/components/common/ImageModal';
@@ -33,6 +38,7 @@ export default class ResearchPlanDetailsContainers extends Component {
     this.state = {
       activeContainer: 0,
       commentBoxVisible: hasComment,
+      mode: 'edit',
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -41,6 +47,8 @@ export default class ResearchPlanDetailsContainers extends Component {
     this.handleRemove = this.handleRemove.bind(this);
     this.handleUndo = this.handleUndo.bind(this);
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
+    this.handleToggleMode = this.handleToggleMode.bind(this);
+    this.handleMove = this.handleMove.bind(this);
   }
 
   componentDidMount() {
@@ -60,6 +68,22 @@ export default class ResearchPlanDetailsContainers extends Component {
 
   handleAccordionOpen(key) {
     this.setState({ activeContainer: key });
+  }
+
+  handleToggleMode(mode) {
+    this.setState({ mode });
+  }
+
+  handleMove(source, target) {
+    const { researchPlan, handleResearchPlanChange } = this.props;
+    const analysesContainer = researchPlan.container.children.filter(
+      (element) => ~element.container_type.indexOf('analyses'),
+    )[0];
+    const sortedConts = ArrayUtils.sortArrByIndex(analysesContainer.children);
+    const isEqCId = (container, tagEl) => container.id === tagEl.id;
+    const newSortConts = reOrderArr(source, target, isEqCId, sortedConts);
+    analysesContainer.children = indexedContainers(newSortConts);
+    handleResearchPlanChange(researchPlan);
   }
 
   handleRemove(container) {
@@ -156,15 +180,13 @@ export default class ResearchPlanDetailsContainers extends Component {
     const { readOnly } = this.props;
     if (!readOnly) {
       return (
-        <div className="mt-2">
-          <Button
-            size="sm"
-            variant="success"
-            onClick={this.handleAdd}
-          >
-            Add analysis
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          variant="success"
+          onClick={this.handleAdd}
+        >
+          Add analysis
+        </Button>
       );
     }
 
@@ -186,7 +208,7 @@ export default class ResearchPlanDetailsContainers extends Component {
 
   render() {
     const { researchPlan, readOnly } = this.props;
-    const { activeContainer, commentBoxVisible } = this.state;
+    const { activeContainer, commentBoxVisible, mode } = this.state;
 
     const containerHeader = (container) => {
       let kind = container.extended_metadata.kind || '';
@@ -271,17 +293,17 @@ export default class ResearchPlanDetailsContainers extends Component {
       ));
 
       if (analysesContainer.length === 1 && analysesContainer[0].children.length > 0) {
+        const sortedChildren = ArrayUtils.sortArrByIndex(analysesContainer[0].children);
         return (
           <div>
-            <div className="my-2 mx-3 d-flex justify-content-end">
-              <ButtonToolbar>
-                <div className="mt-2">
-                  <CommentButton
-                    toggleCommentBox={this.toggleCommentBox}
-                    isVisible={commentBoxVisible}
-                    size="sm"
-                  />
-                </div>
+            <div className="my-2 mx-3 d-flex justify-content-between align-items-center">
+              {AnalysisModeToggle(mode, this.handleToggleMode, readOnly)}
+              <ButtonToolbar className="gap-1">
+                <CommentButton
+                  toggleCommentBox={this.toggleCommentBox}
+                  isVisible={commentBoxVisible}
+                  size="sm"
+                />
                 {this.addButton()}
               </ButtonToolbar>
             </div>
@@ -290,45 +312,56 @@ export default class ResearchPlanDetailsContainers extends Component {
               value={researchPlan.container.description}
               handleCommentTextChange={this.handleCommentTextChange}
             />
-            <Accordion
-              className="border rounded overflow-hidden"
-              onSelect={this.handleAccordionOpen}
-              activeKey={activeContainer}
-            >
-              {analysesContainer[0].children.map((container, key) => {
-                const isFirstTab = key === 0;
-                return (
-                  <Card
-                    eventKey={key}
-                    key={`research_plan_container_${container.id}`}
-                    className={`rounded-0 border-0 ${isFirstTab ? '' : ' border-top'}`}
-                  >
-                    <Card.Header className="rounded-0 p-0 border-bottom-0">
-                      <AccordionHeaderWithButtons eventKey={key}>
-                        {container.is_deleted ? containerHeaderDeleted(container) : containerHeader(container)}
-                      </AccordionHeaderWithButtons>
-                    </Card.Header>
-
-                    {!container.is_deleted && (
-                      <Accordion.Collapse eventKey={key}>
-                        <Card.Body>
-                          <ContainerComponent
-                            templateType="researchPlan"
-                            element={researchPlan}
-                            readOnly={readOnly}
-                            disabled={readOnly}
-                            container={container}
-                            onChange={this.handleChange}
-                            rootContainer={researchPlan.container}
-                            index={key}
-                          />
-                        </Card.Body>
-                      </Accordion.Collapse>
-                    )}
-                  </Card>
-                );
-              })}
-            </Accordion>
+            {mode === 'order' ? (
+              <div>
+                {sortedChildren.map((container) => (
+                  <AnalysesOrderRow
+                    key={container.id}
+                    container={container}
+                    handleMove={this.handleMove}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Accordion
+                className="border rounded overflow-hidden"
+                onSelect={this.handleAccordionOpen}
+                activeKey={activeContainer}
+              >
+                {sortedChildren.map((container, key) => {
+                  const isFirstTab = key === 0;
+                  return (
+                    <Card
+                      eventKey={key}
+                      key={`research_plan_container_${container.id}`}
+                      className={`rounded-0 border-0 ${isFirstTab ? '' : ' border-top'}`}
+                    >
+                      <Card.Header className="rounded-0 p-0 border-bottom-0">
+                        <AccordionHeaderWithButtons eventKey={key}>
+                          {container.is_deleted ? containerHeaderDeleted(container) : containerHeader(container)}
+                        </AccordionHeaderWithButtons>
+                      </Card.Header>
+                      {!container.is_deleted && (
+                        <Accordion.Collapse eventKey={key}>
+                          <Card.Body>
+                            <ContainerComponent
+                              templateType="researchPlan"
+                              element={researchPlan}
+                              readOnly={readOnly}
+                              disabled={readOnly}
+                              container={container}
+                              onChange={this.handleChange}
+                              rootContainer={researchPlan.container}
+                              index={key}
+                            />
+                          </Card.Body>
+                        </Accordion.Collapse>
+                      )}
+                    </Card>
+                  );
+                })}
+              </Accordion>
+            )}
             <ViewSpectra
               sample={this.props.researchPlan}
               handleSampleChanged={this.handleSpChange}
@@ -347,14 +380,12 @@ export default class ResearchPlanDetailsContainers extends Component {
         <div>
           <div className="d-flex align-items-center justify-content-between my-2 mx-3">
             <span className="ms-3"> There are currently no Analyses. </span>
-            <ButtonToolbar>
-              <div className="mt-2">
-                <CommentButton
-                  toggleCommentBox={this.toggleCommentBox}
-                  isVisible={commentBoxVisible}
-                  size="sm"
-                />
-              </div>
+            <ButtonToolbar className="gap-2">
+              <CommentButton
+                toggleCommentBox={this.toggleCommentBox}
+                isVisible={commentBoxVisible}
+                size="sm"
+              />
               {this.addButton()}
             </ButtonToolbar>
           </div>
