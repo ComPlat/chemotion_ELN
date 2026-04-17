@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
-  Button, Modal, Card, Row, Col
+  Button, Modal, Card, Row, Col, Nav, Pagination, InputGroup, Form
 } from 'react-bootstrap';
 import 'whatwg-fetch';
 import _ from 'lodash';
@@ -28,11 +28,16 @@ const changeUrl = (url, urlTitle) => (url ? (
 ));
 
 const handleNotification = (nots, act, needCallback = true, context) => {
+  let count = 0;
   nots.forEach((n) => {
     if (act === 'rem') {
       NotificationActions.removeByUid(n.id);
     }
     if (act === 'add') {
+      count += 1;
+      if (count > 3) {
+        return;
+      }
       const infoTimeString = formatDate(n.created_at);
 
       const newText = n.content.data
@@ -114,10 +119,20 @@ const handleNotification = (nots, act, needCallback = true, context) => {
           }
           break;
         default:
-        //
       }
     }
   });
+
+  if (count > 3) {
+    const notification = {
+      title: `You have ${count - 3} more notification${count > 4 ? 's' : ''}`,
+      level: 'warning',
+      autoDismiss: 5,
+      position: 'tr',
+    };
+
+    NotificationActions.add(notification);
+  }
 };
 
 const createUpgradeNotification = (serverVersion, localVersion, context) => {
@@ -160,12 +175,17 @@ export default function NoticeButton() {
   const messageAutoIntervalRef = useRef(6000);
 
   const [showModal, setShowModal] = useState(false);
-  const [dbNotices, setDbNotices] = useState([]);
+  const [newNotices, setNewNotices] = useState([]);
+  const [ackNotices, setAckNotices] = useState([]);
   const [serverVersion, setServerVersion] = useState('');
   const [localVersion, setLocalVersion] = useState('');
+  const [showAck, setShowAck] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 5;
+  const [filterNotices, setFilterNotices] = useState('');
 
   // Render calculations
-  const noticeNum = Object.keys(dbNotices).length;
+  const noticeNum = newNotices.length;
   const btnIcon = noticeNum > 0 ? 'fa-bell' : 'fa-bell-o';
 
   // Stable: reads from ref, never needs to change
@@ -188,8 +208,8 @@ export default function NoticeButton() {
             attachmentNotificationStore.addMessage(message);
           }
         });
-        result.messages.sort((a, b) => a.id - b.id);
-        setDbNotices(result.messages);
+        result.messages.sort((a, b) => b.id - a.id);
+        setNewNotices(result.messages);
         setServerVersion(result.version);
       });
     }
@@ -249,10 +269,16 @@ export default function NoticeButton() {
   }, [messageFetch, startPolling]);
 
   const handleShow = useCallback(() => {
-    MessagesFetcher.fetchMessages(0).then((result) => {
-      result.messages.sort((a, b) => a.id - b.id);
+    Promise.all([
+      MessagesFetcher.fetchMessages(1), // acknowledged
+      MessagesFetcher.fetchMessages(0), // unread
+    ]).then(([ackResult, unreadResult]) => {
+      const ackMessages = ackResult.messages.sort((a, b) => b.id - a.id);
+      const unreadMessages = unreadResult.messages.sort((a, b) => b.id - a.id);
+
+      setAckNotices(ackMessages);
+      setNewNotices(unreadMessages);
       setShowModal(true);
-      setDbNotices(result.messages);
     });
   }, []);
 
@@ -265,83 +291,179 @@ export default function NoticeButton() {
       ids: [],
     };
     if (ackAll) {
-      params.ids = _.map(dbNotices, 'id');
+      params.ids = _.map(newNotices, 'id');
     } else {
-      params.ids[0] = idx;
+      params.ids = [idx];
     }
     MessagesFetcher.acknowledgedMessage(params).then((result) => {
-      const ackIds = _.map(result.ack, 'id');
-      const filteredNotices = _.filter(
-        dbNotices,
-        (o) => !_.includes(ackIds, o.id)
-      );
-      filteredNotices.sort((a, b) => a.id - b.id);
-      setDbNotices(filteredNotices);
-    });
-  }, [dbNotices]);
+      const ackIdSet = new Set(_.map(result.ack, 'id'));
 
-  const renderBody = useCallback(() => {
-    if (dbNotices.length === 0) {
+      setNewNotices((prev) => prev
+        .filter((o) => !ackIdSet.has(o.id))
+        .sort((a, b) => b.id - a.id));
+
+      setAckNotices((prev) => [
+        ...prev,
+        ...newNotices.filter((o) => ackIdSet.has(o.id)),
+      ]);
+    });
+  }, [newNotices]);
+
+  const messageArc = useCallback((idx) => {
+    const params = {
+      ids: [idx],
+      archive: true,
+    };
+
+    MessagesFetcher.acknowledgedMessage(params).then((result) => {
+      const ackIdSet = new Set(_.map(result.ack, 'id'));
+
+      setAckNotices((prevAckNotices) => prevAckNotices
+        .filter((o) => !ackIdSet.has(o.id))
+        .sort((a, b) => b.id - a.id));
+    });
+  }, []);
+
+  const allNotices = [
+    ...newNotices.map((n) => ({ ...n, source: 'new' })),
+    ...(showAck ? ackNotices.map((n) => ({ ...n, source: 'ack' })) : [])
+  ].sort((a, b) => b.id - a.id);
+
+  const search = filterNotices?.toLowerCase() || '';
+
+  const filteredNotices = allNotices.filter((not) => (
+    not.subject.toLowerCase().includes(search)
+  || not.sender_name.toLowerCase().includes(search)
+  || not.content.data.toLowerCase().includes(search)
+  ));
+
+  const totalPages = Math.ceil(filteredNotices.length / perPage);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages || 1);
+    }
+  }, [currentPage, totalPages]);
+
+  const renderBody = () => {
+    if (allNotices.length === 0) {
       return (
         <Card className="text-center" eventKey="0">
-          <Card.Body>No new notifications.</Card.Body>
+          <Card.Body>{`No ${showAck ? '' : 'new'} notifications.`}</Card.Body>
         </Card>
       );
     }
 
-    return dbNotices.map((not, index) => {
-      const infoTimeString = formatDate(not.created_at);
+    const start = (currentPage - 1) * perPage;
+    const end = start + perPage;
 
-      const newText = not.content.data
-        .split('\n')
-        .map((i) => <p key={`${infoTimeString}-${i}`}>{i}</p>);
+    return (
+      <>
+        <Row>
+          <InputGroup className="mb-3">
+            <InputGroup.Text><i className="fa fa-search" /></InputGroup.Text>
+            <Form.Control
+              type="text"
+              value={filterNotices}
+              onChange={(event) => {
+                setFilterNotices(event.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </InputGroup>
+        </Row>
+        {filteredNotices.slice(start, end).map((not, index) => {
+          const infoTimeString = formatDate(not.created_at);
 
-      const { url, urlTitle } = not.content;
-      if (url) {
-        newText.push(
-          <p key={`${infoTimeString}-${url}`}>{changeUrl(url, urlTitle)}</p>
-        );
-      }
+          const newText = not.content.data
+            .split('\n')
+            .map((i) => <p key={`${infoTimeString}-${i}`}>{i}</p>);
 
-      return (
-        <Card
-          key={`panel-modal-body-${not.id}`}
-          eventKey={index}
-          className="mb-3"
-        >
-          <Card.Header className="d-flex gap-2">
-            <i className="fa fa-commenting-o" aria-hidden="true" />
-            {not.subject}
-            <span>
-              <strong>From: </strong>
-              {not.sender_name}
-            </span>
-            <span>
-              <strong>Created On: </strong>
-              {formatDate(not.created_at)}
-            </span>
-          </Card.Header>
-          <Card.Body>
-            <Row>
-              <Col lg="auto">
-                <Button
-                  id={`notice-button-ack-${not.id}`}
-                  key={`notice-button-ack-${not.id}`}
-                  onClick={() => messageAck(not.id, false)}
-                >
-                  <i className="fa fa-check me-1" aria-hidden="true" />
-                  Got it
-                </Button>
-              </Col>
-              <Col>{newText}</Col>
-            </Row>
-          </Card.Body>
-        </Card>
-      );
-    });
-  }, [dbNotices, messageAck]);
+          const { url, urlTitle } = not.content;
+          if (url) {
+            newText.push(
+              <p key={`${infoTimeString}-${url}`}>{changeUrl(url, urlTitle)}</p>
+            );
+          }
 
-  const renderModal = useCallback(() => (
+          return (
+            <Card
+              key={`panel-modal-body-${not.id}`}
+              eventKey={index}
+              className="mb-3"
+            >
+              <Card.Header className="d-flex gap-2">
+                <i className="fa fa-commenting-o" aria-hidden="true" />
+                {not.subject}
+                <span>
+                  <strong>From: </strong>
+                  {not.sender_name}
+                </span>
+                <span>
+                  <strong>Created On: </strong>
+                  {formatDate(not.created_at)}
+                </span>
+              </Card.Header>
+              <Card.Body>
+                <Row>
+                  <Col lg="auto">
+                    { not.source === 'new' ? (
+                      <Button
+                        id={`notice-button-ack-${not.id}`}
+                        key={`notice-button-ack-${not.id}`}
+                        size="sm"
+                        variant="warning"
+                        onClick={() => messageAck(not.id, false)}
+                      >
+                        <i className="fa fa-check me-1" aria-hidden="true" />
+                        Got it
+                      </Button>
+                    )
+                      : (
+                        <Button
+                          id={`notice-button-del-${not.id}`}
+                          key={`notice-button-del-${not.id}`}
+                          size="sm"
+                          variant="danger"
+                          onClick={() => messageArc(not.id)}
+                        >
+                          <i className="fa fa-archive me-1" aria-hidden="true" />
+                          Archive
+                        </Button>
+                      )}
+                  </Col>
+                  <Col>{newText}</Col>
+                </Row>
+              </Card.Body>
+            </Card>
+          );
+        })}
+        {totalPages > 1 && (
+          <Pagination className="justify-content-center mt-3">
+            <Pagination.Prev
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+            />
+            {[...Array(totalPages).keys()].map((key, i) => (
+              <Pagination.Item
+                key={`page_${key}`}
+                active={i + 1 === currentPage}
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </Pagination.Item>
+            ))}
+            <Pagination.Next
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+            />
+          </Pagination>
+        )}
+      </>
+    );
+  };
+
+  const renderModal = () => (
     <Modal
       centered
       show={showModal}
@@ -349,8 +471,20 @@ export default function NoticeButton() {
       dialogClassName="modal-xl"
     >
       <Modal.Header closeButton>
-        <Modal.Title>Unread Notifications</Modal.Title>
+        <Modal.Title>Notifications</Modal.Title>
       </Modal.Header>
+      <Nav variant="tabs" activeKey={showAck ? 'all' : 'unread'} className="px-3">
+        <Nav.Item>
+          <Nav.Link eventKey="unread" onClick={() => setShowAck(false)}>
+            {`Unread${newNotices.length > 0 ? ` (${newNotices.length})` : ''}`}
+          </Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="all" onClick={() => setShowAck(true)}>
+            All
+          </Nav.Link>
+        </Nav.Item>
+      </Nav>
       <Modal.Body className="vh-70 overflow-auto">
         {renderBody()}
       </Modal.Body>
@@ -365,7 +499,7 @@ export default function NoticeButton() {
         </Button>
       </Modal.Footer>
     </Modal>
-  ), [showModal, handleHide, renderBody, messageAck]);
+  );
 
   // Runs once on mount: fetch config, then start polling.
   // All dependencies are stable (never recreated), so this effect
@@ -378,10 +512,10 @@ export default function NoticeButton() {
     };
   }, [envConfiguration, stopActivityDetection]);
 
-  // Handle notifications when dbNotices change
+  // Handle notifications when newNotices change
   useEffect(() => {
     const prevNots = prevDbNoticesRef.current;
-    const currentNots = dbNotices;
+    const currentNots = newNotices;
 
     const prevNotIds = _.map(prevNots, 'id');
     const currentNotIds = _.map(currentNots, 'id');
@@ -395,8 +529,8 @@ export default function NoticeButton() {
       handleNotification(remMessages, 'rem', true, context);
     }
 
-    prevDbNoticesRef.current = dbNotices;
-  }, [dbNotices, context]);
+    prevDbNoticesRef.current = newNotices;
+  }, [newNotices, context]);
 
   // Handle version upgrade notifications
   useEffect(() => {
