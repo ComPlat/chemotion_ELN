@@ -290,7 +290,8 @@ export const CalendarStore = types
         accessible: entry.accessible,
         element_short_label: entry.element_short_label,
         notified_users: entry.notified_users,
-      };
+        notify_users: entry.notify_user_ids,
+      }
     },
     transformEntryForApi(entry) {
       return {
@@ -303,8 +304,8 @@ export const CalendarStore = types
         created_by: entry.created_by,
         eventable_type: entry.eventable_type,
         eventable_id: entry.eventable_id,
-        notify_user_ids: entry.notify_users?.map((e) => e.value),
-      };
+        notify_user_ids: entry.notify_users,
+      }
     },
   }))
   .views((self) => ({
