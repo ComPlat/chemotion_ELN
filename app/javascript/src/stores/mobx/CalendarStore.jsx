@@ -45,6 +45,7 @@ export const CalendarStore = types
     eventable_id: types.optional(types.maybeNull(types.number)),
     eventable_type: types.optional(types.maybeNull(types.string)),
     showSharedCollectionEntries: types.optional(types.boolean, false),
+    error: types.optional(types.maybeNull(types.string), null),
   })
   .actions(self => ({
     getEntries: flow(function* getEntries() {
@@ -199,6 +200,10 @@ export const CalendarStore = types
       self.current_entry = {};
       self.show_time_slot_editor = false;
       self.current_entry_editable = false;
+      self.error = null;
+    },
+    changeErrorMessage(message) {
+      self.error = message;
     },
     toggleEntries(event) {
       event.stopPropagation();
