@@ -11,7 +11,7 @@ import {
   Col
 } from 'react-bootstrap';
 
-import { OtpInput } from 'src/components/common/AuthendifactionHelper';
+import { OtpInput } from 'src/components/common/OtpInput';
 import { formValueHandler, submitAsForm } from 'src/utilities/FormHelper';
 
 function omniauthLabel(icon, name) {

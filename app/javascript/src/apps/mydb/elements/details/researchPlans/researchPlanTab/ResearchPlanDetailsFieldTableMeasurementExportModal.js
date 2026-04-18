@@ -3,11 +3,12 @@ import Aviator from 'aviator';
 import equal from 'deep-equal';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, ButtonToolbar, Button, ButtonGroup, Dropdown } from 'react-bootstrap';
+import { Button, ButtonGroup, Dropdown } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import { v4 as uuidv4 } from 'uuid';
 import { observer } from 'mobx-react';
 
+import AppModal from 'src/components/common/AppModal';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -124,13 +125,17 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
     };
 
     return (
-      <Modal centered animation size="lg" show={this.props.show} onHide={this.props.onHide}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            Export measurements to samples
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ maxHeight: '600px', overflowY: 'scroll' }}>
+      <AppModal
+        size="lg"
+        show={this.props.show}
+        onHide={this.props.onHide}
+        title="Export measurements to samples"
+        closeLabel="Close"
+        primaryActionLabel="Link data to sample"
+        onPrimaryAction={this.handleSubmit.bind(this)}
+        primaryActionDisabled={!this.readyForSubmit()}
+      >
+        <div style={{ maxHeight: '600px', overflowY: 'scroll' }}>
           {measurementCandidates && this._selectAllButton()}
           <div className="ag-theme-alpine">
             {measurementCandidates &&
@@ -144,18 +149,8 @@ class ResearchPlanDetailsFieldTableMeasurementExportModal extends Component {
               />
             }
           </div>
-        </Modal.Body>
-        <Modal.Footer className="border-0">
-          <ButtonToolbar>
-            <Button variant="warning" onClick={this.props.onHide}>
-              Close
-            </Button>
-            <Button variant="primary" disabled={!this.readyForSubmit()} onClick={this.handleSubmit.bind(this)}>
-              Link data to sample
-            </Button>
-          </ButtonToolbar>
-        </Modal.Footer> 
-      </Modal>
+        </div>
+      </AppModal>
     );
   }
 

@@ -3,10 +3,11 @@ import React, {
 } from 'react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
-  Button, Modal, Card, Row, Col, Nav, Pagination, InputGroup, Form
+  Button, Card, Row, Col, Nav, Pagination, InputGroup, Form
 } from 'react-bootstrap';
 import 'whatwg-fetch';
 import _ from 'lodash';
+import AppModal from 'src/components/common/AppModal';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
@@ -27,7 +28,7 @@ const changeUrl = (url, urlTitle) => (url ? (
   <span />
 ));
 
-const handleNotification = (nots, act, needCallback = true, context) => {
+const handleNotification = (nots, act, context, needCallback = true) => {
   let count = 0;
   nots.forEach((n) => {
     if (act === 'rem') {
@@ -86,7 +87,7 @@ const handleNotification = (nots, act, needCallback = true, context) => {
         'RefreshChemotionCollection',
         'CollectionActions.fetchUnsharedCollectionRoots',
       ];
-      if (refreshCollectionActions.includes(n.content.action) || n.subject == 'Shared Collection With Me') {
+      if (refreshCollectionActions.includes(n.content.action) || n.subject === 'Shared Collection With Me') {
         context.collections.fetchCollections();
       }
 
@@ -157,7 +158,7 @@ const createUpgradeNotification = (serverVersion, localVersion, context) => {
     updated_at: infoTimeString,
     content: contentJson,
   };
-  handleNotification([not], 'add', false, context);
+  handleNotification([not], 'add', context, false);
 };
 
 export default function NoticeButton() {
@@ -407,7 +408,7 @@ export default function NoticeButton() {
               <Card.Body>
                 <Row>
                   <Col lg="auto">
-                    { not.source === 'new' ? (
+                    {not.source === 'new' ? (
                       <Button
                         id={`notice-button-ack-${not.id}`}
                         key={`notice-button-ack-${not.id}`}
@@ -418,19 +419,18 @@ export default function NoticeButton() {
                         <i className="fa fa-check me-1" aria-hidden="true" />
                         Got it
                       </Button>
-                    )
-                      : (
-                        <Button
-                          id={`notice-button-del-${not.id}`}
-                          key={`notice-button-del-${not.id}`}
-                          size="sm"
-                          variant="danger"
-                          onClick={() => messageArc(not.id)}
-                        >
-                          <i className="fa fa-archive me-1" aria-hidden="true" />
-                          Archive
-                        </Button>
-                      )}
+                    ) : (
+                      <Button
+                        id={`notice-button-del-${not.id}`}
+                        key={`notice-button-del-${not.id}`}
+                        size="sm"
+                        variant="danger"
+                        onClick={() => messageArc(not.id)}
+                      >
+                        <i className="fa fa-archive me-1" aria-hidden="true" />
+                        Archive
+                      </Button>
+                    )}
                   </Col>
                   <Col>{newText}</Col>
                 </Row>
@@ -463,17 +463,17 @@ export default function NoticeButton() {
     );
   };
 
-  const renderModal = () => (
-    <Modal
-      centered
+  const renderModal = useCallback(() => (
+    <AppModal
+      title="Notifications"
       show={showModal}
       onHide={handleHide}
-      dialogClassName="modal-xl"
+      size="xl"
+      bodyClassName="p-0"
+      primaryActionLabel={newNotices.length > 0 ? 'Mark all as read' : undefined}
+      onPrimaryAction={newNotices.length > 0 ? () => messageAck(0, true) : undefined}
     >
-      <Modal.Header closeButton>
-        <Modal.Title>Notifications</Modal.Title>
-      </Modal.Header>
-      <Nav variant="tabs" activeKey={showAck ? 'all' : 'unread'} className="px-3">
+      <Nav variant="tabs" activeKey={showAck ? 'all' : 'unread'} className="px-3 pt-3">
         <Nav.Item>
           <Nav.Link eventKey="unread" onClick={() => setShowAck(false)}>
             {`Unread${newNotices.length > 0 ? ` (${newNotices.length})` : ''}`}
@@ -485,21 +485,11 @@ export default function NoticeButton() {
           </Nav.Link>
         </Nav.Item>
       </Nav>
-      <Modal.Body className="vh-70 overflow-auto">
+      <div className="px-3 pb-3 vh-70 overflow-auto">
         {renderBody()}
-      </Modal.Body>
-      <Modal.Footer>
-        <Button
-          id="notice-button-ack-all"
-          key="notice-button-ack-all"
-          onClick={() => messageAck(0, true)}
-        >
-          <i className="fa fa-check" aria-hidden="true" />
-          &nbsp;Mark all notifications as read
-        </Button>
-      </Modal.Footer>
-    </Modal>
-  );
+      </div>
+    </AppModal>
+  ), [showModal, handleHide, renderBody, messageAck]);
 
   // Runs once on mount: fetch config, then start polling.
   // All dependencies are stable (never recreated), so this effect
@@ -523,10 +513,10 @@ export default function NoticeButton() {
     const remMessages = _.filter(prevNots, (o) => !_.includes(currentNotIds, o.id));
 
     if (Object.keys(newMessages).length > 0) {
-      handleNotification(newMessages, 'add', true, context);
+      handleNotification(newMessages, 'add', context, true);
     }
     if (Object.keys(remMessages).length > 0) {
-      handleNotification(remMessages, 'rem', true, context);
+      handleNotification(remMessages, 'rem', context, true);
     }
 
     prevDbNoticesRef.current = newNotices;

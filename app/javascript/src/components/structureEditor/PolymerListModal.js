@@ -2,8 +2,9 @@
 import PropTypes from 'prop-types';
 import React, { useState, useEffect } from 'react';
 import SVG from 'react-inlinesvg';
+import AppModal from 'src/components/common/AppModal';
 import {
-  Accordion, Button, Card, Form, Modal, Spinner
+  Accordion, Button, ButtonGroup, Card, Form, Spinner
 } from 'react-bootstrap';
 
 const PolymerShapes = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -58,110 +59,85 @@ function PolymerListModal({
   };
 
   return (
-    <Modal
-      centered
-      className="w-500 h-500 top-50 start-50 translate-middle"
-      style={{ zIndex: '10000' }}
-      contentClassName="border-1"
-      animation
+    <AppModal
+      title={title}
+      size="lg"
       show={loading}
       onHide={onCloseClick}
+      showFooter={false}
     >
-      <Modal.Header closeButton>
-        <Modal.Title>{title}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form.Group className="w-100 d-flex justify-content-end align-items-center mb-3">
-          <div
-            className="btn-group w-100"
-            role="group"
-            aria-label="Category switch"
-            style={{ display: 'flex', gap: 0 }}
-          >
-            {shapesList && Object.keys(shapesList)
-              .map((categoryItem, index, arr) => {
-              const isActive = category === categoryItem;
-              const isFirst = index === 0;
-              const isLast = index === arr.length - 1;
+      <Form.Group className="w-100 d-flex justify-content-end align-items-center mb-3">
+        <ButtonGroup className="w-100" aria-label="Category switch">
+          {shapesList && Object.keys(shapesList).map((categoryItem) => {
+            const isActive = category === categoryItem;
 
-              return (
-                <Button
-                  key={categoryItem}
-                  onClick={() => onCategoryChange(categoryItem)}
-                  style={{
-                    flex: 1,
-                    backgroundColor: isActive ? '#167782' : 'transparent',
-                    color: isActive ? '#fff' : '#6c757d',
-                    border: isActive ? 'none' : '1px solid #ced4da',
-                    textTransform: 'capitalize',
-                    borderRadius: isFirst
-                      ? '8px 0 0 8px'
-                      : isLast
-                        ? '0 8px 8px 0'
-                        : '0',
-                    margin: 0
-                  }}
-                >
-                  {categoryItem}
-                </Button>
-              );
-            })}
+            return (
+              <Button
+                key={categoryItem}
+                variant="light"
+                active={isActive}
+                className="flex-fill text-capitalize"
+                onClick={() => onCategoryChange(categoryItem)}
+              >
+                {categoryItem}
+              </Button>
+            );
+          })}
+        </ButtonGroup>
+      </Form.Group>
+
+      <Accordion>
+        {loadingData ? (
+          <div className="d-flex justify-content-center align-items-center" style={{ height: '180px' }}>
+            <Spinner animation="border" role="status" variant="#167782" style={{ color: '#167782' }}>
+              <span className="visually-hidden">Loading...</span>
+            </Spinner>
           </div>
-        </Form.Group>
-
-        <Accordion>
-          {loadingData ? (
-            <div className="d-flex justify-content-center align-items-center" style={{ height: '180px' }}>
-              <Spinner animation="border" role="status" variant="#167782" style={{ color: '#167782' }}>
-                <span className="visually-hidden">Loading...</span>
-              </Spinner>
-            </div>
-          ) : shapesList && shapesList[category]?.map((tab) => (
-            <Card key={tab.id}>
-              <Card.Header>
-                <Accordion.Item eventKey={String(tab.id)}>
-                  <Accordion.Header>{tab.label}</Accordion.Header>
-                </Accordion.Item>
-              </Card.Header>
-              <Accordion.Collapse eventKey={String(tab.id)}>
-                <Card.Body>
-                  <Accordion>
-                    {tab.subTabs.map((subTab) => (
-                      <Card key={subTab.id}>
-                        <Card.Header>
-                          <Accordion.Item eventKey={subTab.id}>
-                            <Accordion.Header>{subTab.label}</Accordion.Header>
-                          </Accordion.Item>
-                        </Card.Header>
-                        <Accordion.Collapse eventKey={subTab.id}>
-                          <Card.Body>
-                            {subTab?.shapes?.map((shape) => (
-                              <Button
-                                key={shape.template_id}
-                                variant="normal"
-                                onClick={async () => {
-                                  if (shape.template_id) {
-                                    onShapeSelection(shape.template_id, true);
-                                  }
-                                }}
-                              >
-                                <div className="flex flex-col items-center gap-2">
-                                  <SVG src={`/polymerShapes/${category}/${shape.iconName}.svg`} title={shape.label || 'shape'} />
-                                </div>
-                              </Button>
-                            ))}
-                          </Card.Body>
-                        </Accordion.Collapse>
-                      </Card>
-                    ))}
-                  </Accordion>
-                </Card.Body>
-              </Accordion.Collapse>
-            </Card>
-          ))}
-        </Accordion>
-      </Modal.Body>
-    </Modal>
+        ) : shapesList && shapesList[category]?.map((tab) => (
+          <Card key={tab.id}>
+            <Card.Header>
+              <Accordion.Item eventKey={String(tab.id)}>
+                <Accordion.Header>{tab.label}</Accordion.Header>
+              </Accordion.Item>
+            </Card.Header>
+            <Accordion.Collapse eventKey={String(tab.id)}>
+              <Card.Body>
+                <Accordion>
+                  {tab.subTabs.map((subTab) => (
+                    <Card key={subTab.id}>
+                      <Card.Header>
+                        <Accordion.Item eventKey={subTab.id}>
+                          <Accordion.Header>{subTab.label}</Accordion.Header>
+                        </Accordion.Item>
+                      </Card.Header>
+                      <Accordion.Collapse eventKey={subTab.id}>
+                        <Card.Body>
+                          {subTab?.shapes?.map((shape) => (
+                            <Button
+                              key={shape.template_id}
+                              variant="normal"
+                              onClick={async () => {
+                                if (shape.template_id) {
+                                  onShapeSelection(shape.template_id, true);
+                                }
+                              }}
+                            >
+                              <div className="flex flex-col items-center gap-2">
+                                <SVG src={`/polymerShapes/${category}/${shape.iconName}.svg`} title={shape.label || 'shape'} />
+                              </div>
+                            </Button>
+                          ))}
+                        </Card.Body>
+                      </Accordion.Collapse>
+                    </Card>
+                  ))}
+                </Accordion>
+              </Card.Body>
+            </Accordion.Collapse>
+          </Card>
+        ))}
+      </Accordion>
+    </AppModal>
   );
 }
 
@@ -236,57 +212,72 @@ function SpecialCharModal({
   ];
 
   return (
-    <Modal
-      centered
-      className="w-500 h-500 top-50 start-50 translate-middle"
+    <AppModal
+      title={title}
+      dialogClassName="w-500 h-500"
+      className="top-50 start-50 translate-middle"
       style={{ zIndex: '10000' }}
-      contentClassName="border-1"
-      animation
       show={loading}
       onHide={onCloseClick}
+      showFooter={false}
     >
-      <Modal.Header closeButton>
-        <Modal.Title>{title}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div className="flex flex-col flex-1 gap-4">
-          <div className="flex-1 bg-gray-100 p-4 border border-gray-300 rounded-lg shadow-md max-w-xl ">
-            <h4>Standard bonds</h4>
-            <div className="flex-row flex-wrap gap-2" style={{ display: 'flex' }}>
-              {
-                specialCharacters.map((item) => (
-                  <Button
-                    key={item}
-                    className={`w-10 h-10 text-lg font-medium border rounded-md hover:bg-gray-200 text-gray-800 shadow-sm flex items-center justify-center ${restSelection === item ? 'bg-green-200' : 'bg-white'}`}
-                    onClick={() => onRestSelections(item)}
-                  >
-                    {item}
-                  </Button>
-                ))
-              }
-            </div>
-          </div>
-          <div className="flex-1 bg-gray-100  p-4 border border-gray-300 rounded-lg shadow-md max-w-xl">
-            <h4>Dashed-bonds</h4>
-            <div className="flex-row flex-wrap gap-2" style={{ display: 'flex' }}>
-              {
-                specialCharacters.map((item) => (
-                  <Button
-                    key={item}
-                    className={`w-10 h-10 text-lg font-medium border rounded-md hover:bg-gray-200 text-gray-800 shadow-sm flex items-center justify-center ${dashedSelection === item ? 'bg-green-200' : 'bg-white'}`}
-                    onClick={() => onDashedSelection(item)}
-                  >
-                    {item}
-                  </Button>
-                ))
-              }
-            </div>
+      <div className="flex flex-col flex-1 gap-4">
+        <div className="flex-1 bg-gray-100 p-4 border border-gray-300 rounded-lg shadow-md max-w-xl ">
+          <h4>Standard bonds</h4>
+          <div className="flex-row flex-wrap gap-2" style={{ display: 'flex' }}>
+            {
+              specialCharacters.map((item) => (
+                <Button
+                  key={item}
+                  className={`w-10 h-10 text-lg font-medium border rounded-md hover:bg-gray-200 text-gray-800 shadow-sm flex items-center justify-center ${restSelection === item ? 'bg-green-200' : 'bg-white'}`}
+                  onClick={() => onRestSelections(item)}
+                >
+                  {item}
+                </Button>
+              ))
+            }
           </div>
         </div>
-      </Modal.Body>
-    </Modal>
+        <div className="flex-1 bg-gray-100  p-4 border border-gray-300 rounded-lg shadow-md max-w-xl">
+          <h4>Dashed-bonds</h4>
+          <div className="flex-row flex-wrap gap-2" style={{ display: 'flex' }}>
+            {
+              specialCharacters.map((item) => (
+                <Button
+                  key={item}
+                  className={`w-10 h-10 text-lg font-medium border rounded-md hover:bg-gray-200 text-gray-800 shadow-sm flex items-center justify-center ${dashedSelection === item ? 'bg-green-200' : 'bg-white'}`}
+                  onClick={() => onDashedSelection(item)}
+                >
+                  {item}
+                </Button>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+    </AppModal>
   );
 }
+
+SpecialCharModal.propTypes = {
+  loading: PropTypes.bool,
+  title: PropTypes.string,
+  onCloseClick: PropTypes.func,
+  dashedSelection: PropTypes.string,
+  restSelection: PropTypes.string,
+  onDashedSelection: PropTypes.func,
+  onRestSelections: PropTypes.func,
+};
+
+SpecialCharModal.defaultProps = {
+  loading: false,
+  title: 'Text Node Special Characters',
+  onCloseClick: () => {},
+  dashedSelection: null,
+  restSelection: null,
+  onDashedSelection: () => {},
+  onRestSelections: () => {},
+};
 
 export {
   PolymerListModal, PolymerListIconKetcherToolbarButton, specialCharButton, SpecialCharModal, SolidSurfaceTemplatesIconTextButton
@@ -296,5 +287,12 @@ PolymerListModal.propTypes = {
   loading: PropTypes.bool,
   title: PropTypes.string,
   onCloseClick: PropTypes.func,
-  onShapeSelection: PropTypes.func
+  onShapeSelection: PropTypes.func,
+};
+
+PolymerListModal.defaultProps = {
+  loading: false,
+  title: 'Surface Chemistry Templates',
+  onCloseClick: () => {},
+  onShapeSelection: () => {},
 };

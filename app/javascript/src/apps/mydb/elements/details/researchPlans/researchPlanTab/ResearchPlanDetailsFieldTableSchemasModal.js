@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Modal, Button, Form, InputGroup, ButtonToolbar } from 'react-bootstrap';
+import {
+  Button,
+  Form,
+  InputGroup,
+  ButtonToolbar,
+} from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
+import AppModal from 'src/components/common/AppModal';
 
 class ResearchPlanDetailsFieldTableSchemasModal extends Component {
   constructor(props) {
@@ -9,15 +15,15 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
 
     this.state = {
       schemaNameValue: '',
-      schemaNameError: ''
+      schemaNameError: '',
     };
   }
 
-  handleSchemaNameChange(event) {
+  handleSchemaNameChange = (event) => {
     this.setState({ schemaNameValue: event.target.value });
-  }
+  };
 
-  handleSubmit() {
+  handleSubmit = () => {
     const { onSubmit } = this.props;
     const { schemaNameValue } = this.state;
 
@@ -27,36 +33,38 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
       this.setState({ schemaNameError: '', schemaNameValue: '' });
       onSubmit(schemaNameValue);
     }
-  }
+  };
 
-  renderName(node) {
+  static renderName(node) {
     const schema = node.data;
     return schema.name;
   }
 
-  renderSchemaColumns(node) {
+  static renderSchemaColumns(node) {
     const schema = node.data;
-    return schema.value.columns.map(column => column.headerName).join(', ');
+    return schema.value.columns.map((column) => column.headerName).join(', ');
   }
 
-  renderRows(node) {
+  static renderRows(node) {
     const schema = node.data;
     return schema.value.rows.length;
   }
 
-  renderButtons(node) {
+  renderButtons = (node) => {
+    const { onUse, onDelete } = this.props;
     const schema = node.data;
+
     return (
       <ButtonToolbar className=" justify-content-end">
-        <Button variant="warning" size="sm" onClick={() => this.props.onUse(schema)}>
+        <Button variant="warning" size="sm" onClick={() => onUse(schema)}>
           Use
         </Button>
-        <Button variant="danger" size="sm" onClick={() => this.props.onDelete(schema)}>
+        <Button variant="danger" size="sm" onClick={() => onDelete(schema)}>
           Delete
         </Button>
       </ButtonToolbar>
     );
-  }
+  };
 
   render() {
     const { modal, onHide } = this.props;
@@ -64,23 +72,23 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
 
     const columnDefs = [
       {
-        headerName: "Name",
-        cellRenderer: this.renderName,
+        headerName: 'Name',
+        cellRenderer: ResearchPlanDetailsFieldTableSchemasModal.renderName,
       },
       {
-        headerName: "Columns",
-        cellRenderer: this.renderSchemaColumns,
+        headerName: 'Columns',
+        cellRenderer: ResearchPlanDetailsFieldTableSchemasModal.renderSchemaColumns,
         wrapText: true,
-        cellClass: ["lh-base", "py-2"],
+        cellClass: ['lh-base', 'py-2'],
       },
       {
-        headerName: "# Rows",
-        cellRenderer: this.renderRows,
+        headerName: '# Rows',
+        cellRenderer: ResearchPlanDetailsFieldTableSchemasModal.renderRows,
       },
       {
-        headerName: "",
-        cellRenderer: this.renderButtons.bind(this),
-        cellClass: ["p-2"],
+        headerName: '',
+        cellRenderer: this.renderButtons,
+        cellClass: ['p-2'],
       },
     ];
 
@@ -94,57 +102,63 @@ class ResearchPlanDetailsFieldTableSchemasModal extends Component {
     };
 
     return (
-      <Modal centered animation show={modal.show} onHide={onHide}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            Table schemas
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="mb-5">
-            <Form.Group>
-              <Form.Label>Save current schema</Form.Label>
-              <InputGroup>
-                <Form.Control
-                  type="text"
-                  value={schemaNameValue}
-                  onChange={this.handleSchemaNameChange.bind(this)}
-                />
-                <Button variant="primary" onClick={this.handleSubmit.bind(this)}>
-                  Save
-                </Button>
-              </InputGroup>
-              <Form.Text className="text-danger">{schemaNameError}</Form.Text>
-            </Form.Group>
-          </div>
-          <div className="ag-theme-alpine">
-            <h4>Stored schemas</h4>
-            <AgGridReact
-              columnDefs={columnDefs}
-              autoSizeStrategy={{ type: 'fitGridWidth' }}
-              defaultColDef={defaultColDef}
-              rowData={modal.schemas}
-              rowHeight="auto"
-              domLayout="autoHeight"
-            />
-          </div>
-        </Modal.Body>
-        <Modal.Footer className="modal-footer border-0">
-          <Button variant="light" onClick={onHide}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <AppModal
+        show={modal.show}
+        onHide={onHide}
+        title="Table schemas"
+        showFooter
+        closeLabel="Close"
+      >
+        <div className="mb-5">
+          <Form.Group>
+            <Form.Label>Save current schema</Form.Label>
+            <InputGroup>
+              <Form.Control
+                type="text"
+                value={schemaNameValue}
+                onChange={this.handleSchemaNameChange}
+              />
+              <Button variant="primary" onClick={this.handleSubmit}>
+                Save
+              </Button>
+            </InputGroup>
+            <Form.Text className="text-danger">{schemaNameError}</Form.Text>
+          </Form.Group>
+        </div>
+        <div className="ag-theme-alpine">
+          <h4>Stored schemas</h4>
+          <AgGridReact
+            columnDefs={columnDefs}
+            autoSizeStrategy={{ type: 'fitGridWidth' }}
+            defaultColDef={defaultColDef}
+            rowData={modal.schemas}
+            rowHeight="auto"
+            domLayout="autoHeight"
+          />
+        </div>
+      </AppModal>
     );
   }
 }
 
 ResearchPlanDetailsFieldTableSchemasModal.propTypes = {
-  modal: PropTypes.object,
-  onSubmit: PropTypes.func,
-  onHide: PropTypes.func,
-  onUse: PropTypes.func,
-  onDelete: PropTypes.func
+  modal: PropTypes.shape({
+    schemas: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      value: PropTypes.shape({
+        columns: PropTypes.arrayOf(PropTypes.shape({
+          headerName: PropTypes.string,
+        })),
+        rows: PropTypes.arrayOf(PropTypes.shape({})),
+      }),
+    })),
+    show: PropTypes.bool.isRequired,
+  }).isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  onHide: PropTypes.func.isRequired,
+  onUse: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 export default ResearchPlanDetailsFieldTableSchemasModal;

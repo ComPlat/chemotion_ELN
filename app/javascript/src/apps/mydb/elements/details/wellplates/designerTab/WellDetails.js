@@ -1,15 +1,12 @@
 /* eslint-disable camelcase */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Button,
   Form,
-  InputGroup,
-  Modal,
-  Row,
-  Col
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import PropTypes from 'prop-types';
+import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
 import { wellplateShowSample } from 'src/utilities/routesUtils';
 import Aviator from 'aviator';
@@ -50,7 +47,7 @@ const sampleVisualisation = (well, onChange) => {
     svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath} />;
     removeButton = (
       <Button size="sm" variant="danger" onClick={removeSampleFromWell}>
-        <i className="fa fa-trash-o" />
+        Clear well
       </Button>
     );
   }
@@ -155,25 +152,20 @@ const colorPicker = (well, onChange, activeColor, setActiveColor) => (
   </Form.Group>
 );
 
-const WellDetails = ({ well, readoutTitles, handleClose, onChange }) => {
+function WellDetails({ well, readoutTitles, handleClose, onChange }) {
   const [activeColor, setActiveColor] = useState(well.color_code || null);
   return (
-    <Modal
-      animation
-      centered
-      show={() => { well != null; }}
+    <AppModal
+      title={`Well Details for Well ${well.alphanumericPosition}`}
+      show={Boolean(well)}
       onHide={handleClose}
+      showFooter={false}
     >
-      <Modal.Header closeButton>
-        <Modal.Title as="h3">Well Details for Well {well.alphanumericPosition}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        {sampleVisualisation(well, onChange)}
-        {labelSelection(well, onChange)}
-        {readoutSection(well.readouts, readoutTitles)}
-        {colorPicker(well, onChange, activeColor, setActiveColor)}
-      </Modal.Body>
-    </Modal>
+      {sampleVisualisation(well, onChange)}
+      {labelSelection(well, onChange)}
+      {readoutSection(well.readouts, readoutTitles)}
+      {colorPicker(well, onChange, activeColor, setActiveColor)}
+    </AppModal>
   );
 }
 

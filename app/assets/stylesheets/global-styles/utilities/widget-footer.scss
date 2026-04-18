@@ -1,0 +1,7 @@
+.widget-footer {
+  @extend .surface-tab__header;
+  @extend .gap-1;
+  .btn-ghost:not(:last-child) {
+    margin-right: $close-button-margin;
+  }
+}

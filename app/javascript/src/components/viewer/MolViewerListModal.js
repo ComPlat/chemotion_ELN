@@ -1,8 +1,19 @@
 /* eslint-disable react/forbid-prop-types */
-import React, { useState, useEffect } from 'react';
+import React, {
+  useState,
+  useEffect,
+} from 'react';
 import PropTypes from 'prop-types';
-import { Accordion, Col, Modal, Nav, Row } from 'react-bootstrap';
-import { MolViewer } from 'react-molviewer';
+import {
+  Accordion,
+  Col,
+  Nav,
+  Row,
+} from 'react-bootstrap';
+import {
+  MolViewer,
+} from 'react-molviewer';
+import AppModal from 'src/components/common/AppModal';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
@@ -67,39 +78,32 @@ function MolViewerListModal(props) {
   ));
 
   return (
-    <Modal
-      centered
-      className="modal-xxxl"
-      animation
+    <AppModal
+      title={selected.dsName
+        ? `Dataset: ${selected.dsName} / File: ${selected?.filename}${MolViewerSet.INFO}`
+        : MolViewerSet.INFO}
       show={show}
+      size="xxxl"
       onHide={handleModalOpen}
     >
-      <Modal.Header onClick={(e) => e.stopPropagation()} closeButton>
-        <Modal.Title>
-          {`Dataset: ${selected.dsName} / File: ${selected?.filename}`}
-          {MolViewerSet.INFO}
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body onClick={(e) => e.stopPropagation()}>
-        <Row>
-          <Col sm={2}>
-            <Accordion defaultActiveKey={defaultActiveKey}>
-              {navContainers}
-            </Accordion>
-          </Col>
-          <Col sm={10}>
-            {selected?.id && molContent && (
-              <MolViewer
-                molContent={molContent}
-                viewType={`file_${selected?.id}`}
-                fnInit={() => LoadingActions.start()}
-                fnCb={() => LoadingActions.stop()}
-              />
-            )}
-          </Col>
-        </Row>
-      </Modal.Body>
-    </Modal>
+      <Row>
+        <Col sm={2}>
+          <Accordion defaultActiveKey={defaultActiveKey}>
+            {navContainers}
+          </Accordion>
+        </Col>
+        <Col sm={10}>
+          {selected?.id && molContent && (
+            <MolViewer
+              molContent={molContent}
+              viewType={`file_${selected?.id}`}
+              fnInit={() => LoadingActions.start()}
+              fnCb={() => LoadingActions.stop()}
+            />
+          )}
+        </Col>
+      </Row>
+    </AppModal>
   );
 }
 

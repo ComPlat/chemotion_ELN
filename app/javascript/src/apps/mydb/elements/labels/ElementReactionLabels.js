@@ -1,79 +1,27 @@
 import React from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import ElementStore from 'src/stores/alt/stores/ElementStore';
+import ElementNoAccessTrigger from 'src/apps/mydb/elements/labels/ElementNoAccessTrigger';
 
-export default class ElementReactionLabels extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      showWarning: false,
-      clicked: false
-    };
-    let { element } = props;
-
-    this.handleOnClick = this.handleOnClick.bind(this);
-    this.closeWarning = this.closeWarning.bind(this);
-
-    this.onStoreChange = this.onStoreChange.bind(this);
-  }
-
-  componentDidMount() {
-    ElementStore.listen(this.onStoreChange);
-  }
-
-  componentWillUnmount() {
-    ElementStore.unlisten(this.onStoreChange);
-  }
-
-  onStoreChange(state) {
-    if (this.state.showWarning != state.elementWarning) {
-      this.setState({
-        showWarning: state.elementWarning
-      });
-    }
-  }
-
-  closeWarning() {
-    this.setState({showWarning: false });
-    ElementActions.closeWarning();
-  }
-
-  handleOnClick(e) {
-    let { element } = this.props;
-
-    ElementActions.tryFetchReactionById(element.tag.taggable_data.reaction_id);
-    this.setState({ clicked: true });
-    e.stopPropagation();
-  }
-
-  render() {
-    let { element } = this.props;
-
-    if (!element.tag || !element.tag.taggable_data ||
-        !element.tag.taggable_data.reaction_id)
-      return null;
-
-    const { showWarning, clicked } = this.state;
-
-    return (
-      <>
-        <Button variant="light" size="xxsm" onClick={this.handleOnClick} key={element.id}>
-          <i className="icon-reaction"/>
+function ElementReactionLabels({ element }) {
+  return (
+    <ElementNoAccessTrigger
+      element={element}
+      isAvailable={(currentElement) => Boolean(currentElement.tag?.taggable_data?.reaction_id)}
+      fetchElement={(currentElement) => (
+        ElementActions.tryFetchReactionById(currentElement.tag.taggable_data.reaction_id)
+      )}
+      renderTrigger={({ onClick }) => (
+        <Button variant="light" size="xxsm" onClick={onClick} key={element.id}>
+          <i className="icon-reaction" />
         </Button>
-        <Modal centered show={showWarning && clicked} onHide={this.closeWarning}>
-          <Modal.Header closeButton>
-            <Modal.Title>No Access to Element</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            Sorry, you cannot access this Reaction.
-          </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={this.closeWarning}>Close</Button>
-          </Modal.Footer>
-        </Modal>
-      </>
-    )
-  }
+      )}
+      warningMessage="Sorry, you cannot access this Reaction."
+    />
+  );
 }
+
+ElementReactionLabels.propTypes = ElementNoAccessTrigger.propTypes;
+
+export default ElementReactionLabels;

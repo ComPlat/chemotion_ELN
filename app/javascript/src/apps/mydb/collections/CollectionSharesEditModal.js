@@ -1,13 +1,19 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonGroup, Modal } from 'react-bootstrap';
+import { Button, ButtonGroup } from 'react-bootstrap';
 
 import UserInfoIcon from 'src/apps/mydb/collections/UserInfoIcon';
 import PermissionIcons from 'src/apps/mydb/collections/PermissionIcons';
+import AppModal from 'src/components/common/AppModal';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const CollectionSharesEditModal = ({ node, updateNode, deleteNode, onHide }) => {
+function CollectionSharesEditModal({
+  node,
+  updateNode,
+  deleteNode,
+  onHide,
+}) {
   const collectionsStore = useContext(StoreContext).collections;
   const sharedWithUsers = collectionsStore.sharedWithUsers(node.id);
   const collectionShares = sharedWithUsers !== undefined ? sharedWithUsers.shared_with_users : [];
@@ -19,18 +25,13 @@ const CollectionSharesEditModal = ({ node, updateNode, deleteNode, onHide }) => 
   }, [node.id]);
 
   return (
-    <Modal
+    <AppModal
       show
-      centered
       scrollable
       onHide={onHide}
+      title={node.label}
     >
-      <Modal.Header closeButton>
-        <Modal.Title>
-          {node.label}
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body className="d-flex flex-column gap-2">
+      <div className="d-flex flex-column gap-2">
         {collectionShares.map((collectionShare) => (
           <div
             key={collectionShare.id}
@@ -61,8 +62,8 @@ const CollectionSharesEditModal = ({ node, updateNode, deleteNode, onHide }) => 
             </ButtonGroup>
           </div>
         ))}
-      </Modal.Body>
-    </Modal>
+      </div>
+    </AppModal>
   );
 }
 

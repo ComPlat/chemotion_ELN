@@ -2,15 +2,17 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Sample from 'src/models/Sample';
 import Molecule from 'src/models/Molecule';
-import SampleDetailsComponentsDnd from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponentsDnd'; // Import the appropriate Dnd component
+import SampleDetailsComponentsDnd
+  from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponentsDnd';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import { checkComponentVolumeAndNotify } from 'src/utilities/VolumeUtils';
 import {
-  ListGroup, ListGroupItem, Button, Modal
+  ListGroup, ListGroupItem, Button
 } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 
 /**
  * SampleDetailsComponents manages the display and interaction of components within a sample.
@@ -19,6 +21,17 @@ import {
  * @extends React.Component
  */
 export default class SampleDetailsComponents extends React.Component {
+  /**
+   * Updates total volume only if component concentration is locked
+   * @param {Object} component - The component to check
+   * @param {Sample} sample - The parent sample
+   */
+  static updateTotalVolumeIfConcentrationLocked(component, sample) {
+    if (component.isComponentConcentrationLocked()) {
+      sample.updateTotalVolume(component.amount_mol, component.concn);
+    }
+  }
+
   /**
    * Creates an instance of SampleDetailsComponents.
    * @param {Object} props - Component props
@@ -31,10 +44,7 @@ export default class SampleDetailsComponents extends React.Component {
    */
   constructor(props) {
     super(props);
-
-    const { sample } = props;
     this.state = {
-      sample,
       showModal: false,
       droppedMaterial: null,
       activeTab: 'concentration',
@@ -112,12 +122,12 @@ export default class SampleDetailsComponents extends React.Component {
       case 'g':
         // volume/mass given, update amount
         currentComponent.handleVolumeChange(amount, totalVolume);
-        this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
+        SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
         break;
       case 'mol':
         // amount given, update volume/mass
         currentComponent.handleAmountChange(amount, totalVolume);
-        this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
+        SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
         break;
       case 'mol/l':
         // starting conc./target concentration changes
@@ -299,17 +309,6 @@ export default class SampleDetailsComponents extends React.Component {
   }
 
   /**
-   * Updates total volume only if component concentration is locked
-   * @param {Object} component - The component to check
-   * @param {Sample} sample - The parent sample
-   */
-  updateTotalVolumeIfConcentrationLocked(component, sample) {
-    if (component.isComponentConcentrationLocked()) {
-      sample.updateTotalVolume(component.amount_mol, component.concn);
-    }
-  }
-
-  /**
    * Updates sample for amount/unit changes.
    * @param {Object} changeEvent - The change event
    */
@@ -393,7 +392,7 @@ export default class SampleDetailsComponents extends React.Component {
     const totalVolume = sample.amount_l;
 
     currentComponent.updateRatio(newRatio, materialGroup, totalVolume, referenceMoles);
-    this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
+    SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
   }
 
   /**
@@ -420,7 +419,7 @@ export default class SampleDetailsComponents extends React.Component {
     }
     currentComponent.setPurity(purity, totalVolume, referenceComponent, lockAmountColumnSolids, materialGroup);
 
-    this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
+    SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
 
     // Check if the component is the reference component
     if (referenceComponent && referenceComponent.id === sampleID) {
@@ -639,6 +638,8 @@ export default class SampleDetailsComponents extends React.Component {
         srcMat, srcGroup, tagMat, tagGroup
       },
     });
+
+    return null;
   }
 
   /**
@@ -646,18 +647,21 @@ export default class SampleDetailsComponents extends React.Component {
    * @returns {JSX.Element} The modal component
    */
   renderModal() {
+    const { showModal } = this.state;
+
     return (
-      <Modal show={this.state.showModal} onHide={this.handleModalClose}>
-        <Modal.Header closeButton />
-        <Modal.Body>
-          <p>Do you want to merge or move this component?</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="success" onClick={() => this.handleModalAction('merge')}>Merge</Button>
-          <Button variant="primary" onClick={() => this.handleModalAction('move')}>Move</Button>
-          <Button variant="light" onClick={this.handleModalClose}>Close</Button>
-        </Modal.Footer>
-      </Modal>
+      <AppModal
+        show={showModal}
+        onHide={this.handleModalClose}
+        title="Move or merge component"
+        primaryActionLabel="Move"
+        onPrimaryAction={() => this.handleModalAction('move')}
+        extendedFooter={(
+          <Button variant="primary" onClick={() => this.handleModalAction('merge')}>Merge</Button>
+        )}
+      >
+        <p>Do you want to merge or move this component?</p>
+      </AppModal>
     );
   }
 
@@ -669,6 +673,7 @@ export default class SampleDetailsComponents extends React.Component {
     const {
       sample, isOver, canDrop, enableComponentLabel, enableComponentPurity
     } = this.props;
+    const { activeTab } = this.state;
     const style = {
       padding: '2px 5px',
     };
@@ -705,7 +710,7 @@ export default class SampleDetailsComponents extends React.Component {
             materialGroup="liquid"
             showModalWithMaterial={this.showModalWithMaterial}
             handleTabSelect={this.handleTabSelect}
-            activeTab={this.state.activeTab}
+            activeTab={activeTab}
             enableComponentLabel={enableComponentLabel}
             enableComponentPurity={enableComponentPurity}
           />
@@ -721,7 +726,7 @@ export default class SampleDetailsComponents extends React.Component {
             materialGroup="solid"
             showModalWithMaterial={this.showModalWithMaterial}
             handleTabSelect={this.handleTabSelect}
-            activeTab={this.state.activeTab}
+            activeTab={activeTab}
             enableComponentLabel={enableComponentLabel}
             enableComponentPurity={enableComponentPurity}
           />

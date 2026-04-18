@@ -1,13 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, ButtonToolbar, Form, Modal, Dropdown
+  Button, Form, Dropdown
 } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import readXlsxFile, { readSheetNames } from 'read-excel-file';
 import { parse as parseSdf } from 'sdf-parser';
 
+import AppModal from 'src/components/common/AppModal';
+import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ColumnMappingComponent from 'src/apps/mydb/collections/ColumnMappingComponent';
@@ -247,11 +249,13 @@ export default class ModalImport extends React.Component {
 
   constructor(props) {
     super(props);
-    
+    this.validationComponentRef = React.createRef();
+    this.handleValidationStateChange = this.handleValidationStateChange.bind(this);
+
     // Resolve the target collection ID once
     const uiState = UIStore.getState();
     const targetCollectionId = props.collectionId || uiState.currentCollection.id;
-    
+
     this.state = {
       file: null,
       importAsChemical: false,
@@ -265,7 +269,10 @@ export default class ModalImport extends React.Component {
       fileFormat: null,
       isProcessing: false,
       mappedColumns: null,
-      showCancelConfirmation: false,
+      cancelOverlayTarget: null,
+      cancelOverlayPlacement: 'top',
+      validationIsValidated: false,
+      validationIsDataValid: false,
       targetCollectionId,
     };
   }
@@ -285,7 +292,7 @@ export default class ModalImport extends React.Component {
       mappedColumns,
       targetCollectionId
     } = this.state;
-    
+
     const params = {
       file,
       currentCollectionId: targetCollectionId,
@@ -324,6 +331,8 @@ export default class ModalImport extends React.Component {
       showColumnMapping: false,
       showValidation: false,
       mappedColumns: null,
+      validationIsValidated: false,
+      validationIsDataValid: false,
     });
   }
 
@@ -358,10 +367,39 @@ export default class ModalImport extends React.Component {
     }
   }
 
+  handleValidationStateChange({ isValidated, isDataValid }) {
+    this.setState((prevState) => {
+      if (
+        prevState.validationIsValidated === isValidated
+        && prevState.validationIsDataValid === isDataValid
+      ) {
+        return null;
+      }
+
+      return {
+        validationIsValidated: isValidated,
+        validationIsDataValid: isDataValid,
+      };
+    });
+  }
+
+  handleValidationPrimaryAction() {
+    const { validationIsValidated, validationIsDataValid } = this.state;
+
+    if (validationIsValidated && validationIsDataValid) {
+      this.handleImportData();
+      return;
+    }
+
+    this.validationComponentRef.current?.validateData();
+  }
+
   handleImportData() {
     const { onHide } = this.props;
-    const { importAsChemical, fileFormat, rowData, targetCollectionId } = this.state;
-    
+    const {
+      importAsChemical, fileFormat, rowData, targetCollectionId
+    } = this.state;
+
     // For Excel and other formats, send the cleaned data directly
     const params = {
       currentCollectionId: targetCollectionId,
@@ -441,7 +479,9 @@ export default class ModalImport extends React.Component {
         showColumnMapping: false,
         rowData: rowDataWithIds,
         columnDefs,
-        isProcessing: false
+        isProcessing: false,
+        validationIsValidated: false,
+        validationIsDataValid: false,
       });
     } catch (error) {
       console.error('Data extraction error:', error);
@@ -455,20 +495,55 @@ export default class ModalImport extends React.Component {
     }
   }
 
-  handleCancelValidation(updatedRowData) {
-    // If updated data is provided, set it in the state
-    if (updatedRowData) {
-      this.setState({
-        rowData: updatedRowData,
-        showValidation: false,
-        showColumnMapping: true
-      });
-    } else {
-      this.setState({
-        showValidation: false,
-        showColumnMapping: true
-      });
+  requestCancelConfirmation(event, placement = 'top') {
+    const { showValidation } = this.state;
+    const { onHide } = this.props;
+
+    if (!showValidation) {
+      onHide();
+      return;
     }
+
+    this.setState({
+      cancelOverlayTarget: event?.currentTarget || null,
+      cancelOverlayPlacement: placement,
+    });
+  }
+
+  confirmCancelValidation() {
+    this.setState({
+      rowData: [],
+      showValidation: false,
+      showColumnMapping: true,
+      cancelOverlayTarget: null,
+      validationIsValidated: false,
+      validationIsDataValid: false,
+    });
+  }
+
+  abortImport() {
+    const { onHide } = this.props;
+
+    this.setState({
+      file: null,
+      importAsChemical: false,
+      importWithColumnMapping: false,
+      showColumnMapping: false,
+      showValidation: false,
+      columnNames: [],
+      rowData: [],
+      columnDefs: [],
+      mappedColumns: null,
+      cancelOverlayTarget: null,
+      validationIsValidated: false,
+      validationIsDataValid: false,
+    }, () => onHide());
+  }
+
+  dismissCancelConfirmation() {
+    this.setState({
+      cancelOverlayTarget: null,
+    });
   }
 
   // Helper function to check if there are duplicate mapped columns
@@ -855,23 +930,6 @@ export default class ModalImport extends React.Component {
     reader.readAsText(file, encoding);
   }
 
-  confirmCancelValidation() {
-    // Do not preserve data when returning to column mapping
-    this.setState({
-      rowData: [],
-      showValidation: false,
-      showColumnMapping: true,
-      showCancelConfirmation: false,
-    });
-  }
-
-  dismissCancelConfirmation() {
-    // Close the confirmation modal without taking action
-    this.setState({
-      showCancelConfirmation: false,
-    });
-  }
-
   dropzoneOrfilePreview() {
     const { file, importAsChemical, importWithColumnMapping } = this.state;
     return (
@@ -984,103 +1042,92 @@ export default class ModalImport extends React.Component {
       columnDefs,
       isProcessing,
       mappedColumns,
-      showCancelConfirmation
+      cancelOverlayTarget,
+      cancelOverlayPlacement,
+      validationIsValidated,
+      validationIsDataValid,
     } = this.state;
-    
+
+    const isValidationStep = showValidation;
+    const modalSize = isValidationStep ? 'xl' : undefined;
+    const modalBackdrop = isValidationStep ? 'static' : true;
+    const dialogClassName = isValidationStep ? undefined : 'modal-import-dialog';
+    const isInitialStep = !showColumnMapping && !showValidation;
+
     let importButtonText;
-    if (showColumnMapping) {
+    if (isValidationStep) {
+      importButtonText = validationIsValidated && validationIsDataValid ? 'Import' : 'Validate Data';
+    } else if (showColumnMapping) {
       importButtonText = 'Proceed to validate Data';
     } else if (importWithColumnMapping) {
       importButtonText = 'Map Columns and Validate Data';
     } else {
       importButtonText = 'Import';
     }
+
     return (
       <>
         <style>{'.modal-import-dialog{min-width:550px;}'}</style>
-        <Modal show={show} onHide={onHide} dialogClassName="modal-import-dialog">
-          <Modal.Header closeButton>
-            <Modal.Title>
-              Import samples from file to {collectionName}
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            {this.dropzoneOrfilePreview()}
-            {importWithColumnMapping && showColumnMapping && (
-              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                {isProcessing && (
-                  <div className="text-center my-3">
-                    <div className="spinner-border text-primary" role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <p className="mt-2">Processing data, please wait...</p>
+        <AppModal
+          show={show}
+          onHide={onHide}
+          onRequestClose={(event, source) => this.requestCancelConfirmation(
+            event,
+            source === 'header' ? 'bottom' : 'top'
+          )}
+          backdrop={modalBackdrop}
+          keyboard={!isValidationStep}
+          size={modalSize}
+          dialogClassName={dialogClassName}
+          title={`Import samples from file to ${collectionName}`}
+          primaryActionLabel={importButtonText}
+          onPrimaryAction={isValidationStep
+            ? () => this.handleValidationPrimaryAction()
+            : () => this.handleClick()}
+          primaryActionDisabled={isValidationStep ? isProcessing : this.isDisabled() || isProcessing}
+        >
+          {isInitialStep && this.dropzoneOrfilePreview()}
+          {importWithColumnMapping && showColumnMapping && (
+            <>
+              {isProcessing && (
+                <div className="text-center my-3">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
                   </div>
-                )}
-                <ColumnMappingComponent
-                  columnNames={columnNames || []}
-                  modelName={importAsChemical ? 'chemical' : 'sample'}
-                  disabled={isProcessing}
-                  initialMappedColumns={mappedColumns}
-                  onMappedColumnsChange={(columns) => this.setState({ mappedColumns: columns })}
-                />
-              </div>
-            )}
-            {showValidation && (
-              <ValidationComponent
-                rowData={rowData || []}
-                onRowDataChange={(data) => this.setState({ rowData: data })}
-                columnDefs={columnDefs || []}
-                onValidate={(invalidRows, rowsData) => this.handleValidation(invalidRows, rowsData)}
-                onImport={() => this.handleImportData()}
-                onCancel={(updatedRowData) => this.handleCancelValidation(updatedRowData)}
+                  <p className="mt-2">Processing data, please wait...</p>
+                </div>
+              )}
+              <ColumnMappingComponent
+                columnNames={columnNames || []}
+                modelName={importAsChemical ? 'chemical' : 'sample'}
+                disabled={isProcessing}
+                initialMappedColumns={mappedColumns}
+                onMappedColumnsChange={(columns) => this.setState({ mappedColumns: columns })}
               />
-            )}
-            <ButtonToolbar className="justify-content-end mt-2">
-              <Button variant="light" onClick={() => onHide()}>Cancel</Button>
-              <Button
-                variant="primary"
-                onClick={() => this.handleClick()}
-                disabled={this.isDisabled() || isProcessing}
-              >
-                {importButtonText}
-              </Button>
-            </ButtonToolbar>
-          </Modal.Body>
-
-          {/* Validation Cancellation Confirmation Modal */}
-          <Modal
-            show={showCancelConfirmation}
-            onHide={() => this.dismissCancelConfirmation()}
-            backdrop="static"
-            keyboard={false}
-            size="md"
-            centered
-            dialogClassName="confirmation-modal-wider"
-          >
-            <Modal.Header>
-              <Modal.Title as="h5">Confirm Cancellation</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <div className="d-flex align-items-center mb-3">
-                <i className="fa fa-exclamation-triangle text-warning me-2" style={{ fontSize: '1.5rem' }} />
-                <p className="mb-0">
-                  Any edits made during validation will not be preserved.
-                </p>
-              </div>
-              <p className="text-muted small">
-                Cancelling validation will return you to the column mapping screen.
-              </p>
-            </Modal.Body>
-            <Modal.Footer className="d-flex flex-row justify-content-between">
-              <Button variant="primary" onClick={() => this.dismissCancelConfirmation()}>
-                Continue Validation
-              </Button>
-              <Button variant="secondary" onClick={() => this.confirmCancelValidation()}>
-                Return to Column Mapping
-              </Button>
-            </Modal.Footer>
-          </Modal>
-        </Modal>
+            </>
+          )}
+          {showValidation && (
+            <ValidationComponent
+              ref={this.validationComponentRef}
+              rowData={rowData || []}
+              onRowDataChange={(data) => this.setState({ rowData: data })}
+              columnDefs={columnDefs || []}
+              onValidate={(invalidRows, rowsData) => this.handleValidation(invalidRows, rowsData)}
+              onValidationStateChange={this.handleValidationStateChange}
+            />
+          )}
+          <ConfirmationOverlay
+            overlayTarget={cancelOverlayTarget}
+            placement={cancelOverlayPlacement}
+            warningText="Closing this dialog will abort your import."
+            destructiveAction={() => this.abortImport()}
+            destructiveActionLabel="Abort Import"
+            hideAction={() => this.dismissCancelConfirmation()}
+            hideActionLabel="Cancel"
+            primaryAction={() => this.confirmCancelValidation()}
+            primaryActionLabel="Return to Mapping"
+          />
+        </AppModal>
       </>
     );
   }
@@ -1091,4 +1138,9 @@ ModalImport.propTypes = {
   onHide: PropTypes.func.isRequired,
   collectionId: PropTypes.number,
   collectionName: PropTypes.string,
+};
+
+ModalImport.defaultProps = {
+  collectionId: null,
+  collectionName: undefined,
 };

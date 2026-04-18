@@ -4,5 +4,15 @@
 
 .ql-editor {
   -webkit-user-select: text;
-          user-select: text;
+  user-select: text;
+}
+
+.text-editor-quill {
+  border: "0px solid #ced4da";
+  border-radius: "4px";
+  .ql-editor.ql-blank::before {
+    content: "1wt.% Pt, γ-Al2O3 and more...";
+    color: #999;
+    font-style: Helvetica, Arial, sans-serif;
+  }
 }

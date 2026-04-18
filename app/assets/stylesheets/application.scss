@@ -18,10 +18,12 @@
 @import "global-styles/tags";
 
 // file css rules that are targeted at specific components under components
+@import "components/AppModal";
 @import "components/AttachmentList";
 @import "components/ButtonGroupToggleButton";
 @import "components/CollectionTree";
 @import "components/CreateElementButton";
+@import "components/DetailCard";
 @import "components/DragHandle";
 @import "components/ElementAllCheckbox";
 @import "components/ElementDetails";
@@ -69,7 +71,6 @@
 @import "legacy/metadata";
 @import "legacy/molecules";
 @import "legacy/molviewer";
-@import "legacy/mozilla";
 @import "legacy/nmrdb-logo";
 @import "legacy/omniauth";
 @import "legacy/polymer_section";

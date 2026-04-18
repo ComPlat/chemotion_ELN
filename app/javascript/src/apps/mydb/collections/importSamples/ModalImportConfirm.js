@@ -1,13 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button,
-  ButtonToolbar,
   Form,
-  Modal
 } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import SVG from 'react-inlinesvg';
+import AppModal from 'src/components/common/AppModal';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
@@ -210,31 +208,28 @@ export default class ModalImportConfirm extends React.Component {
     )})
 
     return (
-      <Modal show={show} centered size="xl" onHide={this.cancelImport}>
-        <Modal.Header closeButton>
-          <Modal.Title>Sample Import Confirmation</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="ag-theme-bootstrap" style={{ height: '500px' }} >
-            <AgGridReact
-              columnDefs={columns.columnDefs}
-              defaultColDef={columns.defaultColDef}
-              rowData={rows}
-              rowHeight="100"
-              rowSelection="single"
-              getRowStyle={(params) => {
-                if (params.data.checked) { return null }
-                else { return { 'backgroundColor': 'red' } }
-              }}
-            />
-          </div>
-
-          <ButtonToolbar className="mt-2 justify-content-end">
-            <Button variant="primary" onClick={() => this.cancelImport()}>Cancel</Button>
-            <Button variant="warning" onClick={() => this.handleClick()}>Import</Button>
-          </ButtonToolbar>
-        </Modal.Body>
-      </Modal>
+      <AppModal
+        show={show}
+        size="xl"
+        onHide={this.cancelImport}
+        title="Sample Import Confirmation"
+        primaryActionLabel="Import"
+        onPrimaryAction={() => this.handleClick()}
+      >
+        <div className="ag-theme-bootstrap" style={{ height: '500px' }} >
+          <AgGridReact
+            columnDefs={columns.columnDefs}
+            defaultColDef={columns.defaultColDef}
+            rowData={rows}
+            rowHeight="100"
+            rowSelection="single"
+            getRowStyle={(params) => {
+              if (params.data.checked) { return null }
+              else { return { 'backgroundColor': 'red' } }
+            }}
+          />
+        </div>
+      </AppModal>
     )
   }
 }

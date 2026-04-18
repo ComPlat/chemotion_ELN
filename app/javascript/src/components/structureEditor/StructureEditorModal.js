@@ -5,8 +5,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Button, ButtonToolbar, Modal, Card
+  Form
 } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
 import StructureEditor from 'src/models/StructureEditor';
 import EditorAttrs from 'src/components/structureEditor/StructureEditorSet';
@@ -17,15 +18,15 @@ import {
 } from 'src/components/structureEditor/EditorsInstances';
 import EditorRenderer from 'src/components/structureEditor/EditorRenderer';
 import Component from 'src/models/Component';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import uuid from 'uuid';
 
 function EditorList(props) {
   const { options, fnChange, value } = props;
   return (
-    <Form.Group className="w-100">
-      <Form.Label>Structure Editor</Form.Label>
+    <Form.Group className="col-sm-6 d-flex gap-2 align-items-center">
+      <Form.Label className="col-form-label">Editor</Form.Label>
       <Select
+        className="flex-grow-1"
         name="editorSelection"
         options={options}
         onChange={fnChange}
@@ -41,30 +42,61 @@ EditorList.propTypes = {
   options: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-const WarningBox = ({ handleCancelBtn, hideWarning }) => (
-  <Card variant="info">
-    <Card.Header>Parents/Descendants will not be changed!</Card.Header>
-    <Card.Body>
-      <p>This sample has parents or descendants, and they will not be changed.</p>
-      <p>Are you sure?</p>
-    </Card.Body>
-    <Card.Footer className="d-flex justify-content-end">
-      <ButtonToolbar>
-        <Button variant="danger" onClick={handleCancelBtn}>
-          Cancel
-        </Button>
-        <Button variant="warning" onClick={hideWarning}>
-          Continue Editing
-        </Button>
-      </ButtonToolbar>
-    </Card.Footer>
-  </Card>
+const WarningBox = () => (
+  <>
+    <h3>Parents/Descendants will not be changed!</h3>
+    <p>
+      This sample has parents or descendants, and they will not be changed.
+      <br />
+      Are you sure?
+    </p>
+  </>
 );
 
 WarningBox.propTypes = {
-  handleCancelBtn: PropTypes.func.isRequired,
-  hideWarning: PropTypes.func.isRequired,
 };
+
+function EditorControls({ editorId, editorOptions, onEditorChange }) {
+  return (
+    editorId && (
+      <div className="row mb-3">
+        <EditorList
+          value={editorId}
+          fnChange={onEditorChange}
+          options={editorOptions}
+        />
+        {editorId === 'ketcher' && (
+          <CommonTemplatesList />
+        )}
+      </div>
+    )
+  );
+}
+
+EditorControls.propTypes = {
+  editorId: PropTypes.string,
+  editorOptions: PropTypes.arrayOf(PropTypes.object).isRequired,
+  onEditorChange: PropTypes.func.isRequired,
+};
+
+EditorControls.defaultProps = {
+  editorId: null,
+};
+
+function postComponents(components) {
+  return components?.map(
+    (comp, idx) => new Component({
+      id: uuid(),
+      name: 'HierarchicalMaterial',
+      position: idx,
+      molecule: { id: Math.random().toFixed(2) * 100 }, // TODO: should be discussion, duplication is not concerned in this case
+      template_category: Object.values(comp)[0],
+      source: Object.keys(comp)[0],
+      molar_mass: 0,
+      weight_ratio_exp: 0
+    })
+  );
+}
 
 export default class StructureEditorModal extends React.Component {
   constructor(props) {
@@ -127,6 +159,7 @@ export default class StructureEditorModal extends React.Component {
   }
 
   async handleSaveBtn() {
+    const { hasChildren, hasParent, onSave } = this.props;
     const { editor } = this.state;
     const structure = editor.structureDef;
     if (editor.id === 'marvinjs') {
@@ -135,9 +168,9 @@ export default class StructureEditorModal extends React.Component {
           const editorImg = new structure.editor.ImageExporter({ imageType: 'image/svg' });
           editorImg.render(mMol).then(
             (svg) => {
-              this.setState({ showModal: false, showWarning: this.props.hasChildren || this.props.hasParent }, () => {
-                if (this.props.onSave) {
-                  this.props.onSave(mMol, svg, null, editor.id);
+              this.setState({ showModal: false, showWarning: hasChildren || hasParent }, () => {
+                if (onSave) {
+                  onSave(mMol, svg, null, editor.id);
                 }
               });
             },
@@ -179,23 +212,6 @@ export default class StructureEditorModal extends React.Component {
     );
   }
 
-
-
-  postComponents(components) {
-    return components?.map(
-      (comp, idx) => new Component({
-        id: uuid(),
-        name: 'HierarchicalMaterial',
-        position: idx,
-        molecule: { id: Math.random().toFixed(2) * 100 }, // TODO: should be discussion, duplication is not concerned in this case
-        template_category: Object.values(comp)[0],
-        source: Object.keys(comp)[0],
-        molar_mass: 0,
-        weight_ratio_exp: 0
-      })
-    );
-  }
-
   /**
    * Initializes all available structure editors.
    * Ensures editors are loaded and available for selection.
@@ -204,10 +220,14 @@ export default class StructureEditorModal extends React.Component {
     if (!Object.keys(this.editors).length) {
       try {
         // Load the Ketcher editor if editors are not initialized
-        this.editors = { ketcher: await getEditorById('ketcher') };
+        this.editors = {
+          ketcher: await getEditorById('ketcher')
+        };
       } catch (error) {
         notifyError(`Failed to initialize Ketcher editor: ${error}`);
-        this.editors = { ketcher: null };
+        this.editors = {
+          ketcher: null
+        };
       }
     }
   }
@@ -223,10 +243,16 @@ export default class StructureEditorModal extends React.Component {
       }
       try {
         // Call onSaveFileK2SC and get the required data
-        const { ket2Molfile, svgElement, componentsList, textNodesFormula, shouldSvg } = await onSaveFileK2SC();
+        const {
+          ket2Molfile,
+          svgElement,
+          componentsList,
+          textNodesFormula,
+          shouldSvg,
+        } = await onSaveFileK2SC();
         const { svg: preparedSvg, message: svgFailedMessage } = svgElement || {};
         const updatedSvg = shouldSvg ? await transformSvgIdsAndReferences(preparedSvg) : null;
-        const components = componentsList ? this.postComponents(componentsList) : [];
+        const components = componentsList ? postComponents(componentsList) : [];
         this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, components, textNodesFormula);
         if (shouldSvg) onSVGStructureError(svgFailedMessage);
       } catch (error) {
@@ -287,10 +313,14 @@ export default class StructureEditorModal extends React.Component {
   }
 
   render() {
-    const { cancelBtnText, submitBtnText, onSave } = this.props;
+    const {
+      cancelBtnText,
+      submitBtnText,
+      onSave,
+      submitAddons,
+    } = this.props;
     const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
 
-    const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
     const { editor, showWarning, showModal } = this.state;
 
     const editorOptions = Object.keys(this.editors).map((e) => ({
@@ -299,48 +329,37 @@ export default class StructureEditorModal extends React.Component {
       label: this.editors[e]?.label,
     }));
 
+    const modalFooter = showWarning ? undefined : submitAddons;
+    const primaryActionLabel = showWarning ? 'Continue Editing' : submitBtnText;
+    const primaryActionHandler = showWarning ? this.hideWarning.bind(this) : handleSaveBtn;
+
     return (
-      <Modal
-        centered
-        className={!showWarning && 'modal-xxxl'}
+      <AppModal
+        title="Structure Editor"
+        showFooter
         show={showModal}
+        dialogClassName={!showWarning ? 'modal-xxxl' : undefined}
         onLoad={this.initializeEditor.bind(this)}
         onHide={this.handleCancelBtn.bind(this)}
+        closeLabel={cancelBtnText}
+        primaryActionLabel={primaryActionHandler ? primaryActionLabel : undefined}
+        onPrimaryAction={primaryActionHandler || undefined}
+        extendedFooter={modalFooter}
       >
-        <Modal.Header closeButton className="gap-3">
-          {editor?.id && (
-            <EditorList
-              value={editor?.id}
-              fnChange={this.handleEditorSelection}
-              options={editorOptions}
-            />
-          )}
-          {editor?.id === 'ketcher' && (
-            <CommonTemplatesList />
-          )}
-        </Modal.Header>
-        <Modal.Body>
-          {showWarning && (
-            <WarningBox handleCancelBtn={this.handleCancelBtn.bind(this)} hideWarning={this.hideWarning.bind(this)} />
-          )}
-          {this.renderEditor()}
-        </Modal.Body>
         {!showWarning && (
-          <Modal.Footer className="modal-footer border-0">
-            <ButtonToolbar>
-              <Button variant="warning" onClick={this.handleCancelBtn.bind(this)}>
-                {cancelBtnText}
-              </Button>
-              {handleSaveBtn && (
-                <Button variant="primary" onClick={handleSaveBtn}>
-                  {submitBtnText}
-                </Button>
-              )}
-              {handleSaveBtn && submitAddons}
-            </ButtonToolbar>
-          </Modal.Footer>
+          <EditorControls
+            editorId={editor?.id}
+            editorOptions={editorOptions}
+            onEditorChange={this.handleEditorSelection}
+          />
         )}
-      </Modal>
+        {showWarning && (
+          <WarningBox />
+        )}
+        {!showWarning && (
+          this.renderEditor()
+        )}
+      </AppModal>
     );
   }
 }
@@ -355,7 +374,7 @@ StructureEditorModal.propTypes = {
   submitBtnText: PropTypes.string,
   cancelBtnText: PropTypes.string,
   onSVGStructureError: PropTypes.func,
-
+  submitAddons: PropTypes.node,
 };
 
 StructureEditorModal.defaultProps = {
@@ -368,4 +387,5 @@ StructureEditorModal.defaultProps = {
   submitBtnText: 'Save',
   cancelBtnText: 'Cancel',
   onSVGStructureError: () => {},
+  submitAddons: null,
 };

@@ -1,134 +1,117 @@
 import React from 'react';
-import { Modal, Button, ListGroup, ButtonGroup, ButtonToolbar } from 'react-bootstrap';
-import OntologySelect from './OntologySelect';
-import OntologySortableList from './OntologySortableList';
-import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
-import OntologySegmentsList from './OntologySegmentsList';
+import PropTypes from 'prop-types';
 import { observer } from 'mobx-react';
+import {
+  Button,
+  ButtonGroup,
+  ButtonToolbar,
+  ListGroup,
+} from 'react-bootstrap';
+import OntologySegmentsList from 'src/apps/mydb/elements/details/deviceDescriptions/OntologySegmentsList';
+import OntologySelect from 'src/apps/mydb/elements/details/deviceDescriptions/OntologySelect';
+import OntologySortableList from 'src/apps/mydb/elements/details/deviceDescriptions/OntologySortableList';
+import AppModal from 'src/components/common/AppModal';
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 
-const OntologiesList = ({ store, element }) => {
-  const ontologies = element['ontologies'] || [];
+function OntologiesList({ store, element }) {
+  const ontologies = element.ontologies || [];
 
   const editOntologyForm = (index) => {
     store.toggleOntologyModal();
     store.toggleOntologySelect();
     store.toggleOntologyFormSelection();
     store.setOntologyIndexForEdit(index);
-  }
+  };
 
   const deleteOntology = (index) => {
-    if (ontologies.length < 1) { return }
+    if (ontologies.length < 1) {
+      return;
+    }
 
-    let updatedOntologies = [];
-
-    // delete directly
-    // ontologies.splice(index, (index >= 0 ? 1 : 0));
-
-    ontologies.map((currentOntology) => {
+    const updatedOntologies = ontologies.map((currentOntology) => {
       if (currentOntology.data.short_form === ontologies[index].data.short_form) {
-        const deletedOntology = { ...currentOntology };
-        deletedOntology.is_deleted = true;
-        updatedOntologies.push(deletedOntology);
-      } else {
-        updatedOntologies.push(currentOntology);
+        return { ...currentOntology, is_deleted: true };
       }
+
+      return currentOntology;
     });
 
     store.changeDeviceDescription('ontologies', updatedOntologies);
-  }
+  };
 
   const undoDelete = (index) => {
-    let updatedOntologies = [];
-    ontologies.map((currentOntology) => {
+    const updatedOntologies = ontologies.map((currentOntology) => {
       if (currentOntology.data.short_form === ontologies[index].data.short_form) {
-        const deletedOntology = { ...currentOntology };
-        deletedOntology.is_deleted = false;
-        updatedOntologies.push(deletedOntology);
-      } else {
-        updatedOntologies.push(currentOntology);
+        return { ...currentOntology, is_deleted: false };
       }
+
+      return currentOntology;
     });
 
     store.changeDeviceDescription('ontologies', updatedOntologies);
-  }
+  };
 
   const changeOntologyMode = () => {
-    const newMode = store.ontology_mode == 'edit' ? 'order' : 'edit';
+    const newMode = store.ontology_mode === 'edit' ? 'order' : 'edit';
     store.changeOntologyMode(newMode);
-  }
+  };
 
   const ontologyModal = () => {
-    if (!store.show_ontology_modal) { return null; }
+    if (!store.show_ontology_modal) {
+      return null;
+    }
 
-    let ontologyModalTitle = 'Select Ontology';
-    ontologyModalTitle = store.show_ontology_form_selection ? ontologyModalTitle + ' forms' : ontologyModalTitle;
+    const ontologyModalTitle = store.show_ontology_form_selection
+      ? 'Select Ontology forms'
+      : 'Select Ontology';
     const modalSize = store.show_ontology_form_selection ? 'lg' : 'md';
 
     return (
-      <Modal
-        backdrop="static"
+      <AppModal
+        title={ontologyModalTitle}
         show={store.show_ontology_modal}
         onHide={() => store.closeOntologyModal()}
         size={modalSize}
-        centered
+        showFooter={store.show_ontology_form_selection}
+        closeLabel="Close"
       >
-        <Modal.Header closeButton>
-          <Modal.Title>{ontologyModalTitle}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {
-            store.show_ontology_select && (
-              <OntologySelect store={store} element={element} />
-            )
-          }
-          {
-            store.show_ontology_form_selection && (
-              <div className="overflow-auto vh-70">
-                <OntologySegmentsList
-                  key="ontology-segments-list-form-selection"
-                  store={store}
-                  element={element}
-                  isSelection={true}
-                />
-              </div>
-            )
-          }
-        </Modal.Body>
-        {
-          store.show_ontology_form_selection && (
-            <Modal.Footer className="justify-content-start">
-              <Button variant="primary" onClick={() => store.closeOntologyModal()}>
-                Close
-              </Button>
-            </Modal.Footer>
-          )
-        }
-      </Modal>
+        {store.show_ontology_select && (
+          <OntologySelect store={store} element={element} />
+        )}
+        {store.show_ontology_form_selection && (
+          <div className="overflow-auto vh-70">
+            <OntologySegmentsList
+              key="ontology-segments-list-form-selection"
+              store={store}
+              element={element}
+              isSelection
+            />
+          </div>
+        )}
+      </AppModal>
     );
-  }
+  };
 
-  const addOntologyButton = () => {
-    return (
-      <Button
-        size="xsm"
-        variant="success"
-        onClick={() => store.toggleOntologyModal()}
-      >
-        <i className="fa fa-plus me-1" />
-        Add ontology
-      </Button>
-    );
-  }
+  const addOntologyButton = () => (
+    <Button
+      size="xsm"
+      variant="success"
+      onClick={() => store.toggleOntologyModal()}
+    >
+      <i className="fa fa-plus me-1" />
+      Add ontology
+    </Button>
+  );
 
   const ontologyModeButton = () => {
-    const readonly = ontologies < 1 ? true : false;
+    const readonly = ontologies.length < 1;
 
     return (
       <ButtonGroup>
         <ButtonGroupToggleButton
           size="xsm"
           active={store.ontology_mode === 'edit'}
-          onClick={() => changeOntologyMode(store)}
+          onClick={changeOntologyMode}
           disabled={readonly}
         >
           <i className="fa fa-edit me-1" />
@@ -137,7 +120,7 @@ const OntologiesList = ({ store, element }) => {
         <ButtonGroupToggleButton
           size="xsm"
           active={store.ontology_mode === 'order'}
-          onClick={() => changeOntologyMode(store)}
+          onClick={changeOntologyMode}
           disabled={readonly}
         >
           <i className="fa fa-reorder me-1" />
@@ -145,10 +128,12 @@ const OntologiesList = ({ store, element }) => {
         </ButtonGroupToggleButton>
       </ButtonGroup>
     );
-  }
+  };
 
-  const editButton = (index, hasSegement) => {
-    if (ontologies[index].is_deleted || !hasSegement) { return null; }
+  const editButton = (index, hasSegment) => {
+    if (ontologies[index].is_deleted || !hasSegment) {
+      return null;
+    }
 
     return (
       <Button
@@ -160,10 +145,12 @@ const OntologiesList = ({ store, element }) => {
         <i className="fa fa-edit" />
       </Button>
     );
-  }
+  };
 
   const deleteOntologyButton = (index) => {
-    if (ontologies[index].is_deleted) { return null; }
+    if (ontologies[index].is_deleted) {
+      return null;
+    }
 
     return (
       <Button
@@ -175,11 +162,13 @@ const OntologiesList = ({ store, element }) => {
         <i className="fa fa-trash-o" />
       </Button>
     );
-  }
+  };
 
   const undoDeleteButton = (index) => {
     const isDeleted = ontologies[index].is_deleted;
-    if (isDeleted === undefined || !isDeleted) { return null; }
+    if (isDeleted === undefined || !isDeleted) {
+      return null;
+    }
 
     return (
       <Button
@@ -191,70 +180,95 @@ const OntologiesList = ({ store, element }) => {
         <i className="fa fa-undo" aria-hidden="true" />
       </Button>
     );
-  }
+  };
 
   const ontologyListItem = () => {
-    let rows = [];
+    const sortedOntologies = [...ontologies].sort((a, b) => a.index - b.index);
 
-    ontologies
-      .sort((a, b) => a.index - b.index)
-      .map((ontology, index) => {
-        const deletedClass = ontology.is_deleted ? ' text-decoration-line-through' : '';
-        const backgroundColor = index % 2 === 0 ? 'bg-gray-100' : 'bg-white';
-        const hasNoSegmentsClass = !ontology.segments ? ' text-gray-600' : '';
+    return sortedOntologies.map((ontology, index) => {
+      const deletedClass = ontology.is_deleted ? ' text-decoration-line-through' : '';
+      const backgroundColor = index % 2 === 0 ? 'bg-gray-100' : 'bg-white';
+      const hasNoSegmentsClass = !ontology.segments ? ' text-gray-600' : '';
+      const ontologyKey = `${store.key_prefix}-${ontology.data.short_form || ontology.data.label}`;
 
-        if (store.ontology_mode == 'order') {
-          rows.push(
-            <OntologySortableList
-              store={store}
-              element={element}
-              ontology={ontology}
-              index={index}
-              key={`sortable-list-${index}`}
-            />
-          );
-        } else {
-          rows.push(
-            <ListGroup.Item
-              key={`${store.key_prefix}-${ontology.data.label}-${index}`}
-              className={`${backgroundColor}${deletedClass}${hasNoSegmentsClass}`}
-              as="li"
-            >
+      if (store.ontology_mode === 'order') {
+        return (
+          <OntologySortableList
+            store={store}
+            element={element}
+            ontology={ontology}
+            index={index}
+            key={`sortable-list-${ontologyKey}`}
+          />
+        );
+      }
+
+      return (
+        <ListGroup.Item
+          key={ontologyKey}
+          className={`${backgroundColor}${deletedClass}${hasNoSegmentsClass}`}
+          as="li"
+        >
+          <div>
+            <div className="d-flex justify-content-between align-items-center gap-2">
+              <h4>{ontology.data.label}</h4>
               <div>
-                <div className="d-flex justify-content-between align-items-center gap-2">
-                  <h4>{ontology.data.label}</h4>
-                  <div>
-                    <ButtonToolbar className="flex-nowrap">
-                      {editButton(index, ontology.segments)}
-                      {undoDeleteButton(index)}
-                      {deleteOntologyButton(index)}
-                    </ButtonToolbar>
-                  </div>
-                </div>
+                <ButtonToolbar className="flex-nowrap">
+                  {editButton(index, ontology.segments)}
+                  {undoDeleteButton(index)}
+                  {deleteOntologyButton(index)}
+                </ButtonToolbar>
               </div>
-            </ListGroup.Item>
-          );
-        }
-      });
-    return rows;
-  }
+            </div>
+          </div>
+        </ListGroup.Item>
+      );
+    });
+  };
 
   return (
     <>
-      <div className="d-flex justify-content-between mb-3" key={`${store.key_prefix}-${element['name']}`}>
+      <div className="d-flex justify-content-between mb-3" key={`${store.key_prefix}-${element.name}`}>
         {ontologyModeButton()}
         {addOntologyButton()}
       </div>
-      {
-        element['ontologies'].length >= 1 && (
-          <ListGroup key="ontology-list" as="ul">
-            {ontologyListItem()}
-          </ListGroup>
-        )
-      }
+      {element.ontologies.length >= 1 && (
+        <ListGroup key="ontology-list" as="ul">
+          {ontologyListItem()}
+        </ListGroup>
+      )}
       {ontologyModal()}
     </>
   );
 }
+
+OntologiesList.propTypes = {
+  store: PropTypes.shape({
+    key_prefix: PropTypes.string,
+    ontology_mode: PropTypes.string,
+    show_ontology_modal: PropTypes.bool,
+    show_ontology_select: PropTypes.bool,
+    show_ontology_form_selection: PropTypes.bool,
+    toggleOntologyModal: PropTypes.func.isRequired,
+    toggleOntologySelect: PropTypes.func.isRequired,
+    toggleOntologyFormSelection: PropTypes.func.isRequired,
+    setOntologyIndexForEdit: PropTypes.func.isRequired,
+    changeDeviceDescription: PropTypes.func.isRequired,
+    changeOntologyMode: PropTypes.func.isRequired,
+    closeOntologyModal: PropTypes.func.isRequired,
+  }).isRequired,
+  element: PropTypes.shape({
+    name: PropTypes.string,
+    ontologies: PropTypes.arrayOf(PropTypes.shape({
+      index: PropTypes.number,
+      is_deleted: PropTypes.bool,
+      segments: PropTypes.oneOfType([PropTypes.array, PropTypes.bool, PropTypes.object]),
+      data: PropTypes.shape({
+        label: PropTypes.string,
+        short_form: PropTypes.string,
+      }).isRequired,
+    })),
+  }).isRequired,
+};
 
 export default observer(OntologiesList);

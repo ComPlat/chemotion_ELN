@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import { Modal, ProgressBar } from 'react-bootstrap';
+import { ProgressBar } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import LoadingStore from 'src/stores/alt/stores/LoadingStore';
 
 export default class ProgressModal extends Component {
@@ -31,18 +32,28 @@ export default class ProgressModal extends Component {
     const progressValue = [];
     if (filePool) {
       filePool.forEach((file) => {
-        const item = (<div>
-          <i key={file.filename}>Uploading {file.filename}</i>
-          <ProgressBar animated now={file.progress*100} />
-        </div>);
+        const item = (
+          <div key={file.filename}>
+            <i>
+              Uploading
+              {' '}
+              {file.filename}
+            </i>
+            <ProgressBar animated now={file.progress * 100} />
+          </div>
+        );
         progressValue.push(item);
       });
     }
 
     return (
-      <Modal centered className='loading-progress-modal' animation show={loadingWithProgress}>
+      <AppModal
+        title="Uploading"
+        show={loadingWithProgress}
+        showFooter={false}
+      >
         {progressValue}
-      </Modal>
+      </AppModal>
     );
   }
 }

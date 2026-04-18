@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
-import { Button, Modal } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import PropTypes from 'prop-types';
+import AppModal from 'src/components/common/AppModal';
 
 export default class DeleteComment extends Component {
   constructor(props) {
@@ -39,20 +40,16 @@ export default class DeleteComment extends Component {
         >
           <i className="fa fa-trash-o" />
         </Button>
-        <Modal centered show={showConfirmModal} onHide={this.handleModalClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>
-              Confirm Delete
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <p>Are you sure you want to delete?</p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={this.handleModalClose} className="pull-left">Close</Button>
-            <Button variant="danger" onClick={this.handleDelete} className="pull-left">Delete</Button>
-          </Modal.Footer>
-        </Modal>
+        <AppModal
+          show={showConfirmModal}
+          onHide={this.handleModalClose}
+          title="Confirm Delete"
+          closeLabel="Close"
+          primaryActionLabel="Delete"
+          onPrimaryAction={this.handleDelete}
+        >
+          <p>Are you sure you want to delete?</p>
+        </AppModal>
       </>
     );
   }
@@ -60,5 +57,7 @@ export default class DeleteComment extends Component {
 
 DeleteComment.propTypes = {
   onDelete: PropTypes.func.isRequired,
-  comment: PropTypes.object.isRequired,
+  comment: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  }).isRequired,
 };

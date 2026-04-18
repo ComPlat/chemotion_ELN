@@ -2,8 +2,9 @@
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import {
-  Button, Form, Modal
+  Form,
 } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import QuillEditor from 'src/components/QuillEditor';
 import Delta from 'quill-delta';
 
@@ -48,59 +49,31 @@ function TextEditorModal({
     }
   };
 
-  const handleCancel = () => {
-    if (onCloseClick) {
-      onCloseClick();
-    }
-  };
-
   return (
-    <Modal
-      centered
-      className="w-500 h-500 top-50 start-50 translate-middle"
-      animation
+    <AppModal
+      title={title}
       show={loading}
       onHide={onCloseClick}
+      size="lg"
+      closeLabel="Cancel"
+      primaryActionLabel="Apply"
+      onPrimaryAction={handleApply}
     >
-      <Modal.Header closeButton>
-        <Modal.Title>{title}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <style>
-          {`
-            .text-editor-quill .ql-editor.ql-blank::before {
-              content: '1wt.% Pt, γ-Al2O3 and more...';
-              color: #999;
-              font-style: Helvetica, Arial, sans-serif;
-            }
-          `}
-        </style>
-        <Form.Group className="mb-3">
-          <div className="text-editor-quill" style={{ border: '0px solid #ced4da', borderRadius: '4px' }}>
-            <QuillEditor
-              value={editorValue}
-              onChange={handleChange}
-              theme="snow"
-              height="200px"
-              disabled={false}
-              toolbarSymbol={[]}
-              toolbarDropdown={[]}
-              customToolbar=""
-            />
-          </div>
-          <div style={{
-            marginTop: '12px',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '8px'
-          }}
-          >
-            <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
-            <Button variant="primary" onClick={handleApply}>Apply</Button>
-          </div>
-        </Form.Group>
-      </Modal.Body>
-    </Modal>
+      <Form.Group className="mb-3">
+        <div className="text-editor-quill">
+          <QuillEditor
+            value={editorValue}
+            onChange={handleChange}
+            theme="snow"
+            height="200px"
+            disabled={false}
+            toolbarSymbol={[]}
+            toolbarDropdown={[]}
+            customToolbar=""
+          />
+        </div>
+      </Form.Group>
+    </AppModal>
   );
 }
 

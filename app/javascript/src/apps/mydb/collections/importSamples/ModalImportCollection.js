@@ -1,38 +1,38 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, ButtonToolbar, Modal } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
+import AppModal from 'src/components/common/AppModal';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-export default class ModalImportCollection extends React.Component {
-  static contextType = StoreContext;
-
+class ModalImportCollection extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       file: null,
-      processing: false
+      processing: false,
     };
   }
 
   handleClick() {
     const { onHide } = this.props;
     const { file } = this.state;
+    const { collections } = this.context;
     this.setState({ processing: true });
-    let params = {
-      file: file
-    }
+    const params = {
+      file,
+    };
 
-    this.context.collections.importCollections(params);
+    collections.importCollections(params);
     setTimeout(() => {
       this.setState({ processing: false });
       onHide();
     }, 1800);
   }
 
-  handleFileDrop(attachment_file) {
-    this.setState({ file: attachment_file[0] });
+  handleFileDrop(attachmentFile) {
+    this.setState({ file: attachmentFile[0] });
   }
 
   handleAttachmentRemove() {
@@ -51,18 +51,18 @@ export default class ModalImportCollection extends React.Component {
           </Button>
         </div>
       );
-    } else {
-      return (
-        <Dropzone
-          onDrop={attachment_file => this.handleFileDrop(attachment_file)}
-          style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
-        >
-          <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
-            Drop File, or Click to Select.
-          </div>
-        </Dropzone>
-      );
     }
+
+    return (
+      <Dropzone
+        onDrop={(attachmentFile) => this.handleFileDrop(attachmentFile)}
+        style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
+      >
+        <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
+          Drop File, or Click to Select.
+        </div>
+      </Dropzone>
+    );
   }
 
   isDisabled() {
@@ -73,31 +73,27 @@ export default class ModalImportCollection extends React.Component {
   render() {
     const { onHide } = this.props;
     const { processing } = this.state;
-    const bStyle = processing === true ? 'danger' : 'warning';
-    const bClass = processing === true ? 'fa fa-spinner fa-pulse' : 'fa fa-file-text-o';
     const bTitle = processing === true ? 'Importing' : 'Import';
 
     return (
-      <Modal show onHide={onHide}>
-        <Modal.Header closeButton>
-          <Modal.Title>Import Collections from ZIP archive</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {this.dropzoneOrfilePreview()}
-          <ButtonToolbar className="mt-2 justify-content-end">
-            <Button variant="primary" onClick={() => onHide()}>Cancel</Button>
-            <Button variant={bStyle} onClick={() => this.handleClick()} disabled={this.isDisabled()}>
-              <i className={bClass} />
-              {' '}
-              {bTitle}
-            </Button>
-          </ButtonToolbar>
-        </Modal.Body>
-      </Modal>
-    )
+      <AppModal
+        show
+        onHide={onHide}
+        title="Import Collections from ZIP archive"
+        primaryActionLabel={bTitle}
+        onPrimaryAction={() => this.handleClick()}
+        primaryActionDisabled={this.isDisabled()}
+      >
+        {this.dropzoneOrfilePreview()}
+      </AppModal>
+    );
   }
 }
 
+ModalImportCollection.contextType = StoreContext;
+
+export default ModalImportCollection;
+
 ModalImportCollection.propTypes = {
   onHide: PropTypes.func.isRequired,
-}
+};

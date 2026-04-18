@@ -980,8 +980,8 @@ class ElementStore {
   handleGenerateWellplateFromClipboard(collection_id) {
     let clipboardSamples = ClipboardStore.getState().samples;
 
-    this.changeCurrentElement(Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collectionId));
-    // this.state.currentElement = Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collectionId);
+    this.changeCurrentElement(Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id));
+    // this.state.currentElement = Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id);
   }
 
   // -- Screens --
