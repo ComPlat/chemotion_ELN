@@ -2,8 +2,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Modal, Button, OverlayTrigger, Tooltip
+  OverlayTrigger, Tooltip
 } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { stopEvent } from 'src/utilities/DomHelper';
 import { fetchImageSrcByAttachmentId } from 'src/utilities/imageHelper';
@@ -120,17 +121,16 @@ export default class ImageModal extends Component {
             />
           </OverlayTrigger>
         </div>
-        <Modal
-          centered
+        <AppModal
+          title={popObject.title}
           show={this.state.showModal}
           onHide={this.handleModalClose}
           dialogClassName="noticeModal"
           size="xxxl"
+          closeLabel="Close"
+          showFooter
         >
-          <Modal.Header closeButton>
-            <Modal.Title>{popObject.title}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body style={{ overflow: 'auto', position: 'relative', minHeight: '400px' }}>
+          <div style={{ overflow: 'auto', position: 'relative', minHeight: '400px' }}>
             {isPdf && fetchSrc ? (
               <iframe
                 src={fetchSrc}
@@ -159,13 +159,8 @@ export default class ImageModal extends Component {
                 onError={this.handleImageError}
               />
             )}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="primary" onClick={this.handleModalClose} className="pull-left">
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
+          </div>
+        </AppModal>
       </div>
     );
   }
@@ -188,4 +183,8 @@ ImageModal.propTypes = {
     title: PropTypes.string,
   }).isRequired,
   placement: PropTypes.string,
+};
+
+ImageModal.defaultProps = {
+  placement: 'right',
 };
