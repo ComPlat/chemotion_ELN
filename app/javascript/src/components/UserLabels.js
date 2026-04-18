@@ -1,31 +1,39 @@
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable max-classes-per-file */
-import React, { Component } from 'react';
+/* eslint-disable camelcase */
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import PropTypes from 'prop-types';
-import {
-  Modal, Badge, Button, Form, ButtonToolbar, Row, Col
-} from 'react-bootstrap';
-import { Select } from 'src/components/common/Select';
 import { AgGridReact } from 'ag-grid-react';
+import {
+  Badge,
+  Button,
+  Form,
+} from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
+import ColorLabel from 'src/components/common/ColorLabel';
+import { Select } from 'src/components/common/Select';
+import { colorOptions } from 'src/components/staticDropdownOptions/options';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import { colorOptions } from 'src/components/staticDropdownOptions/options';
-import ColorLabel from 'src/components/common/ColorLabel';
 
-/* eslint-disable camelcase */
-const UserLabel = ({ title, color, access_level }) => (
-  <Badge
-    bg="custom"
-    style={{
-      backgroundColor: color,
-      borderRadius: access_level === 2 ? '0.25em' : '10px',
-    }}
-  >
-    {title}
-  </Badge>
-);
+function UserLabel({ title, color, access_level }) {
+  return (
+    <Badge
+      bg="custom"
+      style={{
+        backgroundColor: color,
+        borderRadius: access_level === 2 ? '0.25em' : '10px',
+      }}
+    >
+      {title}
+    </Badge>
+  );
+}
 
 UserLabel.propTypes = {
   title: PropTypes.string.isRequired,
@@ -33,498 +41,423 @@ UserLabel.propTypes = {
   access_level: PropTypes.number.isRequired,
 };
 
-class UserLabelModal extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      labels: [],
-      label: {},
-      showDetails: false,
-      defaultColor: '#428BCA',
-    };
-    this.onChange = this.onChange.bind(this);
-    this.handelNewLabel = this.handelNewLabel.bind(this);
-    this.handleSaveLabel = this.handleSaveLabel.bind(this);
-    this.handleBackButton = this.handleBackButton.bind(this);
-    this.handleAccessChange = this.handleAccessChange.bind(this);
-    this.handleColorPicker = this.handleColorPicker.bind(this);
-    this.handleEditLabelClick = this.handleEditLabelClick.bind(this);
-    this.renderActions = this.renderActions.bind(this);
-  }
+const editableElementShape = PropTypes.shape({
+  setUserLabels: PropTypes.func.isRequired,
+  user_labels: PropTypes.arrayOf(PropTypes.number),
+});
 
-  componentDidMount() {
-    UserStore.listen(this.onChange);
+const taggedElementShape = PropTypes.shape({
+  tag: PropTypes.shape({
+    taggable_data: PropTypes.shape({
+      user_labels: PropTypes.arrayOf(PropTypes.number),
+    }),
+  }),
+});
+
+function filterAvailableLabels(labels, currentUser) {
+  return (labels || []).filter(
+    (currentLabel) => currentLabel.access_level === 2 || currentLabel.user_id === currentUser?.id,
+  );
+}
+
+function renderUserLabelCell(node) {
+  const {
+    title,
+    color,
+    access_level,
+  } = node.data;
+
+  return (
+    <UserLabel
+      title={title}
+      color={color}
+      access_level={access_level}
+    />
+  );
+}
+
+function renderAccessLabelCell(node) {
+  switch (node.data.access_level) {
+    case 0:
+      return 'Private';
+    case 1:
+      return 'Public';
+    default:
+      return '';
+  }
+}
+
+function renderColorOptionLabel(option) {
+  return <ColorLabel color={option.value} label={option.label} />;
+}
+
+function UserLabelModal({ showLabelModal, onHide }) {
+  const [labels, setLabels] = useState([]);
+  const [label, setLabel] = useState({});
+  const [showDetails, setShowDetails] = useState(false);
+
+  const handleStoreChange = useCallback((state) => {
+    const { currentUser, labels: storeLabels } = state;
+    setLabels(filterAvailableLabels(storeLabels, currentUser));
+  }, []);
+
+  useEffect(() => {
+    UserStore.listen(handleStoreChange);
     UserActions.fetchUserLabels();
-  }
 
-  componentWillUnmount() {
-    UserStore.unlisten(this.onChange);
-  }
+    return () => {
+      UserStore.unlisten(handleStoreChange);
+    };
+  }, [handleStoreChange]);
 
-  handleEditLabelClick(e, label) {
-    this.setState({ showDetails: true, label });
-  }
+  const handleEditLabelClick = useCallback((nextLabel) => {
+    setLabel(nextLabel);
+    setShowDetails(true);
+  }, []);
 
-  handleColorPicker(option) {
-    const { label } = this.state;
-    const hex = option?.value || null;
-    this.setState({
-      label: { ...label, color: hex },
-    });
-  }
+  const handleColorPicker = useCallback((option) => {
+    const color = option?.value || null;
+    setLabel((currentLabel) => ({
+      ...currentLabel,
+      color,
+    }));
+  }, []);
 
-  handleAccessChange({ value }) {
-    const { label } = this.state;
-    this.setState({
-      label: { ...label, access_level: value },
-    });
-  }
+  const handleAccessChange = useCallback(({ value }) => {
+    setLabel((currentLabel) => ({
+      ...currentLabel,
+      access_level: value,
+    }));
+  }, []);
 
-  handleBackButton() {
-    this.setState({
-      showDetails: false
-    });
-  }
+  const handleFieldChange = useCallback((field) => (event) => {
+    const { value } = event.target;
+    setLabel((currentLabel) => ({
+      ...currentLabel,
+      [field]: value,
+    }));
+  }, []);
 
-  handleSaveLabel() {
-    const { label } = this.state;
-    if (typeof (this.titleInput) !== 'undefined' && this.titleInput) {
-      label.title = this.titleInput.value;
-    }
-    if (typeof (this.descInput) !== 'undefined' && this.descInput) {
-      label.description = this.descInput.value;
-    }
-    if (
-      label.title != null
-      && label.title.trim().length !== 0
-      && label.color != null
-      && label.color.trim().length !== 0
-    ) {
-      UsersFetcher.updateUserLabel({
-        id: label.id,
-        title: label.title,
-        access_level: (label.access_level === true || label.access_level === 1) ? 1 : 0,
-        description: label.description,
-        color: label.color
-      }).then(() => {
-        UserActions.fetchUserLabels();
-        this.setState({
-          showDetails: false
-        });
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    } else {
+  const handleBackButton = useCallback(() => {
+    setShowDetails(false);
+  }, []);
+
+  const handleSaveLabel = useCallback(() => {
+    const nextLabel = {
+      ...label,
+      title: label.title || '',
+      description: label.description || '',
+      color: label.color || '',
+    };
+
+    if (!nextLabel.title.trim() || !nextLabel.color.trim()) {
       NotificationActions.removeByUid('createUserLabel');
-      const notification = {
+      NotificationActions.add({
         title: 'Create User Label',
         message: 'Title or color is empty',
         level: 'error',
         dismissible: 'button',
         autoDismiss: 5,
         position: 'tr',
-        uid: 'createUserLabel'
-      };
-      NotificationActions.add(notification);
+        uid: 'createUserLabel',
+      });
+      return;
     }
-  }
 
-  onChange(state) {
-    const { currentUser, labels } = state;
-    const list = (labels || []).filter(
-      (r) => r.access_level === 2 || r.user_id === (currentUser && currentUser.id)
-    );
-
-    this.setState({
-      labels: list,
+    UsersFetcher.updateUserLabel({
+      id: nextLabel.id,
+      title: nextLabel.title,
+      access_level: nextLabel.access_level === true || nextLabel.access_level === 1 ? 1 : 0,
+      description: nextLabel.description,
+      color: nextLabel.color,
+    }).then(() => {
+      UserActions.fetchUserLabels();
+      setShowDetails(false);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
     });
-  }
+  }, [label]);
 
-  handelNewLabel() {
-    this.setState({
-      label: {},
-      showDetails: true,
-    });
-  }
+  const handleNewLabel = useCallback(() => {
+    setLabel({});
+    setShowDetails(true);
+  }, []);
 
-  renderUserLabel(node) {
-    return (<UserLabel {...node.data} />);
-  }
+  const renderActions = useCallback((node) => (
+    <Button
+      size="sm"
+      disabled={node.data.access_level === 2}
+      variant="light"
+      onClick={() => handleEditLabelClick(node.data)}
+    >
+      {node.data.access_level === 2 ? 'Global' : 'Edit'}
+    </Button>
+  ), [handleEditLabelClick]);
 
-  renderAccessLabel(node) {
-    let accessLabel = '';
-    switch (node.data.access_level) {
-      case 0:
-        accessLabel = 'Private';
-        break;
-      case 1:
-        accessLabel = 'Public';
-        break;
-    }
-    return accessLabel;
-  }
+  const columnDefs = useMemo(() => ([
+    {
+      headerName: 'Label',
+      minWidth: 100,
+      maxWidth: 100,
+      cellRenderer: renderUserLabelCell,
+    },
+    {
+      headerName: 'Access',
+      minWidth: 70,
+      maxWidth: 70,
+      cellRenderer: renderAccessLabelCell,
+    },
+    {
+      headerName: 'Description',
+      field: 'description',
+      wrapText: true,
+      cellClass: ['lh-base', 'p-2', 'border-end'],
+    },
+    {
+      headerName: 'Color',
+      field: 'color',
+      minWidth: 80,
+      maxWidth: 80,
+    },
+    {
+      headerName: 'Action',
+      minWidth: 60,
+      maxWidth: 60,
+      cellRenderer: renderActions,
+      cellClass: ['p-2'],
+    },
+  ]), [renderActions]);
 
-  renderActions(node) {
-    return (
-      <Button
-        size="sm"
-        disabled={node.data.access_level === 2}
-        variant={node.data.access_level === 2 ? 'light' : 'success'}
-        onClick={(e) => this.handleEditLabelClick(e, node.data)}
-      >
-        {node.data.access_level === 2 ? 'Global' : 'Edit'}
-      </Button>
-    );
-  }
+  const defaultColDef = useMemo(() => ({
+    editable: false,
+    flex: 1,
+    autoHeight: true,
+    sortable: false,
+    resizable: false,
+    suppressMovable: true,
+    cellClass: ['border-end', 'px-2'],
+    headerClass: ['border-end', 'px-2'],
+  }), []);
 
-  renderLabels() {
-    const { showDetails, labels } = this.state;
-    if (showDetails === true) {
-      return this.renderLabel();
-    }
+  const accessList = useMemo(() => ([
+    { label: 'Private - Exclusive access for you', value: 0 },
+    { label: 'Public - Shareable before publication, Visible to all after', value: 1 },
+  ]), []);
 
-    const columnDefs = [
-      {
-        headerName: "Label",
-        minWidth: 100,
-        maxWidth: 100,
-        cellRenderer: this.renderUserLabel,
-      },
-      {
-        headerName: "Access",
-        minWidth: 70,
-        maxWidth: 70,
-        cellRenderer: this.renderAccessLabel,
-      },
-      {
-        headerName: "Description",
-        field: "description",
-        wrapText: true,
-        cellClass: ["lh-base", "p-2", "border-end"],
-      },
-      {
-        headerName: "Color",
-        field: "color",
-        minWidth: 80,
-        maxWidth: 80,
-      },
-      {
-        headerName: "Action",
-        minWidth: 55,
-        maxWidth: 55,
-        cellRenderer: this.renderActions,
-        cellClass: ["p-2"],
-      },
-    ];
+  const selectedColor = useMemo(
+    () => colorOptions.find(({ value }) => value === label.color) || null,
+    [label.color],
+  );
 
-    const defaultColDef = {
-      editable: false,
-      flex: 1,
-      autoHeight: true,
-      sortable: false,
-      resizable: false,
-      suppressMovable: true,
-      cellClass: ["border-end", "px-2"],
-      headerClass: ["border-end", "px-2"]
-    };
+  const extendedFooter = showDetails ? (
+    <Button variant="secondary" onClick={handleBackButton}>Back</Button>
+  ) : undefined;
 
-    return (
-      <div className="ag-theme-alpine">
-        <h3 className="pb-2">
-          <Button variant="primary" size="md" onClick={() => this.handelNewLabel()}>
-            <i className="fa fa-plus me-1" />
-            Create
-          </Button>
-        </h3>
-        <AgGridReact
-          columnDefs={columnDefs}
-          defaultColDef={defaultColDef}
-          rowData={labels || []}
-          rowHeight="auto"
-          domLayout="autoHeight"
-          autoSizeStrategy={{ type: 'fitGridWidth' }}
+  const modalBody = showDetails ? (
+    <Form horizontal>
+      <Form.Group controlId="accessLevelInput" className="mb-2">
+        <Form.Label>
+          Public?
+        </Form.Label>
+        <Select
+          name="userLabel"
+          options={accessList}
+          onChange={handleAccessChange}
+          value={accessList.find(({ value }) => value === label.access_level)}
         />
-      </div>
-    );
-  }
+      </Form.Group>
+      <Form.Group controlId="titleInput" className="mb-2">
+        <Form.Label>
+          Title
+        </Form.Label>
+        <Form.Control
+          type="text"
+          value={label.title || ''}
+          onChange={handleFieldChange('title')}
+        />
+      </Form.Group>
+      <Form.Group controlId="descInput" className="mb-2">
+        <Form.Label>
+          Description
+        </Form.Label>
+        <Form.Control
+          type="text"
+          value={label.description || ''}
+          onChange={handleFieldChange('description')}
+        />
+      </Form.Group>
+      <Form.Group controlId="colorInput">
+        <Form.Label>Background Color</Form.Label>
+        <Select
+          className="rounded-corners"
+          name="colorPicker"
+          isClearable
+          options={colorOptions}
+          value={selectedColor}
+          onChange={handleColorPicker}
+          getOptionLabel={renderColorOptionLabel}
+          maxHeight="200px"
+          placeholder="Choose a color..."
+        />
+      </Form.Group>
+    </Form>
+  ) : (
+    <div className="ag-theme-alpine">
+      <AgGridReact
+        columnDefs={columnDefs}
+        defaultColDef={defaultColDef}
+        rowData={labels}
+        rowHeight="auto"
+        domLayout="autoHeight"
+        autoSizeStrategy={{ type: 'fitGridWidth' }}
+      />
+    </div>
+  );
 
-  renderColorOptionLabel(option) {
-    return (
-      <ColorLabel color={option.value} label={option.label} />
-    );
-  }
-
-  renderLabel() {
-    const { label } = this.state;
-    const bcStyle = {
-      backgroundColor: label.color || this.state.defaultColor
-    };
-    const accessList = [
-      { label: 'Private - Exclusive access for you', value: 0 },
-      { label: 'Public - Shareable before publication, Visible to all after', value: 1 }
-    ];
-
-    return (
-      <Form horizontal>
-        <Form.Group controlId="accessLevelInput" className="mb-2">
-          <Form.Label>
-            Public?
-          </Form.Label>
-          <Select
-            name="userLabel"
-            options={accessList}
-            onChange={this.handleAccessChange}
-            value={accessList.find(({ value }) => value === label.access_level)}
-          />
-        </Form.Group>
-        <Form.Group controlId="titleInput" className="mb-2">
-          <Form.Label>
-            Title
-          </Form.Label>
-          <Form.Control
-            type="text"
-            ref={(m) => { this.titleInput = m; }}
-            defaultValue={label.title || ''}
-          />
-        </Form.Group>
-        <Form.Group controlId="descInput" className="mb-2">
-          <Form.Label>
-            Description
-          </Form.Label>
-          <Form.Control
-            type="text"
-            ref={(m) => { this.descInput = m; }}
-            defaultValue={label.description || ''}
-          />
-        </Form.Group>
-        <Form.Group controlId="colorInput">
-          <Form.Label>Background Color</Form.Label>
-          <Select
-            className="rounded-corners"
-            name="colorPicker"
-            isClearable
-            ref={(m) => { this.colorInput = m; }}
-            options={colorOptions}
-            value={colorOptions.find(({ value }) => value === label.color) || null}
-            onChange={this.handleColorPicker}
-            getOptionLabel={this.renderColorOptionLabel}
-            maxHeight="200px"
-            placeholder="Choose a color..."
-          />
-        </Form.Group>
-      </Form>
-    );
-  }
-
-  render() {
-    const { showLabelModal } = this.props;
-    const { showDetails } = this.state;
-
-    return (
-      <Modal
-        centered
-        show={showLabelModal}
-        onHide={this.props.onHide}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>My labels</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {this.renderLabels()}
-        </Modal.Body>
-        {showDetails
-          && (
-            <Modal.Footer>
-              <ButtonToolbar className="mt-2">
-                <Button variant="light" onClick={this.handleBackButton}>Back</Button>
-                <Button variant="primary" onClick={this.handleSaveLabel}>Save</Button>
-              </ButtonToolbar>
-            </Modal.Footer>
-          )}
-      </Modal>
-    );
-  }
+  return (
+    <AppModal
+      title="My labels"
+      show={showLabelModal}
+      onHide={onHide}
+      size={showDetails ? undefined : 'lg'}
+      closeLabel="Close"
+      extendedFooter={extendedFooter}
+      primaryActionLabel={showDetails ? 'Save' : 'Create'}
+      onPrimaryAction={showDetails ? handleSaveLabel : handleNewLabel}
+    >
+      {modalBody}
+    </AppModal>
+  );
 }
 
 UserLabelModal.propTypes = {
   showLabelModal: PropTypes.bool.isRequired,
-  onHide: PropTypes.func.isRequired
+  onHide: PropTypes.func.isRequired,
 };
+function EditUserLabels({ element, fnCb }) {
+  const [currentUser, setCurrentUser] = useState(() => UserStore.getState().currentUser || {});
+  const [labelOptions, setLabelOptions] = useState(() => UserStore.getState().labels || []);
 
-// eslint-disable-next-line react/no-multi-comp
-class EditUserLabels extends React.Component {
-  constructor(props) {
-    super(props);
+  const handleStoreChange = useCallback((state) => {
+    setCurrentUser(state.currentUser || {});
+    setLabelOptions(state.labels || []);
+  }, []);
 
-    const userState = UserStore.getState();
-    this.state = {
-      currentUser: userState.currentUser || {},
-      labelOptions: userState.labels || [],
+  useEffect(() => {
+    UserStore.listen(handleStoreChange);
+
+    return () => {
+      UserStore.unlisten(handleStoreChange);
     };
-    this.onChange = this.onChange.bind(this);
-    this.handleSelectChange = this.handleSelectChange.bind(this);
-  }
+  }, [handleStoreChange]);
 
-  componentDidMount() {
-    UserStore.listen(this.onChange);
-  }
-
-  componentWillUnmount() {
-    UserStore.unlisten(this.onChange);
-  }
-
-  handleSelectChange(val) {
-    const { element, fnCb } = this.props;
-    const ids = val.map((v) => v.id);
+  const handleSelectChange = useCallback((values) => {
+    const ids = (values || []).map((currentLabel) => currentLabel.id);
     element.setUserLabels(ids);
     fnCb(element);
-  }
+  }, [element, fnCb]);
 
-  onChange(state) {
-    const { currentUser, labels } = state;
-    this.setState({
-      currentUser,
-      labelOptions: labels || [],
-    });
-  }
+  const currentLabelIds = element.user_labels || [];
+  const selectedLabels = labelOptions.filter((currentLabel) => (
+    currentLabelIds.includes(currentLabel.id)
+    && (currentLabel.access_level > 0 || currentLabel.user_id === currentUser.id)
+  ));
+  const options = filterAvailableLabels(labelOptions, currentUser);
 
-  render() {
-    const { currentUser, labelOptions } = this.state;
-    const { element } = this.props;
-
-    const curLabelIds = element?.user_labels || [];
-    const selectedLabels = labelOptions.filter((o) => (
-      curLabelIds.includes(o.id) && (o.access_level > 0 || o.user_id === currentUser.id)
-    ))
-
-    const options = labelOptions
-      .filter((o) => o.access_level === 2 || o.user_id === currentUser.id)
-
-    return (
-      <Form.Group>
-        <Form.Label>My labels</Form.Label>
-        <Select
-          isMulti
-          options={options}
-          getOptionValue={(label) => label.id}
-          getOptionLabel={(label) => label.title}
-          formatOptionLabel={UserLabel}
-          value={selectedLabels}
-          onChange={this.handleSelectChange}
-        />
-      </Form.Group>
-    );
-  }
+  return (
+    <Form.Group>
+      <Form.Label>My labels</Form.Label>
+      <Select
+        isMulti
+        options={options}
+        getOptionValue={(currentLabel) => currentLabel.id}
+        getOptionLabel={(currentLabel) => currentLabel.title}
+        formatOptionLabel={UserLabel}
+        value={selectedLabels}
+        onChange={handleSelectChange}
+      />
+    </Form.Group>
+  );
 }
 
 EditUserLabels.propTypes = {
-  element: PropTypes.object.isRequired,
+  element: editableElementShape.isRequired,
   fnCb: PropTypes.func.isRequired,
 };
+function ShowUserLabels({ element }) {
+  const [currentUser, setCurrentUser] = useState(() => UserStore.getState().currentUser || {});
+  const [labelOptions, setLabelOptions] = useState(() => UserStore.getState().labels || []);
 
+  const handleStoreChange = useCallback((state) => {
+    setCurrentUser(state.currentUser || {});
+    setLabelOptions(state.labels || []);
+  }, []);
 
-// eslint-disable-next-line react/no-multi-comp
-class ShowUserLabels extends React.Component {
-  constructor(props) {
-    super(props);
+  useEffect(() => {
+    UserStore.listen(handleStoreChange);
 
-    const { currentUser, labels } = UserStore.getState();
-    this.state = {
-      currentUser: currentUser || {},
-      labelOptions: labels || [],
+    return () => {
+      UserStore.unlisten(handleStoreChange);
     };
-    this.onChange = this.onChange.bind(this);
-  }
+  }, [handleStoreChange]);
 
-  componentDidMount() {
-    UserStore.listen(this.onChange);
-  }
+  const currentLabelIds = element?.tag?.taggable_data?.user_labels || [];
+  const visibleLabels = labelOptions.filter((currentLabel) => (
+    currentLabelIds.includes(currentLabel.id)
+    && (currentLabel.access_level > 0 || currentLabel.user_id === currentUser.id)
+  ));
 
-  componentWillUnmount() {
-    UserStore.unlisten(this.onChange);
-  }
-
-  onChange(state) {
-    const { currentUser, labels } = state;
-    this.setState({
-      currentUser,
-      labelOptions: labels || [],
-    });
-  }
-
-  render() {
-    const { element } = this.props;
-    const { currentUser, labelOptions } = this.state;
-
-    const curLabelIds = element?.tag?.taggable_data?.user_labels || [];
-    const labels = labelOptions.filter((o) => (
-      curLabelIds.includes(o.id) && (o.access_level > 0 || o.user_id === currentUser.id)
-    ));
-
-    return labels.map((l) => <UserLabel key={l.id} {...l} />);
-  }
+  return visibleLabels.map((currentLabel) => (
+    <UserLabel
+      key={currentLabel.id}
+      title={currentLabel.title}
+      color={currentLabel.color}
+      access_level={currentLabel.access_level}
+    />
+  ));
 }
 
 ShowUserLabels.propTypes = {
-  element: PropTypes.object.isRequired
+  element: taggedElementShape.isRequired,
 };
+function SearchUserLabels({ fnCb, userLabel, size }) {
+  const [currentUser, setCurrentUser] = useState(() => UserStore.getState().currentUser || {});
+  const [labels, setLabels] = useState(() => UserStore.getState().labels || []);
 
+  const handleStoreChange = useCallback((state) => {
+    setCurrentUser(state.currentUser || {});
+    setLabels(state.labels || []);
+  }, []);
 
-class SearchUserLabels extends React.Component {
-  constructor(props) {
-    super(props);
+  useEffect(() => {
+    UserStore.listen(handleStoreChange);
 
-    const { currentUser, labels } = UserStore.getState();
-    this.state = {
-      currentUser: currentUser || {},
-      labels: labels || [],
+    return () => {
+      UserStore.unlisten(handleStoreChange);
     };
-    this.onChange = this.onChange.bind(this);
-    this.handleSelectChange = this.handleSelectChange.bind(this);
-  }
+  }, [handleStoreChange]);
 
-  componentDidMount() {
-    UserStore.listen(this.onChange);
-  }
+  const handleSelectChange = useCallback((value) => {
+    fnCb(value?.id ?? null);
+  }, [fnCb]);
 
-  componentWillUnmount() {
-    UserStore.unlisten(this.onChange);
-  }
+  const options = filterAvailableLabels(labels, currentUser);
+  const selectedLabel = labels.find((currentLabel) => currentLabel.id === userLabel) || null;
 
-  handleSelectChange(value) {
-    this.props.fnCb(value?.id ?? null);
-  }
-
-  onChange(state) {
-    const { currentUser, labels } = state;
-    this.setState({
-      currentUser,
-      labels
-    });
-  }
-
-  render() {
-    const { currentUser, labels } = this.state;
-    const { userLabel } = this.props;
-    const list = (labels || []).filter(
-      (r) => r.access_level === 2 || r.user_id === (currentUser && currentUser.id)
-    );
-
-    return (
-      <Select
-        isClearable
-        options={list}
-        getOptionValue={(label) => label.id}
-        getOptionLabel={(label) => label.title}
-        formatOptionLabel={UserLabel}
-        value={labels.find((l) => l.id === userLabel)}
-        onChange={this.handleSelectChange}
-        placeholder="Filter by label"
-        minWidth="100px"
-        size={this.props.size}
-      />
-    );
-  }
+  return (
+    <Select
+      isClearable
+      options={options}
+      getOptionValue={(currentLabel) => currentLabel.id}
+      getOptionLabel={(currentLabel) => currentLabel.title}
+      formatOptionLabel={UserLabel}
+      value={selectedLabel}
+      onChange={handleSelectChange}
+      placeholder="Filter by label"
+      minWidth="100px"
+      size={size}
+    />
+  );
 }
 
 SearchUserLabels.propTypes = {
@@ -538,4 +471,9 @@ SearchUserLabels.defaultProps = {
   size: 'md',
 };
 
-export { UserLabelModal, EditUserLabels, ShowUserLabels, SearchUserLabels };
+export {
+  UserLabelModal,
+  EditUserLabels,
+  ShowUserLabels,
+  SearchUserLabels,
+};
