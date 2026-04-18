@@ -40,8 +40,22 @@ const loadEditor = (editor, scripts) => {
  */
 const getEditorPropertiesFromUI = async (editorId) => {
   const data = await UIFetcher.initialize();
-  if (data && data.structureEditors.editors && data.structureEditors.editors?.[editorId]) {
-    return data.structureEditors.editors?.[editorId];
+  const editors = data?.structureEditors?.editors;
+  if (editors?.[editorId]) {
+    return editors[editorId];
+  }
+  if (editorId === 'ketcher' && editors?.ketcher2) {
+    return editors.ketcher2;
+  }
+  return null;
+};
+
+const resolveEditorAvailability = (editorId, availableEditors = {}) => {
+  if (availableEditors?.[editorId]) {
+    return availableEditors[editorId];
+  }
+  if (editorId === 'ketcher' && availableEditors?.ketcher2) {
+    return availableEditors.ketcher2;
   }
   return null;
 };
@@ -60,7 +74,8 @@ export async function getEditorById(editorId, configs = {}, availableEditors = n
 
   if (editorAlias) {
     let configAlias = configs;
-    let available = availableEditors?.[editorAlias] || UIStore.getState().structureEditors?.editors?.[editorAlias];
+    let available = resolveEditorAvailability(editorAlias, availableEditors)
+      || resolveEditorAvailability(editorAlias, UIStore.getState().structureEditors?.editors);
     if (!available) {
       available = await getEditorPropertiesFromUI(editorAlias);
       configAlias = { editor: editorAlias };
