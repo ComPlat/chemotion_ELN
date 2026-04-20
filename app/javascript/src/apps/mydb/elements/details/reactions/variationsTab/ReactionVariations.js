@@ -44,10 +44,10 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   const gridRef = useRef(null);
   const pendingReactionVariations = useRef(null);
   const reactionVariations = reaction.variations;
-  const setReactionVariations = (updatedReactionVariations) => {
+  const setReactionVariations = useCallback((updatedReactionVariations) => {
     reaction.variations = updatedReactionVariations;
     onReactionChange(reaction);
-  };
+  }, [reaction, onReactionChange]);
   const reactionHasPolymers = reaction.hasPolymers();
   const reactionShortLabel = reaction.short_label;
   const reactionMaterials = getReactionMaterials(reaction);
