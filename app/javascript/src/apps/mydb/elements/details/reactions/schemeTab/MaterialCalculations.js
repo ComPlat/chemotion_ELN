@@ -1,23 +1,28 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Form } from 'react-bootstrap';
 
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 
-export default class MaterialCalculations extends Component {
-  materialVolume() {
-    const { material } = this.props;
+const METRIC_PREFIXES = ['m', 'n', 'u'];
+const METRIC_PREFIXES_MOL = ['m', 'n'];
+
+function getMetricPrefix(material, index, prefixes) {
+  return (
+    material.metrics
+    && material.metrics.length > 2
+    && prefixes.includes(material.metrics[index])
+  ) ? material.metrics[index]
+    : 'm';
+}
+
+function MaterialCalculations({ material }) {
+  const renderMaterialVolume = () => {
     if (material.contains_residues) {
       return <Form.Control type="text" value="N / A" disabled />;
     }
 
-    const metricPrefixes = ['m', 'n', 'u'];
-    const metric = (
-      material.metrics
-      && material.metrics.length > 2
-      && metricPrefixes.includes(material.metrics[1])
-    ) ? material.metrics[1]
-      : 'm';
+    const metric = getMetricPrefix(material, 1, METRIC_PREFIXES);
 
     return (
       <NumeralInputWithUnitsCompo
@@ -25,84 +30,67 @@ export default class MaterialCalculations extends Component {
         value={material.amount_ml || ''}
         unit="l"
         metricPrefix={metric}
-        metricPrefixes={metricPrefixes}
+        metricPrefixes={METRIC_PREFIXES}
         precision={5}
         disabled
         readOnly
         size="sm"
       />
     );
-  }
+  };
 
-  render() {
-    const { material } = this.props;
+  const metric = getMetricPrefix(material, 0, METRIC_PREFIXES);
+  const metricMol = getMetricPrefix(material, 2, METRIC_PREFIXES);
 
-    const metricPrefixes = ['m', 'n', 'u'];
-    const metric = (
-      material.metrics
-      && material.metrics.length > 2
-      && metricPrefixes.includes(material.metrics[0])
-    ) ? material.metrics[0]
-      : 'm';
-
-    const metricPrefixesMol = ['m', 'n'];
-    const metricMol = (
-      material.metrics
-      && material.metrics.length > 2
-      && metricPrefixes.includes(material.metrics[2])
-    ) ? material.metrics[2]
-      : 'm';
-
-    return (
-      <div className="d-flex gap-2 align-items-start">
-        <div className="flex-grow-1 text-end pt-1">Adjusted:</div>
-        <div className="reaction-material__amount-input">
-          <NumeralInputWithUnitsCompo
-            className="reaction-material__mass-input"
-            value={material.adjusted_amount_g}
-            unit="g"
-            metricPrefix={metric}
-            metricPrefixes={metricPrefixes}
-            precision={5}
-            disabled
-            readOnly
-            size="sm"
-          />
-          {this.materialVolume()}
-          <NumeralInputWithUnitsCompo
-            className="reaction-material__molarity-input"
-            value={material.adjusted_amount_mol}
-            unit="mol"
-            metricPrefix={metricMol}
-            metricPrefixes={metricPrefixesMol}
-            precision={4}
-            disabled
-            readOnly
-            size="sm"
-          />
-        </div>
+  return (
+    <div className="d-flex gap-2 align-items-start">
+      <div className="flex-grow-1 text-end pt-1">Adjusted:</div>
+      <div className="reaction-material__amount-input">
         <NumeralInputWithUnitsCompo
-          className="reaction-material__concentration-input"
-          value={material.adjusted_loading}
-          unit="mmol/g"
-          metricPrefix="n"
-          metricPrefixes={['n']}
-          precision={3}
+          className="reaction-material__mass-input"
+          value={material.adjusted_amount_g}
+          unit="g"
+          metricPrefix={metric}
+          metricPrefixes={METRIC_PREFIXES}
+          precision={5}
           disabled
           readOnly
           size="sm"
         />
-        <Form.Control
-          className="reaction-material__equivalent-input"
-          type="text"
-          value={`${((material.adjusted_equivalent || 0) * 100).toFixed(1)} %`}
+        {renderMaterialVolume()}
+        <NumeralInputWithUnitsCompo
+          className="reaction-material__molarity-input"
+          value={material.adjusted_amount_mol}
+          unit="mol"
+          metricPrefix={metricMol}
+          metricPrefixes={METRIC_PREFIXES_MOL}
+          precision={4}
           disabled
+          readOnly
           size="sm"
         />
-        <div className="reaction-material__delete-input" />
       </div>
-    );
-  }
+      <NumeralInputWithUnitsCompo
+        className="reaction-material__concentration-input"
+        value={material.adjusted_loading}
+        unit="mmol/g"
+        metricPrefix="n"
+        metricPrefixes={['n']}
+        precision={3}
+        disabled
+        readOnly
+        size="sm"
+      />
+      <Form.Control
+        className="reaction-material__equivalent-input"
+        type="text"
+        value={`${((material.adjusted_equivalent || 0) * 100).toFixed(1)} %`}
+        disabled
+        size="sm"
+      />
+      <div className="reaction-material__delete-input" />
+    </div>
+  );
 }
 
 MaterialCalculations.propTypes = {
@@ -116,3 +104,5 @@ MaterialCalculations.propTypes = {
     adjusted_equivalent: PropTypes.number,
   }).isRequired,
 };
+
+export default MaterialCalculations;

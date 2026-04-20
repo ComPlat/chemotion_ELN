@@ -32,7 +32,6 @@ import {
   convertTemperature,
   convertTime,
   convertTurnoverFrequency,
-  calculateFeedstockMoles,
   calculateGasMoles,
   convertTemperatureToKelvin,
 } from 'src/utilities/UnitsConversion';
@@ -1243,153 +1242,30 @@ export default class ReactionDetailsScheme extends React.Component {
     return this.updatedReactionWithSample(this.updatedSamplesForVesselSizeChange.bind(this));
   }
 
-  /**
-   * Recalculates equivalent values for starting materials and reactants.
-   * Uses the reference material's moles to compute each material's equivalent.
-   *
-   * Formula: equivalent = material.amount_mol / referenceMaterial.amount_mol
-   *
-   * @param {Object} reaction - The reaction object containing materials
-   */
   // eslint-disable-next-line class-methods-use-this
   recalculateEquivalentsForMaterials(reaction) {
-    const { referenceMaterial } = reaction;
-    if (!referenceMaterial) {
-      return;
-    }
-
-    const materialsToUpdate = [
-      ...reaction.starting_materials,
-      ...reaction.reactants,
-    ];
-
-    materialsToUpdate.forEach((material) => {
-      if (!material.reference && material.amount_mol) {
-        if (referenceMaterial.amount_mol === 0) {
-          material.equivalent = 0;
-        } else {
-          material.equivalent = material.amount_mol / referenceMaterial.amount_mol;
-        }
-      }
-    });
+    reaction.recalculateEquivalentsForMaterials();
   }
 
+  // Delegates to Reaction model static methods
+  // eslint-disable-next-line class-methods-use-this
   calculateEquivalent(refM, updatedSample) {
-    if (!refM.contains_residues) {
-      NotificationActions.add({
-        message: 'Cannot perform calculations for loading and equivalent',
-        level: 'error'
-      });
-
-      return 1.0;
-    }
-
-    if (!refM.loading) {
-      NotificationActions.add({
-        message: 'Please set non-zero starting material loading',
-        level: 'error'
-      });
-
-      return 0.0;
-    }
-
-    let loading = refM.residues[0].custom_info.loading;
-    let mass_koef = updatedSample.amount_g / refM.amount_g;
-    let mwb = updatedSample.molecule.molecular_weight;
-    let mwa = refM.molecule.molecular_weight;
-    let mw_diff = mwb - mwa;
-    let equivalent = (1000.0 / loading) * (mass_koef - 1.0) / mw_diff;
-
-    if (equivalent < 0.0 || equivalent > 1.0 || isNaN(equivalent) || !isFinite(equivalent)) {
-      equivalent = 1.0;
-    }
-
-    return equivalent;
+    return Reaction.calculateEquivalentForPolymer(refM, updatedSample);
   }
 
+  // eslint-disable-next-line class-methods-use-this
   checkMassMolecule(referenceM, updatedS) {
-    let errorMsg;
-    let mFull;
-    const mwb = updatedS.decoupled ? (updatedS.molecular_mass || 0) : updatedS.molecule.molecular_weight;
-
-    // mass check apply to 'polymers' only
-    if (!updatedS.contains_residues) {
-      mFull = referenceM.amount_mol * mwb;
-      const maxTheoAmount = mFull * (updatedS.coefficient || 1.0 / referenceM.coefficient || 1.0);
-      if (updatedS.amount_g > maxTheoAmount) {
-        errorMsg = 'Experimental mass value is larger than possible\n'
-          + 'by 100% conversion! Please check your data.';
-      }
-    } else {
-      const mwa = referenceM.decoupled ? (referenceM.molecular_mass || 0) : referenceM.molecule.molecular_weight;
-      const deltaM = mwb - mwa;
-      const massA = referenceM.amount_g;
-      mFull = massA + (referenceM.amount_mol * deltaM);
-      const massExperimental = updatedS.amount_g;
-
-      if (deltaM > 0) { // expect weight gain
-        if (massExperimental > mFull) {
-          errorMsg = 'Experimental mass value is larger than possible\n'
-            + 'by 100% conversion! Please check your data.';
-        } else if (massExperimental < massA) {
-          errorMsg = 'Material loss! '
-            + 'Experimental mass value is less than possible!\n'
-            + 'Please check your data.';
-        }
-      } else if (massExperimental < mFull) { // expect weight loss
-        errorMsg = 'Experimental mass value is less than possible\n'
-          + 'by 100% conversion! Please check your data.';
-      }
-    }
-
-    updatedS.maxAmount = mFull;
-
-    if (errorMsg && !updatedS.decoupled) {
-      updatedS.error_mass = true;
-      NotificationActions.add({
-        message: errorMsg,
-        level: 'error',
-      });
-    } else {
-      updatedS.error_mass = false;
-    }
-
-    return { mFull, errorMsg };
+    return Reaction.checkMassMolecule(referenceM, updatedS);
   }
 
+  // eslint-disable-next-line class-methods-use-this
   checkMassPolymer(referenceM, updatedS, massAnalyses) {
-    const equivalent = this.calculateEquivalent(referenceM, updatedS);
-    updatedS.equivalent = equivalent;
-    let fconv_loading = referenceM.amount_mol / updatedS.amount_g * 1000.0;
-    updatedS.residues[0].custom_info['loading_full_conv'] = fconv_loading;
-    updatedS.residues[0].custom_info['loading_type'] = 'mass_diff';
-
-    let newAmountMol;
-
-    if (equivalent < 0.0 || equivalent > 1.0) {
-      updatedS.adjusted_equivalent = equivalent > 1.0 ? 1.0 : 0.0;
-      updatedS.adjusted_amount_mol = referenceM.amount_mol;
-      updatedS.adjusted_loading = fconv_loading;
-      updatedS.adjusted_amount_g = updatedS.amount_g;
-      newAmountMol = referenceM.amount_mol;
-    }
-
-    newAmountMol = referenceM.amount_mol * equivalent;
-    const newLoading = (newAmountMol / updatedS.amount_g) * 1000.0;
-
-    updatedS.residues[0].custom_info.loading = newLoading;
+    return Reaction.checkMassPolymer(referenceM, updatedS, massAnalyses);
   }
 
   // eslint-disable-next-line class-methods-use-this
   triggerNotification(isDecoupled) {
-    if (!isDecoupled) {
-      const errorMsg = 'Experimental mass value is larger than possible\n'
-        + 'by 100% conversion! Please check your data.';
-      NotificationActions.add({
-        message: errorMsg,
-        level: 'error',
-      });
-    }
+    Reaction.triggerMassExceededNotification(isDecoupled);
   }
 
   updatedSamplesForAmountChange(samples, updatedSample, materialGroup) {
@@ -1518,13 +1394,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction } = this.props;
     const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     const volume = reactionVesselSize || vesselVolume;
-    const refMaterial = reaction.findFeedstockMaterial();
-    if (!refMaterial || !volume) {
-      return null;
-    }
-    const { purity } = refMaterial;
-    const feedstockMolValue = calculateFeedstockMoles(volume, purity || 1);
-    return (sample.amount_mol / feedstockMolValue);
+    return reaction.calculateEquivalentForGasProductNumeric(sample, volume);
   }
 
   /**
