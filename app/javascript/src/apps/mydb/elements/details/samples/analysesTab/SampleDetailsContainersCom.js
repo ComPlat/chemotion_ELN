@@ -73,7 +73,7 @@ function ReactionsDisplay({
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        {AnalysisModeToggle(mode, handleToggleMode, isDisabled)}
+        <AnalysisModeToggle mode={mode} onToggle={handleToggleMode} disabled={isDisabled} />
         <ButtonToolbar>
           <CommentButton
             toggleCommentBox={toggleCommentBox}

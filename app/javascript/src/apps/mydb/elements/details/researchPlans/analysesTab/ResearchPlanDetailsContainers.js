@@ -297,7 +297,7 @@ export default class ResearchPlanDetailsContainers extends Component {
         return (
           <div>
             <div className="my-2 mx-3 d-flex justify-content-between align-items-center">
-              {AnalysisModeToggle(mode, this.handleToggleMode, readOnly)}
+              <AnalysisModeToggle mode={mode} onToggle={this.handleToggleMode} disabled={readOnly} />
               <ButtonToolbar className="gap-1">
                 <CommentButton
                   toggleCommentBox={this.toggleCommentBox}

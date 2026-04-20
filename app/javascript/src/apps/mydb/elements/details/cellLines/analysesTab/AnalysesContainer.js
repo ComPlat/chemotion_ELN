@@ -103,7 +103,7 @@ class AnalysesContainer extends Component {
   renderModeButton = () => {
     const { mode } = this.state;
     const { readOnly } = this.props;
-    return AnalysisModeToggle(mode, this.handleModeToggle, readOnly);
+    return <AnalysisModeToggle mode={mode} onToggle={this.handleModeToggle} disabled={readOnly} />;
   }
 
   renderEditModeContainer = () => {

@@ -26,6 +26,8 @@ export default class ScreenDetailsContainers extends Component {
       mode: 'edit',
     };
     this.analysesContainer = screen.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+    this.handleToggleMode = this.handleToggleMode.bind(this);
+    this.handleMove = this.handleMove.bind(this);
   }
 
   componentDidMount() {
@@ -217,6 +219,7 @@ export default class ScreenDetailsContainers extends Component {
   };
 
   render() {
+    const { readOnly } = this.props;
     const { screen, commentBoxVisible, mode } = this.state;
     if (screen.container != null) {
       if (this.analysesContainer.length == 1 && this.analysesContainer[0].children.length > 0) {
@@ -224,7 +227,7 @@ export default class ScreenDetailsContainers extends Component {
         return (
           <div>
             <div className="mb-2 me-1 d-flex justify-content-between align-items-center">
-              {AnalysisModeToggle(mode, this.handleToggleMode.bind(this), this.props.readOnly)}
+              <AnalysisModeToggle mode={mode} onToggle={this.handleToggleMode} disabled={readOnly} />
               <ButtonToolbar className="gap-2">
                 <CommentButton
                   toggleCommentBox={this.toggleCommentBox}
@@ -245,7 +248,7 @@ export default class ScreenDetailsContainers extends Component {
                   <AnalysesOrderRow
                     key={container.id}
                     container={container}
-                    handleMove={this.handleMove.bind(this)}
+                    handleMove={this.handleMove}
                   />
                 ))}
               </div>

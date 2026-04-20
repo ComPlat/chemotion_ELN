@@ -404,7 +404,7 @@ export default class ReactionDetailsContainers extends Component {
             <div className="mb-3">
               {this.renderAnalysesHint()}
               <div className="d-flex justify-content-between align-items-center mt-2">
-                {AnalysisModeToggle(mode, this.handleToggleMode, readOnly)}
+                <AnalysisModeToggle mode={mode} onToggle={this.handleToggleMode} disabled={readOnly} />
                 <ButtonToolbar className="gap-2">
                   <CommentButton
                     toggleCommentBox={this.toggleCommentBox}

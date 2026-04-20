@@ -221,7 +221,7 @@ export default class WellplateDetailsContainers extends Component {
     return (
       <div>
         <div className="d-flex justify-content-between align-items-center my-2 mx-3">
-          {AnalysisModeToggle(mode, this.handleToggleMode, readOnly)}
+          <AnalysisModeToggle mode={mode} onToggle={this.handleToggleMode} disabled={readOnly} />
           <ButtonToolbar className="gap-2">
             <CommentButton
               toggleCommentBox={this.toggleCommentBox}

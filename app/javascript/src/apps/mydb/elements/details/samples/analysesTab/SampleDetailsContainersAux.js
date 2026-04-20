@@ -53,30 +53,28 @@ const qCheckMsg = (sample, container) => {
   return '';
 };
 
-const AnalysisModeToggle = (mode, handleToggleMode, isDisabled) => {
-  return (
-    <ButtonGroup>
-      <ButtonGroupToggleButton
-        size="xsm"
-        active={mode === 'edit'}
-        onClick={() => handleToggleMode('edit')}
-        disabled={isDisabled}
-      >
-        <i className="fa fa-edit me-1" />
-        Edit mode
-      </ButtonGroupToggleButton>
-      <ButtonGroupToggleButton
-        size="xsm"
-        active={mode === 'order'}
-        onClick={() => handleToggleMode('order')}
-        disabled={isDisabled}
-      >
-        <i className="fa fa-reorder me-1" />
-        Order mode
-      </ButtonGroupToggleButton>
-    </ButtonGroup>
-  )
-};
+const AnalysisModeToggle = ({ mode, onToggle, disabled = false }) => (
+  <ButtonGroup>
+    <ButtonGroupToggleButton
+      size="xsm"
+      active={mode === 'edit'}
+      onClick={() => onToggle('edit')}
+      disabled={disabled}
+    >
+      <i className="fa fa-edit me-1" />
+      Edit mode
+    </ButtonGroupToggleButton>
+    <ButtonGroupToggleButton
+      size="xsm"
+      active={mode === 'order'}
+      onClick={() => onToggle('order')}
+      disabled={disabled}
+    >
+      <i className="fa fa-reorder me-1" />
+      Order mode
+    </ButtonGroupToggleButton>
+  </ButtonGroup>
+);
 
 const headerBtnGroup = (
   deleted, container, sample, handleRemove, handleSubmit,
