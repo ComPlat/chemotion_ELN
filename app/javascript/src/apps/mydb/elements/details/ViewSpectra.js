@@ -6,8 +6,6 @@ import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
 import TreeSelect from 'antd/lib/tree-select';
 import { InlineMetadata } from 'chem-generic-ui';
-import base64 from 'base-64';
-
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import SpectraStore from 'src/stores/alt/stores/SpectraStore';
@@ -16,6 +14,20 @@ import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import ResearchPlan from 'src/models/ResearchPlan';
 import { inlineNotation } from 'src/utilities/SpectraHelper';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import {
+  LcmsPageCache,
+  applyLcmsPageMetadata,
+  buildInitialLcmsEntities,
+  buildUpdatedLcmsEntities,
+  decodeFetchedSpectrum,
+  formatLcmsErrorMessage,
+  isUvvisSpectrumInfo,
+  lcmsPageValue,
+  lcmsRequestKey,
+  lcmsSameRequest,
+  LCMS_DEFAULT_TRIGGER,
+  LCMS_POLARITY_NEUTRAL,
+} from 'src/utilities/lcmsRuntime';
 
 const rmRefreshed = (analysis) => {
   if (!analysis) return analysis;
@@ -45,6 +57,8 @@ class ViewSpectra extends React.Component {
     this.lcmsRequestId = 0;
     this.lcmsAbortController = null;
     this.pendingLcmsRequest = null;
+    this.lcmsCache = new LcmsPageCache();
+    this.lcmsCacheSignature = null;
 
     this.onChange = this.onChange.bind(this);
     this.writeCommon = this.writeCommon.bind(this);
@@ -68,11 +82,8 @@ class ViewSpectra extends React.Component {
     this.isShowMultipleSelectFile = this.isShowMultipleSelectFile.bind(this);
     this.notationVoltammetry = this.notationVoltammetry.bind(this);
     this.syncLcmsRuntime = this.syncLcmsRuntime.bind(this);
-    this.buildInitialLcmsEntities = this.buildInitialLcmsEntities.bind(this);
-    this.buildUpdatedLcmsEntities = this.buildUpdatedLcmsEntities.bind(this);
     this.onLcmsPageRequest = this.onLcmsPageRequest.bind(this);
-    this.decodeFetchedSpectrum = this.decodeFetchedSpectrum.bind(this);
-    this.applyLcmsPageMetadata = this.applyLcmsPageMetadata.bind(this);
+    this.applyLcmsPageJson = this.applyLcmsPageJson.bind(this);
     this.requestInitialLcmsPage = this.requestInitialLcmsPage.bind(this);
   }
 
@@ -103,7 +114,11 @@ class ViewSpectra extends React.Component {
 
   onChange(newState) {
     const shouldResetLcms = newState?.showModal === false;
-    if (shouldResetLcms) this.lcmsRequestId = 0;
+    if (shouldResetLcms) {
+      this.lcmsRequestId = 0;
+      this.lcmsCache.clear();
+      this.lcmsCacheSignature = null;
+    }
     if (shouldResetLcms && this.lcmsAbortController) {
       this.lcmsAbortController.abort();
       this.lcmsAbortController = null;
@@ -664,12 +679,6 @@ class ViewSpectra extends React.Component {
       axesUnitsStr: JSON.stringify(payload.axesUnitsSt),
       detector: JSON.stringify(payload.detectorSt),
       dscMetaDataStr: JSON.stringify(payload.dscMetaData),
-      predict: JSON.stringify(rmRefreshed(payload.analysis)),
-      waveLengthStr: JSON.stringify(payload.waveLength),
-      cyclicvolta: JSON.stringify(payload.cyclicvoltaSt),
-      axesUnitsStr: JSON.stringify(payload.axesUnitsSt),
-      detector: JSON.stringify(payload.detectorSt),
-      dscMetaDataStr: JSON.stringify(payload.dscMetaData),
       selectedShift,
       integrationStr,
       multiplicityStr: JSON.stringify(selectedMultiplicity),
@@ -777,346 +786,10 @@ class ViewSpectra extends React.Component {
     });
   }
 
-  isUvvisSpectrumInfo(spcInfo) {
-    const label = spcInfo?.label?.toLowerCase?.() || '';
-    return /(?:^|[._-])uvvis(?:[._-]|$)/.test(label);
-  }
-
-  isTicSpectrumInfo(spcInfo) {
-    const label = spcInfo?.label?.toLowerCase?.() || '';
-    return /(?:^|[._-])tic(?:[._-]|$)/.test(label);
-  }
-
-  isPositiveSpectrumInfo(spcInfo) {
-    const label = spcInfo?.label?.toLowerCase?.() || '';
-    return /(?:^|[._-])(plus|positive|pos)(?:[._-]|$)/.test(label);
-  }
-
-  isNegativeSpectrumInfo(spcInfo) {
-    const label = spcInfo?.label?.toLowerCase?.() || '';
-    return /(?:^|[._-])(minus|negative|neg)(?:[._-]|$)/.test(label);
-  }
-
-  decodeFetchedSpectrum(fileObj) {
-    if (!fileObj?.file) return null;
-    let raw = null;
-    let pageHeaderMatch = null;
-    try {
-      raw = new TextDecoder('utf-8')
-        .decode(new Uint8Array([...(base64.decode(fileObj.file))].map(ch => ch.charCodeAt(0))));
-      pageHeaderMatch = raw.match(/##PAGE\s*=\s*"?([0-9.+\-Ee]+)"?/);
-      const jcamp = FN.ExtractJcamp(raw);
-      const { entity, isExist } = FN.buildData(jcamp);
-      if (!isExist || !entity) return null;
-      return {
-        jcamp,
-        entity,
-        predictions: fileObj.predictions || null,
-        rawPageHeader: pageHeaderMatch ? Number(pageHeaderMatch[1]) : null,
-        hasRawPageHeader: !!pageHeaderMatch,
-      };
-    } catch (error) {
-      if (!raw) return null;
-      const fallback = this.buildLcmsPageFallbackEntity(raw, fileObj, pageHeaderMatch);
-      if (!fallback) return null;
-      return fallback;
-    }
-  }
-
-  extractJcampHeaderValue(raw, name) {
-    if (!raw || !name) return null;
-    const escapedName = String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const match = raw.match(new RegExp(`^##${escapedName}\\s*=\\s*(.+)$`, 'mi'));
-    return match ? match[1].trim() : null;
-  }
-
-  extractLcmsPageData(raw) {
-    if (!raw) return null;
-    const lines = raw.split(/\r?\n/);
-    const startIdx = lines.findIndex((line) => /^##(?:XYDATA|DATA TABLE)/.test(line.trim()));
-    if (startIdx < 0) return null;
-
-    const x = [];
-    const y = [];
-    for (let index = startIdx + 1; index < lines.length; index += 1) {
-      const line = lines[index].trim();
-      if (!line) continue;
-      if (line.startsWith('##')) break;
-
-      const parts = line.split(/[,\s]+/).filter(Boolean);
-      if (parts.length < 2) continue;
-
-      const xVal = Number(parts[0]);
-      const yVal = Number(parts[1]);
-      if (!Number.isFinite(xVal) || !Number.isFinite(yVal)) continue;
-
-      x.push(xVal);
-      y.push(yVal);
-    }
-
-    if (x.length === 0 || y.length === 0) return null;
-    return { x, y };
-  }
-
-  buildLcmsPageFallbackEntity(raw, fileObj, pageHeaderMatch) {
-    const data = this.extractLcmsPageData(raw);
-    if (!data) return null;
-
-    const rawPageHeader = pageHeaderMatch ? Number(pageHeaderMatch[1]) : Number(fileObj?.page_value);
-    const pageValue = Number.isFinite(rawPageHeader) ? rawPageHeader : null;
-    const xUnit = this.extractJcampHeaderValue(raw, 'XUNITS') || 'm/z';
-    const yUnit = this.extractJcampHeaderValue(raw, 'YUNITS') || 'Intensity';
-    const title = this.extractJcampHeaderValue(raw, 'TITLE') || 'Spectrum';
-    const scanMode = this.extractJcampHeaderValue(raw, 'SCAN_MODE')
-      || this.extractJcampHeaderValue(raw, 'SCANMODE')
-      || '';
-    const polarity = fileObj?.polarity || (
-      /posit/i.test(scanMode) ? 'positive' : (/negat|negativ/i.test(scanMode) ? 'negative' : 'neutral')
-    );
-    const maxY = data.y.length > 0 ? Math.max(...data.y) : 0;
-    const spectrum = {
-      title,
-      dataType: 'MASS SPECTRUM',
-      xUnit,
-      yUnit,
-      scanMode,
-      pageValue,
-      page: pageValue != null ? String(pageValue) : null,
-      pageSymbol: pageValue != null ? String(pageValue) : null,
-      minX: Math.min(...data.x),
-      maxX: Math.max(...data.x),
-      minY: Math.min(...data.y),
-      maxY,
-      data: [{ x: data.x, y: data.y }],
-      csCategory: `MZ ${String(polarity).toUpperCase()} SPECTRUM`,
-    };
-    const entity = {
-      layout: FN.LIST_LAYOUT.LC_MS,
-      lcmsKind: 'mz',
-      lcmsPolarity: polarity,
-      title,
-      dataType: 'MASS SPECTRUM',
-      xUnit,
-      yUnit,
-      scanMode,
-      pageValue,
-      page: pageValue,
-      pageSymbol: pageValue != null ? String(pageValue) : null,
-      info: {
-        TITLE: title,
-        XUNITS: xUnit,
-        YUNITS: yUnit,
-        SCAN_MODE: scanMode,
-        TYPE: 'ms spectrum',
-        DATATYPE: 'MASS SPECTRUM',
-        $CSCATEGORY: [spectrum.csCategory],
-      },
-      spectrum,
-      feature: spectrum,
-      spectra: [spectrum],
-      features: [spectrum],
-    };
-
-    return {
-      jcamp: raw,
-      entity,
-      predictions: fileObj?.predictions || null,
-      rawPageHeader: pageValue,
-      hasRawPageHeader: Number.isFinite(pageValue),
-    };
-  }
-
-  lcmsPageValue(entity) {
-    if (!entity) return null;
-    const candidates = [entity.pageValue, entity.page, entity.pageSymbol];
-    for (let i = 0; i < candidates.length; i++) {
-      const parsed = Number(candidates[i]);
-      if (Number.isFinite(parsed)) return parsed;
-    }
-    return null;
-  }
-
-  lcmsSameRequest(a, b) {
-    if (!a || !b) return false;
-    if ((a.polarity || 'neutral') !== (b.polarity || 'neutral')) return false;
-    const aRt = Number(a.retentionTime);
-    const bRt = Number(b.retentionTime);
-    if (!Number.isFinite(aRt) || !Number.isFinite(bRt)) return false;
-    return Math.abs(aRt - bRt) < 1e-5;
-  }
-
-  applyLcmsPageMetadata(entity, retentionTime, rawPageHeader = null) {
-    if (!entity) return entity;
-    const existingPage = this.lcmsPageValue(entity);
-    if (Number.isFinite(existingPage)) return entity;
-
-    const headerPage = Number(rawPageHeader);
-    if (Number.isFinite(headerPage)) {
-      return {
-        ...entity,
-        page: headerPage,
-        pageValue: headerPage,
-        pageSymbol: String(rawPageHeader),
-      };
-    }
-
-    const rt = Number(retentionTime);
-    if (!Number.isFinite(rt)) return entity;
-    return {
-      ...entity,
-      page: rt,
-      pageValue: rt,
-      pageSymbol: String(rt),
-    };
-  }
-
-  extractInitialRetentionTime(jcamp) {
-    const spectra = Array.isArray(jcamp?.spectra) ? jcamp.spectra : [];
-    const first = spectra[0] || {};
-    const candidates = [
-      first?.data?.[0]?.x?.[0],
-      first?.data?.x?.[0],
-      first?.data?.[0]?.x,
-      first?.x?.[0],
-      first?.peaks?.[0]?.x,
-    ];
-    for (let i = 0; i < candidates.length; i++) {
-      const parsed = Number(candidates[i]);
-      if (Number.isFinite(parsed)) return parsed;
-    }
-    return null;
-  }
-
-  extractInitialLcmsMzPage(entry) {
-    if (!entry) return null;
-    const candidates = [
-      entry?.built?.entity?.lcms_mz_page,
-      entry?.built?.entity?.lcmsMzPage,
-      entry?.spc?.jcamp?.lcms_mz_page,
-      entry?.spc?.jcamp?.lcmsMzPage,
-      entry?.spc?.jcamp?.info?.$CSLCMSMZPAGE,
-    ];
-    for (let i = 0; i < candidates.length; i++) {
-      const parsed = Number(candidates[i]);
-      if (Number.isFinite(parsed)) return parsed;
-    }
-    return null;
-  }
-
-  applyLcmsBootstrapMetadata(entity, jcamp) {
-    if (!entity) return entity;
-    const lcmsMzPage = Number(
-      jcamp?.lcms_mz_page
-      ?? jcamp?.lcmsMzPage
-      ?? jcamp?.info?.$CSLCMSMZPAGE
-    );
-    if (!Number.isFinite(lcmsMzPage)) return entity;
-    return {
-      ...entity,
-      lcms_mz_page: lcmsMzPage,
-      lcmsMzPage: lcmsMzPage,
-    };
-  }
-
-  buildInitialLcmsEntities(listMuliSpcs, listEntityFiles) {
-    if (!Array.isArray(listMuliSpcs) || !Array.isArray(listEntityFiles)) return null;
-    const pairs = listMuliSpcs.map((spc, index) => ({
-      spc,
-      info: listEntityFiles[index],
-      built: (() => {
-        if (!spc?.jcamp) return null;
-        const built = FN.buildData(spc.jcamp);
-        if (!built?.entity) return built;
-        return {
-          ...built,
-          entity: this.applyLcmsBootstrapMetadata(built.entity, spc.jcamp),
-        };
-      })(),
-    })).filter((entry) => entry.info && entry.built?.entity);
-
-    if (pairs.length === 0) return null;
-    const lcmsPairs = pairs.filter((entry) => FN.isLCMsLayout(entry.built.entity.layout));
-    if (lcmsPairs.length === 0) return null;
-
-    const uvvisPair = lcmsPairs.find((entry) => this.isUvvisSpectrumInfo(entry.info)) || lcmsPairs[0];
-    if (!uvvisPair?.info) return null;
-
-    const ticPairs = lcmsPairs
-      .filter((entry) => this.isTicSpectrumInfo(entry.info))
-      .sort((a, b) => (a.info.label || '').localeCompare(b.info.label || ''));
-    const basePairs = ticPairs.length > 0 ? [...ticPairs, uvvisPair] : [uvvisPair];
-    const plusTicPair = ticPairs.find((entry) => this.isPositiveSpectrumInfo(entry.info));
-    const minusTicPair = ticPairs.find((entry) => this.isNegativeSpectrumInfo(entry.info));
-    const initialTicPair = plusTicPair || minusTicPair || ticPairs[0] || null;
-    const initialPolarity = plusTicPair
-      ? 'positive'
-      : (minusTicPair ? 'negative' : 'neutral');
-
-    const msCandidates = lcmsPairs.filter((entry) => !this.isUvvisSpectrumInfo(entry.info) && !this.isTicSpectrumInfo(entry.info));
-    const msPair = msCandidates.sort((a, b) => {
-      const ap = this.isPositiveSpectrumInfo(a.info)
-        ? 'positive'
-        : (this.isNegativeSpectrumInfo(a.info) ? 'negative' : 'neutral');
-      const bp = this.isPositiveSpectrumInfo(b.info)
-        ? 'positive'
-        : (this.isNegativeSpectrumInfo(b.info) ? 'negative' : 'neutral');
-      const aPolarityScore = ap === initialPolarity ? 0 : 1;
-      const bPolarityScore = bp === initialPolarity ? 0 : 1;
-      if (aPolarityScore !== bPolarityScore) return aPolarityScore - bPolarityScore;
-      const av = this.lcmsPageValue(a.built.entity);
-      const bv = this.lcmsPageValue(b.built.entity);
-      if (av == null && bv == null) return 0;
-      if (av == null) return 1;
-      if (bv == null) return -1;
-      return av - bv;
-    })[0];
-
-    const hasBootstrapMs = !!msPair?.built?.entity;
-    const initialMzPage = this.extractInitialLcmsMzPage(uvvisPair);
-    const initialRetentionTime = initialMzPage
-      ?? this.extractInitialRetentionTime(initialTicPair?.spc?.jcamp)
-      ?? this.lcmsPageValue(msPair?.built?.entity)
-      ?? 0;
-    const baseEntities = basePairs.map((entry) => entry.built.entity);
-    const baseFileNames = basePairs.map((entry) => entry.info.label);
-    const hasInitialMs = hasBootstrapMs;
-    const multiEntities = hasInitialMs ? [...baseEntities, msPair.built.entity] : [...baseEntities];
-    const entityFileNames = hasInitialMs ? [...baseFileNames, msPair.info.label] : [...baseFileNames];
-
-    return {
-      signature: basePairs.map((entry) => entry.info.idx).sort((a, b) => a - b).join('|'),
-      uvvisSpcInfo: uvvisPair.info,
-      baseEntities,
-      baseFileNames,
-      currentMsEntity: hasInitialMs ? msPair.built.entity : null,
-      currentMsFileName: hasInitialMs ? msPair.info.label : null,
-      currentMsPredictions: hasInitialMs ? msPair.spc?.predictions : null,
-      currentMultiEntities: multiEntities,
-      currentEntityFileNames: entityFileNames,
-      initialRetentionTime,
-      initialPolarity,
-      initialRequestSent: false,
-      loading: false,
-    };
-  }
-
-  buildUpdatedLcmsEntities(runtime, nextMsEntity, nextMsFileName = 'lcms_mz_page.jdx', nextMsPredictions = null) {
-    if (!runtime || !nextMsEntity) return null;
-    return {
-      ...runtime,
-      currentMsEntity: nextMsEntity,
-      currentMsFileName: nextMsFileName,
-      currentMsPredictions: nextMsPredictions,
-      currentMultiEntities: [...runtime.baseEntities, nextMsEntity],
-      currentEntityFileNames: [...runtime.baseFileNames, nextMsFileName],
-      loading: false,
-    };
-  }
-
   syncLcmsRuntime() {
     const content = this.getContent();
     const { listMuliSpcs, listEntityFiles } = content || {};
-    const nextRuntime = this.buildInitialLcmsEntities(listMuliSpcs, listEntityFiles);
+    const nextRuntime = buildInitialLcmsEntities(listMuliSpcs, listEntityFiles);
     const currRuntime = this.state.lcmsRuntime;
 
     if (!nextRuntime) {
@@ -1136,6 +809,10 @@ class ViewSpectra extends React.Component {
       if (this.lcmsAbortController) {
         this.lcmsAbortController.abort();
         this.lcmsAbortController = null;
+      }
+      if (this.lcmsCacheSignature !== nextRuntime.signature) {
+        this.lcmsCache.clear();
+        this.lcmsCacheSignature = nextRuntime.signature;
       }
       this.setState({ lcmsRuntime: nextRuntime }, this.requestInitialLcmsPage);
     }
@@ -1157,26 +834,62 @@ class ViewSpectra extends React.Component {
     });
   }
 
+  applyLcmsPageJson(json, runtime, resolvedRetentionTime) {
+    const decoded = decodeFetchedSpectrum(json?.file);
+    if (!decoded?.entity) {
+      this.setState(({ lcmsRuntime }) => ({
+        lcmsRuntime: lcmsRuntime ? { ...lcmsRuntime, loading: false } : lcmsRuntime,
+      }));
+      NotificationActions.add({
+        message: formatLcmsErrorMessage({ code: 'page_not_found' }),
+        level: 'error',
+        position: 'tc',
+      });
+      return;
+    }
+    const msEntity = applyLcmsPageMetadata(
+      decoded.entity,
+      resolvedRetentionTime,
+      decoded?.rawPageHeader,
+    );
+    this.setState(({ lcmsRuntime }) => ({
+      lcmsRuntime: buildUpdatedLcmsEntities(
+        lcmsRuntime || runtime,
+        msEntity,
+        `${runtime.uvvisSpcInfo.label || 'lcms'}_mz_page.jdx`,
+        decoded.predictions,
+      ),
+    }));
+  }
+
   onLcmsPageRequest({ retentionTime, polarity, trigger }) {
     const runtime = this.state.lcmsRuntime;
     if (!runtime?.uvvisSpcInfo?.idx) return;
     const resolvedRetentionTime = retentionTime ?? runtime.initialRetentionTime ?? 0;
-    const resolvedPolarity = polarity || runtime.initialPolarity || 'neutral';
-    const resolvedTrigger = trigger || 'user_click';
+    const resolvedPolarity = polarity || runtime.initialPolarity || LCMS_POLARITY_NEUTRAL;
+    const resolvedTrigger = trigger || LCMS_DEFAULT_TRIGGER;
     const nextRequest = {
       retentionTime: Number(resolvedRetentionTime),
       polarity: resolvedPolarity,
     };
     const currentRequest = {
-      retentionTime: this.lcmsPageValue(runtime.currentMsEntity),
-      polarity: runtime.currentMsEntity?.lcmsPolarity || runtime.initialPolarity || 'neutral',
+      retentionTime: lcmsPageValue(runtime.currentMsEntity),
+      polarity: runtime.currentMsEntity?.lcmsPolarity || runtime.initialPolarity || LCMS_POLARITY_NEUTRAL,
     };
 
-    if (!runtime.loading && this.lcmsSameRequest(currentRequest, nextRequest)) {
-      return;
-    }
+    if (!runtime.loading && lcmsSameRequest(currentRequest, nextRequest)) return;
+    if (runtime.loading && lcmsSameRequest(this.pendingLcmsRequest, nextRequest)) return;
 
-    if (runtime.loading && this.lcmsSameRequest(this.pendingLcmsRequest, nextRequest)) {
+    const cacheKey = lcmsRequestKey({
+      attachmentId: runtime.uvvisSpcInfo.idx,
+      retentionTime: resolvedRetentionTime,
+      polarity: resolvedPolarity,
+    });
+    const cachedJson = this.lcmsCache.get(cacheKey);
+    if (cachedJson) {
+      this.pendingLcmsRequest = null;
+      this.lcmsRequestId += 1;
+      this.applyLcmsPageJson(cachedJson, runtime, resolvedRetentionTime);
       return;
     }
 
@@ -1184,11 +897,9 @@ class ViewSpectra extends React.Component {
     this.lcmsRequestId = requestId;
     this.pendingLcmsRequest = nextRequest;
     this.setState(({ lcmsRuntime }) => ({
-      lcmsRuntime: lcmsRuntime ? { ...lcmsRuntime, loading: true } : lcmsRuntime
+      lcmsRuntime: lcmsRuntime ? { ...lcmsRuntime, loading: true } : lcmsRuntime,
     }));
-    if (this.lcmsAbortController) {
-      this.lcmsAbortController.abort();
-    }
+    if (this.lcmsAbortController) this.lcmsAbortController.abort();
     this.lcmsAbortController = new AbortController();
 
     AttachmentFetcher.fetchLcmsPage({
@@ -1200,60 +911,19 @@ class ViewSpectra extends React.Component {
     }).then((json) => {
       if (requestId !== this.lcmsRequestId) return;
       this.pendingLcmsRequest = null;
-      const decoded = this.decodeFetchedSpectrum(json?.file);
-      if (!decoded?.entity) throw new Error('Invalid LCMS page response');
-      const msEntity = this.applyLcmsPageMetadata(
-        decoded.entity,
-        resolvedRetentionTime,
-        decoded?.rawPageHeader,
-      );
-      if (typeof window !== 'undefined') {
-        window.__LCMS_LAST_PAGE__ = { // eslint-disable-line no-underscore-dangle
-          requestId,
-          requested: {
-            retentionTime: resolvedRetentionTime,
-            polarity: resolvedPolarity,
-            trigger: resolvedTrigger,
-          },
-          file: json?.file,
-          decodedJcamp: decoded?.jcamp,
-          decodedEntity: msEntity,
-        };
-      }
-      this.setState(({ lcmsRuntime }) => ({
-        lcmsRuntime: this.buildUpdatedLcmsEntities(
-          lcmsRuntime || runtime,
-          msEntity,
-          `${runtime.uvvisSpcInfo.label || 'lcms'}_mz_page.jdx`,
-          decoded.predictions,
-        )
-      }));
+      this.lcmsCache.set(cacheKey, json);
+      this.applyLcmsPageJson(json, runtime, resolvedRetentionTime);
     }).catch((error) => {
       if (requestId !== this.lcmsRequestId) return;
       this.pendingLcmsRequest = null;
-      if (error?.name === 'AbortError') {
-        return;
-      }
-      if (typeof window !== 'undefined') {
-        window.__LCMS_LAST_ERROR__ = { // eslint-disable-line no-underscore-dangle
-          requestId,
-          requested: {
-            retentionTime: resolvedRetentionTime,
-            polarity: resolvedPolarity,
-            trigger: resolvedTrigger,
-            attachmentId: runtime?.uvvisSpcInfo?.idx,
-          },
-          errorName: error?.name,
-          errorMessage: error?.message,
-        };
-      }
+      if (error?.name === 'AbortError') return;
       NotificationActions.add({
-        message: 'Unable to load requested LC/MS page.',
+        message: formatLcmsErrorMessage(error),
         level: 'error',
         position: 'tc',
       });
       this.setState(({ lcmsRuntime }) => ({
-        lcmsRuntime: lcmsRuntime ? { ...lcmsRuntime, loading: false } : lcmsRuntime
+        lcmsRuntime: lcmsRuntime ? { ...lcmsRuntime, loading: false } : lcmsRuntime,
       }));
     });
   }
@@ -1265,13 +935,13 @@ class ViewSpectra extends React.Component {
     const selectedCurveIdx = params?.curveSt?.curveIdx;
     const selectedTarget = lcmsTargets.find((target) => target.curveIdx === selectedCurveIdx) || lcmsTargets[0];
     const selectedDatasetId = selectedTarget?.si?.idDt;
-    const uvvisTarget = lcmsTargets.find((target) => this.isUvvisSpectrumInfo(target.si));
+    const uvvisTarget = lcmsTargets.find((target) => isUvvisSpectrumInfo(target.si));
 
     let uvvisSpcInfo = uvvisTarget?.si;
     if (!uvvisSpcInfo) {
       const { spcInfos } = this.state;
       uvvisSpcInfo = spcInfos.find((spc) => (
-        spc?.idDt === selectedDatasetId && this.isUvvisSpectrumInfo(spc)
+        spc?.idDt === selectedDatasetId && isUvvisSpectrumInfo(spc)
       ));
     }
     if (!uvvisSpcInfo) return null;
@@ -1473,13 +1143,6 @@ class ViewSpectra extends React.Component {
           { name: 'write peak & save', value: this.writePeakOp },
           { name: 'write peak, save & close', value: this.writeClosePeakOp },
         ];
-      } else if (FN.isLCMsLayout(et.layout)) {
-        return [
-          { name: 'save', value: this.saveOp },
-          { name: 'save & close', value: this.saveCloseOp },
-          { name: 'write peak & save', value: this.writePeakOp },
-          { name: 'write peak, save & close', value: this.writeClosePeakOp },
-        ];
       } else {
         baseOps = [
           ...baseOps,
@@ -1577,7 +1240,7 @@ class ViewSpectra extends React.Component {
 
     const isLcmsLayout = currEntity && FN.isLCMsLayout(currEntity.layout);
     if (isLcmsLayout && !isExist) {
-      const fallbackRuntime = this.buildInitialLcmsEntities(listMuliSpcs, listEntityFiles);
+      const fallbackRuntime = buildInitialLcmsEntities(listMuliSpcs, listEntityFiles);
       const runtime = this.state.lcmsRuntime || fallbackRuntime;
       if (!runtime?.currentMultiEntities?.length) return this.renderInvalid();
       currEntity = runtime.currentMsEntity || runtime.currentMultiEntities[runtime.currentMultiEntities.length - 1];

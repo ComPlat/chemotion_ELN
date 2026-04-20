@@ -28,12 +28,6 @@ class SpectraActions {
 
     const uniqInfos = selectedInfos.filter((si, index, arr) => index === arr.findIndex((x) => x.idx === si.idx));
     const idxs = uniqInfos.map(si => si.idx);
-    console.log('[SpectraActions.LoadSpectra] selected payload', { // eslint-disable-line no-console
-      totalInput: infos.length,
-      totalRequested: idxs.length,
-      requestedIds: idxs,
-      requestedLabels: uniqInfos.map((si) => si.label),
-    });
     if (idxs.length === 0) {
       return null;
     }

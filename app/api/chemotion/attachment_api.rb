@@ -7,6 +7,9 @@ require 'digest'
 
 module Chemotion
   class AttachmentAPI < Grape::API # rubocop:disable Metrics/ClassLength
+    helpers AttachmentHelpers
+    helpers LcmsApiHelpers
+
     helpers do
       def thumbnail_obj(att)
         { id: att.id, thumbnail: att.thumbnail_base64 }
@@ -47,264 +50,6 @@ module Chemotion
 
           child.destroy
         end
-      end
-
-      def lcms_tmp_name(tmp_file)
-        return '' unless tmp_file
-
-        if tmp_file.respond_to?(:original_filename)
-          tmp_file.original_filename.to_s
-        elsif tmp_file.respond_to?(:path)
-          File.basename(tmp_file.path.to_s)
-        else
-          tmp_file.to_s
-        end
-      end
-
-      def lcms_tmp_preview(tmp_file, bytes = 2048)
-        return '' unless tmp_file
-
-        if tmp_file.respond_to?(:path) && tmp_file.path.present? && File.exist?(tmp_file.path)
-          File.binread(tmp_file.path, bytes)
-        elsif tmp_file.respond_to?(:read)
-          tmp_file.rewind if tmp_file.respond_to?(:rewind)
-          data = tmp_file.read(bytes)
-          tmp_file.rewind if tmp_file.respond_to?(:rewind)
-          data.to_s
-        else
-          ''
-        end
-      rescue StandardError
-        ''
-      end
-
-      def lcms_tmp_page_value(tmp_file)
-        preview = lcms_tmp_preview(tmp_file)
-        match = preview.match(/##PAGE\s*=\s*"?([0-9.+\-Ee]+)"?/)
-        return nil unless match
-
-        Float(match[1])
-      rescue ArgumentError, TypeError
-        nil
-      end
-
-      def lcms_preview_value(preview, label)
-        match = preview.match(/^###{Regexp.escape(label)}\s*=\s*(.+)$/i)
-        return nil unless match
-
-        match[1].to_s.strip.delete_prefix('"').delete_suffix('"').presence
-      end
-
-      def lcms_tmp_polarity(tmp_file)
-        name = lcms_tmp_name(tmp_file).downcase
-        return 'positive' if name.match?(/(?:^|[._-])(plus|positive|pos)(?:[._-]|$)/)
-        return 'negative' if name.match?(/(?:^|[._-])(minus|negative|neg)(?:[._-]|$)/)
-
-        preview = lcms_tmp_preview(tmp_file)
-        return 'positive' if preview.match?(/##POLARITY\s*=\s*"?positive"?/i)
-        return 'negative' if preview.match?(/##POLARITY\s*=\s*"?negative"?/i)
-
-        nil
-      end
-
-      def lcms_page_distance(page_value, requested_retention_time)
-        requested_rt = Float(requested_retention_time) rescue nil
-        return Float::INFINITY unless page_value && requested_rt
-
-        (page_value - requested_rt).abs
-      end
-
-      def lcms_preview_kind(name, preview)
-        label = name.to_s.downcase
-        return 'uvvis' if label.match?(/(?:^|[._-])uvvis(?:[._-]|$)/)
-        return 'tic' if label.match?(/(?:^|[._-])tic(?:[._-]|$)/)
-        return 'mz' if label.match?(/(?:^|[._-])(mz|ms)(?:[._-]|$)/)
-
-        data_type = lcms_preview_value(preview, 'DATA TYPE').to_s.upcase
-        x_units = lcms_preview_value(preview, 'XUNITS').to_s.upcase
-        y_units = lcms_preview_value(preview, 'YUNITS').to_s.upcase
-        title = lcms_preview_value(preview, 'TITLE').to_s.upcase
-
-        return 'mz' if data_type.include?('MASS SPECTRUM') || x_units.include?('M/Z')
-        return 'uvvis' if title.include?('UVVIS') || y_units.include?('DETECTOR SIGNAL')
-        return 'tic' if x_units.include?('RETENTION TIME')
-
-        'unknown'
-      end
-
-      def lcms_tmp_info(tmp_file)
-        preview = lcms_tmp_preview(tmp_file, 4096)
-        kind = lcms_preview_kind(lcms_tmp_name(tmp_file), preview)
-        x_units = lcms_preview_value(preview, 'XUNITS')
-        y_units = lcms_preview_value(preview, 'YUNITS')
-        data_type = lcms_preview_value(preview, 'DATA TYPE')
-        {
-          name: lcms_tmp_name(tmp_file),
-          page: lcms_tmp_page_value(tmp_file),
-          polarity: lcms_tmp_polarity(tmp_file),
-          kind: kind,
-          x_units: x_units,
-          y_units: y_units,
-          data_type: data_type,
-          has_page_header: preview.include?('##PAGE='),
-          is_ms_page: kind == 'mz' && x_units.to_s.match?(/m\/z/i) && lcms_tmp_page_value(tmp_file).present?
-        }
-      end
-
-      def lcms_attachment_preview(att, bytes = 4096)
-        return '' unless att&.respond_to?(:abs_path)
-
-        path = att.abs_path.to_s
-        return '' if path.blank? || !File.exist?(path)
-
-        File.binread(path, bytes)
-      rescue StandardError
-        ''
-      end
-
-      def lcms_attachment_info(att)
-        preview = lcms_attachment_preview(att, 4096)
-        kind = lcms_preview_kind(att&.filename, preview)
-        x_units = lcms_preview_value(preview, 'XUNITS')
-        {
-          name: att&.filename.to_s,
-          page: begin
-            match = preview.match(/##PAGE\s*=\s*"?([0-9.+\-Ee]+)"?/)
-            match ? Float(match[1]) : nil
-          rescue ArgumentError, TypeError
-            nil
-          end,
-          kind: kind,
-          x_units: x_units,
-          y_units: lcms_preview_value(preview, 'YUNITS'),
-          data_type: lcms_preview_value(preview, 'DATA TYPE'),
-          has_page_header: preview.include?('##PAGE='),
-          is_ms_page: kind == 'mz' && x_units.to_s.match?(/m\/z/i) && preview.include?('##PAGE=')
-        }
-      end
-
-      def lcms_attachment_polarity(att)
-        name = att&.filename.to_s.downcase
-        return 'positive' if name.match?(/(?:^|[._-])(plus|positive|pos)(?:[._-]|$)/)
-        return 'negative' if name.match?(/(?:^|[._-])(minus|negative|neg)(?:[._-]|$)/)
-
-        preview = lcms_attachment_preview(att, 4096)
-        scan_mode = lcms_preview_value(preview, 'SCAN_MODE').to_s.downcase
-        return 'positive' if scan_mode.include?('posit')
-        return 'negative' if scan_mode.include?('negat')
-
-        nil
-      end
-
-      def lcms_sibling_attachments(att)
-        scope = Attachment.where(attachable_id: att.attachable_id)
-        scope = scope.where(attachable_type: att.attachable_type) if att.respond_to?(:attachable_type) && att.attachable_type.present?
-        scope.where.not(id: att.id)
-      end
-
-      def lcms_mz_attachments(att)
-        lcms_sibling_attachments(att).select do |candidate|
-          name = candidate.filename.to_s.downcase
-          name.match?(/\.(jdx|dx|jcamp)\z/) && name.match?(/(?:^|[._-])(mz|ms)(?:[._-]|$)/)
-        end
-      end
-
-      def lcms_page_blocks(raw)
-        return [] if raw.blank?
-
-        raw.scan(/(^##PAGE=.*?)(?=^##PAGE=|\z)/m)
-          .flatten
-          .map(&:to_s)
-          .reject(&:blank?)
-      end
-
-      def lcms_page_header_value(block)
-        match = block.to_s.match(/^##PAGE.*?([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)/)
-        return nil unless match
-
-        Float(match[1])
-      rescue ArgumentError, TypeError
-        nil
-      end
-
-      def lcms_header_prefix(raw)
-        idx = raw.to_s.index(/^##PAGE=/)
-        idx ? raw[0...idx] : raw.to_s
-      end
-
-      def lcms_build_single_page_jcamp(source_raw, page_block, page_value)
-        prefix = lcms_header_prefix(source_raw)
-        normalized_prefix = prefix.to_s.lines.map(&:rstrip).reject { |line| line == '##END=' }
-        normalized_block = page_block.to_s.lines.map(&:rstrip).reject { |line| line == '##END=' }
-        normalized_block[0] = "##PAGE=#{page_value}" if normalized_block[0].to_s.start_with?('##PAGE=')
-        "#{(normalized_prefix + normalized_block + ['##END=']).join("\n")}\n"
-      end
-
-      def lcms_extract_existing_mz_page(att, requested_retention_time, requested_polarity)
-        requested_rt = Float(requested_retention_time) rescue nil
-        polarity = requested_polarity.to_s.downcase.presence
-        attachments = lcms_mz_attachments(att)
-        return nil if attachments.empty?
-
-        filtered_attachments = if polarity.present?
-          exact = attachments.select { |candidate| lcms_attachment_polarity(candidate) == polarity }
-          exact.presence || attachments
-        else
-          attachments
-        end
-
-        candidates = filtered_attachments.flat_map do |candidate|
-          raw = candidate.read_file
-          lcms_page_blocks(raw).map do |block|
-            page_value = lcms_page_header_value(block)
-            next unless page_value
-
-            {
-              attachment: candidate,
-              page_value: page_value,
-              distance: lcms_page_distance(page_value, requested_rt),
-              polarity: lcms_attachment_polarity(candidate),
-              jcamp: lcms_build_single_page_jcamp(raw, block, page_value),
-            }
-          end.compact
-        end
-
-        return nil if candidates.empty?
-
-        candidates.min_by do |candidate|
-          [
-            candidate[:distance],
-            candidate[:attachment].id,
-          ]
-        end
-      rescue StandardError => e
-        Rails.logger.error("[lcms_page] existing mz extraction failed attachment_id=#{att&.id}: #{e.message}")
-        nil
-      end
-
-      def pick_lcms_ms_tmp_jcamp(tmp_files, requested_retention_time = nil, requested_polarity = nil)
-        files = Array(tmp_files).compact
-        return nil if files.empty?
-
-        normalized_polarity = requested_polarity.to_s.downcase.presence
-        candidates = files.map { |tmp| [tmp, lcms_tmp_info(tmp)] }
-        candidates = candidates.select { |_tmp, info| info[:is_ms_page] }
-        return nil if candidates.empty?
-
-        if normalized_polarity.present?
-          exact_polarity = candidates.select { |_tmp, info| info[:polarity] == normalized_polarity }
-          candidates = exact_polarity if exact_polarity.present?
-        end
-
-        ranked = candidates.sort_by do |_tmp, info|
-          [
-            lcms_page_distance(info[:page], requested_retention_time),
-            info[:page].nil? ? 1 : 0,
-            info[:name].to_s
-          ]
-        end
-
-        ranked.first&.first
       end
     end
 
@@ -869,58 +614,48 @@ module Chemotion
         { files: [raw_file_obj(jcamp_att)] }
       end
 
-      desc 'Fetch LCMS page on demand'
+      # Returns a single LCMS `##PAGE=` block, picked from sibling mz/ms
+      # JCamp attachments by closest retention time match.
+      desc 'Fetch a single LCMS MS page on demand from sibling mz JCamp files'
       params do
-        requires :attachment_id, type: Integer
-        requires :retention_time, type: String
-        optional :polarity, type: String
-        optional :trigger, type: String
+        requires :attachment_id, type: Integer, desc: 'UVVIS pivot attachment id'
+        requires :retention_time, type: String, desc: 'Target retention time (numeric, sent as string)'
+
+        optional :polarity, type: String, desc: "Restrict to 'positive' or 'negative'; any other value disables filtering"
+        optional :trigger, type: String, desc: 'Client-side analytics tag (initial, scroll, manual, ...)'
       end
       post 'lcms_page' do
-        lcms_params = params.to_h.symbolize_keys
-        lcms_params[:lcms_mz_page] = lcms_params[:retention_time]
-        lcms_params[:lcms_polarity] = lcms_params[:polarity] if lcms_params[:polarity].present?
-        lcms_params[:lcms_trigger] = lcms_params[:trigger] if lcms_params[:trigger].present?
-        Rails.logger.info(
-          "[lcms_page] request attachment_id=#{@attachment&.id} filename=#{@attachment&.filename} " \
-          "retention_time=#{lcms_params[:retention_time]} polarity=#{lcms_params[:polarity]} " \
-          "trigger=#{lcms_params[:trigger]}"
-        )
-        existing_mz_candidate = lcms_extract_existing_mz_page(
-          @attachment,
-          lcms_params[:retention_time],
-          lcms_params[:polarity]
-        )
-        if existing_mz_candidate
-          predictions = JSON.parse(@attachment.get_infer_json_content)
-          Rails.logger.info(
-            "[lcms_page] returning existing_mz_page attachment_id=#{@attachment&.id} " \
-            "source_attachment_id=#{existing_mz_candidate[:attachment].id} " \
-            "source_filename=#{existing_mz_candidate[:attachment].filename} " \
-            "selected_page=#{existing_mz_candidate[:page_value]} " \
-            "selected_distance=#{existing_mz_candidate[:distance]} " \
-            "selected_polarity=#{existing_mz_candidate[:polarity]}"
-          )
-          return {
-            file: {
-              id: existing_mz_candidate[:attachment].id,
-              file: Base64.encode64(existing_mz_candidate[:jcamp]),
-              predictions: predictions,
-              source: 'existing_mz_attachment',
-              polarity: existing_mz_candidate[:polarity],
-              page_value: existing_mz_candidate[:page_value],
-            }
-          }
+        error!({ error: 'Attachment not found', code: 'attachment_not_found' }, 404) if @attachment.nil?
+        unless read_access?(@attachment, current_user)
+          error!({ error: 'Forbidden', code: 'forbidden' }, 403)
         end
-        Rails.logger.error(
-          "[lcms_page] no existing mz page candidate attachment_id=#{@attachment&.id} " \
-          "filename=#{@attachment&.filename} requested_rt=#{lcms_params[:retention_time]} " \
-          "requested_polarity=#{lcms_params[:polarity]} mz_attachments=#{lcms_mz_attachments(@attachment).map(&:filename).inspect}"
+
+        candidate = lcms_extract_existing_mz_page(
+          @attachment,
+          params[:retention_time],
+          params[:polarity],
         )
-        error!({ error: 'No LCMS MS page found in existing mz jdx attachments' }, 422)
+
+        unless candidate
+          error!(
+            { error: 'No LCMS MS page found for the requested retention time/polarity', code: 'page_not_found' },
+            422,
+          )
+        end
+
+        {
+          file: {
+            id: candidate[:attachment].id,
+            file: Base64.encode64(candidate[:jcamp]),
+            predictions: lcms_safe_predictions(@attachment),
+            source: 'existing_mz_attachment',
+            polarity: candidate[:polarity],
+            page_value: candidate[:page_value],
+          },
+        }
       rescue StandardError => e
-        Rails.logger.error("lcms_page exception for attachment #{@attachment&.id}: #{e.message}")
-        error!({ error: 'LCMS page generation failed' }, 422)
+        Rails.logger.error("[lcms_page] exception attachment_id=#{@attachment&.id}: #{e.class}: #{e.message}")
+        error!({ error: 'LCMS page generation failed', code: 'internal_error' }, 422)
       end
 
       desc 'Make spectra inference'

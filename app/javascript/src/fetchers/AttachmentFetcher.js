@@ -81,10 +81,6 @@ export default class AttachmentFetcher {
   }
 
   static fetchFiles(ids) {
-    console.log('[AttachmentFetcher.fetchFiles] request', { // eslint-disable-line no-console
-      idsCount: Array.isArray(ids) ? ids.length : 0,
-      ids,
-    });
     const promise = fetch('/api/v1/attachments/files/', {
       credentials: 'same-origin',
       method: 'POST',
@@ -110,12 +106,6 @@ export default class AttachmentFetcher {
           });
         }
         return response.json();
-      }).then((json) => {
-        console.log('[AttachmentFetcher.fetchFiles] response', { // eslint-disable-line no-console
-          filesCount: Array.isArray(json?.files) ? json.files.length : 0,
-          fileIds: Array.isArray(json?.files) ? json.files.map((f) => f.id) : [],
-        });
-        return json;
       });
 
     return promise;
@@ -704,7 +694,7 @@ export default class AttachmentFetcher {
   }
 
   static fetchLcmsPage({
-    attachmentId, retentionTime, polarity, trigger, signal
+    attachmentId, retentionTime, polarity, trigger, signal, timeoutMs = 30000,
   }) {
     const params = {
       attachmentId,
@@ -712,33 +702,42 @@ export default class AttachmentFetcher {
       polarity,
       trigger,
     };
-    const promise = fetch('/api/v1/attachments/lcms_page/', {
+
+    const controller = new AbortController();
+    const onAbort = () => controller.abort();
+    if (signal) {
+      if (signal.aborted) controller.abort();
+      else signal.addEventListener('abort', onAbort, { once: true });
+    }
+    const timeoutId = timeoutMs > 0
+      ? setTimeout(() => controller.abort(new DOMException('Timeout', 'TimeoutError')), timeoutMs)
+      : null;
+
+    return fetch('/api/v1/attachments/lcms_page/', {
       credentials: 'same-origin',
       method: 'POST',
-      signal,
+      signal: controller.signal,
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(decamelizeKeys(params)),
     })
-      .then((response) => {
+      .then(async (response) => {
         if (!response.ok) {
-          return response.text().then((text) => {
-            throw new Error(`lcms_page ${response.status}: ${text.slice(0, 200)}`);
-          });
+          let payload = null;
+          try { payload = await response.json(); } catch (_) { /* ignore */ }
+          const err = new Error(payload?.error || `lcms_page ${response.status}`);
+          err.status = response.status;
+          err.code = payload?.code || `http_${response.status}`;
+          throw err;
         }
         return response.json();
       })
-      .then((json) => json)
-      .catch((errorMessage) => {
-        if (errorMessage?.name !== 'AbortError') {
-          console.log(errorMessage); // eslint-disable-line no-console
-        }
-        throw errorMessage;
+      .finally(() => {
+        if (timeoutId) clearTimeout(timeoutId);
+        if (signal) signal.removeEventListener('abort', onAbort);
       });
-
-    return promise;
   }
 
   static inferSpectrum(
