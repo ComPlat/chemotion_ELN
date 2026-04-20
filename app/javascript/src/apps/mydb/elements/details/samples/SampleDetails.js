@@ -207,6 +207,8 @@ export default class SampleDetails extends React.Component {
     const { sample } = this.props;
     const { currentUser, showRedirectWarning } = this.state;
 
+    this._isMounted = true;
+
     UIStore.listen(this.onUIStoreChange);
 
     const { activeTab } = this.state;
@@ -223,9 +225,11 @@ export default class SampleDetails extends React.Component {
       _pendingChemicalCreate = null;
       ChemicalFetcher.create({ sample_id: sample.id, ...snapshot })
         .then(() => {
-          // Re-fetch chemical so ChemicalTab renders the newly-created record
-          // without requiring a page refresh.
-          this.chemicalTabRef.current?.fetchChemical(sample);
+          if (this._isMounted) {
+            // Re-fetch chemical so ChemicalTab renders the newly-created record
+            // without requiring a page refresh.
+            this.chemicalTabRef.current?.fetchChemical(sample);
+          }
         })
         .catch((err) => console.log(err));
     }
@@ -262,6 +266,7 @@ export default class SampleDetails extends React.Component {
   }
 
   componentWillUnmount() {
+    this._isMounted = false;
     UIStore.unlisten(this.onUIStoreChange);
   }
 
@@ -304,6 +309,7 @@ export default class SampleDetails extends React.Component {
     // const casObj = {};
     MoleculesFetcher.fetchBySmi(smilesInput)
       .then((result) => {
+        if (!this._isMounted) return;
         if (!result || result == null) {
           NotificationActions.add({
             title: 'Error on Sample creation',
@@ -392,7 +398,9 @@ export default class SampleDetails extends React.Component {
         level: 'error',
         position: 'tc'
       });
-      this.setState({ loadingMolecule: false });
+      if (this._isMounted) {
+        this.setState({ loadingMolecule: false });
+      }
     };
 
     const fetchSuccess = (result) => {
@@ -421,12 +429,14 @@ export default class SampleDetails extends React.Component {
         DetailActions.updateMoleculeNames(sample, normalizedFormula);
       }
 
-      this.setState({
-        sample,
-        smileReadonly: true,
-        pageMessage: result.ob_log,
-        loadingMolecule: false
-      });
+      if (this._isMounted) {
+        this.setState({
+          sample,
+          smileReadonly: true,
+          pageMessage: result.ob_log,
+          loadingMolecule: false
+        });
+      }
     };
 
     const fetchMolecule = (fetchFunction) => {
@@ -509,7 +519,11 @@ export default class SampleDetails extends React.Component {
   handleExportAnalyses(sample) {
     this.setState({ startExport: true });
     AttachmentFetcher.downloadZipBySample(sample.id)
-      .then(() => { this.setState({ startExport: false }); })
+      .then(() => {
+        if (this._isMounted) {
+          this.setState({ startExport: false });
+        }
+      })
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
@@ -1432,19 +1446,27 @@ export default class SampleDetails extends React.Component {
     const mixtureSmiles = sample.molecule_cano_smiles.split('.');
     if (!mixtureSmiles || mixtureSmiles.length === 0) return;
 
-    this.setState({ loadingMolecule: true });
+    if (this._isMounted) {
+      this.setState({ loadingMolecule: true });
+    }
 
     try {
       // Phase 1: Fetch individual molecules, create Components, add sync
       await sample.splitSmilesToMolecule(mixtureSmiles, editor);
-      this.setState({ sample });
+      if (this._isMounted) {
+        this.setState({ sample });
+      }
 
       // Phase 2: Update combined molecule/SVG
       await sample.updateMixtureMolecule();
-      this.setState({ sample, loadingMolecule: false });
+      if (this._isMounted) {
+        this.setState({ sample, loadingMolecule: false });
+      }
     } catch (error) {
       console.log(error);
-      this.setState({ loadingMolecule: false });
+      if (this._isMounted) {
+        this.setState({ loadingMolecule: false });
+      }
     }
   }
 
@@ -1457,6 +1479,7 @@ export default class SampleDetails extends React.Component {
     const { sample } = this.state;
     MoleculesFetcher.decouple(sample.molfile, sample.sample_svg_file, sample.decoupled)
       .then((result) => {
+        if (!this._isMounted) return;
         sample.molecule = result;
         sample.molecule_id = result.id;
         if (result.inchikey === 'DUMMY') { sample.decoupled = true; }

@@ -1527,6 +1527,7 @@ class ElementStore {
     }
     // this.synchronizeElements(this.state.currentElement);
     this.state.currentElement = nextEl;
+    this.setState({ currentElement: nextEl, activeKey: this.state.activeKey, selecteds: this.state.selecteds });
   }
 
 
