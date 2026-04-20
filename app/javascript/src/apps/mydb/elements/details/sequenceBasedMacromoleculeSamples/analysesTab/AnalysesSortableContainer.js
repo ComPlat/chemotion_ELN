@@ -5,11 +5,12 @@ import Container from 'src/models/Container';
 import { useDrag, useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 
 const AnalysesSortableContainer = ({ readonly }) => {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
   const sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
-  const containers = sbmmSample.container.children[0].children;
+  const containers = ArrayUtils.sortArrByIndex(sbmmSample.container.children[0].children);
 
   const moveAnalyse = (idToMove, idOfPredecessor) => {
     Container.switchPositionOfChildContainer(
@@ -17,6 +18,7 @@ const AnalysesSortableContainer = ({ readonly }) => {
       idToMove,
       idOfPredecessor
     );
+    sbmmStore.changeAnalysisContainer([...containers]);
   }
 
   const sortableCard = (container, index) => {
