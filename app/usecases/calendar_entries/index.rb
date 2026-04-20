@@ -88,9 +88,8 @@ module Usecases
       end
 
       def build_shared_eventables_query
-        types = %w[Sample Reaction Labimotion::Element Wellplate ResearchPlan Screen DeviceDescription]
-        types.each_with_object({}) do |type, result|
-          ids = type.constantize.joins(:collections).where(collections: { id: collection_ids }).pluck(:id)
+        EVENTABLE_TYPE_CLASS_MAP.each_with_object({}) do |(type, klass), result|
+          ids = klass.joins(:collections).where(collections: { id: collection_ids }).pluck(:id)
           result[type] = ids if ids.any?
         end
       end

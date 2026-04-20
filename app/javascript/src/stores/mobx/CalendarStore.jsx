@@ -34,7 +34,7 @@ export const CalendarStore = types
     fullscreen: types.optional(types.boolean, false),
     current_entry: types.optional(types.frozen({}), {}),
     current_entry_editable: types.optional(types.boolean, false),
-    show_own_entries: types.optional(types.boolean, false),
+    show_own_entries: types.optional(types.boolean, true),
     current_view: types.optional(types.string, 'week'),
     show_detail: types.optional(types.boolean, false),
 
@@ -45,9 +45,10 @@ export const CalendarStore = types
     entries: types.optional(types.array(types.frozen({})), []),
     eventable_id: types.optional(types.maybeNull(types.number)),
     eventable_type: types.optional(types.maybeNull(types.string)),
-    showSharedCollectionEntries: types.optional(types.boolean, false),
+    show_shared_collection_entries: types.optional(types.boolean, false),
     selected_eventable_types: types.optional(types.array(types.string), []),
     selected_kinds: types.optional(types.array(types.string), []),
+    selected_statuses: types.optional(types.array(types.string), []),
     error: types.optional(types.maybeNull(types.string), null),
   })
   .actions((self) => ({
@@ -58,7 +59,7 @@ export const CalendarStore = types
         created_by: UserStore.getState().currentUser?.id,
         eventable_type: self.eventable_type,
         eventable_id: self.eventable_id,
-        with_shared_collections: self.show_shared_collection_entries
+        with_shared_collections: self.eventable_type ? true : self.show_shared_collection_entries
       };
 
       const result = yield CalendarEntryFetcher.getEntries(params);
@@ -77,29 +78,36 @@ export const CalendarStore = types
       const result = yield CalendarEntryFetcher.create(self.transformEntryForApi(entry));
       if (result) {
         if (result.error) {
-          console.log(result);
-        } else {
-          self.entries.push(self.transformEntryFromApi(result));
-          self.getEntries();
+          self.changeErrorMessage(result.error);
+          return false;
         }
+        self.entries.push(self.transformEntryFromApi(result));
+        if (self.eventable_type && !self.show_own_entries) {
+          self.show_own_entries = true;
+        }
+        self.getEntries();
+        return true;
       }
+      return false;
     }),
     updateEntry: flow(function* updateEntry(entry) {
       const result = yield CalendarEntryFetcher.update(self.transformEntryForApi(entry));
       if (result) {
         if (result.error) {
-          console.log(result);
-        } else {
-          const index = self.entries.findIndex((e) => e.id === result.id);
-          const entries = [...self.entries];
-          if (index !== -1) {
-            entries[index] = self.transformEntryFromApi(result);
-          } else {
-            self.entries.push(self.transformEntryFromApi(result));
-          }
-          self.getEntries();
+          self.changeErrorMessage(result.error);
+          return false;
         }
+        const index = self.entries.findIndex((e) => e.id === result.id);
+        const entries = [...self.entries];
+        if (index !== -1) {
+          entries[index] = self.transformEntryFromApi(result);
+        } else {
+          self.entries.push(self.transformEntryFromApi(result));
+        }
+        self.getEntries();
+        return true;
       }
+      return false;
     }),
     deleteEntry: flow(function* deleteEntry(entry_id) {
       const result = yield CalendarEntryFetcher.deleteById(entry_id);
@@ -186,6 +194,7 @@ export const CalendarStore = types
         title: '',
         description: '',
         kind: '',
+        status: '',
         eventable_id: self.eventable_id,
         eventable_type: self.eventable_type,
         accessible: true,
@@ -219,27 +228,13 @@ export const CalendarStore = types
         self.getEntries();
       }
     },
-    toggleEventableType(type) {
-      const idx = self.selected_eventable_types.indexOf(type);
-      if (idx === -1) {
-        self.selected_eventable_types.push(type);
-      } else {
-        self.selected_eventable_types.splice(idx, 1);
-      }
+    toggleFilterOption(filterKey, option) {
+      const idx = self[filterKey].indexOf(option);
+      if (idx === -1) self[filterKey].push(option);
+      else self[filterKey].splice(idx, 1);
     },
-    clearSelectedTypes() {
-      self.selected_eventable_types.clear();
-    },
-    toggleKind(kind) {
-      const idx = self.selected_kinds.indexOf(kind);
-      if (idx === -1) {
-        self.selected_kinds.push(kind);
-      } else {
-        self.selected_kinds.splice(idx, 1);
-      }
-    },
-    clearSelectedKinds() {
-      self.selected_kinds.clear();
+    clearFilterOptions(filterKey) {
+      self[filterKey].clear();
     },
     onRangeChange(range, view) {
       let newRange = range;
@@ -277,6 +272,7 @@ export const CalendarStore = types
         title: entry.title,
         description: entry.description,
         kind: entry.kind,
+        status: entry.status,
         start: new Date(entry.start_time),
         end: new Date(entry.end_time),
         created_by: entry.created_by,
@@ -299,13 +295,14 @@ export const CalendarStore = types
         title: entry.title,
         description: entry.description,
         kind: entry.kind,
+        status: entry.status,
         start_time: entry.start.toISOString(),
         end_time: entry.end.toISOString(),
         created_by: entry.created_by,
         eventable_type: entry.eventable_type,
         eventable_id: entry.eventable_id,
         notify_user_ids: entry.notify_users,
-      }
+      };
     },
   }))
   .views((self) => ({
@@ -313,10 +310,19 @@ export const CalendarStore = types
     get collectionUsers() { return values(self.collection_users); },
     get availableEventableTypes() {
       const typesInEntries = new Set();
+      let hasEntriesWithoutType = false;
       values(self.entries).forEach((entry) => {
-        if (entry.eventable_type) typesInEntries.add(entry.eventable_type);
+        if (entry.eventable_type) {
+          typesInEntries.add(entry.eventable_type);
+        } else {
+          hasEntriesWithoutType = true;
+        }
       });
-      return Array.from(typesInEntries).sort();
+      const typesList = Array.from(typesInEntries).sort();
+      if (hasEntriesWithoutType) {
+        typesList.push('Others');
+      }
+      return typesList;
     },
     get availableKinds() {
       const kindsInEntries = new Set();
@@ -324,5 +330,12 @@ export const CalendarStore = types
         if (entry.kind) kindsInEntries.add(entry.kind);
       });
       return Array.from(kindsInEntries).sort();
+    },
+    get availableStatuses() {
+      const statusesInEntries = new Set();
+      values(self.entries).forEach((entry) => {
+        if (entry.status) statusesInEntries.add(entry.status);
+      });
+      return Array.from(statusesInEntries).sort();
     },
   }));

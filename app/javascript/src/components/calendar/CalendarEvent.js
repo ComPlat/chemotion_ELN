@@ -7,16 +7,12 @@ const CalendarEvent = (props) => {
   const calendarStore = useContext(StoreContext).calendar;
   const { event } = props;
   const shortTitle = calendarStore.current_view === 'month';
+  const isAgendaView = calendarStore.current_view === 'agenda';
 
   const klassIcon = (event) => {
-    if (!event.element_klass_icon) { return null; }
+    if (!event.element_klass_name) { return null; }
 
-    return (
-      <>
-        <i className={`${event.element_klass_icon} me-2`} />
-        {event.element_klass_name}
-      </>
-    );
+    return event.element_klass_name;
   }
 
   const eventKind = (event) => {
@@ -40,9 +36,31 @@ const CalendarEvent = (props) => {
     return detail;
   }
 
+  if (isAgendaView) {
+    const titleStyle = {
+      fontSize: '1rem',
+      fontWeight: 'bold',
+      overflow: 'hidden',
+      display: '-webkit-box',
+      WebkitLineClamp: 2,
+      WebkitBoxOrient: 'vertical'
+    };
+    return (
+      <div style={titleStyle}>
+        {event.element_klass_icon && (
+          <i className={`${event.element_klass_icon} me-2`} />
+        )}
+        {event.title}
+      </div>
+    );
+  }
+
   return (
     <div className={`${shortTitle ? 'my-2' : 'my-0'} mt-1 fw-bold text-capitalize`} style={{ fontSize: '0.75rem' }}>
-      <p className="mb-0" style={{ overflow: 'hidden', textOverflow: 'clip', whiteSpace: 'nowrap' }}>{event.title}</p>
+      <p className="mb-1" style={{ overflow: 'hidden', textOverflow: 'clip', whiteSpace: 'nowrap' }}>
+        {event.element_klass_icon && <i className={`${event.element_klass_icon} me-1`} />}
+        {event.title}
+      </p>
       {!shortTitle && (
         <span className="d-block fw-normal" style={{ fontSize: '0.70rem' }}>
           {eventDetail(event)}
@@ -59,6 +77,8 @@ CalendarEvent.propTypes = {
   event: PropTypes.shape({
     title: PropTypes.string,
     kind: PropTypes.string,
+    description: PropTypes.string,
+    element_klass_icon: PropTypes.string,
     element_klass_name: PropTypes.string,
     element_short_label: PropTypes.string,
   }).isRequired,
