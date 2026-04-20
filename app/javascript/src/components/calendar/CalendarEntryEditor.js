@@ -32,6 +32,13 @@ function CalendarEntryEditor(props) {
     { label: capitalizeWords(type), value: type }
   ));
 
+  const statusOptions = [
+    { value: 'to be done', label: 'To Be Done' },
+    { value: 'follow up', label: 'Follow Up' },
+    { value: 'on hold', label: 'On Hold' },
+    { value: 'done', label: 'Done' },
+  ];
+
   const notifyUserList = calendarStore.collectionUsers?.map((user) => (
     { label: user.label, value: user.id }
   )) || [];
@@ -295,6 +302,17 @@ function CalendarEntryEditor(props) {
             />
           </Form.Group>
 
+          <Form.Group controlId="calendarEntryStatus" className="mb-3">
+            <Form.Label>Status</Form.Label>
+            <Select
+              isDisabled={disabled}
+              isClearable
+              value={statusOptions.find(({ value }) => value === entry.status)}
+              onChange={(ev) => updateEntry('status', ev?.value || '')}
+              options={statusOptions}
+            />
+          </Form.Group>
+
           <Form.Group
             controlId="calendarEntryEmailNotification"
             className={`mb-3 ${notifyUserList.length > 0 ? 'd-block' : 'd-none'}`}
@@ -396,6 +414,7 @@ CalendarEntryEditor.propTypes = {
     title: PropTypes.string,
     description: PropTypes.string,
     kind: PropTypes.string,
+    status: PropTypes.string,
     notified_users: PropTypes.string,
     element_name: PropTypes.string,
     notify_users: PropTypes.arrayOf(PropTypes.number),

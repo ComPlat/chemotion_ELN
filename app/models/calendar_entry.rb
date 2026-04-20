@@ -5,16 +5,17 @@
 # Table name: calendar_entries
 #
 #  id             :bigint           not null, primary key
-#  eventable_type :string
-#  eventable_id   :bigint
-#  title          :string
-#  description    :string
-#  start_time     :datetime
-#  end_time       :datetime
-#  kind           :string
 #  created_by     :integer          not null
+#  description    :string
+#  end_time       :datetime
+#  eventable_type :string
+#  kind           :string
+#  start_time     :datetime
+#  status         :string
+#  title          :string
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
+#  eventable_id   :bigint
 #
 # Indexes
 #

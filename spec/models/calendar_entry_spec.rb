@@ -11,6 +11,7 @@
 #  eventable_type :string
 #  kind           :string
 #  start_time     :datetime
+#  status         :string
 #  title          :string
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null

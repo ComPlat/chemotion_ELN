@@ -11,6 +11,7 @@ module Entities
       :start_time,
       :end_time,
       :kind,
+      :status,
       :created_by,
       :user_name_abbreviation,
       :user_email,

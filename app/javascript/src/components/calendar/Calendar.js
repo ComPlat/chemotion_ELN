@@ -217,18 +217,25 @@ function Calendar() {
   const filteredEntries = (entries) => {
     let result = entries;
 
-    if (!calendarStore.eventable_type) { return result; }
-
-    if (!calendarStore.show_own_entries) {
+    if (calendarStore.eventable_type && !calendarStore.show_own_entries) {
       result = result.filter((e) => e.created_by !== currentUserId);
     }
 
     if (calendarStore.selected_eventable_types.length > 0) {
-      result = result.filter((e) => calendarStore.selected_eventable_types.includes(e.eventable_type));
+      result = result.filter((e) => {
+        if (calendarStore.selected_eventable_types.includes('Others')) {
+          return calendarStore.selected_eventable_types.includes(e.eventable_type) || !e.eventable_type;
+        }
+        return calendarStore.selected_eventable_types.includes(e.eventable_type);
+      });
     }
 
     if (calendarStore.selected_kinds.length > 0) {
       result = result.filter((e) => calendarStore.selected_kinds.includes(e.kind));
+    }
+
+    if (calendarStore.selected_statuses.length > 0) {
+      result = result.filter((e) => calendarStore.selected_statuses.includes(e.status));
     }
 
     return result;
@@ -328,6 +335,7 @@ function Calendar() {
   };
 
   const typeFilterButton = () => {
+    if (calendarStore.eventable_type) { return null; }
     const availableTypes = calendarStore.availableEventableTypes;
     if (availableTypes.length === 0) { return null; }
 
@@ -435,6 +443,57 @@ function Calendar() {
     );
   };
 
+  const statusFilterButton = () => {
+    const { availableStatuses } = calendarStore;
+    if (availableStatuses.length === 0) { return null; }
+
+    const selectedCount = calendarStore.selected_statuses.length;
+    const variant = selectedCount > 0 ? 'success' : 'light';
+    const tooltip = selectedCount > 0
+      ? `Filtering by ${selectedCount} status(es)`
+      : 'Filter entries by status';
+
+    return (
+      <Dropdown autoClose="outside">
+        <OverlayTrigger placement="bottom" overlay={<Tooltip id="filter-by-status">{tooltip}</Tooltip>}>
+          <Dropdown.Toggle variant={variant} id="calendar-status-filter-toggle">
+            <i className="fa fa-tasks" />
+          </Dropdown.Toggle>
+        </OverlayTrigger>
+        <Dropdown.Menu>
+          {availableStatuses.map((status) => {
+            const checked = calendarStore.selected_statuses.includes(status);
+            return (
+              <Dropdown.Item
+                key={status}
+                as="div"
+                onClick={(e) => { e.stopPropagation(); calendarStore.toggleStatus(status); }}
+                className="d-flex align-items-center gap-2"
+              >
+                <Form.Check
+                  type="checkbox"
+                  id={`calendar-status-filter-${status}`}
+                  checked={checked}
+                  onChange={() => calendarStore.toggleStatus(status)}
+                  onClick={(e) => e.stopPropagation()}
+                  label={capitalizeWords(status)}
+                />
+              </Dropdown.Item>
+            );
+          })}
+          {selectedCount > 0 && (
+            <>
+              <Dropdown.Divider />
+              <Dropdown.Item onClick={() => calendarStore.clearSelectedStatuses()}>
+                Clear
+              </Dropdown.Item>
+            </>
+          )}
+        </Dropdown.Menu>
+      </Dropdown>
+    );
+  };
+
   return (
     <Draggable handle=".modal-header" onDrag={handleDrag}>
       <div>
@@ -463,6 +522,7 @@ function Calendar() {
                 {showEntriesButton()}
                 {typeFilterButton()}
                 {kindFilterButton()}
+                {statusFilterButton()}
                 {modalPropertiesButtons()}
               </ButtonGroup>
             </Stack>

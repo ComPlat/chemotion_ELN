@@ -48,6 +48,7 @@ export const CalendarStore = types
     showSharedCollectionEntries: types.optional(types.boolean, false),
     selected_eventable_types: types.optional(types.array(types.string), []),
     selected_kinds: types.optional(types.array(types.string), []),
+    selected_statuses: types.optional(types.array(types.string), []),
     error: types.optional(types.maybeNull(types.string), null),
   })
   .actions((self) => ({
@@ -186,6 +187,7 @@ export const CalendarStore = types
         title: '',
         description: '',
         kind: '',
+        status: '',
         eventable_id: self.eventable_id,
         eventable_type: self.eventable_type,
         accessible: true,
@@ -241,6 +243,17 @@ export const CalendarStore = types
     clearSelectedKinds() {
       self.selected_kinds.clear();
     },
+    toggleStatus(status) {
+      const idx = self.selected_statuses.indexOf(status);
+      if (idx === -1) {
+        self.selected_statuses.push(status);
+      } else {
+        self.selected_statuses.splice(idx, 1);
+      }
+    },
+    clearSelectedStatuses() {
+      self.selected_statuses.clear();
+    },
     onRangeChange(range, view) {
       let newRange = range;
 
@@ -277,6 +290,7 @@ export const CalendarStore = types
         title: entry.title,
         description: entry.description,
         kind: entry.kind,
+        status: entry.status,
         start: new Date(entry.start_time),
         end: new Date(entry.end_time),
         created_by: entry.created_by,
@@ -299,13 +313,14 @@ export const CalendarStore = types
         title: entry.title,
         description: entry.description,
         kind: entry.kind,
+        status: entry.status,
         start_time: entry.start.toISOString(),
         end_time: entry.end.toISOString(),
         created_by: entry.created_by,
         eventable_type: entry.eventable_type,
         eventable_id: entry.eventable_id,
         notify_user_ids: entry.notify_users,
-      }
+      };
     },
   }))
   .views((self) => ({
@@ -313,10 +328,19 @@ export const CalendarStore = types
     get collectionUsers() { return values(self.collection_users); },
     get availableEventableTypes() {
       const typesInEntries = new Set();
+      let hasEntriesWithoutType = false;
       values(self.entries).forEach((entry) => {
-        if (entry.eventable_type) typesInEntries.add(entry.eventable_type);
+        if (entry.eventable_type) {
+          typesInEntries.add(entry.eventable_type);
+        } else {
+          hasEntriesWithoutType = true;
+        }
       });
-      return Array.from(typesInEntries).sort();
+      const typesList = Array.from(typesInEntries).sort();
+      if (hasEntriesWithoutType) {
+        typesList.push('Others');
+      }
+      return typesList;
     },
     get availableKinds() {
       const kindsInEntries = new Set();
@@ -324,5 +348,12 @@ export const CalendarStore = types
         if (entry.kind) kindsInEntries.add(entry.kind);
       });
       return Array.from(kindsInEntries).sort();
+    },
+    get availableStatuses() {
+      const statusesInEntries = new Set();
+      values(self.entries).forEach((entry) => {
+        if (entry.status) statusesInEntries.add(entry.status);
+      });
+      return Array.from(statusesInEntries).sort();
     },
   }));
