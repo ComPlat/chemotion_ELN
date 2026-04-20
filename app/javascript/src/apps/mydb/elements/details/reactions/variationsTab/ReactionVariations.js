@@ -156,7 +156,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       setReactionVariations(pendingReactionVariations.current);
       pendingReactionVariations.current = null;
     }
-  }, []);
+  }, [setReactionVariations]);
 
   const applyColumnSelection = (columns) => {
     let updatedReactionVariations = addMissingColumnsToVariations({
