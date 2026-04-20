@@ -5,11 +5,12 @@ import Container from 'src/models/Container';
 import { useDrag, useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 
 const AnalysesSortableContainer = ({ readonly }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const deviceDescription = deviceDescriptionsStore.device_description;
-  const containers = deviceDescription.container.children[0].children;
+  const containers = ArrayUtils.sortArrByIndex(deviceDescription.container.children[0].children);
 
   const moveAnalyse = (idToMove, idOfPredecessor) => {
     Container.switchPositionOfChildContainer(
@@ -17,6 +18,7 @@ const AnalysesSortableContainer = ({ readonly }) => {
       idToMove,
       idOfPredecessor
     );
+    deviceDescriptionsStore.changeAnalysisContainer([...containers]);
   }
 
   const sortableCard = (container, index) => {
