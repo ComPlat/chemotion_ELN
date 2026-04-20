@@ -294,7 +294,7 @@ const Calendar = () => {
         overlay={<Tooltip id="new-calendar-event">New Event</Tooltip>}
       >
         <Button variant="light" onClick={handleNewEvent}>
-          <i className="fa fa-plus" />
+          New Event
         </Button>
       </OverlayTrigger>
     );
