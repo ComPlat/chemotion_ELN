@@ -1,11 +1,13 @@
 import React, { useEffect, useContext } from 'react';
-import { Table, Button, ButtonToolbar, Tooltip, OverlayTrigger, Popover, Alert, Card } from 'react-bootstrap';
-import DeviceModal from './DeviceModal';
+import {
+  Table, Button, ButtonToolbar, Tooltip, OverlayTrigger, Popover, Alert, Card
+} from 'react-bootstrap';
+import DeviceModal from 'src/apps/admin/devices/DeviceModal';
 import { endsWith } from 'lodash';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const DevicesList = () => {
+function DevicesList() {
   const devicesStore = useContext(StoreContext).devices;
   const deviceMetadataStore = useContext(StoreContext).deviceMetadata;
 
@@ -18,7 +20,7 @@ const DevicesList = () => {
     devicesStore.showDeviceModal();
     devicesStore.changeErrorMessage('');
     devicesStore.changeSuccessMessage('');
-  }
+  };
 
   const showEditDeviceModal = (device) => {
     devicesStore.setCreateOrUpdate('update');
@@ -27,11 +29,11 @@ const DevicesList = () => {
     devicesStore.showDeviceModal();
     devicesStore.changeErrorMessage('');
     devicesStore.changeSuccessMessage('');
-  }
+  };
 
   const toggleDeviceUsersAndGroups = (deviceId) => {
     document.getElementById(`row-device-${deviceId}`).classList.toggle('show');
-  }
+  };
 
   const showBasicConfig = (device) => {
     let datacollectorText = '';
@@ -55,30 +57,28 @@ const DevicesList = () => {
         {novncText}
       </>
     );
-  }
+  };
 
-  const listUsersAndGroups = (device, idx) => {
-    return (
-      <Table key={`users-table-${idx}`} className="bg-body-secondary">
-        <tbody>
-          {device.users.map((user, i) => (
-            <tr key={`row_${device.id}-${user.id}`}>
-              <td>{i + 1}</td>
-              <td>{user.name}</td>
-              <td>{user.initials}</td>
-              <td>{user.type}</td>
-              <td>{deleteButton(device, user.type.toLowerCase(), user)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    );
-  }
+  const listUsersAndGroups = (device, idx) => (
+    <Table key={`users-table-${idx}`} className="bg-body-secondary">
+      <tbody>
+        {device.users.map((user, i) => (
+          <tr key={`row_${device.id}-${user.id}`}>
+            <td>{i + 1}</td>
+            <td>{user.name}</td>
+            <td>{user.initials}</td>
+            <td>{user.type}</td>
+            <td>{deleteButton(device, user.type.toLowerCase(), user)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
+  );
 
   const testSFTP = (device) => {
     devicesStore.setDeviceTestingId(device.id);
     devicesStore.testSFTP(device);
-  }
+  };
 
   const testSFTPButton = (device) => {
     if (!endsWith(device.datacollector_method, 'sftp')) { return null; }
@@ -95,23 +95,27 @@ const DevicesList = () => {
         </Button>
       </OverlayTrigger>
     );
-  }
+  };
 
   const clearDatacollector = (device) => {
     devicesStore.clearDataCollector(device);
-  }
+  };
 
   const clearDatacollectorSettingsButton = (device) => {
     if (device.datacollector_method) {
       const clearPopover = (
         <Popover id="popover-clear-datacollector">
-          <Popover.Header as="h3">Remove data collector settings of {device.name}</Popover.Header>
+          <Popover.Header as="h3">
+            Remove data collector settings of
+            {device.name}
+          </Popover.Header>
           <Popover.Body>
             <ButtonToolbar>
               <Button
                 size="sm"
                 variant="danger"
-                onClick={() => clearDatacollector(device)}>
+                onClick={() => clearDatacollector(device)}
+              >
                 Yes
               </Button>
               <Button size="sm" variant="warning">
@@ -128,25 +132,29 @@ const DevicesList = () => {
             <i className="fa fa-database" />
           </Button>
         </OverlayTrigger>
-      )
+      );
     }
-  }
+  };
 
   const clearNovncSettings = (device) => {
     devicesStore.clearNovncSettings(device);
-  }
+  };
 
   const clearNovncSettingsButton = (device) => {
     if (device.novnc_target) {
       const clearPopover = (
         <Popover id="popover-clear-novnc">
-          <Popover.Header as="h3">Remove Novnc settings of {device.name}</Popover.Header>
+          <Popover.Header as="h3">
+            Remove Novnc settings of
+            {device.name}
+          </Popover.Header>
           <Popover.Body>
             <ButtonToolbar>
               <Button
                 size="sm"
                 variant="danger"
-                onClick={() => clearNovncSettings(device)}>
+                onClick={() => clearNovncSettings(device)}
+              >
                 Yes
               </Button>
               <Button size="sm" variant="warning">
@@ -163,9 +171,9 @@ const DevicesList = () => {
             <i className="fa fa-cogs" />
           </Button>
         </OverlayTrigger>
-      )
+      );
     }
-  }
+  };
 
   const confirmDelete = (device, type, user) => {
     if (type == 'device') {
@@ -173,18 +181,24 @@ const DevicesList = () => {
     } else {
       devicesStore.deleteDeviceRelation(user, device);
     }
-  }
+  };
 
   const deleteButton = (object, type, user) => {
     const deletePopover = (
       <Popover id="popover-delete-button">
-        <Popover.Header as="h3">Remove {type}: {object.name}</Popover.Header>
+        <Popover.Header as="h3">
+          Remove
+          {type}
+          :
+          {object.name}
+        </Popover.Header>
         <Popover.Body>
           <ButtonToolbar>
             <Button
               size="sm"
               variant="danger"
-              onClick={() => confirmDelete(object, type, user)}>
+              onClick={() => confirmDelete(object, type, user)}
+            >
               Yes
             </Button>
             <Button size="sm" variant="warning">
@@ -206,43 +220,45 @@ const DevicesList = () => {
         </Button>
       </OverlayTrigger>
     );
-  }
+  };
 
-  const listActionButtons = (device, idx) => {
-    return (
-      <td>
-        <ButtonToolbar>
-          <OverlayTrigger placement="top" overlay={<Tooltip id="editDevice">Edit device</Tooltip>}>
-            <Button
-              size="sm"
-              type="button"
-              variant="warning"
-              onClick={() => showEditDeviceModal(device)}>
-              <i className="fa fa-pencil-square-o" />
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger placement="top" overlay={<Tooltip id="UsersAndGroups">Show device users and groups</Tooltip>}>
-            <Button
-              size="sm"
-              type="button"
-              variant="info"
-              onClick={() => toggleDeviceUsersAndGroups(device.id)}>
-              <i className="fa fa-users me-1" />
-              ({device.users.length < 10 ? `0${device.users.length}` : device.users.length})
-            </Button>
-          </OverlayTrigger>
-          {deleteButton(device, 'device', {})}
-          {clearDatacollectorSettingsButton(device)}
-          {clearNovncSettingsButton(device)}
-          {testSFTPButton(device)}
-        </ButtonToolbar>
-      </td>
-    );
-  }
+  const listActionButtons = (device, idx) => (
+    <td>
+      <ButtonToolbar>
+        <OverlayTrigger placement="top" overlay={<Tooltip id="editDevice">Edit device</Tooltip>}>
+          <Button
+            size="sm"
+            type="button"
+            variant="warning"
+            onClick={() => showEditDeviceModal(device)}
+          >
+            <i className="fa fa-pencil-square-o" />
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="top" overlay={<Tooltip id="UsersAndGroups">Show device users and groups</Tooltip>}>
+          <Button
+            size="sm"
+            type="button"
+            variant="info"
+            onClick={() => toggleDeviceUsersAndGroups(device.id)}
+          >
+            <i className="fa fa-users me-1" />
+            (
+            {device.users.length < 10 ? `0${device.users.length}` : device.users.length}
+            )
+          </Button>
+        </OverlayTrigger>
+        {deleteButton(device, 'device', {})}
+        {clearDatacollectorSettingsButton(device)}
+        {clearNovncSettingsButton(device)}
+        {testSFTPButton(device)}
+      </ButtonToolbar>
+    </td>
+  );
 
   const listDevices = () => {
-    let tbody = [];
-    let devices = devicesStore.devices;
+    const tbody = [];
+    const { devices } = devicesStore;
 
     if (devices && devices.length <= 0) { return tbody; }
 
@@ -258,7 +274,11 @@ const DevicesList = () => {
           </tr>
           <tr key={`users-row-${idx}-${device.id}`} className="collapse" id={`row-device-${device.id}`}>
             <td colSpan="5" className="border-top-0">
-              <div className="fw-bold mt-1 mb-1">Device "{device.name}" managed by following users / groups</div>
+              <div className="fw-bold mt-1 mb-1">
+                Device "
+                {device.name}
+                " managed by following users / groups
+              </div>
               {listUsersAndGroups(device, idx)}
             </td>
           </tr>
@@ -267,15 +287,15 @@ const DevicesList = () => {
     });
 
     return tbody;
-  }
+  };
 
   const showMessage = () => {
     if (devicesStore.error_message !== '') {
       return <Alert variant="danger" className="device-alert">{devicesStore.error_message}</Alert>;
-    } else if (devicesStore.success_message !== '') {
+    } if (devicesStore.success_message !== '') {
       return <Alert variant="success" className="device-alert">{devicesStore.success_message}</Alert>;
     }
-  }
+  };
 
   return (
     <Card>
@@ -301,6 +321,6 @@ const DevicesList = () => {
       </Card.Body>
     </Card>
   );
-};
+}
 
 export default observer(DevicesList);
