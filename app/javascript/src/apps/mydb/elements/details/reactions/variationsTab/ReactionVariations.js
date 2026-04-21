@@ -42,11 +42,12 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   }
 
   const gridRef = useRef(null);
+  const pendingReactionVariations = useRef(null);
   const reactionVariations = reaction.variations;
-  const setReactionVariations = (updatedReactionVariations) => {
+  const setReactionVariations = useCallback((updatedReactionVariations) => {
     reaction.variations = updatedReactionVariations;
     onReactionChange(reaction);
-  };
+  }, [reaction, onReactionChange]);
   const reactionHasPolymers = reaction.hasPolymers();
   const reactionShortLabel = reaction.short_label;
   const reactionMaterials = getReactionMaterials(reaction);
@@ -137,10 +138,25 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
     const { field } = colDef;
     const updatedRow = updateVariationsRow(oldRow, field, newValue, reactionHasPolymers);
-    setReactionVariations(
-      reactionVariations.map((row) => (row.id === oldRow.id ? updatedRow : row))
+    const updatedPendingReactionVariations = pendingReactionVariations.current ?? reactionVariations;
+    pendingReactionVariations.current = updatedPendingReactionVariations.map(
+      (row) => (row.id === oldRow.id ? updatedRow : row)
     );
+    gridRef.current.api.applyTransaction({ update: [updatedRow] });
   }, [reactionVariations, reactionHasPolymers]);
+
+  const handleCellEditingStopped = useCallback((event) => {
+    /*
+    Defer setReactionVariations until all cell editing has stopped.
+    Without deferring, ongoing edits (e.g., moving edit focus to cell Y by committing edit of cell X with tab)
+    are unintentionally killed during the re-render that's triggered by calling setReactionVariations.
+    pendingReactionVariations accumulates intermediate updates that are submitted only when there aren't any ongoing edits.
+    */
+    if (pendingReactionVariations.current !== null && event.api.getEditingCells().length === 0) {
+      setReactionVariations(pendingReactionVariations.current);
+      pendingReactionVariations.current = null;
+    }
+  }, [setReactionVariations]);
 
   const applyColumnSelection = (columns) => {
     let updatedReactionVariations = addMissingColumnsToVariations({
@@ -357,6 +373,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           ref={gridRef}
           initialState={initialGridState}
           rowData={reactionVariations}
+          getRowId={(params) => params.data.id}
           rowDragManaged
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
@@ -396,6 +413,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           */
           readOnlyEdit
           onCellEditRequest={updateRow}
+          onCellEditingStopped={handleCellEditingStopped}
           onGridPreDestroyed={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
           onStateUpdated={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
           /*
