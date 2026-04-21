@@ -496,12 +496,18 @@ export default class ReactionDetails extends Component {
   handleReactionSchemeChange(pendingSchemeType) {
     const { reaction } = this.state;
 
-    const isWeightScheme = reaction.weight_percentage;
-    const isGasScheme = reaction.gaseous;
+    let currentSchemeType = 'default';
+    if (reaction.weight_percentage) currentSchemeType = 'weight_percentage';
+    if (reaction.gaseous) currentSchemeType = 'gaseous';
 
-    const isSwitchingFromWeightPercentage = pendingSchemeType !== 'weight_percentage' && isWeightScheme;
-    const isSwitchingFromGas = pendingSchemeType !== 'gaseous' && isGasScheme;
-    const isSwitchingToGas = pendingSchemeType === 'gaseous' && !isGasScheme;
+    if (pendingSchemeType === currentSchemeType) {
+      return;
+    }
+
+    const isSwitchingFromWeightPercentage = (pendingSchemeType !== 'weight_percentage')
+      && (currentSchemeType === 'weight_percentage');
+    const isSwitchingFromGas = (pendingSchemeType !== 'gaseous') && (currentSchemeType === 'gaseous');
+    const isSwitchingToGas = (pendingSchemeType === 'gaseous') && (currentSchemeType !== 'gaseous');
 
     const schemeSwitchClearsVariations = isSwitchingFromGas || isSwitchingToGas;
 
