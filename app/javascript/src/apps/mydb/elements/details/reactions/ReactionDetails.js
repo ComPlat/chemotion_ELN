@@ -66,7 +66,6 @@ const productLink = (product, active) => (
     >
       <i className="icon-sample mx-1" />
       {product.title()}
-      hah
     </span>
   </span>
 );
