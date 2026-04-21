@@ -1744,11 +1744,11 @@ class ElementStore {
         this.handleRefreshElements('cell_line');
         break;
       case 'vessel':
-        this.changeCurrentElement(updatedElement);
+        openOrClose(updatedElement);
         this.handleRefreshElements('vessel');
         break;
       case 'vessel_template':
-        this.changeCurrentElement(updatedElement);
+        openOrClose(updatedElement);
         this.handleRefreshElements('vessel_template');
         this.handleRefreshElements('vessel');
         break;

@@ -45,14 +45,14 @@ function VesselDetails({ vesselItem }) {
     setReadOnly(isReadOnly());
   }, [vesselItem]);
 
-  const handleSubmit = () => {
+  const handleSubmit = (closeView = false) => {
     vesselItem.adoptPropsFromMobXModel(mobXItem);
 
     if (vesselItem.is_new) {
       DetailActions.close(vesselItem, true);
       ElementActions.createVessel(vesselItem);
     } else {
-      ElementActions.updateVessel(vesselItem);
+      ElementActions.updateVessel(vesselItem, closeView);
     }
     mobXItem.markChanged(false);
   };
@@ -68,7 +68,7 @@ function VesselDetails({ vesselItem }) {
 
   const handleSaveClose = () => {
     setShowCloseOverlay(false);
-    handleSubmit();
+    handleSubmit(true);
     handleClose(true);
   };
 

@@ -1153,22 +1153,22 @@ class ElementActions {
     return vesselTemplate;
   }
 
-  updateVessel(params) {
+  updateVessel(params, closeView = false) {
     return (dispatch) => {
       VesselsFetcher.updateVesselInstance(params)
         .then((result) => {
-          dispatch(result);
+          dispatch({ element: result, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
     };
   }
 
-  updateVesselTemplate(params) {
+  updateVesselTemplate(params, closeView = false) {
     return (dispatch) => {
       VesselsFetcher.updateVesselTemplate(params)
         .then((result) => {
-          dispatch(result);
+          dispatch({ element: result, closeView });
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
