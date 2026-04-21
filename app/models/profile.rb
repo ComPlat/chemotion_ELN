@@ -76,6 +76,8 @@ class Profile < ApplicationRecord
     data['is_templates_moderator'] = false
     data['molecule_editor'] = false
     data['converter_admin'] = false
+    data['inbox_auto'] = false
+    data['inbox_manual'] = true
   end
 
   def data_default_layout
