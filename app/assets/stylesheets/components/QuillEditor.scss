@@ -62,8 +62,10 @@
 .ql-editor ul > li {
   list-style-type: none;
 }
-.ql-editor ul > li::before {
+.ql-editor ul > li::before,
+.ql-editor li[data-list="bullet"]::before {
   content: '\25CF';
+  counter-increment: none;
 }
 .ql-editor li::before {
   display: inline-block;
@@ -79,11 +81,17 @@
 .ql-editor ul li {
   padding-left: 1.5em;
 }
-.ql-editor ol li {
+.ql-editor ol li,
+.ql-editor li[data-list="ordered"] {
   counter-reset: list-1 list-2 list-3 list-4 list-5 list-6 list-7 list-8 list-9;
   counter-increment: list-num;
 }
-.ql-editor ol li:before {
+.ql-editor li[data-list="bullet"] {
+  counter-reset: none;
+  counter-increment: none;
+}
+.ql-editor ol li:before,
+.ql-editor li[data-list="ordered"]:before {
   content: counter(list-num, decimal) '. ';
 }
 .ql-editor ol li.ql-indent-1 {
