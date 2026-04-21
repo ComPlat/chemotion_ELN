@@ -1597,18 +1597,20 @@ class ElementStore {
   }
 
   UpdateResearchPlanAttaches(updatedResearchPlan, closeView = false) {
+    // Save-and-Close: close synchronously on the element we already have;
+    // skip the refresh fetch since the panel is going away anyway.
+    if (closeView) {
+      this.deleteCurrentElement(updatedResearchPlan);
+      return;
+    }
     const { selecteds } = this.state;
     ResearchPlansFetcher.fetchById(updatedResearchPlan.id)
       .then((result) => {
         result.mode = 'edit';
-        if (closeView) {
-          this.deleteCurrentElement(result);
-        } else {
-          this.changeCurrentElement(result);
-          const index = this.elementIndex(selecteds, result);
-          const newSelecteds = this.updateElement(result, index);
-          this.setState({ selecteds: newSelecteds });
-        }
+        this.changeCurrentElement(result);
+        const index = this.elementIndex(selecteds, result);
+        const newSelecteds = this.updateElement(result, index);
+        this.setState({ selecteds: newSelecteds });
       });
   }
 
@@ -1617,17 +1619,17 @@ class ElementStore {
   }
 
   UpdateWellplateAttaches(updatedWellplate, closeView = false) {
+    if (closeView) {
+      this.deleteCurrentElement(updatedWellplate);
+      return;
+    }
     const { selecteds } = this.state;
     WellplatesFetcher.fetchById(updatedWellplate.id)
       .then((result) => {
-        if (closeView) {
-          this.deleteCurrentElement(result);
-        } else {
-          this.changeCurrentElement(result);
-          const index = this.elementIndex(selecteds, result);
-          const newSelecteds = this.updateElement(result, index);
-          this.setState({ selecteds: newSelecteds });
-        }
+        this.changeCurrentElement(result);
+        const index = this.elementIndex(selecteds, result);
+        const newSelecteds = this.updateElement(result, index);
+        this.setState({ selecteds: newSelecteds });
       });
   }
 
@@ -1636,17 +1638,17 @@ class ElementStore {
   }
 
   UpdateScreen(updatedScreen, closeView = false) {
+    if (closeView) {
+      this.deleteCurrentElement(updatedScreen);
+      return;
+    }
     const { selecteds } = this.state;
     ScreensFetcher.fetchById(updatedScreen.id)
       .then((result) => {
-        if (closeView) {
-          this.deleteCurrentElement(result);
-        } else {
-          this.changeCurrentElement(result);
-          const index = this.elementIndex(selecteds, result);
-          const newSelecteds = this.updateElement(result, index);
-          this.setState({ selecteds: newSelecteds });
-        }
+        this.changeCurrentElement(result);
+        const index = this.elementIndex(selecteds, result);
+        const newSelecteds = this.updateElement(result, index);
+        this.setState({ selecteds: newSelecteds });
       });
   }
 

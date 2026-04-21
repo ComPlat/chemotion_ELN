@@ -88,6 +88,12 @@ export default function ElementDetailCard({
   const handleSaveClose = () => {
     setShowCloseOverlay(false);
     onSave(true);
+    // Mirror the non-save close path so callers that use onClose for their own
+    // cleanup (e.g. removing an item from a MobX store) still run on Save and Close.
+    // The actual panel close is handled by the onSave chain via DetailActions.close.
+    if (onClose) {
+      onClose();
+    }
   };
 
   const saveButtonProps = {
