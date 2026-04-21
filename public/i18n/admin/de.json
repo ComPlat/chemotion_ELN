@@ -35,6 +35,11 @@
     "user_management-enter_id" : ".. oder die Nutzer ID ein",
     "user_management-login_at" : "Anmeldung um",
     "user_management-disk_usage" : "Festplatten Nutzung",
+    "devices-dc_novnc" : "Datensammler / NoVNC",
+    "devices-add" : "Neues Gerät hinzufügen",
+    "devices-edit" : "Gerät bearbeiten",
+    "devices-show_dev_usr_grp" : "Gerätebenutzer und Gruppen anzeigen",
+    "devices-sftp_test" : "Test der Verbindung zum Datensammler",
     "actions" : "Aktionen",
     "cancel" : "Abbrechen"
 }

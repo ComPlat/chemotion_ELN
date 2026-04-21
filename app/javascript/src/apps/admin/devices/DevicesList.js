@@ -6,8 +6,10 @@ import DeviceModal from 'src/apps/admin/devices/DeviceModal';
 import { endsWith } from 'lodash';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import { useIntl, FormattedMessage } from 'react-intl';
 
 function DevicesList() {
+  const intl = useIntl();
   const devicesStore = useContext(StoreContext).devices;
   const deviceMetadataStore = useContext(StoreContext).deviceMetadata;
 
@@ -83,7 +85,11 @@ function DevicesList() {
   const testSFTPButton = (device) => {
     if (!endsWith(device.datacollector_method, 'sftp')) { return null; }
 
-    const tipTestConnect = <Tooltip id="test_tooltip">test data collector connection</Tooltip>;
+    const tipTestConnect = (
+      <Tooltip id="test_tooltip">
+        <FormattedMessage id="devices-sftp_test" />
+      </Tooltip>
+    );
     return (
       <OverlayTrigger placement="top" overlay={tipTestConnect}>
         <Button size="sm" onClick={() => testSFTP(device)}>
@@ -225,7 +231,14 @@ function DevicesList() {
   const listActionButtons = (device, idx) => (
     <td>
       <ButtonToolbar>
-        <OverlayTrigger placement="top" overlay={<Tooltip id="editDevice">Edit device</Tooltip>}>
+        <OverlayTrigger
+          placement="top"
+          overlay={(
+            <Tooltip id="editDevice">
+              <FormattedMessage id="devices-edit" />
+            </Tooltip>
+)}
+        >
           <Button
             size="sm"
             type="button"
@@ -235,7 +248,14 @@ function DevicesList() {
             <i className="fa fa-pencil-square-o" />
           </Button>
         </OverlayTrigger>
-        <OverlayTrigger placement="top" overlay={<Tooltip id="UsersAndGroups">Show device users and groups</Tooltip>}>
+        <OverlayTrigger
+          placement="top"
+          overlay={(
+            <Tooltip id="UsersAndGroups">
+              <FormattedMessage id="devices-show_dev_usr_grp" />
+            </Tooltip>
+)}
+        >
           <Button
             size="sm"
             type="button"
@@ -300,8 +320,8 @@ function DevicesList() {
   return (
     <Card>
       <Card.Header className="d-flex justify-content-between align-items-center">
-        <span className="fw-bold fs-4">Devices</span>
-        <Button variant="light" onClick={() => showCreateDeviceModal()}>Add new device</Button>
+        <span className="fw-bold fs-4"><FormattedMessage id="navigation-devices" /></span>
+        <Button variant="light" onClick={() => showCreateDeviceModal()}><FormattedMessage id="devices-add" /></Button>
       </Card.Header>
       <Card.Body>
         {showMessage()}
@@ -309,10 +329,10 @@ function DevicesList() {
           <thead>
             <tr className="bg-dark-subtle">
               <th>#</th>
-              <th>Actions</th>
-              <th>Name</th>
-              <th>Initial</th>
-              <th>Data Collector / NoVNC</th>
+              <th><FormattedMessage id="actions" /></th>
+              <th><FormattedMessage id="name" /></th>
+              <th><FormattedMessage id="devices-initial" /></th>
+              <th><FormattedMessage id="devices-dc_novnc" /></th>
             </tr>
           </thead>
           {listDevices()}

@@ -19,7 +19,6 @@
     "user_management-new_user" : "New User",
     "user_management-single_user" : "Single User",
     "user_management-email" : "Email",
-    "user_management-name" : "Name",
     "user_management-first_name" : "First name",
     "user_management-last_name" : "Last name",
     "user_management-password" : "Password",
@@ -39,6 +38,13 @@
     "user_management-enter_id" : ".. or enter the user ID",
     "user_management-login_at" : "Login at",
     "user_management-disk_usage" : "Disk Usage",
+    "devices-initial" : "Initial",
+    "devices-dc_novnc" : "Data Collector / NoVNC",
+    "devices-add" : "Add new device",
+    "devices-edit" : "Edit device",
+    "devices-show_dev_usr_grp" : "Show device users and groups",
+    "devices-sftp_test" : "test data collector connection",
     "actions" : "Actions",
-    "cancel" : "Cancel"
+    "cancel" : "Cancel",
+    "name" : "Name"
 }

@@ -1326,7 +1326,7 @@ class UserManagement extends React.Component {
         <tr className="align-middle fs-4 py-3">
           <th className="fs-4 py-3">#</th>
           <th className="fs-4 py-3"><FormattedMessage id="actions" /></th>
-          <th className="fs-4 py-3"><FormattedMessage id="user_management-name" /></th>
+          <th className="fs-4 py-3"><FormattedMessage id="name" /></th>
           <th className="fs-4 py-3"><FormattedMessage id="user_management-abbr" /></th>
           <th className="fs-4 py-3"><FormattedMessage id="user_management-email" /></th>
           <th className="fs-4 py-3"><FormattedMessage id="user_management-type" /></th>
@@ -1363,7 +1363,7 @@ class UserManagement extends React.Component {
           <th className="fs-6 py-3">
             <Form.Control
               type="text"
-              placeholder={intl.formatMessage({ id: 'user_management-name' })}
+              placeholder={intl.formatMessage({ id: 'name' })}
               onChange={(e) => this.updateFilter('name', e.target.value)}
             />
           </th>
