@@ -106,17 +106,22 @@ export default class SampleForm extends React.Component {
   }
 
   handleAmountChanged(amount) {
-    const { sample } = this.props;
+    const { sample, handleSampleChanged } = this.props;
 
     // sample.initializeSampleDetails?.();
     // sample.sample_details.reference_component_changed = false;
 
     sample.setAmount(amount);
+    sample.changed = true;
+    handleSampleChanged(sample);
   }
 
   handleMolarityChanged(molarity) {
-    this.props.sample.setMolarity(molarity);
+    const { sample, handleSampleChanged } = this.props;
+    sample.setMolarity(molarity);
+    sample.changed = true;
     this.setState({ molarityBlocked: false });
+    handleSampleChanged(sample);
   }
 
   handleSampleTypeChanged(sampleType) {
@@ -161,12 +166,18 @@ export default class SampleForm extends React.Component {
   }
 
   handleDensityChanged(density) {
-    this.props.sample.setDensity(density);
+    const { sample, handleSampleChanged } = this.props;
+    sample.setDensity(density);
+    sample.changed = true;
     this.setState({ molarityBlocked: true });
+    handleSampleChanged(sample);
   }
 
   handleMolecularMassChanged(mass) {
-    this.props.sample.setMolecularMass(mass);
+    const { sample, handleSampleChanged } = this.props;
+    sample.setMolecularMass(mass);
+    sample.changed = true;
+    handleSampleChanged(sample);
   }
 
   handleMixtureAmountLChanged(e, sample) {
@@ -479,6 +490,7 @@ export default class SampleForm extends React.Component {
     if (field === 'purity' && (e.value < 0 || e.value > 1)) {
       e.value = 1;
       sample[field] = e.value;
+      sample.changed = true;
       NotificationActions.add({
         message: 'Purity value should be >= 0 and <=1',
         level: 'error'
@@ -499,8 +511,10 @@ export default class SampleForm extends React.Component {
       const key = field.split('xref_')[1];
       sample.xref[key] = e;
     } else if (e && (e.value || e.value === 0)) {
-      // for numeric inputs
+      // for numeric inputs (e.g. purity) — mark dirty since Element.checksum
+      // strips numeric values and would not otherwise detect the edit.
       sample[field] = e.value;
+      sample.changed = true;
     } else {
       sample[field] = e;
     }

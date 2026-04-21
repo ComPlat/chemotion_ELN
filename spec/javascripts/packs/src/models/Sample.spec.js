@@ -1723,4 +1723,42 @@ describe('Sample', async () => {
       expect(s.equivalent).toBe(originalEquivalent);
     });
   });
+
+  describe('Sample.isPendingToSave (changed flag)', () => {
+    const buildBaseline = () => {
+      const s = Sample.buildEmpty(0);
+      s.is_new = false;
+      s.name = 'baseline';
+      s.updateChecksum();
+      return s;
+    };
+
+    it('is false for an unchanged persisted sample', () => {
+      const s = buildBaseline();
+      expect(s.isPendingToSave).toBe(false);
+    });
+
+    it('becomes true when sample.changed is set to true', () => {
+      const s = buildBaseline();
+      s.changed = true;
+      expect(s.isPendingToSave).toBe(true);
+    });
+
+    it('is true when checksum-based isEdited triggers (name change)', () => {
+      const s = buildBaseline();
+      s.name = 'edited';
+      expect(s.isPendingToSave).toBe(true);
+    });
+
+    it('resets changed to false when updateChecksum is called', () => {
+      const s = buildBaseline();
+      s.changed = true;
+      expect(s.isPendingToSave).toBe(true);
+
+      s.updateChecksum();
+
+      expect(s.changed).toBe(false);
+      expect(s.isPendingToSave).toBe(false);
+    });
+  });
 });

@@ -51,10 +51,11 @@ export default class Element {
   }
 
   get isPendingToSave() {
-    return !_.isEmpty(this) && (this.isNew || this.isEdited);
+    return !_.isEmpty(this) && (this.isNew || this.isEdited || this.changed === true);
   }
 
   updateChecksum(cs) {
+    this.changed = false;
     if (cs) {
       this._checksum = cs
     } else {
