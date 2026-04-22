@@ -978,7 +978,7 @@ class ViewSpectra extends React.Component {
         show={showModal}
         animation
         onHide={this.closeOp}
-        closeLabel="Close without Save"
+        closeLabel="Close"
         showFooter
       >
         {this.renderControls(idx)}
