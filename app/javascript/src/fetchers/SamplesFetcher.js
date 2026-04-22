@@ -123,8 +123,13 @@ export default class SamplesFetcher {
       },
       body: JSON.stringify(sample.serialize())
     }).then((response) => response.json())
-      .then((json) => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
-        .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
+      .then((json) => {
+        if (!json.sample || !json.sample.id) {
+          throw new Error('Invalid response: sample data not found');
+        }
+        return GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
+          .then(() => this.fetchById(json.sample.id));
+      }).catch((errorMessage) => {
         console.log(errorMessage);
       });
     return AttachmentFetcher.uploadNewAttachmentsForContainer(sample.container).then(() => promise());

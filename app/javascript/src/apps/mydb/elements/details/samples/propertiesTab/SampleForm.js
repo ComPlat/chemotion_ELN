@@ -159,7 +159,7 @@ function HierarchicalCompositionTable({ components, onFieldChange }) {
           defaultColDef={COMPOSITION_DEFAULT_COL_DEF}
           rowData={gridRowData}
           getRowId={getRowId}
-          rowHeight="auto"
+          rowHeight={25}
           domLayout="autoHeight"
           onGridReady={fitColumnsToGrid}
           onGridSizeChanged={fitColumnsToGrid}

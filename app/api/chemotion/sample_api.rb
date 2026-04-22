@@ -623,10 +623,12 @@ module Chemotion
         end
 
         all_coll = Collection.get_all_collection_for_user(current_user.id)
-        sample.collections << all_coll
+        sample.collections << all_coll unless sample.collections.include?(all_coll)
 
         sample.container = update_datamodel(params[:container])
-        sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
+        if params[:xref]&.fetch(:inventory_label, nil)
+          sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
+        end
         sample.save!
 
         create_literatures_and_literals(sample, literatures)

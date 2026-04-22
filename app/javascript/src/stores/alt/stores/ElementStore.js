@@ -735,7 +735,14 @@ class ElementStore {
   }
 
   handleCreateSample({ element, closeView, components }) {
-    if (element.isMixture() || element.isHierarchicalMaterial()) {
+    if (!element) {
+      console.error('handleCreateSample: element is undefined');
+      return;
+    }
+    const isMixture = typeof element.isMixture === 'function' && element.isMixture();
+    const isHierarchical = typeof element.isHierarchicalMaterial === 'function'
+      && element.isHierarchicalMaterial();
+    if (isMixture || isHierarchical) {
       ComponentsFetcher.saveOrUpdateComponents(element, components)
         .then(async () => {
           await element.initialComponents(components);
