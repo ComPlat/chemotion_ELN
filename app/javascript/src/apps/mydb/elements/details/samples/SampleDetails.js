@@ -114,7 +114,7 @@ const sampleTitleAppendix = (sample, handleFastInput) => (
   <>
     <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
     <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
-    { !sample.isHierarchicalMaterial && <PubchemLabels element={sample} /> }
+    { !sample.isHierarchicalMaterial() && <PubchemLabels element={sample} /> }
     {sample.isNew && !sample.isMixture() && <FastInput fnHandle={handleFastInput} />}
   </>
 );
