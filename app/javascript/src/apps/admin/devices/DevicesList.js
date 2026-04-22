@@ -6,10 +6,9 @@ import DeviceModal from 'src/apps/admin/devices/DeviceModal';
 import { endsWith } from 'lodash';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { useIntl, FormattedMessage } from 'react-intl';
+import { FormattedMessage } from 'react-intl';
 
 function DevicesList() {
-  const intl = useIntl();
   const devicesStore = useContext(StoreContext).devices;
   const deviceMetadataStore = useContext(StoreContext).deviceMetadata;
 

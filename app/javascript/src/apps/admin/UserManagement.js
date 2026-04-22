@@ -75,66 +75,79 @@ const handleResetPassword = (id, random, handleShowAlert) => {
 };
 
 const validateEmail = (mail) => (/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,63})+$/.test(mail));
-const editTooltip = <Tooltip id="inchi_tooltip">Edit user info</Tooltip>;
-const resetPasswordTooltip = <Tooltip id="assign_button">Reset password</Tooltip>;
-const resetPasswordInstructionsTooltip = <Tooltip id="assign_button">Send password instructions</Tooltip>;
-const confirmUserTooltip = <Tooltip id="assign_button">Confirm this account</Tooltip>;
+const editTooltip = <Tooltip id="inchi_tooltip"><FormattedMessage id="user_management-edit_user" /></Tooltip>;
+const resetPasswordTooltip = (
+  <Tooltip id="assign_button">
+    <FormattedMessage id="user_management-password_reset" />
+  </Tooltip>
+);
+const resetPasswordInstructionsTooltip = (
+  <Tooltip id="assign_button">
+    <FormattedMessage id="user_management-password_instructions" />
+  </Tooltip>
+);
+const confirmUserTooltip = (
+  <Tooltip id="assign_button">
+    <FormattedMessage id="user_management-confirm_account" />
+  </Tooltip>
+);
 const confirmEmailChangeTooltip = (email) => (
   <Tooltip id="email_change_button">
-    Confirm E-Mail:
+    <FormattedMessage id="user_management-confirm_email" />
+    :
     <br />
     {email}
   </Tooltip>
 );
-const disableTooltip = <Tooltip id="assign_button">Lock this account</Tooltip>;
-const enableTooltip = <Tooltip id="assign_button">Unlock this account</Tooltip>;
+const disableTooltip = <Tooltip id="assign_button"><FormattedMessage id="user_management-lock_account" /></Tooltip>;
+const enableTooltip = <Tooltip id="assign_button"><FormattedMessage id="user_management-unlock_account" /></Tooltip>;
 
 function Disable2FATooltip() {
-  return <Tooltip id="assign_button">Enable 2FA (Two factor authentication)</Tooltip>;
+  return <Tooltip id="assign_button"><FormattedMessage id="user_management-enable_2fa" /></Tooltip>;
 }
 
 function Enable2FATooltip() {
-  return <Tooltip id="assign_button">Disable 2FA (Two factor authentication)</Tooltip>;
+  return <Tooltip id="assign_button"><FormattedMessage id="user_management-disable_2fa" /></Tooltip>;
 }
 
 const converterEnableTooltip = (
   <Tooltip id="assign_button">
-    Enable Converter profiles editing for this user (currently disabled)
+    <FormattedMessage id="user_management-enable_profile_edit" />
   </Tooltip>
 );
 const converterDisableTooltip = (
   <Tooltip id="assign_button">
-    Disable Converter profiles editing for this user (currently enabled)
+    <FormattedMessage id="user_management-disable_profile_edit" />
   </Tooltip>
 );
 const templateModeratorEnableTooltip = (
   <Tooltip id="assign_button">
-    Enable Ketcher template editing for this user (currently disabled)
+    <FormattedMessage id="user_management-enable_template_edit" />
   </Tooltip>
 );
 const templateModeratorDisableTooltip = (
   <Tooltip id="assign_button">
-    Disable Ketcher template editing for this user (currently enabled)
+    <FormattedMessage id="user_management-disable_template_edit" />
   </Tooltip>
 );
 const moleculeModeratorEnableTooltip = (
   <Tooltip id="assign_button">
-    Enable editing the representation of the global molecules for this user (currently disabled)
+    <FormattedMessage id="user_management-enable_molecule_edit" />
   </Tooltip>
 );
 const moleculeModeratorDisableTooltip = (
   <Tooltip id="assign_button">
-    Disable editing the representation of the global molecules for this user (currently enabled)
+    <FormattedMessage id="user_management-disable_molecule_edit" />
   </Tooltip>
 );
 const accountActiveTooltip = (
   <Tooltip id="assign_button">
-    This user account is deactivated, click to [activate]
+    <FormattedMessage id="user_management-activate" />
   </Tooltip>
 );
 const accountInActiveTooltip = (
   <Tooltip id="assign_button">
-    This user account is activated, click to [deactivate]
+    <FormattedMessage id="user_management-deactivate" />
   </Tooltip>
 );
 
@@ -1498,7 +1511,11 @@ class UserManagement extends React.Component {
           </OverlayTrigger>
           <OverlayTrigger
             placement="bottom"
-            overlay={<Tooltip id="generic_tooltip">Grant/Revoke Generic Designer</Tooltip>}
+            overlay={(
+              <Tooltip id="generic_tooltip">
+                <FormattedMessage id="user_management-generic_designer_g/r" />
+              </Tooltip>
+)}
           >
             <Button
               size="sm"
