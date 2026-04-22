@@ -284,7 +284,7 @@ export default class SampleDetails extends React.Component {
 
   handleSampleChanged(sample, cb) {
     this.setState({
-      sample,
+      sample: cloneDeep(sample),
     }, () => {
       if (typeof cb === 'function') {
         cb();
@@ -294,8 +294,9 @@ export default class SampleDetails extends React.Component {
 
   handleAmountChanged(amount) {
     const { sample } = this.state;
-    sample.setAmountAndNormalizeToGram(amount);
-    this.setState({ sample });
+    const updatedSample = cloneDeep(sample);
+    updatedSample.setAmountAndNormalizeToGram(amount);
+    this.setState({ sample: updatedSample });
   }
 
   handleFastInput(smi, cas) {

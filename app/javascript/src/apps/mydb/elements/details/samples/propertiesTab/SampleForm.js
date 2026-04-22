@@ -277,11 +277,7 @@ export default class SampleForm extends React.Component {
 
   handleAmountChanged(amount) {
     const { sample } = this.props;
-
-    // sample.initializeSampleDetails?.();
-    // sample.sample_details.reference_component_changed = false;
-
-    sample.setAmount(amount);
+    sample.setAmountAndNormalizeToGram(amount);
   }
 
   handleMolarityChanged(molarity) {
@@ -985,9 +981,9 @@ export default class SampleForm extends React.Component {
       : null;
     let metric;
     if (unit === 'l') {
-      metric = prefixes[1];
+      metric = prefixes[1] || prefixes[0];
     } else if (unit === 'mol') {
-      metric = prefixes[2];
+      metric = prefixes[1] || prefixes[0];
     } else {
       metric = prefixes[0];
     }
