@@ -180,15 +180,33 @@ const onDeleteText = async (editor) => {
     if (editor) {
       await fetchKetcherData(editor);
     }
-    const textListAlias = textList;
-    textListAlias.forEach((item, idx) => {
+
+    // Build the set of text keys that still exist in Ketcher's internal struct.
+    // This is the ground truth — textNodeStruct is not cleared on deletion, so
+    // checking it would always keep associated labels even after they are removed.
+    const ketcherTexts = editor?._structureDef?.editor?.editor?.struct?.()?.texts;
+    const liveKeys = new Set();
+    if (ketcherTexts) {
+      ketcherTexts.forEach((textEntity) => {
+        try {
+          const parsed = JSON.parse(textEntity.content);
+          const k = parsed?.blocks?.[0]?.key;
+          if (k) liveKeys.add(k);
+        } catch (e) { /* skip malformed */ }
+      });
+    }
+
+    const surviving = [];
+    for (const item of textList) {
       const { key } = JSON.parse(item.data.content).blocks[0];
-      if (!Object.values(textNodeStruct).includes(key)) {
+      const stillOnCanvas = ketcherTexts ? liveKeys.has(key) : Object.values(textNodeStruct).includes(key);
+      if (stillOnCanvas) {
+        surviving.push(item);
+      } else {
         deleteKeyByValue(key);
-        textListAlias.splice(idx, 1);
       }
-    });
-    textListSetter(textListAlias);
+    }
+    textListSetter(surviving);
   } catch (e) {
     console.error('onDeleteText', e);
   }

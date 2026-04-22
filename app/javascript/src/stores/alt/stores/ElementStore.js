@@ -801,11 +801,7 @@ class ElementStore {
 
   handleUpdateLinkedElement({ element, closeView, components }) {
     if (element instanceof Sample && (element.isMixture() || element.isHierarchicalMaterial())) {
-      // Initialize components synchronously before rendering so changeCurrentElement
-      // receives an element with properly-structured components instead of API-format ones.
-      if (components?.length > 0) {
-        element.initialComponents(components);
-      }
+      element.initialComponents(components || []);
       ComponentsFetcher.saveOrUpdateComponents(element, components)
         .catch((errorMessage) => {
           console.log(errorMessage);

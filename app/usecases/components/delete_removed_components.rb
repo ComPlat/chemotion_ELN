@@ -16,10 +16,15 @@ module Usecases
           cp.dig(:component_properties, :molecule_id)&.to_i
         end
 
-        # Delete all components for the sample whose molecule_id is not in the keep list
-        Component.where(sample_id: @sample_id)
-                 .where.not("CAST(component_properties ->> 'molecule_id' AS INTEGER) IN (?)", molecule_ids_to_keep)
-                 .destroy_all
+        # When no components remain, delete all. Otherwise delete those not in the keep list.
+        # Avoid passing an empty array to IN(?) — Rails generates IN(NULL) which never matches.
+        if molecule_ids_to_keep.empty?
+          Component.where(sample_id: @sample_id).destroy_all
+        else
+          Component.where(sample_id: @sample_id)
+                   .where.not("CAST(component_properties ->> 'molecule_id' AS INTEGER) IN (?)", molecule_ids_to_keep)
+                   .destroy_all
+        end
       end
     end
   end

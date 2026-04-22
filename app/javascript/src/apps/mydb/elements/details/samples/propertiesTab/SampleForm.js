@@ -166,6 +166,7 @@ function HierarchicalCompositionTable({ components, onFieldChange }) {
           onFirstDataRendered={fitColumnsToGrid}
           singleClickEdit
           stopEditingWhenCellsLoseFocus
+          overlayNoRowsTemplate="Create sample to generate the table."
         />
       </div>
     </>
