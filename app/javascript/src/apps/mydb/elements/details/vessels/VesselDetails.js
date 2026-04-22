@@ -68,8 +68,12 @@ function VesselDetails({ vesselItem }) {
 
   const handleSaveClose = () => {
     setShowCloseOverlay(false);
+    // handleSubmit(true) threads closeView through updateVessel; the store closes
+    // the panel once the update resolves. Locally we only need to clear our MobX
+    // entry — do not dispatch DetailActions.close here, otherwise the store close
+    // path runs twice and can shift the active tab unexpectedly.
     handleSubmit(true);
-    handleClose(true);
+    context.vesselDetailsStore.removeVesselFromStore(vesselItem.id);
   };
 
   const requestClose = (event, forceClose = false, placement = 'bottom') => {

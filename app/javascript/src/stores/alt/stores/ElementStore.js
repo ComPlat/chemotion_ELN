@@ -1715,7 +1715,14 @@ class ElementStore {
     const closeView = isEnriched ? !!payload.closeView : false;
     const openOrClose = (el) => {
       if (closeView) {
-        this.deleteCurrentElement(el);
+        // Guard: if the element is no longer in selecteds (e.g. a detail view
+        // already dispatched DetailActions.close synchronously), skip
+        // deleteCurrentElement so we don't reset activeKey/currentElement and
+        // unexpectedly shift the active tab.
+        const { selecteds } = this.state;
+        if (this.elementIndex(selecteds, el) !== -1) {
+          this.deleteCurrentElement(el);
+        }
       } else {
         this.changeCurrentElement(el);
       }

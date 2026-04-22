@@ -575,7 +575,9 @@ export default class SampleDetails extends React.Component {
     }
 
     if (needChemicalSave) {
-      this.setState({ saveInventoryAction: true });
+      // Defer close until the inventory save completes; handleInventorySaveComplete
+      // consumes closeAfterInventorySave when didSave is true.
+      this.setState({ saveInventoryAction: true, closeAfterInventorySave: closeView });
     }
   }
 
