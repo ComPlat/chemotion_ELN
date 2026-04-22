@@ -8,6 +8,7 @@ class ImportSamplesJob < ApplicationJob
   after_perform :notify_user
 
   def perform(params)
+    params = params.with_indifferent_access
     @user_id = params[:user_id]
     @collection_id = params[:collection_id]
     file_format = File.extname(params[:attachment]&.filename)
@@ -52,11 +53,18 @@ class ImportSamplesJob < ApplicationJob
 
   def notify_user
     message = @result.is_a?(Hash) ? @result[:message] : nil
+    status = @result.is_a?(Hash) ? @result[:status] : nil
+    # Frontend NoticeButton already handles this action and refreshes current collection list.
+    # Provide it on successful/complete import notifications.
+    data_args = { message: message }
+    data_args[:action] = 'RefreshSampleList'
+    data_args[:collection_id] = @collection_id if @collection_id.present?
+    data_args[:status] = status if status.present?
     Message.create_msg_notification(
       channel_subject: Channel::IMPORT_SAMPLES_NOTIFICATION,
       message_from: @user_id,
       message_to: [@user_id],
-      data_args: { message: message },
+      data_args: data_args,
       collection_id: @collection_id,
       level: 'info',
       autoDismiss: 5,

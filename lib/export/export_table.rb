@@ -12,13 +12,15 @@ module Export
       'real amount', 'real unit', 'description', 'purity', 'solvent', 'location',
       'secret', 'short label', 'density', 'melting pt', 'boiling pt', 'created_at',
       'updated_at', 'MW', 'user_labels', 'decoupled', 'molecular mass (decoupled)', 'sum formula (decoupled)',
-      'sample uuid'
+      'sample uuid',
+      'height', 'width', 'length', 'state', 'color', 'storage condition'
     ].freeze
 
     # allowed sample/molecule headers for sample detail level 10
     HEADERS_SAMPLE_10 = HEADERS_SAMPLE_0 + [
       'molfile', 'sample readout', 'image', 'identifier', 'molecule name',
-      'canonical smiles', 'sum formula', 'inchistring', 'InChI' # , 'analyses'
+      'canonical smiles', 'sum formula', 'inchistring', 'InChI',
+      'residue_type', 'polymer_type', 'loading', 'loading_type'
     ].freeze
 
     HEADERS_SAMPLE_ID = [
@@ -59,15 +61,15 @@ module Export
     def extract_label_from_solvent_column(sample_column)
       return unless sample_column.is_a?(String) && !sample_column.empty?
 
-      solvent_hash = begin
+      parsed = begin
         JSON.parse(sample_column)
       rescue StandardError
         nil
       end
 
-      return nil if solvent_hash.nil?
-
-      solvent_values = solvent_hash.map { |solvent| solvent&.fetch('label', nil) }
+      return nil if parsed.nil?
+      solvent_list = parsed.is_a?(Array) ? parsed : []
+      solvent_values = solvent_list.map { |solvent| solvent.is_a?(Hash) ? solvent&.fetch('label', nil) : nil }
       solvent_values.compact.join('-')
     end
 
@@ -87,7 +89,7 @@ module Export
       when :sample_analyses
         generate_headers_sample_id
         add_analyses_header(selected_columns)
-      when :sample_components
+      when :sample_components, :sample_composition_table
         generate_headers_sample_id
         add_components_header(selected_columns)
       when :sample, :sample_chemicals
