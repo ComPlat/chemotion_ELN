@@ -1,9 +1,9 @@
 import React, {
-  useState, useEffect, useCallback, useMemo
+  useState, useEffect, useCallback
 } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Container, Card, Row, Col, Form, Button, Alert
+  Container, Card, Row, Col, Form, Button, Alert, Modal
 } from 'react-bootstrap';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import InventoryLabelSettings from 'src/apps/settings/InventoryLabelSettings';
@@ -11,6 +11,7 @@ import ScifinderCredential from 'src/apps/scifinderCredential/ScifinderCredentia
 import UserSetting from 'src/components/structureEditor/UserSetting';
 import OmniauthCredential from 'src/apps/omniauthCredential/OmniauthCredential';
 import UserCounter from 'src/apps/userCounter/UserCounter';
+import TreeViewItem from 'src/components/common/TreeViewItem';
 import { TwoFactorSettings } from 'src/apps/userSettings/TwoFA';
 import { AccountSettings, DeleteSettings } from 'src/apps/userSettings/UserSettings';
 import Affiliations from 'src/apps/userSettings/Affiliations';
@@ -341,71 +342,45 @@ function AccountProfile({ currentUser, closeSettings }) {
     return null;
   };
 
-  const buttonStyle = useMemo(() => ({
-    all: 'unset', // removes margin, padding, border, background
-    cursor: 'pointer', // make it clear it’s clickable
-    display: 'block', // full width
-    width: '100%',
-    padding: '2px', // optional for hit area
-  }), []);
-
   return (
-    <div className="container-fluid d-flex flex-column" style={{ minHeight: '100vh' }}>
-      <div
-        className="bg-light"
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 5
-        }}
+    <div className="account-profile w-100 d-flex flex-column">
+      <Modal.Header
+        className="account-profile__header"
+        closeButton
+        onHide={closeSettings}
       >
-        <h1 style={{
-          display: 'inline',
-        }}
-        >
-          Settings
-        </h1>
-
-        {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
-        <button type="button" onClick={closeSettings} className="m-2 mb-4 float-end btn-close" />
-      </div>
-      <div className="row flex-grow-1">
-        {/* Left column: stretch to bottom */}
-        <div
-          className="col-2 bg-light d-flex flex-column"
-          style={{ minHeight: '100%' }}
-        >
-
-          <ul className="list-unstyled p-3">
-            <li>
-              <button type="button" style={buttonStyle} onClick={() => setCurrentSettings('account')}>Account</button>
-            </li>
-            <li>
-              <button type="button" style={buttonStyle} onClick={() => setCurrentSettings('profile')}>Profile</button>
-            </li>
-            <li>
-              <button
-                type="button"
-                style={buttonStyle}
+        <h4 className="ms-3">Settings</h4>
+      </Modal.Header>
+      <div className="d-flex flex-grow-1 align-items-stretch">
+        <div className="sidebar">
+          <div className="sidebar-content">
+            <div className="tree-view__container">
+              <TreeViewItem
+                title="Account"
+                selected={currentSettings === 'account'}
+                onClick={() => setCurrentSettings('account')}
+              />
+              <TreeViewItem
+                title="Profile"
+                selected={currentSettings === 'profile'}
+                onClick={() => setCurrentSettings('profile')}
+              />
+              <TreeViewItem
+                title="3rd-party apps & SciFinder"
+                selected={currentSettings === 'external'}
                 onClick={() => setCurrentSettings('external')}
-              >
-                3rd-party apps & SciFinder
-              </button>
-            </li>
-            <li>
-              <button
-                type="button"
-                style={buttonStyle}
+              />
+              <TreeViewItem
+                title="Affiliations"
+                selected={currentSettings === 'affiliations'}
                 onClick={() => setCurrentSettings('affiliations')}
-              >
-                Affiliations
-              </button>
-            </li>
-          </ul>
+              />
+            </div>
+          </div>
         </div>
-        <Col>
+        <div className="flex-grow-1">
           {renderMain()}
-        </Col>
+        </div>
       </div>
 
       <script src="/assets/pages.js" />
