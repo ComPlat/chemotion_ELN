@@ -7,4 +7,10 @@
   .modal-footer {
     @extend .widget-footer;
   }
+  .modal-fullscreen {
+    .modal-body {
+      @extend .flex-grow-1;
+      max-height: none;
+    }
+  }
 }
