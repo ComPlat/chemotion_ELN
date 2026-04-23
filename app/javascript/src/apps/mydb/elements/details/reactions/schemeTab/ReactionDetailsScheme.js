@@ -716,7 +716,7 @@ export default class ReactionDetailsScheme extends React.Component {
     updatedSample.initializeSampleDetails?.();
     updatedSample.sample_details.reference_component_changed = false;
     // Amount was edited directly by user, so concentration can be auto-recalculated again.
-    delete updatedSample.preserveConcentration;
+    updatedSample.preserveConcentration = false;
 
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToGram(amount);
@@ -755,7 +755,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // updatedSample.setAmountAndNormalizeToGram(amount);
     // setAmount should be called first before updating feedstock mole and volume values
     // Amount was edited directly by user, so concentration can be auto-recalculated again.
-    delete updatedSample.preserveConcentration;
+    updatedSample.preserveConcentration = false;
     updatedSample.setAmount(amount);
     if (
       reaction.weight_percentage
@@ -1405,7 +1405,7 @@ export default class ReactionDetailsScheme extends React.Component {
     materialsToRecalculate.forEach((material, index) => {
       if (material.id !== editedSample.id) {
         // Only the actively edited sample should keep its manual concentration.
-        delete materialsToRecalculate[index].preserveConcentration;
+        materialsToRecalculate[index].preserveConcentration = false;
       }
     });
   }
