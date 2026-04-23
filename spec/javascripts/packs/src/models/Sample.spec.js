@@ -1450,7 +1450,7 @@ describe('Sample', async () => {
       sample.updateConcentrationFromSolvent(reaction);
       expect(sample.concn).toBe(1.23);
 
-      delete sample.preserveConcentration;
+      sample.preserveConcentration = false;
       sample.updateConcentrationFromSolvent(reaction);
 
       expect(sample.concn).toBeCloseTo(0.2, 5); // 0.1 mol / 0.5 L = 0.2 mol/L
