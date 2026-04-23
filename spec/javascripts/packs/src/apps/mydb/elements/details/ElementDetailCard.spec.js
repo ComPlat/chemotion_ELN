@@ -65,7 +65,7 @@ describe('ElementDetailCard save button wiring', () => {
     expect(onSave.firstCall.args[0]).toBe(true);
   });
 
-  it('invokes onClose cleanup on Save and Close (Copilot review #1/#6)', () => {
+  it('invokes onClose cleanup when Save and Close is clicked', () => {
     const wrapper = mountCard();
     findSaveCloseButton(wrapper).simulate('click');
     expect(onClose.calledOnce).toBe(true);

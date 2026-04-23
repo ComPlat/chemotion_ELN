@@ -57,13 +57,16 @@ class InboxStore {
         ElementActions.createSample,
         ElementActions.updateSample,
         ElementActions.createReaction,
+        // update* actions now dispatch { element, closeView } so they must
+        // go through the Dict handler, which unwraps the payload before
+        // forwarding to handleUpdateCreateElement.
+        ElementActions.updateReaction,
+        ElementActions.updateWellplate,
+        ElementActions.updateScreen,
       ],
       handleUpdateCreateElement: [
-        ElementActions.updateReaction,
         ElementActions.createWellplate,
-        ElementActions.updateWellplate,
         ElementActions.createScreen,
-        ElementActions.updateScreen,
       ],
       handleClose: DetailActions.close,
       handleConfirmDelete: DetailActions.confirmDelete,
