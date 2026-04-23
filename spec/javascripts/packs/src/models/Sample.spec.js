@@ -3,6 +3,7 @@
 import expect from 'expect';
 import SampleFactory from 'factories/SampleFactory';
 import Sample from 'src/models/Sample.js';
+import Reaction from 'src/models/Reaction';
 import Component from 'src/models/Component';
 
 describe('Sample', async () => {
@@ -1292,6 +1293,13 @@ describe('Sample', async () => {
     let sample;
     let reaction;
 
+    // Helper: build a solvent sample with a given volume in liters, used to
+    // drive the real Reaction's combined-volume calculation.
+    const buildSolvent = (volumeL) => new Sample({
+      amount_value: volumeL,
+      amount_unit: 'l',
+    });
+
     beforeEach(() => {
       // Create sample with amount_mol by setting up a reference component
       // For mixtures, amount_mol uses calculateMixtureAmountMol() which requires a reference component
@@ -1307,22 +1315,14 @@ describe('Sample', async () => {
       refComp.component_properties = {};
       sample.initialComponents([refComp]);
       sample.sample_details = { reference_component_changed: true };
-      reaction = {
-        volume: 0.5,
-        use_reaction_volume: false,
-        calculateCombinedReactionVolume: () => 0.2,
-        solventVolume: 0.1,
-        reactionVolumeForConcentration() {
-          if (this.use_reaction_volume) {
-            const reactionVolume = Number(this.volume);
-            if (Number.isFinite(reactionVolume) && reactionVolume > 0) {
-              return reactionVolume;
-            }
-          }
 
-          return this.calculateCombinedReactionVolume();
-        }
-      };
+      // Use a real Reaction instance so that `reactionVolumeForConcentration`
+      // and `calculateCombinedReactionVolume` exercise their production logic.
+      reaction = Reaction.buildEmpty();
+      reaction.volume = 0.5;
+      reaction.use_reaction_volume = false;
+      // Default combined volume = 0.2 L (single solvent)
+      reaction.solvents = [buildSolvent(0.2)];
     });
 
     it('uses reaction volume when checkbox is checked', () => {
@@ -1336,7 +1336,7 @@ describe('Sample', async () => {
 
     it('uses combined volume when checkbox is unchecked', () => {
       reaction.use_reaction_volume = false;
-      reaction.calculateCombinedReactionVolume = () => 0.2;
+      reaction.solvents = [buildSolvent(0.2)];
 
       sample.updateConcentrationFromSolvent(reaction);
 
@@ -1347,7 +1347,7 @@ describe('Sample', async () => {
       reaction.use_reaction_volume = true;
       reaction.volume = null;
       // When reaction.volume is null, it falls back to calculateCombinedReactionVolume
-      reaction.calculateCombinedReactionVolume = () => null;
+      reaction.solvents = [];
 
       sample.updateConcentrationFromSolvent(reaction);
 
@@ -1358,7 +1358,7 @@ describe('Sample', async () => {
       reaction.use_reaction_volume = true;
       reaction.volume = 0;
       // When reaction.volume is 0, it falls back to calculateCombinedReactionVolume
-      reaction.calculateCombinedReactionVolume = () => null;
+      reaction.solvents = [];
 
       sample.updateConcentrationFromSolvent(reaction);
 
@@ -1367,7 +1367,7 @@ describe('Sample', async () => {
 
     it('sets concn to null when combined volume is null', () => {
       reaction.use_reaction_volume = false;
-      reaction.calculateCombinedReactionVolume = () => null;
+      reaction.solvents = [];
 
       sample.updateConcentrationFromSolvent(reaction);
 
