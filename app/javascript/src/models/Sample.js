@@ -10,6 +10,7 @@ import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import {
   convertTemperatureToKelvin,
   calculateVolumeForFeedstockOrGas,
@@ -260,7 +261,11 @@ export default class Sample extends Element {
       ancestor_ids: [],
       literatures: {},
     });
-
+    // set inventory checkbox if collection has inventory label
+    InventoryFetcher.fetchInventoryOfCollection(collection_id)
+      .then((result) => {
+        sample.inventory_sample = !!result;
+      });
     sample.short_label = Sample.buildNewShortLabel();
     return sample;
   }
@@ -268,11 +273,10 @@ export default class Sample extends Element {
   getMoleculeId() {
     if (this.decoupled && this.molfile) {
       return `M${this.id}`;
-    } else if (this.stereo == null) {
+    } if (this.stereo == null) {
       return `M${this.molecule.id}_any_any`;
-    } else {
-      return `M${this.molecule.id}_${this.stereo.abs || 'any'}_${this.stereo.rel || 'any'}`;
     }
+    return `M${this.molecule.id}_${this.stereo.abs || 'any'}_${this.stereo.rel || 'any'}`;
   }
 
   isNoStructureSample() {
@@ -1634,7 +1638,7 @@ export default class Sample extends Element {
 
   get polymer_formula() {
     if (!this.contains_residues || !this.residues?.[0]?.custom_info) return '';
-    const formula = this.residues[0].custom_info.formula;
+    const { formula } = this.residues[0].custom_info;
     return formula != null ? String(formula) : '';
   }
 
