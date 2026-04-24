@@ -18,6 +18,7 @@ function InventoryLabelSettings() {
   const [updateSpinner, setUpdateSpinner] = useState(false);
   const [resetSpinner, setResetSpinner] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [showCreateConfirmation, setShowCreateConfirmation] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
 
   const assignOptions = (inventoryCollections) => {
@@ -251,6 +252,30 @@ function InventoryLabelSettings() {
     });
   };
 
+  const handleUpdateConfirmation = async () => {
+    const collectionIds = collectCollectionIds(selectedCollections);
+    const results = await Promise.all(
+      collectionIds.map((collectionId) => InventoryFetcher.fetchInventoryOfCollection(collectionId))
+    );
+
+    const isCreate = results.some((result) => !result);
+
+    if (isCreate) {
+      setShowCreateConfirmation(true);
+    } else {
+      updateUserSettings();
+    }
+  };
+
+  const handleCreateCancel = () => {
+    setShowCreateConfirmation(false);
+  };
+
+  const handleCreateConfirmation = () => {
+    updateUserSettings();
+    setShowCreateConfirmation(false);
+  };
+
   const handleResetConfirmation = () => {
     const collectionIds = collectCollectionIds(selectedCollections);
 
@@ -272,99 +297,100 @@ function InventoryLabelSettings() {
   };
 
   return (
-    <Card>
-      <Card.Header>Sample Inventory Label</Card.Header>
-      <Card.Body>
-        <Row className="mb-3">
-          <Col xs={{ span: 3, offset: 3 }}><Form.Label>Select Collection</Form.Label></Col>
-          <Col xs={3}>
-            <TreeSelect
-              name="names of collections"
-              style={{ width: '100%' }}
-              multiple
-              treeData={options}
-              onChange={(selectedOptions) => handleSelectOptionChange(selectedOptions)}
-              value={selectedCollections}
-              dropdownStyle={{ maxHeight: '250px', zIndex: '500000' }}
-            />
-          </Col>
-        </Row>
-        <Row className="mb-3">
-          <Col xs={{ span: 3, offset: 3 }}>
-            <Form.Label>
-              Name
-            </Form.Label>
-          </Col>
-          <Col xs={2}>
-            <Form.Control type="text" value={nameValue} onChange={handleNameChange} />
-          </Col>
-        </Row>
-        <Row className="mb-3">
-          <Col xs={{ span: 3, offset: 3 }}>
-            <Form.Label>Prefix</Form.Label>
-          </Col>
-          <Col xs={2}>
-            <Form.Control type="text" value={prefixValue} onChange={handlePrefixChange} />
-          </Col>
-        </Row>
-        <Row className="mb-3">
-          <Col xs={{ span: 3, offset: 3 }}>
-            <Form.Label>
-              Counter starts at
-            </Form.Label>
-          </Col>
-          <Col xs={2}>
-            <Form.Control type="text" value={counterValue} onChange={handleCounterChange} />
-          </Col>
-        </Row>
-        <Row className="mb-3">
-          <Col xs={{ offset: 3 }}>
-            <b>Next sample inventory label will be: </b>
-            {nextInventoryLabel}
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={12} className="d-flex justify-content-end pe-5">
-            <div className="d-flex gap-2" style={{ width: '600px' }}>
-              <Button
-                variant="primary"
-                onClick={() => { updateUserSettings(); }}
-                className="offset-4 w-100"
-                disabled={resetSpinner}
-              >
-                {updateSpinner
-                  ? (
-                    <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
-                  ) : (
-                    'Update Inventory Label'
-                  )}
-              </Button>
-              <OverlayTrigger
-                placement="top"
-                overlay={(
-                  <Tooltip>
-                    Reset the inventory label settings (prefix, name, counter) for selected collections
-                  </Tooltip>
-                )}
-              >
+    <>
+      <Card>
+        <Card.Header>Sample Inventory Label</Card.Header>
+        <Card.Body>
+          <Row className="mb-3">
+            <Col xs={{ span: 3, offset: 3 }}><Form.Label>Select Collection</Form.Label></Col>
+            <Col xs={3}>
+              <TreeSelect
+                name="names of collections"
+                style={{ width: '100%' }}
+                multiple
+                treeData={options}
+                onChange={(selectedOptions) => handleSelectOptionChange(selectedOptions)}
+                value={selectedCollections}
+                dropdownStyle={{ maxHeight: '250px', zIndex: '500000' }}
+              />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col xs={{ span: 3, offset: 3 }}>
+              <Form.Label>
+                Name
+              </Form.Label>
+            </Col>
+            <Col xs={2}>
+              <Form.Control type="text" value={nameValue} onChange={handleNameChange} />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col xs={{ span: 3, offset: 3 }}>
+              <Form.Label>Prefix</Form.Label>
+            </Col>
+            <Col xs={2}>
+              <Form.Control type="text" value={prefixValue} onChange={handlePrefixChange} />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col xs={{ span: 3, offset: 3 }}>
+              <Form.Label>
+                Counter starts at
+              </Form.Label>
+            </Col>
+            <Col xs={2}>
+              <Form.Control type="text" value={counterValue} onChange={handleCounterChange} />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col xs={{ offset: 3 }}>
+              <b>Next sample inventory label will be: </b>
+              {nextInventoryLabel}
+            </Col>
+          </Row>
+          <Row>
+            <Col xs={12} className="d-flex justify-content-end pe-5">
+              <div className="d-flex gap-2" style={{ width: '600px' }}>
                 <Button
-                  variant="danger"
-                  onClick={handleResetConfirmation}
-                  disabled={updateSpinner}
-                  className="w-100"
+                  variant="primary"
+                  onClick={handleUpdateConfirmation}
+                  className="offset-4 w-100"
+                  disabled={resetSpinner}
                 >
-                  {resetSpinner
+                  {updateSpinner
                     ? (
                       <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
                     ) : (
-                      'Reset inventory label'
+                      'Update Inventory Label'
                     )}
                 </Button>
-              </OverlayTrigger>
-            </div>
-          </Col>
-        </Row>
-        {errorMessage && (
+                <OverlayTrigger
+                  placement="top"
+                  overlay={(
+                    <Tooltip>
+                      Reset the inventory label settings (prefix, name, counter) for selected collections
+                    </Tooltip>
+                )}
+                >
+                  <Button
+                    variant="danger"
+                    onClick={handleResetConfirmation}
+                    disabled={updateSpinner}
+                    className="w-100"
+                  >
+                    {resetSpinner
+                      ? (
+                        <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
+                      ) : (
+                        'Reset inventory label'
+                      )}
+                  </Button>
+                </OverlayTrigger>
+              </div>
+            </Col>
+          </Row>
+          {errorMessage && (
           <Row className="mt-3">
             <Col xs={{ span: 6, offset: 3 }}>
               <Alert variant="danger">
@@ -372,8 +398,29 @@ function InventoryLabelSettings() {
               </Alert>
             </Col>
           </Row>
-        )}
-      </Card.Body>
+          )}
+        </Card.Body>
+      </Card>
+      <Modal
+        show={showCreateConfirmation}
+        onHide={handleCreateCancel}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Create</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          You are about to create the inventory label for selected collection(s).
+          This will automatically select the &apos;Inventory&apos; checkbox for all samples in those collections.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={handleCreateCancel}>
+            Cancel
+          </Button>
+          <Button variant="warning" onClick={handleCreateConfirmation}>
+            Yes, Create
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <AppModal
         show={showResetConfirmation}
@@ -385,7 +432,7 @@ function InventoryLabelSettings() {
         You are about to delete the inventory label for selected collection(s).
         Are you sure you want to delete the assigned prefix, name and counter?
       </AppModal>
-    </Card>
+    </>
   );
 }
 
