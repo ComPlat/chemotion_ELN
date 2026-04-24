@@ -21,7 +21,7 @@ import OlsTreeSelect from '../../../../../components/OlsComponent';
 
 async function handleZipFile(zipFile) {
   const zip = await JSZip.loadAsync(zipFile);
-  const rootFileName = ''; // zipFile.name.replace(/\.zip$/, '');
+  const rootFileName = '';
 
   const files = new VirtualFolderNode(rootFileName, '');
 

@@ -25,7 +25,7 @@ import {
   removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange, getReactionMaterialsHashes, SAMPLE_LABELS
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
-  ColumnSelection, MaterialParser,
+  ColumnSelection,
   RemoveVariationsModal
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import columnDefinitionsReducer
@@ -65,8 +65,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, []);
   const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
   const [asyncDataLoaded, setAsyncDataLoaded] = useState(false);
-
-  let context;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -126,73 +124,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       ]
     );
   };
-
-  const handelAutofillVariationSampleFromAnalysis = useCallback(({
-    sampleIdentifier, value, unit, variationRow
-  }) => {
-    const { matType, matItem } = Object.entries(reactionMaterials)
-      .map(([matTypeKey, matList]) => matList.map((matListed) => ({ matType: matTypeKey, matItem: matListed })))
-      .flat()
-      .find(({ matItem: mat }) => SAMPLE_LABELS
-        .some((labelKey) => mat[labelKey] === sampleIdentifier));
-
-    const findAuxForCol = () => {
-      if (!selectedColumns[matType].some((x) => x === `${matItem.id}`)) {
-        const newSelectedColumns = {
-          ...selectedColumns,
-          [matType]: [...selectedColumns[matType], `${matItem.id}`]
-        };
-        const updatedReactionVariations = addMissingColumnsToVariations({
-          materials: reactionMaterials,
-          segments: reactionSegments,
-          selectedColumns: newSelectedColumns,
-          variations: reactionVariations,
-          reactionHasPolymers,
-          durationValue,
-          durationUnit,
-          temperatureValue,
-          temperatureUnit,
-          gasMode,
-          vesselVolume
-        });
-
-        const newColumnDefinitions = columnDefinitionsReducer(
-          columnDefinitions,
-          {
-            type: 'apply_column_selection',
-            materials: reactionMaterials,
-            segments: reactionSegments,
-            selectedColumns: newSelectedColumns,
-            gasMode
-          }
-        );
-
-        return [newColumnDefinitions, updatedReactionVariations, newSelectedColumns];
-      }
-      return [columnDefinitions, reactionMaterials, selectedColumns];
-    };
-    const [newColumnDefinitions, updatedReactionVariations, newSelectedColumns] = findAuxForCol();
-    const newVariationRow = updatedReactionVariations.find((row) => row.id === variationRow.id);
-    const colDef = newColumnDefinitions
-      .find((matGroup) => matGroup.groupId === matType)?.children
-      .find((matCd) => matCd.groupId === `${matItem.id}`)?.children
-      .find((child) => {
-        if (unit === '%' && ['equivalent', 'yield'].includes(child.entry)) return true;
-        return child.units.includes(unit);
-      });
-    colDef.hide = false;
-    colDef.displayUnit = unit;
-
-    const { valueParser } = cellDataTypes[colDef.cellDataType];
-    const cellData = newVariationRow[matType][`${matItem.id}`];
-
-    newVariationRow[matType][`${matItem.id}`] = valueParser({
-      data: newVariationRow, oldValue: cellData, newValue: `${value}`, colDef, context
-    });
-    setReactionVariations(updatedReactionVariations);
-    setColumnDefinitions({ type: 'set_updated', update: newColumnDefinitions });
-    setSelectedColumns(newSelectedColumns);
-  }, [reactionMaterials, context, selectedColumns]);
 
   const copyRow = useCallback((data) => {
     const copiedRow = copyVariationsRow(data, reactionVariations);
@@ -283,6 +214,83 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       </Button>
     </OverlayTrigger>
   );
+
+  let context = {
+    reactionHasPolymers,
+    reactionShortLabel,
+    allReactionAnalyses,
+  };
+
+  const handleAutofillVariationSampleFromAnalysis = useCallback(({
+    sampleIdentifier, value, unit, variationRow
+  }) => {
+    const foundMat = Object.entries(reactionMaterials)
+      .map(([matTypeKey, matList]) => matList.map((matListed) => ({ matType: matTypeKey, matItem: matListed })))
+      .flat()
+      .find(({ matItem: mat }) => SAMPLE_LABELS
+        .some((labelKey) => mat[labelKey] === sampleIdentifier));
+    if (!foundMat) return;
+    const { matType, matItem } = foundMat;
+    const findAuxForCol = () => {
+      if (!selectedColumns[matType].some((x) => x === `${matItem.id}`)) {
+        const newSelectedColumns = {
+          ...selectedColumns,
+          [matType]: [...selectedColumns[matType], `${matItem.id}`]
+        };
+        const updatedReactionVariations = addMissingColumnsToVariations({
+          materials: reactionMaterials,
+          segments: reactionSegments,
+          selectedColumns: newSelectedColumns,
+          variations: reactionVariations,
+          reactionHasPolymers,
+          durationValue,
+          durationUnit,
+          temperatureValue,
+          temperatureUnit,
+          gasMode,
+          vesselVolume
+        });
+
+        const newColumnDefinitions = columnDefinitionsReducer(
+          columnDefinitions,
+          {
+            type: 'apply_column_selection',
+            materials: reactionMaterials,
+            segments: reactionSegments,
+            selectedColumns: newSelectedColumns,
+            gasMode
+          }
+        );
+
+        return [newColumnDefinitions, updatedReactionVariations, newSelectedColumns];
+      }
+      return [structuredClone(columnDefinitions), reactionVariations, selectedColumns];
+    };
+    const [newColumnDefinitions, updatedReactionVariations, newSelectedColumns] = findAuxForCol();
+    const newVariationRow = updatedReactionVariations.find((row) => row.id === variationRow.id);
+    const colDef = newColumnDefinitions
+      .find((matGroup) => matGroup.groupId === matType)?.children
+      .find((matCd) => matCd.groupId === `${matItem.id}`)?.children
+      .find((child) => {
+        if (unit === '%' && ['equivalent', 'yield'].includes(child.entry)) return true;
+        return child.units.includes(unit);
+      });
+    if (!colDef) {
+      return;
+    }
+    colDef.hide = false;
+    colDef.displayUnit = unit;
+
+    const { valueParser } = cellDataTypes[colDef.cellDataType];
+    const cellData = newVariationRow[matType][`${matItem.id}`];
+
+    newVariationRow[matType][`${matItem.id}`] = valueParser({
+      data: newVariationRow, oldValue: cellData, newValue: `${value}`, colDef, context
+    });
+    setReactionVariations(updatedReactionVariations);
+    setColumnDefinitions({ type: 'set_updated', update: newColumnDefinitions });
+    setSelectedColumns(newSelectedColumns);
+  }, [reactionMaterials, selectedColumns, ...Object.values(context)]);
 
   /*
    What follows is a series of imperative state updates that keep the "Variations" tab in sync with the "Scheme" tab.
@@ -418,15 +426,15 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   if (!asyncDataLoaded) {
     return null;
   }
-  context = {
+
+  let gridContext = {
+    ...context,
     copyRow,
     removeRow,
     setColumnDefinitions,
-    reactionHasPolymers,
-    reactionShortLabel,
-    allReactionAnalyses,
-    handelAutofillVariationSampleFromAnalysis
+    handleAutofillVariationSampleFromAnalysis
   };
+
   return (
     <div>
       <ButtonGroup>

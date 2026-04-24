@@ -10,7 +10,7 @@ import {
   getVariationsRowName,
   REACTION_VARIATIONS_TAB_KEY,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
-import AttachmentFetcher from '../../../../../../fetchers/AttachmentFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 
 function getReactionAnalyses(reaction) {
   const reactionCopy = cloneDeep(reaction);
@@ -110,7 +110,7 @@ function AnalysesCellEditor({
   context
 }) {
   const [selectedAnalysisIDs, setSelectedAnalysisIDs] = useState(analysesIDs);
-  const { reactionShortLabel, allReactionAnalyses, handelAutofillVariationSampleFromAnalysis } = context;
+  const { reactionShortLabel, allReactionAnalyses, handleAutofillVariationSampleFromAnalysis } = context;
 
   const onAnalysisSelectionReady = () => {
     onValueChange(selectedAnalysisIDs);
@@ -137,10 +137,16 @@ function AnalysesCellEditor({
 
   const handleAutofill = async (dataset) => {
     const res = await AttachmentFetcher.loadAttachmentContent(dataset);
-    const resText = await res.json();
-    const { samples } = typeof resText === 'string' ? JSON.parse(resText) : resText;
+    let jsonRes;
+    try {
+      const resText = await res.json();
+      jsonRes = typeof resText === 'string' ? JSON.parse(resText) : resText;
+    } catch {
+      return;
+    }
+    const { samples } = jsonRes;
     samples.forEach(([sampleIdentifier, value, unit]) => {
-      handelAutofillVariationSampleFromAnalysis({
+      handleAutofillVariationSampleFromAnalysis({
         sampleIdentifier, value, unit, variationRow: row
       });
     });
@@ -210,7 +216,7 @@ AnalysesCellEditor.propTypes = {
   context: PropTypes.shape({
     reactionShortLabel: PropTypes.string.isRequired,
     allReactionAnalyses: PropTypes.array.isRequired,
-    handelAutofillVariationSampleFromAnalysis: PropTypes.func.isRequired
+    handleAutofillVariationSampleFromAnalysis: PropTypes.func.isRequired
   }).isRequired,
 };
 
