@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/AbcSize, Rails/HasManyOrHasOneDependent, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+# rubocop:disable Rails/HasManyOrHasOneDependent, Rails/SkipsModelValidations
 
 # == Schema Information
 #
@@ -37,6 +37,7 @@ class Collection < ApplicationRecord
   belongs_to :inventory, optional: true
   has_ancestry orphan_strategy: :adopt
 
+  after_save :add_inventory_sample_if_inventory_added
   has_many :collections_samples, dependent: :destroy
   has_many :collections_reactions, dependent: :destroy
   has_many :collections_wellplates, dependent: :destroy
@@ -191,5 +192,13 @@ class Collection < ApplicationRecord
   def self.get_all_collection_for_user(user_id)
     find_by(user_id: user_id, label: 'All', is_locked: true)
   end
+
+  private
+
+  def add_inventory_sample_if_inventory_added
+    return unless saved_change_to_inventory_id? && inventory_id.present?
+
+    samples.where(inventory_sample: [false, nil]).update_all(inventory_sample: true)
+  end
 end
-# rubocop:enable Metrics/AbcSize, Rails/HasManyOrHasOneDependent,Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+# rubocop:enable Rails/HasManyOrHasOneDependent, Rails/SkipsModelValidations
