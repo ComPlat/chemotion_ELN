@@ -70,8 +70,7 @@ module Usecases
             # Update container
             next unless (container = Container.find_by(id: child[:id]))
 
-            raw = container.extended_metadata['analyses_compared']
-            old_analyses_compared = parse_analyses_compared(raw)
+            old_analyses_compared = parse_analyses_compared(container.extended_metadata['analyses_compared'])
 
             container.update!(
               name: child[:name],
@@ -163,8 +162,6 @@ module Usecases
           end
         when Array
           raw
-        else
-          nil
         end
       end
 
@@ -172,33 +169,25 @@ module Usecases
         file_ids = analyses_compared.map { |e| e.dig('file', 'id') }.compact
         return false if file_ids.empty?
 
-        all_in_existing_dataset = true
         first_dataset_id = nil
-
         file_ids.each do |fid|
           att = Attachment.find_by(id: fid)
-          unless att&.attachable_type == 'Container'
-            all_in_existing_dataset = false
-            break
-          end
+          return false unless att&.attachable_type == 'Container'
 
           parent = Container.find_by(id: att.attachable_id)
-          unless parent && parent.container_type == 'dataset' && parent.parent_id == container.id
-            all_in_existing_dataset = false
-            break
-          end
+          return false unless parent && parent.container_type == 'dataset' && parent.parent_id == container.id
 
           if first_dataset_id.nil?
             first_dataset_id = parent.id
           elsif first_dataset_id != parent.id
-            all_in_existing_dataset = false
-            break
+            return false
           end
         end
 
-        all_in_existing_dataset
+        true
       end
 
+      # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def generate_comparison_dataset!(container, analyses_compared)
         list_file = []
         list_file_names = []
@@ -219,7 +208,14 @@ module Usecases
           created_by_user = attachment.created_by
           base = File.basename(attachment.filename, '.*')
           base_no_compared = base.sub(/_compared_[0-9:\-]+\z/, '')
-          new_filename = "#{base_no_compared}_compared_#{Time.now.strftime('%Y-%m-%d-%H:%M:%S')}#{File.extname(attachment.filename)}"
+          ts = Time.now.strftime('%Y-%m-%d-%H:%M:%S')
+          new_filename = "#{base_no_compared}_compared_#{ts}#{File.extname(attachment.filename)}"
+
+          original_path = attachment.abs_path
+          next unless File.exist?(original_path)
+
+          temp_file = Tempfile.new([base, File.extname(attachment.filename)])
+          FileUtils.cp(original_path, temp_file.path)
 
           new_att = Attachment.new(
             filename: new_filename,
@@ -227,14 +223,8 @@ module Usecases
             created_for: created_by_user,
             attachable_type: 'Container',
             attachable_id: target_id,
+            file_path: temp_file.path,
           )
-
-          original_path = attachment.abs_path
-          next unless File.exist?(original_path)
-
-          temp_file = Tempfile.new([base, File.extname(attachment.filename)])
-          FileUtils.cp(original_path, temp_file.path)
-          new_att.file_path = temp_file.path
           new_att.save!
 
           list_file_names << new_att.filename
@@ -250,7 +240,7 @@ module Usecases
         container.extended_metadata['analyses_compared'] = new_analyses_compared_list
         container.update_column(:extended_metadata, container.extended_metadata) # rubocop:disable Rails/SkipsModelValidations
 
-        return unless list_file.any?
+        return if list_file.empty?
 
         _, image = Chemotion::Jcamp::CombineImg.combine(list_file, 0, list_file_names, nil)
         return unless image.present?
@@ -258,7 +248,7 @@ module Usecases
         old = Attachment.find_by(filename: combined_image_filename, attachable_id: target_id)
         old&.destroy!
 
-        att = Attachment.new(
+        Attachment.create!(
           filename: combined_image_filename,
           created_by: created_by_user,
           created_for: created_by_user,
@@ -267,8 +257,8 @@ module Usecases
           attachable_id: target_id,
           thumb: true,
         )
-        att.save!
       end
+      # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
     end
   end
 end

@@ -1,0 +1,253 @@
+import React, { useCallback, useEffect, useMemo } from 'react';
+import PropTypes from 'prop-types';
+import { Modal } from 'react-bootstrap';
+
+import SpectraActions from 'src/stores/alt/actions/SpectraActions';
+
+import useCompareSpectra, { COMPARE_STATUS } from '../hooks/useCompareSpectra';
+import useSpectraStoreSlice from '../hooks/useSpectraStoreSlice';
+import { resolveSelection } from '../utils/compareSelectionTree';
+import { cleanLayoutLabel } from '../utils/containerLayout';
+import CompareSpectraHeader from './CompareSpectraHeader';
+import CompareSpectraBody, { formatPksOps, formatMpyOps } from './CompareSpectraBody';
+
+const selectModalSlice = (state) => ({
+  showCompareModal: state.showCompareModal,
+  storeContainer: state.container,
+});
+
+const resolveActiveContainer = (sample, preferred) => {
+  const preferredId = preferred?.id;
+  if (!sample || typeof sample.analysisContainers !== 'function') return preferred;
+  const list = sample.analysisContainers() || [];
+  if (preferredId) {
+    const found = list.find((c) => c.id === preferredId);
+    if (found) return found;
+  }
+  return preferred || sample?.container || null;
+};
+
+const computeNextContainerFromSelection = (container, selection) => {
+  if (!container) return container;
+  const layoutLabel = cleanLayoutLabel(selection?.[0]?.layout);
+  return {
+    ...container,
+    extended_metadata: {
+      ...(container.extended_metadata || {}),
+      analyses_compared: selection,
+      kind: layoutLabel || container.extended_metadata?.kind || null,
+    },
+  };
+};
+
+const writeContentOps = (container, ops) => {
+  if (!container) return container;
+  const existing = container.extended_metadata?.content;
+  const currentOps = Array.isArray(existing?.ops) ? [...existing.ops] : [{ insert: '\n' }];
+  let nextOps = [...currentOps, ...ops];
+  if (nextOps[0]?.insert === '\n' && nextOps.length > 1) nextOps = nextOps.slice(1);
+  return {
+    ...container,
+    extended_metadata: {
+      ...(container.extended_metadata || {}),
+      content: { ops: nextOps },
+    },
+  };
+};
+
+const buildSavePayloads = (params) => {
+  const list = Array.isArray(params?.spectra_list) ? params.spectra_list : [];
+  return list.length > 0 ? list : [params];
+};
+
+const resolveWriteParams = (params) => {
+  const payloads = buildSavePayloads(params);
+  const fallbackCurveIdx = params?.curveSt?.curveIdx ?? 0;
+  const payload = payloads[fallbackCurveIdx] || payloads[0] || {};
+  const curveIdx = payload?.curveSt?.curveIdx ?? payload?.curveIdx ?? fallbackCurveIdx;
+
+  const shift = payload?.shift?.shifts ? payload.shift : { shifts: [payload?.shift] };
+  const integration = payload?.integration?.integrations
+    ? payload.integration
+    : { integrations: [payload?.integration] };
+  const multiplicity = payload?.multiplicity?.multiplicities
+    ? payload.multiplicity
+    : { multiplicities: [payload?.multiplicity] };
+
+  return {
+    peaks: payload?.peaks,
+    shift,
+    layout: payload?.layout,
+    isAscend: payload?.isAscend,
+    decimal: payload?.decimal ?? 2,
+    body: payload?.body,
+    isIntensity: payload?.isIntensity,
+    integration,
+    multiplicity,
+    waveLength: payload?.waveLength,
+    curveSt: { curveIdx },
+  };
+};
+
+const CompareSpectraModal = ({
+  sample,
+  onContainerChange,
+  onSampleChanged,
+  onSubmit,
+}) => {
+  const { showCompareModal, storeContainer } = useSpectraStoreSlice(selectModalSlice);
+
+  const activeContainer = useMemo(
+    () => resolveActiveContainer(sample, storeContainer || sample?.container),
+    [sample, storeContainer],
+  );
+
+  const compare = useCompareSpectra({
+    sample,
+    container: showCompareModal ? activeContainer : null,
+  });
+
+  const close = useCallback(() => {
+    SpectraActions.ToggleCompareModal.defer(null);
+  }, []);
+
+  useEffect(() => {
+    if (!showCompareModal) compare.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showCompareModal]);
+
+  const handleSelectionChange = useCallback((treeData, selectedFiles, info) => {
+    if (!compare.container) return;
+    const selection = resolveSelection({
+      treeData,
+      selectedFiles,
+      info,
+    });
+    const nextContainer = computeNextContainerFromSelection(compare.container, selection);
+    compare.setContainer(nextContainer);
+    onContainerChange?.(nextContainer);
+  }, [compare, onContainerChange]);
+
+  const handleUndo = useCallback(() => {
+    const next = compare.undo();
+    if (next) onContainerChange?.(next);
+  }, [compare, onContainerChange]);
+
+  const persistOps = useCallback(async (params, opsToWrite = null) => {
+    if (!compare.container) return;
+    let containerForSave = compare.container;
+    if (Array.isArray(opsToWrite) && opsToWrite.length > 0) {
+      containerForSave = writeContentOps(compare.container, opsToWrite);
+      compare.setContainer(containerForSave);
+      onContainerChange?.(containerForSave);
+    }
+
+    try {
+      const payloads = buildSavePayloads(params);
+      const result = await compare.persist({
+        payloads,
+        frontCurveIdx: params?.curveSt?.curveIdx ?? 0,
+      });
+      if (result?.container) {
+        onContainerChange?.(result.container);
+        if (typeof onSampleChanged === 'function') {
+          onSampleChanged(sample, () => onSubmit?.());
+        } else {
+          onSubmit?.();
+        }
+      } else {
+        onSubmit?.();
+      }
+    } catch {
+    }
+  }, [compare, onContainerChange, onSampleChanged, onSubmit, sample]);
+
+  const handleSave = useCallback((params) => persistOps(params), [persistOps]);
+  const handleSaveClose = useCallback(async (params) => {
+    await persistOps(params);
+    close();
+  }, [persistOps, close]);
+
+  const buildWriteOps = useCallback((params, isMpy) => {
+    const resolved = resolveWriteParams(params);
+    if (!resolved.layout) return [];
+    const curveIdx = resolved.curveSt.curveIdx ?? 0;
+    const entity = compare.multiEntities?.[curveIdx] || compare.multiEntities?.[0];
+    if (!entity) return [];
+    return isMpy ? formatMpyOps({ entity, ...resolved }) : formatPksOps({ entity, ...resolved });
+  }, [compare.multiEntities]);
+
+  const handleWritePeak = useCallback((params) => persistOps(params, buildWriteOps(params, false)), [persistOps, buildWriteOps]);
+  const handleWriteMpy = useCallback((params) => persistOps(params, buildWriteOps(params, true)), [persistOps, buildWriteOps]);
+  const handleWriteClosePeak = useCallback(async (params) => {
+    await persistOps(params, buildWriteOps(params, false));
+    close();
+  }, [persistOps, buildWriteOps, close]);
+  const handleWriteCloseMpy = useCallback(async (params) => {
+    await persistOps(params, buildWriteOps(params, true));
+    close();
+  }, [persistOps, buildWriteOps, close]);
+
+  const handleRetry = useCallback(() => {
+    if (!compare.container) return;
+    compare.setContainer({ ...compare.container });
+  }, [compare]);
+
+  const canUpdate = !!sample?.can_update;
+
+  return (
+    <Modal
+      centered
+      size="xxxl"
+      show={!!showCompareModal}
+      animation
+      onHide={close}
+    >
+      <CompareSpectraHeader
+        sample={sample}
+        container={compare.container}
+        originalAnalyses={compare.container?.extended_metadata?.analyses_compared}
+        showUndo={compare.showUndo}
+        onSelectionChange={handleSelectionChange}
+        onUndo={handleUndo}
+        onClose={close}
+      />
+      <Modal.Body className="vh-80">
+        <CompareSpectraBody
+          status={compare.status === COMPARE_STATUS.IDLE ? COMPARE_STATUS.LOADING : compare.status}
+          spectra={compare.spectra}
+          multiEntities={compare.multiEntities}
+          failures={compare.failures}
+          error={compare.error}
+          saveError={compare.saveError}
+          container={compare.container}
+          sample={sample}
+          canUpdate={canUpdate}
+          onClose={close}
+          onRetry={handleRetry}
+          onSave={handleSave}
+          onSaveClose={handleSaveClose}
+          onWritePeak={handleWritePeak}
+          onWriteMpy={handleWriteMpy}
+          onWriteClosePeak={handleWriteClosePeak}
+          onWriteCloseMpy={handleWriteCloseMpy}
+        />
+      </Modal.Body>
+    </Modal>
+  );
+};
+
+CompareSpectraModal.propTypes = {
+  sample: PropTypes.object.isRequired,
+  onContainerChange: PropTypes.func,
+  onSampleChanged: PropTypes.func,
+  onSubmit: PropTypes.func,
+};
+
+CompareSpectraModal.defaultProps = {
+  onContainerChange: () => {},
+  onSampleChanged: () => {},
+  onSubmit: () => {},
+};
+
+export default CompareSpectraModal;

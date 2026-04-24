@@ -3,11 +3,12 @@ import { FN } from '@complat/react-spectra-editor';
 
 import alt from 'src/stores/alt/alt';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
+import {
+  decodeSpectra,
+  DEFAULT_PREDICTIONS,
+} from 'src/apps/mydb/elements/details/spectraCompare/services/spectraDecoder';
 
-const defaultPred = {
-  outline: {},
-  output: { result: [] },
-};
+const defaultPred = DEFAULT_PREDICTIONS;
 
 class SpectraStore {
   constructor() {
@@ -21,7 +22,7 @@ class SpectraStore {
     this.others = [];
     this.showModalNMRDisplayer = false;
     this.showCompareModal = false;
-    this.spectraCompare = [];
+    this.container = null;
 
     this.bindListeners({
       handleToggleModal: SpectraActions.ToggleModal,
@@ -38,47 +39,6 @@ class SpectraStore {
       handleRegenerateEdited: SpectraActions.RegenerateEdited,
       handleToggleModalNMRDisplayer: SpectraActions.ToggleModalNMRDisplayer,
       handleLoadSpectraForNMRDisplayer: SpectraActions.LoadSpectraForNMRDisplayer,
-      handleLoadSpectraCompare: SpectraActions.LoadSpectraCompare,
-      handleSaveMultiSpectraComparison: SpectraActions.SaveMultiSpectraComparison,
-    });
-  }
-
-  decodeSpectrum(target) { // eslint-disable-line class-methods-use-this
-    const { file, predictions, id } = target;
-    if (!file) return null;
-    let spectrum = { predictions: defaultPred, idx: id };
-    if (predictions && predictions.outline && predictions.outline.code) {
-      spectrum = Object.assign({}, spectrum, { predictions });
-    }
-
-    try {
-      const raw = new TextDecoder("utf-8").decode(new Uint8Array([...(base64.decode(file))].map(ch => ch.charCodeAt(0))));
-      const jcamp = FN.ExtractJcamp(raw);
-      const lcmsMzPageMatch = raw.match(/^##\$CSLCMSMZPAGE\s*=\s*"?([0-9.+\-Ee]+)"?/mi);
-      const lcmsMzPage = lcmsMzPageMatch ? Number(lcmsMzPageMatch[1]) : null;
-      if (Number.isFinite(lcmsMzPage) && !Number.isFinite(jcamp?.lcms_mz_page)) {
-        jcamp.lcms_mz_page = lcmsMzPage;
-        jcamp.lcmsMzPage = lcmsMzPage;
-      }
-      if (!jcamp.spectra) return null;
-      spectrum = Object.assign({}, spectrum, { jcamp });
-    } catch (err) {
-      console.log('stores/SpectraStore.js: decodeSpectrum error!');
-      return null;
-    }
-
-    return spectrum; // spectrum = { predictions: {…}, jcamp: {…} }
-  }
-
-  decodeSpectra(fetchedFiles = {}) {
-    const { files } = fetchedFiles;
-    if (!files) return [];
-    const returnFiles = files.map(f => this.decodeSpectrum(f)).filter(r => r !== null);
-    if (returnFiles === null || returnFiles === undefined) {
-      return [];
-    }
-    return returnFiles.sort(function (a, b) {
-      return b.idx - a.idx;
     });
   }
 
@@ -100,7 +60,7 @@ class SpectraStore {
   }
 
   handleLoadSpectra({ fetchedFiles, spcInfos }) {
-    const spcMetas = this.decodeSpectra(fetchedFiles);
+    const spcMetas = decodeSpectra(fetchedFiles);
     const sortedSpcInfo = [...spcInfos];
     sortedSpcInfo.sort((a, b) => b.idx - a.idx);
     if (spcMetas.length > 0) {
@@ -145,25 +105,8 @@ class SpectraStore {
     });
   }
 
-  handleLoadSpectraCompare(payload) {
-    if (!payload || !payload.fetchedFiles) {
-      this.setState({
-        spectraCompare: [],
-        fetched: true,
-      });
-      return;
-    }
-    const { fetchedFiles } = payload;
-    const spcMetas = this.decodeSpectra(fetchedFiles);
-
-    this.setState({
-      spectraCompare: spcMetas,
-      fetched: true,
-    });
-  }
-
   handleSaveToFile({ fetchedFiles, spcInfo = defaultPred }) {
-    const fetchedSpcMetas = this.decodeSpectra(fetchedFiles);
+    const fetchedSpcMetas = decodeSpectra(fetchedFiles);
     const fsm = fetchedSpcMetas.length > 0 ? fetchedSpcMetas[0] : null;
     if (!fsm) return;
     const fetchedIdx = fsm.idx;
@@ -275,13 +218,6 @@ class SpectraStore {
     });
   }
 
-  handleSaveMultiSpectraComparison(response) {
-    if (response && response.new_attachment_ids) {
-      this.setState({
-        newAttachmentIds: response.new_attachment_ids,
-      });
-    }
-  }
 }
 
 export default alt.createStore(SpectraStore, 'SpectraStore');

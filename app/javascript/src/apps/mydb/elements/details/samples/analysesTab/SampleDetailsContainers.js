@@ -6,7 +6,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
-import ViewSpectraCompare from 'src/apps/mydb/elements/details/ViewSpectraCompare';
+import CompareSpectraModal from 'src/apps/mydb/elements/details/spectraCompare/components/CompareSpectraModal';
 import {
   RndNotAvailable, RndNoAnalyses,
   ReactionsDisplay
@@ -71,19 +71,19 @@ export default class SampleDetailsContainers extends Component {
 
   handleChange = (updatedContainer) => {
     const { sample, handleSampleChanged } = this.props;
-  
+
     if (updatedContainer) {
       const analysesRoot = sample.analysesContainers()[0];
-  
+
       if (analysesRoot && Array.isArray(analysesRoot.children)) {
-        const idx = analysesRoot.children.findIndex(c => c.id === updatedContainer.id);
-  
+        const idx = analysesRoot.children.findIndex((c) => c.id === updatedContainer.id);
+
         if (idx !== -1) {
           analysesRoot.children[idx] = updatedContainer;
         }
       }
     }
-  
+
     handleSampleChanged(sample);
   };
   
@@ -249,11 +249,11 @@ export default class SampleDetailsContainers extends Component {
             handleSampleChanged={handleSampleChanged}
             handleSubmit={handleSubmit}
           />
-          <ViewSpectraCompare
-            elementData={sample}
-            handleSampleChanged={handleSampleChanged}
-            handleSubmit={handleSubmit}
-            handleContainerChanged={this.handleContainerChanged}
+          <CompareSpectraModal
+            sample={sample}
+            onSampleChanged={handleSampleChanged}
+            onSubmit={handleSubmit}
+            onContainerChange={this.handleContainerChanged}
           />
         </div>
       );
