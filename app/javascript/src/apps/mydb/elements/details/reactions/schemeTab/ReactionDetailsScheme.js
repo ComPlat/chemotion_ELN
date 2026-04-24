@@ -1348,13 +1348,10 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction } = this.props;
     const { lockEquivColumn } = this.state;
 
-    updatedSample.setAmountFromConcentration(
+    updatedSample.setAmountFromConcentrationAndPreserve(
       newConcentration,
       reaction.reactionVolumeForConcentration()
     );
-
-    // Mark the sample to preserve its manually-set concentration.
-    updatedSample.preserveConcentration = true;
 
     // Update reaction with the changed sample amounts
     // This will handle equivalent recalculation based on lockEquivColumn state
