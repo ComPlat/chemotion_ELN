@@ -6,6 +6,7 @@ import {
 import uuid from 'uuid';
 import Literature from 'src/models/Literature';
 import { getKeysOfMap,createCitationTypeMap } from 'src/apps/mydb/elements/details/literature/CitationTools';
+import CreateButton from '../../../../../components/common/CreateButton';
 
 function RefByUserInfo({ info, litype }) {
   if (typeof (info) === 'undefined' || !info || info.length === 0) {
@@ -81,14 +82,11 @@ function AddButton({
   onLiteratureAdd, literature, title, readOnly = false
 }) {
   return (
-    <Button
-      variant="success"
+    <CreateButton
       onClick={() => onLiteratureAdd(literature)}
       disabled={!isLiteratureValid(literature) || readOnly}
       title={title}
-    >
-      <i className="fa fa-plus" />
-    </Button>
+    />
   );
 }
 

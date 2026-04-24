@@ -41,7 +41,7 @@ class QcMain extends Component {
       QcActions.loadInfers.defer({ sample });
     };
     let iconClsName = 'fa fa-cog fa-1x';
-    if (loading) iconClsName += ' fa-spin fa-fw';
+    if (loading) iconClsName += ' fa-spin';
     const variant = loading ? 'warning' : 'primary';
 
     return (

@@ -28,9 +28,7 @@ export default function Sidebar() {
           { 'flex-column': isCollapsed }
         )}
         >
-          <a href="/mydb" title="Link to mydb index page" className="sidebar-logo">
-            <ChemotionLogo collapsed={isCollapsed} />
-          </a>
+          <ChemotionLogo collapsed={isCollapsed} />
         </div>
       </div>
       <div className="sidebar-collapse-button-container">

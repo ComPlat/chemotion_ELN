@@ -57,7 +57,7 @@ const CommentTable = ({ element, comments, editComment, deleteComment, showSecti
     const currentUser = selectCurrentUser(UserStore.getState());
 
     return (
-      <ButtonToolbar className="flex-nowrap align-items-center gap-2 my-2">
+      <ButtonToolbar className="flex-nowrap my-2">
         <Button
           disabled={disableEditComment(comment)}
           onClick={() => markCommentResolved(comment)}

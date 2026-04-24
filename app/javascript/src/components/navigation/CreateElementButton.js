@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, ButtonToolbar, Form, Modal, Dropdown, OverlayTrigger, Tooltip
+  Button, Form, Dropdown
 } from 'react-bootstrap';
 import { PermissionConst } from 'src/utilities/PermissionConst';
 import { allElnElements, allElnElmentsWithLabel, allGenericElements } from 'src/apps/generic/Utils';
@@ -11,18 +11,21 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
+import AppModal from 'src/components/common/AppModal';
+import ElementIcon from 'src/components/common/ElementIcon';
 
 const CreateElementDropdownToggle = React.forwardRef(({ onClick }, ref) => (
   <Button
-    variant="success"
-    className="rounded-circle shadow"
+    variant="create"
+    className="create-element-button"
     ref={ref}
     onClick={(e) => {
       e.preventDefault();
       onClick(e);
     }}
   >
-    <i className="fa fa-plus" />
+    <i className="fa fa-plus me-1 create-element-button__icon" />
+    <span className="create-element-button__label">Create</span>
   </Button>
 ));
 
@@ -53,16 +56,15 @@ export default class CreateElementButton extends React.Component {
   }
 
   static createBtn(type) {
-    let iconClass = `icon-${type}`;
     const genericEls = UserStore.getState().genericEls || [];
-    if (!allElnElements.includes(type) && typeof genericEls !== 'undefined'
-      && genericEls !== null && genericEls.length > 0) {
-      const genericEl = (genericEls && genericEls.find((el) => el.name === type)) || {};
-      iconClass = `${genericEl.icon_name}`;
-    }
+    const genericEl = !allElnElements.includes(type)
+      ? genericEls.find((el) => el.name === type)
+      : null;
+    const element = genericEl || { type };
+
     return (
       <div>
-        <i className={`${iconClass} me-1`} />
+        <ElementIcon element={element} className="me-1" />
         <i className="fa fa-plus" />
       </div>
     );
@@ -87,15 +89,11 @@ export default class CreateElementButton extends React.Component {
         show: false,
         sampleCount: 0,
         wellplateCount: 0
-      },
-      showCopyReactionModal: false,
-      pendingReactionId: null
+      }
     };
 
     this.onUserStoreChange = this.onUserStoreChange.bind(this);
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
-    this.handleCopyReactionConfirm = this.handleCopyReactionConfirm.bind(this);
-    this.handleCopyReactionModalClose = this.handleCopyReactionModalClose.bind(this);
   }
 
   componentDidMount() {
@@ -107,16 +105,6 @@ export default class CreateElementButton extends React.Component {
   componentWillUnmount() {
     UserStore.unlisten(this.onUserStoreChange);
     UIStore.unlisten(this.onUIStoreChange);
-  }
-
-  handleCopyReactionConfirm(keepAmounts) {
-    const { pendingReactionId } = this.state;
-    this.setState({ showCopyReactionModal: false, pendingReactionId: null });
-    ElementActions.copyReactionFromId(pendingReactionId, keepAmounts);
-  }
-
-  handleCopyReactionModalClose() {
-    this.setState({ showCopyReactionModal: false, pendingReactionId: null });
   }
 
   handleModalHide() {
@@ -155,55 +143,6 @@ export default class CreateElementButton extends React.Component {
       : (label === 'All' && is_locked);
 
     this.setState({ isDisabled: newIsDisabled });
-  }
-
-  copyReactionAmountsModal() {
-    const { showCopyReactionModal } = this.state;
-    return (
-      <Modal centered animation={false} show={showCopyReactionModal} onHide={this.handleCopyReactionModalClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Copy Reaction</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Do you also want to copy the
-          <strong> real amounts </strong>
-          of the reaction materials (excluding product materials)?
-          <br />
-          <br />
-          <strong>Note: </strong>
-          Target amounts of the starting and reactant materials will be copied by default.
-          The amounts (real and target) of the product materials can not be copied.
-          <br />
-        </Modal.Body>
-        <Modal.Footer className="border-0">
-          <OverlayTrigger
-            placement="bottom"
-            overlay={(
-              <Tooltip id="copy-modal-yes-tooltip">
-                Real amounts of starting materials, reactants, and solvents will be preserved
-              </Tooltip>
-            )}
-          >
-            <Button className="w-100 btn btn-info" onClick={() => this.handleCopyReactionConfirm(true)}>
-              Yes - copy target and real amounts
-            </Button>
-          </OverlayTrigger>
-
-          <OverlayTrigger
-            placement="bottom"
-            overlay={(
-              <Tooltip id="copy-modal-no-tooltip">
-                Only target amounts will be copied, real amounts will be cleared
-              </Tooltip>
-            )}
-          >
-            <Button className="w-100 btn btn-info" onClick={() => this.handleCopyReactionConfirm(false)}>
-              No - only copy the target amounts
-            </Button>
-          </OverlayTrigger>
-        </Modal.Footer>
-      </Modal>
-    );
   }
 
   createWellplateFromSamples() {
@@ -251,11 +190,16 @@ export default class CreateElementButton extends React.Component {
     const { modalProps } = this.state;
 
     return (
-      <Modal centered animation={false} show={modalProps.show} onHide={() => this.handleModalHide()}>
-        <Modal.Header closeButton>
-          <Modal.Title>Create Wellplates from Samples</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
+      <AppModal
+        animation={false}
+        show={modalProps.show}
+        onHide={() => this.handleModalHide()}
+        title="Create Wellplates from Samples"
+        closeLabel="Cancel"
+        primaryActionLabel="Submit"
+        onPrimaryAction={() => this.bulkCreateWellplates()}
+      >
+        <div>
           You have selected
           {modalProps.sampleCount}
           {' samples. Please fill in the number of wellplates you would like to create.'}
@@ -267,13 +211,8 @@ export default class CreateElementButton extends React.Component {
               defaultValue={modalProps.wellplateCount || ''}
             />
           </Form.Group>
-
-          <ButtonToolbar>
-            <Button variant="primary" onClick={() => this.handleModalHide()}>Cancel</Button>
-            <Button variant="warning" onClick={() => this.bulkCreateWellplates()}>Submit</Button>
-          </ButtonToolbar>
-        </Modal.Body>
-      </Modal>
+        </div>
+      </AppModal>
     );
   }
 
@@ -287,14 +226,13 @@ export default class CreateElementButton extends React.Component {
     sortedLayout?.forEach(([sl]) => {
       const el = allElnElmentsWithLabel.concat(allGenericElements()).find((ael) => ael.name === sl);
       if (el) {
-        const iconClass = el.icon_name ? el.icon_name : `icon-${el.name}`;
         itemTables.push(
           <Dropdown.Item
             id={`create-${el.name}-button`}
             key={el.name}
             onClick={() => CreateElementButton.createElementOfType(el.name)}
           >
-            <i className={`me-1 ${iconClass}`} />
+            <ElementIcon element={{ ...el, type: el.name }} className="me-1" />
             {`Create ${el.label}`}
           </Dropdown.Item>
         );
@@ -303,10 +241,10 @@ export default class CreateElementButton extends React.Component {
 
     return (
       <Dropdown
+        className="create-element-dropdown"
         id="create-element-dropdown"
         drop="up"
         align="end"
-        className="create-element-button"
       >
         <Dropdown.Toggle
           as={CreateElementDropdownToggle}
@@ -314,7 +252,6 @@ export default class CreateElementButton extends React.Component {
         />
         <Dropdown.Menu className="shadow">
           {this.createWellplateModal()}
-          {this.copyReactionAmountsModal()}
           {itemTables}
 
           <Dropdown.Divider />

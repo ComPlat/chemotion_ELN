@@ -13,6 +13,10 @@
     cursor: pointer !important;
   }
   font-size: 1rem;
+  i {
+    width: auto !important;
+    min-width: 0 !important;
+  }
 }
 .panel-collapse-button--indented,
 .sidebar .panel-collapse-button {

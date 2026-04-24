@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dropdown, Button, Modal } from 'react-bootstrap';
+import { Dropdown, Button } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -13,6 +13,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import SelectionSplitButton from 'src/apps/mydb/elements/list/selectionActions/SelectionSplitButton';
 import SelectionGenerateButton from 'src/apps/mydb/elements/list/selectionActions/SelectionGenerateButton';
 import SelectionExportButton from 'src/apps/mydb/elements/list/selectionActions/SelectionExportButton';
+import AppModal from 'src/components/common/AppModal';
 import { elementNames } from 'src/apps/generic/Utils';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -116,18 +117,13 @@ export default class SelectionActions extends React.Component {
 
   renderTopSecretModal() {
     return (
-      <Modal
-        centered
-        show={true}
+      <AppModal
+        show
         onHide={this.hideModal}
+        title="Sharing not allowed"
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Sharing not allowed</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          One of the selected elements contains one or several samples marked as top secret.
-        </Modal.Body>
-      </Modal>
+        One of the selected elements contains one or several samples marked as top secret.
+      </AppModal>
     );
   }
 
@@ -185,12 +181,14 @@ export default class SelectionActions extends React.Component {
         <SelectionExportButton />
         <SelectionSplitButton />
         <Dropdown id="move-or-assign-btn">
-          <Dropdown.Toggle 
+          <Dropdown.Toggle
             variant="light"
             size="sm"
             disabled={assignDisabled && moveDisabled}
+            title="Transfer"
+            aria-label="Transfer"
           >
-            <i className="fa fa-exchange me-1" />
+            <i className="fa fa-exchange me-1" aria-hidden="true" />
             <span className="selection-action-text-label">Transfer</span>
           </Dropdown.Toggle>
           <Dropdown.Menu>
@@ -210,12 +208,14 @@ export default class SelectionActions extends React.Component {
         </Dropdown>
 
         <Dropdown id="remove-or-delete-btn">
-          <Dropdown.Toggle 
+          <Dropdown.Toggle
             variant="light"
             size="sm"
             disabled={removeDisabled && deleteDisabled}
+            title="Remove"
+            aria-label="Remove"
           >
-            <i className="fa fa-times-circle-o me-1" />
+            <i className="fa fa-times-circle-o me-1" aria-hidden="true" />
             <span className="selection-action-text-label">Remove</span>
           </Dropdown.Toggle>
           <Dropdown.Menu>
@@ -239,8 +239,10 @@ export default class SelectionActions extends React.Component {
           id="share-btn"
           disabled={shareDisabled}
           onClick={() => this.showModal('share')}
+          title="Share"
+          aria-label="Share"
         >
-          <i className="fa fa-share-alt me-1" />
+          <i className="fa fa-share-alt me-1" aria-hidden="true" />
           <span className="selection-action-text-label">Share</span>
         </Button>
         <Button
@@ -249,8 +251,10 @@ export default class SelectionActions extends React.Component {
           id="literature-btn"
           disabled={literatureDisabled}
           onClick={ElementActions.showLiteratureDetail}
+          title="References"
+          aria-label="References"
         >
-          <i className="fa fa-book me-1" />
+          <i className="fa fa-book me-1" aria-hidden="true" />
           <span className="selection-action-text-label">References</span>
         </Button>
         {this.renderModal()}

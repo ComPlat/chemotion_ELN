@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
@@ -11,6 +11,7 @@ import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 import Sample from 'src/models/Sample';
 import Chemical from 'src/models/Chemical';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
+import AppModal from 'src/components/common/AppModal';
 
 const createChemical = (chemicalData = [{}], cas = null) => {
   const chemical = new Chemical();
@@ -32,6 +33,7 @@ describe('ChemicalTab basic rendering', () => {
         ChemicalTab,
         {
           sample,
+          type: 'sample',
           saveInventory: false,
           setSaveInventory: sinon.spy(),
           handleUpdateSample: sinon.spy(),
@@ -75,6 +77,7 @@ describe('ChemicalTab component', () => {
       ChemicalTab,
       {
         sample,
+        type: 'sample',
         saveInventory: false,
         editChemical: sinon.spy(),
         setSaveInventory: sinon.spy(),
@@ -168,7 +171,7 @@ describe('ChemicalTab component', () => {
 
     it('Simulate clicking on the modal close button ', () => {
       const closePropertiesModalSpy = sinon.spy(instance, 'closePropertiesModal');
-      wrapper.find(Modal.Footer).find(Button).simulate('click');
+      wrapper.find(AppModal).prop('onHide')();
       expect(closePropertiesModalSpy.called).toBe(true);
       closePropertiesModalSpy.restore();
     });
@@ -387,6 +390,7 @@ describe('Manual SDS attachment functionality', () => {
         ChemicalTab,
         {
           sample: testSample,
+          type: 'sample',
           saveInventory: false,
           setSaveInventory: sinon.spy(),
           handleUpdateSample: sinon.spy(),

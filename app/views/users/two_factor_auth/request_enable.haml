@@ -1,0 +1,19 @@
+
+
+.message-container
+  .message-box
+    %h1 Enter 2FA Code
+    - if @message
+      %div.alert.alert-danger= @message
+
+    %p Use an authenticator app (e.g. Google Authenticator, Microsoft Authenticator, or Authy) to scan the QR code. The app will generate a 6-digit code that changes every 30 seconds. Enter the current code below to enable 2FA.
+
+    = raw @qr_code_svg
+
+    = form_with url: "/users/two_factor_auth/verify", method: :post do |form|
+      = hidden_field_tag :jwt, params[:jwt]
+
+      .input-group.mt-3
+        = form.text_field :code, placeholder: "Enter code from app", class: "form-control"
+        = form.submit "Enable 2FA", class: "btn btn-primary"
+

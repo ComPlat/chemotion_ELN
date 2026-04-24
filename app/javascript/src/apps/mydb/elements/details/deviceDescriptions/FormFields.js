@@ -458,7 +458,7 @@ const inputGroupWithWeightUnit = (element, store, field, field_unit, label, info
           onChange={handleFieldChanged(store, field, 'text', element.type)}
         />
         <Button
-          variant="success"
+          variant="light"
           onClick={() => changeWeightUnit(element, store, field, field_unit, element.type)}
         >
           {element[field_unit] || 'kg'}

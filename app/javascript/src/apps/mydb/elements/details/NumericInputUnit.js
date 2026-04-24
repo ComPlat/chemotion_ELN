@@ -90,6 +90,7 @@ export default function NumericInputUnit(props) {
         />
         <Button
           disabled={inputDisabled}
+          variant="light"
           onClick={toggleInput}
         >
           {currentUnit}

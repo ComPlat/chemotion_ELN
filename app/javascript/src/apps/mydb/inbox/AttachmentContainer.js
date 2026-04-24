@@ -161,7 +161,7 @@ class AttachmentContainer extends Component {
 
     return connectDragSource(
       <div className="d-flex align-items-center overflow-hidden p-1">
-        <ButtonToolbar className="gap-2">
+        <ButtonToolbar>
           {checkBox}
           {trash}
           <i

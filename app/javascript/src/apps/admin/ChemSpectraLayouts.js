@@ -2,8 +2,9 @@
 import React, { Component } from 'react';
 import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
 import {
-  Table, Button, Form, Modal, Popover, OverlayTrigger, Alert
+  Table, Button, Form, Popover, OverlayTrigger, Alert
 } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
 
 export default class ChemSpectraLayouts extends Component {
@@ -27,7 +28,7 @@ export default class ChemSpectraLayouts extends Component {
     this.handleShowNewTypeLayoutModal = this.handleShowNewTypeLayoutModal.bind(this);
     this.handleCloseNewTypeLayoutModal = this.handleCloseNewTypeLayoutModal.bind(this);
     this.getLayoutOptionsAndMapping = this.getLayoutOptionsAndMapping.bind(this);
-    this.handleSelectLayout = this.handleSelectLayout.bind(this)
+    this.handleSelectLayout = this.handleSelectLayout.bind(this);
   }
 
   componentDidMount() {
@@ -191,51 +192,42 @@ export default class ChemSpectraLayouts extends Component {
           Add New Data Type
         </Button>
 
-        <Modal centered show={showNewTypeLayoutModal} onHide={this.handleCloseNewTypeLayoutModal}>
-          <Modal.Header closeButton>
-            <Modal.Title>
-              New Data Type
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            {alertMessage && (
-              <Alert variant="warning">
-                {alertMessage}
-              </Alert>
-            )}
-            <Form>
-              <Form.Group className="mb-2">
-                <Form.Label>Data Type</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="dataType"
-                  value={newDataType.dataType}
-                  onChange={this.handleInputChange}
-                  className="py-2"
-                />
-              </Form.Group>
-              <Form.Group>
-                <Form.Label>Layout</Form.Label>
-                <Select
-                  name="layout"
-                  value={{ label: newDataType.layout, value: newDataType.layout }}
-                  onChange={this.handleSelectLayout}
-                  options={layoutsOptions}
-                  placeholder="Select a Layout"
-                />
-              </Form.Group>
-            </Form>
+        <AppModal
+          show={showNewTypeLayoutModal}
+          onHide={this.handleCloseNewTypeLayoutModal}
+          title="New Data Type"
+          primaryActionLabel="Add Data Type"
+          onPrimaryAction={this.handleAddDataType}
+        >
+          {alertMessage && (
+            <Alert variant="warning">
+              {alertMessage}
+            </Alert>
+          )}
+          <Form>
+            <Form.Group className="mb-2">
+              <Form.Label>Data Type</Form.Label>
+              <Form.Control
+                type="text"
+                name="dataType"
+                value={newDataType.dataType}
+                onChange={this.handleInputChange}
+                className="py-2"
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Layout</Form.Label>
+              <Select
+                name="layout"
+                value={{ label: newDataType.layout, value: newDataType.layout }}
+                onChange={this.handleSelectLayout}
+                options={layoutsOptions}
+                placeholder="Select a Layout"
+              />
+            </Form.Group>
+          </Form>
 
-          </Modal.Body>
-          <Modal.Footer className="modal-footer border-0">
-            <Button variant="primary" size="md" onClick={this.handleAddDataType}>
-              Add Data Type
-            </Button>
-            <Button variant="warning" size="md" onClick={this.handleCloseNewTypeLayoutModal}>
-              Cancel
-            </Button>
-          </Modal.Footer>
-        </Modal>
+        </AppModal>
 
         <h3 className="bg-gray-200 p-3 rounded">Data Types</h3>
         <Table responsive hover bordered>

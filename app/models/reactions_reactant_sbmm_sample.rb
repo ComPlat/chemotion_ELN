@@ -6,9 +6,11 @@
 #
 #  id                                     :bigint           not null, primary key
 #  deleted_at                             :datetime
+#  equivalent                             :float
 #  position                               :integer
 #  reference                              :boolean          default(FALSE), not null
 #  show_label                             :boolean          default(FALSE), not null
+#  weight_percentage                      :float
 #  created_at                             :datetime
 #  updated_at                             :datetime
 #  reaction_id                            :integer          not null

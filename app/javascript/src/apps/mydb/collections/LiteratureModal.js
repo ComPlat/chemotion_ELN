@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Modal,
   Accordion,
   Table,
   Button,
@@ -12,6 +11,7 @@ import {
 } from 'react-bootstrap';
 import Immutable from 'immutable';
 import { uniqBy } from 'lodash';
+import AppModal from 'src/components/common/AppModal';
 import {
   Citation,
   CitationUserRow,
@@ -24,31 +24,33 @@ import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { copyToClipboard } from 'src/utilities/clipboard';
+import ElementIcon from 'src/components/common/ElementIcon';
 
 const Cite = require('citation-js');
 
 const ElementLink = ({ literature }) => {
   const {
-    external_label,
-    short_label,
+    external_label: externalLabel,
+    short_label: shortLabel,
     name,
-    element_type,
-    element_id,
+    element_id: elementId,
   } = literature;
-  const type = element_type && element_type.toLowerCase();
+
   return (
     <Button
-      title={`${external_label ? external_label.concat(' - ') : ''}${name}`}
+      title={`${externalLabel ? externalLabel.concat(' - ') : ''}${name}`}
+      variant="light"
       onClick={() => {
         const { uri } = Aviator.getCurrentRequest();
         const uriArray = uri.split(/\//);
-        if (type && element_id) {
-          Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${element_id}`);
+        const elementType = literature.element_type && literature.element_type.toLowerCase();
+        if (elementType && elementId) {
+          Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${elementType}/${elementId}`);
         }
       }}
     >
-      <i className={`me-2 ${element_type ? `icon-${type}` : ''}`} />
-      {short_label}
+      <ElementIcon element={literature} className="me-2" />
+      {shortLabel}
     </Button>
   );
 };
@@ -316,52 +318,46 @@ export default class LiteratureModal extends Component {
     const label = currentCollection?.label || '';
 
     return (
-      <Modal show={show} onHide={onHide} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>
+      <AppModal
+        show={show}
+        onHide={onHide}
+        size="lg"
+        title={(
+          <>
             <i className="fa fa-book me-2" />
             {`Reference Report for collection ${label}`}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Accordion>
-            <Accordion.Item eventKey="2">
-              <Accordion.Header>
-                {LiteratureModal.renderSectionHeader('References for samples', contentSamples)}
-              </Accordion.Header>
-              <Accordion.Body>
-                {sampleRefs.map((lit) => (
-                  <Row key={`sampleRef-${lit.id}`} className="mb-3">
-                    <Col xs={1}><ElementTypeLink literature={lit} type="sample" /></Col>
-                    <Col xs={11}><Citation literature={lit} /></Col>
-                  </Row>
-                ))}
-              </Accordion.Body>
-            </Accordion.Item>
-            <Accordion.Item eventKey="3">
-              <Accordion.Header>
-                {LiteratureModal.renderSectionHeader('References for reactions', contentReactions)}
-              </Accordion.Header>
-              <Accordion.Body>
-                {reactionRefs.map((lit) => (
-                  <Row key={`reactionRef-${lit.id}`} className="mb-3">
-                    <Col xs={1}><ElementTypeLink literature={lit} type="reaction" /></Col>
-                    <Col xs={11}><Citation literature={lit} /></Col>
-                  </Row>
-                ))}
-              </Accordion.Body>
-            </Accordion.Item>
-          </Accordion>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="light" onClick={onHide}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={onHide}>
-            Done
-          </Button>
-        </Modal.Footer>
-      </Modal>
+          </>
+        )}
+      >
+        <Accordion>
+          <Accordion.Item eventKey="2">
+            <Accordion.Header>
+              {LiteratureModal.renderSectionHeader('References for samples', contentSamples)}
+            </Accordion.Header>
+            <Accordion.Body>
+              {sampleRefs.map((lit) => (
+                <Row key={`sampleRef-${lit.id}`} className="mb-3">
+                  <Col xs={1}><ElementTypeLink literature={lit} type="sample" /></Col>
+                  <Col xs={11}><Citation literature={lit} /></Col>
+                </Row>
+              ))}
+            </Accordion.Body>
+          </Accordion.Item>
+          <Accordion.Item eventKey="3">
+            <Accordion.Header>
+              {LiteratureModal.renderSectionHeader('References for reactions', contentReactions)}
+            </Accordion.Header>
+            <Accordion.Body>
+              {reactionRefs.map((lit) => (
+                <Row key={`reactionRef-${lit.id}`} className="mb-3">
+                  <Col xs={1}><ElementTypeLink literature={lit} type="reaction" /></Col>
+                  <Col xs={11}><Citation literature={lit} /></Col>
+                </Row>
+              ))}
+            </Accordion.Body>
+          </Accordion.Item>
+        </Accordion>
+      </AppModal>
     );
   }
 }

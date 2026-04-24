@@ -1,8 +1,9 @@
 import React from 'react';
-import { Modal, Button, Alert } from 'react-bootstrap';
+import { Button, Alert } from 'react-bootstrap';
 import {
   configure,
   shallow,
+  mount,
 } from 'enzyme';
 import {
   describe, it, beforeEach, afterEach
@@ -19,8 +20,8 @@ configure({ adapter: new Adapter() });
 describe('ValidationComponent basic rendering', () => {
   let wrapper = null;
   const onValidateSpy = sinon.spy();
-  const onCancelSpy = sinon.spy();
   const onRowDataChangeSpy = sinon.spy();
+  const onValidationStateChangeSpy = sinon.spy();
 
   const mockRowData = [
     {
@@ -50,16 +51,16 @@ describe('ValidationComponent basic rendering', () => {
           rowData: mockRowData,
           columnDefs: mockColumnDefs,
           onValidate: onValidateSpy,
-          onCancel: onCancelSpy,
-          onRowDataChange: onRowDataChangeSpy
+          onRowDataChange: onRowDataChangeSpy,
+          onValidationStateChange: onValidationStateChangeSpy
         }
       )
     );
   });
 
-  it('should render the modal component', () => {
-    expect(wrapper.find(Modal)).toHaveLength(1);
-    expect(wrapper.find(Modal.Title).text()).toEqual('Validate Data to import');
+  it('should render the validation component content', () => {
+    expect(wrapper.text()).toEqual(expect.stringContaining('Review and edit your data before importing.'));
+    expect(wrapper.text()).toEqual(expect.stringContaining('Invalid rows will be highlighted in red after validation.'));
   });
 
   it('should render the AG Grid component', () => {
@@ -68,21 +69,12 @@ describe('ValidationComponent basic rendering', () => {
   });
 
   it('should render action buttons', () => {
-    // Check specifically for buttons with exact text to avoid ambiguity
     const addRowBtn = wrapper.findWhere((node) => node.type() === Button && node.text().includes('Add Row'));
-
     const showMoreBtn = wrapper.findWhere((node) => node.type() === Button
       && node.text().includes('Show More Rows'));
 
-    const cancelBtn = wrapper.findWhere((node) => node.type() === Button && node.text() === 'Cancel');
-
-    const validateBtn = wrapper.findWhere((node) => node.type() === Button
-      && node.text() === 'Validate Data');
-
     expect(addRowBtn).toHaveLength(1);
     expect(showMoreBtn).toHaveLength(1);
-    expect(cancelBtn).toHaveLength(1);
-    expect(validateBtn).toHaveLength(1);
   });
 
   it('should not render validation errors by default', () => {
@@ -96,8 +88,8 @@ describe('ValidationComponent basic rendering', () => {
 describe('ValidationComponent interaction tests', () => {
   let wrapper = null;
   let onValidateSpy = null;
-  let onCancelSpy = null;
   let onRowDataChangeSpy = null;
+  let onValidationStateChangeSpy = null;
 
   const mockRowData = [
     {
@@ -121,8 +113,8 @@ describe('ValidationComponent interaction tests', () => {
 
   beforeEach(() => {
     onValidateSpy = sinon.spy();
-    onCancelSpy = sinon.spy();
     onRowDataChangeSpy = sinon.spy();
+    onValidationStateChangeSpy = sinon.spy();
 
     wrapper = shallow(
       React.createElement(
@@ -131,23 +123,30 @@ describe('ValidationComponent interaction tests', () => {
           rowData: mockRowData,
           columnDefs: mockColumnDefs,
           onValidate: onValidateSpy,
-          onCancel: onCancelSpy,
-          onRowDataChange: onRowDataChangeSpy
+          onRowDataChange: onRowDataChangeSpy,
+          onValidationStateChange: onValidationStateChangeSpy
         }
       )
     );
   });
 
-  it('should call onCancel when cancel button is clicked', () => {
-    // Find the cancel button precisely by text and type
-    const cancelButton = wrapper.findWhere((node) => node.type() === Button
-      && node.text() === 'Cancel');
+  it('should go to the last page when show more rows is clicked', () => {
+    const mockGridApi = {
+      paginationGoToPage: sinon.spy(),
+      paginationGetTotalPages: sinon.stub().returns(3)
+    };
 
-    expect(cancelButton).toHaveLength(1);
+    wrapper.find(AgGridReact).props().onGridReady({ api: mockGridApi });
+    wrapper.update();
 
-    // Call the onClick handler directly
-    cancelButton.prop('onClick')();
-    expect(onCancelSpy.calledOnce).toBe(true);
+    const showMoreButton = wrapper.findWhere((node) => node.type() === Button
+      && node.text().includes('Show More Rows'));
+
+    expect(showMoreButton).toHaveLength(1);
+
+    showMoreButton.prop('onClick')();
+    expect(mockGridApi.paginationGoToPage.calledOnce).toBe(true);
+    expect(mockGridApi.paginationGoToPage.firstCall.args[0]).toBe(2);
   });
 
   it('should add a new row when add row button is clicked', () => {
@@ -174,6 +173,7 @@ describe('ValidationComponent validation tests', () => {
   let onValidateSpy = null;
   let validateRowUnifiedStub = null;
   let mockGridApi = null;
+  let validationRef = null;
 
   const mockRowData = [
     {
@@ -197,6 +197,7 @@ describe('ValidationComponent validation tests', () => {
 
   beforeEach(() => {
     onValidateSpy = sinon.spy();
+    validationRef = React.createRef();
 
     // Stub the validation function to return predefined results
     validateRowUnifiedStub = sinon.stub(validationUtils, 'validateRowUnified');
@@ -222,15 +223,16 @@ describe('ValidationComponent validation tests', () => {
       ensureIndexVisible: sinon.spy()
     };
 
-    wrapper = shallow(
+    wrapper = mount(
       React.createElement(
         ValidationComponent,
         {
+          ref: validationRef,
           rowData: mockRowData,
           columnDefs: mockColumnDefs,
           onValidate: onValidateSpy,
-          onCancel: sinon.spy(),
-          onRowDataChange: sinon.spy()
+          onRowDataChange: sinon.spy(),
+          onValidationStateChange: sinon.spy()
         }
       )
     );
@@ -247,18 +249,11 @@ describe('ValidationComponent validation tests', () => {
     }
   });
 
-  it('should validate data when validate button is clicked', async () => {
-    // Find the validate button specifically by text and type
-    const validateButton = wrapper.findWhere((node) => node.type() === Button && node.text() === 'Validate Data');
+  it('should validate data when validateData is invoked through the forwarded ref', async () => {
+    expect(validationRef.current).toBeDefined();
+    await validationRef.current.validateData();
 
-    expect(validateButton).toHaveLength(1);
-
-    // Call the onClick handler directly
-    await validateButton.prop('onClick')();
-
-    // Check if validation function was called for each row
     expect(validateRowUnifiedStub.callCount).toBe(2);
-    // Check if onValidate was called
     expect(onValidateSpy.calledOnce).toBe(true);
   });
 });

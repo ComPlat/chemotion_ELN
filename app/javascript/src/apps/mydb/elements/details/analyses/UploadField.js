@@ -1,8 +1,9 @@
 import React, {
   useState, useCallback, useRef, useEffect
 } from 'react';
+import PropTypes from 'prop-types';
 import {
-  OverlayTrigger, Modal, Button, Container, Row, Col, ListGroup, Badge, Tooltip
+  OverlayTrigger, Button, Container, Row, Col, ListGroup, Badge, Tooltip
 } from 'react-bootstrap';
 import JSZip from 'jszip';
 import {
@@ -16,8 +17,8 @@ import {
 } from 'src/apps/mydb/elements/details/analyses/FileManager';
 import { FileTree, ToggleSwitch } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { AdvancedAnalysesList } from 'src/apps/mydb/elements/details/analyses/AdvancedComponents';
-import OlsTreeSelect from '../../../../../components/OlsComponent';
-import PropTypes from 'prop-types';
+import AppModal from 'src/components/common/AppModal';
+import OlsTreeSelect from 'src/components/OlsComponent';
 
 async function handleZipFile(zipFile) {
   const zip = await JSZip.loadAsync(zipFile);
@@ -268,6 +269,11 @@ UploadButton.propTypes = {
   element: PropTypes.object.isRequired,
   handleClose: PropTypes.func.isRequired,
   setElement: PropTypes.func.isRequired,
+  ontology: PropTypes.string,
+};
+
+UploadButton.defaultProps = {
+  ontology: '',
 };
 
 function UploadField({ disabled = false, element, setElement }) {
@@ -351,6 +357,16 @@ function UploadField({ disabled = false, element, setElement }) {
     }
     return (
       <Container>
+        <Row className="justify-content-end mb-2">
+          <Col xs="auto">
+            <ToggleSwitch
+              disabled={listedFiles.length === 0}
+              isChecked={isAdvanced}
+              setIsChecked={setIsAdvanced}
+              label="Advanced mode"
+            />
+          </Col>
+        </Row>
         <Row>
           <Col>
             <p>
@@ -394,34 +410,30 @@ function UploadField({ disabled = false, element, setElement }) {
     <>
       <OverlayTrigger
         placement="top"
-        overlay={<Tooltip id="annotate_tooltip">Create multiple analyses at once from selected files and/or folders that will be uploaded.</Tooltip>}
+        overlay={(
+          <Tooltip id="annotate_tooltip">
+            Create multiple analyses at once from selected files and/or folders that will be uploaded.
+          </Tooltip>
+        )}
       >
         <Button
-        size="sm"
-        variant="success"
-        disabled={disabled}
-        onClick={handleShow}
-      >
-        Analyses from upload
-      </Button>
+          size="sm"
+          variant="success"
+          disabled={disabled}
+          onClick={handleShow}
+        >
+          Analyses from upload
+        </Button>
       </OverlayTrigger>
 
-      <Modal size="xl" show={show} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Create Analyses from files or folders</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {content()}
-        </Modal.Body>
-        <Modal.Footer>
-          <ToggleSwitch
-            disabled={listedFiles.length === 0}
-            isChecked={isAdvanced}
-            setIsChecked={setIsAdvanced}
-            label="Advanced mode"
-          />
-        </Modal.Footer>
-      </Modal>
+      <AppModal
+        size="xl"
+        show={show}
+        onHide={handleClose}
+        title="Create Analyses from files or folders"
+      >
+        {content()}
+      </AppModal>
     </>
   );
 }

@@ -62,7 +62,7 @@ export default class ComputeTask extends React.Component {
         </td>
         <td className="text-center">{task.updatedAt}</td>
         <td className="text-center">
-          <ButtonToolbar className="gap-1">
+          <ButtonToolbar>
             <Button variant="info" onClick={this.checkState} size="xsm" style={{ width: '22px' }}>
               <i className="fa fa-long-arrow-up" />
               <i className="fa fa-long-arrow-down" />

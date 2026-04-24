@@ -7,8 +7,9 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import Search from 'src/apps/mydb/elements/list/search/Search';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import SelectionActions from './selectionActions/SelectionActions';
+import SelectionActions from 'src/apps/mydb/elements/list/selectionActions/SelectionActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
+import CreateElementButton from 'src/components/navigation/CreateElementButton';
 import ElementsTable from 'src/apps/mydb/elements/list/ElementsTable';
 import ElementsTableSettings from 'src/apps/mydb/elements/list/ElementsTableSettings';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
@@ -171,6 +172,7 @@ export default class ElementsList extends React.Component {
       visible, hidden, totalCheckedElements, totalElements, currentTab, currentCollection
     } = this.state;
     const { search } = this.context;
+    const { overview = true } = this.props;
 
     const hasSearchApplied = !!UIStore.getState().currentSearchByID;
 
@@ -231,15 +233,18 @@ export default class ElementsList extends React.Component {
             {currentCollection?.label || ''}
             {hasSearchApplied && (<span className="ms-2 text-lighten2 condensed-text-width">(search results)</span>)}
           </h1>
-          {hasSearchApplied ? (
-            <Button
-              variant="light"
-              onClick={() => this.handleRemoveSearchResult(search)}
-            >
-              <i className="fa fa-times-circle me-2" />
-              Clear search
-            </Button>
-          ) : <Search />}
+          <div className="d-flex align-items-center gap-3">
+            {hasSearchApplied ? (
+              <Button
+                variant="light"
+                onClick={() => this.handleRemoveSearchResult(search)}
+              >
+                <i className="fa fa-times-circle me-2" />
+                Clear search
+              </Button>
+            ) : <Search />}
+            {overview && <CreateElementButton />}
+          </div>
         </div>
         <SelectionActions />
         <div className="tabs-container--with-full-grow position-relative">

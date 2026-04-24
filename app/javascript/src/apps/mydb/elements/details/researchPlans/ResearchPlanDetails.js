@@ -3,13 +3,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab, Dropdown, ButtonGroup
+  Tooltip, OverlayTrigger, ButtonToolbar, Tabs, Tab, Dropdown, ButtonGroup
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -19,7 +17,6 @@ import ResearchPlanWellplates from 'src/apps/mydb/elements/details/researchPlans
 import ResearchPlanMetadata from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanMetadata';
 import Attachment from 'src/models/Attachment';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import ConfirmClose from 'src/components/common/ConfirmClose';
 import ResearchPlan from 'src/models/ResearchPlan';
 import ResearchPlanDetailsAttachments from
   'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
@@ -29,23 +26,21 @@ import ResearchPlanDetailsName from
   'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
 import ResearchPlanDetailsContainers from
   'src/apps/mydb/elements/details/researchPlans/analysesTab/ResearchPlanDetailsContainers';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
-import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
-import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
-import CopyElementModal from 'src/components/common/CopyElementModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { commentActivation } from 'src/utilities/CommentHelper';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
-import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
+import { EditUserLabels } from 'src/components/UserLabels';
 
 export default class ResearchPlanDetails extends Component {
   // eslint-disable-next-line react/static-property-placement
@@ -356,53 +351,28 @@ export default class ResearchPlanDetails extends Component {
     } = researchPlan;
     const edit = researchPlan.mode === 'edit';
 
-    const editTooltip = (<Tooltip id="edit-tooltip">Click to switch to edit mode</Tooltip>);
-    const viewTooltip = (<Tooltip id="view-tooltip">Click to switch to view mode</Tooltip>);
-
-    const EditButton = (
-      <Button
-        variant={researchPlan.mode === 'edit' ? 'warning' : 'light'}
-        style={{
-          pointerEvents: 'none',
-          backgroundColor: researchPlan.mode !== 'edit' ? '#E8E8E8' : undefined,
-        }}
-      >
-        <i className="fa fa-pencil" />
-      </Button>
-    );
-
-    const ViewButton = (
-      <Button
-        variant={researchPlan.mode === 'view' ? 'info' : 'light'}
-        style={{
-          pointerEvents: 'none',
-          backgroundColor: researchPlan.mode !== 'view' ? '#E8E8E8' : undefined,
-        }}
-      >
-        <i className="fa fa-eye fa-sm" />
-      </Button>
-    );
+    const editTooltip = (<Tooltip id="edit-tooltip">Switch to edit mode</Tooltip>);
+    const viewTooltip = (<Tooltip id="view-tooltip">Switch to view mode</Tooltip>);
 
     const btnMode = (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => {
-          if (researchPlan.mode === 'view') {
-            this.handleSwitchMode('edit');
-          } else {
-            this.handleSwitchMode('view');
-          }
-        }}
-        onKeyPress={() => {}}
-      >
-        <OverlayTrigger placement="top" overlay={researchPlan.mode === 'view' ? editTooltip : viewTooltip}>
-          <ButtonGroup>
-            {EditButton}
-            {ViewButton}
-          </ButtonGroup>
+      <ButtonGroup>
+        <OverlayTrigger placement="top" overlay={editTooltip}>
+          <ButtonGroupToggleButton
+            active={researchPlan.mode === 'edit'}
+            onClick={() => this.handleSwitchMode('edit')}
+          >
+            <i className="fa fa-pencil" />
+          </ButtonGroupToggleButton>
         </OverlayTrigger>
-      </div>
+        <OverlayTrigger placement="top" overlay={viewTooltip}>
+          <ButtonGroupToggleButton
+            active={researchPlan.mode === 'view'}
+            onClick={() => this.handleSwitchMode('view')}
+          >
+            <i className="fa fa-eye fa-sm" />
+          </ButtonGroupToggleButton>
+        </OverlayTrigger>
+      </ButtonGroup>
     );
 
     return (
@@ -417,7 +387,7 @@ export default class ResearchPlanDetails extends Component {
               onCopyToMetadata={this.handleCopyToMetadata.bind(this)}
             />
           </div>
-          <ButtonToolbar className="d-flex justify-content-center align-items-end gap-1">
+          <ButtonToolbar className="d-flex justify-content-center align-items-end">
             {btnMode}
             {this.renderExportButton(changed)}
           </ButtonToolbar>
@@ -475,64 +445,9 @@ export default class ResearchPlanDetails extends Component {
     );
   } /* eslint-enable */
 
-  renderPanelHeading(researchPlan) {
-    const titleTooltip = formatTimeStampsOfElement(researchPlan || {});
-
-    return (
-      <div className="d-flex align-items-center justify-content-between">
-        <div className="d-flex align-items-center gap-2">
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
-            <span>
-              <i className="fa fa-file-text-o" />
-              <span className="mx-1">{researchPlan.name}</span>
-            </span>
-          </OverlayTrigger>
-          <ShowUserLabels element={researchPlan} />
-          <ElementCollectionLabels element={researchPlan} placement="right" />
-          <HeaderCommentSection element={researchPlan} />
-        </div>
-        <div className="d-flex align-items-center gap-1 flex-row-reverse">
-          <ConfirmClose el={researchPlan} />
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="saveresearch_plan">Save Research Plan</Tooltip>}>
-            <Button
-              variant="warning"
-              size="xxsm"
-              onClick={() => this.handleSubmit()}
-              style={{ display: (researchPlan.changed || false) ? '' : 'none' }}
-            >
-              <i className="fa fa-floppy-o" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
-          {!researchPlan.isNew
-            && <OpenCalendarButton isPanelHeader eventableId={researchPlan.id} eventableType="ResearchPlan" />}
-          <CopyElementModal element={researchPlan} />
-        </div>
-      </div>
-    );
-  }
-
-  renderPanelFooter() {
-    const { researchPlan } = this.state;
-
-    return (
-      <>
-        <Button
-          variant="primary"
-          onClick={() => DetailActions.close(researchPlan)}
-        >
-          Close
-        </Button>
-        {(researchPlan.changed || researchPlan.is_copy) && (
-          <Button variant="warning" onClick={() => this.handleSubmit()}>
-            {researchPlan.isNew ? 'Create' : 'Save'}
-          </Button>
-        )}
-      </>
-    );
-  }
-
   render() {
     const { researchPlan, visible } = this.state;
+    const { openedFromCollectionId } = this.props;
 
     const tabContentsMap = {
       research_plan: (
@@ -622,17 +537,20 @@ export default class ResearchPlanDetails extends Component {
     const activeTab = (this.state.activeTab !== 0 && this.state.activeTab) || visible[0];
 
     return (
-      <DetailCard
+      <ElementDetailCard
+        element={researchPlan}
         isPendingToSave={researchPlan.isPendingToSave}
-        header={this.renderPanelHeading(researchPlan)}
-        footer={this.renderPanelFooter()}
+        title={researchPlan.name}
+        titleTooltip={formatTimeStampsOfElement(researchPlan || {})}
+        onSave={() => this.handleSubmit()}
+        showCalendar
       >
         <div className="tabs-container--with-borders">
           <ElementDetailSortTab
             type="research_plan"
             availableTabs={Object.keys(tabContentsMap)}
             onTabPositionChanged={this.onTabPositionChanged}
-            openedFromCollectionId={this.props.openedFromCollectionId}
+            openedFromCollectionId={openedFromCollectionId}
           />
           <Tabs
             mountOnEnter
@@ -646,7 +564,7 @@ export default class ResearchPlanDetails extends Component {
           </Tabs>
         </div>
         <CommentModal element={researchPlan} />
-      </DetailCard>
+      </ElementDetailCard>
     );
   }
 }
@@ -654,4 +572,8 @@ export default class ResearchPlanDetails extends Component {
 ResearchPlanDetails.propTypes = {
   researchPlan: PropTypes.instanceOf(ResearchPlan).isRequired,
   openedFromCollectionId: PropTypes.number,
+};
+
+ResearchPlanDetails.defaultProps = {
+  openedFromCollectionId: null,
 };

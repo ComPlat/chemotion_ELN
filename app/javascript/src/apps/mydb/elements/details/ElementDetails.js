@@ -11,7 +11,7 @@ import GraphContainer from 'src/apps/mydb/elements/details/GraphContainer';
 import MetadataContainer from 'src/components/metadata/MetadataContainer';
 //import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
 import ReactionDetails from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
-import ReportContainer from 'src/apps/mydb/elements/details/reports/ReportContainer';
+import ReportDetails from 'src/apps/mydb/elements/details/reports/ReportDetails';
 import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
 import DeviceDescriptionDetails from 'src/apps/mydb/elements/details/deviceDescriptions/DeviceDescriptionDetails';
 import SampleDetails from 'src/apps/mydb/elements/details/samples/SampleDetails';
@@ -24,6 +24,8 @@ import VesselTemplateDetails from 'src/apps/mydb/elements/details/vessels/Vessel
 import VesselTemplateCreate from 'src/apps/mydb/elements/details/vessels/VesselTemplateCreate';
 import SequenceBasedMacromoleculeSampleDetails from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleDetails';
 import LiteratureDetails from 'src/apps/mydb/elements/details/literature/LiteratureDetails';
+import ElementIcon from 'src/components/common/ElementIcon';
+import CreateElementButton from '../../../../components/navigation/CreateElementButton';
 
 const tabInfoHash = {
   metadata: {
@@ -153,7 +155,7 @@ export default class ElementDetails extends Component {
       case 'metadata':
         return <MetadataContainer metadata={el} />;
       case 'report':
-        return <ReportContainer report={el} />;
+        return <ReportDetails report={el} />;
       case 'prediction':
         // return <PredictionContainer prediction={el} />;
         console.warn('Attempting to show outdated PredictionContainer');
@@ -216,11 +218,13 @@ export default class ElementDetails extends Component {
     const title = el.type === 'vessel_template' ? el.title : tab.title ?? el.title();
 
     const spanClassName = el.isPendingToSave ? 'unsaved' : '';
-    const iconClassName = 'me-1 ' + (el.element_klass ? el.element_klass.icon_name : tab.iconEl ?? 'icon-' + el.type);
 
     return (
       <span className={spanClassName}>
-        <i className={iconClassName} />
+        <ElementIcon
+          element={el}
+          className="me-1"
+        />
         {title}
       </span>
     );
@@ -264,12 +268,15 @@ export default class ElementDetails extends Component {
       ));
 
     return (
-      <div className="tabs-container--with-full-height">
+      <div className="elements-details tabs-container--with-full-height">
+        <div className="d-flex justify-content-end">
+          <CreateElementButton />
+        </div>
         <Tabs
           id="elements-tabs"
           activeKey={activeKey}
           onSelect={DetailActions.select}
-          className="surface-tabs"
+          className="elements-details__tabs surface-tabs"
         >
           {selectedElements}
         </Tabs>

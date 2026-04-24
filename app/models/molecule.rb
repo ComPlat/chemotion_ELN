@@ -251,11 +251,10 @@ class Molecule < ApplicationRecord
     mns.exclude?(new_name)
   end
 
-  def self.svg_reprocess(svg, struct)
+  def self.svg_reprocess(svg, struct, service: nil)
     return svg if svg_valid_and_not_openbabel?(svg)
 
-    # Use unified SVG renderer service with fallback chain
-    Chemotion::SvgRenderer.render_svg_from_molfile(struct)
+    Chemotion::SvgRenderer.render_svg_from_molfile(struct, service: service)
   end
 
   def self.svg_valid_and_not_openbabel?(svg)
