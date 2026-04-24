@@ -115,38 +115,35 @@ function InventoryLabelSettings() {
     setSelectedValue(validCollectionIds);
   };
 
-  const findCollectionIds = (selectedOptions) => {
-    // find collections of Group
-    let collectionsIds = [];
-    if (typeof selectedOptions[0] === 'string') {
-      options.map((object) => {
-        if (object.title === selectedOptions[0]) {
-          collectionsIds = object.children.map((child) => child.value);
-        }
-        return null;
-      });
-    } else {
-      collectionsIds = selectedOptions;
-    }
-    return collectionsIds;
-  };
+  const resolveSelectedItems = (selectedOptions) => {
+    if (!selectedOptions?.length) return [];
 
-  const collectCollectionIds = (selectedOptions) => {
-    if (!selectedOptions || selectedOptions.length === 0) return [];
-
-    const collectionIds = selectedOptions.map((option) => {
+    return selectedOptions.map((option) => {
+    // CASE 1: group selected by title
       if (typeof option === 'string') {
-        // If it's a group title, find the group and get all its collection IDs
-        const groupObject = find(options, { title: option });
-        return groupObject?.children?.map((child) => child.value) || [];
+        const group = options.find((g) => g.title === option);
+        return group?.children || [];
       }
-      // If it's already a collection ID, return it directly
-      return option;
-    });
 
-    // Flatten the array and remove any undefined/null values
-    return collectionIds.flat().filter((id) => id != null);
+      // CASE 2: option is already an ID
+      const group = options.find((g) => g.children?.some((c) => c.value === option));
+
+      if (group) {
+        return group.children.find((c) => c.value === option);
+      }
+
+      // CASE 3: standalone item (no children structure)
+      return options.find((o) => o.value === option || o.title === option);
+    }).flat().filter(Boolean);
   };
+
+  const collectCollectionIds = (selectedOptions) => resolveSelectedItems(selectedOptions)
+    .map((item) => item.value)
+    .filter(Boolean);
+
+  const collectCollectionTitles = (selectedOptions) => resolveSelectedItems(selectedOptions)
+    .map((item) => item.title)
+    .filter(Boolean);
 
   const updateUserSettings = () => {
     setUpdateSpinner(true);
@@ -208,8 +205,12 @@ function InventoryLabelSettings() {
     setSelectedValue(selectedOptions);
     setErrorMessage(null);
 
-    const selectedIds = selectedOptions.length !== 0 ? findCollectionIds(selectedOptions) : null;
-    const inventory = selectedIds ? findInventory(selectedOptions, selectedIds) : null;
+    const selectedIds = collectCollectionIds(selectedOptions);
+
+    const inventory = selectedIds.length > 0
+      ? findInventory(selectedOptions, selectedIds)
+      : null;
+
     if (inventory) {
       setCounterValue(inventory.counter);
       setPrefixValue(inventory.prefix);
@@ -408,7 +409,10 @@ function InventoryLabelSettings() {
         primaryActionLabel="Yes, Create"
         onPrimaryAction={handleCreateConfirmation}
       >
-        You are about to create the inventory label for selected collection(s).
+        You are about to create the inventory label for:
+        <ul>
+          {collectCollectionTitles(selectedCollections).map((col) => <li key={col}>{col}</li>)}
+        </ul>
         This will automatically select the &apos;Inventory&apos; checkbox for all samples in those collections.
       </AppModal>
 
@@ -419,7 +423,10 @@ function InventoryLabelSettings() {
         primaryActionLabel="Yes, Reset"
         onPrimaryAction={handleResetConfirm}
       >
-        You are about to delete the inventory label for selected collection(s).
+        You are about to delete the inventory label for:
+        <ul>
+          {collectCollectionTitles(selectedCollections).map((x) => <li key={x}>{x}</li>)}
+        </ul>
         Are you sure you want to delete the assigned prefix, name and counter?
       </AppModal>
     </>
