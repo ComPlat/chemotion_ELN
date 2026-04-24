@@ -59,7 +59,7 @@ gem 'jwt'
 gem 'kaminari'
 gem 'kaminari-grape'
 
-gem 'labimotion', '2.2.0.rc5'
+gem 'labimotion', git: 'https://github.com/StarmanMartin/labimotion.git', branch: 'autofill-reaction-variation-sample-from-analysys' # gem 'labimotion', path: '../labimotion/labimotion'
 gem 'logidze'
 
 gem 'mimemagic', '0.3.10'
