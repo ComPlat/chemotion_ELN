@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Form, Button, ButtonToolbar, Modal } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 
+import AppModal from 'src/components/common/AppModal';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 export default class SelectionDeleteModal extends React.Component {
@@ -34,31 +35,27 @@ export default class SelectionDeleteModal extends React.Component {
     const { onHide } = this.props;
 
     return (
-      <Modal show centered onHide={onHide}>
-        <Modal.Header closeButton>
-          <Modal.Title>Delete from all Collections?</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Check
-                type="checkbox"
-                onChange={this.handleCheck}
-                checked={deleteSubsamples}
-                label="Also delete reaction associated samples&nbsp;"
-              />
-              <Form.Text>
-                If left unchecked, only the solvent and reactant samples of the selected reactions will be deleted
-              </Form.Text>
-            </Form.Group>
-
-            <ButtonToolbar>
-              <Button variant="primary" onClick={onHide}>Cancel</Button>
-              <Button variant="warning" onClick={this.handleClick}>Delete</Button>
-            </ButtonToolbar>
-          </Form>
-        </Modal.Body>
-      </Modal>
+      <AppModal
+        show
+        onHide={onHide}
+        title="Delete from all Collections?"
+        primaryActionLabel="Delete"
+        onPrimaryAction={this.handleClick}
+      >
+        <Form>
+          <Form.Group className="mb-3">
+            <Form.Check
+              type="checkbox"
+              onChange={this.handleCheck}
+              checked={deleteSubsamples}
+              label="Also delete reaction associated samples&nbsp;"
+            />
+            <Form.Text>
+              If left unchecked, only the solvent and reactant samples of the selected reactions will be deleted
+            </Form.Text>
+          </Form.Group>
+        </Form>
+      </AppModal>
     );
   }
 }

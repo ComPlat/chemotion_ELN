@@ -44,7 +44,7 @@ const collectionShow = (e) => {
 };
 
 const reportShowReport = () => {
-  ElementActions.showReportContainer();
+  ElementActions.showReportDetails();
 };
 
 const predictionShowFwdRxn = () => {

@@ -1,16 +1,46 @@
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable camelcase */
 import React, { useContext } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import {
-  OverlayTrigger, Popover, Button
+  Button, Dropdown
 } from 'react-bootstrap';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-function ElementCollectionLabels({ element, placement }) {
+const CollectionToggle = React.forwardRef(({
+  onClick,
+  labelsCount,
+  totalSharedCollections,
+}, ref) => (
+  <Button
+    ref={ref}
+    size="xxsm"
+    variant="secondary"
+    onClick={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick(e);
+    }}
+  >
+    <i className="fa fa-list" />
+    {` ${labelsCount} `}
+    {' | '}
+    <i className="fa fa-share-alt" />
+    {`${totalSharedCollections} `}
+  </Button>
+));
+CollectionToggle.displayName = 'CollectionToggle';
+CollectionToggle.propTypes = {
+  onClick: PropTypes.func.isRequired,
+  labelsCount: PropTypes.number.isRequired,
+  totalSharedCollections: PropTypes.number.isRequired,
+};
+
+function ElementCollectionLabels({ element }) {
   const { currentUser } = UserStore.getState();
   if (!currentUser) return (<span />);
   if (!element.tag) return (<span />);
@@ -25,27 +55,25 @@ function ElementCollectionLabels({ element, placement }) {
     aviatorNavigationWithCollectionId(label.id, element.type, element.id);
   }
 
-  const formatLabels = (labels) => {
-    return labels.map((label, index) => {
+  const formatItems = (labels) => {
+    return labels.map((label) => {
       const collectionFromStore = collectionsStore.find(label.id)
       if (!collectionFromStore) return (<span />);
 
       return (
-        <span className="d-inline-block m-1" key={index}>
-          <Button variant="light" size="sm" onClick={(e) => handleOnClick(label, e)}>
-            {collectionFromStore.label}
-          </Button>
-        </span>
+        <Dropdown.Item key={label.id} onClick={(e) => handleOnClick(label, e)}>
+          {collectionFromStore.label}
+        </Dropdown.Item>
       );
     });
   }
 
-  const renderLabels = (title, labels) => {
+  const renderCollectionsItems = (title, labels) => {
     if (labels.length === 0) return null;
     return (
       <>
-        <Popover.Header>{title}</Popover.Header>
-        <Popover.Body>{formatLabels(labels)}</Popover.Body>
+        <Dropdown.Header>{title}</Dropdown.Header>
+        {formatItems(labels)}
       </>
     );
   }
@@ -53,33 +81,24 @@ function ElementCollectionLabels({ element, placement }) {
   const ownCollections = element.tag.taggable_data.collection_labels.filter(label => collectionsStore.isOwnCollection(label.id))
   const sharedCollections = element.tag.taggable_data.collection_labels.filter(label => collectionsStore.isSharedCollection(label.id))
 
-  const collectionOverlay = (
-    <Popover className="scrollable-popover" id="element-collections">
-      {renderLabels('My Collections', ownCollections)}
-      {renderLabels('Shared Collections', sharedCollections)}
-    </Popover>
-  );
+  if (ownCollections.length === 0 && sharedCollections.length === 0) { return (<span />); }
 
   return (
-    <OverlayTrigger
-      trigger="click"
-      rootClose
-      placement={placement}
-      overlay={collectionOverlay}
-    >
-      <Button
-        key={element.id}
-        size="xxsm"
-        variant="light"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <i className="fa fa-list" />
-        {` ${ownCollections.length} `}
-        {' - '}
-        {`${sharedCollections.length} `}
-        <i className="fa fa-share-alt" />
-      </Button>
-    </OverlayTrigger>
+    <Dropdown>
+      <Dropdown.Toggle
+        as={CollectionToggle}
+        id="dropdown-custom-components"
+        labelsCount={ownCollections.length}
+        totalSharedCollections={sharedCollections.length}
+      />
+      {createPortal(
+        <Dropdown.Menu>
+          {renderCollectionsItems('My Collections', ownCollections)}
+          {renderCollectionsItems('Shared Collections', sharedCollections)}
+        </Dropdown.Menu>,
+        document.body
+      )}
+    </Dropdown>
   );
 }
 
@@ -97,9 +116,4 @@ ElementCollectionLabels.propTypes = {
       }),
     }),
   }).isRequired,
-  placement: PropTypes.string,
-};
-
-ElementCollectionLabels.defaultProps = {
-  placement: 'left',
 };

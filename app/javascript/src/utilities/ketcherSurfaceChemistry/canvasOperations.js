@@ -19,7 +19,7 @@ import {
   handleAddAtom,
   removeTextFromData
 } from 'src/utilities/ketcherSurfaceChemistry/AtomsAndMolManipulation';
-import { findByKeyAndUpdateTextNodePosition } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import { findByKeyAndUpdateTextNodePosition, forTextNodeHeader } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import {
   imageNodeForTextNodeSetter,
   buttonClickForRectangleSelection,
@@ -55,15 +55,20 @@ import { findTemplateIdCategoryFromTemplates } from 'src/utilities/ketcherSurfac
 
 // function when a canvas is saved using main "SAVE" button
 const arrangePolymers = async (canvasData, editor) => {
+  // Do not add PolymersList tag when no polymer images are present
+  if (!imagesList || imagesList.length === 0) {
+    return canvasData.split('\n');
+  }
   // grab image index
   // find index for alias
   // on matching create a string to be attached with polymers sections
-  const listOfAtomsWithAlias = [];
   const data = JSON.parse(await editor.structureDef.editor.getKet());
-  mols
+  const atomsWithAlias = mols
     .flatMap((item) => data[item]?.atoms ?? [])
-    .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias))
-    .forEach((i) => listOfAtomsWithAlias.push(i.alias));
+    .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias));
+
+  // Keep atom index order so PolymersList matches positions (0, 1, 2) and image sequence is correct after load
+  const listOfAtomsWithAlias = atomsWithAlias.map((i) => i.alias);
   const processString = await templateAliasesPrepare(listOfAtomsWithAlias);
   return [...canvasData.split('\n'), KET_TAGS.polymerIdentifier, processString];
 };
@@ -93,7 +98,8 @@ const arrangeTextNodes = async (ket2Molfile) => {
               textSeparator,
               block.text
             ].join('').trim();
-            assembleTextList.push(line);
+            const y = textItem.data?.position?.y ?? 0;
+            assembleTextList.push({ line, y });
           }
         }
       }
@@ -103,9 +109,12 @@ const arrangeTextNodes = async (ket2Molfile) => {
 
   if (!assembleTextList.length) return ket2Molfile;
 
+  // Sort vertically: bottom (larger y) first
+  assembleTextList.sort((a, b) => b.y - a.y);
+
   ket2Molfile.push(
     KET_TAGS.textNodeIdentifier,
-    ...assembleTextList,
+    ...assembleTextList.map((entry) => entry.line),
     KET_TAGS.textNodeIdentifierClose
   );
 
@@ -166,22 +175,6 @@ const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z
   // Generate unique key for text node (similar to draft.js format)
   const generateKey = () => Math.random().toString(36).substring(2, 8);
   const textKey = generateKey();
-
-  // Import forTextNodeHeader from TextNode utility
-  const forTextNodeHeader = (key, description) => JSON.stringify({
-    blocks: [
-      {
-        key,
-        text: description,
-        type: 'unstyled',
-        depth: 0,
-        inlineStyleRanges: [],
-        entityRanges: [],
-        data: {},
-      }
-    ],
-    entityMap: {}
-  });
 
   // Create default pos array based on position
   const defaultPos = [
@@ -447,7 +440,7 @@ const prepareSvg = async (editor) => {
     const svg = new XMLSerializer().serializeToString(doc);
     return { svg, message: null };
   } catch (e) {
-    return { svg: null, message: e?.message || 'Unknown error in prepareSvg' };
+    return { svg: null, message: e || 'Unknown error in prepareSvg' };
   }
 };
 

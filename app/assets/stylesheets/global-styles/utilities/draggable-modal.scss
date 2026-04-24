@@ -34,7 +34,8 @@
   left: 0;
 }
 
-.modal.draggable-modal-dialog.minimized, .modal.draggable-modal-dialog-xxxl.minimized {
+.modal.draggable-modal-dialog.minimized,
+.modal.draggable-modal-dialog-xxxl.minimized {
   height: 66px;
   overflow: hidden;
 }
@@ -109,11 +110,11 @@
 }
 
 .draggable-modal-content .modal-header .btn-group .btn:hover {
-  background-color: $chemstrap-silicon-active1;
+  background-color: $chemstrap-silicon-active;
 }
 
 .draggable-modal-content .modal-header .btn-group .btn.active {
-  background-color: $chemstrap-silicon-active1;
+  background-color: $chemstrap-silicon-active;
   color: var(--bs-gray-800);
 }
 
@@ -148,7 +149,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  padding: 1.25rem; 
+  padding: 1.25rem;
 }
 
 .draggable-modal-form-fields .device-alert {
@@ -179,4 +180,3 @@
 .draggable-modal-scrollable-content .tab-content .is-invalid__control {
   border-color: var(--bs-danger);
 }
-

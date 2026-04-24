@@ -30,10 +30,9 @@
   }
 
   &__toolbar {
-    position: absolute;
-    top: 0;
-    right: 0;
-    display: flex;
+    @extend .position-absolute;
+    @extend .top-0;
+    @extend .end-0;
     z-index: 11;
   }
 

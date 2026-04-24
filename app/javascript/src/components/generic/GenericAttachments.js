@@ -254,7 +254,7 @@ class GenericAttachments extends Component {
                   </Button>
                 ) : (
                   <>
-                    <ButtonToolbar className="gap-1">
+                    <ButtonToolbar>
                       {downloadButton(attachment)}
                       <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
                       <EditButton attachment={attachment} onChange={this.props.onEdit} />

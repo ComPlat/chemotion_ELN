@@ -150,7 +150,7 @@ const PropertiesForm = ({ readonly }) => {
     const searchOptionsVisible = sbmmStore.show_search_options[sbmmSample.id] ? false : true;
 
     return (
-      <Button variant="primary" onClick={() => sbmmStore.toggleSearchOptions(sbmmSample.id, searchOptionsVisible)}>
+      <Button variant="light" onClick={() => sbmmStore.toggleSearchOptions(sbmmSample.id, searchOptionsVisible)}>
         {buttonText} search options
       </Button>
     )
@@ -382,8 +382,11 @@ const PropertiesForm = ({ readonly }) => {
                       label="Purity"
                       disabled={disabled}
                       variant="light"
-                      onChange={(e) => formHelper.onChange('purity', e.value)}
+                      onChange={(e) => formHelper.onChange('purity', e?.value, 'number')}
                     />
+                    {sbmmSample?.errors?.purity && (
+                      <Form.Control.Feedback type="invalid" className="d-block">{sbmmSample.errors.purity}</Form.Control.Feedback>
+                    )}
                   </Col>
                   <Col>
                     {formHelper.textInput('purity_detection', 'Purity detection', '')}

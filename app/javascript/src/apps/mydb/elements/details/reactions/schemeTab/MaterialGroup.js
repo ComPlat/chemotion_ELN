@@ -249,7 +249,6 @@ function GeneralMaterialGroup({
         onToggle={switchYield}
         onLabel="Yield"
         offLabel="Conv."
-        variant="primary"
         tooltipOn={conversionText}
         tooltipOff={yieldText}
         size="xsm"

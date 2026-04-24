@@ -81,6 +81,11 @@ module Chemotion
       FileUtils.ln_s(new_sprite, sprite_file)
     end
 
+    # OTP secret key used by Devise for encrypting two-factor authentication secrets.
+    # In development and test, it falls back to a default value. In production, ensure
+    # OTP_SECRET_KEY is set in the environment to keep encryption secure.
+    config.otp_secret_encryption_key = ENV.fetch('OTP_SECRET_KEY')
+
     # Specifically allow some classes to be serialized by Psych
     # See https://discuss.rubyonrails.org/t/cve-2022-32224-possible-rce-escalation-bug-with-serialized-columns-in-active-record/81017
     # and https://stackoverflow.com/questions/71332602/upgrading-to-ruby-3-1-causes-psychdisallowedclass-exception-when-using-yaml-lo

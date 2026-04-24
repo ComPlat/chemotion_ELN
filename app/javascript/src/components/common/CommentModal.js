@@ -202,7 +202,7 @@ export default class CommentModal extends Component {
 
           </Modal.Body>
           <Modal.Footer className="modal-footer border-0">
-            <ButtonToolbar className="gap-2">
+            <ButtonToolbar>
               <Button
                 variant="secondary"
                 onClick={() => CommentActions.toggleCommentModal(false)}

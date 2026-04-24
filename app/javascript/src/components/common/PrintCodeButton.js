@@ -5,7 +5,7 @@ import { Tooltip, OverlayTrigger, Dropdown } from 'react-bootstrap';
 import PrintCodeModal from 'src/components/common/PrintCodeModal';
 
 // Component that allows users to print a PDF.
-export default function PrintCodeButton({ element, analyses }) {
+export default function PrintCodeButton({ element, analyses, size, variant }) {
   // State for the modal and preview
   const [showModal, setShowModal] = useState(false);
   const [selectedConfig, setSelectedConfig] = useState('');
@@ -69,17 +69,15 @@ export default function PrintCodeButton({ element, analyses }) {
     <>
       {/* Overlay for the button */}
       <OverlayTrigger
-        placement="top"
-        delayShow={500}
         overlay={tooltip}
       >
         <Dropdown>
           <Dropdown.Toggle
-            variant="light"
+            variant={variant}
             disabled={element.isNew}
-            size="xxsm"
+            size={size}
           >
-            <i className="fa fa-barcode fa-lg" />
+            <i className="fa fa-barcode" />
           </Dropdown.Toggle>
 
           {createPortal(
@@ -116,8 +114,12 @@ export default function PrintCodeButton({ element, analyses }) {
 PrintCodeButton.propTypes = {
   element: PropTypes.object.isRequired,
   analyses: PropTypes.array,
+  size: PropTypes.string,
+  variant: PropTypes.string,
 };
 
 PrintCodeButton.defaultProps = {
   analyses: [],
+  size: 'xxsm',
+  variant: 'light',
 };

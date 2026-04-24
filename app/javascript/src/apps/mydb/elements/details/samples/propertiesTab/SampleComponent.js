@@ -461,7 +461,8 @@ class SampleComponent extends Component {
           disabled={!permitOn(sample)}
           onChange={(e) => this.handleAmountChange(e, material.amount_l, '', false)}
           onMetricsChange={this.handleMetricsChange}
-          variant={material.amount_unit === 'l' ? 'primary' : 'light'}
+          variant="light"
+          active={material.amount_unit === 'l'}
         />
       </td>
     );
@@ -472,10 +473,9 @@ class SampleComponent extends Component {
    * @param {Object} material - The material object
    * @param {string} metric - The metric prefix
    * @param {Array<string>} metricPrefixes - Allowed metric prefixes
-   * @param {string} massBsStyle - Bootstrap style for the input
    * @returns {JSX.Element} The mass input cell
    */
-  componentMass(material, metric, metricPrefixes, massBsStyle) {
+  componentMass(material, metric, metricPrefixes) {
     const { lockAmountColumnSolids } = this.state;
     const { sample } = this.props;
 
@@ -498,7 +498,8 @@ class SampleComponent extends Component {
             disabled={!permitOn(sample) || lockAmountColumnSolids}
             onChange={(e) => this.handleAmountChange(e, material.amount_g, '', lockAmountColumnSolids)}
             onMetricsChange={this.handleMetricsChange}
-            variant={material.error_mass ? 'error' : massBsStyle}
+            active={material.amount_unit === 'g'}
+            isError={material.error_mass}
             name="molecular-weight"
           />
         </div>
@@ -538,7 +539,8 @@ class SampleComponent extends Component {
               disabled={!permitOn(sample)}
               onChange={(e) => this.handleAmountChange(e, material.amount_mol, '', false)}
               onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
+              variant="light"
+              active={material.amount_unit === 'mol'}
             />
           </div>
         </OverlayTrigger>
@@ -778,7 +780,6 @@ class SampleComponent extends Component {
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
     const metricMol = getMetricMol(material);
-    const massBsStyle = material.amount_unit === 'g' ? 'primary' : 'light';
     const metricMolConc = getMetricMolConc(material);
 
     return (
@@ -809,7 +810,7 @@ class SampleComponent extends Component {
         <td
           style={enableComponentPurity === false ? { verticalAlign: 'bottom' } : null}
         >
-          {this.componentMass(material, metric, metricPrefixes, massBsStyle)}
+          {this.componentMass(material, metric, metricPrefixes)}
         </td>
 
         {this.componentMol(material, metricMol, metricPrefixesMol)}

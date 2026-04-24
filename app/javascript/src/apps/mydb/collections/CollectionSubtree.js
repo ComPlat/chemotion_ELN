@@ -90,7 +90,7 @@ function CollectionSubtree({ root, sharedWithMe, isExpanded, level }) {
     <div key={root.id}>
       <div
         id={`tree-id-${root.label}`}
-        className={`tree-view_item ${selected ? 'tree-view_item--selected' : ''}`}
+        className={`tree-view__item ${selected ? 'tree-view__item--selected' : ''}`}
         onClick={(e) => handleClick(root, e)}
         style={{ paddingLeft: `${((level - 0.5) * 12) - 4}px` }}
       >

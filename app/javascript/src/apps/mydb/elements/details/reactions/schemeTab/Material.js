@@ -149,6 +149,7 @@ class Material extends Component {
 
     aviatorNavigation(sample.type, sample.id, true, false);
     if (isSbmm) {
+      ElementActions.fetchSequenceBasedMacromoleculeSampleById(sample.id);
     } else {
       sample.updateChecksum();
       ElementActions.showReactionMaterial({ sample, reaction });
@@ -170,7 +171,7 @@ class Material extends Component {
         unit="mmol/g"
         metricPrefix="n"
         metricPrefixes={['n']}
-        variant={material.error_loading ? 'error' : 'primary'}
+        isError={material.error_loading}
         size="sm"
         precision={3}
         disabled={
@@ -245,7 +246,8 @@ class Material extends Component {
       <Button
         className="p-1 ms-1"
         onClick={e => this.handleShowLabelChange(e)}
-        variant={material.show_label ? 'primary' : 'light'}
+        variant="light"
+        active={material.show_label}
         size="sm"
         title={material.show_label ? 'Switch to structure' : 'Switch to label'}
       >
@@ -447,7 +449,7 @@ class Material extends Component {
       <NumeralInputWithUnitsCompo
         size="sm"
         precision={4}
-        variant="primary"
+        active
         value={updateValue}
         disabled={readOnly}
         onMetricsChange={(e) => this.gasFieldsUnitsChanged(e, field)}
@@ -664,7 +666,8 @@ class Material extends Component {
               || material.gas_type === 'gas'}
             onChange={(e) => this.handleAmountUnitChange(e, material.amount_l, material.amountType)}
             onMetricsChange={this.handleMetricsChange}
-            variant={material.amount_unit === 'l' ? 'primary' : 'light'}
+            variant="light"
+            active={material.amount_unit === 'l'}
             size="sm"
           />
         </div>
@@ -698,7 +701,8 @@ class Material extends Component {
         disabled={isDisabled}
         onChange={(e) => this.handleAmountUnitChange(e, material.amount_mol, material.amountType)}
         onMetricsChange={this.handleMetricsChange}
-        variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
+        variant="light"
+        active={material.amount_unit === 'mol'}
         size="sm"
       />
     );
@@ -730,7 +734,8 @@ class Material extends Component {
         disabled={isDisabled}
         onChange={(e) => this.handleAmountUnitChange(e, material.activity_value, material.amountType)}
         onMetricsChange={this.handleMetricsChange}
-        variant={isActivityActive ? 'primary' : 'light'}
+        variant="light"
+        active={isActivityActive}
         size="sm"
       />
     );
@@ -1079,7 +1084,7 @@ class Material extends Component {
     return material;
   }
 
-  massField(material, metricPrefixes, reaction, massBsStyle, metric) {
+  massField(material, metricPrefixes, reaction, metric) {
     const { lockEquivColumn, materialGroup } = this.props;
 
     const tooltip = (
@@ -1112,7 +1117,8 @@ class Material extends Component {
             }
             onChange={(e) => this.debounceHandleAmountUnitChange(e, material.amount_g, material.amountType)}
             onMetricsChange={this.handleMetricsChange}
-            variant={material.error_mass ? 'error' : massBsStyle}
+            active={material.amount_unit === 'g'}
+            isError={material.error_mass}
             size="sm"
             name="molecular-weight"
           />
@@ -1151,7 +1157,6 @@ class Material extends Component {
       dropRef,
     } = this.props;
 
-    const massBsStyle = material.amount_unit === 'g' ? 'primary' : 'light';
     const metricPrefixes = ['m', 'n', 'u'];
     let metric = 'm';
     if (isSbmmSample(material)) {
@@ -1203,7 +1208,7 @@ class Material extends Component {
               </OverlayTrigger>
             )}
             <div className="reaction-material__amount-data">
-              {this.massField(material, metricPrefixes, reaction, massBsStyle, metric)}
+              {this.massField(material, metricPrefixes, reaction, metric)}
               {this.materialVolume(material, 'reaction-material__volume-data')}
               {this.materialAmountMol(material)}
             </div>
@@ -1407,7 +1412,8 @@ class Material extends Component {
         className="reaction-material__target-data"
         disabled={isDisabled}
         onClick={() => this.toggleTarget(isTarget)}
-        variant={isTarget ? 'primary' : 'light'}
+        variant="light"
+        active={isTarget}
         size="sm"
       >
         {isTarget ? 'T' : 'R'}
@@ -1453,18 +1459,18 @@ class Material extends Component {
     }
     const gasTypes = ['feedstock', 'catalyst', 'gas'];
     const gasTypeStatus = gasTypes.includes(material?.gas_type);
-    const feedstockStatus = (gasTypeStatus && !isSbmmGasSchemeUnavailable) ? '#009a4d' : 'grey';
+    const isGasTypeActive = gasTypeStatus && !isSbmmGasSchemeUnavailable;
     const tooltip = <Tooltip id="feedstockGas">{tooltipText}</Tooltip>;
     return (
       <div className="pe-1">
         <OverlayTrigger overlay={tooltip}>
           <span className="d-inline-block" style={{ cursor: isSbmmGasSchemeUnavailable ? 'not-allowed' : 'pointer' }}>
             <Button
-              variant="primary"
+              variant="light"
+              active={isGasTypeActive}
               size="xsm"
               onClick={() => this.handleGasTypeChange('gasType', gasTypeValue)}
               disabled={isSbmmGasSchemeUnavailable}
-              style={{ backgroundColor: feedstockStatus, pointerEvents: isSbmmGasSchemeUnavailable ? 'none' : 'auto' }}
             >
               {gasTypeValue}
             </Button>

@@ -32,7 +32,7 @@ class Versioning::Serializers::ReactionSerializer < Versioning::Serializers::Bas
         formatter: svg_path_formatter('reactions'),
       },
       rxno: {
-        label: 'Type (Name Reaction Ontology)',
+        label: 'Type (Name Reaction)',
         revert: %i[rxno],
         formatter: ->(key, value) { default_formatter.call(key, value).to_s.split(' | ', 2)[1] },
         revertible_value_formatter: default_formatter,

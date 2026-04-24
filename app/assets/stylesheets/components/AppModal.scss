@@ -1,0 +1,16 @@
+.app-modal {
+  .modal-body {
+    @extend .pb-4;
+    @extend .overflow-y-auto;
+    max-height: 70vh;
+  }
+  .modal-footer {
+    @extend .widget-footer;
+  }
+  .modal-fullscreen {
+    .modal-body {
+      @extend .flex-grow-1;
+      max-height: none;
+    }
+  }
+}

@@ -48,7 +48,7 @@ export function Layout() {
       <Form.Group className="mb-3" controlId="formBasicCheckbox">
         <Form.Check type="checkbox" label="Check me out" />
       </Form.Group>
-      <ButtonToolbar className="gap-3 justify-content-end">
+      <ButtonToolbar className="justify-content-end">
         <Button variant="light">Cancel</Button>
         <Button>Save</Button>
       </ButtonToolbar>

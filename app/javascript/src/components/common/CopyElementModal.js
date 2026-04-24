@@ -1,14 +1,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Modal, Button, OverlayTrigger, Tooltip
+  Form, Button
 } from 'react-bootstrap';
 import uuid from 'uuid';
 
+import AppModal from 'src/components/common/AppModal';
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import CollectionSelect from 'src/components/common/CollectionSelect';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import DetailCardButton from 'src/apps/mydb/elements/details/DetailCardButton';
 
 const Notification = (props) => (
   NotificationActions.add({
@@ -25,10 +28,15 @@ export default class CopyElementModal extends React.Component {
   constructor(props) {
     super(props);
 
+    // Determine default collection (full object, since CollectionSelect expects objects)
+    const { currentCollection } = UIStore.getState();
+    const defCol = currentCollection && currentCollection.is_shared === false
+      && currentCollection.is_locked === false && currentCollection.label !== 'All'
+      ? currentCollection : null;
 
     this.state = {
       showModal: false,
-      selectedCol: props.defCol,
+      selectedCol: defCol,
       showAmountsConfirm: false
     };
     this.handleModalClose = this.handleModalClose.bind(this);
@@ -50,8 +58,9 @@ export default class CopyElementModal extends React.Component {
   handleAmountsConfirm(keepAmounts) {
     const { selectedCol } = this.state;
     const { element } = this.props;
+    const colId = selectedCol?.id ?? selectedCol;
     this.setState({ showAmountsConfirm: false });
-    ElementActions.copyReaction(element, selectedCol, keepAmounts);
+    ElementActions.copyReaction(element, colId, keepAmounts);
   }
 
   handleAmountsConfirmClose() {
@@ -70,22 +79,24 @@ export default class CopyElementModal extends React.Component {
       return false;
     }
 
+    const colId = selectedCol?.id ?? selectedCol;
+
     if (element.type === 'sample') {
-      ClipboardActions.fetchElementAndBuildCopy(element, selectedCol.id, 'copy_sample');
+      ClipboardActions.fetchElementAndBuildCopy(element, colId, 'copy_sample');
     } else if (element.type === 'reaction') {
       // Show amounts confirmation modal instead of proceeding directly
       this.setState({ showModal: false, showAmountsConfirm: true });
       return true;
     } else if (element.type === 'research_plan') {
-      ElementActions.copyResearchPlan(element, selectedCol.id);
+      ElementActions.copyResearchPlan(element, colId);
     } else if (element.type === 'device_description') {
-      ClipboardActions.fetchDeviceDescriptionAndBuildCopy(element, selectedCol.id);
+      ClipboardActions.fetchDeviceDescriptionAndBuildCopy(element, colId);
     } else if (element.type === 'cell_line') {
-      ElementActions.copyCellLineFromId(element.id, selectedCol.id);
+      ElementActions.copyCellLineFromId(element.id, colId);
     } else if (element.type === 'sequence_based_macromolecule_sample') {
-      ClipboardActions.fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(element, selectedCol.id);
+      ClipboardActions.fetchSequenceBasedMacromoleculeSamplesAndBuildCopy(element, colId);
     } else {
-      ElementActions.copyElement(element, selectedCol.id);
+      ElementActions.copyElement(element, colId);
     }
 
     this.setState({ showModal: false });
@@ -101,76 +112,46 @@ export default class CopyElementModal extends React.Component {
 
     return (
       <>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="CopyElement">Copy</Tooltip>}
+        <DetailCardButton onClick={this.handleModalShow} iconClass="fa fa-clone" label="Copy" />
+
+        <AppModal
+          show={showModal}
+          onHide={this.handleModalClose}
+          title="Copy"
+          closeLabel="Close"
+          primaryActionLabel="Copy"
+          onPrimaryAction={this.copyElement}
         >
-          <Button id="copy-element-btn" size="xxsm" variant="success" onClick={this.handleModalShow}>
-            <i className="fa fa-clone" />
-          </Button>
-        </OverlayTrigger>
+          <Form.Label>Copy to Collection</Form.Label>
+          <CollectionSelect
+            value={selectedCol}
+            withShared={false}
+            onChange={this.onColSelectChange}
+          />
+        </AppModal>
 
-        <Modal centered show={showModal} onHide={this.handleModalClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>Copy</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form.Label>Copy to Collection</Form.Label>
-            <CollectionSelect
-              value={selectedCol}
-              withShared={false}
-              onChange={this.onColSelectChange}
-            />
-          </Modal.Body>
-          <Modal.Footer className="border-0">
-            <Button variant="light" onClick={this.handleModalClose}>Close</Button>
-            <Button id="submit-copy-element-btn" variant="success" onClick={this.copyElement}>Copy</Button>
-          </Modal.Footer>
-        </Modal>
-
-        <Modal centered animation={false} show={showAmountsConfirm} onHide={this.handleAmountsConfirmClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>Copy Reaction</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            Do you also want to copy the
-            <strong> real amounts </strong>
-            of the reaction materials (excluding product materials)?
-            <br />
-            <br />
-            <strong>Note: </strong>
-            Target amounts of the starting and reactant materials will be copied by default.
-            The amounts (real and target) of the product materials can not be copied.
-            <br />
-          </Modal.Body>
-          <Modal.Footer className="border-0">
-            <OverlayTrigger
-              placement="bottom"
-              overlay={(
-                <Tooltip id="copy-modal-yes-tooltip">
-                  Real amounts of starting materials, reactants, and solvents will be preserved
-                </Tooltip>
-              )}
-            >
-              <Button className="w-100 btn btn-info" onClick={() => this.handleAmountsConfirm(true)}>
-                Yes - copy target and real amounts
-              </Button>
-            </OverlayTrigger>
-
-            <OverlayTrigger
-              placement="bottom"
-              overlay={(
-                <Tooltip id="copy-modal-no-tooltip">
-                  Only target amounts will be copied, real amounts will be cleared
-                </Tooltip>
-              )}
-            >
-              <Button className="w-100 btn btn-info" onClick={() => this.handleAmountsConfirm(false)}>
-                No - only copy the target amounts
-              </Button>
-            </OverlayTrigger>
-          </Modal.Footer>
-        </Modal>
+        <AppModal
+          show={showAmountsConfirm}
+          onHide={this.handleAmountsConfirmClose}
+          animation={false}
+          title="Include Real Amounts?"
+          primaryActionLabel="Include"
+          onPrimaryAction={() => this.handleAmountsConfirm(true)}
+          extendedFooter={(
+            <Button variant="secondary" onClick={() => this.handleAmountsConfirm(false)}>
+              Omit
+            </Button>
+          )}
+        >
+          <div>
+            <p>
+              Target amounts of the starting and reactant materials will be copied by default.
+              Real amounts can also be included for starting materials, reactants, and solvents.
+              Product material amounts cannot be copied.
+            </p>
+            <p className="mb-0">Include the real amounts in your copy?</p>
+          </div>
+        </AppModal>
       </>
     );
   }
@@ -178,10 +159,5 @@ export default class CopyElementModal extends React.Component {
 
 CopyElementModal.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
-  element: PropTypes.object.isRequired,
-  defCol: PropTypes.number
-};
-
-CopyElementModal.defaultProps = {
-  defCol: null
+  element: PropTypes.object.isRequired
 };

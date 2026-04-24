@@ -49,3 +49,7 @@ IMG_INDIGO=epmlsop/indigo-service:1.34.0-rc.1
 #HOST_PORT_APP=3000
 #HOST_PORT_WEBPACK=3035
 
+# One time password secrate key for 2FA
+OTP_SECRET_KEY='secret'
+
+

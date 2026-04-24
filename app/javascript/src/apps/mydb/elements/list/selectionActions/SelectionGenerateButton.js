@@ -94,16 +94,18 @@ export default class SelectionGenerateButton extends React.Component {
   }
 
   render() {
-    const { json, checkedIds, enableComputedProps, enableReactionPredict } = this.state;
+    const {
+      json, checkedIds, enableComputedProps, enableReactionPredict
+    } = this.state;
     const ids = checkedIds.toArray();
     const disabledPrint = !(ids.length > 0);
     const pdfMenuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
 
     return (
       <Dropdown id="selection-generate-button">
-        <Dropdown.Toggle variant="light" size="sm">
-          <i className="fa fa-file-text-o me-1" />
-          <span className="selection-action-text-label">Generate</span>
+        <Dropdown.Toggle variant="light" size="sm" title="Reporting" aria-label="Reporting">
+          <i className="fa fa-caret-square-o-right me-1" aria-hidden="true" />
+          <span className="selection-action-text-label">Reporting</span>
         </Dropdown.Toggle>
 
         <Dropdown.Menu>
@@ -129,7 +131,7 @@ export default class SelectionGenerateButton extends React.Component {
           )}
 
           {/* Report Utility Items */}
-          <Dropdown.Item onClick={ElementActions.showReportContainer} title="Report">
+          <Dropdown.Item onClick={ElementActions.showReportDetails} title="Report">
             Report
           </Dropdown.Item>
 

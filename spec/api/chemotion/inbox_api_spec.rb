@@ -18,15 +18,16 @@ describe Chemotion::InboxAPI do
       let(:sample_exact_a) { create(:sample, name: 'JB-R23-A', creator: user, collections: [collection]) }
       let(:sample_exact_b) { create(:sample, name: 'JB-R23-B', creator: user, collections: [collection]) }
 
+      before do
+        sample_short
+        sample_exact_a
+        sample_exact_b
+      end
+
       describe 'get samples by sample name' do
         let(:search_string) { 'R23' }
 
-        before do
-          sample_short
-          sample_exact_a
-          sample_exact_b
-          get "/api/v1/inbox/samples?search_string=#{search_string}"
-        end
+        before { get "/api/v1/inbox/samples?search_string=#{search_string}" }
 
         it 'return fitting samples' do
           expect(JSON.parse(response.body)['samples'].size).to eq(2)
