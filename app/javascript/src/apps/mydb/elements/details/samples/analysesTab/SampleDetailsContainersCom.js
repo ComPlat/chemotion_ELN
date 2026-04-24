@@ -4,7 +4,7 @@ import {
   ButtonToolbar, Accordion, Card, Button, OverlayTrigger, Tooltip,
 } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
-import ContainerCompareAnalyses from 'src/components/container/ContainerCompareAnalyses';
+import CompareInlineEditor from 'src/apps/mydb/elements/details/spectraCompare/components/CompareInlineEditor';
 import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersDnd';
 import { AnalysesHeader } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
 import AnalysisModeToggle from 'src/apps/mydb/elements/details/analyses/AnalysisModeToggle';
@@ -111,7 +111,7 @@ function ReactionsDisplay({
           <Accordion.Collapse eventKey={id}>
             <Card.Body>
               {container.extended_metadata && container.extended_metadata.is_comparison ? (
-                <ContainerCompareAnalyses
+                <CompareInlineEditor
                   templateType="sample"
                   readOnly={readOnly}
                   sample={sample}
@@ -177,7 +177,12 @@ function ReactionsDisplay({
               <h6 className="m-0 fw-bold">Spectra comparison</h6>
               <OverlayTrigger
                 placement="right"
-                overlay={<Tooltip id="comparison-info-tooltip">Example text for now</Tooltip>}
+                overlay={(
+                  <Tooltip id="comparison-info-tooltip">
+                    Group several spectra of the same layout (e.g. several
+                    1H NMR or CV runs) into a single comparison container.
+                  </Tooltip>
+                )}
               >
                 <i className="fa fa-info-circle text-info" style={{ cursor: 'pointer' }} />
               </OverlayTrigger>
@@ -234,7 +239,11 @@ function ReactionsDisplay({
               <h6 className="m-0 fw-bold">Spectra comparison</h6>
               <OverlayTrigger
                 placement="right"
-                overlay={<Tooltip id="comparison-info-tooltip">Example text for now</Tooltip>}
+                overlay={(
+                  <Tooltip id="comparison-info-tooltip">
+                    Reorder the saved spectra comparisons.
+                  </Tooltip>
+                )}
               >
                 <i className="fa fa-info-circle text-info" style={{ cursor: 'pointer' }} />
               </OverlayTrigger>
