@@ -10,8 +10,8 @@ import {
   JcampIds,
   BuildSpcInfosForNMRDisplayer,
   isNMRKind,
-  BuildSpectraComparedInfos,
 } from 'src/utilities/SpectraHelper';
+import { buildCompareInfos } from 'src/apps/mydb/elements/details/spectraCompare/utils/compareInfos';
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -23,7 +23,6 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SpectraCompareButton from 'src/components/common/SpectraCompareButton';
-import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 
 const qCheckPass = () => (
   <i className="fa fa-check ms-1 text-success" />
@@ -120,14 +119,11 @@ const headerBtnGroup = (
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
-  const spcCompareInfo = BuildSpectraComparedInfos(sample, container);
+  const spcCompareInfo = buildCompareInfos(sample, container);
   const toggleCompareModal = (e) => {
     e.stopPropagation();
     SpectraActions.ToggleCompareModal(container);
-    SpectraActions.LoadSpectraCompare.defer(spcCompareInfo);
   };
-
-  const { spectraCompare } = SpectraStore.getState();
 
   return (deleted ?
     <Button
@@ -153,8 +149,6 @@ const headerBtnGroup = (
       {
         container.extended_metadata.is_comparison ? (
           <SpectraCompareButton
-            sample={sample}
-            spectraCompare={spectraCompare}
             spcInfos={spcCompareInfo}
             toggleSpectraModal={toggleCompareModal}
           />
