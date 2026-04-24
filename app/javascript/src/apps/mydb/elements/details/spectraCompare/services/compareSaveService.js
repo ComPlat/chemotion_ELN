@@ -21,9 +21,10 @@ const buildEditedDataSpectrum = (payload, curveIdx, si) => {
     ? payload.multiplicity.multiplicities[curveIdx]
     : payload?.multiplicity;
 
+  const peakList = Array.isArray(fPeaks) ? fPeaks : [];
   return {
     si,
-    peaksStr: FN.toPeakStr(fPeaks),
+    peaksStr: FN.toPeakStr(peakList),
     selectedShift,
     scan: payload?.scan,
     thres: payload?.thres,
