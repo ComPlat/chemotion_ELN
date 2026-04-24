@@ -70,7 +70,7 @@ module Usecases
             next unless (container = Container.find_by(id: child[:id]))
 
             old_analyses_compared = ComparisonDatamodelSupport.parse_analyses_compared(
-              container.extended_metadata['analyses_compared'],
+              container.extended_metadata&.[]('analyses_compared'),
             )
 
             container.update!(
