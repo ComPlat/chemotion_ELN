@@ -2030,4 +2030,32 @@ describe('Sample', async () => {
       expect(sample.amount_unit).toBe(originalUnit);
     });
   });
+
+  describe('Sample.setAmountFromConcentrationAndPreserve()', () => {
+    it('sets the amount from concentration and marks preserveConcentration', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+      sample.preserveConcentration = false;
+
+      sample.setAmountFromConcentrationAndPreserve(2, 0.5);
+
+      expect(sample.amount_value).toBeCloseTo(1, 10);
+      expect(sample.amount_unit).toBe('mol');
+      expect(sample.preserveConcentration).toBe(true);
+    });
+
+    it('does not mark preserved when inputs are invalid', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+      const originalValue = sample.amount_value;
+      const originalUnit = sample.amount_unit;
+      sample.preserveConcentration = false;
+
+      sample.setAmountFromConcentrationAndPreserve(0, 0.5);
+      sample.setAmountFromConcentrationAndPreserve(Number.NaN, 0.5);
+      sample.setAmountFromConcentrationAndPreserve(2, 0);
+
+      expect(sample.preserveConcentration).toBe(false);
+      expect(sample.amount_value).toBe(originalValue);
+      expect(sample.amount_unit).toBe(originalUnit);
+    });
+  });
 });

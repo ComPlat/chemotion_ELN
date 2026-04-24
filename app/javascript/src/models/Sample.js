@@ -973,6 +973,23 @@ export default class Sample extends Element {
   }
 
   /**
+   * Variant of `setAmountFromConcentration` intended for user-entered
+   * concentrations: after writing the new amount, marks `preserveConcentration`
+   * so that subsequent bulk concentration recalculations (e.g.
+   * `Reaction#updateAllConcentrations`) do not overwrite the entered value.
+   *
+   * @param {number} concentration - Concentration in mol/L.
+   * @param {number} volumeL - Volume in liters.
+   * @returns {void}
+   */
+  setAmountFromConcentrationAndPreserve(concentration, volumeL) {
+    const newAmountMol = this.setAmountFromConcentration(concentration, volumeL);
+    if (newAmountMol == null) return;
+
+    this.preserveConcentration = true;
+  }
+
+  /**
    * Captures the previous molar and mass values before updating the amount,
    * to support ratio-based recalculations in mixture mass conversions.
    *
