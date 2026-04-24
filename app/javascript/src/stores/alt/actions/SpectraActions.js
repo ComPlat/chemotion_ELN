@@ -52,22 +52,6 @@ class SpectraActions {
     };
   }
 
-  LoadSpectraCompare(spcInfos) {
-    const idxs = spcInfos && spcInfos.map(si => si.idx);
-    if (idxs.length === 0) {
-      return null;
-    }
-
-    return (dispatch) => {
-      AttachmentFetcher.fetchFiles(idxs)
-        .then((fetchedFiles) => {
-          dispatch({ fetchedFiles, spcInfos });
-        }).catch((errorMessage) => {
-          console.log(errorMessage); // eslint-disable-line
-        });
-    };
-  }
-
   Regenerate(jcampIds, cb) {
     return (dispatch) => {
       AttachmentFetcher.regenerateSpectrum(jcampIds)
@@ -245,22 +229,6 @@ class SpectraActions {
     };
   }
 
-  SaveMultiSpectraComparison(jcampIds, containerId, curveIdx = 0, editedDataSpectra = [], cb = () => { }) {
-    return (dispatch) => {
-      AttachmentFetcher.combineSpectra(jcampIds, containerId, curveIdx, editedDataSpectra)
-        .then((response) => {
-          if (response && response.new_attachment_ids) {
-            dispatch(response);
-          } else {
-            dispatch({ new_attachment_ids: [] });
-          }
-          const datasetId = response && response.dataset_id ? response.dataset_id : null;
-          if (typeof cb === 'function') cb(response);
-        }).catch((errorMessage) => {
-          console.log(errorMessage); // eslint-disable-line
-        })
-    }
-  }
 }
 
 export default alt.createActions(SpectraActions);
