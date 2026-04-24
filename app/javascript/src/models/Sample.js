@@ -943,6 +943,28 @@ export default class Sample extends Element {
   }
 
   /**
+   * Updates the sample's amount from a concentration and a reaction-level
+   * volume, using the formula `amount_mol = volume (L) * concentration (mol/L)`.
+   * The corresponding mass is derived inside `setAmount` via molecular weight.
+   *
+   * @param {number} concentration - Concentration in mol/L.
+   * @param {number} volumeL - Volume in liters.
+   * @returns {number | null} The new amount in mol, or `null` if inputs invalid.
+   */
+  setAmountFromConcentration(concentration, volumeL) {
+    if (!Number.isFinite(volumeL)
+      || volumeL <= 0
+      || !Number.isFinite(concentration)
+      || concentration <= 0) {
+      return null;
+    }
+
+    const newAmountMol = volumeL * concentration;
+    this.setAmount({ value: newAmountMol, unit: 'mol' });
+    return newAmountMol;
+  }
+
+  /**
    * Captures the previous molar and mass values before updating the amount,
    * to support ratio-based recalculations in mixture mass conversions.
    *
