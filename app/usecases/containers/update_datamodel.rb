@@ -32,8 +32,7 @@ module Usecases
 
       private
 
-      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      # rubocop:disable Metrics/BlockLength
+      # rubocop:disable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       def create_or_update_containers(children, parent_container, current_user = {})
         return unless children
         return unless can_update_container?(parent_container)
@@ -137,8 +136,7 @@ module Usecases
           attachment.update!(attachable_id: container.id, attachable_type: 'Container') if container.present?
         end
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      # rubocop:enable Metrics/BlockLength
+      # rubocop:enable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
       def delete_containers_and_attachments(container)
         Attachment.where_container(container[:id]).destroy_all
