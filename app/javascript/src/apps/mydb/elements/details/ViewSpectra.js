@@ -10,9 +10,12 @@ import { InlineMetadata } from 'chem-generic-ui';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import SpectraStore from 'src/stores/alt/stores/SpectraStore';
-import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import ResearchPlan from 'src/models/ResearchPlan';
 import { inlineNotation } from 'src/utilities/SpectraHelper';
+import {
+  formatPks as formatPksOps,
+  formatMpy as formatMpyOps,
+} from 'src/apps/mydb/elements/details/spectraCompare/formatters/spectraFormatters';
 
 const rmRefreshed = (analysis) => {
   if (!analysis) return analysis;
@@ -42,6 +45,7 @@ class ViewSpectra extends React.Component {
     this.writeCommon = this.writeCommon.bind(this);
     this.writePeakOp = this.writePeakOp.bind(this);
     this.writeMpyOp = this.writeMpyOp.bind(this);
+    this.resolveCurrentEntity = this.resolveCurrentEntity.bind(this);
     this.writeCloseCommon = this.writeCloseCommon.bind(this);
     this.writeClosePeakOp = this.writeClosePeakOp.bind(this);
     this.writeCloseMpyOp = this.writeCloseMpyOp.bind(this);
@@ -51,7 +55,6 @@ class ViewSpectra extends React.Component {
     this.closeOp = this.closeOp.bind(this);
     this.predictOp = this.predictOp.bind(this);
     this.buildOpsByLayout = this.buildOpsByLayout.bind(this);
-    this.formatPks = this.formatPks.bind(this);
     this.getContent = this.getContent.bind(this);
     this.getSpcInfo = this.getSpcInfo.bind(this);
     this.getQDescVal = this.getQDescVal.bind(this);
@@ -207,169 +210,17 @@ class ViewSpectra extends React.Component {
     return ops;
   }
 
-  formatPks({
-    peaks, shift, layout, isAscend, decimal, body,
-    isIntensity, integration, curveSt, waveLength
-  }) {
-    const layoutOpsObj = SpectraOps[layout];
-    if (!layoutOpsObj) {
-      return [];
-    }
-
-    const { curveIdx } = curveSt;
-    const { shifts } = shift;
-    const selectedShift = shifts[curveIdx];
-
-    const { integrations } = integration;
-    const selectedIntegration = integrations[curveIdx];
-
-    if (!selectedShift || !selectedIntegration) {
-      return [];
-    }
-
+  resolveCurrentEntity(curveIdx = 0) {
     const content = this.getContent();
-    let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
-
-    if (!built) {
-      const listMuliSpcs = content?.listMuliSpcs;
-      if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
-        const spc = listMuliSpcs[curveIdx] || listMuliSpcs[0];
-        if (spc?.jcamp) built = FN.buildData(spc.jcamp);
-      }
+    if (content?.jcamp) {
+      return FN.buildData(content.jcamp)?.entity || null;
     }
-    const entity = built?.entity;
-    if (!entity) return [];
-
-    const features = entity?.features;
-    const f0 = Array.isArray(features)
-      ? features[0]
-      : (features?.editPeak || features?.autoPeak || features) || {};
-    const temperature = entity?.temperature;
-
-    let observeFrequency = Array.isArray(f0?.observeFrequency)
-      ? f0.observeFrequency[0]
-      : f0?.observeFrequency;
-    const freq = Array.isArray(observeFrequency) ? observeFrequency[0] : observeFrequency;
-    const freqStr = freq ? `${parseInt(freq, 10)} MHz, ` : '';
-
-    const boundary = (f0 && (typeof f0.maxY !== 'undefined') && (typeof f0.minY !== 'undefined'))
-      ? { maxY: f0.maxY, minY: f0.minY }
-      : undefined;
-
-    const mBody = body || FN.peaksBody({
-      peaks,
-      layout,
-      decimal,
-      shift,
-      isAscend,
-      isIntensity,
-      boundary,
-      integration: selectedIntegration,
-      waveLength,
-      temperature
-    });
-    let solventDecimal = decimal
-    if (FN.is13CLayout(layout)) {
-      solventDecimal = 2
+    const listMuliSpcs = content?.listMuliSpcs;
+    if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
+      const spc = listMuliSpcs[curveIdx] || listMuliSpcs[0];
+      if (spc?.jcamp) return FN.buildData(spc.jcamp)?.entity || null;
     }
-
-    const { label, value, name } = selectedShift.ref;
-    const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(solventDecimal)} ppm], ` : '';
-    return [
-      ...layoutOpsObj.head(freqStr, solvent),
-      { insert: mBody },
-      ...layoutOpsObj.tail(),
-    ];
-  }
-
-  formatMpy({
-    shift, isAscend, decimal,
-    integration, multiplicity, layout, curveSt
-  }) {
-    const { curveIdx } = curveSt;
-    const { shifts } = shift;
-    const selectedShift = shifts[curveIdx];
-    const { integrations } = integration;
-    const selectedIntegration = integrations[curveIdx];
-    const { multiplicities } = multiplicity;
-    const selectedMutiplicity = multiplicities[curveIdx];
-    const content = this.getContent();
-    let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
-
-    if (!built) {
-      const listMuliSpcs = content?.listMuliSpcs;
-      if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
-        const spc = listMuliSpcs[curveIdx] || listMuliSpcs[0];
-        if (spc?.jcamp) built = FN.buildData(spc.jcamp);
-      }
-    }
-    const entity = built?.entity;
-    if (!entity) return [];
-
-    const features = entity?.features;
-    const f0 = Array.isArray(features)
-      ? features[0]
-      : (features?.editPeak || features?.autoPeak || features) || {};
-
-    let observeFrequency = Array.isArray(f0?.observeFrequency)
-      ? f0.observeFrequency[0]
-      : f0?.observeFrequency;
-    const freq = Array.isArray(observeFrequency) ? observeFrequency[0] : observeFrequency;
-    const freqStr = freq ? `${parseInt(freq, 10)} MHz, ` : '';
-    // multiplicity
-    const { refArea, refFactor, stack: isStack } = selectedIntegration;
-    const shiftVal = selectedMutiplicity.shift;
-    const ms = selectedMutiplicity.stack || [];
-    const is = isStack || [];
-
-    const macs = ms.map((m) => {
-      const { peaks, mpyType, xExtent } = m;
-      const { xL, xU } = xExtent || {};
-      const it = is.find((i) => i.xL === xL && i.xU === xU) || { area: 0 };
-      const area = refArea ? (it.area * refFactor) / refArea : 0;
-      const center = FN.calcMpyCenter(peaks, shiftVal, mpyType);
-      const xs = (m.peaks || []).map(p => p.x).sort((a, b) => a - b);
-      const [aIdx, bIdx] = isAscend ? [0, xs.length - 1] : [xs.length - 1, 0];
-      const mxA = mpyType === 'm' && xs.length ? (xs[aIdx] - shiftVal).toFixed(decimal) : 0;
-      const mxB = mpyType === 'm' && xs.length ? (xs[bIdx] - shiftVal).toFixed(decimal) : 0;
-      return { ...m, area, center, mxA, mxB };
-    }).sort((a, b) => (isAscend ? a.center - b.center : b.center - a.center));
-    let couplings = [].concat(...macs.map((m) => {
-      const jsSorted = (m.js || []).slice().sort((a, b) => (isAscend ? a - b : b - a));
-      const c = m.center;
-      const type = m.mpyType || 'm';
-      const it = Math.round(m.area || 0);
-      const js = [].concat(...jsSorted.map(j => ([
-        { insert: 'J', attributes: { italic: true } },
-        { insert: ` = ${j.toFixed(1)} Hz` },
-        { insert: ', ' },
-      ])));
-      const atomCount = layout === '1H' ? `, ${it}H` : '';
-      const location = type === 'm'
-        ? `${m.mxA}–${m.mxB}`
-        : `${(c ?? 0).toFixed(decimal)}`;
-
-      return jsSorted.length === 0
-        ? [
-            { insert: `${location} (${type}${atomCount})` },
-            { insert: ', ' },
-          ]
-        : [
-            { insert: `${location} (${type}, ` },
-            ...js.slice(0, js.length - 1),
-            { insert: `${atomCount})` },
-            { insert: ', ' },
-          ];
-    }));
-    couplings = couplings.slice(0, couplings.length - 1);
-    const { label, value, name } = selectedShift.ref;
-    const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(decimal)} ppm], ` : '';
-    return [
-      { attributes: { script: 'super' }, insert: layout.slice(0, -1) },
-      { insert: `${layout.slice(-1)} NMR (${freqStr}${solvent}ppm) δ = ` },
-      ...couplings,
-      { insert: '.' },
-    ];
+    return null;
   }
 
   resolveWriteParams(params) {
@@ -419,14 +270,16 @@ class ViewSpectra extends React.Component {
     if (!si) return;
 
     let ops = [];
+    const entity = this.resolveCurrentEntity(curveSt?.curveIdx ?? 0);
     if (['1H', '13C', '15N', '19F', '29Si', '31P'].includes(layout) && isMpy) {
-      ops = this.formatMpy({
-        multiplicity, integration, shift, isAscend, decimal, layout, curveSt
+      ops = formatMpyOps({
+        entity, multiplicity, integration, shift, isAscend, decimal, layout, curveSt,
       });
     } else if (FN.isCyclicVoltaLayout(layout)) {
       ops = this.notationVoltammetry(cyclicvoltaSt, curveSt, layout, sample, si?.idDt);
     } else {
-      ops = this.formatPks({
+      ops = formatPksOps({
+        entity,
         peaks,
         shift,
         layout,
@@ -436,7 +289,7 @@ class ViewSpectra extends React.Component {
         isIntensity,
         integration,
         curveSt,
-        waveLength
+        waveLength,
       });
     }
 
