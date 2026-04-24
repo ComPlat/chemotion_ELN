@@ -279,6 +279,234 @@ describe('Reaction', () => {
     });
   });
 
+  describe('Reaction.hasValidReactionVolume', () => {
+    it('returns true for a positive numeric volume', () => {
+      reaction.volume = 0.5;
+      expect(reaction.hasValidReactionVolume).toBe(true);
+    });
+
+    it('returns false when volume is null, empty, zero, or negative', () => {
+      reaction.volume = null;
+      expect(reaction.hasValidReactionVolume).toBe(false);
+      reaction.volume = '';
+      expect(reaction.hasValidReactionVolume).toBe(false);
+      reaction.volume = 0;
+      expect(reaction.hasValidReactionVolume).toBe(false);
+      reaction.volume = -1;
+      expect(reaction.hasValidReactionVolume).toBe(false);
+    });
+  });
+
+  describe('Reaction.canUpdateConcentration()', () => {
+    it('always allows updates when equivalents are unlocked', () => {
+      reaction.use_reaction_volume = false;
+      reaction.volume = null;
+      expect(reaction.canUpdateConcentration(false)).toBe(true);
+    });
+
+    it('requires use_reaction_volume and a valid volume when equivalents are locked', () => {
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+      expect(reaction.canUpdateConcentration(true)).toBe(true);
+
+      reaction.use_reaction_volume = false;
+      expect(reaction.canUpdateConcentration(true)).toBe(false);
+
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0;
+      expect(reaction.canUpdateConcentration(true)).toBe(false);
+    });
+  });
+
+  describe('Reaction.storageGroupFor()', () => {
+    it('returns reactant_sbmm_samples for SBMM materials in the reactants group', () => {
+      const sbmmMaterial = { type: 'sequence_based_macromolecule_sample' };
+      expect(Reaction.storageGroupFor(sbmmMaterial, 'reactants'))
+        .toBe('reactant_sbmm_samples');
+    });
+
+    it('returns the original group for non-SBMM materials', () => {
+      const sample = { type: 'sample' };
+      expect(Reaction.storageGroupFor(sample, 'reactants')).toBe('reactants');
+      expect(Reaction.storageGroupFor(sample, 'starting_materials'))
+        .toBe('starting_materials');
+    });
+
+    it('returns the original group for SBMM materials outside reactants', () => {
+      const sbmmMaterial = { type: 'sequence_based_macromolecule_sample' };
+      expect(Reaction.storageGroupFor(sbmmMaterial, 'starting_materials'))
+        .toBe('starting_materials');
+    });
+  });
+
+  describe('Reaction.resetPreservedConcentrationExcept()', () => {
+    it('clears preserveConcentration on all materials except the edited one', () => {
+      reaction.starting_materials = [
+        { id: 'edited', preserveConcentration: true },
+        { id: 'a', preserveConcentration: true },
+      ];
+      reaction.reactants = [{ id: 'b', preserveConcentration: true }];
+      reaction.products = [{ id: 'c', preserveConcentration: true }];
+
+      // The array setters wrap plain objects into Sample instances, so we
+      // need to work with the instances owned by the reaction.
+      const edited = reaction.starting_materials[0];
+      const [, other1] = reaction.starting_materials;
+      const [other2] = reaction.reactants;
+      const [product] = reaction.products;
+
+      reaction.resetPreservedConcentrationExcept(edited);
+
+      expect(edited.preserveConcentration).toBe(true);
+      expect(other1.preserveConcentration).toBe(false);
+      expect(other2.preserveConcentration).toBe(false);
+      expect(product.preserveConcentration).toBe(false);
+    });
+
+    it('is a no-op when arrays are missing', () => {
+      reaction._starting_materials = null;
+      reaction._reactants = null;
+      reaction._products = null;
+      expect(() => reaction.resetPreservedConcentrationExcept({ id: 1 }))
+        .not.toThrow();
+    });
+  });
+
+  describe('Reaction.updateReferenceAmountForLockedEquivalents()', () => {
+    const buildSample = (overrides = {}) => {
+      const sample = {
+        setAmount: (amount) => {
+          sample.lastAmount = amount;
+          sample.amount_value = amount.value;
+          sample.amount_unit = amount.unit;
+        },
+      };
+      return Object.assign(sample, overrides);
+    };
+
+    it('rebases the reference amount when equivalents are locked', () => {
+      const referenceSample = buildSample({ reference: true });
+      const updatedSample = buildSample({
+        reference: false,
+        equivalent: 2,
+        amount_mol: 0.5,
+      });
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        updatedSample,
+        true
+      );
+
+      expect(referenceSample.lastAmount).toEqual({ value: 0.25, unit: 'mol' });
+    });
+
+    it('does nothing when equivalents are unlocked', () => {
+      const referenceSample = buildSample({ reference: true });
+      const updatedSample = buildSample({
+        reference: false,
+        equivalent: 2,
+        amount_mol: 0.5,
+      });
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        updatedSample,
+        false
+      );
+
+      expect(referenceSample.lastAmount).toBe(undefined);
+    });
+
+    it('does nothing when the candidate is not the reference sample', () => {
+      const referenceSample = buildSample({ reference: false });
+      const updatedSample = buildSample({
+        reference: false,
+        equivalent: 2,
+        amount_mol: 0.5,
+      });
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        updatedSample,
+        true
+      );
+
+      expect(referenceSample.lastAmount).toBe(undefined);
+    });
+
+    it('does nothing when the updated sample is itself the reference', () => {
+      const referenceSample = buildSample({ reference: true });
+      const updatedSample = buildSample({
+        reference: true,
+        equivalent: 2,
+        amount_mol: 0.5,
+      });
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        updatedSample,
+        true
+      );
+
+      expect(referenceSample.lastAmount).toBe(undefined);
+    });
+
+    it('does nothing when equivalent or amount_mol is invalid', () => {
+      const referenceSample = buildSample({ reference: true });
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        buildSample({ equivalent: 0, amount_mol: 0.5 }),
+        true
+      );
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        buildSample({ equivalent: 2, amount_mol: Number.NaN }),
+        true
+      );
+
+      expect(referenceSample.lastAmount).toBe(undefined);
+    });
+  });
+
+  describe('Reaction.deriveVolumeFromSampleConcentration()', () => {
+    it('sets volume, enables use_reaction_volume, and recalculates concentrations', () => {
+      const sample = { amount_mol: 0.5 };
+      let updateCalled = false;
+      reaction.updateAllConcentrations = () => { updateCalled = true; };
+
+      const result = reaction.deriveVolumeFromSampleConcentration(sample, 2);
+
+      expect(result).toEqual({ volume: 0.25, useReactionVolume: true });
+      expect(reaction.volume).toBe(0.25);
+      expect(reaction.use_reaction_volume).toBe(true);
+      expect(updateCalled).toBe(true);
+    });
+
+    it('returns null when the concentration is not positive', () => {
+      reaction.updateAllConcentrations = () => {
+        throw new Error('should not recalc');
+      };
+      const sample = { amount_mol: 0.5 };
+
+      expect(reaction.deriveVolumeFromSampleConcentration(sample, 0)).toBe(null);
+      expect(reaction.deriveVolumeFromSampleConcentration(sample, Number.NaN))
+        .toBe(null);
+    });
+
+    it('returns null when amount_mol is missing or zero', () => {
+      reaction.updateAllConcentrations = () => {
+        throw new Error('should not recalc');
+      };
+
+      expect(reaction.deriveVolumeFromSampleConcentration({ amount_mol: 0 }, 2))
+        .toBe(null);
+      expect(reaction.deriveVolumeFromSampleConcentration({}, 2)).toBe(null);
+      expect(reaction.deriveVolumeFromSampleConcentration(null, 2)).toBe(null);
+    });
+  });
+
   describe('Reaction.updateAllConcentrations()', () => {
     it('calls updateConcentrationFromSolvent for all materials', async() => {
       const material1 = await SampleFactory.build('reactionConcentrations.water_100g');

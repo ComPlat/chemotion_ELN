@@ -1171,6 +1171,20 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   /**
+   * Applies an equivalent-derived mol amount, preserving the sample's
+   * currently selected mol unit and recalculating the dependent mass field.
+   *
+   * @param {number} newAmountMol - Canonical amount in `mol`.
+   * @returns {void}
+   */
+  applyAmountFromEquivalent(newAmountMol) {
+    const molUnit = this.amount_as_used_mol_unit || 'mol';
+    const convertedAmount = convertUnits(newAmountMol, 'mol', molUnit);
+    this.setAmount({ value: convertedAmount, unit: molUnit });
+    this.calculateAmountAsUsedMass();
+  }
+
+  /**
    * Sets the amount and normalizes to grams.
    * Converts any unit to grams and updates amount_as_used_mass_value.
    * @param {Object} amount - The amount object containing value and unit

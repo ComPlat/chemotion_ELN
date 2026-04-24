@@ -1662,7 +1662,7 @@ describe('Sample', async () => {
       const s = new Sample();
       s.weight_percentage_reference = false;
       const originalEquivalent = s.equivalent;
-      
+
       const ret = s.updateYieldForWeightPercentageReference();
 
       expect(ret).toBe(s);
@@ -1795,6 +1795,42 @@ describe('Sample', async () => {
 
       expect(s.changed).toBe(false);
       expect(s.isPendingToSave).toBe(false);
+    });
+  });
+
+  describe('Sample.setAmountFromConcentration()', () => {
+    it('sets amount_value to volume * concentration in mol', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+
+      const result = sample.setAmountFromConcentration(2, 0.5);
+
+      expect(result).toBeCloseTo(1, 10);
+      expect(sample.amount_value).toBeCloseTo(1, 10);
+      expect(sample.amount_unit).toBe('mol');
+    });
+
+    it('returns null and leaves the sample unchanged when concentration is invalid', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+      const originalValue = sample.amount_value;
+      const originalUnit = sample.amount_unit;
+
+      expect(sample.setAmountFromConcentration(0, 0.5)).toBe(null);
+      expect(sample.setAmountFromConcentration(Number.NaN, 0.5)).toBe(null);
+
+      expect(sample.amount_value).toBe(originalValue);
+      expect(sample.amount_unit).toBe(originalUnit);
+    });
+
+    it('returns null and leaves the sample unchanged when volume is invalid', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+      const originalValue = sample.amount_value;
+      const originalUnit = sample.amount_unit;
+
+      expect(sample.setAmountFromConcentration(2, 0)).toBe(null);
+      expect(sample.setAmountFromConcentration(2, null)).toBe(null);
+
+      expect(sample.amount_value).toBe(originalValue);
+      expect(sample.amount_unit).toBe(originalUnit);
     });
   });
 });
