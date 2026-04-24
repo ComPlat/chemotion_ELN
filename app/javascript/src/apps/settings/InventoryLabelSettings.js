@@ -401,26 +401,16 @@ function InventoryLabelSettings() {
           )}
         </Card.Body>
       </Card>
-      <Modal
+      <AppModal
         show={showCreateConfirmation}
         onHide={handleCreateCancel}
+        title="Confirm Create"
+        primaryActionLabel="Yes, Create"
+        onPrimaryAction={handleCreateConfirmation}
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Create</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          You are about to create the inventory label for selected collection(s).
-          This will automatically select the &apos;Inventory&apos; checkbox for all samples in those collections.
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={handleCreateCancel}>
-            Cancel
-          </Button>
-          <Button variant="warning" onClick={handleCreateConfirmation}>
-            Yes, Create
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        You are about to create the inventory label for selected collection(s).
+        This will automatically select the &apos;Inventory&apos; checkbox for all samples in those collections.
+      </AppModal>
 
       <AppModal
         show={showResetConfirmation}
