@@ -8,9 +8,9 @@ module Chemotion
   class ChemSpectraAPI < Grape::API
     format :json
 
-    helpers do # rubocop:disable BlockLength
+    helpers do
       def encode64(path)
-        target = File.exist?(path) && IO.binread(path) || false
+        target = (File.exist?(path) && File.binread(path)) || false
         Base64.encode64(target)
       end
 
@@ -31,9 +31,7 @@ module Chemotion
       end
 
       def get_molfile(params)
-        if params[:molfile].is_a? String
-          params[:molfile] = { tempfile: Tempfile.new }
-        end
+        params[:molfile] = { tempfile: Tempfile.new } if params[:molfile].is_a? String
         params[:molfile][:tempfile]
       end
 
@@ -46,7 +44,7 @@ module Chemotion
         jcamp = encode64(tmp_jcamp.path)
         img = encode64(tmp_img.path)
         { status: true, jcamp: jcamp, img: img }
-      rescue
+      rescue StandardError
         { status: false }
       end
 
@@ -58,7 +56,7 @@ module Chemotion
         )
         predict = JSON.parse(params['predict'])
         to_zip_file(params[:filename], params[:src], jcamp, img, predict)
-      rescue
+      rescue StandardError
         error!('Save files error!', 500)
       end
 
@@ -71,16 +69,14 @@ module Chemotion
         jcamp = encode64(tmp_jcamp.path)
         img = encode64(tmp_img.path)
         { status: true, jcamp: jcamp, img: img }
-      rescue
+      rescue StandardError
         { status: false }
       end
 
       def raw_file(att)
-        begin
-          Base64.encode64(att.read_file)
-        rescue StandardError
-          nil
-        end
+        Base64.encode64(att.read_file)
+      rescue StandardError
+        nil
       end
 
       def compare_data_type_mapping(response) # rubocop:disable Metrics/AbcSize
@@ -119,7 +115,7 @@ module Chemotion
       end
     end
 
-    resource :chemspectra do # rubocop:disable BlockLength
+    resource :chemspectra do
       resource :file do
         desc 'Convert file'
         params do
@@ -197,7 +193,7 @@ module Chemotion
           if pm[:extras].present?
             begin
               extras = JSON.parse(pm[:extras])
-            rescue
+            rescue StandardError
               extras = {}
             end
 
@@ -225,39 +221,33 @@ module Chemotion
                 origin_container
               end
 
-            unless holder
-              error!({ error: 'Container not found' }, 404)
-            end
+            error!({ error: 'Container not found' }, 404) unless holder
 
             dataset_container = Container.create!(
-              name: "Comparison #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}",
+              name: "Comparison #{Time.current.strftime('%Y-%m-%d %H:%M:%S')}",
               container_type: 'dataset',
-              parent_id: holder.id
+              parent_id: holder.id,
             )
 
             pm[:spectra_ids].each do |att_id|
               att = Attachment.find_by(id: att_id)
               next unless att
+              next if att.attachment.blank?
 
               new_att = Attachment.new(
                 filename: att.filename,
                 created_by: current_user.id,
                 created_for: current_user.id,
                 attachable_type: 'Container',
-                attachable_id: dataset_container.id
+                attachable_id: dataset_container.id,
               )
-
-              if att.attachment.present?
-                temp = att.attachment.download
-                new_att.file_path = temp.path
-                new_att.save!
-                temp.close
-                temp.unlink
-              end
+              temp = att.attachment.download
+              new_att.file_path = temp.path
+              new_att.save!
+              temp.close
+              temp.unlink
             end
           end
-
-          target_container_id = dataset_container.id
 
           if is_update_mode && pm[:edited_data_spectra].present?
             dataset_attachments = dataset_container.attachments.index_by(&:id)
@@ -268,16 +258,13 @@ module Chemotion
 
               mol = Tempfile.new(['mol', '.mol'])
               begin
-                new_jcamp, _ = Chemotion::Jcamp::Create.spectrum(
+                new_jcamp, = Chemotion::Jcamp::Create.spectrum(
                   target_att.abs_path,
                   mol.path,
                   false,
-                  data
+                  data,
                 )
-
-                if new_jcamp && File.exist?(new_jcamp.path)
-                  FileUtils.cp(new_jcamp.path, target_att.abs_path)
-                end
+                FileUtils.cp(new_jcamp.path, target_att.abs_path) if new_jcamp && File.exist?(new_jcamp.path)
               rescue StandardError => e
                 Rails.logger.error "Failed to update spectrum #{target_att.id}: #{e.message}"
               ensure
@@ -287,13 +274,15 @@ module Chemotion
             end
           end
 
-          spectra_attachments = dataset_container.attachments.reject { |a| a.filename.to_s.downcase.end_with?('.png', '.jpg') }
+          spectra_attachments = dataset_container.attachments.reject do |a|
+            a.filename.to_s.downcase.end_with?('.png', '.jpg')
+          end
 
           _, image = Chemotion::Jcamp::CombineImg.combine(
             spectra_attachments.map(&:abs_path),
             pm[:front_spectra_idx],
             spectra_attachments.map(&:filename),
-            extras
+            extras,
           )
 
           if image
@@ -305,28 +294,31 @@ module Chemotion
               attachable_type: 'Container',
               attachable_id: dataset_container.id,
               created_by: current_user.id,
-              created_for: current_user.id
+              created_for: current_user.id,
             )
           end
 
           final_attachments = dataset_container.attachments.reload
-          analyses_compared = final_attachments
-                                .reject { |a| a.filename.to_s.downcase.end_with?('.png') }
-                                .map do |a|
-                                  {
-                                    file: { id: a.id },
-                                    dataset: { id: dataset_container.id },
-                                    analysis: { id: dataset_container.id }
-                                  }
-                                end
+          non_combined_images = final_attachments.reject do |a|
+            a.filename.to_s.downcase.end_with?('.png')
+          end
+          analyses_compared = non_combined_images.map do |a|
+            {
+              file: { id: a.id },
+              dataset: { id: dataset_container.id },
+              analysis: { id: dataset_container.id },
+            }
+          end
 
+          # rubocop:disable Rails/SkipsModelValidations -- bulk update of JSON metadata; validations not required here
           dataset_container.update_column(
             :extended_metadata,
             {
               is_comparison: true,
-              analyses_compared: analyses_compared
-            }
+              analyses_compared: analyses_compared,
+            },
           )
+          # rubocop:enable Rails/SkipsModelValidations
 
           dataset_json = Entities::ContainerEntity.represent(dataset_container).as_json
 
@@ -334,7 +326,7 @@ module Chemotion
             status: true,
             dataset_id: dataset_container.id,
             dataset: dataset_json,
-            analyses_compared: analyses_compared
+            analyses_compared: analyses_compared,
           }
         rescue StandardError => e
           Rails.logger.error "Error in combine_spectra: #{e.message}"
@@ -342,7 +334,6 @@ module Chemotion
           error!({ error: 'Server Error', message: e.message }, 500)
         end
       end
-
 
       resource :predict do
         desc 'Predict NMR by peaks'

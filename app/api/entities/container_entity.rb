@@ -3,6 +3,15 @@
 module Entities
   class ContainerEntity < ApplicationEntity
     THUMBNAIL_CONTENT_TYPES = %w[image/jpg image/jpeg image/png image/tiff].freeze
+
+    # dataset nodes and analysis nodes used for spectra comparison
+    EXPOSE_ATTACHMENTS = lambda { |object, _options|
+      return true if object.container_type == 'dataset'
+      return false unless object.container_type == 'analysis'
+
+      object.extended_metadata&.[]('is_comparison') == 'true'
+    }.freeze
+
     expose(
       :id,
       :name,
@@ -13,67 +22,83 @@ module Entities
     expose :preview_img, if: ->(object, _options) { object.container_type == 'analysis' }
     expose :comparable_info, if: ->(object, _options) { object.container_type == 'analysis' }
 
-    expose :attachments, using: 'Entities::AttachmentEntity', if: lambda { |object, _options|
-                                                                    object.container_type == 'dataset' || (object.container_type == 'analysis' && object.extended_metadata['is_comparison'] == 'true')
-                                                                  }
+    expose :attachments, using: 'Entities::AttachmentEntity', if: EXPOSE_ATTACHMENTS
     expose :code_log, using: 'Entities::CodeLogEntity', if: ->(object, _options) { object.container_type == 'analysis' }
     expose :children, using: 'Entities::ContainerEntity', unless: lambda { |object, _options|
-                                                                    object.container_type == 'dataset'
-                                                                  }
+      object.container_type == 'dataset'
+    }
     expose :dataset, using: 'Labimotion::DatasetEntity', if: ->(object, _options) { object.container_type == 'dataset' }
 
-    # rubocop:disable Metrics/AbcSize
     def extended_metadata
       return unless object.extended_metadata
 
-      report = object.extended_metadata['report'] == 'true' || object.extended_metadata == 'true'
-
-      {}.tap do |metadata|
-        metadata[:report] = report
-        metadata[:status] = object.extended_metadata['status']
-        metadata[:kind] = object.extended_metadata['kind']
-        metadata[:index] = object.extended_metadata['index']
-        metadata[:instrument] = object.extended_metadata['instrument']
-        metadata[:preferred_thumbnail] = object.extended_metadata['preferred_thumbnail']
-        if object.extended_metadata['content'].present?
-          metadata[:content] =
-            JSON.parse(object.extended_metadata['content'])
-        end
-        if object.extended_metadata['hyperlinks'].present?
-          metadata[:hyperlinks] =
-            JSON.parse(object.extended_metadata['hyperlinks'])
-        end
-        if object.extended_metadata && object.extended_metadata['general_description'].present?
-          general_desc = object.extended_metadata['general_description']
-          metadata[:general_description] = if general_desc.is_a?(String)
-                                             begin
-                                               JSON.parse(general_desc)
-                                             rescue JSON::ParserError
-                                               general_desc
-                                             end
-                                           else
-                                             general_desc
-                                           end
-        end
-        if object.extended_metadata['is_comparison'].present?
-          metadata[:is_comparison] = object.extended_metadata['is_comparison'] == 'true'
-        end
-        if object.extended_metadata['analyses_compared'].present?
-          raw_ac = object.extended_metadata['analyses_compared']
-          metadata[:analyses_compared] = if raw_ac.is_a?(String)
-                                           begin
-                                             JSON.parse(raw_ac.gsub('=>', ':').gsub(/\bnil\b/, 'null'))
-                                           rescue StandardError
-                                             []
-                                           end
-                                         else
-                                           raw_ac
-                                         end
-        end
-      end
+      build_extended_metadata_hash
     end
 
     private
+
+    def build_extended_metadata_hash
+      ext_meta = object.extended_metadata
+      report = ext_meta['report'] == 'true' || ext_meta == 'true'
+
+      {}.tap do |metadata|
+        fill_core_metadata_fields(metadata, ext_meta, report)
+        assign_parsed_json_field(metadata, :content, ext_meta['content'])
+        assign_parsed_json_field(metadata, :hyperlinks, ext_meta['hyperlinks'])
+        assign_general_description_field(metadata, ext_meta)
+        metadata[:is_comparison] = ext_meta['is_comparison'] == 'true' if ext_meta['is_comparison'].present?
+        assign_analyses_compared_field(metadata, ext_meta)
+      end
+    end
+
+    def fill_core_metadata_fields(metadata, ext_meta, report)
+      metadata[:report] = report
+      metadata[:status] = ext_meta['status']
+      metadata[:kind] = ext_meta['kind']
+      metadata[:index] = ext_meta['index']
+      metadata[:instrument] = ext_meta['instrument']
+      metadata[:preferred_thumbnail] = ext_meta['preferred_thumbnail']
+    end
+
+    def assign_parsed_json_field(metadata, key, raw)
+      return if raw.blank?
+
+      metadata[key] = JSON.parse(raw)
+    end
+
+    def assign_general_description_field(metadata, ext_meta)
+      return unless ext_meta && ext_meta['general_description'].present?
+
+      general_desc = ext_meta['general_description']
+      metadata[:general_description] = if general_desc.is_a?(String)
+                                         begin
+                                           JSON.parse(general_desc)
+                                         rescue JSON::ParserError
+                                           general_desc
+                                         end
+                                       else
+                                         general_desc
+                                       end
+    end
+
+    def assign_analyses_compared_field(metadata, ext_meta)
+      return if ext_meta['analyses_compared'].blank?
+
+      raw_ac = ext_meta['analyses_compared']
+      metadata[:analyses_compared] = parse_analyses_compared_raw(raw_ac)
+    end
+
+    def parse_analyses_compared_raw(raw_ac)
+      if raw_ac.is_a?(String)
+        begin
+          JSON.parse(raw_ac.gsub('=>', ':').gsub(/\bnil\b/, 'null'))
+        rescue StandardError
+          []
+        end
+      else
+        raw_ac
+      end
+    end
 
     # The frontend assumes the analysis (no other container types) to have a preview image.
     # Technically the images are attached to the analysis' dataset children though.
@@ -94,10 +119,10 @@ module Entities
         attachable_id: object.id,
       )
 
-      unless attachments_with_thumbnail.exists?
-        build_preview_image(comparison_thumbnail)
-      else
+      if attachments_with_thumbnail.exists?
         build_preview_image(attachments_with_thumbnail)
+      else
+        build_preview_image(comparison_thumbnail)
       end
     end
 
@@ -133,34 +158,44 @@ module Entities
     def comparable_info
       return unless object.container_type == 'analysis'
 
-      is_comparison = object.extended_metadata['is_comparison'].present? && object.extended_metadata['is_comparison'] == 'true'
+      is_comparison = comparison_flag_true?
+      return default_comparable_info(is_comparison) if object.extended_metadata['analyses_compared'].blank?
+
+      build_comparable_info_from_compared(is_comparison)
+    end
+
+    def comparison_flag_true?
+      meta = object.extended_metadata
+      meta['is_comparison'].present? && meta['is_comparison'] == 'true'
+    end
+
+    def default_comparable_info(is_comparison)
+      {
+        is_comparison: is_comparison,
+        list_attachments: [],
+        list_dataset: [],
+        list_analyses: [],
+        layout: '',
+      }
+    end
+
+    def build_comparable_info_from_compared(is_comparison)
+      raw_ac = object.extended_metadata['analyses_compared']
+      analyses_compared = parse_analyses_compared_raw(raw_ac)
+      analyses_compared = [] unless analyses_compared.is_a?(Array)
 
       list_attachments = []
       list_dataset = []
       list_analyses = []
       layout = ''
-      if object.extended_metadata['analyses_compared'].present?
-        raw_ac = object.extended_metadata['analyses_compared']
-        analyses_compared = if raw_ac.is_a?(String)
-                              begin
-                                JSON.parse(raw_ac.gsub('=>', ':').gsub(/\bnil\b/, 'null'))
-                              rescue StandardError
-                                []
-                              end
-                            else
-                              raw_ac
-                            end
-        analyses_compared = [] unless analyses_compared.is_a?(Array)
-
-        analyses_compared.each do |attachment_info|
-          layout = attachment_info['layout']
-          attachment = Attachment.find_by(id: attachment_info['file']['id'])
-          dataset = Container.find_by(id: attachment_info['dataset']['id'])
-          analyis = Container.find_by(id: attachment_info['analysis']['id'])
-          list_attachments.push(attachment) if attachment.nil? == false
-          list_dataset.push(dataset)
-          list_analyses.push(analyis)
-        end
+      analyses_compared.each do |attachment_info|
+        layout = attachment_info['layout']
+        attachment = Attachment.find_by(id: attachment_info['file']['id'])
+        dataset = Container.find_by(id: attachment_info['dataset']['id'])
+        analysis = Container.find_by(id: attachment_info['analysis']['id'])
+        list_attachments << attachment if attachment
+        list_dataset.push(dataset)
+        list_analyses.push(analysis)
       end
 
       {
@@ -173,4 +208,3 @@ module Entities
     end
   end
 end
-# rubocop:enable Metrics/AbcSize

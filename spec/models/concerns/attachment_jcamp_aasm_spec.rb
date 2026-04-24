@@ -157,9 +157,10 @@ describe 'AttachmentJcampProcess' do
       end
     end
 
-    context 'with two attachment which area all a txt files' do
+    context 'with two txt attachments in the same container' do
       let(:container_id) { attachment_txt1.attachable_id }
-      let!(:attachment_txt2) do
+
+      before do
         attachment2 = create(:attachment)
         attachment2.attachable_id = attachment_txt1.attachable_id
         attachment2.save!
@@ -170,7 +171,7 @@ describe 'AttachmentJcampProcess' do
       end
     end
 
-    context 'with two attachment which area all a txt files' do
+    context 'with no attachments for a non-existent container id' do
       let(:container_id) { -1 }
 
       it 'an emtpy json returned' do
@@ -183,7 +184,10 @@ describe 'AttachmentJcampProcess' do
       let(:json_attachment) { create(:attachment, :with_infer_json_file) }
 
       before do
-        allow_any_instance_of(Attachment).to receive(:json?).and_return(true)
+        allow(Attachment).to receive(:where)
+          .with(attachable_id: json_attachment.attachable_id)
+          .and_return([json_attachment])
+        allow(json_attachment).to receive(:json?).and_return(true)
       end
 
       it 'returns the first file contained in the container' do
