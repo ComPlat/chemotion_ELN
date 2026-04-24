@@ -81,7 +81,7 @@ export default class AttachmentFetcher {
   }
 
   static async loadAttachmentContent({ id }) {
-    const res = await fetch(`/api/v1/attachments/${id}`);
+    const res = await fetch(`/api/v1/attachments/${id}`, { credentials: 'same-origin' });
     if (!res.ok) {
       throw new Error(`HTTP error: ${res.status}`);
     }

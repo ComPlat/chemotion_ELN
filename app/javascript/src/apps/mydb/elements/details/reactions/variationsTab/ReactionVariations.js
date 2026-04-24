@@ -215,12 +215,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     </OverlayTrigger>
   );
 
-  let context = {
-    reactionHasPolymers,
-    reactionShortLabel,
-    allReactionAnalyses,
-  };
-
   const handleAutofillVariationSampleFromAnalysis = useCallback(({
     sampleIdentifier, value, unit, variationRow
   }) => {
@@ -285,12 +279,30 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     const cellData = newVariationRow[matType][`${matItem.id}`];
 
     newVariationRow[matType][`${matItem.id}`] = valueParser({
-      data: newVariationRow, oldValue: cellData, newValue: `${value}`, colDef, context
+      data: newVariationRow,
+      oldValue: cellData,
+      newValue: `${value}`,
+      colDef,
+      context: { reactionHasPolymers }
     });
     setReactionVariations(updatedReactionVariations);
     setColumnDefinitions({ type: 'set_updated', update: newColumnDefinitions });
     setSelectedColumns(newSelectedColumns);
-  }, [reactionMaterials, selectedColumns, ...Object.values(context)]);
+  }, [
+    reactionMaterials,
+    reactionSegments,
+    reactionVariations,
+    selectedColumns,
+    columnDefinitions,
+    reactionHasPolymers,
+    durationValue,
+    durationUnit,
+    temperatureValue,
+    temperatureUnit,
+    gasMode,
+    vesselVolume,
+    setReactionVariations,
+  ]);
 
   /*
    What follows is a series of imperative state updates that keep the "Variations" tab in sync with the "Scheme" tab.
@@ -427,12 +439,14 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     return null;
   }
 
-  let gridContext = {
-    ...context,
+  const context = {
+    reactionHasPolymers,
+    reactionShortLabel,
+    allReactionAnalyses,
     copyRow,
     removeRow,
     setColumnDefinitions,
-    handleAutofillVariationSampleFromAnalysis
+    handleAutofillVariationSampleFromAnalysis,
   };
 
   return (
