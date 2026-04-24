@@ -10,6 +10,7 @@ import {
   getVariationsRowName,
   REACTION_VARIATIONS_TAB_KEY,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import AttachmentFetcher from '../../../../../../fetchers/AttachmentFetcher';
 
 function getReactionAnalyses(reaction) {
   const reactionCopy = cloneDeep(reaction);
@@ -109,7 +110,7 @@ function AnalysesCellEditor({
   context
 }) {
   const [selectedAnalysisIDs, setSelectedAnalysisIDs] = useState(analysesIDs);
-  const { reactionShortLabel, allReactionAnalyses } = context;
+  const { reactionShortLabel, allReactionAnalyses, handelAutofillVariationSampleFromAnalysis } = context;
 
   const onAnalysisSelectionReady = () => {
     onValueChange(selectedAnalysisIDs);
@@ -134,23 +135,52 @@ function AnalysesCellEditor({
     stopEditing();
   };
 
+  const handleAutofill = async (dataset) => {
+    const res = await AttachmentFetcher.loadAttachmentContent(dataset);
+    const resText = await res.json();
+    const { samples } = typeof resText === 'string' ? JSON.parse(resText) : resText;
+    samples.forEach(([sampleIdentifier, value, unit]) => {
+      handelAutofillVariationSampleFromAnalysis({
+        sampleIdentifier, value, unit, variationRow: row
+      });
+    });
+  };
+
   const analysesSelection = (
     <div className="max-height-200 overflow-y-auto">
       <Form.Group>
-        {allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((analysis) => (
-          <div key={analysis.id} className="d-flex align-items-center">
-            <Form.Check
-              type="checkbox"
-              onChange={() => onChange(analysis.id)}
-              label={analysis.name}
-              checked={selectedAnalysisIDs.includes(analysis.id)}
-              className="me-2"
-            />
-            <Button size="sm" variant="light" onClick={() => navigateToAnalysis(analysis.id)}>
-              <i className="fa fa-external-link" />
-            </Button>
-          </div>
-        ))}
+        {allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((analysis) => {
+          const isSelected = selectedAnalysisIDs.includes(analysis.id);
+          const { children } = analysis;
+          const dataset = children
+            .filter((ch) => ch.container_type === 'dataset')
+            .reduce((accumulator, current) => {
+              const { attachments } = current;
+              return [...accumulator, ...attachments];
+            }, [])
+            .find((att) => att.filename === 'reaction_variation.json');
+
+          return (
+            <div key={analysis.id} className="d-flex align-items-center">
+              <Form.Check
+                type="checkbox"
+                onChange={() => onChange(analysis.id)}
+                label={analysis.name}
+                checked={isSelected}
+                className="me-2"
+              />
+              <Button size="sm" variant="light" onClick={() => navigateToAnalysis(analysis.id)}>
+                <i className="fa fa-external-link" />
+              </Button>
+              {dataset && (
+              <Button size="sm" disabled={!isSelected} variant="info" onClick={() => handleAutofill(dataset)}>
+                Populate samples from data file
+                <i className="fa fa-share" />
+              </Button>
+              )}
+            </div>
+          );
+        })}
       </Form.Group>
     </div>
   );
@@ -180,6 +210,7 @@ AnalysesCellEditor.propTypes = {
   context: PropTypes.shape({
     reactionShortLabel: PropTypes.string.isRequired,
     allReactionAnalyses: PropTypes.array.isRequired,
+    handelAutofillVariationSampleFromAnalysis: PropTypes.func.isRequired
   }).isRequired,
 };
 

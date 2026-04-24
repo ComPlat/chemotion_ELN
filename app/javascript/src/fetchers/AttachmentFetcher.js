@@ -80,6 +80,15 @@ export default class AttachmentFetcher {
     return promise;
   }
 
+  static async loadAttachmentContent({ id }) {
+    const res = await fetch(`/api/v1/attachments/${id}`);
+    if (!res.ok) {
+      throw new Error(`HTTP error: ${res.status}`);
+    }
+
+    return res;
+  }
+
   static fetchFiles(ids) {
     const promise = fetch('/api/v1/attachments/files/', {
       credentials: 'same-origin',
@@ -637,9 +646,7 @@ export default class AttachmentFetcher {
         const fetchedFilesIdxs = json.files.map((file) => (file.id));
         jcampIds = [...jcampIds, ...fetchedFilesIdxs];
 
-        return AttachmentFetcher.combineSpectra(jcampIds, curveIdx, params).then((res) => {
-          return json;
-        }).catch((errMsg) => {
+        return AttachmentFetcher.combineSpectra(jcampIds, curveIdx, params).then((res) => json).catch((errMsg) => {
           console.log(errMsg); // eslint-disable-line
         });
       })
@@ -743,7 +750,7 @@ export default class AttachmentFetcher {
   }
 
   static combineSpectra(jcampIds, curveIdx, extraParams = null) {
-    const extras = JSON.stringify(decamelizeKeys(extraParams))
+    const extras = JSON.stringify(decamelizeKeys(extraParams));
     const promise = fetch(
       '/api/v1/chemspectra/file/combine_spectra',
       {
@@ -757,7 +764,7 @@ export default class AttachmentFetcher {
         body: JSON.stringify({
           spectra_ids: jcampIds,
           front_spectra_idx: curveIdx,
-          extras: extras,
+          extras,
         }),
       },
     )

@@ -16,12 +16,12 @@ import {
 } from 'src/apps/mydb/elements/details/analyses/FileManager';
 import { FileTree, ToggleSwitch } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { AdvancedAnalysesList } from 'src/apps/mydb/elements/details/analyses/AdvancedComponents';
-import OlsTreeSelect from '../../../../../components/OlsComponent';
 import PropTypes from 'prop-types';
+import OlsTreeSelect from '../../../../../components/OlsComponent';
 
 async function handleZipFile(zipFile) {
   const zip = await JSZip.loadAsync(zipFile);
-  const rootFileName = zipFile.name.replace(/\.zip$/, '');
+  const rootFileName = ''; // zipFile.name.replace(/\.zip$/, '');
 
   const files = new VirtualFolderNode(rootFileName, '');
 
@@ -397,13 +397,13 @@ function UploadField({ disabled = false, element, setElement }) {
         overlay={<Tooltip id="annotate_tooltip">Create multiple analyses at once from selected files and/or folders that will be uploaded.</Tooltip>}
       >
         <Button
-        size="sm"
-        variant="success"
-        disabled={disabled}
-        onClick={handleShow}
-      >
-        Analyses from upload
-      </Button>
+          size="sm"
+          variant="success"
+          disabled={disabled}
+          onClick={handleShow}
+        >
+          Analyses from upload
+        </Button>
       </OverlayTrigger>
 
       <Modal size="xl" show={show} onHide={handleClose}>

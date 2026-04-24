@@ -22,10 +22,10 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
   updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDsToLabels,
-  removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange, getReactionMaterialsHashes
+  removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange, getReactionMaterialsHashes, SAMPLE_LABELS
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
-  ColumnSelection,
+  ColumnSelection, MaterialParser,
   RemoveVariationsModal
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import columnDefinitionsReducer
@@ -51,6 +51,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   const reactionHasPolymers = reaction.hasPolymers();
   const reactionShortLabel = reaction.short_label;
   const reactionMaterials = getReactionMaterials(reaction);
+
   const [previousReactionMaterials, setPreviousReactionMaterials] = useState(reactionMaterials);
   const [reactionSegments, setReactionSegments] = useState(new Map());
   const gasMode = reaction.gaseous;
@@ -64,6 +65,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, []);
   const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
   const [asyncDataLoaded, setAsyncDataLoaded] = useState(false);
+
+  let context;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -124,6 +127,73 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     );
   };
 
+  const handelAutofillVariationSampleFromAnalysis = useCallback(({
+    sampleIdentifier, value, unit, variationRow
+  }) => {
+    const { matType, matItem } = Object.entries(reactionMaterials)
+      .map(([matTypeKey, matList]) => matList.map((matListed) => ({ matType: matTypeKey, matItem: matListed })))
+      .flat()
+      .find(({ matItem: mat }) => SAMPLE_LABELS
+        .some((labelKey) => mat[labelKey] === sampleIdentifier));
+
+    const findAuxForCol = () => {
+      if (!selectedColumns[matType].some((x) => x === `${matItem.id}`)) {
+        const newSelectedColumns = {
+          ...selectedColumns,
+          [matType]: [...selectedColumns[matType], `${matItem.id}`]
+        };
+        const updatedReactionVariations = addMissingColumnsToVariations({
+          materials: reactionMaterials,
+          segments: reactionSegments,
+          selectedColumns: newSelectedColumns,
+          variations: reactionVariations,
+          reactionHasPolymers,
+          durationValue,
+          durationUnit,
+          temperatureValue,
+          temperatureUnit,
+          gasMode,
+          vesselVolume
+        });
+
+        const newColumnDefinitions = columnDefinitionsReducer(
+          columnDefinitions,
+          {
+            type: 'apply_column_selection',
+            materials: reactionMaterials,
+            segments: reactionSegments,
+            selectedColumns: newSelectedColumns,
+            gasMode
+          }
+        );
+
+        return [newColumnDefinitions, updatedReactionVariations, newSelectedColumns];
+      }
+      return [columnDefinitions, reactionMaterials, selectedColumns];
+    };
+    const [newColumnDefinitions, updatedReactionVariations, newSelectedColumns] = findAuxForCol();
+    const newVariationRow = updatedReactionVariations.find((row) => row.id === variationRow.id);
+    const colDef = newColumnDefinitions
+      .find((matGroup) => matGroup.groupId === matType)?.children
+      .find((matCd) => matCd.groupId === `${matItem.id}`)?.children
+      .find((child) => {
+        if (unit === '%' && ['equivalent', 'yield'].includes(child.entry)) return true;
+        return child.units.includes(unit);
+      });
+    colDef.hide = false;
+    colDef.displayUnit = unit;
+
+    const { valueParser } = cellDataTypes[colDef.cellDataType];
+    const cellData = newVariationRow[matType][`${matItem.id}`];
+
+    newVariationRow[matType][`${matItem.id}`] = valueParser({
+      data: newVariationRow, oldValue: cellData, newValue: `${value}`, colDef, context
+    });
+    setReactionVariations(updatedReactionVariations);
+    setColumnDefinitions({ type: 'set_updated', update: newColumnDefinitions });
+    setSelectedColumns(newSelectedColumns);
+  }, [reactionMaterials, context, selectedColumns]);
+
   const copyRow = useCallback((data) => {
     const copiedRow = copyVariationsRow(data, reactionVariations);
     setReactionVariations(
@@ -147,11 +217,11 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
 
   const handleCellEditingStopped = useCallback((event) => {
     /*
-    Defer setReactionVariations until all cell editing has stopped.
-    Without deferring, ongoing edits (e.g., moving edit focus to cell Y by committing edit of cell X with tab)
-    are unintentionally killed during the re-render that's triggered by calling setReactionVariations.
-    pendingReactionVariations accumulates intermediate updates that are submitted only when there aren't any ongoing edits.
-    */
+     Defer setReactionVariations until all cell editing has stopped.
+     Without deferring, ongoing edits (e.g., moving edit focus to cell Y by committing edit of cell X with tab)
+     are unintentionally killed during the re-render that's triggered by calling setReactionVariations.
+     pendingReactionVariations accumulates intermediate updates that are submitted only when there aren't any ongoing edits.
+     */
     if (pendingReactionVariations.current !== null && event.api.getEditingCells().length === 0) {
       setReactionVariations(pendingReactionVariations.current);
       pendingReactionVariations.current = null;
@@ -204,7 +274,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           {' '}
           rows.
         </Tooltip>
-          )}
+      )}
     >
       <Button size="sm" variant="success" onClick={addRow} className="mb-2">
         <i className="fa fa-plus me-1" />
@@ -215,25 +285,25 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   );
 
   /*
-  What follows is a series of imperative state updates that keep the "Variations" tab in sync with the "Scheme" tab.
-  This pattern isn't nice, but the best I could do according to
-  https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes and
-  https://react.dev/reference/react/useState#storing-information-from-previous-renders.
-  It would be preferable to refactor this to a more declarative approach, using a store for example.
-  */
+   What follows is a series of imperative state updates that keep the "Variations" tab in sync with the "Scheme" tab.
+   This pattern isn't nice, but the best I could do according to
+   https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes and
+   https://react.dev/reference/react/useState#storing-information-from-previous-renders.
+   It would be preferable to refactor this to a more declarative approach, using a store for example.
+   */
 
   /*
-  Update materials according to "Scheme" tab.
-  */
+   Update materials according to "Scheme" tab.
+   */
   if (!isEqual(
     getReactionMaterialsHashes(reactionMaterials, gasMode, vesselVolume),
     getReactionMaterialsHashes(previousReactionMaterials, gasMode, vesselVolume)
   )) {
     /*
-    Keep set of materials up-to-date.
-    Materials could have been added or removed in the "Scheme" tab.
-    We need to only *remove* obsolete materials, not *add* missing ones, since users add materials manually.
-    */
+     Keep set of materials up-to-date.
+     Materials could have been added or removed in the "Scheme" tab.
+     We need to only *remove* obsolete materials, not *add* missing ones, since users add materials manually.
+     */
     const updatedSelectedColumns = removeObsoleteMaterialColumns(
       reactionMaterials,
       selectedColumns
@@ -247,8 +317,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     let updatedColumnDefinitions = removeObsoleteColumnDefinitions(columnDefinitions, updatedSelectedColumns);
 
     /*
-    Update column definitions to account for potential changes in the corresponding materials' gas type.
-    */
+     Update column definitions to account for potential changes in the corresponding materials' gas type.
+     */
     updatedColumnDefinitions = updateColumnDefinitionsMaterialsOnAuxChange(
       updatedColumnDefinitions,
       reactionMaterials,
@@ -256,8 +326,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     );
 
     /*
-    Update materials in response to changes in non-editable quantities from the "Scheme" tab.
-    */
+     Update materials in response to changes in non-editable quantities from the "Scheme" tab.
+     */
     updatedReactionVariations = updateVariationsOnAuxChange(
       updatedReactionVariations,
       reactionMaterials,
@@ -278,8 +348,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   }
 
   /*
-  Update gas mode according to "Scheme" tab.
-  */
+   Update gas mode according to "Scheme" tab.
+   */
   if (gasMode !== previousGasMode) {
     const updatedSelectedColumns = getVariationsColumns([]);
     setSelectedColumns(updatedSelectedColumns);
@@ -300,45 +370,45 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   }
 
   /*
-  The "Variations" tab holds references to analyses in the "Analyses" tab.
-  Users can add, remove, or edit analyses in the "Analyses" tab.
-  Every analysis in the "Analyses" tab can be assigned to one or more rows in the "Variations" tab.
-  Each row in the variations table keeps references to its assigned analyses
-  by tracking the corresponding `analysesIDs`.
-  In the example below, variations row "A" keeps a reference to `analysesIDs` "1",
-  whereas variations row "C" keeps references to "1" and "3".
-  The set of all `analysesIDs` that are referenced by variations is called `referenceIDs`.
+   The "Variations" tab holds references to analyses in the "Analyses" tab.
+   Users can add, remove, or edit analyses in the "Analyses" tab.
+   Every analysis in the "Analyses" tab can be assigned to one or more rows in the "Variations" tab.
+   Each row in the variations table keeps references to its assigned analyses
+   by tracking the corresponding `analysesIDs`.
+   In the example below, variations row "A" keeps a reference to `analysesIDs` "1",
+   whereas variations row "C" keeps references to "1" and "3".
+   The set of all `analysesIDs` that are referenced by variations is called `referenceIDs`.
 
-  Figure 1
-  Analyses tab  Variations tab
-  .---.         .---------.
-  | 1 |<--------| A: 1    |
-  |---|     \   |---------|
-  | 2 |      \  | B:      |
-  |---|       \ |---------|
-  | 3 |<-------\| C: 1, 3 |
-  |---|         `---------`
-  | 4 |
-  `---`
+   Figure 1
+   Analyses tab  Variations tab
+   .---.         .---------.
+   | 1 |<--------| A: 1    |
+   |---|     \   |---------|
+   | 2 |      \  | B:      |
+   |---|       \ |---------|
+   | 3 |<-------\| C: 1, 3 |
+   |---|         `---------`
+   | 4 |
+   `---`
 
-  The table below shows how to keep the state consistent across the "Analyses" tab and "Variations" tab.
-  "X" denotes absence of ID.
+   The table below shows how to keep the state consistent across the "Analyses" tab and "Variations" tab.
+   "X" denotes absence of ID.
 
-  Table 1
-  .-------------- ---------------- -------------------------------------------------.
-  | Analyses tab  | Variations tab | action                                         |
-  | (analysesIDs) | (referenceIDs) |                                                |
-  |-------------- |--------------- |----------------------------------------------- |
-  | ID            | ID             | None                                           |
-  |-------------- |--------------- |----------------------------------------------- |
-  | X             | ID             | Container with ID removed in "Analyses" tab.   |
-  |               |                | Remove ID from `referenceIDs`.                 |
-  |-------------- |--------------- |----------------------------------------------- |
-  | ID            | X              | Row that's tracking ID removed in "Variations" |
-  |               |                | tab. No action required since "Analyses" tab   |
-  |               |                | only displays associations to existing rows.   |
-  `-------------- ---------------- -------------------------------------------------`
-  */
+   Table 1
+   .-------------- ---------------- -------------------------------------------------.
+   | Analyses tab  | Variations tab | action                                         |
+   | (analysesIDs) | (referenceIDs) |                                                |
+   |-------------- |--------------- |----------------------------------------------- |
+   | ID            | ID             | None                                           |
+   |-------------- |--------------- |----------------------------------------------- |
+   | X             | ID             | Container with ID removed in "Analyses" tab.   |
+   |               |                | Remove ID from `referenceIDs`.                 |
+   |-------------- |--------------- |----------------------------------------------- |
+   | ID            | X              | Row that's tracking ID removed in "Variations" |
+   |               |                | tab. No action required since "Analyses" tab   |
+   |               |                | only displays associations to existing rows.   |
+   `-------------- ---------------- -------------------------------------------------`
+   */
   if (!isEqual(allReactionAnalyses, previousAllReactionAnalyses)) {
     const updatedReactionVariations = updateAnalyses(reactionVariations, allReactionAnalyses);
     setReactionVariations(updatedReactionVariations);
@@ -348,7 +418,15 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
   if (!asyncDataLoaded) {
     return null;
   }
-
+  context = {
+    copyRow,
+    removeRow,
+    setColumnDefinitions,
+    reactionHasPolymers,
+    reactionShortLabel,
+    allReactionAnalyses,
+    handelAutofillVariationSampleFromAnalysis
+  };
   return (
     <div>
       <ButtonGroup>
@@ -397,31 +475,24 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           maintainColumnOrder
           suppressNoRowsOverlay
           suppressDragLeaveHidesColumns
-          context={{
-            copyRow,
-            removeRow,
-            setColumnDefinitions,
-            reactionHasPolymers,
-            reactionShortLabel,
-            allReactionAnalyses
-          }}
+          context={context}
           /*
-          IMPORTANT: In conjunction with `onCellEditRequest`,
-          `readOnlyEdit` ensures that all edits of `reaction.variations` go through `updateRow`,
-          rather than the grid mutating `reaction.variations` directly on user edits.
-          I.e., we take explicit control of state manipulation.
-          */
+           IMPORTANT: In conjunction with `onCellEditRequest`,
+           `readOnlyEdit` ensures that all edits of `reaction.variations` go through `updateRow`,
+           rather than the grid mutating `reaction.variations` directly on user edits.
+           I.e., we take explicit control of state manipulation.
+           */
           readOnlyEdit
           onCellEditRequest={updateRow}
           onCellEditingStopped={handleCellEditingStopped}
           onGridPreDestroyed={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
           onStateUpdated={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
           /*
-          We need to persist manual row sort (i.e., user changes row order by dragging rows),
-          since ag-grid does not persist manual row sort as part of the grid state.
-          In contrast to sort by column, we persist manual row sorting in the data, not in the grid state.
-          When the event fires, the grid has already mutated the row order, we just need to persist it.
-          */
+           We need to persist manual row sort (i.e., user changes row order by dragging rows),
+           since ag-grid does not persist manual row sort as part of the grid state.
+           In contrast to sort by column, we persist manual row sorting in the data, not in the grid state.
+           When the event fires, the grid has already mutated the row order, we just need to persist it.
+           */
           onRowDragEnd={(event) => handleRowDrag(event)}
         />
       </div>
