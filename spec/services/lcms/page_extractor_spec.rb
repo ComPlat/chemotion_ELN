@@ -18,7 +18,7 @@ describe Lcms::PageExtractor do
 
   let(:index) { Lcms::PageIndexer.build(attachment) }
 
-  it 'returns a self-contained JCamp string for the requested page' do
+  it 'returns a self-contained JCamp string for the requested page', :aggregate_failures do
     page = index[:pages][1]
     jcamp = described_class.extract(attachment, page, prefix_size: index[:prefix_size])
 

@@ -52,12 +52,13 @@ module Lcms
       def build_cache_key(attachment)
         return nil unless attachment&.id && attachment.respond_to?(:updated_at)
 
-        version = attachment.updated_at&.to_i || 0
+        version = attachment.updated_at.to_i
         "#{CACHE_NAMESPACE}:#{attachment.id}:#{version}"
       end
 
       def attachment_path(attachment)
-        return nil unless attachment&.respond_to?(:abs_path)
+        return nil if attachment.nil?
+        return nil unless attachment.respond_to?(:abs_path)
 
         attachment.abs_path.to_s.presence
       end
@@ -80,6 +81,7 @@ module Lcms
         { prefix_size: 0, polarity: nil, pages: [] }.freeze
       end
 
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def build_from_file(path, name_polarity)
         pages = []
         prefix_size = 0
@@ -105,9 +107,15 @@ module Lcms
           pages.last[:byte_end] = io.size if pages.any? && pages.last[:byte_end].nil?
           prefix_size = io.size if prefix_size.zero? && pages.empty?
         end
-        { prefix_size: prefix_size, polarity: name_polarity || polarity_from_scan_mode(scan_mode), pages: pages.map(&:freeze).freeze }.freeze
+        {
+          prefix_size: prefix_size,
+          polarity: name_polarity || polarity_from_scan_mode(scan_mode),
+          pages: pages.map(&:freeze).freeze,
+        }.freeze
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def build_from_string(raw, name_polarity)
         return empty_index if raw.blank?
 
@@ -131,8 +139,13 @@ module Lcms
         end
         pages.last[:byte_end] = raw.bytesize if pages.any? && pages.last[:byte_end].nil?
         prefix_size = raw.bytesize if prefix_size.zero? && pages.empty?
-        { prefix_size: prefix_size, polarity: name_polarity || polarity_from_scan_mode(scan_mode), pages: pages.map(&:freeze).freeze }.freeze
+        {
+          prefix_size: prefix_size,
+          polarity: name_polarity || polarity_from_scan_mode(scan_mode),
+          pages: pages.map(&:freeze).freeze,
+        }.freeze
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
       def parse_page_value(line)
         match = line.match(PAGE_HEADER_REGEX)

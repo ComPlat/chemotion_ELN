@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/BlockLength
+# rubocop:disable Metrics/BlockLength, Style/OneClassPerFile
 
 require 'net/http'
 
@@ -29,6 +29,7 @@ module Chemotion
   module Jcamp
     # Gen module
     module Util
+      # rubocop:disable Metrics/ModuleLength
       def self.generate_tmp_file(content, ext = nil, binmode = false)
         # fname = ext == 'png' ? ['jcamp', '.png'] : ['jcamp']
         fname = ['jcamp']
@@ -48,32 +49,37 @@ module Chemotion
         entry.name.split('.')[-1]
       end
 
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       def self.extract_zip(rsp_io)
         arr_jcamp = []
         arr_img = []
         arr_csv = []
         arr_nmrium = []
+        png_exts = %w[png]
+        jcamp_exts = %w[dx jdx jcamp mzml raw cdf zip]
+        csv_exts = %w[csv]
+        nmrium_exts = %w[nmrium]
         Zip::InputStream.open(rsp_io) do |io|
           while (entry = io.get_next_entry)
             ext = extract_ext(entry)
             entry_name = entry&.name.to_s
             data = entry.get_input_stream.read.force_encoding('UTF-8')
-            if %w[png].include?(ext)
+            if png_exts.include?(ext)
               tmp_img = generate_tmp_file(data, ext)
               tmp_img.instance_variable_set(:@original_filename, entry_name)
               tmp_img.define_singleton_method(:original_filename) { @original_filename }
               arr_img.push(tmp_img)
-            elsif %w[dx jdx jcamp mzml raw cdf zip].include?(ext.downcase)
+            elsif jcamp_exts.include?(ext.downcase)
               tmp_jcamp = generate_tmp_file(data, ext)
               tmp_jcamp.instance_variable_set(:@original_filename, entry_name)
               tmp_jcamp.define_singleton_method(:original_filename) { @original_filename }
               arr_jcamp.push(tmp_jcamp)
-            elsif %w[csv].include?(ext)
+            elsif csv_exts.include?(ext)
               tmp_csv = generate_tmp_file(data, ext)
               tmp_csv.instance_variable_set(:@original_filename, entry_name)
               tmp_csv.define_singleton_method(:original_filename) { @original_filename }
               arr_csv.push(tmp_csv)
-            elsif %w[nmrium].include?(ext)
+            elsif nmrium_exts.include?(ext)
               tmp_nmrium = generate_tmp_file(data, ext)
               tmp_nmrium.instance_variable_set(:@original_filename, entry_name)
               tmp_nmrium.define_singleton_method(:original_filename) { @original_filename }
@@ -89,6 +95,8 @@ module Chemotion
         end
         [tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium]
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+      # rubocop:enable Metrics/ModuleLength
     end
   end
 end
@@ -98,9 +106,11 @@ module Chemotion
   # process Jcamp files
   module Jcamp
     # Create module
+    # rubocop:disable Metrics/ModuleLength
     module Create
       include HTTParty
 
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Style/OptionalBooleanParameter
       def self.build_body(
         file, molfile, is_regen = false, params = {}
       )
@@ -119,7 +129,7 @@ module Chemotion
           peaks_str: params[:peaks_str],
           integration: params[:integration],
           multiplicity: params[:multiplicity],
-          fname: params[:fname] || (params[:file] && params[:file].try(:[], :filename)),
+          fname: params[:fname] || params[:file]&.try(:[], :filename),
           wave_length: params[:wave_length],
           cyclic_volta: params[:cyclicvolta],
           jcamp_idx: params[:curve_idx],
@@ -138,6 +148,7 @@ module Chemotion
           converter_url: Rails.configuration.try(:converter).try(:url),
         }
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Style/OptionalBooleanParameter
 
       def self.read_data_type_mapping
         file_path = Rails.configuration.path_spectra_data_type
@@ -149,6 +160,7 @@ module Chemotion
         ''
       end
 
+      # rubocop:disable Style/OptionalBooleanParameter, Style/TrailingCommaInArguments, Metrics/MethodLength
       def self.stub_http(
         file_path_or_paths, mol_path, is_regen = false, params = {}
       )
@@ -167,7 +179,7 @@ module Chemotion
                 api_endpoint,
                 body: body,
                 multipart: true,
-                timeout: 120
+                timeout: 120,
               )
             end
           ensure
@@ -181,14 +193,16 @@ module Chemotion
                 api_endpoint,
                 body: body,
                 multipart: true,
-                timeout: 120
+                timeout: 120,
               )
             end
           end
         end
         response
       end
+      # rubocop:enable Style/OptionalBooleanParameter, Style/TrailingCommaInArguments, Metrics/MethodLength
 
+      # rubocop:disable Style/OptionalBooleanParameter
       def self.spectrum(
         file_path_or_paths, mol_path, is_regen = false, params = {}
       )
@@ -208,12 +222,12 @@ module Chemotion
           raise StandardError, 'Chemspectra response missing metadata header'
         end
 
-        message = if json_rsp.is_a?(Hash)
-                    json_rsp['error'] || json_rsp['message']
-                  end
-        raise StandardError, (message.present? ? message : 'Chemspectra response missing metadata header')
+        message = json_rsp['error'] || json_rsp['message'] if json_rsp.is_a?(Hash)
+        raise StandardError, message.presence || 'Chemspectra response missing metadata header'
       end
+      # rubocop:enable Style/OptionalBooleanParameter
     end
+    # rubocop:enable Metrics/ModuleLength
   end
 end
 
@@ -499,3 +513,4 @@ module Chemotion
 end
 
 # rubocop:enable Metrics/BlockLength
+# rubocop:enable Style/OneClassPerFile

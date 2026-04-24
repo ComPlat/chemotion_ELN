@@ -621,14 +621,12 @@ module Chemotion
         requires :attachment_id, type: Integer, desc: 'UVVIS pivot attachment id'
         requires :retention_time, type: String, desc: 'Target retention time (numeric, sent as string)'
 
-        optional :polarity, type: String, desc: "Restrict to 'positive' or 'negative'; any other value disables filtering"
+        optional :polarity, type: String, desc: 'LCMS polarity: positive, negative, or any other to skip filter'
         optional :trigger, type: String, desc: 'Client-side analytics tag (initial, scroll, manual, ...)'
       end
       post 'lcms_page' do
         error!({ error: 'Attachment not found', code: 'attachment_not_found' }, 404) if @attachment.nil?
-        unless read_access?(@attachment, current_user)
-          error!({ error: 'Forbidden', code: 'forbidden' }, 403)
-        end
+        error!({ error: 'Forbidden', code: 'forbidden' }, 403) unless read_access?(@attachment, current_user)
 
         candidate = lcms_extract_existing_mz_page(
           @attachment,

@@ -29,7 +29,8 @@ describe Lcms::PageIndexer do
     end
 
     it 'extracts page values as floats' do
-      expect(index[:pages].map { |p| p[:page_value] }).to eq([1.0, 2.5, 4.75])
+      vals = index[:pages].map { |p| p[:page_value] } # rubocop:disable Rails/Pluck -- array of hashes
+      expect(vals).to eq([1.0, 2.5, 4.75])
     end
 
     it 'records non-overlapping byte ranges in order' do
@@ -59,8 +60,7 @@ describe Lcms::PageIndexer do
   describe '.for' do
     it 'caches the index across calls based on attachment id and updated_at' do
       first = described_class.for(attachment)
-      allow(attachment).to receive(:abs_path).and_return('/nonexistent/path')
-      allow(attachment).to receive(:read_file).and_return('')
+      allow(attachment).to receive_messages(abs_path: '/nonexistent/path', read_file: '')
       second = described_class.for(attachment)
 
       expect(second[:pages].length).to eq(first[:pages].length)

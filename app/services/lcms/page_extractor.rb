@@ -9,22 +9,26 @@ module Lcms
       def extract(attachment, page_entry, prefix_size:)
         path = attachment_path(attachment)
         prefix, block = if path.present? && File.exist?(path)
-                         read_segments_from_file(path, prefix_size, page_entry)
-                       else
-                         read_segments_from_string(safe_read(attachment), prefix_size, page_entry)
-                       end
+                          read_segments_from_file(path, prefix_size, page_entry)
+                        else
+                          read_segments_from_string(safe_read(attachment), prefix_size, page_entry)
+                        end
         return nil if block.blank?
 
         build_single_page_jcamp(prefix, block, page_entry[:page_value])
       rescue StandardError => e
-        Rails.logger.warn("[Lcms::PageExtractor] extract failed for attachment_id=#{attachment&.id}: #{e.class}: #{e.message}")
+        Rails.logger.warn(
+          "[Lcms::PageExtractor] extract failed for attachment_id=#{attachment&.id}: " \
+          "#{e.class}: #{e.message}",
+        )
         nil
       end
 
       private
 
       def attachment_path(attachment)
-        return nil unless attachment&.respond_to?(:abs_path)
+        return nil if attachment.nil?
+        return nil unless attachment.respond_to?(:abs_path)
 
         attachment.abs_path.to_s.presence
       end
@@ -40,7 +44,7 @@ module Lcms
           prefix = prefix_size.positive? ? io.read(prefix_size).to_s : ''
           io.seek(page_entry[:byte_start])
           length = page_entry[:byte_end].to_i - page_entry[:byte_start].to_i
-          block = length.positive? ? io.read(length).to_s : io.read.to_s
+          block = length.positive? ? io.read(length).to_s : ''
           [prefix, block]
         end
       end

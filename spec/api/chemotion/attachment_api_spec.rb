@@ -654,7 +654,7 @@ describe Chemotion::AttachmentAPI do
     end
 
     context 'when attachment does not exist' do
-      let(:attachment) { OpenStruct.new(id: -1) }
+      let(:attachment) { Struct.new(:id).new(-1) }
 
       before { execute_request }
 
@@ -669,7 +669,7 @@ describe Chemotion::AttachmentAPI do
       let(:attachment) { create(:attachment, :with_spectra_file, attachable: container) }
 
       before do
-        allow_any_instance_of(Chemotion::AttachmentAPI).to receive(:read_access?).and_return(true)
+        allow_any_instance_of(AttachmentHelpers).to receive(:read_access?).and_return(true)
         execute_request
       end
 

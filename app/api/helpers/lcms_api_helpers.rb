@@ -4,6 +4,7 @@
 # endpoint. Picks the closest `##PAGE=` block to a requested retention
 # time across sibling mz/ms JCamp attachments, using `Lcms::PageIndexer`
 # to avoid re-parsing whole attachments at each request.
+# rubocop:disable Metrics/ModuleLength
 module LcmsApiHelpers
   extend Grape::API::Helpers
 
@@ -13,6 +14,7 @@ module LcmsApiHelpers
   POLARITY_NEGATIVE_REGEX = /(?:^|[._-])(minus|negative|neg)(?:[._-]|$)/i.freeze
   ALLOWED_POLARITIES = %w[positive negative].freeze
 
+  # rubocop:disable Metrics/AbcSize
   def lcms_extract_existing_mz_page(att, requested_retention_time, requested_polarity)
     requested_rt = lcms_to_float(requested_retention_time)
     normalized_polarity = lcms_normalize_polarity(requested_polarity)
@@ -44,6 +46,7 @@ module LcmsApiHelpers
     )
     nil
   end
+  # rubocop:enable Metrics/AbcSize
 
   def lcms_safe_predictions(att)
     raw = att&.get_infer_json_content
@@ -130,3 +133,4 @@ module LcmsApiHelpers
     best
   end
 end
+# rubocop:enable Metrics/ModuleLength
