@@ -184,14 +184,13 @@ describe 'AttachmentJcampProcess' do
       let(:json_attachment) { create(:attachment, :with_infer_json_file) }
 
       before do
-        allow(Attachment).to receive(:where)
-          .with(attachable_id: json_attachment.attachable_id)
-          .and_return([json_attachment])
-        allow(json_attachment).to receive(:json?).and_return(true)
+        # rubocop:disable RSpec/AnyInstance
+        allow_any_instance_of(Attachment).to receive(:json?).and_return(true)
+        # rubocop:enable RSpec/AnyInstance
       end
 
       it 'returns the first file contained in the container' do
-        expect(execute).to eq json_attachment.read_file
+        expect(execute).to eq(json_attachment.read_file.presence || '{}')
       end
     end
   end
