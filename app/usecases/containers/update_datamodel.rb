@@ -34,8 +34,7 @@ module Usecases
 
       private
 
-      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      # rubocop:disable Metrics/BlockLength
+      # rubocop:disable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       def create_or_update_containers(children, parent_container, current_user = {})
         return unless children
         return unless can_update_container?(parent_container)
@@ -144,8 +143,7 @@ module Usecases
           @variation_links << link if link
         end
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      # rubocop:enable Metrics/BlockLength
+      # rubocop:enable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
       def flush_variation_links(root_container)
         return if @variation_links.empty? || root_container.nil?
