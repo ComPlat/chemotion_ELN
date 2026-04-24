@@ -835,7 +835,14 @@ class ElementStore {
         });
     }
     if (closeView) {
-      this.deleteCurrentElement(element);
+      // Guard: if the element is no longer in selecteds (e.g. a detail view
+      // already dispatched DetailActions.close synchronously), skip
+      // deleteCurrentElement so we don't reset activeKey/currentElement and
+      // unexpectedly shift the active tab.
+      const { selecteds } = this.state;
+      if (this.elementIndex(selecteds, element) !== -1) {
+        this.deleteCurrentElement(element);
+      }
     } else {
       this.changeCurrentElement(element);
     }
