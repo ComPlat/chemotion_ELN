@@ -3,7 +3,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Tooltip, OverlayTrigger, ButtonToolbar, Tabs, Tab, Dropdown, ButtonGroup
+  Tooltip, OverlayTrigger, ButtonToolbar, Tabs, Tab, Dropdown, ButtonGroup
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
@@ -28,6 +28,7 @@ import ResearchPlanDetailsContainers from
   'src/apps/mydb/elements/details/researchPlans/analysesTab/ResearchPlanDetailsContainers';
 import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import CommentSection from 'src/components/comments/CommentSection';
@@ -350,53 +351,28 @@ export default class ResearchPlanDetails extends Component {
     } = researchPlan;
     const edit = researchPlan.mode === 'edit';
 
-    const editTooltip = (<Tooltip id="edit-tooltip">Click to switch to edit mode</Tooltip>);
-    const viewTooltip = (<Tooltip id="view-tooltip">Click to switch to view mode</Tooltip>);
-
-    const EditButton = (
-      <Button
-        variant={researchPlan.mode === 'edit' ? 'warning' : 'light'}
-        style={{
-          pointerEvents: 'none',
-          backgroundColor: researchPlan.mode !== 'edit' ? '#E8E8E8' : undefined,
-        }}
-      >
-        <i className="fa fa-pencil" />
-      </Button>
-    );
-
-    const ViewButton = (
-      <Button
-        variant={researchPlan.mode === 'view' ? 'info' : 'light'}
-        style={{
-          pointerEvents: 'none',
-          backgroundColor: researchPlan.mode !== 'view' ? '#E8E8E8' : undefined,
-        }}
-      >
-        <i className="fa fa-eye fa-sm" />
-      </Button>
-    );
+    const editTooltip = (<Tooltip id="edit-tooltip">Switch to edit mode</Tooltip>);
+    const viewTooltip = (<Tooltip id="view-tooltip">Switch to view mode</Tooltip>);
 
     const btnMode = (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => {
-          if (researchPlan.mode === 'view') {
-            this.handleSwitchMode('edit');
-          } else {
-            this.handleSwitchMode('view');
-          }
-        }}
-        onKeyPress={() => {}}
-      >
-        <OverlayTrigger placement="top" overlay={researchPlan.mode === 'view' ? editTooltip : viewTooltip}>
-          <ButtonGroup>
-            {EditButton}
-            {ViewButton}
-          </ButtonGroup>
+      <ButtonGroup>
+        <OverlayTrigger placement="top" overlay={editTooltip}>
+          <ButtonGroupToggleButton
+            active={researchPlan.mode === 'edit'}
+            onClick={() => this.handleSwitchMode('edit')}
+          >
+            <i className="fa fa-pencil" />
+          </ButtonGroupToggleButton>
         </OverlayTrigger>
-      </div>
+        <OverlayTrigger placement="top" overlay={viewTooltip}>
+          <ButtonGroupToggleButton
+            active={researchPlan.mode === 'view'}
+            onClick={() => this.handleSwitchMode('view')}
+          >
+            <i className="fa fa-eye fa-sm" />
+          </ButtonGroupToggleButton>
+        </OverlayTrigger>
+      </ButtonGroup>
     );
 
     return (

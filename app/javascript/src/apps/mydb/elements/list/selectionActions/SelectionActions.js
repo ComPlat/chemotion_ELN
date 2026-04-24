@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dropdown, Button, Modal } from 'react-bootstrap';
+import { Dropdown, Button } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -13,6 +13,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import SelectionSplitButton from 'src/apps/mydb/elements/list/selectionActions/SelectionSplitButton';
 import SelectionGenerateButton from 'src/apps/mydb/elements/list/selectionActions/SelectionGenerateButton';
 import SelectionExportButton from 'src/apps/mydb/elements/list/selectionActions/SelectionExportButton';
+import AppModal from 'src/components/common/AppModal';
 import { elementNames } from 'src/apps/generic/Utils';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -116,18 +117,13 @@ export default class SelectionActions extends React.Component {
 
   renderTopSecretModal() {
     return (
-      <Modal
-        centered
-        show={true}
+      <AppModal
+        show
         onHide={this.hideModal}
+        title="Sharing not allowed"
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Sharing not allowed</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          One of the selected elements contains one or several samples marked as top secret.
-        </Modal.Body>
-      </Modal>
+        One of the selected elements contains one or several samples marked as top secret.
+      </AppModal>
     );
   }
 

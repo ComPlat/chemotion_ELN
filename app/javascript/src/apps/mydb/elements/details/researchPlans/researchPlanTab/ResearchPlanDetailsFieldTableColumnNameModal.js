@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { Form } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import {
-  Modal, ButtonToolbar, Button, Form
-} from 'react-bootstrap';
-import { COLUMN_ID_SHORT_LABEL_REACTION, COLUMN_ID_SHORT_LABEL_SAMPLE } from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableUtils';
+  COLUMN_ID_SHORT_LABEL_REACTION,
+  COLUMN_ID_SHORT_LABEL_SAMPLE,
+} from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsFieldTableUtils';
 
 class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
   constructor(props) {
@@ -13,15 +15,19 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
     // For insert actions, don't consider any existing column
     // For rename actions, find the column being renamed
     const currentColumn = (modal.action === 'rename' && modal.colId)
-      ? columns.find(col => col.colId === modal.colId)
+      ? columns.find((col) => col.colId === modal.colId)
       : null;
 
     const isCurrentlySampleColumn = currentColumn?.linkType === COLUMN_ID_SHORT_LABEL_SAMPLE;
     const isCurrentlyReactionColumn = currentColumn?.linkType === COLUMN_ID_SHORT_LABEL_REACTION;
 
     // Check availability of link types
-    const sampleColumnExists = columns.some(col => col.linkType === COLUMN_ID_SHORT_LABEL_SAMPLE);
-    const reactionColumnExists = columns.some(col => col.linkType === COLUMN_ID_SHORT_LABEL_REACTION);
+    const sampleColumnExists = columns.some(
+      (col) => col.linkType === COLUMN_ID_SHORT_LABEL_SAMPLE,
+    );
+    const reactionColumnExists = columns.some(
+      (col) => col.linkType === COLUMN_ID_SHORT_LABEL_REACTION,
+    );
 
     this.state = {
       columnNameValue: '',
@@ -57,8 +63,12 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
       const reactionColumnExists = columns.some((col) => col.linkType === COLUMN_ID_SHORT_LABEL_REACTION);
 
       // Allow linking if no column with that link type exists, or if we're renaming the existing one
-      const isCurrentlySampleColumn = modal.colId && columns.find(col => col.colId === modal.colId)?.linkType === COLUMN_ID_SHORT_LABEL_SAMPLE;
-      const isCurrentlyReactionColumn = modal.colId && columns.find(col => col.colId === modal.colId)?.linkType === COLUMN_ID_SHORT_LABEL_REACTION;
+      const isCurrentlySampleColumn = modal.colId && columns.find(
+        (col) => col.colId === modal.colId,
+      )?.linkType === COLUMN_ID_SHORT_LABEL_SAMPLE;
+      const isCurrentlyReactionColumn = modal.colId && columns.find(
+        (col) => col.colId === modal.colId,
+      )?.linkType === COLUMN_ID_SHORT_LABEL_REACTION;
 
       this.setState({
         columnNameValue,
@@ -71,29 +81,40 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
     }
   }
 
-  handleColumnNameChange(event) {
+  handleColumnNameChange = (event) => {
     this.setState({ columnNameValue: event.target.value });
-  }
+  };
 
   handleSampleLinkChange = (event) => {
-    const checked = event.target.checked;
-    this.setState({
+    const { checked } = event.target;
+
+    this.setState((prevState) => ({
       linkSampleShortLabel: checked,
-      linkReactionShortLabel: checked ? false : this.state.linkReactionShortLabel
-    });
-  }
+      linkReactionShortLabel: checked ? false : prevState.linkReactionShortLabel,
+    }));
+  };
 
   handleReactionLinkChange = (event) => {
-    const checked = event.target.checked;
-    this.setState({
-      linkReactionShortLabel: checked,
-      linkSampleShortLabel: checked ? false : this.state.linkSampleShortLabel
-    });
-  }
+    const { checked } = event.target;
 
-  handleSubmit() {
-    const { columns, onSubmit, onHide, modal } = this.props;
-    const { columnNameValue, linkSampleShortLabel, linkReactionShortLabel } = this.state;
+    this.setState((prevState) => ({
+      linkReactionShortLabel: checked,
+      linkSampleShortLabel: checked ? false : prevState.linkSampleShortLabel,
+    }));
+  };
+
+  handleSubmit = () => {
+    const {
+      columns,
+      onSubmit,
+      onHide,
+      modal,
+    } = this.props;
+    const {
+      columnNameValue,
+      linkSampleShortLabel,
+      linkReactionShortLabel,
+    } = this.state;
 
     if (!columnNameValue) {
       this.setState({ columnNameError: 'Please give a column name.' });
@@ -110,7 +131,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
 
     // If renaming, check if the name or link type has changed
     if (modal.action === 'rename') {
-      const currentColumn = columns.find(col => col.colId === modal.colId);
+      const currentColumn = columns.find((col) => col.colId === modal.colId);
       if (currentColumn) {
         const nameUnchanged = currentColumn.headerName === columnNameValue;
         const currentLinkType = currentColumn.linkType || null;
@@ -139,7 +160,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
     this.setState({ columnNameError: '', columnNameValue: '' });
     // Pass the column name, display name, and link type
     onSubmit(columnNameValue, columnNameValue, linkType);
-  }
+  };
 
   render() {
     const { modal, onHide, columns } = this.props;
@@ -149,7 +170,7 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
       linkSampleShortLabel,
       linkReactionShortLabel,
       linkSampleShortLabelAvailable,
-      linkReactionShortLabelAvailable
+      linkReactionShortLabelAvailable,
     } = this.state;
 
     // Find existing linked column names
@@ -181,72 +202,68 @@ class ResearchPlanDetailsFieldTableColumnNameModal extends Component {
     }
 
     return (
-      <Modal centered animation show={modal.show} onHide={onHide}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {title}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form.Group className="mb-3">
-            <Form.Label>Column name</Form.Label>
-            <Form.Control
-              type="text"
-              value={columnNameValue}
-              onChange={this.handleColumnNameChange.bind(this)}
-              placeholder="Enter column name"
-            />
-            <Form.Text className="text-danger">{columnNameError}</Form.Text>
-          </Form.Group>
+      <AppModal
+        show={modal.show}
+        onHide={onHide}
+        title={title}
+        closeLabel="Cancel"
+        primaryActionLabel={title}
+        onPrimaryAction={this.handleSubmit}
+      >
+        <Form.Group className="mb-3">
+          <Form.Label>Column name</Form.Label>
+          <Form.Control
+            type="text"
+            value={columnNameValue}
+            onChange={this.handleColumnNameChange}
+            placeholder="Enter column name"
+          />
+          <Form.Text className="text-danger">{columnNameError}</Form.Text>
+        </Form.Group>
 
-          <Form.Group className="mb-3">
-            <Form.Label>Special Column Linking</Form.Label>
-            <div className="mt-2">
-              <Form.Check
-                type="checkbox"
-                id="link-sample"
-                label="Enable Sample Short Label Linking"
-                checked={linkSampleShortLabel}
-                disabled={!linkSampleShortLabelAvailable}
-                onChange={this.handleSampleLinkChange}
-                className="mb-2"
-              />
-              <Form.Check
-                type="checkbox"
-                id="link-reaction"
-                label="Enable Reaction Short Label Linking"
-                checked={linkReactionShortLabel}
-                disabled={!linkReactionShortLabelAvailable}
-                onChange={this.handleReactionLinkChange}
-              />
-            </div>
-            <Form.Text className="text-muted">
-              {generateHelpText()}
-            </Form.Text>
-          </Form.Group>
-        </Modal.Body>
-        <Modal.Footer className="modal-footer border-0">
-          <ButtonToolbar>
-            <Button variant="warning" onClick={onHide}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={this.handleSubmit.bind(this)}>
-              {title}
-            </Button>
-          </ButtonToolbar>
-        </Modal.Footer>
-      </Modal>
+        <Form.Group className="mb-3">
+          <Form.Label>Special Column Linking</Form.Label>
+          <div className="mt-2">
+            <Form.Check
+              type="checkbox"
+              id="link-sample"
+              label="Enable Sample Short Label Linking"
+              checked={linkSampleShortLabel}
+              disabled={!linkSampleShortLabelAvailable}
+              onChange={this.handleSampleLinkChange}
+              className="mb-2"
+            />
+            <Form.Check
+              type="checkbox"
+              id="link-reaction"
+              label="Enable Reaction Short Label Linking"
+              checked={linkReactionShortLabel}
+              disabled={!linkReactionShortLabelAvailable}
+              onChange={this.handleReactionLinkChange}
+            />
+          </div>
+          <Form.Text className="text-muted">
+            {generateHelpText()}
+          </Form.Text>
+        </Form.Group>
+      </AppModal>
     );
   }
 }
 
 ResearchPlanDetailsFieldTableColumnNameModal.propTypes = {
-  modal: PropTypes.object,
-  columnName: PropTypes.string,
-  onSubmit: PropTypes.func,
-  onHide: PropTypes.func,
-  columns: PropTypes.array,
-  colId: PropTypes.string,
+  modal: PropTypes.shape({
+    action: PropTypes.string,
+    colId: PropTypes.string,
+    show: PropTypes.bool.isRequired,
+  }).isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  onHide: PropTypes.func.isRequired,
+  columns: PropTypes.arrayOf(PropTypes.shape({
+    colId: PropTypes.string,
+    headerName: PropTypes.string,
+    linkType: PropTypes.string,
+  })).isRequired,
 };
 
 export default ResearchPlanDetailsFieldTableColumnNameModal;

@@ -1,7 +1,8 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { createRef } from 'react';
 import { SpectraEditor, FN } from '@complat/react-spectra-editor';
-import { Alert, Modal, Button } from 'react-bootstrap';
+import { Alert, Button } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
 import TreeSelect from 'antd/lib/tree-select';
@@ -1280,18 +1281,12 @@ class ViewSpectra extends React.Component {
       )
   }
 
-  renderTitle(idx) {
+  renderControls(idx) {
     const { spcInfos, arrSpcIdx, spcMetas } = this.state;
     const si = this.getSpcInfo();
     if (!si) return null;
-    const dses = this.getDSList();
-    const datasetName = dses.find((dc) => dc.id === si.idDt)?.name;
-    const modalTitle = datasetName || si.label || '';
-    const currentSpc = spcMetas.find((x) => x.idx === idx) || spcMetas[0];
-    const isLcmsLayout = currentSpc?.jcamp?.layout === FN.LIST_LAYOUT.LC_MS;
     const options = spcInfos.filter((x) => x.idDt === si.idDt)
       .map((x) => ({ value: x.idx, label: x.label }));
-    // const onSelectChange = e => SpectraActions.SelectIdx(e.value);
     const isShowMultiSelect = this.isShowMultipleSelectFile(idx);
     const onSelectChange = (value) => {
       if (Array.isArray(value)) {
@@ -1301,48 +1296,34 @@ class ViewSpectra extends React.Component {
         SpectraActions.SelectIdx(value, []);
       }
     };
+    const dses = this.getDSList();
     const dsOptions = dses.map((x) => ({ value: x.id, label: x.name }));
+    const currentSpc = spcMetas.find((x) => x.idx === idx) || spcMetas[0];
+    const isLcmsLayout = currentSpc?.jcamp?.layout === FN.LIST_LAYOUT.LC_MS;
 
     const treePopupContainer = createRef();
 
     return (
-      <Modal.Header className="justify-content-between align-items-baseline">
-        <span className="fs-3">
-          {modalTitle}
-        </span>
-        <div className="d-flex gap-1 align-items-center" ref={treePopupContainer}>
-          <Select
-            options={dsOptions}
-            value={dsOptions.find(({value}) => value === si.idDt)}
-            isClearable={false}
-            styles={{
-              container: (baseStyles, state) => ({
-                ...baseStyles,
-                width: 200,
-              })
-            }}
-            onChange={(e) => this.onDSSelectChange(e)}
-          />
-          <TreeSelect
-            treeData={options}
-            value={isShowMultiSelect ? arrSpcIdx : idx}
-            treeCheckable={isShowMultiSelect}
-            disabled={isLcmsLayout}
-            style={{ width: 500 }}
-            maxTagCount={1}
-            onChange={onSelectChange}
-            getPopupContainer={() => treePopupContainer.current}
-          />
-        </div>
-        <Button
-          variant="danger"
+      <div className="d-flex align-items-center gap-3 mb-3" ref={treePopupContainer}>
+        <Select
+          options={dsOptions}
+          value={dsOptions.find(({ value }) => value === si.idDt)}
+          isClearable={false}
+          className="col-sm-2"
+          onChange={(e) => this.onDSSelectChange(e)}
           size="sm"
-          onClick={this.closeOp}
-        >
-          <i className="fa fa-times me-1" />
-          Close without Save
-        </Button>
-      </Modal.Header>
+        />
+        <TreeSelect
+          treeData={options}
+          value={isShowMultiSelect ? arrSpcIdx : idx}
+          treeCheckable={isShowMultiSelect}
+          disabled={isLcmsLayout}
+          maxTagCount={1}
+          onChange={onSelectChange}
+          getPopupContainer={() => treePopupContainer.current}
+          className="col-sm-3"
+        />
+      </div>
     );
   }
 
@@ -1362,29 +1343,34 @@ class ViewSpectra extends React.Component {
 
   render() {
     const { showModal } = this.state;
+    const si = this.getSpcInfo();
+    const dses = this.getDSList();
+    const datasetName = si && dses ? dses.find((dc) => dc.id === si.idDt)?.name : null;
+    const labelPart = datasetName || si?.label || si?.title;
+    const modalTitle = si && labelPart ? `Spectra Editor - ${labelPart}` : 'Spectra Editor';
 
     const {
       jcamp, predictions, idx, listMuliSpcs, listEntityFiles
     } = this.getContent();
 
     return (
-      <Modal
-        centered
+      <AppModal
+        title={modalTitle}
         scrollable
         size="xxxl"
         show={showModal}
         animation
         onHide={this.closeOp}
+        closeLabel="Close"
+        showFooter
       >
-        {this.renderTitle(idx)}
-        <Modal.Body className="min-vh-80">
-          {
-            showModal && (jcamp || (listMuliSpcs && listMuliSpcs.length > 0))
-              ? this.renderSpectraEditor(jcamp, predictions, listMuliSpcs, listEntityFiles)
-              : this.renderEmpty()
-          }
-        </Modal.Body>
-      </Modal>
+        {this.renderControls(idx)}
+        {
+          showModal && (jcamp || (listMuliSpcs && listMuliSpcs.length > 0))
+            ? this.renderSpectraEditor(jcamp, predictions, listMuliSpcs, listEntityFiles)
+            : this.renderEmpty()
+        }
+      </AppModal>
     );
   }
 }

@@ -1,6 +1,7 @@
 import React, { useContext, useEffect } from 'react';
 import DateTimePicker from 'react-datetime-picker/dist/entry.nostyle';
-import { Form, Button, ButtonToolbar, Alert, Modal, Popover, OverlayTrigger } from 'react-bootstrap';
+import { Form, Button, Alert, Popover, OverlayTrigger } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import PropTypes from 'prop-types';
@@ -107,7 +108,7 @@ const CalendarEntryEditor = (props) => {
       <Popover id="popover-delete-entry">
         <Popover.Header as="h3">Are you sure you want to delete the calendar entry?</Popover.Header>
         <Popover.Body>
-          <ButtonToolbar>
+          <div className="d-flex gap-2">
             <Button
               size="sm"
               variant="danger"
@@ -117,7 +118,7 @@ const CalendarEntryEditor = (props) => {
             <Button size="sm" variant="warning">
               No
             </Button>
-          </ButtonToolbar>
+          </div>
         </Popover.Body>
       </Popover>
     );
@@ -131,141 +132,145 @@ const CalendarEntryEditor = (props) => {
     );
   }
 
+  const footerActions = (
+    <>
+      {deleteEntryButton()}
+    </>
+  );
+
   // https://www.npmjs.com/package/react-datetime-picker
 
   return (
-    <Modal
+    <AppModal
+      title={entry?.id ? 'Edit Calendar Entry' : 'New Calendar Entry'}
       backdrop={calendarStore.editor_backdrop}
+      centered={false}
       keyboard={false}
       show={calendarStore.show_time_slot_editor}
       onHide={closeEditor}
+      closeLabel="Cancel"
+      showFooter
+      extendedFooter={footerActions}
+      primaryActionLabel={(editable && accessible) ? 'Save' : undefined}
+      onPrimaryAction={(editable && accessible) ? saveEntry : undefined}
       data-type="calendar-editor"
       style={{
         transform: `translate(${calendarStore.delta_position_editor.x}px, ${calendarStore.delta_position_editor.y}px)`,
         maxWidth: '500px'
       }}
     >
-      <Modal.Body>
-        {createdBy()}
-        {linkToElement()}
-        {calendarStore.error ? (
+      {createdBy()}
+      {linkToElement()}
+      {calendarStore.error ? (
+        <Alert variant="danger">
+          {calendarStore.error}
+        </Alert>
+      ) : null}
+      <Form>
+        <Form.Group controlId="calendarTitle" className="mb-3">
+          <Form.Label>Title*</Form.Label>
+          <Form.Control
+            disabled={disabled}
+            value={entry.title || ''}
+            onChange={(ev) => updateEntry('title', ev.target.value)}
+            autoFocus
+          />
+        </Form.Group>
+
+        <Form.Group controlId="calendarDescription" className="mb-3">
+          <Form.Label>Description</Form.Label>
+          <Form.Control
+            disabled={disabled}
+            as="textarea"
+            value={entry.description || ''}
+            onChange={(ev) => updateEntry('description', ev.target.value)}
+            style={{ resize: 'none' }}
+            rows={4}
+          />
+        </Form.Group>
+
+        <Form.Group controlId="calendarEntryType" className="mb-3">
+          <Form.Label>Type</Form.Label>
+          <Select
+            isDisabled={disabled}
+            isClearable
+            value={calendarTypes.find(({ value }) => value === entry.kind)}
+            onChange={(ev) => updateEntry('kind', ev?.value || '')}
+            options={calendarTypes}
+          />
+        </Form.Group>
+
+        <Form.Group
+          controlId="calendarEntryEmailNotification"
+          className={`mb-3 ${notifyUserList.length > 0 ? 'd-block' : 'd-none'}`}
+        >
+          <Form.Label>Notify Users</Form.Label>
+          <Select
+            isDisabled={disabled}
+            isClearable
+            isMulti
+            value={notifyUserList.filter(({ value }) => entry.notify_users?.includes(value))}
+            onChange={(list) => updateEntry('notify_users', list)}
+            options={notifyUserList}
+          />
+        </Form.Group>
+
+        <Form.Group
+          controlId="calendarEntryNotifiedUsers"
+          className={`mb-3 ${notifyUserList.length > 0 ? 'd-block' : 'd-none'}`}
+        >
+          <Form.Label>Notified Users</Form.Label>
+          <Form.Control
+            disabled
+            as="textarea"
+            value={entry.notified_users}
+            style={{ resize: 'none' }}
+            rows={4}
+          />
+        </Form.Group>
+
+        <Form.Group controlId="calendarStartEntry" className="mb-3">
+          <Form.Label className="w-100">Start*</Form.Label>
+          <DateTimePicker
+            disabled={disabled}
+            clearIcon={null}
+            value={entry.start}
+            onChange={(date) => updateEntry('start', date)}
+            format="dd-MM-y H:mm"
+            className="w-100"
+          />
+        </Form.Group>
+
+        <Form.Group controlId="calendarEndEntry" className="mb-3">
+          <Form.Label className="w-100">End*</Form.Label>
+          <DateTimePicker
+            disabled={disabled}
+            clearIcon={null}
+            value={entry.end}
+            onChange={(date) => updateEntry('end', date)}
+            format="dd-MM-y H:mm"
+            className="w-100"
+          />
+        </Form.Group>
+        {notAccessible ? (
           <Alert variant="danger">
-            {calendarStore.error}
+            Your access to {entry.element_name} was removed.
           </Alert>
         ) : null}
-        <Form>
-          <Form.Group controlId="calendarTitle" className="mb-3">
-            <Form.Label>Title*</Form.Label>
-            <Form.Control
-              disabled={disabled}
-              value={entry.title || ''}
-              onChange={(ev) => updateEntry('title', ev.target.value)}
-              autoFocus
-            />
-          </Form.Group>
-
-          <Form.Group controlId="calendarDescription" className="mb-3">
-            <Form.Label>Description</Form.Label>
-            <Form.Control
-              disabled={disabled}
-              as="textarea"
-              value={entry.description || ''}
-              onChange={(ev) => updateEntry('description', ev.target.value)}
-              style={{ resize: 'none' }}
-              rows={4}
-            />
-          </Form.Group>
-
-          <Form.Group controlId="calendarEntryType" className="mb-3">
-            <Form.Label>Type</Form.Label>
-            <Select
-              isDisabled={disabled}
-              isClearable
-              value={calendarTypes.find(({value}) => value === entry.kind)}
-              onChange={(ev) => updateEntry('kind', ev?.value || '')}
-              options={calendarTypes}
-            />
-          </Form.Group>
-
-          <Form.Group
-            controlId="calendarEntryEmailNotification"
-            className={`mb-3 ${notifyUserList.length > 0 ? 'd-block' : 'd-none'}`}
-          >
-            <Form.Label>Notify Users</Form.Label>
-            <Select
-              isDisabled={disabled}
-              isClearable
-              isMulti
-              value={notifyUserList.filter(({value}) => entry.notify_users?.includes(value))}
-              onChange={(list) => updateEntry('notify_users', list)}
-              options={notifyUserList}
-            />
-          </Form.Group>
-
-          <Form.Group
-            controlId="calendarEntryNotifiedUsers"
-            className={`mb-3 ${notifyUserList.length > 0 ? 'd-block' : 'd-none'}`}
-          >
-            <Form.Label>Notified Users</Form.Label>
-            <Form.Control
-              disabled
-              as="textarea"
-              value={entry.notified_users}
-              style={{ resize: 'none' }}
-              rows={4}
-            />
-          </Form.Group>
-
-          <Form.Group controlId="calendarStartEntry" className="mb-3">
-            <Form.Label className="w-100">Start*</Form.Label>
-            <DateTimePicker
-              disabled={disabled}
-              clearIcon={null}
-              value={entry.start}
-              onChange={(date) => updateEntry('start', date)}
-              format="dd-MM-y H:mm"
-              className="w-100"
-            />
-          </Form.Group>
-
-          <Form.Group controlId="calendarEndEntry" className="mb-3">
-            <Form.Label className="w-100">End*</Form.Label>
-            <DateTimePicker
-              disabled={disabled}
-              clearIcon={null}
-              value={entry.end}
-              onChange={(date) => updateEntry('end', date)}
-              format="dd-MM-y H:mm"
-              className="w-100"
-            />
-          </Form.Group>
-          {notAccessible ? (
-            <Alert variant="danger">
-              Your access to {entry.element_name} was removed.
-            </Alert>
-          ) : null}
-          <ButtonToolbar>
-            <div className="flex-grow-1">
-              {(entry.eventable_type && accessible && entry.id !== undefined) ? (
-                <div>
-                  <a
-                    href={`/api/v1/calendar_entries/ical?id=${entry.id}`}
-                    onClick={() => window.open(`/api/v1/calendar_entries/ical?id=${entry.id}`)}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    ical - download
-                  </a>
-                </div>
-              ) : null}
-            </div>
-            <Button variant="primary" onClick={closeEditor}>Cancel</Button>
-            {deleteEntryButton()}
-            {(editable && accessible) ? <Button variant="warning" onClick={saveEntry}>Save</Button> : null}
-          </ButtonToolbar>
-        </Form>
-      </Modal.Body>
-    </Modal>
+        {(entry.eventable_type && accessible && entry.id !== undefined) ? (
+          <div className="d-flex justify-content-end">
+            <a
+              href={`/api/v1/calendar_entries/ical?id=${entry.id}`}
+              onClick={() => window.open(`/api/v1/calendar_entries/ical?id=${entry.id}`)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              ical - download
+            </a>
+          </div>
+        ) : null}
+      </Form>
+    </AppModal>
   );
 }
 

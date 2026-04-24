@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import { Button, Breadcrumb, Container, Col, Modal, Row } from 'react-bootstrap';
+import {
+  Button, Breadcrumb, Container, Col, Row
+} from 'react-bootstrap';
 import { ProfileList, ProfileForm, FileUploadForm } from '@complat/chemotion-converter-client';
+import AppModal from 'src/components/common/AppModal';
 import ConverterApi from 'src/fetchers/ConverterFetcher';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 
@@ -381,25 +384,26 @@ class ConverterAdmin extends Component {
           <a href="/">Back to MyDB</a>
         </div>
 
-        <Modal centered show={createdModal}>
-          <Modal.Header>
-            <Modal.Title>Profile successfully created!</Modal.Title>
-          </Modal.Header>
+        <AppModal
+          show={createdModal}
+          onHide={this.hideCreatedModal}
+          title="Profile successfully created!"
+          showFooter
+          closeLabel="Close"
+        >
+          Your converter profile has been created successfully.
+        </AppModal>
 
-          <Modal.Footer>
-            <Button variant="primary" onClick={this.hideCreatedModal}>Great!</Button>
-          </Modal.Footer>
-        </Modal>
-
-        <Modal centered show={deleteModal}>
-          <Modal.Header>
-            <Modal.Title>Do you really want to delete this profile?</Modal.Title>
-          </Modal.Header>
-          <Modal.Footer>
-            <Button variant="light" onClick={this.hideDeleteModal}>Cancel</Button>
-            <Button variant="danger" onClick={this.deleteProfile}>Delete profile</Button>
-          </Modal.Footer>
-        </Modal>
+        <AppModal
+          show={deleteModal}
+          onHide={this.hideDeleteModal}
+          title="Do you really want to delete this profile?"
+          closeLabel="Cancel"
+          primaryActionLabel="Delete profile"
+          onPrimaryAction={this.deleteProfile}
+        >
+          This action will permanently remove the selected converter profile.
+        </AppModal>
       </Container>
     );
   }

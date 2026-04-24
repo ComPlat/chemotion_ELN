@@ -1,34 +1,35 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Button, Modal, Badge
+  Form, Button, Badge
 } from 'react-bootstrap';
 import cloneDeep from 'lodash/cloneDeep';
 import Reaction from 'src/models/Reaction';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import AppModal from 'src/components/common/AppModal';
 import {
   getVariationsRowName,
   REACTION_VARIATIONS_TAB_KEY,
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 function getReactionAnalyses(reaction) {
-  const reactionCopy = cloneDeep(reaction);
-  const analysesContainer = reactionCopy.container?.children?.find((child) => child.container_type === 'analyses');
-  const analyses = analysesContainer?.children?.filter((analysis) => !analysis.is_new);
-
-  return analyses ?? [];
+  const analyses = reaction.analysisContainers?.() ?? [];
+  return cloneDeep(analyses).filter((analysis) => !analysis.is_new);
 }
 
 function updateAnalyses(variations, allReactionAnalyses) {
   const analysesIDs = allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((child) => child.id);
-  const updatedVariations = cloneDeep(variations);
-  updatedVariations.forEach((row) => {
-    // eslint-disable-next-line no-param-reassign
+  return cloneDeep(variations).map((row) => {
     const analyses = row.metadata.analyses || [];
-    row.metadata.analyses = analyses.filter((id) => analysesIDs.includes(id));
-  });
 
-  return updatedVariations;
+    return {
+      ...row,
+      metadata: {
+        ...row.metadata,
+        analyses: analyses.filter((id) => analysesIDs.includes(id)),
+      },
+    };
+  });
 }
 
 function getAnalysesOverlay({ data: row, context }) {
@@ -98,7 +99,7 @@ function AnalysesCellRenderer({ value: analysesIDs }) {
 }
 
 AnalysesCellRenderer.propTypes = {
-  value: PropTypes.array.isRequired,
+  value: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
 function AnalysesCellEditor({
@@ -110,6 +111,7 @@ function AnalysesCellEditor({
 }) {
   const [selectedAnalysisIDs, setSelectedAnalysisIDs] = useState(analysesIDs);
   const { reactionShortLabel, allReactionAnalyses } = context;
+  const availableReactionAnalyses = allReactionAnalyses.filter((analysis) => !analysis.is_deleted);
 
   const onAnalysisSelectionReady = () => {
     onValueChange(selectedAnalysisIDs);
@@ -136,35 +138,42 @@ function AnalysesCellEditor({
 
   const analysesSelection = (
     <div className="max-height-200 overflow-y-auto">
-      <Form.Group>
-        {allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((analysis) => (
-          <div key={analysis.id} className="d-flex align-items-center">
-            <Form.Check
-              type="checkbox"
-              onChange={() => onChange(analysis.id)}
-              label={analysis.name}
-              checked={selectedAnalysisIDs.includes(analysis.id)}
-              className="me-2"
-            />
-            <Button size="sm" variant="light" onClick={() => navigateToAnalysis(analysis.id)}>
-              <i className="fa fa-external-link" />
-            </Button>
-          </div>
-        ))}
-      </Form.Group>
+      {availableReactionAnalyses.length === 0 ? (
+        <div className="text-body-secondary">
+          This reaction has no analyses. Add an analysis in the reaction&apos;s Analyses tab first.
+        </div>
+      ) : (
+        <Form.Group>
+          {availableReactionAnalyses.map((analysis) => (
+            <div key={analysis.id} className="d-flex align-items-center">
+              <Form.Check
+                type="checkbox"
+                onChange={() => onChange(analysis.id)}
+                label={analysis.name}
+                checked={selectedAnalysisIDs.includes(analysis.id)}
+                className="me-2"
+              />
+              <Button size="sm" variant="light" onClick={() => navigateToAnalysis(analysis.id)}>
+                <i className="fa fa-external-link" />
+              </Button>
+            </div>
+          ))}
+        </Form.Group>
+      )}
     </div>
   );
 
   const cellContent = (
-    <Modal centered show onHide={() => stopEditing()}>
-      <Modal.Header closeButton>
-        {`Link analyses to ${getVariationsRowName(reactionShortLabel, row.id)}`}
-      </Modal.Header>
-      <Modal.Body>{analysesSelection}</Modal.Body>
-      <Modal.Footer>
-        <Button onClick={onAnalysisSelectionReady}>Save</Button>
-      </Modal.Footer>
-    </Modal>
+    <AppModal
+      show
+      onHide={() => stopEditing()}
+      title={`Link analyses to ${getVariationsRowName(reactionShortLabel, row.id)}`}
+      primaryActionLabel="Save"
+      onPrimaryAction={onAnalysisSelectionReady}
+      primaryActionDisabled={availableReactionAnalyses.length === 0}
+    >
+      {analysesSelection}
+    </AppModal>
   );
 
   return cellContent;
@@ -179,7 +188,11 @@ AnalysesCellEditor.propTypes = {
   stopEditing: PropTypes.func.isRequired,
   context: PropTypes.shape({
     reactionShortLabel: PropTypes.string.isRequired,
-    allReactionAnalyses: PropTypes.array.isRequired,
+    allReactionAnalyses: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      is_deleted: PropTypes.bool,
+      name: PropTypes.string,
+    })).isRequired,
   }).isRequired,
 };
 
