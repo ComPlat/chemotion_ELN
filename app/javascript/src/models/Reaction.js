@@ -1119,6 +1119,48 @@ export default class Reaction extends Element {
     return !!this.lock_reaction_volume;
   }
 
+  /**
+   * True when the reaction has a positive numeric volume value.
+   *
+   * @returns {boolean}
+   */
+  get hasValidReactionVolume() {
+    return this.volume != null && this.volume !== '' && Number(this.volume) > 0;
+  }
+
+  /**
+   * Decides whether a concentration edit may proceed given the reaction's
+   * current volume settings and the caller-supplied equivalents lock state.
+   *
+   * Rules:
+   * - If equivalents are unlocked, concentration edits are always allowed.
+   * - If equivalents are locked, `use_reaction_volume` must be enabled and
+   *   a positive reaction volume must be set.
+   *
+   * @param {boolean} lockEquivColumn - Whether the equivalents column is locked.
+   * @returns {boolean}
+   */
+  canUpdateConcentration(lockEquivColumn) {
+    if (!lockEquivColumn) return true;
+    return !!(this.use_reaction_volume && this.hasValidReactionVolume);
+  }
+
+  /**
+   * Maps a UI material group name to the underlying storage array name.
+   * SBMM samples shown as 'reactants' are actually stored in
+   * 'reactant_sbmm_samples'; without this translation, repositioning fails.
+   *
+   * @param {Object} material
+   * @param {string} groupName
+   * @returns {string}
+   */
+  static storageGroupFor(material, groupName) {
+    if (groupName === 'reactants' && isSbmmSample(material)) {
+      return 'reactant_sbmm_samples';
+    }
+    return groupName;
+  }
+
   get purificationSolventVolume() {
     return this.totalVolumeForMaterialGroup(Reaction.PURIFICATION_SOLVENTS);
   }
@@ -1364,6 +1406,97 @@ export default class Reaction extends Element {
     allMaterials.forEach((material) => {
       material.updateConcentrationFromSolvent(this);
     });
+  }
+
+  /**
+   * Derives a new reaction volume from a sample's concentration edit.
+   *
+   * Formula: volume (L) = amount_mol / concentration (mol/L)
+   *
+   * On a valid positive `concentration` and a sample with positive
+   * `amount_mol`, this sets `reaction.volume` to the computed value,
+   * enables `use_reaction_volume`, and recalculates concentrations for all
+   * materials.
+   *
+   * @param {Sample} sample
+   * @param {number} concentration - New concentration in mol/L.
+   * @returns {{ volume: number, useReactionVolume: true } | null}
+   *   Describes the applied changes so the caller can persist them via
+   *   `onInputChange`, or `null` if no change was applied.
+   */
+  deriveVolumeFromSampleConcentration(sample, concentration) {
+    if (!sample || !Number.isFinite(concentration) || concentration <= 0) {
+      return null;
+    }
+
+    const amountMol = sample.amount_mol || 0;
+    if (amountMol <= 0) return null;
+
+    const newVolume = amountMol / concentration;
+    this.volume = newVolume;
+    this.use_reaction_volume = true;
+    this.updateAllConcentrations();
+
+    return { volume: newVolume, useReactionVolume: true };
+  }
+
+  /**
+   * Clears `preserveConcentration` on every starting material, reactant,
+   * and product except the supplied `editedSample`. Used so that the
+   * currently-edited sample keeps its manually-entered concentration while
+   * other materials are recomputed from the updated amounts/volume.
+   *
+   * @param {Sample} editedSample
+   * @returns {void}
+   */
+  resetPreservedConcentrationExcept(editedSample) {
+    const materials = [
+      ...(this.starting_materials || []),
+      ...(this.reactants || []),
+      ...(this.products || []),
+    ];
+
+    materials.forEach((material) => {
+      if (!editedSample || material.id !== editedSample.id) {
+        material.preserveConcentration = false;
+      }
+    });
+  }
+
+  /**
+   * When equivalents are locked and a non-reference material's amount
+   * changes, the reference material's amount must be rebased on the new
+   * ratio. Given the current reference sample, the edited sample, and the
+   * lock state, this recomputes the reference's amount and sets it in mol.
+   *
+   * Formula: newRefMol = updatedSample.amount_mol / updatedSample.equivalent
+   *
+   * @param {Sample} referenceSample - Candidate reference sample.
+   * @param {Sample} updatedSample - The non-reference sample that changed.
+   * @param {boolean} lockEquivColumn
+   * @returns {void}
+   */
+  // eslint-disable-next-line class-methods-use-this
+  updateReferenceAmountForLockedEquivalents(referenceSample, updatedSample, lockEquivColumn) {
+    if (!lockEquivColumn
+      || !referenceSample
+      || !referenceSample.reference
+      || !updatedSample
+      || updatedSample.reference) {
+      return;
+    }
+
+    const sampleEquiv = updatedSample.equivalent;
+    if (!Number.isFinite(sampleEquiv)
+      || sampleEquiv <= 0
+      || !Number.isFinite(updatedSample.amount_mol)) {
+      return;
+    }
+
+    const newRefMol = updatedSample.amount_mol / sampleEquiv;
+    if (Number.isFinite(newRefMol) && newRefMol >= 0) {
+      referenceSample.setAmount({ value: newRefMol, unit: 'mol' });
+    }
   }
 
   isFeedstockMaterialPresent() {

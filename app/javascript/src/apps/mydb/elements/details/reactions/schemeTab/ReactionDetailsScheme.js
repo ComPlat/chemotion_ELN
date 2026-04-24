@@ -43,7 +43,6 @@ import Component from 'src/models/Component';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
-import { convertUnits } from 'src/components/staticDropdownOptions/units';
 
 export default class ReactionDetailsScheme extends React.Component {
   constructor(props) {
@@ -82,7 +81,6 @@ export default class ReactionDetailsScheme extends React.Component {
     this.updateVolume = this.updateVolume.bind(this);
     this.handleVolumeCheckboxChange = this.handleVolumeCheckboxChange.bind(this);
     this.switchVolumeLock = this.switchVolumeLock.bind(this);
-    this.hasValidReactionVolume = this.hasValidReactionVolume.bind(this);
     this.showReactionVolumeRequiredWarning = this.showReactionVolumeRequiredWarning.bind(this);
   }
 
@@ -424,26 +422,13 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
-  /**
-   * Maps UI group names to storage arrays. SBMM samples shown as 'reactants'
-   * are actually stored in 'reactant_sbmm_samples'. Without this translation,
-   * repositioning fails because indexOf returns -1, causing duplicates.
-   */
-  // eslint-disable-next-line class-methods-use-this
-  translateMaterialGroupForStorage(material, groupName) {
-    if (groupName === 'reactants' && isSbmmSample(material)) {
-      return 'reactant_sbmm_samples';
-    }
-    return groupName;
-  }
-
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
     const { reaction, onReactionChange } = this.props;
     this.updateDraggedMaterialGasType(reaction, srcMat, srcGroup, tagMat, tagGroup);
 
     // Translate UI group names to actual storage arrays for SBMM samples
-    const actualSrcGroup = this.translateMaterialGroupForStorage(srcMat, srcGroup);
-    const actualTagGroup = this.translateMaterialGroupForStorage(tagMat, tagGroup);
+    const actualSrcGroup = Reaction.storageGroupFor(srcMat, srcGroup);
+    const actualTagGroup = Reaction.storageGroupFor(tagMat, tagGroup);
 
     reaction.moveMaterial(srcMat, actualSrcGroup, tagMat, actualTagGroup);
     onReactionChange(reaction, { updateGraphic: true });
@@ -731,7 +716,7 @@ export default class ReactionDetailsScheme extends React.Component {
     if (lockEquivColumn) {
       // A direct amount edit should refresh every derived concentration once
       // locked-equivalent propagation has updated the dependent sample amounts.
-      this.resetPreservedConcentrationForOtherMaterials(updatedReaction, updatedSample);
+      updatedReaction.resetPreservedConcentrationExcept(updatedSample);
       updatedReaction.updateAllConcentrations();
     }
 
@@ -789,7 +774,7 @@ export default class ReactionDetailsScheme extends React.Component {
     if (lockEquivColumn) {
       // Recompute concentrations after locked-equivalent amount propagation.
       // Running this earlier would use stale amount_mol values for the other samples.
-      this.resetPreservedConcentrationForOtherMaterials(updatedReaction, updatedSample);
+      updatedReaction.resetPreservedConcentrationExcept(updatedSample);
       updatedReaction.updateAllConcentrations();
     }
 
@@ -1269,22 +1254,18 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   /**
-   * Handles concentration change for a material.
-   * Case 1: When volume is unlocked, recalculates reaction volume based on the entered concentration.
-   * Case 2: When volume is locked, recalculates amount_mol and amount_g based on the entered concentration.
+   * Handles a concentration edit for a material. Delegates the pure
+   * calculations to `Reaction` / `Sample`; this method only orchestrates
+   * input validation, UI warnings, and `onInputChange` propagation.
    *
-   * Formula (Case 1): volume (L) = amount_mol / concentration (mol/L)
-   * Formula (Case 2): amount_mol = volume (L) * concentration (mol/L)
-   *                   amount_g = amount_mol * molecular_weight (g/mol)
-   *
-   * @param {Object} changeEvent - Event containing sampleID, concentration, materialGroup
-   * @returns {Reaction} The updated reaction object
+   * @param {Object} changeEvent - Event with `{ sampleID, concentration }`.
+   * @returns {Reaction} The (possibly mutated) reaction object.
    */
   updatedReactionForConcentrationChange(changeEvent) {
     const { reaction } = this.props;
     const { sampleID, concentration } = changeEvent;
     const updatedSample = reaction.sampleById(sampleID);
-    const concentrationValue = concentration.value;
+    const concentrationValue = concentration?.value;
 
     if (!updatedSample
       || concentrationValue == null
@@ -1293,80 +1274,86 @@ export default class ReactionDetailsScheme extends React.Component {
       return reaction;
     }
 
-    if (!this.canUpdateConcentrationWithCurrentVolumeSettings(reaction)) {
+    if (!this.guardConcentrationUpdate(reaction)) {
       return reaction;
     }
 
-    const newConcentration = concentrationValue; // in mol/L (base unit)
+    updatedSample.concn = concentrationValue;
 
-    // Store the new concentration on the sample
-    updatedSample.concn = newConcentration;
-
-    if (!reaction.isVolumeLocked) {
-      // Case 1: Volume is unlocked - calculate new volume from concentration
-      this.calculateVolumeFromConcentration(updatedSample, newConcentration, reaction);
-      // Recalculate concentrations for all other materials based on new volume
-      reaction.updateAllConcentrations();
-    } else if (reaction.isVolumeLocked) {
-      // Case 2: Volume is locked - calculate amount_mol and amount_g from concentration
-      return this.handleLockedVolumeConcentrationChange(updatedSample, newConcentration);
+    if (reaction.isVolumeLocked) {
+      return this.handleLockedVolumeConcentrationChange(updatedSample, concentrationValue);
     }
 
+    this.applyDerivedVolumeFromConcentration(reaction, updatedSample, concentrationValue);
     return reaction;
   }
 
   /**
- * Determines whether concentration can be updated based on current volume settings.
- *
- * When equivalents are unlocked, concentration updates are always allowed.
- * When equivalents are locked, a valid reaction volume is required.
- * If the requirement is not met, a warning is shown to the user.
- *
- * @param {Object} reaction - The reaction object containing volume settings.
- * @param {boolean} reaction.use_reaction_volume - Indicates if reaction volume is enabled.
- * @returns {boolean} Returns true if concentration update is allowed, otherwise false.
- */
-  canUpdateConcentrationWithCurrentVolumeSettings(reaction) {
+   * Checks `reaction.canUpdateConcentration` for the current equivalents
+   * lock state and surfaces a UI warning when the update is rejected.
+   *
+   * @param {Reaction} reaction
+   * @returns {boolean}
+   */
+  guardConcentrationUpdate(reaction) {
     const { lockEquivColumn } = this.state;
 
-    // If equivalents are unlocked, allow updates without checks
-    if (!lockEquivColumn) return true;
-
-    const hasValidVolume = reaction.use_reaction_volume && this.hasValidReactionVolume(reaction);
-
-    if (!hasValidVolume) {
-      this.showReactionVolumeRequiredWarning(
-        'Please provide a reaction volume to update the concentration. '
-          + 'You can enter the calculated volume (e.g., from the solvents) '
-          + 'or use the detected material volume.'
-      );
-      return false;
+    if (reaction.canUpdateConcentration(lockEquivColumn)) {
+      return true;
     }
 
-    return true;
+    this.showReactionVolumeRequiredWarning(
+      'Please provide a reaction volume to update the concentration. '
+        + 'You can enter the calculated volume (e.g., from the solvents) '
+        + 'or use the detected material volume.'
+    );
+    return false;
   }
 
   /**
-   * Handles concentration changes when reaction volume is locked.
-   * Two subcases:
-   * 2.1) Equivalents unlocked: Only the changed sample's amount is recalculated
-   * 2.2) Equivalents locked: Changed sample's amount is recalculated, and if it's a reference material,
-   *      all other samples' amounts are recalculated based on their locked equivalents.
-   *      Then concentrations are updated for all materials EXCEPT the edited sample, whose manually-entered
-   *      concentration is preserved.
+   * Bridges `Reaction#deriveVolumeFromSampleConcentration` with the parent
+   * form's `onInputChange` so that the derived volume and the
+   * `use_reaction_volume` flag are persisted.
    *
-   * @param {Sample} updatedSample - The sample with the concentration change
-   * @param {number} newConcentration - The new concentration value in mol/L
-   * @returns {Reaction} The updated reaction object
+   * @param {Reaction} reaction
+   * @param {Sample} sample
+   * @param {number} concentration - Concentration in mol/L.
+   * @returns {void}
+   */
+  applyDerivedVolumeFromConcentration(reaction, sample, concentration) {
+    const { onInputChange } = this.props;
+    const applied = reaction.deriveVolumeFromSampleConcentration(sample, concentration);
+
+    if (applied && onInputChange) {
+      onInputChange('volume', applied.volume);
+      onInputChange('useReactionVolumeForConcentration', applied.useReactionVolume);
+    }
+  }
+
+  /**
+   * Handles concentration changes when the reaction volume is locked.
+   *
+   * Two subcases:
+   * - Equivalents unlocked: only the edited sample's amount is updated.
+   * - Equivalents locked: Changed sample's amount is recalculated, and if it's a reference material,
+   *   all other samples' amounts are recalculated based on their locked equivalents.
+   *   Then concentrations are updated for all materials EXCEPT the edited sample, whose manually-entered
+   *   concentration is preserved.
+   *
+   * @param {Sample} updatedSample
+   * @param {number} newConcentration - Concentration in mol/L.
+   * @returns {Reaction}
    */
   handleLockedVolumeConcentrationChange(updatedSample, newConcentration) {
     const { reaction } = this.props;
     const { lockEquivColumn } = this.state;
 
-    // Calculate amount_mol and amount_g from concentration and locked volume
-    this.calculateAmountFromConcentration(updatedSample, newConcentration, reaction);
+    updatedSample.setAmountFromConcentration(
+      newConcentration,
+      reaction.reactionVolumeForConcentration()
+    );
 
-    // Mark the sample to preserve its manually-set concentration
+    // Mark the sample to preserve its manually-set concentration.
     updatedSample.preserveConcentration = true;
 
     // Update reaction with the changed sample amounts
@@ -1380,90 +1367,11 @@ export default class ReactionDetailsScheme extends React.Component {
     // except the currently edited sample. The edited sample keeps its manually-entered
     // concentration; all others are recalculated from updated amounts/volume.
     if (lockEquivColumn) {
-      this.resetPreservedConcentrationForOtherMaterials(updatedReaction, updatedSample);
+      updatedReaction.resetPreservedConcentrationExcept(updatedSample);
       updatedReaction.updateAllConcentrations({ includeProducts: false });
     }
 
     return updatedReaction;
-  }
-
-  /**
-   * Clears `preserveConcentration` on all materials except the edited sample.
-   *
-   * @param {Reaction} reaction - Reaction containing materials
-   * @param {Sample} editedSample - Sample that should keep manual concentration
-   * @returns {void}
-   */
-  // eslint-disable-next-line class-methods-use-this
-  resetPreservedConcentrationForOtherMaterials(reaction, editedSample) {
-    const materialsToRecalculate = [
-      ...(reaction.starting_materials || []),
-      ...(reaction.reactants || []),
-      ...(reaction.products || []),
-    ];
-
-    materialsToRecalculate.forEach((material, index) => {
-      if (material.id !== editedSample.id) {
-        // Only the actively edited sample should keep its manual concentration.
-        materialsToRecalculate[index].preserveConcentration = false;
-      }
-    });
-  }
-
-  /**
-   * Calculates and updates reaction volume based on sample concentration.
-   * Formula: volume (L) = amount_mol / concentration (mol/L)
-   *
-   * @param {Sample} sample - The sample with the concentration change
-   * @param {number} concentration - The new concentration value in mol/L
-   * @param {Reaction} reaction - The reaction to update
-   */
-  calculateVolumeFromConcentration(sample, concentration, reaction) {
-    const { onInputChange } = this.props;
-
-    if (!Number.isFinite(concentration) || concentration <= 0) {
-      return;
-    }
-
-    const amountMol = sample.amount_mol || 0;
-    if (amountMol > 0) {
-      const newVolume = amountMol / concentration; // in liters
-      reaction.volume = newVolume;
-      // Ensure the derived reaction volume is used for subsequent concentration recalculation.
-      reaction.use_reaction_volume = true;
-
-      // Update volume via onInputChange to ensure persistence
-      if (onInputChange) {
-        onInputChange('volume', newVolume);
-        onInputChange('useReactionVolumeForConcentration', true);
-      }
-    }
-  }
-
-  /**
-   * Calculates and updates sample amount based on concentration when volume is locked.
-   * Uses reaction-level concentration volume:
-   * - reaction volume when `use_reaction_volume` is enabled and valid
-   * - otherwise combined reaction volume from materials
-   * Formula: amount_mol = volume (L) * concentration (mol/L)
-   * The amount_g is automatically calculated from amount_mol by setAmount() using molecular weight.
-   *
-   * @param {Sample} sample - The sample with the concentration change
-   * @param {number} concentration - The new concentration value in mol/L
-   * @param {Reaction} reaction - The reaction containing the sample
-   */
-  calculateAmountFromConcentration(sample, concentration, reaction) {
-    const volumeL = reaction.reactionVolumeForConcentration();
-
-    if (!Number.isFinite(volumeL) || volumeL <= 0 || !Number.isFinite(concentration) || concentration <= 0) {
-      return;
-    }
-
-    const newAmountMol = volumeL * concentration; // in moles
-
-    // Update the sample's amount with the new mol value
-    // setAmount will handle conversion to amount_g using molecular weight
-    sample.setAmount({ value: newAmountMol, unit: 'mol' });
   }
 
   /**
@@ -1616,31 +1524,6 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   /**
-   * Recomputes reference material amount when equivalent locking is enabled
-   * and a non-reference material amount is changed.
-   *
-   * @param {Sample} sample
-   * @param {Sample} updatedSample
-   * @param {boolean} lockEquivColumn
-   */
-  // eslint-disable-next-line class-methods-use-this
-  updateReferenceAmountForLockedEquivalents(sample, updatedSample, lockEquivColumn) {
-    if (!lockEquivColumn || !sample.reference || !updatedSample || updatedSample.reference) {
-      return;
-    }
-
-    const sampleEquiv = updatedSample.equivalent;
-    if (!Number.isFinite(sampleEquiv) || sampleEquiv <= 0 || !Number.isFinite(updatedSample.amount_mol)) {
-      return;
-    }
-
-    const newRefMol = updatedSample.amount_mol / sampleEquiv;
-    if (Number.isFinite(newRefMol) && newRefMol >= 0) {
-      sample.setAmount({ value: newRefMol, unit: 'mol' });
-    }
-  }
-
-  /**
    * Returns the material list with dependent amount/equivalent values recalculated
    * after one material amount change.
    *
@@ -1650,7 +1533,8 @@ export default class ReactionDetailsScheme extends React.Component {
    * @returns {Sample[]}
    */
   updatedSamplesForAmountChange(samples, updatedSample, materialGroup) {
-    const { reaction: { referenceMaterial } } = this.props;
+    const { reaction } = this.props;
+    const { referenceMaterial } = reaction;
     const { lockEquivColumn } = this.state;
     const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
     let stoichiometryCoeff = 1.0;
@@ -1660,7 +1544,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
       // If equivalents are locked and this is the reference sample,
       // recalculate its amount from the updated sample
-      this.updateReferenceAmountForLockedEquivalents(sample, updatedSample, lockEquivColumn);
+      reaction.updateReferenceAmountForLockedEquivalents(sample, updatedSample, lockEquivColumn);
 
       if (referenceMaterial) {
         if (sample.id === updatedSample.id) {
@@ -1790,27 +1674,6 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   /**
-   * Updates SBMM amount from an equivalent-derived mol value while preserving
-   * the sample's currently selected mol unit.
-   *
-   * @param {SequenceBasedMacromoleculeSample} sample - SBMM sample to update.
-   * @param {number} newAmountMol - Canonical amount in mol.
-   * @returns {void}
-   */
-  // eslint-disable-next-line class-methods-use-this
-  updateSbmmAmountFromEquivalent(sample, newAmountMol) {
-    // Keep the sample's active mol unit, defaulting to mol when missing.
-    const molUnit = sample.amount_as_used_mol_unit || 'mol';
-    // Convert canonical mol input into the unit currently used by SBMM fields.
-    const convertedAmount = convertUnits(newAmountMol, 'mol', molUnit);
-
-    // Persist converted mol amount in the sample.
-    sample.setAmount({ value: convertedAmount, unit: molUnit });
-    // Recalculate dependent mass field derived from amount_as_used_mol.
-    sample.calculateAmountAsUsedMass();
-  }
-
-  /**
    * Applies equivalent-driven amount updates for SBMM, mixture, and regular samples.
    *
    * @param {Sample|SequenceBasedMacromoleculeSample} sample - Target sample.
@@ -1822,7 +1685,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // SBMM amount for equivalent changes should be driven by mol amount.
     // Using mass normalization here clears mol in SBMM model setters.
     if (isSbmmSample(sample)) {
-      this.updateSbmmAmountFromEquivalent(sample, newAmountMol);
+      sample.applyAmountFromEquivalent(newAmountMol);
       return;
     }
 
@@ -2260,7 +2123,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction, onInputChange } = this.props;
     const willLockVolume = !reaction.isVolumeLocked;
 
-    if (willLockVolume && !this.hasValidReactionVolume(reaction)) {
+    if (willLockVolume && !reaction.hasValidReactionVolume) {
       this.showReactionVolumeRequiredWarning(
         'Please enter a reaction volume value before locking the reaction volume.'
       );
@@ -2271,10 +2134,6 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  hasValidReactionVolume(reaction) {
-    return reaction.volume != null && reaction.volume !== '' && Number(reaction.volume) > 0;
-  }
-
   showReactionVolumeRequiredWarning(message) {
     NotificationActions.add({
       title: 'Reaction Volume Required',
@@ -2387,7 +2246,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction, onInputChange } = this.props;
 
     // Show notification if checkbox is selected but volume is 0 or null
-    if (checked && !this.hasValidReactionVolume(reaction)) {
+    if (checked && !reaction.hasValidReactionVolume) {
       this.showReactionVolumeRequiredWarning(
         'Please enter a reaction volume value before enabling concentration calculation '
           + 'based on reaction volume.'
