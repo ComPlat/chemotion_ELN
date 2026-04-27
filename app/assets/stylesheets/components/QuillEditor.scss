@@ -63,7 +63,9 @@
   list-style-type: none;
 }
 .ql-editor ul > li::before,
-.ql-editor li[data-list="bullet"]::before {
+.ql-editor li[data-list="bullet"]::before,
+.ql-editor ol li[data-list="bullet"][class*="ql-indent-"]:before,
+.ql-editor ul li[data-list="bullet"][class*="ql-indent-"]:before {
   content: '\25CF';
 }
 .ql-editor li::before {
@@ -96,6 +98,7 @@
 .ql-editor ol li.ql-indent-1 {
   counter-increment: list-1;
 }
+.ql-editor ol li[data-list="ordered"].ql-indent-1:before,
 .ql-editor ol li.ql-indent-1:before {
   content: counter(list-1, lower-alpha) '. ';
 }
@@ -105,6 +108,7 @@
 .ql-editor ol li.ql-indent-2 {
   counter-increment: list-2;
 }
+.ql-editor ol li[data-list="ordered"].ql-indent-2:before,
 .ql-editor ol li.ql-indent-2:before {
   content: counter(list-2, lower-roman) '. ';
 }
@@ -114,6 +118,7 @@
 .ql-editor ol li.ql-indent-3 {
   counter-increment: list-3;
 }
+.ql-editor ol li[data-list="ordered"].ql-indent-3:before,
 .ql-editor ol li.ql-indent-3:before {
   content: counter(list-3, decimal) '. ';
 }
@@ -123,6 +128,7 @@
 .ql-editor ol li.ql-indent-4 {
   counter-increment: list-4;
 }
+.ql-editor ol li[data-list="ordered"].ql-indent-4:before,
 .ql-editor ol li.ql-indent-4:before {
   content: counter(list-4, lower-alpha) '. ';
 }
@@ -132,6 +138,7 @@
 .ql-editor ol li.ql-indent-5 {
   counter-increment: list-5;
 }
+.ql-editor ol li[data-list="ordered"].ql-indent-5:before,
 .ql-editor ol li.ql-indent-5:before {
   content: counter(list-5, lower-roman) '. ';
 }
@@ -141,6 +148,7 @@
 .ql-editor ol li.ql-indent-6 {
   counter-increment: list-6;
 }
+.ql-editor ol li[data-list="ordered"].ql-indent-6:before,
 .ql-editor ol li.ql-indent-6:before {
   content: counter(list-6, decimal) '. ';
 }
@@ -150,6 +158,7 @@
 .ql-editor ol li.ql-indent-7 {
   counter-increment: list-7;
 }
+.ql-editor ol li[data-list="ordered"].ql-indent-7:before,
 .ql-editor ol li.ql-indent-7:before {
   content: counter(list-7, lower-alpha) '. ';
 }
@@ -159,6 +168,7 @@
 .ql-editor ol li.ql-indent-8 {
   counter-increment: list-8;
 }
+.ql-editor ol li[data-list="ordered"].ql-indent-8:before,
 .ql-editor ol li.ql-indent-8:before {
   content: counter(list-8, lower-roman) '. ';
 }
@@ -168,6 +178,7 @@
 .ql-editor ol li.ql-indent-9 {
   counter-increment: list-9;
 }
+.ql-editor ol li[data-list="ordered"].ql-indent-9:before,
 .ql-editor ol li.ql-indent-9:before {
   content: counter(list-9, decimal) '. ';
 }
