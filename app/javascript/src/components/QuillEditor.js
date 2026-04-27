@@ -410,7 +410,7 @@ export default class QuillEditor extends React.Component {
 }
 
 QuillEditor.propTypes = {
-  value: PropTypes.object,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   customToolbar: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
   toolbarSymbol: PropTypes.array,
   toolbarDropdown: PropTypes.arrayOf(PropTypes.object),
