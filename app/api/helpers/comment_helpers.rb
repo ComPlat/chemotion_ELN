@@ -13,6 +13,14 @@ module CommentHelpers
     end
   end
 
+  # Returns the in-app URL path for a given element so it can be embedded in
+  # notifications as a clickable deep link.  The path matches the Aviator
+  # client-side routes defined in routes.js (e.g. /mydb/sample/42).
+  def element_url_path(element)
+    type_slug = element.class.to_s.underscore
+    "/mydb/#{type_slug}/#{element.id}"
+  end
+
   def notify_collection_owners(current_user, element)
     element.collections.find_each do |collection|
       recipient = collection.user.send(:user_ids) - [current_user.id]
@@ -30,6 +38,8 @@ module CommentHelpers
         message_to: recipient,
         data_args: data_args,
         level: 'info',
+        url: element_url_path(element),
+        urlTitle: "View #{element.class} #{element_name(element)}",
       )
     end
   end
@@ -40,11 +50,14 @@ module CommentHelpers
 
     Message.create_msg_notification(
       channel_subject: Channel::COMMENT_RESOLVED,
-      message_from: current_user.id, message_to: [comment.created_by],
+      message_from: current_user.id,
+      message_to: [comment.created_by],
       data_args: { resolved_by: current_user.name,
                    element_type: commentable_type,
                    element_name: element_name(commentable) },
-      level: 'info'
+      level: 'info',
+      url: element_url_path(commentable),
+      urlTitle: "View #{commentable_type} #{element_name(commentable)}",
     )
   end
 end
