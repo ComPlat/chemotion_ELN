@@ -64,12 +64,10 @@ module Chemotion
         requires :id, type: Integer, desc: "Screen id"
       end
       route_param :id do
-        before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Screen.find(params[:id])).read?
-        end
-
         get do
           screen = Screen.find(params[:id])
+          policy = ElementPolicy.new(current_user, screen)
+          error!('401 Unauthorized', 401) unless policy.read?
 
           present(
             screen,
@@ -77,6 +75,8 @@ module Chemotion
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
             root: :screen
           )
+        rescue ActiveRecord::RecordNotFound
+          error!('404 Not Found', 404)
         end
 
         namespace :add_research_plan do

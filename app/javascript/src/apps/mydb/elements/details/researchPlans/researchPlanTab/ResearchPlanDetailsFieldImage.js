@@ -83,7 +83,10 @@ export default class ResearchPlanDetailsFieldImage extends Component {
         || field.value.width === '') ? { width: 'unset' } : { width: `${zoom}%` };
       content = (
         <div>
-          <img style={style} src={this.state.imageSrc} alt={field.value.file_name}
+          <img
+            style={style}
+            src={this.state.imageSrc}
+            alt={field.value.file_name}
             className="img-fluid"
           />
         </div>
@@ -146,7 +149,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     } else {
       AttachmentFetcher.fetchImageAttachment({ identifier: publicName })
         .then((result) => {
-          if (result.data != null) {
+          if (result !== undefined && result.data != null) {
             this.setState({ imageSrc: result.data });
           }
         });

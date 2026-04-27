@@ -5991,7 +5991,6 @@ chem-generic-ui@^2.2.2:
     diff "^8.0.2"
     generic-ui-core "^2.4.0"
     html-to-image "^1.11.11"
-    humps "^2.0.1"
     jsondiffpatch "^0.7.3"
     lodash "^4.18.1"
     mathjs "^15.2.0"

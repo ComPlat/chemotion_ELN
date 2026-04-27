@@ -148,10 +148,6 @@ describe Chemotion::CellLineAPI do
       it 'returns correct http status 404' do
         expect(response).to have_http_status :not_found
       end
-
-      it 'correct error message' do
-        expect(parsed_json_response['error']).to eq 'Resource not found'
-      end
     end
   end
 

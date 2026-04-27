@@ -1,132 +1,86 @@
-import 'whatwg-fetch';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 import DeviceDescription from 'src/models/DeviceDescription';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
+import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
 export default class DeviceDescriptionFetcher {
-  static fetchByCollectionId(id, queryParams = {}) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, 'device_descriptions', DeviceDescription);
+  static fetchByCollectionId(id, params = {}) {
+    return ApiClient.getJson(`/api/v1/device_descriptions?${preparedCollectionParams(id, params)}`, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.device_descriptions.map((deviceDescription) => (new DeviceDescription(deviceDescription))),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
   }
 
   static fetchDeviceDescriptionsByUIStateAndLimit(params) {
-    const limit = params.limit ? params.limit : null;
-
-    return fetch('/api/v1/device_descriptions/ui_state/',
-      {
-        ...this._httpOptions('POST'),
-        body: JSON.stringify(params)
-      }
-    ).then(response => response.json())
-      .then((json) => {
-        return json.device_descriptions.map((d) => new DeviceDescription(d))
-      })
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.postJson('/api/v1/device_descriptions/ui_state', { body: params })
+      .then((json) => json.device_descriptions.map((d) => new DeviceDescription(d)));
   }
 
   static splitAsSubDeviceDescription(params) {
-    return fetch('/api/v1/device_descriptions/sub_device_descriptions/',
-      {
-        ...this._httpOptions('POST'),
-        body: JSON.stringify(params)
-      }
-    ).then(response => response.json())
-      .then((json) => json)
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.postJson('/api/v1/device_descriptions/sub_device_descriptions', { body: params });
   }
 
   static fetchById(deviceDescriptionId) {
-    return fetch(
-      `/api/v1/device_descriptions/${deviceDescriptionId}`,
-      { ...this._httpOptions() }
-    ).then(response => response.json())
-      .then((json) => {
-        if (json.error) {
-          const id = deviceDescriptionId;
-          return new DeviceDescription({ id: `${id}:error:DeviceDescription ${id} is not accessible!`, is_new: true });
-        } else {
-          const deviceDescription = new DeviceDescription(json.device_description);
-          deviceDescription._checksum = deviceDescription.checksum();
-          return deviceDescription;
-        }
-      })
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.getJson(`/api/v1/device_descriptions/${deviceDescriptionId}`)
+      .then((json) => this.deviceDescriptionElement(json, deviceDescriptionId));
   }
 
   static createDeviceDescription(deviceDescription) {
     const newFiles = (deviceDescription.attachments || []).filter((a) => a.is_new && !a.is_deleted);
 
-    const promise = () => fetch(
-      `/api/v1/device_descriptions`,
-      {
-        ...this._httpOptions('POST'),
-        body: JSON.stringify(deviceDescription)
-      }
-    ).then(response => response.json())
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(deviceDescription.container)
+      .then(() => ApiClient.postJson('/api/v1/device_descriptions', { body: deviceDescription }))
       .then((json) => {
-        if (newFiles.length <= 0) {
-          return new DeviceDescription(json.device_description);
-        }
-        return AttachmentFetcher.updateAttachables(newFiles, 'DeviceDescription', json.device_description.id, [])()
-          .then(() => new DeviceDescription(json.device_description));
-      })
-      .catch(errorMessage => console.log(errorMessage));
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(deviceDescription.container).then(() => promise());
+        const { id } = json.device_description;
+        return AttachmentFetcher.updateAttachables(newFiles, 'DeviceDescription', id, [])
+          .then(() => this.deviceDescriptionElement(json, id));
+      });
   }
 
   static updateDeviceDescription(deviceDescription) {
     const newFiles = (deviceDescription.attachments || []).filter((a) => a.is_new && !a.is_deleted);
     const delFiles = (deviceDescription.attachments || []).filter((a) => !a.is_new && a.is_deleted);
 
-    const promise = () => fetch(
-      `/api/v1/device_descriptions/${deviceDescription.id}`,
-      {
-        ...this._httpOptions('PUT'),
-        body: JSON.stringify(deviceDescription)
-      }
-    ).then((response) => response.json())
-      .then((json) => {
-        const updatedDeviceDescription = new DeviceDescription(json.device_description);
-        updatedDeviceDescription.updated = true;
-        updatedDeviceDescription.updateChecksum();
-        return updatedDeviceDescription;
-      })
-      .catch(errorMessage => console.log(errorMessage));
+    const tasks = [
+      AttachmentFetcher.uploadNewAttachmentsForContainer(deviceDescription.container),
+      AttachmentFetcher.updateAttachables(newFiles, 'DeviceDescription', deviceDescription.id, delFiles),
+    ];
 
-    const tasks = [];
-    tasks.push(AttachmentFetcher.uploadNewAttachmentsForContainer(deviceDescription.container));
-
-    if (newFiles.length > 0 || delFiles.length > 0) {
-      tasks.push(AttachmentFetcher.updateAttachables(newFiles, 'DeviceDescription', deviceDescription.id, delFiles)());
-    }
     return Promise.all(tasks)
-      .then(() => BaseFetcher.updateAnnotations(deviceDescription))
-      .then(() => promise());
+      .then(() => AnnotationsFetcher.updateAnnotations(deviceDescription))
+      .then(() => ApiClient.putJson(`/api/v1/device_descriptions/${deviceDescription.id}`, {
+        body: deviceDescription
+      }))
+      .then((json) => this.deviceDescriptionElement(json, deviceDescription.id, true));
   }
 
   static deleteDeviceDescription(deviceDescriptionId) {
-    return fetch(
-      `/api/v1/device_descriptions/${deviceDescriptionId}`,
-      { ...this._httpOptions('DELETE') }
-    ).then(response => response.json())
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.deleteRequest(`/api/v1/device_descriptions/${deviceDescriptionId}`);
   }
 
   static fetchOntologiesByLabimotionSegmentKlasses() {
-    return fetch(
-      '/api/v1/device_descriptions/ontologies',
-      { ...this._httpOptions() }
-    ).then(response => response.json())
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.getJson('/api/v1/device_descriptions/ontologies');
   }
 
-  static _httpOptions(method = 'GET') {
-    return {
-      credentials: 'same-origin',
-      method: method,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      }
-    };
+  static deviceDescriptionElement(json, id, update = false) {
+    if (json.error) {
+      return new DeviceDescription({ id: `${id}:error:DeviceDescription ${id} is not accessible!`, is_new: true });
+    }
+    const deviceDescription = new DeviceDescription(json.device_description);
+    if (update) {
+      deviceDescription.updated = true;
+      deviceDescription.updateChecksum();
+    } else {
+      // eslint-disable-next-line no-underscore-dangle
+      deviceDescription._checksum = deviceDescription.checksum();
+    }
+    return deviceDescription;
   }
 }
