@@ -324,6 +324,57 @@ describe 'Reporter::Docx::DetailReaction' do
       )
     end
 
+    context 'when building displayed_solvents' do
+      let(:solvent_real_only) do
+        {
+          preferred_label: 'DCM',
+          target_amount_value: 0,
+          real_amount_value: 5.0,
+          amount_ml: 0.0,
+          real_amount_ml: 5.0,
+        }
+      end
+      let(:solvent_target_only) do
+        {
+          preferred_label: 'EtOH',
+          target_amount_value: 3.0,
+          real_amount_value: nil,
+          amount_ml: 3.0,
+          real_amount_ml: 0.0,
+        }
+      end
+      let(:solvent_both) do
+        {
+          preferred_label: 'THF',
+          target_amount_value: 2.0,
+          real_amount_value: 4.5,
+          amount_ml: 2.0,
+          real_amount_ml: 4.5,
+        }
+      end
+
+      def detail_for(solvents)
+        Reporter::Docx::DetailReaction.new(
+          reaction: OpenStruct.new(solvents: solvents),
+          mol_serials: [],
+          index: prev_index,
+          si_rxn_settings: all_si_rxn_settings,
+        )
+      end
+
+      it 'uses real_amount_ml when only real amount is set' do
+        expect(detail_for([solvent_real_only]).send(:displayed_solvents)).to eq('DCM (5.00ml)')
+      end
+
+      it 'falls back to target amount_ml when real amount is zero/nil' do
+        expect(detail_for([solvent_target_only]).send(:displayed_solvents)).to eq('EtOH (3.00ml)')
+      end
+
+      it 'prefers real over target when both are set' do
+        expect(detail_for([solvent_both]).send(:displayed_solvents)).to eq('THF (4.50ml)')
+      end
+    end
+
     context 'when calculating_amount_mmol' do
       let(:valid_vessel_size) { { 'amount' => 10, 'unit' => 'ml' } }
       let!(:reaction_with_valid_vessel_size) { create(:reaction, vessel_size: valid_vessel_size) }
