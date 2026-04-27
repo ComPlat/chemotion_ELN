@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 
-import ApiClient from 'src/api_clients/base_api_client';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class CollectionsFetcher {
   static fetchCollections() {
