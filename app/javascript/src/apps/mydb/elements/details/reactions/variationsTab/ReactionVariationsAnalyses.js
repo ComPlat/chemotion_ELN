@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Button, Modal, Badge
+  Form, Button, Modal, Badge, DropdownButton, Dropdown
 } from 'react-bootstrap';
 import cloneDeep from 'lodash/cloneDeep';
 import Reaction from 'src/models/Reaction';
@@ -136,7 +136,8 @@ function AnalysesCellEditor({
   };
 
   const handleAutofill = async (dataset) => {
-    const res = await AttachmentFetcher.loadAttachmentContent(dataset);
+    const attVariation = dataset.attachments.find((att) => att.filename === 'reaction_variation.json');
+    const res = await AttachmentFetcher.loadAttachmentContent(attVariation);
     let jsonRes;
     try {
       const resText = await res.json();
@@ -153,18 +154,14 @@ function AnalysesCellEditor({
   };
 
   const analysesSelection = (
-    <div className="max-height-200 overflow-y-auto">
+    <div className="overflow-y-auto pb-5">
       <Form.Group>
         {allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((analysis) => {
           const isSelected = selectedAnalysisIDs.includes(analysis.id);
           const { children } = analysis;
           const dataset = children
             .filter((ch) => ch.container_type === 'dataset')
-            .reduce((accumulator, current) => {
-              const { attachments } = current;
-              return [...accumulator, ...attachments];
-            }, [])
-            .find((att) => att.filename === 'reaction_variation.json');
+            .filter((ch) => ch.attachments.some((att) => att.filename === 'reaction_variation.json'));
 
           return (
             <div key={analysis.id} className="d-flex align-items-center">
@@ -178,11 +175,23 @@ function AnalysesCellEditor({
               <Button size="sm" variant="light" onClick={() => navigateToAnalysis(analysis.id)}>
                 <i className="fa fa-external-link" />
               </Button>
-              {dataset && (
-              <Button size="sm" disabled={!isSelected} variant="info" onClick={() => handleAutofill(dataset)}>
+              {dataset.length === 1 && (
+              <Button size="sm" disabled={!isSelected} variant="info" onClick={() => handleAutofill(dataset[0])}>
                 Populate samples from data file
                 <i className="fa fa-share" />
               </Button>
+              )}
+              {dataset.length > 1 && (
+                <DropdownButton size="sm" disabled={!isSelected} title="Populate samples from data file">
+                  {dataset.map((ds) => (
+                    <Dropdown.Item key={ds.name} onClick={() => handleAutofill(dataset[0])}>
+                      Dataset:
+                      {' '}
+                      {ds.name}
+                      <i className="fa fa-share" />
+                    </Dropdown.Item>
+                  ))}
+                </DropdownButton>
               )}
             </div>
           );

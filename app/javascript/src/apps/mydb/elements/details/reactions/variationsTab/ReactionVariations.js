@@ -258,7 +258,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
 
         return [newColumnDefinitions, updatedReactionVariations, newSelectedColumns];
       }
-      return [structuredClone(columnDefinitions), reactionVariations, selectedColumns];
+      return [columnDefinitions.map((x) => ({ ...x })), reactionVariations, selectedColumns];
     };
     const [newColumnDefinitions, updatedReactionVariations, newSelectedColumns] = findAuxForCol();
     const newVariationRow = updatedReactionVariations.find((row) => row.id === variationRow.id);
