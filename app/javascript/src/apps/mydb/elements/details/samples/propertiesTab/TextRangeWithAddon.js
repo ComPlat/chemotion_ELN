@@ -54,24 +54,45 @@ export default class TextRangeWithAddon extends Component {
 
   render() {
     const {
-      addon, disabled, label, tipOnText, value
+      addon, disabled, label, tipOnText, value,
+      alternativeActive, alternativeLabel, alternativeToggleLabel,
+      alternativeToggleTooltip, onAlternativeToggle, field
     } = this.props;
+
+    const showAlternative = Boolean(alternativeActive);
+    const inputValue = showAlternative ? alternativeLabel : value;
+    const inputDisabled = disabled || showAlternative;
+
     return (
       <Form.Group size="sm">
         <Form.Label>{label}</Form.Label>
         <InputGroup data-cy={"cy_"+label}>
           <Form.Control
-            title={tipOnText}
+            title={showAlternative ? alternativeLabel : tipOnText}
             type="text"
-            disabled={disabled}
-            value={value}
+            disabled={inputDisabled}
+            value={inputValue}
             ref={(ref) => { this.input = ref; }}
             onChange={(event) => this.handleInputChange(event)}
             onFocus={() => this.handleInputFocus()}
             onBlur={() => this.handleInputBlur()}
           />
-          <InputGroup.Text>{addon}</InputGroup.Text>
+          {!showAlternative && <InputGroup.Text>{addon}</InputGroup.Text>}
         </InputGroup>
+        {alternativeToggleLabel && onAlternativeToggle && (
+          <div className="mt-1">
+            <Form.Check
+              type="checkbox"
+              id={`alt_toggle_${field}`}
+              checked={showAlternative}
+              disabled={disabled}
+              label={alternativeToggleLabel}
+              title={alternativeToggleTooltip || alternativeToggleLabel}
+              onChange={(e) => onAlternativeToggle(e.target.checked)}
+              className="text-range-alternative-checkbox"
+            />
+          </div>
+        )}
       </Form.Group>
     );
   }
@@ -84,7 +105,12 @@ TextRangeWithAddon.propTypes = {
   addon: PropTypes.string,
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
-  tipOnText: PropTypes.string
+  tipOnText: PropTypes.string,
+  alternativeActive: PropTypes.bool,
+  alternativeLabel: PropTypes.string,
+  alternativeToggleLabel: PropTypes.string,
+  alternativeToggleTooltip: PropTypes.string,
+  onAlternativeToggle: PropTypes.func,
 };
 
 TextRangeWithAddon.defaultProps = {
@@ -93,5 +119,10 @@ TextRangeWithAddon.defaultProps = {
   addon: '',
   disabled: false,
   onChange: () => {},
-  tipOnText: ''
+  tipOnText: '',
+  alternativeActive: false,
+  alternativeLabel: '',
+  alternativeToggleLabel: '',
+  alternativeToggleTooltip: '',
+  onAlternativeToggle: null,
 };
