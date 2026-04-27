@@ -835,7 +835,14 @@ class ElementStore {
         });
     }
     if (closeView) {
-      this.deleteCurrentElement(element);
+      // Guard: if the element is no longer in selecteds (e.g. a detail view
+      // already dispatched DetailActions.close synchronously), skip
+      // deleteCurrentElement so we don't reset activeKey/currentElement and
+      // unexpectedly shift the active tab.
+      const { selecteds } = this.state;
+      if (this.elementIndex(selecteds, element) !== -1) {
+        this.deleteCurrentElement(element);
+      }
     } else {
       this.changeCurrentElement(element);
     }
@@ -1596,7 +1603,13 @@ class ElementStore {
     }
   }
 
-  UpdateResearchPlanAttaches(updatedResearchPlan) {
+  UpdateResearchPlanAttaches(updatedResearchPlan, closeView = false) {
+    // Save-and-Close: close synchronously on the element we already have;
+    // skip the refresh fetch since the panel is going away anyway.
+    if (closeView) {
+      this.deleteCurrentElement(updatedResearchPlan);
+      return;
+    }
     const { selecteds } = this.state;
     ResearchPlansFetcher.fetchById(updatedResearchPlan.id)
       .then((result) => {
@@ -1608,11 +1621,15 @@ class ElementStore {
       });
   }
 
-  handleUpdateResearchPlanAttaches(updatedResearchPlan) {
-    this.UpdateResearchPlanAttaches(updatedResearchPlan);
+  handleUpdateResearchPlanAttaches(updatedResearchPlan, closeView = false) {
+    this.UpdateResearchPlanAttaches(updatedResearchPlan, closeView);
   }
 
-  UpdateWellplateAttaches(updatedWellplate) {
+  UpdateWellplateAttaches(updatedWellplate, closeView = false) {
+    if (closeView) {
+      this.deleteCurrentElement(updatedWellplate);
+      return;
+    }
     const { selecteds } = this.state;
     WellplatesFetcher.fetchById(updatedWellplate.id)
       .then((result) => {
@@ -1623,11 +1640,15 @@ class ElementStore {
       });
   }
 
-  handleUpdateWellplateAttaches(updatedWellplate) {
-    this.UpdateWellplateAttaches(updatedWellplate);
+  handleUpdateWellplateAttaches(updatedWellplate, closeView = false) {
+    this.UpdateWellplateAttaches(updatedWellplate, closeView);
   }
 
-  UpdateScreen(updatedScreen) {
+  UpdateScreen(updatedScreen, closeView = false) {
+    if (closeView) {
+      this.deleteCurrentElement(updatedScreen);
+      return;
+    }
     const { selecteds } = this.state;
     ScreensFetcher.fetchById(updatedScreen.id)
       .then((result) => {
@@ -1638,8 +1659,8 @@ class ElementStore {
       });
   }
 
-  handleUpdateScreen(updatedScreen) {
-    this.UpdateScreen(updatedScreen);
+  handleUpdateScreen(updatedScreen, closeView = false) {
+    this.UpdateScreen(updatedScreen, closeView);
   }
 
   handleUpdateMoleculeNames(updatedSample) {
@@ -1694,7 +1715,25 @@ class ElementStore {
     }
   }
 
-  handleUpdateElement(updatedElement) {
+  handleUpdateElement(payload) {
+    // Accept both the legacy shape (element) and the enriched shape ({ element, closeView }).
+    const isEnriched = payload && typeof payload === 'object' && 'element' in payload && !('type' in payload);
+    const updatedElement = isEnriched ? payload.element : payload;
+    const closeView = isEnriched ? !!payload.closeView : false;
+    const openOrClose = (el) => {
+      if (closeView) {
+        // Guard: if the element is no longer in selecteds (e.g. a detail view
+        // already dispatched DetailActions.close synchronously), skip
+        // deleteCurrentElement so we don't reset activeKey/currentElement and
+        // unexpectedly shift the active tab.
+        const { selecteds } = this.state;
+        if (this.elementIndex(selecteds, el) !== -1) {
+          this.deleteCurrentElement(el);
+        }
+      } else {
+        this.changeCurrentElement(el);
+      }
+    };
     switch (updatedElement?.type) {
       case 'sample':
         fetchOls('sample');
@@ -1708,38 +1747,38 @@ class ElementStore {
       case 'screen':
         fetchOls('screen');
         this.handleRefreshElements('screen');
-        this.handleUpdateScreen(updatedElement);
+        this.handleUpdateScreen(updatedElement, closeView);
         break;
       case 'research_plan':
         this.handleRefreshElements('research_plan');
-        this.handleUpdateResearchPlanAttaches(updatedElement);
+        this.handleUpdateResearchPlanAttaches(updatedElement, closeView);
         break;
       case 'cell_line':
-        this.changeCurrentElement(updatedElement);
+        openOrClose(updatedElement);
         this.handleRefreshElements('cell_line');
         break;
       case 'vessel':
-        this.changeCurrentElement(updatedElement);
+        openOrClose(updatedElement);
         this.handleRefreshElements('vessel');
         break;
       case 'vessel_template':
-        this.changeCurrentElement(updatedElement);
+        openOrClose(updatedElement);
         this.handleRefreshElements('vessel_template');
         this.handleRefreshElements('vessel');
         break;
       case 'wellplate':
         fetchOls('wellplate');
         this.handleRefreshElements('wellplate');
-        this.handleUpdateWellplateAttaches(updatedElement);
+        this.handleUpdateWellplateAttaches(updatedElement, closeView);
         this.handleRefreshElements('sample');
         break;
       case 'device_description':
-        this.changeCurrentElement(updatedElement);
+        openOrClose(updatedElement);
         this.handleRefreshElements('device_description');
         break;
       case 'sequence_based_macromolecule_sample':
         this.handleUpdatedSbmmSample(updatedElement);
-        this.changeCurrentElement(updatedElement);
+        openOrClose(updatedElement);
         this.handleRefreshElements('sequence_based_macromolecule_sample');
         break;
       case 'genericEl':

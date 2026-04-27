@@ -446,7 +446,7 @@ export default class GenericElDetails extends Component {
           isPendingToSave={genericEl.isPendingToSave}
           title={genericEl.short_label}
           titleTooltip={formatTimeStampsOfElement(genericEl || {})}
-          onSave={() => this.handleSubmit()}
+          onSave={(closeView) => this.handleSubmit(closeView)}
           saveDisabled={!genericEl.isNew && !genericEl.can_update}
           showCalendar
         >

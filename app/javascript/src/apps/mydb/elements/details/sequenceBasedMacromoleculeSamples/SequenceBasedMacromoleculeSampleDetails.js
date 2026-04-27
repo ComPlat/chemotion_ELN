@@ -247,13 +247,14 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
     sbmmStore.setActiveTabKey(key);
   };
 
-  const handleSubmit = () => {
-    sbmmStore.saveSample(sbmmSample);
+  const handleSubmit = (closeView = false) => {
+    sbmmStore.saveSample(sbmmSample, closeView);
   };
 
   // Chain-save: save SBMM sample first (if changed and valid), then chemical (if edited)
-  const handleChainSave = () => {
+  const handleChainSave = (closeView = false) => {
     const sbmmHasChanges = sbmmSample.isEdited || sbmmSample.changed;
+    const willSaveChemical = sbmmStore.isChemicalEdited && !sbmmSample.isNew;
     // Snapshot chemical data BEFORE handleSubmit closes this instance.
     // For new SBMM samples, navigateToNewElement mounts a fresh component;
     // the useEffect on mount will consume _sbmmPendingChemicalCreate.
@@ -261,9 +262,10 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
       _sbmmPendingChemicalCreate = chemicalTabRef.current?.getChemicalSnapshot() ?? null;
     }
     if (sbmmHasChanges && Object.keys(sbmmSample.errors).length < 1) {
-      handleSubmit();
+      // Defer close when chemical also needs saving so ChemicalTab stays mounted.
+      handleSubmit(willSaveChemical ? false : closeView);
     }
-    if (sbmmStore.isChemicalEdited && !sbmmSample.isNew) {
+    if (willSaveChemical) {
       handleSubmitChemical();
     }
   };
@@ -337,7 +339,7 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
       titleAppendix={titleAppendix}
       headerToolbar={headerToolbar}
       footerToolbar={downloadAnalysisButton()}
-      onSave={handleChainSave}
+      onSave={(closeView) => handleChainSave(closeView)}
       saveDisabled={!canSaveSample && !canSaveChemical}
       showPrintCode
       showCalendar
