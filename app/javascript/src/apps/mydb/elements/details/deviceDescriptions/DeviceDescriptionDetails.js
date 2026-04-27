@@ -108,13 +108,13 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
     deviceDescriptionsStore.setActiveTabKey(key);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (closeView = false) => {
     LoadingActions.start();
     if (deviceDescription.is_new) {
       DetailActions.close(deviceDescription, true);
       ElementActions.createDeviceDescription(deviceDescription);
     } else {
-      ElementActions.updateDeviceDescription(deviceDescription);
+      ElementActions.updateDeviceDescription(deviceDescription, closeView);
     }
     deviceDescriptionsStore.setCurrentDeviceDescriptionIdToSave(`${deviceDescription.id}`);
   };
@@ -151,7 +151,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
       title={deviceDescription.name}
       titleTooltip={formatTimeStampsOfElement(deviceDescription || {})}
       footerToolbar={downloadAnalysisButton()}
-      onSave={handleSubmit}
+      onSave={(closeView) => handleSubmit(closeView)}
       saveDisabled={!deviceDescriptionIsValid()}
       showPrintCode
       showCalendar

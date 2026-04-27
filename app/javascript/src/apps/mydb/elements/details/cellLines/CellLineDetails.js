@@ -29,7 +29,7 @@ class CellLineDetails extends React.Component {
     };
   }
 
-  handleSubmit(cellLineItem) {
+  handleSubmit(cellLineItem, closeView = false) {
     // eslint-disable-next-line react/destructuring-assignment
     const mobXItem = this.context.cellLineDetailsStore.cellLines(this.props.cellLineItem.id);
     cellLineItem.adoptPropsFromMobXModel(mobXItem);
@@ -38,7 +38,7 @@ class CellLineDetails extends React.Component {
       DetailActions.close(cellLineItem, true);
       ElementActions.createCellLine(cellLineItem);
     } else {
-      ElementActions.updateCellLine(cellLineItem);
+      ElementActions.updateCellLine(cellLineItem, closeView);
     }
     mobXItem.setChanged(false);
   }
@@ -88,7 +88,7 @@ class CellLineDetails extends React.Component {
         title={cellLineItem.short_label}
         titleTooltip={formatTimeStampsOfElement(cellLineItem || {})}
         onClose={() => this.handleClose()}
-        onSave={() => this.handleSubmit(cellLineItem)}
+        onSave={(closeView) => this.handleSubmit(cellLineItem, closeView)}
         saveDisabled={saveDisabled}
       >
         <div className="tabs-container--with-borders">

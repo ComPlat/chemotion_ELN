@@ -320,14 +320,14 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       self.conflict_sbmms = [];
       self.saveSample(self.sequence_based_macromolecule_sample);
     },
-    saveSample(sbmmSample) {
+    saveSample(sbmmSample, closeView = false) {
       LoadingActions.start();
       if (sbmmSample.is_new) {
         self.removeFromOpenSequenceBasedMacromoleculeSamples(sbmmSample);
         DetailActions.close(sbmmSample, true);
         ElementActions.createSequenceBasedMacromoleculeSample(sbmmSample);
       } else {
-        ElementActions.updateSequenceBasedMacromoleculeSample(sbmmSample);
+        ElementActions.updateSequenceBasedMacromoleculeSample(sbmmSample, closeView);
         self.setUpdatedSequenceBasedMacromoleculeSampleId(sbmmSample.id);
       }
     },

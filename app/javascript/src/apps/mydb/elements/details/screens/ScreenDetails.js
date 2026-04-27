@@ -93,14 +93,14 @@ export default class ScreenDetails extends Component {
     this.setState({ visible });
   }
 
-  handleSubmit() {
+  handleSubmit(closeView = false) {
     const { screen } = this.state;
     LoadingActions.start();
 
     if (screen.isNew) {
       ElementActions.createScreen(screen);
     } else {
-      ElementActions.updateScreen(screen);
+      ElementActions.updateScreen(screen, closeView);
     }
     if (screen.is_new) {
       const force = true;
@@ -390,7 +390,7 @@ export default class ScreenDetails extends Component {
         isPendingToSave={screen.isPendingToSave}
         title={screen.name}
         titleTooltip={formatTimeStampsOfElement(screen || {})}
-        onSave={() => this.handleSubmit()}
+        onSave={(closeView) => this.handleSubmit(closeView)}
         showPrintCode
       >
         <ResearchplanFlowDisplay

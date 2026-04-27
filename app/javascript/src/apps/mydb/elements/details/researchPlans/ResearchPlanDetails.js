@@ -103,7 +103,7 @@ export default class ResearchPlanDetails extends Component {
 
   // handle functions
 
-  handleSubmit() {
+  handleSubmit(closeView = false) {
     const { researchPlan } = this.state;
     LoadingActions.start();
     this.context.attachmentNotificationStore.clearMessages();
@@ -111,7 +111,7 @@ export default class ResearchPlanDetails extends Component {
     if (researchPlan.isNew) {
       ElementActions.createResearchPlan(researchPlan);
     } else {
-      ElementActions.updateResearchPlan(researchPlan);
+      ElementActions.updateResearchPlan(researchPlan, closeView);
     }
 
     if (researchPlan.is_new) {
@@ -566,7 +566,7 @@ export default class ResearchPlanDetails extends Component {
         isPendingToSave={researchPlan.isPendingToSave}
         title={researchPlan.name}
         titleTooltip={formatTimeStampsOfElement(researchPlan || {})}
-        onSave={() => this.handleSubmit()}
+        onSave={(closeView) => this.handleSubmit(closeView)}
         showCalendar
       >
         <div className="tabs-container--with-borders">

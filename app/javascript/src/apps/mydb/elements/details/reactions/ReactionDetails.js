@@ -1000,8 +1000,7 @@ export default class ReactionDetails extends Component {
         titleAppendix={titleAppendix}
         headerToolbar={headerToolbar}
         footerToolbar={footerToolbar}
-        onSave={() => this.handleSubmit()}
-        onSaveClose={() => this.handleSubmit(true)}
+        onSave={(closeView) => this.handleSubmit(closeView)}
         showSave={showSave}
         saveDisabled={saveDisabled}
         showPrintCode
