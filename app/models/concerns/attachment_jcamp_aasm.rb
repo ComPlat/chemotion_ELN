@@ -304,7 +304,7 @@ module AttachmentJcampProcess
     return generate_spectrum_from_nmrium if params[:ext] == 'nmrium'
 
     spectrum_data = generate_spectrum_data(params, is_regen)
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium, spc_type, invalid_molfile = spectrum_data
+    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, _arr_nmrium, spc_type, invalid_molfile = spectrum_data
 
     check_invalid_molfile(invalid_molfile)
 
@@ -345,7 +345,7 @@ module AttachmentJcampProcess
 
     tmp_files_to_be_deleted = [tmp_jcamp, tmp_img]
 
-    unless arr_csv.nil? || arr_csv.empty?
+    if arr_csv.present?
       curr_tmp_csv = arr_csv[0]
       csv_att = generate_csv_att(curr_tmp_csv, 'edit', false, params)
       tmp_files_to_be_deleted.push(*arr_csv)
@@ -353,7 +353,7 @@ module AttachmentJcampProcess
     end
 
     # set_backup
-    unless arr_nmrium.nil? || arr_nmrium.empty?
+    if arr_nmrium.present?
       curr_tmp_nmrium = arr_nmrium[0]
       nmrium_att = generate_nmrium_att(curr_tmp_nmrium, '', false)
       tmp_files_to_be_deleted.push(*arr_nmrium)
@@ -385,7 +385,7 @@ module AttachmentJcampProcess
   def generate_spectrum_data(params, is_regen)
     return if params[:ext] == 'nmrium'
 
-    tmp_jcamp, tmp_img, arr_jcamp, arr_img, arr_csv, arr_nmrium, spc_type, invalid_molfile = Tempfile.create('molfile') do |t_molfile|
+    Tempfile.create('molfile') do |t_molfile|
       if attachable&.root_element.is_a?(Sample)
         t_molfile.write(attachable.root_element.molecule.molfile)
         t_molfile.rewind
@@ -570,17 +570,19 @@ module AttachmentJcampProcess
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = fname_wo_ext(self)
     atts.each do |att|
-      edit_jdx_name = File.basename(att.filename, '.edit.jdx')
-      peak_jdx_name = File.basename(att.filename, '.peak.jdx')
-      edit_image_name = File.basename(att.filename, '.edit.png')
-      peak_image_name = File.basename(att.filename, '.peak.png')
-      array_valid_names = [edit_jdx_name, peak_jdx_name, edit_image_name, peak_image_name]
-
-      is_delete = (att.edited? || att.peaked? || att.image?) &&
-                  att.id != attachment.id &&
-                  array_valid_names.include?(valid_name)
-      att.delete if is_delete
+      att.delete if related_edit_peak_to_delete?(att, attachment, valid_name)
     end
+  end
+
+  def related_edit_peak_to_delete?(att, keep_attachment, valid_name)
+    return false unless att.edited? || att.peaked? || att.image?
+    return false if att.id == keep_attachment.id
+
+    edit_jdx = File.basename(att.filename, '.edit.jdx')
+    peak_jdx = File.basename(att.filename, '.peak.jdx')
+    edit_img = File.basename(att.filename, '.edit.png')
+    peak_img = File.basename(att.filename, '.peak.png')
+    [edit_jdx, peak_jdx, edit_img, peak_img].include?(valid_name)
   end
 
   def delete_tmps(tmp_arr)
@@ -646,14 +648,15 @@ module AttachmentJcampProcess
       atts = Attachment.where(attachable_id: attachable_id)
       valid_name = fname_wo_ext(img_att)
       atts.each do |att|
-        is_delete = (
-          att.image? &&
-            att.id != img_att.id &&
-            valid_name == fname_wo_ext(att)
-        )
-        att.delete if is_delete
+        att.delete if related_arr_img_to_delete?(att, img_att, valid_name)
       end
     end
+  end
+
+  def related_arr_img_to_delete?(att, keep_img_att, valid_name)
+    att.image? &&
+      att.id != keep_img_att.id &&
+      valid_name == fname_wo_ext(att)
   end
 
   def delete_related_csv(csv_att)
