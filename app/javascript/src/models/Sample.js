@@ -35,11 +35,21 @@ const prepareRangeBound = (args = {}, field) => {
     if (!args[`${field}_lowerbound`]) {
       argsNew[`${field}_lowerbound`] = Number.NEGATIVE_INFINITY === Number(bounds[0]) ? null : Number(bounds[0]);
     }
-    if (argsNew[`${field}_upperbound`] == null || argsNew[`${field}_upperbound`] == null) {
-      argsNew[`${field}_display`] = (argsNew[`${field}_lowerbound`] || '').toString().trim();
+
+    const xrefLabel = args.xref && args.xref[`${field}_label`];
+    const lower = argsNew[`${field}_lowerbound`];
+    const upper = argsNew[`${field}_upperbound`];
+
+    if (xrefLabel) {
+      argsNew[`${field}_display`] = xrefLabel;
+    } else if (lower == null && upper == null) {
+      argsNew[`${field}_display`] = '';
+    } else if (lower == null) {
+      argsNew[`${field}_display`] = `<${upper}`;
+    } else if (upper == null) {
+      argsNew[`${field}_display`] = lower.toString().trim();
     } else {
-      argsNew[`${field}_display`] = ((argsNew[`${field}_lowerbound`] || '')
-        .toString().concat(' – ', argsNew[`${field}_upperbound`])).trim();
+      argsNew[`${field}_display`] = `${lower} – ${upper}`.trim();
     }
   }
   return argsNew;
@@ -644,20 +654,67 @@ export default class Sample extends Element {
     this._imported_readout = imported_readout;
   }
 
-  updateRange(field, lower, upper) {
-    this[`${field}_lowerbound`] = lower;
-    this[`${field}_upperbound`] = upper;
-    if (lower === '' && upper === '') {
-      this[`${field}_display`] = lower.toString();
-      this[field] = lower.toString();
-    } else if (lower === upper) {
-      this[`${field}_upperbound`] = '';
-      this[`${field}_display`] = lower.toString();
-      this[field] = lower.toString().concat('...', Number.POSITIVE_INFINITY);
+  // Returns true when a bound value represents an open (unbounded) end of a range.
+  static isOpenBound(value) {
+    return value === '' || value == null
+      || value === Number.NEGATIVE_INFINITY || value === Number.POSITIVE_INFINITY
+      || value === '-Infinity' || value === 'Infinity';
+  }
+
+  // Persists or removes the human-readable label in xref so it survives a reload.
+  updateRangeLabel(field, label) {
+    this.xref = { ...(this.xref || {}) };
+    if (label === '' || label == null) {
+      delete this.xref[`${field}_label`];
     } else {
-      this[`${field}_display`] = (lower.toString().concat(' – ', upper)).trim();
-      this[field] = lower.toString().concat('..', upper);
+      this.xref[`${field}_label`] = label;
     }
+  }
+
+  // Derives the display string shown in the UI input from the normalised bounds.
+  static rangeDisplayText(lowerForApi, upperForApi, isOpenLower, isOpenUpper, label) {
+    if (label) return label;
+
+    if (isOpenLower && isOpenUpper) return '';
+
+    if (isOpenLower) return `<${upperForApi}`;
+    if (isOpenUpper) return lowerForApi.toString();
+
+    if (lowerForApi === upperForApi) return lowerForApi.toString();
+
+    return `${lowerForApi} – ${upperForApi}`.trim();
+  }
+
+  // Serializes the bounds into the Ruby range literal stored on the model
+  // and sent to the API (e.g. "65..68", "65...Infinity", "-Infinity..200").
+  static rangeSerialised(lowerForApi, upperForApi, isOpenLower, isOpenUpper) {
+    if (isOpenLower && isOpenUpper) return '';
+    if (isOpenLower) return `-Infinity..${upperForApi}`;
+    if (isOpenUpper || lowerForApi === upperForApi) return `${lowerForApi}...${Number.POSITIVE_INFINITY}`;
+
+    return `${lowerForApi}..${upperForApi}`;
+  }
+
+  updateRange(field, lower, upper, label = undefined) {
+    const isOpenLower = Sample.isOpenBound(lower);
+    const isOpenUpper = Sample.isOpenBound(upper);
+
+    const lowerForApi = isOpenLower ? '' : lower;
+    const upperForApi = isOpenUpper ? '' : upper;
+
+    this[`${field}_lowerbound`] = lowerForApi;
+    this[`${field}_upperbound`] = upperForApi;
+
+    if (label !== undefined) this.updateRangeLabel(field, label);
+
+    const displayText = Sample.rangeDisplayText(lowerForApi, upperForApi, isOpenLower, isOpenUpper, label);
+    // When both bounds are equal treat it as a single-value entry (no upper stored).
+    if (!isOpenLower && !isOpenUpper && lowerForApi === upperForApi) {
+      this[`${field}_upperbound`] = '';
+    }
+
+    this[`${field}_display`] = displayText;
+    this[field] = Sample.rangeSerialised(lowerForApi, upperForApi, isOpenLower, isOpenUpper);
   }
 
   /**

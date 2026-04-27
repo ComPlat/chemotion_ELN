@@ -434,10 +434,10 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  handleRangeChanged(field, lower, upper) {
-    const { sample } = this.props;
-    sample.updateRange(field, lower, upper);
-    this.props.handleSampleChanged(sample);
+  handleRangeChanged(field, lower, upper, label) {
+    const { sample, handleSampleChanged } = this.props;
+    sample.updateRange(field, lower, upper, label);
+    handleSampleChanged(sample);
   }
 
   // Toggle the "Decomposed" state for melting point. When checked, the numeric
@@ -447,7 +447,7 @@ export default class SampleForm extends React.Component {
     const { sample, handleSampleChanged } = this.props;
     sample.xref = { ...(sample.xref || {}), melting_point_decomposed: !!checked };
     if (checked) {
-      sample.updateRange('melting_point', '', '');
+      sample.updateRange('melting_point', '', '', '');
     }
     handleSampleChanged(sample);
   }
@@ -1276,7 +1276,7 @@ export default class SampleForm extends React.Component {
                     value={sample.melting_point_display}
                     disabled={polyDisabled}
                     onChange={this.handleRangeChanged}
-                    tipOnText="Use space-separated value to input a Temperature range"
+                    tipOnText='Examples: "65", "65-68", "65 68", ">300", "<200"'
                     alternativeActive={!!(sample.xref && sample.xref.melting_point_decomposed)}
                     alternativeLabel="Decomposed"
                     alternativeToggleLabel="Decomposed"
@@ -1293,7 +1293,7 @@ export default class SampleForm extends React.Component {
                     value={sample.boiling_point_display}
                     disabled={polyDisabled}
                     onChange={this.handleRangeChanged}
-                    tipOnText="Use space-separated value to input a Temperature range"
+                    tipOnText='Examples: "65", "65-68", "65 68", ">300", "<200"'
                   />
                 </Col>
                 <Col>{this.inputWithUnit(sample, 'xref_flash_point', 'Flash point')}</Col>
