@@ -18,6 +18,28 @@ const semanticColors = [
   { title: 'chemstrap-orange', description: 'Warning' },
 ];
 
+// Interactive surface colors: graphite (topbar) and silicon (surfaces) with their hover/active states.
+const interactiveSurfaceColors = [
+  {
+    title: 'chemstrap-graphite',
+    description: 'Topbar background',
+    variants: {
+      base: 'chemstrap-graphite',
+      hover: 'chemstrap-graphite-hover',
+      active: 'chemstrap-graphite-active',
+    },
+  },
+  {
+    title: 'chemstrap-silicon',
+    description: 'Interactive surfaces',
+    variants: {
+      base: 'chemstrap-silicon',
+      hover: 'chemstrap-silicon-hover',
+      active: 'chemstrap-silicon-active',
+    },
+  },
+];
+
 export function Shades() {
   return (
     <div className="row mb-3">
@@ -79,6 +101,37 @@ export default {
               />
             ))}
           </ColorPalette>
+          <Subtitle>Interactive Surface Colors</Subtitle>
+          <Markdown>
+            {`
+  **Chemstrap-graphite** is the topbar background color. **Chemstrap-silicon** drives interactive
+  surface elements such as buttons and highlighted rows. Both colors expose dedicated **hover** and
+  **active** variants to communicate interactivity states consistently across the interface.
+            `}
+          </Markdown>
+          <ColorPalette>
+            {interactiveSurfaceColors.map((color) => (
+              <ColorItem
+                key={color.title}
+                title={color.title}
+                subtitle={color.description}
+                colors={Object.fromEntries(
+                  Object.entries(color.variants).map(([label, token]) => [
+                    label,
+                    getColorValue(token),
+                  ])
+                )}
+              />
+            ))}
+          </ColorPalette>
+          <Markdown>
+            {`
+  #### Silicon active
+  The **silicon-active** variant has a prominent role: it is used as the accent color for the
+  header and footer of **active tabs, cards, and modals**, making the currently focused element
+  immediately recognisable.
+            `}
+          </Markdown>
           <Subtitle>Semantic Colors</Subtitle>
           <Markdown>
             {`
