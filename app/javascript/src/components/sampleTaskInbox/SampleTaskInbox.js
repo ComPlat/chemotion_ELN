@@ -2,7 +2,7 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Draggable from 'react-draggable';
 import React, { useContext, useState } from 'react';
 import SampleTaskCard from 'src/components/sampleTaskInbox/SampleTaskCard';
-import { Card, Col, Modal } from 'react-bootstrap';
+import { Col, Modal, Row } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { useDrop } from 'react-dnd';
@@ -69,25 +69,12 @@ const SampleTaskInbox = ({}) => {
   }
 
   const sampleDropzone = (dropRef, text, subtext) => {
-    const style = {
-      padding: 10,
-      borderStyle: 'dashed',
-      textAlign: 'center',
-      color: 'gray',
-      marginTop: '12px',
-      marginBottom: '8px'
-    };
-
     return (
-      <Card>
-        <Card.Footer>
-          <div style={style} ref={dropRef}>
-            {text}
-            <br />
-            {subtext}
-          </div>
-        </Card.Footer>
-      </Card>
+      <div className="dnd-zone h-100" ref={dropRef}>
+        {text}
+        <br />
+        {subtext}
+      </div>
     );
   };
 
@@ -131,16 +118,15 @@ const SampleTaskInbox = ({}) => {
 
           <Modal.Body className="max-vh-60">
             {openSampleTasks()}
+            <Row className="align-items-stretch my-3">
+              <Col>
+                {sampleDropzone(singleScanDropRef, 'Drop Sample to create a Single Scan Task', '(weighing only compound)')}
+              </Col>
+              <Col>
+                {sampleDropzone(doubleScanDropRef, 'Drop Sample to create a Double Scan Task', '(weighing vessel and vessel+compound to calculate difference)')}
+              </Col>
+            </Row>
           </Modal.Body>
-
-          <Modal.Footer className="openSampleTasks">
-            <Col>
-              {sampleDropzone(singleScanDropRef, 'Drop Sample to create a Single Scan Task', '(weighing only compound)')}
-            </Col>
-            <Col>
-              {sampleDropzone(doubleScanDropRef, 'Drop Sample to create a Double Scan Task', '(weighing vessel and vessel+compound to calculate difference)')}
-            </Col>
-          </Modal.Footer>
         </Modal>
       </div>
     </Draggable>

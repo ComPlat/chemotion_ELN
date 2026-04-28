@@ -4,7 +4,7 @@
 import React, { Component, createRef } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Modal, Overlay
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Overlay
 } from 'react-bootstrap';
 import { findIndex, isEmpty } from 'lodash';
 
@@ -37,6 +37,7 @@ import { rfValueFormat } from 'src/utilities/ElementUtils';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
 import { permitOn } from 'src/components/common/uis';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
+import AppModal from 'src/components/common/AppModal';
 import Immutable from 'immutable';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
@@ -97,8 +98,8 @@ export default class ReactionDetails extends Component {
     this.confirmSchemeChange = this.confirmSchemeChange.bind(this);
     this.cancelSchemeChange = this.cancelSchemeChange.bind(this);
     this.state.showWtInfoModal = false;
-    this.state.showSchemeChangeConfirm = false;
     this.state.pendingSchemeType = null;
+    this.state.schemeChangeConfirmMessage = null;
     this.isUpdatingGraphic = false; // Flag to prevent infinite loops
     this.pendingGraphicReaction = null; // Queued reaction when update requested during in-flight fetch
     this.schemeDropdownRef = createRef();
@@ -183,12 +184,12 @@ export default class ReactionDetails extends Component {
     const nextActiveTab = nextState.activeTab;
     const nextActiveAnalysisTab = nextState.activeAnalysisTab;
     const nextVisible = nextState.visible;
-    const nextShowSchemeChangeConfirm = nextState.showSchemeChangeConfirm;
+    const nextSchemeChangeConfirmMessage = nextState.schemeChangeConfirmMessage;
     const nextShowWtInfoModal = nextState.showWtInfoModal;
     const nextReactionSvgVersion = nextState.reactionSvgVersion;
     const {
       reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab,
-      showSchemeChangeConfirm, showWtInfoModal, reactionSvgVersion
+      schemeChangeConfirmMessage, showWtInfoModal, reactionSvgVersion
     } = this.state;
     return (
       reactionFromNextProps.id !== reactionFromCurrentState.id
@@ -198,7 +199,7 @@ export default class ReactionDetails extends Component {
       || nextActiveTab !== activeTab || nextVisible !== visible
       || nextActiveAnalysisTab !== activeAnalysisTab
       || reactionFromNextState !== reactionFromCurrentState
-      || nextShowSchemeChangeConfirm !== showSchemeChangeConfirm
+      || nextSchemeChangeConfirmMessage !== schemeChangeConfirmMessage
       || nextShowWtInfoModal !== showWtInfoModal
       || nextReactionSvgVersion !== reactionSvgVersion
     );
@@ -493,24 +494,70 @@ export default class ReactionDetails extends Component {
     });
   }
 
-  handleReactionSchemeChange(type) {
+  handleReactionSchemeChange(pendingSchemeType) {
     const { reaction } = this.state;
 
-    // If switching FROM weight_percentage to another scheme, show confirmation
-    if (reaction.weight_percentage && type !== 'weight_percentage') {
+    let currentSchemeType = 'default';
+    if (reaction.weight_percentage) currentSchemeType = 'weight_percentage';
+    if (reaction.gaseous) currentSchemeType = 'gaseous';
+
+    if (pendingSchemeType === currentSchemeType) {
+      return;
+    }
+
+    const isSwitchingFromWeightPercentage = (pendingSchemeType !== 'weight_percentage')
+      && (currentSchemeType === 'weight_percentage');
+    const isSwitchingFromGas = (pendingSchemeType !== 'gaseous') && (currentSchemeType === 'gaseous');
+    const isSwitchingToGas = (pendingSchemeType === 'gaseous') && (currentSchemeType !== 'gaseous');
+
+    const schemeSwitchClearsVariations = isSwitchingFromGas || isSwitchingToGas;
+
+    const schemeSwitchRequiresConfirmation = isSwitchingFromWeightPercentage || schemeSwitchClearsVariations;
+    if (schemeSwitchRequiresConfirmation) {
+      let schemeChangeConfirmMessage;
+      if (schemeSwitchClearsVariations && isSwitchingFromWeightPercentage) {
+        schemeChangeConfirmMessage = (
+          <>
+            Switching scheme will clear the Variations table, data will be lost.
+            <br />
+            Any assigned weight percentage reference and wt% values in wt% fields
+            <br />
+            of materials will be deleted.
+            <br />
+            Switch scheme?
+          </>
+        );
+      } else if (schemeSwitchClearsVariations) {
+        schemeChangeConfirmMessage = (
+          <>
+            Switching scheme will clear the Variations table, data will be lost. Switch scheme?
+          </>
+        );
+      } else {
+        schemeChangeConfirmMessage = (
+          <>
+            Any assigned weight percentage reference and wt% values in wt% fields
+            <br />
+            of materials will be deleted.
+            <br />
+            Switch scheme?
+          </>
+        );
+      }
+
       this.setState({
-        showSchemeChangeConfirm: true,
-        pendingSchemeType: type,
+        pendingSchemeType,
+        schemeChangeConfirmMessage,
       });
       return;
     }
 
-    this.applySchemeChange(type);
+    this.applySchemeChange(pendingSchemeType);
   }
 
   /**
    * Applies the scheme change without confirmation.
-   * Called directly when not switching from weight_percentage, or after user confirms.
+    * Called directly when no confirmation is required, or after user confirms.
    *
    * @param {string} type - The scheme type to switch to ('default', 'gaseous', 'weight_percentage')
    */
@@ -546,8 +593,8 @@ export default class ReactionDetails extends Component {
   confirmSchemeChange() {
     const { pendingSchemeType } = this.state;
     this.setState({
-      showSchemeChangeConfirm: false,
       pendingSchemeType: null,
+      schemeChangeConfirmMessage: null,
     }, () => {
       if (pendingSchemeType) {
         this.applySchemeChange(pendingSchemeType);
@@ -561,8 +608,8 @@ export default class ReactionDetails extends Component {
    */
   cancelSchemeChange() {
     this.setState({
-      showSchemeChangeConfirm: false,
       pendingSchemeType: null,
+      schemeChangeConfirmMessage: null,
     });
   }
 
@@ -690,7 +737,10 @@ export default class ReactionDetails extends Component {
 
   render() {
     const {
-      reaction, visible, activeTab, showSchemeChangeConfirm
+      reaction,
+      visible,
+      activeTab,
+      schemeChangeConfirmMessage,
     } = this.state;
     this.updateReactionVesselSize(reaction);
     let schemeType = 'Default';
@@ -755,17 +805,13 @@ export default class ReactionDetails extends Component {
             </Dropdown>
             <Overlay
               target={() => this.schemeDropdownRef.current}
-              show={showSchemeChangeConfirm}
+              show={!!schemeChangeConfirmMessage}
               placement="bottom"
               rootClose
               onHide={() => this.cancelSchemeChange()}
             >
               <Tooltip placement="bottom" className="in" id="scheme-change-confirm-tooltip">
-                Any Assigned Weight percentage reference and wt% values in wt% fields
-                <br />
-                of materials will be deleted.
-                <br />
-                Switch scheme?
+                {schemeChangeConfirmMessage}
                 <br />
                 <ButtonToolbar className="justify-content-center mt-1">
                   <Button
@@ -965,32 +1011,30 @@ export default class ReactionDetails extends Component {
           onRefresh={() => this.refreshGraphic()}
           isRefreshing={this.state.isRefreshingGraphic || false}
         />
-        <Modal show={this.state.showWtInfoModal} onHide={this.closeWtInfoModal} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>Weight Percentage Reaction Scheme</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <p>
-              The weight percentage scheme lets you set a reference material and a
-              target mass. Other materials can be assigned a weight percentage
-              (wt%) in the interval [0,1], and their mass will be computed as equal to
-              target_mass * wt%.
-            </p>
-            <p>
-              <strong>Key points: </strong>
-              select a reference material, set its target amount, enter
-              wt% for desired starting materials/reactants, and the system will
-              automatically recalculate amounts of those materials.
-            </p>
-            <p>
-              For full details and examples see the
-              <a href={documentationLink} target="_blank" rel="noreferrer" className="ms-1">documentation</a>
-            </p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={this.closeWtInfoModal}>Close</Button>
-          </Modal.Footer>
-        </Modal>
+        <AppModal
+          show={this.state.showWtInfoModal}
+          onHide={this.closeWtInfoModal}
+          title="Weight Percentage Reaction Scheme"
+          showFooter
+          closeLabel="Close"
+        >
+          <p>
+            The weight percentage scheme lets you set a reference material and a
+            target mass. Other materials can be assigned a weight percentage
+            (wt%) in the interval [0,1], and their mass will be computed as equal to
+            target_mass * wt%.
+          </p>
+          <p>
+            <strong>Key points: </strong>
+            select a reference material, set its target amount, enter
+            wt% for desired starting materials/reactants, and the system will
+            automatically recalculate amounts of those materials.
+          </p>
+          <p>
+            For full details and examples see the
+            <a href={documentationLink} target="_blank" rel="noreferrer" className="ms-1">documentation</a>
+          </p>
+        </AppModal>
         {this.state.sfn && <ScifinderSearch el={reaction} />}
         <div className="tabs-container--with-borders">
           <ElementDetailSortTab

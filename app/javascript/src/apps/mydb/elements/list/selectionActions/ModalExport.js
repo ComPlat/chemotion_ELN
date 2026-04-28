@@ -1,8 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Button, ButtonToolbar, Dropdown, DropdownButton, Modal
-} from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import CheckBoxList from 'src/components/common/CheckBoxList';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ReportsFetcher from 'src/fetchers/ReportsFetcher';
@@ -197,10 +196,10 @@ export default class ModalExport extends React.Component {
 
   toggleColumns(text, checked, section) {
     this.setState((prevState) => {
-      const { columns } = prevState;
+      const columns = { ...prevState.columns };
       columns[section] = columns[section].map((col) => {
         if (col.text === text) {
-          return Object.assign({}, col, { checked: !checked })
+          return { ...col, checked: !checked };
         }
         return col;
       });
@@ -238,10 +237,12 @@ export default class ModalExport extends React.Component {
 
   toggleColumnsAll(section) {
     this.setState((prevState) => {
-      const { columns, checkedAllColumns } = prevState;
+      const checkedAllColumns = { ...prevState.checkedAllColumns };
+      const columns = { ...prevState.columns };
+
       checkedAllColumns[section] = !checkedAllColumns[section];
       columns[section] = columns[section].map(
-        (col) => Object.assign({}, col, { checked: checkedAllColumns[section] })
+        (col) => ({ ...col, checked: checkedAllColumns[section] })
       );
       return { columns, checkedAllColumns };
     });
@@ -276,38 +277,31 @@ export default class ModalExport extends React.Component {
   }
 
   buttonBar() {
-    const { onHide } = this.props;
     const chemicalColumns = this.filteredColumns();
     const hasNoSdfExportData = chemicalColumns.chemicals.length !== 0
       || chemicalColumns.components.length !== 0;
 
     return (
-      <ButtonToolbar className="justify-content-end">
-        <Button variant="primary" onClick={onHide}>Cancel</Button>
-        <DropdownButton
-          drop="up"
-          variant="warning"
-          id="md-export-dropdown"
-          title="XLSX/SD Export"
-          onSelect={this.handleClick}
-        >
-          <Dropdown.Item eventKey="1">XLSX Export</Dropdown.Item>
-          <Dropdown.Item eventKey="2" disabled={hasNoSdfExportData}>SDF Export</Dropdown.Item>
-        </DropdownButton>
-      </ButtonToolbar>
+      <Button
+        variant="primary"
+        onClick={() => this.handleClick('2')}
+        disabled={hasNoSdfExportData}
+      >
+        SDF Export
+      </Button>
     );
   }
 
   filteredColumns() {
     const { columns } = this.state;
     const tables = Object.keys(columns);
-    return tables.reduce((filteredtables, table) => {
-      filteredtables[table] = (columns[table] || []).reduce(
+    return tables.reduce((filteredTables, table) => ({
+      ...filteredTables,
+      [table]: (columns[table] || []).reduce(
         (cols, column) => (column && column.checked ? cols.concat(column.value) : cols),
         []
-      );
-      return filteredtables;
-    }, {});
+      )
+    }), {});
   }
 
   render() {
@@ -315,67 +309,69 @@ export default class ModalExport extends React.Component {
     const { columns, checkedAllColumns } = this.state;
 
     return (
-      <Modal show onHide={onHide} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Select Data to Export</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <h4>Sample properties</h4>
-          <CheckBoxList
-            items={columns.sample}
-            toggleCheckbox={this.toggleColumnsSample}
-            toggleCheckAll={this.toggleColumnsAllSample}
-            checkedAll={checkedAllColumns.sample}
-          />
-          <h4>Molecule properties</h4>
-          <CheckBoxList
-            items={columns.molecule}
-            toggleCheckbox={this.toggleColumnsMolecule}
-            toggleCheckAll={this.toggleColumnsAllMolecule}
-            checkedAll={checkedAllColumns.molecule}
-          />
-          <h4>Reaction properties</h4>
-          <CheckBoxList
-            items={columns.reaction}
-            toggleCheckbox={this.toggleColumnsReaction}
-            toggleCheckAll={this.toggleColumnsAllReaction}
-            checkedAll={checkedAllColumns.reaction}
-          />
-          <h4>Wellplate and well properties</h4>
-          <CheckBoxList
-            items={columns.wellplate}
-            toggleCheckbox={this.toggleColumnsWellplate}
-            toggleCheckAll={this.toggleColumnsAllWellplate}
-            checkedAll={checkedAllColumns.wellplate}
-          />
-          <h4>Analyses</h4>
-          <CheckBoxList
-            items={columns.analyses}
-            toggleCheckbox={this.toggleColumnsAnalyses}
-            toggleCheckAll={this.toggleColumnsAllAnalyses}
-            checkedAll={checkedAllColumns.analyses}
-          />
-          <h4>Chemicals</h4>
-          <CheckBoxList
-            items={columns.chemicals}
-            toggleCheckbox={this.toggleColumnsChemicals}
-            toggleCheckAll={this.toggleColumnsAllChemicals}
-            checkedAll={checkedAllColumns.chemicals}
-          />
-          <h4>Components</h4>
-          <CheckBoxList
-            items={columns.components}
-            toggleCheckbox={this.toggleColumnsComponents}
-            toggleCheckAll={this.toggleColumnsAllComponents}
-            checkedAll={checkedAllColumns.components}
-          />
-          {this.buttonBar()}
-        </Modal.Body>
-      </Modal>
+      <AppModal
+        show
+        onHide={onHide}
+        size="lg"
+        title="Select Data to Export"
+        extendedFooter={this.buttonBar()}
+        primaryActionLabel="XLSX Export"
+        onPrimaryAction={() => this.handleClick('1')}
+      >
+        <h4>Sample properties</h4>
+        <CheckBoxList
+          items={columns.sample}
+          toggleCheckbox={this.toggleColumnsSample}
+          toggleCheckAll={this.toggleColumnsAllSample}
+          checkedAll={checkedAllColumns.sample}
+        />
+        <h4>Molecule properties</h4>
+        <CheckBoxList
+          items={columns.molecule}
+          toggleCheckbox={this.toggleColumnsMolecule}
+          toggleCheckAll={this.toggleColumnsAllMolecule}
+          checkedAll={checkedAllColumns.molecule}
+        />
+        <h4>Reaction properties</h4>
+        <CheckBoxList
+          items={columns.reaction}
+          toggleCheckbox={this.toggleColumnsReaction}
+          toggleCheckAll={this.toggleColumnsAllReaction}
+          checkedAll={checkedAllColumns.reaction}
+        />
+        <h4>Wellplate and well properties</h4>
+        <CheckBoxList
+          items={columns.wellplate}
+          toggleCheckbox={this.toggleColumnsWellplate}
+          toggleCheckAll={this.toggleColumnsAllWellplate}
+          checkedAll={checkedAllColumns.wellplate}
+        />
+        <h4>Analyses</h4>
+        <CheckBoxList
+          items={columns.analyses}
+          toggleCheckbox={this.toggleColumnsAnalyses}
+          toggleCheckAll={this.toggleColumnsAllAnalyses}
+          checkedAll={checkedAllColumns.analyses}
+        />
+        <h4>Chemicals</h4>
+        <CheckBoxList
+          items={columns.chemicals}
+          toggleCheckbox={this.toggleColumnsChemicals}
+          toggleCheckAll={this.toggleColumnsAllChemicals}
+          checkedAll={checkedAllColumns.chemicals}
+        />
+        <h4>Components</h4>
+        <CheckBoxList
+          items={columns.components}
+          toggleCheckbox={this.toggleColumnsComponents}
+          toggleCheckAll={this.toggleColumnsAllComponents}
+          checkedAll={checkedAllColumns.components}
+        />
+      </AppModal>
     );
   }
 }
 
 ModalExport.propTypes = {
-  onHide: PropTypes.func,
+  onHide: PropTypes.func.isRequired,
 };

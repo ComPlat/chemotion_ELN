@@ -292,7 +292,7 @@ button.btn-close {
 
 .popover-multi-item {
   // Remove top-left radius for every child after the second
-  &:nth-child(n+3) .popover-header {
+  &:nth-child(n + 3) .popover-header {
     border-top-left-radius: 0;
   }
   &:not(:last-child) {
@@ -351,8 +351,9 @@ button.btn-close {
 }
 
 .dropdown {
-  > .btn {
-    line-height: 0;
+  line-height: 0;
+  > .dropdown-menu {
+    line-height: $line-height-base;
   }
 }
 

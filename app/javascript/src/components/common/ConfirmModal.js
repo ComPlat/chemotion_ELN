@@ -1,23 +1,36 @@
 import React from 'react';
-import { Button, Modal, ButtonToolbar } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import AppModal from 'src/components/common/AppModal';
 
-function ConfirmModal({ showModal, title, content, onClick, dialogClassName }) {
+function ConfirmModal({
+  showModal, title, content, onClick, dialogClassName
+}) {
   return (
-    <Modal centered animation show={showModal} dialogClassName={dialogClassName} onHide={() => onClick(false)}>
-      <Modal.Header closeButton>
-        <Modal.Title>{title}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        {content}
-      </Modal.Body>
-      <Modal.Footer className="border-0">
-        <ButtonToolbar>
-          <Button variant="primary" onClick={() => onClick(false)}>No</Button>
-          <Button variant="danger" onClick={() => onClick(true)}>Yes</Button>
-        </ButtonToolbar>
-      </Modal.Footer>
-    </Modal>
+    <AppModal
+      show={showModal}
+      onHide={() => onClick(false)}
+      animation
+      dialogClassName={dialogClassName}
+      title={title}
+      closeLabel="No"
+      primaryActionLabel="Yes"
+      onPrimaryAction={() => onClick(true)}
+    >
+      {content}
+    </AppModal>
   );
 }
+
+ConfirmModal.propTypes = {
+  showModal: PropTypes.bool.isRequired,
+  title: PropTypes.node.isRequired,
+  content: PropTypes.node.isRequired,
+  onClick: PropTypes.func.isRequired,
+  dialogClassName: PropTypes.string,
+};
+
+ConfirmModal.defaultProps = {
+  dialogClassName: undefined,
+};
 
 export default ConfirmModal;

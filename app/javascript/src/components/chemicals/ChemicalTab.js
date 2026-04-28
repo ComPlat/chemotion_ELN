@@ -3,9 +3,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Accordion, Form, Button, OverlayTrigger, Tooltip, ButtonToolbar,
-  ListGroup, ListGroupItem, InputGroup, Modal, Row, Col,
+  ListGroup, ListGroupItem, InputGroup, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
 import { chemicalStatusOptions } from 'src/components/staticDropdownOptions/options';
 import SVG from 'react-inlinesvg';
@@ -66,13 +67,18 @@ export default class ChemicalTab extends React.Component {
   }
 
   handleFieldChanged(parameter, value) {
-    const { chemical } = this.state;
+    let { chemical } = this.state;
     const { editChemical } = this.props;
-    if (chemical) {
-      chemical.buildChemical(parameter, value);
-      editChemical(chemical.isEdited);
+
+    if (!chemical) {
+      chemical = Chemical.buildEmpty();
     }
-    this.setState({ chemical });
+
+    chemical.buildChemical(parameter, value);
+
+    this.setState({ chemical }, () => {
+      editChemical(chemical.isEdited);
+    });
   }
 
   handleSubmitSave() {
@@ -261,6 +267,22 @@ export default class ChemicalTab extends React.Component {
 
   handleAdd() {
     this.setState({ showModal: true });
+  }
+
+  /**
+   * Returns a snapshot of the current chemical data so the parent can persist
+   * it after the sample is created (when ChemicalTab cannot save itself because
+   * the sample has no server-side ID yet).
+   * @returns {{ chemical_data: any, cas: string } | null}
+   */
+  getChemicalSnapshot() {
+    const { chemical } = this.state;
+    const { sample } = this.props;
+    if (!chemical) return null;
+    return {
+      chemical_data: chemical._chemical_data || null,
+      cas: sample?.xref?.cas ?? '',
+    };
   }
 
   querySafetySheets = () => {
@@ -1808,34 +1830,26 @@ export default class ChemicalTab extends React.Component {
     }
 
     return (
-      <Modal
-        centered
+      <AppModal
+        title="Fetched Chemical Properties"
         show={viewChemicalPropertiesModal}
         onHide={() => this.closePropertiesModal()}
         size="lg"
+        closeLabel="Close"
+        showFooter
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Fetched Chemical Properties</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form.Group controlId="propertiesModal">
-            <Form.Control
-              as="textarea"
-              className="w-100"
-              readOnly
-              disabled
-              type="text"
-              rows={10}
-              value={fetchedChemicalProperties}
-            />
-          </Form.Group>
-        </Modal.Body>
-        <Modal.Footer className="border-0">
-          <Button variant="warning" onClick={() => this.closePropertiesModal()}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        <Form.Group controlId="propertiesModal">
+          <Form.Control
+            as="textarea"
+            className="w-100"
+            readOnly
+            disabled
+            type="text"
+            rows={10}
+            value={fetchedChemicalProperties}
+          />
+        </Form.Group>
+      </AppModal>
     );
   }
 

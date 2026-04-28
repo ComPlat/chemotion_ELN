@@ -255,7 +255,7 @@ export class ContainerDatasetModalContent extends Component {
 
   // the next method is used in ContainerDatasetModal.js please ignore eslint warning
   // eslint-disable-next-line react/no-unused-class-component-methods
-  handleSave(shouldClose = false) {
+  handleSave() {
     const { datasetContainer } = this.state;
     const {
       onChange, onModalHide, handleContainerSubmit, isNew
@@ -263,13 +263,11 @@ export class ContainerDatasetModalContent extends Component {
     this.context.attachmentNotificationStore.clearMessages();
     onChange(datasetContainer);
     if (!isNew) {
-      handleContainerSubmit(shouldClose);
-      if (shouldClose) onModalHide();
+      handleContainerSubmit();
+      onModalHide();
       return;
     }
-    if (shouldClose) {
-      onModalHide();
-    }
+    onModalHide();
   }
 
   // eslint-disable-next-line react/no-unused-class-component-methods, react/sort-comp

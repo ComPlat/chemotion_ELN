@@ -56,7 +56,7 @@ export default class Navigation extends React.Component {
   userSession() {
     const { currentUser, omniauthProviders, extraRules } = this.state;
     return currentUser
-      ? <UserAuth />
+      ? <UserAuth userMenuDropdownToggleVariant="link" />
       : (
         <NavNewSession
           authenticityToken={this.token()}
