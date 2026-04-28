@@ -1,8 +1,8 @@
 /* eslint-disable react/destructuring-assignment */
 import React from 'react';
 import {
-  Table, Button, Modal, Form, Tooltip, OverlayTrigger, Tabs, Tab,
-  Nav, NavItem, Alert, Card, Col,
+  Table, Button, Form, Tooltip, OverlayTrigger, Tabs, Tab,
+  Alert, Card, Col, ButtonToolbar,
   Row
 } from 'react-bootstrap';
 import { AsyncSelect } from 'src/components/common/Select';
@@ -12,6 +12,7 @@ import AdminFetcher from 'src/fetchers/AdminFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import GenericAdminModal from 'src/apps/admin/generic/GenericAdminModal';
+import AppModal from 'src/components/common/AppModal';
 
 function MessageAlert({ message, link = null, onHide }) {
   return (
@@ -163,6 +164,8 @@ export default class UserManagement extends React.Component {
       user: {},
       deletedUsers: [],
       selectedUsers: null,
+      newUserTab: 'singleUser',
+      showDeleteUserConfirm: false,
       showMsgModal: false,
       showNewUserModal: false,
       showEditUserModal: false,
@@ -229,6 +232,7 @@ export default class UserManagement extends React.Component {
 
   handleNewUserShow() {
     this.setState({
+      newUserTab: 'singleUser',
       showNewUserModal: true,
       messageNewUserModal: ''
     });
@@ -236,6 +240,7 @@ export default class UserManagement extends React.Component {
 
   handleNewUserClose() {
     this.setState({
+      newUserTab: 'singleUser',
       showNewUserModal: false,
       messageNewUserModal: ''
     });
@@ -243,6 +248,7 @@ export default class UserManagement extends React.Component {
 
   handleEditUserShow(user) {
     this.setState({
+      showDeleteUserConfirm: false,
       showEditUserModal: true,
       messageEditUserModal: '',
       user
@@ -251,6 +257,7 @@ export default class UserManagement extends React.Component {
 
   handleEditUserClose() {
     this.setState({
+      showDeleteUserConfirm: false,
       showEditUserModal: false,
       messageEditUserModal: '',
       user: {}
@@ -766,584 +773,469 @@ export default class UserManagement extends React.Component {
   renderMessageModal() {
     const { selectedUsers } = this.state;
     return (
-      <Modal
-        centered
+      <AppModal
         show={this.state.showMsgModal}
         onHide={this.handleMsgClose}
+        title="Send Message"
+        primaryActionLabel="Send"
+        onPrimaryAction={() => this.messageSend()}
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Send Message</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group controlId="formControlsTextarea">
-              <Form.Label>Message</Form.Label>
-              <Form.Control
-                as="textarea"
-                placeholder="Message..."
-                rows="20"
-                ref={(ref) => {
-                  this.myMessage = ref;
-                }}
-              />
-            </Form.Group>
-            <Form.Group className="my-3">
-              <AsyncSelect
-                isMulti
-                value={selectedUsers}
-                matchProp="name"
-                placeholder="Select users"
-                loadOptions={loadUserByName}
-                onChange={this.handleSelectUser}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer className="modal-footer border-0">
-          <Button variant="primary" onClick={() => this.messageSend()}>
-            Send
-            <i className="fa fa-paper-plane ms-1" />
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        <Form>
+          <Form.Group controlId="formControlsTextarea">
+            <Form.Label>Message</Form.Label>
+            <Form.Control
+              as="textarea"
+              placeholder="Message..."
+              rows="20"
+              ref={(ref) => {
+                this.myMessage = ref;
+              }}
+            />
+          </Form.Group>
+          <Form.Group className="my-3">
+            <AsyncSelect
+              isMulti
+              value={selectedUsers}
+              matchProp="name"
+              placeholder="Select users"
+              loadOptions={loadUserByName}
+              onChange={this.handleSelectUser}
+            />
+          </Form.Group>
+        </Form>
+      </AppModal>
     );
   }
 
   renderNewUserModal() {
+    const { newUserTab } = this.state;
+
     return (
-      <Modal
-        centered
+      <AppModal
         show={this.state.showNewUserModal}
         onHide={this.handleNewUserClose}
         size="lg"
-        backdrop="static"
+        title="New User"
+        primaryActionLabel={newUserTab === 'singleUser' ? 'Create user' : 'Create users'}
+        onPrimaryAction={newUserTab === 'singleUser'
+          ? () => this.handleCreateNewUser()
+          : () => this.handleCreateNewUsersFromFile()}
       >
-        <Modal.Header closeButton>
-          <Modal.Title>New User</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Tabs id="createUserTabs" className="fs-6">
-            <Tab eventKey="singleUser" title="Single user">
-              <Form
-                className="ms-2 mt-2"
+        <Tabs
+          id="createUserTabs"
+          activeKey={newUserTab}
+          className="fs-6"
+          onSelect={(eventKey) => this.setState({ newUserTab: eventKey })}
+        >
+          <Tab eventKey="singleUser" title="Single user">
+            <Form
+              className="ms-2 mt-2"
+            >
+              <Form.Group
+                className="w-75 mb-3"
+                controlId="formControlEmail"
               >
-                <Form.Group
-                  className="w-75 mb-3"
-                  controlId="formControlEmail"
-                >
-                  <Form.Label>
-                    Email:
-                  </Form.Label>
-                  <Form.Control
-                    type="email"
-                    name="email"
-                    ref={(ref) => {
-                      this.email = ref;
-                    }}
-                  />
-                </Form.Group>
-                <Form.Group
-                  className="w-75 mb-3"
-                  controlId="formControlPassword"
-                >
-                  <Form.Label>
-                    Password:
-                  </Form.Label>
-                  <Form.Control
-                    type="password"
-                    name="password"
-                    ref={(ref) => {
-                      this.password = ref;
-                    }}
-                  />
-                </Form.Group>
-                <Form.Group
-                  className="w-75 mb-3"
-                  controlId="formControlPasswordConfirmation"
-                >
-                  <Form.Label>
-                    Password Confirmation:
-                  </Form.Label>
-                  <Form.Control
-                    type="password"
-                    ref={(ref) => {
-                      this.passwordConfirm = ref;
-                    }}
-                  />
-                </Form.Group>
-                <Form.Group
-                  className="w-75 mb-3"
-                  controlId="formControlFirstName"
-                >
-                  <Form.Label>
-                    First name:
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="firstname"
-                    ref={(ref) => {
-                      this.firstname = ref;
-                    }}
-                  />
-                </Form.Group>
-                <Form.Group
-                  className="w-75 mb-3"
-                  controlId="formControlLastName"
-                >
-                  <Form.Label>
-                    {' '}
-                    Last name:
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="lastname"
-                    ref={(ref) => {
-                      this.lastname = ref;
-                    }}
-                  />
-                </Form.Group>
-                <Form.Group
-                  className="w-75 mb-3"
-                  controlId="formControlAbbr"
-                >
-                  <Form.Label>
-                    Abbr (3) *:
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="nameAbbr"
-                    ref={(ref) => {
-                      this.nameAbbr = ref;
-                    }}
-                  />
-                </Form.Group>
-                <Form.Group
-                  className="w-75 mb-3"
-                  controlId="formControlsType"
-                >
-                  <Form.Label>
-                    Type:
-                  </Form.Label>
-                  <Form.Select ref={(ref) => {
-                    this.type = ref;
+                <Form.Label>
+                  Email:
+                </Form.Label>
+                <Form.Control
+                  type="email"
+                  name="email"
+                  ref={(ref) => {
+                    this.email = ref;
                   }}
-                  >
-                    <option value="Person">Person</option>
-                    <option value="Admin">Admin</option>
-                  </Form.Select>
-                </Form.Group>
-              </Form>
-              <Button variant="primary" className="mt-3 ms-2" onClick={() => this.handleCreateNewUser()}>
-                Create user
-                <i className="fa fa-plus ms-1" />
-              </Button>
-
-            </Tab>
-            <Tab eventKey="multiUser" title="Multiple users from file">
-              <Form className="my-3">
-                <Form.Group>
-                  <Form.Label>Please format the user file like the table below.</Form.Label>
-                  <Table striped bordered hover className="mt-1">
-                    <thead>
-                      <tr>
-                        <th>email</th>
-                        <th>password</th>
-                        <th>firstname</th>
-                        <th>lastname</th>
-                        <th>nameabbr</th>
-                        <th>type</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>john.doe@eln.edu</td>
-                        <td>password0</td>
-                        <td>John</td>
-                        <td>Doe</td>
-                        <td>jod</td>
-                        <td>Person</td>
-                      </tr>
-                      <tr>
-                        <td>jane.doe@eln.edu</td>
-                        <td>password1</td>
-                        <td>Jane</td>
-                        <td>Doe</td>
-                        <td>jad</td>
-                        <td>Person</td>
-                      </tr>
-                    </tbody>
-                  </Table>
-                </Form.Group>
-                <Form.Group id="userFileDragAndDrop">
-                  <CSVReader
-                    onDrop={this.handleOnDropUserFile}
-                    onError={this.handleOnErrorUserFile}
-                    config={{ header: true, skipEmptyLines: true }}
-                    addRemoveButton
-                    onRemoveFile={this.handleOnRemoveUserFile}
-                    className="my-1"
-                  >
-                    <span>
-                      Drop a CSV user file here or click to upload.
-                      The following column-delimiters are accepted: &apos;,&apos; or &apos;;&apos; or &apos;tab&apos;.
-                    </span>
-                  </CSVReader>
-                </Form.Group>
-                <Button variant="primary" className="my-3" onClick={() => this.handleCreateNewUsersFromFile()}>
-                  Create users
-                  <i className="fa fa-plus ms-1" />
-                </Button>
-                <Form.Group>
-                  <Form.Label>Processing Summary</Form.Label>
-                  <Form.Control
-                    readOnly
-                    as="textarea"
-                    id="processingSummary"
-                    rows={5}
-                    value={this.state.processingSummaryUserFile}
-                  />
-                </Form.Group>
-              </Form>
-            </Tab>
-          </Tabs>
-        </Modal.Body>
-        <Modal.Footer className="modal-footer border-0">
-          <Form.Group controlId="formControlMessage" className="flex-grow-1">
-            <Form.Control type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
-          </Form.Group>
-          <Button variant="warning" className="fs-6" onClick={() => this.handleNewUserClose()}>Cancel</Button>
-        </Modal.Footer>
-      </Modal>
+                />
+              </Form.Group>
+              <Form.Group
+                className="w-75 mb-3"
+                controlId="formControlPassword"
+              >
+                <Form.Label>
+                  Password:
+                </Form.Label>
+                <Form.Control
+                  type="password"
+                  name="password"
+                  ref={(ref) => {
+                    this.password = ref;
+                  }}
+                />
+              </Form.Group>
+              <Form.Group
+                className="w-75 mb-3"
+                controlId="formControlPasswordConfirmation"
+              >
+                <Form.Label>
+                  Password Confirmation:
+                </Form.Label>
+                <Form.Control
+                  type="password"
+                  ref={(ref) => {
+                    this.passwordConfirm = ref;
+                  }}
+                />
+              </Form.Group>
+              <Form.Group
+                className="w-75 mb-3"
+                controlId="formControlFirstName"
+              >
+                <Form.Label>
+                  First name:
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  name="firstname"
+                  ref={(ref) => {
+                    this.firstname = ref;
+                  }}
+                />
+              </Form.Group>
+              <Form.Group
+                className="w-75 mb-3"
+                controlId="formControlLastName"
+              >
+                <Form.Label>
+                  {' '}
+                  Last name:
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  name="lastname"
+                  ref={(ref) => {
+                    this.lastname = ref;
+                  }}
+                />
+              </Form.Group>
+              <Form.Group
+                className="w-75 mb-3"
+                controlId="formControlAbbr"
+              >
+                <Form.Label>
+                  Abbr (3) *:
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  name="nameAbbr"
+                  ref={(ref) => {
+                    this.nameAbbr = ref;
+                  }}
+                />
+              </Form.Group>
+              <Form.Group
+                className="w-75 mb-3"
+                controlId="formControlsType"
+              >
+                <Form.Label>
+                  Type:
+                </Form.Label>
+                <Form.Select ref={(ref) => {
+                  this.type = ref;
+                }}
+                >
+                  <option value="Person">Person</option>
+                  <option value="Admin">Admin</option>
+                </Form.Select>
+              </Form.Group>
+            </Form>
+          </Tab>
+          <Tab eventKey="multiUser" title="Multiple users from file">
+            <Form className="my-3">
+              <Form.Group>
+                <Form.Label>Please format the user file like the table below.</Form.Label>
+                <Table striped bordered hover className="mt-1">
+                  <thead>
+                    <tr>
+                      <th>email</th>
+                      <th>password</th>
+                      <th>firstname</th>
+                      <th>lastname</th>
+                      <th>nameabbr</th>
+                      <th>type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>john.doe@eln.edu</td>
+                      <td>password0</td>
+                      <td>John</td>
+                      <td>Doe</td>
+                      <td>jod</td>
+                      <td>Person</td>
+                    </tr>
+                    <tr>
+                      <td>jane.doe@eln.edu</td>
+                      <td>password1</td>
+                      <td>Jane</td>
+                      <td>Doe</td>
+                      <td>jad</td>
+                      <td>Person</td>
+                    </tr>
+                  </tbody>
+                </Table>
+              </Form.Group>
+              <Form.Group id="userFileDragAndDrop">
+                <CSVReader
+                  onDrop={this.handleOnDropUserFile}
+                  onError={this.handleOnErrorUserFile}
+                  config={{ header: true, skipEmptyLines: true }}
+                  addRemoveButton
+                  onRemoveFile={this.handleOnRemoveUserFile}
+                  className="my-1"
+                >
+                  <span>
+                    Drop a CSV user file here or click to upload.
+                    The following column-delimiters are accepted: &apos;,&apos; or &apos;;&apos; or &apos;tab&apos;.
+                  </span>
+                </CSVReader>
+              </Form.Group>
+              <Form.Group>
+                <Form.Label>Processing Summary</Form.Label>
+                <Form.Control
+                  readOnly
+                  as="textarea"
+                  id="processingSummary"
+                  rows={5}
+                  value={this.state.processingSummaryUserFile}
+                />
+              </Form.Group>
+            </Form>
+          </Tab>
+        </Tabs>
+        <Form.Group controlId="formControlMessage" className="flex-grow-1 mt-2">
+          <Form.Control type="text" readOnly name="messageNewUserModal" value={this.state.messageNewUserModal} />
+        </Form.Group>
+      </AppModal>
     );
   }
 
   renderEditUserModal() {
-    const { user } = this.state;
+    const {
+      user, showEditUserModal, messageEditUserModal, showDeleteUserConfirm
+    } = this.state;
+    const deleteUserTooltip = (
+      <Tooltip id="edit-user-delete-tooltip">
+        <div className="p2">
+          Are you sure you want to delete this user?
+          <ButtonToolbar className="justify-content-end mt-2">
+            <Button size="xsm" variant="ghost" onClick={() => this.setState({ showDeleteUserConfirm: false })}>
+              Cancel
+            </Button>
+            <Button
+              size="xsm"
+              variant="danger"
+              onClick={() => {
+                this.setState({ showDeleteUserConfirm: false });
+                this.handleDeleteUser(user);
+              }}
+            >
+              Delete
+            </Button>
+          </ButtonToolbar>
+        </div>
+      </Tooltip>
+    );
+
     return (
-      <Tab.Container id="tabs-with-dropdown" defaultActiveKey="first">
-        <Modal
-          centered
-          show={this.state.showEditUserModal}
-          onHide={this.handleEditUserClose}
-          backdrop="static"
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>
-              <Nav variant="tabs">
-                <NavItem>
-                  <Nav.Link eventKey="first">Edit user account </Nav.Link>
-                </NavItem>
-                <NavItem>
-                  <Nav.Link eventKey="second">Delete user</Nav.Link>
-                </NavItem>
-              </Nav>
-            </Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Tab.Content animation>
-              <Tab.Pane eventKey="first">
-                <Form>
-                  <Form.Group as={Row} className="mb-3 ms-5 mt-2" controlId="formControlEmail">
-                    <Form.Label column sm="3" className="fs-6">
-                      Email:
-                    </Form.Label>
-                    <Col sm="7">
-                      <Form.Control
-                        type="email"
-                        name="u_email"
-                        defaultValue={user.email}
-                        ref={(ref) => {
-                          this.u_email = ref;
-                        }}
-                        className="fs-6"
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlFirstName">
-                    <Form.Label column sm="3" className="fs-6">
-                      First name:
-                    </Form.Label>
-                    <Col sm="7">
-                      <Form.Control
-                        type="text"
-                        name="u_firstname"
-                        defaultValue={user.first_name}
-                        ref={(ref) => {
-                          this.u_firstname = ref;
-                        }}
-                        className="fs-6"
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlLastName">
-                    <Form.Label column sm="3" className="fs-6">
-                      Last name:
-                    </Form.Label>
-                    <Col sm="7">
-                      <Form.Control
-                        type="text"
-                        name="u_lastname"
-                        defaultValue={user.last_name}
-                        ref={(ref) => {
-                          this.u_lastname = ref;
-                        }}
-                        className="fs-6"
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAbbr">
-                    <Form.Label column sm="3" className="fs-6">
-                      Abbr:
-                    </Form.Label>
-                    <Col sm="7">
-                      <Form.Control
-                        type="text"
-                        name="u_abbr"
-                        defaultValue={user.initials}
-                        ref={(ref) => {
-                          this.u_abbr = ref;
-                        }}
-                        className="fs-6"
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAvail">
-                    <Form.Label column sm="3" className="fs-6">
-                      Allocated Space (MB):
-                    </Form.Label>
-                    <Col sm="7">
-                      <Form.Control
-                        type="number"
-                        min="1"
-                        name="u_avail"
-                        defaultValue={user.allocated_space === 0 ? '' : user.allocated_space / 1024 / 1024}
-                        ref={(ref) => {
-                          this.u_avail = ref;
-                        }}
-                        className="fs-6"
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlsType">
-                    <Form.Label column sm="3" className="fs-6">
-                      Type:
-                    </Form.Label>
-                    <Col sm="7">
-                      <Form.Select
-                        defaultValue={user.type}
-                        ref={(ref) => {
-                          this.u_type = ref;
-                        }}
-                        className="fs-6"
-                      >
-                        <option value="Person">Person</option>
-                        <option value="Group">Group</option>
-                        <option value="Admin">Admin</option>
-                      </Form.Select>
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlMessage">
-                    <Col sm="10">
-                      <Form.Control
-                        type="text"
-                        readOnly
-                        name="messageEditUserModal"
-                        value={this.state.messageEditUserModal}
-                        className="my-3 form-control text-danger text-center fs-6"
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} className="mb-3">
-                    <Col sm="6">
-                      <Button variant="secondary" className="w-100" onClick={() => this.handleEditUserClose()}>
-                        Cancel
-                      </Button>
-                    </Col>
-                    <Col sm="6">
-                      <Button variant="primary" className="w-100" onClick={() => this.handleUpdateUser(user)}>
-                        Update
-                        <i className="fa fa-save ms-1" />
-                      </Button>
-                    </Col>
-                  </Form.Group>
-                </Form>
-              </Tab.Pane>
-              <Tab.Pane eventKey="second">
-                <Form>
-                  <Form.Group as={Row} className="mb-3 mt-2 ms-5" controlId="formControlEmail">
-                    <Form.Label column sm="3" className="fs-6">
-                      Email:
-                    </Form.Label>
-                    <Col sm="7">
-                      <Form.Control
-                        type="email"
-                        name="u_email"
-                        defaultValue={user.email}
-                        disabled
-                        className="fs-6"
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlFirstName">
-                    <Form.Label column sm="3" className="fs-6">
-                      First name:
-                    </Form.Label>
-                    <Col sm="7">
-                      <Form.Control
-                        type="text"
-                        name="u_firstname"
-                        defaultValue={user.first_name}
-                        disabled
-                        className="fs-6"
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlLastName">
-                    <Form.Label column sm="3" className="fs-6">
-                      Last name:
-                    </Form.Label>
-                    <Col sm="7">
-                      <Form.Control
-                        type="text"
-                        name="u_lastname"
-                        defaultValue={user.last_name}
-                        disabled
-                        className="fs-6"
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAbbr">
-                    <Form.Label column sm="3" className="fs-6">
-                      Abbr:
-                    </Form.Label>
-                    <Col sm="7">
-                      <Form.Control
-                        type="text"
-                        name="u_abbr"
-                        defaultValue={user.initials}
-                        disabled
-                        className="fs-6"
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlsType">
-                    <Form.Label column sm="3" className="fs-6">
-                      Type:
-                    </Form.Label>
-                    <Col sm="7">
-                      <Form.Control
-                        disabled
-                        defaultValue={user.type}
-                        className="fs-6"
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlMessage">
-                    <Col sm="10">
-                      <Form.Control
-                        type="text"
-                        readOnly
-                        name="messageEditUserModal"
-                        value="Delete User Account. Are you sure?"
-                        className="my-3 fs-6 form-control text-danger text-center"
-                      />
-                    </Col>
-                  </Form.Group>
-                  <Form.Group as={Row} className="mb-3">
-                    <Col sm="6">
-                      <Button variant="secondary" className="w-100" onClick={() => this.handleEditUserClose()}>
-                        Cancel
-                      </Button>
-                    </Col>
-                    <Col sm="6">
-                      <Button variant="danger" className="w-100" onClick={() => this.handleDeleteUser(user)}>
-                        Delete
-                        <i className="fa fa-trash ms-1" />
-                      </Button>
-                    </Col>
-                  </Form.Group>
-                </Form>
-              </Tab.Pane>
-            </Tab.Content>
-          </Modal.Body>
-        </Modal>
-      </Tab.Container>
+      <AppModal
+        show={showEditUserModal}
+        onHide={this.handleEditUserClose}
+        title="Edit user account"
+        primaryActionLabel="Update"
+        onPrimaryAction={() => this.handleUpdateUser(user)}
+        extendedFooter={(
+          <OverlayTrigger
+            trigger="click"
+            placement="top"
+            rootClose
+            show={showDeleteUserConfirm}
+            onToggle={(nextShow) => this.setState({ showDeleteUserConfirm: nextShow })}
+            overlay={deleteUserTooltip}
+          >
+            <Button variant="danger">Delete</Button>
+          </OverlayTrigger>
+        )}
+      >
+        <Form>
+          <Form.Group as={Row} className="mb-3 ms-5 mt-2" controlId="formControlEmail">
+            <Form.Label column sm="3" className="fs-6">
+              Email:
+            </Form.Label>
+            <Col sm="7">
+              <Form.Control
+                type="email"
+                name="u_email"
+                defaultValue={user.email}
+                ref={(ref) => {
+                  this.u_email = ref;
+                }}
+                className="fs-6"
+              />
+            </Col>
+          </Form.Group>
+          <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlFirstName">
+            <Form.Label column sm="3" className="fs-6">
+              First name:
+            </Form.Label>
+            <Col sm="7">
+              <Form.Control
+                type="text"
+                name="u_firstname"
+                defaultValue={user.first_name}
+                ref={(ref) => {
+                  this.u_firstname = ref;
+                }}
+                className="fs-6"
+              />
+            </Col>
+          </Form.Group>
+          <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlLastName">
+            <Form.Label column sm="3" className="fs-6">
+              Last name:
+            </Form.Label>
+            <Col sm="7">
+              <Form.Control
+                type="text"
+                name="u_lastname"
+                defaultValue={user.last_name}
+                ref={(ref) => {
+                  this.u_lastname = ref;
+                }}
+                className="fs-6"
+              />
+            </Col>
+          </Form.Group>
+          <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAbbr">
+            <Form.Label column sm="3" className="fs-6">
+              Abbr:
+            </Form.Label>
+            <Col sm="7">
+              <Form.Control
+                type="text"
+                name="u_abbr"
+                defaultValue={user.initials}
+                ref={(ref) => {
+                  this.u_abbr = ref;
+                }}
+                className="fs-6"
+              />
+            </Col>
+          </Form.Group>
+          <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAvail">
+            <Form.Label column sm="3" className="fs-6">
+              Allocated Space (MB):
+            </Form.Label>
+            <Col sm="7">
+              <Form.Control
+                type="number"
+                min="1"
+                name="u_avail"
+                defaultValue={user.allocated_space === 0 ? '' : user.allocated_space / 1024 / 1024}
+                ref={(ref) => {
+                  this.u_avail = ref;
+                }}
+                className="fs-6"
+              />
+            </Col>
+          </Form.Group>
+          <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlsType">
+            <Form.Label column sm="3" className="fs-6">
+              Type:
+            </Form.Label>
+            <Col sm="7">
+              <Form.Select
+                defaultValue={user.type}
+                ref={(ref) => {
+                  this.u_type = ref;
+                }}
+                className="fs-6"
+              >
+                <option value="Person">Person</option>
+                <option value="Group">Group</option>
+                <option value="Admin">Admin</option>
+              </Form.Select>
+            </Col>
+          </Form.Group>
+          <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlMessage">
+            <Col sm="10">
+              <Form.Control
+                type="text"
+                readOnly
+                name="messageEditUserModal"
+                value={messageEditUserModal}
+                className="my-3 form-control text-danger text-center fs-6"
+              />
+            </Col>
+          </Form.Group>
+        </Form>
+      </AppModal>
     );
   }
 
   renderRestoreAccountModal() {
     return (
-      <Modal centered show={this.state.showRestoreAccountModal} onHide={this.handleRestoreAccountClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Restore account</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="d-flex justify-content-center align-items-center">
-          <Form className="w-75">
-            <Form.Group controlId="formControlAbbr">
-              <Row className="mb-3">
-                <Col column sm={3}>
-                  <Form.Label column sm={3} className=" fs-6">Abbr: </Form.Label>
-                </Col>
-                <Col sm={9}>
-                  <Form.Control
-                    type="text"
-                    name="nameAbbreviation"
-                    placeholder="Please enter the name abbreviation .."
-                    className="flex-grow-1"
-                    ref={(ref) => {
-                      this.nameAbbreviation = ref;
-                    }}
-                  />
-                </Col>
-              </Row>
-            </Form.Group>
-            <Form.Group controlId="formControlID">
-              <Row className="mb-3">
-                <Col column sm={3}>
-                  <Form.Label className="fs-6">ID:</Form.Label>
-                </Col>
-                <Col sm={9}>
-                  <Form.Control
-                    type="text"
-                    name="id"
-                    placeholder=".. or enter the user ID"
-                    defaultValue=""
-                    onFocus={() => this.setState({ showError: false, showSuccess: false })}
-                    ref={(ref) => {
-                      this.id = ref;
-                    }}
-                  />
-                </Col>
-              </Row>
-
-            </Form.Group>
-            <Form.Group controlId="formControlMessage">
-              <Col sm={12}>
+      <AppModal
+        show={this.state.showRestoreAccountModal}
+        onHide={this.handleRestoreAccountClose}
+        title="Restore account"
+        primaryActionLabel="Restore"
+        onPrimaryAction={() => this.handleRestoreAccount()}
+      >
+        <Form className="w-75 mx-auto">
+          <Form.Group controlId="formControlAbbr">
+            <Row className="mb-3">
+              <Col column sm={3}>
+                <Form.Label column sm={3} className=" fs-6">Abbr: </Form.Label>
+              </Col>
+              <Col sm={9}>
                 <Form.Control
-                  className="mt-3"
                   type="text"
-                  readOnly
-                  name="messageRestoreAccountModal"
-                  value={this.state.messageRestoreAccountModal}
-                  isValid={this.state.showSuccess}
-                  isInvalid={this.state.showError}
+                  name="nameAbbreviation"
+                  placeholder="Please enter the name abbreviation .."
+                  className="flex-grow-1"
+                  ref={(ref) => {
+                    this.nameAbbreviation = ref;
+                  }}
                 />
               </Col>
-            </Form.Group>
-            {this.state.deletedUsers.length > 0
-              && renderDeletedUsersTable(this.state.deletedUsers)}
-          </Form>
-        </Modal.Body>
-        <Modal.Footer className="modal-footer border-0">
-          <Button variant="primary" className="fs-6" onClick={() => this.handleRestoreAccount()}>
-            Restore
-            <i className="fa fa-save ms-1" />
-          </Button>
-          <Button variant="warning" className="fs-6" onClick={() => this.handleRestoreAccountClose()}>
-            Cancel
-          </Button>
-        </Modal.Footer>
-      </Modal>
+            </Row>
+          </Form.Group>
+          <Form.Group controlId="formControlID">
+            <Row className="mb-3">
+              <Col column sm={3}>
+                <Form.Label className="fs-6">ID:</Form.Label>
+              </Col>
+              <Col sm={9}>
+                <Form.Control
+                  type="text"
+                  name="id"
+                  placeholder=".. or enter the user ID"
+                  defaultValue=""
+                  onFocus={() => this.setState({ showError: false, showSuccess: false })}
+                  ref={(ref) => {
+                    this.id = ref;
+                  }}
+                />
+              </Col>
+            </Row>
+
+          </Form.Group>
+          <Form.Group controlId="formControlMessage">
+            <Col sm={12}>
+              <Form.Control
+                className="mt-3"
+                type="text"
+                readOnly
+                name="messageRestoreAccountModal"
+                value={this.state.messageRestoreAccountModal}
+                isValid={this.state.showSuccess}
+                isInvalid={this.state.showError}
+              />
+            </Col>
+          </Form.Group>
+          {this.state.deletedUsers.length > 0
+            && renderDeletedUsersTable(this.state.deletedUsers)}
+        </Form>
+      </AppModal>
     );
   }
 

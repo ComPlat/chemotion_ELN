@@ -1,14 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  ButtonGroup, Button, Tooltip, Overlay
+  Button
 } from 'react-bootstrap';
+import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 
 class GatePushButton extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      showOverlay: false,
+      overlayTarget: null,
     };
 
     this.buttonRef = React.createRef();
@@ -18,7 +19,7 @@ class GatePushButton extends React.Component {
   }
 
   hideOverlay() {
-    this.setState({ showOverlay: false });
+    this.setState({ overlayTarget: null });
   }
 
   async transmit(method = 'GET') {
@@ -43,7 +44,7 @@ class GatePushButton extends React.Component {
     };
 
     const newState = {
-      showOverlay: method === 'GET', // Only show overlay for GET requests (initial check)
+      overlayTarget: method === 'GET' ? this.buttonRef.current : null,
       status: 'redirect',
       target: response.target
     };
@@ -65,82 +66,58 @@ class GatePushButton extends React.Component {
     this.setState(newState);
   }
 
-  tooltipContent() {
+  confirmationOverlayProps() {
     const { status, message, target } = this.state;
-    let content;
+
     if (status === 'confirm') {
-      content = (
-        <div>
-          Mirror Sample and Reaction data to your chemotion.net account ?
-          <ButtonGroup className="ms-1">
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => this.transmit('POST')}
-            >
-              Yes
-            </Button>
-            <Button
-              variant="warning"
-              size="sm"
-              onClick={this.hideOverlay}
-            >
-              No
-            </Button>
-          </ButtonGroup>
-        </div>
-      );
-    } else if (status === 'unavailable') {
-      content = (
-        <div>
-          Sorry, it seems chemotion-repository.net can not be reached at the moment
-          <ButtonGroup className="ms-1">
-            <Button
-              variant="warning"
-              size="sm"
-              onClick={this.hideOverlay}
-            >
-              OK
-            </Button>
-          </ButtonGroup>
-        </div>
-      );
-    } else if (status === 'redirect') {
-      content = (
-        <div>
-          {message}
-          <ButtonGroup className="ms-1">
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => {
-                this.hideOverlay();
-                window.location.assign(
-                  `${target}pages/tokens?origin=${encodeURI(
-                    window.location.origin
-                  )}`
-                );
-                // window.open(`${target}pages/tokens?origin=${encodeURI(window.location.origin)}` , '_blank');
-              }}
-            >
-              Yes
-            </Button>
-            <Button
-              variant="warning"
-              size="sm"
-              onClick={this.hideOverlay}
-            >
-              No
-            </Button>
-          </ButtonGroup>
-        </div>
-      );
+      return {
+        warningText: 'Mirror Sample and Reaction data to your chemotion.net account?',
+        destructiveAction: () => this.transmit('POST'),
+        destructiveActionLabel: 'Yes',
+        hideAction: this.hideOverlay,
+        hideActionLabel: 'No',
+      };
     }
-    return <Tooltip id="chemotion-net-gate">{content}</Tooltip>;
+
+    if (status === 'unavailable') {
+      return {
+        warningText: 'Sorry, it seems chemotion-repository.net can not be reached at the moment',
+        hideAction: this.hideOverlay,
+        hideActionLabel: 'OK',
+      };
+    }
+
+    if (status === 'redirect') {
+      return {
+        warningText: message,
+        destructiveAction: () => {
+          this.hideOverlay();
+          window.location.assign(
+            `${target}pages/tokens?origin=${encodeURI(
+              window.location.origin
+            )}`
+          );
+        },
+        destructiveActionLabel: 'Yes',
+        hideAction: this.hideOverlay,
+        hideActionLabel: 'No',
+      };
+    }
+
+    return null;
   }
 
   render() {
-    const { showOverlay } = this.state;
+    const { overlayTarget } = this.state;
+    const overlayProps = this.confirmationOverlayProps();
+    const {
+      warningText,
+      destructiveAction,
+      destructiveActionLabel,
+      hideAction,
+      hideActionLabel,
+    } = overlayProps || {};
+
     return (
       <>
         <Button
@@ -155,14 +132,17 @@ class GatePushButton extends React.Component {
         >
           <i className="fa fa-paper-plane" />
         </Button>
-
-        <Overlay
-          show={showOverlay}
-          placement="bottom"
-          target={this.buttonRef}
-        >
-          {this.tooltipContent()}
-        </Overlay>
+        {overlayProps && (
+          <ConfirmationOverlay
+            overlayTarget={overlayTarget}
+            placement="bottom"
+            warningText={warningText}
+            destructiveAction={destructiveAction}
+            destructiveActionLabel={destructiveActionLabel}
+            hideAction={hideAction}
+            hideActionLabel={hideActionLabel}
+          />
+        )}
       </>
     );
   }

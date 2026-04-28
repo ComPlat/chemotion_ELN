@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import {
-  Button, Modal, Form, Col, Row
+  Form, Col, Row
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import Wellplate from 'src/models/Wellplate';
+import AppModal from 'src/components/common/AppModal';
 
 const isInteger = (value) => {
   if (Number.isNaN(value)) return false
@@ -36,57 +37,53 @@ const CustomSizeModal = ({ show, wellplate, updateWellplate, handleClose }) => {
   const heightChanged = height != wellplate.height
   const canSubmit = widthIsValid && heightIsValid && (widthChanged || heightChanged)
 
+  const handleApply = () => {
+    updateWellplate({ type: 'size', value: { width, height } })
+    handleClose()
+  }
+
   return (
-    <Modal centered show={show} onHide={handleClose}>
-      <Modal.Header closeButton>Wellplate Dimensions</Modal.Header>
-      <Modal.Body>
-        <Row>
-          <Col xs={5}>
-            <Form.Group>
-              <Form.Label>Width</Form.Label>
-              <Form.Control
-                type="text"
-                value={width}
-                className={widthIsValid ? 'size-without-error' : 'invalid-wellplate-size'}
-                onChange={event => setWidth(event.target.value)}
-              />
-              {!widthIsValid && errorMessage('Width')}
-            </Form.Group>
-          </Col>
-          <Col xs={5}>
-            <Form.Group>
-              <Form.Label>Height</Form.Label>
-              <Form.Control
-                type="text"
-                value={height}
-                className={heightIsValid ? 'size-without-error' : 'invalid-wellplate-size'}
-                onChange={event => setHeight(event.target.value)}
-              />
-              {!heightIsValid && errorMessage('Height')}
-            </Form.Group>
-          </Col>
-          <Col xs={2}>
-            <Form.Group>
-              <Form.Label>Size</Form.Label>
-              <Form.Control type="text" disabled value={height * width} />
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={{ span: 1, offset: 10 }}>
-            <Button
-              onClick={() => {
-                updateWellplate({ type: 'size', value: { width: width, height: height } })
-                handleClose()
-              }}
-              disabled={!canSubmit}
-            >
-              Apply
-            </Button>
-          </Col>
-        </Row>
-      </Modal.Body>
-    </Modal>
+    <AppModal
+      show={show}
+      onHide={handleClose}
+      title="Wellplate Dimensions"
+      primaryActionLabel="Apply"
+      onPrimaryAction={handleApply}
+      primaryActionDisabled={!canSubmit}
+    >
+      <Row>
+        <Col xs={5}>
+          <Form.Group>
+            <Form.Label>Width</Form.Label>
+            <Form.Control
+              type="text"
+              value={width}
+              className={widthIsValid ? 'size-without-error' : 'invalid-wellplate-size'}
+              onChange={event => setWidth(event.target.value)}
+            />
+            {!widthIsValid && errorMessage('Width')}
+          </Form.Group>
+        </Col>
+        <Col xs={5}>
+          <Form.Group>
+            <Form.Label>Height</Form.Label>
+            <Form.Control
+              type="text"
+              value={height}
+              className={heightIsValid ? 'size-without-error' : 'invalid-wellplate-size'}
+              onChange={event => setHeight(event.target.value)}
+            />
+            {!heightIsValid && errorMessage('Height')}
+          </Form.Group>
+        </Col>
+        <Col xs={2}>
+          <Form.Group>
+            <Form.Label>Size</Form.Label>
+            <Form.Control type="text" disabled value={height * width} />
+          </Form.Group>
+        </Col>
+      </Row>
+    </AppModal>
   )
 }
 

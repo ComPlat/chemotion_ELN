@@ -742,9 +742,9 @@ module Reporter
         if solvents.present?
           solvents.map do |solvent|
             s = OpenStruct.new(solvent)
-            volume = if s.target_amount_value
-                       " (#{valid_digit(s.amount_ml, digit)}ml)"
-                     elsif s.real_amount_value
+            volume = if s.real_amount_value && s.real_amount_value != 0
+                       " (#{valid_digit(s.real_amount_ml, digit)}ml)"
+                     elsif s.target_amount_value && s.target_amount_value != 0
                        " (#{valid_digit(s.amount_ml, digit)}ml)"
                      end
             "#{s.preferred_label}#{volume}" if s.preferred_label

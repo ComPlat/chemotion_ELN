@@ -7,8 +7,9 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import PropTypes from 'prop-types';
 import { toJS } from 'mobx';
 import {
-  Button, Form, Row, Col, Table, InputGroup, Modal, Card, Container
+  Button, Form, Row, Col, Table, InputGroup, Card, Container
 } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import { detailFooterButton } from 'src/apps/mydb/elements/details/DetailCardButton';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -396,27 +397,17 @@ function VesselTemplateDetails({ vessels }) {
                         <i className="fa fa-minus-square" title="Remove from current collection" />
                       </Button>
                     </div>
-                    <Modal
+                    <AppModal
+                      title="Remove Vessel Instance"
                       show={showConfirm}
                       onHide={closeModal}
-                      centered
+                      closeLabel="Cancel"
+                      primaryActionLabel={deleting ? 'Removing...' : 'Remove'}
+                      primaryActionDisabled={deleting}
+                      onPrimaryAction={() => HandleDeleteInstance(instance.id, vesselTemplateId)}
                     >
-                      <Modal.Body>
-                        Remove selected vessel instance from this collection?
-                      </Modal.Body>
-                      <Modal.Footer>
-                        <Button variant="secondary" onClick={closeModal} disabled={deleting}>
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="danger"
-                          onClick={() => HandleDeleteInstance(instance.id, vesselTemplateId)}
-                          disabled={deleting}
-                        >
-                          {deleting ? 'Removing…' : 'Remove'}
-                        </Button>
-                      </Modal.Footer>
-                    </Modal>
+                      Remove selected vessel instance from this collection?
+                    </AppModal>
                   </td>
                 </tr>
               ))}
