@@ -53,7 +53,8 @@ const post_form_data = (api_endpoint, options) => {
 }
 
 const delete_request = (api_endpoint, options = {}) => {
-  return api_request(api_endpoint, { method: 'DELETE', ...options })
+  const defaults = { method: 'DELETE' }
+  return api_request(api_endpoint, { ...defaults, ...options })
 }
 
 // most low level request, which actually calls fetch
