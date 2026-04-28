@@ -169,7 +169,7 @@ module Chemotion
               error!({
                        error: 'OTP Missing',
                        otp_required: true,
-                       otp_wrong: !params[:otp_attempt].blank?
+                       otp_wrong: params[:otp_attempt].present?,
                      }, 422)
             end
           else
@@ -200,30 +200,28 @@ module Chemotion
               error!({
                        error: 'OTP Missing',
                        otp_required: true,
-                       otp_wrong: !params[:otp_attempt].blank?
+                       otp_wrong: params[:otp_attempt].present?,
                      }, 422)
             end
           else
             error!('2FA is needed', 401)
           end
           result = current_user.tokens.find do |_, token|
-            token["name"] == params[:name] && token["expiration_date"] == params[:expiration_date]
+            token['name'] == params[:name] && token['expiration_date'] == params[:expiration_date]
           end
 
           # Return error if not found
           error!('Token not found', 404) unless result
 
-          key, token = result
+          _, token = result
 
           # Mark as revoked
-          token["revoked"] = true
+          token['revoked'] = true
 
           # Save the updated tokens back to the user
           current_user.save!
         end
-
       end
-
     end
 
     resource :groups do

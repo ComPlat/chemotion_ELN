@@ -5,7 +5,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import PropTypes from 'prop-types';
-import { OtpInput } from '../../components/common/AuthendifactionHelper';
+import { OtpInput } from 'src/components/common/OtpInput';
 
 const tokensShape = PropTypes.arrayOf(
   PropTypes.shape({

@@ -202,6 +202,7 @@ class User < ApplicationRecord
   def check_otp(otp_attempt)
     validate_and_consume_otp!(otp_attempt)
   end
+
   def self.find_first_by_auth_conditions(warden_conditions)
     conditions = warden_conditions.dup
     if (login = conditions.delete(:login))
@@ -474,9 +475,9 @@ class User < ApplicationRecord
   def add_token(name:, token:, expiration_date:)
     self.tokens ||= {}
     self.tokens[token] = {
-      "name" => name,
-      "expiration_date" => expiration_date.to_i,
-      "revoked" => false
+      'name' => name,
+      'expiration_date' => expiration_date.to_i,
+      'revoked' => false,
     }
   end
 
@@ -488,7 +489,8 @@ class User < ApplicationRecord
 
   # Fetch an item by token
   def get_token(token)
-    return nil if tokens.blank?          # handles nil or empty
+    return nil if tokens.blank? # handles nil or empty
+
     tokens[token]
   end
 
@@ -546,14 +548,14 @@ class User < ApplicationRecord
 
   def remove_expired_tokens
     time_i = Time.now.to_i
-    tokens&.reject! { |_, item| time_i > item["expiration_date"] }
+    tokens&.reject! { |_, item| time_i > item['expiration_date'] }
   end
 
   def validate_tokens
     return if tokens.blank?
 
     unless tokens.is_a?(Hash)
-      errors.add(:tokens, "must be an object/hash")
+      errors.add(:tokens, 'must be an object/hash')
       return
     end
 
@@ -564,23 +566,20 @@ class User < ApplicationRecord
       end
 
       # Required keys
-      ['name', 'expiration_date', 'revoked'].each do |key|
-        unless item.key?(key)
-          errors.add(:tokens, "item for token #{token} must have key #{key}")
-        end
+      %w[name expiration_date revoked].each do |key|
+        errors.add(:tokens, "item for token #{token} must have key #{key}") unless item.key?(key)
       end
       errors.add(:tokens, "revoked for token #{token} must be a bool") unless [true, false].include?(item['revoked'])
       errors.add(:tokens, "name for token #{token} must be a string") unless item['name']&.is_a?(String)
-      errors.add(:tokens, "expiration_date for token #{token} must be a timestamp (integer)") unless item['expiration_date']&.is_a?(Integer)
-
+      unless item['expiration_date']&.is_a?(Integer)
+        errors.add(:tokens,
+                   "expiration_date for token #{token} must be a timestamp (integer)")
+      end
 
       # Ensure token is string
-      unless token.is_a?(String)
-        errors.add(:tokens, "token key must be a string")
-      end
+      errors.add(:tokens, 'token key must be a string') unless token.is_a?(String)
     end
   end
-
 end
 
 class Person < User
