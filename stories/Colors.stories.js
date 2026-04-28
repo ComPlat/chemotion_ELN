@@ -1,5 +1,7 @@
 import React from 'react';
-import { Title, Subtitle, Canvas, ColorPalette, ColorItem, Markdown, Source } from '@storybook/blocks';
+import {
+  Title, Subtitle, Canvas, ColorPalette, ColorItem, Markdown,
+} from '@storybook/blocks';
 import { getColorValue } from './componentAttributes';
 
 // Base colors array. Color values are fetched dynamically from CSS custom properties.
@@ -170,6 +172,7 @@ export default {
             `}
           </Markdown>
           <Canvas of={Shades} />
+          {/* eslint-disable max-len */}
           <Markdown>
             {`
 We provided utility classes for all shades of surface, text and border colors.
@@ -187,6 +190,7 @@ We provided utility classes for all shades of surface, text and border colors.
 rely on the default colors provided by the component.
             `}
           </Markdown>
+          {/* eslint-enable max-len */}
         </>
       ),
     },
