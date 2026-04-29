@@ -1,181 +1,126 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Wellplate from 'src/models/Wellplate';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 export default class WellplatesFetcher {
-  static fetchById(id) {
-    const promise = fetch(`/api/v1/wellplates/${id}.json`, {
-      credentials: 'same-origin'
-    })
-      .then((response) => response.json()).then((json) => {
-        const rWellplate = new Wellplate(json.wellplate);
-        rWellplate.attachments = json.attachments;
-        // eslint-disable-next-line no-underscore-dangle
-        rWellplate._checksum = rWellplate.checksum();
-        if (json.error) {
-          return new Wellplate({ id: `${id}:error:Wellplate ${id} is not accessible!`, wells: [], is_new: true });
-        }
-        return rWellplate;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
-  }
-
   static fetchByCollectionId(id, queryParams = {}) {
     return BaseFetcher.fetchByCollectionId(id, queryParams, 'wellplates', Wellplate);
   }
 
-  static bulkCreateWellplates(params) {
-    const promise = fetch('/api/v1/wellplates/bulk', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise;
+  static fetchById(id) {
+    return ApiClient.get_json(`/api/v1/wellplates/${id}`)
+      .then((json) => {
+        const wellplate = new Wellplate(json.wellplate);
+        wellplate.attachments = json.attachments;
+        // eslint-disable-next-line no-underscore-dangle
+        wellplate._checksum = wellplate.checksum();
+        if (json.error) {
+          return new Wellplate({
+            id: `${id}:error:Wellplate ${id} is not accessible!`,
+            wells: [],
+            is_new: true,
+          });
+        }
+        return wellplate;
+      });
   }
 
-  static update(wellplate) {
-    const newFiles = (wellplate.attachments || []).filter((a) => a.is_new && !a.is_deleted);
-    const delFiles = (wellplate.attachments || []).filter((a) => !a.is_new && a.is_deleted);
-
-    const promise = () => fetch(`/api/v1/wellplates/${wellplate.id}`, {
-      credentials: 'same-origin',
-      method: 'put',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(wellplate.serialize())
-    }).then((response) => response.json()).then((json) => {
-      if (newFiles.length <= 0 && delFiles.length <= 0) {
-        return;
-      }
-      return AttachmentFetcher.updateAttachables(newFiles, 'Wellplate', json.wellplate.id, delFiles)();
-    })
-      .then(() => BaseFetcher.updateAnnotations(wellplate))
-      .then(() => WellplatesFetcher.fetchById(wellplate.id))
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container).then(() => promise());
+  static bulkCreateWellplates(params) {
+    return ApiClient.post_json('/api/v1/wellplates/bulk', { body: params });
   }
 
   static create(wellplate) {
     const files = (wellplate.attachments || []).filter((a) => a.is_new && !a.is_deleted);
+    const body = JSON.stringify(wellplate.serialize());
 
-    const promise = () => fetch('/api/v1/wellplates/', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(wellplate.serialize())
-    })
-      .then((response) => response.json())
+    const promise = () => ApiClient.post_json('/api/v1/wellplates/', { body })
       .then((json) => {
         if (files.length <= 0) {
           return new Wellplate(json.wellplate);
         }
         return AttachmentFetcher.updateAttachables(files, 'Wellplate', json.wellplate.id, [])()
           .then(() => new Wellplate(json.wellplate));
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
       });
 
     return AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container).then(() => promise());
   }
 
+  static update(wellplate) {
+    const newFiles = (wellplate.attachments || []).filter((a) => a.is_new && !a.is_deleted);
+    const delFiles = (wellplate.attachments || []).filter((a) => !a.is_new && a.is_deleted);
+    const body = JSON.stringify(wellplate.serialize());
+
+    const promise = () => ApiClient.put_json(`/api/v1/wellplates/${wellplate.id}`, { body })
+      .then((json) => new Wellplate(json.wellplate));
+
+    const tasks = [];
+    tasks.push(AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container));
+
+    if (newFiles.length > 0 || delFiles.length > 0) {
+      tasks.push(AttachmentFetcher.updateAttachables(newFiles, 'Wellplate', wellplate.id, delFiles)());
+    }
+    return Promise.all(tasks)
+      .then(() => BaseFetcher.updateAnnotations(wellplate))
+      .then(() => promise());
+  }
+
   static fetchWellplatesByUIState(params) {
-    return fetch('/api/v1/wellplates/ui_state/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
+    const body = JSON.stringify({
+      ui_state: {
+        all: params.wellplate.all,
+        included_ids: params.wellplate.included_ids,
+        excluded_ids: params.wellplate.excluded_ids,
+        collection_id: params.wellplate.collection_id,
       },
-      body: JSON.stringify({
-        ui_state: {
-          all: params.wellplate.all,
-          included_ids: params.wellplate.included_ids,
-          excluded_ids: params.wellplate.excluded_ids,
-          collection_id: params.wellplate.collection_id
-        }
-      })
-    }).then((response) => response.json()).then((json) => json.wellplates.map((w) => new Wellplate(w))).catch((errorMessage) => {
-      console.log(errorMessage);
     });
+
+    return ApiClient.post_json('/api/v1/wellplates/ui_state/', { body })
+      .then((json) => json.wellplates.map((w) => new Wellplate(w)));
   }
 
   static splitAsSubwellplates(params) {
-    const promise = fetch('/api/v1/wellplates/subwellplates/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
+    const body = JSON.stringify({
+      ui_state: {
+        wellplate: {
+          all: params.wellplate.checkedAll,
+          included_ids: params.wellplate.checkedIds,
+          excluded_ids: params.wellplate.uncheckedIds,
+        },
+        currentCollectionId: params.currentCollection.id,
       },
-      body: JSON.stringify({
-        ui_state: {
-          wellplate: {
-            all: params.wellplate.checkedAll,
-            included_ids: params.wellplate.checkedIds,
-            excluded_ids: params.wellplate.uncheckedIds
-          },
-          currentCollectionId: params.currentCollection.id
-        }
-      })
-    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
     });
 
-    return promise;
+    return ApiClient.post_json('/api/v1/wellplates/subwellplates/', { body });
   }
 
   static importWellplateSpreadsheet(wellplateId, attachmentId) {
-    const promise = fetch(`/api/v1/wellplates/import_spreadsheet/${wellplateId}`, {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        wellplate_id: wellplateId,
-        attachment_id: attachmentId
-      })
-    }).then((response) => response.json())
+    const body = JSON.stringify({
+      wellplate_id: wellplateId,
+      attachment_id: attachmentId,
+    });
+
+    return ApiClient.put_json(`/api/v1/wellplates/import_spreadsheet/${wellplateId}`, { body })
       .then((json) => {
         if (json.error) {
           let msg = 'Import to wellplate failed: ';
           msg += json.error;
           NotificationActions.add({
             message: msg,
-            level: 'error'
+            level: 'error',
           });
           return json;
         }
         NotificationActions.add({
           message: 'Import successful.',
-          level: 'success'
+          level: 'success',
         });
-        const rWellplate = new Wellplate(json.wellplate);
-        rWellplate.attachments = json.attachments;
+        const wellplate = new Wellplate(json.wellplate);
+        wellplate.attachments = json.attachments;
         // eslint-disable-next-line no-underscore-dangle
-        rWellplate._checksum = rWellplate.checksum();
-        return rWellplate;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
+        wellplate._checksum = wellplate.checksum();
+        return wellplate;
       });
-    return promise;
   }
 }
