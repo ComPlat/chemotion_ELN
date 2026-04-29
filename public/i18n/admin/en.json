@@ -62,7 +62,14 @@
     "devices-edit" : "Edit device",
     "devices-show_dev_usr_grp" : "Show device users and groups",
     "devices-sftp_test" : "test data collector connection",
+    "devices-properties" : "Properties",
+    "devices-users_groups" : "Users & Groups",
+    "devices-data_collector" : "Data Collector",
+    "devices-novnc_settings" : "NoVNC Settings",
+    "devices-metadata" : "Metadata",
     "actions" : "Actions",
     "cancel" : "Cancel",
-    "name" : "Name"
+    "save" : "Save",
+    "name" : "Name",
+    "edit" : "Edit"
 }

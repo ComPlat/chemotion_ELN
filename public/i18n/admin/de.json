@@ -58,6 +58,13 @@
     "devices-edit" : "Gerät bearbeiten",
     "devices-show_dev_usr_grp" : "Gerätebenutzer und Gruppen anzeigen",
     "devices-sftp_test" : "Test der Verbindung zum Datensammler",
+    "devices-properties" : "Eigenschaften",
+    "devices-users_groups" : "Benutzer & Gruppen",
+    "devices-data_collector" : "Datensammler",
+    "devices-novnc_settings" : "NoVNC Einstellungen",
+    "devices-metadata" : "Metadaten",
     "actions" : "Aktionen",
-    "cancel" : "Abbrechen"
+    "cancel" : "Abbrechen",
+    "save" : "Speichern",
+    "edit" : "Bearbeite"
 }
