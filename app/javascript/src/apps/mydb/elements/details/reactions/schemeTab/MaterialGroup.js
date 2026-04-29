@@ -200,13 +200,20 @@ function GeneralMaterialGroup({
         });
     };
 
+    const filterReagents = (option, inputValue) => {
+      if (!inputValue) return true;
+      const normalizedInput = inputValue.replace(/\s+/g, '');
+      const normalizedLabel = option.label.replace(/\s+/g, '');
+      return normalizedLabel.toLowerCase().includes(normalizedInput.toLowerCase());
+    };
+
     reagentDd = (
       <Select
         isDisabled={!permitOn(reaction)}
-        value={null}
         options={reagentList}
         placeholder="Add"
         onChange={createReagentForReaction}
+        filterOption={filterReagents}
         size="xsm"
         styles={{
           menu: (base) => ({
@@ -388,6 +395,13 @@ function SolventsMaterialGroup({
     }
   }), defaultMultiSolventsSmilesOptions);
 
+  const filterSolvents = (option, inputValue) => {
+    if (!inputValue) return true;
+    const normalizedInput = inputValue.replace(/\s+/g, '');
+    const normalizedLabel = option.label.replace(/\s+/g, '');
+    return normalizedLabel.toLowerCase().includes(normalizedInput.toLowerCase());
+  };
+
   return (
     <ReorderableMaterialContainer
       materials={materials}
@@ -416,11 +430,11 @@ function SolventsMaterialGroup({
                 {addSampleButton}
                 {groupHeaders.group}
                 <Select
-                  value={null}
                   isDisabled={!permitOn(reaction)}
                   options={solventOptions}
                   placeholder="Add"
                   onChange={createDefaultSolventsForReaction}
+                  filterOption={filterSolvents}
                   size="xsm"
                 />
               </div>
