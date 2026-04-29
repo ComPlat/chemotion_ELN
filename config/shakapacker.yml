@@ -92,7 +92,10 @@ development:
     # live_reload: true
     client:
       # Should we show a full-screen overlay in the browser when there are compiler errors or warnings?
-      overlay: true
+      overlay: 
+        errors: true
+        warnings: false
+        runtimeErrors: false
       # May also be a string
       webSocketURL: 'ws://localhost:3035/ws'
         # hostname: 'localhost'
