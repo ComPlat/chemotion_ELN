@@ -4,7 +4,7 @@ module Usecases
   module Public
     class BuildToken
       def self.execute!(params, name = nil, user = nil)
-        name ||= "nameless #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
+        name ||= "nameless #{Time.current.strftime('%Y-%m-%d %H:%M:%S')}"
         if user.nil?
           user = User.where(name_abbreviation: params[:username]).or(User.where(email: params[:username])).take
           return if user.blank?
@@ -18,16 +18,20 @@ module Usecases
           expires_at = 6.months.from_now
         end
 
+        token_id = SecureRandom.uuid
+
         payload = {
+          token_id: token_id,
           first_name: user.first_name,
           user_id: user.id,
           created: Time.current.to_s,
-          last_name: user.last_name
+          last_name: user.last_name,
         }
 
         token = JsonWebToken.encode(payload, expires_at.to_i)
-        user.add_token(name: name, token: token, expiration_date: expires_at)
+        user.add_token(name: name, token_id: token_id, expiration_date: expires_at)
         return nil unless user.save
+
         token
       end
     end

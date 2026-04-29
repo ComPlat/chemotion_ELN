@@ -472,9 +472,9 @@ class User < ApplicationRecord
   end
 
   # Add a new token
-  def add_token(name:, token:, expiration_date:)
+  def add_token(name:, token_id:, expiration_date:)
     self.tokens ||= {}
-    self.tokens[token] = {
+    self.tokens[token_id] = {
       'name' => name,
       'expiration_date' => expiration_date.to_i,
       'revoked' => false,
@@ -488,10 +488,10 @@ class User < ApplicationRecord
   end
 
   # Fetch an item by token
-  def get_token(token)
+  def get_token(token_id)
     return nil if tokens.blank? # handles nil or empty
 
-    tokens[token]
+    tokens[token_id]
   end
 
   # Fetch an item by token

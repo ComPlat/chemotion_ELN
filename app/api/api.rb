@@ -39,8 +39,9 @@ class API < Grape::API
       user_id = decoded_token[:user_id]
 
       user = User.find(user_id)
-      token = user.get_token(current_token)
+      token = user.get_token(decoded_token[:token_id])
       return nil if token && token['revoked']
+
       user
     rescue StandardError
       nil
