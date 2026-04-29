@@ -33,9 +33,8 @@ export default class WellplatesFetcher {
 
   static create(wellplate) {
     const files = (wellplate.attachments || []).filter((a) => a.is_new && !a.is_deleted);
-    const body = JSON.stringify(wellplate.serialize());
 
-    const promise = () => ApiClient.post_json('/api/v1/wellplates/', { body })
+    const promise = () => ApiClient.post_json('/api/v1/wellplates/', { body: wellplate.serialize() })
       .then((json) => {
         if (files.length <= 0) {
           return new Wellplate(json.wellplate);
@@ -50,9 +49,8 @@ export default class WellplatesFetcher {
   static update(wellplate) {
     const newFiles = (wellplate.attachments || []).filter((a) => a.is_new && !a.is_deleted);
     const delFiles = (wellplate.attachments || []).filter((a) => !a.is_new && a.is_deleted);
-    const body = JSON.stringify(wellplate.serialize());
 
-    const promise = () => ApiClient.put_json(`/api/v1/wellplates/${wellplate.id}`, { body })
+    const promise = () => ApiClient.put_json(`/api/v1/wellplates/${wellplate.id}`, { body: wellplate.serialize() })
       .then((json) => new Wellplate(json.wellplate));
 
     const tasks = [];
@@ -67,21 +65,21 @@ export default class WellplatesFetcher {
   }
 
   static fetchWellplatesByUIState(params) {
-    const body = JSON.stringify({
+    const body = {
       ui_state: {
         all: params.wellplate.all,
         included_ids: params.wellplate.included_ids,
         excluded_ids: params.wellplate.excluded_ids,
         collection_id: params.wellplate.collection_id,
       },
-    });
+    };
 
     return ApiClient.post_json('/api/v1/wellplates/ui_state/', { body })
       .then((json) => json.wellplates.map((w) => new Wellplate(w)));
   }
 
   static splitAsSubwellplates(params) {
-    const body = JSON.stringify({
+    const body = {
       ui_state: {
         wellplate: {
           all: params.wellplate.checkedAll,
@@ -90,16 +88,16 @@ export default class WellplatesFetcher {
         },
         currentCollectionId: params.currentCollection.id,
       },
-    });
+    };
 
     return ApiClient.post_json('/api/v1/wellplates/subwellplates/', { body });
   }
 
   static importWellplateSpreadsheet(wellplateId, attachmentId) {
-    const body = JSON.stringify({
+    const body = {
       wellplate_id: wellplateId,
       attachment_id: attachmentId,
-    });
+    };
 
     return ApiClient.put_json(`/api/v1/wellplates/import_spreadsheet/${wellplateId}`, { body })
       .then((json) => {
