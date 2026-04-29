@@ -335,8 +335,8 @@ CloseWithConfirmationOverlay.parameters = {
   docs: {
     description: {
       story: `
-Intercept close requests using \`onRequestClose\` and show a confirmation overlay anchored to
-the clicked close control.
+Intercept close requests using \`onRequestClose\` and show a
+[ConfirmationOverlay](/components-confirmationoverlay--docs) anchored to the clicked close control.
       `,
     },
   },
