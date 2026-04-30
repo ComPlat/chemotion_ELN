@@ -15,7 +15,7 @@ import {
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
   removeObsoleteColumnDefinitions, getInitialGridState, persistRowOrder, setRowOrder,
   setLayout, persistTableLayout, cellDataTypes,
-  getReactionSegments,
+  getReactionSegments, processHeaderForCsvExport
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
@@ -214,6 +214,17 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     </OverlayTrigger>
   );
 
+  const exportTable = () => (
+    <Button
+      size="sm"
+      className="mb-2"
+      onClick={() => gridRef.current.api.exportDataAsCsv({ processHeaderCallback: processHeaderForCsvExport })}
+    >
+      <i className="icon-arrow-up-from-bracket" />
+      Export to CSV
+    </Button>
+  );
+
   /*
   What follows is a series of imperative state updates that keep the "Variations" tab in sync with the "Scheme" tab.
   This pattern isn't nice, but the best I could do according to
@@ -353,7 +364,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     <div>
       <ButtonGroup>
         {addVariation()}
-        <RemoveVariationsModal onRemoveAll={() => setReactionVariations([])} />
+        {exportTable()}
         <ColumnSelection
           selectedColumns={selectedColumns}
           availableColumns={{
@@ -367,6 +378,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           }}
           onApply={applyColumnSelection}
         />
+        <RemoveVariationsModal onRemoveAll={() => setReactionVariations([])} />
       </ButtonGroup>
       <div className="ag-theme-alpine ag-theme-reaction-variations">
         <AgGridReact
