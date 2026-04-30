@@ -661,12 +661,12 @@ function EntrySelectionHeader({
   return (
     <div>
       <div className="d-flex align-items-center w-100">
-        <span
-          className="ag-header-group-cell-label"
+        <Button
+          size="sm"
           onClick={() => handleNameChange(names[(names.indexOf(displayName) + 1) % names.length] ?? displayName)}
         >
           {`${displayName} ${gasType && gasType !== 'off' ? `(${gasType})` : ''}`}
-        </span>
+        </Button>
         <Button
           variant="link"
           className="p-0 ms-1 lh-1"
@@ -718,6 +718,27 @@ function EntrySelectionHeader({
     </div>
   );
 }
+
+EntrySelectionHeader.propTypes = {
+  columnGroup: PropTypes.shape({
+    parent: PropTypes.shape({
+      groupId: PropTypes.string.isRequired,
+    }).isRequired,
+    groupId: PropTypes.string.isRequired,
+    getColGroupDef: PropTypes.func.isRequired,
+  }).isRequired,
+  names: PropTypes.arrayOf(PropTypes.string),
+  gasType: PropTypes.string,
+  context: PropTypes.shape({
+    setColumnDefinitions: PropTypes.func.isRequired,
+  }).isRequired,
+  displayName: PropTypes.string.isRequired,
+};
+
+EntrySelectionHeader.defaultProps = {
+  names: [],
+  gasType: '',
+};
 
 function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   const [showModal, setShowModal] = useState(false);
@@ -772,7 +793,8 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
 
   return (
     <>
-      <Button size="sm" variant="primary" onClick={() => setShowModal(true)} className="mb-2">
+      <Button size="sm" onClick={() => setShowModal(true)} className="mb-2">
+        <i className="fa fa-pencil me-1" />
         Select Columns
       </Button>
 
@@ -841,7 +863,6 @@ function RemoveVariationsModal({ onRemoveAll }) {
     <>
       <Button size="sm" variant="danger" onClick={handleShow} className="mb-2">
         <i className="fa fa-trash me-1" />
-        {' '}
         Remove all variations
       </Button>
 
