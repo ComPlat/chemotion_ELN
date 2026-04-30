@@ -28,8 +28,8 @@ function RowToolsCellRenderer({
   const { reactionShortLabel, copyRow, removeRow } = context;
   return (
     <div>
+      <span className="me-1">{getVariationsRowName(reactionShortLabel, row.id)}</span>
       <ButtonGroup>
-        <Button size="xsm" variant="secondary">{getVariationsRowName(reactionShortLabel, row.id)}</Button>
         <Button size="xsm" variant="success" onClick={() => copyRow(row)}>
           <i className="fa fa-clone" />
         </Button>
@@ -672,13 +672,12 @@ function EntrySelectionHeader({
   return (
     <div>
       <div className="d-flex align-items-center w-100">
-        <button
-          type="button"
-          className="ag-header-group-cell-label btn btn-link p-0 text-start text-decoration-none"
+        <Button
+          size="sm"
           onClick={() => handleNameChange(names[(names.indexOf(displayName) + 1) % names.length] ?? displayName)}
         >
           {`${displayName} ${gasType && gasType !== 'off' ? `(${gasType})` : ''}`}
-        </button>
+        </Button>
         <Button
           variant="link"
           className="p-0 ms-1 lh-1"
@@ -746,12 +745,6 @@ EntrySelectionHeader.defaultProps = {
   gasType: '',
 };
 
-function ToolHeader() {
-  return (
-    <span>Tools</span>
-  );
-}
-
 function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   const [showModal, setShowModal] = useState(false);
   const [currentColumns, setCurrentColumns] = useState(selectedColumns);
@@ -786,7 +779,8 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
 
   return (
     <>
-      <Button size="sm" variant="primary" onClick={() => setShowModal(true)} className="mb-2">
+      <Button size="sm" onClick={() => setShowModal(true)} className="mb-2">
+        <i className="fa fa-pencil me-1" />
         Select Columns
       </Button>
 
@@ -834,7 +828,6 @@ function RemoveVariationsModal({ onRemoveAll }) {
     <>
       <Button size="sm" variant="danger" onClick={handleShow} className="mb-2">
         <i className="fa fa-trash me-1" />
-        {' '}
         Remove all variations
       </Button>
 
@@ -916,7 +909,6 @@ export {
   NoteCellRenderer,
   NoteCellEditor,
   MaterialOverlay,
-  ToolHeader,
   ColumnSelection,
   SegmentFormatter,
   SegmentParser,
