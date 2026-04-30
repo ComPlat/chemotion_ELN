@@ -16,19 +16,17 @@ An **Electronic Lab Notebook** for chemists!
 
 ## Acknowledgments
 
-This project has been funded by the **[DFG]**.
-
-[![DFG Logo]][DFG]
-
+<a href="https://www.dfg.de/en/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/DFG-logo-blau.svg/330px-DFG-logo-blau.svg.png" alt="DFG Logo" height="60"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://www.helmholtz.de/en/"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Helmholtz-Gemeinschaft_Logo_2019.svg/330px-Helmholtz-Gemeinschaft_Logo_2019.svg.png" alt="Helmholtz Logo" height="60"></a>
 
 Funded by the [Deutsche Forschungsgemeinschaft (DFG, German Research Foundation)](https://www.dfg.de/) under the [National Research Data Infrastructure – NFDI4Chem](https://nfdi4chem.de/) – Projektnummer **441958208** since 2020.
 
+Funded by the [Helmholtz Association](https://www.helmholtz.de/en/) under the program Biointerfaces (BIF-TM); currently supported by the Helmholtz program Information (until 2027).
 
 ---
 
 ## License
 
-**Copyright © `2015` - `2023` [Nicole Jung]** <br>
+**Copyright © `2015 - 2026` [Nicole Jung]** <br>
 of the **[Karlsruhe Institute of Technology]**.
 
 > This program is free software:
@@ -57,8 +55,6 @@ of the **[Karlsruhe Institute of Technology]**.
 [Documentation]: https://www.chemotion.net/docs/eln
 [Changelog]: CHANGELOG.md
 
-[DFG]: https://www.dfg.de/en/
-[DFG Logo]: https://chemotion.net/img/logos/DFG_logo.png
 
 [Nicole Jung]: mailto:nicole.jung@kit.edu
 [Karlsruhe Institute of Technology]: https://www.kit.edu/english/
