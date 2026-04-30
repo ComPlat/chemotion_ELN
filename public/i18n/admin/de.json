@@ -62,9 +62,5 @@
     "devices-users_groups" : "Benutzer & Gruppen",
     "devices-data_collector" : "Datensammler",
     "devices-novnc_settings" : "NoVNC Einstellungen",
-    "devices-metadata" : "Metadaten",
-    "actions" : "Aktionen",
-    "cancel" : "Abbrechen",
-    "save" : "Speichern",
-    "edit" : "Bearbeite"
+    "devices-metadata" : "Metadaten"
 }

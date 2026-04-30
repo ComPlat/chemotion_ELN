@@ -66,10 +66,5 @@
     "devices-users_groups" : "Users & Groups",
     "devices-data_collector" : "Data Collector",
     "devices-novnc_settings" : "NoVNC Settings",
-    "devices-metadata" : "Metadata",
-    "actions" : "Actions",
-    "cancel" : "Cancel",
-    "save" : "Save",
-    "name" : "Name",
-    "edit" : "Edit"
+    "devices-metadata" : "Metadata"
 }
