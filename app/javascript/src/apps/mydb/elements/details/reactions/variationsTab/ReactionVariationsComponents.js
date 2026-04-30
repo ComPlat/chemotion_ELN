@@ -672,13 +672,12 @@ function EntrySelectionHeader({
   return (
     <div>
       <div className="d-flex align-items-center w-100">
-        <button
-          type="button"
-          className="ag-header-group-cell-label btn btn-link p-0 text-start text-decoration-none"
+        <Button
+          size="sm"
           onClick={() => handleNameChange(names[(names.indexOf(displayName) + 1) % names.length] ?? displayName)}
         >
           {`${displayName} ${gasType && gasType !== 'off' ? `(${gasType})` : ''}`}
-        </button>
+        </Button>
         <Button
           variant="link"
           className="p-0 ms-1 lh-1"
