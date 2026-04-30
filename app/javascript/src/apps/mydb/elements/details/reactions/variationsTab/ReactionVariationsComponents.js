@@ -28,8 +28,8 @@ function RowToolsCellRenderer({
   const { reactionShortLabel, copyRow, removeRow } = context;
   return (
     <div>
+      <span className="me-1">{getVariationsRowName(reactionShortLabel, row.id)}</span>
       <ButtonGroup>
-        <Button size="xsm" variant="secondary">{getVariationsRowName(reactionShortLabel, row.id)}</Button>
         <Button size="xsm" variant="success" onClick={() => copyRow(row)}>
           <i className="fa fa-clone" />
         </Button>
@@ -745,12 +745,6 @@ EntrySelectionHeader.defaultProps = {
   gasType: '',
 };
 
-function ToolHeader() {
-  return (
-    <span>Tools</span>
-  );
-}
-
 function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   const [showModal, setShowModal] = useState(false);
   const [currentColumns, setCurrentColumns] = useState(selectedColumns);
@@ -915,7 +909,6 @@ export {
   NoteCellRenderer,
   NoteCellEditor,
   MaterialOverlay,
-  ToolHeader,
   ColumnSelection,
   SegmentFormatter,
   SegmentParser,
