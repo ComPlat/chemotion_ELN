@@ -10,7 +10,7 @@ export default class WellplatesFetcher {
   }
 
   static fetchById(id) {
-    return ApiClient.get_json(`/api/v1/wellplates/${id}`)
+    return ApiClient.getJson(`/api/v1/wellplates/${id}`)
       .then((json) => {
         const wellplate = new Wellplate(json.wellplate);
         wellplate.attachments = json.attachments;
@@ -28,13 +28,13 @@ export default class WellplatesFetcher {
   }
 
   static bulkCreateWellplates(params) {
-    return ApiClient.post_json('/api/v1/wellplates/bulk', { body: params });
+    return ApiClient.postJson('/api/v1/wellplates/bulk', { body: params });
   }
 
   static create(wellplate) {
     const files = (wellplate.attachments || []).filter((a) => a.is_new && !a.is_deleted);
 
-    const promise = () => ApiClient.post_json('/api/v1/wellplates/', { body: wellplate.serialize() })
+    const promise = () => ApiClient.postJson('/api/v1/wellplates/', { body: wellplate.serialize() })
       .then((json) => {
         if (files.length <= 0) {
           return new Wellplate(json.wellplate);
@@ -50,7 +50,7 @@ export default class WellplatesFetcher {
     const newFiles = (wellplate.attachments || []).filter((a) => a.is_new && !a.is_deleted);
     const delFiles = (wellplate.attachments || []).filter((a) => !a.is_new && a.is_deleted);
 
-    const promise = () => ApiClient.put_json(`/api/v1/wellplates/${wellplate.id}`, { body: wellplate.serialize() })
+    const promise = () => ApiClient.putJson(`/api/v1/wellplates/${wellplate.id}`, { body: wellplate.serialize() })
       .then((json) => new Wellplate(json.wellplate));
 
     const tasks = [];
@@ -74,7 +74,7 @@ export default class WellplatesFetcher {
       },
     };
 
-    return ApiClient.post_json('/api/v1/wellplates/ui_state/', { body })
+    return ApiClient.postJson('/api/v1/wellplates/ui_state/', { body })
       .then((json) => json.wellplates.map((w) => new Wellplate(w)));
   }
 
@@ -90,7 +90,7 @@ export default class WellplatesFetcher {
       },
     };
 
-    return ApiClient.post_json('/api/v1/wellplates/subwellplates/', { body });
+    return ApiClient.postJson('/api/v1/wellplates/subwellplates/', { body });
   }
 
   static importWellplateSpreadsheet(wellplateId, attachmentId) {
@@ -99,7 +99,7 @@ export default class WellplatesFetcher {
       attachment_id: attachmentId,
     };
 
-    return ApiClient.put_json(`/api/v1/wellplates/import_spreadsheet/${wellplateId}`, { body })
+    return ApiClient.putJson(`/api/v1/wellplates/import_spreadsheet/${wellplateId}`, { body })
       .then((json) => {
         if (json.error) {
           let msg = 'Import to wellplate failed: ';
