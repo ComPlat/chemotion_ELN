@@ -206,9 +206,8 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
         </Tooltip>
           )}
     >
-      <Button size="sm" variant="success" onClick={addRow} className="mb-2">
+      <Button size="sm" onClick={addRow} className="mb-2">
         <i className="fa fa-plus me-1" />
-        {' '}
         Add variation
       </Button>
     </OverlayTrigger>

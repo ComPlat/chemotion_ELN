@@ -786,7 +786,8 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
 
   return (
     <>
-      <Button size="sm" variant="primary" onClick={() => setShowModal(true)} className="mb-2">
+      <Button size="sm" onClick={() => setShowModal(true)} className="mb-2">
+        <i className="fa fa-pencil" />
         Select Columns
       </Button>
 
@@ -834,7 +835,6 @@ function RemoveVariationsModal({ onRemoveAll }) {
     <>
       <Button size="sm" variant="danger" onClick={handleShow} className="mb-2">
         <i className="fa fa-trash me-1" />
-        {' '}
         Remove all variations
       </Button>
 
