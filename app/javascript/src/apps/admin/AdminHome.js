@@ -19,7 +19,6 @@ import ThirdPartyApp from 'src/apps/admin/ThirdPartyApp';
 import { IntlProvider, FormattedMessage } from 'react-intl';
 import I18NFetcher from 'src/fetchers/I18NFetcher';
 
-const LOCALES = ['en', 'de'];
 const DEFAULT_LOCALE = 'en';
 
 class AdminHome extends React.Component {
@@ -28,6 +27,7 @@ class AdminHome extends React.Component {
     this.state = {
       pageIndex: 0,
       locale: DEFAULT_LOCALE,
+      locales: [],
       messages: null,
     };
     this.handleSelect = this.handleSelect.bind(this);
@@ -62,18 +62,23 @@ class AdminHome extends React.Component {
   }
 
   fetchMessages() {
-    const requests = LOCALES.flatMap((locale) => [
-      I18NFetcher.fetchGeneralMessages(locale),
-      I18NFetcher.fetchAdminMessages(locale),
-    ]);
-    Promise.all(requests).then((results) => {
-      const messages = {};
-      LOCALES.forEach((locale, index) => {
-        const general = results[index * 2];
-        const admin = results[index * 2 + 1];
-        messages[locale] = { ...general, ...admin };
+    I18NFetcher.fetchAvailableLocales().then((discovered) => {
+      const locales = (discovered && discovered.length > 0) ? discovered : [DEFAULT_LOCALE];
+      const requests = locales.flatMap((locale) => [
+        I18NFetcher.fetchGeneralMessages(locale),
+        I18NFetcher.fetchAdminMessages(locale),
+      ]);
+      Promise.all(requests).then((results) => {
+        const messages = {};
+        locales.forEach((locale, index) => {
+          const general = results[index * 2];
+          const admin = results[index * 2 + 1];
+          messages[locale] = { ...general, ...admin };
+        });
+        const nextState = { locales, messages };
+        if (!locales.includes(this.state.locale)) nextState.locale = DEFAULT_LOCALE;
+        this.setState(nextState);
       });
-      this.setState({ messages });
     });
   }
 
@@ -97,7 +102,8 @@ class AdminHome extends React.Component {
   }
 
   renderLocaleSwitch() {
-    const { locale } = this.state;
+    const { locale, locales } = this.state;
+    if (locales.length < 2) return null;
     return (
       <div className="d-grid">
         <Dropdown onSelect={this.handleLocaleSelect}>
@@ -105,7 +111,7 @@ class AdminHome extends React.Component {
             {this.getLanguageName(locale)}
           </Dropdown.Toggle>
           <Dropdown.Menu className="w-100">
-            {LOCALES.map((code) => (
+            {locales.map((code) => (
               <Dropdown.Item key={code} eventKey={code} active={code === locale}>
                 {this.getLanguageName(code)}
               </Dropdown.Item>
