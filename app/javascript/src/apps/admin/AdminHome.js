@@ -107,7 +107,7 @@ class AdminHome extends React.Component {
     return (
       <div className="d-grid">
         <Dropdown onSelect={this.handleLocaleSelect}>
-          <Dropdown.Toggle variant="primary" className="w-100">
+          <Dropdown.Toggle variant="primary" className="w-100 text-start">
             {this.getLanguageName(locale)}
           </Dropdown.Toggle>
           <Dropdown.Menu className="w-100">

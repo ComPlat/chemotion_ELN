@@ -6,7 +6,7 @@ module Chemotion
       namespace :i18n do
         desc 'List available UI locales (top-level files in public/i18n/)'
         get :locales do
-          Rails.root.join('public/i18n').glob('*.json').map { |path| path.basename('.json').to_s }.sort
+          Rails.public_path.join('i18n').glob('*.json').map { |path| path.basename('.json').to_s }.sort
         end
       end
     end

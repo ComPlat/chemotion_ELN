@@ -5,5 +5,7 @@
     "cancel": "Abbrechen",
     "save": "Speichern",
     "name": "Name",
-    "edit": "Bearbeite"
+    "edit": "Bearbeite",
+    "delete": "Löschen",
+    "update": "Aktualisieren"
 }

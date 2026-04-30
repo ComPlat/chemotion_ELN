@@ -5,5 +5,8 @@
     "cancel": "Cancel",
     "save": "Save",
     "name": "Name",
-    "edit": "Edit"
+    "edit": "Edit",
+    "delete": "Delete",
+    "update": "Update",
+    "id": "ID"
 }

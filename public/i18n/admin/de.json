@@ -62,5 +62,19 @@
     "devices-users_groups" : "Benutzer & Gruppen",
     "devices-data_collector" : "Datensammler",
     "devices-novnc_settings" : "NoVNC Einstellungen",
-    "devices-metadata" : "Metadaten"
+    "devices-metadata" : "Metadaten",
+    "user_management-deleted_at" : "Gelöscht am",
+    "user_management-delete_user_confirm" : "Sind Sie sicher, dass Sie diesen Benutzer löschen möchten?",
+    "user_management-allocated_space" : "Zugewiesener Speicherplatz (MB)",
+    "user_management-edit_user_account" : "Benutzerkonto bearbeiten",
+    "user_management-filter_active_inactive" : "Aktiv & Inaktiv",
+    "user_management-active" : "Aktiv",
+    "user_management-inactive" : "Inaktiv",
+    "user_management-filter_locked_unlocked" : "Gesperrt & Entsperrt",
+    "user_management-locked" : "Gesperrt",
+    "user_management-unlocked" : "Entsperrt",
+    "user_management-all" : "Alle",
+    "user_management-person" : "Person",
+    "user_management-admin" : "Admin",
+    "user_management-group" : "Gruppe"
 }

@@ -155,8 +155,8 @@ const renderDeletedUsersTable = (deletedUsers) => (
   <Table striped bordered hover className="mt-3">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Deleted at</th>
+        <th><FormattedMessage id="id" /></th>
+        <th><FormattedMessage id="user_management-deleted_at" /></th>
       </tr>
     </thead>
     <tbody>
@@ -791,13 +791,13 @@ class UserManagement extends React.Component {
       <AppModal
         show={this.state.showMsgModal}
         onHide={this.handleMsgClose}
-        title="Send Message"
-        primaryActionLabel="Send"
+        title={intl.formatMessage({ id: 'user_management-send_message' })}
+        primaryActionLabel={intl.formatMessage({ id: 'user_management-send' })}
         onPrimaryAction={() => this.messageSend()}
       >
         <Form>
           <Form.Group controlId="formControlsTextarea">
-            <Form.Label>Message</Form.Label>
+            <Form.Label><FormattedMessage id="user_management-message" /></Form.Label>
             <Form.Control
               as="textarea"
               placeholder={`${intl.formatMessage({ id: 'user_management-message' })}...`}
@@ -831,7 +831,9 @@ class UserManagement extends React.Component {
         onHide={this.handleNewUserClose}
         size="lg"
         title={intl.formatMessage({ id: 'user_management-new_user' })}
-        primaryActionLabel={newUserTab === 'singleUser' ? 'Create user' : 'Create users'}
+        primaryActionLabel={intl.formatMessage({
+          id: newUserTab === 'singleUser' ? 'user_management-create_user' : 'user_management-create_users',
+        })}
         onPrimaryAction={newUserTab === 'singleUser'
           ? () => this.handleCreateNewUser()
           : () => this.handleCreateNewUsersFromFile()}
@@ -948,8 +950,8 @@ class UserManagement extends React.Component {
                   this.type = ref;
                 }}
                 >
-                  <option value="Person">Person</option>
-                  <option value="Admin">Admin</option>
+                  <option value="Person">{intl.formatMessage({ id: 'user_management-person' })}</option>
+                  <option value="Admin">{intl.formatMessage({ id: 'user_management-admin' })}</option>
                 </Form.Select>
               </Form.Group>
             </Form>
@@ -1034,13 +1036,14 @@ class UserManagement extends React.Component {
     const {
       user, showEditUserModal, messageEditUserModal, showDeleteUserConfirm
     } = this.state;
+    const { intl } = this.props;
     const deleteUserTooltip = (
       <Tooltip id="edit-user-delete-tooltip">
         <div className="p2">
-          Are you sure you want to delete this user?
+          <FormattedMessage id="user_management-delete_user_confirm" />
           <ButtonToolbar className="justify-content-end mt-2">
             <Button size="xsm" variant="ghost" onClick={() => this.setState({ showDeleteUserConfirm: false })}>
-              Cancel
+              <FormattedMessage id="cancel" />
             </Button>
             <Button
               size="xsm"
@@ -1050,7 +1053,7 @@ class UserManagement extends React.Component {
                 this.handleDeleteUser(user);
               }}
             >
-              Delete
+              <FormattedMessage id="delete" />
             </Button>
           </ButtonToolbar>
         </div>
@@ -1061,8 +1064,8 @@ class UserManagement extends React.Component {
       <AppModal
         show={showEditUserModal}
         onHide={this.handleEditUserClose}
-        title="Edit user account"
-        primaryActionLabel="Update"
+        title={intl.formatMessage({ id: 'user_management-edit_user_account' })}
+        primaryActionLabel={intl.formatMessage({ id: 'update' })}
         onPrimaryAction={() => this.handleUpdateUser(user)}
         extendedFooter={(
           <OverlayTrigger
@@ -1073,7 +1076,7 @@ class UserManagement extends React.Component {
             onToggle={(nextShow) => this.setState({ showDeleteUserConfirm: nextShow })}
             overlay={deleteUserTooltip}
           >
-            <Button variant="danger">Delete</Button>
+            <Button variant="danger"><FormattedMessage id="delete" /></Button>
           </OverlayTrigger>
         )}
       >
@@ -1148,7 +1151,8 @@ class UserManagement extends React.Component {
           </Form.Group>
           <Form.Group as={Row} className="mb-3 ms-5" controlId="formControlAvail">
             <Form.Label column sm="3" className="fs-6">
-              Allocated Space (MB):
+              <FormattedMessage id="user_management-allocated_space" />
+              :
             </Form.Label>
             <Col sm="7">
               <Form.Control
@@ -1176,9 +1180,9 @@ class UserManagement extends React.Component {
                 }}
                 className="fs-6"
               >
-                <option value="Person">Person</option>
-                <option value="Group">Group</option>
-                <option value="Admin">Admin</option>
+                <option value="Person">{intl.formatMessage({ id: 'user_management-person' })}</option>
+                <option value="Group">{intl.formatMessage({ id: 'user_management-group' })}</option>
+                <option value="Admin">{intl.formatMessage({ id: 'user_management-admin' })}</option>
               </Form.Select>
             </Col>
           </Form.Group>
@@ -1204,8 +1208,8 @@ class UserManagement extends React.Component {
       <AppModal
         show={this.state.showRestoreAccountModal}
         onHide={this.handleRestoreAccountClose}
-        title="Restore account"
-        primaryActionLabel="Restore"
+        title={intl.formatMessage({ id: 'user_management-restore_account' })}
+        primaryActionLabel={intl.formatMessage({ id: 'user_management-restore' })}
         onPrimaryAction={() => this.handleRestoreAccount()}
       >
         <Form className="w-75">
@@ -1234,7 +1238,10 @@ class UserManagement extends React.Component {
           <Form.Group controlId="formControlID">
             <Row className="mb-3">
               <Col column sm={3}>
-                <Form.Label className="fs-6">ID:</Form.Label>
+                <Form.Label className="fs-6">
+                  <FormattedMessage id="id" />
+                  :
+                </Form.Label>
               </Col>
               <Col sm={9}>
                 <Form.Control
@@ -1256,7 +1263,7 @@ class UserManagement extends React.Component {
               <Form.Control
                 type="text"
                 name="nameAbbreviation"
-                placeholder="Please enter the name abbreviation .."
+                placeholder={intl.formatMessage({ id: 'user_management-enter_abbr' })}
                 className="flex-grow-1"
                 ref={(ref) => {
                   this.nameAbbreviation = ref;
@@ -1345,7 +1352,7 @@ class UserManagement extends React.Component {
           <th className="fs-4 py-3"><FormattedMessage id="user_management-type" /></th>
           <th className="fs-4 py-3"><FormattedMessage id="user_management-disk_usage" /></th>
           <th className="fs-4 py-3"><FormattedMessage id="user_management-login_at" /></th>
-          <th className="fs-4 py-3">ID</th>
+          <th className="fs-4 py-3"><FormattedMessage id="id" /></th>
         </tr>
         <tr>
           <th aria-label="Empty header for the '#' column" />
@@ -1356,9 +1363,9 @@ class UserManagement extends React.Component {
                   aria-label="Filter Active-Inactive"
                   onChange={(e) => this.updateDropdownFilter('account_active', e.target.value)}
                 >
-                  <option value="">Active & Inactive</option>
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
+                  <option value="">{intl.formatMessage({ id: 'user_management-filter_active_inactive' })}</option>
+                  <option value="true">{intl.formatMessage({ id: 'user_management-active' })}</option>
+                  <option value="false">{intl.formatMessage({ id: 'user_management-inactive' })}</option>
                 </Form.Select>
               </Col>
               <Col xs={5}>
@@ -1366,9 +1373,9 @@ class UserManagement extends React.Component {
                   aria-label="Filter Locked-Unlocked"
                   onChange={(e) => this.updateDropdownFilter('locked_at', e.target.value)}
                 >
-                  <option value="">Locked & Unlocked</option>
-                  <option value="true">Locked</option>
-                  <option value="false">Unlocked</option>
+                  <option value="">{intl.formatMessage({ id: 'user_management-filter_locked_unlocked' })}</option>
+                  <option value="true">{intl.formatMessage({ id: 'user_management-locked' })}</option>
+                  <option value="false">{intl.formatMessage({ id: 'user_management-unlocked' })}</option>
                 </Form.Select>
               </Col>
             </div>
@@ -1399,9 +1406,9 @@ class UserManagement extends React.Component {
               aria-label="Filter Person-Admin"
               onChange={(e) => this.updateDropdownFilter('type', e.target.value)}
             >
-              <option value="">All</option>
-              <option value="Person">Person</option>
-              <option value="Admin">Admin</option>
+              <option value="">{intl.formatMessage({ id: 'user_management-all' })}</option>
+              <option value="Person">{intl.formatMessage({ id: 'user_management-person' })}</option>
+              <option value="Admin">{intl.formatMessage({ id: 'user_management-admin' })}</option>
             </Form.Select>
           </th>
           <th className="fs-6 py-3" aria-label="Empty header for the 'Disk Usage' column" />
