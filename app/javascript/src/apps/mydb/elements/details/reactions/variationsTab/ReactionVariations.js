@@ -219,7 +219,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       className="mb-2"
       onClick={() => gridRef.current.api.exportDataAsCsv({ processHeaderCallback: processHeaderForCsvExport })}
     >
-      <i className="icon-arrow-up-from-bracket" />
+      <i className="icon-arrow-up-from-bracket me-1" />
       Export to CSV
     </Button>
   );

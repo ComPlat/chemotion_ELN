@@ -786,7 +786,7 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   return (
     <>
       <Button size="sm" onClick={() => setShowModal(true)} className="mb-2">
-        <i className="fa fa-pencil" />
+        <i className="fa fa-pencil me-1" />
         Select Columns
       </Button>
 
