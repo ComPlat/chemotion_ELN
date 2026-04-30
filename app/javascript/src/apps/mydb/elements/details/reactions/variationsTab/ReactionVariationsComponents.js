@@ -703,7 +703,7 @@ function EntrySelectionHeader({
           </thead>
           <tbody>
             {entryColDefs.map((entryColDef) => {
-              const { entry, hide } = entryColDef;
+              const { entry, hide, displayUnit } = entryColDef;
               return (
                 <tr key={entry}>
                   <td className="text-center">
@@ -713,7 +713,10 @@ function EntrySelectionHeader({
                       onChange={() => handleEntrySelection(entry)}
                     />
                   </td>
-                  <td>{getUserFacingEntryName(entry)}</td>
+                  <td>
+                    {getUserFacingEntryName(entry)}
+                    {displayUnit && <span className="ms-1">{`(${displayUnit})`}</span>}
+                  </td>
                 </tr>
               );
             })}
@@ -748,6 +751,7 @@ EntrySelectionHeader.defaultProps = {
 function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   const [showModal, setShowModal] = useState(false);
   const [currentColumns, setCurrentColumns] = useState(selectedColumns);
+  const [pendingDeselection, setPendingDeselection] = useState(null);
 
   useEffect(() => {
     // Remove currently selected columns that are no longer available.
@@ -769,9 +773,28 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   };
 
   const handleSelectChange = (key) => (selectedOptions) => {
-    const updatedCurrentColumns = { ...currentColumns };
-    updatedCurrentColumns[key] = selectedOptions ? selectedOptions.map((option) => option.value) : [];
-    setCurrentColumns(updatedCurrentColumns);
+    const newValues = selectedOptions ? selectedOptions.map((option) => option.value) : [];
+    const currentValues = currentColumns[key] || [];
+    const deselectedLabels = currentValues
+      .filter((id) => !newValues.includes(id))
+      .map((id) => availableColumns[key][id]);
+
+    if (deselectedLabels.length > 0) {
+      setPendingDeselection({ key, newValues, deselectedLabels: deselectedLabels.join(', ') });
+    } else {
+      setCurrentColumns((prev) => ({ ...prev, [key]: newValues }));
+    }
+  };
+
+  const handleConfirmDeselection = () => {
+    if (!pendingDeselection) return;
+    const { key, newValues } = pendingDeselection;
+    setCurrentColumns((prev) => ({ ...prev, [key]: newValues }));
+    setPendingDeselection(null);
+  };
+
+  const handleCancelDeselection = () => {
+    setPendingDeselection(null);
   };
 
   const splitCamelCase = (str) => str.replace(/([a-z])([A-Z])/g, '$1 $2');
@@ -803,6 +826,26 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
             />
           </div>
         ))}
+      </AppModal>
+
+      <AppModal
+        show={pendingDeselection !== null}
+        onHide={handleCancelDeselection}
+        animation={false}
+        title="Confirm De-selection"
+        closeLabel={`Keep ${pendingDeselection?.deselectedLabels || ''}`}
+        extendedFooter={(
+          <Button variant="danger" onClick={handleConfirmDeselection}>
+            Remove
+            {' '}
+            {pendingDeselection?.deselectedLabels}
+          </Button>
+        )}
+      >
+        Are you sure you want to de-select
+        {' '}
+        {pendingDeselection?.deselectedLabels}
+        ? De-selection results in the loss of data.
       </AppModal>
     </>
   );
