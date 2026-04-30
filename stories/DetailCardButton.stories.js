@@ -60,7 +60,7 @@ function renderStory(args) {
 }
 
 export default {
-  title: 'Components/DetailCardButton',
+  title: 'Molecules/DetailCardButton',
   component: DetailCardButton,
   tags: ['autodocs'],
   parameters: {

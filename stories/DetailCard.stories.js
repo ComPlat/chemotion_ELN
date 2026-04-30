@@ -173,7 +173,7 @@ function renderStory(args) {
 }
 
 export default {
-  title: 'Components/DetailCard',
+  title: 'Organisms/DetailCard',
   component: DetailCard,
   tags: ['autodocs'],
   parameters: {
@@ -190,7 +190,7 @@ It provides:
 - an optional footer toolbar
 
 Header and footer actions follow a consistent compact/full pattern. Use the dedicated
-[DetailCardButton helpers](/components-detailcardbutton--docs) to render the same action
+[DetailCardButton helpers](?path=/docs/molecules-detailcardbutton--docs) to render the same action
 in both places without duplicating markup.
         `,
       },

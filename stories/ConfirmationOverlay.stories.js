@@ -90,7 +90,7 @@ function renderStory(args) {
 }
 
 export default {
-  title: 'Components/ConfirmationOverlay',
+  title: 'Organisms/ConfirmationOverlay',
   component: ConfirmationOverlay,
   tags: ['autodocs'],
   parameters: {

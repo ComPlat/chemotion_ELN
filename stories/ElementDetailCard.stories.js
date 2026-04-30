@@ -269,7 +269,7 @@ function renderStory(args) {
 }
 
 export default {
-  title: 'Components/ElementDetailCard',
+  title: 'Organisms/ElementDetailCard',
   component: ElementDetailCard,
   tags: ['autodocs'],
   parameters: {

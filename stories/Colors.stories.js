@@ -70,7 +70,7 @@ export function Shades() {
 }
 
 export default {
-  title: 'Design Principles/Colors',
+  title: 'Subatomic/Colors',
   tags: ['autodocs'],
   parameters: {
     options: {

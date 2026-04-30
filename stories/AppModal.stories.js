@@ -137,7 +137,7 @@ AppModalDemo.defaultProps = {
 };
 
 export default {
-  title: 'Components/AppModal',
+  title: 'Organisms/AppModal',
   component: AppModal,
   tags: ['autodocs'],
   parameters: {
@@ -156,7 +156,7 @@ AppModal helps to establish a consistent footer button pattern:
 - It provides an extra slot for additional actions and places them between cancel and primary.
   Please choose the secondary variant for buttons in this slot to visually separate them from the main action.
 
-More info about button variants: [Button variants](/components-button--docs#button-variants-5).
+More info about button variants: [Button variants](?path=/docs/atoms-button--docs#button-variants-5).
         `,
       },
     },
@@ -336,7 +336,7 @@ CloseWithConfirmationOverlay.parameters = {
     description: {
       story: `
 Intercept close requests using \`onRequestClose\` and show a
-[ConfirmationOverlay](/components-confirmationoverlay--docs) anchored to the clicked close control.
+[ConfirmationOverlay](?path=/docs/organisms-confirmationoverlay--docs) anchored to the clicked close control.
       `,
     },
   },
