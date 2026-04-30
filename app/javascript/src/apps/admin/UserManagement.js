@@ -848,7 +848,7 @@ class UserManagement extends React.Component {
                 controlId="formControlEmail"
               >
                 <Form.Label>
-                  <FormattedMessage id="user_management-email" />
+                  <FormattedMessage id="email" />
                   :
                 </Form.Label>
                 <Form.Control
@@ -1083,7 +1083,7 @@ class UserManagement extends React.Component {
         <Form>
           <Form.Group as={Row} className="mb-3 ms-5 mt-2" controlId="formControlEmail">
             <Form.Label column sm="3" className="fs-6">
-              <FormattedMessage id="user_management-email" />
+              <FormattedMessage id="email" />
               :
             </Form.Label>
             <Col sm="7">
@@ -1348,7 +1348,7 @@ class UserManagement extends React.Component {
           <th className="fs-4 py-3"><FormattedMessage id="actions" /></th>
           <th className="fs-4 py-3"><FormattedMessage id="name" /></th>
           <th className="fs-4 py-3"><FormattedMessage id="user_management-abbr" /></th>
-          <th className="fs-4 py-3"><FormattedMessage id="user_management-email" /></th>
+          <th className="fs-4 py-3"><FormattedMessage id="email" /></th>
           <th className="fs-4 py-3"><FormattedMessage id="user_management-type" /></th>
           <th className="fs-4 py-3"><FormattedMessage id="user_management-disk_usage" /></th>
           <th className="fs-4 py-3"><FormattedMessage id="user_management-login_at" /></th>
@@ -1397,7 +1397,7 @@ class UserManagement extends React.Component {
           <th className="fs-6 py-3">
             <Form.Control
               type="text"
-              placeholder={intl.formatMessage({ id: 'user_management-email' })}
+              placeholder={intl.formatMessage({ id: 'email' })}
               onChange={(e) => this.updateFilter('email', e.target.value)}
             />
           </th>

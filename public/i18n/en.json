@@ -8,5 +8,11 @@
     "edit": "Edit",
     "delete": "Delete",
     "update": "Update",
-    "id": "ID"
+    "id": "ID",
+    "email": "Email",
+    "user": "User",
+    "none": "None",
+    "type_to_search": "Type to search",
+    "select_placeholder": "Select ...",
+    "copy_to_clipboard": "copy to clipboard"
 }

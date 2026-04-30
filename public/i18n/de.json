@@ -7,5 +7,11 @@
     "name": "Name",
     "edit": "Bearbeite",
     "delete": "Löschen",
-    "update": "Aktualisieren"
+    "update": "Aktualisieren",
+    "email": "E-Mail",
+    "user": "Benutzer",
+    "none": "Keine",
+    "type_to_search": "Tippen zum Suchen",
+    "select_placeholder": "Auswählen ...",
+    "copy_to_clipboard": "in die Zwischenablage kopieren"
 }

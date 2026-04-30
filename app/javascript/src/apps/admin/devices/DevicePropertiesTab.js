@@ -1,19 +1,26 @@
 import React, { useContext } from 'react';
 import { Form } from 'react-bootstrap';
+import { useIntl, FormattedMessage } from 'react-intl';
 import { Select } from 'src/components/common/Select';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 function DevicePropertiesTab() {
+  const intl = useIntl();
   const devicesStore = useContext(StoreContext).devices;
   const { device } = devicesStore;
 
   const verificationOptions = [
-    { label: 'None', value: 'none' },
-    { label: 'Verified device', value: 'verified_device' },
-    { label: 'Unverified sub-version', value: 'unverified_sub_version' },
-    { label: 'Verified sub-version', value: 'verified_sub_version' },
+    { label: intl.formatMessage({ id: 'none' }), value: 'none' },
+    { label: intl.formatMessage({ id: 'devices-verification_verified_device' }), value: 'verified_device' },
+    {
+      label: intl.formatMessage(
+        { id: 'devices-verification_unverified_sub_version' }
+      ),
+      value: 'unverified_sub_version'
+    },
+    { label: intl.formatMessage({ id: 'devices-verification_verified_sub_version' }), value: 'verified_sub_version' },
   ];
   const verificationStatusValue = device
     ? verificationOptions.filter((f) => f.value === device.verification_status) : '';
@@ -26,7 +33,11 @@ function DevicePropertiesTab() {
   return (
     <Form>
       <Form.Group className="mb-4">
-        <Form.Label>Name *</Form.Label>
+        <Form.Label>
+          <FormattedMessage id="name" />
+          {' '}
+          *
+        </Form.Label>
         <Form.Control
           type="text"
           value={device.name}
@@ -36,7 +47,11 @@ function DevicePropertiesTab() {
       </Form.Group>
 
       <Form.Group className="mb-4">
-        <Form.Label>Name abbreviation *</Form.Label>
+        <Form.Label>
+          <FormattedMessage id="devices-name_abbreviation" />
+          {' '}
+          *
+        </Form.Label>
         <Form.Control
           type="text"
           value={device.name_abbreviation}
@@ -46,7 +61,7 @@ function DevicePropertiesTab() {
       </Form.Group>
 
       <Form.Group className="mb-4">
-        <Form.Label>Email</Form.Label>
+        <Form.Label><FormattedMessage id="email" /></Form.Label>
         <Form.Control
           type="text"
           value={device.email}
@@ -56,7 +71,7 @@ function DevicePropertiesTab() {
       </Form.Group>
 
       <Form.Group className="mb-4">
-        <Form.Label>Serial number</Form.Label>
+        <Form.Label><FormattedMessage id="devices-serial_number" /></Form.Label>
         <Form.Control
           type="text"
           value={device.serial_number ? device.serial_number : ''}
@@ -65,7 +80,7 @@ function DevicePropertiesTab() {
       </Form.Group>
 
       <Form.Group className="mb-4">
-        <Form.Label>Verification Status</Form.Label>
+        <Form.Label><FormattedMessage id="devices-verification_status" /></Form.Label>
         <Select
           isClearable
           value={verificationStatusValue}
@@ -79,7 +94,7 @@ function DevicePropertiesTab() {
           id="device_active"
           type="checkbox"
           checked={device.account_active}
-          label="Active"
+          label={intl.formatMessage({ id: 'devices-active' })}
           onChange={(event) => onChange('account_active', event.target.checked)}
         />
       </Form.Group>
@@ -89,7 +104,7 @@ function DevicePropertiesTab() {
           id="device_visible"
           type="checkbox"
           checked={device.visibility}
-          label="Visibility"
+          label={intl.formatMessage({ id: 'devices-visibility' })}
           onChange={(event) => onChange('visibility', event.target.checked)}
         />
       </Form.Group>
