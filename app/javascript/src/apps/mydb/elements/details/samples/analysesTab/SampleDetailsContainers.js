@@ -106,7 +106,7 @@ export default class SampleDetailsContainers extends Component {
     );
   }
 
-  handleContainerChanged = (updatedContainer) => {
+  handleContainerChanged = (updatedContainer, cb) => {
     const { sample, handleSampleChanged } = this.props;
   
     const replaceRecursively = (node) => {
@@ -124,7 +124,7 @@ export default class SampleDetailsContainers extends Component {
     const root = sample.container;
     replaceRecursively(root);
   
-    handleSampleChanged(sample);
+    handleSampleChanged(sample, cb);
   };
   
 
