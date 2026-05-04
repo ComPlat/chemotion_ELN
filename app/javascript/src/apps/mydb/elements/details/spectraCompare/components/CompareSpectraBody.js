@@ -116,6 +116,11 @@ const renderFailureBanner = (failures) => {
   );
 };
 
+const contentOpsFromContainer = (container) => {
+  const ops = container?.extended_metadata?.content?.ops;
+  return Array.isArray(ops) ? ops : [];
+};
+
 const CompareSpectraBody = ({
   status,
   spectra,
@@ -134,6 +139,7 @@ const CompareSpectraBody = ({
   onWriteMpy,
   onWriteClosePeak,
   onWriteCloseMpy,
+  onDescriptionChanged,
 }) => {
   const entityFileNames = useMemo(() => (
     container?.comparable_info?.list_attachments?.map((att) => att.filename) || null
@@ -173,6 +179,9 @@ const CompareSpectraBody = ({
           multiEntities={multiEntities}
           entityFileNames={entityFileNames}
           operations={operations}
+          descriptions={contentOpsFromContainer(container)}
+          canChangeDescription={canUpdate}
+          onDescriptionChanged={onDescriptionChanged}
         />
       </div>
     </div>
@@ -197,6 +206,7 @@ CompareSpectraBody.propTypes = {
   onWriteMpy: PropTypes.func,
   onWriteClosePeak: PropTypes.func,
   onWriteCloseMpy: PropTypes.func,
+  onDescriptionChanged: PropTypes.func,
 };
 
 CompareSpectraBody.defaultProps = {
@@ -215,6 +225,7 @@ CompareSpectraBody.defaultProps = {
   onWriteMpy: undefined,
   onWriteClosePeak: undefined,
   onWriteCloseMpy: undefined,
+  onDescriptionChanged: undefined,
 };
 
 export { formatPksOps, formatMpyOps, layoutsWillShowMulti };
