@@ -99,7 +99,7 @@ AppModal.propTypes = {
   /** Disabled state for the standardized primary action button */
   primaryActionDisabled: PropTypes.bool,
   /** Label for the built-in close button */
-  closeLabel: PropTypes.string,
+  closeLabel: PropTypes.node,
   /** Extra CSS class added to the root Modal element alongside app-modal */
   className: PropTypes.string,
   /** Extra CSS class added to Modal.Body */

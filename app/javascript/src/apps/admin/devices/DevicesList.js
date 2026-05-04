@@ -6,9 +6,10 @@ import DeviceModal from 'src/apps/admin/devices/DeviceModal';
 import { endsWith } from 'lodash';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { FormattedMessage } from 'react-intl';
+import { FormattedMessage, useIntl } from 'react-intl';
 
 function DevicesList() {
+  const intl = useIntl();
   const devicesStore = useContext(StoreContext).devices;
   const deviceMetadataStore = useContext(StoreContext).deviceMetadata;
 
@@ -51,10 +52,13 @@ function DevicesList() {
 
     return (
       <>
-        <b className="text-success pe-1">Data Collector:</b>
+        <b className="text-success pe-1">
+          <FormattedMessage id="devices-data_collector" />
+          :
+        </b>
         {datacollectorText}
         <br />
-        <b className="text-success pe-1">Novnc:</b>
+        <b className="text-success pe-1">NoVNC:</b>
         {novncText}
       </>
     );
@@ -111,8 +115,10 @@ function DevicesList() {
       const clearPopover = (
         <Popover id="popover-clear-datacollector">
           <Popover.Header as="h3">
-            Remove data collector settings of
-            {device.name}
+            <FormattedMessage
+              id="devices-remove_dc_settings_of"
+              values={{ name: device.name }}
+            />
           </Popover.Header>
           <Popover.Body>
             <ButtonToolbar>
@@ -121,10 +127,10 @@ function DevicesList() {
                 variant="danger"
                 onClick={() => clearDatacollector(device)}
               >
-                Yes
+                <FormattedMessage id="yes" />
               </Button>
               <Button size="sm" variant="warning">
-                No
+                <FormattedMessage id="no" />
               </Button>
             </ButtonToolbar>
           </Popover.Body>
@@ -133,7 +139,11 @@ function DevicesList() {
 
       return (
         <OverlayTrigger placement="right" trigger="focus" overlay={clearPopover}>
-          <Button size="sm" className="bg-danger-subtle text-danger" title="Clear data collector settings">
+          <Button
+            size="sm"
+            className="bg-danger-subtle text-danger"
+            title={intl.formatMessage({ id: 'devices-clear_dc_settings' })}
+          >
             <i className="fa fa-database" />
           </Button>
         </OverlayTrigger>
@@ -150,8 +160,10 @@ function DevicesList() {
       const clearPopover = (
         <Popover id="popover-clear-novnc">
           <Popover.Header as="h3">
-            Remove Novnc settings of
-            {device.name}
+            <FormattedMessage
+              id="devices-remove_novnc_settings_of"
+              values={{ name: device.name }}
+            />
           </Popover.Header>
           <Popover.Body>
             <ButtonToolbar>
@@ -160,10 +172,10 @@ function DevicesList() {
                 variant="danger"
                 onClick={() => clearNovncSettings(device)}
               >
-                Yes
+                <FormattedMessage id="yes" />
               </Button>
               <Button size="sm" variant="warning">
-                No
+                <FormattedMessage id="no" />
               </Button>
             </ButtonToolbar>
           </Popover.Body>
@@ -172,7 +184,11 @@ function DevicesList() {
 
       return (
         <OverlayTrigger placement="right" trigger="focus" overlay={clearPopover}>
-          <Button size="sm" className="bg-danger-subtle text-danger" title="Clear NoVNC settings">
+          <Button
+            size="sm"
+            className="bg-danger-subtle text-danger"
+            title={intl.formatMessage({ id: 'devices-clear_novnc_settings' })}
+          >
             <i className="fa fa-cogs" />
           </Button>
         </OverlayTrigger>
@@ -192,10 +208,10 @@ function DevicesList() {
     const deletePopover = (
       <Popover id="popover-delete-button">
         <Popover.Header as="h3">
-          Remove
-          {type}
-          :
-          {object.name}
+          <FormattedMessage
+            id="devices-confirm_remove"
+            values={{ type, name: object.name }}
+          />
         </Popover.Header>
         <Popover.Body>
           <ButtonToolbar>
@@ -204,10 +220,10 @@ function DevicesList() {
               variant="danger"
               onClick={() => confirmDelete(object, type, user)}
             >
-              Yes
+              <FormattedMessage id="yes" />
             </Button>
             <Button size="sm" variant="warning">
-              No
+              <FormattedMessage id="no" />
             </Button>
           </ButtonToolbar>
         </Popover.Body>
@@ -220,7 +236,11 @@ function DevicesList() {
         trigger="focus"
         overlay={deletePopover}
       >
-        <Button size="sm" variant="danger" title="Delete device">
+        <Button
+          size="sm"
+          variant="danger"
+          title={intl.formatMessage({ id: 'devices-delete_device' })}
+        >
           <i className="fa fa-trash-o" />
         </Button>
       </OverlayTrigger>
@@ -294,9 +314,10 @@ function DevicesList() {
           <tr key={`users-row-${idx}-${device.id}`} className="collapse" id={`row-device-${device.id}`}>
             <td colSpan="5" className="border-top-0">
               <div className="fw-bold mt-1 mb-1">
-                Device "
-                {device.name}
-                " managed by following users / groups
+                <FormattedMessage
+                  id="devices-managed_by"
+                  values={{ name: device.name }}
+                />
               </div>
               {listUsersAndGroups(device, idx)}
             </td>

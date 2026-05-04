@@ -1,14 +1,18 @@
 import React from 'react';
-import { Table, Button, Form, Card } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import {
+  Table, Button, Form, Card,
+} from 'react-bootstrap';
+import { findIndex } from 'lodash';
+import { injectIntl, FormattedMessage } from 'react-intl';
 import AppModal from 'src/components/common/AppModal';
 import { AsyncSelect } from 'src/components/common/Select';
-import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import AdminDeviceFetcher from 'src/fetchers/AdminDeviceFetcher';
 import { selectUserOptionFormater, selectDeviceOptionFormater } from 'src/utilities/selectHelper';
 import AdminGroupElement from 'src/apps/admin/AdminGroupElement';
 
-export default class GroupsDevices extends React.Component {
+class GroupsDevices extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -34,55 +38,6 @@ export default class GroupsDevices extends React.Component {
 
   handleGroupChange() {
     this.fetch('Group');
-  }
-
-  setGroupAdmin(groupRec, userRec, setAdmin = true) {
-    const { groups } = this.state;
-    const params = {
-      action: 'NodeAdm',
-      rootType: 'Group',
-      actionType: 'Adm',
-      id: groupRec.id,
-      admin_id: userRec.id,
-      set_admin: setAdmin
-    };
-    AdminFetcher.updateGroup(params)
-      .then((result) => {
-        if (setAdmin) {
-          groupRec.admins.splice(1, 0, userRec);
-        } else {
-          const usrIdx = findIndex(groupRec.admins, o => o.id === userRec.id);
-          groupRec.admins.splice(usrIdx, 1);
-        }
-        const idx = findIndex(groups, o => o.id === groupRec.id);
-        groups.splice(idx, 1, groupRec);
-        this.setState({ groups });
-      });
-  }
-
-  fetch(type) {
-    AdminFetcher.fetchGroupsDevices(type)
-      .then((result) => {
-        switch (type) {
-          case 'Group':
-            this.setState({ groups: result.list });
-            break;
-          case 'Device':
-            this.setState({ devices: result.list });
-            break;
-          default:
-            break;
-        }
-      });
-  }
-
-  fetchDevices() {
-    AdminDeviceFetcher.fetchDevices()
-      .then((result) => {
-        this.setState({
-          devices: result.devices
-        });
-      });
   }
 
   handleShowModal(root, rootType, actionType) {
@@ -118,25 +73,49 @@ export default class GroupsDevices extends React.Component {
     this.setState({ selectedUsers: val });
   }
 
+  fetch(type) {
+    AdminFetcher.fetchGroupsDevices(type)
+      .then((result) => {
+        switch (type) {
+          case 'Group':
+            this.setState({ groups: result.list });
+            break;
+          case 'Device':
+            this.setState({ devices: result.list });
+            break;
+          default:
+            break;
+        }
+      });
+  }
+
+  fetchDevices() {
+    AdminDeviceFetcher.fetchDevices()
+      .then((result) => {
+        this.setState({
+          devices: result.devices
+        });
+      });
+  }
+
   loadUserByNameType(input) {
     const { actionType } = this.state;
     if (!input) {
       return Promise.resolve([]);
     }
 
-    if (actionType == 'Device') {
+    if (actionType === 'Device') {
       return AdminDeviceFetcher.fetchDevicesByName(input)
         .then((res) => selectDeviceOptionFormater({ data: res, withType: false }))
         .catch((errorMessage) => {
           console.log(errorMessage);
         });
-    } else {
-      return AdminFetcher.fetchUsersByNameType(input, actionType)
-        .then((res) => selectUserOptionFormater({ data: res, withType: false }))
-        .catch((errorMessage) => {
-          console.log(errorMessage);
-        });
     }
+    return AdminFetcher.fetchUsersByNameType(input, actionType)
+      .then((res) => selectUserOptionFormater({ data: res, withType: false }))
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
   createGroup() {
@@ -155,6 +134,7 @@ export default class GroupsDevices extends React.Component {
     AdminFetcher.createGroupDevice(param)
       .then((result) => {
         if (result.error) {
+          // eslint-disable-next-line no-alert
           alert(result.error);
         } else {
           switch (rootType) {
@@ -175,52 +155,6 @@ export default class GroupsDevices extends React.Component {
             default:
               break;
           }
-        }
-      });
-  }
-
-  confirmDelete(rootType, actionType, groupRec, userRec, isRoot = false) {
-    const { groups, devices } = this.state;
-    const rmUsers = userRec == null ? [] : [userRec.id];
-
-    const params = {
-      action: isRoot ? 'RootDel' : 'NodeDel',
-      rootType,
-      actionType,
-      id: groupRec.id,
-      destroy_obj: isRoot,
-      rm_users: rmUsers
-    };
-
-    AdminFetcher.updateGroup(params)
-      .then((result) => {
-        switch (rootType) {
-          case 'Group':
-            if (isRoot === true) {
-              this.setState({
-                groups: filter(this.state.groups, o => o.id != groupRec.id),
-              });
-            } else {
-              const idx = findIndex(groups, o => o.id === result.root.id);
-              groups.splice(idx, 1, result.root);
-              this.setState({ groups });
-            }
-            this.fetchDevices();
-            break;
-          case 'Device':
-            if (isRoot === true) {
-              this.setState({
-                devices: filter(this.state.devices, o => o.id !== groupRec.id),
-              });
-            } else {
-              const idx = findIndex(devices, o => o.id === result.root.id);
-              devices.splice(idx, 1, result.root);
-              this.setState({ devices });
-            }
-            this.fetch('Group');
-            break;
-          default:
-            break;
         }
       });
   }
@@ -249,12 +183,12 @@ export default class GroupsDevices extends React.Component {
       .then((result) => {
         switch (rootType) {
           case 'Group':
-            idx = findIndex(groups, o => o.id === result.root.id);
+            idx = findIndex(groups, (o) => o.id === result.root.id);
             groups.splice(idx, 1, result.root);
             this.fetchDevices();
             break;
           case 'Device':
-            idx = findIndex(devices, o => o.id === result.root.id);
+            idx = findIndex(devices, (o) => o.id === result.root.id);
             devices.splice(idx, 1, result.root);
             this.fetch('Group');
             break;
@@ -278,7 +212,7 @@ export default class GroupsDevices extends React.Component {
           currentState={this.state}
           onChangeGroupData={this.handleGroupChange}
           onShowModal={this.handleShowModal}
-          key={`group-element-key-component-${idx}`}
+          key={`group-element-key-component-${g.id}`}
         />
       ));
     }
@@ -286,22 +220,31 @@ export default class GroupsDevices extends React.Component {
     return (
       <Card>
         <Card.Header>
-          <Card.Title className='mt-1 py-1'>
-            Group List
-            ({groups.length})
-            <Button variant="primary" className='ms-2' size='md' onClick={() => this.handleShowCreateModal('Group')}>Add New Group</Button>
+          <Card.Title className="mt-1 py-1">
+            <FormattedMessage
+              id="groups-list_title"
+              values={{ count: groups.length }}
+            />
+            <Button
+              variant="primary"
+              className="ms-2"
+              size="md"
+              onClick={() => this.handleShowCreateModal('Group')}
+            >
+              <FormattedMessage id="groups-add_new_group" />
+            </Button>
           </Card.Title>
         </Card.Header>
         <Card.Body>
           <Table responsive condensed hover>
             <thead>
-              <tr className='bg-gray-200 '>
+              <tr className="bg-gray-200 ">
                 <th className="py-3">#</th>
-                <th className="w-25 py-3">Actions</th>
-                <th className="py-3">Name</th>
-                <th className="py-3">Kürzel</th>
-                <th className="py-3">Admin by</th>
-                <th className="py-3">Email</th>
+                <th className="w-25 py-3"><FormattedMessage id="actions" /></th>
+                <th className="py-3"><FormattedMessage id="name" /></th>
+                <th className="py-3"><FormattedMessage id="user_management-abbr" /></th>
+                <th className="py-3"><FormattedMessage id="groups-admin_by" /></th>
+                <th className="py-3"><FormattedMessage id="email" /></th>
               </tr>
             </thead>
             {tbody}
@@ -313,49 +256,62 @@ export default class GroupsDevices extends React.Component {
 
   renderCreateModal() {
     const { showCreateModal, rootType } = this.state;
-    const title = (rootType === 'Group') ? 'Add new group' : 'Add new device';
+    const { intl } = this.props;
+    const title = rootType === 'Group'
+      ? intl.formatMessage({ id: 'groups-add_new_group' })
+      : intl.formatMessage({ id: 'devices-add' });
+    const primaryActionLabel = rootType === 'Group'
+      ? intl.formatMessage({ id: 'groups-create_new_group' })
+      : intl.formatMessage({ id: 'groups-create_new_device' });
     return (
       <AppModal
         show={showCreateModal}
         onHide={this.handleCloseGroup}
         title={title}
-        primaryActionLabel={`Create new ${rootType === 'Group' ? 'group' : 'device'}`}
+        primaryActionLabel={primaryActionLabel}
         onPrimaryAction={() => this.createGroup()}
+        closeLabel={intl.formatMessage({ id: 'cancel' })}
       >
         <Form>
-          <Form.Group controlId="formInlineName" className='mb-3 fs-5 fw-bold'>
-            <Form.Label>Name*</Form.Label>
+          <Form.Group controlId="formInlineName" className="mb-3 fs-5 fw-bold">
+            <Form.Label>
+              <FormattedMessage id="name" />
+              *
+            </Form.Label>
             <Form.Control
               type="text"
               ref={(m) => { this.firstInput = m; }}
               placeholder="eg: AK"
-              className='py-2'
+              className="py-2"
             />
           </Form.Group>
-          <Form.Group controlId="formInlineName" className='mb-3 fs-5 fw-bold'>
+          <Form.Group controlId="formInlineName" className="mb-3 fs-5 fw-bold">
             <Form.Control
               type="text"
               ref={(m) => { this.lastInput = m; }}
               placeholder="J. Moriarty"
-              className='py-2'
+              className="py-2"
             />
           </Form.Group>
-          <Form.Group controlId="formInlineNameAbbr" className='mb-3 fs-5 fw-bold'>
-            <Form.Label>Name abbreviation*</Form.Label>
+          <Form.Group controlId="formInlineNameAbbr" className="mb-3 fs-5 fw-bold">
+            <Form.Label>
+              <FormattedMessage id="devices-name_abbreviation" />
+              *
+            </Form.Label>
             <Form.Control
               type="text"
               ref={(m) => { this.abbrInput = m; }}
               placeholder="AK-JM"
-              className='py-2'
+              className="py-2"
             />
           </Form.Group>
-          <Form.Group controlId="formInlineEmail" className='mb-4 fs-5 fw-bold'>
-            <Form.Label>Email</Form.Label>
+          <Form.Group controlId="formInlineEmail" className="mb-4 fs-5 fw-bold">
+            <Form.Label><FormattedMessage id="email" /></Form.Label>
             <Form.Control
               type="text"
               ref={(m) => { this.emailInput = m; }}
               placeholder="eg: abc@kit.edu"
-              className='py-2'
+              className="py-2"
             />
           </Form.Group>
         </Form>
@@ -371,39 +327,40 @@ export default class GroupsDevices extends React.Component {
       actionType,
       selectedUsers
     } = this.state;
-    let title = '';
+    const { intl } = this.props;
+    let titleId = '';
     switch (rootType) {
       case 'Group':
-        if (actionType === 'Person') {
-          title = `Add users to group: ${root.name}`;
-        } else {
-          title = `Add devices to group: ${root.name}`;
-        }
+        titleId = actionType === 'Person'
+          ? 'groups-add_users_to_group'
+          : 'groups-add_devices_to_group';
         break;
       case 'Device':
-        if (actionType === 'Person') {
-          title = `Add permission on device: ${root.name} to users`;
-        } else {
-          title = `Add permission on device: ${root.name} to groups`;
-        }
+        titleId = actionType === 'Person'
+          ? 'groups-add_permission_to_users'
+          : 'groups-add_permission_to_groups';
         break;
       default:
         break;
     }
+    const title = titleId
+      ? intl.formatMessage({ id: titleId }, { name: root?.name ?? '' })
+      : '';
 
     return (
       <AppModal
         show={showModal}
         onHide={this.handleClose}
         title={title}
-        primaryActionLabel="Add"
+        primaryActionLabel={intl.formatMessage({ id: 'add' })}
         onPrimaryAction={() => this.addToRoot(root)}
+        closeLabel={intl.formatMessage({ id: 'cancel' })}
       >
         <AsyncSelect
           isMulti
           value={selectedUsers}
           matchProp="name"
-          placeholder="Select ..."
+          placeholder={intl.formatMessage({ id: 'select_placeholder' })}
           loadOptions={this.loadUserByNameType}
           onChange={this.handleSelectUser}
         />
@@ -421,3 +378,11 @@ export default class GroupsDevices extends React.Component {
     );
   }
 }
+
+GroupsDevices.propTypes = {
+  intl: PropTypes.shape({
+    formatMessage: PropTypes.func.isRequired,
+  }).isRequired,
+};
+
+export default injectIntl(GroupsDevices);

@@ -2,6 +2,7 @@
     "language-en": "English",
     "language-de": "Deutsch",
     "actions": "Actions",
+    "add": "Add",
     "cancel": "Cancel",
     "save": "Save",
     "name": "Name",
@@ -12,6 +13,8 @@
     "email": "Email",
     "user": "User",
     "none": "None",
+    "yes": "Yes",
+    "no": "No",
     "type_to_search": "Type to search",
     "select_placeholder": "Select ...",
     "copy_to_clipboard": "copy to clipboard"

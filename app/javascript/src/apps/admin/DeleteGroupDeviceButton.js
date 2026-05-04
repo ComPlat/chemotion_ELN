@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button, Popover, OverlayTrigger } from 'react-bootstrap';
+import { FormattedMessage } from 'react-intl';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 
 export default class DeleteGroupDeviceButton extends React.Component {
@@ -55,32 +56,47 @@ export default class DeleteGroupDeviceButton extends React.Component {
 
   render() {
     const { rootType, actionType, groupRec, userRec, isRoot } = this.props;
-    let msg = 'remove yourself from the group';
+    let msgNode = <FormattedMessage id="groups-remove_yourself" />;
     if (rootType === 'Group' && isRoot) {
-      msg = `remove group: ${groupRec.name}`;
+      msgNode = <FormattedMessage id="groups-remove_group" values={{ name: groupRec.name }} />;
     } else if (rootType === 'Device' && isRoot) {
-      msg = `remove device: ${groupRec.name}`;
+      msgNode = <FormattedMessage id="groups-remove_device" values={{ name: groupRec.name }} />;
     } else if (rootType === 'Group' && !isRoot && actionType === 'Person') {
-      msg = `remove user: ${userRec.name} from group: ${groupRec.name} ?`;
+      msgNode = (
+        <FormattedMessage
+          id="groups-remove_user_from_group"
+          values={{ userName: userRec.name, groupName: groupRec.name }}
+        />
+      );
     } else if (rootType === 'Group' && !isRoot && actionType === 'Device') {
-      msg = `remove device: ${userRec.name} from group: ${groupRec.name} ?`;
+      msgNode = (
+        <FormattedMessage
+          id="groups-remove_device_from_group"
+          values={{ deviceName: userRec.name, groupName: groupRec.name }}
+        />
+      );
     } else if (rootType === 'Device' && !isRoot) {
-      msg = `remove user: ${userRec.name} from group: ${groupRec.name} ?`;
+      msgNode = (
+        <FormattedMessage
+          id="groups-remove_user_from_group"
+          values={{ userName: userRec.name, groupName: groupRec.name }}
+        />
+      );
     } else {
-      msg = `remove ???: ${groupRec.name}`;
+      msgNode = <FormattedMessage id="groups-remove_unknown" values={{ name: groupRec.name }} />;
     }
 
     const popover = (
       <Popover id="popover-positioned-scrolling-left">
         <Popover.Header id="popover-positioned-scrolling-left" as="h5">
-          {msg}
+          {msgNode}
         </Popover.Header>
         <Popover.Body>
-          <Button size="sm" variant="danger" className='me-2' onClick={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}>
-            Yes
+          <Button size="sm" variant="danger" className="me-2" onClick={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}>
+            <FormattedMessage id="yes" />
           </Button>
-          <Button size="sm" variant="warning" onClick={this.handleClick} >
-            No
+          <Button size="sm" variant="warning" onClick={this.handleClick}>
+            <FormattedMessage id="no" />
           </Button>
         </Popover.Body>
       </Popover>

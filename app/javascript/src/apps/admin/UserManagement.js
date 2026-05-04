@@ -794,6 +794,7 @@ class UserManagement extends React.Component {
         title={intl.formatMessage({ id: 'user_management-send_message' })}
         primaryActionLabel={intl.formatMessage({ id: 'user_management-send' })}
         onPrimaryAction={() => this.messageSend()}
+        closeLabel={intl.formatMessage({ id: 'cancel' })}
       >
         <Form>
           <Form.Group controlId="formControlsTextarea">
@@ -837,6 +838,7 @@ class UserManagement extends React.Component {
         onPrimaryAction={newUserTab === 'singleUser'
           ? () => this.handleCreateNewUser()
           : () => this.handleCreateNewUsersFromFile()}
+        closeLabel={intl.formatMessage({ id: 'cancel' })}
       >
         <Tabs id="createUserTabs" className="fs-6">
           <Tab eventKey="singleUser" title={intl.formatMessage({ id: 'user_management-single_user' })}>
@@ -1067,6 +1069,7 @@ class UserManagement extends React.Component {
         title={intl.formatMessage({ id: 'user_management-edit_user_account' })}
         primaryActionLabel={intl.formatMessage({ id: 'update' })}
         onPrimaryAction={() => this.handleUpdateUser(user)}
+        closeLabel={intl.formatMessage({ id: 'cancel' })}
         extendedFooter={(
           <OverlayTrigger
             trigger="click"
@@ -1211,6 +1214,7 @@ class UserManagement extends React.Component {
         title={intl.formatMessage({ id: 'user_management-restore_account' })}
         primaryActionLabel={intl.formatMessage({ id: 'user_management-restore' })}
         onPrimaryAction={() => this.handleRestoreAccount()}
+        closeLabel={intl.formatMessage({ id: 'cancel' })}
       >
         <Form className="w-75">
           <Form.Group controlId="formControlAbbr">
