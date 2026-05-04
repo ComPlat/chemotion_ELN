@@ -24,6 +24,11 @@ const solventStr = (selectedShift, decimal) => {
   return `${cleanedName} [${ref.value.toFixed(decimal)} ppm], `;
 };
 
+const normalizeShiftForPeaksBody = (shift, selectedShift, curveIdx) => {
+  if (Array.isArray(shift?.shifts)) return { shift, atIndex: curveIdx };
+  return { shift: { shifts: [selectedShift] }, atIndex: 0 };
+};
+
 export const formatPks = ({
   entity,
   peaks,
@@ -56,7 +61,7 @@ export const formatPks = ({
     peaks,
     layout,
     decimal,
-    shift,
+    ...normalizeShiftForPeaksBody(shift, selectedShift, curveIdx),
     isAscend,
     isIntensity,
     boundary,

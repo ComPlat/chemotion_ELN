@@ -30,6 +30,26 @@ describe('spectraFormatters', () => {
     it('returns [] when layout is unknown', () => {
       expect(formatPks({ entity: {}, layout: 'UNKNOWN' })).toEqual([]);
     });
+
+    it('formats peaks when the selected spectrum provides a plain shift object', () => {
+      const result = formatPks({
+        entity: {
+          layout: '1H',
+          features: [{ observeFrequency: [400], maxY: 1, minY: 0 }],
+        },
+        peaks: [{ x: 1.23, y: 1 }],
+        shift: { ref: { label: false, name: '', value: 0 }, peak: { x: 0 } },
+        layout: '1H',
+        isAscend: true,
+        decimal: 2,
+        isIntensity: false,
+        integration: { stack: [] },
+        curveSt: { curveIdx: 1 },
+      });
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(result.some((op) => op.insert === '1.23')).toEqual(true);
+    });
   });
 
   describe('formatMpy', () => {
