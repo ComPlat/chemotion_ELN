@@ -72,6 +72,8 @@ function reducer(state, action) {
         ...state,
         status: STATUS.READY,
         container: action.container,
+        spectra: action.spectra || state.spectra,
+        failures: action.failures || state.failures,
         originalAnalyses: cloneAnalyses(action.container?.extended_metadata?.analyses_compared),
         saveError: null,
       };
@@ -197,14 +199,25 @@ export const useCompareSpectra = ({ sample, container }, deps = {}) => {
         payloads,
         frontCurveIdx,
       }, { combineSpectra: deps.combineSpectra });
+      const refreshedInfos = buildCompareInfos(sample, result.container);
+      const refreshed = refreshedInfos.length > 0
+        ? await load(refreshedInfos)
+        : { spectra: [], failures: [] };
+
+      previousInfosRef.current = refreshedInfos;
       cacheRef.current.invalidate();
-      dispatch({ type: 'SAVE_SUCCESS', container: result.container });
-      return result;
+      dispatch({
+        type: 'SAVE_SUCCESS',
+        container: result.container,
+        spectra: refreshed.spectra,
+        failures: refreshed.failures,
+      });
+      return { ...result, ...refreshed };
     } catch (error) {
       dispatch({ type: 'SAVE_FAIL', error });
       throw error;
     }
-  }, [save, state.container, state.spectra, deps.combineSpectra]);
+  }, [load, sample, save, state.container, state.spectra, deps.combineSpectra]);
 
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
