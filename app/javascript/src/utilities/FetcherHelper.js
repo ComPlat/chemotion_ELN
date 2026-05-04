@@ -1,4 +1,5 @@
 import base64 from 'base-64';
+import { camelCase, snakeCase } from 'lodash';
 
 const getFileName = (response) => {
   const disposition = response.headers.get('Content-Disposition');
@@ -10,7 +11,7 @@ const getFileName = (response) => {
       return matches[1].replace(/['"]/g, '');
     }
   }
-}
+};
 
 const downloadBlob = (file_name, blob) => {
   const url = window.URL.createObjectURL(blob);
@@ -28,11 +29,31 @@ const downloadBlob = (file_name, blob) => {
 const parseBase64ToArrayBuffer = (encodedData) => {
   const decodedData = base64.decode(encodedData);
   const bufferLength = decodedData.length;
-  let bytesArray = new Uint8Array(bufferLength);
+  const bytesArray = new Uint8Array(bufferLength);
   for (let i = 0; i < bufferLength; i++) {
     bytesArray[i] = decodedData.charCodeAt(i);
   }
   return bytesArray.buffer;
 };
 
-export { getFileName, downloadBlob, parseBase64ToArrayBuffer };
+const transformKeys = (fn, obj) => {
+  if (Array.isArray(obj)) return obj.map((item) => transformKeys(fn, item));
+  if (obj !== null && typeof obj === 'object') {
+    return Object.keys(obj).reduce((newObj, key) => {
+      // eslint-disable-next-line no-param-reassign
+      newObj[fn(key)] = transformKeys(fn, obj[key]);
+      return newObj;
+    }, {});
+  }
+  return obj;
+};
+
+// replaces hump
+const camelizeKeys = (obj) => transformKeys(camelCase, obj);
+const decamelizeKeys = (obj) => transformKeys(snakeCase, obj);
+const camelize = (str) => camelCase(str);
+const decamelize = (str) => snakeCase(str);
+
+export {
+  getFileName, downloadBlob, parseBase64ToArrayBuffer, camelizeKeys, decamelizeKeys, camelize, decamelize
+};
