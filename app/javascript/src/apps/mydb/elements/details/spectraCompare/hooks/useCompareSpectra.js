@@ -187,14 +187,19 @@ export const useCompareSpectra = ({ sample, container }, deps = {}) => {
     return next;
   }, [state.container, state.originalAnalyses]);
 
-  const persist = useCallback(async ({ payloads, frontCurveIdx = 0 } = {}) => {
-    if (!state.container) {
+  const persist = useCallback(async ({
+    payloads,
+    frontCurveIdx = 0,
+    container: containerOverride = null,
+  } = {}) => {
+    const containerForSave = containerOverride || state.container;
+    if (!containerForSave) {
       return null;
     }
     dispatch({ type: 'SAVE_START' });
     try {
       const result = await save({
-        container: state.container,
+        container: containerForSave,
         spectra: state.spectra,
         payloads,
         frontCurveIdx,
