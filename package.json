@@ -143,8 +143,7 @@
     "webpack-dev-server": "5"
   },
   "resolutions": {
-    "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#02556ae3bd23ddda146c9aeb48727a9a5539587b",
-    "react-date-picker": "8.4.0"
+    "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#02556ae3bd23ddda146c9aeb48727a9a5539587b"
   },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
