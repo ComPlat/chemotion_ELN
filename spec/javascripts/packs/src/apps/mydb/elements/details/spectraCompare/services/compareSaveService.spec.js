@@ -38,6 +38,25 @@ describe('compareSaveService.applyCombineResponse', () => {
     expect(next.children[0].attachments).toEqual([{ id: 99 }]);
     expect(next.comparable_info.list_attachments).toEqual([{ id: 99 }]);
   });
+
+  it('preserves the current comparison content after combining spectra', () => {
+    const original = {
+      ...baseContainer(),
+      extended_metadata: {
+        ...baseContainer().extended_metadata,
+        content: { ops: [{ insert: 'first peaks' }, { insert: 'second peaks' }] },
+      },
+    };
+    const next = applyCombineResponse(original, {
+      dataset: { id: 5, attachments: [{ id: 99 }] },
+      analyses_compared: original.extended_metadata.analyses_compared,
+    });
+
+    expect(next.extended_metadata.content.ops).toEqual([
+      { insert: 'first peaks' },
+      { insert: 'second peaks' },
+    ]);
+  });
 });
 
 describe('compareSaveService.saveCompareSpectra', () => {
