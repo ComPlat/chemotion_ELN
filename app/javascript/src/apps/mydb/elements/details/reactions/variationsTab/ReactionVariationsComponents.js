@@ -752,6 +752,7 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   const [showModal, setShowModal] = useState(false);
   const [currentColumns, setCurrentColumns] = useState(selectedColumns);
   const [pendingDeselection, setPendingDeselection] = useState(null);
+  const pendingDeselectionConfirmation = pendingDeselection !== null;
 
   useEffect(() => {
     // Remove currently selected columns that are no longer available.
@@ -808,7 +809,7 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
       </Button>
 
       <AppModal
-        show={showModal}
+        show={showModal && !pendingDeselectionConfirmation}
         onHide={() => setShowModal(false)}
         animation={false}
         title="Column Selection"
@@ -829,7 +830,7 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
       </AppModal>
 
       <AppModal
-        show={pendingDeselection !== null}
+        show={pendingDeselectionConfirmation}
         onHide={handleCancelDeselection}
         animation={false}
         title="Confirm De-selection"
