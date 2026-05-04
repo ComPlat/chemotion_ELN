@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Modal } from 'react-bootstrap';
 
+import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 
 import useCompareSpectra, { COMPARE_STATUS } from '../hooks/useCompareSpectra';
@@ -51,6 +52,20 @@ const writeContentOps = (container, ops) => {
     extended_metadata: {
       ...(container.extended_metadata || {}),
       content: { ops: nextOps },
+    },
+  };
+};
+
+const replaceContent = (container, content) => {
+  if (!container) return container;
+  const nextContent = content?.ops
+    ? content
+    : { ops: Array.isArray(content) ? content : [{ insert: '\n' }] };
+  return {
+    ...container,
+    extended_metadata: {
+      ...(container.extended_metadata || {}),
+      content: nextContent,
     },
   };
 };
@@ -135,6 +150,7 @@ const CompareSpectraModal = ({
 
   const persistOps = useCallback(async (params, opsToWrite = null) => {
     if (!compare.container) return;
+    LoadingActions.start.defer();
     let containerForSave = compare.container;
     if (Array.isArray(opsToWrite) && opsToWrite.length > 0) {
       containerForSave = writeContentOps(compare.container, opsToWrite);
@@ -147,6 +163,7 @@ const CompareSpectraModal = ({
       const result = await compare.persist({
         payloads,
         frontCurveIdx: params?.curveSt?.curveIdx ?? 0,
+        container: containerForSave,
       });
       if (result?.container) {
         onContainerChange?.(result.container);
@@ -159,6 +176,7 @@ const CompareSpectraModal = ({
         onSubmit?.();
       }
     } catch {
+      LoadingActions.stop.defer();
     }
   }, [compare, onContainerChange, onSampleChanged, onSubmit, sample]);
 
@@ -187,6 +205,13 @@ const CompareSpectraModal = ({
     await persistOps(params, buildWriteOps(params, true));
     close();
   }, [persistOps, buildWriteOps, close]);
+
+  const handleDescriptionChanged = useCallback((content) => {
+    if (!compare.container) return;
+    const nextContainer = replaceContent(compare.container, content);
+    compare.setContainer(nextContainer);
+    onContainerChange?.(nextContainer);
+  }, [compare, onContainerChange]);
 
   const handleRetry = useCallback(() => {
     if (!compare.container) return;
@@ -231,6 +256,7 @@ const CompareSpectraModal = ({
           onWriteMpy={handleWriteMpy}
           onWriteClosePeak={handleWriteClosePeak}
           onWriteCloseMpy={handleWriteCloseMpy}
+          onDescriptionChanged={handleDescriptionChanged}
         />
       </Modal.Body>
     </Modal>
