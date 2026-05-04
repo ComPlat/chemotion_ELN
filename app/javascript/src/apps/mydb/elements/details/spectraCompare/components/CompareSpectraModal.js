@@ -1,4 +1,6 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, {
+  useCallback, useEffect, useMemo, useRef,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Modal } from 'react-bootstrap';
 
@@ -81,24 +83,16 @@ const resolveWriteParams = (params) => {
   const payload = payloads[fallbackCurveIdx] || payloads[0] || {};
   const curveIdx = payload?.curveSt?.curveIdx ?? payload?.curveIdx ?? fallbackCurveIdx;
 
-  const shift = payload?.shift?.shifts ? payload.shift : { shifts: [payload?.shift] };
-  const integration = payload?.integration?.integrations
-    ? payload.integration
-    : { integrations: [payload?.integration] };
-  const multiplicity = payload?.multiplicity?.multiplicities
-    ? payload.multiplicity
-    : { multiplicities: [payload?.multiplicity] };
-
   return {
     peaks: payload?.peaks,
-    shift,
+    shift: payload?.shift,
     layout: payload?.layout,
     isAscend: payload?.isAscend,
     decimal: payload?.decimal ?? 2,
     body: payload?.body,
     isIntensity: payload?.isIntensity,
-    integration,
-    multiplicity,
+    integration: payload?.integration,
+    multiplicity: payload?.multiplicity,
     waveLength: payload?.waveLength,
     curveSt: { curveIdx },
   };
@@ -121,6 +115,19 @@ const CompareSpectraModal = ({
     sample,
     container: showCompareModal ? activeContainer : null,
   });
+  const compareRef = useRef(compare);
+
+  useEffect(() => {
+    compareRef.current = compare;
+  }, [compare]);
+
+  const setCurrentContainer = useCallback((nextContainer) => {
+    compareRef.current = {
+      ...compareRef.current,
+      container: nextContainer,
+    };
+    compareRef.current.setContainer(nextContainer);
+  }, []);
 
   const close = useCallback(() => {
     SpectraActions.ToggleCompareModal.defer(null);
@@ -132,53 +139,60 @@ const CompareSpectraModal = ({
   }, [showCompareModal]);
 
   const handleSelectionChange = useCallback((treeData, selectedFiles, info) => {
-    if (!compare.container) return;
+    const currentCompare = compareRef.current;
+    if (!currentCompare.container) return;
     const selection = resolveSelection({
       treeData,
       selectedFiles,
       info,
     });
-    const nextContainer = computeNextContainerFromSelection(compare.container, selection);
-    compare.setContainer(nextContainer);
+    const nextContainer = computeNextContainerFromSelection(currentCompare.container, selection);
+    setCurrentContainer(nextContainer);
     onContainerChange?.(nextContainer);
-  }, [compare, onContainerChange]);
+  }, [onContainerChange, setCurrentContainer]);
 
   const handleUndo = useCallback(() => {
-    const next = compare.undo();
-    if (next) onContainerChange?.(next);
-  }, [compare, onContainerChange]);
+    const next = compareRef.current.undo();
+    if (next) {
+      compareRef.current = {
+        ...compareRef.current,
+        container: next,
+      };
+      onContainerChange?.(next);
+    }
+  }, [onContainerChange]);
 
   const persistOps = useCallback(async (params, opsToWrite = null) => {
-    if (!compare.container) return;
+    const currentCompare = compareRef.current;
+    if (!currentCompare.container) return;
     LoadingActions.start.defer();
-    let containerForSave = compare.container;
+    let containerForSave = currentCompare.container;
     if (Array.isArray(opsToWrite) && opsToWrite.length > 0) {
-      containerForSave = writeContentOps(compare.container, opsToWrite);
-      compare.setContainer(containerForSave);
+      containerForSave = writeContentOps(currentCompare.container, opsToWrite);
+      setCurrentContainer(containerForSave);
       onContainerChange?.(containerForSave);
     }
 
     try {
       const payloads = buildSavePayloads(params);
-      const result = await compare.persist({
+      const result = await compareRef.current.persist({
         payloads,
         frontCurveIdx: params?.curveSt?.curveIdx ?? 0,
         container: containerForSave,
       });
       if (result?.container) {
-        onContainerChange?.(result.container);
-        if (typeof onSampleChanged === 'function') {
-          onSampleChanged(sample, () => onSubmit?.());
-        } else {
-          onSubmit?.();
-        }
+        compareRef.current = {
+          ...compareRef.current,
+          container: result.container,
+        };
+        onContainerChange?.(result.container, () => onSubmit?.());
       } else {
         onSubmit?.();
       }
     } catch {
       LoadingActions.stop.defer();
     }
-  }, [compare, onContainerChange, onSampleChanged, onSubmit, sample]);
+  }, [onContainerChange, onSubmit, setCurrentContainer]);
 
   const handleSave = useCallback((params) => persistOps(params), [persistOps]);
   const handleSaveClose = useCallback(async (params) => {
@@ -190,10 +204,11 @@ const CompareSpectraModal = ({
     const resolved = resolveWriteParams(params);
     if (!resolved.layout) return [];
     const curveIdx = resolved.curveSt.curveIdx ?? 0;
-    const entity = compare.multiEntities?.[curveIdx] || compare.multiEntities?.[0];
+    const { multiEntities } = compareRef.current;
+    const entity = multiEntities?.[curveIdx] || multiEntities?.[0];
     if (!entity) return [];
     return isMpy ? formatMpyOps({ entity, ...resolved }) : formatPksOps({ entity, ...resolved });
-  }, [compare.multiEntities]);
+  }, []);
 
   const handleWritePeak = useCallback((params) => persistOps(params, buildWriteOps(params, false)), [persistOps, buildWriteOps]);
   const handleWriteMpy = useCallback((params) => persistOps(params, buildWriteOps(params, true)), [persistOps, buildWriteOps]);
@@ -207,16 +222,18 @@ const CompareSpectraModal = ({
   }, [persistOps, buildWriteOps, close]);
 
   const handleDescriptionChanged = useCallback((content) => {
-    if (!compare.container) return;
-    const nextContainer = replaceContent(compare.container, content);
-    compare.setContainer(nextContainer);
+    const currentCompare = compareRef.current;
+    if (!currentCompare.container) return;
+    const nextContainer = replaceContent(currentCompare.container, content);
+    setCurrentContainer(nextContainer);
     onContainerChange?.(nextContainer);
-  }, [compare, onContainerChange]);
+  }, [onContainerChange, setCurrentContainer]);
 
   const handleRetry = useCallback(() => {
-    if (!compare.container) return;
-    compare.setContainer({ ...compare.container });
-  }, [compare]);
+    const currentCompare = compareRef.current;
+    if (!currentCompare.container) return;
+    setCurrentContainer({ ...currentCompare.container });
+  }, [setCurrentContainer]);
 
   const canUpdate = !!sample?.can_update;
 
