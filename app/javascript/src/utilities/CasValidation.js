@@ -22,17 +22,17 @@ const checkCasDigit = (digits) => {
 
 const validateCas = (cas, boolean) => {
   const filterCas = cas.replace(/-/g, '');
-  if (cas && cas !== '') {
-    const isnum = /^[0-9-]+$/.test(cas) && !(/^[-]+$/.test(cas));
+  if (cas && cas.trim() !== '') {
+    const isNum = /^[0-9-]+$/.test(cas) && !(/^[-]+$/.test(cas));
     let match;
     let result;
-    if (filterCas.length >= 5 && isnum) {
+    if (filterCas.length >= 5 && isNum) {
       const checkFormat = cas.match(/([0-9]{2,7})-([0-9]{2})-[0-9]/);
       match = checkFormat || addHyphensToCas(cas);
       const digits = (match[1] + match[2]).split('').reverse();
       result = checkCasDigit(digits);
     }
-    const valid = result == cas.slice(-1);
+    const valid = result === Number(cas.slice(-1));
     if (!valid && boolean) {
       return false;
     }
