@@ -23,7 +23,7 @@ module Usecases
           psm_changes = sbmm.protein_sequence_modification.changes.except('created_at', 'updated_at')
           effective_changes[:protein_sequence_modification] = psm_changes
         end
-        effective_changes[:parent] = "Uniprot Protein #{sbmm.parent.primary_accession}" unless sbmm.parent.persisted?
+        effective_changes[:parent] = "Uniprot Protein #{sbmm&.parent&.primary_accession}" unless sbmm&.parent&.persisted?
 
         SbmmMailer.request_changes(
           sbmm.id,

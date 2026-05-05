@@ -301,7 +301,7 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
         </a>
       );
     }
-    return <img src="/logos/uniprot-logo-gray.svg" className="uniprot-logo-gray" alt="Uniprot" />;
+    return <img src="/logos/uniprot-logo.svg" className="uniprot-logo-gray" alt="Uniprot" />;
   };
 
   // Handler for chemical save
