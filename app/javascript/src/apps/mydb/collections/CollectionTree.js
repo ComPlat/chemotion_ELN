@@ -147,7 +147,7 @@ function CollectionTree({ isCollapsed }) {
                     ? <div className="text-muted text-center p-2">No collections</div>
                     : roots.map((root) => {
                       // create a copy of the root with computed label
-                      const rootWithLabel = collectionKey === 'syncedWithMe'
+                      const rootWithLabel = (collectionKey === 'syncedWithMe' || collectionKey === 'sharedWithMe')
                         ? { ...root, label: CollectionStore.getChildLabel(root) }
                         : root;
 
