@@ -396,7 +396,13 @@ module Chemotion
         optional :height, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
         optional :width, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
         optional :length, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
+        optional :diameter, type: String, desc: 'diameter of the Hierarchical sample'
         optional :storage_condition, type: String, desc: 'storage condition of the Hierarchical sample'
+        optional :material, type: String, desc: 'material of the Hierarchical sample'
+        optional :cspi, type: String, desc: 'CSPI of the Hierarchical sample'
+        optional :particle_size, type: String, desc: 'particle size of the Hierarchical sample'
+        optional :shape, type: String, desc: 'shape of the Hierarchical sample'
+        optional :sieve_fraction, type: String, desc: 'sieve fraction of the Hierarchical sample'
       end
 
       route_param :id do
@@ -456,15 +462,21 @@ module Chemotion
           # remove collection_id from sample attributes after updating inventory label
           attributes.delete(:collection_id)
 
-          # store hierarchical fields as properties in sample_details (no DB columns)
-          hierarchical_keys = %i[color state height width length storage_condition]
-          hierarchical = hierarchical_keys.each_with_object({}) do |k, h|
-            h[k.to_s] = attributes.delete(k) if attributes.key?(k)
+          # Handle hierarchical fields - save to both DB columns and sample_details for backward compatibility
+          sample_details_param = attributes.delete(:sample_details) || {}
+
+          # Extract fields that have DB columns and save them directly
+          db_column_fields = %i[color state height width length diameter storage_condition material cspi particle_size shape sieve_fraction]
+          db_column_fields.each do |field|
+            if sample_details_param.key?(field.to_s)
+              attributes[field] = sample_details_param.delete(field.to_s)
+            end
           end
-          if hierarchical.present?
+
+          # Merge remaining sample_details with existing ones
+          if sample_details_param.present?
             existing = @sample.sample_details || {}
-            from_params = attributes.delete(:sample_details) || {}
-            attributes[:sample_details] = existing.deep_merge(from_params).merge(hierarchical)
+            attributes[:sample_details] = existing.deep_merge(sample_details_param)
           end
 
           @sample.update!(attributes)

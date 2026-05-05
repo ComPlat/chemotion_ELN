@@ -33,6 +33,12 @@ module Entities
       expose! :height
       expose! :width
       expose! :length
+      expose! :diameter
+      expose! :material
+      expose! :cspi
+      expose! :particle_size
+      expose! :shape
+      expose! :sieve_fraction
     end
 
     # Level 1 attributes

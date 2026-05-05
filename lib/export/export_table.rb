@@ -13,7 +13,8 @@ module Export
       'secret', 'short label', 'density', 'melting pt', 'boiling pt', 'created_at',
       'updated_at', 'MW', 'user_labels', 'decoupled', 'molecular mass (decoupled)', 'sum formula (decoupled)',
       'sample uuid',
-      'height', 'width', 'length', 'state', 'color', 'storage condition'
+      'height', 'width', 'length', 'diameter', 'state', 'color', 'storage condition',
+      'material', 'cspi', 'particle size', 'shape', 'sieve fraction'
     ].freeze
 
     # allowed sample/molecule headers for sample detail level 10

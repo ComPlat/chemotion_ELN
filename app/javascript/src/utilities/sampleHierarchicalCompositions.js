@@ -31,6 +31,9 @@ const buildHierarchicalMaterialRows = (components) => {
       ? weightRatioCalcFloat
       : parseFloat(calcWeightRatioWithoutWeight(components)) || 0;
 
+    // Skip rows with no component data
+    if (!component || !sourceAlias) return;
+
     // Calculate molar ratio (weight ratio / molar mass) for summing totals
     // This represents moles = weight / molar_mass
     // Ensure all calculations maintain float precision

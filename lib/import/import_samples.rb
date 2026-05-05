@@ -577,7 +577,7 @@ module Import
     def handle_default_fields(sample, db_column, value)
       if sample.has_attribute?(db_column)
         sample[db_column] = value || ''
-      elsif %w[height width length state color storage_condition].include?(db_column)
+      elsif %w[height width length diameter state color storage_condition material cspi particle_size shape sieve_fraction].include?(db_column)
         # Backward compatibility: some DBs do not have dedicated hierarchical columns yet.
         sample.sample_details ||= {}
         sample.sample_details[db_column] = value || ''
@@ -589,13 +589,8 @@ module Import
       array = ["\"cas\""]
       conditions = map_column.nil? || array.include?(map_column[1])
       # Hierarchical fields use COALESCE in export map; use simple attribute name for import
-      hierarchical_db_columns = {
-        'height' => 'height', 'width' => 'width', 'length' => 'length',
-        'state' => 'state', 'color' => 'color', 'storage_condition' => 'storage_condition'
-      }.freeze
-      field_normalized = field.to_s.strip.downcase.gsub(/\s+/, '_')
-      db_column = hierarchical_db_columns[field_normalized]
-      db_column ||= (conditions ? field : (map_column[0].sub('s.', '').delete!('"') || map_column[0].sub('s.', '')))
+      db_column = get_db_column_for_field(field)
+      db_column ||= (conditions ? field : (map_column && (map_column[0].sub('s.', '').delete!('"') || map_column[0].sub('s.', ''))))
       if field == 'molecule name' && row[field].present?
         molecule.create_molecule_name_by_user(row[field], current_user_id)
       end
@@ -607,7 +602,7 @@ module Import
       fields_with_units = %w[density molarity flash_point].freeze
       fields_with_float_values = %w[
         real_amount_value target_amount_value purity refractive_index molecular_mass
-        height width length
+        height width length diameter
       ].freeze
       comparison_values = %w[melting_point boiling_point].freeze
       if comparison_values.include?(db_column)
@@ -681,13 +676,19 @@ module Import
         height
         width
         length
+        diameter
         state
         storage_condition
+        material
+        cspi
+        particle_size
+        shape
+        sieve_fraction
       ].freeze
       return unless included_fields.include?(db_column) || additional_columns.include?(db_column)
 
       excluded_column = %w[description solvent].freeze
-      val = row[field]
+      val = row_value_case_insensitive(row, field)
       value = process_value(val, db_column)
       handle_sample_fields(sample, db_column, value) unless value.nil?
       sample[db_column] = '' if excluded_column.include?(db_column) && val.nil?
@@ -881,6 +882,19 @@ module Import
         id created_at updated_at molecule_id molfile impurities ancestry created_by
         short_label deleted_at sample_svg_file user_id identifier fingerprint_id molecule_name_id
       ]
+    end
+
+    # Explicitly map header names to database columns for new hierarchical properties
+    # This ensures they're recognized even if the header casing/spacing varies
+    def get_db_column_for_field(field_name)
+      field_normalized = field_name.to_s.strip.downcase.gsub(/\s+/, '_')
+      hierarchical_map = {
+        'height' => 'height', 'width' => 'width', 'length' => 'length', 'diameter' => 'diameter',
+        'state' => 'state', 'color' => 'color', 'storage_condition' => 'storage_condition',
+        'material' => 'material', 'cspi' => 'cspi', 'particle_size' => 'particle_size',
+        'shape' => 'shape', 'sieve_fraction' => 'sieve_fraction'
+      }
+      hierarchical_map[field_normalized]
     end
 
     def error_process_file(error)

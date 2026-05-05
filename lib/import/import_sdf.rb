@@ -60,8 +60,14 @@ class Import::ImportSdf < Import::ImportSamples
       height: { field: 'height', displayName: 'Height' },
       width: { field: 'width', displayName: 'Width' },
       length: { field: 'length', displayName: 'Length' },
+      diameter: { field: 'diameter', displayName: 'Diameter' },
       state: { field: 'state', displayName: 'State' },
       storage_condition: { field: 'storage_condition', displayName: 'Storage condition' },
+      material: { field: 'material', displayName: 'Material' },
+      cspi: { field: 'cspi', displayName: 'CSPI' },
+      particle_size: { field: 'particle_size', displayName: 'Particle size' },
+      shape: { field: 'shape', displayName: 'Shape' },
+      sieve_fraction: { field: 'sieve_fraction', displayName: 'Sieve fraction' },
     }
   end
 

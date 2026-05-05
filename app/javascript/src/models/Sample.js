@@ -462,7 +462,13 @@ export default class Sample extends Element {
       height: this.height || '',
       width: this.width || '',
       length: this.length || '',
+      diameter: this.diameter || '',
       storage_condition: this.storage_condition || '',
+      material: this.material || '',
+      cspi: this.cspi || '',
+      particle_size: this.particle_size || '',
+      shape: this.shape || '',
+      sieve_fraction: this.sieve_fraction || '',
     });
 
     return serialized;

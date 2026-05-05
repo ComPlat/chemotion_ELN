@@ -35,6 +35,22 @@ const stateOptions = [
   { value: 'liquid_solution', label: 'Liquid Solution' }
 ];
 
+const HIERARCHICAL_PROPERTY_OPTIONS = [
+  { value: 'sieve_fraction', label: 'Sieve fraction', placeholder: 'e.g., 100-200 µm' },
+  { value: 'height', label: 'Height', placeholder: 'e.g., 5 cm' },
+  { value: 'diameter', label: 'Diameter', placeholder: 'e.g., 2.5 cm' },
+  { value: 'width', label: 'Width', placeholder: 'e.g., 3 cm' },
+  { value: 'length', label: 'Length', placeholder: 'e.g., 10 cm' },
+  { value: 'material', label: 'Material', placeholder: 'e.g., Glass, Plastic' },
+  { value: 'cspi', label: 'CSPI', placeholder: 'e.g., 45°C' },
+  { value: 'particle_size', label: 'Particle size', placeholder: 'e.g., Medium, 50 µm' },
+  { value: 'shape', label: 'Shape', placeholder: 'e.g., Spherical, Cubic' },
+];
+
+const PROPERTY_MAP = Object.fromEntries(
+  HIERARCHICAL_PROPERTY_OPTIONS.map((opt) => [opt.value, { label: opt.label, placeholder: opt.placeholder }])
+);
+
 /**
  * Normalizes components that may be in API-format (with nested component_properties)
  * to a flat format where source, molar_mass, weight_ratio_exp etc. are top-level fields.
@@ -64,61 +80,63 @@ const COMPOSITION_DEFAULT_COL_DEF = {
 
 const buildCompositionColumnDefs = (onFieldChange) => [
   {
-    headerName: 'Source',
+    headerName: 'Components',
     field: 'sourceAlias',
     minWidth: 90,
     cellClass: ['lh-base', 'border-end'],
   },
   {
-    headerName: 'Weight ratio exp.',
-    field: 'weight_ratio_exp',
-    editable: true,
-    cellClass: ['editable-cell', 'border-end'],
-    valueSetter: (params) => {
-      if (params.newValue != null) onFieldChange(params.data.index, 'weight_ratio_exp', params.newValue);
-    },
-  },
-  {
-    headerName: 'Molar Mass (g/mol)',
-    field: 'molar_mass',
-    editable: true,
-    cellClass: ['editable-cell', 'border-end'],
-    valueSetter: (params) => {
-      if (params.newValue != null) onFieldChange(params.data.index, 'molar_mass', params.newValue);
-    },
-  },
-  {
-    headerName: 'Weight ratio (calc) / %',
+    headerName: 'Calculated weight ratio',
     field: 'weightRatioCalcProcessed',
     minWidth: 110,
     cellClass: ['lh-base', 'border-end'],
   },
   {
-    headerName: 'Molar ratio (calc) / molar mass',
+    headerName: 'Experimental weight ratio',
+    field: 'weight_ratio_exp',
+    editable: true,
+    cellClass: ['editable-cell', 'border-end'],
+    minWidth: 110,
+    valueSetter: (params) => {
+      if (params.newValue != null) onFieldChange(params.data.index, 'weight_ratio_exp', params.newValue);
+    },
+  },
+  {
+    headerName: 'Molar mass [g/mol]',
+    field: 'molar_mass',
+    editable: true,
+    cellClass: ['editable-cell', 'border-end'],
+    minWidth: 110,
+    valueSetter: (params) => {
+      if (params.newValue != null) onFieldChange(params.data.index, 'molar_mass', params.newValue);
+    },
+  },
+  {
+    headerName: 'Calculated molar ratio',
     field: 'molarRatioCalcMM',
-    minWidth: 120,
+    minWidth: 110,
     valueGetter: (p) => (p.data?.molarRatioCalcMM ?? '-'),
     cellClass: ['lh-base', 'border-end'],
   },
   {
-    headerName: 'Weight ratio (calc) / molar mass',
-    field: 'weightRatioCalcMM',
-    minWidth: 120,
-    valueGetter: (p) => (p.data?.weightRatioCalcMM ?? '-'),
-    cellClass: ['lh-base', 'border-end'],
-  },
-  {
-    headerName: 'Molar ratio exp / %',
+    headerName: 'Experimental molar ratio',
     field: 'molarRatioExpPercent',
     minWidth: 110,
     valueGetter: (p) => (p.data?.molarRatioExpPercent !== '-' ? (p.data?.molarRatioExpPercent ?? '-') : '-'),
     cellClass: ['lh-base', 'border-end'],
   },
   {
-    headerName: 'Molar ratio (calc) / %',
+    headerName: 'Calculated molar percentage',
     field: 'molarRatioCalcPercent',
     minWidth: 120,
     valueGetter: (p) => (p.data?.molarRatioCalcPercent !== '-' ? (p.data?.molarRatioCalcPercent ?? '-') : '-'),
+    cellClass: ['lh-base', 'border-end'],
+  },
+  {
+    headerName: 'Experimental molar percentage',
+    field: 'weightRatioCalcMM',
+    minWidth: 120,
+    valueGetter: (p) => (p.data?.weightRatioCalcMM ?? '-'),
     cellClass: ['lh-base', 'border-end'],
   },
 ];
@@ -216,6 +234,7 @@ export default class SampleForm extends React.Component {
     this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
     this.stateSelect = this.stateSelect.bind(this);
     this.handleComponentFieldChanged = this.handleComponentFieldChanged.bind(this);
+    this.handleHierarchicalPropertySelectionChanged = this.handleHierarchicalPropertySelectionChanged.bind(this);
   }
 
   componentDidUpdate(prevProps) {
@@ -541,9 +560,11 @@ export default class SampleForm extends React.Component {
       return true;
     });
 
+    const labelText = sample.isHierarchicalMaterial() ? 'Material' : 'Molecule name';
+
     return (
       <Form.Group>
-        <Form.Label>Molecule name</Form.Label>
+        <Form.Label>{labelText}</Form.Label>
         <InputGroup>
           <CreatableSelect
             name="moleculeName"
@@ -643,6 +664,10 @@ export default class SampleForm extends React.Component {
     const {
       sample, handleSampleChanged, onDecoupleChanged, decoupleMolecule
     } = this.props;
+
+    // Check if field is a hierarchical property (should go to sample_details)
+    const isHierarchicalProperty = HIERARCHICAL_PROPERTY_OPTIONS.some((opt) => opt.value === field);
+
     if (field === 'purity' && (e.value < 0 || e.value > 1)) {
       e.value = 1;
       sample[field] = e.value;
@@ -665,6 +690,14 @@ export default class SampleForm extends React.Component {
       sample.xref ||= {};
       const key = field.split('xref_')[1];
       sample.xref[key] = e;
+    } else if (isHierarchicalProperty) {
+      // Store hierarchical properties as direct attributes (DB columns) AND in sample_details for backward compatibility
+      const value = e && (e.value || e.value === 0) ? e.value : e;
+      sample[field] = value;
+      sample.sample_details = {
+        ...(sample.sample_details || {}),
+        [field]: value,
+      };
     } else if (e && (e.value || e.value === 0)) {
       // for numeric inputs
       sample[field] = e.value;
@@ -784,9 +817,13 @@ export default class SampleForm extends React.Component {
     this.handleFieldChanged('molecular_mass', { value: null });
   }
 
-  textInput(sample, field, label, disabled = false, readOnly = false) {
+  textInput(sample, field, label, disabled = false, readOnly = false, placeholder = '') {
+    const isHierarchicalProperty = HIERARCHICAL_PROPERTY_OPTIONS.some((opt) => opt.value === field);
     const updateValue = (/^xref_/.test(field) && sample.xref
-      ? sample.xref[field.split('xref_')[1]] : sample[field]) || '';
+      ? sample.xref[field.split('xref_')[1]]
+      : isHierarchicalProperty
+        ? sample[field] || sample.sample_details?.[field]
+        : sample[field]) || '';
 
     return (
       <Form.Group className="w-100">
@@ -795,6 +832,7 @@ export default class SampleForm extends React.Component {
           id={`txinput_${field}`}
           type="text"
           value={updateValue}
+          placeholder={placeholder}
           onChange={(e) => {
             const newValue = e.target.value;
             this.setState({ sumFormula: newValue });
@@ -1366,25 +1404,92 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  getSelectedHierarchicalProperties() {
+    const { sample } = this.props;
+    const stored = sample.sample_details?.selected_properties;
+    return Array.isArray(stored) ? stored : [];
+  }
+
+  handleHierarchicalPropertySelectionChanged(selectedOptions) {
+    const { sample, handleSampleChanged } = this.props;
+    const selectedValues = (selectedOptions || []).map((opt) => opt.value);
+    sample.sample_details = {
+      ...(sample.sample_details || {}),
+      selected_properties: selectedValues,
+    };
+    handleSampleChanged(sample);
+  }
+
+  hierarchicalPropertySelect(sample) {
+    const selectedKeys = this.getSelectedHierarchicalProperties();
+    const selectedOptions = HIERARCHICAL_PROPERTY_OPTIONS.filter(
+      (opt) => selectedKeys.includes(opt.value)
+    );
+    return (
+      <Form.Group>
+        <Form.Label>Additional Properties</Form.Label>
+        <Select
+          isMulti
+          name="hierarchicalProperties"
+          isDisabled={!sample.can_update}
+          options={HIERARCHICAL_PROPERTY_OPTIONS}
+          value={selectedOptions}
+          onChange={this.handleHierarchicalPropertySelectionChanged}
+          placeholder="Select properties to display..."
+          closeMenuOnSelect={false}
+        />
+      </Form.Group>
+    );
+  }
+
   hierarchicalMaterialComponentsList(sample) {
+    const selectedKeys = this.getSelectedHierarchicalProperties();
+    const show = (key) => selectedKeys.includes(key);
+
     return (
       <>
-        <h5 className="mt-4">Hierarchical material components:</h5>
+        <h5 className="mt-4">Hierarchical material information:</h5>
         <Row className="align-items-end mb-4">
           <Col>{this.moleculeInput()}</Col>
+
           <Col xs={4} className="d-flex align-items-end gap-2">
+
             {this.infoButton()}
             {this.sampleAmount(sample)}
           </Col>
         </Row>
+
         <Row className="align-items-end mb-4">
-          <Col>{this.dimensionFieldGroup(sample)}</Col>
-        </Row>
-        <Row>
           <Col>{this.stateSelect(sample)}</Col>
-          <Col>{this.textInput(sample, 'color', 'Color')}</Col>
-          <Col>{this.textInput(sample, 'storage_condition', 'Storage Conditions')}</Col>
+          <Col>{this.hierarchicalPropertySelect(sample)}</Col>
         </Row>
+
+        {selectedKeys.length > 0 && (
+          <>
+            {selectedKeys.map((key, index) => {
+              const isEvenIndex = index % 2 === 0;
+
+              if (isEvenIndex) {
+                const nextKey = selectedKeys[index + 1];
+                const currentProp = PROPERTY_MAP[key];
+                const nextProp = nextKey ? PROPERTY_MAP[nextKey] : null;
+
+                if (!currentProp) return null;
+
+                return (
+                  <Row key={`property-row-${index}`} className="mb-4">
+                    <Col xs={6}>{this.textInput(sample, key, currentProp.label, false, false, currentProp.placeholder)}</Col>
+                    {nextKey && nextProp && (
+                      <Col xs={6}>{this.textInput(sample, nextKey, nextProp.label, false, false, nextProp.placeholder)}</Col>
+                    )}
+                  </Row>
+                );
+              }
+              return null;
+            })}
+          </>
+        )}
+
         <Row>{this.hierarchicalMaterialTable(sample)}</Row>
       </>
     );
