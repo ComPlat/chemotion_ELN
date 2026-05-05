@@ -24,7 +24,6 @@ function CollectionManagementMenu() {
   const [modal, showModal] = useState(null);
   const [hasRadar, setHasRadar] = useState(false);
   const hideModal = () => showModal(null);
-
   const [isDisabled, setIsDisabled] = useState(true);
 
   const onUIStoreChange = ({ currentCollection, hasRadar: storeHasRadar }) => {
@@ -34,11 +33,14 @@ function CollectionManagementMenu() {
     }
 
     const {
-      label, is_locked, shared, permission_level
+      label,
+      is_locked: isLocked,
+      shared,
+      permission_level: permissionLevel,
     } = currentCollection;
     const newIsDisabled = (
-      (label === 'All' && is_locked)
-      || (shared === true && permission_level < PermissionConst.ImportElements)
+      (label === 'All' && isLocked)
+      || (shared === true && permissionLevel < PermissionConst.ImportElements)
     );
     setIsDisabled(newIsDisabled);
     setHasRadar(storeHasRadar);
@@ -66,40 +68,40 @@ function CollectionManagementMenu() {
 
   return (
     <div className="mb-3 d-flex gap-2">
+      <Button
+        variant="light"
+        onClick={() => showModal('exportCollection')}
+        title="Export as ZIP archive"
+      >
+        Export collections
+      </Button>
+      <Button
+        variant="light"
+        onClick={() => showModal('importCollection')}
+        title="Import collections from ZIP archive"
+      >
+        Import collections
+      </Button>
+      {hasRadar && (
+        <>
           <Button
             variant="light"
-            onClick={() => showModal('exportCollection')}
-            title="Export as ZIP archive"
+            onClick={() => editMetadataFunction()}
+            disabled={isDisabled}
+            title="Edit metadata"
           >
-            Export collections
+            Edit collection metadata
           </Button>
           <Button
             variant="light"
-            onClick={() => showModal('importCollection')}
-            title="Import collections from ZIP archive"
+            onClick={() => showModal('exportCollectionToRadar')}
+            disabled={isDisabled}
+            title="Export to RADAR"
           >
-            Import collections
+            Publish current collection via RADAR
           </Button>
-          {hasRadar && (
-            <>
-              <Button
-                variant="light"
-                onClick={() => editMetadataFunction()}
-                disabled={isDisabled}
-                title="Edit metadata"
-              >
-                Edit collection metadata
-              </Button>
-              <Button
-                variant="light"
-                onClick={() => showModal('exportCollectionToRadar')}
-                disabled={isDisabled}
-                title="Export to RADAR"
-              >
-                Publish current collection via RADAR
-              </Button>
-            </>
-          )}
+        </>
+      )}
 
       {modalContent}
     </div>

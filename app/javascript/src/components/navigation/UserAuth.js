@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import 'whatwg-fetch';
+import propType from 'prop-types';
 import {
   Card,
   Dropdown,
-  Modal,
   Button,
   Table,
   Form,
@@ -11,6 +11,7 @@ import {
   Row,
 } from 'react-bootstrap';
 import _ from 'lodash';
+import AppModal from 'src/components/common/AppModal';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -369,16 +370,15 @@ export default class UserAuth extends Component {
     ));
 
     return (
-      <Modal
-        centered
+      <AppModal
+        title="My Groups & Devices"
         show={showModal}
         size="xl"
         onHide={this.handleClose}
+        closeLabel="Close"
+        showFooter
       >
-        <Modal.Header closeButton>
-          <Modal.Title>My Groups & Devices</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="d-flex flex-column gap-3">
+        <div className="d-flex flex-column gap-3">
           <Card border="success">
             <Card.Header>
               Create new group
@@ -458,14 +458,16 @@ export default class UserAuth extends Component {
               </Table>
             </Card.Body>
           </Card>
-        </Modal.Body>
-      </Modal>
+        </div>
+      </AppModal>
     );
   }
 
   // render modal
   renderSubscribeModal() {
-    const tbody = this.state.currentSubscriptions.map((g) => (
+    const { currentSubscriptions, showSubscription } = this.state;
+
+    const tbody = currentSubscriptions.map((g) => (
       <tr key={`row_${g.id}`} className="fw-bold">
         <td width="10%" style={{ border: 'none' }}>
           <Button
@@ -483,22 +485,17 @@ export default class UserAuth extends Component {
     ));
 
     return (
-      <Modal
-        centered
-        show={this.state.showSubscription}
+      <AppModal
+        title="My Subscription"
+        show={showSubscription}
         onHide={this.handleSubscriptionClose}
+        closeLabel="Close"
+        showFooter
       >
-        <Modal.Header closeButton>
-          <Modal.Title>My Subscription</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
-          <div>
-            <Table>
-              <tbody>{tbody}</tbody>
-            </Table>
-          </div>
-        </Modal.Body>
-      </Modal>
+        <Table>
+          <tbody>{tbody}</tbody>
+        </Table>
+      </AppModal>
     );
   }
 
@@ -506,134 +503,134 @@ export default class UserAuth extends Component {
     const { showDeviceMetadataModal, device, deviceMetadata } = this.state;
     const title = 'Device Metadata';
     return (
-      <Modal
-        centered
-        show={showDeviceMetadataModal}
-        onHide={this.handleDeviceMetadataModalClose}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>
+      <AppModal
+        title={(
+          <>
             {device.name}
             {' '}
             Metadata
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Card border="success">
-            <Card.Header>
-              {title}
-            </Card.Header>
-            <Card.Body>
-              <Form>
-                <Form.Group controlId="metadataFormDOI">
-                  <Form.Label>DOI</Form.Label>
-                  <Form.Control
-                    type="text"
-                    defaultValue={deviceMetadata.doi}
-                    readonly="true"
-                  />
-                </Form.Group>
-                <Form.Group controlId="metadataFormState">
-                  <Form.Label>State</Form.Label>
-                  <Form.Control
-                    type="text"
-                    defaultValue={deviceMetadata.data_cite_state}
-                    readonly="true"
-                  />
-                </Form.Group>
+          </>
+        )}
+        show={showDeviceMetadataModal}
+        onHide={this.handleDeviceMetadataModalClose}
+        closeLabel="Close"
+        showFooter
+      >
+        <Card border="success">
+          <Card.Header>
+            {title}
+          </Card.Header>
+          <Card.Body>
+            <Form>
+              <Form.Group controlId="metadataFormDOI">
+                <Form.Label>DOI</Form.Label>
+                <Form.Control
+                  type="text"
+                  defaultValue={deviceMetadata.doi}
+                  readonly="true"
+                />
+              </Form.Group>
+              <Form.Group controlId="metadataFormState">
+                <Form.Label>State</Form.Label>
+                <Form.Control
+                  type="text"
+                  defaultValue={deviceMetadata.data_cite_state}
+                  readonly="true"
+                />
+              </Form.Group>
 
-                <Form.Group controlId="metadataFormURL">
-                  <Form.Label>URL</Form.Label>
-                  <Form.Control
-                    type="text"
-                    defaultValue={deviceMetadata.url}
-                    readonly="true"
-                  />
-                </Form.Group>
+              <Form.Group controlId="metadataFormURL">
+                <Form.Label>URL</Form.Label>
+                <Form.Control
+                  type="text"
+                  defaultValue={deviceMetadata.url}
+                  readonly="true"
+                />
+              </Form.Group>
 
-                <Form.Group controlId="metadataFormLandingPage">
-                  <Form.Label>Landing Page</Form.Label>
-                  <Form.Control
-                    type="text"
-                    defaultValue={deviceMetadata.landing_page}
-                    readonly="true"
-                  />
-                </Form.Group>
-                <Form.Group controlId="metadataFormName">
-                  <Form.Label>Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    defaultValue={deviceMetadata.name}
-                    readonly="true"
-                  />
-                </Form.Group>
-                <Form.Group controlId="metadataFormPublicationYear">
-                  <Form.Label>Publication Year</Form.Label>
-                  <Form.Control
-                    type="number"
-                    defaultValue={deviceMetadata.publication_year}
-                    readonly="true"
-                  />
-                </Form.Group>
-                <Form.Group controlId="metadataFormDescription">
-                  <Form.Label>Description</Form.Label>
-                  <Form.Control
-                    type="text"
-                    defaultValue={deviceMetadata.description}
-                    readonly="true"
-                  />
-                </Form.Group>
+              <Form.Group controlId="metadataFormLandingPage">
+                <Form.Label>Landing Page</Form.Label>
+                <Form.Control
+                  type="text"
+                  defaultValue={deviceMetadata.landing_page}
+                  readonly="true"
+                />
+              </Form.Group>
+              <Form.Group controlId="metadataFormName">
+                <Form.Label>Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  defaultValue={deviceMetadata.name}
+                  readonly="true"
+                />
+              </Form.Group>
+              <Form.Group controlId="metadataFormPublicationYear">
+                <Form.Label>Publication Year</Form.Label>
+                <Form.Control
+                  type="number"
+                  defaultValue={deviceMetadata.publication_year}
+                  readonly="true"
+                />
+              </Form.Group>
+              <Form.Group controlId="metadataFormDescription">
+                <Form.Label>Description</Form.Label>
+                <Form.Control
+                  type="text"
+                  defaultValue={deviceMetadata.description}
+                  readonly="true"
+                />
+              </Form.Group>
 
-                {deviceMetadata.dates
-                  && deviceMetadata.dates.map((dateItem, index) => (
-                    <div key={index}>
-                      <Col smOffset={0} sm={6}>
-                        <Form.Group>
-                          <Form.Label>Date</Form.Label>
-                          <Form.Control
-                            type="text"
-                            defaultValue={dateItem.date}
-                            readonly="true"
-                          />
-                        </Form.Group>
-                      </Col>
-                      <Col smOffset={0} sm={6}>
-                        <Form.Group>
-                          <Form.Label>DateType</Form.Label>
-                          <Form.Control
-                            type="text"
-                            defaultValue={dateItem.dateType}
-                            readonly="true"
-                          />
-                        </Form.Group>
-                      </Col>
-                    </div>
-                  ))}
+              {deviceMetadata.dates
+                && deviceMetadata.dates.map((dateItem, index) => (
+                  <div key={index}>
+                    <Col smOffset={0} sm={6}>
+                      <Form.Group>
+                        <Form.Label>Date</Form.Label>
+                        <Form.Control
+                          type="text"
+                          defaultValue={dateItem.date}
+                          readonly="true"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col smOffset={0} sm={6}>
+                      <Form.Group>
+                        <Form.Label>DateType</Form.Label>
+                        <Form.Control
+                          type="text"
+                          defaultValue={dateItem.dateType}
+                          readonly="true"
+                        />
+                      </Form.Group>
+                    </Col>
+                  </div>
+                ))}
 
-                <Row>
-                  <Col smOffset={0} sm={12}>
-                    <p className="text-right">
-                      DataCiteVersion:
-                      {' '}
-                      {deviceMetadata.data_cite_version}
-                      <br />
-                      DataCiteUpdatedAt:
-                      {' '}
-                      {formatDate(deviceMetadata.data_cite_updated_at)}
-                      <br />
-                    </p>
-                  </Col>
-                </Row>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Modal.Body>
-      </Modal>
+              <Row>
+                <Col smOffset={0} sm={12}>
+                  <p className="text-right">
+                    DataCiteVersion:
+                    {' '}
+                    {deviceMetadata.data_cite_version}
+                    <br />
+                    DataCiteUpdatedAt:
+                    {' '}
+                    {formatDate(deviceMetadata.data_cite_updated_at)}
+                    <br />
+                  </p>
+                </Col>
+              </Row>
+            </Form>
+          </Card.Body>
+        </Card>
+      </AppModal>
     );
   }
 
   render() {
     const { currentUser, showLabelModal, showSubscription } = this.state;
+    const { userMenuDropdownToggleVariant } = this.props;
     if (!currentUser) {
       return <i className="fa fa-spinner" />;
     }
@@ -641,7 +638,7 @@ export default class UserAuth extends Component {
     return (
       <>
         <Dropdown>
-          <Dropdown.Toggle variant="topbar">
+          <Dropdown.Toggle variant={userMenuDropdownToggleVariant}>
             <i className="fa fa-user me-1" />
             {currentUser.name}
           </Dropdown.Toggle>
@@ -688,3 +685,11 @@ export default class UserAuth extends Component {
     );
   }
 }
+
+UserAuth.propTypes = {
+  userMenuDropdownToggleVariant: propType.string,
+};
+
+UserAuth.defaultProps = {
+  userMenuDropdownToggleVariant: 'topbar',
+};

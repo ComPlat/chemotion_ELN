@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import Tree from 'react-ui-tree';
-import { Button, Modal } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import { set, isEmpty } from 'lodash';
 import { List } from 'immutable';
+import AppModal from 'src/components/common/AppModal';
 import CollectionTabLayoutEditor from 'src/apps/mydb/collections/CollectionTabLayoutEditor';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -115,7 +116,7 @@ const CollectionTabs = () => {
     setShowModal(true);
     setLayouts(layouts);
   }
-  
+
   const renderNode = (node) => {
     if (node.is_locked || node.id < 1) {
       return (
@@ -151,75 +152,60 @@ const CollectionTabs = () => {
         renderNode={renderNode}
       />
 
-      {
-        showModal && (
-          <Modal
-            size="lg"
-            centered
-            animation
-            show={showModal}
-            onHide={() => setShowModal(false)}
-            contentClassName="vh-90"
-          >
-            <Modal.Header closeButton>
-              <Modal.Title>{currentCollection.label}</Modal.Title>
-            </Modal.Header>
-            <Modal.Body className="p-0 h-100 overflow-hidden">
-              <div className="d-flex h-100">
-                {/* Left Sidebar */}
-                <div className="bg-light border-end border-light p-3 w-40 overflow-auto">
-                  <div className="d-flex flex-column">
-                    {allElements.map((element) => {
-                      const { name, label } = element;
-                      const isActive = selectedCategory === name;
-                      const btnClass = `btn text-start py-2 mb-2 ${isActive ? 'surface-active' : ''}`;
-                      return (
-                        <button
-                          key={name}
-                          type="button"
-                          className={btnClass}
-                          style={{
-                            border: '1px solid var(--bs-border-color)',
-                            borderRadius: '0.375rem',
-                            backgroundColor: isActive ? undefined : 'white'
-                          }}
-                          onClick={() => setSelectedCategory(name)}
-                        >
-                          <ElementIcon element={element} className="me-1" />
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Right Content */}
-                <div className="flex-grow-1 p-4" style={{ overflowY: 'auto' }}>
-                  <p className="text-muted mb-2">
-                    Choose which items appear for this category and in what order.
-                  </p>
-                  <CollectionTabLayoutEditor
-                    visible={layouts[selectedCategory].visible}
-                    hidden={layouts[selectedCategory].hidden}
-                    getItemComponent={({ item }) => <TabItemComponent item={item} />}
-                    onLayoutChange={(visible, hidden) => {
-                      setLayouts({ ...layouts, [selectedCategory]: { visible, hidden } });
-                    }}
-                  />
-                </div>
+      {showModal && (
+        <AppModal
+          size="lg"
+          show={showModal}
+          onHide={() => setShowModal(false)}
+          contentClassName="vh-90"
+          bodyClassName="p-0 h-100 overflow-hidden"
+          title={currentCollection.label}
+          primaryActionLabel="Save changes"
+          onPrimaryAction={handleSave}
+        >
+          <div className="d-flex h-100">
+            <div className="bg-light border-end border-light p-3 w-40 overflow-auto">
+              <div className="d-flex flex-column">
+                {allElements.map((element) => {
+                  const { name, label } = element;
+                  const isActive = selectedCategory === name;
+                  const btnClass = `btn text-start py-2 mb-2 ${isActive ? 'surface-active' : ''}`;
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      className={btnClass}
+                      style={{
+                        border: '1px solid var(--bs-border-color)',
+                        borderRadius: '0.375rem',
+                        backgroundColor: isActive ? undefined : 'white'
+                      }}
+                      onClick={() => setSelectedCategory(name)}
+                    >
+                      <ElementIcon element={element} className="me-1" />
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
-            </Modal.Body>
-            <Modal.Footer className="d-flex justify-content-between">
-              <Button variant="secondary" onClick={() => setShowModal(false)}>
-                Cancel
-              </Button>
-              <Button variant="primary" onClick={() => handleSave()}>
-                Save changes
-              </Button>
-            </Modal.Footer>
-          </Modal>
-        )
-      }
+            </div>
+
+            <div className="flex-grow-1 p-4" style={{ overflowY: 'auto' }}>
+              <p className="text-muted mb-2">
+                Choose which items appear for this category and in what order.
+              </p>
+              <CollectionTabLayoutEditor
+                visible={layouts[selectedCategory].visible}
+                hidden={layouts[selectedCategory].hidden}
+                getItemComponent={({ item }) => <TabItemComponent item={item} />}
+                onLayoutChange={(visible, hidden) => {
+                  setLayouts({ ...layouts, [selectedCategory]: { visible, hidden } });
+                }}
+              />
+            </div>
+          </div>
+        </AppModal>
+      )}
     </div>
   );
 }

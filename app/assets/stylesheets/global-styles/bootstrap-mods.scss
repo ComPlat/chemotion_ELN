@@ -173,56 +173,57 @@ h6 {
   }
 }
 
-@mixin square-icon-form-elements($padding-x, $padding-y) {
-  padding: $padding-y $padding-x;
-  &:has(> i:only-child) {
-    padding: $padding-y;
-  }
+@mixin button-like-size($padding-y, $padding-x, $font-size, $border-radius) {
+  @include button-size($padding-y, $padding-x, $font-size, $border-radius);
+  padding: var(--bs-btn-padding-y) var(--bs-btn-padding-x);
+  font-size: var(--bs-btn-font-size);
+  border-radius: var(--bs-btn-border-radius);
 }
 
 @mixin xsm-form-elements {
-  @include square-icon-form-elements(
-    $input-btn-padding-x-xsm,
-    $input-btn-padding-y-xsm
+  @include button-like-size(
+    $btn-padding-y-xsm,
+    $btn-padding-x-xsm,
+    $btn-font-size-xsm,
+    $btn-border-radius-xsm
   );
-  font-size: 12px;
-  border-radius: 3px;
   @include condensed-text-width;
 }
 
 @mixin xxsm-form-elements {
-  @include square-icon-form-elements(
-    $input-btn-padding-x-xxsm,
-    $input-btn-padding-y-xxsm
+  @include button-like-size(
+    $btn-padding-y-xxsm,
+    $btn-padding-x-xxsm,
+    $btn-font-size-xxsm,
+    $btn-border-radius-xxsm
   );
-  font-size: 12px;
-  border-radius: 2.5px;
   @include condensed-text-width;
 }
 
 .btn {
-  @include square-icon-form-elements(
-    $input-btn-padding-x,
-    $input-btn-padding-y
-  );
-  &-lg {
-    @include square-icon-form-elements(
-      $input-btn-padding-x-lg,
-      $input-btn-padding-y-lg
-    );
+  &:has(> i:only-child) {
+    padding: var(--bs-btn-padding-y);
   }
   &-sm {
-    @include square-icon-form-elements(
-      $input-btn-padding-x-sm,
-      $input-btn-padding-y-sm
-    );
     @include condensed-text-width;
   }
   &-xsm {
-    @include xsm-form-elements;
+    @include button-size(
+      $btn-padding-y-xsm,
+      $btn-padding-x-xsm,
+      $btn-font-size-xsm,
+      $btn-border-radius-xsm
+    );
+    @include condensed-text-width;
   }
   &-xxsm {
-    @include xxsm-form-elements;
+    @include button-size(
+      $btn-padding-y-xxsm,
+      $btn-padding-x-xxsm,
+      $btn-font-size-xxsm,
+      $btn-border-radius-xxsm
+    );
+    @include condensed-text-width;
   }
 }
 

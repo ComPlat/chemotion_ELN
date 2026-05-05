@@ -209,28 +209,53 @@ const cleaningNMRiumData = (nmriumData) => {
   if (!nmriumData) return null;
   const cleanedNMRiumData = { ...nmriumData };
 
-  const { data } = cleanedNMRiumData;
-  if (!data) return cleanedNMRiumData;
-
-  const { spectra } = data;
-  if (!spectra) return cleanedNMRiumData;
-
   const root = cleanedNMRiumData.data || cleanedNMRiumData;
+  const { spectra } = root;
+  if (!Array.isArray(spectra)) return cleanedNMRiumData;
+
+  delete root.actionType;
   const hasGlobalSource = !!root.source;
 
   const newSpectra = spectra.map((spc) => {
     const tmpSpc = { ...spc };
     const hasLocalSource = !!(spc && (spc.source || spc.sourceSelector));
     const hasSource = hasLocalSource || hasGlobalSource;
+    // Check if the spectrum is a 2D spectrum
+    const isSourceOnly2D = hasSource && (
+      tmpSpc?.info?.dimension === 2
+      || tmpSpc?.originalInfo?.dimension === 2
+      || tmpSpc?.meta?.dimension === 2
+    );
 
     delete tmpSpc.originalData;
     if (hasSource) {
       delete tmpSpc.data;
     }
+
+    // For 2D spectra, we need to keep the name of the spectrum in display.name and remove the info, originalInfo, and meta
+    if (isSourceOnly2D) {
+      const spectrumName = tmpSpc?.display?.name
+        || tmpSpc?.info?.name
+        || tmpSpc?.originalInfo?.name
+        || tmpSpc?.meta?.name;
+      if (spectrumName) {
+        tmpSpc.display = { ...tmpSpc.display, name: spectrumName };
+      }
+      delete tmpSpc.info;
+      delete tmpSpc.originalInfo;
+      delete tmpSpc.meta;
+      // Remove the filters if they are not valid
+      if (Array.isArray(tmpSpc.filters)) {
+        tmpSpc.filters = tmpSpc.filters.filter(
+          (filter) => filter && typeof filter === 'object' && !Object.prototype.hasOwnProperty.call(filter, 'error')
+        );
+      }
+    }
+
     return tmpSpc;
   });
 
-  data.spectra = [...newSpectra];
+  root.spectra = [...newSpectra];
 
   return cleanedNMRiumData;
 };

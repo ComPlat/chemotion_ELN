@@ -92,6 +92,13 @@ export default function ReactionConditions({
     handleChange(conditions.filter((_, i) => i !== index));
   }, [conditions, handleChange]);
 
+  const filterConditions = useCallback((option, inputValue) => {
+    if (!inputValue) return true;
+    const normalizedInput = inputValue.replace(/\s+/g, '');
+    const normalizedLabel = option.label.replace(/\s+/g, '');
+    return normalizedLabel.toLowerCase().includes(normalizedInput.toLowerCase());
+  }, []);
+
   return (
     <div className="material-group">
       <div className="pseudo-table__row pseudo-table__row-header">
@@ -109,6 +116,7 @@ export default function ReactionConditions({
               multi={false}
               options={conditionsOptions}
               onChange={({ value }) => addCondition(value)}
+              filterOption={filterConditions}
               size="xsm"
               placeholder="Add"
             />

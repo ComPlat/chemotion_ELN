@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, Table, Button, Form, Card } from 'react-bootstrap';
+import { Table, Button, Form, Card } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import { AsyncSelect } from 'src/components/common/Select';
 import { findIndex, filter } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
@@ -314,59 +315,51 @@ export default class GroupsDevices extends React.Component {
     const { showCreateModal, rootType } = this.state;
     const title = (rootType === 'Group') ? 'Add new group' : 'Add new device';
     return (
-      <Modal
-        centered
+      <AppModal
         show={showCreateModal}
         onHide={this.handleCloseGroup}
+        title={title}
+        primaryActionLabel={`Create new ${rootType === 'Group' ? 'group' : 'device'}`}
+        onPrimaryAction={() => this.createGroup()}
       >
-        <Modal.Header closeButton className='bg-light'>
-          <Modal.Title>{title}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group controlId="formInlineName" className='mb-3 fs-5 fw-bold'>
-              <Form.Label>Name*</Form.Label>
-              <Form.Control
-                type="text"
-                ref={(m) => { this.firstInput = m; }}
-                placeholder="eg: AK"
-                className='py-2'
-              />
-            </Form.Group>
-            <Form.Group controlId="formInlineName" className='mb-3 fs-5 fw-bold'>
-              <Form.Control
-                type="text"
-                ref={(m) => { this.lastInput = m; }}
-                placeholder="J. Moriarty"
-                className='py-2'
-              />
-            </Form.Group>
-            <Form.Group controlId="formInlineNameAbbr" className='mb-3 fs-5 fw-bold'>
-              <Form.Label>Name abbreviation*</Form.Label>
-              <Form.Control
-                type="text"
-                ref={(m) => { this.abbrInput = m; }}
-                placeholder="AK-JM"
-                className='py-2'
-              />
-            </Form.Group>
-            <Form.Group controlId="formInlineEmail" className='mb-4 fs-5 fw-bold'>
-              <Form.Label>Email</Form.Label>
-              <Form.Control
-                type="text"
-                ref={(m) => { this.emailInput = m; }}
-                placeholder="eg: abc@kit.edu"
-                className='py-2'
-              />
-            </Form.Group>
-            <Modal.Footer className='modal-footer border-0'>
-              <Button size="lg" variant="primary" onClick={() => this.createGroup()}>
-                Create new {rootType === 'Group' ? 'group' : 'device'}
-              </Button>
-            </Modal.Footer>
-          </Form>
-        </Modal.Body>
-      </Modal>
+        <Form>
+          <Form.Group controlId="formInlineName" className='mb-3 fs-5 fw-bold'>
+            <Form.Label>Name*</Form.Label>
+            <Form.Control
+              type="text"
+              ref={(m) => { this.firstInput = m; }}
+              placeholder="eg: AK"
+              className='py-2'
+            />
+          </Form.Group>
+          <Form.Group controlId="formInlineName" className='mb-3 fs-5 fw-bold'>
+            <Form.Control
+              type="text"
+              ref={(m) => { this.lastInput = m; }}
+              placeholder="J. Moriarty"
+              className='py-2'
+            />
+          </Form.Group>
+          <Form.Group controlId="formInlineNameAbbr" className='mb-3 fs-5 fw-bold'>
+            <Form.Label>Name abbreviation*</Form.Label>
+            <Form.Control
+              type="text"
+              ref={(m) => { this.abbrInput = m; }}
+              placeholder="AK-JM"
+              className='py-2'
+            />
+          </Form.Group>
+          <Form.Group controlId="formInlineEmail" className='mb-4 fs-5 fw-bold'>
+            <Form.Label>Email</Form.Label>
+            <Form.Control
+              type="text"
+              ref={(m) => { this.emailInput = m; }}
+              placeholder="eg: abc@kit.edu"
+              className='py-2'
+            />
+          </Form.Group>
+        </Form>
+      </AppModal>
     );
   }
 
@@ -399,33 +392,22 @@ export default class GroupsDevices extends React.Component {
     }
 
     return (
-      <Modal
-        centered
+      <AppModal
         show={showModal}
         onHide={this.handleClose}
+        title={title}
+        primaryActionLabel="Add"
+        onPrimaryAction={() => this.addToRoot(root)}
       >
-        <Modal.Header closeButton>
-          <Modal.Title>{title}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <AsyncSelect
-            isMulti
-            value={selectedUsers}
-            matchProp="name"
-            placeholder="Select ..."
-            loadOptions={this.loadUserByNameType}
-            onChange={this.handleSelectUser}
-          />
-          <Button
-            size="md"
-            variant="warning"
-            className='mt-3'
-            onClick={() => this.addToRoot(root)}
-          >
-            Add
-          </Button>
-        </Modal.Body>
-      </Modal>
+        <AsyncSelect
+          isMulti
+          value={selectedUsers}
+          matchProp="name"
+          placeholder="Select ..."
+          loadOptions={this.loadUserByNameType}
+          onChange={this.handleSelectUser}
+        />
+      </AppModal>
     );
   }
 

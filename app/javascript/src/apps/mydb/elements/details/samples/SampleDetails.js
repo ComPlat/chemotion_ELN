@@ -6,10 +6,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, InputGroup, ListGroupItem, Tabs, Tab, Row, Col,
-  Tooltip, OverlayTrigger, Modal, Alert, Form,
+  Tooltip, OverlayTrigger, Alert, Form,
   Accordion, Container
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
+import AppModal from 'src/components/common/AppModal';
 import { CreatableSelect } from 'src/components/common/Select';
 import { cloneDeep, findIndex, set } from 'lodash';
 import uuid from 'uuid';
@@ -1462,37 +1463,27 @@ export default class SampleDetails extends React.Component {
   }
 
   renderMolfileModal() {
-    const { molfile } = this.state;
+    const { molfile, showMolfileModal } = this.state;
 
     return (
-      <Modal
-        centered
-        show={this.state.showMolfileModal}
-        dialogClassName="modal-lg"
+      <AppModal
+        title="Molfile"
+        show={showMolfileModal}
+        size="lg"
         onHide={this.handleMolfileClose}
+        closeLabel="Close"
+        showFooter
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Molfile</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div>
-            <Form.Group controlId="molfileInputModal">
-              <Form.Control
-                as="textarea"
-                rows={30}
-                readOnly
-                disabled
-                value={molfile}
-              />
-            </Form.Group>
-          </div>
-          <div>
-            <Button variant="warning" onClick={this.handleMolfileClose}>
-              Close
-            </Button>
-          </div>
-        </Modal.Body>
-      </Modal>
+        <Form.Group controlId="molfileInputModal">
+          <Form.Control
+            as="textarea"
+            rows={30}
+            readOnly
+            disabled
+            value={molfile}
+          />
+        </Form.Group>
+      </AppModal>
     );
   }
 

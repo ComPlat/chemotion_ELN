@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import { Form, ButtonToolbar, Button } from 'react-bootstrap';
-import { Select } from 'src/components/common/Select';
-import { sizeAttributes } from './componentAttributes';
-
 import {
   Title,
   Subtitle,
@@ -10,6 +7,8 @@ import {
   Canvas,
   Markdown,
 } from '@storybook/blocks';
+import { Select } from 'src/components/common/Select';
+import { sizeAttributes } from './componentAttributes';
 
 const sizes = sizeAttributes;
 const options = [
@@ -48,7 +47,7 @@ export function Layout() {
       <Form.Group className="mb-3" controlId="formBasicCheckbox">
         <Form.Check type="checkbox" label="Check me out" />
       </Form.Group>
-      <ButtonToolbar className="justify-content-end">
+      <ButtonToolbar className="justify-content-end gap-3">
         <Button variant="light">Cancel</Button>
         <Button>Save</Button>
       </ButtonToolbar>
@@ -92,7 +91,7 @@ export function Sizing() {
 }
 
 export default {
-  title: 'Design Principles/Forms',
+  title: 'Molecules/Forms',
   tags: ['autodocs'],
   parameters: {
     options: {

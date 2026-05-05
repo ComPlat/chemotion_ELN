@@ -4,5 +4,14 @@
 
 .ql-editor {
   -webkit-user-select: text;
-          user-select: text;
+  user-select: text;
+}
+
+.text-editor-quill {
+  border: $form-select-border-width solid $form-select-border-color;
+  @include border-radius($input-border-radius, 0);
+  .ql-editor.ql-blank::before {
+    content: "1wt.% Pt, γ-Al2O3 and more...";
+    @extend .text-lighten2;
+  }
 }
