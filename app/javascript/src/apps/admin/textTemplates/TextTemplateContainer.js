@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { Container, Col, Row } from 'react-bootstrap';
+import { FormattedMessage } from 'react-intl';
 
 import TextTemplatesFetcher from 'src/fetchers/TextTemplatesFetcher';
 import TextTemplateForm from 'src/apps/admin/textTemplates/TextTemplateForm';
@@ -148,7 +149,7 @@ export default class TextTemplateContainer extends React.Component {
                 updateTemplate={this.updateTemplate}
               />
             ) : (
-              <h3>Select a template to edit</h3>
+              <h3><FormattedMessage id="text_templates-select_template" /></h3>
             )}
           </Col>
         </Row>
