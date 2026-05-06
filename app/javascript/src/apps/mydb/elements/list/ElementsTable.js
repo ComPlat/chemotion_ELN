@@ -627,6 +627,7 @@ export default class ElementsTable extends React.Component {
               overlay={<Tooltip id="filters_toggle_tooltip">{filterToggleTitle}</Tooltip>}
             >
               <Button
+                className="elements-table-header__filters-toggle-btn"
                 size="sm"
                 variant="secondary"
                 onClick={this.toggleFilters}
