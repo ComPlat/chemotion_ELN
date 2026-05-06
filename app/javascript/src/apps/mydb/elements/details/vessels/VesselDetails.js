@@ -112,7 +112,7 @@ function VesselDetails({ vesselItem }) {
         label: submitLabel,
         iconClass: 'fa fa-floppy-o',
         variant: 'primary',
-        onClick: handleSubmit,
+        onClick: () => handleSubmit(),
       })}
     </div>
   ) : null;
@@ -127,7 +127,7 @@ function VesselDetails({ vesselItem }) {
         iconClass: 'fa fa-floppy-o',
         variant: 'primary',
         disabled: isSubmitDisabled,
-        onClick: handleSubmit,
+        onClick: () => handleSubmit(),
       })}
     </>
   );
