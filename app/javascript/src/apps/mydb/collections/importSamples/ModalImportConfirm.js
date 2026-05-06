@@ -96,6 +96,13 @@ export default class ModalImportConfirm extends React.Component {
         checked: !!e.inchikey,
       }))
 
+      // Auto-map SDF tags to sample fields when their names match (case-insensitive,
+      // ignoring spaces/underscores). Tags like HEIGHT, PARTICLE_SIZE map to height, particle_size.
+      const normalize = (s) => s.toString().toLowerCase().replace(/[\s_]+/g, '');
+      const fieldKeyByNormalized = Object.keys(sdfUploadData.mapped_keys).reduce((acc, k) => {
+        acc[normalize(k)] = k;
+        return acc;
+      }, {});
       this.setState({
         show: true,
         rows,
@@ -103,7 +110,7 @@ export default class ModalImportConfirm extends React.Component {
         custom_data_keys: sdfUploadData.custom_data_keys,
         mapped_keys: sdfUploadData.mapped_keys,
         defaultSelected: sdfUploadData.custom_data_keys.reduce((acc, key) => {
-          acc[key] = '';
+          acc[key] = fieldKeyByNormalized[normalize(key)] || '';
           return acc;
         }, {}),
       });

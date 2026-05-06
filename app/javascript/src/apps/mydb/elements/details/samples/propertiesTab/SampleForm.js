@@ -1409,7 +1409,18 @@ export default class SampleForm extends React.Component {
   getSelectedHierarchicalProperties() {
     const { sample } = this.props;
     const stored = sample.sample_details?.selected_properties;
-    return Array.isArray(stored) ? stored : [];
+    // If the sample explicitly tracks which properties to show (set by user toggle
+    // or by SDF/XLS import), respect it strictly.
+    if (Array.isArray(stored)) return stored;
+
+    // Legacy fallback for older samples without selected_properties: auto-include
+    // any hierarchical field that has a value.
+    return HIERARCHICAL_PROPERTY_OPTIONS
+      .map((opt) => opt.value)
+      .filter((key) => {
+        const v = sample[key] ?? sample.sample_details?.[key];
+        return v !== undefined && v !== null && v !== '';
+      });
   }
 
   renderHierarchicalPropertyInput(sample, key, prop) {

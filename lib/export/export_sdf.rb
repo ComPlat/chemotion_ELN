@@ -133,10 +133,13 @@ module Export
     end
 
     # Keep only the CTAB (up to and including "M  END") when molfile has no PolymersList/TextNode.
-    # When PolymersList or TextNode blocks are present, keep the full molfile including those blocks and $$$$.
+    # When PolymersList or TextNode blocks are present, keep the full molfile including those blocks but
+    # strip any trailing $$$$ separator (which is appended by concatenate_data after the SDF tag block).
     def validate_molfile(molfile)
       s = molfile.to_s
-      return s.rstrip if Chemotion::MolfilePolymerSupport.has_polymer_or_textnode_blocks?(s)
+      if Chemotion::MolfilePolymerSupport.has_polymer_or_textnode_blocks?(s)
+        return s.rstrip.sub(/\${4}\s*\z/, '').rstrip
+      end
 
       return s unless s.include?('M  END')
 

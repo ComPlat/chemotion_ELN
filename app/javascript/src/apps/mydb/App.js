@@ -7,6 +7,7 @@ import Topbar from 'src/apps/mydb/mainNavigation/topbar/Topbar';
 import FlowViewerModal from 'src/apps/generic/FlowViewerModal';
 import Elements from 'src/apps/mydb/elements/Elements';
 import InboxModal from 'src/apps/mydb/inbox/InboxModal';
+import ModalImportConfirm from 'src/apps/mydb/collections/importSamples/ModalImportConfirm';
 import Calendar from 'src/components/calendar/Calendar';
 import LoadingModal from 'src/components/common/LoadingModal';
 import ProgressModal from 'src/components/common/ProgressModal';
@@ -96,6 +97,7 @@ class App extends Component {
         <InboxModal />
         <SampleTaskInbox />
         <Calendar />
+        <ModalImportConfirm />
       </>
     );
   }
