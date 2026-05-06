@@ -18,7 +18,7 @@ import ToolbarTemplateCreator from 'src/components/textTemplateToolbar/ToolbarTe
 const toolbarOptions = [
   'bold', 'italic', 'underline',
   'header', 'script',
-  'list', 'bullet',
+  'list',
 ];
 
 export default class ReactionDescriptionEditor extends React.Component {
