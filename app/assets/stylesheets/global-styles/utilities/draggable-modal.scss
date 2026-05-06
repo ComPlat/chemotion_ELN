@@ -106,20 +106,7 @@
 .draggable-modal-content .modal-header .btn-group .btn {
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--bs-gray-600);
-}
-
-.draggable-modal-content .modal-header .btn-group .btn:hover {
-  background-color: $chemstrap-silicon-active;
-}
-
-.draggable-modal-content .modal-header .btn-group .btn.active {
-  background-color: $chemstrap-silicon-active;
-  color: var(--bs-gray-800);
-}
-
-.draggable-modal-content .modal-header .btn-group .btn.active:hover {
-  color: white;
+  padding-right: 0.5rem;
 }
 
 .draggable-modal-content .modal-header .btn-group .btn .button-icon {
