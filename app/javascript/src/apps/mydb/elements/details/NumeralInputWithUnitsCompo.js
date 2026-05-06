@@ -245,9 +245,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
           )}
           {(() => {
             const inputGroup = (
-              <InputGroup
-                className="d-flex flex-nowrap align-items-center w-100"
-              >
+              <InputGroup className="w-100">
                 <Form.Control
                   type="text"
                   disabled={inputDisabled}
