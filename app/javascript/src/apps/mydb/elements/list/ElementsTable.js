@@ -17,6 +17,7 @@ import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
 import ElementsTableEntries from 'src/apps/mydb/elements/list/ElementsTableEntries';
 import SampleGroupContainer from 'src/apps/mydb/elements/list/sample/SampleGroupContainer';
 import { SearchUserLabels } from 'src/components/UserLabels';
+import ToggleButton from 'src/components/common/ToggleButton';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
@@ -64,7 +65,6 @@ export default class ElementsTable extends React.Component {
     this.onChange = this.onChange.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
 
-    this.toggleProductOnly = this.toggleProductOnly.bind(this);
     this.setUserLabel = this.setUserLabel.bind(this);
     this.setFromDate = this.setFromDate.bind(this);
     this.setToDate = this.setToDate.bind(this);
@@ -354,11 +354,6 @@ export default class ElementsTable extends React.Component {
 
     this.setState({ filterCloseHint: false });
   };
-
-  toggleProductOnly() {
-    const { productOnly } = this.state;
-    UIActions.setProductOnly(!productOnly);
-  }
 
   renderNumberOfResultsInput() {
     const { ui } = this.state;
@@ -707,14 +702,16 @@ export default class ElementsTable extends React.Component {
             />
           </InputGroup>
           {(type === 'sample') ? (
-            <Button
+            <ToggleButton
+              isToggledInitial={productOnly}
+              onToggle={(isToggled) => UIActions.setProductOnly(isToggled)}
+              onLabel="Products only"
+              offLabel="Products only"
+              tooltipOn="Remove products only filter"
+              tooltipOff="Apply products only filter"
+              showIcon
               size="sm"
-              onClick={this.toggleProductOnly}
-              variant="light"
-              active={productOnly}
-            >
-              Products only
-            </Button>
+            />
           ) : null}
         </div>
         {hasActiveFilters && (
@@ -723,6 +720,7 @@ export default class ElementsTable extends React.Component {
             variant="light"
             onClick={this.clearFilters}
           >
+            <i className="fa fa-times-circle me-1" />
             Clear
           </Button>
         )}
