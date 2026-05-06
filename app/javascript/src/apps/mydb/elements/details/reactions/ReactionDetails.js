@@ -142,7 +142,7 @@ export default class ReactionDetails extends Component {
     const selectedReactionType = reaction.reaction_type || 'standard';
 
     return (
-      <Form.Group className="reaction-details-toolbar__group mb-0">
+      <Form.Group className="reaction-details-toolbar__group mb-0 me-2">
         <Select
           size="sm"
           name="reaction_type"
@@ -326,6 +326,50 @@ export default class ReactionDetails extends Component {
       isEditingHeaderName: false,
       headerNameDraft: reaction.name || '',
     });
+  }
+
+  renderHeaderTitle() {
+    const { reaction, isEditingHeaderName, headerNameDraft } = this.state;
+    const titlePrefix = reaction.short_label || '';
+    const canEditName = permitOn(reaction) && !reaction.isMethodDisabled('name');
+
+    return (
+      <span className="reaction-details-header__title">
+        {titlePrefix && (
+          <span className="reaction-details-header__title-prefix me-1">{titlePrefix}</span>
+        )}
+        {isEditingHeaderName ? (
+          <Form.Control
+            ref={this.headerNameInputRef}
+            size="sm"
+            type="text"
+            name="reaction_name"
+            value={headerNameDraft}
+            placeholder="Reaction name"
+            className="reaction-details-header__title-input d-inline-block"
+            onChange={this.handleHeaderNameDraftChange}
+            onBlur={this.commitHeaderNameChange}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                this.commitHeaderNameChange();
+              } else if (event.key === 'Escape') {
+                this.cancelHeaderNameChange();
+              }
+            }}
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className={`reaction-details-header__title-text${reaction.name ? '' : ' reaction-details-header__title-text--empty'}`}
+            onDoubleClick={canEditName ? this.openHeaderNameEditor : undefined}
+            title={canEditName ? 'Double-click to edit reaction name' : undefined}
+          >
+            {reaction.name || 'Reaction name'}
+          </span>
+        )}
+      </span>
+    );
   }
 
   handleInputChange(type, event) {
@@ -1080,7 +1124,8 @@ export default class ReactionDetails extends Component {
     const currentTab = (activeTab !== 0 && activeTab) || visible[0];
 
     const titleTooltip = formatTimeStampsOfElement(reaction || {});
-    const title = reaction.title();
+
+    const title = this.renderHeaderTitle();
 
     const titleAppendix = (
       <>
