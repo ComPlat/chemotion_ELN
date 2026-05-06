@@ -64,8 +64,6 @@ export default class ElementsTable extends React.Component {
     this.onChange = this.onChange.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
 
-    this.changeDateFilter = this.changeDateFilter.bind(this);
-
     this.toggleProductOnly = this.toggleProductOnly.bind(this);
     this.setUserLabel = this.setUserLabel.bind(this);
     this.setFromDate = this.setFromDate.bind(this);
@@ -357,12 +355,6 @@ export default class ElementsTable extends React.Component {
     this.setState({ filterCloseHint: false });
   };
 
-  changeDateFilter() {
-    let { filterCreatedAt } = this.state;
-    filterCreatedAt = !filterCreatedAt;
-    UIActions.setFilterCreatedAt(filterCreatedAt);
-  }
-
   toggleProductOnly() {
     const { productOnly } = this.state;
     UIActions.setProductOnly(!productOnly);
@@ -441,17 +433,15 @@ export default class ElementsTable extends React.Component {
     const { sortDirection } = this.state;
     const sortDirectionIcon = sortDirection === 'ASC' ? 'fa-long-arrow-up' : 'fa-long-arrow-down';
     const changeSortDirectionTitle = sortDirection === 'ASC' ? 'change to descending' : 'change to ascending';
-    const sortDirectionTooltip = <Tooltip id="change_sort_direction">{changeSortDirectionTitle}</Tooltip>;
     return (
-      <OverlayTrigger placement="top" overlay={sortDirectionTooltip}>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={this.changeSortDirection}
-        >
-          <i className={`fa ${sortDirectionIcon}`} />
-        </Button>
-      </OverlayTrigger>
+      <Button
+        size="sm"
+        variant="secondary"
+        title={changeSortDirectionTitle}
+        onClick={this.changeSortDirection}
+      >
+        <i className={`fa ${sortDirectionIcon}`} />
+      </Button>
     );
   };
 
@@ -672,25 +662,24 @@ export default class ElementsTable extends React.Component {
     const hasActiveFilters = this.hasActiveFilters();
     const searchLabel = <SearchUserLabels userLabel={userLabel} fnCb={this.setUserLabel} size="sm" />;
 
-    const filterTitle = filterCreatedAt === true
-      ? 'click to filter by update date - currently filtered by creation date'
-      : 'click to filter by creation date - currently filtered by update date';
-    const filterIconClass = filterCreatedAt === true ? 'fa-calendar' : 'fa-calendar-o';
-    const filterTooltip = <Tooltip id="date_tooltip">{filterTitle}</Tooltip>;
-    const filterIcon = <i className={`fa ${filterIconClass}`} />;
+    const DATE_FILTER_OPTIONS = [
+      { value: true, label: 'Created' },
+      { value: false, label: 'Updated' },
+    ];
+    const dateFilterValue = DATE_FILTER_OPTIONS.find(({ value }) => value === filterCreatedAt);
 
     return (
       <div id={`elements-table-filters-${type}`} className="elements-table-filters">
         <div className="d-flex align-items-center gap-2">
           {searchLabel}
           <InputGroup className="elements-table-header__date-filter" size="sm">
-            <OverlayTrigger placement="top" overlay={filterTooltip}>
-              <Button
-                onClick={this.changeDateFilter}
-              >
-                {filterIcon}
-              </Button>
-            </OverlayTrigger>
+            <Select
+              options={DATE_FILTER_OPTIONS}
+              isClearable={false}
+              value={dateFilterValue}
+              onChange={(opt) => UIActions.setFilterCreatedAt(opt?.value ?? opt)}
+              size="sm"
+            />
             <DatePicker
               selected={fromDate}
               placeholderText="From"

@@ -190,6 +190,16 @@ h6 {
   }
 }
 
+@mixin sm-form-elements {
+  @include button-like-size(
+    $btn-padding-y-sm,
+    $btn-padding-x-sm,
+    $btn-font-size-sm,
+    $btn-border-radius-sm
+  );
+  @include condensed-text-width;
+}
+
 @mixin xsm-form-elements {
   @include button-like-size(
     $btn-padding-y-xsm,
