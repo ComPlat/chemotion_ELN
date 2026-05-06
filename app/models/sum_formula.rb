@@ -2,7 +2,7 @@
 
 class SumFormula < Hash
   ELEMENT_REGEXP = /\A[A-Z][a-z]*\z/.freeze
-  NUMBER_REGEXP = /\d+(?:\.\d+)?/.freeze
+  NUMBER_REGEXP = /\d+(?:[.,]\d+)?/.freeze
 
   def initialize(formula = '')
     super()
@@ -294,7 +294,9 @@ class SumFormula < Hash
   end
 
   def self.parse_numeric_token(token)
-    token.include?('.') ? token.to_f : token.to_i
+    return token.tr(',', '.').to_f if token.match?(/[.,]/)
+
+    token.to_i
   end
 
   private_class_method :decimal_dot?, :hydrate_dot?, :previous_top_level_separator_index,
