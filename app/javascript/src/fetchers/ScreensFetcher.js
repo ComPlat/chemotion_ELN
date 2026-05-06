@@ -1,79 +1,45 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Screen from 'src/models/Screen';
-import AttachmentFetcher from 'src/fetchers/AttachmentFetcher'
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 
 export default class ScreensFetcher {
-  static fetchById(id) {
-    let promise = fetch('/api/v1/screens/' + id + '.json', {
-      credentials: 'same-origin'
-    })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        const rScreen = new Screen(json.screen);
-        if (json.error) {
-          rScreen.id = `${id}:error:Screen ${id} is not accessible!`;
-        }
-        return rScreen;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
-  }
-
   static fetchByCollectionId(id, queryParams = {}) {
     return BaseFetcher.fetchByCollectionId(id, queryParams, 'screens', Screen);
   }
 
-  static update(screen) {
-    const promise = () => fetch(`/api/v1/screens/${screen.id}`, {
-      credentials: 'same-origin',
-      method: 'put',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(screen.serialize())
-    }).then(response => response.json())
-      .then(json => GenericElsFetcher.uploadGenericFiles(screen, json.screen.id, 'Screen')
-        .then(() => BaseFetcher.updateAnnotationsInContainer(screen))
-        .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(screen.container).then(() => promise());
+  static fetchById(id) {
+    return ApiClient.getJson(`/api/v1/screens/${id}`)
+      .then((json) => this.screenElement(json, id));
   }
 
   static create(screen) {
-    const promise = () => fetch('/api/v1/screens/', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(screen.serialize())
-    }).then(response => response.json())
-      .then(json => GenericElsFetcher.uploadGenericFiles(screen, json.screen.id, 'Screen')
-        .then(() => this.fetchById(json.screen.id))).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
+    const promise = () => ApiClient.postJson('/api/v1/screens', { body: screen.serialize() })
+      .then((json) => GenericElsFetcher.uploadGenericFiles(screen, json.screen.id, 'Screen')
+        .then(() => this.screenElement(json, json.screen.id)));
+
     return AttachmentFetcher.uploadNewAttachmentsForContainer(screen.container).then(() => promise());
   }
 
-  static addResearchPlan(screen_id, collection_id) {
-    return fetch(
-      `/api/v1/screens/${screen_id}/add_research_plan`,
-      {
-        credentials: 'same-origin',
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ collection_id })
-      }
-    ).then(response => response.json()).catch(errorMessage => console.log(errorMessage));
+  static update(screen) {
+    const promise = () => ApiClient.putJson(`/api/v1/screens/${screen.id}`, { body: screen.serialize() })
+      .then((json) => GenericElsFetcher.uploadGenericFiles(screen, json.screen.id, 'Screen')
+        .then(() => BaseFetcher.updateAnnotationsInContainer(screen))
+        .then(() => this.screenElement(json, json.screen.id)));
+
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(screen.container).then(() => promise());
+  }
+
+  static addResearchPlan(screenId, collectionId) {
+    return ApiClient.postJson(`/api/v1/screens/${screenId}/add_research_plan`, { body: collectionId });
+  }
+
+  static screenElement(json, id) {
+    const screen = new Screen(json.screen);
+    if (json.error) {
+      screen.id = `${id}:error:Screen ${id} is not accessible!`;
+    }
+    return screen;
   }
 }
