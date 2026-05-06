@@ -1,5 +1,64 @@
 # Chemotion_ELN Changelog
 
+# [v3.1.1]
+> (2026-05-06)
+
+## Features and enhancements
+
+### Reaction variations
+* export reaction variations table to CSV ([#3208](https://github.com/ComPlat/chemotion_ELN/pull/3208))
+* warn about data loss in reaction variations when switching reaction schemes ([#3162](https://github.com/ComPlat/chemotion_ELN/pull/3162))
+
+## Fixes
+
+* NMRium 2D source-only reload ([#3190](https://github.com/ComPlat/chemotion_ELN/pull/3190))
+* reactants search regex improvements ([#3183](https://github.com/ComPlat/chemotion_ELN/pull/3183))
+* Quill editor bullet styles ([#3160](https://github.com/ComPlat/chemotion_ELN/pull/3160))
+* keep edit when cell loses focus in reaction variations ([#3154](https://github.com/ComPlat/chemotion_ELN/pull/3154))
+* strip image embeds in ReactQuill to prevent ParchmentError on reaction load
+
+### report
+
+* use real-first amount precedence for solvents in reaction docx ([#3191](https://github.com/ComPlat/chemotion_ELN/pull/3191))
+* escape HTML special chars in Quill delta converter
+* use --export-area-page in Inkscape 1.x to prevent reaction image distortion and clipping for polymer schemes
+
+### UI/UX
+
+* show save buttons when editing numeric sample properties ([#3148](https://github.com/ComPlat/chemotion_ELN/pull/3148))
+* close panel after Save and Close for every element type
+* show sharer name in 'Shared with me' collection tree roots
+* prevent datepicker input from overlapping search dropdown menu
+* restyle settings header for contrast and consistency
+
+### spectra
+
+* editor refresh simulation payload ([#3203](https://github.com/ComPlat/chemotion_ELN/pull/3203))
+
+### profile
+
+* default inbox transfer flags for all users ([#3147](https://github.com/ComPlat/chemotion_ELN/pull/3147))
+
+## Docs
+
+### readme
+
+* update acknowledgments, logos, and copyright year ([#3210](https://github.com/ComPlat/chemotion_ELN/pull/3210))
+
+## Chore
+
+* version
+* yarn upgrade interactive
+
+### deps
+
+* bump @complat/react-spectra-editor to 1.7.1
+
+### ontologies
+
+* update default CHMO list ([#3164](https://github.com/ComPlat/chemotion_ELN/pull/3164))
+
+
 # [v3.1.0]
 > (2026-04-14)
 
