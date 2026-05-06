@@ -468,9 +468,13 @@ module Chemotion
           # Extract fields that have DB columns and save them directly
           db_column_fields = %i[color state height width length diameter storage_condition material cspi particle_size shape sieve_fraction]
           db_column_fields.each do |field|
-            if sample_details_param.key?(field.to_s)
-              attributes[field] = sample_details_param.delete(field.to_s)
-            end
+            next unless sample_details_param.key?(field.to_s)
+
+            sd_value = sample_details_param.delete(field.to_s)
+            # If direct attribute has a value, don't let an empty sample_details value overwrite it
+            next if attributes[field].present? && sd_value.blank?
+
+            attributes[field] = sd_value
           end
 
           # Merge remaining sample_details with existing ones

@@ -45,6 +45,8 @@ const HIERARCHICAL_PROPERTY_OPTIONS = [
   { value: 'cspi', label: 'CSPI', placeholder: 'e.g., 45°C' },
   { value: 'particle_size', label: 'Particle size', placeholder: 'e.g., Medium, 50 µm' },
   { value: 'shape', label: 'Shape', placeholder: 'e.g., Spherical, Cubic' },
+  { value: 'color', label: 'Color', placeholder: 'e.g., Red, Blue' },
+  { value: 'storage_condition', label: 'Storage condition', placeholder: 'e.g., Room temperature' },
 ];
 
 const PROPERTY_MAP = Object.fromEntries(
@@ -1410,6 +1412,10 @@ export default class SampleForm extends React.Component {
     return Array.isArray(stored) ? stored : [];
   }
 
+  renderHierarchicalPropertyInput(sample, key, prop) {
+    return this.textInput(sample, key, prop.label, false, false, prop.placeholder);
+  }
+
   handleHierarchicalPropertySelectionChanged(selectedOptions) {
     const { sample, handleSampleChanged } = this.props;
     const selectedValues = (selectedOptions || []).map((opt) => opt.value);
@@ -1478,9 +1484,9 @@ export default class SampleForm extends React.Component {
 
                 return (
                   <Row key={`property-row-${index}`} className="mb-4">
-                    <Col xs={6}>{this.textInput(sample, key, currentProp.label, false, false, currentProp.placeholder)}</Col>
+                    <Col xs={6}>{this.renderHierarchicalPropertyInput(sample, key, currentProp)}</Col>
                     {nextKey && nextProp && (
-                      <Col xs={6}>{this.textInput(sample, nextKey, nextProp.label, false, false, nextProp.placeholder)}</Col>
+                      <Col xs={6}>{this.renderHierarchicalPropertyInput(sample, nextKey, nextProp)}</Col>
                     )}
                   </Row>
                 );
