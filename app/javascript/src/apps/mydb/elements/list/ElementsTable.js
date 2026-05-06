@@ -27,8 +27,15 @@ import VesselContainer from 'src/apps/mydb/elements/list/vessel/VesselContainer'
 import VesselTemplateGroupView from 'src/apps/mydb/elements/list/vessel/VesselTemplateGroupView';
 import DeviceDescriptionList from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionList';
 import DeviceDescriptionListHeader from 'src/apps/mydb/elements/list/deviceDescriptions/DeviceDescriptionListHeader';
-import SequenceBasedMacromoleculeSampleList from 'src/apps/mydb/elements/list/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleList';
-import SequenceBasedMacromoleculeSampleListHeader from 'src/apps/mydb/elements/list/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleListHeader';
+import SequenceBasedMacromoleculeSampleList
+  from 'src/apps/mydb/elements/list/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleList';
+import SequenceBasedMacromoleculeSampleListHeader
+  from 'src/apps/mydb/elements/list/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleListHeader';
+
+const SORT_MODE_OPTIONS = [
+  { value: 'created', label: 'Created' },
+  { value: 'updated', label: 'Updated' }
+];
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -45,6 +52,8 @@ export default class ElementsTable extends React.Component {
       moleculeSort: false,
       searchResult: false,
       productOnly: false,
+      showFilters: false,
+      filterCloseHint: false,
       page: null,
       pages: null,
       elementsGroup: 'none',
@@ -119,6 +128,23 @@ export default class ElementsTable extends React.Component {
     }
   };
 
+  handleNumberOfResultsChange(event) {
+    const { value } = event.target;
+    if (parseInt(value, 10) > 0) {
+      UIActions.changeNumberOfResultsShown(value);
+      this.handleDelayForNumberOfResults();
+    }
+  }
+
+  handleDelayForNumberOfResults() {
+    const { type } = this.props;
+
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      ElementActions.refreshElements(type);
+    }, 900);
+  }
+
   onChangeUI(state) {
     const { type } = this.props;
     if (typeof state[type] === 'undefined' || state[type] === null) {
@@ -141,7 +167,7 @@ export default class ElementsTable extends React.Component {
 
     const isSearchResult = !!currentSearchByID;
 
-    const { currentStateProductOnly, searchResult } = this.state;
+    const { currentStateProductOnly, searchResult, filterCloseHint } = this.state;
     const stateChange = (
       currentId || filterCreatedAt
       || fromDate || toDate || userLabel || productOnly !== currentStateProductOnly
@@ -150,6 +176,7 @@ export default class ElementsTable extends React.Component {
     const moleculeSort = isSearchResult ? true : ElementStore.getState().moleculeSort;
 
     if (stateChange) {
+      const hasActiveFilters = !!(userLabel || fromDate || toDate || productOnly);
       this.setState({
         filterCreatedAt,
         ui: {
@@ -161,6 +188,7 @@ export default class ElementsTable extends React.Component {
         },
         isGroupBaseCollapsed: groupCollapse[type]?.baseState === 'collapsed',
         productOnly,
+        filterCloseHint: filterCloseHint && hasActiveFilters,
         searchResult: isSearchResult,
         moleculeSort
       });
@@ -232,9 +260,12 @@ export default class ElementsTable extends React.Component {
     });
   };
 
-  changeElementsGroup = ({ value: elementsGroup }) => {
+  changeElementsGroup = (selectedOption) => {
     const { type } = this.props;
     const { elementsSort, sortDirection } = this.state;
+    const elementsGroup = selectedOption?.value ?? selectedOption;
+
+    if (!elementsGroup) return;
 
     this.setState({
       elementsGroup,
@@ -245,15 +276,16 @@ export default class ElementsTable extends React.Component {
     });
   };
 
-  changeElementsSort = () => {
+  changeElementsSortMode = (selectedOption) => {
     const { type } = this.props;
     const { elementsGroup, sortDirection } = this.state;
-    let { elementsSort } = this.state;
-    elementsSort = !elementsSort;
+    const value = selectedOption?.value ?? selectedOption;
 
-    this.setState({
-      elementsSort
-    }, () => {
+    if (!value) return;
+
+    const elementsSort = value === 'created';
+
+    this.setState({ elementsSort }, () => {
       UIActions.resetGroupCollapse({ type });
       this.updateFilterAndUserProfile(elementsSort, sortDirection, elementsGroup);
     });
@@ -276,6 +308,7 @@ export default class ElementsTable extends React.Component {
   collapseButton = () => {
     const { isGroupBaseCollapsed } = this.state;
     const { type } = this.props;
+    const ariaLabel = isGroupBaseCollapsed ? 'Expand all groups' : 'Collapse all groups';
 
     const onClick = isGroupBaseCollapsed
       ? () => UIActions.expandAllGroups({ type })
@@ -285,11 +318,43 @@ export default class ElementsTable extends React.Component {
       <button
         type="button"
         onClick={onClick}
+        aria-label={ariaLabel}
         className={`accordion-button accordion-button--icon-only${isGroupBaseCollapsed ? ' collapsed' : ''}`}
       >
         &nbsp;
       </button>
     );
+  };
+
+  hasActiveFilters = () => {
+    const { ui, productOnly } = this.state;
+    const { fromDate, toDate, userLabel } = ui;
+    return !!(userLabel || fromDate || toDate || productOnly);
+  };
+
+  toggleFilters = () => {
+    const { showFilters } = this.state;
+    if (showFilters && this.hasActiveFilters()) {
+      this.setState({ filterCloseHint: true });
+      return;
+    }
+
+    this.setState({
+      showFilters: !showFilters,
+      filterCloseHint: false,
+    });
+  };
+
+  clearFilters = () => {
+    const { ui, productOnly } = this.state;
+    const { fromDate, toDate, userLabel } = ui;
+
+    if (userLabel) UIActions.setUserLabel(null);
+    if (fromDate) UIActions.setFromDate(null);
+    if (toDate) UIActions.setToDate(null);
+    if (productOnly) UIActions.setProductOnly(false);
+
+    this.setState({ filterCloseHint: false });
   };
 
   changeDateFilter() {
@@ -301,23 +366,6 @@ export default class ElementsTable extends React.Component {
   toggleProductOnly() {
     const { productOnly } = this.state;
     UIActions.setProductOnly(!productOnly);
-  }
-
-  handleNumberOfResultsChange(event) {
-    const { value } = event.target;
-    if (parseInt(value, 10) > 0) {
-      UIActions.changeNumberOfResultsShown(value);
-      this.handleDelayForNumberOfResults();
-    }
-  }
-
-  handleDelayForNumberOfResults() {
-    const { type } = this.props;
-
-    clearTimeout(this.timer);
-    this.timer = setTimeout(() => {
-      ElementActions.refreshElements(type);
-    }, 900);
   }
 
   renderNumberOfResultsInput() {
@@ -370,40 +418,22 @@ export default class ElementsTable extends React.Component {
   renderSamplesHeader = () => {
     const {
       moleculeSort,
-      productOnly,
     } = this.state;
 
     const options = [
       { value: false, label: 'Grouped by Sample' },
       { value: true, label: 'Grouped by Molecule' }
     ];
-    const tooltipText = productOnly ? 'Show all' : 'Show products only';
 
     return (
-      <>
-        <Select
-          options={options}
-          isClearable={false}
-          value={options.find(({ value }) => value === moleculeSort)}
-          onChange={this.changeSampleSort}
-          size="sm"
-        />
-        <OverlayTrigger
-          placement="top"
-          overlay={<Tooltip id="showProductsOnly">{tooltipText}</Tooltip>}
-        >
-          <Button
-            size="sm"
-            onClick={this.toggleProductOnly}
-            variant="light"
-            active={productOnly}
-          >
-            <i
-              className="fa fa-product-hunt"
-            />
-          </Button>
-        </OverlayTrigger>
-      </>
+      <Select
+        options={options}
+        isClearable={false}
+        value={options.find(({ value }) => value === moleculeSort)}
+        onChange={this.changeSampleSort}
+        size="sm"
+        variant="secondary"
+      />
     );
   };
 
@@ -414,19 +444,40 @@ export default class ElementsTable extends React.Component {
     const sortDirectionTooltip = <Tooltip id="change_sort_direction">{changeSortDirectionTitle}</Tooltip>;
     return (
       <OverlayTrigger placement="top" overlay={sortDirectionTooltip}>
-        <button
-          type="button"
-          style={{ border: 'none' }}
+        <Button
+          size="sm"
+          variant="secondary"
           onClick={this.changeSortDirection}
         >
           <i className={`fa ${sortDirectionIcon}`} />
-        </button>
+        </Button>
       </OverlayTrigger>
     );
   };
 
+  renderSortControls = ({ showDirection = true } = {}) => {
+    const { elementsSort } = this.state;
+    const sortModeValue = SORT_MODE_OPTIONS.find(({ value }) => (
+      elementsSort ? value === 'created' : value === 'updated'
+    ));
+
+    return (
+      <InputGroup size="sm" className="flex-nowrap w-auto">
+        <Select
+          options={SORT_MODE_OPTIONS}
+          isClearable={false}
+          value={sortModeValue}
+          onChange={this.changeElementsSortMode}
+          size="sm"
+          variant="secondary"
+        />
+        {showDirection ? this.renderChangeSortDirectionIcon() : null}
+      </InputGroup>
+    );
+  };
+
   renderReactionsHeader = () => {
-    const { elementsGroup, elementsSort, sortDirection } = this.state;
+    const { elementsGroup } = this.state;
     const optionsHash = {
       none: { sortColumn: 'create date', label: 'List' },
       rinchi_short_key: { sortColumn: 'RInChI', label: 'Grouped by RInChI' },
@@ -436,33 +487,6 @@ export default class ElementsTable extends React.Component {
       value: option[0],
       label: option[1].label
     }));
-
-    const { sortColumn } = optionsHash[elementsGroup];
-    const sortDirectionText = sortDirection === 'ASC' ? 'ascending' : 'descending';
-    const sortTitle = elementsSort
-      ? `click to sort by update date (${sortDirectionText}) - currently sorted by ${sortColumn} (${sortDirectionText})`
-      : `click to sort by ${sortColumn} (${sortDirectionText})`
-      + ` - currently sorted by update date (${sortDirectionText})`;
-    const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
-    let sortIconClass = 'fa-clock-o';
-    if (elementsGroup !== 'none') {
-      sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
-    } else {
-      sortIconClass = elementsSort ? 'fa-history' : 'fa-clock-o';
-    }
-    const sortIcon = <i className={`fa ${sortIconClass}`} />;
-    const sortContent = (
-      <OverlayTrigger placement="top" overlay={sortTooltip}>
-        <button
-          type="button"
-          style={{ border: 'none' }}
-          onClick={this.changeElementsSort}
-        >
-          {sortIcon}
-        </button>
-      </OverlayTrigger>
-    );
-
     return (
       <>
         <Select
@@ -470,19 +494,19 @@ export default class ElementsTable extends React.Component {
           options={options}
           clearable={false}
           searchable={false}
-          value={options.find(({ value }) => value == elementsGroup)}
+          value={options.find(({ value }) => value === elementsGroup)}
           onChange={this.changeElementsGroup}
           className="header-group-select"
           size="sm"
+          variant="secondary"
         />
-        {sortContent}
-        {this.renderChangeSortDirectionIcon()}
+        {this.renderSortControls()}
       </>
     );
   };
 
   renderGenericElementsHeader = () => {
-    const { elementsGroup, elementsSort } = this.state;
+    const { elementsGroup } = this.state;
     const { genericEl } = this.props;
 
     if (!genericEl.properties_release) return null;
@@ -522,40 +546,24 @@ export default class ElementsTable extends React.Component {
       // eslint-disable-next-line react/no-direct-mutation-state
       this.state.elementsGroup = 'none';
     }
-    const { sortColumn } = optionsHash[elementsGroup] || optionsHash.none;
-    const sortTitle = elementsSort ? `sort by ${sortColumn}` : 'sort by update date';
-    const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
-    const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
-    const sortIcon = <i className={`fa ${sortIconClass}`} />;
-    const sortContent = (
-      <OverlayTrigger placement="top" overlay={sortTooltip}>
-        <button
-          type="button"
-          style={{ border: 'none' }}
-          onClick={this.changeElementsSort}
-        >
-          {sortIcon}
-        </button>
-      </OverlayTrigger>
-    );
-
     return (
       <>
         <Select
           options={options}
           isClearable={false}
-          value={options.find(({ value }) => value == elementsGroup)}
+          value={options.find(({ value }) => value === elementsGroup)}
           onChange={this.changeElementsGroup}
           className="header-group-select"
           size="sm"
+          variant="secondary"
         />
-        {elementsGroup !== 'none' ? (sortContent) : null}
+        {elementsGroup !== 'none' ? this.renderSortControls({ showDirection: false }) : null}
       </>
     );
   };
 
   renderVesselsHeader = () => {
-    const { elementsGroup, elementsSort, sortDirection } = this.state;
+    const { elementsGroup } = this.state;
 
     const optionsHash = {
       none: { sortColumn: 'create date', label: 'List' },
@@ -566,16 +574,6 @@ export default class ElementsTable extends React.Component {
       value,
       label: config.label,
     }));
-
-    const { sortColumn } = optionsHash[elementsGroup];
-    const sortTitle = elementsSort
-      ? `Sort by ${sortColumn} (${sortDirection})`
-      : `Sort by update date (${sortDirection})`;
-    const sortTooltip = <Tooltip id="vessel_sort_tooltip">{sortTitle}</Tooltip>;
-
-    const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
-    const sortIcon = <i className={`fa ${sortIconClass}`} />;
-
     return (
       <>
         <Select
@@ -585,22 +583,20 @@ export default class ElementsTable extends React.Component {
           onChange={this.changeElementsGroup}
           className="header-group-select"
           size="sm"
+          variant="secondary"
         />
-        <OverlayTrigger placement="top" overlay={sortTooltip}>
-          <button type="button" style={{ border: 'none' }} onClick={this.changeElementsSort}>
-            {sortIcon}
-          </button>
-        </OverlayTrigger>
+        {this.renderSortControls()}
         {elementsGroup !== 'none' ? this.collapseButton() : null}
       </>
     );
   };
 
-
   renderHeader = () => {
-    const { filterCreatedAt, ui, elementsGroup } = this.state;
+    const {
+      showFilters,
+      elementsGroup,
+    } = this.state;
     const { type, genericEl } = this.props;
-    const { fromDate, toDate, userLabel } = ui;
 
     let typeSpecificHeader = null;
     let displayCollapseButton = false;
@@ -622,60 +618,124 @@ export default class ElementsTable extends React.Component {
     } else if (type === 'vessel') {
       typeSpecificHeader = this.renderVesselsHeader();
     }
+    const hasActiveFilters = this.hasActiveFilters();
+    let filterToggleTitle = 'Show filters';
+    if (showFilters && hasActiveFilters) {
+      filterToggleTitle = 'Clear filters before hiding';
+    } else if (showFilters) {
+      filterToggleTitle = 'Hide filters';
+    }
 
+    return (
+      <div className="elements-table-header gap-1">
+        <ElementAllCheckbox type={type} />
+        <div className="d-flex gap-1 align-items-center">
+          <div className="elements-table-header__display-settings">
+            {typeSpecificHeader}
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="filters_toggle_tooltip">{filterToggleTitle}</Tooltip>}
+            >
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={this.toggleFilters}
+                active={showFilters}
+                aria-expanded={showFilters}
+                aria-controls={`elements-table-filters-${type}`}
+                aria-label="Toggle filters"
+              >
+                <i className="fa fa-filter" />
+              </Button>
+            </OverlayTrigger>
+          </div>
+          {(displayCollapseButton || elementsGroup !== 'none') && this.collapseButton()}
+        </div>
+      </div>
+    );
+  };
+
+  renderFilters = () => {
+    const {
+      filterCreatedAt,
+      ui,
+      showFilters,
+      productOnly,
+    } = this.state;
+    const { type } = this.props;
+    const { fromDate, toDate, userLabel } = ui;
+
+    if (!showFilters) {
+      return null;
+    }
+
+    const hasActiveFilters = this.hasActiveFilters();
     const searchLabel = <SearchUserLabels userLabel={userLabel} fnCb={this.setUserLabel} size="sm" />;
 
     const filterTitle = filterCreatedAt === true
       ? 'click to filter by update date - currently filtered by creation date'
       : 'click to filter by creation date - currently filtered by update date';
     const filterIconClass = filterCreatedAt === true ? 'fa-calendar' : 'fa-calendar-o';
-
     const filterTooltip = <Tooltip id="date_tooltip">{filterTitle}</Tooltip>;
     const filterIcon = <i className={`fa ${filterIconClass}`} />;
 
     return (
-      <div className="elements-table-header gap-1">
-        <ElementAllCheckbox type={type} />
-        <div className="d-flex gap-1 align-items-center">
-          <div className="elements-table-header__filters">
-            {searchLabel}
-            <InputGroup className="elements-table-header__date-filter" size="sm">
-              <OverlayTrigger placement="top" overlay={filterTooltip}>
-                <Button
-                  onClick={this.changeDateFilter}
-                >
-                  {filterIcon}
-                </Button>
-              </OverlayTrigger>
-              <DatePicker
-                selected={fromDate}
-                placeholderText="From"
-                onChange={this.setFromDate}
-                popperPlacement="bottom-start"
-                popperModifiers={[{
-                  name: 'prevent-flip',
-                  fn: () => ({ reset: { placement: 'bottom-start' } })
-                }]}
-                isClearable
-                dateFormat="dd-MM-YY"
-              />
-              <DatePicker
-                selected={toDate}
-                placeholderText="To"
-                popperPlacement="bottom"
-                popperModifiers={[{
-                  name: 'prevent-flip',
-                  fn: () => ({ reset: { placement: 'bottom' } })
-                }]}
-                onChange={this.setToDate}
-                isClearable
-                dateFormat="dd-MM-YY"
-              />
-            </InputGroup>
-            {typeSpecificHeader}
-          </div>
-          {(displayCollapseButton || elementsGroup !== 'none') && this.collapseButton()}
+      <div id={`elements-table-filters-${type}`} className="elements-table-filters">
+        <div className="d-flex align-items-center gap-2">
+          {searchLabel}
+          <InputGroup className="elements-table-header__date-filter" size="sm">
+            <OverlayTrigger placement="top" overlay={filterTooltip}>
+              <Button
+                onClick={this.changeDateFilter}
+              >
+                {filterIcon}
+              </Button>
+            </OverlayTrigger>
+            <DatePicker
+              selected={fromDate}
+              placeholderText="From"
+              onChange={this.setFromDate}
+              popperPlacement="bottom-start"
+              popperModifiers={[{
+                name: 'prevent-flip',
+                fn: () => ({ reset: { placement: 'bottom-start' } })
+              }]}
+              isClearable
+              dateFormat="dd-MM-YY"
+            />
+            <DatePicker
+              selected={toDate}
+              placeholderText="To"
+              popperPlacement="bottom"
+              popperModifiers={[{
+                name: 'prevent-flip',
+                fn: () => ({ reset: { placement: 'bottom' } })
+              }]}
+              onChange={this.setToDate}
+              isClearable
+              dateFormat="dd-MM-YY"
+            />
+          </InputGroup>
+          {(type === 'sample') ? (
+            <Button
+              size="sm"
+              onClick={this.toggleProductOnly}
+              variant="light"
+              active={productOnly}
+            >
+              Products only
+            </Button>
+          ) : null}
         </div>
+        {hasActiveFilters && (
+          <Button
+            size="sm"
+            variant="light"
+            onClick={this.clearFilters}
+          >
+            Clear
+          </Button>
+        )}
       </div>
     );
   };
@@ -758,6 +818,7 @@ export default class ElementsTable extends React.Component {
     return (
       <div className="list-container d-flex flex-column h-100">
         {this.renderHeader()}
+        {this.renderFilters()}
         {this.renderEntries()}
       </div>
     );

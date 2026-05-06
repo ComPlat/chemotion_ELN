@@ -11,11 +11,20 @@
     @extend .flex-nowrap;
     @extend .w-auto;
   }
-  &__filters {
+  &__display-settings {
     @extend .flex-grow-1;
     @extend .d-flex;
     @extend .gap-1;
     @extend .align-items-center;
     @extend .flex-wrap;
   }
+}
+
+.elements-table-filters {
+  @extend .d-flex;
+  @extend .align-items-center;
+  @extend .justify-content-between;
+  @extend .flex-wrap;
+  @extend .bg-primary;
+  padding: $modal-inner-padding;
 }

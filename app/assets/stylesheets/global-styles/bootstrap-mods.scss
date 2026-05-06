@@ -180,6 +180,16 @@ h6 {
   border-radius: var(--bs-btn-border-radius);
 }
 
+@mixin button-like-variant($name) {
+  @include open-button($name);
+}
+
+.select-secondary {
+  .chemotion-select__control {
+    @include button-like-variant("secondary");
+  }
+}
+
 @mixin xsm-form-elements {
   @include button-like-size(
     $btn-padding-y-xsm,
@@ -249,7 +259,6 @@ button.btn-close {
   @extend .flex-column;
   @extend .align-items-center;
   @extend .justify-content-center;
-  height: $btn-line-height;
 }
 
 .btn-toolbar {
