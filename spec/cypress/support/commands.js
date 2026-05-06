@@ -26,8 +26,9 @@
 
 Cypress.Commands.add('login', (username, password) => {
   cy.visit('users/sign_in');
-  cy.get('#user_login').type(username);
-  cy.get('#user_password').type(`${password}{enter}`, { log: false });
+  cy.get('input[name="login"]').type(username);
+  cy.get('input[name="password"]').type(password);
+  cy.contains('button', 'Log in').click();
 });
 
 Cypress.Commands.add('createDefaultUser', (emailAddress, abbr) => {
@@ -56,15 +57,15 @@ Cypress.Commands.add('createDefaultAdmin', () => {
   ]);
 });
 
-Cypress.Commands.add('createUserWithCredentials', (email, password, fname, lname, abbr, ) => {
-  cy.get('[data-cy="create-user"]').click();
+Cypress.Commands.add('createUserWithCredentials', (email, password, fname, lname, abbr) => {
+  cy.contains('New User').click();
   cy.get('#formControlEmail').type(email);
   cy.get('#formControlPassword').type(password);
   cy.get('#formControlPasswordConfirmation').type(password);
   cy.get('#formControlFirstName').type(fname);
   cy.get('#formControlLastName').type(lname);
   cy.get('#formControlAbbr').type(abbr);
-  cy.get('.col-sm-10 > .btn').click();
+  cy.contains('Create user').click();
 });
 
 Cypress.Commands.add('createCollection', (userID, label) => {
