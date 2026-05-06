@@ -170,6 +170,7 @@
 
 # Temp files
 /spec/tmp/*
+/spec/cypress/screenshots
 
 # Temp rake task file
 .rake_tasks~
