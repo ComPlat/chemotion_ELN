@@ -12,7 +12,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 
 function SolventDetails({
-  solvent, deleteSolvent, onChangeSolvent, sampleType
+  solvent, deleteSolvent, onChangeSolvent, sampleType, isDisabled
 }) {
   const currentPurity = solvent?.purity ?? 1.0;
   const [purityInput, setPurityInput] = React.useState(currentPurity);
@@ -110,6 +110,7 @@ function SolventDetails({
             metricPrefixes={metricPrefixes}
             precision={3}
             onChange={changeVolume}
+            disabled={isDisabled}
           />
         </td>
       )}
@@ -119,6 +120,7 @@ function SolventDetails({
           name="solvent_ratio"
           value={solvent.ratio}
           onChange={changeRatio}
+          disabled={isDisabled}
         />
       </td>
       <td>
@@ -128,6 +130,7 @@ function SolventDetails({
           value={purityInput}
           onChange={changePurity}
           onBlur={handlePurityBlur}
+          disabled={isDisabled}
         />
       </td>
       <td>
@@ -136,12 +139,14 @@ function SolventDetails({
           name="solvent_vendor"
           value={solvent.vendor}
           onChange={changeVendor}
+          disabled={isDisabled}
         />
       </td>
       <td>
         <Button
           variant="danger"
           onClick={() => deleteSolvent(solvent)}
+          disabled={isDisabled}
           style={{
             width: '30px',
             height: '30px',
@@ -158,7 +163,7 @@ function SolventDetails({
 }
 
 function SampleSolventGroup({
-  materialGroup, sample, dropSample, deleteSolvent, onChangeSolvent
+  materialGroup, sample, dropSample, deleteSolvent, onChangeSolvent, isDisabled
 }) {
   const sampleSolvents = sample.solvent ?? [];
   const sampleType = sample.sample_type;
@@ -203,6 +208,7 @@ function SampleSolventGroup({
           options={solventOptions}
           placeholder="Select solvents or drag-n-drop molecules from the sample list"
           onChange={createDefaultSolvents}
+          isDisabled={isDisabled}
         />
         {sampleSolvents.length > 0 && (
           <Table className="mt-2">
@@ -227,6 +233,7 @@ function SampleSolventGroup({
                   deleteSolvent={deleteSolvent}
                   onChangeSolvent={onChangeSolvent}
                   sampleType={sampleType}
+                  isDisabled={isDisabled}
                 />
               ))}
             </tbody>
@@ -243,6 +250,24 @@ SampleSolventGroup.propTypes = {
   deleteSolvent: PropTypes.func.isRequired,
   onChangeSolvent: PropTypes.func.isRequired,
   materialGroup: PropTypes.string.isRequired,
+  isDisabled: PropTypes.bool,
+};
+
+SampleSolventGroup.defaultProps = {
+  isDisabled: false,
+};
+
+SolventDetails.propTypes = {
+  solvent: PropTypes.object.isRequired,
+  deleteSolvent: PropTypes.func.isRequired,
+  onChangeSolvent: PropTypes.func.isRequired,
+  sampleType: PropTypes.string,
+  isDisabled: PropTypes.bool,
+};
+
+SolventDetails.defaultProps = {
+  sampleType: '',
+  isDisabled: false,
 };
 
 export { SampleSolventGroup, SolventDetails };
