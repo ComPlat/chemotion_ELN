@@ -781,7 +781,12 @@ export default class ReactionDetails extends Component {
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
           <div className="d-flex align-items-center">
             <Dropdown ref={this.schemeDropdownRef}>
-              <Dropdown.Toggle variant="info" size="sm" id="scheme-type-dropdown">
+              <Dropdown.Toggle
+                variant="info"
+                size="sm"
+                id="scheme-type-dropdown"
+                disabled={!permitOn(reaction)}
+              >
                 <i className="fa fa-cog" />
                 <span className="ms-1">
                   Current Scheme:&nbsp;
