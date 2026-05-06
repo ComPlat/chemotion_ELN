@@ -405,6 +405,7 @@ class EditUserLabels extends React.Component {
         <Form.Label>My labels</Form.Label>
         <Select
           isMulti
+          isDisabled={!element?.can_update}
           options={options}
           getOptionValue={(label) => label.id}
           getOptionLabel={(label) => label.title}
