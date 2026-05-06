@@ -770,7 +770,7 @@ export default class SampleForm extends React.Component {
     return (
       <NumericInputUnit
         field="flash_point"
-        inputDisabled={false}
+        inputDisabled={!sample.can_update}
         onInputChange={
           (newValue, newUnit) => this.handleFieldChanged(field, newValue, newUnit)
         }
@@ -1140,8 +1140,8 @@ export default class SampleForm extends React.Component {
         <Form.Label>Sample type</Form.Label>
         <Select
           name="sampleType"
-          clearable={false}
-          disabled={!sample.can_update}
+          isClearable={false}
+          isDisabled={!sample.can_update}
           value={selectedSampleType}
           onChange={(value) => this.handleSampleTypeChanged(value)}
           options={SampleTypesOptions}
@@ -1346,6 +1346,7 @@ export default class SampleForm extends React.Component {
           <SampleDetailsSolvents
             sample={sample}
             onChange={handleSampleChanged}
+            isDisabled={!sample.can_update}
           />
         </Row>
 
