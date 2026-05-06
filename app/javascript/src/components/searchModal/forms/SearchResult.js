@@ -253,13 +253,13 @@ function SearchResult({ handleClear }) {
 
     return (
       <ButtonToolbar className="advanced-search-buttons results flex-shrink-0">
-        <Button variant="primary" onClick={() => searchStore.handleCancel()}>
+        <Button variant="secondary" onClick={() => searchStore.handleCancel()}>
           Cancel
         </Button>
-        <Button variant="info" onClick={handleClear}>
+        <Button variant="danger" onClick={handleClear}>
           Reset
         </Button>
-        <Button variant="warning" onClick={handleAdoptResult}>
+        <Button variant="primary" onClick={handleAdoptResult}>
           Adopt Result
         </Button>
       </ButtonToolbar>

@@ -116,6 +116,11 @@
     @extend .surface-hover;
   }
 
+  .btn:has(> i:only-child),
+  button.btn-close:has(> i:only-child) {
+    padding: 0.3rem !important;
+  }
+
   i {
     font-size: 1.7em;
   }
