@@ -22,26 +22,39 @@ module CommentHelpers
   end
 
   def notify_collection_owners(current_user, element)
-    element.collections.find_each do |collection|
-      recipient = collection.user.send(:user_ids) - [current_user.id]
-      next if recipient.blank?
+    recipients = collect_collection_recipients(element) - [current_user.id]
+    return if recipients.blank?
 
-      data_args = {
-        commented_by: current_user.name,
-        element_type: element.class.to_s,
-        element_name: element_name(element),
-      }
+    data_args = {
+      commented_by: current_user.name,
+      element_type: element.class.to_s,
+      element_name: element_name(element),
+    }
 
-      Message.create_msg_notification(
-        channel_subject: Channel::COMMENT_ON_MY_COLLECTION,
-        message_from: current_user.id,
-        message_to: recipient,
-        data_args: data_args,
-        level: 'info',
-        url: element_url_path(element),
-        urlTitle: "View #{element.class} #{element_name(element)}",
-      )
+    Message.create_msg_notification(
+      channel_subject: Channel::COMMENT_ON_MY_COLLECTION,
+      message_from: current_user.id,
+      message_to: recipients,
+      data_args: data_args,
+      level: 'info',
+      url: element_url_path(element),
+      urlTitle: "View #{element.class} #{element_name(element)}",
+    )
+  end
+
+  # Collects all users with access to the element across its collections —
+  # both the collection owners and anyone the collection is shared with —
+  # expanding any group recipients to their member ids and de-duplicating.
+  def collect_collection_recipients(element)
+    ids = element.collections.includes(:user, collection_shares: :shared_with).flat_map do |collection|
+      [
+        *collection.user&.send(:user_ids),
+        *collection.collection_shares.flat_map do |share|
+          share.shared_with&.send(:user_ids)
+        end,
+      ]
     end
+    ids.compact.uniq
   end
 
   def notify_comment_resolved(comment, current_user)
