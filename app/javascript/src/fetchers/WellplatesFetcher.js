@@ -11,20 +11,7 @@ export default class WellplatesFetcher {
 
   static fetchById(id) {
     return ApiClient.getJson(`/api/v1/wellplates/${id}`)
-      .then((json) => {
-        const wellplate = new Wellplate(json.wellplate);
-        wellplate.attachments = json.attachments;
-        // eslint-disable-next-line no-underscore-dangle
-        wellplate._checksum = wellplate.checksum();
-        if (json.error) {
-          return new Wellplate({
-            id: `${id}:error:Wellplate ${id} is not accessible!`,
-            wells: [],
-            is_new: true,
-          });
-        }
-        return wellplate;
-      });
+      .then((json) => this.wellplateElement(json, id));
   }
 
   static bulkCreateWellplates(params) {
@@ -40,7 +27,7 @@ export default class WellplatesFetcher {
           return new Wellplate(json.wellplate);
         }
         return AttachmentFetcher.updateAttachables(files, 'Wellplate', json.wellplate.id, [])()
-          .then(() => new Wellplate(json.wellplate));
+          .then(() => this.wellplateElement(json, wellplate.id));
       });
 
     return AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container).then(() => promise());
@@ -51,7 +38,7 @@ export default class WellplatesFetcher {
     const delFiles = (wellplate.attachments || []).filter((a) => !a.is_new && a.is_deleted);
 
     const promise = () => ApiClient.putJson(`/api/v1/wellplates/${wellplate.id}`, { body: wellplate.serialize() })
-      .then((json) => new Wellplate(json.wellplate));
+      .then((json) => this.wellplateElement(json, wellplate.id));
 
     const tasks = [];
     tasks.push(AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container));
@@ -114,11 +101,18 @@ export default class WellplatesFetcher {
           message: 'Import successful.',
           level: 'success',
         });
-        const wellplate = new Wellplate(json.wellplate);
-        wellplate.attachments = json.attachments;
-        // eslint-disable-next-line no-underscore-dangle
-        wellplate._checksum = wellplate.checksum();
-        return wellplate;
+        return this.wellplateElement(json, wellplateId);
       });
+  }
+
+  static wellplateElement(json, id) {
+    if (json.error) {
+      return new Wellplate({ id: `${id}:error:Wellplate ${id} is not accessible!` });
+    }
+    const wellplate = new Wellplate(json.wellplate);
+    wellplate.attachments = json.attachments;
+    // eslint-disable-next-line no-underscore-dangle
+    wellplate._checksum = wellplate.checksum();
+    return wellplate;
   }
 }
