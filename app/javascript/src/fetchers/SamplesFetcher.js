@@ -28,25 +28,7 @@ export default class SamplesFetcher {
     return ApiClient.postJson('/api/v1/samples/ui_state', { body })
       .then((json) => {
         const samples = (json.samples || []).map((s) => new Sample(s));
-
-        // build literature map by literal_id
-        const literatures = (json.literatures || []).reduce(
-          (acc, l) => acc.set(l.literal_id, new Literature(l)),
-          Map()
-        );
-
-        // attach literatures per sample BEFORE enrichment
-        samples.forEach((sample) => {
-          const sampleLits = literatures.filter(
-            (l) => l.element_id === sample.id
-          );
-
-          if (sampleLits.size > 0) {
-            sample.literatures = sampleLits;
-            sample.updateChecksum(); // prevent dirty-on-load
-          }
-        });
-
+        samples.forEach((sample) => this.sampleLiteratures(sample, json));
         return samples;
       });
   }
@@ -164,11 +146,20 @@ export default class SamplesFetcher {
       return new Sample({ id: `${id}:error:Sample ${id} is not accessible!` });
     }
     const sample = new Sample(json.sample);
-    if (json.literatures && json.literatures.length > 0) {
-      const tliteratures = json.literatures.map((literature) => new Literature(literature));
-      const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Map());
-      sample.literatures = lits;
-      sample.updateChecksum();
+    return this.sampleLiteratures(sample, json);
+  }
+
+  static sampleLiteratures(sample, json) {
+    // build literature map by literal_id
+    const literatures = (json.literatures || []).reduce(
+      (acc, l) => acc.set(l.literal_id, new Literature(l)),
+      new Map()
+    );
+    const sampleLits = literatures.filter((l) => l.element_id === sample.id);
+    if (sampleLits.size > 0) {
+      // eslint-disable-next-line no-param-reassign
+      sample.literatures = sampleLits;
+      sample.updateChecksum(); // prevent dirty-on-load
     }
     return sample;
   }
