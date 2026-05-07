@@ -412,6 +412,7 @@ class EditUserLabels extends React.Component {
           formatOptionLabel={UserLabel}
           value={selectedLabels}
           onChange={this.handleSelectChange}
+          isDisabled={element?.can_update === false}
         />
       </Form.Group>
     );
