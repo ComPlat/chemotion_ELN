@@ -160,15 +160,15 @@ export default class SamplesFetcher {
   }
 
   static sampleElement(json, id) {
+    if (json.error) {
+      return new Sample({ id: `${id}:error:Sample ${id} is not accessible!` });
+    }
     const sample = new Sample(json.sample);
     if (json.literatures && json.literatures.length > 0) {
       const tliteratures = json.literatures.map((literature) => new Literature(literature));
       const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Map());
       sample.literatures = lits;
       sample.updateChecksum();
-    }
-    if (json.error) {
-      sample.id = `${id}:error:Sample ${id} is not accessible!`;
     }
     return sample;
   }
