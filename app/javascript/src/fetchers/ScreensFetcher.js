@@ -36,10 +36,9 @@ export default class ScreensFetcher {
   }
 
   static screenElement(json, id) {
-    const screen = new Screen(json.screen);
     if (json.error) {
-      screen.id = `${id}:error:Screen ${id} is not accessible!`;
+      return new Screen({ id: `${id}:error:Screen ${id} is not accessible!` });
     }
-    return screen;
+    return new Screen(json.screen);
   }
 }
