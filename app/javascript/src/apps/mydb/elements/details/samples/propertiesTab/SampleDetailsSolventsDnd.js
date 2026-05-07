@@ -8,6 +8,10 @@ import classnames from 'classnames';
 
 const target = {
   drop(tagProps, monitor) {
+    if (tagProps.sample?.can_update !== true) {
+      return;
+    }
+
     const { dropSample } = tagProps;
     const srcItem = monitor.getItem();
     const srcType = monitor.getItemType();
@@ -22,6 +26,10 @@ const target = {
     }
   },
   canDrop(tagProps, monitor) {
+    if (tagProps.sample?.can_update !== true) {
+      return false;
+    }
+
     const srcType = monitor.getItemType();
     const isCorrectType = srcType === DragDropItemTypes.SAMPLE
       || srcType === DragDropItemTypes.MOLECULE;
