@@ -67,6 +67,10 @@ export default class ReactionDetailsPurification extends Component {
 
   dropPSolvent(srcSample, tagMaterial, tagGroup, extLabel) {
     const { reaction, onReactionChange } = this.props;
+    if (!permitOn(reaction)) {
+      return;
+    }
+
     const splitSample = Sample.buildNew(srcSample, reaction.collection_id, tagGroup);
     splitSample.short_label = tagGroup.slice(0, -1);
     splitSample.external_label = extLabel;
@@ -126,9 +130,10 @@ export default class ReactionDetailsPurification extends Component {
               materials={reaction.purification_solvents}
               dropMaterial={dummy}
               deleteMaterial={this.deletePSolvent}
-              dropSample={this.dropPSolvent}
+              dropSample={permitOn(reaction) ? this.dropPSolvent : dummy}
               showLoadingColumn={!!reaction.hasPolymers()}
               onChange={onChange}
+              dndEnabled={permitOn(reaction)}
             />
           </Col>
         </Row>
@@ -151,7 +156,7 @@ export default class ReactionDetailsPurification extends Component {
             <div className="mx-0 mt-2">
               <EditUserLabels element={reaction} fnCb={this.handleOnReactionChange} />
             </div>
-            <PrivateNoteElement element={reaction} disabled={!reaction.can_update} />
+            <PrivateNoteElement element={reaction} disabled={!permitOn(reaction)} />
           </Col>
         </Row>
       </>

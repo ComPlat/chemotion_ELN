@@ -41,8 +41,10 @@ function MaterialGroup({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, headIndex,
   dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
-  switchYield
+  switchYield, dndEnabled
 }) {
+  const effectiveDndEnabled = dndEnabled && permitOn(reaction);
+
   const getMaterialComponent = ({
     dragRef,
     dropRef,
@@ -111,6 +113,7 @@ function MaterialGroup({
         getMaterialComponent={getMaterialComponent}
         headIndex={headIndex}
         reaction={reaction}
+        dndEnabled={effectiveDndEnabled}
       />
     );
   }
@@ -130,6 +133,7 @@ function MaterialGroup({
       lockEquivColumn={lockEquivColumn}
       displayYieldField={displayYieldField}
       switchYield={switchYield}
+      dndEnabled={effectiveDndEnabled}
     />
   );
 }
@@ -175,7 +179,7 @@ function GeneralMaterialGroup({
   materials, materialGroup, getMaterialComponent, headIndex,
   dropSample, onDrop, onReorder,
   showLoadingColumn, reaction,
-  switchEquiv, lockEquivColumn, displayYieldField, switchYield
+  switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled
 }) {
   const isReactants = materialGroup === 'reactants';
   const groupHeaders = { ...headers };
@@ -300,6 +304,7 @@ function GeneralMaterialGroup({
       materialGroup={materialGroup}
       onDrop={onDrop}
       onReorder={onReorder}
+      dndEnabled={dndEnabled}
       renderMaterial={({ index, ...props }) => getMaterialComponent({
         ...props,
         index: headIndex + index
@@ -359,7 +364,7 @@ function GeneralMaterialGroup({
 
 function SolventsMaterialGroup({
   materials, materialGroup, getMaterialComponent, headIndex, reaction,
-  dropSample, onDrop, onReorder
+  dropSample, onDrop, onReorder, dndEnabled
 }) {
   const groupHeaders = { ...headers };
   groupHeaders.group = 'Solvents';
@@ -408,6 +413,7 @@ function SolventsMaterialGroup({
       materialGroup={materialGroup}
       onDrop={onDrop}
       onReorder={onReorder}
+      dndEnabled={dndEnabled}
       renderMaterial={({ index, ...props }) => getMaterialComponent({
         ...props,
         index: headIndex + index
@@ -466,7 +472,8 @@ MaterialGroup.propTypes = {
   switchEquiv: PropTypes.func.isRequired,
   lockEquivColumn: PropTypes.bool,
   displayYieldField: PropTypes.bool,
-  switchYield: PropTypes.func.isRequired
+  switchYield: PropTypes.func.isRequired,
+  dndEnabled: PropTypes.bool,
 };
 
 GeneralMaterialGroup.propTypes = {
@@ -482,7 +489,8 @@ GeneralMaterialGroup.propTypes = {
   switchEquiv: PropTypes.func.isRequired,
   lockEquivColumn: PropTypes.bool,
   displayYieldField: PropTypes.bool,
-  switchYield: PropTypes.func.isRequired
+  switchYield: PropTypes.func.isRequired,
+  dndEnabled: PropTypes.bool,
 };
 
 SolventsMaterialGroup.propTypes = {
@@ -494,6 +502,7 @@ SolventsMaterialGroup.propTypes = {
   getMaterialComponent: PropTypes.func.isRequired,
   headIndex: PropTypes.number.isRequired,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
+  dndEnabled: PropTypes.bool,
 };
 
 MaterialGroup.defaultProps = {
@@ -501,12 +510,14 @@ MaterialGroup.defaultProps = {
   lockEquivColumn: false,
   displayYieldField: null,
   headIndex: 0,
+  dndEnabled: true,
 };
 
 GeneralMaterialGroup.defaultProps = {
   showLoadingColumn: false,
   lockEquivColumn: false,
-  displayYieldField: null
+  displayYieldField: null,
+  dndEnabled: true,
 };
 
 export default MaterialGroup;
