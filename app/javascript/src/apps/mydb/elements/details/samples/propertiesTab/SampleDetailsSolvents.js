@@ -58,6 +58,7 @@ export default class SampleDetailsSolvents extends React.Component {
         sample={sample}
         dropSample={this.dropSample}
         deleteSolvent={this.deleteSolvent}
+        canDrop={sample.can_update !== false}
         onChangeSolvent={(changeEvent) => this.onChangeSolvent(changeEvent)}
         isDisabled={isDisabled}
       />
