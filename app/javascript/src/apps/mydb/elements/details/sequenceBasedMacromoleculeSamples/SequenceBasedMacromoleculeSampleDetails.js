@@ -37,6 +37,7 @@ import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import CollectionUtils from 'src/models/collection/CollectionUtils';
 import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
+import DetailActions from 'src/stores/alt/actions/DetailActions';
 
 // Module-level slot: holds chemical data to be created after a new SBMM sample is
 // persisted (survives the component unmount/remount caused by navigateToNewElement).
@@ -90,6 +91,13 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
     }
   }, [alertRef.current]);
 
+  const handleInventorySaveComplete = (didSave) => {
+    if (didSave && sbmmStore.closeAfterInventorySave) {
+      DetailActions.close(sbmmSample, true);
+    }
+    sbmmStore.setCloseAfterInventorySave(false);
+  };
+
   const sbmmInventoryTab = (eventKey) => (
     <Tab eventKey={eventKey} title="Inventory" key={`Inventory${sbmmSample.id.toString()}`} unmountOnExit={false}>
       {
@@ -103,6 +111,7 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
           setSaveInventory={(v) => sbmmStore.setSaveInventoryAction(v)}
           saveInventory={sbmmStore.saveInventoryAction}
           editChemical={sbmmStore.editChemical}
+          onInventorySaveComplete={handleInventorySaveComplete}
           key={`ChemicalTab${sbmmSample.id.toString()}`}
         />
       </ListGroupItem>
@@ -251,6 +260,12 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
     sbmmStore.saveSample(sbmmSample, closeView);
   };
 
+  // Handler for chemical save
+  const handleSubmitChemical = () => {
+    // Set saveInventoryAction to true, which triggers ChemicalTab to save
+    sbmmStore.setSaveInventoryAction(true);
+  };
+
   // Chain-save: save SBMM sample first (if changed and valid), then chemical (if edited)
   const handleChainSave = (closeView = false) => {
     const sbmmHasChanges = sbmmSample.isEdited || sbmmSample.changed;
@@ -266,6 +281,9 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
       handleSubmit(willSaveChemical ? false : closeView);
     }
     if (willSaveChemical) {
+      // Defer close until the inventory save completes; ChemicalTab's
+      // onInventorySaveComplete consumes closeAfterInventorySave below.
+      sbmmStore.setCloseAfterInventorySave(closeView);
       handleSubmitChemical();
     }
   };
@@ -302,12 +320,6 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
       );
     }
     return <img src="/logos/uniprot-logo-gray.svg" className="uniprot-logo-gray" alt="Uniprot" />;
-  };
-
-  // Handler for chemical save
-  const handleSubmitChemical = () => {
-    // Set saveInventoryAction to true, which triggers ChemicalTab to save
-    sbmmStore.setSaveInventoryAction(true);
   };
 
   const hasSampleChanges = sbmmSample.isEdited || sbmmSample.changed;

@@ -102,6 +102,7 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     // For ChemicalTab integration
     saveInventoryAction: types.optional(types.boolean, false),
     isChemicalEdited: types.optional(types.boolean, false),
+    closeAfterInventorySave: types.optional(types.boolean, false),
   })
   .actions(self => ({
     setSaveInventoryAction(value) {
@@ -109,6 +110,9 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     },
     editChemical(value) {
       self.isChemicalEdited = value;
+    },
+    setCloseAfterInventorySave(value) {
+      self.closeAfterInventorySave = value;
     },
     searchForSequenceBasedMacromolecule: flow(function* searchForSequenceBasedMacromolecule(search_term, search_field) {
       let result = yield SequenceBasedMacromoleculesFetcher.searchForSequenceBasedMacromolecule(search_term, search_field);

@@ -834,16 +834,17 @@ class ElementStore {
           console.log(errorMessage);
         });
     }
+    // Guard both branches: if the element is no longer in selecteds (e.g.
+    // closed synchronously by handleSubmit, or by a deferred chemical-save
+    // close racing ahead of this dispatch), skip the selection update so we
+    // don't either re-delete (and shift the active tab) or re-add the panel
+    // via changeCurrentElement's addElement fallback.
+    const stillOpen = this.elementIndex(this.state.selecteds, element) !== -1;
     if (closeView) {
-      // Guard: if the element is no longer in selecteds (e.g. a detail view
-      // already dispatched DetailActions.close synchronously), skip
-      // deleteCurrentElement so we don't reset activeKey/currentElement and
-      // unexpectedly shift the active tab.
-      const { selecteds } = this.state;
-      if (this.elementIndex(selecteds, element) !== -1) {
+      if (stillOpen) {
         this.deleteCurrentElement(element);
       }
-    } else {
+    } else if (stillOpen) {
       this.changeCurrentElement(element);
     }
     this.handleUpdateElement(element);
@@ -1721,16 +1722,17 @@ class ElementStore {
     const updatedElement = isEnriched ? payload.element : payload;
     const closeView = isEnriched ? !!payload.closeView : false;
     const openOrClose = (el) => {
+      // Guard both branches: if the element is no longer in selecteds (e.g.
+      // closed synchronously by the detail view, or by a deferred chemical-
+      // save close racing ahead of this dispatch), skip the selection update
+      // so we don't either re-delete (and shift the active tab) or re-add the
+      // panel via changeCurrentElement's addElement fallback.
+      const stillOpen = this.elementIndex(this.state.selecteds, el) !== -1;
       if (closeView) {
-        // Guard: if the element is no longer in selecteds (e.g. a detail view
-        // already dispatched DetailActions.close synchronously), skip
-        // deleteCurrentElement so we don't reset activeKey/currentElement and
-        // unexpectedly shift the active tab.
-        const { selecteds } = this.state;
-        if (this.elementIndex(selecteds, el) !== -1) {
+        if (stillOpen) {
           this.deleteCurrentElement(el);
         }
-      } else {
+      } else if (stillOpen) {
         this.changeCurrentElement(el);
       }
     };
