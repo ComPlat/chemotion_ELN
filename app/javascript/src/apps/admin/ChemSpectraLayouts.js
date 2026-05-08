@@ -1,13 +1,15 @@
 /* eslint-disable no-param-reassign */
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
 import {
   Table, Button, Form, Popover, OverlayTrigger, Alert
 } from 'react-bootstrap';
+import { FormattedMessage, injectIntl } from 'react-intl';
 import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
 
-export default class ChemSpectraLayouts extends Component {
+class ChemSpectraLayouts extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -74,9 +76,9 @@ export default class ChemSpectraLayouts extends Component {
   handleAddDataType() {
     const { newDataType, layouts } = this.state;
     if (newDataType.dataType.length === 0) {
-      this.setState({ alertMessage: 'Please enter a data type' });
+      this.setState({ alertMessage: 'chem_spectra_layouts-please_enter_data_type' });
     } else if (newDataType.layout.length === 0) {
-      this.setState({ alertMessage: 'Please select a layout' });
+      this.setState({ alertMessage: 'chem_spectra_layouts-please_select_layout' });
     } else {
       const existingLayout = layouts.find(([layout]) => layout === newDataType.layout);
 
@@ -84,7 +86,7 @@ export default class ChemSpectraLayouts extends Component {
         const [, dataTypeArray] = existingLayout;
 
         if (dataTypeArray.includes(newDataType.dataType.trimEnd())) {
-          this.setState({ alertMessage: 'Data type already exists' });
+          this.setState({ alertMessage: 'chem_spectra_layouts-data_type_exists' });
         } else {
           const updatedLayouts = layouts.map(([layout, dataType]) => {
             if (layout === newDataType.layout) {
@@ -132,6 +134,25 @@ export default class ChemSpectraLayouts extends Component {
       .catch((error) => console.error(error));
   }
 
+  getLayoutOptionsAndMapping() {
+    const { layouts } = this.state;
+    const layoutsMapping = layouts.reduce((acc, [layout, dataTypes]) => {
+      dataTypes.forEach((dataType) => {
+        acc.push({ layout, dataType });
+      });
+      return acc;
+    }, []);
+
+    const allLayouts = Array.from(new Set(layoutsMapping.map(({ layout }) => layout))).sort();
+
+    const layoutsOptions = allLayouts.map((layout) => ({
+      value: layout,
+      label: layout
+    }));
+
+    return { layoutsOptions, layoutsMapping };
+  }
+
   fetchSpectraLayouts() {
     ChemSpectraFetcher.fetchSpectraLayouts()
       .then((layouts) => {
@@ -155,29 +176,11 @@ export default class ChemSpectraLayouts extends Component {
       .catch((error) => console.error(error));
   }
 
-  getLayoutOptionsAndMapping() {
-    const { layouts } = this.state;
-    const layoutsMapping = layouts.reduce((acc, [layout, dataTypes]) => {
-      dataTypes.forEach((dataType) => {
-        acc.push({ layout, dataType });
-      });
-      return acc;
-    }, []);
-
-    const allLayouts = Array.from(new Set(layoutsMapping.map(({ layout }) => layout))).sort();
-
-    const layoutsOptions = allLayouts.map((layout) => ({
-      value: layout,
-      label: layout
-    }));
-
-    return { layoutsOptions, layoutsMapping };
-  }
-
   render() {
     const {
       newDataType, showNewTypeLayoutModal, alertMessage, defaultLayouts
     } = this.state;
+    const { intl } = this.props;
 
     const { layoutsOptions, layoutsMapping } = this.getLayoutOptionsAndMapping();
 
@@ -189,24 +192,25 @@ export default class ChemSpectraLayouts extends Component {
           onClick={this.handleShowNewTypeLayoutModal}
           className="mb-2"
         >
-          Add New Data Type
+          <FormattedMessage id="chem_spectra_layouts-add_new" />
         </Button>
 
         <AppModal
           show={showNewTypeLayoutModal}
           onHide={this.handleCloseNewTypeLayoutModal}
-          title="New Data Type"
-          primaryActionLabel="Add Data Type"
+          title={<FormattedMessage id="chem_spectra_layouts-new_data_type" />}
+          primaryActionLabel={intl.formatMessage({ id: 'chem_spectra_layouts-add_data_type' })}
           onPrimaryAction={this.handleAddDataType}
+          closeLabel={<FormattedMessage id="cancel" />}
         >
           {alertMessage && (
             <Alert variant="warning">
-              {alertMessage}
+              <FormattedMessage id={alertMessage} />
             </Alert>
           )}
           <Form>
             <Form.Group className="mb-2">
-              <Form.Label>Data Type</Form.Label>
+              <Form.Label><FormattedMessage id="chem_spectra_layouts-data_type" /></Form.Label>
               <Form.Control
                 type="text"
                 name="dataType"
@@ -216,26 +220,26 @@ export default class ChemSpectraLayouts extends Component {
               />
             </Form.Group>
             <Form.Group>
-              <Form.Label>Layout</Form.Label>
+              <Form.Label><FormattedMessage id="chem_spectra_layouts-layout" /></Form.Label>
               <Select
                 name="layout"
                 value={{ label: newDataType.layout, value: newDataType.layout }}
                 onChange={this.handleSelectLayout}
                 options={layoutsOptions}
-                placeholder="Select a Layout"
+                placeholder={intl.formatMessage({ id: 'chem_spectra_layouts-select_layout' })}
               />
             </Form.Group>
           </Form>
 
         </AppModal>
 
-        <h3 className="bg-gray-200 p-3 rounded">Data Types</h3>
+        <h3 className="bg-gray-200 p-3 rounded"><FormattedMessage id="chem_spectra_layouts-title" /></h3>
         <Table responsive hover bordered>
           <thead>
             <tr>
               <th>#</th>
-              <th>Data Type</th>
-              <th>Layout</th>
+              <th><FormattedMessage id="chem_spectra_layouts-data_type" /></th>
+              <th><FormattedMessage id="chem_spectra_layouts-layout" /></th>
             </tr>
           </thead>
           <tbody>
@@ -256,7 +260,7 @@ export default class ChemSpectraLayouts extends Component {
                           overlay={(
                             <Popover id="popover-positioned-scrolling-left">
                               <Popover.Header id="popover-positioned-scrolling-left" as="h5">
-                                Delete this data type?
+                                <FormattedMessage id="chem_spectra_layouts-delete_confirm" />
                               </Popover.Header>
                               <Popover.Body className="ps-5">
                                 <Button
@@ -267,14 +271,14 @@ export default class ChemSpectraLayouts extends Component {
                                     this.handleDeleteDataType({ layout: entry.layout, dataType: entry.dataType });
                                   }}
                                 >
-                                  Yes
+                                  <FormattedMessage id="yes" />
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="warning"
                                   onClick={this.handleClick}
                                 >
-                                  No
+                                  <FormattedMessage id="no" />
                                 </Button>
                               </Popover.Body>
                             </Popover>
@@ -298,3 +302,11 @@ export default class ChemSpectraLayouts extends Component {
     );
   }
 }
+
+ChemSpectraLayouts.propTypes = {
+  intl: PropTypes.shape({
+    formatMessage: PropTypes.func.isRequired,
+  }).isRequired,
+};
+
+export default injectIntl(ChemSpectraLayouts);

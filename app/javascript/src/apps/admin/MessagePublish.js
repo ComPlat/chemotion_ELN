@@ -1,13 +1,14 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import PropTypes from 'prop-types';
 import {
   Form, Button, Row, Col
 } from 'react-bootstrap';
+import { FormattedMessage, injectIntl } from 'react-intl';
 import { Select } from 'src/components/common/Select';
 
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 
-export default class MessagePublish extends React.Component {
+class MessagePublish extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -38,9 +39,10 @@ export default class MessagePublish extends React.Component {
 
   messageSend() {
     const { selectedChannel } = this.state;
+    const { intl } = this.props;
 
     if (!selectedChannel) {
-      alert('Please select channel!');
+      alert(intl.formatMessage({ id: 'message_publish-please_select_channel' }));
     } else {
       const params = {
         channel_id: selectedChannel.value,
@@ -48,26 +50,27 @@ export default class MessagePublish extends React.Component {
       };
 
       MessagesFetcher.createMessage(params)
-        .then((result) => {
+        .then(() => {
           this.myMessage.value = '';
-          alert('Message sent!');
+          alert(intl.formatMessage({ id: 'message_publish-message_sent' }));
         });
     }
   }
 
   render() {
     const { selectedChannel, channels } = this.state;
+    const { intl } = this.props;
 
     return (
       <Row className="flex-grow-1 d-flex">
         <Col md={3} className="d-flex flex-column">
           <Form.Group controlId="channelSelect" className="flex-grow-1 d-flex flex-column m-3">
-            <Form.Label className="fs-5">Channel</Form.Label>
+            <Form.Label className="fs-5"><FormattedMessage id="message_publish-channel" /></Form.Label>
             <Select
               value={selectedChannel}
               onChange={this.handleChannelChange}
               options={channels}
-              placeholder="Select your channel"
+              placeholder={intl.formatMessage({ id: 'message_publish-select_channel' })}
               autoFocus
               className="mt-1"
             />
@@ -76,10 +79,10 @@ export default class MessagePublish extends React.Component {
         <Col md={9} className="d-flex flex-column">
           <Form>
             <Form.Group controlId="formControlsTextarea" className="flex-grow-1 d-flex flex-column m-3">
-              <Form.Label className="fs-5">Message</Form.Label>
+              <Form.Label className="fs-5"><FormattedMessage id="message_publish-message" /></Form.Label>
               <Form.Control
                 as="textarea"
-                placeholder="message..."
+                placeholder={intl.formatMessage({ id: 'message_publish-message_placeholder' })}
                 rows="20"
                 ref={(ref) => { this.myMessage = ref; }}
                 className="fs-5 mt-1"
@@ -91,7 +94,7 @@ export default class MessagePublish extends React.Component {
               className="mt-3 ms-3"
               size="lg"
             >
-              Publish
+              <FormattedMessage id="message_publish-publish" />
               <i className="fa fa-paper-plane ms-1" />
             </Button>
           </Form>
@@ -100,7 +103,11 @@ export default class MessagePublish extends React.Component {
     );
   }
 }
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('MsgPub');
-  if (domElement) { ReactDOM.render(<MsgPub />, domElement); }
-});
+
+MessagePublish.propTypes = {
+  intl: PropTypes.shape({
+    formatMessage: PropTypes.func.isRequired,
+  }).isRequired,
+};
+
+export default injectIntl(MessagePublish);
