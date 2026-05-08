@@ -2,7 +2,6 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Vessel from 'src/models/vessel/Vessel';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
-import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -76,10 +75,7 @@ export default class VesselsFetcher {
   static fetchVesselTemplateById(id, collectionId) {
     const encodedCollectionId = collectionId ? `?collection_id=${encodeURIComponent(collectionId)}` : '';
     return ApiClient.getJson(`/api/v1/vessels/templates/${id}${encodedCollectionId}`)
-      .then((json) => {
-        if (json.error) { throw new Error(json.error); }
-        return this.vesselsWithType(collectionId, json);
-      });
+      .then((json) => this.vesselTemplateElement(json, collectionId));
   }
 
   static fetchEmptyVesselTemplate() {
@@ -88,34 +84,30 @@ export default class VesselsFetcher {
   }
 
   static createVesselTemplate(vessel) {
-    return this.uploadAttachments(vessel)
-      .then(() => ApiClient.postJson('/api/v1/vessels/templates/create', {
-        body: extractCreateVesselTemplateApiParameter(vessel),
-        handleResponseSuccess: (response) => {
-          if (response.ok === false) {
-            throw new Error('Failed to create vessel template');
-          }
-          return response.json();
-        },
-        handleResponseError: (exception) => {
-          console.error('Template creation failed::', exception);
-          NotificationActions.add(errorMessageParameter);
-        }
-      }))
+    return ApiClient.postJson('/api/v1/vessels/templates/create', {
+      body: extractCreateVesselTemplateApiParameter(vessel),
+      handleResponseSuccess: (response) => {
+        if (response.ok) { return response.json(); }
+        throw new Error('Failed to create vessel template');
+      },
+      handleResponseError: (exception) => {
+        console.error('Template creation failed::', exception);
+        NotificationActions.add(errorMessageParameter);
+      }
+    })
       .then((json) => {
         if (json) {
           const { currentCollection } = UIStore.getState();
           NotificationActions.add(successfullyCreatedParameter);
-          return this.fetchVesselTemplateById(json.id, currentCollection?.id);
+          return this.vesselTemplateElement(json, currentCollection?.id);
         }
         return [];
       });
   }
 
   static createVesselInstance(vessel) {
-    const body = extractCreateVesselInstanceApiParameter(vessel);
     return ApiClient.postJson('/api/v1/vessels/instances/create', {
-      body,
+      body: extractCreateVesselInstanceApiParameter(vessel),
       handleResponseError: (exception) => {
         console.error('Vessel instance creation failed:', exception);
         NotificationActions.add(errorMessageParameter);
@@ -126,28 +118,6 @@ export default class VesselsFetcher {
         UserStore.getState().currentUser.vessels_count += 1;
         return Vessel.createFromRestResponse(vessel.collectionId, json);
       });
-  }
-
-  static vesselsWithType(collectionId, json) {
-    const vessels = Vessel.createFromTemplateResponse(collectionId, json);
-    vessels.forEach((vessel, idx) => {
-      // eslint-disable-next-line no-param-reassign
-      vessel.type = idx === 0 ? 'vessel_template' : 'vessel';
-    });
-    return vessels;
-  }
-
-  static uploadAttachments(vessel) {
-    const files = AttachmentFetcher.getFileListfrom(vessel.container);
-
-    if (files.length > 0) {
-      const tasks = [];
-      files.forEach((file) => tasks.push(AttachmentFetcher.uploadFile(file).then()));
-      return Promise.all(tasks).then(() => {
-        Promise.resolve(1);
-      });
-    }
-    return Promise.resolve(1);
   }
 
   static getAllVesselNames() {
@@ -170,29 +140,22 @@ export default class VesselsFetcher {
   }
 
   static updateVesselTemplate(templateId, updatedData, collectionId) {
-    const body = extractUpdateVesselTemplateApiParameter(updatedData);
-
-    return this.uploadAttachments(updatedData)
-      .then(() => ApiClient.putJson(`/api/v1/vessels/templates/${templateId}`, {
-        body,
-        handleResponseError: (exception) => {
-          console.error('Error updating vessel template:', exception);
-          NotificationActions.add(errorMessageParameter);
-        }
-      }))
+    return ApiClient.putJson(`/api/v1/vessels/templates/${templateId}`, {
+      body: extractUpdateVesselTemplateApiParameter(updatedData),
+      handleResponseError: (exception) => {
+        console.error('Error updating vessel template:', exception);
+        NotificationActions.add(errorMessageParameter);
+      }
+    })
       .then((json) => {
-        if (updatedData?.container?.attachments) {
-          BaseFetcher.updateAnnotationsInContainer(updatedData);
-        }
         NotificationActions.add(successfullyUpdatedParameter);
-        return this.vesselsWithType(collectionId, json);
+        return this.vesselTemplateElement(json, collectionId);
       });
   }
 
   static updateVesselInstance(updatedData) {
-    const body = extractUpdateVesselApiParameter(updatedData);
     return ApiClient.putJson(`/api/v1/vessels/${updatedData.id}`, {
-      body,
+      body: extractUpdateVesselApiParameter(updatedData),
       handleResponseError: (exception) => {
         console.error('Error updating vessel instance:', exception);
         NotificationActions.add(errorMessageParameter);
@@ -207,11 +170,11 @@ export default class VesselsFetcher {
   static deleteVesselInstance(vesselId) {
     return ApiClient.deleteRequest(`/api/v1/vessels/${vesselId}`, {
       handleResponseSuccess: (response) => {
-        if (response.ok === false) {
-          throw new Error(`Failed to delete vessel. Status: ${response.status}`);
+        if (response.ok) {
+          NotificationActions.add(successfullyDeletedParameter);
+          return response.json();
         }
-        NotificationActions.add(successfullyDeletedParameter);
-        return response.json();
+        throw new Error(`Failed to delete vessel. Status: ${response.status}`);
       },
       handleResponseError: (exception) => {
         console.error('Error deleting vessel instance:', exception);
@@ -241,10 +204,8 @@ export default class VesselsFetcher {
     return ApiClient.postJson('/api/v1/vessels/bulk_create', {
       body,
       handleResponseSuccess: (response) => {
-        if (response.ok === false) {
-          throw new Error('Bulk create failed');
-        }
-        return response.json();
+        if (response.ok) { return response.json(); }
+        throw new Error('Bulk create failed');
       },
       handleResponseError: (exception) => {
         console.error('Bulk vessel instance creation error:', exception);
@@ -268,5 +229,16 @@ export default class VesselsFetcher {
 
   static isValidVesselId(id) {
     return this.lastCreatedVesselIds.has(id);
+  }
+
+  static vesselTemplateElement(json, collectionId) {
+    if (json.error) { throw new Error(json.error); }
+
+    const vessels = Vessel.createFromTemplateResponse(collectionId, json);
+    vessels.forEach((vessel, idx) => {
+      // eslint-disable-next-line no-param-reassign
+      vessel.type = idx === 0 ? 'vessel_template' : 'vessel';
+    });
+    return vessels;
   }
 }
