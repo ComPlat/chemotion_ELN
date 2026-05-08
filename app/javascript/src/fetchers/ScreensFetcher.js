@@ -15,20 +15,25 @@ export default class ScreensFetcher {
   }
 
   static create(screen) {
-    const promise = () => ApiClient.postJson('/api/v1/screens', { body: screen.serialize() })
-      .then((json) => GenericElsFetcher.uploadGenericFiles(screen, json.screen.id, 'Screen')
-        .then(() => this.screenElement(json, json.screen.id)));
-
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(screen.container).then(() => promise());
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(screen.container)
+      .then(() => ApiClient.postJson('/api/v1/screens', { body: screen.serialize() }))
+      .then((json) => {
+        const { id } = json.screen;
+        return GenericElsFetcher.uploadGenericFiles(screen, id, 'Screen')
+          .then(() => this.screenElement(json, id));
+      });
   }
 
   static update(screen) {
-    const promise = () => ApiClient.putJson(`/api/v1/screens/${screen.id}`, { body: screen.serialize() })
-      .then((json) => GenericElsFetcher.uploadGenericFiles(screen, json.screen.id, 'Screen')
-        .then(() => BaseFetcher.updateAnnotationsInContainer(screen))
-        .then(() => this.screenElement(json, json.screen.id)));
+    const tasks = [
+      AttachmentFetcher.uploadNewAttachmentsForContainer(screen.container),
+      GenericElsFetcher.uploadGenericFiles(screen, screen.id, 'Screen'),
+    ];
 
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(screen.container).then(() => promise());
+    return Promise.all(tasks)
+      .then(() => BaseFetcher.updateAnnotationsInContainer(screen))
+      .then(() => ApiClient.putJson(`/api/v1/screens/${screen.id}`, { body: screen.serialize() }))
+      .then((json) => this.screenElement(json, screen.id));
   }
 
   static addResearchPlan(screenId, collectionId) {

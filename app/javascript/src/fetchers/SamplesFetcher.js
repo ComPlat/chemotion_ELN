@@ -43,21 +43,25 @@ export default class SamplesFetcher {
   }
 
   static create(sample) {
-    const promise = () => ApiClient.postJson('/api/v1/samples', { body: sample.serialize() })
-      .then((json) => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
-        .then(() => this.sampleElement(json, json.sample.id)));
-
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(sample.container).then(() => promise());
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(sample.container)
+      .then(() => ApiClient.postJson('/api/v1/samples', { body: sample.serialize() }))
+      .then((json) => {
+        const { id } = json.sample;
+        return GenericElsFetcher.uploadGenericFiles(sample, id, 'Sample')
+          .then(() => this.sampleElement(json, id));
+      });
   }
 
   static update(sample) {
-    const promise = () => ApiClient.putJson(`/api/v1/samples/${sample.id}`, { body: sample.serialize() })
-      .then((json) => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
-        .then(() => BaseFetcher.updateAnnotationsInContainer(sample))
-        .then(() => this.sampleElement(json, json.sample.id)));
+    const tasks = [
+      AttachmentFetcher.uploadNewAttachmentsForContainer(sample.container),
+      GenericElsFetcher.uploadGenericFiles(sample, sample.id, 'Sample'),
+    ];
 
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(sample.container)
-      .then(() => promise());
+    return Promise.all(tasks)
+      .then(() => BaseFetcher.updateAnnotationsInContainer(sample))
+      .then(() => ApiClient.putJson(`/api/v1/samples/${sample.id}`, { body: sample.serialize() }))
+      .then((json) => this.sampleElement(json, sample.id));
   }
 
   static splitAsSubsamples(params) {
@@ -128,10 +132,8 @@ export default class SamplesFetcher {
     return ApiClient.postJson('/api/v1/samples/batch-refresh-svg', {
       body,
       handleResponseSuccess: (response) => {
-        if (response.ok === false) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
+        if (response.ok) { return response.json(); }
+        throw new Error(`HTTP error! status: ${response.status}`);
       },
       handleResponseError: (exception) => {
         console.error('Error batch refreshing SVGs:', exception);

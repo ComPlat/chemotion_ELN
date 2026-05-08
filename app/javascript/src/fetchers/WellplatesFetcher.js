@@ -19,36 +19,25 @@ export default class WellplatesFetcher {
   }
 
   static create(wellplate) {
-    const files = (wellplate.attachments || []).filter((a) => a.is_new && !a.is_deleted);
-
-    const promise = () => ApiClient.postJson('/api/v1/wellplates/', { body: wellplate.serialize() })
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container)
+      .then(() => ApiClient.postJson('/api/v1/wellplates', { body: wellplate.serialize() }))
       .then((json) => {
-        if (files.length <= 0) {
-          return new Wellplate(json.wellplate);
-        }
-        return AttachmentFetcher.updateAttachables(files, 'Wellplate', json.wellplate.id, [])()
-          .then(() => this.wellplateElement(json, wellplate.id));
+        const { id } = json.wellplate;
+        return this.wellplateAttachments(wellplate, id)
+          .then(() => this.wellplateElement(json, id));
       });
-
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container).then(() => promise());
   }
 
   static update(wellplate) {
-    const newFiles = (wellplate.attachments || []).filter((a) => a.is_new && !a.is_deleted);
-    const delFiles = (wellplate.attachments || []).filter((a) => !a.is_new && a.is_deleted);
+    const tasks = [
+      AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container),
+      this.wellplateAttachments(wellplate, wellplate.id),
+    ];
 
-    const promise = () => ApiClient.putJson(`/api/v1/wellplates/${wellplate.id}`, { body: wellplate.serialize() })
-      .then((json) => this.wellplateElement(json, wellplate.id));
-
-    const tasks = [];
-    tasks.push(AttachmentFetcher.uploadNewAttachmentsForContainer(wellplate.container));
-
-    if (newFiles.length > 0 || delFiles.length > 0) {
-      tasks.push(AttachmentFetcher.updateAttachables(newFiles, 'Wellplate', wellplate.id, delFiles)());
-    }
     return Promise.all(tasks)
       .then(() => BaseFetcher.updateAnnotations(wellplate))
-      .then(() => promise());
+      .then(() => ApiClient.putJson(`/api/v1/wellplates/${wellplate.id}`, { body: wellplate.serialize() }))
+      .then((json) => this.wellplateElement(json, wellplate.id));
   }
 
   static fetchWellplatesByUIState(params) {
@@ -114,5 +103,12 @@ export default class WellplatesFetcher {
     // eslint-disable-next-line no-underscore-dangle
     wellplate._checksum = wellplate.checksum();
     return wellplate;
+  }
+
+  static wellplateAttachments(wellplate, id) {
+    const newFiles = (wellplate.attachments || []).filter((a) => a.is_new && !a.is_deleted);
+    const delFiles = (wellplate.attachments || []).filter((a) => !a.is_new && a.is_deleted);
+    if (newFiles.length === 0 && delFiles.length === 0) return Promise.resolve();
+    return AttachmentFetcher.updateAttachables(newFiles, 'Wellplate', id, delFiles)();
   }
 }

@@ -22,41 +22,35 @@ export default class ResearchPlansFetcher {
   static create(researchPlan) {
     researchPlan.convertTemporaryImageFieldsInBody();
 
-    const promise = () => ApiClient.postJson('/api/v1/research_plans', { body: researchPlan.serialize() })
-      .then((json) => AttachmentFetcher.updateAttachables(
-        researchPlan.getNewAttachments(),
-        'ResearchPlan',
-        json.research_plan.id,
-        researchPlan.getMarkedAsDeletedAttachments()
-      )()
-        .then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
-          .then(() => this.researchPlanElement(json, json.research_plan.id))));
-
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container).then(() => promise());
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container)
+      .then(() => ApiClient.postJson('/api/v1/research_plans', { body: researchPlan.serialize() }))
+      .then((json) => {
+        const { id } = json.research_plan;
+        return this.researchPlanAttachments(researchPlan, id)
+          .then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, id, 'ResearchPlan', true))
+          .then(() => this.researchPlanElement(json, id));
+      });
   }
 
   static update(researchPlan) {
     researchPlan.convertTemporaryImageFieldsInBody();
 
-    const promise = () => ApiClient.putJson(
-      `/api/v1/research_plans/${researchPlan.id}`,
-      { body: researchPlan.serialize() }
-    )
-      .then((json) => AttachmentFetcher.updateAttachables(
-        researchPlan.getNewAttachments(),
-        'ResearchPlan',
-        json.research_plan.id,
-        researchPlan.getMarkedAsDeletedAttachments()
-      )()
-        .then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
-          .then(() => BaseFetcher.updateAnnotations(researchPlan))
-          .then(() => this.researchPlanElement(json, json.research_plan.id))));
+    const tasks = [
+      AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container),
+      this.researchPlanAttachments(researchPlan, researchPlan.id),
+    ];
 
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container).then(() => promise());
+    return Promise.all(tasks)
+      .then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, researchPlan.id, 'ResearchPlan', true))
+      .then(() => BaseFetcher.updateAnnotations(researchPlan))
+      .then(() => ApiClient.putJson(`/api/v1/research_plans/${researchPlan.id}`, { body: researchPlan.serialize() }))
+      .then((json) => this.researchPlanElement(json, researchPlan.id));
   }
 
-  static updateSVGFile(svg_file, isChemdraw = false) {
-    return ApiClient.postJson('/api/v1/research_plans/svg', { body: { svg_file, is_chemdraw: isChemdraw } });
+  static updateSVGFile(svgFile, isChemdraw = false) {
+    return ApiClient.postJson('/api/v1/research_plans/svg', {
+      body: { svg_file: svgFile, is_chemdraw: isChemdraw }
+    });
   }
 
   static updateImageFile(imageFile, replace) {
@@ -71,11 +65,11 @@ export default class ResearchPlansFetcher {
     let fileName;
     return ApiClient.getJson(`/api/v1/research_plans/${researchPlan.id}/export/?export_format=${exportFormat}`, {
       handleResponseSuccess: (response) => {
-        if (response.ok === false) {
-          throw new Error(response);
+        if (response.ok) {
+          fileName = getFileName(response);
+          return response.blob();
         }
-        fileName = getFileName(response);
-        return response.blob();
+        throw new Error(response);
       }
     })
       .then((blob) => {
@@ -87,11 +81,11 @@ export default class ResearchPlansFetcher {
     let fileName;
     return ApiClient.getJson(`/api/v1/research_plans/${researchPlan.id}/export_table/${field.id}`, {
       handleResponseSuccess: (response) => {
-        if (response.ok === false) {
-          throw new Error(response.statusText);
+        if (response.ok) {
+          fileName = getFileName(response);
+          return response.blob();
         }
-        fileName = getFileName(response);
-        return response.blob();
+        throw new Error(response.statusText);
       }
     })
       .then((blob) => {
@@ -102,10 +96,8 @@ export default class ResearchPlansFetcher {
   static fetchTableSchemas() {
     return ApiClient.getJson('/api/v1/research_plans/table_schemas', {
       handleResponseSuccess: (response) => {
-        if (response.ok === false) {
-          throw new Error(response.statusText);
-        }
-        return response.json();
+        if (response.ok) { return response.json(); }
+        throw new Error(response.statusText);
       }
     });
   }
@@ -150,5 +142,14 @@ export default class ResearchPlansFetcher {
     }
 
     return researchPlan;
+  }
+
+  static researchPlanAttachments(researchPlan, id) {
+    return AttachmentFetcher.updateAttachables(
+      researchPlan.getNewAttachments(),
+      'ResearchPlan',
+      id,
+      researchPlan.getMarkedAsDeletedAttachments()
+    )();
   }
 }

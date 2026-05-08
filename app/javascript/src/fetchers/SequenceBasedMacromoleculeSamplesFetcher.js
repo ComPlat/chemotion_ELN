@@ -27,111 +27,45 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
 
   static fetchById(sbmmSampleId) {
     return ApiClient.getJson(`/api/v1/sequence_based_macromolecule_samples/${sbmmSampleId}`)
-      .then((json) => {
-        if (json.error) {
-          return new SequenceBasedMacromoleculeSample(
-            {
-              id: `${sbmmSampleId}:error:SequenceBasedMacromoleculeSample ${sbmmSampleId} is not accessible!`,
-              is_new: true
-            }
-          );
-        }
-        const sbmmSample = new SequenceBasedMacromoleculeSample(json.sequence_based_macromolecule_sample);
-        // eslint-disable-next-line no-underscore-dangle
-        sbmmSample._checksum = sbmmSample.checksum();
-        return sbmmSample;
-      });
+      .then((json) => this.sbmmSampleElement(json, sbmmSampleId));
   }
 
   static createSequenceBasedMacromoleculeSample(sbmmSample) {
-    const { sbmmSampleFiles, sbmmFiles } = this.filesForSbmmSampleAndSbmm(sbmmSample);
-
-    const promise = () => ApiClient.postJson(
-      '/api/v1/sequence_based_macromolecule_samples',
-      { body: sbmmSample.serialize() }
-    )
-      .then((json) => {
-        if (json.error) {
-          return this.errorHandling(sbmmSample, json.error, true);
-        }
-
-        if (sbmmSampleFiles.length <= 0 && sbmmFiles.length <= 0) {
-          return new SequenceBasedMacromoleculeSample(json.sequence_based_macromolecule_sample);
-        }
-
-        const attachmentTasks = [];
-        if (sbmmSampleFiles.length > 0) {
-          attachmentTasks.push(
-            AttachmentFetcher.updateAttachables(
-              sbmmSampleFiles,
-              'SequenceBasedMacromoleculeSample',
-              json.sequence_based_macromolecule_sample.id,
-              []
-            )()
-          );
-        }
-        if (sbmmFiles.length > 0) {
-          attachmentTasks.push(
-            AttachmentFetcher.updateAttachables(
-              sbmmFiles,
-              'SequenceBasedMacromolecule',
-              json.sequence_based_macromolecule_sample.sequence_based_macromolecule.id,
-              []
-            )()
-          );
-        }
-
-        return Promise.all(attachmentTasks)
-          .then(() => new SequenceBasedMacromoleculeSample(json.sequence_based_macromolecule_sample));
-      });
-
     return AttachmentFetcher.uploadNewAttachmentsForContainer(sbmmSample.container)
-      .then(() => promise());
+      .then(() => ApiClient.postJson('/api/v1/sequence_based_macromolecule_samples', { body: sbmmSample.serialize() }))
+      .then((json) => {
+        if (json.error) return this.errorHandling(sbmmSample, json.error, true);
+        const { id, sequence_based_macromolecule: sbmm } = json.sequence_based_macromolecule_sample;
+        return Promise.all([
+          this.sbmmSampleAttachments(sbmmSample, id),
+          this.sbmmAttachments(sbmmSample.sequence_based_macromolecule, sbmm.id),
+        ]).then(() => this.sbmmSampleElement(json, json.sequence_based_macromolecule_sample.id));
+      });
   }
 
   static updateSequenceBasedMacromoleculeSample(sbmmSample) {
-    const {
-      sbmmSampleFiles, sbmmFiles, deletedSbmmSampleFiles, deletedSbmmFiles
-    } = this.filesForSbmmSampleAndSbmm(sbmmSample);
     const sbmm = sbmmSample.sequence_based_macromolecule;
 
-    const promise = () => ApiClient.putJson(
-      `/api/v1/sequence_based_macromolecule_samples/${sbmmSample.id}`,
-      {
-        body: sbmmSample.serialize()
-      }
-    )
+    const tasks = [
+      AttachmentFetcher.uploadNewAttachmentsForContainer(sbmmSample.container),
+      this.sbmmSampleAttachments(sbmmSample, sbmmSample.id),
+      this.sbmmAttachments(sbmm, sbmm.id),
+    ];
+
+    return Promise.all(tasks)
+      .then(() => BaseFetcher.updateAnnotations(sbmmSample))
+      .then(() => ApiClient.putJson(
+        `/api/v1/sequence_based_macromolecule_samples/${sbmmSample.id}`,
+        { body: sbmmSample.serialize() }
+      ))
       .then((json) => {
-        if (json.error) {
-          return this.errorHandling(sbmmSample, json.error, false);
-        }
+        if (json.error) return this.errorHandling(sbmmSample, json.error, false);
         const updatedSbmmSample = new SequenceBasedMacromoleculeSample(json.sequence_based_macromolecule_sample);
         if (sbmmSample.belongTo) { updatedSbmmSample.belongTo = sbmmSample.belongTo; }
         updatedSbmmSample.updated = true;
         updatedSbmmSample.updateChecksum();
         return updatedSbmmSample;
       });
-
-    const tasks = [];
-    tasks.push(AttachmentFetcher.uploadNewAttachmentsForContainer(sbmmSample.container));
-    if (sbmmSampleFiles.length > 0 || deletedSbmmSampleFiles.length > 0) {
-      tasks.push(
-        AttachmentFetcher.updateAttachables(
-          sbmmSampleFiles,
-          'SequenceBasedMacromoleculeSample',
-          sbmmSample.id,
-          deletedSbmmSampleFiles
-        )()
-      );
-    }
-    if (sbmmFiles.length > 0 || deletedSbmmFiles.length > 0) {
-      tasks.push(
-        AttachmentFetcher.updateAttachables(sbmmFiles, 'SequenceBasedMacromolecule', sbmm.id, deletedSbmmFiles)()
-      );
-    }
-    return Promise.all(tasks)
-      .then(() => BaseFetcher.updateAnnotations(sbmmSample))
-      .then(() => promise());
   }
 
   static deleteSequenceBasedMacromoleculeSample(sequenceBasedMacromoleculeSampleId) {
@@ -140,15 +74,33 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
     );
   }
 
-  static filesForSbmmSampleAndSbmm(sbmmSample) {
-    const sbmm = sbmmSample.sequence_based_macromolecule;
-    const sbmmSampleFiles = (sbmmSample.attachments || []).filter((a) => a.is_new && !a.is_deleted);
-    const sbmmFiles = (sbmm.attachments || []).filter((a) => a.is_new && !a.is_deleted);
-    const deletedSbmmSampleFiles = (sbmmSample.attachments || []).filter((a) => !a.is_new && a.is_deleted);
-    const deletedSbmmFiles = (sbmm.attachments || []).filter((a) => !a.is_new && a.is_deleted);
-    return {
-      sbmmSampleFiles, sbmmFiles, deletedSbmmFiles, deletedSbmmSampleFiles
-    };
+  static sbmmSampleElement(json, id) {
+    if (json.error) {
+      return new SequenceBasedMacromoleculeSample(
+        {
+          id: `${id}:error:SequenceBasedMacromoleculeSample ${id} is not accessible!`,
+          is_new: true
+        }
+      );
+    }
+    const sbmmSample = new SequenceBasedMacromoleculeSample(json.sequence_based_macromolecule_sample);
+    // eslint-disable-next-line no-underscore-dangle
+    sbmmSample._checksum = sbmmSample.checksum();
+    return sbmmSample;
+  }
+
+  static sbmmSampleAttachments(sbmmSample, id) {
+    const newFiles = (sbmmSample.attachments || []).filter((a) => a.is_new && !a.is_deleted);
+    const delFiles = (sbmmSample.attachments || []).filter((a) => !a.is_new && a.is_deleted);
+    if (newFiles.length === 0 && delFiles.length === 0) return Promise.resolve();
+    return AttachmentFetcher.updateAttachables(newFiles, 'SequenceBasedMacromoleculeSample', id, delFiles)();
+  }
+
+  static sbmmAttachments(sbmm, id) {
+    const newFiles = (sbmm.attachments || []).filter((a) => a.is_new && !a.is_deleted);
+    const delFiles = (sbmm.attachments || []).filter((a) => !a.is_new && a.is_deleted);
+    if (newFiles.length === 0 && delFiles.length === 0) return Promise.resolve();
+    return AttachmentFetcher.updateAttachables(newFiles, 'SequenceBasedMacromolecule', id, delFiles)();
   }
 
   static errorHandling(sbmmSample, error, isNew) {
