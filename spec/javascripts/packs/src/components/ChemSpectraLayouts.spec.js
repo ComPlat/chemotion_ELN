@@ -8,7 +8,7 @@ import assert from 'assert';
 import sinon from 'sinon';
 import expect from 'expect';
 import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
-import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
+import { ChemSpectraLayouts } from 'src/apps/admin/ChemSpectraLayouts';
 
 configure({ adapter: new Adapter() });
 
@@ -17,6 +17,8 @@ describe('ChemSpectraLayouts', () => {
   let updateDataTypeStub;
   let fetchSpectraLayoutsStub;
   let fetchUpdatedSpectraLayoutsStub;
+
+  const intl = { formatMessage: ({ id }) => id };
 
   const mockData = {
     datatypes: {
@@ -29,7 +31,7 @@ describe('ChemSpectraLayouts', () => {
     sinon.stub(global, 'fetch').callsFake(() => Promise.resolve({
       json: () => Promise.resolve({ some: 'data' }),
     }));
-    component = shallow(React.createElement(ChemSpectraLayouts, {}));
+    component = shallow(React.createElement(ChemSpectraLayouts, { intl }));
     updateDataTypeStub = sinon.stub(ChemSpectraFetcher, 'updateDataTypes');
     fetchSpectraLayoutsStub = sinon.stub(ChemSpectraFetcher, 'fetchSpectraLayouts').resolves(mockData);
     fetchUpdatedSpectraLayoutsStub = sinon.stub(ChemSpectraFetcher, 'fetchUpdatedSpectraLayouts');
@@ -67,7 +69,7 @@ describe('ChemSpectraLayouts', () => {
     component.instance().setState({ newDataType });
     await component.instance().handleAddDataType();
 
-    assert.equal(component.state('alertMessage'), 'Please select a layout');
+    assert.equal(component.state('alertMessage'), 'chem_spectra_layouts-please_select_layout');
     assert.equal(updateDataTypeStub.callCount, 0);
   });
 
@@ -77,7 +79,7 @@ describe('ChemSpectraLayouts', () => {
     component.instance().setState({ newDataType });
     await component.instance().handleAddDataType();
 
-    assert.equal(component.state('alertMessage'), 'Please enter a data type');
+    assert.equal(component.state('alertMessage'), 'chem_spectra_layouts-please_enter_data_type');
     assert.equal(updateDataTypeStub.callCount, 0);
   });
 

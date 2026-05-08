@@ -9,7 +9,7 @@ import { FormattedMessage, injectIntl } from 'react-intl';
 import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
 
-class ChemSpectraLayouts extends Component {
+export class ChemSpectraLayouts extends Component {
   constructor(props) {
     super(props);
     this.state = {
