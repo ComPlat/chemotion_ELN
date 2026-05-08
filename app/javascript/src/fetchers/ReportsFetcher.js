@@ -17,7 +17,7 @@ export default class ReportsFetcher {
   }
 
   static fetchDownloadable(ids) {
-    ApiClient.postJson('/api/v1/archives/downloadable', { body: { ids } });
+    return ApiClient.postJson('/api/v1/archives/downloadable', { body: { ids } });
   }
 
   static create(report) {
