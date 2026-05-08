@@ -1551,46 +1551,10 @@
     react-select "^5.10.2"
     uuid "^13.0.0"
 
-"@complat/react-spectra-editor@1.3.5":
-  version "1.3.5"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.3.5.tgz#67413be000949a19a715706fd8314aa4096f7ffd"
-  integrity sha512-9au3vqAna6BC1VfIuIhC9/D2iI5nUCAtwqibEmlZabqDur4B83Gr6lzefWh/xcrAPQKtAoGydBBVuBA2Y38NLg==
-  dependencies:
-    "@complat/react-svg-file-zoom-pan" "1.1.4"
-    "@emotion/react" "^11.11.1"
-    "@emotion/styled" "^11.11.0"
-    "@mdi/js" "^7.2.96"
-    "@mdi/react" "^1.6.1"
-    "@mui/icons-material" "^5.14.9"
-    "@mui/material" "^5.14.9"
-    "@mui/styles" "^5.14.9"
-    "@popperjs/core" "^2.11.8"
-    "@types/jest" "^29.5.0"
-    "@types/node" "^18.15.11"
-    "@types/react" "^18.0.34"
-    "@types/react-dom" "^18.0.11"
-    babel-plugin-transform-object-rest-spread "^6.26.0"
-    browserslist "^4.21.5"
-    classnames "^2.3.2"
-    d3 "^7.8.5"
-    d3-tip "^0.9.1"
-    jcampconverter "4.1.0"
-    ml-savitzky-golay-generalized "1.1.1"
-    prop-types "^15.8.1"
-    react-dropzone "^8.0.3"
-    react-quill "^2.0.0"
-    react-redux "^7.2.0"
-    redux "^4.1.1"
-    redux-saga "^1.1.3"
-    redux-undo "^1.1.0"
-    regenerator-transform "^0.13.3"
-    reselect "^4.0.0"
-    typescript "^5.0.4"
-
-"@complat/react-spectra-editor@1.7.1":
-  version "1.7.1"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.7.1.tgz#cf5c790bbacc4088df737a9d5d97501d94736317"
-  integrity sha512-HBd/iPrFJD/QLyyh+XRfZF9A9CtBJdX0S/guj6ZT9il/44gZOwqGLdZcrVzpfRTqrQAkAZm+kRnsOV3FG3uD1A==
+"@complat/react-spectra-editor@1.3.5", "@complat/react-spectra-editor@github:ComPlat/react-spectra-editor#329ab3beda0bb1c1cd4f18ccf1ae510bb8882d22":
+  version "1.7.0"
+  uid "329ab3beda0bb1c1cd4f18ccf1ae510bb8882d22"
+  resolved "https://codeload.github.com/ComPlat/react-spectra-editor/tar.gz/329ab3beda0bb1c1cd4f18ccf1ae510bb8882d22"
   dependencies:
     "@complat/react-svg-file-zoom-pan" "1.1.4"
     "@emotion/react" "^11.11.1"
