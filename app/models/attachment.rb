@@ -284,6 +284,9 @@ class Attachment < ApplicationRecord
     return [reactions.first, variation] if samples.empty? && reactions.one?
     return [samples.first, nil]         if reactions.empty? && samples.one?
 
+    product_samples = samples.select { |s| s.reactions_samples.any? { |rs| rs.type == 'ReactionsProductSample' } }
+    return [product_samples.first, nil] if reactions.empty? && product_samples.one?
+
     [nil, nil]
   end
 
