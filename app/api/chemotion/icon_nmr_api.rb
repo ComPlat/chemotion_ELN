@@ -2,6 +2,10 @@ module Chemotion
   class IconNmrAPI < Grape::API
     resource :icon_nmr do
       namespace :config do
+        before do
+          error!(401) unless current_user.matrix_check_by_name("iconNmr")
+        end
+
         desc "Create config file and send to SFTP Server"
         params do
           requires :data, type: Array
