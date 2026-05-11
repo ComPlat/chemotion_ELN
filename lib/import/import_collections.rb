@@ -333,10 +333,17 @@ module Import
           'sample_type',
           'state',
           'height',
-          'color',
           'width',
           'length',
+          'diameter',
+          'color',
           'storage_condition',
+          'material',
+          'cspi',
+          'particle_size',
+          'shape',
+          'sieve_fraction',
+          'sample_details',
         ).merge(
           created_by: @current_user_id,
           collections: fetch_many(

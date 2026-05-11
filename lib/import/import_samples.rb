@@ -725,6 +725,14 @@ module Import
          (sample_type_val.casecmp('hierarchicalmaterial').zero? || sample_type_val.casecmp('hierarchical').zero?)
         sample.sample_type = Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL
       end
+      %w[height width length diameter particle_size sieve_fraction cspi].each do |field|
+        unit_val = row_value_case_insensitive(row, "#{field} unit").to_s.strip
+        unit_val = row_value_case_insensitive(row, "#{field}_unit").to_s.strip if unit_val.blank?
+        next if unit_val.blank?
+
+        sample.sample_details ||= {}
+        sample.sample_details["#{field}_unit"] = unit_val
+      end
       sample.save!
       save_chemical(chemical, sample) if @import_type == 'chemical'
       handle_sample_components(row, sample) if sample_has_components?(row)

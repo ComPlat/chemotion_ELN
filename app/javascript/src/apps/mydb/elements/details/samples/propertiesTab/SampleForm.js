@@ -25,6 +25,7 @@ import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/prop
 import { SAMPLE_TYPE_HIERARCHICAL_MATERIAL } from 'src/models/Sample';
 import Component from 'src/models/Component';
 import buildHierarchicalMaterialRows from 'src/utilities/sampleHierarchicalCompositions';
+import { unitSystems, convertUnits } from 'src/components/staticDropdownOptions/units';
 
 const stateOptions = [
   { value: 'solid_powder', label: 'Solid Powder' },
@@ -51,6 +52,46 @@ const HIERARCHICAL_PROPERTY_OPTIONS = [
 const PROPERTY_MAP = Object.fromEntries(
   HIERARCHICAL_PROPERTY_OPTIONS.map((opt) => [opt.value, { label: opt.label, placeholder: opt.placeholder }])
 );
+
+const DIMENSION_FIELDS = ['height', 'diameter', 'width', 'length'];
+const LENGTH_UNIT_FIELDS = [...DIMENSION_FIELDS, 'particle_size', 'sieve_fraction'];
+const TEMP_FIELDS = ['cspi'];
+
+// Physical bulk dimensions: µm → mm → cm → m (no nm — not at nanoscale)
+const DIMENSION_UNIT_OPTIONS = unitSystems.length.filter((u) => ['µm', 'mm', 'cm', 'm'].includes(u.value));
+// Particles can range from nano to millimetre scale
+const PARTICLE_SIZE_UNIT_OPTIONS = unitSystems.length.filter((u) => ['nm', 'µm', 'mm'].includes(u.value));
+// Sieve mesh: only µm and mm are standard sieve denominations
+const SIEVE_FRACTION_UNIT_OPTIONS = unitSystems.length.filter((u) => ['µm', 'mm'].includes(u.value));
+const TEMP_UNIT_OPTIONS = unitSystems.temperature;
+
+const FIELD_UNIT_OPTIONS = {
+  height: DIMENSION_UNIT_OPTIONS,
+  width: DIMENSION_UNIT_OPTIONS,
+  length: DIMENSION_UNIT_OPTIONS,
+  diameter: DIMENSION_UNIT_OPTIONS,
+  particle_size: PARTICLE_SIZE_UNIT_OPTIONS,
+  sieve_fraction: SIEVE_FRACTION_UNIT_OPTIONS,
+  cspi: TEMP_UNIT_OPTIONS,
+};
+
+// Convert temperature between arbitrary from/to units via Kelvin as intermediate
+const convertTemperatureFromTo = (value, from, to) => {
+  if (from === to) return value;
+  const toKelvin = (v, u) => {
+    if (u === 'K')  return v;
+    if (u === '°C') return v + 273.15;
+    if (u === '°F') return ((v - 32) * 5) / 9 + 273.15;
+    return v;
+  };
+  const fromKelvin = (v, u) => {
+    if (u === 'K')  return v;
+    if (u === '°C') return v - 273.15;
+    if (u === '°F') return ((v - 273.15) * 9) / 5 + 32;
+    return v;
+  };
+  return parseFloat(fromKelvin(toKelvin(value, from), to).toFixed(4));
+};
 
 /**
  * Normalizes components that may be in API-format (with nested component_properties)
@@ -1425,7 +1466,76 @@ export default class SampleForm extends React.Component {
       });
   }
 
+  handleHierarchicalUnitChanged(field, newUnit) {
+    const { sample, handleSampleChanged } = this.props;
+    const details = { ...(sample.sample_details || {}) };
+    const unitKey = `${field}_unit`;
+    const oldUnit = details[unitKey];
+
+    if (LENGTH_UNIT_FIELDS.includes(field) && oldUnit && oldUnit !== newUnit) {
+      const rawVal = sample[field] ?? details[field];
+      const currentVal = parseFloat(rawVal);
+      if (!Number.isNaN(currentVal)) {
+        const converted = convertUnits(currentVal, oldUnit, newUnit);
+        sample[field] = converted;
+        details[field] = converted;
+      }
+    } else if (TEMP_FIELDS.includes(field) && oldUnit && oldUnit !== newUnit) {
+      const currentVal = parseFloat(sample[field] ?? details[field]);
+      if (!Number.isNaN(currentVal)) {
+        const converted = convertTemperatureFromTo(currentVal, oldUnit, newUnit);
+        sample[field] = converted;
+        details[field] = converted;
+      }
+    }
+
+    details[unitKey] = newUnit;
+    sample.sample_details = details;
+    handleSampleChanged(sample);
+  }
+
+  renderFieldWithUnit(sample, key, label, unitOptions, defaultUnit, isTextInput = false) {
+    const details = sample.sample_details || {};
+    const value = sample[key] ?? details[key] ?? '';
+    const unit = details[`${key}_unit`] ?? defaultUnit;
+    const cycleUnit = () => {
+      const idx = unitOptions.findIndex((u) => u.value === unit);
+      const nextUnit = unitOptions[(idx + 1) % unitOptions.length].value;
+      this.handleHierarchicalUnitChanged(key, nextUnit);
+    };
+    return (
+      <Form.Group className="w-100">
+        <Form.Label>{label}</Form.Label>
+        <div className="numeral-input-with-units">
+          <InputGroup className="d-flex flex-nowrap align-items-center w-100">
+            <Form.Control
+              type="text"
+              value={value}
+              disabled={!sample.can_update}
+              placeholder={PROPERTY_MAP[key]?.placeholder}
+              className="flex-grow-1"
+              onChange={(e) => this.handleFieldChanged(key, e.target.value)}
+            />
+            <Button
+              variant="light"
+              disabled={!sample.can_update}
+              onClick={cycleUnit}
+              className="px-1"
+            >
+              {unit}
+            </Button>
+          </InputGroup>
+        </div>
+      </Form.Group>
+    );
+  }
+
   renderHierarchicalPropertyInput(sample, key, prop) {
+    const unitOptions = FIELD_UNIT_OPTIONS[key];
+    if (unitOptions) {
+      const defaultUnit = unitOptions[0].value;
+      return this.renderFieldWithUnit(sample, key, prop.label, unitOptions, defaultUnit);
+    }
     return this.textInput(sample, key, prop.label, false, false, prop.placeholder);
   }
 
@@ -1495,7 +1605,7 @@ export default class SampleForm extends React.Component {
 
               return [
                 ...regularKeys.map((key) => (
-                  <Col xs={6} key={key} className="mb-4">
+                  <Col xs={3} key={key} className="mb-4">
                     {this.renderHierarchicalPropertyInput(sample, key, PROPERTY_MAP[key])}
                   </Col>
                 )),
