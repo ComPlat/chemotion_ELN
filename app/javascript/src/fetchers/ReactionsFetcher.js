@@ -1,4 +1,4 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 import { Map } from 'immutable';
 
 import BaseFetcher from 'src/fetchers/BaseFetcher';
@@ -12,101 +12,86 @@ import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercen
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
-  static async fetchById(id) {
-    try {
-      const response = await fetch(`/api/v1/reactions/${id}.json`, {
-        credentials: 'same-origin'
-      }).then((response) => response.json())
-        .then((json) => {
-          const userLabels = json?.reaction?.tag?.taggable_data?.user_labels || null;
-          if (json.hasOwnProperty('reaction')) {
-            const reaction = new Reaction(json.reaction);
-            const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
-            if (vesselSize) {
-              GasPhaseReactionActions.setReactionVesselSize(vesselSize);
-            }
-            if (catalystMoles) {
-              GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
-            }
-            const { weightPercentageReference, targetAmount } = reaction.findWeightPercentageReferenceMaterial();
-            if (weightPercentageReference) {
-              WeightPercentageReactionActions.setWeightPercentageReference(weightPercentageReference);
-              WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
-            }
-            if (json.literatures && json.literatures.length > 0) {
-              const tliteratures = json.literatures.map((literature) => new Literature(literature));
-              const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), Map());
-              reaction.literatures = lits;
-            }
-            if (json.research_plans && json.research_plans.length > 0) {
-              reaction.research_plans = json.research_plans;
-            }
-            reaction.updateMaxAmountOfProducts();
-            if (!userLabels) reaction.user_labels = userLabels;
-            return reaction;
-          }
-          const rReaction = new Reaction(json.reaction);
-          if (!userLabels) rReaction.setUserLabels(userLabels);
-          if (json.error) {
-            rReaction.id = `${id}:error:Reaction ${id} is not accessible!`;
-          }
-          return rReaction;
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-      const researchPlans = await ResearchPlansFetcher.fetchResearchPlansForElements(id, response.type);
-      response.research_plans = researchPlans;
-      return response;
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
   static fetchByCollectionId(id, queryParams = {}) {
     return BaseFetcher.fetchByCollectionId(id, queryParams, 'reactions', Reaction);
   }
 
+  static fetchById(id) {
+    return ApiClient.getJson(`/api/v1/reactions/${id}`)
+      .then((json) => this.reactionElement(json, id));
+  }
+
   static findByShortLabel(shortLabel) {
-    return fetch(
-      `/api/v1/reactions/findByShortLabel/${shortLabel}.json`,
-      {
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' }
-      }
-    ).then((response) => response.json()).catch((errorMessage) => console.log(errorMessage));
+    return ApiClient.getJson(`/api/v1/reactions/findByShortLabel/${shortLabel}`);
   }
 
-  static async create(reaction, method = 'post') {
-    const uploadPromises = [
+  static create(reaction) {
+    const tasks = [
       AttachmentFetcher.uploadNewAttachmentsForContainer(reaction.container),
-      ...reaction.products.map(prod => AttachmentFetcher.uploadNewAttachmentsForContainer(prod.container)),
+      ...reaction.products.map((prod) => AttachmentFetcher.uploadNewAttachmentsForContainer(prod.container)),
     ];
-    await Promise.all(uploadPromises);
-    const promise = () => fetch(`/api/v1/reactions/${method === 'post' ? '' : reaction.id}`, {
-      credentials: 'same-origin',
-      method,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(reaction.serialize())
-    }).then((response) => response.json())
-      .then((json) => GenericElsFetcher.uploadGenericFiles(reaction, json.reaction.id, 'Reaction')
-        .then(() => ReactionsFetcher.updateAnnotationsInReaction(reaction))
-        .then(() => this.fetchById(json.reaction.id))).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    return promise();
-  }
 
-  static updateAnnotationsInReaction(reaction) {
-    const tasks = [];
-    tasks.push(BaseFetcher.updateAnnotationsInContainer(reaction));
-    reaction.products.forEach((e) => tasks.push(BaseFetcher.updateAnnotationsInContainer(e)));
-    return Promise.all(tasks);
+    return Promise.all(tasks)
+      .then(() => ApiClient.postJson('/api/v1/reactions', { body: reaction.serialize() }))
+      .then((json) => {
+        const { id } = json.reaction;
+        return GenericElsFetcher.uploadGenericFiles(reaction, id, 'Reaction')
+          .then(() => this.updateAnnotationsInReaction(reaction))
+          .then(() => this.reactionElement(json, id));
+      });
   }
 
   static update(reaction) {
-    return ReactionsFetcher.create(reaction, 'put');
+    const tasks = [
+      AttachmentFetcher.uploadNewAttachmentsForContainer(reaction.container),
+      ...reaction.products.map((prod) => AttachmentFetcher.uploadNewAttachmentsForContainer(prod.container)),
+      GenericElsFetcher.uploadGenericFiles(reaction, reaction.id, 'Reaction'),
+    ];
+
+    return Promise.all(tasks)
+      .then(() => this.updateAnnotationsInReaction(reaction))
+      .then(() => ApiClient.putJson(`/api/v1/reactions/${reaction.id}`, { body: reaction.serialize() }))
+      .then((json) => this.reactionElement(json, reaction.id));
+  }
+
+  static updateAnnotationsInReaction(reaction) {
+    const tasks = [
+      BaseFetcher.updateAnnotationsInContainer(reaction),
+      ...reaction.products.map((e) => BaseFetcher.updateAnnotationsInContainer(e)),
+    ];
+    return Promise.all(tasks);
+  }
+
+  static reactionElement(json, id) {
+    if (json.error) {
+      return new Reaction({ id: `${id}:error:Reaction ${id} is not accessible!` });
+    }
+
+    const userLabels = json?.reaction?.tag?.taggable_data?.user_labels || null;
+
+    const reaction = new Reaction(json.reaction);
+    const { catalystMoles, vesselSize } = reaction.findReactionVesselSizeCatalystMaterialValues();
+    if (vesselSize) {
+      GasPhaseReactionActions.setReactionVesselSize(vesselSize);
+    }
+    if (catalystMoles) {
+      GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles);
+    }
+    const { weightPercentageReference, targetAmount } = reaction.findWeightPercentageReferenceMaterial();
+    if (weightPercentageReference) {
+      WeightPercentageReactionActions.setWeightPercentageReference(weightPercentageReference);
+      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
+    }
+    if (json.literatures && json.literatures.length > 0) {
+      const tliteratures = json.literatures.map((literature) => new Literature(literature));
+      const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Map());
+      reaction.literatures = lits;
+    }
+    if (json.research_plans && json.research_plans.length > 0) {
+      reaction.research_plans = json.research_plans;
+    }
+    reaction.updateMaxAmountOfProducts();
+    if (!userLabels) reaction.user_labels = userLabels;
+    return reaction;
   }
 }
