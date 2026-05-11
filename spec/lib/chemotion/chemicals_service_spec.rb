@@ -284,33 +284,33 @@ describe Chemotion::ChemicalsService do
       end
 
       it 'decomposes an unknown + combination into individual codes' do
-        # P302+P335+P334 is not in the JSON as a combined key but each part is
-        result = described_class.construct_p_statements(['P302+P335+P334'])
-        expect(result.keys).to match_array(%w[P302 P335 P334])
+        # P302+P335+P340 is not in the JSON as a combined key but each part is
+        result = described_class.construct_p_statements(['P302+P335+P340'])
+        expect(result.keys).to match_array(%w[P302 P335 P340])
       end
 
       it 'includes values for all decomposed precautionary codes' do
-        result = described_class.construct_p_statements(['P302+P335+P334'])
+        result = described_class.construct_p_statements(['P302+P335+P340'])
         expect(result['P302']).to be_present
         expect(result['P335']).to be_present
-        expect(result['P334']).to be_present
+        expect(result['P340']).to be_present
       end
 
-      it 'decomposes P304+P340+P310' do
-        result = described_class.construct_p_statements(['P304+P340+P310'])
-        expect(result.keys).to match_array(%w[P304 P340 P310])
+      it 'decomposes P304+P335+P315' do
+        result = described_class.construct_p_statements(['P304+P335+P315'])
+        expect(result.keys).to match_array(%w[P304 P335 P315])
       end
 
-      it 'decomposes a 4-part combination P370+P372+P380+P373' do
-        result = described_class.construct_p_statements(['P370+P372+P380+P373'])
-        expect(result.keys).to match_array(%w[P370 P372 P380 P373])
+      it 'decomposes a 4-part combination P370+P372+P380+P374' do
+        result = described_class.construct_p_statements(['P370+P372+P380+P374'])
+        expect(result.keys).to match_array(%w[P370 P372 P380 P374])
       end
 
       it 'handles mixed input: known combo and unknown combo together' do
-        result = described_class.construct_p_statements(['P302+P352', 'P302+P335+P334'])
+        result = described_class.construct_p_statements(['P302+P352', 'P302+P335+P340'])
         expect(result).to have_key('P302+P352')
         expect(result).to have_key('P335')
-        expect(result).to have_key('P334')
+        expect(result).to have_key('P340')
       end
 
       it 'silently skips codes not in the JSON' do
@@ -326,8 +326,8 @@ describe Chemotion::ChemicalsService do
       end
 
       it 'decomposes an unknown + combination into individual H codes' do
-        result = described_class.construct_h_statements(['H301+H311+H331'])
-        expect(result.keys).to match_array(%w[H301 H311 H331])
+        result = described_class.construct_h_statements(['H301+H312+H315'])
+        expect(result.keys).to match_array(%w[H301 H312 H315])
         expect(result['H301']).to be_present
       end
 

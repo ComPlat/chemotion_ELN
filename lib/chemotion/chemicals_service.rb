@@ -274,6 +274,8 @@ module Chemotion
     end
 
     private_class_method :extract_h_text_from_array, :extract_p_text_from_array, :extract_pictograms_from_array
+    private_class_method :process_statement, :normalize_phrases_to_array, :load_hazard_phrases_hash,
+                         :load_precautionary_phrases_hash
 
     def self.safety_phrases_merck(product_link)
       safety_section = safety_section(product_link)
