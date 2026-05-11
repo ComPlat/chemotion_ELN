@@ -673,7 +673,7 @@ export default class Component extends Sample {
       } else {
         const parts = source.split('-');
         sourceContent = source;
-        compContent = parts[1];
+        compContent = parts[1] || parts[0];
       }
     }
     return { source: source, component: compContent, weightRatioCalc: weightRatioContent };

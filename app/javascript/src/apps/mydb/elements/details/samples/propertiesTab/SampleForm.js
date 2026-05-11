@@ -37,15 +37,14 @@ const stateOptions = [
 
 const HIERARCHICAL_PROPERTY_OPTIONS = [
   { value: 'sieve_fraction', label: 'Sieve fraction', placeholder: 'e.g., 100-200 µm' },
-  { value: 'height', label: 'Height', placeholder: 'e.g., 5 cm' },
-  { value: 'diameter', label: 'Diameter', placeholder: 'e.g., 2.5 cm' },
-  { value: 'width', label: 'Width', placeholder: 'e.g., 3 cm' },
-  { value: 'length', label: 'Length', placeholder: 'e.g., 10 cm' },
+  { value: 'height', label: 'Height', placeholder: 'e.g., 5' },
+  { value: 'diameter', label: 'Diameter', placeholder: 'e.g., 2.5' },
+  { value: 'width', label: 'Width', placeholder: 'e.g., 3' },
+  { value: 'length', label: 'Length', placeholder: 'e.g., 10' },
   { value: 'material', label: 'Material', placeholder: 'e.g., Glass, Plastic' },
   { value: 'cspi', label: 'CSPI', placeholder: 'e.g., 45°C' },
   { value: 'particle_size', label: 'Particle size', placeholder: 'e.g., Medium, 50 µm' },
   { value: 'shape', label: 'Shape', placeholder: 'e.g., Spherical, Cubic' },
-  { value: 'color', label: 'Color', placeholder: 'e.g., Red, Blue' },
   { value: 'storage_condition', label: 'Storage condition', placeholder: 'e.g., Room temperature' },
 ];
 
@@ -700,6 +699,9 @@ export default class SampleForm extends React.Component {
         ...(sample.sample_details || {}),
         [field]: value,
       };
+    } else if (field === 'state') {
+      // State is stored as a DB column (not as hierarchical property)
+      sample[field] = e && (e.value || e.value === 0) ? e.value : e;
     } else if (e && (e.value || e.value === 0)) {
       // for numeric inputs
       sample[field] = e.value;
@@ -1477,34 +1479,34 @@ export default class SampleForm extends React.Component {
         </Row>
 
         <Row className="align-items-end mb-4">
-          <Col>{this.stateSelect(sample)}</Col>
+          <Col xs={6}>{this.stateSelect(sample)}</Col>
+        </Row>
+
+        <Row className="align-items-end mb-4">
           <Col>{this.hierarchicalPropertySelect(sample)}</Col>
         </Row>
 
         {selectedKeys.length > 0 && (
-          <>
-            {selectedKeys.map((key, index) => {
-              const isEvenIndex = index % 2 === 0;
+          <Row className="mb-4">
+            {(() => {
+              const dimensionFields = ['height', 'diameter', 'width', 'length'];
+              const regularKeys = selectedKeys.filter((k) => !dimensionFields.includes(k));
+              const dimensionKeys = selectedKeys.filter((k) => dimensionFields.includes(k));
 
-              if (isEvenIndex) {
-                const nextKey = selectedKeys[index + 1];
-                const currentProp = PROPERTY_MAP[key];
-                const nextProp = nextKey ? PROPERTY_MAP[nextKey] : null;
-
-                if (!currentProp) return null;
-
-                return (
-                  <Row key={`property-row-${index}`} className="mb-4">
-                    <Col xs={6}>{this.renderHierarchicalPropertyInput(sample, key, currentProp)}</Col>
-                    {nextKey && nextProp && (
-                      <Col xs={6}>{this.renderHierarchicalPropertyInput(sample, nextKey, nextProp)}</Col>
-                    )}
-                  </Row>
-                );
-              }
-              return null;
-            })}
-          </>
+              return [
+                ...regularKeys.map((key) => (
+                  <Col xs={6} key={key} className="mb-4">
+                    {this.renderHierarchicalPropertyInput(sample, key, PROPERTY_MAP[key])}
+                  </Col>
+                )),
+                ...dimensionKeys.map((key) => (
+                  <Col xs={3} key={key} className="mb-4">
+                    {this.renderHierarchicalPropertyInput(sample, key, PROPERTY_MAP[key])}
+                  </Col>
+                )),
+              ];
+            })()}
+          </Row>
         )}
 
         <Row>{this.hierarchicalMaterialTable(sample)}</Row>
@@ -1666,6 +1668,13 @@ export default class SampleForm extends React.Component {
                 <Col md={4}>
                   {this.textInput(sample, 'location', 'Location')}
                 </Col>
+                {sample.isHierarchicalMaterial() && (
+                  <Col md={4}>
+                    {this.textInput(sample, 'color', 'Color')}
+                  </Col>
+                )}
+              </Row>
+              <Row className="align-items-end mb-4">
                 <Col md={4}>
                   {this.drySolventCheckbox(sample)}
                 </Col>

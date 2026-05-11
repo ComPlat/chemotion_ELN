@@ -577,7 +577,7 @@ module Import
     def handle_default_fields(sample, db_column, value)
       if sample.has_attribute?(db_column)
         sample[db_column] = value || ''
-      elsif %w[height width length diameter state color storage_condition material cspi particle_size shape sieve_fraction].include?(db_column)
+      elsif %w[height width length diameter state storage_condition material cspi particle_size shape sieve_fraction].include?(db_column)
         # Backward compatibility: some DBs do not have dedicated hierarchical columns yet.
         sample.sample_details ||= {}
         sample.sample_details[db_column] = value || ''
@@ -890,7 +890,7 @@ module Import
       field_normalized = field_name.to_s.strip.downcase.gsub(/\s+/, '_')
       hierarchical_map = {
         'height' => 'height', 'width' => 'width', 'length' => 'length', 'diameter' => 'diameter',
-        'state' => 'state', 'color' => 'color', 'storage_condition' => 'storage_condition',
+        'state' => 'state', 'storage_condition' => 'storage_condition',
         'material' => 'material', 'cspi' => 'cspi', 'particle_size' => 'particle_size',
         'shape' => 'shape', 'sieve_fraction' => 'sieve_fraction'
       }
