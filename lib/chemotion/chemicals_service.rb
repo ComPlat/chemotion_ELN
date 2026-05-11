@@ -168,54 +168,59 @@ module Chemotion
                     .children[1].children[1].children[1]
     end
 
-    def self.construct_h_statements(h_phrases, vendor = nil)
+    def self.construct_h_statements(h_phrases)
       h_statements = {}
-      h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
+      h_phrases_hash = load_hazard_phrases_hash
+      h_array = normalize_phrases_to_array(h_phrases, 'H')
 
-      # Normalize input to an array of hazard codes (e.g. ["H301", "H314"])
-      h_array = if h_phrases.is_a?(String)
-                  h_phrases.scan(/H\d{1,3}[A-Za-z0-9]*/)
-                elsif h_phrases.is_a?(Array)
-                  h_phrases
-                else
-                  []
-                end
-
-      h_array.each do |element|
-        code = element.to_s.strip
-        next if code.empty?
-
-        if (value = h_phrases_hash[code])
-          h_statements[code] = " #{value}"
-        end
+      h_array.each do |code|
+        process_statement(code, h_phrases_hash, h_statements)
       end
 
       h_statements
     end
 
+    def self.process_statement(code, phrases_hash, statements)
+      code = code.to_s.strip
+      return if code.empty?
+
+      if (value = phrases_hash[code])
+        statements[code] = " #{value}"
+      elsif code.include?('+')
+        code.scan(/[A-Z]\d{1,3}[A-Za-z0-9]*/).each do |part|
+          statements[part] = " #{phrases_hash[part]}" if phrases_hash[part]
+        end
+      end
+    end
+
+    def self.normalize_phrases_to_array(phrases, prefix)
+      if phrases.is_a?(String)
+        phrases.scan(/#{prefix}\d{1,3}[A-Za-z0-9]*/)
+      elsif phrases.is_a?(Array)
+        phrases
+      else
+        []
+      end
+    end
+
+    def self.load_hazard_phrases_hash
+      JSON.parse(File.read('./public/json/hazardPhrases.json'))
+    end
+
     def self.construct_p_statements(p_phrases)
       p_statements = {}
-      p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
+      p_phrases_hash = load_precautionary_phrases_hash
+      p_array = normalize_phrases_to_array(p_phrases, 'P')
 
-      # Normalize input to an array of precautionary codes (e.g. ["P102", "P301"])
-      p_array = if p_phrases.is_a?(String)
-                  p_phrases.scan(/P\d{1,3}[A-Za-z0-9]*/)
-                elsif p_phrases.is_a?(Array)
-                  p_phrases
-                else
-                  []
-                end
-
-      p_array.each do |element|
-        code = element.to_s.strip
-        next if code.empty?
-
-        if (value = p_phrases_hash[code])
-          p_statements[code] = " #{value}"
-        end
+      p_array.each do |code|
+        process_statement(code, p_phrases_hash, p_statements)
       end
 
       p_statements
+    end
+
+    def self.load_precautionary_phrases_hash
+      JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
     end
 
     def self.construct_pictograms(pictograms)
