@@ -90,7 +90,8 @@ module Chemotion
 
         get do
           reaction = Reaction.find(params[:id])
-          class_name = reaction&.class&.name
+          research_plans =
+            ResearchPlan.where('body @> ?', [{ value: { 'reaction_id' => reaction&.id } }].to_json).select(:id, :name)
 
           {
             reaction: Entities::ReactionEntity.represent(
@@ -99,9 +100,10 @@ module Chemotion
               detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
             ),
             literatures: Entities::LiteratureEntity.represent(
-              citation_for_elements(params[:id], class_name),
+              citation_for_elements(params[:id], "Reaction"),
               with_user_info: true,
             ),
+            research_plans: research_plans,
           }
         end
       end
@@ -207,13 +209,21 @@ module Chemotion
           kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          present(
-            reaction,
-            with: Entities::ReactionEntity,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
-            root: :reaction,
-            policy: @element_policy,
-          )
+          research_plans =
+            ResearchPlan.where('body @> ?', [{ value: { 'reaction_id' => reaction&.id } }].to_json).select(:id, :name)
+
+          {
+            reaction: Entities::ReactionEntity.represent(
+              reaction,
+              policy: @element_policy,
+              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
+            ),
+            literatures: Entities::LiteratureEntity.represent(
+              citation_for_elements(reaction.id, "Reaction"),
+              with_user_info: true,
+            ),
+            research_plans: research_plans,
+          }
         end
       end
 

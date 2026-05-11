@@ -318,7 +318,7 @@ module Chemotion
               policy: @element_policy,
             ),
             literatures: Entities::LiteratureEntity.represent(
-              citation_for_elements(params[:id], 'Sample'),
+              citation_for_elements(sample.id, 'Sample'),
               with_user_info: true,
             ),
           }
@@ -455,13 +455,20 @@ module Chemotion
           kinds = @sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          present(
-            @sample,
-            with: Entities::SampleEntity,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: @sample).detail_levels,
-            policy: @element_policy,
-            root: :sample,
-          )
+          {
+            sample: Entities::SampleEntity.represent(
+              @sample,
+              detail_levels: ElementDetailLevelCalculator
+                .new(user: current_user, element: @sample)
+                .detail_levels,
+              policy: @element_policy,
+            ),
+            literatures: Entities::LiteratureEntity.represent(
+              citation_for_elements(@sample.id, 'Sample'),
+              with_user_info: true,
+            ),
+          }
+
         rescue ActiveRecord::RecordNotUnique => e
           # Extract the column or index name from the error message
           match = e.message.match(/duplicate key value violates unique constraint "(?<index_name>.+)"/)
