@@ -174,3 +174,7 @@ Cypress.Commands.add('settingPermission', (permission) => {
   cy.clearCookie('_chemotion_session');
   cy.get('a[title="Log out"]').click();
 });
+
+Cypress.Commands.add('clickDetailFooterButton', (buttonText) => {
+  cy.get('div[class="card-footer"').contains('button', buttonText).click();
+});

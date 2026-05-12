@@ -33,7 +33,7 @@ describe('Copy Samples', () => {
   it('copy sample to same collection', () => {
     cy.get('body').contains('.chemotion-select__option', collectionName).click();
     cy.contains('button', 'Copy').click();
-    cy.get('div[class="card-footer"').contains('button', 'Create').click();
+    cy.clickDetailFooterButton('Create');
 
     // Copied Sample exists in sample list
     cy.get('div[class="element-groups-renderer"').contains('cu1-1');
@@ -42,7 +42,7 @@ describe('Copy Samples', () => {
   it('copy sample to different collection', () => {
     cy.get('body').contains('.chemotion-select__option', secondCollectionName).click();
     cy.contains('button', 'Copy').click();
-    cy.get('div[class="card-footer"').contains('button', 'Create').click();
+    cy.clickDetailFooterButton('Create');
 
     cy.contains(secondCollectionName).click();
     cy.get('div[class="element-groups-renderer"').contains('cu1-1');
