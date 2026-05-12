@@ -82,6 +82,7 @@ function buildWrappedComponent(name, BaseComponent) {
         ref={ref}
         menuPortalTarget={document.body}
         menuPlacement="auto"
+        menuPosition="fixed"
         unstyled
         styles={stylesWithOverrides}
         components={mergedComponents}
