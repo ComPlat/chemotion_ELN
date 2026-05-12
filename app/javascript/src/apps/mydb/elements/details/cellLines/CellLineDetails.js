@@ -46,6 +46,7 @@ class CellLineDetails extends React.Component {
     const { cellLineItem } = this.props;
     const { cellLineDetailsStore } = this.context;
     cellLineDetailsStore.removeCellLineFromStore(cellLineItem.id);
+    DetailActions.close(cellLineItem, true);
   }
 
   handleTabChange(eventKey) {
