@@ -4,16 +4,16 @@ describe('Sample Creation', () => {
       cy.appFactories([['create', 'collection', { user_id: user[0].id }]]);
     });
 
-    cy.visit('users/sign_in');
     cy.login('cu1', 'user_password');
-    cy.stubCollections();
-    cy.get('div').find('[id="tree-id-Collection 1"]').click();
-    cy.get('#create-split-button').click();
-    cy.get('#create-sample-button').click();
-    cy.get('.chem-identifiers-section > .list-group-item').click();
-    cy.get('#smilesInput').type('c1cc(cc(c1)c1ccccc1)c1ccccc1');
+    cy.contains('Collection 1').click();
+    cy.contains('Create').click();
+    cy.contains('Create Sample').click();
+    cy.contains('Chemical identifiers').click();
+    cy.contains('Canonical Smiles').siblings('input').type('c1cc(cc(c1)c1ccccc1)c1ccccc1');
     cy.get('#smile-create-molecule').click();
-    cy.get('#submit-sample-btn').click();
-    cy.url().should('include', '/sample/1');
+    cy.clickDetailFooterButton('Create');
+
+    cy.get('i.icon-sample').closest('button[role="tab"]').click();
+    cy.get('#elements-list-view').contains('cu1-1');
   });
 });
