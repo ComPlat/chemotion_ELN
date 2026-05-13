@@ -1,4 +1,5 @@
 import React from 'react';
+import { List } from 'immutable';
 import { Dropdown } from 'react-bootstrap';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -9,11 +10,23 @@ import { PDFDocument } from 'pdf-lib';
 import Utils from 'src/utilities/Functions';
 import 'whatwg-fetch';
 
+// Element types accepted by the /api/v1/code_logs/print_codes endpoint
+// (see app/api/chemotion/code_log_api.rb).
+const PRINTABLE_ELEMENT_TYPES = [
+  'sample',
+  'reaction',
+  'wellplate',
+  'screen',
+  'device_description',
+  'sequence_based_macromolecule_sample',
+];
+
 export default class SelectionGenerateButton extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      checkedIds: UIStore.getState().sample.checkedIds,
+      checkedIds: List(),
+      elementType: 'sample',
       json: {},
       matrix: null,
       enableComputedProps: null,
@@ -50,9 +63,16 @@ export default class SelectionGenerateButton extends React.Component {
   }
 
   onUIStoreChange(state) {
-    if (state.sample.checkedIds !== this.state.checkedIds) {
+    const { checkedIds, elementType } = this.state;
+    const activeType = PRINTABLE_ELEMENT_TYPES.find(
+      (t) => state[t] && state[t].checkedIds && state[t].checkedIds.size > 0
+    );
+    const nextCheckedIds = activeType ? state[activeType].checkedIds : List();
+    const nextElementType = activeType || 'sample';
+    if (nextCheckedIds !== checkedIds || nextElementType !== elementType) {
       this.setState({
-        checkedIds: state.sample.checkedIds
+        checkedIds: nextCheckedIds,
+        elementType: nextElementType,
       });
     }
   }
@@ -68,20 +88,21 @@ export default class SelectionGenerateButton extends React.Component {
     }
   }
 
-  async downloadPrintCodesPDF(ids, template) {
-    const { json } = this.state;
-    const fetchedData = await PrintCodeFetcher.fetchPrintCodes(ids.length > 0 ? ids : null, template, json);
-
-    if (!Array.isArray(fetchedData) || fetchedData.length === 0) {
-      console.error('No data received or data is not in expected format');
-      return;
-    }
+  async downloadPrintCodesPDF(ids, selectedConfig) {
+    const { json, elementType } = this.state;
+    if (!ids || ids.length === 0) return;
 
     const mergedPdf = await PDFDocument.create();
-    const pdfPromises = fetchedData.map(async (base64String) => {
-      const pdfBytes = Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
-      const pdf = await PDFDocument.load(pdfBytes);
-      const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+    const configParams = json[selectedConfig] || {};
+
+    const pdfPromises = ids.map(async (id) => {
+      let url = `/api/v1/code_logs/print_codes?element_type=${elementType}&ids[]=${id}`;
+      Object.entries(configParams).forEach(([key, value]) => {
+        url += `&${key}=${value}`;
+      });
+      const pdfBytes = await PrintCodeFetcher.fetchMergedPrintCodes(url);
+      const pdfToMerge = await PDFDocument.load(pdfBytes);
+      const copiedPages = await mergedPdf.copyPages(pdfToMerge, pdfToMerge.getPageIndices());
       copiedPages.forEach((page) => mergedPdf.addPage(page));
     });
 
