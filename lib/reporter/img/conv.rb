@@ -18,6 +18,8 @@ module Reporter
       end
 
       def self.by_inkscape(input, output, ext, width: 1550, height: 440)
+        input = input.to_s
+        output = output.to_s
         # The composed reaction SVG has an outer <svg width="1560" height="440"> and
         # an inner <svg width="100%"> with no explicit height. Inkscape 1.x resolves
         # the inner height from the viewBox aspect ratio, which can exceed 440 px for

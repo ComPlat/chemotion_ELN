@@ -52,6 +52,28 @@ describe Reporter::Img::Conv do
         allow(described_class).to receive(:system).and_return(true)
         described_class.by_inkscape(input, output, ext)
       end
+
+      it 'passes only Strings to the system call (regression: Pathname input must not raise TypeError)' do
+        expect(described_class).to receive(:system) do |cmd, *args|
+          expect(args).to all(be_a(String))
+          true
+        end
+
+        described_class.by_inkscape(Pathname.new(input), output, ext)
+      end
+    end
+
+    context 'when input is a Pathname' do
+      before { allow(described_class).to receive(:system).and_return(true) }
+
+      it 'does not raise TypeError' do
+        expect { described_class.by_inkscape(Pathname.new(input), output, ext) }.not_to raise_error
+      end
+
+      it 'converts the Pathname to a String before calling pin_nested_svg_height' do
+        expect(described_class).to receive(:pin_nested_svg_height).with(input).and_return(input)
+        described_class.by_inkscape(Pathname.new(input), output, ext)
+      end
     end
 
     context 'when Inkscape 1.x call fails (falls back to 0.x syntax)' do
