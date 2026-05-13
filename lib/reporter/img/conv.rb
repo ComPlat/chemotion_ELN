@@ -27,7 +27,7 @@ module Reporter
         # overflow, producing a blank image. Pinning height="100%" on the inner element
         # keeps it inside the outer frame and lets the viewBox scale all content
         # (including polymer images) uniformly to fit, so --export-area-page is safe.
-        prepared = pin_nested_svg_height(input)
+        prepared, prepared_tmp = pin_nested_svg_height(input)
 
         # Inkscape 1.x: --export-type and --export-filename (or -o)
         args_1x = [
@@ -48,15 +48,25 @@ module Reporter
           "--export-width=#{width.to_i} --export-height=#{height.to_i}",
         )
         raise 'Inkscape export failed' unless success
+      ensure
+        prepared_tmp&.close!
       end
 
-      # Adds height="100%" to any nested <svg> that carries width="100%" but no
-      # explicit height attribute. Returns the path of a patched temp file when
-      # changes are needed, or the original path when the SVG is already correct.
+      # Patches any nested +<svg>+ element that has +width="100%"+ but no
+      # explicit height by adding +height="100%"+. Keeps the inner frame
+      # inside the outer page so +--export-area-page+ does not clip
+      # overflowing content. When a patched copy is produced, the caller
+      # owns the returned Tempfile and must call +close!+ on it.
+      #
+      # @param svg_path [String] path to the SVG file to inspect
+      # @return [Array(String, Tempfile)] +[patched_path, tmp]+ when a
+      #   patched copy was written; caller must close! the Tempfile
+      # @return [Array(String, nil)] +[svg_path, nil]+ when the SVG needed
+      #   no patch (path is the original input)
       def self.pin_nested_svg_height(svg_path)
         doc = Nokogiri::XML(File.read(svg_path))
         outer = doc.at_xpath('//*[local-name()="svg"]')
-        return svg_path unless outer
+        return [svg_path, nil] unless outer
 
         changed = false
         outer.xpath('.//*[local-name()="svg"]').each do |inner|
@@ -65,12 +75,12 @@ module Reporter
           inner['height'] = '100%'
           changed = true
         end
-        return svg_path unless changed
+        return [svg_path, nil] unless changed
 
         tmp = Tempfile.new(['diagram_prepared', '.svg'])
         tmp.write(doc.to_xml)
         tmp.close
-        tmp.path
+        [tmp.path, tmp]
       end
 
       def self.valid?(path)
