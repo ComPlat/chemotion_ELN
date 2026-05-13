@@ -68,55 +68,6 @@ Cypress.Commands.add('createUserWithCredentials', (email, password, fname, lname
   cy.contains('Create user').click();
 });
 
-Cypress.Commands.add('createCollection', (userID, label) => {
-  cy.appFactories([
-    ['create', 'collection', {
-      user_id: userID,
-      label,
-      sample_detail_level: 10,
-    }],
-  ]);
-});
-
-Cypress.Commands.add('waitForCollections', () => {
-  cy.intercept('GET', '/api/v1/collections/roots.json').as('colletions1');
-  cy.intercept('GET', '/api/v1/collections/shared_roots.json').as('colletions2');
-  cy.intercept('GET', '/api/v1/collections/remote_roots.json').as('colletions3');
-  cy.intercept('GET', '/api/v1/syncCollections/sync_remote_roots.json').as('colletions4');
-  cy.intercept('PATCH', '/api/v1/collections').as('collections.patch');
-  cy.get('#collection-management-button').click();
-  cy.wait([
-    '@colletions1',
-    '@colletions2',
-    '@colletions3',
-    '@colletions4',
-  ]);
-});
-
-const staticResponse = {};
-Cypress.Commands.add('stubCollections', () => {
-  cy.intercept('GET', '/api/v1/collections/roots.json', staticResponse).as('colletions1');
-  cy.intercept('GET', '/api/v1/collections/shared_roots.json', staticResponse).as('colletions2');
-  cy.intercept('GET', '/api/v1/collections/remote_roots.json', staticResponse).as('colletions3');
-  cy.intercept('GET', '/api/v1/syncCollections/sync_remote_roots.json', staticResponse).as('colletions4');
-  cy.intercept('PATCH', '/api/v1/collections', staticResponse).as('collections.patch');
-  cy.get('#collection-management-button').click();
-  cy.wait([
-    '@colletions1',
-    '@colletions2',
-    '@colletions3',
-    '@colletions4',
-  ]);
-});
-
-Cypress.Commands.add('stubExperimentData', () => {
-  cy.intercept('GET', '/api/v1/samples.json', staticResponse);
-  cy.intercept('GET', '/api/v1/research.json', staticResponse);
-  cy.intercept('GET', '/api/v1/wellplates.json', staticResponse);
-  cy.intercept('GET', '/api/v1/screens.json', staticResponse);
-  cy.intercept('GET', '/api/v1/research_plans.json', staticResponse);
-});
-
 Cypress.Commands.add('createMessages', (adminID, channelID, userID) => {
   cy.appFactories([['create', 'message', {
     channel_id: channelID,
