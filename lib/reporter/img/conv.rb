@@ -18,10 +18,17 @@ module Reporter
         svg_file
       end
 
+      # Allocates a closed Tempfile with the requested extension, suitable
+      # as an output target for Inkscape. The caller owns the Tempfile and
+      # must call +close!+ on it when done.
+      #
+      # @param target_ext [String, Symbol] extension without the leading dot
+      #   (e.g. +"png"+)
+      # @return [Tempfile] a closed Tempfile at the requested extension
       def self.ext_to_path(target_ext)
         output_file = Tempfile.new(['diagram', ".#{target_ext}"])
-        File.open(output_file.path, 'w')
-        output_file.path
+        output_file.close
+        output_file
       end
 
       def self.by_inkscape(input, output, ext, width: 1550, height: 440)
