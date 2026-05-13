@@ -1,5 +1,4 @@
 import React from 'react';
-import { List } from 'immutable';
 import { Dropdown } from 'react-bootstrap';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -25,8 +24,11 @@ export default class SelectionGenerateButton extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      checkedIds: List(),
-      elementType: null,
+      // Map of element type -> Immutable.List of checked IDs, including every
+      // printable type with at least one selection (selections persist across
+      // tab switches in UIStore, so the user may have selections on multiple
+      // tabs simultaneously — print all of them).
+      selectionsByType: {},
       json: {},
       matrix: null,
       enableComputedProps: null,
@@ -77,43 +79,54 @@ export default class SelectionGenerateButton extends React.Component {
         enableReactionPredict: MatrixCheck(storeMatrix, 'reactionPrediction'),
       });
     }
-    this.syncFromStores();
   }
 
-  // Picks the active element type from UserStore (the currently selected tab)
-  // and reads the matching checkedIds from UIStore. Scanning UIStore for the
-  // first non-empty selection instead would pick up stale selections left
-  // over from other tabs.
+  // Collects checked IDs for every printable element type from UIStore so we
+  // can print labels for selections across all tabs in one go.
   syncFromStores() {
-    const { currentType } = UserStore.getState() || {};
     const uiState = UIStore.getState() || {};
-    const isPrintable = PRINTABLE_ELEMENT_TYPES.includes(currentType);
-    const typeState = isPrintable ? uiState[currentType] : null;
-    const nextCheckedIds = (typeState && typeState.checkedIds) || List();
-    const nextElementType = isPrintable ? currentType : null;
+    const next = {};
+    let changed = false;
+    const { selectionsByType: prev } = this.state;
 
-    const { checkedIds, elementType } = this.state;
-    if (nextCheckedIds !== checkedIds || nextElementType !== elementType) {
-      this.setState({
-        checkedIds: nextCheckedIds,
-        elementType: nextElementType,
-      });
+    PRINTABLE_ELEMENT_TYPES.forEach((t) => {
+      const ids = uiState[t]?.checkedIds;
+      if (ids && ids.size > 0) {
+        next[t] = ids;
+        if (prev[t] !== ids) changed = true;
+      } else if (prev[t]) {
+        changed = true;
+      }
+    });
+
+    if (changed || Object.keys(next).length !== Object.keys(prev).length) {
+      this.setState({ selectionsByType: next });
     }
   }
 
-  async downloadPrintCodesPDF(ids, selectedConfig) {
-    const { json, elementType } = this.state;
-    if (!elementType || !ids || ids.length === 0) return;
-
+  async downloadPrintCodesPDF(selectedConfig) {
+    const { json, selectionsByType } = this.state;
     const configParams = json[selectedConfig] || {};
+    const baseQuery = Object.entries(configParams)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('&');
+
+    const requests = [];
+    Object.entries(selectionsByType).forEach(([elementType, idsList]) => {
+      idsList.forEach((id) => {
+        const params = `element_type=${elementType}&ids[]=${id}`;
+        const url = baseQuery
+          ? `/api/v1/code_logs/print_codes?${params}&${baseQuery}`
+          : `/api/v1/code_logs/print_codes?${params}`;
+        requests.push(url);
+      });
+    });
+
+    if (requests.length === 0) return;
 
     try {
       const mergedPdf = await PDFDocument.create();
-      const pdfPromises = ids.map(async (id) => {
-        let url = `/api/v1/code_logs/print_codes?element_type=${elementType}&ids[]=${id}`;
-        Object.entries(configParams).forEach(([key, value]) => {
-          url += `&${key}=${value}`;
-        });
+      const pdfPromises = requests.map(async (url) => {
         const pdfBytes = await PrintCodeFetcher.fetchMergedPrintCodes(url);
         const pdfToMerge = await PDFDocument.load(pdfBytes);
         const copiedPages = await mergedPdf.copyPages(pdfToMerge, pdfToMerge.getPageIndices());
@@ -133,10 +146,11 @@ export default class SelectionGenerateButton extends React.Component {
 
   render() {
     const {
-      json, checkedIds, elementType, enableComputedProps, enableReactionPredict
+      json, selectionsByType, enableComputedProps, enableReactionPredict
     } = this.state;
-    const ids = checkedIds.toArray();
-    const disabledPrint = !elementType || ids.length === 0;
+    const totalSelected = Object.values(selectionsByType)
+      .reduce((sum, list) => sum + list.size, 0);
+    const disabledPrint = totalSelected === 0;
     const pdfMenuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
 
     return (
@@ -155,7 +169,7 @@ export default class SelectionGenerateButton extends React.Component {
               onClick={(event) => {
                 event.stopPropagation();
                 if (!disabledPrint) {
-                  this.downloadPrintCodesPDF(ids, e.name);
+                  this.downloadPrintCodesPDF(e.name);
                 }
               }}
             >
