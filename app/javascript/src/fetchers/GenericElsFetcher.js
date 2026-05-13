@@ -1,4 +1,4 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 import GenericEl from 'src/models/GenericEl';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import BaseFetcher from 'src/fetchers/BaseFetcher';
@@ -6,71 +6,119 @@ import GenericBaseFetcher from 'src/fetchers/GenericBaseFetcher';
 import { getFileName, downloadBlob } from 'src/utilities/FetcherHelper';
 
 export default class GenericElsFetcher extends GenericBaseFetcher {
-  static exec(path, method) {
-    return super.exec(`generic_elements/${path}`, method);
-  }
-
-  static execData(params, path) {
-    return super.execData(params, `generic_elements/${path}`);
-  }
-
   static fetchByCollectionId(id, queryParams = {}) {
     return BaseFetcher.fetchByCollectionId(id, queryParams, 'generic_elements', GenericEl);
   }
 
   static export(element, klass, exportFormat) {
     let fileName;
-    const api = `/api/v1/generic_elements/export.json?id=${element.id}&klass=${klass}&export_format=${exportFormat}`;
-    const promise = fetch(api, {
-      credentials: 'same-origin',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
+    const searchParams = new URLSearchParams({ id: element.id, klass, export_format: exportFormat });
+    return ApiClient.getJson(`/api/v1/generic_elements/export?${searchParams}`, {
+      handleResponseSuccess: (response) => {
+        if (response.ok) {
+          fileName = getFileName(response);
+          return response.blob();
+        }
+        throw Error(response.statusText);
       }
-    }).then((response) => {
-      if (response.ok) {
-        fileName = getFileName(response);
-        return response.blob();
-      }
-    }).then((blob) => {
-      downloadBlob(fileName, blob);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise;
+    })
+      .then((blob) => {
+        downloadBlob(fileName, blob);
+      });
   }
 
   static fetchById(id) {
-    const promise = fetch(`/api/v1/generic_elements/${id}.json`, {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        const genericEl = new GenericEl(json.element);
-        genericEl.attachments = json.attachments;
-        if (json.error) {
-          genericEl.type = null;
-        }
-        return genericEl;
-      })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    return ApiClient.getJson(`/api/v1/generic_elements/${id}`)
+      .then((json) => this.genericElement(json, id));
   }
 
-  static uploadGenericFiles(
-    element,
-    id,
-    type,
-    hasAttach = false,
-    isElement = false
-  ) {
+  static uploadGenericFiles(element, id, type, hasAttach = false, isElement = false) {
+    if (!this.canUploadGenericFiles(element, isElement, hasAttach)) {
+      return Promise.resolve(true);
+    }
+
+    const data = this.prepareUploadData(element, id, type, isElement, hasAttach);
+    return ApiClient.postFormData('/api/v1/generic_elements/upload_generics_files', { body: data });
+  }
+
+  static create(genericEl) {
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(genericEl.container)
+      .then(() => ApiClient.postJson('/api/v1/generic_elements', { body: genericEl.serialize() }))
+      .then((json) => {
+        const { id } = json.element;
+        return this.uploadGenericFiles(genericEl, id, 'Element', true, true)
+          .then(() => this.genericElement(json, id));
+      });
+  }
+
+  static update(genericEl) {
+    const tasks = [
+      AttachmentFetcher.uploadNewAttachmentsForContainer(genericEl.container),
+      this.uploadGenericFiles(genericEl, genericEl.id, 'Element', true, true),
+    ];
+
+    return Promise.all(tasks)
+      .then(() => ApiClient.putJson(`/api/v1/generic_elements/${genericEl.id}`, { body: genericEl.serialize() }))
+      .then((json) => this.genericElement(json, genericEl.id));
+  }
+
+  static split(params, name) {
+    const body = {
+      ui_state: {
+        element: {
+          all: params[name].checkedAll,
+          included_ids: params[name].checkedIds,
+          excluded_ids: params[name].uncheckedIds,
+          name
+        },
+        currentCollectionId: params.currentCollection.id
+      }
+    };
+    return ApiClient.postJson('/api/v1/generic_elements/split', { body });
+  }
+
+  static createElementKlass(params) {
+    return ApiClient.postJson('/api/v1/generic_elements/create_element_klass', { body: params });
+  }
+
+  static fetchElementKlasses() {
+    return ApiClient.getJson('/api/v1/generic_elements/klasses_all');
+  }
+
+  static fetchElementKlass(klassName) {
+    return ApiClient.getJson(`/api/v1/generic_elements/klass?name=${klassName}`);
+  }
+
+  static updateElementKlass(params) {
+    return ApiClient.postJson('/api/v1/generic_elements/update_element_klass', { body: params });
+  }
+
+  static updateElementTemplate(params) {
+    return ApiClient.postJson('/api/v1/generic_elements/update_template', {
+      body: { ...params, klass: 'ElementKlass' }
+    });
+  }
+
+  static fetchRepo() {
+    return ApiClient.getJson('/api/v1/generic_elements/fetch_repo');
+  }
+
+  static createRepo(params) {
+    return ApiClient.postJson('/api/v1/generic_elements/create_repo_klass', { body: params });
+  }
+
+  static uploadKlass(params) {
+    return ApiClient.postJson('/api/v1/generic_elements/upload_klass', { body: params });
+  }
+
+  static canUploadGenericFiles(element, isElement, hasAttach) {
+    let uploadable = true;
     const segFiles = (element.segments || []).filter(
       (seg) => seg.files && seg.files.length > 0
     ).length === 0;
+
     if (!isElement && !hasAttach && segFiles === true) {
-      return Promise.resolve(true);
+      uploadable = false;
     }
     if (
       isElement
@@ -80,7 +128,7 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
       && (typeof element.attachments === 'undefined'
         || (element.attachments || []).length === 0)
     ) {
-      return Promise.resolve(true);
+      uploadable = false;
     }
     if (
       !isElement
@@ -88,9 +136,12 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
       && segFiles === true
       && (element.attachments || []).length === 0
     ) {
-      return Promise.resolve(true);
+      uploadable = false;
     }
+    return uploadable;
+  }
 
+  static prepareUploadData(element, id, type, isElement, hasAttach) {
     const data = new FormData();
     data.append('att_id', id);
     data.append('att_type', type);
@@ -106,8 +157,8 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
       data.append('elInfo', JSON.stringify(elMap));
     }
 
-    if (GenericElsFetcher.shouldUploadAttachments(hasAttach, element)) {
-      GenericElsFetcher.prepareAttachmentParam(element, data);
+    if (this.shouldUploadAttachments(hasAttach, element)) {
+      this.prepareAttachmentParam(element, data);
     }
 
     (element.segments || []).forEach((segment) => {
@@ -125,97 +176,7 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
       });
     });
     data.append('seInfo', JSON.stringify(segMap));
-    return fetch('/api/v1/generic_elements/upload_generics_files', {
-      credentials: 'same-origin',
-      method: 'post',
-      body: data,
-    })
-      .then((response) => response)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  static updateOrCreate(genericEl, action = 'create') {
-    const method = action === 'create' ? 'post' : 'put';
-    const api = action === 'create'
-      ? '/api/v1/generic_elements/'
-      : `/api/v1/generic_elements/${genericEl.id}`;
-    const promise = () => fetch(api, {
-      credentials: 'same-origin',
-      method,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(genericEl.serialize()),
-    })
-      .then((response) => response.json())
-      .then((json) => GenericElsFetcher.uploadGenericFiles(
-        genericEl,
-        json.element.id,
-        'Element',
-        true,
-        true
-      ).then(() => this.fetchById(json.element.id)))
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(genericEl.container).then(() => promise());
-  }
-
-  static update(genericEl) {
-    return this.updateOrCreate(genericEl, 'update');
-  }
-
-  static create(genericEl) {
-    return this.updateOrCreate(genericEl, 'create');
-  }
-
-  static split(params, name) {
-    const data = {
-      ui_state: {
-        element: {
-          all: params[name].checkedAll,
-          included_ids: params[name].checkedIds,
-          excluded_ids: params[name].uncheckedIds,
-          name
-        },
-        currentCollectionId: params.currentCollection.id
-      }
-    };
-    return this.execData(data, 'split');
-  }
-
-  static createElementKlass(params) {
-    return this.execData(params, 'create_element_klass');
-  }
-
-  static fetchElementKlasses() {
-    return this.exec('klasses_all.json', 'GET');
-  }
-
-  static fetchElementKlass(klassName) {
-    return this.exec(`klass.json?name=${klassName}`, 'GET');
-  }
-
-  static updateElementKlass(params) {
-    return this.execData(params, 'update_element_klass');
-  }
-
-  static updateElementTemplate(params) {
-    return super.updateTemplate(
-      { ...params, klass: 'ElementKlass' },
-      'update_element_template'
-    );
-  }
-
-  static fetchRepo() {
-    return this.exec('fetch_repo', 'GET');
-  }
-
-  static createRepo(params) {
-    return this.execData(params, 'create_repo_klass');
+    return data;
   }
 
   static prepareAttachmentParam(element, data) {
@@ -241,7 +202,12 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
       && element.type !== 'research_plan';
   }
 
-  static uploadKlass(params) {
-    return this.execData(params, 'upload_klass');
+  static genericElement(json, id) {
+    if (json.error) {
+      return new GenericEl({ id: `${id}:error:GenericEl ${id} is not accessible!` });
+    }
+    const genericEl = new GenericEl(json.element);
+    genericEl.attachments = json.attachments;
+    return genericEl;
   }
 }
