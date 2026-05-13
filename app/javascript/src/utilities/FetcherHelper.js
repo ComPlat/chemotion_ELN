@@ -1,5 +1,5 @@
 import base64 from 'base-64';
-import { camelCase, snakeCase } from 'lodash';
+import { camelCase, snakeCase, upperFirst } from 'lodash';
 
 const getFileName = (response) => {
   const disposition = response.headers.get('Content-Disposition');
@@ -54,6 +54,10 @@ const decamelizeKeys = (obj) => transformKeys(snakeCase, obj);
 const camelize = (str) => camelCase(str);
 const decamelize = (str) => snakeCase(str);
 
+// returns string: string_test => StringTest
+const classifyString = (str) => upperFirst(camelCase(str));
+
 export {
-  getFileName, downloadBlob, parseBase64ToArrayBuffer, camelizeKeys, decamelizeKeys, camelize, decamelize
+  getFileName, downloadBlob, parseBase64ToArrayBuffer,
+  camelizeKeys, decamelizeKeys, camelize, decamelize, classifyString
 };
