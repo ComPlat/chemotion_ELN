@@ -18,10 +18,12 @@ module Reporter
         load_svg_paths
         set_svg(products_only)
         raise 'Fehler: Kein Bild angegeben' if svg_data.nil?
-        svg_path = Reporter::Img::Conv.data_to_svg(svg_data)
+        svg_tmp = Reporter::Img::Conv.data_to_svg(svg_data)
         out_path = Reporter::Img::Conv.ext_to_path(@format)
-        Reporter::Img::Conv.by_inkscape(svg_path, out_path, @format)
+        Reporter::Img::Conv.by_inkscape(svg_tmp.path, out_path, @format)
         out_path
+      ensure
+        svg_tmp&.close!
       end
 
       private

@@ -5,10 +5,17 @@ require 'nokogiri'
 module Reporter
   module Img
     module Conv
+      # Writes the given SVG markup to a fresh Tempfile and returns the
+      # (closed) Tempfile object. The caller owns the Tempfile and must call
+      # +close!+ on it when done to delete the underlying file.
+      #
+      # @param svg_data [String] raw SVG markup
+      # @return [Tempfile] a closed Tempfile whose path holds +svg_data+
       def self.data_to_svg(svg_data)
         svg_file = Tempfile.new(['diagram', '.svg'])
-        File.open(svg_file.path, 'w') { |file| file.write(svg_data) }
-        svg_file.path
+        svg_file.write(svg_data)
+        svg_file.close
+        svg_file
       end
 
       def self.ext_to_path(target_ext)

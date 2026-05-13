@@ -235,10 +235,13 @@ describe Reporter::Img::Conv do
   end
 
   describe '.data_to_svg' do
-    it 'writes SVG data to a temp file and returns its path' do
+    it 'writes SVG data to a temp file and returns a Tempfile' do
       svg = '<svg><circle/></svg>'
-      path = described_class.data_to_svg(svg)
-      expect(File.read(path)).to eq(svg)
+      svg_tmp = described_class.data_to_svg(svg)
+      expect(svg_tmp).to be_a(Tempfile)
+      expect(File.read(svg_tmp.path)).to eq(svg)
+    ensure
+      svg_tmp&.close!
     end
   end
 
