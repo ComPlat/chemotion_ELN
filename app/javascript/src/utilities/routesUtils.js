@@ -69,8 +69,9 @@ const sampleShowOrNew = (e) => {
 };
 
 const cellLineShowOrNew = (e) => {
-  const id = e.params.cell_lineID || e.params.cellLineID;
-  if (id === 'new') {
+  const cellLineId = e.params.cell_lineID || e.params.cellLineID;
+
+  if (cellLineId === 'new') {
     ElementActions.generateEmptyCellLine(e.params.collectionID, e.params.cell_line_template);
   } else {
     ElementActions.tryFetchCellLineElById.defer(id);
