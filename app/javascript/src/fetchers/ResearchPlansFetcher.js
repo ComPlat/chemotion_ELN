@@ -58,7 +58,7 @@ export default class ResearchPlansFetcher {
     data.append('file', imageFile);
     if (replace) { data.append('replace', replace); }
 
-    return ApiClient.postJson('/api/v1/research_plans/image', { body: data });
+    return ApiClient.postFormData('/api/v1/research_plans/image', { body: data });
   }
 
   static export(researchPlan, exportFormat) {

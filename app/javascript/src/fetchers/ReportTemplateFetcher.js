@@ -18,7 +18,7 @@ export default class ReportTemplateFetcher {
       data.append('file', params.attachment);
     }
 
-    return ApiClient.postJson('/api/v1/report_templates', {
+    return ApiClient.postFormData('/api/v1/report_templates', {
       body: data,
       handleResponseSuccess: (response) => {
         if (response.ok === false) {
@@ -48,7 +48,7 @@ export default class ReportTemplateFetcher {
       data.append('file', params.attachment);
     }
 
-    return ApiClient.putJson(`/api/v1/report_templates/${params.id}`, {
+    return ApiClient.putFormData(`/api/v1/report_templates/${params.id}`, {
       body: data,
       handleResponseSuccess: (response) => {
         if (response.ok == false) {

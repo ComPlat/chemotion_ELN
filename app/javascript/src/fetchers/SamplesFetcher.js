@@ -90,7 +90,7 @@ export default class SamplesFetcher {
     data.append('currentCollectionId', params.currentCollectionId);
     data.append('import_type', params.type);
 
-    return ApiClient.postJson('/api/v1/samples/import', { body: data });
+    return ApiClient.postFormData('/api/v1/samples/import', { body: data });
   }
 
   static importSamplesFromFileConfirm(params) {
