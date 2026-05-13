@@ -77,17 +77,18 @@ class CodePdf < Prawn::Document
     @text_position = 'below' if @code_image_size_ratio > CODE_IMAGE_SIZE_LIMIT_RIGHT || code_type == BAR_CODE
   end
 
-  # Iterates through each element and formats it on the page.
+  # Iterates through each element and renders one page per element.
   # @return [void]
   def iterate
-    element = elements.first
-    format_text(element)
-    move_down MARGIN * ratio
-    display_code(element)
-    handle_text(element)
-    print_sample if display_sample && type == ELEMENTS_TYPES.first
-    # Draw the bounds of the current page
-    stroke_bounds
+    elements.each_with_index do |element, idx|
+      start_new_page if idx.positive?
+      move_down MARGIN * ratio
+      display_code(element)
+      handle_text(element)
+      print_sample(element) if display_sample && type == ELEMENTS_TYPES.first
+      # Draw the bounds of the current page
+      stroke_bounds
+    end
   end
 
   def handle_text(element)
@@ -173,26 +174,32 @@ class CodePdf < Prawn::Document
   end
 
   # Prints the sample image on the page if necessary.
+  # @param element [Object] The element whose SVG should be rendered.
   # @return [void]
-  def print_sample
+  def print_sample(element)
     return unless display_sample
 
     # Draw the sample if necessary
-    svg(File.read(image_data_getter.last), sample_option)
+    svg(File.read(image_data_for(element).last), sample_option)
     move_down SAMPLE_SVG_OFFSET.mm
   end
 
-  # Returns the width, height and URL of the SVG image associated with the first element.
-  # @param elements [Array] The elements to get the data from.
-  # @return [Array<String, String, [String, Pathname]>] An array containing the width, height and URL of the SVG image.
+  # Returns the width, height and URL of the SVG image for a specific element.
+  # @param element [Object] The element to get the SVG data from.
+  # @return [Array<String, String, [String, Pathname]>] +[width, height, path]+
   # @note returns a dummy image if the SVG file does not exist or if an error occurs.
-  def image_data_getter
-    element = elements.first
+  def image_data_for(element)
     full_svg_path = element.respond_to?(:full_svg_path, true) ? element.send(:full_svg_path) : nil
     return dummy_image if full_svg_path.nil? || !File.exist?(full_svg_path)
 
-    # Extract the width and height attributes from the SVG element
     extract_svg_size(full_svg_path)
+  end
+
+  # Returns the SVG image data for the first element. Used for page-size
+  # calculation, which is shared across all rendered pages.
+  # @return [Array<String, String, [String, Pathname]>] +[width, height, path]+
+  def image_data_getter
+    image_data_for(elements.first)
   end
 
   # Extracts the width and height of the SVG image from the given path.

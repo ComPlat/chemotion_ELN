@@ -24,11 +24,12 @@ export default class SelectionGenerateButton extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      // Map of element type -> Immutable.List of checked IDs, including every
-      // printable type with at least one selection (selections persist across
-      // tab switches in UIStore, so the user may have selections on multiple
-      // tabs simultaneously — print all of them).
+      // Snapshot of ui_state per printable element type that has any active
+      // selection ({checkedAll, checkedIds, uncheckedIds}). Mirrors UIStore so
+      // we can build the ui_state payload that the print_codes_by_ui_state
+      // endpoint expects.
       selectionsByType: {},
+      currentCollection: null,
       json: {},
       matrix: null,
       enableComputedProps: null,
@@ -81,63 +82,70 @@ export default class SelectionGenerateButton extends React.Component {
     }
   }
 
-  // Collects checked IDs for every printable element type from UIStore so we
-  // can print labels for selections across all tabs in one go.
+  // Collects ui_state per printable element type from UIStore so we can print
+  // labels for selections across all tabs (including "All pages" via
+  // checkedAll) in a single batch.
   syncFromStores() {
     const uiState = UIStore.getState() || {};
     const next = {};
-    let changed = false;
-    const { selectionsByType: prev } = this.state;
 
     PRINTABLE_ELEMENT_TYPES.forEach((t) => {
-      const ids = uiState[t]?.checkedIds;
-      if (ids && ids.size > 0) {
-        next[t] = ids;
-        if (prev[t] !== ids) changed = true;
-      } else if (prev[t]) {
-        changed = true;
-      }
+      const typeState = uiState[t];
+      if (!typeState) return;
+      const hasSelection = typeState.checkedAll
+        || (typeState.checkedIds && typeState.checkedIds.size > 0);
+      if (!hasSelection) return;
+      next[t] = {
+        checkedAll: !!typeState.checkedAll,
+        checkedIds: typeState.checkedIds ? typeState.checkedIds.toArray() : [],
+        uncheckedIds: typeState.uncheckedIds ? typeState.uncheckedIds.toArray() : [],
+      };
     });
 
-    if (changed || Object.keys(next).length !== Object.keys(prev).length) {
-      this.setState({ selectionsByType: next });
-    }
+    this.setState({
+      selectionsByType: next,
+      currentCollection: uiState.currentCollection || null,
+    });
   }
 
   async downloadPrintCodesPDF(selectedConfig) {
-    const { json, selectionsByType } = this.state;
+    const { json, selectionsByType, currentCollection } = this.state;
+    if (!currentCollection || Object.keys(selectionsByType).length === 0) return;
+
     const configParams = json[selectedConfig] || {};
-    const baseQuery = Object.entries(configParams)
-      .map(([key, value]) => `${key}=${value}`)
-      .join('&');
-
-    const requests = [];
-    Object.entries(selectionsByType).forEach(([elementType, idsList]) => {
-      idsList.forEach((id) => {
-        const params = `element_type=${elementType}&ids[]=${id}`;
-        const url = baseQuery
-          ? `/api/v1/code_logs/print_codes?${params}&${baseQuery}`
-          : `/api/v1/code_logs/print_codes?${params}`;
-        requests.push(url);
-      });
-    });
-
-    if (requests.length === 0) return;
 
     try {
       const mergedPdf = await PDFDocument.create();
-      const pdfPromises = requests.map(async (url) => {
-        const pdfBytes = await PrintCodeFetcher.fetchMergedPrintCodes(url);
+      const requests = Object.entries(selectionsByType).map(([elementType, selection]) => {
+        const payload = {
+          element_type: elementType,
+          ui_state: {
+            checkedAll: selection.checkedAll,
+            checkedIds: selection.checkedIds,
+            uncheckedIds: selection.uncheckedIds,
+            collection_id: currentCollection.id,
+            is_sync_to_me: !!currentCollection.is_sync_to_me,
+          },
+          ...configParams,
+        };
+        return PrintCodeFetcher.fetchPrintCodesByUIState(payload);
+      });
+
+      const pdfBuffers = await Promise.all(requests);
+      // Append each PDF sequentially — mergedPdf mutations aren't safe to
+      // interleave even though JS is single-threaded, because copyPages and
+      // addPage share internal state on the merged document.
+      await pdfBuffers.reduce(async (chain, pdfBytes) => {
+        await chain;
+        if (!pdfBytes || pdfBytes.byteLength === 0) return;
         const pdfToMerge = await PDFDocument.load(pdfBytes);
         const copiedPages = await mergedPdf.copyPages(pdfToMerge, pdfToMerge.getPageIndices());
         copiedPages.forEach((page) => mergedPdf.addPage(page));
-      });
+      }, Promise.resolve());
 
-      await Promise.all(pdfPromises);
       const mergedPdfBytes = await mergedPdf.save();
       const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
-
       Utils.downloadFile({ contents: url, name: 'print_codes_merged.pdf' });
     } catch (err) {
       console.error('Failed to generate print codes PDF', err);
@@ -146,11 +154,11 @@ export default class SelectionGenerateButton extends React.Component {
 
   render() {
     const {
-      json, selectionsByType, enableComputedProps, enableReactionPredict
+      json, selectionsByType, currentCollection,
+      enableComputedProps, enableReactionPredict,
     } = this.state;
-    const totalSelected = Object.values(selectionsByType)
-      .reduce((sum, list) => sum + list.size, 0);
-    const disabledPrint = totalSelected === 0;
+    const hasSelection = Object.keys(selectionsByType).length > 0;
+    const disabledPrint = !currentCollection || !hasSelection;
     const pdfMenuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
 
     return (
