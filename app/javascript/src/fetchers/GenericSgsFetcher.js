@@ -1,7 +1,8 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
+import GenericBaseFetcher from 'src/fetchers/GenericBaseFetcher';
 import { getFileName, downloadBlob } from 'src/utilities/FetcherHelper';
 
-export default class GenericSgsFetcher {
+export default class GenericSgsFetcher extends GenericBaseFetcher {
   static fetchRepo() {
     return ApiClient.getJson('/api/v1/segments/fetch_repo');
   }

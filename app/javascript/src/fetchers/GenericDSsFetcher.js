@@ -1,6 +1,7 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
+import GenericBaseFetcher from 'src/fetchers/GenericBaseFetcher';
 
-export default class GenericDSsFetcher {
+export default class GenericDSsFetcher extends GenericBaseFetcher {
   static fetchRepo() {
     return ApiClient.getJson('/api/v1/generic_dataset/fetch_repo');
   }
