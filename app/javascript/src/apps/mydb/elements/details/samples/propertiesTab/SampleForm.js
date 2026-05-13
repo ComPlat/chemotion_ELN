@@ -1589,10 +1589,7 @@ export default class SampleForm extends React.Component {
         </Row>
 
         <Row className="align-items-end mb-4">
-          <Col xs={6}>{this.stateSelect(sample)}</Col>
-        </Row>
-
-        <Row className="align-items-end mb-4">
+          <Col xs={3}>{this.stateSelect(sample)}</Col>
           <Col>{this.hierarchicalPropertySelect(sample)}</Col>
         </Row>
 

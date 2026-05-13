@@ -251,7 +251,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     },
     [EventNames.ADD_BOND]: async () => {
-      if (editor && editor.structureDef) {
+      if (editor && editor.structureDef && (imagesList.length > 0 || textList.length > 0)) {
         await onTemplateMove(editor);
       }
     }
