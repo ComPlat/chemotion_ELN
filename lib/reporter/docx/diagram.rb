@@ -29,15 +29,18 @@ module Reporter
       #   path and its backing Tempfile
       # @raise [RuntimeError] when no SVG data is available
       def img_path(products_only = false)
+        rendered = false
         load_svg_paths
         set_svg(products_only)
         raise 'Fehler: Kein Bild angegeben' if svg_data.nil?
         svg_tmp = Reporter::Img::Conv.data_to_svg(svg_data)
         out_tmp = Reporter::Img::Conv.ext_to_path(@format)
         Reporter::Img::Conv.by_inkscape(svg_tmp.path, out_tmp.path, @format)
+        rendered = true
         [out_tmp.path, out_tmp]
       ensure
         svg_tmp&.close!
+        out_tmp&.close! unless rendered
       end
 
       private

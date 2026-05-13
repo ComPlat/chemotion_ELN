@@ -15,15 +15,22 @@ describe Reporter::Xlsx::ReactionList do
   # Tempfile become GC-eligible immediately and the file can be unlinked
   # before caxlsx zips it into the .xlsx output.
   describe 'image Tempfile GC lifetime' do
+    let(:fake_png_tmp) do
+      Tempfile.new(['fake', '.png']).tap do |tmp|
+        tmp.binmode
+        tmp.write("\x89PNG\r\n\x1a\n".b) # PNG magic bytes — enough for caxlsx to accept it
+        tmp.close
+      end
+    end
     let(:fake_png_path) do
-      tmp = Tempfile.new(['fake', '.png'])
-      tmp.binmode
-      tmp.write("\x89PNG\r\n\x1a\n".b) # PNG magic bytes — enough for caxlsx to accept it
-      tmp.close
-      tmp.path
+      fake_png_tmp.path
     end
     let(:fake_tmp) { instance_spy(Tempfile) }
     let(:list) { described_class.new(objs: [serialized_reaction]) }
+
+    after do
+      fake_png_tmp.close!
+    end
 
     before do
       allow(Reporter::Helper).to receive(:mol_img_path).and_return([fake_png_path, fake_tmp])
@@ -34,15 +41,17 @@ describe Reporter::Xlsx::ReactionList do
       # GC-eligible the moment mol_img_path returned. Retaining it on @img_tmps
       # guarantees it remains alive through Package#serialize, which inspects
       # image_src lazily.
-      tempfile = Tempfile.new(['rspec', file_extension])
-      list.create(tempfile.path)
+      Tempfile.create(['rspec', file_extension]) do |tempfile|
+        list.create(tempfile.path)
+      end
 
       expect(list.instance_variable_get(:@img_tmps)).to include(fake_tmp)
     end
 
     it 'closes the image Tempfile after create finishes' do
-      tempfile = Tempfile.new(['rspec', file_extension])
-      list.create(tempfile.path)
+      Tempfile.create(['rspec', file_extension]) do |tempfile|
+        list.create(tempfile.path)
+      end
 
       expect(fake_tmp).to have_received(:close!).at_least(:once)
     end

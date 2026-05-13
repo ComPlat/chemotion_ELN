@@ -512,7 +512,7 @@ M  END
 
     orig_cdxml = File.read(output)
     shifted_cdxml, geometry = Cdxml::Shifter.new({orig_cdxml: orig_cdxml, shifter: shifter}).convey
-    { content: shifted_cdxml, geometry: geometry, path: output }
+    { content: shifted_cdxml, geometry: geometry, path: output_path }
   ensure
     input_tf&.close!
     output_tf&.close!
