@@ -25,10 +25,12 @@ export default class PrintCodeFetcher {
     };
     // Fetch the PDF
     return fetch(url, requestOptions)
-      .then((response) => response.blob())
-      .then((result) => result.arrayBuffer())
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Print code request failed: ${response.status} ${response.statusText}`);
+        }
+        return response.blob();
+      })
+      .then((result) => result.arrayBuffer());
   }
 }
