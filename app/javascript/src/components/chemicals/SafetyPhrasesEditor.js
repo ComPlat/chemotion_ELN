@@ -20,7 +20,7 @@ const prettyPictogramName = (file) => trim(file).replace(/\.[A-Za-z0-9]+$/, '').
 
 // Only allow known GHS pictogram codes (GHS01–GHS09). This guards against path-traversal
 // and XSS via the /images/ghs/${code}.svg interpolation in PictogramCard.
-const VALID_PICTOGRAM_CODE_RE = /^GHS\d{2}$/;
+const VALID_PICTOGRAM_CODE_RE = /^GHS0[1-9]$/;
 
 export const normalizeSafetyPhrases = (value) => {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};

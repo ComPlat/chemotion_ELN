@@ -49,8 +49,8 @@ describe('normalizeSafetyPhrases', () => {
     });
   });
 
-  it('strips pictogram codes that do not match the GHS\\d{2} whitelist (XSS/path-traversal guard)', () => {
-    expect(normalizeSafetyPhrases({ pictograms: ['GHS01', '../evil', 'GHS09', 'javascript:alert(1)', 'ghs01'] })).toEqual({
+  it('strips pictogram codes outside the GHS01-GHS09 whitelist', () => {
+    expect(normalizeSafetyPhrases({ pictograms: ['GHS01', '../evil', 'GHS09', 'GHS99', 'ghs01'] })).toEqual({
       h_statements: {}, p_statements: {}, pictograms: ['GHS01', 'GHS09'],
     });
   });
