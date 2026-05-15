@@ -1,11 +1,11 @@
 /* eslint-disable camelcase */
-import 'whatwg-fetch';
-import { decamelizeKeys } from 'humps';
-
-import Attachment from 'src/models/Attachment';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import SparkMD5 from 'spark-md5';
+
+import ApiClient from 'src/api_clients/ChemotionApiClient';
+import Attachment from 'src/models/Attachment';
+import { decamelizeKeys, downloadBlob } from 'src/utilities/FetcherHelper';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const fileFromAttachment = (attachment, containerId) => {
   const { file } = attachment;
@@ -15,100 +15,85 @@ const fileFromAttachment = (attachment, containerId) => {
   return file;
 };
 
+// NOTE: FetcherHelper.getFileName contains basically the same code but uses the full response object,
+//       not only the dispositionHeader value
+const extractFilenameFromContentDispositionHeader = (dispositionHeader) => {
+  if (dispositionHeader != null) {
+    if (dispositionHeader && dispositionHeader.indexOf('attachment') !== -1) {
+      const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+      const matches = filenameRegex.exec(dispositionHeader);
+      if (matches != null && matches[1]) {
+        return matches[1].replace(/['"]/g, '');
+      }
+    }
+  }
+
+  return null;
+};
+
 export default class AttachmentFetcher {
   static fetchImageAttachment(params) {
-    let url = '/api/v1/attachments/image/';
+    const baseUrl = '/api/v1/attachments/image/';
 
-    if (params.id) {
-      url += encodeURIComponent(params.id);
-    } else if (params.identifier) {
-      const urlParams = new URLSearchParams({ identifier: params.identifier });
-      url += `-1?${urlParams}`;
-    } else {
+    if (!(params.id || params.identifier)) {
       throw new Error('Either id or identifier must be provided.');
     }
 
-    return fetch(url, {
-      credentials: 'same-origin',
-      method: 'GET',
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error ${response.status}`);
-        }
-        return response.blob();
-      })
-      .then((blob) => ({
-        type: blob.type,
-        data: URL.createObjectURL(blob),
-      }))
-      .catch((error) => {
-        console.error('Failed to fetch image attachment:', error);
-      });
+    const idParameter = encodeURIComponent(params.id || '-1');
+    const urlParams = params.id ? '' : new URLSearchParams({ identifier: params.identifier });
+
+    const url = `${baseUrl}${idParameter}?${urlParams}`;
+
+    const handleResponseSuccess = (response) => {
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+
+      const blob = response.blob();
+
+      return { type: blob.type, data: URL.createObjectURL(blob) };
+    };
+    const handleResponseError = (error) => console.error('Failed to fetch image attachment:', error);
+    const headers = {};
+
+    return ApiClient.getJson(
+      url,
+      {
+        handleResponseError,
+        handleResponseSuccess,
+        headers
+      }
+    );
   }
 
   static fetchThumbnail(params) {
-    const promise = fetch(`/api/v1/attachments/thumbnail/${params.id}`, {
-      credentials: 'same-origin',
-      method: 'GET',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.getJson(`/api/v1/attachments/thumbnail/${params.id}`);
   }
 
   static fetchThumbnails(ids) {
-    const promise = fetch('/api/v1/attachments/thumbnails/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ids }),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.postJson('/api/v1/attachments/thumbnails/', { body: ids });
   }
 
   static fetchFiles(ids) {
-    const promise = fetch('/api/v1/attachments/files/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ids }),
-    })
-      .then((response) => {
-        if (response.ok === false) {
-          let msg = 'Fetching files failed: ';
-          if (response.status === 401) {
-            msg += 'You do not have permission to read the attachments!';
-          } else {
-            msg += response.statusText;
-          }
-          NotificationActions.add({
-            message: msg,
-            level: 'error',
-            position: 'tc',
-            autoDismiss: 0,
-          });
-        }
+    const handleResponseSuccess = (response) => {
+      if (response.ok) {
         return response.json();
-      }).then((json) => json);
+      }
 
-    return promise;
+      let msg = 'Fetching files failed: ';
+      if (response.status === 401) {
+        msg += 'You do not have permission to read the attachments!';
+      } else {
+        msg += response.statusText;
+      }
+      NotificationActions.add({
+        message: msg,
+        level: 'error',
+        position: 'tc',
+        autoDismiss: 0,
+      });
+      return null;
+    };
+
+    return ApiClient.postJson('/api/v1/attachments/files/', { body: ids, handleResponseSuccess });
   }
 
   static fetchJcamp(target) {
@@ -118,57 +103,23 @@ export default class AttachmentFetcher {
     data.append('molfile', mol);
     data.append('mass', mass);
 
-    const promise = fetch('/api/v1/chemspectra/file/convert', {
-      credentials: 'same-origin',
-      method: 'POST',
-      body: data,
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.postFormData('/api/v1/chemspectra/file/convert', { body: data });
   }
 
-  static getFileListfrom(container) {
-    if (container == null) return [];
-    const allFiles = [];
-    this.filterAllAttachments(allFiles, container.children);
-    return allFiles;
-  }
-
-  static filterAllAttachments(files, containers) {
-    containers.forEach((container) => {
-      const tmpArray = (container.attachments || [])
-        .filter((a) => a.is_new && !a.is_deleted)
-        .map((a) => fileFromAttachment(a, container.id));
-      files.push(...tmpArray);
-
-      if (container.children && container.children.length > 0) {
-        this.filterAllAttachments(files, container.children);
-      }
-    });
-  }
-
-  static updateAttachables(files, attachableType, attachableId, dels) {
-    const data = new FormData();
+  static updateAttachables(files, attachableType, attachableId, deletions) {
+    const body = new FormData();
     files.forEach((file) => {
-      data.append('attfilesIdentifier[]', file.id);
-      data.append('files[]', file.file, file.name);
+      body.append('attfilesIdentifier[]', file.id);
+      body.append('files[]', file.file, file.name);
     });
-    data.append('attachable_type', attachableType);
-    data.append('attachable_id', attachableId);
+    body.append('attachable_type', attachableType);
+    body.append('attachable_id', attachableId);
 
-    dels.forEach((f) => {
-      data.append('del_files[]', f.id);
+    deletions.forEach((f) => {
+      body.append('del_files[]', f.id);
     });
-    return () => fetch('/api/v1/attachable/update_attachments_attachable', {
-      credentials: 'same-origin',
-      method: 'post',
-      body: data,
-    }).then((response) => {
+
+    const handleResponseSuccess = (response) => {
       if (response.ok === false) {
         let msg = 'Files uploading failed: ';
         if (response.status === 413) {
@@ -182,22 +133,23 @@ export default class AttachmentFetcher {
           position: 'tc',
         });
       }
-    });
+    };
+
+    return ApiClient.postFormData(
+      '/api/v1/attachable/update_attachments_attachable',
+      { body, handleResponseSuccess }
+    );
   }
 
   static uploadToInbox(attachments) {
-    const data = new FormData();
+    const body = new FormData();
     const files = attachments
       .filter((f) => f.is_new)
       .map((f) => fileFromAttachment(f, null));
-    files.forEach((file) => {
-      data.append(file.id || file.name, file);
-    });
-    return () => fetch('/api/v1/attachments/upload_to_inbox', {
-      credentials: 'same-origin',
-      method: 'post',
-      body: data,
-    }).then((response) => {
+
+    files.forEach((file) => body.append(file.id || file.name, file));
+
+    const handleResponseSuccess = (response) => {
       if (response.ok === false) {
         let msg = 'Files uploading to Inbox failed: ';
         if (response.status === 413) {
@@ -210,93 +162,98 @@ export default class AttachmentFetcher {
           level: 'error',
         });
       }
-    });
+    };
+
+    return ApiClient.postFormData('/api/v1/attachments/upload_to_inbox', { body, handleResponseSuccess });
   }
 
-  static uploadFiles(files) {
-    const data = new FormData();
-    files.forEach((file) => {
-      data.append(file.id || file.name, file);
-    });
-    return () => fetch('/api/v1/attachments/upload_dataset_attachments', {
-      credentials: 'same-origin',
-      contentType: 'application/json',
-      method: 'post',
-      body: data,
-    })
-      .then((response) => response.json())
-      .then((json) => {
-        for (let i = 0; i < json.error_messages.length; i += 1) {
-          NotificationActions.add({
-            message: json.error_messages[i],
-            level: 'error',
-          });
-        }
-      });
-  }
+  // TODO: this function seems obsolete, delete?
+  // static uploadFiles(files) {
+  //   const data = new FormData();
+  //   files.forEach((file) => {
+  //     data.append(file.id || file.name, file);
+  //   });
+
+  //   return ApiClient.postFormData('/api/v1/attachments/upload_dataset_attachments', { body: data })
+  //     .then((json) => {
+  //       for (let i = 0; i < json.error_messages.length; i += 1) {
+  //         NotificationActions.add({
+  //           message: json.error_messages[i],
+  //           level: 'error',
+  //         });
+  //       }
+  //     });
+  // }
 
   static uploadCompleted(filename, key, checksum) {
-    return () => fetch('/api/v1/attachments/upload_chunk_complete', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        filename,
-        key,
-        checksum,
-      }),
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        LoadingActions.stopLoadingWithProgress(filename);
-        if (response.ok === false) {
-          let msg = 'Files uploading failed: ';
-          if (response.status === 413) {
-            msg += 'File size limit exceeded.';
-          } else {
-            msg += response.statusText;
-          }
+    const handleResponseSuccess = (response) => {
+      LoadingActions.stopLoadingWithProgress(filename);
 
+      if (response.ok === false) {
+        let msg = 'Files uploading failed: ';
+        if (response.status === 413) {
+          msg += 'File size limit exceeded.';
+        } else {
+          msg += response.statusText;
+        }
+
+        NotificationActions.add({
+          message: msg,
+          level: 'error',
+        });
+      } else if (response.error_messages) {
+        for (let i = 0; i < response.error_messages.length; i += 1) {
           NotificationActions.add({
-            message: msg,
+            message: response.error_messages[i],
             level: 'error',
           });
-        } else if (response.error_messages) {
-          for (let i = 0; i < response.error_messages.length; i += 1) {
-            NotificationActions.add({
-              message: response.error_messages[i],
-              level: 'error',
-            });
-          }
         }
-      });
+      }
+    };
+
+    return ApiClient.postJson(
+      '/api/v1/attachments/upload_chunk_complete',
+      {
+        body: { filename, key, checksum },
+        handleResponseSuccess
+      }
+    );
   }
 
   static uploadChunk(chunk, counter, key, progress, filename) {
-    const body = { file: chunk, counter, key };
-    const formData = new FormData();
-    Object.keys(body).forEach((name) => {
-      formData.append(name, body[name]);
-    });
-    return () => fetch('/api/v1/attachments/upload_chunk', {
-      credentials: 'same-origin',
-      method: 'post',
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        LoadingActions.updateLoadingProgress(filename, progress);
-        if (response.ok === false) {
-          const msg = `Chunk uploading failed: ${response.statusText}`;
-          NotificationActions.add({
-            message: msg,
-            level: 'error',
-          });
-        }
+    const body = new FormData();
+
+    body.append('file', chunk);
+    body.append('counter', counter);
+    body.append('key', key);
+
+    const handleResponseSuccess = (response) => {
+      LoadingActions.updateLoadingProgress(filename, progress);
+      if (response.ok) return response.json();
+
+      const msg = `Chunk uploading failed: ${response.statusText}`;
+      NotificationActions.add({
+        message: msg,
+        level: 'error',
       });
+      return null;
+    };
+
+    return ApiClient.postFormData('/api/v1/attachments/upload_chunk', { body, handleResponseSuccess });
+  }
+
+  static getFileContent(file) {
+    const promise = new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const buffer = new Uint8Array(event.target.result);
+        resolve(buffer);
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
+
+    return promise;
   }
 
   static async uploadFile(file) {
@@ -325,256 +282,57 @@ export default class AttachmentFetcher {
     return Promise.all(tasks).then(() => this.uploadCompleted(file.name, key, checksum)());
   }
 
-  static getFileContent(file) {
-    const promise = new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = function (event) {
-        const buffer = new Uint8Array(event.target.result);
-        resolve(buffer);
-      };
-
-      reader.readAsArrayBuffer(file);
-    });
-
-    return promise;
-  }
-
   static deleteAttachment(params) {
-    const promise = fetch(`/api/v1/attachments/${params.id}`, {
-      credentials: 'same-origin',
-      method: 'DELETE',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => response.json())
-      .then((json) => new Attachment(json.attachment))
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.deleteRequest(`/api/v1/attachments/${params.id}`)
+      .then((json) => new Attachment(json.attachment));
   }
 
   static bulkDeleteAttachments(attachmentIdsToDelete) {
-    const promise = fetch('/api/v1/attachments/bulk_delete', {
-      credentials: 'same-origin',
-      method: 'DELETE',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ ids: attachmentIdsToDelete }),
-    })
-      .then((response) => response.json())
-      .then((json) => ({
-        deleted_attachments: json.deleted_attachments || [],
-      }))
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.deleteRequest('/api/v1/attachments/bulk_delete', { body: attachmentIdsToDelete });
   }
 
   static deleteContainerLink(params) {
-    const promise = fetch(`/api/v1/attachments/link/${params.id}`, {
-      credentials: 'same-origin',
-      method: 'DELETE',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => response.json())
-      .then((json) => new Attachment(json.attachment))
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.deleteRequest(`/api/v1/attachments/link/${params.id}`)
+      .then((json) => new Attachment(json.attachment));
+  }
 
-    return promise;
+  static downloadFile(url, fileNameFallback = 'dataset.zip') {
+    const handleResponseSuccess = (response) => {
+      const dispositionHeader = response.headers.get('Content-Disposition');
+      if (dispositionHeader == null) {
+        NotificationActions.notifyExImportStatus('Analysis download', 204);
+        return null;
+      }
+
+      const fileName = extractFilenameFromContentDispositionHeader(dispositionHeader) || fileNameFallback;
+
+      downloadBlob(fileName, response.blob());
+      return null;
+    };
+
+    return ApiClient.apiRequest(url, { method: 'GET', handleResponseSuccess });
   }
 
   static downloadDataset(id) {
-    let file_name = 'dataset.xlsx';
-    return fetch(`/api/v1/export_ds/dataset/${id}`, {
-      credentials: 'same-origin',
-      method: 'GET',
-    })
-      .then((response) => {
-        const disposition = response.headers.get('Content-Disposition');
-        if (disposition && disposition.indexOf('attachment') !== -1) {
-          const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-          const matches = filenameRegex.exec(disposition);
-          if (matches != null && matches[1]) {
-            file_name = matches[1].replace(/['"]/g, '');
-          }
-        }
-        return response.blob();
-      })
-      .then((blob) => {
-        const a = document.createElement('a');
-        a.style = 'display: none';
-        document.body.appendChild(a);
-        const url = window.URL.createObjectURL(blob);
-        a.href = url;
-        a.download = file_name;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return AttachmentFetcher.downloadFile(`/api/v1/export_ds/dataset/${id}`, 'dataset.xlsx');
   }
 
   static downloadZip(id) {
-    let file_name = 'dataset.zip';
-    return fetch(`/api/v1/attachments/zip/${id}`, {
-      credentials: 'same-origin',
-      method: 'GET',
-    })
-      .then((response) => {
-        const disposition = response.headers.get('Content-Disposition');
-        if (disposition && disposition.indexOf('attachment') !== -1) {
-          const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-          const matches = filenameRegex.exec(disposition);
-          if (matches != null && matches[1]) {
-            file_name = matches[1].replace(/['"]/g, '');
-          }
-        }
-        return response.blob();
-      })
-      .then((blob) => {
-        const a = document.createElement('a');
-        a.style = 'display: none';
-        document.body.appendChild(a);
-        const url = window.URL.createObjectURL(blob);
-        a.href = url;
-        a.download = file_name;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return AttachmentFetcher.downloadFile(`/api/v1/attachments/zip/${id}`);
   }
 
   static downloadZipBySample(sampleId) {
-    let fileName = 'dataset.zip';
-    return fetch(`/api/v1/attachments/sample_analyses/${sampleId}`, {
-      credentials: 'same-origin',
-      method: 'GET',
-    })
-      .then((response) => {
-        const disposition = response.headers.get('Content-Disposition');
-        if (disposition != null) {
-          if (disposition && disposition.indexOf('attachment') !== -1) {
-            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-            const matches = filenameRegex.exec(disposition);
-            if (matches != null && matches[1]) {
-              fileName = matches[1].replace(/['"]/g, '');
-            }
-          }
-
-          return response.blob();
-        }
-        NotificationActions.notifyExImportStatus('Analysis download', 204);
-        return null;
-      })
-      .then((blob) => {
-        if (blob && blob.type != null) {
-          const a = document.createElement('a');
-          a.style = 'display: none';
-          document.body.appendChild(a);
-          const url = window.URL.createObjectURL(blob);
-          a.href = url;
-          a.download = fileName;
-          a.click();
-          window.URL.revokeObjectURL(url);
-        }
-      })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return AttachmentFetcher.downloadFile(`/api/v1/attachments/sample_analyses/${sampleId}`);
   }
 
   static downloadZipByDeviceDescription(deviceDescriptionId) {
-    let fileName = 'dataset.zip';
-    return fetch(`/api/v1/attachments/device_description_analyses/${deviceDescriptionId}`, {
-      credentials: 'same-origin',
-      method: 'GET',
-    })
-      .then((response) => {
-        const disposition = response.headers.get('Content-Disposition');
-        if (disposition != null) {
-          if (disposition && disposition.indexOf('attachment') !== -1) {
-            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-            const matches = filenameRegex.exec(disposition);
-            if (matches != null && matches[1]) {
-              fileName = matches[1].replace(/['"]/g, '');
-            }
-          }
-
-          return response.blob();
-        }
-        NotificationActions.notifyExImportStatus('Analysis download', 204);
-        return null;
-      })
-      .then((blob) => {
-        if (blob && blob.type != null) {
-          const a = document.createElement('a');
-          a.style = 'display: none';
-          document.body.appendChild(a);
-          const url = window.URL.createObjectURL(blob);
-          a.href = url;
-          a.download = fileName;
-          a.click();
-          window.URL.revokeObjectURL(url);
-        }
-      })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return AttachmentFetcher.downloadFile(`/api/v1/attachments/device_description_analyses/${deviceDescriptionId}`);
   }
 
   static downloadZipBySequenceBaseMacromoleculeSample(sequenceBasedMacromoleculeSampleId) {
-    let fileName = 'dataset.zip';
-    return fetch(`/api/v1/attachments/sequence_based_macromolecule_sample_analyses/${sequenceBasedMacromoleculeSampleId}`, {
-      credentials: 'same-origin',
-      method: 'GET',
-    })
-      .then((response) => {
-        const disposition = response.headers.get('Content-Disposition');
-        if (disposition != null) {
-          if (disposition && disposition.indexOf('attachment') !== -1) {
-            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-            const matches = filenameRegex.exec(disposition);
-            if (matches != null && matches[1]) {
-              fileName = matches[1].replace(/['"]/g, '');
-            }
-          }
-
-          return response.blob();
-        }
-        NotificationActions.notifyExImportStatus('Analysis download', 204);
-        return null;
-      })
-      .then((blob) => {
-        if (blob && blob.type != null) {
-          const a = document.createElement('a');
-          a.style = 'display: none';
-          document.body.appendChild(a);
-          const url = window.URL.createObjectURL(blob);
-          a.href = url;
-          a.download = fileName;
-          a.click();
-          window.URL.revokeObjectURL(url);
-        }
-      })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return AttachmentFetcher.downloadFile(
+      `/api/v1/attachments/sequence_based_macromolecule_sample_analyses/${sequenceBasedMacromoleculeSampleId}`
+    );
   }
 
   static saveSpectrum(
@@ -618,36 +376,18 @@ export default class AttachmentFetcher {
       dscMetaData
     };
 
-    const promise = fetch('/api/v1/attachments/save_spectrum/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(decamelizeKeys(params)),
-    })
-      .then((response) => response.json())
+    return ApiClient.postJson('/api/v1/attachments/save_spectrum/', { body: decamelizeKeys(params) })
       .then((json) => {
-        if (!isSaveCombined) {
-          return json;
-        }
+        if (!isSaveCombined) return json;
+
         const oldSpcInfos = [...previousSpcInfos].filter((spc) => spc.idx !== attId);
-        let jcampIds = oldSpcInfos.map((spc) => (spc.idx));
-        const fetchedFilesIdxs = json.files.map((file) => (file.id));
+        let jcampIds = oldSpcInfos.map((spc) => spc.idx);
+        const fetchedFilesIdxs = json.files.map((file) => file.id);
         jcampIds = [...jcampIds, ...fetchedFilesIdxs];
 
-        return AttachmentFetcher.combineSpectra(jcampIds, curveIdx, params).then((res) => {
-          return json;
-        }).catch((errMsg) => {
-          console.log(errMsg); // eslint-disable-line
-        });
-      })
-      .catch((errorMessage) => {
-        console.log(errorMessage);
+        return AttachmentFetcher.combineSpectra(jcampIds, curveIdx, params)
+          .then(() => json); // this appears to be intentional, I didn't change this from the original code
       });
-
-    return promise;
   }
 
   static inferSpectrum(
@@ -680,94 +420,50 @@ export default class AttachmentFetcher {
       layout,
     };
 
-    const promise = fetch('/api/v1/attachments/infer/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(decamelizeKeys(params)),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.postJson('/api/v1/attachments/infer/', { body: decamelizeKeys(params) });
   }
 
   static regenerateSpectrum(jcampIds) {
-    const promise = fetch('/api/v1/attachments/regenerate_spectrum/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        original: jcampIds.orig,
-        generated: jcampIds.gene,
-      }),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.postJson(
+      '/api/v1/attachments/regenerate_spectrum/',
+      { body: { original: jcampIds.orig, generated: jcampIds.gene } }
+    );
   }
 
   static regenerateEditedSpectrum(jcampIds, molfile) {
-    const promise = fetch('/api/v1/attachments/regenerate_edited_spectrum/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        edited: jcampIds.edited,
-        molfile,
-      }),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.postJson(
+      '/api/v1/attachments/regenerate_edited_spectrum/',
+      { body: { edited: jcampIds.edited, molfile } }
+    );
   }
 
   static combineSpectra(jcampIds, curveIdx, extraParams = null) {
-    const extras = JSON.stringify(decamelizeKeys(extraParams))
-    const promise = fetch(
+    const extras = decamelizeKeys(extraParams);
+    return ApiClient.postJson(
       '/api/v1/chemspectra/file/combine_spectra',
-      {
-        credentials: 'same-origin',
-        method: 'POST',
-        headers:
-        {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          spectra_ids: jcampIds,
-          front_spectra_idx: curveIdx,
-          extras: extras,
-        }),
-      },
-    )
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+      { body: { spectra_ids: jcampIds, front_spectra_idx: curveIdx, extras } }
+    );
+  }
 
-    return promise;
+  static filterAllAttachments(files, containers) {
+    containers.forEach((container) => {
+      const tmpArray = (container.attachments || [])
+        .filter((a) => a.is_new && !a.is_deleted)
+        .map((a) => fileFromAttachment(a, container.id));
+      files.push(...tmpArray);
+
+      if (container.children && container.children.length > 0) {
+        this.filterAllAttachments(files, container.children);
+      }
+    });
+  }
+
+  static getFileListfrom(container) {
+    if (container == null) return [];
+
+    const allFiles = [];
+    this.filterAllAttachments(allFiles, container.children);
+    return allFiles;
   }
 
   static async uploadNewAttachmentsForContainer(container) {
