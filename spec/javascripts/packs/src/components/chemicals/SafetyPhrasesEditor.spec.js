@@ -59,11 +59,11 @@ describe('normalizeSafetyPhrases', () => {
 describe('SafetyPhrasesEditor', () => {
   beforeEach(() => {
     const fetchStub = sinon.stub(global, 'fetch');
-    fetchStub.withArgs('/json/hazardPhrases.json', sinon.match.any)
+    fetchStub.withArgs('/json/hazardPhrases.json')
       .resolves(buildResponse({ H200: 'Unstable explosive', H315: 'Causes skin irritation' }));
-    fetchStub.withArgs('/json/precautionaryPhrases.json', sinon.match.any)
+    fetchStub.withArgs('/json/precautionaryPhrases.json')
       .resolves(buildResponse({ P102: 'Keep out of reach of children.' }));
-    fetchStub.withArgs('/json/pictograms.json', sinon.match.any)
+    fetchStub.withArgs('/json/pictograms.json')
       .resolves(buildResponse({ GHS01: 'Explosive.gif', GHS07: 'Harmful_Irritant.gif' }));
   });
 
