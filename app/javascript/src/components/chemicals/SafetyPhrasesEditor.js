@@ -3,23 +3,11 @@ import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import { Select } from 'src/components/common/Select';
-
-const PHRASE_FILES = {
-  hazard: '/json/hazardPhrases.json',
-  precautionary: '/json/precautionaryPhrases.json',
-  pictograms: '/json/pictograms.json',
-};
-
-const phraseCache = {};
-
-const fetchPhraseFile = (key) => {
-  if (phraseCache[key]) return phraseCache[key];
-  phraseCache[key] = fetch(PHRASE_FILES[key], { credentials: 'same-origin' })
-    .then((res) => (res && res.ok ? res.json() : {}))
-    .then((d) => (d && typeof d === 'object' ? d : {}))
-    .catch(() => ({}));
-  return phraseCache[key];
-};
+import {
+  loadHazardPhrases,
+  loadPrecautionaryPhrases,
+  loadPictograms,
+} from 'src/utilities/chemicalDataValidations';
 
 const trim = (v) => (typeof v === 'string' ? v.trim() : '');
 
@@ -31,9 +19,11 @@ const formatStatementValue = (text) => {
 const prettyPictogramName = (file) => trim(file).replace(/\.[A-Za-z0-9]+$/, '').replace(/_/g, ' ');
 
 export const normalizeSafetyPhrases = (value) => {
-  const source = value && typeof value === 'object' ? value : {};
-  const h = source.h_statements && typeof source.h_statements === 'object' ? source.h_statements : {};
-  const p = source.p_statements && typeof source.p_statements === 'object' ? source.p_statements : {};
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  const h = source.h_statements && typeof source.h_statements === 'object' && !Array.isArray(source.h_statements)
+    ? source.h_statements : {};
+  const p = source.p_statements && typeof source.p_statements === 'object' && !Array.isArray(source.p_statements)
+    ? source.p_statements : {};
   const pictograms = Array.isArray(source.pictograms)
     ? source.pictograms.filter((c) => typeof c === 'string') : [];
   return { h_statements: h, p_statements: p, pictograms };
@@ -78,7 +68,7 @@ PhraseListItem.propTypes = {
 
 const itemShape = PropTypes.shape({
   code: PropTypes.string.isRequired,
-  text: PropTypes.string,
+  text: PropTypes.string.isRequired,
   onDelete: PropTypes.func.isRequired,
 });
 
@@ -232,9 +222,9 @@ function SafetyPhrasesEditor({ value, onChange }) {
   useEffect(() => {
     let mounted = true;
     Promise.all([
-      fetchPhraseFile('hazard'),
-      fetchPhraseFile('precautionary'),
-      fetchPhraseFile('pictograms'),
+      loadHazardPhrases(),
+      loadPrecautionaryPhrases(),
+      loadPictograms(),
     ]).then(([h, p, g]) => {
       if (!mounted) return;
       setHazardDict(h);
