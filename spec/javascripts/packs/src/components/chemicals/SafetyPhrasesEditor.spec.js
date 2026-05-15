@@ -173,6 +173,18 @@ describe('SafetyPhrasesEditor', () => {
     expect(onChange.firstCall.args[0].pictograms).toEqual(['GHS01', 'GHS07']);
   });
 
+  it('ignores invalid pictogram values before emitting onChange', () => {
+    const onChange = sinon.spy();
+    const wrapper = shallow(
+      React.createElement(SafetyPhrasesEditor, { value: null, onChange })
+    );
+
+    pictogramSection(wrapper).prop('onAdd')({ value: '../evil' });
+    pictogramSection(wrapper).prop('onAdd')({ value: 'GHS99' });
+
+    expect(onChange.called).toBe(false);
+  });
+
   it('emits onChange when pictogram delete handler runs, preserving other sections', () => {
     const onChange = sinon.spy();
     const value = {

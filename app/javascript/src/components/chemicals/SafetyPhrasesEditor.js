@@ -273,8 +273,9 @@ function SafetyPhrasesEditor({ value, onChange }) {
   };
 
   const handleAddPictogram = (option) => {
-    if (!option || !option.value || data.pictograms.includes(option.value)) return;
-    emit({ ...data, pictograms: [...data.pictograms, option.value] });
+    const code = trim(option && option.value);
+    if (!code || !VALID_PICTOGRAM_CODE_RE.test(code) || data.pictograms.includes(code)) return;
+    emit({ ...data, pictograms: [...data.pictograms, code] });
   };
 
   const handleRemovePictogram = (code) => {
