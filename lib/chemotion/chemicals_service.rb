@@ -268,6 +268,11 @@ module Chemotion
       pictogram_text.to_s.split(',').map(&:strip).reject(&:empty?)
     end
 
+    def self.names_properties_merck(properties)
+      properties.search('div.MuiGrid-grid-sm-3')
+                .css('span').map(&:text).map { |str| str.tr(' ', '_').downcase }
+    end
+
     private_class_method :extract_h_text_from_array, :extract_p_text_from_array, :extract_pictograms_from_array,
                          :names_properties_merck
 
@@ -302,11 +307,6 @@ module Chemotion
       chem_properties_alfa(properties)
     rescue StandardError
       'Could not find additional chemical properties'
-    end
-
-    def self.names_properties_merck(properties)
-      properties.search('div.MuiGrid-grid-sm-3')
-                .css('span').map(&:text).map { |str| str.tr(' ', '_').downcase }
     end
 
     def self.clean_property_name(property_name)
