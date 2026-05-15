@@ -1,4 +1,4 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class MoleculeSvgFetcher {
   /**
@@ -7,21 +7,12 @@ export default class MoleculeSvgFetcher {
    * @returns {Promise} Promise that resolves to { success: boolean, molecule_svg_file: string, svg_path: string, error?: string }
    */
   static renderSvgFromMolfile(molfile) {
-    return fetch('/api/v1/molecules/render_svg', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+    return ApiClient.postJson('/api/v1/molecules/render_svg', {
+      body: molfile,
+      handleResponseError: (exception) => {
+        console.error('Error calling render_svg API:', exception);
+        return { success: false, error: exception.message || 'Network error' };
       },
-      body: JSON.stringify({
-        molfile
-      })
-    }).then((response) => {
-      return response.json();
-    }).catch((errorMessage) => {
-      console.error('Error calling render_svg API:', errorMessage);
-      return { success: false, error: errorMessage.message || 'Network error' };
     });
   }
 }
