@@ -18,6 +18,10 @@ const formatStatementValue = (text) => {
 
 const prettyPictogramName = (file) => trim(file).replace(/\.[A-Za-z0-9]+$/, '').replace(/_/g, ' ');
 
+// Only allow known GHS pictogram codes (GHS01–GHS09). This guards against path-traversal
+// and XSS via the /images/ghs/${code}.svg interpolation in PictogramCard.
+const VALID_PICTOGRAM_CODE_RE = /^GHS\d{2}$/;
+
 export const normalizeSafetyPhrases = (value) => {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   const h = source.h_statements && typeof source.h_statements === 'object' && !Array.isArray(source.h_statements)
@@ -25,7 +29,7 @@ export const normalizeSafetyPhrases = (value) => {
   const p = source.p_statements && typeof source.p_statements === 'object' && !Array.isArray(source.p_statements)
     ? source.p_statements : {};
   const pictograms = Array.isArray(source.pictograms)
-    ? source.pictograms.filter((c) => typeof c === 'string') : [];
+    ? source.pictograms.filter((c) => typeof c === 'string' && VALID_PICTOGRAM_CODE_RE.test(c)) : [];
   return { h_statements: h, p_statements: p, pictograms };
 };
 
