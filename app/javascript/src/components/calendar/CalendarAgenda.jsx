@@ -1,31 +1,74 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import { Form } from 'react-bootstrap';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+
+const formatDate = (date) => new Date(date).toLocaleDateString('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+});
+
+const isSameDay = (start, end) => {
+  const s = new Date(start);
+  const e = new Date(end);
+  return s.getFullYear() === e.getFullYear()
+    && s.getMonth() === e.getMonth()
+    && s.getDate() === e.getDate();
+};
 
 function CalendarAgenda(props) {
+  const calendarStore = useContext(StoreContext).calendar;
   const { events, onSelectEvent, eventStyleGetter } = props;
+
+  const currentDate = new Date(calendarStore.current_date);
+  const isToday = currentDate.toDateString() === new Date().toDateString();
+  const displayDate = currentDate.toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
+
+  const agendaHeader = (
+    <div className="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+      <span style={{ fontWeight: 600, fontSize: '1rem' }}>
+        {displayDate}
+        {isToday && (
+          <span className="ms-2 badge bg-primary" style={{ fontSize: '0.7rem', verticalAlign: 'middle' }}>
+            Today
+          </span>
+        )}
+      </span>
+      <Form.Check
+        type="checkbox"
+        id="calendar-show-past-events"
+        label="Show past events"
+        checked={calendarStore.show_past_events}
+        onChange={() => calendarStore.toggleShowPastEvents()}
+      />
+    </div>
+  );
 
   if (events.length === 0) {
     return (
-      <div className="rbc-agenda-view">
-        <p>No events</p>
+      <div className="rbc-agenda-view d-flex flex-column" style={{ height: '100%' }}>
+        {agendaHeader}
+        <div className="d-flex flex-grow-1 align-items-center justify-content-center">
+          <p className="text-muted mb-0">No events scheduled.</p>
+        </div>
       </div>
     );
   }
 
   const groupedByDate = {};
   events.forEach((event) => {
-    const dateKey = new Date(event.start).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    });
+    const dateKey = formatDate(event.start);
     if (!groupedByDate[dateKey]) {
       groupedByDate[dateKey] = [];
     }
     groupedByDate[dateKey].push(event);
   });
 
-  const dates = Object.keys(groupedByDate);
+  const allDates = Object.keys(groupedByDate);
 
   return (
     <div
@@ -36,6 +79,7 @@ function CalendarAgenda(props) {
         overflow: 'auto'
       }}
     >
+      {agendaHeader}
       <table
         className="rbc-agenda-table"
         style={{
@@ -52,13 +96,13 @@ function CalendarAgenda(props) {
           </tr>
         </thead>
         <tbody>
-          {dates.map((dateKey) => {
+          {allDates.map((dateKey) => {
             const dateEvents = groupedByDate[dateKey];
-            return dateEvents.map((event, idx) => {
+            return dateEvents.map((event) => {
               const eventStyle = eventStyleGetter ? eventStyleGetter(event) : {};
               return (
                 <tr
-                  key={`${dateKey}-${idx}`}
+                  key={event.id ?? `${dateKey}-${event.title}`}
                   role="button"
                   tabIndex={0}
                   onClick={() => onSelectEvent?.(event)}
@@ -66,47 +110,44 @@ function CalendarAgenda(props) {
                   className="rbc-agenda-event-row"
                   style={eventStyle.style}
                 >
-                {idx === 0 && (
-                  <td
-                    rowSpan={dateEvents.length}
-                    className="rbc-agenda-date-cell"
-                  >
-                    {dateKey}
+                  <td className="rbc-agenda-date-cell">
+                    {isSameDay(event.start, event.end)
+                      ? dateKey
+                      : `${dateKey} – ${formatDate(event.end)}`}
                   </td>
-                )}
-                <td className="rbc-agenda-time-cell">
-                  {new Date(event.start).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                  {' – '}
-                  {new Date(event.end).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </td>
-                <td
-                  className="rbc-agenda-event-name-cell"
-                  style={{ verticalAlign: 'middle' }}
-                >
-                  {event.element_klass_icon && (
-                    <i className={`${event.element_klass_icon} me-2`} />
-                  )}
-                  {event.title}
-                </td>
-                <td
-                  className="rbc-agenda-description-cell"
-                  style={{
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    maxWidth: '500px',
-                    verticalAlign: 'middle'
-                  }}
-                >
-                  {event.description || ''}
-                </td>
-              </tr>
+                  <td className="rbc-agenda-time-cell">
+                    {new Date(event.start).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                    {' – '}
+                    {new Date(event.end).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </td>
+                  <td
+                    className="rbc-agenda-event-name-cell"
+                    style={{ verticalAlign: 'middle' }}
+                  >
+                    {event.element_klass_icon && (
+                      <i className={`${event.element_klass_icon} me-2`} />
+                    )}
+                    {event.title}
+                  </td>
+                  <td
+                    className="rbc-agenda-description-cell"
+                    style={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '500px',
+                      verticalAlign: 'middle'
+                    }}
+                  >
+                    {event.description || ''}
+                  </td>
+                </tr>
               );
             });
           })}
@@ -130,4 +171,4 @@ CalendarAgenda.propTypes = {
   eventStyleGetter: PropTypes.func
 };
 
-export default CalendarAgenda;
+export default observer(CalendarAgenda);

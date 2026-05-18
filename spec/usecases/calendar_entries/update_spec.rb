@@ -69,5 +69,30 @@ RSpec.describe Usecases::CalendarEntries::Update do
         }.by(1)
       end
     end
+
+    context 'when notify_user_ids is not included in params' do
+      let(:another_user) { create(:person) }
+      let(:params) do
+        {
+          id: calendar_entry.id,
+          title: 'Updated Title',
+          start_time: Time.current.beginning_of_day,
+          end_time: Time.current.beginning_of_day + 2.hours,
+          description: 'Description',
+          kind: 'reminder',
+          eventable_id: nil,
+          eventable_type: nil,
+        }
+      end
+
+      before do
+        create(:calendar_entry_notification, calendar_entry: calendar_entry, user: another_user)
+      end
+
+      it 'does not remove existing notifications' do
+        expect { described_class.new(user: user, params: params).perform! }
+          .not_to(change { CalendarEntryNotification.where(calendar_entry: calendar_entry).count })
+      end
+    end
   end
 end

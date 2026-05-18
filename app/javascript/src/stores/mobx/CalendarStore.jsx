@@ -4,6 +4,8 @@ import CalendarEntryFetcher from 'src/fetchers/CalendarEntryFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 
+let entriesRequestGeneration = 0;
+
 const CalendarTypes = {
   default: [
     'reservation', 'duration', 'handover', 'reminder', 'report', 'meeting', 'maintenance', 'availability'
@@ -40,32 +42,50 @@ export const CalendarStore = types
 
     collection_users: types.optional(types.array(types.frozen({})), []),
     calendar_types: types.optional(types.frozen({}), CalendarTypes),
+    current_date: types.optional(types.Date, () => new Date()),
     start: types.optional(types.maybeNull(types.Date)),
     end: types.optional(types.maybeNull(types.Date)),
     entries: types.optional(types.array(types.frozen({})), []),
     eventable_id: types.optional(types.maybeNull(types.number)),
     eventable_type: types.optional(types.maybeNull(types.string)),
     show_shared_collection_entries: types.optional(types.boolean, false),
+    show_past_events: types.optional(types.boolean, false),
     selected_eventable_types: types.optional(types.array(types.string), []),
     selected_kinds: types.optional(types.array(types.string), []),
     selected_statuses: types.optional(types.array(types.string), []),
     error: types.optional(types.maybeNull(types.string), null),
+    loading: types.optional(types.boolean, false),
   })
   .actions((self) => ({
     getEntries: flow(function* getEntries() {
-      const params = {
-        start_time: self.start.toISOString(),
-        end_time: self.end.toISOString(),
-        created_by: UserStore.getState().currentUser?.id,
-        eventable_type: self.eventable_type,
-        eventable_id: self.eventable_id,
-        with_shared_collections: self.eventable_type ? true : self.show_shared_collection_entries
-      };
+      entriesRequestGeneration += 1;
+      const generation = entriesRequestGeneration;
+      self.loading = true;
 
-      const result = yield CalendarEntryFetcher.getEntries(params);
-      if (result) {
-        if (self.entries.length >= 1) { self.entries = []; }
-        result.forEach((entry) => self.entries.push(self.transformEntryFromApi(entry)));
+      try {
+        if (!self.start || !self.end) {
+          const base = new Date(self.current_date);
+          self.start = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, 0, 0);
+          self.end = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 23, 59, 59, 999);
+        }
+
+        const params = {
+          start_time: self.start.toISOString(),
+          end_time: self.end.toISOString(),
+          created_by: UserStore.getState().currentUser?.id,
+          eventable_type: self.eventable_type,
+          eventable_id: self.eventable_id,
+          with_shared_collections: self.eventable_type ? true : self.show_shared_collection_entries
+        };
+
+        const result = yield CalendarEntryFetcher.getEntries(params);
+        if (generation === entriesRequestGeneration) {
+          self.entries = result ? result.map((entry) => self.transformEntryFromApi(entry)) : [];
+        }
+      } finally {
+        if (generation === entriesRequestGeneration) {
+          self.loading = false;
+        }
       }
     }),
     getCollectionUsers: flow(function* getCollectionUsers(params) {
@@ -84,6 +104,13 @@ export const CalendarStore = types
         self.entries.push(self.transformEntryFromApi(result));
         if (self.eventable_type && !self.show_own_entries) {
           self.show_own_entries = true;
+        }
+        const entryStart = new Date(result.start_time);
+        const entryEnd = new Date(result.end_time);
+        const isOutsideView = !self.start || !self.end
+          || entryStart >= self.end || entryEnd <= self.start;
+        if (isOutsideView) {
+          self.current_date = entryStart;
         }
         self.getEntries();
         return true;
@@ -217,6 +244,9 @@ export const CalendarStore = types
     changeErrorMessage(message) {
       self.error = message;
     },
+    changeCurrentDate(date) {
+      self.current_date = date;
+    },
     toggleEntries(event) {
       event.stopPropagation();
       event.preventDefault();
@@ -227,6 +257,9 @@ export const CalendarStore = types
         self.show_shared_collection_entries = !self.show_shared_collection_entries;
         self.getEntries();
       }
+    },
+    toggleShowPastEvents() {
+      self.show_past_events = !self.show_past_events;
     },
     toggleFilterOption(filterKey, option) {
       const idx = self[filterKey].indexOf(option);

@@ -18,7 +18,7 @@ module Usecases
 
         ActiveRecord::Base.transaction do
           entry.update!(params.except(:id, :notify_user_ids))
-          reconcile_notifications(entry)
+          reconcile_notifications(entry) if params.key?(:notify_user_ids)
         end
 
         entry

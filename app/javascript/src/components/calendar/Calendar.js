@@ -23,12 +23,22 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 function FilterButton({
   id, tooltipSuffix, icon, options, selected, onToggle, onClear, renderLabel
 }) {
-  if (options.length === 0) return null;
   const selectedCount = selected.length;
+  const hasOptions = options.length > 0;
   const variant = selectedCount > 0 ? 'success' : 'light';
   const tooltip = selectedCount > 0
     ? `Filtering by ${selectedCount} ${tooltipSuffix}`
     : `Filter entries by ${tooltipSuffix}`;
+
+  if (!hasOptions) {
+    return (
+      <CalendarTooltip id={`filter-by-${id}`} text={`Filter entries by ${tooltipSuffix}`}>
+        <Button variant="light" disabled>
+          <i className={`fa ${icon}`} />
+        </Button>
+      </CalendarTooltip>
+    );
+  }
 
   return (
     <Dropdown autoClose="outside">
@@ -147,14 +157,21 @@ CustomAgendaView.defaultProps = {
   onSelectEvent: undefined,
 };
 CustomAgendaView.title = () => 'Agenda';
+CustomAgendaView.range = (date) => {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+};
 CustomAgendaView.navigate = (date, action) => {
   switch (action) {
     case 'TODAY':
       return new Date();
     case 'NEXT':
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 30);
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
     case 'PREV':
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate() - 30);
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
     default:
       return date;
   }
@@ -308,8 +325,31 @@ function Calendar() {
   const filteredEntries = (entries) => {
     let result = entries;
 
+    if (calendarStore.current_view === 'agenda') {
+      const viewDate = new Date(calendarStore.current_date);
+      const dayStart = new Date(viewDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(viewDate);
+      dayEnd.setHours(23, 59, 59, 999);
+      result = result.filter((e) => e.start <= dayEnd && e.end >= dayStart);
+
+      if (!calendarStore.show_past_events) {
+        const now = new Date();
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const isViewingToday = dayStart.toDateString() === todayStart.toDateString();
+        if (isViewingToday) {
+          result = result.filter((e) => e.end >= now);
+        }
+      }
+    }
+
     if (calendarStore.eventable_type && !calendarStore.show_own_entries) {
-      result = result.filter((e) => e.created_by !== currentUserId);
+      result = result.filter(
+        (e) => String(e.eventable_id) === String(calendarStore.eventable_id)
+          && e.eventable_type === calendarStore.eventable_type
+          && e.created_by !== currentUserId,
+      );
     }
 
     if (calendarStore.selected_eventable_types.length > 0) {
@@ -329,7 +369,7 @@ function Calendar() {
       result = result.filter((e) => calendarStore.selected_statuses.includes(e.status));
     }
 
-    return result;
+    return result.slice().sort((a, b) => a.start - b.start);
   };
 
   const headerDescription = () => {
@@ -506,9 +546,24 @@ function Calendar() {
               className="overflow-y-auto"
               style={{
                 height: calendarHeight,
-                overflowX: 'auto'
+                overflowX: 'auto',
+                position: 'relative'
               }}
             >
+              {calendarStore.loading && (
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'rgba(255,255,255,0.6)',
+                  zIndex: 10
+                }}
+                >
+                  <i className="fa fa-spinner fa-spin fa-2x text-muted" />
+                </div>
+              )}
               <DragAndDropCalendar
                 components={{ event: CalendarEvent }}
                 localizer={localizer}
@@ -516,6 +571,8 @@ function Calendar() {
                 views={{
                   month: true, week: true, work_week: true, day: true, agenda: CustomAgendaView
                 }}
+                date={calendarStore.current_date}
+                onNavigate={(date) => calendarStore.changeCurrentDate(date)}
                 view={calendarStore.current_view || 'month'}
                 startAccessor="start"
                 endAccessor="end"

@@ -92,7 +92,7 @@ module Entities
     end
 
     def notify_user_ids
-      object.calendar_entry_notifications.pluck(:user_id)
+      object.instance_variable_get(:@notify_user_ids) || object.calendar_entry_notifications.pluck(:user_id)
     end
   end
 end

@@ -43,17 +43,11 @@ module Usecases
       end
 
       def eventable_accessible?
-        if normalized_eventable_type == 'DeviceDescription'
-          # Device descriptions are shared booking calendars — show all entries to anyone with access
-          DeviceDescription.where(id: params[:eventable_id])
-                           .joins(:collections).where(collections: { id: collection_ids }).any?
-        else
-          # For other types, only show all entries if the user owns the collection
-          eventable_class = EVENTABLE_TYPE_CLASS_MAP[normalized_eventable_type]
-          return false if eventable_class.nil?
+        eventable_class = EVENTABLE_TYPE_CLASS_MAP[normalized_eventable_type]
+        return false if eventable_class.nil?
 
-          eventable_class.where(id: params[:eventable_id]).for_user(user.id).any?
-        end
+        eventable_class.where(id: params[:eventable_id])
+                       .joins(:collections).where(collections: { id: collection_ids }).any?
       end
 
       def normalized_eventable_type
@@ -88,10 +82,20 @@ module Usecases
       end
 
       def build_shared_eventables_query
-        EVENTABLE_TYPE_CLASS_MAP.each_with_object({}) do |(type, klass), result|
-          ids = klass.joins(:collections).where(collections: { id: collection_ids }).pluck(:id)
-          result[type] = ids if ids.any?
-        end
+        return {} if collection_ids.empty?
+
+        connection = ActiveRecord::Base.connection
+        union_sql = EVENTABLE_TYPE_CLASS_MAP.map do |type, klass|
+          klass.joins(:collections)
+               .where(collections: { id: collection_ids })
+               .distinct
+               .select("#{connection.quote(type)} AS eventable_type, #{klass.table_name}.id AS eventable_id")
+               .to_sql
+        end.join(' UNION ')
+
+        connection.select_all("SELECT eventable_type, eventable_id FROM (#{union_sql}) AS t")
+                  .group_by { |r| r['eventable_type'] }
+                  .transform_values { |v| v.map { |r| r['eventable_id'] } }
       end
 
       # load elements and element klasses here to reduce later n+1 queries in calendar entry entities
@@ -134,6 +138,7 @@ module Usecases
           end
           entry.instance_variable_set(:@accessible, (collection_ids & (element&.collection_ids || [])).any?)
           entry.instance_variable_set(:@notified_users, entry.notified_users)
+          entry.instance_variable_set(:@notify_user_ids, entry.calendar_entry_notifications.map(&:user_id))
         end
 
         calendar_entries
