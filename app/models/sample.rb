@@ -142,8 +142,8 @@ class Sample < ApplicationRecord
       .where('molecule_names.name ILIKE ?', "%#{sanitize_sql_like(query)}%")
   }
   scope :by_exact_name, lambda { |query|
-                          sanitized_query = "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])$"
-                          where('lower(name) ~* lower(?) or lower(external_label) ~* lower(?)',
+                          sanitized_query = "^([a-zA-Z0-9]+-)?#{sanitize_sql_like(query)}(-?[a-zA-Z])?$"
+                          where('lower(samples.name) ~* lower(?) or lower(samples.external_label) ~* lower(?)',
                                 sanitized_query, sanitized_query)
                         }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{sanitize_sql_like(query)}%") }
@@ -722,7 +722,6 @@ class Sample < ApplicationRecord
       elemental_compositions << ElementalComposition.new(attrs)
     end
   end
-
 
   def set_loading_from_ea
     return unless residues.first
