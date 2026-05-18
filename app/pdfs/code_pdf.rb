@@ -145,9 +145,12 @@ class CodePdf < Prawn::Document
   # @param element [Object] The element to generate the bar code for.
   # @return [void]
   def display_bar_code(element)
+    cl = code_log_for(element)
+    return unless cl
+
     # Generate the barcode itself
     bar_code(element, @code_image_size_ratio)
-    text_box code_log_for(element)&.value_sm, bar_code_label_options(@width, @code_image_size_ratio)
+    text_box cl.value_sm, bar_code_label_options(@width, @code_image_size_ratio)
     move_down TEXT_OFFSET.mm * ratio
   end
 
@@ -381,9 +384,9 @@ class CodePdf < Prawn::Document
   def preload_code_logs
     return {} if elements.blank?
 
-    source = elements.first.source_class
+    source_class = elements.first.source_class
     ids = elements.map(&:id)
-    CodeLog.where(source: source, source_id: ids)
+    CodeLog.where(source: source_class, source_id: ids)
            .order(created_at: :desc)
            .each_with_object({}) { |log, hash| hash[log.source_id] ||= log }
   end
