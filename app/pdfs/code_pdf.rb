@@ -147,7 +147,7 @@ class CodePdf < Prawn::Document
   def display_bar_code(element)
     # Generate the barcode itself
     bar_code(element, @code_image_size_ratio)
-    text_box code_log_for(element).value_sm, bar_code_label_options(@width, @code_image_size_ratio)
+    text_box code_log_for(element)&.value_sm, bar_code_label_options(@width, @code_image_size_ratio)
     move_down TEXT_OFFSET.mm * ratio
   end
 
@@ -296,7 +296,10 @@ class CodePdf < Prawn::Document
   # @param text_position [String] The position of the text.
   # @return [void]
   def qr_code(element, width, code_image_size_ratio, text_position)
-    qr_code = Barby::QrCode.new(code_log_for(element).value, size: 1, level: :l)
+    cl = code_log_for(element)
+    return unless cl
+
+    qr_code = Barby::QrCode.new(cl.value, size: 1, level: :l)
     outputter = outputter(qr_code)
     svg outputter.to_svg(square_code_options(width, code_image_size_ratio, text_position)),
         square_code_options(width, code_image_size_ratio, text_position)
@@ -308,7 +311,10 @@ class CodePdf < Prawn::Document
   # @param code_image_size_ratio [Float] The ratio used to scale the code image.
   # @return [void]
   def bar_code(element, code_image_size_ratio)
-    outputter = outputter(Barby::Code128C.new(code_log_for(element).value_sm))
+    cl = code_log_for(element)
+    return unless cl
+
+    outputter = outputter(Barby::Code128C.new(cl.value_sm))
     svg outputter.to_svg(bar_code_options(code_image_size_ratio)), bar_code_options(code_image_size_ratio)
     move_down BAR_CODE_OFFSET * ratio
   end
@@ -320,7 +326,10 @@ class CodePdf < Prawn::Document
   # @param text_position [String] The position of the text.
   # @return [void]
   def data_matrix(element, width, code_image_size_ratio, text_position)
-    outputter = outputter(Barby::DataMatrix.new(code_log_for(element).value))
+    cl = code_log_for(element)
+    return unless cl
+
+    outputter = outputter(Barby::DataMatrix.new(cl.value))
     svg outputter.to_svg(square_code_options(width, code_image_size_ratio, text_position)),
         square_code_options(width, code_image_size_ratio, text_position)
     move_down DATA_MATRIX_CODE_OFFSET * ratio * code_image_size_ratio
