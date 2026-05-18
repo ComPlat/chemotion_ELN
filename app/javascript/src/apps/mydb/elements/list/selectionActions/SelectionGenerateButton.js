@@ -9,17 +9,34 @@ import { PDFDocument } from 'pdf-lib';
 import Utils from 'src/utilities/Functions';
 import 'whatwg-fetch';
 
+// Element types accepted by the /api/v1/code_logs/print_codes endpoint
+// (see app/api/chemotion/code_log_api.rb).
+const PRINTABLE_ELEMENT_TYPES = [
+  'sample',
+  'reaction',
+  'wellplate',
+  'screen',
+  'device_description',
+  'sequence_based_macromolecule_sample',
+];
+
 export default class SelectionGenerateButton extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      checkedIds: UIStore.getState().sample.checkedIds,
+      // Snapshot of ui_state per printable element type that has any active
+      // selection ({checkedAll, checkedIds, uncheckedIds}). Mirrors UIStore so
+      // we can build the ui_state payload that the print_codes_by_ui_state
+      // endpoint expects.
+      selectionsByType: {},
+      currentCollection: null,
       json: {},
       matrix: null,
       enableComputedProps: null,
       enableReactionPredict: null,
     };
 
+    this.syncFromStores = this.syncFromStores.bind(this);
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.onUserStoreChange = this.onUserStoreChange.bind(this);
     this.downloadPrintCodesPDF = this.downloadPrintCodesPDF.bind(this);
@@ -28,8 +45,8 @@ export default class SelectionGenerateButton extends React.Component {
   async componentDidMount() {
     UIStore.listen(this.onUIStoreChange);
     UserStore.listen(this.onUserStoreChange);
-    this.onUIStoreChange(UIStore.getState());
     this.onUserStoreChange(UserStore.getState());
+    this.syncFromStores();
 
     // Import the PDF configuration when the component mounts
     try {
@@ -49,17 +66,14 @@ export default class SelectionGenerateButton extends React.Component {
     UserStore.unlisten(this.onUserStoreChange);
   }
 
-  onUIStoreChange(state) {
-    if (state.sample.checkedIds !== this.state.checkedIds) {
-      this.setState({
-        checkedIds: state.sample.checkedIds
-      });
-    }
+  onUIStoreChange() {
+    this.syncFromStores();
   }
 
   onUserStoreChange(state) {
     const { matrix: storeMatrix } = state?.currentUser || {};
-    if (this.state.matrix !== storeMatrix) {
+    const { matrix } = this.state;
+    if (matrix !== storeMatrix) {
       this.setState({
         matrix: storeMatrix,
         enableComputedProps: MatrixCheck(storeMatrix, 'computedProp'),
@@ -68,37 +82,83 @@ export default class SelectionGenerateButton extends React.Component {
     }
   }
 
-  async downloadPrintCodesPDF(ids, template) {
-    const { json } = this.state;
-    const fetchedData = await PrintCodeFetcher.fetchPrintCodes(ids.length > 0 ? ids : null, template, json);
+  // Collects ui_state per printable element type from UIStore so we can print
+  // labels for selections across all tabs (including "All pages" via
+  // checkedAll) in a single batch.
+  syncFromStores() {
+    const uiState = UIStore.getState() || {};
+    const next = {};
 
-    if (!Array.isArray(fetchedData) || fetchedData.length === 0) {
-      console.error('No data received or data is not in expected format');
-      return;
-    }
-
-    const mergedPdf = await PDFDocument.create();
-    const pdfPromises = fetchedData.map(async (base64String) => {
-      const pdfBytes = Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
-      const pdf = await PDFDocument.load(pdfBytes);
-      const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-      copiedPages.forEach((page) => mergedPdf.addPage(page));
+    PRINTABLE_ELEMENT_TYPES.forEach((t) => {
+      const typeState = uiState[t];
+      if (!typeState) return;
+      const hasSelection = typeState.checkedAll
+        || (typeState.checkedIds && typeState.checkedIds.size > 0);
+      if (!hasSelection) return;
+      next[t] = {
+        checkedAll: !!typeState.checkedAll,
+        checkedIds: typeState.checkedIds ? typeState.checkedIds.toArray() : [],
+        uncheckedIds: typeState.uncheckedIds ? typeState.uncheckedIds.toArray() : [],
+      };
     });
 
-    await Promise.all(pdfPromises);
-    const mergedPdfBytes = await mergedPdf.save();
-    const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
+    this.setState({
+      selectionsByType: next,
+      currentCollection: uiState.currentCollection || null,
+    });
+  }
 
-    Utils.downloadFile({ contents: url, name: 'print_codes_merged.pdf' });
+  async downloadPrintCodesPDF(selectedConfig) {
+    const { json, selectionsByType, currentCollection } = this.state;
+    if (!currentCollection || Object.keys(selectionsByType).length === 0) return;
+
+    const configParams = json[selectedConfig] || {};
+
+    try {
+      const mergedPdf = await PDFDocument.create();
+      const requests = Object.entries(selectionsByType).map(([elementType, selection]) => {
+        const payload = {
+          element_type: elementType,
+          ui_state: {
+            checkedAll: selection.checkedAll,
+            checkedIds: selection.checkedIds,
+            uncheckedIds: selection.uncheckedIds,
+            collection_id: currentCollection.id,
+            is_sync_to_me: !!currentCollection.is_sync_to_me,
+          },
+          ...configParams,
+        };
+        return PrintCodeFetcher.fetchPrintCodesByUIState(payload);
+      });
+
+      const pdfBuffers = await Promise.all(requests);
+      // Append each PDF sequentially — mergedPdf mutations aren't safe to
+      // interleave even though JS is single-threaded, because copyPages and
+      // addPage share internal state on the merged document.
+      await pdfBuffers.reduce(async (chain, pdfBytes) => {
+        await chain;
+        if (!pdfBytes || pdfBytes.byteLength === 0) return;
+        const pdfToMerge = await PDFDocument.load(pdfBytes);
+        const copiedPages = await mergedPdf.copyPages(pdfToMerge, pdfToMerge.getPageIndices());
+        copiedPages.forEach((page) => mergedPdf.addPage(page));
+      }, Promise.resolve());
+
+      const mergedPdfBytes = await mergedPdf.save();
+      const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      Utils.downloadFile({ contents: url, name: 'print_codes_merged.pdf' });
+    } catch (err) {
+      console.error('Failed to generate print codes PDF', err);
+    }
   }
 
   render() {
     const {
-      json, checkedIds, enableComputedProps, enableReactionPredict
+      json, selectionsByType, currentCollection,
+      enableComputedProps, enableReactionPredict,
     } = this.state;
-    const ids = checkedIds.toArray();
-    const disabledPrint = !(ids.length > 0);
+    const hasSelection = Object.keys(selectionsByType).length > 0;
+    const disabledPrint = !currentCollection || !hasSelection;
     const pdfMenuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
 
     return (
@@ -117,7 +177,7 @@ export default class SelectionGenerateButton extends React.Component {
               onClick={(event) => {
                 event.stopPropagation();
                 if (!disabledPrint) {
-                  this.downloadPrintCodesPDF(ids, e.name);
+                  this.downloadPrintCodesPDF(e.name);
                 }
               }}
             >

@@ -23,6 +23,15 @@ class CodePdf < Prawn::Document
   BAR_CODE = CODE_TYPES[1].freeze
   TEXT_POSITION_TYPES = %w[below right].freeze
   ELEMENTS_TYPES = %w[sample reaction].freeze
+  # Candidate TTF paths searched in order. The first existing file is used so
+  # element labels with non-Latin1 characters (e.g. Arabic, CJK) render instead
+  # of raising Encoding::UndefinedConversionError under Prawn's default AFM
+  # Helvetica.
+  UNICODE_FONT_PATHS = [
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+    '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
+    '/usr/share/fonts/TTF/DejaVuSans.ttf',
+  ].freeze
 
   attr_reader :elements, # list of elements to be displayed
               :code_type, # type of code to be displayed, one of CODE_TYPES
@@ -43,6 +52,7 @@ class CodePdf < Prawn::Document
   # @return [CodePdf] a new CodePdf object
   def initialize(elements, **options)
     @elements = elements
+    @code_logs_cache = preload_code_logs
     @code_type = determine_code_type(options)
     @code_image_size = options.fetch(:code_image_size, 0)
     @width = options.fetch(:width, 0)
@@ -61,7 +71,20 @@ class CodePdf < Prawn::Document
       page_size: page_size,
       margin: [0, 0, 0, 0],
     )
+    register_unicode_font
     iterate
+  end
+
+  # Registers a TTF that covers a broad Unicode range so element labels with
+  # non-Latin1 characters can be rendered. No-op if none of the candidates
+  # exist on the host; falls back to Prawn's default Helvetica (Win-1252) in
+  # that case.
+  def register_unicode_font
+    path = UNICODE_FONT_PATHS.find { |p| File.exist?(p) }
+    return unless path
+
+    font_families.update('Unicode' => { normal: path })
+    font 'Unicode'
   end
 
   def determine_code_type(options)
@@ -77,23 +100,24 @@ class CodePdf < Prawn::Document
     @text_position = 'below' if @code_image_size_ratio > CODE_IMAGE_SIZE_LIMIT_RIGHT || code_type == BAR_CODE
   end
 
-  # Iterates through each element and formats it on the page.
+  # Iterates through each element and renders one page per element.
   # @return [void]
   def iterate
-    element = elements.first
-    format_text(element)
-    move_down MARGIN * ratio
-    display_code(element)
-    handle_text(element)
-    print_sample if display_sample && type == ELEMENTS_TYPES.first
-    # Draw the bounds of the current page
-    stroke_bounds
+    elements.each_with_index do |element, idx|
+      start_new_page if idx.positive?
+      move_down MARGIN * ratio
+      display_code(element)
+      handle_text(element)
+      print_sample(element) if display_sample && type == ELEMENTS_TYPES.first
+      # Draw the bounds of the current page
+      stroke_bounds
+    end
   end
 
   def handle_text(element)
     values = [
       [element.name, name],
-      [element.code_log&.id, code_log],
+      [code_log_for(element)&.id, code_log],
     ]
 
     if type == ELEMENTS_TYPES.first
@@ -143,9 +167,12 @@ class CodePdf < Prawn::Document
   # @param element [Object] The element to generate the bar code for.
   # @return [void]
   def display_bar_code(element)
+    cl = code_log_for(element)
+    return unless cl
+
     # Generate the barcode itself
     bar_code(element, @code_image_size_ratio)
-    text_box element.code_log.value_sm, bar_code_label_options(@width, @code_image_size_ratio)
+    text_box cl.value_sm, bar_code_label_options(@width, @code_image_size_ratio)
     move_down TEXT_OFFSET.mm * ratio
   end
 
@@ -173,26 +200,32 @@ class CodePdf < Prawn::Document
   end
 
   # Prints the sample image on the page if necessary.
+  # @param element [Object] The element whose SVG should be rendered.
   # @return [void]
-  def print_sample
+  def print_sample(element)
     return unless display_sample
 
     # Draw the sample if necessary
-    svg(File.read(image_data_getter.last), sample_option)
+    svg(File.read(image_data_for(element).last), sample_option)
     move_down SAMPLE_SVG_OFFSET.mm
   end
 
-  # Returns the width, height and URL of the SVG image associated with the first element.
-  # @param elements [Array] The elements to get the data from.
-  # @return [Array<String, String, [String, Pathname]>] An array containing the width, height and URL of the SVG image.
+  # Returns the width, height and URL of the SVG image for a specific element.
+  # @param element [Object] The element to get the SVG data from.
+  # @return [Array<String, String, [String, Pathname]>] +[width, height, path]+
   # @note returns a dummy image if the SVG file does not exist or if an error occurs.
-  def image_data_getter
-    element = elements.first
+  def image_data_for(element)
     full_svg_path = element.respond_to?(:full_svg_path, true) ? element.send(:full_svg_path) : nil
     return dummy_image if full_svg_path.nil? || !File.exist?(full_svg_path)
 
-    # Extract the width and height attributes from the SVG element
     extract_svg_size(full_svg_path)
+  end
+
+  # Returns the SVG image data for the first element. Used for page-size
+  # calculation, which is shared across all rendered pages.
+  # @return [Array<String, String, [String, Pathname]>] +[width, height, path]+
+  def image_data_getter
+    image_data_for(elements.first)
   end
 
   # Extracts the width and height of the SVG image from the given path.
@@ -288,7 +321,10 @@ class CodePdf < Prawn::Document
   # @param text_position [String] The position of the text.
   # @return [void]
   def qr_code(element, width, code_image_size_ratio, text_position)
-    qr_code = Barby::QrCode.new(element.code_log.value, size: 1, level: :l)
+    cl = code_log_for(element)
+    return unless cl
+
+    qr_code = Barby::QrCode.new(cl.value, size: 1, level: :l)
     outputter = outputter(qr_code)
     svg outputter.to_svg(square_code_options(width, code_image_size_ratio, text_position)),
         square_code_options(width, code_image_size_ratio, text_position)
@@ -300,7 +336,10 @@ class CodePdf < Prawn::Document
   # @param code_image_size_ratio [Float] The ratio used to scale the code image.
   # @return [void]
   def bar_code(element, code_image_size_ratio)
-    outputter = outputter(Barby::Code128C.new(element.code_log.value_sm))
+    cl = code_log_for(element)
+    return unless cl
+
+    outputter = outputter(Barby::Code128C.new(cl.value_sm))
     svg outputter.to_svg(bar_code_options(code_image_size_ratio)), bar_code_options(code_image_size_ratio)
     move_down BAR_CODE_OFFSET * ratio
   end
@@ -312,7 +351,10 @@ class CodePdf < Prawn::Document
   # @param text_position [String] The position of the text.
   # @return [void]
   def data_matrix(element, width, code_image_size_ratio, text_position)
-    outputter = outputter(Barby::DataMatrix.new(element.code_log.value))
+    cl = code_log_for(element)
+    return unless cl
+
+    outputter = outputter(Barby::DataMatrix.new(cl.value))
     svg outputter.to_svg(square_code_options(width, code_image_size_ratio, text_position)),
         square_code_options(width, code_image_size_ratio, text_position)
     move_down DATA_MATRIX_CODE_OFFSET * ratio * code_image_size_ratio
@@ -355,6 +397,27 @@ class CodePdf < Prawn::Document
 
   def outputter(code)
     Barby::SvgOutputter.new(code)
+  end
+
+  # Loads all CodeLog records for the current elements in a single query and
+  # returns them as a hash keyed by +source_id+, so callers can do an O(1)
+  # look-up instead of issuing one query per element (N+1 pattern).
+  # @return [Hash{Integer => CodeLog}]
+  def preload_code_logs
+    return {} if elements.blank?
+
+    source_class = elements.first.source_class
+    ids = elements.map(&:id)
+    CodeLog.where(source: source_class, source_id: ids)
+           .order(created_at: :desc)
+           .each_with_object({}) { |log, hash| hash[log.source_id] ||= log }
+  end
+
+  # Returns the cached CodeLog for +element+.
+  # @param element [Object]
+  # @return [CodeLog, nil]
+  def code_log_for(element)
+    @code_logs_cache[element.id]
   end
 end
 # rubocop:enable Metrics/ClassLength
