@@ -1,5 +1,31 @@
 # Chemotion_ELN Changelog
 
+# [v3.1.2]
+> (2026-05-18)
+
+## Fixes
+
+* bulk print label ([#3259](https://github.com/ComPlat/chemotion_ELN/pull/3259))
+* cell-line handleClose ([#3246](https://github.com/ComPlat/chemotion_ELN/pull/3246))
+
+### report
+
+* coerce Quill op["insert"] to String before CGI.escapeHTML ([#3258](https://github.com/ComPlat/chemotion_ELN/pull/3258))
+* Tempfile GC lifetimes and Pathname handling in Inkscape pipeline ([#3253](https://github.com/ComPlat/chemotion_ELN/pull/3253))
+
+### API
+
+* expose temp_svg from molecules SMILES endpoint ([#3252](https://github.com/ComPlat/chemotion_ELN/pull/3252))
+
+### UI/UX
+
+* correct react-select portal dropdown positioning in modals ([#3250](https://github.com/ComPlat/chemotion_ELN/pull/3250))
+
+### ketcher
+
+* skip onTemplateMove on ADD_BOND when no images/labels present ([#3249](https://github.com/ComPlat/chemotion_ELN/pull/3249))
+
+
 # [v3.1.1]
 > (2026-05-06)
 
