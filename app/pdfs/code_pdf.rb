@@ -43,6 +43,7 @@ class CodePdf < Prawn::Document
   # @return [CodePdf] a new CodePdf object
   def initialize(elements, **options)
     @elements = elements
+    @code_logs_cache = preload_code_logs
     @code_type = determine_code_type(options)
     @code_image_size = options.fetch(:code_image_size, 0)
     @width = options.fetch(:width, 0)
@@ -94,7 +95,7 @@ class CodePdf < Prawn::Document
   def handle_text(element)
     values = [
       [element.name, name],
-      [element.code_log&.id, code_log],
+      [code_log_for(element)&.id, code_log],
     ]
 
     if type == ELEMENTS_TYPES.first
@@ -146,7 +147,7 @@ class CodePdf < Prawn::Document
   def display_bar_code(element)
     # Generate the barcode itself
     bar_code(element, @code_image_size_ratio)
-    text_box element.code_log.value_sm, bar_code_label_options(@width, @code_image_size_ratio)
+    text_box code_log_for(element).value_sm, bar_code_label_options(@width, @code_image_size_ratio)
     move_down TEXT_OFFSET.mm * ratio
   end
 
@@ -295,7 +296,7 @@ class CodePdf < Prawn::Document
   # @param text_position [String] The position of the text.
   # @return [void]
   def qr_code(element, width, code_image_size_ratio, text_position)
-    qr_code = Barby::QrCode.new(element.code_log.value, size: 1, level: :l)
+    qr_code = Barby::QrCode.new(code_log_for(element).value, size: 1, level: :l)
     outputter = outputter(qr_code)
     svg outputter.to_svg(square_code_options(width, code_image_size_ratio, text_position)),
         square_code_options(width, code_image_size_ratio, text_position)
@@ -307,7 +308,7 @@ class CodePdf < Prawn::Document
   # @param code_image_size_ratio [Float] The ratio used to scale the code image.
   # @return [void]
   def bar_code(element, code_image_size_ratio)
-    outputter = outputter(Barby::Code128C.new(element.code_log.value_sm))
+    outputter = outputter(Barby::Code128C.new(code_log_for(element).value_sm))
     svg outputter.to_svg(bar_code_options(code_image_size_ratio)), bar_code_options(code_image_size_ratio)
     move_down BAR_CODE_OFFSET * ratio
   end
@@ -319,7 +320,7 @@ class CodePdf < Prawn::Document
   # @param text_position [String] The position of the text.
   # @return [void]
   def data_matrix(element, width, code_image_size_ratio, text_position)
-    outputter = outputter(Barby::DataMatrix.new(element.code_log.value))
+    outputter = outputter(Barby::DataMatrix.new(code_log_for(element).value))
     svg outputter.to_svg(square_code_options(width, code_image_size_ratio, text_position)),
         square_code_options(width, code_image_size_ratio, text_position)
     move_down DATA_MATRIX_CODE_OFFSET * ratio * code_image_size_ratio
@@ -362,6 +363,27 @@ class CodePdf < Prawn::Document
 
   def outputter(code)
     Barby::SvgOutputter.new(code)
+  end
+
+  # Loads all CodeLog records for the current elements in a single query and
+  # returns them as a hash keyed by +source_id+, so callers can do an O(1)
+  # look-up instead of issuing one query per element (N+1 pattern).
+  # @return [Hash{Integer => CodeLog}]
+  def preload_code_logs
+    return {} if elements.blank?
+
+    source = elements.first.source_class
+    ids = elements.map(&:id)
+    CodeLog.where(source: source, source_id: ids)
+           .order(created_at: :desc)
+           .each_with_object({}) { |log, hash| hash[log.source_id] ||= log }
+  end
+
+  # Returns the cached CodeLog for +element+.
+  # @param element [Object]
+  # @return [CodeLog, nil]
+  def code_log_for(element)
+    @code_logs_cache[element.id]
   end
 end
 # rubocop:enable Metrics/ClassLength
