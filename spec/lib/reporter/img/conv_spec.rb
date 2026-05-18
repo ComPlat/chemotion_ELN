@@ -9,8 +9,8 @@ describe Reporter::Img::Conv do
     let(:ext)    { 'png' }
 
     before do
-      # pin_nested_svg_height returns the original path when the SVG is absent/unchanged
-      allow(described_class).to receive(:pin_nested_svg_height).and_return(input)
+      # pin_nested_svg_height returns [path, nil] when the SVG needs no change
+      allow(described_class).to receive(:pin_nested_svg_height).and_return([input, nil])
     end
 
     context 'when Inkscape 1.x is available' do
@@ -48,9 +48,31 @@ describe Reporter::Img::Conv do
       end
 
       it 'prepares the SVG via pin_nested_svg_height before export' do
-        expect(described_class).to receive(:pin_nested_svg_height).with(input).and_return(input)
+        expect(described_class).to receive(:pin_nested_svg_height).with(input).and_return([input, nil])
         allow(described_class).to receive(:system).and_return(true)
         described_class.by_inkscape(input, output, ext)
+      end
+
+      it 'passes only Strings to the system call (regression: Pathname input must not raise TypeError)' do
+        expect(described_class).to receive(:system) do |cmd, *args|
+          expect(args).to all(be_a(String))
+          true
+        end
+
+        described_class.by_inkscape(Pathname.new(input), output, ext)
+      end
+    end
+
+    context 'when input is a Pathname' do
+      before { allow(described_class).to receive(:system).and_return(true) }
+
+      it 'does not raise TypeError' do
+        expect { described_class.by_inkscape(Pathname.new(input), output, ext) }.not_to raise_error
+      end
+
+      it 'converts the Pathname to a String before calling pin_nested_svg_height' do
+        expect(described_class).to receive(:pin_nested_svg_height).with(input).and_return([input, nil])
+        described_class.by_inkscape(Pathname.new(input), output, ext)
       end
     end
 
@@ -71,6 +93,28 @@ describe Reporter::Img::Conv do
         allow(described_class).to receive(:system).and_return(nil)
         expect { described_class.by_inkscape(input, output, ext) }
           .to raise_error(RuntimeError, 'Inkscape export failed')
+      end
+    end
+
+    context 'when pin_nested_svg_height returns a patched Tempfile' do
+      let(:patched_path) { '/tmp/patched.svg' }
+      let(:patched_tmp)  { instance_double(Tempfile) }
+
+      before do
+        allow(described_class).to receive(:pin_nested_svg_height).and_return([patched_path, patched_tmp])
+        allow(described_class).to receive(:system).and_return(true)
+        allow(patched_tmp).to receive(:close!)
+      end
+
+      it 'closes the patched Tempfile after export' do
+        expect(patched_tmp).to receive(:close!)
+        described_class.by_inkscape(input, output, ext)
+      end
+
+      it 'closes the patched Tempfile even when export raises' do
+        allow(described_class).to receive(:system).and_return(nil)
+        expect(patched_tmp).to receive(:close!)
+        expect { described_class.by_inkscape(input, output, ext) }.to raise_error('Inkscape export failed')
       end
     end
   end
@@ -97,17 +141,25 @@ describe Reporter::Img::Conv do
 
       it 'returns a new path (not the original)' do
         path = write_svg(svg)
-        result = described_class.pin_nested_svg_height(path)
-        expect(result).not_to eq(path)
+        result_path, = described_class.pin_nested_svg_height(path)
+        expect(result_path).not_to eq(path)
+      end
+
+      it 'returns a Tempfile as the second element' do
+        path = write_svg(svg)
+        _, result_tmp = described_class.pin_nested_svg_height(path)
+        expect(result_tmp).to be_a(Tempfile)
+        result_tmp.close!
       end
 
       it 'adds height="100%" to the inner svg element' do
         path = write_svg(svg)
-        result = described_class.pin_nested_svg_height(path)
-        doc = Nokogiri::XML(File.read(result))
+        result_path, result_tmp = described_class.pin_nested_svg_height(path)
+        doc = Nokogiri::XML(File.read(result_path))
         inner = doc.xpath('//*[local-name()="svg"]/*[local-name()="svg"]').first
         expect(inner['height']).to eq('100%')
         expect(inner['width']).to eq('100%')
+        result_tmp.close!
       end
     end
 
@@ -122,7 +174,9 @@ describe Reporter::Img::Conv do
 
       it 'returns the original path unchanged' do
         path = write_svg(svg)
-        expect(described_class.pin_nested_svg_height(path)).to eq(path)
+        result_path, result_tmp = described_class.pin_nested_svg_height(path)
+        expect(result_path).to eq(path)
+        expect(result_tmp).to be_nil
       end
     end
 
@@ -137,7 +191,9 @@ describe Reporter::Img::Conv do
 
       it 'returns the original path unchanged' do
         path = write_svg(svg)
-        expect(described_class.pin_nested_svg_height(path)).to eq(path)
+        result_path, result_tmp = described_class.pin_nested_svg_height(path)
+        expect(result_path).to eq(path)
+        expect(result_tmp).to be_nil
       end
     end
 
@@ -160,27 +216,32 @@ describe Reporter::Img::Conv do
 
       it 'adds height="100%" so polymer images are scaled within the frame, not clipped' do
         path = write_svg(svg)
-        result = described_class.pin_nested_svg_height(path)
-        doc = Nokogiri::XML(File.read(result))
+        result_path, result_tmp = described_class.pin_nested_svg_height(path)
+        doc = Nokogiri::XML(File.read(result_path))
         inner = doc.xpath('//*[local-name()="svg"]/*[local-name()="svg"]').first
         expect(inner['height']).to eq('100%')
+        result_tmp.close!
       end
 
       it 'preserves <image> elements in the output' do
         path = write_svg(svg)
-        result = described_class.pin_nested_svg_height(path)
-        doc = Nokogiri::XML(File.read(result))
+        result_path, result_tmp = described_class.pin_nested_svg_height(path)
+        doc = Nokogiri::XML(File.read(result_path))
         images = doc.xpath('//*[local-name()="image"]')
         expect(images).not_to be_empty
+        result_tmp.close!
       end
     end
   end
 
   describe '.data_to_svg' do
-    it 'writes SVG data to a temp file and returns its path' do
+    it 'writes SVG data to a temp file and returns a Tempfile' do
       svg = '<svg><circle/></svg>'
-      path = described_class.data_to_svg(svg)
-      expect(File.read(path)).to eq(svg)
+      svg_tmp = described_class.data_to_svg(svg)
+      expect(svg_tmp).to be_a(Tempfile)
+      expect(File.read(svg_tmp.path)).to eq(svg)
+    ensure
+      svg_tmp&.close!
     end
   end
 
