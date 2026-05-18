@@ -23,6 +23,15 @@ class CodePdf < Prawn::Document
   BAR_CODE = CODE_TYPES[1].freeze
   TEXT_POSITION_TYPES = %w[below right].freeze
   ELEMENTS_TYPES = %w[sample reaction].freeze
+  # Candidate TTF paths searched in order. The first existing file is used so
+  # element labels with non-Latin1 characters (e.g. Arabic, CJK) render instead
+  # of raising Encoding::UndefinedConversionError under Prawn's default AFM
+  # Helvetica.
+  UNICODE_FONT_PATHS = [
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+    '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
+    '/usr/share/fonts/TTF/DejaVuSans.ttf',
+  ].freeze
 
   attr_reader :elements, # list of elements to be displayed
               :code_type, # type of code to be displayed, one of CODE_TYPES
@@ -62,7 +71,20 @@ class CodePdf < Prawn::Document
       page_size: page_size,
       margin: [0, 0, 0, 0],
     )
+    register_unicode_font
     iterate
+  end
+
+  # Registers a TTF that covers a broad Unicode range so element labels with
+  # non-Latin1 characters can be rendered. No-op if none of the candidates
+  # exist on the host; falls back to Prawn's default Helvetica (Win-1252) in
+  # that case.
+  def register_unicode_font
+    path = UNICODE_FONT_PATHS.find { |p| File.exist?(p) }
+    return unless path
+
+    font_families.update('Unicode' => { normal: path })
+    font 'Unicode'
   end
 
   def determine_code_type(options)
