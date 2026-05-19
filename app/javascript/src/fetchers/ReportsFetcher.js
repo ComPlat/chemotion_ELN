@@ -1,17 +1,14 @@
 import 'whatwg-fetch';
 import _ from 'lodash';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { downloadBlob } from 'src/utilities/FetcherHelper';
 
 export default class ReportsFetcher {
   static fetchArchives() {
-    let promise = fetch('/api/v1/archives/all', {
+    const promise = fetch('/api/v1/archives/all', {
       credentials: 'same-origin'
     })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
+      .then((response) => response.json()).then((json) => json).catch((errorMessage) => {
         console.log(errorMessage);
       });
 
@@ -19,12 +16,12 @@ export default class ReportsFetcher {
   }
 
   static deleteArchive(archive_id) {
-    let promise = fetch(`/api/v1/archives/${archive_id}`, {
+    const promise = fetch(`/api/v1/archives/${archive_id}`, {
       credentials: 'same-origin',
       method: 'DELETE',
     })
       .then((response) => {
-        if (response.status == 200) { return archive_id }
+        if (response.status == 200) { return archive_id; }
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -33,20 +30,16 @@ export default class ReportsFetcher {
   }
 
   static fetchDownloadable(ids) {
-    let promise = fetch('/api/v1/archives/downloadable/', {
+    const promise = fetch('/api/v1/archives/downloadable/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ ids: ids }),
+      body: JSON.stringify({ ids }),
     })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
+      .then((response) => response.json()).then((json) => json).catch((errorMessage) => {
         console.log(errorMessage);
       });
 
@@ -54,17 +47,15 @@ export default class ReportsFetcher {
   }
 
   static create(report) {
-    let promise = fetch('/api/v1/reports', {
+    const promise = fetch('/api/v1/reports', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(report),
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
+    }).then((response) => response.json()).then((json) => {
       if (json.error) {
         NotificationActions.add({
           title: json.error,
@@ -129,5 +120,20 @@ export default class ReportsFetcher {
     });
 
     return promise;
+  }
+
+  static exportSamples(type, id) {
+    const fileName = `${type.charAt(0).toUpperCase() + type.substring(1)}_${id}_Samples Excel.xlsx`;
+    return fetch(`/api/v1/reports/excel_${type}?id=${id}`, {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
+    }).then((response) => {
+      if (response.ok) { return response.blob(); }
+      throw Error(response.statusText);
+    }).then((blob) => {
+      downloadBlob(fileName, blob);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
   }
 }
