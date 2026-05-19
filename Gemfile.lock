@@ -190,7 +190,7 @@ GEM
       bigdecimal
       rexml
     crass (1.0.6)
-    css_parser (1.17.1)
+    css_parser (1.22.0)
       addressable
     csv (3.3.5)
     cypress-on-rails (1.17.0)
@@ -518,7 +518,7 @@ GEM
       pry (>= 0.13, < 0.15)
     pry-rails (0.3.11)
       pry (>= 0.13.0)
-    public_suffix (5.1.1)
+    public_suffix (7.0.5)
     puma (5.6.9)
       nio4r (~> 2.0)
     raabro (1.4.0)
