@@ -41,7 +41,7 @@ export const MeasurementsStore = types
       // for more complex cases we should use the generator version.
       // see https://mobx-state-tree.js.org/concepts/async-actions for more details.
       MeasurementsFetcher.fetchMeasurementHierarchy(sampleId)
-        .then(result => result.forEach(entry => self._storeMeasurementsForSample(entry)))
+        .then(result => Array.isArray(result) ? result.forEach(entry => self._storeMeasurementsForSample(entry)) : [])
         .then(result => afterComplete())
     },
     deleteMeasurement(id, afterComplete = () => {}) {

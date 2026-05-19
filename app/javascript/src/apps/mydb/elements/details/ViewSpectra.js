@@ -660,10 +660,13 @@ class ViewSpectra extends React.Component {
   }
 
   refreshOp(params) {
-    const refreshPayloads = this.getSavePayloads(params, { simulatenmr: true });
+    const hasSpectraList = Array.isArray(params?.spectra_list) && params.spectra_list.length > 0;
+    const spectraList = hasSpectraList
+      ? this.getSavePayloads(params, { simulatenmr: true })
+      : [{ ...params, simulatenmr: true }];
     this.saveOp({
       ...params,
-      spectra_list: refreshPayloads,
+      spectra_list: spectraList,
     });
   }
 

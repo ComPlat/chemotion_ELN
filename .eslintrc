@@ -36,5 +36,16 @@
         "paths": ["app/javascript"]
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "files": ["stories/**/*.js", "stories/**/*.jsx"],
+      "rules": {
+        "no-relative-import-paths/no-relative-import-paths": "off",
+        "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
+        "import/no-unresolved": ["error", { "ignore": ["storybook/test"] }],
+        "max-len": ["error", { "code": 120, "ignoreComments": true }]
+      }
+    }
+  ]
 }

@@ -1,3 +1,4 @@
+/* eslint-disable react/require-default-props */
 import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Form } from 'react-bootstrap';
@@ -15,29 +16,20 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import { filterParamsFromUIState } from 'src/utilities/collectionUtilities';
 
-const defaultProps = {
-  title: 'Sharing of Elements',
-  collectionId: null,
-  collectionShareId: null,
-  shareType: 'new',
-  collectionPermissions: {
+function SelectionShareModal({
+  title = 'Sharing of Elements',
+  collectionId = null,
+  collectionShareId = null,
+  shareType = 'new',
+  collectionPermissions = {
     permissionLevel: 0,
     sampleDetailLevel: 0,
     reactionDetailLevel: 0,
     wellplateDetailLevel: 0,
     screenDetailLevel: 0,
-    elementDetailLevel: 10
+    elementDetailLevel: 10,
   },
-  showUserSelect: true,
-};
-
-function SelectionShareModal({
-  title,
-  collectionId,
-  collectionShareId,
-  shareType,
-  collectionPermissions,
-  showUserSelect,
+  showUserSelect = true,
   onHide,
 }) {
   const collectionsStore = useContext(StoreContext).collections;
@@ -273,8 +265,6 @@ function SelectionShareModal({
 }
 
 export default observer(SelectionShareModal);
-
-SelectionShareModal.defaultProps = defaultProps;
 
 SelectionShareModal.propTypes = {
   title: PropTypes.string,

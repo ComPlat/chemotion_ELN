@@ -1128,10 +1128,11 @@ class Material extends Component {
   }
 
   dragHandle() {
-    const { dragRef } = this.props;
+    const { dragRef, reaction } = this.props;
+    const enabled = permitOn(reaction);
 
     return (
-      <DragHandle ref={dragRef} />
+      <DragHandle ref={enabled ? dragRef : null} enabled={enabled} />
     );
   }
 
@@ -1203,6 +1204,7 @@ class Material extends Component {
                     value={material.coefficient ?? 1}
                     onChange={this.handleCoefficientChange}
                     name="coefficient"
+                    disabled={!permitOn(reaction)}
                   />
                 </div>
               </OverlayTrigger>

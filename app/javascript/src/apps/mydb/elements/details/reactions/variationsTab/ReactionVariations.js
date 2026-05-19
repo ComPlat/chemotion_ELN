@@ -15,7 +15,7 @@ import {
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
   removeObsoleteColumnDefinitions, getInitialGridState, persistRowOrder, setRowOrder,
   setLayout, persistTableLayout, cellDataTypes,
-  getReactionSegments,
+  getReactionSegments, processHeaderForCsvExport
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
@@ -206,12 +206,22 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
         </Tooltip>
           )}
     >
-      <Button size="sm" variant="success" onClick={addRow} className="mb-2">
+      <Button size="sm" onClick={addRow} className="mb-2">
         <i className="fa fa-plus me-1" />
-        {' '}
         Add variation
       </Button>
     </OverlayTrigger>
+  );
+
+  const exportTable = () => (
+    <Button
+      size="sm"
+      className="mb-2"
+      onClick={() => gridRef.current.api.exportDataAsCsv({ processHeaderCallback: processHeaderForCsvExport })}
+    >
+      <i className="icon-arrow-up-from-bracket me-1" />
+      Export to CSV
+    </Button>
   );
 
   /*
@@ -353,7 +363,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     <div>
       <ButtonGroup>
         {addVariation()}
-        <RemoveVariationsModal onRemoveAll={() => setReactionVariations([])} />
+        {exportTable()}
         <ColumnSelection
           selectedColumns={selectedColumns}
           availableColumns={{
@@ -367,6 +377,7 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
           }}
           onApply={applyColumnSelection}
         />
+        <RemoveVariationsModal onRemoveAll={() => setReactionVariations([])} />
       </ButtonGroup>
       <div className="ag-theme-alpine ag-theme-reaction-variations">
         <AgGridReact
