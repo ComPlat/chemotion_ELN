@@ -33,8 +33,6 @@ import {
   convertTime,
   convertTurnoverFrequency,
   calculateFeedstockMoles,
-  calculateGasMoles,
-  convertTemperatureToKelvin,
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -42,7 +40,6 @@ import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
-import { parseNumericString } from 'src/utilities/MathUtils';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
@@ -600,7 +597,7 @@ export default class ReactionDetailsScheme extends React.Component {
         break;
       case 'VesselSizeChanged':
         onReactionChange(
-          this.updatedReactionForVesselSizeChange()
+          this.updatedReactionForVesselSizeChange(changeEvent)
         );
         break;
       default:
@@ -1239,8 +1236,10 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
-  updatedReactionForVesselSizeChange() {
-    return this.updatedReactionWithSample(this.updatedSamplesForVesselSizeChange.bind(this));
+  updatedReactionForVesselSizeChange(changeEvent) {
+    return this.updatedReactionWithSample(
+      (samples) => this.updatedSamplesForVesselSizeChange(samples, changeEvent.vesselSizeInLiters)
+    );
   }
 
   /**
@@ -1824,18 +1823,18 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
-  updatedSamplesForVesselSizeChange(samples) {
-    const vesselSize = GasPhaseReactionStore.getState().reactionVesselSizeValue;
+  updatedSamplesForVesselSizeChange(samples, vesselSizeInLiters) {
+    const vesselSize = vesselSizeInLiters ?? GasPhaseReactionStore.getState().reactionVesselSizeValue;
     return samples.map((sample) => {
       if (sample.isGas() && sample.gas_phase_data) {
-        const { part_per_million, temperature } = sample.gas_phase_data;
-        let temperatureInKelvin = temperature.value;
-        if (temperature.unit !== 'K') {
-          temperatureInKelvin = convertTemperatureToKelvin({ value: temperature.value, unit: temperature.unit });
+        const moles = sample.updateGasMoles(vesselSize);
+        if (moles !== null && moles !== undefined) {
+          sample.setAmount({ value: moles, unit: 'mol' });
+          const equivalent = this.calculateEquivalentForGasProduct(sample, vesselSize);
+          if (equivalent !== null && equivalent !== undefined) {
+            sample.equivalent = equivalent > 1 ? 1 : equivalent;
+          }
         }
-        const moles = calculateGasMoles(vesselSize, part_per_million, temperatureInKelvin);
-        sample.setAmount({ value: moles, unit: 'mol' });
-        sample.updateTONValue(moles);
       }
       return sample;
     });
@@ -1858,21 +1857,41 @@ export default class ReactionDetailsScheme extends React.Component {
     return reaction;
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  normalizeVesselSizeValue(raw) {
+    let value = raw.replace(/[^0-9.]/g, '');
+    const dotIndex = value.indexOf('.');
+    if (dotIndex !== -1) {
+      value = value.substring(0, dotIndex + 1) + value.substring(dotIndex + 1).replace(/\./g, '');
+    }
+    return value;
+  }
+
+  vesselSizeInLiters(normalizedValue, unit) {
+    const numericValue = parseFloat(normalizedValue) || 0;
+    return unit === 'l' ? numericValue : numericValue * 0.001;
+  }
+
   updateVesselSize(e) {
-    const { onInputChange } = this.props;
-    const { value } = e.target;
+    const { onInputChange, reaction } = this.props;
+    const value = this.normalizeVesselSizeValue(e.target.value);
     onInputChange('vesselSizeAmount', value);
-    const event = {
+    this.handleMaterialsChange({
       type: 'VesselSizeChanged',
-    };
-    this.handleMaterialsChange(event);
+      vesselSizeInLiters: this.vesselSizeInLiters(value, reaction.vessel_size?.unit),
+    });
   }
 
   updateVesselSizeOnBlur(e) {
-    const { onInputChange } = this.props;
-    const { value } = e.target;
-    const newValue = parseNumericString(value);
-    onInputChange('vesselSizeAmount', newValue);
+    const { onInputChange, reaction } = this.props;
+    const value = this.normalizeVesselSizeValue(e.target.value);
+    onInputChange('vesselSizeAmount', value);
+    if (value !== '') {
+      this.handleMaterialsChange({
+        type: 'VesselSizeChanged',
+        vesselSizeInLiters: this.vesselSizeInLiters(value, reaction.vessel_size?.unit),
+      });
+    }
   }
 
   changeVesselSizeUnit() {
