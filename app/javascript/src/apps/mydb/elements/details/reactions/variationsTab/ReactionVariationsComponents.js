@@ -4,7 +4,7 @@ import React, {
 } from 'react';
 import Select from 'react-select';
 import {
-  Button, ButtonGroup, Form, OverlayTrigger, Tooltip, Table
+  Button, ButtonGroup, Form, Modal, OverlayTrigger, Tooltip, Table
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { cloneDeep, isEqual } from 'lodash';
@@ -808,26 +808,53 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
         Select Columns
       </Button>
 
-      <AppModal
-        show={showModal && !pendingDeselectionConfirmation}
-        onHide={() => setShowModal(false)}
-        animation={false}
-        title="Column Selection"
-        primaryActionLabel="Apply"
-        onPrimaryAction={handleApply}
-      >
-        {Object.entries(availableColumns).map(([columnGroup, columnIDsToLabels]) => (
-          <div key={columnGroup}>
-            <h5>{toUpperCase(splitCamelCase(columnGroup))}</h5>
-            <Select
-              isMulti
-              options={Object.entries(columnIDsToLabels).map(([id, label]) => ({ value: id, label }))}
-              value={currentColumns[columnGroup]?.map((id) => ({ value: id, label: columnIDsToLabels[id] })) || []}
-              onChange={handleSelectChange(columnGroup)}
-            />
-          </div>
-        ))}
-      </AppModal>
+      <Modal show={showModal && !pendingDeselectionConfirmation} onHide={() => setShowModal(false)} animation={false}>
+        <Modal.Header closeButton>
+          <Modal.Title>Column Selection</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {Object.entries(availableColumns).map(([columnGroup, columnIDsToLabels]) => (
+            <div key={columnGroup}>
+              <h5>{toUpperCase(splitCamelCase(columnGroup))}</h5>
+              <Select
+                isMulti
+                options={Object.entries(columnIDsToLabels).map(([id, label]) => ({ value: id, label }))}
+                value={currentColumns[columnGroup]?.map((id) => ({ value: id, label: columnIDsToLabels[id] })) || []}
+                onChange={handleSelectChange(columnGroup)}
+              />
+            </div>
+          ))}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleApply}>
+            Apply
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={pendingDeselection !== null} onHide={handleCancelDeselection} animation={false}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm De-selection</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to de-select
+          {' '}
+          {pendingDeselection?.deselectedLabels}
+          ? De-selection results in the loss of data.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCancelDeselection}>
+            Keep
+            {' '}
+            {pendingDeselection?.deselectedLabels}
+          </Button>
+          <Button variant="danger" onClick={handleConfirmDeselection}>
+            Remove
+            {' '}
+            {pendingDeselection?.deselectedLabels}
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <AppModal
         show={pendingDeselectionConfirmation}
