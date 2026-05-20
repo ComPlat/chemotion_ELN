@@ -387,12 +387,6 @@ module Chemotion
       'Could not find additional chemical properties'
     end
 
-    # Returns cleaned property name strings from an Apollo-state attributes array.
-    # Each element is a Hash with at least a 'label' key (e.g. from product['attributes']).
-    def self.names_properties_merck(attributes)
-      attributes.filter_map { |attr| clean_property_name(attr['label']) }
-    end
-
     def self.clean_property_name(property_name)
       return nil if property_name.blank?
 
