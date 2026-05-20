@@ -4,8 +4,8 @@ import { InputGroup, Form } from 'react-bootstrap';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const ALLOWED_INPUT_CHARS = /[-+0-9.,\s><=≥≤–]/;
-const NUMBER_REGEX = /-?\d+(?:\.\d+)?/g;
-const COMPARISON_PREFIX_REGEX = /^\s*(>=|<=|≥|≤|>|<)\s*(-?\d+(?:\.\d+)?)\s*$/;
+const NUMBER_REGEX = /-?(?:\d+(?:\.\d+)?|\.\d+)/g;
+const COMPARISON_PREFIX_REGEX = /^\s*(>=|<=|≥|≤|>|<)\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*$/;
 
 const humanizeFieldName = (field) => field
   .replace(/_/g, ' ')
@@ -53,7 +53,7 @@ export const parseRangeInput = (rawInput) => {
     .replace(/(\d)-(?=\s*-?\d)/g, '$1 ')
     .replace(/\s*–\s*/g, ' ')
     .replace(/\.{2,3}/g, ' ')
-    .replace(/,/g, ' ');
+    .replace(/,/g, '.');
 
   const numberMatches = normalized.match(NUMBER_REGEX);
   if (!numberMatches || numberMatches.length === 0) return null;

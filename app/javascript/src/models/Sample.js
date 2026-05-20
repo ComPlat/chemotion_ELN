@@ -705,7 +705,9 @@ export default class Sample extends Element {
     this[`${field}_lowerbound`] = lowerForApi;
     this[`${field}_upperbound`] = upperForApi;
 
-    if (label !== undefined) this.updateRangeLabel(field, label);
+    // Always synchronize the persisted xref label with the current update so
+    // stale labels do not survive calls that only change/clear the bounds.
+    this.updateRangeLabel(field, label === undefined ? '' : label);
 
     const displayText = Sample.rangeDisplayText(lowerForApi, upperForApi, isOpenLower, isOpenUpper, label);
     // When both bounds are equal treat it as a single-value entry (no upper stored).

@@ -128,10 +128,15 @@ describe('parseRangeInput', () => {
     expect(parseRangeInput('  65 - 68  ').lower).toBe(65);
   });
 
-  it('tolerates a comma as a decimal/range separator', () => {
-    const result = parseRangeInput('65,68');
-    expect(result.kind).toBe('range');
-    expect(result.lower).toBe(65);
-    expect(result.upper).toBe(68);
+  it('parses decimal-comma input as numeric values', () => {
+    const singleValueResult = parseRangeInput('65,5');
+    expect(singleValueResult.kind).toBe('single');
+    expect(singleValueResult.lower).toBe(65.5);
+    expect(singleValueResult.upper).toBe(65.5);
+
+    const rangeResult = parseRangeInput('1,5-2,5');
+    expect(rangeResult.kind).toBe('range');
+    expect(rangeResult.lower).toBe(1.5);
+    expect(rangeResult.upper).toBe(2.5);
   });
 });
