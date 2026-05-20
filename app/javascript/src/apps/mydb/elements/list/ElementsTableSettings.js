@@ -68,6 +68,7 @@ export default class ElementsTableSettings extends React.Component {
     UIStore.unlisten(this.onChangeUI);
     if (this._saveLabelTimeout) {
       clearTimeout(this._saveLabelTimeout);
+      this._saveLabelTimeout = null;
       const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
       UserActions.updateUserProfile({
         show_external_name: showSampleExternalLabel,
@@ -136,6 +137,7 @@ export default class ElementsTableSettings extends React.Component {
   scheduleSaveLabels() {
     clearTimeout(this._saveLabelTimeout);
     this._saveLabelTimeout = setTimeout(() => {
+      this._saveLabelTimeout = null;
       const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
       UserActions.updateUserProfile({
         show_external_name: showSampleExternalLabel,
