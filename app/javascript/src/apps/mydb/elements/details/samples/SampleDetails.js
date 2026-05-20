@@ -973,7 +973,7 @@ export default class SampleDetails extends React.Component {
         />
         <div className="mb-2">
           {this.chemicalIdentifiersItem(sample)}
-          {sample.molecule_formula && !sample.isHierarchicalMaterial && (
+          {sample.molecule_formula && !sample.isHierarchicalMaterial() && (
             this.elementalPropertiesItem(sample)
           )}
         </div>
