@@ -37,7 +37,7 @@ module Chemotion
           Connection: 'keep-alive',
         },
         timeout: 15,
-        follow_redirects: true }
+        follow_redirects: false }
     end
 
     def self.merck_request(name)
@@ -99,35 +99,37 @@ module Chemotion
       doc.css("a[href*='/product/']").map { |a| a['href'] }.find { |h| h.match?(product_path_re) }
     end
 
-    # Validate that a URL is safe to request (SSRF protection)
+    # Validate that a URL is safe to request (SSRF protection).
+    # Redirects are disabled in request_options so whitelisted URLs cannot
+    # redirect to untrusted hosts.
     def self.validate_url_for_request!(url)
       raise StandardError, 'URL cannot be nil or empty' if url.blank?
 
       parsed_uri = URI.parse(url)
-      raise StandardError, 'Invalid URL scheme' unless %w[http https].include?(parsed_uri.scheme)
-
-      host = parsed_uri.host
-      raise StandardError, 'URL host cannot be empty' if host.blank?
-
-      normalized_host = host.downcase
-
-      # Check if domain is in whitelist
-      domain_allowed = ALLOWED_DOMAINS.any? do |allowed|
-        normalized_allowed = allowed.downcase
-        normalized_host == normalized_allowed || normalized_host.end_with?(".#{normalized_allowed}")
-      end
-      raise StandardError, "Domain #{host} is not allowed" unless domain_allowed
+      raise StandardError, 'Invalid URL scheme' unless %w[https].include?(parsed_uri.scheme)
+      raise StandardError, 'URL host cannot be empty' if parsed_uri.host.blank?
+      raise StandardError, "Domain #{parsed_uri.host} is not allowed" unless allowed_host?(parsed_uri.host)
 
       url
     rescue URI::InvalidURIError
       raise StandardError, 'Invalid URL format'
     end
 
+    # Returns true when +host+ matches an entry in ALLOWED_DOMAINS exactly or
+    # as a subdomain (e.g. "www.sigmaaldrich.com" matches "sigmaaldrich.com").
+    def self.allowed_host?(host)
+      normalized = host.to_s.downcase
+      ALLOWED_DOMAINS.any? do |allowed|
+        normalized == allowed || normalized.end_with?(".#{allowed}")
+      end
+    end
+
     private_class_method :extract_product_href_from_next_data,
                          :extract_product_href_from_apollo_state,
                          :apollo_first_search_product,
                          :extract_product_href_from_html,
-                         :validate_url_for_request!
+                         :validate_url_for_request!,
+                         :allowed_host?
 
     def self.merck(name, language)
       product_number_string = merck_request(name)
@@ -254,7 +256,7 @@ module Chemotion
                     .children[1].children[1].children[1]
     end
 
-    def self.construct_h_statements(h_phrases, vendor = nil)
+    def self.construct_h_statements(h_phrases)
       h_statements = {}
       h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
 
