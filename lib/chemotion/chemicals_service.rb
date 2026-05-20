@@ -102,17 +102,22 @@ module Chemotion
     # Validate that a URL is safe to request (SSRF protection)
     def self.validate_url_for_request!(url)
       raise StandardError, 'URL cannot be nil or empty' if url.blank?
-      
+
       parsed_uri = URI.parse(url)
       raise StandardError, 'Invalid URL scheme' unless %w[http https].include?(parsed_uri.scheme)
-      
+
       host = parsed_uri.host
       raise StandardError, 'URL host cannot be empty' if host.blank?
 
+      normalized_host = host.downcase
+
       # Check if domain is in whitelist
-      domain_allowed = ALLOWED_DOMAINS.any? { |allowed| host.end_with?(allowed) || host == allowed }
+      domain_allowed = ALLOWED_DOMAINS.any? do |allowed|
+        normalized_allowed = allowed.downcase
+        normalized_host == normalized_allowed || normalized_host.end_with?(".#{normalized_allowed}")
+      end
       raise StandardError, "Domain #{host} is not allowed" unless domain_allowed
-      
+
       url
     rescue URI::InvalidURIError
       raise StandardError, 'Invalid URL format'
