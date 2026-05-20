@@ -1318,8 +1318,19 @@ class ElementActions {
   bulkUpdateUserLabels(params) {
     return (dispatch) => {
       UserLabelsFetcher.bulkUpdate(params)
-        .then(() => { dispatch(); })
-        .catch((error) => {
+        .then(() => {
+          NotificationActions.add({
+            title: 'Bulk edit user labels',
+            message: 'Labels updated for the selection.',
+            level: 'success',
+            position: 'tr',
+            dismissible: 'button',
+            autoDismiss: 5,
+            uid: 'bulkUpdateUserLabels',
+          });
+          dispatch();
+        })
+        .catch(() => {
           NotificationActions.add({
             title: 'Bulk edit user labels',
             message: 'Could not update labels for the selection.',
@@ -1329,7 +1340,6 @@ class ElementActions {
             autoDismiss: 5,
             uid: 'bulkUpdateUserLabels',
           });
-          console.error(error);
         });
     };
   }

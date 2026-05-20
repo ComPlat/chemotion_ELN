@@ -62,7 +62,6 @@ module Chemotion
         error!('No accessible labels', 403) if add_ids.empty? && remove_ids.empty?
 
         collection_id = params.dig(:ui_state, :currentCollection, :id)
-        error!('400 Bad Request', 400) if collection_id.blank?
 
         # Build every selected scope first, authorize them all, and only then
         # mutate inside a transaction so a failed check can't leave partial writes.
@@ -88,13 +87,12 @@ module Chemotion
 
         ActiveRecord::Base.transaction do
           scopes.each do |scope|
-            scope.find_each do |el|
-              bulk_apply_element_labels(el, add_ids, remove_ids, current_user.id)
-            end
+            bulk_apply_labels_to_scope(scope, add_ids, remove_ids, current_user.id)
           end
         end
 
         status 204
+        body false
       end
     end
   end
