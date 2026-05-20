@@ -1834,6 +1834,9 @@ export default class ReactionDetailsScheme extends React.Component {
           if (equivalent !== null && equivalent !== undefined) {
             sample.equivalent = equivalent > 1 ? 1 : equivalent;
           }
+        } else {
+          sample.setAmount({ value: null, unit: 'mol' });
+          sample.equivalent = null;
         }
       }
       return sample;
