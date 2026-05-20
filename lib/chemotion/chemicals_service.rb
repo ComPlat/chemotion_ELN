@@ -26,7 +26,7 @@ module Chemotion
     }.freeze
 
     SAFETY_SHEETS_DIR = 'public/safety_sheets'
-    ALLOWED_DOMAINS = %w[sigmaaldrich.com alfa.com].freeze
+    ALLOWED_DOMAINS = %w[sigmaaldrich.com].freeze
 
     def self.request_options
       { headers: {
