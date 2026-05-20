@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Chemotion
+  # rubocop:disable Metrics/ClassLength
   class ChemicalsService
     MAP_GERMAN_TO_ENGLISH_PROPERTIES = {
       'qualitätsniveau' => 'quality level',
@@ -44,8 +45,8 @@ module Chemotion
       string = CGI.escape(name.gsub(/\s/, '-'))
       url = "https://www.sigmaaldrich.com/DE/de/search/#{string}" \
             "?focus=products&page=1&perpage=30&sort=relevance&term=#{string}&type=product"
-      validate_url_for_request!(url)
-      merck_res = HTTParty.get(url, request_options)
+      safe_url = validate_url_for_request!(url)
+      merck_res = HTTParty.get(safe_url, request_options)
       doc = Nokogiri::HTML.parse(merck_res.body.to_s)
 
       href = extract_product_href_from_next_data(doc) || extract_product_href_from_html(doc)
@@ -102,6 +103,8 @@ module Chemotion
     # Validate that a URL is safe to request (SSRF protection).
     # Redirects are disabled in request_options so whitelisted URLs cannot
     # redirect to untrusted hosts.
+    # Returns a URI reconstructed from parsed components so callers receive a
+    # taint-free string even when the input originated from user data.
     def self.validate_url_for_request!(url)
       raise StandardError, 'URL cannot be nil or empty' if url.blank?
 
@@ -110,7 +113,8 @@ module Chemotion
       raise StandardError, 'URL host cannot be empty' if parsed_uri.host.blank?
       raise StandardError, "Domain #{parsed_uri.host} is not allowed" unless allowed_host?(parsed_uri.host)
 
-      url
+      # Return the URI rebuilt from parsed components to break the taint flow.
+      parsed_uri.to_s
     rescue URI::InvalidURIError
       raise StandardError, 'Invalid URL format'
     end
@@ -169,8 +173,8 @@ module Chemotion
     def self.alfa(name, language)
       chosen_lang = { 'en' => 'EE', 'de' => 'DE', 'fr' => 'FR' }
       url = "https://www.alfa.com/en/search/?q=#{CGI.escape(name)}"
-      validate_url_for_request!(url)
-      alfa_req = HTTParty.get(url, request_options)
+      safe_url = validate_url_for_request!(url)
+      alfa_req = HTTParty.get(safe_url, request_options)
       alfa_link = "https://www.alfa.com/en/msds/?language=#{chosen_lang[language]}&subformat=CLP1&sku=#{alfa_product(alfa_req)}"
       { 'alfa_link' => alfa_link, 'alfa_product_number' => alfa_product(alfa_req),
         'alfa_product_link' => "https://www.alfa.com/en/catalog/#{alfa_product(alfa_req)}" }
@@ -217,10 +221,10 @@ module Chemotion
     end
 
     def self.request_pdf_file(link, file_path)
-      validate_url_for_request!(link)
+      safe_url = validate_url_for_request!(link)
       options = request_options.dup
       options[:headers]['Origin'] = 'https://www.sigmaaldrich.com'
-      req_safety_sheet = HTTParty.get(link, options)
+      req_safety_sheet = HTTParty.get(safe_url, options)
       if req_safety_sheet.headers['Content-Type'] == 'application/pdf'
         File.binwrite(file_path, req_safety_sheet)
         sleep 1
@@ -250,8 +254,8 @@ module Chemotion
 
     def self.health_section(product_number)
       url = "https://www.alfa.com/en/catalog/#{CGI.escape(product_number)}/"
-      validate_url_for_request!(url)
-      alfa_req = HTTParty.get(url, request_options)
+      safe_url = validate_url_for_request!(url)
+      alfa_req = HTTParty.get(safe_url, request_options)
       Nokogiri::HTML.parse(alfa_req.body).xpath("//*[contains(@id, 'health')]")
                     .children[1].children[1].children[1]
     end
@@ -337,8 +341,8 @@ module Chemotion
     # Fetch and parse __NEXT_DATA__ Apollo state from a Sigma-Aldrich product page.
     # Returns the first Hash with __typename == 'Product', or nil.
     def self.fetch_product_from_apollo(product_link)
-      validate_url_for_request!(product_link)
-      response = HTTParty.get(product_link, request_options)
+      safe_url = validate_url_for_request!(product_link)
+      response = HTTParty.get(safe_url, request_options)
       doc = Nokogiri::HTML.parse(response.body.to_s)
       script = doc.at_css('#__NEXT_DATA__')
       return nil unless script
@@ -380,8 +384,8 @@ module Chemotion
     end
 
     def self.chemical_properties_alfa(product_link)
-      validate_url_for_request!(product_link)
-      alfa_req = HTTParty.get(product_link, request_options)
+      safe_url = validate_url_for_request!(product_link)
+      alfa_req = HTTParty.get(safe_url, request_options)
       properties = Nokogiri::HTML.parse(alfa_req.body).xpath("//*[contains(@id, 'product')]").search('div.col-md-12')
                                  .search('div.col-md-3').text.delete("\t").split("\n\n")
       chem_properties_alfa(properties)
@@ -429,8 +433,8 @@ module Chemotion
     end
 
     def self.chemical_properties_merck(product_link)
-      validate_url_for_request!(product_link)
-      product = fetch_product_from_apollo(product_link)
+      safe_url = validate_url_for_request!(product_link)
+      product = fetch_product_from_apollo(safe_url)
       raise StandardError, 'Product not found in Apollo state' unless product
 
       (product['attributes'] || []).each_with_object({}) do |attr, result|
@@ -586,4 +590,5 @@ module Chemotion
       { error: e.message }
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end
