@@ -21,6 +21,6 @@ export default class UserSettingsFetcher {
   }
 
   static deleteAffiliation(id) {
-    return ApiClient.deleteRequest(`/api/v1/public/affiliations/${id}`);
+    return ApiClient.deleteRequest(`/api/v1/affiliations/${id}`);
   }
 }
