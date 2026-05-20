@@ -620,7 +620,6 @@ class ElementStore {
     this.fetchElementsByCollectionIdandLayout();
   }
 
-
   fetchElementsByCollectionIdandLayout() {
     const { currentSearchSelection, currentCollection } = UIStore.getState();
     if (currentSearchSelection != null) {

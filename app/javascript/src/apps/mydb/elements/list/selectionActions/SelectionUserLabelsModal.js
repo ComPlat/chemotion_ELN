@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Button, Form, Modal } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import UserActions from 'src/stores/alt/actions/UserActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 const labelOption = ({ title, color, access_level }) => (
@@ -19,7 +20,16 @@ const labelOption = ({ title, color, access_level }) => (
 );
 
 const SelectionUserLabelsModal = ({ onHide }) => {
-  const { currentUser, labels } = UserStore.getState();
+  const [{ currentUser, labels }, setUserState] = useState(() => UserStore.getState());
+
+  useEffect(() => {
+    const handleStoreChange = (state) => setUserState(state);
+    UserStore.listen(handleStoreChange);
+    UserActions.fetchUserLabels();
+
+    return () => UserStore.unlisten(handleStoreChange);
+  }, []);
+
   const editableLabels = useMemo(() => (
     (labels || []).filter((l) => l.access_level === 2 || l.user_id === currentUser?.id)
   ), [labels, currentUser]);

@@ -61,29 +61,36 @@ module Chemotion
 
         error!('No accessible labels', 403) if add_ids.empty? && remove_ids.empty?
 
-        collection_id = params[:ui_state][:currentCollection][:id]
+        collection_id = params.dig(:ui_state, :currentCollection, :id)
+        error!('400 Bad Request', 400) if collection_id.blank?
+
+        # Build every selected scope first, authorize them all, and only then
+        # mutate inside a transaction so a failed check can't leave partial writes.
+        scopes = []
 
         API::ELEMENTS.each do |element|
           ui_state = params[:ui_state][element]
           next if ui_state.blank?
 
-          scope = API::ELEMENT_CLASS[element].by_collection_id(collection_id).by_ui_state(ui_state)
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, scope).update?
-
-          scope.find_each do |el|
-            bulk_apply_element_labels(el, add_ids, remove_ids, current_user.id)
-          end
+          scopes << API::ELEMENT_CLASS[element].by_collection_id(collection_id).by_ui_state(ui_state)
         end
 
         Labimotion::ElementKlass.where(name: params[:ui_state].keys).select(:name, :id).each do |klass|
           ui_state = params[:ui_state][klass.name]
           next if ui_state.blank?
 
-          scope = klass.elements.by_collection_id(collection_id).by_ui_state(ui_state)
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, scope).update?
+          scopes << klass.elements.by_collection_id(collection_id).by_ui_state(ui_state)
+        end
 
-          scope.find_each do |el|
-            bulk_apply_element_labels(el, add_ids, remove_ids, current_user.id)
+        scopes.each do |scope|
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, scope).update_all?
+        end
+
+        ActiveRecord::Base.transaction do
+          scopes.each do |scope|
+            scope.find_each do |el|
+              bulk_apply_element_labels(el, add_ids, remove_ids, current_user.id)
+            end
           end
         end
 

@@ -15,7 +15,13 @@ export default class UserLabelsFetcher {
         remove_label_ids,
       }),
     })
-      .then((response) => response)
-      .catch((errorMessage) => { console.log(errorMessage); });
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            throw new Error(text || `Request failed with status ${response.status}`);
+          });
+        }
+        return response;
+      });
   }
 }

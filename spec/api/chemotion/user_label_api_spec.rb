@@ -100,6 +100,35 @@ describe Chemotion::UserLabelAPI do
       expect(response).to have_http_status(:bad_request)
     end
 
+    it "preserves another user's private label while applying the caller's labels" do
+      foreign = UserLabel.create!(user_id: other_user.id, access_level: 0, title: 'Foreign', color: '#fff')
+      sample_1.tag.update!(taggable_data: (sample_1.tag.taggable_data || {}).merge('user_labels' => [foreign.id]))
+
+      params = { ui_state: ui_state_for([sample_1.id]), add_label_ids: [label_a.id] }
+
+      post '/api/v1/user_labels/bulk', params: params, as: :json
+
+      expect(response).to have_http_status(:no_content)
+      expect(sample_1.reload.tag.taggable_data['user_labels']).to contain_exactly(foreign.id, label_a.id)
+    end
+
+    it 'returns 401 and writes nothing when the user cannot update the selection' do
+      foreign_collection = create(:collection, user_id: other_user.id)
+      foreign_sample = create(:sample)
+      CollectionsSample.create!(sample: foreign_sample, collection: foreign_collection)
+
+      ui_state = {
+        currentCollection: { id: foreign_collection.id },
+        sample: { checkedAll: false, checkedIds: [foreign_sample.id], uncheckedIds: [], collection_id: foreign_collection.id },
+      }
+      params = { ui_state: ui_state, add_label_ids: [label_a.id] }
+
+      post '/api/v1/user_labels/bulk', params: params, as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(foreign_sample.reload.tag.taggable_data['user_labels'] || []).to be_empty
+    end
+
     context 'with generic elements' do
       let(:element_klass) { create(:element_klass, name: 'ElementKlassUserLabel') }
       let(:generic_el) { create(:element, element_klass: element_klass, creator: user) }
