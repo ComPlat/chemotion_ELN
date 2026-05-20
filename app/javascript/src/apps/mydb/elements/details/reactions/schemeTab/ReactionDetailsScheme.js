@@ -1862,7 +1862,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   // eslint-disable-next-line class-methods-use-this
   normalizeVesselSizeValue(raw) {
-    let value = raw.replace(/[^0-9.]/g, '');
+    let value = raw.replace(',', '.').replace(/[^0-9.]/g, '');
     const dotIndex = value.indexOf('.');
     if (dotIndex !== -1) {
       value = value.substring(0, dotIndex + 1) + value.substring(dotIndex + 1).replace(/\./g, '');
