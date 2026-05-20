@@ -257,7 +257,7 @@ export default class WellplateDetailsContainers extends Component {
               return (
                 <Card
                   eventKey={key}
-                  key={`wellplate_container_${key}`}
+                  key={`wellplate_container_${container.id}`}
                   className={`rounded-0 border-0${isFirstTab ? '' : ' border-top'}`}
                 >
                   <Card.Header className="rounded-0 p-0 border-bottom-0">

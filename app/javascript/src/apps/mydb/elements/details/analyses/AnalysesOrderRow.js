@@ -103,6 +103,7 @@ AnalysesOrderRowContent.propTypes = {
   isDragging: PropTypes.bool.isRequired,
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
+  handleMove: PropTypes.func.isRequired,
 };
 
 export default compose(
