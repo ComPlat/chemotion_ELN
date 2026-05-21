@@ -848,7 +848,14 @@ RSpec.describe Attachment do
   end
 
   describe '#resolve_unique_match' do
-    let(:user) { create(:person) }
+    # New Person profiles default to inbox_auto: false (introduced in #3147),
+    # which would short-circuit resolve_unique_match. Flip it on for the
+    # specs in this block, which exist to exercise the auto-match logic.
+    let(:user) do
+      create(:person).tap do |u|
+        u.profile.update!(data: u.profile.data.merge('inbox_auto' => true))
+      end
+    end
     let(:collection) { create(:collection, user: user) }
     let(:attachment) do
       create(:attachment, :with_pdf, filename: 'JB-R23.pdf').tap do |a|
