@@ -26,7 +26,7 @@ export default class MessagesFetcher {
   }
 
   static acknowledgedMessage(params) {
-    return ApiClient.postJson('/api/v1/messages/ack', { body: params });
+    return ApiClient.putJson('/api/v1/messages/ack', { body: params });
   }
 
   static subscribeChannel(params) {
