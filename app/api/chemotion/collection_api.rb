@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Chemotion
   class CollectionAPI < Grape::API
     rescue_from ActiveRecord::RecordNotFound do
@@ -155,33 +157,21 @@ module Chemotion
       end
 
       desc 'Get collection metadata'
-      before do
-        error!('401 Unauthorized', 401) unless CollectionPolicy.new(current_user, Collection.find(params[:id])).read_metadata?
-      end
       get '/:id/metadata' do
         metadata = Metadata.where(collection_id: params[:id]).first
-        if metadata
-          metadata
-        else
-          error!('404 Not Found', 404)
-        end
+        metadata || error!('404 Not Found', 404)
       end
 
-      desc "Create/update collection metadata"
+      desc 'Create/update collection metadata'
       rescue_from ActiveRecord::RecordNotFound do
         error!('401 Unauthorized', 401)
       end
       params do
         requires :metadata, type: JSON
       end
-      before do
-        error!('401 Unauthorized', 401) unless CollectionPolicy.new(current_user, Collection.find(params[:id])).update_metadata?
-      end
       post :metadata do
-        metadata = Metadata.where(collection_id: params[:id]).first
-        unless metadata
-          metadata = Metadata.new(collection_id: params[:id])
-        end
+        metadata = Metadata.where(collection_id: params[:collection_id]).first
+        metadata ||= Metadata.new(collection_id: params[:collection_id])
         metadata.metadata = params[:metadata]
         metadata.save!
         metadata
