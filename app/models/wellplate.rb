@@ -5,16 +5,16 @@
 # Table name: wellplates
 #
 #  id                     :integer          not null, primary key
-#  name                   :string
+#  deleted_at             :datetime
 #  description            :string
+#  height                 :integer          default(8)
+#  name                   :string
+#  plain_text_description :text
+#  readout_titles         :jsonb
+#  short_label            :string
+#  width                  :integer          default(12)
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
-#  deleted_at             :datetime
-#  short_label            :string
-#  readout_titles         :jsonb
-#  plain_text_description :text
-#  width                  :integer          default(12)
-#  height                 :integer          default(8)
 #
 # Indexes
 #

@@ -47,6 +47,11 @@ module Versioning
           versions += Versioning::Serializers::ChemicalSerializer.call(Chemical.with_log_data.find(sample.chemical.id))
         end
 
+        sample.literals.each do |literal|
+          versions += Versioning::Serializers::LiteratureSerializer
+                      .call(Literature.with_log_data.find(literal.literature_id), ["Reference: #{literal.litype}"])
+        end
+
         versions
       end
     end
