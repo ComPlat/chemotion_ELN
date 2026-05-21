@@ -312,7 +312,8 @@ export default class InboxModal extends React.Component {
         placement="top"
         overlay={<Tooltip id="inbox_size_tooltip">{tooltipText}</Tooltip>}
       >
-        <DropdownButton title="Size"
+        <DropdownButton
+          title="Size"
           variant="info"
           size="sm"
           onSelect={(size) => this.handleSizingIconClick(size)}
@@ -331,15 +332,18 @@ export default class InboxModal extends React.Component {
     const { collectorAddress } = this.state;
 
     return (
-      <CopyToClipboard text={collectorAddress}>
-        <OverlayTrigger placement="bottom" overlay={this.infoMessage()}>
-          <Button
-            size="xsm"
-          >
+      <OverlayTrigger
+        placement="bottom"
+        overlay={this.infoMessage()}
+      >
+        <CopyToClipboard
+          text={collectorAddress}
+        >
+          <Button size="xsm">
             <i className="fa fa-info" />
           </Button>
-        </OverlayTrigger>
-      </CopyToClipboard>
+        </CopyToClipboard>
+      </OverlayTrigger>
     );
   }
 
@@ -368,7 +372,7 @@ export default class InboxModal extends React.Component {
       visible, inboxVisible, numberOfAttachments, collectorAddress, colMdValue
     } = this.state;
 
-    if (!visible) { return null; };
+    if (!visible) { return null; }
 
     return (
       <Draggable
