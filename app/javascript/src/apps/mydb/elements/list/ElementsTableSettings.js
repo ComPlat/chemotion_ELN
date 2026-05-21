@@ -54,6 +54,7 @@ export default class ElementsTableSettings extends React.Component {
     this.handleToggleScheme = this.handleToggleScheme.bind(this);
     this.onChangeUser = this.onChangeUser.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
+    this._saveLabelTimeout = null;
   }
 
   componentDidMount() {
@@ -66,6 +67,16 @@ export default class ElementsTableSettings extends React.Component {
   componentWillUnmount() {
     UserStore.unlisten(this.onChangeUser);
     UIStore.unlisten(this.onChangeUI);
+    if (this._saveLabelTimeout) {
+      clearTimeout(this._saveLabelTimeout);
+      this._saveLabelTimeout = null;
+      const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
+      UserActions.updateUserProfile({
+        show_external_name: showSampleExternalLabel,
+        show_sample_short_label: showSampleShortLabel,
+        show_sample_name: showSampleName,
+      });
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -90,11 +101,11 @@ export default class ElementsTableSettings extends React.Component {
 
   onChangeUser(state) {
     const { currentType } = this.state;
-    if (state && state.profile) {
+    if (state && state.profile && !this._saveLabelTimeout) {
       this.setState({
-        showSampleExternalLabel: state.profile.show_external_name,
-        showSampleName: state.profile.show_sample_name,
-        showSampleShortLabel: state.profile.show_sample_short_label
+        showSampleExternalLabel: !!state.profile.show_external_name,
+        showSampleName: !!state.profile.show_sample_name,
+        showSampleShortLabel: !!state.profile.show_sample_short_label
       });
     }
     if (state && (currentType !== state.currentType)) {
@@ -104,6 +115,9 @@ export default class ElementsTableSettings extends React.Component {
 
   onTabLayoutClose(show) {
     if (!show) {
+      clearTimeout(this._saveLabelTimeout);
+      this._saveLabelTimeout = null;
+
       this.updateLayout();
 
       if (this.state.currentType == "sample" || this.state.currentType == "reaction") {
@@ -113,14 +127,6 @@ export default class ElementsTableSettings extends React.Component {
           UIActions.toggleShowPreviews(cur_previews);
         }
       }
-
-      const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
-
-      UserActions.updateUserProfile({
-        show_external_name: showSampleExternalLabel,
-        show_sample_short_label: showSampleShortLabel,
-        show_sample_name: showSampleName
-      });
     }
   }
 
@@ -129,37 +135,46 @@ export default class ElementsTableSettings extends React.Component {
     this.setState({ tableSchemePreviews: !tableSchemePreviews });
   }
 
+  scheduleSaveLabels() {
+    clearTimeout(this._saveLabelTimeout);
+    this._saveLabelTimeout = setTimeout(() => {
+      this._saveLabelTimeout = null;
+      const { showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
+      UserActions.updateUserProfile({
+        show_external_name: showSampleExternalLabel,
+        show_sample_short_label: showSampleShortLabel,
+        show_sample_name: showSampleName,
+      });
+    }, 300);
+  }
+
   handleToggleSampleExt() {
-    const { showSampleExternalLabel } = this.state;
-    this.setState({
-      showSampleExternalLabel: !showSampleExternalLabel,
-      showSampleShortLabel: false,
-      showSampleName: false
-    });
+    this.setState(
+      ({ showSampleExternalLabel }) => ({ showSampleExternalLabel: !showSampleExternalLabel }),
+      this.scheduleSaveLabels
+    );
   }
 
   handleToggleSampleShortLabel() {
-    const { showSampleShortLabel } = this.state;
-    this.setState({
-      showSampleShortLabel: !showSampleShortLabel,
-      showSampleExternalLabel: false,
-      showSampleName: false
-    });
+    this.setState(
+      ({ showSampleShortLabel }) => ({ showSampleShortLabel: !showSampleShortLabel }),
+      this.scheduleSaveLabels
+    );
   }
 
   handleToggleSampleName() {
-    const { showSampleName } = this.state;
-    this.setState({
-      showSampleName: !showSampleName,
-      showSampleExternalLabel: false,
-      showSampleShortLabel: false
-    });
+    this.setState(
+      ({ showSampleName }) => ({ showSampleName: !showSampleName }),
+      this.scheduleSaveLabels
+    );
   }
 
   updateLayout() {
-    const { visible, hidden } = this.state;
-    const layout = {};
+    const { visible, hidden, showSampleExternalLabel, showSampleShortLabel, showSampleName } = this.state;
+    const userProfile = UserStore.getState().profile;
+    if (!userProfile) return;
 
+    const layout = {};
     visible.forEach((value, index) => {
       layout[value] = (index + 1);
     });
@@ -167,9 +182,13 @@ export default class ElementsTableSettings extends React.Component {
       layout[value] = (-index - 1);
     });
 
-    const userProfile = UserStore.getState().profile;
-    userProfile.data.layout = layout;
-    UserActions.updateUserProfile(userProfile);
+    UserActions.updateUserProfile({
+      ...userProfile,
+      data: { ...(userProfile.data || {}), layout },
+      show_external_name: showSampleExternalLabel,
+      show_sample_short_label: showSampleShortLabel,
+      show_sample_name: showSampleName,
+    });
   }
 
   render() {
@@ -184,6 +203,10 @@ export default class ElementsTableSettings extends React.Component {
     } = this.state;
 
     const showSettings = (currentType === 'sample' || currentType === 'reaction');
+    const isSample = currentType === 'sample';
+    const otherLabelChecked = showSampleExternalLabel || showSampleName;
+    const shortLabelDisabled = !otherLabelChecked;
+    const shortLabelChecked = shortLabelDisabled ? true : showSampleShortLabel;
     const popoverSettings = ({ close }) => (
       <Popover className="d-flex popover-multi">
         {showSettings && (
@@ -197,24 +220,29 @@ export default class ElementsTableSettings extends React.Component {
                   checked={tableSchemePreviews}
                   label="Show schemes images"
                 />
-                <Form.Check
-                  type="checkbox"
-                  onChange={this.handleToggleSampleExt}
-                  checked={showSampleExternalLabel}
-                  label="Show sample external name on title"
-                />
-                <Form.Check
-                  type="checkbox"
-                  onChange={this.handleToggleSampleShortLabel}
-                  checked={showSampleShortLabel}
-                  label="Show sample short label"
-                />
-                <Form.Check
-                  type="checkbox"
-                  onChange={this.handleToggleSampleName}
-                  checked={showSampleName}
-                  label="Show sample name"
-                />
+                {isSample && (
+                  <>
+                    <Form.Check
+                      type="checkbox"
+                      onChange={this.handleToggleSampleExt}
+                      checked={showSampleExternalLabel}
+                      label="Show sample external name on title"
+                    />
+                    <Form.Check
+                      type="checkbox"
+                      onChange={this.handleToggleSampleShortLabel}
+                      checked={shortLabelChecked}
+                      disabled={shortLabelDisabled}
+                      label="Show sample short label"
+                    />
+                    <Form.Check
+                      type="checkbox"
+                      onChange={this.handleToggleSampleName}
+                      checked={showSampleName}
+                      label="Show sample name"
+                    />
+                  </>
+                )}
               </Form>
             </Popover.Body>
           </div>
