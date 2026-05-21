@@ -357,12 +357,12 @@ function TokenList({ tokens, onRevoke }) {
       </thead>
       <tbody>
         {tokens.map((token) => (
-          <tr className={token.revoked ? 'revoked-auth-token' : ''} key={`${token.name}-${token.expiration_date}`}>
+          <tr className={token.revoked ? 'revoked-auth-token' : ''} key={`${token.name}-${token.expires_at}`}>
             <td>
               {token.name}
             </td>
 
-            <td>{formatDate(token.expiration_date)}</td>
+            <td>{formatDate(token.expires_at)}</td>
             <td>
               {!token.revoked
                 ? (

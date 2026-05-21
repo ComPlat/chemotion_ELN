@@ -38,7 +38,6 @@
 #  reset_password_sent_at    :datetime
 #  reset_password_token      :string
 #  sign_in_count             :integer          default(0), not null
-#  tokens                    :jsonb
 #  type                      :string           default("Person")
 #  unconfirmed_email         :string
 #  unlock_token              :string
@@ -116,6 +115,7 @@ class User < ApplicationRecord
   has_many :element_text_templates, dependent: :destroy
   has_many :calendar_entries, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
   has_many :comments, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
+  has_many :api_tokens, dependent: :destroy
 
   accepts_nested_attributes_for :affiliations, :profile
 
@@ -126,8 +126,6 @@ class User < ApplicationRecord
   validate :name_abbreviation_length, on: :create
   validate :name_abbreviation_format, on: :create
   validate :mail_checker
-  validate :validate_tokens
-  before_save :remove_expired_tokens
 
   # NB: only Persons and Admins can get a confirmation email and confirm their email.
   before_create :skip_confirmation_notification!, unless: proc { |user|
@@ -202,7 +200,6 @@ class User < ApplicationRecord
   def check_otp(otp_attempt)
     validate_and_consume_otp!(otp_attempt)
   end
-
   def self.find_first_by_auth_conditions(warden_conditions)
     conditions = warden_conditions.dup
     if (login = conditions.delete(:login))
@@ -471,34 +468,6 @@ class User < ApplicationRecord
     default_admin.allocated_space
   end
 
-  # Add a new token
-  def add_token(name:, token_id:, expiration_date:)
-    self.tokens ||= {}
-    self.tokens[token_id] = {
-      'name' => name,
-      'expiration_date' => expiration_date.to_i,
-      'revoked' => false,
-    }
-  end
-
-  # Remove a token
-  def remove_token(token)
-    self.tokens ||= {}
-    self.tokens.delete(token)
-  end
-
-  # Fetch an item by token
-  def get_token(token_id)
-    return nil if tokens.blank? # handles nil or empty
-
-    tokens[token_id]
-  end
-
-  # Fetch an item by token
-  def revoke_token(token)
-    self.tokens[token]['revoked'] = true
-  end
-
   private
 
   # These user collections are locked, i.e., the user is not allowed to:
@@ -544,41 +513,6 @@ class User < ApplicationRecord
 
   def user_ids
     [id]
-  end
-
-  def remove_expired_tokens
-    time_i = Time.now.to_i
-    tokens&.reject! { |_, item| time_i > item['expiration_date'] }
-  end
-
-  def validate_tokens
-    return if tokens.blank?
-
-    unless tokens.is_a?(Hash)
-      errors.add(:tokens, 'must be an object/hash')
-      return
-    end
-
-    tokens.each do |token, item|
-      unless item.is_a?(Hash)
-        errors.add(:tokens, "item for token #{token} must be a hash")
-        next
-      end
-
-      # Required keys
-      %w[name expiration_date revoked].each do |key|
-        errors.add(:tokens, "item for token #{token} must have key #{key}") unless item.key?(key)
-      end
-      errors.add(:tokens, "revoked for token #{token} must be a bool") unless [true, false].include?(item['revoked'])
-      errors.add(:tokens, "name for token #{token} must be a string") unless item['name']&.is_a?(String)
-      unless item['expiration_date']&.is_a?(Integer)
-        errors.add(:tokens,
-                   "expiration_date for token #{token} must be a timestamp (integer)")
-      end
-
-      # Ensure token is string
-      errors.add(:tokens, 'token key must be a string') unless token.is_a?(String)
-    end
   end
 end
 

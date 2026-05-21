@@ -27,7 +27,7 @@ class API < Grape::API
     end
 
     def detect_current_user
-      detect_current_user_from_session || detect_current_user_from_jwt
+      detect_current_user_from_session || detect_current_user_from_api_token || detect_current_user_from_jwt
     end
 
     def detect_current_user_from_session
@@ -38,11 +38,18 @@ class API < Grape::API
       decoded_token = JsonWebToken.decode(current_token)
       user_id = decoded_token[:user_id]
 
-      user = User.find(user_id)
-      token = user.get_token(decoded_token[:token_id])
-      return nil if token && token['revoked']
+      User.find(user_id)
+    rescue StandardError
+      nil
+    end
 
-      user
+    def detect_current_user_from_api_token
+      return nil unless current_token&.start_with?('chemtoken_')
+
+      token = ApiToken.authenticate(current_token)
+      return nil unless token
+
+      token.user
     rescue StandardError
       nil
     end

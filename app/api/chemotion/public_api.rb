@@ -33,17 +33,9 @@ module Chemotion
         params do
           requires :username, type: String, desc: 'Username'
           requires :password, type: String, desc: 'Password'
-          optional :expires_in_days,
-                   type: Integer,
-                   default: 160,
-                   values: 1..600,
-                   desc: 'Token expiration in days (1–600)'
-          optional :name, type: String, desc: 'Name of the item'
         end
         post do
-          item_name = params[:name].to_s.strip
-          item_name = nil if item_name.empty?
-          token = Usecases::Public::BuildToken.execute!(params, item_name)
+          token = Usecases::Public::BuildToken.execute!(params)
           error!('401 Unauthorized', 401) if token.blank?
 
           { token: token }

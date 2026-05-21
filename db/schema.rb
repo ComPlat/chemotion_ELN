@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_03_25_085008) do
+ActiveRecord::Schema.define(version: 2026_05_21_070729) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -49,6 +49,18 @@ ActiveRecord::Schema.define(version: 2026_03_25_085008) do
     t.string "time"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "api_tokens", force: :cascade do |t|
+    t.string "name"
+    t.string "token"
+    t.bigint "user_id", null: false
+    t.datetime "expires_at"
+    t.datetime "revoked_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["token"], name: "index_api_tokens_on_token", unique: true
+    t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
 
   create_table "attachments", id: :serial, force: :cascade do |t|
@@ -1783,6 +1795,7 @@ ActiveRecord::Schema.define(version: 2026_03_25_085008) do
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
   end
 
+  add_foreign_key "api_tokens", "users"
   add_foreign_key "chemicals", "sequence_based_macromolecule_samples"
   add_foreign_key "collection_shares", "collections"
   add_foreign_key "collection_shares", "users", column: "shared_with_id"

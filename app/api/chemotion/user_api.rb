@@ -176,11 +176,13 @@ module Chemotion
             error!('2FA is needed', 401)
           end
           item_name = params[:name].to_s.strip
-          item_name = nil if item_name.empty?
-          token = Usecases::Public::BuildToken.execute!(params, item_name, current_user)
-          error!('401 Unauthorized', 401) if token.blank?
+          item_name = "Token #{Time.current.strftime('%Y%m%d_%H:%M:%S')}" if item_name.empty?
+          token = current_user.api_tokens.create!(
+            expires_at: params[:expires_in_days].days.from_now,
+            name: item_name,
+          )
 
-          { token: token }
+          { token: token.plain_token }
         end
       end
 
@@ -190,8 +192,7 @@ module Chemotion
           optional :otp_attempt,
                    type: String,
                    desc: 'one time password'
-          requires :expiration_date, type: Integer
-          requires :name, type: String
+          requires :id, type: Integer, desc: 'Token ID'
         end
 
         post do
@@ -206,17 +207,12 @@ module Chemotion
           else
             error!('2FA is needed', 401)
           end
-          result = current_user.tokens.find do |_, token|
-            token['name'] == params[:name] && token['expiration_date'] == params[:expiration_date]
-          end
+          token = current_user.api_tokens.find(params[:id])
 
           # Return error if not found
-          error!('Token not found', 404) unless result
+          error!('Token not found', 404) unless token
 
-          _, token = result
-
-          # Mark as revoked
-          token['revoked'] = true
+          token.revoke!
 
           # Save the updated tokens back to the user
           current_user.save!
