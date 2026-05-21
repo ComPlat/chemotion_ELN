@@ -111,7 +111,7 @@ export default class ReactionDetailsMainProperties extends Component {
                 />
                 <Button
                   disabled={!permitOn(reaction)}
-                  variant="primary"
+                  variant="light"
                   onClick={() => this.changeUnit()}
                 >
                   {temperature.valueUnit}
@@ -126,7 +126,7 @@ export default class ReactionDetailsMainProperties extends Component {
             <Col>
               <LineChartContainer
                 data={temperature}
-                xAxis="Time"
+                xAxis="Time (h)"
                 yAxis={`Temperature (${temperature.valueUnit})`}
               />
             </Col>

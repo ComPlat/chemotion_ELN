@@ -2,8 +2,10 @@ import 'whatwg-fetch';
 import Chemical from 'src/models/Chemical';
 
 export default class ChemicalFetcher {
-  static fetchChemical(sampleId) {
-    return fetch(`/api/v1/chemicals?sample_id=${sampleId}`, {
+  // Fetch chemical by either sample_id or sequence_based_macromolecule_sample_id, depending on type
+  static fetchChemical(id, type) {
+    const paramName = type === 'SBMM' ? 'sequence_based_macromolecule_sample_id' : 'sample_id';
+    return fetch(`/api/v1/chemicals?${paramName}=${id}`, {
       credentials: 'same-origin',
     }).then((response) => response.json())
       .then((json) => new Chemical(json))
@@ -11,7 +13,7 @@ export default class ChemicalFetcher {
   }
 
   static create(data) {
-    const params = { ...data };
+    const { type, ...params } = data;
     return fetch('/api/v1/chemicals/create', {
       credentials: 'same-origin',
       method: 'post',
@@ -26,14 +28,15 @@ export default class ChemicalFetcher {
   }
 
   static update(params) {
-    return fetch(`/api/v1/chemicals/${params.sample_id}`, {
+    const { type, ...bodyParams } = params;
+    return fetch('/api/v1/chemicals', {
       credentials: 'same-origin',
       method: 'put',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(params)
+      body: JSON.stringify(bodyParams)
     }).then((response) => response.json())
       .then((json) => json)
       .catch((errorMessage) => { console.log(errorMessage); });

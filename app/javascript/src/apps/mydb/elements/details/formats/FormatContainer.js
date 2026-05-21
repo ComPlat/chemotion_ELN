@@ -3,7 +3,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
-import FormatComponent from 'src/apps/mydb/elements/details/formats/FormatComponent';
+import FormatDetails from 'src/apps/mydb/elements/details/formats/FormatDetails';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -98,29 +98,31 @@ export default class FormatContainer extends React.Component {
   }
 
   onFormat() {
-    let selectedObjs = _.cloneDeep(this.state.selectedObjs);
+    this.setState((previousState) => {
+      let selectedObjs = _.cloneDeep(previousState.selectedObjs);
 
-    const formatAnalyses = (el) => {
-      (el.analyses || []).forEach((ana) => {
-        const { content } = ana.extended_metadata;
-        if (typeof content === 'string') {
-          ana.extended_metadata.content = JSON.parse(content);
-        }
+      const formatAnalyses = (el) => {
+        (el.analyses || []).forEach((ana) => {
+          const { content } = ana.extended_metadata;
+          if (typeof content === 'string') {
+            ana.extended_metadata.content = JSON.parse(content);
+          }
 
-        ana.extended_metadata.content = formatAnalysisContent(ana);
+          ana.extended_metadata.content = formatAnalysisContent(ana);
+        });
+      };
+
+      selectedObjs = selectedObjs.map((obj) => {
+        formatAnalyses(obj);
+        if (obj.type === 'Reaction') formatAnalyses(obj.children);
+
+        return obj;
       });
-    };
 
-    selectedObjs = selectedObjs.map((obj) => {
-      formatAnalyses(obj);
-      if (obj.type === 'Reaction') formatAnalyses(obj.children);
+      const isSaved = _.isEqual(selectedObjs, previousState.selectedObjs);
 
-      return obj;
+      return { selectedObjs, isSaved };
     });
-
-    const isSaved = _.isEqual(selectedObjs, this.state.selectedObjs);
-
-    this.setState({ selectedObjs, isSaved });
   }
 
   onSave() {
@@ -140,20 +142,22 @@ export default class FormatContainer extends React.Component {
 
     const objs = flattenObjs(selectedObjs);
 
-    objs.forEach(obj => ElementActions.updateContainerContent(obj));
+    objs.forEach((obj) => ElementActions.updateContainerContent(obj));
 
     this.setState({ selectedObjs, isSaved: true });
   }
 
   onClose() {
-    DetailActions.close(this.props.format, this.state.isSaved);
+    const { format } = this.props;
+    const { isSaved } = this.state;
+    DetailActions.close(format, isSaved);
   }
 
   render() {
     const { selectedObjs, isSaved } = this.state;
 
     return (
-      <FormatComponent
+      <FormatDetails
         list={selectedObjs}
         onFormat={this.onFormat}
         isPendingToSave={!isSaved}
@@ -165,7 +169,7 @@ export default class FormatContainer extends React.Component {
 }
 
 FormatContainer.propTypes = {
-  format: PropTypes.shape.isRequired
+  format: PropTypes.shape({}).isRequired
 };
 
 /* eslint-enable no-param-reassign */

@@ -76,6 +76,8 @@
 #  index_device_descriptions_on_device_id  (device_id)
 #
 class DeviceDescription < ApplicationRecord
+  PREFIX = 'Dev'
+
   attr_accessor :collection_id, :is_split
 
   include ElementUIStateScopes
@@ -96,7 +98,6 @@ class DeviceDescription < ApplicationRecord
   belongs_to :creator, foreign_key: :created_by, class_name: 'User', inverse_of: :device_descriptions
 
   has_many :attachments, as: :attachable, inverse_of: :attachable, dependent: :nullify
-  has_many :sync_collections_users, through: :collections
 
   has_many :comments, as: :commentable, inverse_of: :commentable, dependent: :destroy
   has_one :container, as: :containable, inverse_of: :containable, dependent: :nullify
@@ -187,11 +188,10 @@ class DeviceDescription < ApplicationRecord
   def set_short_label
     return if is_split == true
 
-    prefix = 'Dev'
     counter = creator.increment_counter 'device_descriptions' # rubocop:disable Rails/SkipsModelValidations
     user_label = creator.name_abbreviation
 
-    update(short_label: "#{user_label}-#{prefix}#{counter}")
+    update(short_label: "#{user_label}-#{PREFIX}#{counter}")
   end
 
   def counter_for_split_short_label

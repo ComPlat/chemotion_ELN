@@ -2,20 +2,33 @@
 
 FIXTURES_DIR = Rails.root.join('spec/fixtures')
 
-# Factory to parse a json file and return a hash
+# Factory to parse a json or yaml fixture and return a hash
 FactoryBot.define do
-  # @param [Symbol, String] :from the name of the json file to use to generate the structures
-  #   (with or without .json extension)
-  # @option [Pathname] :fixtures_dir the directory where the json file is located (default: FIXTURES_DIR)
-  # @option [String, Pathname] :file_path path to the json file (default: fixtures_dir.join("#{from}.json"))
+  # @param [Symbol, String] :from the name of the fixture file to use to generate the structures
+  #   (with or without .json/.yml extension). A sibling +.yml+ file, if present,
+  #   takes precedence over +.json+ — useful when the fixture contains characters
+  #   (e.g. SMILES backslashes) that are awkward to embed in strict JSON.
+  # @option [Pathname] :fixtures_dir the directory where the fixture is located (default: FIXTURES_DIR)
+  # @option [String, Pathname] :file_path resolved fixture path (computed from +from+ and +fixtures_dir+)
   factory :parsed_json, class: Hash do
     transient do
       from { nil }
       fixtures_dir { FIXTURES_DIR }
 
       # private
-      file_path { fixtures_dir.join("#{from}#{from.end_with?('.json') ? '' : '.json'}") }
-      data { File.exist?(file_path) ? JSON.parse(File.read(file_path)) : {} }
+      file_path do
+        base = from.to_s.sub(/\.(json|ya?ml)\z/, '')
+        %w[.yml .yaml .json].lazy.map { |ext| fixtures_dir.join("#{base}#{ext}") }.find(&:exist?) ||
+          fixtures_dir.join("#{base}.json")
+      end
+      data do
+        next {} unless File.exist?(file_path)
+
+        case File.extname(file_path.to_s)
+        when '.yml', '.yaml' then YAML.load_file(file_path)
+        else JSON.parse(File.read(file_path))
+        end
+      end
     end
     initialize_with { data }
   end

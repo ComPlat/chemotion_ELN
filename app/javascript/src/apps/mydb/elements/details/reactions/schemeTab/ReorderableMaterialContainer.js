@@ -7,6 +7,7 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 const newElementTypes = [
   DragDropItemTypes.SAMPLE,
   DragDropItemTypes.MOLECULE,
+  DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE,
 ];
 
 // This component is a container for reorderable materials.
@@ -22,6 +23,7 @@ export default function ReorderableMaterialContainer({
   onDrop,
   onReorder,
   renderMaterial,
+  dndEnabled,
   children,
 }) {
   const [hoveredIndex, setHoveredIndex] = useState(0);
@@ -33,22 +35,28 @@ export default function ReorderableMaterialContainer({
       ...newElementTypes,
     ],
     collect: (monitor) => {
+      const dropAllowed = dndEnabled && monitor.canDrop();
       // eslint-disable-next-line no-shadow
-      const hoveringElement = monitor.isOver() && newElementTypes.includes(monitor.getItemType())
+      const hoveringElement = dropAllowed && monitor.isOver() && newElementTypes.includes(monitor.getItemType())
         ? monitor.getItem().element : null;
 
       // eslint-disable-next-line no-shadow
-      const hoveringMaterial = monitor.isOver() && monitor.getItemType() === DragDropItemTypes.MATERIAL
+      const hoveringMaterial = dropAllowed && monitor.isOver() && monitor.getItemType() === DragDropItemTypes.MATERIAL
         ? monitor.getItem().material : null;
 
       return {
         isOver: monitor.isOver(),
-        canDrop: monitor.canDrop(),
+        canDrop: dropAllowed,
         hoveringMaterial,
         hoveringElement,
       };
     },
+    canDrop: () => dndEnabled,
     drop: (item, monitor) => {
+      if (!dndEnabled || !monitor.canDrop()) {
+        return;
+      }
+
       if (newElementTypes.includes(monitor.getItemType())) {
         onDrop({ ...item, type: monitor.getItemType() }, hoveredIndex);
       }
@@ -58,6 +66,7 @@ export default function ReorderableMaterialContainer({
       }
     },
     hover: (_, monitor) => {
+      if (!dndEnabled) return;
       if (!monitor.canDrop()) return;
       if (newElementTypes.includes(monitor.getItemType())) return;
 
@@ -119,6 +128,7 @@ export default function ReorderableMaterialContainer({
           materialGroup={materialGroup}
           index={index}
           onHover={setHoveredIndex}
+          dndEnabled={dndEnabled}
           renderMaterial={renderMaterial}
         />
       );
@@ -143,11 +153,13 @@ ReorderableMaterialContainer.propTypes = {
   onDrop: PropTypes.func.isRequired,
   onReorder: PropTypes.func.isRequired,
   renderMaterial: PropTypes.func.isRequired,
+  dndEnabled: PropTypes.bool,
   className: PropTypes.string,
   children: PropTypes.func.isRequired,
 };
 
 ReorderableMaterialContainer.defaultProps = {
+  dndEnabled: true,
   className: null,
 };
 
@@ -156,6 +168,7 @@ function Item({
   materialGroup,
   index,
   onHover,
+  dndEnabled,
   renderMaterial,
 }) {
   const [{ isDragging }, drag, preview] = useDrag({
@@ -171,14 +184,16 @@ function Item({
       DragDropItemTypes.MATERIAL,
       ...newElementTypes,
     ],
+    canDrop: () => dndEnabled,
     collect: (monitor) => ({
       isOver: monitor.isOver(),
-      canDrop: [
+      canDrop: dndEnabled && [
         DragDropItemTypes.MATERIAL,
         ...newElementTypes
       ].includes(monitor.getItemType()),
     }),
     hover: (hoverItem, monitor) => {
+      if (!dndEnabled) return;
       if (!monitor.canDrop()) return;
 
       // Update the hovered index on the parent list, so the hovered item can be
@@ -221,5 +236,10 @@ Item.propTypes = {
   materialGroup: PropTypes.string.isRequired,
   index: PropTypes.number.isRequired,
   onHover: PropTypes.func.isRequired,
+  dndEnabled: PropTypes.bool,
   renderMaterial: PropTypes.func.isRequired,
+};
+
+Item.defaultProps = {
+  dndEnabled: true,
 };

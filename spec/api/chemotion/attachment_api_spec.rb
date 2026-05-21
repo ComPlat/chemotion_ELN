@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Rspec/NestedGroups
+# rubocop:disable RSpec/NestedGroups
 # rubocop:disable RSpec/MultipleMemoizedHelpers
 # rubocop:disable RSpec/AnyInstance
 # rubocop:disable RSpec/BeforeAfterAll
@@ -313,13 +313,9 @@ describe Chemotion::AttachmentAPI do
     let(:owner_user) { create(:person) }
     let(:receiving_user) { logged_in_user }
     let(:shared_collection) do
-      create(:collection,
-             user_id: receiving_user.id,
-             is_shared: true,
-             shared_by_id: owner_user.id,
-             is_locked: true,
-             permission_level: 0,
-             label: 'shared by owner_user')
+      create(:collection, user: owner_user, label: 'shared by owner_user').tap do |collection|
+        create(:collection_share, collection: collection, shared_with: receiving_user)
+      end
     end
 
     let(:attachment) { create(:attachment, :with_png_image) }
@@ -370,8 +366,10 @@ describe Chemotion::AttachmentAPI do
   end
 
   describe 'GET /api/v1/attachments/zip/{container_id}' do
+    let(:user) { create(:person) }
+    let(:collection) { create(:collection, user: user) }
     let(:container_id) { sample.container.children[0].children[0].id }
-    let(:sample) { create(:sample_with_image_in_analysis) }
+    let(:sample) { create(:sample_with_image_in_analysis, collections: [collection]) }
     let(:execute) { get "/api/v1/attachments/zip/#{container_id}" }
     let(:file_name) { response.header['Content-Disposition'].split('=').last.tr('"', '') }
     let(:file_path) { Rails.root.join("public/zip/#{file_name}") }
@@ -383,14 +381,10 @@ describe Chemotion::AttachmentAPI do
       response.stream.close
     end
 
-    before do |example|
-      if example.metadata[:enable_download_access].present?
-        allow_any_instance_of(ElementPolicy).to receive(:read?).and_return(true)
-        allow_any_instance_of(ElementPermissionProxy).to receive(:read_dataset?).and_return(true)
-      end
-    end
-
     context 'when attachment is not available' do
+      let(:other_user) { create(:person) }
+      let(:collection) { create(:collection, user: other_user) }
+
       before do
         execute
       end
@@ -400,7 +394,7 @@ describe Chemotion::AttachmentAPI do
       end
     end
 
-    context 'when attachment is available', :enable_download_access do
+    context 'when attachment is available' do
       context 'when attachment is image and not annotated' do
         before do
           execute
@@ -435,7 +429,7 @@ describe Chemotion::AttachmentAPI do
       end
 
       context 'when attachment is image and annotated' do
-        let(:sample2) { create(:sample_with_annotated_image_in_analysis) }
+        let(:sample2) { create(:sample_with_annotated_image_in_analysis, collections: [collection]) }
         let(:execute) { get "/api/v1/attachments/zip/#{sample2.container.children[0].children[0].id}" }
 
         before do
@@ -672,7 +666,7 @@ describe Chemotion::AttachmentAPI do
     let(:c1) { create(:collection, user_id: user.id) }
     let!(:cont_s1_root) { create(:container) }
     let!(:s1) do
-      create(:sample_without_analysis, name: 'sample 1', container: cont_s1_root)
+      create(:sample_without_analysis, name: 'sample 1', container: cont_s1_root, collections: [c1])
     end
 
     let!(:cont_s1_analyses) { create(:container, container_type: 'analyses') }
@@ -701,8 +695,6 @@ describe Chemotion::AttachmentAPI do
       before do
         allow_any_instance_of(WardenAuthentication).to receive(:current_user)
           .and_return(user)
-
-        CollectionsSample.create!(sample: s1, collection: c1)
 
         cont_s1_root.children << cont_s1_analyses
         cont_s1_root.save!
@@ -787,7 +779,7 @@ class ThumbnailerMock
     tmp_path
   end
 end
-# rubocop:enable Rspec/NestedGroups
+# rubocop:enable RSpec/NestedGroups
 # rubocop:enable RSpec/MultipleMemoizedHelpers
 # rubocop:enable RSpec/AnyInstance
 # rubocop:enable RSpec/BeforeAfterAll

@@ -1,20 +1,17 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Row, Col, Button,
-  Tooltip, OverlayTrigger, Tabs, Tab
+  Form, Row, Col,
+  Tabs, Tab
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import Immutable from 'immutable';
 
-import ConfirmClose from 'src/components/common/ConfirmClose';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import QuillEditor from 'src/components/QuillEditor';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
@@ -28,8 +25,6 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
-import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
-import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
@@ -37,7 +32,7 @@ import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
-import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
+import { EditUserLabels } from 'src/components/UserLabels';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -184,66 +179,6 @@ export default class ScreenDetails extends Component {
     screen.wellplates.splice(wellplateIndex, 1);
 
     this.setState({ screen });
-  }
-
-  screenHeader(screen) {
-    const saveBtnDisplay = screen.isEdited ? 'block' : 'none';
-    const datetp = formatTimeStampsOfElement(screen || {});
-
-    return (
-      <div className="d-flex align-items-center justify-content-between">
-        <div className="d-flex align-items-center gap-2">
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="screenDatesx">{datetp}</Tooltip>}>
-            <span>
-              <i className="icon-screen me-1" />
-              {screen.name}
-            </span>
-          </OverlayTrigger>
-          <ShowUserLabels element={screen} />
-          <ElementCollectionLabels element={screen} placement="right" />
-          <HeaderCommentSection element={screen} />
-        </div>
-        <div className="d-flex align-items-center gap-1">
-          <PrintCodeButton element={screen} />
-          {!screen.isNew
-            && <OpenCalendarButton isPanelHeader eventableId={screen.id} eventableType="Screen" />}
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}
-          >
-            <Button
-              variant="warning"
-              size="xxsm"
-              onClick={() => this.handleSubmit()}
-              style={{ display: saveBtnDisplay }}
-            >
-              <i className="fa fa-floppy-o " />
-            </Button>
-          </OverlayTrigger>
-          <ConfirmClose el={screen} />
-        </div>
-      </div>
-    );
-  }
-
-  screenFooter() {
-    const { screen } = this.state;
-    const submitLabel = screen.isNew ? 'Create' : 'Save';
-
-    return (
-      <>
-        <Button variant="primary" onClick={() => DetailActions.close(screen)}>
-          Close
-        </Button>
-        <Button
-          id="submit-screen-btn"
-          variant="warning"
-          onClick={() => this.handleSubmit()}
-        >
-          {submitLabel}
-        </Button>
-      </>
-    );
   }
 
   propertiesFields(screen) {
@@ -450,10 +385,13 @@ export default class ScreenDetails extends Component {
     };
 
     return (
-      <DetailCard
+      <ElementDetailCard
+        element={screen}
         isPendingToSave={screen.isPendingToSave}
-        header={this.screenHeader(screen)}
-        footer={this.screenFooter()}
+        title={screen.name}
+        titleTooltip={formatTimeStampsOfElement(screen || {})}
+        onSave={() => this.handleSubmit()}
+        showPrintCode
       >
         <ResearchplanFlowDisplay
           initialData={screen.componentGraphData}
@@ -473,12 +411,13 @@ export default class ScreenDetails extends Component {
             activeKey={activeTab}
             onSelect={(key) => this.handleSelect(key)}
             id="screen-detail-tab"
+            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>
         </div>
         <CommentModal element={screen} />
-      </DetailCard>
+      </ElementDetailCard>
     );
   }
 }
@@ -486,4 +425,8 @@ export default class ScreenDetails extends Component {
 ScreenDetails.propTypes = {
   screen: PropTypes.instanceOf(Screen).isRequired,
   openedFromCollectionId: PropTypes.number,
+};
+
+ScreenDetails.defaultProps = {
+  openedFromCollectionId: null,
 };

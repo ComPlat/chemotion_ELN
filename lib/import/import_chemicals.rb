@@ -19,7 +19,8 @@ module Import
       'cas', 'status', 'vendor', 'order number', 'amount', 'volume', 'price', 'person', 'required date', 'ordered date',
       'required by', 'pictograms', 'h statements', 'p statements', 'safety sheet link', 'product link', 'host building',
       'host room', 'host cabinet', 'host group', 'owner', 'borrowed by', 'current building', 'current room',
-      'current cabinet', 'current group', 'disposal info', 'important notes', 'expiration date', 'storage temperature'
+      'current cabinet', 'current group', 'disposal info', 'important notes', 'expiration date', 'storage temperature',
+      'delivery date', 'opening date'
     ].freeze
     MAP_ACTION = {
       SAFETY_SHEET => ->(chemical, key, formatted_value) { set_safety_sheet(chemical, key, formatted_value) },

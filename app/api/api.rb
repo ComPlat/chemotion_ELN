@@ -61,6 +61,7 @@ class API < Grape::API
 
     def public_request?
       request.path.start_with?(
+        '/api/v1/authentication/',
         '/api/v1/public/',
         '/api/v1/chemspectra/',
         '/api/v1/ketcher/layout',
@@ -168,7 +169,6 @@ class API < Grape::API
   mount Chemotion::ContainerAPI
   mount Chemotion::MoleculeAPI
   mount Chemotion::CollectionAPI
-  mount Chemotion::SyncCollectionAPI
   mount Chemotion::SampleAPI
   mount Chemotion::ReactionAPI
   mount Chemotion::WellplateAPI
@@ -224,6 +224,9 @@ class API < Grape::API
   mount Chemotion::VesselAPI
   mount Chemotion::SequenceBasedMacromoleculeAPI
   mount Chemotion::SequenceBasedMacromoleculeSampleAPI
+  mount Chemotion::CollectionShareAPI
+  mount Chemotion::CollectionElementsAPI
+  mount Chemotion::AuthenticationAPI
 
   if Rails.env.development?
     add_swagger_documentation(info: {

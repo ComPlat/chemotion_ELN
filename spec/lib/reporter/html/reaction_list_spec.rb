@@ -15,7 +15,7 @@ describe 'Reporter::Html::ReactionList instance' do
   end
 
   it 'contains a html file' do
-    [product_1, product_2].each do |product|
+    [product1, product2].each do |product|
       expect(html_file).to include(product.molecule.inchistring)
       expect(html_file).to include(product.molecule.inchikey)
       expect(html_file).to include(reaction.rinchi_long_key)

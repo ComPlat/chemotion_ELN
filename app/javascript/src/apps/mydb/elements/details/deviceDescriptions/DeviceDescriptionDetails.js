@@ -1,22 +1,16 @@
 import React, { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, Tooltip, OverlayTrigger
+  Button, Tabs, Tab
 } from 'react-bootstrap';
 
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
-import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import ConfirmClose from 'src/components/common/ConfirmClose';
-import PrintCodeButton from 'src/components/common/PrintCodeButton';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
-import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
-import CopyElementModal from 'src/components/common/CopyElementModal';
 import Immutable from 'immutable';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
@@ -29,7 +23,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import CollectionUtils from 'src/models/collection/CollectionUtils';
+import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 import PropertiesForm from 'src/apps/mydb/elements/details/deviceDescriptions/propertiesTab/PropertiesForm';
 import AttachmentForm from 'src/apps/mydb/elements/details/deviceDescriptions/attachmentsTab/AttachmentForm';
 import AnalysesContainer from 'src/apps/mydb/elements/details/deviceDescriptions/analysesTab/AnalysesContainer';
@@ -43,12 +37,10 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
   const deviceDescription = deviceDescriptionsStore.device_description;
   deviceDescriptionsStore.setKeyPrefix('deviceDescription');
 
-  const { currentCollection, isSync } = UIStore.getState();
+  const { currentCollection } = UIStore.getState();
   const { currentUser } = UserStore.getState();
 
   const [visibleTabs, setVisibleTabs] = useState(Immutable.List());
-
-  const submitLabel = deviceDescription.isNew ? 'Create' : 'Save';
   const tabContents = [];
 
   useEffect(() => {
@@ -85,11 +77,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
     history: 'History',
   };
 
-  const isReadOnly = () => CollectionUtils.isReadOnly(
-    currentCollection,
-    currentUser.id,
-    isSync
-  );
+  const isReadOnly = () => !collectionHasPermission(currentCollection, 0);
 
   const disabled = (index) => (!!(deviceDescription.isNew && index !== 0));
 
@@ -152,77 +140,17 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
     );
   };
 
-  const deviceDescriptionHeader = () => {
-    const titleTooltip = formatTimeStampsOfElement(deviceDescription || {});
-    const defCol = currentCollection && currentCollection.is_shared === false
-      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
-
-    return (
-      <div className="d-flex align-items-center justify-content-between">
-        <div className="d-flex align-items-center gap-2">
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="deviceDescriptionDates">{titleTooltip}</Tooltip>}>
-            <span>
-              <i className="icon-device_description me-1" />
-              {deviceDescription.name}
-            </span>
-          </OverlayTrigger>
-          {!deviceDescription.isNew && (
-            <ElementCollectionLabels element={deviceDescription} placement="right" />
-          )}
-          <HeaderCommentSection element={deviceDescription} />
-        </div>
-        <div className="d-flex align-items-center gap-1">
-          <PrintCodeButton element={deviceDescription} />
-          {!deviceDescription.isNew && (
-            <OpenCalendarButton
-              isPanelHeader
-              eventableId={deviceDescription.id}
-              eventableType="DeviceDescription"
-            />
-          )}
-          {deviceDescription.can_copy && !deviceDescription.isNew && (
-            <CopyElementModal
-              element={deviceDescription}
-              defCol={defCol}
-            />
-          )}
-          {deviceDescription.isEdited && (
-            <OverlayTrigger
-              placement="bottom"
-              overlay={<Tooltip id="saveDeviceDescription">Save device description</Tooltip>}
-            >
-              <Button
-                variant="warning"
-                size="xxsm"
-                onClick={() => handleSubmit()}
-              >
-                <i className="fa fa-floppy-o " />
-              </Button>
-            </OverlayTrigger>
-          )}
-          <ConfirmClose el={deviceDescription} />
-        </div>
-      </div>
-    );
-  };
-
-  const deviceDescriptionFooter = () => (
-    <>
-      <Button variant="primary" onClick={() => DetailActions.close(deviceDescription)}>
-        Close
-      </Button>
-      <Button variant="warning" disabled={!deviceDescriptionIsValid()} onClick={() => handleSubmit()}>
-        {submitLabel}
-      </Button>
-      {downloadAnalysisButton()}
-    </>
-  );
-
   return (
-    <DetailCard
+    <ElementDetailCard
+      element={deviceDescription}
       isPendingToSave={deviceDescription.isPendingToSave}
-      header={deviceDescriptionHeader()}
-      footer={deviceDescriptionFooter()}
+      title={deviceDescription.name}
+      titleTooltip={formatTimeStampsOfElement(deviceDescription || {})}
+      footerToolbar={downloadAnalysisButton()}
+      onSave={handleSubmit}
+      saveDisabled={!deviceDescriptionIsValid()}
+      showPrintCode
+      showCalendar
     >
       <div className="tabs-container--with-borders">
         <ElementDetailSortTab
@@ -238,17 +166,22 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
           id="deviceDescriptionDetailsTab"
           mountOnEnter
           unmountOnExit
+          className="has-config-overlay"
         >
           {tabContents}
         </Tabs>
       </div>
       <CommentModal element={deviceDescription} />
-    </DetailCard>
+    </ElementDetailCard>
   );
 }
 
 DeviceDescriptionDetails.propTypes = {
   openedFromCollectionId: PropTypes.number,
+};
+
+DeviceDescriptionDetails.defaultProps = {
+  openedFromCollectionId: null,
 };
 
 export default observer(DeviceDescriptionDetails);

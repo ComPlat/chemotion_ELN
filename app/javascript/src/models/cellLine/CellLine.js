@@ -30,6 +30,7 @@ export default class CellLine extends Element {
     cellLine.passage = response.passage;
     cellLine.id = String(response.id);
     cellLine.tag = response.tag;
+    cellLine.can_copy = response.can_copy;
 
     cellLine.cellLineName = response.cellline_material.name;
     cellLine.source = response.cellline_material.source;

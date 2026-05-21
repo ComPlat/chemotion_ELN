@@ -106,17 +106,22 @@ export default class SampleForm extends React.Component {
   }
 
   handleAmountChanged(amount) {
-    const { sample } = this.props;
+    const { sample, handleSampleChanged } = this.props;
 
     // sample.initializeSampleDetails?.();
     // sample.sample_details.reference_component_changed = false;
 
     sample.setAmount(amount);
+    sample.changed = true;
+    handleSampleChanged(sample);
   }
 
   handleMolarityChanged(molarity) {
-    this.props.sample.setMolarity(molarity);
+    const { sample, handleSampleChanged } = this.props;
+    sample.setMolarity(molarity);
+    sample.changed = true;
     this.setState({ molarityBlocked: false });
+    handleSampleChanged(sample);
   }
 
   handleSampleTypeChanged(sampleType) {
@@ -161,12 +166,18 @@ export default class SampleForm extends React.Component {
   }
 
   handleDensityChanged(density) {
-    this.props.sample.setDensity(density);
+    const { sample, handleSampleChanged } = this.props;
+    sample.setDensity(density);
+    sample.changed = true;
     this.setState({ molarityBlocked: true });
+    handleSampleChanged(sample);
   }
 
   handleMolecularMassChanged(mass) {
-    this.props.sample.setMolecularMass(mass);
+    const { sample, handleSampleChanged } = this.props;
+    sample.setMolecularMass(mass);
+    sample.changed = true;
+    handleSampleChanged(sample);
   }
 
   handleMixtureAmountLChanged(e, sample) {
@@ -208,7 +219,7 @@ export default class SampleForm extends React.Component {
           </Tooltip>
         )}
       >
-        <Button>
+        <Button variant="light">
           <i className="fa fa-info" />
         </Button>
       </OverlayTrigger>
@@ -473,10 +484,13 @@ export default class SampleForm extends React.Component {
   }
 
   handleFieldChanged(field, e, unit = null) {
-    const { sample, handleSampleChanged } = this.props;
+    const {
+      sample, handleSampleChanged, onDecoupleChanged, decoupleMolecule
+    } = this.props;
     if (field === 'purity' && (e.value < 0 || e.value > 1)) {
       e.value = 1;
       sample[field] = e.value;
+      sample.changed = true;
       NotificationActions.add({
         message: 'Purity value should be >= 0 and <=1',
         level: 'error'
@@ -497,8 +511,10 @@ export default class SampleForm extends React.Component {
       const key = field.split('xref_')[1];
       sample.xref[key] = e;
     } else if (e && (e.value || e.value === 0)) {
-      // for numeric inputs
+      // for numeric inputs (e.g. purity) — mark dirty since Element.checksum
+      // strips numeric values and would not otherwise detect the edit.
       sample[field] = e.value;
+      sample.changed = true;
     } else {
       sample[field] = e;
     }
@@ -506,19 +522,23 @@ export default class SampleForm extends React.Component {
     sample.formulaChanged = this.formulaChanged();
 
     if (field === 'decoupled') {
-      if (!sample[field]) {
-        sample.sum_formula = '';
+      if (onDecoupleChanged) {
+        onDecoupleChanged(e);
       } else {
-        if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
-        if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
-          sample.residues[0].custom_info.polymer_type = 'self_defined';
-          delete sample.residues[0].custom_info.surface_type;
+        sample[field] = e;
+        if (!sample[field]) {
+          sample.sum_formula = '';
+        } else {
+          if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
+          if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
+            delete sample.residues[0].custom_info.surface_type;
+          }
         }
-      }
-      if (!sample[field] && ((sample.molfile || '') === '')) {
-        handleSampleChanged(sample);
-      } else {
-        handleSampleChanged(sample, this.props.decoupleMolecule);
+        if (!sample[field] && ((sample.molfile || '') === '')) {
+          handleSampleChanged(sample);
+        } else {
+          handleSampleChanged(sample, decoupleMolecule);
+        }
       }
     } else { handleSampleChanged(sample); }
   }
@@ -750,7 +770,7 @@ export default class SampleForm extends React.Component {
     return (
       <NumericInputUnit
         field="flash_point"
-        inputDisabled={false}
+        inputDisabled={!sample.can_update}
         onInputChange={
           (newValue, newUnit) => this.handleFieldChanged(field, newValue, newUnit)
         }
@@ -834,6 +854,10 @@ export default class SampleForm extends React.Component {
           metric = metricPrefixes.indexOf(prefixAmountL) > -1 ? prefixAmountL : 'm';
           break;
         }
+        case 'defined_part_amount': {
+          metric = 'm';
+          break;
+        }
         case 'molecular_mass': {
           metric = 'n';
           break;
@@ -857,7 +881,8 @@ export default class SampleForm extends React.Component {
         title={title}
         disabled={disabled || gasSample || feedstockSample}
         block={block}
-        variant={unit && sample.amount_unit === unit ? 'primary' : 'light'}
+        variant="light"
+        active={Boolean(unit && sample.amount_unit === unit)}
         onChange={(e) => this.handleFieldChanged(field, e)}
         onMetricsChange={(e) => this.handleMetricsChange(e)}
         id={`numInput_${field}`}
@@ -904,7 +929,8 @@ export default class SampleForm extends React.Component {
         title={title}
         disabled={disabled}
         block={block}
-        variant={unit && sample.amount_unit === unit ? 'primary' : 'light'}
+        variant="light"
+        active={Boolean(unit && sample.amount_unit === unit)}
         onChange={(e) => this.handleFieldChanged(field, e)}
       />
     );
@@ -1114,8 +1140,8 @@ export default class SampleForm extends React.Component {
         <Form.Label>Sample type</Form.Label>
         <Select
           name="sampleType"
-          clearable={false}
-          disabled={!sample.can_update}
+          isClearable={false}
+          isDisabled={!sample.can_update}
           value={selectedSampleType}
           onChange={(value) => this.handleSampleTypeChanged(value)}
           options={SampleTypesOptions}
@@ -1132,6 +1158,7 @@ export default class SampleForm extends React.Component {
    */
   mixtureComponentsList(sample) {
     const { enableComponentLabel, enableComponentPurity } = this.state;
+    const { setComponentDeletionLoading, setMoleculeLoading } = this.props;
 
     return (
       <Row className="mb-4">
@@ -1141,7 +1168,8 @@ export default class SampleForm extends React.Component {
             onChange={this.handleMixtureComponentChanged}
             enableComponentLabel={enableComponentLabel}
             enableComponentPurity={enableComponentPurity}
-            setComponentDeletionLoading={this.props.setComponentDeletionLoading}
+            setComponentDeletionLoading={setComponentDeletionLoading}
+            setMoleculeLoading={setMoleculeLoading}
           />
         </Col>
       </Row>
@@ -1318,6 +1346,7 @@ export default class SampleForm extends React.Component {
           <SampleDetailsSolvents
             sample={sample}
             onChange={handleSampleChanged}
+            isDisabled={!sample.can_update}
           />
         </Row>
 
@@ -1335,8 +1364,14 @@ SampleForm.propTypes = {
   customizableField: PropTypes.func.isRequired,
   enableSampleDecoupled: PropTypes.bool,
   decoupleMolecule: PropTypes.func.isRequired,
+  onDecoupleChanged: PropTypes.func,
+  setComponentDeletionLoading: PropTypes.func,
+  setMoleculeLoading: PropTypes.func,
 };
 
 SampleForm.defaultProps = {
   enableSampleDecoupled: false,
+  onDecoupleChanged: null,
+  setComponentDeletionLoading: () => {},
+  setMoleculeLoading: () => {},
 };

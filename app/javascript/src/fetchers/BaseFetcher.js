@@ -49,16 +49,15 @@ export default class BaseFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams = {}, isSync = false, type = 'samples', ElKlass) {
+  static fetchByCollectionId(id, queryParams = {}, type = 'samples', ElKlass) {
     const getParams = {}
 
     getParams.page = queryParams.page || 1;
     getParams.per_page = queryParams.per_page || UIStore.getState().number_of_results;
     getParams.filter_created_at = (queryParams.filterCreatedAt === true);
     getParams.product_only = (queryParams.productOnly === true);
+    getParams.collection_id = id;
 
-    if (isSync) getParams.sync_collection_id = id;
-    if (!isSync) getParams.collection_id = id;
     if (queryParams.fromDate) getParams.from_date = `${dateToUnixTimestamp(queryParams.fromDate)}`;
     if (queryParams.toDate) getParams.to_date = `${dateToUnixTimestamp(queryParams.toDate)}`;
     if (queryParams.userLabel) getParams.user_label = `${queryParams.userLabel}`;

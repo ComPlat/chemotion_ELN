@@ -57,12 +57,7 @@ export default class AdminFetcher {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(otherParams),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    }).then((response) => response.json());
   }
 
   static createUserAccount(params) {
@@ -74,6 +69,23 @@ export default class AdminFetcher {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(params),
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  static enableDisableOtp({ enable, id }) {
+    return fetch(`/api/v1/admin/users/${id}/otp`, {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ enable }),
     })
       .then((response) => response.json())
       .then((json) => json)

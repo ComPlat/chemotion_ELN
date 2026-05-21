@@ -125,7 +125,7 @@ const Calendar = () => {
       case 'Wellplate':
         return 'icon-wellplate';
       case 'ResearchPlan':
-        return 'icon-research_plan';
+        return 'icon-research-plan';
       case 'Screen':
         return 'icon-screen';
       case 'DeviceDescription':

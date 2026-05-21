@@ -534,7 +534,7 @@ const DetailSearch = () => {
   const ButtonOrAddOn = (units, value, column, option, subFieldId) => {
     if (units.length > 1) {
       return (
-        <Button key={units} variant="success"
+        <Button key={units} variant="light"
           dangerouslySetInnerHTML={{ __html: value }}
           onClick={changeUnit(units, value, column, option, subFieldId)} />
       );
@@ -749,7 +749,7 @@ const DetailSearch = () => {
       case 'solvent_smiles':
         return '=';
       default:
-        return type == 'system-defined' ? searchStore.numeric_match : 'ILIKE';
+        return type == 'system-defined' ? searchStore.numeric_match : (type == 'select' ? '=' : 'ILIKE');
     }
   }
 

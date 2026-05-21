@@ -15,8 +15,8 @@ import {
 } from 'src/utilities/CellLineUtils';
 
 export default class CellLinesFetcher {
-  static fetchByCollectionId(id, queryParams = {}, isSync = false) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'cell_lines', CellLine);
+  static fetchByCollectionId(id, queryParams = {}) {
+    return BaseFetcher.fetchByCollectionId(id, queryParams, 'cell_lines', CellLine);
   }
 
   static fetchById(id) {

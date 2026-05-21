@@ -56,7 +56,7 @@ export default class Navigation extends React.Component {
   userSession() {
     const { currentUser, omniauthProviders, extraRules } = this.state;
     return currentUser
-      ? <UserAuth />
+      ? <UserAuth userMenuDropdownToggleVariant="link" />
       : (
         <NavNewSession
           authenticityToken={this.token()}
@@ -68,13 +68,13 @@ export default class Navigation extends React.Component {
 
   render() {
     return (
-      <div className="bg-gray-200 d-flex align-items-center justify-content-between px-4 py-2">
+      <div className="surface-lighten4 d-flex align-items-center justify-content-between px-4 py-3">
         <a href="/mydb">
           <ChemotionLogo />
         </a>
 
         <div className="d-flex gap-2">
-          <SupportMenuButton linkToEln />
+          <SupportMenuButton linkToEln variant="link" />
           {this.userSession()}
         </div>
       </div>

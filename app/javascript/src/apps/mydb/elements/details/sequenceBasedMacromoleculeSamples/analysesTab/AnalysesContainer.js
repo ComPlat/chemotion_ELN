@@ -121,7 +121,7 @@ function AnalysesContainer({ readonly }) {
           <div>
             <div className="d-flex justify-content-between align-items-center mb-3">
               {modeButton()}
-              <ButtonToolbar className="gap-2">
+              <ButtonToolbar>
                 <CommentButton
                   toggleCommentBox={sbmmStore.toggleAnalysisCommentBox}
                   isVisible={sbmmStore.analysis_comment_box}
@@ -161,7 +161,7 @@ function AnalysesContainer({ readonly }) {
           <div>
             <div className="d-flex justify-content-between align-items-center">
               <p className="m-0">There are currently no Analyses.</p>
-              <ButtonToolbar className="gap-2">
+              <ButtonToolbar>
                 <CommentButton
                   toggleCommentBox={sbmmStore.toggleAnalysisCommentBox}
                   isVisible={sbmmStore.analysis_comment_box}

@@ -8,7 +8,7 @@
  *= require_self
  */
 
- // file css rules that are used by multiple components under global-styles/utilities
+// file css rules that are used by multiple components under global-styles/utilities
 @import "global-styles/chemstrap-tokens";
 @import "global-styles/bootstrap-config";
 @import "global-styles/bootstrap-mods";
@@ -18,11 +18,15 @@
 @import "global-styles/tags";
 
 // file css rules that are targeted at specific components under components
+@import "components/AppModal";
 @import "components/AttachmentList";
 @import "components/ButtonGroupToggleButton";
 @import "components/CollectionTree";
+@import "components/CreateElementButton";
+@import "components/DetailCard";
 @import "components/DragHandle";
 @import "components/ElementAllCheckbox";
+@import "components/ElementDetails";
 @import "components/ElementDragLayer";
 @import "components/ElementsTable";
 @import "components/ElementGroupsRenderer_ElementListRenderer";
@@ -40,14 +44,15 @@
 @import "components/Report";
 @import "components/ReorderableList";
 @import "components/SampleName";
+@import "components/SearchInput";
 @import "components/SearchModal";
 @import "components/SearchResult";
+@import "components/SelectionActions";
 @import "components/Sidebar_Topbar";
 @import "components/TabLayoutEditor";
 @import "components/CollectionTabLayoutEditor";
 @import "components/svg_with_popver";
 @import "components/FolderDropzone.module";
-@import "components/ReactionVariations";
 
 @import "legacy/miscellaneous";
 @import "legacy/AttachmentContainer";
@@ -66,7 +71,6 @@
 @import "legacy/metadata";
 @import "legacy/molecules";
 @import "legacy/molviewer";
-@import "legacy/mozilla";
 @import "legacy/nmrdb-logo";
 @import "legacy/omniauth";
 @import "legacy/polymer_section";

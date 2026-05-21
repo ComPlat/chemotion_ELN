@@ -1,10 +1,10 @@
 import React from 'react';
 import expect from 'expect';
 import sinon from 'sinon';
-import Enzyme, { shallow } from 'enzyme';
+import Enzyme, { mount, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import { describe, it, beforeEach } from 'mocha';
-import { Button, Tabs, Tab } from 'react-bootstrap';
+import { Tabs, Tab } from 'react-bootstrap';
 import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -62,24 +62,33 @@ describe('VesselDetails', () => {
       expect(tabProps.at(0).prop('title')).toEqual('Properties');
     });
 
-    it('renders the buttons', () => {
-      const wrapper = shallow(React.createElement(VesselDetails, { ...props }));
-      const saveButtons = wrapper.find(Button).filterWhere(
-        (btn) => btn.prop('variant') === 'warning'
+    it('renders primary action and Close buttons in the card footer', () => {
+      const wrapper = mount(
+        <VesselDetails
+          vesselItem={props.vesselItem}
+        />
       );
-      expect(saveButtons).toHaveLength(1);
+      const footer = wrapper.find('.card-footer');
+      expect(footer.exists()).toBe(true);
+      expect(footer.find('button').filterWhere(
+        (btn) => btn.hasClass('btn-primary')
+      )).toHaveLength(1);
+
+      expect(footer.find('button').filterWhere((btn) => btn.text().includes('Close'))).toHaveLength(1);
     });
   });
 
   describe('when the vessel has a new status', () => {
     it('displays the correct button text for creation', () => {
-      const wrapper = shallow(React.createElement(VesselDetails, { ...props }));
-      const createButton = wrapper.find(Button).filterWhere(
-        (btn) => btn.text().includes('Create')
+      const wrapper = mount(
+        <VesselDetails
+          vesselItem={props.vesselItem}
+        />
       );
 
-      expect(createButton).toHaveLength(1);
-      expect(createButton.prop('variant')).toBe('warning');
+      expect(wrapper.find('.card-footer').find('button').filterWhere(
+        (btn) => btn.text().includes('Create')
+      )).toHaveLength(1);
     });
   });
 

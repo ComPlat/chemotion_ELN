@@ -5,18 +5,16 @@ require 'spec_helper'
 RSpec.describe Usecases::CalendarEntries::Users do
   describe '#perform!' do
     let(:user) { create(:person) }
+    let(:collection) { create(:collection, user: user) }
     let(:another_user) { create(:person) }
-    let(:sample) { create(:sample) }
-    let(:calendar_entry) { create(:calendar_entry, :sample, creator: user, eventable: sample) }
+    let(:other_users_collection) { create(:collection, user: another_user) }
+    let(:sample) { create(:sample, collections: [collection, other_users_collection]) }
+    let(:calendar_entry) { create(:calendar_entry, creator: user, eventable: sample) }
 
     before do
+      collection
+      other_users_collection
       calendar_entry
-
-      collection = create(:collection, user_id: user.id)
-      sample.collections_samples.create(collection_id: collection.id)
-
-      collection = create(:collection, user_id: another_user.id)
-      sample.collections_samples.create(collection_id: collection.id)
     end
 
     context 'when using invalid parameters' do

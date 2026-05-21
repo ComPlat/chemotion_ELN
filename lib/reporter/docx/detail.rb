@@ -146,6 +146,10 @@ module Reporter
       def met_pref(metric_prefix, unit)
         "#{MET_PREF_SYMBOLS[metric_prefix]}#{unit}"
       end
+
+      def normalize_liter_unit(unit)
+        unit.to_s.tr('L', 'l')
+      end
     end
   end
 end

@@ -8,7 +8,9 @@ module Usecases
       def initialize(params:, user:)
         @params = params
         @user = user
-        @sample = user_accessible_samples.find(params[:sample_id]) if params[:sample_id]
+
+        @sample = Sample.find(params[:sample_id])
+        raise ActiveRecord::RecordNotFound unless ElementPolicy.new(user, @sample).read?
       end
 
       def perform!
@@ -33,7 +35,7 @@ module Usecases
       # As in the near future the logic for shared/synched collections will change, it is feasible to extract
       # this into its own method, even if currently there is only dummy logic used
       def user_accessible_samples
-        user.samples
+        Collection.accessible_for(user).samples
       end
     end
   end

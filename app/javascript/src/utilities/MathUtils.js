@@ -68,6 +68,8 @@ const formatBytes = (bytes, decimals = 2) => {
  * @returns {number|NaN} - The parsed number or NaN if parsing fails.
  */
 function parseNumericString(numberString) {
+  if (Number.isFinite(numberString)) return numberString;
+
   if (typeof numberString !== 'string') {
     return NaN;
   }

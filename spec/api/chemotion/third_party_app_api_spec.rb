@@ -213,7 +213,7 @@ describe Chemotion::ThirdPartyAppAPI do
       end
 
       context 'when attachment is nested into analysis and readable and accessable and 3pa exists' do
-        let(:collection) { create(:collection) }
+        let(:collection) { create(:collection, user: user) }
         let!(:research_plan) do
           create(:research_plan, creator: other_user, collections: [collection], container: root_container)
         end
@@ -238,6 +238,7 @@ describe Chemotion::ThirdPartyAppAPI do
 
   describe 'POST /api/v1/public/third_party_apps/{token}' do
     let(:user) { create(:person) }
+    let(:other_user) { create(:person) }
     let!(:attachment) { create(:attachment, :with_image, storage: 'tmp', created_by: user.id, created_for: user.id) }
     let(:params_token) do
       {
@@ -322,7 +323,7 @@ describe Chemotion::ThirdPartyAppAPI do
     end
 
     context 'when user is not allowed to upload file' do
-      let(:inaccessible_collection) { create(:collection) }
+      let(:inaccessible_collection) { create(:collection, user: other_user) }
       let(:attachment) do
         create(:attachment, :with_image, storage: 'tmp', created_by: user.id, created_for: user.id)
       end
@@ -342,8 +343,11 @@ describe Chemotion::ThirdPartyAppAPI do
         end
       end
 
+      # TODO: check if this spec does what it is supposed to do. I "fixed" it by setting the collection to another user,
+      #       i.e. blocking write access due to the attachment being in an inaccessible collection.
+      #       I have no idea why the context above did this explicitly before, but not this context here
       context 'when attachment is in a dataset of the researchplan' do
-        let(:collection) { create(:collection) }
+        let(:collection) { create(:collection, user: other_user) }
         let!(:research_plan) do
           create(:research_plan, creator: admin1, collections: [collection], container: root_container)
         end

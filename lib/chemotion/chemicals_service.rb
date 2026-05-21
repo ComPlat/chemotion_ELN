@@ -49,13 +49,27 @@ module Chemotion
 
     def self.merck(name, language)
       product_number_string = merck_request(name)
-      product_number = merck_request(name)[15, merck_request(name).length].split('/')[1]
+      product_number = product_number_string[15, product_number_string.length].split('/')[1]
+      validate_product_number!(product_number)
       url_string = product_number_string[15, product_number_string.length]
       merck_link = "https://www.sigmaaldrich.com/DE/#{language}/sds/#{url_string}"
       { 'merck_link' => merck_link, 'merck_product_number' => product_number,
         'merck_product_link' => "https://www.sigmaaldrich.com#{product_number_string}" }
     rescue StandardError
       'Could not find safety data sheet from Merck'
+    end
+
+    # Validate product number to avoid URLs or query strings being treated as product IDs
+    # Only allow letters, digits, hyphen and underscore. Reject any other characters.
+    def self.validate_product_number!(product_number)
+      if product_number.nil? || product_number.to_s.strip.empty?
+        raise StandardError, 'Could not find safety data sheet from Merck'
+      end
+
+      allowed_pattern = /\A[A-Za-z0-9\-_]+\z/
+      return if product_number.to_s.match?(allowed_pattern)
+
+      raise StandardError, 'Could not find safety data sheet from Merck'
     end
 
     def self.alfa_product(alfa_req)
@@ -158,26 +172,64 @@ module Chemotion
       h_statements = {}
       h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
 
-      h_array = vendor == 'merck' ? h_phrases[4].split(',') : h_phrases
+      # Normalize input to an array of hazard codes (e.g. ["H301", "H314"])
+      h_array = if h_phrases.is_a?(String)
+                  h_phrases.scan(/H\d{1,3}[A-Za-z0-9]*/)
+                elsif h_phrases.is_a?(Array)
+                  h_phrases
+                else
+                  []
+                end
+
       h_array.each do |element|
-        h_phrases_hash.map { |k, v| k == element ? h_statements[k] = " #{v}" : nil }
+        code = element.to_s.strip
+        next if code.empty?
+
+        if (value = h_phrases_hash[code])
+          h_statements[code] = " #{value}"
+        end
       end
+
       h_statements
     end
 
-    def self.construct_p_statements(p_phrases, vendor = nil)
+    def self.construct_p_statements(p_phrases)
       p_statements = {}
       p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
-      p_array = vendor == 'merck' ? p_phrases[5].split('-').map { |element| element.gsub(/\s+/, '') } : p_phrases
+
+      # Normalize input to an array of precautionary codes (e.g. ["P102", "P301"])
+      p_array = if p_phrases.is_a?(String)
+                  p_phrases.scan(/P\d{1,3}[A-Za-z0-9]*/)
+                elsif p_phrases.is_a?(Array)
+                  p_phrases
+                else
+                  []
+                end
+
       p_array.each do |element|
-        p_phrases_hash.map { |k, v| k == element ? p_statements[k] = " #{v}" : nil }
+        code = element.to_s.strip
+        next if code.empty?
+
+        if (value = p_phrases_hash[code])
+          p_statements[code] = " #{value}"
+        end
       end
+
       p_statements
     end
 
     def self.construct_pictograms(pictograms)
       pictograms_hash = JSON.parse(File.read('./public/json/pictograms.json'))
-      pictograms.filter_map { |e| pictograms_hash[e] ? e : nil }
+      # Accept either a comma-separated string or an array
+      pictogram_array = if pictograms.is_a?(String)
+                          pictograms.split(',').map(&:strip)
+                        elsif pictograms.is_a?(Array)
+                          pictograms.map { |x| x.to_s.strip }
+                        else
+                          []
+                        end
+
+      pictogram_array.filter_map { |e| pictograms_hash.key?(e) ? e : nil }
     end
 
     def self.safety_phrases_thermofischer(product_number)
@@ -201,12 +253,33 @@ module Chemotion
                     .xpath("//*[contains(@class, '#{search_string}')]")
     end
 
+    def self.extract_h_text_from_array(safety_array)
+      safety_array.find { |t| t =~ /H\d{1,3}/ } || safety_array.find { |t| t.to_s.downcase.include?('hazard') } || ''
+    end
+
+    def self.extract_p_text_from_array(safety_array)
+      p_code_regex = /P\d{1,3}/
+      safety_array.find { |t| t =~ p_code_regex } ||
+        safety_array.find { |t| t.to_s.downcase.include?('precaution') } || ''
+    end
+
+    def self.extract_pictograms_from_array(safety_array)
+      pictogram_text = safety_array.find { |t| t =~ /pictogram|GHS|ghs|,/i } || ''
+      pictogram_text.to_s.split(',').map(&:strip).reject(&:empty?)
+    end
+
+    private_class_method :extract_h_text_from_array, :extract_p_text_from_array, :extract_pictograms_from_array
+
     def self.safety_phrases_merck(product_link)
       safety_section = safety_section(product_link)
       safety_array = safety_section.children.reject { |i| i.text.empty? }.map(&:text)
-      pictograms = safety_array[3].split(',')
-      { 'h_statements' => construct_h_statements(safety_array, 'merck'),
-        'p_statements' => construct_p_statements(safety_array, 'merck'),
+
+      h_text = extract_h_text_from_array(safety_array)
+      p_text = extract_p_text_from_array(safety_array)
+      pictograms = extract_pictograms_from_array(safety_array)
+
+      { 'h_statements' => construct_h_statements(h_text),
+        'p_statements' => construct_p_statements(p_text),
         'pictograms' => construct_pictograms(pictograms) }
     rescue StandardError
       'Could not find H and P phrases'

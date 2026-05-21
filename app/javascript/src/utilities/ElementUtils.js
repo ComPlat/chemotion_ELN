@@ -1,11 +1,10 @@
-import Aviator from 'aviator';
 import _ from 'lodash';
 import { deltaToMarkdown, markdownToDelta } from 'src/utilities/deltaMarkdownConverter';
 import { searchAndReplace } from 'src/utilities/markdownUtils';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
-import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from '../stores/alt/stores/UserStore';
+import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 
 const rfValueFormat = (input) => {
   if (typeof input !== 'string') { return input; }
@@ -208,26 +207,6 @@ const SameEleTypId = (orig, next) => {
     return true;
   }
   return false;
-};
-
-const UrlSilentNavigation = (element) => {
-  const { currentCollection, isSync } = UIStore.getState();
-  if (element) {
-    let elementString = `${element.type}`;
-    if (!isNaN(element.id)) elementString += `/${element.id}`;
-
-    const collectionUrl = `${currentCollection.id}/${elementString}`;
-    Aviator.navigate(
-      isSync ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`,
-      { silent: true },
-    );
-  } else {
-    const cId = currentCollection.id;
-    Aviator.navigate(
-      isSync ? `/scollection/${cId}/` : `/collection/${cId}/`,
-      { silent: true },
-    );
-  }
 };
 
 const markdownChemicalFormular = (text) => {
@@ -473,6 +452,19 @@ const getElementSegments = (elementName, tabs) => {
   return _.uniq(allTabs.concat(labels));
 }
 
+/**
+ * Check if a material/sample is a Sequence-Based Macromolecule Sample
+ * @param {Object} material - The material or sample to check
+ * @returns {boolean} - True if the material is an SBMM sample
+ */
+const isSbmmSample = (material) => {
+  if (!material) return false;
+
+  return material instanceof SequenceBasedMacromoleculeSample
+         || material.type === 'sequence_based_macromolecule_sample'
+         || material.sequence_based_macromolecule != null;
+};
+
 export {
   rfValueFormat,
   hNmrCheckMsg,
@@ -481,7 +473,6 @@ export {
   cNmrCount,
   msCheckMsg,
   SameEleTypId,
-  UrlSilentNavigation,
   sampleAnalysesFormatPattern,
   commonFormatPattern,
   Alphabet,
@@ -492,5 +483,6 @@ export {
   atomCountCInNMRDescription,
   emwInStr,
   instrumentText,
-  getElementSegments
+  getElementSegments,
+  isSbmmSample
 };

@@ -80,9 +80,8 @@ module Chemotion
               end
             end
           end
-          molecule.attributes.merge(temp_svg: File.exist?(svg_process[:svg_file_path]) && svg_process[:svg_file_name], ob_log: babel_info[:ob_log])
-
-          present molecule, with: Entities::MoleculeEntity
+          temp_svg = File.exist?(svg_process[:svg_file_path]) ? svg_process[:svg_file_name] : nil
+          Entities::MoleculeEntity.represent(molecule, temp_svg: temp_svg, ob_log: babel_info[:ob_log])
         end
       end
 
@@ -195,7 +194,9 @@ module Chemotion
           svg = KetcherService::SVGProcessor.clean_and_trim_svg(svg) || svg
           svg_process = SVG::Processor.new.structure_svg('ketcher_epam', svg, svg_digest, true)
         else
-          svg = Molecule.svg_reprocess(nil, molfile)
+          # Molfile has PolymersList tag -> use Indigo first; else Ketcher first; fallback to OpenBabel.
+          svg_service = Chemotion::SvgRenderer.has_polymers_list_tag?(molfile) ? 'indigo' : 'ketcher'
+          svg = Molecule.svg_reprocess(nil, molfile, service: svg_service)
           return error!('Failed to generate SVG from molfile', 422) if svg.blank?
 
           svg_process = SVG::Processor.new.structure_svg('ketcher', svg, svg_digest, true)

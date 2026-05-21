@@ -18,6 +18,9 @@ module Tagging
       'ReactionsSolventSample', 'ReactionsReactantSample'
       args = { reaction_tag: reaction_id, resources_tag: true }
       element = 'sample'
+    when 'ReactionsReactantSbmmSample'
+      args = { reaction_tag: reaction_id, resources_tag: true }
+      element = 'sequence_based_macromolecule_sample'
     when 'Well'
       args = { wellplate_tag: wellplate_id }
       element = 'sample'
