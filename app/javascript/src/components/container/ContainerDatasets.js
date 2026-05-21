@@ -85,7 +85,9 @@ export default class ContainerDatasets extends Component {
       }
     });
 
-    // Check and reassign preferred thumbnail if the current one was deleted
+    // Always propagate changes to parent
+    this.props.onChange(container);
+    // Also check and reassign preferred thumbnail if the current one was deleted
     this.reassignPreferredThumbnailIfNeeded(container);
   };
 

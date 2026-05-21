@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  OverlayTrigger, Tooltip
+  OverlayTrigger, Tooltip, Button,
 } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
@@ -529,9 +529,10 @@ ImageModal.propTypes = {
   placement: PropTypes.string,
   disableClick: PropTypes.bool,
   imageStyle: PropTypes.object,
-  preferredThumbnail: PropTypes.string,
+  preferredThumbnail: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   ChildrenAttachmentsIds: PropTypes.arrayOf(PropTypes.number),
   onChangePreferredThumbnail: PropTypes.func,
+  showPop: PropTypes.bool,
 };
 
 ImageModal.defaultProps = {
@@ -540,8 +541,6 @@ ImageModal.defaultProps = {
   preferredThumbnail: null,
   ChildrenAttachmentsIds: [],
   onChangePreferredThumbnail: () => { },
-};
-
-ImageModal.defaultProps = {
   placement: 'right',
+  showPop: false,
 };
