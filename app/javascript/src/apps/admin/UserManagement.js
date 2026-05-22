@@ -52,7 +52,7 @@ const loadUserByName = (input) => {
 };
 
 const handleResetPassword = (id, random, handleShowAlert) => {
-  AdminFetcher.resetUserPassword({ user_id: id, random })
+  AdminFetcher.resetUserPassword({ userId: id, random })
     .then((result) => {
       if (result && result.rp) {
         let message = '';

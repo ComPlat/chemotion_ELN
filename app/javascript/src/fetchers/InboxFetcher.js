@@ -18,7 +18,6 @@ export default class InboxFetcher {
   }
 
   static fetchInboxByContainer(containerId, currentContainerPage) {
-    console.log(containerId, containerId < 0, containerId !== -1);
     if (containerId < 0) { return Promise.resolve([]); }
 
     const userState = UserStore.getState();
@@ -27,8 +26,7 @@ export default class InboxFetcher {
     // if the user has not updated its profile yet, we set the default sort to name
     const searchTerm = { dataset_page: currentContainerPage || 1, sort_column: filters.inbox?.sort || 'name' };
 
-    return ApiClient.getJson(`/api/v1/inbox/containers/${containerId}?${new URLSearchParams(searchTerm)}`)
-      .then(() => true);
+    return ApiClient.getJson(`/api/v1/inbox/containers/${containerId}?${new URLSearchParams(searchTerm)}`);
   }
 
   static fetchInboxUnsorted() {
@@ -44,12 +42,12 @@ export default class InboxFetcher {
   }
 
   static assignToSampleAnalysis(attachmentId, sampleId) {
-    return ApiClient.postJson(`/api/v1/inbox/samples/${attachmentId}?attachment_id=${sampleId}`);
+    return ApiClient.postJson(`/api/v1/inbox/samples/${sampleId}`, { body: { attachment_id: attachmentId } });
   }
 
   static assignToReactionAnalysis(reactionId, attachmentId, variation) {
-    return ApiClient.postJson(
-      `/api/v1/inbox/reactions/${reactionId}?${new URLSearchParams({ attachment_id: attachmentId, variation })}`
-    );
+    return ApiClient.postJson(`/api/v1/inbox/reactions/${reactionId}`, {
+      body: { attachment_id: attachmentId, variation }
+    });
   }
 }
