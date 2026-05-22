@@ -156,6 +156,22 @@ const AnalysisHeader = ({ container, readonly }) => {
     }),
   };
   const attachment = getAttachmentFromContainer(container);
+  const allAttachments = container?.children?.flatMap((child) => (child.attachments || [])) || [];
+  const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new && att.thumb === true);
+  const attachmentsIds = savedAttachments
+    .map((att) => Number(att.id))
+    .filter((id) => !Number.isNaN(id) && id > 0);
+  const preferredThumbnail = container?.extended_metadata?.preferred_thumbnail || null;
+
+  const onChangePreferredThumbnail = (currentPreferredThumbnail) => {
+    if (currentPreferredThumbnail !== preferredThumbnail) {
+      container.extended_metadata = {
+        ...container.extended_metadata,
+        preferred_thumbnail: currentPreferredThumbnail,
+      };
+      sbmmStore.changeAnalysisContainerContent(container);
+    }
+  };
 
   const orderClass = sbmmStore.analysis_mode == 'order' ? 'order pe-2' : '';
   const deleted = container?.is_deleted || false;
@@ -165,12 +181,19 @@ const AnalysisHeader = ({ container, readonly }) => {
       <div className="preview border d-flex align-items-center">
         {deleted
           ? <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> 
-          : <ImageModal
-            attachment={attachment}
-            popObject={{
-              title: container.name,
-            }}
-          />
+          : (
+            <ImageModal
+              attachment={attachment}
+              popObject={{
+                title: container.name,
+              }}
+              preferredThumbnail={preferredThumbnail}
+              childrenAttachmentIds={attachmentsIds}
+              onChangePreferredThumbnail={(currentPreferredThumbnail) => onChangePreferredThumbnail(
+                currentPreferredThumbnail
+              )}
+            />
+          )
         }
       </div>
       <div className={"flex-grow-1" + (deleted ? "" : " analysis-header-fade")}>
