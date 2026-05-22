@@ -24,6 +24,15 @@
   }
 }
 
+@supports (field-sizing: content) {
+  .sample-description-auto {
+    field-sizing: content;
+    min-height: 2lh;
+    resize: none;
+    overflow: hidden;
+  }
+}
+
 .sample-form,
 .additional-form {
   margin-bottom: 0px !important;
