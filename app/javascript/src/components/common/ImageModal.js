@@ -39,30 +39,31 @@ export default class ImageModal extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { attachment, ChildrenAttachmentsIds, preferredThumbnail } = this.props;
-    const prevIds = prevProps.ChildrenAttachmentsIds || [];
-    const currIds = ChildrenAttachmentsIds || [];
-    // Attachment changed - refetch thumbnail
-    if (attachment?.id !== prevProps.attachment?.id) {
-      this.fetchImageThumbnail();
-    }
-    // Preferred thumbnail prop changed - sync state and refetch
-    if (preferredThumbnail !== prevProps.preferredThumbnail) {
+    const { attachment, childrenAttachmentIds, preferredThumbnail } = this.props;
+    const prevIds = prevProps.childrenAttachmentIds || [];
+    const currIds = childrenAttachmentIds || [];
+
+    const attachmentChanged = attachment?.id !== prevProps.attachment?.id;
+    const preferredChanged = preferredThumbnail !== prevProps.preferredThumbnail;
+    const idsChanged = prevIds.length !== currIds.length
+      || !prevIds.every((id, i) => id === currIds[i]);
+
+    if (preferredChanged) {
       this.setState({
         currentPreferredThumbnail: preferredThumbnail ? Number(preferredThumbnail) : null
       });
-      this.fetchImageThumbnail();
     }
-    // ChildrenAttachmentsIds changed (attachment added/deleted) - refresh thumbnails
-    if (prevIds.length !== currIds.length || !prevIds.every((id, i) => id === currIds[i])) {
+
+    if (idsChanged) {
       this.fetchThumbnails();
-      // If current preferred thumbnail is no longer in the list, clear it from state
       const { currentPreferredThumbnail } = this.state;
       if (currentPreferredThumbnail && !currIds.includes(currentPreferredThumbnail)) {
-        // Parent will handle reassigning; clear local state
         this.setState({ currentPreferredThumbnail: null });
-        this.fetchImageThumbnail();
       }
+    }
+
+    if (attachmentChanged || preferredChanged || idsChanged) {
+      this.fetchImageThumbnail();
     }
   }
 
@@ -143,9 +144,9 @@ export default class ImageModal extends Component {
   }
 
   fetchThumbnails() {
-    const { ChildrenAttachmentsIds } = this.props;
+    const { childrenAttachmentIds } = this.props;
     // Filter to ensure only valid numeric IDs are sent to the API
-    const validIds = (ChildrenAttachmentsIds || []).filter(
+    const validIds = (childrenAttachmentIds || []).filter(
       (id) => typeof id === 'number' && !Number.isNaN(id) && id > 0
     );
     if (validIds.length > 0) {
@@ -164,7 +165,7 @@ export default class ImageModal extends Component {
   }
 
   async fetchImageThumbnail() {
-    const { attachment, preferredThumbnail, ChildrenAttachmentsIds } = this.props;
+    const { attachment, preferredThumbnail, childrenAttachmentIds } = this.props;
     const fileType = attachment?.file?.type;
     const isImage = fileType?.startsWith('image/');
     const defaultNoAttachment = '/images/wild_card/no_attachment.svg';
@@ -175,7 +176,7 @@ export default class ImageModal extends Component {
     const isPreferredValid = preferredThumbnail
       && !Number.isNaN(preferredId)
       && preferredId > 0
-      && (ChildrenAttachmentsIds || []).includes(preferredId);
+      && (childrenAttachmentIds || []).includes(preferredId);
 
     // render image of preferred attachment thumbnail if available and valid
     if (isPreferredValid) {
@@ -522,7 +523,7 @@ ImageModal.propTypes = {
       type: PropTypes.string,
       preview: PropTypes.string,
     })
-  }).isRequired,
+  }),
   popObject: PropTypes.shape({
     title: PropTypes.string,
   }).isRequired,
@@ -530,16 +531,18 @@ ImageModal.propTypes = {
   disableClick: PropTypes.bool,
   imageStyle: PropTypes.object,
   preferredThumbnail: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  ChildrenAttachmentsIds: PropTypes.arrayOf(PropTypes.number),
+  childrenAttachmentIds: PropTypes.arrayOf(PropTypes.number),
   onChangePreferredThumbnail: PropTypes.func,
   showPop: PropTypes.bool,
 };
 
 ImageModal.defaultProps = {
   imageStyle: {},
+  attachment: null,
   disableClick: false,
+  attachment: null,
   preferredThumbnail: null,
-  ChildrenAttachmentsIds: [],
+  childrenAttachmentIds: [],
   onChangePreferredThumbnail: () => { },
   placement: 'right',
   showPop: false,

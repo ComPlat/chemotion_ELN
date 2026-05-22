@@ -220,7 +220,7 @@ export default class ResearchPlanDetailsContainers extends Component {
       const attachment = getAttachmentFromContainer(container);
       // Build list of saved, non-deleted attachment IDs (exclude is_new which don't have server IDs yet)
       const allAttachments = container?.children?.flatMap((child) => (child.attachments || [])) || [];
-      const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new);
+      const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new && att.thumb === true);
       const attachmentsIds = savedAttachments
         .map((att) => Number(att.id))
         .filter((id) => !Number.isNaN(id) && id > 0);
@@ -247,7 +247,7 @@ export default class ResearchPlanDetailsContainers extends Component {
                 title: container.name,
               }}
               preferredThumbnail={preferredThumbnail}
-              ChildrenAttachmentsIds={attachmentsIds}
+              childrenAttachmentIds={attachmentsIds}
               onChangePreferredThumbnail={(currentPreferredThumbnail) => onChangePreferredThumbnail(
                 currentPreferredThumbnail
               )}

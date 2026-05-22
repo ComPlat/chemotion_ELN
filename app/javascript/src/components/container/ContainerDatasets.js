@@ -85,18 +85,18 @@ export default class ContainerDatasets extends Component {
       }
     });
 
-    // Always propagate changes to parent
-    this.props.onChange(container);
-    // Also check and reassign preferred thumbnail if the current one was deleted
+    // Reassign preferred thumbnail if needed, then propagate once to parent
     this.reassignPreferredThumbnailIfNeeded(container);
   };
 
   reassignPreferredThumbnailIfNeeded = (analysisContainer) => {
-    // Get all saved, non-deleted attachment IDs from all datasets (exclude is_new which don't have server IDs yet)
+    // Get all saved, non-deleted attachment IDs that actually have thumbnails
     const allAttachments = analysisContainer?.children?.flatMap(
       (child) => (child.attachments || [])
     ) || [];
-    const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new);
+    const savedAttachments = allAttachments.filter(
+      (att) => !att.is_deleted && !att.is_new && att.thumb === true
+    );
     const validAttachmentIds = savedAttachments
       .map((att) => Number(att.id))
       .filter((id) => !Number.isNaN(id) && id > 0);
@@ -120,9 +120,9 @@ export default class ContainerDatasets extends Component {
           preferred_thumbnail: null,
         };
       }
-      // Propagate change to parent
-      this.props.onChange(analysisContainer);
     }
+    // Propagate final state to parent once
+    this.props.onChange(analysisContainer);
   };
 
   handleModalHide() {

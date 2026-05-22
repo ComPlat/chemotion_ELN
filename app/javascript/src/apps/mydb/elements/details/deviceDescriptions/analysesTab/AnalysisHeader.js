@@ -159,7 +159,7 @@ function AnalysisHeader({ container, readonly }) {
   // Build list of non-deleted attachment IDs
   const allAttachments = container?.children?.flatMap((child) => (child.attachments || [])) || [];
   // Filter: exclude deleted and is_new attachments (is_new don't have server IDs yet)
-  const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new);
+  const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new && att.thumb === true);
   const attachmentsIds = savedAttachments
     .map((att) => Number(att.id))
     .filter((id) => !Number.isNaN(id) && id > 0);
@@ -192,7 +192,7 @@ function AnalysisHeader({ container, readonly }) {
                 title: container.name,
               }}
               preferredThumbnail={preferredThumbnail}
-              ChildrenAttachmentsIds={attachmentsIds}
+              childrenAttachmentIds={attachmentsIds}
               onChangePreferredThumbnail={(currentPreferredThumbnail) => onChangePreferredThumbnail(
                 currentPreferredThumbnail
               )}
