@@ -116,14 +116,11 @@ export default class ImageModal extends Component {
         (result) => {
           if (!result?.data) throw new Error('Attachment is not provided');
           const src = result.data;
-          // Only update modalPreviewSrc from fetchImage if no preferred thumbnail is active
-          this.setState((prevState) => ({
+          this.setState({
             fetchSrc: src,
             isPdf: result.type === 'application/pdf',
-            modalPreviewSrc: prevState.currentPreferredThumbnail
-              ? prevState.modalPreviewSrc
-              : src,
-          }));
+            modalPreviewSrc: src,
+          });
         }
       );
     } catch (error) {
