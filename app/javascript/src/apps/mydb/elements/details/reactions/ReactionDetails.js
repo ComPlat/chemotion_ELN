@@ -328,46 +328,73 @@ export default class ReactionDetails extends Component {
     });
   }
 
+  renderHeaderNameInput() {
+    const { headerNameDraft } = this.state;
+
+    return (
+      <Form.Control
+        ref={this.headerNameInputRef}
+        size="sm"
+        type="text"
+        name="reaction_name"
+        value={headerNameDraft}
+        placeholder="Reaction name"
+        className="reaction-details-header__title-input d-inline-block"
+        onChange={this.handleHeaderNameDraftChange}
+        onBlur={this.commitHeaderNameChange}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            this.commitHeaderNameChange();
+          } else if (event.key === 'Escape') {
+            this.cancelHeaderNameChange();
+          }
+        }}
+      />
+    );
+  }
+
+  renderHeaderNameDisplay(reaction, canEditName) {
+    const titleClassName = `reaction-details-header__title-text${
+      reaction.name ? '' : ' reaction-details-header__title-text--empty'
+    }`;
+    const titleLabel = reaction.name || 'Reaction name';
+
+    if (!canEditName) {
+      return (
+        <span className={titleClassName}>
+          {titleLabel}
+        </span>
+      );
+    }
+
+    return (
+      <button
+        type="button"
+        className={titleClassName}
+        aria-label={`Edit reaction name: ${titleLabel}`}
+        onClick={this.openHeaderNameEditor}
+        title="Edit reaction name"
+      >
+        {titleLabel}
+      </button>
+    );
+  }
+
   renderHeaderTitle() {
-    const { reaction, isEditingHeaderName, headerNameDraft } = this.state;
+    const { reaction, isEditingHeaderName } = this.state;
     const titlePrefix = reaction.short_label || '';
     const canEditName = permitOn(reaction) && !reaction.isMethodDisabled('name');
+    const titleContent = isEditingHeaderName
+      ? this.renderHeaderNameInput()
+      : this.renderHeaderNameDisplay(reaction, canEditName);
 
     return (
       <span className="reaction-details-header__title">
         {titlePrefix && (
           <span className="reaction-details-header__title-prefix me-1">{titlePrefix}</span>
         )}
-        {isEditingHeaderName ? (
-          <Form.Control
-            ref={this.headerNameInputRef}
-            size="sm"
-            type="text"
-            name="reaction_name"
-            value={headerNameDraft}
-            placeholder="Reaction name"
-            className="reaction-details-header__title-input d-inline-block"
-            onChange={this.handleHeaderNameDraftChange}
-            onBlur={this.commitHeaderNameChange}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                this.commitHeaderNameChange();
-              } else if (event.key === 'Escape') {
-                this.cancelHeaderNameChange();
-              }
-            }}
-          />
-        ) : (
-          <span
-            aria-hidden="true"
-            className={`reaction-details-header__title-text${reaction.name ? '' : ' reaction-details-header__title-text--empty'}`}
-            onDoubleClick={canEditName ? this.openHeaderNameEditor : undefined}
-            title={canEditName ? 'Double-click to edit reaction name' : undefined}
-          >
-            {reaction.name || 'Reaction name'}
-          </span>
-        )}
+        {titleContent}
       </span>
     );
   }
