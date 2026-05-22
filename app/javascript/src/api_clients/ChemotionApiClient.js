@@ -70,6 +70,16 @@ const postFormData = (apiEndpoint, options) => {
   return apiRequest(apiEndpoint, { ...defaults, ...options });
 };
 
+const patchJson = (apiEndpoint, options) => {
+  const defaults = { method: 'PATCH' };
+
+  if (typeof options.body !== 'string') {
+    options.body = JSON.stringify(options.body);
+  }
+
+  return apiRequest(apiEndpoint, { ...defaults, ...options });
+};
+
 const deleteRequest = (apiEndpoint, options = {}) => {
   const defaults = { method: 'DELETE' };
   return apiRequest(apiEndpoint, { ...defaults, ...options });
@@ -82,6 +92,7 @@ const ChemotionApiClient = {
   putFormData,
   postJson,
   postFormData,
+  patchJson,
   deleteRequest
 };
 
