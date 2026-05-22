@@ -271,7 +271,7 @@ export default class AttachmentFetcher {
     for (let counter = 1; counter <= chunksCount; counter += 1) {
       const chunk = file.slice(beginingOfTheChunk, endOfTheChunk);
       tasks.push(
-        this.uploadChunk(chunk, counter, key, counter / totalStep, file.name)()
+        this.uploadChunk(chunk, counter, key, counter / totalStep, file.name)
       );
       spark.append(await this.getFileContent(chunk));
       beginingOfTheChunk = endOfTheChunk;
@@ -279,7 +279,7 @@ export default class AttachmentFetcher {
     }
 
     const checksum = spark.end();
-    return Promise.all(tasks).then(() => this.uploadCompleted(file.name, key, checksum)());
+    return Promise.all(tasks).then(() => this.uploadCompleted(file.name, key, checksum));
   }
 
   static deleteAttachment(params) {

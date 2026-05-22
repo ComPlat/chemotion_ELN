@@ -335,19 +335,19 @@ export default class UserManagement extends React.Component {
 
   handleConverterAdmin(id, isConverterAdmin) {
     const message = `Converter-profiles editing has been ${isConverterAdmin === true ? 'dis' : 'en'}abled for user ${id}`;
-    this.updateProfile({ user_id: id, converter_admin: !isConverterAdmin }, message);
+    this.updateProfile({ userId: id, converter_admin: !isConverterAdmin }, message);
   }
 
   handleTemplatesModerator(id, isTemplatesModerator) {
     const message = `Ketcher-template editing has been ${isTemplatesModerator === true ? 'en' : 'dis'}abled for user ${id}`;
-    this.updateProfile({ user_id: id, is_templates_moderator: !isTemplatesModerator }, message);
+    this.updateProfile({ userId: id, is_templates_moderator: !isTemplatesModerator }, message);
   }
 
   handleMoleculesModerator(id, isMoleculesEditor) {
     const message = isMoleculesEditor === true
       ? 'Disable editing the representation of the global molecules for this user'
       : 'Enable editing the representation of the global molecules for this user';
-    this.updateProfile({ user_id: id, molecule_editor: !isMoleculesEditor }, message);
+    this.updateProfile({ userId: id, molecule_editor: !isMoleculesEditor }, message);
   }
 
   handleActiveInActiveAccount(id, isActive) {
