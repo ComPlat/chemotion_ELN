@@ -293,6 +293,56 @@ export default class Sample extends Element {
     return this.components && this.components.length > 0;
   }
 
+  /**
+   * Normalizes a dot-separated SMILES string to a sorted set for order-independent comparison.
+   * @param {string} smilesString - Dot-separated canonical SMILES
+   * @returns {string} Sorted, dot-joined SMILES string
+   */
+  static normalizeSmilesSet(smilesString) {
+    if (!smilesString || typeof smilesString !== 'string') return '';
+    return smilesString.split('.').filter(Boolean).sort().join('.');
+  }
+
+  /**
+   * Compares two dot-separated SMILES strings as sets (order-independent).
+   * @param {string} smilesA - First SMILES string
+   * @param {string} smilesB - Second SMILES string
+   * @returns {boolean} True when both strings represent the same SMILES set
+   */
+  static sameSmilesSet(smilesA, smilesB) {
+    return Sample.normalizeSmilesSet(smilesA) === Sample.normalizeSmilesSet(smilesB);
+  }
+
+  /**
+   * Reorders mixture components to follow the sequence in a dot-separated SMILES string
+   * (typically matching the structure editor / molfile fragment order).
+   * @param {Array<string>} mixtureSmiles - Ordered SMILES fragments
+   */
+  syncComponentOrderToSmiles(mixtureSmiles) {
+    if (!this.hasComponents() || !mixtureSmiles?.length) return;
+
+    const ordered = [];
+    const remaining = [...this.components];
+
+    mixtureSmiles.forEach((smiles) => {
+      const index = remaining.findIndex(
+        (component) => component.molecule_cano_smiles === smiles
+          || component.molecule?.cano_smiles === smiles
+      );
+      if (index >= 0) {
+        ordered.push(remaining[index]);
+        remaining.splice(index, 1);
+      }
+    });
+
+    if (remaining.length > 0) {
+      ordered.push(...remaining);
+    }
+
+    this.components = ordered;
+    this.setComponentPositions();
+  }
+
   getChildrenCount() {
     return parseInt(Sample.children_count[this.id] || this.children_count, 10);
   }
@@ -2023,8 +2073,8 @@ export default class Sample extends Element {
 
     if (!combinedSmiles) return;
 
-    // Only fetch if the combined SMILES differs from current
-    if (combinedSmiles === this.molecule_cano_smiles) return;
+    // Same component set (possibly different order) — keep editor molfile/SVG intact.
+    if (Sample.sameSmilesSet(combinedSmiles, this.molecule_cano_smiles)) return;
 
     const result = await MoleculesFetcher.fetchBySmi(combinedSmiles, null, this.molfile, 'ketcher');
 
@@ -2047,13 +2097,6 @@ export default class Sample extends Element {
 
     this.molecule = result;
     this.molfile = result.molfile;
-
-    // Clear sample_svg_file after setting molecule, because the setter
-    // re-populates it from temp_svg.  For mixtures the permanent combined
-    // SVG (molecule.molecule_svg_file) should be used instead.
-    if (this.isMixture()) {
-      this.sample_svg_file = null;
-    }
   }
 
   /**
@@ -2348,6 +2391,7 @@ export default class Sample extends Element {
     });
 
     this.addMixtureComponentsSync(newComponents);
+    this.syncComponentOrderToSmiles(mixtureSmiles);
   }
 
   /**

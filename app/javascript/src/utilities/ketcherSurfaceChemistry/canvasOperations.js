@@ -437,6 +437,7 @@ const prepareSvg = async (editor) => {
     const svgBlob = await editor.structureDef.editor.generateImage(data, generateImageParams);
     const svgString = await new Response(svgBlob).text();
     const doc = parser.parseFromString(svgString, 'image/svg+xml');
+    addOrUpdateSvgTitle(doc.documentElement);
     const svg = new XMLSerializer().serializeToString(doc);
     return { svg, message: null };
   } catch (e) {
