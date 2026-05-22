@@ -87,7 +87,7 @@ export default function UnsortedDatasetModal({ show, datasetContainer, onHide })
     LoadingActions.start();
     return AttachmentFetcher.uploadToInbox(
       currentDatasetContainer.attachments.filter((file) => file.is_new && !file.is_deleted),
-    )().then(() => {
+    ).then(() => {
       onHide();
       InboxActions.fetchInboxUnsorted();
     });

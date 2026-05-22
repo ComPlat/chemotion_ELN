@@ -93,14 +93,14 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
     const newFiles = (sbmmSample.attachments || []).filter((a) => a.is_new && !a.is_deleted);
     const delFiles = (sbmmSample.attachments || []).filter((a) => !a.is_new && a.is_deleted);
     if (newFiles.length === 0 && delFiles.length === 0) return Promise.resolve();
-    return AttachmentFetcher.updateAttachables(newFiles, 'SequenceBasedMacromoleculeSample', id, delFiles)();
+    return AttachmentFetcher.updateAttachables(newFiles, 'SequenceBasedMacromoleculeSample', id, delFiles);
   }
 
   static sbmmAttachments(sbmm, id) {
     const newFiles = (sbmm.attachments || []).filter((a) => a.is_new && !a.is_deleted);
     const delFiles = (sbmm.attachments || []).filter((a) => !a.is_new && a.is_deleted);
     if (newFiles.length === 0 && delFiles.length === 0) return Promise.resolve();
-    return AttachmentFetcher.updateAttachables(newFiles, 'SequenceBasedMacromolecule', id, delFiles)();
+    return AttachmentFetcher.updateAttachables(newFiles, 'SequenceBasedMacromolecule', id, delFiles);
   }
 
   static errorHandling(sbmmSample, error, isNew) {

@@ -29,7 +29,7 @@ export default class DeviceDescriptionFetcher {
       .then(() => ApiClient.postJson('/api/v1/device_descriptions', { body: deviceDescription }))
       .then((json) => {
         const { id } = json.device_description;
-        return AttachmentFetcher.updateAttachables(newFiles, 'DeviceDescription', id, [])()
+        return AttachmentFetcher.updateAttachables(newFiles, 'DeviceDescription', id, [])
           .then(() => this.deviceDescriptionElement(json, id));
       });
   }
@@ -40,7 +40,7 @@ export default class DeviceDescriptionFetcher {
 
     const tasks = [
       AttachmentFetcher.uploadNewAttachmentsForContainer(deviceDescription.container),
-      AttachmentFetcher.updateAttachables(newFiles, 'DeviceDescription', deviceDescription.id, delFiles)(),
+      AttachmentFetcher.updateAttachables(newFiles, 'DeviceDescription', deviceDescription.id, delFiles),
     ];
 
     return Promise.all(tasks)

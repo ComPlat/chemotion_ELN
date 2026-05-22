@@ -109,6 +109,6 @@ export default class WellplatesFetcher {
     const newFiles = (wellplate.attachments || []).filter((a) => a.is_new && !a.is_deleted);
     const delFiles = (wellplate.attachments || []).filter((a) => !a.is_new && a.is_deleted);
     if (newFiles.length === 0 && delFiles.length === 0) return Promise.resolve();
-    return AttachmentFetcher.updateAttachables(newFiles, 'Wellplate', id, delFiles)();
+    return AttachmentFetcher.updateAttachables(newFiles, 'Wellplate', id, delFiles);
   }
 }

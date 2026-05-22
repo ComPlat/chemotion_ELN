@@ -150,6 +150,6 @@ export default class ResearchPlansFetcher {
       'ResearchPlan',
       id,
       researchPlan.getMarkedAsDeletedAttachments()
-    )();
+    );
   }
 }
