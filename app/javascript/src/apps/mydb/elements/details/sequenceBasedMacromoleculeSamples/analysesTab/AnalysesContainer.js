@@ -101,7 +101,15 @@ function AnalysesContainer({ readonly }) {
                     readOnly={readonly}
                     templateType="sbmmSample"
                     container={container}
-                    onChange={() => sbmmStore.changeAnalysisContainerContent(container)}
+                    onChange={(cont) => {
+                      if (cont.id === sbmmSample.container.id) {
+                        // Root container from modal save: update all analyses from fresh server data
+                        sbmmStore.changeAnalysisContainer(cont.children[0].children);
+                      } else {
+                        // Individual analysis container update (e.g. preferred thumbnail change)
+                        sbmmStore.changeAnalysisContainerContent(cont);
+                      }
+                    }}
                     rootContainer={sbmmSample.container}
                     index={index}
                   />
