@@ -2542,6 +2542,7 @@ export default class Sample extends Element {
       this.calculateTotalMixtureMass();
       this.updateMixtureComponentEquivalent();
     }
+    // Reorder components to follow the editor's fragment order in both cases.
     this.syncComponentOrderToSmiles(mixtureSmiles);
   }
 
