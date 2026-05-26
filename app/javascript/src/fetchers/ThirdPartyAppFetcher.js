@@ -1,7 +1,6 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
-import { ThirdPartyAppServices } from 'src/endpoints/ApiServices';
 
-const { TPA_ENDPOINT } = ThirdPartyAppServices;
+const TPA_ENDPOINT = '/api/v1/third_party_apps';
 const TPA_ENDPOINT_ADMIN = `${TPA_ENDPOINT}/admin`;
 
 export default class ThirdPartyAppFetcher {
