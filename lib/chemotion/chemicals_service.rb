@@ -268,13 +268,7 @@ module Chemotion
       pictogram_text.to_s.split(',').map(&:strip).reject(&:empty?)
     end
 
-    def self.names_properties_merck(properties)
-      properties.search('div.MuiGrid-grid-sm-3')
-                .css('span').map(&:text).map { |str| str.tr(' ', '_').downcase }
-    end
-
-    private_class_method :extract_h_text_from_array, :extract_p_text_from_array, :extract_pictograms_from_array,
-                         :names_properties_merck
+    private_class_method :extract_h_text_from_array, :extract_p_text_from_array, :extract_pictograms_from_array
 
     def self.safety_phrases_merck(product_link)
       safety_section = safety_section(product_link)
