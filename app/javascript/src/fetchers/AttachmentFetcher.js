@@ -69,10 +69,12 @@ export default class AttachmentFetcher {
   }
 
   static fetchThumbnails(ids) {
-    return ApiClient.postJson('/api/v1/attachments/thumbnails/', { body: ids });
+    return ApiClient.postJson('/api/v1/attachments/thumbnails', { body: ids });
   }
 
   static fetchFiles(ids) {
+    if (ids.length < 1) { return {}; }
+
     const handleResponseSuccess = (response) => {
       if (response.ok) {
         return response.json();
@@ -93,7 +95,7 @@ export default class AttachmentFetcher {
       return null;
     };
 
-    return ApiClient.postJson('/api/v1/attachments/files/', { body: ids, handleResponseSuccess });
+    return ApiClient.postJson('/api/v1/attachments/files', { body: ids, handleResponseSuccess });
   }
 
   static fetchJcamp(target) {
