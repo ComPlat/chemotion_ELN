@@ -1,5 +1,7 @@
 import base64 from 'base-64';
-import { camelCase, snakeCase, upperFirst } from 'lodash';
+import {
+  camelCase, snakeCase, upperFirst, isNil, omitBy
+} from 'lodash';
 
 const getFileName = (response) => {
   const disposition = response.headers.get('Content-Disposition');
@@ -13,13 +15,13 @@ const getFileName = (response) => {
   }
 };
 
-const downloadBlob = (file_name, blob) => {
+const downloadBlob = (fileName, blob) => {
   const url = window.URL.createObjectURL(blob);
 
   const a = document.createElement('a');
   a.style = 'display: none';
   a.href = url;
-  a.download = file_name;
+  a.download = fileName;
 
   document.body.appendChild(a);
   a.click();
@@ -56,8 +58,9 @@ const decamelize = (str) => snakeCase(str);
 
 // returns string: string_test => StringTest
 const classifyString = (str) => upperFirst(camelCase(str));
+const filteredSearchParams = (params) => new URLSearchParams(omitBy(params, isNil));
 
 export {
   getFileName, downloadBlob, parseBase64ToArrayBuffer,
-  camelizeKeys, decamelizeKeys, camelize, decamelize, classifyString
+  camelizeKeys, decamelizeKeys, camelize, decamelize, classifyString, filteredSearchParams
 };
