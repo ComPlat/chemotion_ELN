@@ -4,7 +4,7 @@ import React, {
 } from 'react';
 import Select from 'react-select';
 import {
-  Button, ButtonGroup, Form, Modal, OverlayTrigger, Tooltip, Table
+  Button, ButtonGroup, Form, OverlayTrigger, Tooltip, Table
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { cloneDeep, isEqual } from 'lodash';
@@ -672,13 +672,12 @@ function EntrySelectionHeader({
   return (
     <div>
       <div className="d-flex align-items-center w-100">
-        <button
-          type="button"
-          className="ag-header-group-cell-label btn btn-link p-0 text-start text-decoration-none"
+        <Button
+          size="sm"
           onClick={() => handleNameChange(names[(names.indexOf(displayName) + 1) % names.length] ?? displayName)}
         >
           {`${displayName} ${gasType && gasType !== 'off' ? `(${gasType})` : ''}`}
-        </button>
+        </Button>
         <Button
           variant="link"
           className="p-0 ms-1 lh-1"
@@ -749,16 +748,11 @@ EntrySelectionHeader.defaultProps = {
   gasType: '',
 };
 
-function ToolHeader() {
-  return (
-    <span>Tools</span>
-  );
-}
-
 function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   const [showModal, setShowModal] = useState(false);
   const [currentColumns, setCurrentColumns] = useState(selectedColumns);
   const [pendingDeselection, setPendingDeselection] = useState(null);
+  const pendingDeselectionConfirmation = pendingDeselection !== null;
 
   useEffect(() => {
     // Remove currently selected columns that are no longer available.
@@ -794,6 +788,7 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   };
 
   const handleConfirmDeselection = () => {
+    if (!pendingDeselection) return;
     const { key, newValues } = pendingDeselection;
     setCurrentColumns((prev) => ({ ...prev, [key]: newValues }));
     setPendingDeselection(null);
@@ -808,57 +803,51 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
 
   return (
     <>
-      <Button size="sm" variant="primary" onClick={() => setShowModal(true)} className="mb-2">
+      <Button size="sm" onClick={() => setShowModal(true)} className="mb-2">
+        <i className="fa fa-pencil me-1" />
         Select Columns
       </Button>
 
-      <Modal show={showModal} onHide={() => setShowModal(false)} animation={false}>
-        <Modal.Header closeButton>
-          <Modal.Title>Column Selection</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {Object.entries(availableColumns).map(([columnGroup, columnIDsToLabels]) => (
-            <div key={columnGroup}>
-              <h5>{toUpperCase(splitCamelCase(columnGroup))}</h5>
-              <Select
-                isMulti
-                options={Object.entries(columnIDsToLabels).map(([id, label]) => ({ value: id, label }))}
-                value={currentColumns[columnGroup]?.map((id) => ({ value: id, label: columnIDsToLabels[id] })) || []}
-                onChange={handleSelectChange(columnGroup)}
-              />
-            </div>
-          ))}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleApply}>
-            Apply
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <AppModal
+        show={showModal && !pendingDeselectionConfirmation}
+        onHide={() => setShowModal(false)}
+        animation={false}
+        title="Column Selection"
+        primaryActionLabel="Apply"
+        onPrimaryAction={handleApply}
+      >
+        {Object.entries(availableColumns).map(([columnGroup, columnIDsToLabels]) => (
+          <div key={columnGroup}>
+            <h5>{toUpperCase(splitCamelCase(columnGroup))}</h5>
+            <Select
+              isMulti
+              options={Object.entries(columnIDsToLabels).map(([id, label]) => ({ value: id, label }))}
+              value={currentColumns[columnGroup]?.map((id) => ({ value: id, label: columnIDsToLabels[id] })) || []}
+              onChange={handleSelectChange(columnGroup)}
+            />
+          </div>
+        ))}
+      </AppModal>
 
-      <Modal show={pendingDeselection !== null} onHide={handleCancelDeselection} animation={false}>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm De-selection</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to de-select
-          {' '}
-          {pendingDeselection?.deselectedLabels}
-          ? De-selection results in the loss of data.
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCancelDeselection}>
-            Keep
-            {' '}
-            {pendingDeselection?.deselectedLabels}
-          </Button>
+      <AppModal
+        show={pendingDeselectionConfirmation}
+        onHide={handleCancelDeselection}
+        animation={false}
+        title="Confirm De-selection"
+        closeLabel={`Keep ${pendingDeselection?.deselectedLabels || ''}`}
+        extendedFooter={(
           <Button variant="danger" onClick={handleConfirmDeselection}>
             Remove
             {' '}
             {pendingDeselection?.deselectedLabels}
           </Button>
-        </Modal.Footer>
-      </Modal>
+        )}
+      >
+        Are you sure you want to de-select
+        {' '}
+        {pendingDeselection?.deselectedLabels}
+        ? De-selection results in the loss of data.
+      </AppModal>
     </>
   );
 }
@@ -883,7 +872,6 @@ function RemoveVariationsModal({ onRemoveAll }) {
     <>
       <Button size="sm" variant="danger" onClick={handleShow} className="mb-2">
         <i className="fa fa-trash me-1" />
-        {' '}
         Remove all variations
       </Button>
 
@@ -965,7 +953,6 @@ export {
   NoteCellRenderer,
   NoteCellEditor,
   MaterialOverlay,
-  ToolHeader,
   ColumnSelection,
   SegmentFormatter,
   SegmentParser,
