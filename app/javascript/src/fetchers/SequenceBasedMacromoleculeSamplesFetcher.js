@@ -1,16 +1,36 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
+import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
+import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
 
 export default class SequenceBasedMacromoleculeSamplesFetcher {
-  static fetchByCollectionId(id, queryParams = {}, listOrder = 'sbmm') {
-    return BaseFetcher.fetchByCollectionId(
-      id,
-      { ...queryParams, listOrder },
-      'sequence_based_macromolecule_samples',
-      SequenceBasedMacromoleculeSample
-    );
+  static fetchByCollectionId(id, params = {}, listOrder = 'sbmm') {
+    const searchParams = this.sbmmSampleSearchParams(id, params, listOrder);
+
+    return ApiClient.getJson(`/api/v1/sequence_based_macromolecule_samples?${searchParams}`, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.sequence_based_macromolecule_samples
+            .map((sbmmSample) => new SequenceBasedMacromoleculeSample(sbmmSample)),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
+  }
+
+  static sbmmSampleSearchParams(id, params, listOrder) {
+    // eslint-disable-next-line object-curly-newline
+    const { fromDate, toDate, filterCreatedAt, ...restParams } = params;
+
+    const searchParams = preparedCollectionParams(id, { ...restParams, listOrder });
+    searchParams.set('filter[timestamp_field]', filterCreatedAt ? 'created_at' : 'updated_at');
+    if (fromDate) searchParams.set('filter[after_timestamp]', dateToUnixTimestamp(fromDate));
+    if (toDate) searchParams.set('filter[before_timestamp]', dateToUnixTimestamp(toDate));
+    return searchParams;
   }
 
   static fetchSequenceBasedMacromoleculeSamplesByUIStateAndLimit(params) {
@@ -53,7 +73,7 @@ export default class SequenceBasedMacromoleculeSamplesFetcher {
     ];
 
     return Promise.all(tasks)
-      .then(() => BaseFetcher.updateAnnotations(sbmmSample))
+      .then(() => AnnotationsFetcher.updateAnnotations(sbmmSample))
       .then(() => ApiClient.putJson(
         `/api/v1/sequence_based_macromolecule_samples/${sbmmSample.id}`,
         { body: sbmmSample.serialize() }
