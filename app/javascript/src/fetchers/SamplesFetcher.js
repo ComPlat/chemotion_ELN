@@ -4,14 +4,25 @@ import { Map } from 'immutable';
 import Sample from 'src/models/Sample';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
+import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import Literature from 'src/models/Literature';
+import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
 export default class SamplesFetcher {
-  static fetchByCollectionId(id, queryParams = {}, moleculeSort = false) {
-    const updatedQueryParams = { ...queryParams, moleculeSort };
-    return BaseFetcher.fetchByCollectionId(id, updatedQueryParams, 'samples', Sample);
+  static fetchByCollectionId(id, params = {}, moleculeSort = false) {
+    const updatedParams = { ...params, moleculeSort: moleculeSort ? 1 : 0 };
+
+    return ApiClient.getJson(`/api/v1/samples?${preparedCollectionParams(id, updatedParams)}`, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.samples.map((sample) => (new Sample(sample))),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
   }
 
   static fetchSamplesByUIStateAndLimit(params) {
@@ -59,7 +70,7 @@ export default class SamplesFetcher {
     ];
 
     return Promise.all(tasks)
-      .then(() => BaseFetcher.updateAnnotationsInContainer(sample))
+      .then(() => AnnotationsFetcher.updateAnnotationsInContainer(sample))
       .then(() => ApiClient.putJson(`/api/v1/samples/${sample.id}`, { body: sample.serialize() }))
       .then((json) => this.sampleElement(json, sample.id));
   }
