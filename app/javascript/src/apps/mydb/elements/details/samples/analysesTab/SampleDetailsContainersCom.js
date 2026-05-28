@@ -3,10 +3,8 @@ import React from 'react';
 import { ButtonToolbar, Accordion, Card } from 'react-bootstrap';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersDnd';
-import {
-  AnalysesHeader,
-  AnalysisModeToggle,
-} from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
+import { AnalysesHeader } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
+import AnalysisModeToggle from 'src/apps/mydb/elements/details/analyses/AnalysisModeToggle';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 

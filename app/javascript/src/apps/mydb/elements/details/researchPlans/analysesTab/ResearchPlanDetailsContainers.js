@@ -8,8 +8,7 @@ import {
 } from 'react-bootstrap';
 import Container from 'src/models/Container';
 import ArrayUtils from 'src/utilities/ArrayUtils';
-import { reOrderArr } from 'src/utilities/DndControl';
-import { indexedContainers } from 'src/apps/mydb/elements/details/analyses/utils';
+import { findAnalysesContainer, reorderAnalyses } from 'src/apps/mydb/elements/details/analyses/utils';
 import AnalysisModeToggle from 'src/apps/mydb/elements/details/analyses/AnalysisModeToggle';
 import AnalysesOrderRow from 'src/apps/mydb/elements/details/analyses/AnalysesOrderRow';
 import ContainerComponent from 'src/components/container/ContainerComponent';
@@ -76,13 +75,7 @@ export default class ResearchPlanDetailsContainers extends Component {
 
   handleMove(source, target) {
     const { researchPlan, handleResearchPlanChange } = this.props;
-    const analysesContainer = researchPlan.container.children.filter(
-      (element) => ~element.container_type.indexOf('analyses'),
-    )[0];
-    const sortedConts = ArrayUtils.sortArrByIndex(analysesContainer.children);
-    const isEqCId = (container, tagEl) => container.id === tagEl.id;
-    const newSortConts = reOrderArr(source, target, isEqCId, sortedConts);
-    analysesContainer.children = indexedContainers(newSortConts);
+    reorderAnalyses(findAnalysesContainer(researchPlan), source, target);
     handleResearchPlanChange(researchPlan);
   }
 
