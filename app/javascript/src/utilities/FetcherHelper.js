@@ -2,6 +2,7 @@ import base64 from 'base-64';
 import {
   camelCase, snakeCase, upperFirst, isNil, omitBy
 } from 'lodash';
+import { dateToUnixTimestamp } from 'src/utilities/timezoneHelper';
 
 const getFileName = (response) => {
   const disposition = response.headers.get('Content-Disposition');
@@ -58,9 +59,20 @@ const decamelize = (str) => snakeCase(str);
 
 // returns string: string_test => StringTest
 const classifyString = (str) => upperFirst(camelCase(str));
+// returns search params where params with nil or undefined values where removed
 const filteredSearchParams = (params) => new URLSearchParams(omitBy(params, isNil));
 
+const preparedCollectionParams = (id, params) => {
+  const collectionParams = {
+    ...params,
+    collection_id: id,
+    from_date: (params?.fromDate ? dateToUnixTimestamp(params.fromDate) : null),
+    to_date: (params?.toDate ? dateToUnixTimestamp(params.toDate) : null)
+  };
+  return filteredSearchParams(decamelizeKeys(collectionParams));
+};
+
 export {
-  getFileName, downloadBlob, parseBase64ToArrayBuffer,
+  getFileName, downloadBlob, parseBase64ToArrayBuffer, preparedCollectionParams,
   camelizeKeys, decamelizeKeys, camelize, decamelize, classifyString, filteredSearchParams
 };

@@ -1,12 +1,22 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Wellplate from 'src/models/Wellplate';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
+import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
 export default class WellplatesFetcher {
-  static fetchByCollectionId(id, queryParams = {}) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, 'wellplates', Wellplate);
+  static fetchByCollectionId(id, params = {}) {
+    return ApiClient.getJson(`/api/v1/wellplates?${preparedCollectionParams(id, params)}`, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.wellplates.map((wellplate) => (new Wellplate(wellplate))),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
   }
 
   static fetchById(id) {
@@ -35,7 +45,7 @@ export default class WellplatesFetcher {
     ];
 
     return Promise.all(tasks)
-      .then(() => BaseFetcher.updateAnnotations(wellplate))
+      .then(() => AnnotationsFetcher.updateAnnotations(wellplate))
       .then(() => ApiClient.putJson(`/api/v1/wellplates/${wellplate.id}`, { body: wellplate.serialize() }))
       .then((json) => this.wellplateElement(json, wellplate.id));
   }
