@@ -1229,6 +1229,7 @@ export default class SampleForm extends React.Component {
         <Form.Label>Description</Form.Label>
         <Form.Control
           as="textarea"
+          className="sample-description-auto"
           placeholder={sample.description}
           value={sample.description || ''}
           onChange={(e) => this.handleFieldChanged('description', e.target.value)}
