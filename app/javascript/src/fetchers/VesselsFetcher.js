@@ -1,11 +1,11 @@
 /* eslint-disable camelcase */
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Vessel from 'src/models/vessel/Vessel';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
 import {
   extractCreateVesselTemplateApiParameter,
@@ -60,8 +60,17 @@ const errorMessageParameter = {
 };
 
 export default class VesselsFetcher {
-  static fetchByCollectionId(id, queryParams = {}) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, 'vessels', Vessel);
+  static fetchByCollectionId(id, params = {}) {
+    return ApiClient.getJson(`/api/v1/vessels?${preparedCollectionParams(id, params)}`, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.vessels.map((vessel) => (Vessel.createFromRestResponse(id, vessel))),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
   }
 
   static fetchById(id) {
