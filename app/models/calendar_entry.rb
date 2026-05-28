@@ -67,9 +67,8 @@ class CalendarEntry < ApplicationRecord
     collection = collection_for(user)
     return unless collection
 
-    is_synchronized = collection.is_a?(SyncCollectionsUser)
     url = Rails.application.config.root_url
-    "#{url}/mydb/#{is_synchronized ? 's' : ''}collection/#{collection.id}/#{eventable_type.downcase}/#{eventable_id}"
+    "#{url}/mydb/collection/#{collection.id}/#{eventable_type.downcase}/#{eventable_id}"
   end
 
   def create_messages(user_ids, type)
@@ -101,9 +100,7 @@ class CalendarEntry < ApplicationRecord
 
   def collection_for(user)
     collections = eventable&.collections || Collection.none
-    sync_collections = SyncCollectionsUser.includes(:collection)
-                                          .find_by(user_id: user.id, collections: { id: collections.ids })
-    collections&.find_by(user_id: user.id) || sync_collections
+    collections&.find_by(user_id: user.id)
   end
 
   def range

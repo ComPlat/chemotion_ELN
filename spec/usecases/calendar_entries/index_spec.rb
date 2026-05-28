@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-# rubocop:disable RSpec/MultipleMemoizedHelpers
+# rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet
 RSpec.describe Usecases::CalendarEntries::Index do
   describe '#perform!' do
     let(:time) { Time.zone.parse('2023-06-01 13:00:00') }
@@ -10,16 +10,26 @@ RSpec.describe Usecases::CalendarEntries::Index do
     let(:user1) { create(:person) }
     let(:user2) { create(:person) }
     let(:user3) { create(:person) }
+    let(:collection1) do
+      create(:collection, user: user1).tap do |collection|
+        create(:collection_share, collection: collection, shared_with: user3)
+      end
+    end
+    let(:collection2) do
+      create(:collection, user: user1, parent: collection1).tap do |collection|
+        create(:collection_share, collection: collection, shared_with: user2)
+      end
+    end
+    let(:collection3) { create(:collection, user: user3) }
 
-    let(:sample1) { create(:sample) }
-    let(:sample2) { create(:sample) }
+    let(:sample1) { create(:sample, collections: [collection1, collection2]) }
+    let(:sample2) { create(:sample, collections: [collection3]) }
 
-    let(:reaction1) { create(:reaction) }
+    let(:reaction1) { create(:reaction, collections: [collection1]) }
 
     let(:user1_reaction1_calendar_entry_in_range) do
       create(
         :calendar_entry,
-        :reaction,
         creator: user1,
         eventable: reaction1,
         start_time: time + 30.minutes,
@@ -29,7 +39,6 @@ RSpec.describe Usecases::CalendarEntries::Index do
     let(:user1_sample1_calendar_entry_in_range) do
       create(
         :calendar_entry,
-        :sample,
         creator: user1,
         eventable: sample1,
         start_time: time + 30.minutes,
@@ -39,7 +48,6 @@ RSpec.describe Usecases::CalendarEntries::Index do
     let(:user1_sample1_calendar_entry_out_of_range) do
       create(
         :calendar_entry,
-        :sample,
         creator: user1,
         eventable: sample1,
         start_time: time + 2.hours,
@@ -57,7 +65,6 @@ RSpec.describe Usecases::CalendarEntries::Index do
     let(:user2_sample1_calendar_entry_in_range) do
       create(
         :calendar_entry,
-        :sample,
         creator: user2,
         eventable: sample1,
         start_time: time + 30.minutes,
@@ -67,7 +74,6 @@ RSpec.describe Usecases::CalendarEntries::Index do
     let(:user3_sample2_calendar_entry_in_range) do
       create(
         :calendar_entry,
-        :sample,
         creator: user3,
         eventable: sample2,
         start_time: time + 30.minutes,
@@ -82,33 +88,6 @@ RSpec.describe Usecases::CalendarEntries::Index do
       user1_calendar_entry_in_range
       user2_sample1_calendar_entry_in_range
       user3_sample2_calendar_entry_in_range
-
-      collection1 = create(:collection, user: user1)
-      sample1.collections_samples.create(collection: collection1)
-      reaction1.collections_reactions.create(collection: collection1)
-
-      collection2 = create(
-        :collection,
-        user: user2,
-        shared_by_id: user1.id,
-        is_shared: true,
-        is_locked: true,
-        parent: collection1,
-      )
-      sample1.collections_samples.create(collection: collection2)
-
-      collection3 = create(:collection, user: user3)
-      sample2.collections_samples.create(collection: collection3)
-
-      sync_collection = collection1.sync_collections_users.create(user: user3, sharer: user1)
-      collection4 = create(
-        :collection,
-        user: user3,
-        shared_by_id: user1.id,
-        is_locked: true,
-        is_shared: true,
-      )
-      sync_collection.update(fake_ancestry: collection4.id.to_s)
     end
 
     context 'when setting eventable to sample1' do
@@ -130,7 +109,6 @@ RSpec.describe Usecases::CalendarEntries::Index do
           user2_sample1_calendar_entry_in_range.id,
         ].sort
         expect(described_class.new(user: user2, params: params).perform!.pluck(:id).sort).to eq [
-          user1_sample1_calendar_entry_in_range.id,
           user2_sample1_calendar_entry_in_range.id,
         ].sort
         expect(described_class.new(user: user3, params: params).perform!.pluck(:id).sort).to eq [
@@ -223,4 +201,4 @@ RSpec.describe Usecases::CalendarEntries::Index do
     end
   end
 end
-# rubocop:enable RSpec/MultipleMemoizedHelpers
+# rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet

@@ -62,8 +62,8 @@ export default class ReactionsFetcher {
     }
   }
 
-  static fetchByCollectionId(id, queryParams = {}, isSync = false) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'reactions', Reaction);
+  static fetchByCollectionId(id, queryParams = {}) {
+    return BaseFetcher.fetchByCollectionId(id, queryParams, 'reactions', Reaction);
   }
 
   static findByShortLabel(shortLabel) {
@@ -94,8 +94,8 @@ export default class ReactionsFetcher {
       .then((json) => GenericElsFetcher.uploadGenericFiles(reaction, json.reaction.id, 'Reaction')
         .then(() => ReactionsFetcher.updateAnnotationsInReaction(reaction))
         .then(() => this.fetchById(json.reaction.id))).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+          console.log(errorMessage);
+        });
     return promise();
   }
 

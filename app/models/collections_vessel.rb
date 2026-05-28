@@ -23,4 +23,22 @@ class CollectionsVessel < ApplicationRecord
 
   belongs_to :collection
   belongs_to :vessel
+
+  include Tagging
+  include Collecting
+
+  def self.remove_in_collection(element_ids, collection_ids)
+    delete_in_collection(element_ids, collection_ids)
+    update_tag_by_element_ids(element_ids)
+  end
+
+  def self.move_to_collection(element_ids, from_col_ids, to_col_ids)
+    delete_in_collection(element_ids, from_col_ids)
+    insert_in_collection(element_ids, to_col_ids)
+    update_tag_by_element_ids(element_ids)
+  end
+
+  def self.create_in_collection(element_ids, collection_ids)
+    static_create_in_collection(element_ids, collection_ids)
+  end
 end

@@ -11,7 +11,7 @@ import {
   setUpReaction, setUpGaseousReaction, getColumnDefinitionsMaterialIDs, getColumnGroupChild, getReactionMaterialsIDs
 } from 'helper/reactionVariationsHelpers';
 import {
-  materialTypes, getCurrentEntry, getEntryDefs,
+  materialTypes
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { cloneDeep } from 'lodash';
 
@@ -138,26 +138,26 @@ describe('ReactionVariationsMaterials', () => {
     const productColumnDefinition = getColumnGroupChild(
       updatedColumnDefinitions,
       'products',
-      `products.${productIDs[0]}`
+      productIDs[0]
     );
+
     expect(productColumnDefinition.cellDataType).toBe('gas');
-    const currentEntry = getCurrentEntry(productColumnDefinition.entryDefs);
-    expect(currentEntry).toBe('duration');
-    expect(productColumnDefinition.entryDefs[currentEntry].displayUnit).toBe('Second(s)');
+    expect(productColumnDefinition.entry).toBe('duration');
+    expect(productColumnDefinition.displayUnit).toBe('Second(s)');
 
     const reactantIDs = getColumnDefinitionsMaterialIDs(updatedColumnDefinitions, 'reactants');
     const reactantColumnDefinition = getColumnGroupChild(
       updatedColumnDefinitions,
       'reactants',
-      `reactants.${reactantIDs[0]}`
+      reactantIDs[0]
     );
     expect(reactantColumnDefinition.cellDataType).toBe('feedstock');
-    expect(getCurrentEntry(reactantColumnDefinition.entryDefs)).toBe('mass');
+    expect(reactantColumnDefinition.entry).toBe('mass');
   });
   it('determines cell editability based on entry', async () => {
     const colDef = {
       field: 'foo',
-      entryDefs: getEntryDefs(['equivalent'])
+      entry: 'equivalent'
     };
     const data = {
       foo: {

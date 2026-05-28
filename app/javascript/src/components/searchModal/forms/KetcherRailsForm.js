@@ -6,7 +6,10 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
-  togglePanel, showErrorMessage, AccordeonHeaderButtonForSearchForm, panelVariables
+  togglePanel,
+  showErrorMessage,
+  AccordeonHeaderButtonForSearchForm,
+  panelVariables,
 } from 'src/components/searchModal/forms/SearchModalFunctions';
 import SearchResult from 'src/components/searchModal/forms/SearchResult';
 import { getEditorById } from 'src/components/structureEditor/EditorsInstances';
@@ -14,24 +17,41 @@ import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 
 function KetcherRailsform() {
   const [editor, setEditor] = React.useState(null);
+  const [iframeHeight, setIframeHeight] = React.useState(0.65 * window.innerHeight);
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
-  const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? 'active' : '';
-  const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active' : '';
+  const accordionItemClass = searchStore.searchResultsCount > 0 ? ' with-result' : '';
+  const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? `active${accordionItemClass}` : '';
+  const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active with-result' : '';
   const { pgCartridge } = UIStore.getState();
   const iframeStyle = {};
-  const iframeHeight = panelVars.invisibleClassName
-    ? 0.62 * window.innerHeight
-    : 0.65 * window.innerHeight;
 
   useEffect(() => {
     const loadEditor = async () => {
       const editorInstance = await getEditorById('ketcher');
       setEditor(editorInstance);
+      setIframeHeight(calculateHeight());
     };
 
     loadEditor();
   }, []);
+
+  useEffect(() => {
+    setIframeHeight(calculateHeight());
+  }, [panelVars.invisibleClassName, searchStore.error_messages.length]);
+
+  const calculateHeight = () => {
+    const searchModalHeaderHeight = document.getElementById('search-modal-header')?.offsetHeight;
+    const ketcherSearchHeaderHeight = document.getElementById('ketcher-search-header')?.offsetHeight;
+    const ketcherSearchFooterHeight = document.getElementById('ketcher-search-footer')?.offsetHeight;
+    const ketcherHeaderHeight = searchModalHeaderHeight + ketcherSearchHeaderHeight + ketcherSearchFooterHeight;
+    const headerHeight = ketcherHeaderHeight < 220 ? 220 : ketcherHeaderHeight;
+    const buttonsHeight = searchStore.search_result_panel_visible ? ketcherSearchHeaderHeight : 0;
+    const errorHeight = searchStore.error_messages.length > 0
+      ? document.getElementById('search-error-message')?.offsetHeight + 16
+      : 0;
+    return window.innerHeight - headerHeight - buttonsHeight - errorHeight;
+  };
 
   const handleSearchTypeChange = (e) => {
     searchStore.changeKetcherRailsValue('searchType', e.target.value);
@@ -45,9 +65,10 @@ function KetcherRailsform() {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
-    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
     let tanimoto = searchStore.ketcherRailsValues.tanimotoThreshold;
-    if (tanimoto <= 0 || tanimoto > 1) { tanimoto = 0.3; }
+    if (tanimoto <= 0 || tanimoto > 1) {
+      tanimoto = 0.3;
+    }
 
     const selection = {
       elementType: 'structure',
@@ -56,10 +77,12 @@ function KetcherRailsform() {
       tanimoto_threshold: tanimoto,
       page_size: uiState.number_of_results,
       search_by_method: 'structure',
-      structure_search: true
+      structure_search: true,
     };
     searchStore.loadSearchResults({
-      selection, collectionId, isSync, moleculeSort: true
+      selection,
+      collectionId,
+      moleculeSort: true,
     });
     searchStore.clearSearchAndTabResults();
     searchValuesByMolfile();
@@ -82,8 +105,9 @@ function KetcherRailsform() {
     /// / Check if blank molfile
     const molfileLines = molfile.match(/[^\r\n]+/g);
     /// / If the first character ~ num of atoms is 0, we will not search
-    if (molfileLines[1].trim()[0] !== 0) {
+    if (molfileLines[1].trim()[0] !== '0') {
       searchStore.showSearchResults();
+      searchStore.enableAccordionToggle();
       searchStore.removeErrorMessage(message);
       structureSearch(molfile);
     }
@@ -98,13 +122,13 @@ function KetcherRailsform() {
     searchStore.clearSearchResults();
 
     const iframe = document.querySelector('#ketcher').contentWindow;
-    iframe.document.querySelector('#new').click();
+    iframe.location.reload();
   };
 
   return (
     <Accordion defaultActiveKey={0} activeKey={searchStore.search_accordion_active_key} className="search-modal" flush>
       <Accordion.Item eventKey={0} className={activeSearchAccordionClass}>
-        <h2 className="accordion-header">
+        <h2 className="accordion-header flex-shrink-0" id="ketcher-search-header">
           <AccordeonHeaderButtonForSearchForm
             title={panelVars.searchTitle}
             eventKey={0}
@@ -115,20 +139,18 @@ function KetcherRailsform() {
         <Accordion.Collapse eventKey={0}>
           <div className="accordion-body">
             {showErrorMessage(searchStore)}
-            {editor && (
-              <KetcherEditor
-                editor={editor}
-                molfile={''}
-                iH={iframeHeight}
-                iS={iframeStyle}
-              />
-            )}
-            <div className="ketcher-buttons">
-              <ButtonToolbar className="gap-2">
-                <Button variant="primary" onClick={() => searchStore.handleCancel()}>
+            <div className="flex-grow-1">
+              {editor && <KetcherEditor editor={editor} molfile="" iH={iframeHeight} iS={iframeStyle} />}
+            </div>
+            <div className="ketcher-buttons" id="ketcher-search-footer">
+              <ButtonToolbar>
+                <Button variant="secondary" onClick={() => searchStore.handleCancel()}>
                   Cancel
                 </Button>
-                <Button variant="warning" onClick={handleSearch}>
+                <Button variant="danger" onClick={() => handleClear(searchStore)}>
+                  Reset
+                </Button>
+                <Button variant="primary" onClick={handleSearch}>
                   Search
                 </Button>
               </ButtonToolbar>
@@ -151,8 +173,7 @@ function KetcherRailsform() {
                 <Form.Check
                   type="radio"
                   value="sub"
-                  label={pgCartridge !== 'none'
-                    ? `Substructure Search with ${pgCartridge}` : 'Substructure Search'}
+                  label={pgCartridge !== 'none' ? `Substructure Search with ${pgCartridge}` : 'Substructure Search'}
                   checked={searchStore.ketcherRailsValues.searchType === 'sub'}
                   onChange={handleSearchTypeChange}
                 />
@@ -162,19 +183,16 @@ function KetcherRailsform() {
         </Accordion.Collapse>
       </Accordion.Item>
       <Accordion.Item eventKey={1} className={`${panelVars.invisibleClassName}${activeResultAccordionClass}`}>
-        <h2 className="accordion-header">
+        <h2 className="accordion-header flex-shrink-0">
           <AccordeonHeaderButtonForSearchForm
             title={panelVars.resultTitle}
             eventKey={1}
-            disabled={false}
             callback={togglePanel(searchStore)}
           />
         </h2>
-        <Accordion.Collapse eventKey={1}>
+        <Accordion.Collapse eventKey={1} className="search-result-body">
           <div className="accordion-body">
-            <SearchResult
-              handleClear={() => handleClear(searchStore)}
-            />
+            <SearchResult handleClear={() => handleClear(searchStore)} />
           </div>
         </Accordion.Collapse>
       </Accordion.Item>

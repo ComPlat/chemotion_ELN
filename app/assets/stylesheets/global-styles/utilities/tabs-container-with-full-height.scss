@@ -1,13 +1,23 @@
-.tabs-container--with-full-height {
-  @extend .h-100;
+@mixin tabs-container-maxxed-height {
   @extend .d-flex;
   @extend .flex-column;
 
   .tab-content {
     @extend .flex-grow-1;
+    @extend .overflow-auto;
 
     .tab-pane {
       @extend .h-100;
     }
   }
+}
+
+.tabs-container--with-full-grow {
+  @include tabs-container-maxxed-height;
+  @extend .flex-grow-1;
+}
+
+.tabs-container--with-full-height {
+  @include tabs-container-maxxed-height;
+  @extend .h-100;
 }

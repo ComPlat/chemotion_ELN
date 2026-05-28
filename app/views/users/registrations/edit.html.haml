@@ -2,7 +2,11 @@
   .row
     %h2.mb-3 Change account log-in
     = form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put }) do |f|
-      = devise_error_messages!
+      - if resource.errors.any?
+        .devise-errors
+          %ul
+            - resource.errors.full_messages.each do |message|
+              %li.error-item= message
       .form-group.mb-3
         = f.label :email, "New Email", class: 'form-label'
         = f.email_field :email, autofocus: true, class: 'form-control'

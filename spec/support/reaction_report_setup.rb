@@ -9,9 +9,9 @@ RSpec.shared_context 'reaction report setup' do
       'turnover_frequency' => { unit: 'TON/h', value: 0.000007688 },
       'turnover_number' => 0.00001538,
     }
-    CollectionsReaction.create!(reaction: reaction, collection: c1)
+    CollectionsReaction.create!(reaction: reaction, collection: collection)
 
-    CollectionsSample.find_or_create_by(sample_id: sample.id, collection_id: c1.id)
+    CollectionsSample.find_or_create_by(sample_id: sample.id, collection_id: collection.id)
     ReactionsProductSample.find_or_create_by(
       reaction: reaction,
       sample: sample,

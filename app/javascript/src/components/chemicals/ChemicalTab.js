@@ -3,18 +3,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Accordion, Form, Button, OverlayTrigger, Tooltip, ButtonToolbar,
-  ListGroup, ListGroupItem, InputGroup, Modal, Row, Col,
+  ListGroup, ListGroupItem, InputGroup, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
 import { chemicalStatusOptions } from 'src/components/staticDropdownOptions/options';
-import SVG from 'react-inlinesvg';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SDSAttachmentModal from 'src/components/chemicals/SDSAttachmentModal';
+import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
 import Chemical from 'src/models/Chemical';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
@@ -30,7 +31,6 @@ export default class ChemicalTab extends React.Component {
       vendorValue: 'Merck',
       queryOption: 'CAS',
       safetySheetLanguage: 'en',
-      safetyPhrases: '',
       warningMessage: '',
       loadingQuerySafetySheets: false,
       loadingSaveSafetySheets: {},
@@ -66,13 +66,18 @@ export default class ChemicalTab extends React.Component {
   }
 
   handleFieldChanged(parameter, value) {
-    const { chemical } = this.state;
+    let { chemical } = this.state;
     const { editChemical } = this.props;
-    if (chemical) {
-      chemical.buildChemical(parameter, value);
-      editChemical(chemical.isEdited);
+
+    if (!chemical) {
+      chemical = Chemical.buildEmpty();
     }
-    this.setState({ chemical });
+
+    chemical.buildChemical(parameter, value);
+
+    this.setState({ chemical }, () => {
+      editChemical(chemical.isEdited);
+    });
   }
 
   handleSubmitSave() {
@@ -81,8 +86,12 @@ export default class ChemicalTab extends React.Component {
       sample,
       setSaveInventory,
       editChemical,
+      type,
+      onInventorySaveComplete,
     } = this.props;
     if (!sample || !chemical) {
+      setSaveInventory(false);
+      if (onInventorySaveComplete) onInventorySaveComplete(false);
       return;
     }
     const chemicalData = chemical._chemical_data || null;
@@ -90,31 +99,47 @@ export default class ChemicalTab extends React.Component {
     const params = {
       chemical_data: chemicalData,
       cas,
-      sample_id: sample.id
     };
-    if (chemical.isNew) {
-      ChemicalFetcher.create(params).then((response) => {
-        if (response) {
-          this.setState({ chemical });
-        }
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    if (type === 'SBMM') {
+      params.sequence_based_macromolecule_sample_id = sample.id;
+    } else {
+      params.sample_id = sample.id;
+    }
+
+    const isNewChemical = chemical.isNew;
+    const saveRequest = isNewChemical
+      ? ChemicalFetcher.create(params)
+      : ChemicalFetcher.update(params);
+
+    if (isNewChemical) {
       chemical.isNew = false;
       editChemical(false);
       chemical.updateChecksum();
-    } else {
-      ChemicalFetcher.update(params).then((response) => {
-        if (response) {
-          editChemical(false);
-          chemical.updateChecksum();
-          this.setState({ chemical });
-        }
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
     }
-    setSaveInventory(false);
+
+    saveRequest
+      .then((response) => {
+        if (response) {
+          if (isNewChemical) {
+            this.setState({ chemical });
+          } else {
+            editChemical(false);
+            chemical.updateChecksum();
+            this.setState({ chemical });
+          }
+
+          if (onInventorySaveComplete) onInventorySaveComplete(true);
+        } else if (onInventorySaveComplete) {
+          onInventorySaveComplete(false);
+        }
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+        if (onInventorySaveComplete) onInventorySaveComplete(false);
+      })
+      .finally(() => {
+        setSaveInventory(false);
+      });
   }
 
   handleRemove(index, document) {
@@ -243,6 +268,22 @@ export default class ChemicalTab extends React.Component {
     this.setState({ showModal: true });
   }
 
+  /**
+   * Returns a snapshot of the current chemical data so the parent can persist
+   * it after the sample is created (when ChemicalTab cannot save itself because
+   * the sample has no server-side ID yet).
+   * @returns {{ chemical_data: any, cas: string } | null}
+   */
+  getChemicalSnapshot() {
+    const { chemical } = this.state;
+    const { sample } = this.props;
+    if (!chemical) return null;
+    return {
+      chemical_data: chemical._chemical_data || null,
+      cas: sample?.xref?.cas ?? '',
+    };
+  }
+
   querySafetySheets = () => {
     const { sample } = this.props;
     this.setState({ loadingQuerySafetySheets: true });
@@ -295,42 +336,8 @@ export default class ChemicalTab extends React.Component {
     });
   };
 
-  // eslint-disable-next-line class-methods-use-this
-  stylePhrases = (str) => {
-    const HazardPhrases = [];
-    if (str && str.h_statements && str.h_statements.length !== 0) {
-      // eslint-disable-next-line no-restricted-syntax
-      for (const [key, value] of Object.entries(str.h_statements)) {
-        // eslint-disable-next-line react/jsx-one-expression-per-line
-        const st = <p key={key}> {key}:{value} </p>;
-        HazardPhrases.push(st);
-      }
-    }
-
-    const precautionaryPhrases = [];
-    if (str && str.p_statements && str?.p_statements?.length !== 0) {
-      // eslint-disable-next-line no-restricted-syntax
-      for (const [key, value] of Object.entries(str?.p_statements || {})) {
-        // eslint-disable-next-line react/jsx-one-expression-per-line
-        const st = <p key={key}>{key}:{value}</p>;
-        precautionaryPhrases.push(st);
-      }
-    }
-
-    const pictogramsArray = str.pictograms?.map((i) => (
-      i !== null ? <SVG key={`ghs${i}`} src={`/images/ghs/${i}.svg`} /> : null));
-
-    return (
-      <div>
-        <p className="fw-bold">Pictograms: </p>
-        {(str.pictograms !== undefined && str.pictograms.length !== 0)
-          ? pictogramsArray : <p>Could not find pictograms</p>}
-        <p className="fw-bold mt-3">Hazard Statements: </p>
-        {HazardPhrases}
-        <p className="fw-bold">Precautionary Statements: </p>
-        {precautionaryPhrases}
-      </div>
-    );
+  handleSafetyPhrasesChange = (next) => {
+    this.handleFieldChanged('safetyPhrases', next);
   };
 
   isSavedSds = () => {
@@ -390,7 +397,6 @@ export default class ChemicalTab extends React.Component {
       } else if (result === 'Could not find H and P phrases') {
         this.setState({ warningMessage: result });
       } else {
-        this.setState({ safetyPhrases: this.stylePhrases(result) });
         this.handleFieldChanged('safetyPhrases', result);
       }
     }).catch((errorMessage) => {
@@ -566,10 +572,11 @@ export default class ChemicalTab extends React.Component {
   };
 
   fetchChemical(sample) {
+    const { type } = this.props;
     if (sample === undefined || sample.is_new) {
       return;
     }
-    ChemicalFetcher.fetchChemical(sample.id).then((chemical) => {
+    ChemicalFetcher.fetchChemical(sample.id, type).then((chemical) => {
       if (chemical !== null) {
         this.setState({ chemical });
       }
@@ -619,8 +626,10 @@ export default class ChemicalTab extends React.Component {
     sample.xref.refractive_index = properties.refractive_index || sample.xref.refractive_index;
     sample.xref.solubility = properties.solubility || sample.xref.solubility;
 
-    handleUpdateSample(sample);
-    ElementActions.updateSample(new Sample(sample), false);
+    if (handleUpdateSample) {
+      handleUpdateSample(sample);
+      ElementActions.updateSample(new Sample(sample), false);
+    }
   }
 
   chemicalStatus(data) {
@@ -1240,7 +1249,7 @@ export default class ChemicalTab extends React.Component {
               {this.checkMarkButton(document)}
             </a>
           ) : null}
-          <ButtonToolbar className="gap-1">
+          <ButtonToolbar>
             {this.copyButton(document)}
             {this.saveSafetySheetsButton(document)}
             {this.removeButton(index, document)}
@@ -1401,16 +1410,13 @@ export default class ChemicalTab extends React.Component {
   };
 
   renderSafetyPhrases = () => {
-    const { chemical, safetyPhrases } = this.state;
-    let fetchedSafetyPhrases;
-    if (chemical && chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
-      const phrases = chemical._chemical_data[0].safetyPhrases;
-      fetchedSafetyPhrases = (phrases !== undefined) ? this.stylePhrases(phrases) : '';
-    }
+    const { chemical } = this.state;
+    const phrases = chemical?._chemical_data?.[0]?.safetyPhrases;
     return (
-      <div className="pt-2 w-100">
-        {safetyPhrases === '' ? fetchedSafetyPhrases : safetyPhrases}
-      </div>
+      <SafetyPhrasesEditor
+        value={phrases}
+        onChange={this.handleSafetyPhrasesChange}
+      />
     );
   };
 
@@ -1502,11 +1508,11 @@ export default class ChemicalTab extends React.Component {
           </Col>
         </Row>
         <Row className="mb-3">
-          <Col>
+          <Col sm={3}>
             {this.textInput(data, 'Person', 'person')}
           </Col>
-          <Col sm={4}>
-            <ButtonGroup className="mb-2">
+          <Col sm={6}>
+            <ButtonGroup className="flex-wrap" style={{ marginBottom: '0.79rem' }}>
               <ButtonGroupToggleButton
                 onClick={() => this.setState({ switchRequiredOrderedDate: 'required' })}
                 active={switchRequiredOrderedDate === 'required'}
@@ -1528,10 +1534,26 @@ export default class ChemicalTab extends React.Component {
               >
                 Expiration date
               </ButtonGroupToggleButton>
+              <ButtonGroupToggleButton
+                onClick={() => this.setState({ switchRequiredOrderedDate: 'delivery' })}
+                active={switchRequiredOrderedDate === 'delivery'}
+                size="xxsm"
+              >
+                Delivery date
+              </ButtonGroupToggleButton>
+              <ButtonGroupToggleButton
+                onClick={() => this.setState({ switchRequiredOrderedDate: 'opening' })}
+                active={switchRequiredOrderedDate === 'opening'}
+                size="xxsm"
+              >
+                Opening date
+              </ButtonGroupToggleButton>
             </ButtonGroup>
             {switchRequiredOrderedDate === 'required' && this.textInput(data, 'Date', 'required_date')}
             {switchRequiredOrderedDate === 'ordered' && this.textInput(data, 'Date', 'ordered_date')}
             {switchRequiredOrderedDate === 'expiration' && this.textInput(data, 'Date', 'expiration_date')}
+            {switchRequiredOrderedDate === 'delivery' && this.textInput(data, 'Date', 'delivery_date')}
+            {switchRequiredOrderedDate === 'opening' && this.textInput(data, 'Date', 'opening_date')}
           </Col>
           <Col sm={3}>
             {this.textInput(data, 'Required by', 'required_by')}
@@ -1769,34 +1791,26 @@ export default class ChemicalTab extends React.Component {
     }
 
     return (
-      <Modal
-        centered
+      <AppModal
+        title="Fetched Chemical Properties"
         show={viewChemicalPropertiesModal}
         onHide={() => this.closePropertiesModal()}
         size="lg"
+        closeLabel="Close"
+        showFooter
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Fetched Chemical Properties</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form.Group controlId="propertiesModal">
-            <Form.Control
-              as="textarea"
-              className="w-100"
-              readOnly
-              disabled
-              type="text"
-              rows={10}
-              value={fetchedChemicalProperties}
-            />
-          </Form.Group>
-        </Modal.Body>
-        <Modal.Footer className="border-0">
-          <Button variant="warning" onClick={() => this.closePropertiesModal()}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        <Form.Group controlId="propertiesModal">
+          <Form.Control
+            as="textarea"
+            className="w-100"
+            readOnly
+            disabled
+            type="text"
+            rows={10}
+            value={fetchedChemicalProperties}
+          />
+        </Form.Group>
+      </AppModal>
     );
   }
 
@@ -1805,6 +1819,7 @@ export default class ChemicalTab extends React.Component {
       chemical,
       showModal,
     } = this.state;
+    const { type } = this.props;
 
     const data = chemical?._chemical_data?.[0] ?? [];
     return (
@@ -1824,12 +1839,14 @@ export default class ChemicalTab extends React.Component {
             </Accordion.Body>
           </Accordion.Item>
 
-          <Accordion.Item eventKey="safetyTab">
-            <Accordion.Header>Safety</Accordion.Header>
-            <Accordion.Body>
-              {this.safetyTab()}
-            </Accordion.Body>
-          </Accordion.Item>
+          {type === 'sample' && (
+            <Accordion.Item eventKey="safetyTab">
+              <Accordion.Header>Safety</Accordion.Header>
+              <Accordion.Body>
+                {this.safetyTab()}
+              </Accordion.Body>
+            </Accordion.Item>
+          )}
 
           <Accordion.Item eventKey="locationTab">
             <Accordion.Header>Location and Information</Accordion.Header>
@@ -1853,8 +1870,15 @@ export default class ChemicalTab extends React.Component {
 
 ChemicalTab.propTypes = {
   sample: PropTypes.object,
-  handleUpdateSample: PropTypes.func.isRequired,
+  type: PropTypes.string.isRequired,
+  handleUpdateSample: PropTypes.func,
   saveInventory: PropTypes.bool.isRequired,
   setSaveInventory: PropTypes.func.isRequired,
   editChemical: PropTypes.func.isRequired,
+  onInventorySaveComplete: PropTypes.func,
+};
+
+ChemicalTab.defaultProps = {
+  handleUpdateSample: null,
+  onInventorySaveComplete: null,
 };

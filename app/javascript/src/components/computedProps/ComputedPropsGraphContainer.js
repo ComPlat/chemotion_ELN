@@ -4,7 +4,7 @@ import _ from 'lodash';
 
 import { Select, CreatableSelect } from 'src/components/common/Select';
 import {
-  Row, Col, Button, Form, Container, ButtonToolbar
+  Row, Col, Form, Container
 } from 'react-bootstrap';
 
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -26,8 +26,8 @@ const defaultTemplate = {
   name: 'Default',
   xAxisType: 'lumo',
   yAxisType: 'mean_abs_potential',
-  referenceDesc: 'Compounds are interesting as material for the ' +
-    'Electron Transport Layer (ETL)',
+  referenceDesc: 'Compounds are interesting as material for the '
+    + 'Electron Transport Layer (ETL)',
   referencePoints: etlReferences,
 };
 
@@ -68,16 +68,16 @@ export default class ComputedPropsGraphContainer extends React.Component {
 
   componentDidUpdate(prevProps, prevState) {
   // Sync templateInputValue when template changes
-  const { curTemplateIdx, graphTemplates } = this.state;
-  const currentTemplate = graphTemplates[curTemplateIdx];
-  const prevTemplate = prevState.graphTemplates[prevState.curTemplateIdx];
+    const { curTemplateIdx, graphTemplates } = this.state;
+    const currentTemplate = graphTemplates[curTemplateIdx];
+    const prevTemplate = prevState.graphTemplates[prevState.curTemplateIdx];
 
-  if (currentTemplate?.name !== prevTemplate?.name) {
-    this.setState({
-      templateInputValue: currentTemplate?.name || ''
-    });
+    if (currentTemplate?.name !== prevTemplate?.name) {
+      this.setState({
+        templateInputValue: currentTemplate?.name || ''
+      });
+    }
   }
-}
 
   componentWillUnmount() {
     UserStore.unlisten(this.onUserChange);
@@ -146,7 +146,7 @@ export default class ComputedPropsGraphContainer extends React.Component {
       return;
     }
     const { graphTemplates } = this.state;
-    const tIdx = graphTemplates.findIndex(t => t.name === template.label);
+    const tIdx = graphTemplates.findIndex((t) => t.name === template.label);
     if (tIdx > -1) {
       this.setState({
         curTemplateIdx: tIdx,
@@ -205,13 +205,13 @@ export default class ComputedPropsGraphContainer extends React.Component {
   }
 
   render() {
-    const { show, graphData, style } = this.props;
+    const { show, graphData } = this.props;
     if (!show || graphData.length === 0) return <span />;
 
-    const { curTemplateIdx, graphTemplates } = this.state;
-    const template = graphTemplates.size === 0 ?
-      defaultTemplate :
-      graphTemplates[curTemplateIdx];
+    const { curTemplateIdx, graphTemplates, templateInputValue } = this.state;
+    const template = graphTemplates.size === 0
+      ? defaultTemplate
+      : graphTemplates[curTemplateIdx];
 
     const xAxisType = template?.xAxisType || 'lumo';
     const yAxisType = template?.yAxisType || 'mean_abs_potential';
@@ -239,7 +239,7 @@ export default class ComputedPropsGraphContainer extends React.Component {
     ));
 
     return (
-      <Container style={style}>
+      <Container>
         <Row>
           <Col xs={18} md={12}>
             <ComputedPropsGraph
@@ -247,14 +247,13 @@ export default class ComputedPropsGraphContainer extends React.Component {
               yAxis={yAxis}
               show={show}
               data={data}
-              style={style}
               referencePoints={referencePoints}
               referenceDesc={referenceDesc}
             />
           </Col>
         </Row>
-        <Row >
-          <Col xs={9} md={6} >
+        <Row>
+          <Col xs={9} md={6}>
             <GraphReferenceTable
               xLabel={xAxis.label}
               yLabel={yAxis.label}
@@ -269,7 +268,7 @@ export default class ComputedPropsGraphContainer extends React.Component {
                 <CreatableSelect
                   isClearable
                   isInputEditable
-                  inputValue={this.state.templateInputValue}
+                  inputValue={templateInputValue}
                   onChange={(selectedOption) => {
                     const value = selectedOption ? selectedOption.label : '';
                     this.setState({ templateInputValue: value });
@@ -291,7 +290,7 @@ export default class ComputedPropsGraphContainer extends React.Component {
                 <Form.Label column sm={4}>X Axis</Form.Label>
                 <Select
                   onChange={this.onXAxisChange}
-                  value={axisSelectOptions.find(({value}) => value === xAxisType)}
+                  value={axisSelectOptions.find(({ value }) => value === xAxisType)}
                   options={axisSelectOptions}
                 />
               </Form.Group>
@@ -299,7 +298,7 @@ export default class ComputedPropsGraphContainer extends React.Component {
                 <Form.Label column sm={4}>Y Axis</Form.Label>
                 <Select
                   onChange={this.onYAxisChange}
-                  value={axisSelectOptions.find(({value}) => value === yAxisType)}
+                  value={axisSelectOptions.find(({ value }) => value === yAxisType)}
                   options={axisSelectOptions}
                 />
               </Form.Group>
@@ -311,17 +310,9 @@ export default class ComputedPropsGraphContainer extends React.Component {
                   placeholder="Description"
                   value={referenceDesc}
                   rows={5}
-                  onChange={e => this.onDescChange(e)}
+                  onChange={(e) => this.onDescChange(e)}
                 />
               </Form.Group>
-              <ButtonToolbar className="gap-1 mt-2 justify-content-end">
-                <Button variant="info" size="sm" onClick={this.saveTemplate}>
-                  Save Template
-                </Button>
-                <Button variant="danger" size="sm" onClick={this.deleteTemplate}>
-                  Delete Template
-                </Button>
-              </ButtonToolbar>
             </Form>
           </Col>
         </Row>
@@ -331,11 +322,8 @@ export default class ComputedPropsGraphContainer extends React.Component {
 }
 
 ComputedPropsGraphContainer.propTypes = {
-  graphData: PropTypes.arrayOf(PropTypes.object).isRequired,
+  graphData: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   show: PropTypes.bool.isRequired,
-  style: PropTypes.object,
 };
 
-ComputedPropsGraphContainer.defaultProps = {
-  style: {}
-};
+ComputedPropsGraphContainer.defaultProps = {};

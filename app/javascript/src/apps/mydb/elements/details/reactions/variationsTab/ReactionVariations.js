@@ -13,8 +13,9 @@ import Reaction from 'src/models/Reaction';
 import {
   createVariationsRow, copyVariationsRow, updateVariationsRow, getVariationsColumns, materialTypes,
   addMissingColumnsToVariations, removeObsoleteColumnsFromVariations, getColumnDefinitions,
-  removeObsoleteColumnDefinitions, getInitialGridState, getInitialEntryDefinitions, persistTableLayout, cellDataTypes,
-  getReactionSegments
+  removeObsoleteColumnDefinitions, getInitialGridState, persistRowOrder, setRowOrder,
+  setLayout, persistTableLayout, cellDataTypes,
+  getReactionSegments, processHeaderForCsvExport
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   getReactionAnalyses, updateAnalyses
@@ -31,7 +32,7 @@ import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
-export default function ReactionVariations({ reaction, onReactionChange, isActive }) {
+export default function ReactionVariations({ reaction, onReactionChange }) {
   if (reaction.isNew) {
     return (
       <Alert variant="info">
@@ -41,11 +42,12 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   }
 
   const gridRef = useRef(null);
+  const pendingReactionVariations = useRef(null);
   const reactionVariations = reaction.variations;
-  const setReactionVariations = (updatedReactionVariations) => {
+  const setReactionVariations = useCallback((updatedReactionVariations) => {
     reaction.variations = updatedReactionVariations;
     onReactionChange(reaction);
-  };
+  }, [reaction, onReactionChange]);
   const reactionHasPolymers = reaction.hasPolymers();
   const reactionShortLabel = reaction.short_label;
   const reactionMaterials = getReactionMaterials(reaction);
@@ -64,26 +66,21 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const [asyncDataLoaded, setAsyncDataLoaded] = useState(false);
 
   useEffect(() => {
-    // Auto-size columns when the parent tab is (re-)entered.
-    if (isActive && gridRef.current?.api) {
-      gridRef.current.api.autoSizeAllColumns();
-    }
-  }, [isActive]);
-
-  useEffect(() => {
     const fetchData = async () => {
       const segments = await getReactionSegments(reaction);
       const updatedSelectedColumns = {
         ...selectedColumns, segments: selectedColumns.segments.filter((segment) => Object.hasOwn(segments, segment))
       };
-      const updatedReactionVariations = removeObsoleteColumnsFromVariations(reactionVariations, updatedSelectedColumns);
-      const updatedColumnDefinitions = getColumnDefinitions(
+      let updatedReactionVariations = removeObsoleteColumnsFromVariations(reactionVariations, updatedSelectedColumns);
+      let updatedColumnDefinitions = getColumnDefinitions(
         updatedSelectedColumns,
         reactionMaterials,
         segments,
         gasMode,
-        getInitialEntryDefinitions(reaction.id)
       );
+      updatedColumnDefinitions = setLayout(reaction.id, updatedColumnDefinitions);
+      updatedReactionVariations = setRowOrder(reaction.id, updatedReactionVariations);
+
       setReactionSegments(segments);
       setSelectedColumns(updatedSelectedColumns);
       setReactionVariations(updatedReactionVariations);
@@ -92,6 +89,17 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     };
     fetchData();
   }, []);
+
+  const handleRowDrag = (event) => {
+    const rowOrder = [];
+    event.api.forEachNode((node) => rowOrder.push(node.data.id));
+
+    persistRowOrder(reaction.id, rowOrder);
+    const reorderedVariations = rowOrder
+      .map((id) => reactionVariations.find((row) => row.id === id))
+      .filter(Boolean);
+    setReactionVariations(reorderedVariations);
+  };
 
   const addRow = () => {
     setReactionVariations(
@@ -130,10 +138,25 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
     const { field } = colDef;
     const updatedRow = updateVariationsRow(oldRow, field, newValue, reactionHasPolymers);
-    setReactionVariations(
-      reactionVariations.map((row) => (row.id === oldRow.id ? updatedRow : row))
+    const updatedPendingReactionVariations = pendingReactionVariations.current ?? reactionVariations;
+    pendingReactionVariations.current = updatedPendingReactionVariations.map(
+      (row) => (row.id === oldRow.id ? updatedRow : row)
     );
+    gridRef.current.api.applyTransaction({ update: [updatedRow] });
   }, [reactionVariations, reactionHasPolymers]);
+
+  const handleCellEditingStopped = useCallback((event) => {
+    /*
+    Defer setReactionVariations until all cell editing has stopped.
+    Without deferring, ongoing edits (e.g., moving edit focus to cell Y by committing edit of cell X with tab)
+    are unintentionally killed during the re-render that's triggered by calling setReactionVariations.
+    pendingReactionVariations accumulates intermediate updates that are submitted only when there aren't any ongoing edits.
+    */
+    if (pendingReactionVariations.current !== null && event.api.getEditingCells().length === 0) {
+      setReactionVariations(pendingReactionVariations.current);
+      pendingReactionVariations.current = null;
+    }
+  }, [setReactionVariations]);
 
   const applyColumnSelection = (columns) => {
     let updatedReactionVariations = addMissingColumnsToVariations({
@@ -183,18 +206,23 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
         </Tooltip>
           )}
     >
-      <Button size="sm" variant="success" onClick={addRow} className="mb-2">
+      <Button size="sm" onClick={addRow} className="mb-2">
         <i className="fa fa-plus me-1" />
-        {' '}
         Add variation
       </Button>
     </OverlayTrigger>
   );
 
-  const fitColumnToContent = (event) => {
-    const { column } = event;
-    gridRef.current.api.autoSizeColumns([column], false);
-  };
+  const exportTable = () => (
+    <Button
+      size="sm"
+      className="mb-2"
+      onClick={() => gridRef.current.api.exportDataAsCsv({ processHeaderCallback: processHeaderForCsvExport })}
+    >
+      <i className="icon-arrow-up-from-bracket me-1" />
+      Export to CSV
+    </Button>
+  );
 
   /*
   What follows is a series of imperative state updates that keep the "Variations" tab in sync with the "Scheme" tab.
@@ -273,6 +301,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           return materials;
         }, {}),
         selectedColumns: updatedSelectedColumns,
+        segments: reactionSegments,
         gasMode
       }
     );
@@ -334,7 +363,7 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
     <div>
       <ButtonGroup>
         {addVariation()}
-        <RemoveVariationsModal onRemoveAll={() => setReactionVariations([])} />
+        {exportTable()}
         <ColumnSelection
           selectedColumns={selectedColumns}
           availableColumns={{
@@ -344,29 +373,41 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
               return acc;
             }, {}),
             properties: { duration: 'Duration', temperature: 'Temperature' },
-            metadata: { notes: 'Notes', analyses: 'Analyses' }
+            metadata: { notes: 'Notes', analyses: 'Analyses', group: 'Group' },
           }}
           onApply={applyColumnSelection}
         />
+        <RemoveVariationsModal onRemoveAll={() => setReactionVariations([])} />
       </ButtonGroup>
       <div className="ag-theme-alpine ag-theme-reaction-variations">
         <AgGridReact
           ref={gridRef}
           initialState={initialGridState}
           rowData={reactionVariations}
+          getRowId={(params) => params.data.id}
           rowDragManaged
-          headerHeight={110}
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
           defaultColDef={{
             editable: true,
             sortable: true,
-            resizable: false,
+            resizable: true,
+            cellStyle: (params) => {
+              const { editable } = params.colDef;
+              const isEditable = typeof editable === 'function' ? editable(params) : editable;
+              return isEditable === false ? { backgroundColor: '#e9ecef' } : null;
+            },
+          }}
+          defaultColGroupDef={{
+            resizable: true,
           }}
           dataTypeDefinitions={cellDataTypes}
           tooltipShowDelay={0}
+          groupHeaderHeight={53}
           domLayout="autoHeight"
           maintainColumnOrder
+          suppressNoRowsOverlay
+          suppressDragLeaveHidesColumns
           context={{
             copyRow,
             removeRow,
@@ -383,12 +424,16 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
           */
           readOnlyEdit
           onCellEditRequest={updateRow}
-          onCellValueChanged={(event) => fitColumnToContent(event)}
-          onColumnHeaderClicked={(event) => fitColumnToContent(event)}
+          onCellEditingStopped={handleCellEditingStopped}
           onGridPreDestroyed={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
           onStateUpdated={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
-          onFirstDataRendered={() => gridRef.current.api.autoSizeAllColumns()}
-          onComponentStateChanged={() => gridRef.current.api.autoSizeAllColumns()}
+          /*
+          We need to persist manual row sort (i.e., user changes row order by dragging rows),
+          since ag-grid does not persist manual row sort as part of the grid state.
+          In contrast to sort by column, we persist manual row sorting in the data, not in the grid state.
+          When the event fires, the grid has already mutated the row order, we just need to persist it.
+          */
+          onRowDragEnd={(event) => handleRowDrag(event)}
         />
       </div>
     </div>
@@ -398,5 +443,4 @@ export default function ReactionVariations({ reaction, onReactionChange, isActiv
 ReactionVariations.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   onReactionChange: PropTypes.func.isRequired,
-  isActive: PropTypes.bool.isRequired,
 };

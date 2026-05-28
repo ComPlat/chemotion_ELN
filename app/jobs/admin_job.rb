@@ -11,6 +11,8 @@ class AdminJob < ApplicationJob
       load Rails.root.join('db/seeds/shared/collections.seed.rb')
     when 'install_ketcher2'
       Open3.popen3('bin/chem-ket2-install.sh', chdir: Rails.root)
+    when 'rerender_reactions'
+      SvgReactionRendering.new.render
     end
   end
 end

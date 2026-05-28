@@ -23,6 +23,8 @@ export let allTemplates = {}; // contains all templates
 export let templatesBaseHashWithTemplateId = {}; // contains all templates
 export let allowProcessing = true;
 export let upsertImageCalled = 0;
+// PolymersList line (after "> <PolymersList>") so we can extend it on paste instead of replace
+export let storedPolymersListLine = null;
 
 export const FILOStackSetter = async (data) => {
   FILOStack = data;
@@ -71,6 +73,10 @@ export const deletedAtomsSetter = (data) => {
 
 export const textListSetter = (data) => {
   textList = data;
+};
+
+export const storedPolymersListLineSetter = (line) => {
+  storedPolymersListLine = line != null && line !== '' ? String(line).trim() : null;
 };
 
 export const textNodeStructSetter = (data) => {
@@ -212,6 +218,7 @@ export const resetKetcherStore = () => {
   allowProcessing = true;
   imageListCopyContainer = [];
   textListCopyContainer = [];
+  storedPolymersListLine = null;
 };
 
 export const emptyKetcherStore = () => ({

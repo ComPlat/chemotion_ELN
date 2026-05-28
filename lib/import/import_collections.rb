@@ -3,10 +3,18 @@
 # rubocop:disable Metrics/AbcSize,Metrics/MethodLength,Metrics/BlockLength,Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity, Layout/LineLength
 
 require 'json'
+require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 module Import
   class ImportCollections # rubocop:disable Metrics/ClassLength
     attr_reader :log_file_path
+
+    # Labels of collections created in this import (from import_collections or gate).
+    def created_collection_labels
+      return [] unless @instances.key?('Collection')
+
+      @instances['Collection'].values.map(&:label).compact.sort
+    end
 
     # rubocop:disable Style/OptionalBooleanParameter , Metrics/ParameterLists
     def initialize(att, current_user_id, gate = false, col_id = nil, origin = nil, logger = nil)
@@ -113,11 +121,13 @@ module Import
           import_screens
           Import::Helpers::CelllineImporter.new(@data, @current_user_id, @instances).execute
           Import::Helpers::SequenceBasedMacromoleculeSampleImporter.new(@data, @current_user_id, @instances).execute
+          Import::Helpers::DeviceDescriptionImporter.new(@data, @current_user_id, @instances).execute
         end
 
         import_containers
         import_segments
         import_datasets
+        Import::Helpers::DeviceDescriptionImporter.new(@data, @current_user_id, @instances).update_ontologies
         import_attachments
         import_literals
       end
@@ -180,11 +190,6 @@ module Import
         # create the collection
         collection = Collection.create!(fields.slice(
           'label',
-          'sample_detail_level',
-          'reaction_detail_level',
-          'wellplate_detail_level',
-          'screen_detail_level',
-          'researchplan_detail_level',
           'created_at',
           'updated_at',
         ).merge(
@@ -195,6 +200,7 @@ module Import
         # add collection to @instances map
         update_instances!(uuid, collection)
       end
+      labels = created_collection_labels
     end
 
     def gate_collection
@@ -273,8 +279,13 @@ module Import
         end
 
         # Priority: molfile > cano_smiles > dummy (if decoupled and both blank)
+        # When molfile has > <PolymersList>, use full molfile and Molecule.svg_reprocess so polymers use SvgRenderer.
+        if molfile.present? && Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile)
+          molecule = find_or_create_molecule_for_polymer_molfile(molfile.to_s)
+        end
         # Always use molfile if available (highest priority)
-        molecule = Molecule.find_or_create_by_molfile(molfile) if molfile.present?
+        molecule ||= Molecule.find_or_create_by_molfile(molfile) if molfile.present?
+
         # Use cano_smiles if molfile is missing or invalid but cano_smiles is available
         molecule ||= Molecule.find_or_create_by_cano_smiles(cano_smiles) if cano_smiles.present?
         # Create dummy only for decoupled samples with no structure data
@@ -504,7 +515,7 @@ module Import
           'updated_at',
         ).merge(
           wellplate: @instances.fetch('Wellplate').fetch(fields.fetch('wellplate_id')),
-          sample: @instances.fetch('Sample', nil)&.fetch(fields.fetch('sample_id'), nil),
+          sample: @instances.dig('Sample', fields.fetch('sample_id')),
         ))
 
         # add reaction to the @instances map
@@ -574,10 +585,10 @@ module Import
           # the root container was created when the containable was imported
           containable_type = fields.fetch('containable_type')
           containable_uuid = fields.fetch('containable_id')
-          containable = @instances.fetch(containable_type, nil)&.fetch(containable_uuid, nil)
+          containable = @instances.dig(containable_type, containable_uuid)
           container = containable&.container
         when 'analyses'
-          # get the analyses container from its parent (root) container
+          # get the analyses container from its parent (root) containers
           parent = @instances.fetch('Container').fetch(fields.fetch('parent_id'), nil)
           container = parent.children.where("container_type = 'analyses'")&.first if parent.present?
         else
@@ -610,7 +621,7 @@ module Import
         # get the attachable for this attachment
         attachable_type = fields.fetch('attachable_type', nil)
         attachable_uuid = fields.fetch('attachable_id')
-        attachable = @instances.fetch(attachable_type, nil)&.fetch(attachable_uuid, nil) if attachable_type.present?
+        attachable = @instances.dig(attachable_type, attachable_uuid) if attachable_type.present?
 
         attachment = Attachment.where(
           'id IN (?) AND filename LIKE ? ',
@@ -712,6 +723,7 @@ module Import
           fields.slice(
             'element_type',
             'category',
+            'litype',
             'created_at',
             'updated_at',
           ).merge(
@@ -746,7 +758,7 @@ module Import
 
       parents = ancestry.split('/')
       parent_uuid = parents[-1]
-      @instances.fetch(type, {}).fetch(parent_uuid, nil)
+      @instances.dig(type, parent_uuid)
     end
 
     # read the image from the tmp dir/file
@@ -784,7 +796,7 @@ module Import
         next unless fields.fetch(local_field) == local_id
 
         foreign_id = fields.fetch(foreign_field)
-        instance = @instances.fetch(foreign_type, {}).fetch(foreign_id, nil)
+        instance = @instances.dig(foreign_type, foreign_id)
         associations << instance unless instance.nil?
       end
       associations
@@ -816,6 +828,65 @@ module Import
       LOG
 
       @logger.error(log_content)
+    end
+
+    # When molfile has > <PolymersList>, find or create molecule and reprocess SVG so SvgRenderer can inject polymer images.
+    # Mirrors logic in Import::ImportSamples#get_data_from_molfile.
+    # @return [Molecule, nil] the molecule or nil if cleaned molfile is blank
+    def find_or_create_molecule_for_polymer_molfile(raw_molfile)
+      cleaned = Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
+      return nil if cleaned.blank?
+
+      molfile_for_babel = cleaned.dup
+      molfile_for_babel = "\n#{molfile_for_babel}" unless molfile_for_babel.start_with?("\n")
+      molfile_for_babel = "#{molfile_for_babel}\n" unless molfile_for_babel.end_with?("\n")
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
+      inchikey = babel_info[:inchikey]
+
+      molecule = if inchikey.present?
+                   Molecule.find_or_create_by_molfile(raw_molfile, babel_info)
+                 else
+                   find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
+                 end
+      return molecule unless molecule.present?
+
+      reprocessed_svg = Molecule.svg_reprocess(nil, raw_molfile, service: :indigo)
+      if reprocessed_svg.present?
+        molecule.attach_svg(reprocessed_svg)
+        molecule.molfile = raw_molfile if molecule.molfile.to_s != raw_molfile
+        molecule.save
+      end
+      molecule
+    end
+
+    # Remove PolymersList, TextNode and other SDF blocks, then keep only CTAB (up to M  END).
+    def clean_molfile_for_inchikey(raw_molfile)
+      Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
+    end
+
+    # Keep only the CTAB (up to and including M END). Strip SDF blocks that can break Open Babel.
+    def sanitize_molfile_for_import(molfile)
+      Chemotion::MolfilePolymerSupport.keep_only_ctab(molfile)
+    end
+
+    # When Open Babel returns blank inchikey for a PolymersList molfile, create a molecule with a synthetic inchikey.
+    def find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
+      synthetic_inchikey = "POLYMER_#{Digest::SHA256.hexdigest(raw_molfile)}"
+      formula = babel_info[:formula].to_s.presence || ''
+      molecule = Molecule.find_by(inchikey: synthetic_inchikey, is_partial: true, sum_formular: formula)
+      if molecule
+        molecule.molfile = raw_molfile
+        molecule.save!
+      else
+        molecule = Molecule.new(
+          inchikey: synthetic_inchikey,
+          is_partial: true,
+          sum_formular: formula,
+          molfile: raw_molfile
+        )
+        molecule.save!
+      end
+      molecule
     end
 
     # Sort records by created_at timestamp

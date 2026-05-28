@@ -61,10 +61,22 @@ module ThirdPartyAppHelpers
     return error!('No read access to attachment', 403) unless read_access?(@attachment, @user)
 
     content_type 'application/octet-stream'
-    header['Content-Length'] = @attachment.filesize.to_s
+    header['Content-Length'] = attachment_filesize.to_s
     header['Content-Disposition'] = "attachment; filename=#{@attachment.filename}"
     env['api.format'] = :binary
     @attachment.read_file
+  end
+
+  # @note: Check file size before download from the third party app
+  #  This is a temporary solution aroung the discrepency for some zip file of the recorded size vs actual on the fs
+  #  see #463
+  # @return [Integer] the file size in bytes
+  def attachment_filesize
+    if @attachment.attachment.mime_type == 'application/zip'
+      path = @attachment.attachment.to_io.path
+      return File.size(path)
+    end
+    @attachment.filesize
   end
 
   # desc: upload file from the third party app

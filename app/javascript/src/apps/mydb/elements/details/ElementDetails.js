@@ -8,11 +8,10 @@ import ElementStore from 'src/stores/alt/stores/ElementStore';
 import FormatContainer from 'src/apps/mydb/elements/details/formats/FormatContainer';
 import GenericElDetails from 'src/components/generic/GenericElDetails';
 import GraphContainer from 'src/apps/mydb/elements/details/GraphContainer';
-import LiteratureDetails from 'src/apps/mydb/elements/details/LiteratureDetails';
 import MetadataContainer from 'src/components/metadata/MetadataContainer';
 //import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
 import ReactionDetails from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
-import ReportContainer from 'src/apps/mydb/elements/details/reports/ReportContainer';
+import ReportDetails from 'src/apps/mydb/elements/details/reports/ReportDetails';
 import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
 import DeviceDescriptionDetails from 'src/apps/mydb/elements/details/deviceDescriptions/DeviceDescriptionDetails';
 import SampleDetails from 'src/apps/mydb/elements/details/samples/SampleDetails';
@@ -24,6 +23,9 @@ import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails'
 import VesselTemplateDetails from 'src/apps/mydb/elements/details/vessels/VesselTemplateDetails';
 import VesselTemplateCreate from 'src/apps/mydb/elements/details/vessels/VesselTemplateCreate';
 import SequenceBasedMacromoleculeSampleDetails from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleDetails';
+import LiteratureDetails from 'src/apps/mydb/elements/details/literature/LiteratureDetails';
+import ElementIcon from 'src/components/common/ElementIcon';
+import CreateElementButton from '../../../../components/navigation/CreateElementButton';
 
 const tabInfoHash = {
   metadata: {
@@ -79,7 +81,7 @@ const tabInfoHash = {
     )
   },
   literature_map: {
-    title: 'Literature',
+    title: 'References',
     iconEl: (
       <span>
         <i className="fa fa-book" aria-hidden="true" />
@@ -153,18 +155,17 @@ export default class ElementDetails extends Component {
       case 'metadata':
         return <MetadataContainer metadata={el} />;
       case 'report':
-        return <ReportContainer report={el} />;
+        return <ReportDetails report={el} />;
       case 'prediction':
-        //return <PredictionContainer prediction={el} />;
-        console.warn('Attempting to show outdated PredictionContainer')
+        // return <PredictionContainer prediction={el} />;
+        console.warn('Attempting to show outdated PredictionContainer');
+        break;
       case 'format':
         return <FormatContainer format={el} />;
       case 'graph':
         return <GraphContainer graph={el} />;
       case 'task':
         return <ComputeTaskContainer task={el} />;
-      case 'literature_map':
-        return <LiteratureDetails literatureMap={el} />;
       case 'cell_line':
         return <CellLineDetails cellLineItem={el} />;
       case 'vessel':
@@ -182,6 +183,9 @@ export default class ElementDetails extends Component {
         return null;
       case 'sequence_based_macromolecule_sample':
         return <SequenceBasedMacromoleculeSampleDetails openedFromCollectionId={el.openedFromCollectionId} />;
+      case 'literature_map':
+        return <LiteratureDetails literatureMap={el} />;
+
       default:
         return (
           <div className="text-center">
@@ -214,11 +218,13 @@ export default class ElementDetails extends Component {
     const title = el.type === 'vessel_template' ? el.title : tab.title ?? el.title();
 
     const spanClassName = el.isPendingToSave ? 'unsaved' : '';
-    const iconClassName = 'me-1 ' + (el.element_klass ? el.element_klass.icon_name : tab.iconEl ?? 'icon-' + el.type);
 
     return (
       <span className={spanClassName}>
-        <i className={iconClassName} />
+        <ElementIcon
+          element={el}
+          className="me-1"
+        />
         {title}
       </span>
     );
@@ -262,12 +268,15 @@ export default class ElementDetails extends Component {
       ));
 
     return (
-      <div className="tabs-container--with-full-height">
+      <div className="elements-details tabs-container--with-full-height">
+        <div className="d-flex justify-content-end">
+          <CreateElementButton />
+        </div>
         <Tabs
           id="elements-tabs"
           activeKey={activeKey}
           onSelect={DetailActions.select}
-          className="surface-tabs"
+          className="elements-details__tabs surface-tabs"
         >
           {selectedElements}
         </Tabs>

@@ -2,12 +2,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, ButtonGroup, Tooltip, Overlay, OverlayTrigger, Dropdown,
+  Button, Tooltip, OverlayTrigger, Dropdown,
   Card, Collapse, Container, Row, Col
 } from 'react-bootstrap';
-import Aviator from 'aviator';
-import UIStore from 'src/stores/alt/stores/UIStore';
-import { researchPlanShowOrNew } from 'src/utilities/routesUtils';
+import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import ResearchPlan from 'src/models/ResearchPlan';
@@ -16,6 +14,7 @@ import ResearchPlanDetailsBody from
 import ResearchPlanDetailsName from
   'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsName';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 function InfoButton({ iconClass, text, style, tooltip }) {
   style ||= 'info';
@@ -47,7 +46,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
       researchPlan,
       update: false,
       expanded: expanded || false,
-      confirmRemove: false,
+      confirmRemoveTarget: null,
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
@@ -172,14 +171,6 @@ export default class EmbeddedResearchPlanDetails extends Component {
     });
   }
 
-  openResearchPlan() {
-    const { currentCollection, isSync } = UIStore.getState();
-    const researchPlanID = this.state.researchPlan.id;
-    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/research_plan/${researchPlanID}`;
-    Aviator.navigate(uri, { silent: true });
-    researchPlanShowOrNew({ params: { research_planID: researchPlanID } });
-  }
-
   numberOfAnalyses(researchPlan) {
     if (!researchPlan.container) { return; }
     const analyses_container = researchPlan.container.children
@@ -259,29 +250,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
     const { deleteResearchPlan, saveResearchPlan } = this.props;
     const titleTooltip = formatTimeStampsOfElement(researchPlan || {});
     const expandIconClass = this.state.expanded ? 'fa fa-compress' : 'fa fa-expand';
-
-    const popover = (
-      <Tooltip placement="left" className="in" id="tooltip-bottom">
-        Remove {researchPlan.name} from Screen?
-        <br />
-        <ButtonGroup>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => deleteResearchPlan(researchPlan.id)}
-          >
-            Yes
-          </Button>
-          <Button
-            variant="warning"
-            size="sm"
-            onClick={() => this.setState({ confirmRemove: false })}
-          >
-            No
-          </Button>
-        </ButtonGroup>
-      </Tooltip>
-    );
+    const { confirmRemoveTarget } = this.state;
 
     return (
       <div className='d-flex align-items-center justify-content-between'>
@@ -316,7 +285,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
             <Button
               variant="info"
               size="xxsm"
-              onClick={() => this.openResearchPlan()}>
+              onClick={() => aviatorNavigation('research_plan', this.state.researchPlan.id, true, true)}>
               <i className="fa fa-window-maximize" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
@@ -330,24 +299,25 @@ export default class EmbeddedResearchPlanDetails extends Component {
               <i className="fa fa-floppy-o" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
-          <Overlay
-            rootClose
-            target={this.target}
-            show={this.state.confirmRemove}
+          <ConfirmationOverlay
+            overlayTarget={confirmRemoveTarget}
             placement="bottom"
-            onHide={() => this.setState({ confirmRemove: false })}
-          >
-            {popover}
-          </Overlay>
+            warningText={`Remove ${researchPlan.name} from Screen?`}
+            destructiveAction={() => deleteResearchPlan(researchPlan.id)}
+            destructiveActionLabel="Yes"
+            hideAction={() => this.setState({ confirmRemoveTarget: null })}
+            hideActionLabel="No"
+          />
           <OverlayTrigger
             placement="bottom"
             overlay={<Tooltip id="remove_esearch_plan">Remove Research Plan from Screen</Tooltip>}
           >
             <Button
-              ref={(button) => { this.target = button; }}
               variant="danger"
               size="xxsm"
-              onClick={() => this.setState({ confirmRemove: !this.state.confirmRemove })}
+              onClick={(event) => this.setState((prevState) => ({
+                confirmRemoveTarget: prevState.confirmRemoveTarget ? null : event.currentTarget,
+              }))}
             >
               <i className="fa fa-trash-o" aria-hidden="true" />
             </Button>

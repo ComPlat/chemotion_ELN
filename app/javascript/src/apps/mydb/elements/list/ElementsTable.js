@@ -395,7 +395,8 @@ export default class ElementsTable extends React.Component {
           <Button
             size="sm"
             onClick={this.toggleProductOnly}
-            variant={productOnly ? 'primary' : 'light'}
+            variant="light"
+            active={productOnly}
           >
             <i
               className="fa fa-product-hunt"
@@ -418,7 +419,7 @@ export default class ElementsTable extends React.Component {
           style={{ border: 'none' }}
           onClick={this.changeSortDirection}
         >
-          <i className={`fa fa-fw ${sortDirectionIcon}`} />
+          <i className={`fa ${sortDirectionIcon}`} />
         </button>
       </OverlayTrigger>
     );
@@ -449,7 +450,7 @@ export default class ElementsTable extends React.Component {
     } else {
       sortIconClass = elementsSort ? 'fa-history' : 'fa-clock-o';
     }
-    const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
+    const sortIcon = <i className={`fa ${sortIconClass}`} />;
     const sortContent = (
       <OverlayTrigger placement="top" overlay={sortTooltip}>
         <button
@@ -525,7 +526,7 @@ export default class ElementsTable extends React.Component {
     const sortTitle = elementsSort ? `sort by ${sortColumn}` : 'sort by update date';
     const sortTooltip = <Tooltip id="reaction_sort_tooltip">{sortTitle}</Tooltip>;
     const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
-    const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
+    const sortIcon = <i className={`fa ${sortIconClass}`} />;
     const sortContent = (
       <OverlayTrigger placement="top" overlay={sortTooltip}>
         <button
@@ -573,7 +574,7 @@ export default class ElementsTable extends React.Component {
     const sortTooltip = <Tooltip id="vessel_sort_tooltip">{sortTitle}</Tooltip>;
 
     const sortIconClass = elementsSort ? 'fa-sort-alpha-desc' : 'fa-clock-o';
-    const sortIcon = <i className={`fa fa-fw ${sortIconClass}`} />;
+    const sortIcon = <i className={`fa ${sortIconClass}`} />;
 
     return (
       <>
@@ -743,7 +744,7 @@ export default class ElementsTable extends React.Component {
     }
 
     return (
-      <div ref={this.elementRef} className="flex-grow-1 h-0 overflow-y-auto surface-tab__content">
+      <div ref={this.elementRef} className="flex-grow-1 h-0 overflow-y-auto pb-3 surface-tab__content">
         {elementsTableEntries}
         <div className="mt-2 d-flex justify-content-between">
           {this.renderPagination()}

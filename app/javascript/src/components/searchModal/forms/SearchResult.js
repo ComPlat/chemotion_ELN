@@ -6,7 +6,6 @@ import {
 } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { allElnElementsForSearch } from 'src/apps/generic/Utils';
 
@@ -14,8 +13,8 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import Aviator from 'aviator';
 import SearchResultTabContent from 'src/components/searchModal/forms/SearchResultTabContent';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 function SearchResult({ handleClear }) {
   const searchStore = useContext(StoreContext).search;
@@ -24,6 +23,7 @@ function SearchResult({ handleClear }) {
   const profile = userState.profile || {};
   const genericElements = userState.genericEls || [];
   const [visibleTabs, setVisibleTabs] = useState([]);
+  const { currentCollection } = UIStore.getState();
 
   useEffect(() => {
     if (typeof (profile) !== 'undefined' && profile
@@ -75,21 +75,8 @@ function SearchResult({ handleClear }) {
   };
 
   const adoptResultAndOpenDetail = (element) => {
-    const { currentCollection, isSync } = UIStore.getState();
     const { id, type } = element;
-    const uri = isSync
-      ? `/scollection/${currentCollection.id}/${type}/${id}`
-      : `/collection/${currentCollection.id}/${type}/${id}`;
-    Aviator.navigate(uri, { silent: true });
-
-    const e = { type, params: { collectionID: currentCollection.id } };
-    e.params[`${type}ID`] = id;
-
-    if (genericElements.find((el) => el.name === type)) {
-      e.klassType = 'GenericEl';
-    }
-
-    elementShowOrNew(e);
+    aviatorNavigation(type, id, true, true);
     handleAdoptResult();
 
     return null;
@@ -108,23 +95,31 @@ function SearchResult({ handleClear }) {
 
   const searchValuesList = () => {
     if (searchStore.searchResultVisible && searchStore.searchValues.length > 0) {
+      let structureSvg = '';
+      if (searchStore.structure_svg) {
+        const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(searchStore.structure_svg)}`;
+        structureSvg = <img src={dataUrl} style={{ maxHeight: '100px' }} />;
+      }
+
       return (
         <div className="search-value-list">
           <h4>Your Search</h4>
           {
+            searchStore.structure_svg && (
+              structureSvg
+            )
+          }
+          {!searchStore.structure_svg && (
             searchStore.searchValues.map((val, i) => {
               let cleanVal = val.replace(/\bILIKE\b/, 'LIKE');
-
               if (i === 0) {
                 cleanVal = cleanVal
                   .replace(/^AND\b\s*/, '')
                   .replace(/^OR\b\s*/, '')
                   .trim();
               }
-
               return <div key={i}>{cleanVal}</div>;
-            })
-          }
+            }))}
           {
             searchStore.searchResultsCount > 0 ? null : (
               <div className="search-spinner"><i className="fa fa-spinner fa-pulse fa-4x fa-fw" /></div>
@@ -135,7 +130,7 @@ function SearchResult({ handleClear }) {
       );
     }
     return null;
-  }
+  };
 
   const resultsCount = () => {
     if (searchStore.searchResultsCount === 0) { return null; }
@@ -152,19 +147,21 @@ function SearchResult({ handleClear }) {
         <h4 className="search-result-number-of-results">
           {sum}
           {' '}
-          results
+          results for the collection "
+          {currentCollection?.label}
+          "
         </h4>
       </div>
     );
-  }
+  };
 
   const searchResultNavItem = (list, tabResult) => {
-    if (searchStore.searchResultsCount === 0) { return null }
+    if (searchStore.searchResultsCount === 0) { return null; }
 
     let iconClass = `icon-${list.key}`;
     let tooltipText = list.key && capitalizeWords(list.key);
-    
-    if (!allElnElementsForSearch.includes(list.key + 's')) {
+
+    if (!allElnElementsForSearch.includes(`${list.key}s`)) {
       const genericElement = (genericElements && genericElements.find((el) => el.name === list.key)) || {};
       iconClass = `${genericElement.icon_name} icon_generic_nav`;
       tooltipText = `${genericElement.label}<br />${genericElement.desc}`;
@@ -175,7 +172,7 @@ function SearchResult({ handleClear }) {
       </Tooltip>
     );
     let itemClass = tabResult.total_elements === 0 ? 'no-result' : '';
-    itemClass = searchStore.search_result_active_tab_key == list.index ? itemClass + ' active' : itemClass;
+    itemClass = searchStore.search_result_active_tab_key == list.index ? `${itemClass} active` : itemClass;
 
     return (
       <ToggleButton
@@ -188,34 +185,37 @@ function SearchResult({ handleClear }) {
         <OverlayTrigger delayShow={500} placement="top" overlay={tooltip}>
           <div className="d-inline-flex align-items-center">
             <i className={`${iconClass} pe-1`} />
-            <span className="fs-3">
-              ({tabResult.total_elements})
+            <span className="fs-6">
+              (
+              {tabResult.total_elements}
+              )
             </span>
           </div>
         </OverlayTrigger>
       </ToggleButton>
     );
-  }
+  };
 
   const searchResultTabContainer = () => {
-    if (searchStore.searchResultsCount === 0) { return null }
+    if (searchStore.searchResultsCount === 0) { return null; }
 
     const navItems = [];
     const tabContents = [];
 
     visibleTabs.map((list) => {
-      const tab = results.find(val => val.id.indexOf(list.key) !== -1);
+      const tab = results.find((val) => val.id.indexOf(list.key) !== -1);
       if (tab === undefined) { return; }
       const tabResult = tab.results;
 
       const navItem = searchResultNavItem(list, tabResult);
-      const tabContent =
+      const tabContent = (
         <SearchResultTabContent
           key={`${list.key}-result-tab`}
           list={list}
           tabResult={tabResult}
           openDetail={adoptResultAndOpenDetail}
         />
+      );
 
       navItems.push(navItem);
       tabContents.push(tabContent);
@@ -246,29 +246,29 @@ function SearchResult({ handleClear }) {
         </div>
       </Tab.Container>
     );
-  }
+  };
 
   const resultButtons = () => {
     if (searchStore.searchResultsCount === 0) { return null; }
 
     return (
-      <ButtonToolbar className="advanced-search-buttons results">
-        <Button variant="primary" onClick={() => searchStore.handleCancel()}>
+      <ButtonToolbar className="advanced-search-buttons results flex-shrink-0">
+        <Button variant="secondary" onClick={() => searchStore.handleCancel()}>
           Cancel
         </Button>
-        <Button variant="info" onClick={handleClear}>
+        <Button variant="danger" onClick={handleClear}>
           Reset
         </Button>
-        <Button variant="warning" onClick={handleAdoptResult}>
+        <Button variant="primary" onClick={handleAdoptResult}>
           Adopt Result
         </Button>
       </ButtonToolbar>
     );
-  }
+  };
 
   return (
     <>
-      <div className="result-content-header">
+      <div className="result-content-header flex-shrink-0">
         {searchValuesList()}
         {resultsCount()}
       </div>

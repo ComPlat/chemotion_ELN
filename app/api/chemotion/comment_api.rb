@@ -10,10 +10,7 @@ module Chemotion
 
     helpers do
       def authorize_commentable_access(commentable)
-        collections = Collection.where(id: commentable.collections.ids)
-        allowed_user_ids = authorized_users(collections)
-
-        error!('401 Unauthorized', 401) unless allowed_user_ids.include?(current_user.id)
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, commentable).read?
       end
 
       def authorize_update_access(comment)
@@ -107,11 +104,8 @@ module Chemotion
 
       post do
         commentable = find_commentable(params[:commentable_type], params[:commentable_id])
-        collections = Collection.where(id: commentable.collections.ids)
 
-        allowed_user_ids = authorized_users(collections)
-
-        error!('401 Unauthorized', 401) unless allowed_user_ids.include? current_user.id
+        authorize_commentable_access(commentable)
 
         attributes = {
           content: params[:content],
@@ -124,7 +118,7 @@ module Chemotion
         comment = Comment.new(attributes)
         comment.save!
 
-        create_message_notification(collections, current_user, commentable)
+        notify_collection_owners(current_user, commentable)
 
         present comment, with: Entities::CommentEntity, root: 'comment'
       end

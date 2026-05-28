@@ -185,7 +185,9 @@ const KetcherEditor = forwardRef((props, ref) => {
     canvasIframeRefSetter(iframeRef);
     return () => canvasIframeRefSetter(null);
   }, [iframeRef]);
-  const initMol = molfile || '\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
+  const defaultEmptyMol = 'null\n  Ketcher  3272610132D 1   1.00000     0.00000     0\n\n'
+    + '  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n';
+  const initMol = molfile || defaultEmptyMol;
 
   // action based on event-name
   const eventHandlers = {
@@ -234,7 +236,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     },
     [EventNames.ADD_BOND]: async () => {
-      if (editor && editor.structureDef) {
+      if (editor && editor.structureDef && (imagesList.length > 0 || textList.length > 0)) {
         await onTemplateMove(editor);
       }
     }
@@ -322,6 +324,7 @@ const KetcherEditor = forwardRef((props, ref) => {
       resetStore,
       loadContent,
       buttonEvents,
+      onPasteWithKetcherData: handlePasteWithKetcherData,
     });
 
     // Initialize button state (disabled by default)
@@ -528,6 +531,16 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     } catch (err) {
       console.error('Error in loadContent:', err);
+    }
+  };
+
+  const handlePasteWithKetcherData = async (pastedText) => {
+    try {
+      if (editor?.structureDef && pastedText) {
+        await prepareKetcherData(editor, pastedText, { isPaste: true });
+      }
+    } catch (err) {
+      console.error('Error pasting molfile with polymer data:', err);
     }
   };
 

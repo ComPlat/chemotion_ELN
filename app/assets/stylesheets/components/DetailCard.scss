@@ -1,0 +1,44 @@
+.detail-card {
+  @extend .d-flex;
+  @extend .flex-column;
+
+  @extend .border-0;
+  @extend .h-100;
+
+  & > .card-header {
+    @extend .surface-tab__header;
+    @extend .state-border;
+    .btn-close {
+      margin-left: $close-button-margin;
+    }
+  }
+
+  &.detail-card--unsaved > .card-header {
+    @extend .border-warning;
+  }
+
+  & > &__scroll-container {
+    @extend .flex-grow-1;
+    @extend .overflow-y-auto;
+    @extend .h-0;
+    @extend .pt-1;
+
+    > .card-body {
+      @extend .p-0;
+    }
+
+    .card-footer {
+      @extend .widget-footer;
+      @extend .border-0;
+      @extend .d-flex;
+      @extend .justify-content-end;
+      @extend .align-items-center;
+    }
+  }
+}
+
+.tab-pane > .detail-card,
+.tab-pane > .detail-card > .card-header {
+  @extend .border-top-0;
+  @extend .rounded-top-0;
+}

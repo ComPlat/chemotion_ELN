@@ -33,8 +33,9 @@ export default class Element {
     }
     return sha256(JSON.stringify(_.omitBy(_.omit(
       tThis,
-      ['_checksum', 'belongTo', 'matGroup', 'molecule_names', 'equivalent', '_equivalent', 'formulaChanged', 'research_plans', ...fieldsToOmit],
-    ), _.isEmpty)));
+      ['_checksum', 'belongTo', 'matGroup', 'molecule_names', 'equivalent', '_equivalent',
+        'formulaChanged', 'research_plans', ...fieldsToOmit],
+    ), (value) => value !== true && _.isEmpty(value))));
   }
 
   get getChecksum() {
@@ -50,10 +51,11 @@ export default class Element {
   }
 
   get isPendingToSave() {
-    return !_.isEmpty(this) && (this.isNew || this.isEdited);
+    return !_.isEmpty(this) && (this.isNew || this.isEdited || this.changed === true);
   }
 
   updateChecksum(cs) {
+    this.changed = false;
     if (cs) {
       this._checksum = cs
     } else {

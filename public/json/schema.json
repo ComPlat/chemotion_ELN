@@ -69,24 +69,6 @@
             "label": {
               "type": "string"
             },
-            "shared_by_id": {
-              "$ref": "#/definitions/uuid"
-            },
-            "is_shared": {
-              "type": "boolean"
-            },
-            "permission_level": {
-              "type": "integer"
-            },
-            "sample_detail_level": {
-              "type": "integer"
-            },
-            "reaction_detail_level": {
-              "type": "integer"
-            },
-            "wellplate_detail_level": {
-              "type": "integer"
-            },
             "created_at": {
               "$ref": "#/definitions/datetime"
             },
@@ -96,20 +78,23 @@
             "position": {
               "type": "integer"
             },
-            "screen_detail_level": {
-              "type": "integer"
-            },
             "is_locked": {
               "type": "boolean"
             },
             "deleted_at": {
               "type": "null"
             },
-            "is_synchronized": {
-              "type": "boolean"
+            "tabs_segment": {
+              "type": [
+                "number",
+                "null"
+              ]
             },
-            "researchplan_detail_level": {
-              "type": "integer"
+            "inventory_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "shared": {
+              "type": "boolean"
             }
           },
           "additionalProperties": false
@@ -489,7 +474,7 @@
               "type": "string"
             },
             "custom_info": {
-              "type": "objecy"
+              "type": "object"
             },
             "created_at": {
               "$ref": "#/definitions/datetime"

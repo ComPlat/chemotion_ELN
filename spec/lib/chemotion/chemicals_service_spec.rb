@@ -3,6 +3,24 @@
 require 'rails_helper'
 
 describe Chemotion::ChemicalsService do
+  describe '.validate_product_number!' do
+    it 'raises when product_number is nil' do
+      expect { described_class.validate_product_number!(nil) }.to raise_error(StandardError)
+    end
+
+    it 'raises when product_number is blank' do
+      expect { described_class.validate_product_number!('  ') }.to raise_error(StandardError)
+    end
+
+    it 'raises when product_number contains suspicious characters' do
+      expect { described_class.validate_product_number!('bl3h9abba10e?context=bbe') }.to raise_error(StandardError)
+    end
+
+    it 'does not raise for valid product numbers' do
+      expect { described_class.validate_product_number!('ABC-123_def') }.not_to raise_error
+    end
+  end
+
   describe Chemotion::ChemicalsService do
     context 'with write_file (current implementation)' do
       let(:link) { 'https://www.sigmaaldrich.com/DE/en/sds/sigald/383112' }

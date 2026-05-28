@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
-import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
+import ReportsFetcher from 'src/fetchers/ReportsFetcher';
 
 export default class ExportSamplesButton extends Component {
   constructor(props) {
@@ -14,7 +14,7 @@ export default class ExportSamplesButton extends Component {
     this.setState({ startExport: true });
 
     const { type, id } = this.props;
-    CollectionsFetcher.expotSamples(type, id)
+    ReportsFetcher.exportSamples(type, id)
       .then(() => { this.setState({ startExport: false }); })
       .catch((errorMessage) => { console.log(errorMessage); });
   }
@@ -23,7 +23,7 @@ export default class ExportSamplesButton extends Component {
     const { startExport } = this.state;
     return (
       <Button
-        variant="info"
+        variant="secondary"
         onClick={this.handleExport}
       >
         Export samples

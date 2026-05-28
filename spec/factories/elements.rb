@@ -10,7 +10,7 @@ FactoryBot.define do
     klass_uuid { element_klass.uuid }
     callback(:before_create) do |element|
       element.creator = FactoryBot.build(:user) if element.creator.blank?
-      element.collections << FactoryBot.build(:collection)
+      element.collections << FactoryBot.build(:collection) if element.collections.blank?
       element.container = FactoryBot.create(:container, :with_analysis) if element.container.blank?
     end
   end

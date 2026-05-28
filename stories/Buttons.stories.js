@@ -1,8 +1,7 @@
 import React from 'react';
 import { fn } from 'storybook/test';
-import { sizeAttributes } from './componentAttributes';
-
 import { Button } from 'react-bootstrap';
+import { sizeAttributes } from './componentAttributes';
 
 const sizes = sizeAttributes;
 
@@ -11,22 +10,26 @@ const renderVariantsAndStates = (variantList) => (
     {variantList.map((variant) => (
       <div key={variant.name} className="d-flex mb-3 justify-content-start align-items-center gap-2">
         <div className="w-25">
-          <strong>Usage:</strong>
-          &nbsp;
-          {variant.label}
-          <br />
           <strong>Variant:</strong>
           &nbsp;
           {variant.name}
+          <br />
+          <strong>Usage:</strong>
+          &nbsp;
+          {variant.label}
         </div>
-        <div>
-          <Button variant={variant.name}>Default</Button>
-        </div>
-        <div>
-          <Button variant={variant.name} active>Active</Button>
-        </div>
-        <div>
-          <Button variant={variant.name} disabled>Disabled</Button>
+        <div className={`p-2 rounded${variant.backgroundClass ? ` ${variant.backgroundClass}` : ''}`}>
+          <div className="d-flex gap-2 align-items-center">
+            <div>
+              <Button variant={variant.name}>Default</Button>
+            </div>
+            <div>
+              <Button variant={variant.name} active>Active</Button>
+            </div>
+            <div>
+              <Button variant={variant.name} disabled>Disabled</Button>
+            </div>
+          </div>
         </div>
       </div>
     ))}
@@ -34,7 +37,7 @@ const renderVariantsAndStates = (variantList) => (
 );
 
 export default {
-  title: 'Components/Button',
+  title: 'Atoms/Button',
   component: Button,
   parameters: {
     // Optional parameter to center the component in the Canvas. More info: https://storybook.js.org/docs/configure/story-layout
@@ -68,7 +71,7 @@ export default {
   argTypes: {
     variant: {
       control: { type: 'select' },
-      options: ['light', 'primary', 'success', 'danger', 'plain', 'neat'],
+      options: ['light', 'primary', 'secondary', 'success', 'danger', 'ghost', 'plain', 'neat'],
       description: 'Visual style of the button',
       table: {
         type: { summary: 'string' },
@@ -118,7 +121,17 @@ export function ButtonVariants() {
     [
       { name: 'light', label: 'Default' },
       { name: 'primary', label: 'Main Action' },
-      { name: 'plain', label: 'plain' },
+      {
+        name: 'secondary',
+        label: 'Default for headers and footers of cards and modals',
+        backgroundClass: 'surface-active',
+      },
+      {
+        name: 'ghost',
+        label: 'Close and cancel actions in headers and footers of cards and modals',
+        backgroundClass: 'surface-active',
+      },
+      { name: 'plain', label: 'Mimick hyperlink' },
       { name: 'neat', label: 'no padding' }
     ],
   );
@@ -132,11 +145,17 @@ ButtonVariants.parameters = {
   not helpful as the subjective and inconsistent use of color does not convey a clear meaning to the user.**
 
   With the exeption of create and destroy bottons (see semantic variants below) we recommend to stick to the
-  following two variants:<br />
+  following three variants:<br />
   The **light** variant is our default choice for most actions, providing good readability without being overly
   prominent.<br />
   Use **primary** variant is to be used for the main function within the given context (e.g. the submit or save
   button in a form).
+  
+  The **secondary** variant is reserved for the headers and footers of cards and modals.
+  It is the default variant for these sections.
+
+  The **ghost** variant is reserved for the headers and footers of cards and modals.
+  It is the least prominent variant and is applied exclusively for the close and cancel actions.
 
   For a link like appearance with no background or border use the **plain** variant.<br />
   For buttons that require no padding (e.g. icon only buttons) use the **neat** variant.
@@ -176,7 +195,6 @@ SemanticVariants.parameters = {
 export function DeprecatedVariants() {
   return renderVariantsAndStates(
     [
-      { name: 'secondary', label: 'Deprecated' },
       { name: 'warning', label: 'Deprecated' },
       { name: 'info', label: 'Deprecated' }
     ]
@@ -187,11 +205,11 @@ DeprecatedVariants.parameters = {
   docs: {
     description: {
       story: `
-  The **secondary**, **warning** and **info** variants are built in Bootstrap variants but are not recommended
+  The **warning** and **info** variants are built in Bootstrap variants but are not recommended
   for buttons. As mentioned above these colors do not convey a clear meaning to the user. Please remove these
   variants from existing buttons and avoid using them in new code.
 
-  **Secondary**, **warning** and **info** variants or helper-classes might still be used for other components
+  **warning** and **info** variants or helper-classes might still be used for other components
   such as badges and alerts where they are more appropriate.
       `
     }
@@ -204,6 +222,13 @@ export function Sizes() {
         {sizes.map((size) => (
           <Button key={size} size={size} variant="light">
             {size.toUpperCase()}
+          </Button>
+        ))}
+      </div>
+      <div className="d-flex mb-3 gap-3 align-items-center">
+        {sizes.map((size) => (
+          <Button key={size} size={size} variant="light">
+            <i className="icon-research_plan" />
           </Button>
         ))}
       </div>
@@ -223,6 +248,8 @@ Sizes.parameters = {
       story: `
   Given the high density of ELN UI, we extended Bootstrap's standard sizing with extra small and extra
   extra small options. Extra extra small buttons should be used sparingly, large buttons are not recommended at all.
+
+  Buttons with icons only as content are automatically fitted into a square shape reducing horizontal padding.
 
   Icons inside of buttons with variant **neat** are scaled up to improve their visibility as a standalone element.
       `

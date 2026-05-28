@@ -2,15 +2,17 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Sample from 'src/models/Sample';
 import Molecule from 'src/models/Molecule';
-import SampleDetailsComponentsDnd from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponentsDnd'; // Import the appropriate Dnd component
+import SampleDetailsComponentsDnd
+  from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponentsDnd';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import { checkComponentVolumeAndNotify } from 'src/utilities/VolumeUtils';
 import {
-  ListGroup, ListGroupItem, Button, Modal
+  ListGroup, ListGroupItem, Button
 } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 
 /**
  * SampleDetailsComponents manages the display and interaction of components within a sample.
@@ -19,6 +21,17 @@ import {
  * @extends React.Component
  */
 export default class SampleDetailsComponents extends React.Component {
+  /**
+   * Updates total volume only if component concentration is locked
+   * @param {Object} component - The component to check
+   * @param {Sample} sample - The parent sample
+   */
+  static updateTotalVolumeIfConcentrationLocked(component, sample) {
+    if (component.isComponentConcentrationLocked()) {
+      sample.updateTotalVolume(component.amount_mol, component.concn);
+    }
+  }
+
   /**
    * Creates an instance of SampleDetailsComponents.
    * @param {Object} props - Component props
@@ -31,14 +44,16 @@ export default class SampleDetailsComponents extends React.Component {
    */
   constructor(props) {
     super(props);
-
-    const { sample } = props;
     this.state = {
-      sample,
       showModal: false,
       droppedMaterial: null,
       activeTab: 'concentration',
     };
+
+    // Counter to track pending molecule update requests
+    this.pendingMoleculeRequests = 0;
+    // Sequence counter to ensure only the latest molecule update is applied
+    this.moleculeUpdateSequence = 0;
 
     this.dropSample = this.dropSample.bind(this);
     this.dropMaterial = this.dropMaterial.bind(this);
@@ -54,6 +69,8 @@ export default class SampleDetailsComponents extends React.Component {
     this.handleModalAction = this.handleModalAction.bind(this);
     this.handleTabSelect = this.handleTabSelect.bind(this);
     this.updatePurity = this.updatePurity.bind(this);
+    this.startMoleculeUpdate = this.startMoleculeUpdate.bind(this);
+    this.endMoleculeUpdate = this.endMoleculeUpdate.bind(this);
   }
 
   /**
@@ -105,12 +122,12 @@ export default class SampleDetailsComponents extends React.Component {
       case 'g':
         // volume/mass given, update amount
         currentComponent.handleVolumeChange(amount, totalVolume);
-        this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
+        SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
         break;
       case 'mol':
         // amount given, update volume/mass
         currentComponent.handleAmountChange(amount, totalVolume);
-        this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
+        SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
         break;
       case 'mol/l':
         // starting conc./target concentration changes
@@ -176,6 +193,81 @@ export default class SampleDetailsComponents extends React.Component {
   }
 
   /**
+   * Starts a molecule update request and manages loading state.
+   * Increments the pending request counter and sets loading to true if first request.
+   */
+  startMoleculeUpdate() {
+    const { setMoleculeLoading } = this.props;
+    this.pendingMoleculeRequests += 1;
+    if (this.pendingMoleculeRequests === 1) {
+      setMoleculeLoading(true);
+    }
+  }
+
+  /**
+   * Starts a sequenced molecule update to prevent race conditions.
+   * @returns {number} The sequence number for this update request
+   */
+  startSequencedMoleculeUpdate() {
+    this.startMoleculeUpdate();
+    this.moleculeUpdateSequence += 1;
+    return this.moleculeUpdateSequence;
+  }
+
+  /**
+   * Ends a molecule update request and manages loading state.
+   * Decrements the pending request counter and sets loading to false if no pending requests.
+   */
+  endMoleculeUpdate() {
+    const { setMoleculeLoading } = this.props;
+    this.pendingMoleculeRequests = Math.max(0, this.pendingMoleculeRequests - 1);
+    if (this.pendingMoleculeRequests === 0) {
+      setMoleculeLoading(false);
+    }
+  }
+
+  /**
+   * Checks if the given sequence number is still current (not superseded by newer requests).
+   * @param {number} sequenceNumber - The sequence number to check
+   * @returns {boolean} True if this sequence is still the latest
+   */
+  isSequenceCurrent(sequenceNumber) {
+    return sequenceNumber === this.moleculeUpdateSequence;
+  }
+
+  /**
+   * Updates the mixture molecule in the background after component deletion.
+   * Handles race conditions where additional deletions may occur during the async fetch.
+   * @param {Sample} sample - The sample to update
+   * @param {number} updateSequence - The sequence number for this update
+   * @param {number} expectedComponentCount - The expected component count after deletion
+   * @param {Function} onChange - Callback to trigger UI update
+   */
+  async updateMoleculeAfterDeletion(sample, updateSequence, expectedComponentCount, onChange) {
+    if (!this.isSequenceCurrent(updateSequence)) return;
+
+    try {
+      await sample.updateMixtureMolecule();
+    } catch (error) {
+      console.error('Error updating mixture molecule after deletion:', error);
+      return;
+    }
+
+    // After async operation, verify state is still valid:
+    // - Sequence must still be current
+    // - Component count must match (user may have deleted more while waiting)
+    const currentComponentCount = sample.components?.length || 0;
+    if (this.isSequenceCurrent(updateSequence) && currentComponentCount === expectedComponentCount) {
+      onChange(sample);
+    } else if (currentComponentCount === 0) {
+      // Components were all deleted while we were fetching - ensure molecule is cleared
+      sample.clearMoleculeData();
+      onChange(sample);
+    }
+    // If count changed but not zero, a newer sequence will handle the correct update
+  }
+
+  /**
    * Normalizes components array to ensure all items are Component instances.
    * @param {Array} components - Array of components to normalize
    * @returns {Array} Array of Component instances
@@ -214,17 +306,6 @@ export default class SampleDetailsComponents extends React.Component {
     }
 
     return sample.components[componentIndex];
-  }
-
-  /**
-   * Updates total volume only if component concentration is locked
-   * @param {Object} component - The component to check
-   * @param {Sample} sample - The parent sample
-   */
-  updateTotalVolumeIfConcentrationLocked(component, sample) {
-    if (component.isComponentConcentrationLocked()) {
-      sample.updateTotalVolume(component.amount_mol, component.concn);
-    }
   }
 
   /**
@@ -311,7 +392,7 @@ export default class SampleDetailsComponents extends React.Component {
     const totalVolume = sample.amount_l;
 
     currentComponent.updateRatio(newRatio, materialGroup, totalVolume, referenceMoles);
-    this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
+    SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
   }
 
   /**
@@ -338,7 +419,7 @@ export default class SampleDetailsComponents extends React.Component {
     }
     currentComponent.setPurity(purity, totalVolume, referenceComponent, lockAmountColumnSolids, materialGroup);
 
-    this.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
+    SampleDetailsComponents.updateTotalVolumeIfConcentrationLocked(currentComponent, sample);
 
     // Check if the component is the reference component
     if (referenceComponent && referenceComponent.id === sampleID) {
@@ -382,33 +463,55 @@ export default class SampleDetailsComponents extends React.Component {
 
     splitSample.material_group = tagGroup;
 
+    const { onChange } = this.props;
+
     if (splitSample.isMixture()) {
       ComponentsFetcher.fetchComponentsBySampleId(srcSample.id)
         .then(async (components) => {
-          await Promise.all(
-            components.map(async (component) => {
-              const sampleComponent = Component.createFromSampleData(
-                component,
-                splitSample.parent_id,
-                tagGroup,
-                sample,
-              );
-              await sample.addMixtureComponent(sampleComponent);
-              sample.updateMixtureComponentEquivalent();
-            })
-          );
-          this.props.onChange(sample);
+          const sampleComponents = components.map((component) => Component.createFromSampleData(
+            component,
+            splitSample.parent_id,
+            tagGroup,
+            sample,
+          ));
+
+          // Phase 1: add components synchronously and re-render immediately
+          sample.addMixtureComponentsSync(sampleComponents);
+          const updateSequence = this.startSequencedMoleculeUpdate();
+          onChange(sample);
+
+          // Phase 2: fetch combined molecule/SVG in the background, then re-render
+          try {
+            await sample.updateMixtureMolecule();
+            // Only apply the result if this is still the latest request
+            if (this.isSequenceCurrent(updateSequence)) {
+              onChange(sample);
+            }
+          } finally {
+            this.endMoleculeUpdate();
+          }
         }).catch((errorMessage) => {
           console.error(errorMessage);
         });
     } else {
-      sample.addMixtureComponent(splitSample)
+      // Phase 1: add component synchronously and re-render immediately
+      sample.addMixtureComponentSync(splitSample);
+      const updateSequence = this.startSequencedMoleculeUpdate();
+      onChange(sample);
+
+      // Phase 2: fetch combined molecule/SVG in the background, then re-render
+      sample.updateMixtureMolecule()
         .then(() => {
-          sample.updateMixtureComponentEquivalent();
-          this.props.onChange(sample);
+          // Only apply the result if this is still the latest request
+          if (this.isSequenceCurrent(updateSequence)) {
+            onChange(sample);
+          }
         })
         .catch((errorMessage) => {
-          console.error('Error adding component:', errorMessage);
+          console.error('Error updating mixture molecule:', errorMessage);
+        })
+        .finally(() => {
+          this.endMoleculeUpdate();
         });
     }
   }
@@ -447,12 +550,19 @@ export default class SampleDetailsComponents extends React.Component {
       sample.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
       onChange(sample);
     } else if (action === 'merge') {
+      const updateSequence = this.startSequencedMoleculeUpdate();
       sample.mergeComponents(srcMat, srcGroup, tagMat, tagGroup)
         .then(() => {
-          onChange(sample);
+          // Only apply the result if this is still the latest request
+          if (this.isSequenceCurrent(updateSequence)) {
+            onChange(sample);
+          }
         })
         .catch((error) => {
           console.error('Error merging components:', error);
+        })
+        .finally(() => {
+          this.endMoleculeUpdate();
         });
     }
   }
@@ -466,13 +576,24 @@ export default class SampleDetailsComponents extends React.Component {
 
     // Set loading state for component deletion
     setComponentDeletionLoading(true);
+    const updateSequence = this.startSequencedMoleculeUpdate();
 
     try {
-      await sample.deleteMixtureComponent(component);
-      onChange(sample);
+      // Phase 1: Fast operations - immediate UI update with mass changes
+      sample.deleteMixtureComponent(component);
+      onChange(sample); // Immediate update with new mass
+
+      // Capture expected component count AFTER deletion
+      const expectedComponentCount = sample.components?.length || 0;
+
+      // Phase 2: Slow molecule update in background - only if components remain
+      if (expectedComponentCount > 0 && sample.molecule_cano_smiles) {
+        await this.updateMoleculeAfterDeletion(sample, updateSequence, expectedComponentCount, onChange);
+      }
     } finally {
-      // Clear loading state
+      // Clear loading states
       setComponentDeletionLoading(false);
+      this.endMoleculeUpdate();
     }
   }
 
@@ -517,6 +638,8 @@ export default class SampleDetailsComponents extends React.Component {
         srcMat, srcGroup, tagMat, tagGroup
       },
     });
+
+    return null;
   }
 
   /**
@@ -524,18 +647,21 @@ export default class SampleDetailsComponents extends React.Component {
    * @returns {JSX.Element} The modal component
    */
   renderModal() {
+    const { showModal } = this.state;
+
     return (
-      <Modal show={this.state.showModal} onHide={this.handleModalClose}>
-        <Modal.Header closeButton />
-        <Modal.Body>
-          <p>Do you want to merge or move this component?</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="success" onClick={() => this.handleModalAction('merge')}>Merge</Button>
-          <Button variant="primary" onClick={() => this.handleModalAction('move')}>Move</Button>
-          <Button variant="light" onClick={this.handleModalClose}>Close</Button>
-        </Modal.Footer>
-      </Modal>
+      <AppModal
+        show={showModal}
+        onHide={this.handleModalClose}
+        title="Move or merge component"
+        primaryActionLabel="Move"
+        onPrimaryAction={() => this.handleModalAction('move')}
+        extendedFooter={(
+          <Button variant="primary" onClick={() => this.handleModalAction('merge')}>Merge</Button>
+        )}
+      >
+        <p>Do you want to merge or move this component?</p>
+      </AppModal>
     );
   }
 
@@ -547,6 +673,7 @@ export default class SampleDetailsComponents extends React.Component {
     const {
       sample, isOver, canDrop, enableComponentLabel, enableComponentPurity
     } = this.props;
+    const { activeTab } = this.state;
     const style = {
       padding: '2px 5px',
     };
@@ -583,7 +710,7 @@ export default class SampleDetailsComponents extends React.Component {
             materialGroup="liquid"
             showModalWithMaterial={this.showModalWithMaterial}
             handleTabSelect={this.handleTabSelect}
-            activeTab={this.state.activeTab}
+            activeTab={activeTab}
             enableComponentLabel={enableComponentLabel}
             enableComponentPurity={enableComponentPurity}
           />
@@ -599,7 +726,7 @@ export default class SampleDetailsComponents extends React.Component {
             materialGroup="solid"
             showModalWithMaterial={this.showModalWithMaterial}
             handleTabSelect={this.handleTabSelect}
-            activeTab={this.state.activeTab}
+            activeTab={activeTab}
             enableComponentLabel={enableComponentLabel}
             enableComponentPurity={enableComponentPurity}
           />
@@ -621,4 +748,5 @@ SampleDetailsComponents.propTypes = {
   enableComponentLabel: PropTypes.bool.isRequired,
   enableComponentPurity: PropTypes.bool.isRequired,
   setComponentDeletionLoading: PropTypes.func.isRequired,
+  setMoleculeLoading: PropTypes.func.isRequired,
 };

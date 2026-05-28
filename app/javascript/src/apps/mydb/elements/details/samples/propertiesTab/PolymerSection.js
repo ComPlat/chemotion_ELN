@@ -118,7 +118,6 @@ export default class PolymerSection extends React.Component {
           metricPrefixes={['n']}
           precision={3}
           name="polymer_loading"
-          variant="primary"
           onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
           disabled={residue.custom_info.loading_type !== 'external'}
         />

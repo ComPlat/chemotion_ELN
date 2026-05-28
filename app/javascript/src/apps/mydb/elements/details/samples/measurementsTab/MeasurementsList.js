@@ -40,7 +40,7 @@ const MeasurementsList = ({ sample }) => {
     }
   }
 
-  const renderDeleteButton = (measurement) =>{
+  const renderDeleteButton = (measurement) => {
     return (
       <Button
         variant="danger"

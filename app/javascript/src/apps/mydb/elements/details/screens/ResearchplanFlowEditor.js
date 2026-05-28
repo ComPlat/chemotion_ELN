@@ -3,7 +3,8 @@ import ReactFlow, {
   ReactFlowProvider, Controls, Background, applyNodeChanges, applyEdgeChanges, addEdge, useReactFlow,
   Panel as ReactFlowPanel, useUpdateNodeInternals
 } from 'reactflow'
-import { Modal, Button, InputGroup, Card, ListGroup } from 'react-bootstrap'
+import { Button, InputGroup, Card, ListGroup } from 'react-bootstrap'
+import AppModal from 'src/components/common/AppModal'
 
 const buildUnassignedNodes = (nodes, researchplans) => {
   return researchplans.reduce((newNodes, plan) => {
@@ -158,48 +159,35 @@ const ResearchplanFlowEditor = (props) => {
   }
 
   return (
-    <div>
-      <Modal
-        centered
-        show={visible}
-        animation
-        size="xxxl"
-        onHide={onHide}
-        onEnter={onEnter}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>ResearchPlan Flow Editor</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="w-100 block" style={{ height: '500px' }}>
-            <ReactFlow
-              nodes={nodes}
-              onNodesChange={onNodesChange}
-              edges={edges}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onEdgeClick={onEdgeClick}
-              onPaneClick={onPaneClick}
-            >
-              <Background />
-              <Controls showInteractive={false} />
-              <ReactFlowPanel position="top-right" style={{ width: '20%' }}>
-                {edgeLabelEditor()}
-                {unassignedNodeButtons()}
-              </ReactFlowPanel>
-            </ReactFlow>
-          </div>
-        </Modal.Body>
-        <Modal.Footer className="justify-content-between">
-          <Button variant="light" onClick={onHide}>
-            Cancel
-          </Button>
-          <Button variant="success" onClick={onClickSave}>
-            Save
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </div>
+    <AppModal
+      show={visible}
+      size="xxxl"
+      onHide={onHide}
+      onEnter={onEnter}
+      title="ResearchPlan Flow Editor"
+      closeLabel="Cancel"
+      primaryActionLabel="Save"
+      onPrimaryAction={onClickSave}
+    >
+      <div className="w-100 block" style={{ height: '500px' }}>
+        <ReactFlow
+          nodes={nodes}
+          onNodesChange={onNodesChange}
+          edges={edges}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onEdgeClick={onEdgeClick}
+          onPaneClick={onPaneClick}
+        >
+          <Background />
+          <Controls showInteractive={false} />
+          <ReactFlowPanel position="top-right" style={{ width: '20%' }}>
+            {edgeLabelEditor()}
+            {unassignedNodeButtons()}
+          </ReactFlowPanel>
+        </ReactFlow>
+      </div>
+    </AppModal>
   )
 }
 

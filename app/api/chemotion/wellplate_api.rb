@@ -38,14 +38,13 @@ module Chemotion
         end
         # we are using POST because the fetchers don't support GET requests with body data
         post do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id],
-                                                   params[:ui_state][:is_sync_to_me])
+          cid = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id]).id
           wellplates = Wellplate
                        .includes_for_list_display
                        .by_collection_id(cid)
                        .by_ui_state(params[:ui_state])
                        .for_user(current_user.id)
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, wellplates).read?
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, wellplates).read_all?
 
           present wellplates, with: Entities::WellplateEntity, root: :wellplates, displayed_in_list: true
         end
@@ -54,7 +53,6 @@ module Chemotion
       desc 'Return serialized wellplates'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
-        optional :sync_collection_id, type: Integer, desc: 'SyncCollectionsUser id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :user_label, type: Integer, desc: 'user label'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
@@ -67,14 +65,8 @@ module Chemotion
       get do
         scope = if params[:collection_id]
                   begin
-                    Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids)
+                    Collection.accessible_for(current_user)
                               .find(params[:collection_id]).wellplates
-                  rescue ActiveRecord::RecordNotFound
-                    Wellplate.none
-                  end
-                elsif params[:sync_collection_id]
-                  begin
-                    current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.wellplates
                   rescue ActiveRecord::RecordNotFound
                     Wellplate.none
                   end

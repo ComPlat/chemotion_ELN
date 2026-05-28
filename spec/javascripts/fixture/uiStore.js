@@ -70,7 +70,6 @@ const emptyState = {
   currentSearchByID: null,
   showCollectionManagement: false,
   showDeviceManagement: false,
-  isSync: false,
   showModal: false,
   modalParams: {},
   hasChemSpectra: false,
