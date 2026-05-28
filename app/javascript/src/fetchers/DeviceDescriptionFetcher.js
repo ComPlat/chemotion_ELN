@@ -1,11 +1,21 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
 import DeviceDescription from 'src/models/DeviceDescription';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
+import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
 export default class DeviceDescriptionFetcher {
-  static fetchByCollectionId(id, queryParams = {}) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, 'device_descriptions', DeviceDescription);
+  static fetchByCollectionId(id, params = {}) {
+    return ApiClient.getJson(`/api/v1/device_descriptions?${preparedCollectionParams(id, params)}`, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.device_descriptions.map((deviceDescription) => (new DeviceDescription(deviceDescription))),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
   }
 
   static fetchDeviceDescriptionsByUIStateAndLimit(params) {
@@ -44,7 +54,7 @@ export default class DeviceDescriptionFetcher {
     ];
 
     return Promise.all(tasks)
-      .then(() => BaseFetcher.updateAnnotations(deviceDescription))
+      .then(() => AnnotationsFetcher.updateAnnotations(deviceDescription))
       .then(() => ApiClient.putJson(`/api/v1/device_descriptions/${deviceDescription.id}`, {
         body: deviceDescription
       }))
