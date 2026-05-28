@@ -1,12 +1,22 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Screen from 'src/models/Screen';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
+import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
+import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
 export default class ScreensFetcher {
-  static fetchByCollectionId(id, queryParams = {}) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, 'screens', Screen);
+  static fetchByCollectionId(id, params = {}) {
+    return ApiClient.getJson(`/api/v1/screens?${preparedCollectionParams(id, params)}`, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.screens.map((screen) => (new Screen(screen))),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
   }
 
   static fetchById(id) {
@@ -31,7 +41,7 @@ export default class ScreensFetcher {
     ];
 
     return Promise.all(tasks)
-      .then(() => BaseFetcher.updateAnnotationsInContainer(screen))
+      .then(() => AnnotationsFetcher.updateAnnotationsInContainer(screen))
       .then(() => ApiClient.putJson(`/api/v1/screens/${screen.id}`, { body: screen.serialize() }))
       .then((json) => this.screenElement(json, screen.id));
   }
