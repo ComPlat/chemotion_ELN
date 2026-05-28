@@ -1,13 +1,32 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import GenericEl from 'src/models/GenericEl';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
 import GenericBaseFetcher from 'src/fetchers/GenericBaseFetcher';
-import { getFileName, downloadBlob } from 'src/utilities/FetcherHelper';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import { getFileName, downloadBlob, preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
 export default class GenericElsFetcher extends GenericBaseFetcher {
-  static fetchByCollectionId(id, queryParams = {}) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, 'generic_elements', GenericEl);
+  static fetchByCollectionId(id, params = {}) {
+    const searchParams = this.genericElsSearchParams(params);
+
+    return ApiClient.getJson(`/api/v1/generic_elements?${preparedCollectionParams(id, searchParams)}`, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.generic_elements.map((element) => (new GenericEl(element))),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
+  }
+
+  static genericElsSearchParams(params) {
+    const userState = UserStore.getState();
+    const filters = userState?.profile?.data?.filters || {};
+    const group = filters[params.name]?.group || 'none';
+    const sort = filters[params.name]?.sort || false;
+    return { ...params, el_type: params.name, sort_column: (sort && group) || 'updated_at' };
   }
 
   static export(element, klass, exportFormat) {
