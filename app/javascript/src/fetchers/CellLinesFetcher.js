@@ -1,10 +1,11 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import CellLine from 'src/models/cellLine/CellLine';
 import Container from 'src/models/Container';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
 import {
   extractApiParameter,
@@ -16,8 +17,17 @@ import {
 } from 'src/utilities/CellLineUtils';
 
 export default class CellLinesFetcher {
-  static fetchByCollectionId(id, queryParams = {}) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, 'cell_lines', CellLine);
+  static fetchByCollectionId(id, params = {}) {
+    return ApiClient.getJson(`/api/v1/cell_lines?${preparedCollectionParams(id, params)}`, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.cell_lines.map((cellLine) => (CellLine.createFromRestResponse(id, cellLine))),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
   }
 
   static fetchById(id) {
@@ -72,7 +82,7 @@ export default class CellLinesFetcher {
     const params = extractApiParameter(cellLineItem);
 
     return AttachmentFetcher.uploadNewAttachmentsForContainer(cellLineItem.container)
-      .then(() => BaseFetcher.updateAnnotationsInContainer(cellLineItem))
+      .then(() => AnnotationsFetcher.updateAnnotationsInContainer(cellLineItem))
       .then(() => ApiClient.putJson('/api/v1/cell_lines', {
         body: params,
         handleResponseError: (exception) => {
