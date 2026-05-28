@@ -3,15 +3,24 @@ import { Map } from 'immutable';
 
 import ResearchPlan from 'src/models/ResearchPlan';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
+import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import Literature from 'src/models/Literature';
 
-import { getFileName, downloadBlob } from 'src/utilities/FetcherHelper';
+import { getFileName, downloadBlob, preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
 export default class ResearchPlansFetcher {
-  static fetchByCollectionId(id, queryParams = {}) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, 'research_plans', ResearchPlan);
+  static fetchByCollectionId(id, params = {}) {
+    return ApiClient.getJson(`/api/v1/research_plans?${preparedCollectionParams(id, params)}`, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.research_plans.map((researchPlan) => (new ResearchPlan(researchPlan))),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
   }
 
   static fetchById(id) {
@@ -42,7 +51,7 @@ export default class ResearchPlansFetcher {
 
     return Promise.all(tasks)
       .then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, researchPlan.id, 'ResearchPlan', true))
-      .then(() => BaseFetcher.updateAnnotations(researchPlan))
+      .then(() => AnnotationsFetcher.updateAnnotations(researchPlan))
       .then(() => ApiClient.putJson(`/api/v1/research_plans/${researchPlan.id}`, { body: researchPlan.serialize() }))
       .then((json) => this.researchPlanElement(json, researchPlan.id));
   }
