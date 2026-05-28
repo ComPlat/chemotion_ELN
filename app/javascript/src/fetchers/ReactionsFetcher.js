@@ -1,19 +1,48 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import { Map } from 'immutable';
 
-import BaseFetcher from 'src/fetchers/BaseFetcher';
 import Reaction from 'src/models/Reaction';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
-import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
+import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
-// TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
-  static fetchByCollectionId(id, queryParams = {}) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, 'reactions', Reaction);
+  static fetchByCollectionId(id, params = {}) {
+    const sortParams = this.reactionSortParams();
+    const updatedParams = { ...params, ...sortParams };
+
+    return ApiClient.getJson(`/api/v1/reactions?${preparedCollectionParams(id, updatedParams)}`, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.reactions.map((reaction) => (new Reaction(reaction))),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
+  }
+
+  static reactionSortParams() {
+    const userState = UserStore.getState();
+    const filters = userState?.profile?.data?.filters || {};
+    if (!filters.reaction) return { sort_column: 'created_at', sort_direction: 'DESC' };
+
+    const { sort = false, direction = 'DESC' } = filters.reaction;
+    const group = filters.reaction.group || 'created_at';
+    let sortColumn = 'updated_at';
+    if (group === 'none' && sort) {
+      sortColumn = 'created_at';
+    } else if (sort && group) {
+      sortColumn = group;
+    }
+
+    return { sort_column: sortColumn, sort_direction: direction };
   }
 
   static fetchById(id) {
@@ -56,8 +85,8 @@ export default class ReactionsFetcher {
 
   static updateAnnotationsInReaction(reaction) {
     const tasks = [
-      BaseFetcher.updateAnnotationsInContainer(reaction),
-      ...reaction.products.map((e) => BaseFetcher.updateAnnotationsInContainer(e)),
+      AnnotationsFetcher.updateAnnotationsInContainer(reaction),
+      ...reaction.products.map((e) => AnnotationsFetcher.updateAnnotationsInContainer(e)),
     ];
     return Promise.all(tasks);
   }
