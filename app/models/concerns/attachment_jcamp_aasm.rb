@@ -391,7 +391,8 @@ module AttachmentJcampProcess
         t_molfile.rewind
       end
       lcms_mz = params[:lcms_mz_page_data].present? || params['lcms_mz_page_data'].present?
-      file_paths = if lcms_related_file_paths.present? && lcms_mz
+      # On-demand MS page save: pass only the UVVIS pivot so ChemSpectra does not reprocess all TIC/MZ siblings.
+      file_paths = if lcms_mz && lcms_related_file_paths.present?
                      abs_path
                    else
                      lcms_related_file_paths || abs_path

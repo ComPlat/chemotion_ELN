@@ -107,10 +107,16 @@ export const lcmsPageValue = (entity) => {
   return null;
 };
 
+const isMissingRetentionTime = (rt) => rt == null || rt === '';
+
 // True when two `{ retentionTime, polarity }` requests are equivalent (same polarity + RT < 1e-5 apart).
 export const lcmsSameRequest = (a, b) => {
   if (!a || !b) return false;
   if ((a.polarity || LCMS_POLARITY_NEUTRAL) !== (b.polarity || LCMS_POLARITY_NEUTRAL)) return false;
+  const aMissing = isMissingRetentionTime(a.retentionTime);
+  const bMissing = isMissingRetentionTime(b.retentionTime);
+  if (aMissing && bMissing) return true;
+  if (aMissing || bMissing) return false;
   const aRt = Number(a.retentionTime);
   const bRt = Number(b.retentionTime);
   if (!Number.isFinite(aRt) || !Number.isFinite(bRt)) return false;

@@ -251,14 +251,26 @@ class ViewSpectra extends React.Component {
     return entity || {};
   }
 
+  loadEntitySafe(curveIdx = 0) {
+    let entity = this.loadEntity(curveIdx);
+    if (entity && entity.features) return entity;
+    const content = this.getContent();
+    let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
+    if (!built) {
+      const listMuliSpcs = content?.listMuliSpcs;
+      if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
+        const spc = listMuliSpcs[curveIdx] || listMuliSpcs[0];
+        if (spc?.jcamp) built = FN.buildData(spc.jcamp);
+      }
+    }
+    return built?.entity || {};
+  }
+
   getSpcInfo(curveIdx = 0) {
     const { spcInfos, spcIdx, arrSpcIdx } = this.state;
     let selectedIdx = spcIdx;
     if (arrSpcIdx.length > 0) {
       selectedIdx = arrSpcIdx[curveIdx];
-    }
-
-    if (arrSpcIdx.length > 0) {
       const selectedInfo = spcInfos.find((info) => info.idx === selectedIdx) || spcInfos[0];
       const currentDatasetId = selectedInfo?.idDt;
       const uvvisPeakFile = spcInfos.find((info) => (
@@ -304,22 +316,7 @@ class ViewSpectra extends React.Component {
       return [];
     }
 
-    const loadEntitySafe = (idx) => {
-      let e = this.loadEntity(idx || 0);
-      if (e && e.features) return e;
-      const content = this.getContent();
-      let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
-      if (!built) {
-        const listMuliSpcs = content?.listMuliSpcs;
-        if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
-          const spc = listMuliSpcs[idx] || listMuliSpcs[0];
-          if (spc?.jcamp) built = FN.buildData(spc.jcamp);
-        }
-      }
-      return built?.entity || {};
-    };
-
-    const entity = loadEntitySafe(curveIdx);
+    const entity = this.loadEntitySafe(curveIdx);
     const features = entity?.features;
     if (!features) return [];
   
@@ -373,23 +370,8 @@ class ViewSpectra extends React.Component {
     const selectedIntegration = integration?.integrations?.[curveIdx];
     const selectedMultiplicity = multiplicity?.multiplicities?.[curveIdx];
     if (!selectedShift || !selectedIntegration || !selectedMultiplicity) return [];
-  
-    const loadEntitySafe = (idx) => {
-      let e = this.loadEntity(idx || 0);
-      if (e && e.features) return e;
-      const content = this.getContent();
-      let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
-      if (!built) {
-        const listMuliSpcs = content?.listMuliSpcs;
-        if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
-          const spc = listMuliSpcs[idx] || listMuliSpcs[0];
-          if (spc?.jcamp) built = FN.buildData(spc.jcamp);
-        }
-      }
-      return built?.entity || {};
-    };
 
-    const entity = loadEntitySafe(curveIdx);
+    const entity = this.loadEntitySafe(curveIdx);
     const features = entity?.features;
     if (!features) return [];
     const f0 = Array.isArray(features)

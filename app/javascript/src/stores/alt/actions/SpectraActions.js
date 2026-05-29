@@ -26,7 +26,12 @@ class SpectraActions {
       return [...uvvis, ...tics];
     });
 
-    const uniqInfos = selectedInfos.filter((si, index, arr) => index === arr.findIndex((x) => x.idx === si.idx));
+    const seenIdx = new Set();
+    const uniqInfos = selectedInfos.filter((si) => {
+      if (seenIdx.has(si.idx)) return false;
+      seenIdx.add(si.idx);
+      return true;
+    });
     const idxs = uniqInfos.map(si => si.idx);
     if (idxs.length === 0) {
       return null;

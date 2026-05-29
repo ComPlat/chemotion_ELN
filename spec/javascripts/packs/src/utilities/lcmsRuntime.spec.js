@@ -5,6 +5,7 @@ import {
   LcmsPageCache,
   formatLcmsErrorMessage,
   lcmsRequestKey,
+  lcmsSameRequest,
   LCMS_CACHE_DEFAULT_LIMIT,
 } from 'src/utilities/lcmsRuntime';
 
@@ -23,6 +24,36 @@ describe('lcmsRequestKey', () => {
   it('produces an empty rt segment for non-finite values', () => {
     expect(lcmsRequestKey({ attachmentId: 9, retentionTime: NaN, polarity: 'positive' }))
       .toEqual('9::::positive');
+  });
+});
+
+describe('lcmsSameRequest', () => {
+  it('treats requests with the same polarity and RT as equivalent', () => {
+    expect(lcmsSameRequest(
+      { retentionTime: 1.23, polarity: 'positive' },
+      { retentionTime: 1.2300004, polarity: 'positive' },
+    )).toBe(true);
+  });
+
+  it('treats missing RT on both sides as equivalent when polarity matches', () => {
+    expect(lcmsSameRequest(
+      { retentionTime: null, polarity: 'neutral' },
+      { retentionTime: undefined, polarity: 'neutral' },
+    )).toBe(true);
+  });
+
+  it('returns false when only one side lacks a finite RT', () => {
+    expect(lcmsSameRequest(
+      { retentionTime: null, polarity: 'positive' },
+      { retentionTime: 1.0, polarity: 'positive' },
+    )).toBe(false);
+  });
+
+  it('returns false when polarity differs', () => {
+    expect(lcmsSameRequest(
+      { retentionTime: 1.0, polarity: 'positive' },
+      { retentionTime: 1.0, polarity: 'negative' },
+    )).toBe(false);
   });
 });
 
