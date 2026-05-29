@@ -722,7 +722,6 @@ class Sample < ApplicationRecord
     end
   end
 
-
   def set_loading_from_ea
     return unless residues.first
 

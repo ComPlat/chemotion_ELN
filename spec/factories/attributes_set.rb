@@ -14,7 +14,10 @@ FactoryBot.define do
       fixtures_dir { FIXTURES_DIR }
 
       # private
-      file_path { fixtures_dir.join("#{from}#{from.end_with?('.json') ? '' : '.json'}") }
+      file_path do
+        base = from.to_s
+        fixtures_dir.join(base.end_with?('.json') ? base : "#{base}.json")
+      end
       data { File.exist?(file_path) ? JSON.parse(File.read(file_path)) : {} }
     end
     initialize_with { data }

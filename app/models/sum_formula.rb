@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
 class SumFormula < Hash
   ELEMENT_REGEXP = /\A[A-Z][a-z]*\z/.freeze
   NUMBER_REGEXP = /\d+(?:\.\d+)?/.freeze
@@ -301,3 +302,4 @@ class SumFormula < Hash
                        :next_top_level_separator_index, :extract_number,
                        :parse_numeric_value, :parse_numeric_token
 end
+# rubocop:enable Metrics/ClassLength

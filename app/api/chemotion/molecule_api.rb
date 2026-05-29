@@ -80,7 +80,8 @@ module Chemotion
               end
             end
           end
-          molecule.attributes.merge(temp_svg: File.exist?(svg_process[:svg_file_path]) && svg_process[:svg_file_name], ob_log: babel_info[:ob_log])
+          temp_svg = File.exist?(svg_process[:svg_file_path]) ? svg_process[:svg_file_name] : nil
+          molecule.attributes.merge(temp_svg: temp_svg, ob_log: babel_info[:ob_log])
 
           present molecule, with: Entities::MoleculeEntity
         end
