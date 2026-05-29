@@ -205,13 +205,15 @@ export default function NoticeButton() {
     if (remainTime < idleTimeoutRef.current) {
       const { attachmentNotificationStore } = context;
       MessagesFetcher.fetchMessages(0).then((result) => {
-        result.messages.forEach((message) => {
+        const messages = result?.messages;
+        if (!Array.isArray(messages)) { return; }
+        messages.forEach((message) => {
           if (message.subject === 'Send TPA attachment arrival notification') {
             attachmentNotificationStore.addMessage(message);
           }
         });
-        result.messages.sort((a, b) => b.id - a.id);
-        setNewNotices(result.messages);
+        messages.sort((a, b) => b.id - a.id);
+        setNewNotices(messages);
         setServerVersion(result.version);
       });
     }
