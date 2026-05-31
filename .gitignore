@@ -104,6 +104,9 @@
 
 /public/editors/*
 !/public/editors/.keep
+
+/public/workshop/*
+!/public/workshop/.keep
 /public/favicon.ico
 
 # written by Labimotion gem
