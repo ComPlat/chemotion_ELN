@@ -18,7 +18,7 @@ const getMetricPrefix = (metrics, index, validPrefixes, defaultPrefix = 'm') => 
  * Common metric prefixes for molecular amounts (mol)
  * @type {Array<string>}
  */
-const metricPrefixesMol = ['m', 'n'];
+const metricPrefixesMol = ['m', 'n', 'u'];
 
 /**
  * Common metric prefixes for concentrations (mol/l)

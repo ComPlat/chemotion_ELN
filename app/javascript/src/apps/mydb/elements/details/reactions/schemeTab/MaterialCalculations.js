@@ -45,7 +45,7 @@ export default class MaterialCalculations extends Component {
     ) ? material.metrics[0]
       : 'm';
 
-    const metricPrefixesMol = ['m', 'n'];
+    const metricPrefixesMol = ['m', 'n', 'u'];
     const metricMol = (
       material.metrics
       && material.metrics.length > 2
