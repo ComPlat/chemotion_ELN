@@ -46,10 +46,7 @@ export default class AttachmentFetcher {
 
     const handleResponseSuccess = (response) => {
       if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-
-      const blob = response.blob();
-
-      return { type: blob.type, data: URL.createObjectURL(blob) };
+      return response.blob();
     };
     const handleResponseError = (error) => console.error('Failed to fetch image attachment:', error);
     const headers = {};
@@ -61,7 +58,7 @@ export default class AttachmentFetcher {
         handleResponseSuccess,
         headers
       }
-    );
+    ).then((blob) => ({ type: blob?.type, data: blob ? URL.createObjectURL(blob) : {} }));
   }
 
   static fetchThumbnail(params) {
@@ -69,7 +66,7 @@ export default class AttachmentFetcher {
   }
 
   static fetchThumbnails(ids) {
-    return ApiClient.postJson('/api/v1/attachments/thumbnails', { body: ids });
+    return ApiClient.postJson('/api/v1/attachments/thumbnails', { body: { ids } });
   }
 
   static fetchFiles(ids) {
@@ -95,7 +92,7 @@ export default class AttachmentFetcher {
       return null;
     };
 
-    return ApiClient.postJson('/api/v1/attachments/files', { body: ids, handleResponseSuccess });
+    return ApiClient.postJson('/api/v1/attachments/files', { body: { ids }, handleResponseSuccess });
   }
 
   static fetchJcamp(target) {
@@ -299,6 +296,7 @@ export default class AttachmentFetcher {
   }
 
   static downloadFile(url, fileNameFallback = 'dataset.zip') {
+    let fileName;
     const handleResponseSuccess = (response) => {
       const dispositionHeader = response.headers.get('Content-Disposition');
       if (dispositionHeader == null) {
@@ -306,13 +304,15 @@ export default class AttachmentFetcher {
         return null;
       }
 
-      const fileName = extractFilenameFromContentDispositionHeader(dispositionHeader) || fileNameFallback;
-
-      downloadBlob(fileName, response.blob());
-      return null;
+      fileName = extractFilenameFromContentDispositionHeader(dispositionHeader) || fileNameFallback;
+      return response.blob();
     };
 
-    return ApiClient.apiRequest(url, { method: 'GET', handleResponseSuccess });
+    return ApiClient.apiRequest(url, { method: 'GET', handleResponseSuccess })
+      .then((blob) => {
+        if (blob && blob.type != null) { downloadBlob(fileName, blob); }
+        return null;
+      });
   }
 
   static downloadDataset(id) {
