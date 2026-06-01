@@ -13,13 +13,14 @@ import { CommentButton, CommentBox } from 'src/components/common/AnalysisComment
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 import AnalysisHeader from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/analysesTab/AnalysisHeader';
 import AnalysesSortableContainer from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/analysesTab/AnalysesSortableContainer';
 
 function AnalysesContainer({ readonly }) {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
   const sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
-  const containers = sbmmSample.container.children[0].children;
+  const containers = ArrayUtils.sortArrByIndex(sbmmSample.container.children[0].children);
 
   useEffect(() => {
     TextTemplateActions.fetchTextTemplates('sbmmSample');

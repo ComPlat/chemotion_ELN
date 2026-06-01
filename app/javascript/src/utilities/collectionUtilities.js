@@ -68,7 +68,7 @@ const collectionOptions = (store, showSharedCollections) => {
 };
 
 const collectionHasPermission = (collection, permissionLevel) => {
-  if (collection === null || collection.permission_level === undefined) { return true; }
+  if (!collection || collection.permission_level === undefined) { return true; }
 
   return collection.collection_share_id && collection.permission_level >= permissionLevel;
 };
