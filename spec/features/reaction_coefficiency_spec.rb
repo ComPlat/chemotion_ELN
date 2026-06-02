@@ -79,6 +79,19 @@ describe 'Coeffiency Reactions' do
       messages = find_all('.notification-message', text: 'Experimental mass value is larger than possible')
       expect(messages.length).to be >= 1
     end
+
+    it 'accepts non-integer coefficients and computes correct yield', :js do
+      find('.tree-view', text: 'chemotion-repository.net').click
+      first('i.icon-reaction').click
+      first('span.isvg.loaded.reaction').click
+      inputs = find_all("input[name='coefficient']")
+      # H2 (ref, coeff=1.5) + O2 -> H2O (coeff=1.5): yield = (0.002*1.5)/(0.002*1.5) = 100%
+      inputs[0].set(1.5)
+      inputs[2].set(1.5)
+      find_by_id('submit-reaction-btn').click
+      expect(find("input[name='yield']").value).to eq('100%')
+      expect(page).not_to have_selector('.notification-message', text: 'positive integer')
+    end
   end
 
   describe 'Coeffiency Second Reaction' do

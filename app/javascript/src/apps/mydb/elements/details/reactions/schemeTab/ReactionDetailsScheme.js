@@ -1680,12 +1680,12 @@ export default class ReactionDetailsScheme extends React.Component {
   updatedSamplesForCoefficientChange(samples, updatedSample) {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
-        // set sampple.coefficient to default value, if user set coeff. value to zero
-        if (updatedSample.coefficient % 1 !== 0 || updatedSample.coefficient === 0) {
+        // reset coefficient to default value if user sets it to zero or negative
+        if (!updatedSample.coefficient || updatedSample.coefficient <= 0) {
           updatedSample.coefficient = 1;
           sample.coefficient = updatedSample.coefficient;
           NotificationActions.add({
-            message: 'The sample coefficient should be a positive integer',
+            message: 'The sample coefficient should be a positive number',
             level: 'error'
           });
         } else {
