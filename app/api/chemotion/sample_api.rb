@@ -595,14 +595,16 @@ module Chemotion
         literatures = attributes.delete(:literatures)
 
         sample = Sample.new(attributes)
+        collections = []
 
         if params[:collection_id]
           collection = Collection.accessible_for(current_user).find_by(id: params[:collection_id])
-          sample.collections << collection if collection.present?
+          collections << collection if collection.present?
         end
 
         all_coll = Collection.get_all_collection_for_user(current_user.id)
-        sample.collections << all_coll
+        collections << all_coll if all_coll.present?
+        sample.collections = collections.uniq
 
         sample.container = update_datamodel(params[:container])
         sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
