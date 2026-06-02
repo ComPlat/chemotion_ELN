@@ -106,7 +106,7 @@ export default class AttachmentFetcher {
           });
         }
         return response.json();
-      }).then((json) => json);
+      });
 
     return promise;
   }
@@ -595,14 +595,19 @@ export default class AttachmentFetcher {
     isSaveCombined,
     axesUnitsStr,
     detector,
-    dscMetaData
+    dscMetaData,
+    lcmsPeaksStr,
+    lcmsIntegralsStr,
+    lcmsUvvisWavelength,
+    lcmsMzPage,
+    lcmsMzPageData
   ) {
     const params = {
       attachmentId: attId,
       peaksStr,
-      shiftSelectX: shift.peak.x,
-      shiftRefName: shift.ref.name,
-      shiftRefValue: shift.ref.value,
+      shiftSelectX: shift?.peak?.x,
+      shiftRefName: shift?.ref?.name,
+      shiftRefValue: shift?.ref?.value,
       scan,
       thres,
       integration,
@@ -615,19 +620,57 @@ export default class AttachmentFetcher {
       simulatenmr,
       axesUnits: axesUnitsStr,
       detector,
-      dscMetaData
+      dscMetaData,
+      lcmsPeaksStr,
+      lcmsIntegralsStr,
+      lcmsUvvisWavelength,
+      lcmsMzPage,
+      lcmsMzPageData
     };
+
+    const decamelized = decamelizeKeys(params);
+    const hasLcmsMzPageData = decamelized.lcms_mz_page_data != null;
+
+    let body;
+    let headers = { Accept: 'application/json' };
+    if (hasLcmsMzPageData) {
+      const formData = new FormData();
+      Object.keys(decamelized).forEach((key) => {
+        const value = decamelized[key];
+        if (value === undefined) return;
+        if (key === 'lcms_mz_page_data') {
+          formData.append(key, new Blob([JSON.stringify(value)], { type: 'application/json' }), 'lcms_mz_page_data.json');
+        } else {
+          const str = (value != null && typeof value === 'object') ? JSON.stringify(value) : value;
+          formData.append(key, str != null ? String(str) : '');
+        }
+      });
+      body = formData;
+    } else {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(decamelized);
+    }
 
     const promise = fetch('/api/v1/attachments/save_spectrum/', {
       credentials: 'same-origin',
       method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(decamelizeKeys(params)),
+      headers,
+      body,
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            throw new Error(`save_spectrum ${response.status}: ${text.slice(0, 200)}`);
+          });
+        }
+        const contentType = response.headers.get('Content-Type') || '';
+        if (!contentType.includes('application/json')) {
+          return response.text().then((text) => {
+            throw new Error(`save_spectrum: expected JSON, got ${contentType.slice(0, 50)} - ${text.slice(0, 200)}`);
+          });
+        }
+        return response.json();
+      })
       .then((json) => {
         if (!isSaveCombined) {
           return json;
@@ -648,6 +691,53 @@ export default class AttachmentFetcher {
       });
 
     return promise;
+  }
+
+  static fetchLcmsPage({
+    attachmentId, retentionTime, polarity, trigger, signal, timeoutMs = 30000,
+  }) {
+    const params = {
+      attachmentId,
+      retentionTime: retentionTime != null ? String(retentionTime) : '',
+      polarity,
+      trigger,
+    };
+
+    const controller = new AbortController();
+    const onAbort = () => controller.abort();
+    if (signal) {
+      if (signal.aborted) controller.abort();
+      else signal.addEventListener('abort', onAbort, { once: true });
+    }
+    const timeoutId = timeoutMs > 0
+      ? setTimeout(() => controller.abort(new DOMException('Timeout', 'TimeoutError')), timeoutMs)
+      : null;
+
+    return fetch('/api/v1/attachments/lcms_page/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(decamelizeKeys(params)),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          let payload = null;
+          try { payload = await response.json(); } catch (_) { /* ignore */ }
+          const err = new Error(payload?.error || `lcms_page ${response.status}`);
+          err.status = response.status;
+          err.code = payload?.code || `http_${response.status}`;
+          throw err;
+        }
+        return response.json();
+      })
+      .finally(() => {
+        if (timeoutId) clearTimeout(timeoutId);
+        if (signal) signal.removeEventListener('abort', onAbort);
+      });
   }
 
   static inferSpectrum(
