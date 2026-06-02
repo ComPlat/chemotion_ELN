@@ -620,10 +620,11 @@ module Chemotion
         literatures = attributes.delete(:literatures)
 
         sample = Sample.new(attributes)
+        collections = []
 
         if params[:collection_id]
           collection = current_user.collections.find_by(id: params[:collection_id])
-          sample.collections << collection if collection.present?
+          collections << collection if collection.present?
         end
 
         is_shared_collection = false
@@ -631,15 +632,17 @@ module Chemotion
           sync_collection = current_user.all_sync_in_collections_users.find_by(id: params[:collection_id])
           if sync_collection.present?
             is_shared_collection = true
-            sample.collections << Collection.find(sync_collection['collection_id'])
-            sample.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
+            collections << Collection.find(sync_collection['collection_id'])
+            collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
           end
         end
 
         unless is_shared_collection
           all_coll = Collection.get_all_collection_for_user(current_user.id)
-          sample.collections << all_coll if all_coll.present? && sample.collection_ids.exclude?(all_coll.id)
+          collections << all_coll if all_coll.present?
         end
+
+        sample.collections = collections.uniq
 
         sample.container = update_datamodel(params[:container])
         sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
