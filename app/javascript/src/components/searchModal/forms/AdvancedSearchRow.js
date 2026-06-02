@@ -18,7 +18,7 @@ const AdvancedSearchRow = ({ idx }) => {
   let mapperOptions = mapperFields;
   let fieldOptions = [];
 
-  if (['sequence_based_macromolecule_samples', 'device_descriptions'].includes(searchElement.table)) {
+  if (['sequence_based_macromolecule_samples', 'device_descriptions', 'cell_lines'].includes(searchElement.table)) {
     fieldOptions = SelectFieldData[searchElement.table];
   } else {
     fieldOptions = SelectFieldData.fields[searchElement.table];
@@ -34,7 +34,9 @@ const AdvancedSearchRow = ({ idx }) => {
   }
 
   let linkSelectSpacer = selection.link == '' ? '' : 'visible';
-  let selectedFieldOption = selection.field.label == 'Name' && searchElement.table == 'samples' ? fieldOptions[0].value : selection.field;
+  let selectedFieldOption = selection.field.label == 'Name' && ['samples', 'cell_lines'].includes(searchElement.table)
+    ? fieldOptions[0].value
+    : selection.field;
 
   const logicalOperators = [
     { value: "AND", label: "AND" },
@@ -102,6 +104,11 @@ const AdvancedSearchRow = ({ idx }) => {
     searchValues['element_id'] = searchElement.element_id;
 
     const fieldColumn = searchValues.field.column;
+    if (searchElement.table == 'cell_lines' && selection.field.label == 'Name' && !searchValues.field.table) {
+      let searchValuesField = { ...searchValues.field };
+      searchValuesField.table = selectedFieldOption.table;
+      searchValues.field = searchValuesField;
+    }
     if (value.column == 'temperature') { searchValues = temperatureConditions(searchValues, value.column) }
     if (value.column == 'duration') { searchValues = durationConditions(searchValues, value.column) }
     if (specialMatcherFields.includes(searchValues.field.column)) { checkValueForNumber(searchValues.value) }
