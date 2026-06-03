@@ -17,6 +17,8 @@ module LcmsApiHelpers
   # rubocop:disable Metrics/AbcSize
   def lcms_extract_existing_mz_page(att, requested_retention_time, requested_polarity)
     requested_rt = lcms_to_float(requested_retention_time)
+    return nil if requested_rt.nil?
+
     normalized_polarity = lcms_normalize_polarity(requested_polarity)
 
     candidates = lcms_indexed_candidates(att)

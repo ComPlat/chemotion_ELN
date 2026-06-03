@@ -684,10 +684,12 @@ export default class AttachmentFetcher {
           return json;
         }).catch((errMsg) => {
           console.log(errMsg); // eslint-disable-line
+          return json;
         });
       })
       .catch((errorMessage) => {
-        console.log(errorMessage);
+        console.log(errorMessage); // eslint-disable-line
+        throw errorMessage;
       });
 
     return promise;

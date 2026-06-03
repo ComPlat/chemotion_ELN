@@ -179,9 +179,9 @@ module AttachmentJcampProcess
 
     if ext == 'png'
       att.set_image
-    elsif to_edit || addon == 'edit' || (addon.is_a?(String) && addon.include?('edit'))
+    elsif ext == 'jdx' && (to_edit || addon == 'edit' || (addon.is_a?(String) && addon.include?('edit')))
       att.set_edited
-    elsif addon == 'peak' || (addon.is_a?(String) && addon.include?('peak'))
+    elsif ext == 'jdx' && (addon == 'peak' || (addon.is_a?(String) && addon.include?('peak')))
       att.set_force_peaked
     else
       filename_lower = att.filename.to_s.downcase
