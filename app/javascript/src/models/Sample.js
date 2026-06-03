@@ -2148,8 +2148,8 @@ export default class Sample extends Element {
 
     if (!combinedSmiles) return;
 
-    // Same component set (possibly different order) — keep editor molfile/SVG intact.
-    if (Sample.sameSmilesSet(combinedSmiles, this.molecule_cano_smiles)) return;
+    // Only fetch if the combined SMILES differs from current
+    if (combinedSmiles === this.molecule_cano_smiles) return;
 
     const result = await MoleculesFetcher.fetchBySmi(combinedSmiles, null, this.molfile, 'ketcher');
 
