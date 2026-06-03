@@ -136,7 +136,6 @@ class SampleMergeService
     validate_legacy_state!(source, target)
     validate_authorization!(source, target, reaction)
     validate_reaction_membership!(source, target, reaction)
-    validate_real_amounts!(source, target)
     validate_molecule_compatibility!(source, target)
   end
 
@@ -183,6 +182,8 @@ class SampleMergeService
   end
 
   def sample_mol(sample, fallback_mw)
+    return 0.0 if real_amount_blank?(sample)
+
     mol = sample.amount_mol
     return mol.to_f unless mol.nil?
 

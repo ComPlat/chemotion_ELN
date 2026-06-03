@@ -78,6 +78,18 @@ describe SampleMergeService do
       end
     end
 
+    context 'when the source has no recorded real amount (n.d)' do
+      let(:source) { build_product(real_value: 0.0, real_unit: nil, molecule: molecule) }
+      let(:target) { build_product(real_value: 3.0, real_unit: 'mol', molecule: molecule) }
+
+      it 'treats the source as 0 mol and merges without error' do
+        result = service.merge!(source_id: source.id, target_id: target.id, reaction_id: reaction.id)
+
+        expect(result.real_amount_value).to eq(3.0)
+        expect(result.real_amount_unit).to eq('mol')
+      end
+    end
+
     context 'when an amount uses an unconvertible unit' do
       let(:source) { build_product(real_value: 5.0, real_unit: 'ml', molecule: molecule) }
       let(:target) { build_product(real_value: 1.0, real_unit: 'mol', molecule: molecule) }

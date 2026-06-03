@@ -459,13 +459,15 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   handleMergeConfirm(source, target) {
-    const { reaction } = this.props;
+    const { reaction, onReactionChange } = this.props;
 
     return SamplesFetcher.mergeSamples({
       sourceSampleId: source.id,
       targetSampleId: target.id,
       reactionId: reaction.id,
     }).then(() => {
+      reaction.products = reaction.products.filter((p) => p.id !== source.id);
+      onReactionChange(reaction, { updateGraphic: true });
       ElementActions.fetchReactionById(reaction.id);
     }).catch((err) => {
       NotificationActions.add({
@@ -476,9 +478,10 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   handleUnmerge(mergeId) {
-    const { reaction } = this.props;
+    const { reaction, onReactionChange } = this.props;
 
     SamplesFetcher.unmergeSample(mergeId).then(() => {
+      onReactionChange(reaction, { updateGraphic: true });
       ElementActions.fetchReactionById(reaction.id);
     }).catch((err) => {
       NotificationActions.add({
