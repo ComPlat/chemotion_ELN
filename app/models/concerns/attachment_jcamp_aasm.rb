@@ -165,6 +165,14 @@ module AttachmentJcampProcess
     ext.nil? || ext == 'jdx'
   end
 
+  def jcamp_edit_addon?(addon, to_edit)
+    to_edit || addon == 'edit' || (addon.is_a?(String) && addon.include?('edit'))
+  end
+
+  def jcamp_peak_addon?(addon)
+    addon == 'peak' || (addon.is_a?(String) && addon.include?('peak'))
+  end
+
   # rubocop:disable Metrics/AbcSize, Metrics/BlockNesting, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Style/OptionalBooleanParameter, Lint/DuplicateBranch, Style/IfInsideElse
   def generate_att(meta_tmp, addon, to_edit = false, ext = nil)
     return unless meta_tmp
@@ -184,9 +192,9 @@ module AttachmentJcampProcess
 
     if ext == 'png'
       att.set_image
-    elsif spectrum_jcamp_aasm_ext?(ext) && (to_edit || addon == 'edit' || (addon.is_a?(String) && addon.include?('edit')))
+    elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_edit_addon?(addon, to_edit)
       att.set_edited
-    elsif spectrum_jcamp_aasm_ext?(ext) && (addon == 'peak' || (addon.is_a?(String) && addon.include?('peak')))
+    elsif spectrum_jcamp_aasm_ext?(ext) && jcamp_peak_addon?(addon)
       att.set_force_peaked
     else
       filename_lower = att.filename.to_s.downcase
