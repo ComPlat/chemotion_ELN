@@ -76,7 +76,7 @@ module Entities
     end
 
     def products
-      displayed_in_list? ? [] : object.reactions_product_samples
+      displayed_in_list? ? [] : object.reactions_product_samples.includes(sample: { incoming_merges: :source_sample })
     end
 
     def purification_solvents

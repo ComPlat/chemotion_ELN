@@ -41,7 +41,7 @@ function MaterialGroup({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, headIndex,
   dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
-  switchYield, dndEnabled
+  switchYield, dndEnabled, onInitiateMerge, onUnmerge,
 }) {
   const effectiveDndEnabled = dndEnabled && permitOn(reaction);
 
@@ -70,6 +70,7 @@ function MaterialGroup({
       isOver={isOver}
       canDrop={canDrop}
       isDragging={isDragging}
+      onUnmerge={onUnmerge}
     />
   );
 
@@ -98,7 +99,30 @@ function MaterialGroup({
   };
 
   const onReorder = (item, index) => {
-    dropMaterial(item.material, item.materialGroup, materials.at(index), materialGroup);
+    const target = materials.at(index);
+
+    if (
+      materialGroup === 'products'
+      && item.materialGroup === 'products'
+      && target
+      && item.material.id !== target.id
+    ) {
+      if (item.material.is_legacy) {
+        NotificationActions.add({
+          message: 'This sample has already been merged.',
+          level: 'warning',
+          position: 'tr',
+        });
+        return;
+      }
+      // Show modal instead of pendingMerge confirmation row
+      if (onInitiateMerge) {
+        onInitiateMerge(item.material, target);
+      }
+      return;
+    }
+
+    dropMaterial(item.material, item.materialGroup, target, materialGroup);
   };
 
   if (materialGroup === 'solvents'
@@ -474,6 +498,8 @@ MaterialGroup.propTypes = {
   displayYieldField: PropTypes.bool,
   switchYield: PropTypes.func.isRequired,
   dndEnabled: PropTypes.bool,
+  onInitiateMerge: PropTypes.func,
+  onUnmerge: PropTypes.func,
 };
 
 GeneralMaterialGroup.propTypes = {
@@ -511,6 +537,8 @@ MaterialGroup.defaultProps = {
   displayYieldField: null,
   headIndex: 0,
   dndEnabled: true,
+  onInitiateMerge: null,
+  onUnmerge: null,
 };
 
 GeneralMaterialGroup.defaultProps = {
@@ -518,6 +546,8 @@ GeneralMaterialGroup.defaultProps = {
   lockEquivColumn: false,
   displayYieldField: null,
   dndEnabled: true,
+  onInitiateMerge: null,
+  onUnmerge: null,
 };
 
 export default MaterialGroup;

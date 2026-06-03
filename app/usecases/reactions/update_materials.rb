@@ -62,7 +62,7 @@ end
 
 module Usecases
   module Reactions
-    class UpdateMaterials
+    class UpdateMaterials # rubocop:disable Metrics/ClassLength
       include ContainerHelpers
       include Reactable
       attr_reader :current_user
@@ -242,6 +242,7 @@ module Usecases
 
       def update_existing_sample(sample, fixed_label, target_amount = nil)
         existing_sample = Sample.find(sample.id)
+        return existing_sample if existing_sample.is_legacy
 
         update_gas_material = @reaction.vessel_size && @vessel_size && (
           @reaction.vessel_size['amount'] != @vessel_size['amount'] ||
