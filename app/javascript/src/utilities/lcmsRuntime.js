@@ -14,26 +14,75 @@ export const LCMS_LABEL_REGEX = {
   negative: /(?:^|[._-])(minus|negative|neg)(?:[._-]|$)/,
 };
 
-// Rounds a retention time to 5 decimals so equivalent floats yield equal cache keys.
+// Same key as react-spectra-editor `reducer_hplc_ms/persistence.js` (sessionStorage).
+const LC_TIC_STORAGE_PREFIX = 'rsEditor.lcmsTic:';
+
+export const readPersistedLcmsTicHints = (datasetKey) => {
+  if (datasetKey == null) return {};
+  try {
+    const raw = sessionStorage.getItem(`${LC_TIC_STORAGE_PREFIX}${datasetKey}`);
+    return raw ? JSON.parse(raw) : {};
+  } catch (_error) {
+    return {};
+  }
+};
+
+export const normalizePersistedPolarity = (value) => {
+  if (value == null || value === '') return null;
+  if (value === 0 || value === '0') return 'positive';
+  if (value === 1 || value === '1') return 'negative';
+  if (value === 2 || value === '2') return LCMS_POLARITY_NEUTRAL;
+  const s = String(value).toLowerCase();
+  if (s === 'positive' || s === 'pos' || s === 'plus') return 'positive';
+  if (s === 'negative' || s === 'neg' || s === 'minus') return 'negative';
+  if (s === 'neutral' || s === 'neu') return LCMS_POLARITY_NEUTRAL;
+  return null;
+};
+
+export const entityPolarity = (entity) => (
+  entity?.lcmsPolarity || entity?.lcms_polarity || null
+);
+
+export const resolveRuntimePolarity = (runtime, override = null) => (
+  override || runtime?.preferredPolarity || LCMS_POLARITY_NEUTRAL
+);
+
+export const resolveRuntimeRetentionTime = (runtime, override = null) => (
+  override ?? runtime?.preferredRetentionTime ?? 0
+);
+
+export const resolveLcmsDisplayEntity = (runtime) => {
+  if (!runtime?.currentMultiEntities?.length) return null;
+  let entity = runtime.uvvisEntity
+    || runtime.baseEntities?.find((ent) => ent?.layout && FN.isLCMsLayout(ent.layout))
+    || runtime.currentMsEntity
+    || runtime.currentMultiEntities[runtime.currentMultiEntities.length - 1];
+  if (entity && runtime.datasetKey != null && entity.idDt == null) {
+    entity = { ...entity, idDt: runtime.datasetKey };
+  }
+  return entity;
+};
+
+const withPolarityFields = (entity, polarity) => (
+  polarity ? { ...entity, lcmsPolarity: polarity, lcms_polarity: polarity } : entity
+);
+
 const normaliseRt = (rt) => {
   const num = Number(rt);
   if (!Number.isFinite(num)) return '';
   return num.toFixed(5);
 };
 
-// Builds the canonical cache key for a `(attachmentId, retentionTime, polarity)` triple.
 export const lcmsRequestKey = ({ attachmentId, retentionTime, polarity }) => (
   `${attachmentId ?? ''}::${normaliseRt(retentionTime)}::${polarity || LCMS_POLARITY_NEUTRAL}`
 );
 
-// Tiny LRU cache for fetched MS pages, keyed by `lcmsRequestKey`.
 export class LcmsPageCache {
   constructor(limit = LCMS_CACHE_DEFAULT_LIMIT) {
     this.limit = limit > 0 ? limit : LCMS_CACHE_DEFAULT_LIMIT;
     this.entries = new Map();
   }
 
-  // Returns the cached value for `key` (or null) and marks it most-recently-used.
   get(key) {
     if (!this.entries.has(key)) return null;
     const value = this.entries.get(key);
@@ -42,7 +91,6 @@ export class LcmsPageCache {
     return value;
   }
 
-  // Stores `value` under `key`, evicting the least-recently-used entry if the cap is exceeded.
   set(key, value) {
     if (this.entries.has(key)) this.entries.delete(key);
     this.entries.set(key, value);
@@ -52,18 +100,15 @@ export class LcmsPageCache {
     }
   }
 
-  // Removes every entry from the cache.
   clear() {
     this.entries.clear();
   }
 
-  // Returns the number of entries currently held in the cache.
   size() {
     return this.entries.size;
   }
 }
 
-// Maps an API/network error to a user-readable LCMS notification message.
 export const formatLcmsErrorMessage = (error) => {
   if (!error) return 'Unable to load requested LC/MS page.';
   if (error.name === 'TimeoutError') return 'LC/MS page request timed out. Please retry.';
@@ -77,26 +122,19 @@ export const formatLcmsErrorMessage = (error) => {
   }
 };
 
-// Lower-cases an spcInfo label, used by the polarity/role predicates below.
 const labelOf = (spcInfo) => (spcInfo?.label || '').toLowerCase();
 
-// True when the spcInfo label matches a UVVIS chromatogram (`*_uvvis_*`).
 export const isUvvisSpectrumInfo = (spcInfo) => LCMS_LABEL_REGEX.uvvis.test(labelOf(spcInfo));
-// True when the spcInfo label matches a TIC chromatogram (`*_tic_*`).
 export const isTicSpectrumInfo = (spcInfo) => LCMS_LABEL_REGEX.tic.test(labelOf(spcInfo));
-// True when the spcInfo label denotes positive polarity (`plus`, `pos`, `positive`).
 export const isPositiveSpectrumInfo = (spcInfo) => LCMS_LABEL_REGEX.positive.test(labelOf(spcInfo));
-// True when the spcInfo label denotes negative polarity (`minus`, `neg`, `negative`).
 export const isNegativeSpectrumInfo = (spcInfo) => LCMS_LABEL_REGEX.negative.test(labelOf(spcInfo));
 
-// Returns the polarity ('positive' | 'negative' | LCMS_POLARITY_NEUTRAL) inferred from an spcInfo.
 const polarityFromInfo = (info) => {
   if (isPositiveSpectrumInfo(info)) return 'positive';
   if (isNegativeSpectrumInfo(info)) return 'negative';
   return LCMS_POLARITY_NEUTRAL;
 };
 
-// Reads the numeric `##PAGE=` value carried by an entity (page / pageValue / pageSymbol).
 export const lcmsPageValue = (entity) => {
   if (!entity) return null;
   const candidates = [entity.pageValue, entity.page, entity.pageSymbol];
@@ -109,7 +147,6 @@ export const lcmsPageValue = (entity) => {
 
 const isMissingRetentionTime = (rt) => rt == null || rt === '';
 
-// True when two `{ retentionTime, polarity }` requests are equivalent (same polarity + RT < 1e-5 apart).
 export const lcmsSameRequest = (a, b) => {
   if (!a || !b) return false;
   if ((a.polarity || LCMS_POLARITY_NEUTRAL) !== (b.polarity || LCMS_POLARITY_NEUTRAL)) return false;
@@ -123,7 +160,6 @@ export const lcmsSameRequest = (a, b) => {
   return Math.abs(aRt - bRt) < 1e-5;
 };
 
-// Base64-decodes a `POST /lcms_page` payload and turns it into a SpectraEditor entity (null on failure).
 export const decodeFetchedSpectrum = (fileObj) => {
   if (!fileObj?.file) return null;
   try {
@@ -145,29 +181,38 @@ export const decodeFetchedSpectrum = (fileObj) => {
   }
 };
 
-// Backfills page/pageValue/pageSymbol on an entity that lacks them, using the JCamp header then the requested RT.
-export const applyLcmsPageMetadata = (entity, retentionTime, rawPageHeader = null) => {
+export const applyLcmsPageMetadata = (
+  entity,
+  retentionTime,
+  rawPageHeader = null,
+  polarity = null,
+) => {
   if (!entity) return entity;
-  if (Number.isFinite(lcmsPageValue(entity))) return entity;
+
+  if (Number.isFinite(lcmsPageValue(entity))) {
+    return withPolarityFields(entity, polarity);
+  }
 
   const headerPage = Number(rawPageHeader);
   if (Number.isFinite(headerPage)) {
-    return {
+    return withPolarityFields({
       ...entity,
       page: headerPage,
       pageValue: headerPage,
       pageSymbol: String(rawPageHeader),
-    };
+    }, polarity);
   }
 
   const rt = Number(retentionTime);
-  if (!Number.isFinite(rt)) return entity;
-  return {
+  if (!Number.isFinite(rt)) {
+    return withPolarityFields(entity, polarity);
+  }
+  return withPolarityFields({
     ...entity,
     page: rt,
     pageValue: rt,
     pageSymbol: String(rt),
-  };
+  }, polarity);
 };
 
 // Picks the first finite x value out of a TIC JCamp to seed the initial retention time.
@@ -249,16 +294,23 @@ export const buildInitialLcmsEntities = (listMuliSpcs, listEntityFiles) => {
   const plusTicPair = ticPairs.find((entry) => isPositiveSpectrumInfo(entry.info));
   const minusTicPair = ticPairs.find((entry) => isNegativeSpectrumInfo(entry.info));
   const initialTicPair = plusTicPair || minusTicPair || ticPairs[0] || null;
-  let initialPolarity = LCMS_POLARITY_NEUTRAL;
-  if (plusTicPair) initialPolarity = 'positive';
-  else if (minusTicPair) initialPolarity = 'negative';
+  let defaultPolarity = LCMS_POLARITY_NEUTRAL;
+  if (plusTicPair) defaultPolarity = 'positive';
+  else if (minusTicPair) defaultPolarity = 'negative';
+
+  const datasetKey = uvvisPair.info?.idDt ?? null;
+  const persistedTic = readPersistedLcmsTicHints(datasetKey);
+  const persistedPolarity = normalizePersistedPolarity(persistedTic?.polarity);
+  const preferredPolarity = persistedPolarity || defaultPolarity;
+  const persistedMzPage = Number(persistedTic?.mzPage);
+  const persistedMzPageFinite = Number.isFinite(persistedMzPage) ? persistedMzPage : null;
 
   const msCandidates = lcmsPairs.filter(
     (entry) => !isUvvisSpectrumInfo(entry.info) && !isTicSpectrumInfo(entry.info),
   );
   const msPair = [...msCandidates].sort((a, b) => {
-    const aPolarityScore = polarityFromInfo(a.info) === initialPolarity ? 0 : 1;
-    const bPolarityScore = polarityFromInfo(b.info) === initialPolarity ? 0 : 1;
+    const aPolarityScore = polarityFromInfo(a.info) === preferredPolarity ? 0 : 1;
+    const bPolarityScore = polarityFromInfo(b.info) === preferredPolarity ? 0 : 1;
     if (aPolarityScore !== bPolarityScore) return aPolarityScore - bPolarityScore;
     const av = lcmsPageValue(a.built.entity);
     const bv = lcmsPageValue(b.built.entity);
@@ -268,29 +320,42 @@ export const buildInitialLcmsEntities = (listMuliSpcs, listEntityFiles) => {
     return av - bv;
   })[0];
 
-  const hasBootstrapMs = !!msPair?.built?.entity;
+  const bootstrapPolarity = msPair ? polarityFromInfo(msPair.info) : null;
+  const useBootstrapMs = !!msPair?.built?.entity && bootstrapPolarity === preferredPolarity;
   const initialMzPage = extractInitialLcmsMzPage(uvvisPair);
-  const initialRetentionTime = initialMzPage
+  const preferredRetentionTime = persistedMzPageFinite
+    ?? initialMzPage
     ?? extractInitialRetentionTime(initialTicPair?.spc?.jcamp)
     ?? lcmsPageValue(msPair?.built?.entity)
     ?? 0;
+
+  const uvvisEntity = uvvisPair.built.entity
+    ? { ...uvvisPair.built.entity, idDt: datasetKey ?? uvvisPair.built.entity.idDt }
+    : null;
   const baseEntities = basePairs.map((entry) => entry.built.entity);
   const baseFileNames = basePairs.map((entry) => entry.info.label);
-  const multiEntities = hasBootstrapMs ? [...baseEntities, msPair.built.entity] : [...baseEntities];
-  const entityFileNames = hasBootstrapMs ? [...baseFileNames, msPair.info.label] : [...baseFileNames];
+  const multiEntities = useBootstrapMs
+    ? [...baseEntities, msPair.built.entity]
+    : [...baseEntities];
+  const entityFileNames = useBootstrapMs
+    ? [...baseFileNames, msPair.info.label]
+    : [...baseFileNames];
 
   return {
     signature: basePairs.map((entry) => entry.info.idx).sort((a, b) => a - b).join('|'),
     uvvisSpcInfo: uvvisPair.info,
+    uvvisEntity,
+    datasetKey,
     baseEntities,
     baseFileNames,
-    currentMsEntity: hasBootstrapMs ? msPair.built.entity : null,
-    currentMsFileName: hasBootstrapMs ? msPair.info.label : null,
-    currentMsPredictions: hasBootstrapMs ? msPair.spc?.predictions : null,
+    currentMsEntity: useBootstrapMs ? msPair.built.entity : null,
+    currentMsPolarity: useBootstrapMs ? preferredPolarity : null,
+    currentMsFileName: useBootstrapMs ? msPair.info.label : null,
+    currentMsPredictions: useBootstrapMs ? msPair.spc?.predictions : null,
     currentMultiEntities: multiEntities,
     currentEntityFileNames: entityFileNames,
-    initialRetentionTime,
-    initialPolarity,
+    preferredPolarity,
+    preferredRetentionTime,
     initialRequestSent: false,
     loading: false,
   };
@@ -302,11 +367,13 @@ export const buildUpdatedLcmsEntities = (
   nextMsEntity,
   nextMsFileName = 'lcms_mz_page.jdx',
   nextMsPredictions = null,
+  msPolarity = null,
 ) => {
   if (!runtime || !nextMsEntity) return null;
   return {
     ...runtime,
     currentMsEntity: nextMsEntity,
+    currentMsPolarity: msPolarity,
     currentMsFileName: nextMsFileName,
     currentMsPredictions: nextMsPredictions,
     currentMultiEntities: [...runtime.baseEntities, nextMsEntity],

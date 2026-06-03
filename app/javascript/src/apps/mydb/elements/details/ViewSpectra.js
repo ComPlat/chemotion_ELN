@@ -21,13 +21,15 @@ import {
   buildInitialLcmsEntities,
   buildUpdatedLcmsEntities,
   decodeFetchedSpectrum,
+  entityPolarity,
   formatLcmsErrorMessage,
-  isUvvisSpectrumInfo,
   lcmsPageValue,
   lcmsRequestKey,
   lcmsSameRequest,
   LCMS_DEFAULT_TRIGGER,
-  LCMS_POLARITY_NEUTRAL,
+  resolveLcmsDisplayEntity,
+  resolveRuntimePolarity,
+  resolveRuntimeRetentionTime,
 } from 'src/utilities/lcmsRuntime';
 
 const rmRefreshed = (analysis) => {
@@ -803,21 +805,29 @@ class ViewSpectra extends React.Component {
 
   requestInitialLcmsPage() {
     const runtime = this.state.lcmsRuntime;
-    if (!runtime || runtime.currentMsEntity || runtime.initialRequestSent) return;
-    this.setState(({ lcmsRuntime }) => ({
-      lcmsRuntime: lcmsRuntime ? { ...lcmsRuntime, initialRequestSent: true } : lcmsRuntime
-    }), () => {
-      const nextRuntime = this.state.lcmsRuntime;
-      if (!nextRuntime || nextRuntime.currentMsEntity) return;
-      this.onLcmsPageRequest({
-        retentionTime: nextRuntime.initialRetentionTime,
-        polarity: nextRuntime.initialPolarity,
-        trigger: 'initial',
-      });
-    });
+    if (!runtime || runtime.initialRequestSent) return;
+
+    const polarity = resolveRuntimePolarity(runtime);
+    const retentionTime = resolveRuntimeRetentionTime(runtime);
+    const msPolarity = entityPolarity(runtime.currentMsEntity) || runtime.currentMsPolarity;
+    const skipFetch = runtime.currentMsEntity
+      && msPolarity === polarity
+      && lcmsSameRequest(
+        { retentionTime: lcmsPageValue(runtime.currentMsEntity), polarity: msPolarity },
+        { retentionTime, polarity },
+      );
+
+    this.setState(
+      ({ lcmsRuntime }) => ({
+        lcmsRuntime: lcmsRuntime ? { ...lcmsRuntime, initialRequestSent: true } : lcmsRuntime,
+      }),
+      skipFetch ? undefined : () => {
+        this.onLcmsPageRequest({ retentionTime, polarity, trigger: 'initial' });
+      },
+    );
   }
 
-  applyLcmsPageJson(json, runtime, resolvedRetentionTime) {
+  applyLcmsPageJson(json, runtime, resolvedRetentionTime, polarity) {
     const decoded = decodeFetchedSpectrum(json?.file);
     if (!decoded?.entity) {
       this.setState(({ lcmsRuntime }) => ({
@@ -830,10 +840,12 @@ class ViewSpectra extends React.Component {
       });
       return;
     }
+    const resolvedPolarity = resolveRuntimePolarity(runtime, polarity);
     const msEntity = applyLcmsPageMetadata(
       decoded.entity,
       resolvedRetentionTime,
       decoded?.rawPageHeader,
+      resolvedPolarity,
     );
     this.setState(({ lcmsRuntime }) => ({
       lcmsRuntime: buildUpdatedLcmsEntities(
@@ -841,6 +853,7 @@ class ViewSpectra extends React.Component {
         msEntity,
         `${runtime.uvvisSpcInfo.label || 'lcms'}_mz_page.jdx`,
         decoded.predictions,
+        resolvedPolarity,
       ),
     }));
   }
@@ -848,8 +861,8 @@ class ViewSpectra extends React.Component {
   onLcmsPageRequest({ retentionTime, polarity, trigger }) {
     const runtime = this.state.lcmsRuntime;
     if (!runtime?.uvvisSpcInfo?.idx) return;
-    const resolvedRetentionTime = retentionTime ?? runtime.initialRetentionTime ?? 0;
-    const resolvedPolarity = polarity || runtime.initialPolarity || LCMS_POLARITY_NEUTRAL;
+    const resolvedRetentionTime = resolveRuntimeRetentionTime(runtime, retentionTime);
+    const resolvedPolarity = resolveRuntimePolarity(runtime, polarity);
     const resolvedTrigger = trigger || LCMS_DEFAULT_TRIGGER;
     const nextRequest = {
       retentionTime: Number(resolvedRetentionTime),
@@ -857,7 +870,7 @@ class ViewSpectra extends React.Component {
     };
     const currentRequest = {
       retentionTime: lcmsPageValue(runtime.currentMsEntity),
-      polarity: runtime.currentMsEntity?.lcmsPolarity || runtime.initialPolarity || LCMS_POLARITY_NEUTRAL,
+      polarity: entityPolarity(runtime.currentMsEntity) || resolveRuntimePolarity(runtime),
     };
 
     if (!runtime.loading && lcmsSameRequest(currentRequest, nextRequest)) return;
@@ -872,7 +885,7 @@ class ViewSpectra extends React.Component {
     if (cachedJson) {
       this.pendingLcmsRequest = null;
       this.lcmsRequestId += 1;
-      this.applyLcmsPageJson(cachedJson, runtime, resolvedRetentionTime);
+      this.applyLcmsPageJson(cachedJson, runtime, resolvedRetentionTime, resolvedPolarity);
       return;
     }
 
@@ -895,7 +908,7 @@ class ViewSpectra extends React.Component {
       if (requestId !== this.lcmsRequestId) return;
       this.pendingLcmsRequest = null;
       this.lcmsCache.set(cacheKey, json);
-      this.applyLcmsPageJson(json, runtime, resolvedRetentionTime);
+      this.applyLcmsPageJson(json, runtime, resolvedRetentionTime, resolvedPolarity);
     }).catch((error) => {
       if (requestId !== this.lcmsRequestId) return;
       this.pendingLcmsRequest = null;
@@ -909,58 +922,6 @@ class ViewSpectra extends React.Component {
         lcmsRuntime: lcmsRuntime ? { ...lcmsRuntime, loading: false } : lcmsRuntime,
       }));
     });
-  }
-
-  buildLcmsSingleTarget(targets, params) {
-    const lcmsTargets = targets.filter((target) => FN.isLCMsLayout(target?.payload?.layout));
-    if (lcmsTargets.length === 0) return null;
-
-    const selectedCurveIdx = params?.curveSt?.curveIdx;
-    const selectedTarget = lcmsTargets.find((target) => target.curveIdx === selectedCurveIdx) || lcmsTargets[0];
-    const selectedDatasetId = selectedTarget?.si?.idDt;
-    const uvvisTarget = lcmsTargets.find((target) => isUvvisSpectrumInfo(target.si));
-
-    let uvvisSpcInfo = uvvisTarget?.si;
-    if (!uvvisSpcInfo) {
-      const { spcInfos } = this.state;
-      uvvisSpcInfo = spcInfos.find((spc) => (
-        spc?.idDt === selectedDatasetId && isUvvisSpectrumInfo(spc)
-      ));
-    }
-    if (!uvvisSpcInfo) return null;
-
-    const sourcePayload = selectedTarget?.payload || uvvisTarget?.payload || {};
-    const uvvisPayload = uvvisTarget?.payload || sourcePayload;
-    const curveIdx = sourcePayload?.curveSt?.curveIdx ?? sourcePayload?.curveIdx ?? selectedTarget?.curveIdx ?? 0;
-    const mergedPayload = {
-      ...uvvisPayload,
-      ...sourcePayload,
-      layout: FN.LIST_LAYOUT.LC_MS,
-      curveSt: { curveIdx },
-      scan: sourcePayload.scan ?? uvvisPayload.scan ?? params?.scan,
-      thres: sourcePayload.thres ?? uvvisPayload.thres ?? params?.thres,
-      keepPred: sourcePayload.keepPred ?? uvvisPayload.keepPred ?? params?.keepPred,
-      simulatenmr: sourcePayload.simulatenmr ?? uvvisPayload.simulatenmr ?? params?.simulatenmr ?? false,
-      analysis: sourcePayload.analysis ?? uvvisPayload.analysis ?? params?.analysis,
-      peaks: sourcePayload.peaks ?? uvvisPayload.peaks ?? params?.peaks,
-      shift: sourcePayload.shift ?? uvvisPayload.shift ?? params?.shift,
-      integration: sourcePayload.integration ?? uvvisPayload.integration ?? params?.integration,
-      multiplicity: sourcePayload.multiplicity ?? uvvisPayload.multiplicity ?? params?.multiplicity,
-      waveLength: sourcePayload.waveLength ?? uvvisPayload.waveLength ?? params?.waveLength,
-      cyclicvoltaSt: sourcePayload.cyclicvoltaSt ?? uvvisPayload.cyclicvoltaSt ?? params?.cyclicvoltaSt,
-      axesUnitsSt: sourcePayload.axesUnitsSt ?? uvvisPayload.axesUnitsSt ?? params?.axesUnitsSt,
-      detectorSt: sourcePayload.detectorSt ?? uvvisPayload.detectorSt ?? params?.detectorSt,
-      dscMetaData: sourcePayload.dscMetaData ?? uvvisPayload.dscMetaData ?? params?.dscMetaData,
-      lcms_peaks: sourcePayload.lcms_peaks ?? uvvisPayload.lcms_peaks ?? params?.lcms_peaks,
-      lcms_integrals: sourcePayload.lcms_integrals ?? uvvisPayload.lcms_integrals ?? params?.lcms_integrals,
-      lcms_uvvis_wavelength: sourcePayload.lcms_uvvis_wavelength
-        ?? uvvisPayload.lcms_uvvis_wavelength
-        ?? params?.lcms_uvvis_wavelength,
-      lcms_mz_page: sourcePayload.lcms_mz_page ?? uvvisPayload.lcms_mz_page ?? params?.lcms_mz_page,
-      lcms_mz_page_data: sourcePayload.lcms_mz_page_data ?? uvvisPayload.lcms_mz_page_data ?? params?.lcms_mz_page_data,
-    };
-
-    return { payload: mergedPayload, curveIdx, si: uvvisSpcInfo };
   }
 
   saveOp(params) {
@@ -1225,8 +1186,8 @@ class ViewSpectra extends React.Component {
     if (isLcmsLayout && !isExist) {
       const fallbackRuntime = buildInitialLcmsEntities(listMuliSpcs, listEntityFiles);
       const runtime = this.state.lcmsRuntime || fallbackRuntime;
-      if (!runtime?.currentMultiEntities?.length) return this.renderInvalid();
-      currEntity = runtime.currentMsEntity || runtime.currentMultiEntities[runtime.currentMultiEntities.length - 1];
+      currEntity = resolveLcmsDisplayEntity(runtime);
+      if (!currEntity) return this.renderInvalid();
       multiEntities = runtime.currentMultiEntities;
       entityFileNames = runtime.currentEntityFileNames;
       currentPredictions = runtime.currentMsPredictions || currentPredictions;

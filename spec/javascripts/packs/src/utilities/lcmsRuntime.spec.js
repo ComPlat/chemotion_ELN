@@ -7,7 +7,32 @@ import {
   lcmsRequestKey,
   lcmsSameRequest,
   LCMS_CACHE_DEFAULT_LIMIT,
+  normalizePersistedPolarity,
+  readPersistedLcmsTicHints,
 } from 'src/utilities/lcmsRuntime';
+
+describe('normalizePersistedPolarity', () => {
+  it('maps editor polarity hints to canonical values', () => {
+    expect(normalizePersistedPolarity('negative')).toEqual('negative');
+    expect(normalizePersistedPolarity('MINUS')).toEqual('negative');
+    expect(normalizePersistedPolarity(0)).toEqual('positive');
+  });
+});
+
+describe('readPersistedLcmsTicHints', () => {
+  it('reads hints written by the spectra editor session storage key', () => {
+    const datasetKey = 'test-dataset-lcms';
+    sessionStorage.setItem(
+      `rsEditor.lcmsTic:${datasetKey}`,
+      JSON.stringify({ polarity: 'negative', mzPage: 1.23 }),
+    );
+    expect(readPersistedLcmsTicHints(datasetKey)).toEqual({
+      polarity: 'negative',
+      mzPage: 1.23,
+    });
+    sessionStorage.removeItem(`rsEditor.lcmsTic:${datasetKey}`);
+  });
+});
 
 describe('lcmsRequestKey', () => {
   it('normalises retention time and falls back to a neutral polarity', () => {
