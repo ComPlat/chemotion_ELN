@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Use case for deleting components that are no longer present in the update payload for a sample.
-# Finds all components for the sample whose molecule_id is not in the provided list and deletes them.
+# Finds all existing components for the sample whose id is not in the provided list and deletes them.
 module Usecases
   module Components
     class DeleteRemovedComponents
@@ -11,15 +11,16 @@ module Usecases
       end
 
       def execute!
-        # Collect molecule_ids to keep from the incoming params
-        molecule_ids_to_keep = @components_params.filter_map do |cp|
-          cp.dig(:component_properties, :molecule_id)&.to_i
-        end
+        # Collect existing component ids to keep. Non-integer ids (e.g. client-side
+        # placeholders like 'new_1') correspond to brand-new components and are
+        # ignored here; they are inserted by Usecases::Components::Create.
+        ids_to_keep = @components_params.filter_map do |cp|
+          Integer(cp[:id], exception: false)
+        end.compact
 
-        # Delete all components for the sample whose molecule_id is not in the keep list
-        Component.where(sample_id: @sample_id)
-                 .where.not("CAST(component_properties ->> 'molecule_id' AS INTEGER) IN (?)", molecule_ids_to_keep)
-                 .destroy_all
+        scope = Component.where(sample_id: @sample_id)
+        scope = scope.where.not(id: ids_to_keep) if ids_to_keep.any?
+        scope.destroy_all
       end
     end
   end

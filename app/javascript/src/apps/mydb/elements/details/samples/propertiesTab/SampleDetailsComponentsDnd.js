@@ -17,6 +17,11 @@ const target = {
    * @param {Object} monitor - The drag-and-drop monitor
    */
   drop(tagProps, monitor) {
+    // React-DnD invokes drop() from innermost target outwards. If an inner row-level
+    // drop target (SampleComponent) already handled this drop, skip here to prevent
+    // duplicate component additions.
+    if (monitor.didDrop()) return;
+
     const { dropSample, dropMaterial } = tagProps;
     const srcItem = monitor.getItem();
     const srcType = monitor.getItemType();

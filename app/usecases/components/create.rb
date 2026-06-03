@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 # Use case for creating or updating components for a given sample.
-# Iterates through the provided components, finds or initializes each by sample and molecule_id,
-# assigns attributes, and saves with validation.
+# Iterates through the provided components, finds or initializes each by component id,
+# assigns attributes, and saves with validation. Lookup is keyed on the component id
+# (not molecule_id) so a mixture can hold multiple components that share the same molecule.
 module Usecases
   module Components
     class Create
@@ -20,12 +21,16 @@ module Usecases
         add_molecule_data_to_components
 
         @components.each do |component_params|
-          molecule_id = component_params.dig(:component_properties, :molecule_id).to_i
+          # Look up by component id rather than molecule_id so multiple components
+          # sharing the same molecule are persisted as separate rows.
+          # Integer ids reference existing components; non-integer ids (e.g. 'new_1',
+          # 'comp_xxx') indicate newly added components and trigger a fresh insert.
+          component_id = Integer(component_params[:id], exception: false)
 
-          component = Component
-                      .where("sample_id = ? AND CAST(component_properties ->> 'molecule_id' AS INTEGER) = ?",
-                             @sample_id, molecule_id)
-                      .first_or_initialize(sample_id: @sample_id)
+          component = Component.find_by(
+            sample_id: @sample_id,
+            id: component_id,
+          ) || Component.new(sample_id: @sample_id)
 
           component.assign_attributes(
             name: component_params[:name],
