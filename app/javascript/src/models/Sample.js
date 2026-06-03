@@ -2189,16 +2189,10 @@ export default class Sample extends Element {
    * to update the molecule/SVG via a network request.
    * @param {Object} newComponent - The new component to add.
    * @param {boolean} skipRecalculations - If true, skips expensive recalculations (for batch operations)
-   * @returns {boolean} True if the component was added, false if it was a duplicate.
+   * @returns {boolean} Always true — every component is added unconditionally.
    */
   addMixtureComponentSync(newComponent, skipRecalculations = false) {
     const tmpComponents = [...(this.components || [])];
-    // Check if this component is already present (including merged components, e.g. ionic compounds)
-    const isNew = !tmpComponents.some(
-      (component) => component.molecule.iupac_name === newComponent.molecule.iupac_name
-        || component.molecule.inchikey === newComponent.molecule.inchikey
-        || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)
-    );
 
     if (!newComponent.material_group) {
       newComponent.material_group = 'liquid';
@@ -2208,18 +2202,16 @@ export default class Sample extends Element {
       newComponent.purity = 1;
     }
 
-    if (isNew) {
-      tmpComponents.push(newComponent);
-      this.components = tmpComponents;
+    tmpComponents.push(newComponent);
+    this.components = tmpComponents;
 
-      if (!skipRecalculations) {
-        this.setComponentPositions();
-        this.calculateTotalMixtureMass();
-        this.updateMixtureComponentEquivalent();
-      }
+    if (!skipRecalculations) {
+      this.setComponentPositions();
+      this.calculateTotalMixtureMass();
+      this.updateMixtureComponentEquivalent();
     }
 
-    return isNew;
+    return true;
   }
 
   /**
@@ -2228,10 +2220,19 @@ export default class Sample extends Element {
    * @async
    */
   async updateMixtureMolecule() {
-    const combinedSmiles = (this.components || [])
+    // Capture the per-component SMILES list before the async fetch so the
+    // stale check below can detect any additions/removals that happen while waiting.
+    const componentSmilesSnapshot = (this.components || [])
       .map((c) => c.molecule_cano_smiles)
-      .filter(Boolean)
-      .join('.');
+      .filter(Boolean);
+
+    // Flatten each component's SMILES into individual fragments (a merged ionic compound
+    // or a "benzene dimer" carries a dot-joined cano_smiles like "c1ccccc1.c1ccccc1"),
+    // then deduplicate across all fragments so that multiple components sharing the same
+    // molecule — whether stored as separate rows or as a merged multi-fragment molecule —
+    // each contribute only one structure to the combined SVG.
+    const allFragments = componentSmilesSnapshot.flatMap((s) => s.split('.'));
+    const combinedSmiles = [...new Set(allFragments)].join('.');
 
     if (!combinedSmiles) return;
 
@@ -2246,13 +2247,14 @@ export default class Sample extends Element {
       return;
     }
 
-    // Re-validate after async fetch: discard if the component set changed while in flight.
+    // Stale check: compare the pre-fetch snapshot against the current component list.
+    // Any addition or removal during the async fetch discards this result.
     const currentSmiles = (this.components || [])
       .map((c) => c.molecule_cano_smiles)
       .filter(Boolean)
       .join('.');
 
-    if (!currentSmiles || !Sample.sameSmilesSet(combinedSmiles, currentSmiles)) {
+    if (!currentSmiles || componentSmilesSnapshot.join('.') !== currentSmiles) {
       return;
     }
 
@@ -2268,18 +2270,11 @@ export default class Sample extends Element {
   addMixtureComponentsSync(newComponents) {
     if (!newComponents || newComponents.length === 0) return;
 
-    let hasNewComponents = false;
-    newComponents.forEach((c) => {
-      const isNew = this.addMixtureComponentSync(c, true); // Skip recalculations during batch
-      if (isNew) hasNewComponents = true;
-    });
+    newComponents.forEach((c) => this.addMixtureComponentSync(c, true));
 
-    // Only perform expensive recalculations once if we actually added new components
-    if (hasNewComponents) {
-      this.setComponentPositions();
-      this.calculateTotalMixtureMass();
-      this.updateMixtureComponentEquivalent();
-    }
+    this.setComponentPositions();
+    this.calculateTotalMixtureMass();
+    this.updateMixtureComponentEquivalent();
   }
 
   /**
