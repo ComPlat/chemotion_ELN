@@ -148,7 +148,7 @@ module Chemotion
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
         optional :ph_operator, type: String
-        optional :ph_value, type: String
+        optional :ph_value, type: Float
         optional :tlc_solvents, type: String
         optional :solvent, type: String
         optional :tlc_description, type: String
@@ -232,7 +232,7 @@ module Chemotion
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
         optional :ph_operator, type: String
-        optional :ph_value, type: String
+        optional :ph_value, type: Float
         optional :tlc_solvents, type: String
         optional :solvent, type: String
         optional :tlc_description, type: String

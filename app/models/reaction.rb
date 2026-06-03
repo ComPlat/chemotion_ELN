@@ -16,7 +16,7 @@
 #  observation            :text
 #  origin                 :jsonb
 #  ph_operator            :string           default("="), not null
-#  ph_value               :string
+#  ph_value               :float
 #  plain_text_description :text
 #  plain_text_observation :text
 #  purification           :string           default([]), is an Array
@@ -27,6 +27,7 @@
 #  rinchi_short_key       :string
 #  rinchi_string          :text
 #  rinchi_web_key         :string
+#  role                   :string
 #  rxno                   :string
 #  short_label            :string
 #  solvent                :string

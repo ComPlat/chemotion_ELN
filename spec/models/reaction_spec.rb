@@ -16,7 +16,7 @@
 #  observation            :text
 #  origin                 :jsonb
 #  ph_operator            :string           default("="), not null
-#  ph_value               :string
+#  ph_value               :float
 #  plain_text_description :text
 #  plain_text_observation :text
 #  purification           :string           default([]), is an Array

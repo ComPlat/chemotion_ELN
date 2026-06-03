@@ -134,7 +134,7 @@ export default class Reaction extends Element {
       dangerous_products: '',
       conditions: '',
       ph_operator: '=',
-      ph_value: '',
+      ph_value: null,
       description: Reaction.quillDefault(),
       duration: '',
       durationDisplay: DurationDefault,
@@ -204,6 +204,11 @@ export default class Reaction extends Element {
     return this.reaction_type === 'interaction';
   }
 
+  phValueForSerialize() {
+    const v = parseFloat(this.ph_value);
+    return Number.isFinite(v) ? v : null;
+  }
+
   serialize() {
     return super.serialize({
       collection_id: this.collection_id,
@@ -212,7 +217,7 @@ export default class Reaction extends Element {
       dangerous_products: this.dangerous_products,
       conditions: this.conditions,
       ph_operator: this.ph_operator || '=',
-      ph_value: this.ph_value || '',
+      ph_value: this.phValueForSerialize(),
       duration: this.duration,
       durationDisplay: this.durationDisplay,
       durationCalc: this.durationCalc(),

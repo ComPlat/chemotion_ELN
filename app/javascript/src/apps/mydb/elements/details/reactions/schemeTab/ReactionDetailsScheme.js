@@ -2065,7 +2065,7 @@ export default class ReactionDetailsScheme extends React.Component {
   renderPhConditionProperty() {
     const { reaction, onInputChange } = this.props;
     const operator = reaction.ph_operator || '=';
-    const value = reaction.ph_value || '';
+    const value = reaction.ph_value ?? '';
     const isDisabled = !permitOn(reaction);
 
     return (
@@ -2081,7 +2081,8 @@ export default class ReactionDetailsScheme extends React.Component {
             {operator}
           </Button>
           <Form.Control
-            type="text"
+            type="number"
+            step="any"
             value={value}
             disabled={isDisabled}
             placeholder="value"
@@ -2262,12 +2263,6 @@ export default class ReactionDetailsScheme extends React.Component {
             </Col>
             <Col sm={3}>
               {this.renderRole()}
-            </Col>
-            <Col sm={3}>
-              {this.reactionVesselSize()}
-            </Col>
-            <Col sm={3}>
-              {this.reactionVolume()}
             </Col>
           </Row>
         )}
