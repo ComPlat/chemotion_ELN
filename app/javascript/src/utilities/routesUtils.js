@@ -22,6 +22,8 @@ const collectionShow = (e) => {
   const collectionPromise = CollectionsFetcher.fetchByCollectionId(collectionId);
 
   collectionPromise.then((collection) => {
+    if (!collection) return;
+
     if (currentSearchSelection) {
       UIActions.selectCollectionWithoutUpdating(collection);
       ElementActions.fetchBasedOnSearchSelectionAndCollection({
