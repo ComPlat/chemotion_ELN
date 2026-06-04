@@ -25,7 +25,7 @@ export default class SearchFetcher {
     };
 
     return ApiClient.postJson(`/api/v1/search/${selection.elementType.toLowerCase()}`, { body })
-      .then((json) => this.getResultByKey({ ...json }));
+      .then((json) => this.getResultByKey({ ...json }, collectionId));
   }
 
   static fetchBasedOnSearchResultIds(params) {
@@ -43,7 +43,7 @@ export default class SearchFetcher {
     };
 
     return ApiClient.postJson(`/api/v1/search/${selection.elementType.toLowerCase()}`, { body })
-      .then((json) => this.getResultByKey({ ...json }));
+      .then((json) => this.getResultByKey({ ...json }, collectionId));
   }
 
   static getResultByKey(result, collectionId) {

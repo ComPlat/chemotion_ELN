@@ -74,7 +74,7 @@ const cellLineShowOrNew = (e) => {
   if (cellLineId === 'new') {
     ElementActions.generateEmptyCellLine(e.params.collectionID, e.params.cell_line_template);
   } else {
-    ElementActions.tryFetchCellLineElById.defer(id);
+    ElementActions.tryFetchCellLineElById.defer(cellLineId);
   }
 };
 
