@@ -1,7 +1,7 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Device from 'src/models/Device';
 import DeviceAnalysis from 'src/models/DeviceAnalysis';
-import _ from 'lodash';
+import { uniq } from 'lodash';
 
 export default class DeviceFetcher {
   static fetchAll() {
@@ -50,5 +50,31 @@ export default class DeviceFetcher {
 
   static generateExperimentConfig(experiment) {
     return ApiClient.postJson('/api/v1/icon_nmr/config', { body: experiment.buildConfig() });
+  }
+
+  static fetchCurrentConnection(selected, isNotFocused) {
+    const searchTerm = { id: selected.id, status: isNotFocused };
+    return ApiClient.getJson(`/api/v1/devices/current_connection?${new URLSearchParams(searchTerm)}`, {
+      handleResponseError: (exception) => {
+        console.error('Error fetching connections:', exception);
+        return { using: 0, watching: 0 };
+      },
+    })
+      .then((json) => {
+        let using = 0;
+        let watching = 0;
+        if (json.result && Array.isArray(json.result) && json.result.length > 0) {
+          const data = uniq(json.result)
+            .filter((line) => line && line.includes(','))
+            .map((line) => line.split(','));
+          const conn = Object.fromEntries(data);
+
+          Object.keys(conn).forEach((k) => {
+            if (conn[k] === '0') { using += 1; }
+            if (conn[k] === '1') { watching += 1; }
+          });
+        }
+        return { using, watching };
+      });
   }
 }

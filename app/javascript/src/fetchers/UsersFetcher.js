@@ -1,5 +1,6 @@
 /* eslint-disable arrow-parens */
 import ApiClient from 'src/api_clients/ChemotionApiClient';
+import DocumentHelper from 'src/utilities/DocumentHelper';
 
 // TODO: SamplesFetcher also updates Samples and so on...naming?
 export default class UsersFetcher {
@@ -120,5 +121,25 @@ export default class UsersFetcher {
 
   static fetchEnable2FAQR() {
     return ApiClient.putJson('/api/v1/users/two_factor');
+  }
+
+  static logoutUser() {
+    return ApiClient.deleteRequest('/users/sign_out', {
+      data: { authenticity_token: DocumentHelper.getMetaContent('csrf-token') },
+      headers: {},
+      handleResponseSuccess: (response) => response
+    });
+  }
+
+  static submitAsForm(url, method, body) {
+    const options = {
+      body,
+      headers: {},
+      handleResponseSuccess: (response) => response
+    };
+    if (method === 'PUT') {
+      return ApiClient.putFormData(url, options);
+    }
+    return ApiClient.postFormData(url, options);
   }
 }
