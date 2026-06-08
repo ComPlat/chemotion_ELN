@@ -2159,14 +2159,16 @@ export default class Sample extends Element {
       return;
     }
 
-    // Stale check: compare the pre-fetch snapshot against the current component list.
-    // Any addition or removal during the async fetch discards this result.
+    // Re-validate after async fetch: discard if the component set changed while
+    // in flight. Compare the pre-fetch snapshot against the current list as sets
+    // (order-independent) so a mere reorder doesn't discard a valid result, while
+    // still preserving duplicate fragments for same-molecule mixtures.
     const currentSmiles = (this.components || [])
       .map((c) => c.molecule_cano_smiles)
       .filter(Boolean)
       .join('.');
 
-    if (!currentSmiles || componentSmilesSnapshot.join('.') !== currentSmiles) {
+    if (!currentSmiles || !Sample.sameSmilesSet(componentSmilesSnapshot.join('.'), currentSmiles)) {
       return;
     }
 
