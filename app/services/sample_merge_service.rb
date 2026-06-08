@@ -69,8 +69,9 @@ class SampleMergeService
   end
 
   def apply_unmerge!(merge, source, target)
-    restore_or_subtract!(merge, target)
-    restore_target_molecule!(merge, target)
+    is_last_merge = target.incoming_merges.where.not(id: merge.id).none?
+    restore_or_subtract!(merge, target, is_last_merge)
+    restore_target_molecule!(merge, target, is_last_merge)
     source.update!(is_legacy: false)
     restore_source_reaction_product!(merge, source)
     merge.destroy!
@@ -80,10 +81,8 @@ class SampleMergeService
     { value: target.real_amount_value, unit: target.real_amount_unit }
   end
 
-  def restore_or_subtract!(merge, target)
-    is_last_merge = target.incoming_merges.where.not(id: merge.id).none?
-
-    if is_last_merge && merge.target_real_amount_value_before.present?
+  def restore_or_subtract!(merge, target, is_last_merge)
+    if is_last_merge
       target.update!(
         real_amount_value: merge.target_real_amount_value_before,
         real_amount_unit: merge.target_real_amount_unit_before,
@@ -104,8 +103,7 @@ class SampleMergeService
     target.update!(molecule_id: source.molecule_id)
   end
 
-  def restore_target_molecule!(merge, target)
-    is_last_merge = target.incoming_merges.where.not(id: merge.id).none?
+  def restore_target_molecule!(merge, target, is_last_merge)
     return unless is_last_merge
     return if merge.target_molecule_id_before == target.molecule_id
 
@@ -159,11 +157,6 @@ class SampleMergeService
     raise MergeError, 'target must be a product of this reaction' unless products.exists?(sample_id: target.id)
   end
 
-  def validate_real_amounts!(source, target)
-    raise MergeError, 'source has no recorded real amount' if real_amount_blank?(source)
-    raise MergeError, 'target has no recorded real amount' if real_amount_blank?(target)
-  end
-
   def validate_molecule_compatibility!(source, target)
     return if no_molecule?(source) || no_molecule?(target)
     return if source.molecule_inchikey == target.molecule_inchikey
@@ -197,9 +190,7 @@ class SampleMergeService
             'missing molecular weight or unsupported unit'
     end
 
-    purity = sample.purity.to_f
-    purity = 1.0 unless purity.positive?
-    (value * purity) / fallback_mw.to_f
+    (value * sample.purity.to_f) / fallback_mw.to_f
   end
 
   def real_amount_blank?(sample)

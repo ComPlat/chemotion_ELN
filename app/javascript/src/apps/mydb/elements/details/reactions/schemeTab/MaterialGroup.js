@@ -115,6 +115,14 @@ function MaterialGroup({
         });
         return;
       }
+      if (item.material.is_new || target.is_new) {
+        NotificationActions.add({
+          message: 'Save the reaction before merging products.',
+          level: 'warning',
+          position: 'tr',
+        });
+        return;
+      }
       // Show modal instead of pendingMerge confirmation row
       if (onInitiateMerge) {
         onInitiateMerge(item.material, target);
