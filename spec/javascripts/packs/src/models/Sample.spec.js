@@ -1761,4 +1761,68 @@ describe('Sample', async () => {
       expect(s.isPendingToSave).toBe(false);
     });
   });
+
+  describe('Sample.normalizeSmilesSet()', () => {
+    it('returns fragments in sorted order', () => {
+      expect(Sample.normalizeSmilesSet('CCO.C')).toBe('C.CCO');
+    });
+
+    it('is idempotent when already sorted', () => {
+      expect(Sample.normalizeSmilesSet('C.CCO')).toBe('C.CCO');
+    });
+
+    it('returns empty string for null', () => {
+      expect(Sample.normalizeSmilesSet(null)).toBe('');
+    });
+
+    it('returns empty string for empty string', () => {
+      expect(Sample.normalizeSmilesSet('')).toBe('');
+    });
+
+    it('returns empty string for non-string input', () => {
+      expect(Sample.normalizeSmilesSet(42)).toBe('');
+    });
+
+    it('handles a single fragment with no dot', () => {
+      expect(Sample.normalizeSmilesSet('CCO')).toBe('CCO');
+    });
+
+    it('filters out empty fragments from leading/trailing dots', () => {
+      expect(Sample.normalizeSmilesSet('.CCO.')).toBe('CCO');
+    });
+  });
+
+  describe('Sample.sameSmilesSet()', () => {
+    it('returns true for identical strings', () => {
+      expect(Sample.sameSmilesSet('C.CCO', 'C.CCO')).toBe(true);
+    });
+
+    it('returns true when fragment order differs', () => {
+      expect(Sample.sameSmilesSet('CCO.C', 'C.CCO')).toBe(true);
+    });
+
+    it('returns true for three fragments in any order', () => {
+      expect(Sample.sameSmilesSet('A.B.C', 'C.A.B')).toBe(true);
+    });
+
+    it('returns false when fragment sets differ', () => {
+      expect(Sample.sameSmilesSet('C.CCO', 'C.CC')).toBe(false);
+    });
+
+    it('returns false when one string has an extra fragment', () => {
+      expect(Sample.sameSmilesSet('C.CCO', 'C.CCO.O')).toBe(false);
+    });
+
+    it('returns false when one input is null', () => {
+      expect(Sample.sameSmilesSet(null, 'C.CCO')).toBe(false);
+    });
+
+    it('returns true when both inputs are null', () => {
+      expect(Sample.sameSmilesSet(null, null)).toBe(true);
+    });
+
+    it('returns true when both inputs are empty string', () => {
+      expect(Sample.sameSmilesSet('', '')).toBe(true);
+    });
+  });
 });

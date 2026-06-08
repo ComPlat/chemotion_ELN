@@ -295,6 +295,7 @@ export default class Sample extends Element {
 
   /**
    * Normalizes a dot-separated SMILES string to a sorted set for order-independent comparison.
+   * Assumes each fragment is a single-molecule SMILES (no dot-salts like [Na+].[Cl-] per component).
    * @param {string} smilesString - Dot-separated canonical SMILES
    * @returns {string} Sorted, dot-joined SMILES string
    */
@@ -2084,14 +2085,13 @@ export default class Sample extends Element {
       return;
     }
 
-    // Re-validate after async fetch: components may have changed during the request.
-    // If they did, this response is stale and should be discarded to avoid race conditions.
+    // Re-validate after async fetch: discard if the component set changed while in flight.
     const currentSmiles = (this.components || [])
       .map((c) => c.molecule_cano_smiles)
       .filter(Boolean)
       .join('.');
 
-    if (!currentSmiles || combinedSmiles !== currentSmiles) {
+    if (!currentSmiles || !Sample.sameSmilesSet(combinedSmiles, currentSmiles)) {
       return;
     }
 
