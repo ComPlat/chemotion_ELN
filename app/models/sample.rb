@@ -19,6 +19,7 @@
 #  imported_readout    :string
 #  impurities          :string           default("")
 #  inventory_sample    :boolean          default(FALSE)
+#  is_legacy           :boolean          default(FALSE), not null
 #  is_top_secret       :boolean          default(FALSE)
 #  location            :string           default("")
 #  melting_point       :numrange
@@ -55,6 +56,7 @@
 #  index_samples_on_deleted_at        (deleted_at)
 #  index_samples_on_identifier        (identifier)
 #  index_samples_on_inventory_sample  (inventory_sample)
+#  index_samples_on_is_legacy         (is_legacy) WHERE (is_legacy = true)
 #  index_samples_on_molecule_name_id  (molecule_name_id)
 #  index_samples_on_sample_id         (molecule_id)
 #  index_samples_on_short_label       (short_label)
@@ -228,6 +230,8 @@ class Sample < ApplicationRecord
   before_create :check_molecule_name
   before_create :set_boiling_melting_points
   after_create :create_root_container
+  before_destroy :prevent_destroy_with_incoming_merges, prepend: true
+  before_destroy :prevent_destroy_when_merged_source, prepend: true
   after_save :update_counter
   after_save :update_equivalent_for_reactions
   after_save :update_gas_material
@@ -258,6 +262,20 @@ class Sample < ApplicationRecord
   has_many :comments, as: :commentable, dependent: :destroy
 
   has_many :components, dependent: :destroy
+
+  has_one  :outgoing_merge,
+           class_name: 'SampleMerge',
+           foreign_key: :source_sample_id,
+           inverse_of: :source_sample,
+           dependent: :destroy
+  has_many :incoming_merges,
+           class_name: 'SampleMerge',
+           foreign_key: :target_sample_id,
+           inverse_of: :target_sample,
+           dependent: :destroy
+  has_many :merged_sources,
+           through: :incoming_merges,
+           source: :source_sample
 
   belongs_to :fingerprint, optional: true
   belongs_to :user, optional: true
@@ -292,6 +310,20 @@ class Sample < ApplicationRecord
   delegate :inchikey, to: :molecule, prefix: true, allow_nil: true
 
   attr_writer :skip_reaction_svg_update
+
+  def prevent_destroy_when_merged_source
+    return if outgoing_merge.nil?
+
+    errors.add(:base, 'Cannot delete a merged sample. Unmerge it first.')
+    throw :abort
+  end
+
+  def prevent_destroy_with_incoming_merges
+    return unless incoming_merges.exists?
+
+    errors.add(:base, 'Cannot delete a sample that has merged sources. Unmerge them first.')
+    throw :abort
+  end
 
   def self.rebuild_pg_search_documents
     find_each(&:update_pg_search_document)

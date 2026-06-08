@@ -236,4 +236,33 @@ export default class SamplesFetcher {
         throw errorMessage;
       });
   }
+
+  static mergeSamples({ sourceSampleId, targetSampleId, reactionId }) {
+    return fetch('/api/v1/samples/merge', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        source_sample_id: sourceSampleId,
+        target_sample_id: targetSampleId,
+        reaction_id: reactionId,
+      }),
+    }).then(async (response) => {
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error || 'Merge failed');
+      return new Sample(json.sample);
+    });
+  }
+
+  static unmergeSample(mergeId) {
+    return fetch(`/api/v1/samples/merge/${mergeId}`, {
+      credentials: 'same-origin',
+      method: 'DELETE',
+      headers: { Accept: 'application/json' },
+    }).then(async (response) => {
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error || 'Unmerge failed');
+      return new Sample(json.sample);
+    });
+  }
 }

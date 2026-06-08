@@ -7,7 +7,9 @@ import {
 import { Select } from 'src/components/common/Select';
 import Delta from 'quill-delta';
 import MaterialGroup from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
+import MergeSampleModal from 'src/components/common/MergeSampleModal';
 import Sample from 'src/models/Sample';
+import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import Reaction from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
@@ -60,6 +62,9 @@ export default class ReactionDetailsScheme extends React.Component {
       lockEquivColumn,
       displayYieldField: null,
       reactionDescTemplate: textTemplate.toJS(),
+      showMergeModal: false,
+      sourceProduct: null,
+      targetProduct: null,
     };
 
     this.reactQuillRef = React.createRef();
@@ -75,6 +80,11 @@ export default class ReactionDetailsScheme extends React.Component {
     this.dropSbmmSample = this.dropSbmmSample.bind(this);
     this.switchEquiv = this.switchEquiv.bind(this);
     this.switchYield = this.switchYield.bind(this);
+    this.handleMergeConfirm = this.handleMergeConfirm.bind(this);
+    this.handleUnmerge = this.handleUnmerge.bind(this);
+    this.showMergeModal = this.showMergeModal.bind(this);
+    this.handleReorderProducts = this.handleReorderProducts.bind(this);
+    this.handleMergeModalClose = this.handleMergeModalClose.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);
     this.reactionVesselSize = this.reactionVesselSize.bind(this);
     this.updateVesselSize = this.updateVesselSize.bind(this);
@@ -446,6 +456,58 @@ export default class ReactionDetailsScheme extends React.Component {
 
     reaction.moveMaterial(srcMat, actualSrcGroup, tagMat, actualTagGroup);
     onReactionChange(reaction, { updateGraphic: true });
+  }
+
+  handleMergeConfirm(source, target) {
+    const { reaction, onReactionChange } = this.props;
+
+    return SamplesFetcher.mergeSamples({
+      sourceSampleId: source.id,
+      targetSampleId: target.id,
+      reactionId: reaction.id,
+    }).then(() => {
+      reaction.products = reaction.products.filter((p) => p.id !== source.id);
+      onReactionChange(reaction, { updateGraphic: true });
+      ElementActions.fetchReactionById(reaction.id);
+    }).catch((err) => {
+      NotificationActions.add({
+        title: 'Merge failed', message: err.message, level: 'error', position: 'tr',
+      });
+      throw err;
+    });
+  }
+
+  handleUnmerge(mergeId) {
+    const { reaction, onReactionChange } = this.props;
+
+    SamplesFetcher.unmergeSample(mergeId).then(() => {
+      onReactionChange(reaction, { updateGraphic: true });
+      ElementActions.fetchReactionById(reaction.id);
+    }).catch((err) => {
+      NotificationActions.add({
+        title: 'Unmerge failed', message: err.message, level: 'error', position: 'tr',
+      });
+    });
+  }
+
+  showMergeModal(sourceProduct, targetProduct) {
+    this.setState({
+      showMergeModal: true,
+      sourceProduct,
+      targetProduct,
+    });
+  }
+
+  handleMergeModalClose() {
+    this.setState({
+      showMergeModal: false,
+      sourceProduct: null,
+      targetProduct: null,
+    });
+  }
+
+  handleReorderProducts(sourceProduct, targetProduct) {
+    this.dropMaterial(sourceProduct, 'products', targetProduct, 'products');
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -2158,7 +2220,7 @@ export default class ReactionDetailsScheme extends React.Component {
           <MaterialGroup
             reaction={reaction}
             materialGroup="products"
-            materials={reaction.products}
+            materials={reaction.products.filter((p) => !p.is_legacy)}
             dropMaterial={this.dropMaterial}
             deleteMaterial={
               (material, materialGroup) => this.deleteMaterial(material, materialGroup)
@@ -2170,6 +2232,8 @@ export default class ReactionDetailsScheme extends React.Component {
             lockEquivColumn={this.state.lockEquivColumn}
             switchYield={this.switchYield}
             displayYieldField={displayYieldField}
+            onInitiateMerge={this.showMergeModal}
+            onUnmerge={this.handleUnmerge}
           />
           <ReactionConditions
             conditions={reaction.conditions}
@@ -2237,6 +2301,15 @@ export default class ReactionDetailsScheme extends React.Component {
           onInputChange={onInputChange}
           additionQuillRef={this.additionQuillRef}
           onChange={(event) => this.handleMaterialsChange(event)}
+        />
+
+        <MergeSampleModal
+          show={this.state.showMergeModal}
+          onHide={this.handleMergeModalClose}
+          sourceProduct={this.state.sourceProduct}
+          targetProduct={this.state.targetProduct}
+          onMerge={this.handleMergeConfirm}
+          onReorder={this.handleReorderProducts}
         />
       </>
     );
