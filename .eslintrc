@@ -30,10 +30,7 @@
     "prefer-destructuring": ["error", { "object": true, "array": false }],
     "eqeqeq": ["error", "always", { "null": "ignore" }],
     "no-shadow": "error",
-    "no-param-reassign": ["error", {
-      "props": true,
-      "ignorePropertyModificationsFor": ["acc", "e", "ctx", "req", "request", "res", "response", "state"]
-    }],
+    "no-param-reassign": ["error", { "props": false }],
     "no-use-before-define": ["error", { "functions": true, "classes": true, "variables": true }],
     "no-console": "off",
     "comma-dangle": [1, "only-multiline"],
@@ -49,7 +46,7 @@
       "unnamedComponents": "arrow-function"
     }],
     "react/prefer-stateless-function": "warn",
-    "react/destructuring-assignment": ["error", "always"],
+    "react/destructuring-assignment": "off",
     "react/no-array-index-key": "warn",
     "react/jsx-props-no-spreading": "off",
     "react/require-default-props": "off",
