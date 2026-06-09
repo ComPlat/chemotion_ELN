@@ -2,10 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Delta from 'quill-delta';
 import { Button, Form, InputGroup } from 'react-bootstrap';
+import { FormattedMessage } from 'react-intl';
 
 import QuillEditor from 'src/components/QuillEditor';
 import TextTemplateIcon from 'src/apps/admin/textTemplates/TextTemplateIcon';
-
 
 export default class TextTemplateForm extends React.Component {
   constructor(props) {
@@ -21,7 +21,6 @@ export default class TextTemplateForm extends React.Component {
     this.onChangeText = this.onChangeText.bind(this);
     this.onChangeIcon = this.onChangeIcon.bind(this);
     this.saveTemplate = this.saveTemplate.bind(this);
-
   }
 
   componentDidUpdate(prevProps) {
@@ -76,31 +75,38 @@ export default class TextTemplateForm extends React.Component {
 
     return (
       <div>
-        <h3>Editing '{selectedTemplate.name}'</h3>
+        <h3>
+          <FormattedMessage
+            id="text_templates-editing"
+            values={{ name: selectedTemplate.name }}
+          />
+        </h3>
         <InputGroup className="mb-3">
-          <InputGroup.Text className='fs-5 fw-bold me-3'>Preview</InputGroup.Text>
+          <InputGroup.Text className="fs-5 fw-bold me-3">
+            <FormattedMessage id="text_templates-preview" />
+          </InputGroup.Text>
           <TextTemplateIcon
-            iconClass='fs-3 my-3'
+            iconClass="fs-3 my-3"
             template={selectedTemplate}
           />
         </InputGroup>
         <Form>
           <Form.Group className="mb-3">
-            <Form.Label className='fs-5'>Text</Form.Label>
+            <Form.Label className="fs-5"><FormattedMessage id="text_templates-text" /></Form.Label>
             <Form.Control
               type="text"
               value={text}
               onChange={this.onChangeText}
-              className='py-3'
+              className="py-3"
             />
           </Form.Group>
           <Form.Group className="mb-3">
-            <Form.Label className='fs-5'>Icon</Form.Label>
+            <Form.Label className="fs-5"><FormattedMessage id="text_templates-icon" /></Form.Label>
             <Form.Control
               type="text"
               value={icon}
               onChange={this.onChangeIcon}
-              className='py-3'
+              className="py-3"
             />
           </Form.Group>
           <Form.Group className="mb-3">
@@ -112,7 +118,7 @@ export default class TextTemplateForm extends React.Component {
           </Form.Group>
         </Form>
         <Button variant="primary" onClick={this.saveTemplate}>
-          Save
+          <FormattedMessage id="save" />
         </Button>
       </div>
     );

@@ -2,6 +2,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
+import { FormattedMessage } from 'react-intl';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { ALL_TYPES } from 'src/apps/generic/Utils';
 import AppModal from 'src/components/common/AppModal';
@@ -10,34 +11,6 @@ export default class GenericAdminModal extends Component {
   constructor(props) {
     super(props);
     this.handleAuthAdmin = this.handleAuthAdmin.bind(this);
-  }
-
-  renderButton(_params, _user) {
-    const params = _params || [];
-    const user = _user;
-    return params.map((p, i) => (
-      <Button
-        key={`_auth_designer_button_${ALL_TYPES[i]}`}
-        size="sm"
-        variant={p ? 'warning' : 'light'}
-        className='me-2'
-        onClick={() =>
-          this.handleAuthAdmin(user, `${ALL_TYPES[i]}s`.toLowerCase(), p)
-        }
-      >
-        {p ? 'Revoke' : 'Grant'} Generic {ALL_TYPES[i]}
-      </Button>
-    ));
-  }
-
-  renderDescription(_params) {
-    const params = _params || [];
-    return params.map((p, i) => (
-      <li key={`_description_${ALL_TYPES[i]}`} className=' fs-6 ms-3 my-2 align-items-center'>
-        Currently {p ? '' : 'NOT'} acting as the Designer of the Generic
-        {ALL_TYPES[i]}
-      </li>
-    ));
   }
 
   handleAuthAdmin(user, type, value) {
@@ -50,6 +23,38 @@ export default class GenericAdminModal extends Component {
     AdminFetcher.updateAccount(params).then((updatedUser) => fnCb(updatedUser));
   }
 
+  renderButton(_params, _user) {
+    const params = _params || [];
+    const user = _user;
+    return params.map((p, i) => (
+      <Button
+        key={`_auth_designer_button_${ALL_TYPES[i]}`}
+        size="sm"
+        variant={p ? 'warning' : 'light'}
+        className="me-2"
+        onClick={() => this.handleAuthAdmin(user, `${ALL_TYPES[i]}s`.toLowerCase(), p)}
+      >
+        <FormattedMessage
+          id={p ? 'generic_admin-revoke' : 'generic_admin-grant'}
+          values={{ type: ALL_TYPES[i] }}
+        />
+      </Button>
+    ));
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  renderDescription(_params) {
+    const params = _params || [];
+    return params.map((p, i) => (
+      <li key={`_description_${ALL_TYPES[i]}`} className=" fs-6 ms-3 my-2 align-items-center">
+        <FormattedMessage
+          id={p ? 'generic_admin-currently_acting' : 'generic_admin-currently_not_acting'}
+          values={{ type: ALL_TYPES[i] }}
+        />
+      </li>
+    ));
+  }
+
   render() {
     const { user, fnShowModal } = this.props;
     const { elements, segments, datasets } = user.generic_admin || {};
@@ -57,7 +62,13 @@ export default class GenericAdminModal extends Component {
       <AppModal
         show
         onHide={() => fnShowModal(false)}
-        title={`Grant/Revoke Generic Designer (user: ${user.name})`}
+        title={(
+          <FormattedMessage
+            id="generic_admin-modal_title"
+            values={{ name: user.name }}
+          />
+        )}
+        closeLabel={<FormattedMessage id="cancel" />}
       >
         <div className="d-flex flex-wrap ms-3">
           {this.renderButton([elements, segments, datasets], user)}

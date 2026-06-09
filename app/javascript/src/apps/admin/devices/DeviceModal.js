@@ -11,8 +11,10 @@ import DeviceUserGroupsTab from 'src/apps/admin/devices/DeviceUserGroupsTab';
 import DeviceDataCollectorTab from 'src/apps/admin/devices/DeviceDataCollectorTab';
 import DeviceNovncTab from 'src/apps/admin/devices/DeviceNovncTab';
 import DeviceMetadataTab from 'src/apps/admin/devices/DeviceMetadataTab';
+import { useIntl, FormattedMessage } from 'react-intl';
 
 function DeviceModal() {
+  const intl = useIntl();
   const devicesStore = useContext(StoreContext).devices;
   const deviceMetadataStore = useContext(StoreContext).deviceMetadata;
   let { device } = devicesStore;
@@ -172,9 +174,9 @@ function DeviceModal() {
 
   const modalTitle = () => {
     if (devicesStore.create_or_update === 'update') {
-      return `Edit ${device.name}`;
+      return `${intl.formatMessage({ id: 'edit' })} ${device.name}`;
     }
-    return 'Add new device';
+    return intl.formatMessage({ id: 'devices-add' });
   };
 
   const showMessage = () => {
@@ -235,14 +237,14 @@ function DeviceModal() {
                   >
                     <Tab
                       eventKey={1}
-                      title="Properties"
+                      title={intl.formatMessage({ id: 'devices-properties' })}
                       key="tab-properties-1"
                     >
                       <DevicePropertiesTab />
                     </Tab>
                     <Tab
                       eventKey={2}
-                      title="Users & Groups"
+                      title={intl.formatMessage({ id: 'devices-users_groups' })}
                       key="tab-user-group-2"
                       disabled={disableTab}
                     >
@@ -250,7 +252,7 @@ function DeviceModal() {
                     </Tab>
                     <Tab
                       eventKey={3}
-                      title="Data Collector"
+                      title={intl.formatMessage({ id: 'devices-data_collector' })}
                       key="tab-data-collector-3"
                       disabled={disableTab}
                     >
@@ -258,7 +260,7 @@ function DeviceModal() {
                     </Tab>
                     <Tab
                       eventKey={4}
-                      title="NoVNC Settings"
+                      title={intl.formatMessage({ id: 'devices-novnc_settings' })}
                       key="tab-novnc-settings-4"
                       disabled={disableTab}
                     >
@@ -266,7 +268,7 @@ function DeviceModal() {
                     </Tab>
                     <Tab
                       eventKey={5}
-                      title="Metadata"
+                      title={intl.formatMessage({ id: 'devices-metadata' })}
                       key="tab-metadata-5"
                       disabled={disableTab}
                     >
@@ -276,10 +278,10 @@ function DeviceModal() {
                 </div>
                 <ButtonToolbar className="draggable-modal-form-buttons">
                   <Button variant="warning" onClick={() => handleCancel()}>
-                    Cancel
+                    <FormattedMessage id="cancel" />
                   </Button>
                   <Button variant="primary" onClick={saveDeviceOrRelation}>
-                    Save
+                    <FormattedMessage id="save" />
                   </Button>
                 </ButtonToolbar>
               </div>

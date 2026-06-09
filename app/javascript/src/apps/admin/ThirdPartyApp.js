@@ -1,14 +1,24 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   Table, Button, Form, Tooltip, OverlayTrigger, ButtonToolbar
 } from 'react-bootstrap';
+import { FormattedMessage, injectIntl } from 'react-intl';
 import AppModal from 'src/components/common/AppModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 
-const editTip = <Tooltip id="edit_tpa_tooltip">edit third party app</Tooltip>;
-const deleteTip = <Tooltip id="delete_tpa_tooltip">delete third party app</Tooltip>;
+const editTip = (
+  <Tooltip id="edit_tpa_tooltip">
+    <FormattedMessage id="third_party_app-edit_tooltip" />
+  </Tooltip>
+);
+const deleteTip = (
+  <Tooltip id="delete_tpa_tooltip">
+    <FormattedMessage id="third_party_app-delete_tooltip" />
+  </Tooltip>
+);
 
-export default class ThirdPartyApp extends React.Component {
+class ThirdPartyApp extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -144,14 +154,14 @@ export default class ThirdPartyApp extends React.Component {
     let appId = 0;
     if (name.length < 1) {
       this.setState({
-        errorMessage: 'Name is shorter than 1 character'
+        errorMessage: { id: 'third_party_app-error_name_short' }
       });
       return false;
     }
 
     if (fileTypes.length === 0) {
       this.setState({
-        errorMessage: 'File type cannot be empty'
+        errorMessage: { id: 'third_party_app-error_file_empty' }
       });
       return false;
     }
@@ -159,21 +169,21 @@ export default class ThirdPartyApp extends React.Component {
     if ((ip.slice(0, 7) !== 'http://')
       && (ip.slice(0, 8) !== 'https://')) {
       this.setState({
-        errorMessage: 'URL should start with http:// or https://'
+        errorMessage: { id: 'third_party_app-error_url_invalid' }
       });
       return false;
     }
     // check if name is already used
     if (thirdPartyApps.find((tpa) => { appId = tpa.id; return currentID !== tpa.id && tpa.name === name; })) {
       this.setState({
-        errorMessage: `Name is already used by app with id: ${appId}`
+        errorMessage: { id: 'third_party_app-error_name_used', values: { appId } }
       });
       return false;
     }
     // check if url is already used
     if (thirdPartyApps.find((tpa) => { appId = tpa.id; return currentID !== tpa.id && tpa.url === ip; })) {
       this.setState({
-        errorMessage: `URL already used by app with id: ${appId}`
+        errorMessage: { id: 'third_party_app-error_url_used', values: { appId } }
       });
       return false;
     }
@@ -182,17 +192,19 @@ export default class ThirdPartyApp extends React.Component {
 
   renderDeleteThirdPartyAppModal() {
     const { showMsgModalDelete, currentName, currentID } = this.state;
+    const { intl } = this.props;
     return (
       <AppModal
         show={showMsgModalDelete}
         onHide={this.closeDeleteThirdPartyAppModal}
-        title="Delete third party app"
-        primaryActionLabel="Delete"
+        title={<FormattedMessage id="third_party_app-delete_title" />}
+        primaryActionLabel={intl.formatMessage({ id: 'delete' })}
         onPrimaryAction={() => this.delete(currentID)}
+        closeLabel={<FormattedMessage id="cancel" />}
       >
         <p>
           <strong>
-            {` Do you really want to delete ${currentName}?`}
+            <FormattedMessage id="third_party_app-delete_confirm" values={{ name: currentName }} />
           </strong>
         </p>
       </AppModal>
@@ -207,6 +219,7 @@ export default class ThirdPartyApp extends React.Component {
       currentIP,
       currentFileTypes,
     } = this.state;
+    const { intl } = this.props;
 
     let nameRef = null;
     let urlRef = null;
@@ -229,9 +242,8 @@ export default class ThirdPartyApp extends React.Component {
 
     const handleNameChange = (event) => {
       const { errorMessage: currentErrorMessage } = this.state;
-      // if current errorMessage start with Name, clear it
       const newState = { currentName: event.target.value };
-      if (currentErrorMessage.startsWith('Name')) {
+      if (currentErrorMessage?.id?.startsWith('third_party_app-error_name')) {
         newState.errorMessage = '';
       }
       this.setState(newState);
@@ -240,7 +252,7 @@ export default class ThirdPartyApp extends React.Component {
     const handleIPChange = (event) => {
       const { errorMessage: currentErrorMessage } = this.state;
       const newState = { currentIP: event.target.value };
-      if (currentErrorMessage.startsWith('URL')) {
+      if (currentErrorMessage?.id?.startsWith('third_party_app-error_url')) {
         newState.errorMessage = '';
       }
       this.setState(newState);
@@ -250,7 +262,7 @@ export default class ThirdPartyApp extends React.Component {
       const { errorMessage: currentErrorMessage } = this.state;
       const newFileTypes = event.target.value;
       const newState = { currentFileTypes: newFileTypes };
-      if (currentErrorMessage && currentErrorMessage.startsWith('FileTypes')) {
+      if (currentErrorMessage?.id?.startsWith('third_party_app-error_file')) {
         newState.errorMessage = '';
       }
       this.setState(newState);
@@ -260,13 +272,14 @@ export default class ThirdPartyApp extends React.Component {
       <AppModal
         show={showMsgModalEdit}
         onHide={this.closeEditThirdPartyAppModal}
-        title="Edit third party app"
-        primaryActionLabel="Update"
+        title={<FormattedMessage id="third_party_app-edit_title" />}
+        primaryActionLabel={intl.formatMessage({ id: 'update' })}
         onPrimaryAction={handleEdit}
+        closeLabel={<FormattedMessage id="cancel" />}
       >
         <Form.Group controlId="formControlName" className="mb-2">
           <Form.Label>
-            Name:
+            {`${intl.formatMessage({ id: 'name' })}:`}
           </Form.Label>
           <Form.Control
             type="text"
@@ -279,7 +292,7 @@ export default class ThirdPartyApp extends React.Component {
 
         <Form.Group controlId="formControlIPAdress" className="mb-2">
           <Form.Label>
-            IP address:
+            {`${intl.formatMessage({ id: 'third_party_app-ip_address' })}:`}
           </Form.Label>
           <Form.Control
             type="text"
@@ -292,7 +305,7 @@ export default class ThirdPartyApp extends React.Component {
 
         <Form.Group controlId="formControlFileType" className="mb-2">
           <Form.Label>
-            Compatible File types (MIME):
+            {`${intl.formatMessage({ id: 'third_party_app-compatible_file_types_mime' })}:`}
           </Form.Label>
           <Form.Control
             type="text"
@@ -300,13 +313,18 @@ export default class ThirdPartyApp extends React.Component {
             value={currentFileTypes}
             onChange={handleFileTypesChange}
             ref={(ref) => { fileTypesRef = ref; }}
-            placeholder="* or comma separated list: image/png,text..."
+            placeholder={intl.formatMessage({ id: 'third_party_app-file_types_placeholder' })}
           />
         </Form.Group>
 
         {errorMessage && (
           <Form.Group controlId="formControlEditMessage">
-            <Form.Control type="text" readOnly name="messageNewUserModal" value={errorMessage} />
+            <Form.Control
+              type="text"
+              readOnly
+              name="messageNewUserModal"
+              value={intl.formatMessage({ id: errorMessage.id }, errorMessage.values)}
+            />
           </Form.Group>
         )}
       </AppModal>
@@ -315,6 +333,7 @@ export default class ThirdPartyApp extends React.Component {
 
   renderNewThirdPartyAppModal() {
     const { showMsgModal, errorMessage } = this.state;
+    const { intl } = this.props;
 
     let nameRef = null;
     let urlRef = null;
@@ -334,39 +353,45 @@ export default class ThirdPartyApp extends React.Component {
       <AppModal
         show={showMsgModal}
         onHide={this.closeNewThirdPartyAppModal}
-        title="Create new third party app"
-        primaryActionLabel="Create"
+        title={<FormattedMessage id="third_party_app-new_title" />}
+        primaryActionLabel={intl.formatMessage({ id: 'create' })}
         onPrimaryAction={handleCreate}
+        closeLabel={<FormattedMessage id="cancel" />}
       >
         <Form.Group controlId="formControlName" className="mb-2">
           <Form.Label>
-            Name:
+            {`${intl.formatMessage({ id: 'name' })}:`}
           </Form.Label>
           <Form.Control type="text" name="Name" ref={(ref) => { nameRef = ref; }} />
         </Form.Group>
 
         <Form.Group controlId="formControlIPAdress" className="mb-2">
           <Form.Label>
-            IP address:
+            {`${intl.formatMessage({ id: 'third_party_app-ip_address' })}:`}
           </Form.Label>
           <Form.Control type="text" name="IP address" ref={(ref) => { urlRef = ref; }} />
         </Form.Group>
 
         <Form.Group controlId="formControlFileTypes" className="mb-2">
           <Form.Label>
-            File types (MIME):
+            {`${intl.formatMessage({ id: 'third_party_app-file_types_mime' })}:`}
           </Form.Label>
           <Form.Control
             type="text"
             name="File types"
             ref={(ref) => { fileTypesRef = ref; }}
-            placeholder="* or comma separated list: image/png,text..."
+            placeholder={intl.formatMessage({ id: 'third_party_app-file_types_placeholder' })}
           />
         </Form.Group>
 
         {errorMessage && (
           <Form.Group controlId="formControlCreateMessage">
-            <Form.Control type="text" readOnly name="messageNewUserModal" value={errorMessage} />
+            <Form.Control
+              type="text"
+              readOnly
+              name="messageNewUserModal"
+              value={intl.formatMessage({ id: errorMessage.id }, errorMessage.values)}
+            />
           </Form.Group>
         )}
       </AppModal>
@@ -379,7 +404,7 @@ export default class ThirdPartyApp extends React.Component {
     return (
       <div>
         <Button variant="primary" size="sm" onClick={() => this.showNewThirdPartyAppModal()}>
-          New ThirdPartyApp
+          <FormattedMessage id="third_party_app-new_btn" />
           <i className="fa fa-plus ms-1" />
         </Button>
         {this.renderNewThirdPartyAppModal()}
@@ -387,11 +412,11 @@ export default class ThirdPartyApp extends React.Component {
         <Table>
           <thead>
             <tr>
-              <th>Actions</th>
-              <th>Name</th>
-              <th>IP address</th>
-              <th>File types</th>
-              <th>ID</th>
+              <th><FormattedMessage id="actions" /></th>
+              <th><FormattedMessage id="name" /></th>
+              <th><FormattedMessage id="third_party_app-ip_address" /></th>
+              <th><FormattedMessage id="third_party_app-file_types" /></th>
+              <th><FormattedMessage id="id" /></th>
             </tr>
           </thead>
           <tbody>
@@ -401,7 +426,7 @@ export default class ThirdPartyApp extends React.Component {
                   <ButtonToolbar>
                     <OverlayTrigger placement="bottom" overlay={editTip}>
                       <Button variant="info" size="sm" onClick={() => this.showEditThirdPartyAppModal(entry.id)}>
-                        Edit
+                        <FormattedMessage id="edit" />
                       </Button>
                     </OverlayTrigger>
 
@@ -429,3 +454,11 @@ export default class ThirdPartyApp extends React.Component {
     );
   }
 }
+
+ThirdPartyApp.propTypes = {
+  intl: PropTypes.shape({
+    formatMessage: PropTypes.func.isRequired,
+  }).isRequired,
+};
+
+export default injectIntl(ThirdPartyApp);

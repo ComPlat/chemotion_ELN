@@ -1,0 +1,22 @@
+{
+    "language-en": "English",
+    "language-de": "Deutsch",
+    "actions": "Aktionen",
+    "add": "Hinzufügen",
+    "cancel": "Abbrechen",
+    "create": "Erstellen",
+    "save": "Speichern",
+    "name": "Name",
+    "edit": "Bearbeite",
+    "delete": "Löschen",
+    "update": "Aktualisieren",
+    "email": "E-Mail",
+    "file": "Datei",
+    "user": "Benutzer",
+    "none": "Keine",
+    "yes": "Ja",
+    "no": "Nein",
+    "type_to_search": "Tippen zum Suchen",
+    "select_placeholder": "Auswählen ...",
+    "copy_to_clipboard": "in die Zwischenablage kopieren"
+}

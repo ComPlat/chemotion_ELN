@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import {
   Form, InputGroup, Tooltip, OverlayTrigger, Button
 } from 'react-bootstrap';
+import { useIntl, FormattedMessage } from 'react-intl';
 import { Select } from 'src/components/common/Select';
 import { startsWith, endsWith } from 'lodash';
 
@@ -16,10 +17,15 @@ function ListLocalCollector({ localCollectorValues }) {
     <div className="mt-3 p-2 border-1 border-danger border-dashed">
       {localCollectorValues.map((c) => (
         <div key={c.path}>
-          <Form.Label className="fw-bold">Local Collector Dir Configuration</Form.Label>
+          <Form.Label className="fw-bold">
+            <FormattedMessage id="devices-local_collector_config" />
+          </Form.Label>
           <Form.Group>
             <InputGroup>
-              <OverlayTrigger placement="right" overlay={<Tooltip id="copy_tooltip">copy to clipboard</Tooltip>}>
+              <OverlayTrigger
+                placement="right"
+                overlay={<Tooltip id="copy_tooltip"><FormattedMessage id="copy_to_clipboard" /></Tooltip>}
+              >
                 <Button
                   size="xxsm"
                   variant="light"
@@ -42,6 +48,7 @@ function ListLocalCollector({ localCollectorValues }) {
 }
 
 function DeviceDataCollectorTab() {
+  const intl = useIntl();
   const devicesStore = useContext(StoreContext).devices;
   const [localCollectorValues, setLocalCollectorValues] = useState([]);
   const { device } = devicesStore;
@@ -103,7 +110,11 @@ function DeviceDataCollectorTab() {
   return (
     <Form className="d-flex justify-content-between flex-wrap">
       <Form.Group className="w-100 mb-4">
-        <Form.Label>Watch method *</Form.Label>
+        <Form.Label>
+          <FormattedMessage id="devices-watch_method" />
+          {' '}
+          *
+        </Form.Label>
         <Select
           isClearable
           value={methodValue}
@@ -114,33 +125,41 @@ function DeviceDataCollectorTab() {
       </Form.Group>
 
       <Form.Group className="w-50 mb-4 pe-4">
-        <Form.Label>User *</Form.Label>
+        <Form.Label>
+          <FormattedMessage id="user" />
+          {' '}
+          *
+        </Form.Label>
         <Form.Control
           type="text"
           value={userValue}
           className={device.valid_datacollector_user}
           onChange={(event) => onChange('datacollector_user', event.target.value)}
-          placeholder="e.g. User"
+          placeholder={intl.formatMessage({ id: 'devices-user_placeholder' })}
           readOnly={endsWith(methodValueCheck, 'local')}
           disabled={endsWith(methodValueCheck, 'local')}
         />
       </Form.Group>
 
       <Form.Group className="w-50 mb-4">
-        <Form.Label>Host *</Form.Label>
+        <Form.Label>
+          <FormattedMessage id="devices-host" />
+          {' '}
+          *
+        </Form.Label>
         <Form.Control
           type="text"
           value={hostValue}
           className={device.valid_datacollector_host}
           onChange={(event) => onChange('datacollector_host', event.target.value)}
-          placeholder="e.g. remote.address or localhost:2222"
+          placeholder={intl.formatMessage({ id: 'devices-host_placeholder' })}
           readOnly={endsWith(methodValueCheck, 'local')}
           disabled={endsWith(methodValueCheck, 'local')}
         />
       </Form.Group>
 
       <Form.Group className="w-50 mb-4 pe-4">
-        <Form.Label>SFTP authentication with</Form.Label>
+        <Form.Label><FormattedMessage id="devices-sftp_authentication" /></Form.Label>
         <Select
           value={authenticationValue}
           options={authenticationOptions}
@@ -149,26 +168,30 @@ function DeviceDataCollectorTab() {
       </Form.Group>
 
       <Form.Group className="w-50 mb-4">
-        <Form.Label>Key file</Form.Label>
+        <Form.Label><FormattedMessage id="devices-key_file" /></Form.Label>
         <Form.Control
           type="text"
           value={keyFileValue}
           className={device.valid_datacollector_key_name}
           onChange={(event) => onChange('datacollector_key_name', event.target.value)}
-          placeholder="e.g. /home/user/.ssh/rsa/eln-privatekey.pem"
+          placeholder={intl.formatMessage({ id: 'devices-key_file_placeholder' })}
           readOnly={endsWith(methodValueCheck, 'local') || readonlyKeyName}
           disabled={endsWith(methodValueCheck, 'local') || readonlyKeyName}
         />
       </Form.Group>
 
       <Form.Group className="w-100 mb-4">
-        <Form.Label>Watch directory *</Form.Label>
+        <Form.Label>
+          <FormattedMessage id="devices-watch_directory" />
+          {' '}
+          *
+        </Form.Label>
         <Form.Control
           type="text"
           value={dirValue}
           className={device.valid_datacollector_dir}
           onChange={(event) => onChange('datacollector_dir', event.target.value)}
-          placeholder="e.g. /home/sftp/eln"
+          placeholder={intl.formatMessage({ id: 'devices-watch_directory_placeholder' })}
           readOnly={userLevelSelected}
           disabled={userLevelSelected}
         />
@@ -178,12 +201,11 @@ function DeviceDataCollectorTab() {
             id="enable_user_level_data_collection"
             type="checkbox"
             checked={userLevelSelected}
-            label="Enable user level data collection"
+            label={intl.formatMessage({ id: 'devices-enable_user_level' })}
             onChange={(event) => onChange('datacollector_user_level_selected', event.target.checked)}
           />
           <Form.Text>
-            If you choose this option, the system will gather files and folders from subdirectories within the
-            directory you have specified. These subdirectories must align with user name abbreviations.
+            <FormattedMessage id="devices-user_level_hint" />
           </Form.Text>
         </div>
 
@@ -195,17 +217,17 @@ function DeviceDataCollectorTab() {
       </Form.Group>
 
       <Form.Group className="w-100 mb-4">
-        <Form.Label className="fw-bold">Number of files</Form.Label>
+        <Form.Label className="fw-bold"><FormattedMessage id="devices-number_of_files" /></Form.Label>
         <Form.Control
           type="number"
           value={numberOfFilesValue}
           onChange={(event) => onChange('datacollector_number_of_files', event.target.value)}
           min="0"
-          placeholder="e.g. 10"
+          placeholder={intl.formatMessage({ id: 'devices-number_of_files_placeholder' })}
           readOnly={startsWith(methodValueCheck, 'file')}
           disabled={startsWith(methodValueCheck, 'file')}
         />
-        <Form.Text>Folderwatcher: set to 0 for a varying number of files</Form.Text>
+        <Form.Text><FormattedMessage id="devices-number_of_files_hint" /></Form.Text>
       </Form.Group>
     </Form>
   );

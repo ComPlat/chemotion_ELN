@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   Table, Button, Form, Tooltip, OverlayTrigger, InputGroup
 } from 'react-bootstrap';
@@ -7,11 +8,16 @@ import { AsyncSelect } from 'src/components/common/Select';
 import JSONInput from 'react-json-editor-ajrm';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { FormattedMessage, injectIntl } from 'react-intl';
 import AppModal from 'src/components/common/AppModal';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
-const editTooltip = <Tooltip id="edit_tooltip">Edit Permission</Tooltip>;
-const jsonTooltip = <Tooltip id="edit_tooltip">Edit JSON</Tooltip>;
+const editTooltip = (
+  <Tooltip id="edit_tooltip"><FormattedMessage id="matrix-edit_permission" /></Tooltip>
+);
+const jsonTooltip = (
+  <Tooltip id="json_tooltip"><FormattedMessage id="matrix-edit_json" /></Tooltip>
+);
 const Notification = (props) => (
   NotificationActions.add({
     title: props.title,
@@ -34,7 +40,7 @@ const loadUserByName = (input) => {
     });
 };
 
-export default class MatrixManagement extends React.Component {
+class MatrixManagement extends React.Component {
   constructor(props) {
     super(props);
 
@@ -82,6 +88,7 @@ export default class MatrixManagement extends React.Component {
 
   handleSave(matrice) {
     const { includeUsers, excludeUsers } = this.state;
+    const { intl } = this.props;
 
     const params = {
       id: matrice.id,
@@ -92,13 +99,19 @@ export default class MatrixManagement extends React.Component {
     params.include_ids = (includeUsers ?? []).map((u) => u.value);
     params.exclude_ids = (excludeUsers ?? []).map((u) => u.value);
 
+    const title = intl.formatMessage({ id: 'matrix-function_label' }, { name: matrice.name });
+
     AdminFetcher.updateMatrice(params)
       .then((result) => {
         if (result.error) {
-          Notification({ title: `Function [${matrice.name}]`, lvl: 'error', msg: result.error });
+          Notification({ title, lvl: 'error', msg: result.error });
           return false;
         }
-        Notification({ title: `Function [${matrice.name}]`, lvl: 'info', msg: 'Updated successfully' });
+        Notification({
+          title,
+          lvl: 'info',
+          msg: intl.formatMessage({ id: 'matrix-updated_successfully' }),
+        });
         this.setState({
           showEditModal: false, includeUsers: null, excludeUsers: null, matrice: {}
         });
@@ -109,16 +122,19 @@ export default class MatrixManagement extends React.Component {
   }
 
   handleJsonSave(matrice) {
+    const { intl } = this.props;
+    const title = intl.formatMessage({ id: 'matrix-function_label' }, { name: matrice.name });
+
     AdminFetcher.updateMatrice({ id: matrice.id, configs: matrice.configs })
       .then((result) => {
         if (result.error) {
-          Notification({ title: `Function [${matrice.name}]`, lvl: 'error', msg: result.error });
+          Notification({ title, lvl: 'error', msg: result.error });
           return false;
         }
         Notification({
-          title: `Function [${matrice.name}]`,
+          title,
           lvl: 'info',
-          msg: 'JSON Configuration updated successfully'
+          msg: intl.formatMessage({ id: 'matrix-json_updated_successfully' }),
         });
         this.setState({ showJsonModal: false, showJsonBtn: false, matrice: {} });
         this.fetchMatrices();
@@ -167,6 +183,7 @@ export default class MatrixManagement extends React.Component {
 
   renderList() {
     const { matrices } = this.state;
+    const { intl } = this.props;
     const tbody = matrices && matrices.map((e, idx) => (
       <tbody key={`tbody_${e.id}`}>
         <tr
@@ -181,7 +198,7 @@ export default class MatrixManagement extends React.Component {
                 variant="info"
                 onClick={() => this.edit(e)}
                 className="me-1"
-                aria-label="Edit permission"
+                aria-label={intl.formatMessage({ id: 'matrix-edit_permission' })}
               >
                 <i className="fa fa-pencil-square-o" />
               </Button>
@@ -193,7 +210,7 @@ export default class MatrixManagement extends React.Component {
                 variant="warning"
                 onClick={() => this.editJson(e)}
                 className="me-1"
-                aria-label="Edit JSON configuration"
+                aria-label={intl.formatMessage({ id: 'matrix-edit_json_configuration' })}
               >
                 <i className="fa fa-cog" />
               </Button>
@@ -202,7 +219,7 @@ export default class MatrixManagement extends React.Component {
           <td>{e.id}</td>
           <td>{e.name}</td>
           <td>{e.label}</td>
-          <td>{e.enabled === true ? 'true' : 'false'}</td>
+          <td><FormattedMessage id={e.enabled === true ? 'yes' : 'no'} /></td>
           <td>{e.include_users.map((u) => u.label).join(', ')}</td>
           <td>{e.exclude_users.map((u) => u.label).join(', ')}</td>
         </tr>
@@ -215,13 +232,13 @@ export default class MatrixManagement extends React.Component {
           <thead>
             <tr className="bg-gray-200">
               <th>#</th>
-              <th>Actions</th>
-              <th>ID</th>
-              <th>Function name</th>
-              <th>Description</th>
-              <th>Set globally</th>
-              <th>Enabled for</th>
-              <th>Disabled for</th>
+              <th><FormattedMessage id="actions" /></th>
+              <th><FormattedMessage id="id" /></th>
+              <th><FormattedMessage id="matrix-function_name" /></th>
+              <th><FormattedMessage id="matrix-description" /></th>
+              <th><FormattedMessage id="matrix-set_globally" /></th>
+              <th><FormattedMessage id="matrix-enabled_for" /></th>
+              <th><FormattedMessage id="matrix-disabled_for" /></th>
             </tr>
           </thead>
           {tbody}
@@ -234,31 +251,34 @@ export default class MatrixManagement extends React.Component {
     const {
       matrice, includeUsers, excludeUsers, showEditModal
     } = this.state;
+    const { intl } = this.props;
+    const selectPlaceholder = intl.formatMessage({ id: 'select_placeholder' });
 
     return (
       <AppModal
         show={showEditModal}
         onHide={this.handleClose}
-        title="Edit Permisson"
-        primaryActionLabel="Update"
+        title={<FormattedMessage id="matrix-edit_permission" />}
+        primaryActionLabel={intl.formatMessage({ id: 'update' })}
         onPrimaryAction={() => this.handleSave(matrice)}
+        closeLabel={<FormattedMessage id="cancel" />}
       >
         <Form className="row g-3">
           <Form.Group controlId="formControlId">
             <InputGroup>
-              <InputGroup.Text>ID</InputGroup.Text>
+              <InputGroup.Text><FormattedMessage id="id" /></InputGroup.Text>
               <Form.Control type="text" defaultValue={matrice.id} readOnly />
             </InputGroup>
           </Form.Group>
           <Form.Group controlId="formControlName">
             <InputGroup>
-              <InputGroup.Text>Function name</InputGroup.Text>
+              <InputGroup.Text><FormattedMessage id="matrix-function_name" /></InputGroup.Text>
               <Form.Control type="text" defaultValue={matrice.name} readOnly />
             </InputGroup>
           </Form.Group>
           <Form.Group controlId="formControlLabel">
             <InputGroup>
-              <InputGroup.Text>Description</InputGroup.Text>
+              <InputGroup.Text><FormattedMessage id="matrix-description" /></InputGroup.Text>
               <Form.Control type="text" defaultValue={matrice.label} ref={(ref) => { this.m_label = ref; }} />
             </InputGroup>
           </Form.Group>
@@ -268,33 +288,32 @@ export default class MatrixManagement extends React.Component {
               type="checkbox"
               checked={matrice.enabled}
               onChange={(e) => this.handleChange(!matrice.enabled, e)}
-              label="Enable globally"
+              label={<FormattedMessage id="matrix-enable_globally" />}
               className="fs-5"
             />
             <p className="ms-3 fs-6">
-              (When [checked], all users can see/use this feature,
-              when [unchecked], only allowed users can see/use this function)
+              <FormattedMessage id="matrix-enable_globally_hint" />
             </p>
           </Form.Group>
           <Form.Group>
-            <Form.Label>Include Users</Form.Label>
+            <Form.Label><FormattedMessage id="matrix-include_users" /></Form.Label>
             <AsyncSelect
               isMulti
               value={includeUsers}
               matchProp="name"
-              placeholder="Select..."
+              placeholder={selectPlaceholder}
               loadOptions={loadUserByName}
               onChange={this.handleIncludeUser}
               menuPosition="fixed"
             />
           </Form.Group>
           <Form.Group>
-            <Form.Label>Exclude Users</Form.Label>
+            <Form.Label><FormattedMessage id="matrix-exclude_users" /></Form.Label>
             <AsyncSelect
               isMulti
               value={excludeUsers}
               matchProp="name"
-              placeholder="Select..."
+              placeholder={selectPlaceholder}
               loadOptions={loadUserByName}
               onChange={this.handleExcludeUser}
               menuPosition="fixed"
@@ -307,26 +326,28 @@ export default class MatrixManagement extends React.Component {
 
   renderJsonModal() {
     const { matrice, showJsonBtn, showJsonModal } = this.state;
+    const { intl } = this.props;
 
     return (
       <AppModal
         show={showJsonModal}
         onHide={this.handleJsonClose}
-        title="JSON Configurations"
-        primaryActionLabel="Update"
+        title={<FormattedMessage id="matrix-json_configurations" />}
+        primaryActionLabel={intl.formatMessage({ id: 'update' })}
         onPrimaryAction={() => this.handleJsonSave(matrice)}
         primaryActionDisabled={!showJsonBtn}
+        closeLabel={<FormattedMessage id="cancel" />}
       >
         <Form className="row g-3">
           <Form.Group controlId="formControlId">
             <InputGroup>
-              <InputGroup.Text>ID</InputGroup.Text>
+              <InputGroup.Text><FormattedMessage id="id" /></InputGroup.Text>
               <Form.Control type="text" defaultValue={matrice.id} readOnly />
             </InputGroup>
           </Form.Group>
           <Form.Group controlId="formControlName">
             <InputGroup>
-              <InputGroup.Text>Function name</InputGroup.Text>
+              <InputGroup.Text><FormattedMessage id="matrix-function_name" /></InputGroup.Text>
               <Form.Control type="text" defaultValue={matrice.name} readOnly />
             </InputGroup>
           </Form.Group>
@@ -352,3 +373,11 @@ export default class MatrixManagement extends React.Component {
     );
   }
 }
+
+MatrixManagement.propTypes = {
+  intl: PropTypes.shape({
+    formatMessage: PropTypes.func.isRequired,
+  }).isRequired,
+};
+
+export default injectIntl(MatrixManagement);

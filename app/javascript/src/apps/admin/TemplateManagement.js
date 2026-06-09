@@ -1,16 +1,30 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   Table, Button, Form, Tooltip,
   OverlayTrigger, Popover, Card, Container
 } from 'react-bootstrap';
+import { FormattedMessage, injectIntl } from 'react-intl';
 import AppModal from 'src/components/common/AppModal';
 import ReportTemplateFetcher from 'src/fetchers/ReportTemplateFetcher';
 import Dropzone from 'react-dropzone';
 import { Select } from 'src/components/common/Select';
 
-const editTooltip = <Tooltip id="inchi_tooltip">Edit this template</Tooltip>;
+const editTooltip = (
+  <Tooltip id="inchi_tooltip"><FormattedMessage id="template_management-edit_tooltip" /></Tooltip>
+);
 
-export default class TemplateManagement extends React.Component {
+const REPORT_TEMPLATE_TYPE_KEYS = [
+  { value: 'standard', id: 'template_management-type_standard' },
+  { value: 'supporting_information', id: 'template_management-type_supporting_information' },
+  { value: 'supporting_information_std_rxn', id: 'template_management-type_supporting_information_std_rxn' },
+  { value: 'spectrum', id: 'template_management-type_spectrum' },
+  { value: 'rxn_list_xlsx', id: 'template_management-type_rxn_list_xlsx' },
+  { value: 'rxn_list_csv', id: 'template_management-type_rxn_list_csv' },
+  { value: 'rxn_list_html', id: 'template_management-type_rxn_list_html' },
+];
+
+class TemplateManagement extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -19,16 +33,6 @@ export default class TemplateManagement extends React.Component {
       attachment: null,
       showNewTemplateModal: false,
       templateType: null,
-      reportTemplateTypes:
-        [
-          { label: 'Standard', value: 'standard' },
-          { label: 'Supporting Information', value: 'supporting_information' },
-          { label: 'Supporting Information - Standard Reaction', value: 'supporting_information_std_rxn' },
-          { label: 'Supporting Information - Spectra', value: 'spectrum' },
-          { label: 'Supporting Information - Reaction List (.xlsx)', value: 'rxn_list_xlsx' },
-          { label: 'Supporting Information - Reaction List (.csv)', value: 'rxn_list_csv' },
-          { label: 'Supporting Information - Reaction List (.html)', value: 'rxn_list_html' }
-        ],
       showEditUserModal: false,
     };
     this.handleFetchTemplates = this.handleFetchTemplates.bind(this);
@@ -157,6 +161,14 @@ export default class TemplateManagement extends React.Component {
     this.setState({ templateType: e });
   }
 
+  getReportTemplateTypes() {
+    const { intl } = this.props;
+    return REPORT_TEMPLATE_TYPE_KEYS.map(({ value, id }) => ({
+      value,
+      label: intl.formatMessage({ id }),
+    }));
+  }
+
   dropzoneOrfilePreview() {
     const { template, attachment } = this.state;
     if (template.attachment_id) {
@@ -186,39 +198,41 @@ export default class TemplateManagement extends React.Component {
         className="d-flex align-items-center justify-content-center dnd-zone"
       >
         <div className="text-center pt-3 text-lighten2 fs-6">
-          Drop File, or Click to Select.
+          <FormattedMessage id="template_management-drop_file" />
         </div>
       </Dropzone>
     );
   }
 
   renderNewTemplateModal() {
-    const { showNewTemplateModal, reportTemplateTypes, templateType } = this.state;
+    const { showNewTemplateModal, templateType } = this.state;
+    const { intl } = this.props;
     return (
       <AppModal
         show={showNewTemplateModal}
         onHide={this.handleNewTemplateClose}
-        title="New Template"
-        primaryActionLabel="Create"
+        title={<FormattedMessage id="template_management-new_template" />}
+        primaryActionLabel={intl.formatMessage({ id: 'create' })}
         onPrimaryAction={() => this.handleCreateNewTemplate()}
+        closeLabel={<FormattedMessage id="cancel" />}
       >
         <Container>
           <Form>
             <Form.Group controlId="formControlName" className="mb-3">
-              <Form.Label className="fs-6">Name:</Form.Label>
+              <Form.Label className="fs-6">{`${intl.formatMessage({ id: 'name' })}:`}</Form.Label>
               <Form.Control type="text" name="templateName" ref={(ref) => { this.templateName = ref; }} />
             </Form.Group>
             <Form.Group controlId="formControlReportTemplateType" className="mb-3">
-              <Form.Label className="fs-6">Type:</Form.Label>
+              <Form.Label className="fs-6">{`${intl.formatMessage({ id: 'user_management-type' })}:`}</Form.Label>
               <Select
-                options={reportTemplateTypes}
+                options={this.getReportTemplateTypes()}
                 value={templateType}
                 isClearable
                 onChange={this.onTemplateTypeChange}
               />
             </Form.Group>
             <Form.Group controlId="formControlAttachment" className="mb-1">
-              <Form.Label className="fs-6">File:</Form.Label>
+              <Form.Label className="fs-6">{`${intl.formatMessage({ id: 'file' })}:`}</Form.Label>
               {this.dropzoneOrfilePreview()}
             </Form.Group>
           </Form>
@@ -228,22 +242,22 @@ export default class TemplateManagement extends React.Component {
   }
 
   renderEditTemplateModal() {
-    const {
-      template, showEditUserModal, reportTemplateTypes, templateType
-    } = this.state;
+    const { template, showEditUserModal, templateType } = this.state;
+    const { intl } = this.props;
 
     return (
       <AppModal
         show={showEditUserModal}
         onHide={this.handleEditTemplateClose}
-        title="Edit Template"
-        primaryActionLabel="Update"
+        title={<FormattedMessage id="template_management-edit_template" />}
+        primaryActionLabel={intl.formatMessage({ id: 'update' })}
         onPrimaryAction={() => this.handleUpdateTemplate(template.id)}
+        closeLabel={<FormattedMessage id="cancel" />}
       >
         <Container>
           <Form>
             <Form.Group controlId="formControlName" className="mb-3">
-              <Form.Label className="fs-6">Name:</Form.Label>
+              <Form.Label className="fs-6">{`${intl.formatMessage({ id: 'name' })}:`}</Form.Label>
               <Form.Control
                 type="text"
                 name="templateName"
@@ -252,16 +266,16 @@ export default class TemplateManagement extends React.Component {
               />
             </Form.Group>
             <Form.Group controlId="formControlReportTemplateType" className="mb-3">
-              <Form.Label className="fs-6">Type:</Form.Label>
+              <Form.Label className="fs-6">{`${intl.formatMessage({ id: 'user_management-type' })}:`}</Form.Label>
               <Select
-                options={reportTemplateTypes}
+                options={this.getReportTemplateTypes()}
                 value={templateType}
                 isClearable
                 onChange={this.onTemplateTypeChange}
               />
             </Form.Group>
             <Form.Group controlId="formControlAttachment" className="mb-3">
-              <Form.Label className="fs-6">File:</Form.Label>
+              <Form.Label className="fs-6">{`${intl.formatMessage({ id: 'file' })}:`}</Form.Label>
               {this.dropzoneOrfilePreview()}
             </Form.Group>
           </Form>
@@ -274,14 +288,14 @@ export default class TemplateManagement extends React.Component {
     const popover = (
       <Popover id="popover-positioned-scrolling-left">
         <Popover.Header id="popover-positioned-scrolling-left" as="h5">
-          Delete this template?
+          <FormattedMessage id="template_management-delete_confirm" />
         </Popover.Header>
         <Popover.Body>
           <Button size="sm" variant="danger" className="me-1" onClick={() => this.handleDeleteTemplate(template)}>
-            Yes
+            <FormattedMessage id="yes" />
           </Button>
           <Button size="sm" variant="warning" onClick={this.handleClick}>
-            No
+            <FormattedMessage id="no" />
           </Button>
         </Popover.Body>
       </Popover>
@@ -305,62 +319,66 @@ export default class TemplateManagement extends React.Component {
   }
 
   render() {
-    const { templates, reportTemplateTypes } = this.state;
+    const { templates } = this.state;
+    const reportTemplateTypes = this.getReportTemplateTypes();
 
     const tcolumn = (
       <tr>
         <th>#</th>
-        <th>Name</th>
-        <th>Report Type</th>
-        <th>ID</th>
-        <th>Actions</th>
+        <th><FormattedMessage id="name" /></th>
+        <th><FormattedMessage id="template_management-report_type" /></th>
+        <th><FormattedMessage id="id" /></th>
+        <th><FormattedMessage id="actions" /></th>
       </tr>
     );
 
-    const tbody = templates.map((g, idx) => (
-      <tr key={`row_${g.id}`}>
-        <td>
-          {idx + 1}
-        </td>
-        <td>
-          {' '}
-          {g.name}
-          {' '}
-        </td>
-        <td>
-          {' '}
-          {reportTemplateTypes.find(({ value }) => value === g.report_type).label}
-          {' '}
-        </td>
-        <td>
-          {' '}
-          {g.id}
-          {' '}
-        </td>
-        <td>
-          <OverlayTrigger placement="bottom" overlay={editTooltip}>
-            <Button
-              size="sm"
-              variant="info"
-              onClick={() => this.handleEditTemplateShow(g.id)}
-              className="me-2"
-            >
-              <i className="fa fa-user" />
-            </Button>
-          </OverlayTrigger>
-          <div className="d-inline-block">
-            {this.renderDeleteButton(g)}
-          </div>
-        </td>
-      </tr>
-    ));
+    const tbody = templates.map((g, idx) => {
+      const matchedType = reportTemplateTypes.find(({ value }) => value === g.report_type);
+      return (
+        <tr key={`row_${g.id}`}>
+          <td>
+            {idx + 1}
+          </td>
+          <td>
+            {' '}
+            {g.name}
+            {' '}
+          </td>
+          <td>
+            {' '}
+            {matchedType ? matchedType.label : g.report_type}
+            {' '}
+          </td>
+          <td>
+            {' '}
+            {g.id}
+            {' '}
+          </td>
+          <td>
+            <OverlayTrigger placement="bottom" overlay={editTooltip}>
+              <Button
+                size="sm"
+                variant="info"
+                onClick={() => this.handleEditTemplateShow(g.id)}
+                className="me-2"
+              >
+                <i className="fa fa-user" />
+              </Button>
+            </OverlayTrigger>
+            <div className="d-inline-block">
+              {this.renderDeleteButton(g)}
+            </div>
+          </td>
+        </tr>
+      );
+    });
 
     return (
       <Container fluid className="fs-5">
         <Card>
           <Card.Body>
             <Button variant="primary" size="md" onClick={() => this.handleNewTemplateShow()}>
-              Add new template
+              <FormattedMessage id="template_management-add_new" />
               {' '}
               <i className="fa fa-plus ms-1" />
             </Button>
@@ -384,3 +402,11 @@ export default class TemplateManagement extends React.Component {
     );
   }
 }
+
+TemplateManagement.propTypes = {
+  intl: PropTypes.shape({
+    formatMessage: PropTypes.func.isRequired,
+  }).isRequired,
+};
+
+export default injectIntl(TemplateManagement);

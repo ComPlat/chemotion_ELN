@@ -1,0 +1,23 @@
+{
+    "language-en": "English",
+    "language-de": "Deutsch",
+    "actions": "Actions",
+    "add": "Add",
+    "cancel": "Cancel",
+    "create": "Create",
+    "save": "Save",
+    "name": "Name",
+    "edit": "Edit",
+    "delete": "Delete",
+    "update": "Update",
+    "id": "ID",
+    "email": "Email",
+    "file": "File",
+    "user": "User",
+    "none": "None",
+    "yes": "Yes",
+    "no": "No",
+    "type_to_search": "Type to search",
+    "select_placeholder": "Select ...",
+    "copy_to_clipboard": "copy to clipboard"
+}
