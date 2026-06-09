@@ -40,15 +40,15 @@ CollectionToggle.propTypes = {
   totalSharedCollections: PropTypes.number.isRequired,
 };
 
-function ElementCollectionLabels({ element }) {
+const ElementCollectionLabels = ({ element }) => {
+  const collectionsStore = useContext(StoreContext).collections;
+
   const { currentUser } = UserStore.getState();
   if (!currentUser) return (<span />);
   if (!element.tag) return (<span />);
   if (!element.tag.taggable_data) return (<span />);
   if (!element.tag.taggable_data.collection_labels) return (<span />);
   if (element.tag.taggable_data.collection_labels.length == 0) return (<span />);
-
-  const collectionsStore = useContext(StoreContext).collections;
 
   const handleOnClick = (label, e) => {
     e.stopPropagation();
@@ -78,8 +78,10 @@ function ElementCollectionLabels({ element }) {
     );
   }
 
-  const ownCollections = element.tag.taggable_data.collection_labels.filter(label => collectionsStore.isOwnCollection(label.id))
-  const sharedCollections = element.tag.taggable_data.collection_labels.filter(label => collectionsStore.isSharedCollection(label.id))
+  const ownCollections = element.tag.taggable_data.collection_labels
+    .filter(label => collectionsStore.isOwnCollection(label.id))
+  const sharedCollections = element.tag.taggable_data.collection_labels
+    .filter(label => collectionsStore.isSharedCollection(label.id))
 
   if (ownCollections.length === 0 && sharedCollections.length === 0) { return (<span />); }
 
@@ -100,9 +102,9 @@ function ElementCollectionLabels({ element }) {
       )}
     </Dropdown>
   );
-}
+};
 
-export default observer(ElementCollectionLabels)
+export default observer(ElementCollectionLabels);
 
 ElementCollectionLabels.propTypes = {
   element: PropTypes.shape({

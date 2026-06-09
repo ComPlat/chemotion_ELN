@@ -6,19 +6,6 @@ import {
 import ModalImport from 'src/apps/mydb/collections/importSamples/ModalImport';
 import LiteratureModal from 'src/apps/mydb/collections/LiteratureModal';
 
-function findCollectionLabelById(collections, collectionId) {
-  if (!collections || collections.length === 0) return null;
-
-  for (let index = 0; index < collections.length; index += 1) {
-    const collection = collections[index];
-    if (collection.id === collectionId) return collection.label;
-    const childLabel = findCollectionLabelById(collection.children, collectionId);
-    if (childLabel) return childLabel;
-  }
-
-  return null;
-}
-
 const CollectionSubtreeFunctionsDropdownToggle = React.forwardRef(({
   onClick,
 }, ref) => (
@@ -40,12 +27,12 @@ CollectionSubtreeFunctionsDropdownToggle.propTypes = {
   onClick: PropTypes.func.isRequired,
 };
 
-export default function CollectionSubtreeFunctions({ collection }) {
-  if (collection === null || collection === undefined) return null;
-
+const CollectionSubtreeFunctions = ({ collection }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showLiteratureModal, setShowLiteratureModal] = useState(false);
   const [isLiteratureModalMounted, setIsLiteratureModalMounted] = useState(false);
+
+  if (collection === null || collection === undefined) return null;
 
   const collectionName = collection.label || 'Unknown Collection';
 
@@ -103,8 +90,10 @@ export default function CollectionSubtreeFunctions({ collection }) {
       )}
     </>
   );
-}
+};
 
 CollectionSubtreeFunctions.propTypes = {
   collection: PropTypes.object.isRequired,
 };
+
+export default CollectionSubtreeFunctions;

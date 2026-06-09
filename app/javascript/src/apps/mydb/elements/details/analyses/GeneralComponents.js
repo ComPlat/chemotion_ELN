@@ -1,10 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import { Button, Form } from 'react-bootstrap';
 
-function ToggleSwitch({ isChecked, setIsChecked, label }) {
+const ToggleSwitch = ({ isChecked, setIsChecked, label }) => {
   const handleChange = useCallback(() => {
     setIsChecked(!isChecked);
-  });
+  }, [isChecked, setIsChecked]);
 
   return (
     <Form>
@@ -17,31 +17,21 @@ function ToggleSwitch({ isChecked, setIsChecked, label }) {
       />
     </Form>
   );
-}
+};
 
-function FileTree({ treeData }) {
-  return (
-    <ul style={{ overflow: 'auto' }}>
-      {treeData.map((node, idx) => (
-        <TreeNode key={idx} node={node} />
-      ))}
-    </ul>
-  );
-}
-
-function TreeNode({ node }) {
-  if (node.marked) {
-    return null;
-  }
+const TreeNode = ({ node }) => {
   const [expanded, setExpanded] = useState(false);
   const hasChildren = node.isDirectory;
 
-  const handleClick = useCallback(() => setExpanded(!expanded));
+  const handleClick = useCallback(() => setExpanded((prev) => !prev), []);
   const onDragStart = useCallback((e) => {
     e.dataTransfer.setData('text/plain', node.fullPath);
-    // optionally, set a drag image or effect
     e.dataTransfer.effectAllowed = 'move';
-  });
+  }, [node.fullPath]);
+
+  if (node.marked) {
+    return null;
+  }
 
   return (
     <li>
@@ -65,13 +55,21 @@ function TreeNode({ node }) {
       )}
     </li>
   );
-}
+};
 
-function DatasetDropZone({ droppedPaths, setDroppedPaths }) {
+const FileTree = ({ treeData }) => (
+  <ul style={{ overflow: 'auto' }}>
+    {treeData.map((node, idx) => (
+      <TreeNode key={idx} node={node} />
+    ))}
+  </ul>
+);
+
+const DatasetDropZone = ({ droppedPaths, setDroppedPaths }) => {
   const onDragOver = useCallback((e) => {
-    e.preventDefault(); // allow drop
+    e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-  });
+  }, []);
 
   const onDrop = useCallback((e) => {
     e.preventDefault();
@@ -80,11 +78,11 @@ function DatasetDropZone({ droppedPaths, setDroppedPaths }) {
     if (path) {
       setDroppedPaths([...newDroppedPaths, path]);
     }
-  });
+  }, [droppedPaths, setDroppedPaths]);
 
   const removePath = useCallback((pathToRemove) => {
     setDroppedPaths(droppedPaths.filter((p) => p !== pathToRemove));
-  });
+  }, [droppedPaths, setDroppedPaths]);
 
   return (
     <div
@@ -111,7 +109,7 @@ function DatasetDropZone({ droppedPaths, setDroppedPaths }) {
       </ul>
     </div>
   );
-}
+};
 
 export {
   ToggleSwitch,

@@ -12,7 +12,7 @@ import {
 } from 'react-bootstrap';
 
 import { OtpInput } from 'src/components/common/OtpInput';
-import { formValueHandler, submitAsForm } from 'src/utilities/FormHelper';
+import { useFormValues, submitAsForm } from 'src/utilities/FormHelper';
 
 function omniauthLabel(icon, name) {
   if (icon) {
@@ -49,7 +49,7 @@ const handleLoginSubmit = async ({ form, url }) => {
 function ExtendedSignInForm({
   url, rememberable, username = '', fromInvalid = false
 }) {
-  const [form, setForm] = formValueHandler({
+  const [form, setForm] = useFormValues({
     login: username || '',
     password: '',
     remember_me: false,
@@ -170,7 +170,7 @@ ExtendedSignInForm.defaultProps = {
 };
 
 function SignInForm({ authenticityToken }) {
-  const [form, setForm] = formValueHandler({
+  const [form, setForm] = useFormValues({
     login: '',
     password: '',
     otp_attempt: ''
