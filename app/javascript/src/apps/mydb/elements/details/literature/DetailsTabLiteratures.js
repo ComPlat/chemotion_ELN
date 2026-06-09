@@ -58,7 +58,7 @@ export default class DetailsTabLiteratures extends Component {
 
     this.state = {
       literature: this.createEmptyLiterature(this.props.element.type),
-      literatures: new Map(),
+      literatures: Map(),
       sortedIds: [],
     };
     this.handleInputChange = this.handleInputChange.bind(this);

@@ -13,7 +13,7 @@ export default class LiteraturesFetcher {
     }).then((response) => response.json())
       .then((json) => json.literatures)
       .then((literatures) => literatures.map((literature) => new Literature(literature)))
-      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Map()))
+      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), Map()))
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
@@ -34,7 +34,7 @@ export default class LiteraturesFetcher {
     }).then((response) => response.json())
       .then((json) => { if (json.error) { throw json; } return json.literatures; })
       .then((literatures) => literatures.map((lits) => new Literature(lits)))
-      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Map()))
+      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), Map()))
       .catch((errorMessage) => { console.log(errorMessage); throw errorMessage; });
   }
 
@@ -75,7 +75,7 @@ export default class LiteraturesFetcher {
     }).then((response) => response.json())
       .then((json) => { if (json.error) { throw json; } return json.literatures; })
       .then((literatures) => literatures.map((lits) => new Literature(lits)))
-      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Map()))
+      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), Map()))
       .catch((errorMessage) => { console.log(errorMessage); throw errorMessage; });
   }
 
@@ -118,7 +118,7 @@ export default class LiteraturesFetcher {
       body: JSON.stringify(params)
     }).then((response) => response.json())
       .then((json) => json.selectedRefs.map((lit) => new Literature(lit)))
-      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Map()))
+      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), Map()))
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 }

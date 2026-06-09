@@ -137,7 +137,7 @@ export default class LiteratureDetails extends Component {
       literature: Literature.buildEmpty(),
       sorting: 'element',
       sortedIds: [],
-      selectedRefs: new Map()
+      selectedRefs: Map()
     };
     this.handleUIStoreChange = this.handleUIStoreChange.bind(this);
     this.loadSelectedReferences = this.loadSelectedReferences.bind(this);

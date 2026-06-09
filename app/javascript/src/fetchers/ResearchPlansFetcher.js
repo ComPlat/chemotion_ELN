@@ -19,7 +19,7 @@ export default class ResearchPlansFetcher {
         rResearchPlan.attachments = json.attachments;
         if (json.literatures && json.literatures.length > 0) {
           const tliteratures = json.literatures.map((literature) => new Literature(literature));
-          const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Map());
+          const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), Map());
           rResearchPlan.literatures = lits;
           rResearchPlan.updateChecksum();
         }

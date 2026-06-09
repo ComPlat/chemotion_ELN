@@ -132,7 +132,7 @@ export default class LiteratureModal extends Component {
     this.state = {
       sampleRefs: [],
       reactionRefs: [],
-      selectedRefs: new Map(),
+      selectedRefs: Map(),
       literature: Literature.buildEmpty(),
       sorting: 'element',
       sortedIds: [],

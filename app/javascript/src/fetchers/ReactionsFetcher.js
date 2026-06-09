@@ -35,7 +35,7 @@ export default class ReactionsFetcher {
             }
             if (json.literatures && json.literatures.length > 0) {
               const tliteratures = json.literatures.map((literature) => new Literature(literature));
-              const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Map());
+              const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), Map());
               reaction.literatures = lits;
             }
             if (json.research_plans && json.research_plans.length > 0) {
