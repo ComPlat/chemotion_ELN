@@ -23,7 +23,7 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
   const handlePaginationSelect = (index, ids, key) => {
     searchStore.changeTabCurrentPage(key, index, list.index);
 
-    const search_result = searchStore.tabSearchResultValues.find((val) => val.id == `${key}s-${index}`);
+    const search_result = searchStore.tabSearchResultValues.find((val) => val.id === `${key}s-${index}`);
     if (search_result === undefined) {
       searchByIds(index, ids, key);
     }
@@ -33,11 +33,12 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
+    const model = key === 'cell_line' ? 'cell_lines' : key;
 
     const selection = {
       elementType: 'by_ids',
       id_params: {
-        model_name: key,
+        model_name: model,
         ids,
         total_elements: tabResult.total_elements,
         with_filter: false,
