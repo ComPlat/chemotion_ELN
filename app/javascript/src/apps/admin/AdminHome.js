@@ -14,6 +14,7 @@ import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
 import DevicesList from 'src/apps/admin/devices/DevicesList';
 // import TemplateManagement from 'src/apps/admin/TemplateManagement';
 import ThirdPartyApp from 'src/apps/admin/ThirdPartyApp';
+import InfoSupportLinks from 'src/apps/admin/InfoSupportLinks';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -45,6 +46,7 @@ class AdminHome extends React.Component {
       case 13: return <DelayedJobs />;
       case 14: return <ChemSpectraLayouts />;
       case 15: return <ThirdPartyApp />;
+      case 16: return <InfoSupportLinks />;
       default: return null;
     }
   }
@@ -89,6 +91,9 @@ class AdminHome extends React.Component {
         </NavItem>
         <NavItem>
           <Nav.Link eventKey={15}>Third Party Apps</Nav.Link>
+        </NavItem>
+        <NavItem>
+          <Nav.Link eventKey={16}>Info &amp; Support Links</Nav.Link>
         </NavItem>
       </Nav>
     );
