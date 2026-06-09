@@ -14,7 +14,7 @@ import AppModal from 'src/components/common/AppModal';
 import { CreatableSelect } from 'src/components/common/Select';
 import { cloneDeep, findIndex, set } from 'lodash';
 import uuid from 'uuid';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -154,7 +154,7 @@ export default class SampleDetails extends React.Component {
       quickCreator: false,
       showInchikey: false,
       pageMessage: null,
-      visible: Immutable.List(),
+      visible: List(),
       startExport: false,
       sfn: UIStore.getState().hasSfn,
       saveInventoryAction: false,

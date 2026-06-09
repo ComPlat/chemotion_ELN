@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
-import Immutable from 'immutable';
+import { Map } from 'immutable';
 import {
   Citation, doiValid, sanitizeDoi, groupByCitation, AddButton, LiteratureInput, LiteralType
 } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
@@ -58,7 +58,7 @@ export default class DetailsTabLiteratures extends Component {
 
     this.state = {
       literature: this.createEmptyLiterature(this.props.element.type),
-      literatures: new Immutable.Map(),
+      literatures: Map(),
       sortedIds: [],
     };
     this.handleInputChange = this.handleInputChange.bind(this);

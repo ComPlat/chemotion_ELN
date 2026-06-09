@@ -1,5 +1,5 @@
 import { getElementSegments } from './ElementUtils';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 
 export const TAB_DISPLAY_NAMES = {
   qc_curation: 'QC & curation',
@@ -45,8 +45,8 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
   }
   hidden = hidden.filter(n => n);
   return {
-    visible: Immutable.List(visible.filter(n => n !== undefined)),
-    hidden: Immutable.List(hidden.filter(n => (n !== undefined && n !== first)))
+    visible: List(visible.filter(n => n !== undefined)),
+    hidden: List(hidden.filter(n => (n !== undefined && n !== first)))
   };
 };
 
