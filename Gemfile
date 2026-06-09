@@ -87,7 +87,7 @@ gem 'pg'
 gem 'pg_search'
 gem 'prawn'
 gem 'prawn-svg'
-gem 'puma', '< 6.0.0'
+gem 'puma', '< 8.0.0'
 
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'

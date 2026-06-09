@@ -440,7 +440,7 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     net-ssh (6.1.0)
-    nio4r (2.7.4)
+    nio4r (2.7.5)
     nokogiri (1.15.7-aarch64-linux)
       racc (~> 1.4)
     nokogiri (1.15.7-x86_64-linux)
@@ -520,7 +520,7 @@ GEM
     pry-rails (0.3.11)
       pry (>= 0.13.0)
     public_suffix (7.0.5)
-    puma (5.6.9)
+    puma (7.2.1)
       nio4r (~> 2.0)
     raabro (1.4.0)
     racc (1.8.1)
@@ -917,7 +917,7 @@ DEPENDENCIES
   pry (>= 0.14.2)
   pry-byebug
   pry-rails
-  puma (< 6.0.0)
+  puma (< 8.0.0)
   rack
   rack-cors
   rails (~> 6.1.7.7)
