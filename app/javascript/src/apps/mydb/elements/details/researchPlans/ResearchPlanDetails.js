@@ -6,7 +6,7 @@ import {
   Tooltip, OverlayTrigger, ButtonToolbar, Tabs, Tab, Dropdown, ButtonGroup
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -51,7 +51,7 @@ export default class ResearchPlanDetails extends Component {
     const { researchPlan } = props;
     this.state = {
       researchPlan,
-      visible: Immutable.List(),
+      visible: List(),
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);

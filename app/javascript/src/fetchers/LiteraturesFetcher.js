@@ -1,11 +1,11 @@
 import 'whatwg-fetch';
-import Immutable from 'immutable';
+import { List, Map } from 'immutable';
 import Literature from 'src/models/Literature';
 
 export default class LiteraturesFetcher {
   static fetchElementReferences(element) {
     if (!element || element.isNew) {
-      return Promise.resolve(Immutable.List());
+      return Promise.resolve(List());
     }
     const { type, id } = element;
     return fetch(`/api/v1/literatures?element_type=${type}&element_id=${id}`, {
@@ -13,7 +13,7 @@ export default class LiteraturesFetcher {
     }).then((response) => response.json())
       .then((json) => json.literatures)
       .then((literatures) => literatures.map((literature) => new Literature(literature)))
-      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map()))
+      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Map()))
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
@@ -21,7 +21,7 @@ export default class LiteraturesFetcher {
     const { element, literature } = params;
     const { type, id } = element;
     if (!element || element.isNew) {
-      return Promise.resolve(Immutable.List());
+      return Promise.resolve(List());
     }
     return fetch('/api/v1/literatures', {
       credentials: 'same-origin',
@@ -34,7 +34,7 @@ export default class LiteraturesFetcher {
     }).then((response) => response.json())
       .then((json) => { if (json.error) { throw json; } return json.literatures; })
       .then((literatures) => literatures.map((lits) => new Literature(lits)))
-      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map()))
+      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Map()))
       .catch((errorMessage) => { console.log(errorMessage); throw errorMessage; });
   }
 
@@ -75,7 +75,7 @@ export default class LiteraturesFetcher {
     }).then((response) => response.json())
       .then((json) => { if (json.error) { throw json; } return json.literatures; })
       .then((literatures) => literatures.map((lits) => new Literature(lits)))
-      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map()))
+      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Map()))
       .catch((errorMessage) => { console.log(errorMessage); throw errorMessage; });
   }
 
@@ -98,10 +98,10 @@ export default class LiteraturesFetcher {
           researchPlanRefs,
         } = json;
         return {
-          collectionRefs: Immutable.List(collectionRefs.map((lit) => new Literature(lit))),
-          sampleRefs: Immutable.List(sampleRefs.map((lit) => new Literature(lit))),
-          reactionRefs: Immutable.List(reactionRefs.map((lit) => new Literature(lit))),
-          researchPlanRefs: Immutable.List(researchPlanRefs.map((lit) => new Literature(lit))),
+          collectionRefs: List(collectionRefs.map((lit) => new Literature(lit))),
+          sampleRefs: List(sampleRefs.map((lit) => new Literature(lit))),
+          reactionRefs: List(reactionRefs.map((lit) => new Literature(lit))),
+          researchPlanRefs: List(researchPlanRefs.map((lit) => new Literature(lit))),
         };
       })
       .catch((errorMessage) => { console.log(errorMessage); });
@@ -118,7 +118,7 @@ export default class LiteraturesFetcher {
       body: JSON.stringify(params)
     }).then((response) => response.json())
       .then((json) => json.selectedRefs.map((lit) => new Literature(lit)))
-      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map()))
+      .then((lits) => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Map()))
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 }

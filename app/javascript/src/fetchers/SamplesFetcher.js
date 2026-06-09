@@ -1,5 +1,5 @@
 import 'whatwg-fetch';
-import Immutable from 'immutable';
+import { Map } from 'immutable';
 
 import Sample from 'src/models/Sample';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
@@ -34,7 +34,7 @@ export default class SamplesFetcher {
         // build literature map by literal_id
         const literatures = (json.literatures || []).reduce(
           (acc, l) => acc.set(l.literal_id, new Literature(l)),
-          new Immutable.Map()
+          new Map()
         );
 
         // attach literatures per sample BEFORE enrichment
@@ -64,7 +64,7 @@ export default class SamplesFetcher {
         const rSample = new Sample(json.sample);
         if (json.literatures && json.literatures.length > 0) {
           const tliteratures = json.literatures.map((literature) => new Literature(literature));
-          const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());
+          const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Map());
           rSample.literatures = lits;
           rSample.updateChecksum();
         }

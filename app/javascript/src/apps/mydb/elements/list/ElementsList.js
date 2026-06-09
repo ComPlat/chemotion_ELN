@@ -1,4 +1,4 @@
-import Immutable from 'immutable';
+import { List, Set } from 'immutable';
 import React from 'react';
 import {
   Tabs, Tab, Tooltip, OverlayTrigger, Button
@@ -31,8 +31,8 @@ function getVisibleAndHiddenFromLayout(layout) {
   });
 
   return {
-    visible: Immutable.List(visible).sortBy((t) => layout[t]),
-    hidden: Immutable.List(hidden).sortBy((t) => -1 * layout[t]),
+    visible: List(visible).sortBy((t) => layout[t]),
+    hidden: List(hidden).sortBy((t) => -1 * layout[t]),
   };
 }
 
@@ -43,8 +43,8 @@ export default class ElementsList extends React.Component {
     super(props);
     this.state = {
       totalElements: {},
-      visible: Immutable.List(),
-      hidden: Immutable.List(),
+      visible: List(),
+      hidden: List(),
       genericEls: [],
       currentTab: 0,
       totalCheckedElements: {},
@@ -85,8 +85,8 @@ export default class ElementsList extends React.Component {
   }
 
   onChangeUser(state) {
-    let visible = Immutable.List();
-    let hidden = Immutable.List();
+    let visible = List();
+    let hidden = List();
     let { currentType, currentTab } = state;
 
     if (state?.profile?.data?.layout) {
@@ -125,8 +125,8 @@ export default class ElementsList extends React.Component {
     elNames.forEach((type) => {
       const elementUI = state[type] || {
         checkedAll: false,
-        checkedIds: Immutable.List(),
-        uncheckedIds: Immutable.List(),
+        checkedIds: List(),
+        uncheckedIds: List(),
       };
       const element = ElementStore.getState().elements[`${type}s`];
       const nextCount = elementUI.checkedAll
@@ -176,7 +176,7 @@ export default class ElementsList extends React.Component {
 
     const hasSearchApplied = !!UIStore.getState().currentSearchByID;
 
-    const constEls = Immutable.Set(allElnElements);
+    const constEls = Set(allElnElements);
     const tabItems = visible.map((value, i) => {
       let iconClass = `icon-${value}`;
       let ttl = (
