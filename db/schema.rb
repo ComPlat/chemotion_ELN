@@ -104,6 +104,7 @@ ActiveRecord::Schema.define(version: 2026_03_25_085008) do
     t.datetime "updated_at", null: false
     t.string "eventable_type"
     t.bigint "eventable_id"
+    t.string "status"
     t.index ["created_by"], name: "index_calendar_entries_on_created_by"
     t.index ["eventable_type", "eventable_id"], name: "index_calendar_entries_on_eventable_type_and_eventable_id"
   end
