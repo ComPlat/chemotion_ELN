@@ -239,6 +239,7 @@ export const useCompareSpectra = ({ sample, container }, deps = {}) => {
     error: state.error,
     saveError: state.saveError,
     container: state.container,
+    originalAnalyses: state.originalAnalyses,
     multiEntities,
     showUndo,
     setContainer,

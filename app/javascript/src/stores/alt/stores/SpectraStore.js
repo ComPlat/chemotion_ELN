@@ -54,8 +54,8 @@ class SpectraStore {
 
   handleToggleCompareModal(container) {
     this.setState({
-      showCompareModal: !this.showCompareModal,
-      container: container,
+      showCompareModal: !!container,
+      container,
     })
   }
 
