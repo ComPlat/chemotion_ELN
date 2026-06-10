@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 
 export default function SpectraCompareButton({
-  spcInfos, toggleSpectraModal, disabled,
+  spcInfos, toggleSpectraModal, disabled, tooltip,
 }) {
   const isDisabled = disabled || !(spcInfos.length > 0);
   return (
@@ -13,7 +13,7 @@ export default function SpectraCompareButton({
       placement="bottom"
       overlay={(
         <Tooltip id="spectra-compare">
-          Compare the analytical spectra grouped under this comparison
+          {tooltip}
         </Tooltip>
       )}
     >
@@ -36,9 +36,11 @@ SpectraCompareButton.propTypes = {
   spcInfos: PropTypes.array,
   toggleSpectraModal: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
+  tooltip: PropTypes.string,
 };
 
 SpectraCompareButton.defaultProps = {
   spcInfos: [],
   disabled: false,
+  tooltip: 'Compare the analytical spectra grouped under this comparison',
 };
