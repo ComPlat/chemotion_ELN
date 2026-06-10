@@ -10,7 +10,11 @@ module Usecases
       def initialize(sample, components)
         @sample = sample
         @sample_id = sample.id
-        @components = components
+        @components = components.map do |cp|
+          c = cp.with_indifferent_access
+          c[:component_properties] = c[:component_properties].with_indifferent_access if c[:component_properties]
+          c
+        end
       end
 
       def execute!
@@ -27,10 +31,12 @@ module Usecases
           # 'comp_xxx') indicate newly added components and trigger a fresh insert.
           component_id = Integer(component_params[:id], exception: false)
 
-          component = Component.find_by(
-            sample_id: @sample_id,
-            id: component_id,
-          ) || Component.new(sample_id: @sample_id)
+          component = if component_id
+                        Component.find_by(sample_id: @sample_id, id: component_id) ||
+                          Component.new(sample_id: @sample_id)
+                      else
+                        Component.new(sample_id: @sample_id)
+                      end
 
           component.assign_attributes(
             name: component_params[:name],

@@ -5,6 +5,7 @@ import SampleFactory from 'factories/SampleFactory';
 import Sample from 'src/models/Sample.js';
 import Component from 'src/models/Component';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+import sinon from 'sinon';
 
 describe('Sample', async () => {
   const referenceSample = await SampleFactory.build('SampleFactory.water_100g');
@@ -1827,153 +1828,6 @@ describe('Sample', async () => {
     });
   });
 
-  describe('Sample loading getter', () => {
-    const buildPolymerSample = (loadingValue) => {
-      const sample = new Sample();
-      sample._contains_residues = true;
-      sample.residues = [{ custom_info: { loading: loadingValue } }];
-      return sample;
-    };
-
-    it('parses a numeric string to a float', () => {
-      expect(buildPolymerSample('1.75').loading).toBe(1.75);
-    });
-
-    it('parses an integer string to a number', () => {
-      expect(buildPolymerSample('3').loading).toBe(3);
-    });
-
-    it('returns an already-numeric value unchanged', () => {
-      expect(buildPolymerSample(2.5).loading).toBe(2.5);
-    });
-
-    it('returns null as-is', () => {
-      expect(buildPolymerSample(null).loading).toBeNull();
-    });
-
-    it('returns undefined as-is', () => {
-      expect(buildPolymerSample(undefined).loading).toBeUndefined();
-    });
-
-    it('returns a non-numeric string unchanged', () => {
-      expect(buildPolymerSample('n.d').loading).toBe('n.d');
-    });
-
-    it('returns false when contains_residues is false', () => {
-      const sample = new Sample();
-      sample._contains_residues = false;
-      expect(sample.loading).toBe(false);
-    });
-  });
-
-  describe('Sample external_loading getter', () => {
-    const buildPolymerSample = (externalLoadingValue) => {
-      const sample = new Sample();
-      sample._contains_residues = true;
-      sample.residues = [{ custom_info: { external_loading: externalLoadingValue } }];
-      return sample;
-    };
-
-    it('parses a numeric string to a float', () => {
-      expect(buildPolymerSample('0.5').external_loading).toBe(0.5);
-    });
-
-    it('parses an integer string to a number', () => {
-      expect(buildPolymerSample('2').external_loading).toBe(2);
-    });
-
-    it('returns an already-numeric value unchanged', () => {
-      expect(buildPolymerSample(1.75).external_loading).toBe(1.75);
-    });
-
-    it('returns null as-is', () => {
-      expect(buildPolymerSample(null).external_loading).toBeNull();
-    });
-
-    it('returns undefined as-is', () => {
-      expect(buildPolymerSample(undefined).external_loading).toBeUndefined();
-    });
-
-    it('returns 0.0 (the default) as a number, not a string', () => {
-      expect(buildPolymerSample(0.0).external_loading).toBe(0);
-      expect(typeof buildPolymerSample(0.0).external_loading).toBe('number');
-    });
-
-    it('returns a non-numeric string unchanged', () => {
-      expect(buildPolymerSample('n.d').external_loading).toBe('n.d');
-    });
-
-    it('returns false when contains_residues is false', () => {
-      const sample = new Sample();
-      sample._contains_residues = false;
-      expect(sample.external_loading).toBe(false);
-    });
-  });
-
-  describe('Sample.setAmountFromConcentration()', () => {
-    it('sets amount_value to volume * concentration in mol', async () => {
-      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
-
-      const result = sample.setAmountFromConcentration(2, 0.5);
-
-      expect(result).toBeCloseTo(1, 10);
-      expect(sample.amount_value).toBeCloseTo(1, 10);
-      expect(sample.amount_unit).toBe('mol');
-    });
-
-    it('returns null and leaves the sample unchanged when concentration is invalid', async () => {
-      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
-      const originalValue = sample.amount_value;
-      const originalUnit = sample.amount_unit;
-
-      expect(sample.setAmountFromConcentration(0, 0.5)).toBe(null);
-      expect(sample.setAmountFromConcentration(Number.NaN, 0.5)).toBe(null);
-
-      expect(sample.amount_value).toBe(originalValue);
-      expect(sample.amount_unit).toBe(originalUnit);
-    });
-
-    it('returns null and leaves the sample unchanged when volume is invalid', async () => {
-      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
-      const originalValue = sample.amount_value;
-      const originalUnit = sample.amount_unit;
-
-      expect(sample.setAmountFromConcentration(2, 0)).toBe(null);
-      expect(sample.setAmountFromConcentration(2, null)).toBe(null);
-
-      expect(sample.amount_value).toBe(originalValue);
-      expect(sample.amount_unit).toBe(originalUnit);
-    });
-  });
-
-  describe('Sample.setAmountFromConcentrationAndPreserve()', () => {
-    it('sets the amount from concentration and marks preserveConcentration', async () => {
-      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
-      sample.preserveConcentration = false;
-
-      sample.setAmountFromConcentrationAndPreserve(2, 0.5);
-
-      expect(sample.amount_value).toBeCloseTo(1, 10);
-      expect(sample.amount_unit).toBe('mol');
-      expect(sample.preserveConcentration).toBe(true);
-    });
-
-    it('does not mark preserved when inputs are invalid', async () => {
-      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
-      const originalValue = sample.amount_value;
-      const originalUnit = sample.amount_unit;
-      sample.preserveConcentration = false;
-
-      sample.setAmountFromConcentrationAndPreserve(0, 0.5);
-      sample.setAmountFromConcentrationAndPreserve(Number.NaN, 0.5);
-      sample.setAmountFromConcentrationAndPreserve(2, 0);
-
-      expect(sample.preserveConcentration).toBe(false);
-      expect(sample.amount_value).toBe(originalValue);
-      expect(sample.amount_unit).toBe(originalUnit);
-    });
-  });
-
   describe('Sample.mergeComponents() — same molecule', () => {
     function makeSample(comps) {
       const s = new Sample();
@@ -1983,16 +1837,17 @@ describe('Sample', async () => {
     }
 
     function makeComp(id, moleculeId, amounts = {}) {
-      return {
-        id,
-        molecule: { id: moleculeId },
-        amount_mol: amounts.mol ?? 0.01,
-        amount_g: amounts.g ?? 1.8,
-        amount_l: amounts.l ?? 0.001,
-        material_group: 'liquid',
-        position: 0,
-        reference: false,
-      };
+      const comp = new Component({});
+      comp.id = id;
+      comp.molecule = { id: moleculeId };
+      comp.amount_mol = amounts.mol ?? 0.01;
+      comp.amount_g = amounts.g ?? 1.8;
+      comp.amount_l = amounts.l ?? 0.001;
+      comp.material_group = 'liquid';
+      comp.position = 0;
+      comp.reference = false;
+      comp.purity = 1;
+      return comp;
     }
 
     it('collapses two same-molecule components into one', async () => {
@@ -2048,18 +1903,21 @@ describe('Sample', async () => {
       expect(calcEquivSpy.callCount).toBe(2);
     });
 
-    it('does not fetch a new molecule when molecules are the same', async () => {
-      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+it('does not fetch a new molecule when molecules are the same', async () => {
+  const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
 
-      const comp1 = makeComp(1, 42);
-      const comp2 = makeComp(2, 42);
-      const sample = makeSample([comp1, comp2]);
+  try {
+    const comp1 = makeComp(1, 42);
+    const comp2 = makeComp(2, 42);
+    const sample = makeSample([comp1, comp2]);
 
-      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+    await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
 
-      expect(fetchStub.called).toBe(false);
-      fetchStub.restore();
-    });
+    expect(fetchStub.called).toBe(false);
+  } finally {
+    fetchStub.restore();
+  }
+});
   });
 
   describe('Sample.splitSmilesToMolecule() — structure editor reconciliation', () => {

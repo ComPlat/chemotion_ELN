@@ -7,7 +7,7 @@ module Usecases
     class DeleteRemovedComponents
       def initialize(sample_id, components_params)
         @sample_id = sample_id
-        @components_params = components_params
+        @components_params = components_params.map(&:with_indifferent_access)
       end
 
       def execute!
@@ -16,7 +16,7 @@ module Usecases
         # ignored here; they are inserted by Usecases::Components::Create.
         ids_to_keep = @components_params.filter_map do |cp|
           Integer(cp[:id], exception: false)
-        end.compact
+        end
 
         scope = Component.where(sample_id: @sample_id)
         scope = scope.where.not(id: ids_to_keep) if ids_to_keep.any?
