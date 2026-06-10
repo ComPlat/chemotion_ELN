@@ -322,7 +322,7 @@ RSpec.describe Usecases::Components::Create do
         allow(sample).to receive(:sample_details).and_return(sample_details_double)
       end
 
-      it 'modifies component_properties hash in place' do
+      it 'calculates relative_molecular_weight on the normalized components' do
         components_params = [
           {
             id: 'new_1',
@@ -335,13 +335,11 @@ RSpec.describe Usecases::Components::Create do
           },
         ]
 
-        # The calculation should modify the hash in place
-        expect(components_params.first[:component_properties][:relative_molecular_weight]).to be_nil
-
         use_case = described_class.new(sample, components_params)
         use_case.send(:calculate_relative_molecular_weights)
 
-        expect(components_params.first[:component_properties][:relative_molecular_weight]).to eq(500.0)
+        internal = use_case.instance_variable_get(:@components)
+        expect(internal.first[:component_properties][:relative_molecular_weight]).to eq(500.0)
       end
     end
   end
