@@ -354,7 +354,7 @@ module Chemotion
           dataset_container.update_column(
             :extended_metadata,
             (dataset_container.extended_metadata || {}).merge(
-              'is_comparison' => true,
+              'is_comparison' => 'true',
               'analyses_compared' => analyses_compared,
             ),
           )
