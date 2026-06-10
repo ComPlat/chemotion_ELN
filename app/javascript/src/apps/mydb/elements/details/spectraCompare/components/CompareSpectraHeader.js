@@ -5,7 +5,7 @@ import { TreeSelect } from 'antd';
 
 import {
   buildSelectionTree,
-  filterMenuByLayout,
+  limitMenuToSelection,
 } from '../utils/compareSelectionTree';
 
 const titleFromContainer = (container) => container?.name || 'Compare spectra';
@@ -29,11 +29,16 @@ const CompareSpectraHeader = ({
     [originalAnalyses, container],
   );
 
-  const filteredMenu = useMemo(() => {
-    if (!Array.isArray(refAnalyses) || refAnalyses.length === 0) return menuItems;
-    const selectedLayout = refAnalyses?.[0]?.layout || null;
-    return filterMenuByLayout(menuItems, selectedLayout);
-  }, [menuItems, refAnalyses]);
+  const allowedIds = useMemo(() => (
+    Array.isArray(refAnalyses)
+      ? refAnalyses.map((entry) => entry?.file?.id).filter((id) => id != null)
+      : []
+  ), [refAnalyses]);
+
+  const filteredMenu = useMemo(
+    () => limitMenuToSelection(menuItems, allowedIds),
+    [menuItems, allowedIds],
+  );
 
   const handleChange = (value, _label, info) => {
     onSelectionChange?.(filteredMenu, value, info);
@@ -47,6 +52,7 @@ const CompareSpectraHeader = ({
           style={{ width: 800 }}
           placeholder="Select spectra to compare"
           treeCheckable
+          treeDefaultExpandAll
           treeData={filteredMenu}
           value={selectedFiles}
           onChange={handleChange}

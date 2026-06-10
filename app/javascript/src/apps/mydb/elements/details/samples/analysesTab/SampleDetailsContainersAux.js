@@ -11,7 +11,11 @@ import {
   BuildSpcInfosForNMRDisplayer,
   isNMRKind,
 } from 'src/utilities/SpectraHelper';
-import { buildCompareInfos } from 'src/apps/mydb/elements/details/spectraCompare/utils/compareInfos';
+import {
+  buildCompareInfos,
+  canOpenComparisonEditor,
+  hasUnsavedComparisonSelection,
+} from 'src/apps/mydb/elements/details/spectraCompare/utils/compareInfos';
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -120,6 +124,11 @@ const headerBtnGroup = (
   const enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
   const spcCompareInfo = buildCompareInfos(sample, container);
+  const compareEditorEnabled = canOpenComparisonEditor(container);
+  const compareHasUnsaved = hasUnsavedComparisonSelection(container);
+  const compareTooltip = compareHasUnsaved
+    ? 'Apply or save the comparison before opening the editor'
+    : 'Compare the analytical spectra grouped under this comparison';
   const toggleCompareModal = (e) => {
     e.stopPropagation();
     SpectraActions.ToggleCompareModal(container);
@@ -151,6 +160,8 @@ const headerBtnGroup = (
           <SpectraCompareButton
             spcInfos={spcCompareInfo}
             toggleSpectraModal={toggleCompareModal}
+            disabled={!compareEditorEnabled}
+            tooltip={compareTooltip}
           />
         ) : (
           <SpectraEditorButton
