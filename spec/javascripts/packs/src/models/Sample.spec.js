@@ -2197,16 +2197,17 @@ describe('Sample', async () => {
     }
 
     function makeComp(id, moleculeId, amounts = {}) {
-      return {
-        id,
-        molecule: { id: moleculeId },
-        amount_mol: amounts.mol ?? 0.01,
-        amount_g: amounts.g ?? 1.8,
-        amount_l: amounts.l ?? 0.001,
-        material_group: 'liquid',
-        position: 0,
-        reference: false,
-      };
+      const comp = new Component({});
+      comp.id = id;
+      comp.molecule = { id: moleculeId };
+      comp.amount_mol = amounts.mol ?? 0.01;
+      comp.amount_g = amounts.g ?? 1.8;
+      comp.amount_l = amounts.l ?? 0.001;
+      comp.material_group = 'liquid';
+      comp.position = 0;
+      comp.reference = false;
+      comp.purity = 1;
+      return comp;
     }
 
     it('collapses two same-molecule components into one', async () => {
@@ -2262,18 +2263,21 @@ describe('Sample', async () => {
       expect(calcEquivSpy.callCount).toBe(2);
     });
 
-    it('does not fetch a new molecule when molecules are the same', async () => {
-      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+it('does not fetch a new molecule when molecules are the same', async () => {
+  const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
 
-      const comp1 = makeComp(1, 42);
-      const comp2 = makeComp(2, 42);
-      const sample = makeSample([comp1, comp2]);
+  try {
+    const comp1 = makeComp(1, 42);
+    const comp2 = makeComp(2, 42);
+    const sample = makeSample([comp1, comp2]);
 
-      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+    await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
 
-      expect(fetchStub.called).toBe(false);
-      fetchStub.restore();
-    });
+    expect(fetchStub.called).toBe(false);
+  } finally {
+    fetchStub.restore();
+  }
+});
   });
 
   describe('Sample.splitSmilesToMolecule() — structure editor reconciliation', () => {

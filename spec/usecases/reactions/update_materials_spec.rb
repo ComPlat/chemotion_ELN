@@ -173,6 +173,63 @@ describe Usecases::Reactions::UpdateMaterials do
       end
     end
 
+    context 'when sample is a new mixture sub-sample' do
+      let(:molecule_a) { create(:molecule) }
+      let(:molecule_b) { create(:molecule) }
+      let(:mixture_parent) do
+        create(:sample, name: 'MixtureParent',
+                        sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+                        container: create(:container))
+      end
+      let!(:parent_component_a) do
+        create(:component, sample: mixture_parent, name: 'Comp A', position: 0,
+                           component_properties: { 'molecule_id' => molecule_a.id, 'amount_mol' => 0.1 })
+      end
+      let!(:parent_component_b) do
+        create(:component, sample: mixture_parent, name: 'Comp B', position: 1,
+                           component_properties: { 'molecule_id' => molecule_b.id, 'amount_mol' => 0.2 })
+      end
+      # Mirrors the front-end payload for a freshly dragged-in mixture: a new
+      # split sub-sample whose serialized components still carry the parent's
+      # component ids.
+      let(:samples) do
+        {
+          'reactants' => [
+            'target_amount_unit' => 'mg',
+            'target_amount_value' => 86.09596,
+            'equivalent' => 1,
+            'reference' => false,
+            'is_new' => true,
+            'molfile' => molfile,
+            'container' => root_container,
+            'parent_id' => mixture_parent.id,
+            'sample_type' => Sample::SAMPLE_TYPE_MIXTURE,
+            'components' => [
+              {
+                'id' => parent_component_a.id,
+                'name' => 'Comp A',
+                'position' => 0,
+                'component_properties' => { 'molecule_id' => molecule_a.id, 'amount_mol' => 0.1 },
+              },
+              {
+                'id' => parent_component_b.id,
+                'name' => 'Comp B',
+                'position' => 1,
+                'component_properties' => { 'molecule_id' => molecule_b.id, 'amount_mol' => 0.2 },
+              },
+            ],
+          ],
+        }
+      end
+
+      it 'copies the parent components onto the sub-sample without duplicating them' do
+        subsample = Sample.find_by(short_label: 'reactant')
+
+        expect(subsample).to be_present
+        expect(Component.where(sample_id: subsample.id).count).to eq(2)
+      end
+    end
+
     context 'when vessel volume is valid' do
       it 'returns the calculated mole gas product' do
         result = class_instance.send(:update_mole_gas_product, product_sample, 80)
