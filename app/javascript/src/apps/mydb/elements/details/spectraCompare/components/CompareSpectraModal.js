@@ -101,7 +101,6 @@ const resolveWriteParams = (params) => {
 const CompareSpectraModal = ({
   sample,
   onContainerChange,
-  onSampleChanged,
   onSubmit,
 }) => {
   const { showCompareModal, storeContainer } = useSpectraStoreSlice(selectModalSlice);
@@ -255,13 +254,11 @@ const CompareSpectraModal = ({
       <Modal.Body className="vh-80">
         <CompareSpectraBody
           status={compare.status === COMPARE_STATUS.IDLE ? COMPARE_STATUS.LOADING : compare.status}
-          spectra={compare.spectra}
           multiEntities={compare.multiEntities}
           failures={compare.failures}
           error={compare.error}
           saveError={compare.saveError}
           container={compare.container}
-          sample={sample}
           canUpdate={canUpdate}
           onClose={close}
           onRetry={handleRetry}
@@ -281,13 +278,11 @@ const CompareSpectraModal = ({
 CompareSpectraModal.propTypes = {
   sample: PropTypes.object.isRequired,
   onContainerChange: PropTypes.func,
-  onSampleChanged: PropTypes.func,
   onSubmit: PropTypes.func,
 };
 
 CompareSpectraModal.defaultProps = {
   onContainerChange: () => {},
-  onSampleChanged: () => {},
   onSubmit: () => {},
 };
 
