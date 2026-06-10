@@ -1150,46 +1150,10 @@
     uuid "^13.0.0"
     zustand "^4.5.7"
 
-"@complat/react-spectra-editor@1.3.5":
-  version "1.3.5"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.3.5.tgz#67413be000949a19a715706fd8314aa4096f7ffd"
-  integrity sha512-9au3vqAna6BC1VfIuIhC9/D2iI5nUCAtwqibEmlZabqDur4B83Gr6lzefWh/xcrAPQKtAoGydBBVuBA2Y38NLg==
-  dependencies:
-    "@complat/react-svg-file-zoom-pan" "1.1.4"
-    "@emotion/react" "^11.11.1"
-    "@emotion/styled" "^11.11.0"
-    "@mdi/js" "^7.2.96"
-    "@mdi/react" "^1.6.1"
-    "@mui/icons-material" "^5.14.9"
-    "@mui/material" "^5.14.9"
-    "@mui/styles" "^5.14.9"
-    "@popperjs/core" "^2.11.8"
-    "@types/jest" "^29.5.0"
-    "@types/node" "^18.15.11"
-    "@types/react" "^18.0.34"
-    "@types/react-dom" "^18.0.11"
-    babel-plugin-transform-object-rest-spread "^6.26.0"
-    browserslist "^4.21.5"
-    classnames "^2.3.2"
-    d3 "^7.8.5"
-    d3-tip "^0.9.1"
-    jcampconverter "4.1.0"
-    ml-savitzky-golay-generalized "1.1.1"
-    prop-types "^15.8.1"
-    react-dropzone "^8.0.3"
-    react-quill "^2.0.0"
-    react-redux "^7.2.0"
-    redux "^4.1.1"
-    redux-saga "^1.1.3"
-    redux-undo "^1.1.0"
-    regenerator-transform "^0.13.3"
-    reselect "^4.0.0"
-    typescript "^5.0.4"
-
-"@complat/react-spectra-editor@1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.8.0.tgz#36b80e60393cba9aab3aba35d58ad1d95e3f33b5"
-  integrity sha512-SLpjN125lI3Fyl1hsaiOcvhC+LHQNKZZ0YekFRv9Al4BFv4ldqkELM2zrnhgc5/bhCxnr6TDEcxrNqGOOduYsQ==
+"@complat/react-spectra-editor@1.3.5", "@complat/react-spectra-editor@github:ComPlat/react-spectra-editor#feat/comparison-spectra":
+  version "1.7.2"
+  uid "67e71fd6a5b27d87549d1bebca458b9a97e74d11"
+  resolved "https://codeload.github.com/ComPlat/react-spectra-editor/tar.gz/67e71fd6a5b27d87549d1bebca458b9a97e74d11"
   dependencies:
     "@complat/react-svg-file-zoom-pan" "1.1.5"
     "@emotion/react" "^11.11.1"
@@ -1223,15 +1187,6 @@
     regenerator-transform "^0.13.3"
     reselect "^4.0.0"
     typescript "^5.0.4"
-
-"@complat/react-svg-file-zoom-pan@1.1.4":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@complat/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.1.4.tgz#292e44e4b9ad0e8efa1f0b6d52358baa75dc13b5"
-  integrity sha512-1VjX7OEMPZJ0PZmUZxE1ZvUVEFU6h67FEyJphu6sXVzIYA8TG+JZwBaKh/V2k8nplA6hqGohbydX8oo2GJ1VwA==
-  dependencies:
-    babel-plugin-transform-object-rest-spread "^6.26.0"
-    d3 "^7.8.5"
-    regenerator-transform "^0.13.3"
 
 "@complat/react-svg-file-zoom-pan@1.1.5":
   version "1.1.5"
@@ -14949,6 +14904,13 @@ strip-ansi@^6.0.0, strip-ansi@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
   integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
+  dependencies:
+    ansi-regex "^5.0.1"
+
+strip-ansi@^7.0.1:
+  version "7.1.2"
+  resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-7.1.2.tgz#132875abde678c7ea8d691533f2e7e22bb744dba"
+  integrity sha512-gmBGslpoQJtgnMAvOVqGZpEz9dyoKTCzy2nfz/n8aIFhN/jCE/rCmcxabB6jOOHV+0WNnylOxaxBQPSvcWklhA==
   dependencies:
     ansi-regex "^5.0.1"
 
