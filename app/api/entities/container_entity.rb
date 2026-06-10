@@ -9,7 +9,7 @@ module Entities
       return true if object.container_type == 'dataset'
       return false unless object.container_type == 'analysis'
 
-      object.extended_metadata&.[]('is_comparison') == 'true'
+      Entities::ContainerEntity.comparison_flag?(object.extended_metadata&.[]('is_comparison'))
     }.freeze
 
     expose(
@@ -29,6 +29,10 @@ module Entities
     }
     expose :dataset, using: 'Labimotion::DatasetEntity', if: ->(object, _options) { object.container_type == 'dataset' }
 
+    def self.comparison_flag?(value)
+      [true, 'true'].include?(value)
+    end
+
     def extended_metadata
       return unless object.extended_metadata
 
@@ -46,7 +50,9 @@ module Entities
         assign_parsed_json_field(metadata, :content, ext_meta['content'])
         assign_parsed_json_field(metadata, :hyperlinks, ext_meta['hyperlinks'])
         assign_general_description_field(metadata, ext_meta)
-        metadata[:is_comparison] = ext_meta['is_comparison'] == 'true' if ext_meta['is_comparison'].present?
+        if ext_meta['is_comparison'].present?
+          metadata[:is_comparison] = self.class.comparison_flag?(ext_meta['is_comparison'])
+        end
         assign_analyses_compared_field(metadata, ext_meta)
       end
     end
@@ -165,8 +171,7 @@ module Entities
     end
 
     def comparison_flag_true?
-      meta = object.extended_metadata
-      meta['is_comparison'].present? && meta['is_comparison'] == 'true'
+      self.class.comparison_flag?(object.extended_metadata&.[]('is_comparison'))
     end
 
     def default_comparable_info(is_comparison)
