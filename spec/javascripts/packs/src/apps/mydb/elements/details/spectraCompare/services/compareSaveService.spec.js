@@ -57,6 +57,7 @@ describe('compareSaveService.applyCombineResponse', () => {
       { insert: 'second peaks' },
     ]);
   });
+
 });
 
 describe('compareSaveService.saveCompareSpectra', () => {
@@ -89,6 +90,34 @@ describe('compareSaveService.saveCompareSpectra', () => {
     expect(container.children[0].attachments).toEqual([]);
     expect(result.dataset.id).toEqual(5);
     expect(result.spectraIds).toEqual([10, 11]);
+  });
+
+  it('serializes solvent shift fields like single-spectrum saves', async () => {
+    const container = baseContainer();
+    let receivedEditedData = null;
+    const fakeCombine = async (_ids, _containerId, _curveIdx, editedDataSpectra) => {
+      receivedEditedData = editedDataSpectra;
+      return {
+        dataset: { id: 5, attachments: [] },
+        analyses_compared: container.extended_metadata.analyses_compared,
+      };
+    };
+
+    await saveCompareSpectra({
+      container,
+      spectra: [{ idx: 10 }],
+      payloads: [{
+        peaks: [],
+        shift: {
+          peak: { x: 7.24 },
+          ref: { name: 'Chloroform-d (s)', value: '7.26' },
+        },
+      }],
+    }, { combineSpectra: fakeCombine });
+
+    expect(receivedEditedData[0].shiftSelectX).toEqual(7.24);
+    expect(receivedEditedData[0].shiftRefName).toEqual('Chloroform-d (s)');
+    expect(receivedEditedData[0].shiftRefValue).toEqual('7.26');
   });
 
   it('rejects the promise when the API returns an error', async () => {

@@ -318,6 +318,7 @@ const CompareInlineEditor = ({
             style={{ width: '100%' }}
             placeholder="Please select"
             treeCheckable
+            treeDefaultExpandAll
             value={selectedFiles}
             treeData={menuItems}
             getPopupContainer={(triggerNode) => triggerNode.parentNode}
