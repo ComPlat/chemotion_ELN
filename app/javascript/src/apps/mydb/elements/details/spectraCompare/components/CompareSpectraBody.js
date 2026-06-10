@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Alert, Button, Spinner } from 'react-bootstrap';
 import { SpectraEditor, FN } from '@complat/react-spectra-editor';
@@ -53,7 +53,7 @@ const buildOpsByLayout = ({
 
 const renderEmpty = (onClose) => (
   <div className="d-flex h-100 justify-content-center align-items-center">
-    <Alert variant="warning" className="text-center" onClick={onClose}>
+    <Alert variant="warning" className="text-center">
       <Alert.Heading>
         <i className="fa fa-exclamation-triangle me-2" />
         No spectra to compare
@@ -121,6 +121,30 @@ const contentOpsFromContainer = (container) => {
   return Array.isArray(ops) ? ops : [];
 };
 
+const titleFieldsFromEntity = (entity) => {
+  const features = entity?.features;
+  const firstFeature = Array.isArray(features) ? features[0] : null;
+  const featureObject = Array.isArray(features) ? null : features;
+  return {
+    entityTitle: entity?.title,
+    featureTitle: featureObject?.title,
+    autoPeakTitle: featureObject?.autoPeak?.title,
+    editPeakTitle: featureObject?.editPeak?.title,
+    firstFeatureTitle: firstFeature?.title,
+    spectrumTitle: entity?.spectrum?.title,
+    firstSpectrumTitle: entity?.spectra?.[0]?.title,
+    layout: entity?.layout,
+  };
+};
+
+const titleFieldsFromJcamp = (jcamp) => ({
+  jcampTitle: jcamp?.title,
+  jcampInfoTitle: jcamp?.info?.title,
+  jcampSpectraTitle: jcamp?.spectra?.title,
+  jcampFirstSpectrumTitle: jcamp?.spectra?.[0]?.title,
+  jcampFirstSpectrumInfoTitle: jcamp?.spectra?.[0]?.info?.title,
+});
+
 const CompareSpectraBody = ({
   status,
   spectra,
@@ -141,9 +165,45 @@ const CompareSpectraBody = ({
   onWriteCloseMpy,
   onDescriptionChanged,
 }) => {
-  const entityFileNames = useMemo(() => (
-    container?.comparable_info?.list_attachments?.map((att) => att.filename) || null
-  ), [container]);
+  const entityFileNames = useMemo(() => {
+    const attachments = container?.comparable_info?.list_attachments;
+    if (!Array.isArray(attachments)) return null;
+
+    return attachments
+      .filter((att) => !/\.png$/i.test(att.filename || ''))
+      .map((att) => att.filename);
+  }, [container]);
+
+  useEffect(() => {
+    const payload = {
+      status,
+      container: {
+        id: container?.id,
+        name: container?.name,
+        kind: container?.extended_metadata?.kind,
+        analysesCompared: container?.extended_metadata?.analyses_compared,
+        comparableAttachments: container?.comparable_info?.list_attachments,
+      },
+      propsPassedToSpectraEditor: {
+        entity: titleFieldsFromEntity(multiEntities?.[multiEntities.length - 1]),
+        multiEntities: (multiEntities || []).map((entity, index) => ({
+          index,
+          ...titleFieldsFromEntity(entity),
+        })),
+        entityFileNames,
+        descriptions: contentOpsFromContainer(container),
+      },
+      decodedSpectraBeforeBuildData: (spectra || []).map((spc, index) => ({
+        index,
+        idx: spc?.idx,
+        ...titleFieldsFromJcamp(spc?.jcamp),
+      })),
+    };
+
+    // Use console.log (not debug): Chrome/Firefox hide debug unless "Verbose" is enabled.
+    // eslint-disable-next-line no-console
+    console.log('[CompareSpectra] props sent to SpectraEditor', payload);
+  }, [container, entityFileNames, multiEntities, spectra, status]);
 
   if (status === COMPARE_STATUS.LOADING) return renderLoading();
   if (status === COMPARE_STATUS.ERROR) {
@@ -154,6 +214,15 @@ const CompareSpectraBody = ({
   }
 
   const currEntity = multiEntities[multiEntities.length - 1];
+
+  // eslint-disable-next-line no-console
+  console.log('[CompareSpectra] rendering SpectraEditor', {
+    status,
+    entity: titleFieldsFromEntity(currEntity),
+    entityFileNames,
+    curveCount: multiEntities.length,
+  });
+
   const operations = buildOpsByLayout({
     entity: currEntity,
     canUpdate,

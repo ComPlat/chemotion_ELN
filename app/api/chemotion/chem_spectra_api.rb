@@ -113,6 +113,46 @@ module Chemotion
       def save_data_types(file_path, current_data_types)
         File.write(file_path, JSON.pretty_generate(current_data_types))
       end
+
+      def normalized_compare_entry(entry)
+        entry.respond_to?(:deep_stringify_keys) ? entry.deep_stringify_keys : entry
+      end
+
+      def parse_compare_entries(raw)
+        parsed = if raw.is_a?(String)
+                   JSON.parse(raw.gsub('=>', ':'))
+                 else
+                   raw
+                 end
+        parsed.is_a?(Array) ? parsed.map { |entry| normalized_compare_entry(entry) || {} } : []
+      rescue StandardError
+        []
+      end
+
+      def indexed_compare_entries(container)
+        raw = container&.extended_metadata&.[]('analyses_compared') ||
+              container&.extended_metadata&.[](:analyses_compared)
+        parse_compare_entries(raw).index_by { |entry| entry.dig('file', 'id') }
+      end
+
+      def build_compare_entry(attachment, dataset_container, existing_entries)
+        existing = normalized_compare_entry(existing_entries[attachment.id]) || {}
+        existing.merge(
+          'file' => (normalized_compare_entry(existing['file']) || {}).merge('id' => attachment.id),
+          'dataset' => (normalized_compare_entry(existing['dataset']) || {}).merge('id' => dataset_container.id),
+          'analysis' => (normalized_compare_entry(existing['analysis']) || {}).merge('id' => dataset_container.id),
+        )
+      end
+
+      def compare_regeneration_fname(attachment)
+        filename = attachment.filename.to_s
+        ext = File.extname(filename)
+        ext = '.jdx' if ext.blank?
+        base = File.basename(filename, File.extname(filename))
+        cleaned = base.sub(/(?:\.peak)?_compared_\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}\z/i, '')
+                      .sub(/\.peak\z/i, '')
+        "#{cleaned.presence || base}#{ext}"
+      end
     end
 
     resource :chemspectra do
@@ -184,6 +224,7 @@ module Chemotion
           requires :spectra_ids, type: [Integer]
           requires :front_spectra_idx, type: Integer # index of front spectra
           requires :container_id, type: Integer
+          optional :edited_data_spectra, type: Array
           optional :extras, type: String
         end
         post 'combine_spectra' do
@@ -249,6 +290,8 @@ module Chemotion
             end
           end
 
+          existing_compare_entries = indexed_compare_entries(dataset_container)
+
           if is_update_mode && pm[:edited_data_spectra].present?
             dataset_attachments = dataset_container.attachments.index_by(&:id)
 
@@ -256,13 +299,14 @@ module Chemotion
               target_att = dataset_attachments[data.dig(:si, :idx)]
               next unless target_att
 
+              spectrum_data = data.merge(fname: compare_regeneration_fname(target_att))
               mol = Tempfile.new(['mol', '.mol'])
               begin
                 new_jcamp, = Chemotion::Jcamp::Create.spectrum(
                   target_att.abs_path,
                   mol.path,
                   false,
-                  data,
+                  spectrum_data,
                 )
                 FileUtils.cp(new_jcamp.path, target_att.abs_path) if new_jcamp && File.exist?(new_jcamp.path)
               rescue StandardError => e
@@ -303,20 +347,16 @@ module Chemotion
             a.filename.to_s.downcase.end_with?('.png')
           end
           analyses_compared = non_combined_images.map do |a|
-            {
-              file: { id: a.id },
-              dataset: { id: dataset_container.id },
-              analysis: { id: dataset_container.id },
-            }
+            build_compare_entry(a, dataset_container, existing_compare_entries)
           end
 
           # rubocop:disable Rails/SkipsModelValidations -- bulk update of JSON metadata; validations not required here
           dataset_container.update_column(
             :extended_metadata,
-            {
-              is_comparison: true,
-              analyses_compared: analyses_compared,
-            },
+            (dataset_container.extended_metadata || {}).merge(
+              'is_comparison' => true,
+              'analyses_compared' => analyses_compared,
+            ),
           )
           # rubocop:enable Rails/SkipsModelValidations
 
