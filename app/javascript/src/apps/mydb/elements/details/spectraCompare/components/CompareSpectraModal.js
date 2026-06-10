@@ -148,8 +148,7 @@ const CompareSpectraModal = ({
     });
     const nextContainer = computeNextContainerFromSelection(currentCompare.container, selection);
     setCurrentContainer(nextContainer);
-    onContainerChange?.(nextContainer);
-  }, [onContainerChange, setCurrentContainer]);
+  }, [setCurrentContainer]);
 
   const handleUndo = useCallback(() => {
     const next = compareRef.current.undo();
@@ -158,9 +157,8 @@ const CompareSpectraModal = ({
         ...compareRef.current,
         container: next,
       };
-      onContainerChange?.(next);
     }
-  }, [onContainerChange]);
+  }, []);
 
   const persistOps = useCallback(async (params, opsToWrite = null) => {
     const currentCompare = compareRef.current;
@@ -170,7 +168,6 @@ const CompareSpectraModal = ({
     if (Array.isArray(opsToWrite) && opsToWrite.length > 0) {
       containerForSave = writeContentOps(currentCompare.container, opsToWrite);
       setCurrentContainer(containerForSave);
-      onContainerChange?.(containerForSave);
     }
 
     try {
@@ -190,6 +187,8 @@ const CompareSpectraModal = ({
         onSubmit?.();
       }
     } catch {
+      // swallow: persist already dispatched SAVE_FAIL into the hook state
+    } finally {
       LoadingActions.stop.defer();
     }
   }, [onContainerChange, onSubmit, setCurrentContainer]);
@@ -226,8 +225,7 @@ const CompareSpectraModal = ({
     if (!currentCompare.container) return;
     const nextContainer = replaceContent(currentCompare.container, content);
     setCurrentContainer(nextContainer);
-    onContainerChange?.(nextContainer);
-  }, [onContainerChange, setCurrentContainer]);
+  }, [setCurrentContainer]);
 
   const handleRetry = useCallback(() => {
     const currentCompare = compareRef.current;
@@ -248,7 +246,7 @@ const CompareSpectraModal = ({
       <CompareSpectraHeader
         sample={sample}
         container={compare.container}
-        originalAnalyses={compare.container?.extended_metadata?.analyses_compared}
+        originalAnalyses={compare.originalAnalyses}
         showUndo={compare.showUndo}
         onSelectionChange={handleSelectionChange}
         onUndo={handleUndo}
