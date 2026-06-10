@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
+import Container from 'src/models/Container';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
@@ -86,7 +87,7 @@ export default class SampleDetailsContainers extends Component {
 
     handleSampleChanged(sample);
   };
-  
+
   onUIStoreChange(state) {
     const { activeAnalysis } = this.state;
     if (state.sample.activeAnalysis !== activeAnalysis) {
@@ -105,11 +106,11 @@ export default class SampleDetailsContainers extends Component {
 
   handleContainerChanged = (updatedContainer, cb) => {
     const { sample, handleSampleChanged } = this.props;
-  
+
     const replaceRecursively = (node) => {
       if (!node || !node.children) return;
-  
-      node.children = node.children.map(child => {
+
+      node.children = node.children.map((child) => {
         if (child.id === updatedContainer.id) {
           return updatedContainer;
         }
@@ -117,13 +118,12 @@ export default class SampleDetailsContainers extends Component {
         return child;
       });
     };
-  
+
     const root = sample.container;
     replaceRecursively(root);
-  
+
     handleSampleChanged(sample, cb);
   };
-  
 
   handleMove(source, target) {
     const { sample } = this.props;
@@ -251,7 +251,6 @@ export default class SampleDetailsContainers extends Component {
           />
           <CompareSpectraModal
             sample={sample}
-            onSampleChanged={handleSampleChanged}
             onSubmit={handleSubmit}
             onContainerChange={this.handleContainerChanged}
           />
