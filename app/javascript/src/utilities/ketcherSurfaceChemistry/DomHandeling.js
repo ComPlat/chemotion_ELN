@@ -288,7 +288,11 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
       );
 
       if (!LAYERING_FLAGS.skipTemplateName) {
-        await updateTemplatesInTheCanvas(iframeRef);
+        try {
+          await updateTemplatesInTheCanvas(iframeRef);
+        } catch (e) {
+          if (!(e instanceof DOMException && e.name === 'SecurityError')) throw e;
+        }
       }
     });
 
@@ -300,8 +304,8 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
 
     // Fallback: Try to manually find buttons after some time, debounce the function
     debounceAttach = setTimeout(() => {
-      Object.keys(buttonEvents).forEach((title) => {
-        attachListenerForTitle(iframeDocument, title);
+      Object.keys(buttonEvents).forEach((selector) => {
+        attachListenerForTitle(iframeDocument, selector, buttonEvents);
       });
 
       PolymerListIconKetcherToolbarButton(iframeDocument);
@@ -329,10 +333,10 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
     try {
       const iframeDocument = getIframeDocument();
       if (iframeDocument) {
-        Object.keys(buttonEvents).forEach((title) => {
-          const button = iframeDocument.querySelector(`[title="${title}"]`);
+        Object.keys(buttonEvents).forEach((selector) => {
+          const button = iframeDocument.querySelector(selector);
           if (button) {
-            button.removeEventListener('click', buttonEvents[title]);
+            button.removeEventListener('click', buttonEvents[selector]);
           }
         });
       }
