@@ -146,6 +146,24 @@ module Versioning
               revert: %i[xref.refractive_index],
               formatter: jsonb_formatter('refractive_index'),
             },
+            {
+              name: 'xref.moisture',
+              label: 'Moisture',
+              revert: %i[xref.moisture],
+              formatter: jsonb_formatter('moisture'),
+            },
+            {
+              name: 'xref.particle_size',
+              label: 'Particle size',
+              revert: %i[xref.particle_size],
+              formatter: jsonb_formatter('particle_size'),
+            },
+            {
+              name: 'xref.physical_state',
+              label: 'Physical state',
+              revert: %i[xref.physical_state],
+              formatter: jsonb_formatter('physical_state'),
+            },
           ],
           solvent: {
             label: 'Solvent',

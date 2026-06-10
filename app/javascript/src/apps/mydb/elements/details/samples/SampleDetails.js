@@ -937,6 +937,9 @@ export default class SampleDetails extends React.Component {
       rfsovents,
       supplier,
       private_notes,
+      moisture,
+      particle_size,
+      physical_state,
       ...customKeys
     } = cloneDeep(xref || {});
     const check = ['form', 'solubility', 'refractive_index', 'flash_point', 'inventory_label'];

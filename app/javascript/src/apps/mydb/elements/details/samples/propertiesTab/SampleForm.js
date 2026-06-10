@@ -786,6 +786,79 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  numericInputWithAddon(sample, field, label, addonText, min = null, max = null) {
+    const key = field.split('xref_')[1];
+    const updateValue = (sample.xref && sample.xref[key] != null) ? sample.xref[key] : '';
+
+    const handleChange = (e) => {
+      const { value } = e.target;
+      if (value === '') {
+        this.handleFieldChanged(field, null);
+        return;
+      }
+      const parsed = parseFloat(value);
+      // ignore intermediate/invalid states (e.g. "-") so we never store NaN in xref
+      if (Number.isNaN(parsed)) return;
+
+      let next = parsed;
+      if (min != null && next < min) next = min;
+      if (max != null && next > max) next = max;
+      if (next !== parsed) {
+        NotificationActions.add({
+          message: max != null
+            ? `${label} must be between ${min} and ${max}`
+            : `${label} must be at least ${min}`,
+          level: 'error',
+        });
+      }
+      this.handleFieldChanged(field, next);
+    };
+
+    return (
+      <Form.Group>
+        <Form.Label>{label}</Form.Label>
+        <InputGroup>
+          <Form.Control
+            type="number"
+            step="any"
+            min={min != null ? min : undefined}
+            max={max != null ? max : undefined}
+            value={updateValue}
+            onChange={handleChange}
+            disabled={!sample.can_update}
+            readOnly={!sample.can_update}
+          />
+          <InputGroup.Text>{addonText}</InputGroup.Text>
+        </InputGroup>
+      </Form.Group>
+    );
+  }
+
+  physicalStateInput(sample) {
+    const physicalStateOptions = [
+      { label: 'solid', value: 'solid' },
+      { label: 'liquid', value: 'liquid' },
+      { label: 'gas', value: 'gas' },
+    ];
+
+    const currentValue = sample.xref?.physical_state;
+    const selectedOption = physicalStateOptions.find((o) => o.value === currentValue) || null;
+
+    return (
+      <Form.Group>
+        <Form.Label>Physical state</Form.Label>
+        <Select
+          name="physicalState"
+          isClearable
+          isDisabled={!sample.can_update}
+          options={physicalStateOptions}
+          value={selectedOption}
+          onChange={(option) => this.handleFieldChanged('xref_physical_state', option ? option.value : null)}
+        />
+      </Form.Group>
+    );
+  }
+
   inputWithUnit(sample, field, label) {
     const value = sample.xref && sample.xref[field.split('xref_')[1]] ? sample.xref[field.split('xref_')[1]].value : '';
     const unit = sample.xref && sample.xref[field.split('xref_')[1]] ? sample.xref[field.split('xref_')[1]].unit : '°C';
@@ -1275,6 +1348,11 @@ export default class SampleForm extends React.Component {
                 <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
                 <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
                 <Col>{this.textInput(sample, 'xref_solubility', 'Soluble in')}</Col>
+              </Row>
+              <Row className="mb-4">
+                <Col>{this.numericInputWithAddon(sample, 'xref_moisture', 'Moisture', '%', 0, 100)}</Col>
+                <Col>{this.numericInputWithAddon(sample, 'xref_particle_size', 'Particle size', 'µm', 0)}</Col>
+                <Col>{this.physicalStateInput(sample)}</Col>
               </Row>
               <Row className="align-items-start mb-4">
                 <Col>
