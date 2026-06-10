@@ -2532,8 +2532,14 @@ export default class Sample extends Element {
   }
 
   /**
-   * Fetches individual molecules for each SMILES in parallel, wraps them as
-   * Component instances, and adds them synchronously to the mixture.
+   * Fetches individual molecules for the given SMILES fragments and reconciles
+   * them with the existing components:
+   * - fragments already covered by an existing component are skipped, so
+   *   unchanged structures keep their component entry (no duplicates),
+   * - components whose structure no longer occurs in the edited structure
+   *   (i.e. it was modified in the structure editor) are updated in place
+   *   with the new molecule, preserving amounts, name, and position,
+   * - any remaining fragments are added as new Component instances.
    *
    * Does NOT call updateMixtureMolecule() — the caller is responsible for
    * triggering the combined-molecule fetch (and any intermediate setState)
@@ -2541,11 +2547,23 @@ export default class Sample extends Element {
    *
    * @param {Array<string>} mixtureSmiles - Array of SMILES strings to split.
    * @param {string} editor - The editor to use for fetching molecules.
-   * @returns {Promise<void>} Resolves once components have been added.
+   * @returns {Promise<void>} Resolves once components have been added/updated.
    */
   async splitSmilesToMolecule(mixtureSmiles, editor) {
+    const components = this.components || [];
+
+    // Fragments already covered by the current components (a merged ionic
+    // component carries a dot-joined cano_smiles like "[Na+].[Cl-]").
+    const existingFragments = new Set(
+      components.flatMap((c) => (c.molecule_cano_smiles || '').split('.')).filter(Boolean)
+    );
+
+    // Only fragments that no current component covers need to be resolved.
+    const unknownSmiles = mixtureSmiles.filter((smiles) => smiles && !existingFragments.has(smiles));
+    if (unknownSmiles.length === 0) return;
+
     const results = await Promise.all(
-      mixtureSmiles.map((smiles) => MoleculesFetcher.fetchBySmi(smiles, null, null, editor))
+      unknownSmiles.map((smiles) => MoleculesFetcher.fetchBySmi(smiles, null, null, editor))
     );
 
     // Filter out failed fetches (undefined/null) and track which SMILES failed
@@ -2555,7 +2573,7 @@ export default class Sample extends Element {
       if (molecule && molecule.id) {
         molecules.push(molecule);
       } else {
-        failedSmiles.push(mixtureSmiles[index]);
+        failedSmiles.push(unknownSmiles[index]);
       }
     });
 
@@ -2575,14 +2593,41 @@ export default class Sample extends Element {
       return;
     }
 
+    // Components whose structure no longer occurs in the edited structure were
+    // modified in the structure editor — update them in place instead of
+    // adding the edited structure as an additional component.
+    const editedFragments = new Set(mixtureSmiles);
+    const staleComponents = components.filter(
+      (component) => !(component.molecule_cano_smiles || '')
+        .split('.')
+        .every((fragment) => editedFragments.has(fragment))
+    );
+
     const { default: Component } = await import('src/models/Component');
 
-    const newComponents = molecules.map((molecule) => {
-      const newSample = Sample.buildNew(molecule, this.collection_id);
-      return new Component(newSample);
+    const newComponents = [];
+    molecules.forEach((molecule, index) => {
+      const staleComponent = staleComponents[index];
+      if (staleComponent) {
+        staleComponent.molecule = molecule;
+        staleComponent.molecule_id = molecule.id;
+        staleComponent.molfile = molecule.molfile;
+        // The molecular weight changed — re-derive the molar amount from the
+        // user-entered mass/volume so the row stays consistent.
+        staleComponent.calculateAmount(staleComponent.purity || 1.0);
+      } else {
+        const newSample = Sample.buildNew(molecule, this.collection_id);
+        newComponents.push(new Component(newSample));
+      }
     });
 
-    this.addMixtureComponentsSync(newComponents);
+    if (newComponents.length > 0) {
+      this.addMixtureComponentsSync(newComponents);
+    } else {
+      // Only in-place updates happened — refresh the mixture totals/ratios.
+      this.calculateTotalMixtureMass();
+      this.updateMixtureComponentEquivalent();
+    }
     this.syncComponentOrderToSmiles(mixtureSmiles);
   }
 
