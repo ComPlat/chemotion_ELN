@@ -3,6 +3,10 @@ import PropTypes from 'prop-types';
 import { Button, Accordion, Card, ButtonToolbar } from 'react-bootstrap';
 
 import Container from 'src/models/Container';
+import ArrayUtils from 'src/utilities/ArrayUtils';
+import { findAnalysesContainer, reorderAnalyses } from 'src/apps/mydb/elements/details/analyses/utils';
+import AnalysisModeToggle from 'src/apps/mydb/elements/details/analyses/AnalysisModeToggle';
+import AnalysesOrderRow from 'src/apps/mydb/elements/details/analyses/AnalysesOrderRow';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
@@ -18,8 +22,11 @@ export default class ScreenDetailsContainers extends Component {
       screen,
       activeContainer: 0,
       commentBoxVisible: hasComment,
+      mode: 'edit',
     };
     this.analysesContainer = screen.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+    this.handleToggleMode = this.handleToggleMode.bind(this);
+    this.handleMove = this.handleMove.bind(this);
   }
 
   componentDidMount() {
@@ -81,6 +88,17 @@ export default class ScreenDetailsContainers extends Component {
     this.setState({ activeContainer: key });
   }
 
+  handleToggleMode(mode) {
+    this.setState({ mode });
+  }
+
+  handleMove(source, target) {
+    const { handleScreenChanged } = this.props;
+    const { screen } = this.state;
+    reorderAnalyses(findAnalysesContainer(screen), source, target);
+    handleScreenChanged(screen);
+  }
+
   stopToggleAccordion(event) {
     event.stopPropagation();
   }
@@ -90,16 +108,14 @@ export default class ScreenDetailsContainers extends Component {
     if (readOnly) { return null; }
 
     return (
-      <div className="my-2">
-        <Button
-          size="sm"
-          variant="success"
-          onClick={() => this.handleAdd()}
-        >
-          <i className="fa fa-plus me-1" />
-          Add analysis
-        </Button>
-      </div>
+      <Button
+        size="sm"
+        variant="success"
+        onClick={() => this.handleAdd()}
+      >
+        <i className="fa fa-plus me-1" />
+        Add analysis
+      </Button>
     );
   }
 
@@ -196,20 +212,21 @@ export default class ScreenDetailsContainers extends Component {
   };
 
   render() {
-    const { screen, commentBoxVisible } = this.state;
+    const { readOnly } = this.props;
+    const { screen, commentBoxVisible, mode } = this.state;
     if (screen.container != null) {
       if (this.analysesContainer.length == 1 && this.analysesContainer[0].children.length > 0) {
+        const sortedChildren = ArrayUtils.sortArrByIndex(this.analysesContainer[0].children);
         return (
           <div>
-            <div className="mb-2 me-1 d-flex flex-row-reverse">
-              <ButtonToolbar>
-                <div className="mt-2">
-                  <CommentButton
-                    toggleCommentBox={this.toggleCommentBox}
-                    isVisible={commentBoxVisible}
-                    size="sm"
-                  />
-                </div>
+            <div className="mb-2 me-1 d-flex justify-content-between align-items-center">
+              <AnalysisModeToggle mode={mode} onToggle={this.handleToggleMode} disabled={readOnly} />
+              <ButtonToolbar className="gap-2">
+                <CommentButton
+                  toggleCommentBox={this.toggleCommentBox}
+                  isVisible={commentBoxVisible}
+                  size="sm"
+                />
                 {this.addButton()}
               </ButtonToolbar>
             </div>
@@ -218,26 +235,38 @@ export default class ScreenDetailsContainers extends Component {
               value={screen.container.description}
               handleCommentTextChange={this.handleCommentTextChange}
             />
-            <Accordion className="border rounded overflow-hidden">
-              {this.analysesContainer[0].children.map((container, key) => {
-                const isFirstTab = key === 0;
-                return (
-                  <Card
-                    key={`screen_container_${container.id}`}
-                    className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
-                  >
-                    <Card.Header className="rounded-0 p-0 border-bottom-0">
-                      <AccordionHeaderWithButtons eventKey={key}>
-                        {container.is_deleted
-                          ? this.containerHeaderDeleted(container)
-                          : this.containerHeader(container)}
-                      </AccordionHeaderWithButtons>
-                    </Card.Header>
-                    {this.collapsableBody(container, key)}
-                  </Card>
-                );
-              })}
-            </Accordion>
+            {mode === 'order' ? (
+              <div>
+                {sortedChildren.map((container) => (
+                  <AnalysesOrderRow
+                    key={container.id}
+                    container={container}
+                    handleMove={this.handleMove}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Accordion className="border rounded overflow-hidden">
+                {sortedChildren.map((container, key) => {
+                  const isFirstTab = key === 0;
+                  return (
+                    <Card
+                      key={`screen_container_${container.id}`}
+                      className={`rounded-0 border-0${isFirstTab ? '' : ' border-top'}`}
+                    >
+                      <Card.Header className="rounded-0 p-0 border-bottom-0">
+                        <AccordionHeaderWithButtons eventKey={key}>
+                          {container.is_deleted
+                            ? this.containerHeaderDeleted(container)
+                            : this.containerHeader(container)}
+                        </AccordionHeaderWithButtons>
+                      </Card.Header>
+                      {this.collapsableBody(container, key)}
+                    </Card>
+                  );
+                })}
+              </Accordion>
+            )}
           </div>
         );
       } else {
@@ -246,13 +275,11 @@ export default class ScreenDetailsContainers extends Component {
             <div className="d-flex align-items-center justify-content-between my-2">
               <span> There are currently no Analyses.</span>
               <ButtonToolbar>
-                <div className="mt-2">
-                  <CommentButton
-                    toggleCommentBox={this.toggleCommentBox}
-                    isVisible={commentBoxVisible}
-                    size="sm"
-                  />
-                </div>
+                <CommentButton
+                  toggleCommentBox={this.toggleCommentBox}
+                  isVisible={commentBoxVisible}
+                  size="sm"
+                />
                 {this.addButton()}
               </ButtonToolbar>
             </div>

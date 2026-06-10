@@ -303,11 +303,6 @@ module Chemotion
       'Could not find additional chemical properties'
     end
 
-    def self.names_properties_merck(properties)
-      properties.search('div.MuiGrid-grid-sm-3')
-                .css('span').map(&:text).map { |str| str.tr(' ', '_').downcase }
-    end
-
     def self.clean_property_name(property_name)
       return nil if property_name.blank?
 

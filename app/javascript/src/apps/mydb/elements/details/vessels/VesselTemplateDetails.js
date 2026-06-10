@@ -6,6 +6,7 @@ import React, {
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import PropTypes from 'prop-types';
 import { toJS } from 'mobx';
+import uuid from 'uuid';
 import {
   Button, Form, Row, Col, Table, InputGroup, Card, Container
 } from 'react-bootstrap';
@@ -99,6 +100,7 @@ function VesselTemplateDetails({ vessels }) {
 
   const handleAddNewInstance = () => {
     setNewInstances([...newInstances, {
+      localId: uuid.v4(),
       vesselInstanceName: '',
       vesselInstanceDescription: '',
       barCode: '',
@@ -412,9 +414,7 @@ function VesselTemplateDetails({ vessels }) {
                 </tr>
               ))}
               {newInstances.map((instance, index) => (
-                <tr
-                  key={`new-${instance.vesselInstanceName || ''}-${instance.barCode || ''}-${instance.qrCode || ''}`}
-                >
+                <tr key={instance.localId}>
                   {['vesselInstanceName', 'vesselInstanceDescription', 'barCode', 'qrCode'].map((field) => (
                     <td key={field} className="p-1">
                       <Form.Control

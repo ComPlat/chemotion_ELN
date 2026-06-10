@@ -1,11 +1,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import Container from 'src/models/Container';
 import ArrayUtils from 'src/utilities/ArrayUtils';
-import { reOrderArr } from 'src/utilities/DndControl';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import CompareSpectraModal from 'src/apps/mydb/elements/details/spectraCompare/components/CompareSpectraModal';
@@ -17,9 +16,9 @@ import {
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { UploadField } from 'src/apps/mydb/elements/details/analyses/UploadField';
 import {
-  sortedContainers,
-  indexedContainers,
-  addNewAnalyses
+  addNewAnalyses,
+  findAnalysesContainer,
+  reorderAnalyses,
 } from 'src/apps/mydb/elements/details/analyses/utils';
 
 export default class SampleDetailsContainers extends Component {
@@ -44,8 +43,6 @@ export default class SampleDetailsContainers extends Component {
     this.handleMove = this.handleMove.bind(this);
     this.toggleAddToReport = this.toggleAddToReport.bind(this);
     this.handleToggleMode = this.handleToggleMode.bind(this);
-    this.isEqCId = this.isEqCId.bind(this);
-    this.indexedContainers = this.indexedContainers.bind(this);
   }
 
   componentDidMount() {
@@ -129,26 +126,8 @@ export default class SampleDetailsContainers extends Component {
 
   handleMove(source, target) {
     const { sample } = this.props;
-
-    const sortedConts = sortedContainers(sample);
-    const newSortConts = reOrderArr(source, target, this.isEqCId, sortedConts);
-    const newIndexedConts = this.indexedContainers(newSortConts);
-
-    sample.analysesContainers()[0].children = newIndexedConts;
+    reorderAnalyses(findAnalysesContainer(sample), source, target);
     this.props.setState((prevState) => ({ ...prevState, sample }));
-  }
-
-  sortedContainers(sample) {
-    const containers = sample.analysesContainers()[0].children;
-    return ArrayUtils.sortArrByIndex(containers);
-  }
-
-  isEqCId(container, tagEl) {
-    return container.id === tagEl.id;
-  }
-
-  indexedContainers(containers) {
-    return indexedContainers(containers);
   }
 
   handleRemove(container) {
@@ -188,15 +167,20 @@ export default class SampleDetailsContainers extends Component {
           element={sample}
           setElement={(sample, cb = null) => setState((prevState) => ({ ...prevState, sample }), cb)}
         />
-        <Button
-          size="xsm"
-          variant="success"
-          onClick={() => this.handleAdd(false)}
-          disabled={!sample.can_update}
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id="add-analysis-tooltip">Create and add empty analyses.</Tooltip>}
         >
-          <i className="fa fa-plus me-1" />
-          Add analysis
-        </Button>
+          <Button
+            size="sm"
+            variant="success"
+            onClick={() => this.handleAdd(false)}
+            disabled={!sample.can_update}
+          >
+            <i className="fa fa-plus me-1" />
+            Add analysis
+          </Button>
+        </OverlayTrigger>
       </>
     );
   }

@@ -8,6 +8,10 @@ import classnames from 'classnames';
 
 const target = {
   drop(tagProps, monitor) {
+    if (tagProps.sample?.can_update !== true) {
+      return;
+    }
+
     const { dropSample } = tagProps;
     const srcItem = monitor.getItem();
     const srcType = monitor.getItemType();
@@ -22,6 +26,10 @@ const target = {
     }
   },
   canDrop(tagProps, monitor) {
+    if (tagProps.sample?.can_update !== true) {
+      return false;
+    }
+
     const srcType = monitor.getItemType();
     const isCorrectType = srcType === DragDropItemTypes.SAMPLE
       || srcType === DragDropItemTypes.MOLECULE;
@@ -39,7 +47,8 @@ class SampleDetailsSolventsDnd extends React.Component {
   render() {
     const {
       sample, materialGroup,
-      isOver, canDrop, connectDropTarget, dropSample, deleteSolvent, onChangeSolvent
+      isOver, canDrop, connectDropTarget, dropSample, deleteSolvent, onChangeSolvent,
+      isDisabled
     } = this.props;
 
     return connectDropTarget(
@@ -55,6 +64,7 @@ class SampleDetailsSolventsDnd extends React.Component {
           deleteSolvent={deleteSolvent}
           onChangeSolvent={onChangeSolvent}
           materialGroup={materialGroup ?? ''}
+          isDisabled={isDisabled}
         />
       </div>
     );
@@ -75,4 +85,9 @@ SampleDetailsSolventsDnd.propTypes = {
   canDrop: PropTypes.bool.isRequired,
   connectDropTarget: PropTypes.func.isRequired,
   deleteSolvent: PropTypes.func.isRequired,
+  isDisabled: PropTypes.bool,
+};
+
+SampleDetailsSolventsDnd.defaultProps = {
+  isDisabled: false,
 };

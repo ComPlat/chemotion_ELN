@@ -33,7 +33,12 @@ module Usecases
       private
 
       def model_name(id_params)
-        id_params[:model_name] == 'element' ? Labimotion::Element : id_params[:model_name].camelize.constantize
+        case id_params[:model_name]
+        when 'element' then Labimotion::Element
+        when 'cell_lines' then CelllineSample
+        else
+          id_params[:model_name].camelize.constantize
+        end
       end
 
       def basic_scope
@@ -89,7 +94,8 @@ module Usecases
 
         timezone = @from ? Time.zone.at(@from.to_time) : Time.zone.at(@to.to_time) + 1.day
         created_or_updated_at = @by_created_at ? 'created_at' : 'updated_at'
-        scope = scope.where("#{@id_params[:model_name].pluralize}.#{created_or_updated_at} >= ?", timezone)
+        model = @id_params[:model_name] == 'cell_lines' ? 'cellline_samples' : @id_params[:model_name].pluralize
+        scope = scope.where("#{model}.#{created_or_updated_at} >= ?", timezone)
         @total_elements = scope.size
 
         scope
@@ -136,8 +142,9 @@ module Usecases
       end
 
       def serialized_result_by_id(element, serialized_scope)
+        model = @id_params[:model_name] == 'cell_lines' ? 'CellLineSample' : @model_name
         entities =
-          @model_name == Labimotion::Element ? Labimotion::ElementEntity : "Entities::#{@model_name}Entity".constantize
+          @model_name == Labimotion::Element ? Labimotion::ElementEntity : "Entities::#{model}Entity".constantize
         serialized =
           entities.represent(element, displayed_in_list: true).serializable_hash
         serialized_scope.push(serialized)

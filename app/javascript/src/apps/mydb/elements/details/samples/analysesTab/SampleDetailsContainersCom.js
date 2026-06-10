@@ -6,10 +6,8 @@ import {
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import CompareInlineEditor from 'src/apps/mydb/elements/details/spectraCompare/components/CompareInlineEditor';
 import ContainerRow from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersDnd';
-import {
-  AnalysesHeader,
-  AnalysisModeToggle,
-} from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
+import { AnalysesHeader } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
+import AnalysisModeToggle from 'src/apps/mydb/elements/details/analyses/AnalysisModeToggle';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 
@@ -144,8 +142,8 @@ function ReactionsDisplay({
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        {AnalysisModeToggle(mode, handleToggleMode, isDisabled)}
-        <ButtonToolbar>
+        <AnalysisModeToggle mode={mode} onToggle={handleToggleMode} disabled={isDisabled} />
+        <ButtonToolbar className="gap-2">
           <CommentButton
             toggleCommentBox={toggleCommentBox}
             isVisible={commentBoxVisible}
@@ -187,15 +185,24 @@ function ReactionsDisplay({
                 <i className="fa fa-info-circle text-info" style={{ cursor: 'pointer' }} />
               </OverlayTrigger>
             </div>
-            <Button
-              size="xsm"
-              variant="success"
-              onClick={() => handleAdd(true)}
-              disabled={isDisabled}
+            <OverlayTrigger
+              placement="top"
+              overlay={(
+                <Tooltip id="add-comparison-tooltip">
+                  Create a container to compare several spectra of the same layout.
+                </Tooltip>
+              )}
             >
-              <i className="fa fa-plus me-1" />
-              Add comparisons
-            </Button>
+              <Button
+                size="sm"
+                variant="success"
+                onClick={() => handleAdd(true)}
+                disabled={isDisabled}
+              >
+                <i className="fa fa-plus me-1" />
+                Add comparison
+              </Button>
+            </OverlayTrigger>
           </div>
 
           {comparisons.length > 0 && (

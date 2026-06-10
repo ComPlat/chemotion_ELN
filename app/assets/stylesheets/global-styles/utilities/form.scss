@@ -35,3 +35,11 @@
 .ant-select-dropdown {
   z-index: 2000 !important; /* higher than modal */
 }
+
+.invalid-input {
+  @extend .border-danger;
+
+  .chemotion-select__control {
+    border-color: var(--bs-danger);
+  }
+}

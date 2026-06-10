@@ -22,7 +22,7 @@ import AttachmentForm
 import ConflictModal
   from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/ConflictModal';
 import { collectionHasPermission } from 'src/utilities/collectionUtilities';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 import { set } from 'lodash';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
@@ -48,7 +48,7 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
   const { currentCollection } = UIStore.getState();
   const { currentUser } = UserStore.getState();
 
-  const [visibleTabs, setVisibleTabs] = useState(Immutable.List());
+  const [visibleTabs, setVisibleTabs] = useState(List());
   const submitLabel = sbmmSample.isNew ? 'Create' : 'Save';
   const tabContents = [];
   const alertRef = useRef();
@@ -289,7 +289,7 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
         </a>
       );
     }
-    return <img src="/logos/uniprot-logo-gray.svg" className="uniprot-logo-gray" alt="Uniprot" />;
+    return <img src="/logos/uniprot-logo.svg" className="uniprot-logo-gray" alt="Uniprot" />;
   };
 
   // Handler for chemical save

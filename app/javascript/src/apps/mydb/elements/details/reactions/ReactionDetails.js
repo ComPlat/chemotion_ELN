@@ -38,7 +38,7 @@ import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesBut
 import { permitOn } from 'src/components/common/uis';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import AppModal from 'src/components/common/AppModal';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import MatrixCheck from 'src/components/common/MatrixCheck';
@@ -66,7 +66,6 @@ const productLink = (product, active) => (
     >
       <i className="icon-sample mx-1" />
       {product.title()}
-      hah
     </span>
   </span>
 );
@@ -80,7 +79,7 @@ export default class ReactionDetails extends Component {
       reaction,
       activeTab: UIStore.getState().reaction.activeTab,
       activeAnalysisTab: UIStore.getState().reaction.activeAnalysisTab,
-      visible: Immutable.List(),
+      visible: List(),
       sfn: UIStore.getState().hasSfn,
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
       reactionSvgVersion: 0, // Bumped when graphic is updated so shouldComponentUpdate sees a state change (we mutate reaction in place)
@@ -775,7 +774,12 @@ export default class ReactionDetails extends Component {
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
           <div className="d-flex align-items-center">
             <Dropdown ref={this.schemeDropdownRef}>
-              <Dropdown.Toggle variant="info" size="sm" id="scheme-type-dropdown">
+              <Dropdown.Toggle
+                variant="info"
+                size="sm"
+                id="scheme-type-dropdown"
+                disabled={!permitOn(reaction)}
+              >
                 <i className="fa fa-cog" />
                 <span className="ms-1">
                   Current Scheme:&nbsp;

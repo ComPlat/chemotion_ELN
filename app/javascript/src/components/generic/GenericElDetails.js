@@ -9,7 +9,7 @@ import {
   Tab,
 } from 'react-bootstrap';
 import { cloneDeep, findIndex, merge } from 'lodash';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
   GenUIProvider, GenInterface, GenToolbar, browseElement
@@ -53,7 +53,7 @@ export default class GenericElDetails extends Component {
       genericEl: props.genericEl,
       activeTab: 0,
       // List of all visible segment tabs.
-      visible: Immutable.List(),
+      visible: List(),
       expandAll: undefined,
     };
     this.onChangeUI = this.onChangeUI.bind(this);
