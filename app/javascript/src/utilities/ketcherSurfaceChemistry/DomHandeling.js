@@ -311,7 +311,11 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
 
   const iframeEl = iframeRef?.current;
   if (iframeEl) {
-    iframeEl.addEventListener('load', setup);
+    if (getIframeDocument()?.readyState === 'complete') {
+      setup();
+    } else {
+      iframeEl.addEventListener('load', setup);
+    }
   }
 
   // Cleanup function
