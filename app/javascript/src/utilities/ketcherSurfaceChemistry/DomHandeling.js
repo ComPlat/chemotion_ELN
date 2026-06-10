@@ -257,60 +257,84 @@ export const imageNodeForTextNodeSetter = async (data) => {
 
 // helper function to add mutation observers to DOM elements
 const attachClickListeners = (iframeRef, buttonEvents) => {
-  // Main function to attach listeners and observers
-  const iframeDocument = iframeRef?.current?.contentWindow?.document || null;
+  let observer = null;
+  let debounceAttach = null;
 
-  // Attach MutationObserver to listen for relevant DOM mutations (e.g., new elements added)
-  const observer = new MutationObserver(async (mutationsList) => {
-    await Promise.all(
-      mutationsList.map(async (mutation) => {
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          await Promise.all(
-            Object.keys(buttonEvents).map(async (selector) => {
-              await attachListenerForTitle(iframeDocument, selector, buttonEvents);
-            })
-          );
-        }
-      })
-    );
-
-    if (!LAYERING_FLAGS.skipTemplateName) {
-      await updateTemplatesInTheCanvas(iframeRef);
+  const getIframeDocument = () => {
+    try {
+      return iframeRef?.current?.contentWindow?.document || null;
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'SecurityError') return null;
+      throw e;
     }
-  });
+  };
 
-  // Start observing the iframe's document for changes (child nodes added anywhere in the subtree)
-  observer.observe(iframeDocument, {
-    childList: true,
-    subtree: true,
-  });
+  const setup = () => {
+    const iframeDocument = getIframeDocument();
+    if (!iframeDocument) return;
 
-  // Fallback: Try to manually find buttons after some time, debounce the function
-  const debounceAttach = setTimeout(() => {
-    Object.keys(buttonEvents).forEach((title) => {
-      attachListenerForTitle(iframeDocument, title);
+    // Attach MutationObserver to listen for relevant DOM mutations (e.g., new elements added)
+    observer = new MutationObserver(async (mutationsList) => {
+      await Promise.all(
+        mutationsList.map(async (mutation) => {
+          if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+            await Promise.all(
+              Object.keys(buttonEvents).map(async (selector) => {
+                await attachListenerForTitle(iframeDocument, selector, buttonEvents);
+              })
+            );
+          }
+        })
+      );
+
+      if (!LAYERING_FLAGS.skipTemplateName) {
+        await updateTemplatesInTheCanvas(iframeRef);
+      }
     });
 
-    // Ensure iframe content is loaded before adding the button
-    if (iframeRef?.current?.contentWindow?.document?.readyState === 'complete') {
+    // Start observing the iframe's document for changes (child nodes added anywhere in the subtree)
+    observer.observe(iframeDocument, {
+      childList: true,
+      subtree: true,
+    });
+
+    // Fallback: Try to manually find buttons after some time, debounce the function
+    debounceAttach = setTimeout(() => {
+      Object.keys(buttonEvents).forEach((title) => {
+        attachListenerForTitle(iframeDocument, title);
+      });
+
       PolymerListIconKetcherToolbarButton(iframeDocument);
       SolidSurfaceTemplatesIconTextButton(iframeDocument);
-    } else if (iframeRef?.current?.onload) {
-      iframeRef.current.onload = PolymerListIconKetcherToolbarButton;
-      iframeRef.current.onload = SolidSurfaceTemplatesIconTextButton;
-    }
-  }, 1000);
+    }, 1000);
+  };
+
+  const iframeEl = iframeRef?.current;
+  if (iframeEl) {
+    iframeEl.addEventListener('load', setup);
+  }
 
   // Cleanup function
   return () => {
-    observer.disconnect();
-    clearTimeout(debounceAttach);
-    Object.keys(buttonEvents).forEach((title) => {
-      const button = iframeDocument.querySelector(`[title="${title}"]`);
-      if (button) {
-        button.removeEventListener('click', buttonEvents[title]);
+    if (iframeEl) {
+      iframeEl.removeEventListener('load', setup);
+    }
+    if (observer) observer.disconnect();
+    if (debounceAttach) clearTimeout(debounceAttach);
+
+    try {
+      const iframeDocument = getIframeDocument();
+      if (iframeDocument) {
+        Object.keys(buttonEvents).forEach((title) => {
+          const button = iframeDocument.querySelector(`[title="${title}"]`);
+          if (button) {
+            button.removeEventListener('click', buttonEvents[title]);
+          }
+        });
       }
-    });
+    } catch (e) {
+      if (!(e instanceof DOMException && e.name === 'SecurityError')) throw e;
+    }
   };
 };
 
