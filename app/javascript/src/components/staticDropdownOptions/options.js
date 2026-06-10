@@ -242,6 +242,13 @@ export const defaultMultiSolventsSmilesOptions = [{
     density: 0.66
   }
 }, {
+  label: 'Heptane',
+  value: {
+    external_label: 'Heptane',
+    smiles: 'CCCCCCC',
+    density: 0.684
+  }
+}, {
   label: 'N-Methyl-2-pyrrolidone (NMP)',
   value: {
     external_label: 'NMP',
@@ -254,6 +261,13 @@ export const defaultMultiSolventsSmilesOptions = [{
     external_label: 'Pentane',
     smiles: 'CCCCC',
     density: 0.63
+  }
+}, {
+  label: 'n-Pentane',
+  value: {
+    external_label: 'n-Pentane',
+    smiles: 'CCCCC',
+    density: 0.626
   }
 }, {
   label: 'Pyridine',
