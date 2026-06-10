@@ -143,7 +143,8 @@ export const useCompareSpectra = ({ sample, container }, deps = {}) => {
       return;
     }
 
-    const callId = (loadRef.current += 1);
+    loadRef.current += 1;
+    const callId = loadRef.current;
     dispatch({ type: 'LOAD_START' });
 
     load(compareInfos)

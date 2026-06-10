@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Alert, Button, Spinner } from 'react-bootstrap';
-import { SpectraEditor, FN } from '@complat/react-spectra-editor';
+import { SpectraEditor } from '@complat/react-spectra-editor';
 
 import { COMPARE_STATUS } from '../hooks/useCompareSpectra';
 import {
@@ -9,16 +9,6 @@ import {
   formatMpy as formatMpyOps,
   isNmrLayout,
 } from '../formatters/spectraFormatters';
-
-const layoutsWillShowMulti = [
-  FN.LIST_LAYOUT.CYCLIC_VOLTAMMETRY,
-  FN.LIST_LAYOUT.SEC,
-  FN.LIST_LAYOUT.AIF,
-  FN.LIST_LAYOUT.H1,
-  FN.LIST_LAYOUT.C13,
-  FN.LIST_LAYOUT.UVVIS,
-  FN.LIST_LAYOUT.HPLC_UVVIS,
-];
 
 const buildOpsByLayout = ({
   entity,
@@ -70,7 +60,9 @@ const renderLoading = () => (
   </div>
 );
 
-const renderError = ({ error, failures, onClose, onRetry }) => (
+const renderError = ({
+  error, failures, onClose, onRetry,
+}) => (
   <div className="d-flex h-100 justify-content-center align-items-center">
     <Alert variant="danger" className="text-center">
       <Alert.Heading>
@@ -82,7 +74,11 @@ const renderError = ({ error, failures, onClose, onRetry }) => (
         <ul className="text-start small">
           {failures.map((f) => (
             <li key={f.info?.idx}>
-              {f.info?.info?.file?.name || `attachment ${f.info?.idx}`} &mdash; {f.reason}
+              {f.info?.info?.file?.name || `attachment ${f.info?.idx}`}
+              {' '}
+              &mdash;
+              {' '}
+              {f.reason}
             </li>
           ))}
         </ul>
@@ -108,7 +104,11 @@ const renderFailureBanner = (failures) => {
       <ul className="mb-0 small">
         {failures.map((f) => (
           <li key={f.info?.idx}>
-            {f.info?.info?.file?.name || `attachment ${f.info?.idx}`} &mdash; {f.reason}
+            {f.info?.info?.file?.name || `attachment ${f.info?.idx}`}
+            {' '}
+            &mdash;
+            {' '}
+            {f.reason}
           </li>
         ))}
       </ul>
@@ -121,39 +121,13 @@ const contentOpsFromContainer = (container) => {
   return Array.isArray(ops) ? ops : [];
 };
 
-const titleFieldsFromEntity = (entity) => {
-  const features = entity?.features;
-  const firstFeature = Array.isArray(features) ? features[0] : null;
-  const featureObject = Array.isArray(features) ? null : features;
-  return {
-    entityTitle: entity?.title,
-    featureTitle: featureObject?.title,
-    autoPeakTitle: featureObject?.autoPeak?.title,
-    editPeakTitle: featureObject?.editPeak?.title,
-    firstFeatureTitle: firstFeature?.title,
-    spectrumTitle: entity?.spectrum?.title,
-    firstSpectrumTitle: entity?.spectra?.[0]?.title,
-    layout: entity?.layout,
-  };
-};
-
-const titleFieldsFromJcamp = (jcamp) => ({
-  jcampTitle: jcamp?.title,
-  jcampInfoTitle: jcamp?.info?.title,
-  jcampSpectraTitle: jcamp?.spectra?.title,
-  jcampFirstSpectrumTitle: jcamp?.spectra?.[0]?.title,
-  jcampFirstSpectrumInfoTitle: jcamp?.spectra?.[0]?.info?.title,
-});
-
 const CompareSpectraBody = ({
   status,
-  spectra,
   multiEntities,
   failures,
   error,
   saveError,
   container,
-  sample,
   canUpdate,
   onClose,
   onRetry,
@@ -174,54 +148,17 @@ const CompareSpectraBody = ({
       .map((att) => att.filename);
   }, [container]);
 
-  useEffect(() => {
-    const payload = {
-      status,
-      container: {
-        id: container?.id,
-        name: container?.name,
-        kind: container?.extended_metadata?.kind,
-        analysesCompared: container?.extended_metadata?.analyses_compared,
-        comparableAttachments: container?.comparable_info?.list_attachments,
-      },
-      propsPassedToSpectraEditor: {
-        entity: titleFieldsFromEntity(multiEntities?.[multiEntities.length - 1]),
-        multiEntities: (multiEntities || []).map((entity, index) => ({
-          index,
-          ...titleFieldsFromEntity(entity),
-        })),
-        entityFileNames,
-        descriptions: contentOpsFromContainer(container),
-      },
-      decodedSpectraBeforeBuildData: (spectra || []).map((spc, index) => ({
-        index,
-        idx: spc?.idx,
-        ...titleFieldsFromJcamp(spc?.jcamp),
-      })),
-    };
-
-    // Use console.log (not debug): Chrome/Firefox hide debug unless "Verbose" is enabled.
-    // eslint-disable-next-line no-console
-    console.log('[CompareSpectra] props sent to SpectraEditor', payload);
-  }, [container, entityFileNames, multiEntities, spectra, status]);
-
   if (status === COMPARE_STATUS.LOADING) return renderLoading();
   if (status === COMPARE_STATUS.ERROR) {
-    return renderError({ error, failures, onClose, onRetry });
+    return renderError({
+      error, failures, onClose, onRetry,
+    });
   }
   if (!Array.isArray(multiEntities) || multiEntities.length === 0) {
     return renderEmpty(onClose);
   }
 
   const currEntity = multiEntities[multiEntities.length - 1];
-
-  // eslint-disable-next-line no-console
-  console.log('[CompareSpectra] rendering SpectraEditor', {
-    status,
-    entity: titleFieldsFromEntity(currEntity),
-    entityFileNames,
-    curveCount: multiEntities.length,
-  });
 
   const operations = buildOpsByLayout({
     entity: currEntity,
@@ -259,13 +196,11 @@ const CompareSpectraBody = ({
 
 CompareSpectraBody.propTypes = {
   status: PropTypes.string.isRequired,
-  spectra: PropTypes.array,
   multiEntities: PropTypes.array,
   failures: PropTypes.array,
   error: PropTypes.object,
   saveError: PropTypes.object,
   container: PropTypes.object,
-  sample: PropTypes.object,
   canUpdate: PropTypes.bool,
   onClose: PropTypes.func.isRequired,
   onRetry: PropTypes.func,
@@ -279,13 +214,11 @@ CompareSpectraBody.propTypes = {
 };
 
 CompareSpectraBody.defaultProps = {
-  spectra: [],
   multiEntities: [],
   failures: [],
   error: null,
   saveError: null,
   container: null,
-  sample: null,
   canUpdate: true,
   onRetry: null,
   onSave: undefined,
@@ -297,5 +230,5 @@ CompareSpectraBody.defaultProps = {
   onDescriptionChanged: undefined,
 };
 
-export { formatPksOps, formatMpyOps, layoutsWillShowMulti };
+export { formatPksOps, formatMpyOps };
 export default CompareSpectraBody;
