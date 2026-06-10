@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Tooltip, OverlayTrigger
@@ -20,6 +20,8 @@ import ReorderableMaterialContainer
   from 'src/apps/mydb/elements/details/reactions/schemeTab/ReorderableMaterialContainer';
 import CreateButton from 'src/components/common/CreateButton';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import { components as ReactSelectComponents } from 'react-select';
 
 const headers = {
   ref: 'Ref',
@@ -81,11 +83,9 @@ function MaterialGroup({
       dropSample(item.element, materials.at(index), materialGroup, null, true);
     }
     if (item.type === DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE) {
-      // Handle SBMM drop - only for reactants group
       if (materialGroup === 'reactants' && dropSbmmSample) {
         dropSbmmSample(item.element, materials.at(index), materialGroup);
       } else {
-        // Show notification if trying to drop SBMM into other groups
         NotificationActions.add({
           title: 'Invalid Action',
           message: 'SBMM samples can only be placed in the Reactants group.',
@@ -175,6 +175,105 @@ function materialGroupClassNames({ isEmpty, isOver, canDrop }) {
   });
 }
 
+// Shared factory for per-user localStorage usage tracking.
+// Uses label as the storage key so molecules sharing the same SMILES are tracked separately.
+function createUsageTracker(storageSuffix) {
+  function getKey() {
+    const { currentUser } = UserStore.getState();
+    if (!currentUser?.id) return null;
+    return `user${currentUser.id}-${storageSuffix}`;
+  }
+
+  function record({ label, value }) {
+    try {
+      const key = getKey();
+      if (!key) return;
+      const stored = JSON.parse(localStorage.getItem(key) || '{}');
+      const entry = stored[label] || { label, value, count: 0 };
+      stored[label] = {
+        ...entry,
+        label,
+        value,
+        count: entry.count + 1,
+      };
+      localStorage.setItem(key, JSON.stringify(stored));
+    } catch (_) { /* ignore storage errors */ }
+  }
+
+  function getTop(n = 5) {
+    try {
+      const key = getKey();
+      if (!key) return [];
+      const stored = JSON.parse(localStorage.getItem(key) || '{}');
+      return Object.values(stored)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, n)
+        .map(({ label, value }) => ({ label, value }));
+    } catch (_) { return []; }
+  }
+
+  return { record, getTop };
+}
+
+const reagentTracker = createUsageTracker('reagent-usage');
+const solventTracker = createUsageTracker('solvent-usage');
+
+// Tab counts are computed from react-select's live inputValue to avoid
+// the 1-frame lag that occurs when tracking inputValue in component state.
+function ReagentMenuList({ children, selectProps, ...menuListProps }) {
+  const {
+    hasMostUsed, activeTab, onSetActiveTab, allTabLabel,
+    inputValue, allOptions, topOptions, filterFn,
+  } = selectProps;
+  const tabs = hasMostUsed ? ['all', 'mostUsed'] : ['all'];
+  const tabLabels = { mostUsed: 'Most Used', all: allTabLabel || 'All Reagents' };
+  const tabCounts = filterFn ? {
+    all: (allOptions || []).filter((o) => filterFn(o, inputValue)).length,
+    mostUsed: (topOptions || []).filter((o) => filterFn(o, inputValue)).length,
+  } : null;
+  return (
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    <ReactSelectComponents.MenuList selectProps={selectProps} {...menuListProps}>
+      <div className="reagent-group__tabs" role="tablist">
+        {tabs.map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab}
+            className={`reagent-group__tab${activeTab === tab ? ' reagent-group__tab--active' : ''}`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => onSetActiveTab(tab)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSetActiveTab(tab); } }}
+          >
+            {tabLabels[tab]}
+            {tabCounts?.[tab] != null && (
+              <span className="reagent-group__tab-count">
+                {`(${tabCounts[tab]})`}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+      {children}
+    </ReactSelectComponents.MenuList>
+  );
+}
+
+ReagentMenuList.propTypes = {
+  children: PropTypes.node.isRequired,
+  selectProps: PropTypes.shape({
+    hasMostUsed: PropTypes.bool,
+    activeTab: PropTypes.string,
+    onSetActiveTab: PropTypes.func,
+    allTabLabel: PropTypes.string,
+    inputValue: PropTypes.string,
+    allOptions: PropTypes.arrayOf(PropTypes.shape({})),
+    topOptions: PropTypes.arrayOf(PropTypes.shape({})),
+    filterFn: PropTypes.func,
+  }).isRequired,
+};
+
 function GeneralMaterialGroup({
   materials, materialGroup, getMaterialComponent, headIndex,
   dropSample, onDrop, onReorder,
@@ -183,6 +282,8 @@ function GeneralMaterialGroup({
 }) {
   const isReactants = materialGroup === 'reactants';
   const groupHeaders = { ...headers };
+  const [activeTab, setActiveTab] = useState('all');
+  const [topReagents, setTopReagents] = useState(() => reagentTracker.getTop());
 
   let reagentDd = null;
   if (isReactants) {
@@ -194,6 +295,8 @@ function GeneralMaterialGroup({
     }));
 
     const createReagentForReaction = ({ label, value: smi }) => {
+      reagentTracker.record({ label, value: smi });
+      setTopReagents(reagentTracker.getTop());
       MoleculesFetcher.fetchBySmi(smi)
         .then((result) => {
           const molecule = new Molecule(result);
@@ -211,26 +314,26 @@ function GeneralMaterialGroup({
       return normalizedLabel.toLowerCase().includes(normalizedInput.toLowerCase());
     };
 
+    const effectiveTab = topReagents.length > 0 ? activeTab : 'all';
+    const selectOptions = effectiveTab === 'mostUsed' ? topReagents : reagentList;
+
     reagentDd = (
       <Select
         isDisabled={!permitOn(reaction)}
-        options={reagentList}
-        placeholder="Add"
+        options={selectOptions}
+        value={null}
+        placeholder="Add reagent..."
         onChange={createReagentForReaction}
         filterOption={filterReagents}
+        hasMostUsed={topReagents.length > 0}
+        activeTab={effectiveTab}
+        onSetActiveTab={setActiveTab}
+        allOptions={reagentList}
+        topOptions={topReagents}
+        filterFn={filterReagents}
+        components={{ MenuList: ReagentMenuList }}
+        classNames={{ menu: () => 'reagent-menu' }}
         size="xsm"
-        styles={{
-          menu: (base) => ({
-            ...base,
-            minWidth: 800,
-            width: '800px',
-            maxWidth: '95vw',
-          }),
-          option: (base) => ({
-            ...base,
-            fontSize: '0.875rem',
-          }),
-        }}
       />
     );
   }
@@ -368,6 +471,9 @@ function SolventsMaterialGroup({
 }) {
   const groupHeaders = { ...headers };
   groupHeaders.group = 'Solvents';
+  const [activeTab, setActiveTab] = useState('all');
+  const [topSolvents, setTopSolvents] = useState(() => solventTracker.getTop());
+
   const addSampleButton = (
     <CreateButton
       disabled={!permitOn(reaction)}
@@ -376,21 +482,23 @@ function SolventsMaterialGroup({
     />
   );
 
-  const createDefaultSolventsForReaction = ({ value: solvent }) => {
+  const createDefaultSolventsForReaction = ({ label, value: solvent }) => {
+    solventTracker.record({ label, value: solvent });
+    setTopSolvents(solventTracker.getTop());
     const smi = solvent.smiles;
     MoleculesFetcher.fetchBySmi(smi)
       .then((result) => {
         const molecule = new Molecule(result);
         const d = molecule.density;
         const solventDensity = solvent.density || 1;
-        molecule.density = (d && d > 0) || solventDensity;
+        molecule.density = (d > 0) ? d : solventDensity;
         dropSample(molecule, null, materialGroup, solvent.external_label);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
   };
 
-  const solventOptions = Object.keys(ionic_liquids).reduce((solvents, ionicLiquid) => solvents.concat({
+  const allSolventOptions = Object.keys(ionic_liquids).reduce((solvents, ionicLiquid) => solvents.concat({
     label: ionicLiquid,
     value: {
       external_label: ionicLiquid,
@@ -406,6 +514,9 @@ function SolventsMaterialGroup({
     const normalizedLabel = option.label.replace(/\s+/g, '');
     return normalizedLabel.toLowerCase().includes(normalizedInput.toLowerCase());
   };
+
+  const effectiveTab = topSolvents.length > 0 ? activeTab : 'all';
+  const solventOptions = effectiveTab === 'mostUsed' ? topSolvents : allSolventOptions;
 
   return (
     <ReorderableMaterialContainer
@@ -438,9 +549,19 @@ function SolventsMaterialGroup({
                 <Select
                   isDisabled={!permitOn(reaction)}
                   options={solventOptions}
-                  placeholder="Add"
+                  value={null}
+                  placeholder="Add solvent..."
                   onChange={createDefaultSolventsForReaction}
                   filterOption={filterSolvents}
+                  hasMostUsed={topSolvents.length > 0}
+                  activeTab={effectiveTab}
+                  onSetActiveTab={setActiveTab}
+                  allOptions={allSolventOptions}
+                  topOptions={topSolvents}
+                  filterFn={filterSolvents}
+                  allTabLabel="All Solvents"
+                  components={{ MenuList: ReagentMenuList }}
+                  classNames={{ menu: () => 'solvent-menu' }}
                   size="xsm"
                 />
               </div>
@@ -503,6 +624,10 @@ SolventsMaterialGroup.propTypes = {
   headIndex: PropTypes.number.isRequired,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   dndEnabled: PropTypes.bool,
+};
+
+SolventsMaterialGroup.defaultProps = {
+  dndEnabled: true,
 };
 
 MaterialGroup.defaultProps = {
