@@ -6,6 +6,7 @@ import SampleFactory from 'factories/SampleFactory';
 import Sample from 'src/models/Sample.js';
 import Reaction from 'src/models/Reaction';
 import Component from 'src/models/Component';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 
 describe('Sample', async () => {
   const referenceSample = await SampleFactory.build('SampleFactory.water_100g');
@@ -2184,6 +2185,94 @@ describe('Sample', async () => {
       expect(sample.preserveConcentration).toBe(false);
       expect(sample.amount_value).toBe(originalValue);
       expect(sample.amount_unit).toBe(originalUnit);
+    });
+  });
+
+  describe('Sample.mergeComponents() — same molecule', () => {
+    function makeSample(comps) {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      s.components = comps;
+      return s;
+    }
+
+    function makeComp(id, moleculeId, amounts = {}) {
+      return {
+        id,
+        molecule: { id: moleculeId },
+        amount_mol: amounts.mol ?? 0.01,
+        amount_g: amounts.g ?? 1.8,
+        amount_l: amounts.l ?? 0.001,
+        material_group: 'liquid',
+        position: 0,
+        reference: false,
+      };
+    }
+
+    it('collapses two same-molecule components into one', async () => {
+      const comp1 = makeComp(1, 42);
+      const comp2 = makeComp(2, 42);
+      const sample = makeSample([comp1, comp2]);
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      expect(sample.components.length).toBe(1);
+    });
+
+    it('retains the target component (not the source)', async () => {
+      const comp1 = makeComp(1, 42);
+      const comp2 = makeComp(2, 42);
+      const sample = makeSample([comp1, comp2]);
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      expect(sample.components[0]).toBe(comp2);
+    });
+
+    it('resets target amounts and concentration to 0', async () => {
+      const comp1 = makeComp(1, 42, { mol: 0.01, g: 1.8, l: 0.001 });
+      const comp2 = makeComp(2, 42, { mol: 0.05, g: 9.0, l: 0.005 });
+      comp2.molarity_value = 0.5;
+      comp2.concn = 0.5;
+      const sample = makeSample([comp1, comp2]);
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      expect(sample.components[0].amount_mol).toBe(0);
+      expect(sample.components[0].amount_g).toBe(0);
+      expect(sample.components[0].amount_l).toBe(0);
+      expect(sample.components[0].molarity_value).toBe(0);
+      expect(sample.components[0].concn).toBe(0);
+    });
+
+    it('recalculates mass and equivalents after resetting amounts', async () => {
+      const calcMassSpy = sinon.spy();
+      const calcEquivSpy = sinon.spy();
+
+      const comp1 = makeComp(1, 42, { mol: 0.01, g: 1.8, l: 0.001 });
+      const comp2 = makeComp(2, 42, { mol: 0.05, g: 9.0, l: 0.005 });
+      const sample = makeSample([comp1, comp2]);
+      sample.calculateTotalMixtureMass = calcMassSpy;
+      sample.updateMixtureComponentEquivalent = calcEquivSpy;
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      // Called once by deleteMixtureComponent and once after resetAmounts
+      expect(calcMassSpy.callCount).toBe(2);
+      expect(calcEquivSpy.callCount).toBe(2);
+    });
+
+    it('does not fetch a new molecule when molecules are the same', async () => {
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+
+      const comp1 = makeComp(1, 42);
+      const comp2 = makeComp(2, 42);
+      const sample = makeSample([comp1, comp2]);
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      expect(fetchStub.called).toBe(false);
+      fetchStub.restore();
     });
   });
 });

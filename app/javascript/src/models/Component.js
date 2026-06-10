@@ -340,6 +340,18 @@ export default class Component extends Sample {
   }
 
   /**
+   * Resets all amount and concentration fields to zero.
+   * Used when a same-molecule merge collapses a duplicate component into this one.
+   */
+  resetAmounts() {
+    this.amount_mol = 0;
+    this.amount_g = 0;
+    this.amount_l = 0;
+    this.molarity_value = 0;
+    this.concn = 0;
+  }
+
+  /**
    * Checks if the current component has a locked concentration.
    *
    * Retrieves the `lockedComponents` list from the `ComponentStore` state

@@ -2314,6 +2314,21 @@ export default class Sample extends Element {
   }
 
   /**
+   * Removes the source component and resets the target's amounts and concentration
+   * to zero, then recalculates mixture totals. Used when both components share the
+   * same molecule so no new molecule fetch is required.
+   * @param {Object} srcMat - The duplicate component to remove.
+   * @param {Object} tagMat - The component to keep, whose amounts will be cleared.
+   */
+  mergeSameMoleculeComponents(srcMat, tagMat) {
+    this.deleteMixtureComponent(srcMat);
+    tagMat.resetAmounts();
+    // Re-run after reset so mass and equivalents reflect the zeroed amounts.
+    this.calculateTotalMixtureMass();
+    this.updateMixtureComponentEquivalent();
+  }
+
+  /**
    * Handles total volume changes for mixture samples.
    *
    * This method is called when the total volume of a mixture is updated.
@@ -2456,7 +2471,32 @@ export default class Sample extends Element {
   }
 
   /**
-   * Merges two components into a new one by combining their SMILES and updating the mixture.
+   * Combines two different-molecule components into one by joining their SMILES,
+   * fetching the resulting molecule, and replacing both with the merged component.
+   * @async
+   * @param {Object} srcMat - The source component.
+   * @param {Object} tagMat - The target component.
+   * @param {string} tagGroup - Material group for the new merged component.
+   */
+  async mergeDifferentMoleculeComponents(srcMat, tagMat, tagGroup) {
+    const newSmiles = `${srcMat.molecule_cano_smiles}.${tagMat.molecule_cano_smiles}`;
+
+    try {
+      const newMolecule = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher');
+      const newComponent = Sample.buildNew(newMolecule, this.collection_id);
+      newComponent.material_group = tagGroup;
+
+      this.deleteMixtureComponent(tagMat);
+      this.deleteMixtureComponent(srcMat);
+      await this.addMixtureComponent(newComponent);
+    } catch (error) {
+      console.error('Error merging components:', error);
+    }
+  }
+
+  /**
+   * Merges two components into one. Routes to the appropriate strategy based on
+   * whether the components share the same molecule.
    * @async
    * @param {Object} srcMat - The source material/component to merge.
    * @param {string} srcGroup - The source group name.
@@ -2471,18 +2511,14 @@ export default class Sample extends Element {
       console.error('Source or target material not found in components.');
       return;
     }
-    const newSmiles = `${srcMat.molecule_cano_smiles}.${tagMat.molecule_cano_smiles}`;
 
-    try {
-      const newMolecule = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher');
-      const newComponent = Sample.buildNew(newMolecule, this.collection_id);
-      newComponent.material_group = tagGroup;
+    const srcMoleculeId = srcMat.molecule?.id;
+    const tagMoleculeId = tagMat.molecule?.id;
 
-      this.deleteMixtureComponent(tagMat);
-      this.deleteMixtureComponent(srcMat);
-      await this.addMixtureComponent(newComponent);
-    } catch (error) {
-      console.error('Error merging components:', error);
+    if (srcMoleculeId && tagMoleculeId && srcMoleculeId === tagMoleculeId) {
+      this.mergeSameMoleculeComponents(srcMat, tagMat);
+    } else {
+      await this.mergeDifferentMoleculeComponents(srcMat, tagMat, tagGroup);
     }
   }
 
