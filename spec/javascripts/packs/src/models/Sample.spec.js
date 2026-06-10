@@ -2061,4 +2061,78 @@ describe('Sample', async () => {
       fetchStub.restore();
     });
   });
+
+  describe('Sample.splitSmilesToMolecule() — structure editor reconciliation', () => {
+    function makeComponent(id, moleculeId, canoSmiles) {
+      const comp = new Component({});
+      comp.id = id;
+      comp.molecule = { id: moleculeId, cano_smiles: canoSmiles };
+      comp.material_group = 'liquid';
+      comp.purity = 1;
+      return comp;
+    }
+
+    function makeMixture(comps) {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      s.components = comps;
+      return s;
+    }
+
+    // Restore in beforeEach too: an earlier failing test can leak a
+    // fetchBySmi stub, which would make stubbing here throw.
+    beforeEach(() => {
+      sinon.restore();
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('does not re-add components whose structure is unchanged', async () => {
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+      const compA = makeComponent(1, 42, 'CCO');
+      const compB = makeComponent(2, 43, 'c1ccccc1');
+      const sample = makeMixture([compA, compB]);
+
+      await sample.splitSmilesToMolecule(['CCO', 'c1ccccc1'], 'ketcher');
+
+      expect(fetchStub.called).toBe(false);
+      expect(sample.components.length).toBe(2);
+    });
+
+    it('updates the existing component in place when its structure was edited', async () => {
+      const editedMolecule = { id: 99, cano_smiles: 'CCC', molfile: 'edited molfile' };
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi').resolves(editedMolecule);
+      const compA = makeComponent(1, 42, 'CCO');
+      const compB = makeComponent(2, 43, 'c1ccccc1');
+      const sample = makeMixture([compA, compB]);
+
+      // 'CCO' was edited to 'CCC' in the structure editor
+      await sample.splitSmilesToMolecule(['CCC', 'c1ccccc1'], 'ketcher');
+
+      expect(fetchStub.calledOnce).toBe(true);
+      expect(fetchStub.firstCall.args[0]).toBe('CCC');
+      // No additional component; the stale one was updated in place
+      expect(sample.components.length).toBe(2);
+      expect(sample.components[0]).toBe(compA);
+      expect(compA.molecule.id).toBe(99);
+      expect(compA.molecule_cano_smiles).toBe('CCC');
+      expect(compA.molfile).toBe('edited molfile');
+    });
+
+    it('adds a new component when a new structure was drawn', async () => {
+      const newMolecule = { id: 77, cano_smiles: 'CCC', molfile: 'new molfile' };
+      sinon.stub(MoleculesFetcher, 'fetchBySmi').resolves(newMolecule);
+      const compA = makeComponent(1, 42, 'CCO');
+      const compB = makeComponent(2, 43, 'c1ccccc1');
+      const sample = makeMixture([compA, compB]);
+
+      // a third structure was added in the structure editor
+      await sample.splitSmilesToMolecule(['CCO', 'c1ccccc1', 'CCC'], 'ketcher');
+
+      expect(sample.components.length).toBe(3);
+      expect(sample.components[2].molecule.id).toBe(77);
+    });
+  });
 });
