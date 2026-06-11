@@ -152,11 +152,6 @@ RSpec.describe Usecases::Containers::ComparisonCombineSpectra do
         }
       end
 
-      before do
-        attachment_double = double(blank?: false, download: combined_image) # rubocop:disable RSpec/VerifiedDoubles
-        allow_any_instance_of(Attachment).to receive(:attachment).and_return(attachment_double) # rubocop:disable RSpec/AnyInstance
-      end
-
       it 'creates a dataset child and copies the selected spectra' do
         expect do
           described_class.execute!(params, current_user: user)
