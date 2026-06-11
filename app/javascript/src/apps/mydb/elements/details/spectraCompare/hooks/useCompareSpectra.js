@@ -204,7 +204,7 @@ export const useCompareSpectra = ({ sample, container }, deps = {}) => {
         spectra: state.spectra,
         payloads,
         frontCurveIdx,
-      }, { combineSpectra: deps.combineSpectra });
+      }, { combineSpectraComparison: deps.combineSpectraComparison });
       const refreshedInfos = buildCompareInfos(sample, result.container);
       const refreshed = refreshedInfos.length > 0
         ? await load(refreshedInfos)
@@ -223,7 +223,7 @@ export const useCompareSpectra = ({ sample, container }, deps = {}) => {
       dispatch({ type: 'SAVE_FAIL', error });
       throw error;
     }
-  }, [load, sample, save, state.container, state.spectra, deps.combineSpectra]);
+  }, [load, sample, save, state.container, state.spectra, deps.combineSpectraComparison]);
 
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 

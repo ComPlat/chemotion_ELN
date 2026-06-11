@@ -1188,6 +1188,6 @@ describe('SpectraHelper', () => {
         expect(formattedString).toEqual(expectedString);
         expect(quillData).toEqual(expectedQuillData);
       });
-    })
+    });
   });
 });

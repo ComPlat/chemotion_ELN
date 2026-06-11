@@ -94,8 +94,8 @@ export const applyCombineResponse = (container, response) => {
 };
 
 export const saveCompareSpectra = async (options, deps = {}) => {
-  const combineSpectra = deps.combineSpectra
-    || AttachmentFetcher.combineSpectra.bind(AttachmentFetcher);
+  const combineSpectraComparison = deps.combineSpectraComparison
+    || AttachmentFetcher.combineSpectraComparison.bind(AttachmentFetcher);
   const {
     container,
     spectra = [],
@@ -123,7 +123,7 @@ export const saveCompareSpectra = async (options, deps = {}) => {
 
   let response;
   try {
-    response = await combineSpectra(
+    response = await combineSpectraComparison(
       selectedFiles,
       datasetTargetId,
       frontCurveIdx,
@@ -136,7 +136,7 @@ export const saveCompareSpectra = async (options, deps = {}) => {
   }
 
   if (!response || response.status === false || response.error) {
-    const message = response?.message || response?.error || 'combine_spectra failed';
+    const message = response?.message || response?.error || 'combine_spectra_comparison failed';
     const error = new Error(message);
     error.compareSave = true;
     error.response = response;
