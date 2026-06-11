@@ -48,7 +48,7 @@ FactoryBot.define do
 
     trait :with_infer_json_file do
       filename { 'infer.json' }
-      file_path { Rails.root.join('spec/fixtures/infer.json') }
+      file_path { Rails.root.join('spec/fixtures/foobar.infer.json') }
     end
 
     trait :with_csv_file do

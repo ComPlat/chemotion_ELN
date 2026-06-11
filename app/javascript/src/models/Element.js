@@ -130,7 +130,7 @@ export default class Element {
     const result = {};
     const analysisContainers = this.analysisContainers();
 
-    analysisContainers.forEach((aic, idx) => {
+    analysisContainers.forEach((aic) => {
       const { extended_metadata } = aic;
 
       let layout = null;

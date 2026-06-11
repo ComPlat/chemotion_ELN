@@ -264,9 +264,9 @@ const AnalysesHeader = ({
           ) : (
             <>
               <div className={deleted ? 'text-body-tertiary' : ''}>
-                Type : {kind}
+                Type: {kind}
                 <br />
-                Statut :{' '}
+                Status:{' '}
                 <span className="me-4">
                   {status} {qCheckMsg(sample, container)}
                 </span>

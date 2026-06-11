@@ -77,26 +77,31 @@ module Usecases
             next unless File.exist?(original_path)
 
             temp_file = Tempfile.new([base, File.extname(attachment.filename)])
-            FileUtils.cp(original_path, temp_file.path)
+            begin
+              FileUtils.cp(original_path, temp_file.path)
 
-            new_att = Attachment.new(
-              filename: new_filename,
-              created_by: created_by_user,
-              created_for: created_by_user,
-              attachable_type: 'Container',
-              attachable_id: target_id,
-              file_path: temp_file.path,
-            )
-            new_att.save!
+              new_att = Attachment.new(
+                filename: new_filename,
+                created_by: created_by_user,
+                created_for: created_by_user,
+                attachable_type: 'Container',
+                attachable_id: target_id,
+                file_path: temp_file.path,
+              )
+              new_att.save!
 
-            list_file_names << new_att.filename
-            list_file << new_att.abs_path
+              list_file_names << new_att.filename
+              list_file << new_att.abs_path
 
-            new_entry = entry.dup
-            new_entry['file'] = { 'id' => new_att.id }
-            new_entry['dataset'] = { 'id' => target_id }
-            new_entry['analysis'] = { 'id' => target_id }
-            new_analyses_compared_list << new_entry
+              new_entry = entry.dup
+              new_entry['file'] = { 'id' => new_att.id }
+              new_entry['dataset'] = { 'id' => target_id }
+              new_entry['analysis'] = { 'id' => target_id }
+              new_analyses_compared_list << new_entry
+            ensure
+              temp_file.close
+              temp_file.unlink
+            end
           end
 
           container.extended_metadata['analyses_compared'] = new_analyses_compared_list

@@ -136,7 +136,7 @@ RSpec.describe AttachmentJcampAasm do # rubocop:disable RSpec/MultipleDescribes
   end
 end
 
-describe 'AttachmentJcampProcess' do
+RSpec.describe 'AttachmentJcampProcess' do # rubocop:disable RSpec/MultipleDescribes
   describe '#get_infer_json_content' do
     let(:attachment_txt1) { create(:attachment) }
 
@@ -152,7 +152,7 @@ describe 'AttachmentJcampProcess' do
     context 'with one attachment which is a txt file' do
       let(:container_id) { attachment_txt1.attachable_id }
 
-      it 'an emtpy json returned' do
+      it 'an empty json returned' do
         expect(execute).to eq '{}'
       end
     end
@@ -166,7 +166,7 @@ describe 'AttachmentJcampProcess' do
         attachment2.save!
       end
 
-      it 'an emtpy json returned' do
+      it 'an empty json returned' do
         expect(execute).to eq '{}'
       end
     end
@@ -174,7 +174,7 @@ describe 'AttachmentJcampProcess' do
     context 'with no attachments for a non-existent container id' do
       let(:container_id) { -1 }
 
-      it 'an emtpy json returned' do
+      it 'an empty json returned' do
         expect(execute).to eq '{}'
       end
     end
