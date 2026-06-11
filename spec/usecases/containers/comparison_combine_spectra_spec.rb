@@ -57,36 +57,70 @@ RSpec.describe Usecases::Containers::ComparisonCombineSpectra do
         }
       end
 
-      it 'marks the dataset as comparison and stores a thumbnail image' do
+      it 'returns success with dataset and analyses_compared' do
         result = described_class.execute!(params, current_user: user)
 
         expect(result[:status]).to be true
         expect(result[:dataset_id]).to eq(dataset_container.id)
         expect(result[:analyses_compared]).not_to be_empty
+      end
 
-        dataset_container.reload
-        expect(dataset_container.extended_metadata['is_comparison']).to eq('true')
+      it 'sets is_comparison on the dataset' do
+        described_class.execute!(params, current_user: user)
+
+        expect(dataset_container.reload.extended_metadata['is_comparison']).to eq('true')
+      end
+
+      it 'stores combined_image.png as thumbnail' do
+        described_class.execute!(params, current_user: user)
 
         combined = Attachment.find_by(filename: 'combined_image.png', attachable_id: dataset_container.id)
         expect(combined).to be_present
         expect(combined.thumb).to be true
       end
+    end
 
-      context 'with edited_data_spectra' do
-        before do
-          new_jcamp = Tempfile.new(['regen', '.jdx'])
-          allow(Chemotion::Jcamp::Create).to receive(:spectrum).and_return([new_jcamp, nil])
-        end
+    context 'when updating with edited_data_spectra' do
+      let(:analysis_container) do
+        create(
+          :analysis_container,
+          extended_metadata: {
+            'is_comparison' => 'true',
+            'kind' => 'Type: 1H NMR',
+            'analyses_compared' => [],
+          },
+        )
+      end
+      let!(:dataset_container) do
+        create(:container, parent: analysis_container, container_type: 'dataset', name: 'Comparison dataset')
+      end
+      let!(:spectrum_attachment) do
+        create(
+          :attachment,
+          :with_spectra_file,
+          attachable: dataset_container,
+          created_by: user.id,
+          created_for: user.id,
+        )
+      end
+      let(:params) do
+        {
+          container_id: analysis_container.id,
+          spectra_ids: [spectrum_attachment.id],
+          front_spectra_idx: 0,
+          edited_data_spectra: [{ si: { idx: spectrum_attachment.id }, peaksStr: '[]' }],
+        }
+      end
 
-        it 'regenerates the target spectrum before combining' do
-          edited_params = params.merge(
-            edited_data_spectra: [{ si: { idx: spectrum_attachment.id }, peaksStr: '[]' }],
-          )
+      before do
+        new_jcamp = Tempfile.new(['regen', '.jdx'])
+        allow(Chemotion::Jcamp::Create).to receive(:spectrum).and_return([new_jcamp, nil])
+      end
 
-          described_class.execute!(edited_params, current_user: user)
+      it 'regenerates the target spectrum before combining' do
+        described_class.execute!(params, current_user: user)
 
-          expect(Chemotion::Jcamp::Create).to have_received(:spectrum).once
-        end
+        expect(Chemotion::Jcamp::Create).to have_received(:spectrum).once
       end
     end
 
@@ -119,7 +153,8 @@ RSpec.describe Usecases::Containers::ComparisonCombineSpectra do
       end
 
       before do
-        allow_any_instance_of(Attachment).to receive(:attachment).and_return(double(blank?: false, download: combined_image)) # rubocop:disable RSpec/AnyInstance, RSpec/VerifiedDoubles
+        attachment_double = double(blank?: false, download: combined_image) # rubocop:disable RSpec/VerifiedDoubles
+        allow_any_instance_of(Attachment).to receive(:attachment).and_return(attachment_double) # rubocop:disable RSpec/AnyInstance
       end
 
       it 'creates a dataset child and copies the selected spectra' do

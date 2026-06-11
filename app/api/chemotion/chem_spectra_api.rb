@@ -114,38 +114,43 @@ module Chemotion
         File.write(file_path, JSON.pretty_generate(current_data_types))
       end
 
-      def combine_spectra(pm)
+      def combine_spectra(params)
+        list_file, list_file_names, container_id, combined_image_filename =
+          collect_spectra_combine_inputs(params)
+
+        _, image = Chemotion::Jcamp::CombineImg.combine(
+          list_file, params[:front_spectra_idx], list_file_names, params[:extras]
+        )
+
+        save_combined_spectra_image(image, combined_image_filename, container_id) if image
+        { status: true }
+      end
+
+      def collect_spectra_combine_inputs(params)
         list_file = []
         list_file_names = []
         container_id = -1
         combined_image_filename = ''
-        Attachment.where(id: pm[:spectra_ids]).each do |att|
+        Attachment.where(id: params[:spectra_ids]).find_each do |att|
           container = att.container
           combined_image_filename = "#{container.name}.new_combined.png"
           container_id = att.attachable_id
           list_file_names.push(att.filename)
           list_file.push(att.abs_path)
         end
+        [list_file, list_file_names, container_id, combined_image_filename]
+      end
 
-        _, image = Chemotion::Jcamp::CombineImg.combine(
-          list_file, pm[:front_spectra_idx], list_file_names, pm[:extras]
+      def save_combined_spectra_image(image, combined_image_filename, container_id)
+        Attachment.find_by(filename: combined_image_filename, attachable_id: container_id)&.destroy!
+        Attachment.create!(
+          filename: combined_image_filename,
+          created_by: current_user.id,
+          created_for: current_user.id,
+          file_path: image.path,
+          attachable_type: 'Container',
+          attachable_id: container_id,
         )
-
-        unless image.nil?
-          att = Attachment.find_by(filename: combined_image_filename, attachable_id: container_id)
-          att.destroy! unless att.nil?
-          att = Attachment.new(
-            filename: combined_image_filename,
-            created_by: current_user.id,
-            created_for: current_user.id,
-            file_path: image.path,
-            attachable_type: 'Container',
-            attachable_id: container_id,
-          )
-          att.save!
-        end
-
-        { status: true }
       end
     end
 
