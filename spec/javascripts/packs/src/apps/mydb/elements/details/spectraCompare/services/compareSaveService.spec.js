@@ -85,7 +85,7 @@ describe('compareSaveService.saveCompareSpectra', () => {
       container,
       spectra: [{ idx: 10 }, { idx: 11 }],
       payloads: [{}],
-    }, { combineSpectra: fakeCombine });
+    }, { combineSpectraComparison: fakeCombine });
     expect(result.container).not.toBe(container);
     expect(container.children[0].attachments).toEqual([]);
     expect(result.dataset.id).toEqual(5);
@@ -113,7 +113,7 @@ describe('compareSaveService.saveCompareSpectra', () => {
           ref: { name: 'Chloroform-d (s)', value: '7.26' },
         },
       }],
-    }, { combineSpectra: fakeCombine });
+    }, { combineSpectraComparison: fakeCombine });
 
     expect(receivedEditedData[0].shiftSelectX).toEqual(7.24);
     expect(receivedEditedData[0].shiftRefName).toEqual('Chloroform-d (s)');
@@ -128,7 +128,7 @@ describe('compareSaveService.saveCompareSpectra', () => {
         container: baseContainer(),
         spectra: [{ idx: 10 }],
         payloads: [{}],
-      }, { combineSpectra: fakeCombine });
+      }, { combineSpectraComparison: fakeCombine });
     } catch (err) { caught = err; }
     expect(caught).not.toEqual(null);
     expect(caught.message).toEqual('boom');

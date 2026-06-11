@@ -114,44 +114,38 @@ module Chemotion
         File.write(file_path, JSON.pretty_generate(current_data_types))
       end
 
-      def normalized_compare_entry(entry)
-        entry.respond_to?(:deep_stringify_keys) ? entry.deep_stringify_keys : entry
-      end
+      def combine_spectra(pm)
+        list_file = []
+        list_file_names = []
+        container_id = -1
+        combined_image_filename = ''
+        Attachment.where(id: pm[:spectra_ids]).each do |att|
+          container = att.container
+          combined_image_filename = "#{container.name}.new_combined.png"
+          container_id = att.attachable_id
+          list_file_names.push(att.filename)
+          list_file.push(att.abs_path)
+        end
 
-      def parse_compare_entries(raw)
-        parsed = if raw.is_a?(String)
-                   JSON.parse(raw.gsub('=>', ':'))
-                 else
-                   raw
-                 end
-        parsed.is_a?(Array) ? parsed.map { |entry| normalized_compare_entry(entry) || {} } : []
-      rescue StandardError
-        []
-      end
-
-      def indexed_compare_entries(container)
-        raw = container&.extended_metadata&.[]('analyses_compared') ||
-              container&.extended_metadata&.[](:analyses_compared)
-        parse_compare_entries(raw).index_by { |entry| entry.dig('file', 'id') }
-      end
-
-      def build_compare_entry(attachment, dataset_container, existing_entries)
-        existing = normalized_compare_entry(existing_entries[attachment.id]) || {}
-        existing.merge(
-          'file' => (normalized_compare_entry(existing['file']) || {}).merge('id' => attachment.id),
-          'dataset' => (normalized_compare_entry(existing['dataset']) || {}).merge('id' => dataset_container.id),
-          'analysis' => (normalized_compare_entry(existing['analysis']) || {}).merge('id' => dataset_container.id),
+        _, image = Chemotion::Jcamp::CombineImg.combine(
+          list_file, pm[:front_spectra_idx], list_file_names, pm[:extras]
         )
-      end
 
-      def compare_regeneration_fname(attachment)
-        filename = attachment.filename.to_s
-        ext = File.extname(filename)
-        ext = '.jdx' if ext.blank?
-        base = File.basename(filename, File.extname(filename))
-        cleaned = base.sub(/(?:\.peak)?_compared_\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}\z/i, '')
-                      .sub(/\.peak\z/i, '')
-        "#{cleaned.presence || base}#{ext}"
+        unless image.nil?
+          att = Attachment.find_by(filename: combined_image_filename, attachable_id: container_id)
+          att.destroy! unless att.nil?
+          att = Attachment.new(
+            filename: combined_image_filename,
+            created_by: current_user.id,
+            created_for: current_user.id,
+            file_path: image.path,
+            attachable_type: 'Container',
+            attachable_id: container_id,
+          )
+          att.save!
+        end
+
+        { status: true }
       end
     end
 
@@ -222,154 +216,35 @@ module Chemotion
         desc 'Combine spectra'
         params do
           requires :spectra_ids, type: [Integer]
-          requires :front_spectra_idx, type: Integer # index of front spectra
-          requires :container_id, type: Integer
-          optional :edited_data_spectra, type: Array
+          requires :front_spectra_idx, type: Integer
           optional :extras, type: String
         end
         post 'combine_spectra' do
           pm = to_rails_snake_case(params)
-
-          extras = nil
-          if pm[:extras].present?
-            begin
-              extras = JSON.parse(pm[:extras])
-            rescue StandardError
-              extras = {}
-            end
-
-            if extras['deleted_attachment_ids'].present?
-              Attachment.where(id: extras['deleted_attachment_ids']).destroy_all
-            end
-          end
-
-          origin_container = Container.find_by(id: pm[:container_id])
-
-          dataset_container =
-            if origin_container.container_type == 'dataset'
-              origin_container
-            else
-              origin_container.children.find { |c| c.container_type == 'dataset' }
-            end
-
-          is_update_mode = dataset_container.present?
-
-          unless is_update_mode
-            holder =
-              if origin_container && origin_container.container_type == 'dataset'
-                origin_container.parent
-              else
-                origin_container
-              end
-
-            error!({ error: 'Container not found' }, 404) unless holder
-
-            dataset_container = Container.create!(
-              name: "Comparison #{Time.current.strftime('%Y-%m-%d %H:%M:%S')}",
-              container_type: 'dataset',
-              parent_id: holder.id,
-            )
-
-            pm[:spectra_ids].each do |att_id|
-              att = Attachment.find_by(id: att_id)
-              next unless att
-              next if att.attachment.blank?
-
-              new_att = Attachment.new(
-                filename: att.filename,
-                created_by: current_user.id,
-                created_for: current_user.id,
-                attachable_type: 'Container',
-                attachable_id: dataset_container.id,
-              )
-              temp = att.attachment.download
-              new_att.file_path = temp.path
-              new_att.save!
-              temp.close
-              temp.unlink
-            end
-          end
-
-          existing_compare_entries = indexed_compare_entries(dataset_container)
-
-          if is_update_mode && pm[:edited_data_spectra].present?
-            dataset_attachments = dataset_container.attachments.index_by(&:id)
-
-            pm[:edited_data_spectra].each do |data|
-              target_att = dataset_attachments[data.dig(:si, :idx)]
-              next unless target_att
-
-              spectrum_data = data.merge(fname: compare_regeneration_fname(target_att))
-              mol = Tempfile.new(['mol', '.mol'])
-              begin
-                new_jcamp, = Chemotion::Jcamp::Create.spectrum(
-                  target_att.abs_path,
-                  mol.path,
-                  false,
-                  spectrum_data,
-                )
-                FileUtils.cp(new_jcamp.path, target_att.abs_path) if new_jcamp && File.exist?(new_jcamp.path)
-              rescue StandardError => e
-                Rails.logger.error "Failed to update spectrum #{target_att.id}: #{e.message}"
-              ensure
-                mol.close
-                mol.unlink
-              end
-            end
-          end
-
-          spectra_attachments = dataset_container.attachments.reject do |a|
-            a.filename.to_s.downcase.end_with?('.png', '.jpg')
-          end
-
-          _, image = Chemotion::Jcamp::CombineImg.combine(
-            spectra_attachments.map(&:abs_path),
-            pm[:front_spectra_idx],
-            spectra_attachments.map(&:filename),
-            extras,
-          )
-
-          if image
-            dataset_container.attachments.where(filename: 'combined_image.png').destroy_all
-
-            Attachment.create!(
-              filename: 'combined_image.png',
-              file_path: image.path,
-              attachable_type: 'Container',
-              attachable_id: dataset_container.id,
-              created_by: current_user.id,
-              created_for: current_user.id,
-            )
-          end
-
-          final_attachments = dataset_container.attachments.reload
-          non_combined_images = final_attachments.reject do |a|
-            a.filename.to_s.downcase.end_with?('.png')
-          end
-          analyses_compared = non_combined_images.map do |a|
-            build_compare_entry(a, dataset_container, existing_compare_entries)
-          end
-
-          # rubocop:disable Rails/SkipsModelValidations -- bulk update of JSON metadata; validations not required here
-          dataset_container.update_column(
-            :extended_metadata,
-            (dataset_container.extended_metadata || {}).merge(
-              'is_comparison' => 'true',
-              'analyses_compared' => analyses_compared,
-            ),
-          )
-          # rubocop:enable Rails/SkipsModelValidations
-
-          dataset_json = Entities::ContainerEntity.represent(dataset_container).as_json
-
-          {
-            status: true,
-            dataset_id: dataset_container.id,
-            dataset: dataset_json,
-            analyses_compared: analyses_compared,
-          }
+          content_type('application/json')
+          combine_spectra(pm)
         rescue StandardError => e
           Rails.logger.error "Error in combine_spectra: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          error!({ error: 'Server Error', message: e.message }, 500)
+        end
+
+        desc 'Combine spectra for comparison containers'
+        params do
+          requires :spectra_ids, type: [Integer]
+          requires :front_spectra_idx, type: Integer
+          requires :container_id, type: Integer
+          optional :edited_data_spectra, type: Array
+          optional :extras, type: String
+        end
+        post 'combine_spectra_comparison' do
+          pm = to_rails_snake_case(params)
+          content_type('application/json')
+          Usecases::Containers::ComparisonCombineSpectra.execute!(pm, current_user: current_user)
+        rescue Usecases::Containers::ComparisonCombineSpectra::ContainerNotFound
+          error!({ error: 'Container not found' }, 404)
+        rescue StandardError => e
+          Rails.logger.error "Error in combine_spectra_comparison: #{e.message}"
           Rails.logger.error e.backtrace.join("\n")
           error!({ error: 'Server Error', message: e.message }, 500)
         end
