@@ -1,4 +1,4 @@
-/* eslint-disable react/display-name, no-param-reassign */
+/* eslint-disable react/display-name, no-param-reassign, react-hooks/immutability */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
   useRef, useState, useCallback, useReducer, useEffect, useMemo
@@ -55,7 +55,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   const [previousAllReactionAnalyses, setPreviousAllReactionAnalyses] = useState(allReactionAnalyses);
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, []);
-  const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
+  const initialGridState = useMemo(() => getInitialGridState(reaction.id), [reaction.id]);
   const [asyncDataLoaded, setAsyncDataLoaded] = useState(false);
 
   useEffect(() => {

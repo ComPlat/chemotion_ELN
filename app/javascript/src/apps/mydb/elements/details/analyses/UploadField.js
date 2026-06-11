@@ -310,7 +310,7 @@ const UploadField = ({ disabled = false, element, setElement }) => {
     let kind = (ev || '');
     kind = `${kind.split('|')[0].trim()} | ${(kind.split('|')[1] || '').trim()}`;
     setOntology(kind);
-  });
+  }, []);
 
   const [, setConsumedPaths] = useState([]);
   const handleSetConsumedPaths = useCallback((paths) => {

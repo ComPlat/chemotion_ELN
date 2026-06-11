@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React, {
   useState, useEffect, useMemo, useCallback
 } from 'react';
@@ -155,16 +156,18 @@ export const annotateButton = (attachment, onClick) => (
  *  - disabled: boolean
  *  - onChange: function
  */
-export function EditButton({ attachment, disabled, onChange }) {
+export const EditButton = ({ attachment, disabled, onChange }) => {
   const { docserver } = UIStore.getState() || {};
-  const extensionsObj = docserver?.extensions || {};
   // Previously "attachmentEditor" -> now available at UserStore.editorConfig.available (bool)
   const attachmentEditor = Boolean(docserver?.available);
   const editDisable = disabled || !attachmentEditor || attachment.edit_state === 'editing';
 
   const extsList = useMemo(
-    () => values(extensionsObj).join(','),
-    [extensionsObj]
+    () => {
+      const { docserver: ds } = UIStore.getState() || {};
+      return values(ds?.extensions || {}).join(',');
+    },
+    []
   );
 
   const editorTooltip = useCallback(
@@ -240,7 +243,7 @@ export function EditButton({ attachment, disabled, onChange }) {
           onChange(newAttachment);
         }
       });
-  }, [attachment, editDisable]);
+  }, [attachment, editDisable, onChange]);
 
   return (
     <OverlayTrigger placement="top" overlay={editorTooltip(extsList)}>
@@ -398,7 +401,7 @@ const filterOptions = (contentType, options) => {
 
 const noChoice = [<Dropdown.Item key={uuid.v4()} disabled>None Available</Dropdown.Item>];
 
-export function ThirdPartyAppButton({ attachment, options = [] }) {
+export const ThirdPartyAppButton = ({ attachment, options = [] }) => {
   const [menuItems, setMenuItems] = useState([]);
   const contentType = mime.contentType(attachment.content_type)
     ? attachment.content_type : mime.lookup(attachment.filename);

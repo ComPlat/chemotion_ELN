@@ -46,9 +46,9 @@ const handleLoginSubmit = async ({ form, url }) => {
   };
 };
 
-function ExtendedSignInForm({
+const ExtendedSignInForm = ({
   url, rememberable, username = '', fromInvalid = false
-}) {
+}) => {
   const [form, setForm] = useFormValues({
     login: username || '',
     password: '',
@@ -98,7 +98,7 @@ function ExtendedSignInForm({
       setShowOtp(true);
       setWrongOtp(resText.content.otp_wrong);
     }
-  }, [form]);
+  }, [form, setForm, url]);
 
   return (
     <>
@@ -169,7 +169,7 @@ ExtendedSignInForm.defaultProps = {
   fromInvalid: false
 };
 
-function SignInForm({ authenticityToken }) {
+const SignInForm = ({ authenticityToken }) => {
   const [form, setForm] = useFormValues({
     login: '',
     password: '',
@@ -194,7 +194,7 @@ function SignInForm({ authenticityToken }) {
       setWrongOtp(false);
       window.location = `${url}?login=${form.login}&invalid=1`;
     }
-  }, [form]);
+  }, [form, setForm]);
 
   return (
     <Form id="new_user" className="new_user" action="" acceptCharset="UTF-8" method="post" onSubmit={handleSubmit}>
@@ -259,7 +259,7 @@ SignInForm.propTypes = {
   authenticityToken: PropTypes.string.isRequired,
 };
 
-function NewSession({ authenticityToken, omniauthProviders = {}, extraRules = {} }) {
+const NewSession = ({ authenticityToken, omniauthProviders = {}, extraRules = {} }) => {
   const items = omniauthProviders && Object.keys(omniauthProviders).map((key) => (
     <Button
       key={uuid.v4()}

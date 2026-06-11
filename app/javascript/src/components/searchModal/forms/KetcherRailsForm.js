@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useCallback, useEffect, useContext } from 'react';
 import {
   Button, ButtonToolbar, Form, Accordion
 } from 'react-bootstrap';
@@ -15,7 +15,7 @@ import SearchResult from 'src/components/searchModal/forms/SearchResult';
 import { getEditorById } from 'src/components/structureEditor/EditorsInstances';
 import KetcherEditor from 'src/components/structureEditor/KetcherEditor';
 
-function KetcherRailsform() {
+const KetcherRailsform = () => {
   const [editor, setEditor] = React.useState(null);
   const [iframeHeight, setIframeHeight] = React.useState(0.65 * window.innerHeight);
   const searchStore = useContext(StoreContext).search;
@@ -26,21 +26,7 @@ function KetcherRailsform() {
   const { pgCartridge } = UIStore.getState();
   const iframeStyle = {};
 
-  useEffect(() => {
-    const loadEditor = async () => {
-      const editorInstance = await getEditorById('ketcher');
-      setEditor(editorInstance);
-      setIframeHeight(calculateHeight());
-    };
-
-    loadEditor();
-  }, []);
-
-  useEffect(() => {
-    setIframeHeight(calculateHeight());
-  }, [panelVars.invisibleClassName, searchStore.error_messages.length]);
-
-  const calculateHeight = () => {
+  const calculateHeight = useCallback(() => {
     const searchModalHeaderHeight = document.getElementById('search-modal-header')?.offsetHeight;
     const ketcherSearchHeaderHeight = document.getElementById('ketcher-search-header')?.offsetHeight;
     const ketcherSearchFooterHeight = document.getElementById('ketcher-search-footer')?.offsetHeight;
@@ -51,7 +37,23 @@ function KetcherRailsform() {
       ? document.getElementById('search-error-message')?.offsetHeight + 16
       : 0;
     return window.innerHeight - headerHeight - buttonsHeight - errorHeight;
-  };
+  }, [searchStore]);
+
+  useEffect(() => {
+    const loadEditor = async () => {
+      const editorInstance = await getEditorById('ketcher');
+      setEditor(editorInstance);
+      setIframeHeight(calculateHeight());
+    };
+
+    loadEditor();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIframeHeight(calculateHeight());
+  }, [panelVars.invisibleClassName, searchStore.error_messages.length, calculateHeight]);
 
   const handleSearchTypeChange = (e) => {
     searchStore.changeKetcherRailsValue('searchType', e.target.value);

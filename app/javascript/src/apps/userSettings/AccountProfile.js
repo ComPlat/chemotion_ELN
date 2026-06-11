@@ -1,6 +1,4 @@
-import React, {
-  useState, useEffect, useCallback
-} from 'react';
+import React, { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
   Container, Card, Row, Col, Form, Button, Alert, Modal
@@ -18,7 +16,7 @@ import { AccountSettings, DeleteSettings } from 'src/apps/userSettings/UserSetti
 import Affiliations from 'src/apps/userSettings/Affiliations';
 import TextTemplates from 'src/apps/userSettings/TextTemplates';
 
-function AuthenticationSettings({ currentUser }) {
+const AuthenticationSettings = ({ currentUser }) => {
   return (
     <Container className="my-3 d-flex flex-column gap-3">
       <AccountSettings currentUser={currentUser} />
@@ -36,21 +34,17 @@ AuthenticationSettings.propTypes = {
   }).isRequired,
 };
 
-function ProfileSettings({ currentUser }) {
+const ProfileSettings = ({ currentUser }) => {
   const [reactionPrefix, setReactionPrefix] = useState(currentUser.reaction_name_prefix || '');
   const [reactionsCount, setReactionsCount] = useState(currentUser.counters?.reactions || 0);
   const [inboxAuto, setInboxAuto] = useState(currentUser.profile?.data.inbox_auto !== false);
   const [inboxManual, setInboxManual] = useState(currentUser.profile?.data.inbox_manual);
   const [curation, setCuration] = useState(currentUser.profile?.curation || 1);
-  const [nextLabel, setNextLabel] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [successPosition, setSuccessPosition] = useState(null);
   const nextReactionLabelCounter = parseInt(reactionsCount, 10) + 1;
   const updatedNextReactionLabel = nextReactionLabelCounter.toString().padStart(3, '0');
-
-  useEffect(() => {
-    setNextLabel(`${currentUser.initials}-${reactionPrefix}${updatedNextReactionLabel}`);
-  }, [currentUser, reactionPrefix, reactionsCount]);
+  const nextLabel = `${currentUser.initials}-${reactionPrefix}${updatedNextReactionLabel}`;
 
   const handleUserSettingsSubmit = useCallback(
     (e) => {
@@ -95,7 +89,7 @@ function ProfileSettings({ currentUser }) {
           console.error('Failed to update profile:', error);
         });
     }
-  }, [inboxAuto, inboxManual]);
+  }, [inboxAuto, inboxManual, currentUser]);
 
   const handleProfileSubmit = useCallback((e) => {
     e.preventDefault();
@@ -307,7 +301,7 @@ ProfileSettings.propTypes = {
   }).isRequired,
 };
 
-function ExternalSettings() {
+const ExternalSettings = () => {
   return (
     <Container className="my-3 d-flex flex-column gap-3">
 
@@ -319,14 +313,14 @@ function ExternalSettings() {
   );
 }
 
-function AffiliationsSettings() {
+const AffiliationsSettings = () => {
   return (
     <Container className="my-3 d-flex flex-column gap-3">
       <Affiliations />
     </Container>
   );
 }
-function AccountProfile({ currentUser, closeSettings }) {
+const AccountProfile = ({ currentUser, closeSettings }) => {
   const [currentSettings, setCurrentSettings] = useState('account');
 
   const renderMain = () => {
