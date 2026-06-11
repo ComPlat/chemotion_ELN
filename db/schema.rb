@@ -17,6 +17,7 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   enable_extension "pg_trgm"
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
+  enable_extension "rdkit"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", id: :serial, force: :cascade do |t|
@@ -437,8 +438,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.jsonb "admin_ids", default: {}
     t.jsonb "user_ids", default: {}
     t.string "version"
-    t.jsonb "metadata", default: {}, null: false
     t.jsonb "super_class_of", default: {}, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.index ["ols_term_id"], name: "dataset_klasses_on_ols_term_id_ukey", unique: true
     t.index ["super_class_of"], name: "index_dataset_klasses_on_super_class_of", using: :gin
     t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_dataset_klasses_metadata"
   end
@@ -755,8 +757,11 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "uuid"
     t.string "klass_uuid"
     t.jsonb "properties_release"
-    t.string "ancestry"
+    t.string "ancestry", default: "/", null: false, collation: "C"
     t.jsonb "metadata", default: {}, null: false
+    t.index ["ancestry"], name: "index_elements_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
+    t.index ["name"], name: "index_elements_on_name_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.index ["short_label"], name: "index_elements_on_short_label_trigram", opclass: :gin_trgm_ops, using: :gin
     t.check_constraint "jsonb_typeof(metadata) = 'object'::text", name: "chk_elements_metadata"
   end
 
@@ -865,101 +870,6 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["prefix"], name: "index_inventories_on_prefix", unique: true
-  end
-
-  create_table "ketcherails_amino_acids", id: :serial, force: :cascade do |t|
-    t.integer "moderated_by"
-    t.integer "suggested_by"
-    t.string "name", null: false
-    t.text "molfile", null: false
-    t.integer "aid", default: 1, null: false
-    t.integer "aid2", default: 1, null: false
-    t.integer "bid", default: 1, null: false
-    t.string "icon_path"
-    t.string "sprite_class"
-    t.string "status"
-    t.text "notes"
-    t.datetime "approved_at"
-    t.datetime "rejected_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "icon_file_name"
-    t.string "icon_content_type"
-    t.integer "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.index ["moderated_by"], name: "index_ketcherails_amino_acids_on_moderated_by"
-    t.index ["name"], name: "index_ketcherails_amino_acids_on_name"
-    t.index ["suggested_by"], name: "index_ketcherails_amino_acids_on_suggested_by"
-  end
-
-  create_table "ketcherails_atom_abbreviations", id: :serial, force: :cascade do |t|
-    t.integer "moderated_by"
-    t.integer "suggested_by"
-    t.string "name", null: false
-    t.text "molfile", null: false
-    t.integer "aid", default: 1, null: false
-    t.integer "bid", default: 1, null: false
-    t.string "icon_path"
-    t.string "sprite_class"
-    t.string "status"
-    t.text "notes"
-    t.datetime "approved_at"
-    t.datetime "rejected_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "icon_file_name"
-    t.string "icon_content_type"
-    t.integer "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.string "rtl_name"
-    t.index ["moderated_by"], name: "index_ketcherails_atom_abbreviations_on_moderated_by"
-    t.index ["name"], name: "index_ketcherails_atom_abbreviations_on_name"
-    t.index ["suggested_by"], name: "index_ketcherails_atom_abbreviations_on_suggested_by"
-  end
-
-  create_table "ketcherails_common_templates", id: :serial, force: :cascade do |t|
-    t.integer "moderated_by"
-    t.integer "suggested_by"
-    t.string "name", null: false
-    t.text "molfile", null: false
-    t.string "icon_path"
-    t.string "sprite_class"
-    t.text "notes"
-    t.datetime "approved_at"
-    t.datetime "rejected_at"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.integer "template_category_id"
-    t.string "status"
-    t.string "icon_file_name"
-    t.string "icon_content_type"
-    t.integer "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.index ["moderated_by"], name: "index_ketcherails_common_templates_on_moderated_by"
-    t.index ["name"], name: "index_ketcherails_common_templates_on_name"
-    t.index ["suggested_by"], name: "index_ketcherails_common_templates_on_suggested_by"
-  end
-
-  create_table "ketcherails_custom_templates", id: :serial, force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.string "name", null: false
-    t.text "molfile", null: false
-    t.string "icon_path"
-    t.string "sprite_class"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.index ["user_id"], name: "index_ketcherails_custom_templates_on_user_id"
-  end
-
-  create_table "ketcherails_template_categories", id: :serial, force: :cascade do |t|
-    t.string "name", null: false
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.string "icon_file_name"
-    t.string "icon_content_type"
-    t.integer "icon_file_size"
-    t.datetime "icon_updated_at"
-    t.string "sprite_class"
   end
 
   create_table "layer_tracks", force: :cascade do |t|
@@ -2216,6 +2126,24 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
           END;
           RETURN NEW;
       END;
+      $function$
+  SQL
+  create_function :set_samples_mol_rdkit, sql_definition: <<-'SQL'
+      CREATE OR REPLACE FUNCTION public.set_samples_mol_rdkit()
+       RETURNS trigger
+       LANGUAGE plpgsql
+      AS $function$
+      begin
+      	if (TG_OP='INSERT') then
+      		insert into rdkit.mols values (new.id, mol_from_ctab(encode(new.molfile, 'escape')::cstring));
+      	end if;
+      	if (TG_OP='UPDATE') then
+      		if new.MOLFILE <> old.MOLFILE then
+      			update rdkit.mols set m = mol_from_ctab(encode(new.molfile, 'escape')::cstring) where id = new.id;
+      		end if;
+      	end if;
+      	return new;
+      end
       $function$
   SQL
   create_function :calculate_dataset_space, sql_definition: <<-'SQL'
