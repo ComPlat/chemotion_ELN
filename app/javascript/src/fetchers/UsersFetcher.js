@@ -86,14 +86,6 @@ export default class UsersFetcher {
     return ApiClient.getJson('/api/v1/users/list_editors');
   }
 
-  static listUserLabels() {
-    return ApiClient.getJson('/api/v1/user_labels/list_labels');
-  }
-
-  static updateUserLabel(params = {}) {
-    return ApiClient.putJson('/api/v1/user_labels/save_label', { body: params });
-  }
-
   static updateUserCounter(params = {}) {
     return ApiClient.putJson('/api/v1/users/update_counter', { body: params });
   }

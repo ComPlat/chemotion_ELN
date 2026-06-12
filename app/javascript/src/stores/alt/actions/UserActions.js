@@ -2,6 +2,7 @@
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import alt from 'src/stores/alt/alt';
 
 class UserActions {
@@ -105,7 +106,7 @@ class UserActions {
 
   fetchUserLabels() {
     return (dispatch) => {
-      UsersFetcher.listUserLabels(true)
+      UserLabelsFetcher.listUserLabels(true)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
