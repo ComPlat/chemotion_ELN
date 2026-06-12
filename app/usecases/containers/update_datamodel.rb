@@ -32,8 +32,7 @@ module Usecases
 
       private
 
-      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      # rubocop:disable Metrics/BlockLength
+      # rubocop:disable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       def create_or_update_containers(children, parent_container, current_user = {})
         return unless children
         return unless can_update_container?(parent_container)
@@ -57,6 +56,7 @@ module Usecases
             extended_metadata['general_description'] = extended_metadata['general_description'].to_json
           end
 
+          old_analyses_compared = nil
           if child[:is_new]
             # Create container
             container = parent_container.children.create(
@@ -68,6 +68,10 @@ module Usecases
           else
             # Update container
             next unless (container = Container.find_by(id: child[:id]))
+
+            old_analyses_compared = ComparisonDatamodelSupport.parse_analyses_compared(
+              container.extended_metadata&.[]('analyses_compared'),
+            )
 
             container.update!(
               name: child[:name],
@@ -83,6 +87,25 @@ module Usecases
             container.save_dataset(dataset: child[:dataset], element: parent_container&.root&.containable, current_user: current_user) # rubocop:disable Layout/LineLength
           end
           create_or_update_containers(child[:children], container, current_user)
+
+          dataset_being_deleted = child[:children]&.any? { |c| c[:container_type] == 'dataset' && c[:is_deleted] }
+          if dataset_being_deleted && extended_metadata&.[]('analyses_compared').present?
+            extended_metadata.delete('analyses_compared')
+            container.update!(extended_metadata: extended_metadata)
+          end
+
+          next if extended_metadata&.[]('analyses_compared').blank?
+
+          current_analyses_compared = ComparisonDatamodelSupport.parse_analyses_compared(
+            extended_metadata['analyses_compared'],
+          )
+          next unless current_analyses_compared.is_a?(Array)
+          next if current_analyses_compared == old_analyses_compared
+          next if ComparisonDatamodelSupport.analyses_already_in_same_dataset?(
+            container, current_analyses_compared
+          )
+
+          ComparisonDatamodelSupport.generate_comparison_dataset!(container, current_analyses_compared)
         end
       end
 
@@ -113,8 +136,7 @@ module Usecases
           attachment.update!(attachable_id: container.id, attachable_type: 'Container') if container.present?
         end
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      # rubocop:enable Metrics/BlockLength
+      # rubocop:enable Metrics/AbcSize, Metrics/BlockLength, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
       def delete_containers_and_attachments(container)
         Attachment.where_container(container[:id]).destroy_all

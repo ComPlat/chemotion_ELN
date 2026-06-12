@@ -742,9 +742,8 @@ export default class AttachmentFetcher {
     return promise;
   }
 
-  static combineSpectra(jcampIds, curveIdx, extraParams = null) {
-    const extras = JSON.stringify(decamelizeKeys(extraParams))
-    const promise = fetch(
+  static postCombineSpectra(body) {
+    return fetch(
       '/api/v1/chemspectra/file/combine_spectra',
       {
         credentials: 'same-origin',
@@ -754,11 +753,7 @@ export default class AttachmentFetcher {
           Accept: 'application/json',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          spectra_ids: jcampIds,
-          front_spectra_idx: curveIdx,
-          extras: extras,
-        }),
+        body: JSON.stringify(body),
       },
     )
       .then((response) => response.json())
@@ -766,8 +761,48 @@ export default class AttachmentFetcher {
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
+  }
 
-    return promise;
+  static postCombineSpectraComparison(body) {
+    return fetch(
+      '/api/v1/chemspectra/file/combine_spectra_comparison',
+      {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers:
+        {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+    )
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  static combineSpectra(jcampIds, curveIdx, extraParams = null) {
+    const extras = extraParams != null ? JSON.stringify(decamelizeKeys(extraParams)) : null;
+    const body = {
+      spectra_ids: jcampIds,
+      front_spectra_idx: curveIdx,
+    };
+    if (extras != null) {
+      body.extras = extras;
+    }
+    return AttachmentFetcher.postCombineSpectra(body);
+  }
+
+  static combineSpectraComparison(jcampIds, containerId, curveIdx, editedDataSpectra) {
+    return AttachmentFetcher.postCombineSpectraComparison({
+      spectra_ids: jcampIds,
+      container_id: containerId,
+      front_spectra_idx: curveIdx,
+      edited_data_spectra: editedDataSpectra,
+    });
   }
 
   static async uploadNewAttachmentsForContainer(container) {

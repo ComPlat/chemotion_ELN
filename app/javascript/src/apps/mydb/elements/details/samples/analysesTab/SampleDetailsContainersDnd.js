@@ -13,6 +13,13 @@ const orderSource = {
 };
 
 const orderTarget = {
+  canDrop(props, monitor) {
+    const source = monitor.getItem().container;
+    const target = props.container;
+    const sourceIsComparison = !!source.extended_metadata?.is_comparison;
+    const targetIsComparison = !!target.extended_metadata?.is_comparison;
+    return sourceIsComparison === targetIsComparison;
+  },
   drop(targetProps, monitor) {
     const source = monitor.getItem().container;
     const target = targetProps.container;

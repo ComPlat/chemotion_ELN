@@ -7,6 +7,11 @@ class SpectraActions {
     return null;
   }
 
+  ToggleCompareModal(container) {
+    return container;
+  }
+
+
   LoadSpectra(spcInfos) {
     const idxs = spcInfos && spcInfos.map(si => si.idx);
     if (idxs.length === 0) {
@@ -199,6 +204,7 @@ class SpectraActions {
       }
     };
   }
+
 }
 
 export default alt.createActions(SpectraActions);

@@ -14,7 +14,7 @@
     "@citation-js/plugin-isbn": "0.3.0",
     "@complat/chem-spectra-client": "1.3.5",
     "@complat/chemotion-converter-client": "~0.15.0",
-    "@complat/react-spectra-editor": "1.7.1",
+    "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#feat/comparison-spectra",
     "@novnc/novnc": "~1.5.0",
     "@sentry/react": "^7.73.0",
     "@sentry/tracing": "^7.16.0",
@@ -145,6 +145,9 @@
     "storybook": "^9.1.19",
     "webpack-dev-server": "5"
   },
+  "resolutions": {
+    "@complat/react-spectra-editor": "github:ComPlat/react-spectra-editor#feat/comparison-spectra"
+  },
   "scripts": {
     "postinstall": "./package_postinstall.sh",
     "test": "NODE_ENV=test NODE_PATH=./spec/javascripts:./app/javascript yarn mocha --exit --require './spec/javascripts/setup.js' './spec/javascripts/**/*.spec.js'",
@@ -192,7 +195,9 @@
     ],
     "env": {
       "development": {
-        "plugins": ["react-refresh/babel"]
+        "plugins": [
+          "react-refresh/babel"
+        ]
       }
     }
   },
