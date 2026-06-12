@@ -32,6 +32,8 @@
     "no-shadow": "error",
     "no-param-reassign": ["error", { "props": false }],
     "no-use-before-define": ["error", { "functions": true, "classes": true, "variables": true }],
+    "semi": ["error", "always"],
+    "quotes": ["error", "single", { "avoidEscape": true, "allowTemplateLiterals": false }],
     "no-console": "off",
     "comma-dangle": [1, "only-multiline"],
     "max-len": ["error", { "code": 120, "ignoreComments": true }],
@@ -56,6 +58,9 @@
     ]
   },
   "settings": {
+    "react": {
+      "version": "detect"
+    },
     "import/resolver": {
       "node": {
         "paths": ["app/javascript"]
