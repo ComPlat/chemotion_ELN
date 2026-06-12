@@ -48,17 +48,17 @@ const ElementCollectionLabels = ({ element }) => {
   if (!element.tag) return (<span />);
   if (!element.tag.taggable_data) return (<span />);
   if (!element.tag.taggable_data.collection_labels) return (<span />);
-  if (element.tag.taggable_data.collection_labels.length == 0) return (<span />);
+  if (element.tag.taggable_data.collection_labels.length === 0) return (<span />);
 
   const handleOnClick = (label, e) => {
     e.stopPropagation();
     aviatorNavigationWithCollectionId(label.id, element.type, element.id);
-  }
+  };
 
   const formatItems = (labels) => {
     return labels.map((label) => {
-      const collectionFromStore = collectionsStore.find(label.id)
-      if (!collectionFromStore) return (<span />);
+      const collectionFromStore = collectionsStore.find(label.id);
+      if (!collectionFromStore) return null;
 
       return (
         <Dropdown.Item key={label.id} onClick={(e) => handleOnClick(label, e)}>
@@ -66,7 +66,7 @@ const ElementCollectionLabels = ({ element }) => {
         </Dropdown.Item>
       );
     });
-  }
+  };
 
   const renderCollectionsItems = (title, labels) => {
     if (labels.length === 0) return null;
@@ -76,12 +76,12 @@ const ElementCollectionLabels = ({ element }) => {
         {formatItems(labels)}
       </>
     );
-  }
+  };
 
   const ownCollections = element.tag.taggable_data.collection_labels
-    .filter(label => collectionsStore.isOwnCollection(label.id))
+    .filter(label => collectionsStore.isOwnCollection(label.id));
   const sharedCollections = element.tag.taggable_data.collection_labels
-    .filter(label => collectionsStore.isSharedCollection(label.id))
+    .filter(label => collectionsStore.isSharedCollection(label.id));
 
   if (ownCollections.length === 0 && sharedCollections.length === 0) { return (<span />); }
 

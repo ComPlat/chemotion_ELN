@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -11,12 +12,12 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 
 const SvgCellRenderer = ({ value })=>{
-  return <SVG src={"/images/"+value} className="molecule-fixed-data" />
-}
+  return <SVG src={`/images/${value}`} className="molecule-fixed-data" />;
+};
 
 SvgCellRenderer.propTypes = {
   value: PropTypes.string,
-}
+};
 
 const SelectCellRenderer = ({ value, onSelectChange, data, node: { rowIndex }}) => {
   return data.inchikey
@@ -25,27 +26,27 @@ const SelectCellRenderer = ({ value, onSelectChange, data, node: { rowIndex }}) 
          defaultChecked={value}
         />
     : null;
-}
+};
 
-class CustomHeader extends React.Component {
-  render(){
-    const {displayName,defaultSelected,mapped_keys} = this.props
+const CustomHeader = () => {
+  const {displayName, defaultSelected, mapped_keys} = this.props;
 
-    return(
-        <div className="ag-header-cell-label">
-          {displayName} &nbsp;
-          <select onChange={event=>this.props.onHeaderSelect(event.target.value,displayName)} defaultValue={defaultSelected}>
-            <option value=""               >do not import</option>
-            {Object.keys(mapped_keys).map(k=>{
-              return <option value={mapped_keys[k].field}>
-                {mapped_keys[k].multiple ? "add to ": "use as "}{mapped_keys[k].displayName}
-              </option>})
-            }
-          </select>
-        </div>
-    )
-  }
-}
+  return(
+    <div className="ag-header-cell-label">
+      {displayName} &nbsp;
+      <select
+        onChange={event => this.props.onHeaderSelect(event.target.value, displayName)} defaultValue={defaultSelected}
+      >
+        <option value="">do not import</option>
+        {Object.keys(mapped_keys).map(k => (
+          <option key={k} value={mapped_keys[k].field}>
+            {mapped_keys[k].multiple ? 'add to ' : 'use as '}{mapped_keys[k].displayName}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
 
 export default class ModalImportConfirm extends React.Component {
   constructor(props) {
@@ -56,12 +57,12 @@ export default class ModalImportConfirm extends React.Component {
       rows: [],
       custom_data_keys: [],
       mapped_keys: {},
-    }
+    };
 
-    this.onSelectChange = this.onSelectChange.bind(this)
-    this.onHeaderSelect = this.onHeaderSelect.bind(this)
-    this.cancelImport = this.cancelImport.bind(this)
-    this.onElementStoreChange = this.onElementStoreChange.bind(this)
+    this.onSelectChange = this.onSelectChange.bind(this);
+    this.onHeaderSelect = this.onHeaderSelect.bind(this);
+    this.cancelImport = this.cancelImport.bind(this);
+    this.onElementStoreChange = this.onElementStoreChange.bind(this);
   }
 
   cancelImport() {
@@ -92,7 +93,7 @@ export default class ModalImportConfirm extends React.Component {
         ...e,
         index: i + 1,
         checked: !!e.inchikey,
-      }))
+      }));
 
       this.setState({
         show: true,
@@ -117,62 +118,62 @@ export default class ModalImportConfirm extends React.Component {
       defaultSelected
     } = this.state;
 
-    let filtered_mapped_keys = {}
+    const filtered_mapped_keys = {};
 
     custom_data_keys.map(e=>{
-      let field = defaultSelected[e]
+      const field = defaultSelected[e];
       if (mapped_keys[field] && mapped_keys[field].multiple ){
-        filtered_mapped_keys[field] = filtered_mapped_keys[field] ? filtered_mapped_keys[field] : []
-        filtered_mapped_keys[field].push(e)
-      } else if (field !== "") {
-        filtered_mapped_keys[field] = e
+        filtered_mapped_keys[field] = filtered_mapped_keys[field] ? filtered_mapped_keys[field] : [];
+        filtered_mapped_keys[field].push(e);
+      } else if (field !== '') {
+        filtered_mapped_keys[field] = e;
       }
-    })
-    let processRows = rows.map(row=>{
+    });
+    const processRows = rows.map(row=>{
       if (row.checked){
-        let newRow = {
+        const newRow = {
           inchikey: row.inchikey,
           molfile: row.molfile,
-        }
+        };
         Object.keys(filtered_mapped_keys).map(e=>{
-          let k=filtered_mapped_keys[e]
-          newRow[e] = mapped_keys[e].multiple ? k.map(f=>{return(f+"\n"+row[f]+"\n")}).join("\n")
-           : row[k]
-        })
-        newRow['decoupled'] = row['MOLECULE-LESS'] || 'f'
-        return newRow
+          const k=filtered_mapped_keys[e];
+          newRow[e] = mapped_keys[e].multiple ? k.map(f=>{return(`${f}\n${row[f]}\n`);}).join('\n')
+           : row[k];
+        });
+        newRow['decoupled'] = row['MOLECULE-LESS'] || 'f';
+        return newRow;
       }
-    })
-    filtered_mapped_keys['decoupled'] = "MOLECULE-LESS"
-    let params = {
+    });
+    filtered_mapped_keys['decoupled'] = 'MOLECULE-LESS';
+    const params = {
       currentCollectionId: collection_id,
       rows: processRows,
       mapped_keys: filtered_mapped_keys,
-    }
+    };
 
-    ElementActions.importSamplesFromFileConfirm(params)
+    ElementActions.importSamplesFromFileConfirm(params);
     this.setState({ show: false });
   }
 
   onSelectChange(checked, rowIndex) {
-    let { rows } = this.state
-    rows[rowIndex].checked = checked
-    this.setState({rows: rows})
+    const { rows } = this.state;
+    rows[rowIndex].checked = checked;
+    this.setState({rows});
   }
 
-  onHeaderSelect(target,customHeader){
-    let {defaultSelected, custom_data_keys, mapped_keys} = this.state
+  onHeaderSelect(target, customHeader){
+    const {defaultSelected, custom_data_keys, mapped_keys} = this.state;
     if (mapped_keys[target] && !mapped_keys[target].multiple){
-      custom_data_keys.map(k =>{if (defaultSelected[k]== target){defaultSelected[k]=""} })
+      custom_data_keys.map(k =>{if (defaultSelected[k]== target){defaultSelected[k]='';} });
     }
-    defaultSelected[customHeader]=target
-    this.setState({defaultSelected:defaultSelected})
+    defaultSelected[customHeader]=target;
+    this.setState({defaultSelected});
   }
 
   render() {
-    let { show, rows, custom_data_keys, mapped_keys, defaultSelected } = this.state
+    const { show, rows, custom_data_keys, mapped_keys, defaultSelected } = this.state;
 
-    let columns={
+    const columns={
           columnDefs: [
             {headerName: '#', field: 'index', width: 60, pinned: 'left'},
             {headerName: 'Structure', field: 'svg', cellRenderer: SvgCellRenderer, pinned: 'left', autoHeight: true },
@@ -192,7 +193,7 @@ export default class ModalImportConfirm extends React.Component {
             resizable: true,
             sortable: true,
           },
-        }
+        };
 
     custom_data_keys.map((e)=>{columns.columnDefs.push(
       {
@@ -202,10 +203,10 @@ export default class ModalImportConfirm extends React.Component {
         headerComponentParams:{
           onHeaderSelect: this.onHeaderSelect,
           defaultSelected: defaultSelected[e],
-          mapped_keys: mapped_keys,
+          mapped_keys,
         }
       }
-    )})
+    );});
 
     return (
       <AppModal
@@ -224,12 +225,12 @@ export default class ModalImportConfirm extends React.Component {
             rowHeight="100"
             rowSelection="single"
             getRowStyle={(params) => {
-              if (params.data.checked) { return null }
-              else { return { 'backgroundColor': 'red' } }
+              if (params.data.checked) { return null; }
+              else { return { 'backgroundColor': 'red' }; }
             }}
           />
         </div>
       </AppModal>
-    )
+    );
   }
 }

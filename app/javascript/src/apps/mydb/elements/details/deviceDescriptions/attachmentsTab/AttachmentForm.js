@@ -269,6 +269,6 @@ const AttachmentForm = ({ readonly }) => {
       }
     </div>
   );
-}
+};
 
 export default observer(AttachmentForm);
