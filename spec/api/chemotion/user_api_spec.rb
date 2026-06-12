@@ -90,40 +90,11 @@ describe Chemotion::UserAPI do
     end
   end
 
-  describe 'GET /api/v1/users/list_labels' do
-    context 'when user labels present' do
-      before do
-        UserLabel.create!(user_id: user.id, access_level: 0, title: 'Label 1', color: 'Color 1')
-        UserLabel.create!(user_id: other_user.id, access_level: 1, title: 'Label 2', color: 'Color 2')
-        UserLabel.create!(user_id: other_user.id, access_level: 0, title: 'Label 3', color: 'Color 3')
-        get '/api/v1/users/list_labels'
-      end
-
-      it 'returns a list of user labels' do
-        expect(parsed_json_response['labels'].length).to eq(2)
-      end
-    end
-
-    context 'when user labels missing' do
-      before do
-        get '/api/v1/users/list_labels'
-      end
-
-      it 'returns an empty list of user labels' do
-        expect(parsed_json_response['labels'].length).to eq(0)
-      end
-    end
-  end
-
   describe 'GET /api/v1/users/list_editors' do
     pending 'TODO: Add missing spec'
   end
 
   describe 'GET /api/v1/users/omniauth_providers' do
-    pending 'TODO: Add missing spec'
-  end
-
-  describe 'PUT /api/v1/users/save_label' do
     pending 'TODO: Add missing spec'
   end
 

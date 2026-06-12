@@ -284,6 +284,7 @@ class ElementStore {
       handleFetchMetadata: ElementActions.fetchMetadata,
       handleDeleteElements: ElementActions.deleteElements,
 
+      handleBulkUpdateUserLabels: ElementActions.bulkUpdateUserLabels,
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
       handleSplitElements: ElementActions.splitElements,
       handleSplitAsSubwellplates: ElementActions.splitAsSubwellplates,
@@ -611,6 +612,11 @@ class ElementStore {
   }
 
   handleRefreshElementsAfterCollectionChanges() {
+    UIActions.uncheckWholeSelection.defer();
+    this.fetchElementsByCollectionIdandLayout();
+  }
+
+  handleBulkUpdateUserLabels() {
     UIActions.uncheckWholeSelection.defer();
     this.fetchElementsByCollectionIdandLayout();
   }
