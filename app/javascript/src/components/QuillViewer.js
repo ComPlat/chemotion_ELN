@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Quill from 'quill';
 import _ from 'lodash';
 
-import { keepSupSub } from 'src/utilities/quillFormat';
+import { keepSupSub, stripImages } from 'src/utilities/quillFormat';
 
 export default class QuillViewer extends React.Component {
   constructor(props) {
@@ -19,7 +19,7 @@ export default class QuillViewer extends React.Component {
   componentDidUpdate(prevProps) {
     const { value } = this.props;
     if (value && prevProps.value && value !== prevProps.value) {
-      this.viewer.setContents(value);
+      this.viewer.setContents(stripImages(value));
     }
   }
 
@@ -27,6 +27,7 @@ export default class QuillViewer extends React.Component {
     if (!this.viewer) {
       const { quillViewer } = this;
       const defaultOptions = {
+        formats: ['bold', 'italic', 'underline', 'header', 'script', 'list', 'indent'],
         theme: this.theme,
         readOnly: this.readOnly,
       };
@@ -34,7 +35,7 @@ export default class QuillViewer extends React.Component {
       this.viewer = new Quill(quillViewer, defaultOptions);
       const oriValue = this.props.value;
       const value = this.props.preview ? keepSupSub(oriValue) : oriValue;
-      this.viewer.setContents(value);
+      this.viewer.setContents(stripImages(value));
     }
   }
 

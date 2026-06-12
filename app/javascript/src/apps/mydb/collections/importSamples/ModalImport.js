@@ -336,7 +336,7 @@ export default class ModalImport extends React.Component {
     });
   }
 
-  handleValidation(invalidRows, rowsData) {
+  static handleValidation(invalidRows) {
     if (invalidRows.length > 0) {
       // if some rows have validation errors, show notification but keep the modal open
       NotificationActions.add({
@@ -345,25 +345,6 @@ export default class ModalImport extends React.Component {
         level: 'error',
         dismissible: true,
       });
-    } else {
-      // Get the current valid data from the grid
-      const validData = rowsData.filter((row) => !row.delete && (row.valid !== false));
-
-      // Prepare data for backend
-      const cleanedData = validData.map((row) => {
-        const cleanRow = { ...row };
-        if (cleanRow.molfile !== undefined && cleanRow.molfile !== null) {
-          cleanRow.molfile = `\n${cleanRow.molfile}\n`;
-        }
-        // Remove UI-specific properties
-        delete cleanRow.id;
-        delete cleanRow.valid;
-        delete cleanRow.errors;
-        delete cleanRow.delete;
-        return cleanRow;
-      });
-
-      this.setState({ rowData: cleanedData });
     }
   }
 
@@ -397,14 +378,28 @@ export default class ModalImport extends React.Component {
   handleImportData() {
     const { onHide } = this.props;
     const {
-      importAsChemical, fileFormat, rowData, targetCollectionId
+      importAsChemical, fileFormat, targetCollectionId
     } = this.state;
 
-    // For Excel and other formats, send the cleaned data directly
+    const liveRows = this.validationComponentRef.current?.getRowData() ?? [];
+    const cleanedData = liveRows
+      .filter((row) => !row.delete && row.valid !== false)
+      .map((row) => {
+        const cleanRow = { ...row };
+        if (cleanRow.molfile != null) {
+          cleanRow.molfile = `\n${cleanRow.molfile}\n`;
+        }
+        delete cleanRow.id;
+        delete cleanRow.valid;
+        delete cleanRow.errors;
+        delete cleanRow.delete;
+        return cleanRow;
+      });
+
     const params = {
       currentCollectionId: targetCollectionId,
       type: importAsChemical ? 'chemical' : 'sample',
-      data: rowData,
+      data: cleanedData,
       originalFormat: fileFormat
     };
 
@@ -1112,7 +1107,7 @@ export default class ModalImport extends React.Component {
               rowData={rowData || []}
               onRowDataChange={(data) => this.setState({ rowData: data })}
               columnDefs={columnDefs || []}
-              onValidate={(invalidRows, rowsData) => this.handleValidation(invalidRows, rowsData)}
+              onValidate={(invalidRows) => ModalImport.handleValidation(invalidRows)}
               onValidationStateChange={this.handleValidationStateChange}
             />
           )}

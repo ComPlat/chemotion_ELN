@@ -1,21 +1,19 @@
 import { elementNames, allElnElements } from 'src/apps/generic/Utils';
 
-const isElementSelectionEmpty = (element) => {
-  return !element.checkedAll &&
-    element.checkedIds.size == 0 &&
-    element.uncheckedIds.size == 0;
-}
+const isElementSelectionEmpty = (element) => !element.checkedAll
+    && element.checkedIds.size === 0
+    && element.uncheckedIds.size === 0;
 
 const filterParamsFromUIState = (uiState) => {
-  let collectionId = uiState.currentCollection.id;
+  const collectionId = uiState.currentCollection.id;
   // currentSearchSelection: uiState.currentSearchSelection,
 
-  let filterParams = {
+  const filterParams = {
     currentCollection: { id: collectionId },
   };
 
   allElnElements.map((element) => {
-    if (uiState[element] === undefined || isElementSelectionEmpty(uiState[element])) { return }
+    if (uiState[element] === undefined || isElementSelectionEmpty(uiState[element])) { return; }
 
     filterParams[element] = {
       all: uiState[element].checkedAll,
@@ -27,7 +25,7 @@ const filterParamsFromUIState = (uiState) => {
 
   elementNames(false).then((klassArray) => {
     klassArray.forEach((klass) => {
-      if (isElementSelectionEmpty(uiState[`${klass}`])) { return }
+      if (isElementSelectionEmpty(uiState[`${klass}`])) { return; }
 
       filterParams[`${klass}`] = {
         all: uiState[`${klass}`].checkedAll,
@@ -39,7 +37,7 @@ const filterParamsFromUIState = (uiState) => {
   });
 
   return filterParams;
-}
+};
 
 const makeList = (collections, tree = [], depth = 0) => {
   if (!Array.isArray(collections)) return tree;
@@ -50,14 +48,14 @@ const makeList = (collections, tree = [], depth = 0) => {
   });
 
   return tree;
-}
+};
 
 const collectionOptions = (store, showSharedCollections) => {
   const ownCollections = store.own_collections;
   let shared = [];
   if (showSharedCollections) {
     const sharedWithMeCollections = store.shared_with_me_collections;
-    shared = sharedWithMeCollections.flatMap((c) => c.children).filter((c) => c.permission_level >= 1)
+    shared = sharedWithMeCollections.flatMap((c) => c.children).filter((c) => c.permission_level >= 1);
   }
 
   return [
@@ -67,12 +65,14 @@ const collectionOptions = (store, showSharedCollections) => {
       options: makeList(shared),
     },
   ];
-}
+};
 
 const collectionHasPermission = (collection, permissionLevel) => {
-  if (collection.permission_level === undefined) { return true }
+  if (!collection || collection.permission_level === undefined) { return true; }
 
   return collection.collection_share_id && collection.permission_level >= permissionLevel;
-}
+};
 
-export { isElementSelectionEmpty, filterParamsFromUIState, collectionOptions, collectionHasPermission }
+export {
+  isElementSelectionEmpty, filterParamsFromUIState, collectionOptions, collectionHasPermission
+};

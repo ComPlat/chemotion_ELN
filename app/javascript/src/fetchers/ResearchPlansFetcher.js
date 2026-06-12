@@ -1,5 +1,5 @@
 import 'whatwg-fetch';
-import Immutable from 'immutable';
+import { Map } from 'immutable';
 
 import ResearchPlan from 'src/models/ResearchPlan';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
@@ -19,7 +19,7 @@ export default class ResearchPlansFetcher {
         rResearchPlan.attachments = json.attachments;
         if (json.literatures && json.literatures.length > 0) {
           const tliteratures = json.literatures.map((literature) => new Literature(literature));
-          const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());
+          const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), Map());
           rResearchPlan.literatures = lits;
           rResearchPlan.updateChecksum();
         }

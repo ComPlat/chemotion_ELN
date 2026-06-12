@@ -10,6 +10,8 @@ import isEqual from 'lodash/isEqual';
 
 import Quill from 'quill';
 
+import { stripImages } from 'src/utilities/quillFormat';
+
 function postpone(fn) {
   Promise.resolve().then(fn);
 }
@@ -255,9 +257,10 @@ export default class ReactQuill extends React.Component {
     const sel = this.getEditorSelection();
 
     if (typeof value === 'string') {
-      editor.setContents(editor.clipboard.convert(value));
+      const converted = editor.clipboard.convert(value);
+      editor.setContents(stripImages(converted));
     } else {
-      editor.setContents(value);
+      editor.setContents(stripImages(value));
     }
 
     postpone(() => this.setEditorSelection(editor, sel));

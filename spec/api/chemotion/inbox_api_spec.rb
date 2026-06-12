@@ -17,6 +17,10 @@ describe Chemotion::InboxAPI do
       let(:sample_short) { create(:sample, name: 'JB-R581-A', creator: user, collections: [collection]) }
       let(:sample_exact_a) { create(:sample, name: 'JB-R23-A', creator: user, collections: [collection]) }
       let(:sample_exact_b) { create(:sample, name: 'JB-R23-B', creator: user, collections: [collection]) }
+      let(:sample_no_suffix) { create(:sample, name: 'JB-R23', creator: user, collections: [collection]) }
+      let(:sample_external_digit) do
+        create(:sample, name: 'unrelated', external_label: 'JB-R23', creator: user, collections: [collection])
+      end
 
       before do
         sample_short
@@ -31,6 +35,34 @@ describe Chemotion::InboxAPI do
 
         it 'return fitting samples' do
           expect(JSON.parse(response.body)['samples'].size).to eq(2)
+        end
+      end
+
+      describe 'get samples by sample name ending with a digit' do
+        let(:search_string) { 'R23.pdf' }
+
+        before do
+          sample_no_suffix
+          get "/api/v1/inbox/samples?search_string=#{search_string}"
+        end
+
+        it 'returns samples whose name ends with a digit' do
+          names = JSON.parse(response.body)['samples'].pluck('name')
+          expect(names).to include('JB-R23')
+        end
+      end
+
+      describe 'get samples by external label ending with a digit' do
+        let(:search_string) { 'R23.pdf' }
+
+        before do
+          sample_external_digit
+          get "/api/v1/inbox/samples?search_string=#{search_string}"
+        end
+
+        it 'returns samples whose external_label ends with a digit' do
+          ids = JSON.parse(response.body)['samples'].pluck('id')
+          expect(ids).to include(sample_external_digit.id)
         end
       end
 

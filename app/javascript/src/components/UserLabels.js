@@ -221,10 +221,10 @@ function UserLabelModal({ showLabelModal, onHide }) {
     },
     {
       headerName: 'Action',
-      minWidth: 60,
-      maxWidth: 60,
+      minWidth: 85,
+      maxWidth: 85,
       cellRenderer: renderActions,
-      cellClass: ['p-2'],
+      cellClass: ['p-2', 'd-flex', 'justify-content-center', 'align-items-center'],
     },
   ]), [renderActions]);
 
@@ -369,6 +369,7 @@ function EditUserLabels({ element, fnCb }) {
       <Form.Label>My labels</Form.Label>
       <Select
         isMulti
+        isDisabled={!element?.can_update}
         options={options}
         getOptionValue={(currentLabel) => currentLabel.id}
         getOptionLabel={(currentLabel) => currentLabel.title}

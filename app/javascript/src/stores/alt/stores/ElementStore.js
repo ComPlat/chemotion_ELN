@@ -34,6 +34,7 @@ import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import { SameEleTypId } from 'src/utilities/ElementUtils';
 import { aviatorNavigation, aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
+import { allElnElementsForSearch } from 'src/apps/generic/Utils';
 import { chmoConversions } from 'src/components/OlsComponent';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GenericEl from 'src/models/GenericEl';
@@ -283,6 +284,7 @@ class ElementStore {
       handleFetchMetadata: ElementActions.fetchMetadata,
       handleDeleteElements: ElementActions.deleteElements,
 
+      handleBulkUpdateUserLabels: ElementActions.bulkUpdateUserLabels,
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
       handleSplitElements: ElementActions.splitElements,
       handleSplitAsSubwellplates: ElementActions.splitAsSubwellplates,
@@ -610,6 +612,11 @@ class ElementStore {
   }
 
   handleRefreshElementsAfterCollectionChanges() {
+    UIActions.uncheckWholeSelection.defer();
+    this.fetchElementsByCollectionIdandLayout();
+  }
+
+  handleBulkUpdateUserLabels() {
     UIActions.uncheckWholeSelection.defer();
     this.fetchElementsByCollectionIdandLayout();
   }
@@ -1353,8 +1360,9 @@ class ElementStore {
     const { moleculeSort } = this.state;
     const { page } = uiState[type];
     let filterParams = {};
-    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
-    const modelName = !elnElements.includes(type) ? 'element' : type;
+    const elnElements = allElnElementsForSearch;
+    let modelName = !elnElements.includes(`${type}s`) ? 'element' : type;
+    modelName = type === 'cell_line' ? 'cell_lines' : modelName;
 
     if (fromDate || toDate || userLabel || productOnly) {
       filterParams = {

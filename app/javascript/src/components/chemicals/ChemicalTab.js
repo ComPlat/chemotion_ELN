@@ -9,13 +9,13 @@ import {
 import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
 import { chemicalStatusOptions } from 'src/components/staticDropdownOptions/options';
-import SVG from 'react-inlinesvg';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import Sample from 'src/models/Sample';
 import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SDSAttachmentModal from 'src/components/chemicals/SDSAttachmentModal';
+import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
 import Chemical from 'src/models/Chemical';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
@@ -31,7 +31,6 @@ export default class ChemicalTab extends React.Component {
       vendorValue: 'Merck',
       queryOption: 'CAS',
       safetySheetLanguage: 'en',
-      safetyPhrases: '',
       warningMessage: '',
       loadingQuerySafetySheets: false,
       loadingSaveSafetySheets: {},
@@ -337,42 +336,8 @@ export default class ChemicalTab extends React.Component {
     });
   };
 
-  // eslint-disable-next-line class-methods-use-this
-  stylePhrases = (str) => {
-    const HazardPhrases = [];
-    if (str && str.h_statements && str.h_statements.length !== 0) {
-      // eslint-disable-next-line no-restricted-syntax
-      for (const [key, value] of Object.entries(str.h_statements)) {
-        // eslint-disable-next-line react/jsx-one-expression-per-line
-        const st = <p key={key}> {key}:{value} </p>;
-        HazardPhrases.push(st);
-      }
-    }
-
-    const precautionaryPhrases = [];
-    if (str && str.p_statements && str?.p_statements?.length !== 0) {
-      // eslint-disable-next-line no-restricted-syntax
-      for (const [key, value] of Object.entries(str?.p_statements || {})) {
-        // eslint-disable-next-line react/jsx-one-expression-per-line
-        const st = <p key={key}>{key}:{value}</p>;
-        precautionaryPhrases.push(st);
-      }
-    }
-
-    const pictogramsArray = str.pictograms?.map((i) => (
-      i !== null ? <SVG key={`ghs${i}`} src={`/images/ghs/${i}.svg`} /> : null));
-
-    return (
-      <div>
-        <p className="fw-bold">Pictograms: </p>
-        {(str.pictograms !== undefined && str.pictograms.length !== 0)
-          ? pictogramsArray : <p>Could not find pictograms</p>}
-        <p className="fw-bold mt-3">Hazard Statements: </p>
-        {HazardPhrases}
-        <p className="fw-bold">Precautionary Statements: </p>
-        {precautionaryPhrases}
-      </div>
-    );
+  handleSafetyPhrasesChange = (next) => {
+    this.handleFieldChanged('safetyPhrases', next);
   };
 
   isSavedSds = () => {
@@ -432,7 +397,6 @@ export default class ChemicalTab extends React.Component {
       } else if (result === 'Could not find H and P phrases') {
         this.setState({ warningMessage: result });
       } else {
-        this.setState({ safetyPhrases: this.stylePhrases(result) });
         this.handleFieldChanged('safetyPhrases', result);
       }
     }).catch((errorMessage) => {
@@ -1446,16 +1410,13 @@ export default class ChemicalTab extends React.Component {
   };
 
   renderSafetyPhrases = () => {
-    const { chemical, safetyPhrases } = this.state;
-    let fetchedSafetyPhrases;
-    if (chemical && chemical._chemical_data !== undefined && chemical._chemical_data.length !== 0) {
-      const phrases = chemical._chemical_data[0].safetyPhrases;
-      fetchedSafetyPhrases = (phrases !== undefined) ? this.stylePhrases(phrases) : '';
-    }
+    const { chemical } = this.state;
+    const phrases = chemical?._chemical_data?.[0]?.safetyPhrases;
     return (
-      <div className="pt-2 w-100">
-        {safetyPhrases === '' ? fetchedSafetyPhrases : safetyPhrases}
-      </div>
+      <SafetyPhrasesEditor
+        value={phrases}
+        onChange={this.handleSafetyPhrasesChange}
+      />
     );
   };
 

@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { Popover } from 'react-bootstrap';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 import { isEmpty, set } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -29,8 +29,8 @@ export default function ElementDetailSortTab({
   openedFromCollectionId,
 }) {
   const { collections } = useContext(StoreContext);
-  const [visible, setVisible] = useState(Immutable.List());
-  const [hidden, setHidden] = useState(Immutable.List());
+  const [visible, setVisible] = useState(List());
+  const [hidden, setHidden] = useState(List());
   const addInventoryTabRef = useRef(addInventoryTab);
   const availableTabsRef = useRef(availableTabs);
   const onTabPositionChangedRef = useRef(onTabPositionChanged);

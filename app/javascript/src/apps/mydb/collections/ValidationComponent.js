@@ -274,15 +274,14 @@ const ValidationComponent = React.forwardRef(({
 
     // Update the currentRowData with validation results and conversions
     setCurrentRowData(allRows);
-    onRowDataChange(allRows);
-
     gridApi.refreshCells();
     onValidate(invalid, allRows);
   };
 
   useImperativeHandle(ref, () => ({
-    validateData
-  }), [validateData]);
+    validateData,
+    getRowData: () => currentRowData,
+  }), [validateData, currentRowData]);
 
   const addNewRow = () => {
     // Generate a user-friendly row ID based on current data length

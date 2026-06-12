@@ -14,6 +14,7 @@ import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
 import DevicesList from 'src/apps/admin/devices/DevicesList';
 // import TemplateManagement from 'src/apps/admin/TemplateManagement';
 import ThirdPartyApp from 'src/apps/admin/ThirdPartyApp';
+import InfoSupportLinks from 'src/apps/admin/InfoSupportLinks';
 
 const ADMIN_PAGES = [
   { key: 0, label: 'Dashboard', component: AdminDashboard },
@@ -28,6 +29,7 @@ const ADMIN_PAGES = [
   { key: 13, label: 'Delayed Jobs', component: DelayedJobs },
   { key: 14, label: 'ChemSpectra Layouts', component: ChemSpectraLayouts },
   { key: 15, label: 'Third Party Apps', component: ThirdPartyApp },
+  { key: 16, label: 'Info & Support Links', component: InfoSupportLinks },
 ];
 
 export default function AdminHome() {

@@ -7,10 +7,12 @@ import Delta from 'quill-delta';
 
 import _ from 'lodash';
 import { Dropdown, DropdownButton, OverlayTrigger, Popover, Button } from 'react-bootstrap';
+import { stripImages } from 'src/utilities/quillFormat';
 
 const toolbarOptions = [
   ['bold', 'italic', 'underline'],
   [{ list: 'ordered' }, { list: 'bullet' }],
+  [{ indent: '-1' }, { indent: '+1' }],
   [{ script: 'sub' }, { script: 'super' }],
   [{ header: [1, 2, 3, 4, 5, 6, false] }],
   [{
@@ -25,7 +27,6 @@ const toolbarOptions = [
   // ['α', 'β', 'π'],
   // ['blockquote', 'code-block'],
   // [{ 'header': 1 }, { 'header': 2 }],
-  // [{ 'indent': '-1'}, { 'indent': '+1' }],
   // [{ 'direction': 'rtl' }],
   // [{ 'size': ['small', false, 'large', 'huge'] }],
   // [{ 'align': [] }],
@@ -94,7 +95,7 @@ export default class QuillEditor extends React.Component {
 
     this.setState({ value });
     const sel = this.editor.getSelection();
-    this.editor.setContents(value);
+    this.editor.setContents(stripImages(value));
     if (sel) this.editor.setSelection(sel);
   }
 
@@ -174,6 +175,7 @@ export default class QuillEditor extends React.Component {
             }
           }
         },
+        formats: ['bold', 'italic', 'underline', 'header', 'script', 'list', 'indent'],
         theme: this.theme,
         readOnly: this.readOnly,
       };
@@ -181,7 +183,7 @@ export default class QuillEditor extends React.Component {
       // init Quill
       this.editor = new Quill(quillEditor, quillOptions);
       const { value } = this.state;
-      if (value) this.editor.setContents(value);
+      if (value) this.editor.setContents(stripImages(value));
 
       // Resolve compability with Grammarly Chrome add-on
       // Fromm https://github.com/quilljs/quill/issues/574

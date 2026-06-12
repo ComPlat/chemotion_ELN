@@ -31,6 +31,10 @@
 class CelllineMaterial < ApplicationRecord
   acts_as_paranoid
 
+  include PgSearch::Model
+
   has_many :literals, as: :element, dependent: :destroy
   has_many :literatures, through: :literals
+
+  multisearchable against: %i[name]
 end

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, ButtonGroup, Form } from 'react-bootstrap';
+import { Button, Form } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import ImageModal from 'src/components/common/ImageModal';
@@ -15,7 +15,6 @@ import MolViewerListBtn from 'src/components/viewer/MolViewerListBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
-import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 
 const qCheckPass = () => (
@@ -51,31 +50,6 @@ const qCheckMsg = (sample, container) => {
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'MS', '');
   }
   return '';
-};
-
-const AnalysisModeToggle = (mode, handleToggleMode, isDisabled) => {
-  return (
-    <ButtonGroup>
-      <ButtonGroupToggleButton
-        size="xsm"
-        active={mode === 'edit'}
-        onClick={() => handleToggleMode('edit')}
-        disabled={isDisabled}
-      >
-        <i className="fa fa-edit me-1" />
-        Edit mode
-      </ButtonGroupToggleButton>
-      <ButtonGroupToggleButton
-        size="xsm"
-        active={mode === 'order'}
-        onClick={() => handleToggleMode('order')}
-        disabled={isDisabled}
-      >
-        <i className="fa fa-reorder me-1" />
-        Order mode
-      </ButtonGroupToggleButton>
-    </ButtonGroup>
-  )
 };
 
 const headerBtnGroup = (
@@ -248,4 +222,4 @@ const AnalysesHeader = ({
   );
 };
 
-export { AnalysesHeader, AnalysisModeToggle };
+export { AnalysesHeader };

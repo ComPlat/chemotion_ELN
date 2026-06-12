@@ -1916,13 +1916,13 @@ export default class ReactionDetailsScheme extends React.Component {
             name="reaction_vessel_size"
             type="text"
             value={reaction.vessel_size?.amount ?? ''}
-            disabled={false}
+            disabled={reaction.can_update === false}
             onChange={(event) => this.updateVesselSize(event)}
             onBlur={(event) => this.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
             className="flex-grow-1 Select-control"
           />
           <Button
-            disabled={false}
+            disabled={reaction.can_update === false}
             variant="light"
             onClick={() => this.changeVesselSizeUnit()}
           >

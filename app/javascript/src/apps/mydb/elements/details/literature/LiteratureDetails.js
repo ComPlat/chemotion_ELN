@@ -6,7 +6,7 @@ import {
   Row,
   Col
 } from 'react-bootstrap';
-import Immutable from 'immutable';
+import { Map } from 'immutable';
 import { uniqBy } from 'lodash';
 import {
   Citation,
@@ -137,7 +137,7 @@ export default class LiteratureDetails extends Component {
       literature: Literature.buildEmpty(),
       sorting: 'element',
       sortedIds: [],
-      selectedRefs: new Immutable.Map()
+      selectedRefs: Map()
     };
     this.handleUIStoreChange = this.handleUIStoreChange.bind(this);
     this.loadSelectedReferences = this.loadSelectedReferences.bind(this);
