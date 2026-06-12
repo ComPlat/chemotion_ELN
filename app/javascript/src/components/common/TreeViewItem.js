@@ -16,7 +16,7 @@ export default function TreeViewItem({
   children,
 }) {
   const handleKeyDown = (e) => {
-    if (!onClick) return;
+    if (!onClick || e.target !== e.currentTarget) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onClick(e);
