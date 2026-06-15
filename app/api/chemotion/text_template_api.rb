@@ -94,7 +94,13 @@ module Chemotion
           user_id: current_user.id,
           data: params["data"] || {}
         )
-        error!(template.errors.full_messages.join(', '), 422) unless template.save
+        saved = begin
+          template.save
+        rescue ActiveRecord::RecordNotUnique
+          template.errors.add(:name, :taken)
+          false
+        end
+        error!(template.errors.full_messages.join(', '), 422) unless saved
 
         present template, with: Entities::TextTemplateEntity
       end
