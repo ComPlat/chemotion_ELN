@@ -42,5 +42,4 @@ RSpec.describe TextTemplate, type: :model do
       end
     end
   end
-
 end
