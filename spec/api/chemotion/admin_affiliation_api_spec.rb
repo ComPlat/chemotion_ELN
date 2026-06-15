@@ -6,10 +6,13 @@ RSpec.describe Chemotion::AdminAffiliationAPI do
   let!(:admin) { create(:admin) }
   let!(:user) { create(:person) }
   let!(:suggestion) { create(:affiliation_suggestion, user: user, organization: 'KIT', department: 'IOC') }
+  let(:warden_instance) { instance_double(WardenAuthentication) }
 
   describe 'GET /api/v1/admin/affiliation_suggestions' do
-    context 'as admin' do
-      before { allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(admin) }
+    before { allow(WardenAuthentication).to receive(:new).and_return(warden_instance) }
+
+    context 'when admin' do
+      before { allow(warden_instance).to receive(:current_user).and_return(admin) }
 
       it 'lists pending suggestions' do
         get '/api/v1/admin/affiliation_suggestions'
@@ -18,8 +21,8 @@ RSpec.describe Chemotion::AdminAffiliationAPI do
       end
     end
 
-    context 'as regular user' do
-      before { allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user) }
+    context 'when the user is not an admin' do
+      before { allow(warden_instance).to receive(:current_user).and_return(user) }
 
       it 'returns 401' do
         get '/api/v1/admin/affiliation_suggestions'
@@ -29,28 +32,31 @@ RSpec.describe Chemotion::AdminAffiliationAPI do
   end
 
   describe 'PUT /api/v1/admin/affiliation_suggestions/:id/approve' do
+    let(:mail_double) { instance_double(ActionMailer::MessageDelivery, deliver_later: nil) }
+    let(:mailer_double) { class_double(AffiliationMailer, suggestion_approved: mail_double) }
+
     before do
-      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(admin)
-      stub_const('AffiliationMailer', double('AffiliationMailer',
-                                             suggestion_approved: double('mail', deliver_later: nil)))
+      allow(WardenAuthentication).to receive(:new).and_return(warden_instance)
+      allow(warden_instance).to receive(:current_user).and_return(admin)
+      stub_const('AffiliationMailer', mailer_double)
     end
 
-    it 'creates a UserAffiliation and marks suggestion approved' do
-      expect {
+    it 'creates a UserAffiliation and marks suggestion approved', :aggregate_failures do
+      expect do
         put "/api/v1/admin/affiliation_suggestions/#{suggestion.id}/approve"
-      }.to change(UserAffiliation, :count).by(1)
+      end.to change(UserAffiliation, :count).by(1)
 
       expect(response).to have_http_status(:ok)
       expect(suggestion.reload).to be_approved
       expect(suggestion.reload.affiliation_id).not_to be_nil
     end
 
-    it 'approves a name-only suggestion without creating an affiliation' do
+    it 'approves a name-only suggestion without creating an affiliation', :aggregate_failures do
       name_only = create(:affiliation_suggestion, user: user, organization: nil, department: 'New Dept')
 
-      expect {
+      expect do
         put "/api/v1/admin/affiliation_suggestions/#{name_only.id}/approve"
-      }.not_to change(UserAffiliation, :count)
+      end.not_to change(UserAffiliation, :count)
 
       expect(response).to have_http_status(:ok)
       expect(name_only.reload).to be_approved
@@ -59,10 +65,13 @@ RSpec.describe Chemotion::AdminAffiliationAPI do
   end
 
   describe 'PUT /api/v1/admin/affiliation_suggestions/:id/reject' do
+    let(:mail_double) { instance_double(ActionMailer::MessageDelivery, deliver_later: nil) }
+    let(:mailer_double) { class_double(AffiliationMailer, suggestion_rejected: mail_double) }
+
     before do
-      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(admin)
-      stub_const('AffiliationMailer', double('AffiliationMailer',
-                                             suggestion_rejected: double('mail', deliver_later: nil)))
+      allow(WardenAuthentication).to receive(:new).and_return(warden_instance)
+      allow(warden_instance).to receive(:current_user).and_return(admin)
+      stub_const('AffiliationMailer', mailer_double)
     end
 
     it 'marks suggestion rejected' do

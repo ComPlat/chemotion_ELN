@@ -8,7 +8,7 @@
 #  country        :string
 #  department     :string
 #  group          :string
-#  organization   :string           not null
+#  organization   :string
 #  status         :integer          default("pending"), not null
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null

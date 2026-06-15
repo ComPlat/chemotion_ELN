@@ -44,13 +44,14 @@ RSpec.describe Chemotion::AffiliationAPI do
 
   describe 'POST /api/v1/affiliation_suggestions' do
     let(:user) { create(:person) }
-    let(:mail_double) { double('mail', deliver_later: nil) }
-    let(:mailer_double) { double('AffiliationMailer', suggestion_submitted: mail_double) }
+    let(:warden_instance) { instance_double(WardenAuthentication) }
+    let(:mail_double) { instance_double(ActionMailer::MessageDelivery, deliver_later: nil) }
+    let(:mailer_double) { class_double(AffiliationMailer, suggestion_submitted: mail_double) }
 
     before do
-      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
+      allow(WardenAuthentication).to receive(:new).and_return(warden_instance)
+      allow(warden_instance).to receive(:current_user).and_return(user)
       stub_const('AffiliationMailer', mailer_double)
-      allow(mailer_double).to receive(:suggestion_submitted).and_return(mail_double)
     end
 
     it 'creates a pending suggestion' do
@@ -71,9 +72,11 @@ RSpec.describe Chemotion::AffiliationAPI do
 
   describe 'GET /api/v1/affiliation_suggestions' do
     let(:user) { create(:person) }
+    let(:warden_instance) { instance_double(WardenAuthentication) }
 
     before do
-      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
+      allow(WardenAuthentication).to receive(:new).and_return(warden_instance)
+      allow(warden_instance).to receive(:current_user).and_return(user)
       create(:affiliation_suggestion, user: user, organization: 'KIT', status: :pending)
       create(:affiliation_suggestion, user: user, organization: 'MIT', status: :approved)
     end

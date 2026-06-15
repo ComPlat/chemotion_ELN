@@ -149,9 +149,13 @@ module Chemotion
 
         # Block if the value already exists in the affiliations registry
         registry_scope = Affiliation.all
-        registry_scope = registry_scope.where("LOWER(organization) = LOWER(?)", attrs[:organization]) if attrs[:organization].present?
-        registry_scope = registry_scope.where("LOWER(department) = LOWER(?)", attrs[:department]) if attrs[:department].present?
-        registry_scope = registry_scope.where("LOWER(\"group\") = LOWER(?)", attrs[:group]) if attrs[:group].present?
+        if attrs[:organization].present?
+          registry_scope = registry_scope.where('LOWER(organization) = LOWER(?)', attrs[:organization])
+        end
+        if attrs[:department].present?
+          registry_scope = registry_scope.where('LOWER(department) = LOWER(?)', attrs[:department])
+        end
+        registry_scope = registry_scope.where('LOWER("group") = LOWER(?)', attrs[:group]) if attrs[:group].present?
         error!({ error: 'This already exists in the affiliation registry.' }, 422) if registry_scope.exists?
 
         suggestion = AffiliationSuggestion.create!(attrs.merge(user_id: current_user.id))
