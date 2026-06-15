@@ -150,7 +150,7 @@ module Chemotion
           deleted_attachments = attachments.destroy_all
         end
 
-        { deleted_attachments: deleted_attachments }
+        { deleted_attachments: deleted_attachments || [] }
       rescue StandardError => e
         Rails.logger.error("Error deleting attachments: #{e.message}")
         error!({ error: e.message }, 422)

@@ -41,7 +41,6 @@
     "dnd-multi-backend": "^9.0.0",
     "es6-promise-debounce": "^1.0.1",
     "html2pdf.js": "^0.14.0",
-    "humps": "^2.0.1",
     "immutable": "^5.1.5",
     "jcampconverter": "^2.11.0",
     "js-yaml": "^3.13.1",

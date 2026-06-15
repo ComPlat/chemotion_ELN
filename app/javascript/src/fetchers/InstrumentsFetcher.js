@@ -1,12 +1,8 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class InstrumentsFetcher {
   static fetchInstrumentsForCurrentUser(query) {
-    return fetch(
-      `/api/v1/instruments/${encodeURIComponent(query)}`,
-      { credentials: 'same-origin' }
-    ).then(response => response.json())
-      .then(json => json.instruments)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.getJson(`/api/v1/instruments/${encodeURIComponent(query)}`)
+      .then((json) => json.instruments);
   }
 }

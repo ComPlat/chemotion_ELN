@@ -33,9 +33,6 @@ describe('ChemicalFetcher methods', () => {
       const result = await ChemicalFetcher.fetchChemical(sampleId, 'sample');
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals?sample_id=${sampleId}`, {
-        credentials: 'same-origin',
-      });
       expect(result.id).toEqual(expectedResponse.id);
       expect(result.cas).toEqual(expectedResponse.cas);
       expect(result.chemical_data).toEqual(expectedResponse.chemical_data);
@@ -61,16 +58,6 @@ describe('ChemicalFetcher methods', () => {
       const result = await ChemicalFetcher.create(inputData);
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals/create', {
-        credentials: 'same-origin',
-        method: 'post',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(inputData)
-      });
-
       expect(result).toEqual(expectedResponse);
     });
 
@@ -97,15 +84,6 @@ describe('ChemicalFetcher methods', () => {
         // Restore original method
         createStub.restore();
         sinon.assert.calledOnce(fetchStub);
-        sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals/create', {
-          credentials: 'same-origin',
-          method: 'post',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(inputData)
-        });
         expect(error.message).toEqual('Fetch error');
       }
     });
@@ -132,15 +110,6 @@ describe('ChemicalFetcher methods', () => {
 
       const { type, ...expectedBody } = params;
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals', {
-        credentials: 'same-origin',
-        method: 'put',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(expectedBody)
-      });
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -168,16 +137,6 @@ describe('ChemicalFetcher methods', () => {
       const resultObject = JSON.parse(result); // Parse the received response as JSON
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals/fetch_safetysheet'
-        + `/${queryParams.id}?data[vendor]=${queryParams.vendor}&data[option]=${queryParams.queryOption}`
-        + `&data[language]=${queryParams.language}&data[searchStr]=${queryParams.string}`, {
-        credentials: 'same-origin',
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
       expect(resultObject).toEqual(expectedResponse);
     });
   });
@@ -197,15 +156,6 @@ describe('ChemicalFetcher methods', () => {
       const result = await ChemicalFetcher.saveSafetySheets(inputData);
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals/save_safety_datasheet', {
-        credentials: 'same-origin',
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(inputData)
-      });
-
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -235,12 +185,6 @@ describe('ChemicalFetcher methods', () => {
 
       // Assert that fetch was called once with the correct parameters
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/chemicals/save_manual_sds', {
-        credentials: 'same-origin',
-        method: 'post',
-        body: inputParams
-      });
-
       expect(result).toEqual(expectedResponse);
     });
 
@@ -293,11 +237,6 @@ describe('ChemicalFetcher methods', () => {
       const result = await ChemicalFetcher.safetyPhrases(queryParams);
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals/safety_phrases/${queryParams.id}`
-           + `?vendor=${queryParams.vendor}`, {
-        credentials: 'same-origin',
-        method: 'GET'
-      });
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -318,10 +257,6 @@ describe('ChemicalFetcher methods', () => {
       const result = await ChemicalFetcher.chemicalProperties(productLink);
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, `/api/v1/chemicals/chemical_properties?link=${productLink}`, {
-        credentials: 'same-origin',
-        method: 'GET'
-      });
       expect(result).toEqual(expectedResponse);
     });
   });

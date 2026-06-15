@@ -1,17 +1,12 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class TemplateFetcher {
   static commonTemplates() {
-    return fetch('/json/ketcher_common_templates.json', {
-      credentials: 'same-origin',
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error('Failed to load common templates');
-        return response.json();
-      })
-      .catch((error) => {
-        console.error('Error loading templates:', error);
-        return [];
-      });
+    return ApiClient.getJson('/json/ketcher_common_templates', {
+      handleResponseSuccess: (response) => {
+        if (response.ok) { return response.json(); }
+        throw new Error('Failed to load common templates');
+      }
+    });
   }
 }

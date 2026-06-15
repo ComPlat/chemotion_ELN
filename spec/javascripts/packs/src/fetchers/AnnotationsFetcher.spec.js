@@ -2,14 +2,14 @@
 
 import expect from 'expect';
 import ContainerFactory from 'factories/ContainerFactory';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
+import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 
-describe('BaseFetcher', () => {
-  describe('.getAttachments()', () => {
+describe('AnnotationsFetcher', () => {
+  describe('.extractAttachmentsFromContainer()', () => {
     it('with linear hierarchy and two attachments', async () => {
       const container = await ContainerFactory.build('ContainerFactory.four_container_linear_hierarchy_two_attachments');
 
-      const attachments = BaseFetcher.getAttachments(container);
+      const attachments = AnnotationsFetcher.extractAttachmentsFromContainer(container);
       expect(attachments.length).toEqual(2);
     });
   });

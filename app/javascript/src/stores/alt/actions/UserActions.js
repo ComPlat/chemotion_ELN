@@ -2,9 +2,8 @@
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import alt from 'src/stores/alt/alt';
-
-import DocumentHelper from 'src/utilities/DocumentHelper';
 
 class UserActions {
   fetchOlsRxno() {
@@ -63,13 +62,9 @@ class UserActions {
   }
 
   logout() {
-    fetch('/users/sign_out', {
-      method: 'delete',
-      credentials: 'same-origin',
-      data: { authenticity_token: DocumentHelper.getMetaContent('csrf-token') }
-    })
-      .then(response => {
-        if (response.status == 204) {
+    UsersFetcher.logoutUser()
+      .then((response) => {
+        if (response.status === 204) {
           location = '/home';
         }
       });
@@ -111,7 +106,7 @@ class UserActions {
 
   fetchUserLabels() {
     return (dispatch) => {
-      UsersFetcher.listUserLabels(true)
+      UserLabelsFetcher.listUserLabels(true)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -134,7 +129,7 @@ class UserActions {
   fetchNoVNCDevices() {
     return (dispatch) => {
       UsersFetcher.fetchNoVNCDevices()
-        .then(result => { dispatch(result); })
+        .then((result) => { dispatch(result); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
@@ -168,7 +163,7 @@ class UserActions {
         credentials: 'same-origin',
         cache: 'no-store',
         headers: { 'cache-control': 'no-cache' }
-      }).then(response => response.json()).then(json => dispatch(json)).catch((errorMessage) => {
+      }).then((response) => response.json()).then((json) => dispatch(json)).catch((errorMessage) => {
         console.log(errorMessage);
       });
     };
