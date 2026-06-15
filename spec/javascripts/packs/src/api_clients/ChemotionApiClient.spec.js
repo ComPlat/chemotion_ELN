@@ -45,3 +45,32 @@ describe('ChemotionApiClient.deleteRequest', () => {
     expect(options.body).toBe(undefined);
   });
 });
+
+describe('ChemotionApiClient 204 No Content handling', () => {
+  let fetchStub;
+
+  beforeEach(() => {
+    fetchStub = sinon.stub(global, 'fetch');
+  });
+
+  afterEach(() => {
+    fetchStub.restore();
+  });
+
+  it('resolves null (does not throw) when the response is 204 with an empty body', async () => {
+    // A real 204 has no body; response.json() would throw "Unexpected end of JSON input".
+    fetchStub.resolves(new Response(null, { status: 204 }));
+
+    const result = await ApiClient.deleteRequest('/api/v1/collection_shares/1');
+
+    expect(result).toBe(null);
+  });
+
+  it('still parses the JSON body for a normal 200 response', async () => {
+    fetchStub.resolves(new Response(JSON.stringify({ hello: 'world' }), { status: 200 }));
+
+    const result = await ApiClient.getJson('/api/v1/anything');
+
+    expect(result).toEqual({ hello: 'world' });
+  });
+});
