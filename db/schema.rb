@@ -20,6 +20,20 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
   enable_extension "rdkit"
   enable_extension "uuid-ossp"
 
+  create_table "affiliation_suggestions", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "organization"
+    t.string "department"
+    t.string "group"
+    t.string "country"
+    t.integer "status", default: 0, null: false
+    t.integer "affiliation_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["status"], name: "index_affiliation_suggestions_on_status"
+    t.index ["user_id"], name: "index_affiliation_suggestions_on_user_id"
+  end
+
   create_table "affiliations", id: :serial, force: :cascade do |t|
     t.string "company"
     t.string "country"
@@ -1807,6 +1821,7 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
   end
 
+  add_foreign_key "affiliation_suggestions", "users"
   add_foreign_key "api_tokens", "users"
   add_foreign_key "chemicals", "sequence_based_macromolecule_samples"
   add_foreign_key "collection_shares", "collections"

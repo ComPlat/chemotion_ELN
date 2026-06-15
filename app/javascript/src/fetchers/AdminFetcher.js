@@ -113,4 +113,31 @@ export default class AdminFetcher {
   static restartJob(id) {
     return ApiClient.putJson('/api/v1/admin/jobs/restart/', { body: { id } });
   }
+
+  static fetchAffiliationSuggestions(status) {
+    return fetch(`/api/v1/admin/affiliation_suggestions?status=${status}`, {
+      credentials: 'same-origin',
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  static updateAffiliationSuggestion(id, action) {
+    return fetch(`/api/v1/admin/affiliation_suggestions/${id}/${action}`, {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => response.json())
+      .then((json) => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
 }

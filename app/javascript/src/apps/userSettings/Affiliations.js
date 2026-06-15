@@ -1,39 +1,75 @@
-import React, { useState, useEffect } from 'react';
-import { CreatableSelect } from 'src/components/common/Select';
+import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
+import { Select } from 'src/components/common/Select';
 import {
-  Button, Modal, OverlayTrigger, Table, Tooltip, Popover
+  Button, Overlay, OverlayTrigger, Table, Tooltip, Popover
 } from 'react-bootstrap';
-import DatePicker from 'react-datepicker';
-import moment from 'moment';
 
 import UserSettingsFetcher from 'src/fetchers/UserSettingsFetcher';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import OrganizationSelect from 'src/components/affiliation/OrganizationSelect';
+import AffiliationSelect from 'src/components/affiliation/AffiliationSelect';
 
 function Affiliations() {
   const [affiliations, setAffiliations] = useState([]);
   const [countryOptions, setCountryOptions] = useState([]);
-  const [orgOptions, setOrgOptions] = useState([]);
   const [deptOptions, setDeptOptions] = useState([]);
   const [groupOptions, setGroupOptions] = useState([]);
   const [inputError, setInputError] = useState({});
-  const [errorMsg, setErrorMsg] = useState('');
   const [showConfirmIndex, setShowConfirmIndex] = useState(null);
-  const [inputValues, setInputValues] = useState({});
+  const [pendingSuggestions, setPendingSuggestions] = useState([]);
+  // field: 'organization' | 'department' | 'group' | null — which suggestion popover is open
+  const [suggestionPopover, setSuggestionPopover] = useState({ field: null, value: '' });
+  const [orgHints, setOrgHints] = useState([]);
 
-  const currentEntries = affiliations.filter((entry) => entry.current);
+  // Refs for suggestion trigger buttons — passed to <Overlay target> to avoid
+  // OverlayTrigger's dequal deep-compare hitting circular DOM/fiber refs.
+  const orgTriggerRef = useRef(null);
+  const deptTriggerRef = useRef(null);
+  const groupTriggerRef = useRef(null);
+  const suggestionTriggerRefs = { organization: orgTriggerRef, department: deptTriggerRef, group: groupTriggerRef };
+
+  const savedEntries = affiliations.filter((entry) => entry.id);
 
   const getAllAffiliations = () => {
     UserSettingsFetcher.getAllAffiliations()
       .then((data) => {
-        setAffiliations(data.map((item) => (
-          {
-            ...item,
-            disabled: true,
-            current: item.from !== null && item.to === null
-          }
-        )));
+        setAffiliations(data.map((item) => ({
+          ...item,
+          disabled: true,
+        })));
       });
-    setErrorMsg('');
     setInputError({});
+  };
+
+  const refreshSuggestions = () => {
+    Promise.all([
+      UserSettingsFetcher.getPendingSuggestions(),
+      UserSettingsFetcher.getSuggestionsByStatus('rejected'),
+    ]).then(([pending, rejected]) => {
+      const freshPending = pending || [];
+      const freshRejected = rejected || [];
+
+      setPendingSuggestions((prev) => {
+        const resolved = prev.filter((p) => !freshPending.find((f) => f.id === p.id));
+        const nowRejected = resolved.filter((p) => freshRejected.find((r) => r.id === p.id));
+
+        if (resolved.length > 0) getAllAffiliations();
+
+        if (nowRejected.length > 0) {
+          NotificationActions.add({
+            title: 'Affiliation request rejected',
+            message: 'An admin has rejected one of your affiliation requests. Please review and resubmit.',
+            level: 'warning',
+            position: 'tc',
+            dismissible: 'button',
+            autoDismiss: 8,
+          });
+        }
+
+        return freshPending;
+      });
+    });
   };
 
   useEffect(() => {
@@ -46,35 +82,49 @@ function Affiliations() {
         setInputError({});
       });
 
-    UserSettingsFetcher.getAutoCompleteSuggestions('organizations')
-      .then((data) => {
-        setOrgOptions(data.map((item) => ({ value: item.value, label: item.label })));
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-
-    UserSettingsFetcher.getAutoCompleteSuggestions('departments')
-      .then((data) => {
-        setDeptOptions(data.map((item) => ({ value: item.value, label: item.label })));
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-
-    UserSettingsFetcher.getAutoCompleteSuggestions('groups')
-      .then((data) => {
-        setGroupOptions(data.map((item) => ({ value: item.value, label: item.label })));
-      })
-      .catch((error) => {
-        console.log(error);
-      });
     getAllAffiliations();
+
+    UserSettingsFetcher.getPendingSuggestions()
+      .then((data) => setPendingSuggestions(data || []));
   }, []);
+
+  // Debounced ROR hint search when the org suggestion popover is open.
+  // Only fires for 4+ char queries; filters to results whose label contains the query
+  // to avoid false positives from ROR's substring matching on short terms.
+  useEffect(() => {
+    const query = suggestionPopover.value.trim();
+    if (suggestionPopover.field !== 'organization' || query.length < 4) {
+      setOrgHints([]);
+      return undefined;
+    }
+    const timer = setTimeout(() => {
+      UserSettingsFetcher.searchRorOrganizations(query)
+        .then((results) => {
+          const q = query.toLowerCase();
+          const relevant = results.filter((r) => r.label.toLowerCase().includes(q));
+          setOrgHints(relevant.slice(0, 5));
+        });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [suggestionPopover.value, suggestionPopover.field]);
+
+  const reloadDeptOptions = (org) => {
+    if (!org) { setDeptOptions([]); return; }
+    UserSettingsFetcher.getAutoCompleteSuggestions('departments', org)
+      .then((data) => setDeptOptions(data || []));
+  };
+
+  const reloadGroupOptions = (org, dept) => {
+    if (!org) { setGroupOptions([]); return; }
+    UserSettingsFetcher.getAutoCompleteSuggestions('groups', org, dept)
+      .then((data) => setGroupOptions(data || []));
+  };
 
   const handleCreateOrUpdateAffiliation = (index) => {
     const params = affiliations[index];
-    const callFunction = params.id ? UserSettingsFetcher.updateAffiliation : UserSettingsFetcher.createAffiliation;
+    const callFunction = params.id
+      ? UserSettingsFetcher.updateAffiliation
+      : UserSettingsFetcher.createAffiliation;
 
     callFunction(params)
       .then(() => getAllAffiliations())
@@ -98,7 +148,6 @@ function Affiliations() {
     } else {
       affiliations.splice(index, 1);
       setAffiliations(affiliations);
-      setInputValues({});
     }
   };
 
@@ -106,21 +155,30 @@ function Affiliations() {
     const updatedAffiliations = [...affiliations];
     updatedAffiliations[index][field] = value;
     const newInputErrors = { ...inputError };
-    if (field === 'from' && (updatedAffiliations[index].from === null || updatedAffiliations[index].from === '')) {
-      newInputErrors[index] = { ...newInputErrors[index], from: true };
-      setErrorMsg('From date is Required');
-    } else if (field === 'to' && updatedAffiliations[index].from > value) {
-      newInputErrors[index] = { ...newInputErrors[index], to: true };
-      setErrorMsg('Invalid date');
-    } else if (field === 'organization' && !value) {
-      newInputErrors[index] = { ...newInputErrors[index], organization: true };
-      setErrorMsg('Organization is required');
+
+    if (field === 'organization') {
+      updatedAffiliations[index].department = '';
+      updatedAffiliations[index].group = '';
+      reloadDeptOptions(value);
+      setGroupOptions([]);
+      if (!value) {
+        newInputErrors[index] = { ...newInputErrors[index], organization: true };
+      } else if (newInputErrors[index]) {
+        delete newInputErrors[index].organization;
+        if (Object.keys(newInputErrors[index]).length === 0) {
+          delete newInputErrors[index];
+        }
+      }
+    } else if (field === 'department') {
+      updatedAffiliations[index].group = '';
+      reloadGroupOptions(updatedAffiliations[index].organization, value);
     } else if (newInputErrors[index]) {
       delete newInputErrors[index][field];
       if (Object.keys(newInputErrors[index]).length === 0) {
         delete newInputErrors[index];
       }
     }
+
     setInputError(newInputErrors);
     setAffiliations(updatedAffiliations);
   };
@@ -132,13 +190,6 @@ function Affiliations() {
     if (!updatedAffiliations[index].organization) {
       newInputErrors[index] = { ...newInputErrors[index], organization: true };
       setInputError(newInputErrors);
-      setErrorMsg('Organization is required');
-      return;
-    }
-    if (!updatedAffiliations[index].from) {
-      newInputErrors[index] = { ...newInputErrors[index], from: true };
-      setInputError(newInputErrors);
-      setErrorMsg('From date is required');
       return;
     }
 
@@ -147,6 +198,165 @@ function Affiliations() {
       setAffiliations(updatedAffiliations);
       handleCreateOrUpdateAffiliation(index);
     }
+  };
+
+  const submitSuggestion = (params, onDone) => {
+    UserSettingsFetcher.createSuggestion(params)
+      .then(() => {
+        // Batch both updates into one render cycle — avoids dequal stack overflow
+        // in OverlayTrigger when Promise callbacks trigger separate re-renders (React 17).
+        ReactDOM.unstable_batchedUpdates(() => {
+          onDone();
+          setAffiliations((prev) => prev.filter((a) => a.id));
+        });
+        NotificationActions.add({
+          title: 'Affiliation request submitted',
+          message: 'Your affiliation will be added once an admin approves it.',
+          level: 'info',
+          position: 'tc',
+          dismissible: 'button',
+          autoDismiss: 5,
+        });
+        UserSettingsFetcher.getPendingSuggestions().then((data) => setPendingSuggestions(data || []));
+      })
+      .catch(() => {
+        NotificationActions.add({
+          title: 'Submission failed',
+          message: 'Your request could not be submitted. Please try again.',
+          level: 'error',
+          position: 'tc',
+          dismissible: 'button',
+          autoDismiss: 5,
+        });
+      });
+  };
+
+  const closeSuggestionPopover = () => setSuggestionPopover({ field: null, value: '' });
+
+  const activeRowWithOrg = affiliations.find((a) => !a.disabled && a.organization);
+
+  const handleSuggestionSubmit = () => {
+    const { field, value } = suggestionPopover;
+    if (!value.trim()) return;
+
+    // Client-side dedup: block if a matching pending suggestion already exists (case-insensitive)
+    const norm = (v) => (v || '').trim().toLowerCase();
+    const alreadyPending = pendingSuggestions.some((s) => {
+      if (field === 'organization') return norm(s.organization) === norm(value);
+      const sameOrg = norm(s.organization) === norm(activeRowWithOrg ? activeRowWithOrg.organization : '');
+      return norm(s[field]) === norm(value) && sameOrg;
+    });
+
+    // Check against the already-loaded registry options (dept/group dropdowns)
+    const registryOptions = field === 'department' ? deptOptions : field === 'group' ? groupOptions : [];
+    const alreadyInRegistry = registryOptions.some((opt) => norm(opt.value) === norm(value));
+
+    if (alreadyPending || alreadyInRegistry) {
+      NotificationActions.add({
+        title: alreadyInRegistry ? 'Already in registry' : 'Already pending',
+        message: alreadyInRegistry
+          ? `"${value.trim()}" already exists. Select it from the dropdown instead.`
+          : `A pending suggestion for this ${field} already exists.`,
+        level: 'warning',
+        position: 'tc',
+        dismissible: 'button',
+        autoDismiss: 5,
+      });
+      closeSuggestionPopover();
+      return;
+    }
+
+    const context = field !== 'organization' && activeRowWithOrg
+      ? { organization: activeRowWithOrg.organization, country: activeRowWithOrg.country || '' }
+      : {};
+    submitSuggestion({ [field]: value.trim(), ...context }, closeSuggestionPopover);
+  };
+
+  // requiresOrg=false for organization suggestions (no active row needed)
+  const renderSuggestionTrigger = (field, label, requiresOrg = true) => {
+    const disabled = requiresOrg && !activeRowWithOrg;
+    const isOpen = suggestionPopover.field === field;
+    const triggerRef = suggestionTriggerRefs[field];
+
+    const btn = disabled ? (
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id={`suggest-${field}-disabled`}>Select an organization first</Tooltip>}
+      >
+        <span className="ms-1">
+          <Button size="sm" variant="link" className="p-0" disabled style={{ pointerEvents: 'none' }}>
+            <i className="fa fa-plus" />
+          </Button>
+        </span>
+      </OverlayTrigger>
+    ) : (
+      <Button
+        ref={triggerRef}
+        size="sm"
+        variant="link"
+        className="p-0 ms-1"
+        onClick={() => (isOpen
+          ? closeSuggestionPopover()
+          : setSuggestionPopover({ field, value: '' }))}
+      >
+        <i className="fa fa-plus" />
+      </Button>
+    );
+
+    return (
+      <>
+        {btn}
+        {!disabled && (
+          <Overlay
+            target={triggerRef}
+            show={isOpen}
+            placement="bottom"
+            rootClose
+            onHide={closeSuggestionPopover}
+          >
+            <Popover id={`suggestion-popover-${field}`} style={{ minWidth: field === 'organization' ? '300px' : '220px' }}>
+              <Popover.Body>
+                <div className="mb-3">
+                  {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+                  <label className="form-label form-label-sm">{label}</label>
+                  <input
+                    className="form-control form-control-sm"
+                    value={suggestionPopover.value}
+                    onChange={(e) => setSuggestionPopover((p) => ({ ...p, value: e.target.value }))}
+                  />
+                </div>
+                {field === 'organization' && orgHints.length > 0 && (
+                  <div className="mb-3 p-2 bg-warning bg-opacity-25 rounded border border-warning" style={{ fontSize: '0.8rem' }}>
+                    <div className="fw-semibold mb-1">
+                      <i className="fa fa-exclamation-triangle me-1" />
+                      Already in ROR — select from the dropdown:
+                    </div>
+                    {orgHints.map((h) => (
+                      <div key={h.value} className="text-truncate text-secondary">
+                        {h.label}
+                        {h.country && <span className="ms-1 text-muted">({h.country})</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="d-flex justify-content-end gap-2">
+                  <Button size="sm" variant="light" onClick={closeSuggestionPopover}>Cancel</Button>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    disabled={!suggestionPopover.value.trim() || (field === 'organization' && orgHints.length > 0)}
+                    style={(field === 'organization' && orgHints.length > 0) ? { pointerEvents: 'none', opacity: 0.5 } : {}}
+                    onClick={handleSuggestionSubmit}
+                  >
+                    Confirm
+                  </Button>
+                </div>
+              </Popover.Body>
+            </Popover>
+          </Overlay>
+        )}
+      </>
+    );
   };
 
   const popover = (index) => (
@@ -180,39 +390,64 @@ function Affiliations() {
 
   return (
     <div>
-      <h3>My affiliations </h3>
-      <div>
-        <h4 className="fs-5 mb-3"> Current affiliations</h4>
-        <div className="d-flex flex-wrap gap-2">
-          {currentEntries.map((entry) => (
-            <div
-              key={entry.id}
-              className="border border-gray-300 rounded-2 p-2 shadow-sm mw-40 flex-grow-1"
-              style={{ minWidth: '200px', maxWidth: '350px' }}
-            >
-              <p>
-                <strong className="me-1">Country:</strong>
-                {entry.country}
-              </p>
-              <p>
-                <strong className="me-1">Organization:</strong>
-                {entry.organization}
-              </p>
-              <p>
-                <strong className="me-1">Department:</strong>
-                {entry.department}
-              </p>
-              <p>
-                <strong className="me-1">Group:</strong>
-                {entry.group}
-              </p>
-              <p>
-                <strong className="me-1">From:</strong>
-                {entry.from}
-              </p>
-            </div>
-          ))}
-        </div>
+      <div className="d-flex align-items-center justify-content-between mb-1">
+        <h3 className="mb-0">My affiliations</h3>
+        <Button size="sm" variant="outline-secondary" onClick={() => { getAllAffiliations(); refreshSuggestions(); }}>
+          <i className="fa fa-refresh me-1" />
+          Refresh
+        </Button>
+      </div>
+      <div className="d-flex flex-nowrap gap-2 overflow-auto pb-2">
+        {savedEntries.map((entry) => (
+          <div
+            key={entry.id}
+            className="position-relative border border-gray-300 rounded-2 p-2 shadow-sm flex-shrink-0"
+            style={{ minWidth: '250px', maxWidth: '300px' }}
+          >
+            <span className="badge position-absolute top-0 end-0 m-2 bg-success">Current</span>
+            <p>
+              <strong className="me-1">Country:</strong>
+              {entry.country}
+            </p>
+            <p>
+              <strong className="me-1">Organization:</strong>
+              {entry.organization}
+            </p>
+            <p>
+              <strong className="me-1">Department:</strong>
+              {entry.department}
+            </p>
+            <p>
+              <strong className="me-1">Group:</strong>
+              {entry.group}
+            </p>
+          </div>
+        ))}
+        {pendingSuggestions.map((s) => (
+          <div
+            key={`suggestion-${s.id}`}
+            className="position-relative border border-warning rounded-2 p-2 shadow-sm flex-shrink-0"
+            style={{ minWidth: '250px', maxWidth: '300px' }}
+          >
+            <span className="badge position-absolute top-0 end-0 m-2 bg-warning text-dark">In Review</span>
+            <p>
+              <strong className="me-1">Country:</strong>
+              {s.country || '—'}
+            </p>
+            <p>
+              <strong className="me-1">Organization:</strong>
+              {s.organization || '—'}
+            </p>
+            <p>
+              <strong className="me-1">Department:</strong>
+              {s.department || '—'}
+            </p>
+            <p>
+              <strong className="me-1">Group:</strong>
+              {s.group || '—'}
+            </p>
+          </div>
+        ))}
       </div>
 
       <div className="d-flex justify-content-end my-1">
@@ -225,8 +460,6 @@ function Affiliations() {
               organization: '',
               department: '',
               group: '',
-              from: '',
-              to: '',
               disabled: false,
             }]);
           }}
@@ -247,200 +480,73 @@ function Affiliations() {
         </colgroup>
         <thead>
           <tr>
-            <th>Country</th>
-            <th>
+            <th style={{ width: '16%' }}>Country</th>
+            <th style={{ width: '24%' }}>
               Organization
               <span className="text-danger ms-1">*</span>
+              {renderSuggestionTrigger('organization', 'Organization name', false)}
             </th>
-            <th>Department</th>
-            <th>Working Group</th>
-            <th>
-              From
-              <span className="text-danger ms-1">*</span>
+            <th style={{ width: '22%' }}>
+              Department
+              {renderSuggestionTrigger('department', 'Department name')}
             </th>
-            <th>To</th>
-            <th>Control</th>
+            <th style={{ width: '22%' }}>
+              Working Group
+              {renderSuggestionTrigger('group', 'Working group name')}
+            </th>
+            <th style={{ width: '16%' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
-
           {affiliations.map((item, index) => (
             <tr key={item.id}>
               <td>
                 {item.disabled ? item.country
                   : (
-                    <CreatableSelect
-                      disabled={item.disabled}
+                    <Select
                       isClearable
-                      isInputEditable
-                      inputValue={inputValues[`${index}_country`] || item.country || ''}
-                      placeholder="Select or enter a new option"
+                      placeholder="Select country"
                       options={countryOptions}
-                      onCreateOption={(newValue) => {
-                        const newOption = { value: newValue, label: newValue };
-                        setCountryOptions((prev) => [...prev, newOption]);
-                        onChangeHandler(index, 'country', newValue);
-                      }}
                       value={countryOptions.find((option) => option.value === item.country) || null}
-                      onChange={(choice) => {
-                        const value = choice ? choice.value : '';
-                        setInputValues((prev) => ({ ...prev, [`${index}_country`]: value }));
-                        onChangeHandler(index, 'country', value);
-                      }}
-                      onInputChange={(inputValue, { action }) => {
-                        if (action === 'input-change') {
-                          setInputValues((prev) => ({ ...prev, [`${index}_country`]: inputValue }));
-                          onChangeHandler(index, 'country', inputValue);
-                        }
-                      }}
-                      allowCreateWhileLoading
-                      formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
+                      onChange={(choice) => onChangeHandler(index, 'country', choice ? choice.value : '')}
                     />
                   )}
               </td>
               <td>
                 {item.disabled ? item.organization
                   : (
-                    <>
-                      <CreatableSelect
-                        disabled={item.disabled}
-                        isClearable
-                        isInputEditable
-                        inputValue={inputValues[`${index}_organization`] || item.organization || ''}
-                        placeholder="Select or enter a new option"
-                        className={inputError[index] && inputError[index].organization ? 'is-invalid' : ''}
-                        options={orgOptions}
-                        value={orgOptions.find((option) => option.value === item.organization) || null}
-                        onCreateOption={(newValue) => {
-                          const newOption = { value: newValue, label: newValue };
-                          setOrgOptions((prev) => [...prev, newOption]);
-                          onChangeHandler(index, 'organization', newValue);
-                        }}
-                        onChange={(choice) => {
-                          const value = choice ? choice.value : '';
-                          setInputValues((prev) => ({ ...prev, [`${index}_organization`]: value }));
-                          onChangeHandler(index, 'organization', value);
-                        }}
-                        onInputChange={(inputValue, { action }) => {
-                          if (action === 'input-change') {
-                            setInputValues((prev) => ({ ...prev, [`${index}_organization`]: inputValue }));
-                            onChangeHandler(index, 'organization', inputValue);
-                          }
-                        }}
-                        allowCreateWhileLoading
-                        formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
-                      />
-                      {inputError[index] && inputError[index].organization && (
-                      <div className="invalid-feedback">Organization is required</div>
-                      )}
-                    </>
+                    <OrganizationSelect
+                      value={item.organization ? { value: item.organization, label: item.organization } : null}
+                      isInvalid={!!(inputError[index] && inputError[index].organization)}
+                      country={item.country || ''}
+                      onChange={(choice) => {
+                        onChangeHandler(index, 'organization', choice ? choice.label : '');
+                        if (choice && choice.country) onChangeHandler(index, 'country', choice.country);
+                      }}
+                    />
                   )}
               </td>
               <td>
                 {item.disabled ? item.department
                   : (
-                    <CreatableSelect
-                      disabled={item.disabled}
-                      isClearable
-                      isInputEditable
-                      inputValue={inputValues[`${index}_department`] || item.department || ''}
-                      placeholder="Select or enter a new option"
+                    <AffiliationSelect
+                      placeholder="Select department"
+                      value={item.department || ''}
                       options={deptOptions}
-                      value={deptOptions.find((option) => option.value === item.department) || null}
-                      onCreateOption={(newValue) => {
-                        const newOption = { value: newValue, label: newValue };
-                        setDeptOptions((prev) => [...prev, newOption]);
-                        onChangeHandler(index, 'department', newValue);
-                      }}
-                      onChange={(choice) => {
-                        const value = choice ? choice.value : '';
-                        setInputValues((prev) => ({ ...prev, [`${index}_department`]: value }));
-                        onChangeHandler(index, 'department', value);
-                      }}
-                      onInputChange={(inputValue, { action }) => {
-                        if (action === 'input-change') {
-                          setInputValues((prev) => ({ ...prev, [`${index}_department`]: inputValue }));
-                          onChangeHandler(index, 'department', inputValue);
-                        }
-                      }}
-                      allowCreateWhileLoading
-                      formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
+                      disabled={!item.organization}
+                      onChange={(val) => onChangeHandler(index, 'department', val)}
                     />
                   )}
               </td>
               <td>
                 {item.disabled ? item.group
                   : (
-                    <CreatableSelect
-                      placeholder="Select or enter a new option"
-                      disabled={item.disabled}
-                      isClearable
-                      isInputEditable
-                      inputValue={inputValues[`${index}_group`] || item.group || ''}
-                      value={groupOptions.find((option) => option.value === item.group) || null}
+                    <AffiliationSelect
+                      placeholder="Select working group"
+                      value={item.group || ''}
                       options={groupOptions}
-                      onCreateOption={(newValue) => {
-                        const newOption = { value: newValue, label: newValue };
-                        setGroupOptions((prev) => [...prev, newOption]);
-                        onChangeHandler(index, 'group', newValue);
-                      }}
-                      onChange={(choice) => {
-                        const value = choice ? choice.value : '';
-                        setInputValues((prev) => ({ ...prev, [`${index}_group`]: value }));
-                        onChangeHandler(index, 'group', value);
-                      }}
-                      onInputChange={(inputValue, { action }) => {
-                        if (action === 'input-change') {
-                          setInputValues((prev) => ({ ...prev, [`${index}_group`]: inputValue }));
-                          onChangeHandler(index, 'group', inputValue);
-                        }
-                      }}
-                      allowCreateWhileLoading
-                      formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
-                    />
-                  )}
-              </td>
-              <td>
-                {item.disabled ? item.from
-                  : (
-                    <>
-                      <DatePicker
-                          // eslint-disable-next-line no-nested-ternary
-                        placeholderText={inputError[index] ? inputError[index].from ? errorMsg : '' : 'Required'}
-                        isClearable
-                        clearButtonTitle="Clear"
-                          // eslint-disable-next-line max-len
-                        className={`py-1 rounded border ${inputError[index] && inputError[index].from ? 'border-danger' : 'border-gray'}`}
-                        showPopperArrow={false}
-                        disabled={item.disabled}
-                        showMonthYearPicker
-                        dateFormat="yyyy-MM"
-                        selected={item.from}
-                        onChange={(date) => {
-                          onChangeHandler(index, 'from', date ? moment(date).format('YYYY-MM') : null);
-                        }}
-                      />
-                      {inputError[index] && inputError[index].from && (
-                      <div className="invalid-feedback">From is required</div>
-                      )}
-                    </>
-                  )}
-              </td>
-              <td>
-                {item.disabled ? item.to
-                  : (
-                    <DatePicker
-                      placeholderText={inputError[index] && inputError[index].to ? errorMsg : ''}
-                      isClearable
-                      clearButtonTitle="Clear"
-                        // eslint-disable-next-line max-len
-                      className={`py-1 rounded border ${inputError[index] && inputError[index].to ? 'border-danger' : 'border-gray'}`}
-                      showPopperArrow={false}
-                      disabled={item.disabled}
-                      showMonthYearPicker
-                      dateFormat="yyyy-MM"
-                      selected={inputError[index] && inputError[index].to ? null : item.to}
-                      onChange={(date) => onChangeHandler(index, 'to', date ? moment(date).format('YYYY-MM') : date)}
+                      disabled={!item.organization}
+                      onChange={(val) => onChangeHandler(index, 'group', val)}
                     />
                   )}
               </td>
@@ -454,7 +560,7 @@ function Affiliations() {
                           <Tooltip id="affiliation_edit_tooltip">
                             Edit affiliation
                           </Tooltip>
-                          )}
+                        )}
                       >
                         <Button
                           size="sm"
@@ -477,7 +583,7 @@ function Affiliations() {
                           <Tooltip id="affiliation_save_tooltip">
                             Save changes
                           </Tooltip>
-                          )}
+                        )}
                       >
                         <Button
                           size="sm"
@@ -511,6 +617,7 @@ function Affiliations() {
           ))}
         </tbody>
       </Table>
+
     </div>
   );
 }
