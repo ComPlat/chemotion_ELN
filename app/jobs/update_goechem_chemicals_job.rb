@@ -21,19 +21,27 @@ class UpdateGoechemChemicalsJob < ApplicationJob
     Delayed::Worker.logger.error e
   end
 
+  # @param params [Hash] :job ('sync_goechem' or 'fetch_goechem_updates'),
+  #   :user_id (Chemotion user), :goechem_user_id (GoeChem userid) and an
+  #   optional :collection_id targeting a collection owned by the user —
+  #   omitted, the sync uses the user's auto-created "GoeChem Inventory"
+  #   collection.
   def perform(params)
     @params = params
     @user_id = params[:user_id]
     @result = {}
 
     begin
+      args = {
+        user_id: params[:user_id],
+        goechem_user_id: params[:goechem_user_id],
+        collection_id: params[:collection_id],
+      }.compact
       case params[:job]
       when 'sync_goechem'
-        sync_job = GoeChem::Sync.new(params[:collection_id])
-        @result = sync_job.process
+        @result = GoeChem::Sync.new(**args).process
       when 'fetch_goechem_updates'
-        update_job = GoeChem::FetchUpdates.new(params[:collection_id])
-        @result[:message] = update_job.message
+        @result[:message] = GoeChem::FetchUpdates.new(**args).message
       end
     rescue StandardError => e
       Delayed::Worker.logger.error e
