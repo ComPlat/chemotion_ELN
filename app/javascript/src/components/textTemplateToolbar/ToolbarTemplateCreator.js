@@ -1,19 +1,40 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { ButtonToolbar, Button, Form, Popover } from 'react-bootstrap';
+import { components as SelectComponents } from 'react-select';
 import { Select } from 'src/components/common/Select';
-// import { template } from 'lodash';
+import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
+import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
+
+const noRootCloseComponents = {
+  Menu: (props) => (
+    <div role="presentation" onClick={e => e.stopPropagation()}>
+      <SelectComponents.Menu {...props} />
+    </div>
+  ),
+};
+
+const MT_ID = 0;
 
 const getIconAndDropdown = (template) => {
-  const dropdownTemplates = Object.keys(template).filter(k => (
-    k !== '_toolbar'
-  )).map((k, idx) => (
-    { id: idx + 1, name: k, data: template[k] }
-  ));
+  const reservedKeys = ['_toolbar', '_mt', '_mt_label'];
+  const dropdownTemplates = Object.keys(template)
+    .filter(k => !reservedKeys.includes(k))
+    .map((k, idx) => ({ id: idx + 1, name: k, data: template[k] }));
 
   // eslint-disable-next-line no-underscore-dangle
   const toolbarTemplate = template._toolbar || [];
-  return [toolbarTemplate, dropdownTemplates];
+
+  const mtDropdown = {
+    id: MT_ID,
+    // eslint-disable-next-line no-underscore-dangle
+    name: template._mt_label || 'MT',
+    // eslint-disable-next-line no-underscore-dangle
+    data: template._mt || [],
+    isMT: true,
+  };
+
+  return [toolbarTemplate, [mtDropdown, ...dropdownTemplates]];
 };
 
 export default class ToolbarTemplateCreator extends React.Component {
@@ -23,7 +44,8 @@ export default class ToolbarTemplateCreator extends React.Component {
     this.toolbarSelectRef = React.createRef();
 
     const [iconTemplates, dropdownTemplates] = getIconAndDropdown(props.template);
-    this.state = { iconTemplates, dropdownTemplates };
+
+    this.state = { iconTemplates, dropdownTemplates, personalTemplates: [] };
 
     this.toolbarDdSelectRefs = dropdownTemplates.map(dd => ({
       id: dd.id,
@@ -33,8 +55,10 @@ export default class ToolbarTemplateCreator extends React.Component {
       id: dd.id,
       ref: React.createRef()
     }));
-    this.id = dropdownTemplates.length + 1;
+    this.id = Math.max(0, ...dropdownTemplates.map(d => d.id)) + 1;
 
+    this.state.personalTemplates = TextTemplateStore.getState().personalTemplates || [];
+    this.onStoreChange = this.onStoreChange.bind(this);
     this.setTitleRef = this.setTitleRef.bind(this);
     this.onChangeDropdown = this.onChangeDropdown.bind(this);
 
@@ -43,9 +67,22 @@ export default class ToolbarTemplateCreator extends React.Component {
     this.saveUserTemplates = this.saveUserTemplates.bind(this);
   }
 
+  componentDidMount() {
+    TextTemplateStore.listen(this.onStoreChange);
+    TextTemplateActions.fetchPersonalTemplates();
+  }
+
+  componentWillUnmount() {
+    TextTemplateStore.unlisten(this.onStoreChange);
+  }
+
+  onStoreChange({ personalTemplates }) {
+    this.setState({ personalTemplates: personalTemplates || [] });
+  }
+
   componentDidUpdate(prevProps) {
     const { template } = this.props;
-    if (template === prevProps.template) return;
+    if (JSON.stringify(template) === JSON.stringify(prevProps.template)) return;
 
     const [iconTemplates, dropdownTemplates] = getIconAndDropdown(template);
     this.toolbarDdSelectRefs = dropdownTemplates.map(dd => ({
@@ -56,7 +93,7 @@ export default class ToolbarTemplateCreator extends React.Component {
       id: dd.id,
       ref: React.createRef()
     }));
-    this.id = dropdownTemplates.length + 1;
+    this.id = Math.max(0, ...dropdownTemplates.map(d => d.id)) + 1;
 
     this.setState({ iconTemplates, dropdownTemplates });
   }
@@ -116,7 +153,7 @@ export default class ToolbarTemplateCreator extends React.Component {
   }
 
   saveUserTemplates() {
-    const { updateTextTemplates } = this.props;
+    const { updateTextTemplates, onClose } = this.props;
     if (!updateTextTemplates) return;
 
     const iconTemplates = this.toolbarSelectRef.current.state.selectValue;
@@ -130,23 +167,39 @@ export default class ToolbarTemplateCreator extends React.Component {
 
       const selectRef = selectRefs[0].ref;
       const selectedValue = selectRef.current.state.selectValue;
-
       const tempName = template.name;
-      userTemplate[tempName] = selectedValue.map(v => v.value);
+
+      if (template.isMT) {
+        // eslint-disable-next-line no-underscore-dangle
+        userTemplate._mt = selectedValue.map(v => v.value);
+        // eslint-disable-next-line no-underscore-dangle
+        userTemplate._mt_label = tempName;
+      } else {
+        userTemplate[tempName] = selectedValue.map(v => v.value);
+      }
     });
     this.setState({ dropdownTemplates });
     updateTextTemplates(userTemplate);
+    if (onClose) onClose();
   }
 
   render() {
     const { templateOptions } = this.props;
-    const options = templateOptions.map(n => ({ label: n, value: n }));
+    const { iconTemplates, dropdownTemplates, personalTemplates } = this.state;
 
-    const { iconTemplates, dropdownTemplates } = this.state;
-    const iconSelected = iconTemplates.map(n => ({ label: n, value: n }));
+    const personalNames = personalTemplates.map(t => t.name);
+    const allOptions = [
+      ...templateOptions,
+      ...personalNames.filter(n => !templateOptions.includes(n))
+    ].map(n => ({ label: n, value: n }));
+
+    const validOptionNames = new Set(allOptions.map(o => o.value));
+    const iconSelected = iconTemplates
+      .filter(n => validOptionNames.has(n))
+      .map(n => ({ label: n, value: n }));
 
     const dropdownTemplateSelector = dropdownTemplates.map((template) => {
-      const { name, id } = template;
+      const { name, id, isMT } = template;
       const selectRef = this.toolbarDdSelectRefs.filter(r => (
         r.id === template.id
       ))[0];
@@ -155,14 +208,15 @@ export default class ToolbarTemplateCreator extends React.Component {
       ))[0];
       if (!selectRef || !titleRef) { return null; }
 
-      const ddSelected = template.data.map(n => ({ label: n, value: n }));
+      const ddSelected = template.data
+        .filter(n => validOptionNames.has(n))
+        .map(n => ({ label: n, value: n }));
       const removeDropdown = () => this.removeDropdownTemplate(template);
 
       return (
         <div key={`ttc_dd_${name}_${id}`}>
           <hr />
-          <div className="d-flex gap-2 mt-2" style={{ minWidth: '475px', maxWidth: '775px' }}
-          >
+          <div className="d-flex gap-2 mt-2" style={{ minWidth: '475px', maxWidth: '775px' }}>
             <Form.Control
               className="col2"
               onChange={e => this.onChangeDropdown('DropdownName', e, id)}
@@ -173,17 +227,20 @@ export default class ToolbarTemplateCreator extends React.Component {
             <Select
               className="me-2 col-9 f-5"
               ref={selectRef.ref}
-              options={options}
+              options={allOptions}
               defaultValue={ddSelected}
               onChange={e => this.onChangeDropdown('DropdownData', e, id)}
               isMulti
               isSearchable
               closeMenuOnSelect={false}
+              components={noRootCloseComponents}
             />
             <Button
               variant="danger"
               size="sm"
               onClick={removeDropdown}
+              disabled={isMT}
+              title={isMT ? 'Personal templates dropdown cannot be removed' : undefined}
             >
               <i className="fa fa-trash" />
             </Button>
@@ -209,6 +266,14 @@ export default class ToolbarTemplateCreator extends React.Component {
             >
               New dropdown
             </Button>
+            <Button
+              variant="light"
+              href="/text_templates"
+              title="Manage text templates"
+            >
+              <i className="fa fa-file-text-o me-1" />
+              Text Templates
+            </Button>
           </ButtonToolbar>
           <hr />
           <div className="d-flex gap-2 mt-2" style={{ minWidth: '475px', maxWidth: '775px' }}>
@@ -217,20 +282,20 @@ export default class ToolbarTemplateCreator extends React.Component {
               className="col2"
               disabled
               defaultValue="Toolbar"
-              
             />
             <Select
               className="me-5 col-9 f-5"
               ref={this.toolbarSelectRef}
               defaultValue={iconSelected}
-              options={options}
+              options={allOptions}
               isMulti
               isSearchable
               closeMenuOnSelect={false}
+              components={noRootCloseComponents}
             />
           </div>
           {dropdownTemplateSelector}
-        </Popover.Body >
+        </Popover.Body>
       </>
     );
   }
@@ -241,11 +306,13 @@ ToolbarTemplateCreator.propTypes = {
   template: PropTypes.object,
   templateOptions: PropTypes.arrayOf(PropTypes.string),
   /* eslint-enable react/forbid-prop-types */
-  updateTextTemplates: PropTypes.func
+  updateTextTemplates: PropTypes.func,
+  onClose: PropTypes.func,
 };
 
 ToolbarTemplateCreator.defaultProps = {
   template: {},
   templateOptions: [],
-  updateTextTemplates: null
+  updateTextTemplates: null,
+  onClose: null,
 };

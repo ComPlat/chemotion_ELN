@@ -19,6 +19,4 @@
 #
 
 class PredefinedTextTemplate < TextTemplate
-  # STI: this file is only here because of rails model autoloading.
-  # place all code in app/models/text_template.rb.
 end
