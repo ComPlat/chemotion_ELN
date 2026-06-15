@@ -82,6 +82,11 @@ const patchJson = (apiEndpoint, options) => {
 
 const deleteRequest = (apiEndpoint, options = {}) => {
   const defaults = { method: 'DELETE' };
+
+  if (options.body != null && typeof options.body !== 'string') {
+    options.body = JSON.stringify(options.body);
+  }
+
   return apiRequest(apiEndpoint, { ...defaults, ...options });
 };
 

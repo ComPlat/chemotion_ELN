@@ -138,9 +138,11 @@ module Chemotion
       end
 
       desc 'Bulk Delete Attachments'
+      params do
+        requires :ids, type: Array[Integer], desc: 'IDs of attachments to delete'
+      end
       delete 'bulk_delete' do
-        ids = params[:ids]
-        attachments = Attachment.where(id: ids)
+        attachments = Attachment.where(id: params[:ids])
 
         unpermitted_attachments = attachments.reject { |attachment| writable?(attachment) }
 
