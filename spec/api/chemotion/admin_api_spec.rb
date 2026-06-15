@@ -106,4 +106,18 @@ RSpec.describe Chemotion::AdminAPI do
       end
     end
   end
+
+  describe 'POST /api/v1/admin/olsEnableDisable' do
+    before do
+      # Isolate the public-file writes; we only assert the HTTP contract here.
+      allow(OlsTerm).to receive(:write_public_file)
+      post '/api/v1/admin/olsEnableDisable/', params: { owl_name: 'chebi' }
+    end
+
+    # The fetcher (AdminFetcher.olsTermDisableEnable) treats success as status 204;
+    # this pins that contract so a status change can't silently break the admin UI.
+    it 'returns 204 No Content on success' do
+      expect(response).to have_http_status(:no_content)
+    end
+  end
 end
