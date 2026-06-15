@@ -70,6 +70,38 @@ RSpec.describe Chemotion::AffiliationAPI do
     end
   end
 
+  describe 'DELETE /api/v1/affiliations/:id' do
+    let(:user) { create(:person) }
+    let(:warden_instance) { instance_double(WardenAuthentication) }
+    let(:affiliation) { Affiliation.create!(organization: 'KIT', department: 'IOC') }
+
+    before do
+      allow(WardenAuthentication).to receive(:new).and_return(warden_instance)
+      allow(warden_instance).to receive(:current_user).and_return(user)
+    end
+
+    it 'removes the orphaned affiliation once no user references it', :aggregate_failures do
+      user_affiliation = UserAffiliation.create!(user: user, affiliation: affiliation)
+
+      expect do
+        delete "/api/v1/affiliations/#{user_affiliation.id}"
+      end.to change(Affiliation, :count).by(-1)
+
+      expect(response).to have_http_status(:ok)
+      expect(Affiliation.find_by(id: affiliation.id)).to be_nil
+    end
+
+    it 'keeps the affiliation while another user still references it' do
+      other_user = create(:person)
+      user_affiliation = UserAffiliation.create!(user: user, affiliation: affiliation)
+      UserAffiliation.create!(user: other_user, affiliation: affiliation)
+
+      expect do
+        delete "/api/v1/affiliations/#{user_affiliation.id}"
+      end.not_to change(Affiliation, :count)
+    end
+  end
+
   describe 'GET /api/v1/affiliation_suggestions' do
     let(:user) { create(:person) }
     let(:warden_instance) { instance_double(WardenAuthentication) }

@@ -111,8 +111,12 @@ module Chemotion
       desc 'delete user affiliation'
       delete ':id' do
         u_affiliation = @affiliations.find(params[:id])
-        u_affiliation.destroy!
-        Affiliation.find_by(id: params[:id])&.destroy! if UserAffiliation.where(affiliation_id: params[:id]).empty?
+        affiliation_id = u_affiliation.affiliation_id
+        ActiveRecord::Base.transaction do
+          u_affiliation.destroy!
+          affiliation = Affiliation.lock.find_by(id: affiliation_id)
+          affiliation&.destroy! if UserAffiliation.where(affiliation_id: affiliation_id).empty?
+        end
       rescue ActiveRecord::RecordInvalid => e
         error!({ error: e.message }, 422)
       end
