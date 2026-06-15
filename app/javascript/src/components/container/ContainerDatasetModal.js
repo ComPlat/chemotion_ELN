@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
-  OverlayTrigger, Tooltip, Button, ButtonGroup, Form
+  Nav, Tab
 } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
@@ -26,20 +26,11 @@ export default class ContainerDatasetModal extends Component {
 
     this.handleSave = this.handleSave.bind(this);
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
-    this.handleModalClose = this.handleModalClose.bind(this);
     this.handleCloseRequest = this.handleCloseRequest.bind(this);
     this.hideCloseOverlay = this.hideCloseOverlay.bind(this);
     this.handleDiscard = this.handleDiscard.bind(this);
 
     this.onHandleContainerSubmit = this.onHandleContainerSubmit.bind(this);
-  }
-
-  handleModalClose(event) {
-    if (event && event.type === 'keydown' && event.key === 'Escape') {
-      this.handleCloseRequest(event, 'header');
-    } else {
-      this.props.onHide();
-    }
   }
 
   handleCloseRequest(event, source) {
@@ -109,10 +100,10 @@ export default class ContainerDatasetModal extends Component {
     const {
       mode, instrumentIsEmpty, closeOverlayTarget, closeOverlayPlacement
     } = this.state;
-
-    const attachmentTooltip = (<Tooltip id="attachment-tooltip">Click to view Attachments</Tooltip>);
-    const metadataTooltip = (<Tooltip id="metadata-tooltip">Click to view Metadata</Tooltip>);
     const isNew = !Number.isInteger(rootContainer.id);
+    const notification = mode === 'attachments' && instrumentIsEmpty
+      ? 'Instrument missing, switch to Metadata.'
+      : undefined;
 
     const canSave = !readOnly && !disabled;
 
@@ -120,78 +111,68 @@ export default class ContainerDatasetModal extends Component {
       return (
         <>
           <AppModal
-            title="Dataset"
+            title={this.state.localName}
+            onChangeTitle={canSave ? (value) => this.handleNameChange(value) : undefined}
+            notification={notification}
+            notificationType={notification ? 'warning' : undefined}
             enforceFocus={false}
             backdrop={false}
             show={show}
             size="lg"
+            dialogClassName="modal-xxxl"
             onHide={this.hideCloseOverlay}
             onRequestClose={this.handleCloseRequest}
             closeLabel="Close"
             primaryActionLabel={canSave ? 'Save' : undefined}
             onPrimaryAction={canSave ? this.handleSave : undefined}
           >
-            <div className="d-flex flex-column gap-3 mb-3">
-              <Form.Group>
-                <Form.Label>Name</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={this.state.localName}
-                  onChange={(e) => { this.handleNameChange(e.target.value); }}
-                  disabled={readOnly}
-                />
-              </Form.Group>
-              <div className="d-flex flex-wrap align-items-center gap-3">
-                <ButtonGroup>
-                  <OverlayTrigger
-                    placement="top"
-                    overlay={attachmentTooltip}
-                  >
-                    <Button
-                      variant="light"
-                      active={mode === 'attachments'}
-                      onClick={() => this.handleSwitchMode('attachments')}
-                    >
+            <Tab.Container activeKey={mode} onSelect={(selectedMode) => this.handleSwitchMode(selectedMode)}>
+              <div className="d-flex flex-column gap-3">
+                <Nav variant="tabs">
+                  <Nav.Item>
+                    <Nav.Link eventKey="attachments">
                       Attachments
                       <i className="fa fa-paperclip ms-1" aria-hidden="true" />
-                    </Button>
-                  </OverlayTrigger>
-                  <OverlayTrigger
-                    placement="top"
-                    overlay={metadataTooltip}
-                  >
-                    <Button
-                      variant="light"
-                      active={mode === 'metadata'}
-                      onClick={() => this.handleSwitchMode('metadata')}
-                    >
+                    </Nav.Link>
+                  </Nav.Item>
+                  <Nav.Item>
+                    <Nav.Link eventKey="metadata">
                       Metadata
                       <i className="fa fa-address-card ms-1 border-0" aria-hidden="true" />
-                    </Button>
-                  </OverlayTrigger>
-                </ButtonGroup>
-                {mode === 'attachments' && instrumentIsEmpty && (
-                  <div className="d-flex align-items-center text-danger">
-                    <i className="fa fa-exclamation-triangle me-1" />
-                    <span className="fw-bold">
-                      Instrument missing, switch to Metadata.
-                    </span>
-                  </div>
-                )}
+                    </Nav.Link>
+                  </Nav.Item>
+                </Nav>
+                <Tab.Content>
+                  <Tab.Pane eventKey="attachments">
+                    <DatasetModalContent
+                      ref={this.datasetInput}
+                      readOnly={readOnly}
+                      datasetContainer={datasetContainer}
+                      element={element}
+                      kind={kind}
+                      onModalHide={() => onHide()}
+                      onChange={onChange}
+                      mode="attachments"
+                      isNew={isNew}
+                      handleContainerSubmit={this.onHandleContainerSubmit}
+                    />
+                  </Tab.Pane>
+                  <Tab.Pane eventKey="metadata">
+                    <DatasetModalContent
+                      readOnly={readOnly}
+                      datasetContainer={datasetContainer}
+                      element={element}
+                      kind={kind}
+                      onModalHide={() => onHide()}
+                      onChange={onChange}
+                      mode="metadata"
+                      isNew={isNew}
+                      handleContainerSubmit={this.onHandleContainerSubmit}
+                    />
+                  </Tab.Pane>
+                </Tab.Content>
               </div>
-            </div>
-            <DatasetModalContent
-              ref={this.datasetInput}
-              readOnly={readOnly}
-              datasetContainer={datasetContainer}
-              element={element}
-              kind={kind}
-              onModalHide={() => onHide()}
-              onChange={onChange}
-              mode={mode}
-              isNew={isNew}
-              handleContainerSubmit={this.onHandleContainerSubmit}
-            />
+            </Tab.Container>
           </AppModal>
           <ConfirmationOverlay
             overlayTarget={closeOverlayTarget}

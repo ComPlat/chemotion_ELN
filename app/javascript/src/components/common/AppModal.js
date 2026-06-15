@@ -1,13 +1,18 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Modal } from 'react-bootstrap';
+import {
+  Alert, Button, Form, InputGroup, Modal
+} from 'react-bootstrap';
 
 function AppModal({
   show,
   onHide,
   onRequestClose,
   title,
+  onChangeTitle,
+  notification,
+  notificationType,
   children,
   showFooter,
   extendedFooter,
@@ -35,6 +40,7 @@ function AppModal({
   };
 
   const shouldShowFooter = showFooter ?? (extendedFooter !== undefined || (primaryActionLabel && onPrimaryAction));
+  const editableTitleValue = typeof title === 'string' ? title : '';
 
   return (
     <Modal
@@ -49,7 +55,30 @@ function AppModal({
       {...rest}
     >
       <Modal.Header className="d-flex justify-content-between align-items-center">
-        <Modal.Title>{title}</Modal.Title>
+        {onChangeTitle ? (
+          <InputGroup>
+            <Form.Control
+              type="text"
+              value={editableTitleValue}
+              className="app-modal__title-input"
+              onChange={(event) => onChangeTitle(event.target.value)}
+              aria-label="Modal title"
+            />
+            <InputGroup.Text>
+              <i className="fa fa-pencil" aria-hidden="true" />
+            </InputGroup.Text>
+          </InputGroup>
+        ) : (
+          <Modal.Title>{title}</Modal.Title>
+        )}
+        {notification && (
+          <Alert
+            variant={notificationType}
+            role="status"
+          >
+            {notification}
+          </Alert>
+        )}
         <button
           type="button"
           className="btn-close"
@@ -86,6 +115,12 @@ AppModal.propTypes = {
   onRequestClose: PropTypes.func,
   /** Text or element rendered inside Modal.Title */
   title: PropTypes.node.isRequired,
+  /** If provided, title is rendered as editable input and callback receives new title string */
+  onChangeTitle: PropTypes.func,
+  /** Optional inline notification displayed in modal header */
+  notification: PropTypes.string,
+  /** Notification visual style */
+  notificationType: PropTypes.oneOf(['warning', 'info', 'success', 'danger']),
   /** Modal body content */
   children: PropTypes.node.isRequired,
   /** Overrides automatic footer visibility when set */
@@ -115,6 +150,9 @@ AppModal.propTypes = {
 AppModal.defaultProps = {
   showFooter: undefined,
   extendedFooter: undefined,
+  onChangeTitle: undefined,
+  notification: undefined,
+  notificationType: 'info',
   onRequestClose: undefined,
   primaryActionLabel: undefined,
   onPrimaryAction: undefined,
