@@ -2,6 +2,26 @@
 
 module Chemotion
   class TextTemplateAPI < Grape::API
+    rescue_from ActiveRecord::RecordNotFound do
+      error!('404 Not found', 404)
+    end
+
+    rescue_from ActiveRecord::RecordInvalid do |e|
+      error!(e.record.errors.full_messages.join(', '), 422)
+    end
+
+    rescue_from ActiveRecord::RecordNotUnique do
+      error!('Name has already been taken', 422)
+    end
+
+    helpers do
+      def authorize_global_text_template_editor!
+        return if Admin.exists?(id: current_user.id) || current_user.global_text_template_editor
+
+        error!('401 Unauthorized', 401)
+      end
+    end
+
     resource :text_templates do
       params do
         requires :type, type: String, desc: 'element type'
@@ -46,62 +66,34 @@ module Chemotion
       end
 
       delete :by_name do
-        unless Admin.exists?(id: current_user.id) || current_user.global_text_template_editor
-          error!('401 Unauthorized', 401)
-        end
+        authorize_global_text_template_editor!
 
-        template = PredefinedTextTemplate.where(name: params['name']).first
-        error!('404 Not found', 404) if template.nil?
-
-        template.destroy
-
+        template = Usecases::TextTemplates::Predefined.new(current_user).destroy(params)
         present template, with: Entities::TextTemplateEntity
       end
 
       desc 'Update predefined text template'
       params do
-        requires :id, type: Integer, desc: "Text template ID"
-        requires :name, type: String, desc: "Unique predefined template name"
-        optional :data, type: Hash, desc: "Text template details"
+        requires :id, type: Integer, desc: 'Text template ID'
+        requires :name, type: String, desc: 'Unique predefined template name'
+        optional :data, type: Hash, desc: 'Text template details'
       end
       put :predefined_text_template do
-        unless Admin.exists?(id: current_user.id) || current_user.global_text_template_editor
-          error!('401 Unauthorized', 401)
-        end
+        authorize_global_text_template_editor!
 
-        template = PredefinedTextTemplate.find_by(id: params["id"])
-        error!('404 Not found', 404) if template.nil?
-
-        error!(template.errors.full_messages.join(', '), 422) unless template.update(
-          name: params['name'].presence || template.name,
-          data: params['data'] || template.data,
-        )
+        template = Usecases::TextTemplates::Predefined.new(current_user).update(params)
         present template, with: Entities::TextTemplateEntity
       end
 
       desc 'Create predefined text template'
       params do
-        requires :name, type: String, desc: "Unique predefined template name"
-        optional :data, type: Hash, desc: "Text template details"
+        requires :name, type: String, desc: 'Unique predefined template name'
+        optional :data, type: Hash, desc: 'Text template details'
       end
       post :predefined_text_template do
-        unless Admin.exists?(id: current_user.id) || current_user.global_text_template_editor
-          error!('401 Unauthorized', 401)
-        end
+        authorize_global_text_template_editor!
 
-        template = PredefinedTextTemplate.new(
-          name: params["name"],
-          user_id: current_user.id,
-          data: params["data"] || {}
-        )
-        saved = begin
-          template.save
-        rescue ActiveRecord::RecordNotUnique
-          template.errors.add(:name, :taken)
-          false
-        end
-        error!(template.errors.full_messages.join(', '), 422) unless saved
-
+        template = Usecases::TextTemplates::Predefined.new(current_user).create(params)
         present template, with: Entities::TextTemplateEntity
       end
 
@@ -119,12 +111,7 @@ module Chemotion
           optional :data, type: Hash, desc: 'Template data'
         end
         post do
-          template = PersonalTextTemplate.new(
-            user_id: current_user.id,
-            name: params[:name],
-            data: params[:data] || {},
-          )
-          error!(template.errors.full_messages.join(', '), 422) unless template.save
+          template = Usecases::TextTemplates::Personal.new(current_user).create(params)
           present template, with: Entities::TextTemplateEntity
         end
 
@@ -135,22 +122,13 @@ module Chemotion
           optional :data, type: Hash, desc: 'Template data'
         end
         put ':id' do
-          template = PersonalTextTemplate.find_by(id: params[:id], user_id: current_user.id)
-          error!('404 Not found', 404) if template.nil?
-
-          error!(template.errors.full_messages.join(', '), 422) unless template.update(
-            name: params[:name],
-            data: params[:data] || template.data,
-          )
+          template = Usecases::TextTemplates::Personal.new(current_user).update(params)
           present template, with: Entities::TextTemplateEntity
         end
 
         desc 'Delete a personal text template'
         delete ':id' do
-          template = PersonalTextTemplate.find_by(id: params[:id], user_id: current_user.id)
-          error!('404 Not found', 404) if template.nil?
-
-          template.destroy
+          template = Usecases::TextTemplates::Personal.new(current_user).destroy(params)
           present template, with: Entities::TextTemplateEntity
         end
       end
