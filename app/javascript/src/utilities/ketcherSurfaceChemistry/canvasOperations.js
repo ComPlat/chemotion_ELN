@@ -431,6 +431,18 @@ const replaceAliasWithRG = async (data) => {
 const prepareSvg = async (editor) => {
   try {
     const struct = await replaceAliasWithRG({ ...latestData });
+    // Indigo (used inside generateImage) rejects "rg-label" atoms that have no matching
+    // R-group definition. Convert them to plain label atoms so the SVG renders correctly.
+    for (const key of Object.keys(struct)) {
+      if (key === 'root') continue;
+      const mol = struct[key];
+      if (!mol?.atoms) continue;
+      mol.atoms = mol.atoms.map((atom) => {
+        if (atom.type !== 'rg-label') return atom;
+        const { type, $refs, ...rest } = atom;
+        return { ...rest, label: rest.label || 'R#' };
+      });
+    }
     const generateImageParams = { outputFormat: 'svg' };
     const parser = new DOMParser();
     const data = JSON.stringify(struct);

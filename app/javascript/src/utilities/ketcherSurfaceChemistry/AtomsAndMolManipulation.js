@@ -159,6 +159,8 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
           const aliasPass = (
             atom.type === KET_TAGS.rgLabel
             || atom.label === KET_TAGS.inspiredLabel
+            || atom.label === KET_TAGS.RGroupTag
+            || atom.label === 'R'
             || ALIAS_PATTERNS.threeParts.test(atom.alias)
           );
           const entry = polymerByAtomIndex[atomIndex];
@@ -184,6 +186,8 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
           const aliasPass = (
             atom.type === KET_TAGS.rgLabel
             || atom.label === KET_TAGS.inspiredLabel
+            || atom.label === KET_TAGS.RGroupTag
+            || atom.label === 'R'
             || ALIAS_PATTERNS.threeParts.test(atom.alias)
           );
           if (polymerItem && aliasPass) {
