@@ -1,8 +1,9 @@
 import React, {
   useState, useCallback, useRef, useEffect
 } from 'react';
+import PropTypes from 'prop-types';
 import {
-  OverlayTrigger, Modal, Button, Container, Row, Col, ListGroup, Badge, Tooltip
+  OverlayTrigger, Button, Container, Row, Col, ListGroup, Badge, Tooltip
 } from 'react-bootstrap';
 import JSZip from 'jszip';
 import {
@@ -16,7 +17,8 @@ import {
 } from 'src/apps/mydb/elements/details/analyses/FileManager';
 import { FileTree, ToggleSwitch } from 'src/apps/mydb/elements/details/analyses/GeneralComponents';
 import { AdvancedAnalysesList } from 'src/apps/mydb/elements/details/analyses/AdvancedComponents';
-import PropTypes from 'prop-types';
+import AppModal from 'src/components/common/AppModal';
+import OlsTreeSelect from 'src/components/OlsComponent';
 
 async function handleZipFile(zipFile) {
   const zip = await JSZip.loadAsync(zipFile);
@@ -181,7 +183,7 @@ FileListDisplay.propTypes = {
 };
 
 function UploadButton({
-  files, handleClose, element, setElement
+  files, handleClose, element, setElement, ontology = ''
 }) {
   if (!files.length) {
     return null;
@@ -189,7 +191,7 @@ function UploadButton({
 
   const singleFileHandle = useCallback(async () => {
     const file = await new ZipFileContainer(files).getFile();
-    createAnalsesForSingelFiles(element, [file], file.name);
+    createAnalsesForSingelFiles(element, [file], file.name, ontology);
     handleClose();
     setElement(element, () => {
     });
@@ -200,7 +202,7 @@ function UploadButton({
     // eslint-disable-next-line react/prop-types
     files.forEach((fileContainer) => {
       pList.push(fileContainer.getFile().then((file) => {
-        createAnalsesForSingelFiles(element, [file], file.name);
+        createAnalsesForSingelFiles(element, [file], file.name, ontology);
         return true;
       }));
     });
@@ -213,6 +215,7 @@ function UploadButton({
   const multiFileOneAnaHandle = useCallback(async () => {
     const pList = [];
     const newContainer = addNewAnalyses(element);
+    newContainer.extended_metadata.kind = ontology;
     files.forEach((fileContainer) => {
       pList.push(fileContainer.getFile().then((file) => {
         const datasetContainer = createDataset();
@@ -266,6 +269,11 @@ UploadButton.propTypes = {
   element: PropTypes.object.isRequired,
   handleClose: PropTypes.func.isRequired,
   setElement: PropTypes.func.isRequired,
+  ontology: PropTypes.string,
+};
+
+UploadButton.defaultProps = {
+  ontology: '',
 };
 
 function UploadField({ disabled = false, element, setElement }) {
@@ -275,7 +283,8 @@ function UploadField({ disabled = false, element, setElement }) {
   };
 
   const [show, setShow] = useState(false);
-  const [isAdvanced, setisAdvanced] = useState(false);
+  const [ontology, setOntology] = useState('');
+  const [isAdvanced, setIsAdvanced] = useState(false);
   const [listedFiles, setListedFiles] = useState([]);
   const handleClose = useCallback(() => {
     setListedFiles([]);
@@ -286,7 +295,7 @@ function UploadField({ disabled = false, element, setElement }) {
   const handleChange = useCallback((items) => {
     if (items.length === 1) {
       if (items[0].isFile) {
-        createAnalsesForSingelFiles(element, [items[0].file], items[0].name);
+        createAnalsesForSingelFiles(element, [items[0].file], items[0].name, ontology);
         setShow(false);
         setElement(element, () => {
         });
@@ -300,7 +309,13 @@ function UploadField({ disabled = false, element, setElement }) {
     }
 
     setListedFiles(items);
-  }, []);
+  }, [ontology]);
+
+  const handlesSetOntology = useCallback((ev) => {
+    let kind = (ev || '');
+    kind = `${kind.split('|')[0].trim()} | ${(kind.split('|')[1] || '').trim()}`;
+    setOntology(kind);
+  });
 
   const content = () => {
     const [, setConsumedPaths] = useState([]);
@@ -342,6 +357,16 @@ function UploadField({ disabled = false, element, setElement }) {
     }
     return (
       <Container>
+        <Row className="justify-content-end mb-2">
+          <Col xs="auto">
+            <ToggleSwitch
+              disabled={listedFiles.length === 0}
+              isChecked={isAdvanced}
+              setIsChecked={setIsAdvanced}
+              label="Advanced mode"
+            />
+          </Col>
+        </Row>
         <Row>
           <Col>
             <p>
@@ -359,8 +384,17 @@ function UploadField({ disabled = false, element, setElement }) {
         <Row className="justify-content-md-center">
           <Col lg={5}>
             <FolderDropzone handleChange={handleChange} />
+            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+            <label className="form-label">Type (Chemical Methods Ontology)</label>
+            <OlsTreeSelect
+              selectName="chmo"
+              selectedValue={ontology}
+              onSelectChange={handlesSetOntology}
+              selectedDisable={false}
+            />
             <UploadButton
               files={listedFiles}
+              ontology={ontology}
               handleClose={handleClose}
               element={element}
               setElement={wrappedSetElement}
@@ -376,34 +410,30 @@ function UploadField({ disabled = false, element, setElement }) {
     <>
       <OverlayTrigger
         placement="top"
-        overlay={<Tooltip id="annotate_tooltip">Create multiple analyses at once from selected files and/or folders that will be uploaded.</Tooltip>}
+        overlay={(
+          <Tooltip id="annotate_tooltip">
+            Create multiple analyses at once from selected files and/or folders that will be uploaded.
+          </Tooltip>
+        )}
       >
         <Button
-        size="sm"
-        variant="success"
-        disabled={disabled}
-        onClick={handleShow}
-      >
-        Analyses from upload
-      </Button>
+          size="sm"
+          variant="success"
+          disabled={disabled}
+          onClick={handleShow}
+        >
+          Analyses from upload
+        </Button>
       </OverlayTrigger>
 
-      <Modal size="xl" show={show} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Create Analyses from files or folders</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {content()}
-        </Modal.Body>
-        <Modal.Footer>
-          <ToggleSwitch
-            disabled={listedFiles.length === 0}
-            isChecked={isAdvanced}
-            setIsChecked={setisAdvanced}
-            label="Advanced mode"
-          />
-        </Modal.Footer>
-      </Modal>
+      <AppModal
+        size="xl"
+        show={show}
+        onHide={handleClose}
+        title="Create Analyses from files or folders"
+      >
+        {content()}
+      </AppModal>
     </>
   );
 }

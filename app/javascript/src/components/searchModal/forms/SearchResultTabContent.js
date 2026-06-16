@@ -23,7 +23,7 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
   const handlePaginationSelect = (index, ids, key) => {
     searchStore.changeTabCurrentPage(key, index, list.index);
 
-    const search_result = searchStore.tabSearchResultValues.find((val) => val.id == `${key}s-${index}`);
+    const search_result = searchStore.tabSearchResultValues.find((val) => val.id === `${key}s-${index}`);
     if (search_result === undefined) {
       searchByIds(index, ids, key);
     }
@@ -33,12 +33,12 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
-    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
+    const model = key === 'cell_line' ? 'cell_lines' : key;
 
     const selection = {
       elementType: 'by_ids',
       id_params: {
-        model_name: key,
+        model_name: model,
         ids,
         total_elements: tabResult.total_elements,
         with_filter: false,
@@ -51,7 +51,6 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     searchStore.loadSearchResultTab({
       selection,
       collectionId,
-      isSync,
       page_size: tabResult.per_page,
       page: index,
       moleculeSort: true,
@@ -143,6 +142,8 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
       if (object.xref && object.inventory_label) { infos.push(object.inventory_label); }
       if (object.xref && object.xref.cas) { infos.push(object.xref.cas); }
       names = [object.short_label, object.name].concat(infos);
+    } else if (object.type == 'cell_line') {
+      names = [object.short_label, object.itemName];
     } else {
       names = [object.short_label, object.name];
     }
@@ -162,31 +163,42 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     const previousMolecule = previous?.molecule_formula;
 
     const showSampleHeader = object.type === 'sample' && previousMolecule !== object.molecule_formula;
+    const showReactionHeader = object.type === 'reaction' && previous?.rxno !== object?.rxno;
 
     return (
-      <div
-        key={`${object.short_name}-${i}`}
-        className="search-result-tab-content-list"
-        onClick={copyToClipboard}
-      >
-        {/* Sample grouping header */}
-        {showSampleHeader && (
-          <div className="search-result-molecule sample">
-            {svgPreview(object)}
-            <SampleName sample={object} />
+      <div className="search-result-group">
+        {(showSampleHeader || showReactionHeader) && (
+          <div className="search-result-group-header-content">
+            <div
+              key={`${object.short_name}-${i}`}
+              className="search-result-tab-content-list"
+              onClick={copyToClipboard}
+            >
+              {/* Sample grouping header */}
+              {showSampleHeader && (
+                <div className="d-flex flex-grow-1 gap-5 pt-2">
+                  {svgPreview(object)}
+                  <div className="flex-grow-1">
+                    <SampleName sample={object} />
+                  </div>
+                </div>
+              )}
+
+              {/* Reaction SVG grouping header */}
+              {showReactionHeader && (
+                <div className="search-result-molecule">
+                  {svgPreview(object)}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Reaction SVG — always */}
-        {object.type === 'reaction' && (
-          <div className="search-result-molecule reaction">
-            {svgPreview(object)}
+        <div className="search-result-list-items">
+          <div className="search-result-tab-content-list-name">
+            {shortLabelWithMoreInfos(object)}
           </div>
-        )}
-
-        <span className="search-result-tab-content-list-name">
-          {shortLabelWithMoreInfos(object)}
-        </span>
+        </div>
       </div>
     );
   };
@@ -197,24 +209,60 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     const badgeTitle = object.sequence_based_macromolecule.uniprot_derivation.split('_').slice(-1)[0];
 
     const header = previousSbmm !== object.sequence_based_macromolecule.id && (
-      <div
-        key={`${object.sequence_based_macromolecule.short_name}-${i}`}
-        className="search-result-molecule pt-2 fw-bold fs-5"
-      >
-        {object.sbmmShortLabel()}
-        {' '}
-        {object.sequence_based_macromolecule.short_name}
+      <div className="search-result-group-header-content">
+        <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
+          <div
+            key={`${object.sequence_based_macromolecule.short_name}-${i}`}
+            className="search-result-molecule align-items-center fw-bold fs-5"
+          >
+            {object.sbmmShortLabel()}
+            {' '}
+            {object.sequence_based_macromolecule.short_name}
+          </div>
+        </div>
       </div>
     );
 
     return (
-      <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
+      <div className="search-result-group">
         {header}
-        <div className="search-result-tab-content-list-name">
-          <div className="d-flex align-items-center gap-2">
-            <Badge bg="info" className="border border-active bg-opacity-25 text-active rounded">
-              {badgeTitle}
-            </Badge>
+        <div className="search-result-list-items">
+          <div className="search-result-tab-content-list-name">
+            <div className="d-flex align-items-center gap-2">
+              <Badge bg="info" className="border border-active bg-opacity-25 text-active rounded">
+                {badgeTitle}
+              </Badge>
+              {shortLabelWithMoreInfos(object)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const cellLineList = (object, i, elements) => {
+    const previous = elements[i - 1];
+    const previousMaterial = previous ? `${previous.cellLineName} - ${previous.source}` : '';
+    const objectMaterial = `${object.cellLineName} - ${object.source}`;
+
+    const header = previousMaterial !== objectMaterial && (
+      <div className="search-result-group-header-content">
+        <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
+          <div
+            key={`${objectMaterial}-${i}`}
+            className="search-result-molecule align-items-center fw-bold fs-5"
+          >
+            {objectMaterial}
+          </div>
+        </div>
+      </div>
+    );
+
+    return (
+      <div className="search-result-group">
+        {header}
+        <div className="search-result-list-items">
+          <div className="search-result-tab-content-list-name">
             {shortLabelWithMoreInfos(object)}
           </div>
         </div>
@@ -233,11 +281,15 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
           return sampleAndReactionList(object, i, elements);
         } if (object.type === 'sequence_based_macromolecule_sample') {
           return sbmmList(object, i, elements);
+        } if (object.type === 'cell_line') {
+          return cellLineList(object, i, elements);
         }
         return (
-          <div key={`${list.key}-${i}`} className="search-result-tab-content-list-white">
-            <div key={object.type}>
-              {shortLabelWithMoreInfos(object)}
+          <div className="search-result-group">
+            <div key={`${list.key}-${i}`} className="search-result-tab-content-list-name">
+              <div key={object.type}>
+                {shortLabelWithMoreInfos(object)}
+              </div>
             </div>
           </div>
         );

@@ -2,7 +2,7 @@
 
 RSpec.shared_examples 'Rinchi Xlsx/Csv formats' do
   it 'has correct values' do
-    [product_1, product_2].each_with_index do |product, line_offset|
+    [product1, product2].each_with_index do |product, line_offset|
       _, _, _, inchistring, inchikey, long_key, web_key, short_key =
         report_file.sheet(0).row(4 + line_offset)
 
@@ -17,27 +17,17 @@ end
 
 RSpec.shared_context 'Report shared declarations', shared_context: :metadata do
   let(:user) { create(:user) }
-  let(:collection) do
-    create(
-      :collection,
-      user: user,
-      sample_detail_level: 10,
-      reaction_detail_level: 10,
-      wellplate_detail_level: 10,
-      screen_detail_level: 10,
-      permission_level: 10
-    )
-  end
-  let(:starting_material_1) do
+  let(:collection) { create(:collection, user: user) }
+  let(:starting_material1) do
     create(:sample, molfile: build(:molfile, type: '../../rinchi/esterifica/rct_01'), collections: [collection])
   end
-  let(:starting_material_2) do
+  let(:starting_material2) do
     create(:sample, molfile: build(:molfile, type: '../../rinchi/esterifica/rct_02'), collections: [collection])
   end
-  let(:product_1) do
+  let(:product1) do
     create(:sample, molfile: build(:molfile, type: '../../rinchi/esterifica/prd_01'), collections: [collection])
   end
-  let(:product_2) do
+  let(:product2) do
     create(:sample, molfile: build(:molfile, type: '../../rinchi/esterifica/prd_02'), collections: [collection])
   end
   let(:solvent) do
@@ -51,7 +41,7 @@ RSpec.shared_context 'Report shared declarations', shared_context: :metadata do
       reaction,
       current_user: user,
       detail_levels: ElementDetailLevelCalculator.new(user: user, element: reaction).detail_levels,
-      serializable: true
+      serializable: true,
     )
   end
   let(:report_file) do
@@ -61,10 +51,16 @@ RSpec.shared_context 'Report shared declarations', shared_context: :metadata do
   end
 
   before do
-    reaction.reactions_starting_material_samples.create(sample: starting_material_1, equivalent: 0.88, position: 1)
-    reaction.reactions_starting_material_samples.create(sample: starting_material_2, equivalent: 0.88, position: 2)
-    reaction.reactions_product_samples.create(sample: product_1, equivalent: 0.88, position: 1)
-    reaction.reactions_product_samples.create(sample: product_2, equivalent: 0.88, position: 2)
-    reaction.reactions_solvent_samples.create(sample: solvent, equivalent: 0.88)
+    create(
+      :reactions_starting_material_sample, reaction: reaction, sample: starting_material1,
+                                           equivalent: 0.88, position: 1
+    )
+    create(
+      :reactions_starting_material_sample, reaction: reaction, sample: starting_material2,
+                                           equivalent: 0.88, position: 2
+    )
+    create(:reactions_product_sample, reaction: reaction, sample: product1, equivalent: 0.88, position: 1)
+    create(:reactions_product_sample, reaction: reaction, sample: product2, equivalent: 0.88, position: 2)
+    create(:reactions_solvent_sample, reaction: reaction, sample: solvent, equivalent: 0.88)
   end
 end

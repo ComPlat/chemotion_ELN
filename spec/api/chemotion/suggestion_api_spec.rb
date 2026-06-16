@@ -4,13 +4,15 @@ require 'rails_helper'
 
 describe Chemotion::SuggestionAPI do
   let!(:user) { create(:person, first_name: 'tam', last_name: 'M') }
-  let!(:collection) { create(:collection, user: user, is_shared: true, permission_level: 1, sample_detail_level: 10) }
-
+  let(:collection) { create(:collection, user: user) }
+  let(:material) { create(:cellline_material) }
+  let!(:sample) { create(:sample, name: 'search-example', collections: [collection]) }
+  let(:query) { 'query' }
+  let(:json_response) { JSON.parse(response.body) }
   let(:params) do
     {
       collection_id: collection.id,
       query: query,
-      is_sync: false,
     }
   end
 
@@ -286,8 +288,11 @@ describe Chemotion::SuggestionAPI do
     let(:query) { 'query' }
 
     it 'returns suggestions object with the correct structure' do
-      get '/api/v1/suggestions/all', params: params
-
+      get '/api/v1/suggestions/all',
+          params: {
+            collection_id: collection.id,
+            query: query,
+          }
       expect(response).to have_http_status(:success)
       expect(parsed_json_response.keys).to contain_exactly('suggestions')
       suggestions = parsed_json_response['suggestions']
@@ -299,7 +304,7 @@ describe Chemotion::SuggestionAPI do
     let(:query) { 'query' }
 
     it 'returns unauthorized error' do
-      get '/api/v1/suggestions/all', params: params
+      get '/api/v1/suggestions/all', params: { collection_id: collection.id, query: query }
 
       expect(response).to have_http_status(:unauthorized)
     end

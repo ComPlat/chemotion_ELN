@@ -8,7 +8,6 @@ import Aviator from 'aviator';
 import alt from 'src/stores/alt/alt';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -32,10 +31,10 @@ import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 
-import { elementShowOrNew } from 'src/utilities/routesUtils';
-
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import { SameEleTypId, UrlSilentNavigation } from 'src/utilities/ElementUtils';
+import { SameEleTypId } from 'src/utilities/ElementUtils';
+import { aviatorNavigation, aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
+import { allElnElementsForSearch } from 'src/apps/generic/Utils';
 import { chmoConversions } from 'src/components/OlsComponent';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import GenericEl from 'src/models/GenericEl';
@@ -274,7 +273,7 @@ class ElementStore {
           ElementActions.generateEmptyVessel,
           ElementActions.generateEmptyVesselTemplate,
           ElementActions.generateEmptySequenceBasedMacromoleculeSample,
-          ElementActions.showReportContainer,
+          ElementActions.showReportDetails,
           ElementActions.showExplorerDetails,
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
@@ -286,9 +285,7 @@ class ElementStore {
       handleFetchMetadata: ElementActions.fetchMetadata,
       handleDeleteElements: ElementActions.deleteElements,
 
-      handleUpdateElementsCollection: ElementActions.updateElementsCollection,
-      handleAssignElementsCollection: ElementActions.assignElementsCollection,
-      handleRemoveElementsCollection: ElementActions.removeElementsCollection,
+      handleBulkUpdateUserLabels: ElementActions.bulkUpdateUserLabels,
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
       handleSplitElements: ElementActions.splitElements,
       handleSplitAsSubwellplates: ElementActions.splitAsSubwellplates,
@@ -323,11 +320,12 @@ class ElementStore {
       ],
       handleUpdateEmbeddedResearchPlan: ElementActions.updateEmbeddedResearchPlan,
       handleRefreshComputedProp: ElementActions.refreshComputedProp,
+      handleRefreshElementsAfterCollectionChanges: ElementActions.refreshElementsAfterCollectionChanges,
     });
   }
 
   handleFetchAllDevices(devices) {
-    this.state.elements['devices'].devices = devices;
+    this.state.elements.devices.devices = devices;
   }
 
   handleFetchDeviceById(device) {
@@ -335,17 +333,17 @@ class ElementStore {
   }
 
   findDeviceIndexById(deviceId) {
-    const { devices } = this.state.elements['devices'];
+    const { devices } = this.state.elements.devices;
     return devices.findIndex((e) => e.id === deviceId);
   }
 
   handleSaveDevice(device) {
-    const { devices } = this.state.elements['devices'];
+    const { devices } = this.state.elements.devices;
     const deviceKey = devices.findIndex((e) => e._checksum === device._checksum);
     if (deviceKey === -1) {
-      this.state.elements['devices'].devices.push(device);
+      this.state.elements.devices.devices.push(device);
     } else {
-      this.state.elements['devices'].devices[deviceKey] = device;
+      this.state.elements.devices.devices[deviceKey] = device;
     }
   }
 
@@ -356,20 +354,20 @@ class ElementStore {
       device.types.push(type);
     }
     const deviceKey = this.findDeviceIndexById(device.id);
-    this.state.elements['devices'].devices[deviceKey] = device;
+    this.state.elements.devices.devices[deviceKey] = device;
   }
 
   handleCreateDevice() {
-    const { devices } = this.state.elements['devices'];
+    const { devices } = this.state.elements.devices;
     const newDevice = Device.buildEmpty();
     const newKey = devices.length;
-    this.state.elements['devices'].activeAccordionDevice = newKey;
-    this.state.elements['devices'].devices.push(newDevice);
+    this.state.elements.devices.activeAccordionDevice = newKey;
+    this.state.elements.devices.devices.push(newDevice);
   }
 
   handleDeleteDevice(device) {
-    const { devices, activeAccordionDevice } = this.state.elements['devices'];
-    this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id);
+    const { devices, activeAccordionDevice } = this.state.elements.devices;
+    this.state.elements.devices.devices = devices.filter((e) => e.id !== device.id);
   }
 
   handleAddSampleToDevice({ sample, device, options = { save: false } }) {
@@ -420,24 +418,18 @@ class ElementStore {
 
   handleOpenDeviceAnalysis({ device, type }) {
     switch (type) {
-      case "NMR":
-        const { currentCollection, isSync } = UIStore.getState();
-        const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === "NMR");
+      case 'NMR':
+        const { currentCollection } = UIStore.getState();
+        const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === 'NMR');
 
         // update Device in case of sample was added by dnd and device was not saved
         device.updateChecksum();
         ElementActions.saveDevice(device);
 
         if (deviceAnalysis) {
-          Aviator.navigate(isSync
-            ? `/scollection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
-            : `/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
-          );
+          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`);
         } else {
-          Aviator.navigate(isSync
-            ? `/scollection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
-            : `/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
-          );
+          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`);
         }
         break;
     }
@@ -446,32 +438,32 @@ class ElementStore {
   handleRemoveSampleFromDevice({ sample, device }) {
     device.samples = device.samples.filter((e) => e.id !== sample.id);
     const deviceKey = this.findDeviceIndexById(device.id);
-    this.state.elements['devices'].devices[deviceKey] = device;
+    this.state.elements.devices.devices[deviceKey] = device;
   }
 
   handleChangeDeviceProp({ device, prop, value }) {
     device[prop] = value;
     const deviceKey = this.findDeviceIndexById(device.id);
-    this.state.elements['devices'].devices[deviceKey] = device;
+    this.state.elements.devices.devices[deviceKey] = device;
   }
 
   handleChangeActiveAccordionDevice(key) {
-    this.state.elements['devices'].activeAccordionDevice = key;
+    this.state.elements.devices.activeAccordionDevice = key;
   }
 
   handleChangeSelectedDeviceId(deviceId) {
-    this.state.elements['devices'].selectedDeviceId = deviceId;
+    this.state.elements.devices.selectedDeviceId = deviceId;
   }
 
   handleSetSelectedDeviceId(deviceId) {
-    this.state.elements['devices'].selectedDeviceId = deviceId;
+    this.state.elements.devices.selectedDeviceId = deviceId;
   }
 
   handleSetRefreshCoefficient(obj) {
     this.setState({ refreshCoefficient: [obj] });
   }
 
-  //TODO move these in Element Action ??
+  // TODO move these in Element Action ??
   createSampleAnalysis(sampleId, type) {
     return new Promise((resolve, reject) => {
       SamplesFetcher.fetchById(sampleId)
@@ -528,15 +520,13 @@ class ElementStore {
   }
 
   handleSaveDeviceAnalysis(analysis) {
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection } = UIStore.getState();
     this.state.currentElement = analysis;
 
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
-      : `/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
-    );
+    Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`);
   }
 
+  // eslint-disable-next-line object-curly-newline
   handleChangeAnalysisExperimentProp({ analysis, experiment, prop, value }) {
     const experimentKey = analysis.experiments.findIndex((e) => e.id === experiment.id);
     analysis.experiments[experimentKey][prop] = value;
@@ -594,7 +584,7 @@ class ElementStore {
       sample, reaction, wellplate, screen, research_plan, vessel,
       currentCollection, cell_line, device_description, sequence_based_macromolecule_sample
     } = ui_state;
-    const selecteds = this.state.selecteds.map(s => ({ id: s.id, type: s.type }));
+    const selecteds = this.state.selecteds.map((s) => ({ id: s.id, type: s.type }));
     const params = {
       options,
       sample,
@@ -623,30 +613,18 @@ class ElementStore {
     ElementActions.deleteElementsByUIState(params);
   }
 
-  handleUpdateElementsCollection() {
-    CollectionActions.fetchUnsharedCollectionRoots();
+  handleRefreshElementsAfterCollectionChanges() {
     UIActions.uncheckWholeSelection.defer();
     this.fetchElementsByCollectionIdandLayout();
   }
 
-  handleAssignElementsCollection() {
-    CollectionActions.fetchUnsharedCollectionRoots();
+  handleBulkUpdateUserLabels() {
     UIActions.uncheckWholeSelection.defer();
-    this.fetchElementsByCollectionIdandLayout();
-  }
-
-  handleRemoveElementsCollection() {
-    // CollectionActions.fetchUnsharedCollectionRoots();
-    // UIActions.clearSearchSelection.defer()
-    UIActions.uncheckWholeSelection.defer();
-    this.waitFor(UIStore.dispatchToken);
-
     this.fetchElementsByCollectionIdandLayout();
   }
 
   fetchElementsByCollectionIdandLayout() {
     const { currentSearchSelection, currentCollection } = UIStore.getState();
-    const isSync = !!(currentCollection && currentCollection.is_sync_to_me);
     if (currentSearchSelection != null) {
       const { currentType } = UserStore.getState();
       this.handleRefreshElements(currentType);
@@ -665,7 +643,7 @@ class ElementStore {
         if (layout.sequence_based_macromolecule_sample && layout.sequence_based_macromolecule_sample > 0) {
           this.handleRefreshElements('sequence_based_macromolecule_sample');
         }
-        if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
+        if (layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
         const { currentUser, genericEls } = UserStore.getState();
         if (MatrixCheck(currentUser.matrix, 'genericElement')) {
@@ -680,7 +658,7 @@ class ElementStore {
   }
 
   handleFetchGenericElsByCollectionId(result) {
-    //const klassName = result.element_klass && result.element_klass.name;
+    // const klassName = result.element_klass && result.element_klass.name;
     let { type } = result;
     if (typeof type === 'undefined' || type == null) {
       type = (result.result.elements && result.result.elements.length > 0 && result.result.elements[0].type) || result.result.type;
@@ -695,7 +673,7 @@ class ElementStore {
   handleCreateGenericEl(genericEl) {
     UserActions.fetchCurrentUser();
     this.handleRefreshElements((genericEl.element_klass && genericEl.element_klass.name) || 'genericEl');
-    //this.handleRefreshElements('genericEl');
+    // this.handleRefreshElements('genericEl');
     this.navigateToNewElement(genericEl, 'GenericEl');
   }
 
@@ -778,7 +756,9 @@ class ElementStore {
     }
   }
 
-  handleCreateSampleForReaction({ newSample, reaction, materialGroup, components }) {
+  handleCreateSampleForReaction({
+    newSample, reaction, materialGroup, components
+  }) {
     UserActions.fetchCurrentUser();
     if (newSample.isMixture()) {
       ComponentsFetcher.saveOrUpdateComponents(newSample, components)
@@ -853,12 +833,7 @@ class ElementStore {
   }
 
   handleSplitAsSubsamples(uiState) {
-    ElementActions.fetchSamplesByCollectionId(
-      uiState.currentCollection.id,
-      {},
-      uiState.isSync,
-      this.state.moleculeSort
-    );
+    ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {}, this.state.moleculeSort);
   }
 
   handleSplitElements(obj) {
@@ -871,17 +846,12 @@ class ElementStore {
     const params = {
       page, perPage, fromDate, toDate, userLabel, productOnly, name
     };
-    ElementActions.fetchGenericElsByCollectionId(ui_state.currentCollection.id, params, ui_state.isSync, name);
+    ElementActions.fetchGenericElsByCollectionId(ui_state.currentCollection.id, params, name);
   }
 
   handleSplitAsSubwellplates(uiState) {
     ElementActions.fetchWellplatesByCollectionId(uiState.currentCollection.id);
-    ElementActions.fetchSamplesByCollectionId(
-      uiState.currentCollection.id,
-      {},
-      uiState.isSync,
-      this.state.moleculeSort
-    );
+    ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {}, this.state.moleculeSort);
   }
 
   handleSplitAsSubCellLines(uiState) {
@@ -974,19 +944,19 @@ class ElementStore {
 
   handleImportSamplesFromFile(data) {
     if (data.sdf) {
-      this.setState({ sdfUploadData: data })
+      this.setState({ sdfUploadData: data });
     } else {
       this.handleRefreshElements('sample');
     }
   }
 
   handleImportSamplesFromFileConfirm() {
-    this.setState({ sdfUploadData: null })
+    this.setState({ sdfUploadData: null });
     this.handleRefreshElements('sample');
   }
 
   handleImportSamplesFromFileDecline() {
-    this.setState({ sdfUploadData: null })
+    this.setState({ sdfUploadData: null });
   }
 
   // -- Wellplates --
@@ -1019,10 +989,10 @@ class ElementStore {
   }
 
   handleGenerateWellplateFromClipboard(collection_id) {
-    let clipboardSamples = ClipboardStore.getState().samples;
+    const clipboardSamples = ClipboardStore.getState().samples;
 
-    this.changeCurrentElement(Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collectionId));
-    // this.state.currentElement = Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collectionId);
+    this.changeCurrentElement(Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id));
+    // this.state.currentElement = Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id);
   }
 
   // -- Screens --
@@ -1102,16 +1072,26 @@ class ElementStore {
   }
 
   handleSplitAsSubDeviceDescription(uiState) {
-    ElementActions.fetchDeviceDescriptionsByCollectionId(
-      uiState.currentCollectionId,
-      {},
-      uiState.isSync,
-    );
+    this.handleRefreshElements('device_description');
   }
 
   // -- Sequence Based Macromolecules --
 
+  // eslint-disable-next-line class-methods-use-this
+  buildReactionReference(reaction) {
+    return { type: 'reaction', id: reaction.id };
+  }
+
   handlefetchSequenceBasedMacromoleculeSampleById(result) {
+    const current = this.state.currentElement;
+    // If SBMM was opened from an active reaction tab, preserve that origin context.
+    if (current instanceof Reaction) {
+      const isReactionSbmm = (current.reactant_sbmm_samples || []).some((s) => s.id === result.id);
+      if (isReactionSbmm) {
+        // Keep only reaction identity to avoid sharing/freezing side effects from full reaction objects.
+        result.belongTo = this.buildReactionReference(current);
+      }
+    }
     this.changeCurrentElement(result);
   }
 
@@ -1135,11 +1115,7 @@ class ElementStore {
   }
 
   handleSplitAsSubSequenceBasedMacromoleculeSample(uiState) {
-    ElementActions.fetchSequenceBasedMacromoleculeSamplesByCollectionId(
-      uiState.currentCollectionId,
-      {},
-      uiState.isSync,
-    );
+    this.handleRefreshElements('sequence_based_macromolecule_sample');
   }
 
   // -- Reactions --
@@ -1226,17 +1202,17 @@ class ElementStore {
     this.changeCurrentElement(
       Reaction.copyFromReactionAndCollectionId(reaction, colId, keepAmounts)
     );
-    Aviator.navigate(`/collection/${colId}/reaction/copy`);
+    aviatorNavigationWithCollectionId(result.colId, 'reaction', 'copy', true, false);
   }
 
   handleCopyResearchPlan(result) {
     this.changeCurrentElement(ResearchPlan.copyFromResearchPlanAndCollectionId(result.research_plan, result.colId));
-    Aviator.navigate(`/collection/${result.colId}/research_plan/copy`);
+    aviatorNavigationWithCollectionId(result.colId, 'research_plan', 'copy', true, false);
   }
 
   handleCopyElement(result) {
     this.changeCurrentElement(GenericEl.copyFromCollectionId(result.element, result.colId));
-    Aviator.navigate(`/collection/${result.colId}/${result.element.type}/copy`);
+    aviatorNavigationWithCollectionId(result.colId, result.element.type, 'copy', true, false);
   }
 
   handleCopyCellLine(result) {
@@ -1269,25 +1245,39 @@ class ElementStore {
   navigateToNewElement(element = {}, klassType = '') {
     this.waitFor(UIStore.dispatchToken);
     const { type, id } = element;
-    const { uri, namedParams } = Aviator.getCurrentRequest();
-    const uriArray = uri.split(/\//);
-    if (!type) {
-      Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}`, { silent: true });
-      return null;
-    }
-    namedParams[`${type}ID`] = id;
-    Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${id}`, { silent: true });
-    elementShowOrNew({ type, klassType, params: namedParams });
+
+    aviatorNavigation(type, id, true, true);
     return null;
   }
 
   handleGenerateEmptyElement(element) {
-    const { currentElement } = this.state;
+    const { currentElement, selecteds } = this.state;
+    const selectionScopedTypes = ['report', 'literature_map'];
+    let nextElement = element;
 
-    const newElementOfSameTypeIsPresent =
-      currentElement && currentElement.isNew && currentElement.type === element.type;
+    if (element && selectionScopedTypes.includes(element.type)) {
+      const uiState = UIStore.getState();
+      const sampleIds = uiState?.sample?.checkedIds?.toArray ? uiState.sample.checkedIds.toArray() : [];
+      const selectionKey = `${uiState?.currentCollection?.id || 'none'}:${sampleIds.map(String).sort().join(',')}`;
+
+      nextElement = { ...element, selectionKey };
+      const existingIndex = selecteds.findIndex(
+        (el) => el?.type === nextElement.type && el?.selectionKey === selectionKey
+      );
+      if (existingIndex >= 0) {
+        this.state.activeKey = existingIndex;
+        this.state.currentElement = selecteds[existingIndex];
+        return;
+      }
+    }
+
+    const newElementOfSameTypeIsPresent = currentElement
+      && currentElement.isNew
+      && currentElement.type === nextElement.type
+      && (!selectionScopedTypes.includes(nextElement.type)
+      || currentElement.selectionKey === nextElement.selectionKey);
     if (!newElementOfSameTypeIsPresent) {
-      this.changeCurrentElement(element);
+      this.changeCurrentElement(nextElement);
     }
   }
 
@@ -1307,7 +1297,7 @@ class ElementStore {
     if (typeof uiState[type] === 'undefined') return;
 
     const { page } = uiState[type];
-    const { moleculeSort, listOrder } = this.state;
+    const { moleculeSort, sbmmSampleOrder } = this.state;
     if (this.state.elements[`${type}s`]) {
       this.state.elements[`${type}s`].page = page;
     }
@@ -1323,18 +1313,19 @@ class ElementStore {
         selection: currentSearchSelection,
         collectionId: uiState.currentCollection.id,
         page,
-        isSync: uiState.isSync,
         moleculeSort
       });
     } else if (currentSearchByID != null) {
       this.handleRefreshElementsForSearchById(type, uiState, currentSearchByID);
     } else {
       const perPage = uiState.number_of_results;
+      /* eslint-disable object-curly-newline */
       const { fromDate, toDate, userLabel, productOnly } = uiState;
       const params = { page, per_page: perPage, fromDate, toDate, userLabel, productOnly, name: type };
-      const sortValue = type === 'sequence_based_macromolecule_sample' ? listOrder : moleculeSort;
-      const fnName = type.split('_').map(x => x[0].toUpperCase() + x.slice(1)).join("") + 's';
-      let fn = `fetch${fnName}ByCollectionId`;
+      /* eslint-enable object-curly-newline */
+      const sortValue = type === 'sequence_based_macromolecule_sample' ? sbmmSampleOrder : moleculeSort;
+      const fnName = `${type.split('_').map((x) => x[0].toUpperCase() + x.slice(1)).join('')}s`;
+      const fn = `fetch${fnName}ByCollectionId`;
       const allowedActions = [
         'fetchSamplesByCollectionId',
         'fetchReactionsByCollectionId',
@@ -1347,13 +1338,13 @@ class ElementStore {
         'fetchSequenceBasedMacromoleculeSamplesByCollectionId'
       ];
       if (allowedActions.includes(fn)) {
-        const actionFn = ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, sortValue);
+        const actionFn = ElementActions[fn](uiState.currentCollection.id, params, sortValue);
         if (typeof actionFn === 'function') {
           actionFn(this.alt.dispatch.bind(this));
         }
       } else {
-        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, uiState.isSync, type);
-        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+        ElementActions.fetchGenericElsByCollectionId(uiState.currentCollection.id, params, type);
+        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, params, moleculeSort);
       }
     }
 
@@ -1375,8 +1366,9 @@ class ElementStore {
     const { moleculeSort } = this.state;
     const { page } = uiState[type];
     let filterParams = {};
-    const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
-    const modelName = !elnElements.includes(type) ? 'element' : type;
+    const elnElements = allElnElementsForSearch;
+    let modelName = !elnElements.includes(`${type}s`) ? 'element' : type;
+    modelName = type === 'cell_line' ? 'cell_lines' : modelName;
 
     if (fromDate || toDate || userLabel || productOnly) {
       filterParams = {
@@ -1405,7 +1397,6 @@ class ElementStore {
       selection,
       collectionId: uiState.currentCollection.id,
       page,
-      isSync: uiState.isSync,
       moleculeSort
     });
   }
@@ -1545,7 +1536,6 @@ class ElementStore {
     this.state.currentElement = nextEl;
   }
 
-
   handleGetMoleculeCas(updatedSample) {
     const { selecteds } = this.state;
     const index = this.elementIndex(selecteds, updatedSample);
@@ -1616,6 +1606,50 @@ class ElementStore {
     this.UpdateMolecule(updatedSample);
   }
 
+  findReactionForUpdatedSbmm(updatedElement) {
+    // When an SBMM is opened from a reaction, we store only { type, id } in belongTo.
+    // Prefer that direct reaction id to target the correct open reaction tab.
+    const reactionId = updatedElement?.belongTo?.type === 'reaction'
+      ? updatedElement.belongTo.id
+      : null;
+    const hasReactionRef = reactionId !== null && reactionId !== undefined;
+    const selecteds = this.state.selecteds || [];
+
+    return selecteds.find(
+      (el) => el instanceof Reaction
+        && (
+          // Primary match: reaction id from belongTo context.
+          (hasReactionRef && el.id === reactionId)
+          // Fallback match: if belongTo is missing, find the open reaction that currently contains this SBMM id.
+          || (el.reactant_sbmm_samples || []).some((sample) => sample.id === updatedElement.id)
+        )
+    );
+  }
+
+  updateReactionWithSbmm(reaction, updatedElement) {
+    // Keep a dedicated mutable SBMM instance inside reaction materials;
+    // this avoids sharing/frozen-reference issues with the detail element instance.
+    const updatedReactionSbmm = new SequenceBasedMacromoleculeSample(updatedElement);
+    // Persist only lightweight reaction identity as parent context.
+    updatedReactionSbmm.belongTo = this.buildReactionReference(reaction);
+    updatedElement.belongTo = this.buildReactionReference(reaction);
+    // Replace only the edited SBMM entry in the reaction material list.
+    reaction.reactant_sbmm_samples = (reaction.reactant_sbmm_samples || []).map((sample) => (
+      sample.id === updatedElement.id ? updatedReactionSbmm : sample
+    ));
+    // Mark reaction dirty and refresh SVG so updated SBMM label appears immediately.
+    reaction.changed = true;
+    ElementActions.handleSvgReactionChange(reaction);
+  }
+
+  handleUpdatedSbmmSample(updatedElement) {
+    // Resolve the owning open reaction tab and sync this SBMM back into it.
+    const reaction = this.findReactionForUpdatedSbmm(updatedElement);
+    if (reaction) {
+      this.updateReactionWithSbmm(reaction, updatedElement);
+    }
+  }
+
   handleUpdateElement(updatedElement) {
     switch (updatedElement?.type) {
       case 'sample':
@@ -1660,6 +1694,7 @@ class ElementStore {
         this.handleRefreshElements('device_description');
         break;
       case 'sequence_based_macromolecule_sample':
+        this.handleUpdatedSbmmSample(updatedElement);
         this.changeCurrentElement(updatedElement);
         this.handleRefreshElements('sequence_based_macromolecule_sample');
         break;
@@ -1726,7 +1761,7 @@ class ElementStore {
   addElement(addEl) {
     const { selecteds } = this.state;
     // Store the collection ID from which this element was opened
-    const currentCollection = UIStore.getState().currentCollection;
+    const { currentCollection } = UIStore.getState();
     if (addEl && currentCollection?.id) {
       addEl.openedFromCollectionId = currentCollection.id;
     }
@@ -1737,12 +1772,22 @@ class ElementStore {
     const { selecteds } = this.state;
     // Preserve openedFromCollectionId from the existing element
     const existingEl = selecteds[index];
+    let nextEl = updateEl;
     if (existingEl?.openedFromCollectionId && updateEl) {
-      updateEl.openedFromCollectionId = existingEl.openedFromCollectionId;
+      try {
+        // Fast path: keep the same object when it is mutable.
+        updateEl.openedFromCollectionId = existingEl.openedFromCollectionId;
+      } catch (_error) {
+        // Some SBMM instances can be readonly/frozen; clone and annotate instead.
+        nextEl = typeof updateEl.clone === 'function'
+          ? updateEl.clone()
+          : Object.assign(Object.create(Object.getPrototypeOf(updateEl)), updateEl);
+        nextEl.openedFromCollectionId = existingEl.openedFromCollectionId;
+      }
     }
     return [
       ...selecteds.slice(0, index),
-      updateEl,
+      nextEl,
       ...selecteds.slice(index + 1)
     ];
   }
@@ -1773,16 +1818,33 @@ class ElementStore {
       this.changeCurrentElement(newCurrentElement);
     }
 
-    UrlSilentNavigation(newCurrentElement);
+    aviatorNavigation(newCurrentElement?.type, newCurrentElement?.id, true, false);
     return true;
+  }
+
+  preferredCloseKey(deleteEl, newSelecteds) {
+    // Special close behavior for SBMM opened from a reaction:
+    // return to the originating reaction tab instead of generic "left tab".
+    // This avoids wrong tab selection when multiple reactions are open.
+    if (deleteEl?.type === 'sequence_based_macromolecule_sample' && deleteEl?.belongTo?.type === 'reaction') {
+      const targetReactionId = deleteEl.belongTo.id;
+      const reactionIndex = this.elementIndex(newSelecteds, { type: 'reaction', id: targetReactionId });
+      if (reactionIndex >= 0) {
+        return reactionIndex;
+      }
+    }
+
+    // Default behavior for all other cases: activate the tab to the left.
+    let left = this.state.activeKey - 1;
+    if (left < 0) left = 0;
+    return left;
   }
 
   deleteCurrentElement(deleteEl) {
     const newSelecteds = this.deleteElement(deleteEl);
-    let left = this.state.activeKey - 1;
-    if (left < 0) left = 0;
+    const nextKey = this.preferredCloseKey(deleteEl, newSelecteds);
     this.setState({ selecteds: newSelecteds });
-    this.resetCurrentElement(left, newSelecteds);
+    this.resetCurrentElement(nextKey, newSelecteds);
   }
 
   isDeletable(deleteEl) {
@@ -1839,7 +1901,7 @@ class ElementStore {
   }
 
   // End of DetailStore
-  /////////////////////
+  /// //////////////////
 
   // -- Private Note --
   handleCreatePrivateNote(note) {
@@ -1861,8 +1923,8 @@ class ElementStore {
   static isCurrentElement(element) {
     const currentElement = this.state?.currentElement;
     return !!element && !!currentElement
-         && currentElement.type === element.type
-         && currentElement.id === element.id;
+      && currentElement.type === element.type
+      && currentElement.id === element.id;
   }
 }
 

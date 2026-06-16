@@ -13,7 +13,7 @@ import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralIn
 import Sample from 'src/models/Sample';
 import { permitCls, permitOn } from 'src/components/common/uis';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
@@ -88,8 +88,8 @@ const matTarget = {
   canDrop(tagProps, monitor) {
     const srcType = monitor.getItemType();
     const isCorrectType = srcType === DragDropItemTypes.MATERIAL
-    || srcType === DragDropItemTypes.SAMPLE
-    || srcType === DragDropItemTypes.MOLECULE;
+      || srcType === DragDropItemTypes.SAMPLE
+      || srcType === DragDropItemTypes.MOLECULE;
     return isCorrectType;
   },
 };
@@ -180,7 +180,7 @@ class SampleComponent extends Component {
     if (material.parent_id) {
       UIActions.setRedirectedFromMixture(true);
       const parentSample = new Sample({ id: material.parent_id, type: 'sample' });
-      UrlSilentNavigation(parentSample);
+      aviatorNavigation(parentSample.type, parentSample.id, true, false);
       ElementActions.fetchSampleById(material.parent_id);
     }
   }
@@ -461,7 +461,8 @@ class SampleComponent extends Component {
           disabled={!permitOn(sample)}
           onChange={(e) => this.handleAmountChange(e, material.amount_l, '', false)}
           onMetricsChange={this.handleMetricsChange}
-          variant={material.amount_unit === 'l' ? 'primary' : 'light'}
+          variant="light"
+          active={material.amount_unit === 'l'}
         />
       </td>
     );
@@ -472,10 +473,9 @@ class SampleComponent extends Component {
    * @param {Object} material - The material object
    * @param {string} metric - The metric prefix
    * @param {Array<string>} metricPrefixes - Allowed metric prefixes
-   * @param {string} massBsStyle - Bootstrap style for the input
    * @returns {JSX.Element} The mass input cell
    */
-  componentMass(material, metric, metricPrefixes, massBsStyle) {
+  componentMass(material, metric, metricPrefixes) {
     const { lockAmountColumnSolids } = this.state;
     const { sample } = this.props;
 
@@ -485,7 +485,7 @@ class SampleComponent extends Component {
         placement="top"
         overlay={
           <Tooltip id="molecular-weight-info">{this.generateMolecularWeightTooltipText(material)}</Tooltip>
-      }
+        }
       >
         <div>
           <NumeralInputWithUnitsCompo
@@ -498,7 +498,8 @@ class SampleComponent extends Component {
             disabled={!permitOn(sample) || lockAmountColumnSolids}
             onChange={(e) => this.handleAmountChange(e, material.amount_g, '', lockAmountColumnSolids)}
             onMetricsChange={this.handleMetricsChange}
-            variant={material.error_mass ? 'error' : massBsStyle}
+            active={material.amount_unit === 'g'}
+            isError={material.error_mass}
             name="molecular-weight"
           />
         </div>
@@ -538,7 +539,8 @@ class SampleComponent extends Component {
               disabled={!permitOn(sample)}
               onChange={(e) => this.handleAmountChange(e, material.amount_mol, '', false)}
               onMetricsChange={this.handleMetricsChange}
-              variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
+              variant="light"
+              active={material.amount_unit === 'mol'}
             />
           </div>
         </OverlayTrigger>
@@ -778,7 +780,6 @@ class SampleComponent extends Component {
     const metricPrefixes = ['m', 'n', 'u'];
     const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
     const metricMol = getMetricMol(material);
-    const massBsStyle = material.amount_unit === 'g' ? 'primary' : 'light';
     const metricMolConc = getMetricMolConc(material);
 
     return (
@@ -809,7 +810,7 @@ class SampleComponent extends Component {
         <td
           style={enableComponentPurity === false ? { verticalAlign: 'bottom' } : null}
         >
-          {this.componentMass(material, metric, metricPrefixes, massBsStyle)}
+          {this.componentMass(material, metric, metricPrefixes)}
         </td>
 
         {this.componentMol(material, metricMol, metricPrefixesMol)}

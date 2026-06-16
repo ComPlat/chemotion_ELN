@@ -31,3 +31,15 @@
 .secondary-toggle-headline.active {
   @extend .surface-lighten2;
 }
+
+.ant-select-dropdown {
+  z-index: 2000 !important; /* higher than modal */
+}
+
+.invalid-input {
+  @extend .border-danger;
+
+  .chemotion-select__control {
+    border-color: var(--bs-danger);
+  }
+}

@@ -32,7 +32,7 @@ function inferElementSourceType(element) {
       return DragDropItemTypes.DEVICE_DESCRIPTION;
     case 'cell_line':
       return DragDropItemTypes.CELL_LINE;
-    case 'sequence_based_macromolecule': 
+    case 'sequence_based_macromolecule':
       return DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE;
     case 'sequence_based_macromolecule_sample':
       return DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE;
@@ -135,8 +135,8 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
         return currentElementType === 'device_description' || useDnD(currentElement, genericEls);
       case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE:
         return currentElementType === 'sequence_based_macromolecule_sample' || useDnD(currentElement, genericEls);
-      // case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE:
-      //   return currentElementType === 'sequence_based_macromolecule_sample' || useDnD(currentElement, genericEls);
+      case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE:
+        return currentElementType === 'reaction' || useDnD(currentElement, genericEls);
       default:
         return false;
     }

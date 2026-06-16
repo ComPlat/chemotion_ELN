@@ -1,5 +1,5 @@
 import { getElementSegments } from './ElementUtils';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 
 export const TAB_DISPLAY_NAMES = {
   qc_curation: 'QC & curation',
@@ -45,8 +45,8 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
   }
   hidden = hidden.filter(n => n);
   return {
-    visible: Immutable.List(visible.filter(n => n !== undefined)),
-    hidden: Immutable.List(hidden.filter(n => (n !== undefined && n !== first)))
+    visible: List(visible.filter(n => n !== undefined)),
+    hidden: List(hidden.filter(n => (n !== undefined && n !== first)))
   };
 };
 
@@ -56,7 +56,12 @@ const getArrayFromLayout = (layout, element, addInventoryTab, availableTabs = nu
     layout = { properties: 1, analyses: 2 };
   }
   const layoutKeys = Object.keys(layout);
-  const segmentAvailableTabs = availableTabs || getElementSegments(element, layoutKeys);
+  let segmentAvailableTabs = [];
+  if (element == 'device_description') {
+    segmentAvailableTabs = layoutKeys;
+  } else {
+    segmentAvailableTabs = availableTabs || getElementSegments(element, layoutKeys);
+  }
   return getVisibilityList(layout, segmentAvailableTabs, addInventoryTab);
 };
 

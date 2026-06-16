@@ -4,7 +4,7 @@ module Export
   class ExportChemicals
     CHEMICAL_FIELDS = %w[
       chemical_sample_id cas status vendor order_number amount volume price person required_date
-      ordered_date storage_temperature expiration_date required_by pictograms h_statements p_statements
+      ordered_date storage_temperature expiration_date delivery_date opening_date required_by pictograms h_statements p_statements
       safety_sheet_link_merck safety_sheet_link_thermofischer product_link_merck product_link_thermofischer
       host_building host_room host_cabinet host_group owner borrowed_by current_building
       current_room current_cabinet current_group disposal_info important_notes
@@ -24,6 +24,8 @@ module Export
       order_number: ['c."chemical_data"->0->\'order_number\'', '"order_number"', nil],
       required_date: ['c."chemical_data"->0->\'required_date\'', '"required_date"', nil],
       expiration_date: ['c."chemical_data"->0->\'expiration_date\'', '"expiration_date"', nil],
+      delivery_date: ['c."chemical_data"->0->\'delivery_date\'', '"delivery_date"', nil],
+      opening_date: ['c."chemical_data"->0->\'opening_date\'', '"opening_date"', nil],
       storage_temperature: ['c."chemical_data"->0->\'storage_temperature\'', '"storage_temperature"', nil],
       required_by: ['c."chemical_data"->0->\'required_by\'', '"required_by"', nil],
       safety_sheet_link_merck: [MERCK_SDS_LINK, '"safety_sheet_link_merck"', nil],

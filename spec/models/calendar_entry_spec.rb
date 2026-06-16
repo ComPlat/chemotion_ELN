@@ -11,6 +11,7 @@
 #  eventable_type :string
 #  kind           :string
 #  start_time     :datetime
+#  status         :string
 #  title          :string
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
@@ -117,6 +118,15 @@ RSpec.describe 'CalendarEntry' do
         affected_entry2.id,
       ].sort
     end
+
+    it 'also returns entries stored with snake_case eventable_type' do
+      sample = create(:sample)
+      entry = create(:calendar_entry, :sample, eventable: sample)
+      entry.eventable_type = 'sample'
+      entry.save!(validate: false)
+
+      expect(CalendarEntry.for_event(sample.id, 'Sample').pluck(:id)).to include(entry.id)
+    end
   end
 
   describe 'for_user' do
@@ -188,7 +198,21 @@ RSpec.describe 'CalendarEntry' do
 
       link = entry.link_to_element_for(creator)
 
-      expect(link).to include("http://localhost:3000/mydb/collection/#{collection.id}/reaction/#{reaction.id}")
+      root = Rails.application.config.root_url.chomp('/')
+      expect(link).to eq("#{root}/mydb/collection/#{collection.id}/reaction/#{reaction.id}")
+    end
+
+    it 'uses underscored path segment for multi-word eventable types like DeviceDescription' do
+      creator = create(:person)
+      collection = create(:collection, user_id: creator.id)
+      device_description = create(:device_description, created_by: creator.id)
+      device_description.collections_device_descriptions.create(collection_id: collection.id)
+
+      entry = create(:calendar_entry, eventable: device_description, creator: creator)
+
+      link = entry.link_to_element_for(creator)
+      root = Rails.application.config.root_url.chomp('/')
+      expect(link).to eq("#{root}/mydb/collection/#{collection.id}/device_description/#{device_description.id}")
     end
   end
 
@@ -241,7 +265,7 @@ RSpec.describe 'CalendarEntry' do
   end
 
   describe 'collection_for' do
-    it 'returns the first collection or syn collection that contains this entry of a given user' do
+    it 'returns the first collection that contains this entry of a given user' do
       entry = create(:calendar_entry, :reaction)
 
       reaction = entry.eventable
@@ -252,12 +276,8 @@ RSpec.describe 'CalendarEntry' do
 
       another_user = create(:person)
 
-      sync_user = create(:person)
-      sync_collection = collection.sync_collections_users.create(user: sync_user, sharer: creator)
-
       expect(entry.collection_for(creator)).to eq collection
       expect(entry.collection_for(another_user)).to be_nil
-      expect(entry.collection_for(sync_user)).to eq sync_collection
     end
   end
 

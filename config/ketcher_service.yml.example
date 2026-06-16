@@ -1,5 +1,5 @@
 development:
-  :url: 'https://220.ketcher.chemserv.scc.kit.edu/render'
+  :url: 'http://ketchersvc:4000/render'
 
 production:
-  :url: 'https://220.ketcher.chemserv.scc.kit.edu/render'
+  :url: 'http://ketchersvc:4000/render'

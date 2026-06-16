@@ -10,12 +10,10 @@ import PropTypes from 'prop-types';
 
 function VesselItemEntry({ vesselItem }) {
   const showDetails = () => {
-    const { currentCollection, isSync } = UIStore.getState();
+    const { currentCollection } = UIStore.getState();
     const { id, type } = vesselItem;
 
-    const uri = isSync
-      ? `/scollection/${currentCollection.id}/vessel/${id}`
-      : `/collection/${currentCollection.id}/vessel/${id}`;
+    const uri = `/collection/${currentCollection.id}/vessel/${id}`;
     Aviator.navigate(uri, { silent: true });
 
     const e = {
@@ -35,7 +33,7 @@ function VesselItemEntry({ vesselItem }) {
   const backgroundColorClass = currentElement?.id === vesselItem.id ? 'text-bg-primary' : '';
 
   return (
-  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus
     <button
       type="button"
       className={`border-0 bg-transparent ${backgroundColorClass}`}

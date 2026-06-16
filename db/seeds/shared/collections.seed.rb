@@ -12,7 +12,7 @@ Person.find_each do |user|
   end
   # Ensure collection All content is up to date
   all_id = user.collections.find_by(label: 'All', is_locked: true).id
-  user_collections = Collection.where(user_id: user.id, is_shared: false).pluck(:id)
+  user_collections = Collection.where(user_id: user.id).pluck(:id)
   [
     CollectionsSample, CollectionsReaction, CollectionsScreen,
     CollectionsWellplate, CollectionsResearchPlan,

@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Modal, Button, Form } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 
 function SDSAttachmentModal({ show, onHide, onSubmit }) {
   const [productNumber, setProductNumber] = React.useState('');
@@ -162,69 +163,64 @@ function SDSAttachmentModal({ show, onHide, onSubmit }) {
     || (safetySheetLink && safetySheetLink.length > MAX_URL_LEN);
 
   return (
-    <Modal show={show} onHide={onHide}>
-      <Modal.Header closeButton>
-        <Modal.Title>Attach Safety Sheet File</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form>
-          <Form.Group controlId="productNumber">
-            <Form.Label>Product Number</Form.Label>
-            <Form.Control
-              id="productNumber"
-              type="text"
-              value={productNumber}
-              onChange={(e) => setProductNumber(e.target.value)}
-              required
-            />
-          </Form.Group>
-          <Form.Group controlId="vendorName">
-            <Form.Label>Vendor Name</Form.Label>
-            <Form.Control
-              id="vendorName"
-              type="text"
-              value={vendorName}
-              onChange={(e) => setVendorName(e.target.value)}
-              required
-            />
-          </Form.Group>
-          <Form.Group controlId="fileUpload">
-            <Form.Label>Attach File (PDF only)</Form.Label>
-            <Form.Control
-              type="file"
-              accept="application/pdf"
-              onChange={handleFileChange}
-              required
-            />
-          </Form.Group>
-          <Form.Group controlId="productLink">
-            <Form.Label>Product Link (optional)</Form.Label>
-            <Form.Control
-              type="text"
-              value={productLink}
-              onChange={(e) => setProductLink(e.target.value)}
-            />
-          </Form.Group>
-          <Form.Group controlId="safetySheetLink">
-            <Form.Label>Safety Sheet Link (optional)</Form.Label>
-            <Form.Control
-              type="text"
-              value={safetySheetLink}
-              onChange={(e) => setSafetySheetLink(e.target.value)}
-            />
-          </Form.Group>
-          {error && <div className="text-danger mt-2">{error}</div>}
-        </Form>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={onHide}>
-          Close
-        </Button>
-        <Button variant="primary" onClick={handleSubmit} disabled={isSubmitDisabled}>
-          Submit
-        </Button>
-      </Modal.Footer>
-    </Modal>
+    <AppModal
+      show={show}
+      onHide={onHide}
+      title="Attach Safety Sheet File"
+      primaryActionLabel="Submit"
+      onPrimaryAction={handleSubmit}
+      primaryActionDisabled={isSubmitDisabled}
+      closeLabel="Close"
+    >
+      <Form>
+        <Form.Group controlId="productNumber">
+          <Form.Label>Product Number</Form.Label>
+          <Form.Control
+            id="productNumber"
+            type="text"
+            value={productNumber}
+            onChange={(e) => setProductNumber(e.target.value)}
+            required
+          />
+        </Form.Group>
+        <Form.Group controlId="vendorName">
+          <Form.Label>Vendor Name</Form.Label>
+          <Form.Control
+            id="vendorName"
+            type="text"
+            value={vendorName}
+            onChange={(e) => setVendorName(e.target.value)}
+            required
+          />
+        </Form.Group>
+        <Form.Group controlId="fileUpload">
+          <Form.Label>Attach File (PDF only)</Form.Label>
+          <Form.Control
+            type="file"
+            accept="application/pdf"
+            onChange={handleFileChange}
+            required
+          />
+        </Form.Group>
+        <Form.Group controlId="productLink">
+          <Form.Label>Product Link (optional)</Form.Label>
+          <Form.Control
+            type="text"
+            value={productLink}
+            onChange={(e) => setProductLink(e.target.value)}
+          />
+        </Form.Group>
+        <Form.Group controlId="safetySheetLink">
+          <Form.Label>Safety Sheet Link (optional)</Form.Label>
+          <Form.Control
+            type="text"
+            value={safetySheetLink}
+            onChange={(e) => setSafetySheetLink(e.target.value)}
+          />
+        </Form.Group>
+        {error && <div className="text-danger mt-2">{error}</div>}
+      </Form>
+    </AppModal>
   );
 }
 

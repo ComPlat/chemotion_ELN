@@ -15,6 +15,7 @@ import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
+import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SearchFetcher from 'src/fetchers/SearchFetcher';
@@ -241,9 +242,9 @@ class ElementActions {
   }
 
   // -- Generic --
-  fetchGenericElsByCollectionId(id, queryParams = {}, collectionIsSync = false, elementType) {
+  fetchGenericElsByCollectionId(id, queryParams = {}, elementType) {
     return (dispatch) => {
-      GenericElsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      GenericElsFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => { dispatch({ result, type: elementType }); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
@@ -292,10 +293,9 @@ class ElementActions {
     };
   }
 
-  fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
-    moleculeSort = false) {
+  fetchSamplesByCollectionId(id, queryParams = {}, moleculeSort = false) {
     return (dispatch) => {
-      SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync, moleculeSort)
+      SamplesFetcher.fetchByCollectionId(id, queryParams, moleculeSort)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -304,9 +304,9 @@ class ElementActions {
     };
   }
 
-  fetchReactionsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchReactionsByCollectionId(id, queryParams = {}) {
     return (dispatch) => {
-      ReactionsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      ReactionsFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -315,9 +315,9 @@ class ElementActions {
     };
   }
 
-  fetchWellplatesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchWellplatesByCollectionId(id, queryParams = {}) {
     return (dispatch) => {
-      WellplatesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      WellplatesFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -326,9 +326,9 @@ class ElementActions {
     };
   }
 
-  fetchScreensByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchScreensByCollectionId(id, queryParams = {}) {
     return (dispatch) => {
-      ScreensFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      ScreensFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -337,9 +337,9 @@ class ElementActions {
     };
   }
 
-  fetchResearchPlansByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchResearchPlansByCollectionId(id, queryParams = {}) {
     return (dispatch) => {
-      ResearchPlansFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      ResearchPlansFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -348,9 +348,9 @@ class ElementActions {
     };
   }
 
-  fetchCellLinesByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchCellLinesByCollectionId(id, queryParams = {}) {
     return (dispatch) => {
-      CellLinesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      CellLinesFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -359,9 +359,9 @@ class ElementActions {
     };
   }
 
-  fetchDeviceDescriptionsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchDeviceDescriptionsByCollectionId(id, queryParams = {}) {
     return (dispatch) => {
-      DeviceDescriptionFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      DeviceDescriptionFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -370,9 +370,9 @@ class ElementActions {
     };
   }
 
-  fetchVesselsByCollectionId(id, queryParams = {}, collectionIsSync = false) {
+  fetchVesselsByCollectionId(id, queryParams = {}) {
     return (dispatch) => {
-      VesselsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      VesselsFetcher.fetchByCollectionId(id, queryParams)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -381,10 +381,9 @@ class ElementActions {
     };
   }
 
-  fetchSequenceBasedMacromoleculeSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
-    listOrder = 'sbmm') {
+  fetchSequenceBasedMacromoleculeSamplesByCollectionId(id, queryParams = {}, listOrder = 'sbmm') {
     return (dispatch) => {
-      SequenceBasedMacromoleculeSamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync, listOrder)
+      SequenceBasedMacromoleculeSamplesFetcher.fetchByCollectionId(id, queryParams, listOrder)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -432,9 +431,9 @@ class ElementActions {
 
   handleSvgReactionChange(reaction) {
     const materialsSvgPaths = {
-      starting_materials: reaction.starting_materials.map(material => material.svgPath),
-      reactants: reaction.reactants.map(material => material.svgPath),
-      products: reaction.products.map(material => [material.svgPath, material.equivalent])
+      starting_materials: reaction.starting_materials.map((material) => material.svgPath),
+      reactants: reaction.reactantsWithSbmm.map((material) => material.svgPath),
+      products: reaction.products.map((material) => [material.svgPath, material.equivalent])
     };
 
     const solvents = reaction.solvents.map((s) => {
@@ -1256,7 +1255,7 @@ class ElementActions {
   }
 
   // -- Report --
-  showReportContainer() {
+  showReportDetails() {
     return Report.buildEmpty()
   }
 
@@ -1317,33 +1316,38 @@ class ElementActions {
   // - ...
   deleteElementsByUIState(params) {
     return (dispatch) => {
-      UIFetcher.fetchByUIState(params, 'DELETE')
+      UIFetcher.deleteElementsByUIState(params)
         .then((result) => { dispatch(result); })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
 
-  updateElementsCollection(params) {
+  bulkUpdateUserLabels(params) {
     return (dispatch) => {
-      CollectionsFetcher.updateElementsCollection(params)
-        .then(() => { dispatch(); })
-        .catch((errorMessage) => { console.log(errorMessage); });
-    };
-  }
-
-  assignElementsCollection(params) {
-    return (dispatch) => {
-      CollectionsFetcher.assignElementsCollection(params)
-        .then(() => { dispatch(); })
-        .catch((errorMessage) => { console.log(errorMessage); });
-    };
-  }
-
-  removeElementsCollection(params) {
-    return (dispatch) => {
-      CollectionsFetcher.removeElementsCollection(params)
-        .then(() => { dispatch(); })
-        .catch((errorMessage) => { console.log(errorMessage); });
+      UserLabelsFetcher.bulkUpdate(params)
+        .then(() => {
+          NotificationActions.add({
+            title: 'Bulk edit user labels',
+            message: 'Labels updated for the selection.',
+            level: 'success',
+            position: 'tr',
+            dismissible: 'button',
+            autoDismiss: 5,
+            uid: 'bulkUpdateUserLabels',
+          });
+          dispatch();
+        })
+        .catch(() => {
+          NotificationActions.add({
+            title: 'Bulk edit user labels',
+            message: 'Could not update labels for the selection.',
+            level: 'error',
+            position: 'tr',
+            dismissible: 'button',
+            autoDismiss: 5,
+            uid: 'bulkUpdateUserLabels',
+          });
+        });
     };
   }
 
@@ -1383,6 +1387,10 @@ class ElementActions {
 
   refreshComputedProp(cprop) {
     return cprop;
+  }
+
+  refreshElementsAfterCollectionChanges(collectionId) {
+    return collectionId;
   }
 
   // -- Private Note --

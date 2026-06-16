@@ -34,7 +34,8 @@
   left: 0;
 }
 
-.modal.draggable-modal-dialog.minimized, .modal.draggable-modal-dialog-xxxl.minimized {
+.modal.draggable-modal-dialog.minimized,
+.modal.draggable-modal-dialog-xxxl.minimized {
   height: 66px;
   overflow: hidden;
 }
@@ -105,20 +106,7 @@
 .draggable-modal-content .modal-header .btn-group .btn {
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--bs-gray-600);
-}
-
-.draggable-modal-content .modal-header .btn-group .btn:hover {
-  background-color: $chemstrap-silicon-active1;
-}
-
-.draggable-modal-content .modal-header .btn-group .btn.active {
-  background-color: $chemstrap-silicon-active1;
-  color: var(--bs-gray-800);
-}
-
-.draggable-modal-content .modal-header .btn-group .btn.active:hover {
-  color: white;
+  padding-right: 0.5rem;
 }
 
 .draggable-modal-content .modal-header .btn-group .btn .button-icon {
@@ -148,7 +136,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  padding: 1.25rem; 
+  padding: 1.25rem;
 }
 
 .draggable-modal-form-fields .device-alert {
@@ -179,4 +167,3 @@
 .draggable-modal-scrollable-content .tab-content .is-invalid__control {
   border-color: var(--bs-danger);
 }
-

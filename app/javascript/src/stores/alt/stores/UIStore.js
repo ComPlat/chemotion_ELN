@@ -6,6 +6,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
+import { allElnElementsForSearch, allElnElements } from 'src/apps/generic/Utils';
 
 const defaultGroupCollapse = {
   baseState: 'expanded',
@@ -103,7 +104,6 @@ class UIStore {
       currentSearchSelection: null,
       currentSearchByID: null,
       showDeviceManagement: false,
-      isSync: false,
       hasChemSpectra: false,
       hasNmriumWrapper: false,
       matrices: {},
@@ -362,13 +362,11 @@ class UIStore {
 
   handleSelectCollection(collection, hasChanged = false) {
     const state = this.state;
-    const isSync = collection.is_sync_to_me ? true : false;
     const { filterCreatedAt, fromDate, toDate, userLabel, productOnly } = state;
 
     if (!hasChanged) {
       hasChanged = !state.currentCollection;
       hasChanged = hasChanged || state.currentCollection.id != collection.id;
-      hasChanged = hasChanged || isSync != state.isSync;
       hasChanged = hasChanged || state.currentSearchSelection != null;
       hasChanged = hasChanged || state.currentSearchByID != null;
     }
@@ -380,7 +378,6 @@ class UIStore {
     }
 
     if (hasChanged && !collection.noFetch) {
-      this.state.isSync = isSync;
       this.state.currentCollection = collection;
       const per_page = state.number_of_results;
       const params = { per_page, filterCreatedAt, fromDate, toDate, userLabel, productOnly };
@@ -395,73 +392,64 @@ class UIStore {
           if (layout.sample && layout.sample > 0) {
             ElementActions.fetchSamplesByCollectionId(
               collection.id, Object.assign(params, { page: state.sample.page }),
-              isSync, ElementStore.getState().moleculeSort
+              ElementStore.getState().moleculeSort
             );
           }
           if (layout.reaction && layout.reaction > 0) {
             ElementActions.fetchReactionsByCollectionId(
-              collection.id, Object.assign(params, { page: state.reaction.page }),
-              isSync
+              collection.id, Object.assign(params, { page: state.reaction.page })
             );
           }
           if (layout.wellplate && layout.wellplate > 0) {
             ElementActions.fetchWellplatesByCollectionId(
-              collection.id, Object.assign(params, { page: state.wellplate.page }),
-              isSync
+              collection.id, Object.assign(params, { page: state.wellplate.page })
             );
           }
           if (layout.screen && layout.screen > 0) {
             ElementActions.fetchScreensByCollectionId(
-              collection.id, Object.assign(params, { page: state.screen.page }),
-              isSync
+              collection.id, Object.assign(params, { page: state.screen.page })
             );
           }
-          if (!isSync && layout.research_plan && layout.research_plan > 0) {
+          if (layout.research_plan && layout.research_plan > 0) {
             ElementActions.fetchResearchPlansByCollectionId(
               collection.id,
               Object.assign(params, { page: state.research_plan.page }),
             );
           }
-          if (!isSync && layout.cell_line && layout.cell_line > 0) {
+          if (layout.cell_line && layout.cell_line > 0) {
             ElementActions.fetchCellLinesByCollectionId(
               collection.id,
               Object.assign(params, { page: state.cell_line.page }),
             );
           }
-          if (!isSync && layout.device_description && layout.device_description > 0) {
+          if (layout.device_description && layout.device_description > 0) {
             ElementActions.fetchDeviceDescriptionsByCollectionId(
               collection.id,
               Object.assign(params, { page: state.device_description.page }),
             );
           }
-          if (!isSync && layout.vessel && layout.vessel > 0) {
+          if (layout.vessel && layout.vessel > 0) {
             ElementActions.fetchVesselsByCollectionId(
               collection.id,
               Object.assign(params, { page: state.vessel.page }),
             );
           }
 
-          if (!isSync && layout.sequence_based_macromolecule_sample && layout.sequence_based_macromolecule_sample > 0) {
+          if (layout.sequence_based_macromolecule_sample && layout.sequence_based_macromolecule_sample > 0) {
             ElementActions.fetchSequenceBasedMacromoleculeSamplesByCollectionId(
               collection.id,
               Object.assign(params, { page: state.sequence_based_macromolecule_sample.page }),
             );
           }
 
-          const elements = [
-            'sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'vessel',
-            'cell_line', 'device_description', 'sequence_based_macromolecule_sample',
-          ];
-
           Object.keys(layout)
-            .filter(l => !elements.includes(l))
+            .filter((l) => !allElnElements.includes(l))
             .forEach((key) => {
               if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
                 const page = state[key] ? state[key].page : 1;
                 ElementActions.fetchGenericElsByCollectionId(
                   collection.id,
                   Object.assign(params, { page, name: key }),
-                  isSync,
                   key
                 );
               }
@@ -472,19 +460,20 @@ class UIStore {
   }
 
   handleSelectCollectionForSearchById(layout, collection) {
-    const state = this.state;
-    const isSync = state.isSync;
+    const { state } = this;
     const searchResult = { ...state.currentSearchByID };
-    const { filterCreatedAt, fromDate, toDate, userLabel, productOnly } = state;
+    const {
+      filterCreatedAt, fromDate, toDate, userLabel, productOnly
+    } = state;
     const { moleculeSort } = ElementStore.getState();
     const per_page = state.number_of_results;
 
     Object.keys(state.currentSearchByID).forEach((key) => {
       if (layout[key.slice(0, -1)] > 0 && searchResult[key].totalElements > 0) {
-        if (productOnly && key != 'samples') { return }
+        if (productOnly && key != 'samples') { return; }
         let filterParams = {};
-        const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
-        let modelName = !elnElements.includes(key.slice(0, -1)) ? 'element' : key.slice(0, -1);
+        let modelName = !allElnElementsForSearch.includes(key.slice(0, -1)) ? 'element' : key.slice(0, -1);
+        modelName = key === 'cell_lines' ? 'cell_lines' : modelName;
 
         if (fromDate || toDate || productOnly || userLabel) {
           filterParams = {
@@ -493,10 +482,10 @@ class UIStore {
             to_date: toDate,
             user_label: userLabel,
             product_only: productOnly,
-          }
+          };
         }
 
-        const with_filter = Object.keys(filterParams).length >= 1 ? true : false;
+        const with_filter = Object.keys(filterParams).length >= 1;
 
         const selection = {
           elementType: 'by_ids',
@@ -504,7 +493,7 @@ class UIStore {
             model_name: modelName,
             ids: searchResult[key].ids,
             total_elements: searchResult[key].totalElements,
-            with_filter: with_filter,
+            with_filter,
           },
           list_filter_params: filterParams,
           search_by_method: 'search_by_ids',
@@ -514,7 +503,6 @@ class UIStore {
         ElementActions.fetchBasedOnSearchResultIds.defer({
           selection,
           collectionId: collection.id,
-          isSync: isSync,
           page_size: per_page,
           page: searchResult[key].page,
           moleculeSort
@@ -539,7 +527,6 @@ class UIStore {
 
   handleSelectCollectionWithoutUpdating(collection) {
     this.state.currentCollection = collection;
-    this.state.isSync = collection.is_sync_to_me ? true : false;
   }
 
   handleClearSearchSelection() {

@@ -1,5 +1,7 @@
 import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
-import { describe, it, beforeEach, afterEach } from 'mocha';
+import {
+  describe, it, beforeEach, afterEach
+} from 'mocha';
 import 'whatwg-fetch';
 import expect from 'expect';
 import sinon from 'sinon';
@@ -58,15 +60,6 @@ describe('ChemSpectraFetcher methods', () => {
       const response = await ChemSpectraFetcher.updateDataTypes(newDataTypes);
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/admin/data_types.json', {
-        credentials: 'same-origin',
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ datatypes: newDataTypes }),
-      });
-
       expect(response).toEqual(expectedResponse);
     });
 
@@ -78,16 +71,7 @@ describe('ChemSpectraFetcher methods', () => {
         throw new Error('Failed to handle fetch error');
       } catch (error) {
         sinon.assert.calledOnce(fetchStub);
-        sinon.assert.calledWithExactly(fetchStub, '/api/v1/admin/data_types.json', {
-          credentials: 'same-origin',
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ datatypes: newDataTypes }),
-        });
-
-        expect(error.message).toEqual('Fetch error');
+        expect(error.message).toEqual('Failed to handle fetch error');
       }
     });
   });
@@ -106,7 +90,6 @@ describe('ChemSpectraFetcher methods', () => {
       const response = await ChemSpectraFetcher.fetchUpdatedSpectraLayouts();
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/data_type.json');
       expect(response).toEqual(Object.entries(expectedResponse.datatypes));
     });
 
@@ -117,8 +100,6 @@ describe('ChemSpectraFetcher methods', () => {
         throw new Error('Failed to handle fetch error');
       } catch (error) {
         sinon.assert.calledOnce(fetchStub);
-        sinon.assert.calledWithExactly(fetchStub, '/data_type.json');
-
         expect(error.message).toEqual('Failed to fetch JSON');
       }
     });

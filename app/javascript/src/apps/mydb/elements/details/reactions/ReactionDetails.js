@@ -2,20 +2,18 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable react/require-default-props */
 import React, { Component, createRef } from 'react';
-import Aviator from 'aviator';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Modal, Overlay
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Overlay
 } from 'react-bootstrap';
 import { findIndex, isEmpty } from 'lodash';
 
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementResearchPlanLabels from 'src/apps/mydb/elements/labels/ElementResearchPlanLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
 import {
   REACTION_VARIATIONS_TAB_KEY
@@ -28,33 +26,28 @@ import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/sche
 import ReactionDetailsProperties from 'src/apps/mydb/elements/details/reactions/propertiesTab/ReactionDetailsProperties';
 import GreenChemistry from 'src/apps/mydb/elements/details/reactions/greenChemistryTab/GreenChemistry';
 import Utils from 'src/utilities/Functions';
-import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
-import { sampleShowOrNew } from 'src/utilities/routesUtils';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
-import ConfirmClose from 'src/components/common/ConfirmClose';
 import { rfValueFormat } from 'src/utilities/ElementUtils';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
-import CopyElementModal from 'src/components/common/CopyElementModal';
 import { permitOn } from 'src/components/common/uis';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
-import Immutable from 'immutable';
+import AppModal from 'src/components/common/AppModal';
+import { List } from 'immutable';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
-import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
-import { ShowUserLabels } from 'src/components/UserLabels';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/ReactionSchemeGraphic';
@@ -62,20 +55,13 @@ import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercen
 import isEqual from 'lodash/isEqual';
 import DocumentationButton from 'src/components/common/DocumentationButton';
 
-const handleProductClick = (product) => {
-  const uri = Aviator.getCurrentURI();
-  const uriArray = uri.split(/\//);
-  Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/sample/${product.id}`, { silent: true });
-  sampleShowOrNew({ params: { sampleID: product.id } });
-};
-
 const productLink = (product, active) => (
   <span>
     {active && "Sample Analysis:"}
     <span
       aria-hidden="true"
       className="pseudo-link"
-      onClick={() => handleProductClick(product)}
+      onClick={() => aviatorNavigation('sample', product.id, true, true)}
       title="Open sample window"
     >
       <i className="icon-sample mx-1" />
@@ -93,7 +79,7 @@ export default class ReactionDetails extends Component {
       reaction,
       activeTab: UIStore.getState().reaction.activeTab,
       activeAnalysisTab: UIStore.getState().reaction.activeAnalysisTab,
-      visible: Immutable.List(),
+      visible: List(),
       sfn: UIStore.getState().hasSfn,
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
       reactionSvgVersion: 0, // Bumped when graphic is updated so shouldComponentUpdate sees a state change (we mutate reaction in place)
@@ -111,8 +97,8 @@ export default class ReactionDetails extends Component {
     this.confirmSchemeChange = this.confirmSchemeChange.bind(this);
     this.cancelSchemeChange = this.cancelSchemeChange.bind(this);
     this.state.showWtInfoModal = false;
-    this.state.showSchemeChangeConfirm = false;
     this.state.pendingSchemeType = null;
+    this.state.schemeChangeConfirmMessage = null;
     this.isUpdatingGraphic = false; // Flag to prevent infinite loops
     this.pendingGraphicReaction = null; // Queued reaction when update requested during in-flight fetch
     this.schemeDropdownRef = createRef();
@@ -197,12 +183,12 @@ export default class ReactionDetails extends Component {
     const nextActiveTab = nextState.activeTab;
     const nextActiveAnalysisTab = nextState.activeAnalysisTab;
     const nextVisible = nextState.visible;
-    const nextShowSchemeChangeConfirm = nextState.showSchemeChangeConfirm;
+    const nextSchemeChangeConfirmMessage = nextState.schemeChangeConfirmMessage;
     const nextShowWtInfoModal = nextState.showWtInfoModal;
     const nextReactionSvgVersion = nextState.reactionSvgVersion;
     const {
       reaction: reactionFromCurrentState, activeTab, visible, activeAnalysisTab,
-      showSchemeChangeConfirm, showWtInfoModal, reactionSvgVersion
+      schemeChangeConfirmMessage, showWtInfoModal, reactionSvgVersion
     } = this.state;
     return (
       reactionFromNextProps.id !== reactionFromCurrentState.id
@@ -212,7 +198,7 @@ export default class ReactionDetails extends Component {
       || nextActiveTab !== activeTab || nextVisible !== visible
       || nextActiveAnalysisTab !== activeAnalysisTab
       || reactionFromNextState !== reactionFromCurrentState
-      || nextShowSchemeChangeConfirm !== showSchemeChangeConfirm
+      || nextSchemeChangeConfirmMessage !== schemeChangeConfirmMessage
       || nextShowWtInfoModal !== showWtInfoModal
       || nextReactionSvgVersion !== reactionSvgVersion
     );
@@ -397,130 +383,7 @@ export default class ReactionDetails extends Component {
     );
   }
 
-  reactionHeader(reaction) {
-    const titleTooltip = formatTimeStampsOfElement(reaction || {});
 
-    const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.is_shared === false
-      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
-
-    const copyBtn = (reaction.can_copy === true && !reaction.isNew) && (
-      <CopyElementModal
-        element={reaction}
-        defCol={defCol}
-      />
-    );
-
-    const colLabel = !reaction.isNew && (
-      <ElementCollectionLabels element={reaction} key={reaction.id} placement="right" />
-    );
-
-    const rsPlanLabel = (reaction.isNew || isEmpty(reaction.research_plans)) ? null : (
-      <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
-    );
-
-    return (
-      <div className="d-flex justify-content-between">
-        <div className="d-flex align-items-center gap-2">
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-            <span>
-              <i className="icon-reaction me-1" />
-              {reaction.title()}
-            </span>
-          </OverlayTrigger>
-          {colLabel}
-          {rsPlanLabel}
-          <ShowUserLabels element={reaction} />
-          <ElementAnalysesLabels element={reaction} key={`${reaction.id}_analyses`} />
-          <HeaderCommentSection element={reaction} />
-        </div>
-        <div className="d-flex align-items-center gap-1">
-          <ButtonToolbar className="gap-1 justify-content-end">
-            <PrintCodeButton element={reaction} />
-            {!reaction.isNew
-              && <OpenCalendarButton isPanelHeader eventableId={reaction.id} eventableType="Reaction" />}
-            <OverlayTrigger
-              placement="bottom"
-              overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
-            >
-              <Button
-                variant="success"
-                size="xxsm"
-                disabled={reaction.changed || reaction.isNew}
-                title={(reaction.changed || reaction.isNew)
-                  ? 'Report can be generated after reaction is saved.'
-                  : 'Generate report for this reaction'}
-                onClick={() => Utils.downloadFile({
-                  contents: `/api/v1/reports/docx?id=${reaction.id}`,
-                  name: reaction.name
-                })}
-              >
-                <i className="fa fa-cogs" />
-              </Button>
-            </OverlayTrigger>
-            {(reaction.changed || reaction.isNew === true)
-              && (
-                <>
-                  <OverlayTrigger
-                    placement="bottom"
-                    overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}
-                  >
-                    <Button
-                      variant="warning"
-                      size="xxsm"
-                      onClick={() => this.handleSubmit(true)}
-                      disabled={!permitOn(reaction) || !this.reactionIsValid() || reaction.isNew}
-                    >
-                      <i className="fa fa-floppy-o me-1" />
-                      <i className="fa fa-times" />
-                    </Button>
-                  </OverlayTrigger>
-                  <OverlayTrigger
-                    placement="bottom"
-                    overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}
-                  >
-                    <Button
-                      variant="warning"
-                      size="xxsm"
-                      onClick={() => this.handleSubmit()}
-                      disabled={!permitOn(reaction) || !this.reactionIsValid()}
-                    >
-                      <i className="fa fa-floppy-o " />
-                    </Button>
-                  </OverlayTrigger>
-                </>
-              )}
-            {copyBtn}
-            <ConfirmClose el={reaction} />
-          </ButtonToolbar>
-        </div>
-      </div>
-    );
-  }
-
-  reactionFooter() {
-    const { reaction } = this.state;
-    const submitLabel = (reaction && reaction.isNew) ? 'Create' : 'Save';
-
-    return (
-      <>
-        <Button variant="primary" onClick={() => DetailActions.close(reaction)}>
-          Close
-        </Button>
-        <Button
-          id="submit-reaction-btn"
-          variant="warning"
-          onClick={() => this.handleSubmit()}
-          disabled={!permitOn(reaction) || !this.reactionIsValid()}
-        >
-          {submitLabel}
-        </Button>
-        {reaction && !reaction.isNew && (
-          <ExportSamplesButton type="reaction" id={reaction.id} />
-        )}
-      </>
-    );
-  }
 
   refreshGraphic() {
     const { reaction, isRefreshingGraphic } = this.state;
@@ -590,7 +453,7 @@ export default class ReactionDetails extends Component {
     this.isUpdatingGraphic = true;
     const materialsSvgPaths = {
       starting_materials: reaction.starting_materials.map((material) => material.svgPath),
-      reactants: reaction.reactants.map((material) => material.svgPath),
+      reactants: reaction.reactantsWithSbmm.map((material) => material.svgPath),
       products: reaction.products.map((material) => [material.svgPath, material.equivalent])
     };
 
@@ -630,24 +493,70 @@ export default class ReactionDetails extends Component {
     });
   }
 
-  handleReactionSchemeChange(type) {
+  handleReactionSchemeChange(pendingSchemeType) {
     const { reaction } = this.state;
 
-    // If switching FROM weight_percentage to another scheme, show confirmation
-    if (reaction.weight_percentage && type !== 'weight_percentage') {
+    let currentSchemeType = 'default';
+    if (reaction.weight_percentage) currentSchemeType = 'weight_percentage';
+    if (reaction.gaseous) currentSchemeType = 'gaseous';
+
+    if (pendingSchemeType === currentSchemeType) {
+      return;
+    }
+
+    const isSwitchingFromWeightPercentage = (pendingSchemeType !== 'weight_percentage')
+      && (currentSchemeType === 'weight_percentage');
+    const isSwitchingFromGas = (pendingSchemeType !== 'gaseous') && (currentSchemeType === 'gaseous');
+    const isSwitchingToGas = (pendingSchemeType === 'gaseous') && (currentSchemeType !== 'gaseous');
+
+    const schemeSwitchClearsVariations = isSwitchingFromGas || isSwitchingToGas;
+
+    const schemeSwitchRequiresConfirmation = isSwitchingFromWeightPercentage || schemeSwitchClearsVariations;
+    if (schemeSwitchRequiresConfirmation) {
+      let schemeChangeConfirmMessage;
+      if (schemeSwitchClearsVariations && isSwitchingFromWeightPercentage) {
+        schemeChangeConfirmMessage = (
+          <>
+            Switching scheme will clear the Variations table, data will be lost.
+            <br />
+            Any assigned weight percentage reference and wt% values in wt% fields
+            <br />
+            of materials will be deleted.
+            <br />
+            Switch scheme?
+          </>
+        );
+      } else if (schemeSwitchClearsVariations) {
+        schemeChangeConfirmMessage = (
+          <>
+            Switching scheme will clear the Variations table, data will be lost. Switch scheme?
+          </>
+        );
+      } else {
+        schemeChangeConfirmMessage = (
+          <>
+            Any assigned weight percentage reference and wt% values in wt% fields
+            <br />
+            of materials will be deleted.
+            <br />
+            Switch scheme?
+          </>
+        );
+      }
+
       this.setState({
-        showSchemeChangeConfirm: true,
-        pendingSchemeType: type,
+        pendingSchemeType,
+        schemeChangeConfirmMessage,
       });
       return;
     }
 
-    this.applySchemeChange(type);
+    this.applySchemeChange(pendingSchemeType);
   }
 
   /**
    * Applies the scheme change without confirmation.
-   * Called directly when not switching from weight_percentage, or after user confirms.
+    * Called directly when no confirmation is required, or after user confirms.
    *
    * @param {string} type - The scheme type to switch to ('default', 'gaseous', 'weight_percentage')
    */
@@ -683,8 +592,8 @@ export default class ReactionDetails extends Component {
   confirmSchemeChange() {
     const { pendingSchemeType } = this.state;
     this.setState({
-      showSchemeChangeConfirm: false,
       pendingSchemeType: null,
+      schemeChangeConfirmMessage: null,
     }, () => {
       if (pendingSchemeType) {
         this.applySchemeChange(pendingSchemeType);
@@ -698,8 +607,8 @@ export default class ReactionDetails extends Component {
    */
   cancelSchemeChange() {
     this.setState({
-      showSchemeChangeConfirm: false,
       pendingSchemeType: null,
+      schemeChangeConfirmMessage: null,
     });
   }
 
@@ -827,7 +736,10 @@ export default class ReactionDetails extends Component {
 
   render() {
     const {
-      reaction, visible, activeTab, showSchemeChangeConfirm
+      reaction,
+      visible,
+      activeTab,
+      schemeChangeConfirmMessage,
     } = this.state;
     this.updateReactionVesselSize(reaction);
     let schemeType = 'Default';
@@ -862,7 +774,12 @@ export default class ReactionDetails extends Component {
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
           <div className="d-flex align-items-center">
             <Dropdown ref={this.schemeDropdownRef}>
-              <Dropdown.Toggle variant="info" size="sm" id="scheme-type-dropdown">
+              <Dropdown.Toggle
+                variant="info"
+                size="sm"
+                id="scheme-type-dropdown"
+                disabled={!permitOn(reaction)}
+              >
                 <i className="fa fa-cog" />
                 <span className="ms-1">
                   Current Scheme:&nbsp;
@@ -892,19 +809,15 @@ export default class ReactionDetails extends Component {
             </Dropdown>
             <Overlay
               target={() => this.schemeDropdownRef.current}
-              show={showSchemeChangeConfirm}
+              show={!!schemeChangeConfirmMessage}
               placement="bottom"
               rootClose
               onHide={() => this.cancelSchemeChange()}
             >
               <Tooltip placement="bottom" className="in" id="scheme-change-confirm-tooltip">
-                Any Assigned Weight percentage reference and wt% values in wt% fields
+                {schemeChangeConfirmMessage}
                 <br />
-                of materials will be deleted.
-                <br />
-                Switch scheme?
-                <br />
-                <ButtonToolbar className="gap-2 justify-content-center mt-1">
+                <ButtonToolbar className="justify-content-center mt-1">
                   <Button
                     variant="danger"
                     size="xxsm"
@@ -1006,7 +919,6 @@ export default class ReactionDetails extends Component {
           <ReactionVariations
             reaction={reaction}
             onReactionChange={this.handleReactionChange}
-            isActive={activeTab === REACTION_VARIATIONS_TAB_KEY}
           />
         </Tab>
       ),
@@ -1037,48 +949,96 @@ export default class ReactionDetails extends Component {
 
     const currentTab = (activeTab !== 0 && activeTab) || visible[0];
 
+    const titleTooltip = formatTimeStampsOfElement(reaction || {});
+    const title = reaction.title();
+
+    const titleAppendix = (
+      <>
+        {!reaction.isNew && !isEmpty(reaction.research_plans) && (
+          <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
+        )}
+        <ElementAnalysesLabels element={reaction} key={`${reaction.id}_analyses`} />
+      </>
+    );
+
+    const headerToolbar = (
+      <OverlayTrigger
+        overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
+      >
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={reaction.changed || reaction.isNew}
+          title={(reaction.changed || reaction.isNew)
+            ? 'Report can be generated after reaction is saved.'
+            : 'Generate report for this reaction'}
+          onClick={() => Utils.downloadFile({
+            contents: `/api/v1/reports/docx?id=${reaction.id}`,
+            name: reaction.name
+          })}
+        >
+          <i className="fa fa-cogs" />
+        </Button>
+      </OverlayTrigger>
+    );
+
+    const footerToolbar = !reaction.isNew && (
+      <ExportSamplesButton type="reaction" id={reaction.id} />
+    );
+
+    const showSave = reaction.changed || reaction.isNew;
+    const saveDisabled = !permitOn(reaction) || !this.reactionIsValid();
+
     return (
-      <DetailCard
+      <ElementDetailCard
+        element={reaction}
         isPendingToSave={reaction.isPendingToSave}
-        header={this.reactionHeader(reaction)}
-        footer={this.reactionFooter()}
+        title={title}
+        titleTooltip={titleTooltip}
+        titleAppendix={titleAppendix}
+        headerToolbar={headerToolbar}
+        footerToolbar={footerToolbar}
+        onSave={() => this.handleSubmit()}
+        onSaveClose={() => this.handleSubmit(true)}
+        showSave={showSave}
+        saveDisabled={saveDisabled}
+        showPrintCode
+        showCalendar
       >
         <ReactionSchemeGraphic
           key={`reaction-graphic-${reaction.id}-${this.state.reactionSvgVersion || 0}`}
           reaction={reaction}
-          onToggleLabel={(materialId) => {
-            reaction.toggleShowLabelForSample(materialId);
+          onToggleLabel={(materialId, isSbmm) => {
+            reaction.toggleShowLabelForSample(materialId, isSbmm);
             this.handleReactionChange(reaction, { updateGraphic: true });
           }}
           onRefresh={() => this.refreshGraphic()}
           isRefreshing={this.state.isRefreshingGraphic || false}
         />
-        <Modal show={this.state.showWtInfoModal} onHide={this.closeWtInfoModal} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>Weight Percentage Reaction Scheme</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <p>
-              The weight percentage scheme lets you set a reference material and a
-              target mass. Other materials can be assigned a weight percentage
-              (wt%) in the interval [0,1], and their mass will be computed as equal to
-              target_mass * wt%.
-            </p>
-            <p>
-              <strong>Key points: </strong>
-              select a reference material, set its target amount, enter
-              wt% for desired starting materials/reactants, and the system will
-              automatically recalculate amounts of those materials.
-            </p>
-            <p>
-              For full details and examples see the
-              <a href={documentationLink} target="_blank" rel="noreferrer" className="ms-1">documentation</a>
-            </p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={this.closeWtInfoModal}>Close</Button>
-          </Modal.Footer>
-        </Modal>
+        <AppModal
+          show={this.state.showWtInfoModal}
+          onHide={this.closeWtInfoModal}
+          title="Weight Percentage Reaction Scheme"
+          showFooter
+          closeLabel="Close"
+        >
+          <p>
+            The weight percentage scheme lets you set a reference material and a
+            target mass. Other materials can be assigned a weight percentage
+            (wt%) in the interval [0,1], and their mass will be computed as equal to
+            target_mass * wt%.
+          </p>
+          <p>
+            <strong>Key points: </strong>
+            select a reference material, set its target amount, enter
+            wt% for desired starting materials/reactants, and the system will
+            automatically recalculate amounts of those materials.
+          </p>
+          <p>
+            For full details and examples see the
+            <a href={documentationLink} target="_blank" rel="noreferrer" className="ms-1">documentation</a>
+          </p>
+        </AppModal>
         {this.state.sfn && <ScifinderSearch el={reaction} />}
         <div className="tabs-container--with-borders">
           <ElementDetailSortTab
@@ -1093,12 +1053,13 @@ export default class ReactionDetails extends Component {
             onSelect={this.handleSelect}
             id="reaction-detail-tab"
             unmountOnExit
+            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>
           <CommentModal element={reaction} />
         </div>
-      </DetailCard>
+      </ElementDetailCard>
     );
   }
 }

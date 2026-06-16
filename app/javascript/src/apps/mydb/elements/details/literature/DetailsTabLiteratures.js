@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
-import Immutable from 'immutable';
+import { Map } from 'immutable';
 import {
   Citation, doiValid, sanitizeDoi, groupByCitation, AddButton, LiteratureInput, LiteralType
 } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
@@ -18,6 +18,7 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import CitationPanel from 'src/apps/mydb/elements/details/literature/CitationPanel';
 import { createCitationTypeMap } from 'src/apps/mydb/elements/details/literature/CitationTools';
+import CreateButton from '../../../../../components/common/CreateButton';
 
 const Cite = require('citation-js');
 require('@citation-js/plugin-isbn');
@@ -57,7 +58,7 @@ export default class DetailsTabLiteratures extends Component {
 
     this.state = {
       literature: this.createEmptyLiterature(this.props.element.type),
-      literatures: new Immutable.Map(),
+      literatures: Map(),
       sortedIds: [],
     };
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -278,7 +279,7 @@ export default class DetailsTabLiteratures extends Component {
     const citationTypeMap = createCitationTypeMap(this.props.element.type);
     return (
       <>
-        <Row className='mb-4'>
+        <Row className="mb-2">
           <Col xs={8}>
             <LiteratureInput
               handleInputChange={this.handleInputChange}
@@ -297,23 +298,19 @@ export default class DetailsTabLiteratures extends Component {
             />
           </Col>
           <Col xs={1}>
-            <Button
-              variant="success"
-              size="sm"
+            <CreateButton
               onClick={this.fetchMetadata}
               title="fetch metadata for this doi or ISBN(open services) and add citation to selection"
               disabled={(isInvalidDoi && isInvalidIsbn) || readOnly}
-            >
-              <i className="fa fa-plus" aria-hidden="true" />
-            </Button>
+            />
           </Col>
         </Row>
-        <Row className='mb-4'>
+        <Row className="mb-2">
           <Col>
             <Citation literature={literature} />
           </Col>
         </Row>
-        <Row className='mb-4'>
+        <Row className="mb-2">
           <Col xs={7}>
             <LiteratureInput
               handleInputChange={this.handleInputChange}

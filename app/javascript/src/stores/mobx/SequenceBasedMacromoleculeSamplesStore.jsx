@@ -50,6 +50,7 @@ const validationFields = [
   'sequence_based_macromolecule.short_name',
   'sequence_based_macromolecule.post_translational_modifications.acetylation_lysin_number',
   'sequence_based_macromolecule.splitted_sequence',
+  'purity',
 ];
 
 const postModificationCheckboxWithDetailField = [
@@ -76,6 +77,7 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     open_sequence_based_macromolecule_samples: types.optional(types.optional(types.array(types.frozen({})), [])),
     sequence_based_macromolecule_sample: types.optional(types.frozen({}), {}),
     sequence_based_macromolecule_sample_checksum: types.optional(types.string, ''),
+    sequence_based_macromolecule_sample_calc_checksum: types.optional(types.string, ''),
     updated_sequence_based_macromolecule_sample_id: types.optional(types.number, 0),
     active_tab_key: types.optional(types.string, 'properties'),
     toggable_contents: types.optional(types.frozen({}), {}),
@@ -97,8 +99,17 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     conflict_sbmms: types.optional(types.array(types.frozen({})), []),
     show_search_options: types.optional(types.frozen({}), {}),
     list_grouped_by: types.optional(types.string, 'sbmm'),
+    // For ChemicalTab integration
+    saveInventoryAction: types.optional(types.boolean, false),
+    isChemicalEdited: types.optional(types.boolean, false),
   })
   .actions(self => ({
+    setSaveInventoryAction(value) {
+      self.saveInventoryAction = value;
+    },
+    editChemical(value) {
+      self.isChemicalEdited = value;
+    },
     searchForSequenceBasedMacromolecule: flow(function* searchForSequenceBasedMacromolecule(search_term, search_field) {
       let result = yield SequenceBasedMacromoleculesFetcher.searchForSequenceBasedMacromolecule(search_term, search_field);
       if (result?.search_results) {
@@ -240,12 +251,19 @@ export const SequenceBasedMacromoleculeSamplesStore = types
     setSequenceBasedMacromoleculeSample(sequence_based_macromolecule_sample, initial = false) {
       if (initial) {
         self.sequence_based_macromolecule_sample_checksum = sequence_based_macromolecule_sample._checksum;
+        self.sequence_based_macromolecule_sample_calc_checksum = sequence_based_macromolecule_sample.computeCalculationFieldsChecksum();
       }
+      const keepChangedState = sequence_based_macromolecule_sample.changed === true;
       sequence_based_macromolecule_sample.changed = false;
       const sequenceBasedMacromoleculeSample = new SequenceBasedMacromoleculeSample(sequence_based_macromolecule_sample);
+      const calculationFieldsChecksum = sequenceBasedMacromoleculeSample.computeCalculationFieldsChecksum();
 
-      if (sequenceBasedMacromoleculeSample.checksum() !== self.sequence_based_macromolecule_sample_checksum
-        || sequenceBasedMacromoleculeSample.isNew) {
+      if (
+        sequenceBasedMacromoleculeSample.checksum() !== self.sequence_based_macromolecule_sample_checksum
+        || calculationFieldsChecksum !== self.sequence_based_macromolecule_sample_calc_checksum
+        || sequenceBasedMacromoleculeSample.isNew
+        || keepChangedState
+      ) {
         sequenceBasedMacromoleculeSample.changed = true;
       }
 
@@ -259,6 +277,13 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       let sequenceBasedMacromoleculeSample = { ...self.sequence_based_macromolecule_sample };
       const { lastObject, lastKey } = self.getLastObjectAndKeyByField(field, sequenceBasedMacromoleculeSample);
       lastObject[lastKey] = value;
+
+      // Keep purity in sync with its backing field so checksum-based edit detection
+      // also works for purity-only changes.
+      if (lastKey === 'purity') {
+        lastObject._purity = value;
+        sequenceBasedMacromoleculeSample.changed = true;
+      }
 
       if (lastKey === 'splitted_sequence') {
         lastObject['sequence'] = value.split(' ').join('');
@@ -282,7 +307,7 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       }
 
       // sequenceBasedMacromoleculeSample.updated = false;
-      if (Object.keys(sequenceBasedMacromoleculeSample.errors).length >= 1) {
+      if (Object.keys(sequenceBasedMacromoleculeSample.errors).length >= 1 || lastKey === 'purity') {
         sequenceBasedMacromoleculeSample = self.checkIfFieldsAreValid(sequenceBasedMacromoleculeSample);
       }
 
@@ -517,6 +542,7 @@ export const SequenceBasedMacromoleculeSamplesStore = types
       validationFields.forEach((key) => {
         const hasValue = key.split('.').reduce((accumulator, currentValue) => accumulator?.[currentValue], sbmmSample);
         const errorPath = `errors.${key}`.split('.');
+        const purityNumber = Number(sbmmSample.purity);
 
         const isPrimaryAccession =
           self.sequence_based_macromolecule_sample.isNew && key.includes('primary_accession')
@@ -524,11 +550,16 @@ export const SequenceBasedMacromoleculeSamplesStore = types
         const isParentIdentifier =
           self.sequence_based_macromolecule_sample.isNew && key.includes('parent_identifier')
           && sbmm.uniprot_derivation == 'uniprot_modified' && !sbmm.parent_identifier;
+        const validPurity = sbmmSample.purity == '' || purityNumber === 0
+          || (Number.isFinite(purityNumber) && (purityNumber >= 0 && purityNumber <= 1));
 
-        if (!isPrimaryAccession && !isParentIdentifier && hasValue) {
+        if (!isPrimaryAccession && !isParentIdentifier && (hasValue || validPurity)) {
           self.removeError(sbmmSample, errorPath);
         } else if (isPrimaryAccession || isParentIdentifier) {
           self.setError(sbmmSample, errorPath, "Please choose a reference");
+        }
+        if (!validPurity && key == 'purity') {
+          self.setError(sbmmSample, errorPath, "Purity value should be >= 0 and <=1");
         }
       });
 

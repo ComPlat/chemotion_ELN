@@ -11,7 +11,7 @@ import DeleteButton from 'src/components/common/DeleteButton';
 // Function to decode all HTML entities (named, numeric decimal, and hexadecimal)
 function decodeHtmlEntities(text) {
   if (!text) return text;
-  
+
   // Use browser's native HTML entity decoding
   // This handles named entities (&gt;, &lt;, &amp;, etc.)
   // numeric decimal entities (&#62;, &#60;, etc.)
@@ -67,7 +67,7 @@ export default function ReactionConditions({
   const updateCondition = useCallback((index, value) => {
     // Decode HTML entities in real-time (handles any HTML entity)
     const decodedValue = decodeHtmlEntities(value);
-    
+
     // Update local state immediately for responsive UI
     const updatedConditions = [...conditions];
     updatedConditions[index] = decodedValue;
@@ -92,6 +92,13 @@ export default function ReactionConditions({
     handleChange(conditions.filter((_, i) => i !== index));
   }, [conditions, handleChange]);
 
+  const filterConditions = useCallback((option, inputValue) => {
+    if (!inputValue) return true;
+    const normalizedInput = inputValue.replace(/\s+/g, '');
+    const normalizedLabel = option.label.replace(/\s+/g, '');
+    return normalizedLabel.toLowerCase().includes(normalizedInput.toLowerCase());
+  }, []);
+
   return (
     <div className="material-group">
       <div className="pseudo-table__row pseudo-table__row-header">
@@ -99,16 +106,17 @@ export default function ReactionConditions({
           <div className="material-group__header-title">
             <CreateButton
               onClick={() => addCondition()}
-              isDisabled={isDisabled}
+              disabled={isDisabled}
               size="xsm"
             />
             <span>Conditions</span>
             <Select
-              disabled={isDisabled}
+              isDisabled={isDisabled}
               name="default_conditions"
               multi={false}
               options={conditionsOptions}
               onChange={({ value }) => addCondition(value)}
+              filterOption={filterConditions}
               size="xsm"
               placeholder="Add"
             />
@@ -117,6 +125,7 @@ export default function ReactionConditions({
       </div>
       <ReorderableList
         items={conditions}
+        isDisabled={isDisabled}
         getItemId={(item) => conditions.indexOf(item).toString()}
         onReorder={handleChange}
         renderItem={(condition, index) => (
@@ -128,8 +137,10 @@ export default function ReactionConditions({
               size="sm"
               value={condition}
               onChange={(e) => updateCondition(index, e.target.value)}
+              disabled={isDisabled}
             />
             <DeleteButton
+              disabled={isDisabled}
               onClick={() => removeCondition(index)}
             />
           </div>

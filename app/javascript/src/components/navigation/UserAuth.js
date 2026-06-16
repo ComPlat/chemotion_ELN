@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import 'whatwg-fetch';
+import propType from 'prop-types';
 import {
   Card,
   Dropdown,
-  Modal,
   Button,
   Table,
   Form,
@@ -11,6 +11,7 @@ import {
   Row,
 } from 'react-bootstrap';
 import _ from 'lodash';
+import AppModal from 'src/components/common/AppModal';
 
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -20,7 +21,6 @@ import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { UserLabelModal } from 'src/components/UserLabels';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
-import Affiliations from 'src/apps/userSettings/Affiliations';
 import AccountProfile from 'src/apps/userSettings/AccountProfile';
 
 export default class UserAuth extends Component {
@@ -32,9 +32,7 @@ export default class UserAuth extends Component {
       showLabelModal: false,
       currentGroups: [],
       currentDevices: [],
-      selectedUsers: null,
       showSubscription: false,
-      showAffiliations: false,
       showSettings: false,
       currentSubscriptions: [],
       showDeviceMetadataModal: false,
@@ -53,9 +51,6 @@ export default class UserAuth extends Component {
     this.handleSubscriptionClose = this.handleSubscriptionClose.bind(this);
     this.handleDeviceMetadataModalShow = this.handleDeviceMetadataModalShow.bind(this);
     this.handleDeviceMetadataModalClose = this.handleDeviceMetadataModalClose.bind(this);
-    this.handleAffiliationsShow = this.handleAffiliationsShow.bind(this);
-    this.handleAffiliationsHide = this.handleAffiliationsHide.bind(this);
-    this.renderAffiliations = this.renderAffiliations.bind(this);
     this.handleSettingsShow = this.handleSettingsShow.bind(this);
     this.handleSettingsHide = this.handleSettingsHide.bind(this);
     this.renderSettings = this.renderSettings.bind(this);
@@ -286,23 +281,6 @@ export default class UserAuth extends Component {
     });
   };
 
-  handleAffiliationsShow() {
-    this.setState({ showAffiliations: true });
-  }
-
-  handleAffiliationsHide = () => {
-    this.setState({ showAffiliations: false });
-  };
-
-  renderAffiliations() {
-    return this.state.showAffiliations ? (
-      <Affiliations
-        show={this.state.showAffiliations}
-        onHide={this.handleAffiliationsHide}
-      />
-    ) : null;
-  }
-
   // eslint-disable-next-line class-methods-use-this
   handleSettingsShow() {
     this.setState({ showSettings: true });
@@ -310,26 +288,43 @@ export default class UserAuth extends Component {
 
   handleSettingsHide = () => {
     UserActions.fetchCurrentUser();
-    const { currentUser } = this.state;
-    UserActions.updateUserProfile(currentUser.profile);
     this.setState({ showSettings: false });
   };
 
-  renderSettings() {
-    const { showSettings, currentUser } = this.state;
+  renderAffiliations() {
+    const { showAffiliations } = this.state;
+    if (!showAffiliations) return null;
 
     return (
-      <Modal
-        fullscreen
-        show={showSettings}
-        onHide={this.handleSettingsHide}
-        centered
+      <Affiliations
+        show={showAffiliations}
+        onHide={this.handleAffiliationsHide}
+      />
+    );
+  }
+
+  renderSettings() {
+    const { showSettings, currentUser } = this.state;
+    if (!showSettings) {
+      return;
+    }
+
+    return (
+      <div style={{
+        zIndex: 15,
+        background: 'white',
+        position: 'fixed',
+        left: 0,
+        width: '100vw',
+        top: 0,
+        bottom: 0,
+        margin: 0,
+        height: 'auto',
+        overflow: 'auto',
+      }}
       >
-        <Modal.Header closeButton />
-        <Modal.Body style={{ padding: 0 }}>
-          <AccountProfile currentUser={currentUser} />
-        </Modal.Body>
-      </Modal>
+        <AccountProfile currentUser={currentUser} closeSettings={this.handleSettingsHide} />
+      </div>
     );
   }
 
@@ -375,16 +370,15 @@ export default class UserAuth extends Component {
     ));
 
     return (
-      <Modal
-        centered
+      <AppModal
+        title="My Groups & Devices"
         show={showModal}
         size="xl"
         onHide={this.handleClose}
+        closeLabel="Close"
+        showFooter
       >
-        <Modal.Header closeButton>
-          <Modal.Title>My Groups & Devices</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="d-flex flex-column gap-3">
+        <div className="d-flex flex-column gap-3">
           <Card border="success">
             <Card.Header>
               Create new group
@@ -464,14 +458,16 @@ export default class UserAuth extends Component {
               </Table>
             </Card.Body>
           </Card>
-        </Modal.Body>
-      </Modal>
+        </div>
+      </AppModal>
     );
   }
 
   // render modal
   renderSubscribeModal() {
-    const tbody = this.state.currentSubscriptions.map((g) => (
+    const { currentSubscriptions, showSubscription } = this.state;
+
+    const tbody = currentSubscriptions.map((g) => (
       <tr key={`row_${g.id}`} className="fw-bold">
         <td width="10%" style={{ border: 'none' }}>
           <Button
@@ -489,22 +485,17 @@ export default class UserAuth extends Component {
     ));
 
     return (
-      <Modal
-        centered
-        show={this.state.showSubscription}
+      <AppModal
+        title="My Subscription"
+        show={showSubscription}
         onHide={this.handleSubscriptionClose}
+        closeLabel="Close"
+        showFooter
       >
-        <Modal.Header closeButton>
-          <Modal.Title>My Subscription</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ overflow: 'auto' }}>
-          <div>
-            <Table>
-              <tbody>{tbody}</tbody>
-            </Table>
-          </div>
-        </Modal.Body>
-      </Modal>
+        <Table>
+          <tbody>{tbody}</tbody>
+        </Table>
+      </AppModal>
     );
   }
 
@@ -512,134 +503,134 @@ export default class UserAuth extends Component {
     const { showDeviceMetadataModal, device, deviceMetadata } = this.state;
     const title = 'Device Metadata';
     return (
-      <Modal
-        centered
-        show={showDeviceMetadataModal}
-        onHide={this.handleDeviceMetadataModalClose}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>
+      <AppModal
+        title={(
+          <>
             {device.name}
             {' '}
             Metadata
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Card border="success">
-            <Card.Header>
-              {title}
-            </Card.Header>
-            <Card.Body>
-              <Form>
-                <Form.Group controlId="metadataFormDOI">
-                  <Form.Label>DOI</Form.Label>
-                  <Form.Control
-                    type="text"
-                    defaultValue={deviceMetadata.doi}
-                    readonly="true"
-                  />
-                </Form.Group>
-                <Form.Group controlId="metadataFormState">
-                  <Form.Label>State</Form.Label>
-                  <Form.Control
-                    type="text"
-                    defaultValue={deviceMetadata.data_cite_state}
-                    readonly="true"
-                  />
-                </Form.Group>
+          </>
+        )}
+        show={showDeviceMetadataModal}
+        onHide={this.handleDeviceMetadataModalClose}
+        closeLabel="Close"
+        showFooter
+      >
+        <Card border="success">
+          <Card.Header>
+            {title}
+          </Card.Header>
+          <Card.Body>
+            <Form>
+              <Form.Group controlId="metadataFormDOI">
+                <Form.Label>DOI</Form.Label>
+                <Form.Control
+                  type="text"
+                  defaultValue={deviceMetadata.doi}
+                  readonly="true"
+                />
+              </Form.Group>
+              <Form.Group controlId="metadataFormState">
+                <Form.Label>State</Form.Label>
+                <Form.Control
+                  type="text"
+                  defaultValue={deviceMetadata.data_cite_state}
+                  readonly="true"
+                />
+              </Form.Group>
 
-                <Form.Group controlId="metadataFormURL">
-                  <Form.Label>URL</Form.Label>
-                  <Form.Control
-                    type="text"
-                    defaultValue={deviceMetadata.url}
-                    readonly="true"
-                  />
-                </Form.Group>
+              <Form.Group controlId="metadataFormURL">
+                <Form.Label>URL</Form.Label>
+                <Form.Control
+                  type="text"
+                  defaultValue={deviceMetadata.url}
+                  readonly="true"
+                />
+              </Form.Group>
 
-                <Form.Group controlId="metadataFormLandingPage">
-                  <Form.Label>Landing Page</Form.Label>
-                  <Form.Control
-                    type="text"
-                    defaultValue={deviceMetadata.landing_page}
-                    readonly="true"
-                  />
-                </Form.Group>
-                <Form.Group controlId="metadataFormName">
-                  <Form.Label>Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    defaultValue={deviceMetadata.name}
-                    readonly="true"
-                  />
-                </Form.Group>
-                <Form.Group controlId="metadataFormPublicationYear">
-                  <Form.Label>Publication Year</Form.Label>
-                  <Form.Control
-                    type="number"
-                    defaultValue={deviceMetadata.publication_year}
-                    readonly="true"
-                  />
-                </Form.Group>
-                <Form.Group controlId="metadataFormDescription">
-                  <Form.Label>Description</Form.Label>
-                  <Form.Control
-                    type="text"
-                    defaultValue={deviceMetadata.description}
-                    readonly="true"
-                  />
-                </Form.Group>
+              <Form.Group controlId="metadataFormLandingPage">
+                <Form.Label>Landing Page</Form.Label>
+                <Form.Control
+                  type="text"
+                  defaultValue={deviceMetadata.landing_page}
+                  readonly="true"
+                />
+              </Form.Group>
+              <Form.Group controlId="metadataFormName">
+                <Form.Label>Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  defaultValue={deviceMetadata.name}
+                  readonly="true"
+                />
+              </Form.Group>
+              <Form.Group controlId="metadataFormPublicationYear">
+                <Form.Label>Publication Year</Form.Label>
+                <Form.Control
+                  type="number"
+                  defaultValue={deviceMetadata.publication_year}
+                  readonly="true"
+                />
+              </Form.Group>
+              <Form.Group controlId="metadataFormDescription">
+                <Form.Label>Description</Form.Label>
+                <Form.Control
+                  type="text"
+                  defaultValue={deviceMetadata.description}
+                  readonly="true"
+                />
+              </Form.Group>
 
-                {deviceMetadata.dates
-                  && deviceMetadata.dates.map((dateItem, index) => (
-                    <div key={index}>
-                      <Col smOffset={0} sm={6}>
-                        <Form.Group>
-                          <Form.Label>Date</Form.Label>
-                          <Form.Control
-                            type="text"
-                            defaultValue={dateItem.date}
-                            readonly="true"
-                          />
-                        </Form.Group>
-                      </Col>
-                      <Col smOffset={0} sm={6}>
-                        <Form.Group>
-                          <Form.Label>DateType</Form.Label>
-                          <Form.Control
-                            type="text"
-                            defaultValue={dateItem.dateType}
-                            readonly="true"
-                          />
-                        </Form.Group>
-                      </Col>
-                    </div>
-                  ))}
+              {deviceMetadata.dates
+                && deviceMetadata.dates.map((dateItem, index) => (
+                  <div key={index}>
+                    <Col smOffset={0} sm={6}>
+                      <Form.Group>
+                        <Form.Label>Date</Form.Label>
+                        <Form.Control
+                          type="text"
+                          defaultValue={dateItem.date}
+                          readonly="true"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col smOffset={0} sm={6}>
+                      <Form.Group>
+                        <Form.Label>DateType</Form.Label>
+                        <Form.Control
+                          type="text"
+                          defaultValue={dateItem.dateType}
+                          readonly="true"
+                        />
+                      </Form.Group>
+                    </Col>
+                  </div>
+                ))}
 
-                <Row>
-                  <Col smOffset={0} sm={12}>
-                    <p className="text-right">
-                      DataCiteVersion:
-                      {' '}
-                      {deviceMetadata.data_cite_version}
-                      <br />
-                      DataCiteUpdatedAt:
-                      {' '}
-                      {formatDate(deviceMetadata.data_cite_updated_at)}
-                      <br />
-                    </p>
-                  </Col>
-                </Row>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Modal.Body>
-      </Modal>
+              <Row>
+                <Col smOffset={0} sm={12}>
+                  <p className="text-right">
+                    DataCiteVersion:
+                    {' '}
+                    {deviceMetadata.data_cite_version}
+                    <br />
+                    DataCiteUpdatedAt:
+                    {' '}
+                    {formatDate(deviceMetadata.data_cite_updated_at)}
+                    <br />
+                  </p>
+                </Col>
+              </Row>
+            </Form>
+          </Card.Body>
+        </Card>
+      </AppModal>
     );
   }
 
   render() {
     const { currentUser, showLabelModal, showSubscription } = this.state;
+    const { userMenuDropdownToggleVariant } = this.props;
     if (!currentUser) {
       return <i className="fa fa-spinner" />;
     }
@@ -647,7 +638,7 @@ export default class UserAuth extends Component {
     return (
       <>
         <Dropdown>
-          <Dropdown.Toggle variant="light">
+          <Dropdown.Toggle variant={userMenuDropdownToggleVariant}>
             <i className="fa fa-user me-1" />
             {currentUser.name}
           </Dropdown.Toggle>
@@ -656,15 +647,7 @@ export default class UserAuth extends Component {
               eventKey="1"
               onClick={this.handleSettingsShow}
             >
-              Account &amp; Profile
-            </Dropdown.Item>
-            <Dropdown.Item eventKey="3" href="/users/edit">
-              Change Password
-            </Dropdown.Item>
-            <Dropdown.Item
-              onClick={this.handleAffiliationsShow}
-            >
-              My Affiliations
+              Settings
             </Dropdown.Item>
             <Dropdown.Item onClick={this.handleShow}>My Groups & Devices</Dropdown.Item>
             <Dropdown.Item onClick={this.handleLabelShow}>My Labels</Dropdown.Item>
@@ -691,7 +674,6 @@ export default class UserAuth extends Component {
         </Dropdown>
 
         {this.renderModal()}
-        {this.renderAffiliations()}
         {this.renderSettings()}
         <UserLabelModal
           showLabelModal={showLabelModal}
@@ -703,3 +685,11 @@ export default class UserAuth extends Component {
     );
   }
 }
+
+UserAuth.propTypes = {
+  userMenuDropdownToggleVariant: propType.string,
+};
+
+UserAuth.defaultProps = {
+  userMenuDropdownToggleVariant: 'topbar',
+};

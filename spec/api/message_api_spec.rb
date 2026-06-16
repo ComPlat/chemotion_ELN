@@ -75,8 +75,8 @@ describe Chemotion::MessageAPI do
                                      headers: { 'CONTENT_TYPE' => 'application/json' }
       end
 
-      it 'returns 204' do
-        expect(response.code).to eq '204'
+      it 'returns 201' do
+        expect(response.code).to eq '201'
       end
     end
   end

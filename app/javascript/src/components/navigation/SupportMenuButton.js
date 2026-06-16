@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Dropdown } from 'react-bootstrap';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -16,19 +17,27 @@ function ExternalItem({ title, href }) {
   );
 }
 
-export default function SupportMenuButton({ linkToEln = false }) {
+ExternalItem.propTypes = {
+  title: PropTypes.string.isRequired,
+  href: PropTypes.string.isRequired,
+};
+
+export default function SupportMenuButton({ linkToEln, variant }) {
   const [version, setVersion] = useState({});
+  const customLinks = Array.isArray(window.__INFO_SUPPORT_LINKS__) ? window.__INFO_SUPPORT_LINKS__ : [];
+
   useEffect(() => {
     const onUiStoreChange = (state) => setVersion(state.version);
     UIStore.listen(onUiStoreChange);
     onUiStoreChange(UIStore.getState());
     return () => UIStore.unlisten(onUiStoreChange);
   }, []);
+
   const hasVersions = version && Object.keys(version).length > 1;
 
   return (
     <Dropdown>
-      <Dropdown.Toggle variant="light">
+      <Dropdown.Toggle variant={variant}>
         <i className="fa fa-info-circle me-1" />
         Info & Support
       </Dropdown.Toggle>
@@ -39,6 +48,12 @@ export default function SupportMenuButton({ linkToEln = false }) {
         <ExternalItem title="Search documentation" href="https://chemotion.net/search" />
         <ExternalItem title="Helpdesk - Contact Us" href="https://chemotion.net/helpdesk" />
         <ExternalItem title="Report an issue on Github" href="https://github.com/ComPlat/chemotion_ELN/issues" />
+
+        {customLinks.length > 0 && <Dropdown.Divider />}
+        {customLinks.map((link) => (
+          <ExternalItem key={link.id} title={link.label} href={link.url} />
+        ))}
+
         <Dropdown.Divider />
 
         {linkToEln
@@ -64,3 +79,13 @@ export default function SupportMenuButton({ linkToEln = false }) {
     </Dropdown>
   );
 }
+
+SupportMenuButton.propTypes = {
+  linkToEln: PropTypes.bool,
+  variant: PropTypes.string,
+};
+
+SupportMenuButton.defaultProps = {
+  linkToEln: false,
+  variant: 'topbar',
+};

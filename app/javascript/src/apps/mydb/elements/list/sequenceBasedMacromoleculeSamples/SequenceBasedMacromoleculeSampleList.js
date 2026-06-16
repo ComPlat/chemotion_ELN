@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Badge } from 'react-bootstrap';
 
 import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
+import ElementReactionLabels from 'src/apps/mydb/elements/labels/ElementReactionLabels';
 import CommentIcon from 'src/components/comments/CommentIcon';
 import ElementGroupsRenderer from 'src/apps/mydb/elements/list/renderers/ElementGroupsRenderer';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
@@ -64,6 +65,7 @@ function ListItem({ element, showDetails }) {
       </div>
       <div className="d-flex align-items-center gap-1 flex-wrap">
         <CommentIcon commentCount={element.comment_count} />
+        <ElementReactionLabels element={element} />
         <ElementCollectionLabels element={element} />
       </div>
     </div>

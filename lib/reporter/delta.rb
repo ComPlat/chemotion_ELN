@@ -1,3 +1,5 @@
+require 'cgi'
+
 module Reporter
   # Delta class to convert Quill delta format to HTML
   class Delta
@@ -113,7 +115,7 @@ module Reporter
     end
 
     def buildDeltaOps(op)
-      return op["insert"] if (!op["attributes"]) && (!(op && op["insert"].is_a?(Hash) && op["insert"]["image"]))
+      return CGI.escapeHTML(op["insert"].to_s) if (!op["attributes"]) && (!(op && op["insert"].is_a?(Hash) && op["insert"]["image"]))
 
       styles = []
       tags = []
@@ -152,7 +154,7 @@ module Reporter
 
     def html_with_tags_style(op, tags, styles)
       style = styles.count > 0 ? " style=\"#{styles.join(";")}\"" : ""
-      html = "<span#{style}>#{op["insert"]}</span>"
+      html = "<span#{style}>#{CGI.escapeHTML(op["insert"].to_s)}</span>"
 
       tags.each { |tag| html = "<#{tag}>#{html}</#{tag}>" }
       html

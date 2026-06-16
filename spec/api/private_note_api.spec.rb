@@ -11,8 +11,8 @@ end
 describe Chemotion::PrivateNoteAPI do
   let!(:unauthorized_user) { create(:person) }
   let!(:author_user) { create(:person) }
-  let!(:unauthorized_user_collection) { create(:collection, user: unauthorized_user, is_shared: false) }
-  let!(:authorized_user_collection) { create(:collection, user: author_user, is_shared: false) }
+  let!(:unauthorized_user_collection) { create(:collection, user: unauthorized_user) }
+  let!(:authorized_user_collection) { create(:collection, user: author_user) }
   let!(:reaction) { create(:reaction, collections: [unauthorized_user_collection]) }
   let!(:sample) { create(:sample, collections: [unauthorized_user_collection]) }
   let!(:screen) { create(:screen, collections: [unauthorized_user_collection]) }

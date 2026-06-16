@@ -57,15 +57,14 @@ module Chemotion
             optional :from_date, type: Date
             optional :to_date, type: Date
             optional :collection_id, type: Integer
-            optional :is_sync_to_me, type: Boolean, default: false
           end
           optional :limit, type: Integer, desc: 'Limit number of samples'
         end
 
         before do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
-          @samples = Sample.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).read?
+          collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
+          @samples = Sample.by_collection_id(collection.id).by_ui_state(params[:ui_state])
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).read_all?
         end
 
         # we are using POST because the fetchers don't support GET requests with body data
@@ -221,9 +220,6 @@ module Chemotion
       desc 'Return serialized molecules_samples_groups of current user'
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
-        optional :sync_collection_id,
-                 type: Integer,
-                 desc: 'SyncCollectionsUser id'
         optional :molecule_sort, type: Integer, desc: 'Sort by parameter'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
         optional :to_date, type: Integer, desc: 'created_date to in ms'
@@ -234,36 +230,15 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
 
       get do
-        own_collection = false
         sample_scope = Sample.none
         if params[:collection_id]
           begin
-            c = Collection.belongs_to_or_shared_by(
-              current_user.id, current_user.group_ids
-            ).find(params[:collection_id])
-
-            !c.is_shared && (c.shared_by_id != current_user.id) &&
-              (own_collection = true)
-
-            sample_scope = Collection.belongs_to_or_shared_by(
-              current_user.id, current_user.group_ids
-            ).find(params[:collection_id]).samples
-          rescue ActiveRecord::RecordNotFound
-            Sample.none
-          end
-        elsif params[:sync_collection_id]
-          begin
-            own_collection = false
-            c = current_user.all_sync_in_collections_users
-                            .find(params[:sync_collection_id])
-
-            sample_scope = c.collection.samples
+            sample_scope = Collection.accessible_for(current_user).find(params[:collection_id]).samples
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end
         else
           # All collection
-          own_collection = true
           sample_scope = Sample.for_user(current_user.id).distinct
         end
         sample_scope = sample_scope.includes_for_list_display
@@ -343,7 +318,7 @@ module Chemotion
               policy: @element_policy,
             ),
             literatures: Entities::LiteratureEntity.represent(
-              citation_for_elements(params[:id], 'Sample'),
+              citation_for_elements(sample.id, 'Sample'),
               with_user_info: true,
             ),
           }
@@ -480,13 +455,20 @@ module Chemotion
           kinds = @sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          present(
-            @sample,
-            with: Entities::SampleEntity,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: @sample).detail_levels,
-            policy: @element_policy,
-            root: :sample,
-          )
+          {
+            sample: Entities::SampleEntity.represent(
+              @sample,
+              detail_levels: ElementDetailLevelCalculator
+                .new(user: current_user, element: @sample)
+                .detail_levels,
+              policy: @element_policy,
+            ),
+            literatures: Entities::LiteratureEntity.represent(
+              citation_for_elements(@sample.id, 'Sample'),
+              with_user_info: true,
+            ),
+          }
+
         rescue ActiveRecord::RecordNotUnique => e
           # Extract the column or index name from the error message
           match = e.message.match(/duplicate key value violates unique constraint "(?<index_name>.+)"/)
@@ -620,26 +602,16 @@ module Chemotion
         literatures = attributes.delete(:literatures)
 
         sample = Sample.new(attributes)
+        collections = []
 
         if params[:collection_id]
-          collection = current_user.collections.find_by(id: params[:collection_id])
-          sample.collections << collection if collection.present?
+          collection = Collection.accessible_for(current_user).find_by(id: params[:collection_id])
+          collections << collection if collection.present?
         end
 
-        is_shared_collection = false
-        if collection.blank?
-          sync_collection = current_user.all_sync_in_collections_users.find_by(id: params[:collection_id])
-          if sync_collection.present?
-            is_shared_collection = true
-            sample.collections << Collection.find(sync_collection['collection_id'])
-            sample.collections << Collection.get_all_collection_for_user(sync_collection['shared_by_id'])
-          end
-        end
-
-        unless is_shared_collection
-          all_coll = Collection.get_all_collection_for_user(current_user.id)
-          sample.collections << all_coll
-        end
+        all_coll = Collection.get_all_collection_for_user(current_user.id)
+        collections << all_coll if all_coll.present?
+        sample.collections = collections.uniq
 
         sample.container = update_datamodel(params[:container])
         sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])

@@ -13,13 +13,14 @@ import { CommentButton, CommentBox } from 'src/components/common/AnalysisComment
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 import AnalysisHeader from 'src/apps/mydb/elements/details/deviceDescriptions/analysesTab/AnalysisHeader';
 import AnalysesSortableContainer from 'src/apps/mydb/elements/details/deviceDescriptions/analysesTab/AnalysesSortableContainer';
 
 function AnalysesContainer({ readonly }) {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
   const deviceDescription = deviceDescriptionsStore.device_description;
-  const containers = deviceDescription.container.children[0].children;
+  const containers = ArrayUtils.sortArrByIndex(deviceDescription.container.children[0].children);
   const mode = deviceDescriptionsStore.analysis_mode;
 
   useEffect(() => {
@@ -136,7 +137,7 @@ function AnalysesContainer({ readonly }) {
           <div>
             <div className="d-flex justify-content-between align-items-center mb-3">
               {modeButton()}
-              <ButtonToolbar className="gap-2">
+              <ButtonToolbar>
                 <CommentButton
                   toggleCommentBox={deviceDescriptionsStore.toggleAnalysisCommentBox}
                   isVisible={deviceDescriptionsStore.analysis_comment_box}
@@ -176,7 +177,7 @@ function AnalysesContainer({ readonly }) {
           <div>
             <div className="d-flex justify-content-between align-items-center">
               <p className="m-0">There are currently no Analyses.</p>
-              <ButtonToolbar className="gap-2">
+              <ButtonToolbar>
                 <CommentButton
                   toggleCommentBox={deviceDescriptionsStore.toggleAnalysisCommentBox}
                   isVisible={deviceDescriptionsStore.analysis_comment_box}

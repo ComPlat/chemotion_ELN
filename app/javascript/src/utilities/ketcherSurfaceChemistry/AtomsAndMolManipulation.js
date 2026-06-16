@@ -5,7 +5,7 @@
 /* eslint-disable no-param-reassign */
 import {
   getTemplateType, initializeKetcherData, templateWithBoundingBox,
-  fetchKetcherData
+  fetchKetcherData, parsePolymerEntryByAtomIndex
 } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   imageNodeCounter, imageUsedCounterSetter,
@@ -129,40 +129,75 @@ const associateTextNodeWithNewAlias = (atomLocation, newAlias, oldAlias) => {
 };
 
 // helper function to process ketcher-rails files and adding image to ketcher canvas
+// List order must match atom index order (first entry = first R# atom) so shapes stay correct on import.
 const addingPolymersToKetcher = async (railsPolymersList, data) => {
   try {
-    // Split by whitespace and drop empties so each R# atom gets the correct entry (e.g. "6/7/1.00-2.00" -> template 7)
+    // Split by whitespace and drop empties; preserve order so each R# atom gets the correct entry
     const polymerList = (railsPolymersList || '').trim().split(/\s+/).filter(Boolean);
-    let visitedAtoms = 0;
     const collectedImages = [];
     await initializeKetcherData(data);
 
-    // eslint-disable-next-line no-restricted-syntax
-    for (const molName of mols) {
-      const molecule = data[molName];
-      if (!molecule?.atoms) continue;
-      for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
-        const atom = molecule.atoms[atomIndex];
-        const polymerItem = polymerList[visitedAtoms];
-        const aliasPass = (
-          atom.type === KET_TAGS.rgLabel
-          || atom.label === KET_TAGS.inspiredLabel
-          || ALIAS_PATTERNS.threeParts.test(atom.alias)
-        );
-        if (polymerItem && aliasPass) {
-          // step 1: get template type from polymer entry (e.g. "6/7/1.00-2.00" -> type 7, size 1.00-2.00)
-          const { type: templateType, size: templateSize } = getTemplateType(polymerItem);
-          // step 2: update atom with alias
-          imageUsedCounterSetter(imageNodeCounter + 1);
-          visitedAtoms += 1;
-          data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, imageNodeCounter);
-          // step 3: sync bounding box with atom location (fallback to bead if template id not found)
-          const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
-          // step 4: add to the list
-          if (newTemplate) collectedImages.push(newTemplate);
+    // When format is atomIndex/templateId/size (e.g. "2/10/1.00-1.00 0/25/1.00-1.00 1/52/1.50-2.00"),
+    // assign each entry to the correct atom by index so images and TextNode aliases stay in sync.
+    const polymerByAtomIndex = {};
+    let useIndexedFormat = false;
+    for (let i = 0; i < polymerList.length; i++) {
+      const parsed = parsePolymerEntryByAtomIndex(polymerList[i]);
+      if (parsed != null) {
+        polymerByAtomIndex[parsed.atomIndex] = { type: parsed.type, size: parsed.size };
+        useIndexedFormat = true;
+      }
+    }
+
+    if (useIndexedFormat && Object.keys(polymerByAtomIndex).length > 0) {
+      let maxAtomIndex = -1;
+      for (const molName of mols) {
+        const molecule = data[molName];
+        if (!molecule?.atoms) continue;
+        for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
+          const atom = molecule.atoms[atomIndex];
+          const aliasPass = (
+            atom.type === KET_TAGS.rgLabel
+            || atom.label === KET_TAGS.inspiredLabel
+            || ALIAS_PATTERNS.threeParts.test(atom.alias)
+          );
+          const entry = polymerByAtomIndex[atomIndex];
+          if (entry && aliasPass) {
+            const { type: templateType, size: templateSize } = { type: entry.type, size: entry.size };
+            data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, atomIndex);
+            const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
+            if (newTemplate) collectedImages.push(newTemplate);
+            if (atomIndex > maxAtomIndex) maxAtomIndex = atomIndex;
+          }
+        }
+      }
+      imageUsedCounterSetter(maxAtomIndex >= 0 ? maxAtomIndex : 0);
+    } else {
+      // Legacy: assign in consumption order (no atom index in polymer entries)
+      let visitedAtoms = 0;
+      for (const molName of mols) {
+        const molecule = data[molName];
+        if (!molecule?.atoms) continue;
+        for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
+          const atom = molecule.atoms[atomIndex];
+          const polymerItem = polymerList[visitedAtoms];
+          const aliasPass = (
+            atom.type === KET_TAGS.rgLabel
+            || atom.label === KET_TAGS.inspiredLabel
+            || ALIAS_PATTERNS.threeParts.test(atom.alias)
+          );
+          if (polymerItem && aliasPass) {
+            const { type: templateType, size: templateSize } = getTemplateType(polymerItem);
+            imageUsedCounterSetter(imageNodeCounter + 1);
+            visitedAtoms += 1;
+            data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, imageNodeCounter);
+            const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
+            if (newTemplate) collectedImages.push(newTemplate);
+          }
         }
       }
     }
+
     return { c_images: collectedImages, molfileData: data };
   } catch (err) {
     console.error({ err: err.message });

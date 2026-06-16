@@ -14,7 +14,7 @@ module Usecases
       def perform!
         sample_id = nil
         # check permission to update sample
-        sample_id = user_accessible_samples.find(params[:sample_id]).id if params[:sample_id]
+        sample_id = sample.id if params[:sample_id]
         sample_task.update!(
           description: params[:description],
           sample_id: sample_id,
@@ -23,11 +23,10 @@ module Usecases
 
       private
 
-      # This encapsulates the logic which samples a given user can access.
-      # As in the near future the logic for shared/synched collections will change, it is feasible to extract
-      # this into its own method, even if currently there is only dummy logic used
-      def user_accessible_samples
-        user.samples
+      def sample
+        Sample.find(params[:sample_id]).tap do |sample|
+          raise ActiveRecord::RecordNotFound unless ElementPolicy.new(user, sample).read?
+        end
       end
     end
   end

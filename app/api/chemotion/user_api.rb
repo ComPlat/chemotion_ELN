@@ -7,10 +7,12 @@ module Chemotion
       desc 'Find top 3 matched user names'
       params do
         requires :name, type: String
-        optional :type, type: [String], desc: 'user types',
-                        coerce_with: ->(val) { val.split(/[\s|,]+/) },
-                        values: %w[Group Person],
-                        default: %w[Group Person]
+        optional :type,
+                 type: [String],
+                 desc: 'user types',
+                 coerce_with: ->(val) { val.split(/[\s|,]+/) },
+                 values: %w[Group Person],
+                 default: %w[Group Person]
       end
       get 'name' do
         return { users: [] } if params[:name].blank?
@@ -24,10 +26,28 @@ module Chemotion
         present current_user, with: Entities::UserEntity, root: 'user'
       end
 
-      desc 'list user labels'
-      get 'list_labels' do
-        labels = UserLabel.my_labels(current_user)
-        present labels || [], with: Entities::UserLabelEntity, root: 'labels'
+      resource :two_factor do
+        desc 'Get 2FA QR code and status'
+        get do
+          {
+            otp_required_for_login: current_user.otp_required_for_login,
+          }
+        end
+
+        desc 'Enable 2FA by verifying OTP code'
+        put do
+          if current_user.otp_required_for_login
+            link = OtpWebToken.disable_link(current_user)
+            TwoFactorAuthMailer.disable_mail(current_user, link).deliver_now
+          else
+            link = OtpWebToken.enable_link(current_user)
+            TwoFactorAuthMailer.enable_mail(current_user, link).deliver_now
+          end
+
+          {
+            success: true,
+          }
+        end
       end
 
       desc 'list structure editors'
@@ -36,43 +56,20 @@ module Chemotion
         %w[chemdrawEditor marvinjsEditor ketcherEditor].each do |str|
           editors.push(str) if current_user.matrix_check_by_name(str)
         end
-        present Matrice.where(name: editors).order('name'), with: Entities::MatriceEntity, root: 'matrices',
-                                                            unexpose_include_ids: true, unexpose_exclude_ids: true
+        matrices = Matrice.where(name: editors)
+                          .order(:name)
+
+        present matrices,
+                with: Entities::MatriceEntity,
+                root: 'matrices',
+                unexpose_include_ids: true,
+                unexpose_exclude_ids: true
       end
 
       namespace :omniauth_providers do
         desc 'get omniauth providers'
         get do
           { providers: Devise.omniauth_configs.keys, current_user: current_user }
-        end
-      end
-
-      namespace :save_label do
-        desc 'create or update user labels'
-        params do
-          optional :id, type: Integer
-          optional :title, type: String
-          optional :description, type: String
-          optional :color, type: String
-          optional :access_level, type: Integer
-        end
-        put do
-          attr = {
-            id: params[:id],
-            user_id: current_user.id,
-            access_level: params[:access_level] || 0,
-            title: params[:title],
-            description: params[:description],
-            color: params[:color],
-          }
-          label = nil
-          if params[:id].present?
-            label = UserLabel.find(params[:id])
-            label.update!(attr)
-          else
-            label = UserLabel.create!(attr)
-          end
-          present label, with: Entities::UserLabelEntity
         end
       end
 
@@ -178,8 +175,10 @@ module Chemotion
         end
         route_param :device_id do
           get do
-            present DeviceMetadata.find_by(device_id: params[:device_id]), with: Entities::DeviceMetadataEntity,
-                                                                           root: 'device_metadata'
+            device_metadata = DeviceMetadata.find_by(device_id: params[:device_id])
+            present device_metadata,
+                    with: Entities::DeviceMetadataEntity,
+                    root: 'device_metadata'
           end
         end
       end
@@ -275,5 +274,6 @@ module Chemotion
       end
     end
   end
+
   # rubocop:enable Metrics/ClassLength
 end

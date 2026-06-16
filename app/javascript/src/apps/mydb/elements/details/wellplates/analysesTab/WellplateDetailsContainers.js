@@ -2,6 +2,10 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Accordion, Button, Card, ButtonToolbar } from 'react-bootstrap';
 import Container from 'src/models/Container';
+import ArrayUtils from 'src/utilities/ArrayUtils';
+import { findAnalysesContainer, reorderAnalyses } from 'src/apps/mydb/elements/details/analyses/utils';
+import AnalysisModeToggle from 'src/apps/mydb/elements/details/analyses/AnalysisModeToggle';
+import AnalysesOrderRow from 'src/apps/mydb/elements/details/analyses/AnalysesOrderRow';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton'
 
@@ -18,6 +22,7 @@ export default class WellplateDetailsContainers extends Component {
       wellplate,
       activeContainer: 0,
       commentBoxVisible: hasComment,
+      mode: 'edit',
     };
   }
 
@@ -73,6 +78,17 @@ export default class WellplateDetailsContainers extends Component {
     this.setState({ activeContainer: key });
   }
 
+  handleToggleMode = (mode) => {
+    this.setState({ mode });
+  }
+
+  handleMove = (source, target) => {
+    const { setWellplate } = this.props;
+    const { wellplate } = this.state;
+    reorderAnalyses(findAnalysesContainer(wellplate), source, target);
+    setWellplate(wellplate);
+  }
+
   addButton() {
     const { readOnly } = this.props;
     if (!readOnly) {
@@ -100,7 +116,7 @@ export default class WellplateDetailsContainers extends Component {
   };
 
   render() {
-    const { wellplate, activeContainer, commentBoxVisible } = this.state;
+    const { wellplate, activeContainer, commentBoxVisible, mode } = this.state;
     const { readOnly } = this.props;
 
     let containerHeader = (container) => <div className="analysis-header d-flex justify-content-between w-100">
@@ -157,7 +173,6 @@ export default class WellplateDetailsContainers extends Component {
               isVisible={commentBoxVisible}
               size="sm"
             />
-            <ButtonToolbar className="gap-2" />
           </div>
           <CommentBox
             isVisible={commentBoxVisible}
@@ -177,7 +192,7 @@ export default class WellplateDetailsContainers extends Component {
             <p className='m-0'>
               There are currently no Analyses.
             </p>
-            <ButtonToolbar className="gap-2">
+            <ButtonToolbar>
               <CommentButton
                 toggleCommentBox={this.toggleCommentBox}
                 isVisible={commentBoxVisible}
@@ -195,9 +210,11 @@ export default class WellplateDetailsContainers extends Component {
       )
     }
 
+    const sortedChildren = ArrayUtils.sortArrByIndex(analyses_container[0].children);
     return (
       <div>
-        <div className="d-flex justify-content-end my-2 mx-3">
+        <div className="d-flex justify-content-between align-items-center my-2 mx-3">
+          <AnalysisModeToggle mode={mode} onToggle={this.handleToggleMode} disabled={readOnly} />
           <ButtonToolbar className="gap-2">
             <CommentButton
               toggleCommentBox={this.toggleCommentBox}
@@ -212,27 +229,36 @@ export default class WellplateDetailsContainers extends Component {
           value={wellplate.container.description}
           handleCommentTextChange={this.handleCommentTextChange}
         />
-        <Accordion
-          className="border rounded overflow-hidden"
-          onSelect={this.handleAccordionOpen}
-          activeKey={activeContainer}
-        >
-          {
-            analyses_container[0].children.map((container, key) => {
+        {mode === 'order' ? (
+          <div>
+            {sortedChildren.map((container) => (
+              <AnalysesOrderRow
+                key={container.id}
+                container={container}
+                handleMove={this.handleMove}
+              />
+            ))}
+          </div>
+        ) : (
+          <Accordion
+            className="border rounded overflow-hidden"
+            onSelect={this.handleAccordionOpen}
+            activeKey={activeContainer}
+          >
+            {sortedChildren.map((container, key) => {
               const isFirstTab = key === 0;
               return (
                 <Card
                   eventKey={key}
-                  key={`wellplate_container_${key}`}
-                  className={"rounded-0 border-0" + (isFirstTab ? '' : ' border-top')}
+                  key={`wellplate_container_${container.id}`}
+                  className={`rounded-0 border-0${isFirstTab ? '' : ' border-top'}`}
                 >
                   <Card.Header className="rounded-0 p-0 border-bottom-0">
                     <AccordionHeaderWithButtons eventKey={key}>
                       {container.is_deleted ? containerHeaderDeleted(container) : containerHeader(container)}
                     </AccordionHeaderWithButtons>
                   </Card.Header>
-                  {
-                    !container.is_deleted &&
+                  {!container.is_deleted && (
                     <Accordion.Collapse eventKey={key}>
                       <Card.Body>
                         <ContainerComponent
@@ -240,18 +266,18 @@ export default class WellplateDetailsContainers extends Component {
                           element={wellplate}
                           readOnly={readOnly}
                           container={container}
-                          onChange={container => this.handleChange(container)}
+                          onChange={(c) => this.handleChange(c)}
                           rootContainer={wellplate.container}
                           index={key}
                         />
                       </Card.Body>
                     </Accordion.Collapse>
-                  }
+                  )}
                 </Card>
               );
-            })
-          }
-        </Accordion>
+            })}
+          </Accordion>
+        )}
       </div>
     );
   }

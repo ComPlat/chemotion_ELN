@@ -1,10 +1,15 @@
-import Immutable from 'immutable';
+import { List, Set } from 'immutable';
 import React from 'react';
-import { Tabs, Tab, Tooltip, OverlayTrigger, Button } from 'react-bootstrap';
+import {
+  Tabs, Tab, Tooltip, OverlayTrigger, Button
+} from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
+import Search from 'src/apps/mydb/elements/list/search/Search';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import SelectionActions from 'src/apps/mydb/elements/list/selectionActions/SelectionActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
+import CreateElementButton from 'src/components/navigation/CreateElementButton';
 import ElementsTable from 'src/apps/mydb/elements/list/ElementsTable';
 import ElementsTableSettings from 'src/apps/mydb/elements/list/ElementsTableSettings';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
@@ -15,7 +20,8 @@ import { allElnElements } from 'src/apps/generic/Utils';
 import { capitalizeWords } from 'src/utilities/textHelper';
 
 function getVisibleAndHiddenFromLayout(layout) {
-  const visible = [], hidden = [];
+  const visible = [];
+  const hidden = [];
   Object.keys(layout).forEach((key) => {
     if (layout[key] < 0) {
       hidden.push(key);
@@ -25,8 +31,8 @@ function getVisibleAndHiddenFromLayout(layout) {
   });
 
   return {
-    visible: Immutable.List(visible).sortBy((t) => layout[t]),
-    hidden: Immutable.List(hidden).sortBy((t) => -1 * layout[t]),
+    visible: List(visible).sortBy((t) => layout[t]),
+    hidden: List(hidden).sortBy((t) => -1 * layout[t]),
   };
 }
 
@@ -37,11 +43,12 @@ export default class ElementsList extends React.Component {
     super(props);
     this.state = {
       totalElements: {},
-      visible: Immutable.List(),
-      hidden: Immutable.List(),
+      visible: List(),
+      hidden: List(),
       genericEls: [],
       currentTab: 0,
       totalCheckedElements: {},
+      currentCollection: null,
     };
 
     this.onChange = this.onChange.bind(this);
@@ -78,8 +85,8 @@ export default class ElementsList extends React.Component {
   }
 
   onChangeUser(state) {
-    let visible = Immutable.List();
-    let hidden = Immutable.List();
+    let visible = List();
+    let hidden = List();
     let { currentType, currentTab } = state;
 
     if (state?.profile?.data?.layout) {
@@ -102,7 +109,7 @@ export default class ElementsList extends React.Component {
   }
 
   onChangeUI(state) {
-    const { totalCheckedElements } = this.state;
+    const { totalCheckedElements, currentCollection } = this.state;
     // const genericNames = (genericEls && genericEls.map(el => el.name)) || [];
     let genericKlasses = [];
     const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -118,8 +125,8 @@ export default class ElementsList extends React.Component {
     elNames.forEach((type) => {
       const elementUI = state[type] || {
         checkedAll: false,
-        checkedIds: Immutable.List(),
-        uncheckedIds: Immutable.List(),
+        checkedIds: List(),
+        uncheckedIds: List(),
       };
       const element = ElementStore.getState().elements[`${type}s`];
       const nextCount = elementUI.checkedAll
@@ -129,8 +136,11 @@ export default class ElementsList extends React.Component {
       newTotalCheckedElements[type] = nextCount
     });
 
-    if (needsUpdate) {
-      this.setState({ totalCheckedElements: newTotalCheckedElements });
+    if (needsUpdate || currentCollection !== state.currentCollection) {
+      this.setState({
+        totalCheckedElements: newTotalCheckedElements,
+        currentCollection: state.currentCollection
+      });
     }
   }
 
@@ -147,7 +157,8 @@ export default class ElementsList extends React.Component {
 
     // TODO sollte in tab action handler
     const uiState = UIStore.getState();
-    let type = this.state.visible.get(tab);
+    const { visible } = this.state;
+    const type = visible.get(tab);
 
     if (!uiState[type] || !uiState[type].page) { return; }
 
@@ -158,10 +169,14 @@ export default class ElementsList extends React.Component {
 
   render() {
     const {
-      visible, hidden, totalCheckedElements, totalElements, currentTab
+      visible, hidden, totalCheckedElements, totalElements, currentTab, currentCollection
     } = this.state;
+    const { search } = this.context;
+    const { overview = true } = this.props;
 
-    const constEls = Immutable.Set(allElnElements);
+    const hasSearchApplied = !!UIStore.getState().currentSearchByID;
+
+    const constEls = Set(allElnElements);
     const tabItems = visible.map((value, i) => {
       let iconClass = `icon-${value}`;
       let ttl = (
@@ -212,17 +227,27 @@ export default class ElementsList extends React.Component {
     });
 
     return (
-      <>
-        {UIStore.getState().currentSearchByID && (
-          <Button
-            variant="warning"
-            onClick={() => this.handleRemoveSearchResult(this.context.search)}
-            className="w-100 py-2 px-3 mb-3 text-start fs-5"
-          >
-            Remove search result
-          </Button>
-        )}
-        <div className="tabs-container--with-full-height position-relative">
+      <div className="elements-list h-100 d-flex flex-column" style={{ minWidth: '400px' }}>
+        <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap column-gap-4 row-gap-2">
+          <h1 className="m-0 text-capitalize">
+            {currentCollection?.label || ''}
+            {hasSearchApplied && (<span className="ms-2 text-lighten2 condensed-text-width">(search results)</span>)}
+          </h1>
+          <div className="d-flex align-items-center gap-3">
+            {hasSearchApplied ? (
+              <Button
+                variant="light"
+                onClick={() => this.handleRemoveSearchResult(search)}
+              >
+                <i className="fa fa-times-circle me-2" />
+                Clear search
+              </Button>
+            ) : <Search />}
+            {overview && <CreateElementButton />}
+          </div>
+        </div>
+        <SelectionActions />
+        <div className="tabs-container--with-full-grow position-relative">
           <ElementsTableSettings
             visible={visible}
             hidden={hidden}
@@ -231,12 +256,12 @@ export default class ElementsList extends React.Component {
             id="tabList"
             activeKey={currentTab}
             onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
-            className="surface-tabs"
+            className="surface-tabs has-config-overlay"
           >
             {tabItems}
           </Tabs>
         </div>
-      </>
+      </div>
     );
   }
 }

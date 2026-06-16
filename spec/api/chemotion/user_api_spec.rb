@@ -69,7 +69,7 @@ describe Chemotion::UserAPI do
       include_context 'api request jwt context'
 
       let(:expected_response) do
-        Entities::UserEntity.represent(jwt_user, root: :user).to_json
+        Entities::UserEntity.represent(jwt_user.reload, root: :user).to_json
       end
 
       before do
@@ -90,40 +90,11 @@ describe Chemotion::UserAPI do
     end
   end
 
-  describe 'GET /api/v1/users/list_labels' do
-    context 'when user labels present' do
-      before do
-        UserLabel.create!(user_id: user.id, access_level: 0, title: 'Label 1', color: 'Color 1')
-        UserLabel.create!(user_id: other_user.id, access_level: 1, title: 'Label 2', color: 'Color 2')
-        UserLabel.create!(user_id: other_user.id, access_level: 0, title: 'Label 3', color: 'Color 3')
-        get '/api/v1/users/list_labels'
-      end
-
-      it 'returns a list of user labels' do
-        expect(parsed_json_response['labels'].length).to eq(2)
-      end
-    end
-
-    context 'when user labels missing' do
-      before do
-        get '/api/v1/users/list_labels'
-      end
-
-      it 'returns an empty list of user labels' do
-        expect(parsed_json_response['labels'].length).to eq(0)
-      end
-    end
-  end
-
   describe 'GET /api/v1/users/list_editors' do
     pending 'TODO: Add missing spec'
   end
 
   describe 'GET /api/v1/users/omniauth_providers' do
-    pending 'TODO: Add missing spec'
-  end
-
-  describe 'PUT /api/v1/users/save_label' do
     pending 'TODO: Add missing spec'
   end
 
@@ -163,7 +134,7 @@ describe Chemotion::UserAPI do
       ).not_to be_empty
       expect(
         Group.find_by(name_abbreviation: 'JFC').users.pluck(:id),
-      ).to match_array [user.id, other_user.id]
+      ).to contain_exactly(user.id, other_user.id)
       expect(
         Group.find_by(name_abbreviation: 'JFC').admins,
       ).not_to be_empty
@@ -208,7 +179,7 @@ describe Chemotion::UserAPI do
       end
 
       it 'updates a group of persons' do
-        expect(group.users.pluck(:id)).to match_array([alternative_user.id])
+        expect(group.users.pluck(:id)).to contain_exactly(alternative_user.id)
       end
 
       it 'returns an updated group' do
@@ -255,7 +226,7 @@ describe Chemotion::UserAPI do
       it 'does not update a group of persons' do
         expect(
           Group.find(group.id).users.pluck(:id),
-        ).to match_array([other_user.id, alternative_user.id])
+        ).to contain_exactly(other_user.id, alternative_user.id)
       end
 
       it 'returns with unauthorized status' do

@@ -11,7 +11,8 @@ module Chemotion
       namespace :users do
         desc 'Find all users'
         get do
-          present User.order(type: :desc, id: :asc), with: Entities::UserEntity, root: 'users'
+          users = User.includes(:profile).order(type: :desc, id: :asc)
+          present users, with: Entities::UserEntity, root: 'users'
         end
 
         desc 'Find top (5) matched user by name and by type'
@@ -164,11 +165,33 @@ module Chemotion
             rp = if params[:password] || params[:random]
                    pwd = params[:password].presence || Devise.friendly_token.first(10)
                    @user.reset_password(pwd, pwd)
-                 else
-                   @user.respond_to?(:send_reset_password_instructions) && @user.send_reset_password_instructions
+                 elsif @user.respond_to?(:send_reset_password_instructions)
+                   begin
+                     @user.send_reset_password_instructions
+                   rescue Net::ReadTimeout, Net::OpenTimeout, Errno::ETIMEDOUT, IOError => e
+                     Rails.logger.warn(
+                       "resetPassword: SMTP post-delivery error for user #{@user.id}: #{e.class}: #{e.message}",
+                     )
+                     true
+                   end
                  end
             status(400) unless rp
             { pwd: pwd, rp: rp, email: @user.email }
+          end
+
+          namespace :otp do
+            desc 'Enable or disable 2FA (using a OTP)'
+            params do
+              requires :enable, type: Boolean, desc: 'is 2FA enabled'
+            end
+            put do
+              if params[:enable]
+                { link: OtpWebToken.enable_link(@user) }
+              else
+                @user.update!(otp_required_for_login: false)
+                present @user, with: Entities::UserEntity
+              end
+            end
           end
 
           # desc: manage user roles saved in user profile

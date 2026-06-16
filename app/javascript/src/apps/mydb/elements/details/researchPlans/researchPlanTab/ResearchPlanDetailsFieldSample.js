@@ -4,7 +4,7 @@ import { DropTarget } from 'react-dnd';
 import { Button } from 'react-bootstrap';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 import SampleName from 'src/components/common/SampleName';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 
@@ -92,7 +92,7 @@ class ResearchPlanDetailsFieldSample extends Component {
 
   showSample() {
     const { sample } = this.state;
-    UrlSilentNavigation(sample);
+    aviatorNavigation(sample.type, sample.id, true, false);
     ElementActions.fetchSampleById(sample.id);
   }
 

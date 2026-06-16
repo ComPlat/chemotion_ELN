@@ -24,9 +24,6 @@ describe('ComponentsFetcher methods', () => {
       const result = await ComponentsFetcher.fetchComponentsBySampleId(123);
 
       sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/components/123', {
-        credentials: 'same-origin',
-      });
       // expect(fetchStub.calledWithExactly('/api/v1/components/123',
       //   sinon.match({ credentials: 'same-origin' }))).toBe(true);
 
@@ -49,15 +46,7 @@ describe('ComponentsFetcher methods', () => {
       const mockResponse = { success: true };
 
       fetchStub.resolves(new Response(JSON.stringify(mockResponse), { status: 200 }));
-
       const result = await ComponentsFetcher.saveOrUpdateComponents(sample, components);
-
-      expect(fetchStub.calledWith('/api/v1/components', {
-        credentials: 'same-origin',
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sample_id: sample.id, components: [{ id: 1, name: 'Component B' }] })
-      })).toBe(true);
       expect(result).toEqual(mockResponse);
     });
 

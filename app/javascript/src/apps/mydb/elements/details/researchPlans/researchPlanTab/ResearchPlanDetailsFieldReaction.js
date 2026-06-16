@@ -4,8 +4,8 @@ import { DropTarget } from 'react-dnd';
 import { Button } from 'react-bootstrap';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import { UrlSilentNavigation } from 'src/utilities/ElementUtils';
 import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const spec = {
   drop(props, monitor) {
@@ -91,7 +91,7 @@ class ResearchPlanDetailsFieldReaction extends Component {
 
   showReaction() {
     const { reaction } = this.state;
-    UrlSilentNavigation(reaction);
+    aviatorNavigation(reaction.type, reaction.id, true, false);
     ElementActions.fetchReactionById(reaction.id);
   }
 
@@ -144,7 +144,7 @@ class ResearchPlanDetailsFieldReaction extends Component {
     }
     return connectDropTarget(
       <div className={`p-3 text-center mb-3 ${(isOver || canDrop)
-          ? 'dnd-zone dnd-zone-over' : 'dnd-zone'} `}
+        ? 'dnd-zone dnd-zone-over' : 'dnd-zone'} `}
       >
         {content}
       </div>

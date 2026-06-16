@@ -1,164 +1,116 @@
-import React from 'react';
+import React, {
+  useState, useEffect, useContext
+} from 'react';
 import PropTypes from 'prop-types';
-import Aviator from 'aviator';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
-import ChevronIcon from 'src/components/common/ChevronIcon';
-import { collectionShow, scollectionShow } from 'src/utilities/routesUtils';
+import TreeViewItem from 'src/components/common/TreeViewItem';
+import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import CollectionSubtreeFunctions from 'src/apps/mydb/collections/CollectionSubtreeFunctions';
 
-export default class CollectionSubtree extends React.Component {
-  constructor(props) {
-    super(props);
+function CollectionSubtree({
+  root,
+  sharedWithMe,
+  isExpanded,
+  level,
+}) {
+  const { collections: collectionsStore } = useContext(StoreContext);
+  const uiState = UIStore.getState();
+  const { currentCollection } = uiState;
+  const children = root.children || [];
 
-    this.state = {
-      selected: false,
-      visible: false
-    };
+  const [selected, setSelected] = useState(false);
+  const [visible, setVisible] = useState(false);
 
-    this.onChange = this.onChange.bind(this);
-    this.toggleExpansion = this.toggleExpansion.bind(this);
-    this.handleClick = this.handleClick.bind(this);
-    this.handleTakeOwnership = this.handleTakeOwnership.bind(this);
+  if (visible) {
+    collectionsStore.addToggledTreeItem(root.id, root.label);
   }
 
-  componentDidMount() {
-    this.onChange(UIStore.getState());
-    UIStore.listen(this.onChange);
-  }
+  const isVisible = (node, selectedCollection) => {
+    const descendantIds = collectionsStore.descendantIds(node);
+    if (collectionsStore.toggled_tree_items.indexOf(`${node.id}-${node.label}`) > -1) {
+      return true;
+    }
+    if (descendantIds && selectedCollection?.id) {
+      return descendantIds.indexOf(parseInt(selectedCollection.id, 10)) > -1;
+    }
+    return false;
+  };
 
-  componentWillUnmount() {
-    UIStore.unlisten(this.onChange);
-  }
+  const onUiStoreChange = ({ currentCollection: nextCollection }) => {
+    if (nextCollection) {
+      setVisible(isVisible(root, nextCollection));
+      setSelected(nextCollection.id === root.id);
+    }
+  };
 
-  handleTakeOwnership() {
-    const { root: { sharer, id } } = this.props;
-    const isSync = !!sharer;
-    CollectionActions.takeOwnership({ id, isSync });
-  }
+  useEffect(() => {
+    if (sharedWithMe || isExpanded) {
+      onUiStoreChange(uiState);
+    }
 
-  handleClick() {
-    const { root } = this.props;
-    const { visible } = this.state;
-    const uiState = UIStore.getState();
+    UIStore.listen(onUiStoreChange);
+    return () => UIStore.unlisten(onUiStoreChange);
+  }, [currentCollection, sharedWithMe, isExpanded]);
+
+  const handleTakeOwnership = () => {
+    // TODO: determine what should happen if take ownership is possible
+  };
+
+  const toggleExpansion = (e, node) => {
+    e.stopPropagation();
+
+    if (visible) {
+      collectionsStore.removeToggledTreeItem(node.id, node.label);
+    } else {
+      collectionsStore.addToggledTreeItem(node.id, node.label);
+    }
+
+    setVisible(!visible);
+  };
+
+  const handleClick = (node, e) => {
+    const { currentElement } = ElementStore.getState();
+    const element = Array.isArray(currentElement) && currentElement.length > 0 ? currentElement[0] : currentElement;
+
     if (uiState.showCollectionManagement) {
       UIActions.toggleCollectionManagement();
     }
-    this.setState({ visible: visible || this.isVisible(root, uiState) });
 
-    const url = (root.sharer)
-      ? `/scollection/${root.id}/${this.urlForCurrentElement()}`
-      : `/collection/${root.id}/${this.urlForCurrentElement()}`;
-    Aviator.navigate(url, { silent: true });
-
-    const collShow = root.sharer ? scollectionShow : collectionShow;
-    collShow({ params: { collectionID: root.id } });
-  }
-
-  onChange(state) {
-    const { root } = this.props;
-
-    if (state.currentCollection) {
-      const visible = this.isVisible(root, state);
-      const selectedCol = (
-        state.currentCollection.id === root.id
-        && (
-          state.currentCollection.is_synchronized === root.is_synchronized
-          || state.currentCollection.isRemote === root.isRemote
-        )
-      );
-
-      this.setState({
-        selected: selectedCol,
-        visible
-      });
-    }
-  }
-
-  isVisible(node, uiState) {
-    if (node.descendant_ids) {
-      const currentCollectionId = parseInt(uiState.currentCollection.id);
-      if (node.descendant_ids.indexOf(currentCollectionId) > -1) return true;
-    }
-
-    const { visibleRootsIds } = CollectionStore.getState();
-    return (visibleRootsIds.indexOf(node.id) > -1);
-  }
-
-  canTakeOwnership() {
-    const { root, isRemote } = this.props;
-    const isTakeOwnershipAllowed = root.permission_level === 5;
-    const isSync = !!((root.sharer && root.user && root.user.type !== 'Group'));
-    return (isRemote || isSync) && isTakeOwnershipAllowed;
-  }
-
-  urlForCurrentElement() {
-    const { currentElement } = ElementStore.getState();
-
-    if (Array.isArray(currentElement) && currentElement.length > 0) {
-    // When currentElement is an array, use the first item (special handling for vessel templates)
-      const template = currentElement[0];
-      return template.isNew
-        ? `${template.type}/new`
-        : `${template.type}/${template.id}`;
-    } if (currentElement) {
-      return currentElement.isNew
-        ? `${currentElement.type}/new`
-        : `${currentElement.type}/${currentElement.id}`;
-    }
-
-    return '';
-  }
-
-  toggleExpansion(e) {
-    e.stopPropagation();
-    const { root } = this.props;
-    let { visible } = this.state;
-    visible = !visible;
-    this.setState({ visible });
-
-    let { visibleRootsIds } = CollectionStore.getState();
-    if (visible) {
-      visibleRootsIds.push(root.id);
+    if (node.is_locked) {
+      toggleExpansion(e, node);
     } else {
-      const descendantIds = root.descendant_ids
-        ? root.descendant_ids
-        : root.children.map((s) => s.id);
-      descendantIds.push(root.id);
-      visibleRootsIds = visibleRootsIds.filter((x) => descendantIds.indexOf(x) === -1);
+      setVisible(visible || isVisible(node, uiState.currentCollection));
+      aviatorNavigationWithCollectionId(node.id, element?.type, (element?.isNew ? 'new' : element?.id), true, true);
     }
+  };
 
-    // Remove duplicate
-    const newIds = Array.from(new Set(visibleRootsIds));
-    CollectionActions.updateCollectrionTree(newIds);
-  }
+  const canTakeOwnership = () => false;
 
-  render() {
-    const { root, isRemote, level } = this.props;
-    const { visible, selected } = this.state;
-    const sharedUsers = root.sync_collections_users;
-    const children = root.children || [];
+  const handleTakeOwnershipKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleTakeOwnership();
+    }
+  };
 
-    return (
-      <div key={root.id}>
-        <div
-          id={`tree-id-${root.label}`}
-          className={`tree-view_item ${selected ? 'tree-view_item--selected' : ''}`}
-          onClick={this.handleClick}
-          style={{ paddingLeft: `${((level - 0.5) * 12)-4}px` }}
-        >
-          {children.length > 0 ? (
-            <ChevronIcon
-              direction={visible ? 'down' : 'right'}
-              onClick={this.toggleExpansion}
-            />
-          )
-            : (<i className="fa fa-fw" />)}
-          <span className="tree-view_title">{root.label}</span>
+  return (
+    <TreeViewItem
+      id={`tree-id-${root.label}`}
+      title={root.label}
+      selected={selected}
+      level={level}
+      hasChildren={children.length > 0}
+      expanded={visible}
+      onClick={(e) => handleClick(root, e)}
+      onToggleExpand={(e) => toggleExpansion(e, root)}
+      meta={(
+        <>
           {root.inventory_prefix && (
             <OverlayTrigger
               placement="top"
@@ -167,32 +119,53 @@ export default class CollectionSubtree extends React.Component {
               <i className="fa fa-tag" />
             </OverlayTrigger>
           )}
-          {this.canTakeOwnership() && (
+          {canTakeOwnership() && (
             <i
               className="fa fa-exchange"
-              onClick={this.handleTakeOwnership}
+              onClick={() => handleTakeOwnership()}
+              onKeyDown={handleTakeOwnershipKeyDown}
+              role="button"
+              tabIndex={0}
+              aria-label="Take ownership"
             />
           )}
-          {(sharedUsers && sharedUsers.length > 0) && (
-            <OverlayTrigger placement="top" overlay={<UserInfosTooltip users={sharedUsers} />}>
+          {root.shared && (
+            <OverlayTrigger placement="top" overlay={<UserInfosTooltip collectionId={root.id} />}>
               <i className="fa fa-share-alt" />
             </OverlayTrigger>
           )}
-        </div>
-        {visible && (
-          <div className="tree-view">
-            {children.map((child) => (
-              <CollectionSubtree key={child.id} root={child} isRemote={isRemote} level={level + 1} />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
+        </>
+      )}
+      actions={<CollectionSubtreeFunctions collection={root} />}
+    >
+      {children.map((child) => (
+        <CollectionSubtree
+          key={child.id}
+          root={child}
+          sharedWithMe={sharedWithMe}
+          isExpanded={isExpanded}
+          level={level + 1}
+        />
+      ))}
+    </TreeViewItem>
+  );
 }
 
+export default observer(CollectionSubtree);
+
 CollectionSubtree.propTypes = {
-  isRemote: PropTypes.bool,
-  root: PropTypes.object,
-  level: PropTypes.number
+  sharedWithMe: PropTypes.bool.isRequired,
+  isExpanded: PropTypes.bool.isRequired,
+  root: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    label: PropTypes.string.isRequired,
+    children: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+      label: PropTypes.string,
+    })),
+    is_locked: PropTypes.bool,
+    inventory_prefix: PropTypes.string,
+    shared: PropTypes.bool,
+  }).isRequired,
+  level: PropTypes.number.isRequired,
 };

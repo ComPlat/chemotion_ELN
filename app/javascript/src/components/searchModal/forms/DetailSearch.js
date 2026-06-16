@@ -23,7 +23,7 @@ const DetailSearch = () => {
   const searchStore = useContext(StoreContext).search;
   const selection = searchStore.searchElement;
   let fieldOptions = SelectFieldData.fields[selection.table];
-  fieldOptions = ['sequence_based_macromolecule_samples', 'device_descriptions'].includes(selection.table)
+  fieldOptions = ['sequence_based_macromolecule_samples', 'device_descriptions', 'cell_lines'].includes(selection.table)
     ? SelectFieldData[selection.table]
     : fieldOptions;
   const { rxnos, chmos, unitsSystem, segmentKlasses, genericEls, dsKlasses, profile } = UserStore.getState();
@@ -354,7 +354,7 @@ const DetailSearch = () => {
         options = FieldOptions.durationOptions;
       } else if (option.column && option.column == 'target_amount_value') {
         options = FieldOptions.amountSearchOptions;
-      } else if (option.table === 'sequence_based_macromolecule_samples') {
+      } else if (['sequence_based_macromolecule_samples', 'cellline_samples'].includes(option.table)) {
         options = unitSystems[option.option_layers];
       } else {
         options = systemOptions.units;
@@ -534,7 +534,7 @@ const DetailSearch = () => {
   const ButtonOrAddOn = (units, value, column, option, subFieldId) => {
     if (units.length > 1) {
       return (
-        <Button key={units} variant="success"
+        <Button key={units} variant="light"
           dangerouslySetInnerHTML={{ __html: value }}
           onClick={changeUnit(units, value, column, option, subFieldId)} />
       );
@@ -744,12 +744,15 @@ const DetailSearch = () => {
       case 'planned_maintenance_time':
       case 'unexpected_maintenance_date':
       case 'unexpected_maintenance_time':
+      case 'optimal_growth_temp':
+      case 'amount':
+      case 'passage':
         return searchStore.numeric_match;
       case 'unit_measurement':
       case 'solvent_smiles':
         return '=';
       default:
-        return type == 'system-defined' ? searchStore.numeric_match : 'ILIKE';
+        return type == 'system-defined' ? searchStore.numeric_match : (type == 'select' ? '=' : 'ILIKE');
     }
   }
 

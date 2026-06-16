@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
@@ -11,6 +11,7 @@ import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 import Sample from 'src/models/Sample';
 import Chemical from 'src/models/Chemical';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
+import AppModal from 'src/components/common/AppModal';
 
 const createChemical = (chemicalData = [{}], cas = null) => {
   const chemical = new Chemical();
@@ -32,6 +33,7 @@ describe('ChemicalTab basic rendering', () => {
         ChemicalTab,
         {
           sample,
+          type: 'sample',
           saveInventory: false,
           setSaveInventory: sinon.spy(),
           handleUpdateSample: sinon.spy(),
@@ -75,6 +77,7 @@ describe('ChemicalTab component', () => {
       ChemicalTab,
       {
         sample,
+        type: 'sample',
         saveInventory: false,
         editChemical: sinon.spy(),
         setSaveInventory: sinon.spy(),
@@ -168,7 +171,7 @@ describe('ChemicalTab component', () => {
 
     it('Simulate clicking on the modal close button ', () => {
       const closePropertiesModalSpy = sinon.spy(instance, 'closePropertiesModal');
-      wrapper.find(Modal.Footer).find(Button).simulate('click');
+      wrapper.find(AppModal).prop('onHide')();
       expect(closePropertiesModalSpy.called).toBe(true);
       closePropertiesModalSpy.restore();
     });
@@ -267,7 +270,7 @@ describe('ChemicalTab component', () => {
       handleRemoveSpy.restore();
     });
 
-    it('calls stylePhrases() when state of safetyPhrases is defined ', () => {
+    it('renders the SafetyPhrasesEditor with chemical safetyPhrases data', () => {
       const chemicalData = [{
         safetySheetPath: [
           {
@@ -276,12 +279,12 @@ describe('ChemicalTab component', () => {
         ],
         safetyPhrases: {
           h_statements: {
-            H315: 'Causes skin irritation',
-            H319: 'Causes serious eye irritation'
+            H315: ' Causes skin irritation',
+            H319: ' Causes serious eye irritation'
           },
           p_statements: {
-            P264: 'Wash skin thoroughly after handling',
-            P280: 'Wear protective gloves/protective clothing/eye protection/face protection'
+            P264: ' Wash skin thoroughly after handling',
+            P280: ' Wear protective gloves/protective clothing/eye protection/face protection'
           },
           pictograms: ['GHS07']
         }
@@ -291,11 +294,24 @@ describe('ChemicalTab component', () => {
       instance.setState({ chemical: newChemical, displayWell: true });
       wrapper.update();
 
-      const stylePhrasesSpy = sinon.spy(instance, 'stylePhrases');
-      // Trigger rendering of safety phrases which internally calls stylePhrases
-      instance.renderSafetyPhrases();
-      expect(stylePhrasesSpy.called).toBe(true);
-      stylePhrasesSpy.restore();
+      const editor = instance.renderSafetyPhrases();
+      expect(editor).not.toBeNull();
+      expect(editor.props.value).toEqual(chemicalData[0].safetyPhrases);
+      expect(typeof editor.props.onChange).toBe('function');
+    });
+
+    it('handleSafetyPhrasesChange persists into chemical_data via handleFieldChanged', () => {
+      const chemicalData = [{}];
+      const newChemical = createChemical(chemicalData, '7681-82-5');
+      instance.setState({ chemical: newChemical });
+
+      const handleFieldChangedSpy = sinon.spy(instance, 'handleFieldChanged');
+      const next = { h_statements: { H200: ' Unstable explosive' }, p_statements: {}, pictograms: [] };
+      instance.handleSafetyPhrasesChange(next);
+
+      expect(handleFieldChangedSpy.calledWith('safetyPhrases', next)).toBe(true);
+      expect(wrapper.state().chemical.chemical_data[0].safetyPhrases).toEqual(next);
+      handleFieldChangedSpy.restore();
     });
 
     it('should call saveSafetySheetsButton with expected arguments', () => {
@@ -387,6 +403,7 @@ describe('Manual SDS attachment functionality', () => {
         ChemicalTab,
         {
           sample: testSample,
+          type: 'sample',
           saveInventory: false,
           setSaveInventory: sinon.spy(),
           handleUpdateSample: sinon.spy(),

@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 module Entities
-  class CellLineSampleEntity < Grape::Entity
+  class CellLineSampleEntity < ApplicationEntity
     expose :id
+    expose! :can_copy, unless: :displayed_in_list
     expose :amount
     expose :passage
     expose :contamination
@@ -13,5 +14,12 @@ module Entities
     expose :cellline_material
     expose :tag
     expose :container, using: 'Entities::ContainerEntity'
+    expose :type
+
+    private
+
+    def type
+      'cell_line'
+    end
   end
 end

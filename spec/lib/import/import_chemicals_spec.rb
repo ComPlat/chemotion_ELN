@@ -114,6 +114,20 @@ RSpec.describe Import::ImportChemicals do
     end
   end
 
+  describe '.build_chemical with delivery_date and opening_date' do
+    let(:chemical) { { 'chemical_data' => [{}] } }
+
+    it 'sets delivery_date from import' do
+      described_class.process_column(chemical, 'delivery date', '2024-05-01')
+      expect(chemical['chemical_data'][0]['delivery_date']).to eq('2024-05-01')
+    end
+
+    it 'sets opening_date from import' do
+      described_class.process_column(chemical, 'opening date', '2024-06-15')
+      expect(chemical['chemical_data'][0]['opening_date']).to eq('2024-06-15')
+    end
+  end
+
   describe 'build_chemical' do
     let(:row) { { 'cas' => '123-45-6', 'price' => '50 EUR' } }
     let(:header) { %w[cas price] }

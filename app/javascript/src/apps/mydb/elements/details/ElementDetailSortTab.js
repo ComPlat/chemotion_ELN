@@ -1,164 +1,177 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/require-default-props */
-import React, { Component } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Popover } from 'react-bootstrap';
-import Immutable from 'immutable';
-import _ from 'lodash';
+import { List } from 'immutable';
+import { isEmpty, set } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UIActions from 'src/stores/alt/actions/UIActions';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
-import CollectionStore from 'src/stores/alt/stores/CollectionStore';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
-export default class ElementDetailSortTab extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      visible: Immutable.List(),
-      hidden: Immutable.List(),
-      showTabLayoutContainer: false
-    };
+export default function ElementDetailSortTab({
+  type,
+  onTabPositionChanged,
+  availableTabs,
+  tabTitles,
+  addInventoryTab,
+  openedFromCollectionId,
+}) {
+  const { collections } = useContext(StoreContext);
+  const [visible, setVisible] = useState(List());
+  const [hidden, setHidden] = useState(List());
+  const addInventoryTabRef = useRef(addInventoryTab);
+  const availableTabsRef = useRef(availableTabs);
+  const onTabPositionChangedRef = useRef(onTabPositionChanged);
+  const openedFromCollectionIdRef = useRef(openedFromCollectionId);
+  const availableTabsKey = availableTabs.join('|');
 
-    this.onChangeUser = this.onChangeUser.bind(this);
-    this.onChangeUI = this.onChangeUI.bind(this);
-    this.toggleTabLayoutContainer = this.toggleTabLayoutContainer.bind(this);
+  useEffect(() => {
+    addInventoryTabRef.current = addInventoryTab;
+    availableTabsRef.current = availableTabs;
+    onTabPositionChangedRef.current = onTabPositionChanged;
+    openedFromCollectionIdRef.current = openedFromCollectionId;
+  }, [addInventoryTab, availableTabs, onTabPositionChanged, openedFromCollectionId]);
 
-    UserActions.fetchCurrentUser();
-  }
+  const getOpenedFromCollection = useCallback(() => {
+    const currentOpenedFromCollectionId = openedFromCollectionIdRef.current;
+    const stack = [
+      collections.own_collection_tree,
+      collections.shared_with_me_collection_tree,
+    ];
 
-  componentDidMount() {
-    UserStore.listen(this.onChangeUser);
-    CollectionStore.listen(this.onChangeUI);
-  }
+    while (stack.length > 0) {
+      const col = stack.pop();
+      if (col.id === currentOpenedFromCollectionId) return col;
+      if (col.children?.length > 0) stack.push(...col.children);
+    }
 
-  componentWillUnmount() {
-    UserStore.unlisten(this.onChangeUser);
-    CollectionStore.unlisten(this.onChangeUI);
-  }
+    return null;
+  }, [collections]);
 
-  updateTabLayout(layout) {
-    const { addInventoryTab, availableTabs, type, onTabPositionChanged } = this.props;
+  const updateTabLayout = useCallback((layout) => {
+    const currentAvailableTabs = availableTabsRef.current;
+    const currentAddInventoryTab = addInventoryTabRef.current;
 
     // Ensure default tabs exist in layout (for backward compatibility)
-    if (layout && availableTabs) {
+    if (layout && currentAvailableTabs) {
       const defaultTabs = ['properties', 'analyses'];
       const layoutKeys = Object.keys(layout);
-      const maxOrder = Math.max(0, ...layoutKeys.map(k => Math.abs(layout[k])));
+      const maxOrder = Math.max(0, ...layoutKeys.map((key) => Math.abs(layout[key])));
 
       defaultTabs.forEach((tab, idx) => {
-        if (!layoutKeys.includes(tab) && availableTabs.includes(tab)) {
+        if (!layoutKeys.includes(tab) && currentAvailableTabs.includes(tab)) {
           layout[tab] = maxOrder + idx + 1;
         }
       });
     }
 
-    const { visible, hidden } = getArrayFromLayout(layout, type, addInventoryTab, availableTabs);
-    this.setState({ visible, hidden }, () => onTabPositionChanged(visible));
-  }
-
-  getOpenedFromCollection() {
-    const { openedFromCollectionId } = this.props;
-    const collectionState = CollectionStore.getState();
-    const stack = [
-      ...collectionState.unsharedRoots,
-      ...collectionState.sharedRoots,
-      ...collectionState.remoteRoots,
-      ...collectionState.syncInRoots,
-      ...collectionState.lockedRoots
-    ];
-    while (stack.length > 0) {
-      const col = stack.pop();
-      if (col.id == openedFromCollectionId) return col;
-      if (col.children?.length > 0) stack.push(...col.children);
-    }
-    return null;
-  }
-
-  onChangeUser(state) {
-    const { type } = this.props;
-    const collection = this.getOpenedFromCollection() || UIStore.getState().currentCollection;
-    const collectionTabs = collection?.tabs_segment;
-    const layout = (!collectionTabs || _.isEmpty(collectionTabs[type]))
-      ? state.profile?.data?.[`layout_detail_${type}`]
-      : collectionTabs[type];
-    this.updateTabLayout(layout);
-  }
-
-  onChangeUI() {
-    const { type } = this.props;
-    const collection = this.getOpenedFromCollection() || UIStore.getState().currentCollection;
-    const collectionTabs = collection?.tabs_segment;
-    const userProfile = UserStore.getState().profile;
-    const layout = (!collectionTabs || _.isEmpty(collectionTabs[type]))
-      ? userProfile?.data?.[`layout_detail_${type}`]
-      : collectionTabs[type];
-    this.updateTabLayout(layout);
-  }
-
-  toggleTabLayoutContainer(show) {
-    this.setState(
-      (state) => ({ ...state, showTabLayoutContainer: !state.showTabLayoutContainer }),
-      () => {
-        if (!show) this.updateLayout();
-      }
+    const nextLayout = getArrayFromLayout(
+      layout,
+      type,
+      currentAddInventoryTab,
+      currentAvailableTabs,
     );
-  }
+    setVisible(nextLayout.visible);
+    setHidden(nextLayout.hidden);
+    onTabPositionChangedRef.current(nextLayout.visible);
+  }, [type]);
 
-  updateLayout() {
-    const layout = filterTabLayout(this.state);
+  const refreshTabLayout = useCallback((state) => {
+    const collection = getOpenedFromCollection() || UIStore.getState().currentCollection;
+
+    const collectionTabs = typeof (collection?.tabs_segment) === 'string'
+      ? JSON.parse(collection?.tabs_segment)
+      : collection?.tabs_segment;
+
+    const layout = (!collectionTabs || isEmpty(collectionTabs[`${type}`]))
+      ? state.profile?.data?.[`layout_detail_${type}`]
+      : collectionTabs[`${type}`];
+
+    updateTabLayout(layout);
+  }, [getOpenedFromCollection, type, updateTabLayout]);
+
+  const updateLayout = useCallback(() => {
+    const layout = filterTabLayout({ visible, hidden });
     const { currentCollection } = UIStore.getState();
-    const { type } = this.props;
     const tabSegment = { ...currentCollection?.tabs_segment, [type]: layout };
 
-    if (currentCollection && !currentCollection.is_sync_to_me) {
-      CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
-      UIActions.selectCollection({ ...currentCollection, tabs_segment: tabSegment, clearSearch: true });
-    }
+    collections.updateCollection(currentCollection, tabSegment);
 
     const userProfile = UserStore.getState().profile;
-    _.set(userProfile, `data.layout_detail_${type}`, layout);
+    set(userProfile, `data.layout_detail_${type}`, layout);
     UserActions.updateUserProfile(userProfile);
-  }
+  }, [collections, hidden, type, visible]);
 
-  onLayoutChange = (visible, hidden) => {
-    this.setState({ visible, hidden });
-  };
+  const onLayoutChange = useCallback((nextVisible, nextHidden) => {
+    setVisible(nextVisible);
+    setHidden(nextHidden);
+    onTabPositionChangedRef.current(nextVisible);
+  }, []);
 
-  render() {
-    const { visible, hidden } = this.state;
-    const { tabTitles } = this.props;
+  const renderTabItem = useCallback(({ item }) => (
+    <div>{tabTitles[item] ?? capitalizeWords(item)}</div>
+  ), [tabTitles]);
 
-    const popoverSettings = (
-      <Popover>
-        <Popover.Header>Tab Layout</Popover.Header>
-        <Popover.Body>
-          <TabLayoutEditor
-            visible={visible}
-            hidden={hidden}
-            getItemComponent={({item}) => (<div>{tabTitles[item] ?? capitalizeWords(item)}</div>)}
-            onLayoutChange={this.onLayoutChange}
-          />
-        </Popover.Body>
-      </Popover>
-    );
+  useEffect(() => {
+    UserActions.fetchCurrentUser();
+    UserStore.listen(refreshTabLayout);
+    refreshTabLayout(UserStore.getState());
 
-    return (
-      <ConfigOverlayButton onToggle={this.toggleTabLayoutContainer} popoverSettings={popoverSettings} />
-    );
-  }
+    return () => {
+      UserStore.unlisten(refreshTabLayout);
+    };
+  }, [refreshTabLayout]);
+
+  useEffect(() => {
+    refreshTabLayout(UserStore.getState());
+  }, [addInventoryTab, availableTabsKey, refreshTabLayout]);
+
+  const { currentCollection } = UIStore.getState();
+  const isOwnCollection = collections.isOwnCollection(currentCollection?.id);
+  const allCollection = currentCollection?.is_locked && currentCollection.label === 'All';
+  if (!isOwnCollection && !allCollection) { return null; }
+
+  const popoverSettings = (
+    <Popover>
+      <Popover.Header>Tab Layout</Popover.Header>
+      <Popover.Body>
+        <TabLayoutEditor
+          visible={visible}
+          hidden={hidden}
+          getItemComponent={renderTabItem}
+          onLayoutChange={onLayoutChange}
+        />
+      </Popover.Body>
+    </Popover>
+  );
+
+  return (
+    <ConfigOverlayButton
+      popoverSettings={popoverSettings}
+      onToggle={(show) => {
+        if (!show) updateLayout();
+      }}
+    />
+  );
 }
 
 ElementDetailSortTab.propTypes = {
   type: PropTypes.string.isRequired,
   onTabPositionChanged: PropTypes.func.isRequired,
   availableTabs: PropTypes.arrayOf(PropTypes.string).isRequired,
-  tabTitles: PropTypes.object,
+  tabTitles: PropTypes.objectOf(PropTypes.node),
   addInventoryTab: PropTypes.bool,
   openedFromCollectionId: PropTypes.number,
 };

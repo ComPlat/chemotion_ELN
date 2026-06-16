@@ -10,10 +10,7 @@ module Chemotion
 
     helpers do
       def authorize_commentable_access(commentable)
-        collections = Collection.where(id: commentable.collections.ids)
-        allowed_user_ids = authorized_users(collections)
-
-        error!('401 Unauthorized', 401) unless allowed_user_ids.include?(current_user.id)
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, commentable).read?
       end
 
       def authorize_update_access(comment)
@@ -29,7 +26,15 @@ module Chemotion
       end
 
       def find_commentable(commentable_type, commentable_id)
-        commentable_type.classify.constantize.find(commentable_id)
+        if commentable_type == 'CellLine'
+          CelllineSample.find(commentable_id)
+        else
+          commentable_type.classify.constantize.find(commentable_id)
+        end
+      end
+
+      def get_commentable_type(commentable_type)
+        commentable_type == 'CellLine' ? 'CelllineSample' : commentable_type
       end
     end
 
@@ -102,21 +107,19 @@ module Chemotion
                          Comment.research_plan_sections.values +
                          Comment.device_description_sections.values +
                          Comment.sequence_based_macromolecule_sample_sections.values +
+                         Comment.cell_line_sample_sections.values +
                          Comment.header_sections.values
       end
 
       post do
         commentable = find_commentable(params[:commentable_type], params[:commentable_id])
-        collections = Collection.where(id: commentable.collections.ids)
 
-        allowed_user_ids = authorized_users(collections)
-
-        error!('401 Unauthorized', 401) unless allowed_user_ids.include? current_user.id
+        authorize_commentable_access(commentable)
 
         attributes = {
           content: params[:content],
           commentable_id: params[:commentable_id],
-          commentable_type: params[:commentable_type],
+          commentable_type: get_commentable_type(params[:commentable_type]),
           section: params[:section],
           created_by: current_user.id,
           submitter: "#{current_user.first_name} #{current_user.last_name}",
@@ -124,7 +127,7 @@ module Chemotion
         comment = Comment.new(attributes)
         comment.save!
 
-        create_message_notification(collections, current_user, commentable)
+        notify_collection_owners(current_user, commentable)
 
         present comment, with: Entities::CommentEntity, root: 'comment'
       end
@@ -142,7 +145,7 @@ module Chemotion
 
         comments = Comment.where(
           commentable_id: params[:commentable_id],
-          commentable_type: params[:commentable_type],
+          commentable_type: get_commentable_type(params[:commentable_type]),
         ).order(:status, :section, created_at: :desc)
 
         present comments, with: Entities::CommentEntity, root: 'comments'

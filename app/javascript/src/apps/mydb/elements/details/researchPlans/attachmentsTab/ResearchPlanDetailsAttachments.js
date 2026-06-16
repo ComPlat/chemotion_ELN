@@ -271,7 +271,7 @@ class ResearchPlanDetailsAttachments extends Component {
                     </Button>
                   ) : (
                     <>
-                      <ButtonToolbar className="gap-1">
+                      <ButtonToolbar>
                         {downloadButton(attachment)}
                         <ThirdPartyAppButton attachment={attachment} options={thirdPartyApps} />
                         <EditButton attachment={attachment} onChange={onEdit} />

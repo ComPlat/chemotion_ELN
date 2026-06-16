@@ -1,7 +1,8 @@
-FROM ptrxyz/chemotion:eln-2.2.0
+FROM ptrxyz/chemotion:eln-3.1.2
 
 ARG REMOTE=https://github.com/ComPlat/chemotion_ELN.git
 ARG BUNDLER_VERSION=2.4.22
+ARG CUSTOM_KETCHER_BRANCH=v3.12.0
 # The last version of bundler to support current Ruby & RubyGems was 2.4.22.
 
 SHELL ["/bin/bash", "-e", "-o", "pipefail", "-c", "--"]
@@ -73,6 +74,8 @@ ADD https://payload.chemserv.scc.kit.edu/initialize.sh /initialize.sh
 ADD https://payload.chemserv.scc.kit.edu/converter.yml /chemotion/app/config/converter.yml
 ADD https://payload.chemserv.scc.kit.edu/spectra.yml /chemotion/app/config/spectra.yml
 ADD https://payload.chemserv.scc.kit.edu/indigo.yml /chemotion/app/config/indigo_service.yml
+ADD https://payload.chemserv.scc.kit.edu/ketcher.yml /chemotion/app/config/ketcher_service.yml
+
 # stop check for ketcherails
 RUN sed -i '/# add ketcherails templates if needed/,$d' /embed/scripts/dbcheck.sh
 
@@ -80,7 +83,8 @@ RUN chmod +x /embed/run.sh && \
     chmod +x /embed/health.sh && \
     chmod +x /initialize.sh
 
-ADD https://github.com/haditariq/ketcher-build-holder.git /chemotion/app/public/editors/ketcher/standalone
+ADD https://github.com/haditariq/ketcher-build-holder.git#${CUSTOM_KETCHER_BRANCH}  \
+    /chemotion/app/public/editors/ketcher/standalone
 
 EXPOSE 4000
 
@@ -93,5 +97,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
 
 VOLUME [ "/chemotion/app", "/chemotion/data" ]
 
-RUN cp config/structure_editors.yml.example config/structure_editors.yml
-RUN cp config/ketcher_service.yml.example config/ketcher_service.yml

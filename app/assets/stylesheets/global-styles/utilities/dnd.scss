@@ -45,13 +45,13 @@
   @extend .border-bottom;
   @extend .border-end;
   &:hover {
-    @extend .surface-hover-on-white;
+    @extend .surface-hover;
   }
 
   &.is-selected {
-    @extend .surface-active-on-white;
+    @extend .surface-active;
     &:hover {
-      @extend .surface-hover-on-white;
+      @extend .surface-hover;
     }
   }
   &.draggable-list-item--is-dragging {

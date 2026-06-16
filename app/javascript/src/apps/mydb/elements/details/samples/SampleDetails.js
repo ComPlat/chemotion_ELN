@@ -6,14 +6,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, InputGroup, ListGroupItem, Tabs, Tab, Row, Col,
-  Tooltip, OverlayTrigger, Modal, Alert, Form,
+  Tooltip, OverlayTrigger, Alert, Form,
   Accordion, Container
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
+import AppModal from 'src/components/common/AppModal';
 import { CreatableSelect } from 'src/components/common/Select';
 import { cloneDeep, findIndex, set } from 'lodash';
 import uuid from 'uuid';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -23,16 +24,15 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
-import CollectionActions from 'src/stores/alt/actions/CollectionActions';
 import QcActions from 'src/stores/alt/actions/QcActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import QcStore from 'src/stores/alt/stores/QcStore';
 
-import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollectionLabels';
 import ElementAnalysesLabels from 'src/apps/mydb/elements/labels/ElementAnalysesLabels';
 import PubchemLabels from 'src/components/pubchem/PubchemLabels';
 import PubchemLcss from 'src/components/pubchem/PubchemLcss';
 import ElementReactionLabels from 'src/apps/mydb/elements/labels/ElementReactionLabels';
-import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
+import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
@@ -45,13 +45,10 @@ import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
 import SampleForm from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleForm';
 import ComputedPropsContainer from 'src/components/computedProps/ComputedPropsContainer';
 import ComputedPropLabel from 'src/apps/mydb/elements/labels/ComputedPropLabel';
-import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
-import ConfirmClose from 'src/components/common/ConfirmClose';
-import { EditUserLabels, ShowUserLabels } from 'src/components/UserLabels';
-import CopyElementModal from 'src/components/common/CopyElementModal';
+import { EditUserLabels } from 'src/components/UserLabels';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
@@ -63,8 +60,7 @@ import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import MeasurementsTab from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTab';
 import { validateCas } from 'src/utilities/CasValidation';
 import ChemicalTab from 'src/components/chemicals/ChemicalTab';
-import OpenCalendarButton from 'src/components/calendar/OpenCalendarButton';
-import HeaderCommentSection from 'src/components/comments/HeaderCommentSection';
+import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
@@ -76,6 +72,10 @@ import { copyToClipboard } from 'src/utilities/clipboard';
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
 const MWPrecision = 6;
+
+// Module-level slot: holds chemical data to be created after a new sample is
+// persisted (survives the SampleDetails unmount/remount caused by navigateToNewElement).
+let _pendingChemicalCreate = null;
 
 const decoupleCheck = (sample) => {
   if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.isMixture()) {
@@ -106,8 +106,23 @@ const rangeCheck = (field, sample) => {
   return true;
 };
 
+const sampleTitle = (sample) => {
+  const inventoryLabel = sample.inventory_sample && sample.inventory_label ? sample.inventory_label : null;
+  return inventoryLabel || sample.title();
+};
+
+const sampleTitleAppendix = (sample, handleFastInput) => (
+  <>
+    <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
+    <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+    <PubchemLabels element={sample} />
+    {sample.isNew && !sample.isMixture() && <FastInput fnHandle={handleFastInput} />}
+  </>
+);
+
 export default class SampleDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
+  static contextType = StoreContext;
 
   constructor(props) {
     super(props);
@@ -139,15 +154,17 @@ export default class SampleDetails extends React.Component {
       quickCreator: false,
       showInchikey: false,
       pageMessage: null,
-      visible: Immutable.List(),
+      visible: List(),
       startExport: false,
       sfn: UIStore.getState().hasSfn,
       saveInventoryAction: false,
+      closeAfterInventorySave: false,
       isChemicalEdited: false,
       currentUser,
       showRedirectWarning: redirectedFromMixture || false,
       casInputValue: '',
-      ketcherSVGError: null
+      ketcherSVGError: null,
+      previousSurfaceType: null
     };
 
     this.enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
@@ -177,6 +194,7 @@ export default class SampleDetails extends React.Component {
     this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
     this.splitSmiles = this.splitSmiles.bind(this);
     this.setComponentDeletionLoading = this.setComponentDeletionLoading.bind(this);
+    this.chemicalTabRef = React.createRef();
   }
 
   componentDidMount() {
@@ -192,6 +210,20 @@ export default class SampleDetails extends React.Component {
       CommentActions.fetchComments(sample);
     }
 
+    // After a new sample is created, carry out any pending chemical create that
+    // was snapshotted before the old SampleDetails instance was closed.
+    if (_pendingChemicalCreate && !sample.isNew) {
+      const snapshot = _pendingChemicalCreate;
+      _pendingChemicalCreate = null;
+      ChemicalFetcher.create({ sample_id: sample.id, ...snapshot })
+        .then(() => {
+          // Re-fetch chemical so ChemicalTab renders the newly-created record
+          // without requiring a page refresh.
+          this.chemicalTabRef.current?.fetchChemical(sample);
+        })
+        .catch((err) => console.log(err));
+    }
+
     if (showRedirectWarning) {
       // Use setTimeout to defer dispatch and avoid dispatch-in-dispatch errors in Alt/Flux
       setTimeout(() => {
@@ -202,12 +234,12 @@ export default class SampleDetails extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { sample } = this.props;
-    if (sample === prevProps.sample) { return };
+    if (sample === prevProps.sample) { return; }
 
     const smileReadonly = !(
       (sample.isNew
-       && (typeof (sample.molfile) === 'undefined'
-        || (sample.molfile || '').length === 0)
+        && (typeof (sample.molfile) === 'undefined'
+          || (sample.molfile || '').length === 0)
       )
       || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
     );
@@ -371,7 +403,7 @@ export default class SampleDetails extends React.Component {
     const fetchMolecule = (fetchFunction) => {
       fetchFunction()
         .then(fetchSuccess).catch(fetchError).finally(() => {
-          this.splitSmiles(editor, svgFile);
+          this.splitSmiles(editor);
           this.hideStructureEditor();
         });
     };
@@ -442,10 +474,6 @@ export default class SampleDetails extends React.Component {
     this.setState({ sample });
   }
 
-  handleSubmitInventory() {
-    this.setState({ saveInventoryAction: true });
-  }
-
   handleExportAnalyses(sample) {
     this.setState({ startExport: true });
     AttachmentFetcher.downloadZipBySample(sample.id)
@@ -482,28 +510,22 @@ export default class SampleDetails extends React.Component {
 
   sampleFooter() {
     const { sample, startExport } = this.state;
-    const belongToReaction = sample.belongTo && sample.belongTo.type === 'reaction';
     const hasAnalyses = !!(sample.analyses && sample.analyses.length > 0);
 
-    return (
-      <>
-        <Button variant="primary" onClick={() => DetailActions.close(sample)}>
-          Close
+    if (!sample.isNew && hasAnalyses) {
+      return (
+        <Button
+          variant="info"
+          disabled={!this.sampleIsValid()}
+          onClick={() => this.handleExportAnalyses(sample)}
+        >
+          Download Analysis
+          {startExport && <i className="fa fa-spin fa-spinner ms-1" />}
         </Button>
-        {this.saveBtn(sample)}
-        {!sample.isNew && belongToReaction && this.saveBtn(sample, true)}
-        {!sample.isNew && hasAnalyses && (
-          <Button
-            variant="info"
-            disabled={!this.sampleIsValid()}
-            onClick={() => this.handleExportAnalyses(sample)}
-          >
-            Download Analysis
-            {startExport && <i className="fa fa-spin fa-spinner ms-1" />}
-          </Button>
-        )}
-      </>
-    );
+      );
+    }
+
+    return null;
   }
 
   onSVGStructureError = (errorMessage) => {
@@ -536,14 +558,38 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  saveSampleOrInventory(closeView) {
-    const { activeTab, sample } = this.state;
-    if (activeTab === 'inventory' && sample.inventory_sample) {
-      this.handleSubmitInventory();
-    } else {
-      this.handleSubmit(closeView);
+  saveSampleOrChemical() {
+    const { sample, isChemicalEdited } = this.state;
+    const needChemicalSave = isChemicalEdited && !sample.isNew;
+    const needChemicalCreate = isChemicalEdited && sample.isNew;
+
+    if (sample.isPendingToSave) {
+      // Snapshot chemical data BEFORE handleSubmit closes this instance.
+      // For new samples, navigateToNewElement mounts a fresh SampleDetails;
+      // componentDidMount on that new instance will consume _pendingChemicalCreate.
+      if (needChemicalCreate) {
+        _pendingChemicalCreate = this.chemicalTabRef.current?.getChemicalSnapshot() ?? null;
+      }
+
+      // When chemical also needs saving on an existing sample, don't close on
+      // the sample save so ChemicalTab stays mounted to receive saveInventoryAction.
+      this.handleSubmit(needChemicalSave ? false : undefined);
+    }
+
+    if (needChemicalSave) {
+      this.setState({ saveInventoryAction: true });
     }
   }
+
+  handleInventorySaveComplete = (didSave) => {
+    const { sample, closeAfterInventorySave } = this.state;
+
+    if (didSave && closeAfterInventorySave) {
+      DetailActions.close(sample, true);
+    }
+
+    this.setState({ closeAfterInventorySave: false });
+  };
 
   editChemical = (boolean) => {
     this.setState({ isChemicalEdited: boolean });
@@ -562,7 +608,9 @@ export default class SampleDetails extends React.Component {
     const sampleLayout = currentCollection?.tabs_segment?.sample;
 
     // If the collection already tracks the inventory tab, nothing to do
-    if (sampleLayout && Object.prototype.hasOwnProperty.call(sampleLayout, 'inventory')) return;
+    if (sampleLayout && Object.prototype.hasOwnProperty.call(sampleLayout, 'inventory') && sampleLayout?.inventory > 0) {
+      return;
+    }
 
     // Resolve the effective layout: collection -> user profile -> fallback
     const userProfile = UserStore.getState().profile;
@@ -577,8 +625,7 @@ export default class SampleDetails extends React.Component {
 
     // Persist to collection tabs_segment
     const tabSegment = { ...currentCollection?.tabs_segment, sample: updatedLayout };
-    CollectionActions.updateTabsSegment({ segment: tabSegment, cId: currentCollection.id });
-    UIActions.selectCollection({ ...currentCollection, tabs_segment: tabSegment, clearSearch: true });
+    this.context.collections.updateCollection(currentCollection, tabSegment);
 
     if (!userProfile) return;
     // Persist to user profile
@@ -601,17 +648,20 @@ export default class SampleDetails extends React.Component {
     const { saveInventoryAction } = this.state;
 
     return (
-      <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`}>
+      <Tab eventKey={ind} title="Inventory" key={`Inventory${sample.id.toString()}`} unmountOnExit={false}>
         {
           !sample.isNew && <CommentSection section="sample_inventory" element={sample} />
         }
         <ListGroupItem>
           <ChemicalTab
+            ref={this.chemicalTabRef}
             sample={sample}
+            type="sample"
             handleUpdateSample={(s) => this.setState({ sample: s })}
             setSaveInventory={(v) => this.setState({ saveInventoryAction: v })}
             saveInventory={saveInventoryAction}
             editChemical={this.editChemical}
+            onInventorySaveComplete={this.handleInventorySaveComplete}
             key={`ChemicalTab${sample.id.toString()}`}
           />
         </ListGroupItem>
@@ -797,24 +847,6 @@ export default class SampleDetails extends React.Component {
     return (sample.isValid && !loadingMolecule) || sample.is_scoped == true || quickCreator;
   }
 
-  saveBtn(sample, closeView = false) {
-    let submitLabel = (sample && sample.isNew) ? 'Create' : 'Save';
-    const hasComponents = !sample.isMixture() || (sample.hasComponents());
-    const isDisabled = !sample.can_update || !hasComponents;
-    if (closeView) submitLabel += ' and close';
-
-    return (
-      <Button
-        id="submit-sample-btn"
-        variant="warning"
-        onClick={() => this.saveSampleOrInventory(closeView)}
-        disabled={!this.sampleIsValid() || isDisabled}
-      >
-        {submitLabel}
-      </Button>
-    );
-  }
-
   elementalPropertiesItem(sample) {
     // avoid empty ListGroupItem
     if (!sample.molecule_formula || sample.isMixture()) {
@@ -889,7 +921,9 @@ export default class SampleDetails extends React.Component {
           customizableField={this.customizableField}
           enableSampleDecoupled={this.enableSampleDecoupled}
           decoupleMolecule={this.decoupleMolecule}
+          onDecoupleChanged={this.decoupleChanged}
           setComponentDeletionLoading={this.setComponentDeletionLoading}
+          setMoleculeLoading={(loading) => this.setState({ loadingMolecule: loading })}
         />
         <div className="mb-2">
           {this.chemicalIdentifiersItem(sample)}
@@ -944,7 +978,7 @@ export default class SampleDetails extends React.Component {
     const { sample, isCasLoading, validCas } = this.state;
     const { molecule, xref } = sample;
     const cas = xref?.cas ?? '';
-    let casArr = Array.isArray(molecule?.cas) ? molecule?.cas?.filter((el) => el !== null) : [];
+    const casArr = Array.isArray(molecule?.cas) ? molecule?.cas?.filter((el) => el !== null) : [];
     if (cas && !casArr.includes(cas)) {
       casArr.push(cas);
     }
@@ -954,7 +988,7 @@ export default class SampleDetails extends React.Component {
     return (
       <div className="my-4">
         <InputGroup>
-          <div className="d-flex flex-grow-1">
+          <div className="d-flex">
             <InputGroup.Text>CAS</InputGroup.Text>
             <CreatableSelect
               name="cas"
@@ -964,7 +998,7 @@ export default class SampleDetails extends React.Component {
               options={options}
               onChange={(selectedOption) => {
                 if (selectedOption) {
-                  const value = selectedOption.value;
+                  const { value } = selectedOption;
                   this.setState({ casInputValue: value });
                   this.updateCas(selectedOption);
                 } else {
@@ -986,7 +1020,7 @@ export default class SampleDetails extends React.Component {
               value={options.find(({ value }) => value === cas) || null}
               onBlur={() => this.isCASNumberValid(cas || '', true)}
               isDisabled={!sample.can_update}
-              className="flex-grow-1"
+              styles={{ input: (base) => ({ ...base, minWidth: '200px', width: '100%' }) }}
               placeholder="Select or enter CAS number"
               allowCreateWhileLoading
               formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
@@ -1024,89 +1058,7 @@ export default class SampleDetails extends React.Component {
     this.setState({ sample });
   }
 
-  saveButton(sampleUpdateCondition, floppyTag, timesTag, boolean = false) {
-    return (
-      <Button
-        variant="warning"
-        size="xxsm"
-        onClick={() => this.saveSampleOrInventory(boolean)}
-        disabled={sampleUpdateCondition}
-      >
-        {floppyTag}
-        {timesTag || null}
-      </Button>
-    );
-  }
-
-  saveAndCloseSample(sample, saveBtnDisplay) {
-    const { activeTab, isChemicalEdited } = this.state;
-    const isChemicalTab = activeTab === 'inventory';
-    const floppyTag = (
-      <i className="fa fa-floppy-o" />
-    );
-    const timesTag = (
-      <i className="fa fa-times" />
-    );
-    const hasComponents = !sample.isMixture() || sample.hasComponents();
-    const sampleUpdateCondition = !this.sampleIsValid() || !sample.can_update || !hasComponents;
-
-    const elementToSave = activeTab === 'inventory' ? 'Chemical' : 'Sample';
-    const saveAndClose = (saveBtnDisplay
-      && (
-      <OverlayTrigger
-        placement="bottom"
-        overlay={(
-          <Tooltip id="saveCloseSample">
-            {`Save and Close ${elementToSave}`}
-          </Tooltip>
-        )}
-      >
-        {this.saveButton(sampleUpdateCondition, floppyTag, timesTag, true)}
-      </OverlayTrigger>
-      )
-    );
-    const save = (saveBtnDisplay
-      && (
-      <OverlayTrigger
-        placement="bottom"
-        overlay={(
-          <Tooltip id="saveSample">
-            {`Save ${elementToSave}`}
-          </Tooltip>
-        )}
-      >
-        {this.saveButton(sampleUpdateCondition, floppyTag)}
-      </OverlayTrigger>
-      )
-    );
-
-    const saveForChemical = isChemicalTab && isChemicalEdited ? save : null;
-    return (
-      <>
-        { isChemicalTab ? saveForChemical : save}
-        { isChemicalTab ? null : saveAndClose }
-        <ConfirmClose el={sample} />
-      </>
-    );
-  }
-
   sampleHeader(sample) {
-    const { isChemicalEdited, activeTab } = this.state;
-    const titleTooltip = formatTimeStampsOfElement(sample || {});
-    const isChemicalTab = activeTab === 'inventory';
-    const saveBtnDisplay = sample.isEdited || (isChemicalEdited && isChemicalTab);
-
-    const { currentCollection } = UIStore.getState();
-    const defCol = currentCollection && currentCollection.is_shared === false
-      && currentCollection.is_locked === false && currentCollection.label !== 'All' ? currentCollection.id : null;
-
-    const copyBtn = (sample.can_copy && !sample.isNew) ? (
-      <CopyElementModal
-        element={sample}
-        defCol={defCol}
-      />
-    ) : null;
-
     const inventorySample = (
       <Form.Check
         type="checkbox"
@@ -1128,8 +1080,6 @@ export default class SampleDetails extends React.Component {
         label="Decoupled"
       />
     ) : null;
-
-    const inventoryLabel = sample.inventory_sample && sample.inventory_label ? sample.inventory_label : null;
 
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage
@@ -1185,31 +1135,8 @@ export default class SampleDetails extends React.Component {
 
     return (
       <>
-        <div className="d-flex align-items-center flex-wrap">
-          <div className="d-flex align-items-center flex-wrap flex-grow-1 gap-2">
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="sampleDates">{titleTooltip}</Tooltip>}>
-              <span className="flex-shrink-0">
-                <i className="icon-sample me-1" />
-                {inventoryLabel || sample.title()}
-              </span>
-            </OverlayTrigger>
-            <ShowUserLabels element={sample} />
-            <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-            {!sample.isNew && <ElementCollectionLabels element={sample} key={sample.id} placement="right" />}
-            <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
-            <PubchemLabels element={sample} />
-            <HeaderCommentSection element={sample} />
-            {sample.isNew && !sample.isMixture() && <FastInput fnHandle={this.handleFastInput} />}
-          </div>
-          <div className="d-flex align-items-center gap-2">
-            {decoupleCb}
-            {inventorySample}
-            {!sample.isNew && <OpenCalendarButton isPanelHeader eventableId={sample.id} eventableType="Sample" />}
-            <PrintCodeButton element={sample} />
-            {copyBtn}
-            {this.saveAndCloseSample(sample, saveBtnDisplay)}
-          </div>
-        </div>
+        {decoupleCb}
+        {inventorySample}
         {messageBlock}
         {redirectWarningBlock}
       </>
@@ -1384,17 +1311,15 @@ export default class SampleDetails extends React.Component {
     const className = `${style} ${svgPath ? 'svg-container' : 'svg-container-empty'}`;
 
     return sample.can_update ? (
-      <>
-        <div
-          className={className}
-          onClick={this.showStructureEditor}
-          role="button"
-          tabIndex="0"
-        >
-          <i className="fa fa-pencil position-absolute top-0 end-0" />
-          <SVG key={svgPath} src={svgPath} className="molecule-mid" />
-        </div>
-      </>
+      <div
+        className={className}
+        onClick={this.showStructureEditor}
+        role="button"
+        tabIndex="0"
+      >
+        <i className="fa fa-pencil position-absolute top-0 end-0" />
+        <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+      </div>
     ) : (
       <div className={className}>
         <SVG key={svgPath} src={svgPath} className="molecule-mid" />
@@ -1416,7 +1341,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleExactMW(sample) {
-    if (sample.isMixture() && sample.sample_details) { return }
+    if (sample.isMixture() && sample.sample_details) { return; }
 
     const mw = sample.molecule_exact_molecular_weight;
     if (mw) return <ClipboardCopyText text={`Exact mass: ${mw.toFixed(MWPrecision)} g/mol`} />;
@@ -1457,22 +1382,35 @@ export default class SampleDetails extends React.Component {
   }
 
   /**
-   * Splits the canonical SMILES string of a mixture sample and updates the sample's molecules in the editor.
+   * Splits the canonical SMILES string of a mixture sample into individual
+   * components and updates the UI in two phases for fast feedback:
+   *   Phase 1 – splitSmilesToMolecule fetches molecules and adds Component
+   *             instances synchronously. setState shows the list immediately.
+   *   Phase 2 – updateMixtureMolecule fetches the combined molecule/SVG.
    *
-   * @param {string} editor - The editor identifier or instance to use for updating molecules.
-   * @param {string|null} svgFile - Optional SVG file content to use for rendering.
-   * @returns {void}
+   * @param {string} editor - The editor identifier used for molecule fetching.
+   * @returns {Promise<void>}
    */
-  splitSmiles(editor) {
+  async splitSmiles(editor) {
     const { sample } = this.state;
     if (!sample.isMixture() || !sample.molecule_cano_smiles || sample.molecule_cano_smiles === '') { return; }
 
     const mixtureSmiles = sample.molecule_cano_smiles.split('.');
-    if (mixtureSmiles) {
-      sample.splitSmilesToMolecule(mixtureSmiles, editor)
-        .then(() => {
-          this.setState({ sample });
-        });
+    if (!mixtureSmiles || mixtureSmiles.length === 0) return;
+
+    this.setState({ loadingMolecule: true });
+
+    try {
+      // Phase 1: Fetch individual molecules, create Components, add sync
+      await sample.splitSmilesToMolecule(mixtureSmiles, editor);
+      this.setState({ sample });
+
+      // Phase 2: Update combined molecule/SVG
+      await sample.updateMixtureMolecule();
+      this.setState({ sample, loadingMolecule: false });
+    } catch (error) {
+      console.log(error);
+      this.setState({ loadingMolecule: false });
     }
   }
 
@@ -1497,16 +1435,22 @@ export default class SampleDetails extends React.Component {
   }
 
   decoupleChanged(e) {
-    const { sample } = this.state;
-    sample.decoupled = e.target.checked;
+    const { sample, previousSurfaceType } = this.state;
+    const checked = typeof e === 'boolean' ? e : e.target.checked;
+    sample.decoupled = checked;
     if (!sample.decoupled) {
       sample.sum_formula = '';
       sample.molecular_mass = null;
+      if (sample.residues && sample.residues[0] && sample.residues[0].custom_info && previousSurfaceType != null) {
+        sample.residues[0].custom_info.surface_type = previousSurfaceType;
+        this.setState({ previousSurfaceType: null });
+      }
     } else {
       if (!sample.sum_formula || sample.sum_formula.trim() === '') sample.sum_formula = 'undefined structure';
       if (sample.residues && sample.residues[0] && sample.residues[0].custom_info) {
-        sample.residues[0].custom_info.polymer_type = 'self_defined';
-        delete sample.residues[0].custom_info.surface_type;
+        const ci = sample.residues[0].custom_info;
+        this.setState({ previousSurfaceType: ci.surface_type || null });
+        delete ci.surface_type;
       }
     }
     if (!sample.decoupled && ((sample.molfile || '') === '')) {
@@ -1517,37 +1461,27 @@ export default class SampleDetails extends React.Component {
   }
 
   renderMolfileModal() {
-    const { molfile } = this.state;
+    const { molfile, showMolfileModal } = this.state;
 
     return (
-      <Modal
-        centered
-        show={this.state.showMolfileModal}
-        dialogClassName="modal-lg"
+      <AppModal
+        title="Molfile"
+        show={showMolfileModal}
+        size="lg"
         onHide={this.handleMolfileClose}
+        closeLabel="Close"
+        showFooter
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Molfile</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div>
-            <Form.Group controlId="molfileInputModal">
-              <Form.Control
-                as="textarea"
-                rows={30}
-                readOnly
-                disabled
-                value={molfile}
-              />
-            </Form.Group>
-          </div>
-          <div>
-            <Button variant="warning" onClick={this.handleMolfileClose}>
-              Close
-            </Button>
-          </div>
-        </Modal.Body>
-      </Modal>
+        <Form.Group controlId="molfileInputModal">
+          <Form.Control
+            as="textarea"
+            rows={30}
+            readOnly
+            disabled
+            value={molfile}
+          />
+        </Form.Group>
+      </AppModal>
     );
   }
 
@@ -1632,12 +1566,25 @@ export default class SampleDetails extends React.Component {
       && this.state.activeTab) || visible.get(0);
 
     const pendingToSave = sample.isPendingToSave || isChemicalEdited;
+    const hasComponents = !sample.isMixture() || sample.hasComponents();
+    // Chemical can be saved independently of sample validity (requires existing sample)
+    const canSaveChemical = isChemicalEdited && !sample.isNew && sample.can_update;
+    const saveDisabled = (!this.sampleIsValid() || !sample.can_update || !hasComponents)
+      && !canSaveChemical;
 
     return (
-      <DetailCard
+      <ElementDetailCard
+        element={sample}
         isPendingToSave={pendingToSave}
-        header={this.sampleHeader(sample)}
-        footer={this.sampleFooter()}
+        headerToolbar={this.sampleHeader(sample)}
+        footerToolbar={this.sampleFooter()}
+        title={sampleTitle(sample)}
+        titleTooltip={formatTimeStampsOfElement(sample || {})}
+        titleAppendix={sampleTitleAppendix(sample, this.handleFastInput)}
+        onSave={() => this.saveSampleOrChemical()}
+        saveDisabled={saveDisabled}
+        showPrintCode
+        showCalendar
       >
         {ketcherSVGError?.length > 0 && (
           <Alert
@@ -1647,8 +1594,6 @@ export default class SampleDetails extends React.Component {
             onClose={() => this.setState({ ketcherSVGError: null })}
           >
             <strong>SVG generation failed.</strong>
-            {' '}
-            Falling back to the previous SVG.
             <br />
             <small className="text-muted">{ketcherSVGError}</small>
           </Alert>
@@ -1670,6 +1615,7 @@ export default class SampleDetails extends React.Component {
             activeKey={activeTab}
             onSelect={this.handleSelect}
             id="SampleDetailsXTab"
+            className="has-config-overlay"
           >
             {tabContents}
           </Tabs>
@@ -1677,7 +1623,7 @@ export default class SampleDetails extends React.Component {
         {this.structureEditorModal(sample)}
         {this.renderMolfileModal()}
         <CommentModal element={sample} />
-      </DetailCard>
+      </ElementDetailCard>
     );
   }
 }
