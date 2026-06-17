@@ -61,9 +61,18 @@ export default class AdminFetcher {
     return ApiClient.putJson(`/api/v1/admin/users/${userId}/profile/`, { body: otherParams });
   }
 
+  /**
+   * Enables/disables OLS terms. The endpoint replies 204 No Content, so success
+   * is read from the HTTP status.
+   *
+   * @param {object} params - { owl_name, enableIds, disableIds }
+   * @returns {Promise<boolean>} true on success (see ChemotionApiClient.apiRequest)
+   */
   static olsTermDisableEnable(params) {
-    return ApiClient.postJson('/api/v1/admin/olsEnableDisable/', { body: params })
-      .then((response) => response.status === 204);
+    return ApiClient.postJson('/api/v1/admin/olsEnableDisable/', {
+      body: params,
+      handleResponseSuccess: (response) => response.ok,
+    });
   }
 
   static importOlsTerms(file) {

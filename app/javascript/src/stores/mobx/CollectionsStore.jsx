@@ -218,8 +218,8 @@ export const CollectionsStore = types
       }
     }),
     deleteCollectionShare: flow(function* deleteCollectionShare(collectionShareId, collectionId) {
-      const response = yield CollectionSharesFetcher.deleteCollectionShare(collectionShareId)
-      if (response.status === 204) {
+      const success = yield CollectionSharesFetcher.deleteCollectionShare(collectionShareId)
+      if (success) {
         self.fetchCollections()
         self.getSharedWithUsers(collectionId)
       }
@@ -236,9 +236,9 @@ export const CollectionsStore = types
       }
     }),
     removeElementsFromCollection: flow(function* removeElementsFromCollection(params) {
-      const response = yield CollectionElementsFetcher.deleteElementsFromCollection(params)
+      const success = yield CollectionElementsFetcher.deleteElementsFromCollection(params)
 
-      if (response.status === 204) {
+      if (success) {
         // refresh elements
         ElementActions.refreshElementsAfterCollectionChanges(params.ui_state.currentCollection.id)
         return true

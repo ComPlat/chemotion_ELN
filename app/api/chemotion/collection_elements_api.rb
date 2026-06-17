@@ -34,7 +34,8 @@ module Chemotion
           collection_id: params[:collection_id],
           ui_state: params[:ui_state].except(:currentCollection),
         )
-        { status: 204 }
+        status 204
+        body false
       end
     end
   end

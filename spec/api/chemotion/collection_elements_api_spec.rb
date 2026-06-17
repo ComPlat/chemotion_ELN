@@ -153,5 +153,28 @@ describe Chemotion::CollectionElementsAPI do
       expect(response.status).to eq 403
     end
   end
+
+  context 'when removing own elements from an own collection' do
+    let(:source_collection_user) { user }
+    let(:remove_input) do
+      {
+        ui_state: {
+          currentCollection: { id: 0 },
+          sample: {
+            checkedAll: false,
+            checkedIds: [sample1.id, sample2.id, sample3.id],
+            uncheckedIds: [],
+          },
+        },
+      }
+    end
+
+    it 'responds 204 No Content with an empty body' do
+      delete "/api/v1/collection_elements/#{source_collection.id}", params: remove_input
+
+      expect(response).to have_http_status(:no_content)
+      expect(response.body).to be_blank
+    end
+  end
 end
 # rubocop:enable RSpec/IndexedLet, RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations

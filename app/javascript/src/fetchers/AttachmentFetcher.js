@@ -286,8 +286,8 @@ export default class AttachmentFetcher {
       .then((json) => new Attachment(json.attachment));
   }
 
-  static bulkDeleteAttachments(attachmentIdsToDelete) {
-    return ApiClient.deleteRequest('/api/v1/attachments/bulk_delete', { body: attachmentIdsToDelete });
+  static bulkDeleteAttachments(ids) {
+    return ApiClient.deleteRequest('/api/v1/attachments/bulk_delete', { body: { ids } });
   }
 
   static deleteContainerLink(params) {

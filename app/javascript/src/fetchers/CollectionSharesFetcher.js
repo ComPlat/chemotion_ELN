@@ -15,7 +15,16 @@ export default class CollectionSharesFetcher {
       .then((json) => json.collection_share);
   }
 
-  static deleteCollectionShare(collectionId) {
-    return ApiClient.deleteRequest(`/api/v1/collection_shares/${collectionId}`);
+  /**
+   * Deletes a collection share. The endpoint replies 204 No Content, so success
+   * is read from the HTTP status.
+   *
+   * @param {number} collectionShareId - id of the collection share to delete
+   * @returns {Promise<boolean>} true on success (see ChemotionApiClient.apiRequest)
+   */
+  static deleteCollectionShare(collectionShareId) {
+    return ApiClient.deleteRequest(`/api/v1/collection_shares/${collectionShareId}`, {
+      handleResponseSuccess: (response) => response.ok,
+    });
   }
 }
