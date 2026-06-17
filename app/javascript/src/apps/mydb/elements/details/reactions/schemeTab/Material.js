@@ -203,7 +203,7 @@ class Material extends Component {
       && lockEquivColumn
       && reaction.isVolumeLocked
     );
-    const disableSchemeConcentration = reaction.gaseous || reaction.weight_percentage;
+    const disableSchemeConcentration = reaction.weight_percentage;
 
     // For SBMM samples, use concentration_rt_value directly (automatically calculated)
     const concentrationValue = isSbmm
