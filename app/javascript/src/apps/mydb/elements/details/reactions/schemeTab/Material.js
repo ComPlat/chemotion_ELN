@@ -189,13 +189,13 @@ class Material extends Component {
    * Renders the concentration field for a material.
    * For mixtures, it finds the reference component and uses its concentration.
    * For regular materials, it uses the material's own concentration value.
-   * For SBMM materials, it shows the auto-calculated concentration as read-only.
+   * For SBMM materials, it uses `concentration_rt_value` (reaction-scheme concentration).
    *
    * @param {Sample} material - The material sample to display concentration for
    * @returns {JSX.Element} A table cell containing the concentration input component
    */
   materialConcentration(material) {
-    const { reaction, materialGroup } = this.props;
+    const { reaction, materialGroup, lockEquivColumn } = this.props;
 
     const isSbmm = isSbmmSample(material);
     const metricMolConc = getMetricMolConc(material);
@@ -213,9 +213,17 @@ class Material extends Component {
     const isFeedstock = reaction.gaseous && material.isFeedstock && material.isFeedstock();
     const cannotDeriveReactionVolume = hasNoAmount && !reaction.isVolumeLocked && !isFeedstock;
 
+    const disableProductConcentration = (
+      materialGroup === 'products'
+      && lockEquivColumn
+      && reaction.isVolumeLocked
+    );
+    const disableSchemeConcentration = reaction.weight_percentage;
+
     const isConcentrationDisabled =
       !permitOn(reaction)
-      || isSbmm
+      || disableProductConcentration
+      || disableSchemeConcentration
       || isProduct
       || reaction.weight_percentage
       || cannotDeriveReactionVolume;
@@ -248,19 +256,20 @@ class Material extends Component {
    * @param {Object} e - The change event containing new concentration value
    * @param {number} currentValue - Current concentration value for comparison
    */
-handleConcentrationChange(e, currentValue) {
-  const { materialGroup, onChange } = this.props;
-  if (!onChange || !e) return;
-  if (e.value === currentValue) return;
+  handleConcentrationChange(e, currentValue) {
+    const { materialGroup, onChange } = this.props;
+    if (!onChange || !e) return;
+    if (e.value === currentValue) return;
 
-  const event = {
-    concentration: e,
-    type: 'concentrationChanged',
-    materialGroup,
-    sampleID: this.materialId(),
-  };
-  onChange(event);
-}
+    const event = {
+      concentration: e,
+      type: 'concentrationChanged',
+      materialGroup,
+      sampleID: this.materialId(),
+      isSbmm: this.isSbmm,
+    };
+    onChange(event);
+  }
 
   materialRef(material) {
     const { materialGroup, reaction } = this.props;

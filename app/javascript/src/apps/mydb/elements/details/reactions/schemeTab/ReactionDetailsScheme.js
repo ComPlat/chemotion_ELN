@@ -1282,8 +1282,8 @@ export default class ReactionDetailsScheme extends React.Component {
    */
   updatedReactionForConcentrationChange(changeEvent) {
     const { reaction } = this.props;
-    const { sampleID, concentration } = changeEvent;
-    const updatedSample = reaction.sampleById(sampleID);
+    const { sampleID, concentration, isSbmm } = changeEvent;
+    const updatedSample = reaction.findReactionSample(sampleID, isSbmm === true);
     const concentrationValue = concentration?.value;
 
     if (!updatedSample
@@ -1302,6 +1302,13 @@ export default class ReactionDetailsScheme extends React.Component {
 
     if (!this.guardConcentrationUpdate(reaction)) {
       return reaction;
+    }
+
+    // SBMM samples display `concentration_rt_value`; regular samples display `concn`.
+    if (isSbmmSample(updatedSample)) {
+      updatedSample.concentration_rt_value = concentrationValue;
+    } else {
+      updatedSample.concn = concentrationValue;
     }
 
     if (reaction.isVolumeLocked) {
@@ -1433,10 +1440,15 @@ export default class ReactionDetailsScheme extends React.Component {
     );
 
     // Update reaction with the changed sample amounts
-    // This will handle equivalent recalculation based on lockEquivColumn state
+    // This will handle equivalent recalculation based on lockEquivColumn state.
+    // Always include SBMM samples so their equivalents are rebased when the
+    // reference's amount changes (the edited sample may be a regular reference,
+    // not the SBMM itself). Mirrors updatedReactionForAmountChange.
     const updatedReaction = this.updatedReactionWithSample(
       this.updatedSamplesForAmountChange.bind(this),
-      updatedSample
+      updatedSample,
+      undefined,
+      true
     );
 
     // Case 2.2: If equivalents are locked, recalculate concentrations for all materials
