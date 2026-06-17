@@ -92,21 +92,6 @@ Cypress.Commands.add('createMessages', (adminID, channelID, userID) => {
   });
 });
 
-Cypress.Commands.add('createUserWithResearchPlan', () => {
-  cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user1) => {
-    cy.appFactories([['create', 'collection', { label: 'Col1', user_id: user1[0].id }]]).then((collection) => {
-      cy.appFactories([['create', 'molecule', { molecular_weight: 171.03448 }]]).then((molecule) => {
-        cy.appFactories([['create', 'sample', {
-          name: 'PH-1234', real_amount_value: 4.671, molecule_id: molecule[0].id, collection_ids: collection[0].id, user_id: user1[0].id
-        }]]);
-      });
-      cy.appFactories([['create', 'research_plan']]).then((researchPlan) => {
-        cy.appFactories([['create', 'collections_research_plan', { research_plan_id: researchPlan[0].id, collection_id: collection[0].id }]]);
-      });
-    });
-  });
-});
-
 Cypress.Commands.add('settingPermission', (permission) => {
   cy.get('#tree-id-Col1').click();
   cy.visit('/mydb/collection/management');
