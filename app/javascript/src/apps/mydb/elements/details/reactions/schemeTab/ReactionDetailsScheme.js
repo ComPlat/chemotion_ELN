@@ -1274,6 +1274,13 @@ export default class ReactionDetailsScheme extends React.Component {
       return reaction;
     }
 
+    // Feedstocks live in the gas vessel, so amount_mol is derived from the
+    // vessel volume rather than the reaction volume. Leave the reaction volume
+    // and other materials' concentrations untouched.
+    if (reaction.gaseous && updatedSample.isFeedstock()) {
+      return this.handleFeedstockConcentrationChange(updatedSample, concentrationValue);
+    }
+
     if (!this.guardConcentrationUpdate(reaction)) {
       return reaction;
     }
@@ -1285,6 +1292,30 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     this.applyDerivedVolumeFromConcentration(reaction, updatedSample, concentrationValue);
+    return reaction;
+  }
+
+  /**
+   * Handles a concentration edit on a feedstock sample. Updates only the
+   * feedstock's amount_mol using `amount_mol = concentration * vesselVolume`;
+   * the reaction volume and other materials' concentrations are not touched.
+   *
+   * @param {Sample} updatedSample
+   * @param {number} newConcentration - Concentration in mol/L.
+   * @returns {Reaction}
+   */
+  handleFeedstockConcentrationChange(updatedSample, newConcentration) {
+    const { reaction } = this.props;
+    const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
+
+    if (!Number.isFinite(vesselVolume) || vesselVolume <= 0) {
+      return reaction;
+    }
+
+    updatedSample.concn = newConcentration;
+    updatedSample.preserveConcentration = true;
+    updatedSample.setAmount({ value: newConcentration * vesselVolume, unit: 'mol' });
+
     return reaction;
   }
 

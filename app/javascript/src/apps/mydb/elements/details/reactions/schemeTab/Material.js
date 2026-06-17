@@ -195,15 +195,15 @@ class Material extends Component {
    * @returns {JSX.Element} A table cell containing the concentration input component
    */
   materialConcentration(material) {
-    const { reaction, lockEquivColumn, materialGroup } = this.props;
+    const { reaction, materialGroup } = this.props;
+
     const isSbmm = isSbmmSample(material);
     const metricMolConc = getMetricMolConc(material);
-    const disableProductConcentration = (
-      materialGroup === 'products'
-      && lockEquivColumn
-      && reaction.isVolumeLocked
-    );
-    const disableSchemeConcentration = reaction.gaseous || reaction.weight_percentage;
+    const isProduct = materialGroup === 'products';
+    const isConcentrationDisabled = !permitOn(reaction)
+      || isSbmm
+      || isProduct
+      || reaction.weight_percentage;
 
     // For SBMM samples, use concentration_rt_value directly (automatically calculated)
     const concentrationValue = isSbmm
@@ -218,12 +218,7 @@ class Material extends Component {
         metricPrefix={metricMolConc}
         metricPrefixes={metricPrefixesMolConc}
         precision={4}
-        disabled={
-          !permitOn(reaction)
-          || isSbmm
-          || disableProductConcentration
-          || disableSchemeConcentration
-        }
+        disabled={isConcentrationDisabled}
         onChange={(e) => this.handleConcentrationChange(e, concentrationValue)}
         onMetricsChange={this.handleMetricsChange}
         size="sm"
