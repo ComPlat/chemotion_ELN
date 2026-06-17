@@ -14,24 +14,25 @@ const noRootCloseComponents = {
   ),
 };
 
-const MT_ID = 0;
+const TT_ID = 0;
 
 const getIconAndDropdown = (template) => {
-  const reservedKeys = ['_toolbar', '_mt', '_mt_label'];
+  const reservedKeys = ['_toolbar', '_tt', '_tt_label'];
+  // dropdown values must be lists; skip anything else so a stray value can't crash the toolbar
   const dropdownTemplates = Object.keys(template)
-    .filter(k => !reservedKeys.includes(k))
+    .filter(k => !reservedKeys.includes(k) && Array.isArray(template[k]))
     .map((k, idx) => ({ id: idx + 1, name: k, data: template[k] }));
 
   // eslint-disable-next-line no-underscore-dangle
   const toolbarTemplate = template._toolbar || [];
 
   const mtDropdown = {
-    id: MT_ID,
+    id: TT_ID,
     // eslint-disable-next-line no-underscore-dangle
-    name: template._mt_label || 'MT',
+    name: template._tt_label || 'TT',
     // eslint-disable-next-line no-underscore-dangle
-    data: template._mt || [],
-    isMT: true,
+    data: template._tt || [],
+    isTT: true,
   };
 
   return [toolbarTemplate, [mtDropdown, ...dropdownTemplates]];
@@ -169,11 +170,11 @@ export default class ToolbarTemplateCreator extends React.Component {
       const selectedValue = selectRef.current.state.selectValue;
       const tempName = template.name;
 
-      if (template.isMT) {
+      if (template.isTT) {
         // eslint-disable-next-line no-underscore-dangle
-        userTemplate._mt = selectedValue.map(v => v.value);
+        userTemplate._tt = selectedValue.map(v => v.value);
         // eslint-disable-next-line no-underscore-dangle
-        userTemplate._mt_label = tempName;
+        userTemplate._tt_label = tempName;
       } else {
         userTemplate[tempName] = selectedValue.map(v => v.value);
       }
@@ -199,7 +200,7 @@ export default class ToolbarTemplateCreator extends React.Component {
       .map(n => ({ label: n, value: n }));
 
     const dropdownTemplateSelector = dropdownTemplates.map((template) => {
-      const { name, id, isMT } = template;
+      const { name, id, isTT } = template;
       const selectRef = this.toolbarDdSelectRefs.filter(r => (
         r.id === template.id
       ))[0];
@@ -239,8 +240,8 @@ export default class ToolbarTemplateCreator extends React.Component {
               variant="danger"
               size="sm"
               onClick={removeDropdown}
-              disabled={isMT}
-              title={isMT ? 'Personal templates dropdown cannot be removed' : undefined}
+              disabled={isTT}
+              title={isTT ? 'Personal templates dropdown cannot be removed' : undefined}
             >
               <i className="fa fa-trash" />
             </Button>
@@ -268,7 +269,11 @@ export default class ToolbarTemplateCreator extends React.Component {
             </Button>
             <Button
               variant="light"
-              href="/text_templates"
+              onClick={() => {
+                const { onClose } = this.props;
+                if (onClose) onClose();
+                window.dispatchEvent(new CustomEvent('chemotion:open-settings'));
+              }}
               title="Manage text templates"
             >
               <i className="fa fa-file-text-o me-1" />

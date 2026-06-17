@@ -14,17 +14,20 @@ const getNamesFromTemplate = (template) => {
   const iconNames = template._toolbar || [];
   const dropdownNames = {};
 
-  // MT dropdown uses stable keys _mt (data) and _mt_label (display name)
+  // TT dropdown uses stable keys _tt (data) and _tt_label (display name)
   // eslint-disable-next-line no-underscore-dangle
-  if (template._mt !== undefined) {
+  if (template._tt !== undefined) {
     // eslint-disable-next-line no-underscore-dangle
-    dropdownNames[template._mt_label || 'MT'] = template._mt;
+    dropdownNames[template._tt_label || 'TT'] = template._tt;
   }
 
-  const reservedKeys = ['_toolbar', '_mt', '_mt_label'];
-  Object.keys(template).filter(k => !reservedKeys.includes(k)).forEach((k) => {
-    dropdownNames[k] = template[k];
-  });
+  const reservedKeys = ['_toolbar', '_tt', '_tt_label'];
+  // dropdown values must be lists; skip anything else so a stray value can't crash the toolbar
+  Object.keys(template)
+    .filter(k => !reservedKeys.includes(k) && Array.isArray(template[k]))
+    .forEach((k) => {
+      dropdownNames[k] = template[k];
+    });
 
   return [iconNames, dropdownNames];
 };

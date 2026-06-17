@@ -65,10 +65,12 @@ export default class UserAuth extends Component {
   componentDidMount() {
     UserStore.listen(this.onChange);
     UserActions.fetchCurrentUser();
+    window.addEventListener('chemotion:open-settings', this.handleSettingsShow);
   }
 
   componentWillUnmount() {
     UserStore.unlisten(this.onChange);
+    window.removeEventListener('chemotion:open-settings', this.handleSettingsShow);
   }
 
   onChange(state) {
@@ -281,7 +283,6 @@ export default class UserAuth extends Component {
     });
   };
 
-  // eslint-disable-next-line class-methods-use-this
   handleSettingsShow() {
     this.setState({ showSettings: true });
   }
@@ -663,9 +664,6 @@ export default class UserAuth extends Component {
             )}
             <Dropdown.Item eventKey="12" href="/converter_admin">
               Converter Profile
-            </Dropdown.Item>
-            <Dropdown.Item href="/text_templates">
-              Text Templates
             </Dropdown.Item>
             <Dropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</Dropdown.Item>
 

@@ -384,18 +384,9 @@ export default class TextTemplates extends React.Component {
       : fetchedGlobalTemplates[selectedGlobalName];
 
     return (
-      <Container fluid className="d-flex flex-column py-3 px-4" style={{ height: '100vh', overflow: 'hidden' }}>
-        <div className="d-flex align-items-center mb-3">
-          <Button
-            variant="outline-secondary"
-            size="sm"
-            onClick={() => window.history.back()}
-            className="me-3 d-flex align-items-center gap-1"
-          >
-            <i className="fa fa-arrow-left" />
-            Back
-          </Button>
-          <h4 className="fw-bold">Templates</h4>
+      <Container fluid className="d-flex flex-column py-3 px-4" style={{ height: '100%', overflow: 'hidden' }}>
+        <div className="d-flex align-items-baseline mb-3">
+          <h4 className="fw-bold mb-0">Templates</h4>
           <span className="ms-2 text-muted small">All text templates for reactions and analyses</span>
         </div>
 

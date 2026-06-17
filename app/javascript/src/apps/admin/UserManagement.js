@@ -362,7 +362,7 @@ export default class UserManagement extends React.Component {
 
   handleGlobalTextTemplateEditor(id, isGlobalTextTemplateEditor) {
     const message = `Global text template editing has been ${isGlobalTextTemplateEditor === true ? 'dis' : 'en'}abled for user ${id}`;
-    this.updateProfile({ user_id: id, global_text_template_editor: !isGlobalTextTemplateEditor }, message);
+    this.updateProfile({ userId: id, global_text_template_editor: !isGlobalTextTemplateEditor }, message);
   }
 
   handleActiveInActiveAccount(id, isActive) {

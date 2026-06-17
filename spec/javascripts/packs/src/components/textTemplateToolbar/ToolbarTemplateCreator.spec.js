@@ -29,22 +29,22 @@ describe('ToolbarTemplateCreator', () => {
     sinon.restore();
   });
 
-  describe('MT dropdown row', () => {
-    it('always renders an MT row', () => {
+  describe('TT dropdown row', () => {
+    it('always renders a TT row', () => {
       const wrapper = shallow(React.createElement(ToolbarTemplateCreator, defaultProps));
       const { dropdownTemplates } = wrapper.instance().state;
-      const mtRow = dropdownTemplates.find(d => d.isMT);
-      expect(mtRow).toBeDefined();
+      const ttRow = dropdownTemplates.find(d => d.isTT);
+      expect(ttRow).toBeDefined();
     });
 
-    it('MT row trash button is disabled', () => {
+    it('TT row trash button is disabled', () => {
       const wrapper = shallow(React.createElement(ToolbarTemplateCreator, defaultProps));
       const trashButtons = wrapper.find('Button[variant="danger"]');
       const mtButton = trashButtons.filterWhere(b => b.prop('disabled') === true);
       expect(mtButton.length).toBe(1);
     });
 
-    it('non-MT rows have trash button enabled', () => {
+    it('non-TT rows have trash button enabled', () => {
       const template = { 'My Dropdown': ['tmpl1'] };
       const wrapper = shallow(
         React.createElement(ToolbarTemplateCreator, { ...defaultProps, template })
@@ -55,46 +55,46 @@ describe('ToolbarTemplateCreator', () => {
     });
   });
 
-  describe('getIconAndDropdown with stable MT keys', () => {
-    it('reads MT data from _mt key', () => {
-      const template = { _mt: ['tmpl1', 'tmpl2'], _mt_label: 'MT' };
+  describe('getIconAndDropdown with stable TT keys', () => {
+    it('reads TT data from _tt key', () => {
+      const template = { _tt: ['tmpl1', 'tmpl2'], _tt_label: 'TT' };
       const wrapper = shallow(
         React.createElement(ToolbarTemplateCreator, { ...defaultProps, template })
       );
       const { dropdownTemplates } = wrapper.instance().state;
-      const mtRow = dropdownTemplates.find(d => d.isMT);
-      expect(mtRow.data).toEqual(['tmpl1', 'tmpl2']);
+      const ttRow = dropdownTemplates.find(d => d.isTT);
+      expect(ttRow.data).toEqual(['tmpl1', 'tmpl2']);
     });
 
-    it('uses _mt_label as the MT row name', () => {
-      const template = { _mt: [], _mt_label: 'Text Templates' };
+    it('uses _tt_label as the TT row name', () => {
+      const template = { _tt: [], _tt_label: 'Text Templates' };
       const wrapper = shallow(
         React.createElement(ToolbarTemplateCreator, { ...defaultProps, template })
       );
       const { dropdownTemplates } = wrapper.instance().state;
-      const mtRow = dropdownTemplates.find(d => d.isMT);
-      expect(mtRow.name).toBe('Text Templates');
+      const ttRow = dropdownTemplates.find(d => d.isTT);
+      expect(ttRow.name).toBe('Text Templates');
     });
 
-    it('defaults MT row name to MT when _mt_label is absent', () => {
-      const template = { _mt: [] };
+    it('defaults TT row name to TT when _tt_label is absent', () => {
+      const template = { _tt: [] };
       const wrapper = shallow(
         React.createElement(ToolbarTemplateCreator, { ...defaultProps, template })
       );
       const { dropdownTemplates } = wrapper.instance().state;
-      const mtRow = dropdownTemplates.find(d => d.isMT);
-      expect(mtRow.name).toBe('MT');
+      const ttRow = dropdownTemplates.find(d => d.isTT);
+      expect(ttRow.name).toBe('TT');
     });
 
-    it('does not treat _mt/_mt_label as regular dropdown keys', () => {
-      const template = { _mt: [], _mt_label: 'MT', 'Regular': ['tmpl1'] };
+    it('does not treat _tt/_tt_label as regular dropdown keys', () => {
+      const template = { _tt: [], _tt_label: 'TT', 'Regular': ['tmpl1'] };
       const wrapper = shallow(
         React.createElement(ToolbarTemplateCreator, { ...defaultProps, template })
       );
       const { dropdownTemplates } = wrapper.instance().state;
       const names = dropdownTemplates.map(d => d.name);
-      expect(names).not.toContain('_mt');
-      expect(names).not.toContain('_mt_label');
+      expect(names).not.toContain('_tt');
+      expect(names).not.toContain('_tt_label');
       expect(names).toContain('Regular');
     });
 
@@ -122,19 +122,19 @@ describe('ToolbarTemplateCreator', () => {
   });
 
   describe('removeDropdownTemplate', () => {
-    it('removes the specified non-MT dropdown', () => {
+    it('removes the specified non-TT dropdown', () => {
       const template = { 'My Dropdown': ['tmpl1'] };
       const wrapper = shallow(
         React.createElement(ToolbarTemplateCreator, { ...defaultProps, template })
       );
       const { dropdownTemplates } = wrapper.instance().state;
-      const nonMT = dropdownTemplates.find(d => !d.isMT);
+      const nonTT = dropdownTemplates.find(d => !d.isTT);
 
-      wrapper.instance().removeDropdownTemplate(nonMT);
+      wrapper.instance().removeDropdownTemplate(nonTT);
       wrapper.update();
 
       const remaining = wrapper.instance().state.dropdownTemplates;
-      expect(remaining.find(d => d.id === nonMT.id)).toBeUndefined();
+      expect(remaining.find(d => d.id === nonTT.id)).toBeUndefined();
     });
   });
 

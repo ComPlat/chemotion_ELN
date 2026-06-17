@@ -28,9 +28,9 @@ describe('TextTemplateToolbar', () => {
     sinon.restore();
   });
 
-  describe('MT dropdown', () => {
-    it('renders a ToolbarDropdown for _mt key', () => {
-      const template = { _mt: ['template1'], _mt_label: 'MT' };
+  describe('TT dropdown', () => {
+    it('renders a ToolbarDropdown for _tt key', () => {
+      const template = { _tt: ['template1'], _tt_label: 'TT' };
       const predefinedTemplates = { template1: { name: 'template1', data: {} } };
 
       const wrapper = shallow(
@@ -44,8 +44,8 @@ describe('TextTemplateToolbar', () => {
       expect(wrapper.find('ToolbarDropdown').length).toBe(1);
     });
 
-    it('uses _mt_label as the dropdown label', () => {
-      const template = { _mt: ['template1'], _mt_label: 'Text Templates' };
+    it('uses _tt_label as the dropdown label', () => {
+      const template = { _tt: ['template1'], _tt_label: 'Text Templates' };
       const predefinedTemplates = { template1: { name: 'template1', data: {} } };
 
       const wrapper = shallow(
@@ -59,8 +59,8 @@ describe('TextTemplateToolbar', () => {
       expect(wrapper.find('ToolbarDropdown').prop('label')).toBe('Text Templates');
     });
 
-    it('defaults label to MT when _mt_label is absent', () => {
-      const template = { _mt: ['template1'] };
+    it('defaults label to TT when _tt_label is absent', () => {
+      const template = { _tt: ['template1'] };
       const predefinedTemplates = { template1: { name: 'template1', data: {} } };
 
       const wrapper = shallow(
@@ -71,10 +71,10 @@ describe('TextTemplateToolbar', () => {
         })
       );
 
-      expect(wrapper.find('ToolbarDropdown').prop('label')).toBe('MT');
+      expect(wrapper.find('ToolbarDropdown').prop('label')).toBe('TT');
     });
 
-    it('renders no ToolbarDropdown when _mt is absent', () => {
+    it('renders no ToolbarDropdown when _tt is absent', () => {
       const wrapper = shallow(
         React.createElement(TextTemplateToolbar, {
           template: {},
@@ -88,9 +88,9 @@ describe('TextTemplateToolbar', () => {
   });
 
   describe('stale template filtering', () => {
-    it('excludes deleted templates from the MT dropdown items', () => {
-      // _mt references 'deleted' which is not in predefined or personal
-      const template = { _mt: ['existing', 'deleted'], _mt_label: 'MT' };
+    it('excludes deleted templates from the TT dropdown items', () => {
+      // _tt references 'deleted' which is not in predefined or personal
+      const template = { _tt: ['existing', 'deleted'], _tt_label: 'TT' };
       const predefinedTemplates = { existing: { name: 'existing', data: {} } };
 
       const wrapper = shallow(
@@ -107,8 +107,8 @@ describe('TextTemplateToolbar', () => {
     });
 
     it('excludes renamed templates from the dropdown items', () => {
-      // _mt references 'old-name' which was renamed — not in predefined anymore
-      const template = { _mt: ['old-name', 'new-name'], _mt_label: 'MT' };
+      // _tt references 'old-name' which was renamed — not in predefined anymore
+      const template = { _tt: ['old-name', 'new-name'], _tt_label: 'TT' };
       const predefinedTemplates = { 'new-name': { name: 'new-name', data: {} } };
 
       const wrapper = shallow(
@@ -127,7 +127,7 @@ describe('TextTemplateToolbar', () => {
 
   describe('template resolution', () => {
     it('resolves templates from predefinedTemplates', () => {
-      const template = { _mt: ['predefined1'], _mt_label: 'MT' };
+      const template = { _tt: ['predefined1'], _tt_label: 'TT' };
       const predefinedTemplates = { predefined1: { name: 'predefined1', data: { ops: [{ insert: 'hello' }] } } };
 
       const wrapper = shallow(
@@ -149,7 +149,7 @@ describe('TextTemplateToolbar', () => {
       });
       stubStoreAndActions();
 
-      const template = { _mt: ['personal1'], _mt_label: 'MT' };
+      const template = { _tt: ['personal1'], _tt_label: 'TT' };
 
       const wrapper = shallow(
         React.createElement(TextTemplateToolbar, {
@@ -203,7 +203,7 @@ describe('TextTemplateToolbar', () => {
     it('calls applyTemplate with template data when dropdown item is selected', () => {
       const applyTemplate = sinon.spy();
       const templateData = { ops: [{ insert: 'hello' }] };
-      const template = { _mt: ['tmpl1'], _mt_label: 'MT' };
+      const template = { _tt: ['tmpl1'], _tt_label: 'TT' };
       const predefinedTemplates = { tmpl1: { name: 'tmpl1', data: templateData } };
 
       const wrapper = shallow(

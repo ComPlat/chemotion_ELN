@@ -1,10 +1,10 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
-import { camelizeKeys, decamelize } from 'src/utilities/FetcherHelper';
+import { shallowCamelizeKeys, decamelize } from 'src/utilities/FetcherHelper';
 
 export default class TextTemplatesFetcher {
   static fetchTextTemplates(elementName) {
     return ApiClient.getJson(`/api/v1/text_templates/by_type?type=${decamelize(elementName)}`)
-      .then((json) => camelizeKeys(json));
+      .then((json) => shallowCamelizeKeys(json));
   }
 
   static fetchPredefinedTemplateNames() {
@@ -31,7 +31,7 @@ export default class TextTemplatesFetcher {
   }
 
   static deletePredefinedTemplateByName(name) {
-    return ApiClient.deleteRequest(`/api/v1/text_templates/by_name?name=${name}`);
+    return ApiClient.deleteRequest(`/api/v1/text_templates/by_name?name=${encodeURIComponent(name)}`);
   }
 
   static fetchPersonalTemplates() {
