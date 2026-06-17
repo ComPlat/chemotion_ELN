@@ -288,6 +288,121 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
 
       storeStub.restore();
     });
+
+    it('should set gas product concentration from ppm using concn = ppm * 4.1e-8', () => {
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
+      });
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsScheme, {
+          reaction,
+          onReactionChange: onReactionChangeSpy,
+          onInputChange: onInputChangeSpy,
+        })
+      );
+      const gasProduct = reaction.products[0];
+      const newPpm = 20000;
+
+      wrapper.instance().updatedReactionForGasProductFieldsChange({
+        sampleID: gasProduct.id,
+        materialGroup: 'products',
+        field: 'part_per_million',
+        value: newPpm,
+      });
+
+      // concentration (mol/L) = ppm * 4.1e-8
+      expect(gasProduct.concn).toBeCloseTo(newPpm * 4.1e-8, 12);
+      expect(gasProduct.gas_phase_data.part_per_million).toBe(newPpm);
+      storeStub.restore();
+    });
+
+    it('should not change gas product concentration when a non-ppm gas field changes', () => {
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
+      });
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsScheme, {
+          reaction,
+          onReactionChange: onReactionChangeSpy,
+          onInputChange: onInputChangeSpy,
+        })
+      );
+      const gasProduct = reaction.products[0];
+      gasProduct.concn = 4.1e-4; // baseline derived from previous ppm edit
+
+      wrapper.instance().updatedReactionForGasProductFieldsChange({
+        sampleID: gasProduct.id,
+        materialGroup: 'products',
+        field: 'temperature',
+        value: 310,
+      });
+
+      expect(gasProduct.concn).toBe(4.1e-4);
+      storeStub.restore();
+    });
+
+    it('clears preserveConcentration when a feedstock is toggled away from feedstock', () => {
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
+      });
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsScheme, {
+          reaction,
+          onReactionChange: onReactionChangeSpy,
+          onInputChange: onInputChangeSpy,
+        })
+      );
+      const feedstock = reaction.reactants[0];
+      // Simulate a feedstock concentration edit having locked the value.
+      feedstock.preserveConcentration = true;
+      expect(feedstock.gas_type).toBe('feedstock');
+
+      // Toggle feedstock off (current display value is 'FES').
+      wrapper.instance().updatedReactionForGasTypeChange({
+        sampleID: feedstock.id,
+        materialGroup: 'reactants',
+        value: 'FES',
+      });
+
+      expect(feedstock.gas_type).not.toBe('feedstock');
+      expect(feedstock.preserveConcentration).toBe(false);
+      storeStub.restore();
+    });
+
+    it('keeps preserveConcentration intact when feedstock status is unchanged', () => {
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
+      });
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsScheme, {
+          reaction,
+          onReactionChange: onReactionChangeSpy,
+          onInputChange: onInputChangeSpy,
+        })
+      );
+      const catalyst = reaction.reactants[1];
+      catalyst.preserveConcentration = true;
+      expect(catalyst.gas_type).toBe('catalyst');
+
+      // Toggle catalyst off; the sample was never a feedstock so the flag
+      // must not be cleared.
+      wrapper.instance().updatedReactionForGasTypeChange({
+        sampleID: catalyst.id,
+        materialGroup: 'reactants',
+        value: 'CAT',
+      });
+
+      expect(catalyst.preserveConcentration).toBe(true);
+      storeStub.restore();
+    });
   });
 
   describe('Vessel Size Change Calculations', () => {

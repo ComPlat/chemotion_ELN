@@ -33,6 +33,7 @@ import {
   convertTime,
   convertTurnoverFrequency,
   calculateFeedstockMoles,
+  calculateGasConcentrationFromPpm,
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -718,6 +719,10 @@ export default class ReactionDetailsScheme extends React.Component {
       // locked-equivalent propagation has updated the dependent sample amounts.
       updatedReaction.resetPreservedConcentrationExcept(updatedSample);
       updatedReaction.updateAllConcentrations();
+    } else if (reaction.gaseous && updatedSample.isFeedstock && updatedSample.isFeedstock()) {
+      // A feedstock's concentration is derived from the gas vessel size,
+      // so it must be refreshed whenever its own amount changes.
+      updatedSample.updateConcentrationFromSolvent(updatedReaction);
     }
 
     return updatedReaction;
@@ -776,6 +781,10 @@ export default class ReactionDetailsScheme extends React.Component {
       // Running this earlier would use stale amount_mol values for the other samples.
       updatedReaction.resetPreservedConcentrationExcept(updatedSample);
       updatedReaction.updateAllConcentrations();
+    } else if (reaction.gaseous && updatedSample.isFeedstock && updatedSample.isFeedstock()) {
+      // A feedstock's concentration is derived from the gas vessel volume,
+      // so it must be refreshed whenever its own amount changes.
+      updatedSample.updateConcentrationFromSolvent(updatedReaction);
     }
 
     return updatedReaction;
@@ -965,6 +974,7 @@ export default class ReactionDetailsScheme extends React.Component {
     } = changeEvent;
     const { reaction } = this.props;
     let updatedSample = reaction.sampleById(sampleID);
+    const previousGasType = updatedSample.gas_type;
     const isFeedstockMaterialPresent = reaction.isFeedstockMaterialPresent();
     if (materialGroup === 'products') {
       if (value === 'gas') {
@@ -997,6 +1007,14 @@ export default class ReactionDetailsScheme extends React.Component {
     if (updatedSample.gas_type === 'catalyst') {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
+    // A feedstock concentration edit sets preserveConcentration so bulk
+    // recalculations don't overwrite the vessel-derived value. Once the sample
+    // is no longer a feedstock, that lock must be released so its concentration
+    // can be auto-updated again when other materials change.
+    if (previousGasType === 'feedstock' && updatedSample.gas_type !== 'feedstock') {
+      updatedSample.preserveConcentration = false;
+    }
+
     return this.updatedReactionWithSample(this.updatedSamplesForGasTypeChange.bind(this), updatedSample, value);
   }
 
@@ -1027,6 +1045,7 @@ export default class ReactionDetailsScheme extends React.Component {
           break;
         case 'part_per_million':
           updatedSample.gas_phase_data.part_per_million = value;
+          updatedSample.concn = calculateGasConcentrationFromPpm(value);
           break;
         default:
           break;
@@ -1274,6 +1293,13 @@ export default class ReactionDetailsScheme extends React.Component {
       return reaction;
     }
 
+    // Feedstocks live in the gas vessel, so amount_mol is derived from the
+    // vessel volume rather than the reaction volume. Leave the reaction volume
+    // and other materials' concentrations untouched.
+    if (reaction.gaseous && updatedSample.isFeedstock()) {
+      return this.handleFeedstockConcentrationChange(updatedSample, concentrationValue);
+    }
+
     if (!this.guardConcentrationUpdate(reaction)) {
       return reaction;
     }
@@ -1285,6 +1311,30 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     this.applyDerivedVolumeFromConcentration(reaction, updatedSample, concentrationValue);
+    return reaction;
+  }
+
+  /**
+   * Handles a concentration edit on a feedstock sample. Updates only the
+   * feedstock's amount_mol using `amount_mol = concentration * vesselVolume`;
+   * the reaction volume and other materials' concentrations are not touched.
+   *
+   * @param {Sample} updatedSample
+   * @param {number} newConcentration - Concentration in mol/L.
+   * @returns {Reaction}
+   */
+  handleFeedstockConcentrationChange(updatedSample, newConcentration) {
+    const { reaction } = this.props;
+    const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
+
+    if (!Number.isFinite(vesselVolume) || vesselVolume <= 0) {
+      return reaction;
+    }
+
+    updatedSample.concn = newConcentration;
+    updatedSample.preserveConcentration = true;
+    updatedSample.setAmount({ value: newConcentration * vesselVolume, unit: 'mol' });
+
     return reaction;
   }
 

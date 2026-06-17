@@ -245,6 +245,93 @@ describe('Reaction', () => {
       const result = reaction.calculateCombinedReactionVolume();
       expect(result).toBeCloseTo(0.2, 5);
     });
+
+    it('excludes feedstock volume in a gas-scheme reaction', async () => {
+      const solvent = await SampleFactory.build('reactionConcentrations.water_100g');
+      const feedstock = await SampleFactory.build('reactionConcentrations.water_100g');
+      const reactant = await SampleFactory.build('reactionConcentrations.water_100g');
+
+      solvent.amount_value = 0.1;
+      solvent.amount_unit = 'l';
+      feedstock.amount_value = 0.05;
+      feedstock.amount_unit = 'l';
+      feedstock.gas_type = 'feedstock';
+      reactant.amount_value = 0.03;
+      reactant.amount_unit = 'l';
+
+      reaction.gaseous = true;
+      reaction.solvents = [solvent];
+      reaction.starting_materials = [];
+      reaction.reactants = [feedstock, reactant];
+      reaction.products = [];
+
+      const result = reaction.calculateCombinedReactionVolume();
+      // 0.1 (solvent) + 0.03 (reactant); feedstock's 0.05 must be excluded.
+      expect(result).toBeCloseTo(0.13, 5);
+    });
+
+    it('includes feedstock volume when the reaction is not gaseous', async () => {
+      const solvent = await SampleFactory.build('reactionConcentrations.water_100g');
+      const feedstock = await SampleFactory.build('reactionConcentrations.water_100g');
+
+      solvent.amount_value = 0.1;
+      solvent.amount_unit = 'l';
+      feedstock.amount_value = 0.05;
+      feedstock.amount_unit = 'l';
+      feedstock.gas_type = 'feedstock';
+
+      reaction.gaseous = false;
+      reaction.solvents = [solvent];
+      reaction.starting_materials = [];
+      reaction.reactants = [feedstock];
+      reaction.products = [];
+
+      const result = reaction.calculateCombinedReactionVolume();
+      expect(result).toBeCloseTo(0.15, 5);
+    });
+
+    it('includes catalyst volume in a gas-scheme reaction only when purity is non-zero', async () => {
+      const solvent = await SampleFactory.build('reactionConcentrations.water_100g');
+      const catalyst = await SampleFactory.build('reactionConcentrations.water_100g');
+
+      solvent.amount_value = 0.1;
+      solvent.amount_unit = 'l';
+      catalyst.amount_value = 0.05;
+      catalyst.amount_unit = 'l';
+      catalyst.gas_type = 'catalyst';
+      catalyst.purity = 0.5;
+
+      reaction.gaseous = true;
+      reaction.solvents = [solvent];
+      reaction.starting_materials = [];
+      reaction.reactants = [catalyst];
+      reaction.products = [];
+
+      const result = reaction.calculateCombinedReactionVolume();
+      expect(result).toBeCloseTo(0.15, 5);
+    });
+
+    it('excludes catalyst volume in a gas-scheme reaction when purity is zero', async () => {
+      const solvent = await SampleFactory.build('reactionConcentrations.water_100g');
+      const catalyst = await SampleFactory.build('reactionConcentrations.water_100g');
+
+      solvent.amount_value = 0.1;
+      solvent.amount_unit = 'l';
+      catalyst.amount_value = 0.05;
+      catalyst.amount_unit = 'l';
+      catalyst.gas_type = 'catalyst';
+      catalyst.purity = 0;
+
+      reaction.gaseous = true;
+      reaction.solvents = [solvent];
+      reaction.starting_materials = [];
+      reaction.reactants = [catalyst];
+      reaction.products = [];
+
+      const result = reaction.calculateCombinedReactionVolume();
+      // Catalyst's 0.05 L is excluded because purity is 0.
+      expect(result).toBeCloseTo(0.1, 5);
+    });
   });
 
   describe('Reaction.reactionVolumeForConcentration()', () => {

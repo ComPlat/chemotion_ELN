@@ -1356,15 +1356,44 @@ export default class Reaction extends Element {
       totalVolume += this.solventVolume;
     }
 
-    // Add volumes from all reaction materials (starting + reactants + SBMM reactants)
+    // Add suitable volumes from all reaction materials (starting + reactants + SBMM reactants)
 
     this.allReactionMaterials.forEach((material) => {
-      if (material && Number.isFinite(material.amount_l) && material.amount_l > 0) {
+      if (this.materialContributesToCombinedVolume(material)) {
         totalVolume += material.amount_l;
       }
     });
 
     return totalVolume > 0 ? totalVolume : null;
+  }
+
+  /**
+   * Decides whether a material's volume should be added to the combined
+   * reaction volume.
+   *
+   * Base rule: the material must have a positive, finite `amount_l`.
+   *
+   * Gas-scheme exclusions:
+   *   - Feedstocks live in the gas vessel, not the reaction mixture, so their
+   *     volume must not contribute.
+   *   - Catalysts contribute only when their purity/concentration from the parent sample is positive; otherwise the
+   *     catalyst is treated as a solid powder with no liquid volume.
+   *
+   * @param {Sample} material
+   * @returns {boolean}
+   */
+  materialContributesToCombinedVolume(material) {
+    if (!material) return false;
+    if (!Number.isFinite(material.amount_l) || material.amount_l <= 0) return false;
+
+    if (this.gaseous) {
+      if (material.isFeedstock && material.isFeedstock()) return false;
+      if (material.isCatalyst && material.isCatalyst()) {
+        return Number.isFinite(material.purity) && material.purity > 0;
+      }
+    }
+
+    return true;
   }
 
   /**

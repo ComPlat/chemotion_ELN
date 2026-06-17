@@ -131,6 +131,16 @@ const calculateGasMoles = (volume, ppm, temperatureInKelvin) => {
   );
 };
 
+// At 25 °C and 1 atm, derived from the ideal gas law:
+//   concentration (mmol/L) = ppm * 4.1 * 10^-5
+//   concentration (mol/L)  = ppm * 4.1 * 10^-8
+const PPM_TO_MOL_PER_L_AT_25C = 4.1e-8;
+
+const calculateGasConcentrationFromPpm = (ppm) => {
+  if (!Number.isFinite(ppm) || ppm <= 0) return 0;
+  return ppm * PPM_TO_MOL_PER_L_AT_25C;
+};
+
 const calculateVolumeForFeedstockOrGas = (
   vesselVolume,
   purity,
@@ -266,6 +276,7 @@ export {
   calculateMolesFromMoleculeWeight,
   calculateVolumeForFeedstockOrGas,
   calculateGasMoles,
+  calculateGasConcentrationFromPpm,
   calculateFeedstockMoles,
   updateFeedstockMoles,
   calculateTON,
