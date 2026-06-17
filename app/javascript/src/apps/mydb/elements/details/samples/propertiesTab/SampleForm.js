@@ -786,33 +786,42 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  // store the value as typed; bounds are enforced on blur to avoid rewriting in-progress input
+  handleNumericChange(field, value) {
+    if (value === '') {
+      this.handleFieldChanged(field, null);
+      return;
+    }
+    const parsed = parseFloat(value);
+    // ignore intermediate/invalid states (e.g. "-") so we never store NaN in xref
+    if (Number.isNaN(parsed)) return;
+    this.handleFieldChanged(field, parsed);
+  }
+
+  // clamp to [min, max] on blur so the user can finish typing before correction
+  handleNumericBlur(field, label, value, min, max) {
+    if (value === '') return;
+
+    const parsed = parseFloat(value);
+    if (Number.isNaN(parsed)) return;
+
+    let next = parsed;
+    if (min != null && next < min) next = min;
+    if (max != null && next > max) next = max;
+    if (next === parsed) return;
+
+    NotificationActions.add({
+      message: max != null
+        ? `${label} must be between ${min} and ${max}`
+        : `${label} must be at least ${min}`,
+      level: 'error',
+    });
+    this.handleFieldChanged(field, next);
+  }
+
   numericInputWithAddon(sample, field, label, addonText, min = null, max = null) {
     const key = field.split('xref_')[1];
     const updateValue = (sample.xref && sample.xref[key] != null) ? sample.xref[key] : '';
-
-    const handleChange = (e) => {
-      const { value } = e.target;
-      if (value === '') {
-        this.handleFieldChanged(field, null);
-        return;
-      }
-      const parsed = parseFloat(value);
-      // ignore intermediate/invalid states (e.g. "-") so we never store NaN in xref
-      if (Number.isNaN(parsed)) return;
-
-      let next = parsed;
-      if (min != null && next < min) next = min;
-      if (max != null && next > max) next = max;
-      if (next !== parsed) {
-        NotificationActions.add({
-          message: max != null
-            ? `${label} must be between ${min} and ${max}`
-            : `${label} must be at least ${min}`,
-          level: 'error',
-        });
-      }
-      this.handleFieldChanged(field, next);
-    };
 
     return (
       <Form.Group>
@@ -824,7 +833,8 @@ export default class SampleForm extends React.Component {
             min={min != null ? min : undefined}
             max={max != null ? max : undefined}
             value={updateValue}
-            onChange={handleChange}
+            onChange={(e) => this.handleNumericChange(field, e.target.value)}
+            onBlur={(e) => this.handleNumericBlur(field, label, e.target.value, min, max)}
             disabled={!sample.can_update}
             readOnly={!sample.can_update}
           />
@@ -836,9 +846,9 @@ export default class SampleForm extends React.Component {
 
   physicalStateInput(sample) {
     const physicalStateOptions = [
-      { label: 'solid', value: 'solid' },
-      { label: 'liquid', value: 'liquid' },
-      { label: 'gas', value: 'gas' },
+      { label: 'Solid', value: 'solid' },
+      { label: 'Liquid', value: 'liquid' },
+      { label: 'Gas', value: 'gas' },
     ];
 
     const currentValue = sample.xref?.physical_state;

@@ -937,6 +937,7 @@ export default class SampleDetails extends React.Component {
       rfsovents,
       supplier,
       private_notes,
+      color,
       moisture,
       particle_size,
       physical_state,
