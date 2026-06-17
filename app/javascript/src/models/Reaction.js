@@ -1427,11 +1427,15 @@ export default class Reaction extends Element {
     const materials = [
       ...(this.starting_materials || []),
       ...(this.reactants || []),
+      ...(this.reactant_sbmm_samples || []),
       ...(this.products || []),
     ];
 
+    // Compare by object identity, not id: regular samples and SBMM samples can
+    // share the same id (see allReactionMaterials), so an id check could clear or
+    // keep the wrong material's flag.
     materials.forEach((material) => {
-      if (!editedSample || material.id !== editedSample.id) {
+      if (!editedSample || material !== editedSample) {
         material.preserveConcentration = false;
       }
     });

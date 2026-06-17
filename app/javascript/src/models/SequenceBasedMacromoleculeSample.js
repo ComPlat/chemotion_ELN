@@ -614,6 +614,11 @@ export default class SequenceBasedMacromoleculeSample extends Element {
    * @returns {void}
    */
   updateConcentrationFromSolvent(reaction) {
+    // Keep a manually-entered reaction concentration unchanged.
+    if (this.preserveConcentration) {
+      return;
+    }
+
     if (!reaction) {
       this._concentration_rt_value = null;
       return;
@@ -638,6 +643,49 @@ export default class SequenceBasedMacromoleculeSample extends Element {
     } else {
       this._concentration_rt_value = null;
     }
+  }
+
+  /**
+   * Updates the amount (in mol) from a reaction concentration and a reaction-level
+   * volume, using `amount_mol = volume (L) * concentration (mol/L)`. Mirrors
+   * `Sample#setAmountFromConcentration` so SBMM concentration edits feed the same
+   * recalculation chain as regular samples.
+   *
+   * @param {number} concentration - Concentration in mol/L.
+   * @param {number} volumeL - Volume in liters.
+   * @returns {number | null} The new amount in mol, or `null` if inputs invalid.
+   */
+  setAmountFromConcentration(concentration, volumeL) {
+    if (!Number.isFinite(volumeL)
+      || volumeL <= 0
+      || !Number.isFinite(concentration)
+      || concentration <= 0) {
+      return null;
+    }
+
+    const newAmountMol = volumeL * concentration;
+    this.setAmount({ value: newAmountMol, unit: 'mol' });
+    return newAmountMol;
+  }
+
+  /**
+   * Variant of `setAmountFromConcentration` for user-entered reaction
+   * concentrations. `setAmount` recomputes `concentration_rt_value` from the
+   * sample's own as-used volume, so the entered reaction-level value is written
+   * back afterwards and `preserveConcentration` is set so subsequent bulk
+   * recalculations (`Reaction#updateAllConcentrations`) do not overwrite it.
+   *
+   * @param {number} concentration - Concentration in mol/L.
+   * @param {number} volumeL - Volume in liters.
+   * @returns {void}
+   */
+  setAmountFromConcentrationAndPreserve(concentration, volumeL) {
+    const newAmountMol = this.setAmountFromConcentration(concentration, volumeL);
+    if (newAmountMol == null) return;
+
+    this._concentration_rt_value = Number(concentration.toFixed(8));
+    this._concentration_rt_unit ??= 'mol/L';
+    this.preserveConcentration = true;
   }
 
   calculateAmountAsUsedMass() {

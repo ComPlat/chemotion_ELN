@@ -220,7 +220,6 @@ class Material extends Component {
         precision={4}
         disabled={
           !permitOn(reaction)
-          || isSbmm
           || disableProductConcentration
           || disableSchemeConcentration
         }
@@ -248,6 +247,7 @@ class Material extends Component {
         type: 'concentrationChanged',
         materialGroup,
         sampleID: this.materialId(),
+        isSbmm: this.isSbmm,
       };
       onChange(event);
     }
