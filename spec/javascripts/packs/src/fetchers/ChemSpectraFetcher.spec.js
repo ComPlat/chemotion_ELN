@@ -93,6 +93,16 @@ describe('ChemSpectraFetcher methods', () => {
       expect(response).toEqual(Object.entries(expectedResponse.datatypes));
     });
 
+    it('requests the static /data_type.json asset (not the routeless /data_type)', async () => {
+      fetchStub.resolves(new Response(JSON.stringify({ datatypes: {} }), { status: 200 }));
+
+      await ChemSpectraFetcher.fetchUpdatedSpectraLayouts();
+
+      sinon.assert.calledOnce(fetchStub);
+      // Regression guard: the asset is public/data_type.json; GET /data_type 404s (no route).
+      expect(fetchStub.firstCall.args[0]).toEqual('/data_type.json');
+    });
+
     it('should handle fetch failure', async () => {
       fetchStub.resolves(new Response(null, { status: 404 }));
       try {
