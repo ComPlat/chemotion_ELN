@@ -1,10 +1,13 @@
 const webpack = require('webpack');
+const path = require('path');
 
 module.exports = {
   resolve: {
     extensions: ['.json', '...'],
     alias: {
       process: 'process/browser',
+      react: path.resolve(__dirname, '../../', 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, '../../', 'node_modules/react-dom'),
     },
     fallback: {
       util: require.resolve('util/'),

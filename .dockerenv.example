@@ -24,6 +24,11 @@
 #VOLUME_NAME_HOMEDIR=chemotion_eln_homedir2
 #VOLUME_NAME_DB=chemotion_eln_database2
 
+## - LABIMOTION_PATH: host path to a local LabIMotion checkout to mount for development
+## - CONVERTER_CLIENT_PATH: host path to a local chemotion-converter-client checkout to mount
+#LABIMOTION_PATH=/path/to/LabIMotion
+#CONVERTER_CLIENT_PATH=/path/to/chemotion-converter-client
+
 ## ENV for the app container
 ## - RAKE_DB_MIGRATE: use by prepare sh to run db migration (rake db:migrate)
 ## when starting the app container {always, once, never}

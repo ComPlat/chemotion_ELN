@@ -26,6 +26,9 @@
 x-common-volumes: &common-volumes
   - homedir:/home/ubuntu
   - .:/home/ubuntu/app
+  - ${LABIMOTION_PATH:-../labimotion}:/home/ubuntu/labimotion
+  - ${CONVERTER_CLIENT_PATH:-../chemotion-converter-client}:/home/ubuntu/chemotion-converter-client
+
 
 x-common-build: &common-build
   context: '.'
@@ -65,6 +68,13 @@ services:
 
   app:
     image: *chemotion_eln_dev
+    deploy:
+      resources:
+        reservations:
+          memory: 2G # Guaranteed minimum memory
+        limits:
+          memory: 6G
+          cpus: '8.0'
     depends_on:
       setup:
         condition: service_completed_successfully
@@ -89,6 +99,8 @@ services:
     networks:
       - default
       - chemotion
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   webpacker:
     image: *chemotion_eln_dev
