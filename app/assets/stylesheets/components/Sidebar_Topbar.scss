@@ -28,6 +28,7 @@ $topbar-height: 35px;
     @extend .flex-column;
     @extend .flex-grow-1;
     @extend .pb-4;
+    @extend .align-items-stretch;
   }
   &-collapse-button-container {
     margin-top: $topbar-height; //align under topbar

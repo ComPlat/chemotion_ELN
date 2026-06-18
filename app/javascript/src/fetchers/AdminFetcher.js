@@ -1,207 +1,77 @@
-import 'whatwg-fetch';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class AdminFetcher {
   static fetchLocalCollector() {
-    return fetch('/api/v1/admin/listLocalCollector/all.json', {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.getJson('/api/v1/admin/listLocalCollector/all');
   }
 
   static checkDiskSpace() {
-    return fetch('/api/v1/admin/disk.json', {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.getJson('/api/v1/admin/disk');
   }
 
   static getAllocatedUserSpace() {
-    return fetch('/api/v1/admin/usersDefault', {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.getJson('/api/v1/admin/usersDefault');
   }
 
   static setAllocatedUserSpace(allocatedUserSpace) {
-    return fetch('/api/v1/admin/usersDefault', {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ allocatedUserSpace }),
-    });
+    return ApiClient.putJson('/api/v1/admin/usersDefault', { body: allocatedUserSpace });
   }
 
   static resetUserPassword(params) {
-    const { user_id, ...otherParams } = params;
-    return fetch(`/api/v1/admin/users/${user_id}/resetPassword/`, {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(otherParams),
-    }).then((response) => response.json());
+    const { userId, ...otherParams } = params;
+    return ApiClient.putJson(`/api/v1/admin/users/${userId}/resetPassword/`, { body: otherParams });
   }
 
   static createUserAccount(params) {
-    return fetch('/api/v1/admin/users', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.postJson('/api/v1/admin/users', { body: params });
   }
 
   static enableDisableOtp({ enable, id }) {
-    return fetch(`/api/v1/admin/users/${id}/otp`, {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ enable }),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.putJson(`/api/v1/admin/users/${id}/otp`, { body: { enable } });
   }
 
   static updateUser(params) {
     const { id, ...otherParams } = params;
-    return fetch(`/api/v1/admin/users/${id}`, {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(otherParams),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.putJson(`/api/v1/admin/users/${id}`, { body: otherParams });
   }
 
   static deleteUser({ id }) {
-    return fetch(`/api/v1/admin/users/${id}`, {
-      credentials: 'same-origin',
-      method: 'DELETE',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
+    return ApiClient.deleteRequest(`/api/v1/admin/users/${id}`);
   }
 
   static restoreAccount(params) {
-    return fetch('/api/v1/admin/users/restoreAccount/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.postJson('/api/v1/admin/users/restoreAccount/', { body: params });
   }
 
   static fetchUsers(id = null) {
     const url = id ? `/api/v1/admin/users/${id}` : '/api/v1/admin/users';
-    return fetch(url, {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+
+    return ApiClient.getJson(url);
   }
 
   static fetchUsersByNameType(name, type, limit = 5) {
-    return fetch(
-      `/api/v1/admin/users/byname.json?${new URLSearchParams({
-        name,
-        type,
-        limit,
-      })}`,
-      {
-        credentials: 'same-origin',
-        method: 'GET',
-      }
-    )
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    const params = new URLSearchParams({ name, type, limit });
+
+    return ApiClient.getJson(`/api/v1/admin/users/byname.json?${params}`);
   }
 
   static updateAccount(params) {
-    const { user_id, ...otherParams } = params;
-    return fetch(`/api/v1/admin/users/${user_id}/profile/`, {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(otherParams),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    const { userId, ...otherParams } = params;
+
+    return ApiClient.putJson(`/api/v1/admin/users/${userId}/profile/`, { body: otherParams });
   }
 
+  /**
+   * Enables/disables OLS terms. The endpoint replies 204 No Content, so success
+   * is read from the HTTP status.
+   *
+   * @param {object} params - { owl_name, enableIds, disableIds }
+   * @returns {Promise<boolean>} true on success (see ChemotionApiClient.apiRequest)
+   */
   static olsTermDisableEnable(params) {
-    return fetch('/api/v1/admin/olsEnableDisable/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    }).then((response) => {
-      if (response.status === 204) {
-        return true;
-      }
+    return ApiClient.postJson('/api/v1/admin/olsEnableDisable/', {
+      body: params,
+      handleResponseSuccess: (response) => response.ok,
     });
   }
 
@@ -209,134 +79,38 @@ export default class AdminFetcher {
     const data = new FormData();
     data.append('file', file);
 
-    return fetch('/api/v1/admin/importOlsTerms/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      body: data,
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.postFormData('/api/v1/admin/importOlsTerms/', { body: data });
   }
 
   static fetchGroupsDevices(type) {
-    return fetch(`/api/v1/admin/group_device/list?type=${type}`, {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.getJson(`/api/v1/admin/group_device/list?type=${type}`);
   }
 
   static updateGroup(params = {}) {
-    return fetch(`/api/v1/admin/group_device/update/${params.id}`, {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.putJson(`/api/v1/admin/group_device/update/${params.id}`, { body: params });
   }
 
   static deleteGroupRelation(params = {}) {
-    return fetch(`/api/v1/admin/group_device/delete_relation/${params.id}`, {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.putJson(`/api/v1/admin/group_device/delete_relation/${params.id}`, { body: params });
   }
 
   static createGroupDevice(params = {}) {
-    return fetch('/api/v1/admin/group_device/create', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.postJson('/api/v1/admin/group_device/create', { body: params });
   }
 
   static fetchMatrices() {
-    return fetch('/api/v1/admin/matrix', {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.getJson('/api/v1/admin/matrix');
   }
 
   static updateMatrice(params) {
-    return fetch('/api/v1/admin/matrix', {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.putJson('/api/v1/admin/matrix', { body: params });
   }
 
   static fetchJobs() {
-    return fetch('/api/v1/admin/jobs', {
-      credentials: 'same-origin',
-      method: 'GET',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.error(errorMessage);
-      });
+    return ApiClient.getJson('/api/v1/admin/jobs');
   }
 
   static restartJob(id) {
-    return fetch('/api/v1/admin/jobs/restart/', {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(id),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.error(errorMessage);
-      });
+    return ApiClient.putJson('/api/v1/admin/jobs/restart/', { body: { id } });
   }
 }

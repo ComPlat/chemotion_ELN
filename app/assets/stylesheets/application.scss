@@ -18,6 +18,7 @@
 @import "global-styles/tags";
 
 // file css rules that are targeted at specific components under components
+@import "components/AccountProfile";
 @import "components/AppModal";
 @import "components/AttachmentList";
 @import "components/ButtonGroupToggleButton";
@@ -57,7 +58,6 @@
 @import "legacy/miscellaneous";
 @import "legacy/AttachmentContainer";
 @import "legacy/sample";
-@import "legacy/cellLines";
 @import "legacy/chemical-tab";
 @import "legacy/chemspectra";
 @import "legacy/collection_management";

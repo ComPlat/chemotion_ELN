@@ -15,6 +15,7 @@ import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
+import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SearchFetcher from 'src/fetchers/SearchFetcher';
@@ -1311,6 +1312,35 @@ class ElementActions {
       UIFetcher.deleteElementsByUIState(params)
         .then((result) => { dispatch(result); })
         .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
+
+  bulkUpdateUserLabels(params) {
+    return (dispatch) => {
+      UserLabelsFetcher.bulkUpdate(params)
+        .then(() => {
+          NotificationActions.add({
+            title: 'Bulk edit user labels',
+            message: 'Labels updated for the selection.',
+            level: 'success',
+            position: 'tr',
+            dismissible: 'button',
+            autoDismiss: 5,
+            uid: 'bulkUpdateUserLabels',
+          });
+          dispatch();
+        })
+        .catch(() => {
+          NotificationActions.add({
+            title: 'Bulk edit user labels',
+            message: 'Could not update labels for the selection.',
+            level: 'error',
+            position: 'tr',
+            dismissible: 'button',
+            autoDismiss: 5,
+            uid: 'bulkUpdateUserLabels',
+          });
+        });
     };
   }
 

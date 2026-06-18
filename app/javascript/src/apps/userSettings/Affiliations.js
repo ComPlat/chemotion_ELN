@@ -235,7 +235,16 @@ function Affiliations() {
           <i className="fa fa-plus ms-1" />
         </Button>
       </div>
-      <Table striped bordered hover>
+      <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
+        <colgroup>
+          <col style={{ width: '20%' }} />
+          <col style={{ width: '20%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '12%' }} />
+          <col style={{ width: '12%' }} />
+          <col style={{ width: '6%' }} />
+        </colgroup>
         <thead>
           <tr>
             <th>Country</th>

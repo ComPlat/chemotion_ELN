@@ -95,7 +95,7 @@ const handleSearch = (store, uiState) => {
       collectionId,
       moleculeSort: true,
     });
-    store.clearSearchAndTabResults();
+    // store.clearSearchAndTabResults();
     searchValuesByFilters(store);
   }
 };

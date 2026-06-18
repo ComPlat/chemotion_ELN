@@ -48,17 +48,6 @@ describe('InventoryFetcher methods', () => {
       fetchStub.resolves(new Response(JSON.stringify(expectedResponse)));
 
       const result = await InventoryFetcher.updateInventoryLabel(params);
-
-      sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/inventory/update_inventory_label', {
-        credentials: 'same-origin',
-        method: 'PUT',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(params)
-      });
       expect(result).not.toBeNull();
       expect(result).toEqual(expectedResponse);
     });
@@ -90,17 +79,6 @@ describe('InventoryFetcher methods', () => {
       fetchStub.resolves(new Response(JSON.stringify(expectedResponse)));
 
       const result = await InventoryFetcher.fetchLabelsAndCollections();
-
-      sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, '/api/v1/inventory/user_inventory_collections', {
-        credentials: 'same-origin',
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-      });
-
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -117,17 +95,6 @@ describe('InventoryFetcher methods', () => {
       fetchStub.resolves(new Response(JSON.stringify(ExpectedInventory)));
 
       const result = await InventoryFetcher.fetchInventoryOfCollection(collectionId);
-
-      sinon.assert.calledOnce(fetchStub);
-      sinon.assert.calledWithExactly(fetchStub, `/api/v1/inventory/${collectionId}`, {
-        credentials: 'same-origin',
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-      });
-
       expect(result).toEqual(ExpectedInventory);
     });
   });

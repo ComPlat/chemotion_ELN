@@ -15,7 +15,7 @@ import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CalendarActions from 'src/stores/alt/actions/CalendarActions';
 import InboxStore from 'src/stores/alt/stores/InboxStore';
-import { formatDate } from 'src/utilities/timezoneHelper';
+import { formatDate, convertCalendarNotificationToLocal } from 'src/utilities/timezoneHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
 import NotificationButton from 'src/apps/mydb/mainNavigation/topbar/NotificationButton';
@@ -40,8 +40,9 @@ const handleNotification = (nots, act, context, needCallback = true) => {
         return;
       }
       const infoTimeString = formatDate(n.created_at);
+      const convertedData = convertCalendarNotificationToLocal(n.content.data);
 
-      const newText = n.content.data
+      const newText = convertedData
         .split('\n')
         .map((i) => <p key={`${infoTimeString}-${i}`}>{i}</p>);
       const { url, urlTitle } = n.content;
@@ -204,13 +205,15 @@ export default function NoticeButton() {
     if (remainTime < idleTimeoutRef.current) {
       const { attachmentNotificationStore } = context;
       MessagesFetcher.fetchMessages(0).then((result) => {
-        result.messages.forEach((message) => {
+        const messages = result?.messages;
+        if (!Array.isArray(messages)) { return; }
+        messages.forEach((message) => {
           if (message.subject === 'Send TPA attachment arrival notification') {
             attachmentNotificationStore.addMessage(message);
           }
         });
-        result.messages.sort((a, b) => b.id - a.id);
-        setNewNotices(result.messages);
+        messages.sort((a, b) => b.id - a.id);
+        setNewNotices(messages);
         setServerVersion(result.version);
       });
     }
@@ -375,8 +378,9 @@ export default function NoticeButton() {
         </Row>
         {filteredNotices.slice(start, end).map((not, index) => {
           const infoTimeString = formatDate(not.created_at);
+          const convertedData = convertCalendarNotificationToLocal(not.content.data);
 
-          const newText = not.content.data
+          const newText = convertedData
             .split('\n')
             .map((i) => <p key={`${infoTimeString}-${i}`}>{i}</p>);
 

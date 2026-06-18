@@ -94,7 +94,9 @@ module Chemotion
         end
 
         all_coll = Collection.get_all_collection_for_user(current_user.id)
-        research_plan.collections << all_coll
+        # Avoid violating the unique (research_plan_id, collection_id) index when
+        # the chosen collection is already the user's "All" collection.
+        research_plan.collections << all_coll if all_coll && research_plan.collections.exclude?(all_coll)
 
         update_element_labels(research_plan, params[:user_labels], current_user.id)
         present research_plan.reload, with: Entities::ResearchPlanEntity, root: :research_plan
@@ -153,12 +155,10 @@ module Chemotion
         requires :id, type: Integer, desc: 'Research plan id'
       end
       route_param :id do
-        before do
-          @element_policy = ElementPolicy.new(current_user, ResearchPlan.find(params[:id]))
-          error!('401 Unauthorized', 401) unless @element_policy.read?
-        end
         get do
           research_plan = ResearchPlan.find(params[:id])
+          policy = ElementPolicy.new(current_user, research_plan)
+          error!('401 Unauthorized', 401) unless policy.read?
           # TODO: Refactor this massively ugly fallback to be in a more convenient place
           # (i.e. the entity or maybe return a null element from the model)
           if research_plan.research_plan_metadata.nil?
@@ -179,6 +179,8 @@ module Chemotion
               with_user_info: true,
             ),
           }
+        rescue ActiveRecord::RecordNotFound
+          error!('404 Not Found', 404)
         end
       end
 
@@ -210,10 +212,16 @@ module Chemotion
             update_element_labels(research_plan, params[:user_labels], current_user.id)
           end
 
+          research_plan.reload
           detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels
-          present research_plan.reload, with: Entities::ResearchPlanEntity,
-                                        detail_levels: detail_levels,
-                                        root: :research_plan
+          {
+            research_plan: Entities::ResearchPlanEntity.represent(research_plan, detail_levels: detail_levels),
+            attachments: Entities::AttachmentEntity.represent(research_plan.attachments),
+            literatures: Entities::LiteratureEntity.represent(
+              citation_for_elements(research_plan.id, 'ResearchPlan'),
+              with_user_info: true,
+            ),
+          }
         end
       end
 

@@ -149,9 +149,11 @@ module Chemotion
       end
 
       desc 'Bulk Delete Attachments'
+      params do
+        requires :ids, type: Array[Integer], desc: 'IDs of attachments to delete'
+      end
       delete 'bulk_delete' do
-        ids = params[:ids]
-        attachments = Attachment.where(id: ids)
+        attachments = Attachment.where(id: params[:ids])
 
         unpermitted_attachments = attachments.reject { |attachment| writable?(attachment) }
 
@@ -161,7 +163,7 @@ module Chemotion
           deleted_attachments = attachments.destroy_all
         end
 
-        { deleted_attachments: deleted_attachments }
+        { deleted_attachments: deleted_attachments || [] }
       rescue StandardError => e
         Rails.logger.error("Error deleting attachments: #{e.message}")
         error!({ error: e.message }, 422)

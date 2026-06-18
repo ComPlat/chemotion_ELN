@@ -105,18 +105,18 @@ module Chemotion
         requires :id, type: Integer, desc: 'Wellplate id'
       end
       route_param :id do
-        before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:id])).read?
-        end
-
         get do
           wellplate = Wellplate.find(params[:id])
           detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels
+          policy = ElementPolicy.new(current_user, wellplate)
+          error!('401 Unauthorized', 401) unless policy.read?
 
           {
             wellplate: Entities::WellplateEntity.represent(wellplate, detail_levels: detail_levels),
             attachments: Entities::AttachmentEntity.represent(wellplate.attachments),
           }
+        rescue ActiveRecord::RecordNotFound
+          error!('404 Not Found', 404)
         end
       end
 
