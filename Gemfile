@@ -92,6 +92,10 @@ gem 'puma', '< 6.0.0'
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
 gem 'rails', '~> 6.1.7.7'
+# Markdown rendering for mailers/help text. Previously satisfied transitively
+# via sablon < 0.4.3; the realigned sablon no longer depends on it, so it must
+# be declared directly.
+gem 'redcarpet'
 gem 'rinchi-gem', git: 'https://github.com/ComPlat/rinchi-gem.git', branch: 'main'
 gem 'rmagick'
 gem 'roo'
@@ -101,7 +105,7 @@ gem 'ruby-geometry', require: 'geometry'
 gem 'ruby-mailchecker'
 gem 'ruby-ole'
 
-gem 'sablon', git: 'https://github.com/ComPlat/sablon'
+gem 'sablon', git: 'https://github.com/ComPlat/sablon', ref: 'f0c2488'
 gem 'sassc-rails'
 gem 'scenic'
 gem 'schmooze'
