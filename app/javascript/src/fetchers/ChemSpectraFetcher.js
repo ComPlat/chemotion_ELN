@@ -22,7 +22,7 @@ export default class ChemSpectraFetcher {
   }
 
   static fetchUpdatedSpectraLayouts() {
-    return ApiClient.getJson('/data_type', {
+    return ApiClient.getJson('/data_type.json', {
       handleResponseSuccess: (response) => {
         if (response.ok) { return response.json(); }
         return null;
