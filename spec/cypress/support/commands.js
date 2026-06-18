@@ -68,30 +68,6 @@ Cypress.Commands.add('createUserWithCredentials', (email, password, fname, lname
   cy.contains('Create user').click();
 });
 
-Cypress.Commands.add('createMessages', (adminID, channelID, userID) => {
-  cy.appFactories([['create', 'message', {
-    channel_id: channelID,
-    content: { data: 'Thanks for using ELN!\nTo make our system better for you, we bring updates every Friday.' },
-    created_by: adminID
-  }]]).then((message) => {
-    cy.appFactories([['create', 'notification', { message_id: message[0].id, user_id: userID }]]);
-  });
-  cy.appFactories([['create', 'message', {
-    channel_id: channelID,
-    content: { data: 'Thanks for using ELN!\nWe have new features for you.' },
-    created_by: adminID
-  }]]).then((message) => {
-    cy.appFactories([['create', 'notification', { message_id: message[0].id, user_id: userID }]]);
-  });
-  cy.appFactories([['create', 'message', {
-    channel_id: channelID,
-    content: { data: 'Thanks for using ELN!\nHave a nice weekend.' },
-    created_by: adminID
-  }]]).then((message) => {
-    cy.appFactories([['create', 'notification', { message_id: message[0].id, user_id: userID }]]);
-  });
-});
-
 Cypress.Commands.add('clickDetailFooterButton', (buttonText) => {
   cy.get('div[class="card-footer"').contains('button', buttonText).click();
 });
