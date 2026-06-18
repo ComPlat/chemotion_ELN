@@ -92,25 +92,6 @@ Cypress.Commands.add('createMessages', (adminID, channelID, userID) => {
   });
 });
 
-Cypress.Commands.add('settingPermission', (permission) => {
-  cy.get('#tree-id-Col1').click();
-  cy.visit('/mydb/collection/management');
-  cy.get('#sync-users-btn').click();
-  cy.get(':nth-child(2) > #permissionLevelSelect').select(permission);
-  cy.get('#sampleDetailLevelSelect').select('Everything');
-  cy.get('#reactionDetailLevelSelect').select('Everything');
-  cy.get('#wellplateDetailLevelSelect').select('Everything');
-  cy.get(':nth-child(6) > #screenDetailLevelSelect').select('Everything');
-
-  cy.get('#react-select-2--value').type('User').type('{downArrow}').type('{enter}');
-  cy.get('#create-sync-shared-col-btn').click();
-
-  Cypress.on('uncaught:exception', () =>
-    false);
-  cy.clearCookie('_chemotion_session');
-  cy.get('a[title="Log out"]').click();
-});
-
 Cypress.Commands.add('clickDetailFooterButton', (buttonText) => {
   cy.get('div[class="card-footer"').contains('button', buttonText).click();
 });
