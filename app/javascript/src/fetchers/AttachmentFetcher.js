@@ -440,10 +440,13 @@ export default class AttachmentFetcher {
   }
 
   static combineSpectra(jcampIds, curveIdx, extraParams = null) {
-    const extras = JSON.stringify(decamelizeKeys(extraParams));
+    const body = { spectra_ids: jcampIds, front_spectra_idx: curveIdx };
+    if (extraParams != null) {
+      body.extras = JSON.stringify(decamelizeKeys(extraParams));
+    }
     return ApiClient.postJson(
       '/api/v1/chemspectra/file/combine_spectra',
-      { body: { spectra_ids: jcampIds, front_spectra_idx: curveIdx, extras } }
+      { body }
     );
   }
 

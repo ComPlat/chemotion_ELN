@@ -58,4 +58,14 @@ describe('AttachmentFetcher.combineSpectra', () => {
     expect(body.extras).toEqual(JSON.stringify(decamelizeKeys(extraParams)));
     expect(JSON.parse(body.extras)).toEqual({ shift_ref: 1, integration: { peak_a: 2 } });
   });
+
+  it('omits extras when no extra params are provided', async () => {
+    await AttachmentFetcher.combineSpectra([10, 11], 0);
+
+    sinon.assert.calledOnce(fetchStub);
+    const [, options] = fetchStub.firstCall.args;
+    const body = JSON.parse(options.body);
+    expect(body).toEqual({ spectra_ids: [10, 11], front_spectra_idx: 0 });
+    expect(Object.prototype.hasOwnProperty.call(body, 'extras')).toEqual(false);
+  });
 });
