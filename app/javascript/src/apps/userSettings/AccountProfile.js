@@ -15,6 +15,7 @@ import TreeViewItem from 'src/components/common/TreeViewItem';
 import { TwoFactorSettings } from 'src/apps/userSettings/TwoFA';
 import { AccountSettings, DeleteSettings } from 'src/apps/userSettings/UserSettings';
 import Affiliations from 'src/apps/userSettings/Affiliations';
+import TextTemplates from 'src/apps/userSettings/TextTemplates';
 
 function AuthenticationSettings({ currentUser }) {
   return (
@@ -339,11 +340,14 @@ function AccountProfile({ currentUser, closeSettings }) {
     if (currentSettings === 'affiliations') {
       return <AffiliationsSettings />;
     }
+    if (currentSettings === 'text-templates') {
+      return <TextTemplates />;
+    }
     return null;
   };
 
   return (
-    <div className="account-profile w-100 d-flex flex-column">
+    <div className="account-profile w-100 h-100 d-flex flex-column">
       <Modal.Header
         className="account-profile__header"
         closeButton
@@ -351,7 +355,7 @@ function AccountProfile({ currentUser, closeSettings }) {
       >
         <h4 className="ms-3">Settings</h4>
       </Modal.Header>
-      <div className="d-flex flex-grow-1 align-items-stretch">
+      <div className="d-flex flex-grow-1 align-items-stretch" style={{ minHeight: 0 }}>
         <div className="sidebar">
           <div className="sidebar-content">
             <div className="tree-view__container">
@@ -375,10 +379,15 @@ function AccountProfile({ currentUser, closeSettings }) {
                 selected={currentSettings === 'affiliations'}
                 onClick={() => setCurrentSettings('affiliations')}
               />
+              <TreeViewItem
+                title="Text Templates"
+                selected={currentSettings === 'text-templates'}
+                onClick={() => setCurrentSettings('text-templates')}
+              />
             </div>
           </div>
         </div>
-        <div className="flex-grow-1">
+        <div className="flex-grow-1 overflow-auto" style={{ minHeight: 0 }}>
           {renderMain()}
         </div>
       </div>

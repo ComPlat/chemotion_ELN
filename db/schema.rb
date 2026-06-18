@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_04_17_101400) do
+ActiveRecord::Schema.define(version: 2026_06_12_000000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1604,6 +1604,7 @@ ActiveRecord::Schema.define(version: 2026_04_17_101400) do
     t.datetime "updated_at", null: false
     t.index ["deleted_at"], name: "index_text_templates_on_deleted_at"
     t.index ["name"], name: "index_predefined_template", unique: true, where: "((type)::text = 'PredefinedTextTemplate'::text)"
+    t.index ["user_id", "name"], name: "index_personal_text_template", unique: true, where: "((type)::text = 'PersonalTextTemplate'::text)"
     t.index ["user_id"], name: "index_text_templates_on_user_id"
   end
 
