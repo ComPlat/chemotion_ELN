@@ -2656,3 +2656,31 @@ export const deleteAtomAndRemoveImageMultiKet = {
     bonds: []
   },
 };
+
+// "Structure drawn first, ball drawn second" scenario.
+// mol0 has 6 regular C atoms (indices 0-5) then one R# atom at index 6.
+// The polymer ball is at atom index 6, NOT index 0.
+// Old bug: templateAliasesPrepare stored image-counter (0) as the index, so
+//          PolymersList became "0/95/..." — on reload atom[0] is C which fails
+//          aliasPass → ball silently lost → bare "R" displayed.
+// Fix:     actual atom position (6) is now stored, so reload finds the R# atom.
+export const structureFirstBallSecondKet = {
+  root: {
+    nodes: [{ $ref: 'mol0' }],
+    connections: [],
+    templates: []
+  },
+  mol0: {
+    type: 'molecule',
+    atoms: [
+      { label: 'C', location: [1.0, 0.0, 0] },
+      { label: 'C', location: [2.0, 0.0, 0] },
+      { label: 'C', location: [3.0, 0.0, 0] },
+      { label: 'C', location: [4.0, 0.0, 0] },
+      { label: 'C', location: [5.0, 0.0, 0] },
+      { label: 'C', location: [6.0, 0.0, 0] },
+      { label: 'R#', location: [7.0, 0.0, 0] }
+    ],
+    bonds: []
+  }
+};

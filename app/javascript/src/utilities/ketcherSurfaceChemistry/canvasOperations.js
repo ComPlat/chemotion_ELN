@@ -63,13 +63,22 @@ const arrangePolymers = async (canvasData, editor) => {
   // find index for alias
   // on matching create a string to be attached with polymers sections
   const data = JSON.parse(await editor.structureDef.editor.getKet());
-  const atomsWithAlias = mols
-    .flatMap((item) => data[item]?.atoms ?? [])
-    .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias));
 
-  // Keep atom index order so PolymersList matches positions (0, 1, 2) and image sequence is correct after load
-  const listOfAtomsWithAlias = atomsWithAlias.map((i) => i.alias);
-  const processString = await templateAliasesPrepare(listOfAtomsWithAlias);
+  // Collect polymer atoms with their actual position inside their mol's atoms array.
+  // flatMap loses positional info, causing index 0 to always be stored regardless of
+  // where the bead sits — so "structure first, ball second" broke on reopen.
+  const atomsWithAlias = [];
+  for (const molName of mols) {
+    const atoms = data[molName]?.atoms ?? [];
+    for (let i = 0; i < atoms.length; i++) {
+      if (ALIAS_PATTERNS.threeParts.test(atoms[i].alias)) {
+        atomsWithAlias.push({ alias: atoms[i].alias, atomIndex: i });
+      }
+    }
+  }
+  const listOfAtomsWithAlias = atomsWithAlias.map((a) => a.alias);
+  const atomIndexList = atomsWithAlias.map((a) => a.atomIndex);
+  const processString = await templateAliasesPrepare(listOfAtomsWithAlias, atomIndexList);
   return [...canvasData.split('\n'), KET_TAGS.polymerIdentifier, processString];
 };
 
@@ -430,7 +439,7 @@ const replaceAliasWithRG = async (data) => {
 // prepare svg
 const prepareSvg = async (editor) => {
   try {
-    const struct = await replaceAliasWithRG({ ...latestData });
+    const struct = await replaceAliasWithRG(JSON.parse(JSON.stringify(latestData)));
     // Indigo (used inside generateImage) rejects "rg-label" atoms that have no matching
     // R-group definition. Convert them to plain label atoms so the SVG renders correctly.
     for (const key of Object.keys(struct)) {
@@ -1030,9 +1039,12 @@ const onPasteNewShapes = async (editor, tempId, imageToBeAdded, iframeRef) => {
     }
   }
 
-  saveMoveCanvas(editor, latestData, true, true, false);
+  await saveMoveCanvas(editor, latestData, true, true, false);
 
   await buttonClickForRectangleSelection(iframeRef);
+  // Re-run layering after the rectangle-select click re-renders the canvas
+  ImagesToBeUpdatedSetter(true);
+  await runImageLayering(iframeRef);
   FILOStackSetter([]);
   allAtomsSetter([]);
 };

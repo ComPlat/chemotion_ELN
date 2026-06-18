@@ -36,7 +36,9 @@ const attachListenerForTitle = (iframeDocument, selector, buttonEvents) => {
 const buttonClickForRectangleSelection = async (iframeRef) => {
   const iframeDocument = iframeRef?.current?.contentWindow?.document;
   const button = iframeDocument?.querySelector('[data-testid="select-rectangle"]');
-  if (button) {
+  // Only click if not already the active tool — clicking an active Ketcher tool
+  // button toggles it off, which is the opposite of what we want.
+  if (button && !button.classList.contains('active')) {
     button.click();
   }
 };
@@ -105,6 +107,16 @@ const addGreenCircleOnCanvasImages = async (imageElements, iframeDocument = null
       circle.style.opacity = '0';
     });
 
+    // Switch to rectangle selection when a shape is clicked. Defer so Ketcher's
+    // own click handler runs first (images were moved out of Ketcher's <g> container
+    // for layering, so selectionChange no longer fires reliably for them).
+    if (!img.hasRectSelectListener) {
+      img.addEventListener('click', () => {
+        setTimeout(() => buttonClickForRectangleSelection(iframeRef), 0);
+      });
+      img.hasRectSelectListener = true;
+    }
+
     // Keep circle aligned on resize/scroll inside iframe
     iframeRef.current.contentWindow.addEventListener('scroll', positionCircle);
     iframeRef.current.contentWindow.addEventListener('resize', positionCircle);
@@ -123,8 +135,10 @@ const updateImagesInTheCanvas = async (iframeRef) => {
     if (!svg) return;
     if (svg) {
       const imageElements = iframeDocument.querySelectorAll(KET_DOM_TAG.imageTag);
+      // Ketcher nests <image> elements inside <g> groups, so they are NOT direct children
+      // of svg — svg.removeChild(img) throws NotFoundError. Remove from the actual parent.
       imageElements.forEach((img) => {
-        svg?.removeChild(img);
+        img.parentNode?.removeChild(img);
       });
 
       imageElements.forEach((img) => {
@@ -142,17 +156,20 @@ const updateImagesInTheCanvas = async (iframeRef) => {
 const updateTemplatesInTheCanvas = async (iframeRef) => {
   if (iframeRef && iframeRef?.current?.contentWindow?.document) {
     const iframeDocument = iframeRef.current.contentWindow.document;
-    const svg = iframeDocument.querySelector('svg'); // Get the main SVG tag
+    // Target the canvas SVG specifically — querySelector('svg') returns the first SVG
+    // in the document which may be a toolbar icon, not the canvas.
+    const canvasContainer = iframeDocument.querySelector('.StructEditor-module_intermediateCanvas__fR3ws');
+    const svg = canvasContainer?.firstElementChild;
     if (svg) {
-      const textElements = svg.querySelectorAll('text'); // Select all text elements
+      const textElements = svg.querySelectorAll('text');
       textElements.forEach((textElem) => {
-        const { textContent } = textElem; // Get the text content of the <text> element
-        if (textContent === KET_TAGS.inspiredLabel) {
-          textElem.setAttribute('fill', 'transparent'); // Set fill to transparent
+        const { textContent } = textElem;
+        if (textContent.trim() === KET_TAGS.inspiredLabel) {
+          // Use !important so Ketcher's own stylesheet cannot override transparent fill.
+          textElem.style.setProperty('fill', 'transparent', 'important');
           const tspans = textElem.querySelectorAll('tspan');
           tspans.forEach((tspan) => {
-            tspan.setAttribute('fill', 'transparent');
-            tspan.style.fill = 'transparent'; // For good measure
+            tspan.style.setProperty('fill', 'transparent', 'important');
           });
         }
       });
@@ -246,6 +263,7 @@ const runImageLayering = async (iframeRef = canvasIframeRef) => {
   ]);
 
   await makeTransparentByTitle(targetIframe);
+  await updateTemplatesInTheCanvas(targetIframe);
   await updateImagesInTheCanvas(targetIframe);
   ImagesToBeUpdatedSetter(false);
 };
@@ -293,6 +311,29 @@ const attachClickListeners = (iframeRef, buttonEvents) => {
         } catch (e) {
           if (!(e instanceof DOMException && e.name === 'SecurityError')) throw e;
         }
+      }
+
+      // Re-layer images on every mutation (e.g. mouse-move re-renders during drag).
+      // Ketcher puts <image> elements back into their <g> group on each render pass;
+      // move them to the SVG root end so they stay on top without the full
+      // runImageLayering overhead (green circles are refreshed only by runImageLayering).
+      // IMPORTANT: disconnect the observer before mutating the DOM — removeChild/appendChild
+      // are themselves DOM mutations that would re-trigger this callback infinitely.
+      try {
+        const doc = iframeRef?.current?.contentWindow?.document;
+        const canvasContainer = doc?.querySelector('.StructEditor-module_intermediateCanvas__fR3ws');
+        const svg = canvasContainer?.firstElementChild;
+        if (svg) {
+          const imgs = doc.querySelectorAll(KET_DOM_TAG.imageTag);
+          if (imgs.length) {
+            observer.disconnect();
+            imgs.forEach((img) => img.parentNode?.removeChild(img));
+            imgs.forEach((img) => svg.appendChild(img));
+            observer.observe(iframeDocument, { childList: true, subtree: true });
+          }
+        }
+      } catch (e) {
+        if (!(e instanceof DOMException && e.name === 'SecurityError')) throw e;
       }
     });
 

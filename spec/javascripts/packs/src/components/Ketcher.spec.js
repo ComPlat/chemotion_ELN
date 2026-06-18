@@ -3,7 +3,7 @@ import assert from 'assert';
 import {
   describe, it, beforeEach, afterEach
 } from 'mocha';
-import { addPolymerTags } from 'src/utilities/ketcherSurfaceChemistry/PolymersTemplates';
+import { addPolymerTags, templateAliasesPrepare } from 'src/utilities/ketcherSurfaceChemistry/PolymersTemplates';
 import { ALIAS_PATTERNS } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { deepCompareContent } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import { hasKetcherData, loadKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
@@ -17,6 +17,7 @@ import {
   reloadCanvas,
   uniqueEvents,
   templateListSetter,
+  imagesListSetter,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import {
   handleAddAtom,
@@ -45,6 +46,7 @@ import {
   deleteImageWithThreeOldPack,
   deleteAtomAndRemoveImageKet,
   molfileWithPolymerList,
+  structureFirstBallSecondKet,
 } from '../../../data/ketcher_mockups';
 import templates from '../../../../../public/json/surfaceChemistryShapes.json';
 
@@ -378,6 +380,113 @@ describe('Ketcher', () => {
       assert.strictEqual(imagesList.length, 0, 'Images list should be cleared');
       await loadKetcherData(addAtomMockup);
       assert.strictEqual(allAtoms.length, 15, 'All atoms should be restored');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // templateAliasesPrepare — save path index fix
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('templateAliasesPrepare — save path', () => {
+    beforeEach(() => {
+      // Inject a minimal imagesList entry so templateAliasesPrepare can read
+      // imagesList[0].boundingBox without needing a full canvas load.
+      imagesListSetter([{ boundingBox: { height: 1.0, width: 1.0 } }]);
+    });
+
+    // Regression guard: old code always used the alias third-part (image counter = 0)
+    // as the stored atom index. When the ball was drawn after a structure (atom index > 0),
+    // the stored index was wrong — on reload the wrong atom was targeted and the ball was lost.
+    it('uses atomIndexList value instead of image counter when provided', async () => {
+      // alias t_95_0: templateId=95, imagePlace=0 (image counter).
+      // Ball is actually at atom index 6 in the KET.
+      const result = await templateAliasesPrepare(['t_95_0'], [6]);
+      assert.ok(
+        result.startsWith('6/'),
+        `PolymersList must start with actual atom index 6, got: "${result}"`
+      );
+    });
+
+    it('falls back to image counter when atomIndexList is not provided (backward compat)', async () => {
+      const result = await templateAliasesPrepare(['t_95_0']);
+      assert.ok(
+        result.startsWith('0/'),
+        `Without atomIndexList, image counter (0) should be used, got: "${result}"`
+      );
+    });
+
+    it('produces different results for atomIndexList=0 vs atomIndexList=6', async () => {
+      const withZero = await templateAliasesPrepare(['t_95_0'], [0]);
+      const withSix = await templateAliasesPrepare(['t_95_0'], [6]);
+      assert.notStrictEqual(withZero, withSix, 'Different atom indices must produce different PolymersList strings');
+      assert.ok(withZero.startsWith('0/'), `atomIndex 0 → "${withZero}"`);
+      assert.ok(withSix.startsWith('6/'), `atomIndex 6 → "${withSix}"`);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // addPolymerTags — load path: structure-first-ball-second
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('addPolymerTags — structure-first-ball-second load path', () => {
+    // structureFirstBallSecondKet: mol0 has 6 C atoms (indices 0-5) + 1 R# at index 6.
+    // PolymersList "6/95/1.00-1.00" means: atom at index 6 carries a bead (template 95).
+    //
+    // IMPORTANT: addPolymerTags mutates its data argument (pushes image nodes into root.nodes
+    // and updates atoms in place). Each test must deep-copy the fixture so mutations from one
+    // test do not bleed into subsequent tests.
+    const freshKet = () => JSON.parse(JSON.stringify(structureFirstBallSecondKet));
+
+    it('restores the polymer ball when atom index > 0 in PolymersList', async () => {
+      const { molfileData } = await addPolymerTags('6/95/1.00-1.00', freshKet());
+      await loadKetcherData(molfileData);
+
+      assert.strictEqual(imagesList.length, 1, 'ball should be restored (1 image in imagesList)');
+      assert.strictEqual(allAtoms.length, 7, 'all 7 atoms must be present after load');
+
+      // The R# atom at index 6 must now carry the alias assigned by addingPolymersToKetcher.
+      const mol = molfileData[mols[0]];
+      const ballAtom = mol?.atoms[6];
+      assert.ok(
+        ALIAS_PATTERNS.threeParts.test(ballAtom?.alias),
+        `atom[6] must have a t_XX_XX alias, got: "${ballAtom?.alias}"`
+      );
+    });
+
+    // Documents the original bug: storing index 0 targets a plain C atom which fails
+    // aliasPass → no image collected → ball silently lost.
+    it('does NOT restore the ball when the stored index points to a plain C atom (bug scenario)', async () => {
+      // Wrong PolymersList: index 0 points at a C atom, not the R# at index 6.
+      const { molfileData } = await addPolymerTags('0/95/1.00-1.00', freshKet());
+      await loadKetcherData(molfileData);
+
+      assert.strictEqual(
+        imagesList.length,
+        0,
+        'C atom at index 0 fails aliasPass → no ball restored (demonstrates original bug)'
+      );
+    });
+
+    it('handles two balls: one drawn first (index 0) and one drawn later (index 6)', async () => {
+      const twoBeadKet = {
+        root: { nodes: [{ $ref: 'mol0' }], connections: [], templates: [] },
+        mol0: {
+          type: 'molecule',
+          atoms: [
+            { label: 'R#', location: [1.0, 0.0, 0] }, // ball first, index 0
+            { label: 'C', location: [2.0, 0.0, 0] },
+            { label: 'C', location: [3.0, 0.0, 0] },
+            { label: 'C', location: [4.0, 0.0, 0] },
+            { label: 'C', location: [5.0, 0.0, 0] },
+            { label: 'C', location: [6.0, 0.0, 0] },
+            { label: 'R#', location: [7.0, 0.0, 0] }  // ball second, index 6
+          ],
+          bonds: []
+        }
+      };
+
+      const { molfileData } = await addPolymerTags('0/95/1.00-1.00 6/95/1.00-1.00', twoBeadKet);
+      await loadKetcherData(molfileData);
+
+      assert.strictEqual(imagesList.length, 2, 'both balls must be restored');
     });
   });
 });

@@ -649,7 +649,7 @@ module SVG
     end
 
     def sections_string_filtered
-      sections_string.gsub('R#', '').gsub('ABS', '').gsub("font=\'30px \"Arial\"\'", '')
+      sections_string.gsub('R#', '').gsub(/\bABS\b/, '').gsub("font=\'30px \"Arial\"\'", '')
     end
   end
 end

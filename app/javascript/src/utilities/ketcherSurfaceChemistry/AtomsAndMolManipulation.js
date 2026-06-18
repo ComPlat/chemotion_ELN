@@ -150,7 +150,9 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
     }
 
     if (useIndexedFormat && Object.keys(polymerByAtomIndex).length > 0) {
-      let maxAtomIndex = -1;
+      // imageSeqCounter is the alias third-part index (0-based sequence of images collected).
+      // It must NOT be the KET atom index — placeImageOnAtoms uses it to index into imagesList.
+      let imageSeqCounter = 0;
       for (const molName of mols) {
         const molecule = data[molName];
         if (!molecule?.atoms) continue;
@@ -166,14 +168,14 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
           const entry = polymerByAtomIndex[atomIndex];
           if (entry && aliasPass) {
             const { type: templateType, size: templateSize } = { type: entry.type, size: entry.size };
-            data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, atomIndex);
+            data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, imageSeqCounter);
             const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
             if (newTemplate) collectedImages.push(newTemplate);
-            if (atomIndex > maxAtomIndex) maxAtomIndex = atomIndex;
+            imageSeqCounter++;
           }
         }
       }
-      imageUsedCounterSetter(maxAtomIndex >= 0 ? maxAtomIndex : 0);
+      imageUsedCounterSetter(imageSeqCounter > 0 ? imageSeqCounter - 1 : 0);
     } else {
       // Legacy: assign in consumption order (no atom index in polymer entries)
       let visitedAtoms = 0;

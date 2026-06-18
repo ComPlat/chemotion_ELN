@@ -265,15 +265,17 @@ const getStandardMolfileForIndigo = (molfile) => {
 // We default size to 1.00-1.00 since older files were created before size support was added.
 const extractPolymerTagFromAliases = (molfile) => {
   if (!molfile || typeof molfile !== 'string') return null;
-  const lines = molfile.replace(/\r\n/g, '\n').split('\n');
+  // Normalize both \r\n (Windows) and bare \r (classic Mac) to \n.
+  const lines = molfile.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
   const entries = [];
   for (let i = 0; i < lines.length; i++) {
     const match = lines[i].match(/^A\s+(\d+)$/);
     if (match && i + 1 < lines.length) {
       const aliasText = lines[i + 1].trim();
-      const parts = aliasText.split('_');
-      if (parts.length === 3 && parts[0] === 't') {
-        const templateType = parseInt(parts[1], 10);
+      // Anchored regex avoids false positives from aliases with extra underscores.
+      const aliasMatch = aliasText.match(/^t_(\d+)_(\d+)$/);
+      if (aliasMatch) {
+        const templateType = parseInt(aliasMatch[1], 10);
         const atomIndex = parseInt(match[1], 10) - 1; // V2000 is 1-indexed
         if (!Number.isNaN(templateType) && atomIndex >= 0) {
           entries.push(`${atomIndex}/${templateType}/1.00-1.00`);
@@ -415,7 +417,22 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
     // This matches the "paste into editor" behaviour the user already observes.
     if (!polymerTagFromPasted && !textNodes?.length && !isPaste) {
       const cleanMol = getStandardMolfileForIndigo(initMol);
-      await editor.structureDef.editor.setMolecule(cleanMol);
+      try {
+        await editor.structureDef.editor.setMolecule(cleanMol);
+      } catch (setErr) {
+        NotificationActions.add({
+          title: 'Structure Editor error',
+          message: setErr?.message || String(setErr),
+          level: 'error',
+          position: 'tc',
+          dismissible: 'button',
+          autoDismiss: 12,
+        });
+        return;
+      }
+      // Clear polymer state from any previously loaded molecule so paste operations
+      // on this structure don't inherit the prior molecule's polymer decorations.
+      storedPolymersListLineSetter(null);
       await fetchKetcherData(editor);
       setTimeout(async () => { await centerPositionCanvas(editor); }, 100);
       return;
