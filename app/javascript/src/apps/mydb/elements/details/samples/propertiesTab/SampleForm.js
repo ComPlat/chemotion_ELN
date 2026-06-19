@@ -21,6 +21,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
+import { isValidMoleculeName } from 'src/utilities/MoleculeNameValidation';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -385,6 +386,8 @@ export default class SampleForm extends React.Component {
       return true;
     });
 
+    const molNameInvalid = moleculeNameInputValue !== '' && !isValidMoleculeName(moleculeNameInputValue);
+
     return (
       <Form.Group>
         <Form.Label>Molecule name</Form.Label>
@@ -419,15 +422,21 @@ export default class SampleForm extends React.Component {
               return String(value) === String(mno.value) || String(label) === String(mno.label);
             }) || null}
             onCreateOption={(inputValue) => {
+              if (!isValidMoleculeName(inputValue)) return;
               this.setState({ moleculeNameInputValue: inputValue });
               this.addMolName(inputValue);
             }}
             placeholder="Enter or select a molecule name"
             allowCreateWhileLoading
             formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
-            className="flex-grow-1"
+            className={`flex-grow-1${molNameInvalid ? ' is-invalid' : ''}`}
           />
           {this.structureEditorButton(!sample.can_update)}
+          {molNameInvalid && (
+            <Form.Control.Feedback type="invalid" style={{ display: 'block' }}>
+              Name contains invalid characters (control or invisible characters are not allowed).
+            </Form.Control.Feedback>
+          )}
         </InputGroup>
       </Form.Group>
     );

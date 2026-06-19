@@ -68,6 +68,10 @@ en:
           attributes:
             base:
               sample_or_scan_data_required: SampleTask creation requires either a sample id or a file + measurement data
+        molecule_name:
+          attributes:
+            name:
+              invalid_characters: contains invalid characters
         well:
           attributes:
             color_code:
