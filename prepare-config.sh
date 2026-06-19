@@ -18,6 +18,18 @@ for examplefile in config/{database,shrine,datacollectors,storage,radar}.yml.exa
     fi
 done
 
+# copy example .dockerenv.example to .dockerenv if not already present, so a
+# developer can edit/persist overrides for subsequent runs. The first run does
+# not depend on this — docker-compose.dev.yml has working defaults — because
+# .dockerenv is a host-side file read at compose invocation, before this script
+# runs inside the setup container.
+if [ -f .dockerenv ]; then
+    echo ">>> File .dockerenv already exists -> not overwriting"
+else
+    echo ">>> Copying example file .dockerenv.example to .dockerenv"
+    cp .dockerenv.example .dockerenv
+fi
+
 # copy example public/welcome-message-sample.md to actual public/welcome-message.md if not already present
 if [ -f public/welcome-message.md ]; then
     echo ">>> File public/welcome-message.md already exists -> not overwriting"
