@@ -1945,8 +1945,12 @@ export default class ReactionDetailsScheme extends React.Component {
       // Coerce to a Number: the backend serializes `volume` (a BigDecimal) as a
       // string (e.g. "0.005"), and NumeralInputWithUnitsCompo renders "n.d."
       // whenever the value is not Number.isFinite. Pass undefined for
-      // null/empty/invalid so the field shows empty instead of a default 0.
-      const parsedVolume = parseFloat(reaction.volume);
+      // null/empty/invalid so the field shows "n.d." instead of a default 0.
+      // Use Number() rather than parseFloat() so partially-numeric strings like
+      // "1.2abc" are rejected (parseFloat would accept them as 1.2).
+      const rawVolume = reaction.volume;
+      const parsedVolume = (rawVolume == null) ? NaN
+        : (typeof rawVolume === 'string' && rawVolume.trim() === '' ? NaN : Number(rawVolume));
       const volumeValue = Number.isFinite(parsedVolume) ? parsedVolume : undefined;
 
       return (
