@@ -33,8 +33,9 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import { EditUserLabels } from 'src/components/UserLabels';
-import Attachment from 'src/models/Attachment';
-import GenericDetailsAttachments from 'src/apps/mydb/elements/details/genericAttachmentsTab/GenericDetailsAttachments';
+// eslint-disable-next-line import/no-named-as-default
+import AttachmentTab from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -286,43 +287,37 @@ export default class ScreenDetails extends Component {
   handleAttachmentDrop(files) {
     this.setState((prevState) => {
       const { screen } = prevState;
-      const newAttachments = files.map((file) => Attachment.fromFile(file));
-      screen.attachments = [...(screen.attachments || []), ...newAttachments];
+      screen.attachments = addAttachmentsFromFiles(screen.attachments, files);
       screen.changed = true;
       return { screen };
     });
   }
 
   handleAttachmentDelete(attachment) {
-    const { screen } = this.state;
-    const index = (screen.attachments || []).indexOf(attachment);
-    if (index >= 0) {
-      screen.attachments[index].is_deleted = true;
+    this.setState((prevState) => {
+      const { screen } = prevState;
+      screen.attachments = setAttachmentDeleted(screen.attachments, attachment, true);
       screen.changed = true;
-      screen.attachments = [...screen.attachments];
-      this.setState({ screen });
-    }
+      return { screen };
+    });
   }
 
   handleAttachmentUndoDelete(attachment) {
-    const { screen } = this.state;
-    const index = (screen.attachments || []).indexOf(attachment);
-    if (index >= 0) {
-      screen.attachments[index].is_deleted = false;
+    this.setState((prevState) => {
+      const { screen } = prevState;
+      screen.attachments = setAttachmentDeleted(screen.attachments, attachment, false);
       screen.changed = true;
-      screen.attachments = [...screen.attachments];
-      this.setState({ screen });
-    }
+      return { screen };
+    });
   }
 
   handleAttachmentEdit(attachment) {
-    const { screen } = this.state;
-    screen.changed = true;
-    screen.attachments = (screen.attachments || []).map(
-      (a) => (a.id === attachment.id ? attachment : a)
-    );
-    this.setState({ screen });
-    this.forceUpdate();
+    this.setState((prevState) => {
+      const { screen } = prevState;
+      screen.attachments = replaceAttachment(screen.attachments, attachment);
+      screen.changed = true;
+      return { screen };
+    });
   }
 
   handleSelect(eventKey) {
@@ -391,7 +386,7 @@ export default class ScreenDetails extends Component {
         <Tab eventKey="attachments" title="Attachments" key={`attachments_${screen.id}`}>
           <ListGroup fill="true">
             <ListGroupItem>
-              <GenericDetailsAttachments
+              <AttachmentTab
                 element={screen}
                 elementType="Screen"
                 attachments={screen.attachments || []}

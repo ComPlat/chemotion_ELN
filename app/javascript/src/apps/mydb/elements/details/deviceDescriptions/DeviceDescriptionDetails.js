@@ -15,6 +15,7 @@ import { List } from 'immutable';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -25,7 +26,9 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 import PropertiesForm from 'src/apps/mydb/elements/details/deviceDescriptions/propertiesTab/PropertiesForm';
-import AttachmentForm from 'src/apps/mydb/elements/details/deviceDescriptions/attachmentsTab/AttachmentForm';
+// eslint-disable-next-line import/no-named-as-default
+import AttachmentTab
+  from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
 import AnalysesContainer from 'src/apps/mydb/elements/details/deviceDescriptions/analysesTab/AnalysesContainer';
 import MaintenanceForm from 'src/apps/mydb/elements/details/deviceDescriptions/maintenanceTab/MaintenanceForm';
 import DetailsForm from 'src/apps/mydb/elements/details/deviceDescriptions/detailsTab/DetailsForm';
@@ -63,7 +66,6 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
     properties: PropertiesForm,
     detail: DetailsForm,
     analyses: AnalysesContainer,
-    attachments: AttachmentForm,
     maintenance: MaintenanceForm,
     history: versioningTable,
   };
@@ -77,23 +79,81 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
     history: 'History',
   };
 
+  const availableTabs = ['properties', 'detail', 'analyses', 'attachments', 'maintenance', 'history'];
+
   const isReadOnly = () => !collectionHasPermission(currentCollection, 0);
 
   const disabled = (index) => (!!(deviceDescription.isNew && index !== 0));
 
-  visibleTabs.forEach((key, i) => {
-    tabContents.push(
-      <Tab eventKey={key} title={tabTitles[key]} key={`${key}_${deviceDescription.id}`} disabled={disabled(i)}>
-        {
-          !deviceDescription.isNew
-          && <CommentSection section={`device_description_${key}`} element={deviceDescription} />
-        }
-        {React.createElement(tabContentComponents[key], {
-          key: `${deviceDescription.id}-${key}`,
-          readonly: isReadOnly()
-        })}
-      </Tab>
+  const handleAttachmentDrop = (files) => {
+    deviceDescriptionsStore.changeDeviceDescription(
+      'attachments',
+      addAttachmentsFromFiles(deviceDescription.attachments, files)
     );
+  };
+
+  const handleAttachmentDelete = (attachment) => {
+    deviceDescriptionsStore.changeDeviceDescription(
+      'attachments',
+      setAttachmentDeleted(deviceDescription.attachments, attachment, true)
+    );
+  };
+
+  const handleAttachmentUndoDelete = (attachment) => {
+    deviceDescriptionsStore.changeDeviceDescription(
+      'attachments',
+      setAttachmentDeleted(deviceDescription.attachments, attachment, false)
+    );
+  };
+
+  const handleAttachmentEdit = (updated) => {
+    deviceDescriptionsStore.changeDeviceDescription(
+      'attachments',
+      replaceAttachment(deviceDescription.attachments, updated)
+    );
+  };
+
+  const deviceDescriptionAttachmentsTab = (key) => (
+    <Tab
+      eventKey={key}
+      title={tabTitles[key]}
+      key={`${key}_${deviceDescription.id}`}
+      disabled={disabled(availableTabs.indexOf(key))}
+    >
+      {!deviceDescription.isNew && (
+        <CommentSection section="device_description_attachments" element={deviceDescription} />
+      )}
+      <AttachmentTab
+        key={`${deviceDescription.id}-attachments`}
+        element={deviceDescription}
+        elementType="DeviceDescription"
+        attachments={deviceDescription.attachments || []}
+        onDrop={handleAttachmentDrop}
+        onDelete={handleAttachmentDelete}
+        onUndoDelete={handleAttachmentUndoDelete}
+        onEdit={handleAttachmentEdit}
+        readOnly={isReadOnly()}
+      />
+    </Tab>
+  );
+
+  visibleTabs.forEach((key, i) => {
+    if (key === 'attachments') {
+      tabContents.push(deviceDescriptionAttachmentsTab(key));
+    } else {
+      tabContents.push(
+        <Tab eventKey={key} title={tabTitles[key]} key={`${key}_${deviceDescription.id}`} disabled={disabled(i)}>
+          {
+            !deviceDescription.isNew
+            && <CommentSection section={`device_description_${key}`} element={deviceDescription} />
+          }
+          {React.createElement(tabContentComponents[key], {
+            key: `${deviceDescription.id}-${key}`,
+            readonly: isReadOnly()
+          })}
+        </Tab>
+      );
+    }
   });
 
   const onTabPositionChanged = (visible) => {
@@ -155,7 +215,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
       <div className="tabs-container--with-borders">
         <ElementDetailSortTab
           type="device_description"
-          availableTabs={Object.keys(tabContentComponents)}
+          availableTabs={availableTabs}
           tabTitles={tabTitles}
           onTabPositionChanged={onTabPositionChanged}
           openedFromCollectionId={openedFromCollectionId}

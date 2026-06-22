@@ -6,10 +6,10 @@ import { configure, mount } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import sinon from 'sinon';
 
-import { GenericDetailsAttachments } from 'src/apps/mydb/elements/details/genericAttachmentsTab/GenericDetailsAttachments';
+import { AttachmentTab } from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import UIStore from '../../../../../../../../../app/javascript/src/stores/alt/stores/UIStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 configure({ adapter: new Adapter() });
 
@@ -42,7 +42,7 @@ function defaultProps(overrides = {}) {
   };
 }
 
-describe('GenericDetailsAttachments', () => {
+describe('AttachmentTab', () => {
   let sandbox;
 
   beforeEach(() => {
@@ -61,7 +61,7 @@ describe('GenericDetailsAttachments', () => {
   describe('empty state', () => {
     it('shows no-attachments message when list is empty', () => {
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps())
+        React.createElement(AttachmentTab, defaultProps())
       );
       expect(wrapper.text()).toContain('There are currently no attachments.');
     });
@@ -76,7 +76,7 @@ describe('GenericDetailsAttachments', () => {
         makeAttachment({ id: 3, filename: 'cherry.jpg' }),
       ];
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps({ attachments }))
+        React.createElement(AttachmentTab, defaultProps({ attachments }))
       );
 
       wrapper.find('input[type="text"]').simulate('change', { target: { value: 'an' } });
@@ -93,7 +93,7 @@ describe('GenericDetailsAttachments', () => {
         makeAttachment({ id: 2, filename: 'banana.png' }),
       ];
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps({ attachments }))
+        React.createElement(AttachmentTab, defaultProps({ attachments }))
       );
 
       const input = wrapper.find('input[type="text"]');
@@ -116,7 +116,7 @@ describe('GenericDetailsAttachments', () => {
         makeAttachment({ id: 3, filename: 'cherry.jpg' }),
       ];
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps({ attachments }))
+        React.createElement(AttachmentTab, defaultProps({ attachments }))
       );
 
       const rows = wrapper.find('.attachment-row-text');
@@ -131,7 +131,7 @@ describe('GenericDetailsAttachments', () => {
         makeAttachment({ id: 2, filename: 'cherry.jpg' }),
       ];
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps({ attachments }))
+        React.createElement(AttachmentTab, defaultProps({ attachments }))
       );
 
       // The sort-direction button shows '▲' when asc
@@ -152,7 +152,7 @@ describe('GenericDetailsAttachments', () => {
         makeAttachment({ id: 3, filename: 'medium.png', filesize: 500 }),
       ];
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps({ attachments }))
+        React.createElement(AttachmentTab, defaultProps({ attachments }))
       );
 
       wrapper.find('select.sorting-row-style').simulate('change', { target: { value: 'size' } });
@@ -172,7 +172,7 @@ describe('GenericDetailsAttachments', () => {
         makeAttachment({ id: 1, filename: 'to-delete.pdf', is_deleted: true }),
       ];
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps({ attachments }))
+        React.createElement(AttachmentTab, defaultProps({ attachments }))
       );
 
       expect(wrapper.find('strike')).toHaveLength(1);
@@ -185,7 +185,7 @@ describe('GenericDetailsAttachments', () => {
       ];
       const onUndoDelete = sinon.spy();
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps({ attachments, onUndoDelete }))
+        React.createElement(AttachmentTab, defaultProps({ attachments, onUndoDelete }))
       );
 
       const undoBtn = wrapper.find('i.fa-undo').closest('button');
@@ -196,7 +196,7 @@ describe('GenericDetailsAttachments', () => {
       const attachment = makeAttachment({ id: 1, filename: 'to-delete.pdf', is_deleted: true });
       const onUndoDelete = sinon.spy();
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps({ attachments: [attachment], onUndoDelete }))
+        React.createElement(AttachmentTab, defaultProps({ attachments: [attachment], onUndoDelete }))
       );
 
       wrapper.find('i.fa-undo').closest('button').simulate('click');
@@ -207,7 +207,7 @@ describe('GenericDetailsAttachments', () => {
     it('does not show strike-through for a non-deleted attachment', () => {
       const attachments = [makeAttachment({ id: 1, filename: 'keep.pdf', is_deleted: false })];
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps({ attachments }))
+        React.createElement(AttachmentTab, defaultProps({ attachments }))
       );
       expect(wrapper.find('strike')).toHaveLength(0);
     });
@@ -218,7 +218,7 @@ describe('GenericDetailsAttachments', () => {
     it('disables the delete button when readOnly is true', () => {
       const attachments = [makeAttachment({ id: 1, filename: 'locked.pdf' })];
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps({ attachments, readOnly: true }))
+        React.createElement(AttachmentTab, defaultProps({ attachments, readOnly: true }))
       );
 
       const deleteBtn = wrapper.find('i.fa-trash-o').closest('button');
@@ -229,7 +229,7 @@ describe('GenericDetailsAttachments', () => {
     it('enables the delete button when readOnly is false', () => {
       const attachments = [makeAttachment({ id: 1, filename: 'editable.pdf' })];
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps({ attachments, readOnly: false }))
+        React.createElement(AttachmentTab, defaultProps({ attachments, readOnly: false }))
       );
 
       const deleteBtn = wrapper.find('i.fa-trash-o').closest('button');
@@ -248,7 +248,7 @@ describe('GenericDetailsAttachments', () => {
 
       const attachments = [makeAttachment({ id: 1, filename: 'big.pdf' })];
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps({ attachments }))
+        React.createElement(AttachmentTab, defaultProps({ attachments }))
       );
 
       expect(wrapper.find('.alert-warning').exists()).toBe(true);
@@ -258,7 +258,7 @@ describe('GenericDetailsAttachments', () => {
     it('does not show the quota warning when quota is not exceeded', () => {
       const attachments = [makeAttachment({ id: 1, filename: 'small.pdf' })];
       const wrapper = mount(
-        React.createElement(GenericDetailsAttachments, defaultProps({ attachments }))
+        React.createElement(AttachmentTab, defaultProps({ attachments }))
       );
 
       expect(wrapper.find('.alert-warning').exists()).toBe(false);

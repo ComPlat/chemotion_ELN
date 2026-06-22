@@ -17,8 +17,9 @@ import PropertiesForm
   from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/propertiesTab/PropertiesForm';
 import AnalysesContainer
   from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/analysesTab/AnalysesContainer';
-import AttachmentForm
-  from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/attachmentsTab/AttachmentForm';
+// eslint-disable-next-line import/no-named-as-default
+import AttachmentTab
+  from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
 import ConflictModal
   from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/ConflictModal';
 import { collectionHasPermission } from 'src/utilities/collectionUtilities';
@@ -27,6 +28,7 @@ import { set } from 'lodash';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -111,7 +113,6 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
   const tabContentComponents = {
     properties: PropertiesForm,
     analyses: AnalysesContainer,
-    attachments: AttachmentForm,
     inventory: ChemicalTab,
   };
 
@@ -122,14 +123,70 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
     inventory: 'Inventory',
   };
 
+  const availableTabs = ['properties', 'analyses', 'attachments', 'inventory'];
+
   const isReadOnly = () => !collectionHasPermission(currentCollection, 0);
 
   const disabled = (index) => (!!(sbmmSample.isNew && index !== 0));
+
+  const handleAttachmentDrop = (files) => {
+    sbmmStore.changeSequenceBasedMacromoleculeSample(
+      'attachments',
+      addAttachmentsFromFiles(sbmmSample.attachments, files)
+    );
+  };
+
+  const handleAttachmentDelete = (attachment) => {
+    sbmmStore.changeSequenceBasedMacromoleculeSample(
+      'attachments',
+      setAttachmentDeleted(sbmmSample.attachments, attachment, true)
+    );
+  };
+
+  const handleAttachmentUndoDelete = (attachment) => {
+    sbmmStore.changeSequenceBasedMacromoleculeSample(
+      'attachments',
+      setAttachmentDeleted(sbmmSample.attachments, attachment, false)
+    );
+  };
+
+  const handleAttachmentEdit = (updated) => {
+    sbmmStore.changeSequenceBasedMacromoleculeSample(
+      'attachments',
+      replaceAttachment(sbmmSample.attachments, updated)
+    );
+  };
+
+  const sbmmAttachmentsTab = (key) => (
+    <Tab
+      eventKey={key}
+      title={tabTitles[key]}
+      key={`${key}_${sbmmSample.id}`}
+      disabled={disabled(availableTabs.indexOf(key))}
+    >
+      {!sbmmSample.isNew && (
+        <CommentSection section="sequence_based_macromolecule_sample_attachments" element={sbmmSample} />
+      )}
+      <AttachmentTab
+        key={`${sbmmSample.id}-attachments`}
+        element={sbmmSample}
+        elementType="SequenceBasedMacromoleculeSample"
+        attachments={sbmmSample.attachments || []}
+        onDrop={handleAttachmentDrop}
+        onDelete={handleAttachmentDelete}
+        onUndoDelete={handleAttachmentUndoDelete}
+        onEdit={handleAttachmentEdit}
+        readOnly={isReadOnly()}
+      />
+    </Tab>
+  );
 
   visibleTabs.forEach((key, i) => {
     const title = tabTitles[key];
     if (key === 'inventory') {
       tabContents.push(sbmmInventoryTab(key));
+    } else if (key === 'attachments') {
+      tabContents.push(sbmmAttachmentsTab(key));
     } else {
       tabContents.push(
         <Tab eventKey={key} title={title} key={`${key}_${sbmmSample.id}`} disabled={disabled(i)}>
@@ -335,7 +392,7 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
       <div className="tabs-container--with-borders">
         <ElementDetailSortTab
           type="sequence_based_macromolecule_sample"
-          availableTabs={Object.keys(tabContentComponents)}
+          availableTabs={availableTabs}
           tabTitles={tabTitles}
           onTabPositionChanged={onTabPositionChanged}
           addInventoryTab={sbmmSample.inventory_sample || false}

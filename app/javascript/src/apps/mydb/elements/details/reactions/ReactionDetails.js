@@ -55,12 +55,13 @@ import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/Reac
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import isEqual from 'lodash/isEqual';
 import DocumentationButton from 'src/components/common/DocumentationButton';
-import Attachment from 'src/models/Attachment';
-import GenericDetailsAttachments from 'src/apps/mydb/elements/details/genericAttachmentsTab/GenericDetailsAttachments';
+// eslint-disable-next-line import/no-named-as-default
+import AttachmentTab from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
 
 const productLink = (product, active) => (
   <span>
-    {active && "Sample Analysis:"}
+    {active && 'Sample Analysis:'}
     <span
       aria-hidden="true"
       className="pseudo-link"
@@ -289,45 +290,37 @@ export default class ReactionDetails extends Component {
   handleAttachmentDrop = (files) => {
     this.setState((prevState) => {
       const { reaction } = prevState;
-      const newAttachments = files.map((file) => Attachment.fromFile(file));
-      reaction.attachments = [...(reaction.attachments || []), ...newAttachments];
+      reaction.attachments = addAttachmentsFromFiles(reaction.attachments, files);
       reaction.changed = true;
       return { reaction };
     });
   };
 
   handleAttachmentDelete = (attachment) => {
-    const { reaction } = this.state;
-    const index = (reaction.attachments || []).indexOf(attachment);
-    if (index >= 0) {
-      reaction.attachments[index].is_deleted = true;
+    this.setState((prevState) => {
+      const { reaction } = prevState;
+      reaction.attachments = setAttachmentDeleted(reaction.attachments, attachment, true);
       reaction.changed = true;
-      reaction.attachments = [...reaction.attachments];
-      this.setState({ reaction });
-      this.forceUpdate();
-    }
+      return { reaction };
+    });
   };
 
   handleAttachmentUndoDelete = (attachment) => {
-    const { reaction } = this.state;
-    const index = (reaction.attachments || []).indexOf(attachment);
-    if (index >= 0) {
-      reaction.attachments[index].is_deleted = false;
+    this.setState((prevState) => {
+      const { reaction } = prevState;
+      reaction.attachments = setAttachmentDeleted(reaction.attachments, attachment, false);
       reaction.changed = true;
-      reaction.attachments = [...reaction.attachments];
-      this.setState({ reaction });
-      this.forceUpdate();
-    }
+      return { reaction };
+    });
   };
 
   handleAttachmentEdit = (attachment) => {
-    const { reaction } = this.state;
-    reaction.changed = true;
-    reaction.attachments = (reaction.attachments || []).map(
-      (a) => (a.id === attachment.id ? attachment : a)
-    );
-    this.setState({ reaction });
-    this.forceUpdate();
+    this.setState((prevState) => {
+      const { reaction } = prevState;
+      reaction.attachments = replaceAttachment(reaction.attachments, attachment);
+      reaction.changed = true;
+      return { reaction };
+    });
   };
 
   handleSelect = (key) => {
@@ -429,8 +422,6 @@ export default class ReactionDetails extends Component {
       </div>
     );
   }
-
-
 
   refreshGraphic() {
     const { reaction, isRefreshingGraphic } = this.state;
@@ -692,7 +683,7 @@ export default class ReactionDetails extends Component {
    */
   // eslint-disable-next-line class-methods-use-this
   recalculateEquivalentsForMaterials(reaction) {
-    const referenceMaterial = reaction.referenceMaterial;
+    const { referenceMaterial } = reaction;
     if (!referenceMaterial || !referenceMaterial.amount_mol) {
       return;
     }
@@ -973,7 +964,7 @@ export default class ReactionDetails extends Component {
         <Tab eventKey="attachments" title="Attachments" key={`attachments_${reaction.id}`}>
           <ListGroup fill="true">
             <ListGroupItem>
-              <GenericDetailsAttachments
+              <AttachmentTab
                 element={reaction}
                 elementType="Reaction"
                 attachments={reaction.attachments || []}

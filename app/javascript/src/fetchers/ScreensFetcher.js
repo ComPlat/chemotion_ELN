@@ -31,7 +31,7 @@ export default class ScreensFetcher {
       .then((json) => {
         const { id } = json.screen;
         return GenericElsFetcher.uploadGenericFiles(screen, id, 'Screen')
-          .then(() => AttachmentFetcher.updateAttachables(newFiles, 'Screen', id, [])())
+          .then(() => AttachmentFetcher.updateAttachables(newFiles, 'Screen', id, []))
           .then(() => this.fetchById(id));
       });
   }
@@ -47,7 +47,7 @@ export default class ScreensFetcher {
     return Promise.all(tasks)
       .then(() => AnnotationsFetcher.updateAnnotationsInContainer(screen))
       .then(() => ApiClient.putJson(`/api/v1/screens/${screen.id}`, { body: screen.serialize() }))
-      .then((json) => AttachmentFetcher.updateAttachables(newFiles, 'Screen', json.screen.id, delFiles)())
+      .then((json) => AttachmentFetcher.updateAttachables(newFiles, 'Screen', json.screen.id, delFiles))
       .then(() => this.fetchById(screen.id));
   }
 

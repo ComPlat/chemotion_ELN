@@ -109,7 +109,6 @@ export default class WellplatesFetcher {
       return new Wellplate({ id: `${id}:error:Wellplate ${id} is not accessible!` });
     }
     const wellplate = new Wellplate(json.wellplate);
-    wellplate.attachments = json.attachments;
     // eslint-disable-next-line no-underscore-dangle
     wellplate._checksum = wellplate.checksum();
     return wellplate;
