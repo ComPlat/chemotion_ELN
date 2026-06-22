@@ -792,9 +792,15 @@ export default class SampleForm extends React.Component {
       this.handleFieldChanged(field, null);
       return;
     }
-    const parsed = parseFloat(value);
-    // ignore intermediate/invalid states (e.g. "-") so we never store NaN in xref
-    if (Number.isNaN(parsed)) return;
+    // Preserve intermediate decimals (e.g. "12.") so the user can continue typing
+    // without React rewriting the value to "12". Normalized to a number on blur.
+    if (value.endsWith('.') && value !== '.') {
+      this.handleFieldChanged(field, value);
+      return;
+    }
+    const parsed = Number(value);
+    // ignore intermediate/invalid states (e.g. "-") so we never store NaN/Infinity in xref
+    if (!Number.isFinite(parsed)) return;
     this.handleFieldChanged(field, parsed);
   }
 
@@ -802,21 +808,28 @@ export default class SampleForm extends React.Component {
   handleNumericBlur(field, label, value, min, max) {
     if (value === '') return;
 
-    const parsed = parseFloat(value);
-    if (Number.isNaN(parsed)) return;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return;
 
     let next = parsed;
     if (min != null && next < min) next = min;
     if (max != null && next > max) next = max;
-    if (next === parsed) return;
 
-    NotificationActions.add({
-      message: max != null
-        ? `${label} must be between ${min} and ${max}`
-        : `${label} must be at least ${min}`,
-      level: 'error',
-    });
-    this.handleFieldChanged(field, next);
+    if (next !== parsed) {
+      NotificationActions.add({
+        message: max != null
+          ? `${label} must be between ${min} and ${max}`
+          : `${label} must be at least ${min}`,
+        level: 'error',
+      });
+    }
+
+    // Normalize to a number on blur: stores the clamped value, and also converts
+    // any in-progress string left by handleNumericChange (e.g. "12." -> 12).
+    // Skip when the typed text is already the canonical number to avoid redundant writes.
+    if (next !== parsed || String(next) !== value) {
+      this.handleFieldChanged(field, next);
+    }
   }
 
   numericInputWithAddon(sample, field, label, addonText, min = null, max = null) {

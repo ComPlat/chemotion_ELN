@@ -103,68 +103,7 @@ module Versioning
             formatter: metrics_formatter,
             revertible_value_formatter: default_formatter,
           },
-          xref: [
-            {
-              name: 'xref.cas',
-              label: 'CAS',
-              revert: %i[xref.cas],
-              formatter: jsonb_formatter('cas'),
-            },
-            {
-              name: 'xref.inventory_label',
-              label: 'Inventory label',
-              revert: %i[xref.inventory_label],
-              formatter: jsonb_formatter('inventory_label'),
-            },
-            {
-              name: 'xref.flash_point',
-              label: 'Flash Point',
-              revert: %i[xref.flash_point],
-              formatter: jsonb_formatter('flash_point', 'value'),
-            },
-            {
-              name: 'xref.form',
-              label: 'Form',
-              revert: %i[xref.form],
-              formatter: jsonb_formatter('form'),
-            },
-            {
-              name: 'xref.color',
-              label: 'Color',
-              revert: %i[xref.color],
-              formatter: jsonb_formatter('color'),
-            },
-            {
-              name: 'xref.solubility',
-              label: 'Solubility',
-              revert: %i[xref.solubility],
-              formatter: jsonb_formatter('solubility'),
-            },
-            {
-              name: 'xref.refractive_index',
-              label: 'Refractive Index',
-              revert: %i[xref.refractive_index],
-              formatter: jsonb_formatter('refractive_index'),
-            },
-            {
-              name: 'xref.moisture',
-              label: 'Moisture',
-              revert: %i[xref.moisture],
-              formatter: jsonb_formatter('moisture'),
-            },
-            {
-              name: 'xref.particle_size',
-              label: 'Particle size',
-              revert: %i[xref.particle_size],
-              formatter: jsonb_formatter('particle_size'),
-            },
-            {
-              name: 'xref.physical_state',
-              label: 'Physical state',
-              revert: %i[xref.physical_state],
-              formatter: jsonb_formatter('physical_state'),
-            },
-          ],
+          xref: xref_field_definitions,
           solvent: {
             label: 'Solvent',
             kind: :solvent,
@@ -187,6 +126,33 @@ module Versioning
       end
 
       private
+
+      # Each xref entry follows the same shape: it reads/writes a single key under
+      # the sample's jsonb `xref` column. flash_point is the only one that targets a
+      # nested path ('value'), so the formatter path is passed through verbatim.
+      def xref_field_definitions
+        [
+          xref_field('cas', 'CAS'),
+          xref_field('inventory_label', 'Inventory label'),
+          xref_field('flash_point', 'Flash Point', 'value'),
+          xref_field('form', 'Form'),
+          xref_field('color', 'Color'),
+          xref_field('solubility', 'Solubility'),
+          xref_field('refractive_index', 'Refractive Index'),
+          xref_field('moisture', 'Moisture'),
+          xref_field('particle_size', 'Particle size'),
+          xref_field('physical_state', 'Physical state'),
+        ]
+      end
+
+      def xref_field(key, label, *path)
+        {
+          name: "xref.#{key}",
+          label: label,
+          revert: [:"xref.#{key}"],
+          formatter: jsonb_formatter(key, *path),
+        }
+      end
 
       def molecule_names_lookup
         @molecule_names_lookup ||= begin
