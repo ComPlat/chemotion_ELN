@@ -7,6 +7,9 @@ require 'digest'
 
 module Chemotion
   class AttachmentAPI < Grape::API # rubocop:disable Metrics/ClassLength
+    helpers AttachmentHelpers
+    helpers LcmsApiHelpers
+
     helpers do
       def thumbnail_obj(att)
         { id: att.id, thumbnail: att.thumbnail_base64 }
@@ -39,6 +42,14 @@ module Chemotion
         return unless old_att.id != att.id
 
         old_att&.destroy
+      end
+
+      def remove_generated_children(att)
+        Attachment.children_of(att.id).find_each do |child|
+          next unless writable?(child)
+
+          child.destroy
+        end
       end
     end
 
@@ -509,6 +520,7 @@ module Chemotion
           next unless writable?(att)
 
           remove_duplicated(att)
+          remove_generated_children(att)
 
           att.set_regenerating
           att.save
@@ -580,12 +592,70 @@ module Chemotion
         optional :axesUnits, type: String
         optional :detector, type: String
         optional :dscMetaData, type: String
+        optional :lcms_uvvis_wavelength, type: String
+        optional :lcms_mz_page, type: String
+        optional :lcms_mz_page_data
+        optional :lcms_peaks_str, type: String
+        optional :lcms_integrals_str, type: String
       end
       post 'save_spectrum' do
+        lcms_data = params[:lcms_mz_page_data]
+        if lcms_data.respond_to?(:read)
+          params[:lcms_mz_page_data] = lcms_data.read
+        elsif lcms_data.is_a?(Hash) && lcms_data[:tempfile]
+          params[:lcms_mz_page_data] = lcms_data[:tempfile].read
+        end
+
         jcamp_att = @attachment.generate_spectrum(
           false, false, params
         )
+        unless jcamp_att.is_a?(Attachment)
+          Rails.logger.error("save_spectrum failed for attachment #{@attachment&.id}: #{jcamp_att.inspect}")
+          error!({ error: 'Spectrum generation failed' }, 422)
+        end
         { files: [raw_file_obj(jcamp_att)] }
+      end
+
+      # Returns a single LCMS `##PAGE=` block, picked from sibling mz/ms
+      # JCamp attachments by closest retention time match.
+      desc 'Fetch a single LCMS MS page on demand from sibling mz JCamp files'
+      params do
+        requires :attachment_id, type: Integer, desc: 'UVVIS pivot attachment id'
+        requires :retention_time, type: String, desc: 'Target retention time (numeric, sent as string)'
+
+        optional :polarity, type: String, desc: 'LCMS polarity: positive, negative, or any other to skip filter'
+        optional :trigger, type: String, desc: 'Client-side analytics tag (initial, scroll, manual, ...)'
+      end
+      post 'lcms_page' do
+        error!({ error: 'Attachment not found', code: 'attachment_not_found' }, 404) if @attachment.nil?
+        error!({ error: 'Forbidden', code: 'forbidden' }, 403) unless read_access?(@attachment, current_user)
+
+        candidate = lcms_extract_existing_mz_page(
+          @attachment,
+          params[:retention_time],
+          params[:polarity],
+        )
+
+        unless candidate
+          error!(
+            { error: 'No LCMS MS page found for the requested retention time/polarity', code: 'page_not_found' },
+            422,
+          )
+        end
+
+        {
+          file: {
+            id: candidate[:attachment].id,
+            file: Base64.encode64(candidate[:jcamp]),
+            predictions: lcms_safe_predictions(@attachment),
+            source: 'existing_mz_attachment',
+            polarity: candidate[:polarity],
+            page_value: candidate[:page_value],
+          },
+        }
+      rescue StandardError => e
+        Rails.logger.error("[lcms_page] exception attachment_id=#{@attachment&.id}: #{e.class}: #{e.message}")
+        error!({ error: 'LCMS page generation failed', code: 'internal_error' }, 422)
       end
 
       desc 'Make spectra inference'
@@ -612,6 +682,10 @@ module Chemotion
         jcamp_att = @attachment.generate_spectrum(
           false, false, params
         )
+        unless jcamp_att.is_a?(Attachment)
+          Rails.logger.error("infer_spectrum failed for attachment #{@attachment&.id}: #{jcamp_att.inspect}")
+          error!({ error: 'Spectrum generation failed' }, 422)
+        end
         { files: [raw_file_obj(jcamp_att)], predict: predict }
       end
 

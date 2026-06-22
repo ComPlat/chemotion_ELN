@@ -294,6 +294,12 @@ const opsRAMANTail = () => (
   ]
 );
 
+const opsLCMSHead = () => (
+  [
+    { insert: '' },
+  ]
+);
+
 const opsUVVISHead = () => (
   [
     { insert: 'UV-VIS (absorption, solvent), λmax = ' },
@@ -406,7 +412,8 @@ const SpectraOps = {
   Emissions: { head: opsEmmissionHead, tail: opsCommonTail },
   'DLS ACF': { head: opsCommonHead, tail: opsCommonTail },
   'DLS intensity': { head: opsDLSIntensityHead, tail: opsCommonTail },
-  'X-RAY DIFFRACTION': { head: opsXRDHead, tail: opsCommonHead }
+  'X-RAY DIFFRACTION': { head: opsXRDHead, tail: opsCommonHead },
+  'LC/MS': { head: opsLCMSHead, tail: opsCommonTail },
 };
 
 const reactionAnalysesMacros = {

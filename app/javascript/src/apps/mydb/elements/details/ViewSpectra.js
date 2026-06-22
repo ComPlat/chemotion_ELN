@@ -7,13 +7,30 @@ import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
 import TreeSelect from 'antd/lib/tree-select';
 import { InlineMetadata } from 'chem-generic-ui';
-
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import SpectraStore from 'src/stores/alt/stores/SpectraStore';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import ResearchPlan from 'src/models/ResearchPlan';
 import { inlineNotation } from 'src/utilities/SpectraHelper';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+import {
+  LcmsPageCache,
+  applyLcmsPageMetadata,
+  buildInitialLcmsEntities,
+  buildUpdatedLcmsEntities,
+  decodeFetchedSpectrum,
+  entityPolarity,
+  formatLcmsErrorMessage,
+  lcmsPageValue,
+  lcmsRequestKey,
+  lcmsSameRequest,
+  LCMS_DEFAULT_TRIGGER,
+  resolveLcmsDisplayEntity,
+  resolveRuntimePolarity,
+  resolveRuntimeRetentionTime,
+} from 'src/utilities/lcmsRuntime';
 
 const rmRefreshed = (analysis) => {
   if (!analysis) return analysis;
@@ -29,6 +46,7 @@ const layoutsWillShowMulti = [
   FN.LIST_LAYOUT.C13,
   FN.LIST_LAYOUT.UVVIS,
   FN.LIST_LAYOUT.HPLC_UVVIS,
+  FN.LIST_LAYOUT.LC_MS,
 ];
 
 class ViewSpectra extends React.Component {
@@ -37,7 +55,13 @@ class ViewSpectra extends React.Component {
 
     this.state = {
       ...SpectraStore.getState(),
+      lcmsRuntime: null,
     };
+    this.lcmsRequestId = 0;
+    this.lcmsAbortController = null;
+    this.pendingLcmsRequest = null;
+    this.lcmsCache = new LcmsPageCache();
+    this.lcmsCacheSignature = null;
 
     this.onChange = this.onChange.bind(this);
     this.writeCommon = this.writeCommon.bind(this);
@@ -60,6 +84,10 @@ class ViewSpectra extends React.Component {
     this.onSpectraDescriptionChanged = this.onSpectraDescriptionChanged.bind(this);
     this.isShowMultipleSelectFile = this.isShowMultipleSelectFile.bind(this);
     this.notationVoltammetry = this.notationVoltammetry.bind(this);
+    this.syncLcmsRuntime = this.syncLcmsRuntime.bind(this);
+    this.onLcmsPageRequest = this.onLcmsPageRequest.bind(this);
+    this.applyLcmsPageJson = this.applyLcmsPageJson.bind(this);
+    this.requestInitialLcmsPage = this.requestInitialLcmsPage.bind(this);
   }
 
   componentDidMount() {
@@ -67,12 +95,42 @@ class ViewSpectra extends React.Component {
   }
 
   componentWillUnmount() {
+    if (this.lcmsAbortController) {
+      this.lcmsAbortController.abort();
+      this.lcmsAbortController = null;
+    }
     SpectraStore.unlisten(this.onChange);
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    const { showModal, spcMetas, spcIdx, arrSpcIdx } = this.state;
+    if (!showModal) return;
+    if (
+      prevState.showModal !== showModal
+      || prevState.spcMetas !== spcMetas
+      || prevState.spcIdx !== spcIdx
+      || prevState.arrSpcIdx !== arrSpcIdx
+    ) {
+      this.syncLcmsRuntime();
+    }
+  }
+
   onChange(newState) {
-    const origState = this.state;
-    this.setState({ ...origState, ...newState });
+    const shouldResetLcms = newState?.showModal === false;
+    if (shouldResetLcms) {
+      this.lcmsRequestId = 0;
+      this.lcmsCache.clear();
+      this.lcmsCacheSignature = null;
+    }
+    if (shouldResetLcms && this.lcmsAbortController) {
+      this.lcmsAbortController.abort();
+      this.lcmsAbortController = null;
+    }
+    this.setState((prevState) => ({
+      ...prevState,
+      ...newState,
+      ...(shouldResetLcms ? { lcmsRuntime: null } : {}),
+    }));
   }
 
   opsSolvent(shift) {
@@ -118,10 +176,12 @@ class ViewSpectra extends React.Component {
 
   onDSSelectChange(e) {
     const { value } = e;
-    const { spcInfos } = this.state;
+    const { spcInfos, spcMetas } = this.state;
     const sis = spcInfos.filter(x => x.idDt === value);
-    const si = sis.length > 0 ? sis[0] : spcInfos[0];
-    SpectraActions.SelectIdx(si.idx, []);
+    const availableIdxs = new Set(spcMetas.map((spc) => spc.idx));
+    const datasetIdxs = sis.map((info) => info.idx).filter((idx) => availableIdxs.has(idx));
+    const nextIdx = datasetIdxs[0] || spcMetas[0]?.idx || 0;
+    SpectraActions.SelectIdx(nextIdx, datasetIdxs);
   }
 
   getDSList() {
@@ -146,7 +206,7 @@ class ViewSpectra extends React.Component {
     if (spcs && spcs.length > 0) {
       const spc = spcs[0];
       const { jcamp } = spc;
-      if (layoutsWillShowMulti.includes(jcamp.layout)) {
+      if (layoutsWillShowMulti.includes(jcamp.layout) && jcamp.layout !== FN.LIST_LAYOUT.LC_MS) {
         return true;
       }
     }
@@ -181,11 +241,48 @@ class ViewSpectra extends React.Component {
     }
   }
 
+  loadEntity(curveIdx = 0) {
+    let { jcamp, listMuliSpcs } = this.getContent() || {};
+
+    if (!jcamp && listMuliSpcs && listMuliSpcs.length > 0) {
+      jcamp = listMuliSpcs[curveIdx]?.jcamp;
+    }
+
+    if (!jcamp) return {};
+    const { entity } = FN.buildData(jcamp);
+    return entity || {};
+  }
+
+  loadEntitySafe(curveIdx = 0) {
+    let entity = this.loadEntity(curveIdx);
+    if (entity && entity.features) return entity;
+    const content = this.getContent();
+    let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
+    if (!built) {
+      const listMuliSpcs = content?.listMuliSpcs;
+      if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
+        const spc = listMuliSpcs[curveIdx] || listMuliSpcs[0];
+        if (spc?.jcamp) built = FN.buildData(spc.jcamp);
+      }
+    }
+    return built?.entity || {};
+  }
+
   getSpcInfo(curveIdx = 0) {
     const { spcInfos, spcIdx, arrSpcIdx } = this.state;
     let selectedIdx = spcIdx;
     if (arrSpcIdx.length > 0) {
       selectedIdx = arrSpcIdx[curveIdx];
+      const selectedInfo = spcInfos.find((info) => info.idx === selectedIdx) || spcInfos[0];
+      const currentDatasetId = selectedInfo?.idDt;
+      const uvvisPeakFile = spcInfos.find((info) => (
+        info.idDt === currentDatasetId &&
+        info.label &&
+        info.label.match(/_uvvis\.peak\.jdx$/i)
+      ));
+      if (uvvisPeakFile && curveIdx === 0) {
+        selectedIdx = uvvisPeakFile.idx;
+      }
     }
     const sis = spcInfos.filter(x => x.idx === selectedIdx);
     const si = sis.length > 0 ? sis[0] : spcInfos[0];
@@ -213,39 +310,23 @@ class ViewSpectra extends React.Component {
     isIntensity, integration, curveSt, waveLength
   }) {
     const layoutOpsObj = SpectraOps[layout];
-    if (!layoutOpsObj) {
-      return [];
-    }
-
+    if (!layoutOpsObj) return [];
     const { curveIdx } = curveSt;
-    const { shifts } = shift;
-    const selectedShift = shifts[curveIdx];
-
-    const { integrations } = integration;
-    const selectedIntegration = integrations[curveIdx];
-
+    const selectedShift = shift?.shifts?.[curveIdx];
+    const selectedIntegration = integration?.integrations?.[curveIdx];
     if (!selectedShift || !selectedIntegration) {
       return [];
     }
 
-    const content = this.getContent();
-    let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
-
-    if (!built) {
-      const listMuliSpcs = content?.listMuliSpcs;
-      if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
-        const spc = listMuliSpcs[curveIdx] || listMuliSpcs[0];
-        if (spc?.jcamp) built = FN.buildData(spc.jcamp);
-      }
-    }
-    const entity = built?.entity;
-    if (!entity) return [];
-
+    const entity = this.loadEntitySafe(curveIdx);
     const features = entity?.features;
+    if (!features) return [];
+  
     const f0 = Array.isArray(features)
       ? features[0]
       : (features?.editPeak || features?.autoPeak || features) || {};
     const temperature = entity?.temperature;
+
 
     let observeFrequency = Array.isArray(f0?.observeFrequency)
       ? f0.observeFrequency[0]
@@ -253,9 +334,11 @@ class ViewSpectra extends React.Component {
     const freq = Array.isArray(observeFrequency) ? observeFrequency[0] : observeFrequency;
     const freqStr = freq ? `${parseInt(freq, 10)} MHz, ` : '';
 
+
     const boundary = (f0 && (typeof f0.maxY !== 'undefined') && (typeof f0.minY !== 'undefined'))
       ? { maxY: f0.maxY, minY: f0.minY }
       : undefined;
+
 
     const mBody = body || FN.peaksBody({
       peaks,
@@ -269,12 +352,9 @@ class ViewSpectra extends React.Component {
       waveLength,
       temperature
     });
-    let solventDecimal = decimal
-    if (FN.is13CLayout(layout)) {
-      solventDecimal = 2
-    }
 
-    const { label, value, name } = selectedShift.ref;
+    let solventDecimal = FN.is13CLayout(layout) ? 2 : decimal;
+    const { label, value, name } = selectedShift.ref || {};
     const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(solventDecimal)} ppm], ` : '';
     return [
       ...layoutOpsObj.head(freqStr, solvent),
@@ -288,26 +368,14 @@ class ViewSpectra extends React.Component {
     integration, multiplicity, layout, curveSt
   }) {
     const { curveIdx } = curveSt;
-    const { shifts } = shift;
-    const selectedShift = shifts[curveIdx];
-    const { integrations } = integration;
-    const selectedIntegration = integrations[curveIdx];
-    const { multiplicities } = multiplicity;
-    const selectedMutiplicity = multiplicities[curveIdx];
-    const content = this.getContent();
-    let built = content?.jcamp ? FN.buildData(content.jcamp) : null;
+    const selectedShift = shift?.shifts?.[curveIdx];
+    const selectedIntegration = integration?.integrations?.[curveIdx];
+    const selectedMultiplicity = multiplicity?.multiplicities?.[curveIdx];
+    if (!selectedShift || !selectedIntegration || !selectedMultiplicity) return [];
 
-    if (!built) {
-      const listMuliSpcs = content?.listMuliSpcs;
-      if (Array.isArray(listMuliSpcs) && listMuliSpcs.length) {
-        const spc = listMuliSpcs[curveIdx] || listMuliSpcs[0];
-        if (spc?.jcamp) built = FN.buildData(spc.jcamp);
-      }
-    }
-    const entity = built?.entity;
-    if (!entity) return [];
-
+    const entity = this.loadEntitySafe(curveIdx);
     const features = entity?.features;
+    if (!features) return [];
     const f0 = Array.isArray(features)
       ? features[0]
       : (features?.editPeak || features?.autoPeak || features) || {};
@@ -319,17 +387,17 @@ class ViewSpectra extends React.Component {
     const freqStr = freq ? `${parseInt(freq, 10)} MHz, ` : '';
     // multiplicity
     const { refArea, refFactor, stack: isStack } = selectedIntegration;
-    const shiftVal = selectedMutiplicity.shift;
-    const ms = selectedMutiplicity.stack || [];
+    const shiftVal = selectedMultiplicity.shift;
+    const ms = selectedMultiplicity.stack || [];
     const is = isStack || [];
 
     const macs = ms.map((m) => {
-      const { peaks, mpyType, xExtent } = m;
+      const { peaks, mpyType, xExtent } = m || {};
       const { xL, xU } = xExtent || {};
       const it = is.find((i) => i.xL === xL && i.xU === xU) || { area: 0 };
-      const area = refArea ? (it.area * refFactor) / refArea : 0;
-      const center = FN.calcMpyCenter(peaks, shiftVal, mpyType);
-      const xs = (m.peaks || []).map(p => p.x).sort((a, b) => a - b);
+      const area = refArea ? (it.area * (refFactor || 0)) / refArea : 0;
+      const center = FN.calcMpyCenter(peaks || [], shiftVal, mpyType);
+      const xs = (peaks || []).map(p => p.x).sort((a, b) => a - b);
       const [aIdx, bIdx] = isAscend ? [0, xs.length - 1] : [xs.length - 1, 0];
       const mxA = mpyType === 'm' && xs.length ? (xs[aIdx] - shiftVal).toFixed(decimal) : 0;
       const mxB = mpyType === 'm' && xs.length ? (xs[bIdx] - shiftVal).toFixed(decimal) : 0;
@@ -363,7 +431,7 @@ class ViewSpectra extends React.Component {
           ];
     }));
     couplings = couplings.slice(0, couplings.length - 1);
-    const { label, value, name } = selectedShift.ref;
+    const { label, value, name } = selectedShift.ref || {};
     const solvent = label ? `${name.split('(')[0].trim()} [${value.toFixed(decimal)} ppm], ` : '';
     return [
       { attributes: { script: 'super' }, insert: layout.slice(0, -1) },
@@ -386,6 +454,7 @@ class ViewSpectra extends React.Component {
     const waveLength = spectrum.waveLength ?? params.waveLength;
     const body = spectrum.body ?? params.body;
     const cyclicvoltaSt = spectrum.cyclicvoltaSt ?? params.cyclicvoltaSt;
+    const lcms_peaks_text = spectrum.lcms_peaks_text ?? params.lcms_peaks_text;
 
     // Construct arrays indexed by curveIdx for formatPks/formatMpy compatibility
     const shifts = [];
@@ -406,13 +475,15 @@ class ViewSpectra extends React.Component {
     return {
       peaks, shift, layout, isAscend, decimal, body,
       isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength,
+      lcms_peaks_text,
     };
   }
 
   writeCommon(params, isMpy = false) {
     const {
       peaks, shift, layout, isAscend, decimal, body,
-      isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength
+      isIntensity, multiplicity, integration, cyclicvoltaSt, curveSt, waveLength,
+      lcms_peaks_text,
     } = this.resolveWriteParams(params);
 
     const { sample, handleSampleChanged } = this.props;
@@ -420,7 +491,28 @@ class ViewSpectra extends React.Component {
     if (!si) return;
 
     let ops = [];
-    if (['1H', '13C', '15N', '19F', '29Si', '31P'].includes(layout) && isMpy) {
+    if (layout === FN.LIST_LAYOUT.LC_MS) {
+      const lcmsBody = (lcms_peaks_text || '').trim().replace(/\.\s*$/, '');
+      if (lcmsBody) {
+        ops = [
+          { insert: lcmsBody },
+          { insert: '. ' },
+        ];
+      } else {
+        ops = this.formatPks({
+          peaks,
+          shift,
+          layout,
+          isAscend,
+          decimal,
+          body,
+          isIntensity,
+          integration,
+          curveSt,
+          waveLength
+        });
+      }
+    } else if (['1H', '13C', '15N', '19F', '29Si', '31P'].includes(layout) && isMpy) {
       ops = this.formatMpy({
         multiplicity, integration, shift, isAscend, decimal, layout, curveSt
       });
@@ -514,14 +606,58 @@ class ViewSpectra extends React.Component {
   }
 
   buildSerializedPayload(payload, curveIdx) {
+    const { layout } = payload;
     const hasShiftArray = Array.isArray(payload?.shift?.shifts);
     const fPeaks = payload?.peaks && hasShiftArray ? FN.rmRef(payload.peaks, payload.shift, curveIdx) : payload?.peaks;
     const selectedShift = payload.shift?.shifts ? payload.shift.shifts[curveIdx] : payload.shift;
     const selectedIntegration = payload.integration?.integrations ? payload.integration.integrations[curveIdx] : payload.integration;
     const selectedMultiplicity = payload.multiplicity?.multiplicities ? payload.multiplicity.multiplicities[curveIdx] : payload.multiplicity;
 
+    let peaksStr;
+    if (layout === FN.LIST_LAYOUT.LC_MS && Array.isArray(payload.lcms_peaks) && payload.lcms_peaks.length > 0) {
+      const dict = {};
+      payload.lcms_peaks.forEach((p) => {
+        const key = String(p.wavelength);
+        if (!dict[key]) dict[key] = [];
+        dict[key].push({ x: p.x, y: p.y });
+      });
+      peaksStr = JSON.stringify(dict);
+    } else {
+      peaksStr = FN.toPeakStr(fPeaks);
+    }
+
+    let integrationStr;
+    if (layout === FN.LIST_LAYOUT.LC_MS && Array.isArray(payload.lcms_integrals) && payload.lcms_integrals.length > 0) {
+      const dict = {};
+      payload.lcms_integrals.forEach((i) => {
+        const key = String(i.wavelength);
+        if (!dict[key]) dict[key] = [];
+        dict[key].push([i.from, i.to, i.value, i.integral]);
+      });
+      integrationStr = JSON.stringify(dict);
+    } else {
+      integrationStr = JSON.stringify(selectedIntegration);
+    }
+
+    const isLcMs = layout === FN.LIST_LAYOUT.LC_MS;
+    const lcmsPeaksStr = isLcMs && Array.isArray(payload.lcms_peaks)
+      ? JSON.stringify(payload.lcms_peaks)
+      : undefined;
+    const lcmsIntegralsStr = isLcMs && Array.isArray(payload.lcms_integrals)
+      ? JSON.stringify(payload.lcms_integrals)
+      : undefined;
+    const lcmsUvvisWavelength = isLcMs && payload.lcms_uvvis_wavelength != null
+      ? JSON.stringify(payload.lcms_uvvis_wavelength)
+      : undefined;
+    const lcmsMzPage = isLcMs && payload.lcms_mz_page != null
+      ? JSON.stringify(payload.lcms_mz_page)
+      : undefined;
+    const lcmsMzPageData = isLcMs && payload.lcms_mz_page_data != null
+      ? payload.lcms_mz_page_data
+      : undefined;
+
     return {
-      peaksStr: FN.toPeakStr(fPeaks),
+      peaksStr,
       predict: JSON.stringify(rmRefreshed(payload.analysis)),
       waveLengthStr: JSON.stringify(payload.waveLength),
       cyclicvolta: JSON.stringify(payload.cyclicvoltaSt),
@@ -529,8 +665,13 @@ class ViewSpectra extends React.Component {
       detector: JSON.stringify(payload.detectorSt),
       dscMetaDataStr: JSON.stringify(payload.dscMetaData),
       selectedShift,
-      integrationStr: JSON.stringify(selectedIntegration),
+      integrationStr,
       multiplicityStr: JSON.stringify(selectedMultiplicity),
+      lcmsPeaksStr,
+      lcmsIntegralsStr,
+      lcmsUvvisWavelength,
+      lcmsMzPage,
+      lcmsMzPageData,
     };
   }
 
@@ -561,6 +702,11 @@ class ViewSpectra extends React.Component {
         serialized.axesUnitsStr,
         serialized.detector,
         serialized.dscMetaDataStr,
+        serialized.lcmsPeaksStr,
+        serialized.lcmsIntegralsStr,
+        serialized.lcmsUvvisWavelength,
+        serialized.lcmsMzPage,
+        serialized.lcmsMzPageData,
         (fetchedFiles, _spcInfo, errorMessage) => {
           const newIds = (fetchedFiles?.files || []).map((file) => file.id).filter(Boolean);
           resolve({ oldId: target.si.idx, newIds, errorMessage });
@@ -625,6 +771,159 @@ class ViewSpectra extends React.Component {
     });
   }
 
+  syncLcmsRuntime() {
+    const content = this.getContent();
+    const { listMuliSpcs, listEntityFiles } = content || {};
+    const nextRuntime = buildInitialLcmsEntities(listMuliSpcs, listEntityFiles);
+    const currRuntime = this.state.lcmsRuntime;
+
+    if (!nextRuntime) {
+      if (currRuntime) {
+        this.lcmsRequestId = 0;
+        if (this.lcmsAbortController) {
+          this.lcmsAbortController.abort();
+          this.lcmsAbortController = null;
+        }
+        this.setState({ lcmsRuntime: null });
+      }
+      return;
+    }
+
+    if (currRuntime?.signature !== nextRuntime.signature || currRuntime?.uvvisSpcInfo?.idx !== nextRuntime.uvvisSpcInfo?.idx) {
+      this.lcmsRequestId = 0;
+      if (this.lcmsAbortController) {
+        this.lcmsAbortController.abort();
+        this.lcmsAbortController = null;
+      }
+      if (this.lcmsCacheSignature !== nextRuntime.signature) {
+        this.lcmsCache.clear();
+        this.lcmsCacheSignature = nextRuntime.signature;
+      }
+      this.setState({ lcmsRuntime: nextRuntime }, this.requestInitialLcmsPage);
+    }
+  }
+
+  requestInitialLcmsPage() {
+    const runtime = this.state.lcmsRuntime;
+    if (!runtime || runtime.initialRequestSent) return;
+
+    const polarity = resolveRuntimePolarity(runtime);
+    const retentionTime = resolveRuntimeRetentionTime(runtime);
+    const msPolarity = entityPolarity(runtime.currentMsEntity) || runtime.currentMsPolarity;
+    const skipFetch = runtime.currentMsEntity
+      && msPolarity === polarity
+      && lcmsSameRequest(
+        { retentionTime: lcmsPageValue(runtime.currentMsEntity), polarity: msPolarity },
+        { retentionTime, polarity },
+      );
+
+    this.setState(
+      ({ lcmsRuntime }) => ({
+        lcmsRuntime: lcmsRuntime ? { ...lcmsRuntime, initialRequestSent: true } : lcmsRuntime,
+      }),
+      skipFetch ? undefined : () => {
+        this.onLcmsPageRequest({ retentionTime, polarity, trigger: 'initial' });
+      },
+    );
+  }
+
+  applyLcmsPageJson(json, runtime, resolvedRetentionTime, polarity) {
+    const decoded = decodeFetchedSpectrum(json?.file);
+    if (!decoded?.entity) {
+      this.setState(({ lcmsRuntime }) => ({
+        lcmsRuntime: lcmsRuntime ? { ...lcmsRuntime, loading: false } : lcmsRuntime,
+      }));
+      NotificationActions.add({
+        message: formatLcmsErrorMessage({ code: 'page_not_found' }),
+        level: 'error',
+        position: 'tc',
+      });
+      return;
+    }
+    const resolvedPolarity = resolveRuntimePolarity(runtime, polarity);
+    const msEntity = applyLcmsPageMetadata(
+      decoded.entity,
+      resolvedRetentionTime,
+      decoded?.rawPageHeader,
+      resolvedPolarity,
+    );
+    this.setState(({ lcmsRuntime }) => ({
+      lcmsRuntime: buildUpdatedLcmsEntities(
+        lcmsRuntime || runtime,
+        msEntity,
+        `${runtime.uvvisSpcInfo.label || 'lcms'}_mz_page.jdx`,
+        decoded.predictions,
+        resolvedPolarity,
+      ),
+    }));
+  }
+
+  onLcmsPageRequest({ retentionTime, polarity, trigger }) {
+    const runtime = this.state.lcmsRuntime;
+    if (!runtime?.uvvisSpcInfo?.idx) return;
+    const resolvedRetentionTime = resolveRuntimeRetentionTime(runtime, retentionTime);
+    const resolvedPolarity = resolveRuntimePolarity(runtime, polarity);
+    const resolvedTrigger = trigger || LCMS_DEFAULT_TRIGGER;
+    const nextRequest = {
+      retentionTime: Number(resolvedRetentionTime),
+      polarity: resolvedPolarity,
+    };
+    const currentRequest = {
+      retentionTime: lcmsPageValue(runtime.currentMsEntity),
+      polarity: entityPolarity(runtime.currentMsEntity) || resolveRuntimePolarity(runtime),
+    };
+
+    if (!runtime.loading && lcmsSameRequest(currentRequest, nextRequest)) return;
+    if (runtime.loading && lcmsSameRequest(this.pendingLcmsRequest, nextRequest)) return;
+
+    const cacheKey = lcmsRequestKey({
+      attachmentId: runtime.uvvisSpcInfo.idx,
+      retentionTime: resolvedRetentionTime,
+      polarity: resolvedPolarity,
+    });
+    const cachedJson = this.lcmsCache.get(cacheKey);
+    if (cachedJson) {
+      this.pendingLcmsRequest = null;
+      this.lcmsRequestId += 1;
+      this.applyLcmsPageJson(cachedJson, runtime, resolvedRetentionTime, resolvedPolarity);
+      return;
+    }
+
+    const requestId = this.lcmsRequestId + 1;
+    this.lcmsRequestId = requestId;
+    this.pendingLcmsRequest = nextRequest;
+    this.setState(({ lcmsRuntime }) => ({
+      lcmsRuntime: lcmsRuntime ? { ...lcmsRuntime, loading: true } : lcmsRuntime,
+    }));
+    if (this.lcmsAbortController) this.lcmsAbortController.abort();
+    this.lcmsAbortController = new AbortController();
+
+    AttachmentFetcher.fetchLcmsPage({
+      attachmentId: runtime.uvvisSpcInfo.idx,
+      retentionTime: resolvedRetentionTime,
+      polarity: resolvedPolarity,
+      trigger: resolvedTrigger,
+      signal: this.lcmsAbortController.signal,
+    }).then((json) => {
+      if (requestId !== this.lcmsRequestId) return;
+      this.pendingLcmsRequest = null;
+      this.lcmsCache.set(cacheKey, json);
+      this.applyLcmsPageJson(json, runtime, resolvedRetentionTime, resolvedPolarity);
+    }).catch((error) => {
+      if (requestId !== this.lcmsRequestId) return;
+      this.pendingLcmsRequest = null;
+      if (error?.name === 'AbortError') return;
+      NotificationActions.add({
+        message: formatLcmsErrorMessage(error),
+        level: 'error',
+        position: 'tc',
+      });
+      this.setState(({ lcmsRuntime }) => ({
+        lcmsRuntime: lcmsRuntime ? { ...lcmsRuntime, loading: false } : lcmsRuntime,
+      }));
+    });
+  }
+
   saveOp(params) {
     const { handleSubmit } = this.props;
     if (!Array.isArray(params?.spectra_list) || params.spectra_list.length === 0) {
@@ -660,13 +959,10 @@ class ViewSpectra extends React.Component {
   }
 
   refreshOp(params) {
-    const hasSpectraList = Array.isArray(params?.spectra_list) && params.spectra_list.length > 0;
-    const spectraList = hasSpectraList
-      ? this.getSavePayloads(params, { simulatenmr: true })
-      : [{ ...params, simulatenmr: true }];
+    const refreshPayloads = this.getSavePayloads(params, { simulatenmr: true });
     this.saveOp({
       ...params,
-      spectra_list: spectraList,
+      spectra_list: refreshPayloads,
     });
   }
 
@@ -763,7 +1059,7 @@ class ViewSpectra extends React.Component {
         { name: 'write, save & close', value: this.saveCloseOp },
       ];
     }
-    const updatable = sample && sample.can_update;    
+    const updatable = sample && sample.can_update;
     let baseOps = updatable ? [
       { name: 'write peak & save', value: this.writePeakOp },
       { name: 'write peak, save & close', value: this.writeClosePeakOp },
@@ -783,6 +1079,13 @@ class ViewSpectra extends React.Component {
           ...baseOps,
           { name: 'save', value: this.writeCommon },
           { name: 'save & close', value: this.writeCloseCommon },
+        ];
+      } else if (FN.isLCMsLayout(et.layout)) {
+        return [
+          { name: 'save', value: this.saveOp },
+          { name: 'save & close', value: this.saveCloseOp },
+          { name: 'write peak & save', value: this.writePeakOp },
+          { name: 'write peak, save & close', value: this.writeClosePeakOp },
         ];
       } else {
         baseOps = [
@@ -854,6 +1157,9 @@ class ViewSpectra extends React.Component {
 
   renderSpectraEditor(jcamp, predictions, listMuliSpcs, listEntityFiles) {
     const { sample } = this.props;
+    const spcInfo = this.getSpcInfo();
+    const datasetKey = spcInfo?.idDt ?? 'unknown';
+    let currentPredictions = predictions;
     const {
       entity, isExist,
     } = FN.buildData(jcamp);
@@ -876,6 +1182,17 @@ class ViewSpectra extends React.Component {
       entityFileNames = filteredListEntityFiles.map((x) => x.label);
     }
 
+    const isLcmsLayout = currEntity && FN.isLCMsLayout(currEntity.layout);
+    if (isLcmsLayout && !isExist) {
+      const fallbackRuntime = buildInitialLcmsEntities(listMuliSpcs, listEntityFiles);
+      const runtime = this.state.lcmsRuntime || fallbackRuntime;
+      currEntity = resolveLcmsDisplayEntity(runtime);
+      if (!currEntity) return this.renderInvalid();
+      multiEntities = runtime.currentMultiEntities;
+      entityFileNames = runtime.currentEntityFileNames;
+      currentPredictions = runtime.currentMsPredictions || currentPredictions;
+    }
+
     const others = this.buildOthers();
     const operations = this.buildOpsByLayout(currEntity);
     const descriptions = this.getQDescVal();
@@ -883,13 +1200,13 @@ class ViewSpectra extends React.Component {
       btnCb: this.predictOp,
       refreshCb: this.refreshOp,
       molecule: 'molecule',
-      predictions,
+      predictions: currentPredictions,
     };
-
-    return !isExist && multiEntities.length === 0
+    return !isExist && (!Array.isArray(multiEntities) || multiEntities.length === 0)
       ? this.renderInvalid()
       : (
       <SpectraEditor
+        key={`dataset-${datasetKey}`}
         entity={currEntity}
         multiEntities={multiEntities}
         entityFileNames={entityFileNames}
@@ -901,18 +1218,18 @@ class ViewSpectra extends React.Component {
         descriptions={descriptions}
         canChangeDescription
         onDescriptionChanged={this.onSpectraDescriptionChanged}
+        onLcmsPageRequest={this.onLcmsPageRequest}
         userManualLink={{ cv: 'https://www.chemotion.net/docs/services/chemspectra/cv' }}
       />
       )
   }
 
   renderControls(idx) {
-    const { spcInfos, arrSpcIdx } = this.state;
+    const { spcInfos, arrSpcIdx, spcMetas } = this.state;
     const si = this.getSpcInfo();
     if (!si) return null;
     const options = spcInfos.filter((x) => x.idDt === si.idDt)
       .map((x) => ({ value: x.idx, label: x.label }));
-    // const onSelectChange = e => SpectraActions.SelectIdx(e.value);
     const isShowMultiSelect = this.isShowMultipleSelectFile(idx);
     const onSelectChange = (value) => {
       if (Array.isArray(value)) {
@@ -924,6 +1241,8 @@ class ViewSpectra extends React.Component {
     };
     const dses = this.getDSList();
     const dsOptions = dses.map((x) => ({ value: x.id, label: x.name }));
+    const currentSpc = spcMetas.find((x) => x.idx === idx) || spcMetas[0];
+    const isLcmsLayout = currentSpc?.jcamp?.layout === FN.LIST_LAYOUT.LC_MS;
 
     const treePopupContainer = createRef();
 
@@ -941,6 +1260,7 @@ class ViewSpectra extends React.Component {
           treeData={options}
           value={isShowMultiSelect ? arrSpcIdx : idx}
           treeCheckable={isShowMultiSelect}
+          disabled={isLcmsLayout}
           maxTagCount={1}
           onChange={onSelectChange}
           getPopupContainer={() => treePopupContainer.current}
@@ -967,7 +1287,10 @@ class ViewSpectra extends React.Component {
   render() {
     const { showModal } = this.state;
     const si = this.getSpcInfo();
-    const modalTitle = si ? `Spectra Editor - ${si.title}` : 'Spectra Editor';
+    const dses = this.getDSList();
+    const datasetName = si && dses ? dses.find((dc) => dc.id === si.idDt)?.name : null;
+    const labelPart = datasetName || si?.label || si?.title;
+    const modalTitle = si && labelPart ? `Spectra Editor - ${labelPart}` : 'Spectra Editor';
 
     const {
       jcamp, predictions, idx, listMuliSpcs, listEntityFiles
