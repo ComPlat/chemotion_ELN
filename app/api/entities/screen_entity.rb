@@ -25,6 +25,7 @@ module Entities
       expose! :component_graph_data,  anonymize_with: {}
       expose! :segments,              anonymize_with: [],  using: 'Labimotion::SegmentEntity'
       expose! :tag,                   anonymize_with: nil, using: 'Entities::ElementTagEntity'
+      expose! :attachments,           anonymize_with: [],  using: 'Entities::AttachmentEntity'
     end
     # rubocop:enable Layout/ExtraSpacing
 

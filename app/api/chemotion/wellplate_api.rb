@@ -113,7 +113,6 @@ module Chemotion
 
           {
             wellplate: Entities::WellplateEntity.represent(wellplate, detail_levels: detail_levels),
-            attachments: Entities::AttachmentEntity.represent(wellplate.attachments),
           }
         rescue ActiveRecord::RecordNotFound
           error!('404 Not Found', 404)
@@ -249,7 +248,6 @@ module Chemotion
                   detail_levels: ElementDetailLevelCalculator.new(user: current_user,
                                                                   element: wellplate).detail_levels,
                 ),
-                attachments: Entities::AttachmentEntity.represent(wellplate.attachments),
               }
             rescue StandardError => e
               error!(e, 500)

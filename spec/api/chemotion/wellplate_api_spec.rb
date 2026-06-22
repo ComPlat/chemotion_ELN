@@ -297,7 +297,7 @@ describe Chemotion::WellplateAPI do
       it 'returns a hash' do
         expect(response.parsed_body).to be_a(Hash)
         expect(response.parsed_body['wellplate']['type']).to eq('wellplate')
-        expect(response.parsed_body['attachments'].first['filename']).to eq(attachment.filename)
+        expect(response.parsed_body['wellplate']['attachments'].first['filename']).to eq(attachment.filename)
       end
     end
 

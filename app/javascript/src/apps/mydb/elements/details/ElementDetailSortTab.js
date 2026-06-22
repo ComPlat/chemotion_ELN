@@ -35,6 +35,8 @@ export default function ElementDetailSortTab({
   const availableTabsRef = useRef(availableTabs);
   const onTabPositionChangedRef = useRef(onTabPositionChanged);
   const openedFromCollectionIdRef = useRef(openedFromCollectionId);
+  const isPopoverOpenRef = useRef(false);
+  const justSavedLayoutRef = useRef(null);
   const availableTabsKey = availableTabs.join('|');
 
   useEffect(() => {
@@ -89,6 +91,18 @@ export default function ElementDetailSortTab({
   }, [type]);
 
   const refreshTabLayout = useCallback((state) => {
+    if (isPopoverOpenRef.current) return;
+
+    // If updateLayout() was just called, the profile from an in-flight fetchCurrentUser
+    // may still carry the old layout. Use the locally-saved layout for this one firing,
+    // then clear it so subsequent refreshes read from the (now-updated) server profile.
+    if (justSavedLayoutRef.current) {
+      const savedLayout = justSavedLayoutRef.current;
+      justSavedLayoutRef.current = null;
+      updateTabLayout(savedLayout);
+      return;
+    }
+
     const collection = getOpenedFromCollection() || UIStore.getState().currentCollection;
 
     const collectionTabs = typeof (collection?.tabs_segment) === 'string'
@@ -104,6 +118,9 @@ export default function ElementDetailSortTab({
 
   const updateLayout = useCallback(() => {
     const layout = filterTabLayout({ visible, hidden });
+    // Snapshot what we saved so refreshTabLayout can use it if an in-flight
+    // fetchCurrentUser response arrives before updateUserProfile is processed.
+    justSavedLayoutRef.current = layout;
     const { currentCollection } = UIStore.getState();
     const tabSegment = { ...currentCollection?.tabs_segment, [type]: layout };
 
@@ -161,6 +178,7 @@ export default function ElementDetailSortTab({
     <ConfigOverlayButton
       popoverSettings={popoverSettings}
       onToggle={(show) => {
+        isPopoverOpenRef.current = show;
         if (!show) updateLayout();
       }}
     />

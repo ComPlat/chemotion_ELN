@@ -47,13 +47,17 @@ export default class CellLinesFetcher {
           return cellLine;
         },
       }))
-      .then((json) => GenericElsFetcher.uploadGenericFiles(cellLine, json.id, 'CellLineSample')
-        .then(() => {
-          NotificationActions.add(successfullyCreatedParameter);
-          // eslint-disable-next-line no-param-reassign
-          user.cell_lines_count += 1;
-          return this.cellLineElement(params.collection_id, json);
-        }));
+      .then((json) => {
+        const newFiles = (cellLine.attachments || []).filter((a) => a.is_new && !a.is_deleted);
+        return GenericElsFetcher.uploadGenericFiles(cellLine, json.id, 'CellLineSample')
+          .then(() => AttachmentFetcher.updateAttachables(newFiles, 'CelllineSample', json.id, [])())
+          .then(() => {
+            NotificationActions.add(successfullyCreatedParameter);
+            // eslint-disable-next-line no-param-reassign
+            user.cell_lines_count += 1;
+            return this.cellLineElement(params.collection_id, json);
+          });
+      });
   }
 
   static getAllCellLineNames() {
@@ -92,8 +96,13 @@ export default class CellLinesFetcher {
         },
       }))
       .then((json) => {
-        NotificationActions.add(successfullyUpdatedParameter);
-        return this.cellLineElement(params.collection_id, json);
+        const newFiles = (cellLineItem.attachments || []).filter((a) => a.is_new && !a.is_deleted);
+        const delFiles = (cellLineItem.attachments || []).filter((a) => !a.is_new && a.is_deleted);
+        return AttachmentFetcher.updateAttachables(newFiles, 'CelllineSample', cellLineItem.id, delFiles)()
+          .then(() => {
+            NotificationActions.add(successfullyUpdatedParameter);
+            return this.cellLineElement(params.collection_id, json);
+          });
       });
   }
 

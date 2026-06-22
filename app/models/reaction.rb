@@ -115,6 +115,8 @@ class Reaction < ApplicationRecord
   has_many :collections, through: :collections_reactions
   accepts_nested_attributes_for :collections_reactions
 
+  has_many :attachments, as: :attachable, dependent: :nullify
+
   has_many :reactions_samples, dependent: :destroy
   has_many :samples, through: :reactions_samples, source: :sample
   has_many :sample_molecules, through: :samples, source: :molecule

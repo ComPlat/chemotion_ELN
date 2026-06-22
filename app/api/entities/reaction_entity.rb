@@ -53,6 +53,7 @@ module Entities
       expose! :use_reaction_volume
       expose! :gaseous
       expose! :weight_percentage
+      expose! :attachments, using: 'Entities::AttachmentEntity'
     end
 
     expose_timestamps

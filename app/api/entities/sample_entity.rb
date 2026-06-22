@@ -77,6 +77,7 @@ module Entities
       expose! :sample_type
       expose! :sample_details
       expose! :components,              unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ComponentEntity'
+      expose! :attachments,             unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::AttachmentEntity'
     end
     # rubocop:enable Layout/ExtraSpacing, Metrics/BlockLength
 

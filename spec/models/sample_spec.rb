@@ -514,4 +514,25 @@ RSpec.describe Sample do
       end
     end
   end
+
+  describe 'attachments association' do
+    let(:sample) { create(:sample) }
+
+    it 'has a polymorphic attachments association' do
+      attachment = create(:attachment, attachable: sample)
+      expect(sample.attachments).to include(attachment)
+    end
+
+    it 'orphans attachment when sample is destroyed' do
+      attachment = create(:attachment, attachable: sample)
+      sample.destroy
+      reloaded = Attachment.unscoped.find(attachment.id)
+      expect(reloaded.attachable_id).to be_nil
+    end
+
+    it 'can have multiple attachments' do
+      create_list(:attachment, 3, attachable: sample)
+      expect(sample.attachments.count).to eq(3)
+    end
+  end
 end

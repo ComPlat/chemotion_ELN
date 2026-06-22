@@ -55,6 +55,7 @@ export default class ReactionsFetcher {
   }
 
   static create(reaction) {
+    const newFiles = (reaction.attachments || []).filter((a) => a.is_new && !a.is_deleted);
     const tasks = [
       AttachmentFetcher.uploadNewAttachmentsForContainer(reaction.container),
       ...reaction.products.map((prod) => AttachmentFetcher.uploadNewAttachmentsForContainer(prod.container)),
@@ -66,11 +67,14 @@ export default class ReactionsFetcher {
         const { id } = json.reaction;
         return GenericElsFetcher.uploadGenericFiles(reaction, id, 'Reaction')
           .then(() => this.updateAnnotationsInReaction(reaction))
-          .then(() => this.reactionElement(json, id));
+          .then(() => AttachmentFetcher.updateAttachables(newFiles, 'Reaction', id, [])())
+          .then(() => this.fetchById(id));
       });
   }
 
   static update(reaction) {
+    const newFiles = (reaction.attachments || []).filter((a) => a.is_new && !a.is_deleted);
+    const delFiles = (reaction.attachments || []).filter((a) => !a.is_new && a.is_deleted);
     const tasks = [
       AttachmentFetcher.uploadNewAttachmentsForContainer(reaction.container),
       ...reaction.products.map((prod) => AttachmentFetcher.uploadNewAttachmentsForContainer(prod.container)),
@@ -80,7 +84,8 @@ export default class ReactionsFetcher {
     return Promise.all(tasks)
       .then(() => this.updateAnnotationsInReaction(reaction))
       .then(() => ApiClient.putJson(`/api/v1/reactions/${reaction.id}`, { body: reaction.serialize() }))
-      .then((json) => this.reactionElement(json, reaction.id));
+      .then((json) => AttachmentFetcher.updateAttachables(newFiles, 'Reaction', json.reaction.id, delFiles)())
+      .then(() => this.fetchById(reaction.id));
   }
 
   static updateAnnotationsInReaction(reaction) {

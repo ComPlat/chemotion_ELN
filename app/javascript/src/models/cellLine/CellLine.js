@@ -50,6 +50,8 @@ export default class CellLine extends Element {
     cellLine.is_new = false;
 
     cellLine.container = response.container;
+    cellLine.attachments = response.attachments || [];
+    cellLine.updateChecksum();
 
     return cellLine;
   }

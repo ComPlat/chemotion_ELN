@@ -174,4 +174,25 @@ RSpec.describe Reaction, type: :model do
     end
 
   end
+
+  describe 'attachments association' do
+    let(:reaction) { create(:reaction) }
+
+    it 'has a polymorphic attachments association' do
+      attachment = create(:attachment, attachable: reaction)
+      expect(reaction.attachments).to include(attachment)
+    end
+
+    it 'orphans attachment when reaction is destroyed' do
+      attachment = create(:attachment, attachable: reaction)
+      reaction.destroy
+      reloaded = Attachment.unscoped.find(attachment.id)
+      expect(reloaded.attachable_id).to be_nil
+    end
+
+    it 'can have multiple attachments' do
+      create_list(:attachment, 2, attachable: reaction)
+      expect(reaction.attachments.count).to eq(2)
+    end
+  end
 end

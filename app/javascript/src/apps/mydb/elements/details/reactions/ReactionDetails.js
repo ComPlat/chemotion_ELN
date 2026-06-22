@@ -4,7 +4,8 @@
 import React, { Component, createRef } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Overlay
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Overlay,
+  ListGroup, ListGroupItem
 } from 'react-bootstrap';
 import { findIndex, isEmpty } from 'lodash';
 
@@ -54,6 +55,8 @@ import ReactionSchemeGraphic from 'src/apps/mydb/elements/details/reactions/Reac
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import isEqual from 'lodash/isEqual';
 import DocumentationButton from 'src/components/common/DocumentationButton';
+import Attachment from 'src/models/Attachment';
+import GenericDetailsAttachments from 'src/apps/mydb/elements/details/genericAttachmentsTab/GenericDetailsAttachments';
 
 const productLink = (product, active) => (
   <span>
@@ -282,6 +285,50 @@ export default class ReactionDetails extends Component {
 
     this.setState({ reaction }, cb);
   }
+
+  handleAttachmentDrop = (files) => {
+    this.setState((prevState) => {
+      const { reaction } = prevState;
+      const newAttachments = files.map((file) => Attachment.fromFile(file));
+      reaction.attachments = [...(reaction.attachments || []), ...newAttachments];
+      reaction.changed = true;
+      return { reaction };
+    });
+  };
+
+  handleAttachmentDelete = (attachment) => {
+    const { reaction } = this.state;
+    const index = (reaction.attachments || []).indexOf(attachment);
+    if (index >= 0) {
+      reaction.attachments[index].is_deleted = true;
+      reaction.changed = true;
+      reaction.attachments = [...reaction.attachments];
+      this.setState({ reaction });
+      this.forceUpdate();
+    }
+  };
+
+  handleAttachmentUndoDelete = (attachment) => {
+    const { reaction } = this.state;
+    const index = (reaction.attachments || []).indexOf(attachment);
+    if (index >= 0) {
+      reaction.attachments[index].is_deleted = false;
+      reaction.changed = true;
+      reaction.attachments = [...reaction.attachments];
+      this.setState({ reaction });
+      this.forceUpdate();
+    }
+  };
+
+  handleAttachmentEdit = (attachment) => {
+    const { reaction } = this.state;
+    reaction.changed = true;
+    reaction.attachments = (reaction.attachments || []).map(
+      (a) => (a.id === attachment.id ? attachment : a)
+    );
+    this.setState({ reaction });
+    this.forceUpdate();
+  };
 
   handleSelect = (key) => {
     UIActions.selectTab({ tabKey: key, type: 'reaction' });
@@ -920,6 +967,24 @@ export default class ReactionDetails extends Component {
             reaction={reaction}
             onReactionChange={this.handleReactionChange}
           />
+        </Tab>
+      ),
+      attachments: (
+        <Tab eventKey="attachments" title="Attachments" key={`attachments_${reaction.id}`}>
+          <ListGroup fill="true">
+            <ListGroupItem>
+              <GenericDetailsAttachments
+                element={reaction}
+                elementType="Reaction"
+                attachments={reaction.attachments || []}
+                onDrop={this.handleAttachmentDrop}
+                onDelete={this.handleAttachmentDelete}
+                onUndoDelete={this.handleAttachmentUndoDelete}
+                onEdit={this.handleAttachmentEdit}
+                readOnly={!reaction.can_update}
+              />
+            </ListGroupItem>
+          </ListGroup>
         </Tab>
       ),
       history: (
