@@ -97,5 +97,6 @@ export default class CellLine extends Element {
     this.cellType = mobx.cellType;
     this.cryopreservationMedium = mobx.cryopreservationMedium;
     this.created_by = mobx.created_by;
+    this.attachments = mobx.attachments ? [...mobx.attachments] : [];
   }
 }

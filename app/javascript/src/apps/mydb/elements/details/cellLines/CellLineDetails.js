@@ -69,37 +69,33 @@ class CellLineDetails extends React.Component {
 
   handleAttachmentDrop(files) {
     const { cellLineItem } = this.props;
-    const mobXItem = this.context.cellLineDetailsStore.cellLines(cellLineItem.id);
-    cellLineItem.attachments = addAttachmentsFromFiles(cellLineItem.attachments, files);
-    cellLineItem.changed = true;
-    mobXItem?.setChanged(true);
+    const { cellLineDetailsStore } = this.context;
+    const current = cellLineDetailsStore.cellLines(cellLineItem.id).attachments;
+    cellLineDetailsStore.changeAttachments(cellLineItem.id, addAttachmentsFromFiles(current, files));
     this.forceUpdate();
   }
 
   handleAttachmentDelete(attachment) {
     const { cellLineItem } = this.props;
-    const mobXItem = this.context.cellLineDetailsStore.cellLines(cellLineItem.id);
-    cellLineItem.attachments = setAttachmentDeleted(cellLineItem.attachments, attachment, true);
-    cellLineItem.changed = true;
-    mobXItem?.setChanged(true);
+    const { cellLineDetailsStore } = this.context;
+    const current = cellLineDetailsStore.cellLines(cellLineItem.id).attachments;
+    cellLineDetailsStore.changeAttachments(cellLineItem.id, setAttachmentDeleted(current, attachment, true));
     this.forceUpdate();
   }
 
   handleAttachmentUndoDelete(attachment) {
     const { cellLineItem } = this.props;
-    const mobXItem = this.context.cellLineDetailsStore.cellLines(cellLineItem.id);
-    cellLineItem.attachments = setAttachmentDeleted(cellLineItem.attachments, attachment, false);
-    cellLineItem.changed = true;
-    mobXItem?.setChanged(true);
+    const { cellLineDetailsStore } = this.context;
+    const current = cellLineDetailsStore.cellLines(cellLineItem.id).attachments;
+    cellLineDetailsStore.changeAttachments(cellLineItem.id, setAttachmentDeleted(current, attachment, false));
     this.forceUpdate();
   }
 
   handleAttachmentEdit(attachment) {
     const { cellLineItem } = this.props;
-    const mobXItem = this.context.cellLineDetailsStore.cellLines(cellLineItem.id);
-    cellLineItem.attachments = replaceAttachment(cellLineItem.attachments, attachment);
-    cellLineItem.changed = true;
-    mobXItem?.setChanged(true);
+    const { cellLineDetailsStore } = this.context;
+    const current = cellLineDetailsStore.cellLines(cellLineItem.id).attachments;
+    cellLineDetailsStore.changeAttachments(cellLineItem.id, replaceAttachment(current, attachment));
     this.forceUpdate();
   }
 
@@ -177,7 +173,7 @@ class CellLineDetails extends React.Component {
                   <AttachmentTab
                     element={cellLineItem}
                     elementType="CelllineSample"
-                    attachments={cellLineItem.attachments || []}
+                    attachments={mobXItem?.attachments || cellLineItem.attachments || []}
                     onDrop={this.handleAttachmentDrop.bind(this)}
                     onDelete={this.handleAttachmentDelete.bind(this)}
                     onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
