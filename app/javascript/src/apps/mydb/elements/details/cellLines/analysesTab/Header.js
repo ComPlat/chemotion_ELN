@@ -1,7 +1,6 @@
 import React from 'react';
 import QuillViewer from 'src/components/QuillViewer';
 import PropTypes from 'prop-types';
-import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import { Button } from 'react-bootstrap';
 
@@ -106,15 +105,23 @@ export default class Header extends React.Component {
 
   // eslint-disable-next-line class-methods-use-this
   renderImagePreview = () => {
-    const { container } = this.props;
-    const attachment = getAttachmentFromContainer(container);
+    const { container, handleChange } = this.props;
+
+    const onPreferredThumbnailChange = (preferredId) => {
+      container.extended_metadata = {
+        ...container.extended_metadata,
+        preferred_thumbnail: preferredId,
+      };
+      handleChange(container);
+    };
 
     return (
       <ImageModal
-        attachment={attachment}
+        container={container}
         popObject={{
           title: container.name,
         }}
+        onPreferredThumbnailChange={onPreferredThumbnailChange}
       />
     );
   }
