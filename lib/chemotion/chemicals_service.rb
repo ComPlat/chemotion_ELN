@@ -185,22 +185,32 @@ module Chemotion
       return if code.empty?
 
       if (value = phrases_hash[code])
+        # Exact match (single code or a combined code such as "P305+P351+P338"):
+        # store it as one statement.
         statements[code] = " #{value}"
       elsif code.include?('+')
-        code.scan(/[A-Z]\d{1,3}[A-Za-z0-9]*/).each do |part|
+        # Combined code with no combined entry in the lookup table: fall back to its
+        # individual parts so the available statements are still surfaced.
+        code.split('+').each do |part|
           statements[part] = " #{phrases_hash[part]}" if phrases_hash[part]
         end
       end
     end
 
+    # Split a phrase string into the codes used as lookup keys.
+    #
+    # A single code is an optional "EU" prefix (for supplemental EUH### statements),
+    # the H/P letter, 1-3 digits, and optional sub-category letters (e.g. EUH071,
+    # H360FD, H350i). Codes joined by "+" (e.g. "P305 + P351 + P338") are kept
+    # together as one token so they resolve to the combined statement rather than
+    # being split into separate phrases; inner whitespace is stripped to match the
+    # JSON keys (e.g. "P305+P351+P338").
     def self.normalize_phrases_to_array(phrases, prefix)
-      if phrases.is_a?(String)
-        phrases.scan(/#{prefix}\d{1,3}[A-Za-z0-9]*/)
-      elsif phrases.is_a?(Array)
-        phrases
-      else
-        []
-      end
+      return phrases if phrases.is_a?(Array)
+      return [] unless phrases.is_a?(String)
+
+      atom = /(?:EU)?#{prefix}\d{1,3}[A-Za-z]*/
+      phrases.scan(/#{atom}(?:\s*\+\s*#{atom})*/).map { |code| code.gsub(/\s+/, '') }
     end
 
     def self.load_hazard_phrases_hash
