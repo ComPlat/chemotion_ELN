@@ -267,9 +267,10 @@ export default class ReactionDetails extends Component {
     const { newReaction, options } = setReactionByType(reaction, type, value);
 
     // Update gas phase store synchronously for vessel size changes
-    // to ensure store is updated before gas calculations run during render
     if (type === 'vesselSizeAmount' || type === 'vesselSizeUnit') {
-      this.updateReactionVesselSize(newReaction);
+      const { catalystMoles, vesselSize } = newReaction.findReactionVesselSizeCatalystMaterialValues();
+      GasPhaseReactionActions.setReactionVesselSize(vesselSize || null);
+      GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles || null);
     }
     this.handleReactionChange(newReaction, options);
   }
