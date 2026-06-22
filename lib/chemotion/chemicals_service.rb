@@ -29,13 +29,29 @@ module Chemotion
     SAFETY_SHEETS_DIR = 'public/safety_sheets'
     ALLOWED_DOMAINS = %w[sigmaaldrich.com].freeze
 
+    # Sending only a User-Agent + `Accept: */*`
+    # (and the CORS-preflight `Access-Control-Request-Method` header) is treated
+    # as automated, so `__NEXT_DATA__` returns Nil. The header set below
+    # mirrors a real Chrome document navigation to avoid bot screening.
+    #
+    # Accept-Encoding is intentionally NOT set: Net::HTTP only transparently
+    # decompresses gzip when it adds the header itself. Advertising it manually
+    # (especially brotli) yields an undecoded body that Nokogiri can't parse.
     def self.request_options
       { headers: {
-          'Access-Control-Request-Method' => 'GET',
-          'Accept' => '*/*',
-          'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0',
-          'Accept-Encoding': 'gzip, deflate, br',
-          Connection: 'keep-alive',
+          'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          'Accept-Language' => 'de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7',
+          'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' \
+                          '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'sec-ch-ua' => '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+          'sec-ch-ua-mobile' => '?0',
+          'sec-ch-ua-platform' => '"Linux"',
+          'Sec-Fetch-Dest' => 'document',
+          'Sec-Fetch-Mode' => 'navigate',
+          'Sec-Fetch-Site' => 'none',
+          'Sec-Fetch-User' => '?1',
+          'Upgrade-Insecure-Requests' => '1',
+          'Connection' => 'keep-alive',
         },
         timeout: 15,
         follow_redirects: false }
