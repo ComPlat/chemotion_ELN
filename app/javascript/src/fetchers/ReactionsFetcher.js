@@ -67,7 +67,7 @@ export default class ReactionsFetcher {
         const { id } = json.reaction;
         return GenericElsFetcher.uploadGenericFiles(reaction, id, 'Reaction')
           .then(() => this.updateAnnotationsInReaction(reaction))
-          .then(() => AttachmentFetcher.updateAttachables(newFiles, 'Reaction', id, [])())
+          .then(() => AttachmentFetcher.updateAttachables(newFiles, 'Reaction', id, []))
           .then(() => this.fetchById(id));
       });
   }
@@ -84,7 +84,7 @@ export default class ReactionsFetcher {
     return Promise.all(tasks)
       .then(() => this.updateAnnotationsInReaction(reaction))
       .then(() => ApiClient.putJson(`/api/v1/reactions/${reaction.id}`, { body: reaction.serialize() }))
-      .then((json) => AttachmentFetcher.updateAttachables(newFiles, 'Reaction', json.reaction.id, delFiles)())
+      .then((json) => AttachmentFetcher.updateAttachables(newFiles, 'Reaction', json.reaction.id, delFiles))
       .then(() => this.fetchById(reaction.id));
   }
 

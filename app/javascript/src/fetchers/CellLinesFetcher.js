@@ -50,7 +50,7 @@ export default class CellLinesFetcher {
       .then((json) => {
         const newFiles = (cellLine.attachments || []).filter((a) => a.is_new && !a.is_deleted);
         return GenericElsFetcher.uploadGenericFiles(cellLine, json.id, 'CellLineSample')
-          .then(() => AttachmentFetcher.updateAttachables(newFiles, 'CelllineSample', json.id, [])())
+          .then(() => AttachmentFetcher.updateAttachables(newFiles, 'CelllineSample', json.id, []))
           .then(() => {
             NotificationActions.add(successfullyCreatedParameter);
             // eslint-disable-next-line no-param-reassign
@@ -98,10 +98,10 @@ export default class CellLinesFetcher {
       .then((json) => {
         const newFiles = (cellLineItem.attachments || []).filter((a) => a.is_new && !a.is_deleted);
         const delFiles = (cellLineItem.attachments || []).filter((a) => !a.is_new && a.is_deleted);
-        return AttachmentFetcher.updateAttachables(newFiles, 'CelllineSample', cellLineItem.id, delFiles)()
+        return AttachmentFetcher.updateAttachables(newFiles, 'CelllineSample', cellLineItem.id, delFiles)
           .then(() => {
             NotificationActions.add(successfullyUpdatedParameter);
-            return this.cellLineElement(params.collection_id, json);
+            return this.fetchById(cellLineItem.id);
           });
       });
   }

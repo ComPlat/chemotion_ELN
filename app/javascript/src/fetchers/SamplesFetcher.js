@@ -60,7 +60,7 @@ export default class SamplesFetcher {
         const { id } = json.sample;
         const newFiles = (sample.attachments || []).filter((a) => a.is_new && !a.is_deleted);
         return GenericElsFetcher.uploadGenericFiles(sample, id, 'Sample')
-          .then(() => AttachmentFetcher.updateAttachables(newFiles, 'Sample', id, [])())
+          .then(() => AttachmentFetcher.updateAttachables(newFiles, 'Sample', id, []))
           .then(() => this.fetchById(id));
       });
   }
@@ -76,7 +76,7 @@ export default class SamplesFetcher {
     return Promise.all(tasks)
       .then(() => AnnotationsFetcher.updateAnnotationsInContainer(sample))
       .then(() => ApiClient.putJson(`/api/v1/samples/${sample.id}`, { body: sample.serialize() }))
-      .then((json) => AttachmentFetcher.updateAttachables(newFiles, 'Sample', json.sample.id, delFiles)())
+      .then((json) => AttachmentFetcher.updateAttachables(newFiles, 'Sample', json.sample.id, delFiles))
       .then(() => this.fetchById(sample.id));
   }
 

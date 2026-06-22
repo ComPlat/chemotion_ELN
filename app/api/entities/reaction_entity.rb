@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Layout/ExtraSpacing, Layout/LineLength
+# rubocop:disable Layout/ExtraSpacing, Layout/LineLength, Metrics/BlockLength
 module Entities
   class ReactionEntity < ApplicationEntity
     with_options(anonymize_below: 0) do
@@ -53,7 +53,7 @@ module Entities
       expose! :use_reaction_volume
       expose! :gaseous
       expose! :weight_percentage
-      expose! :attachments, using: 'Entities::AttachmentEntity'
+      expose! :attachments,            anonymize_with: [],                               using: 'Entities::AttachmentEntity'
     end
 
     expose_timestamps
@@ -120,4 +120,4 @@ module Entities
     end
   end
 end
-# rubocop:enable Layout/ExtraSpacing, Layout/LineLength
+# rubocop:enable Layout/ExtraSpacing, Layout/LineLength, Metrics/BlockLength
