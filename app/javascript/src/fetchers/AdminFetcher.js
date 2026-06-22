@@ -115,29 +115,10 @@ export default class AdminFetcher {
   }
 
   static fetchAffiliationSuggestions(status) {
-    return fetch(`/api/v1/admin/affiliation_suggestions?status=${status}`, {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.getJson(`/api/v1/admin/affiliation_suggestions?status=${status}`);
   }
 
   static updateAffiliationSuggestion(id, action) {
-    return fetch(`/api/v1/admin/affiliation_suggestions/${id}/${action}`, {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.putJson(`/api/v1/admin/affiliation_suggestions/${id}/${action}`, { body: {} });
   }
 }
