@@ -90,7 +90,6 @@ export default class ElementsTableEntries extends Component {
           onClick={showDetails}
           style={{ cursor: 'pointer' }}
           width={element.type === 'research_plan' ? '280px' : 'unset'}
-          data-cy={`researchPLanItem-${element.id}`}
           className="d-flex gap-1 flex-column flex-grow-1"
         >
           <SvgWithPopover

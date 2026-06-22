@@ -149,7 +149,7 @@ export default class TextRangeWithAddon extends Component {
     return (
       <Form.Group size="sm">
         <Form.Label>{label}</Form.Label>
-        <InputGroup data-cy={"cy_"+label}>
+        <InputGroup>
           <Form.Control
             title={showAlternative ? alternativeLabel : tipOnText}
             type="text"
