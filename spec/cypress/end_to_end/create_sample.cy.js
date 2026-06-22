@@ -1,5 +1,5 @@
 describe('Sample Creation', () => {
-  it('create sample', () => {
+  it('creates sample', () => {
     cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user) => {
       cy.appFactories([['create', 'collection', { user_id: user[0].id }]]);
     });

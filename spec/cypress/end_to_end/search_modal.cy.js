@@ -14,13 +14,13 @@ describe('Text search', () => {
     cy.get('#open-search-modal').click();
   });
 
-  it('search for sample name by advanced search', () => {
+  it('searches for sample name by advanced search', () => {
     cy.get('input[placeholder="Search value"]').type('Foo');
     cy.get('.advanced-search-buttons').contains('Search').click();
     cy.contains('1 results');
   });
 
-  it('search for sample name by detail search', () => {
+  it('searches for sample name by detail search', () => {
     cy.contains('Detail').click();
     cy.get('#input_name').type('Foo');
     cy.get('.advanced-search-buttons').contains('Search').click();

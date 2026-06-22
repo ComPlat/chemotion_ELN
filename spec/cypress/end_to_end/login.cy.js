@@ -41,7 +41,7 @@ describe('Login Page', () => {
     cy.contains("Didn't receive confirmation instructions?").should('have.attr', 'href', '/users/confirmation/new');
   });
 
-  it('login with locked account', () => {
+  it('logs in with locked account', () => {
     cy.appFactories([
       ['create', 'user', {
         password: 'foo_bar_baz',

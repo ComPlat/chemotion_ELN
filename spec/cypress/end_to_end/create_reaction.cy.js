@@ -1,5 +1,5 @@
 describe('Reactions Create/Update', () => {
-  it('create and update reaction', () => {
+  it('creates and updates reaction', () => {
     cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user) => {
       cy.appFactories([['create', 'collection', { user_id: user[0].id }]]).then((collection) => {
         cy.appFactories([['create', 'molecule', { molecular_weight: 171.03448 }]]).then((molecule) => {

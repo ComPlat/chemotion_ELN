@@ -9,20 +9,20 @@ describe('Manage Collections', () => {
     cy.contains('Foo');
   });
 
-  it('create an unshared collection', () => {
+  it('creates an unshared collection', () => {
     cy.get('#add-new-collection-button').click();
     cy.get('input[value="New Collection"]').clear().type('Bar');
     cy.get('#save-collections-button').click();
     cy.get('.collection-node').find('input[value="Bar"]');
   });
 
-  it('rename an unshared collection', () => {
+  it('renames an unshared collection', () => {
     cy.get('input[value="Foo"]').clear().type('Bar');
     cy.get('#save-collections-button').click();
     cy.get('.collection-node').find('input[value="Bar"]');
   });
 
-  it('delete an unshared collection', () => {
+  it('deletes an unshared collection', () => {
     cy.get('.collection-node').find('i.fa-trash-o').parent('button').click({ force: true });
     cy.contains('Do you really want to delete "Foo"?');
     cy.contains('button', 'Yes').click();

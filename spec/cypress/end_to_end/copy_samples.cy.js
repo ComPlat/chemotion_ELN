@@ -30,7 +30,7 @@ describe('Copy Samples', () => {
     cy.get('#modal-collection-id-select').click();
   });
 
-  it('copy sample to same collection', () => {
+  it('copies sample to same collection', () => {
     cy.get('body').contains('.chemotion-select__option', collectionName).click();
     cy.contains('button', 'Copy').click();
     cy.clickDetailFooterButton('Create');
@@ -39,7 +39,7 @@ describe('Copy Samples', () => {
     cy.get('div[class="element-groups-renderer"').contains('cu1-1');
   });
 
-  it('copy sample to different collection', () => {
+  it('copies sample to different collection', () => {
     cy.get('body').contains('.chemotion-select__option', secondCollectionName).click();
     cy.contains('button', 'Copy').click();
     cy.clickDetailFooterButton('Create');

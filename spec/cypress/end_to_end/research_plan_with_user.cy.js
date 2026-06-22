@@ -20,13 +20,13 @@ describe('Research Plan with User', () => {
     cy.get('i.fa.fa-pencil').parent('button').click({ force: true });
   });
 
-  it('rename research plan', () => {
+  it('renames research plan', () => {
     cy.get('input[name="research_plan_name"]').clear().type('My Research Plan 2');
     cy.clickDetailFooterButton('Save');
     cy.get('.element-list-item').contains('My Research Plan 2');
   });
 
-  it('add/remove fields in research plan', () => {
+  it('adds/removes fields in research plan', () => {
     ([['richtext', 'Text'],
       ['table', 'Table'],
       ['ketcher', 'Ketcher schema'],

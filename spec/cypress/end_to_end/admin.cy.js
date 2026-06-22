@@ -1,5 +1,5 @@
 describe('Admin', () => {
-  it('add single user', () => {
+  it('adds single user', () => {
     cy.createDefaultAdmin();
     cy.visit('users/sign_in');
     cy.login('ADM', 'admin_password');
@@ -8,7 +8,7 @@ describe('Admin', () => {
     cy.contains('complat user');
   });
 
-  it('add a user with wrong email', () => {
+  it('adds a user with wrong email', () => {
     cy.createDefaultAdmin();
     cy.visit('users/sign_in');
     cy.login('ADM', 'admin_password');
@@ -17,7 +17,7 @@ describe('Admin', () => {
     cy.get('#formControlMessage').should('have.value', 'You have entered an invalid email address!');
   });
 
-  it('add a user with wrong abbreviation', () => {
+  it('adds a user with wrong abbreviation', () => {
     cy.createDefaultAdmin();
     cy.visit('users/sign_in');
     cy.login('ADM', 'admin_password');

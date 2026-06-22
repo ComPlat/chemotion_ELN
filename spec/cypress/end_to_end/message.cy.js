@@ -31,14 +31,14 @@ describe('Message Box', () => {
     cy.login('a01', 'user_password');
   });
 
-  it('open message box and acknowledge all messages', () => {
+  it('opens message box and acknowledges all messages', () => {
     cy.contains('Notifications').click();
     cy.contains('Unread (3)');
     cy.contains('Mark all as read').click();
     cy.contains('No new notifications');
   });
 
-  it('open message box and acknowledge single message', () => {
+  it('opens message box and acknowledges single message', () => {
     cy.contains('Notifications').click();
     cy.get('#notice-button-ack-1').click();
     cy.contains('Unread (2)');

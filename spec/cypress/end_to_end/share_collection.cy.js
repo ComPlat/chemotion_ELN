@@ -50,7 +50,7 @@ describe('Share Collections', () => {
     cy.get('select[id="permissionLevelSelect"]').select('Read');
   });
 
-  it('share with permission to read everything', () => {
+  it('shares with permission to read everything', () => {
     cy.get('#sampleDetailLevelSelect').select('Everything');
     cy.get('#reactionDetailLevelSelect').select('Everything');
     cy.get('#wellplateDetailLevelSelect').select('Everything');
@@ -61,7 +61,7 @@ describe('Share Collections', () => {
     cy.contains('Foo Bar (fb)');
   });
 
-  it('share with permission read limited', () => {
+  it('shares with permission read limited', () => {
     cy.get('#sampleDetailLevelSelect').select('Molecular mass of the compound, external label');
     cy.get('#reactionDetailLevelSelect').select('Everything');
     cy.get('#wellplateDetailLevelSelect').select('Everything');

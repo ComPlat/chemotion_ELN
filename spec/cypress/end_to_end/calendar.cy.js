@@ -26,17 +26,17 @@ describe('Calendar', () => {
     cy.get('div[data-type="calendar-modal"').as('calendarModal');
   });
 
-  it('open and close Calendar with close button', () => {
+  it('opens and closes Calendar with close button', () => {
     cy.get('button[class="btn-close"]').click();
     cy.get('@calendarModal').should('not.exist');
   });
 
-  it('open and close Calendar when click on background', () => {
+  it('opens and closes Calendar when click on background', () => {
     cy.get('.modal-backdrop').click('topLeft', { force: true });
     cy.get('@calendarModal').should('not.exist');
   });
 
-  it('check Today/Back/Next month', () => {
+  it('checks Today/Back/Next month', () => {
     const { previousMonth, currentMonth, nextMonth } = getMonthNames();
 
     cy.contains('Month').click();

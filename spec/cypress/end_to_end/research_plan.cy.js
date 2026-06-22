@@ -3,7 +3,7 @@ const inshiString = 'InChI=1S/H2O/h1H2';
 const molFileVersion = 'V2000';
 
 describe('Research Plan', () => {
-  it('create and delete a research plan', () => {
+  it('creates and deletes a research plan', () => {
     cy.visit('users/sign_in');
     cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user) => {
       cy.appFactories([['create', 'collection', { label: 'Col1', user_id: user[0].id }]]).then((collection) => {

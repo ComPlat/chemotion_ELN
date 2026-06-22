@@ -1,5 +1,5 @@
 describe('Wellplate Creation', () => {
-  it('create wellplate', () => {
+  it('creates wellplate', () => {
     cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user) => {
       cy.appFactories([['create', 'collection', { user_id: user[0].id }]]).then((collection) => {
         cy.appFactories([['create', 'molecule']]).then((molecule) => {
