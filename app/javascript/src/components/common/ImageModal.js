@@ -18,18 +18,15 @@ const DEFAULT_UNAVAILABLE = '/images/wild_card/not_available.svg';
 const isValidImageSrc = (src) => typeof src === 'string' && src.length > 0;
 
 export default class ImageModal extends Component {
-  // Resolve effective inputs from `container` (analysis mode) or `attachment` (legacy).
+  // Resolve effective inputs from `container` (analysis mode) or `attachment` (single image).
   // Usable before `this` is set up (called from the constructor).
   static derive(props) {
     if (props.container) {
       const { previewAttachment, candidateIds, preferredId } = getContainerImageData(props.container);
       return { attachment: previewAttachment, candidateIds, preferredId };
     }
-    return {
-      attachment: props.attachment,
-      candidateIds: props.childrenAttachmentIds || [],
-      preferredId: props.preferredThumbnail ? Number(props.preferredThumbnail) : null,
-    };
+    // single-image mode (e.g. element table/list thumbnails): no carousel, no preferred
+    return { attachment: props.attachment, candidateIds: [], preferredId: null };
   }
 
   constructor(props) {
@@ -172,16 +169,12 @@ export default class ImageModal extends Component {
     }
   };
 
-  // explicit, separate action = persist preferred (shared across viewers).
-  // Accepts the new `onPreferredThumbnailChange` and the legacy `onChangePreferredThumbnail`
-  // (still emitted by element headers not yet migrated to the `container` prop).
+  // explicit, separate action = persist preferred (shared across viewers)
   handleSetPreferred = () => {
     const { selectedId, preferredId } = this.state;
     if (!selectedId || selectedId === preferredId) return;
-    const { onPreferredThumbnailChange, onChangePreferredThumbnail } = this.props;
-    const persist = onPreferredThumbnailChange || onChangePreferredThumbnail || (() => {});
     this.setState({ preferredId: selectedId });
-    persist(selectedId); // parent writes metadata + persists
+    this.props.onPreferredThumbnailChange(selectedId); // parent writes metadata + persists
     this.fetchPreviewThumbnail(); // refresh grey-area preview to the new preferred
   };
 
@@ -267,9 +260,11 @@ export default class ImageModal extends Component {
   render() {
     const { showPop, popObject, placement = 'right' } = this.props;
     const {
-      isPdf, isLoading, modalPreviewSrc, selectedId, preferredId,
+      isPdf, isLoading, modalPreviewSrc, selectedId, preferredId, thumbnails,
     } = this.state;
     const { attachment } = ImageModal.derive(this.props);
+    // Preferred selection only applies in analysis mode (a carousel of candidates exists).
+    const canSelectPreferred = thumbnails.length > 0;
     const canSetPreferred = selectedId && selectedId !== preferredId;
 
     if (showPop) {
@@ -330,17 +325,19 @@ export default class ImageModal extends Component {
                     />
                   )}
                 </div>
-                <div className="d-flex justify-content-center mt-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    disabled={!canSetPreferred}
-                    onClick={this.handleSetPreferred}
-                  >
-                    <i className="fa fa-star me-1" />
-                    {preferredId && selectedId === preferredId ? 'Preferred image' : 'Set as preferred'}
-                  </Button>
-                </div>
+                {canSelectPreferred && (
+                  <div className="d-flex justify-content-center mt-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      disabled={!canSetPreferred}
+                      onClick={this.handleSetPreferred}
+                    >
+                      <i className="fa fa-star me-1" />
+                      {preferredId && selectedId === preferredId ? 'Preferred image' : 'Set as preferred'}
+                    </Button>
+                  </div>
+                )}
                 {this.renderCarousel()}
               </>
             )}
@@ -359,7 +356,7 @@ ImageModal.propTypes = {
     extended_metadata: PropTypes.shape({}),
   }),
   onPreferredThumbnailChange: PropTypes.func,
-  // legacy single-image mode (mutually exclusive with `container`)
+  // single-image mode (mutually exclusive with `container`): element table/list thumbnails
   attachment: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     filename: PropTypes.string,
@@ -372,13 +369,6 @@ ImageModal.propTypes = {
       preview: PropTypes.string,
     }),
   }),
-  // legacy analysis props (consumed via the static derive()/handleSetPreferred for element
-  // headers not yet migrated to the `container` prop)
-  // eslint-disable-next-line react/no-unused-prop-types
-  preferredThumbnail: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  // eslint-disable-next-line react/no-unused-prop-types
-  childrenAttachmentIds: PropTypes.arrayOf(PropTypes.number),
-  onChangePreferredThumbnail: PropTypes.func,
   popObject: PropTypes.shape({
     title: PropTypes.string,
   }).isRequired,
@@ -394,10 +384,7 @@ ImageModal.propTypes = {
 ImageModal.defaultProps = {
   container: null,
   attachment: null,
-  onPreferredThumbnailChange: null,
-  onChangePreferredThumbnail: null,
-  preferredThumbnail: null,
-  childrenAttachmentIds: [],
+  onPreferredThumbnailChange: () => { },
   placement: 'right',
   disableClick: false,
   imageStyle: {},

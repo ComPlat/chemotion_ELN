@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { Form, Button } from 'react-bootstrap';
 
 import QuillViewer from 'src/components/QuillViewer';
-import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 import ImageModal from 'src/components/common/ImageModal';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
@@ -155,26 +154,10 @@ function AnalysisHeader({ container, readonly }) {
       return c;
     }),
   };
-  const attachment = getAttachmentFromContainer(container);
-  // Build list of non-deleted attachment IDs
-  const allAttachments = container?.children?.flatMap((child) => (child.attachments || [])) || [];
-  // Filter: exclude deleted and is_new attachments (is_new don't have server IDs yet)
-  const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new && att.thumb === true);
-  const attachmentsIds = savedAttachments
-    .map((att) => Number(att.id))
-    .filter((id) => !Number.isNaN(id) && id > 0);
-  // Get current preferred thumbnail (reassignment is handled by ContainerDatasets on deletion)
-  const preferredThumbnail = container?.extended_metadata?.preferred_thumbnail || null;
-
-  const onChangePreferredThumbnail = (currentPreferredThumbnail) => {
-    if (currentPreferredThumbnail !== preferredThumbnail) {
-      // Handle the change of preferred thumbnail
-      container.extended_metadata = {
-        ...container.extended_metadata,
-        preferred_thumbnail: currentPreferredThumbnail,
-      };
-      deviceDescriptionsStore.changeAnalysisContainerContent(container);
-    }
+  const onPreferredThumbnailChange = (preferredId) => {
+    // eslint-disable-next-line no-param-reassign, react/prop-types
+    container.extended_metadata = { ...container.extended_metadata, preferred_thumbnail: preferredId };
+    deviceDescriptionsStore.changeAnalysisContainerContent(container);
   };
 
   const orderClass = deviceDescriptionsStore.analysis_mode == 'order' ? 'order pe-2' : '';
@@ -187,15 +170,11 @@ function AnalysisHeader({ container, readonly }) {
           ? <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" />
           : (
             <ImageModal
-              attachment={attachment}
+              container={container}
               popObject={{
                 title: container.name,
               }}
-              preferredThumbnail={preferredThumbnail}
-              childrenAttachmentIds={attachmentsIds}
-              onChangePreferredThumbnail={(currentPreferredThumbnail) => onChangePreferredThumbnail(
-                currentPreferredThumbnail
-              )}
+              onPreferredThumbnailChange={onPreferredThumbnailChange}
             />
           )
         }

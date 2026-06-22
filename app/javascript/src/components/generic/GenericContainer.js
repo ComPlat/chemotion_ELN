@@ -8,7 +8,6 @@ import ContainerComponent from 'src/components/container/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
 import ImageModal from 'src/components/common/ImageModal';
 import { instrumentText } from 'src/utilities/ElementUtils';
-import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 import {
   JcampIds, BuildSpcInfos, BuildSpcInfosForNMRDisplayer, isNMRKind
 } from 'src/utilities/SpectraHelper';
@@ -114,24 +113,14 @@ const newHeader = (props) => {
       return c;
     }),
   };
-  const attachment = getAttachmentFromContainer(container);
-  // Build list of saved, non-deleted attachment IDs (exclude is_new which don't have server IDs yet)
-  const allAttachments = container?.children?.flatMap((child) => (child.attachments || [])) || [];
-  const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new && att.thumb === true);
-  const preferredThumbnail = container?.extended_metadata?.preferred_thumbnail || null;
-  const attachmentsIds = savedAttachments
-    .map((att) => Number(att.id))
-    .filter((id) => !Number.isNaN(id) && id > 0);
-
-  const onChangePreferredThumbnail = (currentPreferredThumbnail) => {
-    if (currentPreferredThumbnail !== preferredThumbnail && fnChange) {
-      // Handle the change of preferred thumbnail
-      container.extended_metadata = {
-        ...container.extended_metadata,
-        preferred_thumbnail: currentPreferredThumbnail,
-      };
-      fnChange(container);
-    }
+  const onPreferredThumbnailChange = (preferredId) => {
+    if (!fnChange) return;
+    // eslint-disable-next-line no-param-reassign
+    container.extended_metadata = {
+      ...container.extended_metadata,
+      preferred_thumbnail: preferredId,
+    };
+    fnChange(container);
   };
 
   return (
@@ -141,15 +130,11 @@ const newHeader = (props) => {
           <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" aria-hidden="true" />
         ) : (
           <ImageModal
-            attachment={attachment}
+            container={container}
             popObject={{
               title: container.name,
             }}
-            preferredThumbnail={preferredThumbnail}
-            childrenAttachmentIds={attachmentsIds}
-            onChangePreferredThumbnail={(currentPreferredThumbnail) => onChangePreferredThumbnail(
-              currentPreferredThumbnail
-            )}
+            onPreferredThumbnailChange={onPreferredThumbnailChange}
           />
         )}
       </div>
