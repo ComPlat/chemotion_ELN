@@ -342,6 +342,7 @@ export default class ImageModal extends Component {
                 {selectedFilename}
               </div>
             )}
+            {/* main preview: PDF in an iframe, everything else as an image */}
             {isPdf && modalPreviewSrc ? (
               <iframe
                 src={modalPreviewSrc}
@@ -351,41 +352,40 @@ export default class ImageModal extends Component {
                 title="PDF Viewer"
               />
             ) : (
-              <>
-                <div
-                  className="d-flex justify-content-center align-items-center bg-light rounded position-relative"
-                  style={{ minHeight: 300, maxHeight: 420 }}
-                >
-                  {isLoading ? (
-                    <div className="spinner-border text-primary" role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                  ) : (
-                    <img
-                      src={isValidImageSrc(modalPreviewSrc) ? modalPreviewSrc : DEFAULT_UNAVAILABLE}
-                      className="img-fluid"
-                      style={{ maxHeight: 400, objectFit: 'contain' }}
-                      alt={attachment?.filename}
-                      onError={this.handleImageError}
-                    />
-                  )}
-                </div>
-                {canSelectPreferred && (
-                  <div className="d-flex justify-content-center mt-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      disabled={!canSetPreferred}
-                      onClick={this.handleSetPreferred}
-                    >
-                      <i className="fa fa-star me-1" />
-                      {preferredId && selectedId === preferredId ? 'Preferred image' : 'Set as preferred'}
-                    </Button>
+              <div
+                className="d-flex justify-content-center align-items-center bg-light rounded position-relative"
+                style={{ minHeight: 300, maxHeight: 420 }}
+              >
+                {isLoading ? (
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
                   </div>
+                ) : (
+                  <img
+                    src={isValidImageSrc(modalPreviewSrc) ? modalPreviewSrc : DEFAULT_UNAVAILABLE}
+                    className="img-fluid"
+                    style={{ maxHeight: 400, objectFit: 'contain' }}
+                    alt={attachment?.filename}
+                    onError={this.handleImageError}
+                  />
                 )}
-                {this.renderCarousel()}
-              </>
+              </div>
             )}
+            {/* selection controls — shown for both image and PDF previews */}
+            {canSelectPreferred && (
+              <div className="d-flex justify-content-center mt-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={!canSetPreferred}
+                  onClick={this.handleSetPreferred}
+                >
+                  <i className="fa fa-star me-1" />
+                  {preferredId && selectedId === preferredId ? 'Preferred image' : 'Set as preferred'}
+                </Button>
+              </div>
+            )}
+            {this.renderCarousel()}
           </div>
         </AppModal>
       </div>
