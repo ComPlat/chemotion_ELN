@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_06_12_000000) do
+ActiveRecord::Schema.define(version: 2026_06_22_010000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -30,6 +30,8 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.integer "affiliation_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "ror_id"
+    t.integer "target_user_affiliation_id"
     t.index ["status"], name: "index_affiliation_suggestions_on_status"
     t.index ["user_id"], name: "index_affiliation_suggestions_on_user_id"
   end

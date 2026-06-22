@@ -13,8 +13,6 @@ import AffiliationSelect from 'src/components/affiliation/AffiliationSelect';
 function Affiliations() {
   const [affiliations, setAffiliations] = useState([]);
   const [countryOptions, setCountryOptions] = useState([]);
-  const [deptOptions, setDeptOptions] = useState([]);
-  const [groupOptions, setGroupOptions] = useState([]);
   const [inputError, setInputError] = useState({});
   const [showConfirmIndex, setShowConfirmIndex] = useState(null);
   const [pendingSuggestions, setPendingSuggestions] = useState([]);
@@ -108,25 +106,77 @@ function Affiliations() {
     return () => clearTimeout(timer);
   }, [suggestionPopover.value, suggestionPopover.field]);
 
-  const reloadDeptOptions = (org) => {
-    if (!org) { setDeptOptions([]); return; }
-    UserSettingsFetcher.getAutoCompleteSuggestions('departments', org)
-      .then((data) => setDeptOptions(data || []));
+  // Shallow-merge a patch into a single row by index.
+  const patchRow = (index, patch) => setAffiliations(
+    (prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)),
+  );
+
+  // Options are stored per row (item.deptOptions/item.groupOptions) so two rows
+  // in edit mode at once never share — or clobber — each other's dropdowns.
+  const loadRowDeptOptions = (index, organization, rorId) => {
+    if (!organization && !rorId) { patchRow(index, { deptOptions: [] }); return; }
+    UserSettingsFetcher.getAutoCompleteSuggestions('departments', organization, '', rorId)
+      .then((data) => patchRow(index, { deptOptions: data || [] }));
   };
 
-  const reloadGroupOptions = (org, dept) => {
-    if (!org) { setGroupOptions([]); return; }
-    UserSettingsFetcher.getAutoCompleteSuggestions('groups', org, dept)
-      .then((data) => setGroupOptions(data || []));
+  const loadRowGroupOptions = (index, organization, department, rorId) => {
+    if (!organization && !rorId) { patchRow(index, { groupOptions: [] }); return; }
+    UserSettingsFetcher.getAutoCompleteSuggestions('groups', organization, department, rorId)
+      .then((data) => patchRow(index, { groupOptions: data || [] }));
+  };
+
+  const clearFieldError = (index, field) => {
+    setInputError((prev) => {
+      if (!prev[index]) return prev;
+      const next = { ...prev, [index]: { ...prev[index] } };
+      delete next[index][field];
+      if (Object.keys(next[index]).length === 0) delete next[index];
+      return next;
+    });
+  };
+
+  // Organization picks carry ROR data; apply org name, ror_id and country in a
+  // single state update so a follow-up change can't clobber the others.
+  const handleOrganizationChange = (index, choice) => {
+    const organization = choice ? choice.label : '';
+    // ROR results have value=ror_id (distinct from name); registry picks have value=label.
+    const rorId = choice && choice.value && choice.value !== choice.label ? choice.value : '';
+    const country = choice && choice.country ? choice.country : null;
+
+    setAffiliations((prev) => prev.map((row, i) => (i === index
+      ? {
+        ...row,
+        organization,
+        ror_id: rorId,
+        ...(country ? { country } : {}),
+        department: '',
+        group: '',
+        deptOptions: [],
+        groupOptions: [],
+      }
+      : row)));
+
+    if (organization) clearFieldError(index, 'organization');
+    else setInputError((prev) => ({ ...prev, [index]: { ...prev[index], organization: true } }));
+
+    loadRowDeptOptions(index, organization, rorId);
   };
 
   const handleCreateOrUpdateAffiliation = (index) => {
-    const params = affiliations[index];
-    const callFunction = params.id
+    const row = affiliations[index];
+    const payload = {
+      id: row.id,
+      country: row.country,
+      organization: row.organization,
+      department: row.department,
+      group: row.group,
+      ror_id: row.ror_id,
+    };
+    const callFunction = row.id
       ? UserSettingsFetcher.updateAffiliation
       : UserSettingsFetcher.createAffiliation;
 
-    callFunction(params)
+    callFunction(payload)
       .then(() => getAllAffiliations())
       .catch((error) => {
         console.error(error);
@@ -152,35 +202,18 @@ function Affiliations() {
   };
 
   const onChangeHandler = (index, field, value) => {
-    const updatedAffiliations = [...affiliations];
-    updatedAffiliations[index][field] = value;
-    const newInputErrors = { ...inputError };
+    setAffiliations((prev) => prev.map((row, i) => {
+      if (i !== index) return row;
+      const updated = { ...row, [field]: value };
+      if (field === 'department') updated.group = '';
+      return updated;
+    }));
 
-    if (field === 'organization') {
-      updatedAffiliations[index].department = '';
-      updatedAffiliations[index].group = '';
-      reloadDeptOptions(value);
-      setGroupOptions([]);
-      if (!value) {
-        newInputErrors[index] = { ...newInputErrors[index], organization: true };
-      } else if (newInputErrors[index]) {
-        delete newInputErrors[index].organization;
-        if (Object.keys(newInputErrors[index]).length === 0) {
-          delete newInputErrors[index];
-        }
-      }
-    } else if (field === 'department') {
-      updatedAffiliations[index].group = '';
-      reloadGroupOptions(updatedAffiliations[index].organization, value);
-    } else if (newInputErrors[index]) {
-      delete newInputErrors[index][field];
-      if (Object.keys(newInputErrors[index]).length === 0) {
-        delete newInputErrors[index];
-      }
+    if (field === 'department') {
+      const row = affiliations[index];
+      loadRowGroupOptions(index, row.organization, value, row.ror_id);
     }
-
-    setInputError(newInputErrors);
-    setAffiliations(updatedAffiliations);
+    clearFieldError(index, field);
   };
 
   const handleSaveButtonClick = (index) => {
@@ -247,8 +280,11 @@ function Affiliations() {
       return norm(s[field]) === norm(value) && sameOrg;
     });
 
-    // Check against the already-loaded registry options (dept/group dropdowns)
-    const registryOptions = field === 'department' ? deptOptions : field === 'group' ? groupOptions : [];
+    // Check against the active row's already-loaded registry options (dept/group dropdowns)
+    const rowOptions = activeRowWithOrg || {};
+    let registryOptions = [];
+    if (field === 'department') registryOptions = rowOptions.deptOptions || [];
+    else if (field === 'group') registryOptions = rowOptions.groupOptions || [];
     const alreadyInRegistry = registryOptions.some((opt) => norm(opt.value) === norm(value));
 
     if (alreadyPending || alreadyInRegistry) {
@@ -267,7 +303,16 @@ function Affiliations() {
     }
 
     const context = field !== 'organization' && activeRowWithOrg
-      ? { organization: activeRowWithOrg.organization, country: activeRowWithOrg.country || '' }
+      ? {
+        organization: activeRowWithOrg.organization,
+        country: activeRowWithOrg.country || '',
+        // Carry the org's ROR id so an approved suggestion stays linked to it.
+        ...(activeRowWithOrg.ror_id ? { ror_id: activeRowWithOrg.ror_id } : {}),
+        // A working group lives under a department, so carry the row's department along.
+        ...(field === 'group' && activeRowWithOrg.department
+          ? { department: activeRowWithOrg.department }
+          : {}),
+      }
       : {};
     submitSuggestion({ [field]: value.trim(), ...context }, closeSuggestionPopover);
   };
@@ -277,6 +322,8 @@ function Affiliations() {
     const disabled = requiresOrg && !activeRowWithOrg;
     const isOpen = suggestionPopover.field === field;
     const triggerRef = suggestionTriggerRefs[field];
+    // Block submitting an organization that already exists in ROR.
+    const orgBlocked = field === 'organization' && orgHints.length > 0;
 
     const btn = disabled ? (
       <OverlayTrigger
@@ -314,7 +361,10 @@ function Affiliations() {
             rootClose
             onHide={closeSuggestionPopover}
           >
-            <Popover id={`suggestion-popover-${field}`} style={{ minWidth: field === 'organization' ? '300px' : '220px' }}>
+            <Popover
+              id={`suggestion-popover-${field}`}
+              style={{ minWidth: field === 'organization' ? '300px' : '220px' }}
+            >
               <Popover.Body>
                 <div className="mb-3">
                   {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
@@ -325,8 +375,11 @@ function Affiliations() {
                     onChange={(e) => setSuggestionPopover((p) => ({ ...p, value: e.target.value }))}
                   />
                 </div>
-                {field === 'organization' && orgHints.length > 0 && (
-                  <div className="mb-3 p-2 bg-warning bg-opacity-25 rounded border border-warning" style={{ fontSize: '0.8rem' }}>
+                {orgBlocked && (
+                  <div
+                    className="mb-3 p-2 bg-warning bg-opacity-25 rounded border border-warning"
+                    style={{ fontSize: '0.8rem' }}
+                  >
                     <div className="fw-semibold mb-1">
                       <i className="fa fa-exclamation-triangle me-1" />
                       Already in ROR — select from the dropdown:
@@ -334,7 +387,7 @@ function Affiliations() {
                     {orgHints.map((h) => (
                       <div key={h.value} className="text-truncate text-secondary">
                         {h.label}
-                        {h.country && <span className="ms-1 text-muted">({h.country})</span>}
+                        {h.country && <span className="ms-1 text-muted">{` (${h.country})`}</span>}
                       </div>
                     ))}
                   </div>
@@ -344,8 +397,8 @@ function Affiliations() {
                   <Button
                     size="sm"
                     variant="primary"
-                    disabled={!suggestionPopover.value.trim() || (field === 'organization' && orgHints.length > 0)}
-                    style={(field === 'organization' && orgHints.length > 0) ? { pointerEvents: 'none', opacity: 0.5 } : {}}
+                    disabled={!suggestionPopover.value.trim() || orgBlocked}
+                    style={orgBlocked ? { pointerEvents: 'none', opacity: 0.5 } : {}}
                     onClick={handleSuggestionSubmit}
                   >
                     Confirm
@@ -455,13 +508,17 @@ function Affiliations() {
           disabled={affiliations.some((item) => !item.id)}
           variant="primary"
           onClick={() => {
-            setAffiliations((prev) => [...prev, {
-              country: '',
-              organization: '',
-              department: '',
-              group: '',
-              disabled: false,
-            }]);
+            // Only one row is editable at a time: lock all existing rows, open the new one.
+            setAffiliations((prev) => [
+              ...prev.map((r) => ({ ...r, disabled: true })),
+              {
+                country: '',
+                organization: '',
+                department: '',
+                group: '',
+                disabled: false,
+              },
+            ]);
           }}
         >
           Add affiliation
@@ -516,13 +573,12 @@ function Affiliations() {
                 {item.disabled ? item.organization
                   : (
                     <OrganizationSelect
-                      value={item.organization ? { value: item.organization, label: item.organization } : null}
+                      value={item.organization
+                        ? { value: item.ror_id || item.organization, label: item.organization }
+                        : null}
                       isInvalid={!!(inputError[index] && inputError[index].organization)}
                       country={item.country || ''}
-                      onChange={(choice) => {
-                        onChangeHandler(index, 'organization', choice ? choice.label : '');
-                        if (choice && choice.country) onChangeHandler(index, 'country', choice.country);
-                      }}
+                      onChange={(choice) => handleOrganizationChange(index, choice)}
                     />
                   )}
               </td>
@@ -532,7 +588,7 @@ function Affiliations() {
                     <AffiliationSelect
                       placeholder="Select department"
                       value={item.department || ''}
-                      options={deptOptions}
+                      options={item.deptOptions || []}
                       disabled={!item.organization}
                       onChange={(val) => onChangeHandler(index, 'department', val)}
                     />
@@ -544,7 +600,7 @@ function Affiliations() {
                     <AffiliationSelect
                       placeholder="Select working group"
                       value={item.group || ''}
-                      options={groupOptions}
+                      options={item.groupOptions || []}
                       disabled={!item.organization}
                       onChange={(val) => onChangeHandler(index, 'group', val)}
                     />
@@ -567,9 +623,12 @@ function Affiliations() {
                           variant="primary"
                           className="ms-auto"
                           onClick={() => {
-                            const updatedAffiliations = [...affiliations];
-                            updatedAffiliations[index].disabled = false;
-                            setAffiliations(updatedAffiliations);
+                            // Single-row editing: open this row, lock every other one.
+                            setAffiliations((prev) => prev.map((r, i) => ({ ...r, disabled: i !== index })));
+                            // Editing doesn't fire the org onChange, so load the
+                            // org-scoped department/group options for this row.
+                            loadRowDeptOptions(index, item.organization, item.ror_id);
+                            loadRowGroupOptions(index, item.organization, item.department, item.ror_id);
                           }}
                         >
                           <i className="fa fa-edit" title="Edit affiliation" />

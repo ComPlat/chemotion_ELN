@@ -62,6 +62,27 @@ RSpec.describe Chemotion::AdminAffiliationAPI do
       expect(name_only.reload).to be_approved
       expect(name_only.affiliation_id).to be_nil
     end
+
+    it 'copies the ROR id onto the created affiliation' do
+      with_ror = create(
+        :affiliation_suggestion, user: user, organization: 'KIT', department: 'IFG', ror_id: '04t3en479'
+      )
+      put "/api/v1/admin/affiliation_suggestions/#{with_ror.id}/approve"
+      expect(Affiliation.find(with_ror.reload.affiliation_id).ror_id).to eq('04t3en479')
+    end
+
+    it 'repoints the edited user affiliation instead of creating a new one' do
+      original = Affiliation.create!(organization: 'KIT', department: 'IBCS', country: 'Germany')
+      ua = UserAffiliation.create!(user: user, affiliation: original)
+      sugg = create(:affiliation_suggestion,
+                    user: user, organization: 'KIT', department: 'IBCS', group: 'Levkin',
+                    country: 'Germany', target_user_affiliation_id: ua.id)
+
+      put "/api/v1/admin/affiliation_suggestions/#{sugg.id}/approve"
+
+      expect(ua.reload.affiliation.group).to eq('Levkin')
+      expect(UserAffiliation.where(user: user).count).to eq(1)
+    end
   end
 
   describe 'PUT /api/v1/admin/affiliation_suggestions/:id/reject' do

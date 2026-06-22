@@ -16,10 +16,11 @@ export default class UserSettingsFetcher {
       .then((data) => (data || []).filter(Boolean));
   }
 
-  static getAutoCompleteSuggestions(type, organization = '', department = '') {
+  static getAutoCompleteSuggestions(type, organization = '', department = '', rorId = '') {
     const params = new URLSearchParams();
     if (organization) params.append('organization', organization);
     if (department) params.append('department', department);
+    if (rorId) params.append('ror_id', rorId);
     const query = params.toString() ? `?${params.toString()}` : '';
 
     return ApiClient.getJson(`/api/v1/public/affiliations/${type}${query}`)
@@ -38,6 +39,10 @@ export default class UserSettingsFetcher {
 
   static createSuggestion(params) {
     return ApiClient.postJson('/api/v1/affiliation_suggestions', { body: params });
+  }
+
+  static deleteSuggestion(id) {
+    return ApiClient.deleteRequest(`/api/v1/affiliation_suggestions/${id}`);
   }
 
   static getAllAffiliations() {

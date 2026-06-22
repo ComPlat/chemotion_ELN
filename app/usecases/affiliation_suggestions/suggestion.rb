@@ -28,8 +28,9 @@ module Usecases
             department: suggestion.department,
             group: suggestion.group,
             country: suggestion.country,
+            ror_id: suggestion.ror_id,
           )
-          UserAffiliation.find_or_create_by!(user_id: suggestion.user_id, affiliation_id: affiliation.id)
+          apply_affiliation(suggestion, affiliation)
           suggestion.update!(status: :approved, affiliation_id: affiliation.id)
         else
           suggestion.update!(status: :approved)
@@ -45,6 +46,10 @@ module Usecases
         suggestion
       end
 
+      def withdraw(id)
+        @current_user.affiliation_suggestions.pending.find(id).destroy!
+      end
+
       private
 
       def pending_suggestion(id)
@@ -54,11 +59,33 @@ module Usecases
         suggestion
       end
 
+      # Repoint the edited UserAffiliation when the suggestion targets one,
+      # otherwise add a new UserAffiliation for the approved affiliation.
+      def apply_affiliation(suggestion, affiliation)
+        if suggestion.target_user_affiliation_id
+          repoint(suggestion.target_user_affiliation_id, affiliation)
+        else
+          UserAffiliation.find_or_create_by!(user_id: suggestion.user_id, affiliation_id: affiliation.id)
+        end
+      end
+
+      def repoint(user_affiliation_id, affiliation)
+        user_affiliation = UserAffiliation.find(user_affiliation_id)
+        old_affiliation_id = user_affiliation.affiliation_id
+        ActiveRecord::Base.transaction do
+          user_affiliation.update!(affiliation_id: affiliation.id)
+          if old_affiliation_id != affiliation.id
+            old = Affiliation.lock.find_by(id: old_affiliation_id)
+            old&.destroy! if UserAffiliation.where(affiliation_id: old_affiliation_id).empty?
+          end
+        end
+      end
+
       def ensure_no_pending_duplicate!(params)
         scope = @current_user.affiliation_suggestions.pending
         %i[organization department group].each do |col|
           val = params[col]
-          scope = val.present? ? scope.where("LOWER(#{col}) = LOWER(?)", val) : scope.where(col => nil)
+          scope = val.present? ? scope.where(%(LOWER("#{col}") = LOWER(?)), val) : scope.where(col => nil)
         end
         return unless scope.exists?
 
