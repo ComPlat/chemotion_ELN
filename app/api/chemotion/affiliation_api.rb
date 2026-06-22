@@ -70,18 +70,7 @@ module Chemotion
         optional :group, type: String, desc: 'working group', allow_blank: false
       end
       post do
-        attributes = declared(params, include_missing: false).compact_blank
-        %i[department group].each do |k|
-          next unless attributes[k]
-
-          attributes[k] = Affiliation.canonical(k, attributes[k].strip)
-        end
-        ua_attributes = {
-          user_id: current_user.id,
-          affiliation: Affiliation.find_or_create_by(attributes),
-        }
-
-        UserAffiliation.create(ua_attributes)
+        Usecases::Affiliations::UserAffiliations.new(current_user).create(declared(params, include_missing: false))
         status 201
       rescue ActiveRecord::RecordInvalid => e
         { error: e.message }
@@ -96,27 +85,14 @@ module Chemotion
         optional :group, type: String, desc: 'working group', allow_blank: false
       end
       put do
-        attributes = declared(params, include_missing: false).compact_blank
-        %i[department group].each do |k|
-          next unless attributes[k]
-
-          attributes[k] = Affiliation.canonical(k, attributes[k].strip)
-        end
-        affiliation = Affiliation.find_or_create_by(attributes.except(:id))
-        @affiliations.find(params[:id]).update(affiliation_id: affiliation.id)
+        Usecases::Affiliations::UserAffiliations.new(current_user).update(declared(params, include_missing: false))
       rescue ActiveRecord::RecordInvalid => e
         { error: e.message }
       end
 
       desc 'delete user affiliation'
       delete ':id' do
-        u_affiliation = @affiliations.find(params[:id])
-        affiliation_id = u_affiliation.affiliation_id
-        ActiveRecord::Base.transaction do
-          u_affiliation.destroy!
-          affiliation = Affiliation.lock.find_by(id: affiliation_id)
-          affiliation&.destroy! if UserAffiliation.where(affiliation_id: affiliation_id).empty?
-        end
+        Usecases::Affiliations::UserAffiliations.new(current_user).destroy(params)
       rescue ActiveRecord::RecordInvalid => e
         error!({ error: e.message }, 422)
       end
@@ -143,30 +119,11 @@ module Chemotion
         optional :country, type: String, desc: 'country'
       end
       post do
-        attrs = declared(params, include_missing: false)
-        scope = current_user.affiliation_suggestions.pending
-        %i[organization department group].each do |col|
-          val = attrs[col]
-          scope = val.present? ? scope.where("LOWER(#{col}) = LOWER(?)", val) : scope.where(col => nil)
-        end
-        error!({ error: 'You already have a pending suggestion with these details.' }, 422) if scope.exists?
-
-        # Block if the value already exists in the affiliations registry
-        registry_scope = Affiliation.all
-        if attrs[:organization].present?
-          registry_scope = registry_scope.where('LOWER(organization) = LOWER(?)', attrs[:organization])
-        end
-        if attrs[:department].present?
-          registry_scope = registry_scope.where('LOWER(department) = LOWER(?)', attrs[:department])
-        end
-        registry_scope = registry_scope.where('LOWER("group") = LOWER(?)', attrs[:group]) if attrs[:group].present?
-        error!({ error: 'This already exists in the affiliation registry.' }, 422) if registry_scope.exists?
-
-        suggestion = AffiliationSuggestion.create!(attrs.merge(user_id: current_user.id))
-        AffiliationMailer.suggestion_submitted(suggestion).deliver_later
+        suggestion = Usecases::AffiliationSuggestions::Suggestion.new(current_user)
+                                                                 .create(declared(params, include_missing: false))
         status 201
         suggestion.as_json(only: %i[id organization department group country status])
-      rescue ActiveRecord::RecordInvalid => e
+      rescue Usecases::AffiliationSuggestions::Errors::DuplicateSuggestion, ActiveRecord::RecordInvalid => e
         error!({ error: e.message }, 422)
       end
     end

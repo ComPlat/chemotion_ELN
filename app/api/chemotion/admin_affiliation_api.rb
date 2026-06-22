@@ -24,35 +24,18 @@ module Chemotion
 
         desc 'Approve a suggestion'
         put ':id/approve' do
-          suggestion = AffiliationSuggestion.find(params[:id])
-          error!({ error: 'Already processed' }, 422) unless suggestion.pending?
-
-          # An affiliation row needs an organization; a name-only suggestion
-          # (department or working group) is just approved without one.
-          if suggestion.organization.present?
-            affiliation = Affiliation.find_or_create_by(
-              organization: suggestion.organization,
-              department: suggestion.department,
-              group: suggestion.group,
-              country: suggestion.country,
-            )
-            UserAffiliation.find_or_create_by!(user_id: suggestion.user_id, affiliation_id: affiliation.id)
-            suggestion.update!(status: :approved, affiliation_id: affiliation.id)
-          else
-            suggestion.update!(status: :approved)
-          end
-          AffiliationMailer.suggestion_approved(suggestion).deliver_later
+          Usecases::AffiliationSuggestions::Suggestion.new(current_user).approve(params[:id])
           { ok: true }
+        rescue Usecases::AffiliationSuggestions::Errors::AlreadyProcessed => e
+          error!({ error: e.message }, 422)
         end
 
         desc 'Reject a suggestion'
         put ':id/reject' do
-          suggestion = AffiliationSuggestion.find(params[:id])
-          error!({ error: 'Already processed' }, 422) unless suggestion.pending?
-
-          suggestion.update!(status: :rejected)
-          AffiliationMailer.suggestion_rejected(suggestion).deliver_later
+          Usecases::AffiliationSuggestions::Suggestion.new(current_user).reject(params[:id])
           { ok: true }
+        rescue Usecases::AffiliationSuggestions::Errors::AlreadyProcessed => e
+          error!({ error: e.message }, 422)
         end
       end
     end
