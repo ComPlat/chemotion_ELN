@@ -54,6 +54,9 @@ const getAttachmentFromContainer = (container) => {
  * Saved attachments only (thumb, not new, not deleted) — the preferred id is shared across
  * all viewers, so it must reference a persisted attachment.
  *
+ * Candidates are previewable saved attachments — images and PDFs (plus anything that already
+ * has a thumbnail) — so PDFs are selectable even when their thumbnail wasn't generated.
+ *
  * @param {Object} container - The analysis container with children[].attachments[].
  * @returns {{previewAttachment: (Object|null), candidates: Array<{id: number, filename: string}>,
  *   candidateIds: number[], preferredId: (number|null)}}
@@ -62,13 +65,18 @@ const getAttachmentFromContainer = (container) => {
  *   candidateIds - the candidate ids only;
  *   preferredId - the persisted preferred id, only if still among candidateIds, else null.
  */
+const isPreviewableAttachment = (att) => att.thumb === true
+  || (att.content_type || '').startsWith('image/')
+  || att.content_type === 'application/pdf'
+  || /\.pdf$/i.test(att.filename || '');
+
 const getContainerImageData = (container) => {
   const previewAttachment = getAttachmentFromContainer(container);
 
   const datasetChildren = container?.children?.filter((child) => child.container_type === 'dataset') || [];
   const candidates = datasetChildren
     .flatMap((child) => child.attachments || [])
-    .filter((att) => att.thumb === true && !att.is_deleted && !att.is_new)
+    .filter((att) => !att.is_deleted && !att.is_new && isPreviewableAttachment(att))
     .map((att) => ({ id: Number(att.id), filename: att.filename }))
     .filter((c) => !Number.isNaN(c.id) && c.id > 0);
   const candidateIds = candidates.map((c) => c.id);

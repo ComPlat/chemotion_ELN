@@ -95,8 +95,13 @@ export default class ImageModal extends Component {
   handleModalShow(e) {
     if (this.props.disableClick) return;
     stopEvent(e);
-    const { attachment, preferredId } = ImageModal.derive(this.props);
-    const selectedId = preferredId || (attachment?.id ? Number(attachment.id) : null);
+    const { attachment, candidateIds, preferredId } = ImageModal.derive(this.props);
+    // Fall back to the first candidate so a PDF-only analysis (no thumbnailed default) still
+    // opens on a selectable attachment.
+    const selectedId = preferredId
+      || (attachment?.id ? Number(attachment.id) : null)
+      || candidateIds[0]
+      || null;
     this.setState({
       showModal: true, selectedId, preferredId, modalPreviewSrc: '',
     });
