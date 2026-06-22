@@ -72,6 +72,7 @@ module Chemotion
           present(
             screen,
             with: Entities::ScreenEntity,
+            policy: policy,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
             root: :screen
           )

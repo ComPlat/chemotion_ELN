@@ -14,13 +14,16 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 
 import {
-  Tabs, Tab
+  Tabs, Tab, ListGroup, ListGroupItem
 } from 'react-bootstrap';
 import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import GeneralProperties from 'src/apps/mydb/elements/details/cellLines/propertiesTab/GeneralProperties';
 import AnalysesContainer from 'src/apps/mydb/elements/details/cellLines/analysesTab/AnalysesContainer';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
+// eslint-disable-next-line import/no-named-as-default
+import AttachmentTab from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
 
 class CellLineDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
@@ -62,6 +65,38 @@ class CellLineDetails extends React.Component {
     const { cellLineDetailsStore } = this.context;
     cellLineDetailsStore.removeCellLineFromStore(cellLineItem.id);
     DetailActions.close(cellLineItem, true);
+  }
+
+  handleAttachmentDrop(files) {
+    const { cellLineItem } = this.props;
+    const { cellLineDetailsStore } = this.context;
+    const current = cellLineDetailsStore.cellLines(cellLineItem.id).attachments;
+    cellLineDetailsStore.changeAttachments(cellLineItem.id, addAttachmentsFromFiles(current, files));
+    this.forceUpdate();
+  }
+
+  handleAttachmentDelete(attachment) {
+    const { cellLineItem } = this.props;
+    const { cellLineDetailsStore } = this.context;
+    const current = cellLineDetailsStore.cellLines(cellLineItem.id).attachments;
+    cellLineDetailsStore.changeAttachments(cellLineItem.id, setAttachmentDeleted(current, attachment, true));
+    this.forceUpdate();
+  }
+
+  handleAttachmentUndoDelete(attachment) {
+    const { cellLineItem } = this.props;
+    const { cellLineDetailsStore } = this.context;
+    const current = cellLineDetailsStore.cellLines(cellLineItem.id).attachments;
+    cellLineDetailsStore.changeAttachments(cellLineItem.id, setAttachmentDeleted(current, attachment, false));
+    this.forceUpdate();
+  }
+
+  handleAttachmentEdit(attachment) {
+    const { cellLineItem } = this.props;
+    const { cellLineDetailsStore } = this.context;
+    const current = cellLineDetailsStore.cellLines(cellLineItem.id).attachments;
+    cellLineDetailsStore.changeAttachments(cellLineItem.id, replaceAttachment(current, attachment));
+    this.forceUpdate();
   }
 
   handleTabChange(eventKey) {
@@ -131,6 +166,22 @@ class CellLineDetails extends React.Component {
                 element={cellLineItem}
                 literatures={cellLineItem.is_new ? cellLineItem.literatures : null}
               />
+            </Tab>
+            <Tab eventKey="tab4" title="Attachments" key="tab4" disabled={cellLineItem.is_new}>
+              <ListGroup fill="true">
+                <ListGroupItem>
+                  <AttachmentTab
+                    element={cellLineItem}
+                    elementType="CelllineSample"
+                    attachments={mobXItem?.attachments || cellLineItem.attachments || []}
+                    onDrop={this.handleAttachmentDrop.bind(this)}
+                    onDelete={this.handleAttachmentDelete.bind(this)}
+                    onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
+                    onEdit={this.handleAttachmentEdit.bind(this)}
+                    readOnly={readOnly}
+                  />
+                </ListGroupItem>
+              </ListGroup>
             </Tab>
           </Tabs>
         </div>

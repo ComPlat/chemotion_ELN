@@ -15,11 +15,12 @@ import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import ResearchPlanWellplates from 'src/apps/mydb/elements/details/researchPlans/wellplatesTab/ResearchPlanWellplates';
 import ResearchPlanMetadata from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanMetadata';
-import Attachment from 'src/models/Attachment';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ResearchPlan from 'src/models/ResearchPlan';
-import ResearchPlanDetailsAttachments from
-  'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
+// eslint-disable-next-line import/no-named-as-default
+import AttachmentTab from
+  'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
 import ResearchPlanDetailsBody from
   'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ResearchPlanDetailsBody';
 import ResearchPlanDetailsName from
@@ -174,43 +175,38 @@ export default class ResearchPlanDetails extends Component {
   // handle attachment actions
   handleAttachmentDrop(files) {
     this.setState((prevState) => {
-      const newAttachments = files.map((file) => Attachment.fromFile(file));
-      const updatedAttachments = prevState.researchPlan.attachments.concat(newAttachments);
-      const updatedResearchPlan = new ResearchPlan({
-        ...prevState.researchPlan,
-        attachments: updatedAttachments,
-        changed: true
-      });
-
-      return { researchPlan: updatedResearchPlan };
+      const { researchPlan } = prevState;
+      researchPlan.attachments = addAttachmentsFromFiles(researchPlan.attachments, files);
+      researchPlan.changed = true;
+      return { researchPlan };
     });
   }
 
   handleAttachmentDelete(attachment) {
-    const { researchPlan } = this.state;
-    const index = researchPlan.attachments.indexOf(attachment);
-    researchPlan.changed = true;
-    researchPlan.attachments[index].is_deleted = true;
-    this.setState({ researchPlan });
+    this.setState((prevState) => {
+      const { researchPlan } = prevState;
+      researchPlan.attachments = setAttachmentDeleted(researchPlan.attachments, attachment, true);
+      researchPlan.changed = true;
+      return { researchPlan };
+    });
   }
 
   handleAttachmentUndoDelete(attachment) {
-    const { researchPlan } = this.state;
-    const index = researchPlan.attachments.indexOf(attachment);
-    researchPlan.attachments[index].is_deleted = false;
-    this.setState({ researchPlan });
+    this.setState((prevState) => {
+      const { researchPlan } = prevState;
+      researchPlan.attachments = setAttachmentDeleted(researchPlan.attachments, attachment, false);
+      researchPlan.changed = true;
+      return { researchPlan };
+    });
   }
 
   handleAttachmentEdit(attachment) {
-    const { researchPlan } = this.state;
-    researchPlan.changed = true;
-    // update only this attachment
-    researchPlan.attachments.map((currentAttachment) => {
-      if (currentAttachment.id === attachment.id) return attachment;
-      return null;
+    this.setState((prevState) => {
+      const { researchPlan } = prevState;
+      researchPlan.attachments = replaceAttachment(researchPlan.attachments, attachment);
+      researchPlan.changed = true;
+      return { researchPlan };
     });
-    this.setState({ researchPlan });
-    this.forceUpdate();
   }
 
   handleExport(exportFormat) {
@@ -256,6 +252,25 @@ export default class ResearchPlanDetails extends Component {
 
   handleAttachmentImportComplete() {
     this.setState({ activeTab: 0 });
+  }
+
+  handleAttachmentImport(attachment) {
+    const { researchPlan } = this.state;
+    LoadingActions.start();
+    ElementActions.importTableFromSpreadsheet(
+      researchPlan.id,
+      attachment.id,
+      this.handleAttachmentImportComplete.bind(this)
+    );
+    LoadingActions.stop();
+  }
+
+  // eslint-disable-next-line react/sort-comp
+  isAttachmentInBody(attachment) {
+    const { researchPlan } = this.state;
+    return researchPlan.body.some(
+      (field) => field.type === 'image' && field.value.public_name === attachment.identifier
+    );
   }
 
   onTabPositionChanged(visible) {
@@ -432,14 +447,17 @@ export default class ResearchPlanDetails extends Component {
 
   renderAttachmentsTab(researchPlan) { /* eslint-disable react/jsx-no-bind */
     return (
-      <ResearchPlanDetailsAttachments
-        researchPlan={researchPlan}
+      <AttachmentTab
+        element={researchPlan}
+        elementType="ResearchPlan"
         attachments={researchPlan.attachments}
         onDrop={this.handleAttachmentDrop.bind(this)}
         onDelete={this.handleAttachmentDelete.bind(this)}
         onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
-        onAttachmentImportComplete={this.handleAttachmentImportComplete.bind(this)}
         onEdit={this.handleAttachmentEdit.bind(this)}
+        onImport={this.handleAttachmentImport.bind(this)}
+        elementChanged={researchPlan.changed}
+        isDeleteProtected={this.isAttachmentInBody.bind(this)}
         readOnly={false}
       />
     );

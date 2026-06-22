@@ -5,7 +5,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, InputGroup, ListGroupItem, Tabs, Tab, Row, Col,
+  Button, InputGroup, ListGroup, ListGroupItem, Tabs, Tab, Row, Col,
   Tooltip, OverlayTrigger, Alert, Form,
   Accordion, Container
 } from 'react-bootstrap';
@@ -52,6 +52,9 @@ import { EditUserLabels } from 'src/components/UserLabels';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
+// eslint-disable-next-line import/no-named-as-default
+import AttachmentTab from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
 import NmrSimTab from 'src/apps/mydb/elements/details/samples/nmrSimTab/NmrSimTab';
 import FastInput from 'src/apps/mydb/elements/details/samples/FastInput';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
@@ -479,6 +482,42 @@ export default class SampleDetails extends React.Component {
     AttachmentFetcher.downloadZipBySample(sample.id)
       .then(() => { this.setState({ startExport: false }); })
       .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  handleAttachmentDrop(files) {
+    this.setState((prevState) => {
+      const { sample } = prevState;
+      sample.attachments = addAttachmentsFromFiles(sample.attachments, files);
+      sample.changed = true;
+      return { sample };
+    });
+  }
+
+  handleAttachmentDelete(attachment) {
+    this.setState((prevState) => {
+      const { sample } = prevState;
+      sample.attachments = setAttachmentDeleted(sample.attachments, attachment, true);
+      sample.changed = true;
+      return { sample };
+    });
+  }
+
+  handleAttachmentUndoDelete(attachment) {
+    this.setState((prevState) => {
+      const { sample } = prevState;
+      sample.attachments = setAttachmentDeleted(sample.attachments, attachment, false);
+      sample.changed = true;
+      return { sample };
+    });
+  }
+
+  handleAttachmentEdit(attachment) {
+    this.setState((prevState) => {
+      const { sample } = prevState;
+      sample.attachments = replaceAttachment(sample.attachments, attachment);
+      sample.changed = true;
+      return { sample };
+    });
   }
 
   handleSelect(eventKey) {
@@ -1495,6 +1534,24 @@ export default class SampleDetails extends React.Component {
       results: this.sampleImportReadoutTab('results'),
       qc_curation: this.qualityCheckTab('qc_curation'),
       measurements: this.measurementsTab('measurements'),
+      attachments: (
+        <Tab eventKey="attachments" title="Attachments" key={`attachments_${sample.id}`}>
+          <ListGroup fill="true">
+            <ListGroupItem>
+              <AttachmentTab
+                element={sample}
+                elementType="Sample"
+                attachments={sample.attachments || []}
+                onDrop={this.handleAttachmentDrop.bind(this)}
+                onDelete={this.handleAttachmentDelete.bind(this)}
+                onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
+                onEdit={this.handleAttachmentEdit.bind(this)}
+                readOnly={!sample.can_update}
+              />
+            </ListGroupItem>
+          </ListGroup>
+        </Tab>
+      ),
       history: this.versioningTable('history')
     };
 

@@ -19,7 +19,7 @@ import GenericDSDetails from 'src/components/generic/GenericDSDetails';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
-import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
+import ImageAnnotationModalSVG from 'src/components/ImageAnnotationModalSVG';
 import { FolderDropzone } from 'src/apps/mydb/elements/details/analyses/UploadField';
 import PropTypes from 'prop-types';
 import {

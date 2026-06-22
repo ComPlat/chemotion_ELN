@@ -115,10 +115,14 @@ export default class ImageModal extends Component {
             placement={placement}
             overlay={this.showPopObject()}
           >
-            <img
-              src={thumbnail}
-              alt={attachment?.filename}
-            />
+            {thumbnail ? (
+              <img
+                src={thumbnail}
+                alt={attachment?.filename}
+              />
+            ) : (
+              <div className="attachment-thumbnail-placeholder" />
+            )}
           </OverlayTrigger>
         </div>
         <AppModal

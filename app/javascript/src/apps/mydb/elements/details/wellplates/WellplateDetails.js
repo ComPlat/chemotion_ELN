@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import html2pdf from 'html2pdf.js/src';
 import PropTypes from 'prop-types';
 import {
-  Card, ListGroup, ListGroupItem, Tabs, Tab
+  Card, ListGroup, ListGroupItem, Tabs, Tab, Popover,
 } from 'react-bootstrap';
 import { findIndex } from 'lodash';
 import { List } from 'immutable';
@@ -16,9 +16,9 @@ import WellplateProperties from 'src/apps/mydb/elements/details/wellplates/prope
 import WellplateDetailsContainers from
   'src/apps/mydb/elements/details/wellplates/analysesTab/WellplateDetailsContainers';
 // eslint-disable-next-line import/no-named-as-default
-import WellplateDetailsAttachments from
-  'src/apps/mydb/elements/details/wellplates/attachmentsTab/WellplateDetailsAttachments';
-import Attachment from 'src/models/Attachment';
+import AttachmentTab from
+  'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
 import Utils from 'src/utilities/Functions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -39,6 +39,22 @@ import WellplateModel from 'src/models/Wellplate';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import { EditUserLabels } from 'src/components/UserLabels';
+
+const wellplateTemplateInfo = (
+  <Popover id="popover-wellplate-template-info" title="Template info">
+    This template should be used to import well readouts. The&nbsp;
+    <strong>red</strong>
+    &nbsp;column may not be altered at all. The contents of the&nbsp;
+    <strong>yellow</strong>
+    &nbsp;columns may be altered, the headers may not. The&nbsp;
+    <strong>green</strong>
+    &nbsp;columns must contain at least one&nbsp;
+    <i>_Value</i>
+    &nbsp;and&nbsp;
+    <i>_Unit</i>
+    &nbsp;pair with a matching prefix before the underscore. They may contain an arbitrary amount of readout pairs.
+  </Popover>
+);
 
 export default class WellplateDetails extends Component {
   /* eslint-disable react/destructuring-assignment */
@@ -170,26 +186,20 @@ export default class WellplateDetails extends Component {
   // handle attachment actions
   handleAttachmentDrop(files) {
     this.setState((prevState) => {
-      const newAttachments = files.map((file) => Attachment.fromFile(file));
       const { wellplate } = prevState;
-
-      wellplate.attachments = [
-        ...wellplate.attachments || [],
-        ...newAttachments
-      ];
-
+      wellplate.attachments = addAttachmentsFromFiles(wellplate.attachments, files);
       wellplate.changed = true;
-
       return { wellplate };
     });
   }
 
   handleAttachmentDelete(attachment) {
-    const { wellplate } = this.state;
-    const index = wellplate.attachments.indexOf(attachment);
-    wellplate.changed = true;
-    wellplate.attachments[index].is_deleted = true;
-    this.setState({ wellplate });
+    this.setState((prevState) => {
+      const { wellplate } = prevState;
+      wellplate.attachments = setAttachmentDeleted(wellplate.attachments, attachment, true);
+      wellplate.changed = true;
+      return { wellplate };
+    });
   }
 
   handleAttachmentImport(attachment) {
@@ -201,29 +211,30 @@ export default class WellplateDetails extends Component {
     ElementActions.importWellplateSpreadsheet(wellplateId, attachmentId);
   }
 
-  handleAttachmentUndoDelete(attachment) {
+  handleTemplateDownload() {
     const { wellplate } = this.state;
-    const index = wellplate.attachments.indexOf(attachment);
-    wellplate.attachments[index].is_deleted = false;
-    this.setState({ wellplate });
+    Utils.downloadFile({
+      contents: `/api/v1/wellplates/template/${wellplate.id}`,
+      name: 'wellplate_import_template.xlsx',
+    });
   }
 
-  handleAttachmentDownload(attachment) { // eslint-disable-line class-methods-use-this
-    Utils.downloadFile({ contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename });
+  handleAttachmentUndoDelete(attachment) {
+    this.setState((prevState) => {
+      const { wellplate } = prevState;
+      wellplate.attachments = setAttachmentDeleted(wellplate.attachments, attachment, false);
+      wellplate.changed = true;
+      return { wellplate };
+    });
   }
 
   handleAttachmentEdit(attachment) {
-    const { wellplate } = this.state;
-    wellplate.changed = true;
-    // update only this attachment
-    wellplate.attachments.map((currentAttachment) => {
-      if (currentAttachment.id === attachment.id) {
-        return attachment;
-      }
-      return currentAttachment;
+    this.setState((prevState) => {
+      const { wellplate } = prevState;
+      wellplate.attachments = replaceAttachment(wellplate.attachments, attachment);
+      wellplate.changed = true;
+      return { wellplate };
     });
-    this.setState({ wellplate });
-    this.forceUpdate();
   }
 
   onTabPositionChanged(visible) {
@@ -328,15 +339,17 @@ export default class WellplateDetails extends Component {
         <Tab eventKey="attachments" title="Attachments" key={`attachments_${wellplate.id}`}>
           <ListGroup fill="true">
             <ListGroupItem>
-              <WellplateDetailsAttachments
-                wellplate={wellplate}
+              <AttachmentTab
+                element={wellplate}
+                elementType="Wellplate"
                 attachments={wellplate.attachments}
                 onDrop={this.handleAttachmentDrop.bind(this)}
                 onDelete={this.handleAttachmentDelete.bind(this)}
                 onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
-                onDownload={this.handleAttachmentDownload.bind(this)}
-                onImport={this.handleAttachmentImport.bind(this)}
                 onEdit={this.handleAttachmentEdit.bind(this)}
+                onImport={this.handleAttachmentImport.bind(this)}
+                onTemplateDownload={this.handleTemplateDownload.bind(this)}
+                templateInfoContent={wellplateTemplateInfo}
                 readOnly={false}
               />
             </ListGroupItem>

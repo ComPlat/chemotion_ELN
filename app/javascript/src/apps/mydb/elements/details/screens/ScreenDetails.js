@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {
   Form, Row, Col,
-  Tabs, Tab
+  Tabs, Tab, ListGroup, ListGroupItem
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
 import { List } from 'immutable';
@@ -33,6 +33,9 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 import { EditUserLabels } from 'src/components/UserLabels';
+// eslint-disable-next-line import/no-named-as-default
+import AttachmentTab from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -281,6 +284,42 @@ export default class ScreenDetails extends Component {
     );
   }
 
+  handleAttachmentDrop(files) {
+    this.setState((prevState) => {
+      const { screen } = prevState;
+      screen.attachments = addAttachmentsFromFiles(screen.attachments, files);
+      screen.changed = true;
+      return { screen };
+    });
+  }
+
+  handleAttachmentDelete(attachment) {
+    this.setState((prevState) => {
+      const { screen } = prevState;
+      screen.attachments = setAttachmentDeleted(screen.attachments, attachment, true);
+      screen.changed = true;
+      return { screen };
+    });
+  }
+
+  handleAttachmentUndoDelete(attachment) {
+    this.setState((prevState) => {
+      const { screen } = prevState;
+      screen.attachments = setAttachmentDeleted(screen.attachments, attachment, false);
+      screen.changed = true;
+      return { screen };
+    });
+  }
+
+  handleAttachmentEdit(attachment) {
+    this.setState((prevState) => {
+      const { screen } = prevState;
+      screen.attachments = replaceAttachment(screen.attachments, attachment);
+      screen.changed = true;
+      return { screen };
+    });
+  }
+
   handleSelect(eventKey) {
     UIActions.selectTab({ tabKey: eventKey, type: 'screen' });
     this.setState({
@@ -341,6 +380,24 @@ export default class ScreenDetails extends Component {
             updateResearchPlan={(researchPlan) => this.updateResearchPlan(researchPlan)}
             saveResearchPlan={(researchPlan) => this.saveResearchPlan(researchPlan)}
           />
+        </Tab>
+      ),
+      attachments: (
+        <Tab eventKey="attachments" title="Attachments" key={`attachments_${screen.id}`}>
+          <ListGroup fill="true">
+            <ListGroupItem>
+              <AttachmentTab
+                element={screen}
+                elementType="Screen"
+                attachments={screen.attachments || []}
+                onDrop={this.handleAttachmentDrop.bind(this)}
+                onDelete={this.handleAttachmentDelete.bind(this)}
+                onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
+                onEdit={this.handleAttachmentEdit.bind(this)}
+                readOnly={!screen.can_update}
+              />
+            </ListGroupItem>
+          </ListGroup>
         </Tab>
       ),
       history: (

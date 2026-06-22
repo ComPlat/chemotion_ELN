@@ -930,6 +930,7 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          LoadingActions.stop();
         });
     };
   }

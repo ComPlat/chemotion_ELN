@@ -14,6 +14,7 @@ module Entities
     expose :cellline_material
     expose :tag
     expose :container, using: 'Entities::ContainerEntity'
+    expose :attachments, using: 'Entities::AttachmentEntity'
     expose :type
 
     private
