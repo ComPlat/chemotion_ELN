@@ -1,421 +1,279 @@
-/* eslint-disable react/destructuring-assignment */
+/* eslint-disable react/destructuring-assignment, react/sort-comp */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  OverlayTrigger, Tooltip, Button,
-} from 'react-bootstrap';
+import { OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { stopEvent } from 'src/utilities/DomHelper';
-import { fetchImageSrcByAttachmentId } from 'src/utilities/imageHelper';
+import {
+  fetchImageSrcByAttachmentId,
+  getContainerImageData,
+} from 'src/utilities/imageHelper';
+
+const DEFAULT_NO_ATTACHMENT = '/images/wild_card/no_attachment.svg';
+const DEFAULT_UNAVAILABLE = '/images/wild_card/not_available.svg';
+
+// Valid, displayable image src. (The upstream `[object Object]` leak from
+// fetchImageSrcByAttachmentId's error path should be fixed there, not masked here.)
+const isValidImageSrc = (src) => typeof src === 'string' && src.length > 0;
 
 export default class ImageModal extends Component {
+  // Resolve effective inputs from `container` (analysis mode) or `attachment` (legacy).
+  // Usable before `this` is set up (called from the constructor).
+  static derive(props) {
+    if (props.container) {
+      const { previewAttachment, candidateIds, preferredId } = getContainerImageData(props.container);
+      return { attachment: previewAttachment, candidateIds, preferredId };
+    }
+    return {
+      attachment: props.attachment,
+      candidateIds: props.childrenAttachmentIds || [],
+      preferredId: props.preferredThumbnail ? Number(props.preferredThumbnail) : null,
+    };
+  }
+
   constructor(props) {
     super(props);
+    const { preferredId } = ImageModal.derive(props);
     this.state = {
-      fetchSrc: '',
       showModal: false,
       isPdf: false,
-      thumbnail: '',
-      thumbnails: [],
-      currentPreferredThumbnail: Number(props.preferredThumbnail) || null,
-      thumbPage: 0,
       isLoading: false,
-      // 'preview' = clicking thumbnail only previews it; 'select' = sets it as preferred
-      thumbMode: 'select',
-      // src shown in modal main image area (may differ from the saved preferred)
-      modalPreviewSrc: '',
+      thumbnail: '', // grey-area preview src (= preferred, else default)
+      thumbnails: [], // carousel: [{ id, thumbnail }]
+      preferredId, // persisted preferred id (shared across viewers)
+      selectedId: null, // currently previewed-large id (transient, not persisted)
+      modalPreviewSrc: '', // full-res src shown large in the modal main area
     };
 
-    this.fetchImage = this.fetchImage.bind(this);
-    this.handleModalClose = this.handleModalClose.bind(this);
     this.handleModalShow = this.handleModalShow.bind(this);
+    this.handleModalClose = this.handleModalClose.bind(this);
     this.handleImageError = this.handleImageError.bind(this);
-    this.fetchImageThumbnail = this.fetchImageThumbnail.bind(this);
+    this.fetchPreviewThumbnail = this.fetchPreviewThumbnail.bind(this);
   }
 
   componentDidMount() {
-    this.fetchImageThumbnail();
+    this.fetchPreviewThumbnail();
   }
 
   componentDidUpdate(prevProps) {
-    const { attachment, childrenAttachmentIds, preferredThumbnail } = this.props;
-    const prevIds = prevProps.childrenAttachmentIds || [];
-    const currIds = childrenAttachmentIds || [];
+    const prev = ImageModal.derive(prevProps);
+    const curr = ImageModal.derive(this.props);
 
-    const attachmentChanged = attachment?.id !== prevProps.attachment?.id;
-    const preferredChanged = preferredThumbnail !== prevProps.preferredThumbnail;
-    const idsChanged = prevIds.length !== currIds.length
-      || !prevIds.every((id, i) => id === currIds[i]);
+    const attachmentChanged = prev.attachment?.id !== curr.attachment?.id;
+    const preferredChanged = prev.preferredId !== curr.preferredId;
+    const idsChanged = prev.candidateIds.length !== curr.candidateIds.length
+      || !prev.candidateIds.every((id, i) => id === curr.candidateIds[i]);
 
-    if (preferredChanged) {
-      this.setState({
-        currentPreferredThumbnail: preferredThumbnail ? Number(preferredThumbnail) : null
-      });
-    }
-
-    if (idsChanged) {
-      this.fetchThumbnails();
-      const { currentPreferredThumbnail } = this.state;
-      if (currentPreferredThumbnail && !currIds.includes(currentPreferredThumbnail)) {
-        this.setState({ currentPreferredThumbnail: null });
-      }
-    }
-
-    if (attachmentChanged || preferredChanged || idsChanged) {
-      this.fetchImageThumbnail();
-    }
+    if (preferredChanged) this.setState({ preferredId: curr.preferredId });
+    if (attachmentChanged || preferredChanged || idsChanged) this.fetchPreviewThumbnail();
   }
 
-  // Check if src is a valid displayable image source
-  isValidImageSrc(src) {
-    return typeof src === 'string'
-      && src.length > 0
-      && !src.includes('[object Object]');
+  handleImageError() {
+    this.setState({ modalPreviewSrc: DEFAULT_UNAVAILABLE });
   }
-
-  // keyboard handler extracted from inline render for thumbnails
-  handleThumbKeyDown = (e, thumb) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      this.handleThumbClick(thumb);
-    }
-  };
 
   handleModalClose(e) {
     stopEvent(e);
+    // Pure no-op on cancel: nothing is mutated or persisted by previewing.
     this.setState({ showModal: false });
   }
 
   handleModalShow(e) {
-    if (!this.props.disableClick) {
-      stopEvent(e);
-      // Sync currentPreferredThumbnail with prop when modal opens
-      const { preferredThumbnail } = this.props;
-      this.setState((prevState) => ({
-        showModal: true,
-        currentPreferredThumbnail: preferredThumbnail ? Number(preferredThumbnail) : null,
-        // Reset modal preview to current thumbnail so preferred image shows immediately
-        modalPreviewSrc: prevState.thumbnail || '',
-        thumbMode: 'select',
-      }));
-      this.fetchImage();
-      this.fetchThumbnails();
-    }
+    if (this.props.disableClick) return;
+    stopEvent(e);
+    const { attachment, preferredId } = ImageModal.derive(this.props);
+    const selectedId = preferredId || (attachment?.id ? Number(attachment.id) : null);
+    this.setState({
+      showModal: true, selectedId, preferredId, modalPreviewSrc: '',
+    });
+    this.fetchCarouselThumbnails();
+    if (selectedId) this.fetchLargeImage(selectedId);
   }
 
-  handleImageError() {
-    this.setState({ fetchSrc: '/images/wild_card/not_available.svg' });
-  }
-
-  fetchImage() {
+  // grey-area preview (preferred, else default attachment)
+  async fetchPreviewThumbnail() {
+    const { attachment, preferredId } = ImageModal.derive(this.props);
     try {
-      const { attachment } = this.props;
-      if (!attachment) throw new Error('Attachment is not provided');
-      AttachmentFetcher.fetchImageAttachment({ id: attachment.id }).then(
-        (result) => {
-          if (!result?.data) throw new Error('Attachment is not provided');
-          const src = result.data;
-          // Only update modalPreviewSrc from fetchImage if no preferred thumbnail is active
-          this.setState((prevState) => ({
-            fetchSrc: src,
-            isPdf: result.type === 'application/pdf',
-            modalPreviewSrc: prevState.currentPreferredThumbnail
-              ? prevState.modalPreviewSrc
-              : src,
-          }));
-        }
-      );
-    } catch (error) {
-      this.handleImageError();
-    }
-  }
-
-  buildImageSrcArrayFromThumbnails(thumbnails) {
-    if (thumbnails && thumbnails.length > 0) {
-      return thumbnails.map(({ id, thumbnail }) => {
-        const src = (typeof thumbnail === 'string' && thumbnail.length > 0)
-          ? `data:image/png;base64,${thumbnail}`
-          : null;
-        return { id, thumbnail: src };
-      });
-    }
-    return [];
-  }
-
-  fetchThumbnails() {
-    const { childrenAttachmentIds } = this.props;
-    // Filter to ensure only valid numeric IDs are sent to the API
-    const validIds = (childrenAttachmentIds || []).filter(
-      (id) => typeof id === 'number' && !Number.isNaN(id) && id > 0
-    );
-    if (validIds.length > 0) {
-      AttachmentFetcher.fetchThumbnails(validIds)
-        .then((result) => {
-          this.setState({ thumbnails: this.buildImageSrcArrayFromThumbnails(result.thumbnails) });
-        })
-        .catch((err) => {
-          console.error('Failed to fetch thumbnails', err);
-          this.setState({ thumbnails: [] });
-        });
-    } else {
-      // Clear thumbnails when no valid attachment IDs exist
-      this.setState({ thumbnails: [] });
-    }
-  }
-
-  async fetchImageThumbnail() {
-    const { attachment, preferredThumbnail, childrenAttachmentIds } = this.props;
-    const fileType = attachment?.file?.type;
-    const isImage = fileType?.startsWith('image/');
-    const defaultNoAttachment = '/images/wild_card/no_attachment.svg';
-    const defaultUnavailable = '/images/wild_card/not_available.svg';
-
-    // Validate preferredThumbnail is still in the list of valid attachment IDs
-    const preferredId = Number(preferredThumbnail);
-    const isPreferredValid = preferredThumbnail
-      && !Number.isNaN(preferredId)
-      && preferredId > 0
-      && (childrenAttachmentIds || []).includes(preferredId);
-
-    // render image of preferred attachment thumbnail if available and valid
-    if (isPreferredValid) {
-      this.setState({ isLoading: true });
-      try {
-        const src = await fetchImageSrcByAttachmentId(preferredThumbnail);
-        this.setState({
-          thumbnail: src,
-          fetchSrc: src,
-          modalPreviewSrc: src,
-          isLoading: false,
-        });
+      if (preferredId) {
+        const src = await fetchImageSrcByAttachmentId(preferredId);
+        this.setState({ thumbnail: src });
         return;
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to fetch preferred thumbnail', err);
-        this.setState({ isLoading: false });
       }
-    }
-
-    try {
       if (attachment?.thumb) {
         const src = await fetchImageSrcByAttachmentId(attachment.id);
         this.setState({ thumbnail: src });
       } else if (attachment?.is_new || attachment?.is_pending) {
-        const previewSrc = isImage ? attachment?.file?.preview : defaultUnavailable;
-        this.setState({ thumbnail: previewSrc });
+        const isImage = attachment?.file?.type?.startsWith('image/');
+        this.setState({ thumbnail: isImage ? attachment?.file?.preview : DEFAULT_UNAVAILABLE });
       } else {
-        this.setState({ thumbnail: defaultNoAttachment });
+        this.setState({ thumbnail: DEFAULT_NO_ATTACHMENT });
       }
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('Failed to fetch image thumbnail', err);
-      this.setState({ thumbnail: defaultUnavailable, isLoading: false });
+      console.error('Failed to fetch preview thumbnail', err);
+      this.setState({ thumbnail: DEFAULT_UNAVAILABLE });
     }
   }
 
+  // carousel of all selectable thumbnails
+  fetchCarouselThumbnails() {
+    const { candidateIds } = ImageModal.derive(this.props);
+    if (!candidateIds.length) {
+      this.setState({ thumbnails: [] });
+      return;
+    }
+    AttachmentFetcher.fetchThumbnails(candidateIds)
+      .then((result) => {
+        const thumbnails = (result.thumbnails || []).map(({ id, thumbnail }) => ({
+          id,
+          thumbnail: (typeof thumbnail === 'string' && thumbnail.length > 0)
+            ? `data:image/png;base64,${thumbnail}`
+            : null,
+        }));
+        this.setState({ thumbnails });
+      })
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch thumbnails', err);
+        this.setState({ thumbnails: [] });
+      });
+  }
+
+  // full-resolution large display of the selected image; the spinner covers the load.
+  fetchLargeImage(id) {
+    this.setState({ isLoading: true, isPdf: false });
+    AttachmentFetcher.fetchImageAttachment({ id })
+      .then((result) => {
+        if (!result?.data) throw new Error('No image data');
+        this.setState({
+          modalPreviewSrc: result.data,
+          isPdf: result.type === 'application/pdf',
+          isLoading: false,
+        });
+      })
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch full image', err);
+        this.setState({ isLoading: false, modalPreviewSrc: DEFAULT_UNAVAILABLE });
+      });
+  }
+
+  // click a thumbnail = preview large only; never persists
+  handleSelectThumbnail = (thumb) => {
+    this.setState({ selectedId: thumb.id });
+    this.fetchLargeImage(thumb.id);
+  };
+
+  handleThumbKeyDown = (e, thumb) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      this.handleSelectThumbnail(thumb);
+    }
+  };
+
+  // explicit, separate action = persist preferred (shared across viewers).
+  // Accepts the new `onPreferredThumbnailChange` and the legacy `onChangePreferredThumbnail`
+  // (still emitted by element headers not yet migrated to the `container` prop).
+  handleSetPreferred = () => {
+    const { selectedId, preferredId } = this.state;
+    if (!selectedId || selectedId === preferredId) return;
+    const { onPreferredThumbnailChange, onChangePreferredThumbnail } = this.props;
+    const persist = onPreferredThumbnailChange || onChangePreferredThumbnail || (() => {});
+    this.setState({ preferredId: selectedId });
+    persist(selectedId); // parent writes metadata + persists
+    this.fetchPreviewThumbnail(); // refresh grey-area preview to the new preferred
+  };
+
   showPopObject() {
     const { thumbnail } = this.state;
-    const { attachment } = this.props;
-
+    const { attachment } = ImageModal.derive(this.props);
     return (
       <Tooltip id="popObject" className="large-preview-modal">
         <img
-          src={this.isValidImageSrc(thumbnail) ? thumbnail : '/images/wild_card/not_available.svg'}
+          src={isValidImageSrc(thumbnail) ? thumbnail : DEFAULT_UNAVAILABLE}
           alt={attachment?.filename}
         />
       </Tooltip>
     );
   }
 
-  handleSetPreferred = (thumb) => {
-    const { onChangePreferredThumbnail } = this.props;
-    this.setState({
-      currentPreferredThumbnail: thumb.id,
-      thumbnail: thumb.thumbnail,
-      modalPreviewSrc: thumb.thumbnail,
-    });
-    if (thumb.id !== this.state.currentPreferredThumbnail) {
-      onChangePreferredThumbnail(thumb.id);
-    }
-  };
-
-  // Handles thumbnail click depending on current mode
-  handleThumbClick = (thumb) => {
-    const { thumbMode } = this.state;
-    if (thumbMode === 'select') {
-      this.handleSetPreferred(thumb);
-    } else {
-      // preview mode: only update the modal preview image, do not change preferred
-      this.setState({ modalPreviewSrc: thumb.thumbnail });
-    }
-  };
-
-  handleThumbPage = (delta) => {
-    const { thumbPage, thumbnails } = this.state;
-    const thumbnailsPerPage = 6;
-    const totalThumbPages = Math.ceil((thumbnails?.length || 0) / thumbnailsPerPage);
-    const newPage = thumbPage + delta;
-    if (newPage >= 0 && newPage < totalThumbPages) {
-      this.setState({ thumbPage: newPage });
-    }
-  };
-
-  renderAttachmentsThumbnails = () => {
-    const {
-      thumbnails: allThumbnails, currentPreferredThumbnail, thumbPage, thumbMode,
-    } = this.state;
-    const thumbnailsPerPage = 6;
-    const totalThumbPages = Math.ceil((allThumbnails?.length || 0) / thumbnailsPerPage);
-    const currentThumbs = (allThumbnails || [])
-      .slice(
-        thumbPage * thumbnailsPerPage,
-        (thumbPage + 1) * thumbnailsPerPage
-      );
-
-    if (!allThumbnails || allThumbnails.length === 0) return null;
-
+  renderCarousel() {
+    const { thumbnails, selectedId, preferredId } = this.state;
+    if (!thumbnails.length) return null;
     return (
-      <div className="mt-3 pt-2">
-        {/* Mode toggle */}
-        <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
-          <span className="text-muted small">Thumbnail mode:</span>
-          <div className="btn-group btn-group-sm" role="group" aria-label="Thumbnail mode">
-            <button
-              type="button"
-              className={`btn ${thumbMode === 'preview' ? 'btn-primary' : 'btn-outline-secondary'}`}
-              onClick={() => this.setState({ thumbMode: 'preview' })}
-              title="Click a thumbnail to preview it without changing the preferred selection"
+      <div className="d-flex flex-row flex-nowrap overflow-auto gap-2 justify-content-center mt-3 pt-2">
+        {thumbnails.map((thumb) => {
+          const isPreferred = thumb.id === preferredId;
+          const isSelected = thumb.id === selectedId;
+          const cls = isSelected ? 'border-2 border-primary' : 'border border-secondary';
+          return (
+            <div
+              key={thumb.id}
+              className={`d-flex flex-column align-items-center p-1 rounded bg-white ${cls}`}
+              style={{
+                cursor: 'pointer', minWidth: 64, height: 90,
+              }}
+              role="button"
+              tabIndex={0}
+              title={isPreferred ? 'Current preferred image' : 'Click to preview'}
+              onClick={() => this.handleSelectThumbnail(thumb)}
+              onKeyDown={(e) => this.handleThumbKeyDown(e, thumb)}
             >
-              <i className="fa fa-eye me-1" />
-              Preview only
-            </button>
-            <button
-              type="button"
-              className={`btn ${thumbMode === 'select' ? 'btn-primary' : 'btn-outline-secondary'}`}
-              onClick={() => this.setState({ thumbMode: 'select' })}
-              title="Click a thumbnail to set it as the preferred display image"
-            >
-              <i className="fa fa-star me-1" />
-              Set preferred
-            </button>
-          </div>
-        </div>
-
-        {/* Thumbnail strip */}
-        <div className="d-flex align-items-center justify-content-center">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => this.handleThumbPage(-1)}
-            disabled={thumbPage === 0}
-            className="me-2 flex-shrink-0"
-          >
-            <i className="fa fa-chevron-left" />
-          </Button>
-          <div className="d-flex flex-row flex-nowrap overflow-auto gap-2">
-            {currentThumbs.map((thumb) => {
-              const isPreferred = thumb.id === currentPreferredThumbnail;
-              const cardClass = isPreferred
-                ? 'border-2 border-info bg-info-subtle'
-                : 'border border-secondary bg-white';
-              let modeTitle;
-              if (thumbMode === 'select') {
-                modeTitle = isPreferred ? 'Current preferred thumbnail'
-                  : 'Set as preferred display thumbnail by selecting this image using set preferred mode';
-              } else {
-                modeTitle = 'Preview this image';
-              }
-              return (
-                <div
-                  key={thumb.id}
-                  className={`d-flex flex-column align-items-center justify-content-center p-1 rounded ${cardClass}`}
-                  style={{
-                    cursor: 'pointer', minWidth: 64, minHeight: 90, maxWidth: 70, height: 80,
-                  }}
-                  title={modeTitle}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => this.handleThumbClick(thumb)}
-                  onKeyDown={(e) => this.handleThumbKeyDown(e, thumb)}
-                >
-                  <img
-                    src={this.isValidImageSrc(thumb.thumbnail)
-                      ? thumb.thumbnail : '/images/wild_card/no_attachment.svg'}
-                    alt={`Thumbnail ${thumb.id}`}
-                    className="img-thumbnail"
-                    style={{
-                      width: 60, height: 60, objectFit: 'cover', display: 'block',
-                    }}
-                  />
-                  {isPreferred && (
-                    <div className="text-primary small mt-1" style={{ fontSize: '0.65rem' }}>
-                      <i className="fa fa-star me-1" />
-                      Preferred
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => this.handleThumbPage(1)}
-            disabled={thumbPage >= totalThumbPages - 1}
-            className="ms-2 flex-shrink-0"
-          >
-            <i className="fa fa-chevron-right" />
-          </Button>
-        </div>
+              <img
+                src={isValidImageSrc(thumb.thumbnail) ? thumb.thumbnail : DEFAULT_NO_ATTACHMENT}
+                alt={`Thumbnail ${thumb.id}`}
+                style={{ width: 60, height: 60, objectFit: 'cover' }}
+              />
+              {isPreferred && (
+                <span className="text-primary" style={{ fontSize: '0.65rem' }}>
+                  <i className="fa fa-star me-1" />
+                  Preferred
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     );
-  };
+  }
 
-  render() {
-    const {
-      showPop,
-      popObject,
-      imageStyle,
-      attachment,
-      placement = 'right'
-    } = this.props;
-    const {
-      isPdf,
-      fetchSrc,
-      thumbnail,
-      modalPreviewSrc,
-    } = this.state;
-    const defaultUnavailable = '/images/wild_card/not_available.svg';
-
-    if (showPop) {
+  renderPreviewBox() {
+    const { isLoading, thumbnail } = this.state;
+    const { imageStyle } = this.props;
+    const { attachment } = ImageModal.derive(this.props);
+    if (isLoading) {
       return (
-        <div className="preview-table">
-          {this.state.isLoading ? (
-            <div
-              className="d-flex justify-content-center align-items-center"
-              style={{
-                width: imageStyle?.width || 120,
-                height: imageStyle?.height || 120,
-                minWidth: 60,
-                minHeight: 60,
-                ...imageStyle
-              }}
-            >
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-            </div>
-          ) : (
-            <img
-              src={this.isValidImageSrc(thumbnail) ? thumbnail : defaultUnavailable}
-              alt={attachment?.filename}
-              style={{ cursor: 'default', ...imageStyle }}
-              onError={this.handleImageError}
-            />
-          )}
+        <div
+          className="d-flex justify-content-center align-items-center"
+          style={{ width: imageStyle?.width || 120, height: imageStyle?.height || 120, ...imageStyle }}
+        >
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
         </div>
       );
+    }
+    return (
+      <img
+        src={isValidImageSrc(thumbnail) ? thumbnail : DEFAULT_UNAVAILABLE}
+        alt={attachment?.filename}
+        style={{ ...imageStyle }}
+        onError={this.handleImageError}
+      />
+    );
+  }
+
+  render() {
+    const { showPop, popObject, placement = 'right' } = this.props;
+    const {
+      isPdf, isLoading, modalPreviewSrc, selectedId, preferredId,
+    } = this.state;
+    const { attachment } = ImageModal.derive(this.props);
+    const canSetPreferred = selectedId && selectedId !== preferredId;
+
+    if (showPop) {
+      return <div className="preview-table">{this.renderPreviewBox()}</div>;
     }
 
     return (
@@ -427,35 +285,13 @@ export default class ImageModal extends Component {
           role="button"
           tabIndex={0}
         >
-          {this.state.isLoading ? (
-            <div
-              className="d-flex justify-content-center align-items-center"
-              style={{
-                width: imageStyle?.width || 120,
-                height: imageStyle?.height || 120,
-                minWidth: 60,
-                minHeight: 60,
-                ...imageStyle
-              }}
-            >
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-            </div>
-          ) : (
-            <OverlayTrigger
-              placement={placement}
-              overlay={this.showPopObject()}
-            >
-              <img
-                src={this.isValidImageSrc(thumbnail) ? thumbnail : defaultUnavailable}
-                alt={attachment?.filename}
-                style={{ ...imageStyle }}
-                role="button"
-              />
+          {isLoading ? this.renderPreviewBox() : (
+            <OverlayTrigger placement={placement} overlay={this.showPopObject()}>
+              {this.renderPreviewBox()}
             </OverlayTrigger>
           )}
         </div>
+
         <AppModal
           title={popObject.title}
           show={this.state.showModal}
@@ -465,45 +301,49 @@ export default class ImageModal extends Component {
           closeLabel="Close"
           showFooter
         >
-          <div style={{ overflow: 'auto', position: 'relative', minHeight: '400px' }}>
-            {isPdf && fetchSrc ? (
+          <div style={{ overflow: 'auto', position: 'relative', minHeight: 400 }}>
+            {isPdf && modalPreviewSrc ? (
               <iframe
-                src={fetchSrc}
+                src={modalPreviewSrc}
                 width="100%"
                 height="500px"
                 style={{ border: 'none' }}
                 title="PDF Viewer"
-              >
-                <p>
-                  Your browser does not support PDFs.
-                  <a href={fetchSrc} target="_blank" rel="noopener noreferrer">
-                    Download the PDF
-                  </a>
-                </p>
-              </iframe>
+              />
             ) : (
-              <div
-                className="d-flex justify-content-center align-items-center bg-light rounded"
-                style={{ minHeight: 300, maxHeight: 420 }}
-              >
-                {this.state.isLoading ? (
-                  <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                ) : (
-                  <img
-                    src={this.isValidImageSrc(modalPreviewSrc) ? modalPreviewSrc : defaultUnavailable}
-                    className="img-fluid"
-                    style={{ maxHeight: 400, objectFit: 'contain' }}
-                    alt={attachment?.filename}
-                    onError={this.handleImageError}
-                  />
-                )}
-              </div>
+              <>
+                <div
+                  className="d-flex justify-content-center align-items-center bg-light rounded position-relative"
+                  style={{ minHeight: 300, maxHeight: 420 }}
+                >
+                  {isLoading ? (
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  ) : (
+                    <img
+                      src={isValidImageSrc(modalPreviewSrc) ? modalPreviewSrc : DEFAULT_UNAVAILABLE}
+                      className="img-fluid"
+                      style={{ maxHeight: 400, objectFit: 'contain' }}
+                      alt={attachment?.filename}
+                      onError={this.handleImageError}
+                    />
+                  )}
+                </div>
+                <div className="d-flex justify-content-center mt-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={!canSetPreferred}
+                    onClick={this.handleSetPreferred}
+                  >
+                    <i className="fa fa-star me-1" />
+                    {preferredId && selectedId === preferredId ? 'Preferred image' : 'Set as preferred'}
+                  </Button>
+                </div>
+                {this.renderCarousel()}
+              </>
             )}
-          </div>
-          <div>
-            {this.renderAttachmentsThumbnails()}
           </div>
         </AppModal>
       </div>
@@ -512,6 +352,14 @@ export default class ImageModal extends Component {
 }
 
 ImageModal.propTypes = {
+  // analysis mode (preferred): everything is derived from the container
+  container: PropTypes.shape({
+    name: PropTypes.string,
+    children: PropTypes.arrayOf(PropTypes.shape({})),
+    extended_metadata: PropTypes.shape({}),
+  }),
+  onPreferredThumbnailChange: PropTypes.func,
+  // legacy single-image mode (mutually exclusive with `container`)
   attachment: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     filename: PropTypes.string,
@@ -522,27 +370,36 @@ ImageModal.propTypes = {
     file: PropTypes.shape({
       type: PropTypes.string,
       preview: PropTypes.string,
-    })
+    }),
   }),
+  // legacy analysis props (consumed via the static derive()/handleSetPreferred for element
+  // headers not yet migrated to the `container` prop)
+  // eslint-disable-next-line react/no-unused-prop-types
+  preferredThumbnail: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  // eslint-disable-next-line react/no-unused-prop-types
+  childrenAttachmentIds: PropTypes.arrayOf(PropTypes.number),
+  onChangePreferredThumbnail: PropTypes.func,
   popObject: PropTypes.shape({
     title: PropTypes.string,
   }).isRequired,
   placement: PropTypes.string,
   disableClick: PropTypes.bool,
-  imageStyle: PropTypes.object,
-  preferredThumbnail: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  childrenAttachmentIds: PropTypes.arrayOf(PropTypes.number),
-  onChangePreferredThumbnail: PropTypes.func,
+  imageStyle: PropTypes.shape({
+    width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  }),
   showPop: PropTypes.bool,
 };
 
 ImageModal.defaultProps = {
-  imageStyle: {},
+  container: null,
   attachment: null,
-  disableClick: false,
+  onPreferredThumbnailChange: null,
+  onChangePreferredThumbnail: null,
   preferredThumbnail: null,
   childrenAttachmentIds: [],
-  onChangePreferredThumbnail: () => { },
   placement: 'right',
+  disableClick: false,
+  imageStyle: {},
   showPop: false,
 };

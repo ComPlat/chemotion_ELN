@@ -47,6 +47,36 @@ const getAttachmentFromContainer = (container) => {
 };
 
 /**
+ * Derives everything ImageModal needs for analysis "browse & set preferred" mode from a
+ * single container, so the generic ImageModal stays domain-thin and the attachment pipeline
+ * isn't copy-pasted across every analysis-header parent.
+ *
+ * Saved attachments only (thumb, not new, not deleted) — the preferred id is shared across
+ * all viewers, so it must reference a persisted attachment.
+ *
+ * @param {Object} container - The analysis container with children[].attachments[].
+ * @returns {{previewAttachment: (Object|null), candidateIds: number[], preferredId: (number|null)}}
+ *   previewAttachment - the default preview attachment (see getAttachmentFromContainer);
+ *   candidateIds - selectable attachment ids;
+ *   preferredId - the persisted preferred id, only if still among candidateIds, else null.
+ */
+const getContainerImageData = (container) => {
+  const previewAttachment = getAttachmentFromContainer(container);
+
+  const datasetChildren = container?.children?.filter((child) => child.container_type === 'dataset') || [];
+  const candidateIds = datasetChildren
+    .flatMap((child) => child.attachments || [])
+    .filter((att) => att.thumb === true && !att.is_deleted && !att.is_new)
+    .map((att) => Number(att.id))
+    .filter((id) => !Number.isNaN(id) && id > 0);
+
+  const raw = container?.extended_metadata?.preferred_thumbnail;
+  const preferredId = raw && candidateIds.includes(Number(raw)) ? Number(raw) : null;
+
+  return { previewAttachment, candidateIds, preferredId };
+};
+
+/**
  * Fetches the base64 thumbnail image source for a given attachment ID.
  *
  * If no ID is provided, or if the fetch fails, a fallback SVG image path is returned.
@@ -84,5 +114,9 @@ const previewAttachmentImage = (
 };
 
 export {
-  previewContainerImage, previewAttachmentImage, fetchImageSrcByAttachmentId, getAttachmentFromContainer
+  previewContainerImage,
+  previewAttachmentImage,
+  fetchImageSrcByAttachmentId,
+  getAttachmentFromContainer,
+  getContainerImageData,
 };

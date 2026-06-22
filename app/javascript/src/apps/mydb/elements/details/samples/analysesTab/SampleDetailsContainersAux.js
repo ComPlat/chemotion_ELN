@@ -15,7 +15,6 @@ import MolViewerListBtn from 'src/components/viewer/MolViewerListBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
-import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 
 const qCheckPass = () => (
   <i className="fa fa-check ms-1 text-success"/>
@@ -187,41 +186,17 @@ function AnalysesHeader({
       return c;
     }),
   };
-  const attachment = getAttachmentFromContainer(container);
-  // Build list of saved, non-deleted attachment IDs (exclude is_new which don't have server IDs yet)
-  const allAttachments = container?.children?.flatMap((child) => (child.attachments || [])) || [];
-  const savedAttachments = allAttachments.filter((att) => !att.is_deleted && !att.is_new && att.thumb === true);
-  const attachmentsIds = savedAttachments
-    .map((att) => Number(att.id))
-    .filter((id) => !Number.isNaN(id) && id > 0);
-  // Get current preferred thumbnail (reassignment is handled by ContainerDatasets on deletion)
-  const preferredThumbnail = container?.extended_metadata?.preferred_thumbnail || null;
-
-  const onChangePreferredThumbnail = (currentPreferredThumbnail) => {
-    if (currentPreferredThumbnail !== preferredThumbnail) {
-      // Handle the change of preferred thumbnail
-      container.extended_metadata = {
-        ...container.extended_metadata,
-        preferred_thumbnail: currentPreferredThumbnail,
-      };
-      updateContainerPreferredThumbnail();
-    }
-  };
   return (
     <div className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}>
       <div className="preview border d-flex align-items-center">
         {deleted
           ? <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> : (
             <ImageModal
-              attachment={attachment}
+              container={container}
               popObject={{
                 title: container.name,
               }}
-              preferredThumbnail={preferredThumbnail}
-              childrenAttachmentIds={attachmentsIds}
-              onChangePreferredThumbnail={(currentPreferredThumbnail) => onChangePreferredThumbnail(
-                currentPreferredThumbnail
-              )}
+              onPreferredThumbnailChange={(id) => updateContainerPreferredThumbnail(container, id)}
             />
           )}
       </div>

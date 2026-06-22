@@ -156,7 +156,14 @@ export default class SampleDetailsContainers extends Component {
     this.handleChange(container);
   }
 
-  updateContainerPreferredThumbnail() {
+  // Persist the chosen preferred preview image for an analysis container. Shared across all
+  // viewers: writes extended_metadata and flags the sample changed via the existing path.
+  updateContainerPreferredThumbnail(container, preferredId) {
+    // eslint-disable-next-line no-param-reassign
+    container.extended_metadata = {
+      ...container.extended_metadata,
+      preferred_thumbnail: preferredId,
+    };
     this.handleChange();
   }
 
