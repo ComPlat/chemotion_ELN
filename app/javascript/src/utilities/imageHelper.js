@@ -55,25 +55,30 @@ const getAttachmentFromContainer = (container) => {
  * all viewers, so it must reference a persisted attachment.
  *
  * @param {Object} container - The analysis container with children[].attachments[].
- * @returns {{previewAttachment: (Object|null), candidateIds: number[], preferredId: (number|null)}}
+ * @returns {{previewAttachment: (Object|null), candidates: Array<{id: number, filename: string}>,
+ *   candidateIds: number[], preferredId: (number|null)}}
  *   previewAttachment - the default preview attachment (see getAttachmentFromContainer);
- *   candidateIds - selectable attachment ids;
+ *   candidates - selectable attachments ({ id, filename }) for the carousel;
+ *   candidateIds - the candidate ids only;
  *   preferredId - the persisted preferred id, only if still among candidateIds, else null.
  */
 const getContainerImageData = (container) => {
   const previewAttachment = getAttachmentFromContainer(container);
 
   const datasetChildren = container?.children?.filter((child) => child.container_type === 'dataset') || [];
-  const candidateIds = datasetChildren
+  const candidates = datasetChildren
     .flatMap((child) => child.attachments || [])
     .filter((att) => att.thumb === true && !att.is_deleted && !att.is_new)
-    .map((att) => Number(att.id))
-    .filter((id) => !Number.isNaN(id) && id > 0);
+    .map((att) => ({ id: Number(att.id), filename: att.filename }))
+    .filter((c) => !Number.isNaN(c.id) && c.id > 0);
+  const candidateIds = candidates.map((c) => c.id);
 
   const raw = container?.extended_metadata?.preferred_thumbnail;
   const preferredId = raw && candidateIds.includes(Number(raw)) ? Number(raw) : null;
 
-  return { previewAttachment, candidateIds, preferredId };
+  return {
+    previewAttachment, candidates, candidateIds, preferredId,
+  };
 };
 
 /**

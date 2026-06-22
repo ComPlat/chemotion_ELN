@@ -17,16 +17,32 @@ const DEFAULT_UNAVAILABLE = '/images/wild_card/not_available.svg';
 // fetchImageSrcByAttachmentId's error path should be fixed there, not masked here.)
 const isValidImageSrc = (src) => typeof src === 'string' && src.length > 0;
 
+// Font-awesome icon for an attachment that has no rendered thumbnail, by extension.
+const fileIconClass = (filename) => {
+  const ext = (filename || '').split('.').pop().toLowerCase();
+  if (ext === 'pdf') return 'fa-file-pdf-o';
+  if (['doc', 'docx', 'odt'].includes(ext)) return 'fa-file-word-o';
+  if (['xls', 'xlsx', 'csv', 'ods'].includes(ext)) return 'fa-file-excel-o';
+  if (['zip', 'gz', 'tar', '7z', 'rar'].includes(ext)) return 'fa-file-archive-o';
+  return 'fa-file-o';
+};
+
 export default class ImageModal extends Component {
   // Resolve effective inputs from `container` (analysis mode) or `attachment` (single image).
   // Usable before `this` is set up (called from the constructor).
   static derive(props) {
     if (props.container) {
-      const { previewAttachment, candidateIds, preferredId } = getContainerImageData(props.container);
-      return { attachment: previewAttachment, candidateIds, preferredId };
+      const {
+        previewAttachment, candidates, candidateIds, preferredId,
+      } = getContainerImageData(props.container);
+      return {
+        attachment: previewAttachment, candidates, candidateIds, preferredId,
+      };
     }
     // single-image mode (e.g. element table/list thumbnails): no carousel, no preferred
-    return { attachment: props.attachment, candidateIds: [], preferredId: null };
+    return {
+      attachment: props.attachment, candidates: [], candidateIds: [], preferredId: null,
+    };
   }
 
   constructor(props) {
@@ -37,7 +53,7 @@ export default class ImageModal extends Component {
       isPdf: false,
       isLoading: false,
       thumbnail: '', // grey-area preview src (= preferred, else default)
-      thumbnails: [], // carousel: [{ id, thumbnail }]
+      thumbnails: [], // carousel: [{ id, filename, thumbnail }]
       preferredId, // persisted preferred id (shared across viewers)
       selectedId: null, // currently previewed-large id (transient, not persisted)
       modalPreviewSrc: '', // full-res src shown large in the modal main area
@@ -115,15 +131,19 @@ export default class ImageModal extends Component {
 
   // carousel of all selectable thumbnails
   fetchCarouselThumbnails() {
-    const { candidateIds } = ImageModal.derive(this.props);
+    const { candidates, candidateIds } = ImageModal.derive(this.props);
     if (!candidateIds.length) {
       this.setState({ thumbnails: [] });
       return;
     }
+    const nameById = new Map(candidates.map((c) => [c.id, c.filename]));
     AttachmentFetcher.fetchThumbnails(candidateIds)
       .then((result) => {
         const thumbnails = (result.thumbnails || []).map(({ id, thumbnail }) => ({
           id,
+          filename: nameById.get(id) || '',
+          // null when the attachment has no rendered thumbnail (e.g. PDF without a
+          // generated preview) — the carousel then shows a typed file-icon placeholder.
           thumbnail: (typeof thumbnail === 'string' && thumbnail.length > 0)
             ? `data:image/png;base64,${thumbnail}`
             : null,
@@ -205,25 +225,36 @@ export default class ImageModal extends Component {
               key={thumb.id}
               className={`d-flex flex-column align-items-center p-1 rounded bg-white ${cls}`}
               style={{
-                cursor: 'pointer', minWidth: 64, height: 90,
+                cursor: 'pointer', minWidth: 72, maxWidth: 72, height: 96,
               }}
               role="button"
               tabIndex={0}
-              title={isPreferred ? 'Current preferred image' : 'Click to preview'}
+              title={`${thumb.filename || `attachment ${thumb.id}`}${isPreferred ? ' (current preferred)' : ''}`}
               onClick={() => this.handleSelectThumbnail(thumb)}
               onKeyDown={(e) => this.handleThumbKeyDown(e, thumb)}
             >
-              <img
-                src={isValidImageSrc(thumb.thumbnail) ? thumb.thumbnail : DEFAULT_NO_ATTACHMENT}
-                alt={`Thumbnail ${thumb.id}`}
-                style={{ width: 60, height: 60, objectFit: 'cover' }}
-              />
-              {isPreferred && (
-                <span className="text-primary" style={{ fontSize: '0.65rem' }}>
-                  <i className="fa fa-star me-1" />
-                  Preferred
-                </span>
+              {isValidImageSrc(thumb.thumbnail) ? (
+                <img
+                  src={thumb.thumbnail}
+                  alt={thumb.filename || `attachment ${thumb.id}`}
+                  style={{ width: 56, height: 56, objectFit: 'cover' }}
+                />
+              ) : (
+                // no rendered thumbnail (e.g. PDF without a generated preview)
+                <div
+                  className="d-flex align-items-center justify-content-center text-body-tertiary"
+                  style={{ width: 56, height: 56 }}
+                >
+                  <i className={`fa ${fileIconClass(thumb.filename)} fa-2x`} aria-hidden="true" />
+                </div>
               )}
+              <span
+                className="text-truncate w-100 text-center"
+                style={{ fontSize: '0.6rem', lineHeight: 1.1 }}
+              >
+                {isPreferred && <i className="fa fa-star text-primary me-1" />}
+                {thumb.filename || `#${thumb.id}`}
+              </span>
             </div>
           );
         })}
@@ -262,10 +293,13 @@ export default class ImageModal extends Component {
     const {
       isPdf, isLoading, modalPreviewSrc, selectedId, preferredId, thumbnails,
     } = this.state;
-    const { attachment } = ImageModal.derive(this.props);
+    const { attachment, candidates } = ImageModal.derive(this.props);
     // Preferred selection only applies in analysis mode (a carousel of candidates exists).
     const canSelectPreferred = thumbnails.length > 0;
     const canSetPreferred = selectedId && selectedId !== preferredId;
+    // Filename of the image currently shown large (any file type), for the caption.
+    const selectedFilename = candidates.find((c) => c.id === selectedId)?.filename
+      || attachment?.filename || '';
 
     if (showPop) {
       return <div className="preview-table">{this.renderPreviewBox()}</div>;
@@ -297,6 +331,12 @@ export default class ImageModal extends Component {
           showFooter
         >
           <div style={{ overflow: 'auto', position: 'relative', minHeight: 400 }}>
+            {selectedFilename && (
+              <div className="text-center text-body-secondary text-truncate mb-2" title={selectedFilename}>
+                <i className="fa fa-file-o me-1" aria-hidden="true" />
+                {selectedFilename}
+              </div>
+            )}
             {isPdf && modalPreviewSrc ? (
               <iframe
                 src={modalPreviewSrc}
