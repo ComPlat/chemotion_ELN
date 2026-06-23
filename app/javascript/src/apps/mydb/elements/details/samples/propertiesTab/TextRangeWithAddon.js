@@ -118,6 +118,10 @@ export default class TextRangeWithAddon extends Component {
         position: 'tc',
         autoDismiss: 8,
       });
+      // handleInputChange has been syncing the raw keystrokes into the model on every keypress.
+      // Clear both the input and the model fields so an invalid value isn't persisted.
+      this.input.value = '';
+      onChange(field, '', '', '');
       return;
     }
 
