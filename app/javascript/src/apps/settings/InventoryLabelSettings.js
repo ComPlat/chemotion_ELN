@@ -18,6 +18,7 @@ function InventoryLabelSettings() {
   const [updateSpinner, setUpdateSpinner] = useState(false);
   const [resetSpinner, setResetSpinner] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [showCreateConfirmation, setShowCreateConfirmation] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
 
   const assignOptions = (inventoryCollections) => {
@@ -114,38 +115,35 @@ function InventoryLabelSettings() {
     setSelectedValue(validCollectionIds);
   };
 
-  const findCollectionIds = (selectedOptions) => {
-    // find collections of Group
-    let collectionsIds = [];
-    if (typeof selectedOptions[0] === 'string') {
-      options.map((object) => {
-        if (object.title === selectedOptions[0]) {
-          collectionsIds = object.children.map((child) => child.value);
-        }
-        return null;
-      });
-    } else {
-      collectionsIds = selectedOptions;
-    }
-    return collectionsIds;
-  };
+  const resolveSelectedItems = (selectedOptions) => {
+    if (!selectedOptions?.length) return [];
 
-  const collectCollectionIds = (selectedOptions) => {
-    if (!selectedOptions || selectedOptions.length === 0) return [];
-
-    const collectionIds = selectedOptions.map((option) => {
+    return selectedOptions.map((option) => {
+    // CASE 1: group selected by title
       if (typeof option === 'string') {
-        // If it's a group title, find the group and get all its collection IDs
-        const groupObject = find(options, { title: option });
-        return groupObject?.children?.map((child) => child.value) || [];
+        const group = options.find((g) => g.title === option);
+        return group?.children || [];
       }
-      // If it's already a collection ID, return it directly
-      return option;
-    });
 
-    // Flatten the array and remove any undefined/null values
-    return collectionIds.flat().filter((id) => id != null);
+      // CASE 2: option is already an ID
+      const group = options.find((g) => g.children?.some((c) => c.value === option));
+
+      if (group) {
+        return group.children.find((c) => c.value === option);
+      }
+
+      // CASE 3: standalone item (no children structure)
+      return options.find((o) => o.value === option || o.title === option);
+    }).flat().filter(Boolean);
   };
+
+  const collectCollectionIds = (selectedOptions) => resolveSelectedItems(selectedOptions)
+    .map((item) => item.value)
+    .filter(Boolean);
+
+  const collectCollectionTitles = (selectedOptions) => resolveSelectedItems(selectedOptions)
+    .map((item) => item.title)
+    .filter(Boolean);
 
   const updateUserSettings = () => {
     setUpdateSpinner(true);
@@ -207,8 +205,12 @@ function InventoryLabelSettings() {
     setSelectedValue(selectedOptions);
     setErrorMessage(null);
 
-    const selectedIds = selectedOptions.length !== 0 ? findCollectionIds(selectedOptions) : null;
-    const inventory = selectedIds ? findInventory(selectedOptions, selectedIds) : null;
+    const selectedIds = collectCollectionIds(selectedOptions);
+
+    const inventory = selectedIds.length > 0
+      ? findInventory(selectedOptions, selectedIds)
+      : null;
+
     if (inventory) {
       setCounterValue(inventory.counter);
       setPrefixValue(inventory.prefix);
@@ -251,6 +253,30 @@ function InventoryLabelSettings() {
     });
   };
 
+  const handleUpdateConfirmation = async () => {
+    const collectionIds = collectCollectionIds(selectedCollections);
+    const results = await Promise.all(
+      collectionIds.map((collectionId) => InventoryFetcher.fetchInventoryOfCollection(collectionId))
+    );
+
+    const isCreate = results.some((result) => !result);
+
+    if (isCreate) {
+      setShowCreateConfirmation(true);
+    } else {
+      updateUserSettings();
+    }
+  };
+
+  const handleCreateCancel = () => {
+    setShowCreateConfirmation(false);
+  };
+
+  const handleCreateConfirmation = () => {
+    updateUserSettings();
+    setShowCreateConfirmation(false);
+  };
+
   const handleResetConfirmation = () => {
     const collectionIds = collectCollectionIds(selectedCollections);
 
@@ -272,99 +298,100 @@ function InventoryLabelSettings() {
   };
 
   return (
-    <Card>
-      <Card.Header>Sample Inventory Label</Card.Header>
-      <Card.Body>
-        <Row className="mb-3">
-          <Col xs={{ span: 3, offset: 3 }}><Form.Label>Select Collection</Form.Label></Col>
-          <Col xs={3}>
-            <TreeSelect
-              name="names of collections"
-              style={{ width: '100%' }}
-              multiple
-              treeData={options}
-              onChange={(selectedOptions) => handleSelectOptionChange(selectedOptions)}
-              value={selectedCollections}
-              dropdownStyle={{ maxHeight: '250px', zIndex: '500000' }}
-            />
-          </Col>
-        </Row>
-        <Row className="mb-3">
-          <Col xs={{ span: 3, offset: 3 }}>
-            <Form.Label>
-              Name
-            </Form.Label>
-          </Col>
-          <Col xs={2}>
-            <Form.Control type="text" value={nameValue} onChange={handleNameChange} />
-          </Col>
-        </Row>
-        <Row className="mb-3">
-          <Col xs={{ span: 3, offset: 3 }}>
-            <Form.Label>Prefix</Form.Label>
-          </Col>
-          <Col xs={2}>
-            <Form.Control type="text" value={prefixValue} onChange={handlePrefixChange} />
-          </Col>
-        </Row>
-        <Row className="mb-3">
-          <Col xs={{ span: 3, offset: 3 }}>
-            <Form.Label>
-              Counter starts at
-            </Form.Label>
-          </Col>
-          <Col xs={2}>
-            <Form.Control type="text" value={counterValue} onChange={handleCounterChange} />
-          </Col>
-        </Row>
-        <Row className="mb-3">
-          <Col xs={{ offset: 3 }}>
-            <b>Next sample inventory label will be: </b>
-            {nextInventoryLabel}
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={12} className="d-flex justify-content-end pe-5">
-            <div className="d-flex gap-2" style={{ width: '600px' }}>
-              <Button
-                variant="primary"
-                onClick={() => { updateUserSettings(); }}
-                className="offset-4 w-100"
-                disabled={resetSpinner}
-              >
-                {updateSpinner
-                  ? (
-                    <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
-                  ) : (
-                    'Update Inventory Label'
-                  )}
-              </Button>
-              <OverlayTrigger
-                placement="top"
-                overlay={(
-                  <Tooltip>
-                    Reset the inventory label settings (prefix, name, counter) for selected collections
-                  </Tooltip>
-                )}
-              >
+    <>
+      <Card>
+        <Card.Header>Sample Inventory Label</Card.Header>
+        <Card.Body>
+          <Row className="mb-3">
+            <Col xs={{ span: 3, offset: 3 }}><Form.Label>Select Collection</Form.Label></Col>
+            <Col xs={3}>
+              <TreeSelect
+                name="names of collections"
+                style={{ width: '100%' }}
+                multiple
+                treeData={options}
+                onChange={(selectedOptions) => handleSelectOptionChange(selectedOptions)}
+                value={selectedCollections}
+                dropdownStyle={{ maxHeight: '250px', zIndex: '500000' }}
+              />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col xs={{ span: 3, offset: 3 }}>
+              <Form.Label>
+                Name
+              </Form.Label>
+            </Col>
+            <Col xs={2}>
+              <Form.Control type="text" value={nameValue} onChange={handleNameChange} />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col xs={{ span: 3, offset: 3 }}>
+              <Form.Label>Prefix</Form.Label>
+            </Col>
+            <Col xs={2}>
+              <Form.Control type="text" value={prefixValue} onChange={handlePrefixChange} />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col xs={{ span: 3, offset: 3 }}>
+              <Form.Label>
+                Counter starts at
+              </Form.Label>
+            </Col>
+            <Col xs={2}>
+              <Form.Control type="text" value={counterValue} onChange={handleCounterChange} />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col xs={{ offset: 3 }}>
+              <b>Next sample inventory label will be: </b>
+              {nextInventoryLabel}
+            </Col>
+          </Row>
+          <Row>
+            <Col xs={12} className="d-flex justify-content-end pe-5">
+              <div className="d-flex gap-2" style={{ width: '600px' }}>
                 <Button
-                  variant="danger"
-                  onClick={handleResetConfirmation}
-                  disabled={updateSpinner}
-                  className="w-100"
+                  variant="primary"
+                  onClick={handleUpdateConfirmation}
+                  className="offset-4 w-100"
+                  disabled={resetSpinner}
                 >
-                  {resetSpinner
+                  {updateSpinner
                     ? (
                       <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
                     ) : (
-                      'Reset inventory label'
+                      'Update Inventory Label'
                     )}
                 </Button>
-              </OverlayTrigger>
-            </div>
-          </Col>
-        </Row>
-        {errorMessage && (
+                <OverlayTrigger
+                  placement="top"
+                  overlay={(
+                    <Tooltip>
+                      Reset the inventory label settings (prefix, name, counter) for selected collections
+                    </Tooltip>
+                )}
+                >
+                  <Button
+                    variant="danger"
+                    onClick={handleResetConfirmation}
+                    disabled={updateSpinner}
+                    className="w-100"
+                  >
+                    {resetSpinner
+                      ? (
+                        <i className="fa fa-spinner fa-pulse" aria-hidden="true" />
+                      ) : (
+                        'Reset inventory label'
+                      )}
+                  </Button>
+                </OverlayTrigger>
+              </div>
+            </Col>
+          </Row>
+          {errorMessage && (
           <Row className="mt-3">
             <Col xs={{ span: 6, offset: 3 }}>
               <Alert variant="danger">
@@ -372,8 +399,22 @@ function InventoryLabelSettings() {
               </Alert>
             </Col>
           </Row>
-        )}
-      </Card.Body>
+          )}
+        </Card.Body>
+      </Card>
+      <AppModal
+        show={showCreateConfirmation}
+        onHide={handleCreateCancel}
+        title="Confirm Create"
+        primaryActionLabel="Yes, Create"
+        onPrimaryAction={handleCreateConfirmation}
+      >
+        You are about to create the inventory label for:
+        <ul>
+          {collectCollectionTitles(selectedCollections).map((col) => <li key={col}>{col}</li>)}
+        </ul>
+        This will automatically select the &apos;Inventory&apos; checkbox for all samples in those collections.
+      </AppModal>
 
       <AppModal
         show={showResetConfirmation}
@@ -382,10 +423,13 @@ function InventoryLabelSettings() {
         primaryActionLabel="Yes, Reset"
         onPrimaryAction={handleResetConfirm}
       >
-        You are about to delete the inventory label for selected collection(s).
+        You are about to delete the inventory label for:
+        <ul>
+          {collectCollectionTitles(selectedCollections).map((x) => <li key={x}>{x}</li>)}
+        </ul>
         Are you sure you want to delete the assigned prefix, name and counter?
       </AppModal>
-    </Card>
+    </>
   );
 }
 
