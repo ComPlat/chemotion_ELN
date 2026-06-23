@@ -51,7 +51,7 @@ gem 'httparty'
 
 gem 'icalendar'
 gem 'image_processing', '~> 1.8'
-gem 'inchi-gem', git: 'https://github.com/ComPlat/inchi-gem.git', branch: 'main'
+gem 'inchi-gem', git: 'https://github.com/ComPlat/inchi-gem.git', tag: 'v1.07.5'
 
 gem 'jquery-rails' # must be in, otherwise the views lack jquery, even though the gem is supplied by ketcher-rails
 gem 'jwt'
