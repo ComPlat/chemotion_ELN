@@ -45,7 +45,9 @@ RSpec.describe Molecule, type: :model do
       molecule.save!
       invalid_molecule = described_class.new
       invalid_molecule.inchikey = molecule.inchikey
-      expect { invalid_molecule.save! }.to raise_error
+      invalid_molecule.sum_formular = molecule.sum_formular
+      invalid_molecule.is_partial = molecule.is_partial
+      expect { invalid_molecule.save! }.to raise_error(ActiveRecord::RecordNotUnique)
     end
 
     it 'have a tag with CID' do
