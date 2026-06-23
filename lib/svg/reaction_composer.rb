@@ -215,6 +215,10 @@ module SVG
       "#{template_it.strip} #{sections_string_filtered} </svg></svg>"
     end
 
+    def compose_svg
+      compose_reaction_svg
+    end
+
     private
 
     def init_materials(materials_svg_paths)
@@ -307,8 +311,8 @@ module SVG
     end
 
     def temperature_duration_it
-      darray = duration&.match(/(\d+.?\d*)\s+(\w{2})/)
-      show_duration = darray.present? ? "#{darray[1]} #{TIME_UNIT[darray[2].downcase]}" : nil
+      duration_amount, duration_unit = parsed_duration
+      show_duration = duration_amount.present? ? "#{duration_amount} #{duration_unit}" : nil
 
       tmdu = if show_duration.blank?
                temperature
@@ -324,6 +328,21 @@ module SVG
           <text text-anchor="middle" x="#{arrow_width / 2}" y="30" font-size="#{word_size + 2}">#{tmdu}</text>
         </svg>
       XML
+    end
+
+    def parsed_duration
+      duration.to_s.strip.split.each_cons(2) do |amount, unit|
+        mapped_unit = TIME_UNIT[unit.to_s[0, 2].downcase]
+        next unless duration_amount?(amount) && mapped_unit.present?
+
+        return [amount, mapped_unit]
+      end
+
+      nil
+    end
+
+    def duration_amount?(amount)
+      amount.match?(/\A\d+(?:\.\d+)?\z/)
     end
 
     def conditions_it

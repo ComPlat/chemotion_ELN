@@ -446,7 +446,9 @@ class ElementActions {
     }
 
     return () => {
-      ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions)
+      const productsOnly = reaction.reaction_type === 'interaction';
+      const showYield = !productsOnly;
+      ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions, productsOnly, showYield)
         .then((result) => {
           reaction.reaction_svg_file = result.reaction_svg;
         }).catch((errorMessage) => {
