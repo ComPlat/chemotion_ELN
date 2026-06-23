@@ -145,14 +145,10 @@ class Molecule < ApplicationRecord
     self.sum_formular = babel_info[:formula]
     self.molecular_weight = babel_info[:mol_wt]
     self.exact_molecular_weight = babel_info[:mass]
-    self.iupac_name = pubchem_info[:iupac_name]
-    self.names = pubchem_info[:names]
-    self.pcid = pubchem_info[:cid]
-
+    assign_pubchem_data(pubchem_info)
     check_sum_formular
     svg = Molecule.svg_reprocess(babel_info[:svg], svg_molfile || molfile)
     attach_svg svg
-
     self.cano_smiles = babel_info[:cano_smiles]
     self.molfile_version = babel_info[:molfile_version]
     self.is_partial = babel_info[:is_partial]
@@ -268,6 +264,12 @@ class Molecule < ApplicationRecord
   end
 
   private
+
+  def assign_pubchem_data(pubchem_info)
+    self.iupac_name = pubchem_info[:iupac_name]
+    self.names = pubchem_info[:names]
+    self.pcid = pubchem_info[:cid]
+  end
 
   # This frees the inchikey value from the index
   def deindex_inchikey

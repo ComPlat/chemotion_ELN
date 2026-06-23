@@ -133,29 +133,29 @@ RSpec.describe Molecule, type: :model do
       partial_molfile  = 'partial-molfile-no-PolymersList'
       molecule.molfile = partial_molfile
 
-      expect(Molecule).to receive(:svg_reprocess).with(nil, original_molfile).and_return(nil)
-
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
       molecule.assign_molecule_data(babel_info, {}, svg_molfile: original_molfile)
+      expect(described_class).to have_received(:svg_reprocess).with(nil, original_molfile)
     end
 
     it 'falls back to self.molfile when svg_molfile is not given' do
       molecule.molfile = 'stored-molfile'
 
-      expect(Molecule).to receive(:svg_reprocess).with(nil, 'stored-molfile').and_return(nil)
-
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
       molecule.assign_molecule_data(babel_info, {})
+      expect(described_class).to have_received(:svg_reprocess).with(nil, 'stored-molfile')
     end
 
     it 'falls back to self.molfile when svg_molfile is nil explicitly' do
       molecule.molfile = 'stored-molfile'
 
-      expect(Molecule).to receive(:svg_reprocess).with(nil, 'stored-molfile').and_return(nil)
-
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
       molecule.assign_molecule_data(babel_info, {}, svg_molfile: nil)
+      expect(described_class).to have_received(:svg_reprocess).with(nil, 'stored-molfile')
     end
 
     it 'assigns molecular properties from babel_info regardless of svg_molfile' do
-      allow(Molecule).to receive(:svg_reprocess).and_return(nil)
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
       molecule.molfile = 'molfile'
 
       molecule.assign_molecule_data(babel_info, {})
@@ -204,11 +204,10 @@ RSpec.describe Molecule, type: :model do
 
       allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfile).and_return(babel_info)
       allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey).and_return({})
-      allow(Molecule).to receive(:svg_reprocess).and_return(nil)
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
 
-      expect(Molecule).to receive(:svg_reprocess).with(nil, polymer_molfile)
-
-      Molecule.find_or_create_by_molfile(polymer_molfile)
+      described_class.find_or_create_by_molfile(polymer_molfile)
+      expect(described_class).to have_received(:svg_reprocess).with(nil, polymer_molfile)
     end
   end
 
@@ -248,11 +247,10 @@ RSpec.describe Molecule, type: :model do
 
       allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfile).and_return(babel_info)
       allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey).and_return({})
-      allow(Molecule).to receive(:svg_reprocess).and_return(nil)
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
 
-      expect(Molecule).to receive(:svg_reprocess).with(nil, ball_only_molfile)
-
-      Molecule.find_or_create_by_molfile(ball_only_molfile)
+      described_class.find_or_create_by_molfile(ball_only_molfile)
+      expect(described_class).to have_received(:svg_reprocess).with(nil, ball_only_molfile)
     end
   end
 end
