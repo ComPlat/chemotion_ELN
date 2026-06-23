@@ -30,9 +30,25 @@ import {
   RemoveVariationsModal,
   TopHorizontalScrollbar
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+import ReactionVariationsSummary
+  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsSummary';
 import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
+
+const OPENSTATS_TPA_NAME = 'OpenStats';
+
+const notify = ({ title, message, level }) => NotificationActions.add({
+  title,
+  message,
+  level,
+  dismissible: 'button',
+  autoDismiss: 10,
+  position: 'tr',
+});
 
 const initializeGridStore = (initialVariations = []) => ({
   reactionVariations: initialVariations,
@@ -491,6 +507,39 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     }));
   };
 
+  const sendToOpenStats = () => {
+    const selectedCols = gridRef.current.api.getColumnState();
+
+    const columnOrder = selectedCols.filter(
+      (col) => !col.hide && col.colId !== 'ag-Grid-SelectionColumn' && col.colId !== 'tools'
+    ).map((col) => col.colId);
+
+    const selectedRows = gridRef.current.api.getSelectedRows();
+    const variationUuids = selectedRows.map((row) => row.uuid).filter(Boolean);
+    if (variationUuids.length === 0) {
+      notify({
+        title: 'Nothing to send',
+        message: 'Select at least one variation row before sending to OpenStats.',
+        level: 'warning',
+      });
+      return;
+    }
+
+    const { thirdPartyApps = [] } = UIStore.getState() ?? {};
+    const openStats = thirdPartyApps.find((tpa) => tpa.name === OPENSTATS_TPA_NAME);
+    if (!openStats) {
+      notify({
+        title: 'OpenStats not configured',
+        message: `Third-party app "${OPENSTATS_TPA_NAME}" is not registered on this instance. Ask an admin to add it.`,
+        level: 'error',
+      });
+      return;
+    }
+
+    ThirdPartyAppFetcher.fetchVariationsToken(reaction.id, openStats.id, variationUuids, columnOrder)
+      .then((url) => window.open(url, '_blank'));
+  };
+
   const removeAllRows = () => {
     reactionVolumeByRowIdRef.current = {};
     setGridStore((previousGridStore) => ({
@@ -557,6 +606,22 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     </OverlayTrigger>
   );
 
+  const sendToTPA = () => (
+    <OverlayTrigger
+      placement="bottom"
+      overlay={(
+        <Tooltip>
+          Send data to OpenStats
+        </Tooltip>
+          )}
+    >
+      <Button size="sm" onClick={sendToOpenStats} className="mb-2">
+        <i className="fa fa-external-link me-1" aria-hidden="true" />
+        Send to OpenStats
+      </Button>
+    </OverlayTrigger>
+  );
+
   const exportTable = () => (
     <Button
       size="sm"
@@ -580,6 +645,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     <div>
       <ButtonGroup>
         {addVariation()}
+        {sendToTPA()}
         {exportTable()}
         <ColumnSelection
           selectedColumns={selectedColumns}
@@ -665,6 +731,13 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
           onGridReady={() => setGridToken((token) => token + 1)}
         />
       </div>
+      {/*
+      The statistics OpenStats sends back are rendered here, below the grid.
+      We pass the whole `reaction` (not just its variations) because the summary
+      lives on the reaction's "Statistical Analysis" attachments, which the
+      component reads + fetches itself.
+      */}
+      <ReactionVariationsSummary reaction={reaction} />
     </div>
   );
 };

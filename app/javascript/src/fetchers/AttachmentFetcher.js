@@ -281,6 +281,19 @@ export default class AttachmentFetcher {
     return Promise.all(tasks).then(() => this.uploadCompleted(file.name, key, checksum));
   }
 
+  // Download a stored attachment's raw bytes by id and return them as text.
+  // Used to read small JSON sidecar files (e.g. the OpenStats variations summary).
+  static fetchAttachmentText(id) {
+    return fetch(`/api/v1/attachments/${id}`, {
+      credentials: 'same-origin',
+    }).then((response) => {
+      if (!response.ok) {
+        throw new Error(`Failed to fetch attachment ${id} (${response.status})`);
+      }
+      return response.text();
+    });
+  }
+
   static deleteAttachment(params) {
     return ApiClient.deleteRequest(`/api/v1/attachments/${params.id}`)
       .then((json) => new Attachment(json.attachment));
