@@ -205,15 +205,14 @@ module Chemotion
     # together as one token so they resolve to the combined statement rather than
     # being split into separate phrases; inner whitespace is stripped to match the
     # JSON keys (e.g. "P305+P351+P338").
-def self.normalize_phrases_to_array(phrases, prefix)
-  if phrases.is_a?(Array)
-    return phrases.map { |p| p.to_s.gsub(/\s+/, '') }.reject(&:empty?)
-  end
-  return [] unless phrases.is_a?(String)
+    def self.normalize_phrases_to_array(phrases, prefix)
+      return phrases.map { |p| p.to_s.gsub(/\s+/, '') }.reject(&:empty?) if phrases.is_a?(Array)
 
-  atom = /(?:EU)?#{prefix}\d{1,3}[A-Za-z]*/
-  phrases.scan(/#{atom}(?:\s*\+\s*#{atom})*/).map { |code| code.gsub(/\s+/, '') }
-end
+      return [] unless phrases.is_a?(String)
+
+      atom = /(?:EU)?#{prefix}\d{1,3}[A-Za-z]*/
+      phrases.scan(/#{atom}(?:\s*\+\s*#{atom})*/).map { |code| code.gsub(/\s+/, '') }
+    end
 
     def self.load_hazard_phrases_hash
       JSON.parse(File.read('./public/json/hazardPhrases.json'))
