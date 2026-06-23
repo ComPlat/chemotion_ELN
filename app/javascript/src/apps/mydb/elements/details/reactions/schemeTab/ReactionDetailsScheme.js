@@ -1964,11 +1964,16 @@ export default class ReactionDetailsScheme extends React.Component {
     const prefix = 'm';
 
     if (!isDisabled) {
-      // Pass undefined explicitly when null/empty to avoid default value of 0
-      // The component will show empty instead of "n.d." when value is undefined
-      const volumeValue = (reaction.volume != null && reaction.volume !== '')
-        ? reaction.volume
-        : undefined;
+      // Coerce to a Number: the backend serializes `volume` (a BigDecimal) as a
+      // string (e.g. "0.005"), and NumeralInputWithUnitsCompo renders "n.d."
+      // whenever the value is not Number.isFinite. Pass undefined for
+      // null/empty/invalid so the field shows "n.d." instead of a default 0.
+      // Use Number() rather than parseFloat() so partially-numeric strings like
+      // "1.2abc" are rejected (parseFloat would accept them as 1.2).
+      const rawVolume = reaction.volume;
+      const parsedVolume = (rawVolume == null) ? NaN
+        : (typeof rawVolume === 'string' && rawVolume.trim() === '' ? NaN : Number(rawVolume));
+      const volumeValue = Number.isFinite(parsedVolume) ? parsedVolume : undefined;
 
       return (
         <Form.Group>
