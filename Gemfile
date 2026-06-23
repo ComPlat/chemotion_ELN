@@ -92,6 +92,7 @@ gem 'puma', '< 6.0.0'
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
 gem 'rails', '~> 6.1.7.7'
+gem 'redcarpet' # markdown rendering (welcome mailer, application_helper#markdown)
 gem 'rinchi-gem', git: 'https://github.com/ComPlat/rinchi-gem.git', branch: 'main'
 gem 'rmagick'
 gem 'roo'

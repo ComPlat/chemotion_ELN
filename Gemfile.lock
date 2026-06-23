@@ -921,6 +921,7 @@ DEPENDENCIES
   rack
   rack-cors
   rails (~> 6.1.7.7)
+  redcarpet
   rinchi-gem!
   rmagick
   roo
