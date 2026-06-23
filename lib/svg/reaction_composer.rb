@@ -5,13 +5,17 @@ require 'cgi'
 module SVG
   class ReactionComposer
     REACTANT_SCALE = 0.75
-    YIELD_YOFFSET = 10
+    YIELD_YOFFSET = 30
+    LINE_HEIGHT = 25
+    X_SPACING = 20
+    ARROW_SPACING = 50
+    PADDING = 10
     SOLVENT_LENGTH_LIMIT = 15
     CONDITION_LENGTH_LIMIT = 20
     WORD_SIZE_BASE_REPORT = 12
     WORD_SIZE_REPORT_SCALE = 2
     WORD_SIZE_BASE_SVG = 14
-    WORD_SIZE_SVG_SCALE = 1.7
+    WORD_SIZE_SVG_SCALE = 2
     ARROW_LENGTH_BASE = 120
     ARROW_LENGTH_SCALE = 50
     TIME_UNIT = {
@@ -23,7 +27,7 @@ module SVG
       'da' => 'd',
       'we' => 'w',
       'mo' => 'm',
-      'ye' => 'y'
+      'ye' => 'y',
     }.freeze
 
     attr_reader :starting_materials, :reactants, :products, :duration,
@@ -208,6 +212,7 @@ module SVG
     end
 
     def compose_reaction_svg
+      @temp_dur_solv_cond = wrap_lines(temp_dur, solvents, word_size) + conditions.to_s.split("\n").reject(&:blank?)
       set_global_view_box_height
       section_it
       return "#{core_template_it.strip} #{sections_string_filtered}</svg>" if @core_only
@@ -249,45 +254,13 @@ module SVG
     end
 
     def init_arrow_width
-      @arrow_width = num_reactants * ARROW_LENGTH_SCALE + ARROW_LENGTH_BASE
-      scl = (((solvents || []) + (conditions || '').split("\n"))&.max_by(&:length)&.length || 1) * 12
-      @arrow_width = [@arrow_width, scl].max
+      @arrow_width = ARROW_LENGTH_BASE
+      @arrow_width = [arrow_width, calculate_arrow_width].max
     end
 
     def init_svg
       @preserve_aspect_ratio = pas&.match(/(\w| )+/) && "preserveAspectRatio = #{$1}" || ''
-      @global_view_box_array = [0, 0, 50, 50]
-    end
-
-    # check the length of each solvent and decide how many solv. per line according to solv.length and reactants.size
-    def actual_solvents_lines
-      solv_lines = []
-      i = 0
-      solvents.each_with_index do |solvent, i|
-        solv_str_sum = 0
-        solv_str_pre = 0
-        solv_line_str = ""
-        arr_length =  solv_lines.length
-
-        # string of solvent line which to be added to next line (array[index]) in solv_lines array
-        !(i == 0) ? solv_line_str = "#{solv_lines[arr_length-1]} / #{solvents[i]}"  : solv_line_str = ""
-        solv_str_sum += (solv_line_str).length
-
-        !(i == 0) ? solv_str_pre = ((solv_lines[arr_length-1]).to_s).length : 0
-
-        define_singleton_method(:push_to_solv_lines) do
-          solv_lines.push(solvents[i])
-        end
-
-        define_singleton_method(:modify_solv_lines_prev) do
-          solv_lines[arr_length-1] = solv_line_str
-        end
-
-        i == 0 || reactants.size <= 1 ? push_to_solv_lines
-        : ((reactants.size == 2 && solv_str_sum <= 22) || (reactants.size >= 3 && solv_str_sum <= 35) ? modify_solv_lines_prev
-        : push_to_solv_lines)
-      end
-      solv_lines
+      @global_view_box_array = [0, 0, 0, 0]
     end
 
     def template_it
@@ -306,52 +279,75 @@ module SVG
       XML
     end
 
-    def temperature_duration_it
-      darray = duration&.match(/(\d+.?\d*)\s+(\w{2})/)
-      show_duration = darray.present? ? "#{darray[1]} #{TIME_UNIT[darray[2].downcase]}" : nil
-
-      tmdu = if show_duration.blank?
-               temperature
-             elsif temperature.blank?
-               show_duration
-             else
-               "#{temperature}, #{show_duration}"
-             end
-      return nil if tmdu.blank?
-
-      <<~XML
-        <svg font-family="sans-serif">
-          <text text-anchor="middle" x="#{arrow_width / 2}" y="30" font-size="#{word_size + 2}">#{tmdu}</text>
-        </svg>
-      XML
-    end
-
-    def conditions_it
-      y_init = 55
-      y_init += (actual_solvents_lines.size).ceil * 26 if solvents.present?
-      return nil if conditions.blank?
-
-      s_conditions = conditions.split("\n") || []
-      s_conditions.map.with_index do |condition, index|
-        # Escape XML special chars so "pH < value" and ">" etc. render correctly (scrub_xml would strip < as a tag)
-        escaped = CGI.escapeHTML(condition.to_s)
+    def temp_dur_solv_cond_it
+      y_init = LINE_HEIGHT + 10
+      @temp_dur_solv_cond.map.with_index do |tdsc, index|
         <<~XML
           <svg font-family="sans-serif">
-            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{y_init + index * 25}" font-size="#{word_size}">#{escaped}</text>
+            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{y_init + (index * LINE_HEIGHT)}" font-size="#{word_size}">#{CGI.escapeHTML(tdsc.to_s)}</text>
           </svg>
         XML
       end.join(' ')
+    end 
+
+    def temp_dur
+      darray = duration&.match(/(\d+.?\d*)\s+(\w{2})/)
+      show_duration = darray.present? ? "#{darray[1]} #{TIME_UNIT[darray[2].downcase]}" : nil
+
+      if show_duration.blank?
+        temperature
+      elsif temperature.blank?
+        show_duration
+      else
+        "#{temperature}, #{show_duration}"
+      end
     end
 
-    def solvent_it
-      return nil if solvents.blank?
-      (actual_solvents_lines || solvents).map.with_index do |solvent, index|
-        <<~XML
-          <svg font-family="sans-serif">
-            <text text-anchor="middle" x="#{arrow_width / 2}" y="#{55 + index * 25}" font-size="#{word_size}">#{solvent}</text>
-          </svg>
-        XML
-      end.join('  ')
+    def solvent_tokens(solvents)
+      return ["(#{solvents.first})"] if solvents.length == 1
+
+      solvents.map.with_index do |solvent, index|
+        case index
+        when 0
+          "(#{solvent}," # if first solvent, open parentheses
+        when solvents.length - 1
+          "#{solvent})" # if last solvent, close parentheses
+        else
+          "#{solvent}," # if middle solvent, add comma
+        end
+      end
+    end
+
+    def compose_solvents(solvents)
+      solvent_tokens(solvents).join(' ')
+    end
+
+    def wrap_lines(conditions, solvents, word_size)
+      lines = []
+      tokens = solvent_tokens(solvents)
+
+      # if all solvents fit within arrow width, return as is
+      test = "#{conditions} #{tokens.join(' ')}"
+      if (test.length * word_size * 0.6) < arrow_width
+        return [test]
+      end
+
+      lines << conditions unless conditions.empty? # start solvents in new line if conditions is not empty
+      current = ''
+
+      tokens.each do |token|
+          test = current.empty? ? token : "#{current} #{token}"
+
+          if (test.length * word_size * 0.6) < arrow_width
+            current = test
+          else
+            lines << current
+            current = token
+          end
+        end
+
+      lines << current unless current.empty? # push any remaining text
+      lines
     end
 
     def arrow_it
@@ -364,10 +360,10 @@ module SVG
     end
 
     # position the plus sign between reactants/products/starting materials in the reaction
-    def divide_it(x = 0, y =0)
+    def divide_it(x = 0, y = 0)
       <<~XML
-        <svg font-family="sans-serif" font-size="33">
-            <text x="#{x}" y="#{y+16}">+</text>
+        <svg font-family="sans-serif" font-size="30">
+            <text x="#{x}" y="#{y}">+</text>
         </svg>
       XML
     end
@@ -386,24 +382,21 @@ module SVG
     # assign height scale for condition lines
     def find_cond_max_height
       conditions_arr = conditions.try(:split, "\n") || []
-      conditions_arr.length * 75
-    end
-
-    # assign height scale for solvent lines
-    def find_solvent_max_height
-      actual_solvents_lines.length * 75
-    end
-
-    # sum of conditions and solvents height scale
-    def count_height_solv_conditions
-      find_solvent_max_height + find_cond_max_height
+      conditions_arr.length * LINE_HEIGHT
     end
 
     def set_global_view_box_height
-      material_max = find_material_max_height(starting_materials + products)
-      @reactant_max = find_material_max_height(reactants)
-      @max_of_solv_conditions = count_height_solv_conditions()
-      global_view_box_array[3] = [@reactant_max * 2.5 , @max_of_solv_conditions, material_max, global_view_box_array[3]].max + 2 * YIELD_YOFFSET + 15
+      @material_max = find_material_max_height(starting_materials + products)
+      @reactant_max = find_material_max_height(reactants) * REACTANT_SCALE
+      @max_of_solv_conditions = (@temp_dur_solv_cond.length + 1) * LINE_HEIGHT
+
+      # if reactants do not protrude above materials, insert half materials height as "spacer"
+      @above_arrow = [@reactant_max, @material_max / 2].max + PADDING
+
+      # if conditions/solvents do not protrude below materials, insert half materials height as "spacer"
+      @below_arrow = [@max_of_solv_conditions, @material_max / 2 + YIELD_YOFFSET].max + PADDING
+
+      global_view_box_array[3] = @above_arrow + @below_arrow
     end
 
     def set_cr_global_view_box_height
@@ -508,50 +501,62 @@ module SVG
       output
     end
 
+    def calculate_arrow_width
+      group_width = reactants.each_with_index.sum do |m, ind|
+        width = X_SPACING
+
+        svg = inner_file_content(m)
+        vb = svg && (svg['viewBox'] || svg['viewbox'])&.split(/\s+/)&.map(&:to_i) || []
+
+        width += vb[2] if vb.any?
+        width
+      end
+
+      [((group_width * REACTANT_SCALE) + (X_SPACING * 2)).round, @arrow_width].max
+    end
+
     def compose_material_group(material_group, **options)
       gvba = global_view_box_array
-      w0 = gvba[2]
       x_shift = options[:start_at] || 0
       y_center = options[:y_center] || 0
       scale = options[:scale] || 1
       output = ''
-      vb_middle = gvba[3] / 2.round
       group_width = 0
       material_group.map.with_index do |m, ind|
         if ind.positive?
-          group_width += 50
-          output += divide_it(group_width, y_center)
-          group_width += 80
+          group_width += X_SPACING
+          unless options[:is_reactants] # if not reactants, add plus sign between materials and products
+            output += divide_it(group_width, y_center)
+            group_width += 30 # width of plus sign
+          end
         end
         material, yield_amount = *separate_material_yield(m)
         svg = inner_file_content(material)
         vb = svg && (svg['viewBox'] || svg['viewbox'])&.split(/\s+/)&.map(&:to_i) || []
-        unless vb.empty?
 
-          x_shift = group_width + 10 - vb[0]
-          y_shift = (y_center - vb[3] / 2).round
+        unless vb.empty?
+          x_shift = group_width - vb[0]
+          if ind.positive?  # add x spacing if not first element
+            x_shift += X_SPACING
+            group_width += X_SPACING
+          end
+          y_shift = options[:is_reactants] ? (y_center - (vb[3] * scale)).round : (y_center - (vb[3] / 2) * scale).round
           yield_svg = ''
-          yield_svg += compose_yield_svg(yield_amount, (vb[2] / 2).round, ((@max_height_for_products + vb[3]) / 2).round) if yield_amount
-          group_width += vb[2] + 10
-          svg['width'] = "#{vb[2]}px;"
-          svg['height'] = "#{vb[3]}px;"
+          yield_svg += compose_yield_svg(yield_amount, (vb[2] / 2).round, (vb[3]).round) if yield_amount
+          group_width += vb[2]
 
           output += "<g transform='translate(#{x_shift}, #{y_shift})'> #{svg.inner_html}"
+
           output += yield_svg if @show_yield
           output += '</g>'
         end
       end
-      reactant_shift = options[:is_reactants] ? 30 : 0
-      output = "<g transform='translate(#{gvba[2] + reactant_shift}, 0)'><g transform='scale(#{scale})'> #{output} </g></g>"
+
+      reactant_shift = options[:is_reactants] ? X_SPACING : 0
+      output = "<g transform='translate(#{options[:start_at] + reactant_shift}, 0)'><g transform='scale(#{scale})'> #{output} </g></g>"
       scaled_group_width = (group_width * scale).round
 
-      if options[:arrow_width]
-        @arrow_width = [([scaled_group_width, 50].max + 80), @arrow_width].max
-        gvba[2] += arrow_width
-      else
-        gvba[2] += scaled_group_width
-      end
-      global_view_box_array = gvba
+      self.global_view_box_array[2] = options[:start_at] + (options[:is_reactants] ? arrow_width : scaled_group_width)
       output
     end
 
@@ -571,69 +576,31 @@ module SVG
     def compose_arrow_and_reaction_labels(options = {})
       x_shift = options[:start_at]
       y_shift = options[:arrow_y_shift]
-      [arrow_it, conditions_it, solvent_it, temperature_duration_it].reduce('') do |acc, it|
+      [arrow_it, temp_dur_solv_cond_it].reduce('') do |acc, it|
         it.present? ? "#{acc} <g transform='translate(#{x_shift}, #{y_shift})'> #{it} </g>" : acc
       end
     end
 
-    # sum of conditions and solvents array length
-    def solv_conditions_length
-      (find_solvent_max_height + find_cond_max_height) / 75
-    end
+    # returns y center position depending on whether content above or below middle need more space
+    def y_center_position(vb_height, upper_content, lower_content)
+      mid = vb_height / 2
+      return upper_content if upper_content > mid
+      return vb_height - lower_content if lower_content > mid
 
-    #  correcting scale for reactants size when solv_condi arr is max and @reactant_max > 300
-    def adjust_reactants_range
-      max = 300
-      count = 0
-      range = 50
-
-      until @reactant_max <= max
-        max += 100
-        count += 1
-      end
-      range * count
-    end
-
-    # correcting scale when material(> 400) is larger than reactants and solv_condi array
-    def material_scale
-      material_max = find_material_max_height(starting_materials + products)
-      scale = material_max/400
-      scale > 1 ? (material_max - 400)/(4 * scale) : 0
-    end
-
-    # adjusting y position of reactants when there is solvents/conditions lines below reaction arrow - deduct solv_height (range) from box height so that it does not affect reactants position
-    def reactants_solv_interaction
-      solv_conditions_length = (find_solvent_max_height + find_cond_max_height) / 75
-      y_center = (global_view_box_array[3]/ 2).round
-      solv_range = @reactant_max <= 100 ? y_center + (solv_conditions_length - 3) * 12.2 : (y_center - 90) + (solv_conditions_length - 3) * 12.2
-      @reactant_max <= 300 && @max_of_solv_conditions != 0 ? solv_range
-      : solv_range - adjust_reactants_range
-    end
-
-    def check_case
-      material_max = find_material_max_height(starting_materials + products)
-      reactant_solv_condi_max = [@reactant_max * 2.5, @max_of_solv_conditions].max
-      y_center = (global_view_box_array[3]/ 2).round
-      y_center_scale = @reactant_max <= 140 ? y_center : y_center - 70
-      material_max > reactant_solv_condi_max ?  y_center_scale + material_scale
-      : (@reactant_max  > 1100 ?  @reactant_max
-      : y_center_scale)
+      mid
     end
 
     def section_it
       sections = {}
-      y_center = (global_view_box_array[3]/ 2).round
-      material_max = find_material_max_height(starting_materials + products)
-      reactant_material_max = [@reactant_max * 2.5, material_max].max
-      @reactants_y_position = (@max_of_solv_conditions > reactant_material_max &&  !(reactants.blank?))  ? reactants_solv_interaction : check_case
+      y_center = y_center_position(global_view_box_array[3], @above_arrow, @below_arrow).round
       sections[:starting_materials] = compose_material_group(starting_materials, start_at: 0, y_center: y_center)
-      arrow_x_shift = (global_view_box_array[2] += 50) # adjust starting material to arrow
-      arrow_y_shift = y_center
-      sections[:reactants] = compose_material_group reactants, start_at: global_view_box_array[2], scale: REACTANT_SCALE, arrow_width: true, y_center: (@reactants_y_position).round, is_reactants: true # TODO: rectify y_center for reactant
-      sections[:arrow] = compose_arrow_and_reaction_labels start_at: arrow_x_shift, arrow_y_shift: arrow_y_shift
-      global_view_box_array[2] += 40 # adjust arrow to products
-      @max_height_for_products = find_material_max_height(products)
-      sections[:products] = compose_material_group products, start_at: global_view_box_array[2], y_center: y_center
+      sections[:arrow] = compose_arrow_and_reaction_labels(start_at: global_view_box_array[2] + ARROW_SPACING, arrow_y_shift: y_center)
+      sections[:reactants] = compose_material_group(reactants,
+        start_at: global_view_box_array[2] + ARROW_SPACING,
+        scale: REACTANT_SCALE,
+        y_center: y_center,
+        is_reactants: true)
+      sections[:products] = compose_material_group(products, start_at: global_view_box_array[2] + ARROW_SPACING, y_center: y_center)
       @sections = sections
     end
 
