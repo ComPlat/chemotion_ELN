@@ -136,7 +136,7 @@ RSpec.describe Molecule, type: :model do
       molecule.molfile = partial_molfile
 
       allow(described_class).to receive(:svg_reprocess).and_return(nil)
-      molecule.assign_molecule_data(babel_info, {}, svg_molfile: original_molfile)
+      molecule.assign_molecule_data(babel_info, {}, original_molfile)
       expect(described_class).to have_received(:svg_reprocess).with(nil, original_molfile)
     end
 
@@ -152,7 +152,7 @@ RSpec.describe Molecule, type: :model do
       molecule.molfile = 'stored-molfile'
 
       allow(described_class).to receive(:svg_reprocess).and_return(nil)
-      molecule.assign_molecule_data(babel_info, {}, svg_molfile: nil)
+      molecule.assign_molecule_data(babel_info, {}, nil)
       expect(described_class).to have_received(:svg_reprocess).with(nil, 'stored-molfile')
     end
 
