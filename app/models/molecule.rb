@@ -105,7 +105,7 @@ class Molecule < ApplicationRecord
     molecule ||= Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
       pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
       mol.molfile = (is_partial && partial_molfile) || molfile
-      mol.assign_molecule_data(babel_info, pubchem_info)
+      mol.assign_molecule_data(babel_info, pubchem_info, svg_molfile: molfile)
     end
     molecule.ob_log = babel_info[:ob_log]
     molecule
@@ -140,7 +140,7 @@ class Molecule < ApplicationRecord
     self.save!
   end
 
-  def assign_molecule_data(babel_info, pubchem_info = {})
+  def assign_molecule_data(babel_info, pubchem_info = {}, svg_molfile: nil)
     self.inchistring = babel_info[:inchi]
     self.sum_formular = babel_info[:formula]
     self.molecular_weight = babel_info[:mol_wt]
@@ -150,7 +150,7 @@ class Molecule < ApplicationRecord
     self.pcid = pubchem_info[:cid]
 
     check_sum_formular
-    svg = Molecule.svg_reprocess(babel_info[:svg], molfile)
+    svg = Molecule.svg_reprocess(babel_info[:svg], svg_molfile || molfile)
     attach_svg svg
 
     self.cano_smiles = babel_info[:cano_smiles]

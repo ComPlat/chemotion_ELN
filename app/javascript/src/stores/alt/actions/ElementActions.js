@@ -687,10 +687,10 @@ class ElementActions {
     return (dispatch) => {
       ReactionsFetcher.create(params)
         .then((result) => {
-          dispatch(result)
+          dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
-          // Ensure loading stops even on error
+        }).finally(() => {
           LoadingActions.stop();
         });
     };
@@ -700,10 +700,10 @@ class ElementActions {
     return (dispatch) => {
       ReactionsFetcher.update(params)
         .then((result) => {
-          dispatch({ element: result, closeView })
+          dispatch({ element: result, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
-          // Ensure loading stops even on error
+        }).finally(() => {
           LoadingActions.stop();
         });
     };

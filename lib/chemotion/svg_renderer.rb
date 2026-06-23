@@ -442,7 +442,7 @@ module Chemotion
       return svg unless bounds
 
       template_lookup = load_surface_template_lookup
-      return svg if template_lookup.empty?
+      return svg if template_lookup.blank?
 
       svg_root['xmlns:xlink'] ||= 'http://www.w3.org/1999/xlink'
       labels = polymer_data[:text_by_index] || {}
@@ -555,7 +555,7 @@ module Chemotion
       return doc.to_xml unless bounds
 
       template_lookup = load_surface_template_lookup
-      return doc.to_xml if template_lookup.empty?
+      return doc.to_xml if template_lookup.blank?
 
       svg_root['xmlns:xlink'] ||= 'http://www.w3.org/1999/xlink'
       factors = compute_polymer_scale_factors(polymers.size, labels.any?, bounds)
@@ -986,7 +986,7 @@ module Chemotion
         lookup
       rescue StandardError => e
         Rails.logger.error("Failed to load surface chemistry shapes: #{e.message}")
-        {}
+        nil
       end
     end
 

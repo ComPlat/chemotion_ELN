@@ -388,38 +388,59 @@ describe('Ketcher', () => {
   // ─────────────────────────────────────────────────────────────────────────
   describe('templateAliasesPrepare — save path', () => {
     beforeEach(() => {
-      // Inject a minimal imagesList entry so templateAliasesPrepare can read
-      // imagesList[0].boundingBox without needing a full canvas load.
-      imagesListSetter([{ boundingBox: { height: 1.0, width: 1.0 } }]);
+      imagesListSetter([
+        { boundingBox: { height: 1.0, width: 1.0 } },
+        { boundingBox: { height: 2.0, width: 2.0 } },
+      ]);
     });
 
-    // Regression guard: old code always used the alias third-part (image counter = 0)
-    // as the stored atom index. When the ball was drawn after a structure (atom index > 0),
-    // the stored index was wrong — on reload the wrong atom was targeted and the ball was lost.
-    it('uses atomIndexList value instead of image counter when provided', async () => {
-      // alias t_95_0: templateId=95, imagePlace=0 (image counter).
-      // Ball is actually at atom index 6 in the KET.
-      const result = await templateAliasesPrepare(['t_95_0'], [6]);
-      assert.ok(
-        result.startsWith('6/'),
-        `PolymersList must start with actual atom index 6, got: "${result}"`
-      );
-    });
-
-    it('falls back to image counter when atomIndexList is not provided (backward compat)', async () => {
+    it('uses image counter (from alias) when atomIndexList is omitted — legacy behaviour', async () => {
       const result = await templateAliasesPrepare(['t_95_0']);
-      assert.ok(
-        result.startsWith('0/'),
-        `Without atomIndexList, image counter (0) should be used, got: "${result}"`
-      );
+      assert.strictEqual(result, '0/95/1.00-1.00');
     });
 
-    it('produces different results for atomIndexList=0 vs atomIndexList=6', async () => {
-      const withZero = await templateAliasesPrepare(['t_95_0'], [0]);
-      const withSix = await templateAliasesPrepare(['t_95_0'], [6]);
-      assert.notStrictEqual(withZero, withSix, 'Different atom indices must produce different PolymersList strings');
-      assert.ok(withZero.startsWith('0/'), `atomIndex 0 → "${withZero}"`);
-      assert.ok(withSix.startsWith('6/'), `atomIndex 6 → "${withSix}"`);
+    it('uses image counter when atomIndexList is an empty array — explicit empty fallback', async () => {
+      const result = await templateAliasesPrepare(['t_95_0'], []);
+      assert.strictEqual(result, '0/95/1.00-1.00');
+    });
+
+    // Regression guard: old code always used the alias image counter (0) as the stored atom
+    // index. When the ball was drawn after a structure (atom index > 0), the wrong atom was
+    // targeted on reload and the ball was lost.
+    it('uses actual atom index from atomIndexList when provided — Bug A fix', async () => {
+      const result = await templateAliasesPrepare(['t_95_0'], [3]);
+      assert.strictEqual(result, '3/95/1.00-1.00');
+    });
+
+    it('structure-first scenario: N=5 atoms, ball at atom 5 → stored as index 5', async () => {
+      imagesListSetter([{ boundingBox: { height: 1.5, width: 1.5 } }]);
+      const result = await templateAliasesPrepare(['t_95_0'], [5]);
+      assert.strictEqual(result, '5/95/1.50-1.50');
+    });
+
+    it('two balls: each uses its own actual atom index (not both zero)', async () => {
+      const result = await templateAliasesPrepare(['t_95_0', 't_95_1'], [0, 4]);
+      assert.strictEqual(result, '0/95/1.00-1.00 4/95/2.00-2.00');
+    });
+
+    it('surface template (templateId=96) appends "s" suffix instead of /templateId', async () => {
+      const result = await templateAliasesPrepare(['t_96_0'], [2]);
+      assert.strictEqual(result, '2s/1.00-1.00');
+    });
+
+    it('returns empty string when aliasesList is empty', async () => {
+      const result = await templateAliasesPrepare([], []);
+      assert.strictEqual(result, '');
+    });
+
+    it('skips aliases that do not match the threeParts pattern', async () => {
+      const result = await templateAliasesPrepare(['invalid', 't_95_0'], [7]);
+      assert.strictEqual(result, '7/95/1.00-1.00');
+    });
+
+    it('atomIndexList shorter than aliasesList falls back to alias image counter for extras', async () => {
+      const result = await templateAliasesPrepare(['t_95_0', 't_95_1'], [9]);
+      assert.strictEqual(result, '9/95/1.00-1.00 1/95/2.00-2.00');
     });
   });
 
