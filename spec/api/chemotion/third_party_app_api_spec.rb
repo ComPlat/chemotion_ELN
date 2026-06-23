@@ -428,5 +428,284 @@ describe Chemotion::ThirdPartyAppAPI do
       end
     end
   end
+
+  describe 'reaction-variations TPA flow' do
+    let(:collection) { create(:collection, user: admin1) }
+    let(:tpa) { create(:third_party_app, name: 'OpenStats') }
+    let(:starting_material) { create(:valid_sample) }
+    let(:reaction) do
+      create(
+        :reaction_with_variations,
+        creator: admin1,
+        collections: [collection],
+        starting_materials: [starting_material],
+        reactants: [create(:valid_sample)],
+        products: [create(:valid_sample)],
+        solvents: [create(:valid_sample)],
+      ).reload
+    end
+    let(:variation_uuids) { reaction.variations.map { |variation| variation['uuid'] } }
+    let(:cache) { ActiveSupport::Cache::FileStore.new('tmp/ThirdPartyApp', expires_in: 1.hour) }
+
+    # The token endpoint returns a JSON-encoded URL "<app.url>?url=<escaped>&method=...".
+    # Pull the escaped public-endpoint URL back out and take its last path segment (the JWT).
+    def token_from(json_url)
+      escaped = json_url[/url=([^&]+)/, 1]
+      CGI.unescape(escaped).split('/').last
+    end
+
+    describe 'GET /api/v1/third_party_apps/variations_token' do
+      let(:body) { JSON.parse(response.body) }
+      let(:token) { token_from(body) }
+      let(:payload) { JsonWebToken.decode(token) }
+
+      context 'when the user may read the reaction' do
+        before do
+          get '/api/v1/third_party_apps/variations_token',
+              params: {
+                reactionID: reaction.id, appID: tpa.id,
+                variationUuids: variation_uuids, columnOrder: %w[a b]
+              }
+        end
+
+        it 'status of get request 200?' do
+          expect(response).to have_http_status(:ok)
+        end
+
+        it 'points at the OpenStats app with the VariationStatistics method' do
+          expect(body).to start_with("#{tpa.url}?url=")
+          expect(body).to end_with('&method=VariationStatistics')
+        end
+
+        it 'encodes the request context into the token payload' do
+          expect(payload['reactionID']).to eq reaction.id
+          expect(payload['userID']).to eq admin1.id
+          expect(payload['appID']).to eq tpa.id
+          expect(payload['variationUuids']).to match_array(variation_uuids)
+          expect(payload['columnOrder']).to eq %w[a b]
+          expect(payload['requestID']).to be_present
+        end
+      end
+
+      context 'when the user may not read the reaction' do
+        let(:collection) { create(:collection, user: create(:person)) }
+
+        before do
+          get '/api/v1/third_party_apps/variations_token',
+              params: { reactionID: reaction.id, appID: tpa.id, variationUuids: variation_uuids }
+        end
+
+        it 'status code is 403' do
+          expect(response).to have_http_status(:forbidden)
+        end
+      end
+    end
+
+    describe 'GET /api/v1/public/third_party_app_variations/{token}' do
+      let(:sent_uuids) { variation_uuids }
+      let(:token) { token_from(JSON.parse(response.body)) }
+      let(:request_id) { JsonWebToken.decode(token)['requestID'] }
+      let(:cache_key) { "reaction/#{reaction.id}/#{admin1.id}/#{tpa.id}/#{request_id}" }
+      let(:body) { JSON.parse(response.body) }
+
+      before do
+        get '/api/v1/third_party_apps/variations_token',
+            params: { reactionID: reaction.id, appID: tpa.id, variationUuids: sent_uuids, columnOrder: %w[a b] }
+      end
+
+      context 'when all variations are requested' do
+        before { get "/api/v1/public/third_party_app_variations/#{token}" }
+
+        it 'status of get request 200?' do
+          expect(response).to have_http_status(:ok)
+        end
+
+        it 'returns the identity envelope alongside the variations' do
+          expect(body.keys).to match_array(%w[id request_id columnOrder variations])
+          expect(body['id']).to eq reaction.id.to_s
+          expect(body['request_id']).to eq request_id
+          expect(body['columnOrder']).to eq %w[a b]
+        end
+
+        it 'returns every requested variation' do
+          expect(body['variations'].length).to eq variation_uuids.length
+        end
+
+        it 'annotates each material with its human-readable name and short label' do
+          aux = body['variations'].first['startingMaterials'].values.first['aux']
+          expect(aux['shortLabel']).to eq starting_material.short_label
+          expect(aux['name']).to eq(starting_material.preferred_label.presence || starting_material.short_label)
+        end
+
+        it 'decrements the download counter' do
+          expect(cache.read(cache_key)[:download]).to eq 2
+        end
+      end
+
+      context 'when only a subset of variations is requested' do
+        let(:sent_uuids) { [variation_uuids.first] }
+
+        before { get "/api/v1/public/third_party_app_variations/#{token}" }
+
+        it 'returns only the requested variation' do
+          expect(body['variations'].length).to eq 1
+        end
+      end
+
+      context 'when the download counter is exhausted' do
+        before do
+          cache.write(cache_key, { token: token, download: -1 })
+          get "/api/v1/public/third_party_app_variations/#{token}"
+        end
+
+        it 'status code is 403' do
+          expect(response).to have_http_status(:forbidden)
+        end
+      end
+
+      context 'when read access is revoked after minting the token' do
+        before do
+          reaction.collections = []
+          reaction.save
+          get "/api/v1/public/third_party_app_variations/#{token}"
+        end
+
+        it 'status code is 403' do
+          expect(response).to have_http_status(:forbidden)
+        end
+      end
+    end
+
+    describe 'POST /api/v1/public/third_party_app_variations/{token}' do
+      let(:request_id) { SecureRandom.uuid }
+      let(:payload) do
+        {
+          'appID' => tpa.id,
+          'userID' => admin1.id,
+          'reactionID' => reaction.id,
+          'variationUuids' => variation_uuids,
+          'columnOrder' => [],
+          'requestID' => request_id,
+        }
+      end
+      let(:secret) { Rails.application.secrets.secret_key_base }
+      let(:token) { JWT.encode(payload, secret, 'HS256') }
+      let(:cache_key) { "reaction/#{reaction.id}/#{admin1.id}/#{tpa.id}/#{request_id}" }
+      let(:upload_counter) { 10 }
+
+      # OpenStats bundles the workbook, summary tables and plots into a single
+      # result.zip under throwaway R tempfile names.
+      let(:result_zip) do
+        file = Tempfile.new(['tpa_result', '.zip'])
+        file.close
+        Zip::OutputStream.open(file.path) do |zip|
+          zip.put_next_entry('tmp/RtmpAbc/workbook.xlsx')
+          zip.write('fake-xlsx-bytes')
+          zip.put_next_entry('tmp/RtmpAbc/summary.json')
+          zip.write('{"id":"x","request_id":"y","element_info":[],"Output":[]}')
+          zip.put_next_entry('tmp/RtmpAbc/plot.png')
+          zip.write('fake-png-bytes')
+        end
+        file
+      end
+      let(:uploaded_file) { Rack::Test::UploadedFile.new(result_zip.path, 'application/zip') }
+      let(:upload_params) { { file: uploaded_file } }
+
+      before do
+        cache.write(cache_key, { token: token, upload: upload_counter })
+        allow(Message).to receive(:create_msg_notification)
+        post "/api/v1/public/third_party_app_variations/#{token}", params: upload_params
+      end
+
+      context 'when the result is a valid zip and the user may write' do
+        let(:analysis) do
+          reaction.reload.container.analyses_container.children
+                  .find { |child| child.name == 'Statistical Analysis' }
+        end
+        let(:dataset) { analysis.children.first }
+
+        it 'status code is 201' do
+          expect(response).to have_http_status(:created)
+        end
+
+        it 'creates a Statistical Analysis analysis on the reaction' do
+          expect(analysis).to be_present
+        end
+
+        it 'attaches the workbook, summary and plot under stable filenames' do
+          expect(dataset.attachments.map(&:filename)).to contain_exactly(
+            'statistical_analysis.xlsx',
+            'variations_summary.json',
+            'variations_plot_1.png',
+          )
+        end
+
+        it 'echoes the analysis id and request id' do
+          expect(JSON.parse(response.body)).to include(
+            'analysis_id' => analysis.id,
+            'request_id' => request_id,
+          )
+        end
+
+        it 'triggers the TPA attachment notification' do
+          expect(Message).to have_received(:create_msg_notification)
+            .with(hash_including(channel_subject: Channel::SEND_TPA_ATTACHMENT_NOTIFICATION))
+        end
+      end
+
+      context 'when the echoed request_id does not match the token' do
+        let(:upload_params) { { file: uploaded_file, request_id: 'not-the-request-id' } }
+
+        it 'status code is 422' do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+
+      context 'when the echoed id does not match the token' do
+        let(:upload_params) { { file: uploaded_file, id: '0' } }
+
+        it 'status code is 422' do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+
+      context 'when the uploaded file is not a valid zip' do
+        let(:uploaded_file) do
+          file = Tempfile.new(['not_a_zip', '.zip'])
+          file.write('this is plainly not a zip archive')
+          file.rewind
+          Rack::Test::UploadedFile.new(file.path, 'application/zip')
+        end
+
+        it 'status code is 422' do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+      end
+
+      context 'when the user lacks access to the reaction' do
+        let(:collection) { create(:collection, user: create(:person)) }
+
+        it 'status code is 403' do
+          expect(response).to have_http_status(:forbidden)
+        end
+      end
+
+      context 'when the upload counter is exhausted' do
+        let(:upload_counter) { -1 }
+
+        it 'status code is 403' do
+          expect(response).to have_http_status(:forbidden)
+        end
+      end
+
+      context 'when no file is uploaded' do
+        let(:upload_params) { {} }
+
+        it 'status code is 400' do
+          expect(response).to have_http_status(:bad_request)
+        end
+      end
+    end
+  end
 end
 # rubocop:enable RSpec/LetSetup,RSpec/MultipleExpectations,RSpec/NestedGroups,RSpec/MultipleMemoizedHelpers

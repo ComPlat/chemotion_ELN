@@ -105,6 +105,11 @@ module Entities
       :vesselVolume,
       :materialType,
       :density,
+      # Human-readable identifiers injected server-side at TPA download time
+      # (see ThirdPartyAppHelpers#annotate_material_names!). nil when the
+      # underlying sample no longer exists.
+      :name,
+      :shortLabel,
     )
   end
 

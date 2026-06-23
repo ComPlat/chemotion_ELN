@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import React, {
-  useState, useEffect, useMemo, useRef, useCallback
+  useState, useEffect, useMemo, useRef
 } from 'react';
 import Select from 'react-select';
 import {
@@ -207,7 +207,7 @@ function MaterialFormatter({ value: cellData, colDef }) {
 }
 
 function GroupCellEditor({
-  value, onValueChange, stopEditing, onKeyDown
+  value, onValueChange, stopEditing
 }) {
   const [currentValue, setCurrentValue] = useState(() => {
     const group = value?.group ?? 1;
@@ -217,49 +217,27 @@ function GroupCellEditor({
 
   const inputRef = useRef(null);
 
-  const focusInput = useCallback(() => {
-    requestAnimationFrame(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
-      }
-    });
+  useEffect(() => {
+    inputRef.current?.focus();
+    inputRef.current?.select();
   }, []);
 
+  // Push the parsed value to ag-grid on every change so it's
+  // already in sync when stopEditing fires (avoids v33 race).
   useEffect(() => {
-    // Focus on mount
-    focusInput();
-  }, [focusInput]);
-
-  const commitValue = () => {
-    const parts = currentValue.split('.');
-
-    const groupStr = parts[0] || '';
-    const subGroupStr = parts[1] || '';
-
+    const [groupStr = '', subGroupStr = ''] = currentValue.split('.');
     let group = parseInt(groupStr, 10);
     let subgroup = parseInt(subGroupStr, 10);
-
-    if (Number.isNaN(group) || group <= 0) {
-      group = 1;
-    }
-
-    if (Number.isNaN(subgroup) || subgroup <= 0) {
-      subgroup = 1;
-    }
-
+    if (Number.isNaN(group) || group <= 0) group = 1;
+    if (Number.isNaN(subgroup) || subgroup <= 0) subgroup = 1;
     onValueChange({ group, subgroup });
-    stopEditing();
-  };
+  }, [currentValue]);
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' || e.key === 'Escape') {
       e.preventDefault();
-      commitValue();
-    } else if (e.key === 'Escape') {
       stopEditing();
     }
-    if (onKeyDown) onKeyDown(e);
   };
 
   return (
@@ -268,8 +246,7 @@ function GroupCellEditor({
       type="text"
       value={currentValue}
       onChange={(e) => setCurrentValue(sanitizeGroupEntry(e.target.value))}
-      onBlurCapture={commitValue}
-      onKeyDownCapture={handleKeyDown}
+      onKeyDown={handleKeyDown}
     />
   );
 }
@@ -280,8 +257,7 @@ GroupCellEditor.propTypes = {
     subgroup: PropTypes.number,
   }).isRequired,
   onValueChange: PropTypes.func.isRequired,
-  onKeyDown: PropTypes.func.isRequired,
-  stopEditing: PropTypes.bool.isRequired,
+  stopEditing: PropTypes.func.isRequired,
 };
 
 function GroupCellRenderer({ value: cellData }) {

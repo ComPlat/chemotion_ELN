@@ -57,4 +57,15 @@ export default class ThirdPartyAppFetcher {
     }).then((response) => response.json())
       .catch((errorMessage) => { console.log(errorMessage); });
   }
+
+  static fetchVariationsToken(reactionID, appID, variationUuids, columnOrder = []) {
+    const params = new URLSearchParams({ reactionID, appID });
+    variationUuids.forEach((uuid) => params.append('variationUuids[]', uuid));
+    columnOrder.forEach((col) => params.append('columnOrder[]', col));
+    const url = `${TPA_ENDPOINT}/variations_token?${params.toString()}`;
+    return fetch(url, {
+      credentials: 'same-origin'
+    }).then((response) => response.json())
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
 }

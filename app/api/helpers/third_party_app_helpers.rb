@@ -43,6 +43,41 @@ module ThirdPartyAppHelpers
     error!('Record not found', 404)
   end
 
+  # ---------------------------------------------------------------------------
+  # Reaction-variations flow (parallel to the attachment helpers above).
+  # ---------------------------------------------------------------------------
+
+  # desc: prepare the token payload for the reaction-variations flow.
+  # `columnOrder` carries the grid's visible columns in display order (their
+  # colIds); it lives only in the browser, so the frontend must hand it to us
+  # here to reach the TPA.
+  def prepare_variations_payload
+    @payload = {
+      'appID' => params[:appID],
+      'userID' => current_user.id,
+      'reactionID' => params[:reactionID],
+      'variationUuids' => params[:variationUuids] || [],
+      'columnOrder' => params[:columnOrder] || [],
+      'requestID' => SecureRandom.uuid,
+    }
+  end
+
+  # desc: find records from a variations payload and set @cache_key to a
+  # reaction-namespaced key (so reaction ids can't collide with attachment ids).
+  def parse_variations_payload(payload = @payload)
+    @user = User.find(payload['userID']&.to_i)
+    @app = payload['appID'].to_i.zero? ? ThirdPartyApp.new : ThirdPartyApp.find(payload['appID']&.to_i)
+    @reaction = Reaction.find(payload['reactionID']&.to_i)
+    @variation_uuids = Array(payload['variationUuids'])
+    @column_order = Array(payload['columnOrder'])
+    @request_id = payload['requestID']
+    @cache_key = "reaction/#{@reaction&.id}/#{@user&.id}/#{@app&.id}/#{@request_id}"
+
+    error!('No read access to reaction', 403) unless ElementPolicy.new(@user, @reaction).read?
+  rescue ActiveRecord::RecordNotFound
+    error!('Record not found', 404)
+  end
+
   # desc: decrement the counters / check if token permission is expired
   def update_cache(key)
     return error!('Invalid token', 403) if cached_token.nil? || cached_token[:token] != params[:token]
@@ -53,6 +88,150 @@ module ThirdPartyAppHelpers
 
     cached_token[key] -= 1
     cache.write(cache_key, cached_token)
+  end
+
+  # desc: return reaction variations JSON for download to third-party app.
+  def download_variations_to_third_party_app
+    update_cache(:download)
+    return error!('No read access to reaction', 403) unless ElementPolicy.new(@user, @reaction).read?
+
+    selected = @reaction.variations
+                        .select { |v| @variation_uuids.include?(v['uuid']) }
+                        .map(&:deep_symbolize_keys)
+
+    labels = reaction_sample_labels(@reaction)
+    selected.each { |row| annotate_material_names!(row, labels) }
+
+    content_type 'application/json'
+    {
+      id: @reaction.id.to_s,
+      request_id: @request_id,
+      columnOrder: @column_order,
+      variations: Entities::ReactionVariationEntity.represent(selected, serializable: true),
+    }
+  end
+
+  # desc: store the statistics result POSTed back by the third-party app.
+  def upload_variations_result_from_third_party_app
+    update_cache(:upload)
+    verify_variations_result_envelope!
+    return error!('No write access to reaction', 403) unless ElementPolicy.new(@user, @reaction).update?
+
+    ensure_reaction_container!
+
+    dataset = @reaction.container.analyses_container.create_analysis_with_dataset!(name: 'Statistical Analysis')
+    analysis = dataset.parent
+
+    store_variations_result_files(dataset, params[:file])
+
+    {
+      message: 'Statistical analysis stored successfully',
+      analysis_id: analysis.id,
+      request_id: @request_id,
+    }
+  end
+
+  # desc: integrity check on the echoed envelope.
+  def verify_variations_result_envelope!
+    if params[:request_id].present? && params[:request_id] != @request_id
+      error!('request_id does not match the token', 422)
+    end
+    return if params[:id].blank? || params[:id].to_s == @reaction.id.to_s
+
+    error!('id does not match the token', 422)
+  end
+
+  # desc: a reaction created through the API always carries a container, but be
+  # defensive — build the root (+ analyses child) tree if one is somehow missing,
+  # so the upload can't 500 on a container-less reaction.
+  def ensure_reaction_container!
+    return if @reaction.container
+
+    @reaction.container = Container.create_root_container
+    @reaction.save!
+  end
+
+  # desc: unpack the result.zip POSTed by OpenStats and attach its inner files to
+  # the dataset.
+  def store_variations_result_files(dataset, file)
+    return error!('No result file uploaded', 422) if file.blank?
+
+    excel = nil
+    plot_index = 0
+    Zip::File.open(file[:tempfile].path) do |zip|
+      zip.each do |entry|
+        next if entry.ftype == :directory
+
+        case File.extname(entry.name).downcase
+        when '.xlsx', '.xls'
+          excel = attach_variations_entry(dataset, entry, "statistical_analysis#{File.extname(entry.name).downcase}")
+        when '.json'
+          attach_variations_entry(dataset, entry, 'variations_summary.json')
+        when '.png'
+          plot_index += 1
+          attach_variations_entry(dataset, entry, "variations_plot_#{plot_index}.png")
+        end
+      end
+    end
+    notify_variations_result_uploaded(excel) if excel
+  rescue Zip::Error
+    error!('Uploaded result file is not a valid zip', 422)
+  end
+
+  # desc: materialise a single zip entry as a dataset Attachment under `filename`.
+  def attach_variations_entry(dataset, entry, filename)
+    tempfile = Tempfile.new(['variations_result', File.extname(filename)])
+    begin
+      tempfile.binmode
+      tempfile.write(entry.get_input_stream.read)
+      tempfile.flush
+      Attachment.create!(
+        attachable: dataset,
+        created_by: @user.id,
+        created_for: @user.id,
+        filename: filename,
+        file_path: tempfile.path,
+      )
+    ensure
+      tempfile.close
+      tempfile.unlink
+    end
+  end
+
+  # desc: reuse the existing TPA attachment-arrival notification.
+  def notify_variations_result_uploaded(attachment)
+    Message.create_msg_notification(
+      channel_subject: Channel::SEND_TPA_ATTACHMENT_NOTIFICATION,
+      message_from: @user.id,
+      attachment: Entities::NotificationAttachmentEntity.represent(attachment).as_json,
+      data_args: { app: @app.name },
+    )
+  end
+
+  # desc: map sample id => { name:, shortLabel: } for every sample in the reaction.
+  def reaction_sample_labels(reaction)
+    reaction.samples.each_with_object({}) do |sample, map|
+      map[sample.id] = {
+        name: sample.preferred_label.presence || sample.short_label,
+        shortLabel: sample.short_label,
+      }
+    end
+  end
+
+  # desc: inject the resolved name/shortLabel into each material's aux.
+  def annotate_material_names!(row, labels)
+    %i[startingMaterials reactants products solvents].each do |material_type|
+      row[material_type]&.each do |sample_id, material|
+        next unless material[:aux]
+
+        label = labels[sample_id.to_s.to_i]
+        next unless label
+
+        material[:aux][:name] = label[:name]
+        material[:aux][:shortLabel] = label[:shortLabel]
+      end
+    end
+    row
   end
 
   # desc: return file for download to third party app
@@ -120,6 +299,17 @@ module ThirdPartyAppHelpers
     url = URI.parse Rails.application.config.root_url
     url.path = Pathname.new(url.path)
                        .join('/', API.prefix.to_s, API.version, 'public/third_party_apps', @token)
+                       .to_s
+
+    url
+  end
+
+  # Build the url for the public reaction-variations endpoint.
+  def variations_token_uri
+    url = URI.parse Rails.application.config.root_url
+    url.path = Pathname.new(url.path)
+                       .join('/', API.prefix.to_s, API.version,
+                             'public/third_party_app_variations', @token)
                        .to_s
 
     url
