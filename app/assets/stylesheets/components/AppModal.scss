@@ -1,4 +1,17 @@
 .app-modal {
+  .modal-header {
+    @extend .gap-3;
+    .alert {
+      @extend .mb-0;
+      --bs-alert-padding-x: #{$input-padding-x};
+      --bs-alert-padding-y: #{$input-padding-y};
+      line-height: #{$input-line-height};
+    }
+    .input-group {
+      @extend .w-auto;
+    }
+  }
+
   .modal-body {
     @extend .pb-4;
     @extend .overflow-y-auto;
