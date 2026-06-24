@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { InputGroup, Form } from 'react-bootstrap';
+import { InputGroup, Form, Button } from 'react-bootstrap';
 
 export default class TextRangeWithAddon extends Component {
   handleInputChange(e) {
@@ -54,7 +54,7 @@ export default class TextRangeWithAddon extends Component {
 
   render() {
     const {
-      addon, disabled, label, tipOnText, value
+      addon, disabled, label, onAddonClick, tipOnText, value
     } = this.props;
     return (
       <Form.Group size="sm">
@@ -70,7 +70,17 @@ export default class TextRangeWithAddon extends Component {
             onFocus={() => this.handleInputFocus()}
             onBlur={() => this.handleInputBlur()}
           />
-          <InputGroup.Text>{addon}</InputGroup.Text>
+          {onAddonClick ? (
+            <Button
+              disabled={disabled}
+              variant="light"
+              onClick={onAddonClick}
+            >
+              {addon}
+            </Button>
+          ) : (
+            <InputGroup.Text>{addon}</InputGroup.Text>
+          )}
         </InputGroup>
       </Form.Group>
     );
@@ -83,6 +93,7 @@ TextRangeWithAddon.propTypes = {
   value: PropTypes.string,
   addon: PropTypes.string,
   disabled: PropTypes.bool,
+  onAddonClick: PropTypes.func,
   onChange: PropTypes.func,
   tipOnText: PropTypes.string
 };
@@ -92,6 +103,7 @@ TextRangeWithAddon.defaultProps = {
   value: '',
   addon: '',
   disabled: false,
+  onAddonClick: null,
   onChange: () => {},
   tipOnText: ''
 };
