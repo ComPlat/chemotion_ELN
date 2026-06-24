@@ -13,7 +13,6 @@ import {
 } from 'src/utilities/hierarchicalPropertyConfig';
 
 const TEMP_FIELDS = ['cspi'];
-const NEW_SURFACE_FIELDS = ['layer_thickness', 'liquid_medium', 'stabilizer'];
 
 const convertTemperatureFromTo = (value, from, to) => {
   if (from === to) return value;
@@ -199,9 +198,6 @@ export default function HierarchicalMaterialSection({
   const selectedOptions = HIERARCHICAL_PROPERTY_OPTIONS.filter(
     (opt) => selectedKeys.includes(opt.value),
   );
-  const existingKeys = selectedKeys.filter((k) => !NEW_SURFACE_FIELDS.includes(k));
-  const newKeys = selectedKeys.filter((k) => NEW_SURFACE_FIELDS.includes(k));
-
   return (
     <>
       <h5 className="mt-4">Hierarchical material information:</h5>
@@ -247,39 +243,18 @@ export default function HierarchicalMaterialSection({
       </Row>
 
       {selectedKeys.length > 0 && (
-        <>
-          {existingKeys.length > 0 && (
-            <Row className="mb-4">
-              {existingKeys.map((key) => (
-                <Col xs={3} key={key} className="mb-4">
-                  <HierarchicalPropertyInput
-                    sample={sample}
-                    fieldKey={key}
-                    onFieldChange={handleFieldChange}
-                    onUnitChange={handleUnitChange}
-                  />
-                </Col>
-              ))}
-            </Row>
-          )}
-          {newKeys.length > 0 && (
-            <>
-              <h6 className="mt-2 text-muted">Surface chemistry properties:</h6>
-              <Row className="mb-4">
-                {newKeys.map((key) => (
-                  <Col xs={3} key={key} className="mb-4">
-                    <HierarchicalPropertyInput
-                      sample={sample}
-                      fieldKey={key}
-                      onFieldChange={handleFieldChange}
-                      onUnitChange={handleUnitChange}
-                    />
-                  </Col>
-                ))}
-              </Row>
-            </>
-          )}
-        </>
+        <Row className="mb-4">
+          {selectedKeys.map((key) => (
+            <Col xs={3} key={key} className="mb-4">
+              <HierarchicalPropertyInput
+                sample={sample}
+                fieldKey={key}
+                onFieldChange={handleFieldChange}
+                onUnitChange={handleUnitChange}
+              />
+            </Col>
+          ))}
+        </Row>
       )}
 
       <Row>{compositionTable}</Row>
