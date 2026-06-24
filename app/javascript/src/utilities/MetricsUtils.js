@@ -18,7 +18,7 @@ const getMetricPrefix = (metrics, index, validPrefixes, defaultPrefix = 'm') => 
  * Common metric prefixes for molecular amounts (mol)
  * @type {Array<string>}
  */
-const metricPrefixesMol = ['m', 'n'];
+const metricPrefixesMol = ['m', 'n', 'u'];
 
 /**
  * Common metric prefixes for concentrations (mol/l)
@@ -28,7 +28,7 @@ const metricPrefixesMolConc = ['m', 'n'];
 
 /**
  * Gets the metric prefix for molecular amount (mol) from component metrics.
- * Uses index 2 of the metrics array with valid prefixes ['m', 'n'].
+ * Uses index 2 of the metrics array with valid prefixes ['m', 'n', 'u'].
  *
  * @param {Object} component - The component object containing metrics
  * @returns {string} The metric prefix for mol units (default: 'm')
