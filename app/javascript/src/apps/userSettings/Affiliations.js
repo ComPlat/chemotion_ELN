@@ -91,17 +91,15 @@ function Affiliations() {
   // to avoid false positives from ROR's substring matching on short terms.
   useEffect(() => {
     const query = suggestionPopover.value.trim();
-    if (suggestionPopover.field !== 'organization' || query.length < 4) {
+    if (suggestionPopover.field !== 'organization' || query.length < 3) {
       setOrgHints([]);
       return undefined;
     }
     const timer = setTimeout(() => {
+      // Trust ROR's ranking (it resolves acronyms like "KIT" → Karlsruhe Institute
+      // of Technology, which a literal substring filter would discard).
       UserSettingsFetcher.searchRorOrganizations(query)
-        .then((results) => {
-          const q = query.toLowerCase();
-          const relevant = results.filter((r) => r.label.toLowerCase().includes(q));
-          setOrgHints(relevant.slice(0, 5));
-        });
+        .then((results) => setOrgHints((results || []).slice(0, 5)));
     }, 400);
     return () => clearTimeout(timer);
   }, [suggestionPopover.value, suggestionPopover.field]);
@@ -153,6 +151,8 @@ function Affiliations() {
         group: '',
         deptOptions: [],
         groupOptions: [],
+        // Picked from a dropdown = an existing org, so nothing on this row is pending.
+        pendingFields: [],
       }
       : row)));
 
@@ -206,6 +206,8 @@ function Affiliations() {
       if (i !== index) return row;
       const updated = { ...row, [field]: value };
       if (field === 'department') updated.group = '';
+      // Choosing from a dropdown means this field is an existing value, not a suggestion.
+      if (row.pendingFields) updated.pendingFields = row.pendingFields.filter((f) => f !== field);
       return updated;
     }));
 
@@ -214,23 +216,6 @@ function Affiliations() {
       loadRowGroupOptions(index, row.organization, value, row.ror_id);
     }
     clearFieldError(index, field);
-  };
-
-  const handleSaveButtonClick = (index) => {
-    const updatedAffiliations = [...affiliations];
-    const newInputErrors = { ...inputError };
-
-    if (!updatedAffiliations[index].organization) {
-      newInputErrors[index] = { ...newInputErrors[index], organization: true };
-      setInputError(newInputErrors);
-      return;
-    }
-
-    if (!newInputErrors[index] || !Object.keys(newInputErrors[index]).length) {
-      updatedAffiliations[index].disabled = true;
-      setAffiliations(updatedAffiliations);
-      handleCreateOrUpdateAffiliation(index);
-    }
   };
 
   const submitSuggestion = (params, onDone) => {
@@ -262,6 +247,38 @@ function Affiliations() {
           autoDismiss: 5,
         });
       });
+  };
+
+  const handleSaveButtonClick = (index) => {
+    const updatedAffiliations = [...affiliations];
+    const newInputErrors = { ...inputError };
+
+    if (!updatedAffiliations[index].organization) {
+      newInputErrors[index] = { ...newInputErrors[index], organization: true };
+      setInputError(newInputErrors);
+      return;
+    }
+
+    if (newInputErrors[index] && Object.keys(newInputErrors[index]).length) return;
+
+    const row = updatedAffiliations[index];
+    if (row.pendingFields && row.pendingFields.length > 0) {
+      // Any pending (newly suggested) value sends the whole row to admin review.
+      const payload = {
+        organization: row.organization,
+        country: row.country || '',
+        department: row.department || '',
+        group: row.group || '',
+        ...(row.ror_id ? { ror_id: row.ror_id } : {}),
+        ...(row.id ? { target_user_affiliation_id: row.id } : {}),
+      };
+      submitSuggestion(payload, () => getAllAffiliations());
+      return;
+    }
+
+    updatedAffiliations[index].disabled = true;
+    setAffiliations(updatedAffiliations);
+    handleCreateOrUpdateAffiliation(index);
   };
 
   const closeSuggestionPopover = () => setSuggestionPopover({ field: null, value: '' });
@@ -302,33 +319,69 @@ function Affiliations() {
       return;
     }
 
-    const context = field !== 'organization' && activeRowWithOrg
-      ? {
-        organization: activeRowWithOrg.organization,
-        country: activeRowWithOrg.country || '',
-        // Carry the org's ROR id so an approved suggestion stays linked to it.
-        ...(activeRowWithOrg.ror_id ? { ror_id: activeRowWithOrg.ror_id } : {}),
-        // A working group lives under a department, so carry the row's department along.
-        ...(field === 'group' && activeRowWithOrg.department
-          ? { department: activeRowWithOrg.department }
-          : {}),
-      }
-      : {};
-    submitSuggestion({ [field]: value.trim(), ...context }, closeSuggestionPopover);
+    // Stage the value into a row as a pending field; submission happens on Save.
+    const trimmed = value.trim();
+    const addPending = (row) => Array.from(new Set([...(row.pendingFields || []), field]));
+
+    if (field === 'organization') {
+      // Org has no required active row: stage into the open editable row, or open a new one.
+      setAffiliations((prev) => {
+        const idx = prev.findIndex((a) => !a.disabled);
+        if (idx === -1) {
+          return [
+            ...prev.map((r) => ({ ...r, disabled: true })),
+            {
+              country: '',
+              organization: trimmed,
+              ror_id: '',
+              department: '',
+              group: '',
+              disabled: false,
+              pendingFields: ['organization'],
+            },
+          ];
+        }
+        return prev.map((r, i) => (i === idx
+          ? {
+            ...r,
+            organization: trimmed,
+            ror_id: '',
+            pendingFields: addPending(r),
+          }
+          : r));
+      });
+      clearFieldError(affiliations.findIndex((a) => !a.disabled), 'organization');
+      closeSuggestionPopover();
+      return;
+    }
+
+    // Department/group: the trigger is disabled unless an editable row already has an org.
+    const targetIndex = affiliations.findIndex((a) => !a.disabled && a.organization);
+    if (targetIndex === -1) { closeSuggestionPopover(); return; }
+    setAffiliations((prev) => prev.map((row, i) => (i === targetIndex
+      ? { ...row, [field]: trimmed, pendingFields: addPending(row) }
+      : row)));
+    closeSuggestionPopover();
   };
 
   // requiresOrg=false for organization suggestions (no active row needed)
-  const renderSuggestionTrigger = (field, label, requiresOrg = true) => {
-    const disabled = requiresOrg && !activeRowWithOrg;
+  const renderSuggestionTrigger = (field, label) => {
+    const activeRow = affiliations.find((a) => !a.disabled);
+    // Org suggestions need an open row with a country (an org belongs to a country,
+    // and ROR matches by country); department/group need a row that already has an org.
+    const disabled = field === 'organization'
+      ? (!activeRow || !activeRow.country)
+      : !activeRowWithOrg;
+    const disabledHint = field === 'organization'
+      ? 'Add a row and select a country first'
+      : 'Select an organization first';
     const isOpen = suggestionPopover.field === field;
     const triggerRef = suggestionTriggerRefs[field];
-    // Block submitting an organization that already exists in ROR.
-    const orgBlocked = field === 'organization' && orgHints.length > 0;
 
     const btn = disabled ? (
       <OverlayTrigger
         placement="top"
-        overlay={<Tooltip id={`suggest-${field}-disabled`}>Select an organization first</Tooltip>}
+        overlay={<Tooltip id={`suggest-${field}-disabled`}>{disabledHint}</Tooltip>}
       >
         <span className="ms-1">
           <Button size="sm" variant="link" className="p-0" disabled style={{ pointerEvents: 'none' }}>
@@ -375,14 +428,14 @@ function Affiliations() {
                     onChange={(e) => setSuggestionPopover((p) => ({ ...p, value: e.target.value }))}
                   />
                 </div>
-                {orgBlocked && (
+                {field === 'organization' && orgHints.length > 0 && (
                   <div
-                    className="mb-3 p-2 bg-warning bg-opacity-25 rounded border border-warning"
+                    className="mb-3 p-2 bg-light rounded border border-secondary-subtle"
                     style={{ fontSize: '0.8rem' }}
                   >
                     <div className="fw-semibold mb-1">
-                      <i className="fa fa-exclamation-triangle me-1" />
-                      Already in ROR — select from the dropdown:
+                      <i className="fa fa-info-circle me-1" />
+                      Possible matches in ROR — pick one from the dropdown if it fits:
                     </div>
                     {orgHints.map((h) => (
                       <div key={h.value} className="text-truncate text-secondary">
@@ -397,8 +450,7 @@ function Affiliations() {
                   <Button
                     size="sm"
                     variant="primary"
-                    disabled={!suggestionPopover.value.trim() || orgBlocked}
-                    style={orgBlocked ? { pointerEvents: 'none', opacity: 0.5 } : {}}
+                    disabled={!suggestionPopover.value.trim()}
                     onClick={handleSuggestionSubmit}
                   >
                     Confirm
@@ -499,6 +551,13 @@ function Affiliations() {
               <strong className="me-1">Group:</strong>
               {s.group || '—'}
             </p>
+            <Button
+              size="sm"
+              variant="outline-danger"
+              onClick={() => UserSettingsFetcher.deleteSuggestion(s.id).then(() => refreshSuggestions())}
+            >
+              Withdraw
+            </Button>
           </div>
         ))}
       </div>
@@ -527,31 +586,29 @@ function Affiliations() {
       </div>
       <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
         <colgroup>
-          <col style={{ width: '20%' }} />
-          <col style={{ width: '20%' }} />
-          <col style={{ width: '15%' }} />
-          <col style={{ width: '15%' }} />
-          <col style={{ width: '12%' }} />
-          <col style={{ width: '12%' }} />
-          <col style={{ width: '6%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '32%' }} />
+          <col style={{ width: '24%' }} />
+          <col style={{ width: '24%' }} />
+          <col style={{ width: '10%' }} />
         </colgroup>
         <thead>
           <tr>
-            <th style={{ width: '16%' }}>Country</th>
-            <th style={{ width: '24%' }}>
+            <th style={{ width: '10%' }}>Country</th>
+            <th style={{ width: '32%' }}>
               Organization
               <span className="text-danger ms-1">*</span>
-              {renderSuggestionTrigger('organization', 'Organization name', false)}
+              {renderSuggestionTrigger('organization', 'Organization name')}
             </th>
-            <th style={{ width: '22%' }}>
+            <th style={{ width: '24%' }}>
               Department
               {renderSuggestionTrigger('department', 'Department name')}
             </th>
-            <th style={{ width: '22%' }}>
+            <th style={{ width: '24%' }}>
               Working Group
               {renderSuggestionTrigger('group', 'Working group name')}
             </th>
-            <th style={{ width: '16%' }}>Actions</th>
+            <th style={{ width: '10%' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -572,38 +629,53 @@ function Affiliations() {
               <td>
                 {item.disabled ? item.organization
                   : (
-                    <OrganizationSelect
-                      value={item.organization
-                        ? { value: item.ror_id || item.organization, label: item.organization }
-                        : null}
-                      isInvalid={!!(inputError[index] && inputError[index].organization)}
-                      country={item.country || ''}
-                      onChange={(choice) => handleOrganizationChange(index, choice)}
-                    />
+                    <>
+                      <OrganizationSelect
+                        value={item.organization
+                          ? { value: item.ror_id || item.organization, label: item.organization }
+                          : null}
+                        isInvalid={!!(inputError[index] && inputError[index].organization)}
+                        country={item.country || ''}
+                        onChange={(choice) => handleOrganizationChange(index, choice)}
+                      />
+                      {(item.pendingFields || []).includes('organization') && (
+                        <small className="text-warning d-block">New — pending admin approval on Save</small>
+                      )}
+                    </>
                   )}
               </td>
               <td>
                 {item.disabled ? item.department
                   : (
-                    <AffiliationSelect
-                      placeholder="Select department"
-                      value={item.department || ''}
-                      options={item.deptOptions || []}
-                      disabled={!item.organization}
-                      onChange={(val) => onChangeHandler(index, 'department', val)}
-                    />
+                    <>
+                      <AffiliationSelect
+                        placeholder="Select department"
+                        value={item.department || ''}
+                        options={item.deptOptions || []}
+                        disabled={!item.organization}
+                        onChange={(val) => onChangeHandler(index, 'department', val)}
+                      />
+                      {(item.pendingFields || []).includes('department') && (
+                        <small className="text-warning d-block">New — pending admin approval on Save</small>
+                      )}
+                    </>
                   )}
               </td>
               <td>
                 {item.disabled ? item.group
                   : (
-                    <AffiliationSelect
-                      placeholder="Select working group"
-                      value={item.group || ''}
-                      options={item.groupOptions || []}
-                      disabled={!item.organization}
-                      onChange={(val) => onChangeHandler(index, 'group', val)}
-                    />
+                    <>
+                      <AffiliationSelect
+                        placeholder="Select working group"
+                        value={item.group || ''}
+                        options={item.groupOptions || []}
+                        disabled={!item.organization}
+                        onChange={(val) => onChangeHandler(index, 'group', val)}
+                      />
+                      {(item.pendingFields || []).includes('group') && (
+                        <small className="text-warning d-block">New — pending admin approval on Save</small>
+                      )}
+                    </>
                   )}
               </td>
               <td>
