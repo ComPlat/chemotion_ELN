@@ -154,6 +154,82 @@ RSpec.describe Sample do
     end
   end
 
+  describe 'new hierarchical fields (layer_thickness, liquid_medium, stabilizer)' do
+    it 'persists and returns layer_thickness when set on the column' do
+      sample = create(:sample, layer_thickness: '50')
+      expect(sample.layer_thickness).to eq('50')
+      expect(sample.reload.layer_thickness).to eq('50')
+    end
+
+    it 'persists and returns liquid_medium when set on the column' do
+      sample = create(:sample, liquid_medium: 'Water')
+      expect(sample.liquid_medium).to eq('Water')
+      expect(sample.reload.liquid_medium).to eq('Water')
+    end
+
+    it 'persists and returns stabilizer when set on the column' do
+      sample = create(:sample, stabilizer: 'PVP')
+      expect(sample.stabilizer).to eq('PVP')
+      expect(sample.reload.stabilizer).to eq('PVP')
+    end
+
+    it 'falls back to sample_details for layer_thickness when column is blank' do
+      sample = create(:sample, layer_thickness: nil, sample_details: { 'layer_thickness' => '100' })
+      expect(sample.layer_thickness).to eq('100')
+    end
+
+    it 'falls back to sample_details for liquid_medium when column is blank' do
+      sample = create(:sample, liquid_medium: nil, sample_details: { 'liquid_medium' => 'Ethanol' })
+      expect(sample.liquid_medium).to eq('Ethanol')
+    end
+
+    it 'falls back to sample_details for stabilizer when column is blank' do
+      sample = create(:sample, stabilizer: nil, sample_details: { 'stabilizer' => 'PEG' })
+      expect(sample.stabilizer).to eq('PEG')
+    end
+
+    it 'prefers column over sample_details for new fields' do
+      sample = create(:sample,
+        layer_thickness: 'col',
+        sample_details: { 'layer_thickness' => 'details' })
+      expect(sample.layer_thickness).to eq('col')
+    end
+  end
+
+  describe 'dropdown hierarchical fields (sieve_fraction, material, shape, storage_condition)' do
+    it 'persists sieve_fraction as a string value' do
+      sample = create(:sample, sieve_fraction: 'fine_powder')
+      expect(sample.reload.sieve_fraction).to eq('fine_powder')
+    end
+
+    it 'persists material as a string value' do
+      sample = create(:sample, material: 'cordierite')
+      expect(sample.reload.material).to eq('cordierite')
+    end
+
+    it 'persists shape as a string value' do
+      sample = create(:sample, shape: 'cylinders')
+      expect(sample.reload.shape).to eq('cylinders')
+    end
+
+    it 'persists storage_condition as a string value' do
+      sample = create(:sample, storage_condition: 'glovebox')
+      expect(sample.reload.storage_condition).to eq('glovebox')
+    end
+  end
+
+  describe 'cell density (cspi) field with CPSI semantics' do
+    it 'persists cspi as a string value' do
+      sample = create(:sample, cspi: '400')
+      expect(sample.reload.cspi).to eq('400')
+    end
+
+    it 'falls back to sample_details when cspi column is blank' do
+      sample = create(:sample, cspi: nil, sample_details: { 'cspi' => '300' })
+      expect(sample.cspi).to eq('300')
+    end
+  end
+
   describe 'deletion' do
     let(:sample) { create(:sample) }
     let(:starting_material_reaction) { create(:reaction) }
@@ -302,6 +378,9 @@ RSpec.describe Sample do
       expect(sample.save).to be(true)
       expect(sample.molecule).to eq(molecule)
       expect(sample.molecule.cano_smiles).to eq('')
+    end
+  end
+
   describe 'molfiles with polymers' do
     # 3 R# with bonds, PolymersList + TextNode
     let(:molfile_three_r_with_bonds) do

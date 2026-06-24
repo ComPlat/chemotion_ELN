@@ -25,73 +25,9 @@ import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/prop
 import { SAMPLE_TYPE_HIERARCHICAL_MATERIAL } from 'src/models/Sample';
 import Component from 'src/models/Component';
 import buildHierarchicalMaterialRows from 'src/utilities/sampleHierarchicalCompositions';
-import { unitSystems, convertUnits } from 'src/components/staticDropdownOptions/units';
+import { HIERARCHICAL_PROPERTY_OPTIONS } from 'src/utilities/hierarchicalPropertyConfig';
+import HierarchicalMaterialSection from 'src/apps/mydb/elements/details/samples/propertiesTab/HierarchicalMaterialSection';
 
-const stateOptions = [
-  { value: 'solid_powder', label: 'Solid Powder' },
-  { value: 'solid_pellet', label: 'Solid Pellet' },
-  { value: 'solid_monolith', label: 'Solid Monolith' },
-  { value: 'solid_shape', label: 'Solid Shape' },
-  { value: 'liquid_colloidal', label: 'Liquid Colloidal' },
-  { value: 'liquid_solution', label: 'Liquid Solution' }
-];
-
-const HIERARCHICAL_PROPERTY_OPTIONS = [
-  { value: 'sieve_fraction', label: 'Sieve fraction', placeholder: 'e.g., 100-200 µm' },
-  { value: 'height', label: 'Height', placeholder: 'e.g., 5' },
-  { value: 'diameter', label: 'Diameter', placeholder: 'e.g., 2.5' },
-  { value: 'width', label: 'Width', placeholder: 'e.g., 3' },
-  { value: 'length', label: 'Length', placeholder: 'e.g., 10' },
-  { value: 'material', label: 'Material', placeholder: 'e.g., Glass, Plastic' },
-  { value: 'cspi', label: 'CSPI', placeholder: 'e.g., 45°C' },
-  { value: 'particle_size', label: 'Particle size', placeholder: 'e.g., Medium, 50 µm' },
-  { value: 'shape', label: 'Shape', placeholder: 'e.g., Spherical, Cubic' },
-  { value: 'storage_condition', label: 'Storage condition', placeholder: 'e.g., Room temperature' },
-];
-
-const PROPERTY_MAP = Object.fromEntries(
-  HIERARCHICAL_PROPERTY_OPTIONS.map((opt) => [opt.value, { label: opt.label, placeholder: opt.placeholder }])
-);
-
-const DIMENSION_FIELDS = ['height', 'diameter', 'width', 'length'];
-const LENGTH_UNIT_FIELDS = [...DIMENSION_FIELDS, 'particle_size', 'sieve_fraction'];
-const TEMP_FIELDS = ['cspi'];
-
-// Physical bulk dimensions: µm → mm → cm → m (no nm — not at nanoscale)
-const DIMENSION_UNIT_OPTIONS = unitSystems.length.filter((u) => ['µm', 'mm', 'cm', 'm'].includes(u.value));
-// Particles can range from nano to millimetre scale
-const PARTICLE_SIZE_UNIT_OPTIONS = unitSystems.length.filter((u) => ['nm', 'µm', 'mm'].includes(u.value));
-// Sieve mesh: only µm and mm are standard sieve denominations
-const SIEVE_FRACTION_UNIT_OPTIONS = unitSystems.length.filter((u) => ['µm', 'mm'].includes(u.value));
-const TEMP_UNIT_OPTIONS = unitSystems.temperature;
-
-const FIELD_UNIT_OPTIONS = {
-  height: DIMENSION_UNIT_OPTIONS,
-  width: DIMENSION_UNIT_OPTIONS,
-  length: DIMENSION_UNIT_OPTIONS,
-  diameter: DIMENSION_UNIT_OPTIONS,
-  particle_size: PARTICLE_SIZE_UNIT_OPTIONS,
-  sieve_fraction: SIEVE_FRACTION_UNIT_OPTIONS,
-  cspi: TEMP_UNIT_OPTIONS,
-};
-
-// Convert temperature between arbitrary from/to units via Kelvin as intermediate
-const convertTemperatureFromTo = (value, from, to) => {
-  if (from === to) return value;
-  const toKelvin = (v, u) => {
-    if (u === 'K')  return v;
-    if (u === '°C') return v + 273.15;
-    if (u === '°F') return ((v - 32) * 5) / 9 + 273.15;
-    return v;
-  };
-  const fromKelvin = (v, u) => {
-    if (u === 'K')  return v;
-    if (u === '°C') return v - 273.15;
-    if (u === '°F') return ((v - 273.15) * 9) / 5 + 32;
-    return v;
-  };
-  return parseFloat(fromKelvin(toKelvin(value, from), to).toFixed(4));
-};
 
 /**
  * Normalizes components that may be in API-format (with nested component_properties)
@@ -274,9 +210,7 @@ export default class SampleForm extends React.Component {
     this.switchDensityMolarity = this.switchDensityMolarity.bind(this);
     this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
     this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
-    this.stateSelect = this.stateSelect.bind(this);
     this.handleComponentFieldChanged = this.handleComponentFieldChanged.bind(this);
-    this.handleHierarchicalPropertySelectionChanged = this.handleHierarchicalPropertySelectionChanged.bind(this);
   }
 
   componentDidUpdate(prevProps) {
@@ -1428,199 +1362,6 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  stateSelect(sample) {
-    return (
-      <Form.Group controlId="sampleDetailLevelSelect">
-        <Form.Label>State</Form.Label>
-        <Form.Select
-          onChange={(e) => {
-            this.handleFieldChanged('state', e.target.value);
-          }}
-          value={sample.state || ''}
-        >
-          <option value="">Select a state</option>
-          {stateOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
-    );
-  }
-
-  getSelectedHierarchicalProperties() {
-    const { sample } = this.props;
-    const stored = sample.sample_details?.selected_properties;
-    // If the sample explicitly tracks which properties to show (set by user toggle
-    // or by SDF/XLS import), respect it strictly.
-    if (Array.isArray(stored)) return stored;
-
-    // Legacy fallback for older samples without selected_properties: auto-include
-    // any hierarchical field that has a value.
-    return HIERARCHICAL_PROPERTY_OPTIONS
-      .map((opt) => opt.value)
-      .filter((key) => {
-        const v = sample[key] ?? sample.sample_details?.[key];
-        return v !== undefined && v !== null && v !== '';
-      });
-  }
-
-  handleHierarchicalUnitChanged(field, newUnit) {
-    const { sample, handleSampleChanged } = this.props;
-    const details = { ...(sample.sample_details || {}) };
-    const unitKey = `${field}_unit`;
-    const oldUnit = details[unitKey];
-
-    if (LENGTH_UNIT_FIELDS.includes(field) && oldUnit && oldUnit !== newUnit) {
-      const rawVal = sample[field] ?? details[field];
-      const currentVal = parseFloat(rawVal);
-      if (!Number.isNaN(currentVal)) {
-        const converted = convertUnits(currentVal, oldUnit, newUnit);
-        sample[field] = converted;
-        details[field] = converted;
-      }
-    } else if (TEMP_FIELDS.includes(field) && oldUnit && oldUnit !== newUnit) {
-      const currentVal = parseFloat(sample[field] ?? details[field]);
-      if (!Number.isNaN(currentVal)) {
-        const converted = convertTemperatureFromTo(currentVal, oldUnit, newUnit);
-        sample[field] = converted;
-        details[field] = converted;
-      }
-    }
-
-    details[unitKey] = newUnit;
-    sample.sample_details = details;
-    handleSampleChanged(sample);
-  }
-
-  renderFieldWithUnit(sample, key, label, unitOptions, defaultUnit, isTextInput = false) {
-    const details = sample.sample_details || {};
-    const value = sample[key] ?? details[key] ?? '';
-    const unit = details[`${key}_unit`] ?? defaultUnit;
-    const cycleUnit = () => {
-      const idx = unitOptions.findIndex((u) => u.value === unit);
-      const nextUnit = unitOptions[(idx + 1) % unitOptions.length].value;
-      this.handleHierarchicalUnitChanged(key, nextUnit);
-    };
-    return (
-      <Form.Group className="w-100">
-        <Form.Label>{label}</Form.Label>
-        <div className="numeral-input-with-units">
-          <InputGroup className="d-flex flex-nowrap align-items-center w-100">
-            <Form.Control
-              type="text"
-              value={value}
-              disabled={!sample.can_update}
-              placeholder={PROPERTY_MAP[key]?.placeholder}
-              className="flex-grow-1"
-              onChange={(e) => this.handleFieldChanged(key, e.target.value)}
-            />
-            <Button
-              variant="light"
-              disabled={!sample.can_update}
-              onClick={cycleUnit}
-              className="px-1"
-            >
-              {unit}
-            </Button>
-          </InputGroup>
-        </div>
-      </Form.Group>
-    );
-  }
-
-  renderHierarchicalPropertyInput(sample, key, prop) {
-    const unitOptions = FIELD_UNIT_OPTIONS[key];
-    if (unitOptions) {
-      const defaultUnit = unitOptions[0].value;
-      return this.renderFieldWithUnit(sample, key, prop.label, unitOptions, defaultUnit);
-    }
-    return this.textInput(sample, key, prop.label, false, false, prop.placeholder);
-  }
-
-  handleHierarchicalPropertySelectionChanged(selectedOptions) {
-    const { sample, handleSampleChanged } = this.props;
-    const selectedValues = (selectedOptions || []).map((opt) => opt.value);
-    sample.sample_details = {
-      ...(sample.sample_details || {}),
-      selected_properties: selectedValues,
-    };
-    handleSampleChanged(sample);
-  }
-
-  hierarchicalPropertySelect(sample) {
-    const selectedKeys = this.getSelectedHierarchicalProperties();
-    const selectedOptions = HIERARCHICAL_PROPERTY_OPTIONS.filter(
-      (opt) => selectedKeys.includes(opt.value)
-    );
-    return (
-      <Form.Group>
-        <Form.Label>Additional Properties</Form.Label>
-        <Select
-          isMulti
-          name="hierarchicalProperties"
-          isDisabled={!sample.can_update}
-          options={HIERARCHICAL_PROPERTY_OPTIONS}
-          value={selectedOptions}
-          onChange={this.handleHierarchicalPropertySelectionChanged}
-          placeholder="Select properties to display..."
-          closeMenuOnSelect={false}
-        />
-      </Form.Group>
-    );
-  }
-
-  hierarchicalMaterialComponentsList(sample) {
-    const selectedKeys = this.getSelectedHierarchicalProperties();
-    const show = (key) => selectedKeys.includes(key);
-
-    return (
-      <>
-        <h5 className="mt-4">Hierarchical material information:</h5>
-        <Row className="align-items-end mb-4">
-          <Col>{this.moleculeInput()}</Col>
-
-          <Col xs={4} className="d-flex align-items-end gap-2">
-
-            {this.infoButton()}
-            {this.sampleAmount(sample)}
-          </Col>
-        </Row>
-
-        <Row className="align-items-end mb-4">
-          <Col xs={3}>{this.stateSelect(sample)}</Col>
-          <Col>{this.hierarchicalPropertySelect(sample)}</Col>
-        </Row>
-
-        {selectedKeys.length > 0 && (
-          <Row className="mb-4">
-            {(() => {
-              const dimensionFields = ['height', 'diameter', 'width', 'length'];
-              const regularKeys = selectedKeys.filter((k) => !dimensionFields.includes(k));
-              const dimensionKeys = selectedKeys.filter((k) => dimensionFields.includes(k));
-
-              return [
-                ...regularKeys.map((key) => (
-                  <Col xs={3} key={key} className="mb-4">
-                    {this.renderHierarchicalPropertyInput(sample, key, PROPERTY_MAP[key])}
-                  </Col>
-                )),
-                ...dimensionKeys.map((key) => (
-                  <Col xs={3} key={key} className="mb-4">
-                    {this.renderHierarchicalPropertyInput(sample, key, PROPERTY_MAP[key])}
-                  </Col>
-                )),
-              ];
-            })()}
-          </Row>
-        )}
-
-        <Row>{this.hierarchicalMaterialTable(sample)}</Row>
-      </>
-    );
-  }
-
   handleComponentFieldChanged(index, field, value) {
     const { sample } = this.props;
 
@@ -1790,8 +1531,16 @@ export default class SampleForm extends React.Component {
           )
         }
 
-        {selectedSampleType?.value === SAMPLE_TYPE_HIERARCHICAL_MATERIAL
-          && this.hierarchicalMaterialComponentsList(sample)}
+        {selectedSampleType?.value === SAMPLE_TYPE_HIERARCHICAL_MATERIAL && (
+          <HierarchicalMaterialSection
+            sample={sample}
+            onSampleChanged={handleSampleChanged}
+            moleculeInput={this.moleculeInput()}
+            infoButton={this.infoButton()}
+            sampleAmount={this.sampleAmount(sample)}
+            compositionTable={this.hierarchicalMaterialTable()}
+          />
+        )}
 
         {selectedSampleType?.value === 'Mixture' && (
           <>

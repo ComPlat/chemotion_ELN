@@ -469,6 +469,9 @@ export default class Sample extends Element {
       particle_size: this.particle_size || '',
       shape: this.shape || '',
       sieve_fraction: this.sieve_fraction || '',
+      layer_thickness: this.layer_thickness || '',
+      liquid_medium: this.liquid_medium || '',
+      stabilizer: this.stabilizer || '',
     });
 
     return serialized;

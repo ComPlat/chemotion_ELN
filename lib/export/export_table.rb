@@ -16,7 +16,8 @@ module Export
       'height', 'height unit', 'width', 'width unit', 'length', 'length unit',
       'diameter', 'diameter unit', 'state', 'color', 'storage condition',
       'material', 'cspi', 'cspi unit', 'particle size', 'particle size unit',
-      'shape', 'sieve fraction', 'sieve fraction unit'
+      'shape', 'sieve fraction', 'sieve fraction unit',
+      'layer thickness', 'layer thickness unit', 'liquid medium', 'stabilizer'
     ].freeze
 
     # allowed sample/molecule headers for sample detail level 10

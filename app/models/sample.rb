@@ -103,7 +103,7 @@ class Sample < ApplicationRecord
   ].freeze
 
   # Hierarchical sample properties (column or sample_details, fallback to xref for backwards compatibility)
-  %i[color state height width length diameter storage_condition material cspi particle_size shape sieve_fraction].each do |key|
+  %i[color state height width length diameter storage_condition material cspi particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer].each do |key|
     define_method(key) do
       read_attribute(key).presence ||
         (sample_details || {}).dig(key.to_s) ||

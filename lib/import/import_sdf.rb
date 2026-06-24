@@ -68,6 +68,9 @@ class Import::ImportSdf < Import::ImportSamples
       particle_size: { field: 'particle_size', displayName: 'Particle size' },
       shape: { field: 'shape', displayName: 'Shape' },
       sieve_fraction: { field: 'sieve_fraction', displayName: 'Sieve fraction' },
+      layer_thickness: { field: 'layer_thickness', displayName: 'Layer thickness' },
+      liquid_medium: { field: 'liquid_medium', displayName: 'Liquid medium' },
+      stabilizer: { field: 'stabilizer', displayName: 'Stabilizer' },
     }
   end
 
@@ -221,10 +224,13 @@ class Import::ImportSdf < Import::ImportSamples
             sample['particle_size'] = row['particle_size'] if row['particle_size'].present?
             sample['shape'] = row['shape'] if row['shape'].present?
             sample['sieve_fraction'] = row['sieve_fraction'] if row['sieve_fraction'].present?
+            sample['layer_thickness'] = row['layer_thickness'] if row['layer_thickness'].present?
+            sample['liquid_medium'] = row['liquid_medium'] if row['liquid_medium'].present?
+            sample['stabilizer'] = row['stabilizer'] if row['stabilizer'].present?
 
             # Record which hierarchical "additional properties" were actually mapped/imported
             # so the sample form shows only those fields (not all populated ones).
-            additional_property_keys = %w[sieve_fraction height diameter width length material cspi particle_size shape]
+            additional_property_keys = %w[sieve_fraction height diameter width length material cspi particle_size shape layer_thickness liquid_medium stabilizer]
             selected_props = additional_property_keys.select { |k| row[k].to_s.strip.present? }
             if selected_props.any?
               sample.sample_details = (sample.sample_details || {}).merge('selected_properties' => selected_props)

@@ -84,6 +84,9 @@ export default class ModalExport extends React.Component {
           { value: ['particle_size', 'particle_size_unit'], text: 'Particle size', checked: false },
           { value: 'shape', text: 'Shape', checked: false },
           { value: ['sieve_fraction', 'sieve_fraction_unit'], text: 'Sieve fraction', checked: false },
+          { value: ['layer_thickness', 'layer_thickness_unit'], text: 'Layer thickness', checked: false },
+          { value: 'liquid_medium', text: 'Liquid medium', checked: false },
+          { value: 'stabilizer', text: 'Stabilizer', checked: false },
         ],
         molecule: [
           { value: 'cano_smiles', text: 'canonical smiles', checked: true },

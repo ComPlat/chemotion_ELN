@@ -399,10 +399,13 @@ module Chemotion
         optional :diameter, type: String, desc: 'diameter of the Hierarchical sample'
         optional :storage_condition, type: String, desc: 'storage condition of the Hierarchical sample'
         optional :material, type: String, desc: 'material of the Hierarchical sample'
-        optional :cspi, type: String, desc: 'CSPI of the Hierarchical sample'
+        optional :cspi, type: String, desc: 'Cell density (CPSI) of the Hierarchical sample'
         optional :particle_size, type: String, desc: 'particle size of the Hierarchical sample'
         optional :shape, type: String, desc: 'shape of the Hierarchical sample'
         optional :sieve_fraction, type: String, desc: 'sieve fraction of the Hierarchical sample'
+        optional :layer_thickness, type: String, desc: 'layer thickness of the Hierarchical sample'
+        optional :liquid_medium, type: String, desc: 'liquid medium of the Hierarchical sample'
+        optional :stabilizer, type: String, desc: 'stabilizer of the Hierarchical sample'
       end
 
       route_param :id do
@@ -466,7 +469,7 @@ module Chemotion
           sample_details_param = attributes.delete(:sample_details) || {}
 
           # Extract fields that have DB columns and save them directly
-          db_column_fields = %i[color state height width length diameter storage_condition material cspi particle_size shape sieve_fraction]
+          db_column_fields = %i[color state height width length diameter storage_condition material cspi particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer]
           db_column_fields.each do |field|
             next unless sample_details_param.key?(field.to_s)
 

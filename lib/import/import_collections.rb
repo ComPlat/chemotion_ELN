@@ -343,6 +343,9 @@ module Import
           'particle_size',
           'shape',
           'sieve_fraction',
+          'layer_thickness',
+          'liquid_medium',
+          'stabilizer',
           'sample_details',
         ).merge(
           created_by: @current_user_id,

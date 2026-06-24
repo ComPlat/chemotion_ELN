@@ -39,6 +39,9 @@ module Entities
       expose! :particle_size
       expose! :shape
       expose! :sieve_fraction
+      expose! :layer_thickness
+      expose! :liquid_medium
+      expose! :stabilizer
     end
 
     # Level 1 attributes

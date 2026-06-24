@@ -577,7 +577,7 @@ module Import
     def handle_default_fields(sample, db_column, value)
       if sample.has_attribute?(db_column)
         sample[db_column] = value || ''
-      elsif %w[height width length diameter state storage_condition material cspi particle_size shape sieve_fraction].include?(db_column)
+      elsif %w[height width length diameter state storage_condition material cspi particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer].include?(db_column)
         # Backward compatibility: some DBs do not have dedicated hierarchical columns yet.
         sample.sample_details ||= {}
         sample.sample_details[db_column] = value || ''
@@ -684,6 +684,9 @@ module Import
         particle_size
         shape
         sieve_fraction
+        layer_thickness
+        liquid_medium
+        stabilizer
       ].freeze
       return unless included_fields.include?(db_column) || additional_columns.include?(db_column)
 
@@ -725,7 +728,7 @@ module Import
          (sample_type_val.casecmp('hierarchicalmaterial').zero? || sample_type_val.casecmp('hierarchical').zero?)
         sample.sample_type = Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL
       end
-      %w[height width length diameter particle_size sieve_fraction cspi].each do |field|
+      %w[height width length diameter particle_size sieve_fraction cspi layer_thickness].each do |field|
         unit_val = row_value_case_insensitive(row, "#{field} unit").to_s.strip
         unit_val = row_value_case_insensitive(row, "#{field}_unit").to_s.strip if unit_val.blank?
         next if unit_val.blank?
@@ -900,7 +903,9 @@ module Import
         'height' => 'height', 'width' => 'width', 'length' => 'length', 'diameter' => 'diameter',
         'state' => 'state', 'storage_condition' => 'storage_condition',
         'material' => 'material', 'cspi' => 'cspi', 'particle_size' => 'particle_size',
-        'shape' => 'shape', 'sieve_fraction' => 'sieve_fraction'
+        'shape' => 'shape', 'sieve_fraction' => 'sieve_fraction',
+        'layer_thickness' => 'layer_thickness', 'liquid_medium' => 'liquid_medium',
+        'stabilizer' => 'stabilizer'
       }
       hierarchical_map[field_normalized]
     end
