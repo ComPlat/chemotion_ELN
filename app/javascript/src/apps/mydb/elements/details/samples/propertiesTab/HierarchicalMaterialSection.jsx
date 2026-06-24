@@ -152,6 +152,15 @@ export default function HierarchicalMaterialSection({
 
   const handleFieldChange = (field, value) => {
     sample[field] = value;
+    const unitOptions = FIELD_UNIT_OPTIONS[field];
+    if (unitOptions) {
+      const details = { ...(sample.sample_details || {}) };
+      const unitKey = `${field}_unit`;
+      if (!details[unitKey]) {
+        details[unitKey] = unitOptions[0].value;
+        sample.sample_details = details;
+      }
+    }
     onSampleChanged(sample);
   };
 
