@@ -5,6 +5,13 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 
 const filterTreeNode = (input, child) => String(child.props.search && child.props.search.toLowerCase())
   .indexOf(input && input.toLowerCase()) !== -1;
+
+const RECENTLY_SELECTED_LABEL = '-- Recently selected --';
+
+const isRecentlySelectedNode = (node) => (
+  node.title === RECENTLY_SELECTED_LABEL || node.value === RECENTLY_SELECTED_LABEL
+);
+
 export default class OlsTreeSelect extends Component {
   constructor(props) {
     super(props);
@@ -12,13 +19,16 @@ export default class OlsTreeSelect extends Component {
   }
 
   OnSelectChange(e) {
+    const { selectName, onSelectChange } = this.props;
+
     const cleanedOlsEntry = this.removeArtificalId(e || '');
-    this.props.onSelectChange(
+    onSelectChange(
       cleanedOlsEntry,
-      this.props.selectName
+      selectName
     );
   }
 
+  // eslint-disable-next-line class-methods-use-this
   removeArtificalId(value) {
     const uuidCheckRegex = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
     const parts = value.split('$');
@@ -32,16 +42,55 @@ export default class OlsTreeSelect extends Component {
       .trim();
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  combineChmoAndBao(chmos, bao) {
+    const chmoArray = chmos || [];
+    const baoArray = bao || [];
+
+    // Find "Recently selected" nodes in both arrays (typically the first element)
+    const chmoRecentlySelected = chmoArray.find(isRecentlySelectedNode);
+    const baoRecentlySelected = baoArray.find(isRecentlySelectedNode);
+
+    // Get other nodes (excluding "Recently selected")
+    const chmoOtherNodes = chmoArray.filter((node) => !isRecentlySelectedNode(node));
+    const baoOtherNodes = baoArray.filter((node) => !isRecentlySelectedNode(node));
+
+    // Merge "Recently selected" children if both exist
+    let mergedRecentlySelected = null;
+    if (chmoRecentlySelected || baoRecentlySelected) {
+      const chmoChildren = chmoRecentlySelected?.children || [];
+      const baoChildren = baoRecentlySelected?.children || [];
+      const mergedChildren = [...chmoChildren, ...baoChildren];
+
+      mergedRecentlySelected = {
+        ...(chmoRecentlySelected || baoRecentlySelected),
+        children: mergedChildren
+      };
+    }
+
+    // Combine: merged "Recently selected" first, then other nodes from both ontologies
+    const combined = [];
+    if (mergedRecentlySelected) {
+      combined.push(mergedRecentlySelected);
+    }
+    combined.push(...chmoOtherNodes, ...baoOtherNodes);
+
+    return combined;
+  }
+
   render() {
+    const { selectName, selectedValue, selectedDisable } = this.props;
     const { rxnos, chmos, bao } = UserStore.getState();
+
     let treeData = [];
-    const height = this.props.selectName === 'rxno' ? '35px' : null;
-    switch (this.props.selectName) {
+    const height = selectName === 'rxno' ? '35px' : null;
+    switch (selectName) {
       case 'rxno':
         treeData = rxnos;
         break;
       case 'chmo':
-        treeData = chmos;
+        // Combine CHMO and BAO ontology terms, merging "Recently selected" sections
+        treeData = this.combineChmoAndBao(chmos, bao);
         break;
       case 'bao':
         treeData = bao;
@@ -50,19 +99,24 @@ export default class OlsTreeSelect extends Component {
         break;
     }
 
+    // Expand both CHMO and BAO when selectName is 'chmo'
+    const expandedKeys = selectName === 'chmo'
+      ? ['chmo', 'bao']
+      : [selectName];
+
     return (
       <TreeSelect
-        treeDefaultExpandedKeys={[this.props.selectName]}
-        name={this.props.selectName}
+        treeDefaultExpandedKeys={expandedKeys}
+        name={selectName}
         showSearch
-        className='w-100'
-        style={{height}}
-        value={this.props.selectedValue}
+        className="w-100"
+        style={{ height }}
+        value={selectedValue}
         treeData={treeData}
         placeholder="Select..."
         allowClear
         onChange={(e) => this.OnSelectChange(e)}
-        disabled={this.props.selectedDisable}
+        disabled={selectedDisable}
         filterTreeNode={filterTreeNode}
       />
     );
