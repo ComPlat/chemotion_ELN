@@ -344,6 +344,65 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       expect(gasProduct.concn).toBe(4.1e-4);
       storeStub.restore();
     });
+
+    it('clears preserveConcentration when a feedstock is toggled away from feedstock', () => {
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
+      });
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsScheme, {
+          reaction,
+          onReactionChange: onReactionChangeSpy,
+          onInputChange: onInputChangeSpy,
+        })
+      );
+      const feedstock = reaction.reactants[0];
+      // Simulate a feedstock concentration edit having locked the value.
+      feedstock.preserveConcentration = true;
+      expect(feedstock.gas_type).toBe('feedstock');
+
+      // Toggle feedstock off (current display value is 'FES').
+      wrapper.instance().updatedReactionForGasTypeChange({
+        sampleID: feedstock.id,
+        materialGroup: 'reactants',
+        value: 'FES',
+      });
+
+      expect(feedstock.gas_type).not.toBe('feedstock');
+      expect(feedstock.preserveConcentration).toBe(false);
+      storeStub.restore();
+    });
+
+    it('keeps preserveConcentration intact when feedstock status is unchanged', () => {
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
+      });
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsScheme, {
+          reaction,
+          onReactionChange: onReactionChangeSpy,
+          onInputChange: onInputChangeSpy,
+        })
+      );
+      const catalyst = reaction.reactants[1];
+      catalyst.preserveConcentration = true;
+      expect(catalyst.gas_type).toBe('catalyst');
+
+      // Toggle catalyst off; the sample was never a feedstock so the flag
+      // must not be cleared.
+      wrapper.instance().updatedReactionForGasTypeChange({
+        sampleID: catalyst.id,
+        materialGroup: 'reactants',
+        value: 'CAT',
+      });
+
+      expect(catalyst.preserveConcentration).toBe(true);
+      storeStub.restore();
+    });
   });
 
   describe('Vessel Size Change Calculations', () => {

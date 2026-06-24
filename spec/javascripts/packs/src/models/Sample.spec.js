@@ -1,6 +1,7 @@
 /* global describe, context, it */
 
 import expect from 'expect';
+import sinon from 'sinon';
 import SampleFactory from 'factories/SampleFactory';
 import Sample from 'src/models/Sample.js';
 import Reaction from 'src/models/Reaction';
@@ -1473,6 +1474,84 @@ describe('Sample', async () => {
       gasProduct.updateConcentrationFromSolvent(reaction);
 
       expect(gasProduct.concn).toBe(4.1e-4);
+    });
+
+    it('derives feedstock concentration from vessel volume in a gas-scheme reaction', () => {
+      // Feedstocks live in the gas vessel; their concentration is derived from
+      // vesselVolume, not the reaction volume.
+      const feedstock = new Sample({
+        amount_value: 18.015,
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      feedstock.gas_type = 'feedstock';
+      reaction.gaseous = true;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5; // reaction volume is intentionally different to confirm it's not used
+
+      const vesselStub = sinon.stub(feedstock, 'fetchReactionVesselSizeFromStore').returns(2);
+      feedstock.updateConcentrationFromSolvent(reaction);
+      vesselStub.restore();
+
+      // 18.015 g / 18.015 g/mol = 1 mol; 1 mol / 2 L (vessel) = 0.5 mol/L
+      expect(feedstock.concn).toBeCloseTo(0.5, 5);
+    });
+
+    it('keeps user-entered feedstock concentration when preserveConcentration is set', () => {
+      const feedstock = new Sample({
+        amount_value: 18.015,
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      feedstock.gas_type = 'feedstock';
+      feedstock.concn = 0.42;
+      feedstock.preserveConcentration = true;
+      reaction.gaseous = true;
+
+      const vesselStub = sinon.stub(feedstock, 'fetchReactionVesselSizeFromStore').returns(2);
+      feedstock.updateConcentrationFromSolvent(reaction);
+      vesselStub.restore();
+
+      expect(feedstock.concn).toBe(0.42);
+    });
+
+    it('sets feedstock concentration to null when vessel volume is unknown', () => {
+      const feedstock = new Sample({
+        amount_value: 18.015,
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      feedstock.gas_type = 'feedstock';
+      reaction.gaseous = true;
+
+      const vesselStub = sinon.stub(feedstock, 'fetchReactionVesselSizeFromStore').returns(null);
+      feedstock.updateConcentrationFromSolvent(reaction);
+      vesselStub.restore();
+
+      expect(feedstock.concn).toBe(null);
+    });
+
+    it('still recalculates feedstock concentration when the reaction is not gaseous', () => {
+      // Outside a gas-scheme reaction, gas_type carries no special semantics for
+      // the concentration formula.
+      const sample = new Sample({
+        amount_value: 18.015,
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      sample.gas_type = 'feedstock';
+      reaction.gaseous = false;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      sample.updateConcentrationFromSolvent(reaction);
+
+      // 18.015 g / 18.015 g/mol = 1 mol; 1 mol / 0.5 L = 2 mol/L
+      expect(sample.concn).toBeCloseTo(2.0, 5);
     });
 
     context('when product coefficient is zero', () => {

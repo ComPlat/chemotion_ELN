@@ -852,6 +852,26 @@ export default class Sample extends Element {
   }
 
   /**
+   * Updates the sample's concentration (`concn`) from the gas vessel volume.
+   * Used for feedstock samples in a gas-scheme reaction, whose concentration
+   * is based on the vessel volume rather than the reaction-mixture volume.
+   * Respects `preserveConcentration` to keep manually-entered values intact.
+   *
+   * @returns {void}
+   */
+  updateConcentrationFromGasVessel() {
+    if (this.preserveConcentration) return;
+
+    const vesselSize = this.fetchReactionVesselSizeFromStore();
+    if (Number.isFinite(vesselSize) && vesselSize > 0
+      && Number.isFinite(this.amount_mol) && this.amount_mol >= 0) {
+      this.concn = this.amount_mol / vesselSize;
+    } else {
+      this.concn = null;
+    }
+  }
+
+  /**
    * Updates the sample's concentration (`concn`) based on its total amount in moles
    * and the reaction-level volume selected by `reaction.reactionVolumeForConcentration()`.
    *
@@ -876,6 +896,14 @@ export default class Sample extends Element {
     // Gas products derive concentration from ppm via the ideal gas law at 25 °C;
     // see ReactionDetailsScheme#updatedReactionForGasProductFieldsChange.
     if (this.isGas()) {
+      return;
+    }
+
+    // Feedstocks in a gas-scheme reaction live in the gas vessel rather than
+    // the reaction mixture, so their concentration is derived from the vessel
+    // volume — not the reaction volume.
+    if (reaction && reaction.gaseous && this.isFeedstock()) {
+      this.updateConcentrationFromGasVessel();
       return;
     }
 

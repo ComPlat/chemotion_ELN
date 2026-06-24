@@ -719,6 +719,10 @@ export default class ReactionDetailsScheme extends React.Component {
       // locked-equivalent propagation has updated the dependent sample amounts.
       updatedReaction.resetPreservedConcentrationExcept(updatedSample);
       updatedReaction.updateAllConcentrations();
+    } else if (reaction.gaseous && updatedSample.isFeedstock && updatedSample.isFeedstock()) {
+      // A feedstock's concentration is derived from the gas vessel size,
+      // so it must be refreshed whenever its own amount changes.
+      updatedSample.updateConcentrationFromSolvent(updatedReaction);
     }
 
     return updatedReaction;
@@ -777,6 +781,10 @@ export default class ReactionDetailsScheme extends React.Component {
       // Running this earlier would use stale amount_mol values for the other samples.
       updatedReaction.resetPreservedConcentrationExcept(updatedSample);
       updatedReaction.updateAllConcentrations();
+    } else if (reaction.gaseous && updatedSample.isFeedstock && updatedSample.isFeedstock()) {
+      // A feedstock's concentration is derived from the gas vessel volume,
+      // so it must be refreshed whenever its own amount changes.
+      updatedSample.updateConcentrationFromSolvent(updatedReaction);
     }
 
     return updatedReaction;
@@ -966,6 +974,7 @@ export default class ReactionDetailsScheme extends React.Component {
     } = changeEvent;
     const { reaction } = this.props;
     let updatedSample = reaction.sampleById(sampleID);
+    const previousGasType = updatedSample.gas_type;
     const isFeedstockMaterialPresent = reaction.isFeedstockMaterialPresent();
     if (materialGroup === 'products') {
       if (value === 'gas') {
@@ -998,6 +1007,14 @@ export default class ReactionDetailsScheme extends React.Component {
     if (updatedSample.gas_type === 'catalyst') {
       GasPhaseReactionActions.setCatalystReferenceMole(updatedSample.amount_mol);
     }
+    // A feedstock concentration edit sets preserveConcentration so bulk
+    // recalculations don't overwrite the vessel-derived value. Once the sample
+    // is no longer a feedstock, that lock must be released so its concentration
+    // can be auto-updated again when other materials change.
+    if (previousGasType === 'feedstock' && updatedSample.gas_type !== 'feedstock') {
+      updatedSample.preserveConcentration = false;
+    }
+
     return this.updatedReactionWithSample(this.updatedSamplesForGasTypeChange.bind(this), updatedSample, value);
   }
 
