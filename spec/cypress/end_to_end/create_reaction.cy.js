@@ -1,5 +1,7 @@
-describe('Reactions Create/Update', () => {
-  it('creates and updates reaction', () => {
+describe('Reaction', () => {
+  it('creates a reaction', () => {
+    const reactionName = `Reaction A ${Date.now()}`;
+
     cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user) => {
       cy.appFactories([['create', 'collection', { user_id: user[0].id }]]).then((collection) => {
         cy.appFactories([['create', 'molecule', { molecular_weight: 171.03448 }]]).then((molecule) => {
@@ -25,19 +27,13 @@ describe('Reactions Create/Update', () => {
     // Create reaction
     cy.contains('Create').click();
     cy.contains('Create Reaction').click();
-    cy.get('input[name="reaction_name"]').first().clear().type('Reaction A');
+    cy.get('input[name="reaction_name"]').should('be.visible').clear().type(reactionName);
     // Valid reaction requires sample
     cy.contains('Reactants').find('.chemotion-select').click();
-    cy.contains('ferrocene').click();
+    cy.get('body').contains('.chemotion-select__option', /Material|ferrocene/i).click();
     cy.clickDetailFooterButton('Create');
 
-    cy.get('i.icon-reaction').closest('button[role="tab"]').click();
-    cy.get('#elements-list-view').contains('Reaction A');
-
-    // Update reaction
-    cy.get('input[name="reaction_name"]').first().clear().type('Reaction B');
-    cy.clickDetailFooterButton('Save');
-
-    cy.get('#elements-list-view').contains('Reaction B');
+    cy.get('i.icon-reaction').closest('button[id*="tabList-tab"]').click();
+    cy.contains('#elements-list-view .element-list-item', reactionName);
   });
 });

@@ -69,5 +69,7 @@ Cypress.Commands.add('createUserWithCredentials', (email, password, fname, lname
 });
 
 Cypress.Commands.add('clickDetailFooterButton', (buttonText) => {
-  cy.get('div[class="card-footer"').contains('button', buttonText).click();
+  cy.get('div[class="card-footer"').contains('button', buttonText)
+    .should('not.be.disabled')
+    .click();
 });
