@@ -873,6 +873,12 @@ export default class Sample extends Element {
    * @returns {void}
    */
   updateConcentrationFromSolvent(reaction) {
+    // Gas products derive concentration from ppm via the ideal gas law at 25 °C;
+    // see ReactionDetailsScheme#updatedReactionForGasProductFieldsChange.
+    if (this.isGas()) {
+      return;
+    }
+
     // Keep manually-entered concentration unchanged.
     if (this.preserveConcentration) {
       return;

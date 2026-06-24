@@ -1456,6 +1456,25 @@ describe('Sample', async () => {
       expect(sample.concn).toBeCloseTo(0.2, 5); // 0.1 mol / 0.5 L = 0.2 mol/L
     });
 
+    it('does not overwrite concentration for gas products', () => {
+      // Gas products derive concentration from ppm via the ideal gas law at 25 °C,
+      // not from amount_mol / reaction_volume — see ReactionDetailsScheme.
+      const gasProduct = new Sample({
+        amount_value: 18.015,
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      gasProduct.gas_type = 'gas';
+      gasProduct.concn = 4.1e-4; // pre-set as if derived from ppm
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      gasProduct.updateConcentrationFromSolvent(reaction);
+
+      expect(gasProduct.concn).toBe(4.1e-4);
+    });
+
     context('when product coefficient is zero', () => {
       it('amount is 100 because zero coefficient was set to one', () => {
         product.coefficient = 0;

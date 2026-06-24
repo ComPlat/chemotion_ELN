@@ -33,6 +33,7 @@ import {
   convertTime,
   convertTurnoverFrequency,
   calculateFeedstockMoles,
+  calculateGasConcentrationFromPpm,
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -1027,6 +1028,7 @@ export default class ReactionDetailsScheme extends React.Component {
           break;
         case 'part_per_million':
           updatedSample.gas_phase_data.part_per_million = value;
+          updatedSample.concn = calculateGasConcentrationFromPpm(value);
           break;
         default:
           break;
