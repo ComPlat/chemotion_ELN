@@ -78,9 +78,13 @@ const ElementCollectionLabels = ({ element }) => {
     );
   };
 
-  const ownCollections = element.tag.taggable_data.collection_labels
+  // Guard against malformed entries: legacy/un-backfilled tags can contain null elements or
+  // entries without a real collection id, which would otherwise throw on `label.id`.
+  const validLabels = element.tag.taggable_data.collection_labels
+    .filter(label => label && label.id != null);
+  const ownCollections = validLabels
     .filter(label => collectionsStore.isOwnCollection(label.id));
-  const sharedCollections = element.tag.taggable_data.collection_labels
+  const sharedCollections = validLabels
     .filter(label => collectionsStore.isSharedCollection(label.id));
 
   if (ownCollections.length === 0 && sharedCollections.length === 0) { return (<span />); }
