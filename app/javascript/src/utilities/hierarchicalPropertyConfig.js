@@ -11,7 +11,6 @@ export const HIERARCHICAL_PROPERTY_OPTIONS = [
   { value: 'particle_size', label: 'Particle size', placeholder: 'e.g., Medium, 50 µm' },
   { value: 'shape', label: 'Shape', placeholder: 'e.g., Cylinders' },
   { value: 'storage_condition', label: 'Storage condition', placeholder: 'e.g., Glovebox' },
-  // New properties
   { value: 'layer_thickness', label: 'Layer thickness', placeholder: 'e.g., 50' },
   { value: 'liquid_medium', label: 'Liquid medium', placeholder: 'e.g., Water' },
   { value: 'stabilizer', label: 'Stabilizer', placeholder: 'e.g., PVP' },
@@ -23,8 +22,6 @@ export const PROPERTY_MAP = Object.fromEntries(
 
 export const DIMENSION_FIELDS = ['height', 'diameter', 'width', 'length'];
 export const LENGTH_UNIT_FIELDS = [...DIMENSION_FIELDS, 'particle_size', 'sieve_fraction', 'layer_thickness'];
-export const TEMP_FIELDS = [];
-
 const DIMENSION_UNIT_OPTIONS = unitSystems.length.filter((u) => ['µm', 'mm', 'cm', 'm'].includes(u.value));
 const PARTICLE_SIZE_UNIT_OPTIONS = unitSystems.length.filter((u) => ['nm', 'µm', 'mm'].includes(u.value));
 const SIEVE_FRACTION_UNIT_OPTIONS = unitSystems.length.filter((u) => ['µm', 'mm'].includes(u.value));
@@ -41,9 +38,6 @@ export const FIELD_UNIT_OPTIONS = {
 };
 
 export const FIELD_DROPDOWN_OPTIONS = {
-  sieve_fraction: [
-    { value: 'fine powder', label: 'Fine powder' },
-  ],
   material: [
     { value: 'Cordierite', label: 'Cordierite' },
     { value: 'Stainless Steel', label: 'Stainless Steel' },
