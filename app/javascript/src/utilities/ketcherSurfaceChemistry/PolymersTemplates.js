@@ -54,7 +54,7 @@ const templateAliasesPrepare = async (aliasesList, atomIndexList = []) => {
         // alias image counter so existing call-sites without atom position info still work.
         const actualIndex = atomIndexList.length > counter
           ? atomIndexList[counter]
-          : parseInt(aliasesList[counter].split('_')[2], 10);
+          : parseInt(aliasesList[i].split('_')[2], 10);
         let idx = String(actualIndex);
         idx += templateId === KET_TAGS.templateSurface ? 's' : `/${templateId}`;
         idx += `/${height.toFixed(2)}-${width.toFixed(2)}`;

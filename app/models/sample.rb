@@ -502,11 +502,13 @@ class Sample < ApplicationRecord
   end
 
   def get_svg_path
-    if sample_svg_file.present?
-      "/images/samples/#{sample_svg_file}"
-    elsif molecule&.molecule_svg_file&.present?
-      "/images/molecules/#{molecule.molecule_svg_file}"
+    return "/images/samples/#{sample_svg_file}" if sample_svg_file.present?
+
+    if molecule&.is_partial && molfile.present?
+      return polymer_sample_svg_path
     end
+
+    "/images/molecules/#{molecule.molecule_svg_file}" if molecule&.molecule_svg_file&.present?
   end
 
   # return the full path of the svg file (molecule svg if no sample svg) if it or nil.
@@ -819,6 +821,23 @@ class Sample < ApplicationRecord
 
   def has_density
     density.present? && density.positive? && (molarity_value.blank? || molarity_value.zero?)
+  end
+
+  # Generates and persists a sample SVG for polymer samples that lack one.
+  # Uses the full sample molfile (which retains the PolymersList tag) so polymer
+  # shapes are injected. Falls back to molecule_svg_file when generation fails.
+  def polymer_sample_svg_path
+    svg = Molecule.svg_reprocess(nil, molfile)
+    if svg.present?
+      attach_svg(svg)
+      if sample_svg_file.present?
+        # rubocop:disable Rails/SkipsModelValidations
+        update_column(:sample_svg_file, sample_svg_file)
+        # rubocop:enable Rails/SkipsModelValidations
+        return "/images/samples/#{sample_svg_file}"
+      end
+    end
+    "/images/molecules/#{molecule.molecule_svg_file}" if molecule&.molecule_svg_file&.present?
   end
 
   # build a full path of the sample svg, nil if not buildable
