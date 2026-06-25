@@ -3,33 +3,15 @@ import PropTypes from 'prop-types';
 import {
   Button, Form, InputGroup, Row, Col,
 } from 'react-bootstrap';
-import { Select } from 'src/components/common/Select';
+import { Select, CreatableSelect } from 'src/components/common/Select';
 import { convertUnits } from 'src/components/staticDropdownOptions/units';
 import {
   HIERARCHICAL_PROPERTY_OPTIONS,
   FIELD_UNIT_OPTIONS,
+  FIELD_DROPDOWN_OPTIONS,
   PROPERTY_MAP,
   LENGTH_UNIT_FIELDS,
 } from 'src/utilities/hierarchicalPropertyConfig';
-
-const TEMP_FIELDS = ['cspi'];
-
-const convertTemperatureFromTo = (value, from, to) => {
-  if (from === to) return value;
-  const toKelvin = (v, u) => {
-    if (u === 'K') return v;
-    if (u === '°C') return v + 273.15;
-    if (u === '°F') return ((v - 32) * 5) / 9 + 273.15;
-    return v;
-  };
-  const fromKelvin = (v, u) => {
-    if (u === 'K') return v;
-    if (u === '°C') return v - 273.15;
-    if (u === '°F') return ((v - 273.15) * 9) / 5 + 32;
-    return v;
-  };
-  return parseFloat(fromKelvin(toKelvin(value, from), to).toFixed(4));
-};
 
 const stateOptions = [
   { value: 'solid_powder', label: 'Solid Powder' },
@@ -103,7 +85,30 @@ function HierarchicalPropertyInput({
   sample, fieldKey, onFieldChange, onUnitChange,
 }) {
   const prop = PROPERTY_MAP[fieldKey];
+  const dropdownOptions = FIELD_DROPDOWN_OPTIONS[fieldKey];
   const unitOptions = FIELD_UNIT_OPTIONS[fieldKey];
+
+  if (dropdownOptions) {
+    const details = sample.sample_details || {};
+    const rawValue = sample[fieldKey] ?? details[fieldKey] ?? '';
+    const selectedOption = rawValue
+      ? (dropdownOptions.find((o) => o.value === rawValue) || { value: rawValue, label: rawValue })
+      : null;
+    return (
+      <Form.Group>
+        <Form.Label>{prop.label}</Form.Label>
+        <CreatableSelect
+          isClearable
+          isDisabled={!sample.can_update}
+          options={dropdownOptions}
+          value={selectedOption}
+          placeholder={prop.placeholder}
+          onChange={(opt) => onFieldChange(fieldKey, opt ? opt.value : '')}
+        />
+      </Form.Group>
+    );
+  }
+
   if (unitOptions) {
     return (
       <FieldWithUnit
@@ -117,6 +122,7 @@ function HierarchicalPropertyInput({
       />
     );
   }
+
   const details = sample.sample_details || {};
   const value = sample[fieldKey] ?? details[fieldKey] ?? '';
   return (
@@ -173,13 +179,6 @@ export default function HierarchicalMaterialSection({
       const currentVal = parseFloat(sample[field] ?? details[field]);
       if (!Number.isNaN(currentVal)) {
         const converted = convertUnits(currentVal, oldUnit, newUnit);
-        sample[field] = converted;
-        details[field] = converted;
-      }
-    } else if (TEMP_FIELDS.includes(field) && oldUnit && oldUnit !== newUnit) {
-      const currentVal = parseFloat(sample[field] ?? details[field]);
-      if (!Number.isNaN(currentVal)) {
-        const converted = convertTemperatureFromTo(currentVal, oldUnit, newUnit);
         sample[field] = converted;
         details[field] = converted;
       }

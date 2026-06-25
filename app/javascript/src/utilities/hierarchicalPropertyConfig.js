@@ -6,11 +6,11 @@ export const HIERARCHICAL_PROPERTY_OPTIONS = [
   { value: 'diameter', label: 'Diameter', placeholder: 'e.g., 2.5' },
   { value: 'width', label: 'Width', placeholder: 'e.g., 3' },
   { value: 'length', label: 'Length', placeholder: 'e.g., 10' },
-  { value: 'material', label: 'Material', placeholder: 'e.g., Glass, Plastic' },
-  { value: 'cspi', label: 'CSPI', placeholder: 'e.g., 45°C' },
+  { value: 'material', label: 'Monolith material', placeholder: 'e.g., Cordierite' },
+  { value: 'cspi', label: 'Cell density', placeholder: 'e.g., 400' },
   { value: 'particle_size', label: 'Particle size', placeholder: 'e.g., Medium, 50 µm' },
-  { value: 'shape', label: 'Shape', placeholder: 'e.g., Spherical, Cubic' },
-  { value: 'storage_condition', label: 'Storage condition', placeholder: 'e.g., Room temperature' },
+  { value: 'shape', label: 'Shape', placeholder: 'e.g., Cylinders' },
+  { value: 'storage_condition', label: 'Storage condition', placeholder: 'e.g., Glovebox' },
   // New properties
   { value: 'layer_thickness', label: 'Layer thickness', placeholder: 'e.g., 50' },
   { value: 'liquid_medium', label: 'Liquid medium', placeholder: 'e.g., Water' },
@@ -23,7 +23,7 @@ export const PROPERTY_MAP = Object.fromEntries(
 
 export const DIMENSION_FIELDS = ['height', 'diameter', 'width', 'length'];
 export const LENGTH_UNIT_FIELDS = [...DIMENSION_FIELDS, 'particle_size', 'sieve_fraction', 'layer_thickness'];
-export const TEMP_FIELDS = ['cspi'];
+export const TEMP_FIELDS = [];
 
 const DIMENSION_UNIT_OPTIONS = unitSystems.length.filter((u) => ['µm', 'mm', 'cm', 'm'].includes(u.value));
 const PARTICLE_SIZE_UNIT_OPTIONS = unitSystems.length.filter((u) => ['nm', 'µm', 'mm'].includes(u.value));
@@ -37,9 +37,25 @@ export const FIELD_UNIT_OPTIONS = {
   diameter: DIMENSION_UNIT_OPTIONS,
   particle_size: PARTICLE_SIZE_UNIT_OPTIONS,
   sieve_fraction: SIEVE_FRACTION_UNIT_OPTIONS,
-  cspi: unitSystems.temperature,
   layer_thickness: LAYER_THICKNESS_UNIT_OPTIONS,
 };
 
-// No dropdown fields — all pre-existing properties keep their original text/unit input rendering
-export const FIELD_DROPDOWN_OPTIONS = {};
+export const FIELD_DROPDOWN_OPTIONS = {
+  sieve_fraction: [
+    { value: 'fine powder', label: 'Fine powder' },
+  ],
+  material: [
+    { value: 'Cordierite', label: 'Cordierite' },
+    { value: 'Stainless Steel', label: 'Stainless Steel' },
+  ],
+  shape: [
+    { value: 'Cylinders', label: 'Cylinders' },
+    { value: 'Daisy', label: 'Daisy' },
+  ],
+  storage_condition: [
+    { value: 'Glovebox', label: 'Glovebox' },
+    { value: 'Ambient Condition', label: 'Ambient Condition' },
+    { value: 'Fridge (+5 to +10°C)', label: 'Fridge (+5 to +10°C)' },
+    { value: 'Freezer (min -10°C)', label: 'Freezer (min -10°C)' },
+  ],
+};
