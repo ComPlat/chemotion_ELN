@@ -115,6 +115,7 @@ class User < ApplicationRecord
   has_many :element_text_templates, dependent: :destroy
   has_many :calendar_entries, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
   has_many :comments, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
+  has_many :api_tokens, dependent: :destroy
 
   accepts_nested_attributes_for :affiliations, :profile
 

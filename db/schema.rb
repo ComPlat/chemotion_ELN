@@ -52,6 +52,18 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "api_tokens", force: :cascade do |t|
+    t.string "name"
+    t.string "token_digest", null: false
+    t.bigint "user_id", null: false
+    t.datetime "expires_at"
+    t.datetime "revoked_at"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
+    t.index ["user_id"], name: "index_api_tokens_on_user_id"
+  end
+
   create_table "attachments", id: :serial, force: :cascade do |t|
     t.integer "attachable_id"
     t.string "filename"
@@ -1795,6 +1807,7 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
   end
 
+  add_foreign_key "api_tokens", "users"
   add_foreign_key "chemicals", "sequence_based_macromolecule_samples"
   add_foreign_key "collection_shares", "collections"
   add_foreign_key "collection_shares", "users", column: "shared_with_id"

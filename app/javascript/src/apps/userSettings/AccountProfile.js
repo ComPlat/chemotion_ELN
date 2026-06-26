@@ -12,6 +12,7 @@ import UserSetting from 'src/components/structureEditor/UserSetting';
 import OmniauthCredential from 'src/apps/omniauthCredential/OmniauthCredential';
 import UserCounter from 'src/apps/userCounter/UserCounter';
 import TreeViewItem from 'src/components/common/TreeViewItem';
+import AuthToken from 'src/apps/userSettings/AuthToken';
 import { TwoFactorSettings } from 'src/apps/userSettings/TwoFA';
 import { AccountSettings, DeleteSettings } from 'src/apps/userSettings/UserSettings';
 import Affiliations from 'src/apps/userSettings/Affiliations';
@@ -22,6 +23,7 @@ function AuthenticationSettings({ currentUser }) {
     <Container className="my-3 d-flex flex-column gap-3">
       <AccountSettings currentUser={currentUser} />
       <TwoFactorSettings />
+      <AuthToken currentUser={currentUser} />
       <DeleteSettings />
     </Container>
   );
