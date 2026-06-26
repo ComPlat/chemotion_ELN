@@ -54,13 +54,13 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
 
   create_table "api_tokens", force: :cascade do |t|
     t.string "name"
-    t.string "token"
+    t.string "token_digest", null: false
     t.bigint "user_id", null: false
     t.datetime "expires_at"
     t.datetime "revoked_at"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.index ["token"], name: "index_api_tokens_on_token", unique: true
+    t.index ["token_digest"], name: "index_api_tokens_on_token_digest", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
 
