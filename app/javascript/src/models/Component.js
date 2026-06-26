@@ -36,12 +36,12 @@ export default class Component extends Sample {
    * The value is formatted to a fixed number of decimal places defined by `MW_PRECISION`.
    * If the molecular weight is missing or not a finite number, an empty string is returned.
    *
-   * @returns {string} The formatted molecular weight text (e.g., " (180.16 g/mol)") or an empty string.
+   * @returns {string} The formatted molecular weight text (e.g., "180.16 g/mol") or an empty string.
    */
   get molecularWeightText() {
     const mw = this.molecule?.molecular_weight;
     return (typeof mw === 'number' && Number.isFinite(mw))
-      ? ` (${mw.toFixed(MW_PRECISION)} g/mol)`
+      ? `${mw.toFixed(MW_PRECISION)} g/mol`
       : '';
   }
 

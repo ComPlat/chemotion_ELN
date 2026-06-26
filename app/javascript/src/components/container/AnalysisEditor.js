@@ -36,7 +36,8 @@ export default class AnalysisEditor extends React.Component {
       fetchedNames: Object.keys(fetchedTemplates),
       predefinedTemplateNames: predefinedTemplateNames && predefinedTemplateNames.toJS(),
       fetchedPredefinedTemplates,
-      updateTemplate: false
+      updateTemplate: false,
+      showTemplateCreator: false,
     };
 
     this.fetchPredefinedTemplates = this.fetchPredefinedTemplates.bind(this);
@@ -177,10 +178,12 @@ export default class AnalysisEditor extends React.Component {
   }
 
   render() {
-    const { predefinedTemplateNames, fetchedPredefinedTemplates } = this.state;
+    const { predefinedTemplateNames, fetchedPredefinedTemplates, showTemplateCreator } = this.state;
 
     const { template, analysis, readOnly } = this.props;
     const value = analysis.extended_metadata.content || {};
+
+    const closeTemplateCreator = () => this.setState({ showTemplateCreator: false });
 
     const autoFormatIcon = <span className="fa fa-magic" />;
     const templateCreatorPopover = (
@@ -193,6 +196,7 @@ export default class AnalysisEditor extends React.Component {
           template={template}
           templateOptions={predefinedTemplateNames}
           updateTextTemplates={this.updateTextTemplates}
+          onClose={closeTemplateCreator}
         />
       </Popover>
     );
@@ -218,11 +222,12 @@ export default class AnalysisEditor extends React.Component {
           applyTemplate={this.applyTemplate}
         />
         <OverlayTrigger
+          show={showTemplateCreator}
+          onToggle={(show) => this.setState({ showTemplateCreator: show })}
           trigger="click"
           placement="top"
           rootClose
           overlay={templateCreatorPopover}
-          onHide={this.onCloseTemplateCreator}
         >
           <button className="ql-formats" title="Template Settings">
             <i as="button" className="fa fa-cog" />

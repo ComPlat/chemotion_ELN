@@ -23,7 +23,7 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
   const handlePaginationSelect = (index, ids, key) => {
     searchStore.changeTabCurrentPage(key, index, list.index);
 
-    const search_result = searchStore.tabSearchResultValues.find((val) => val.id == `${key}s-${index}`);
+    const search_result = searchStore.tabSearchResultValues.find((val) => val.id === `${key}s-${index}`);
     if (search_result === undefined) {
       searchByIds(index, ids, key);
     }
@@ -33,11 +33,12 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
     const collectionId = currentCollection ? currentCollection.id : null;
+    const model = key === 'cell_line' ? 'cell_lines' : key;
 
     const selection = {
       elementType: 'by_ids',
       id_params: {
-        model_name: key,
+        model_name: model,
         ids,
         total_elements: tabResult.total_elements,
         with_filter: false,
@@ -49,7 +50,7 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
 
     searchStore.loadSearchResultTab({
       selection,
-      collectionId: collectionId,
+      collectionId,
       page_size: tabResult.per_page,
       page: index,
       moleculeSort: true,
@@ -141,6 +142,8 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
       if (object.xref && object.inventory_label) { infos.push(object.inventory_label); }
       if (object.xref && object.xref.cas) { infos.push(object.xref.cas); }
       names = [object.short_label, object.name].concat(infos);
+    } else if (object.type == 'cell_line') {
+      names = [object.short_label, object.itemName];
     } else {
       names = [object.short_label, object.name];
     }
@@ -190,7 +193,7 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
             </div>
           </div>
         )}
-        
+
         <div className="search-result-list-items">
           <div className="search-result-tab-content-list-name">
             {shortLabelWithMoreInfos(object)}
@@ -237,6 +240,36 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
     );
   };
 
+  const cellLineList = (object, i, elements) => {
+    const previous = elements[i - 1];
+    const previousMaterial = previous ? `${previous.cellLineName} - ${previous.source}` : '';
+    const objectMaterial = `${object.cellLineName} - ${object.source}`;
+
+    const header = previousMaterial !== objectMaterial && (
+      <div className="search-result-group-header-content">
+        <div key={`${list.key}-${i}`} className="search-result-tab-content-list">
+          <div
+            key={`${objectMaterial}-${i}`}
+            className="search-result-molecule align-items-center fw-bold fs-5"
+          >
+            {objectMaterial}
+          </div>
+        </div>
+      </div>
+    );
+
+    return (
+      <div className="search-result-group">
+        {header}
+        <div className="search-result-list-items">
+          <div className="search-result-tab-content-list-name">
+            {shortLabelWithMoreInfos(object)}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const tabContentList = () => {
     let contentList = <div key={list.index} className="search-result-tab-content-list-white">No results</div>;
     const resultsByPage = searchStore.tabSearchResultValues.find((val) => val.id == `${list.key}s-${currentPageNumber}`);
@@ -248,6 +281,8 @@ function SearchResultTabContent({ list, tabResult, openDetail }) {
           return sampleAndReactionList(object, i, elements);
         } if (object.type === 'sequence_based_macromolecule_sample') {
           return sbmmList(object, i, elements);
+        } if (object.type === 'cell_line') {
+          return cellLineList(object, i, elements);
         }
         return (
           <div className="search-result-group">

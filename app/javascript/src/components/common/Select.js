@@ -80,8 +80,9 @@ function buildWrappedComponent(name, BaseComponent) {
         )}
         classNamePrefix={baseClassName}
         ref={ref}
-        menuPortalTarget={document.body}
+        menuPortalTarget={usePortal ? document.body : undefined}
         menuPlacement="auto"
+        menuPosition="fixed"
         unstyled
         styles={stylesWithOverrides}
         components={mergedComponents}

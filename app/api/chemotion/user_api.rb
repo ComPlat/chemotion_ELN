@@ -50,12 +50,6 @@ module Chemotion
         end
       end
 
-      desc 'list user labels'
-      get 'list_labels' do
-        labels = UserLabel.my_labels(current_user)
-        present labels || [], with: Entities::UserLabelEntity, root: 'labels'
-      end
-
       desc 'list structure editors'
       get 'list_editors' do
         editors = []
@@ -76,35 +70,6 @@ module Chemotion
         desc 'get omniauth providers'
         get do
           { providers: Devise.omniauth_configs.keys, current_user: current_user }
-        end
-      end
-
-      namespace :save_label do
-        desc 'create or update user labels'
-        params do
-          optional :id, type: Integer
-          optional :title, type: String
-          optional :description, type: String
-          optional :color, type: String
-          optional :access_level, type: Integer
-        end
-        put do
-          attr = {
-            id: params[:id],
-            user_id: current_user.id,
-            access_level: params[:access_level] || 0,
-            title: params[:title],
-            description: params[:description],
-            color: params[:color],
-          }
-          label = nil
-          if params[:id].present?
-            label = UserLabel.find(params[:id])
-            label.update!(attr)
-          else
-            label = UserLabel.create!(attr)
-          end
-          present label, with: Entities::UserLabelEntity
         end
       end
 

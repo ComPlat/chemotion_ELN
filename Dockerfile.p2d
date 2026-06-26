@@ -1,7 +1,8 @@
-FROM ptrxyz/chemotion:eln-3.0.0
+FROM ptrxyz/chemotion:eln-3.1.2
 
 ARG REMOTE=https://github.com/ComPlat/chemotion_ELN.git
 ARG BUNDLER_VERSION=2.4.22
+ARG CUSTOM_KETCHER_BRANCH=v3.12.0
 # The last version of bundler to support current Ruby & RubyGems was 2.4.22.
 
 SHELL ["/bin/bash", "-e", "-o", "pipefail", "-c", "--"]
@@ -81,6 +82,9 @@ RUN sed -i '/# add ketcherails templates if needed/,$d' /embed/scripts/dbcheck.s
 RUN chmod +x /embed/run.sh && \
     chmod +x /embed/health.sh && \
     chmod +x /initialize.sh
+
+ADD https://github.com/haditariq/ketcher-build-holder.git#${CUSTOM_KETCHER_BRANCH}  \
+    /chemotion/app/public/editors/ketcher/standalone
 
 EXPOSE 4000
 

@@ -33,8 +33,6 @@ import {
   convertTime,
   convertTurnoverFrequency,
   calculateFeedstockMoles,
-  calculateGasMoles,
-  convertTemperatureToKelvin,
 } from 'src/utilities/UnitsConversion';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
@@ -42,7 +40,6 @@ import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
-import { parseNumericString } from 'src/utilities/MathUtils';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
@@ -600,7 +597,7 @@ export default class ReactionDetailsScheme extends React.Component {
         break;
       case 'VesselSizeChanged':
         onReactionChange(
-          this.updatedReactionForVesselSizeChange()
+          this.updatedReactionForVesselSizeChange(changeEvent)
         );
         break;
       default:
@@ -1239,8 +1236,10 @@ export default class ReactionDetailsScheme extends React.Component {
     }
   }
 
-  updatedReactionForVesselSizeChange() {
-    return this.updatedReactionWithSample(this.updatedSamplesForVesselSizeChange.bind(this));
+  updatedReactionForVesselSizeChange(changeEvent) {
+    return this.updatedReactionWithSample(
+      (samples) => this.updatedSamplesForVesselSizeChange(samples, changeEvent.vesselSizeInLiters)
+    );
   }
 
   /**
@@ -1824,18 +1823,21 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
-  updatedSamplesForVesselSizeChange(samples) {
-    const vesselSize = GasPhaseReactionStore.getState().reactionVesselSizeValue;
+  updatedSamplesForVesselSizeChange(samples, vesselSizeInLiters) {
+    const vesselSize = vesselSizeInLiters ?? GasPhaseReactionStore.getState().reactionVesselSizeValue;
     return samples.map((sample) => {
       if (sample.isGas() && sample.gas_phase_data) {
-        const { part_per_million, temperature } = sample.gas_phase_data;
-        let temperatureInKelvin = temperature.value;
-        if (temperature.unit !== 'K') {
-          temperatureInKelvin = convertTemperatureToKelvin({ value: temperature.value, unit: temperature.unit });
+        const moles = sample.updateGasMoles(vesselSize);
+        if (moles !== null && moles !== undefined) {
+          sample.setAmount({ value: moles, unit: 'mol' });
+          const equivalent = this.calculateEquivalentForGasProduct(sample, vesselSize);
+          if (equivalent !== null && equivalent !== undefined) {
+            sample.equivalent = equivalent > 1 ? 1 : equivalent;
+          }
+        } else {
+          sample.setAmount({ value: null, unit: 'mol' });
+          sample.equivalent = null;
         }
-        const moles = calculateGasMoles(vesselSize, part_per_million, temperatureInKelvin);
-        sample.setAmount({ value: moles, unit: 'mol' });
-        sample.updateTONValue(moles);
       }
       return sample;
     });
@@ -1858,21 +1860,41 @@ export default class ReactionDetailsScheme extends React.Component {
     return reaction;
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  normalizeVesselSizeValue(raw) {
+    let value = raw.replace(',', '.').replace(/[^0-9.]/g, '');
+    const dotIndex = value.indexOf('.');
+    if (dotIndex !== -1) {
+      value = value.substring(0, dotIndex + 1) + value.substring(dotIndex + 1).replace(/\./g, '');
+    }
+    return value;
+  }
+
+  vesselSizeInLiters(normalizedValue, unit) {
+    const numericValue = parseFloat(normalizedValue) || 0;
+    return unit === 'l' ? numericValue : numericValue * 0.001;
+  }
+
   updateVesselSize(e) {
-    const { onInputChange } = this.props;
-    const { value } = e.target;
+    const { onInputChange, reaction } = this.props;
+    const value = this.normalizeVesselSizeValue(e.target.value);
     onInputChange('vesselSizeAmount', value);
-    const event = {
+    this.handleMaterialsChange({
       type: 'VesselSizeChanged',
-    };
-    this.handleMaterialsChange(event);
+      vesselSizeInLiters: this.vesselSizeInLiters(value, reaction.vessel_size?.unit),
+    });
   }
 
   updateVesselSizeOnBlur(e) {
-    const { onInputChange } = this.props;
-    const { value } = e.target;
-    const newValue = parseNumericString(value);
-    onInputChange('vesselSizeAmount', newValue);
+    const { onInputChange, reaction } = this.props;
+    const value = this.normalizeVesselSizeValue(e.target.value);
+    onInputChange('vesselSizeAmount', value);
+    if (value !== '') {
+      this.handleMaterialsChange({
+        type: 'VesselSizeChanged',
+        vesselSizeInLiters: this.vesselSizeInLiters(value, reaction.vessel_size?.unit),
+      });
+    }
   }
 
   changeVesselSizeUnit() {
@@ -1942,11 +1964,16 @@ export default class ReactionDetailsScheme extends React.Component {
     const prefix = 'm';
 
     if (!isDisabled) {
-      // Pass undefined explicitly when null/empty to avoid default value of 0
-      // The component will show empty instead of "n.d." when value is undefined
-      const volumeValue = (reaction.volume != null && reaction.volume !== '')
-        ? reaction.volume
-        : undefined;
+      // Coerce to a Number: the backend serializes `volume` (a BigDecimal) as a
+      // string (e.g. "0.005"), and NumeralInputWithUnitsCompo renders "n.d."
+      // whenever the value is not Number.isFinite. Pass undefined for
+      // null/empty/invalid so the field shows "n.d." instead of a default 0.
+      // Use Number() rather than parseFloat() so partially-numeric strings like
+      // "1.2abc" are rejected (parseFloat would accept them as 1.2).
+      const rawVolume = reaction.volume;
+      const parsedVolume = (rawVolume == null) ? NaN
+        : (typeof rawVolume === 'string' && rawVolume.trim() === '' ? NaN : Number(rawVolume));
+      const volumeValue = Number.isFinite(parsedVolume) ? parsedVolume : undefined;
 
       return (
         <Form.Group>

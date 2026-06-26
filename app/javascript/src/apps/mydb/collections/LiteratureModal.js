@@ -9,7 +9,7 @@ import {
   OverlayTrigger,
   Tooltip
 } from 'react-bootstrap';
-import Immutable from 'immutable';
+import { Map } from 'immutable';
 import { uniqBy } from 'lodash';
 import AppModal from 'src/components/common/AppModal';
 import {
@@ -132,7 +132,7 @@ export default class LiteratureModal extends Component {
     this.state = {
       sampleRefs: [],
       reactionRefs: [],
-      selectedRefs: new Immutable.Map(),
+      selectedRefs: Map(),
       literature: Literature.buildEmpty(),
       sorting: 'element',
       sortedIds: [],

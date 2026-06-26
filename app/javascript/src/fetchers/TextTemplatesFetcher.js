@@ -1,81 +1,53 @@
-import 'whatwg-fetch';
-
-import { camelize, decamelize } from 'humps';
-
-const shallowCamelizeKeys = (obj) => {
-  return Object.keys(obj).reduce((newObj, key) => {
-    // eslint-disable-next-line no-param-reassign
-    newObj[camelize(key)] = obj[key];
-    return newObj;
-  }, {});
-};
+import ApiClient from 'src/api_clients/ChemotionApiClient';
+import { shallowCamelizeKeys, decamelize } from 'src/utilities/FetcherHelper';
 
 export default class TextTemplatesFetcher {
   static fetchTextTemplates(elementName) {
-    return fetch(`/api/v1/text_templates/by_type?type=${decamelize(elementName)}`, {
-      credentials: 'same-origin'
-    }).then(response => response.json())
-      .then(json => shallowCamelizeKeys(json))
-      .catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.getJson(`/api/v1/text_templates/by_type?type=${decamelize(elementName)}`)
+      .then((json) => shallowCamelizeKeys(json));
   }
 
   static fetchPredefinedTemplateNames() {
-    return fetch('/api/v1/text_templates/predefinedNames', {
-      credentials: 'same-origin',
-      method: 'GET'
-    }).then(response => response.json())
-      .then(json => json.text_templates)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.getJson('/api/v1/text_templates/predefinedNames')
+      .then((json) => json.text_templates);
   }
 
   static fetchPredefinedTemplateByNames(names) {
-    const params = names.map(n => `name[]=${encodeURIComponent(n)}`).join('&');
-
-    return fetch(`/api/v1/text_templates/by_name?${params}`, {
-      credentials: 'same-origin',
-      method: 'GET'
-    }).then(response => response.json())
-      .then(json => json.text_templates)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    const params = names.map((n) => `name[]=${encodeURIComponent(n)}`).join('&');
+    return ApiClient.getJson(`/api/v1/text_templates/by_name?${params}`)
+      .then((json) => json.text_templates);
   }
 
   static updateTextTemplates(elementName, template) {
-    return fetch('/api/v1/text_templates/update', {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ data: template, type: decamelize(elementName) })
-    }).then(response => response.json())
-      .catch((errorMessage) => { console.log(errorMessage); });
+    const body = { data: template, type: decamelize(elementName) };
+    return ApiClient.putJson('/api/v1/text_templates/update', { body });
   }
 
   static updatePredefinedTemplates(template) {
-    const method = template.id ? 'PUT' : 'POST';
-
-    return fetch('/api/v1/text_templates/predefined_text_template', {
-      credentials: 'same-origin',
-      method,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(template)
-    }).then(response => response.json())
-      .catch((errorMessage) => { console.log(errorMessage); });
+    const url = '/api/v1/text_templates/predefined_text_template';
+    const body = template;
+    if (template.id) { return ApiClient.putJson(url, { body }); }
+    return ApiClient.postJson(url, { body });
   }
 
   static deletePredefinedTemplateByName(name) {
-    return fetch(`/api/v1/text_templates/by_name?name=${name}`, {
-      credentials: 'same-origin',
-      method: 'DELETE',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-    }).then(response => response.json())
-      .catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.deleteRequest(`/api/v1/text_templates/by_name?name=${encodeURIComponent(name)}`);
+  }
+
+  static fetchPersonalTemplates() {
+    return ApiClient.getJson('/api/v1/text_templates/personal')
+      .then((json) => json.text_templates);
+  }
+
+  static createPersonalTemplate(template) {
+    return ApiClient.postJson('/api/v1/text_templates/personal', { body: template });
+  }
+
+  static updatePersonalTemplate(template) {
+    return ApiClient.putJson(`/api/v1/text_templates/personal/${template.id}`, { body: template });
+  }
+
+  static deletePersonalTemplate(id) {
+    return ApiClient.deleteRequest(`/api/v1/text_templates/personal/${id}`);
   }
 }

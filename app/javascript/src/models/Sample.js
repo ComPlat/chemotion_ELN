@@ -35,11 +35,21 @@ const prepareRangeBound = (args = {}, field) => {
     if (!args[`${field}_lowerbound`]) {
       argsNew[`${field}_lowerbound`] = Number.NEGATIVE_INFINITY === Number(bounds[0]) ? null : Number(bounds[0]);
     }
-    if (argsNew[`${field}_upperbound`] == null || argsNew[`${field}_upperbound`] == null) {
-      argsNew[`${field}_display`] = (argsNew[`${field}_lowerbound`] || '').toString().trim();
+
+    const xrefLabel = args.xref && args.xref[`${field}_label`];
+    const lower = argsNew[`${field}_lowerbound`];
+    const upper = argsNew[`${field}_upperbound`];
+
+    if (xrefLabel) {
+      argsNew[`${field}_display`] = xrefLabel;
+    } else if (lower == null && upper == null) {
+      argsNew[`${field}_display`] = '';
+    } else if (lower == null) {
+      argsNew[`${field}_display`] = `<${upper}`;
+    } else if (upper == null) {
+      argsNew[`${field}_display`] = lower.toString().trim();
     } else {
-      argsNew[`${field}_display`] = ((argsNew[`${field}_lowerbound`] || '')
-        .toString().concat(' – ', argsNew[`${field}_upperbound`])).trim();
+      argsNew[`${field}_display`] = `${lower} – ${upper}`.trim();
     }
   }
   return argsNew;
@@ -293,6 +303,57 @@ export default class Sample extends Element {
     return this.components && this.components.length > 0;
   }
 
+  /**
+   * Normalizes a dot-separated SMILES string to a sorted set for order-independent comparison.
+   * Assumes each fragment is a single-molecule SMILES (no dot-salts like [Na+].[Cl-] per component).
+   * @param {string} smilesString - Dot-separated canonical SMILES
+   * @returns {string} Sorted, dot-joined SMILES string
+   */
+  static normalizeSmilesSet(smilesString) {
+    if (!smilesString || typeof smilesString !== 'string') return '';
+    return smilesString.split('.').filter(Boolean).sort().join('.');
+  }
+
+  /**
+   * Compares two dot-separated SMILES strings as sets (order-independent).
+   * @param {string} smilesA - First SMILES string
+   * @param {string} smilesB - Second SMILES string
+   * @returns {boolean} True when both strings represent the same SMILES set
+   */
+  static sameSmilesSet(smilesA, smilesB) {
+    return Sample.normalizeSmilesSet(smilesA) === Sample.normalizeSmilesSet(smilesB);
+  }
+
+  /**
+   * Reorders mixture components to follow the sequence in a dot-separated SMILES string
+   * (typically matching the structure editor / molfile fragment order).
+   * @param {Array<string>} mixtureSmiles - Ordered SMILES fragments
+   */
+  syncComponentOrderToSmiles(mixtureSmiles) {
+    if (!this.hasComponents() || !mixtureSmiles?.length) return;
+
+    const ordered = [];
+    const remaining = [...this.components];
+
+    mixtureSmiles.forEach((smiles) => {
+      const index = remaining.findIndex(
+        (component) => component.molecule_cano_smiles === smiles
+          || component.molecule?.cano_smiles === smiles
+      );
+      if (index >= 0) {
+        ordered.push(remaining[index]);
+        remaining.splice(index, 1);
+      }
+    });
+
+    if (remaining.length > 0) {
+      ordered.push(...remaining);
+    }
+
+    this.components = ordered;
+    this.setComponentPositions();
+  }
+
   getChildrenCount() {
     return parseInt(Sample.children_count[this.id] || this.children_count, 10);
   }
@@ -489,17 +550,31 @@ export default class Sample extends Element {
     const { profile } = UserStore.getState();
     const show_external_name = profile ? profile.show_external_name : false;
     const show_sample_name = profile ? profile.show_sample_name : false;
-    const { external_label } = this;
+    const show_sample_short_label = profile ? profile.show_sample_short_label : false;
+    const { external_label, name, short_label } = this;
     const extLabelClass = 'label--bold';
-    const { name } = this;
-    const { short_label } = this;
 
-    if (show_external_name) {
-      return (external_label ? <span className={extLabelClass}>{external_label}</span> : short_label);
-    } if (show_sample_name) {
-      return (name ? <span className={extLabelClass}>{name}</span> : short_label);
-    }
-    return short_label;
+    const otherChecked = show_external_name || show_sample_name;
+    const showShortLabel = !otherChecked || show_sample_short_label;
+
+    const parts = [];
+    if (showShortLabel) parts.push(<span key="short">{short_label}</span>);
+    if (show_sample_name && name) parts.push(<span key="name" className={extLabelClass}>{name}</span>);
+    if (show_external_name && external_label) parts.push(<span key="ext" className={extLabelClass}>{external_label}</span>);
+
+    if (parts.length === 0) return short_label;
+    if (parts.length === 1) return parts[0];
+
+    return (
+      <span className="d-flex gap-1 align-items-center">
+        {parts.map((part, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && <span className="text-muted">|</span>}
+            {part}
+          </React.Fragment>
+        ))}
+      </span>
+    );
   }
 
   get molecule_name_label() {
@@ -630,20 +705,69 @@ export default class Sample extends Element {
     this._imported_readout = imported_readout;
   }
 
-  updateRange(field, lower, upper) {
-    this[`${field}_lowerbound`] = lower;
-    this[`${field}_upperbound`] = upper;
-    if (lower === '' && upper === '') {
-      this[`${field}_display`] = lower.toString();
-      this[field] = lower.toString();
-    } else if (lower === upper) {
-      this[`${field}_upperbound`] = '';
-      this[`${field}_display`] = lower.toString();
-      this[field] = lower.toString().concat('...', Number.POSITIVE_INFINITY);
+  // Returns true when a bound value represents an open (unbounded) end of a range.
+  static isOpenBound(value) {
+    return value === '' || value == null
+      || value === Number.NEGATIVE_INFINITY || value === Number.POSITIVE_INFINITY
+      || value === '-Infinity' || value === 'Infinity';
+  }
+
+  // Persists or removes the human-readable label in xref so it survives a reload.
+  updateRangeLabel(field, label) {
+    this.xref = { ...(this.xref || {}) };
+    if (label === '' || label == null) {
+      delete this.xref[`${field}_label`];
     } else {
-      this[`${field}_display`] = (lower.toString().concat(' – ', upper)).trim();
-      this[field] = lower.toString().concat('..', upper);
+      this.xref[`${field}_label`] = label;
     }
+  }
+
+  // Derives the display string shown in the UI input from the normalised bounds.
+  static rangeDisplayText(lowerForApi, upperForApi, isOpenLower, isOpenUpper, label) {
+    if (label) return label;
+
+    if (isOpenLower && isOpenUpper) return '';
+
+    if (isOpenLower) return `<${upperForApi}`;
+    if (isOpenUpper) return lowerForApi.toString();
+
+    if (lowerForApi === upperForApi) return lowerForApi.toString();
+
+    return `${lowerForApi} – ${upperForApi}`.trim();
+  }
+
+  // Serializes the bounds into the Ruby range literal stored on the model
+  // and sent to the API (e.g. "65..68", "65...Infinity", "-Infinity..200").
+  static rangeSerialised(lowerForApi, upperForApi, isOpenLower, isOpenUpper) {
+    if (isOpenLower && isOpenUpper) return '';
+    if (isOpenLower) return `-Infinity..${upperForApi}`;
+    if (isOpenUpper || lowerForApi === upperForApi) return `${lowerForApi}...${Number.POSITIVE_INFINITY}`;
+
+    return `${lowerForApi}..${upperForApi}`;
+  }
+
+  updateRange(field, lower, upper, label = undefined) {
+    const isOpenLower = Sample.isOpenBound(lower);
+    const isOpenUpper = Sample.isOpenBound(upper);
+
+    const lowerForApi = isOpenLower ? '' : lower;
+    const upperForApi = isOpenUpper ? '' : upper;
+
+    this[`${field}_lowerbound`] = lowerForApi;
+    this[`${field}_upperbound`] = upperForApi;
+
+    // Always synchronize the persisted xref label with the current update so
+    // stale labels do not survive calls that only change/clear the bounds.
+    this.updateRangeLabel(field, label === undefined ? '' : label);
+
+    const displayText = Sample.rangeDisplayText(lowerForApi, upperForApi, isOpenLower, isOpenUpper, label);
+    // When both bounds are equal treat it as a single-value entry (no upper stored).
+    if (!isOpenLower && !isOpenUpper && lowerForApi === upperForApi) {
+      this[`${field}_upperbound`] = '';
+    }
+
+    this[`${field}_display`] = displayText;
+    this[field] = Sample.rangeSerialised(lowerForApi, upperForApi, isOpenLower, isOpenUpper);
   }
 
   /**
@@ -2023,8 +2147,8 @@ export default class Sample extends Element {
 
     if (!combinedSmiles) return;
 
-    // Only fetch if the combined SMILES differs from current
-    if (combinedSmiles === this.molecule_cano_smiles) return;
+    // Same component set (possibly different order) — keep editor molfile/SVG intact.
+    if (Sample.sameSmilesSet(combinedSmiles, this.molecule_cano_smiles)) return;
 
     const result = await MoleculesFetcher.fetchBySmi(combinedSmiles, null, this.molfile, 'ketcher');
 
@@ -2034,26 +2158,18 @@ export default class Sample extends Element {
       return;
     }
 
-    // Re-validate after async fetch: components may have changed during the request.
-    // If they did, this response is stale and should be discarded to avoid race conditions.
+    // Re-validate after async fetch: discard if the component set changed while in flight.
     const currentSmiles = (this.components || [])
       .map((c) => c.molecule_cano_smiles)
       .filter(Boolean)
       .join('.');
 
-    if (!currentSmiles || combinedSmiles !== currentSmiles) {
+    if (!currentSmiles || !Sample.sameSmilesSet(combinedSmiles, currentSmiles)) {
       return;
     }
 
     this.molecule = result;
     this.molfile = result.molfile;
-
-    // Clear sample_svg_file after setting molecule, because the setter
-    // re-populates it from temp_svg.  For mixtures the permanent combined
-    // SVG (molecule.molecule_svg_file) should be used instead.
-    if (this.isMixture()) {
-      this.sample_svg_file = null;
-    }
   }
 
   /**
@@ -2348,6 +2464,7 @@ export default class Sample extends Element {
     });
 
     this.addMixtureComponentsSync(newComponents);
+    this.syncComponentOrderToSmiles(mixtureSmiles);
   }
 
   /**

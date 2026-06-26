@@ -1,82 +1,67 @@
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 import GenericBaseFetcher from 'src/fetchers/GenericBaseFetcher';
+import { getFileName, downloadBlob } from 'src/utilities/FetcherHelper';
 
 export default class GenericSgsFetcher extends GenericBaseFetcher {
-  static exec(path, method) {
-    return super.exec(`segments/${path}`, method);
-  }
-
-  static execData(params, path) {
-    return super.execData(params, `segments/${path}`);
-  }
-
   static fetchRepo() {
-    return this.exec('fetch_repo', 'GET');
+    return ApiClient.getJson('/api/v1/segments/fetch_repo');
   }
 
   static createRepo(params) {
-    return this.execData(params, 'create_repo_klass');
+    return ApiClient.postJson('/api/v1/segments/create_repo_klass', { body: params });
   }
 
   static createKlass(params) {
-    return this.execData(params, 'create_segment_klass');
+    return ApiClient.postJson('/api/v1/segments/create_segment_klass', { body: params });
   }
 
   static fetchKlass(elementName = null) {
-    const api = elementName == null
-      ? 'klasses.json'
-      : `klasses.json?element=${elementName}`;
-    return this.exec(api, 'GET');
+    const path = elementName == null ? 'klasses' : `klasses?element=${elementName}`;
+    return ApiClient.getJson(`/api/v1/segments/${path}`);
   }
 
   static fetchRepoKlassList() {
-    return this.exec('fetch_repo_generic_template_list', 'GET');
+    return ApiClient.getJson('/api/v1/segments/fetch_repo_generic_template_list');
   }
 
   static listSegmentKlass(params = {}) {
-    const api = params.is_active === undefined
-      ? 'list_segment_klass.json'
-      : `list_segment_klass.json?is_active=${params.is_active}`;
-    return this.exec(api, 'GET');
+    const path = params.is_active === undefined
+      ? 'list_segment_klass'
+      : `list_segment_klass?is_active=${params.is_active}`;
+    return ApiClient.getJson(`/api/v1/segments/${path}`);
   }
 
   static syncTemplate(params) {
-    return this.execData(params, 'fetch_repo_generic_template');
+    return ApiClient.postJson('/api/v1/segments/fetch_repo_generic_template', { body: params });
   }
 
   static updateSegmentKlass(params) {
-    return this.execData(params, 'update_segment_klass');
+    return ApiClient.postJson('/api/v1/segments/update_segment_klass', { body: params });
   }
 
   static updateSegmentTemplate(params) {
-    return super.updateTemplate(
-      { ...params, klass: 'SegmentKlass' },
-      'update_segment_template'
-    );
+    return ApiClient.postJson('/api/v1/generic_elements/update_template', {
+      body: { ...params, klass: 'SegmentKlass' }
+    });
   }
 
   static uploadKlass(params) {
-    return this.execData(params, 'upload_klass');
+    return ApiClient.postJson('/api/v1/segments/upload_klass', { body: params });
   }
 
-  static downloadKlass(id, klass) {
+  static downloadKlass(id) {
     let fileName;
-    const promise = fetch(`/api/v1/segments/download_klass.json?id=${id}`, {
-      credentials: 'same-origin',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
+    return ApiClient.getJson(`/api/v1/segments/download_klass?id=${id}`, {
+      handleResponseSuccess: (response) => {
+        if (response.ok) {
+          fileName = getFileName(response);
+          return response.blob();
+        }
+        throw Error(response.statusText);
       }
-    }).then((response) => {
-      if (response.ok) {
-        fileName = getFileName(response);
-        return response.blob();
-      }
-    }).then((blob) => {
-      downloadBlob(fileName, blob);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise;
+    })
+      .then((blob) => {
+        downloadBlob(fileName, blob);
+      });
   }
-
 }

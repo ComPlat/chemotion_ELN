@@ -6,7 +6,32 @@ import {
 import QrReader from 'react-qr-reader';
 import AppModal from 'src/components/common/AppModal';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import 'whatwg-fetch';
+import Aviator from 'aviator';
+import CodeLogsFetcher from 'src/fetchers/CodeLogsFetcher';
+
+function initializeBarcodeScan() {
+  Quagga.init({
+    inputStream: {
+      name: 'Live',
+      type: 'LiveStream',
+      target: document.querySelector('#barcode-scanner'),
+    },
+    decoder: {
+      readers: ['code_128_reader'],
+    }
+  }, (err) => {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    console.log('Initialization finished. Ready to start');
+    Quagga.start();
+  });
+}
+
+function handleError(err) {
+  console.error(err);
+}
 
 export default class ScanCodeButton extends React.Component {
   constructor(props) {
@@ -26,88 +51,27 @@ export default class ScanCodeButton extends React.Component {
     this.handleScan = this.handleScan.bind(this);
   }
 
-  open() {
-    this.setState({ showModal: true });
-  }
-
-  close() {
-    this.setState({ showModal: false, showQrReader: false, scanError: null });
-  }
-
-  initializeBarcodeScan() {
-    Quagga.init({
-      inputStream: {
-        name: "Live",
-        type: "LiveStream",
-        target: document.querySelector('#barcode-scanner'),
-      },
-      decoder: {
-        readers: ["code_128_reader"],
-      }
-    }, function(err) {
-      if (err) {
-        console.log(err);
-        return;
-      }
-      console.log("Initialization finished. Ready to start");
-      Quagga.start();
-    });
-  }
-
-  startBarcodeScan() {
-    this.initializeBarcodeScan();
-
-    Quagga.onDetected((data) => {
-      const barcode = data.codeResult.code;
-      this.handleScan(barcode, true);
-      Quagga.stop();
-    });
-
-    this.setState({ showQrReader: false });
-  }
-
-  startQrCodeScan() {
-    this.setState({ showQrReader: true });
-  }
-
-  checkJSONResponse(json) {
-    if (json.error) {
-      var error = new Error(json.error);
-      error.response = json;
-      throw error;
-    } else {
-      return json;
-    }
-  }
-
   handleScan(data, stopQuagga = false) {
-    let codeInput = this.codeInput.value;
-    let code_log = {};
-    if (codeInput) {
-      data = codeInput;
-    }
+    const codeInput = this.codeInput.value;
+    let codeLog = {};
+    const dataInput = codeInput || data;
+    if (!dataInput) { return; }
+    console.log(data, codeInput, dataInput);
 
-    if (!data) {
-      return;
-    }
+    if (stopQuagga) { Quagga.stop(); }
 
-    stopQuagga && Quagga.stop();
-    fetch(`/api/v1/code_logs/generic?code=${data}`, {
-      credentials: 'same-origin'
-    })
-      .then(response => response.json())
-      .then(this.checkJSONResponse)
+    CodeLogsFetcher.fetchGenericCodeLogs(dataInput)
       .then((json) => {
-        code_log = json.code_log;
-        if (code_log.source === 'container') {
+        codeLog = json.code_log;
+        if (codeLog.source === 'container') {
           // open active analysis
-          UIActions.selectTab({ tabKey: 1, type: code_log.root_code.source });
-          UIActions.selectActiveAnalysis({ type: 'sample', analysisIndex: code_log.source_id });
-          Aviator.navigate(`/collection/all/${code_log.root_code.source}/${code_log.root_code.source_id}`);
+          UIActions.selectTab({ tabKey: 1, type: codeLog.root_code.source });
+          UIActions.selectActiveAnalysis({ type: 'sample', analysisIndex: codeLog.source_id });
+          Aviator.navigate(`/collection/all/${codeLog.root_code.source}/${codeLog.root_code.source_id}`);
           this.close();
         } else {
-          UIActions.selectTab({ tabKey: 0, type: code_log.root_code.source });
-          Aviator.navigate(`/collection/all/${code_log.source}/${code_log.source_id}`);
+          UIActions.selectTab({ tabKey: 0, type: codeLog.root_code.source });
+          Aviator.navigate(`/collection/all/${codeLog.source}/${codeLog.source_id}`);
           this.close();
         }
       })
@@ -125,8 +89,28 @@ export default class ScanCodeButton extends React.Component {
     }
   }
 
-  handleError(err) {
-    console.error(err);
+  open() {
+    this.setState({ showModal: true });
+  }
+
+  close() {
+    this.setState({ showModal: false, showQrReader: false, scanError: null });
+  }
+
+  startBarcodeScan() {
+    initializeBarcodeScan();
+
+    Quagga.onDetected((data) => {
+      const barcode = data.codeResult.code;
+      this.handleScan(barcode, true);
+      Quagga.stop();
+    });
+
+    this.setState({ showQrReader: false });
+  }
+
+  startQrCodeScan() {
+    this.setState({ showQrReader: true });
   }
 
   scanModal() {
@@ -163,7 +147,7 @@ export default class ScanCodeButton extends React.Component {
               <QrReader
                 previewStyle={{ width: 550 }}
                 onScan={this.handleScan}
-                onError={this.handleError}
+                onError={handleError}
               />
             )
             : (
@@ -177,14 +161,14 @@ export default class ScanCodeButton extends React.Component {
   }
 
   scanAlert() {
-    if (this.state.scanError) {
+    const { scanError, scanInfo } = this.state;
+    if (scanError) {
       return (
         <div>
-          {this.state.scanInfo &&
-            <Alert variant="info">{this.state.scanInfo}</Alert>
-          }
+          {scanInfo
+            && <Alert variant="info">{scanInfo}</Alert>}
           <Alert variant="danger">
-            {this.state.scanError}
+            {scanError}
           </Alert>
         </div>
       );

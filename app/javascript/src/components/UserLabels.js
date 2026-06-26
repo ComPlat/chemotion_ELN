@@ -16,7 +16,7 @@ import AppModal from 'src/components/common/AppModal';
 import ColorLabel from 'src/components/common/ColorLabel';
 import { Select } from 'src/components/common/Select';
 import { colorOptions } from 'src/components/staticDropdownOptions/options';
-import UsersFetcher from 'src/fetchers/UsersFetcher';
+import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -164,7 +164,7 @@ function UserLabelModal({ showLabelModal, onHide }) {
       return;
     }
 
-    UsersFetcher.updateUserLabel({
+    UserLabelsFetcher.updateUserLabel({
       id: nextLabel.id,
       title: nextLabel.title,
       access_level: nextLabel.access_level === true || nextLabel.access_level === 1 ? 1 : 0,
@@ -221,10 +221,10 @@ function UserLabelModal({ showLabelModal, onHide }) {
     },
     {
       headerName: 'Action',
-      minWidth: 60,
-      maxWidth: 60,
+      minWidth: 85,
+      maxWidth: 85,
       cellRenderer: renderActions,
-      cellClass: ['p-2'],
+      cellClass: ['p-2', 'd-flex', 'justify-content-center', 'align-items-center'],
     },
   ]), [renderActions]);
 

@@ -38,7 +38,7 @@ import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesBut
 import { permitOn } from 'src/components/common/uis';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
 import AppModal from 'src/components/common/AppModal';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
 import ScifinderSearch from 'src/components/scifinder/ScifinderSearch';
 import MatrixCheck from 'src/components/common/MatrixCheck';
@@ -66,7 +66,6 @@ const productLink = (product, active) => (
     >
       <i className="icon-sample mx-1" />
       {product.title()}
-      hah
     </span>
   </span>
 );
@@ -80,7 +79,7 @@ export default class ReactionDetails extends Component {
       reaction,
       activeTab: UIStore.getState().reaction.activeTab,
       activeAnalysisTab: UIStore.getState().reaction.activeAnalysisTab,
-      visible: Immutable.List(),
+      visible: List(),
       sfn: UIStore.getState().hasSfn,
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
       reactionSvgVersion: 0, // Bumped when graphic is updated so shouldComponentUpdate sees a state change (we mutate reaction in place)
@@ -268,9 +267,10 @@ export default class ReactionDetails extends Component {
     const { newReaction, options } = setReactionByType(reaction, type, value);
 
     // Update gas phase store synchronously for vessel size changes
-    // to ensure store is updated before gas calculations run during render
     if (type === 'vesselSizeAmount' || type === 'vesselSizeUnit') {
-      this.updateReactionVesselSize(newReaction);
+      const { catalystMoles, vesselSize } = newReaction.findReactionVesselSizeCatalystMaterialValues();
+      GasPhaseReactionActions.setReactionVesselSize(vesselSize || null);
+      GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles || null);
     }
     this.handleReactionChange(newReaction, options);
   }

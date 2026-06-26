@@ -11,6 +11,7 @@ import { v4 as uuid } from 'uuid';
 
 import { unitSystems } from 'src/components/staticDropdownOptions/units';
 import { capitalizeWords } from 'src/utilities/textHelper';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 const inputByType = (object, field, index, formHelper, disabled) => {
   const fullFieldName = `${field}.${index}.${object.value}`;
@@ -523,7 +524,7 @@ function ColoredAccordeonHeaderButton({
       {title}
     </Button>
   );
-};
+}
 
 function SecondaryCollapseContent({
   children, title, eventKey, error, active, store
@@ -549,7 +550,7 @@ function SecondaryCollapseContent({
       </Collapse>
     </div>
   );
-};
+}
 
 function formValueHandler(startValues) {
   const [form, setForm] = useState(startValues);
@@ -588,12 +589,7 @@ function submitAsForm({
   Object.entries(form).forEach(([key, val]) => {
     formData.append(makeKey(key), val);
   });
-
-  return fetch(url, {
-    method,
-    body: formData,
-    credentials: 'same-origin'
-  });
+  return UsersFetcher.submitAsForm(url, method, formData);
 }
 
 export {
