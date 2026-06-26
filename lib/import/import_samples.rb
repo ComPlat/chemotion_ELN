@@ -95,11 +95,11 @@ module Import
 
     def check_required_fields
       @mandatory_check = {}
-      header_fields = ['molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles', 'decoupled']
+      header_fields = ['molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles', 'decoupled', 'cas']
       header_fields.each do |check|
         @mandatory_check[check] = true if header.find { |e| /^\s*#{check}?/i =~ e }
       end
-      message = 'Column headers should have: molfile, or Smiles (or cano_smiles, canonical smiles)'
+      message = 'Column headers should have: molfile, Smiles (or cano_smiles, canonical smiles), CAS, or decoupled'
       raise message if mandatory_check.empty?
     end
 
@@ -187,19 +187,33 @@ module Import
       padded_row = raw_row.values_at(0...header.length)
       row = [header, padded_row].transpose.to_h
       is_decoupled = row_value_case_insensitive(row, 'decoupled')
-      return unless structure?(row) || is_decoupled
+      return unless structure?(row) || is_decoupled || cas?(row)
 
       rows << row.each_pair { |k, v| v && row[k] = v.to_s }
     end
 
     def process_row_data(row, index)
       is_decoupled = row_value_case_insensitive(row, 'decoupled')
-      return Molecule.find_or_create_dummy if is_decoupled && !structure?(row)
+      return Molecule.find_or_create_dummy if is_decoupled && no_structure_or_cas?(row)
 
-      molecule, molfile = extract_molfile_and_molecule(row, index)
-      return if molfile.nil? || molecule.nil?
+      molecule, molfile = molecule_and_molfile_with_cas_fallback(row, index)
+      ## import sample as decoupled if no structure information is available
+      return Molecule.find_or_create_dummy if molfile.nil? || molecule.nil?
 
       [molecule, molfile]
+    end
+
+    def no_structure_or_cas?(row)
+      !structure?(row) && !cas?(row)
+    end
+
+    # Resolve molecule/molfile from structure - fall back to CAS lookup when structure is missing.
+    def molecule_and_molfile_with_cas_fallback(row, index)
+      molecule, molfile = extract_molfile_and_molecule(row, index)
+      return [molecule, molfile] unless (molfile.nil? || molecule.nil?) && cas?(row)
+
+      molecule = find_molecule_by_cas(row['cas'].to_s.strip)
+      [molecule, molecule&.molfile]
     end
 
     def process_component_row_data(component_row, index)
@@ -224,7 +238,7 @@ module Import
               unprocessable_count += 1
               next
             end
-            sample_save(row, molfile, molecule, i)
+            sample_save(row, molfile, molecule, i, force_decoupled: molfile.nil?)
           rescue StandardError => _e
             unprocessable_count += 1
             @unprocessable << { row: row, index: i } unless @unprocessable.any? { |u| u[:index] == i }
@@ -251,6 +265,34 @@ module Import
       header_present = keys.any? { |key| determine_sheet(xlsx)[key] }
       cell_present = keys.any? { |key| row_value_case_insensitive(row, key).to_s.present? }
       header_present && cell_present
+    end
+
+    def cas?(row)
+      cas = row['cas'].to_s.strip
+      cas.present?
+    end
+
+    def find_molecule_by_cas(cas_nr)
+      return nil if cas_nr.blank?
+
+      @molecule_cas_cache ||= {}
+      return @molecule_cas_cache[cas_nr] if @molecule_cas_cache.key?(cas_nr)
+
+      begin
+        result = Chemotion::CasLookupService.fetch_by_cas(cas_nr)
+        smiles = result[:smiles]
+
+        if smiles.present?
+          molecule = Molecule.find_or_create_by_cano_smiles(smiles)
+          @molecule_cas_cache[cas_nr] = molecule
+          return molecule
+        end
+      rescue StandardError => e
+        Rails.logger.warn "CAS lookup failed for #{cas_nr}: #{e.message}"
+      end
+
+      @molecule_cas_cache[cas_nr] = nil
+      nil
     end
 
     # When Open Babel returns blank inchikey for a PolymersList molfile, create a molecule with a synthetic
@@ -700,8 +742,9 @@ module Import
       sample
     end
 
-    def sample_save(row, molfile, molecule, index = nil)
+    def sample_save(row, molfile, molecule, index = nil, force_decoupled: false)
       sample = create_sample_and_assign_molecule(current_user_id, molfile, molecule)
+      sample.decoupled = true if force_decoupled
       stereo = {}
       header.each do |field|
         stereo[Regexp.last_match(1)] = row[field] if field.to_s.strip =~ /^stereo_(abs|rel)$/

@@ -28,6 +28,7 @@ class ImportSamplesJob < ApplicationJob
         rows: params[:sdf_rows],
         mapped_keys: params[:mapped_keys],
         attachment: params[:attachment],
+        import_type: params[:import_type],
       )
       sdf_import.create_samples
       @result = { message: sdf_import.message }

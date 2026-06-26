@@ -109,6 +109,7 @@ export default class SamplesFetcher {
       currentCollectionId: params.currentCollectionId,
       rows: params.rows,
       mapped_keys: params.mapped_keys,
+      import_type: params.import_type,
     };
 
     return ApiClient.postJson('/api/v1/samples/confirm_import', { body })

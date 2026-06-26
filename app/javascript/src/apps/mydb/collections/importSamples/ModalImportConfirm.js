@@ -56,6 +56,7 @@ export default class ModalImportConfirm extends React.Component {
       rows: [],
       custom_data_keys: [],
       mapped_keys: {},
+      import_type: null,
     }
 
     this.onSelectChange = this.onSelectChange.bind(this)
@@ -75,6 +76,55 @@ export default class ModalImportConfirm extends React.Component {
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onElementStoreChange);
+  }
+
+  // Common SDF column names whose normalized form does not equal the target field name.
+  // Maps normalized SDF column -> target field; only applied when no exact field match exists
+  // and the aliased field actually exists in mapped_keys.
+  static get COLUMN_ALIASES() {
+    return {
+      sample_name: 'name',
+      sample_external_label: 'external_label',
+      external: 'external_label',
+      real_unit: 'real_amount_unit',
+      target_unit: 'target_amount_unit',
+      melting_pt: 'melting_point',
+      boiling_pt: 'boiling_point',
+      molecular_mass_decoupled: 'molecular_mass',
+      sum_formula_decoupled: 'sum_formula',
+      h_statement: 'h_statements',
+      p_statement: 'p_statements',
+      pictogram: 'pictograms',
+      hazard_statements: 'h_statements',
+      precautionary_statements: 'p_statements',
+      order_no: 'order_number',
+      owner: 'owner',
+      storage_temp: 'storage_temperature',
+    };
+  }
+
+  // Pre-select a target field for every SDF column whose name matches a mapped key
+  // (e.g. STATUS -> status, H_STATEMENTS -> h_statements, CAS -> cas), so the user does
+  // not have to map each column by hand and chemical fields are imported by default.
+  // Exact name match wins; otherwise a known alias is used when its field exists.
+  static autoSelectFields(customDataKeys, mappedKeys) {
+    const normalize = (value) => String(value).toLowerCase().replace(/\s+/g, '_');
+    const fieldByNormalizedName = {};
+    Object.keys(mappedKeys || {}).forEach((key) => {
+      const field = mappedKeys[key] && mappedKeys[key].field;
+      if (field) { fieldByNormalizedName[normalize(field)] = field; }
+    });
+    const aliases = ModalImportConfirm.COLUMN_ALIASES;
+    const resolveField = (columnName) => {
+      const norm = normalize(columnName);
+      if (fieldByNormalizedName[norm]) { return fieldByNormalizedName[norm]; }
+      const aliased = aliases[norm];
+      return aliased && fieldByNormalizedName[normalize(aliased)] ? fieldByNormalizedName[normalize(aliased)] : '';
+    };
+    return (customDataKeys || []).reduce((acc, key) => {
+      acc[key] = resolveField(key);
+      return acc;
+    }, {});
   }
 
   onElementStoreChange({ sdfUploadData }) {
@@ -100,10 +150,11 @@ export default class ModalImportConfirm extends React.Component {
         collection_id: sdfUploadData.collection_id,
         custom_data_keys: sdfUploadData.custom_data_keys,
         mapped_keys: sdfUploadData.mapped_keys,
-        defaultSelected: sdfUploadData.custom_data_keys.reduce((acc, key) => {
-          acc[key] = '';
-          return acc;
-        }, {}),
+        import_type: sdfUploadData.import_type,
+        defaultSelected: ModalImportConfirm.autoSelectFields(
+          sdfUploadData.custom_data_keys,
+          sdfUploadData.mapped_keys,
+        ),
       });
     }
   }
@@ -114,7 +165,8 @@ export default class ModalImportConfirm extends React.Component {
       collection_id,
       mapped_keys,
       rows,
-      defaultSelected
+      defaultSelected,
+      import_type
     } = this.state;
 
     let filtered_mapped_keys = {}
@@ -148,6 +200,7 @@ export default class ModalImportConfirm extends React.Component {
       currentCollectionId: collection_id,
       rows: processRows,
       mapped_keys: filtered_mapped_keys,
+      import_type: import_type,
     }
 
     ElementActions.importSamplesFromFileConfirm(params)
