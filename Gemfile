@@ -102,7 +102,7 @@ gem 'ruby-geometry', require: 'geometry'
 gem 'ruby-mailchecker'
 gem 'ruby-ole'
 
-gem 'sablon', git: 'https://github.com/ComPlat/sablon'
+gem 'sablon', git: 'https://github.com/ComPlat/sablon', tag: 'v0.4.3-1'
 gem 'sassc-rails'
 gem 'scenic'
 gem 'schmooze'
