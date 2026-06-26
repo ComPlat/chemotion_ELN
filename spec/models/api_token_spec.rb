@@ -64,6 +64,7 @@ RSpec.describe ApiToken, type: :model do
     describe '.active' do
       it 'includes only non-revoked, non-expired tokens' do
         expect(described_class.active).to contain_exactly(active_token, never_expires)
+        expect(described_class.active).not_to include(revoked_token, expired_token)
       end
     end
 
@@ -78,7 +79,7 @@ RSpec.describe ApiToken, type: :model do
     let(:api_token) { user.api_tokens.create!(name: 'CI') }
 
     it 'stamps revoked_at and drops the token from .active' do
-      expect { api_token.revoke! }.to change { api_token.revoked_at }.from(nil)
+      expect { api_token.revoke! }.to change(api_token, :revoked_at).from(nil)
       expect(described_class.active).not_to include(api_token)
     end
   end

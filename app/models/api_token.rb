@@ -1,4 +1,4 @@
-# app/models/api_token.rb
+# frozen_string_literal: true
 
 require 'digest'
 
@@ -11,11 +11,11 @@ class ApiToken < ApplicationRecord
 
   scope :active, -> {
     where(revoked_at: nil)
-      .where("expires_at IS NULL OR expires_at > ?", Time.current)
+      .where('expires_at IS NULL OR expires_at > ?', Time.current)
   }
 
   scope :not_expired, -> {
-    where("expires_at IS NULL OR expires_at > ?", Time.current)
+    where('expires_at IS NULL OR expires_at > ?', Time.current)
       .order(revoked_at: :desc, expires_at: :desc)
   }
 
