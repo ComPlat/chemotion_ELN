@@ -49,6 +49,7 @@ export default class SampleForm extends React.Component {
     this.updateStereoRel = this.updateStereoRel.bind(this);
     this.addMolName = this.addMolName.bind(this);
     this.handleRangeChanged = this.handleRangeChanged.bind(this);
+    this.handleMeltingPointDecomposedChanged = this.handleMeltingPointDecomposedChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.fetchNextInventoryLabel = this.fetchNextInventoryLabel.bind(this);
     this.matchSelectedCollection = this.matchSelectedCollection.bind(this);
@@ -442,10 +443,22 @@ export default class SampleForm extends React.Component {
     );
   }
 
-  handleRangeChanged(field, lower, upper) {
-    const { sample } = this.props;
-    sample.updateRange(field, lower, upper);
-    this.props.handleSampleChanged(sample);
+  handleRangeChanged(field, lower, upper, label) {
+    const { sample, handleSampleChanged } = this.props;
+    sample.updateRange(field, lower, upper, label);
+    handleSampleChanged(sample);
+  }
+
+  // Toggle the "Decomposed" state for melting point. When checked, the numeric
+  // range is cleared because the substance decomposes before melting and no
+  // temperature can be measured.
+  handleMeltingPointDecomposedChanged(checked) {
+    const { sample, handleSampleChanged } = this.props;
+    sample.xref = { ...(sample.xref || {}), melting_point_decomposed: !!checked };
+    if (checked) {
+      sample.updateRange('melting_point', '', '', '');
+    }
+    handleSampleChanged(sample);
   }
 
   /* eslint-disable camelcase */
@@ -1263,7 +1276,7 @@ export default class SampleForm extends React.Component {
                 <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
                 <Col>{this.textInput(sample, 'xref_solubility', 'Soluble in')}</Col>
               </Row>
-              <Row className="align-items-end mb-4">
+              <Row className="align-items-start mb-4">
                 <Col>
                   <TextRangeWithAddon
                     field="melting_point"
@@ -1272,7 +1285,12 @@ export default class SampleForm extends React.Component {
                     value={sample.melting_point_display}
                     disabled={polyDisabled}
                     onChange={this.handleRangeChanged}
-                    tipOnText="Use space-separated value to input a Temperature range"
+                    tipOnText='Examples: "65", "65-68", "65 68", ">300", "<200"'
+                    alternativeActive={!!(sample.xref && sample.xref.melting_point_decomposed)}
+                    alternativeLabel="Decomposed"
+                    alternativeToggleLabel="Decomposed"
+                    alternativeToggleTooltip="Substance decomposes before melting; no temperature can be measured"
+                    onAlternativeToggle={this.handleMeltingPointDecomposedChanged}
                   />
                 </Col>
 
@@ -1284,7 +1302,7 @@ export default class SampleForm extends React.Component {
                     value={sample.boiling_point_display}
                     disabled={polyDisabled}
                     onChange={this.handleRangeChanged}
-                    tipOnText="Use space-separated value to input a Temperature range"
+                    tipOnText='Examples: "65", "65-68", "65 68", ">300", "<200"'
                   />
                 </Col>
                 <Col>{this.inputWithUnit(sample, 'xref_flash_point', 'Flash point')}</Col>
