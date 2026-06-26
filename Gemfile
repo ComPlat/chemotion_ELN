@@ -21,9 +21,12 @@ gem 'countries'
 gem 'daemons'
 gem 'delayed_cron_job'
 gem 'delayed_job_active_record'
+
 gem 'devise'
+gem 'devise-jwt' # authentication also requires 'jwt' and 'rack-cors'.
 gem 'devise-two-factor'
 gem 'encryptor' # Needed for devise-two-factor
+
 gem 'dotenv-rails', require: 'dotenv/rails-now'
 
 gem 'ed25519'
@@ -35,6 +38,9 @@ gem 'faraday-multipart'
 gem 'font-awesome-rails'
 gem 'fugit'
 gem 'fx'
+
+# Google protocol buffers for CLAP data format and export.
+gem 'google-protobuf'
 
 gem 'grape'
 gem 'grape-entity'
@@ -181,11 +187,15 @@ group :test do
   gem 'database_cleaner-active_record'
 
   gem 'factory_bot_rails'
+  gem 'test-prof', '~> 1.0'
 
   gem 'launchy'
 
   gem 'rspec-repeat'
 
+  # Convenient RSpec Syntax
+  gem 'rspec-collection_matchers'
+  gem 'rspec-its'
   gem 'shoulda-matchers'
 
   gem 'simplecov', require: false

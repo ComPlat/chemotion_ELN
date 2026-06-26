@@ -71,6 +71,7 @@ module Usecases
         @reaction = reaction
         @materials = {
           starting_material: Array(materials['starting_materials']).map { |m| OSample.new(m) },
+          intermediate: Array(materials['intermediate_samples']).map { |m| OSample.new(m) },
           reactant: Array(materials['reactants']).map { |m| OSample.new(m) },
           solvent: Array(materials['solvents']).map { |m| OSample.new(m) },
           purification_solvent: Array(materials['purification_solvents']).map { |m| OSample.new(m) },
@@ -111,15 +112,15 @@ module Usecases
                 sample.position = idx if sample.position.nil?
                 sample.reference = false if material_group == 'solvent' && sample.reference == true
                 if sample.is_new
-                  if sample.parent_id && material_group != 'product'
-                    modified_sample = create_sub_sample(
-                      sample,
-                      fixed_label,
-                      weight_percentage_ref_record_target_amount,
-                    )
-                  else
-                    modified_sample = create_new_sample(sample, fixed_label, weight_percentage_ref_record_target_amount)
-                  end
+                  modified_sample = if sample.parent_id && material_group != 'product'
+                                      create_sub_sample(
+                                        sample,
+                                        fixed_label,
+                                        weight_percentage_ref_record_target_amount,
+                                      )
+                                    else
+                                      create_new_sample(sample, fixed_label, weight_percentage_ref_record_target_amount)
+                                    end
                 else
                   modified_sample = update_existing_sample(
                     sample,
@@ -183,7 +184,8 @@ module Usecases
           :type, :molecule, :collection_id, :short_label, :waste, :show_label, :coefficient, :user_labels,
           :boiling_point_lowerbound, :boiling_point_upperbound,
           :melting_point_lowerbound, :melting_point_upperbound, :segments, :gas_type,
-          :gas_phase_data, :conversion_rate, :weight_percentage_reference, :weight_percentage, :components, :literatures
+          :gas_phase_data, :conversion_rate, :weight_percentage_reference, :weight_percentage, :components,
+          :literatures, :intermediate_type
         ).merge(created_by: @current_user.id,
                 boiling_point: rangebound(sample.boiling_point_lowerbound, sample.boiling_point_upperbound),
                 melting_point: rangebound(sample.melting_point_lowerbound, sample.melting_point_upperbound))
@@ -283,43 +285,25 @@ module Usecases
 
       def associate_sample_with_reaction(sample, modified_sample, material_group)
         reactions_sample_klass = "Reactions#{material_group.camelize}Sample"
-        existing_association = ReactionsSample.find_by(sample_id: modified_sample.id)
+        reactions_sample = ReactionsSample.find_or_initialize_by(sample_id: modified_sample.id)
+
         weight_percentage = sample.weight_percentage_reference ? 1 : sample.weight_percentage
-        if existing_association
-          existing_association.update!(
-            reaction_id: @reaction.id,
-            # equivalent: sample.equivalent,
-            reference: sample.reference,
-            show_label: sample.show_label,
-            waste: sample.waste,
-            coefficient: sample.coefficient,
-            position: sample.position,
-            type: reactions_sample_klass,
-            gas_type: sample.gas_type,
-            gas_phase_data: sample.gas_phase_data,
-            conversion_rate: sample.conversion_rate,
-            weight_percentage_reference: sample.weight_percentage_reference,
-            weight_percentage: weight_percentage,
-          )
-        # sample was moved to other materialgroup
-        else
-          ReactionsSample.create!(
-            sample_id: modified_sample.id,
-            reaction_id: @reaction.id,
-            equivalent: sample.equivalent,
-            reference: sample.reference,
-            show_label: sample.show_label,
-            waste: sample.waste,
-            coefficient: sample.coefficient,
-            position: sample.position,
-            type: reactions_sample_klass,
-            gas_type: sample.gas_type,
-            gas_phase_data: sample.gas_phase_data,
-            conversion_rate: sample.conversion_rate,
-            weight_percentage_reference: sample.weight_percentage_reference,
-            weight_percentage: weight_percentage,
-          )
-        end
+        reactions_sample.update!(
+          reaction_id: @reaction.id,
+          equivalent: sample.equivalent,
+          reference: sample.reference,
+          show_label: sample.show_label,
+          waste: sample.waste,
+          coefficient: sample.coefficient,
+          position: sample.position,
+          type: reactions_sample_klass,
+          intermediate_type: sample.intermediate_type,
+          gas_type: sample.gas_type,
+          gas_phase_data: sample.gas_phase_data,
+          conversion_rate: sample.conversion_rate,
+          weight_percentage_reference: sample.weight_percentage_reference,
+          weight_percentage: weight_percentage,
+        )
       end
 
       def destroy_unused_samples(modified_sample_ids)

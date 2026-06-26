@@ -497,6 +497,7 @@ export default class Sample extends Element {
       inventory_sample: this.inventory_sample,
       segments: this.segments.map((s) => s.serialize()),
       sample_type: this.sample_type,
+      intermediate_type: this.intermediate_type,
       sample_details: this.sample_details,
       literatures: this.literatures,
     });
@@ -1169,7 +1170,7 @@ export default class Sample extends Element {
     }
 
     if (this.amount_unit === 'mol' && (this.isGas()
-    || this.isFeedstock())) return this.amount_value;
+      || this.isFeedstock())) return this.amount_value;
 
     return this.convertGramToUnit(this.amount_g, 'mol');
   }
@@ -1559,7 +1560,7 @@ export default class Sample extends Element {
 
   get molecule_iupac_name() {
     return this.molecule_name_hash && this.molecule_name_hash.label
-        || this.molecule && this.molecule.iupac_name;
+      || this.molecule && this.molecule.iupac_name;
   }
 
   set molecule_iupac_name(iupac_name) {
@@ -1718,6 +1719,22 @@ export default class Sample extends Element {
       return 1;
     }
     return this._equivalent;
+  }
+
+  get intermediate_type() {
+    return this._intermediate_type;
+  }
+
+  set intermediate_type(intermediate_type) {
+    this._intermediate_type = intermediate_type;
+  }
+
+  get reaction_step() {
+    return this._reaction_step;
+  }
+
+  set reaction_step(reaction_step) {
+    this._reaction_step = reaction_step;
   }
 
   set conc(conc) {
@@ -1907,7 +1924,9 @@ export default class Sample extends Element {
         ? this.components.map((s) => s.serializeComponent())
         : [],
       weight_percentage_reference: this.weight_percentage_reference || false,
-      weight_percentage: this.weight_percentage
+      weight_percentage: this.weight_percentage,
+      intermediate_type: this.intermediate_type,
+      reaction_step: this.reaction_step,
     };
     _.merge(params, extra_params);
     return params;
@@ -1998,7 +2017,7 @@ export default class Sample extends Element {
       // Filter by chemical identity (inchikey or smiles) rather than label
       // to avoid duplicates when the same compound has different labels (e.g., "Acetone" vs "propan-2-one")
       const filtered = tmpSolvents.find((solv) => (solv && solv.smiles === solventData.smiles
-            && solv.inchikey === solventData.inchikey));
+        && solv.inchikey === solventData.inchikey));
       if (!filtered) {
         tmpSolvents.push(solventData);
       } else if (newSolvent.external_label) {
@@ -2019,7 +2038,7 @@ export default class Sample extends Element {
     // Match by chemical identity (inchikey or smiles) rather than label
     // to ensure deletion works even if labels differ (e.g., "Acetone" vs "propan-2-one")
     const filteredIndex = tmpSolvents.findIndex((solv) => (solv.smiles === solventToDelete.smiles
-            && solv.inchikey === solventToDelete.inchikey));
+      && solv.inchikey === solventToDelete.inchikey));
     if (filteredIndex >= 0) {
       tmpSolvents.splice(filteredIndex, 1);
     }
@@ -2036,7 +2055,7 @@ export default class Sample extends Element {
     }
 
     const filteredIndex = tmpSolvents.findIndex((solv) => (solv.smiles === solventToUpdate.smiles
-              && solv.inchikey && solventToUpdate.inchikey));
+      && solv.inchikey && solventToUpdate.inchikey));
     if (filteredIndex >= 0) {
       tmpSolvents[filteredIndex] = solventToUpdate;
 
@@ -2062,6 +2081,14 @@ export default class Sample extends Element {
    */
   updateSampleType(newSampleType) {
     this.sample_type = newSampleType;
+  }
+
+  /**
+   * Updates the intermediate type.
+   * @param {string} newIntermediateType - The new intermediate type
+   */
+  updateIntermediateType(newIntermediateType) {
+    this.intermediate_type = newIntermediateType;
   }
 
   /**

@@ -691,3 +691,11 @@ export const BiosafetyLevelOptions = [
   { value: 'S2', label: 'Biosafety level 2' },
   { value: 'S3', label: 'Biosafety level 3' },
 ];
+
+
+export const IntermediateTypeOptions = [
+  { value: 'PURE', label: 'Pure' },
+  { value: 'CRUDE', label: 'Crude' },
+  { value: 'MIXTURE', label: 'Mixture' },
+  { value: 'INTERMEDIATE', label: 'Intermediate' }
+];

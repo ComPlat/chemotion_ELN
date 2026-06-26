@@ -241,18 +241,37 @@ class Material extends Component {
     );
   }
 
-  materialShowLabel(material) {
+  materialStep(material) {
     return (
-      <Button
-        className="p-1 ms-1"
-        onClick={e => this.handleShowLabelChange(e)}
-        variant="light"
-        active={material.show_label}
-        size="sm"
-        title={material.show_label ? 'Switch to structure' : 'Switch to label'}
-      >
-        {material.show_label ? 'l' : 's'}
-      </Button>
+      <OverlayTrigger placement="top" overlay={<Tooltip id="reactionStep">Reaction Process Step</Tooltip>}>
+        <td>
+          <NumeralInputWithUnitsCompo
+            disabled
+            size="sm"
+            precision={1}
+            value={material.reaction_step}
+          />
+        </td>
+      </OverlayTrigger>
+    );
+  }
+
+  materialIntermediateType(material) {
+    return (
+      <td>
+        <Form.Select
+          size="sm"
+          value={material.intermediate_type}
+          onChange={event => this.handleintermediateTypeChange(event.target.value)}
+          isInvalid={!material.intermediate_type}
+        >
+          <option disabled hidden>Unspecified</option>
+          <option value="CRUDE">Crude</option>
+          <option value="MIXTURE">Mixture</option>
+          <option value="INTERMEDIATE">Intermediate</option>
+          <option value="PURE">Pure</option>
+        </Form.Select>
+      </td>
     );
   }
 
@@ -380,7 +399,7 @@ class Material extends Component {
           value={material.equivalent}
           disabled={
             !permitOn(reaction) || ((((material.reference || false)
-            && material.equivalent) !== false) || lockEquivColumn)
+              && material.equivalent) !== false) || lockEquivColumn)
           }
           onChange={(e) => this.handleEquivalentChange(e)}
         />
@@ -688,7 +707,7 @@ class Material extends Component {
     const isDisabled = !permitOn(reaction)
       || isAmountDisabledByWeightPercentage
       || (materialGroup === 'products'
-      || (!material.reference && lockEquivColumn));
+        || (!material.reference && lockEquivColumn));
 
     return (
       <NumeralInputWithUnitsCompo
@@ -717,7 +736,7 @@ class Material extends Component {
     const isDisabled = !permitOn(reaction)
       || isAmountDisabledByWeightPercentage
       || (materialGroup === 'products'
-      || (!material.reference && lockEquivColumn));
+        || (!material.reference && lockEquivColumn));
 
     // Check if activity is the active unit
     // For SBMM samples: check if _amount_unit is 'U' (set when activity is the primary amount)
@@ -999,6 +1018,18 @@ class Material extends Component {
     }
   }
 
+  handleintermediateTypeChange(intermediateType) {
+    if (this.props.onChange) {
+      const event = {
+        intermediateType,
+        type: 'reactionIntermediateTypeChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId()
+      };
+      this.props.onChange(event);
+    }
+  }
+
   createParagraph(m) {
     const { materialGroup } = this.props;
     const isSbmm = isSbmmSample(m);
@@ -1244,15 +1275,16 @@ class Material extends Component {
                 onClick={() => deleteMaterial(material)}
               />
             </div>
-          </div>
+          </div >
           {materialGroup === 'products' && (
             <>
               {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
               {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material} />}
             </>
-          )}
+          )
+          }
         </div>
-      </div>
+      </div >
     );
 
     return (
@@ -1404,6 +1436,61 @@ class Material extends Component {
     );
   }
 
+  intermediateMaterial() {
+    const {
+      material,
+      deleteMaterial,
+      reaction,
+      dropRef,
+    } = this.props;
+
+    const massBsStyle = material.amount_unit === 'g' ? 'primary' : 'default';
+    const metricPrefixes = ['m', 'n', 'u'];
+    const metric = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[0]) > -1) ? material.metrics[0] : 'm';
+    const metricMol = (material.metrics && material.metrics.length > 2 && metricPrefixes.indexOf(material.metrics[2]) > -1) ? material.metrics[2] : 'm';
+
+    return (
+      <div ref={dropRef} className={this.rowClassNames()}>
+        {this.dragHandle()}
+        {this.materialNameWithIupac(material)}
+        <div className="d-flex flex-column gap-2 py-1">
+          <div className="d-flex gap-2 align-items-start">
+            <div className="reaction-material__reaction-step-data">
+              {this.materialStep(material)}
+            </div>
+            <div className="reaction-material__intermediate-type-data">
+              {this.materialIntermediateType(material)}
+            </div>
+
+            <div className="reaction-material__amount-data">
+              {this.massField(material, metricPrefixes, reaction, metric)}
+              {this.materialVolume(material, 'reaction-material__volume-data')}
+              <NumeralInputWithUnitsCompo
+                value={material.amount_mol}
+                className="reaction-material__molarity-data"
+                unit="mol"
+                metricPrefix={metricMol}
+                metricPrefixes={metricPrefixes}
+                precision={4}
+                disabled={!permitOn(reaction)
+                  || (!material.reference && this.props.lockEquivColumn)
+                  || !material}
+                onChange={e => this.handleAmountUnitChange(e, material.amount_mol)}
+                onMetricsChange={this.handleMetricsChange}
+                variant={material.amount_unit === 'mol' ? 'primary' : 'light'}
+                size="sm"
+              />
+            </div>
+            <DeleteButton
+              disabled={!permitOn(reaction)}
+              onClick={() => deleteMaterial(material)}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   switchTargetReal() {
     const { reaction, material } = this.props;
     const isTarget = material.amountType === 'target';
@@ -1493,9 +1580,7 @@ class Material extends Component {
 
     // Skip shortLabel for reactants and solvents/purification_solvents, and mixtures
     const skipIupacName = (
-      materialGroup === 'reactants'
-      || materialGroup === 'solvents'
-      || materialGroup === 'purification_solvents'
+      ['reactants', 'solvents', 'purification_solvents', 'intermediate_samples'].includes(materialGroup)
       || isMixture
       || isSbmm
     );
@@ -1516,7 +1601,7 @@ class Material extends Component {
         materialDisplayName = material.name || material.short_label;
       } else {
         materialDisplayName = material.molecule_iupac_name || material.name;
-        if (materialGroup === 'solvents' || materialGroup === 'purification_solvents') {
+        if (['solvents', 'purification_solvents', 'intermediate_samples'].includes(materialGroup)) {
           materialDisplayName = material.external_label || materialDisplayName;
         }
       }
@@ -1722,11 +1807,15 @@ class Material extends Component {
 
   render() {
     const { materialGroup } = this.props;
-
-    const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
-    return sp
-      ? this.solventMaterial()
-      : this.generalMaterial();
+    let component;
+    if (['solvents', 'purification_solvents'].includes(materialGroup)) {
+      component = this.solventMaterial();
+    } else if (materialGroup === 'intermediate_samples') {
+      component = this.intermediateMaterial();
+    } else {
+      component = this.generalMaterial();
+    }
+    return component;
   }
 }
 
