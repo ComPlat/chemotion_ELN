@@ -6,6 +6,14 @@ import ElementalCompositionGroup from 'src/apps/mydb/elements/details/samples/pr
 import NotificationActions from 'src/stores/alt/actions/NotificationActions'
 import { Select } from 'src/components/common/Select';
 
+const parseLoadingValue = (rawValue) => {
+  if (rawValue == null) return undefined;
+  if (typeof rawValue === 'string' && rawValue.trim() === '') return undefined;
+
+  const parsed = Number(rawValue);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
 export default class PolymerSection extends React.Component {
   handleCustomInfoNumericChanged(e, name, residue, sample) {
     const { handleSampleChanged, handleAmountChanged } = this.props;
@@ -13,9 +21,11 @@ export default class PolymerSection extends React.Component {
 
     // make calculations if loading was changed
     if (name == 'loading') {
-      handleAmountChanged(sample.amount);
       if (residue.custom_info.loading_type == 'external')
         sample.external_loading = e.value;
+
+      handleAmountChanged(sample.amount);
+      handleSampleChanged(sample);
 
       let errorMessage;
       if (e.value == 0.0)
@@ -56,7 +66,7 @@ export default class PolymerSection extends React.Component {
     residue.custom_info['loading_type'] = e.target.value;
 
     if (e.target.value == 'external') {
-      sample.loading = sample.external_loading;
+      sample.loading = parseLoadingValue(sample.external_loading);
     }
     else {
       let e_compositon = sample.elemental_compositions.find(function (item) {
@@ -104,6 +114,11 @@ export default class PolymerSection extends React.Component {
   }
 
   polymerLoading(sample, residue) {
+    const loadingValue = residue.custom_info.loading_type === 'external'
+      ? (parseLoadingValue(sample.external_loading)
+        ?? parseLoadingValue(sample.loading))
+      : sample.loading;
+
     return (
       <div>
         <h5>Loading according to:</h5>
@@ -112,7 +127,7 @@ export default class PolymerSection extends React.Component {
         {this.customInfoRadio('Elemental analyses', 'found', residue, sample)}
         {this.customInfoRadio('External estimation', 'external', residue, sample)}
         <NumeralInputWithUnitsCompo
-          value={sample.loading}
+          value={loadingValue}
           unit="mmol/g"
           metricPrefix="n"
           metricPrefixes={['n']}
