@@ -21,7 +21,7 @@ module Export
       @xfile = {}
     end
 
-    def generate_sheet_with_samples(table, samples = nil)
+    def generate_sheet_with_samples(table, samples = nil, _columns_params = nil)
       @samples = samples
       return if samples.nil? # || samples.count.zero?
 
@@ -104,6 +104,7 @@ module Export
     def sdf_molfile_for(sample)
       return sample['molfile'] if sample['molfile'].present?
       return EMPTY_MOLFILE if sample['source_type'] == 'sbmm'
+      return EMPTY_MOLFILE if sample['decoupled'].in?(['t', true])
 
       nil
     end
