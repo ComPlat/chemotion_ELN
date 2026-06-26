@@ -277,10 +277,9 @@ export default class ModalExport extends React.Component {
   }
 
   buttonBar() {
-    const chemicalColumns = this.filteredColumns();
-    const hasNoSdfExportData = chemicalColumns.chemicals.length !== 0
-      || chemicalColumns.components.length !== 0;
-
+    const filteredColumns = this.filteredColumns();
+    const hasNoSdfExportData = filteredColumns.sample.length === 0 && filteredColumns.chemicals.length === 0
+      && filteredColumns.components.length === 0;
     return (
       <Button
         variant="primary"

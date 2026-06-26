@@ -150,6 +150,7 @@ module Chemotion
               attachment: @att,
               collection_id: params[:currentCollectionId],
               current_user_id: current_user.id,
+              import_type: params[:import_type],
             )
 
             sdf_import.find_or_create_mol_by_batch
@@ -159,6 +160,7 @@ module Chemotion
               data: sdf_import.processed_mol, status: sdf_import.status,
               custom_data_keys: sdf_import.custom_data_keys.keys,
               mapped_keys: sdf_import.mapped_keys,
+              import_type: sdf_import.import_type,
               collection_id: sdf_import.collection_id
             }
           end
@@ -180,6 +182,7 @@ module Chemotion
           requires :rows, type: Array, desc: 'Selected Molecule from the UI'
           requires :currentCollectionId, type: Integer
           requires :mapped_keys, type: Hash
+          optional :import_type, type: String, desc: 'sample or chemical'
         end
 
         before do
@@ -194,6 +197,7 @@ module Chemotion
               current_user_id: current_user.id,
               rows: rows,
               mapped_keys: params[:mapped_keys],
+              import_type: params[:import_type],
             )
             sdf_import.create_samples
             return {
@@ -208,6 +212,7 @@ module Chemotion
               file_name: 'dummy.sdf',
               sdf_rows: rows,
               mapped_keys: params[:mapped_keys],
+              import_type: params[:import_type],
             }
             ImportSamplesJob.perform_later(parameters)
             return {

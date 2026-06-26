@@ -77,7 +77,7 @@ module Chemotion
                                      :components)
         end
 
-        if params[:exportType] == 1 && params[:columns][:chemicals].present?
+        if params[:columns][:chemicals].present?
           generate_sheets_for_tables(%i[sample], table_params, export, params[:columns][:chemicals],
                                      :chemicals)
           generate_sheets_for_tables(%i[reaction wellplate], table_params, export)
