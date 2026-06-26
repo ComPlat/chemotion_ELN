@@ -9,12 +9,12 @@ class ApiToken < ApplicationRecord
 
   before_create :generate_token!
 
-  scope :active, -> {
+  scope :active, lambda {
     where(revoked_at: nil)
       .where('expires_at IS NULL OR expires_at > ?', Time.current)
   }
 
-  scope :not_expired, -> {
+  scope :not_expired, lambda {
     where('expires_at IS NULL OR expires_at > ?', Time.current)
       .order(revoked_at: :desc, expires_at: :desc)
   }
