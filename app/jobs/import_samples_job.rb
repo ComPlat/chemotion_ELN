@@ -26,6 +26,7 @@ class ImportSamplesJob < ApplicationJob
         collection_id: @collection_id,
         current_user_id: @user_id,
         attachment: params[:attachment],
+        import_type: params[:import_type],
       )
       sdf_import.import_from_file
       @result = { message: sdf_import.message }
