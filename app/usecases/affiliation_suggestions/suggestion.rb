@@ -10,6 +10,7 @@ module Usecases
       end
 
       def create(params)
+        params = params.compact_blank
         ensure_no_pending_duplicate!(params)
         ensure_not_in_registry!(params)
 
@@ -25,8 +26,8 @@ module Usecases
         if suggestion.organization.present?
           affiliation = Affiliation.find_or_create_by(
             organization: suggestion.organization,
-            department: suggestion.department,
-            group: suggestion.group,
+            department: Affiliation.canonical(:department, suggestion.department),
+            group: Affiliation.canonical(:group, suggestion.group),
             country: suggestion.country,
             ror_id: suggestion.ror_id,
           )
@@ -59,18 +60,20 @@ module Usecases
         suggestion
       end
 
-      # Repoint the edited UserAffiliation when the suggestion targets one,
-      # otherwise add a new UserAffiliation for the approved affiliation.
+      # Repoint the edited UserAffiliation when the suggestion targets one the
+      # submitter actually owns, otherwise add a new UserAffiliation. Scoping to
+      # the submitter blocks a forged target_user_affiliation_id from repointing
+      # someone else's affiliation on approval.
       def apply_affiliation(suggestion, affiliation)
-        if suggestion.target_user_affiliation_id
-          repoint(suggestion.target_user_affiliation_id, affiliation)
+        target = suggestion.user.user_affiliations.find_by(id: suggestion.target_user_affiliation_id)
+        if target
+          repoint(target, affiliation)
         else
           UserAffiliation.find_or_create_by!(user_id: suggestion.user_id, affiliation_id: affiliation.id)
         end
       end
 
-      def repoint(user_affiliation_id, affiliation)
-        user_affiliation = UserAffiliation.find(user_affiliation_id)
+      def repoint(user_affiliation, affiliation)
         old_affiliation_id = user_affiliation.affiliation_id
         ActiveRecord::Base.transaction do
           user_affiliation.update!(affiliation_id: affiliation.id)

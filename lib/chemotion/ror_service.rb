@@ -14,7 +14,7 @@ module Chemotion
         response = HTTParty.get(build_url(query, country), request_options)
         return [] unless response.success?
 
-        JSON.parse(response.body)['items'].map { |item| parse_item(item) }
+        (JSON.parse(response.body)['items'] || []).map { |item| parse_item(item) }
       rescue StandardError => e
         Rails.logger.error "ROR API error: #{e.message}"
         []

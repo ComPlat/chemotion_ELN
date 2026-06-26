@@ -85,10 +85,7 @@ export default function AffiliationSuggestions() {
           {suggestions.length === 0 && (
             <tr>
               <td colSpan={statusFilter === 'pending' ? 8 : 7} className="text-center text-muted">
-                No
-                {statusFilter}
-                {' '}
-                suggestions
+                {`No ${statusFilter} suggestions`}
               </td>
             </tr>
           )}

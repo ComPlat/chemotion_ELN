@@ -2,7 +2,7 @@
   %p
     User
     %strong= @user.name
-    (= @user.email) submitted a new affiliation suggestion. Log in to the admin panel to approve or reject it.
+    (#{@user.email}) submitted a new affiliation suggestion. Log in to the admin panel to approve or reject it.
 - elsif action_name == 'suggestion_approved'
   %p Your affiliation suggestion has been approved and is now visible in your affiliations.
 - else

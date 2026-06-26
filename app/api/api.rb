@@ -4,7 +4,7 @@
 require 'grape-entity'
 require 'grape-swagger'
 
-class API < Grape::API
+class API < Grape::API # rubocop:disable Metrics/ClassLength
   include LogidzeModule
 
   format :json

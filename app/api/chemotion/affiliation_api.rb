@@ -80,8 +80,8 @@ module Chemotion
       params do
         requires :organization, type: String, desc: 'organization', allow_blank: false
         optional :country, type: String, desc: 'country'
-        optional :department, type: String, desc: 'department', allow_blank: false
-        optional :group, type: String, desc: 'working group', allow_blank: false
+        optional :department, type: String, desc: 'department'
+        optional :group, type: String, desc: 'working group'
         optional :ror_id, type: String, desc: 'ROR id'
       end
       post do
@@ -96,8 +96,8 @@ module Chemotion
         requires :id, type: Integer, desc: 'user_affiliation id'
         requires :organization, type: String, desc: 'organization', allow_blank: false
         optional :country, type: String, desc: 'country'
-        optional :department, type: String, desc: 'department', allow_blank: false
-        optional :group, type: String, desc: 'working group', allow_blank: false
+        optional :department, type: String, desc: 'department'
+        optional :group, type: String, desc: 'working group'
         optional :ror_id, type: String, desc: 'ROR id'
       end
       put do

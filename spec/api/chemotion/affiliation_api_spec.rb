@@ -151,6 +151,28 @@ RSpec.describe Chemotion::AffiliationAPI do
     end
   end
 
+  describe 'create/update with blank department or group' do
+    let(:user) { create(:person) }
+    let(:warden_instance) { instance_double(WardenAuthentication) }
+
+    before do
+      allow(WardenAuthentication).to receive(:new).and_return(warden_instance)
+      allow(warden_instance).to receive(:current_user).and_return(user)
+    end
+
+    it 'accepts a create when department and group are sent blank', :aggregate_failures do
+      post '/api/v1/affiliations', params: { organization: 'KIT', country: 'Germany', department: '', group: '' }
+      expect(response).to have_http_status(:created)
+      expect(user.reload.affiliations.last.organization).to eq('KIT')
+    end
+
+    it 'accepts an update that clears the department' do
+      ua = UserAffiliation.create!(user: user, affiliation: Affiliation.create!(organization: 'KIT', department: 'IOC'))
+      put '/api/v1/affiliations', params: { id: ua.id, organization: 'KIT', department: '' }
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
   describe 'GET /api/v1/affiliation_suggestions' do
     let(:user) { create(:person) }
     let(:warden_instance) { instance_double(WardenAuthentication) }
