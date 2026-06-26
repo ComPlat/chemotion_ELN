@@ -11,14 +11,14 @@ const tokensShape = PropTypes.arrayOf(
   PropTypes.shape({
     revoked: PropTypes.bool.isRequired,
     name: PropTypes.string.isRequired,
-    expiration_date: PropTypes.number.isRequired,
+    expires_at: PropTypes.number.isRequired,
   })
 );
 
 function AuthToken({ currentUser }) {
   const [show, setShow] = useState(false);
   const [lastToken, setLastToken] = useState(null);
-  const [tokeToRevoke, setTokeToRevoke] = useState(null);
+  const [tokenToRevoke, setTokenToRevoke] = useState(null);
   const [otpAttempt, setOtpAttempt] = useState('');
   const [showOtpDel, setShowOtpDel] = useState(false);
   const [isWrongOtp, setIsWrongOtp] = useState(false);
@@ -35,11 +35,9 @@ function AuthToken({ currentUser }) {
         UserActions.fetchCurrentUser();
         setShowOtpDel(false);
         setIsWrongOtp(false);
-        setTokeToRevoke(null);
+        setTokenToRevoke(null);
       })
       .catch(async (error) => {
-        console.error('Failed to copy token.');
-
         if (error.status === 422) {
           // eslint-disable-next-line camelcase
           const { otp_wrong = false, otp_required = false } = await error.json();
@@ -50,21 +48,21 @@ function AuthToken({ currentUser }) {
         } else {
           setShowOtpDel(false);
           setIsWrongOtp(false);
-          setTokeToRevoke(null);
+          setTokenToRevoke(null);
         }
       });
   };
 
   const handleOnRevoke = useCallback((token) => {
-    setTokeToRevoke(token);
+    setTokenToRevoke(token);
     sendOnRevoke(token);
   });
-  const handleOnWitOtpRevoke = useCallback(() => {
+  const handleOnWithOtpRevoke = useCallback(() => {
     const payload = {
-      ...tokeToRevoke, otp_attempt: otpAttempt
+      ...tokenToRevoke, otp_attempt: otpAttempt
     };
     sendOnRevoke(payload);
-  }, [tokeToRevoke, otpAttempt]);
+  }, [tokenToRevoke, otpAttempt]);
 
   useEffect(() => {
     if (lastToken) {
@@ -75,7 +73,7 @@ function AuthToken({ currentUser }) {
   if (!currentUser.otp_required_for_login) {
     return (
       <Card>
-        <Card.Header>Authentification Token</Card.Header>
+        <Card.Header>Authentication Token</Card.Header>
         <Alert className="m-2" variant="info">
           For security reasons, it is not possible to create
           authentication tokens unless two-factor authentication is enabled.
@@ -92,7 +90,7 @@ function AuthToken({ currentUser }) {
         onOtpChange={onChangeOptAttempt}
         closeOtpModal={closeOtpDel}
         showOtpModal={showOtpDel}
-        handleSubmit={handleOnWitOtpRevoke}
+        handleSubmit={handleOnWithOtpRevoke}
         isWrongOtp={isWrongOtp}
       />
       <AuthTokenCard
@@ -123,9 +121,6 @@ function AuthTokenCard({
   const copyToClipboard = () => {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(lastToken)
-        .then(() => {
-          console.log('Token copied!');
-        })
         .catch(() => {
           console.error('Failed to copy token.');
         });
@@ -137,7 +132,6 @@ function AuthTokenCard({
       textArea.select();
       try {
         document.execCommand('copy');
-        console.log('Token copied!');
       } catch {
         console.error('Failed to copy token.');
       }
@@ -153,7 +147,7 @@ function AuthTokenCard({
   }, [lastToken]);
   return (
     <Card>
-      <Card.Header>Authentification Token</Card.Header>
+      <Card.Header>Authentication Token</Card.Header>
 
       <Card.Body>
         {lastToken && showAlert && (
@@ -200,9 +194,8 @@ AuthTokenCard.defaultProps = {
 function AuthTokenFormModal({
   handleClose, show, setLastToken
 }) {
-  const [pass, setPass] = useState('');
   const [name, setName] = useState('');
-  const [expireInDays, setExpireInDays] = useState(2);
+  const [expireInDays, setExpireInDays] = useState(90);
   const [errorMessage, setErrorMessage] = useState('');
   const [otpAttempt, setOtpAttempt] = useState('');
   const [showOtpDel, setShowOtpDel] = useState(false);
@@ -249,10 +242,9 @@ function AuthTokenFormModal({
           setIsWrongOtp(false);
         }
       });
-  }, [pass, expireInDays, name, otpAttempt]);
+  }, [expireInDays, name, otpAttempt]);
 
   useEffect(() => {
-    setPass('');
     setName('');
     setErrorMessage('');
   }, [show]);
@@ -269,7 +261,7 @@ function AuthTokenFormModal({
       />
       <Modal show={show} onHide={handleClose}>
         <Form onSubmit={handleUserSettingsSubmit}>
-          <Modal.Header>New authentification token</Modal.Header>
+          <Modal.Header>New authentication token</Modal.Header>
 
           <Modal.Body>
             <p>

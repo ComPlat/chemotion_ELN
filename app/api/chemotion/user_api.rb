@@ -123,7 +123,7 @@ module Chemotion
                    desc: 'one time password'
           optional :expires_in_days,
                    type: Integer,
-                   default: 160,
+                   default: 90,
                    values: 1..600,
                    desc: 'Token expiration in days (1–600)'
           optional :name, type: String, desc: 'Name of the item'
@@ -172,15 +172,11 @@ module Chemotion
           else
             error!('2FA is needed', 401)
           end
-          token = current_user.api_tokens.find(params[:id])
-
-          # Return error if not found
+          token = current_user.api_tokens.find_by(id: params[:id])
           error!('Token not found', 404) unless token
+          error!('Token already revoked', 409) if token.revoked_at
 
           token.revoke!
-
-          # Save the updated tokens back to the user
-          current_user.save!
         end
       end
     end

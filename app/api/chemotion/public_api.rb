@@ -24,7 +24,7 @@ module Chemotion
     end
 
     namespace :public do
-      get :ping do
+      get 'ping' do
         status 204
       end
 
