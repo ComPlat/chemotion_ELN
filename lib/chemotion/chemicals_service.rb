@@ -168,54 +168,70 @@ module Chemotion
                     .children[1].children[1].children[1]
     end
 
-    def self.construct_h_statements(h_phrases, vendor = nil)
+    def self.construct_h_statements(h_phrases)
       h_statements = {}
-      h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
+      h_phrases_hash = load_hazard_phrases_hash
+      h_array = normalize_phrases_to_array(h_phrases, 'H')
 
-      # Normalize input to an array of hazard codes (e.g. ["H301", "H314"])
-      h_array = if h_phrases.is_a?(String)
-                  h_phrases.scan(/H\d{1,3}[A-Za-z0-9]*/)
-                elsif h_phrases.is_a?(Array)
-                  h_phrases
-                else
-                  []
-                end
-
-      h_array.each do |element|
-        code = element.to_s.strip
-        next if code.empty?
-
-        if (value = h_phrases_hash[code])
-          h_statements[code] = " #{value}"
-        end
+      h_array.each do |code|
+        process_statement(code, h_phrases_hash, h_statements)
       end
 
       h_statements
     end
 
+    def self.process_statement(code, phrases_hash, statements)
+      code = code.to_s.strip
+      return if code.empty?
+
+      if (value = phrases_hash[code])
+        # Exact match (single code or a combined code such as "P305+P351+P338"):
+        # store it as one statement.
+        statements[code] = " #{value}"
+      elsif code.include?('+')
+        # Combined code with no combined entry in the lookup table: fall back to its
+        # individual parts so the available statements are still surfaced.
+        code.split('+').each do |part|
+          statements[part] = " #{phrases_hash[part]}" if phrases_hash[part]
+        end
+      end
+    end
+
+    # Split a phrase string into the codes used as lookup keys.
+    #
+    # A single code is an optional "EU" prefix (for supplemental EUH### statements),
+    # the H/P letter, 1-3 digits, and optional sub-category letters (e.g. EUH071,
+    # H360FD, H350i). Codes joined by "+" (e.g. "P305 + P351 + P338") are kept
+    # together as one token so they resolve to the combined statement rather than
+    # being split into separate phrases; inner whitespace is stripped to match the
+    # JSON keys (e.g. "P305+P351+P338").
+    def self.normalize_phrases_to_array(phrases, prefix)
+      return phrases.map { |p| p.to_s.gsub(/\s+/, '') }.reject(&:empty?) if phrases.is_a?(Array)
+
+      return [] unless phrases.is_a?(String)
+
+      atom = /(?:EU)?#{prefix}\d{1,3}[A-Za-z]*/
+      phrases.scan(/#{atom}(?:\s*\+\s*#{atom})*/).map { |code| code.gsub(/\s+/, '') }
+    end
+
+    def self.load_hazard_phrases_hash
+      JSON.parse(File.read('./public/json/hazardPhrases.json'))
+    end
+
     def self.construct_p_statements(p_phrases)
       p_statements = {}
-      p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
+      p_phrases_hash = load_precautionary_phrases_hash
+      p_array = normalize_phrases_to_array(p_phrases, 'P')
 
-      # Normalize input to an array of precautionary codes (e.g. ["P102", "P301"])
-      p_array = if p_phrases.is_a?(String)
-                  p_phrases.scan(/P\d{1,3}[A-Za-z0-9]*/)
-                elsif p_phrases.is_a?(Array)
-                  p_phrases
-                else
-                  []
-                end
-
-      p_array.each do |element|
-        code = element.to_s.strip
-        next if code.empty?
-
-        if (value = p_phrases_hash[code])
-          p_statements[code] = " #{value}"
-        end
+      p_array.each do |code|
+        process_statement(code, p_phrases_hash, p_statements)
       end
 
       p_statements
+    end
+
+    def self.load_precautionary_phrases_hash
+      JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
     end
 
     def self.construct_pictograms(pictograms)
@@ -269,6 +285,8 @@ module Chemotion
     end
 
     private_class_method :extract_h_text_from_array, :extract_p_text_from_array, :extract_pictograms_from_array
+    private_class_method :process_statement, :normalize_phrases_to_array, :load_hazard_phrases_hash,
+                         :load_precautionary_phrases_hash
 
     def self.safety_phrases_merck(product_link)
       safety_section = safety_section(product_link)
