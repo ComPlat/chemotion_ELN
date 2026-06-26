@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_06_22_010000) do
+ActiveRecord::Schema.define(version: 2026_06_22_000000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -48,6 +48,7 @@ ActiveRecord::Schema.define(version: 2026_06_22_010000) do
     t.date "to"
     t.string "domain"
     t.string "cat"
+    t.string "ror_id"
   end
 
   create_table "analyses_experiments", id: :serial, force: :cascade do |t|

@@ -33,10 +33,6 @@ export default class UserSettingsFetcher {
     return ApiClient.getJson('/api/v1/affiliation_suggestions?status=pending');
   }
 
-  static getSuggestionsByStatus(status) {
-    return ApiClient.getJson(`/api/v1/affiliation_suggestions?status=${status}`);
-  }
-
   static createSuggestion(params) {
     return ApiClient.postJson('/api/v1/affiliation_suggestions', { body: params });
   }

@@ -41,33 +41,8 @@ function Affiliations() {
   };
 
   const refreshSuggestions = () => {
-    Promise.all([
-      UserSettingsFetcher.getPendingSuggestions(),
-      UserSettingsFetcher.getSuggestionsByStatus('rejected'),
-    ]).then(([pending, rejected]) => {
-      const freshPending = pending || [];
-      const freshRejected = rejected || [];
-
-      setPendingSuggestions((prev) => {
-        const resolved = prev.filter((p) => !freshPending.find((f) => f.id === p.id));
-        const nowRejected = resolved.filter((p) => freshRejected.find((r) => r.id === p.id));
-
-        if (resolved.length > 0) getAllAffiliations();
-
-        if (nowRejected.length > 0) {
-          NotificationActions.add({
-            title: 'Affiliation request rejected',
-            message: 'An admin has rejected one of your affiliation requests. Please review and resubmit.',
-            level: 'warning',
-            position: 'tc',
-            dismissible: 'button',
-            autoDismiss: 8,
-          });
-        }
-
-        return freshPending;
-      });
-    });
+    UserSettingsFetcher.getPendingSuggestions()
+      .then((data) => setPendingSuggestions(data || []));
   };
 
   useEffect(() => {

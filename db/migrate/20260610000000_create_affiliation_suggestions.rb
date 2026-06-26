@@ -10,6 +10,8 @@ class CreateAffiliationSuggestions < ActiveRecord::Migration[6.1]
       t.string :country
       t.integer :status, default: 0, null: false
       t.integer :affiliation_id
+      t.string :ror_id
+      t.integer :target_user_affiliation_id
 
       t.timestamps
     end

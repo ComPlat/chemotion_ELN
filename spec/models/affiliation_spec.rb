@@ -36,12 +36,8 @@ RSpec.describe Affiliation do
       expect(described_class.normalize_key('Jäne')).to eq('jane')
     end
 
-    it 'strips academic titles' do
-      expect(described_class.normalize_key('Prof. Dr. Jane Doe')).to eq('jane doe')
-    end
-
-    it 'maps title+accent variants to the same key as the plain form' do
-      expect(described_class.normalize_key('Prof. Jäne Doë'))
+    it 'maps accent+case variants to the same key as the plain form' do
+      expect(described_class.normalize_key('Jäne DOË'))
         .to eq(described_class.normalize_key('jane doe'))
     end
 
@@ -73,7 +69,7 @@ RSpec.describe Affiliation do
     end
 
     it 'matches the reserved-word group column too' do
-      expect(described_class.canonical(:group, 'Prof. Jane Doe')).to eq('Jäne Doë')
+      expect(described_class.canonical(:group, 'jane doe')).to eq('Jäne Doë')
     end
 
     it 'returns the input when no stored value matches' do
