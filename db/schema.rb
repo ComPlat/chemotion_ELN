@@ -1687,7 +1687,6 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.jsonb "providers"
     t.bigint "used_space", default: 0
     t.bigint "allocated_space", default: 0
-    t.jsonb "tokens"
     t.string "encrypted_otp_secret"
     t.string "encrypted_otp_secret_iv"
     t.string "encrypted_otp_secret_salt"
