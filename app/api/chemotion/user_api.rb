@@ -123,7 +123,7 @@ module Chemotion
                    desc: 'one time password'
           optional :expires_in_days,
                    type: Integer,
-                   default: 90,
+                   default: 30,
                    values: 1..600,
                    desc: 'Token expiration in days (1–600)'
           optional :name, type: String, desc: 'Name of the item'

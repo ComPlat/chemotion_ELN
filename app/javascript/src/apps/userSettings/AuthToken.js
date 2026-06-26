@@ -195,7 +195,7 @@ function AuthTokenFormModal({
   handleClose, show, setLastToken
 }) {
   const [name, setName] = useState('');
-  const [expireInDays, setExpireInDays] = useState(90);
+  const [expireInDays, setExpireInDays] = useState(30);
   const [errorMessage, setErrorMessage] = useState('');
   const [otpAttempt, setOtpAttempt] = useState('');
   const [showOtpDel, setShowOtpDel] = useState(false);
