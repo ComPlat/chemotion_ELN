@@ -5,7 +5,7 @@ Note that you don't have to install Cypress separately with yarn or npm.
 The `cypress-on-rails` gem will take care of that.
 
 Make sure to start the Rails server prior to starting Cypress.
-Note that it's important to start the server with `RAILS_ENV-test`,
+Note that it's important to start the server with `RAILS_ENV=test`,
 Cypress won't recognize the Rails server if it's running in the `development` or `production` env; see [here](https://github.com/shakacode/cypress-playwright-on-rails/issues/25) for more.
 
 ```bash
