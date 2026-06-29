@@ -85,24 +85,81 @@ describe('canvasOperations — arrangePolymers', () => {
     assert.ok(polymerLine.includes('2/95/'), `second ball index missing in: ${polymerLine}`);
   });
 
-  // Multi-mol canvas: ball in mol1 after mol0 has its own atoms
-  it('multi-mol: ball in mol1 uses index within mol1 atoms, not global offset', async () => {
+  // Multi-mol canvas: ball in mol1 after mol0 has its own atoms — global index = mol0 size + local index
+  it('multi-mol: ball in mol1 uses global atom index (mol0 size + local index)', async () => {
     imagesListSetter([makeImageEntry()]);
     molsSetter(['mol0', 'mol1']);
     const editor = {
       structureDef: {
         editor: {
           getKet: async () => JSON.stringify({
-            mol0: { atoms: [{ alias: null }, { alias: null }] }, // 2 carbons, no ball
-            mol1: { atoms: [{ alias: null }, { alias: alias(95, 0) }] }, // C + ball at index 1
+            mol0: { atoms: [{ alias: null }, { alias: null }] }, // 2 carbons — global 0,1
+            mol1: { atoms: [{ alias: null }, { alias: alias(95, 0) }] }, // C + ball at local 1 → global 3
           }),
         },
       },
     };
     const result = await arrangePolymers(CANVAS_DATA, editor);
     const polymerLine = result[result.length - 1];
-    // Ball is at index 1 within mol1 — NOT at global index 3
-    assert.ok(polymerLine.startsWith('1/95/'), `expected mol1-local index 1 but got: ${polymerLine}`);
+    assert.ok(polymerLine.startsWith('3/95/'), `expected global index 3 but got: ${polymerLine}`);
+  });
+
+  // Bug 1 regression: 6 single-atom polymer mols — before fix all had local index 0 → collision
+  it('Bug 1 regression: 6 single-atom polymer mols each get a distinct global atom index', async () => {
+    imagesListSetter([
+      makeImageEntry(), makeImageEntry(), makeImageEntry(),
+      makeImageEntry(), makeImageEntry(), makeImageEntry(),
+    ]);
+    molsSetter(['mol0', 'mol1', 'mol2', 'mol3', 'mol4', 'mol5']);
+    const editor = {
+      structureDef: {
+        editor: {
+          getKet: async () => JSON.stringify({
+            mol0: { atoms: [{ alias: alias(52, 0) }] },
+            mol1: { atoms: [{ alias: alias(52, 1) }] },
+            mol2: { atoms: [{ alias: alias(52, 2) }] },
+            mol3: { atoms: [{ alias: alias(24, 3) }] },
+            mol4: { atoms: [{ alias: alias(53, 4) }] },
+            mol5: { atoms: [{ alias: alias(35, 5) }] },
+          }),
+        },
+      },
+    };
+    const result = await arrangePolymers(CANVAS_DATA, editor);
+    const polymerLine = result[result.length - 1];
+    // All six entries must exist with distinct indices 0-5
+    assert.ok(polymerLine.includes('0/52/'), `missing index 0: ${polymerLine}`);
+    assert.ok(polymerLine.includes('1/52/'), `missing index 1: ${polymerLine}`);
+    assert.ok(polymerLine.includes('2/52/'), `missing index 2: ${polymerLine}`);
+    assert.ok(polymerLine.includes('3/24/'), `missing index 3: ${polymerLine}`);
+    assert.ok(polymerLine.includes('4/53/'), `missing index 4: ${polymerLine}`);
+    assert.ok(polymerLine.includes('5/35/'), `missing index 5: ${polymerLine}`);
+    // None should be duplicate index 0 (the pre-fix bug)
+    const entries = polymerLine.trim().split(/\s+/);
+    const indices = entries.map((e) => e.split('/')[0]);
+    assert.strictEqual(new Set(indices).size, 6, `expected 6 distinct indices, got: ${indices}`);
+  });
+
+  // Mixed mol: structure (7 atoms) + 2 single-atom R# mols → global indices 7 and 8
+  it('mixed mol: structure (7 atoms) + 2 single-atom R# mols → indices 7 and 8', async () => {
+    imagesListSetter([makeImageEntry(), makeImageEntry()]);
+    molsSetter(['mol0', 'mol1', 'mol2']);
+    const structureAtoms = Array(7).fill({ alias: null });
+    const editor = {
+      structureDef: {
+        editor: {
+          getKet: async () => JSON.stringify({
+            mol0: { atoms: structureAtoms },
+            mol1: { atoms: [{ alias: alias(52, 0) }] },
+            mol2: { atoms: [{ alias: alias(24, 1) }] },
+          }),
+        },
+      },
+    };
+    const result = await arrangePolymers(CANVAS_DATA, editor);
+    const polymerLine = result[result.length - 1];
+    assert.ok(polymerLine.includes('7/52/'), `expected index 7: ${polymerLine}`);
+    assert.ok(polymerLine.includes('8/24/'), `expected index 8: ${polymerLine}`);
   });
 
   it('returns canvasData split into lines plus PolymersList header and data', async () => {

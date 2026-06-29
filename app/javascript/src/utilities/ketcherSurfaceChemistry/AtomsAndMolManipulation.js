@@ -141,23 +141,30 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
     // assign each entry to the correct atom by index so images and TextNode aliases stay in sync.
     const polymerByAtomIndex = {};
     let useIndexedFormat = false;
+    let hasCollision = false;
     for (let i = 0; i < polymerList.length; i++) {
       const parsed = parsePolymerEntryByAtomIndex(polymerList[i]);
       if (parsed != null) {
+        if (polymerByAtomIndex[parsed.atomIndex] !== undefined) {
+          hasCollision = true;
+        }
         polymerByAtomIndex[parsed.atomIndex] = { type: parsed.type, size: parsed.size };
         useIndexedFormat = true;
       }
     }
 
-    if (useIndexedFormat && Object.keys(polymerByAtomIndex).length > 0) {
+    if (useIndexedFormat && !hasCollision && Object.keys(polymerByAtomIndex).length > 0) {
       // imageSeqCounter is the alias third-part index (0-based sequence of images collected).
       // It must NOT be the KET atom index — placeImageOnAtoms uses it to index into imagesList.
       let imageSeqCounter = 0;
+      // globalAtomIndex mirrors the save-side globalAtomOffset so polymerByAtomIndex
+      // (keyed by global index) resolves correctly across multiple molecules.
+      let globalAtomIndex = 0;
       for (const molName of mols) {
         const molecule = data[molName];
         if (!molecule?.atoms) continue;
-        for (let atomIndex = 0; atomIndex < molecule.atoms.length; atomIndex++) {
-          const atom = molecule.atoms[atomIndex];
+        for (let localIndex = 0; localIndex < molecule.atoms.length; localIndex++) {
+          const atom = molecule.atoms[localIndex];
           const aliasPass = (
             atom.type === KET_TAGS.rgLabel
             || atom.label === KET_TAGS.inspiredLabel
@@ -165,15 +172,16 @@ const addingPolymersToKetcher = async (railsPolymersList, data) => {
             || atom.label === 'R'
             || ALIAS_PATTERNS.threeParts.test(atom.alias)
           );
-          const entry = polymerByAtomIndex[atomIndex];
+          const entry = polymerByAtomIndex[globalAtomIndex + localIndex];
           if (entry && aliasPass) {
             const { type: templateType, size: templateSize } = { type: entry.type, size: entry.size };
-            data[molName].atoms[atomIndex] = updateAtom(atom.location, templateType, imageSeqCounter);
+            data[molName].atoms[localIndex] = updateAtom(atom.location, templateType, imageSeqCounter);
             const newTemplate = await templateWithBoundingBox(templateType, atom.location, templateSize);
             if (newTemplate) collectedImages.push(newTemplate);
             imageSeqCounter++;
           }
         }
+        globalAtomIndex += molecule.atoms.length;
       }
       imageUsedCounterSetter(imageSeqCounter > 0 ? imageSeqCounter - 1 : 0);
     } else {

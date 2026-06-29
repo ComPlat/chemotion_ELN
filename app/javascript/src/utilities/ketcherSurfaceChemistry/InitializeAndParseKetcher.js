@@ -54,15 +54,41 @@ const loadTemplates = async () => {
 };
 
 // prepare/load ket2 format data
-const loadKetcherData = async (data) => {
+// preserveImagesWhenEmpty: when true (from fetchKetcherData), keep imagesList if data has no images
+// because getKet() often omits them. When false (default), always sync imagesList with data.
+const loadKetcherData = async (data, options = {}) => {
+  const { preserveImagesWhenEmpty = false } = options;
   const nodes = data?.root?.nodes && Array.isArray(data.root.nodes) ? data.root.nodes : [];
   allAtomsSetter([]);
   allNodesSetter([...nodes]);
-  imagesListSetter(nodes.filter((item) => item.type === 'image'));
-  textListSetter(nodes.filter((item) => item.type === 'text'));
-  const sliceEnd = Math.max(0, nodes.length - imagesList.length - textList.length);
-  molsSetter(sliceEnd > 0 ? nodes.slice(0, sliceEnd).map((i) => i.$ref) : []);
-  const molRefs = sliceEnd > 0 ? nodes.slice(0, sliceEnd).map((i) => i.$ref) : [];
+
+  const imageNodesFromData = nodes.filter((item) => item.type === 'image');
+  const molRefsForLog = (nodes || []).filter((n) => n?.$ref).map((n) => n.$ref);
+  // eslint-disable-next-line no-console
+  console.log('[SC] loadKetcherData', {
+    preserveImagesWhenEmpty,
+    imageNodesInData: imageNodesFromData.length,
+    currentImagesList: imagesList.length,
+    molRefs: molRefsForLog,
+    action: imageNodesFromData.length > 0 ? 'SET_FROM_DATA' : (preserveImagesWhenEmpty ? 'PRESERVE' : 'CLEAR'),
+  });
+
+  if (imageNodesFromData.length > 0) {
+    imagesListSetter(imageNodesFromData);
+  } else if (!preserveImagesWhenEmpty) {
+    imagesListSetter([]);
+  }
+
+  // Text nodes are managed in local state; getKet() never returns them.
+  // Only update textList when incoming data actually contains text nodes (e.g. initial load).
+  const textNodesFromData = nodes.filter((item) => item.type === 'text');
+  if (textNodesFromData.length > 0) {
+    textListSetter(textNodesFromData);
+  }
+
+  // Derive mol refs by $ref presence — more robust than index slicing when node order varies.
+  const molRefs = (nodes || []).filter((n) => n?.$ref).map((n) => n.$ref);
+  molsSetter(molRefs);
   molRefs.forEach((item) => (data[item]?.atoms || []).map((i) => allAtoms.push(i)));
 };
 
@@ -395,9 +421,22 @@ const fetchKetcherData = async (editor) => {
     // Ketcher stores R# atoms as rg-label internally. Strip them so latestData
     // never contains rg-label — Indigo's KET loader rejects that type in every
     // downstream call (setMolecule, generateImage, getMolfile).
-    const data = sanitizeRgLabelAtoms(JSON.parse(ketString));
+    const raw = JSON.parse(ketString);
+    const rawNodes = raw?.root?.nodes || [];
+    const rawImages = rawNodes.filter((n) => n?.type === 'image');
+    const rawMols = rawNodes.filter((n) => n?.$ref);
+    // eslint-disable-next-line no-console
+    console.log('[SC] fetchKetcherData → getKet() returned', {
+      totalNodes: rawNodes.length,
+      images: rawImages.length,
+      mols: rawMols.map((n) => n.$ref),
+      currentImagesList: imagesList.length,
+    });
+    const data = sanitizeRgLabelAtoms(raw);
     await latestDataSetter(data);
-    await loadKetcherData(data);
+    // preserveImagesWhenEmpty: Ketcher's getKet() often omits image nodes from its output.
+    // If data has no images, keep the existing imagesList rather than wiping it.
+    await loadKetcherData(data, { preserveImagesWhenEmpty: true });
   } catch (err) {
     console.error('fetchKetcherData', err.message);
   }
@@ -535,6 +574,7 @@ export {
   initializeKetcherData,
   hasKetcherData,
   hasTextNodes,
+  extractPolymerTagFromAliases,
   getTemplateType,
   parsePolymerEntryByAtomIndex,
   templateWithBoundingBox,

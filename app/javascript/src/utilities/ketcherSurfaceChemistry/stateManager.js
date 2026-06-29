@@ -229,13 +229,17 @@ export const emptyKetcherStore = () => ({
   },
 });
 
-export const addNewMol = (tempId) => ({
-  type: 'molecule',
-  atoms: [
-    {
-      label: KET_TAGS.inspiredLabel,
-      alias: `t_${tempId}_${imageNodeCounter}`,
-      location: [-1.5250001907348631, 1.5250000000000004, 0],
-    },
-  ],
-});
+export const addNewMol = (tempId) => {
+  // eslint-disable-next-line no-console
+  console.log('[SC] addNewMol', { tempId, imageNodeCounter, imagesListLengthBefore: imagesList.length });
+  return {
+    type: 'molecule',
+    atoms: [
+      {
+        label: KET_TAGS.inspiredLabel,
+        alias: `t_${tempId}_${imageNodeCounter}`,
+        location: [-1.5250001907348631, 1.5250000000000004, 0],
+      },
+    ],
+  };
+};

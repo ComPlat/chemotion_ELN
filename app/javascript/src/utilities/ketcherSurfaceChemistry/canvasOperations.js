@@ -64,17 +64,19 @@ const arrangePolymers = async (canvasData, editor) => {
   // on matching create a string to be attached with polymers sections
   const data = JSON.parse(await editor.structureDef.editor.getKet());
 
-  // Collect polymer atoms with their actual position inside their mol's atoms array.
-  // flatMap loses positional info, causing index 0 to always be stored regardless of
-  // where the bead sits — so "structure first, ball second" broke on reopen.
+  // Collect polymer atoms with their global atom index (cumulative across all mols).
+  // Per-molecule (local) indices would collide when multiple single-atom polymer mols
+  // each have their R# at local index 0, causing all templates to load as the last one.
   const atomsWithAlias = [];
+  let globalAtomOffset = 0;
   for (const molName of mols) {
     const atoms = data[molName]?.atoms ?? [];
     for (let i = 0; i < atoms.length; i++) {
       if (ALIAS_PATTERNS.threeParts.test(atoms[i].alias)) {
-        atomsWithAlias.push({ alias: atoms[i].alias, atomIndex: i });
+        atomsWithAlias.push({ alias: atoms[i].alias, atomIndex: globalAtomOffset + i });
       }
     }
+    globalAtomOffset += atoms.length;
   }
   const listOfAtomsWithAlias = atomsWithAlias.map((a) => a.alias);
   const atomIndexList = atomsWithAlias.map((a) => a.atomIndex);
@@ -990,6 +992,22 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
       textNodesFormula = replacedString;
     }
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
+
+    const finalMolfile = ket2Lines.join('\n');
+    const hasPolymersList = finalMolfile.includes(KET_TAGS.polymerIdentifier);
+    const hasRHash = finalMolfile.includes(' R# ') || finalMolfile.includes(' R#\n');
+    // eslint-disable-next-line no-console
+    console.log('[SC] onFinalCanvasSave RESULT', {
+      imagesListAtSave: imagesList?.length ?? 0,
+      hasPolymersList,
+      hasRHash,
+      ket2LinesCount: ket2Lines.length,
+      polymersLine: hasPolymersList ? ket2Lines[ket2Lines.indexOf(KET_TAGS.polymerIdentifier) + 1] : null,
+    });
+    if ((imagesList?.length ?? 0) > 0 && !hasPolymersList) {
+      // eslint-disable-next-line no-console
+      console.error('[SC] SAVE INTEGRITY FAILURE — images present but PolymersList missing in output molfile!');
+    }
 
     const svgElement = imagesList.length > 0 ? await getSvgFromCanvas(iframeRef) : await prepareSvg(editor);
     resetStore();

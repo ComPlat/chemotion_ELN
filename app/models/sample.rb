@@ -502,7 +502,20 @@ class Sample < ApplicationRecord
   end
 
   def get_svg_path
-    return "/images/samples/#{sample_svg_file}" if sample_svg_file.present?
+    if sample_svg_file.present?
+      # For polymer samples, check whether the cached SVG already has polymer shapes injected.
+      # If the SVG was saved before Bug 2 was fixed it will contain only "A" text — regenerate.
+      if molecule&.is_partial && molfile.present?
+        svg_path = full_svg_path(sample_svg_file)
+        if svg_path && File.exist?(svg_path.to_s)
+          existing_svg = File.read(svg_path.to_s)
+          return "/images/samples/#{sample_svg_file}" if existing_svg.include?('<image')
+
+          return polymer_sample_svg_path
+        end
+      end
+      return "/images/samples/#{sample_svg_file}"
+    end
 
     if molecule&.is_partial && molfile.present?
       return polymer_sample_svg_path
