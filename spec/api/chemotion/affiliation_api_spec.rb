@@ -166,7 +166,7 @@ RSpec.describe Chemotion::AffiliationAPI do
       expect(user.reload.affiliations.last.organization).to eq('KIT')
     end
 
-    it 'accepts an update that clears the department' do
+    it 'accepts an update with a blank department' do
       ua = UserAffiliation.create!(user: user, affiliation: Affiliation.create!(organization: 'KIT', department: 'IOC'))
       put '/api/v1/affiliations', params: { id: ua.id, organization: 'KIT', department: '' }
       expect(response).to have_http_status(:ok)

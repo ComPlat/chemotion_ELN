@@ -588,7 +588,7 @@ function Affiliations() {
         </thead>
         <tbody>
           {affiliations.map((item, index) => (
-            <tr key={item.id}>
+            <tr key={item.id || `new-${index}`}>
               <td>
                 {item.disabled ? item.country
                   : (
