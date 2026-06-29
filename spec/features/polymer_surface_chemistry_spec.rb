@@ -118,16 +118,21 @@ describe 'Polymer Surface Chemistry', type: :feature do
       find('tr', text: 'Polymer Test Sample', wait: 5).click
       expect(page).to have_selector('.sample-detail', wait: 5)
 
-      # Edit the sample name to trigger a dirty state
-      name_field = find_by_id('txinput_name', wait: 5)
-      name_field.fill_in(with: 'Polymer Test Sample Updated')
+      find_by_id('txinput_name', wait: 5).fill_in(with: 'Polymer Test Sample Updated')
+      find_by_id('submit-sample-btn').click
+
+      expect(page).not_to have_selector('.alert-danger', wait: 3)
+      expect(page).to have_content('Polymer Test Sample Updated', wait: 5)
+    end
+
+    it 'produces no error notification after saving a polymer sample', js: true do
+      find('.tree-view', text: 'chemotion-repository.net').click
+      find('tr', text: 'Polymer Test Sample', wait: 5).click
+      expect(page).to have_selector('.sample-detail', wait: 5)
 
       find_by_id('submit-sample-btn').click
 
-      # No error notification should appear
-      expect(page).not_to have_selector('.alert-danger', wait: 3)
       expect(page).not_to have_content('error', wait: 3, normalize_ws: true)
-      expect(page).to have_content('Polymer Test Sample Updated', wait: 5)
     end
 
     it 'clears the loading indicator after saving a polymer sample', js: true do
@@ -199,7 +204,14 @@ describe 'Polymer Surface Chemistry', type: :feature do
     let!(:stereo_molecule) do
       # A simple molfile with a wedge bond (Indigo would generate ABS on this)
       molfile = <<~MOL
-        \n  Ketcher 01010100002D\n\n  2  1  0  0  0  0  0  0  0  0999 V2000\n    0.0000    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.0000   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  1     0  0\nM  END\n
+
+          Ketcher 01010100002D
+
+          2  1  0  0  0  0  0  0  0  0999 V2000
+            0.0000    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            0.0000   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          1  2  1  1     0  0
+        M  END
       MOL
       create(:molecule, molfile: molfile,
              inchikey: 'STEREO-TEST-INCHIKEY-0001')

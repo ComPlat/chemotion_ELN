@@ -143,7 +143,10 @@ describe Chemotion::MoleculeAPI do
       let(:fake_svg) { '<svg xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="3"/></svg>' }
       # An SVG that triggers the Ketcher-EPAM path (svg.include?('epam-ketcher-ssc'))
       let(:epam_svg) { '<svg xmlns="http://www.w3.org/2000/svg" data-source="epam-ketcher-ssc"><circle/></svg>' }
-      let(:polymer_svg) { '<svg xmlns="http://www.w3.org/2000/svg"><image href="data:image/svg+xml;base64,ZmFrZQ==" width="10" height="10"/></svg>' }
+      let(:polymer_svg) do
+        '<svg xmlns="http://www.w3.org/2000/svg">' \
+          '<image href="data:image/svg+xml;base64,ZmFrZQ==" width="10" height="10"/></svg>'
+      end
 
       before do
         allow(PubChem).to receive_messages(
@@ -151,12 +154,14 @@ describe Chemotion::MoleculeAPI do
           get_molfile_by_smiles: nil,
           get_cid_from_inchikey: nil,
         )
-        allow(Molecule).to receive(:svg_reprocess).and_return(polymer_svg)
+        allow(Molecule).to receive_messages(
+          svg_reprocess: polymer_svg,
+          find_or_create_by_molfile: create(:molecule),
+          find_or_create_dummy: create(:molecule),
+        )
         allow(SVG::Processor).to receive_message_chain(:new, :structure_svg)
           .and_return({ svg_file_name: 'TMPFILE' + SecureRandom.hex(32) + '.svg' })
         allow(KetcherService::SVGProcessor).to receive(:clean_and_trim_svg).and_return(epam_svg)
-        allow(Molecule).to receive(:find_or_create_by_molfile).and_return(create(:molecule))
-        allow(Molecule).to receive(:find_or_create_dummy).and_return(create(:molecule))
       end
 
       it 'ignores frontend svg_file and calls svg_reprocess when molfile has PolymersList' do

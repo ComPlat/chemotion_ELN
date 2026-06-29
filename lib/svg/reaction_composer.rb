@@ -3,6 +3,7 @@ require 'digest'
 require 'cgi'
 
 module SVG
+  # rubocop:disable Metrics/ClassLength
   class ReactionComposer
     REACTANT_SCALE = 0.75
     YIELD_YOFFSET = 10
@@ -652,4 +653,5 @@ module SVG
       sections_string.gsub('R#', '').gsub(/\bABS\b/, '').gsub("font='30px \"Arial\"'", '')
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

@@ -526,14 +526,32 @@ RSpec.describe Sample do
 
     let(:user)     { create(:person) }
     let(:molecule) { create(:molecule, is_partial: true) }
+    let(:polymer_molfile) do
+      <<~MOLFILE
+        null
+
+
+          1  0  0  0  0  0  0  0  0  0999 V2000
+            2.0250   -2.0250    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+        M  END
+
+        > <PolymersList>
+        0/95/1.00-1.00
+        $$$$
+      MOLFILE
+    end
+
     let(:sample) do
       create(:sample,
         created_by: user.id,
         molecule: molecule,
-        molfile: "null\n\n\n  1  0  0  0  0  0  0  0  0  0999 V2000\n    2.0250   -2.0250    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0\nM  END\n\n> <PolymersList>\n0/95/1.00-1.00\n$$$$\n")
+        molfile: polymer_molfile)
     end
 
-    let(:svg_with_image)    { '<svg xmlns="http://www.w3.org/2000/svg"><image href="data:image/svg+xml;base64,ZmFrZQ==" width="10"/></svg>' }
+    let(:svg_with_image) do
+      '<svg xmlns="http://www.w3.org/2000/svg">' \
+        '<image href="data:image/svg+xml;base64,ZmFrZQ==" width="10"/></svg>'
+    end
     let(:svg_without_image) { '<svg xmlns="http://www.w3.org/2000/svg"><text x="5" y="5">A</text></svg>' }
 
     context 'when sample_svg_file is nil' do
