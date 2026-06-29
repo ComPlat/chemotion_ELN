@@ -20,29 +20,28 @@ module Usecases
       end
 
       def approve(id)
-        suggestion = pending_suggestion(id)
-        # An affiliation row needs an organization; a name-only suggestion
-        # (department or working group) is just approved without one.
-        if suggestion.organization.present?
-          affiliation = Affiliation.find_or_create_by(
-            organization: suggestion.organization,
-            department: Affiliation.canonical(:department, suggestion.department),
-            group: Affiliation.canonical(:group, suggestion.group),
-            country: suggestion.country,
-            ror_id: suggestion.ror_id,
-          )
-          apply_affiliation(suggestion, affiliation)
-          suggestion.update!(status: :approved, affiliation_id: affiliation.id)
-        else
-          suggestion.update!(status: :approved)
+        suggestion = with_pending(id) do |s|
+          # A name-only suggestion (department/working group) is approved without an affiliation.
+          if s.organization.present?
+            affiliation = Affiliation.find_or_create_by(
+              organization: s.organization,
+              department: Affiliation.canonical(:department, s.department),
+              group: Affiliation.canonical(:group, s.group),
+              country: s.country,
+              ror_id: s.ror_id,
+            )
+            apply_affiliation(s, affiliation)
+            s.update!(status: :approved, affiliation_id: affiliation.id)
+          else
+            s.update!(status: :approved)
+          end
         end
         AffiliationMailer.suggestion_approved(suggestion).deliver_later
         suggestion
       end
 
       def reject(id)
-        suggestion = pending_suggestion(id)
-        suggestion.update!(status: :rejected)
+        suggestion = with_pending(id) { |s| s.update!(status: :rejected) }
         AffiliationMailer.suggestion_rejected(suggestion).deliver_later
         suggestion
       end
@@ -53,10 +52,14 @@ module Usecases
 
       private
 
-      def pending_suggestion(id)
+      # Lock the row so two admins (or a double-click) can't both process it.
+      def with_pending(id)
         suggestion = AffiliationSuggestion.find(id)
-        raise Errors::AlreadyProcessed, 'Already processed' unless suggestion.pending?
+        suggestion.with_lock do
+          raise Errors::AlreadyProcessed, 'Already processed' unless suggestion.pending?
 
+          yield suggestion
+        end
         suggestion
       end
 

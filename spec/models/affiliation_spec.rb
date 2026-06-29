@@ -16,6 +16,7 @@
 #  to           :date
 #  domain       :string
 #  cat          :string
+#  ror_id       :string
 #
 
 require 'rails_helper'

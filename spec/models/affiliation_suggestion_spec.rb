@@ -13,6 +13,8 @@
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  affiliation_id :integer
+#  ror_id         :string
+#  target_user_affiliation_id :integer
 #  user_id        :integer          not null
 #
 # Indexes

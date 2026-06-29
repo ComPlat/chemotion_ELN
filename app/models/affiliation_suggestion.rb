@@ -33,4 +33,9 @@ class AffiliationSuggestion < ApplicationRecord
   belongs_to :affiliation, optional: true
 
   validates :organization, allow_blank: true, length: { maximum: 255 }
+  validate do
+    next if [organization, department, group].any?(&:present?)
+
+    errors.add(:base, 'must include an organization, department, or group')
+  end
 end

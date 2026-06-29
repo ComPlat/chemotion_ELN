@@ -3,7 +3,9 @@ import PropTypes from 'prop-types';
 import { AsyncSelect } from 'src/components/common/Select';
 import UserSettingsFetcher from 'src/fetchers/UserSettingsFetcher';
 
-function OrganizationSelect({ value, onChange, isInvalid, country }) {
+function OrganizationSelect({
+  value, onChange, isInvalid, country,
+}) {
   const [localOrgs, setLocalOrgs] = useState([]);
 
   useEffect(() => {
@@ -13,7 +15,8 @@ function OrganizationSelect({ value, onChange, isInvalid, country }) {
   const loadOptions = (inputValue) => {
     if (!inputValue || inputValue.length < 2) return Promise.resolve([]);
 
-    return UserSettingsFetcher.searchRorOrganizations(inputValue, country).then((rorResults) => {
+    return UserSettingsFetcher.searchRorOrganizations(inputValue, country).then((results) => {
+      const rorResults = results.filter((r) => r.label);
       const rorNames = new Set(rorResults.map((r) => r.label.toLowerCase()));
 
       const localMatches = localOrgs
@@ -36,7 +39,9 @@ function OrganizationSelect({ value, onChange, isInvalid, country }) {
         value={value}
         onChange={onChange}
         className={isInvalid ? 'is-invalid' : ''}
-        noOptionsMessage={({ inputValue }) => (inputValue.length < 2 ? 'Type at least 2 characters' : 'No organizations found')}
+        noOptionsMessage={({ inputValue }) => (
+          inputValue.length < 2 ? 'Type at least 2 characters' : 'No organizations found'
+        )}
         styles={{ menu: (base) => ({ ...base, width: '100%', minWidth: 'unset' }) }}
       />
       {isInvalid && <div className="invalid-feedback">Organization is required</div>}
