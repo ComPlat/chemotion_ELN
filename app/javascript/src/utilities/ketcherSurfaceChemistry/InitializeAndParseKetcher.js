@@ -10,13 +10,9 @@ import {
   templateListSetter,
   allAtoms,
   allAtomsSetter,
-  allNodes,
   allNodesSetter,
-  imagesList,
   imagesListSetter,
-  mols,
   molsSetter,
-  textList,
   textListSetter,
   textNodeStructSetter,
   ImagesToBeUpdatedSetter,
@@ -63,15 +59,6 @@ const loadKetcherData = async (data, options = {}) => {
   allNodesSetter([...nodes]);
 
   const imageNodesFromData = nodes.filter((item) => item.type === 'image');
-  const molRefsForLog = (nodes || []).filter((n) => n?.$ref).map((n) => n.$ref);
-  // eslint-disable-next-line no-console
-  console.log('[SC] loadKetcherData', {
-    preserveImagesWhenEmpty,
-    imageNodesInData: imageNodesFromData.length,
-    currentImagesList: imagesList.length,
-    molRefs: molRefsForLog,
-    action: imageNodesFromData.length > 0 ? 'SET_FROM_DATA' : (preserveImagesWhenEmpty ? 'PRESERVE' : 'CLEAR'),
-  });
 
   if (imageNodesFromData.length > 0) {
     imagesListSetter(imageNodesFromData);
@@ -422,16 +409,6 @@ const fetchKetcherData = async (editor) => {
     // never contains rg-label — Indigo's KET loader rejects that type in every
     // downstream call (setMolecule, generateImage, getMolfile).
     const raw = JSON.parse(ketString);
-    const rawNodes = raw?.root?.nodes || [];
-    const rawImages = rawNodes.filter((n) => n?.type === 'image');
-    const rawMols = rawNodes.filter((n) => n?.$ref);
-    // eslint-disable-next-line no-console
-    console.log('[SC] fetchKetcherData → getKet() returned', {
-      totalNodes: rawNodes.length,
-      images: rawImages.length,
-      mols: rawMols.map((n) => n.$ref),
-      currentImagesList: imagesList.length,
-    });
     const data = sanitizeRgLabelAtoms(raw);
     await latestDataSetter(data);
     // preserveImagesWhenEmpty: Ketcher's getKet() often omits image nodes from its output.

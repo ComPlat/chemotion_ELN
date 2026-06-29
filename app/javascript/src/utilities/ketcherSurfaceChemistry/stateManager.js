@@ -230,8 +230,6 @@ export const emptyKetcherStore = () => ({
 });
 
 export const addNewMol = (tempId) => {
-  // eslint-disable-next-line no-console
-  console.log('[SC] addNewMol', { tempId, imageNodeCounter, imagesListLengthBefore: imagesList.length });
   return {
     type: 'molecule',
     atoms: [

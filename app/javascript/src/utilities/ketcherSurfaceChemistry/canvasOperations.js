@@ -994,21 +994,6 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
 
     const finalMolfile = ket2Lines.join('\n');
-    const hasPolymersList = finalMolfile.includes(KET_TAGS.polymerIdentifier);
-    const hasRHash = finalMolfile.includes(' R# ') || finalMolfile.includes(' R#\n');
-    // eslint-disable-next-line no-console
-    console.log('[SC] onFinalCanvasSave RESULT', {
-      imagesListAtSave: imagesList?.length ?? 0,
-      hasPolymersList,
-      hasRHash,
-      ket2LinesCount: ket2Lines.length,
-      polymersLine: hasPolymersList ? ket2Lines[ket2Lines.indexOf(KET_TAGS.polymerIdentifier) + 1] : null,
-    });
-    if ((imagesList?.length ?? 0) > 0 && !hasPolymersList) {
-      // eslint-disable-next-line no-console
-      console.error('[SC] SAVE INTEGRITY FAILURE — images present but PolymersList missing in output molfile!');
-    }
-
     const svgElement = imagesList.length > 0 ? await getSvgFromCanvas(iframeRef) : await prepareSvg(editor);
     resetStore();
     return {
