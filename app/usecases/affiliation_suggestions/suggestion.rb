@@ -23,7 +23,7 @@ module Usecases
         suggestion = with_pending(id) do |s|
           # A name-only suggestion (department/working group) is approved without an affiliation.
           if s.organization.present?
-            affiliation = Affiliation.find_or_create_by(
+            affiliation = Affiliation.find_or_create_by!(
               organization: s.organization,
               department: Affiliation.canonical(:department, s.department),
               group: Affiliation.canonical(:group, s.group),

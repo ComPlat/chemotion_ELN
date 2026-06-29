@@ -11,15 +11,15 @@ module Usecases
       end
 
       def create(params)
-        UserAffiliation.create(
+        UserAffiliation.create!(
           user_id: @current_user.id,
-          affiliation: Affiliation.find_or_create_by(affiliation_attributes(params)),
+          affiliation: Affiliation.find_or_create_by!(affiliation_attributes(params)),
         )
       end
 
       def update(params)
-        affiliation = Affiliation.find_or_create_by(affiliation_attributes(params).except(:id))
-        scope.find(params[:id]).update(affiliation_id: affiliation.id)
+        affiliation = Affiliation.find_or_create_by!(affiliation_attributes(params).except(:id))
+        scope.find(params[:id]).update!(affiliation_id: affiliation.id)
       end
 
       def destroy(params)
