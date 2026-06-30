@@ -1,0 +1,22 @@
+- if action_name == 'suggestion_submitted'
+  %p
+    User
+    %strong= @user.name
+    (#{@user.email}) submitted a new affiliation suggestion. Log in to the admin panel to approve or reject it.
+- elsif action_name == 'suggestion_approved'
+  %p Your affiliation suggestion has been approved and is now visible in your affiliations.
+- else
+  %p Your affiliation suggestion was not approved. Contact your ELN administrator if you have questions.
+%table
+  %tr
+    %th Organization
+    %td= @suggestion.organization.presence || '—'
+  %tr
+    %th Department
+    %td= @suggestion.department.presence || '—'
+  %tr
+    %th Working Group
+    %td= @suggestion.group.presence || '—'
+  %tr
+    %th Country
+    %td= @suggestion.country.presence || '—'

@@ -113,4 +113,12 @@ export default class AdminFetcher {
   static restartJob(id) {
     return ApiClient.putJson('/api/v1/admin/jobs/restart/', { body: { id } });
   }
+
+  static fetchAffiliationSuggestions(status) {
+    return ApiClient.getJson(`/api/v1/admin/affiliation_suggestions?status=${status}`);
+  }
+
+  static updateAffiliationSuggestion(id, action) {
+    return ApiClient.putJson(`/api/v1/admin/affiliation_suggestions/${id}/${action}`, { body: {} });
+  }
 }
