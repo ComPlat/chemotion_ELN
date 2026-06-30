@@ -143,12 +143,19 @@ module Datacollector
     def valid_local_dir?(dir)
       return true unless local_collector?
 
-      config.localcollectors.any? do |local|
-        root = Pathname(local[:path]).realpath.to_s
-        Pathname(dir).realpath.to_s.start_with?(root)
-      end
+      target_path = Pathname(dir).realpath.to_s
     rescue Errno::ENOENT
       false
+    else
+      # Return true after first valid directory was found in localcollectors config, otherwise return false
+      !!config.localcollectors.find do |local|
+        begin
+          root = Pathname(local[:path]).realpath.to_s
+          target_path.start_with?(root)
+        rescue Errno::ENOENT
+          false
+        end
+      end
     end
 
     # Get the SFTPClient options for the device
