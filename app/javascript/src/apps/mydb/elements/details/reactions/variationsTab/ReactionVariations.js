@@ -409,6 +409,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
           maintainColumnOrder
           suppressNoRowsOverlay
           suppressDragLeaveHidesColumns
+          suppressColumnVirtualisation={typeof window !== 'undefined' && !!window.Cypress}
           context={{
             copyRow,
             removeRow,
