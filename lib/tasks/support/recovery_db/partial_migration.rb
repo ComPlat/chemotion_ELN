@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ClassLength, Metrics/AbcSize
+# rubocop:disable Metrics/ClassLength, Metrics/AbcSize,Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
 module RecoveryDB
   module PartialMigration
@@ -517,39 +517,81 @@ module RecoveryDB
           attachable_id: old_element_id,
         )
 
-        attachments.each do |attachment|
-          attrs = attachment.attributes.with_indifferent_access.except(
-            :id, :attachable_id, :created_by, :created_by_type, :log_data, :version
+        attachments.each do |old_attachment|
+          attrs = old_attachment.attributes.with_indifferent_access.except(
+            :id, :attachable_id, :created_by, :created_by_type, :log_data, :version,
+            :attachment_data, :identifier
           )
-
           attrs[:attachable_id] = new_element_id
           attrs[:created_by] = new_user_id
           attrs[:created_by_type] = 'User'
 
-          changed = fix_conversion_derivative_in_attrs!(attrs)
-          new_attachment = Attachment.create!(attrs)
-          if changed
-            attacher = new_attachment.attachment_attacher
-            attacher.set(new_attachment.attachment)
-            attacher.create_derivatives
-            new_attachment.attachment_data = attacher.get
-            new_attachment.save!
-          end
+          new_attachment = Attachment.new(attrs)
+          new_attachment.save!(validate: false)
+
+          copy_attachment_file(old_attachment, new_attachment)
         rescue StandardError => e
-          Rails.logger.error "Failed to restore Attachment #{attachment.id}: #{e.message}"
+          Rails.logger.error "Failed to restore Attachment #{old_attachment.id}: #{e.message}"
           raise
         end
       end
 
-      def fix_conversion_derivative_in_attrs!(attrs)
-        return false unless attrs.dig('attachment_data', 'metadata', 'mime_type') == 'image/tiff'
-        return false unless attrs.dig('attachment_data', 'derivatives', 'conversion', 'id')&.start_with?('/')
+      def copy_attachment_file(old_attachment, new_attachment)
+        old_data = old_attachment.attachment_data
+        return unless old_data&.dig('id')
 
-        attrs['attachment_data']['derivatives'].delete('conversion')
-        true
+        storage_key = (old_data['storage'].presence || 'store').to_sym
+        storage = Shrine.storages[storage_key]
+        old_main_id = old_data['id']
+        return unless storage.exists?(old_main_id)
+
+        new_main_id = new_shrine_id(new_attachment, old_main_id)
+        copy_in_storage(storage, old_main_id, new_main_id)
+
+        new_data = old_data.deep_dup
+        new_data['id'] = new_main_id
+        new_data['derivatives'] = copy_derivatives_in_storage(
+          old_data.fetch('derivatives', {}), new_attachment, storage
+        )
+
+        new_attachment.update_column(:attachment_data, new_data) # rubocop:disable Rails/SkipsModelValidations
       rescue StandardError => e
-        Rails.logger.error("Failed to fix 'conversion' in attributes: #{e.message}")
-        false
+        Rails.logger.error "Failed to copy file for attachment #{new_attachment.id}: #{e.message}"
+        raise
+      end
+
+      def copy_derivatives_in_storage(old_derivatives, new_attachment, storage)
+        return {} if old_derivatives.blank?
+
+        old_derivatives.each_with_object({}) do |(name, deriv_data), result|
+          next unless deriv_data.is_a?(Hash)
+
+          old_deriv_id = deriv_data['id'].to_s
+          next if old_deriv_id.empty? || old_deriv_id.start_with?('/') || !storage.exists?(old_deriv_id)
+
+          new_deriv_id = new_shrine_id(new_attachment, old_deriv_id)
+          copy_in_storage(storage, old_deriv_id, new_deriv_id)
+
+          new_deriv_data = deriv_data.merge('id' => new_deriv_id)
+          new_deriv_data['annotated_file_location'] = new_deriv_id if deriv_data['annotated_file_location']
+          result[name] = new_deriv_data
+        rescue StandardError => e
+          Rails.logger.warn "Skipped derivative '#{name}' for attachment #{new_attachment.id}: #{e.message}"
+        end
+      end
+
+      def new_shrine_id(attachment, old_id)
+        old_basename = File.basename(old_id.to_s)
+        suffix = old_basename.sub(/\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i, '')
+        bucket = (attachment.id / 10_000).floor + 1
+        "#{bucket}/#{attachment.identifier}#{suffix}"
+      end
+
+      def copy_in_storage(storage, old_id, new_id)
+        file = storage.open(old_id)
+        storage.upload(file, new_id)
+      ensure
+        file&.close
       end
 
       def restore_reactions_samples(original_reaction_id, new_reaction_id, created_elements, new_user_id,
@@ -885,4 +927,4 @@ module RecoveryDB
   end
 end
 
-# rubocop:enable Metrics/ClassLength, Metrics/AbcSize
+# rubocop:enable Metrics/ClassLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
