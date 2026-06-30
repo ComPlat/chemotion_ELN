@@ -322,16 +322,20 @@ export default class Sample extends Element {
       newSample.molecule = sample.molecule;
       newSample.molecule_name = sample.molecule_name;
       newSample.sample_svg_file = sample.sample_svg_file;
+      newSample.residues = sample.residues || [];
+      newSample.contains_residues = sample.contains_residues;
+      newSample.filterResidueData(true);
     } else {
+      // source is a Molecule — propagate polymer flag so yield uses loading-based formula
       newSample.molecule = sample;
+      if (sample.is_partial) {
+        newSample.contains_residues = true; // triggers setDefaultResidue(); loading stays null until user sets it
+      }
     }
     if (sample.stereo) {
       const { abs, rel } = sample.stereo;
       newSample.stereo = { abs, rel };
     }
-    newSample.residues = sample.residues || [];
-    newSample.contains_residues = sample.contains_residues;
-    newSample.filterResidueData(true);
     newSample.density = sample.density;
     newSample.starting_molarity_value = sample.molarity_value;
     newSample.molarity_value = 0;

@@ -1761,4 +1761,41 @@ describe('Sample', async () => {
       expect(s.isPendingToSave).toBe(false);
     });
   });
+
+  // Regression tests for Bug 8:
+  // Dragged polymer molecule not treated as polymer until re-drawn.
+  // Fix: Sample.buildNew() reads molecule.is_partial and sets contains_residues=true.
+  describe('Sample.buildNew() — polymer propagation from Molecule source', () => {
+    it('sets contains_residues when source molecule has is_partial=true', () => {
+      const molecule = { is_partial: true, molfile: '', metrics: 'mMl' };
+      const newSample = Sample.buildNew(molecule, 0);
+      expect(newSample.contains_residues).toBe(true);
+    });
+
+    it('does not set contains_residues when source molecule has is_partial=false', () => {
+      const molecule = { is_partial: false, molfile: '', metrics: 'mMl' };
+      const newSample = Sample.buildNew(molecule, 0);
+      expect(newSample.contains_residues).toBeFalsy();
+    });
+
+    it('does not set contains_residues when source molecule has is_partial undefined', () => {
+      const molecule = { molfile: '', metrics: 'mMl' };
+      const newSample = Sample.buildNew(molecule, 0);
+      expect(newSample.contains_residues).toBeFalsy();
+    });
+
+    it('propagates contains_residues from a polymer Sample source', () => {
+      const source = Sample.buildEmpty(0);
+      source.contains_residues = true;
+      const newSample = Sample.buildNew(source, 0);
+      expect(newSample.contains_residues).toBe(true);
+    });
+
+    it('does not set contains_residues from a non-polymer Sample source', () => {
+      const source = Sample.buildEmpty(0);
+      source.contains_residues = false;
+      const newSample = Sample.buildNew(source, 0);
+      expect(newSample.contains_residues).toBeFalsy();
+    });
+  });
 });

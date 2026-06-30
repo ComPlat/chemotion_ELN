@@ -1448,14 +1448,20 @@ export default class ReactionDetailsScheme extends React.Component {
           }
         } else {
           if ((!lockEquivColumn || materialGroup === 'products') && sample.gas_type !== 'gas') {
-            // calculate equivalent, don't touch real amount
-            sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
-            // yield taking into account stoichiometry:
-            if (referenceMaterial.amount_mol > 0) {
-              sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
-            } else if (!sample.reference) {
-              // Set equivalent to 0 when reference material has no values (amount_mol = 0)
-              sample.equivalent = 0.0;
+            if (materialGroup === 'products' && sample.contains_residues) {
+              // Polymer products require loading-based yield calc — same path as when they are the updated sample
+              const massAnalyses = this.checkMassMolecule(referenceMaterial, sample);
+              this.checkMassPolymer(referenceMaterial, sample, massAnalyses);
+            } else {
+              // calculate equivalent, don't touch real amount
+              sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
+              // yield taking into account stoichiometry:
+              if (referenceMaterial.amount_mol > 0) {
+                sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
+              } else if (!sample.reference) {
+                // Set equivalent to 0 when reference material has no values (amount_mol = 0)
+                sample.equivalent = 0.0;
+              }
             }
           } else {
             //sample.amount_mol = sample.equivalent * referenceMaterial.amount_mol;
