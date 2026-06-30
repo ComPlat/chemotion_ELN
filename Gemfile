@@ -78,6 +78,10 @@ gem 'omniauth-oauth2', '~> 1.7', '>= 1.7.2'
 gem 'omniauth_openid_connect'
 gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
 gem 'omniauth-shibboleth'
+# LDAP login as an OmniAuth provider; pulls in net-ldap. 2.3.1+ widened its
+# omniauth dependency to ">= 1.2, < 3" so it resolves against our omniauth 1.9
+# (2.0.0-2.3.0 pinned omniauth ~> 1.8.1, which excludes 1.9).
+gem 'omniauth-ldap', '~> 2.3', '>= 2.3.1'
 
 gem 'chemical_elements'
 gem 'openbabel', '3.2.0.1', git: 'https://github.com/ComPlat/openbabel-gem.git', tag: 'v3.2.0.1'
