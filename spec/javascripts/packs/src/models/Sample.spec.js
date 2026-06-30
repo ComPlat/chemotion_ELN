@@ -1887,16 +1887,17 @@ describe('Sample', async () => {
     }
 
     function makeComp(id, moleculeId, amounts = {}) {
-      return {
-        id,
-        molecule: { id: moleculeId },
-        amount_mol: amounts.mol ?? 0.01,
-        amount_g: amounts.g ?? 1.8,
-        amount_l: amounts.l ?? 0.001,
-        material_group: 'liquid',
-        position: 0,
-        reference: false,
-      };
+      const comp = new Component({});
+      comp.id = id;
+      comp.molecule = { id: moleculeId };
+      comp.amount_mol = amounts.mol ?? 0.01;
+      comp.amount_g = amounts.g ?? 1.8;
+      comp.amount_l = amounts.l ?? 0.001;
+      comp.material_group = 'liquid';
+      comp.position = 0;
+      comp.reference = false;
+      comp.purity = 1;
+      return comp;
     }
 
     it('collapses two same-molecule components into one', async () => {

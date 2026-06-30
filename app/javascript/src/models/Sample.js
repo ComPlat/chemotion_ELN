@@ -2395,12 +2395,14 @@ export default class Sample extends Element {
 
     try {
       const newMolecule = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher');
-      const newComponent = Sample.buildNew(newMolecule, this.collection_id);
-      newComponent.material_group = tagGroup;
+      const newSample = Sample.buildNew(newMolecule, this.collection_id);
+      newSample.material_group = tagGroup;
+
+      const { default: Component } = await import('src/models/Component');
 
       this.deleteMixtureComponent(tagMat);
       this.deleteMixtureComponent(srcMat);
-      await this.addMixtureComponent(newComponent);
+      await this.addMixtureComponent(new Component(newSample));
     } catch (error) {
       console.error('Error merging components:', error);
     }
