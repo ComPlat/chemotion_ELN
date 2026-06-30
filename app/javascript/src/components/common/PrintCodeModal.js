@@ -1,20 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import AppModal from 'src/components/common/AppModal';
 import Utils from 'src/utilities/Functions';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
 
 // Component that allows users to print a PDF.
-export default function PrintCodeModal({
+const PrintCodeModal = ({
   element,
   showModal,
   handleModalClose,
   selectedConfig,
   analyses,
-}) {
+}) => {
   // State for the modal and preview
   const [preview, setPreview] = useState(null);
-  const [urlError, setUrlError] = useState([]);
   const [json, setJson] = useState({});
 
   useEffect(() => {
@@ -34,34 +33,29 @@ export default function PrintCodeModal({
     loadData();
   }, []); // Empty dependency array ensures this runs only once when the component mounts
 
-  // Handles errors in the URL.
-  const errorHandler = () => {
-    const tmpUrlError = [];
+  const urlError = useMemo(() => {
+    const errors = [];
     Object.entries(json).forEach(([key, value]) => {
       if (value != null) {
-        if (key === 'code_type') {
-          if (value !== 'bar_code' && value !== 'qr_code' && value !== 'data_matrix_code') {
-            tmpUrlError.push('Invalid code type.'
-              + ' correct values: bar_code, qr_code, data_matrix_code. Value have been overwrite');
-          }
+        if (key === 'code_type' && value !== 'bar_code' && value !== 'qr_code' && value !== 'data_matrix_code') {
+          errors.push('Invalid code type. correct values: bar_code, qr_code, data_matrix_code. '
+           + 'Value have been overwrite');
         }
-        if (key === 'code_image_size') {
-          if (value < 0 || value > 100) {
-            tmpUrlError.push('Invalid code image size, correct values: 0-100. Value  have been overwrite');
-          }
+        if (key === 'code_image_size' && (value < 0 || value > 100)) {
+          errors.push('Invalid code image size, correct values: 0-100. Value  have been overwrite');
         }
-        if (key === 'text_position') {
-          if (value !== 'below' && value !== 'right') {
-            tmpUrlError.push('Invalid text position, correct values: below, right. Value have been overwrite');
-          }
+        if (key === 'text_position' && value !== 'below' && value !== 'right') {
+          errors.push('Invalid text position, correct values: below, right. Value have been overwrite');
         }
       }
     });
-    setUrlError(tmpUrlError);
-  };
+    return errors;
+  }, [json]);
 
-  // Builds the URL for fetching the PDF.
-  const buildURL = async () => {
+  // Build the URL when the modal opens
+  useEffect(() => {
+    if (!showModal) return;
+
     const ids = analyses.length > 0 ? analyses.map((entry) => entry.id) : [];
     let newUrl = analyses.length > 0
       ? `/api/v1/code_logs/print_analyses_codes?element_type=${element.type}`
@@ -77,19 +71,10 @@ export default function PrintCodeModal({
         }
       });
     }
-    errorHandler();
     PrintCodeFetcher.fetchPrintCodes(newUrl).then((result) => {
-      if (result != null) {
-        setPreview(result);
-      }
+      if (result != null) setPreview(result);
     });
-  };
-
-  // Build the URL when the state of the PDF params changes
-  useEffect(() => {
-    if (showModal) {
-      buildURL();
-    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showModal]);
 
   // Display the errors in the URL
@@ -146,3 +131,5 @@ PrintCodeModal.propTypes = {
 PrintCodeModal.defaultProps = {
   analyses: [],
 };
+
+export default PrintCodeModal;

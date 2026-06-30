@@ -960,10 +960,12 @@ export default class Reaction extends Element {
           console.warn('Failed to encode reaction SVG as data URI', e);
           return 'images/wild_card/no_image_180.svg';
         }
-      } if (this.reaction_svg_file.substr(this.reaction_svg_file.length - 4) === '.svg') {
+      }
+      if (this.reaction_svg_file.substr(this.reaction_svg_file.length - 4) === '.svg') {
         return `/images/reactions/${this.reaction_svg_file}`;
       }
-    } else return 'images/wild_card/no_image_180.svg';
+    }
+    return 'images/wild_card/no_image_180.svg';
   }
 
   SMGroupValid() {

@@ -18,13 +18,11 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
 
-function MolViewerListModal(props) {
+const MolViewerListModal = ({
+  datasetContainer, handleModalOpen, isPublic, show
+}) => {
   const config = UIStore.getState().moleculeViewer;
-  if (!config?.featureEnabled) return <span />;
 
-  const {
-    datasetContainer, handleModalOpen, isPublic, show
-  } = props;
   const [molContent, setMolContent] = useState(null);
   const [selected, setSelected] = useState(() => {
     const ds = datasetContainer[0];
@@ -40,6 +38,8 @@ function MolViewerListModal(props) {
       setMolContent(url);
     }
   }, [selected?.id, isPublic]);
+
+  if (!config?.featureEnabled) return <span />;
 
   const handleFile = (e, attachment, ds) => {
     e.stopPropagation();
@@ -105,7 +105,7 @@ function MolViewerListModal(props) {
       </Row>
     </AppModal>
   );
-}
+};
 
 MolViewerListModal.propTypes = {
   datasetContainer: PropTypes.array.isRequired,

@@ -81,14 +81,6 @@ export default class ScreenDetails extends Component {
     }
   }
 
-  onUIStoreChange(state) {
-    if (state.screen.activeTab != this.state.activeTab) {
-      this.setState({
-        activeTab: state.screen.activeTab
-      });
-    }
-  }
-
   onTabPositionChanged(visible) {
     this.setState({ visible });
   }

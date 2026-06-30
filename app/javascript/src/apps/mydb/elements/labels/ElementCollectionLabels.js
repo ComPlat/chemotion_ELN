@@ -40,25 +40,25 @@ CollectionToggle.propTypes = {
   totalSharedCollections: PropTypes.number.isRequired,
 };
 
-function ElementCollectionLabels({ element }) {
+const ElementCollectionLabels = ({ element }) => {
+  const collectionsStore = useContext(StoreContext).collections;
+
   const { currentUser } = UserStore.getState();
   if (!currentUser) return (<span />);
   if (!element.tag) return (<span />);
   if (!element.tag.taggable_data) return (<span />);
   if (!element.tag.taggable_data.collection_labels) return (<span />);
-  if (element.tag.taggable_data.collection_labels.length == 0) return (<span />);
-
-  const collectionsStore = useContext(StoreContext).collections;
+  if (element.tag.taggable_data.collection_labels.length === 0) return (<span />);
 
   const handleOnClick = (label, e) => {
     e.stopPropagation();
     aviatorNavigationWithCollectionId(label.id, element.type, element.id);
-  }
+  };
 
   const formatItems = (labels) => {
     return labels.map((label) => {
-      const collectionFromStore = collectionsStore.find(label.id)
-      if (!collectionFromStore) return (<span />);
+      const collectionFromStore = collectionsStore.find(label.id);
+      if (!collectionFromStore) return null;
 
       return (
         <Dropdown.Item key={label.id} onClick={(e) => handleOnClick(label, e)}>
@@ -66,7 +66,7 @@ function ElementCollectionLabels({ element }) {
         </Dropdown.Item>
       );
     });
-  }
+  };
 
   const renderCollectionsItems = (title, labels) => {
     if (labels.length === 0) return null;
@@ -76,10 +76,12 @@ function ElementCollectionLabels({ element }) {
         {formatItems(labels)}
       </>
     );
-  }
+  };
 
-  const ownCollections = element.tag.taggable_data.collection_labels.filter(label => collectionsStore.isOwnCollection(label.id))
-  const sharedCollections = element.tag.taggable_data.collection_labels.filter(label => collectionsStore.isSharedCollection(label.id))
+  const ownCollections = element.tag.taggable_data.collection_labels
+    .filter(label => collectionsStore.isOwnCollection(label.id));
+  const sharedCollections = element.tag.taggable_data.collection_labels
+    .filter(label => collectionsStore.isSharedCollection(label.id));
 
   if (ownCollections.length === 0 && sharedCollections.length === 0) { return (<span />); }
 
@@ -100,9 +102,9 @@ function ElementCollectionLabels({ element }) {
       )}
     </Dropdown>
   );
-}
+};
 
-export default observer(ElementCollectionLabels)
+export default observer(ElementCollectionLabels);
 
 ElementCollectionLabels.propTypes = {
   element: PropTypes.shape({
