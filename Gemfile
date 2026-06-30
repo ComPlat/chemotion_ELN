@@ -80,7 +80,7 @@ gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
 gem 'omniauth-shibboleth'
 
 gem 'chemical_elements'
-gem 'openbabel', '2.4.90.3', git: 'https://github.com/ptrxyz/openbabel-gem.git', branch: 'ptrxyz-ctime-fix'
+gem 'openbabel', '3.2.0.1', git: 'https://github.com/ComPlat/openbabel-gem.git', tag: 'v3.2.0.1'
 gem 'pandoc-ruby'
 gem 'paranoia', '2.6.0'
 gem 'pg'
