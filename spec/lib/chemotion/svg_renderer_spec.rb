@@ -5,7 +5,7 @@ require 'nokogiri'
 
 RSpec.describe Chemotion::SvgRenderer do
   describe '.parse_polymer_payload' do
-    it 'prefers the full-format PolymersList block (contains template_id + size)' do
+    it 'prefers the full-format PolymersList block (contains template_id + size)' do # rubocop:disable RSpec/MultipleExpectations
       molfile = <<~MOL
         molfile header
         2 0 0 0 0 0 0 0 0 0 0 0 V2000
@@ -53,13 +53,15 @@ RSpec.describe Chemotion::SvgRenderer do
         text_by_index: { 0 => 'LabelA', 1 => 'LabelB' },
       }
 
-      allow(described_class).to receive(:extract_r_or_a_positions_from_svg).and_return([{ x: 5, y: 5 }, { x: 5, y: 7 }])
-      allow(described_class).to receive(:find_svg_bounds).and_return(bounds)
-      allow(described_class).to receive(:load_surface_template_lookup).and_return({
-        5 => { category: 'cat', icon_name: 'icon5' },
-        6 => { category: 'cat', icon_name: 'icon6' },
-      })
-      allow(described_class).to receive(:load_template_svg_data_uri).and_return(icon_data)
+      allow(described_class).to receive_messages(
+        extract_r_or_a_positions_from_svg: [{ x: 5, y: 5 }, { x: 5, y: 7 }],
+        find_svg_bounds: bounds,
+        load_surface_template_lookup: {
+          5 => { category: 'cat', icon_name: 'icon5' },
+          6 => { category: 'cat', icon_name: 'icon6' },
+        },
+        load_template_svg_data_uri: icon_data,
+      )
       allow(described_class).to receive(:expand_svg_viewbox_to_include)
 
       result = described_class.inject_polymer_shapes(svg, molfile, polymer_data)
@@ -78,7 +80,7 @@ RSpec.describe Chemotion::SvgRenderer do
       expect(images.first['width'].to_f).to be_within(0.001).of(115.2)
     end
 
-    it 'replaces <use> glyphs with image+label groups when glyph <use> nodes exist' do
+    it 'replaces <use> glyphs with image+label groups when glyph <use> nodes exist' do # rubocop:disable RSpec/MultipleExpectations
       svg = <<~SVG
         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="10" height="10" viewBox="0 0 10 10">
           <defs>
@@ -98,12 +100,12 @@ RSpec.describe Chemotion::SvgRenderer do
         text_by_index: { 0 => 'LabelA', 1 => 'LabelB' },
       }
 
-      allow(described_class).to receive(:find_svg_bounds).and_return(bounds)
-      allow(described_class).to receive(:load_surface_template_lookup).and_return({
-        5 => { category: 'cat', icon_name: 'icon5' },
-        6 => { category: 'cat', icon_name: 'icon6' },
-      })
-      allow(described_class).to receive(:load_template_svg_data_uri).and_return(icon_data)
+      allow(described_class).to receive_messages(find_svg_bounds: bounds, load_surface_template_lookup: {
+                                                   5 => { category: 'cat',
+                                                          icon_name: 'icon5' },
+                                                   6 => { category: 'cat',
+                                                          icon_name: 'icon6' },
+                                                 }, load_template_svg_data_uri: icon_data)
       allow(described_class).to receive(:expand_svg_viewbox_to_include)
 
       result = described_class.inject_polymer_shapes(svg, molfile, polymer_data)
@@ -137,18 +139,20 @@ RSpec.describe Chemotion::SvgRenderer do
         text_by_index: { 0 => 'LabelA' },
       }
 
-      allow(described_class).to receive(:extract_r_or_a_positions_from_svg).and_return([])
-      allow(described_class).to receive(:find_svg_bounds).and_return(bounds)
-      allow(described_class).to receive(:positions_from_molfile).and_return([{ x: 5, y: 5 }])
-      allow(described_class).to receive(:load_surface_template_lookup).and_return({
-        5 => { category: 'cat', icon_name: 'icon5' },
-      })
-      allow(described_class).to receive(:load_template_svg_data_uri).and_return(icon_data)
+      allow(described_class).to receive_messages(
+        extract_r_or_a_positions_from_svg: [],
+        find_svg_bounds: bounds,
+        positions_from_molfile: [{ x: 5, y: 5 }],
+        load_surface_template_lookup: { 5 => { category: 'cat', icon_name: 'icon5' } },
+        load_template_svg_data_uri: icon_data,
+      )
       allow(described_class).to receive(:expand_svg_viewbox_to_include)
-      expect(described_class).to receive(:remove_r_or_a_placeholder_glyphs).at_least(:once)
+      allow(described_class).to receive(:remove_r_or_a_placeholder_glyphs)
 
       result = described_class.inject_polymer_shapes(svg, molfile, polymer_data)
       doc = Nokogiri::XML(result)
+
+      expect(described_class).to have_received(:remove_r_or_a_placeholder_glyphs).at_least(:once)
 
       images = doc.xpath('//*[local-name()="image"]')
       expect(images.size).to eq(1)

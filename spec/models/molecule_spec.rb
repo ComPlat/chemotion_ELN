@@ -94,15 +94,24 @@ RSpec.describe Molecule, type: :model do
     end
 
     it 'persists the binary molfile' do
-      molfile_example = "\n  Ketcher 05301616272D 1   1.00000     0.00000     0\n\n  2  1  0     0  0            999 V2000\n    1.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0     0  0\nM  END\n" # File.open("spec/models/molecule_spec.rb", "rb")
+      molfile_example = <<~MOL
+
+          Ketcher 05301616272D 1   1.00000     0.00000     0
+
+          2  1  0     0  0            999 V2000
+            1.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          1  2  1  0     0  0
+        M  END
+      MOL
       molecule.assign_attributes(molfile: molfile_example)
       molecule.save!
       persisted_molecule = described_class.last
-      persisted_molfile_SHA =
+      persisted_molfile_sha =
         (Digest::SHA256.new << persisted_molecule.molfile).hexdigest
-      molfile_SHA =
+      molfile_sha =
         (Digest::SHA256.new << molecule.molfile).hexdigest
-      expect(persisted_molfile_SHA).to be === molfile_SHA
+      expect(persisted_molfile_sha).to eq(molfile_sha)
     end
 
     it 'updates LCSS when molecule.pubchem_lcss is requested' do
