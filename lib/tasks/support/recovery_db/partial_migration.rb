@@ -518,6 +518,9 @@ module RecoveryDB
         )
 
         attachments.each do |old_attachment|
+          # Exclude attachment_data and identifier so the new record gets a fresh
+          # DB-generated UUID and its own independent file path rather than sharing
+          # the source's Shrine storage path.
           attrs = old_attachment.attributes.with_indifferent_access.except(
             :id, :attachable_id, :created_by, :created_by_type, :log_data, :version,
             :attachment_data, :identifier
@@ -527,6 +530,8 @@ module RecoveryDB
           attrs[:created_by_type] = 'User'
 
           new_attachment = Attachment.new(attrs)
+          # skip validations — the source record is already valid; validate: false
+          # also avoids triggering file-size checks before the file is attached.
           new_attachment.save!(validate: false)
 
           copy_attachment_file(old_attachment, new_attachment)
@@ -536,6 +541,9 @@ module RecoveryDB
         end
       end
 
+      # Copies the physical file (and all derivatives) for +old_attachment+ into
+      # the Shrine storage under paths derived from +new_attachment+'s id and
+      # identifier, then persists the updated attachment_data JSON.
       def copy_attachment_file(old_attachment, new_attachment)
         old_data = old_attachment.attachment_data
         return unless old_data&.dig('id')
@@ -554,12 +562,17 @@ module RecoveryDB
           old_data.fetch('derivatives', {}), new_attachment, storage
         )
 
+        # update_column bypasses after_save :attach_file, which would re-upload
+        # the file and overwrite the path we just computed.
         new_attachment.update_column(:attachment_data, new_data) # rubocop:disable Rails/SkipsModelValidations
       rescue StandardError => e
         Rails.logger.error "Failed to copy file for attachment #{new_attachment.id}: #{e.message}"
         raise
       end
 
+      # Copies each derivative file to a new storage path. Derivatives whose
+      # stored id begins with '/' are absolute filesystem paths left over from a
+      # broken TIFF conversion and cannot be copied — they are silently dropped.
       def copy_derivatives_in_storage(old_derivatives, new_attachment, storage)
         return {} if old_derivatives.blank?
 
@@ -573,6 +586,7 @@ module RecoveryDB
           copy_in_storage(storage, old_deriv_id, new_deriv_id)
 
           new_deriv_data = deriv_data.merge('id' => new_deriv_id)
+          # annotated_file_location mirrors the Shrine id for annotation SVGs.
           new_deriv_data['annotated_file_location'] = new_deriv_id if deriv_data['annotated_file_location']
           result[name] = new_deriv_data
         rescue StandardError => e
@@ -580,6 +594,10 @@ module RecoveryDB
         end
       end
 
+      # Builds the Shrine storage id for +attachment+ mirroring the path scheme
+      # used by AttachmentUploader#generate_location: bucket derived from the
+      # integer id, filename from the UUID identifier, suffix preserved from the
+      # original basename (e.g. '.thumb.jpg', '.annotation.svg', or empty).
       def new_shrine_id(attachment, old_id)
         old_basename = File.basename(old_id.to_s)
         suffix = old_basename.sub(/\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i, '')
@@ -587,6 +605,8 @@ module RecoveryDB
         "#{bucket}/#{attachment.identifier}#{suffix}"
       end
 
+      # Shrine::Storage::FileSystem#open returns a raw File handle that must be
+      # explicitly closed — it does not support a block form in Shrine 3.x.
       def copy_in_storage(storage, old_id, new_id)
         file = storage.open(old_id)
         storage.upload(file, new_id)
