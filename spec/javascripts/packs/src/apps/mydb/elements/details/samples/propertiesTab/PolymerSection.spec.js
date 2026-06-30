@@ -107,6 +107,78 @@ describe('PolymerSection', () => {
     expect(loadingInput.prop('value')).toEqual(1.75);
   });
 
+  it('falls back to sample.loading when external_loading is the default 0.0', () => {
+    const sample = buildSample();
+    sample.residues[0].custom_info.external_loading = 0.0;
+    sample.residues[0].custom_info.loading = '1.75';
+
+    const wrapper = shallow(
+      <PolymerSection
+        sample={sample}
+        handleSampleChanged={() => {}}
+        handleAmountChanged={() => {}}
+      />
+    );
+
+    const loadingInput = wrapper.find('NumeralInputWithUnitsCompo').at(0);
+    expect(loadingInput.prop('value')).toEqual(1.75);
+  });
+
+  it('passes null when external loading is unset', () => {
+    const sample = buildSample();
+
+    const wrapper = shallow(
+      <PolymerSection
+        sample={sample}
+        handleSampleChanged={() => {}}
+        handleAmountChanged={() => {}}
+      />
+    );
+
+    const loadingInput = wrapper.find('NumeralInputWithUnitsCompo').at(0);
+    expect(loadingInput.prop('value')).toEqual(null);
+  });
+
+  it('sets loading to null when switching to external with no values set', () => {
+    const sample = buildSample();
+    sample.residues[0].custom_info.loading_type = 'found';
+    sample.residues[0].custom_info.loading = null;
+    sample.residues[0].custom_info.external_loading = null;
+
+    const wrapper = shallow(
+      <PolymerSection
+        sample={sample}
+        handleSampleChanged={() => {}}
+        handleAmountChanged={() => {}}
+      />
+    );
+
+    wrapper.instance().handlePRadioChanged(
+      { target: { value: 'external' } },
+      sample.residues[0],
+      sample
+    );
+
+    expect(sample.residues[0].custom_info.loading).toEqual(null);
+  });
+
+  it('parses string loading for non-external loading types', () => {
+    const sample = buildSample();
+    sample.residues[0].custom_info.loading_type = 'found';
+    sample.residues[0].custom_info.loading = '1.75';
+
+    const wrapper = shallow(
+      <PolymerSection
+        sample={sample}
+        handleSampleChanged={() => {}}
+        handleAmountChanged={() => {}}
+      />
+    );
+
+    const loadingInput = wrapper.find('NumeralInputWithUnitsCompo').at(0);
+    expect(loadingInput.prop('value')).toEqual(1.75);
+  });
+
   it('stores a numeric loading value when external estimation is selected', () => {
     const sample = buildSample();
     sample.residues[0].custom_info.loading_type = 'found';

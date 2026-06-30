@@ -14,6 +14,23 @@ const parseLoadingValue = (rawValue) => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
+// external_loading defaults to 0.0 when unset; 0 is not a valid user loading value.
+const externalLoadingValue = (sample) => {
+  const parsedExternal = parseLoadingValue(sample.external_loading);
+  if (parsedExternal != null && parsedExternal !== 0) {
+    return parsedExternal;
+  }
+  return parseLoadingValue(sample.loading);
+};
+
+const polymerLoadingValue = (sample, loadingType) => {
+  const parsed = loadingType === 'external'
+    ? externalLoadingValue(sample)
+    : parseLoadingValue(sample.loading);
+  // null (not undefined) avoids NumeralInputWithUnitsCompo defaultProps substituting 0
+  return parsed ?? null;
+};
+
 export default class PolymerSection extends React.Component {
   handleCustomInfoNumericChanged(e, name, residue, sample) {
     const { handleSampleChanged, handleAmountChanged } = this.props;
@@ -24,6 +41,12 @@ export default class PolymerSection extends React.Component {
       if (residue.custom_info.loading_type == 'external')
         sample.external_loading = e.value;
 
+      // Loading changes require both callbacks. handleAmountChanged recalculates
+      // amount (legacy behavior kept in this branch since 2016). handleSampleChanged
+      // is also required (#3157): NumeralInputWithUnitsCompo resets its display from
+      // props.value on blur, and handleAmountChanged — though it calls setState({ sample })
+      // — does not chain to handleSampleChanged, so without the explicit second call
+      // the loading input reverts after blur. Do not collapse back to one or the other.
       handleAmountChanged(sample.amount);
       handleSampleChanged(sample);
 
@@ -66,7 +89,7 @@ export default class PolymerSection extends React.Component {
     residue.custom_info['loading_type'] = e.target.value;
 
     if (e.target.value == 'external') {
-      sample.loading = parseLoadingValue(sample.external_loading);
+      sample.loading = polymerLoadingValue(sample, 'external');
     }
     else {
       let e_compositon = sample.elemental_compositions.find(function (item) {
@@ -114,10 +137,10 @@ export default class PolymerSection extends React.Component {
   }
 
   polymerLoading(sample, residue) {
-    const loadingValue = residue.custom_info.loading_type === 'external'
-      ? (parseLoadingValue(sample.external_loading)
-        ?? parseLoadingValue(sample.loading))
-      : sample.loading;
+    const loadingValue = polymerLoadingValue(
+      sample,
+      residue.custom_info.loading_type,
+    );
 
     return (
       <div>
