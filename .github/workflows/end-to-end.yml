@@ -2,9 +2,6 @@ name: Cypress end-to-end tests
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - update-cypress
 
 jobs:
  testing:
