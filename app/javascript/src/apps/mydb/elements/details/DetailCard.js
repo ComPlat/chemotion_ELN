@@ -69,7 +69,7 @@ export default function DetailCard({
 DetailCard.propTypes = {
   children: PropTypes.node.isRequired,
   titleIcon: PropTypes.node,
-  title: PropTypes.string.isRequired,
+  title: PropTypes.node.isRequired,
   titleTooltip: PropTypes.string,
   titleAppendix: PropTypes.node,
   headerToolbar: PropTypes.node,

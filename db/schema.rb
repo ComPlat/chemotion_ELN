@@ -1136,6 +1136,9 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.boolean "weight_percentage", default: false
     t.decimal "volume", precision: 10, scale: 4
     t.boolean "use_reaction_volume", default: false, null: false
+    t.string "reaction_type", default: "standard", null: false
+    t.string "ph_operator", default: "=", null: false
+    t.float "ph_value"
     t.index ["deleted_at"], name: "index_reactions_on_deleted_at"
     t.index ["rinchi_short_key"], name: "index_reactions_on_rinchi_short_key", order: :desc
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"

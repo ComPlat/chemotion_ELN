@@ -65,6 +65,7 @@ export default function ReactionSchemeGraphic({
 }) {
   const [svgProps, setSvgProps] = useState({});
   const tooltipContainer = typeof document !== 'undefined' ? document.body : undefined;
+  const isInteractionReaction = reaction.isInteractionReaction();
 
   useEffect(() => {
     // Use svgPath for both file URLs and data URIs (raw SVG is encoded as data URI in Reaction.svgPath)
@@ -125,6 +126,35 @@ export default function ReactionSchemeGraphic({
     );
   };
 
+  const popoverSettings = (
+    <Popover>
+      <Popover.Header>
+        Graphic Settings
+      </Popover.Header>
+      {!isInteractionReaction && (
+        <>
+          <Popover.Body className="border-bottom py-1">
+            <h6 className="fs-9 fw-medium">Starting Materials</h6>
+            {reaction.starting_materials.map(
+              (material) => materialShowLabel(material, false, 'starting_materials')
+            )}
+          </Popover.Body>
+          <Popover.Body className="border-bottom py-1">
+            <h6 className="fs-9 fw-medium">Reactants</h6>
+            {reaction.reactants.map((material) => materialShowLabel(material, false, 'reactants'))}
+            {reaction.reactant_sbmm_samples.map(
+              (material) => materialShowLabel(material, true, 'sbmm_reactants')
+            )}
+          </Popover.Body>
+        </>
+      )}
+      <Popover.Body className="py-1">
+        <h6 className="fs-9 fw-medium">Products</h6>
+        {reaction.products.map((material) => materialShowLabel(material, false, 'products'))}
+      </Popover.Body>
+    </Popover>
+  );
+
   return (
     <div className="Reaction-scheme-graphic__wrapper">
       <div className="Reaction-scheme-graphic__svg-container">
@@ -146,31 +176,9 @@ export default function ReactionSchemeGraphic({
       </div>
       <ButtonToolbar className="Reaction-scheme-graphic__toolbar">
         <ConfigOverlayButton
+          key={isInteractionReaction ? 'interaction' : 'standard'}
           popperConfig={popperConfigAboveToolbar}
-          popoverSettings={
-            (
-              <Popover>
-                <Popover.Header>Graphic Settings</Popover.Header>
-                <Popover.Body className="border-bottom py-1">
-                  <h6 className="fs-9 fw-medium">Starting Materials</h6>
-                  {reaction.starting_materials.map(
-                    (material) => materialShowLabel(material, false, 'starting_materials')
-                  )}
-                </Popover.Body>
-                <Popover.Body className="border-bottom py-1">
-                  <h6 className="fs-9 fw-medium">Reactants</h6>
-                  {reaction.reactants.map((material) => materialShowLabel(material, false, 'reactants'))}
-                  {reaction.reactant_sbmm_samples.map(
-                    (material) => materialShowLabel(material, true, 'sbmm_reactants')
-                  )}
-                </Popover.Body>
-                <Popover.Body className="py-1">
-                  <h6 className="fs-9 fw-medium">Products</h6>
-                  {reaction.products.map((material) => materialShowLabel(material, false, 'products'))}
-                </Popover.Body>
-              </Popover>
-            )
-          }
+          popoverSettings={popoverSettings}
           onToggle={() => {}}
           wrapperClassName=""
         />
