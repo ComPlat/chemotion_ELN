@@ -345,6 +345,15 @@ export default class Sample extends Element {
     return newSample;
   }
 
+  static normalizeSmilesSet(smiles) {
+    if (typeof smiles !== 'string' || smiles === '') return '';
+    return smiles.split('.').filter(Boolean).sort().join('.');
+  }
+
+  static sameSmilesSet(a, b) {
+    return Sample.normalizeSmilesSet(a ?? '') === Sample.normalizeSmilesSet(b ?? '');
+  }
+
   buildChild() {
     Sample.counter += 1;
     const splitSample = this.buildChildWithoutCounter();
