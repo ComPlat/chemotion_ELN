@@ -82,15 +82,6 @@ export default class ReactionDetailsProperties extends Component {
           leadingFieldColSize={9}
           temperatureColSize={3}
         />
-        <Form.Group className="mx-1">
-          <Form.Label>Type (Name Reaction)</Form.Label>
-          <OlsTreeSelect
-            selectName="rxno"
-            selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-            onSelectChange={(event) => this.props.onInputChange('rxno', event.trim())}
-            selectedDisable={!permitOn(reaction) || reaction.isMethodDisabled('rxno')}
-          />
-        </Form.Group>
         <Form.Group className="mx-1 my-3">
           <Form.Label>Dangerous products</Form.Label>
           <Select
