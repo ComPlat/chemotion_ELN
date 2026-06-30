@@ -23,7 +23,7 @@ describe('Calendar', () => {
     cy.visit('users/sign_in');
     cy.login('cu1', 'user_password');
     cy.contains('Calendar').click();
-    cy.get('div[data-type="calendar-modal"').as('calendarModal');
+    cy.get('div[data-type="calendar-modal"]').as('calendarModal');
   });
 
   it('opens and closes Calendar with close button', () => {

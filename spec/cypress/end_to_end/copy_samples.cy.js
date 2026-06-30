@@ -36,7 +36,7 @@ describe('Copy Samples', () => {
     cy.clickDetailFooterButton('Create');
 
     // Copied Sample exists in sample list
-    cy.get('div[class="element-groups-renderer"').contains('cu1-1');
+    cy.get('div[class="element-groups-renderer"]').contains('cu1-1');
   });
 
   it('copies sample to different collection', () => {
@@ -45,6 +45,6 @@ describe('Copy Samples', () => {
     cy.clickDetailFooterButton('Create');
 
     cy.contains(secondCollectionName).click();
-    cy.get('div[class="element-groups-renderer"').contains('cu1-1');
+    cy.get('div[class="element-groups-renderer"]').contains('cu1-1');
   });
 });

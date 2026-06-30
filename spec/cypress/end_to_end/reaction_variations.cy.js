@@ -26,7 +26,7 @@ describe('Reaction Variations', () => {
   };
 
   const openFirstEntrySelectionModal = () => {
-    cy.contains('button', 'Bar').siblings('button', '.fa.fa-pencil').click();
+    cy.contains('button', 'Bar').siblings('button').find('.fa.fa-pencil').closest('button').click();
     cy.contains('.modal-title', /Select entries for/i).should('be.visible');
   };
 

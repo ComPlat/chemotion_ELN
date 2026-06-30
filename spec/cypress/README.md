@@ -1,8 +1,8 @@
 
 [cypress-on-rails](https://github.com/shakacode/cypress-on-rails) integrates the Cypress testing framework with the Ruby on Rails applications.
 
-Note that you don't have to install Cypress separately with yarn or npm.
-The `cypress-on-rails` gem will take care of that.
+Note: You don't need to install Cypress globally.
+This repository installs Cypress via yarn (see package.json), while the `cypress-on-rails` gem provides the Rails integration.
 
 Make sure to start the Rails server prior to starting Cypress.
 Note that it's important to start the server with `RAILS_ENV=test`,

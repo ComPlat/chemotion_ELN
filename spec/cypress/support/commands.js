@@ -27,7 +27,7 @@
 Cypress.Commands.add('login', (username, password) => {
   cy.visit('users/sign_in');
   cy.get('input[name="login"]').type(username);
-  cy.get('input[name="password"]').type(password);
+  cy.get('input[name="password"]').type(password, { log: false });
   cy.contains('button', 'Log in').click();
 });
 
@@ -69,7 +69,7 @@ Cypress.Commands.add('createUserWithCredentials', (email, password, fname, lname
 });
 
 Cypress.Commands.add('clickDetailFooterButton', (buttonText) => {
-  cy.get('div[class="card-footer"').contains('button', buttonText)
+  cy.get('div[class="card-footer"]').contains('button', buttonText)
     .should('not.be.disabled')
     .click();
 });
