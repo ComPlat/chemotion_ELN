@@ -991,6 +991,56 @@ describe('Sample', async () => {
       expect(sample.boiling_point_upperbound).toBe('');
       expect(sample.boiling_point_display).toBe('100');
     });
+
+    it('should treat positive infinity upper bound as open-ended', () => {
+      const sample = new Sample();
+      sample.updateRange('melting_point', 300, Number.POSITIVE_INFINITY, '>300');
+      expect(sample.melting_point_lowerbound).toBe(300);
+      expect(sample.melting_point_upperbound).toBe('');
+      expect(sample.melting_point_display).toBe('>300');
+      expect(sample.xref.melting_point_label).toBe('>300');
+    });
+
+    it('should treat negative infinity lower bound as open-ended', () => {
+      const sample = new Sample();
+      sample.updateRange('boiling_point', Number.NEGATIVE_INFINITY, 50, '<50');
+      expect(sample.boiling_point_lowerbound).toBe('');
+      expect(sample.boiling_point_upperbound).toBe(50);
+      expect(sample.boiling_point_display).toBe('<50');
+      expect(sample.xref.boiling_point_label).toBe('<50');
+    });
+
+    it('should remove the xref label when an empty label is supplied', () => {
+      const sample = new Sample();
+      sample.xref = { melting_point_label: '>300' };
+      sample.updateRange('melting_point', '', '', '');
+      expect(sample.xref.melting_point_label).toBeUndefined();
+      expect(sample.melting_point_display).toBe('');
+    });
+  });
+
+  describe('Sample.prepareRangeBound (via constructor)', () => {
+    it('uses xref label as display when present', () => {
+      const sample = new Sample({
+        melting_point: '300..Infinity',
+        xref: { melting_point_label: '>300' },
+      });
+      expect(sample.melting_point_display).toBe('>300');
+    });
+
+    it('formats open-upper bound without xref label as bare number', () => {
+      const sample = new Sample({ melting_point: '300..Infinity' });
+      expect(sample.melting_point_lowerbound).toBe(300);
+      expect(sample.melting_point_upperbound).toBeNull();
+      expect(sample.melting_point_display).toBe('300');
+    });
+
+    it('formats open-lower bound without xref label using "<" notation', () => {
+      const sample = new Sample({ melting_point: '-Infinity..200' });
+      expect(sample.melting_point_lowerbound).toBeNull();
+      expect(sample.melting_point_upperbound).toBe(200);
+      expect(sample.melting_point_display).toBe('<200');
+    });
   });
 
   describe('Sample.applyMixturePropertiesToSample()', () => {

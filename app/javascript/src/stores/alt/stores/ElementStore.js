@@ -891,7 +891,7 @@ class ElementStore {
     const sample = Sample.buildEmpty(reaction.collection_id);
     sample.molfile = sample.molfile || '';
     sample.molecule = sample.molecule === undefined ? sample : sample.molecule;
-    sample.sample_svg_file = sample.sample_svg_file;
+    sample.sample_svg_file = sample.sample_svg_file ?? null;
     sample.belongTo = reaction;
     sample.matGroup = materialGroup;
     reaction.changed = true;

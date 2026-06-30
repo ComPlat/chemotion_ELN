@@ -65,10 +65,12 @@ export default class UserAuth extends Component {
   componentDidMount() {
     UserStore.listen(this.onChange);
     UserActions.fetchCurrentUser();
+    window.addEventListener('chemotion:open-settings', this.handleSettingsShow);
   }
 
   componentWillUnmount() {
     UserStore.unlisten(this.onChange);
+    window.removeEventListener('chemotion:open-settings', this.handleSettingsShow);
   }
 
   onChange(state) {
@@ -281,7 +283,6 @@ export default class UserAuth extends Component {
     });
   };
 
-  // eslint-disable-next-line class-methods-use-this
   handleSettingsShow() {
     this.setState({ showSettings: true });
   }

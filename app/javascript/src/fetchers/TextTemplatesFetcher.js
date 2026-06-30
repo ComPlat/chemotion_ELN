@@ -1,10 +1,10 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
-import { camelizeKeys, decamelize } from 'src/utilities/FetcherHelper';
+import { shallowCamelizeKeys, decamelize } from 'src/utilities/FetcherHelper';
 
 export default class TextTemplatesFetcher {
   static fetchTextTemplates(elementName) {
     return ApiClient.getJson(`/api/v1/text_templates/by_type?type=${decamelize(elementName)}`)
-      .then((json) => camelizeKeys(json));
+      .then((json) => shallowCamelizeKeys(json));
   }
 
   static fetchPredefinedTemplateNames() {
@@ -31,6 +31,23 @@ export default class TextTemplatesFetcher {
   }
 
   static deletePredefinedTemplateByName(name) {
-    return ApiClient.deleteRequest(`/api/v1/text_templates/by_name?name=${name}`);
+    return ApiClient.deleteRequest(`/api/v1/text_templates/by_name?name=${encodeURIComponent(name)}`);
+  }
+
+  static fetchPersonalTemplates() {
+    return ApiClient.getJson('/api/v1/text_templates/personal')
+      .then((json) => json.text_templates);
+  }
+
+  static createPersonalTemplate(template) {
+    return ApiClient.postJson('/api/v1/text_templates/personal', { body: template });
+  }
+
+  static updatePersonalTemplate(template) {
+    return ApiClient.putJson(`/api/v1/text_templates/personal/${template.id}`, { body: template });
+  }
+
+  static deletePersonalTemplate(id) {
+    return ApiClient.deleteRequest(`/api/v1/text_templates/personal/${id}`);
   }
 }

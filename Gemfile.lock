@@ -14,12 +14,12 @@ GIT
 
 GIT
   remote: https://github.com/ComPlat/sablon
-  revision: 0bb0e77a8eb5ed2953d81af42558e568845c3777
+  revision: 86831850a43fbc7572015f7e0a215adcb26d3719
+  tag: v0.4.3-1
   specs:
-    sablon (0.0.19)
-      nokogiri (>= 1.6.0)
-      redcarpet (>= 3.4.0)
-      rubyzip (>= 1.1)
+    sablon (0.4.3)
+      nokogiri (>= 1.8.5)
+      rubyzip (>= 1.3.0)
 
 GIT
   remote: https://github.com/datacite/omniauth-orcid
@@ -36,11 +36,11 @@ GIT
     thumbnailer (0.2.0)
 
 GIT
-  remote: https://github.com/ptrxyz/openbabel-gem.git
-  revision: a1255a58c7fa52a00b5743dce46af714365d6acd
-  branch: ptrxyz-ctime-fix
+  remote: https://github.com/ComPlat/openbabel-gem.git
+  revision: ecbc65d6643b8bb96d92b745da5a61a2640bfe25
+  tag: v3.2.0.1
   specs:
-    openbabel (2.4.90.3)
+    openbabel (3.2.0.1)
 
 GIT
   remote: https://github.com/toretore/semacode.git
@@ -907,7 +907,7 @@ DEPENDENCIES
   omniauth-orcid!
   omniauth-shibboleth
   omniauth_openid_connect
-  openbabel (= 2.4.90.3)!
+  openbabel (= 3.2.0.1)!
   pandoc-ruby
   paranoia (= 2.6.0)
   pg
@@ -921,6 +921,7 @@ DEPENDENCIES
   rack
   rack-cors
   rails (~> 6.1.7.7)
+  redcarpet
   rinchi-gem!
   rmagick
   roo

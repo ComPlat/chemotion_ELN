@@ -68,10 +68,22 @@ en:
           attributes:
             base:
               sample_or_scan_data_required: SampleTask creation requires either a sample id or a file + measurement data
+        molecule_name:
+          attributes:
+            name:
+              invalid_characters: contains invalid characters
         well:
           attributes:
             color_code:
               invalid_hex_color: "Must be a valid hex color code, e.g. #FF0000"
+        personal_text_template:
+          attributes:
+            name:
+              taken: already exists in your personal templates
+        predefined_text_template:
+          attributes:
+            name:
+              taken: already exists in global templates
         device:
           attributes:
             name:

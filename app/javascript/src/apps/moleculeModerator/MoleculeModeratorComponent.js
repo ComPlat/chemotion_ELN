@@ -9,6 +9,7 @@ import { findIndex } from 'lodash';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import AppModal from 'src/components/common/AppModal';
 import StructureEditorModal from 'src/components/structureEditor/StructureEditorModal';
+import { isValidMoleculeName } from 'src/utilities/MoleculeNameValidation';
 
 export default class MoleculeModeratorComponent extends Component {
   constructor(props) {
@@ -65,8 +66,10 @@ export default class MoleculeModeratorComponent extends Component {
     const { molNames, molName, isNew } = this.state;
 
     if (molName.name === '') {
-      // eslint-disable-next-line no-alert
-      alert('Please input name!');
+      return false;
+    }
+
+    if (!isValidMoleculeName(molName.name)) {
       return false;
     }
 
@@ -80,7 +83,6 @@ export default class MoleculeModeratorComponent extends Component {
     MoleculesFetcher.saveMoleculeName(params).then((result) => {
       if (result.error) {
         console.log(result);
-        alert(result.error);
       } else {
         if (isNew == true) {
           molNames.push(result);
@@ -142,7 +144,6 @@ export default class MoleculeModeratorComponent extends Component {
     MoleculesFetcher.deleteMoleculeName(params).then((result) => {
       if (result.error) {
         console.log(result);
-        alert(result.error);
       } else {
         const idx = findIndex(molNames, (o) => o.id === nameObj.id);
         molNames.splice(idx, 1);
@@ -199,6 +200,10 @@ export default class MoleculeModeratorComponent extends Component {
 
   renderModal() {
     const { show, isNew, molName } = this.state;
+    const nameIsEmpty = molName.name === '';
+    const nameIsInvalid = !nameIsEmpty && !isValidMoleculeName(molName.name);
+    const saveDisabled = nameIsEmpty || nameIsInvalid;
+
     return (
       <AppModal
         show={show}
@@ -206,6 +211,7 @@ export default class MoleculeModeratorComponent extends Component {
         title={isNew ? 'Create Molecule Name' : 'Edit Molecule Name'}
         primaryActionLabel="Save"
         onPrimaryAction={this.onSaveName}
+        primaryActionDisabled={saveDisabled}
       >
         <Form horizontal className="input-form">
           <Form.Group className="mb-3" controlId="formControlId">
@@ -217,7 +223,15 @@ export default class MoleculeModeratorComponent extends Component {
           <Form.Group className="mb-3" controlId="formControlName">
             <InputGroup>
               <InputGroup.Text>Molecule name</InputGroup.Text>
-              <Form.Control type="text" value={molName.name} onChange={this.handleMolNameChange} />
+              <Form.Control
+                type="text"
+                value={molName.name}
+                onChange={this.handleMolNameChange}
+                isInvalid={nameIsInvalid}
+              />
+              <Form.Control.Feedback type="invalid">
+                Name contains invalid characters (control or invisible characters are not allowed).
+              </Form.Control.Feedback>
             </InputGroup>
           </Form.Group>
         </Form>

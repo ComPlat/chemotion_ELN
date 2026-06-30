@@ -82,7 +82,13 @@ export class ContainerDatasetModalContent extends Component {
 
   constructor(props) {
     super(props);
-    const datasetContainer = { ...props.datasetContainer };
+    // Deep-clone attachments so edits (delete/undo) stay isolated to this modal's working
+    // copy and are committed to the parent only on Save. A shallow clone would share the
+    // parent's attachments array, making Cancel unable to revert a deletion.
+    const datasetContainer = {
+      ...props.datasetContainer,
+      attachments: (props.datasetContainer.attachments || []).map((att) => ({ ...att })),
+    };
     const { thirdPartyApps } = UIStore.getState() || [];
     this.thirdPartyApps = thirdPartyApps;
     this.state = {
@@ -91,7 +97,7 @@ export class ContainerDatasetModalContent extends Component {
       instrumentInputValue: '',
       timeoutReference: null,
       imageEditModalShown: false,
-      filteredAttachments: [...props.datasetContainer.attachments],
+      filteredAttachments: [...datasetContainer.attachments],
       prevMessages: [],
       newMessages: [],
       filterText: '',
@@ -114,13 +120,13 @@ export class ContainerDatasetModalContent extends Component {
     this.handleAttachmentRemove = this.handleAttachmentRemove.bind(this);
     this.handleAttachmentBackToInbox = this.handleAttachmentBackToInbox.bind(this);
     this.classifyAttachments = this.classifyAttachments.bind(this);
-    this.state.attachmentGroups = this.classifyAttachments(props.datasetContainer.attachments);
+    this.state.attachmentGroups = this.classifyAttachments(datasetContainer.attachments);
   }
 
   componentDidMount() {
     const { datasetContainer } = this.state;
     this.setState({
-      attachmentGroups: this.classifyAttachments(this.props.datasetContainer.attachments),
+      attachmentGroups: this.classifyAttachments(datasetContainer.attachments),
       instrumentInputValue: datasetContainer?.extended_metadata?.instrument || ''
     });
   }
@@ -230,6 +236,10 @@ export class ContainerDatasetModalContent extends Component {
   handleAttachmentRemove(attachment) {
     const { datasetContainer } = this.state;
     const index = datasetContainer.attachments.indexOf(attachment);
+    if (index === -1) return;
+    // Mutate the working copy only. The deletion is committed to the parent exclusively
+    // via handleSave() -> onChange(), so Cancel reverts and preferred-thumbnail reassignment
+    // runs only on a real Save.
     datasetContainer.attachments[index].is_deleted = true;
     this.setState({ datasetContainer });
   }
@@ -323,22 +333,25 @@ export class ContainerDatasetModalContent extends Component {
   };
 
   filterAttachments() {
-    const filterTextLower = this.state.filterText.toLowerCase();
-    const filteredGroups = this.classifyAttachments(this.props.datasetContainer.attachments);
+    this.setState((prevState) => {
+      const filterTextLower = prevState.filterText.toLowerCase();
+      // Classify from the working copy so filtering reflects in-modal deletes/undos.
+      const filteredGroups = this.classifyAttachments(prevState.datasetContainer.attachments);
 
-    Object.keys(filteredGroups).forEach((group) => {
-      if (Array.isArray(filteredGroups[group])) {
-        filteredGroups[group] = filteredGroups[group]
-          .filter((attachment) => attachment.filename.toLowerCase().includes(filterTextLower));
-      } else {
-        Object.keys(filteredGroups[group]).forEach((subGroup) => {
-          filteredGroups[group][subGroup] = filteredGroups[group][subGroup]
+      Object.keys(filteredGroups).forEach((group) => {
+        if (Array.isArray(filteredGroups[group])) {
+          filteredGroups[group] = filteredGroups[group]
             .filter((attachment) => attachment.filename.toLowerCase().includes(filterTextLower));
-        });
-      }
-    });
+        } else {
+          Object.keys(filteredGroups[group]).forEach((subGroup) => {
+            filteredGroups[group][subGroup] = filteredGroups[group][subGroup]
+              .filter((attachment) => attachment.filename.toLowerCase().includes(filterTextLower));
+          });
+        }
+      });
 
-    this.setState({ attachmentGroups: filteredGroups });
+      return { attachmentGroups: filteredGroups };
+    });
   }
 
   // eslint-disable-next-line class-methods-use-this

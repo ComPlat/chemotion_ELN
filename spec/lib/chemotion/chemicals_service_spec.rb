@@ -271,5 +271,70 @@ describe Chemotion::ChemicalsService do
         expect(result).to be false
       end
     end
+
+    context 'with construct_p_statements' do
+      it 'resolves individual P codes' do
+        result = described_class.construct_p_statements('P102,P260')
+        expect(result).to include('P102', 'P260')
+      end
+
+      it 'resolves a known combined key that exists in the JSON' do
+        result = described_class.construct_p_statements(['P302+P352'])
+        expect(result.keys).to eq(['P302+P352'])
+      end
+
+      it 'decomposes an unknown + combination into individual codes' do
+        # P302+P335+P340 is not in the JSON as a combined key but each part is
+        result = described_class.construct_p_statements(['P302+P335+P340'])
+        expect(result.keys).to match_array(%w[P302 P335 P340])
+      end
+
+      it 'includes values for all decomposed precautionary codes' do
+        result = described_class.construct_p_statements(['P302+P335+P340'])
+        expect(result['P302']).to be_present
+        expect(result['P335']).to be_present
+        expect(result['P340']).to be_present
+      end
+
+      it 'decomposes P304+P335+P315' do
+        result = described_class.construct_p_statements(['P304+P335+P315'])
+        expect(result.keys).to match_array(%w[P304 P335 P315])
+      end
+
+      it 'decomposes a 4-part combination P370+P372+P380+P374' do
+        result = described_class.construct_p_statements(['P370+P372+P380+P374'])
+        expect(result.keys).to match_array(%w[P370 P372 P380 P374])
+      end
+
+      it 'handles mixed input: known combo and unknown combo together' do
+        result = described_class.construct_p_statements(['P302+P352', 'P302+P335+P340'])
+        expect(result).to have_key('P302+P352')
+        expect(result).to have_key('P335')
+        expect(result).to have_key('P340')
+      end
+
+      it 'silently skips codes not in the JSON' do
+        result = described_class.construct_p_statements(['P999'])
+        expect(result).to be_empty
+      end
+    end
+
+    context 'with construct_h_statements' do
+      it 'resolves individual H codes' do
+        result = described_class.construct_h_statements('H301 H314')
+        expect(result).to include('H301', 'H314')
+      end
+
+      it 'decomposes an unknown + combination into individual H codes' do
+        result = described_class.construct_h_statements(['H301+H312+H315'])
+        expect(result.keys).to match_array(%w[H301 H312 H315])
+        expect(result['H301']).to be_present
+      end
+
+      it 'silently skips unknown H codes' do
+        result = described_class.construct_h_statements(['H999'])
+        expect(result).to be_empty
+      end
+    end
   end
 end

@@ -1,4 +1,4 @@
-/* eslint-disable react/display-name */
+/* eslint-disable react/display-name, no-param-reassign, react-hooks/immutability */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
   useRef, useState, useCallback, useReducer, useEffect, useMemo
@@ -32,37 +32,30 @@ import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
-export default function ReactionVariations({ reaction, onReactionChange }) {
-  if (reaction.isNew) {
-    return (
-      <Alert variant="info">
-        Save the reaction to enable the variations tab.
-      </Alert>
-    );
-  }
+const ReactionVariations = ({ reaction, onReactionChange }) => {
+  const reactionVariations = reaction.variations;
+  const reactionHasPolymers = reaction.hasPolymers();
+  const reactionShortLabel = reaction.short_label;
+  const reactionMaterials = getReactionMaterials(reaction);
+  const gasMode = reaction.gaseous;
+  const allReactionAnalyses = getReactionAnalyses(reaction);
+  const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
+  const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
+  const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
 
   const gridRef = useRef(null);
   const pendingReactionVariations = useRef(null);
-  const reactionVariations = reaction.variations;
   const setReactionVariations = useCallback((updatedReactionVariations) => {
     reaction.variations = updatedReactionVariations;
     onReactionChange(reaction);
   }, [reaction, onReactionChange]);
-  const reactionHasPolymers = reaction.hasPolymers();
-  const reactionShortLabel = reaction.short_label;
-  const reactionMaterials = getReactionMaterials(reaction);
   const [previousReactionMaterials, setPreviousReactionMaterials] = useState(reactionMaterials);
   const [reactionSegments, setReactionSegments] = useState(new Map());
-  const gasMode = reaction.gaseous;
   const [previousGasMode, setPreviousGasMode] = useState(gasMode);
-  const allReactionAnalyses = getReactionAnalyses(reaction);
   const [previousAllReactionAnalyses, setPreviousAllReactionAnalyses] = useState(allReactionAnalyses);
-  const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
-  const { userText: temperatureValue = null, valueUnit: temperatureUnit = 'None' } = reaction.temperature ?? {};
-  const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
   const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
   const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, []);
-  const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
+  const initialGridState = useMemo(() => getInitialGridState(reaction.id), [reaction.id]);
   const [asyncDataLoaded, setAsyncDataLoaded] = useState(false);
 
   useEffect(() => {
@@ -89,6 +82,48 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
     };
     fetchData();
   }, []);
+
+  const copyRow = useCallback((data) => {
+    const copiedRow = copyVariationsRow(data, reactionVariations);
+    setReactionVariations(
+      [...reactionVariations, copiedRow]
+    );
+  }, [reactionVariations, setReactionVariations]);
+
+  const removeRow = useCallback((data) => {
+    setReactionVariations(reactionVariations.filter((row) => row.id !== data.id));
+  }, [reactionVariations, setReactionVariations]);
+
+  const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
+    const { field } = colDef;
+    const updatedRow = updateVariationsRow(oldRow, field, newValue, reactionHasPolymers);
+    const updatedPendingReactionVariations = pendingReactionVariations.current ?? reactionVariations;
+    pendingReactionVariations.current = updatedPendingReactionVariations.map(
+      (row) => (row.id === oldRow.id ? updatedRow : row)
+    );
+    gridRef.current.api.applyTransaction({ update: [updatedRow] });
+  }, [reactionVariations, reactionHasPolymers]);
+
+  /*
+  Defer setReactionVariations until all cell editing has stopped.
+  Without deferring, ongoing edits (e.g., moving edit focus to cell Y by committing edit of cell X with tab)
+  are unintentionally killed during the re-render that's triggered by calling setReactionVariations.
+  pendingReactionVariations accumulates intermediate updates that are submitted only when there aren't any ongoing edits.
+  */
+  const handleCellEditingStopped = useCallback((event) => {
+    if (pendingReactionVariations.current !== null && event.api.getEditingCells().length === 0) {
+      setReactionVariations(pendingReactionVariations.current);
+      pendingReactionVariations.current = null;
+    }
+  }, [setReactionVariations]);
+
+  if (reaction.isNew) {
+    return (
+      <Alert variant="info">
+        Save the reaction to enable the variations tab.
+      </Alert>
+    );
+  }
 
   const handleRowDrag = (event) => {
     const rowOrder = [];
@@ -123,40 +158,6 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       ]
     );
   };
-
-  const copyRow = useCallback((data) => {
-    const copiedRow = copyVariationsRow(data, reactionVariations);
-    setReactionVariations(
-      [...reactionVariations, copiedRow]
-    );
-  }, [reactionVariations]);
-
-  const removeRow = useCallback((data) => {
-    setReactionVariations(reactionVariations.filter((row) => row.id !== data.id));
-  }, [reactionVariations]);
-
-  const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
-    const { field } = colDef;
-    const updatedRow = updateVariationsRow(oldRow, field, newValue, reactionHasPolymers);
-    const updatedPendingReactionVariations = pendingReactionVariations.current ?? reactionVariations;
-    pendingReactionVariations.current = updatedPendingReactionVariations.map(
-      (row) => (row.id === oldRow.id ? updatedRow : row)
-    );
-    gridRef.current.api.applyTransaction({ update: [updatedRow] });
-  }, [reactionVariations, reactionHasPolymers]);
-
-  const handleCellEditingStopped = useCallback((event) => {
-    /*
-    Defer setReactionVariations until all cell editing has stopped.
-    Without deferring, ongoing edits (e.g., moving edit focus to cell Y by committing edit of cell X with tab)
-    are unintentionally killed during the re-render that's triggered by calling setReactionVariations.
-    pendingReactionVariations accumulates intermediate updates that are submitted only when there aren't any ongoing edits.
-    */
-    if (pendingReactionVariations.current !== null && event.api.getEditingCells().length === 0) {
-      setReactionVariations(pendingReactionVariations.current);
-      pendingReactionVariations.current = null;
-    }
-  }, [setReactionVariations]);
 
   const applyColumnSelection = (columns) => {
     let updatedReactionVariations = addMissingColumnsToVariations({
@@ -438,9 +439,11 @@ export default function ReactionVariations({ reaction, onReactionChange }) {
       </div>
     </div>
   );
-}
+};
 
 ReactionVariations.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   onReactionChange: PropTypes.func.isRequired,
 };
+
+export default ReactionVariations;

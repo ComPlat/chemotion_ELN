@@ -22,9 +22,9 @@ import {
   calculateGasMoles, calculateTON, calculateFeedstockMoles, calculateFeedstockVolume, calculateGasVolume
 } from 'src/utilities/UnitsConversion';
 
-function RowToolsCellRenderer({
+const RowToolsCellRenderer = ({
   data: row, context
-}) {
+}) => {
   const { reactionShortLabel, copyRow, removeRow } = context;
   return (
     <div>
@@ -39,7 +39,7 @@ function RowToolsCellRenderer({
       </ButtonGroup>
     </div>
   );
-}
+};
 
 RowToolsCellRenderer.propTypes = {
   data: PropTypes.shape({
@@ -145,15 +145,12 @@ function SegmentFormatter({ value: cellData, colDef }) {
   }
 }
 
-function SegmentSelectEditor({
+const SegmentSelectEditor = ({
   value: cellData, colDef, onValueChange, stopEditing
-}) {
+}) => {
   const { entry } = colDef;
   const entryData = cellData?.[entry];
-
-  if (!entryData) return null;
-
-  const { value: selected, options = [] } = entryData;
+  const { value: selected, options = [] } = entryData ?? {};
 
   const optionElements = useMemo(
     () => options.map((option) => <option key={option} value={option} selected={option === selected}>{option}</option>),
@@ -161,6 +158,8 @@ function SegmentSelectEditor({
   );
 
   useEffect(() => stopEditing, [stopEditing]);
+
+  if (!entryData) return null;
 
   const handleChange = (event) => {
     const updatedEntryData = { ...entryData, value: event.target.value };
@@ -176,7 +175,7 @@ function SegmentSelectEditor({
       {optionElements}
     </select>
   );
-}
+};
 
 SegmentSelectEditor.propTypes = {
   value: PropTypes.arrayOf(PropTypes.shape({
@@ -206,9 +205,9 @@ function MaterialFormatter({ value: cellData, colDef }) {
   return convertValueToDisplayUnit(cellData[entry].value, cellData[entry].unit, displayUnit);
 }
 
-function GroupCellEditor({
+const GroupCellEditor = ({
   value, onValueChange, stopEditing, onKeyDown
-}) {
+}) => {
   const [currentValue, setCurrentValue] = useState(() => {
     const group = value?.group ?? 1;
     const subgroup = value?.subgroup ?? 1;
@@ -272,7 +271,7 @@ function GroupCellEditor({
       onKeyDownCapture={handleKeyDown}
     />
   );
-}
+};
 
 GroupCellEditor.propTypes = {
   value: PropTypes.shape({
@@ -284,9 +283,9 @@ GroupCellEditor.propTypes = {
   stopEditing: PropTypes.bool.isRequired,
 };
 
-function GroupCellRenderer({ value: cellData }) {
+const GroupCellRenderer = ({ value: cellData }) => {
   return `${cellData.group}.${cellData.subgroup}`;
-}
+};
 
 GroupCellRenderer.propTypes = {
   value: PropTypes.shape({
@@ -487,7 +486,7 @@ function FeedstockParser({
   return { ...updatedCellData, equivalent: { ...updatedCellData.equivalent, value: equivalent } };
 }
 
-function NoteCellRenderer(props) {
+const NoteCellRenderer = (props) => {
   const { data: { id }, value } = props;
   return (
     <OverlayTrigger
@@ -501,7 +500,7 @@ function NoteCellRenderer(props) {
       <span>{value || PLACEHOLDER_CELL_TEXT}</span>
     </OverlayTrigger>
   );
-}
+};
 
 NoteCellRenderer.propTypes = {
   data: PropTypes.shape({
@@ -514,13 +513,13 @@ NoteCellRenderer.defaultProps = {
   value: '',
 };
 
-function NoteCellEditor({
+const NoteCellEditor = ({
   data: row,
   value,
   onValueChange,
   stopEditing,
   context
-}) {
+}) => {
   const [note, setNote] = useState(value);
   const { reactionShortLabel } = context;
   const textareaRef = useRef(null);
@@ -554,7 +553,7 @@ function NoteCellEditor({
   );
 
   return cellContent;
-}
+};
 
 NoteCellEditor.propTypes = {
   data: PropTypes.shape({
@@ -568,7 +567,7 @@ NoteCellEditor.propTypes = {
   }).isRequired,
 };
 
-function MaterialOverlay({ value: cellData }) {
+const MaterialOverlay = ({ value: cellData }) => {
   const { aux = null } = cellData;
 
   return (
@@ -607,7 +606,7 @@ function MaterialOverlay({ value: cellData }) {
       </div>
     </div>
   );
-}
+};
 
 MaterialOverlay.propTypes = {
   value: PropTypes.arrayOf(PropTypes.shape({
@@ -616,9 +615,9 @@ MaterialOverlay.propTypes = {
   })).isRequired,
 };
 
-function EntrySelectionHeader({
+const EntrySelectionHeader = ({
   columnGroup, names, gasType, context, displayName
-}) {
+}) => {
   const { parent, groupId } = columnGroup;
   const { setColumnDefinitions } = context;
 
@@ -725,7 +724,7 @@ function EntrySelectionHeader({
       </AppModal>
     </div>
   );
-}
+};
 
 EntrySelectionHeader.propTypes = {
   columnGroup: PropTypes.shape({
@@ -748,7 +747,7 @@ EntrySelectionHeader.defaultProps = {
   gasType: '',
 };
 
-function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
+const ColumnSelection = ({ selectedColumns, availableColumns, onApply }) => {
   const [showModal, setShowModal] = useState(false);
   const [currentColumns, setCurrentColumns] = useState(selectedColumns);
   const [pendingDeselection, setPendingDeselection] = useState(null);
@@ -850,7 +849,7 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
       </AppModal>
     </>
   );
-}
+};
 
 ColumnSelection.propTypes = {
   selectedColumns: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
@@ -858,7 +857,7 @@ ColumnSelection.propTypes = {
   onApply: PropTypes.func.isRequired,
 };
 
-function RemoveVariationsModal({ onRemoveAll }) {
+const RemoveVariationsModal = ({ onRemoveAll }) => {
   const [showModal, setShowModal] = useState(false);
 
   const handleClose = () => setShowModal(false);
@@ -888,13 +887,13 @@ function RemoveVariationsModal({ onRemoveAll }) {
       </AppModal>
     </>
   );
-}
+};
 
 RemoveVariationsModal.propTypes = {
   onRemoveAll: PropTypes.func.isRequired,
 };
 
-function UnitToggleHeader({ column, context, api }) {
+const UnitToggleHeader = ({ column, context, api }) => {
   const { units, entry } = column.getColDef();
   const { setColumnDefinitions } = context;
   const [displayUnit, setDisplayUnit] = useState(() => column.getColDef().displayUnit);
@@ -926,7 +925,7 @@ function UnitToggleHeader({ column, context, api }) {
       )}
     </div>
   );
-}
+};
 
 UnitToggleHeader.propTypes = {
   column: PropTypes.shape({

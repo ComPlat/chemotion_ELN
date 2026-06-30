@@ -75,6 +75,12 @@ describe Chemotion::CollectionShareAPI do
       end.to change(CollectionShare, :count).by(-1)
     end
 
+    it 'responds 204 No Content with an empty body' do
+      delete "/api/v1/collection_shares/#{collection_share.id}"
+      expect(response).to have_http_status(:no_content)
+      expect(response.body).to be_blank
+    end
+
     it 'updates the collections shared flag if that was the last share' do
       expect(collection.collection_shares.count).to eq 1
       expect do

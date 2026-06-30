@@ -17,15 +17,15 @@ module Usecases
           save_segments(device_description)
           device_description.reload
           collection = Collection.accessible_for(current_user).find(params[:collection_id])
-          CollectionsDeviceDescription.create(device_description: device_description, collection: collection)
-
           all_collection_of_collection_owner = Collection.get_all_collection_for_user(current_user)
-          if collection.id != all_collection_of_collection_owner.id
-            CollectionsDeviceDescription.create(
-              device_description: device_description,
-              collection: all_collection_of_collection_owner,
-            )
-          end
+          # find_or_create_by avoids violating the unique
+          # (device_description_id, collection_id) index when the chosen
+          # collection is already the user's "All" collection.
+          CollectionsDeviceDescription.find_or_create_by(device_description: device_description, collection: collection)
+          CollectionsDeviceDescription.find_or_create_by(
+            device_description: device_description,
+            collection: all_collection_of_collection_owner,
+          )
 
           device_description
         end

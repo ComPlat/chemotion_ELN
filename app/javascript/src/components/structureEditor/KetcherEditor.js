@@ -371,6 +371,7 @@ const KetcherEditor = forwardRef((props, ref) => {
         eventCleanupRef.current = () => { };
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
 
   /**

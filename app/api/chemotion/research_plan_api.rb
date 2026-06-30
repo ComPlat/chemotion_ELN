@@ -94,7 +94,9 @@ module Chemotion
         end
 
         all_coll = Collection.get_all_collection_for_user(current_user.id)
-        research_plan.collections << all_coll
+        # Avoid violating the unique (research_plan_id, collection_id) index when
+        # the chosen collection is already the user's "All" collection.
+        research_plan.collections << all_coll if all_coll && research_plan.collections.exclude?(all_coll)
 
         update_element_labels(research_plan, params[:user_labels], current_user.id)
         present research_plan.reload, with: Entities::ResearchPlanEntity, root: :research_plan

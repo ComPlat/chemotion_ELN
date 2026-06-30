@@ -273,7 +273,12 @@ module Chemotion
         error!('Unauthorized to delete molecule name!', 401) unless current_user&.molecule_editor
 
         if params[:name_id] == -1
-          molecule_name = MoleculeName.create(molecule_id: params[:id], user_id: current_user.id, description: "#{params[:description]} #{current_user.id}", name: params[:name])
+          molecule_name = MoleculeName.create!(
+            molecule_id: params[:id],
+            user_id: current_user.id,
+            description: "#{params[:description]} #{current_user.id}",
+            name: params[:name],
+          )
         else
           molecule_name = MoleculeName.find(params[:name_id])
           molecule_name.update!(name: params[:name]) if molecule_name.present?

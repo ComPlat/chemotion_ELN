@@ -26,7 +26,7 @@ export default class MoleculesFetcher {
   }
 
   static updateNames(id, newMolName = '') {
-    return ApiClient.getJson(`/api/v1/molecules/names?${new URLSearchParams({ id, new_name: escape(newMolName) })}`)
+    return ApiClient.getJson(`/api/v1/molecules/names?${new URLSearchParams({ id, new_name: newMolName })}`)
       .then((json) => json.molecules);
   }
 

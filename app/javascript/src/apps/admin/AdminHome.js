@@ -8,7 +8,6 @@ import GroupsDevices from 'src/apps/admin/GroupsDevices';
 import MessagePublish from 'src/apps/admin/MessagePublish';
 import OlsTerms from 'src/apps/admin/OlsTerms';
 import MatrixManagement from 'src/apps/admin/MatrixManagement';
-import TextTemplateContainer from 'src/apps/admin/textTemplates/TextTemplateContainer';
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
 import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
 import DevicesList from 'src/apps/admin/devices/DevicesList';
@@ -22,7 +21,6 @@ const ADMIN_PAGES = [
   { key: 9, label: 'Devices', component: DevicesList },
   { key: 4, label: 'Groups', component: GroupsDevices },
   { key: 7, label: 'UI features', component: MatrixManagement },
-  { key: 8, label: 'Text Templates', component: TextTemplateContainer },
   { key: 2, label: 'Message Publish', component: MessagePublish },
   { key: 5, label: 'Load OLS Terms', component: OlsTerms },
   // { key: 12, label: 'Report-template Management', component: TemplateManagement },

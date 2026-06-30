@@ -1281,7 +1281,7 @@ export default class SequenceBasedMacromoleculeSample extends Element {
       obtained_by: '',
       supplier: '',
       formulation: '',
-      purity: '',
+      purity: 1,
       purity_detection: '',
       purification_method: '',
       inventory_sample: false,

@@ -195,8 +195,11 @@ module Chemotion
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
         collection = current_user.collections.where(id: params[:collection_id]).take
-        screen.collections << collection
-        screen.collections << Collection.get_all_collection_for_user(current_user.id)
+        all_collection = Collection.get_all_collection_for_user(current_user.id)
+        # Avoid violating the unique (screen_id, collection_id) index when the
+        # chosen collection is already the user's "All" collection.
+        screen.collections << collection if collection
+        screen.collections << all_collection if all_collection && screen.collections.exclude?(all_collection)
 
         params[:wellplate_ids].each do |id|
           ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: screen.id)

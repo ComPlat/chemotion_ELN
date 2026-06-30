@@ -162,7 +162,7 @@ const createUpgradeNotification = (serverVersion, localVersion, context) => {
   handleNotification([not], 'add', context, false);
 };
 
-export default function NoticeButton() {
+const NoticeButton = () => {
   const context = useContext(StoreContext);
   const intervalRef = useRef(null);
   const prevDbNoticesRef = useRef([]);
@@ -205,13 +205,15 @@ export default function NoticeButton() {
     if (remainTime < idleTimeoutRef.current) {
       const { attachmentNotificationStore } = context;
       MessagesFetcher.fetchMessages(0).then((result) => {
-        result.messages.forEach((message) => {
+        const messages = result?.messages;
+        if (!Array.isArray(messages)) { return; }
+        messages.forEach((message) => {
           if (message.subject === 'Send TPA attachment arrival notification') {
             attachmentNotificationStore.addMessage(message);
           }
         });
-        result.messages.sort((a, b) => b.id - a.id);
-        setNewNotices(result.messages);
+        messages.sort((a, b) => b.id - a.id);
+        setNewNotices(messages);
         setServerVersion(result.version);
       });
     }
@@ -340,12 +342,7 @@ export default function NoticeButton() {
   ));
 
   const totalPages = Math.ceil(filteredNotices.length / perPage);
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages || 1);
-    }
-  }, [currentPage, totalPages]);
+  const effectivePage = Math.min(currentPage, totalPages || 1);
 
   const renderBody = () => {
     if (allNotices.length === 0) {
@@ -356,7 +353,7 @@ export default function NoticeButton() {
       );
     }
 
-    const start = (currentPage - 1) * perPage;
+    const start = (effectivePage - 1) * perPage;
     const end = start + perPage;
 
     return (
@@ -443,21 +440,21 @@ export default function NoticeButton() {
         {totalPages > 1 && (
           <Pagination className="justify-content-center mt-3">
             <Pagination.Prev
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={effectivePage === 1}
+              onClick={() => setCurrentPage(effectivePage - 1)}
             />
             {[...Array(totalPages).keys()].map((key, i) => (
               <Pagination.Item
                 key={`page_${key}`}
-                active={i + 1 === currentPage}
+                active={i + 1 === effectivePage}
                 onClick={() => setCurrentPage(i + 1)}
               >
                 {i + 1}
               </Pagination.Item>
             ))}
             <Pagination.Next
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={effectivePage === totalPages}
+              onClick={() => setCurrentPage(effectivePage + 1)}
             />
           </Pagination>
         )}
@@ -465,7 +462,7 @@ export default function NoticeButton() {
     );
   };
 
-  const renderModal = useCallback(() => (
+  const renderModal = () => (
     <AppModal
       title="Notifications"
       show={showModal}
@@ -491,7 +488,7 @@ export default function NoticeButton() {
         {renderBody()}
       </div>
     </AppModal>
-  ), [showModal, handleHide, renderBody, messageAck]);
+  );
 
   // Runs once on mount: fetch config, then start polling.
   // All dependencies are stable (never recreated), so this effect
@@ -560,3 +557,5 @@ export default function NoticeButton() {
     </>
   );
 }
+
+export default NoticeButton;

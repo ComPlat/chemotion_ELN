@@ -113,6 +113,100 @@ table.reaction-scheme-solvent {
   }
 }
 
+.reaction-details-toolbar {
+  width: 100%;
+
+  &__left {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__right {
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
+
+  &__group {
+    .form-label {
+      font-weight: 600;
+    }
+  }
+
+  &__group--status {
+    min-width: 220px;
+  }
+}
+
+.reaction-details-header {
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex-wrap: nowrap;
+    flex: 0 1 auto;
+  }
+
+  &__title-prefix {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  &__title-meta {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  &__title-text {
+    min-width: 0;
+    font-weight: 400;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+
+    &:focus-visible {
+      outline: 2px solid #0d6efd;
+      outline-offset: 2px;
+    }
+
+    &--empty {
+      color: #6c757d;
+    }
+  }
+
+  &__title-input {
+    width: clamp(120px, 16vw, 220px);
+    min-width: 0;
+    flex: 0 1 clamp(120px, 16vw, 220px);
+
+    &:focus,
+    &:focus-visible {
+      border-color: $input-border-color;
+      box-shadow: none;
+      outline: 0;
+    }
+  }
+}
+
 /* Safari 4.0 - 8.0 */
 @-webkit-keyframes reaction-status-color-change {
   from {

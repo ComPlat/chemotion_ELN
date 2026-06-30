@@ -27,7 +27,7 @@ class API < Grape::API
     end
 
     def detect_current_user
-      detect_current_user_from_session || detect_current_user_from_jwt
+      detect_current_user_from_session || detect_current_user_from_api_token || detect_current_user_from_jwt
     end
 
     def detect_current_user_from_session
@@ -39,6 +39,17 @@ class API < Grape::API
       user_id = decoded_token[:user_id]
 
       User.find(user_id)
+    rescue StandardError
+      nil
+    end
+
+    def detect_current_user_from_api_token
+      return nil unless current_token&.start_with?('chemtoken_')
+
+      token = ApiToken.authenticate(current_token)
+      return nil unless token
+
+      token.user
     rescue StandardError
       nil
     end
@@ -130,7 +141,7 @@ class API < Grape::API
     ],
     'reactions' => %w[
       name short_label status conditions rxno content temperature duration
-      role purification tlc_solvents tlc_description rf_value dangerous_products
+      role reaction_type purification tlc_solvents tlc_description rf_value dangerous_products
       plain_text_description plain_text_observation
     ],
     'wellplates' => %w[name short_label readout_titles content plain_text_description],
