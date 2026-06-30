@@ -194,3 +194,88 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
     expect(ctx.checkMassPolymer.calledOnce).toBe(true);
   });
 });
+
+// Regression tests for the second polymer code path:
+// calculateEquivalentForProduct must route polymer products through checkMassPolymer
+// instead of the MW-based equivalent formula (which gives 0 when amount_g is null).
+describe('ReactionDetailsScheme#calculateEquivalentForProduct — polymer guard', () => {
+  let gasStoreStub;
+
+  const makeRef = () => ({
+    amount_mol: 0.1,
+    amount_g: 200,
+    coefficient: 1,
+    molecule: { molecular_weight: 100 },
+    residues: [{ custom_info: { loading: 0.5 } }],
+    contains_residues: true,
+    loading: 0.5,
+  });
+
+  const buildCtx = (referenceMaterial) => {
+    const checkMassPolymer = sinon.spy();
+    const checkMassMolecule = sinon.stub().returns({ mFull: 55, errorMsg: null });
+    const triggerNotification = sinon.spy();
+    return {
+      props: { reaction: { referenceMaterial } },
+      checkMassMolecule,
+      checkMassPolymer,
+      triggerNotification,
+    };
+  };
+
+  beforeEach(() => {
+    gasStoreStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+      reactionVesselSizeValue: 0,
+    });
+  });
+
+  afterEach(() => {
+    gasStoreStub.restore();
+  });
+
+  it('calls checkMassPolymer for a polymer product (contains_residues=true)', () => {
+    const ref = makeRef();
+    const ctx = buildCtx(ref);
+    const polymerProduct = {
+      id: 'prod-1',
+      contains_residues: true,
+      gas_type: 'off',
+      isGas: () => false,
+      amount_g: null,
+      molecule_molecular_weight: 2000,
+      purity: 1,
+    };
+
+    ReactionDetailsScheme.prototype.calculateEquivalentForProduct.call(
+      ctx,
+      polymerProduct,
+      ref,
+      1.0
+    );
+
+    expect(ctx.checkMassPolymer.calledOnce).toBe(true);
+  });
+
+  it('does not call checkMassPolymer for a non-polymer product (contains_residues=false)', () => {
+    const ref = makeRef();
+    const ctx = buildCtx(ref);
+    const normalProduct = {
+      id: 'prod-2',
+      contains_residues: false,
+      gas_type: 'off',
+      isGas: () => false,
+      amount_g: 50,
+      molecule_molecular_weight: 150,
+      purity: 1,
+    };
+
+    ReactionDetailsScheme.prototype.calculateEquivalentForProduct.call(
+      ctx,
+      normalProduct,
+      ref,
+      1.0
+    );
+
+    expect(ctx.checkMassPolymer.called).toBe(false);
+  });
+});

@@ -939,6 +939,11 @@ export default class ReactionDetailsScheme extends React.Component {
       const equivalent = result > 1 ? 1 : result;
       return { ...sample, equivalent };
     }
+    if (sample.contains_residues) {
+      const massAnalyses = this.checkMassMolecule(referenceMaterial, sample);
+      this.checkMassPolymer(referenceMaterial, sample, massAnalyses);
+      return sample;
+    }
     const numerator = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight;
     const maxAmount = numerator / (sample.purity || 1);
     let equivalent = maxAmount !== 0 ? (sample.amount_g / maxAmount) : 0;
@@ -2066,10 +2071,15 @@ export default class ReactionDetailsScheme extends React.Component {
     } = this.state;
     const { reaction, onInputChange, onReactionChange } = this.props;
     if (reaction.editedSample !== undefined) {
+      const materialGroups = ['starting_materials', 'reactants', 'solvents', 'purification_solvents', 'products'];
       if (reaction.editedSample.amountType === 'target') {
-        this.updatedSamplesForEquivalentChange(reaction.samples, reaction.editedSample);
+        materialGroups.forEach((group) => {
+          this.updatedSamplesForEquivalentChange(reaction[group] || [], reaction.editedSample, group);
+        });
       } else { // real amount, so that we update amount in mmol
-        this.updatedSamplesForAmountChange(reaction.samples, reaction.editedSample);
+        materialGroups.forEach((group) => {
+          this.updatedSamplesForAmountChange(reaction[group] || [], reaction.editedSample, group);
+        });
       }
       reaction.editedSample = undefined;
     } else {
