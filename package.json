@@ -104,7 +104,7 @@
     "svgedit": "^7.3.0",
     "terser-webpack-plugin": "5",
     "util": "^0.12.5",
-    "uuid": "^3.3.2",
+    "uuid": "^14.0.0",
     "webpack": "5",
     "webpack-assets-manifest": "5",
     "webpack-cli": "6",
