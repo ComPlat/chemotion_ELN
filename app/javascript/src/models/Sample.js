@@ -306,22 +306,22 @@ export default class Sample extends Element {
   /**
    * Normalizes a dot-separated SMILES string to a sorted set for order-independent comparison.
    * Assumes each fragment is a single-molecule SMILES (no dot-salts like [Na+].[Cl-] per component).
-   * @param {string} smilesString - Dot-separated canonical SMILES
+   * @param {string} smiles - Dot-separated canonical SMILES
    * @returns {string} Sorted, dot-joined SMILES string
    */
-  static normalizeSmilesSet(smilesString) {
-    if (!smilesString || typeof smilesString !== 'string') return '';
-    return smilesString.split('.').filter(Boolean).sort().join('.');
+  static normalizeSmilesSet(smiles) {
+    if (typeof smiles !== 'string' || smiles === '') return '';
+    return smiles.split('.').filter(Boolean).sort().join('.');
   }
 
   /**
    * Compares two dot-separated SMILES strings as sets (order-independent).
-   * @param {string} smilesA - First SMILES string
-   * @param {string} smilesB - Second SMILES string
+   * @param {string} a - First SMILES string
+   * @param {string} b - Second SMILES string
    * @returns {boolean} True when both strings represent the same SMILES set
    */
-  static sameSmilesSet(smilesA, smilesB) {
-    return Sample.normalizeSmilesSet(smilesA) === Sample.normalizeSmilesSet(smilesB);
+  static sameSmilesSet(a, b) {
+    return Sample.normalizeSmilesSet(a ?? '') === Sample.normalizeSmilesSet(b ?? '');
   }
 
   /**
@@ -404,15 +404,6 @@ export default class Sample extends Element {
     newSample.molfile = sample.molfile || '';
     newSample.gas_type = 'off';
     return newSample;
-  }
-
-  static normalizeSmilesSet(smiles) {
-    if (typeof smiles !== 'string' || smiles === '') return '';
-    return smiles.split('.').filter(Boolean).sort().join('.');
-  }
-
-  static sameSmilesSet(a, b) {
-    return Sample.normalizeSmilesSet(a ?? '') === Sample.normalizeSmilesSet(b ?? '');
   }
 
   buildChild() {
