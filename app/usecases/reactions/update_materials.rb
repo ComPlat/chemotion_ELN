@@ -110,6 +110,9 @@ module Usecases
               samples.each_with_index do |sample, idx|
                 sample.position = idx if sample.position.nil?
                 sample.reference = false if material_group == 'solvent' && sample.reference == true
+                # Track whether the chosen branch has already persisted this sample's
+                # mixture components so we don't insert them a second time below.
+                components_already_persisted = false
                 if sample.is_new
                   if sample.parent_id && material_group != 'product'
                     modified_sample = create_sub_sample(
@@ -117,6 +120,10 @@ module Usecases
                       fixed_label,
                       weight_percentage_ref_record_target_amount,
                     )
+                    # create_sub_sample copies the parent's components onto the new
+                    # subsample (Sample#create_components_for_mixture_subsample), so
+                    # they are already persisted at this point.
+                    components_already_persisted = true
                   else
                     modified_sample = create_new_sample(sample, fixed_label, weight_percentage_ref_record_target_amount)
                   end
@@ -126,9 +133,12 @@ module Usecases
                     fixed_label,
                     weight_percentage_ref_record_target_amount,
                   )
+                  # update_existing_sample already reconciles components internally.
+                  components_already_persisted = true
                 end
 
-                if sample.components.present? && sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+                if !components_already_persisted &&
+                   sample.components.present? && sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
                   Usecases::Components::Create.new(modified_sample, sample.components).execute!
                 end
 

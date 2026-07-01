@@ -1,9 +1,11 @@
 /* global describe, context, it */
 
 import expect from 'expect';
+import sinon from 'sinon';
 import SampleFactory from 'factories/SampleFactory';
 import Sample from 'src/models/Sample.js';
 import Component from 'src/models/Component';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 
 describe('Sample', async () => {
   const referenceSample = await SampleFactory.build('SampleFactory.water_100g');
@@ -1873,6 +1875,172 @@ describe('Sample', async () => {
 
     it('returns true when both inputs are empty string', () => {
       expect(Sample.sameSmilesSet('', '')).toBe(true);
+    });
+  });
+
+  describe('Sample.mergeComponents() — same molecule', () => {
+    function makeSample(comps) {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      s.components = comps;
+      return s;
+    }
+
+    function makeComp(id, moleculeId, amounts = {}) {
+      const comp = new Component({});
+      comp.id = id;
+      comp.molecule = { id: moleculeId };
+      comp.amount_mol = amounts.mol ?? 0.01;
+      comp.amount_g = amounts.g ?? 1.8;
+      comp.amount_l = amounts.l ?? 0.001;
+      comp.material_group = 'liquid';
+      comp.position = 0;
+      comp.reference = false;
+      comp.purity = 1;
+      return comp;
+    }
+
+    it('collapses two same-molecule components into one', async () => {
+      const comp1 = makeComp(1, 42);
+      const comp2 = makeComp(2, 42);
+      const sample = makeSample([comp1, comp2]);
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      expect(sample.components.length).toBe(1);
+    });
+
+    it('retains the target component (not the source)', async () => {
+      const comp1 = makeComp(1, 42);
+      const comp2 = makeComp(2, 42);
+      const sample = makeSample([comp1, comp2]);
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      expect(sample.components[0]).toBe(comp2);
+    });
+
+    it('resets target amounts and concentration to 0', async () => {
+      const comp1 = makeComp(1, 42, { mol: 0.01, g: 1.8, l: 0.001 });
+      const comp2 = makeComp(2, 42, { mol: 0.05, g: 9.0, l: 0.005 });
+      comp2.molarity_value = 0.5;
+      comp2.concn = 0.5;
+      const sample = makeSample([comp1, comp2]);
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      expect(sample.components[0].amount_mol).toBe(0);
+      expect(sample.components[0].amount_g).toBe(0);
+      expect(sample.components[0].amount_l).toBe(0);
+      expect(sample.components[0].molarity_value).toBe(0);
+      expect(sample.components[0].concn).toBe(0);
+    });
+
+    it('recalculates mass and equivalents after resetting amounts', async () => {
+      const calcMassSpy = sinon.spy();
+      const calcEquivSpy = sinon.spy();
+
+      const comp1 = makeComp(1, 42, { mol: 0.01, g: 1.8, l: 0.001 });
+      const comp2 = makeComp(2, 42, { mol: 0.05, g: 9.0, l: 0.005 });
+      const sample = makeSample([comp1, comp2]);
+      sample.calculateTotalMixtureMass = calcMassSpy;
+      sample.updateMixtureComponentEquivalent = calcEquivSpy;
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      // Called once by deleteMixtureComponent and once after resetAmounts
+      expect(calcMassSpy.callCount).toBe(2);
+      expect(calcEquivSpy.callCount).toBe(2);
+    });
+
+it('does not fetch a new molecule when molecules are the same', async () => {
+  const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+
+  try {
+    const comp1 = makeComp(1, 42);
+    const comp2 = makeComp(2, 42);
+    const sample = makeSample([comp1, comp2]);
+
+    await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+    expect(fetchStub.called).toBe(false);
+  } finally {
+    fetchStub.restore();
+  }
+});
+  });
+
+  describe('Sample.splitSmilesToMolecule() — structure editor reconciliation', () => {
+    function makeComponent(id, moleculeId, canoSmiles) {
+      const comp = new Component({});
+      comp.id = id;
+      comp.molecule = { id: moleculeId, cano_smiles: canoSmiles };
+      comp.material_group = 'liquid';
+      comp.purity = 1;
+      return comp;
+    }
+
+    function makeMixture(comps) {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      s.components = comps;
+      return s;
+    }
+
+    // Restore in beforeEach too: an earlier failing test can leak a
+    // fetchBySmi stub, which would make stubbing here throw.
+    beforeEach(() => {
+      sinon.restore();
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('does not re-add components whose structure is unchanged', async () => {
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+      const compA = makeComponent(1, 42, 'CCO');
+      const compB = makeComponent(2, 43, 'c1ccccc1');
+      const sample = makeMixture([compA, compB]);
+
+      await sample.splitSmilesToMolecule(['CCO', 'c1ccccc1'], 'ketcher');
+
+      expect(fetchStub.called).toBe(false);
+      expect(sample.components.length).toBe(2);
+    });
+
+    it('updates the existing component in place when its structure was edited', async () => {
+      const editedMolecule = { id: 99, cano_smiles: 'CCC', molfile: 'edited molfile' };
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi').resolves(editedMolecule);
+      const compA = makeComponent(1, 42, 'CCO');
+      const compB = makeComponent(2, 43, 'c1ccccc1');
+      const sample = makeMixture([compA, compB]);
+
+      // 'CCO' was edited to 'CCC' in the structure editor
+      await sample.splitSmilesToMolecule(['CCC', 'c1ccccc1'], 'ketcher');
+
+      expect(fetchStub.calledOnce).toBe(true);
+      expect(fetchStub.firstCall.args[0]).toBe('CCC');
+      // No additional component; the stale one was updated in place
+      expect(sample.components.length).toBe(2);
+      expect(sample.components[0]).toBe(compA);
+      expect(compA.molecule.id).toBe(99);
+      expect(compA.molecule_cano_smiles).toBe('CCC');
+      expect(compA.molfile).toBe('edited molfile');
+    });
+
+    it('adds a new component when a new structure was drawn', async () => {
+      const newMolecule = { id: 77, cano_smiles: 'CCC', molfile: 'new molfile' };
+      sinon.stub(MoleculesFetcher, 'fetchBySmi').resolves(newMolecule);
+      const compA = makeComponent(1, 42, 'CCO');
+      const compB = makeComponent(2, 43, 'c1ccccc1');
+      const sample = makeMixture([compA, compB]);
+
+      // a third structure was added in the structure editor
+      await sample.splitSmilesToMolecule(['CCO', 'c1ccccc1', 'CCC'], 'ketcher');
+
+      expect(sample.components.length).toBe(3);
+      expect(sample.components[2].molecule.id).toBe(77);
     });
   });
 });

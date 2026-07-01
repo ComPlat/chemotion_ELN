@@ -740,8 +740,13 @@ class ElementStore {
   handleCreateSample({ element, closeView, components }) {
     if (element.isMixture()) {
       ComponentsFetcher.saveOrUpdateComponents(element, components)
-        .then(async () => {
-          await element.initialComponents(components);
+        .then(async (savedComponents) => {
+          // Use the API response so newly inserted rows pick up their real DB ids.
+          // Falls back to the local components if the response is unexpectedly empty.
+          const refreshed = Array.isArray(savedComponents) && savedComponents.length > 0
+            ? savedComponents.map(Component.deserializeData)
+            : components;
+          await element.initialComponents(refreshed);
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
@@ -761,8 +766,11 @@ class ElementStore {
     UserActions.fetchCurrentUser();
     if (newSample.isMixture()) {
       ComponentsFetcher.saveOrUpdateComponents(newSample, components)
-        .then(async () => {
-          await newSample.initialComponents(components);
+        .then(async (savedComponents) => {
+          const refreshed = Array.isArray(savedComponents) && savedComponents.length > 0
+            ? savedComponents.map(Component.deserializeData)
+            : components;
+          await newSample.initialComponents(refreshed);
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
@@ -807,8 +815,11 @@ class ElementStore {
   handleUpdateLinkedElement({ element, closeView, components }) {
     if (element instanceof Sample && element.isMixture()) {
       ComponentsFetcher.saveOrUpdateComponents(element, components)
-        .then(() => {
-          element.initialComponents(components);
+        .then((savedComponents) => {
+          const refreshed = Array.isArray(savedComponents) && savedComponents.length > 0
+            ? savedComponents.map(Component.deserializeData)
+            : components;
+          element.initialComponents(refreshed);
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
