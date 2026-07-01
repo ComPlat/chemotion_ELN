@@ -1,83 +1,30 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { observer } from 'mobx-react';
+
 import UserAuth from 'src/components/navigation/UserAuth';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import UserActions from 'src/stores/alt/actions/UserActions';
 import NavNewSession from 'src/components/navigation/NavNewSession';
 import ChemotionLogo from 'src/components/common/ChemotionLogo';
 import SupportMenuButton from 'src/components/navigation/SupportMenuButton';
-import DocumentHelper from 'src/utilities/DocumentHelper';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
-export default class Navigation extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      currentUser: null,
-      omniauthProviders: {},
-      extraRules: {},
-    };
-    this.onChange = this.onChange.bind(this);
-  }
+function Navigation() {
+  const { userStore } = useContext(StoreContext);
+  const { currentUser } = userStore;
 
-  componentDidMount() {
-    UserStore.listen(this.onChange);
-    UserActions.fetchCurrentUser();
-    UserActions.fetchOmniauthProviders();
-  }
+  return (
+    <div className="surface-lighten4 d-flex align-items-center justify-content-between px-4 py-3">
+      <a href="/mydb">
+        <ChemotionLogo />
+      </a>
 
-  componentWillUnmount() {
-    UserStore.unlisten(this.onChange);
-  }
-
-  onChange(state) {
-    const newId = state.currentUser ? state.currentUser.id : null;
-    const oldId = this.state.currentUser ? this.state.currentUser.id : null;
-    if (newId !== oldId) {
-      this.setState({
-        currentUser: state.currentUser
-      });
-    }
-    if (state.omniauthProviders !== this.state.omniauthProviders) {
-      this.setState({
-        omniauthProviders: state.omniauthProviders
-      });
-    }
-
-    if (state.extraRules !== this.state.extraRules) {
-      this.setState({
-        extraRules: state.extraRules
-      });
-    }
-  }
-
-  token() {
-    return DocumentHelper.getMetaContent('csrf-token');
-  }
-
-  userSession() {
-    const { currentUser, omniauthProviders, extraRules } = this.state;
-    return currentUser
-      ? <UserAuth userMenuDropdownToggleVariant="link" />
-      : (
-        <NavNewSession
-          authenticityToken={this.token()}
-          omniauthProviders={omniauthProviders}
-          extraRules={extraRules}
-        />
-      );
-  }
-
-  render() {
-    return (
-      <div className="surface-lighten4 d-flex align-items-center justify-content-between px-4 py-3">
-        <a href="/mydb">
-          <ChemotionLogo />
-        </a>
-
-        <div className="d-flex gap-2">
-          <SupportMenuButton linkToEln variant="link" />
-          {this.userSession()}
-        </div>
+      <div className="d-flex gap-2">
+        <SupportMenuButton linkToEln variant="link" />
+        {currentUser
+          ? (<UserAuth userMenuDropdownToggleVariant="link" />)
+          : (<NavNewSession />)}
       </div>
-    );
-  }
+    </div>
+  );
 }
+
+export default observer(Navigation);
