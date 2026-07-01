@@ -20,7 +20,12 @@ const externalLoadingValue = (sample) => {
   if (parsedExternal != null && parsedExternal !== 0) {
     return parsedExternal;
   }
-  return parseLoadingValue(sample.loading);
+
+  const parsedLoading = parseLoadingValue(sample.loading);
+  if (parsedLoading != null && parsedLoading !== 0) {
+    return parsedLoading;
+  }
+  return undefined;
 };
 
 const polymerLoadingValue = (sample, loadingType) => {
