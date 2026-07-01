@@ -503,10 +503,14 @@ class Sample < ApplicationRecord
 
   def get_svg_path
     if sample_svg_file.present?
-      "/images/samples/#{sample_svg_file}"
-    elsif molecule&.molecule_svg_file&.present?
-      "/images/molecules/#{molecule.molecule_svg_file}"
+      return polymer_sample_svg_path if polymer_svg_needs_regen?
+
+      return "/images/samples/#{sample_svg_file}"
     end
+
+    return polymer_sample_svg_path if molecule&.is_partial && molfile.present?
+
+    "/images/molecules/#{molecule.molecule_svg_file}" if molecule&.molecule_svg_file.present?
   end
 
   # return the full path of the svg file (molecule svg if no sample svg) if it or nil.
@@ -821,11 +825,40 @@ class Sample < ApplicationRecord
     density.present? && density.positive? && (molarity_value.blank? || molarity_value.zero?)
   end
 
+  # Generates and persists a sample SVG for polymer samples that lack one.
+  # Uses the full sample molfile (which retains the PolymersList tag) so polymer
+  # shapes are injected. Falls back to molecule_svg_file when generation fails.
+  def polymer_sample_svg_path
+    svg = Molecule.svg_reprocess(nil, molfile)
+    if svg.present?
+      attach_svg(svg)
+      if sample_svg_file.present?
+        # rubocop:disable Rails/SkipsModelValidations
+        update_column(:sample_svg_file, sample_svg_file)
+        # rubocop:enable Rails/SkipsModelValidations
+        return "/images/samples/#{sample_svg_file}"
+      end
+    end
+    "/images/molecules/#{molecule.molecule_svg_file}" if molecule&.molecule_svg_file.present?
+  end
+
   # build a full path of the sample svg, nil if not buildable
   def full_svg_path(svg_file_name = sample_svg_file)
     return unless svg_file_name
 
     Rails.public_path.join('images', 'samples', svg_file_name)
+  end
+
+  # Returns true when a polymer sample's cached SVG lacks injected polymer shapes
+  # and must be regenerated. The SVG is stale if it was created before polymer
+  # shape injection was implemented (it will have no <image> elements).
+  def polymer_svg_needs_regen?
+    return false unless molecule&.is_partial && molfile.present?
+
+    svg_path = full_svg_path(sample_svg_file)
+    return false unless svg_path && File.exist?(svg_path.to_s)
+
+    !File.read(svg_path.to_s).include?('<image')
   end
 
   def update_gas_material

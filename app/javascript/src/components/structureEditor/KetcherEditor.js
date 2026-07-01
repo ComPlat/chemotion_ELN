@@ -38,6 +38,7 @@ import {
   redoKetcher,
   imageNodeForTextNodeSetter,
   selectedImageForTextNode,
+  buttonClickForRectangleSelection,
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
 import {
   onAddAtom,
@@ -300,7 +301,13 @@ const KetcherEditor = forwardRef((props, ref) => {
     [getButtonSelector(ButtonSelectors.SAVE)]: async () => imageNodeForTextNodeSetter(null),
     [getButtonSelector(ButtonSelectors.UNDO)]: async () => undoKetcher(editor),
     [getButtonSelector(ButtonSelectors.REDO)]: () => redoKetcher(editor),
-    [getButtonSelector(ButtonSelectors.POLYMER_LIST)]: async () => setShowShapes(!showShapes),
+    [getButtonSelector(ButtonSelectors.POLYMER_LIST)]: async () => {
+      // Clear _selection before clicking so the rect-select change event does not
+      // queue a MOVE_ATOM that races with the upcoming onPasteNewShapes call.
+      try { editor._structureDef.editor.editor._selection = null; } catch (e) { /* ignore */ }
+      await buttonClickForRectangleSelection(iframeRef);
+      setShowShapes(!showShapes);
+    },
     [getButtonSelector(ButtonSelectors.ADD_LABEL)]: async () => {
       // Open modal if an image is selected OR if text with image is selected
       if (selectedImageForTextNode && selectedImageForTextNode.length > 0) {
@@ -484,6 +491,11 @@ const KetcherEditor = forwardRef((props, ref) => {
           currentSelection?.images || null,
           selectedTextKey
         );
+
+        // Ketcher re-renders the canvas SVG on every selection change, which puts
+        // <image> elements back inside their original <g> group and undoes layering.
+        ImagesToBeUpdatedSetter(true);
+        await runImageLayering(iframeRef);
       } catch (err) {
         console.error('Error in selectionChange event handler:', err);
       }

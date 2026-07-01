@@ -94,15 +94,24 @@ RSpec.describe Molecule, type: :model do
     end
 
     it 'persists the binary molfile' do
-      molfile_example = "\n  Ketcher 05301616272D 1   1.00000     0.00000     0\n\n  2  1  0     0  0            999 V2000\n    1.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0     0  0\nM  END\n" # File.open("spec/models/molecule_spec.rb", "rb")
+      molfile_example = <<~MOL
+
+          Ketcher 05301616272D 1   1.00000     0.00000     0
+
+          2  1  0     0  0            999 V2000
+            1.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          1  2  1  0     0  0
+        M  END
+      MOL
       molecule.assign_attributes(molfile: molfile_example)
       molecule.save!
       persisted_molecule = described_class.last
-      persisted_molfile_SHA =
+      persisted_molfile_sha =
         (Digest::SHA256.new << persisted_molecule.molfile).hexdigest
-      molfile_SHA =
+      molfile_sha =
         (Digest::SHA256.new << molecule.molfile).hexdigest
-      expect(persisted_molfile_SHA).to be === molfile_SHA
+      expect(persisted_molfile_sha).to eq(molfile_sha)
     end
 
     it 'updates LCSS when molecule.pubchem_lcss is requested' do
@@ -117,6 +126,142 @@ RSpec.describe Molecule, type: :model do
       persisted_molecule.tag.taggable_data['pubchem_cid'] = 643_785
       persisted_molecule.pubchem_lcss
       expect(persisted_molecule.tag.taggable_data['pubchem_lcss']).not_to be_nil
+    end
+  end
+
+  describe '#assign_molecule_data svg_molfile: kwarg' do
+    let(:molecule) { build(:molecule) }
+    let(:babel_info) do
+      {
+        inchi: 'InChI=...', formula: 'C6H6', mol_wt: 78.0, mass: 78.0,
+        cano_smiles: 'c1ccccc1', molfile_version: 'V2000', is_partial: false,
+        svg: nil, ob_log: nil
+      }
+    end
+
+    it 'uses svg_molfile for SVG generation when provided' do
+      original_molfile = "full-molfile-with-PolymersList\n> <PolymersList>\n0/95/1.0-1.0\n$$$$"
+      partial_molfile  = 'partial-molfile-no-PolymersList'
+      molecule.molfile = partial_molfile
+
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
+      molecule.assign_molecule_data(babel_info, {}, original_molfile)
+      expect(described_class).to have_received(:svg_reprocess).with(nil, original_molfile)
+    end
+
+    it 'falls back to self.molfile when svg_molfile is not given' do
+      molecule.molfile = 'stored-molfile'
+
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
+      molecule.assign_molecule_data(babel_info, {})
+      expect(described_class).to have_received(:svg_reprocess).with(nil, 'stored-molfile')
+    end
+
+    it 'falls back to self.molfile when svg_molfile is nil explicitly' do
+      molecule.molfile = 'stored-molfile'
+
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
+      molecule.assign_molecule_data(babel_info, {}, nil)
+      expect(described_class).to have_received(:svg_reprocess).with(nil, 'stored-molfile')
+    end
+
+    it 'assigns molecular properties from babel_info regardless of svg_molfile' do
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
+      molecule.molfile = 'molfile'
+
+      molecule.assign_molecule_data(babel_info, {})
+
+      expect(molecule.sum_formular).to eq('C6H6')
+      expect(molecule.molecular_weight).to eq(78.0)
+      expect(molecule.exact_molecular_weight).to eq(78.0)
+    end
+  end
+
+  describe '.find_or_create_by_molfile with polymer (svg_molfile: fix)' do
+    let(:polymer_molfile) do
+      <<~MOL
+
+          Ketcher  01012012572D 1   1.00000     0.00000     0
+
+          2  1  0  0  0  0            999 V2000
+            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            1.2124    0.7000    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+          1  2  1  0     0  0
+        M  RGP  1   2   1
+        M  END
+
+        > <PolymersList>
+        1/95/1.00-1.00
+
+        $$$$
+      MOL
+    end
+
+    it 'passes the original molfile (with PolymersList) to assign_molecule_data as svg_molfile' do
+      # Prevent actual OpenBabel / PubChem / SVG calls
+      babel_info = {
+        inchikey: 'TESTINCHIKEY12345-UHFFFAOYSA-N',
+        inchi: 'InChI=1S/test',
+        formula: 'C1',
+        mol_wt: 12.0,
+        mass: 12.0,
+        cano_smiles: 'C',
+        molfile_version: 'V2000',
+        is_partial: true,
+        molfile: "partial\nC atom only\nM  END\n",
+        svg: nil,
+        ob_log: nil,
+      }
+
+      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfile).and_return(babel_info)
+      allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey).and_return({})
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
+
+      described_class.find_or_create_by_molfile(polymer_molfile)
+      expect(described_class).to have_received(:svg_reprocess).with(nil, polymer_molfile)
+    end
+  end
+
+  describe '.find_or_create_by_molfile with ball-only polymer (null header, TextNode)' do
+    let(:ball_only_molfile) do
+      <<~MOL
+        null
+          Ketcher  6232611422D 1   1.00000     0.00000     0
+
+          1  0  0  0  0  0  0  0  0  0999 V2000
+            2.0250   -2.0250    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+        M  END
+
+        > <PolymersList>
+        0/95/1.00-1.00
+        > <TextNode>
+        0#0ce7f3#t_95_0#asdads
+        > </TextNode>
+        $$$$
+      MOL
+    end
+
+    it 'passes the original molfile (with PolymersList and TextNode) as svg_molfile' do
+      babel_info = {
+        inchikey: 'BALLONLYINCHIKEY-UHFFFAOYSA-N',
+        inchi: 'InChI=1S/ball',
+        formula: 'C1',
+        mol_wt: 12.0,
+        mass: 12.0,
+        cano_smiles: 'C',
+        molfile_version: 'V2000',
+        is_partial: true,
+        molfile: "partial\nC atom only\nM  END\n",
+        svg: nil,
+        ob_log: nil,
+      }
+
+      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfile).and_return(babel_info)
+      allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey).and_return({})
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
+
+      described_class.find_or_create_by_molfile(ball_only_molfile)
+      expect(described_class).to have_received(:svg_reprocess).with(nil, ball_only_molfile)
     end
   end
 end

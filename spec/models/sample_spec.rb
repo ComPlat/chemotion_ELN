@@ -514,4 +514,118 @@ RSpec.describe Sample do
       end
     end
   end
+
+  describe '#get_svg_path — polymer auto-heal' do
+    before do
+      allow(PubChem).to receive_messages(
+        get_record_from_inchikey: nil,
+        get_molfile_by_smiles: nil,
+        get_cid_from_inchikey: nil,
+      )
+    end
+
+    let(:user)     { create(:person) }
+    let(:molecule) { create(:molecule, is_partial: true) }
+    let(:polymer_molfile) do
+      <<~MOLFILE
+        null
+
+
+          1  0  0  0  0  0  0  0  0  0999 V2000
+            2.0250   -2.0250    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+        M  END
+
+        > <PolymersList>
+        0/95/1.00-1.00
+        $$$$
+      MOLFILE
+    end
+
+    let(:sample) do
+      create(:sample,
+        created_by: user.id,
+        molecule: molecule,
+        molfile: polymer_molfile)
+    end
+
+    let(:svg_with_image) do
+      '<svg xmlns="http://www.w3.org/2000/svg">' \
+        '<image href="data:image/svg+xml;base64,ZmFrZQ==" width="10"/></svg>'
+    end
+    let(:svg_without_image) { '<svg xmlns="http://www.w3.org/2000/svg"><text x="5" y="5">A</text></svg>' }
+
+    context 'when sample_svg_file is nil' do
+      before { sample.update_column(:sample_svg_file, nil) }
+
+      it 'calls polymer_sample_svg_path to generate one' do
+        allow(sample).to receive(:polymer_sample_svg_path).and_return('/images/samples/generated.svg')
+        path = sample.get_svg_path
+        expect(sample).to have_received(:polymer_sample_svg_path)
+        expect(path).to eq('/images/samples/generated.svg')
+      end
+    end
+
+    context 'when sample_svg_file is present but SVG lacks <image>' do
+      let(:svg_file_name) { "#{SecureRandom.hex(64)}.svg" }
+
+      before do
+        sample.update_column(:sample_svg_file, svg_file_name)
+        allow(File).to receive(:exist?).with(anything).and_call_original
+        allow(File).to receive(:exist?)
+          .with(Rails.public_path.join('images', 'samples', svg_file_name).to_s)
+          .and_return(true)
+        allow(File).to receive(:read)
+          .with(Rails.public_path.join('images', 'samples', svg_file_name).to_s)
+          .and_return(svg_without_image)
+      end
+
+      it 'regenerates by calling polymer_sample_svg_path' do
+        allow(sample).to receive(:polymer_sample_svg_path).and_return('/images/samples/new.svg')
+        sample.get_svg_path
+        expect(sample).to have_received(:polymer_sample_svg_path)
+      end
+    end
+
+    context 'when sample_svg_file is present and SVG contains <image>' do
+      let(:svg_file_name) { "#{SecureRandom.hex(64)}.svg" }
+
+      before do
+        sample.update_column(:sample_svg_file, svg_file_name)
+        allow(File).to receive(:exist?).with(anything).and_call_original
+        allow(File).to receive(:exist?)
+          .with(Rails.public_path.join('images', 'samples', svg_file_name).to_s)
+          .and_return(true)
+        allow(File).to receive(:read)
+          .with(Rails.public_path.join('images', 'samples', svg_file_name).to_s)
+          .and_return(svg_with_image)
+      end
+
+      it 'returns the cached path without regenerating' do
+        allow(sample).to receive(:polymer_sample_svg_path)
+        path = sample.get_svg_path
+        expect(sample).not_to have_received(:polymer_sample_svg_path)
+        expect(path).to eq("/images/samples/#{svg_file_name}")
+      end
+    end
+
+    context 'when molecule is not partial (non-polymer sample)' do
+      let(:plain_molecule) { create(:molecule, is_partial: false) }
+      let(:plain_sample) do
+        create(:sample,
+          created_by: user.id,
+          molecule: plain_molecule,
+          sample_svg_file: "#{SecureRandom.hex(64)}.svg")
+      end
+
+      # Force eager creation before File.read is mocked, to avoid profile.rb
+      # reading its CHMO fixture file while the mock is active.
+      before { plain_sample }
+
+      it 'returns cached path directly without reading the file' do
+        allow(File).to receive(:read)
+        plain_sample.get_svg_path
+        expect(File).not_to have_received(:read)
+      end
+    end
+  end
 end

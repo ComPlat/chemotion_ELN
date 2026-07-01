@@ -3,7 +3,7 @@ import assert from 'assert';
 import {
   describe, it, beforeEach, afterEach
 } from 'mocha';
-import { addPolymerTags } from 'src/utilities/ketcherSurfaceChemistry/PolymersTemplates';
+import { addPolymerTags, templateAliasesPrepare } from 'src/utilities/ketcherSurfaceChemistry/PolymersTemplates';
 import { ALIAS_PATTERNS } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { deepCompareContent } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
 import { hasKetcherData, loadKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
@@ -17,6 +17,7 @@ import {
   reloadCanvas,
   uniqueEvents,
   templateListSetter,
+  imagesListSetter,
 } from 'src/utilities/ketcherSurfaceChemistry/stateManager';
 import {
   handleAddAtom,
@@ -45,6 +46,7 @@ import {
   deleteImageWithThreeOldPack,
   deleteAtomAndRemoveImageKet,
   molfileWithPolymerList,
+  structureFirstBallSecondKet,
 } from '../../../data/ketcher_mockups';
 import templates from '../../../../../public/json/surfaceChemistryShapes.json';
 
@@ -378,6 +380,134 @@ describe('Ketcher', () => {
       assert.strictEqual(imagesList.length, 0, 'Images list should be cleared');
       await loadKetcherData(addAtomMockup);
       assert.strictEqual(allAtoms.length, 15, 'All atoms should be restored');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // templateAliasesPrepare — save path index fix
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('templateAliasesPrepare — save path', () => {
+    beforeEach(() => {
+      imagesListSetter([
+        { boundingBox: { height: 1.0, width: 1.0 } },
+        { boundingBox: { height: 2.0, width: 2.0 } },
+      ]);
+    });
+
+    it('uses image counter (from alias) when atomIndexList is omitted — legacy behaviour', async () => {
+      const result = await templateAliasesPrepare(['t_95_0']);
+      assert.strictEqual(result, '0/95/1.00-1.00');
+    });
+
+    it('uses image counter when atomIndexList is an empty array — explicit empty fallback', async () => {
+      const result = await templateAliasesPrepare(['t_95_0'], []);
+      assert.strictEqual(result, '0/95/1.00-1.00');
+    });
+
+    // Regression guard: old code always used the alias image counter (0) as the stored atom
+    // index. When the ball was drawn after a structure (atom index > 0), the wrong atom was
+    // targeted on reload and the ball was lost.
+    it('uses actual atom index from atomIndexList when provided — Bug A fix', async () => {
+      const result = await templateAliasesPrepare(['t_95_0'], [3]);
+      assert.strictEqual(result, '3/95/1.00-1.00');
+    });
+
+    it('structure-first scenario: N=5 atoms, ball at atom 5 → stored as index 5', async () => {
+      imagesListSetter([{ boundingBox: { height: 1.5, width: 1.5 } }]);
+      const result = await templateAliasesPrepare(['t_95_0'], [5]);
+      assert.strictEqual(result, '5/95/1.50-1.50');
+    });
+
+    it('two balls: each uses its own actual atom index (not both zero)', async () => {
+      const result = await templateAliasesPrepare(['t_95_0', 't_95_1'], [0, 4]);
+      assert.strictEqual(result, '0/95/1.00-1.00 4/95/2.00-2.00');
+    });
+
+    it('surface template (templateId=96) appends "s" suffix instead of /templateId', async () => {
+      const result = await templateAliasesPrepare(['t_96_0'], [2]);
+      assert.strictEqual(result, '2s/1.00-1.00');
+    });
+
+    it('returns empty string when aliasesList is empty', async () => {
+      const result = await templateAliasesPrepare([], []);
+      assert.strictEqual(result, '');
+    });
+
+    it('skips aliases that do not match the threeParts pattern', async () => {
+      const result = await templateAliasesPrepare(['invalid', 't_95_0'], [7]);
+      assert.strictEqual(result, '7/95/1.00-1.00');
+    });
+
+    it('atomIndexList shorter than aliasesList falls back to alias image counter for extras', async () => {
+      const result = await templateAliasesPrepare(['t_95_0', 't_95_1'], [9]);
+      assert.strictEqual(result, '9/95/1.00-1.00 1/95/2.00-2.00');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // addPolymerTags — load path: structure-first-ball-second
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('addPolymerTags — structure-first-ball-second load path', () => {
+    // structureFirstBallSecondKet: mol0 has 6 C atoms (indices 0-5) + 1 R# at index 6.
+    // PolymersList "6/95/1.00-1.00" means: atom at index 6 carries a bead (template 95).
+    //
+    // IMPORTANT: addPolymerTags mutates its data argument (pushes image nodes into root.nodes
+    // and updates atoms in place). Each test must deep-copy the fixture so mutations from one
+    // test do not bleed into subsequent tests.
+    const freshKet = () => JSON.parse(JSON.stringify(structureFirstBallSecondKet));
+
+    it('restores the polymer ball when atom index > 0 in PolymersList', async () => {
+      const { molfileData } = await addPolymerTags('6/95/1.00-1.00', freshKet());
+      await loadKetcherData(molfileData);
+
+      assert.strictEqual(imagesList.length, 1, 'ball should be restored (1 image in imagesList)');
+      assert.strictEqual(allAtoms.length, 7, 'all 7 atoms must be present after load');
+
+      // The R# atom at index 6 must now carry the alias assigned by addingPolymersToKetcher.
+      const mol = molfileData[mols[0]];
+      const ballAtom = mol?.atoms[6];
+      assert.ok(
+        ALIAS_PATTERNS.threeParts.test(ballAtom?.alias),
+        `atom[6] must have a t_XX_XX alias, got: "${ballAtom?.alias}"`
+      );
+    });
+
+    // Documents the original bug: storing index 0 targets a plain C atom which fails
+    // aliasPass → no image collected → ball silently lost.
+    it('does NOT restore the ball when the stored index points to a plain C atom (bug scenario)', async () => {
+      // Wrong PolymersList: index 0 points at a C atom, not the R# at index 6.
+      const { molfileData } = await addPolymerTags('0/95/1.00-1.00', freshKet());
+      await loadKetcherData(molfileData);
+
+      assert.strictEqual(
+        imagesList.length,
+        0,
+        'C atom at index 0 fails aliasPass → no ball restored (demonstrates original bug)'
+      );
+    });
+
+    it('handles two balls: one drawn first (index 0) and one drawn later (index 6)', async () => {
+      const twoBeadKet = {
+        root: { nodes: [{ $ref: 'mol0' }], connections: [], templates: [] },
+        mol0: {
+          type: 'molecule',
+          atoms: [
+            { label: 'R#', location: [1.0, 0.0, 0] }, // ball first, index 0
+            { label: 'C', location: [2.0, 0.0, 0] },
+            { label: 'C', location: [3.0, 0.0, 0] },
+            { label: 'C', location: [4.0, 0.0, 0] },
+            { label: 'C', location: [5.0, 0.0, 0] },
+            { label: 'C', location: [6.0, 0.0, 0] },
+            { label: 'R#', location: [7.0, 0.0, 0] }  // ball second, index 6
+          ],
+          bonds: []
+        }
+      };
+
+      const { molfileData } = await addPolymerTags('0/95/1.00-1.00 6/95/1.00-1.00', twoBeadKet);
+      await loadKetcherData(molfileData);
+
+      assert.strictEqual(imagesList.length, 2, 'both balls must be restored');
     });
   });
 });
