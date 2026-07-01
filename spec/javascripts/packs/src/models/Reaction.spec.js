@@ -151,6 +151,11 @@ describe('Reaction', () => {
       const emptyReaction = Reaction.buildEmpty(1);
       expect(emptyReaction.use_reaction_volume).toBe(false);
     });
+
+    it('should initialize lock_reaction_volume as false', () => {
+      const emptyReaction = Reaction.buildEmpty(1);
+      expect(emptyReaction.lock_reaction_volume).toBe(false);
+    });
   });
 
   describe('Reaction.serialize()', () => {
@@ -164,6 +169,12 @@ describe('Reaction', () => {
       reaction.use_reaction_volume = true;
       const serialized = reaction.serialize();
       expect(serialized.use_reaction_volume).toBe(true);
+    });
+
+    it('should include lock_reaction_volume in serialized output', () => {
+      reaction.lock_reaction_volume = true;
+      const serialized = reaction.serialize();
+      expect(serialized.lock_reaction_volume).toBe(true);
     });
   });
 
@@ -233,6 +244,353 @@ describe('Reaction', () => {
 
       const result = reaction.calculateCombinedReactionVolume();
       expect(result).toBeCloseTo(0.2, 5);
+    });
+
+    it('excludes feedstock volume in a gas-scheme reaction', async () => {
+      const solvent = await SampleFactory.build('reactionConcentrations.water_100g');
+      const feedstock = await SampleFactory.build('reactionConcentrations.water_100g');
+      const reactant = await SampleFactory.build('reactionConcentrations.water_100g');
+
+      solvent.amount_value = 0.1;
+      solvent.amount_unit = 'l';
+      feedstock.amount_value = 0.05;
+      feedstock.amount_unit = 'l';
+      feedstock.gas_type = 'feedstock';
+      reactant.amount_value = 0.03;
+      reactant.amount_unit = 'l';
+
+      reaction.gaseous = true;
+      reaction.solvents = [solvent];
+      reaction.starting_materials = [];
+      reaction.reactants = [feedstock, reactant];
+      reaction.products = [];
+
+      const result = reaction.calculateCombinedReactionVolume();
+      // 0.1 (solvent) + 0.03 (reactant); feedstock's 0.05 must be excluded.
+      expect(result).toBeCloseTo(0.13, 5);
+    });
+
+    it('includes feedstock volume when the reaction is not gaseous', async () => {
+      const solvent = await SampleFactory.build('reactionConcentrations.water_100g');
+      const feedstock = await SampleFactory.build('reactionConcentrations.water_100g');
+
+      solvent.amount_value = 0.1;
+      solvent.amount_unit = 'l';
+      feedstock.amount_value = 0.05;
+      feedstock.amount_unit = 'l';
+      feedstock.gas_type = 'feedstock';
+
+      reaction.gaseous = false;
+      reaction.solvents = [solvent];
+      reaction.starting_materials = [];
+      reaction.reactants = [feedstock];
+      reaction.products = [];
+
+      const result = reaction.calculateCombinedReactionVolume();
+      expect(result).toBeCloseTo(0.15, 5);
+    });
+
+    it('includes catalyst volume in a gas-scheme reaction only when purity is non-zero', async () => {
+      const solvent = await SampleFactory.build('reactionConcentrations.water_100g');
+      const catalyst = await SampleFactory.build('reactionConcentrations.water_100g');
+
+      solvent.amount_value = 0.1;
+      solvent.amount_unit = 'l';
+      catalyst.amount_value = 0.05;
+      catalyst.amount_unit = 'l';
+      catalyst.gas_type = 'catalyst';
+      catalyst.purity = 0.5;
+
+      reaction.gaseous = true;
+      reaction.solvents = [solvent];
+      reaction.starting_materials = [];
+      reaction.reactants = [catalyst];
+      reaction.products = [];
+
+      const result = reaction.calculateCombinedReactionVolume();
+      expect(result).toBeCloseTo(0.15, 5);
+    });
+
+    it('excludes catalyst volume in a gas-scheme reaction when purity is zero', async () => {
+      const solvent = await SampleFactory.build('reactionConcentrations.water_100g');
+      const catalyst = await SampleFactory.build('reactionConcentrations.water_100g');
+
+      solvent.amount_value = 0.1;
+      solvent.amount_unit = 'l';
+      catalyst.amount_value = 0.05;
+      catalyst.amount_unit = 'l';
+      catalyst.gas_type = 'catalyst';
+      catalyst.purity = 0;
+
+      reaction.gaseous = true;
+      reaction.solvents = [solvent];
+      reaction.starting_materials = [];
+      reaction.reactants = [catalyst];
+      reaction.products = [];
+
+      const result = reaction.calculateCombinedReactionVolume();
+      // Catalyst's 0.05 L is excluded because purity is 0.
+      expect(result).toBeCloseTo(0.1, 5);
+    });
+  });
+
+  describe('Reaction.reactionVolumeForConcentration()', () => {
+    it('uses explicit reaction volume when enabled and valid', () => {
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+      reaction.calculateCombinedReactionVolume = () => 0.2;
+
+      const result = reaction.reactionVolumeForConcentration();
+
+      expect(result).toBe(0.5);
+    });
+
+    it('uses combined volume when explicit reaction volume is disabled', () => {
+      reaction.use_reaction_volume = false;
+      reaction.volume = 0.5;
+      reaction.calculateCombinedReactionVolume = () => 0.2;
+
+      const result = reaction.reactionVolumeForConcentration();
+
+      expect(result).toBe(0.2);
+    });
+
+    it('falls back to combined volume when explicit reaction volume is invalid', () => {
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0;
+      reaction.calculateCombinedReactionVolume = () => 0.2;
+
+      const result = reaction.reactionVolumeForConcentration();
+
+      expect(result).toBe(0.2);
+    });
+  });
+
+  describe('Reaction.hasValidReactionVolume', () => {
+    it('returns true for a positive numeric volume', () => {
+      reaction.volume = 0.5;
+      expect(reaction.hasValidReactionVolume).toBe(true);
+    });
+
+    it('returns false when volume is null, empty, zero, or negative', () => {
+      reaction.volume = null;
+      expect(reaction.hasValidReactionVolume).toBe(false);
+      reaction.volume = '';
+      expect(reaction.hasValidReactionVolume).toBe(false);
+      reaction.volume = 0;
+      expect(reaction.hasValidReactionVolume).toBe(false);
+      reaction.volume = -1;
+      expect(reaction.hasValidReactionVolume).toBe(false);
+    });
+  });
+
+  describe('Reaction.canUpdateConcentration()', () => {
+    it('always allows updates when equivalents are unlocked', () => {
+      reaction.use_reaction_volume = false;
+      reaction.volume = null;
+      expect(reaction.canUpdateConcentration(false)).toBe(true);
+    });
+
+    it('requires use_reaction_volume and a valid volume when equivalents are locked', () => {
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+      expect(reaction.canUpdateConcentration(true)).toBe(true);
+
+      reaction.use_reaction_volume = false;
+      expect(reaction.canUpdateConcentration(true)).toBe(false);
+
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0;
+      expect(reaction.canUpdateConcentration(true)).toBe(false);
+    });
+  });
+
+  describe('Reaction.storageGroupFor()', () => {
+    it('returns reactant_sbmm_samples for SBMM materials in the reactants group', () => {
+      const sbmmMaterial = { type: 'sequence_based_macromolecule_sample' };
+      expect(Reaction.storageGroupFor(sbmmMaterial, 'reactants'))
+        .toBe('reactant_sbmm_samples');
+    });
+
+    it('returns the original group for non-SBMM materials', () => {
+      const sample = { type: 'sample' };
+      expect(Reaction.storageGroupFor(sample, 'reactants')).toBe('reactants');
+      expect(Reaction.storageGroupFor(sample, 'starting_materials'))
+        .toBe('starting_materials');
+    });
+
+    it('returns the original group for SBMM materials outside reactants', () => {
+      const sbmmMaterial = { type: 'sequence_based_macromolecule_sample' };
+      expect(Reaction.storageGroupFor(sbmmMaterial, 'starting_materials'))
+        .toBe('starting_materials');
+    });
+  });
+
+  describe('Reaction.resetPreservedConcentrationExcept()', () => {
+    it('clears preserveConcentration on all materials except the edited one', () => {
+      reaction.starting_materials = [
+        { id: 'edited', preserveConcentration: true },
+        { id: 'a', preserveConcentration: true },
+      ];
+      reaction.reactants = [{ id: 'b', preserveConcentration: true }];
+      reaction.products = [{ id: 'c', preserveConcentration: true }];
+
+      // The array setters wrap plain objects into Sample instances, so we
+      // need to work with the instances owned by the reaction.
+      const edited = reaction.starting_materials[0];
+      const [, other1] = reaction.starting_materials;
+      const [other2] = reaction.reactants;
+      const [product] = reaction.products;
+
+      reaction.resetPreservedConcentrationExcept(edited);
+
+      expect(edited.preserveConcentration).toBe(true);
+      expect(other1.preserveConcentration).toBe(false);
+      expect(other2.preserveConcentration).toBe(false);
+      expect(product.preserveConcentration).toBe(false);
+    });
+
+    it('is a no-op when arrays are missing', () => {
+      reaction._starting_materials = null;
+      reaction._reactants = null;
+      reaction._products = null;
+      expect(() => reaction.resetPreservedConcentrationExcept({ id: 1 }))
+        .not.toThrow();
+    });
+  });
+
+  describe('Reaction.updateReferenceAmountForLockedEquivalents()', () => {
+    const buildSample = (overrides = {}) => {
+      const sample = {
+        setAmount: (amount) => {
+          sample.lastAmount = amount;
+          sample.amount_value = amount.value;
+          sample.amount_unit = amount.unit;
+        },
+      };
+      return Object.assign(sample, overrides);
+    };
+
+    it('rebases the reference amount when equivalents are locked', () => {
+      const referenceSample = buildSample({ reference: true });
+      const updatedSample = buildSample({
+        reference: false,
+        equivalent: 2,
+        amount_mol: 0.5,
+      });
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        updatedSample,
+        true
+      );
+
+      expect(referenceSample.lastAmount).toEqual({ value: 0.25, unit: 'mol' });
+    });
+
+    it('does nothing when equivalents are unlocked', () => {
+      const referenceSample = buildSample({ reference: true });
+      const updatedSample = buildSample({
+        reference: false,
+        equivalent: 2,
+        amount_mol: 0.5,
+      });
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        updatedSample,
+        false
+      );
+
+      expect(referenceSample.lastAmount).toBe(undefined);
+    });
+
+    it('does nothing when the candidate is not the reference sample', () => {
+      const referenceSample = buildSample({ reference: false });
+      const updatedSample = buildSample({
+        reference: false,
+        equivalent: 2,
+        amount_mol: 0.5,
+      });
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        updatedSample,
+        true
+      );
+
+      expect(referenceSample.lastAmount).toBe(undefined);
+    });
+
+    it('does nothing when the updated sample is itself the reference', () => {
+      const referenceSample = buildSample({ reference: true });
+      const updatedSample = buildSample({
+        reference: true,
+        equivalent: 2,
+        amount_mol: 0.5,
+      });
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        updatedSample,
+        true
+      );
+
+      expect(referenceSample.lastAmount).toBe(undefined);
+    });
+
+    it('does nothing when equivalent or amount_mol is invalid', () => {
+      const referenceSample = buildSample({ reference: true });
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        buildSample({ equivalent: 0, amount_mol: 0.5 }),
+        true
+      );
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        buildSample({ equivalent: 2, amount_mol: Number.NaN }),
+        true
+      );
+
+      expect(referenceSample.lastAmount).toBe(undefined);
+    });
+  });
+
+  describe('Reaction.deriveVolumeFromSampleConcentration()', () => {
+    it('sets volume, enables use_reaction_volume, and recalculates concentrations', () => {
+      const sample = { amount_mol: 0.5 };
+      let updateCalled = false;
+      reaction.updateAllConcentrations = () => { updateCalled = true; };
+
+      const result = reaction.deriveVolumeFromSampleConcentration(sample, 2);
+
+      expect(result).toEqual({ volume: 0.25, useReactionVolume: true });
+      expect(reaction.volume).toBe(0.25);
+      expect(reaction.use_reaction_volume).toBe(true);
+      expect(updateCalled).toBe(true);
+    });
+
+    it('returns null when the concentration is not positive', () => {
+      reaction.updateAllConcentrations = () => {
+        throw new Error('should not recalc');
+      };
+      const sample = { amount_mol: 0.5 };
+
+      expect(reaction.deriveVolumeFromSampleConcentration(sample, 0)).toBe(null);
+      expect(reaction.deriveVolumeFromSampleConcentration(sample, Number.NaN))
+        .toBe(null);
+    });
+
+    it('returns null when amount_mol is missing or zero', () => {
+      reaction.updateAllConcentrations = () => {
+        throw new Error('should not recalc');
+      };
+
+      expect(reaction.deriveVolumeFromSampleConcentration({ amount_mol: 0 }, 2))
+        .toBe(null);
+      expect(reaction.deriveVolumeFromSampleConcentration({}, 2)).toBe(null);
+      expect(reaction.deriveVolumeFromSampleConcentration(null, 2)).toBe(null);
     });
   });
 

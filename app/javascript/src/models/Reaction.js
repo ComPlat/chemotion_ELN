@@ -167,6 +167,7 @@ export default class Reaction extends Element {
       volume: null,
       use_reaction_volume: false,
       reaction_type: 'standard',
+      lock_reaction_volume: false,
       gaseous: false,
       weight_percentage: false
     });
@@ -255,6 +256,7 @@ export default class Reaction extends Element {
       volume: this.volume,
       use_reaction_volume: this.use_reaction_volume,
       reaction_type: this.reaction_type || 'standard',
+      lock_reaction_volume: this.lock_reaction_volume,
       gaseous: this.gaseous,
       weight_percentage: this.weight_percentage,
     });
@@ -1107,6 +1109,58 @@ export default class Reaction extends Element {
     return totalVolume;
   }
 
+  /**
+   * Checks if the reaction volume field is locked.
+   * When locked, the volume value cannot be automatically recalculated.
+   *
+   * @returns {boolean} True if the volume is locked, false otherwise.
+   */
+  get isVolumeLocked() {
+    return !!this.lock_reaction_volume;
+  }
+
+  /**
+   * True when the reaction has a positive numeric volume value.
+   *
+   * @returns {boolean}
+   */
+  get hasValidReactionVolume() {
+    return this.volume != null && this.volume !== '' && Number(this.volume) > 0;
+  }
+
+  /**
+   * Decides whether a concentration edit may proceed given the reaction's
+   * current volume settings and the caller-supplied equivalents lock state.
+   *
+   * Rules:
+   * - If equivalents are unlocked, concentration edits are always allowed.
+   * - If equivalents are locked, `use_reaction_volume` must be enabled and
+   *   a positive reaction volume must be set.
+   *
+   * @param {boolean} lockEquivColumn - Whether the equivalents column is locked.
+   * @returns {boolean}
+   */
+  canUpdateConcentration(lockEquivColumn) {
+    if (!lockEquivColumn) return true;
+    return !!(this.use_reaction_volume && this.hasValidReactionVolume);
+  }
+
+  /**
+   * Maps a UI material group name to the underlying storage array name.
+   * SBMM samples shown as 'reactants' are actually stored in
+   * 'reactant_sbmm_samples'; without this translation, repositioning fails.
+   *
+   * @param {Object} material
+   * @param {string} groupName
+   * @returns {string}
+   */
+  static storageGroupFor(material, groupName) {
+    if (groupName === 'reactants' && isSbmmSample(material)) {
+      return 'reactant_sbmm_samples';
+    }
+    return groupName;
+  }
+
   get purificationSolventVolume() {
     return this.totalVolumeForMaterialGroup(Reaction.PURIFICATION_SOLVENTS);
   }
@@ -1302,10 +1356,10 @@ export default class Reaction extends Element {
       totalVolume += this.solventVolume;
     }
 
-    // Add volumes from all reaction materials (starting + reactants + SBMM reactants)
+    // Add suitable volumes from all reaction materials (starting + reactants + SBMM reactants)
 
     this.allReactionMaterials.forEach((material) => {
-      if (material && Number.isFinite(material.amount_l) && material.amount_l > 0) {
+      if (this.materialContributesToCombinedVolume(material)) {
         totalVolume += material.amount_l;
       }
     });
@@ -1314,22 +1368,164 @@ export default class Reaction extends Element {
   }
 
   /**
+   * Decides whether a material's volume should be added to the combined
+   * reaction volume.
+   *
+   * Base rule: the material must have a positive, finite `amount_l`.
+   *
+   * Gas-scheme exclusions:
+   *   - Feedstocks live in the gas vessel, not the reaction mixture, so their
+   *     volume must not contribute.
+   *   - Catalysts contribute only when their purity/concentration from the parent sample is positive; otherwise the
+   *     catalyst is treated as a solid powder with no liquid volume.
+   *
+   * @param {Sample} material
+   * @returns {boolean}
+   */
+  materialContributesToCombinedVolume(material) {
+    if (!material) return false;
+    if (!Number.isFinite(material.amount_l) || material.amount_l <= 0) return false;
+
+    if (this.gaseous) {
+      if (material.isFeedstock && material.isFeedstock()) return false;
+      if (material.isCatalyst && material.isCatalyst()) {
+        return Number.isFinite(material.purity) && material.purity > 0;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Returns the volume (L) to use for concentration calculations.
+   *
+   * Priority:
+   * 1. Explicit reaction volume when `use_reaction_volume` is enabled and valid.
+   * 2. Calculated combined reaction volume from materials.
+   *
+   * @returns {number|null} Volume in liters, or null if no valid volume is available
+   */
+  reactionVolumeForConcentration() {
+    if (this.use_reaction_volume) {
+      const reactionVolume = Number(this.volume);
+      if (Number.isFinite(reactionVolume) && reactionVolume > 0) {
+        return reactionVolume;
+      }
+    }
+
+    return this.calculateCombinedReactionVolume();
+  }
+
+  /**
    * Updates concentrations for all materials in the reaction when volumes change.
    * This should be called whenever any material's amount_l changes.
    *
    * @method updateAllConcentrations
    * @memberof Reaction
+   * @param {Object} options - Optional update flags
+   * @param {boolean} options.includeProducts - Whether to also update products
    * @returns {void}
    */
-  updateAllConcentrations() {
+  updateAllConcentrations({ includeProducts = true } = {}) {
     const allMaterials = [
       ...this.allReactionMaterials,
-      ...(this.products || []),
+      ...(includeProducts ? (this.products || []) : []),
     ];
 
     allMaterials.forEach((material) => {
       material.updateConcentrationFromSolvent(this);
     });
+  }
+
+  /**
+   * Derives a new reaction volume from a sample's concentration edit.
+   *
+   * Formula: volume (L) = amount_mol / concentration (mol/L)
+   *
+   * On a valid positive `concentration` and a sample with positive
+   * `amount_mol`, this sets `reaction.volume` to the computed value,
+   * enables `use_reaction_volume`, and recalculates concentrations for all
+   * materials.
+   *
+   * @param {Sample} sample
+   * @param {number} concentration - New concentration in mol/L.
+   * @returns {{ volume: number, useReactionVolume: true } | null}
+   *   Describes the applied changes so the caller can persist them via
+   *   `onInputChange`, or `null` if no change was applied.
+   */
+  deriveVolumeFromSampleConcentration(sample, concentration) {
+    if (!sample || !Number.isFinite(concentration) || concentration <= 0) {
+      return null;
+    }
+
+    const amountMol = sample.amount_mol || 0;
+    if (amountMol <= 0) return null;
+
+    const newVolume = amountMol / concentration;
+    this.volume = newVolume;
+    this.use_reaction_volume = true;
+    this.updateAllConcentrations();
+
+    return { volume: newVolume, useReactionVolume: true };
+  }
+
+  /**
+   * Clears `preserveConcentration` on every starting material, reactant,
+   * and product except the supplied `editedSample`. Used so that the
+   * currently-edited sample keeps its manually-entered concentration while
+   * other materials are recomputed from the updated amounts/volume.
+   *
+   * @param {Sample} editedSample
+   * @returns {void}
+   */
+  resetPreservedConcentrationExcept(editedSample) {
+    const materials = [
+      ...(this.starting_materials || []),
+      ...(this.reactants || []),
+      ...(this.products || []),
+    ];
+
+    materials.forEach((material) => {
+      if (!editedSample || material.id !== editedSample.id) {
+        material.preserveConcentration = false;
+      }
+    });
+  }
+
+  /**
+   * When equivalents are locked and a non-reference material's amount
+   * changes, the reference material's amount must be rebased on the new
+   * ratio. Given the current reference sample, the edited sample, and the
+   * lock state, this recomputes the reference's amount and sets it in mol.
+   *
+   * Formula: newRefMol = updatedSample.amount_mol / updatedSample.equivalent
+   *
+   * @param {Sample} referenceSample - Candidate reference sample.
+   * @param {Sample} updatedSample - The non-reference sample that changed.
+   * @param {boolean} lockEquivColumn
+   * @returns {void}
+   */
+  // eslint-disable-next-line class-methods-use-this
+  updateReferenceAmountForLockedEquivalents(referenceSample, updatedSample, lockEquivColumn) {
+    if (!lockEquivColumn
+      || !referenceSample
+      || !referenceSample.reference
+      || !updatedSample
+      || updatedSample.reference) {
+      return;
+    }
+
+    const sampleEquiv = updatedSample.equivalent;
+    if (!Number.isFinite(sampleEquiv)
+      || sampleEquiv <= 0
+      || !Number.isFinite(updatedSample.amount_mol)) {
+      return;
+    }
+
+    const newRefMol = updatedSample.amount_mol / sampleEquiv;
+    if (Number.isFinite(newRefMol) && newRefMol >= 0) {
+      referenceSample.setAmount({ value: newRefMol, unit: 'mol' });
+    }
   }
 
   isFeedstockMaterialPresent() {
