@@ -73,8 +73,8 @@ services:
         reservations:
           memory: 2G # Guaranteed minimum memory
         limits:
-          memory: 6G
-          cpus: '8.0'
+          memory: ${LIMITS_MEMORY:-6G}
+          cpus: ${LIMITS_CPUS:-8.0}
     depends_on:
       setup:
         condition: service_completed_successfully

@@ -4,6 +4,8 @@
 ## `docker compose --env-file .dockerenv -f docker-compose.dev.yml config`
 ##  will use the values from this file
 
+LIMITS_MEMORY=6G
+LIMITS_CPUS=8.0
 
 ## Project name
 #COMPOSE_PROJECT_NAME=chemotion_eln
