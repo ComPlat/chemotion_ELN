@@ -1,0 +1,1136 @@
+1) Chemotion::AttachableAPI POST /api/v1/attachable/update_attachments_attachable not yet implemented
+     # Not yet implemented
+     # ./spec/api/chemotion/attachable_api_spec.rb:8
+
+  2) Entities::ReactionEntity.represent when detail level for Reaction is 10 returns a research_plan with segments
+     # Segments are an empty array because a segments factory is missing
+     Failure/Error: raise 'missing segments factory'
+
+     RuntimeError:
+       missing segments factory
+     # ./spec/api/entities/reaction_entity_spec.rb:111:in `block (4 levels) in <top (required)>'
+
+  3) migration 20250218160000: add timestamps to reactions_samples does add timestamps to the table
+     # todo: failing on CI atm
+     # ./spec/db/migrate/20250218160000_add_timestamps_to_reactions_samples_spec.rb:23
+
+  4) Entities::SampleEntity.represent when detail level for Sample is 2 returns a sample without segments
+     # Segments are an empty array because a segments factory is missing
+     Failure/Error: raise 'missing segments factory'
+
+     RuntimeError:
+       missing segments factory
+     # ./spec/api/entities/sample_entity_spec.rb:160:in `block (4 levels) in <top (required)>'
+
+  5) Entities::SampleEntity.represent when detail level for Sample is 10 returns a sample with segments
+     # Segments are an empty array because a segments factory is missing
+     Failure/Error: raise 'missing segments factory'
+
+     RuntimeError:
+       missing segments factory
+     # ./spec/api/entities/sample_entity_spec.rb:78:in `block (4 levels) in <top (required)>'
+
+  6) Experiment add some examples to (or delete) /home/ubuntu/app/spec/models/experiment_spec.rb
+     # Not yet implemented
+     # ./spec/models/experiment_spec.rb:26
+
+  7) Container add some examples to (or delete) /home/ubuntu/app/spec/models/container_spec.rb
+     # Not yet implemented
+     # ./spec/models/container_spec.rb:29
+
+  8) Chemotion::Jcamp Chemotion::Jcamp::CreateImg stubs peak in image request
+     # Temporarily skipped with xit
+     # ./spec/lib/chemotion/jcamp_spec.rb:30
+
+  9) Chemotion::Jcamp Chemotion::Jcamp::CombineImg stubs combine image request
+     # Temporarily skipped with xit
+     # ./spec/lib/chemotion/jcamp_spec.rb:60
+
+  10) CelllineMaterial add some examples to (or delete) /home/ubuntu/app/spec/models/cellline_material_spec.rb
+     # Not yet implemented
+     # ./spec/models/cellline_material_spec.rb:34
+
+  11) Chemotion::MoleculeAPI authorized user logged in Get /api/v1/molecules/cas returns a molecule with CAS number
+     # No reason given
+     # ./spec/api/molecule_api_spec.rb:69
+
+  12) Chemotion::MoleculeAPI authorized user logged in Post /api/v1/molecules/smiles when a molecule with a corrupt molfile is already present cannot creates the correct molecule if one with corrupt molfile is there
+     # present for reproducibility
+     # ./spec/api/molecule_api_spec.rb:115
+
+  13) Chemotion::AttachmentAPI GET /api/v1/attachments/svgs not yet implemented
+     # Not yet implemented
+     # ./spec/api/chemotion/attachment_api_spec.rb:699
+
+  14) Chemotion::AttachmentAPI POST /api/v1/attachments/thumbnails
+     # Not yet implemented
+     # ./spec/api/chemotion/attachment_api_spec.rb:560
+
+  15) Chemotion::AttachmentAPI GET /api/v1/attachments/{attachment_id}?annotated=true when attachment is no image not yet implemented
+     # Not yet implemented
+     # ./spec/api/chemotion/attachment_api_spec.rb:690
+
+  16) Chemotion::AttachmentAPI POST /api/v1/attachments/files not yet implemented
+     # Not yet implemented
+     # ./spec/api/chemotion/attachment_api_spec.rb:564
+
+  17) Chemotion::AttachmentAPI POST /api/v1/attachments/infer not yet implemented
+     # Not yet implemented
+     # ./spec/api/chemotion/attachment_api_spec.rb:695
+
+  18) Chemotion::AttachmentAPI GET /api/v1/attachments/thumbnail/{attachment_id} not yet implemented
+     # Not yet implemented
+     # ./spec/api/chemotion/attachment_api_spec.rb:556
+
+  19) Chemotion::AttachmentAPI GET /api/v1/attachments/sample_analyses/{sample_id} not yet implemented
+     # Not yet implemented
+     # ./spec/api/chemotion/attachment_api_spec.rb:509
+
+  20) ResearchPlanTableSchema add some examples to (or delete) /home/ubuntu/app/spec/models/research_plan_table_schema_spec.rb
+     # Not yet implemented
+     # ./spec/models/research_plan_table_schema_spec.rb:18
+
+  21) Chemotion::UserLabelAPI PUT /api/v1/user_labels/save_label TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/user_label_api_spec.rb:46
+
+  22) Chemotion::SearchAPI POST /api/v1/search/reactions TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/search_api_spec.rb:750
+
+  23) Chemotion::SearchAPI POST /api/v1/search/wellplates TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/search_api_spec.rb:754
+
+  24) Chemotion::SearchAPI POST /api/v1/search/screens TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/search_api_spec.rb:758
+
+  25) Chemotion::SearchAPI POST /api/v1/search/elements TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/search_api_spec.rb:129
+
+  26) Chemotion::UserAPI GET /api/v1/groups/queryCurrentDevices TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/user_api_spec.rb:155
+
+  27) Chemotion::UserAPI GET /api/v1/devices/current_connection TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/user_api_spec.rb:247
+
+  28) Chemotion::UserAPI DELETE /api/v1/users/sign_out TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/user_api_spec.rb:110
+
+  29) Chemotion::UserAPI GET /api/v1/users/list_editors TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/user_api_spec.rb:94
+
+  30) Chemotion::UserAPI GET /api/v1/groups/deviceMetadata/{device_id} TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/user_api_spec.rb:159
+
+  31) Chemotion::UserAPI GET /api/v1/users/scifinder TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/user_api_spec.rb:106
+
+  32) Chemotion::UserAPI GET /api/v1/devices/novnc TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/user_api_spec.rb:243
+
+  33) Chemotion::UserAPI GET /api/v1/groups/qrycurrent TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/user_api_spec.rb:151
+
+  34) Chemotion::UserAPI PUT /api/v1/users/update_counter TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/user_api_spec.rb:102
+
+  35) Chemotion::UserAPI GET /api/v1/users/omniauth_providers TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/user_api_spec.rb:98
+
+  36) Chemotion::AdminUserAPI PUT /api/v1/admin/users/:id/resetPassword when sending reset instructions (random=false) lets unrelated mail-delivery errors propagate
+     # Temporarily skipped with xit
+     # ./spec/api/chemotion/admin_user_api_spec.rb:33
+
+  37) Entities::ResearchPlanEntity.represent when detail level for ResearchPlan is 10 returns a research_plan with segments
+      # Segments are an empty array because a segments factory is missing
+      Failure/Error: raise 'missing segments factory'
+
+      RuntimeError:
+        missing segments factory
+      # ./spec/api/entities/research_plan_entity_spec.rb:55:in `block (4 levels) in <top (required)>'
+
+  38) Attachment#create_process not yet implemented
+     # Not yet implemented
+     # ./spec/models/attachment_spec.rb:803
+
+  39) Attachment.create when duplicated accessor is set check if the copy method and the duplicated accessor are still used
+     # Not yet implemented
+     # ./spec/models/attachment_spec.rb:307
+
+  40) Attachment#update_prediction with keep_pred in params hash not yet implemented
+     # Not yet implemented
+     # ./spec/models/attachment_spec.rb:790
+
+  41) TextTemplate add some examples to (or delete) /home/ubuntu/app/spec/models/text_template_spec.rb
+     # Not yet implemented
+     # ./spec/models/text_template_spec.rb:25
+
+  42) Chemotion::WellplateAPI POST /api/v1/wellplates/well_label TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/wellplate_api_spec.rb:318
+
+  43) Chemotion::WellplateAPI POST /api/v1/wellplates/well_color_code TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/wellplate_api_spec.rb:322
+
+  44) Chemotion::WellplateAPI POST /api/v1/wellplates/subwellplates TODO: Add missing spec
+     # Not yet implemented
+     # ./spec/api/chemotion/wellplate_api_spec.rb:270
+
+  45) Entities::WellplateEntity.represent when detail level for Well is 10 returns a wellplate with segments
+      # Segments are an empty array because a segments factory is missing
+      Failure/Error: raise 'missing segments factory'
+
+      RuntimeError:
+        missing segments factory
+      # ./spec/api/entities/wellplate_entity_spec.rb:69:in `block (4 levels) in <top (required)>'
+
+  46) Entities::WellplateEntity.represent when detail level for Well is 0 returns a wellplate with segments
+      # Segments are an empty array because a segments factory is missing
+      Failure/Error: raise 'missing segments factory'
+
+      RuntimeError:
+        missing segments factory
+      # ./spec/api/entities/wellplate_entity_spec.rb:107:in `block (4 levels) in <top (required)>'
+
+  47) Entities::ScreenEntity.represent when detail level for Well is 0 returns a screen without segments
+      # Segments are an empty array because a segments factory is missing
+      Failure/Error: raise 'missing segments factory'
+
+      RuntimeError:
+        missing segments factory
+      # ./spec/api/entities/screen_entity_spec.rb:116:in `block (4 levels) in <top (required)>'
+
+  48) Entities::ScreenEntity.represent when detail level for Well is 10 returns a screen with segments
+      # Segments are an empty array because a segments factory is missing
+      Failure/Error: raise 'missing segments factory'
+
+      RuntimeError:
+        missing segments factory
+      # ./spec/api/entities/screen_entity_spec.rb:70:in `block (4 levels) in <top (required)>'
+
+Failures:
+
+  1) Pages Change Profile sets "Show external name" from false to true, and vice versa
+     Got 0 failures and 2 other errors:
+
+     1.1) Failure/Error: visit root_path
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/support/login_macros.rb:5:in `sign_in'
+          # ./spec/features/pages_spec.rb:10:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+     1.2) Failure/Error: save_screenshot(filename)
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  2) Message Check message box and acknowledge messages open message box and acknowledge the message one by one
+     Got 0 failures and 2 other errors:
+
+     2.1) Failure/Error: visit root_path
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/support/login_macros.rb:5:in `sign_in'
+          # ./spec/features/message_spec.rb:52:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+     2.2) Failure/Error: save_screenshot(filename)
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  3) Message Check message box and acknowledge messages open message box and acknowledge all messages
+     Got 0 failures and 2 other errors:
+
+     3.1) Failure/Error: visit root_path
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/support/login_macros.rb:5:in `sign_in'
+          # ./spec/features/message_spec.rb:52:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+     3.2) Failure/Error: save_screenshot(filename)
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  4) Message Check message box and acknowledge messages check message box number
+     Got 0 failures and 2 other errors:
+
+     4.1) Failure/Error: visit root_path
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/support/login_macros.rb:5:in `sign_in'
+          # ./spec/features/message_spec.rb:52:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+     4.2) Failure/Error: save_screenshot(filename)
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  5) Copy sample share with permission read limited
+     Got 0 failures and 2 other errors:
+
+     5.1) Failure/Error:
+            create(
+              :user,
+              first_name: 'User2',
+              password: 'iamuser2',
+              last_name: 'Complat',
+              account_active: true,
+              email: 'user2@complat.edu',
+              name_abbreviation: 'US2',
+            )
+
+          ActiveRecord::RecordInvalid:
+            Validation failed: Password confirmation doesn't match Password
+          # ./spec/features/share_collection_spec.rb:8:in `block (2 levels) in <top (required)>'
+          # ./spec/features/share_collection_spec.rb:28:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+     5.2) Failure/Error: save_screenshot(filename)
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  6) Copy sample share with permission read everything
+     Got 0 failures and 2 other errors:
+
+     6.1) Failure/Error:
+            create(
+              :user,
+              first_name: 'User2',
+              password: 'iamuser2',
+              last_name: 'Complat',
+              account_active: true,
+              email: 'user2@complat.edu',
+              name_abbreviation: 'US2',
+            )
+
+          ActiveRecord::RecordInvalid:
+            Validation failed: Password confirmation doesn't match Password
+          # ./spec/features/share_collection_spec.rb:8:in `block (2 levels) in <top (required)>'
+          # ./spec/features/share_collection_spec.rb:28:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+     6.2) Failure/Error: save_screenshot(filename)
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  7) Sample management Split sample splits sample
+     Got 0 failures and 2 other errors:
+
+     7.1) Failure/Error: visit root_path
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/support/login_macros.rb:5:in `sign_in'
+          # ./spec/features/sample_management_spec.rb:12:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+     7.2) Failure/Error: save_screenshot(filename)
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  8) Collection management Delete an unshared collection delete an unshared collection
+     Got 0 failures and 2 other errors:
+
+     8.1) Failure/Error: visit root_path
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/support/login_macros.rb:5:in `sign_in'
+          # ./spec/features/collection_management_spec.rb:43:in `block (3 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+     8.2) Failure/Error: save_screenshot(filename)
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  9) Collection management Rename a collection saves the new collection name
+     Got 0 failures and 2 other errors:
+
+     9.1) Failure/Error: visit root_path
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/support/login_macros.rb:5:in `sign_in'
+          # ./spec/features/collection_management_spec.rb:66:in `block (3 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+     9.2) Failure/Error: save_screenshot(filename)
+
+          Webdrivers::BrowserNotFound:
+            Failed to determine Chrome binary location.
+          # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+          # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  10) Collection management Create an unshared collection create an unshared collection
+      Got 0 failures and 2 other errors:
+
+      10.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/collection_management_spec.rb:12:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      10.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  11) Copy sample new sample
+      Got 0 failures and 2 other errors:
+
+      11.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/copy_sample_spec.rb:42:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      11.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  12) Copy sample to same collection
+      Got 0 failures and 2 other errors:
+
+      12.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/copy_sample_spec.rb:42:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      12.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  13) Copy sample to diff collection
+      Got 0 failures and 2 other errors:
+
+      13.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/copy_sample_spec.rb:42:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      13.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  14) Copy sample copy shared collection with permission
+      Got 0 failures and 2 other errors:
+
+      14.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/copy_sample_spec.rb:42:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      14.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  15) Copy sample copy shared collection without permission
+      Got 0 failures and 2 other errors:
+
+      15.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/copy_sample_spec.rb:42:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      15.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  16) Datacollector::Collector#bulk_execute when a device has non-working sftp config bypasses faulty devices
+      Failure/Error: create(:device, :folder_sftp_faulty, user_identifiers: name_abbrs[0..0], data_count: 2 * data_count),
+
+      ActiveRecord::RecordInvalid:
+        Validation failed: Datacollector key name No key file found
+      # ./spec/lib/datacollector/collector_spec.rb:132:in `block (4 levels) in <top (required)>'
+      # ./spec/lib/datacollector/collector_spec.rb:146:in `block (5 levels) in <top (required)>'
+      # ./spec/lib/datacollector/collector_spec.rb:145:in `block (4 levels) in <top (required)>'
+
+  17) Datacollector::Collector.execute with a device configured for sftp file  behaves like a working collector without user directories executes and writes the correct number of files in database
+      Failure/Error:
+        create(
+          :device,
+          device_trait,
+          datacollector_user_level_selected: user_level,
+          datacollector_number_of_files: file_count,
+        )
+
+      ActiveRecord::RecordInvalid:
+        Validation failed: Datacollector key name No key file found
+      Shared Example Group: "a working collector without user directories" called from ./spec/lib/datacollector/collector_spec.rb:71
+      # ./spec/lib/datacollector/collector_spec.rb:53:in `block (6 levels) in <top (required)>'
+      # ./spec/lib/datacollector/collector_spec.rb:20:in `block (4 levels) in <top (required)>'
+
+  18) Datacollector::Collector.execute with a device configured for sftp folder (user dirs) behaves like a working collector with user directories executes and writes the correct number of files in database
+      Failure/Error:
+        create(
+          :device,
+          device_trait,
+          datacollector_user_level_selected: user_level,
+          datacollector_number_of_files: file_count,
+        )
+
+      ActiveRecord::RecordInvalid:
+        Validation failed: Datacollector key name No key file found
+      Shared Example Group: "a working collector with user directories" called from ./spec/lib/datacollector/collector_spec.rb:71
+      # ./spec/lib/datacollector/collector_spec.rb:53:in `block (6 levels) in <top (required)>'
+      # ./spec/lib/datacollector/collector_spec.rb:31:in `block (4 levels) in <top (required)>'
+
+  19) Datacollector::Collector.execute with a device configured for sftp file (user dirs) behaves like a working collector with user directories executes and writes the correct number of files in database
+      Failure/Error:
+        create(
+          :device,
+          device_trait,
+          datacollector_user_level_selected: user_level,
+          datacollector_number_of_files: file_count,
+        )
+
+      ActiveRecord::RecordInvalid:
+        Validation failed: Datacollector key name No key file found
+      Shared Example Group: "a working collector with user directories" called from ./spec/lib/datacollector/collector_spec.rb:71
+      # ./spec/lib/datacollector/collector_spec.rb:53:in `block (6 levels) in <top (required)>'
+      # ./spec/lib/datacollector/collector_spec.rb:31:in `block (4 levels) in <top (required)>'
+
+  20) Datacollector::Collector.execute with a device configured for sftp folder  behaves like a working collector without user directories executes and writes the correct number of files in database
+      Failure/Error:
+        create(
+          :device,
+          device_trait,
+          datacollector_user_level_selected: user_level,
+          datacollector_number_of_files: file_count,
+        )
+
+      ActiveRecord::RecordInvalid:
+        Validation failed: Datacollector key name No key file found
+      Shared Example Group: "a working collector without user directories" called from ./spec/lib/datacollector/collector_spec.rb:71
+      # ./spec/lib/datacollector/collector_spec.rb:53:in `block (6 levels) in <top (required)>'
+      # ./spec/lib/datacollector/collector_spec.rb:20:in `block (4 levels) in <top (required)>'
+
+  21) Datacollector::Collector when a file cannot be deleted does not process non writeable(deletable) file twice
+      Failure/Error: let(:device) { create(:device, :file_sftp) }
+
+      ActiveRecord::RecordInvalid:
+        Validation failed: Datacollector key name No key file found
+      # ./spec/lib/datacollector/collector_spec.rb:153:in `block (3 levels) in <top (required)>'
+      # ./spec/lib/datacollector/collector_spec.rb:158:in `block (3 levels) in <top (required)>'
+
+  22) Datacollector::Collector when a file cannot be deleted does not stall on non-readable files
+      Failure/Error: let(:device) { create(:device, :file_sftp) }
+
+      ActiveRecord::RecordInvalid:
+        Validation failed: Datacollector key name No key file found
+      # ./spec/lib/datacollector/collector_spec.rb:153:in `block (3 levels) in <top (required)>'
+      # ./spec/lib/datacollector/collector_spec.rb:180:in `block (3 levels) in <top (required)>'
+
+  23) Create and update Reaction Create and update reaction UI
+      Got 0 failures and 2 other errors:
+
+      23.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/reaction_creation_spec.rb:13:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      23.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  24) Coeffiency Reactions Coeffiency First Reaction Coeffiency 50%
+      Got 0 failures and 2 other errors:
+
+      24.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/reaction_coefficiency_spec.rb:29:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      24.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  25) Coeffiency Reactions Coeffiency First Reaction Coeffiency 100%
+      Got 0 failures and 2 other errors:
+
+      25.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/reaction_coefficiency_spec.rb:29:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      25.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  26) Coeffiency Reactions Coeffiency First Reaction Mass value is larger than possible
+      Got 0 failures and 2 other errors:
+
+      26.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/reaction_coefficiency_spec.rb:29:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      26.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  27) Coeffiency Reactions Coeffiency Second Reaction Mass value is larger than possible
+      Got 0 failures and 2 other errors:
+
+      27.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/reaction_coefficiency_spec.rb:102:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      27.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  28) Coeffiency Reactions Coeffiency Second Reaction Coeffiency 50%
+      Got 0 failures and 2 other errors:
+
+      28.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/reaction_coefficiency_spec.rb:102:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      28.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  29) Coeffiency Reactions Coeffiency Second Reaction Coeffiency 100%
+      Got 0 failures and 2 other errors:
+
+      29.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/reaction_coefficiency_spec.rb:102:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      29.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  30) Copy research plans new research plan
+      Got 0 failures and 2 other errors:
+
+      30.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/copy_research_plan_spec.rb:24:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      30.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  31) Copy research plans to diff collection
+      Got 0 failures and 2 other errors:
+
+      31.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/copy_research_plan_spec.rb:24:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      31.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  32) Copy research plans to shared collection with permission
+      Got 0 failures and 2 other errors:
+
+      32.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/copy_research_plan_spec.rb:24:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      32.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  33) Copy research plans to same collection
+      Got 0 failures and 2 other errors:
+
+      33.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/copy_research_plan_spec.rb:24:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      33.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  34) Reaction Equiv Spec reaction amount changed with fixed Equiv change material amount
+      Got 0 failures and 2 other errors:
+
+      34.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/reaction_equiv_spec.rb:43:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      34.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  35) create multiple users from file with invalid user-file rejects user-file with invalid header
+      Got 0 failures and 2 other errors:
+
+      35.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/user_management_spec.rb:99:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      35.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  36) create multiple users from file with invalid user-file rejects user-file with > 100 users
+      Got 0 failures and 2 other errors:
+
+      36.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/user_management_spec.rb:99:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      36.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  37) create multiple users from file with invalid user-file rejects user-file with duplicate users
+      Got 0 failures and 2 other errors:
+
+      37.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/user_management_spec.rb:99:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      37.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  38) create multiple users from file with invalid user-file rejects empty user-file
+      Got 0 failures and 2 other errors:
+
+      38.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/user_management_spec.rb:99:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      38.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  39) create multiple users from file with invalid user-file rejects user-file with missing cells
+      Got 0 failures and 2 other errors:
+
+      39.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/user_management_spec.rb:99:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      39.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  40) create multiple users from file with invalid user-file rejects user-file with invalid user type
+      Got 0 failures and 2 other errors:
+
+      40.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/user_management_spec.rb:99:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      40.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  41) create multiple users from file with valid user-file creates valid users and rejects invalid users
+      Got 0 failures and 2 other errors:
+
+      41.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/user_management_spec.rb:99:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      41.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  42) Chemotion::AdminDeviceAPI POST /api/v1/admin_devices when testing sftp connection returns a valid connection
+      Failure/Error: let(:device_with_sftp) { create(:device, :file_sftp) }
+
+      ActiveRecord::RecordInvalid:
+        Validation failed: Datacollector key name No key file found
+      # ./spec/api/chemotion/admin_device_api_spec.rb:8:in `block (2 levels) in <top (required)>'
+      # ./spec/api/chemotion/admin_device_api_spec.rb:67:in `block (4 levels) in <top (required)>'
+      # ./spec/api/chemotion/admin_device_api_spec.rb:87:in `block (4 levels) in <top (required)>'
+
+  43) Reaction management reaction management without residues Yield 50%
+      Got 0 failures and 2 other errors:
+
+      43.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/reaction_management_spec.rb:27:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      43.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  44) Create sample  with smile
+      Got 0 failures and 2 other errors:
+
+      44.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/create_sample_spec.rb:10:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      44.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  45) RdkitExtensionService#ctab_to_smiles converts molfile to smiles
+      Failure/Error: expect(described_class.ctab_to_smiles(molfile)).to eq(smiles)
+
+        expected: "Fc1cccc(F)c1"
+             got: nil
+
+        (compared using ==)
+      # ./spec/services/rdkit_extension_service_spec.rb:16:in `block (3 levels) in <top (required)>'
+
+  46) RdkitExtensionService#smiles_to_ctab does converts faulty smiles to molfile
+      Failure/Error: expect(result).to be_a(String)
+        expected nil to be a kind of String
+      # ./spec/services/rdkit_extension_service_spec.rb:24:in `block (3 levels) in <top (required)>'
+
+  47) RdkitExtensionService#valid_smiles? returns true for valid smiles
+      Failure/Error: expect(described_class.send(:valid_smiles?, smiles)).to be_truthy
+
+        expected: truthy value
+             got: nil
+      # ./spec/services/rdkit_extension_service_spec.rb:36:in `block (3 levels) in <top (required)>'
+
+  48) Copy reaction from own collection to different own collection
+      Got 0 failures and 2 other errors:
+
+      48.1) Failure/Error: find_by_id("tree-id-#{source_collection}").click
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/features/copy_reaction_spec.rb:119:in `copy_reaction'
+            # ./spec/features/copy_reaction_spec.rb:202:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      48.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  49) Copy reaction from own collection to same own collection
+      Got 0 failures and 2 other errors:
+
+      49.1) Failure/Error: find_by_id("tree-id-#{source_collection}").click
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/features/copy_reaction_spec.rb:119:in `copy_reaction'
+            # ./spec/features/copy_reaction_spec.rb:206:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      49.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  50) Copy reaction from shared-with-me collection with copy permission to own collection
+      Got 0 failures and 2 other errors:
+
+      50.1) Failure/Error: CollectionsSample.find_or_create_by!(sample: material1, collection: col1_shared)
+
+            NameError:
+              undefined local variable or method `col1_shared' for #<RSpec::ExampleGroups::CopyReaction::FromSharedWithMeCollection:0x0000aaab2fb2d100>
+            # ./spec/features/copy_reaction_spec.rb:216:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      50.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  51) Copy reaction from shared-with-me collection without copy permission to own collection
+      Got 0 failures and 2 other errors:
+
+      51.1) Failure/Error: CollectionsSample.find_or_create_by!(sample: material1, collection: col1_shared)
+
+            NameError:
+              undefined local variable or method `col1_shared' for #<RSpec::ExampleGroups::CopyReaction::FromSharedWithMeCollection:0x0000aaab32b9f608>
+            # ./spec/features/copy_reaction_spec.rb:216:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      51.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  52) Copy reaction when handling own collections to same collection
+      Got 0 failures and 2 other errors:
+
+      52.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/copy_reaction_spec.rb:146:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      52.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  53) Copy reaction when handling own collections to diff collection
+      Got 0 failures and 2 other errors:
+
+      53.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/copy_reaction_spec.rb:146:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      53.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+  54) Copy reaction when handling own collections new reaction
+      Got 0 failures and 2 other errors:
+
+      54.1) Failure/Error: visit root_path
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/support/login_macros.rb:5:in `sign_in'
+            # ./spec/features/copy_reaction_spec.rb:146:in `block (3 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+      54.2) Failure/Error: save_screenshot(filename)
+
+            Webdrivers::BrowserNotFound:
+              Failed to determine Chrome binary location.
+            # ./spec/spec_helper.rb:74:in `block (2 levels) in <top (required)>'
+            # ./spec/spec_helper.rb:267:in `block (2 levels) in <top (required)>'
+
+1 deprecation warning total
+
+Deprecation Warnings:
+
+The implicit block expectation syntax is deprecated, you should pass a block rather than an argument to `expect` to use the provided block expectation matcher or the matcher must implement `supports_value_expectations?`. e.g  `expect { value }.to change `Collection.count` by 1` not `expect(value).to change `Collection.count` by 1`
