@@ -19,8 +19,9 @@ module Usecases
         suggestion
       end
 
-      def approve(id)
+      def approve(id, edits = {})
         suggestion = with_pending(id) do |s|
+          s.assign_attributes(edits.slice(:organization, :department, :group, :country, :ror_id))
           # A name-only suggestion (department/working group) is approved without an affiliation.
           if s.organization.present?
             affiliation = Affiliation.find_or_create_by!(

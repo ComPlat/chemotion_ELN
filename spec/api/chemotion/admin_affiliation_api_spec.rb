@@ -21,6 +21,20 @@ RSpec.describe Chemotion::AdminAffiliationAPI do
       end
     end
 
+    context 'when the user is an affiliation moderator' do
+      let(:moderator) { create(:person) }
+
+      before do
+        moderator.profile.update!(data: moderator.profile.data.merge('is_affiliation_moderator' => true))
+        allow(warden_instance).to receive(:current_user).and_return(moderator)
+      end
+
+      it 'lists pending suggestions' do
+        get '/api/v1/admin/affiliation_suggestions'
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
     context 'when the user is not an admin' do
       before { allow(warden_instance).to receive(:current_user).and_return(user) }
 
@@ -49,6 +63,13 @@ RSpec.describe Chemotion::AdminAffiliationAPI do
       expect(response).to have_http_status(:ok)
       expect(suggestion.reload).to be_approved
       expect(suggestion.reload.affiliation_id).not_to be_nil
+    end
+
+    it 'applies edited fields before approving', :aggregate_failures do
+      put "/api/v1/admin/affiliation_suggestions/#{suggestion.id}/approve", params: { department: 'ITC' }
+      expect(response).to have_http_status(:ok)
+      expect(suggestion.reload.department).to eq('ITC')
+      expect(Affiliation.find(suggestion.affiliation_id).department).to eq('ITC')
     end
 
     it 'approves a name-only suggestion without creating an affiliation', :aggregate_failures do

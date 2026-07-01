@@ -116,6 +116,16 @@ const templateModeratorDisableTooltip = (
     Disable Ketcher template editing for this user (currently enabled)
   </Tooltip>
 );
+const affiliationModeratorEnableTooltip = (
+  <Tooltip id="assign_button">
+    Enable affiliation suggestion approval for this user (currently disabled)
+  </Tooltip>
+);
+const affiliationModeratorDisableTooltip = (
+  <Tooltip id="assign_button">
+    Disable affiliation suggestion approval for this user (currently enabled)
+  </Tooltip>
+);
 const moleculeModeratorEnableTooltip = (
   <Tooltip id="assign_button">
     Enable editing the representation of the global molecules for this user (currently disabled)
@@ -351,6 +361,11 @@ export default class UserManagement extends React.Component {
   handleTemplatesModerator(id, isTemplatesModerator) {
     const message = `Ketcher-template editing has been ${isTemplatesModerator === true ? 'en' : 'dis'}abled for user ${id}`;
     this.updateProfile({ userId: id, is_templates_moderator: !isTemplatesModerator }, message);
+  }
+
+  handleAffiliationModerator(id, isAffiliationModerator) {
+    const message = `Affiliation approval has been ${isAffiliationModerator === true ? 'dis' : 'en'}abled for user ${id}`;
+    this.updateProfile({ userId: id, is_affiliation_moderator: !isAffiliationModerator }, message);
   }
 
   handleMoleculesModerator(id, isMoleculesEditor) {
@@ -1476,6 +1491,19 @@ export default class UserManagement extends React.Component {
               className="me-1"
             >
               <i className="fa fa-book" aria-hidden="true" />
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="bottom"
+            overlay={(g.is_affiliation_moderator === null || g.is_affiliation_moderator === false) ? affiliationModeratorEnableTooltip : affiliationModeratorDisableTooltip}
+          >
+            <Button
+              size="sm"
+              variant={(g.is_affiliation_moderator === null || g.is_affiliation_moderator === false) ? 'light' : 'success'}
+              onClick={() => this.handleAffiliationModerator(g.id, g.is_affiliation_moderator, false)}
+              className="me-1"
+            >
+              <i className="fa fa-university" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
           <OverlayTrigger

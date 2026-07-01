@@ -3,7 +3,10 @@
 module Chemotion
   class AdminAffiliationAPI < Grape::API
     resource :admin do
-      before { error!('401 Unauthorized', 401) unless current_user.is_a?(Admin) }
+      before do
+        authorized = current_user.is_a?(Admin) || current_user.is_affiliation_moderator
+        error!('401 Unauthorized', 401) unless authorized
+      end
 
       namespace :affiliation_suggestions do
         desc 'List suggestions'
@@ -23,8 +26,16 @@ module Chemotion
         end
 
         desc 'Approve a suggestion'
+        params do
+          optional :organization, type: String, desc: 'edited organization'
+          optional :department, type: String, desc: 'edited department'
+          optional :group, type: String, desc: 'edited working group'
+          optional :country, type: String, desc: 'edited country'
+          optional :ror_id, type: String, desc: 'edited ROR id'
+        end
         put ':id/approve' do
-          Usecases::AffiliationSuggestions::Suggestion.new(current_user).approve(params[:id])
+          edits = declared(params, include_missing: false).except(:id)
+          Usecases::AffiliationSuggestions::Suggestion.new(current_user).approve(params[:id], edits)
           { ok: true }
         rescue Usecases::AffiliationSuggestions::Errors::AlreadyProcessed => e
           error!({ error: e.message }, 422)

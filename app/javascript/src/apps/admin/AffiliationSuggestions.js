@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Badge } from 'react-bootstrap';
+import {
+  Table, Button, Badge, Form
+} from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
+import { Select } from 'src/components/common/Select';
+import OrganizationSelect from 'src/components/affiliation/OrganizationSelect';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
+import UserSettingsFetcher from 'src/fetchers/UserSettingsFetcher';
 
 export default function AffiliationSuggestions() {
   const [suggestions, setSuggestions] = useState([]);
   const [statusFilter, setStatusFilter] = useState('pending');
+  const [countryOptions, setCountryOptions] = useState([]);
+  const [editSug, setEditSug] = useState(null);
 
   const load = (status) => {
     AdminFetcher.fetchAffiliationSuggestions(status)
@@ -13,9 +21,26 @@ export default function AffiliationSuggestions() {
 
   useEffect(() => { load(statusFilter); }, [statusFilter]);
 
-  const handleAction = (id, action) => {
-    AdminFetcher.updateAffiliationSuggestion(id, action)
-      .then(() => load(statusFilter));
+  useEffect(() => {
+    UserSettingsFetcher.getAutoCompleteSuggestions('countries')
+      .then((data) => setCountryOptions((data || []).map((c) => ({ value: c.value, label: c.label }))));
+  }, []);
+
+  const handleAction = (id, action, body = {}) => {
+    AdminFetcher.updateAffiliationSuggestion(id, action, body)
+      .then(() => { setEditSug(null); load(statusFilter); });
+  };
+
+  const setEditField = (patch) => setEditSug((prev) => ({ ...prev, ...patch }));
+
+  const handleOrgChange = (choice) => {
+    const organization = choice ? choice.label : '';
+    const rorId = choice && choice.value && choice.value !== choice.label ? choice.value : '';
+    setEditField({
+      organization,
+      ror_id: rorId,
+      ...(choice && choice.country ? { country: choice.country } : {}),
+    });
   };
 
   const statusBadge = (status) => {
@@ -72,6 +97,9 @@ export default function AffiliationSuggestions() {
               <td>{statusBadge(s.status)}</td>
               {statusFilter === 'pending' && (
                 <td>
+                  <Button size="sm" variant="outline-secondary" className="me-1" onClick={() => setEditSug({ ...s })}>
+                    Edit
+                  </Button>
                   <Button size="sm" variant="success" className="me-1" onClick={() => handleAction(s.id, 'approve')}>
                     Approve
                   </Button>
@@ -91,6 +119,59 @@ export default function AffiliationSuggestions() {
           )}
         </tbody>
       </Table>
+
+      <AppModal
+        show={!!editSug}
+        onHide={() => setEditSug(null)}
+        title="Edit & approve request"
+        primaryActionLabel="Approve"
+        onPrimaryAction={() => editSug && handleAction(editSug.id, 'approve', {
+          organization: editSug.organization || '',
+          department: editSug.department || '',
+          group: editSug.group || '',
+          country: editSug.country || '',
+          ror_id: editSug.ror_id || '',
+        })}
+      >
+        {editSug && (
+          <div className="d-flex flex-column gap-3">
+            <Form.Group>
+              <Form.Label>Country</Form.Label>
+              <Select
+                isClearable
+                placeholder="Select country"
+                options={countryOptions}
+                value={countryOptions.find((o) => o.value === editSug.country) || null}
+                onChange={(c) => setEditField({ country: c ? c.value : '' })}
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Organization</Form.Label>
+              <OrganizationSelect
+                value={editSug.organization
+                  ? { value: editSug.ror_id || editSug.organization, label: editSug.organization }
+                  : null}
+                country={editSug.country || ''}
+                onChange={handleOrgChange}
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Department</Form.Label>
+              <Form.Control
+                value={editSug.department || ''}
+                onChange={(e) => setEditField({ department: e.target.value })}
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Working group</Form.Label>
+              <Form.Control
+                value={editSug.group || ''}
+                onChange={(e) => setEditField({ group: e.target.value })}
+              />
+            </Form.Group>
+          </div>
+        )}
+      </AppModal>
     </div>
   );
 }

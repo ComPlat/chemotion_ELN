@@ -205,6 +205,8 @@ module Chemotion
             params do
               optional :is_templates_moderator, type: Boolean,
                                                 desc: 'enable or disable ketcherails template moderation'
+              optional :is_affiliation_moderator, type: Boolean,
+                                                  desc: 'enable or disable affiliation suggestion moderation'
               optional :molecule_editor, type: Boolean, desc: 'enable or disable molecule moderation'
               optional :converter_admin, type: Boolean, desc: 'converter profile'
               optional :global_text_template_editor, type: Boolean, desc: 'enable editing global text templates'
@@ -221,6 +223,11 @@ module Chemotion
               case params[:is_templates_moderator]
               when true, false
                 pdata = pdata.merge('is_templates_moderator' => params[:is_templates_moderator])
+              end
+
+              case params[:is_affiliation_moderator]
+              when true, false
+                pdata = pdata.merge('is_affiliation_moderator' => params[:is_affiliation_moderator])
               end
 
               case params[:converter_admin]

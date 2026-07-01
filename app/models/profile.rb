@@ -74,6 +74,7 @@ class Profile < ApplicationRecord
 
   def data_default_bool
     data['is_templates_moderator'] = false
+    data['is_affiliation_moderator'] = false
     data['molecule_editor'] = false
     data['converter_admin'] = false
     data['inbox_auto'] = false

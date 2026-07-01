@@ -339,6 +339,10 @@ class User < ApplicationRecord
     profile&.data&.fetch('is_templates_moderator', false)
   end
 
+  def is_affiliation_moderator
+    profile&.data&.fetch('is_affiliation_moderator', false)
+  end
+
   def molecule_editor
     profile&.data&.fetch('molecule_editor', false)
   end

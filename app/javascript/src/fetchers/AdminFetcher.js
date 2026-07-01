@@ -118,7 +118,7 @@ export default class AdminFetcher {
     return ApiClient.getJson(`/api/v1/admin/affiliation_suggestions?status=${status}`);
   }
 
-  static updateAffiliationSuggestion(id, action) {
-    return ApiClient.putJson(`/api/v1/admin/affiliation_suggestions/${id}/${action}`, { body: {} });
+  static updateAffiliationSuggestion(id, action, body = {}) {
+    return ApiClient.putJson(`/api/v1/admin/affiliation_suggestions/${id}/${action}`, { body });
   }
 }
