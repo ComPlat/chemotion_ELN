@@ -2,6 +2,28 @@
 // TODO: research if the following import can be safely removed
 // import 'whatwg-fetch';
 
+// utility functions
+const buildHeaders = (headers) => {
+  const returnHeaders = new Headers();
+  if (headers != null && headers !== undefined) {
+    Object.keys(headers).forEach((header) => {
+      returnHeaders.set(header, headers[header]);
+    });
+  }
+  const authToken = localStorage.getItem('chemotion-auth-token');
+  if (authToken) { returnHeaders.set('Authorization', authToken); }
+  if (!returnHeaders.has('Accept')) { returnHeaders.set('Accept', 'application/json'); }
+  if (!returnHeaders.has('Content-Type')) { returnHeaders.set('Content-Type', 'application/json'); }
+
+  // for formData submission, content type header must not be set, so the browser can set it properly
+  // see Warning at the end of section https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest_API/Using_FormData_Objects#sending_files_using_a_formdata_object
+  if (returnHeaders.has('Content-Type') && returnHeaders['Content-Type'] == null) {
+    returnHeaders.delete('Content-Type');
+  }
+
+  return returnHeaders;
+};
+
 /**
  * Low-level request wrapper shared by every verb helper; the only place that
  * actually calls `fetch`.
@@ -28,10 +50,10 @@ const apiRequest = (apiEndpoint, options) => {
     credentials: 'same-origin',
     handleResponseSuccess: (response) => (response.status === 204 ? null : response.json()),
     handleResponseError: (exception) => { console.log(exception); },
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
   };
+  const headers = buildHeaders(options?.headers);
 
-  options = { ...globalDefaults, ...options };
+  options = { ...globalDefaults, ...options, headers };
   const { handleResponseSuccess, handleResponseError } = options;
 
   return fetch(apiEndpoint, options)
@@ -61,7 +83,7 @@ const putFormData = (apiEndpoint, options) => {
   const defaults = {
     method: 'PUT',
     headers: {
-      Accept: 'application/json' // lets see what omitting the content-type header does...
+      'Content-Type': null // assign null, so buildHeaders will not auto-assign this headerfield but clear it
     }
   };
 
@@ -83,7 +105,7 @@ const postFormData = (apiEndpoint, options) => {
   const defaults = {
     method: 'POST',
     headers: {
-      Accept: 'application/json' // lets see what omitting the content-type header does...
+      'Content-Type': null // assign null, so buildHeaders will not auto-assign this headerfield but clear it
     }
   };
 

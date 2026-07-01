@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import Aviator from 'aviator';
+import appRoutes from 'src/apps/mydb/routes';
 
 import ElementDragLayer from 'src/components/ElementDragLayer';
 import Sidebar from 'src/apps/mydb/mainNavigation/sidebar/Sidebar';
@@ -39,6 +41,9 @@ class App extends Component {
     // user templates
     this.removeLocalStorageEventListener();
     this.storageListener();
+
+    // TODO: check why this does not appear to work
+    appRoutes().then(() => { Aviator.dispatch(); });
   }
 
   componentWillUnmount() {
