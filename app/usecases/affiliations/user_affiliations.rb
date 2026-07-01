@@ -11,15 +11,16 @@ module Usecases
       end
 
       def create(params)
-        UserAffiliation.create!(
-          user_id: @current_user.id,
-          affiliation: Affiliation.find_or_create_by!(affiliation_attributes(params)),
-        )
+        affiliation = Affiliation.find_or_create_by!(affiliation_attributes(params))
+        ensure_not_duplicate!(affiliation.id)
+        scope.create!(affiliation_id: affiliation.id, **params.slice(:from, :to))
       end
 
       def update(params)
-        affiliation = Affiliation.find_or_create_by!(affiliation_attributes(params).except(:id))
-        scope.find(params[:id]).update!(affiliation_id: affiliation.id)
+        affiliation = Affiliation.find_or_create_by!(affiliation_attributes(params))
+        user_affiliation = scope.find(params[:id])
+        ensure_not_duplicate!(affiliation.id, except: user_affiliation.id)
+        user_affiliation.update!(affiliation_id: affiliation.id, **params.slice(:from, :to))
       end
 
       def destroy(params)
@@ -38,8 +39,16 @@ module Usecases
         @current_user.user_affiliations
       end
 
+      def ensure_not_duplicate!(affiliation_id, except: nil)
+        relation = scope.where(affiliation_id: affiliation_id)
+        relation = relation.where.not(id: except) if except
+        return unless relation.exists?
+
+        raise Usecases::Affiliations::Errors::DuplicateAffiliation, 'You already have this affiliation.'
+      end
+
       def affiliation_attributes(params)
-        attributes = params.compact_blank
+        attributes = params.compact_blank.except(:id, :from, :to)
         %i[department group].each do |key|
           attributes[key] = Affiliation.canonical(key, attributes[key].strip) if attributes[key]
         end

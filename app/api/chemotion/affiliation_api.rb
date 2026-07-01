@@ -24,7 +24,7 @@ module Chemotion
 
         desc 'Return all countries available'
         get 'countries' do
-          ISO3166::Country.all_translated
+          ISO3166::Country.all_translated.compact.sort
         end
 
         desc 'Search organizations via ROR API'
@@ -83,12 +83,14 @@ module Chemotion
         optional :department, type: String, desc: 'department'
         optional :group, type: String, desc: 'working group'
         optional :ror_id, type: String, desc: 'ROR id'
+        optional :from, type: Date, desc: 'start date'
+        optional :to, type: Date, desc: 'end date'
       end
       post do
         Usecases::Affiliations::UserAffiliations.new(current_user).create(declared(params, include_missing: false))
         status 201
-      rescue ActiveRecord::RecordInvalid => e
-        { error: e.message }
+      rescue Usecases::Affiliations::Errors::DuplicateAffiliation, ActiveRecord::RecordInvalid => e
+        error!({ error: e.message }, 422)
       end
 
       desc 'update user affiliation'
@@ -99,16 +101,22 @@ module Chemotion
         optional :department, type: String, desc: 'department'
         optional :group, type: String, desc: 'working group'
         optional :ror_id, type: String, desc: 'ROR id'
+        optional :from, type: Date, desc: 'start date'
+        optional :to, type: Date, desc: 'end date'
       end
       put do
         Usecases::Affiliations::UserAffiliations.new(current_user).update(declared(params, include_missing: false))
-      rescue ActiveRecord::RecordInvalid => e
-        { error: e.message }
+      rescue ActiveRecord::RecordNotFound
+        error!({ error: 'Not found' }, 404)
+      rescue Usecases::Affiliations::Errors::DuplicateAffiliation, ActiveRecord::RecordInvalid => e
+        error!({ error: e.message }, 422)
       end
 
       desc 'delete user affiliation'
       delete ':id' do
         Usecases::Affiliations::UserAffiliations.new(current_user).destroy(params)
+      rescue ActiveRecord::RecordNotFound
+        error!({ error: 'Not found' }, 404)
       rescue ActiveRecord::RecordInvalid => e
         error!({ error: e.message }, 422)
       end

@@ -171,6 +171,53 @@ RSpec.describe Chemotion::AffiliationAPI do
       put '/api/v1/affiliations', params: { id: ua.id, organization: 'KIT', department: '' }
       expect(response).to have_http_status(:ok)
     end
+
+    it 'rejects a duplicate affiliation and notifies the user', :aggregate_failures do
+      details = { organization: 'KIT', department: 'IOC', country: 'Germany' }
+      post '/api/v1/affiliations', params: details
+      expect do
+        post '/api/v1/affiliations', params: details
+      end.not_to change(user.user_affiliations, :count)
+      expect(response).to have_http_status(422)
+      expect(parsed_json_response['error']).to eq('You already have this affiliation.')
+    end
+  end
+
+  describe 'from/to dates on a user affiliation' do
+    let(:user) { create(:person) }
+    let(:warden_instance) { instance_double(WardenAuthentication) }
+
+    before do
+      allow(WardenAuthentication).to receive(:new).and_return(warden_instance)
+      allow(warden_instance).to receive(:current_user).and_return(user)
+    end
+
+    it 'stores from and to on the link, not on the shared affiliation', :aggregate_failures do
+      post '/api/v1/affiliations', params: { organization: 'KIT', from: '2020-01-01', to: '2022-12-31' }
+      ua = user.user_affiliations.last
+      expect(ua.from).to eq(Date.new(2020, 1, 1))
+      expect(ua.to).to eq(Date.new(2022, 12, 31))
+      expect(ua.affiliation.from).to be_nil
+    end
+
+    it 'rejects editing one affiliation into another the user already has', :aggregate_failures do
+      Affiliation.create!(organization: 'KIT')
+      post '/api/v1/affiliations', params: { organization: 'KIT' }
+      post '/api/v1/affiliations', params: { organization: 'MIT' }
+      mit = user.user_affiliations.find_by(affiliation: Affiliation.find_by(organization: 'MIT'))
+      put '/api/v1/affiliations', params: { id: mit.id, organization: 'KIT' }
+      expect(response).to have_http_status(422)
+      expect(parsed_json_response['error']).to eq('You already have this affiliation.')
+    end
+
+    it 'updates the dates without splitting the affiliation row', :aggregate_failures do
+      post '/api/v1/affiliations', params: { organization: 'KIT', from: '2020-01-01' }
+      ua = user.user_affiliations.last
+      expect do
+        put '/api/v1/affiliations', params: { id: ua.id, organization: 'KIT', to: '2024-06-30' }
+      end.not_to change(Affiliation, :count)
+      expect(ua.reload.to).to eq(Date.new(2024, 6, 30))
+    end
   end
 
   describe 'GET /api/v1/affiliation_suggestions' do

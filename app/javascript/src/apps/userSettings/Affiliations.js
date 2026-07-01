@@ -29,6 +29,21 @@ function Affiliations() {
 
   const savedEntries = affiliations.filter((entry) => entry.id);
 
+  const toDateValue = (v) => (v ? String(v).slice(0, 10) : '');
+  const isPast = (entry) => !!entry.to && new Date(entry.to) < new Date();
+  const rorLink = (rorId) => rorId && (
+    <a
+      href={`https://ror.org/${rorId}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="ms-1"
+      aria-label="View in ROR registry"
+      title="View in ROR registry"
+    >
+      <i className="fa fa-external-link" />
+    </a>
+  );
+
   const getAllAffiliations = () => {
     UserSettingsFetcher.getAllAffiliations()
       .then((data) => {
@@ -146,13 +161,27 @@ function Affiliations() {
       department: row.department,
       group: row.group,
       ror_id: row.ror_id,
+      from: row.from || '',
+      to: row.to || '',
     };
     const callFunction = row.id
       ? UserSettingsFetcher.updateAffiliation
       : UserSettingsFetcher.createAffiliation;
 
     callFunction(payload)
-      .then(() => getAllAffiliations())
+      .then((result) => {
+        if (result && result.error) {
+          NotificationActions.add({
+            title: 'Affiliation not saved',
+            message: result.error,
+            level: 'error',
+            position: 'tc',
+            dismissible: 'button',
+            autoDismiss: 5,
+          });
+        }
+        getAllAffiliations();
+      })
       .catch((error) => {
         console.error(error);
       });
@@ -163,7 +192,7 @@ function Affiliations() {
     if (id) {
       UserSettingsFetcher.deleteAffiliation(id)
         .then((result) => {
-          if (result.error) {
+          if (result && result.error) {
             console.error(result.error);
             return false;
           }
@@ -484,23 +513,34 @@ function Affiliations() {
             className="position-relative border border-gray-300 rounded-2 p-2 shadow-sm flex-shrink-0"
             style={{ minWidth: '250px', maxWidth: '300px' }}
           >
-            <span className="badge position-absolute top-0 end-0 m-2 bg-success">Current</span>
+            <span
+              className={`badge position-absolute top-0 end-0 m-2 ${isPast(entry) ? 'bg-secondary' : 'bg-success'}`}
+            >
+              {isPast(entry) ? 'Past' : 'Current'}
+            </span>
             <p>
               <strong className="me-1">Country:</strong>
-              {entry.country}
+              {entry.country || '—'}
             </p>
             <p>
               <strong className="me-1">Organization:</strong>
               {entry.organization}
+              {rorLink(entry.ror_id)}
             </p>
             <p>
               <strong className="me-1">Department:</strong>
-              {entry.department}
+              {entry.department || '—'}
             </p>
             <p>
               <strong className="me-1">Group:</strong>
-              {entry.group}
+              {entry.group || '—'}
             </p>
+            {(entry.from || entry.to) && (
+              <p>
+                <strong className="me-1">Period:</strong>
+                {`${toDateValue(entry.from) || '…'} – ${toDateValue(entry.to) || 'present'}`}
+              </p>
+            )}
           </div>
         ))}
         {pendingSuggestions.map((s) => (
@@ -562,35 +602,39 @@ function Affiliations() {
       <Table striped bordered hover style={{ tableLayout: 'fixed' }}>
         <colgroup>
           <col style={{ width: '10%' }} />
-          <col style={{ width: '32%' }} />
           <col style={{ width: '24%' }} />
-          <col style={{ width: '24%' }} />
-          <col style={{ width: '10%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '14%' }} />
         </colgroup>
         <thead>
           <tr>
-            <th style={{ width: '10%' }}>Country</th>
-            <th style={{ width: '32%' }}>
+            <th>Country</th>
+            <th>
               Organization
               <span className="text-danger ms-1">*</span>
               {renderSuggestionTrigger('organization', 'Organization name')}
             </th>
-            <th style={{ width: '24%' }}>
+            <th>
               Department
               {renderSuggestionTrigger('department', 'Department name')}
             </th>
-            <th style={{ width: '24%' }}>
+            <th>
               Working Group
               {renderSuggestionTrigger('group', 'Working group name')}
             </th>
-            <th style={{ width: '10%' }}>Actions</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {affiliations.map((item, index) => (
             <tr key={item.id || `new-${index}`}>
               <td>
-                {item.disabled ? item.country
+                {item.disabled ? (item.country || '—')
                   : (
                     <Select
                       isClearable
@@ -602,25 +646,29 @@ function Affiliations() {
                   )}
               </td>
               <td>
-                {item.disabled ? item.organization
-                  : (
-                    <>
-                      <OrganizationSelect
-                        value={item.organization
-                          ? { value: item.ror_id || item.organization, label: item.organization }
-                          : null}
-                        isInvalid={!!(inputError[index] && inputError[index].organization)}
-                        country={item.country || ''}
-                        onChange={(choice) => handleOrganizationChange(index, choice)}
-                      />
-                      {(item.pendingFields || []).includes('organization') && (
-                        <small className="text-warning d-block">New — pending admin approval on Save</small>
-                      )}
-                    </>
-                  )}
+                {item.disabled ? (
+                  <>
+                    {item.organization}
+                    {rorLink(item.ror_id)}
+                  </>
+                ) : (
+                  <>
+                    <OrganizationSelect
+                      value={item.organization
+                        ? { value: item.ror_id || item.organization, label: item.organization }
+                        : null}
+                      isInvalid={!!(inputError[index] && inputError[index].organization)}
+                      country={item.country || ''}
+                      onChange={(choice) => handleOrganizationChange(index, choice)}
+                    />
+                    {(item.pendingFields || []).includes('organization') && (
+                      <small className="text-warning d-block">New — pending admin approval on Save</small>
+                    )}
+                  </>
+                )}
               </td>
               <td>
-                {item.disabled ? item.department
+                {item.disabled ? (item.department || '—')
                   : (
                     <>
                       <AffiliationSelect
@@ -637,7 +685,7 @@ function Affiliations() {
                   )}
               </td>
               <td>
-                {item.disabled ? item.group
+                {item.disabled ? (item.group || '—')
                   : (
                     <>
                       <AffiliationSelect
@@ -651,6 +699,30 @@ function Affiliations() {
                         <small className="text-warning d-block">New — pending admin approval on Save</small>
                       )}
                     </>
+                  )}
+              </td>
+              <td>
+                {item.disabled ? (toDateValue(item.from) || '—')
+                  : (
+                    <input
+                      type="date"
+                      className="form-control"
+                      style={{ height: '36px' }}
+                      value={toDateValue(item.from)}
+                      onChange={(e) => onChangeHandler(index, 'from', e.target.value)}
+                    />
+                  )}
+              </td>
+              <td>
+                {item.disabled ? (toDateValue(item.to) || '—')
+                  : (
+                    <input
+                      type="date"
+                      className="form-control"
+                      style={{ height: '36px' }}
+                      value={toDateValue(item.to)}
+                      onChange={(e) => onChangeHandler(index, 'to', e.target.value)}
+                    />
                   )}
               </td>
               <td>
