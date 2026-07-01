@@ -9,14 +9,31 @@ module Users
     end
 
     def create
+      login = params[:user][:login]
+      password = params[:user][:password]
       requested_user = find_requested_user
 
       return render_otp_required if otp_required_for_user?(requested_user) &&
-                                    requested_user.valid_password?(params[:user][:password])
+                                    requested_user.valid_password?(password)
 
-      super do |resource|
-        # custom logic after successful login
-        Rails.logger.info("Login success: #{resource.id}")
+      respond_to do |format|
+        format.html { super }
+        format.json do
+          token = Usecases::Authentication::BuildToken.execute!(username: login, password: password)
+          if token.present?
+            # devise code
+            self.resource = warden.authenticate!(auth_options)
+            set_flash_message!(:notice, :signed_in)
+            sign_in(resource_name, resource)
+
+            # custom chemotion code
+            headers["Authorization"] = "Bearer #{token}"
+
+            render json: { token: token, role: requested_user.type }, status: :ok
+          else
+            render json: { message: 'Username or password incorrect.' }, status: :bad_request
+          end
+        end
       end
     end
 

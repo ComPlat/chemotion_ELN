@@ -13,6 +13,7 @@ import { VesselDetailsStore } from 'src/stores/mobx/VesselDetailsStore';
 import { SequenceBasedMacromoleculeSamplesStore } from 'src/stores/mobx/SequenceBasedMacromoleculeSamplesStore';
 import { CollectionsStore } from 'src/stores/mobx/CollectionsStore';
 import { NotificationsStore } from 'src/stores/mobx/NotificationsStore';
+import UserStore from 'src/stores/mobx/UserStore';
 
 export const RootStore = types
   .model({
@@ -29,6 +30,7 @@ export const RootStore = types
     sequenceBasedMacromoleculeSamplesStore: types.optional(SequenceBasedMacromoleculeSamplesStore, {}),
     collectionsStore: types.optional(CollectionsStore, {}),
     notificationsStore: types.optional(NotificationsStore, {}),
+    userStore: types.optional(UserStore, {})
   })
   .views((self) => ({
     get measurements() { return self.measurementsStore; },
@@ -44,6 +46,7 @@ export const RootStore = types
     get sequenceBasedMacromoleculeSamples() { return self.sequenceBasedMacromoleculeSamplesStore; },
     get collections() { return self.collectionsStore; },
     get notifications() { return self.notificationsStore; },
+    get user() { return self.userStore; },
   }));
 export const rootStore = RootStore.create({});
 export const StoreContext = React.createContext(rootStore);
