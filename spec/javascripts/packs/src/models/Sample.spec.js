@@ -1875,4 +1875,87 @@ describe('Sample', async () => {
       expect(Sample.sameSmilesSet('', '')).toBe(true);
     });
   });
+
+  describe('Sample loading getter', () => {
+    const buildPolymerSample = (loadingValue) => {
+      const sample = new Sample();
+      sample._contains_residues = true;
+      sample.residues = [{ custom_info: { loading: loadingValue } }];
+      return sample;
+    };
+
+    it('parses a numeric string to a float', () => {
+      expect(buildPolymerSample('1.75').loading).toBe(1.75);
+    });
+
+    it('parses an integer string to a number', () => {
+      expect(buildPolymerSample('3').loading).toBe(3);
+    });
+
+    it('returns an already-numeric value unchanged', () => {
+      expect(buildPolymerSample(2.5).loading).toBe(2.5);
+    });
+
+    it('returns null as-is', () => {
+      expect(buildPolymerSample(null).loading).toBeNull();
+    });
+
+    it('returns undefined as-is', () => {
+      expect(buildPolymerSample(undefined).loading).toBeUndefined();
+    });
+
+    it('returns a non-numeric string unchanged', () => {
+      expect(buildPolymerSample('n.d').loading).toBe('n.d');
+    });
+
+    it('returns false when contains_residues is false', () => {
+      const sample = new Sample();
+      sample._contains_residues = false;
+      expect(sample.loading).toBe(false);
+    });
+  });
+
+  describe('Sample external_loading getter', () => {
+    const buildPolymerSample = (externalLoadingValue) => {
+      const sample = new Sample();
+      sample._contains_residues = true;
+      sample.residues = [{ custom_info: { external_loading: externalLoadingValue } }];
+      return sample;
+    };
+
+    it('parses a numeric string to a float', () => {
+      expect(buildPolymerSample('0.5').external_loading).toBe(0.5);
+    });
+
+    it('parses an integer string to a number', () => {
+      expect(buildPolymerSample('2').external_loading).toBe(2);
+    });
+
+    it('returns an already-numeric value unchanged', () => {
+      expect(buildPolymerSample(1.75).external_loading).toBe(1.75);
+    });
+
+    it('returns null as-is', () => {
+      expect(buildPolymerSample(null).external_loading).toBeNull();
+    });
+
+    it('returns undefined as-is', () => {
+      expect(buildPolymerSample(undefined).external_loading).toBeUndefined();
+    });
+
+    it('returns 0.0 (the default) as a number, not a string', () => {
+      expect(buildPolymerSample(0.0).external_loading).toBe(0);
+      expect(typeof buildPolymerSample(0.0).external_loading).toBe('number');
+    });
+
+    it('returns a non-numeric string unchanged', () => {
+      expect(buildPolymerSample('n.d').external_loading).toBe('n.d');
+    });
+
+    it('returns false when contains_residues is false', () => {
+      const sample = new Sample();
+      sample._contains_residues = false;
+      expect(sample.external_loading).toBe(false);
+    });
+  });
 });
