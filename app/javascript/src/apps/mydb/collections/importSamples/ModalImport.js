@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Form, Dropdown
 } from 'react-bootstrap';
-import Dropzone from 'react-dropzone';
+import Dropzone from 'src/components/common/Dropzone';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import readXlsxFile, { readSheetNames } from 'read-excel-file';
 import { parse as parseSdf } from 'sdf-parser';
@@ -940,7 +940,12 @@ export default class ModalImport extends React.Component {
           <Dropzone
             onDrop={(attachmentFile) => this.handleFileDrop(attachmentFile)}
             style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
-            accept=".csv,.tsv,.txt,.xlsx,.xls,.sdf"
+            accept={{
+              'text/csv': ['.csv', '.tsv', '.txt'],
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+              'application/vnd.ms-excel': ['.xls'],
+              'chemical/x-mdl-sdfile': ['.sdf'],
+            }}
           >
             <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
               Drop File, or Click to Select. (Supported formats: CSV, TSV, Excel, SDF)

@@ -6,7 +6,7 @@ import {
 import { Select } from 'src/components/common/Select';
 import { useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
-import Dropzone from 'react-dropzone';
+import Dropzone from 'src/components/common/Dropzone';
 import { v4 as uuid } from 'uuid';
 
 import { unitSystems } from 'src/components/staticDropdownOptions/units';

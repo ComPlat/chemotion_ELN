@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Row, Col, ListGroup, ListGroupItem, Button,
 } from 'react-bootstrap';
-import Dropzone from 'react-dropzone';
+import Dropzone from 'src/components/common/Dropzone';
 import AppModal from 'src/components/common/AppModal';
 import Utils from 'src/utilities/Functions';
 import InboxActions from 'src/stores/alt/actions/InboxActions';

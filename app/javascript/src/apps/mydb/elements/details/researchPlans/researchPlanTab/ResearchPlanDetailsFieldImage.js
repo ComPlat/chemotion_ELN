@@ -1,7 +1,7 @@
 /* eslint-disable react/sort-comp, react/prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import Dropzone from 'react-dropzone';
+import Dropzone from 'src/components/common/Dropzone';
 import { Form, InputGroup } from 'react-bootstrap';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
@@ -112,7 +112,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
           </InputGroup>
         </Form.Group>
         <Dropzone
-          accept="image/*"
+          accept={{ 'image/*': [] }}
           multiple={false}
           onDrop={(files) => this.handleDrop(files)}
           className="dnd-zone text-center p-3 my-3"
