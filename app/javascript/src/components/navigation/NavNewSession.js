@@ -1,5 +1,8 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useContext } from 'react';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import {
@@ -24,31 +27,17 @@ function omniauthLabel(icon, name) {
 }
 
 const handleLoginSubmit = async ({ form, url }) => {
-  const res = await submitAsForm({
+  const response = await submitAsForm({
     url, form, prefix: 'user', method: 'POST'
   });
-  const { status, redirected } = res;
-  if (redirected) {
-    window.location = res.url;
-  }
-  let html;
-  let content;
-  if (status === 401) {
-    content = await res.json();
-  } else {
-    html = await res.text();
-  }
 
   return {
-    status,
-    content,
-    html
+    status: response.status,
+    ...(await response.json())
   };
 };
 
-const ExtendedSignInForm = ({
-  url, rememberable, username = '', fromInvalid = false
-}) => {
+const ExtendedSignInForm = observer(({ url, rememberable, username = '', fromInvalid = false }) => {
   const [form, setForm] = useFormValues({
     login: username || '',
     password: '',
@@ -59,44 +48,19 @@ const ExtendedSignInForm = ({
   const [wrongOtp, setWrongOtp] = useState(false);
   const closeOtp = useCallback(() => setShowOtp(false), []);
 
-  // Assume `htmlString` is the HTML response as a string
-  function replaceWarningsInLogin(htmlString) {
-    // Parse the HTML string into a DOM Document
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlString, 'text/html');
-
-    // Find the <div id="Home-Login"> in the response
-    const { body } = doc;
-    const oldAlerts = document.getElementsByClassName('alert');
-    while (oldAlerts[0]) {
-      oldAlerts[0].parentNode.removeChild(oldAlerts[0]);
-    }
-
-    const alerts = body.getElementsByClassName('alert');
-    const container = document.body.getElementsByClassName('container')[0];
-    Array.from(alerts).forEach((el) => {
-      container.prepend(el);
-      // Do something with each alert element
-    });
-  }
-
-  useEffect(() => {
-    if (fromInvalid) {
-      replaceWarningsInLogin('<body><div class="alert alert-warning">Invalid Login or password.</div></body>');
-    }
-  }, [fromInvalid]);
-
   const handleSubmit = useCallback(async (e) => {
+    const userStore = useContext(StoreContext).user;
     e?.preventDefault();
     setForm('otp_attempt', '');
-    const resText = await handleLoginSubmit({ form, url });
-    if (resText.html) {
-      setShowOtp(false);
-      setWrongOtp(false);
-      replaceWarningsInLogin(resText.html);
-    } else if (resText.content.otp_required) {
+    const loginResult = await handleLoginSubmit({ form, url });
+    if (loginResult.status === 200) {
+      userStore.setAuthToken(loginResult.token);
+      userStore.setRole(loginResult.role);
+    } else if (loginResult.status === 400) {
+      // handle bad username/password combination
+    } else if (loginResult.status === 401 && loginResult.otp_required === true) {
       setShowOtp(true);
-      setWrongOtp(resText.content.otp_wrong);
+      setWrongOtp(loginResult.otp_wrong);
     }
   }, [form, setForm, url]);
 
@@ -155,21 +119,19 @@ const ExtendedSignInForm = ({
       </Form>
     </>
   );
-}
+});
 
 ExtendedSignInForm.propTypes = {
   url: PropTypes.string.isRequired,
   username: PropTypes.string,
   rememberable: PropTypes.bool.isRequired,
-  fromInvalid: PropTypes.bool
 };
 
 ExtendedSignInForm.defaultProps = {
   username: '',
-  fromInvalid: false
 };
 
-const SignInForm = ({ authenticityToken }) => {
+function SignInForm() {
   const [form, setForm] = useFormValues({
     login: '',
     password: '',
@@ -178,21 +140,21 @@ const SignInForm = ({ authenticityToken }) => {
   const [showOtp, setShowOtp] = useState('');
   const [wrongOtp, setWrongOtp] = useState(false);
   const closeOtp = useCallback(() => setShowOtp(false), []);
+  const url = '/users/sign_in';
 
   const handleSubmit = useCallback(async (e) => {
+    const userStore = useContext(StoreContext).user;
     e?.preventDefault();
     setForm('otp_attempt', '');
-    const url = '/users/sign_in';
-    const resText = await handleLoginSubmit({ form, url });
-
-    if (resText.content?.otp_required) {
+    const loginResult = await handleLoginSubmit({ form, url });
+    if (loginResult.status === 200) {
+      userStore.setAuthToken(loginResult.token);
+      userStore.setRole(loginResult.role);
+    } else if (loginResult.status === 400) {
+      // handle bad username/password combination
+    } else if (loginResult.status === 401 && loginResult.otp_required === true) {
       setShowOtp(true);
-      console.log(resText.content);
-      setWrongOtp(resText.content.otp_wrong);
-    } else if (resText.html) {
-      setShowOtp(false);
-      setWrongOtp(false);
-      window.location = `${url}?login=${form.login}&invalid=1`;
+      setWrongOtp(loginResult.otp_wrong);
     }
   }, [form, setForm]);
 
@@ -207,7 +169,6 @@ const SignInForm = ({ authenticityToken }) => {
         isWrongOtp={wrongOtp}
       />
       <input name="utf8" value="✓" type="hidden" />
-      <input name="authenticity_token" value={authenticityToken} type="hidden" />
 
       <Row className="g-1 align-items-center">
         <Col xs="auto">
@@ -255,11 +216,10 @@ const SignInForm = ({ authenticityToken }) => {
   );
 }
 
-SignInForm.propTypes = {
-  authenticityToken: PropTypes.string.isRequired,
-};
+function NewSession() {
+  const { userStore } = useContext(StoreContext);
+  const { omniauthProviders, extraRules } = userStore;
 
-const NewSession = ({ authenticityToken, omniauthProviders = {}, extraRules = {} }) => {
   const items = omniauthProviders && Object.keys(omniauthProviders).map((key) => (
     <Button
       key={uuid.v4()}
@@ -281,7 +241,7 @@ const NewSession = ({ authenticityToken, omniauthProviders = {}, extraRules = {}
       {items.length !== 0 && <Col xs="auto">{items}</Col>}
       {showSignIn && (
         <Col xs="auto">
-          <SignInForm authenticityToken={authenticityToken} />
+          <SignInForm />
         </Col>
       )}
       {showSignUp && (
@@ -295,26 +255,6 @@ const NewSession = ({ authenticityToken, omniauthProviders = {}, extraRules = {}
   );
 }
 
-NewSession.propTypes = {
-  authenticityToken: PropTypes.string.isRequired,
-  omniauthProviders: PropTypes.PropTypes.objectOf(
-    PropTypes.shape({
-      icon: PropTypes.string.isRequired,
-      label: PropTypes.string.isRequired,
-    })
-  ),
-  extraRules: PropTypes.shape({
-    disable_db_login: PropTypes.bool.isRequired,
-    disable_signup: PropTypes.bool.isRequired,
-  }).isRequired
-};
+export default observer(NewSession);
 
-NewSession.defaultProps = {
-  omniauthProviders: {}
-};
-
-export default NewSession;
-
-export {
-  ExtendedSignInForm
-};
+export { ExtendedSignInForm };
