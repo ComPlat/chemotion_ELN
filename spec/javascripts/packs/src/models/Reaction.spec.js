@@ -471,13 +471,27 @@ describe('Reaction', () => {
       return Object.assign(sample, overrides);
     };
 
+    // Register the driver in the reaction so the reactant-membership guard
+    // (which prevents products/solvents from rebasing the reference) passes.
+    // A driver rebases the reference unless it is a product or solvent, so a
+    // reactant-side driver just needs to be absent from those groups. Assign
+    // the backing fields directly: the public setters coerce plain objects
+    // into Sample instances, discarding our lightweight test doubles.
+    const asReactant = (updatedSample) => {
+      reaction._products = [];
+      reaction._solvents = [];
+      reaction._purification_solvents = [];
+      return updatedSample;
+    };
+
     it('rebases the reference amount when equivalents are locked', () => {
       const referenceSample = buildSample({ reference: true });
-      const updatedSample = buildSample({
+      const updatedSample = asReactant(buildSample({
+        id: 'driver-1',
         reference: false,
         equivalent: 2,
         amount_mol: 0.5,
-      });
+      }));
 
       reaction.updateReferenceAmountForLockedEquivalents(
         referenceSample,
@@ -490,11 +504,12 @@ describe('Reaction', () => {
 
     it('does nothing when equivalents are unlocked', () => {
       const referenceSample = buildSample({ reference: true });
-      const updatedSample = buildSample({
+      const updatedSample = asReactant(buildSample({
+        id: 'driver-1',
         reference: false,
         equivalent: 2,
         amount_mol: 0.5,
-      });
+      }));
 
       reaction.updateReferenceAmountForLockedEquivalents(
         referenceSample,
@@ -507,11 +522,12 @@ describe('Reaction', () => {
 
     it('does nothing when the candidate is not the reference sample', () => {
       const referenceSample = buildSample({ reference: false });
-      const updatedSample = buildSample({
+      const updatedSample = asReactant(buildSample({
+        id: 'driver-1',
         reference: false,
         equivalent: 2,
         amount_mol: 0.5,
-      });
+      }));
 
       reaction.updateReferenceAmountForLockedEquivalents(
         referenceSample,
@@ -524,11 +540,12 @@ describe('Reaction', () => {
 
     it('does nothing when the updated sample is itself the reference', () => {
       const referenceSample = buildSample({ reference: true });
-      const updatedSample = buildSample({
+      const updatedSample = asReactant(buildSample({
+        id: 'driver-1',
         reference: true,
         equivalent: 2,
         amount_mol: 0.5,
-      });
+      }));
 
       reaction.updateReferenceAmountForLockedEquivalents(
         referenceSample,
@@ -539,21 +556,127 @@ describe('Reaction', () => {
       expect(referenceSample.lastAmount).toBe(undefined);
     });
 
+    it('does not rebase when the driver is a product', () => {
+      const referenceSample = buildSample({ reference: true });
+      // Under locked equivalents a product's mass field stays editable, so a
+      // product can flow in as updatedSample. It must never rebase the
+      // reference (its `equivalent` is a yield, not a stoichiometric ratio).
+      const product = buildSample({
+        id: 'product-1',
+        reference: false,
+        equivalent: 0.8,
+        amount_mol: 0.4,
+      });
+      reaction._starting_materials = [];
+      reaction._reactants = [];
+      reaction._products = [product];
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        product,
+        true
+      );
+
+      expect(referenceSample.lastAmount).toBe(undefined);
+    });
+
+    it('rebases when the driver is an SBMM reactant', () => {
+      const referenceSample = buildSample({ reference: true });
+      // SBMM reactants live in their own group but are stoichiometric
+      // reactants, so an amount edit on one must still rebase the reference.
+      const sbmmReactant = buildSample({
+        id: 'sbmm-1',
+        reference: false,
+        equivalent: 2,
+        amount_mol: 0.5,
+      });
+      reaction._products = [];
+      reaction._solvents = [];
+      reaction._purification_solvents = [];
+      reaction._reactant_sbmm_samples = [sbmmReactant];
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        sbmmReactant,
+        true
+      );
+
+      expect(referenceSample.lastAmount).toEqual({ value: 0.25, unit: 'mol' });
+    });
+
+    it('rebases an SBMM driver even when it shares an id with a reactant', () => {
+      // Regular and SBMM reactants can share an id. Because the guard tests
+      // product/solvent membership (not reactant membership), that overlap is
+      // irrelevant and a legitimate SBMM driver still rebases the reference.
+      const referenceSample = buildSample({ reference: true });
+      const sbmmReactant = buildSample({
+        id: 'shared-id',
+        reference: false,
+        equivalent: 2,
+        amount_mol: 0.5,
+      });
+      reaction._products = [];
+      reaction._solvents = [];
+      reaction._purification_solvents = [];
+      reaction._reactants = [buildSample({ id: 'shared-id', reference: false, equivalent: 3, amount_mol: 9 })];
+      reaction._reactant_sbmm_samples = [sbmmReactant];
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        sbmmReactant,
+        true
+      );
+
+      expect(referenceSample.lastAmount).toEqual({ value: 0.25, unit: 'mol' });
+    });
+
     it('does nothing when equivalent or amount_mol is invalid', () => {
       const referenceSample = buildSample({ reference: true });
 
       reaction.updateReferenceAmountForLockedEquivalents(
         referenceSample,
-        buildSample({ equivalent: 0, amount_mol: 0.5 }),
+        asReactant(buildSample({ id: 'driver-1', equivalent: 0, amount_mol: 0.5 })),
         true
       );
       reaction.updateReferenceAmountForLockedEquivalents(
         referenceSample,
-        buildSample({ equivalent: 2, amount_mol: Number.NaN }),
+        asReactant(buildSample({ id: 'driver-2', equivalent: 2, amount_mol: Number.NaN })),
         true
       );
 
       expect(referenceSample.lastAmount).toBe(undefined);
+    });
+  });
+
+  describe('Reaction.resetPreservedConcentrationExcept()', () => {
+    it('clears preserveConcentration on every group, including SBMM reactants', () => {
+      const sm = { id: 'sm', preserveConcentration: true };
+      const sbmm = { id: 'sbmm', preserveConcentration: true };
+      const product = { id: 'p', preserveConcentration: true };
+      reaction._starting_materials = [sm];
+      reaction._reactants = [];
+      reaction._reactant_sbmm_samples = [sbmm];
+      reaction._products = [product];
+
+      reaction.resetPreservedConcentrationExcept();
+
+      expect(sm.preserveConcentration).toBe(false);
+      expect(sbmm.preserveConcentration).toBe(false);
+      expect(product.preserveConcentration).toBe(false);
+    });
+
+    it('spares the edited sample', () => {
+      const edited = { id: 'edited', preserveConcentration: true };
+      const other = { id: 'other', preserveConcentration: true };
+      reaction._starting_materials = [edited, other];
+      reaction._reactants = [];
+      reaction._reactant_sbmm_samples = [];
+      reaction._products = [];
+
+      reaction.resetPreservedConcentrationExcept(edited);
+
+      expect(edited.preserveConcentration).toBe(true);
+      expect(other.preserveConcentration).toBe(false);
     });
   });
 

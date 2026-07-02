@@ -352,7 +352,7 @@ function GeneralMaterialGroup({
             {showLoadingColumn && <div className="reaction-material__loading-header">{groupHeaders.loading}</div>}
             <div className="reaction-material__concentration-header d-flex align-items-center">
               {groupHeaders.concn}
-              {materialGroup === 'products' && (
+              {materialGroup === 'products' && reaction.gaseous && (
                 <OverlayTrigger
                   placement="top"
                   overlay={(

@@ -823,6 +823,32 @@ describe('Sample', async () => {
     });
   });
 
+  describe('Sample.updateConcentrationFromSolvent() for gas products', () => {
+    it('derives concn from persisted ppm so it survives reload', async () => {
+      const gasSample = await SampleFactory.build('SampleFactory.water_100g');
+      gasSample.gas_type = 'gas';
+      gasSample.gas_phase_data = { part_per_million: 1000 };
+      gasSample.concn = null;
+
+      // concn is transient; the ppm is what persists, so a reload-time
+      // recompute must rebuild concn from ppm rather than leaving it blank.
+      gasSample.updateConcentrationFromSolvent(undefined);
+
+      expect(gasSample.concn).toBeCloseTo(1000 * 4.1e-8, 12);
+    });
+
+    it('sets concn to 0 when ppm is missing', async () => {
+      const gasSample = await SampleFactory.build('SampleFactory.water_100g');
+      gasSample.gas_type = 'gas';
+      gasSample.gas_phase_data = {};
+      gasSample.concn = 0.5;
+
+      gasSample.updateConcentrationFromSolvent(undefined);
+
+      expect(gasSample.concn).toBe(0);
+    });
+  });
+
   describe('Sample.serialize()', () => {
     it('should serialize sample with all properties', () => {
       const sample = new Sample();
@@ -1457,23 +1483,27 @@ describe('Sample', async () => {
       expect(sample.concn).toBeCloseTo(0.2, 5); // 0.1 mol / 0.5 L = 0.2 mol/L
     });
 
-    it('does not overwrite concentration for gas products', () => {
-      // Gas products derive concentration from ppm via the ideal gas law at 25 °C,
-      // not from amount_mol / reaction_volume — see ReactionDetailsScheme.
+    it('derives gas-product concentration from persisted ppm, not amount/volume', () => {
+      // Gas products derive concentration from ppm via the ideal gas law at
+      // 25 °C, not from amount_mol / reaction_volume — see ReactionDetailsScheme.
+      // The ppm persists while concn is transient, so it must be recomputed
+      // from ppm on every pass (incl. load) rather than left blank.
       const gasProduct = new Sample({
-        amount_value: 18.015,
+        amount_value: 18.015, // 1 mol at MW 18.015
         amount_unit: 'g',
         sample_type: 'Micromolecule',
         molecule: { molecular_weight: 18.015 },
       });
       gasProduct.gas_type = 'gas';
-      gasProduct.concn = 4.1e-4; // pre-set as if derived from ppm
+      gasProduct.gas_phase_data = { part_per_million: 10000 };
+      gasProduct.concn = null;
       reaction.use_reaction_volume = true;
       reaction.volume = 0.5;
 
       gasProduct.updateConcentrationFromSolvent(reaction);
 
-      expect(gasProduct.concn).toBe(4.1e-4);
+      // ppm-derived (10000 * 4.1e-8), NOT amount_mol / volume (1 / 0.5 = 2)
+      expect(gasProduct.concn).toBeCloseTo(10000 * 4.1e-8, 12);
     });
 
     it('derives feedstock concentration from vessel volume in a gas-scheme reaction', () => {

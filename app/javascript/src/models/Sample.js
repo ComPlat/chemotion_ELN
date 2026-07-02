@@ -14,6 +14,7 @@ import {
   convertTemperatureToKelvin,
   calculateVolumeForFeedstockOrGas,
   calculateGasMoles,
+  calculateGasConcentrationFromPpm,
   updateFeedstockMoles,
   calculateTON,
   calculateTONPerTimeValue,
@@ -901,9 +902,12 @@ export default class Sample extends Element {
    * @returns {void}
    */
   updateConcentrationFromSolvent(reaction) {
-    // Gas products derive concentration from ppm via the ideal gas law at 25 °C;
-    // see ReactionDetailsScheme#updatedReactionForGasProductFieldsChange.
+    // Gas products derive concentration from ppm via the ideal gas law at
+    // 25 °C. `concn` is transient (not serialized), while the ppm lives in the
+    // persisted gas_phase_data — so recompute it from ppm on every pass,
+    // including on load, or a saved gas reaction reopens with a blank column.
     if (this.isGas()) {
+      this.concn = calculateGasConcentrationFromPpm(this.gas_phase_data?.part_per_million);
       return;
     }
 

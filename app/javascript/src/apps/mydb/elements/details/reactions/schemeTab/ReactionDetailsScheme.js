@@ -1304,12 +1304,11 @@ export default class ReactionDetailsScheme extends React.Component {
       return reaction;
     }
 
-    updatedSample.concn = concentrationValue;
-
     if (reaction.isVolumeLocked) {
       return this.handleLockedVolumeConcentrationChange(updatedSample, concentrationValue);
     }
 
+    updatedSample.concn = concentrationValue;
     this.applyDerivedVolumeFromConcentration(reaction, updatedSample, concentrationValue);
     return reaction;
   }
@@ -1381,6 +1380,30 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   /**
+   * Resolves the reaction volume to use for a concentration-driven amount
+   * update. A locked volume is not necessarily usable: with
+   * `use_reaction_volume` off and no derivable combined volume (e.g. all
+   * solids), reactionVolumeForConcentration() is null. In that case a warning
+   * is surfaced and null is returned, so the caller aborts instead of
+   * silently dropping the typed concentration on the next recompute.
+   *
+   * @param {Reaction} reaction
+   * @returns {number|null} Positive reaction volume in liters, or null.
+   */
+  resolveReactionVolumeForConcentrationOrWarn(reaction) {
+    const reactionVolume = reaction.reactionVolumeForConcentration();
+    if (!Number.isFinite(reactionVolume) || reactionVolume <= 0) {
+      this.showReactionVolumeRequiredWarning(
+        'Please provide a reaction volume to update the concentration. '
+          + 'You can enter the calculated volume (e.g., volume of the reaction materials) '
+          + 'or use the reaction volume directly.'
+      );
+      return null;
+    }
+    return reactionVolume;
+  }
+
+  /**
    * Handles concentration changes when the reaction volume is locked.
    *
    * Two subcases:
@@ -1398,9 +1421,15 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction } = this.props;
     const { lockEquivColumn } = this.state;
 
+    const reactionVolume = this.resolveReactionVolumeForConcentrationOrWarn(reaction);
+    if (reactionVolume == null) {
+      return reaction;
+    }
+
+    updatedSample.concn = newConcentration;
     updatedSample.setAmountFromConcentrationAndPreserve(
       newConcentration,
-      reaction.reactionVolumeForConcentration()
+      reactionVolume
     );
 
     // Update reaction with the changed sample amounts
@@ -1999,6 +2028,13 @@ export default class ReactionDetailsScheme extends React.Component {
   updatedSamplesForVesselSizeChange(samples, vesselSizeInLiters) {
     const vesselSize = vesselSizeInLiters ?? GasPhaseReactionStore.getState().reactionVesselSizeValue;
     return samples.map((sample) => {
+      // A feedstock concentration is derived from amount_mol / vesselVolume, so
+      // a vessel-size change invalidates a manually-entered value. Release the
+      // preserve flag or updateConcentrationFromGasVessel would keep the stale
+      // typed concentration pinned for the rest of the session.
+      if (sample.isFeedstock && sample.isFeedstock()) {
+        sample.preserveConcentration = false;
+      }
       if (sample.isGas() && sample.gas_phase_data) {
         const moles = sample.updateGasMoles(vesselSize);
         if (moles !== null && moles !== undefined) {
@@ -2176,6 +2212,13 @@ export default class ReactionDetailsScheme extends React.Component {
       );
       return;
     }
+
+    // A preserved concentration is only meaningful within the volume regime it
+    // was entered under. Toggling the lock changes how the reaction volume is
+    // resolved, so release the flags — otherwise a material frozen by an
+    // earlier locked-volume edit would never recompute for the rest of the
+    // session while every other material updates.
+    reaction.resetPreservedConcentrationExcept();
 
     onInputChange('lockReactionVolume', !reaction.isVolumeLocked);
   }

@@ -1479,9 +1479,10 @@ export default class Reaction extends Element {
    * @returns {void}
    */
   resetPreservedConcentrationExcept(editedSample) {
+    // Cover every material updateAllConcentrations touches (incl. SBMM
+    // reactants), so no group can keep a stale preserve flag.
     const materials = [
-      ...(this.starting_materials || []),
-      ...(this.reactants || []),
+      ...this.allReactionMaterials,
       ...(this.products || []),
     ];
 
@@ -1512,6 +1513,24 @@ export default class Reaction extends Element {
       || !referenceSample.reference
       || !updatedSample
       || updatedSample.reference) {
+      return;
+    }
+
+    // The reference may only be rebased by a reactant-side driver (starting
+    // material, reactant, or SBMM reactant). A product's `equivalent` is a
+    // yield, not a stoichiometric ratio, yet its mass field stays editable
+    // under locked equivalents — so a product driver passes the numeric
+    // guard below and silently corrupts the reference. Exclude products and
+    // solvents explicitly. We test exclusion rather than reactant-side
+    // membership on purpose: regular and SBMM reactants can share an id, so a
+    // membership test would be sensitive to that overlap, whereas products
+    // and solvents never collide with a reactant's id.
+    const isNonReactantDriver = [
+      ...(this.products || []),
+      ...(this.solvents || []),
+      ...(this.purification_solvents || []),
+    ].some((material) => material.id === updatedSample.id);
+    if (isNonReactantDriver) {
       return;
     }
 

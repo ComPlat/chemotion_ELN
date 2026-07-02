@@ -200,10 +200,25 @@ class Material extends Component {
     const isSbmm = isSbmmSample(material);
     const metricMolConc = getMetricMolConc(material);
     const isProduct = materialGroup === 'products';
-    const isConcentrationDisabled = !permitOn(reaction)
+
+    // When reaction volume is unlocked, editing concentration derives the
+    // reaction volume from amount / concentration. If the material has no
+    // amount yet, the reaction volume cannot be derived, so the entered
+    // concentration would be discarded on the next recalculation.
+    // Disable the field until an amount exists.
+    //
+    // When the reaction volume is locked—or for gaseous feedstocks—the amount
+    // is derived from the concentration instead, so the field remains editable.
+    const hasNoAmount = !Number.isFinite(material.amount_mol) || material.amount_mol <= 0;
+    const isFeedstock = reaction.gaseous && material.isFeedstock && material.isFeedstock();
+    const cannotDeriveReactionVolume = hasNoAmount && !reaction.isVolumeLocked && !isFeedstock;
+
+    const isConcentrationDisabled =
+      !permitOn(reaction)
       || isSbmm
       || isProduct
-      || reaction.weight_percentage;
+      || reaction.weight_percentage
+      || cannotDeriveReactionVolume;
 
     // For SBMM samples, use concentration_rt_value directly (automatically calculated)
     const concentrationValue = isSbmm
@@ -233,20 +248,19 @@ class Material extends Component {
    * @param {Object} e - The change event containing new concentration value
    * @param {number} currentValue - Current concentration value for comparison
    */
-  handleConcentrationChange(e, currentValue) {
-    const { materialGroup, onChange } = this.props;
-    if (e.value === currentValue) return;
+handleConcentrationChange(e, currentValue) {
+  const { materialGroup, onChange } = this.props;
+  if (!onChange || !e) return;
+  if (e.value === currentValue) return;
 
-    if (onChange && e) {
-      const event = {
-        concentration: e,
-        type: 'concentrationChanged',
-        materialGroup,
-        sampleID: this.materialId(),
-      };
-      onChange(event);
-    }
-  }
+  const event = {
+    concentration: e,
+    type: 'concentrationChanged',
+    materialGroup,
+    sampleID: this.materialId(),
+  };
+  onChange(event);
+}
 
   materialRef(material) {
     const { materialGroup, reaction } = this.props;
