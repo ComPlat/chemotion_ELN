@@ -483,9 +483,7 @@ class ElementActions {
 
         // Initialize components on newSample before updating material in reaction
         if (sample.isMixture() && sample.components) {
-          const refreshed = Array.isArray(savedComponents) && savedComponents.length > 0
-            ? savedComponents.map(Component.deserializeData)
-            : sample.components;
+          const refreshed = Component.refreshFromApi(savedComponents, sample.components);
           newSample.initialComponents(refreshed);
         }
 

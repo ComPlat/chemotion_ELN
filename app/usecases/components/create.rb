@@ -7,14 +7,25 @@
 module Usecases
   module Components
     class Create
-      def initialize(sample, components)
-        @sample = sample
-        @sample_id = sample.id
-        @components = components.map do |cp|
+      # Single source of truth for the components-payload shape shared by
+      # DeleteRemovedComponents and Create: an array of indifferent-access hashes,
+      # each with an indifferent-access :component_properties. Idempotent and
+      # nil-safe, so it is cheap to call defensively at every entry point.
+      def self.normalize(components)
+        (components || []).map do |cp|
           c = cp.with_indifferent_access
           c[:component_properties] = c[:component_properties].with_indifferent_access if c[:component_properties]
           c
         end
+      end
+
+      # `components` is expected to be already normalized by the caller via
+      # Usecases::Components::Create.normalize (Reconcile normalizes once and passes
+      # the same array here and to DeleteRemovedComponents).
+      def initialize(sample, components)
+        @sample = sample
+        @sample_id = sample.id
+        @components = components
       end
 
       def execute!
