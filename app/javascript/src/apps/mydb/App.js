@@ -1,5 +1,7 @@
-import React, { Component } from 'react';
+import React, { useContext, useEffect } from 'react';
 import Aviator from 'aviator';
+
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import appRoutes from 'src/apps/mydb/routes';
 
 import ElementDragLayer from 'src/components/ElementDragLayer';
@@ -16,53 +18,35 @@ import Notifications from 'src/components/Notifications';
 import SampleTaskInbox from 'src/components/sampleTaskInbox/SampleTaskInbox';
 import WorkshopGuideDrawer from 'src/components/workshopGuide/WorkshopGuideDrawer';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import UserActions from 'src/stores/alt/actions/UserActions';
 import OnEventListen from 'src/utilities/UserTemplatesHelpers';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
 
-class App extends Component {
-  componentDidMount() {
-    UserActions.fetchOlsRxno();
-    UserActions.fetchOlsChmo();
-    UserActions.fetchOlsBao();
-    UserActions.fetchProfile();
-    UserActions.setUsertemplates();
-    UserActions.fetchUserLabels();
-    UserActions.fetchGenericEls();
-    UserActions.fetchSegmentKlasses();
-    UserActions.fetchDatasetKlasses();
-    UserActions.fetchUnitsSystem();
-    UserActions.fetchEditors();
-    UserActions.fetchKetcherOptions();
-    UIActions.initialize.defer();
-    this.patchExternalLibraries();
+const addLocalStorageListener = () => { window.addEventListener('storage', OnEventListen, false); };
+const removeLocalStorageEventListener = () => { window.removeEventListener('storage', addLocalStorageListener); };
+const saveUserTemplatesToLocalStorage = () => {
+  const storageKey = 'ketcher-tmpls';
+  UsersFetcher.fetchProfile().then((res) => {
+    if (res?.user_templates) {
+      localStorage.setItem(storageKey, '');
+      localStorage.setItem(storageKey, JSON.stringify(res.user_templates));
+    }
+  });
+  return null;
+};
+const saveKetcherOptionsToLocalStorage = () => {
+  UsersFetcher.fetchUserKetcherOptions()
+    .then((result) => {
+      if (result && result?.settings) {
+        if (Object.keys(result?.settings).length) {
+          localStorage.setItem('ketcher-opts', JSON.stringify(result.settings));
+        }
+      }
+    });
+};
 
-    window.addEventListener('storage', this.handleStorageChange);
-
-    // user templates
-    this.removeLocalStorageEventListener();
-    this.storageListener();
-
-    // TODO: check why this does not appear to work
-    appRoutes().then(() => { Aviator.dispatch(); });
-  }
-
-  componentWillUnmount() {
-    this.removeLocalStorageEventListener();
-  }
-
-  removeLocalStorageEventListener() {
-    window.removeEventListener('storage', this.storageListener);
-  }
-
-  storageListener() {
-    window.addEventListener(
-      'storage',
-      OnEventListen,
-      false
-    );
-  }
-
-  patchExternalLibraries() {
+const App = () => {
+  const { userStore } = useContext(StoreContext);
+  const patchExternalLibraries = () => {
     const { plugins } = require('@citation-js/core');
     plugins.input.add('@doi/api', {
       parseType: {
@@ -78,44 +62,68 @@ class App extends Component {
         predicate: /\b(10[.][0-9]{4,}(?:[.][0-9]+)*\/(?:(?!["&\'])\S)+)\b/
       }
     });
-  }
+  };
 
-  renderContent() {
-    return (
-      <div className="mydb-app d-flex vh-100">
-        <Sidebar />
-        <div className="d-flex flex-column flex-grow-1">
-          <Topbar />
-          <Elements />
-        </div>
+  useEffect(() => {
+    userStore.fetchOlsRxno();
+    userStore.fetchOlsChmo();
+    userStore.fetchOlsBao();
+    userStore.fetchProfile();
+    saveUserTemplatesToLocalStorage();
+    userStore.fetchUserLabels();
+    userStore.fetchGenericEls();
+    userStore.fetchSegmentKlasses();
+    userStore.fetchDatasetKlasses();
+    userStore.fetchUnitsSystem();
+    userStore.fetchEditors();
+    saveKetcherOptionsToLocalStorage();
+    UIActions.initialize.defer();
+    patchExternalLibraries();
+
+    // TODO: clarify origin of handleStorageChange
+    // window.addEventListener('storage', this.handleStorageChange);
+
+    // user templates
+    removeLocalStorageEventListener();
+    addLocalStorageListener();
+
+    // TODO: check why this does not appear to work
+    appRoutes().then(() => { Aviator.dispatch(); });
+
+    // return a cleanup function that will be executed when the component is removed from DOM
+    // see https://react.dev/reference/react/useEffect#useeffect
+    return () => { removeLocalStorageEventListener(); };
+  }, []);
+
+  const content = (
+    <div className="mydb-app d-flex vh-100">
+      <Sidebar />
+      <div className="d-flex flex-column flex-grow-1">
+        <Topbar />
+        <Elements />
       </div>
-    );
-  }
+    </div>
+  );
 
-  renderModals() {
-    return (
-      <>
-        <Notifications />
-        <LoadingModal />
-        <ProgressModal />
-        <FlowViewerModal />
-        <InboxModal />
-        <SampleTaskInbox />
-        <Calendar />
-        <WorkshopGuideDrawer />
-      </>
-    );
-  }
+  const modals = (
+    <>
+      <Notifications />
+      <LoadingModal />
+      <ProgressModal />
+      <FlowViewerModal />
+      <InboxModal />
+      <SampleTaskInbox />
+      <Calendar />
+    </>
+  );
 
-  render() {
-    return (
-      <>
-        <ElementDragLayer />
-        {this.renderContent()}
-        {this.renderModals()}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <ElementDragLayer />
+      {content}
+      {modals}
+    </>
+  );
+};
 
 export default App;
