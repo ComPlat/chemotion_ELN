@@ -6,185 +6,260 @@ import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 // adapted from Entities::UserEntity
-const User = types.model({
-  id: types.optional(types.identifier, ''),
-  name: types.optional(types.string, ''),
-  first_name: types.optional(types.string, ''),
-  last_name: types.optional(types.string, ''),
-  initials: types.optional(types.string, ''),
-  used_space: types.optional(types.integer, 0),
-  allocated_space: types.optional(types.integer, 0),
-  samples_count: types.optional(types.integer, 0),
-  reactions_count: types.optional(types.integer, 0),
-  cell_lines_count: types.optional(types.integer, 0),
-  device_descriptions_count: types.optional(types.integer, 0),
-  vessels_count: types.optional(types.integer, 0),
-  sequence_based_macromolecule_samples_count: types.optional(types.integer, 0),
-  type: types.maybeNull(types.string),
-  reaction_name_prefix: types.optional(types.string, ''),
-  // layout: types.???, // this column appears to be orphaned and moved to profile, just without deleting the field in the users table
-  email: types.optional(types.string, ''),
-  unconfirmed_email: types.optional(types.string, ''),
-  confirmed_at: types.maybeNull(types.Date),
-  current_sign_in_at: types.maybeNull(types.Date),
-  locked_at: types.maybeNull(types.Date),
-  is_templates_moderator: types.optional(types.boolean, false),
-  molecule_editor: types.optional(types.boolean, false),
-  converter_admin: types.optional(types.boolean, false),
-  account_active: types.optional(types.boolean, false),
-  matrix: types.optional(types.integer, 0),
-  counters: types.map(types.integer),
-  generic_admin: types.map(types.boolean),
-  otp_required_for_login: types.optional(types.boolean, false),
-  profile: types.frozen({}) // hack to create a structure for something without authoritative data structure
-});
-const Device = types.model({
-  id: types.identifier,
-  name: types.string,
-  target: types.string,
-  password: types.string
-});
+const User = types.model(
+  'User',
+  {
+    id: types.optional(types.identifier, ''),
+    name: types.optional(types.string, ''),
+    first_name: types.optional(types.string, ''),
+    last_name: types.optional(types.string, ''),
+    initials: types.optional(types.string, ''),
+    used_space: types.optional(types.integer, 0),
+    allocated_space: types.optional(types.integer, 0),
+    samples_count: types.optional(types.integer, 0),
+    reactions_count: types.optional(types.integer, 0),
+    cell_lines_count: types.optional(types.integer, 0),
+    device_descriptions_count: types.optional(types.integer, 0),
+    vessels_count: types.optional(types.integer, 0),
+    sequence_based_macromolecule_samples_count: types.optional(types.integer, 0),
+    type: types.maybeNull(types.string),
+    reaction_name_prefix: types.optional(types.string, ''),
+    // layout: types.???, // this column appears to be orphaned and moved to profile, just without deleting the field in the users table
+    email: types.optional(types.string, ''),
+    unconfirmed_email: types.optional(types.string, ''),
+    confirmed_at: types.maybeNull(types.Date),
+    current_sign_in_at: types.maybeNull(types.Date),
+    locked_at: types.maybeNull(types.Date),
+    is_templates_moderator: types.optional(types.boolean, false),
+    molecule_editor: types.optional(types.boolean, false),
+    converter_admin: types.optional(types.boolean, false),
+    account_active: types.optional(types.boolean, false),
+    matrix: types.optional(types.integer, 0),
+    counters: types.map(types.integer),
+    generic_admin: types.map(types.boolean),
+    otp_required_for_login: types.optional(types.boolean, false),
+    profile: types.frozen({}) // hack to create a structure for something without authoritative data structure
+  }
+);
+const Device = types.model(
+  'Device',
+  {
+    id: types.identifier,
+    name: types.string,
+    target: types.string,
+    password: types.string
+  }
+);
 
-const RxnoItem = types.model({
-  id: types.identifier,
-  is_enabled: types.boolean,
-  search: types.string,
-  synonym: types.maybeNull(types.string),
-  title: types.string,
-  value: types.string,
-  children: types.array(types.late(() => RxnoItem))
-});
-const RxnoRecentlySelectedHeader = types.model({
-  title: types.string,
-  value: types.string,
-  selectable: types.boolean,
-  children: types.array(RxnoItem)
-});
+const RxnoItem = types.model(
+  'RxnoItem',
+  {
+    id: types.identifierNumber,
+    is_enabled: types.boolean,
+    search: types.string,
+    synonym: types.maybeNull(types.string),
+    title: types.string,
+    value: types.string,
+    children: types.array(types.late(() => RxnoItem))
+  }
+);
+const RxnoRecentlySelectedHeader = types.model(
+  'RxnoRecentlySelectedHeader',
+  {
+    title: types.string,
+    value: types.string,
+    selectable: types.boolean,
+    children: types.array(RxnoItem)
+  }
+);
 const RxnoOrHeader = types.union(
-  { dispatcher: (snapshot) => { snapshot.selectable !== undefined ? RxnoRecentlySelectedHeader : RxnoItem } },
+  {
+    dispatcher: (snapshot) => {
+      if (snapshot.selectable !== undefined) {
+        return RxnoRecentlySelectedHeader;
+      }
+      return RxnoItem;
+    }
+  },
   RxnoRecentlySelectedHeader,
   RxnoItem
 );
 
-const ChmoItem = types.model({
-  id: types.identifier,
-  is_enabled: types.boolean,
-  search: types.string,
-  synonym: types.maybeNull(types.string),
-  synonyms: types.array(types.string),
-  term_id: types.string, 
-  title: types.string,
-  value: types.string,
-  children: types.array(types.late(() => ChmoItem))
-});
-const ChmoRecentlySelectedHeader = types.model({
-  title: types.string,
-  value: types.string,
-  selectable: types.boolean,
-  children: types.array(ChmoItem)
-});
+const ChmoItem = types.model(
+  'ChmoItem',
+  {
+    id: types.optional(types.integer, 0),
+    is_enabled: types.optional(types.boolean, true),
+    search: types.string,
+    synonym: types.maybeNull(types.string),
+    synonyms: types.maybeNull(types.array(types.string)),
+    term_id: types.maybeNull(types.string),
+    title: types.string,
+    value: types.string,
+    children: types.array(types.late(() => ChmoItem))
+  }
+);
+const ChmoRecentlySelectedHeader = types.model(
+  'ChmoRecentlySelectedHeader',
+  {
+    title: types.string,
+    value: types.string,
+    selectable: types.boolean,
+    children: types.array(ChmoItem)
+  }
+);
 const ChmoOrHeader = types.union(
-  { dispatcher: (snapshot) => { snapshot.selectable !== undefined ? ChmoRecentlySelectedHeader : ChmoItem } },
+  {
+    dispatcher: (snapshot) => {
+      if (snapshot.selectable !== undefined) {
+        return ChmoRecentlySelectedHeader;
+      }
+      return ChmoItem;
+    }
+  },
   ChmoItem,
   ChmoRecentlySelectedHeader
 );
 
-const BaoItem = types.model({
-  id: types.identifier,
-  term_id: types.maybeNull(types.string),
-  synonym: types.maybeNull(types.string),
-  synonyms: types.array(types.string),
-  search: types.string,
-  title: types.string,
-  is_enabled: types.boolean,
-  children: types.array(types.late(() => BaoItem))
-});
-const BaoRecentlySelectedHeader = types.model({
-  title: types.string,
-  value: types.string,
-  selectable: types.boolean,
-  children: types.array(BaoItem)
-});
+const BaoItem = types.model(
+  'BaoItem',
+  {
+    id: types.string,
+    term_id: types.maybeNull(types.string),
+    synonym: types.maybeNull(types.string),
+    synonyms: types.maybeNull(types.array(types.string)),
+    search: types.string,
+    title: types.string,
+    is_enabled: types.boolean,
+    children: types.array(types.late(() => BaoItem))
+  }
+);
+const BaoRecentlySelectedHeader = types.model(
+  'BaoRecentlySelectedHeader',
+  {
+    title: types.string,
+    value: types.string,
+    selectable: types.boolean,
+    children: types.array(BaoItem)
+  }
+);
 const BaoOrHeader = types.union(
-  { dispatcher: (snapshot) => { snapshot.selectable !== undefined ? BaoRecentlySelectedHeader : BaoItem } },
+  {
+    dispatcher: (snapshot) => {
+      if (snapshot.selectable !== undefined) {
+        return BaoRecentlySelectedHeader;
+      }
+      return BaoItem;
+    }
+  },
   BaoItem,
   BaoRecentlySelectedHeader
 );
 
-const Label = types.model({
-  id: types.identifier,
-  user_id: types.maybeNull(types.integer), // must be adapted when switching to uuids eventually
-  access_level: types.integer,
-  title: types.string,
-  description: types.optional(types.string, ''),
-  color: type.string
-});
-const UnitSystemField = types.model({
-  type: types.string,
-  field: types.string,
-  label: types.string,
-  default: types.string,
-  position: types.integer,
-  placeholder: types.string,
-  units: types.array(types.model({
-    key: types.string,
+const Label = types.model(
+  'Label',
+  {
+    id: types.identifier,
+    user_id: types.maybeNull(types.integer), // must be adapted when switching to uuids eventually
+    access_level: types.integer,
+    title: types.string,
+    description: types.optional(types.string, ''),
+    color: types.string
+  }
+);
+const UnitSystemField = types.model(
+  'UnitSystemField',
+  {
+    type: types.string,
+    field: types.string,
     label: types.string,
-    nm: types.integer,
-    unit_type: types.maybeNull(types.string)
-  }))
-});
-const UnitSystem = types.model({
-  fields: types.array(UnitSystemField)
-});
-const MatrixConfiguration = types.model({
-  id: types.identifier,
-  enabled: types.boolean,
-  name: types.string,
-  label: types.string,
-  configs: types.frozen({}),
-  include_ids: types.array(types.integer),
-  include_users: types.array(types.model({
-    value: types.integer,
+    default: types.string,
+    position: types.integer,
+    placeholder: types.string,
+    units: types.array(types.model(
+      'Unit',
+      {
+        key: types.string,
+        label: types.string,
+        nm: types.optional(types.union(types.float, types.integer), 1.0),
+        unit_type: types.maybeNull(types.string)
+      }
+    ))
+  }
+);
+const UnitSystem = types.model(
+  'UnitSystem',
+  {
+    fields: types.array(UnitSystemField)
+  }
+);
+const MatrixConfiguration = types.model(
+  'MatrixConfiguration',
+  {
+    id: types.identifierNumber,
+    enabled: types.boolean,
     name: types.string,
-    label: types.string
-  })),
-  exclude_ids: types.array(types.integer),
-  exclude_users: types.array(types.model({
-    value: types.integer,
-    name: types.string,
-    label: types.string
-  })),
-});
+    label: types.string,
+    configs: types.frozen({}),
+    include_ids: types.array(types.integer),
+    include_users: types.array(types.model(
+      'IncludeUserConfiguration',
+      {
+        value: types.integer,
+        name: types.string,
+        label: types.string
+      }
+    )),
+    exclude_ids: types.array(types.integer),
+    exclude_users: types.array(types.model(
+      'ExcludeUserConfiguration',
+      {
+        value: types.integer,
+        name: types.string,
+        label: types.string
+      }
+    )),
+  }
+);
 
-const OmniauthProvider = types.model({
-  icon: types.string,
-  label: types.string
-});
-const ExtraRule = types.model({
-  disable_db_login: types.optional(types.boolean, false),
-  disable_signup: types.optional(types.boolean, false)
-});
+const OmniauthProvider = types.model(
+  'OmniauthProvider',
+  {
+    icon: types.string,
+    label: types.string
+  }
+);
+const ExtraRule = types.model(
+  'ExtraRule',
+  {
+    disable_db_login: types.optional(types.boolean, false),
+    disable_signup: types.optional(types.boolean, false)
+  }
+);
 
-const UserStore = types.model({
-  authToken: types.maybeNull(types.string, localStorage.getItem('chemotion-auth-token')),
-  role: types.optional(types.string, localStorage.getItem('chemotion-role') || 'Guest'),
-  currentUser: types.maybeNull(User),
-  profile: types.optional(types.frozen({}), {}), // must be serialized later, currently the full datastructure is unknown to me
-  currentTab: types.integer(0),
-  currentType: types.string(''),
-  devices: types.array(Device),
-  rxnos: types.array(RxnoOrHeader),
-  chmos: types.array(ChmoOrHeader),
-  labels: types.array(Label),
-  genericEls: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me
-  segmentKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me,
-  dsKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me,
-  unitsSystem: UnitSystem,
-  matriceConfigs: types.array(MatrixConfiguration),
-  omniauthProviders: types.map(OmniauthProvider),
-  extraRules: types.optional(ExtraRule, {}),
-  bao: types.array(BaoOrHeader),
-}).actions({
+const UserStore = types.model(
+  'UserStore',
+  {
+    authToken: types.maybeNull(types.string, localStorage.getItem('chemotion-auth-token')),
+    role: types.optional(types.string, localStorage.getItem('chemotion-role') || 'Guest'),
+    currentUser: types.maybeNull(User),
+    profile: types.optional(types.frozen({}), {}), // must be serialized later, currently the full datastructure is unknown to me
+    currentTab: types.optional(types.integer, 0),
+    currentType: types.optional(types.string, ''),
+    devices: types.array(Device),
+    rxnos: types.array(RxnoOrHeader),
+    chmos: types.array(ChmoOrHeader),
+    labels: types.array(Label),
+    genericEls: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me
+    segmentKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me,
+    dsKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me,
+    unitsSystem: types.optional(UnitSystem, { fields: [] }),
+    matriceConfigs: types.array(MatrixConfiguration),
+    omniauthProviders: types.map(OmniauthProvider),
+    extraRules: types.optional(ExtraRule, {}),
+    bao: types.array(BaoOrHeader),
+  }
+).actions((self) => ({
   fetchCurrentUser: flow(function* fetchCurrentUser() {
     const result = yield UsersFetcher.fetchCurrentUser();
     self.currentUser = User.create(result.user);
@@ -235,11 +310,11 @@ const UserStore = types.model({
   }),
   fetchSegmentKlasses: flow(function * fetchSegmentKlasses() {
     const result = yield GenericSgsFetcher.listSegmentKlass();
-    self.segmentKlasses = result;
+    self.segmentKlasses = result.klass;
   }),
   fetchDatasetKlasses: flow(function* fetchDatasetKlasses() {
     const result = yield GenericDSsFetcher.fetchKlass();
-    self.dsKlasses = result;
+    self.dsKlasses = result.klass;
   }),
   fetchUnitsSystem: flow(function* fetchUnitsSystem() {
     const result = yield ApiClient.getJson(
@@ -250,7 +325,7 @@ const UserStore = types.model({
   }),
   fetchEditors: flow(function* fetchEditors() {
     const result = yield UsersFetcher.listEditors();
-    self.matriceConfigs = result.map((entry) => MatrixConfiguration.create(entry));
+    self.matriceConfigs = result.matrices.map((entry) => MatrixConfiguration.create(entry));
   }),
   fetchOmniauthProviders: flow(function* fetchOmniauthProviders() {
     const result = yield UsersFetcher.fetchOmniauthProviders();
@@ -264,8 +339,8 @@ const UserStore = types.model({
   setRole: (role) => {
     self.role = role;
     localStorage.setItem('chemotion-role', role);
-  }
-}).views((self) => ({
+  },
+})).views((self) => ({
   isUserQuotaExceeded(filteredAttachments) {
     const totalSize = filteredAttachments.filter((attachment) => attachment.is_new && !attachment.is_deleted)
       .reduce((acc, attachment) => acc + attachment.filesize, 0);
