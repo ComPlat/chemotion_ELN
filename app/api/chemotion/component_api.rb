@@ -62,12 +62,7 @@ module Chemotion
         authorize_sample_update!(sample)
 
         ActiveRecord::Base.transaction do
-          # Delete first so the keep-list only needs to consider rows that already
-          # exist in the DB (identified by their integer ids). Newly added
-          # components (string ids like 'new_1') are inserted by Create afterwards
-          # and are therefore unaffected by the deletion step.
-          Usecases::Components::DeleteRemovedComponents.new(sample.id, params[:components]).execute!
-          Usecases::Components::Create.new(sample, params[:components]).execute!
+          Usecases::Components::Reconcile.new(sample, params[:components]).execute!
         end
         present Component.where(sample_id: sample.id), with: Entities::ComponentEntity
       end

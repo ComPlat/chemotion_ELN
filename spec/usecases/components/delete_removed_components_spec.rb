@@ -49,7 +49,7 @@ RSpec.describe Usecases::Components::DeleteRemovedComponents do
     context 'when all ids are placeholder strings' do
       let(:components_params) { [{ id: 'new_1' }, { id: 'new_2' }] }
 
-      it 'deletes all existing components for the sample' do
+      it 'deletes all existing components (the all-new payload is authoritative)' do
         use_case.execute!
         expect(Component.where(sample_id: sample.id).count).to eq(0)
       end
@@ -58,9 +58,19 @@ RSpec.describe Usecases::Components::DeleteRemovedComponents do
     context 'when components_params is empty' do
       let(:components_params) { [] }
 
-      it 'deletes all existing components for the sample' do
+      it 'deletes all existing components (an empty payload clears the mixture)' do
         use_case.execute!
         expect(Component.where(sample_id: sample.id).count).to eq(0)
+      end
+    end
+
+    context 'when the payload is string-keyed (not yet normalized)' do
+      let(:components_params) { [{ 'id' => component_a.id }] }
+
+      it 'still resolves the keep-list instead of wiping all components' do
+        use_case.execute!
+        remaining_ids = Component.where(sample_id: sample.id).pluck(:id)
+        expect(remaining_ids).to contain_exactly(component_a.id)
       end
     end
 
@@ -82,6 +92,22 @@ RSpec.describe Usecases::Components::DeleteRemovedComponents do
       described_class.new(sample.id, []).execute!
 
       expect(Component.find_by(id: other_component.id)).to be_present
+    end
+
+    context 'when the payload references only ids belonging to another sample' do
+      # A freshly split sub-sample's serialized components still carry the PARENT's
+      # component ids. Those integer ids are not this sample's rows, so the payload
+      # is not authoritative for deletion — it must not wipe this sample's real
+      # components (which Create would then re-insert as churned copies).
+      let(:other_sample) { create(:sample) }
+      let!(:foreign_component) { create(:component, sample: other_sample, position: 1) }
+      let(:components_params) { [{ id: foreign_component.id }] }
+
+      it 'does not delete this sample\'s components' do
+        use_case.execute!
+        remaining_ids = Component.where(sample_id: sample.id).pluck(:id)
+        expect(remaining_ids).to contain_exactly(component_a.id, component_b.id, component_c.id)
+      end
     end
   end
 end

@@ -20,6 +20,11 @@ const target = {
     // React-DnD invokes drop() from innermost target outwards. If an inner row-level
     // drop target (SampleComponent) already handled this drop, skip here to prevent
     // duplicate component additions.
+    //
+    // DO NOT REMOVE this guard. Sample.addMixtureComponentSync() no longer performs
+    // any duplicate detection (it always pushes the component), so this didDrop() check
+    // is the ONLY thing preventing a single drop from adding the same component twice —
+    // once via the inner row target and once via this outer container target.
     if (monitor.didDrop()) return;
 
     const { dropSample, dropMaterial } = tagProps;

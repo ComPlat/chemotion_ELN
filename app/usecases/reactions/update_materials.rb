@@ -110,37 +110,14 @@ module Usecases
               samples.each_with_index do |sample, idx|
                 sample.position = idx if sample.position.nil?
                 sample.reference = false if material_group == 'solvent' && sample.reference == true
-                # Track whether the chosen branch has already persisted this sample's
-                # mixture components so we don't insert them a second time below.
-                components_already_persisted = false
-                if sample.is_new
-                  if sample.parent_id && material_group != 'product'
-                    modified_sample = create_sub_sample(
-                      sample,
-                      fixed_label,
-                      weight_percentage_ref_record_target_amount,
-                    )
-                    # create_sub_sample copies the parent's components onto the new
-                    # subsample (Sample#create_components_for_mixture_subsample), so
-                    # they are already persisted at this point.
-                    components_already_persisted = true
-                  else
-                    modified_sample = create_new_sample(sample, fixed_label, weight_percentage_ref_record_target_amount)
-                  end
-                else
-                  modified_sample = update_existing_sample(
-                    sample,
-                    fixed_label,
-                    weight_percentage_ref_record_target_amount,
-                  )
-                  # update_existing_sample already reconciles components internally.
-                  components_already_persisted = true
-                end
+                modified_sample = persist_sample(
+                  sample,
+                  material_group,
+                  fixed_label,
+                  weight_percentage_ref_record_target_amount,
+                )
 
-                if !components_already_persisted &&
-                   sample.components.present? && sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
-                  Usecases::Components::Create.new(modified_sample, sample.components).execute!
-                end
+                reconcile_mixture_components(modified_sample, sample)
 
                 if sample.segments
                   modified_sample.save_segments(segments: sample.segments,
@@ -162,10 +139,51 @@ module Usecases
 
       private
 
+      # Reconcile a mixture sample's persisted components with the client payload,
+      # deleting the ones the user removed and creating/updating the rest via the
+      # shared use case — the same flow the standalone component API uses. Without
+      # this, update_existing_sample only ever created components (removed ones
+      # survived) and a dragged-in sub-sample's client edits were shadowed by the
+      # parent copy.
+      #
+      # Skip only when components is nil (the payload omitted the key — e.g. a
+      # sub-sample keeping its parent copy). An explicit empty array is a real
+      # instruction ("the mixture now has no components") and is reconciled, which
+      # deletes any persisted components.
+      def reconcile_mixture_components(modified_sample, sample)
+        return unless sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+        return if sample.components.nil?
+
+        Usecases::Components::Reconcile.new(modified_sample, sample.components).execute!
+      end
+
+      # Create or update a single sample, dispatching to the create-subsample,
+      # create-new, or update-existing path.
+      def persist_sample(sample, material_group, fixed_label, target_amount)
+        return update_existing_sample(sample, fixed_label, target_amount) unless sample.is_new
+
+        if sample.parent_id && material_group != 'product'
+          create_sub_sample(sample, fixed_label, target_amount)
+        else
+          create_new_sample(sample, fixed_label, target_amount)
+        end
+      end
+
       def create_sub_sample(sample, fixed_label, target_amount = nil)
         parent_sample = Sample.find(sample.parent_id)
 
-        subsample = parent_sample.create_subsample(@current_user, @reaction.collections, true, 'reaction')
+        # When the payload provides components (including an explicit empty array),
+        # reconcile_mixture_components is the single source of truth for them, so
+        # skip copying the parent's copies here (they would be duplicated, or should
+        # be cleared). Only copy the parent's components when the payload omits the
+        # key entirely (components is nil), matching reconcile's nil skip.
+        subsample = parent_sample.create_subsample(
+          @current_user,
+          @reaction.collections,
+          true,
+          'reaction',
+          copy_components: sample.components.nil?,
+        )
         subsample.short_label = fixed_label if fixed_label
 
         if @reaction.weight_percentage && sample.weight_percentage.present? &&
@@ -274,10 +292,6 @@ module Usecases
         existing_sample.short_label = fixed_label if fixed_label
         existing_sample.name = sample.name if sample.name
         existing_sample.dry_solvent = sample.dry_solvent
-        # Handle components for mixture samples using the proper use case
-        if sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE && sample.components.present?
-          Usecases::Components::Create.new(existing_sample, sample.components).execute!
-        end
         existing_sample.solvent = sample.solvent
 
         if r = existing_sample.residues[0]

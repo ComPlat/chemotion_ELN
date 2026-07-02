@@ -1991,9 +1991,11 @@ export default class Sample extends Element {
       gas_type: this.gas_type || false,
       gas_phase_data: this.gas_phase_data,
       conversion_rate: this.conversion_rate,
-      components: this.components && this.components.length > 0
-        ? this.components.map((s) => s.serializeComponent())
-        : [],
+      // null = components never loaded on the client (list/search responses
+      // omit them) → server keeps/copies persisted ones. [] = user removed
+      // them all → server deletes. Raw API objects (no serializeComponent)
+      // are already in serialized shape and pass through as-is.
+      components: this.components?.map((comp) => comp.serializeComponent?.() ?? comp) ?? null,
       weight_percentage_reference: this.weight_percentage_reference || false,
       weight_percentage: this.weight_percentage
     };
@@ -2520,6 +2522,8 @@ export default class Sample extends Element {
   }
 
   async mergeComponents(srcMat, srcGroup, tagMat, tagGroup) {
+    if (srcMat === tagMat) return;
+
     const srcIndex = this.components.findIndex((mat) => mat === srcMat);
     const tagIndex = this.components.findIndex((mat) => mat === tagMat);
 
@@ -2563,13 +2567,49 @@ export default class Sample extends Element {
    * @returns {Promise<void>} Resolves once components have been added/updated.
    */
   async splitSmilesToMolecule(mixtureSmiles, editor) {
+    const { staleComponents, unknownSmiles } = this.partitionEditedSmiles(mixtureSmiles);
+
+    // Nothing new to fetch — still delete stale components so the list stays
+    // consistent with the edited structure.
+    if (unknownSmiles.length === 0) {
+      this.removeStaleComponents(staleComponents, mixtureSmiles);
+      return;
+    }
+
+    const resolved = await Sample.fetchMoleculesForSmiles(unknownSmiles, editor);
+
+    // Mapping an edited fragment back to its component is only unambiguous for
+    // a single edit — fragment order and component order are not guaranteed to
+    // align, so positional pairing of several edits could attach a molecule
+    // (and the user's amounts) to the wrong row.
+    if (staleComponents.length === 1 && unknownSmiles.length === 1 && resolved.length === 1) {
+      Sample.applyResolvedMolecule(staleComponents[0], resolved[0]);
+      this.calculateTotalMixtureMass();
+      this.updateMixtureComponentEquivalent();
+    } else {
+      await this.addResolvedFragmentsAsComponents(staleComponents, unknownSmiles, resolved);
+    }
+
+    this.syncComponentOrderToSmiles(mixtureSmiles);
+  }
+
+  /**
+   * Splits the edited structure into stale components (at least one fragment
+   * edited away) and fragments that still need resolving. Stale components
+   * don't count as covering any fragment: a stale "A.B" (A→A2) must not block
+   * "B" from being fetched.
+   *
+   * Matching is deliberately set-based, NOT count-based: the editor canvas is
+   * deduplicated (updateMixtureMolecule renders each distinct structure once),
+   * so fragment multiplicity in the editor carries no meaning. Duplicate
+   * same-molecule components are created via drag & drop, and counting
+   * occurrences here would wrongly delete one of them on every editor save.
+   *
+   * @returns {{staleComponents: Array<Object>, unknownSmiles: Array<string>}}
+   */
+  partitionEditedSmiles(mixtureSmiles) {
     const components = this.components || [];
 
-    // Identify stale components first — those where at least one fragment was
-    // edited away. They must not be counted as covering any fragment: a merged
-    // component "A.B" that becomes stale because A→A2 must not block "B" from
-    // being fetched, otherwise "B" is silently dropped after the stale
-    // component is updated in-place to A2.
     const editedFragments = new Set(mixtureSmiles);
     const staleComponents = components.filter(
       (component) => !(component.molecule_cano_smiles || '')
@@ -2578,7 +2618,6 @@ export default class Sample extends Element {
     );
     const staleSet = new Set(staleComponents);
 
-    // Only fragments covered by non-stale components are already resolved.
     const existingFragments = new Set(
       components
         .filter((c) => !staleSet.has(c))
@@ -2586,38 +2625,33 @@ export default class Sample extends Element {
         .filter(Boolean)
     );
 
-    // Only fragments that no current non-stale component covers need to be resolved.
     const unknownSmiles = mixtureSmiles.filter((smiles) => smiles && !existingFragments.has(smiles));
 
-    // Even when there are no new fragments to fetch, stale components (those
-    // whose fragments were removed in the editor) must be deleted so the
-    // component list stays consistent with the edited structure.
-    if (unknownSmiles.length === 0) {
-      staleComponents.forEach((c) => this.deleteMixtureComponent(c));
-      if (staleComponents.length > 0) {
-        this.calculateTotalMixtureMass();
-        this.updateMixtureComponentEquivalent();
-        this.syncComponentOrderToSmiles(mixtureSmiles);
-      }
-      return;
-    }
+    return { staleComponents, unknownSmiles };
+  }
 
+  /**
+   * Deletes the given stale components and refreshes totals/ratios/ordering.
+   */
+  removeStaleComponents(staleComponents, mixtureSmiles) {
+    if (staleComponents.length === 0) return;
+
+    staleComponents.forEach((c) => this.deleteMixtureComponent(c));
+    this.calculateTotalMixtureMass();
+    this.updateMixtureComponentEquivalent();
+    this.syncComponentOrderToSmiles(mixtureSmiles);
+  }
+
+  /**
+   * Fetches a molecule per SMILES fragment, warns the user about failures,
+   * and returns only the successfully resolved molecules (in fragment order).
+   */
+  static async fetchMoleculesForSmiles(smilesList, editor) {
     const results = await Promise.all(
-      unknownSmiles.map((smiles) => MoleculesFetcher.fetchBySmi(smiles, null, null, editor))
+      smilesList.map((smiles) => MoleculesFetcher.fetchBySmi(smiles, null, null, editor))
     );
 
-    // Filter out failed fetches (undefined/null) and track which SMILES failed
-    const failedSmiles = [];
-    const molecules = [];
-    results.forEach((molecule, index) => {
-      if (molecule && molecule.id) {
-        molecules.push(molecule);
-      } else {
-        failedSmiles.push(unknownSmiles[index]);
-      }
-    });
-
-    // Notify user if some molecules failed to resolve
+    const failedSmiles = smilesList.filter((smiles, index) => !(results[index] && results[index].id));
     if (failedSmiles.length > 0) {
       NotificationActions.add({
         title: 'Molecule Resolution Failed',
@@ -2628,44 +2662,44 @@ export default class Sample extends Element {
       });
     }
 
-    // If no valid molecules, exit early
-    if (molecules.length === 0) {
-      return;
-    }
+    return results.filter((molecule) => molecule && molecule.id);
+  }
 
-    // Components whose structure no longer occurs in the edited structure were
-    // modified in the structure editor — update them in place instead of
-    // adding the edited structure as an additional component.
+  /**
+   * Points an existing component at a newly resolved molecule, preserving its
+   * amount, name, and position.
+   */
+  static applyResolvedMolecule(component, molecule) {
+    component.molecule = molecule;
+    component.molecule_id = molecule.id;
+    component.molfile = molecule.molfile;
+    // MW changed — re-derive the molar amount from the entered mass/volume.
+    component.calculateAmount(component.purity || 1.0);
+  }
+
+  /**
+   * Ambiguous reconcile case (multiple edits, or new fragments mixed with
+   * edits): add every resolved fragment as a new component rather than guess
+   * which stale row it came from. Stale rows are deleted only when every
+   * fragment resolved; on partial failure they are kept (the user was warned).
+   */
+  async addResolvedFragmentsAsComponents(staleComponents, unknownSmiles, resolved) {
     const { default: Component } = await import('src/models/Component');
 
-    const newComponents = [];
-    molecules.forEach((molecule, index) => {
-      const staleComponent = staleComponents[index];
-      if (staleComponent) {
-        staleComponent.molecule = molecule;
-        staleComponent.molecule_id = molecule.id;
-        staleComponent.molfile = molecule.molfile;
-        // The molecular weight changed — re-derive the molar amount from the
-        // user-entered mass/volume so the row stays consistent.
-        staleComponent.calculateAmount(staleComponent.purity || 1.0);
-      } else {
-        const newSample = Sample.buildNew(molecule, this.collection_id);
-        newComponents.push(new Component(newSample));
-      }
-    });
-
-    // Stale components not reused for an in-place update (more fragments
-    // removed than added) must be deleted explicitly.
-    staleComponents.slice(molecules.length).forEach((c) => this.deleteMixtureComponent(c));
+    const newComponents = resolved.map(
+      (molecule) => new Component(Sample.buildNew(molecule, this.collection_id))
+    );
+    if (resolved.length === unknownSmiles.length) {
+      staleComponents.forEach((c) => this.deleteMixtureComponent(c));
+    }
 
     if (newComponents.length > 0) {
       this.addMixtureComponentsSync(newComponents);
     } else {
-      // Only in-place updates happened — refresh the mixture totals/ratios.
+      // Every fetch failed — still refresh totals/ratios.
       this.calculateTotalMixtureMass();
       this.updateMixtureComponentEquivalent();
     }
-    this.syncComponentOrderToSmiles(mixtureSmiles);
   }
 
   /**

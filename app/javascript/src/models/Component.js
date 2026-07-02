@@ -782,4 +782,18 @@ export default class Component extends Sample {
 
     return comp;
   }
+
+  /**
+   * Deserialize the components returned by the save/update API so newly inserted
+   * rows pick up their real DB ids. Falls back to the local components when the
+   * response is unexpectedly empty.
+   * @param {Array} savedComponents - API response from saveOrUpdateComponents
+   * @param {Array} fallback - local components to use when the response is empty
+   * @returns {Array<Component>}
+   */
+  static refreshFromApi(savedComponents, fallback) {
+    return Array.isArray(savedComponents) && savedComponents.length > 0
+      ? savedComponents.map(Component.deserializeData)
+      : fallback;
+  }
 }

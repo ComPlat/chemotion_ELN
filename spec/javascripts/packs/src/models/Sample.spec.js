@@ -2210,6 +2210,14 @@ describe('Sample', async () => {
       return comp;
     }
 
+    beforeEach(() => {
+      sinon.restore();
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
     it('collapses two same-molecule components into one', async () => {
       const comp1 = makeComp(1, 42);
       const comp2 = makeComp(2, 42);
@@ -2263,21 +2271,16 @@ describe('Sample', async () => {
       expect(calcEquivSpy.callCount).toBe(2);
     });
 
-it('does not fetch a new molecule when molecules are the same', async () => {
-  const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+    it('does not fetch a new molecule when molecules are the same', async () => {
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+      const comp1 = makeComp(1, 42);
+      const comp2 = makeComp(2, 42);
+      const sample = makeSample([comp1, comp2]);
 
-  try {
-    const comp1 = makeComp(1, 42);
-    const comp2 = makeComp(2, 42);
-    const sample = makeSample([comp1, comp2]);
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
 
-    await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
-
-    expect(fetchStub.called).toBe(false);
-  } finally {
-    fetchStub.restore();
-  }
-});
+      expect(fetchStub.called).toBe(false);
+    });
   });
 
   describe('Sample.splitSmilesToMolecule() — structure editor reconciliation', () => {
@@ -2351,6 +2354,139 @@ it('does not fetch a new molecule when molecules are the same', async () => {
 
       expect(sample.components.length).toBe(3);
       expect(sample.components[2].molecule.id).toBe(77);
+    });
+
+    it('does not mis-attribute molecules when several fragments are edited at once', async () => {
+      // Both components edited, and the editor emits the new fragments in the
+      // reverse of the component order. Positional pairing would swap the
+      // molecules onto the wrong rows; the guardrail instead adds the edited
+      // fragments as fresh components without corrupting either original row.
+      const molX2 = { id: 201, cano_smiles: 'X2', molfile: 'x2' };
+      const molY2 = { id: 202, cano_smiles: 'Y2', molfile: 'y2' };
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+      fetchStub.withArgs('Y2').resolves(molY2);
+      fetchStub.withArgs('X2').resolves(molX2);
+      const compX = makeComponent(1, 42, 'X');
+      const compY = makeComponent(2, 43, 'Y');
+      const sample = makeMixture([compX, compY]);
+
+      await sample.splitSmilesToMolecule(['Y2', 'X2'], 'ketcher');
+
+      const moleculeIds = sample.components.map((c) => c.molecule.id);
+      expect(sample.components.length).toBe(2);
+      expect(moleculeIds).toContain(201);
+      expect(moleculeIds).toContain(202);
+      // The original rows were dropped, not silently re-pointed to a wrong molecule.
+      expect(sample.components).not.toContain(compX);
+      expect(sample.components).not.toContain(compY);
+    });
+
+    it('keeps both same-molecule components when the deduplicated editor structure is saved', async () => {
+      // Two components sharing one molecule render as a SINGLE structure in
+      // the editor (updateMixtureMolecule dedupes fragments), so a save emits
+      // one fragment. Set-based matching must treat both components as
+      // covered — count-based matching would delete one of them on every save.
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+      const compA = makeComponent(1, 43, 'c1ccccc1');
+      const compB = makeComponent(2, 43, 'c1ccccc1');
+      const sample = makeMixture([compA, compB]);
+
+      await sample.splitSmilesToMolecule(['c1ccccc1'], 'ketcher');
+
+      expect(fetchStub.called).toBe(false);
+      expect(sample.components.length).toBe(2);
+    });
+
+    it('ignores a duplicate ring drawn in the editor (canvas is deduplicated by design)', async () => {
+      // Drawing a second copy of an existing structure does not create a
+      // second component — duplicates are added via drag & drop, and the
+      // canvas would collapse back to one structure anyway.
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+      const compA = makeComponent(1, 43, 'c1ccccc1');
+      const sample = makeMixture([compA]);
+
+      await sample.splitSmilesToMolecule(['c1ccccc1', 'c1ccccc1'], 'ketcher');
+
+      expect(fetchStub.called).toBe(false);
+      expect(sample.components.length).toBe(1);
+      expect(sample.components[0]).toBe(compA);
+    });
+
+    it('does not corrupt existing components when a middle fetch fails during a multi-edit', async () => {
+      // C1=A, C2=B, C3=C all edited to X, Y, Z; the fetch for Y fails. In the
+      // ambiguous multi-edit path the resolved fragments are added as new
+      // components and — because not every fragment resolved — the originals are
+      // left untouched rather than corrupted or partially deleted.
+      const molX = { id: 201, cano_smiles: 'X', molfile: 'x' };
+      const molZ = { id: 203, cano_smiles: 'Z', molfile: 'z' };
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+      fetchStub.withArgs('X').resolves(molX);
+      fetchStub.withArgs('Y').resolves(null); // resolution failure
+      fetchStub.withArgs('Z').resolves(molZ);
+      const compA = makeComponent(1, 41, 'A');
+      const compB = makeComponent(2, 42, 'B');
+      const compC = makeComponent(3, 43, 'C');
+      const sample = makeMixture([compA, compB, compC]);
+
+      await sample.splitSmilesToMolecule(['X', 'Y', 'Z'], 'ketcher');
+
+      // No existing component was mutated to the wrong molecule.
+      expect(compA.molecule.id).toBe(41);
+      expect(compB.molecule.id).toBe(42);
+      expect(compC.molecule.id).toBe(43);
+      // The resolved fragments were added as new components.
+      const moleculeIds = sample.components.map((c) => c.molecule.id);
+      expect(moleculeIds).toContain(201);
+      expect(moleculeIds).toContain(203);
+    });
+  });
+
+  describe('Sample.serializeMaterial() — components tri-state', () => {
+    function makeMixture() {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      return s;
+    }
+
+    it('serializes never-loaded components as null (server keeps/copies persisted ones)', () => {
+      const sample = makeMixture();
+
+      expect(sample.serializeMaterial().components).toBe(null);
+    });
+
+    it('serializes an explicitly emptied component list as [] (delete-all instruction)', () => {
+      const sample = makeMixture();
+      sample.components = [];
+
+      expect(sample.serializeMaterial().components).toEqual([]);
+    });
+
+    it('serializes hydrated components via serializeComponent', () => {
+      const sample = makeMixture();
+      const comp = new Component({});
+      comp.id = 1;
+      comp.molecule = { id: 42, cano_smiles: 'CCO' };
+      sample.components = [comp];
+
+      const serialized = sample.serializeMaterial().components;
+      expect(serialized.length).toBe(1);
+      expect(serialized[0].id).toBe(1);
+      expect(serialized[0].component_properties.molecule_id).toBe(42);
+    });
+
+    it('passes raw API component objects through unchanged instead of crashing', () => {
+      const sample = makeMixture();
+      const raw = {
+        id: 7,
+        name: 'Comp A',
+        position: 0,
+        component_properties: { molecule_id: 42, amount_mol: 0.1 },
+      };
+      sample.components = [raw];
+
+      const serialized = sample.serializeMaterial().components;
+      expect(serialized.length).toBe(1);
+      expect(serialized[0]).toEqual(raw);
     });
   });
 });

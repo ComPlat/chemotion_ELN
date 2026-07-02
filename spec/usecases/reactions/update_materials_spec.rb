@@ -195,29 +195,31 @@ describe Usecases::Reactions::UpdateMaterials do
       let(:samples) do
         {
           'reactants' => [
-            'target_amount_unit' => 'mg',
-            'target_amount_value' => 86.09596,
-            'equivalent' => 1,
-            'reference' => false,
-            'is_new' => true,
-            'molfile' => molfile,
-            'container' => root_container,
-            'parent_id' => mixture_parent.id,
-            'sample_type' => Sample::SAMPLE_TYPE_MIXTURE,
-            'components' => [
-              {
-                'id' => parent_component_a.id,
-                'name' => 'Comp A',
-                'position' => 0,
-                'component_properties' => { 'molecule_id' => molecule_a.id, 'amount_mol' => 0.1 },
-              },
-              {
-                'id' => parent_component_b.id,
-                'name' => 'Comp B',
-                'position' => 1,
-                'component_properties' => { 'molecule_id' => molecule_b.id, 'amount_mol' => 0.2 },
-              },
-            ],
+            {
+              'target_amount_unit' => 'mg',
+              'target_amount_value' => 86.09596,
+              'equivalent' => 1,
+              'reference' => false,
+              'is_new' => true,
+              'molfile' => molfile,
+              'container' => root_container,
+              'parent_id' => mixture_parent.id,
+              'sample_type' => Sample::SAMPLE_TYPE_MIXTURE,
+              'components' => [
+                {
+                  'id' => parent_component_a.id,
+                  'name' => 'Comp A',
+                  'position' => 0,
+                  'component_properties' => { 'molecule_id' => molecule_a.id, 'amount_mol' => 0.1 },
+                },
+                {
+                  'id' => parent_component_b.id,
+                  'name' => 'Comp B',
+                  'position' => 1,
+                  'component_properties' => { 'molecule_id' => molecule_b.id, 'amount_mol' => 0.2 },
+                },
+              ],
+            },
           ],
         }
       end
@@ -227,6 +229,157 @@ describe Usecases::Reactions::UpdateMaterials do
 
         expect(subsample).to be_present
         expect(Component.where(sample_id: subsample.id).count).to eq(2)
+      end
+    end
+
+    context 'when a new mixture sub-sample carries client-edited components' do
+      let(:molecule_a) { create(:molecule) }
+      let(:molecule_b) { create(:molecule) }
+      let(:mixture_parent) do
+        create(:sample, name: 'MixtureParent',
+                        sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+                        container: create(:container))
+      end
+      let!(:parent_component_a) do
+        create(:component, sample: mixture_parent, name: 'Comp A', position: 0,
+                           component_properties: { 'molecule_id' => molecule_a.id, 'amount_mol' => 0.1 })
+      end
+      let!(:parent_component_b) do
+        create(:component, sample: mixture_parent, name: 'Comp B', position: 1,
+                           component_properties: { 'molecule_id' => molecule_b.id, 'amount_mol' => 0.2 })
+      end
+      # The user renamed Comp A and changed its amount before the first save; the
+      # payload carries the edited values while still referencing the parent's ids.
+      let(:samples) do
+        {
+          'reactants' => [
+            {
+              'target_amount_unit' => 'mg',
+              'target_amount_value' => 86.09596,
+              'equivalent' => 1,
+              'reference' => false,
+              'is_new' => true,
+              'molfile' => molfile,
+              'container' => root_container,
+              'parent_id' => mixture_parent.id,
+              'sample_type' => Sample::SAMPLE_TYPE_MIXTURE,
+              'components' => [
+                {
+                  'id' => parent_component_a.id,
+                  'name' => 'Comp A (edited)',
+                  'position' => 0,
+                  'component_properties' => { 'molecule_id' => molecule_a.id, 'amount_mol' => 0.5 },
+                },
+                {
+                  'id' => parent_component_b.id,
+                  'name' => 'Comp B',
+                  'position' => 1,
+                  'component_properties' => { 'molecule_id' => molecule_b.id, 'amount_mol' => 0.2 },
+                },
+              ],
+            },
+          ],
+        }
+      end
+
+      it 'persists the client-edited component values, not the parent copies' do
+        subsample = Sample.find_by(short_label: 'reactant')
+        components = Component.where(sample_id: subsample.id).order(:position)
+
+        expect(components.count).to eq(2)
+        expect(components.first.name).to eq('Comp A (edited)')
+        expect(components.first.component_properties['amount_mol']).to eq(0.5)
+      end
+    end
+
+    context 'when an existing mixture sample has a component removed' do
+      let(:molecule_a) { create(:molecule) }
+      let(:molecule_b) { create(:molecule) }
+      # Build the sample with both components here (not via let!) so they exist
+      # before the shared `before` hook runs execute! — the removed one (Comp B) is
+      # not referenced in the payload, so a let! would create it after execute! and
+      # mask the deletion.
+      let(:mixture_sample) do
+        s = create(:sample, name: 'Mixture',
+                            sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+                            container: create(:container))
+        create(:component, sample: s, name: 'Comp A', position: 0,
+                           component_properties: { 'molecule_id' => molecule_a.id, 'amount_mol' => 0.1 })
+        create(:component, sample: s, name: 'Comp B', position: 1,
+                           component_properties: { 'molecule_id' => molecule_b.id, 'amount_mol' => 0.2 })
+        s
+      end
+      let(:component_a) { mixture_sample.components.find_by(name: 'Comp A') }
+      # The client removed Comp B in the reaction editor: only Comp A remains.
+      let(:samples) do
+        {
+          'starting_materials' => [
+            {
+              'id' => mixture_sample.id,
+              'name' => 'Mixture',
+              'target_amount_unit' => 'mg',
+              'target_amount_value' => 75.09596,
+              'equivalent' => 1,
+              'reference' => false,
+              'is_new' => false,
+              'molfile' => molfile,
+              'container' => root_container,
+              'sample_type' => Sample::SAMPLE_TYPE_MIXTURE,
+              'components' => [
+                {
+                  'id' => component_a.id,
+                  'name' => 'Comp A',
+                  'position' => 0,
+                  'component_properties' => { 'molecule_id' => molecule_a.id, 'amount_mol' => 0.1 },
+                },
+              ],
+            },
+          ],
+        }
+      end
+
+      it 'deletes the removed component' do
+        expect(Component.where(sample_id: mixture_sample.id).pluck(:name)).to contain_exactly('Comp A')
+      end
+    end
+
+    context 'when an existing mixture sample has all components cleared' do
+      let(:molecule_a) { create(:molecule) }
+      let(:molecule_b) { create(:molecule) }
+      let(:mixture_sample) do
+        s = create(:sample, name: 'Mixture',
+                            sample_type: Sample::SAMPLE_TYPE_MIXTURE,
+                            container: create(:container))
+        create(:component, sample: s, name: 'Comp A', position: 0,
+                           component_properties: { 'molecule_id' => molecule_a.id, 'amount_mol' => 0.1 })
+        create(:component, sample: s, name: 'Comp B', position: 1,
+                           component_properties: { 'molecule_id' => molecule_b.id, 'amount_mol' => 0.2 })
+        s
+      end
+      # The client cleared every component; it sends an explicit empty array, which
+      # must reconcile to zero persisted components (nil would instead be skipped).
+      let(:samples) do
+        {
+          'starting_materials' => [
+            {
+              'id' => mixture_sample.id,
+              'name' => 'Mixture',
+              'target_amount_unit' => 'mg',
+              'target_amount_value' => 75.09596,
+              'equivalent' => 1,
+              'reference' => false,
+              'is_new' => false,
+              'molfile' => molfile,
+              'container' => root_container,
+              'sample_type' => Sample::SAMPLE_TYPE_MIXTURE,
+              'components' => [],
+            },
+          ],
+        }
+      end
+
+      it 'deletes all persisted components' do
+        expect(Component.where(sample_id: mixture_sample.id).count).to eq(0)
       end
     end
 
