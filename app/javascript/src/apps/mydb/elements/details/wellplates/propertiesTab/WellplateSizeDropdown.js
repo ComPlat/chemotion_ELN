@@ -5,31 +5,44 @@ import PropTypes from 'prop-types';
 import Wellplate from 'src/models/Wellplate';
 import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertiesTab/CustomSizeModal';
 
-const Option = (width, height) => {
-  const label = `${height * width} (${width}x${height})`
-  const value = `${width} ${height}`
+const formatSizeLabel = (width, height) => `${height * width} (${width}x${height})`;
 
-  return (<option key={`${label}-${value}`} label={label} value={value} />)
-}
+const Option = (width, height) => {
+  const label = formatSizeLabel(width, height);
+  const value = `${width} ${height}`;
+
+  return (<option key={`${label}-${value}`} label={label} value={value} />);
+};
 
 const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
-  const size = `${wellplate.width} ${wellplate.height}`
-  const [showCustomSizeModal, setShowCustomSizeModal] = useState(false)
+  const size = `${wellplate.width} ${wellplate.height}`;
+  const [showCustomSizeModal, setShowCustomSizeModal] = useState(false);
 
   const onChange = (event) => {
-    const values = event.target.value.split(" ").map(x => parseInt(x, 10))
-    const width = values[0]
-    const height = values[1]
+    const values = event.target.value.split(' ').map(x => parseInt(x, 10));
+    const width = values[0];
+    const height = values[1];
 
-    updateWellplate({ type: 'size', value: { width: width, height: height } });
-  }
+    updateWellplate({ type: 'size', value: { width, height } });
+  };
 
   const options = [
     Option(24, 16),
     Option(12, 8),
     Option(6, 4),
     Option(4, 3)
-  ]
+  ];
+
+  if (!wellplate.is_new) {
+    return (
+      <Form.Control
+        type="text"
+        value={formatSizeLabel(wellplate.width, wellplate.height)}
+        disabled
+        readOnly
+      />
+    );
+  }
 
   return (
     <>
@@ -45,13 +58,11 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
           required={true}
           value={size}
           onChange={onChange}
-          disabled={!wellplate.is_new}
         >
           {options}
         </Form.Select>
         <Button
           className="create-own-size-button"
-          disabled={!wellplate.is_new}
           onClick={() => setShowCustomSizeModal(true)}
         >
           <i className="fa fa-braille" />
@@ -59,11 +70,11 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
       </InputGroup>
     </>
   );
-}
+};
 
 WellplateSizeDropdown.propTypes = {
   wellplate: PropTypes.instanceOf(Wellplate).isRequired,
   updateWellplate: PropTypes.func.isRequired,
 };
 
-export default WellplateSizeDropdown
+export default WellplateSizeDropdown;

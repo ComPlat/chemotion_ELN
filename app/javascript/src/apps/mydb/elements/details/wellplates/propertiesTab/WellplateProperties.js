@@ -10,6 +10,19 @@ import WellplateSizeDropdown from 'src/apps/mydb/elements/details/wellplates/pro
 import Wellplate from 'src/models/Wellplate';
 import ConfirmModal from 'src/components/common/ConfirmModal'
 
+const renderWellplateSizeLabelTooltip = () => (
+  <OverlayTrigger
+    placement="top"
+    overlay={(
+      <Tooltip id="wellplate-size-label-tooltip">
+        Size cannot be changed after the wellplate has been saved.
+      </Tooltip>
+    )}
+  >
+    <i className="fa fa-info-circle" style={{ cursor: 'pointer' }} />
+  </OverlayTrigger>
+);
+
 export default class WellplateProperties extends Component {
   constructor(props) {
     super(props);
@@ -81,7 +94,11 @@ export default class WellplateProperties extends Component {
             </Form.Group>
           </Col>
           <Col xs="3">
-            <Form.Label>Size</Form.Label>
+            <Form.Label>
+              Size
+              {' '}
+              {renderWellplateSizeLabelTooltip()}
+            </Form.Label>
             <div className="custom-size-dropdown">
               <WellplateSizeDropdown
                 updateWellplate={changeProperties}

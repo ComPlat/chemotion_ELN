@@ -7,6 +7,7 @@ import {
 } from 'mocha';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
+import { Form } from 'react-bootstrap';
 import WellplateSizeDropdown from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateSizeDropdown';
 import wellplate2x3EmptyJson from 'fixture/wellplates/wellplate_2_3_empty';
 import wellplate8x12EmptyJson from 'fixture/wellplates/wellplate_8_12_empty';
@@ -16,7 +17,30 @@ configure({ adapter: new Adapter() });
 
 function emptyFunction() {}
 
-describe.skip('WellplateSizeDropdown', () => {
+describe('WellplateSizeDropdown', () => {
+  it('renders a disabled text field for saved wellplates', () => {
+    const wellplate = new Wellplate({ ...wellplate8x12EmptyJson, is_new: false });
+    const wrapper = shallow(
+      <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
+    );
+
+    expect(wrapper.find(Form.Select).length).toEqual(0);
+    expect(wrapper.find(Form.Control).prop('value')).toEqual('96 (12x8)');
+    expect(wrapper.find(Form.Control).prop('disabled')).toEqual(true);
+  });
+
+  it('renders a size dropdown for new wellplates', () => {
+    const wellplate = new Wellplate(wellplate8x12EmptyJson);
+    const wrapper = shallow(
+      <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
+    );
+
+    expect(wrapper.find(Form.Select).length).toEqual(1);
+    expect(wrapper.find(Form.Control).length).toEqual(0);
+  });
+});
+
+describe.skip('WellplateSizeDropdown legacy', () => {
   describe.skip('constructor()', () => {
     context.skip('when wellplate size 2x3 is not in option list', () => {
       it('the current state has correct currentSize property', () => {
