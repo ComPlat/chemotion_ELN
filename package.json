@@ -80,7 +80,7 @@
     "react-draggable": "^4.4.3",
     "react-dropzone": "^15",
     "react-html-id": "^0.1.5",
-    "react-inlinesvg": "0.8.4",
+    "react-inlinesvg": "^4.5.0",
     "react-input-autosize": "1.1.0",
     "react-json-editor-ajrm": "^2.5.10",
     "react-markdown": "^6.0.2",

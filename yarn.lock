@@ -9255,15 +9255,6 @@ http-signature@~1.4.0:
     jsprim "^2.0.2"
     sshpk "^1.18.0"
 
-httpplease@^0.16.4:
-  version "0.16.4"
-  resolved "https://registry.npmjs.org/httpplease/-/httpplease-0.16.4.tgz"
-  integrity sha1-04Lr4jDvUHkIC06f/r8xap51wNo=
-  dependencies:
-    urllite "~0.5.0"
-    xmlhttprequest "*"
-    xtend "~3.0.0"
-
 https-proxy-agent@^5.0.0, https-proxy-agent@^5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/https-proxy-agent/-/https-proxy-agent-5.0.1.tgz#c59ef224a04fe8b754f3db0063a25ea30d0005d6"
@@ -13754,18 +13745,22 @@ react-fit@^1.4.0:
     prop-types "^15.6.0"
     tiny-warning "^1.0.0"
 
+react-from-dom@^0.7.5:
+  version "0.7.5"
+  resolved "https://registry.yarnpkg.com/react-from-dom/-/react-from-dom-0.7.5.tgz#2d2d2bf6d80149c053bcf71bb6615e5e7f6d23db"
+  integrity sha512-CO92PmMKo/23uYPm6OFvh5CtZbMgHs/Xn+o095Lz/TZj9t8DSDhGdSOMLxBxwWI4sr0MF17KUn9yJWc5Q00R/w==
+
 react-html-id@^0.1.5:
   version "0.1.5"
   resolved "https://registry.npmjs.org/react-html-id/-/react-html-id-0.1.5.tgz"
   integrity sha512-8MvS/oeD7EE9jlIM/iNc2HtyN5mzFLK9DHGThuucxJYnGVYfOR1ZVRkE5znJmKbj8PMDXnrnozjDdHcSQJO3LA==
 
-react-inlinesvg@0.8.4:
-  version "0.8.4"
-  resolved "https://registry.npmjs.org/react-inlinesvg/-/react-inlinesvg-0.8.4.tgz"
-  integrity sha512-pMkYa09gsP+5mA5uYDon5TxJbu76rJqdPSQ9nTRZbVacH58Eo3tFxD0Z382cioxNrpeqWHI/hquzt00GaahnkA==
+react-inlinesvg@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/react-inlinesvg/-/react-inlinesvg-4.5.0.tgz#64aadf82b7d26881329570def00c2029adfb7cf4"
+  integrity sha512-J/ZWLCmYdhOu5a+dWBNKXaQb/YFvTjqTZnoaprOUKD2geu+JcO1sZ2AcrXvzYurgQIuI3Y4+Ji2dUjsO86nhgw==
   dependencies:
-    httpplease "^0.16.4"
-    once "^1.4.0"
+    react-from-dom "^0.7.5"
 
 react-input-autosize@1.1.0:
   version "1.1.0"
@@ -16275,13 +16270,6 @@ url-parse@^1.5.3:
     querystringify "^2.1.1"
     requires-port "^1.0.0"
 
-urllite@~0.5.0:
-  version "0.5.0"
-  resolved "https://registry.npmjs.org/urllite/-/urllite-0.5.0.tgz"
-  integrity sha1-G3u5yj+w25Ug3hE0ZrvPfMNBRRo=
-  dependencies:
-    xtend "~4.0.0"
-
 use-isomorphic-layout-effect@^1.2.0:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/use-isomorphic-layout-effect/-/use-isomorphic-layout-effect-1.2.1.tgz#2f11a525628f56424521c748feabc2ffcc962fce"
@@ -16930,20 +16918,10 @@ xmlchars@^2.2.0:
   resolved "https://registry.yarnpkg.com/xmlchars/-/xmlchars-2.2.0.tgz#060fe1bcb7f9c76fe2a17db86a9bc3ab894210cb"
   integrity sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==
 
-xmlhttprequest@*:
-  version "1.8.0"
-  resolved "https://registry.npmjs.org/xmlhttprequest/-/xmlhttprequest-1.8.0.tgz"
-  integrity sha1-Z/4HXFwk/vOfnWX197f+dRcZaPw=
-
-xtend@^4.0.0, xtend@~4.0.0:
+xtend@^4.0.0:
   version "4.0.2"
   resolved "https://registry.npmjs.org/xtend/-/xtend-4.0.2.tgz"
   integrity sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==
-
-xtend@~3.0.0:
-  version "3.0.0"
-  resolved "https://registry.npmjs.org/xtend/-/xtend-3.0.0.tgz"
-  integrity sha1-XM50B7r2Qsunvs2laBEcST9ZZlo=
 
 y18n@^4.0.0:
   version "4.0.3"
