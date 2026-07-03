@@ -49,5 +49,13 @@ echo ".devcontainer/.env created successfully."
 cp docker-compose.dev.yml .devcontainer/docker-compose.dev.yml
 cp Dockerfile.chemotion-dev .devcontainer/Dockerfile.chemotion-dev
 
+# docker-compose.dev.yml declares `env_file: .env.development` (the committed dev
+# base) for the app/webpacker/storybook services. Compose resolves that path
+# relative to the compose file's directory, which here is .devcontainer/, so the
+# base file must exist next to the copied compose file or compose aborts with
+# "env file .devcontainer/.env.development not found". (.env is the optional
+# per-machine override; it maps to the .devcontainer/.env built above.)
+cp .env.development .devcontainer/.env.development
+
 # prebuild base image
 docker build -f Dockerfile.chemotion-dev --target chemotion_dev_base -t chemotion_eln_dev .
