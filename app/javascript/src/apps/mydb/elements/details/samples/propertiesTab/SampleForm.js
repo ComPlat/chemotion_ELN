@@ -1060,34 +1060,29 @@ export default class SampleForm extends React.Component {
    * @returns {JSX.Element|false} The rendered input or false if not applicable
    */
   totalMixtureVolume(sample) {
-    const isDisabled = sample.isMethodDisabled('amount_value')
-      || sample.gas_type === 'gas'
-      || sample.gas_type === 'feedstock'
-      || sample.contains_residues
-      || !sample.can_update;
+    const isDisabled = sample.isMethodDisabled('amount_value') || !sample.can_update;
 
     const metricPrefixes = ['m', 'u', 'n'];
     const prefix = sample.metrics?.[3] && metricPrefixes.includes(sample.metrics[3])
       ? sample.metrics[3]
       : 'm';
 
-    if (!isDisabled) {
-      return (
-        <NumeralInputWithUnitsCompo
-          value={sample.amount_l}
-          unit="l"
-          label="Total volume"
-          metricPrefix={prefix}
-          metricPrefixes={metricPrefixes}
-          precision={5}
-          title="Total volume"
-          variant="light"
-          id="numInput_total_mixture_volume_l"
-          showInfoTooltipTotalVol
-          onChange={(e) => this.handleMixtureAmountLChanged(e, sample)}
-        />
-      );
-    }
+    return (
+      <NumeralInputWithUnitsCompo
+        value={sample.amount_l}
+        unit="l"
+        label="Total volume"
+        metricPrefix={prefix}
+        metricPrefixes={metricPrefixes}
+        precision={5}
+        title="Total volume"
+        variant="light"
+        id="numInput_total_mixture_volume_l"
+        showInfoTooltipTotalVol
+        disabled={isDisabled}
+        onChange={(e) => this.handleMixtureAmountLChanged(e, sample)}
+      />
+    );
   }
 
   /**
