@@ -1,5 +1,7 @@
 /* eslint-disable react/prop-types */
-import React, { useContext, useState, useEffect } from 'react';
+import React, {
+  useContext, useEffect, useMemo
+} from 'react';
 import {
   Tab, OverlayTrigger, Tooltip,
   ButtonToolbar, Button, Alert, Stack, ToggleButtonGroup, ToggleButton,
@@ -16,35 +18,36 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import SearchResultTabContent from 'src/components/searchModal/forms/SearchResultTabContent';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 
-function SearchResult({ handleClear }) {
+const SearchResult = ({ handleClear }) => {
   const searchStore = useContext(StoreContext).search;
   const results = searchStore.searchResultValues;
   const userState = UserStore.getState();
-  const profile = userState.profile || {};
   const genericElements = userState.genericEls || [];
-  const [visibleTabs, setVisibleTabs] = useState([]);
   const { currentCollection } = UIStore.getState();
 
-  useEffect(() => {
-    if (typeof (profile) !== 'undefined' && profile
-      && typeof (profile.data) !== 'undefined' && profile.data) {
-      const visible = [];
+  const visibleTabs = useMemo(() => {
+    const {profile} = UserStore.getState();
+    if (!profile?.data) return [];
 
-      Object.entries(profile.data.layout).filter((value) => value[1] > 0)
-        .sort((a, b) => a[1] - b[1])
-        .forEach((value, i) => {
-          const tab = results.find((val) => val.id.indexOf(value[0]) !== -1);
-          const totalElements = tab === undefined ? 0 : tab.results.total_elements;
-          if (value[1] > 0 && tab !== undefined) {
-            visible.push({ key: value[0], index: i, totalElements });
-          }
-        });
-      setVisibleTabs(visible);
-      let activeTabElement = visible.find((v) => v.totalElements !== 0);
-      activeTabElement = activeTabElement !== undefined ? activeTabElement.index : 1;
-      handleChangeTab(activeTabElement);
-    }
+    const visible = [];
+    Object.entries(profile.data.layout).filter((value) => value[1] > 0)
+      .sort((a, b) => a[1] - b[1])
+      .forEach((value, i) => {
+        const tab = results.find((val) => val.id.indexOf(value[0]) !== -1);
+        const totalElements = tab === undefined ? 0 : tab.results.total_elements;
+        if (value[1] > 0 && tab !== undefined) {
+          visible.push({ key: value[0], index: i, totalElements });
+        }
+      });
+    return visible;
   }, [results]);
+
+  useEffect(() => {
+    if (visibleTabs.length === 0) return;
+    let activeTab = visibleTabs.find((v) => v.totalElements !== 0);
+    activeTab = activeTab !== undefined ? activeTab.index : 1;
+    searchStore.changeSearchResultActiveTabKey(activeTab);
+  }, [visibleTabs, searchStore]);
 
   const prepareResultForDispatch = () => {
     const resultObject = {};
@@ -98,7 +101,7 @@ function SearchResult({ handleClear }) {
       let structureSvg = '';
       if (searchStore.structure_svg) {
         const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(searchStore.structure_svg)}`;
-        structureSvg = <img src={dataUrl} style={{ maxHeight: '100px' }} />;
+        structureSvg = <img src={dataUrl} style={{ maxHeight: '100px' }} alt="structure" />;
       }
 
       return (
@@ -118,7 +121,7 @@ function SearchResult({ handleClear }) {
                   .replace(/^OR\b\s*/, '')
                   .trim();
               }
-              return <div key={i}>{cleanVal}</div>;
+              return <div key={val}>{cleanVal}</div>;
             }))}
           {
             searchStore.searchResultsCount > 0 ? null : (
@@ -147,9 +150,7 @@ function SearchResult({ handleClear }) {
         <h4 className="search-result-number-of-results">
           {sum}
           {' '}
-          results for the collection "
-          {currentCollection?.label}
-          "
+          {`results for the collection "${currentCollection?.label}"`}
         </h4>
       </div>
     );
@@ -172,7 +173,7 @@ function SearchResult({ handleClear }) {
       </Tooltip>
     );
     let itemClass = tabResult.total_elements === 0 ? 'no-result' : '';
-    itemClass = searchStore.search_result_active_tab_key == list.index ? `${itemClass} active` : itemClass;
+    itemClass = searchStore.search_result_active_tab_key === list.index ? `${itemClass} active` : itemClass;
 
     return (
       <ToggleButton

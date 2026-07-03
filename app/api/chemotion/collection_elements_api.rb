@@ -35,6 +35,7 @@ module Chemotion
           ui_state: params[:ui_state].except(:currentCollection),
         )
         status 204
+        body false
       end
     end
   end

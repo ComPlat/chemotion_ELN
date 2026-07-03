@@ -27,12 +27,16 @@ module Entities
     expose :is_templates_moderator, documentation: { type: 'Boolean', desc: 'ketcherails template administrator' }
     expose :molecule_editor, documentation: { type: 'Boolean', desc: 'molecule administrator' }
     expose :converter_admin, documentation: { type: 'Boolean', desc: 'converter administrator' }
+    expose :global_text_template_editor, documentation: { type: 'Boolean', desc: 'global text template editor' }
     expose :account_active, documentation: { type: 'Boolean', desc: 'User Account Active or Inactive' }
     expose :matrix, documentation: { type: 'Integer', desc: "User's matrix" }
     expose :counters
     expose :generic_admin, documentation: { type: 'Hash', desc: 'Generic administrator' }
     expose :otp_required_for_login, documentation: { type: 'Boolean', desc: 'If 2fa is enabled' }
     expose :profile
+    expose :api_tokens, as: :tokens, using: Entities::ApiTokenEntity do |user, _options|
+      user.api_tokens.not_expired
+    end
 
     def samples_count
       object.counters['samples'].to_i

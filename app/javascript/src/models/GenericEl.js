@@ -18,11 +18,6 @@ export default class GenericEl extends GenericElement {
     return super.buildNewShortLabel(klass, currentUser);
   }
 
-  buildCopy(params = {}) {
-    const { currentUser } = UserStore.getState();
-    return super.buildCopy(params, currentUser);
-  }
-
   static copyFromCollectionId(element, collectionId) {
     const { currentUser } = UserStore.getState();
     return super.copyFromCollectionId(element, collectionId, currentUser);

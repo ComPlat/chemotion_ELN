@@ -50,12 +50,6 @@ module Chemotion
         end
       end
 
-      desc 'list user labels'
-      get 'list_labels' do
-        labels = UserLabel.my_labels(current_user)
-        present labels || [], with: Entities::UserLabelEntity, root: 'labels'
-      end
-
       desc 'list structure editors'
       get 'list_editors' do
         editors = []
@@ -76,35 +70,6 @@ module Chemotion
         desc 'get omniauth providers'
         get do
           { providers: Devise.omniauth_configs.keys, current_user: current_user }
-        end
-      end
-
-      namespace :save_label do
-        desc 'create or update user labels'
-        params do
-          optional :id, type: Integer
-          optional :title, type: String
-          optional :description, type: String
-          optional :color, type: String
-          optional :access_level, type: Integer
-        end
-        put do
-          attr = {
-            id: params[:id],
-            user_id: current_user.id,
-            access_level: params[:access_level] || 0,
-            title: params[:title],
-            description: params[:description],
-            color: params[:color],
-          }
-          label = nil
-          if params[:id].present?
-            label = UserLabel.find(params[:id])
-            label.update!(attr)
-          else
-            label = UserLabel.create!(attr)
-          end
-          present label, with: Entities::UserLabelEntity
         end
       end
 
@@ -148,6 +113,71 @@ module Chemotion
       desc 'Log out current_user'
       delete 'sign_out' do
         status 204
+      end
+
+      namespace :auth_token do
+        desc 'Generate Token'
+        params do
+          optional :otp_attempt,
+                   type: String,
+                   desc: 'one time password'
+          optional :expires_in_days,
+                   type: Integer,
+                   default: 30,
+                   values: 1..600,
+                   desc: 'Token expiration in days (1–600)'
+          optional :name, type: String, desc: 'Name of the item'
+        end
+        post do
+          if current_user.otp_required_for_login
+            unless current_user.validate_and_consume_otp!(params[:otp_attempt])
+              error!({
+                       error: 'OTP Missing',
+                       otp_required: true,
+                       otp_wrong: params[:otp_attempt].present?,
+                     }, 422)
+            end
+          else
+            error!('2FA is needed', 401)
+          end
+          item_name = params[:name].to_s.strip
+          item_name = "Token #{Time.current.strftime('%Y%m%d_%H:%M:%S')}" if item_name.empty?
+          token = current_user.api_tokens.create!(
+            expires_at: params[:expires_in_days].days.from_now,
+            name: item_name,
+          )
+
+          { token: token.plain_token }
+        end
+      end
+
+      namespace :revoke_auth_token do
+        desc 'Revoke user Auth Token'
+        params do
+          optional :otp_attempt,
+                   type: String,
+                   desc: 'one time password'
+          requires :id, type: Integer, desc: 'Token ID'
+        end
+
+        post do
+          if current_user.otp_required_for_login
+            unless current_user.validate_and_consume_otp!(params[:otp_attempt])
+              error!({
+                       error: 'OTP Missing',
+                       otp_required: true,
+                       otp_wrong: params[:otp_attempt].present?,
+                     }, 422)
+            end
+          else
+            error!('2FA is needed', 401)
+          end
+          token = current_user.api_tokens.find_by(id: params[:id])
+          error!('Token not found', 404) unless token
+          error!('Token already revoked', 409) if token.revoked_at
+
+          token.revoke!
+        end
       end
     end
 

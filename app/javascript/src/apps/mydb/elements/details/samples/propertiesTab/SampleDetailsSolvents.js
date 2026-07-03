@@ -52,13 +52,15 @@ export default class SampleDetailsSolvents extends React.Component {
   }
 
   render() {
-    const { sample } = this.props;
+    const { sample, isDisabled } = this.props;
     return (
       <SampleDetailsSolventsDnd
         sample={sample}
         dropSample={this.dropSample}
         deleteSolvent={this.deleteSolvent}
+        canDrop={sample.can_update !== false}
         onChangeSolvent={(changeEvent) => this.onChangeSolvent(changeEvent)}
+        isDisabled={isDisabled}
       />
     );
   }
@@ -67,4 +69,9 @@ export default class SampleDetailsSolvents extends React.Component {
 SampleDetailsSolvents.propTypes = {
   sample: PropTypes.instanceOf(Sample).isRequired,
   onChange: PropTypes.func.isRequired,
+  isDisabled: PropTypes.bool,
+};
+
+SampleDetailsSolvents.defaultProps = {
+  isDisabled: false,
 };

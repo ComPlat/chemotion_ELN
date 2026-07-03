@@ -14,10 +14,7 @@ import PropTypes from 'prop-types';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
 
-function VesselDetails({ vesselItem }) {
-  if (!vesselItem) {
-    return null; // Render nothing if no vesselItem
-  }
+const VesselDetails = ({ vesselItem }) => {
   const isReadOnly = () => {
     const { currentCollection } = UIStore.getState();
     return !collectionHasPermission(currentCollection, 0);
@@ -29,15 +26,18 @@ function VesselDetails({ vesselItem }) {
   const [closeOverlayTarget, setCloseOverlayTarget] = useState(null);
   const [closeOverlayPlacement, setCloseOverlayPlacement] = useState('bottom');
 
+  useEffect(() => {
+    if (!vesselItem) return;
+    context.vesselDetailsStore.convertVesselToModel(vesselItem);
+    setReadOnly(isReadOnly());
+  }, [vesselItem]);
+
+  if (!vesselItem) return null;
+
   const mobXItem = context.vesselDetailsStore.getVessel(vesselItem.id);
   const isPendingToSave = !!mobXItem?.changed;
   const isSubmitDisabled = !mobXItem || mobXItem.isDuplicateName || !mobXItem.changed;
   const submitLabel = vesselItem.is_new ? 'Create' : 'Save';
-
-  useEffect(() => {
-    context.vesselDetailsStore.convertVesselToModel(vesselItem);
-    setReadOnly(isReadOnly());
-  }, [vesselItem]);
 
   const handleSubmit = () => {
     vesselItem.adoptPropsFromMobXModel(mobXItem);
@@ -80,8 +80,6 @@ function VesselDetails({ vesselItem }) {
     setActiveTab(eventKey);
   };
 
-  if (!vesselItem) return null;
-
   const titleAppendix = (
     <ElementCollectionLabels
       className="collection-label"
@@ -102,7 +100,7 @@ function VesselDetails({ vesselItem }) {
         label: submitLabel,
         iconClass: 'fa fa-floppy-o',
         variant: 'primary',
-        onClick: handleSubmit,
+        onClick: () => handleSubmit(),
       })}
     </div>
   ) : null;
@@ -117,7 +115,7 @@ function VesselDetails({ vesselItem }) {
         iconClass: 'fa fa-floppy-o',
         variant: 'primary',
         disabled: isSubmitDisabled,
-        onClick: handleSubmit,
+        onClick: () => handleSubmit(),
       })}
     </>
   );
@@ -182,7 +180,7 @@ function VesselDetails({ vesselItem }) {
       {closeOverlay}
     </DetailCard>
   );
-}
+};
 
 VesselDetails.propTypes = {
   vesselItem: PropTypes.shape({

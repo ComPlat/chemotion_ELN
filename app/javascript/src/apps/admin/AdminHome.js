@@ -1,6 +1,6 @@
-import React from 'react';
-import { Row, Col, Nav, NavItem, Container } from 'react-bootstrap';
+import React, { useState } from 'react';
 import BaseNavigation from 'src/components/navigation/BaseNavigation';
+import TreeViewItem from 'src/components/common/TreeViewItem';
 import Notifications from 'src/components/Notifications';
 import AdminDashboard from 'src/apps/admin/AdminDashboard';
 import UserManagement from 'src/apps/admin/UserManagement';
@@ -8,114 +8,61 @@ import GroupsDevices from 'src/apps/admin/GroupsDevices';
 import MessagePublish from 'src/apps/admin/MessagePublish';
 import OlsTerms from 'src/apps/admin/OlsTerms';
 import MatrixManagement from 'src/apps/admin/MatrixManagement';
-import TextTemplateContainer from 'src/apps/admin/textTemplates/TextTemplateContainer';
 import DelayedJobs from 'src/apps/admin/DelayedJobs';
 import ChemSpectraLayouts from 'src/apps/admin/ChemSpectraLayouts';
 import DevicesList from 'src/apps/admin/devices/DevicesList';
 // import TemplateManagement from 'src/apps/admin/TemplateManagement';
 import ThirdPartyApp from 'src/apps/admin/ThirdPartyApp';
+import InfoSupportLinks from 'src/apps/admin/InfoSupportLinks';
 
-class AdminHome extends React.Component {
-  constructor(props) {
-    super();
-    this.state = {
-      pageIndex: 0,
-    };
-    this.handleSelect = this.handleSelect.bind(this);
-  }
+const ADMIN_PAGES = [
+  { key: 0, label: 'Dashboard', component: AdminDashboard },
+  { key: 1, label: 'User Management', component: UserManagement },
+  { key: 9, label: 'Devices', component: DevicesList },
+  { key: 4, label: 'Groups', component: GroupsDevices },
+  { key: 7, label: 'UI features', component: MatrixManagement },
+  { key: 2, label: 'Message Publish', component: MessagePublish },
+  { key: 5, label: 'Load OLS Terms', component: OlsTerms },
+  // { key: 12, label: 'Report-template Management', component: TemplateManagement },
+  { key: 13, label: 'Delayed Jobs', component: DelayedJobs },
+  { key: 14, label: 'ChemSpectra Layouts', component: ChemSpectraLayouts },
+  { key: 15, label: 'Third Party Apps', component: ThirdPartyApp },
+  { key: 16, label: 'Info & Support Links', component: InfoSupportLinks },
+];
 
-  handleSelect(pageIndex) {
-    this.setState({
-      pageIndex: Number(pageIndex)
-    });
-  }
+export default function AdminHome() {
+  const [pageIndex, setPageIndex] = useState(0);
 
-  mainContent() {
-    const { pageIndex } = this.state;
-    switch (pageIndex) {
-      case 0: return <AdminDashboard />;
-      case 1: return <UserManagement />;
-      case 2: return <MessagePublish />;
-      case 4: return <GroupsDevices />;
-      case 5: return <OlsTerms />;
-      case 7: return <MatrixManagement />;
-      case 8: return <TextTemplateContainer />;
-      case 9: return <DevicesList />;
-      // case 12: return <TemplateManagement />;
-      case 13: return <DelayedJobs />;
-      case 14: return <ChemSpectraLayouts />;
-      case 15: return <ThirdPartyApp />;
-      default: return null;
-    }
-  }
+  const handleSelect = (nextPageIndex) => {
+    setPageIndex(Number(nextPageIndex));
+  };
 
-  renderTree() {
-    const { pageIndex } = this.state;
+  const currentPage = ADMIN_PAGES.find(({ key }) => key === pageIndex);
+  const PageComponent = currentPage?.component;
 
-    return (
-      <Nav className="flex-column fs-5 gap-3 mt-2" variant="pills" activeKey={pageIndex} onSelect={this.handleSelect}>
-        <NavItem>
-          <Nav.Link eventKey={0}>Dashboard</Nav.Link>
-        </NavItem>
-        <NavItem>
-          <Nav.Link eventKey={1}>User Management</Nav.Link>
-        </NavItem>
-        <NavItem>
-          <Nav.Link eventKey={9}>Devices</Nav.Link>
-        </NavItem>
-        <NavItem>
-          <Nav.Link eventKey={4}>Groups</Nav.Link>
-        </NavItem>
-        <NavItem>
-          <Nav.Link eventKey={7}>UI features</Nav.Link>
-        </NavItem>
-        <NavItem>
-          <Nav.Link eventKey={8}>Text Templates</Nav.Link>
-        </NavItem>
-        <NavItem>
-          <Nav.Link eventKey={2}>Message Publish</Nav.Link>
-        </NavItem>
-        <NavItem>
-          <Nav.Link eventKey={5}>Load OLS Terms</Nav.Link>
-        </NavItem>
-        {/* <NavItem>
-          <Nav.Link eventKey={12}>Report-template Management</Nav.Link>
-        </NavItem> */}
-        <NavItem>
-          <Nav.Link eventKey={13}>Delayed Jobs</Nav.Link>
-        </NavItem>
-        <NavItem>
-          <Nav.Link eventKey={14}>ChemSpectra Layouts</Nav.Link>
-        </NavItem>
-        <NavItem>
-          <Nav.Link eventKey={15}>Third Party Apps</Nav.Link>
-        </NavItem>
-      </Nav>
-    );
-  }
-
-  render() {
-    return (
-      <div>
-        <Container fluid>
-          <Row className="mb-3">
-            <BaseNavigation />
-          </Row>
-          <div className="d-flex gap-4">
-            {this.renderTree()}
-            <div className="flex-grow-1">
-              {this.mainContent()}
+  return (
+    <div className="d-flex flex-column vh-100">
+      <BaseNavigation />
+      <div className="d-flex flex-grow-1 align-items-stretch">
+        <div className="sidebar">
+          <div className="sidebar-content">
+            <div className="tree-view__container">
+              {ADMIN_PAGES.map(({ key, label }) => (
+                <TreeViewItem
+                  key={key}
+                  title={label}
+                  selected={pageIndex === key}
+                  onClick={() => handleSelect(key)}
+                />
+              ))}
             </div>
           </div>
-          <Row>
-            <Col>
-              <Notifications />
-            </Col>
-          </Row>
-        </Container>
+        </div>
+        <div className="flex-grow-1 p-4">
+          {PageComponent ? <PageComponent /> : null}
+        </div>
       </div>
-    );
-  }
+      <Notifications />
+    </div>
+  );
 }
-
-export default AdminHome;

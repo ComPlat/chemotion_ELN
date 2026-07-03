@@ -83,6 +83,7 @@ module Chemotion
         collection.update(shared: false) if CollectionShare.where(collection: collection).none?
 
         status 204
+        body false
       end
     end
   end

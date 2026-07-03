@@ -18,6 +18,7 @@
 @import "global-styles/tags";
 
 // file css rules that are targeted at specific components under components
+@import "components/AccountProfile";
 @import "components/AppModal";
 @import "components/AttachmentList";
 @import "components/ButtonGroupToggleButton";
@@ -45,6 +46,7 @@
 @import "components/ReorderableList";
 @import "components/SampleName";
 @import "components/SearchInput";
+@import "components/TextRangeWithAddon";
 @import "components/SearchModal";
 @import "components/SearchResult";
 @import "components/SelectionActions";
@@ -53,11 +55,11 @@
 @import "components/CollectionTabLayoutEditor";
 @import "components/svg_with_popver";
 @import "components/FolderDropzone.module";
+@import "components/UserSettings";
 
 @import "legacy/miscellaneous";
 @import "legacy/AttachmentContainer";
 @import "legacy/sample";
-@import "legacy/cellLines";
 @import "legacy/chemical-tab";
 @import "legacy/chemspectra";
 @import "legacy/collection_management";

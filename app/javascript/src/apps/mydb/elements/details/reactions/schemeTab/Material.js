@@ -368,6 +368,9 @@ class Material extends Component {
   equivalentOrYield(material) {
     const { materialGroup, reaction, lockEquivColumn } = this.props;
     if (materialGroup === 'products') {
+      if (reaction.isInteractionReaction()) {
+        return null; // equivalent and yield not relevant for interaction reactions, and conversion rate is not applicable for products, so we return null to render an empty cell.
+      }
       return this.yieldOrConversionRate(material);
     }
     const isSbmm = isSbmmSample(material);
@@ -1128,10 +1131,11 @@ class Material extends Component {
   }
 
   dragHandle() {
-    const { dragRef } = this.props;
+    const { dragRef, reaction } = this.props;
+    const enabled = permitOn(reaction);
 
     return (
-      <DragHandle ref={dragRef} />
+      <DragHandle ref={enabled ? dragRef : null} enabled={enabled} />
     );
   }
 
@@ -1203,6 +1207,7 @@ class Material extends Component {
                     value={material.coefficient ?? 1}
                     onChange={this.handleCoefficientChange}
                     name="coefficient"
+                    disabled={!permitOn(reaction)}
                   />
                 </div>
               </OverlayTrigger>

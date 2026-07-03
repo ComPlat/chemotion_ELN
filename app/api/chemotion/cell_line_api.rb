@@ -69,6 +69,8 @@ module Chemotion
         error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, cellline_sample).read?
 
         present cellline_sample, with: Entities::CellLineSampleEntity
+      rescue ActiveRecord::RecordNotFound
+        error!('404 Not Found', 404)
       end
 
       desc 'Create a new Cell line sample'

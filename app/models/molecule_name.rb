@@ -27,4 +27,10 @@ class MoleculeName < ApplicationRecord
   belongs_to :molecule, optional: true
 
   has_many :samples
+
+  # Blocks C0/C1 control chars, bidi overrides (U+202A-U+202E, U+2066-U+2069),
+  # and zero-width/invisible chars (U+200B-U+200D, U+FEFF).
+  SAFE_NAME_REGEX = /\A[^\x00-\x1f\x7f\u0080-\u009f\u200b-\u200d\u202a-\u202e\u2066-\u2069\ufeff]+\z/.freeze
+
+  validates :name, format: { with: SAFE_NAME_REGEX, message: :invalid_characters }
 end

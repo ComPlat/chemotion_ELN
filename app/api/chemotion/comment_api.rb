@@ -26,7 +26,15 @@ module Chemotion
       end
 
       def find_commentable(commentable_type, commentable_id)
-        commentable_type.classify.constantize.find(commentable_id)
+        if commentable_type == 'CellLine'
+          CelllineSample.find(commentable_id)
+        else
+          commentable_type.classify.constantize.find(commentable_id)
+        end
+      end
+
+      def get_commentable_type(commentable_type)
+        commentable_type == 'CellLine' ? 'CelllineSample' : commentable_type
       end
     end
 
@@ -99,6 +107,7 @@ module Chemotion
                          Comment.research_plan_sections.values +
                          Comment.device_description_sections.values +
                          Comment.sequence_based_macromolecule_sample_sections.values +
+                         Comment.cell_line_sample_sections.values +
                          Comment.header_sections.values
       end
 
@@ -110,7 +119,7 @@ module Chemotion
         attributes = {
           content: params[:content],
           commentable_id: params[:commentable_id],
-          commentable_type: params[:commentable_type],
+          commentable_type: get_commentable_type(params[:commentable_type]),
           section: params[:section],
           created_by: current_user.id,
           submitter: "#{current_user.first_name} #{current_user.last_name}",
@@ -136,7 +145,7 @@ module Chemotion
 
         comments = Comment.where(
           commentable_id: params[:commentable_id],
-          commentable_type: params[:commentable_type],
+          commentable_type: get_commentable_type(params[:commentable_type]),
         ).order(:status, :section, created_at: :desc)
 
         present comments, with: Entities::CommentEntity, root: 'comments'

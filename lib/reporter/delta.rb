@@ -19,7 +19,7 @@ module Reporter
 
     private
     def deltaToHTML(delta)
-      return "<div></div>" if delta['ops'].blank?
+      return "" if delta['ops'].blank?
 
       html = []
       i = 0
@@ -58,7 +58,11 @@ module Reporter
       html = rebuildList(html, "!!!olli!!!", "ol")
       html = rebuildList(html, "!!!ulli!!!", "ul")
 
-      "<div>" + html.join("") + "</div>"
+      # Emit the block elements (<p>/<ol>/<ul>/<hN>) directly. They are valid
+      # children of sablon's top-level document fragment. A wrapping <div>
+      # would be parsed as a single paragraph that may not contain block
+      # children (sablon >= 0.4.3 raises "p is not a valid child of div").
+      html.join("")
     end
 
     def rebuildList html, string, replace_string
@@ -115,7 +119,7 @@ module Reporter
     end
 
     def buildDeltaOps(op)
-      return CGI.escapeHTML(op["insert"]) if (!op["attributes"]) && (!(op && op["insert"].is_a?(Hash) && op["insert"]["image"]))
+      return CGI.escapeHTML(op["insert"].to_s) if (!op["attributes"]) && (!(op && op["insert"].is_a?(Hash) && op["insert"]["image"]))
 
       styles = []
       tags = []
@@ -154,7 +158,7 @@ module Reporter
 
     def html_with_tags_style(op, tags, styles)
       style = styles.count > 0 ? " style=\"#{styles.join(";")}\"" : ""
-      html = "<span#{style}>#{CGI.escapeHTML(op["insert"])}</span>"
+      html = "<span#{style}>#{CGI.escapeHTML(op["insert"].to_s)}</span>"
 
       tags.each { |tag| html = "<#{tag}>#{html}</#{tag}>" }
       html

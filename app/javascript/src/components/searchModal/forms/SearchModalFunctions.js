@@ -1,4 +1,4 @@
-/* eslint-disable react/function-component-definition */
+/* eslint-disable react/prop-types */
 import React, { useContext } from 'react';
 import {
   Alert, AccordionContext, useAccordionButton, ButtonToolbar, Button
@@ -36,7 +36,7 @@ const filterSearchValues = (store) => {
       const values = { ...Object.values(f)[0] };
 
       if (values.value !== '') {
-        if (keys[0] == 'version_identifier_type') {
+        if (keys[0] === 'version_identifier_type') {
           const fieldValues = { ...values.field };
           fieldValues.column = keys[0];
           values.field = fieldValues;
@@ -71,35 +71,6 @@ const filterSearchValues = (store) => {
   return storedFilter.length === 0 ? [] : storedFilter[0].filters;
 };
 
-const handleSearch = (store, uiState) => {
-  const { currentCollection } = uiState;
-  const collectionId = currentCollection ? currentCollection.id : null;
-  const filters = filterSearchValues(store);
-  const message = 'Please fill out all needed fields';
-  store.addErrorMessage(message);
-
-  if (filters.length > 0 && store.errorMessages.length == 1) {
-    store.showSearchResults();
-    store.enableAccordionToggle();
-    store.removeErrorMessage(message);
-
-    const selection = {
-      elementType: 'advanced',
-      advanced_params: filters,
-      search_by_method: 'advanced',
-      page_size: uiState.number_of_results
-    };
-
-    store.loadSearchResults({
-      selection,
-      collectionId,
-      moleculeSort: true,
-    });
-    store.clearSearchAndTabResults();
-    searchValuesByFilters(store);
-  }
-};
-
 const searchValuesBySubFields = (val, table) => {
   let label = '';
   let value = '';
@@ -108,11 +79,12 @@ const searchValuesBySubFields = (val, table) => {
   const searchValues = [];
 
   val.field.sub_fields.map((sub) => {
-    if (sub.type == 'label') {
+    if (sub.type === 'label') {
       label = sub.value;
     } else if (val.sub_values[0][sub.id]) {
       const subContent = val.sub_values[0][sub.id];
       if (subContent.value !== undefined) {
+        // eslint-disable-next-line prefer-destructuring
         value = subContent.value;
         unit = subContent.value_system;
         label = sub.col_name;
@@ -169,10 +141,10 @@ const searchValuesByFilters = (store) => {
       if (val.field.sub_fields && val.field.sub_fields.length >= 1 && val.sub_values.length >= 1) {
         const values = searchValuesBySubFields(val, table);
         searchValues.push(...values);
-      } else if (val.field.table == 'device_descriptions' && val.field.opt !== undefined) {
+      } else if (val.field.table === 'device_descriptions' && val.field.opt !== undefined) {
         const label = `${val.field.column.toLowerCase()} ${val.field.label.toLowerCase()}`;
         searchValues.push([val.link, table, label, val.match, value, val.unit].join(' '));
-      } else if (val.available_options.length >= 1) {
+      } else if (val.available_options?.length >= 1) {
         const values = searchValuesByAvailableOptions(val, table);
         searchValues.push([val.link, table, val.field.label.toLowerCase(), val.match, value, val.unit].join(' '));
         searchValues.push(...values);
@@ -182,6 +154,36 @@ const searchValuesByFilters = (store) => {
     });
   }
   store.changeSearchValues(searchValues);
+};
+
+const handleSearch = (store, uiState) => {
+  const { currentCollection } = uiState;
+  const collectionId = currentCollection ? currentCollection.id : null;
+  const filters = filterSearchValues(store);
+  const message = 'Please fill out all needed fields';
+  store.addErrorMessage(message);
+  console.log(filters);
+
+  if (filters.length > 0 && store.errorMessages.length === 1) {
+    store.showSearchResults();
+    store.enableAccordionToggle();
+    store.removeErrorMessage(message);
+
+    const selection = {
+      elementType: 'advanced',
+      advanced_params: filters,
+      search_by_method: 'advanced',
+      page_size: uiState.number_of_results
+    };
+
+    store.loadSearchResults({
+      selection,
+      collectionId,
+      moleculeSort: true,
+    });
+    // store.clearSearchAndTabResults();
+    searchValuesByFilters(store);
+  }
 };
 
 const AccordeonHeaderButtonForSearchForm = ({

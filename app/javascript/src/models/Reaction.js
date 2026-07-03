@@ -78,6 +78,11 @@ const DurationDefault = {
   memUnit: 'Hour(s)'
 };
 
+const ReactionTypeOptions = [
+  { value: 'standard', label: 'Standard' },
+  { value: 'interaction', label: 'Interaction' },
+];
+
 export const convertDuration = (value, unit, newUnit) => moment.duration(Number.parseFloat(value), LegMomentUnit[unit])
   .as(MomentUnit[newUnit]);
 
@@ -128,6 +133,8 @@ export default class Reaction extends Element {
       container: Container.init(),
       dangerous_products: '',
       conditions: '',
+      ph_operator: '=',
+      ph_value: null,
       description: Reaction.quillDefault(),
       duration: '',
       durationDisplay: DurationDefault,
@@ -159,6 +166,7 @@ export default class Reaction extends Element {
       vessel_size: { amount: null, unit: 'ml' },
       volume: null,
       use_reaction_volume: false,
+      reaction_type: 'standard',
       gaseous: false,
       weight_percentage: false
     });
@@ -180,12 +188,25 @@ export default class Reaction extends Element {
     return TemperatureUnit;
   }
 
+  static get reaction_type_options() {
+    return ReactionTypeOptions;
+  }
+
   get name() {
     return this._name;
   }
 
   set name(name) {
     this._name = name;
+  }
+
+  isInteractionReaction() {
+    return this.reaction_type === 'interaction';
+  }
+
+  phValueForSerialize() {
+    const v = parseFloat(this.ph_value);
+    return Number.isFinite(v) ? v : null;
   }
 
   serialize() {
@@ -195,6 +216,8 @@ export default class Reaction extends Element {
       description: this.description,
       dangerous_products: this.dangerous_products,
       conditions: this.conditions,
+      ph_operator: this.ph_operator || '=',
+      ph_value: this.phValueForSerialize(),
       duration: this.duration,
       durationDisplay: this.durationDisplay,
       durationCalc: this.durationCalc(),
@@ -231,6 +254,7 @@ export default class Reaction extends Element {
       vessel_size: this.vessel_size,
       volume: this.volume,
       use_reaction_volume: this.use_reaction_volume,
+      reaction_type: this.reaction_type || 'standard',
       gaseous: this.gaseous,
       weight_percentage: this.weight_percentage,
     });
@@ -960,10 +984,12 @@ export default class Reaction extends Element {
           console.warn('Failed to encode reaction SVG as data URI', e);
           return 'images/wild_card/no_image_180.svg';
         }
-      } if (this.reaction_svg_file.substr(this.reaction_svg_file.length - 4) === '.svg') {
+      }
+      if (this.reaction_svg_file.substr(this.reaction_svg_file.length - 4) === '.svg') {
         return `/images/reactions/${this.reaction_svg_file}`;
       }
-    } else return 'images/wild_card/no_image_180.svg';
+    }
+    return 'images/wild_card/no_image_180.svg';
   }
 
   SMGroupValid() {

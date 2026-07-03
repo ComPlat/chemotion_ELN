@@ -1,4 +1,5 @@
-import React, { useContext, useEffect } from 'react';
+/* eslint-disable react/prop-types */
+import React, { useContext, useEffect, useCallback } from 'react';
 import { ButtonToolbar } from 'react-bootstrap';
 
 import Attachment from 'src/models/Attachment';
@@ -24,7 +25,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-function AttachmentForm({ readonly }) {
+const AttachmentForm = ({ readonly }) => {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
   const sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
   const { thirdPartyApps } = UIStore.getState() || [];
@@ -61,7 +62,7 @@ function AttachmentForm({ readonly }) {
     sbmmStore.setFilteredAttachments(filteredAttachments);
   };
 
-  const createAttachmentPreviewImage = () => {
+  const createAttachmentPreviewImage = useCallback(() => {
     const attachments = sbmmSample.attachments.map((attachment) => {
       if (attachment.preview !== undefined && attachment.preview !== '') { return attachment; }
 
@@ -71,17 +72,18 @@ function AttachmentForm({ readonly }) {
       return attachment;
     });
     sbmmStore.setFilteredAttachments(attachments);
-  };
+  }, [sbmmSample.attachments, sbmmStore]);
 
   useEffect(() => {
     createAttachmentPreviewImage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (sbmmSample.updated) {
       createAttachmentPreviewImage();
     }
-  }, [sbmmSample.attachments]);
+  }, [sbmmSample.attachments, sbmmSample.updated, createAttachmentPreviewImage]);
 
   const handleSortChange = (e) => {
     sbmmStore.setAttachmentSortBy(e.target.value);
@@ -110,11 +112,13 @@ function AttachmentForm({ readonly }) {
   };
 
   const showImportConfirm = (attachmentId) => {
+    // eslint-disable-next-line react-hooks/immutability
     sbmmStore.attachment_show_import_confirm[attachmentId] = true;
     sbmmStore.setShowImportConfirm(sbmmStore.attachment_show_import_confirm);
   };
 
   const hideImportConfirm = (attachmentId) => {
+    // eslint-disable-next-line react-hooks/immutability
     sbmmStore.attachment_show_import_confirm[attachmentId] = false;
     sbmmStore.setShowImportConfirm(sbmmStore.attachment_show_import_confirm);
   };

@@ -80,6 +80,61 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
+  describe 'DELETE /api/v1/attachments/bulk_delete' do
+    let(:attachment_one) { create(:attachment) }
+    let(:attachment_two) { create(:attachment) }
+    let(:ids) { [attachment_one.id, attachment_two.id] }
+    let(:execute_request) do
+      delete '/api/v1/attachments/bulk_delete',
+             params: { ids: ids }.to_json,
+             headers: { 'CONTENT_TYPE' => 'application/json' }
+    end
+
+    before do |example|
+      if example.metadata[:enable_attachment_policy_can_delete].present?
+        allow(AttachmentPolicy).to receive(:can_delete?).and_return(true)
+      end
+
+      execute_request
+    end
+
+    context 'when "AttachmentPolicy" allows deletion', :enable_attachment_policy_can_delete do
+      it 'returns with the right http status' do
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'deletes exactly the requested attachments' do
+        expect(Attachment.where(id: ids)).to be_empty
+      end
+
+      it 'returns the deleted attachments' do
+        expect(parsed_json_response['deleted_attachments'].size).to eq(2)
+      end
+    end
+
+    context 'when "AttachmentPolicy" denies deletion' do
+      it 'returns with an error' do
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'does not delete any attachment' do
+        expect(Attachment.where(id: ids).count).to eq(2)
+      end
+    end
+
+    context 'when the ids param is missing' do
+      let(:execute_request) do
+        delete '/api/v1/attachments/bulk_delete',
+               params: {}.to_json,
+               headers: { 'CONTENT_TYPE' => 'application/json' }
+      end
+
+      it 'is rejected by the typed param instead of silently no-op deleting' do
+        expect(response).to have_http_status(:bad_request)
+      end
+    end
+  end
+
   describe 'DELETE /api/v1/attachments/link/{attachment_id}' do
     let(:execute_request) { delete "/api/v1/attachments/link/#{attachment_id}" }
 
@@ -638,6 +693,46 @@ describe Chemotion::AttachmentAPI do
 
   describe 'POST /api/v1/attachments/infer' do
     pending 'not yet implemented'
+  end
+
+  describe 'POST /api/v1/attachments/lcms_page' do
+    let(:lcms_params) do
+      {
+        attachment_id: attachment.id,
+        retention_time: '1.23',
+        polarity: 'positive',
+        trigger: 'initial',
+      }
+    end
+    let(:execute_request) do
+      post '/api/v1/attachments/lcms_page', params: lcms_params, as: :json
+    end
+
+    context 'when attachment does not exist' do
+      let(:attachment) { Struct.new(:id).new(-1) }
+
+      before { execute_request }
+
+      it 'returns 404 with structured error' do
+        expect(response).to have_http_status(:not_found)
+        expect(parsed_json_response['code']).to eq('attachment_not_found')
+      end
+    end
+
+    context 'when no candidate mz attachment exists' do
+      let(:container) { create(:container, containable: user) }
+      let(:attachment) { create(:attachment, :with_spectra_file, attachable: container) }
+
+      before do
+        allow_any_instance_of(AttachmentHelpers).to receive(:read_access?).and_return(true)
+        execute_request
+      end
+
+      it 'returns 422 with page_not_found code' do
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(parsed_json_response['code']).to eq('page_not_found')
+      end
+    end
   end
 
   describe 'GET /api/v1/attachments/svgs' do

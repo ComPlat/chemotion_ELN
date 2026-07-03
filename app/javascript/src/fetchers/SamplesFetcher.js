@@ -1,158 +1,93 @@
-import 'whatwg-fetch';
-import Immutable from 'immutable';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
+import { Map } from 'immutable';
 
 import Sample from 'src/models/Sample';
 import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
+import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import Literature from 'src/models/Literature';
+import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
 export default class SamplesFetcher {
+  static fetchByCollectionId(id, params = {}, moleculeSort = false) {
+    const updatedParams = { ...params, moleculeSort: moleculeSort ? 1 : 0 };
+
+    return ApiClient.getJson(`/api/v1/samples?${preparedCollectionParams(id, updatedParams)}`, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.samples.map((sample) => (new Sample(sample))),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
+  }
+
   static fetchSamplesByUIStateAndLimit(params) {
-    return fetch('/api/v1/samples/ui_state/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
+    const body = {
+      ui_state: {
+        all: params.sample.all,
+        included_ids: params.sample.included_ids,
+        excluded_ids: params.sample.excluded_ids,
+        collection_id: params.sample.collection_id
       },
-      body: JSON.stringify({
-        ui_state: {
-          all: params.sample.all,
-          included_ids: params.sample.included_ids,
-          excluded_ids: params.sample.excluded_ids,
-          collection_id: params.sample.collection_id
-        },
-        limit: params?.limit || null
-      })
-    })
-      .then((response) => response.json())
+      limit: params?.limit || null
+    };
+
+    return ApiClient.postJson('/api/v1/samples/ui_state', { body })
       .then((json) => {
         const samples = (json.samples || []).map((s) => new Sample(s));
-
-        // build literature map by literal_id
-        const literatures = (json.literatures || []).reduce(
-          (acc, l) => acc.set(l.literal_id, new Literature(l)),
-          new Immutable.Map()
-        );
-
-        // attach literatures per sample BEFORE enrichment
-        samples.forEach((sample) => {
-          const sampleLits = literatures.filter(
-            (l) => l.element_id === sample.id
-          );
-
-          if (sampleLits.size > 0) {
-            sample.literatures = sampleLits;
-            sample.updateChecksum(); // prevent dirty-on-load
-          }
-        });
-
+        samples.forEach((sample) => this.sampleLiteratures(sample, json));
         return samples;
-      })
-      .catch((errorMessage) => {
-        console.error(errorMessage);
       });
   }
 
   static fetchById(id) {
-    const promise = fetch(`/api/v1/samples/${id}.json`, {
-      credentials: 'same-origin'
-    })
-      .then((response) => response.json()).then((json) => {
-        const rSample = new Sample(json.sample);
-        if (json.literatures && json.literatures.length > 0) {
-          const tliteratures = json.literatures.map((literature) => new Literature(literature));
-          const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());
-          rSample.literatures = lits;
-          rSample.updateChecksum();
-        }
-        if (json.error) {
-          rSample.id = `${id}:error:Sample ${id} is not accessible!`;
-        }
-        return rSample;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
-  }
-
-  static fetchByCollectionId(id, queryParams = {}, moleculeSort = false) {
-    const updatedQueryParams = { ...queryParams, moleculeSort };
-    return BaseFetcher.fetchByCollectionId(id, updatedQueryParams, 'samples', Sample);
+    return ApiClient.getJson(`/api/v1/samples/${id}`)
+      .then((json) => this.sampleElement(json, id));
   }
 
   static findByShortLabel(shortLabel) {
-    return fetch(
-      `/api/v1/samples/findByShortLabel/${shortLabel}.json`,
-      {
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' }
-      }
-    ).then((response) => response.json()).catch((errorMessage) => console.log(errorMessage));
-  }
-
-  static update(sample) {
-    const promise = () => fetch(`/api/v1/samples/${sample.id}`, {
-      credentials: 'same-origin',
-      method: 'put',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(sample.serialize())
-    }).then((response) => response.json())
-      .then((json) => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
-        .then(() => BaseFetcher.updateAnnotationsInContainer(sample))
-        .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(sample.container)
-      .then(() => promise());
+    return ApiClient.getJson(`/api/v1/samples/findByShortLabel/${shortLabel}.json`);
   }
 
   static create(sample) {
-    const promise = () => fetch('/api/v1/samples', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(sample.serialize())
-    }).then((response) => response.json())
-      .then((json) => GenericElsFetcher.uploadGenericFiles(sample, json.sample.id, 'Sample')
-        .then(() => this.fetchById(json.sample.id))).catch((errorMessage) => {
-        console.log(errorMessage);
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(sample.container)
+      .then(() => ApiClient.postJson('/api/v1/samples', { body: sample.serialize() }))
+      .then((json) => {
+        const { id } = json.sample;
+        return GenericElsFetcher.uploadGenericFiles(sample, id, 'Sample')
+          .then(() => this.sampleElement(json, id));
       });
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(sample.container).then(() => promise());
+  }
+
+  static update(sample) {
+    const tasks = [
+      AttachmentFetcher.uploadNewAttachmentsForContainer(sample.container),
+      GenericElsFetcher.uploadGenericFiles(sample, sample.id, 'Sample'),
+    ];
+
+    return Promise.all(tasks)
+      .then(() => AnnotationsFetcher.updateAnnotationsInContainer(sample))
+      .then(() => ApiClient.putJson(`/api/v1/samples/${sample.id}`, { body: sample.serialize() }))
+      .then((json) => this.sampleElement(json, sample.id));
   }
 
   static splitAsSubsamples(params) {
-    const promise = fetch('/api/v1/samples/subsamples/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        ui_state: {
-          sample: {
-            all: params.sample.checkedAll,
-            included_ids: params.sample.checkedIds,
-            excluded_ids: params.sample.uncheckedIds
-          },
-          currentCollectionId: params.currentCollection.id
-        }
-      })
-    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    const body = {
+      ui_state: {
+        sample: {
+          all: params.sample.checkedAll,
+          included_ids: params.sample.checkedIds,
+          excluded_ids: params.sample.uncheckedIds
+        },
+        currentCollectionId: params.currentCollection.id
+      }
+    };
 
-    return promise;
+    return ApiClient.postJson('/api/v1/samples/subsamples', { body });
   }
 
   static importSamplesFromFile(params) {
@@ -166,74 +101,79 @@ export default class SamplesFetcher {
     data.append('currentCollectionId', params.currentCollectionId);
     data.append('import_type', params.type);
 
-    const promise = fetch('/api/v1/samples/import/', {
-      credentials: 'same-origin',
-      method: 'post',
-      body: data
-    }).then((response) => response.json())
-      .then((json) => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    return ApiClient.postFormData('/api/v1/samples/import', { body: data });
   }
 
   static importSamplesFromFileConfirm(params) {
-    const promise = fetch('/api/v1/samples/confirm_import/', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        currentCollectionId: params.currentCollectionId,
-        rows: params.rows,
-        mapped_keys: params.mapped_keys,
-      })
-    }).then((response) => response.json()).then((json) => {
-      if (Array.isArray(json.error_messages)) {
-        json.error_messages.forEach((message) => {
+    const body = {
+      currentCollectionId: params.currentCollectionId,
+      rows: params.rows,
+      mapped_keys: params.mapped_keys,
+    };
+
+    return ApiClient.postJson('/api/v1/samples/confirm_import', { body })
+      .then((json) => {
+        if (Array.isArray(json.error_messages)) {
+          json.error_messages.forEach((message) => {
+            NotificationActions.add({
+              message,
+              level: 'error',
+              autoDismiss: 10
+            });
+          });
+        } else {
           NotificationActions.add({
-            message,
-            level: 'error',
+            message: json.error_messages || json.message,
+            level: json.message ? 'success' : 'error',
             autoDismiss: 10
           });
-        });
-      } else {
-        NotificationActions.add({
-          message: json.error_messages || json.message,
-          level: json.message ? 'success' : 'error',
-          autoDismiss: 10
-        });
-      }
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
+        }
+        return json;
+      });
   }
 
   static batchRefreshSvg(svgs) {
-    return fetch('/api/v1/samples/batch-refresh-svg', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        svgs: svgs.map(svg => ({
-          svg_path: svg.svgPath,
-          molfile: svg.molfile
-        }))
-      })
-    }).then(response => {
-      if (!response.ok) {
+    const body = {
+      svgs: svgs.map((svg) => ({
+        svg_path: svg.svgPath,
+        molfile: svg.molfile
+      }))
+    };
+
+    return ApiClient.postJson('/api/v1/samples/batch-refresh-svg', {
+      body,
+      handleResponseSuccess: (response) => {
+        if (response.ok) { return response.json(); }
         throw new Error(`HTTP error! status: ${response.status}`);
+      },
+      handleResponseError: (exception) => {
+        console.error('Error batch refreshing SVGs:', exception);
+        throw exception;
       }
-      return response.json();
-    }).then(json => json.results || [])
-      .catch(errorMessage => {
-        console.error('Error batch refreshing SVGs:', errorMessage);
-        throw errorMessage;
-      });
+    })
+      .then((json) => json.results || []);
+  }
+
+  static sampleElement(json, id) {
+    if (json.error) {
+      return new Sample({ id: `${id}:error:Sample ${id} is not accessible!` });
+    }
+    const sample = new Sample(json.sample);
+    return this.sampleLiteratures(sample, json);
+  }
+
+  static sampleLiteratures(sample, json) {
+    // build literature map by literal_id
+    const literatures = (json.literatures || []).reduce(
+      (acc, l) => acc.set(l.literal_id, new Literature(l)),
+      new Map()
+    );
+    const sampleLits = literatures.filter((l) => l.element_id === sample.id);
+    if (sampleLits.size > 0) {
+      // eslint-disable-next-line no-param-reassign
+      sample.literatures = sampleLits;
+      sample.updateChecksum(); // prevent dirty-on-load
+    }
+    return sample;
   }
 }

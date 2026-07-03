@@ -115,6 +115,7 @@ class User < ApplicationRecord
   has_many :element_text_templates, dependent: :destroy
   has_many :calendar_entries, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
   has_many :comments, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
+  has_many :api_tokens, dependent: :destroy
 
   accepts_nested_attributes_for :affiliations, :profile
 
@@ -288,7 +289,7 @@ class User < ApplicationRecord
 
   # The element models for which the counters that can be incremented
   COUNTER_KEYS = %w[
-    samples reactions wellplates celllines device_descriptions sequence_based_macromolecule_samples
+    samples reactions wellplates celllines device_descriptions research_plans sequence_based_macromolecule_samples
   ].freeze
 
   # Increment a counter for a given key
@@ -347,6 +348,10 @@ class User < ApplicationRecord
 
   def converter_admin
     profile&.data&.fetch('converter_admin', false)
+  end
+
+  def global_text_template_editor
+    profile&.data&.fetch('global_text_template_editor', false)
   end
 
   def matrix_check_by_name(name)

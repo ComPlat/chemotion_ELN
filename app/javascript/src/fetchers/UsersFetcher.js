@@ -1,382 +1,194 @@
 /* eslint-disable arrow-parens */
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
+import DocumentHelper from 'src/utilities/DocumentHelper';
+
+class ResponseError extends Error {
+  constructor(response) {
+    super(`${response.status} ${response.statusText}`);
+    this.status = response.status;
+    this.response = response;
+  }
+
+  json() {
+    return this.response.json();
+  }
+}
 
 // TODO: SamplesFetcher also updates Samples and so on...naming?
 export default class UsersFetcher {
   static fetchElementKlasses(genericOnly = true) {
-    let api = '/api/v1/generic_elements/klasses.json';
+    let api = '/api/v1/generic_elements/klasses';
     if (genericOnly) {
-      api = '/api/v1/generic_elements/klasses.json?generic_only=true';
+      api = '/api/v1/generic_elements/klasses?generic_only=true';
     }
-    return fetch(api, {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.getJson(api);
   }
 
   static fetchElementKlassNames(genericOnly = true) {
-    let api = '/api/v1/labimotion_hub/element_klasses_name.json';
+    let api = '/api/v1/labimotion_hub/element_klasses_name';
     if (genericOnly) {
-      api = '/api/v1/labimotion_hub/element_klasses_name.json?generic_only=true';
+      api = '/api/v1/labimotion_hub/element_klasses_name?generic_only=true';
     }
 
-    return fetch(api, {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.getJson(api);
   }
 
   static fetchOmniauthProviders() {
-    return fetch('/api/v1/public/omniauth_providers.json', {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.getJson('/api/v1/public/omniauth_providers');
   }
 
   static fetchUsersByName(name, type = 'Person') {
-    const promise = fetch(
-      `/api/v1/users/name.json?${new URLSearchParams({ name, type })}`,
-      {
-        credentials: 'same-origin',
-      }
-    )
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.getJson(`/api/v1/users/name?${new URLSearchParams({ name, type })}`);
   }
 
   static fetchCurrentUser() {
-    const promise = fetch('/api/v1/users/current.json', {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.getJson('/api/v1/users/current');
   }
 
   static fetchProfile() {
-    const promise = fetch('/api/v1/profiles.json', {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.getJson('/api/v1/profiles');
   }
 
   static updateUserProfile(params = {}) {
-    const promise = fetch('/api/v1/profiles/', {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.putJson('/api/v1/profiles', { body: params });
   }
 
   static fetchNoVNCDevices(id = 0) {
-    return fetch(`/api/v1/devices/novnc?id=${id}`, {
-      credentials: 'same-origin',
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => response.json())
-      .then((json) => json.devices)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.getJson(`/api/v1/devices/novnc?id=${id}`)
+      .then((json) => json.devices);
   }
 
   static createGroup(params = {}) {
-    const promise = fetch('/api/v1/groups/create', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.postJson('/api/v1/groups/create', { body: params });
   }
 
   static fetchCurrentGroup() {
-    const promise = fetch('/api/v1/groups/qrycurrent', {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.getJson('/api/v1/groups/qrycurrent');
   }
 
   static fetchCurrentDevices() {
-    const promise = fetch('/api/v1/groups/queryCurrentDevices', {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.getJson('/api/v1/groups/queryCurrentDevices');
   }
 
   static fetchDeviceMetadataByDeviceId(deviceId) {
-    const promise = fetch(`/api/v1/groups/deviceMetadata/${deviceId}`, {
-      credentials: 'same-origin'
-    }).then(response => response.json()).then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.getJson(`/api/v1/groups/deviceMetadata/${deviceId}`);
   }
 
   static fetchUserOmniauthProviders() {
-    return fetch('/api/v1/users/omniauth_providers.json', {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.getJson('/api/v1/users/omniauth_providers');
   }
 
   static updateGroup(params = {}) {
-    const promise = fetch(`/api/v1/groups/upd/${params.id}`, {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        id: params.id,
-        destroy_group: params.destroy_group,
-        rm_users: params.rm_users,
-        add_users: params.add_users,
-        add_admin: params.add_admin,
-        rm_admin: params.rm_admin,
-      }),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    const body = {
+      id: params.id,
+      destroy_group: params.destroy_group,
+      rm_users: params.rm_users,
+      add_users: params.add_users,
+      add_admin: params.add_admin,
+      rm_admin: params.rm_admin,
+    };
+    return ApiClient.putJson('/api/v1/users/omniauth_providers', { body });
   }
 
   static fetchOls(name, edited = true) {
-    return fetch(`/api/v1/ols_terms/list.json?name=${name}&edited=${edited}`, {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    return ApiClient.getJson(`/api/v1/ols_terms/list?name=${name}&edited=${edited}`);
   }
 
   static listEditors() {
-    const promise = fetch('/api/v1/users/list_editors.json', {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
-  }
-
-  static listUserLabels() {
-    const promise = fetch('/api/v1/users/list_labels.json', {
-      credentials: 'same-origin',
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
-  }
-
-  static updateUserLabel(params = {}) {
-    const promise = fetch('/api/v1/users/save_label/', {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    return ApiClient.getJson('/api/v1/users/list_editors');
   }
 
   static updateUserCounter(params = {}) {
-    const promise = fetch('/api/v1/users/update_counter', {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return ApiClient.putJson('/api/v1/users/update_counter', { body: params });
   }
 
   static scifinderCredential() {
-    const promise = fetch('/api/v1/users/scifinder', {
-      credentials: 'same-origin',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    return ApiClient.getJson('/api/v1/users/scifinder');
   }
 
   static fetchUserKetcherOptions() {
-    const promise = fetch('/api/v1/profiles/editors/ketcher-options', {
-      credentials: 'same-origin',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
-    }).then(response => response.json()).then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    return ApiClient.getJson('/api/v1/profiles/editors/ketcher-options');
   }
 
   static updateUserKetcherOptions(list) {
     const data = JSON.parse(list);
-    const promise = fetch('/api/v1/profiles/editors/ketcher-options', {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        data
-      })
-    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise;
+    return ApiClient.putJson('/api/v1/profiles/editors/ketcher-options', { body: data });
   }
 
   static updateReactionShortLabel(params) {
-    const promise = fetch('/api/v1/users/reaction_short_label', {
+    return ApiClient.putJson('/api/v1/users/reaction_short_label', { body: params });
+  }
+
+  static fetch2FAQR() {
+    return ApiClient.getJson('/api/v1/users/two_factor');
+  }
+
+  static fetchEnable2FAQR() {
+    return ApiClient.putJson('/api/v1/users/two_factor');
+  }
+
+  static logoutUser() {
+    return ApiClient.deleteRequest('/users/sign_out', {
+      data: { authenticity_token: DocumentHelper.getMetaContent('csrf-token') },
+      headers: {},
+      handleResponseSuccess: (response) => response
+    });
+  }
+
+  static submitAsForm(url, method, body) {
+    const options = {
+      body,
+      headers: {},
+      handleResponseSuccess: (response) => response
+    };
+    if (method === 'PUT') {
+      return ApiClient.putFormData(url, options);
+    }
+    return ApiClient.postFormData(url, options);
+  }
+
+  static fetchRevokeAuthTokens(params) {
+    return fetch('/api/v1/users/revoke_auth_token', {
       credentials: 'same-origin',
-      method: 'PUT',
+      method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
     })
-      .then((response) => response.json())
-      .catch((error) => {
-        console.error('Fetch error in updateReactionShortLabel:', error);
-        throw error;
-      });
+      .then((response) => {
+        if (!response.ok) {
+          throw new ResponseError(response);
+        }
 
-    return promise;
-  }
-
-  static fetch2FAQR() {
-    return fetch('/api/v1/users/two_factor', {
-      credentials: 'same-origin',
-      method: 'get',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      }
-    }).then((response) => response.json())
+        return response.json();
+      })
       .catch((error) => {
-        console.error('Fetch error in updateReactionShortLabel:', error);
+        console.error('Fetch error in users/revoke_auth_token:', error);
         throw error;
       });
   }
 
-  static fetchEnable2FAQR() {
-    return fetch('/api/v1/users/two_factor', {
+  static fetchNewAuthToken(params) {
+    return fetch('/api/v1/users/auth_token', {
       credentials: 'same-origin',
-      method: 'put',
+      method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-    }).then((response) => response.json())
+      body: JSON.stringify(params)
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new ResponseError(response);
+        }
+
+        return response.json();
+      })
       .catch((error) => {
-        console.error('Fetch error in updateReactionShortLabel:', error);
+        console.error('Fetch error in public/token:', error);
         throw error;
       });
   }

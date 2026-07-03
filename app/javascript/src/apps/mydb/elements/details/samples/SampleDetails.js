@@ -14,7 +14,7 @@ import AppModal from 'src/components/common/AppModal';
 import { CreatableSelect } from 'src/components/common/Select';
 import { cloneDeep, findIndex, set } from 'lodash';
 import uuid from 'uuid';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
@@ -154,7 +154,7 @@ export default class SampleDetails extends React.Component {
       quickCreator: false,
       showInchikey: false,
       pageMessage: null,
-      visible: Immutable.List(),
+      visible: List(),
       startExport: false,
       sfn: UIStore.getState().hasSfn,
       saveInventoryAction: false,
@@ -234,7 +234,7 @@ export default class SampleDetails extends React.Component {
 
   componentDidUpdate(prevProps) {
     const { sample } = this.props;
-    if (sample === prevProps.sample) { return };
+    if (sample === prevProps.sample) { return; }
 
     const smileReadonly = !(
       (sample.isNew
@@ -380,17 +380,6 @@ export default class SampleDetails extends React.Component {
       sample.molecule = result;
       sample.molecule_id = result.id;
       if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
-
-      // Handle temporary SVG file from structure editor
-      if (result.temp_svg) {
-        // For mixture samples, clear any existing sample_svg_file to preserve combined molecule SVG
-        // This ensures the combined molecule SVG is always displayed
-        if (sample.isMixture()) {
-          sample.sample_svg_file = null;
-        } else {
-          sample.sample_svg_file = result.temp_svg;
-        }
-      }
 
       this.setState({
         sample,
@@ -610,7 +599,7 @@ export default class SampleDetails extends React.Component {
     // If the collection already tracks the inventory tab, nothing to do
     if (sampleLayout && Object.prototype.hasOwnProperty.call(sampleLayout, 'inventory') && sampleLayout?.inventory > 0) {
       return;
-    } 
+    }
 
     // Resolve the effective layout: collection -> user profile -> fallback
     const userProfile = UserStore.getState().profile;
@@ -948,6 +937,10 @@ export default class SampleDetails extends React.Component {
       rfsovents,
       supplier,
       private_notes,
+      color,
+      moisture,
+      particle_size,
+      physical_state,
       ...customKeys
     } = cloneDeep(xref || {});
     const check = ['form', 'solubility', 'refractive_index', 'flash_point', 'inventory_label'];
@@ -978,7 +971,7 @@ export default class SampleDetails extends React.Component {
     const { sample, isCasLoading, validCas } = this.state;
     const { molecule, xref } = sample;
     const cas = xref?.cas ?? '';
-    let casArr = Array.isArray(molecule?.cas) ? molecule?.cas?.filter((el) => el !== null) : [];
+    const casArr = Array.isArray(molecule?.cas) ? molecule?.cas?.filter((el) => el !== null) : [];
     if (cas && !casArr.includes(cas)) {
       casArr.push(cas);
     }
@@ -988,7 +981,7 @@ export default class SampleDetails extends React.Component {
     return (
       <div className="my-4">
         <InputGroup>
-          <div className="d-flex flex-grow-1">
+          <div className="d-flex">
             <InputGroup.Text>CAS</InputGroup.Text>
             <CreatableSelect
               name="cas"
@@ -998,7 +991,7 @@ export default class SampleDetails extends React.Component {
               options={options}
               onChange={(selectedOption) => {
                 if (selectedOption) {
-                  const value = selectedOption.value;
+                  const { value } = selectedOption;
                   this.setState({ casInputValue: value });
                   this.updateCas(selectedOption);
                 } else {
@@ -1020,7 +1013,7 @@ export default class SampleDetails extends React.Component {
               value={options.find(({ value }) => value === cas) || null}
               onBlur={() => this.isCASNumberValid(cas || '', true)}
               isDisabled={!sample.can_update}
-              className="flex-grow-1"
+              styles={{ input: (base) => ({ ...base, minWidth: '200px', width: '100%' }) }}
               placeholder="Select or enter CAS number"
               allowCreateWhileLoading
               formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
@@ -1084,28 +1077,28 @@ export default class SampleDetails extends React.Component {
     const { pageMessage } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-      <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
-        <strong>Structure Alert</strong>
-        <Button
-          size="sm"
-          variant="outline-warning"
-          style={{ float: 'right' }}
-          onClick={() => this.setState({ pageMessage: null })}
-        >
-          Close Alert
-        </Button>
-        {
+        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+          <strong>Structure Alert</strong>
+          <Button
+            size="sm"
+            variant="outline-warning"
+            style={{ float: 'right' }}
+            onClick={() => this.setState({ pageMessage: null })}
+          >
+            Close Alert
+          </Button>
+          {
           pageMessage.error.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-        {
+          {
           pageMessage.warning.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-      </Alert>
-    ) : null;
+        </Alert>
+      ) : null;
 
     // warning message for redirection
     const redirectWarningBlock = this.state.showRedirectWarning ? (
@@ -1311,17 +1304,15 @@ export default class SampleDetails extends React.Component {
     const className = `${style} ${svgPath ? 'svg-container' : 'svg-container-empty'}`;
 
     return sample.can_update ? (
-      <>
-        <div
-          className={className}
-          onClick={this.showStructureEditor}
-          role="button"
-          tabIndex="0"
-        >
-          <i className="fa fa-pencil position-absolute top-0 end-0" />
-          <SVG key={svgPath} src={svgPath} className="molecule-mid" />
-        </div>
-      </>
+      <div
+        className={className}
+        onClick={this.showStructureEditor}
+        role="button"
+        tabIndex="0"
+      >
+        <i className="fa fa-pencil position-absolute top-0 end-0" />
+        <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+      </div>
     ) : (
       <div className={className}>
         <SVG key={svgPath} src={svgPath} className="molecule-mid" />
@@ -1343,7 +1334,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleExactMW(sample) {
-    if (sample.isMixture() && sample.sample_details) { return }
+    if (sample.isMixture() && sample.sample_details) { return; }
 
     const mw = sample.molecule_exact_molecular_weight;
     if (mw) return <ClipboardCopyText text={`Exact mass: ${mw.toFixed(MWPrecision)} g/mol`} />;
@@ -1399,6 +1390,19 @@ export default class SampleDetails extends React.Component {
 
     const mixtureSmiles = sample.molecule_cano_smiles.split('.');
     if (!mixtureSmiles || mixtureSmiles.length === 0) return;
+
+    // Same component set (layout/order edit): sync list order and keep editor molfile/SVG.
+    if (sample.hasComponents()) {
+      const existingSmiles = (sample.components || [])
+        .map((c) => c.molecule_cano_smiles)
+        .filter(Boolean)
+        .join('.');
+      if (Sample.sameSmilesSet(existingSmiles, sample.molecule_cano_smiles)) {
+        sample.syncComponentOrderToSmiles(mixtureSmiles);
+        this.setState({ sample });
+        return;
+      }
+    }
 
     this.setState({ loadingMolecule: true });
 
@@ -1542,27 +1546,27 @@ export default class SampleDetails extends React.Component {
     const { pageMessage, ketcherSVGError } = this.state;
     const messageBlock = (pageMessage
       && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
-      <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
-        <strong>Structure Alert</strong>
-        <Button
-          size="sm"
-          variant="warning"
-          onClick={() => this.setState({ pageMessage: null })}
-        >
-          Close Alert
-        </Button>
-        {
+        <Alert variant="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+          <strong>Structure Alert</strong>
+          <Button
+            size="sm"
+            variant="warning"
+            onClick={() => this.setState({ pageMessage: null })}
+          >
+            Close Alert
+          </Button>
+          {
           pageMessage.error.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-        {
+          {
           pageMessage.warning.map((m) => (
             <div key={uuid.v1()}>{m}</div>
           ))
         }
-      </Alert>
-    ) : null;
+        </Alert>
+      ) : null;
 
     const activeTab = (this.state.activeTab !== 0 && stb.indexOf(this.state.activeTab) > -1
       && this.state.activeTab) || visible.get(0);

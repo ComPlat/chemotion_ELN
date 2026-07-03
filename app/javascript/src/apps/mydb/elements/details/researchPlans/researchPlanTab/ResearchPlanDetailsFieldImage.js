@@ -1,10 +1,8 @@
-/* eslint-disable react/sort-comp */
+/* eslint-disable react/sort-comp, react/prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
-import {
-  Form, InputGroup
-} from 'react-bootstrap';
+import { Form, InputGroup } from 'react-bootstrap';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ImageFileDropHandler from 'src/apps/mydb/elements/details/researchPlans/researchPlanTab/ImageFileDropHandler';
 import ImageAnnotationEditButton from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationEditButton';
@@ -37,11 +35,12 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     if (state.selecteds.length < 1) return;
 
     // multiple items can be selected, we filter to only keep research plans
-    const researchPlans = state.selecteds.filter((element) => element
-        && element?.type === 'research_plan');
+    const researchPlans = state.selecteds.filter((element) => element && element?.type === 'research_plan');
 
     // we find the reasearch plan that has our image entry
-    const researchPlanWithImageEntry = researchPlans.find((element) => !!element.getBodyElementById(this.props?.field?.id));
+    const researchPlanWithImageEntry = researchPlans.find(
+      (element) => !!element.getBodyElementById(this.props?.field?.id)
+    );
 
     // get the image Entry
     const imageEntry = researchPlanWithImageEntry?.getBodyElementById(this.props?.field?.id);
@@ -55,11 +54,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       return;
     }
     const handler = new ImageFileDropHandler();
-    const value = handler.handleDrop(
-      files,
-      this.props.field,
-      this.state.attachments
-    );
+    const value = handler.handleDrop(files, this.props.field, this.state.attachments);
     this.generateSrcOfImage(value.public_name);
     this.props.onChange(value, this.props.field.id, this.state.attachments);
   }
@@ -79,13 +74,13 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     const { zoom } = this.state;
     let content;
     if (field.value.public_name) {
-      const style = (zoom == null || typeof zoom === 'undefined'
-        || field.value.width === '') ? { width: 'unset' } : { width: `${zoom}%` };
+      const style =
+        zoom == null || typeof zoom === 'undefined' || field.value.width === ''
+          ? { width: 'unset' }
+          : { width: `${zoom}%` };
       content = (
         <div>
-          <img style={style} src={this.state.imageSrc} alt={field.value.file_name}
-            className="img-fluid"
-          />
+          <img style={style} src={this.state.imageSrc} alt={field.value.file_name} className="img-fluid" />
         </div>
       );
     } else {
@@ -107,10 +102,12 @@ export default class ResearchPlanDetailsFieldImage extends Component {
             <InputGroup.Text>%</InputGroup.Text>
             <ImageAnnotationEditButton
               attachment={currentAttachment}
-              onClick={() => this.setState({
-                imageEditModalShown: true,
-                chosenAttachment: currentAttachment,
-              })}
+              onClick={() =>
+                this.setState({
+                  imageEditModalShown: true,
+                  chosenAttachment: currentAttachment,
+                })
+              }
             />
           </InputGroup>
         </Form.Group>
@@ -146,7 +143,7 @@ export default class ResearchPlanDetailsFieldImage extends Component {
     } else {
       AttachmentFetcher.fetchImageAttachment({ identifier: publicName })
         .then((result) => {
-          if (result.data != null) {
+          if (result !== undefined && result.data != null) {
             this.setState({ imageSrc: result.data });
           }
         });
@@ -156,14 +153,13 @@ export default class ResearchPlanDetailsFieldImage extends Component {
   renderStatic() {
     const { field } = this.props;
     const { zoom } = this.state;
-    if (
-      typeof field.value.public_name === 'undefined'
-      || field.value.public_name === null
-    ) {
+    if (typeof field.value.public_name === 'undefined' || field.value.public_name === null) {
       return <div />;
     }
-    const style = (zoom == null || typeof zoom === 'undefined'
-      || field.value.width === '') ? { width: 'unset' } : { width: `${zoom}%` };
+    const style =
+      zoom == null || typeof zoom === 'undefined' || field.value.width === ''
+        ? { width: 'unset' }
+        : { width: `${zoom}%` };
 
     return (
       <div className="text-center mb-0 mw-100 border">
@@ -181,14 +177,13 @@ export default class ResearchPlanDetailsFieldImage extends Component {
       <ImageAnnotationModalSVG
         attachment={this.state.chosenAttachment}
         isShow={this.state.imageEditModalShown}
-        handleSave={
-          () => {
-            const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
-            this.state.chosenAttachment.updatedAnnotation = newAnnotation;
-            this.setState({ imageEditModalShown: false });
-            this.props.onChange(this.props.field.value, this.props.field.id, this.state.attachments);
-          }
-        }
+        handleSave={() => {
+          const newAnnotation = document.getElementById('svgEditId').contentWindow.svgEditor.svgCanvas.getSvgString();
+          const { chosenAttachment } = this.state;
+          if (chosenAttachment) { chosenAttachment.updatedAnnotation = newAnnotation; }
+          this.setState({ imageEditModalShown: false });
+          this.props.onChange(this.props.field.value, this.props.field.id, this.state.attachments);
+        }}
         handleOnClose={() => { this.setState({ imageEditModalShown: false }); }}
       />
     );
@@ -208,5 +203,5 @@ ResearchPlanDetailsFieldImage.propTypes = {
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
   edit: PropTypes.bool,
-  attachments: PropTypes.array.isRequired
+  attachments: PropTypes.array.isRequired,
 };

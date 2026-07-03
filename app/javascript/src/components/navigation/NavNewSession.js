@@ -12,7 +12,7 @@ import {
 } from 'react-bootstrap';
 
 import { OtpInput } from 'src/components/common/OtpInput';
-import { formValueHandler, submitAsForm } from 'src/utilities/FormHelper';
+import { useFormValues, submitAsForm } from 'src/utilities/FormHelper';
 
 function omniauthLabel(icon, name) {
   if (icon) {
@@ -46,10 +46,10 @@ const handleLoginSubmit = async ({ form, url }) => {
   };
 };
 
-function ExtendedSignInForm({
+const ExtendedSignInForm = ({
   url, rememberable, username = '', fromInvalid = false
-}) {
-  const [form, setForm] = formValueHandler({
+}) => {
+  const [form, setForm] = useFormValues({
     login: username || '',
     password: '',
     remember_me: false,
@@ -98,7 +98,7 @@ function ExtendedSignInForm({
       setShowOtp(true);
       setWrongOtp(resText.content.otp_wrong);
     }
-  }, [form]);
+  }, [form, setForm, url]);
 
   return (
     <>
@@ -169,8 +169,8 @@ ExtendedSignInForm.defaultProps = {
   fromInvalid: false
 };
 
-function SignInForm({ authenticityToken }) {
-  const [form, setForm] = formValueHandler({
+const SignInForm = ({ authenticityToken }) => {
+  const [form, setForm] = useFormValues({
     login: '',
     password: '',
     otp_attempt: ''
@@ -194,7 +194,7 @@ function SignInForm({ authenticityToken }) {
       setWrongOtp(false);
       window.location = `${url}?login=${form.login}&invalid=1`;
     }
-  }, [form]);
+  }, [form, setForm]);
 
   return (
     <Form id="new_user" className="new_user" action="" acceptCharset="UTF-8" method="post" onSubmit={handleSubmit}>
@@ -259,7 +259,7 @@ SignInForm.propTypes = {
   authenticityToken: PropTypes.string.isRequired,
 };
 
-function NewSession({ authenticityToken, omniauthProviders = {}, extraRules = {} }) {
+const NewSession = ({ authenticityToken, omniauthProviders = {}, extraRules = {} }) => {
   const items = omniauthProviders && Object.keys(omniauthProviders).map((key) => (
     <Button
       key={uuid.v4()}

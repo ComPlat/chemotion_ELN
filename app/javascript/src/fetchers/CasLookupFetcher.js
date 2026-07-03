@@ -1,4 +1,4 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 /**
  * CasLookupFetcher - Handles fetching data via CAS Lookup API
@@ -23,30 +23,35 @@ export default class CasLookupFetcher {
       CasLookupFetcher.REQUEST_TIMEOUT
     );
 
-    return fetch('/api/v1/cas_lookup/lookup', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({ cas_number: casNumber }),
-      signal: controller.signal,
-    })
-      .then((response) => {
-        if (!response.ok) {
-          return response.json().then(
-            (errorData) => {
-              const errorMsg = errorData.error || `API returned status ${response.status}`;
-              throw new Error(errorMsg);
-            },
-            () => {
-              throw new Error(`API returned status ${response.status}`);
-            }
-          );
+    const handleResponseSuccess = (response) => {
+      if (response.ok) { return response.json(); }
+      return response.json().then(
+        (errorData) => {
+          const errorMsg = errorData.error || `API returned status ${response.status}`;
+          throw new Error(errorMsg);
+        },
+        () => {
+          throw new Error(`API returned status ${response.status}`);
         }
-        return response.json();
-      })
+      );
+    };
+
+    const handleResponseError = (exception) => {
+      if (exception.name === 'AbortError') {
+        console.error('CAS Lookup API request timeout');
+        throw new Error('Request timed out');
+      }
+
+      console.error('CAS Lookup API error:', exception);
+      throw exception;
+    };
+
+    return ApiClient.postJson('/api/v1/cas_lookup/lookup', {
+      body: { cas_number: casNumber },
+      signal: controller.signal,
+      handleResponseSuccess,
+      handleResponseError,
+    })
       .then((data) => {
         if (!data.smiles || typeof data.smiles !== 'string') {
           throw new Error('Invalid response format from API');
@@ -57,15 +62,6 @@ export default class CasLookupFetcher {
           cas: data.cas || casNumber,
           source: data.source || 'unknown',
         };
-      })
-      .catch((error) => {
-        if (error.name === 'AbortError') {
-          console.error('CAS Lookup API request timeout');
-          throw new Error('Request timed out');
-        }
-
-        console.error('CAS Lookup API error:', error);
-        throw error;
       })
       .finally(() => {
         // Ensure timeout is cleared

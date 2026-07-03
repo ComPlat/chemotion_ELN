@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Chemotion
   class CollectionAPI < Grape::API
     rescue_from ActiveRecord::RecordNotFound do
@@ -152,6 +154,27 @@ module Chemotion
           ImportCollectionsJob.perform_now(attachment, current_user.id)
           { status: 204 }
         end
+      end
+
+      desc 'Get collection metadata'
+      get '/:id/metadata' do
+        metadata = Metadata.where(collection_id: params[:id]).first
+        metadata || error!('404 Not Found', 404)
+      end
+
+      desc 'Create/update collection metadata'
+      rescue_from ActiveRecord::RecordNotFound do
+        error!('401 Unauthorized', 401)
+      end
+      params do
+        requires :metadata, type: JSON
+      end
+      post :metadata do
+        metadata = Metadata.where(collection_id: params[:collection_id]).first
+        metadata ||= Metadata.new(collection_id: params[:collection_id])
+        metadata.metadata = params[:metadata]
+        metadata.save!
+        metadata
       end
     end
   end

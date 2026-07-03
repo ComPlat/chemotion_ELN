@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
@@ -15,7 +15,7 @@ export default function ElementAllCheckbox({ type }) {
   useEffect(() => {
     const onUpdate = (uiStore) => {
       const typeState = uiStore[type] ?? {};
-      const { checkedAll = false, checkedIds = Immutable.List() } = typeState;
+      const { checkedAll = false, checkedIds = List() } = typeState;
       if (checkedAll) {
         setUiState('checked');
       } else if (checkedIds.size > 0) {

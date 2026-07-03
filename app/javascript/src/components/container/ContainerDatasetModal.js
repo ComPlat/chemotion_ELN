@@ -9,7 +9,7 @@ import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 import DatasetModalContent from 'src/components/container/ContainerDatasetModalContent';
 import ContainerActions from 'src/stores/alt/actions/ContainerActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
+import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 
 export default class ContainerDatasetModal extends Component {
   constructor(props) {
@@ -77,7 +77,7 @@ export default class ContainerDatasetModal extends Component {
     ContainerActions.updateContainerWithFiles(rootContainer)
       .then((updatedContainer) => {
         updateContainerState(updatedContainer, true);
-        BaseFetcher.updateAnnotationsForAttachments(attachments)
+        AnnotationsFetcher.updateAnnotationsForAttachments(attachments)
           .then(() => {
             // const updatedAttachments = attachments.map((att) => ({ ...att }));
             // const updatedDatasetContainer = {

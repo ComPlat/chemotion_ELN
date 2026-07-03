@@ -991,6 +991,56 @@ describe('Sample', async () => {
       expect(sample.boiling_point_upperbound).toBe('');
       expect(sample.boiling_point_display).toBe('100');
     });
+
+    it('should treat positive infinity upper bound as open-ended', () => {
+      const sample = new Sample();
+      sample.updateRange('melting_point', 300, Number.POSITIVE_INFINITY, '>300');
+      expect(sample.melting_point_lowerbound).toBe(300);
+      expect(sample.melting_point_upperbound).toBe('');
+      expect(sample.melting_point_display).toBe('>300');
+      expect(sample.xref.melting_point_label).toBe('>300');
+    });
+
+    it('should treat negative infinity lower bound as open-ended', () => {
+      const sample = new Sample();
+      sample.updateRange('boiling_point', Number.NEGATIVE_INFINITY, 50, '<50');
+      expect(sample.boiling_point_lowerbound).toBe('');
+      expect(sample.boiling_point_upperbound).toBe(50);
+      expect(sample.boiling_point_display).toBe('<50');
+      expect(sample.xref.boiling_point_label).toBe('<50');
+    });
+
+    it('should remove the xref label when an empty label is supplied', () => {
+      const sample = new Sample();
+      sample.xref = { melting_point_label: '>300' };
+      sample.updateRange('melting_point', '', '', '');
+      expect(sample.xref.melting_point_label).toBeUndefined();
+      expect(sample.melting_point_display).toBe('');
+    });
+  });
+
+  describe('Sample.prepareRangeBound (via constructor)', () => {
+    it('uses xref label as display when present', () => {
+      const sample = new Sample({
+        melting_point: '300..Infinity',
+        xref: { melting_point_label: '>300' },
+      });
+      expect(sample.melting_point_display).toBe('>300');
+    });
+
+    it('formats open-upper bound without xref label as bare number', () => {
+      const sample = new Sample({ melting_point: '300..Infinity' });
+      expect(sample.melting_point_lowerbound).toBe(300);
+      expect(sample.melting_point_upperbound).toBeNull();
+      expect(sample.melting_point_display).toBe('300');
+    });
+
+    it('formats open-lower bound without xref label using "<" notation', () => {
+      const sample = new Sample({ melting_point: '-Infinity..200' });
+      expect(sample.melting_point_lowerbound).toBeNull();
+      expect(sample.melting_point_upperbound).toBe(200);
+      expect(sample.melting_point_display).toBe('<200');
+    });
   });
 
   describe('Sample.applyMixturePropertiesToSample()', () => {
@@ -1721,6 +1771,108 @@ describe('Sample', async () => {
 
       expect(ret).toBe(s);
       expect(s.equivalent).toBe(originalEquivalent);
+    });
+  });
+
+  describe('Sample.isPendingToSave (changed flag)', () => {
+    const buildBaseline = () => {
+      const s = Sample.buildEmpty(0);
+      s.is_new = false;
+      s.name = 'baseline';
+      s.updateChecksum();
+      return s;
+    };
+
+    it('is false for an unchanged persisted sample', () => {
+      const s = buildBaseline();
+      expect(s.isPendingToSave).toBe(false);
+    });
+
+    it('becomes true when sample.changed is set to true', () => {
+      const s = buildBaseline();
+      s.changed = true;
+      expect(s.isPendingToSave).toBe(true);
+    });
+
+    it('is true when checksum-based isEdited triggers (name change)', () => {
+      const s = buildBaseline();
+      s.name = 'edited';
+      expect(s.isPendingToSave).toBe(true);
+    });
+
+    it('resets changed to false when updateChecksum is called', () => {
+      const s = buildBaseline();
+      s.changed = true;
+      expect(s.isPendingToSave).toBe(true);
+
+      s.updateChecksum();
+
+      expect(s.changed).toBe(false);
+      expect(s.isPendingToSave).toBe(false);
+    });
+  });
+
+  describe('Sample.normalizeSmilesSet()', () => {
+    it('returns fragments in sorted order', () => {
+      expect(Sample.normalizeSmilesSet('CCO.C')).toBe('C.CCO');
+    });
+
+    it('is idempotent when already sorted', () => {
+      expect(Sample.normalizeSmilesSet('C.CCO')).toBe('C.CCO');
+    });
+
+    it('returns empty string for null', () => {
+      expect(Sample.normalizeSmilesSet(null)).toBe('');
+    });
+
+    it('returns empty string for empty string', () => {
+      expect(Sample.normalizeSmilesSet('')).toBe('');
+    });
+
+    it('returns empty string for non-string input', () => {
+      expect(Sample.normalizeSmilesSet(42)).toBe('');
+    });
+
+    it('handles a single fragment with no dot', () => {
+      expect(Sample.normalizeSmilesSet('CCO')).toBe('CCO');
+    });
+
+    it('filters out empty fragments from leading/trailing dots', () => {
+      expect(Sample.normalizeSmilesSet('.CCO.')).toBe('CCO');
+    });
+  });
+
+  describe('Sample.sameSmilesSet()', () => {
+    it('returns true for identical strings', () => {
+      expect(Sample.sameSmilesSet('C.CCO', 'C.CCO')).toBe(true);
+    });
+
+    it('returns true when fragment order differs', () => {
+      expect(Sample.sameSmilesSet('CCO.C', 'C.CCO')).toBe(true);
+    });
+
+    it('returns true for three fragments in any order', () => {
+      expect(Sample.sameSmilesSet('A.B.C', 'C.A.B')).toBe(true);
+    });
+
+    it('returns false when fragment sets differ', () => {
+      expect(Sample.sameSmilesSet('C.CCO', 'C.CC')).toBe(false);
+    });
+
+    it('returns false when one string has an extra fragment', () => {
+      expect(Sample.sameSmilesSet('C.CCO', 'C.CCO.O')).toBe(false);
+    });
+
+    it('returns false when one input is null', () => {
+      expect(Sample.sameSmilesSet(null, 'C.CCO')).toBe(false);
+    });
+
+    it('returns true when both inputs are null', () => {
+      expect(Sample.sameSmilesSet(null, null)).toBe(true);
+    });
+
+    it('returns true when both inputs are empty string', () => {
+      expect(Sample.sameSmilesSet('', '')).toBe(true);
     });
   });
 });
