@@ -35,6 +35,7 @@
 .dockerenv
 /.devcontainer/Dockerfile*
 /.devcontainer/docker-compose.dev*
+/.devcontainer/.env.development
 /docker-compose.services.yml
 
 /config/matrices.json
