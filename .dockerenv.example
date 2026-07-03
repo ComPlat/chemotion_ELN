@@ -1,6 +1,11 @@
 ## Environment variables for docker-compose.dev.yml
-## Copy this file to .dockerenv and adjust the values
-## Do not commit .dockerenv to the repository
+##
+## OPTIONAL: docker-compose.dev.yml ships with working defaults, so a bare
+##   `docker compose -f docker-compose.dev.yml up` works without this file.
+##   Copy it to .dockerenv only to override the defaults (custom images,
+##   volume names, host ports, migration behavior):
+##     cp .dockerenv.example .dockerenv   # then adjust and pass --env-file .dockerenv
+## Do not commit .dockerenv to the repository.
 ## `docker compose --env-file .dockerenv -f docker-compose.dev.yml config`
 ##  will use the values from this file
 
@@ -15,8 +20,14 @@
 ## app image with preinstalled asdf plugins(ruby, nodejs), gems and nodejs packages
 
 #DOCKER_DEV_IMAGE=complat/dev:v2.0.1-9-g4aec23261
-#DOCKER_PG_IMAGE=postgres:16
+## DOCKER_PG_IMAGE defaults to the rdkit-enabled rolling image (required:
+## schema.rb enables the rdkit extension).
 #DOCKER_PG_IMAGE=complat/dev:postgres16-rdkit
+## To match a specific production release, use the versioned production DB image
+## (also rdkit-enabled — this is the same image the live ChemOrc stack runs):
+#DOCKER_PG_IMAGE=${SERVICE_REPO}:db-${ELN_VERSION}
+## Plain postgres (no rdkit) — only for a non-rdkit experiment; schema load fails.
+#DOCKER_PG_IMAGE=postgres:16
 
 ## - VOLUME_NAME_HOMEDIR: Use another named volume for homedir (asdf, gems, etc)
 ## - VOLUME_NAME_DB: or database
@@ -45,7 +56,7 @@ IMG_KETCHERSVC=${SERVICE_REPO}:ketchersvc-${ELN_VERSION}
 IMG_INDIGO=epmlsop/indigo-service:1.34.0-rc.1
 
 ## Map ports to host
-#HOST_PORT_DG=5432
+#HOST_PORT_PG=5432
 #HOST_PORT_APP=3000
 #HOST_PORT_WEBPACK=3035
 

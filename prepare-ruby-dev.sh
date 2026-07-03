@@ -10,6 +10,11 @@ echo '>>> checking asdf installation'
 # nodejs installation
 ./prepare-nodejs.sh
 
+# nodejs packages (yarn install) — done here so node_modules is fully populated
+# before any runtime container (app, webpacker) starts. Avoids the chicken/egg
+# where the app booted before webpacker had installed packages.
+./prepare-nodejspkg.sh
+
 # default config for rails app
 ./prepare-config.sh
 

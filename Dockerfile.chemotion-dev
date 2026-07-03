@@ -6,7 +6,13 @@
 
 ARG source_image=ubuntu:24.04
 
-FROM ${source_image} AS chemotion_dev_base
+# Pin the build/runtime architecture to amd64. On ARM hosts (e.g. Apple Silicon)
+# Docker would otherwise build a native ARM image, and `bundle install` then
+# resolves several gems (Faraday and a chain of dependencies) to older versions
+# that still ship ARM builds — silently downgrading the dependency tree. Forcing
+# linux/amd64 keeps gem resolution identical across hosts (a no-op on native
+# amd64; emulated via qemu on ARM). See ComPlat/chemotion_ELN#1083.
+FROM --platform=linux/amd64 ${source_image} AS chemotion_dev_base
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
