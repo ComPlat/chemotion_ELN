@@ -105,6 +105,9 @@ class User < ApplicationRecord
   has_many :computed_props
 
   has_many :text_templates, dependent: :destroy
+  has_one  :user_llm_setting,          dependent: :destroy
+  has_many :user_task_model_mappings,  dependent: :destroy
+
   has_one :sample_text_template, dependent: :destroy
   has_one :reaction_text_template, dependent: :destroy
   has_one :reaction_description_text_template, dependent: :destroy
@@ -146,10 +149,11 @@ class User < ApplicationRecord
   before_destroy :delete_data
 
   scope :by_name, lambda { |query|
-    where("LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ? OR LOWER(first_name || ' ' || last_name) ILIKE ?",
-          "#{sanitize_sql_like(query.downcase)}%",
-          "#{sanitize_sql_like(query.downcase)}%",
-          "#{sanitize_sql_like(query.downcase)}%")
+    q = "#{sanitize_sql_like(query.downcase)}%"
+    where(
+      "LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ? OR LOWER(first_name || ' ' || last_name) ILIKE ? OR LOWER(name_abbreviation) ILIKE ?",
+      q, q, q, q
+    )
   }
   scope :persons, -> { where(type: 'Person') }
 

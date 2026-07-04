@@ -929,6 +929,22 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.index ["deleted_at"], name: "index_literatures_on_deleted_at"
   end
 
+  create_table "llm_providers", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "provider_type"
+    t.string "base_url"
+    t.text "api_key_enc"
+    t.string "default_model"
+    t.string "api_protocol", default: "openai", null: false
+    t.string "scope", default: "global", null: false
+    t.bigint "user_id"
+    t.boolean "enabled", default: true, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["scope"], name: "index_llm_providers_on_scope"
+    t.index ["user_id"], name: "index_llm_providers_on_user_id"
+  end
+
   create_table "matrices", id: :serial, force: :cascade do |t|
     t.string "name", null: false
     t.boolean "enabled", default: false
@@ -1714,6 +1730,29 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
     t.datetime "deleted_at"
   end
 
+  create_table "user_llm_settings", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "provider_type", default: "global", null: false
+    t.string "base_url"
+    t.string "api_protocol", default: "openai", null: false
+    t.text "api_key_enc"
+    t.string "default_model"
+    t.boolean "enabled", default: true, null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["user_id"], name: "index_user_llm_settings_on_user_id", unique: true
+  end
+
+  create_table "user_task_model_mappings", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "task_name", null: false
+    t.string "model", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["user_id", "task_name"], name: "index_user_task_model_mappings_on_user_id_and_task_name", unique: true
+    t.index ["user_id"], name: "index_user_task_model_mappings_on_user_id"
+  end
+
   create_table "users", id: :serial, force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -1880,6 +1919,7 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
   add_foreign_key "components", "samples"
   add_foreign_key "layer_tracks", "layers", column: "identifier", primary_key: "identifier"
   add_foreign_key "literals", "literatures"
+  add_foreign_key "llm_providers", "users", on_delete: :cascade
   add_foreign_key "reactions_reactant_sbmm_samples", "reactions"
   add_foreign_key "reactions_reactant_sbmm_samples", "sequence_based_macromolecule_samples"
   add_foreign_key "report_templates", "attachments"
@@ -1887,6 +1927,8 @@ ActiveRecord::Schema.define(version: 2026_10_04_200000) do
   add_foreign_key "sample_tasks", "users", column: "creator_id"
   add_foreign_key "sequence_based_macromolecule_samples", "sequence_based_macromolecules"
   add_foreign_key "sequence_based_macromolecule_samples", "users"
+  add_foreign_key "user_llm_settings", "users", on_delete: :cascade
+  add_foreign_key "user_task_model_mappings", "users", on_delete: :cascade
   create_function :user_instrument, sql_definition: <<-'SQL'
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
        RETURNS TABLE(instrument text)
