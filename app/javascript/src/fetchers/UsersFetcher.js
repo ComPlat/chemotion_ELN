@@ -169,6 +169,19 @@ export default class UsersFetcher {
         throw error;
       });
   }
+  // ── AI / LLM Settings ──────────────────────────────────────────────────────
+
+  static fetchLlmSettings() {
+    return fetch('/api/v1/users/llm_settings', {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    })
+      .then((response) => response.json())
+      .catch((error) => {
+        console.error('fetchLlmSettings error:', error);
+        throw error;
+      });
+  }
 
   static fetchNewAuthToken(params) {
     return fetch('/api/v1/users/auth_token', {
@@ -192,4 +205,128 @@ export default class UsersFetcher {
         throw error;
       });
   }
+  static updateLlmSettings(params = {}) {
+    return fetch('/api/v1/users/llm_settings', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then((body) => {
+            throw new Error(body.error || body.message || `HTTP ${response.status}`);
+          });
+        }
+        return response.json();
+      })
+      .catch((error) => {
+        console.error('updateLlmSettings error:', error);
+        throw error;
+      });
+  }
+
+  static verifyLlmApiKey(params = {}) {
+    return fetch('/api/v1/users/llm_settings/verify', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then((body) => { throw new Error(body.error || body.message || 'Verification failed'); });
+        }
+        return response.json();
+      })
+      .catch((error) => {
+        console.error('verifyLlmApiKey error:', error);
+        throw error;
+      });
+  }
+
+  static fetchLlmModels() {
+    return fetch('/api/v1/users/llm_settings/models', { credentials: 'same-origin' })
+      .then((r) => r.json())
+      .catch(() => ({ models: [] }));
+  }
+
+  // Models offered by the institution (global) provider — for the Task→Model
+  // dropdown when the user is on the institution service. Returns [] if the
+  // provider exposes no list (caller falls back to free-text / default model).
+  static fetchInstitutionLlmModels() {
+    return fetch('/api/v1/llm/institution_models', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : { models: [] }))
+      .then((d) => d.models || [])
+      .catch(() => []);
+  }
+
+  // Models for a supplied (pre-save) custom config. Used to (re)populate the
+  // Task→Model dropdown after a successful Test connection or on load. A blank
+  // api_key tells the server to reuse the user's saved key. Returns [].
+  static fetchLlmModelsForConfig({ protocol, baseUrl, model, apiKey } = {}) {
+    return fetch('/api/v1/users/llm_settings/models', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        protocol,
+        base_url: baseUrl,
+        model,
+        api_key: apiKey,
+      }),
+    })
+      .then((r) => (r.ok ? r.json() : { models: [] }))
+      .then((d) => d.models || [])
+      .catch(() => []);
+  }
+
+  // Fetch all registered LLM task definitions from the Task Registry (SF-04).
+  // Returns an array of task metadata objects: [{ name, display_name, category, ... }]
+  // Resolves to [] on error so callers can fall back gracefully.
+  static fetchLlmTasks() {
+    return fetch('/api/v1/llm/tasks', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : []))
+      .catch(() => []);
+  }
+
+  // Fetch configurable provider presets (config/llm_provider_profiles.yml).
+  // Resolves to [] on error so the preset picker just hides.
+  static fetchLlmProviderProfiles() {
+    return fetch('/api/v1/llm/provider_profiles', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : { profiles: [] }))
+      .then((d) => d.profiles || [])
+      .catch(() => []);
+  }
+
+  // Which AI access gates the current user is granted (drives AI-settings tab
+  // visibility). Fails closed (no access) on error.
+  static fetchLlmAccess() {
+    const denied = { institution_allowed: false, personal_allowed: false, any_allowed: false };
+    return fetch('/api/v1/llm/access', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : denied))
+      .catch(() => denied);
+  }
+
+  // Delete the current user's saved personal API key.
+  static deleteLlmApiKey() {
+    return fetch('/api/v1/users/llm_settings/api_key', {
+      credentials: 'same-origin',
+      method: 'DELETE',
+      headers: { Accept: 'application/json' },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then((body) => {
+            throw new Error(body.error || body.message || `HTTP ${response.status}`);
+          });
+        }
+        return response.json();
+      })
+      .catch((error) => {
+        console.error('deleteLlmApiKey error:', error);
+        throw error;
+      });
+  }
 }
+
