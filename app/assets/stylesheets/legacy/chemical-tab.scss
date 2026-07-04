@@ -122,6 +122,106 @@ table.table-borderless {
     }
 }
 
+.ai-extract-btn {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    // Keep the width constant across "Extract Safety Data with AI" and
+    // "Extracting…" so the button never resizes on click.
+    min-width: 17rem;
+    white-space: nowrap;
+    padding: 0.45rem 1rem;
+    border: none;
+    border-radius: 0.5rem 0 0 0.5rem; // left button of the input group
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #d946ef 100%);
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.3s ease;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -75%;
+        width: 50%;
+        height: 200%;
+        background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.35) 50%,
+            rgba(255, 255, 255, 0) 100%
+        );
+        transform: skewX(-25deg);
+        animation: shine-wave 3.5s ease-in-out infinite;
+    }
+
+    &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        color: #fff;
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #c026d3 100%);
+        box-shadow: 0 5px 16px rgba(139, 92, 246, 0.45);
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35);
+    }
+
+    &:focus-visible {
+        outline: 2px solid #a5b4fc;
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        opacity: 0.7;
+        box-shadow: none;
+        &::after {
+            animation: none;
+        }
+    }
+}
+
+// Paired "view AI result" button — same gradient family, right-rounded so the two
+// read as one control.
+.ai-extract-view-btn {
+    border: none;
+    color: #fff;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+    background: linear-gradient(135deg, #8b5cf6, #d946ef);
+    transition: background 0.3s ease, box-shadow 0.2s ease;
+
+    &:hover:not(:disabled) {
+        color: #fff;
+        background: linear-gradient(135deg, #7c3aed, #c026d3);
+    }
+
+    &:focus-visible {
+        outline: 2px solid #a5b4fc;
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        opacity: 0.55;
+    }
+}
+
+@keyframes shine-wave {
+    0% {
+        left: -75%;
+    }
+    20% {
+        left: 125%;
+    }
+    100% {
+        left: 125%;
+    }
+}
+
 .inventory-tab {
     margin-top: 15px;
     .inventory-information {

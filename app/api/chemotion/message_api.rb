@@ -8,7 +8,7 @@ module Chemotion
       get 'config' do
         { messageEnable: ENV['MESSAGE_ENABLE'] || 'true',
           messageAutoInterval: (ENV['MESSAGE_AUTO_INTERNAL'] || 6000).to_i,
-          idleTimeout: (ENV['MESSAGE_IDLE_TIME'] || 12).to_i }
+          idleTimeout: (ENV['MESSAGE_IDLE_TIME'] || 600).to_i }
       end
 
       desc 'Return messages of the current user'
