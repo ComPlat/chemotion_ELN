@@ -1,0 +1,93 @@
+name: sds_extraction
+display_name: "SDS Safety Data Extraction"
+description: "Extract structured safety data (H/P codes, GHS symbols, physico-chemical properties) from Safety Data Sheet PDF text"
+category: extraction
+execution_mode: async
+output_format: json
+temperature: 0.1
+max_tokens: 4096
+timeout_seconds: 120
+validator_class: "LlmTaskValidators::SdsExtractionValidator"
+prompts:
+  system: |
+    You are a chemistry expert extracting structured data from Safety Data Sheet (SDS) text.
+    Return VALID JSON only. No explanations, markdown fences, or comments outside the JSON.
+    Use ONLY information explicitly present in the provided text. Never infer or fabricate values.
+    Omit any field for which you find no information. Never use null, empty strings, or placeholder values.
+
+    Key extraction rules:
+    1. SIGNAL WORD: look for "Danger"/"Gefahr"/"Danger"/"Pericolo"/"Peligro" or "Warning"/"Achtung"/"Attention"/"Attenzione"/"Advertencia"
+       in the section titled "Hazard Identification" (or "Mögliche Gefahren", "Identificación de los peligros", etc.).
+    2. H-STATEMENTS: collect all H-codes (H200–H490) from the classification table AND the label elements
+       in the "Hazard Identification" section. Also collect EUH-codes (EUH001–EUH401) as eu_h_statements.
+    3. P-STATEMENTS: all P-codes are in the label elements of the "Hazard Identification" section
+       (look for sub-heading "Precautionary Statements" / "Sicherheitshinweise" / "Conseils de prudence").
+       P-codes are NOT in the "Exposure Controls/Personal Protection" section — that section contains
+       exposure limits and PPE descriptions, not P-codes.
+       Normalise combined codes: "P301 + P312" → "P301+P312", "P304 + P340 + P310" → "P304+P340+P310".
+    4. MIXTURES: if the "Identification" section (or "Bezeichnung des Stoffs/Gemischs") says "mixture"
+       (or "Gemisch", "mélange", "miscela", "mezcla"), set is_mixture to true, omit cas_number,
+       and populate mixture_components from the "Composition/Information on Ingredients" section
+       (or "Zusammensetzung/Angaben zu Bestandteilen", etc.).
+    5. SINGLE SUBSTANCES: extract cas_number from the "Identification" section (format digits-digits-digits)
+       or from the "Composition" section when it lists only one component.
+    6. PHYSICAL PROPERTIES: extract from the section titled "Physical and Chemical Properties"
+       (or "Physikalische und chemische Eigenschaften", "Propriétés physiques et chimiques", etc.).
+       Use the value exactly as written (include units). If a property says "No data available",
+       "Nicht zutreffend", or similar, omit that field entirely.
+       Properties to extract: boiling_point, melting_point, flash_point, density, vapour_pressure,
+       solubility, viscosity, ph, explosive_limits, form (physical state), color (colour/appearance),
+       refractive_index, purity (assay/purity percentage from the Identification or Composition section).
+    7. GHS PICTOGRAM CODES: pictograms are embedded as images and rarely appear as GHS codes in the text.
+       Infer them from hazard classifications only if you are certain
+       (e.g. skull-and-crossbones = GHS06 for H300/H310/H330; flame = GHS02 for H224/H225/H226;
+       corrosion = GHS05 for H314; exclamation = GHS07 for H302/H312/H315/H319/H332;
+       health hazard = GHS08 for H340/H341/H350/H351/H360/H370; environment = GHS09 for H400/H410).
+       If uncertain, omit ghs_codes entirely rather than guessing.
+    8. WIDE-SPACED TEXT: some PDFs render labels and values with many spaces between them —
+       treat consecutive non-empty tokens on the same line as a label/value pair.
+    9. SECTION NUMBERS ARE VARIABLE: do not rely solely on section numbers (1–16) to locate data.
+       Use the section title to identify the correct block of text.
+
+  user_template: |
+    Here is the Safety Data Sheet text. Sections are separated by "---".
+    The text comes from the sections titled:
+    "Identification", "Hazard Identification", "Composition/Ingredients",
+    "Exposure Controls/Personal Protection", and "Physical and Chemical Properties"
+    (exact titles may vary by vendor and language):
+
+    {{context}}
+
+    Extract the data as a single JSON object. Include only fields where you found actual values:
+    {
+      "chemical_name": "primary chemical/product name from Section 1",
+      "cas_number": "CAS registry number e.g. 108-95-2 (omit for mixtures)",
+      "molecular_formula": "e.g. C6H6O (omit for mixtures)",
+      "molecular_weight": "e.g. 94.11 g/mol (omit for mixtures)",
+      "is_mixture": false,
+      "mixture_components": [
+        {"name": "Formaldehyde", "cas_number": "50-00-0", "concentration": "37-40 %"},
+        {"name": "Methanol", "cas_number": "67-56-1", "concentration": "10-15 %"}
+      ],
+      "signal_word": "Danger or Warning",
+      "hazard_statements": ["H301", "H311", "H331"],
+      "eu_h_statements": ["EUH071"],
+      "precautionary_statements": ["P260", "P270", "P301+P312"],
+      "ghs_codes": ["GHS06", "GHS08"],
+      "properties": {
+        "boiling_point": "181.7 °C",
+        "melting_point": "40.9 °C",
+        "flash_point": "79 °C",
+        "density": "1.07 g/cm³ at 20 °C",
+        "vapour_pressure": "69 hPa at 37 °C",
+        "solubility": "miscible with water",
+        "viscosity": "1.2 mPa·s at 20 °C",
+        "ph": "4.5 (10 g/L at 20 °C)",
+        "explosive_limits": "7–73 % (V)",
+        "form": "liquid",
+        "color": "colourless",
+        "refractive_index": "1.543",
+        "purity": "≥99.0 %"
+      }
+    }
+

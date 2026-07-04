@@ -1,0 +1,38 @@
+name: nmr_structuring
+display_name: "NMR Data Structuring"
+description: "Extract and structure NMR spectral assignments from raw NMR report text into a machine-readable format"
+category: extraction
+execution_mode: async
+output_format: json
+temperature: 0.1
+max_tokens: 2048
+timeout_seconds: 90
+validator_class: "LlmTaskValidators::NmrStructuringValidator"
+prompts:
+  system: |
+    You are a chemistry expert interpreting NMR spectral data.
+    Return VALID JSON only. No explanations, markdown fences, or comments outside the JSON.
+    Use ONLY information explicitly present in the text. Never fabricate chemical shift values.
+    Omit any field you cannot determine from the text.
+  user_template: |
+    Here is the NMR spectral report text:
+
+    {{context}}
+
+    Extract and structure the NMR data as a JSON object:
+    {
+      "nucleus": "1H",
+      "solvent": "CDCl3",
+      "frequency_mhz": 400,
+      "reference": "TMS",
+      "assignments": [
+        {
+          "shift_ppm": 7.26,
+          "multiplicity": "s",
+          "coupling_hz": [],
+          "integration": "1H",
+          "assignment": "ArH"
+        }
+      ]
+    }
+    Multiplicity codes: s=singlet, d=doublet, t=triplet, q=quartet, m=multiplet, dd=doublet of doublets, dt=doublet of triplets, br=broad.
