@@ -14,6 +14,7 @@ import DevicesList from 'src/apps/admin/devices/DevicesList';
 // import TemplateManagement from 'src/apps/admin/TemplateManagement';
 import ThirdPartyApp from 'src/apps/admin/ThirdPartyApp';
 import InfoSupportLinks from 'src/apps/admin/InfoSupportLinks';
+import AdminLlmConfig from 'src/apps/admin/AdminLlmConfig';
 
 const ADMIN_PAGES = [
   { key: 0, label: 'Dashboard', component: AdminDashboard },
@@ -28,6 +29,7 @@ const ADMIN_PAGES = [
   { key: 14, label: 'ChemSpectra Layouts', component: ChemSpectraLayouts },
   { key: 15, label: 'Third Party Apps', component: ThirdPartyApp },
   { key: 16, label: 'Info & Support Links', component: InfoSupportLinks },
+  { key: 17, label: 'AI / LLM Config', component: AdminLlmConfig }
 ];
 
 export default function AdminHome() {
