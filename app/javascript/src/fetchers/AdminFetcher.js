@@ -113,4 +113,107 @@ export default class AdminFetcher {
   static restartJob(id) {
     return ApiClient.putJson('/api/v1/admin/jobs/restart/', { body: { id } });
   }
+
+  // ── Admin LLM configuration ──────────────────────────────────────────────────
+
+  static fetchLlmConfig() {
+    return fetch('/api/v1/admin/llm_config', {
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+    }).then((response) => {
+      if (!response.ok) {
+        return response.json().then((err) => { throw new Error(err.error || response.statusText); });
+      }
+      return response.json();
+    });
+  }
+
+  static updateLlmConfig(params) {
+    return fetch('/api/v1/admin/llm_config', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    }).then((response) => {
+      if (!response.ok) {
+        return response.json().then((err) => { throw new Error(err.error || response.statusText); });
+      }
+      return response.json();
+    });
+  }
+
+  static testLlmConfig(params = {}) {
+    return fetch('/api/v1/admin/llm_config/test', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    }).then((response) => {
+      if (!response.ok) {
+        return response.json().then((err) => { throw new Error(err.error || response.statusText); });
+      }
+      return response.json();
+    });
+  }
+
+  static fetchLlmModels() {
+    return fetch('/api/v1/admin/llm_config/models', {
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+    }).then((response) => {
+      if (!response.ok) {
+        return response.json().then((err) => { throw new Error(err.error || response.statusText); });
+      }
+      return response.json();
+    });
+  }
+
+  static fetchLlmUsers() {
+    return fetch('/api/v1/admin/llm_users', {
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+    }).then((response) => {
+      if (!response.ok) {
+        return response.json().then((err) => { throw new Error(err.error || response.statusText); });
+      }
+      return response.json();
+    });
+  }
+
+  static setUserLlmEnabled(params) {
+    return fetch('/api/v1/admin/llm_users', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    }).then((response) => {
+      if (!response.ok) {
+        return response.json().then((err) => { throw new Error(err.error || response.statusText); });
+      }
+      return response.json();
+    });
+  }
+
+  // Configurable provider presets (config/llm_provider_profiles.yml). Resolves to
+  // [] on error so the preset picker just hides.
+  static fetchLlmProviderProfiles() {
+    return fetch('/api/v1/llm/provider_profiles', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : { profiles: [] }))
+      .then((d) => d.profiles || [])
+      .catch(() => []);
+  }
+
+  // Delete the saved global provider API key.
+  static deleteLlmApiKey() {
+    return fetch('/api/v1/admin/llm_config/api_key', {
+      credentials: 'same-origin',
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    }).then((response) => {
+      if (!response.ok) {
+        return response.json().then((err) => { throw new Error(err.error || response.statusText); });
+      }
+      return response.json();
+    });
+  }
 }
