@@ -1,0 +1,60 @@
+# LLM provider presets shown as a "Use a preset" picker in the admin and user
+# AI-settings screens. Selecting a preset pre-fills the endpoint, wire protocol,
+# and default model — the user still supplies the API key.
+#
+# This file is OPTIONAL and fully deployment-configurable: edit/add/remove entries
+# to match your institution. If the file is missing or malformed, the picker is
+# simply hidden (safe fallback) — no error, and manual entry still works.
+#
+# Fields per profile:
+#   key           required  unique identifier (any string)
+#   label         required  display name in the dropdown
+#   protocol      required  one of: openai | anthropic | gemini
+#                           (openai = any OpenAI-compatible /v1/chat/completions endpoint)
+#   base_url      optional  endpoint base URL (anthropic/gemini default to their
+#                           official endpoint when blank)
+#   default_model optional  pre-filled default model id
+#   models        optional  explicit list of selectable model ids for this
+#                           provider (offered in the Task→Model dropdowns). Use
+#                           this when the provider's live model-list endpoint is
+#                           unavailable or you want to curate the choices — no
+#                           code change needed.
+#   notes         optional  short hint shown under the picker
+profiles:
+  - key: kit_toolbox
+    label: "KIT KI-Toolbox"
+    protocol: openai
+    base_url: "https://ki-toolbox.scc.kit.edu/api"
+    default_model: ""
+    notes: "KIT-hosted, OpenAI-compatible. Requires a KIT KI-Toolbox API key."
+
+  - key: openai
+    label: "OpenAI"
+    protocol: openai
+    base_url: "https://api.openai.com"
+    default_model: "gpt-4o"
+    models: ["gpt-4o", "gpt-4o-mini", "o3", "o3-mini"]
+    notes: "Usage billed to your OpenAI account."
+
+  - key: anthropic
+    label: "Anthropic (Claude)"
+    protocol: anthropic
+    base_url: "https://api.anthropic.com"
+    default_model: "claude-opus-4-8"
+    models: ["claude-opus-4-8", "claude-sonnet-5", "claude-haiku-4-5"]
+    notes: "Native Anthropic Messages API. Requires an Anthropic API key."
+
+  - key: gemini
+    label: "Google Gemini"
+    protocol: gemini
+    base_url: "https://generativelanguage.googleapis.com"
+    default_model: "gemini-2.5-pro"
+    models: ["gemini-2.5-pro", "gemini-2.5-flash"]
+    notes: "Native Google Gemini API. Requires a Google AI Studio API key."
+
+  - key: ollama
+    label: "Local Ollama"
+    protocol: openai
+    base_url: "http://localhost:11434"
+    default_model: ""
+    notes: "Local Ollama (OpenAI-compatible). Usually needs no API key."
