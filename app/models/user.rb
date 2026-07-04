@@ -105,6 +105,9 @@ class User < ApplicationRecord
   has_many :computed_props
 
   has_many :text_templates, dependent: :destroy
+  has_one  :user_llm_setting,          dependent: :destroy
+  has_many :user_task_model_mappings,  dependent: :destroy
+
   has_one :sample_text_template, dependent: :destroy
   has_one :reaction_text_template, dependent: :destroy
   has_one :reaction_description_text_template, dependent: :destroy
@@ -146,10 +149,11 @@ class User < ApplicationRecord
   before_destroy :delete_data
 
   scope :by_name, lambda { |query|
-    where("LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ? OR LOWER(first_name || ' ' || last_name) ILIKE ?",
-          "#{sanitize_sql_like(query.downcase)}%",
-          "#{sanitize_sql_like(query.downcase)}%",
-          "#{sanitize_sql_like(query.downcase)}%")
+    q = "#{sanitize_sql_like(query.downcase)}%"
+    where(
+      "LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ? OR LOWER(first_name || ' ' || last_name) ILIKE ? OR LOWER(name_abbreviation) ILIKE ?",
+      q, q, q, q
+    )
   }
   scope :persons, -> { where(type: 'Person') }
 
@@ -517,46 +521,6 @@ class User < ApplicationRecord
 
   def user_ids
     [id]
-  end
-end
-
-class Person < User
-  has_many :users_groups, dependent: :destroy, foreign_key: :user_id
-  has_many :groups, through: :users_groups
-
-  has_many :users_admins, dependent: :destroy, foreign_key: :admin_id
-  has_many :administrated_accounts, through: :users_admins, source: :user
-end
-
-class Group < User
-  has_many :users_groups, dependent: :destroy
-  has_many :users, class_name: 'User', through: :users_groups
-
-  has_many :users_admins, dependent: :destroy, foreign_key: :user_id
-  has_many :admins, through: :users_admins, source: :admin # ,  foreign_key:    association_foreign_key: :admin_id
-  around_save :update_allocated_space
-  before_destroy :remove_from_matrices
-
-  def administrated_by?(user)
-    users_admins.where(admin: user).present?
-  end
-
-  private
-
-  def user_ids
-    # Override method to return an array of user IDs in the group
-    users.ids
-  end
-
-  def update_allocated_space
-    return yield unless allocated_space_changed?
-
-    yield
-    users.each do |user|
-      next if user.allocated_space >= allocated_space
-
-      user.update(allocated_space: allocated_space)
-    end
   end
 end
 
