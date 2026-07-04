@@ -3,6 +3,17 @@
 module Chemotion
   class ChemicalAPI < Grape::API
     include Grape::Kaminari
+
+    helpers do
+      # True when the current user has an LLM provider configured for SDS extraction.
+      def llm_provider_available?
+        LlmProviderResolver.resolve(user: current_user, task_name: 'sds_extraction')
+        true
+      rescue Errors::LlmNotConfiguredError
+        false
+      end
+    end
+
     resource :chemicals do
       desc 'update chemicals'
       params do
@@ -175,6 +186,44 @@ module Chemotion
           Rails.logger.error("Error in save_manual_sds: #{e.message}")
           error!({ error: "Internal server error: #{e.message}" }, 500)
         end
+      end
+
+      resource :extract_sds do
+        desc 'Extract safety data from an SDS PDF using the configured LLM provider'
+
+        params do
+          requires :sample_id, type: Integer, desc: 'Sample ID'
+        end
+
+        post do
+          Chemotion::ChemicalsService.handle_exceptions do
+            # Require a configured LLM provider (SF-05). The legacy ai4chemotion
+            # microservice check is re-enabled in a separate commit:
+            #   unless Chemotion::Ai4ChemotionService.available? || llm_provider_available?
+            unless llm_provider_available?
+              error!({ error: 'No LLM extraction service is configured. ' \
+                              'Set up an LLM provider in Profile → AI Settings, ' \
+                              'or ask your admin to configure the institution provider.' }, 503)
+            end
+
+            chemical = Chemical.find_by(sample_id: params[:sample_id])
+            error!({ error: 'Chemical not found for this sample' }, 404) unless chemical
+
+            ExtractSdsJob.perform_later(
+              sample_id: params[:sample_id],
+              user_id: current_user.id,
+            )
+
+            status 202
+            { message: 'SDS extraction job submitted', sample_id: params[:sample_id] }
+          end
+        end
+
+        # Legacy ai4chemotion health endpoint (re-enabled in a separate commit):
+        # desc 'Check ai4chemotion service health'
+        # get :health do
+        #   Chemotion::Ai4ChemotionService.health
+        # end
       end
 
       resources :safety_phrases do

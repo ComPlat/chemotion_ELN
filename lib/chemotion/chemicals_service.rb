@@ -236,6 +236,7 @@ module Chemotion
 
     def self.construct_pictograms(pictograms)
       pictograms_hash = JSON.parse(File.read('./public/json/pictograms.json'))
+
       # Accept either a comma-separated string or an array
       pictogram_array = if pictograms.is_a?(String)
                           pictograms.split(',').map(&:strip)
@@ -245,7 +246,25 @@ module Chemotion
                           []
                         end
 
-      pictogram_array.filter_map { |e| pictograms_hash.key?(e) ? e : nil }
+      # Build a reverse map from filename/description → GHS code for fallback lookup.
+      # "Toxic.gif" → "GHS06", "Toxic" → "GHS06", "toxic" → "GHS06"
+      reverse_map = pictograms_hash.each_with_object({}) do |(code, filename), map|
+        basename = File.basename(filename.to_s, '.*').downcase   # "toxic"
+        full     = filename.to_s.downcase                        # "toxic.gif"
+        map[basename] = code
+        map[full]     = code
+      end
+
+      pictogram_array.filter_map do |e|
+        normalized = e.to_s.strip
+        if pictograms_hash.key?(normalized)
+          # Input is already a GHS code key (e.g. "GHS06")
+          normalized
+        else
+          # Try reverse lookup: filename ("Toxic.gif") or basename ("Toxic", "toxic")
+          reverse_map[normalized] || reverse_map[normalized.downcase]
+        end
+      end.uniq
     end
 
     def self.safety_phrases_thermofischer(product_number)

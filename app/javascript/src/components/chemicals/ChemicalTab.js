@@ -41,6 +41,9 @@ export default class ChemicalTab extends React.Component {
       viewModalForVendor: '',
       showModal: false,
       searchResults: [],
+      loadingExtractSds: false,
+      showAiResultModal: false,
+      llmAvailable: false,
     };
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
@@ -50,10 +53,18 @@ export default class ChemicalTab extends React.Component {
     const { sample } = this.props;
     this.fetchChemical(sample);
     this.updateDisplayWell();
+    window.addEventListener('sdsExtractionComplete', this.handleSdsExtractionComplete);
+    // Determine whether any LLM provider is configured, to enable/disable AI features.
+    ChemicalFetcher.llmAvailable().then((available) => this.setState({ llmAvailable: available }));
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('sdsExtractionComplete', this.handleSdsExtractionComplete);
+    if (this._extractionPollTimer) clearTimeout(this._extractionPollTimer);
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { saveInventory } = this.props;
+    const { saveInventory, sample } = this.props;
     const { chemical } = this.state;
 
     if (prevState.chemical !== chemical) {
@@ -62,6 +73,14 @@ export default class ChemicalTab extends React.Component {
 
     if (saveInventory === true) {
       this.handleSubmitSave();
+    }
+
+    // When the parent sample is re-fetched (e.g. after an SDS extraction job
+    // completes and sends ElementActions.fetchSampleById via notification),
+    // re-fetch the chemical record so the new AI-extracted data is displayed
+    // without requiring a manual page refresh.
+    if (prevProps.sample !== sample && sample && !sample.is_new) {
+      this.fetchChemical(sample);
     }
   }
 
@@ -448,13 +467,166 @@ export default class ChemicalTab extends React.Component {
     });
   };
 
-  querySafetyPhrases = (vendor) => {
-    // Only enable for special vendors: merck and thermofischer
+  handleExtractSds = () => {
+    const { sample } = this.props;
+    const { chemical } = this.state;
+    // Remember the previous success/failure markers so polling can detect a change
+    const prevExtractedAt = chemical?._chemical_data?.[0]?.ai4chemotion?.extracted_at ?? null;
+    const prevFailedAt = chemical?._chemical_data?.[0]?.extraction_error?.failed_at ?? null;
+
+    this.setState({ loadingExtractSds: true });
+
+    ChemicalFetcher.extractSds(sample.id).then(() => {
+      // Job submitted — keep spinner active and poll until results (or an error) arrive
+      NotificationActions.add({
+        title: 'SDS Extraction Running',
+        message: 'Extracting safety data using AI. Results will appear automatically when done.',
+        level: 'info',
+        position: 'tc',
+        autoDismiss: 5,
+      });
+      this.startExtractionPolling(sample.id, prevExtractedAt, prevFailedAt, 0);
+    }).catch((error) => {
+      this.setState({ loadingExtractSds: false });
+      NotificationActions.add({
+        title: 'SDS Extraction Failed',
+        message: error.message || 'Could not start extraction job',
+        level: 'error',
+        position: 'tc',
+        autoDismiss: 5,
+      });
+    });
+  };
+
+  // Poll fetchChemical every 3 s until the extraction succeeds (extracted_at
+  // changes) OR fails (extraction_error.failed_at changes), max 3 minutes.
+  // This is the primary refresh mechanism — independent of the notification system.
+  startExtractionPolling = (sampleId, prevExtractedAt, prevFailedAt, attempt) => {
+    const MAX_ATTEMPTS = 60; // 60 × 3 s = 3 min
+    const POLL_INTERVAL = 3000;
+
+    if (attempt >= MAX_ATTEMPTS) {
+      this.setState({ loadingExtractSds: false });
+      NotificationActions.add({
+        title: 'SDS Extraction',
+        message: 'Extraction is taking longer than expected. Please check back later.',
+        level: 'warning',
+        position: 'tc',
+        autoDismiss: 8,
+      });
+      return;
+    }
+
+    this._extractionPollTimer = setTimeout(() => {
+      const { type, sample } = this.props;
+      if (!sample) { this.setState({ loadingExtractSds: false }); return; }
+
+      ChemicalFetcher.fetchChemical(sampleId, type).then((chemical) => {
+        const data = chemical?._chemical_data?.[0];
+        const newExtractedAt = data?.ai4chemotion?.extracted_at ?? null;
+        const newFailedAt = data?.extraction_error?.failed_at ?? null;
+
+        if (chemical !== null && newExtractedAt && newExtractedAt !== prevExtractedAt) {
+          // Results are ready — update state, clear spinner, and push properties to sample
+          this.setState({ chemical, loadingExtractSds: false });
+          this.mapLlmPropertiesToSample(chemical);
+        } else if (newFailedAt && newFailedAt !== prevFailedAt) {
+          // The job failed (e.g. 401) — reset the button to its default state and
+          // surface the error message the job recorded.
+          this.setState({ chemical, loadingExtractSds: false });
+          NotificationActions.add({
+            title: 'SDS Extraction Failed',
+            message: data?.extraction_error?.message || 'The AI extraction could not be completed.',
+            level: 'error',
+            position: 'tc',
+            autoDismiss: 10,
+          });
+        } else {
+          this.startExtractionPolling(sampleId, prevExtractedAt, prevFailedAt, attempt + 1);
+        }
+      }).catch(() => {
+        this.startExtractionPolling(sampleId, prevExtractedAt, prevFailedAt, attempt + 1);
+      });
+    }, POLL_INTERVAL);
+  };
+
+  querySafetyPhrases = (vendor, vendorLink) => {
+    // Only enable vendor scraping for special vendors (Merck, ThermoFischer)
     const specialVendor = vendor === 'merck' || vendor === 'thermofischer';
-    const { loadingPhrasesVendor } = this.state;
+    // hasLocalFile: any locally stored SDS PDF — can be used for LLM text extraction
+    const hasLocalFile = !!(vendorLink && vendorLink.includes('/safety_sheets/'));
+    const hasProductInfo = specialVendor && this.extractProductInfo(vendor);
+    const {
+      chemical, loadingPhrasesVendor, loadingExtractSds, llmAvailable,
+    } = this.state;
     const isLoading = loadingPhrasesVendor === vendor;
 
-    const button = (
+    const aiData = chemical?._chemical_data?.[0]?.ai4chemotion;
+    const hasAiData = !!aiData?.extracted_at;
+
+    // AI extract button + view-icon (shown when a local PDF is available)
+    const llmButtonGroup = hasLocalFile ? (
+      <InputGroup size="sm">
+        <OverlayTrigger
+          placement="top"
+          overlay={(
+            <Tooltip id="aiExtractTooltip">
+              {llmAvailable
+                ? (
+                  <>
+                    Extract safety phrases &amp; properties from the SDS using AI (LLM-based).
+                    Results are generated automatically and may contain inaccuracies — please review carefully.
+                  </>
+                )
+                : (
+                  <>
+                    No AI provider is configured. Set one up in Profile → AI Settings,
+                    or ask your administrator to configure an institution provider.
+                  </>
+                )}
+            </Tooltip>
+          )}
+        >
+          {/* span wrapper keeps the tooltip working while the button is disabled */}
+          <span className="d-inline-block">
+            <Button
+              className="ai-extract-btn"
+              size="sm"
+              disabled={loadingExtractSds || !llmAvailable}
+              onClick={() => this.handleExtractSds()}
+              style={!llmAvailable ? { pointerEvents: 'none' } : undefined}
+            >
+              {/* fa-fw keeps the icon slot constant so the button doesn't jump when
+                  the spinner replaces the magic icon */}
+              <i className={`fa fa-fw me-2 ${loadingExtractSds ? 'fa-spinner fa-pulse' : 'fa-magic'}`} />
+              {loadingExtractSds ? 'Extracting…' : 'Extract Safety Data with AI'}
+            </Button>
+          </span>
+        </OverlayTrigger>
+        <OverlayTrigger
+          placement="top"
+          overlay={(
+            <Tooltip id="viewAiResultTooltip">
+              {hasAiData
+                ? 'Click to view AI extracted data'
+                : 'Run AI extraction first to view results'}
+            </Tooltip>
+          )}
+        >
+          <Button
+            className="ai-extract-view-btn"
+            size="sm"
+            onClick={() => this.setState({ showAiResultModal: true })}
+            disabled={!hasAiData}
+          >
+            <i className="fa fa-file-text-o" />
+          </Button>
+        </OverlayTrigger>
+      </InputGroup>
+    ) : null;
+
+    // Vendor-scraping button (fetch Safety Phrases from vendor website)
+    const vendorButton = (
       <Button
         id="safetyPhrases-btn"
         onClick={() => this.fetchSafetyPhrases(vendor)}
@@ -477,23 +649,35 @@ export default class ChemicalTab extends React.Component {
       </Button>
     );
 
-    // If disabled, wrap in an OverlayTrigger to show the tooltip
-    if (!specialVendor) {
+    // Both options available: show vendor scraping + LLM extraction side by side
+    if (hasLocalFile && hasProductInfo) {
       return (
-        <OverlayTrigger
-          placement="top"
-          overlay={(
-            <Tooltip id="disabledPhrases">
-              Fetching safety phrases is not available for manually attached safety sheets
-            </Tooltip>
-          )}
-        >
-          <div>{button}</div>
-        </OverlayTrigger>
+        <div className="d-flex flex-column gap-2 align-items-end">
+          {vendorButton}
+          {llmButtonGroup}
+        </div>
       );
     }
 
-    return button;
+    // Only LLM option available (no vendor product info)
+    if (hasLocalFile) return llmButtonGroup;
+
+    // Only vendor scraping available (URL-based SDS, no local copy)
+    if (hasProductInfo) return vendorButton;
+
+    // No extraction options available — show disabled vendor button with explanation
+    return (
+      <OverlayTrigger
+        placement="top"
+        overlay={(
+          <Tooltip id="disabledPhrases">
+            Fetching safety phrases is not available for manually attached safety sheets
+          </Tooltip>
+        )}
+      >
+        <div>{vendorButton}</div>
+      </OverlayTrigger>
+    );
   };
 
   handleAttachmentSubmit = ({
@@ -571,6 +755,16 @@ export default class ChemicalTab extends React.Component {
       });
   };
 
+  // Called when the SDS extraction job completes (via window custom event).
+  // Re-fetches the chemical directly so the AI-extracted data is displayed
+  // without needing the sample checksum to change in ElementStore.
+  handleSdsExtractionComplete = (event) => {
+    const { sample } = this.props;
+    if (sample && event.detail?.sampleId === sample.id) {
+      this.fetchChemical(sample);
+    }
+  };
+
   fetchChemical(sample) {
     const { type } = this.props;
     if (sample === undefined || sample.is_new) {
@@ -630,6 +824,49 @@ export default class ChemicalTab extends React.Component {
       handleUpdateSample(sample);
       ElementActions.updateSample(new Sample(sample), false);
     }
+  }
+
+  // Apply LLM-extracted physical properties to the parent Sample — mirrors
+  // mapToSampleProperties but reads from chemical._chemical_data[0].extractedProperties
+  // (populated by ExtractSdsJob#update_chemical_data) instead of vendor product info.
+  mapLlmPropertiesToSample(chemical) {
+    const { sample, handleUpdateSample } = this.props;
+    if (!sample || !handleUpdateSample) return;
+
+    const properties = chemical?._chemical_data?.[0]?.extractedProperties;
+    if (!properties || Object.keys(properties).length === 0) return;
+
+    // Range properties (boiling_point, melting_point) — same parsing as vendor flow
+    const updateSampleRange = (propertyName, propertyValue) => {
+      if (!propertyValue) return;
+      const rangeValues = propertyValue.replace(/°C?/g, '').trim().split('-');
+      const lowerBound = parseFloat(rangeValues[0].replace('−', '-')) || Number.NEGATIVE_INFINITY;
+      const upperBound = rangeValues.length === 2
+        ? parseFloat(rangeValues[1].replace('−', '-'))
+        : Number.POSITIVE_INFINITY;
+      sample.updateRange(propertyName, lowerBound, upperBound);
+    };
+
+    updateSampleRange('boiling_point', properties.boiling_point);
+    updateSampleRange('melting_point', properties.melting_point);
+
+    if (properties.flash_point) {
+      sample.xref.flash_point = { unit: '°C', value: properties.flash_point };
+    }
+
+    const densityNumber = properties.density?.match(/[0-9.]+/g);
+    if (densityNumber) {
+      sample.density = densityNumber[0];
+    }
+
+    if (properties.form) sample.xref.form = properties.form;
+    if (properties.color) sample.xref.color = properties.color;
+    if (properties.refractive_index) sample.xref.refractive_index = properties.refractive_index;
+    if (properties.solubility) sample.xref.solubility = properties.solubility;
+    if (properties.purity) sample.xref.purity = properties.purity;
+
+    handleUpdateSample(sample);
+    ElementActions.updateSample(new Sample(sample), false);
   }
 
   chemicalStatus(data) {
@@ -1259,7 +1496,7 @@ export default class ChemicalTab extends React.Component {
           {this.renderChemicalProperties(displayName.toLowerCase())}
         </div>
         <div className="justify-content-end">
-          {this.querySafetyPhrases(displayName.toLowerCase())}
+          {this.querySafetyPhrases(displayName.toLowerCase(), vendorLink)}
         </div>
       </div>
     );
@@ -1431,6 +1668,10 @@ export default class ChemicalTab extends React.Component {
     const { loadingQuerySafetySheets, loadChemicalProperties } = this.state;
     // Only enable for special vendors: merck and thermofischer
     const specialVendor = vendor === 'merck' || vendor === 'thermofischer';
+
+    // Hide entirely when the SDS was not fetched via web scraping
+    // (i.e. no vendor product link is available to query properties from)
+    if (!specialVendor || !this.extractProductInfo(vendor)) return null;
 
     return (
       <div className="w-100 mt-0 ms-2">
@@ -1773,6 +2014,99 @@ export default class ChemicalTab extends React.Component {
     );
   }
 
+  renderAiResultModal() {
+    const { showAiResultModal, chemical } = this.state;
+    if (!chemical?._chemical_data?.[0]) return null;
+
+    const aiData = chemical._chemical_data[0].ai4chemotion || {};
+    const extractedProps = chemical._chemical_data[0].extractedProperties || {};
+
+    const extractedAt = aiData.extracted_at
+      ? new Date(aiData.extracted_at).toLocaleString()
+      : 'Unknown';
+
+    const metadataLines = [
+      aiData.chemical_name && `Chemical: ${aiData.chemical_name}`,
+      aiData.is_mixture
+        ? 'Type: Mixture (no single CAS number)'
+        : aiData.cas_number && `CAS: ${aiData.cas_number}`,
+      !aiData.is_mixture && aiData.molecular_formula && `Formula: ${aiData.molecular_formula}`,
+      aiData.signal_word && `Signal Word: ${aiData.signal_word}`,
+    ].filter(Boolean);
+
+    const mixtureLines = aiData.is_mixture && Array.isArray(aiData.mixture_components)
+      && aiData.mixture_components.length > 0
+      ? aiData.mixture_components.map((c) => {
+        const cas = c.cas_number ? ` (CAS: ${c.cas_number})` : '';
+        const conc = c.concentration ? ` [${c.concentration}]` : '';
+        return `${c.name}${cas}${conc}`;
+      })
+      : null;
+
+    const propertiesDisplay = Object.keys(extractedProps).length > 0
+      ? Object.entries(extractedProps)
+          .map(([key, val]) => `${key}: ${val}`)
+          .join('\n')
+      : 'No physical properties were extracted.';
+
+    return (
+      <AppModal
+        title="AI Extracted Data"
+        show={showAiResultModal}
+        onHide={() => this.setState({ showAiResultModal: false })}
+        size="lg"
+        closeLabel="Close"
+        showFooter
+      >
+        <p className="text-muted small mb-3">
+          Safety phrases (H/P codes, GHS pictograms) are shown in the Safety Phrases section.
+        </p>
+        <Form.Group controlId="aiMetadataSection" className="mb-3">
+          <Form.Label className="fw-bold">
+            Extracted Metadata
+          </Form.Label>
+          <Form.Control
+            as="textarea"
+            className="w-100"
+            readOnly
+            disabled
+            rows={metadataLines.length || 2}
+            value={metadataLines.join('\n')}
+          />
+        </Form.Group>
+        {mixtureLines && (
+          <Form.Group controlId="aiMixtureSection" className="mb-3">
+            <Form.Label className="fw-bold">Mixture Components</Form.Label>
+            <Form.Control
+              as="textarea"
+              className="w-100"
+              readOnly
+              disabled
+              rows={mixtureLines.length + 1}
+              value={mixtureLines.join('\n')}
+            />
+          </Form.Group>
+        )}
+        <Form.Group controlId="aiPropertiesSection" className="mb-3">
+          <Form.Label className="fw-bold">Extracted Physical Properties</Form.Label>
+          <Form.Control
+            as="textarea"
+            className="w-100"
+            readOnly
+            disabled
+            rows={6}
+            value={propertiesDisplay}
+          />
+        </Form.Group>
+        {extractedAt && (
+          <p className="text-muted small mb-3">
+            {`Extracted at: ${extractedAt}`}
+          </p>
+        )}
+      </AppModal>
+    );
+  }
+
   renderPropertiesModal() {
     const { viewChemicalPropertiesModal, chemical, viewModalForVendor } = this.state;
     let fetchedChemicalProperties = 'Please fetch chemical properties first to view results';
@@ -1857,6 +2191,7 @@ export default class ChemicalTab extends React.Component {
         </Accordion>
 
         {this.renderPropertiesModal()}
+        {this.renderAiResultModal()}
 
         <SDSAttachmentModal
           show={showModal}
