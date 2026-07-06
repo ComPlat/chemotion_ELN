@@ -31,15 +31,16 @@
   &__control,
   &__menu {
     @extend .d-block;
-    font-family: $form-select-font-family;
+    font-family: var(--bs-btn-font-family, #{$form-select-font-family});
     font-size: var(--bs-btn-font-size, #{$form-select-font-size});
-    font-weight: $form-select-font-weight;
-    line-height: $btn-line-height;
-    color: $form-select-color;
-    background-color: $form-select-bg;
-    border: $form-select-border-width solid $form-select-border-color;
+    font-weight: var(--bs-btn-font-weight, #{$form-select-font-weight});
+    line-height: var(--bs-btn-line-height, #{$btn-line-height});
+    color: var(--bs-btn-color, #{$form-select-color});
+    background-color: var(--bs-btn-bg, #{$form-select-bg});
+    border: var(--bs-btn-border-width, #{$form-select-border-width}) solid
+      var(--bs-btn-border-color, #{$form-select-border-color});
     border-radius: var(--bs-btn-border-radius, #{$form-select-border-radius});
-    @include box-shadow($form-select-box-shadow);
+    box-shadow: var(--bs-btn-box-shadow, #{$form-select-box-shadow});
     appearance: none;
   }
 
@@ -53,12 +54,34 @@
     min-height: auto !important;
 
     &:hover {
-      border-color: $form-select-border-color;
+      color: var(
+        --bs-btn-hover-color,
+        var(--bs-btn-color, #{$form-select-color})
+      );
+      background-color: var(
+        --bs-btn-hover-bg,
+        var(--bs-btn-bg, #{$form-select-bg})
+      );
+      border-color: var(
+        --bs-btn-hover-border-color,
+        #{$form-select-border-color}
+      );
     }
 
     &:focus,
     &--is-focused {
-      border-color: $input-focus-border-color;
+      color: var(
+        --bs-btn-active-color,
+        var(--bs-btn-color, #{$form-select-color})
+      );
+      background-color: var(
+        --bs-btn-active-bg,
+        var(--bs-btn-bg, #{$form-select-bg})
+      );
+      border-color: var(
+        --bs-btn-active-border-color,
+        #{$input-focus-border-color}
+      );
       outline: 0;
       @if $enable-shadows {
         @include box-shadow(
@@ -137,11 +160,19 @@
 
     &--is-selected,
     &--is-selected.chemotion-select__option--is-focused {
-      background-color: $input-focus-border-color;
+      color: var(
+        --bs-btn-active-color,
+        var(--bs-btn-color, #{$form-select-color})
+      );
+      background-color: var(--bs-btn-active-bg, #{$input-focus-border-color});
     }
 
     &--is-focused {
-      background-color: $input-focus-border-color;
+      color: var(
+        --bs-btn-hover-color,
+        var(--bs-btn-color, #{$form-select-color})
+      );
+      background-color: var(--bs-btn-hover-bg, #{$input-focus-border-color});
     }
   }
 
@@ -271,4 +302,23 @@
   white-space: normal;
   text-align: left;
   overflow-x: hidden;
+}
+
+.input-group {
+  > .chemotion-select {
+    &:not(:last-child) {
+      .chemotion-select__control {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+    }
+
+    &:not(:first-child) {
+      .chemotion-select__control {
+        margin-left: calc($input-border-width * -1);
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+    }
+  }
 }

@@ -15,11 +15,14 @@ const CollectionToggle = React.forwardRef(({
   onClick,
   labelsCount,
   totalSharedCollections,
+  size,
+  variant,
 }, ref) => (
   <Button
     ref={ref}
-    size="xxsm"
-    variant="secondary"
+    size={size}
+    variant={variant}
+    className="text-nowrap"
     onClick={(e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -38,9 +41,15 @@ CollectionToggle.propTypes = {
   onClick: PropTypes.func.isRequired,
   labelsCount: PropTypes.number.isRequired,
   totalSharedCollections: PropTypes.number.isRequired,
+  size: PropTypes.string,
+  variant: PropTypes.string,
+};
+CollectionToggle.defaultProps = {
+  size: 'xxsm',
+  variant: 'light',
 };
 
-const ElementCollectionLabels = ({ element }) => {
+const ElementCollectionLabels = ({ element, size, variant }) => {
   const collectionsStore = useContext(StoreContext).collections;
 
   const { currentUser } = UserStore.getState();
@@ -92,6 +101,8 @@ const ElementCollectionLabels = ({ element }) => {
         id="dropdown-custom-components"
         labelsCount={ownCollections.length}
         totalSharedCollections={sharedCollections.length}
+        size={size}
+        variant={variant}
       />
       {createPortal(
         <Dropdown.Menu>
@@ -107,6 +118,8 @@ const ElementCollectionLabels = ({ element }) => {
 export default observer(ElementCollectionLabels);
 
 ElementCollectionLabels.propTypes = {
+  size: PropTypes.string,
+  variant: PropTypes.string,
   element: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     type: PropTypes.string,
@@ -118,4 +131,9 @@ ElementCollectionLabels.propTypes = {
       }),
     }),
   }).isRequired,
+};
+
+ElementCollectionLabels.defaultProps = {
+  size: 'xxsm',
+  variant: 'light',
 };

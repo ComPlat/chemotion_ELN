@@ -50,25 +50,57 @@ export default function ElementAllCheckbox({ type }) {
     selectAll(newOption);
   };
 
+  let ariaChecked;
+  if (uiState === 'checked') ariaChecked = true;
+  else if (uiState === 'partial') ariaChecked = 'mixed';
+  else ariaChecked = false;
+  const listboxId = `element-all-checkbox-listbox-${type}`;
+
   return (
-    <div className="element-all-checkbox" onClick={toggleOptions}>
+    <div
+      role="combobox"
+      aria-expanded={showOptions}
+      aria-haspopup="listbox"
+      aria-controls={listboxId}
+      tabIndex={0}
+      className="element-all-checkbox select-secondary chemotion-select position-static form-select-sm"
+      onClick={toggleOptions}
+      onKeyDown={(e) => e.key === 'Enter' && toggleOptions(e)}
+    >
       <div className="chemotion-select__control">
-        <span className={`form-check-input form-check-input--${uiState}`} onClick={toggleCheckbox} />
+        <span
+          role="checkbox"
+          aria-label="Select all elements"
+          aria-checked={ariaChecked}
+          tabIndex={-1}
+          className={`form-check-input form-check-input--${uiState}`}
+          onClick={toggleCheckbox}
+          onKeyDown={(e) => e.key === 'Enter' && toggleCheckbox(e)}
+        />
         <i className="chemotion-select__indicator chemotion-select__dropdown-indicator" />
       </div>
       {showOptions && (
-        <div className="chemotion-select__menu">
-          {options.map((option, index) => (
-            <div
-              key={option}
-              className={`chemotion-select__option${currentOption === index ? ' chemotion-select__option--is-selected' : ''}`}
-              onClick={() => selectAll(index)}
-            >
-              {option === 'current' && 'Current page'}
-              {option === 'all' && 'All pages'}
-              {option === 'none' && 'None'}
-            </div>
-          ))}
+        <div role="listbox" id={listboxId} className="chemotion-select__menu">
+          {options.map((option, index) => {
+            const isSelected = currentOption === index;
+            const selectedClass = isSelected ? ' chemotion-select__option--is-selected' : '';
+            const optionClassName = `chemotion-select__option${selectedClass}`;
+            return (
+              <div
+                key={option}
+                role="option"
+                aria-selected={isSelected}
+                tabIndex={-1}
+                className={optionClassName}
+                onClick={() => selectAll(index)}
+                onKeyDown={(e) => e.key === 'Enter' && selectAll(index)}
+              >
+                {option === 'current' && 'Current page'}
+                {option === 'all' && 'All pages'}
+                {option === 'none' && 'None'}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

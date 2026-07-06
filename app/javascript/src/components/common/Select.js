@@ -14,13 +14,14 @@ import cs from 'classnames';
 const baseClassName = 'chemotion-select';
 
 // Custom Input component that keeps the input visible for editing selected values
-const EditableInput = (props) => (
-  <components.Input {...props} isHidden={false} />
-);
+function EditableInput(props) {
+  return <components.Input {...props} isHidden={false} />;
+}
 
 function buildWrappedComponent(name, BaseComponent) {
   const component = forwardRef(({
     size,
+    variant,
     minWidth,
     maxHeight,
     className,
@@ -75,6 +76,7 @@ function buildWrappedComponent(name, BaseComponent) {
         {...props}
         className={cs(
           baseClassName,
+          `select-${variant}`,
           className,
           { [`form-select-${size}`]: !!size }
         )}
@@ -94,6 +96,7 @@ function buildWrappedComponent(name, BaseComponent) {
   component.propTypes = {
     ...BaseComponent.propTypes,
     size: PropTypes.string,
+    variant: PropTypes.string,
     minWidth: PropTypes.string,
     maxHeight: PropTypes.string,
     isInputEditable: PropTypes.bool,
@@ -101,6 +104,7 @@ function buildWrappedComponent(name, BaseComponent) {
   component.defaultProps = {
     ...BaseComponent.defaultProps,
     size: null,
+    variant: 'light',
     minWidth: null,
     maxHeight: null,
     isInputEditable: false,
