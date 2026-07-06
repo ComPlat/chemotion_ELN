@@ -1,9 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Nav, Tab
-} from 'react-bootstrap';
+import { Nav } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 import DatasetModalContent from 'src/components/container/ContainerDatasetModalContent';
@@ -126,53 +124,41 @@ export default class ContainerDatasetModal extends Component {
             primaryActionLabel={canSave ? 'Save' : undefined}
             onPrimaryAction={canSave ? this.handleSave : undefined}
           >
-            <Tab.Container activeKey={mode} onSelect={(selectedMode) => this.handleSwitchMode(selectedMode)}>
-              <div className="d-flex flex-column gap-3">
-                <Nav variant="tabs">
-                  <Nav.Item>
-                    <Nav.Link eventKey="attachments">
-                      Attachments
-                      <i className="fa fa-paperclip ms-1" aria-hidden="true" />
-                    </Nav.Link>
-                  </Nav.Item>
-                  <Nav.Item>
-                    <Nav.Link eventKey="metadata">
-                      Metadata
-                      <i className="fa fa-address-card ms-1 border-0" aria-hidden="true" />
-                    </Nav.Link>
-                  </Nav.Item>
-                </Nav>
-                <Tab.Content>
-                  <Tab.Pane eventKey="attachments">
-                    <DatasetModalContent
-                      ref={this.datasetInput}
-                      readOnly={readOnly}
-                      datasetContainer={datasetContainer}
-                      element={element}
-                      kind={kind}
-                      onModalHide={() => onHide()}
-                      onChange={onChange}
-                      mode="attachments"
-                      isNew={isNew}
-                      handleContainerSubmit={this.onHandleContainerSubmit}
-                    />
-                  </Tab.Pane>
-                  <Tab.Pane eventKey="metadata">
-                    <DatasetModalContent
-                      readOnly={readOnly}
-                      datasetContainer={datasetContainer}
-                      element={element}
-                      kind={kind}
-                      onModalHide={() => onHide()}
-                      onChange={onChange}
-                      mode="metadata"
-                      isNew={isNew}
-                      handleContainerSubmit={this.onHandleContainerSubmit}
-                    />
-                  </Tab.Pane>
-                </Tab.Content>
-              </div>
-            </Tab.Container>
+            <div className="d-flex flex-column gap-3">
+              <Nav
+                variant="tabs"
+                activeKey={mode}
+                onSelect={(selectedMode) => this.handleSwitchMode(selectedMode)}
+              >
+                <Nav.Item>
+                  <Nav.Link eventKey="attachments">
+                    Attachments
+                    <i className="fa fa-paperclip ms-1" aria-hidden="true" />
+                  </Nav.Link>
+                </Nav.Item>
+                <Nav.Item>
+                  <Nav.Link eventKey="metadata">
+                    Metadata
+                    <i className="fa fa-address-card ms-1 border-0" aria-hidden="true" />
+                  </Nav.Link>
+                </Nav.Item>
+              </Nav>
+              {/* Single mode-driven instance so both tabs share one datasetContainer
+                  state (all edits are flushed on Save) and the attachment/metadata
+                  subtrees are not mounted twice. */}
+              <DatasetModalContent
+                ref={this.datasetInput}
+                readOnly={readOnly}
+                datasetContainer={datasetContainer}
+                element={element}
+                kind={kind}
+                onModalHide={() => onHide()}
+                onChange={onChange}
+                mode={mode}
+                isNew={isNew}
+                handleContainerSubmit={this.onHandleContainerSubmit}
+              />
+            </div>
           </AppModal>
           <ConfirmationOverlay
             overlayTarget={closeOverlayTarget}
