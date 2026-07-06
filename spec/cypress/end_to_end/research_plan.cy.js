@@ -3,7 +3,7 @@ const inshiString = 'InChI=1S/H2O/h1H2';
 const molFileVersion = 'V2000';
 
 describe('Research Plan', () => {
-  it('create and delete a research plan', () => {
+  it('creates and deletes a research plan', () => {
     cy.visit('users/sign_in');
     cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user) => {
       cy.appFactories([['create', 'collection', { label: 'Col1', user_id: user[0].id }]]).then((collection) => {
@@ -18,28 +18,20 @@ describe('Research Plan', () => {
     });
 
     cy.login('cu1', 'user_password');
-    cy.get('#tree-id-Col1').click();
-    cy.visit('/mydb/collection/3');
-    cy.intercept('GET', '/api/v1/collections/roots.json');
-    cy.intercept('GET', '/api/v1/collections/*').as('req');
-    cy.wait('@req');
-    cy.get('#create-split-button').click().then(() => {
-      cy.contains('Create Research Plan');
-      cy.get('#create-research_plan-button').as('btn');
-      cy.get('@btn').click();
-    });
-    cy.get('.col-lg-8 > .form-group > .form-control').first().clear().type('My Research Plan 1');
-    cy.get('.btn-toolbar > .btn-warning').click();
-    cy.contains('My Research Plan 1');
-    cy.get('#tabList-tab-4 > span').contains('1(0)');
-    cy.get('#tabList-tab-4').click();
-    cy.get('.elements > tbody > tr > [width="30px"] > .element-checkbox').click();
-    cy.get('#remove-or-delete-btn').click();
-    cy.get('.open > .dropdown-menu > :nth-child(2) > a').click();
-    cy.get('.btn-toolbar > .btn-warning').click();
+    cy.contains('Col1').click();
+    cy.get('.create-element-button').click();
+    cy.contains('Create Research Plan').click();
+    cy.contains('New Research Plan');
+    cy.get('input[name="research_plan_name"]').clear().type('My Research Plan');
+    cy.clickDetailFooterButton('Create');
+    cy.get('i.icon-research_plan').closest('button[role="tab"]').click();
+    cy.get('.element-list-item.is-selected').as('listItem');
+    cy.get('@listItem').contains('My Research Plan');
 
-    cy.get('#tabList-tab-0').click();
-    cy.get('#tabList-tab-4').click();
-    cy.get('#tabList-tab-4 > span').contains('0(0)');
+    cy.get('@listItem').find('input[type="checkbox"]').click();
+    cy.get('#remove-or-delete-btn').click();
+    cy.contains('Remove from all Collections').click();
+    cy.contains('button', 'Delete').click();
+    cy.contains('No elements available');
   });
 });

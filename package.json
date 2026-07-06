@@ -124,7 +124,7 @@
     "@storybook/react-webpack5": "^9.1.6",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.8.0",
     "babel-loader": "8",
-    "cypress": "^12.3.0",
+    "cypress": "^15.14.2",
     "enzyme": "^3.7.0",
     "eslint": "^8.20.0",
     "eslint-filtered-fix": "^0.3.0",

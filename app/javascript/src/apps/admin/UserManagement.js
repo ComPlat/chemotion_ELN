@@ -1568,7 +1568,6 @@ export default class UserManagement extends React.Component {
               size="md"
               className="me-1"
               onClick={() => this.handleNewUserShow()}
-              data-cy="create-user"
             >
               New User
               <i className="fa fa-plus ms-1" />
@@ -1577,7 +1576,6 @@ export default class UserManagement extends React.Component {
               variant="primary"
               size="md"
               onClick={() => this.handleRestoreAccountShow()}
-              data-cy="restore-user"
               className="me-1"
             >
               Restore Account

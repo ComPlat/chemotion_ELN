@@ -1,53 +1,50 @@
 describe('Copy Samples', () => {
-  it('no copy button', () => {
-    cy.createDefaultUser('complat.user1@complat.edu', 'cu1').then((user) => {
-      cy.appFactories([['create', 'collection', { user_id: user[0].id, label: 'Col1' }]]);
+  const userName = 'cu1';
+  const collectionName = 'Collection1';
+  const secondCollectionName = 'Collection2';
+  const sampleName = 'Sample1';
+
+  beforeEach(() => {
+    cy.createDefaultUser(`${userName}@complat.edu`, userName).then((user) => {
+      cy.appFactories([['create', 'collection', { user_id: user[0].id, label: collectionName }]])
+        .then((collection1) => {
+          cy.appFactories([['create', 'collection', { user_id: user[0].id, label: secondCollectionName }]])
+            .then(() => {
+              cy.appFactories([['create', 'valid_sample', {
+                short_label: sampleName,
+                collection_ids: collection1[0].id,
+                user_id: user[0].id
+              }]]);
+            });
+        });
     });
-    cy.visit('users/sign_in');
-    cy.login('cu1', 'user_password');
-    // Why `collection/3`?
-    // The collection db table is already populated with 2 entries ('All' and 'chemotion-repository.net').
-    cy.visit('mydb/collection/3/');
-    cy.get('#tree-id-Col1').click();
-    cy.get('#create-split-button').click();
-    cy.get(':nth-child(10)').should('have.class', 'disabled');
+
+    cy.login(userName, 'user_password');
+
+    // Open Sample Detail Modal
+    cy.contains(collectionName).click();
+    cy.contains(sampleName).click();
+
+    // Copy Sample
+    cy.get('i.fa.fa-clone').closest('button').click({ force: true });
+    cy.get('#modal-collection-id-select').click();
   });
 
-  it('copy sample to same collection', () => {
-    cy.appFactories([['create', 'valid_sample']]);
-    cy.login('foobar1@bar.de', 'testtest');
-    cy.visit('mydb/collection/3');
-    cy.intercept('GET', '/api/v1/collections/roots.json').as('colletions1');
-    cy.intercept('GET', '/api/v1/collections/*').as('req');
-    cy.wait('@req');
-    cy.get('div').find('[id="tree-id-Collection 1"]');
-    cy.get('.element-checkbox').as('elem');
-    cy.get('@elem').click();
-    cy.get('#create-split-button').as('split_btn');
-    cy.get('@split_btn').click();
-    cy.get(':nth-child(10)').should('have.class', '');
-    cy.get(':nth-child(10)').as('elem10');
-    cy.get('@elem10').last().click();
-    cy.get('#txinput_name').clear().type('sample 2');
-    cy.get('#submit-sample-btn').click();
-    cy.contains('a01-2');
+  it('copies sample to same collection', () => {
+    cy.get('body').contains('.chemotion-select__option', collectionName).click();
+    cy.contains('button', 'Copy').click();
+    cy.clickDetailFooterButton('Create');
+
+    // Copied Sample exists in sample list
+    cy.get('div[class="element-groups-renderer"]').contains('cu1-1');
   });
 
-  it('copy sample to different collection', () => {
-    cy.appFactories([['create', 'valid_sample']]);
-    cy.appFactories([['create', 'collection', { user_id: 1, label: 'Collection 2' }]]);
-    cy.login('foobar1@bar.de', 'testtest');
-    cy.stubCollections();
-    cy.get('div').find('[id="tree-id-Collection 1"]').click();
-    cy.get('table').contains('a01-1').click();
-    cy.get('#copy-element-btn').click();
-    cy.get('div').find('[class="Select-input"]').find('[id="modal-collection-id-select"]').as('collectionLink');
-    cy.get('@collectionLink').click({ force: true });
-    cy.get('@collectionLink').trigger('keydown', { force: true, keyCode: 40 });
-    cy.get('@collectionLink').type('{enter}', { force: true });
-    cy.get('#submit-copy-element-btn').click();
-    cy.stubExperimentData();
-    cy.get('#submit-sample-btn').click();
-    cy.contains('a01-2');
+  it('copies sample to different collection', () => {
+    cy.get('body').contains('.chemotion-select__option', secondCollectionName).click();
+    cy.contains('button', 'Copy').click();
+    cy.clickDetailFooterButton('Create');
+
+    cy.contains(secondCollectionName).click();
+    cy.get('div[class="element-groups-renderer"]').contains('cu1-1');
   });
 });

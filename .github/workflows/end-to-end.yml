@@ -1,0 +1,130 @@
+name: Cypress end-to-end tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+ testing:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    defaults:
+      run:
+        shell: bash
+
+    container:
+      image: complat/chemotion_eln_runner:latest
+
+    services:
+      postgres:
+        image: complat/dev:postgres16-rdkit
+        env:
+          POSTGRES_PASSWORD: postgres    # env variable required by postgres Docker container
+          POSTGRES_USER: chemotion    # optional env variable used in conjunction with POSTGRES_PASSWORD to set a user and their password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      RAILS_ENV: test
+      YARN_CACHE_FOLDER: /home/runner/.cache/yarn
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Nodejs
+        id: setup_node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .tool-versions
+          cache: '' # disable default caching since yarn is missing there
+          cache-dependency-path: 'yarn.lock'
+          package-manager-cache: false
+
+      - run: corepack enable
+
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          path: tmp/main
+          fetch-depth: 1
+
+      - name: Compute cache key based on main's yarn.lock
+        id: cache_key
+        run: |
+          echo "key=${{ steps.setup_node.outputs.node-version }}-${{ hashFiles('tmp/main/yarn.lock') }}" >> $GITHUB_OUTPUT
+
+      - name: Detect Yarn cache dir
+        id: yarndir
+        run: |
+          if yarn --version | grep -q '^1\.'; then
+            DIR="$(yarn cache dir)"
+          else
+            DIR="$(yarn config get cacheFolder)"
+          fi
+          echo "dir=$DIR" >> $GITHUB_OUTPUT
+
+      - name: Restore dependency cache (from main)
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ steps.yarndir.outputs.dir }}
+          key: ${{ steps.cache_key.outputs.key }}
+          restore-keys: |
+            ${{ steps.setup_node.outputs.node-version }}-
+
+      - name: Configure repository
+        run: |
+          mv public/welcome-message-sample.md public/welcome-message.md
+          cp .env.test.example .env.test
+          cd config
+          cp database.yml.ci database.yml
+          cp -f datacollectors.yml.example datacollectors.yml
+          cp -f profile_default.yml.example profile_default.yml
+          cp -f shrine.yml.example shrine.yml
+          cp -f storage.yml.example storage.yml
+          cp -f radar.yml.example radar.yml
+          touch klasses.json
+          bundle config set without ''
+
+      - name: Install Ruby
+        run: bundle install
+
+      - name: Install JS
+        run: |
+          if yarn --version | grep -q '^1\.'; then
+            yarn install --frozen-lockfile
+          else
+            yarn install --immutable
+          fi
+
+      - name: Save dependency cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/update-cypress'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ steps.yarndir.outputs.dir }}
+          key: ${{ steps.cache_key.outputs.key }}
+
+      - name: Prepare testing
+        run: |
+          bundle exec rails db:prepare
+          apt-get update
+          apt-get install -yqq --fix-missing libgtk-3-0t64 libgbm-dev libnotify-dev libnss3 libxss1 libasound2t64 libxtst6 xauth xvfb
+
+      - name: Start server
+        run: bundle exec rails server -d -b 0.0.0.0 -p 3000
+
+      - name: Wait for server
+        run: curl --retry 10 --retry-delay 2 --retry-all-errors http://localhost:3000/users/sign_in
+
+      - name: Run Cypress end-to-end tests
+        run: yarn cypress run --headless --project spec
+
+      - name: Upload screenshots of failed tests
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          path: ./spec/cypress/screenshots

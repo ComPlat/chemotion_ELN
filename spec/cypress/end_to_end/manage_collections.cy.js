@@ -1,38 +1,31 @@
 describe('Manage Collections', () => {
   beforeEach(() => {
-    cy.createDefaultUser('cu1@complat.edu', 'cu1');
+    cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user) => {
+      cy.appFactories([['create', 'collection', { label: 'Foo', user_id: user[0].id }]]);
+    });
     cy.visit('users/sign_in');
+    cy.login('cu1', 'user_password');
+    cy.contains('Manage Collections').click();
+    cy.contains('Foo');
   });
 
-  it('create an unshared collection', () => {
-    cy.login('cu1', 'user_password');
-    cy.waitForCollections();
-    cy.stubExperimentData();
-    cy.get('#add-new-collection-button').should('be.visible');
+  it('creates an unshared collection', () => {
     cy.get('#add-new-collection-button').click();
-    cy.get('input[value="New Collection"]').should('be.visible');
-    cy.get('input[value="New Collection"]').as('input');
-    cy.get('@input').clear().type('Hello Collection');
+    cy.get('input[value="New Collection"]').clear().type('Bar');
     cy.get('#save-collections-button').click();
-    cy.contains('Hello Collection');
+    cy.get('.collection-node').find('input[value="Bar"]');
   });
 
-  it('rename an unshared collection', () => {
-    cy.createCollection(1, 'Hello Collection');
-    cy.login('cu1', 'user_password');
-    cy.waitForCollections();
-    cy.get('input[value="Hello Collection"]').first().as('input');
-    cy.get('@input').clear().type('Foo-Bar');
+  it('renames an unshared collection', () => {
+    cy.get('input[value="Foo"]').clear().type('Bar');
     cy.get('#save-collections-button').click();
-    cy.contains('Foo-Bar');
+    cy.get('.collection-node').find('input[value="Bar"]');
   });
 
-  it('delete an unshared collection', () => {
-    cy.createCollection(1, 'Hello Collection');
-    cy.login('cu1', 'user_password');
-    cy.waitForCollections();
-    cy.get('#delete-collection-button_3').click();
-    cy.get('#save-collections-button').click();
-    cy.contains('div', 'Hello Collections').should('not.exist');
+  it('deletes an unshared collection', () => {
+    cy.get('.collection-node').find('i.fa-trash-o').parent('button').click({ force: true });
+    cy.contains('Do you really want to delete "Foo"?');
+    cy.contains('button', 'Yes').click();
+    cy.get('.collection-node').find('input[value="Foo"]').should('not.exist');
   });
 });
