@@ -44,7 +44,10 @@ export default class ElementsTable extends React.Component {
     this.elementRef = React.createRef();
 
     const { type } = props;
-    const { groupCollapse } = UIStore.getState();
+    const {
+      groupCollapse, fromDate, toDate, userLabel, productOnly,
+    } = UIStore.getState();
+    const hasPersistedFilters = !!(userLabel || fromDate || toDate || productOnly);
 
     this.state = {
       elements: [],
@@ -53,8 +56,7 @@ export default class ElementsTable extends React.Component {
       moleculeSort: false,
       searchResult: false,
       productOnly: false,
-      showFilters: false,
-      filterCloseHint: false,
+      showFilters: hasPersistedFilters,
       page: null,
       pages: null,
       elementsGroup: 'none',
@@ -165,7 +167,7 @@ export default class ElementsTable extends React.Component {
 
     const isSearchResult = !!currentSearchByID;
 
-    const { currentStateProductOnly, searchResult, filterCloseHint } = this.state;
+    const { currentStateProductOnly, searchResult } = this.state;
     const stateChange = (
       currentId || filterCreatedAt
       || fromDate || toDate || userLabel || productOnly !== currentStateProductOnly
@@ -174,7 +176,6 @@ export default class ElementsTable extends React.Component {
     const moleculeSort = isSearchResult ? true : ElementStore.getState().moleculeSort;
 
     if (stateChange) {
-      const hasActiveFilters = !!(userLabel || fromDate || toDate || productOnly);
       this.setState({
         filterCreatedAt,
         ui: {
@@ -186,7 +187,6 @@ export default class ElementsTable extends React.Component {
         },
         isGroupBaseCollapsed: groupCollapse[type]?.baseState === 'collapsed',
         productOnly,
-        filterCloseHint: filterCloseHint && hasActiveFilters,
         searchResult: isSearchResult,
         moleculeSort
       });
@@ -331,16 +331,7 @@ export default class ElementsTable extends React.Component {
   };
 
   toggleFilters = () => {
-    const { showFilters } = this.state;
-    if (showFilters && this.hasActiveFilters()) {
-      this.setState({ filterCloseHint: true });
-      return;
-    }
-
-    this.setState({
-      showFilters: !showFilters,
-      filterCloseHint: false,
-    });
+    this.setState((prevState) => ({ showFilters: !prevState.showFilters }));
   };
 
   clearFilters = () => {
@@ -351,8 +342,6 @@ export default class ElementsTable extends React.Component {
     if (fromDate) UIActions.setFromDate(null);
     if (toDate) UIActions.setToDate(null);
     if (productOnly) UIActions.setProductOnly(false);
-
-    this.setState({ filterCloseHint: false });
   };
 
   renderNumberOfResultsInput() {
@@ -604,12 +593,8 @@ export default class ElementsTable extends React.Component {
       typeSpecificHeader = this.renderVesselsHeader();
     }
     const hasActiveFilters = this.hasActiveFilters();
-    let filterToggleTitle = 'Show filters';
-    if (showFilters && hasActiveFilters) {
-      filterToggleTitle = 'Clear filters before hiding';
-    } else if (showFilters) {
-      filterToggleTitle = 'Hide filters';
-    }
+    let filterToggleTitle = showFilters ? 'Hide filters' : 'Show filters';
+    if (hasActiveFilters) filterToggleTitle += ' (filters active)';
 
     return (
       <div className="elements-table-header gap-1">
@@ -622,9 +607,9 @@ export default class ElementsTable extends React.Component {
               overlay={<Tooltip id="filters_toggle_tooltip">{filterToggleTitle}</Tooltip>}
             >
               <Button
-                className="elements-table-header__filters-toggle-btn"
+                className={`elements-table-header__filters-toggle-btn${hasActiveFilters ? ' has-active-filters' : ''}`}
                 size="sm"
-                variant="secondary"
+                variant={hasActiveFilters ? 'primary' : 'secondary'}
                 onClick={this.toggleFilters}
                 active={showFilters}
                 aria-expanded={showFilters}
