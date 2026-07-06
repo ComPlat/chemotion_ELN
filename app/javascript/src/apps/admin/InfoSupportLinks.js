@@ -5,25 +5,15 @@ import {
 } from 'react-bootstrap';
 import uuid from 'uuid';
 import InfoSupportLinksFetcher from 'src/fetchers/InfoSupportLinksFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-
-const notify = ({ title, msg, lvl = 'info' }) => NotificationActions.add({
-  title,
-  message: msg,
-  level: lvl,
-  position: 'tc',
-  dismissible: 'button',
-  uid: uuid.v4(),
-});
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const emptyDraft = {
   id: null, label: '', url: '', position: 0, enabled: true,
 };
 
-function LinkFormModal({
+const LinkFormModal = ({
   show, draft, onChange, onClose, onSave, isNew,
-}) {
-  return (
+}) => (
     <Modal centered show={show} onHide={onClose} backdrop="static">
       <Modal.Header closeButton>
         <Modal.Title>{isNew ? 'New Info & Support Link' : 'Edit Info & Support Link'}</Modal.Title>
@@ -79,7 +69,6 @@ function LinkFormModal({
       </Modal.Footer>
     </Modal>
   );
-}
 
 LinkFormModal.propTypes = {
   show: PropTypes.bool.isRequired,
@@ -97,6 +86,7 @@ LinkFormModal.propTypes = {
 };
 
 export default class InfoSupportLinks extends React.Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     this.state = {
@@ -111,6 +101,7 @@ export default class InfoSupportLinks extends React.Component {
     this.handleChange = this.handleChange.bind(this);
     this.handleSave = this.handleSave.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
+    this.notify = this.notify.bind(this);
   }
 
   componentDidMount() {
@@ -123,7 +114,7 @@ export default class InfoSupportLinks extends React.Component {
         const links = Array.isArray(result) ? result : [];
         this.setState({ links });
       })
-      .catch(() => notify({ title: 'Info & Support Links', msg: 'Failed to load links', lvl: 'error' }));
+      .catch(() => this.notify({ title: 'Info & Support Links', msg: 'Failed to load links', lvl: 'error' }));
   }
 
   openNew() {
@@ -149,11 +140,21 @@ export default class InfoSupportLinks extends React.Component {
     return null;
   }
 
+  notify({ title, message, level = 'info' }) {
+    this.context.notifications.add({
+      title,
+      message,
+      level,
+      position: 'tc',
+      uid: uuid.v4(),
+    });
+  }
+
   handleSave() {
     const { draft, isNew } = this.state;
     const err = this.validate(draft);
     if (err) {
-      notify({ title: 'Info & Support Links', msg: err, lvl: 'error' });
+      this.notify({ title: 'Info & Support Links', message: err, level: 'error' });
       return;
     }
     const payload = {
@@ -168,14 +169,14 @@ export default class InfoSupportLinks extends React.Component {
     promise
       .then((result) => {
         if (result && result.errors) {
-          notify({ title: 'Info & Support Links', msg: result.errors.join(', '), lvl: 'error' });
+          this.notify({ title: 'Info & Support Links', message: result.errors.join(', '), lvl: 'error' });
           return;
         }
-        notify({ title: 'Info & Support Links', msg: isNew ? 'Created' : 'Updated' });
+        this.notify({ title: 'Info & Support Links', message: isNew ? 'Created' : 'Updated' });
         this.setState({ showModal: false });
         this.fetchLinks();
       })
-      .catch(() => notify({ title: 'Info & Support Links', msg: 'Save failed', lvl: 'error' }));
+      .catch(() => this.notify({ title: 'Info & Support Links', message: 'Save failed', level: 'error' }));
   }
 
   handleDelete(link) {
@@ -183,10 +184,10 @@ export default class InfoSupportLinks extends React.Component {
     if (!window.confirm(`Delete link "${link.label}"?`)) return;
     InfoSupportLinksFetcher.delete(link.id)
       .then(() => {
-        notify({ title: 'Info & Support Links', msg: 'Deleted' });
+        this.notify({ title: 'Info & Support Links', message: 'Deleted' });
         this.fetchLinks();
       })
-      .catch(() => notify({ title: 'Info & Support Links', msg: 'Delete failed', lvl: 'error' }));
+      .catch(() => this.notify({ title: 'Info & Support Links', message: 'Delete failed', level: 'error' }));
   }
 
   renderRows() {

@@ -4595,13 +4595,6 @@ ajv@^8.0.0, ajv@^8.18.0, ajv@^8.9.0:
     json-schema-traverse "^1.0.0"
     require-from-string "^2.0.2"
 
-alt-utils@2.0.0:
-  version "2.0.0"
-  resolved "https://registry.npmjs.org/alt-utils/-/alt-utils-2.0.0.tgz"
-  integrity sha1-S71WLSCpopWsgTqeMrA1OUZaQMw=
-  dependencies:
-    prop-types "^15.5.10"
-
 alt@0.18.6:
   version "0.18.6"
   resolved "https://registry.npmjs.org/alt/-/alt-0.18.6.tgz"
@@ -8892,6 +8885,11 @@ globalthis@^1.0.4:
   dependencies:
     define-properties "^1.2.1"
     gopd "^1.0.1"
+
+goober@^2.1.16:
+  version "2.1.19"
+  resolved "https://registry.yarnpkg.com/goober/-/goober-2.1.19.tgz#a4b4dcdbba9325b8c4d7380099f9f281f27c6a6f"
+  integrity sha512-U7veizMqxyKlM58+Z5j2ngJBH/r9siDmxpvNxSw0PylF6WQvrASJEZrxh1hidRBJc2jqoBVSyOban5u8m+6Rxg==
 
 gopd@^1.0.1, gopd@^1.2.0:
   version "1.2.0"
@@ -13837,6 +13835,14 @@ react-from-dom@^0.7.5:
   resolved "https://registry.yarnpkg.com/react-from-dom/-/react-from-dom-0.7.5.tgz#2d2d2bf6d80149c053bcf71bb6615e5e7f6d23db"
   integrity sha512-CO92PmMKo/23uYPm6OFvh5CtZbMgHs/Xn+o095Lz/TZj9t8DSDhGdSOMLxBxwWI4sr0MF17KUn9yJWc5Q00R/w==
 
+react-hot-toast@^2.6.0:
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/react-hot-toast/-/react-hot-toast-2.6.0.tgz#4ada6ed3c75c5e42a90d562f55665ff37ee1442b"
+  integrity sha512-bH+2EBMZ4sdyou/DPrfgIouFpcRLCJ+HoCA32UoAYHn6T3Ur5yfcDCeSr5mwldl6pFOsiocmrXMuoCJ1vV8bWg==
+  dependencies:
+    csstype "^3.1.3"
+    goober "^2.1.16"
+
 react-html-id@^0.1.5:
   version "0.1.5"
   resolved "https://registry.npmjs.org/react-html-id/-/react-html-id-0.1.5.tgz"
@@ -13911,7 +13917,7 @@ react-motion@^0.5.2:
     prop-types "^15.5.8"
     raf "^3.1.0"
 
-react-notification-system@^0.2.17, react-notification-system@^0.2.7:
+react-notification-system@^0.2.17:
   version "0.2.17"
   resolved "https://registry.npmjs.org/react-notification-system/-/react-notification-system-0.2.17.tgz"
   integrity sha1-pg7du2IiWtj5/F14N1Rr9s2zaBg=

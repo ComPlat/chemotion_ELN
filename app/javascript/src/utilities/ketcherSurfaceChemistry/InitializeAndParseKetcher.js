@@ -38,7 +38,7 @@ import {
 import {
   attachClickListeners
 } from 'src/utilities/ketcherSurfaceChemistry/DomHandeling';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 const loadTemplates = async () => {
   fetch('/json/surfaceChemistryShapes.json').then((response) => {
@@ -305,12 +305,11 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
       return String(err);
     };
     const notifyMolfileError = (details, level = 'error') => {
-      NotificationActions.add({
+      rootStore.notificationsStore.add({
         title: 'Structure Editor error',
         message: `${details}`,
         level,
         position: 'tc',
-        dismissible: 'button',
         autoDismiss: 12,
       });
     };

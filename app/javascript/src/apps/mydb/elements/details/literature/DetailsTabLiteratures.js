@@ -14,7 +14,7 @@ import CellLine from 'src/models/cellLine/CellLine';
 import Literature from 'src/models/Literature';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import CitationPanel from 'src/apps/mydb/elements/details/literature/CitationPanel';
 import { createCitationTypeMap } from 'src/apps/mydb/elements/details/literature/CitationTools';
@@ -27,7 +27,6 @@ const notification = (message) => ({
   title: 'Add Literature',
   message,
   level: 'error',
-  dismissible: 'button',
   autoDismiss: 5,
   position: 'tr',
   uid: uuid.v4()
@@ -37,7 +36,6 @@ const warningNotification = (message) => ({
   title: '',
   message,
   level: 'warning',
-  dismissible: 'button',
   autoDismiss: 5,
   position: 'tr',
   uid: uuid.v4()
@@ -46,13 +44,14 @@ const warningNotification = (message) => ({
 const checkElementStatus = (element) => {
   const type = element.type.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   if (element.isNew) {
-    NotificationActions.add(notification(`Create ${type} first.`));
+    this.context.notifications.add(notification(`Create ${type} first.`));
     return false;
   }
   return true;
 };
 
 export default class DetailsTabLiteratures extends Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
 
@@ -150,9 +149,9 @@ export default class DetailsTabLiteratures extends Component {
             sortedIds: groupByCitation(prevState.literatures.delete(literature.literal_id))
           }));
         })
-        .then(() => { NotificationActions.add(warningNotification('Literature entry successfully removed')); })
+        .then(() => { this.context.notifications.add(warningNotification('Literature entry successfully removed')); })
         .catch((errorMessage) => {
-          NotificationActions.add(notification(errorMessage.error));
+          this.context.notifications.add(notification(errorMessage.error));
         });
     }
   }
@@ -198,7 +197,7 @@ export default class DetailsTabLiteratures extends Component {
           sorting: 'literature_id'
         }));
       }).catch((errorMessage) => {
-        NotificationActions.add(notification(errorMessage.error));
+        this.context.notifications.add(notification(errorMessage.error));
         this.setState({ literature: this.createEmptyLiterature(this.props.element.type) });
       });
     }
@@ -217,7 +216,7 @@ export default class DetailsTabLiteratures extends Component {
   }
 
   fetchDOIMetadata(doi) {
-    NotificationActions.removeByUid('literature');
+    this.context.notifications.removeByUid('literature');
     LoadingActions.start();
     Cite.async(sanitizeDoi(doi)).then((json) => {
       if (json.data && json.data.length > 0) {
@@ -237,14 +236,14 @@ export default class DetailsTabLiteratures extends Component {
         this.handleLiteratureAdd(literature);
       }
     }).catch((errorMessage) => {
-      NotificationActions.add(notification(`unable to fetch metadata for this doi: ${doi}, error: ${errorMessage}`));
+      this.context.notifications.add(notification(`unable to fetch metadata for this doi: ${doi}, error: ${errorMessage}`));
     }).finally(() => {
       LoadingActions.stop();
     });
   }
 
   fetchISBNMetadata(isbn) {
-    NotificationActions.removeByUid('literature');
+    this.context.notifications.removeByUid('literature');
     LoadingActions.start();
     Cite.async(isbn).then((json) => {
       if (json.data && json.data.length > 0) {
@@ -264,7 +263,7 @@ export default class DetailsTabLiteratures extends Component {
         this.handleLiteratureAdd(literature);
       }
     }).catch((errorMessage) => {
-      NotificationActions.add(notification(`unable to fetch metadata for this ISBN: ${isbn}, error: ${errorMessage}`));
+      this.context.notifications.add(notification(`unable to fetch metadata for this ISBN: ${isbn}, error: ${errorMessage}`));
     }).finally(() => {
       LoadingActions.stop();
     });

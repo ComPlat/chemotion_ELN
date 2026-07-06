@@ -49,7 +49,6 @@ import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/Det
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
 import { EditUserLabels } from 'src/components/UserLabels';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import NmrSimTab from 'src/apps/mydb/elements/details/samples/nmrSimTab/NmrSimTab';
@@ -79,7 +78,7 @@ let _pendingChemicalCreate = null;
 
 const decoupleCheck = (sample) => {
   if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.isMixture()) {
-    NotificationActions.add({
+    this.context.notifications.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
     });
     LoadingActions.stop();
@@ -94,7 +93,7 @@ const rangeCheck = (field, sample) => {
   if (sample[`${field}_lowerbound`] && sample[`${field}_lowerbound`] !== ''
     && sample[`${field}_upperbound`] && sample[`${field}_upperbound`] !== ''
     && Number.parseFloat(sample[`${field}_upperbound`]) < Number.parseFloat(sample[`${field}_lowerbound`])) {
-    NotificationActions.add({
+    this.context.notifications.add({
       title: `Error on ${field.replace(/(^\w{1})|(_{1}\w{1})/g, (match) => match.toUpperCase())}`,
       message: 'range lower bound must be less than or equal to range upper',
       level: 'error',
@@ -300,7 +299,7 @@ export default class SampleDetails extends React.Component {
     MoleculesFetcher.fetchBySmi(smilesInput)
       .then((result) => {
         if (!result || result == null) {
-          NotificationActions.add({
+          this.context.notifications.add({
             title: 'Error on Sample creation',
             message: `Cannot create molecule with entered Smiles/CAS! [${smilesInput}]`,
             level: 'error',
@@ -364,7 +363,7 @@ export default class SampleDetails extends React.Component {
     this.setState({ loadingMolecule: true });
 
     const fetchError = (errorMessage) => {
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Error on Sample creation',
         message: `Cannot create molecule! Error: [${errorMessage}]`,
         level: 'error',

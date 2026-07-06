@@ -1,5 +1,5 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 export default class ReportTemplateFetcher {
   static fetchTemplates() {
@@ -28,7 +28,7 @@ export default class ReportTemplateFetcher {
           } else {
             msg += response.statusText;
           }
-          NotificationActions.add({
+          rootStore.notificationsStore.add({
             message: msg,
             level: 'error'
           });
@@ -58,7 +58,7 @@ export default class ReportTemplateFetcher {
           } else {
             msg += response.statusText;
           }
-          NotificationActions.add({
+          rootStore.notificationsStore.add({
             message: msg,
             level: 'error'
           });

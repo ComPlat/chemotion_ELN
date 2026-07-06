@@ -2,7 +2,7 @@
 /* eslint-disable camelcase */
 import Sample from 'src/models/Sample';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 // Constants
 const MW_PRECISION = 2;
@@ -317,7 +317,7 @@ export default class Component extends Sample {
         const concn_mmol = (this.concn * 1000).toFixed(2);
         const stock_mmol = (this.starting_molarity_value * 1000).toFixed(2);
 
-        NotificationActions.add({
+        rootStore.notificationsStore.add({
           title: 'Concentration Exceeds Stock',
           message: `Total concentration (${concn_mmol} mmol/l) exceeds stock concentration (${stock_mmol} mmol/l).`,
           level: 'warning',
@@ -644,7 +644,7 @@ export default class Component extends Sample {
     } else {
       this.purity = 1;
 
-      NotificationActions.add({
+      rootStore.notificationsStore.add({
         message: `Your input makes the purity ${purity.toFixed(2)}. Purity value should be > 0 and <= 1.`,
         level: 'error'
       });

@@ -10,7 +10,7 @@ import { InlineMetadata } from 'chem-generic-ui';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import SpectraStore from 'src/stores/alt/stores/SpectraStore';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
 import ResearchPlan from 'src/models/ResearchPlan';
 import { inlineNotation } from 'src/utilities/SpectraHelper';
@@ -50,6 +50,7 @@ const layoutsWillShowMulti = [
 ];
 
 class ViewSpectra extends React.Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
 
@@ -833,7 +834,7 @@ class ViewSpectra extends React.Component {
       this.setState(({ lcmsRuntime }) => ({
         lcmsRuntime: lcmsRuntime ? { ...lcmsRuntime, loading: false } : lcmsRuntime,
       }));
-      NotificationActions.add({
+      this.context.notifications.add({
         message: formatLcmsErrorMessage({ code: 'page_not_found' }),
         level: 'error',
         position: 'tc',
@@ -913,7 +914,7 @@ class ViewSpectra extends React.Component {
       if (requestId !== this.lcmsRequestId) return;
       this.pendingLcmsRequest = null;
       if (error?.name === 'AbortError') return;
-      NotificationActions.add({
+      this.context.notifications.add({
         message: formatLcmsErrorMessage(error),
         level: 'error',
         position: 'tc',

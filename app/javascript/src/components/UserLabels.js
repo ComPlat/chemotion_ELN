@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 import React, {
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useState,
@@ -17,7 +18,7 @@ import ColorLabel from 'src/components/common/ColorLabel';
 import { Select } from 'src/components/common/Select';
 import { colorOptions } from 'src/components/staticDropdownOptions/options';
 import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
@@ -92,6 +93,7 @@ function renderColorOptionLabel(option) {
 }
 
 function UserLabelModal({ showLabelModal, onHide }) {
+  const { notifications } = useContext(StoreContext);
   const [labels, setLabels] = useState([]);
   const [label, setLabel] = useState({});
   const [showDetails, setShowDetails] = useState(false);
@@ -151,12 +153,11 @@ function UserLabelModal({ showLabelModal, onHide }) {
     };
 
     if (!nextLabel.title.trim() || !nextLabel.color.trim()) {
-      NotificationActions.removeByUid('createUserLabel');
-      NotificationActions.add({
+      notifications.removeByUid('createUserLabel');
+      notifications.add({
         title: 'Create User Label',
         message: 'Title or color is empty',
         level: 'error',
-        dismissible: 'button',
         autoDismiss: 5,
         position: 'tr',
         uid: 'createUserLabel',

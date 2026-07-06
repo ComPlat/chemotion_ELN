@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Vessel from 'src/models/vessel/Vessel';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -18,7 +18,6 @@ const successfullyCreatedParameter = {
   title: 'Element created',
   message: 'Vessel instance successfully added',
   level: 'info',
-  dismissible: 'button',
   autoDismiss: 10,
   position: 'tr'
 };
@@ -27,7 +26,6 @@ const successfullyCreatedBulkParameter = (count) => ({
   title: 'Element created',
   message: `${count} vessel instance${count > 1 ? 's' : ''} successfully added`,
   level: 'info',
-  dismissible: 'button',
   autoDismiss: 10,
   position: 'tr'
 });
@@ -36,7 +34,6 @@ const successfullyUpdatedParameter = {
   title: 'Element updated',
   message: 'Vessel instance successfully updated',
   level: 'info',
-  dismissible: 'button',
   autoDismiss: 10,
   position: 'tr'
 };
@@ -45,7 +42,6 @@ const successfullyDeletedParameter = {
   title: 'Element deleted',
   message: 'Vessel instance successfully deleted',
   level: 'info',
-  dismissible: 'button',
   autoDismiss: 10,
   position: 'tr'
 };
@@ -54,7 +50,6 @@ const errorMessageParameter = {
   title: 'Error',
   message: 'Unfortunately, the last action failed. Please try again or contact your admin.',
   level: 'error',
-  dismissible: 'button',
   autoDismiss: 30,
   position: 'tr'
 };
@@ -101,13 +96,13 @@ export default class VesselsFetcher {
       },
       handleResponseError: (exception) => {
         console.error('Template creation failed::', exception);
-        NotificationActions.add(errorMessageParameter);
+        rootStore.notificationsStore.add(errorMessageParameter);
       }
     })
       .then((json) => {
         if (json) {
           const { currentCollection } = UIStore.getState();
-          NotificationActions.add(successfullyCreatedParameter);
+          rootStore.notificationsStore.add(successfullyCreatedParameter);
           return this.vesselTemplateElement(json, currentCollection?.id);
         }
         return [];
@@ -119,11 +114,11 @@ export default class VesselsFetcher {
       body: extractCreateVesselInstanceApiParameter(vessel),
       handleResponseError: (exception) => {
         console.error('Vessel instance creation failed:', exception);
-        NotificationActions.add(errorMessageParameter);
+        rootStore.notificationsStore.add(errorMessageParameter);
       }
     })
       .then((json) => {
-        NotificationActions.add(successfullyCreatedParameter);
+        rootStore.notificationsStore.add(successfullyCreatedParameter);
         UserStore.getState().currentUser.vessels_count += 1;
         return Vessel.createFromRestResponse(vessel.collectionId, json);
       });
@@ -153,11 +148,11 @@ export default class VesselsFetcher {
       body: extractUpdateVesselTemplateApiParameter(updatedData),
       handleResponseError: (exception) => {
         console.error('Error updating vessel template:', exception);
-        NotificationActions.add(errorMessageParameter);
+        rootStore.notificationsStore.add(errorMessageParameter);
       }
     })
       .then((json) => {
-        NotificationActions.add(successfullyUpdatedParameter);
+        rootStore.notificationsStore.add(successfullyUpdatedParameter);
         return this.vesselTemplateElement(json, collectionId);
       });
   }
@@ -167,11 +162,11 @@ export default class VesselsFetcher {
       body: extractUpdateVesselApiParameter(updatedData),
       handleResponseError: (exception) => {
         console.error('Error updating vessel instance:', exception);
-        NotificationActions.add(errorMessageParameter);
+        rootStore.notificationsStore.add(errorMessageParameter);
       }
     })
       .then((json) => {
-        NotificationActions.add(successfullyUpdatedParameter);
+        rootStore.notificationsStore.add(successfullyUpdatedParameter);
         return Vessel.createFromRestResponse(0, json);
       });
   }
@@ -180,14 +175,14 @@ export default class VesselsFetcher {
     return ApiClient.deleteRequest(`/api/v1/vessels/${vesselId}`, {
       handleResponseSuccess: (response) => {
         if (response.ok) {
-          NotificationActions.add(successfullyDeletedParameter);
+          rootStore.notificationsStore.add(successfullyDeletedParameter);
           return response.json();
         }
         throw new Error(`Failed to delete vessel. Status: ${response.status}`);
       },
       handleResponseError: (exception) => {
         console.error('Error deleting vessel instance:', exception);
-        NotificationActions.add(errorMessageParameter);
+        rootStore.notificationsStore.add(errorMessageParameter);
       }
     });
   }
@@ -218,7 +213,7 @@ export default class VesselsFetcher {
       },
       handleResponseError: (exception) => {
         console.error('Bulk vessel instance creation error:', exception);
-        NotificationActions.add(errorMessageParameter);
+        rootStore.notificationsStore.add(errorMessageParameter);
       }
     })
       .then((json) => {
@@ -226,7 +221,7 @@ export default class VesselsFetcher {
           ? json.map((v) => Vessel.createFromRestResponse(collectionId, v))
           : [];
 
-        NotificationActions.add(successfullyCreatedBulkParameter(count));
+        rootStore.notificationsStore.add(successfullyCreatedBulkParameter(count));
         // eslint-disable-next-line no-param-reassign
         if (user) user.vessels_count += vessels.length;
         ElementActions.refreshElements('vessel');

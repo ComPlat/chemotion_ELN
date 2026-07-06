@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Card, Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const OmniauthCredential = () => {
+  const { notifications } = useContext(StoreContext);
   const notify = (_params) => {
-    NotificationActions.add({
+    notifications.add({
       title: _params.title,
       message: _params.msg,
       level: _params.lvl,
       position: 'tc',
-      dismissible: 'button',
       uid: uuid.v4()
     });
   };

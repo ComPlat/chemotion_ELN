@@ -1,0 +1,37 @@
+.notification {
+  @extend .m-0;
+  @extend .p-0;
+}
+
+.notification div[role="status"] {
+  @extend .p-0;
+  @extend .m-0;
+  @extend .d-block;
+}
+
+.notification-headline {
+  @extend .d-flex;
+  @extend .align-items-start;
+  @extend .w-100;
+  @extend .p-2;
+  &.info {
+    background-color: var(--bs-info-border-subtle);
+  }
+  &.error {
+    background-color: var(--bs-danger-border-subtle);
+  }
+  &.success {
+    background-color: var(--bs-success-border-subtle);
+  }
+  &.warning {
+    background-color: var(--bs-warning-border-subtle);
+  }
+}
+
+.notification-headline button:hover {
+  @extend .surface-base;
+}
+
+.notification-body {
+  @extend .p-3;
+}

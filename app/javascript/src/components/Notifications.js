@@ -1,24 +1,71 @@
-import React, { Component } from 'react';
-import NotificationSystem from 'react-notification-system';
-import connectToStores from 'alt-utils/lib/connectToStores';
+import React from 'react';
+import { capitalizeWords } from 'src/utilities/textHelper';
+import { Toaster, ToastBar, toast } from 'react-hot-toast';
 
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
-import NotificationStore from 'src/stores/alt/stores/NotificationStore';
+const TOAST_TYPE_TO_ALERT = {
+  success: 'alert-success',
+  error: 'alert-danger',
+  warning: 'alert-warning',
+  loading: 'alert-info',
+  blank: 'alert-info',
+};
 
-class Notifications extends Component {
-  componentDidMount() {
-    NotificationActions.setComponentReference(this.notificationSystem);
-  }
+const toastBarStyle = { padding: 0, background: 'none', boxShadow: 'none' };
 
-  render() {
-    return (
-      <div>
-        <NotificationSystem ref={(notification) => { this.notificationSystem = notification; }} />
-      </div>
-    );
-  }
-}
+const Notifications = () => (
+  <Toaster position="top-right">
+    {(t) => {
+      if (t.type === 'custom') {
+        // Custom toasts (with action button) handle their own Bootstrap styling
+        return <ToastBar toast={t} style={toastBarStyle} />;
+      }
 
-const getStores = () => [NotificationStore];
-const getPropsFromStores = () => NotificationStore.getState();
-export default connectToStores({ getStores, getPropsFromStores }, Notifications);
+      let actionCloseButton = '';
+      if (t.action) {
+        actionCloseButton = (
+          <button
+            type="button"
+            className={'btn btn-danger'}
+            onClick={() => { t.action.callback(); toast.dismiss(t.id); }}
+          >
+            {t.action.label}
+          </button>
+        );
+      }
+      const alertType = t.level && t.level === 'warning' ? t.level : t.type;
+      const alertClass = TOAST_TYPE_TO_ALERT[alertType] || 'alert-info';
+      const title = t.title ? t.title : capitalizeWords(t.level);
+
+      return (
+        <ToastBar toast={t} style={toastBarStyle}>
+          {({ icon, message }) => (
+            <div
+              role="alert"
+              className={`alert ${alertClass} notification`}
+              style={{ minWidth: 280, maxWidth: 420 }}
+            >
+              <div className={`notification-headline gap-2 ${t.level}`}>
+                <strong className="w-100">{title}</strong>
+                <button
+                  type="button"
+                  className="btn-close flex-shrink-0"
+                  aria-label="Close"
+                  onClick={() => toast.dismiss(t.id)}
+                />
+              </div>
+              <div className="notification-body p-3">
+                <div className="d-flex align-items-start gap-2">
+                  {icon}
+                  {message}
+                </div>
+                {actionCloseButton}
+              </div>
+            </div>
+          )}
+        </ToastBar>
+      );
+    }}
+  </Toaster>
+);
+
+export default Notifications;

@@ -16,7 +16,7 @@ import { isSbmmSample } from 'src/utilities/ElementUtils';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -586,11 +586,10 @@ export default class Reaction extends Element {
   validateSbmmGroup(material, group) {
     const isSbmm = isSbmmSample(material);
     if (isSbmm && group !== 'reactants' && group !== 'reactant_sbmm_samples') {
-      NotificationActions.add({
+      rootStore.notificationsStore.add({
         title: 'Invalid Action',
         message: 'SBMM samples can only be placed in the Reactants group.',
         level: 'warning',
-        dismissible: 'button',
         position: 'tr',
       });
       return false;

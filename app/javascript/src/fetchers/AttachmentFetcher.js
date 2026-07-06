@@ -5,7 +5,7 @@ import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Attachment from 'src/models/Attachment';
 import { decamelizeKeys, downloadBlob } from 'src/utilities/FetcherHelper';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 const fileFromAttachment = (attachment, containerId) => {
   const { file } = attachment;
@@ -83,7 +83,7 @@ export default class AttachmentFetcher {
       } else {
         msg += response.statusText;
       }
-      NotificationActions.add({
+      rootStore.notificationsStore.add({
         message: msg,
         level: 'error',
         position: 'tc',
@@ -126,7 +126,7 @@ export default class AttachmentFetcher {
         } else {
           msg += response.statusText;
         }
-        NotificationActions.add({
+        rootStore.notificationsStore.add({
           message: msg,
           level: 'error',
           position: 'tc',
@@ -156,7 +156,7 @@ export default class AttachmentFetcher {
         } else {
           msg += response.statusText;
         }
-        NotificationActions.add({
+        rootStore.notificationsStore.add({
           message: msg,
           level: 'error',
         });
@@ -176,7 +176,7 @@ export default class AttachmentFetcher {
   //   return ApiClient.postFormData('/api/v1/attachments/upload_dataset_attachments', { body: data })
   //     .then((json) => {
   //       for (let i = 0; i < json.error_messages.length; i += 1) {
-  //         NotificationActions.add({
+  //         rootStore.notificationsStore.add({
   //           message: json.error_messages[i],
   //           level: 'error',
   //         });
@@ -196,13 +196,13 @@ export default class AttachmentFetcher {
           msg += response.statusText;
         }
 
-        NotificationActions.add({
+        rootStore.notificationsStore.add({
           message: msg,
           level: 'error',
         });
       } else if (response.error_messages) {
         for (let i = 0; i < response.error_messages.length; i += 1) {
-          NotificationActions.add({
+          rootStore.notificationsStore.add({
             message: response.error_messages[i],
             level: 'error',
           });
@@ -231,7 +231,7 @@ export default class AttachmentFetcher {
       if (response.ok) return response.json();
 
       const msg = `Chunk uploading failed: ${response.statusText}`;
-      NotificationActions.add({
+      rootStore.notificationsStore.add({
         message: msg,
         level: 'error',
       });
@@ -300,7 +300,7 @@ export default class AttachmentFetcher {
     const handleResponseSuccess = (response) => {
       const dispositionHeader = response.headers.get('Content-Disposition');
       if (dispositionHeader == null) {
-        NotificationActions.notifyExImportStatus('Analysis download', 204);
+        rootStore.notificationsStore.notifyExImportStatus('Analysis download', 204);
         return null;
       }
 

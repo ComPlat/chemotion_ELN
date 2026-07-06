@@ -17,7 +17,7 @@ import { aviatorNavigation } from 'src/utilities/routesUtils';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import ComponentActions from 'src/stores/alt/actions/ComponentActions';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import {
   getMetricMol,
@@ -124,6 +124,7 @@ const matTagCollect = (connect, monitor) => ({
  * @extends React.Component
  */
 class SampleComponent extends Component {
+  static contextType = StoreContext;
   /**
    * Creates an instance of SampleComponent.
    * @param {Object} props - Component props
@@ -264,7 +265,7 @@ class SampleComponent extends Component {
 
     if (e.value < 0 || e.value > 1) {
       e.value = 1;
-      NotificationActions.add({
+      this.context.notifications.add({
         message: 'Purity value should be >= 0 and <=1',
         level: 'error'
       });

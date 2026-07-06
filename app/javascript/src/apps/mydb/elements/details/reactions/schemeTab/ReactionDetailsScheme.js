@@ -24,7 +24,7 @@ import OlsTreeSelect from 'src/components/OlsComponent';
 import ReactionDetailsDuration from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsDuration';
 import { permitOn } from 'src/components/common/uis';
 
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -46,6 +46,7 @@ import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercen
 import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
 
 export default class ReactionDetailsScheme extends React.Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
 
@@ -230,7 +231,7 @@ export default class ReactionDetailsScheme extends React.Component {
     );
 
     if (isAlreadyAdded) {
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'SBMM sample already added',
         message: `${srcSbmmSample.name} is already in this reaction.`,
         level: 'warning'
@@ -299,7 +300,7 @@ export default class ReactionDetailsScheme extends React.Component {
     );
   }
 
-  renderRolesOption({icon, label, variant}) {
+  renderRolesOption({ icon, label, variant }) {
     return (
       <>
         <i className={`fa ${icon} text-${variant} me-2`} />
@@ -319,7 +320,7 @@ export default class ReactionDetailsScheme extends React.Component {
         options={rolesOptions}
         formatOptionLabel={this.renderRolesOption}
         isClearable
-        value={rolesOptions.find(({value}) => value === role)}
+        value={rolesOptions.find(({ value }) => value === role)}
         onChange={this.onChangeRole}
       />
     );
@@ -897,7 +898,7 @@ export default class ReactionDetailsScheme extends React.Component {
       ? totalMixtureMassG * 1000
       : null;
 
-    NotificationActions.add({
+    this.context.notifications.add({
       title: 'Mass Exceeded',
       message: 'Entered mass exceeds the available mixture mass for this sample. '
         + `(Available: ${totalMixtureMassMg?.toFixed(3)} mg)`,
@@ -1109,7 +1110,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
     updatedSample.conversion_rate = conversionRate;
     if (conversionRate / 100 > 1) {
-      NotificationActions.add({
+      this.context.notifications.add({
         message: 'conversion rate cannot be more than 100%',
         level: 'warning'
       });
@@ -1526,7 +1527,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   calculateEquivalent(refM, updatedSample) {
     if (!refM.contains_residues) {
-      NotificationActions.add({
+      this.context.notifications.add({
         message: 'Cannot perform calculations for loading and equivalent',
         level: 'error'
       });
@@ -1535,7 +1536,7 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     if (!refM.loading) {
-      NotificationActions.add({
+      this.context.notifications.add({
         message: 'Please set non-zero starting material loading',
         level: 'error'
       });
@@ -1543,11 +1544,11 @@ export default class ReactionDetailsScheme extends React.Component {
       return 0.0;
     }
 
-    let loading = refM.residues[0].custom_info.loading;
-    let mass_koef = updatedSample.amount_g / refM.amount_g;
-    let mwb = updatedSample.molecule.molecular_weight;
-    let mwa = refM.molecule.molecular_weight;
-    let mw_diff = mwb - mwa;
+    const { loading } = refM.residues[0].custom_info;
+    const mass_koef = updatedSample.amount_g / refM.amount_g;
+    const mwb = updatedSample.molecule.molecular_weight;
+    const mwa = refM.molecule.molecular_weight;
+    const mw_diff = mwb - mwa;
     let equivalent = (1000.0 / loading) * (mass_koef - 1.0) / mw_diff;
 
     if (equivalent < 0.0 || equivalent > 1.0 || isNaN(equivalent) || !isFinite(equivalent)) {
@@ -1596,7 +1597,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
     if (errorMsg && !updatedS.decoupled) {
       updatedS.error_mass = true;
-      NotificationActions.add({
+      this.context.notifications.add({
         message: errorMsg,
         level: 'error',
       });
@@ -1610,7 +1611,7 @@ export default class ReactionDetailsScheme extends React.Component {
   checkMassPolymer(referenceM, updatedS, massAnalyses) {
     const equivalent = this.calculateEquivalent(referenceM, updatedS);
     updatedS.equivalent = equivalent;
-    let fconv_loading = referenceM.amount_mol / updatedS.amount_g * 1000.0;
+    const fconv_loading = referenceM.amount_mol / updatedS.amount_g * 1000.0;
     updatedS.residues[0].custom_info['loading_full_conv'] = fconv_loading;
     updatedS.residues[0].custom_info['loading_type'] = 'mass_diff';
 
@@ -1635,7 +1636,7 @@ export default class ReactionDetailsScheme extends React.Component {
     if (!isDecoupled) {
       const errorMsg = 'Experimental mass value is larger than possible\n'
         + 'by 100% conversion! Please check your data.';
-      NotificationActions.add({
+      this.context.notifications.add({
         message: errorMsg,
         level: 'error',
       });
@@ -1887,7 +1888,7 @@ export default class ReactionDetailsScheme extends React.Component {
     return samples.map((sample) => {
       if (sample.id === updatedSample.id) {
         if (sample.weight_percentage > 1 || sample.weight_percentage < 0) {
-          NotificationActions.add({
+          this.context.notifications.add({
             message: 'Weight percentage should be between 0 and 1',
             level: 'error'
           });
@@ -1928,7 +1929,7 @@ export default class ReactionDetailsScheme extends React.Component {
         if (updatedSample.coefficient % 1 !== 0 || updatedSample.coefficient === 0) {
           updatedSample.coefficient = 1;
           sample.coefficient = updatedSample.coefficient;
-          NotificationActions.add({
+          this.context.notifications.add({
             message: 'The sample coefficient should be a positive integer',
             level: 'error'
           });
@@ -2268,12 +2269,11 @@ export default class ReactionDetailsScheme extends React.Component {
 
   // eslint-disable-next-line class-methods-use-this
   showReactionVolumeRequiredWarning(message) {
-    NotificationActions.add({
+    this.context.notifications.add({
       title: 'Reaction Volume Required',
       message,
       level: 'warning',
       position: 'tc',
-      dismissible: 'button',
       autoDismiss: 5,
     });
   }

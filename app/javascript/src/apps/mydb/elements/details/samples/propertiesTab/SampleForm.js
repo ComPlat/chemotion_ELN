@@ -15,7 +15,7 @@ import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
 import { SampleTypesOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
@@ -24,6 +24,7 @@ import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/prop
 import { isValidMoleculeName } from 'src/utilities/MoleculeNameValidation';
 
 export default class SampleForm extends React.Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
 
@@ -156,12 +157,11 @@ export default class SampleForm extends React.Component {
       })
       .catch((errorMessage) => {
         // Show error notification
-        NotificationActions.add({
+        this.context.notifications.add({
           title: 'Error Creating Components',
           message: `Failed to create components: ${errorMessage}`,
           level: 'error',
           position: 'tc',
-          dismissible: 'button',
           autoDismiss: 10
         });
       });
@@ -488,7 +488,7 @@ export default class SampleForm extends React.Component {
             const value = `${prefix}-${counter + 1}`;
             this.handleFieldChanged('xref_inventory_label', value);
           } else {
-            NotificationActions.add({
+            this.context.notifications.add({
               message,
               level: 'error'
             });
@@ -498,7 +498,7 @@ export default class SampleForm extends React.Component {
           console.error(error);
         });
     } else {
-      NotificationActions.add({
+      this.context.notifications.add({
         message: 'Please select the collection to which sample belongs first',
         level: 'error'
       });
@@ -513,7 +513,7 @@ export default class SampleForm extends React.Component {
       e.value = 1;
       sample[field] = e.value;
       sample.changed = true;
-      NotificationActions.add({
+      this.context.notifications.add({
         message: 'Purity value should be >= 0 and <=1',
         level: 'error'
       });
@@ -615,7 +615,7 @@ export default class SampleForm extends React.Component {
 
   handleError() {
     this.clearMolecularMass();
-    NotificationActions.add({
+    this.context.notifications.add({
       message: 'Could not calculate the molecular mass for this sum formula',
       level: 'error'
     });
@@ -633,7 +633,7 @@ export default class SampleForm extends React.Component {
         if (result !== undefined) {
           this.handleFieldChanged('molecular_mass', { value: result });
         } else {
-          NotificationActions.add({
+          this.context.notifications.add({
             message: 'Could not calculate the molecular mass for this sum formula',
             level: 'error'
           });
@@ -642,7 +642,7 @@ export default class SampleForm extends React.Component {
       .catch((error) => {
         console.log(error);
 
-        NotificationActions.add({
+        this.context.notifications.add({
           message: 'An error occurred while calculating the molecular mass',
           level: 'error'
         });
@@ -816,7 +816,7 @@ export default class SampleForm extends React.Component {
     if (max != null && next > max) next = max;
 
     if (next !== parsed) {
-      NotificationActions.add({
+      this.context.notifications.add({
         message: max != null
           ? `${label} must be between ${min} and ${max}`
           : `${label} must be at least ${min}`,
