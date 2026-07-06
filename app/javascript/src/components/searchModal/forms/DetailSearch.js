@@ -833,7 +833,7 @@ const DetailSearch = () => {
 
     if (type == 'system-defined' && searchValue.unit === '') {
       let units = optionsForSelect(option);
-      searchValue.unit = units[0].label;
+      searchValue.unit = units[0] ? units[0].label : '';
     }
 
     if (column.indexOf('temperature') !== -1 && value !== '' && value !== 0 && value !== "0") {
