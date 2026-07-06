@@ -6,7 +6,9 @@ const sinon = require('sinon');
 const {
   describe, it, beforeEach, afterEach
 } = require('mocha');
-const { Button, Modal } = require('react-bootstrap');
+const {
+  Alert, Button, Modal
+} = require('react-bootstrap');
 const AppModal = require('src/components/common/AppModal').default;
 
 configure({ adapter: new Adapter() });
@@ -41,6 +43,42 @@ describe('AppModal', () => {
     expect(wrapper.find(Modal)).toHaveLength(1);
     expect(wrapper.find(Modal.Title).text()).toEqual('Test Modal');
     expect(wrapper.find('.modal-body-content').text()).toEqual('Body content');
+  });
+
+  it('renders an editable title input and emits the updated title string when onChangeTitle is provided', () => {
+    const onChangeTitleSpy = sinon.spy();
+    const wrapper = buildWrapper({
+      title: 'Editable title',
+      onChangeTitle: onChangeTitleSpy,
+    });
+
+    const titleInput = wrapper.findWhere((node) => node.prop('className') === 'app-modal__title-input');
+    expect(titleInput).toHaveLength(1);
+
+    titleInput.prop('onChange')({ target: { value: 'Updated title' } });
+    expect(onChangeTitleSpy.calledOnce).toBe(true);
+    expect(onChangeTitleSpy.firstCall.args[0]).toBe('Updated title');
+  });
+
+  it('defaults notification variant to info when notificationType is not provided', () => {
+    const wrapper = buildWrapper({
+      notification: 'Instrument missing',
+    });
+
+    expect(wrapper.find(Alert)).toHaveLength(1);
+    expect(wrapper.find(Alert).prop('variant')).toEqual('info');
+    expect(wrapper.find(Alert).text()).toEqual('Instrument missing');
+  });
+
+  it('renders danger notification type as danger alert variant', () => {
+    const wrapper = buildWrapper({
+      notification: 'Import failed',
+      notificationType: 'danger',
+    });
+
+    expect(wrapper.find(Alert)).toHaveLength(1);
+    expect(wrapper.find(Alert).prop('variant')).toEqual('danger');
+    expect(wrapper.find(Alert).text()).toEqual('Import failed');
   });
 
   it('does not render a footer by default', () => {
