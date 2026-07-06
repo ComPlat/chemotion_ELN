@@ -55,6 +55,14 @@ const prepareRangeBound = (args = {}, field) => {
   return argsNew;
 };
 
+const parseHstoreNumber = (val) => {
+  if (val === null || val === undefined) return val;
+
+  const num = parseFloat(val);
+
+  return Number.isNaN(num) ? val : num;
+};
+
 export default class Sample extends Element {
   // isMethodRestricted(m) {
   //   return false;
@@ -1653,7 +1661,7 @@ export default class Sample extends Element {
 
   get loading() {
     if (this.contains_residues && this.residues?.[0]?.custom_info) {
-      return this.residues[0].custom_info.loading;
+      return parseHstoreNumber(this.residues[0].custom_info.loading);
     }
     return false;
   }
@@ -1666,7 +1674,7 @@ export default class Sample extends Element {
 
   get external_loading() {
     if (this.contains_residues && this.residues?.[0]?.custom_info) {
-      return this.residues[0].custom_info.external_loading;
+      return parseHstoreNumber(this.residues[0].custom_info.external_loading);
     }
     return false;
   }
