@@ -4,9 +4,9 @@ describe('Reaction Variations', () => {
     cy.contains('.modal-title', 'Column Selection').should('be.visible');
   };
 
-  const removeMetadataColumn = (label) => {
+  const removeColumn = (group, label) => {
     openColumnSelectionModal();
-    cy.contains('.app-modal h5', 'Metadata').parent().within(() => {
+    cy.contains('.app-modal h5', group).parent().within(() => {
       cy.get(`[aria-label="Remove ${label}"]`).click({ force: true });
     });
     cy.contains('.modal-title', 'Confirm De-selection').should('be.visible');
@@ -15,13 +15,13 @@ describe('Reaction Variations', () => {
     cy.contains('button', 'Apply').click();
   };
 
-  const addMetadataColumn = (label) => {
+  const addColumn = (group, label) => {
     openColumnSelectionModal();
-    cy.contains('.app-modal h5', 'Metadata').parent().within(() => {
+    cy.contains('.app-modal h5', group).parent().within(() => {
       cy.get('input').first().click({ force: true });
     });
     cy.get('body').contains('[class*="option"]', label).click({ force: true });
-    cy.contains('.app-modal h5', 'Metadata').parent().contains(label).should('exist');
+    cy.contains('.app-modal h5', group).parent().contains(label).should('exist');
     cy.contains('button', 'Apply').click();
   };
 
@@ -35,7 +35,7 @@ describe('Reaction Variations', () => {
       cy.appFactories([['create', 'collection', { user_id: user[0].id, label: 'Col1' }]])
         .then((collection) => {
           cy.appFactories([['create', 'valid_sample', {
-            collection_ids: [collection[0].id], short_label: 'Bar'
+            collection_ids: [collection[0].id], short_label: 'Bar', external_label: 'Bar'
           }]]).then((startingMaterial) => {
             cy.appFactories([['create', 'reaction_with_variations', {
               collection_ids: [collection[0].id],
@@ -79,11 +79,15 @@ describe('Reaction Variations', () => {
   });
 
   it('adds and removes columns', () => {
-    removeMetadataColumn('Notes');
+    removeColumn('Metadata', 'Notes');
     cy.get('.ag-header').contains(/notes/i).should('not.exist');
 
-    addMetadataColumn('Notes');
+    addColumn('Metadata', 'Notes');
     cy.get('.ag-header').contains(/notes/i).should('exist');
+
+    cy.get('.ag-header').contains(/Bar/i).should('exist');
+    removeColumn('Starting Materials', 'Bar');
+    cy.get('.ag-header').contains(/Bar/i).should('not.exist');
   });
 
   it('adds and removes entries', () => {
