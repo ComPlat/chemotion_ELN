@@ -196,7 +196,7 @@ module Chemotion
 
         collection = writable_collection_for(params[:collection_id])
         error!('403 Forbidden', 403) if params[:collection_id] && collection.nil?
-        all_coll_owner_id = collection && !user_ids.include?(collection.user_id) ? collection.user_id : current_user.id
+        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
         all_collection = Collection.get_all_collection_for_user(all_coll_owner_id)
         # Avoid violating the unique (screen_id, collection_id) index when the
         # chosen collection is already the user's "All" collection.

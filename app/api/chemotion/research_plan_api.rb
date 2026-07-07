@@ -92,7 +92,7 @@ module Chemotion
         error!('403 Forbidden', 403) if params[:collection_id] && collection.nil?
         research_plan.collections << collection if collection
 
-        all_coll_owner_id = collection && !user_ids.include?(collection.user_id) ? collection.user_id : current_user.id
+        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
         all_coll = Collection.get_all_collection_for_user(all_coll_owner_id)
         # Avoid violating the unique (research_plan_id, collection_id) index when
         # the chosen collection is already the user's "All" collection.

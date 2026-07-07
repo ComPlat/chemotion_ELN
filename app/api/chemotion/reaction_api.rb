@@ -290,7 +290,7 @@ module Chemotion
         reaction.save!
         update_element_labels(reaction, params[:user_labels], current_user.id)
         reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
-        all_coll_owner_id = collection && !user_ids.include?(collection.user_id) ? collection.user_id : current_user.id
+        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
         all_collection = Collection.get_all_collection_for_user(all_coll_owner_id)
         # Use find_or_create_by so we don't violate the unique
         # (reaction_id, collection_id) index when the chosen collection is the

@@ -82,7 +82,7 @@ module Usecases
       def all_collection_for_owner
         user_and_group_ids = [@current_user.id, *@current_user.group_ids]
         collection = Collection.find_by(id: @params[:collection_id])
-        owner_id = collection && !user_and_group_ids.include?(collection.user_id) ? collection.user_id : @current_user.id
+        owner_id = collection && user_and_group_ids.exclude?(collection.user_id) ? collection.user_id : @current_user.id
         Collection.get_all_collection_for_user(owner_id)
       end
     end

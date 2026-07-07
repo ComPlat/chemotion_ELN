@@ -610,7 +610,7 @@ module Chemotion
           collections << collection
         end
 
-        all_coll_owner_id = collection && !user_ids.include?(collection.user_id) ? collection.user_id : current_user.id
+        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
         all_coll = Collection.get_all_collection_for_user(all_coll_owner_id)
         collections << all_coll if all_coll.present?
         sample.collections = collections.uniq
