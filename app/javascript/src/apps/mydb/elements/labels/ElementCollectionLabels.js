@@ -87,10 +87,10 @@ const ElementCollectionLabels = ({ element, size, variant }) => {
     );
   };
 
-  const ownCollections = element.tag.taggable_data.collection_labels
-    .filter(label => collectionsStore.isOwnCollection(label.id));
-  const sharedCollections = element.tag.taggable_data.collection_labels
-    .filter(label => collectionsStore.isSharedCollection(label.id));
+  const collectionLabels = element.tag.taggable_data.collection_labels.filter(Boolean);
+
+  const ownCollections = collectionLabels.filter((label) => collectionsStore.isOwnCollection(label.id));
+  const sharedCollections = collectionLabels.filter((label) => collectionsStore.isSharedCollection(label.id));
 
   if (ownCollections.length === 0 && sharedCollections.length === 0) { return (<span />); }
 
