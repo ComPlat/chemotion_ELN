@@ -5,6 +5,7 @@ module Chemotion
   # Reaction API
   class ReactionAPI < Grape::API
     include Grape::Kaminari
+    helpers CollectionHelpers
     helpers ContainerHelpers
     helpers ParamsHelpers
     helpers LiteratureHelpers
@@ -279,7 +280,7 @@ module Chemotion
         attributes.delete(:segments)
         attributes.delete(:user_labels)
 
-        collection = current_user.collections.find_by(id: collection_id)
+        collection = writable_collection_for(collection_id)
         attributes[:created_by] = current_user.id
         reaction = Reaction.create!(attributes)
         recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -289,7 +290,8 @@ module Chemotion
         reaction.save!
         update_element_labels(reaction, params[:user_labels], current_user.id)
         reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
-        all_collection = Collection.get_all_collection_for_user(current_user.id)
+        all_coll_owner_id = collection && !user_ids.include?(collection.user_id) ? collection.user_id : current_user.id
+        all_collection = Collection.get_all_collection_for_user(all_coll_owner_id)
         # Use find_or_create_by so we don't violate the unique
         # (reaction_id, collection_id) index when the chosen collection is the
         # user's "All" collection (both inserts would otherwise be identical).

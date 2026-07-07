@@ -194,8 +194,10 @@ module Chemotion
         kinds = screen.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-        collection = current_user.collections.where(id: params[:collection_id]).take
-        all_collection = Collection.get_all_collection_for_user(current_user.id)
+        collection = writable_collection_for(params[:collection_id])
+        error!('403 Forbidden', 403) if params[:collection_id] && collection.nil?
+        all_coll_owner_id = collection && !user_ids.include?(collection.user_id) ? collection.user_id : current_user.id
+        all_collection = Collection.get_all_collection_for_user(all_coll_owner_id)
         # Avoid violating the unique (screen_id, collection_id) index when the
         # chosen collection is already the user's "All" collection.
         screen.collections << collection if collection

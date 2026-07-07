@@ -25,6 +25,12 @@ module CollectionHelpers
     collection_share.attributes.symbolize_keys.slice(*defaults.keys)
   end
 
+  def writable_collection_for(collection_id)
+    return nil if collection_id.blank?
+
+    Collection.writable_by(current_user).find_by(id: collection_id)
+  end
+
   # TODO: improve this code and its callers by refactoring this logic into a method on collection
   #       example: Collection.find(ID).detail_levels_for_user(user)
   def set_var(c_id = params[:collection_id])

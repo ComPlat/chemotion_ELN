@@ -10,6 +10,7 @@ module Chemotion
   class VesselAPI < Grape::API
     include Grape::Kaminari
 
+    helpers CollectionHelpers
     helpers ParamsHelpers
     helpers ContainerHelpers
 
@@ -133,7 +134,7 @@ module Chemotion
         vessel_template = VesselTemplate.find_by(id: params[:vessel_template_id])
         error!('404 Vessel Template not found', 404) unless vessel_template
 
-        collection = current_user.collections.find_by(id: params[:collection_id])
+        collection = writable_collection_for(params[:collection_id])
         error!('404 Collection not found', 404) unless collection
 
         current_count = Vessel.where(user_id: current_user.id).count
@@ -172,7 +173,7 @@ module Chemotion
       end
 
       post 'bulk_create' do
-        error!('401 Unauthorized', 401) unless current_user.collections.find_by(id: params[:collection_id])
+        error!('401 Unauthorized', 401) unless writable_collection_for(params[:collection_id])
 
         vessel_template = VesselTemplate.find_by(id: params[:vessel_template_id])
         error!('404 VesselTemplate Not Found', 404) unless vessel_template
@@ -202,7 +203,7 @@ module Chemotion
             )
 
             if params[:collection_id]
-              collection = current_user.collections.find_by(id: params[:collection_id])
+              collection = writable_collection_for(params[:collection_id])
               vessel.collections << collection if collection.present?
             end
 
