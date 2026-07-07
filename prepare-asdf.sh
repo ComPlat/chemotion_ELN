@@ -21,7 +21,10 @@ if command -v asdf ; then
     fi
 else
     echo '>>> Missing asdf. Installing...'
-    curl -sSL https://github.com/asdf-vm/asdf/releases/download/${ASDF_BRANCH}/asdf-${ASDF_BRANCH}-linux-amd64.tar.gz | tar -xz --one-top-level=${ASDF_DIR}/bin/
+    mkdir -p /tmp/asdf-install ${ASDF_DIR}/bin
+    curl -sSL https://github.com/asdf-vm/asdf/releases/download/${ASDF_BRANCH}/asdf-${ASDF_BRANCH}-linux-amd64.tar.gz | tar -xz -C /tmp/asdf-install
+    cp /tmp/asdf-install/asdf ${ASDF_DIR}/bin/asdf
+    rm -rf /tmp/asdf-install
     chmod +x ${ASDF_DIR}/bin/asdf
 fi
 
