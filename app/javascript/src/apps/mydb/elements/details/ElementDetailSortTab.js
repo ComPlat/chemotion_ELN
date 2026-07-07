@@ -145,7 +145,7 @@ export default function ElementDetailSortTab({
 
   const { currentCollection } = UIStore.getState();
   const isOwnCollection = collections.isOwnCollection(currentCollection?.id);
-  const allCollection = currentCollection?.is_locked && currentCollection.label === 'All';
+  const allCollection = isAllCollection(currentCollection);
   if (!isOwnCollection && !allCollection) { return null; }
 
   const popoverSettings = (
