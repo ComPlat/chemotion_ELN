@@ -59,7 +59,8 @@ gem 'jwt'
 gem 'kaminari'
 gem 'kaminari-grape'
 
-gem 'labimotion', '2.2.0.rc5'
+# gem 'labimotion', '2.2.0.rc5'
+gem 'labimotion', git: "https://github.com/StarmanMartin/labimotion.git", branch: "make-units-for-system-defined-inputs-configurable-in-the-converter"
 gem 'logidze'
 
 gem 'mimemagic', '0.3.10'
