@@ -1,14 +1,14 @@
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable no-restricted-globals */
 /* eslint-disable camelcase */
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   ListGroupItem,
   Tabs,
   Tab,
 } from 'react-bootstrap';
-import { cloneDeep, findIndex, merge } from 'lodash';
+import { cloneDeep, findIndex, merge, unionBy } from 'lodash';
 import { List } from 'immutable';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import {
@@ -26,6 +26,8 @@ import GenericEl from 'src/models/GenericEl';
 import Attachment from 'src/models/Attachment';
 import { notification, renderFlowModal } from 'src/apps/generic/Utils';
 import GenericAttachments from 'src/components/generic/GenericAttachments';
+import GenericElWellplates from 'src/components/generic/wellplatesTab/GenericElWellplates';
+import GenericElementVariations from 'src/components/generic/variationsTab/GenericElementVariations';
 import { SegmentTabs } from 'src/components/generic/SegmentDetails';
 import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
 import ElementDetailSortTab from 'src/apps/mydb/elements/details/ElementDetailSortTab';
@@ -41,6 +43,18 @@ const onNaviClick = (type, id) => {
   if (elementAction != null && ElementActions[elementAction]) {
     ElementActions[elementAction](id);
   }
+};
+
+const WELLPLATE_SEGMENT_LABEL = 'Wellplates';
+
+const hasWellplateSegment = (element) => {
+  const segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
+  return segmentKlasses.some(
+    (klass) => klass.element_klass
+      && klass.element_klass.name === element.type
+      && klass.label === WELLPLATE_SEGMENT_LABEL
+      && klass.is_active !== false
+  );
 };
 
 export default class GenericElDetails extends Component {
@@ -73,6 +87,9 @@ export default class GenericElDetails extends Component {
     this.handleExport = this.handleExport.bind(this);
     this.handleExpandAll = this.handleExpandAll.bind(this);
     this.setAttachmentDeleted = this.setAttachmentDeleted.bind(this);
+    this.dropWellplate = this.dropWellplate.bind(this);
+    this.deleteWellplate = this.deleteWellplate.bind(this);
+    this.variationsRef = createRef();
   }
 
   componentDidMount() {
@@ -135,6 +152,10 @@ export default class GenericElDetails extends Component {
     LoadingActions.start();
     // eslint-disable-next-line react/destructuring-assignment
     this.context.attachmentNotificationStore.clearMessages();
+
+    if (this.variationsRef.current && this.variationsRef.current.flushIfDirty) {
+      this.variationsRef.current.flushIfDirty();
+    }
 
     el.name = el.name.trim();
 
@@ -233,6 +254,25 @@ export default class GenericElDetails extends Component {
     genericEl.changed = true;
     if (cb) this.setState({ genericEl }, cb());
     else this.setState({ genericEl });
+  }
+
+  dropWellplate(wellplate) {
+    const { genericEl } = this.state;
+    genericEl.changed = true;
+    genericEl.wellplates = unionBy(genericEl.wellplates || [], [wellplate], 'id');
+    this.setState({ genericEl });
+  }
+
+  deleteWellplate(wellplateId) {
+    const { genericEl } = this.state;
+    genericEl.changed = true;
+    const wellplates = genericEl.wellplates || [];
+    const wellplateIndex = wellplates.findIndex(wp => wp.id === wellplateId);
+    if (wellplateIndex > -1) {
+      wellplates.splice(wellplateIndex, 1);
+    }
+    genericEl.wellplates = wellplates;
+    this.setState({ genericEl });
   }
 
   /**
@@ -395,20 +435,55 @@ export default class GenericElDetails extends Component {
     );
   }
 
+  wellplatesTab(ind) {
+    const { genericEl } = this.state;
+    return (
+      <Tab eventKey={ind} title="Wellplates" key={`Wellplates_${genericEl.id}`} mountOnEnter>
+        <ListGroupItem className="pb-4">
+          <GenericElWellplates
+            genericEl={genericEl}
+            wellplates={genericEl.wellplates || []}
+            dropWellplate={this.dropWellplate}
+            deleteWellplate={this.deleteWellplate}
+          />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
+  variationsTab(ind) {
+    const { genericEl } = this.state;
+    return (
+      <Tab eventKey={ind} title="Variations" key={`Variations_${genericEl.id}`}>
+        <ListGroupItem className="pb-4">
+          <GenericElementVariations
+            ref={this.variationsRef}
+            genericEl={genericEl}
+            onDirty={() => this.handleElChanged(genericEl)}
+          />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
   render() {
     const { genericEl, visible } = this.state;
     const { openedFromCollectionId } = this.props;
-    /**
-     *  tabContents is a object containing all (visible) segment tabs
-     */
+    const showWellplates = hasWellplateSegment(genericEl);
     let tabContents = {
       properties: this.propertiesTab.bind(this),
       analyses: this.containersTab.bind(this),
       attachments: this.attachmentsTab.bind(this),
+      variations: this.variationsTab.bind(this),
     };
 
     const segTabs = SegmentTabs(genericEl, this.handleSegmentsChange);
     tabContents = merge(tabContents, segTabs);
+
+    delete tabContents[WELLPLATE_SEGMENT_LABEL];
+    if (showWellplates) {
+      tabContents[WELLPLATE_SEGMENT_LABEL] = this.wellplatesTab.bind(this);
+    }
 
     const tabContentList = [];
     const tabKeyContentList = [];

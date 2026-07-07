@@ -634,6 +634,40 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.index ["name_abbreviation"], name: "index_devices_on_name_abbreviation", unique: true, where: "(name_abbreviation IS NOT NULL)"
   end
 
+  create_table "dose_resp_outputs", force: :cascade do |t|
+    t.bigint "dose_resp_request_id", null: false
+    t.jsonb "output_data", default: {}, null: false
+    t.text "notes"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_dose_resp_outputs_on_created_at"
+    t.index ["deleted_at"], name: "index_dose_resp_outputs_on_deleted_at"
+    t.index ["dose_resp_request_id"], name: "index_dose_resp_outputs_on_dose_resp_request_id"
+  end
+
+  create_table "dose_resp_requests", force: :cascade do |t|
+    t.string "request_id"
+    t.integer "element_id"
+    t.integer "state"
+    t.jsonb "wellplates_metadata"
+    t.string "resp_message"
+    t.integer "created_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.string "access_token"
+    t.datetime "expires_at"
+    t.datetime "revoked_at"
+    t.datetime "first_accessed_at"
+    t.datetime "last_accessed_at"
+    t.integer "access_count", default: 0
+    t.jsonb "input_metadata", default: {}, null: false
+    t.index ["access_token"], name: "index_dose_resp_requests_on_access_token", unique: true
+    t.index ["created_by"], name: "index_dose_resp_requests_on_created_by"
+    t.index ["element_id"], name: "index_dose_resp_requests_on_element_id"
+  end
+
   create_table "element_klasses", id: :serial, force: :cascade do |t|
     t.string "name"
     t.string "label"
@@ -687,6 +721,16 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.index ["taggable_id"], name: "index_element_tags_on_taggable_id"
+  end
+
+  create_table "element_variations", force: :cascade do |t|
+    t.bigint "element_id", null: false
+    t.jsonb "variations", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "layout", default: {}, null: false
+    t.index ["element_id"], name: "index_element_variations_on_element_id", unique: true
+    t.index ["variations"], name: "index_element_variations_on_variations", using: :gin
   end
 
   create_table "elemental_compositions", id: :serial, force: :cascade do |t|
@@ -773,6 +817,17 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.integer "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "elements_wellplates", force: :cascade do |t|
+    t.bigint "element_id", null: false
+    t.bigint "wellplate_id", null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.jsonb "log_data"
+    t.index ["element_id"], name: "index_elements_wellplates_on_element_id"
+    t.index ["wellplate_id"], name: "index_elements_wellplates_on_wellplate_id"
   end
 
   create_table "fingerprints", id: :serial, force: :cascade do |t|
@@ -897,6 +952,7 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.datetime "updated_at", null: false
     t.string "source_type"
     t.bigint "source_id"
+    t.jsonb "metadata", default: {}
     t.index ["deleted_at"], name: "index_measurements_on_deleted_at"
     t.index ["sample_id"], name: "index_measurements_on_sample_id"
     t.index ["source_type", "source_id"], name: "index_measurements_on_source_type_and_source_id"
@@ -1817,6 +1873,7 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
   add_foreign_key "collections", "inventories"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "collections"
   add_foreign_key "collections_sequence_based_macromolecule_samples", "sequence_based_macromolecule_samples"
+  add_foreign_key "dose_resp_outputs", "dose_resp_requests"
   add_foreign_key "components", "samples"
   add_foreign_key "layer_tracks", "layers", column: "identifier", primary_key: "identifier"
   add_foreign_key "literals", "literatures"

@@ -16,6 +16,7 @@ const Measurement = types.model({
   unit: types.string,
   source_type: types.string,
   source_id: types.integer,
+  metadata: types.optional(types.frozen(), {}),
   header: types.reference(SampleHeaderForMeasurement)
 });
 

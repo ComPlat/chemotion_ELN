@@ -164,6 +164,7 @@ class GenericAttachments extends Component {
   renderImageEditModal() {
     const { chosenAttachment, imageEditModalShown } = this.state;
     const { onEdit } = this.props;
+    if (!chosenAttachment) return null;
     return (
       <ImageAnnotationModalSVG
         attachment={chosenAttachment}
