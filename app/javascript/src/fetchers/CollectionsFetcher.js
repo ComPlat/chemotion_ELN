@@ -16,7 +16,7 @@ export default class CollectionsFetcher {
   }
 
   static buldUpdateForOwnCollections(params) {
-    return ApiClient.postJson('/api/v1/collections/bulk_update_own_collections', { body: params })
+    return ApiClient.putJson('/api/v1/collections/bulk_update_own_collections', { body: params })
       .then((json) => json.collections);
   }
 
