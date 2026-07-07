@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Container, Card, Row, Col, Form, Button, Alert, Modal
+  Container, Card, Row, Col, Form, Button, Alert, Modal, Nav
 } from 'react-bootstrap';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import InventoryLabelSettings from 'src/apps/settings/InventoryLabelSettings';
@@ -14,6 +14,7 @@ import AuthToken from 'src/apps/userSettings/AuthToken';
 import { TwoFactorSettings } from 'src/apps/userSettings/TwoFA';
 import { AccountSettings, DeleteSettings } from 'src/apps/userSettings/UserSettings';
 import Affiliations from 'src/apps/userSettings/Affiliations';
+import AffiliationSuggestions from 'src/apps/admin/AffiliationSuggestions';
 import TextTemplates from 'src/apps/userSettings/TextTemplates';
 
 const AuthenticationSettings = ({ currentUser }) => {
@@ -313,13 +314,39 @@ const ExternalSettings = () => {
   );
 }
 
-const AffiliationsSettings = () => {
+const AffiliationsSettings = ({ currentUser }) => {
+  const [tab, setTab] = useState('mine');
+  const isModerator = currentUser.profile?.data?.affiliation_moderator;
+
+  if (!isModerator) {
+    return (
+      <Container className="my-3 d-flex flex-column gap-3">
+        <Affiliations />
+      </Container>
+    );
+  }
+
   return (
     <Container className="my-3 d-flex flex-column gap-3">
-      <Affiliations />
+      <Nav variant="tabs" activeKey={tab} onSelect={(k) => setTab(k)}>
+        <Nav.Item>
+          <Nav.Link eventKey="mine">My affiliations</Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="requests">Requests</Nav.Link>
+        </Nav.Item>
+      </Nav>
+      {tab === 'mine' ? <Affiliations /> : <AffiliationSuggestions />}
     </Container>
   );
-}
+};
+
+AffiliationsSettings.propTypes = {
+  currentUser: PropTypes.shape({
+    profile: PropTypes.shape({ data: PropTypes.shape({ affiliation_moderator: PropTypes.bool }) }),
+  }).isRequired,
+};
+
 const AccountProfile = ({ currentUser, closeSettings }) => {
   const [currentSettings, setCurrentSettings] = useState('account');
 
@@ -334,7 +361,7 @@ const AccountProfile = ({ currentUser, closeSettings }) => {
       return <ExternalSettings />;
     }
     if (currentSettings === 'affiliations') {
-      return <AffiliationsSettings />;
+      return <AffiliationsSettings currentUser={currentUser} />;
     }
     if (currentSettings === 'text-templates') {
       return <TextTemplates />;

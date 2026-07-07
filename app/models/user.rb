@@ -101,6 +101,7 @@ class User < ApplicationRecord
 
   has_many :user_affiliations, dependent: :destroy
   has_many :affiliations, through: :user_affiliations
+  has_many :affiliation_suggestions, dependent: :destroy
 
   has_many :computed_props
 
@@ -336,6 +337,10 @@ class User < ApplicationRecord
 
   def is_templates_moderator
     profile&.data&.fetch('is_templates_moderator', false)
+  end
+
+  def affiliation_moderator
+    profile&.data&.fetch('affiliation_moderator', false)
   end
 
   def molecule_editor

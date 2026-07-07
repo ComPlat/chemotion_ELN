@@ -16,14 +16,16 @@ module Users
 
     def create
       build_resource(sign_up_params)
-      find_affiliation
+      capture_signup_affiliation
       default_password
       providers
 
       yield resource if block_given?
       if resource.save
+        attach_or_suggest_affiliation
         resource_saved_handler
       else
+        resource.affiliations.build(@signup_affiliation || {})
         resource_not_saved_handler
       end
     end
@@ -46,9 +48,31 @@ module Users
       resource.providers = provider
     end
 
-    def find_affiliation
-      resource.affiliations = [Affiliation.find_or_create_by(resource.affiliations.first.slice(:country, :organization,
-                                                                                               :department, :group))]
+    def capture_signup_affiliation
+      first = resource.affiliations.first
+      @signup_affiliation = first&.slice(:country, :organization, :department, :group)&.symbolize_keys
+      @signup_affiliation[:country] = known_country(@signup_affiliation[:country]) if @signup_affiliation
+      resource.affiliations = []
+    end
+
+    # Free text is allowed in the input; anything not on the ISO list is dropped.
+    def known_country(name)
+      ISO3166::Country.all_translated.compact.find { |country| country.casecmp?(name.to_s.strip) }
+    end
+
+    # A failure here must never break the account that was just created.
+    def attach_or_suggest_affiliation
+      return if @signup_affiliation.blank? || @signup_affiliation[:organization].blank?
+
+      route_affiliation
+    rescue StandardError => e
+      Rails.logger.error("Signup affiliation routing failed: #{e.class}: #{e.message}")
+    end
+
+    def route_affiliation
+      Usecases::AffiliationSuggestions::Suggestion.new(resource).create(@signup_affiliation)
+    rescue Usecases::AffiliationSuggestions::Errors::DuplicateSuggestion
+      Usecases::Affiliations::UserAffiliations.new(resource).create(@signup_affiliation)
     end
 
     def default_password
