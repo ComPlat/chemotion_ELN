@@ -211,6 +211,7 @@ class API < Grape::API
   mount Chemotion::InstrumentAPI
   mount Chemotion::MessageAPI
   mount Chemotion::AdminAPI
+  mount Chemotion::AdminAffiliationAPI
   mount Chemotion::AdminUserAPI
   mount Chemotion::AdminInfoSupportAPI
   mount Chemotion::EditorAPI
