@@ -9,7 +9,7 @@ import ApiClient from 'src/api_clients/ChemotionApiClient';
 const User = types.model(
   'User',
   {
-    id: types.optional(types.identifier, ''),
+    id: types.identifierNumber,
     name: types.optional(types.string, ''),
     first_name: types.optional(types.string, ''),
     last_name: types.optional(types.string, ''),
@@ -26,16 +26,13 @@ const User = types.model(
     reaction_name_prefix: types.optional(types.string, ''),
     // layout: types.???, // this column appears to be orphaned and moved to profile, just without deleting the field in the users table
     email: types.optional(types.string, ''),
-    unconfirmed_email: types.optional(types.string, ''),
-    confirmed_at: types.maybeNull(types.Date),
-    current_sign_in_at: types.maybeNull(types.Date),
-    locked_at: types.maybeNull(types.Date),
+    unconfirmed_email: types.maybeNull(types.string),
     is_templates_moderator: types.optional(types.boolean, false),
     molecule_editor: types.optional(types.boolean, false),
     converter_admin: types.optional(types.boolean, false),
     account_active: types.optional(types.boolean, false),
     matrix: types.optional(types.integer, 0),
-    counters: types.map(types.integer),
+    counters: types.map(types.union(types.integer, types.string)),
     generic_admin: types.map(types.boolean),
     otp_required_for_login: types.optional(types.boolean, false),
     profile: types.frozen({}) // hack to create a structure for something without authoritative data structure
@@ -286,6 +283,7 @@ const UserStore = types.model(
   fetchNoVNCDevices: flow(function* fetchNoVNCDevices() {
     const result = yield UsersFetcher.fetchNoVNCDevices();
     self.devices = result.map((device) => Device.create(device));
+    return self.devices;
   }),
 
   fetchOlsRxno: flow(function* fetchOlsRxno() {
@@ -339,7 +337,7 @@ const UserStore = types.model(
   setRole: (role) => {
     self.role = role;
     localStorage.setItem('chemotion-role', role);
-  },
+  }
 })).views((self) => ({
   isUserQuotaExceeded(filteredAttachments) {
     const totalSize = filteredAttachments.filter((attachment) => attachment.is_new && !attachment.is_deleted)
