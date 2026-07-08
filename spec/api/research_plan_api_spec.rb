@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/NestedGroups
+
 require 'rails_helper'
 
 describe Chemotion::ResearchPlanAPI do
@@ -41,12 +43,12 @@ describe Chemotion::ResearchPlanAPI do
               children: [],
               is_new: true,
               is_deleted: false,
-              name: 'new'
-            }
+              name: 'new',
+            },
           }
         end
 
-        before { post '/api/v1/research_plans', params: params, as: :json}
+        before { post '/api/v1/research_plans', params: params, as: :json }
 
         it 'is able to create a new research plan' do
           rp = ResearchPlan.find_by(name: 'test')
@@ -152,7 +154,8 @@ describe Chemotion::ResearchPlanAPI do
         expect(columns.size).to eq 8 # coordinate + 3*2 readout spalten
 
         names = columns.map { |column| column['headerName'] }
-        expect(names).to eq ['Position', 'Sample', 'Readout 1 Value', 'Readout 1 Unit', 'Readout 2 Value', 'Readout 2 Unit', 'Readout 3 Value', 'Readout 3 Unit']
+        expect(names).to eq ['Position', 'Sample', 'Readout 1 Value', 'Readout 1 Unit', 'Readout 2 Value',
+                             'Readout 2 Unit', 'Readout 3 Value', 'Readout 3 Unit']
 
         first_row = rows.first
         first_readout = wellplate.wells.first.readouts.first
@@ -181,3 +184,4 @@ describe Chemotion::ResearchPlanAPI do
     end
   end
 end
+# rubocop:enable RSpec/NestedGroups
