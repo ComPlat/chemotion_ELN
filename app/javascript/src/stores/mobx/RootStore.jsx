@@ -32,6 +32,23 @@ export const RootStore = types
     notificationsStore: types.optional(NotificationsStore, {}),
     userStore: types.optional(UserStore, {})
   })
+  .actions((self) => ({
+    reset: () => {
+      self.measurementsStore = MeasurementsStore.create({ measurements: {}, sampleHeaders: {}});
+      self.sampleTasksStore = SampleTasksStore.create({});
+      self.cellLineDetailsStore = CellLineDetailsStore.create({});
+      self.vesselDetailsStore = VesselDetailsStore.create({});
+      self.searchStore = SearchStore.create({});
+      self.devicesStore = DevicesStore.create({});
+      self.deviceMetadataStore = DeviceMetadataStore.create({});
+      self.attachmentNotificationStore = AttachmentNotificationStore.create({});
+      self.calendarStore = CalendarStore.create({});
+      self.deviceDescriptionsStore = DeviceDescriptionsStore.create({});
+      self.sequenceBasedMacromoleculeSamplesStore = SequenceBasedMacromoleculeSamplesStore.create({});
+      self.collectionsStore = CollectionsStore.create({});
+      self.userStore = UserStore.create({});
+    }
+  }))
   .views((self) => ({
     get measurements() { return self.measurementsStore; },
     get sampleTasks() { return self.sampleTasksStore; },
