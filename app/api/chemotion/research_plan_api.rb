@@ -70,6 +70,9 @@ module Chemotion
         optional :literatures, type: Hash
       end
       post do
+        collection = writable_collection_for(params[:collection_id])
+        error!('403 Forbidden', 403) if params[:collection_id] && collection.nil?
+
         attributes = {
           name: params[:name],
           body: params[:body],
@@ -88,8 +91,6 @@ module Chemotion
         clone_attachs = params[:attachments]&.reject { |a| a[:is_new] }
         Usecases::Attachments::Copy.execute!(clone_attachs, research_plan, current_user.id) if clone_attachs
 
-        collection = writable_collection_for(params[:collection_id])
-        error!('403 Forbidden', 403) if params[:collection_id] && collection.nil?
         research_plan.collections << collection if collection
 
         all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
