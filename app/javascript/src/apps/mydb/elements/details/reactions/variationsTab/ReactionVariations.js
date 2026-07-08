@@ -73,7 +73,9 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     gridVersion,
   } = gridStore;
 
-  const initialGridState = useMemo(() => getInitialGridState(reaction.id), [reaction.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Fetch grid state on every re-mount.
+  const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -491,6 +493,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
       </ButtonGroup>
       <div className="ag-theme-alpine ag-theme-reaction-variations">
         <AgGridReact
+          // Re-mount grid on version change
           key={`${reaction.id}-schema-${gridVersion}`}
           ref={gridRef}
           initialState={initialGridState}
