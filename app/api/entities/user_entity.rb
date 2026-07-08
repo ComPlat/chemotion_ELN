@@ -63,6 +63,10 @@ module Entities
       object.counters['sequence_based_macromolecule_samples'].to_i
     end
 
+    def otp_required_for_login
+      !!object.otp_required_for_login
+    end
+
     expose :current_sign_in_at do |obj|
       return nil unless obj.respond_to? :current_sign_in_at
 

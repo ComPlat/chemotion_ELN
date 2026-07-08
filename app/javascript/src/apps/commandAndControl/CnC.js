@@ -1,11 +1,13 @@
-import React, { createRef } from 'react';
+import React, {
+  useRef, useContext, useEffect, useState
+} from 'react';
+import { observer } from 'mobx-react';
 import RFB from '@novnc/novnc/lib/rfb';
 import {
   Container, Row, Col, ListGroup
 } from 'react-bootstrap';
 
-import DeviceActions from 'src/stores/alt/actions/UserActions';
-import DeviceStore from 'src/stores/alt/stores/UserStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import FocusNovnc from 'src/apps/commandAndControl/FocusNovnc';
 import BaseNavigation from 'src/components/navigation/BaseNavigation';
 import DeviceFetcher from 'src/fetchers/DeviceFetcher';
@@ -18,184 +20,69 @@ const TIME_BLUR = 55000;
 // Interval to query connection counter
 const TIME_CONN = 4000;
 
-class CnC extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      devices: [],
-      selected: {},
-      showDeviceList: true,
-      connected: false,
-      rfb: null,
-      isNotFocused: true,
-      isForcedScreenResizing: false,
-      show: false,
-      watching: 0,
-      using: 0,
-      autoBlur: null,
-      autoDisconnect: null,
-      forceCursor: false,
-      connections: null,
-    };
-    this.UserStoreChange = this.UserStoreChange.bind(this);
-    this.toggleDeviceList = this.toggleDeviceList.bind(this);
-    this.connect = this.connect.bind(this);
-    this.connected = this.connected.bind(this);
-    this.disconnected = this.disconnected.bind(this);
-    this.autoDisconnect = this.autoDisconnect.bind(this);
-    this.handleScreenSizeChanging = this.handleScreenSizeChanging.bind(this);
-    this.handleFocus = this.handleFocus.bind(this);
-    this.handleBlur = this.handleBlur.bind(this);
-    this.handleForceScreenResizing = this.handleForceScreenResizing.bind(this);
-    this.handleCursor = this.handleCursor.bind(this);
-    this.handleMouseEnter = this.handleMouseEnter.bind(this);
-    this.handleMouseLeave = this.handleMouseLeave.bind(this);
-    this.clearTimers = this.clearTimers.bind(this);
+function CnC() {
+  const { devices } = useContext(StoreContext).userStore;
+  const [selectedDevice, setSelectedDevice] = useState({});
+  const [showDeviceList, setShowDeviceList] = useState(true);
+  const [connected, setConnected] = useState(false);
+  const [rfb, setRfb] = useState(null);
+  const [isNotFocused, setIsNotFocused] = useState(true);
+  const [isForcedScreenResizing, setIsForcedScreenResizing] = useState(false);
+  const [using, setUsing] = useState(0);
+  const [watching, setWatching] = useState(0);
+  const [autoBlur, setAutoBlur] = useState(null);
+  const [autoDisconnect, setAutoDisconnect] = useState(null);
+  const [forceCursor, setForceCursor] = useState(false);
+  const [connections, setConnections] = useState(null);
+  const canvasRef = useRef();
 
-    this.fetchConnections = this.fetchConnections.bind(this);
-    this.canvasRef = createRef();
-  }
+  const { userStore } = useContext(StoreContext);
 
-  componentDidMount() {
-    DeviceStore.listen(this.UserStoreChange);
-    DeviceActions.fetchNoVNCDevices();
-    // Listen for window resize event and handle it accordingly
-    window.addEventListener('resize', this.handleScreenSizeChanging);
-  }
-
-  componentWillUnmount() {
-    DeviceStore.unlisten(this.UserStoreChange);
-    this.disconnect();
-
-    // Remove event listener for window resize
-    window.removeEventListener('resize', this.handleScreenSizeChanging);
-  }
-
-  handleFocus() {
-    const { rfb, isForcedScreenResizing } = this.state;
-
-    if (!rfb) { return; }
-    const tempRFB = rfb;
-    tempRFB.viewOnly = false;
-
-    // Focuses the RFB instance
-    rfb.focus();
-    this.clearTimers(); // Clear the auto blur and auto disconnect timers
-    this.setState({ rfb: tempRFB, isNotFocused: false, showDeviceList: false });
-
-    // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
-    if (isForcedScreenResizing) {
-      setTimeout(() => {
-        this.handleScreenSizeChanging();
-      }, 1);
-    }
-  }
+  useEffect(() => {
+    userStore.fetchCurrentUser();
+  }, []);
 
   /**
    * Handles the event when the screen size is changing.
    * If screen resizing is forced, toggles the `scaleViewport` property of the RFB instance.
    * This is done by setting it to false and then back to true, which triggers a resize.
    */
-  handleScreenSizeChanging() {
+  const handleScreenSizeChanging = () => {
     // If there is no RFB instance or screen resizing is not forced, return early
-    const { rfb, isForcedScreenResizing } = this.state;
     if (!rfb || !isForcedScreenResizing) { return; }
     const tempRFB = rfb;
     // Toggle the `scaleViewport` property of the RFB instance
     tempRFB.scaleViewport = false;
     tempRFB.scaleViewport = true;
 
-    this.setState({ rfb: tempRFB });
-  }
+    setRfb(tempRFB);
+  };
 
-  /*
-   * Toggles the `scaleViewport` property of the RFB instance and updates the state accordingly.
-   * Also clears the auto blur and auto disconnect timers and updates the state accordingly.
-   */
-  handleForceScreenResizing() {
-    // If there is no RFB instance, return early
-    const { rfb, isForcedScreenResizing } = this.state;
-    if (!rfb) { return; }
-    // Create a copy of the current RFB instance
-    const tempRFB = rfb;
-    // Toggle the `scaleViewport` property of the RFB instance
-    tempRFB.scaleViewport = !isForcedScreenResizing;
-    // Clear the auto blur and auto disconnect timers
-    this.clearTimers();
-    // Update the state with the new RFB instance and toggled `isForcedScreenResizing` property
-    this.setState({
-      rfb: tempRFB,
-      isForcedScreenResizing: !isForcedScreenResizing
-    });
-  }
+  const fetchConnections = () => {
+    if (!selectedDevice || !selectedDevice.id) { return; }
 
-  handleBlur() {
-    const { rfb, isForcedScreenResizing } = this.state;
-    if (!rfb) { return; }
-    const tempRFB = rfb;
-    tempRFB.viewOnly = true;
-    // Toggle the device list when the screen is blurred
-    // This provides a way to hide the device list when the user is not focused on the screen
-    // this.toggleDeviceList();
-    this.clearTimers();
-    const disconnectTime = setTimeout(this.autoDisconnect, TIME_DISCO);
-    this.setState({
-      rfb: tempRFB, isNotFocused: true, showDeviceList: true, autoDisconnect: disconnectTime
-    });
+    DeviceFetcher.fetchCurrentConnection(selectedDevice, isNotFocused)
+      .then((result) => {
+        setUsing(result.using);
+        setWatching(result.watching);
+      });
+  };
 
-    // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
-    if (isForcedScreenResizing) {
-      setTimeout(() => {
-        this.handleScreenSizeChanging();
-      }, 1);
-    }
-  }
+  const disconnect = () => {
+    clearInterval(connections);
+    if (!rfb) return;
 
-  handleCursor() {
-    const { forceCursor } = this.state;
-    this.setState({ forceCursor: !forceCursor });
-  }
+    rfb.disconnect();
+    setRfb(null);
+  };
 
-  handleMouseEnter() {
-    const { rfb, isNotFocused } = this.state;
-    if (!rfb || isNotFocused) { return; }
-    this.clearTimers();
-  }
+  const connect = () => {
+    disconnect();
+    const { id, target, password } = selectedDevice;
+    if (!canvasRef.current || !id || !target) { return; }
 
-  handleMouseLeave() {
-    const { isNotFocused } = this.state;
-    if (isNotFocused) { return; }
-    this.clearTimers();
-    const blurTime = setTimeout(this.handleBlur, TIME_BLUR);
-    this.setState({ autoBlur: blurTime });
-  }
-
-  UserStoreChange(UserStoreState) {
-    this.setState((prevState) => ({ ...prevState, devices: UserStoreState.devices }));
-  }
-
-  connected() {
-    this.setState({ connected: true });
-  }
-
-  disconnected() {
-    this.setState({ connected: false });
-  }
-
-  clearTimers() {
-    const { autoBlur, autoDisconnect } = this.state;
-    clearTimeout(autoBlur);
-    clearTimeout(autoDisconnect);
-  }
-
-  connect() {
-    this.disconnect();
-    const { selected } = this.state;
-    const { id, target, password } = selected;
-    if (!this.canvasRef.current || !id || !target) { return; }
-
-    const rfb = new RFB(
-      this.canvasRef.current,
+    const newRfb = new RFB(
+      canvasRef.current,
       target,
       {
         repeaterID: '',
@@ -203,75 +90,147 @@ class CnC extends React.Component {
         credentials: { password },
       }
     );
-    rfb.viewOnly = true;
-    rfb.reconnect = true;
-    rfb.show_dot = true;
+    newRfb.viewOnly = true;
+    newRfb.reconnect = true;
+    newRfb.show_dot = true;
     // Prevent the viewport from jumping to the clicked position when in focus mode on the device remote display
-    rfb.focusOnClick = false;
+    newRfb.focusOnClick = false;
 
-    rfb.addEventListener('connect', () => this.connected());
-    rfb.addEventListener('disconnect', () => this.disconnected());
-    this.setState((prevState) => ({
-      ...prevState,
-      rfb,
-      isNotFocused: true,
-      isForcedScreenResizing: false,
-      connections: setInterval(this.fetchConnections, TIME_CONN)
-    }));
-  }
+    newRfb.addEventListener('connect', () => setConnected(true));
+    newRfb.addEventListener('disconnect', () => setConnected(false));
 
-  fetchConnections() {
-    const { selected, isNotFocused } = this.state;
-    if (!selected || !selected.id) { return; }
+    setRfb(newRfb);
+    setIsNotFocused(true);
+    setIsForcedScreenResizing(false);
+    setConnections(setInterval(fetchConnections, TIME_CONN));
+  };
 
-    DeviceFetcher.fetchCurrentConnection(selected, isNotFocused)
-      .then((result) => {
-        const { using, watching } = result;
-        this.setState({ using, watching });
-      });
-  }
+  useEffect(() => {
+    userStore.fetchNoVNCDevices();
+    // Listen for window resize event and handle it accordingly
+    window.addEventListener('resize', handleScreenSizeChanging);
 
-  autoDisconnect() {
-    const { rfb, connections } = this.state;
-    clearInterval(connections);
-    rfb.disconnect();
-  }
+    return () => {
+      disconnect();
 
-  disconnect() {
-    const { rfb, connections } = this.state;
-    clearInterval(connections);
-    if (!rfb) {
-      return;
+      // Remove event listener for window resize
+      window.removeEventListener('resize', handleScreenSizeChanging);
+    };
+  }, []);
+
+  // Connect to device after a new device is selected
+  // This is intended to replace the following code from deviceClick():
+  //    this.setState(
+  //      (prevState) => ({ ...prevState, selected: devices[0] }),
+  //      this.connect
+  //    ));
+  useEffect(() => {
+    connect();
+  }, [selectedDevice]);
+
+  const clearTimers = () => {
+    clearTimeout(autoBlur);
+    clearTimeout(autoDisconnect);
+  };
+
+  const handleFocus = () => {
+    if (!rfb) { return; }
+
+    const newRFB = rfb;
+    newRFB.viewOnly = false;
+
+    // Focuses the RFB instance
+    newRFB.focus();
+    clearTimers(); // Clear the auto blur and auto disconnect timers
+    setRfb(newRFB);
+    setIsNotFocused(false);
+    setShowDeviceList(false);
+
+    // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
+    if (isForcedScreenResizing) {
+      setTimeout(handleScreenSizeChanging, 1);
     }
+  };
+
+  /*
+   * Toggles the `scaleViewport` property of the RFB instance and updates the state accordingly.
+   * Also clears the auto blur and auto disconnect timers and updates the state accordingly.
+   */
+  const handleForceScreenResizing = () => {
+    // If there is no RFB instance, return early
+    if (!rfb) { return; }
+
+    // Create a copy of the current RFB instance
+    const tempRFB = rfb;
+    // Toggle the `scaleViewport` property of the RFB instance
+    tempRFB.scaleViewport = !isForcedScreenResizing;
+    // Clear the auto blur and auto disconnect timers
+    clearTimers();
+    // Update the state with the new RFB instance and toggled `isForcedScreenResizing` property
+    setRfb(tempRFB);
+    setIsForcedScreenResizing(!isForcedScreenResizing);
+  };
+
+  const autoDisconnectHandler = () => {
+    clearInterval(connections);
     rfb.disconnect();
-    this.setState((prevState) => ({ ...prevState, rfb: null }));
-  }
+  };
 
-  toggleDeviceList() {
-    const { showDeviceList } = this.state;
-    const { isNotFocused } = this.state;
+  const handleBlur = () => {
+    if (!rfb) { return; }
+    const tempRFB = rfb;
+    tempRFB.viewOnly = true;
+    // Toggle the device list when the screen is blurred
+    // This provides a way to hide the device list when the user is not focused on the screen
+    // this.toggleDeviceList();
+    clearTimers();
+    const disconnectTime = setTimeout(autoDisconnectHandler, TIME_DISCO);
+    setRfb(tempRFB);
+    setIsNotFocused(true);
+    setShowDeviceList(true);
+    setAutoDisconnect(disconnectTime);
 
+    // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
+    if (isForcedScreenResizing) {
+      setTimeout(handleScreenSizeChanging, 1);
+    }
+  };
+
+  const toggleForceCursor = () => {
+    setForceCursor(!forceCursor);
+  };
+
+  const handleMouseEnter = () => {
+    if (!rfb || isNotFocused) { return; }
+
+    clearTimers();
+  };
+
+  const handleMouseLeave = () => {
+    if (isNotFocused) { return; }
+
+    clearTimers();
+    const blurTime = setTimeout(handleBlur, TIME_BLUR);
+    setAutoBlur(blurTime);
+  };
+
+  const toggleDeviceList = () => {
     // If the device is currently in focus, we want to call handleBlur
     // so that the device is blurred when the device list is toggled.
     if (!isNotFocused) {
-      this.handleBlur();
+      handleBlur();
     }
-    this.setState({
-      showDeviceList: !showDeviceList,
-    });
-  }
 
-  deviceClick(device) {
+    setShowDeviceList(!showDeviceList);
+  };
+
+  const deviceClick = (device) => {
     UsersFetcher.fetchNoVNCDevices(device.id)
-      .then((devices) => this.setState(
-        (prevState) => ({ ...prevState, selected: devices[0] }),
-        this.connect
-      ));
-  }
+      .then((newDevices) => setSelectedDevice(newDevices[0]));
+  };
 
-  renderDeviceList() {
-    const { devices, connected, selected } = this.state;
-    const sortedDevices = devices.sort((a, b) => a.name.localeCompare(b.name));
+  const renderDeviceList = () => {
+    const sortedDevices = devices.slice().sort((a, b) => a.name.localeCompare(b.name));
 
     return (
       <ListGroup>
@@ -279,12 +238,12 @@ class CnC extends React.Component {
           <ListGroup.Item
             action
             key={`device${device.id}`}
-            onClick={() => this.deviceClick(device)}
-            active={selected.id == device.id}
+            onClick={() => deviceClick(device)}
+            active={selectedDevice.id === device.id}
           >
             <div className="d-flex align-items-center justify-content-between">
               {device.name}
-              {selected.id === device.id && (
+              {selectedDevice.id === device.id && (
                 <i className={`fa ${connected
                   ? 'fa-check-circle-o text-success'
                   : 'fa-times-circle-o text-danger'}`}
@@ -295,63 +254,51 @@ class CnC extends React.Component {
         ))}
       </ListGroup>
     );
-  }
+  };
 
-  render() {
-    const {
-      showDeviceList,
-      isNotFocused,
-      isForcedScreenResizing,
-      connected,
-      watching,
-      using,
-      forceCursor
-    } = this.state;
+  const showList = showDeviceList && isNotFocused;
 
-    const showList = showDeviceList && isNotFocused;
+  return (
+    <>
+      <BaseNavigation toggleDeviceList={toggleDeviceList} />
+      <Container fluid>
+        <Row className="pt-3">
+          {showList && (
+            <Col xs={2}>
+              <div className="d-flex gap-2 align-items-baseline">
+                <i className="fa fa-list" />
+                <span>Devices</span>
+              </div>
 
-    return (
-      <>
-        <BaseNavigation toggleDeviceList={this.toggleDeviceList} />
-        <Container fluid>
-          <Row className="pt-3">
-            {showList && (
-              <Col xs={2}>
-                <div className="d-flex gap-2 align-items-baseline">
-                  <i className="fa fa-list" />
-                  <span>Devices</span>
-                </div>
-
-                {this.renderDeviceList()}
-              </Col>
-            )}
-            <Col xs={showList ? 10 : 12} className="d-flex flex-column gap-2">
-              <FocusNovnc
-                isNotFocused={isNotFocused}
-                isForcedScreenResizing={isForcedScreenResizing}
-                handleFocus={this.handleFocus}
-                handleBlur={this.handleBlur}
-                handleForceScreenResizing={this.handleForceScreenResizing}
-                toggleDeviceList={this.toggleDeviceList}
-                isDeviceListVisible={showList}
-                connected={connected}
-                watching={watching}
-                using={using}
-                forceCursor={forceCursor}
-                handleCursor={this.handleCursor}
-              />
-              <div
-                className={forceCursor ? 'force-mouse-pointer' : ''}
-                ref={this.canvasRef}
-                onMouseEnter={this.handleMouseEnter}
-                onMouseLeave={this.handleMouseLeave}
-              />
+              {renderDeviceList()}
             </Col>
-          </Row>
-        </Container>
-      </>
-    );
-  }
+          )}
+          <Col xs={showList ? 10 : 12} className="d-flex flex-column gap-2">
+            <FocusNovnc
+              isNotFocused={isNotFocused}
+              isForcedScreenResizing={isForcedScreenResizing}
+              handleFocus={handleFocus}
+              handleBlur={handleBlur}
+              handleForceScreenResizing={handleForceScreenResizing}
+              toggleDeviceList={toggleDeviceList}
+              isDeviceListVisible={showList}
+              connected={connected}
+              watching={watching}
+              using={using}
+              forceCursor={forceCursor}
+              handleCursor={toggleForceCursor}
+            />
+            <div
+              className={forceCursor ? 'force-mouse-pointer' : ''}
+              ref={canvasRef}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            />
+          </Col>
+        </Row>
+      </Container>
+    </>
+  );
 }
 
-export default CnC;
+export default observer(CnC);
