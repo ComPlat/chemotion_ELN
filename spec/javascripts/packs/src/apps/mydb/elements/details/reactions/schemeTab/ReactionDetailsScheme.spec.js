@@ -138,7 +138,7 @@ describe('ReactionDetailsScheme#switchVolumeLock', () => {
   });
 });
 
-describe('ReactionDetailsScheme#handleLockedVolumeConcentrationChange', () => {
+describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
   it('makes no change when the reaction volume cannot be resolved', () => {
     const reaction = {};
     const updatedSample = {
@@ -154,7 +154,7 @@ describe('ReactionDetailsScheme#handleLockedVolumeConcentrationChange', () => {
     };
 
     const result = ReactionDetailsScheme.prototype
-      .handleLockedVolumeConcentrationChange.call(instance, updatedSample, 2);
+      .handleFixedVolumeConcentrationChange.call(instance, updatedSample, 2);
 
     expect(updatedSample.setAmountFromConcentrationAndPreserve.called).toBe(false);
     expect(instance.updatedReactionWithSample.called).toBe(false);
@@ -178,12 +178,56 @@ describe('ReactionDetailsScheme#handleLockedVolumeConcentrationChange', () => {
     };
 
     const result = ReactionDetailsScheme.prototype
-      .handleLockedVolumeConcentrationChange.call(instance, updatedSample, 2);
+      .handleFixedVolumeConcentrationChange.call(instance, updatedSample, 2);
 
     expect(updatedSample.concn).toBe(2);
     expect(
       updatedSample.setAmountFromConcentrationAndPreserve.calledOnceWith(2, 0.01)
     ).toBe(true);
     expect(result).toBe(updatedReaction);
+  });
+});
+
+describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', () => {
+  const buildInstance = (updatedSample, reactionOverrides = {}) => {
+    const reaction = {
+      gaseous: false,
+      isVolumeLocked: false,
+      findReactionSample: () => updatedSample,
+      ...reactionOverrides,
+    };
+    return {
+      props: { reaction },
+      state: { lockEquivColumn: false },
+      guardConcentrationUpdate: sinon.stub().returns(true),
+      handleFixedVolumeConcentrationChange: sinon.spy(),
+      applyDerivedVolumeFromConcentration: sinon.spy(),
+    };
+  };
+
+  it('derives the amount from a fixed volume when the sample has no amount', () => {
+    const updatedSample = { amount_mol: 0, isFeedstock: () => false };
+    const instance = buildInstance(updatedSample);
+
+    ReactionDetailsScheme.prototype.updatedReactionForConcentrationChange.call(
+      instance,
+      { sampleID: 1, concentration: { value: 2 } }
+    );
+
+    expect(instance.handleFixedVolumeConcentrationChange.calledOnceWith(updatedSample, 2)).toBe(true);
+    expect(instance.applyDerivedVolumeFromConcentration.called).toBe(false);
+  });
+
+  it('derives the reaction volume when the sample already has an amount', () => {
+    const updatedSample = { amount_mol: 0.5, isFeedstock: () => false };
+    const instance = buildInstance(updatedSample);
+
+    ReactionDetailsScheme.prototype.updatedReactionForConcentrationChange.call(
+      instance,
+      { sampleID: 1, concentration: { value: 2 } }
+    );
+
+    expect(instance.applyDerivedVolumeFromConcentration.calledOnce).toBe(true);
+    expect(instance.handleFixedVolumeConcentrationChange.called).toBe(false);
   });
 });

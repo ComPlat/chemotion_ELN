@@ -1524,15 +1524,15 @@ export default class Reaction extends Element {
     // yield, not a stoichiometric ratio, yet its mass field stays editable
     // under locked equivalents — so a product driver passes the numeric
     // guard below and silently corrupts the reference. Exclude products and
-    // solvents explicitly. We test exclusion rather than reactant-side
-    // membership on purpose: regular and SBMM reactants can share an id, so a
-    // membership test would be sensitive to that overlap, whereas products
-    // and solvents never collide with a reactant's id.
+    // solvents explicitly. Compare by object identity, not id: SBMM samples
+    // share the id space with regular samples (see allReactionMaterials), so
+    // an SBMM reactant driver can collide with a product/solvent id and an id
+    // test would misclassify it as non-reactant, wrongly skipping the rebase.
     const isNonReactantDriver = [
       ...(this.products || []),
       ...(this.solvents || []),
       ...(this.purification_solvents || []),
-    ].some((material) => material.id === updatedSample.id);
+    ].includes(updatedSample);
     if (isNonReactantDriver) {
       return;
     }

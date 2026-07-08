@@ -195,38 +195,16 @@ class Material extends Component {
    * @returns {JSX.Element} A table cell containing the concentration input component
    */
   materialConcentration(material) {
-    const { reaction, materialGroup, lockEquivColumn } = this.props;
+    const { reaction, materialGroup } = this.props;
 
     const isSbmm = isSbmmSample(material);
     const metricMolConc = getMetricMolConc(material);
     const isProduct = materialGroup === 'products';
 
-    // When reaction volume is unlocked, editing concentration derives the
-    // reaction volume from amount / concentration. If the material has no
-    // amount yet, the reaction volume cannot be derived, so the entered
-    // concentration would be discarded on the next recalculation.
-    // Disable the field until an amount exists.
-    //
-    // When the reaction volume is locked—or for gaseous feedstocks—the amount
-    // is derived from the concentration instead, so the field remains editable.
-    const hasNoAmount = !Number.isFinite(material.amount_mol) || material.amount_mol <= 0;
-    const isFeedstock = reaction.gaseous && material.isFeedstock && material.isFeedstock();
-    const cannotDeriveReactionVolume = hasNoAmount && !reaction.isVolumeLocked && !isFeedstock;
-
-    const disableProductConcentration = (
-      materialGroup === 'products'
-      && lockEquivColumn
-      && reaction.isVolumeLocked
-    );
-    const disableSchemeConcentration = reaction.weight_percentage;
-
     const isConcentrationDisabled =
       !permitOn(reaction)
-      || disableProductConcentration
-      || disableSchemeConcentration
       || isProduct
-      || reaction.weight_percentage
-      || cannotDeriveReactionVolume;
+      || reaction.weight_percentage;
 
     // For SBMM samples, use concentration_rt_value directly (automatically calculated)
     const concentrationValue = isSbmm

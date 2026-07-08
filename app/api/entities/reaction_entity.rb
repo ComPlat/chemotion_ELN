@@ -22,6 +22,7 @@ module Entities
       expose! :user_labels
     end
 
+    # rubocop:disable Metrics/BlockLength
     with_options(anonymize_below: 10) do
       expose! :code_log,              anonymize_with: nil,                              using: 'Entities::CodeLogEntity'
       expose! :conditions,                                  unless: :displayed_in_list
@@ -58,6 +59,7 @@ module Entities
       expose! :gaseous
       expose! :weight_percentage
     end
+    # rubocop:enable Metrics/BlockLength
 
     expose_timestamps
 

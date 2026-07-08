@@ -606,8 +606,8 @@ describe('Reaction', () => {
 
     it('rebases an SBMM driver even when it shares an id with a reactant', () => {
       // Regular and SBMM reactants can share an id. Because the guard tests
-      // product/solvent membership (not reactant membership), that overlap is
-      // irrelevant and a legitimate SBMM driver still rebases the reference.
+      // membership by object identity (not id), that overlap is irrelevant and
+      // a legitimate SBMM driver still rebases the reference.
       const referenceSample = buildSample({ reference: true });
       const sbmmReactant = buildSample({
         id: 'shared-id',
@@ -619,6 +619,33 @@ describe('Reaction', () => {
       reaction._solvents = [];
       reaction._purification_solvents = [];
       reaction._reactants = [buildSample({ id: 'shared-id', reference: false, equivalent: 3, amount_mol: 9 })];
+      reaction._reactant_sbmm_samples = [sbmmReactant];
+
+      reaction.updateReferenceAmountForLockedEquivalents(
+        referenceSample,
+        sbmmReactant,
+        true
+      );
+
+      expect(referenceSample.lastAmount).toEqual({ value: 0.25, unit: 'mol' });
+    });
+
+    it('rebases an SBMM driver even when it shares an id with a product', () => {
+      // SBMM samples share the id space with regular samples, so an SBMM
+      // reactant driver can collide with a product's id. The guard must key on
+      // object identity, not id — otherwise the product match misclassifies the
+      // SBMM driver as non-reactant and wrongly skips the rebase.
+      const referenceSample = buildSample({ reference: true });
+      const sbmmReactant = buildSample({
+        id: 'shared-id',
+        reference: false,
+        equivalent: 2,
+        amount_mol: 0.5,
+      });
+      reaction._products = [buildSample({ id: 'shared-id', reference: false, equivalent: 0.8, amount_mol: 0.4 })];
+      reaction._solvents = [];
+      reaction._purification_solvents = [];
+      reaction._reactants = [];
       reaction._reactant_sbmm_samples = [sbmmReactant];
 
       reaction.updateReferenceAmountForLockedEquivalents(

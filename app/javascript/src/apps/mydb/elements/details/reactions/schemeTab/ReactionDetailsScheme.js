@@ -1311,8 +1311,14 @@ export default class ReactionDetailsScheme extends React.Component {
       updatedSample.concn = concentrationValue;
     }
 
-    if (reaction.isVolumeLocked) {
-      return this.handleLockedVolumeConcentrationChange(updatedSample, concentrationValue);
+    // Deriving the reaction volume from amount / concentration only works when
+    // the sample already has an amount. When the volume is locked, or the
+    // sample has no amount yet, keep the reaction volume fixed and derive the
+    // amount from concentration × volume instead (otherwise the typed value
+    // would be silently discarded on the next recompute).
+    const hasAmount = Number.isFinite(updatedSample.amount_mol) && updatedSample.amount_mol > 0;
+    if (reaction.isVolumeLocked || !hasAmount) {
+      return this.handleFixedVolumeConcentrationChange(updatedSample, concentrationValue);
     }
 
     updatedSample.concn = concentrationValue;
@@ -1321,9 +1327,15 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   /**
-   * Handles a concentration edit on a feedstock sample. Updates only the
-   * feedstock's amount_mol using `amount_mol = concentration * vesselVolume`;
-   * the reaction volume and other materials' concentrations are not touched.
+   * Handles a concentration edit on a feedstock sample. Derives the feedstock's
+   * amount_mol from `amount_mol = concentration * vesselVolume` (the feedstock
+   * lives in the gas vessel, so its amount is fixed by the vessel volume, not
+   * the reaction volume) and then recomputes dependent fields through the same
+   * amount-change pipeline a direct feedstock amount edit uses — otherwise the
+   * feedstock's own equivalent (and, under locked equivalents, the reference
+   * amount and propagated amounts) would be left stale until the next edit.
+   * `preserveConcentration` guards the value the user just typed from being
+   * overwritten by the recompute.
    *
    * @param {Sample} updatedSample
    * @param {number} newConcentration - Concentration in mol/L.
@@ -1331,6 +1343,7 @@ export default class ReactionDetailsScheme extends React.Component {
    */
   handleFeedstockConcentrationChange(updatedSample, newConcentration) {
     const { reaction } = this.props;
+    const { lockEquivColumn } = this.state;
     const vesselVolume = GasPhaseReactionStore.getState().reactionVesselSizeValue;
 
     if (!Number.isFinite(vesselVolume) || vesselVolume <= 0) {
@@ -1341,7 +1354,22 @@ export default class ReactionDetailsScheme extends React.Component {
     updatedSample.preserveConcentration = true;
     updatedSample.setAmount({ value: newConcentration * vesselVolume, unit: 'mol' });
 
-    return reaction;
+    const updatedReaction = this.updatedReactionWithSample(
+      this.updatedSamplesForAmountChange.bind(this),
+      updatedSample,
+      undefined,
+      true
+    );
+
+    if (lockEquivColumn) {
+      // Locked-equivalent propagation changed the dependent samples' amounts,
+      // so refresh their concentrations. preserveConcentration keeps the
+      // feedstock's own (just-typed) value intact.
+      updatedReaction.resetPreservedConcentrationExcept(updatedSample);
+      updatedReaction.updateAllConcentrations();
+    }
+
+    return updatedReaction;
   }
 
   /**
@@ -1411,7 +1439,10 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   /**
-   * Handles concentration changes when the reaction volume is locked.
+   * Handles a concentration change by treating the reaction volume as fixed and
+   * deriving the sample's amount from `amount = concentration × volume`. Used
+   * both when the reaction volume is locked and when the edited sample has no
+   * amount yet to derive a volume from — in both cases the volume must stay put.
    *
    * Two subcases:
    * - Equivalents unlocked: only the edited sample's amount is updated.
@@ -1424,7 +1455,7 @@ export default class ReactionDetailsScheme extends React.Component {
    * @param {number} newConcentration - Concentration in mol/L.
    * @returns {Reaction}
    */
-  handleLockedVolumeConcentrationChange(updatedSample, newConcentration) {
+  handleFixedVolumeConcentrationChange(updatedSample, newConcentration) {
     const { reaction } = this.props;
     const { lockEquivColumn } = this.state;
 

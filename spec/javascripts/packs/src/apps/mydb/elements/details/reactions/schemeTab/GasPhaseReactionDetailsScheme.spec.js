@@ -572,4 +572,50 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       expect(gasProduct.gas_phase_data.turnover_number).toBeNull();
     });
   });
+
+  describe('Feedstock Concentration Change', () => {
+    const createWrapper = (rxn) => shallow(
+      React.createElement(ReactionDetailsScheme, {
+        reaction: rxn,
+        onReactionChange: onReactionChangeSpy,
+        onInputChange: onInputChangeSpy,
+      })
+    );
+
+    it('derives the feedstock amount and recomputes its equivalent', () => {
+      const vesselVolume = reaction.vessel_size.amount / 1000; // 10 L
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: vesselVolume,
+      });
+
+      const wrapper = createWrapper(reaction);
+      wrapper.setState({ lockEquivColumn: false });
+      const feedstock = reaction.reactants[0];
+      const referenceMaterial = reaction.starting_materials[0];
+      const originalEquivalent = feedstock.equivalent;
+      const newConcentration = 0.002; // mol/L
+
+      wrapper.instance().updatedReactionForConcentrationChange({
+        sampleID: feedstock.id,
+        concentration: { value: newConcentration },
+      });
+
+      // Amount is derived from the vessel volume and the user's concentration,
+      // and the typed concentration is preserved.
+      expect(feedstock.amount_mol).toBeCloseTo(newConcentration * vesselVolume, 10);
+      expect(feedstock.concn).toBe(newConcentration);
+      expect(feedstock.preserveConcentration).toBe(true);
+
+      // The pipeline must rebase the feedstock's own equivalent off the new
+      // amount — before the fix it stayed at the stale pre-edit value.
+      expect(feedstock.equivalent).not.toBeCloseTo(originalEquivalent, 6);
+      expect(feedstock.equivalent).toBeCloseTo(
+        feedstock.amount_mol / referenceMaterial.amount_mol,
+        6
+      );
+
+      storeStub.restore();
+    });
+  });
 });
