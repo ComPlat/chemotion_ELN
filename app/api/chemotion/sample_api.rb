@@ -605,11 +605,13 @@ module Chemotion
         collections = []
 
         if params[:collection_id]
-          collection = Collection.accessible_for(current_user).find_by(id: params[:collection_id])
-          collections << collection if collection.present?
+          collection = writable_collection_for(params[:collection_id])
+          error!('403 Forbidden', 403) if collection.nil?
+          collections << collection
         end
 
-        all_coll = Collection.get_all_collection_for_user(current_user.id)
+        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
+        all_coll = Collection.get_all_collection_for_user(all_coll_owner_id)
         collections << all_coll if all_coll.present?
         sample.collections = collections.uniq
 

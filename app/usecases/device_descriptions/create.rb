@@ -16,15 +16,18 @@ module Usecases
           device_description = DeviceDescription.create!(params.except(:segments))
           save_segments(device_description)
           device_description.reload
-          collection = Collection.accessible_for(current_user).find(params[:collection_id])
-          all_collection_of_collection_owner = Collection.get_all_collection_for_user(current_user)
+          collection = Collection.writable_by(current_user).find_by(id: params[:collection_id]) ||
+                       raise(ActiveRecord::RecordNotFound)
+          user_and_group_ids = [current_user.id, *current_user.group_ids]
+          all_coll_owner_id = user_and_group_ids.include?(collection.user_id) ? current_user.id : collection.user_id
+          all_collection = Collection.get_all_collection_for_user(all_coll_owner_id)
           # find_or_create_by avoids violating the unique
           # (device_description_id, collection_id) index when the chosen
           # collection is already the user's "All" collection.
           CollectionsDeviceDescription.find_or_create_by(device_description: device_description, collection: collection)
           CollectionsDeviceDescription.find_or_create_by(
             device_description: device_description,
-            collection: all_collection_of_collection_owner,
+            collection: all_collection,
           )
 
           device_description

@@ -10,9 +10,9 @@ module Chemotion
     helpers UserLabelHelpers
 
     resource :screens do
-      desc "Return serialized screens"
+      desc 'Return serialized screens'
       params do
-        optional :collection_id, type: Integer, desc: "Collection id"
+        optional :collection_id, type: Integer, desc: 'Collection id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :user_label, type: Integer, desc: 'user label'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
@@ -52,16 +52,16 @@ module Chemotion
           Entities::ScreenEntity.represent(
             screen,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
-            displayed_in_list: true
+            displayed_in_list: true,
           )
         end
 
         { screens: screens }
       end
 
-      desc "Return serialized screen by id"
+      desc 'Return serialized screen by id'
       params do
-        requires :id, type: Integer, desc: "Screen id"
+        requires :id, type: Integer, desc: 'Screen id'
       end
       route_param :id do
         get do
@@ -73,7 +73,7 @@ module Chemotion
             screen,
             with: Entities::ScreenEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
-            root: :screen
+            root: :screen,
           )
         rescue ActiveRecord::RecordNotFound
           error!('404 Not Found', 404)
@@ -100,9 +100,9 @@ module Chemotion
         end
       end
 
-      desc "Update screen by id"
+      desc 'Update screen by id'
       params do
-        requires :id, type: Integer, desc: "screen id"
+        requires :id, type: Integer, desc: 'screen id'
         optional :name, type: String
         optional :collaborator, type: String
         optional :requirements, type: String
@@ -134,7 +134,7 @@ module Chemotion
           screen.save_segments(segments: params[:segments], current_user_id: current_user.id)
           old_wellplate_ids = screen.wellplates.pluck(:id)
 
-          #save to profile
+          # save to profile
           kinds = screen.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
@@ -150,12 +150,12 @@ module Chemotion
             screen,
             with: Entities::ScreenEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
-            root: :screen
+            root: :screen,
           )
         end
       end
 
-      desc "Create a screen"
+      desc 'Create a screen'
       params do
         requires :name, type: String
         optional :collaborator, type: String
@@ -172,6 +172,9 @@ module Chemotion
         optional :component_graph_data, type: JSON
       end
       post do
+        collection = writable_collection_for(params[:collection_id])
+        error!('403 Forbidden', 403) if params[:collection_id] && collection.nil?
+
         attributes = {
           name: params[:name],
           collaborator: params[:collaborator],
@@ -190,12 +193,12 @@ module Chemotion
         screen.save!
         screen.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
-        #save to profile
+        # save to profile
         kinds = screen.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-        collection = current_user.collections.where(id: params[:collection_id]).take
-        all_collection = Collection.get_all_collection_for_user(current_user.id)
+        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
+        all_collection = Collection.get_all_collection_for_user(all_coll_owner_id)
         # Avoid violating the unique (screen_id, collection_id) index when the
         # chosen collection is already the user's "All" collection.
         screen.collections << collection if collection

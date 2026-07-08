@@ -92,6 +92,27 @@ class Collection < ApplicationRecord
     end,
   )
 
+  # returns collections the user may create elements in: own collections and those
+  # shared with at least write_elements permission (permission_level >= 1)
+  scope(
+    :writable_by,
+    lambda do |user|
+      user_and_group_ids = [user.id, *user.group_ids]
+      left_joins(:collection_shares)
+      .left_joins(:inventory)
+      .where(user_id: user_and_group_ids)
+      .or(
+        where(
+          collection_shares: {
+            shared_with_id: user_and_group_ids,
+            permission_level: CollectionShare::PERMISSION_LEVELS[:write_elements]..,
+          },
+        ),
+      )
+      .distinct
+    end,
+  )
+
   # temp for labimotion
   scope(
     :belongs_to_or_shared_by,

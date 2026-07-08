@@ -42,7 +42,8 @@ module Usecases
       private
 
       def collection
-        @collection ||= Collection.accessible_for(current_user).find(params[:collection_id])
+        @collection ||= Collection.writable_by(current_user).find_by(id: params[:collection_id]) ||
+                        raise(ActiveRecord::RecordNotFound)
       end
 
       def collection_is_owned_by_user?
