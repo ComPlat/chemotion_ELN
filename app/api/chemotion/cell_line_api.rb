@@ -79,7 +79,7 @@ module Chemotion
         use :cell_line_creation_params
       end
       post do
-        error!('401 Unauthorized', 401) unless writable_collection_for(params[:collection_id])
+        error!('403 Forbidden', 403) unless writable_collection_for(params[:collection_id])
         use_case = Usecases::CellLines::Create.new(params, current_user)
         cell_line_sample = use_case.execute!
         cell_line_sample.container = update_datamodel(params[:container])

@@ -281,6 +281,7 @@ module Chemotion
         attributes.delete(:user_labels)
 
         collection = writable_collection_for(collection_id)
+        error!('403 Forbidden', 403) if collection_id && collection.nil?
         attributes[:created_by] = current_user.id
         reaction = Reaction.create!(attributes)
         recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
