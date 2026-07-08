@@ -350,7 +350,21 @@ function GeneralMaterialGroup({
             <div className="reaction-material__density-header">{groupHeaders.density}</div>
             <div className="reaction-material__purity-header">{groupHeaders.purity}</div>
             {showLoadingColumn && <div className="reaction-material__loading-header">{groupHeaders.loading}</div>}
-            <div className="reaction-material__concentration-header">{groupHeaders.concn}</div>
+            <div className="reaction-material__concentration-header d-flex align-items-center">
+              {groupHeaders.concn}
+              {materialGroup === 'products' && reaction.gaseous && (
+                <OverlayTrigger
+                  placement="top"
+                  overlay={(
+                    <Tooltip id="concentration-header-info">
+                      Concentration calculated assuming a temperature of 25 °C
+                    </Tooltip>
+                  )}
+                >
+                  <i className="ms-1 fa fa-info-circle" />
+                </OverlayTrigger>
+              )}
+            </div>
             {!isInteractionProducts && (
               <div className="reaction-material__equivalent-header">
                 {groupHeaders.eq}

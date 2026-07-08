@@ -1,8 +1,10 @@
 /* global describe, context, it */
 
 import expect from 'expect';
+import sinon from 'sinon';
 import SampleFactory from 'factories/SampleFactory';
 import Sample from 'src/models/Sample.js';
+import Reaction from 'src/models/Reaction';
 import Component from 'src/models/Component';
 
 describe('Sample', async () => {
@@ -821,6 +823,32 @@ describe('Sample', async () => {
     });
   });
 
+  describe('Sample.updateConcentrationFromSolvent() for gas products', () => {
+    it('derives concn from persisted ppm so it survives reload', async () => {
+      const gasSample = await SampleFactory.build('SampleFactory.water_100g');
+      gasSample.gas_type = 'gas';
+      gasSample.gas_phase_data = { part_per_million: 1000 };
+      gasSample.concn = null;
+
+      // concn is transient; the ppm is what persists, so a reload-time
+      // recompute must rebuild concn from ppm rather than leaving it blank.
+      gasSample.updateConcentrationFromSolvent(undefined);
+
+      expect(gasSample.concn).toBeCloseTo(1000 * 4.1e-8, 12);
+    });
+
+    it('sets concn to 0 when ppm is missing', async () => {
+      const gasSample = await SampleFactory.build('SampleFactory.water_100g');
+      gasSample.gas_type = 'gas';
+      gasSample.gas_phase_data = {};
+      gasSample.concn = 0.5;
+
+      gasSample.updateConcentrationFromSolvent(undefined);
+
+      expect(gasSample.concn).toBe(0);
+    });
+  });
+
   describe('Sample.serialize()', () => {
     it('should serialize sample with all properties', () => {
       const sample = new Sample();
@@ -1292,6 +1320,13 @@ describe('Sample', async () => {
     let sample;
     let reaction;
 
+    // Helper: build a solvent sample with a given volume in liters, used to
+    // drive the real Reaction's combined-volume calculation.
+    const buildSolvent = (volumeL) => new Sample({
+      amount_value: volumeL,
+      amount_unit: 'l',
+    });
+
     beforeEach(() => {
       // Create sample with amount_mol by setting up a reference component
       // For mixtures, amount_mol uses calculateMixtureAmountMol() which requires a reference component
@@ -1307,12 +1342,14 @@ describe('Sample', async () => {
       refComp.component_properties = {};
       sample.initialComponents([refComp]);
       sample.sample_details = { reference_component_changed: true };
-      reaction = {
-        volume: 0.5,
-        use_reaction_volume: false,
-        calculateCombinedReactionVolume: () => 0.2,
-        solventVolume: 0.1
-      };
+
+      // Use a real Reaction instance so that `reactionVolumeForConcentration`
+      // and `calculateCombinedReactionVolume` exercise their production logic.
+      reaction = Reaction.buildEmpty();
+      reaction.volume = 0.5;
+      reaction.use_reaction_volume = false;
+      // Default combined volume = 0.2 L (single solvent)
+      reaction.solvents = [buildSolvent(0.2)];
     });
 
     it('uses reaction volume when checkbox is checked', () => {
@@ -1326,7 +1363,7 @@ describe('Sample', async () => {
 
     it('uses combined volume when checkbox is unchecked', () => {
       reaction.use_reaction_volume = false;
-      reaction.calculateCombinedReactionVolume = () => 0.2;
+      reaction.solvents = [buildSolvent(0.2)];
 
       sample.updateConcentrationFromSolvent(reaction);
 
@@ -1337,7 +1374,7 @@ describe('Sample', async () => {
       reaction.use_reaction_volume = true;
       reaction.volume = null;
       // When reaction.volume is null, it falls back to calculateCombinedReactionVolume
-      reaction.calculateCombinedReactionVolume = () => null;
+      reaction.solvents = [];
 
       sample.updateConcentrationFromSolvent(reaction);
 
@@ -1348,7 +1385,7 @@ describe('Sample', async () => {
       reaction.use_reaction_volume = true;
       reaction.volume = 0;
       // When reaction.volume is 0, it falls back to calculateCombinedReactionVolume
-      reaction.calculateCombinedReactionVolume = () => null;
+      reaction.solvents = [];
 
       sample.updateConcentrationFromSolvent(reaction);
 
@@ -1357,7 +1394,7 @@ describe('Sample', async () => {
 
     it('sets concn to null when combined volume is null', () => {
       reaction.use_reaction_volume = false;
-      reaction.calculateCombinedReactionVolume = () => null;
+      reaction.solvents = [];
 
       sample.updateConcentrationFromSolvent(reaction);
 
@@ -1418,6 +1455,133 @@ describe('Sample', async () => {
       sample.updateConcentrationFromSolvent(null);
 
       expect(sample.concn).toBe(null);
+    });
+
+    it('keeps manually-entered concentration when preserveConcentration is set', () => {
+      sample.concn = 1.23;
+      sample.preserveConcentration = true;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      sample.updateConcentrationFromSolvent(reaction);
+
+      expect(sample.concn).toBe(1.23);
+    });
+
+    it('resumes auto-updating concentration after preserveConcentration is cleared', () => {
+      sample.concn = 1.23;
+      sample.preserveConcentration = true;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      sample.updateConcentrationFromSolvent(reaction);
+      expect(sample.concn).toBe(1.23);
+
+      sample.preserveConcentration = false;
+      sample.updateConcentrationFromSolvent(reaction);
+
+      expect(sample.concn).toBeCloseTo(0.2, 5); // 0.1 mol / 0.5 L = 0.2 mol/L
+    });
+
+    it('derives gas-product concentration from persisted ppm, not amount/volume', () => {
+      // Gas products derive concentration from ppm via the ideal gas law at
+      // 25 °C, not from amount_mol / reaction_volume — see ReactionDetailsScheme.
+      // The ppm persists while concn is transient, so it must be recomputed
+      // from ppm on every pass (incl. load) rather than left blank.
+      const gasProduct = new Sample({
+        amount_value: 18.015, // 1 mol at MW 18.015
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      gasProduct.gas_type = 'gas';
+      gasProduct.gas_phase_data = { part_per_million: 10000 };
+      gasProduct.concn = null;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      gasProduct.updateConcentrationFromSolvent(reaction);
+
+      // ppm-derived (10000 * 4.1e-8), NOT amount_mol / volume (1 / 0.5 = 2)
+      expect(gasProduct.concn).toBeCloseTo(10000 * 4.1e-8, 12);
+    });
+
+    it('derives feedstock concentration from vessel volume in a gas-scheme reaction', () => {
+      // Feedstocks live in the gas vessel; their concentration is derived from
+      // vesselVolume, not the reaction volume.
+      const feedstock = new Sample({
+        amount_value: 18.015,
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      feedstock.gas_type = 'feedstock';
+      reaction.gaseous = true;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5; // reaction volume is intentionally different to confirm it's not used
+
+      const vesselStub = sinon.stub(feedstock, 'fetchReactionVesselSizeFromStore').returns(2);
+      feedstock.updateConcentrationFromSolvent(reaction);
+      vesselStub.restore();
+
+      // 18.015 g / 18.015 g/mol = 1 mol; 1 mol / 2 L (vessel) = 0.5 mol/L
+      expect(feedstock.concn).toBeCloseTo(0.5, 5);
+    });
+
+    it('keeps user-entered feedstock concentration when preserveConcentration is set', () => {
+      const feedstock = new Sample({
+        amount_value: 18.015,
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      feedstock.gas_type = 'feedstock';
+      feedstock.concn = 0.42;
+      feedstock.preserveConcentration = true;
+      reaction.gaseous = true;
+
+      const vesselStub = sinon.stub(feedstock, 'fetchReactionVesselSizeFromStore').returns(2);
+      feedstock.updateConcentrationFromSolvent(reaction);
+      vesselStub.restore();
+
+      expect(feedstock.concn).toBe(0.42);
+    });
+
+    it('sets feedstock concentration to null when vessel volume is unknown', () => {
+      const feedstock = new Sample({
+        amount_value: 18.015,
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      feedstock.gas_type = 'feedstock';
+      reaction.gaseous = true;
+
+      const vesselStub = sinon.stub(feedstock, 'fetchReactionVesselSizeFromStore').returns(null);
+      feedstock.updateConcentrationFromSolvent(reaction);
+      vesselStub.restore();
+
+      expect(feedstock.concn).toBe(null);
+    });
+
+    it('still recalculates feedstock concentration when the reaction is not gaseous', () => {
+      // Outside a gas-scheme reaction, gas_type carries no special semantics for
+      // the concentration formula.
+      const sample = new Sample({
+        amount_value: 18.015,
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      sample.gas_type = 'feedstock';
+      reaction.gaseous = false;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      sample.updateConcentrationFromSolvent(reaction);
+
+      // 18.015 g / 18.015 g/mol = 1 mol; 1 mol / 0.5 L = 2 mol/L
+      expect(sample.concn).toBeCloseTo(2.0, 5);
     });
 
     context('when product coefficient is zero', () => {
@@ -1676,7 +1840,7 @@ describe('Sample', async () => {
       const s = new Sample();
       s.weight_percentage_reference = false;
       const originalEquivalent = s.equivalent;
-      
+
       const ret = s.updateYieldForWeightPercentageReference();
 
       expect(ret).toBe(s);
@@ -1956,6 +2120,70 @@ describe('Sample', async () => {
       const sample = new Sample();
       sample._contains_residues = false;
       expect(sample.external_loading).toBe(false);
+    });
+  });
+
+  describe('Sample.setAmountFromConcentration()', () => {
+    it('sets amount_value to volume * concentration in mol', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+
+      const result = sample.setAmountFromConcentration(2, 0.5);
+
+      expect(result).toBeCloseTo(1, 10);
+      expect(sample.amount_value).toBeCloseTo(1, 10);
+      expect(sample.amount_unit).toBe('mol');
+    });
+
+    it('returns null and leaves the sample unchanged when concentration is invalid', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+      const originalValue = sample.amount_value;
+      const originalUnit = sample.amount_unit;
+
+      expect(sample.setAmountFromConcentration(0, 0.5)).toBe(null);
+      expect(sample.setAmountFromConcentration(Number.NaN, 0.5)).toBe(null);
+
+      expect(sample.amount_value).toBe(originalValue);
+      expect(sample.amount_unit).toBe(originalUnit);
+    });
+
+    it('returns null and leaves the sample unchanged when volume is invalid', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+      const originalValue = sample.amount_value;
+      const originalUnit = sample.amount_unit;
+
+      expect(sample.setAmountFromConcentration(2, 0)).toBe(null);
+      expect(sample.setAmountFromConcentration(2, null)).toBe(null);
+
+      expect(sample.amount_value).toBe(originalValue);
+      expect(sample.amount_unit).toBe(originalUnit);
+    });
+  });
+
+  describe('Sample.setAmountFromConcentrationAndPreserve()', () => {
+    it('sets the amount from concentration and marks preserveConcentration', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+      sample.preserveConcentration = false;
+
+      sample.setAmountFromConcentrationAndPreserve(2, 0.5);
+
+      expect(sample.amount_value).toBeCloseTo(1, 10);
+      expect(sample.amount_unit).toBe('mol');
+      expect(sample.preserveConcentration).toBe(true);
+    });
+
+    it('does not mark preserved when inputs are invalid', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+      const originalValue = sample.amount_value;
+      const originalUnit = sample.amount_unit;
+      sample.preserveConcentration = false;
+
+      sample.setAmountFromConcentrationAndPreserve(0, 0.5);
+      sample.setAmountFromConcentrationAndPreserve(Number.NaN, 0.5);
+      sample.setAmountFromConcentrationAndPreserve(2, 0);
+
+      expect(sample.preserveConcentration).toBe(false);
+      expect(sample.amount_value).toBe(originalValue);
+      expect(sample.amount_unit).toBe(originalUnit);
     });
   });
 });
