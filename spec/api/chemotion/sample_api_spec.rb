@@ -907,6 +907,81 @@ describe Chemotion::SampleAPI do
         expect(sample.dry_solvent).to be(false)
       end
     end
+
+    context 'when collection_id points to a read-only shared collection' do
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:params) do
+        {
+          name: 'forbidden_sample',
+          target_amount_value: 0,
+          target_amount_unit: 'g',
+          description: '',
+          purity: 1,
+          location: '',
+          is_top_secret: false,
+          molfile: build(:molfile, type: 'test_2'),
+          xref: {},
+          container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
+          collection_id: read_only_collection.id,
+        }
+      end
+
+      before { post '/api/v1/samples', params: params, as: :json }
+
+      it 'returns 403 forbidden' do
+        expect(response).to have_http_status :forbidden
+      end
+
+      it 'does not create the sample' do
+        expect(Sample.find_by(name: 'forbidden_sample')).to be_nil
+      end
+
+      it 'does not increment the short_label counter' do
+        expect { post '/api/v1/samples', params: params, as: :json }
+          .not_to(change { user.reload.counters['samples'] })
+      end
+    end
+
+    context 'when collection_id points to a writable shared collection' do
+      let(:writable_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:write_elements])
+        end
+      end
+      let(:params) do
+        {
+          name: 'shared_write_test',
+          target_amount_value: 0,
+          target_amount_unit: 'g',
+          description: '',
+          purity: 1,
+          location: '',
+          is_top_secret: false,
+          molfile: build(:molfile, type: 'test_2'),
+          xref: {},
+          container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
+          collection_id: writable_collection.id,
+        }
+      end
+
+      before { post '/api/v1/samples', params: params, as: :json }
+
+      it 'returns 201 created' do
+        expect(response).to have_http_status :created
+      end
+
+      it 'creates the sample in the shared collection' do
+        sample = Sample.find_by(name: 'shared_write_test')
+        expect(sample).not_to be_nil
+        expect(sample.collections).to include(writable_collection)
+      end
+    end
   end
 
   describe 'DELETE /api/v1/samples' do

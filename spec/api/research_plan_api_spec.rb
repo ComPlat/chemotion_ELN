@@ -69,6 +69,62 @@ describe Chemotion::ResearchPlanAPI do
           expect(response.body).to eq JSON.generate(expected)
         end
       end
+
+      context 'when collection_id points to a read-only shared collection' do
+        let(:other_user) { create(:person) }
+        let(:read_only_collection) do
+          create(:collection, user: other_user).tap do |c|
+            create(:collection_share, collection: c, shared_with: user,
+                                      permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+          end
+        end
+        let(:params) do
+          {
+            name: 'Forbidden Plan',
+            container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
+            collection_id: read_only_collection.id,
+          }
+        end
+
+        before { post '/api/v1/research_plans', params: params, as: :json }
+
+        it 'returns 403 forbidden' do
+          expect(response).to have_http_status :forbidden
+        end
+
+        it 'does not create the research plan' do
+          expect(ResearchPlan.find_by(name: 'Forbidden Plan')).to be_nil
+        end
+      end
+
+      context 'when collection_id points to a writable shared collection' do
+        let(:other_user) { create(:person) }
+        let(:writable_collection) do
+          create(:collection, user: other_user).tap do |c|
+            create(:collection_share, collection: c, shared_with: user,
+                                      permission_level: CollectionShare::PERMISSION_LEVELS[:write_elements])
+          end
+        end
+        let(:params) do
+          {
+            name: 'Shared Write Plan',
+            container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
+            collection_id: writable_collection.id,
+          }
+        end
+
+        before { post '/api/v1/research_plans', params: params, as: :json }
+
+        it 'returns 201 created' do
+          expect(response).to have_http_status :created
+        end
+
+        it 'creates the research plan in the shared collection' do
+          rp = ResearchPlan.find_by(name: 'Shared Write Plan')
+          expect(rp).not_to be_nil
+          expect(rp.collections).to include(writable_collection)
+        end
+      end
     end
 
     describe 'POST /api/v1/research_plans/:id/import_wellplate/:wellplate_id' do

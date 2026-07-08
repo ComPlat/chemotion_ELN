@@ -666,6 +666,61 @@ describe Chemotion::ReactionAPI do
         expect(product.name).to include(r.short_label)
       end
     end
+
+    context 'when collection_id points to a read-only shared collection' do
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:params) do
+        {
+          collection_id: read_only_collection.id,
+          container: new_root_container,
+          materials: { products: [] },
+        }
+      end
+
+      before { post '/api/v1/reactions', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' } }
+
+      it 'returns 403 forbidden' do
+        expect(response).to have_http_status :forbidden
+      end
+
+      it 'does not create the reaction' do
+        expect(Reaction.count).to eq 0
+      end
+    end
+
+    context 'when collection_id points to a writable shared collection' do
+      let(:writable_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:write_elements])
+        end
+      end
+      let(:params) do
+        {
+          name: 'shared_write_reaction',
+          collection_id: writable_collection.id,
+          container: new_root_container,
+          materials: { products: [] },
+        }
+      end
+
+      before { post '/api/v1/reactions', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' } }
+
+      it 'returns 201 created' do
+        expect(response).to have_http_status :created
+      end
+
+      it 'creates the reaction in the shared collection' do
+        reaction = Reaction.find_by(name: 'shared_write_reaction')
+        expect(reaction).not_to be_nil
+        expect(reaction.collections).to include(writable_collection)
+      end
+    end
   end
 end
 # rubocop:enable RSpec/IndexedLet, RSpec/MultipleExpectations, RSpec/MultipleMemoizedHelpers
