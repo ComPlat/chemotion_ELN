@@ -131,7 +131,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
       isSubscribed = false;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reaction.id]);
+  }, [reaction]);
 
   useEffect(() => {
     /*
