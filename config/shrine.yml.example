@@ -2,13 +2,16 @@ development:
   :maximum_size: 100
   :cache: 'uploads/development/cache'
   :store: 'uploads/development'
+  :cold: 'uploads/development/cold'
 
 test:
   :maximum_size: 100
   :cache: 'uploads/test/cache'
   :store: 'uploads/test'
+  :cold: 'uploads/test/cold'
 
 production:
   :maximum_size: 100
   :cache: 'uploads/cache'
   :store: 'uploads'
+  :cold: 'uploads/cold'

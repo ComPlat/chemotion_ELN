@@ -186,10 +186,11 @@ class Attachment < ApplicationRecord
     attachment && attachment['mime_type']
   end
 
-  def reload
+  def reload(*)
     super
 
     set_key
+    self
   end
 
   def set_key; end
@@ -288,6 +289,35 @@ class Attachment < ApplicationRecord
     return [product_samples.first, nil] if reactions.empty? && product_samples.one?
 
     [nil, nil]
+  end
+
+  # A file is "cold" (safe to move to the archive tier) when it has not been
+  # touched for a long time. Judged by edit dates we already have.
+  def cold?(older_than:)
+    updated_at < older_than && (attachable.nil? || attachable.updated_at < older_than)
+  end
+
+  # Move this file to the cold/archive storage tier.
+  # Order matters: upload to cold, persist the new location, THEN delete the
+  # old file. A failure before the delete leaves the original intact (at worst
+  # an orphaned cold copy), so we never lose data.
+  def move_to_cold
+    attacher = attachment_attacher
+    return unless attacher.stored?
+
+    old_file = attacher.file
+    old_derivatives = attacher.derivatives
+
+    old_file.rewind # ensure we copy from the start, not a mid-read cursor
+    attacher.set attacher.upload(old_file, :cold)
+    attacher.set_derivatives attacher.upload_derivatives(old_derivatives, storage: :cold) if old_derivatives.present?
+
+    # update_column skips this model's save callbacks, which otherwise revert
+    # attachment_data (same idiom the model uses in #attach_file).
+    update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
+
+    old_file.delete
+    attacher.delete_derivatives(old_derivatives) if old_derivatives.present?
   end
 
   private

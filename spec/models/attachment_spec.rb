@@ -970,6 +970,56 @@ RSpec.describe Attachment do
       end
     end
   end
+
+  describe '#cold?' do
+    let(:threshold) { 12.months.ago }
+
+    it 'is cold when both the file and its parent are older than the threshold' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      attachment.attachable.update_column(:updated_at, 13.months.ago)
+
+      expect(attachment.cold?(older_than: threshold)).to be true
+    end
+
+    it 'is not cold when the parent was edited recently, even if the file is old' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      attachment.attachable.update_column(:updated_at, 1.day.ago)
+
+      expect(attachment.cold?(older_than: threshold)).to be false
+    end
+
+    it 'judges an orphan (no parent) on its own age alone' do
+      attachment = create(:attachment, attachable: nil)
+      attachment.update_column(:updated_at, 13.months.ago)
+
+      expect(attachment.cold?(older_than: threshold)).to be true
+    end
+  end
+
+  describe '#move_to_cold' do
+    it 'moves the file to the cold storage while preserving its contents' do
+      attachment = create(:attachment)
+      original_content = attachment.read_file
+
+      attachment.move_to_cold
+
+      expect(attachment.attachment.storage_key).to eq(:cold)
+      expect(attachment.read_file).to eq(original_content)
+    end
+
+    it 'moves derivatives (e.g. thumbnails) to cold as well' do
+      attachment = create(:attachment, :with_image)
+      expect(attachment.attachment_attacher.derivatives).to be_present # guard: fixture has a thumbnail
+
+      attachment.move_to_cold
+
+      attachment.attachment_attacher.derivatives.each_value do |derivative|
+        expect(derivative.storage_key).to eq(:cold)
+      end
+    end
+  end
 end
 
 # rubocop:enable RSpec/NestedGroups
