@@ -142,9 +142,9 @@ function SignInForm() {
   const [wrongOtp, setWrongOtp] = useState(false);
   const closeOtp = useCallback(() => setShowOtp(false), []);
   const url = '/users/sign_in';
+  const userStore = useContext(StoreContext).user;
 
   const handleSubmit = useCallback(async (e) => {
-    const userStore = useContext(StoreContext).user;
     e?.preventDefault();
     setForm('otp_attempt', '');
     const loginResult = await handleLoginSubmit({ form, url });
