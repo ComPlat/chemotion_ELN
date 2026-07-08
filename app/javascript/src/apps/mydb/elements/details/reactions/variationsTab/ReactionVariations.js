@@ -32,6 +32,15 @@ import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
+const initializeGridStore = (initialVariations = []) => ({
+  reactionVariations: initialVariations,
+  selectedColumns: getVariationsColumns(initialVariations),
+  columnDefinitions: [],
+  reactionSegments: {},
+  asyncDataLoaded: false,
+  gridVersion: 0,
+});
+
 const ReactionVariations = ({ reaction, onReactionChange }) => {
   const reactionHasPolymers = reaction.hasPolymers();
   const reactionShortLabel = reaction.short_label;
@@ -53,17 +62,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   const previousGasMode = useRef(gasMode);
   const previousAllReactionAnalyses = useRef(allReactionAnalyses);
 
-  const [gridStore, setGridStore] = useState(() => {
-    const initialVariations = reaction.variations ?? [];
-    return {
-      reactionVariations: initialVariations,
-      selectedColumns: getVariationsColumns(initialVariations),
-      columnDefinitions: [],
-      reactionSegments: {},
-      asyncDataLoaded: false,
-      gridVersion: 0,
-    };
-  });
+  const [gridStore, setGridStore] = useState(() => initializeGridStore(reaction.variations ?? []));
 
   const {
     reactionVariations,
@@ -78,6 +77,9 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
 
   useEffect(() => {
     let isSubscribed = true;
+    // Reset local store when switching reactions to avoid leaking previous reaction state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setGridStore(initializeGridStore(reaction.variations ?? []));
     pendingReactionVariations.current = null;
     previousReactionMaterialsHashes.current = reactionMaterialsHashes;
     previousGasMode.current = gasMode;
