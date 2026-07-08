@@ -65,6 +65,7 @@ const App = () => {
   };
 
   useEffect(() => {
+    userStore.fetchCurrentUser();
     userStore.fetchOlsRxno();
     userStore.fetchOlsChmo();
     userStore.fetchOlsBao();
