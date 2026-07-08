@@ -86,6 +86,9 @@ class Wellplate < ApplicationRecord
   has_many :research_plans_wellplates, dependent: :destroy
   has_many :research_plans, through: :research_plans_wellplates
 
+  has_many :elements_wellplates, class_name: 'Labimotion::ElementsWellplate', dependent: :destroy
+  has_many :elements, through: :elements_wellplates, source: :element
+
   has_many :comments, as: :commentable, dependent: :destroy
 
   has_one :container, as: :containable
