@@ -4,6 +4,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 // home
 import Home from 'src/apps/home/Home';
+import CnC from 'src/apps/commandAndControl/CnC';
 // import { ExtendedSignInForm } from 'src/components/navigation/NavNewSession';
 
 // mydb
@@ -53,6 +54,10 @@ function AppDispatcher() {
         <App />
       </DndProvider>
     );
+  }
+  if (role === 'Group') {
+    console.debug('rendering CnC');
+    app = (<CnC />);
   }
   if (role === 'Guest' || app == null) {
     console.debug('rendering home');
