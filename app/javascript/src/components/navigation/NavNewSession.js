@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useCallback, useContext } from 'react';
 import { observer } from 'mobx-react';
+import { keys } from 'mobx';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import PropTypes from 'prop-types';
@@ -220,7 +221,7 @@ function NewSession() {
   const { userStore } = useContext(StoreContext);
   const { omniauthProviders, extraRules } = userStore;
 
-  const items = omniauthProviders && Object.keys(omniauthProviders).map((key) => (
+  const items = omniauthProviders && keys(omniauthProviders).map((key) => (
     <Button
       key={uuid.v4()}
       className="omniauth-btn"
