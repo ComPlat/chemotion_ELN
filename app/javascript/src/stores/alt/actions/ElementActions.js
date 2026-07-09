@@ -46,6 +46,7 @@ import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromolec
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
 
 import _ from 'lodash';
@@ -515,7 +516,13 @@ class ElementActions {
   }
 
   generateEmptySample(collection_id) {
-    return Sample.buildEmpty(collection_id)
+    const { currentCollection } = UIStore.getState();
+    const inventorySample = !!(
+      currentCollection
+      && String(currentCollection.id) === String(collection_id)
+      && currentCollection.inventory_id
+    );
+    return Sample.buildEmpty(collection_id, inventorySample);
   }
 
   tryFetchCellLineElById(cellLineId) {

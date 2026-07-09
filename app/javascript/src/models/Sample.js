@@ -220,7 +220,7 @@ export default class Sample extends Element {
     return { abs: 'any', rel: 'any' };
   }
 
-  static buildEmpty(collection_id) {
+  static buildEmpty(collection_id, inventorySample = false) {
     const sample = new Sample({
       collection_id,
       name: '',
@@ -250,7 +250,7 @@ export default class Sample extends Element {
       can_copy: false,
       stereo: Sample.defaultStereo(),
       decoupled: false,
-      inventory_sample: false,
+      inventory_sample: inventorySample,
       molecular_mass: 0,
       sum_formula: '',
       gas_type: 'off',
@@ -261,7 +261,6 @@ export default class Sample extends Element {
       ancestor_ids: [],
       literatures: {},
     });
-
     sample.short_label = Sample.buildNewShortLabel();
     return sample;
   }
@@ -269,11 +268,10 @@ export default class Sample extends Element {
   getMoleculeId() {
     if (this.decoupled && this.molfile) {
       return `M${this.id}`;
-    } else if (this.stereo == null) {
+    } if (this.stereo == null) {
       return `M${this.molecule.id}_any_any`;
-    } else {
-      return `M${this.molecule.id}_${this.stereo.abs || 'any'}_${this.stereo.rel || 'any'}`;
     }
+    return `M${this.molecule.id}_${this.stereo.abs || 'any'}_${this.stereo.rel || 'any'}`;
   }
 
   isNoStructureSample() {
@@ -1714,7 +1712,7 @@ export default class Sample extends Element {
 
   get polymer_formula() {
     if (!this.contains_residues || !this.residues?.[0]?.custom_info) return '';
-    const formula = this.residues[0].custom_info.formula;
+    const { formula } = this.residues[0].custom_info;
     return formula != null ? String(formula) : '';
   }
 
