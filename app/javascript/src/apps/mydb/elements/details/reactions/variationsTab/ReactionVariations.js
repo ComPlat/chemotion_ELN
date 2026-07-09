@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name, no-param-reassign, react-hooks/immutability */
 import { AgGridReact } from 'ag-grid-react';
 import React, {
-  useRef, useState, useCallback, useReducer, useEffect, useMemo
+  useRef, useState, useCallback, useEffect, useMemo
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Alert,
@@ -32,11 +32,24 @@ import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 
+const initializeGridStore = (initialVariations = []) => ({
+  reactionVariations: initialVariations,
+  selectedColumns: getVariationsColumns(initialVariations),
+  columnDefinitions: [],
+  reactionSegments: {},
+  asyncDataLoaded: false,
+  gridVersion: 0,
+});
+
 const ReactionVariations = ({ reaction, onReactionChange }) => {
-  const reactionVariations = reaction.variations;
   const reactionHasPolymers = reaction.hasPolymers();
   const reactionShortLabel = reaction.short_label;
   const reactionMaterials = getReactionMaterials(reaction);
+  const reactionMaterialsHashes = getReactionMaterialsHashes(
+    reactionMaterials,
+    reaction.gaseous,
+    GasPhaseReactionStore.getState().reactionVesselSizeValue
+  );
   const gasMode = reaction.gaseous;
   const allReactionAnalyses = getReactionAnalyses(reaction);
   const { dispValue: durationValue = null, dispUnit: durationUnit = 'None' } = reaction.durationDisplay ?? {};
@@ -45,54 +58,282 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
 
   const gridRef = useRef(null);
   const pendingReactionVariations = useRef(null);
-  const setReactionVariations = useCallback((updatedReactionVariations) => {
-    reaction.variations = updatedReactionVariations;
-    onReactionChange(reaction);
-  }, [reaction, onReactionChange]);
-  const [previousReactionMaterials, setPreviousReactionMaterials] = useState(reactionMaterials);
-  const [reactionSegments, setReactionSegments] = useState(new Map());
-  const [previousGasMode, setPreviousGasMode] = useState(gasMode);
-  const [previousAllReactionAnalyses, setPreviousAllReactionAnalyses] = useState(allReactionAnalyses);
-  const [selectedColumns, setSelectedColumns] = useState(getVariationsColumns(reactionVariations));
-  const [columnDefinitions, setColumnDefinitions] = useReducer(columnDefinitionsReducer, []);
-  const initialGridState = useMemo(() => getInitialGridState(reaction.id), [reaction.id]);
-  const [asyncDataLoaded, setAsyncDataLoaded] = useState(false);
+  const previousReactionMaterialsHashes = useRef(reactionMaterialsHashes);
+  const previousGasMode = useRef(gasMode);
+  const previousAllReactionAnalyses = useRef(allReactionAnalyses);
+
+  const [gridStore, setGridStore] = useState(() => initializeGridStore(reaction.variations ?? []));
+
+  const {
+    reactionVariations,
+    selectedColumns,
+    columnDefinitions,
+    reactionSegments,
+    asyncDataLoaded,
+    gridVersion,
+  } = gridStore;
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Fetch grid state on every re-mount.
+  const initialGridState = useMemo(() => getInitialGridState(reaction.id), [reaction.id, gridVersion]);
 
   useEffect(() => {
+    /*
+    Reset store when parent's `reaction.variations` diverges from `reactionVariations`
+
+    The identity of the `reaction` object is not stable across saves: Saving builds a fresh
+    `new Reaction(...)`, so this effect fires on every Save, not only on discard/reload/restore.
+    Reset the store only on a genuine out-of-band replacement of the variations, i.e.,
+   .
+    A Save (rows we just wrote back, deep-equal) or an unrelated Scheme-tab edit (variations untouched) must NOT reset,
+    otherwise the user's in-session column selection, layout, and pending edits are lost.
+    Switching reactions is handled separately by the <Tab key={`variations_${reaction.id}`}>
+    remount, which re-seeds the store via the useState initializer.
+    */
+    if (asyncDataLoaded && isEqual(reactionVariations, reaction.variations ?? [])) {
+      return undefined;
+    }
+
+    let isSubscribed = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setGridStore(initializeGridStore(reaction.variations ?? []));
+    pendingReactionVariations.current = null;
+    previousReactionMaterialsHashes.current = reactionMaterialsHashes;
+    previousGasMode.current = gasMode;
+    previousAllReactionAnalyses.current = allReactionAnalyses;
+
     const fetchData = async () => {
       const segments = await getReactionSegments(reaction);
-      const updatedSelectedColumns = {
-        ...selectedColumns, segments: selectedColumns.segments.filter((segment) => Object.hasOwn(segments, segment))
-      };
-      let updatedReactionVariations = removeObsoleteColumnsFromVariations(reactionVariations, updatedSelectedColumns);
-      let updatedColumnDefinitions = getColumnDefinitions(
-        updatedSelectedColumns,
-        reactionMaterials,
-        segments,
-        gasMode,
-      );
-      updatedColumnDefinitions = setLayout(reaction.id, updatedColumnDefinitions);
-      updatedReactionVariations = setRowOrder(reaction.id, updatedReactionVariations);
+      if (!isSubscribed) {
+        return;
+      }
 
-      setReactionSegments(segments);
-      setSelectedColumns(updatedSelectedColumns);
-      setReactionVariations(updatedReactionVariations);
-      setColumnDefinitions({ type: 'set_updated', update: updatedColumnDefinitions });
-      setAsyncDataLoaded(true);
+      setGridStore((previousGridStore) => {
+        const updatedSelectedColumns = {
+          ...previousGridStore.selectedColumns,
+          segments: previousGridStore.selectedColumns.segments.filter(
+            (segment) => Object.hasOwn(segments, segment)
+          )
+        };
+        let updatedReactionVariations = removeObsoleteColumnsFromVariations(
+          previousGridStore.reactionVariations,
+          updatedSelectedColumns
+        );
+        let updatedColumnDefinitions = getColumnDefinitions(
+          updatedSelectedColumns,
+          reactionMaterials,
+          segments,
+          gasMode,
+        );
+
+        updatedColumnDefinitions = setLayout(reaction.id, updatedColumnDefinitions);
+        updatedReactionVariations = setRowOrder(reaction.id, updatedReactionVariations);
+
+        return {
+          ...previousGridStore,
+          reactionSegments: segments,
+          selectedColumns: updatedSelectedColumns,
+          reactionVariations: updatedReactionVariations,
+          columnDefinitions: updatedColumnDefinitions,
+          asyncDataLoaded: true,
+          gridVersion: previousGridStore.gridVersion + 1,
+        };
+      });
     };
+
     fetchData();
+    return () => {
+      isSubscribed = false;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reaction]);
+
+  useEffect(() => {
+    /*
+    Propagate updates to parent
+    */
+    if (!asyncDataLoaded) {
+      return;
+    }
+    if (isEqual(reaction.variations, reactionVariations)) {
+      return;
+    }
+
+    reaction.variations = reactionVariations;
+    onReactionChange(reaction);
+  }, [asyncDataLoaded, onReactionChange, reaction, reactionVariations]);
+
+  useEffect(() => {
+    if (!asyncDataLoaded) {
+      return;
+    }
+
+    if (gasMode !== previousGasMode.current) {
+      /*
+      Update gas mode according to "Scheme" tab.
+      */
+      const updatedSelectedColumns = getVariationsColumns([]);
+      const materialsByType = Object.keys(materialTypes).reduce((materials, materialType) => {
+        materials[materialType] = [];
+        return materials;
+      }, {});
+
+      setGridStore((previousGridStore) => ({
+        ...previousGridStore,
+        selectedColumns: updatedSelectedColumns,
+        columnDefinitions: getColumnDefinitions(
+          updatedSelectedColumns,
+          materialsByType,
+          previousGridStore.reactionSegments,
+          gasMode
+        ),
+        reactionVariations: [],
+        gridVersion: previousGridStore.gridVersion + 1,
+      }));
+
+      previousGasMode.current = gasMode;
+      previousReactionMaterialsHashes.current = reactionMaterialsHashes;
+      return;
+    }
+
+    if (isEqual(reactionMaterialsHashes, previousReactionMaterialsHashes.current)) {
+      return;
+    }
+    /*
+    Keep set of materials up-to-date.
+    Materials could have been added or removed in the "Scheme" tab.
+    We need to only *remove* obsolete materials, not *add* missing ones, since users add materials manually.
+    */
+    setGridStore((previousGridStore) => {
+      const updatedSelectedColumns = removeObsoleteMaterialColumns(
+        reactionMaterials,
+        previousGridStore.selectedColumns
+      );
+
+      let updatedReactionVariations = removeObsoleteColumnsFromVariations(
+        previousGridStore.reactionVariations,
+        updatedSelectedColumns
+      );
+
+      let updatedColumnDefinitions = removeObsoleteColumnDefinitions(
+        previousGridStore.columnDefinitions,
+        updatedSelectedColumns
+      );
+      /*
+      Update column definitions to account for potential changes in the corresponding materials' gas type.
+      */
+      updatedColumnDefinitions = updateColumnDefinitionsMaterialsOnAuxChange(
+        updatedColumnDefinitions,
+        reactionMaterials,
+        gasMode
+      );
+      /*
+      Update materials in response to changes in non-editable quantities from the "Scheme" tab.
+      */
+      updatedReactionVariations = updateVariationsOnAuxChange(
+        updatedReactionVariations,
+        reactionMaterials,
+        gasMode,
+        vesselVolume
+      );
+
+      return {
+        ...previousGridStore,
+        selectedColumns: updatedSelectedColumns,
+        columnDefinitions: updatedColumnDefinitions,
+        reactionVariations: updatedReactionVariations,
+        gridVersion: previousGridStore.gridVersion + 1,
+      };
+    });
+
+    previousReactionMaterialsHashes.current = reactionMaterialsHashes;
+  }, [
+    asyncDataLoaded,
+    gasMode,
+    reactionMaterials,
+    reactionMaterialsHashes,
+    vesselVolume,
+  ]);
+
+  useEffect(() => {
+    if (!asyncDataLoaded) {
+      return;
+    }
+
+    if (isEqual(allReactionAnalyses, previousAllReactionAnalyses.current)) {
+      return;
+    }
+    /*
+    The "Variations" tab holds references to analyses in the "Analyses" tab.
+    Users can add, remove, or edit analyses in the "Analyses" tab.
+    Every analysis in the "Analyses" tab can be assigned to one or more rows in the "Variations" tab.
+    Each row in the variations table keeps references to its assigned analyses
+    by tracking the corresponding `analysesIDs`.
+    In the example below, variations row "A" keeps a reference to `analysesIDs` "1",
+    whereas variations row "C" keeps references to "1" and "3".
+    The set of all `analysesIDs` that are referenced by variations is called `referenceIDs`.
+
+    Figure 1
+    Analyses tab  Variations tab
+    .---.         .---------.
+    | 1 |<--------| A: 1    |
+    |---|     \   |---------|
+    | 2 |      \  | B:      |
+    |---|       \ |---------|
+    | 3 |<-------\| C: 1, 3 |
+    |---|         `---------`
+    | 4 |
+    `---`
+
+    The table below shows how to keep the state consistent across the "Analyses" tab and "Variations" tab.
+    "X" denotes absence of ID.
+
+    Table 1
+    .-------------- ---------------- -------------------------------------------------.
+    | Analyses tab  | Variations tab | action                                         |
+    | (analysesIDs) | (referenceIDs) |                                                |
+    |-------------- |--------------- |----------------------------------------------- |
+    | ID            | ID             | None                                           |
+    |-------------- |--------------- |----------------------------------------------- |
+    | X             | ID             | Container with ID removed in "Analyses" tab.   |
+    |               |                | Remove ID from `referenceIDs`.                 |
+    |-------------- |--------------- |----------------------------------------------- |
+    | ID            | X              | Row that's tracking ID removed in "Variations" |
+    |               |                | tab. No action required since "Analyses" tab   |
+    |               |                | only displays associations to existing rows.   |
+    `-------------- ---------------- -------------------------------------------------`
+    */
+    setGridStore((previousGridStore) => ({
+      ...previousGridStore,
+      reactionVariations: updateAnalyses(previousGridStore.reactionVariations, allReactionAnalyses)
+    }));
+
+    previousAllReactionAnalyses.current = allReactionAnalyses;
+  }, [allReactionAnalyses, asyncDataLoaded]);
+
+  const setColumnDefinitions = useCallback((action) => {
+    setGridStore((previousGridStore) => ({
+      ...previousGridStore,
+      columnDefinitions: columnDefinitionsReducer(previousGridStore.columnDefinitions, action)
+    }));
   }, []);
 
   const copyRow = useCallback((data) => {
-    const copiedRow = copyVariationsRow(data, reactionVariations);
-    setReactionVariations(
-      [...reactionVariations, copiedRow]
-    );
-  }, [reactionVariations, setReactionVariations]);
+    setGridStore((previousGridStore) => {
+      const copiedRow = copyVariationsRow(data, previousGridStore.reactionVariations);
+      return {
+        ...previousGridStore,
+        reactionVariations: [...previousGridStore.reactionVariations, copiedRow]
+      };
+    });
+  }, []);
 
   const removeRow = useCallback((data) => {
-    setReactionVariations(reactionVariations.filter((row) => row.id !== data.id));
-  }, [reactionVariations, setReactionVariations]);
+    setGridStore((previousGridStore) => ({
+      ...previousGridStore,
+      reactionVariations: previousGridStore.reactionVariations.filter((row) => row.id !== data.id)
+    }));
+  }, []);
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
     const { field } = colDef;
@@ -112,10 +353,14 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   */
   const handleCellEditingStopped = useCallback((event) => {
     if (pendingReactionVariations.current !== null && event.api.getEditingCells().length === 0) {
-      setReactionVariations(pendingReactionVariations.current);
+      const updatedReactionVariations = pendingReactionVariations.current;
+      setGridStore((previousGridStore) => ({
+        ...previousGridStore,
+        reactionVariations: updatedReactionVariations
+      }));
       pendingReactionVariations.current = null;
     }
-  }, [setReactionVariations]);
+  }, []);
 
   if (reaction.isNew) {
     return (
@@ -133,19 +378,23 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     const reorderedVariations = rowOrder
       .map((id) => reactionVariations.find((row) => row.id === id))
       .filter(Boolean);
-    setReactionVariations(reorderedVariations);
+    setGridStore((previousGridStore) => ({
+      ...previousGridStore,
+      reactionVariations: reorderedVariations
+    }));
   };
 
   const addRow = () => {
-    setReactionVariations(
-      [
-        ...reactionVariations,
+    setGridStore((previousGridStore) => ({
+      ...previousGridStore,
+      reactionVariations: [
+        ...previousGridStore.reactionVariations,
         createVariationsRow(
           {
             materials: reactionMaterials,
-            segments: reactionSegments,
-            selectedColumns,
-            variations: reactionVariations,
+            segments: previousGridStore.reactionSegments,
+            selectedColumns: previousGridStore.selectedColumns,
+            variations: previousGridStore.reactionVariations,
             reactionHasPolymers,
             durationValue,
             durationUnit,
@@ -156,40 +405,43 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
           }
         )
       ]
-    );
+    }));
   };
 
   const applyColumnSelection = (columns) => {
-    let updatedReactionVariations = addMissingColumnsToVariations({
-      materials: reactionMaterials,
-      segments: reactionSegments,
-      selectedColumns: columns,
-      variations: reactionVariations,
-      reactionHasPolymers,
-      durationValue,
-      durationUnit,
-      temperatureValue,
-      temperatureUnit,
-      gasMode,
-      vesselVolume
-    });
-    updatedReactionVariations = removeObsoleteColumnsFromVariations(
-      updatedReactionVariations,
-      columns
-    );
-    setReactionVariations(updatedReactionVariations);
-
-    setColumnDefinitions(
-      {
-        type: 'apply_column_selection',
+    setGridStore((previousGridStore) => {
+      let updatedReactionVariations = addMissingColumnsToVariations({
         materials: reactionMaterials,
-        segments: reactionSegments,
+        segments: previousGridStore.reactionSegments,
         selectedColumns: columns,
-        gasMode
-      }
-    );
+        variations: previousGridStore.reactionVariations,
+        reactionHasPolymers,
+        durationValue,
+        durationUnit,
+        temperatureValue,
+        temperatureUnit,
+        gasMode,
+        vesselVolume
+      });
+      updatedReactionVariations = removeObsoleteColumnsFromVariations(
+        updatedReactionVariations,
+        columns
+      );
 
-    setSelectedColumns(columns);
+      return {
+        ...previousGridStore,
+        selectedColumns: columns,
+        reactionVariations: updatedReactionVariations,
+        columnDefinitions: columnDefinitionsReducer(previousGridStore.columnDefinitions, {
+          type: 'apply_column_selection',
+          materials: reactionMaterials,
+          segments: previousGridStore.reactionSegments,
+          selectedColumns: columns,
+          gasMode
+        }),
+        gridVersion: previousGridStore.gridVersion + 1,
+      };
+    });
   };
 
   const addVariation = () => (
@@ -225,137 +477,6 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     </Button>
   );
 
-  /*
-  What follows is a series of imperative state updates that keep the "Variations" tab in sync with the "Scheme" tab.
-  This pattern isn't nice, but the best I could do according to
-  https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes and
-  https://react.dev/reference/react/useState#storing-information-from-previous-renders.
-  It would be preferable to refactor this to a more declarative approach, using a store for example.
-  */
-
-  /*
-  Update materials according to "Scheme" tab.
-  */
-  if (!isEqual(
-    getReactionMaterialsHashes(reactionMaterials, gasMode, vesselVolume),
-    getReactionMaterialsHashes(previousReactionMaterials, gasMode, vesselVolume)
-  )) {
-    /*
-    Keep set of materials up-to-date.
-    Materials could have been added or removed in the "Scheme" tab.
-    We need to only *remove* obsolete materials, not *add* missing ones, since users add materials manually.
-    */
-    const updatedSelectedColumns = removeObsoleteMaterialColumns(
-      reactionMaterials,
-      selectedColumns
-    );
-
-    let updatedReactionVariations = removeObsoleteColumnsFromVariations(
-      reactionVariations,
-      updatedSelectedColumns
-    );
-
-    let updatedColumnDefinitions = removeObsoleteColumnDefinitions(columnDefinitions, updatedSelectedColumns);
-
-    /*
-    Update column definitions to account for potential changes in the corresponding materials' gas type.
-    */
-    updatedColumnDefinitions = updateColumnDefinitionsMaterialsOnAuxChange(
-      updatedColumnDefinitions,
-      reactionMaterials,
-      gasMode
-    );
-
-    /*
-    Update materials in response to changes in non-editable quantities from the "Scheme" tab.
-    */
-    updatedReactionVariations = updateVariationsOnAuxChange(
-      updatedReactionVariations,
-      reactionMaterials,
-      gasMode,
-      vesselVolume
-    );
-
-    setColumnDefinitions(
-      {
-        type: 'set_updated',
-        update: updatedColumnDefinitions
-      }
-    );
-    setSelectedColumns(updatedSelectedColumns);
-    setReactionVariations(updatedReactionVariations);
-    setPreviousReactionMaterials(reactionMaterials);
-    setPreviousGasMode(gasMode);
-  }
-
-  /*
-  Update gas mode according to "Scheme" tab.
-  */
-  if (gasMode !== previousGasMode) {
-    const updatedSelectedColumns = getVariationsColumns([]);
-    setSelectedColumns(updatedSelectedColumns);
-    setColumnDefinitions(
-      {
-        type: 'toggle_gas_mode',
-        materials: Object.keys(materialTypes).reduce((materials, materialType) => {
-          materials[materialType] = [];
-          return materials;
-        }, {}),
-        selectedColumns: updatedSelectedColumns,
-        segments: reactionSegments,
-        gasMode
-      }
-    );
-    setPreviousGasMode(gasMode);
-    setReactionVariations([]);
-  }
-
-  /*
-  The "Variations" tab holds references to analyses in the "Analyses" tab.
-  Users can add, remove, or edit analyses in the "Analyses" tab.
-  Every analysis in the "Analyses" tab can be assigned to one or more rows in the "Variations" tab.
-  Each row in the variations table keeps references to its assigned analyses
-  by tracking the corresponding `analysesIDs`.
-  In the example below, variations row "A" keeps a reference to `analysesIDs` "1",
-  whereas variations row "C" keeps references to "1" and "3".
-  The set of all `analysesIDs` that are referenced by variations is called `referenceIDs`.
-
-  Figure 1
-  Analyses tab  Variations tab
-  .---.         .---------.
-  | 1 |<--------| A: 1    |
-  |---|     \   |---------|
-  | 2 |      \  | B:      |
-  |---|       \ |---------|
-  | 3 |<-------\| C: 1, 3 |
-  |---|         `---------`
-  | 4 |
-  `---`
-
-  The table below shows how to keep the state consistent across the "Analyses" tab and "Variations" tab.
-  "X" denotes absence of ID.
-
-  Table 1
-  .-------------- ---------------- -------------------------------------------------.
-  | Analyses tab  | Variations tab | action                                         |
-  | (analysesIDs) | (referenceIDs) |                                                |
-  |-------------- |--------------- |----------------------------------------------- |
-  | ID            | ID             | None                                           |
-  |-------------- |--------------- |----------------------------------------------- |
-  | X             | ID             | Container with ID removed in "Analyses" tab.   |
-  |               |                | Remove ID from `referenceIDs`.                 |
-  |-------------- |--------------- |----------------------------------------------- |
-  | ID            | X              | Row that's tracking ID removed in "Variations" |
-  |               |                | tab. No action required since "Analyses" tab   |
-  |               |                | only displays associations to existing rows.   |
-  `-------------- ---------------- -------------------------------------------------`
-  */
-  if (!isEqual(allReactionAnalyses, previousAllReactionAnalyses)) {
-    const updatedReactionVariations = updateAnalyses(reactionVariations, allReactionAnalyses);
-    setReactionVariations(updatedReactionVariations);
-    setPreviousAllReactionAnalyses(allReactionAnalyses);
-  }
-
   if (!asyncDataLoaded) {
     return null;
   }
@@ -378,10 +499,17 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
           }}
           onApply={applyColumnSelection}
         />
-        <RemoveVariationsModal onRemoveAll={() => setReactionVariations([])} />
+        <RemoveVariationsModal
+          onRemoveAll={() => setGridStore((previousGridStore) => ({
+            ...previousGridStore,
+            reactionVariations: []
+          }))}
+        />
       </ButtonGroup>
       <div className="ag-theme-alpine ag-theme-reaction-variations">
         <AgGridReact
+          // Re-mount grid on version change
+          key={`${reaction.id}-schema-${gridVersion}`}
           ref={gridRef}
           initialState={initialGridState}
           rowData={reactionVariations}
@@ -427,8 +555,8 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
           readOnlyEdit
           onCellEditRequest={updateRow}
           onCellEditingStopped={handleCellEditingStopped}
-          onGridPreDestroyed={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
-          onStateUpdated={(event) => persistTableLayout(reaction.id, event, columnDefinitions)}
+          onGridPreDestroyed={(event) => persistTableLayout(reaction.id, event, gridStore.columnDefinitions)}
+          onStateUpdated={(event) => persistTableLayout(reaction.id, event, gridStore.columnDefinitions)}
           /*
           We need to persist manual row sort (i.e., user changes row order by dragging rows),
           since ag-grid does not persist manual row sort as part of the grid state.
