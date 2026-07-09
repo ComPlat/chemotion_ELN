@@ -61,7 +61,7 @@ const ElementCollectionLabels = ({ element, size, variant }) => {
 
   const handleOnClick = (label, e) => {
     e.stopPropagation();
-    aviatorNavigationWithCollectionId(label.id, element.type, element.id);
+    aviatorNavigationWithCollectionId(label.id, element.type, element.id, true, true);
   };
 
   const formatItems = (labels) => {
