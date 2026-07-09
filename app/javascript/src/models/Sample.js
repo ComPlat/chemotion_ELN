@@ -10,7 +10,6 @@ import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
-import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import {
   convertTemperatureToKelvin,
   calculateVolumeForFeedstockOrGas,
@@ -220,7 +219,7 @@ export default class Sample extends Element {
     return { abs: 'any', rel: 'any' };
   }
 
-  static buildEmpty(collection_id) {
+  static buildEmpty(collection_id, inventorySample = false) {
     const sample = new Sample({
       collection_id,
       name: '',
@@ -250,7 +249,7 @@ export default class Sample extends Element {
       can_copy: false,
       stereo: Sample.defaultStereo(),
       decoupled: false,
-      inventory_sample: false,
+      inventory_sample: inventorySample,
       molecular_mass: 0,
       sum_formula: '',
       gas_type: 'off',
@@ -261,11 +260,6 @@ export default class Sample extends Element {
       ancestor_ids: [],
       literatures: {},
     });
-    // set inventory checkbox if collection has inventory label
-    InventoryFetcher.fetchInventoryOfCollection(collection_id)
-      .then((result) => {
-        sample.inventory_sample = !!result;
-      });
     sample.short_label = Sample.buildNewShortLabel();
     return sample;
   }

@@ -26,6 +26,7 @@ import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher'
 import MetadataFetcher from 'src/fetchers/MetadataFetcher';
 import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import SequenceBasedMacromoleculeSamplesFetcher from 'src/fetchers/SequenceBasedMacromoleculeSamplesFetcher';
+import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 
 import GenericEl from 'src/models/GenericEl';
 import Sample from 'src/models/Sample';
@@ -515,7 +516,14 @@ class ElementActions {
   }
 
   generateEmptySample(collection_id) {
-    return Sample.buildEmpty(collection_id)
+    return (dispatch) => {
+      InventoryFetcher.fetchInventoryOfCollection(collection_id)
+        .then((result) => { dispatch(Sample.buildEmpty(collection_id, !!result)); })
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+          dispatch(Sample.buildEmpty(collection_id));
+        });
+    };
   }
 
   tryFetchCellLineElById(cellLineId) {
