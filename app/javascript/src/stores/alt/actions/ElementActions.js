@@ -26,7 +26,6 @@ import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher'
 import MetadataFetcher from 'src/fetchers/MetadataFetcher';
 import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import SequenceBasedMacromoleculeSamplesFetcher from 'src/fetchers/SequenceBasedMacromoleculeSamplesFetcher';
-import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 
 import GenericEl from 'src/models/GenericEl';
 import Sample from 'src/models/Sample';
@@ -47,6 +46,7 @@ import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromolec
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
 
 import _ from 'lodash';
@@ -516,14 +516,13 @@ class ElementActions {
   }
 
   generateEmptySample(collection_id) {
-    return (dispatch) => {
-      InventoryFetcher.fetchInventoryOfCollection(collection_id)
-        .then((result) => { dispatch(Sample.buildEmpty(collection_id, !!result)); })
-        .catch((errorMessage) => {
-          console.log(errorMessage);
-          dispatch(Sample.buildEmpty(collection_id));
-        });
-    };
+    const { currentCollection } = UIStore.getState();
+    const inventorySample = !!(
+      currentCollection
+      && String(currentCollection.id) === String(collection_id)
+      && currentCollection.inventory_id
+    );
+    return Sample.buildEmpty(collection_id, inventorySample);
   }
 
   tryFetchCellLineElById(cellLineId) {
