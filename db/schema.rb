@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_06_12_000000) do
+ActiveRecord::Schema.define(version: 2026_06_22_000000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -19,6 +19,24 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
   enable_extension "plpgsql"
   enable_extension "rdkit"
   enable_extension "uuid-ossp"
+
+  create_table "affiliation_suggestions", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "organization"
+    t.string "department"
+    t.string "group"
+    t.string "country"
+    t.integer "status", default: 0, null: false
+    t.integer "affiliation_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "ror_id"
+    t.integer "target_user_affiliation_id"
+    t.date "from"
+    t.date "to"
+    t.index ["status"], name: "index_affiliation_suggestions_on_status"
+    t.index ["user_id"], name: "index_affiliation_suggestions_on_user_id"
+  end
 
   create_table "affiliations", id: :serial, force: :cascade do |t|
     t.string "company"
@@ -32,6 +50,7 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.date "to"
     t.string "domain"
     t.string "cat"
+    t.string "ror_id"
   end
 
   create_table "analyses_experiments", id: :serial, force: :cascade do |t|
@@ -1867,6 +1886,7 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.index ["wellplate_id"], name: "index_wells_on_wellplate_id"
   end
 
+  add_foreign_key "affiliation_suggestions", "users"
   add_foreign_key "api_tokens", "users"
   add_foreign_key "chemicals", "sequence_based_macromolecule_samples"
   add_foreign_key "collection_shares", "collections"
