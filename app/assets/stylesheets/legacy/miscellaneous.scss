@@ -68,13 +68,23 @@ label.required:after {
   border-color: $gray-700;
 }
 
-span.pseudo-link {
+.pseudo-link {
   cursor: pointer;
   color: $link-color;
 }
 
-span.pseudo-link:hover {
+.pseudo-link:hover {
   text-decoration: underline;
+}
+
+.pseudo-link.disabled {
+  text-decoration: none;
+  pointer-events: none;
+  cursor: default;
+}
+
+.pseudo-link.disabled:hover {
+  text-decoration: none;
 }
 
 .nav-tabs > li > a {
