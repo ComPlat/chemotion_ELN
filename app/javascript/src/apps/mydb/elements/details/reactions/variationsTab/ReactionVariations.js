@@ -75,7 +75,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   // Fetch grid state on every re-mount.
-  const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
+  const initialGridState = useMemo(() => getInitialGridState(reaction.id), [reaction.id, gridVersion]);
 
   useEffect(() => {
     /*
