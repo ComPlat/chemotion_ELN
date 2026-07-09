@@ -327,8 +327,7 @@ function GlobalProviderCard({ provider: initialProvider, onSaved }) {
               )}
               {providerSwitched && (
                 <p className="mb-1 text-warning small">
-                  You changed the provider — enter the API key for this provider.
-                  The previously saved key belonged to the old provider and will be dropped.
+                  You selected a different provider. Saving a verified API key for this provider will remove the saved API key for the previously configured provider.
                 </p>
               )}
               <div className="d-flex gap-2">
