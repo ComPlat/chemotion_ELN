@@ -1,0 +1,28 @@
+# Enable or disable optional UI components conditionally.
+#
+# On first boot, this example is copied to config/ui_components.yml if that file
+# does not exist yet (see config/initializers/ui_components.rb). Edit
+# config/ui_components.yml to change the behaviour of a running instance.
+#
+# A component is enabled ONLY when its value is `true`. Any other value, an
+# unlisted component, or a failure to load this file leaves it disabled.
+#
+# NOTE: optional components are OPT-IN in production. They ship disabled here so
+# that a new or upgrading instance does not silently expose a component until an
+# admin explicitly turns it on (set the value to `true` and restart).
+#
+# The parsed configuration is delivered to the frontend through
+# GET /api/v1/ui/initialize and is also enforced in the backend APIs that back
+# each component.
+#
+# For more info: See https://chemotion.net/docs/eln/install_configure/configuration
+
+development:
+  # Weighing Tasks (sample scan / weighing task inbox) shown in the top navigation bar.
+  :weighing_tasks: true
+
+test:
+  :weighing_tasks: false
+
+production:
+  :weighing_tasks: false
