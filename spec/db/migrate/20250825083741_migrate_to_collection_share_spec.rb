@@ -135,5 +135,36 @@ RSpec.describe 'migration 20250825083741: MigrateToCollectionShare' do
       expect(synced_collection.reload.shared).to be(true)
     end
   end
+
+  describe 'synchronized sub-collections stay visible to the owner' do
+    # Pre-refactor, a synchronized collection was never re-owned or moved (unlike a directly
+    # shared one) — the owner keeps it in place and recipients get access via
+    # SyncCollectionsUser only. So unlike pass 1, pass 2 must NOT re-parent the collection:
+    # doing so would be how an owner's synchronized sub-collection could silently vanish from
+    # their own tree post-migration while still being reachable by the recipient.
+    let(:scu) { MigrateToCollectionShare::SyncCollectionsUser }
+    let!(:owner_parent) { create(:collection, user: owner, label: 'Owner parent') }
+    let!(:synced_child) { create(:collection, user: owner, label: 'Synced child', parent: owner_parent) }
+
+    before do
+      scu.new(collection_id: synced_child.id, user_id: recipient.id, permission_level: 2).save(validate: false)
+    end
+
+    it "keeps the collection under the owner's tree, in its original place" do
+      MigrateToCollectionShare.new.up
+
+      expect(Collection.own_collections_for(owner)).to include(synced_child)
+      expect(synced_child.reload).to have_attributes(user_id: owner.id, parent_id: owner_parent.id)
+    end
+
+    it 'also makes it visible to the recipient via a CollectionShare' do
+      MigrateToCollectionShare.new.up
+
+      expect(Collection.shared_collections_for(recipient)).to include(synced_child)
+      expect(CollectionShare.find_by(collection_id: synced_child.id)).to have_attributes(
+        shared_with_id: recipient.id, permission_level: 2,
+      )
+    end
+  end
 end
 # rubocop:enable RSpec/DescribeClass, RSpec/MultipleExpectations
