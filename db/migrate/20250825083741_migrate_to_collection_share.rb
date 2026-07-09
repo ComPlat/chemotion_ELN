@@ -1,4 +1,12 @@
+# frozen_string_literal: true
+
 class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
+  # Label of the per-owner node the formerly shared-out collections are regrouped under.
+  # The collection tree lost its "Shared by me" section in the collection-share refactor, so
+  # without this the collections a user owned-and-shared-out would be scattered, undifferentiated,
+  # inside "My Collections". Grouping them keeps them findable.
+  SHARED_OUT_GROUP_LABEL = 'My projects with others'
+
   # SyncCollectionsUser was deleted, but the data migration still needs the model class, so we define it here
   # to be able to use its ActiveRecord interface
   if !defined?(SyncCollectionsUser)
@@ -16,7 +24,12 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
     # NOT use `.unscoped`, which would also drop acts_as_paranoid and pull in soft-deleted rows.
     shared_created = 0
     shared_skipped = 0
+    # owner id => ids of that owner's formerly shared-out collections. Captured here, before
+    # shared_by_id is nulled below (which is the only marker of "was shared out"), and regrouped
+    # after the pass under a single per-owner "My projects with others" node.
+    shared_out_by_owner = Hash.new { |hash, key| hash[key] = [] }
     Collection.where.not(shared_by_id: nil).reorder(nil).find_each do |collection|
+      owner_id = collection.shared_by_id
       if User.exists?(id: collection.user_id)
         CollectionShare.create(
           collection: collection,
@@ -42,9 +55,12 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
       end
       # Transfer ownership to the real owner. The `shared` flag is set authoritatively at the
       # end (it mirrors "has at least one CollectionShare"), not per row.
-      collection.update(user_id: collection.shared_by_id, shared_by_id: nil)
+      collection.update(user_id: owner_id, shared_by_id: nil)
+      shared_out_by_owner[owner_id] << collection.id if owner_id
     end
     say "shared pass: created #{shared_created} shares, skipped #{shared_skipped} (deleted recipient)"
+
+    regroup_shared_out_collections(shared_out_by_owner)
 
     # Second pass: synchronized collections (SyncCollectionsUser join rows).
     sync_created = 0
@@ -96,5 +112,46 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
       'UPDATE collections SET shared = ' \
       'EXISTS (SELECT 1 FROM collection_shares cs WHERE cs.collection_id = collections.id)'
     )
+  end
+
+  # Re-parent each owner's formerly shared-out collections under a single, unlocked, top-level
+  # "My projects with others" node, positioned last among that owner's roots, so they stay
+  # findable now that the tree's "Shared by me" section is gone. The grouping node is owned by
+  # the owner and never shared; recipients still see the child collections via their
+  # CollectionShare (ancestry-independent), so their "Shared with me" view is unchanged.
+  #
+  # @param shared_out_by_owner [Hash{Integer => Array<Integer>}] owner id => shared-out collection ids
+  def regroup_shared_out_collections(shared_out_by_owner)
+    regrouped = 0
+    shared_out_by_owner.each do |owner_id, collection_ids|
+      next unless User.exists?(id: owner_id)
+
+      regrouped += reparent_under_group(collection_ids, shared_out_group_for(owner_id))
+    end
+    say "regrouped #{regrouped} shared-out collections under '#{SHARED_OUT_GROUP_LABEL}'"
+  end
+
+  # Idempotent per-owner grouping node. `ancestry: '/'` is a root in the materialized_path2
+  # format; it is positioned after the owner's existing roots so it sorts last.
+  def shared_out_group_for(owner_id)
+    Collection.find_or_create_by!(user_id: owner_id, label: SHARED_OUT_GROUP_LABEL, is_locked: false) do |node|
+      node.ancestry = '/'
+      node.position = (Collection.where(user_id: owner_id, ancestry: '/').maximum(:position) || 0) + 1
+    end
+  end
+
+  # @return [Integer] number of collections actually moved under +group+
+  def reparent_under_group(collection_ids, group)
+    moved = 0
+    Collection.where(id: collection_ids).where.not(id: group.id).reorder(nil).find_each do |collection|
+      next if collection.parent_id == group.id # already grouped
+
+      # parent= updates ancestry and cascades to descendants (orphan_strategy: :adopt),
+      # preserving any sub-collection subtree the shared-out collection carried.
+      collection.parent = group
+      collection.save!
+      moved += 1
+    end
+    moved
   end
 end
