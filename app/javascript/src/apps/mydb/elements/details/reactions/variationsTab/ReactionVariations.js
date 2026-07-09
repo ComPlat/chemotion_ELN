@@ -78,8 +78,23 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   const initialGridState = useMemo(() => getInitialGridState(reaction.id), []);
 
   useEffect(() => {
+    /*
+    Reset store when parent's `reaction.variations` diverges from `reactionVariations`
+
+    The identity of the `reaction` object is not stable across saves: Saving builds a fresh
+    `new Reaction(...)`, so this effect fires on every Save, not only on discard/reload/restore.
+    Reset the store only on a genuine out-of-band replacement of the variations, i.e.,
+   .
+    A Save (rows we just wrote back, deep-equal) or an unrelated Scheme-tab edit (variations untouched) must NOT reset,
+    otherwise the user's in-session column selection, layout, and pending edits are lost.
+    Switching reactions is handled separately by the <Tab key={`variations_${reaction.id}`}>
+    remount, which re-seeds the store via the useState initializer.
+    */
+    if (asyncDataLoaded && isEqual(reactionVariations, reaction.variations ?? [])) {
+      return undefined;
+    }
+
     let isSubscribed = true;
-    // Reset local store when switching reactions to avoid leaking previous reaction state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setGridStore(initializeGridStore(reaction.variations ?? []));
     pendingReactionVariations.current = null;
