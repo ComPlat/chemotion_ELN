@@ -30,7 +30,7 @@ RSpec.describe ElementsPolicy do
     create(:collection_share, collection: user_2_collection, shared_with: user_1, permission_level: permission_level)
   end
   let(:collection_shared_to_user_2) do
-    create(:collection_share, collection: user_3_collection, shared_with: user_2, permission_level: 2)
+    create(:collection_share, collection: user_3_collection, shared_with: user_2, permission_level: CollectionShare.permission_level(:add_elements))
   end
 
   before do
@@ -93,6 +93,25 @@ RSpec.describe ElementsPolicy do
         expect(policy.allowed?(3)).to be true
         expect(policy.allowed?(4)).to be true
         expect(policy.allowed?(5)).to be false
+      end
+    end
+  end
+
+  describe '#destroy_all?' do
+    it 'returns true when every record is in an own collection' do
+      policy = described_class.new(user_1, Sample.where(id: [sample_1, sample_2, sample_3]))
+
+      expect(policy.destroy_all?).to be true
+    end
+
+    # Destroying element records is owner-only, at every rung — including the top one.
+    context 'when the records are shared, even at the highest permission level' do
+      let(:permission_level) { CollectionShare.permission_level(:pass_ownership) }
+
+      it 'returns false' do
+        policy = described_class.new(user_1, Sample.where(id: [sample_4, sample_5, sample_6]))
+
+        expect(policy.destroy_all?).to be false
       end
     end
   end

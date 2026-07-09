@@ -1,4 +1,5 @@
 import { elementNames, allElnElements } from 'src/apps/generic/Utils';
+import { PermissionConst } from 'src/utilities/PermissionConst';
 
 const isElementSelectionEmpty = (element) => !element.checkedAll
     && element.checkedIds.size === 0
@@ -55,7 +56,10 @@ const collectionOptions = (store, showSharedCollections) => {
   let shared = [];
   if (showSharedCollections) {
     const sharedWithMeCollections = store.shared_with_me_collections;
-    shared = sharedWithMeCollections.flatMap((c) => c.children).filter((c) => c.permission_level >= 1);
+    // Only offer shared collections the user may actually assign elements into.
+    shared = sharedWithMeCollections
+      .flatMap((c) => c.children)
+      .filter((c) => c.permission_level >= PermissionConst.AddElements);
   }
 
   return [

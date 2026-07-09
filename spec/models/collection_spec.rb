@@ -83,7 +83,7 @@ RSpec.describe Collection do
         create(:collection_share, collection: shared_collection, shared_with: group,
                                   permission_level: CollectionShare.permission_level(:read_elements))
         create(:collection_share, collection: shared_collection, shared_with: recipient,
-                                  permission_level: CollectionShare.permission_level(:delete_elements))
+                                  permission_level: CollectionShare.permission_level(:remove_elements))
       end
 
       it 'returns the collection exactly once' do
@@ -92,7 +92,7 @@ RSpec.describe Collection do
 
       it 'reports the highest of the two permission levels, matching what the policies enforce' do
         expect(rows_for(recipient).first.permission_level)
-          .to eq(CollectionShare.permission_level(:delete_elements))
+          .to eq(CollectionShare.permission_level(:remove_elements))
       end
 
       it 'exposes the recipients own share, never the groups' do

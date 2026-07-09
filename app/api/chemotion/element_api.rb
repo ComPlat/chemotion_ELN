@@ -11,17 +11,6 @@ module Chemotion
     helpers CollectionHelpers
     helpers LiteratureHelpers
 
-    # The :ui_state namespace has exactly two routes: a DELETE that destroys the selected element
-    # records, and a read-only POST /load_report.
-    #
-    # NOTE: the DELETE threshold sits *under* the one ElementPolicy#destroy? requires for a single
-    # record (delete_elements). Preserved as-is; reconciling the two is a permission-model decision
-    # tracked separately.
-    UI_STATE_PERMISSION_LEVELS = {
-      'POST' => CollectionShare.permission_level(:read_elements),
-      'DELETE' => CollectionShare.permission_level(:share_collection),
-    }.freeze
-
     namespace :ui_state do
       desc 'Delete elements by UI state'
       params do
@@ -71,17 +60,19 @@ module Chemotion
         elsif (@collection = Collection.own_collections_for(current_user).find_by(id: collection_id))
           # empty block body to keep rubocop happy
         elsif (collection = Collection.accessible_for(current_user).find_by(id: collection_id))
-          # A user can hold several shares on one collection — their own plus one per group. The
-          # effective level is their maximum; picking whichever row the database returned first made
-          # the outcome depend on row order.
-          effective_level = collection.detail_levels_for_user(current_user)[:permission_level]
-          # Unknown verb (a route added later) falls back to the strictest level we gate on here,
-          # rather than raising or silently letting the request through.
-          required_level = UI_STATE_PERMISSION_LEVELS.fetch(
-            request.request_method, UI_STATE_PERMISSION_LEVELS.values.max
-          )
+          # We only reach here when the user is not an owner. DELETE in this namespace destroys the
+          # element records themselves (destroy_all), which is owner-only — see ElementPolicy#destroy?.
+          # A sharee unlinks elements from the collection instead (Usecases::Collections::RemoveElements).
+          # The only other route here, POST load_report, just reads.
+          error!('403 Forbidden', 403) if request.delete?
 
-          error!('403 Forbidden', 403) unless effective_level >= required_level
+          # A user can hold several shares on one collection — their own plus one per group — and they
+          # may disagree. The effective level is their maximum, so the outcome no longer depends on
+          # which share row the database happened to return first.
+          effective_level = collection.detail_levels_for_user(current_user)[:permission_level]
+          error!('403 Forbidden', 403) unless
+            effective_level >= CollectionShare.permission_level(:read_elements)
+
           @collection = collection
         end
         error!('404 Record Not Found', 404) unless @collection

@@ -41,7 +41,7 @@ class InboxSearchElements
   def samples
     collection_ids = Collection.own_collections_for(@current_user).ids
     collection_ids += Collection.shared_with_minimum_permission_level(
-      @current_user, CollectionShare.permission_level(:write)
+      @current_user, CollectionShare.permission_level(:edit_elements)
     ).ids
 
     exact = Sample.by_exact_name(normalize_for_exact_name(@search_string))

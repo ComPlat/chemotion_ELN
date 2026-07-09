@@ -13,7 +13,7 @@ describe Chemotion::CollectionShareAPI do
       {
         collection_id: collection.id,
         user_ids: [other_user.id, third_user.id],
-        permission_level: 5,
+        permission_level: CollectionShare.permission_level(:pass_ownership),
         celllinesample_detail_level: 5,
         devicedescription_detail_level: 5,
         element_detail_level: 5,
@@ -38,7 +38,7 @@ describe Chemotion::CollectionShareAPI do
   describe 'PUT /api/v1/collection_shares' do
     let(:update_params) do
       {
-        permission_level: 5,
+        permission_level: CollectionShare.permission_level(:pass_ownership),
         celllinesample_detail_level: 5,
         devicedescription_detail_level: 5,
         element_detail_level: 5,
@@ -93,7 +93,12 @@ describe Chemotion::CollectionShareAPI do
     context 'when the share belongs to one of the requesters groups' do
       let(:collection) { create(:collection, user: other_user) }
       let(:group) { create(:group, users: [user]) }
-      let(:group_share) { create(:collection_share, collection: collection, shared_with: group) }
+      # Below :manage_shares on purpose — a group share at or above that rung would make every member
+      # a delegated administrator of the collection, which is a different situation entirely.
+      let(:group_share) do
+        create(:collection_share, collection: collection, shared_with: group,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+      end
 
       before { group_share }
 
@@ -163,7 +168,7 @@ describe Chemotion::CollectionShareAPI do
     context 'when the collection reaches the user through a group' do
       before do
         create(:collection_share, collection: collection, shared_with: group,
-                                  permission_level: CollectionShare.permission_level(:write_elements))
+                                  permission_level: CollectionShare.permission_level(:edit_elements))
       end
 
       it 'returns the group share' do
@@ -176,7 +181,7 @@ describe Chemotion::CollectionShareAPI do
         create(:collection_share, collection: collection, shared_with: user,
                                   permission_level: CollectionShare.permission_level(:read_elements))
         create(:collection_share, collection: collection, shared_with: group,
-                                  permission_level: CollectionShare.permission_level(:write_elements))
+                                  permission_level: CollectionShare.permission_level(:edit_elements))
       end
 
       it 'returns both contributing shares' do
@@ -194,6 +199,100 @@ describe Chemotion::CollectionShareAPI do
       it 'returns nothing and does not leak the other recipients share' do
         expect(shares).to be_empty
       end
+    end
+  end
+
+  describe 'permission_level validation' do
+    it 'rejects a level that is not on the ladder' do
+      post '/api/v1/collection_shares/',
+           params: { collection_id: collection.id, user_ids: [other_user.id], permission_level: 42 }
+
+      expect(response).to have_http_status(:bad_request)
+    end
+  end
+
+  describe 'sharing a collection with its own owner' do
+    it 'is refused' do
+      post '/api/v1/collection_shares/', params: { collection_id: collection.id, user_ids: [user.id] }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+  end
+
+  # `user` (the authenticated requester) is not the owner here — they hold a delegated
+  # :manage_shares share on another user's collection.
+  describe 'delegated share management (:manage_shares)' do
+    let(:collection) { create(:collection, user: other_user) }
+    let(:manage_shares) { CollectionShare.permission_level(:manage_shares) }
+
+    before do
+      create(:collection_share, collection: collection, shared_with: user, permission_level: manage_shares)
+    end
+
+    it 'lets the delegate list the collection shares' do
+      get '/api/v1/collection_shares', params: { collection_id: collection.id }
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'lets the delegate share the collection onward at or below their own level' do
+      expect do
+        post '/api/v1/collection_shares/',
+             params: { collection_id: collection.id, user_ids: [third_user.id], permission_level: manage_shares }
+      end.to change(CollectionShare, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+    end
+
+    it 'refuses to let the delegate grant a level above their own' do
+      expect do
+        post '/api/v1/collection_shares/',
+             params: {
+               collection_id: collection.id,
+               user_ids: [third_user.id],
+               permission_level: CollectionShare.permission_level(:pass_ownership),
+             }
+      end.not_to change(CollectionShare, :count)
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'refuses to let the delegate revoke a share that outranks them' do
+      superior = create(
+        :collection_share,
+        collection: collection,
+        shared_with: third_user,
+        permission_level: CollectionShare.permission_level(:pass_ownership),
+      )
+
+      expect { delete "/api/v1/collection_shares/#{superior.id}" }.not_to change(CollectionShare, :count)
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'still lets any sharee reject their own share, whatever its level' do
+      own_share = CollectionShare.find_by(collection: collection, shared_with: user)
+
+      expect { delete "/api/v1/collection_shares/#{own_share.id}" }.to change(CollectionShare, :count).by(-1)
+      expect(response).to have_http_status(:no_content)
+    end
+  end
+
+  describe 'a sharee below :manage_shares' do
+    let(:collection) { create(:collection, user: other_user) }
+
+    before do
+      create(
+        :collection_share,
+        collection: collection,
+        shared_with: user,
+        permission_level: CollectionShare.permission_level(:remove_elements),
+      )
+    end
+
+    it 'cannot administrate the share list' do
+      post '/api/v1/collection_shares/', params: { collection_id: collection.id, user_ids: [third_user.id] }
+
+      expect(response).to have_http_status(:not_found)
     end
   end
 end

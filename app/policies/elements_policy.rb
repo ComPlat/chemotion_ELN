@@ -7,19 +7,26 @@ class ElementsPolicy
   end
 
   def read_all?
-    allowed?(0)
+    allowed?(CollectionShare.permission_level(:read_elements))
   end
 
   def update_all?
-    allowed?(1)
+    allowed?(CollectionShare.permission_level(:edit_elements))
   end
 
+  # Bulk counterpart of ElementPolicy#share? — propagating elements onward, bundled with add_elements.
   def share_all?
-    allowed?(2)
+    allowed?(CollectionShare.permission_level(:add_elements))
   end
 
+  # Destroying element records is owner-only, mirroring ElementPolicy#destroy?. A sharee may unlink
+  # elements from a shared collection at :remove_elements, but that goes through
+  # Usecases::Collections::RemoveElements, not here.
   def destroy_all?
-    allowed?(3)
+    return false unless user_and_scope_present?
+    return false if record_ids_that_should_be_inaccessible.any?
+
+    records_only_from_own_collections?
   end
 
   def allowed?(level)

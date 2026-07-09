@@ -32,15 +32,27 @@
 #  fk_rails_...  (shared_with_id => users.id)
 #
 class CollectionShare < ApplicationRecord
-  # most permission levels are directed at the elements, except pass ownership, this refers to the collection itself
+  # Cumulative permission ladder, ordered by how destructive the capability is. A check is always
+  # "a share exists with permission_level >= N", so every rung silently grants the ones below it.
+  #
+  # 0 read_elements   read the collection and its elements
+  # 1 edit_elements   + edit element content (audited via logidze)
+  # 2 add_elements    + create new elements, add/import existing ones, propagate elements onward
+  # 3 remove_elements + unlink any element from this collection (NOT destroy the element record —
+  #                     destroying is owner-only, see ElementPolicy#destroy?)
+  # 4 manage_shares   + CRUD on this collection's collection_shares rows (delegated ACL admin)
+  # 5 pass_ownership  + transfer ownership of the collection (no endpoint yet)
+  #
+  # The frontend mirrors this in app/javascript/src/utilities/PermissionConst.js — keep in sync.
   PERMISSION_LEVELS = {
     read_elements: 0,
-    write_elements: 1,
-    share_collection: 2,
-    delete_elements: 3,
-    import_elements: 4,
-    pass_ownership: 6,
+    edit_elements: 1,
+    add_elements: 2,
+    remove_elements: 3,
+    manage_shares: 4,
+    pass_ownership: 5,
   }.freeze
+
   belongs_to :collection
   belongs_to :shared_with, class_name: 'User'
 
@@ -62,7 +74,10 @@ class CollectionShare < ApplicationRecord
     ->(detail_level_field, detail_level) { where("#{detail_level_field} >= ?", detail_level) },
   )
 
+  # @param key [Symbol] one of {PERMISSION_LEVELS}' keys
+  # @return [Integer] the level for +key+
+  # @raise [KeyError] if +key+ is not a known permission level
   def self.permission_level(key)
-    PERMISSION_LEVELS[key] || -1
+    PERMISSION_LEVELS.fetch(key)
   end
 end

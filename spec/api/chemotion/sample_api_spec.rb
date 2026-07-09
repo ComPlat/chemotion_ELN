@@ -653,12 +653,22 @@ describe Chemotion::SampleAPI do
         end
       end
 
+      # can_publish is gated on ElementPolicy#destroy?, which is owner-only: a sharee never publishes
+      # someone else's sample, at any rung.
       context 'when permission_level = 3' do
         let(:permission_level) { 3 }
 
         it 'returns correct can_publish & can_update' do
           expect(JSON.parse(response.body)['sample']['can_update']).to be true
-          expect(JSON.parse(response.body)['sample']['can_publish']).to be true
+          expect(JSON.parse(response.body)['sample']['can_publish']).to be false
+        end
+      end
+
+      context 'when permission_level is the highest rung' do
+        let(:permission_level) { CollectionShare.permission_level(:pass_ownership) }
+
+        it 'still cannot publish, because publishing is owner-only' do
+          expect(JSON.parse(response.body)['sample']['can_publish']).to be false
         end
       end
     end
@@ -951,7 +961,7 @@ describe Chemotion::SampleAPI do
       let(:writable_collection) do
         create(:collection, user: other_user).tap do |c|
           create(:collection_share, collection: c, shared_with: user,
-                                    permission_level: CollectionShare::PERMISSION_LEVELS[:write_elements])
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:add_elements])
         end
       end
       let(:params) do

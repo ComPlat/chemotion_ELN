@@ -16,7 +16,7 @@ describe Chemotion::WellplateAPI do
         :collection_share,
         collection: collection,
         shared_with: user,
-        permission_level: 3,
+        permission_level: CollectionShare.permission_level(:remove_elements),
         wellplate_detail_level: 10,
       )
     end
@@ -130,14 +130,28 @@ describe Chemotion::WellplateAPI do
   describe 'DELETE /api/v1/wellplates' do
     let(:wellplate) { create(:wellplate, name: 'test') }
 
-    before do
-      CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
+    context 'when the wellplate is in a collection the user owns' do
+      before { CollectionsWellplate.create!(wellplate: wellplate, collection: collection) }
+
+      it 'is able to delete a wellplate by id' do
+        expect do
+          delete "/api/v1/wellplates/#{wellplate.id}"
+        end.to change(Wellplate, :count).by(-1)
+      end
     end
 
-    it 'is able to delete a wellplate by id' do
-      expect do
-        delete "/api/v1/wellplates/#{wellplate.id}"
-      end.to change(Wellplate, :count).by(-1)
+    # Destroying an element record is owner-only — a sharee may unlink it from the shared collection
+    # instead (CollectionElementsAPI).
+    context 'when the wellplate is only in a collection shared with the user' do
+      before { CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user) }
+
+      it 'refuses to delete it, whatever the permission level' do
+        expect do
+          delete "/api/v1/wellplates/#{wellplate.id}"
+        end.not_to change(Wellplate, :count)
+
+        expect(response).to have_http_status :unauthorized
+      end
     end
   end
 

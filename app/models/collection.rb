@@ -92,8 +92,10 @@ class Collection < ApplicationRecord
     end,
   )
 
-  # returns collections the user may create elements in: own collections and those
-  # shared with at least write_elements permission (permission_level >= 1)
+  # returns collections the user may create elements in: own collections and those shared with at
+  # least add_elements permission. Creating an element inserts a collections_<element> row, so it is
+  # an "add", not an "edit" — a sharee at :edit_elements may change existing content but not inject
+  # new records into someone else's collection.
   scope(
     :writable_by,
     lambda do |user|
@@ -105,7 +107,7 @@ class Collection < ApplicationRecord
         where(
           collection_shares: {
             shared_with_id: user_and_group_ids,
-            permission_level: CollectionShare::PERMISSION_LEVELS[:write_elements]..,
+            permission_level: CollectionShare.permission_level(:add_elements)..,
           },
         ),
       )

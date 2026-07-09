@@ -21,7 +21,7 @@ module Usecases
         @collection = Collection.own_collections_for(current_user).find_by(id: collection_id)
         @collection ||= Collection.shared_with_minimum_permission_level(
           current_user,
-          CollectionShare.permission_level(:delete_elements),
+          CollectionShare.permission_level(:remove_elements),
         ).find_by(id: collection_id)
 
         return if @collection

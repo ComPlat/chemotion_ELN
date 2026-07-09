@@ -41,52 +41,41 @@ describe Chemotion::ElementAPI do
       end
     end
 
-    context 'when the collection is shared with the user above the threshold' do
-      let(:collection) { create(:collection, user: other_user) }
+    # Destroying the element records themselves is owner-only: a sharee unlinks them from the
+    # collection instead (Usecases::Collections::RemoveElements). No rung on the ladder grants this.
+    CollectionShare::PERMISSION_LEVELS.each_key do |level_key|
+      context "when the collection is only shared with the user at :#{level_key}" do
+        let(:collection) { create(:collection, user: other_user) }
 
-      before do
-        create(:collection_share, collection: collection, shared_with: user,
-                                  permission_level: CollectionShare.permission_level(:share_collection))
-      end
+        before do
+          create(:collection_share, collection: collection, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(level_key))
+        end
 
-      it 'deletes the selected element' do
-        expect { delete '/api/v1/ui_state/', params: params, as: :json }
-          .to change(Sample, :count).by(-1)
-      end
-    end
+        it 'is forbidden' do
+          expect { delete '/api/v1/ui_state/', params: params, as: :json }
+            .not_to change(Sample, :count)
 
-    context 'when the collection is shared with the user below the threshold' do
-      let(:collection) { create(:collection, user: other_user) }
-
-      before do
-        create(:collection_share, collection: collection, shared_with: user,
-                                  permission_level: CollectionShare.permission_level(:write_elements))
-      end
-
-      it 'is forbidden' do
-        expect { delete '/api/v1/ui_state/', params: params, as: :json }
-          .not_to change(Sample, :count)
-
-        expect(response).to have_http_status(:forbidden)
+          expect(response).to have_http_status(:forbidden)
+        end
       end
     end
 
-    # The user holds two shares. The permissive one is their own; the group's alone would forbid the
-    # request. Resolving to the maximum makes the outcome independent of which row the DB returns
-    # first — previously a bare find_by picked either.
-    context 'when the user holds both a permissive direct share and a restrictive group share' do
+    context 'when the user holds both a direct and a group share, at the highest rung' do
       let(:collection) { create(:collection, user: other_user) }
 
       before do
         create(:collection_share, collection: collection, shared_with: group,
                                   permission_level: CollectionShare.permission_level(:read_elements))
         create(:collection_share, collection: collection, shared_with: user,
-                                  permission_level: CollectionShare.permission_level(:import_elements))
+                                  permission_level: CollectionShare.permission_level(:pass_ownership))
       end
 
-      it 'deletes the selected element, whichever share the database yields first' do
+      it 'is still forbidden — no share destroys the owner\'s records' do
         expect { delete '/api/v1/ui_state/', params: params, as: :json }
-          .to change(Sample, :count).by(-1)
+          .not_to change(Sample, :count)
+
+        expect(response).to have_http_status(:forbidden)
       end
     end
 

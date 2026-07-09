@@ -104,17 +104,29 @@ describe Chemotion::PermissionAPI do
         post '/api/v1/permissions/status', params: params
       end
 
-      context 'when the permission level is high enough for deletion' do
-        let(:permission_level) { CollectionShare.permission_level(:delete_elements) }
+      # Destroying element records is owner-only, so `deletion_allowed` is false at every shared rung.
+      # A sharee at :remove_elements may unlink elements from the collection, which is a different
+      # operation (CollectionElementsAPI), not mass deletion.
+      context 'when the permission level is the highest non-ownership rung' do
+        let(:permission_level) { CollectionShare.permission_level(:manage_shares) }
 
-        it 'returns deletion_allowed=true and sharing_allowed=true' do
-          expect(parsed_json_response['deletion_allowed']).to be true
+        it 'returns deletion_allowed=false and sharing_allowed=true' do
+          expect(parsed_json_response['deletion_allowed']).to be false
           expect(parsed_json_response['sharing_allowed']).to be true
         end
       end
 
-      context 'when the permission level is only sufficient for sharing' do
-        let(:permission_level) { CollectionShare.permission_level(:share_collection) }
+      context 'when the permission level allows removing elements from the collection' do
+        let(:permission_level) { CollectionShare.permission_level(:remove_elements) }
+
+        it 'still returns deletion_allowed=false, because destroying records is owner-only' do
+          expect(parsed_json_response['deletion_allowed']).to be false
+          expect(parsed_json_response['sharing_allowed']).to be true
+        end
+      end
+
+      context 'when the permission level is only sufficient for sharing elements onward' do
+        let(:permission_level) { CollectionShare.permission_level(:add_elements) }
 
         it 'returns deletion_allowed=false and sharing_allowed=true' do
           expect(parsed_json_response['deletion_allowed']).to be false
@@ -123,7 +135,7 @@ describe Chemotion::PermissionAPI do
       end
 
       context 'when the permission level is too low' do
-        let(:permission_level) { CollectionShare.permission_level(:write_elements) }
+        let(:permission_level) { CollectionShare.permission_level(:edit_elements) }
 
         it 'returns deletion_allowed=false and sharing_allowed=false' do
           expect(parsed_json_response['deletion_allowed']).to be false
