@@ -22,8 +22,9 @@
 #
 # Indexes
 #
-#  index_collection_shares_on_collection_id   (collection_id)
-#  index_collection_shares_on_shared_with_id  (shared_with_id)
+#  index_collection_shares_on_collection_id                     (collection_id)
+#  index_collection_shares_on_collection_id_and_shared_with_id  (collection_id,shared_with_id) UNIQUE
+#  index_collection_shares_on_shared_with_id                    (shared_with_id)
 #
 # Foreign Keys
 #
