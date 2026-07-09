@@ -30,7 +30,12 @@ RSpec.describe ElementsPolicy do
     create(:collection_share, collection: user_2_collection, shared_with: user_1, permission_level: permission_level)
   end
   let(:collection_shared_to_user_2) do
-    create(:collection_share, collection: user_3_collection, shared_with: user_2, permission_level: CollectionShare.permission_level(:add_elements))
+    create(
+      :collection_share,
+      collection: user_3_collection,
+      shared_with: user_2,
+      permission_level: CollectionShare.permission_level(:add_elements),
+    )
   end
 
   before do

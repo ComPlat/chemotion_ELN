@@ -10,12 +10,12 @@ RSpec.describe 'migration 20260709150000: RenumberCollectionSharePermissionLevel
 
   let(:owner) { create(:person) }
 
-  # permission_level is validated nowhere at the model layer (deliberately — the data migration that
-  # seeds collection_shares writes legacy values), so legacy levels can be written directly.
+  # Writes a raw legacy level, bypassing the factory's (redesigned) default. update_column is the
+  # point here: these rows are what a pre-migration database actually holds.
   def share_with_level(level)
     collection = create(:collection, user: owner)
     share = create(:collection_share, collection: collection, shared_with: create(:person))
-    share.update_column(:permission_level, level)
+    share.update_column(:permission_level, level) # rubocop:disable Rails/SkipsModelValidations
     share
   end
 

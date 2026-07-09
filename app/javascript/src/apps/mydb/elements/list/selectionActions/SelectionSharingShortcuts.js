@@ -8,7 +8,7 @@ export default class SharingShortcuts {
       reactionDetailLevel: 10,
       wellplateDetailLevel: 10,
       screenDetailLevel: 10
-    }
+    };
   }
 
   // A partner edits existing content. Adding new elements is a separate, higher rung.
@@ -19,7 +19,7 @@ export default class SharingShortcuts {
       reactionDetailLevel: 0,
       wellplateDetailLevel: 10,
       screenDetailLevel: 1
-    }
+    };
   }
 
   static collaborator() {
@@ -29,7 +29,7 @@ export default class SharingShortcuts {
       reactionDetailLevel: 0,
       wellplateDetailLevel: 0,
       screenDetailLevel: 0
-    }
+    };
   }
 
   static reviewer() {
@@ -39,7 +39,7 @@ export default class SharingShortcuts {
       reactionDetailLevel: 10,
       wellplateDetailLevel: 1,
       screenDetailLevel: 0
-    }
+    };
   }
 
   // A supervisor administrates the collection's share list on the owner's behalf.
@@ -50,6 +50,6 @@ export default class SharingShortcuts {
       reactionDetailLevel: 10,
       wellplateDetailLevel: 10,
       screenDetailLevel: 10
-    }
+    };
   }
 }

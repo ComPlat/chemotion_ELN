@@ -17,7 +17,12 @@ describe Chemotion::ScreenAPI do
   let(:other_user_collection) { create(:collection, user_id: other_user.id) }
   let(:other_shared_collection) do
     create(:collection, user_id: other_user.id).tap do |collection|
-      create(:collection_share, collection: collection, shared_with: user, permission_level: CollectionShare.permission_level(:remove_elements))
+      create(
+        :collection_share,
+        collection: collection,
+        shared_with: user,
+        permission_level: CollectionShare.permission_level(:remove_elements),
+      )
     end
   end
 

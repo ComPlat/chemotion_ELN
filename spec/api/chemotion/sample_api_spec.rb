@@ -79,7 +79,9 @@ describe Chemotion::SampleAPI do
       }
     end
 
-    let(:subsamples) { Sample.where(name: %w[s1 s2]).where.not(id: [s1.id, s2.id]) }
+    # order(:id) — the example indexes subsamples[0]/[1] and pairs them with s1/s2, so the rows must
+    # come back in creation order rather than whatever order Postgres happens to return.
+    let(:subsamples) { Sample.where(name: %w[s1 s2]).where.not(id: [s1.id, s2.id]).order(:id) }
 
     before do
       s1
