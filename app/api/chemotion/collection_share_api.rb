@@ -73,8 +73,12 @@ module Chemotion
         requires :id
       end
       delete '/:id' do
+        # The owner may remove any share on their collection; a recipient may only reject the share
+        # addressed to them personally. `shared_with` would also match a share held by one of the
+        # user's *groups*, letting any member revoke the collection for every other member.
         share = CollectionShare.shared_by(current_user).find_by(id: params[:id])
-        share ||= CollectionShare.shared_with(current_user).find_by(id: params[:id])
+        share ||= CollectionShare.shared_directly_with(current_user).find_by(id: params[:id])
+        error!('403 Forbidden', 403) if share.nil?
 
         collection = share.collection
 

@@ -67,4 +67,77 @@ RSpec.describe Collection do
       expect(all_collection.label).to eq 'All'
     end
   end
+
+  describe '.serialized_shared_collections_for' do
+    let(:owner) { create(:person) }
+    let(:recipient) { create(:person) }
+    let(:group) { create(:group, users: [recipient]) }
+    let(:shared_collection) { create(:collection, user: owner) }
+
+    def rows_for(user)
+      described_class.serialized_shared_collections_for(user).to_a
+    end
+
+    context 'when the collection is shared directly and again through the users group' do
+      before do
+        create(:collection_share, collection: shared_collection, shared_with: group,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+        create(:collection_share, collection: shared_collection, shared_with: recipient,
+                                  permission_level: CollectionShare.permission_level(:delete_elements))
+      end
+
+      it 'returns the collection exactly once' do
+        expect(rows_for(recipient).map(&:id)).to eq([shared_collection.id])
+      end
+
+      it 'reports the highest of the two permission levels, matching what the policies enforce' do
+        expect(rows_for(recipient).first.permission_level)
+          .to eq(CollectionShare.permission_level(:delete_elements))
+      end
+
+      it 'exposes the recipients own share, never the groups' do
+        own_share = CollectionShare.find_by(collection: shared_collection, shared_with: recipient)
+
+        expect(rows_for(recipient).first.collection_share_id).to eq(own_share.id)
+      end
+
+      it 'flags that the collection also arrives through a group' do
+        expect(rows_for(recipient).first.shared_via_group).to be true
+      end
+    end
+
+    context 'when the collection is shared only through the users group' do
+      before do
+        create(:collection_share, collection: shared_collection, shared_with: group,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+      end
+
+      it 'returns the collection' do
+        expect(rows_for(recipient).map(&:id)).to eq([shared_collection.id])
+      end
+
+      # No share of the recipients own => nothing for them to reject. They leave the group instead.
+      it 'exposes no collection_share_id' do
+        expect(rows_for(recipient).first.collection_share_id).to be_nil
+      end
+
+      it 'flags the collection as group-derived' do
+        expect(rows_for(recipient).first.shared_via_group).to be true
+      end
+    end
+
+    context 'when the collection is shared only directly' do
+      before do
+        create(:collection_share, collection: shared_collection, shared_with: recipient,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+      end
+
+      it 'is not flagged as group-derived and exposes the share' do
+        row = rows_for(recipient).first
+
+        expect(row.shared_via_group).to be false
+        expect(row.collection_share_id).not_to be_nil
+      end
+    end
+  end
 end

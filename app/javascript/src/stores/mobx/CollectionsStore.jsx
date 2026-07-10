@@ -24,6 +24,7 @@ export const Collection = types.model({
   permission_level: types.maybeNull(types.integer), // temp for testing
   position: types.maybeNull(types.number),
   shared: types.maybeNull(types.boolean),
+  shared_via_group: types.optional(types.boolean, false),
   tabs_segment: types.optional(types.frozen({}), {}),
 }).actions(self => ({
   addChild(collection) {

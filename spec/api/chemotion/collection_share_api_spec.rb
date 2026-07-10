@@ -89,5 +89,51 @@ describe Chemotion::CollectionShareAPI do
       end.to change(CollectionShare, :count).by(-1)
          .and change(collection, :shared?).from(true).to(false)
     end
+
+    context 'when the share belongs to one of the requesters groups' do
+      let(:collection) { create(:collection, user: other_user) }
+      let(:group) { create(:group, users: [user]) }
+      let(:group_share) { create(:collection_share, collection: collection, shared_with: group) }
+
+      before { group_share }
+
+      # The group's share is not the requester's to reject: destroying it would revoke the collection
+      # for every other member. To drop group-derived access the user leaves the group.
+      it 'refuses to delete it' do
+        expect { delete "/api/v1/collection_shares/#{group_share.id}" }
+          .not_to change(CollectionShare, :count)
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'when the share is neither the requesters nor on a collection they own' do
+      let(:foreign_share) do
+        create(:collection_share, collection: create(:collection, user: other_user), shared_with: third_user)
+      end
+
+      before { foreign_share }
+
+      it 'responds 403 rather than raising' do
+        expect { delete "/api/v1/collection_shares/#{foreign_share.id}" }
+          .not_to change(CollectionShare, :count)
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'when the requester rejects their own direct share' do
+      let(:collection) { create(:collection, user: other_user) }
+      let(:own_share) { create(:collection_share, collection: collection, shared_with: user) }
+
+      before { own_share }
+
+      it 'deletes it' do
+        expect { delete "/api/v1/collection_shares/#{own_share.id}" }
+          .to change(CollectionShare, :count).by(-1)
+
+        expect(response).to have_http_status(:no_content)
+      end
+    end
   end
 end

@@ -146,19 +146,42 @@ class Collection < ApplicationRecord
         .distinct
     end,
   )
+  # One row per **collection**, not per share. A collection can be shared to the same user twice —
+  # directly, and again through one of their groups — and those two rows may carry different
+  # permission levels. `shared_collections_for`'s `.distinct` cannot collapse them because the
+  # selected `collection_shares.id` / `permission_level` differ, so the collection would appear
+  # twice in the recipient's tree with no explanation.
+  #
+  # - `permission_level` is the MAX across the user's own share and their groups' shares. That is
+  #   already the effective grant: every policy check is `shared_with_minimum_permission_level(..).any?`
+  #   and `ElementsPolicy` takes `MAX(collection_shares.permission_level)` explicitly.
+  # - `collection_share_id` is the user's **direct** share, and is NULL when access is purely
+  #   group-derived. Rejecting a share must never destroy the group's share row on behalf of every
+  #   other member — to drop group-derived access a user leaves the group.
+  # - `shared_via_group` lets the UI explain *why* a collection is there.
   scope(
     :serialized_shared_collections_for,
     lambda do |user|
-      shared_collections_for(user).select(
-        [
-          'collections.*',
-          'collection_shares.id AS collection_share_id',
-          'collection_shares.permission_level AS permission_level',
-          'inventories.name AS inventory_name',
-          'inventories.prefix AS inventory_prefix',
-          'concat(users.first_name, chr(32), users.last_name, chr(40), users.name_abbreviation, chr(41)) AS owner',
-        ].join(', '),
-      )
+      # user.id comes from the DB; .to_i keeps it un-injectable inside the aggregate FILTERs, which
+      # cannot take a bind parameter through .select.
+      own_share = "collection_shares.shared_with_id = #{user.id.to_i}"
+
+      joins(:collection_shares)
+        .joins(:user)
+        .left_joins(:inventory)
+        .where(collection_shares: { shared_with_id: [user.id, *user.group_ids] })
+        .group('collections.id, inventories.id, users.id')
+        .select(
+          [
+            'collections.*',
+            "MAX(collection_shares.id) FILTER (WHERE #{own_share}) AS collection_share_id",
+            'MAX(collection_shares.permission_level) AS permission_level',
+            "bool_or(NOT (#{own_share})) AS shared_via_group",
+            'inventories.name AS inventory_name',
+            'inventories.prefix AS inventory_prefix',
+            'concat(users.first_name, chr(32), users.last_name, chr(40), users.name_abbreviation, chr(41)) AS owner',
+          ].join(', '),
+        )
     end,
   )
 

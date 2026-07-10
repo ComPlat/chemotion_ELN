@@ -15,6 +15,8 @@ module Entities
     expose! :owner
     expose! :is_locked
     expose! :permission_level
+    # nil when access is purely group-derived — there is no share of the user's own to reject
     expose! :collection_share_id
+    expose! :shared_via_group
   end
 end
