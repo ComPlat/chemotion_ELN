@@ -140,4 +140,86 @@ RSpec.describe Collection do
       end
     end
   end
+
+  describe '#detail_levels_for_user' do
+    let(:owner) { create(:person) }
+    let(:user) { create(:person) }
+    let(:group) { create(:group, users: [user]) }
+    let(:collection) { create(:collection, user: owner) }
+
+    let(:all_owner_levels) { described_class::DETAIL_LEVEL_KEYS.index_with { described_class::OWNER_LEVEL } }
+    let(:all_zero) { described_class::DETAIL_LEVEL_KEYS.index_with { 0 } }
+
+    it 'grants an owner every level' do
+      own_collection = create(:collection, user: user)
+
+      expect(own_collection.detail_levels_for_user(user)).to eq(all_owner_levels)
+    end
+
+    # own_collections_for / accessible_for / writable_by all treat a group's collection as its
+    # members'. This used to compare `collection.user != current_user` and fall through to zeros.
+    it 'grants a group member every level on a collection owned by that group' do
+      group_collection = create(:collection, user: group)
+
+      expect(group_collection.detail_levels_for_user(user)).to eq(all_owner_levels)
+      expect(group_collection.owned_by?(user)).to be true
+    end
+
+    it 'returns zeros when the user has neither ownership nor a share' do
+      expect(collection.detail_levels_for_user(user)).to eq(all_zero)
+    end
+
+    it 'returns the levels of a share held directly' do
+      create(:collection_share, collection: collection, shared_with: user,
+                                permission_level: 1, sample_detail_level: 3)
+
+      levels = collection.detail_levels_for_user(user)
+
+      expect(levels[:permission_level]).to eq(1)
+      expect(levels[:sample_detail_level]).to eq(3)
+    end
+
+    # The whole point of Bug A: no share of the user's own, so the group's share must be found.
+    it 'returns the levels of a share held only by the users group' do
+      create(:collection_share, collection: collection, shared_with: group,
+                                permission_level: 2, sample_detail_level: 7)
+
+      levels = collection.detail_levels_for_user(user)
+
+      expect(levels[:permission_level]).to eq(2)
+      expect(levels[:sample_detail_level]).to eq(7)
+    end
+
+    context 'when the user holds both a direct and a group share' do
+      # Deliberately crossed: the direct share wins on permission_level, the group's on
+      # sample_detail_level. A "direct share wins" implementation fails the second expectation,
+      # a "group wins" one fails the first.
+      before do
+        create(:collection_share, collection: collection, shared_with: user,
+                                  permission_level: 4, sample_detail_level: 1)
+        create(:collection_share, collection: collection, shared_with: group,
+                                  permission_level: 0, sample_detail_level: 9)
+      end
+
+      it 'resolves each level to the maximum across them' do
+        levels = collection.detail_levels_for_user(user)
+
+        expect(levels[:permission_level]).to eq(4)
+        expect(levels[:sample_detail_level]).to eq(9)
+      end
+    end
+
+    it 'ignores a share on the same collection held by somebody else' do
+      create(:collection_share, collection: collection, shared_with: user, permission_level: 1)
+      create(:collection_share, collection: collection, shared_with: create(:person), permission_level: 4)
+
+      expect(collection.detail_levels_for_user(user)[:permission_level]).to eq(1)
+    end
+
+    it 'ignores a share held by a group the user does not belong to' do
+      create(:collection_share, collection: collection, shared_with: create(:group), permission_level: 4)
+
+      expect(collection.detail_levels_for_user(user)).to eq(all_zero)
+    end
+  end
 end

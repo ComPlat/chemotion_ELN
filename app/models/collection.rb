@@ -235,5 +235,48 @@ class Collection < ApplicationRecord
   def self.get_all_collection_for_user(user_id)
     find_by(user_id: user_id, label: 'All', is_locked: true)
   end
+
+  # The keys {#detail_levels_for_user} resolves. Extend when a new element type gains a detail level.
+  DETAIL_LEVEL_KEYS = %i[
+    permission_level
+    sample_detail_level
+    reaction_detail_level
+    wellplate_detail_level
+    screen_detail_level
+    researchplan_detail_level
+    element_detail_level
+    celllinesample_detail_level
+    devicedescription_detail_level
+    sequencebasedmacromoleculesample_detail_level
+  ].freeze
+
+  # The level granted to an owner. Above every real rung, so an owner passes any threshold.
+  OWNER_LEVEL = 10
+
+  # A collection owned by a group belongs to each of its members, which is how +own_collections_for+,
+  # +accessible_for+ and +writable_by+ all read it.
+  def owned_by?(user)
+    user_id.in?([user.id, *user.group_ids])
+  end
+
+  # What +user+ effectively gets on this collection.
+  #
+  # A user may hold several shares on one collection at once — their own, plus one for each group
+  # they belong to — and those shares may disagree. The effective value of each level is their
+  # **maximum**, which is the rule the authorization layer already applies: +ElementPolicy+ checks
+  # +shared_with_minimum_permission_level(..).any?+ and both +ElementsPolicy+ and
+  # {ElementDetailLevelCalculator} take an explicit +MAX+.
+  #
+  # @param user [User]
+  # @return [Hash{Symbol => Integer}] every key of {DETAIL_LEVEL_KEYS}
+  def detail_levels_for_user(user)
+    return DETAIL_LEVEL_KEYS.index_with { OWNER_LEVEL } if owned_by?(user)
+
+    # Loaded once and reduced in memory: a handful of rows, versus one MAX query per key.
+    shares = CollectionShare.shared_with(user).where(collection: self).to_a
+    return DETAIL_LEVEL_KEYS.index_with { 0 } if shares.empty?
+
+    DETAIL_LEVEL_KEYS.index_with { |key| shares.pluck(key).compact.max || 0 }
+  end
 end
 # rubocop:enable Metrics/AbcSize, Rails/HasManyOrHasOneDependent,Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
