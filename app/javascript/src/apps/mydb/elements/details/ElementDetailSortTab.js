@@ -11,8 +11,7 @@ import PropTypes from 'prop-types';
 import { CloseButton, Popover } from 'react-bootstrap';
 import { List } from 'immutable';
 import { isEmpty, set } from 'lodash';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import UserActions from 'src/stores/alt/actions/UserActions';
+import { reaction } from 'mobx';
 import TabLayoutEditor from 'src/apps/mydb/elements/tabLayout/TabLayoutEditor';
 import ConfigOverlayButton from 'src/components/common/ConfigOverlayButton';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -24,15 +23,16 @@ const isAllCollection = (collection) => Boolean(
   collection?.is_locked && collection?.label === 'All'
 );
 
-export default function ElementDetailSortTab({
+const ElementDetailSortTab = ({
   type,
   onTabPositionChanged,
   availableTabs,
   tabTitles,
   addInventoryTab,
   openedFromCollectionId,
-}) {
+}) => {
   const { collections } = useContext(StoreContext);
+  const { userStore } = useContext(StoreContext);
   const [visible, setVisible] = useState(List());
   const [hidden, setHidden] = useState(List());
   const addInventoryTabRef = useRef(addInventoryTab);
@@ -92,7 +92,7 @@ export default function ElementDetailSortTab({
     onTabPositionChangedRef.current(nextLayout.visible);
   }, [type]);
 
-  const refreshTabLayout = useCallback((state) => {
+  const refreshTabLayout = useCallback((profile) => {
     const collection = getOpenedFromCollection() || UIStore.getState().currentCollection;
 
     const rawTabs = collection?.tabs_segment;
@@ -100,7 +100,7 @@ export default function ElementDetailSortTab({
     if (isAllCollection(collection)) { collectionTabs = null; }
 
     const layout = (!collectionTabs || isEmpty(collectionTabs[`${type}`]))
-      ? state.profile?.data?.[`layout_detail_${type}`]
+      ? profile?.data?.[`layout_detail_${type}`]
       : collectionTabs[`${type}`];
 
     updateTabLayout(layout);
@@ -114,10 +114,10 @@ export default function ElementDetailSortTab({
       collections.updateCollection(currentCollection, tabSegment);
     }
 
-    const userProfile = UserStore.getState().profile;
+    const userProfile = userStore.profile;
     set(userProfile, `data.layout_detail_${type}`, layout);
-    UserActions.updateUserProfile(userProfile);
-  }, [collections, hidden, type, visible]);
+    userStore.updateUserProfile(userProfile);
+  }, [collections, hidden, type, visible, userStore]);
 
   const onLayoutChange = useCallback((nextVisible, nextHidden) => {
     setVisible(nextVisible);
@@ -130,18 +130,19 @@ export default function ElementDetailSortTab({
   ), [tabTitles]);
 
   useEffect(() => {
-    UserActions.fetchCurrentUser();
-    UserStore.listen(refreshTabLayout);
-    refreshTabLayout(UserStore.getState());
+    refreshTabLayout(userStore.profile);
 
-    return () => {
-      UserStore.unlisten(refreshTabLayout);
-    };
-  }, [refreshTabLayout]);
+    const disposeReaction = reaction(
+      () => userStore.profile,
+      (profile) => refreshTabLayout(profile),
+    );
+
+    return () => disposeReaction();
+  }, [refreshTabLayout, userStore]);
 
   useEffect(() => {
-    refreshTabLayout(UserStore.getState());
-  }, [addInventoryTab, availableTabsKey, refreshTabLayout]);
+    refreshTabLayout(userStore.profile);
+  }, [addInventoryTab, availableTabsKey, refreshTabLayout, userStore.profile]);
 
   const { currentCollection } = UIStore.getState();
   const isOwnCollection = collections.isOwnCollection(currentCollection?.id);
@@ -171,7 +172,7 @@ export default function ElementDetailSortTab({
       onClose={updateLayout}
     />
   );
-}
+};
 
 ElementDetailSortTab.propTypes = {
   type: PropTypes.string.isRequired,
@@ -186,3 +187,5 @@ ElementDetailSortTab.defaultProps = {
   tabTitles: {},
   addInventoryTab: false,
 };
+
+export default ElementDetailSortTab;
