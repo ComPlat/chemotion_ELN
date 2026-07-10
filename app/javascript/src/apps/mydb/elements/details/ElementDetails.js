@@ -16,7 +16,6 @@ import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/Re
 import DeviceDescriptionDetails from 'src/apps/mydb/elements/details/deviceDescriptions/DeviceDescriptionDetails';
 import SampleDetails from 'src/apps/mydb/elements/details/samples/SampleDetails';
 import ScreenDetails from 'src/apps/mydb/elements/details/screens/ScreenDetails';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import WellplateDetails from 'src/apps/mydb/elements/details/wellplates/WellplateDetails';
 import CellLineDetails from 'src/apps/mydb/elements/details/cellLines/CellLineDetails';
 import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails';
@@ -26,7 +25,7 @@ import SequenceBasedMacromoleculeSampleDetails from 'src/apps/mydb/elements/deta
 import ExplorerContainer from 'src/apps/mydb/elements/details/explorer/ExplorerContainer';
 import LiteratureDetails from 'src/apps/mydb/elements/details/literature/LiteratureDetails';
 import ElementIcon from 'src/components/common/ElementIcon';
-import CreateElementButton from '../../../../components/navigation/CreateElementButton';
+import CreateElementButton from 'src/components/navigation/CreateElementButton';
 
 const tabInfoHash = {
   metadata: {
@@ -110,7 +109,6 @@ export default class ElementDetails extends Component {
       activeKey,
       deletingElement,
       showTooltip: false,
-      genericEls: UserStore.getState().genericEls || [],
     };
 
     this.onDetailChange = this.onDetailChange.bind(this);
