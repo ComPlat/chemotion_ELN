@@ -11,7 +11,7 @@ import MttAnalysisDetailsModal from 'src/components/generic/wellplatesTab/MttAna
 import MttResultsTable from 'src/components/generic/wellplatesTab/MttResultsTable';
 import MttRequestStatusTable from 'src/components/generic/wellplatesTab/MttRequestStatusTable';
 import { flattenAnalysesFromOutputs } from 'src/utilities/mttDataProcessor';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const target = {
   drop(props, monitor) {
@@ -35,6 +35,7 @@ const collect = (connect, monitor) => ({
 });
 
 class GenericElWellplates extends Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     this.state = {
@@ -210,7 +211,7 @@ class GenericElWellplates extends Component {
 
   handleBatchSendToSample(selectedItems) {
     if (selectedItems.length === 0) {
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'No Selection',
         message: 'Please select at least one analysis to send to samples.',
         level: 'warning',
@@ -249,7 +250,7 @@ class GenericElWellplates extends Component {
             sendingToSample: false,
             selectedAnalyses: {}
           });
-          NotificationActions.add({
+          this.context.notifications.add({
             title: 'Measurements Created',
             message: `Successfully created ${created.length} measurement${created.length > 1 ? 's' : ''}. Check the Measurements tab to view results.`,
             level: 'success',
@@ -258,7 +259,7 @@ class GenericElWellplates extends Component {
           });
         } else if (created.length > 0 && failed.length > 0) {
           this.setState({ sendingToSample: false, selectedAnalyses: {} });
-          NotificationActions.add({
+          this.context.notifications.add({
             title: 'Partial Success',
             message: `Created ${created.length} measurement(s), but ${failed.length} failed.`,
             level: 'warning',
@@ -270,7 +271,7 @@ class GenericElWellplates extends Component {
           const errorMsg = failed.length > 0 && failed[0].errors
             ? failed[0].errors[0]
             : 'Unknown error';
-          NotificationActions.add({
+          this.context.notifications.add({
             title: 'Error',
             message: `Failed to create measurements. ${errorMsg}`,
             level: 'error',
@@ -282,7 +283,7 @@ class GenericElWellplates extends Component {
       .catch((error) => {
         console.error('Error sending to sample:', error);
         this.setState({ sendingToSample: false });
-        NotificationActions.add({
+        this.context.notifications.add({
           title: 'Request Failed',
           message: 'Failed to send results to samples. Please try again.',
           level: 'error',

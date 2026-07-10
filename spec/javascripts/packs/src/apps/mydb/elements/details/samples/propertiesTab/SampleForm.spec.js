@@ -2,11 +2,7 @@ import expect from 'expect';
 import sinon from 'sinon';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
 import SampleForm from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleForm';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import SampleFactory from 'factories/SampleFactory';
 
 configure({ adapter: new Adapter() });
@@ -29,17 +25,17 @@ const findControl = (wrapper) => wrapper.find('FormControl');
 describe('SampleForm new property inputs', () => {
   let sample;
   let instance;
+  let notificationCalls;
 
   beforeEach(async () => {
-    sinon.stub(NotificationActions, 'add');
+    notificationCalls = [];
     sample = await SampleFactory.build('empty');
     sample.can_update = true;
     sample.xref = {};
     instance = buildInstance(sample);
-  });
-
-  afterEach(() => {
-    NotificationActions.add.restore();
+    // SampleForm uses this.context.notifications (legacy React context).
+    // Set it manually since the instance is created directly, not via mount/shallow.
+    instance.context = { notifications: { add: (n) => notificationCalls.push(n) } };
   });
 
   describe('numericInputWithAddon', () => {
@@ -47,7 +43,7 @@ describe('SampleForm new property inputs', () => {
       const wrapper = shallow(instance.numericInputWithAddon(sample, 'xref_moisture', 'Moisture', '%', 0, 100));
       findControl(wrapper).simulate('change', { target: { value: '150' } });
       expect(instance.handleFieldChanged.calledWith('xref_moisture', 150)).toEqual(true);
-      expect(NotificationActions.add.called).toEqual(false);
+      expect(notificationCalls.length).toEqual(0);
     });
 
     it('stores decimal values and exposes step="any"', () => {
@@ -73,21 +69,21 @@ describe('SampleForm new property inputs', () => {
       const wrapper = shallow(instance.numericInputWithAddon(sample, 'xref_moisture', 'Moisture', '%', 0, 100));
       findControl(wrapper).simulate('blur', { target: { value: '150' } });
       expect(instance.handleFieldChanged.calledWith('xref_moisture', 100)).toEqual(true);
-      expect(NotificationActions.add.calledOnce).toEqual(true);
+      expect(notificationCalls.length).toEqual(1);
     });
 
     it('clamps to the min bound on blur and notifies', () => {
       const wrapper = shallow(instance.numericInputWithAddon(sample, 'xref_particle_size', 'Particle size', 'µm', 0));
       findControl(wrapper).simulate('blur', { target: { value: '-5' } });
       expect(instance.handleFieldChanged.calledWith('xref_particle_size', 0)).toEqual(true);
-      expect(NotificationActions.add.calledOnce).toEqual(true);
+      expect(notificationCalls.length).toEqual(1);
     });
 
     it('does not clamp or notify for an in-range value on blur', () => {
       const wrapper = shallow(instance.numericInputWithAddon(sample, 'xref_moisture', 'Moisture', '%', 0, 100));
       findControl(wrapper).simulate('blur', { target: { value: '42' } });
       expect(instance.handleFieldChanged.called).toEqual(false);
-      expect(NotificationActions.add.called).toEqual(false);
+      expect(notificationCalls.length).toEqual(0);
     });
   });
 
