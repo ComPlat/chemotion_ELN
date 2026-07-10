@@ -4,9 +4,6 @@ const Adapter = require('@wojtekmaj/enzyme-adapter-react-17');
 const expect = require('expect');
 const sinon = require('sinon');
 const {
-  describe, it, beforeEach, afterEach
-} = require('mocha');
-const {
   Alert, Button, Modal
 } = require('react-bootstrap');
 const AppModal = require('src/components/common/AppModal').default;

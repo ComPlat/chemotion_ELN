@@ -3,9 +3,6 @@ import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
 import ToggleButton from 'src/components/common/ToggleButton';
 
 configure({ adapter: new Adapter() });

@@ -1,10 +1,6 @@
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
-
 describe('ComponentsFetcher methods', () => {
   let fetchStub;
 

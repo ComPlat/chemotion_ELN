@@ -2,9 +2,6 @@
 
 import React from 'react';
 import expect from 'expect';
-import {
-  describe, it
-} from 'mocha';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import WellplateSizeDropdown from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateSizeDropdown';

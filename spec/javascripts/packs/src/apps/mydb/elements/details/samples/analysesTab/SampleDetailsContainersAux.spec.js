@@ -4,10 +4,6 @@ import sinon from 'sinon';
 import { configure, mount, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import {
-  describe, it, beforeEach
-} from 'mocha';
-
-import {
   AnalysesHeader
 } from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainersAux';
 

@@ -4,10 +4,6 @@ import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  beforeEach, afterEach, describe, it
-} from 'mocha';
-
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 // Note: do not import UnitsConversion helpers here to avoid tautological tests
@@ -16,7 +12,7 @@ import {
   createCompleteGasPhaseReaction,
   createGasProductSample,
   createFeedstockSample,
-} from '../../../../../../../../helper/gasPhaseReactionTestHelpers';
+} from 'helper/gasPhaseReactionTestHelpers';
 
 configure({ adapter: new Adapter() });
 

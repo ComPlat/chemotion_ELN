@@ -1,6 +1,3 @@
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
 import expect from 'expect';
 import sinon from 'sinon';
 
