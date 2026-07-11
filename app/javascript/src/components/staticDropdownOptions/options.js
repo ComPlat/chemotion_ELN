@@ -256,13 +256,6 @@ export const defaultMultiSolventsSmilesOptions = [{
     density: 1.03
   }
 }, {
-  label: 'Pentane',
-  value: {
-    external_label: 'Pentane',
-    smiles: 'CCCCC',
-    density: 0.63
-  }
-}, {
   label: 'n-Pentane',
   value: {
     external_label: 'n-Pentane',
