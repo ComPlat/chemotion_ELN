@@ -56,8 +56,9 @@ function buildWrappedComponent(name, BaseComponent) {
       ...Object.entries(styleDefaults).reduce(
         (acc, [key, defaults]) => {
           acc[key] = (base, state) => ({
-            ...(styles[key] ? styles[key](base, state) : base),
+            ...base,
             ...defaults,
+            ...(styles[key] ? styles[key](base, state) : {}),
           });
           return acc;
         },
