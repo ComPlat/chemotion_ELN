@@ -42,6 +42,13 @@ module Chemotion
         end
       end
 
+      namespace :workshop_guide do
+        desc 'Whether workshop wiki content has been synced (see `rake workshop_guide:sync`)'
+        get 'available' do
+          { available: Rails.public_path.join('workshop', 'home.md').exist? }
+        end
+      end
+
       namespace :omniauth_providers do
         desc 'get omniauth providers'
         get do

@@ -48,4 +48,37 @@ describe Chemotion::PublicAPI do
       end
     end
   end
+
+  describe 'GET /api/v1/public/workshop_guide/available' do
+    subject(:execute_request) { get('/api/v1/public/workshop_guide/available') }
+
+    let(:home_md) { Rails.public_path.join('workshop', 'home.md') }
+
+    context 'when workshop content has not been synced' do
+      before do
+        FileUtils.rm_f(home_md)
+        execute_request
+      end
+
+      it 'responds 200 with available: false' do
+        expect(response).to have_http_status :ok
+        expect(parsed_json_response).to eq({ 'available' => false })
+      end
+    end
+
+    context 'when workshop content has been synced' do
+      before do
+        FileUtils.mkdir_p(home_md.dirname)
+        FileUtils.touch(home_md)
+        execute_request
+      end
+
+      after { FileUtils.rm_f(home_md) }
+
+      it 'responds 200 with available: true' do
+        expect(response).to have_http_status :ok
+        expect(parsed_json_response).to eq({ 'available' => true })
+      end
+    end
+  end
 end
