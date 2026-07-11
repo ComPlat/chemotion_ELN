@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/AbcSize, Rails/HasManyOrHasOneDependent, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+# rubocop:disable Rails/HasManyOrHasOneDependent
 
 # == Schema Information
 #
@@ -159,15 +159,30 @@ class Collection < ApplicationRecord
   #   group-derived. Rejecting a share must never destroy the group's share row on behalf of every
   #   other member — to drop group-derived access a user leaves the group.
   # - `shared_via_group` lets the UI explain *why* a collection is there.
+  # - `owner` carries the abbreviation for the provenance popover; `owner_name` is the plain name for
+  #   the tree's owner-root label. The join to +users+ is a LEFT join so that a collection whose owner
+  #   was hard-destroyed (or whose `user_id` dangles — there is no DB FK to users) is still returned to
+  #   its recipients; both owner strings then COALESCE to a `Deleted user #<id>` placeholder rather
+  #   than dropping the collection from the shared list. (A normal account deletion is a soft-delete
+  #   that keeps the owner row, so this only covers the hard-destroy edge.) The join is raw SQL rather
+  #   than `left_joins(:user)`: `User` is `acts_as_paranoid`, and an association-based join merges the
+  #   target class's default scope into the join's ON clause, so a soft-deleted-but-present owner would
+  #   also read as `users.id IS NULL` — indistinguishable from the hard-destroy case this is meant to
+  #   isolate.
   scope(
     :serialized_shared_collections_for,
     lambda do |user|
       # user.id comes from the DB; .to_i keeps it un-injectable inside the aggregate FILTERs, which
       # cannot take a bind parameter through .select.
       own_share = "collection_shares.shared_with_id = #{user.id.to_i}"
+      # concat() treats NULL as '', so a missing owner must be detected by users.id IS NULL (the LEFT
+      # join produced no row), not by COALESCE over the concat.
+      deleted_owner = "concat('Deleted user #', collections.user_id)"
+      owner_abbr = 'concat(users.first_name, chr(32), users.last_name, chr(40), users.name_abbreviation, chr(41))'
+      owner_plain = 'concat(users.first_name, chr(32), users.last_name)'
 
       joins(:collection_shares)
-        .joins(:user)
+        .joins('LEFT JOIN users ON users.id = collections.user_id')
         .left_joins(:inventory)
         .where(collection_shares: { shared_with_id: [user.id, *user.group_ids] })
         .group('collections.id, inventories.id, users.id')
@@ -179,7 +194,8 @@ class Collection < ApplicationRecord
             "bool_or(NOT (#{own_share})) AS shared_via_group",
             'inventories.name AS inventory_name',
             'inventories.prefix AS inventory_prefix',
-            'concat(users.first_name, chr(32), users.last_name, chr(40), users.name_abbreviation, chr(41)) AS owner',
+            "CASE WHEN users.id IS NULL THEN #{deleted_owner} ELSE #{owner_abbr} END AS owner",
+            "CASE WHEN users.id IS NULL THEN #{deleted_owner} ELSE #{owner_plain} END AS owner_name",
           ].join(', '),
         )
     end,
@@ -279,4 +295,4 @@ class Collection < ApplicationRecord
     DETAIL_LEVEL_KEYS.index_with { |key| shares.pluck(key).compact.max || 0 }
   end
 end
-# rubocop:enable Metrics/AbcSize, Rails/HasManyOrHasOneDependent,Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+# rubocop:enable Rails/HasManyOrHasOneDependent

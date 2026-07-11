@@ -139,6 +139,42 @@ RSpec.describe Collection do
         expect(row.collection_share_id).not_to be_nil
       end
     end
+
+    context 'when the owner exists' do
+      before do
+        create(:collection_share, collection: shared_collection, shared_with: recipient,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+      end
+
+      it 'exposes owner with the abbreviation and a plain owner_name for the tree label' do
+        row = rows_for(recipient).first
+
+        expect(row.owner).to eq("#{owner.first_name} #{owner.last_name}(#{owner.name_abbreviation})")
+        expect(row.owner_name).to eq("#{owner.first_name} #{owner.last_name}")
+      end
+    end
+
+    # A normal account deletion is a soft-delete that keeps the owner row; this covers the harder edge
+    # of a hard-destroyed / dangling owner (no DB FK from collections to users). The recipient must not
+    # lose the collection — the LEFT join keeps it and both owner strings fall back to a placeholder.
+    context 'when the owner has been hard-destroyed (dangling user_id)' do
+      before do
+        create(:collection_share, collection: shared_collection, shared_with: recipient,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+        shared_collection.update_column(:user_id, 0) # rubocop:disable Rails/SkipsModelValidations
+      end
+
+      it 'still returns the collection to the recipient' do
+        expect(rows_for(recipient).map(&:id)).to eq([shared_collection.id])
+      end
+
+      it 'renders a deleted-owner placeholder for owner and owner_name' do
+        row = rows_for(recipient).first
+
+        expect(row.owner).to eq('Deleted user #0')
+        expect(row.owner_name).to eq('Deleted user #0')
+      end
+    end
   end
 
   describe '#detail_levels_for_user' do
