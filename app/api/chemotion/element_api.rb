@@ -60,10 +60,12 @@ module Chemotion
         elsif (@collection = Collection.own_collections_for(current_user).find_by(id: collection_id))
           # empty block body to keep rubocop happy
         elsif (collection = Collection.accessible_for(current_user).find_by(id: collection_id))
-          # We only reach here when the user is not an owner. DELETE in this namespace destroys the
-          # element records themselves (destroy_all), which is owner-only — see ElementPolicy#destroy?.
-          # A sharee unlinks elements from the collection instead (Usecases::Collections::RemoveElements).
-          # The only other route here, POST load_report, just reads.
+          # We only reach here when the user is not an owner. DELETE in this namespace withdraws the
+          # selection from the user's *own* collections and destroys only records left orphaned
+          # (Usecases::Collections::WithdrawElements); a pure sharee has no own-collection membership
+          # to withdraw here, so a shared-collection view still 403s — they use Remove-from-current
+          # (Usecases::Collections::RemoveElements) instead. The only other route here, POST
+          # load_report, just reads.
           error!('403 Forbidden', 403) if request.delete?
 
           # A user can hold several shares on one collection — their own plus one per group — and they
@@ -78,38 +80,15 @@ module Chemotion
         error!('404 Record Not Found', 404) unless @collection
       end
 
-      desc 'delete element from ui state selection.'
+      desc 'Withdraw the ui-state selection from all of the user\'s collections (destroying orphans)'
       delete do
-        deleted = { 'sample' => [] }
-        API::ELEMENTS.each do |element|
-          next unless params[element]
-          next unless params[element][:checkedAll] || params[element][:checkedIds].present?
+        removed = Usecases::Collections::WithdrawElements.new(current_user).perform!(
+          source_collection: @collection,
+          ui_state: params,
+          options: params[:options] || {},
+        )
 
-          element_model = API::ELEMENT_CLASS[element].model_name
-          deleted[element_model.param_key] =
-            @collection.send(element_model.route_key).by_ui_state(params[element]).destroy_all.map(&:id)
-        end
-
-        # explicit inner join on reactions_samples to get soft deleted reactions_samples entries
-
-        sql_join = 'inner join reactions_samples on reactions_samples.sample_id = samples.id'
-        unless params[:options][:deleteSubsamples]
-          sql_join += " and reactions_samples.type in ('ReactionsSolventSample','ReactionsReactantSample')"
-        end
-        deleted['sample'] += Sample.joins(sql_join).joins(:collections)
-                                   .where(
-                                     collections: { id: @collection.id },
-                                     reactions_samples: { reaction_id: deleted['reaction'] },
-                                   )
-                                   .destroy_all.map(&:id)
-        Labimotion::ElementKlass.find_each do |klass|
-          klass_name = params[klass.name]
-          next unless klass_name.present? && (klass_name[:checkedAll] || klass_name[:checkedIds].present?)
-
-          deleted[klass.name] = @collection.send(:elements).by_ui_state(params[klass.name]).destroy_all.map(&:id)
-        end
-
-        { selecteds: params[:selecteds].reject { |sel| deleted.fetch(sel['type'], []).include?(sel['id']) } }
+        { selecteds: params[:selecteds].reject { |sel| removed.fetch(sel['type'], []).include?(sel['id']) } }
       end
 
       namespace :load_report do
