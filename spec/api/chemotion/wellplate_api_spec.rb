@@ -278,6 +278,26 @@ describe Chemotion::WellplateAPI do
         expect(response.parsed_body).to eq({ 'error' => 'height does not have a valid value' })
       end
     end
+
+    # Regression: a collection reachable only through the user's group must still attach the new
+    # wellplate to the sharer's "All" collection. Before the predicates spanned groups, both the
+    # owned and shared checks returned false and no "All" row was written for anyone.
+    context 'when the collection is shared with the user through a group' do
+      let(:group) { create(:group, users: [user]) }
+      let(:collection) do
+        create(:collection, user: other_user).tap do |shared_collection|
+          create(:collection_share, collection: shared_collection, shared_with: group,
+                                    permission_level: CollectionShare.permission_level(:add_elements))
+        end
+      end
+
+      it "attaches the wellplate to the sharer's All collection" do
+        wellplate = Wellplate.find_by(name: name)
+        all_collection = Collection.get_all_collection_for_user(other_user.id)
+
+        expect(all_collection.wellplates).to include(wellplate)
+      end
+    end
   end
 
   describe 'POST /api/v1/wellplates/subwellplates' do
