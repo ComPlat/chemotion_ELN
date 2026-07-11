@@ -1,18 +1,35 @@
 # frozen_string_literal: true
 
 module Chemotion
-  # Overrides the three +/api/v1/converter+ routes that {Labimotion::ConverterAPI}
-  # cannot serve. Everything else on that surface (profiles, options, datasets,
-  # datasets_units) falls through to the gem, so this API must stay mounted
-  # *before* +Labimotion::LabimotionAPI+ in {API}.
+  # Overrides the +/api/v1/converter+ routes that {Labimotion::ConverterAPI}
+  # cannot serve, or serves without normalizing. Everything else on that
+  # surface (create/delete profile, options, datasets, datasets_units) falls
+  # through to the gem, so this API must stay mounted *before*
+  # +Labimotion::LabimotionAPI+ in {API}.
   #
   # - +profiles/restore+ and +conversions+ call +Labimotion::Converter.restore+ /
   #   +.test_conversions+, neither of which the gem defines.
   # - +tables+ drops the +ontology+ field that chemotion-converter-client sends
   #   since 0.16.0, which converter-app needs to pick a reader.
+  # - +profiles+ GET/PUT relay converter-app's response verbatim. converter-app
+  #   only runs its profile-schema migration/validation on write (POST/PUT), so a
+  #   profile that predates a schema field (e.g. +tables+) keeps missing it on
+  #   read forever. chemotion-converter-client 0.16.0's +ProfileForm+ assumes
+  #   every array-typed field is always present and reads several of them
+  #   unguarded on mount (+profile.tables.map+ et al.), so a legacy profile
+  #   crashes the whole admin page the moment "Edit" is clicked. Backfilled here
+  #   with the same defaults the client itself uses for a brand-new profile.
   #
-  # Delete this API once the gem implements them.
+  # Delete the +restore+/+conversions+/+tables+ overrides once the gem
+  # implements them; delete the +profiles+ overrides once converter-app
+  # migrates/validates on read too.
   class ConverterAPI < Grape::API
+    # Array/hash-typed profile fields that chemotion-converter-client 0.16.0
+    # always expects present — see AdminApp.js's brand-new-profile defaults.
+    PROFILE_ARRAY_KEYS = %w[
+      tables identifiers data subjects predicates devices software objects datatypes diff_history
+    ].freeze
+
     # Grape reads error!'s first argument as the body and the second as the
     # status, so a bare error!(401) would answer 500.
     helpers do
@@ -58,6 +75,29 @@ module Chemotion
         env['api.format'] = :binary
         response.body
       end
+
+      # Backfills the array/hash fields chemotion-converter-client 0.16.0 reads
+      # unguarded, so a legacy profile missing them doesn't crash the admin UI.
+      def normalize_profile(profile)
+        return profile unless profile.is_a?(Hash)
+
+        PROFILE_ARRAY_KEYS.each { |key| profile[key] ||= [] }
+        profile['subjectInstances'] ||= {}
+        profile['reactionVariations'] ||= { 'elements' => [], 'identifiers' => [] }
+        profile
+      end
+    end
+
+    resource :converter do
+      before { available? }
+
+      resource :profiles do
+        desc 'list profiles, backfilling fields legacy profiles may be missing'
+        get do
+          profiles = Labimotion::Converter.fetch_profiles || []
+          { profiles: profiles.map { |p| normalize_profile(p) }, client: @profile }
+        end
+      end
     end
 
     resource :converter do
@@ -83,6 +123,13 @@ module Chemotion
               params[:profile_version],
               hard: params[:hard],
             )
+          end
+        end
+
+        route_param :id do
+          desc 'update a profile, backfilling fields legacy profiles may be missing'
+          put do
+            normalize_profile(Labimotion::Converter.update_profile(params))
           end
         end
       end

@@ -35,6 +35,63 @@ describe Chemotion::ConverterAPI do
 
       expect(response).to have_http_status(:unauthorized)
     end
+
+    it 'rejects a non-admin on profile update' do
+      put '/api/v1/converter/profiles/p1'
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it 'allows a non-admin to list profiles' do
+      stub_request(:get, "#{converter_url}profiles").to_return(
+        status: 200,
+        body: [{ id: 'p1' }].to_json,
+        headers: { 'Content-Type' => 'application/json' },
+      )
+
+      get '/api/v1/converter/profiles'
+
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
+  describe 'GET /api/v1/converter/profiles' do
+    before do
+      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user) # rubocop:disable RSpec/AnyInstance
+    end
+
+    it 'backfills the array/hash fields a legacy profile is missing' do
+      stub_request(:get, "#{converter_url}profiles").to_return(
+        status: 200,
+        body: [{ 'id' => 'p1', 'tables' => [{ 'title' => 't1' }] }].to_json,
+        headers: { 'Content-Type' => 'application/json' },
+      )
+
+      get '/api/v1/converter/profiles'
+
+      expect(response).to have_http_status(:ok)
+      profile = parsed_json_response['profiles'].first
+      expect(profile).to include(
+        'tables' => [{ 'title' => 't1' }],
+        'identifiers' => [],
+        'subjects' => [],
+        'subjectInstances' => {},
+        'reactionVariations' => { 'elements' => [], 'identifiers' => [] },
+      )
+    end
+
+    it 'leaves already-complete profiles untouched' do
+      complete_profile = { 'id' => 'p1', 'tables' => [{ 'title' => 't1' }], 'identifiers' => [{ 'id' => 'i1' }] }
+      stub_request(:get, "#{converter_url}profiles").to_return(
+        status: 200,
+        body: [complete_profile].to_json,
+        headers: { 'Content-Type' => 'application/json' },
+      )
+
+      get '/api/v1/converter/profiles'
+
+      expect(parsed_json_response['profiles'].first).to include(complete_profile)
+    end
   end
 
   context 'when the user is a converter admin' do
@@ -66,6 +123,25 @@ describe Chemotion::ConverterAPI do
         post '/api/v1/converter/profiles/restore/p1/1.0'
 
         expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    describe 'PUT /api/v1/converter/profiles/:id' do
+      # AdminApp's silent-save path re-renders the edit form with this response,
+      # so it needs the same backfill as the list endpoint or a legacy profile
+      # re-crashes immediately after being saved.
+      it 'backfills the array/hash fields converter-app omits from the response' do
+        stub_request(:put, "#{converter_url}profiles/p1").to_return(
+          status: 200,
+          body: { 'id' => 'p1', 'title' => 'Updated' }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+
+        put '/api/v1/converter/profiles/p1', params: { title: 'Updated' }
+
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['tables']).to eq([])
+        expect(parsed_json_response['subjectInstances']).to eq({})
       end
     end
 
@@ -131,19 +207,6 @@ describe Chemotion::ConverterAPI do
     describe 'routes left to Labimotion::ConverterAPI' do
       # This API is mounted first, so anything it does not define must cascade to
       # the gem rather than 404.
-      it 'cascades GET /profiles to the gem' do
-        stub_request(:get, "#{converter_url}profiles").to_return(
-          status: 200,
-          body: [{ id: 'p1' }].to_json,
-          headers: { 'Content-Type' => 'application/json' },
-        )
-
-        get '/api/v1/converter/profiles'
-
-        expect(response).to have_http_status(:ok)
-        expect(parsed_json_response).to eq('profiles' => [{ 'id' => 'p1' }], 'client' => 'chemotion')
-      end
-
       it 'cascades GET /datasets_units to the gem' do
         get '/api/v1/converter/datasets_units'
 
