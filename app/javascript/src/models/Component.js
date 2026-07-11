@@ -340,6 +340,18 @@ export default class Component extends Sample {
   }
 
   /**
+   * Resets all amount and concentration fields to zero.
+   * Used when a same-molecule merge collapses a duplicate component into this one.
+   */
+  resetAmounts() {
+    this.amount_mol = 0;
+    this.amount_g = 0;
+    this.amount_l = 0;
+    this.molarity_value = 0;
+    this.concn = 0;
+  }
+
+  /**
    * Checks if the current component has a locked concentration.
    *
    * Retrieves the `lockedComponents` list from the `ComponentStore` state
@@ -769,5 +781,19 @@ export default class Component extends Sample {
     }
 
     return comp;
+  }
+
+  /**
+   * Deserialize the components returned by the save/update API so newly inserted
+   * rows pick up their real DB ids. Falls back to the local components when the
+   * response is unexpectedly empty.
+   * @param {Array} savedComponents - API response from saveOrUpdateComponents
+   * @param {Array} fallback - local components to use when the response is empty
+   * @returns {Array<Component>}
+   */
+  static refreshFromApi(savedComponents, fallback) {
+    return Array.isArray(savedComponents) && savedComponents.length > 0
+      ? savedComponents.map(Component.deserializeData)
+      : fallback;
   }
 }

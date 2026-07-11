@@ -29,6 +29,7 @@ import SequenceBasedMacromoleculeSamplesFetcher from 'src/fetchers/SequenceBased
 
 import GenericEl from 'src/models/GenericEl';
 import Sample from 'src/models/Sample';
+import Component from 'src/models/Component';
 import Reaction from 'src/models/Reaction';
 import Wellplate from 'src/models/Wellplate';
 import CellLine from 'src/models/cellLine/CellLine';
@@ -471,9 +472,11 @@ class ElementActions {
   updateSampleForReaction(sample, reaction, closeView = true) {
     return async (dispatch) => {
       try {
-        // Save components first if it's a mixture
+        // Save components first if it's a mixture and capture the API response so
+        // newly inserted rows pick up their real DB ids on subsequent saves.
+        let savedComponents = null;
         if (sample.isMixture() && sample.components) {
-          await ComponentsFetcher.saveOrUpdateComponents(sample, sample.components);
+          savedComponents = await ComponentsFetcher.saveOrUpdateComponents(sample, sample.components);
         }
 
         // Update sample
@@ -481,7 +484,8 @@ class ElementActions {
 
         // Initialize components on newSample before updating material in reaction
         if (sample.isMixture() && sample.components) {
-          newSample.initialComponents(sample.components);
+          const refreshed = Component.refreshFromApi(savedComponents, sample.components);
+          newSample.initialComponents(refreshed);
         }
 
         // Update the material in the reaction and dispatch
