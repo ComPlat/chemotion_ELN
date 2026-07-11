@@ -2,20 +2,11 @@ import React, { useEffect, useState } from 'react';
 
 import ChemotionLogo from 'src/components/common/ChemotionLogo';
 import WorkshopContent from 'src/components/workshopGuide/WorkshopContent';
-import { workshopBase } from 'src/components/workshopGuide/workshopGuideFetch';
+import { fetchWorkshopAvailability } from 'src/components/workshopGuide/workshopGuideFetch';
 
 // The drawer auto-hides itself if no workshop content is checked out, so the
 // feature is implicitly off on non-workshop instances (just don't run the rake
 // sync task).
-async function probeAvailable() {
-  try {
-    const res = await fetch(`${workshopBase}/home.md`, { method: 'HEAD' });
-    return res.ok;
-  } catch (e) {
-    return false;
-  }
-}
-
 export default function WorkshopGuideDrawer() {
   const [available, setAvailable] = useState(false);
   const [open, setOpen] = useState(false);
@@ -23,7 +14,7 @@ export default function WorkshopGuideDrawer() {
 
   useEffect(() => {
     let cancelled = false;
-    probeAvailable().then((ok) => { if (!cancelled) setAvailable(ok); });
+    fetchWorkshopAvailability().then((ok) => { if (!cancelled) setAvailable(ok); });
     return () => { cancelled = true; };
   }, []);
 
