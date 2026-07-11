@@ -45,7 +45,7 @@ module Chemotion
       namespace :workshop_guide do
         desc 'Whether workshop wiki content has been synced (see `rake workshop_guide:sync`)'
         get 'available' do
-          { available: Rails.public_path.join('workshop', 'home.md').exist? }
+          { available: Rails.public_path.join('workshop', 'home.md').file? }
         end
       end
 

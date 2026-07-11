@@ -53,6 +53,18 @@ describe Chemotion::PublicAPI do
     subject(:execute_request) { get('/api/v1/public/workshop_guide/available') }
 
     let(:home_md) { Rails.public_path.join('workshop', 'home.md') }
+    let(:home_md_backup) { Rails.root.join('tmp/home_md_backup.md') }
+
+    around do |example|
+      had_home_md = home_md.exist?
+      FileUtils.mv(home_md, home_md_backup) if had_home_md
+      begin
+        example.run
+      ensure
+        FileUtils.rm_f(home_md)
+        FileUtils.mv(home_md_backup, home_md) if had_home_md
+      end
+    end
 
     context 'when workshop content has not been synced' do
       before do
