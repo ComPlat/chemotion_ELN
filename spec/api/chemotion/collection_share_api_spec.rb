@@ -136,4 +136,64 @@ describe Chemotion::CollectionShareAPI do
       end
     end
   end
+
+  describe 'GET /api/v1/collection_shares/for_me' do
+    subject(:shares) do
+      get "/api/v1/collection_shares/for_me?collection_id=#{collection.id}"
+      parsed_json_response['collection_shares']
+    end
+
+    let(:collection) { create(:collection, user: other_user) }
+    let(:group) { create(:group, users: [user]) }
+
+    context 'when the collection is shared to the user directly' do
+      before do
+        create(:collection_share, collection: collection, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+      end
+
+      it 'returns the direct share with its type and permission level' do
+        expect(shares).to contain_exactly(
+          include('shared_with_type' => 'Person',
+                  'permission_level' => CollectionShare.permission_level(:read_elements)),
+        )
+      end
+    end
+
+    context 'when the collection reaches the user through a group' do
+      before do
+        create(:collection_share, collection: collection, shared_with: group,
+                                  permission_level: CollectionShare.permission_level(:write_elements))
+      end
+
+      it 'returns the group share' do
+        expect(shares).to contain_exactly(include('shared_with_type' => 'Group'))
+      end
+    end
+
+    context 'when the collection is shared both directly and through a group' do
+      before do
+        create(:collection_share, collection: collection, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+        create(:collection_share, collection: collection, shared_with: group,
+                                  permission_level: CollectionShare.permission_level(:write_elements))
+      end
+
+      it 'returns both contributing shares' do
+        expect(shares.pluck('shared_with_type')).to contain_exactly('Person', 'Group')
+      end
+    end
+
+    context 'when the user has no share on the collection' do
+      before do
+        create(:collection_share, collection: collection, shared_with: third_user,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+      end
+
+      # The load-bearing privacy check: a user must never see another recipient's share.
+      it 'returns nothing and does not leak the other recipients share' do
+        expect(shares).to be_empty
+      end
+    end
+  end
 end
