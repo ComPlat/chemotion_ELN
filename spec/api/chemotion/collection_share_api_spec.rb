@@ -89,5 +89,111 @@ describe Chemotion::CollectionShareAPI do
       end.to change(CollectionShare, :count).by(-1)
          .and change(collection, :shared?).from(true).to(false)
     end
+
+    context 'when the share belongs to one of the requesters groups' do
+      let(:collection) { create(:collection, user: other_user) }
+      let(:group) { create(:group, users: [user]) }
+      let(:group_share) { create(:collection_share, collection: collection, shared_with: group) }
+
+      before { group_share }
+
+      # The group's share is not the requester's to reject: destroying it would revoke the collection
+      # for every other member. To drop group-derived access the user leaves the group.
+      it 'refuses to delete it' do
+        expect { delete "/api/v1/collection_shares/#{group_share.id}" }
+          .not_to change(CollectionShare, :count)
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'when the share is neither the requesters nor on a collection they own' do
+      let(:foreign_share) do
+        create(:collection_share, collection: create(:collection, user: other_user), shared_with: third_user)
+      end
+
+      before { foreign_share }
+
+      it 'responds 403 rather than raising' do
+        expect { delete "/api/v1/collection_shares/#{foreign_share.id}" }
+          .not_to change(CollectionShare, :count)
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'when the requester rejects their own direct share' do
+      let(:collection) { create(:collection, user: other_user) }
+      let(:own_share) { create(:collection_share, collection: collection, shared_with: user) }
+
+      before { own_share }
+
+      it 'deletes it' do
+        expect { delete "/api/v1/collection_shares/#{own_share.id}" }
+          .to change(CollectionShare, :count).by(-1)
+
+        expect(response).to have_http_status(:no_content)
+      end
+    end
+  end
+
+  describe 'GET /api/v1/collection_shares/for_me' do
+    subject(:shares) do
+      get "/api/v1/collection_shares/for_me?collection_id=#{collection.id}"
+      parsed_json_response['collection_shares']
+    end
+
+    let(:collection) { create(:collection, user: other_user) }
+    let(:group) { create(:group, users: [user]) }
+
+    context 'when the collection is shared to the user directly' do
+      before do
+        create(:collection_share, collection: collection, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+      end
+
+      it 'returns the direct share with its type and permission level' do
+        expect(shares).to contain_exactly(
+          include('shared_with_type' => 'Person',
+                  'permission_level' => CollectionShare.permission_level(:read_elements)),
+        )
+      end
+    end
+
+    context 'when the collection reaches the user through a group' do
+      before do
+        create(:collection_share, collection: collection, shared_with: group,
+                                  permission_level: CollectionShare.permission_level(:write_elements))
+      end
+
+      it 'returns the group share' do
+        expect(shares).to contain_exactly(include('shared_with_type' => 'Group'))
+      end
+    end
+
+    context 'when the collection is shared both directly and through a group' do
+      before do
+        create(:collection_share, collection: collection, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+        create(:collection_share, collection: collection, shared_with: group,
+                                  permission_level: CollectionShare.permission_level(:write_elements))
+      end
+
+      it 'returns both contributing shares' do
+        expect(shares.pluck('shared_with_type')).to contain_exactly('Person', 'Group')
+      end
+    end
+
+    context 'when the user has no share on the collection' do
+      before do
+        create(:collection_share, collection: collection, shared_with: third_user,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+      end
+
+      # The load-bearing privacy check: a user must never see another recipient's share.
+      it 'returns nothing and does not leak the other recipients share' do
+        expect(shares).to be_empty
+      end
+    end
   end
 end

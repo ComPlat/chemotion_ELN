@@ -17,6 +17,19 @@ module Chemotion
         present collection.collection_shares, with: Entities::CollectionShareEntity, root: :collection_shares
       end
 
+      desc "The current user's own contributing shares on a collection — their direct share plus one " \
+           'per group of theirs it is shared with. Recipient-facing (unlike GET /, which is owner-only).'
+      params do
+        requires :collection_id, type: Integer
+      end
+      get '/for_me' do
+        # shared_with filters to [current_user.id, *group_ids], so this only ever returns shares that
+        # grant the current user access — never another recipient's. No access => empty list.
+        shares = CollectionShare.shared_with(current_user).where(collection_id: params[:collection_id])
+
+        present shares, with: Entities::CollectionShareEntity, root: :collection_shares
+      end
+
       desc 'Creates collection shares for one collection and one or more users. Existing shares are updated'
       params do
         requires :collection_id, type: Integer
@@ -73,8 +86,12 @@ module Chemotion
         requires :id
       end
       delete '/:id' do
+        # The owner may remove any share on their collection; a recipient may only reject the share
+        # addressed to them personally. `shared_with` would also match a share held by one of the
+        # user's *groups*, letting any member revoke the collection for every other member.
         share = CollectionShare.shared_by(current_user).find_by(id: params[:id])
-        share ||= CollectionShare.shared_with(current_user).find_by(id: params[:id])
+        share ||= CollectionShare.shared_directly_with(current_user).find_by(id: params[:id])
+        error!('403 Forbidden', 403) if share.nil?
 
         collection = share.collection
 

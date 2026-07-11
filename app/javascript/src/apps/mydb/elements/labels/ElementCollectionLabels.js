@@ -61,7 +61,7 @@ const ElementCollectionLabels = ({ element, size, variant }) => {
 
   const handleOnClick = (label, e) => {
     e.stopPropagation();
-    aviatorNavigationWithCollectionId(label.id, element.type, element.id);
+    aviatorNavigationWithCollectionId(label.id, element.type, element.id, true, true);
   };
 
   const formatItems = (labels) => {
@@ -87,10 +87,12 @@ const ElementCollectionLabels = ({ element, size, variant }) => {
     );
   };
 
-  const collectionLabels = element.tag.taggable_data.collection_labels.filter(Boolean);
-
-  const ownCollections = collectionLabels.filter((label) => collectionsStore.isOwnCollection(label.id));
-  const sharedCollections = collectionLabels.filter((label) => collectionsStore.isSharedCollection(label.id));
+  // Guard against malformed entries: legacy/un-backfilled tags can contain null elements or
+  // entries without a real collection id, which would otherwise throw on `label.id`.
+  const validLabels = element.tag.taggable_data.collection_labels
+    .filter((label) => label && label.id != null);
+  const ownCollections = validLabels.filter((label) => collectionsStore.isOwnCollection(label.id));
+  const sharedCollections = validLabels.filter((label) => collectionsStore.isSharedCollection(label.id));
 
   if (ownCollections.length === 0 && sharedCollections.length === 0) { return (<span />); }
 

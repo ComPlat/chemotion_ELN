@@ -7,6 +7,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
+import SharedToMeInfosTooltip from 'src/apps/mydb/collections/SharedToMeInfosTooltip';
 import TreeViewItem from 'src/components/common/TreeViewItem';
 import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 import { observer } from 'mobx-react';
@@ -134,6 +135,14 @@ function CollectionSubtree({
               <i className="fa fa-share-alt" />
             </OverlayTrigger>
           )}
+          {sharedWithMe && !root.is_locked && (
+            <OverlayTrigger
+              placement="top"
+              overlay={<SharedToMeInfosTooltip collectionId={root.id} owner={root.owner} />}
+            >
+              <i className="fa fa-info-circle" />
+            </OverlayTrigger>
+          )}
         </>
       )}
       actions={<CollectionSubtreeFunctions collection={root} />}
@@ -166,6 +175,7 @@ CollectionSubtree.propTypes = {
     is_locked: PropTypes.bool,
     inventory_prefix: PropTypes.string,
     shared: PropTypes.bool,
+    owner: PropTypes.string,
   }).isRequired,
   level: PropTypes.number.isRequired,
 };

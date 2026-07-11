@@ -11,6 +11,17 @@ module Chemotion
     helpers CollectionHelpers
     helpers LiteratureHelpers
 
+    # The :ui_state namespace has exactly two routes: a DELETE that destroys the selected element
+    # records, and a read-only POST /load_report.
+    #
+    # NOTE: the DELETE threshold sits *under* the one ElementPolicy#destroy? requires for a single
+    # record (delete_elements). Preserved as-is; reconciling the two is a permission-model decision
+    # tracked separately.
+    UI_STATE_PERMISSION_LEVELS = {
+      'POST' => CollectionShare.permission_level(:read_elements),
+      'DELETE' => CollectionShare.permission_level(:share_collection),
+    }.freeze
+
     namespace :ui_state do
       desc 'Delete elements by UI state'
       params do
@@ -57,16 +68,21 @@ module Chemotion
         collection_id = params.fetch(:currentCollection, {}).fetch(:id, 0)
         if collection_id.zero? # no or malformed collection id was given
           @collection = Collection.get_all_collection_for_user(current_user)
-        elsif (@collection = current_user.collections.find_by(id: collection_id))
+        elsif (@collection = Collection.own_collections_for(current_user).find_by(id: collection_id))
           # empty block body to keep rubocop happy
-        elsif (collection_share = CollectionShare.find_by(collection_id: collection_id, shared_with_id: user_ids))
-          permission_level = case request.request_method
-                             when 'POST' then -1
-                             when 'DELETE' then 2
-                             else 5
-                             end
-          error!('403 Forbidden', 403) unless collection_share.permission_level >= permission_level
-          @collection = collection_share.collection
+        elsif (collection = Collection.accessible_for(current_user).find_by(id: collection_id))
+          # A user can hold several shares on one collection — their own plus one per group. The
+          # effective level is their maximum; picking whichever row the database returned first made
+          # the outcome depend on row order.
+          effective_level = collection.detail_levels_for_user(current_user)[:permission_level]
+          # Unknown verb (a route added later) falls back to the strictest level we gate on here,
+          # rather than raising or silently letting the request through.
+          required_level = UI_STATE_PERMISSION_LEVELS.fetch(
+            request.request_method, UI_STATE_PERMISSION_LEVELS.values.max
+          )
+
+          error!('403 Forbidden', 403) unless effective_level >= required_level
+          @collection = collection
         end
         error!('404 Record Not Found', 404) unless @collection
       end

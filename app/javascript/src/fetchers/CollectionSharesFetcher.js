@@ -6,6 +6,13 @@ export default class CollectionSharesFetcher {
       .then((json) => json.collection_shares);
   }
 
+  // The current user's own contributing shares on a collection (their direct share + their groups'),
+  // for the shared-to-me provenance popover.
+  static getMyCollectionShares(collectionId) {
+    return ApiClient.getJson(`/api/v1/collection_shares/for_me.json?collection_id=${collectionId}`)
+      .then((json) => json.collection_shares);
+  }
+
   static addCollectionShare(params) {
     return ApiClient.postJson('/api/v1/collection_shares', { body: params });
   }

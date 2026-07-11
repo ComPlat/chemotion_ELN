@@ -20,10 +20,12 @@ export const Collection = types.model({
   inventory_prefix: types.maybeNull(types.string),
   label: types.string,
   is_locked: types.boolean,
-  owner: types.maybeNull(types.string),
+  owner: types.maybeNull(types.string), // "First Last (ABBR)" — shown in the provenance popover
+  owner_name: types.maybeNull(types.string), // plain "First Last" — the shared tree's owner-root label
   permission_level: types.maybeNull(types.integer), // temp for testing
   position: types.maybeNull(types.number),
   shared: types.maybeNull(types.boolean),
+  shared_via_group: types.optional(types.boolean, false),
   tabs_segment: types.optional(types.frozen({}), {}),
 }).actions(self => ({
   addChild(collection) {
@@ -111,6 +113,9 @@ export const CollectionsStore = types
     shared_with_me_collections: types.array(Collection),
     shared_with_me_collection_tree: types.maybeNull(types.frozen({})),
     collection_shares: types.array(CollectionShares),
+    // Per shared-to-me collection (keyed by its id), the current user's own contributing shares
+    // (direct + per group), lazily fetched for the provenance popover.
+    my_collection_shares: types.array(CollectionShares),
     update_tree: types.maybeNull(types.boolean, false),
     toggled_tree_items: types.array(types.string, []),
   })
@@ -200,6 +205,17 @@ export const CollectionsStore = types
           self.collection_shares.push({ id: collectionId, shared_with_users: sharedWithUsers })
         } else {
           self.collection_shares[collectionSharesIndex].shared_with_users = sharedWithUsers
+        }
+      }
+    }),
+    getMySharesFor: flow(function* getMySharesFor(collectionId) {
+      const myShares = yield CollectionSharesFetcher.getMyCollectionShares(collectionId)
+      if (myShares) {
+        const index = self.my_collection_shares.findIndex((entry) => entry.id == collectionId)
+        if (index == -1) {
+          self.my_collection_shares.push({ id: collectionId, shared_with_users: myShares })
+        } else {
+          self.my_collection_shares[index].shared_with_users = myShares
         }
       }
     }),
@@ -342,7 +358,13 @@ export const CollectionsStore = types
 
       sharedWithMeCollections.forEach((collection, i) => {
         if (i === 0 || i > 0 && sharedWithMeCollections[i - 1].owner !== collection.owner) {
-          const ownerCollection = { ancestry: '/', id: 0, label: collection.owner, is_locked: true, owner: collection.owner }
+          // Group by `owner` (with abbreviation — a stable key), but label the root with the plain
+          // `owner_name`; the abbreviation is redundant here and lives in the provenance popover.
+          const ownerName = collection.owner_name || collection.owner
+          const ownerCollection = {
+            ancestry: '/', id: 0, label: ownerName, is_locked: true,
+            owner: collection.owner, owner_name: ownerName,
+          }
           self.shared_with_me_collections.push(Collection.create(ownerCollection))
         }
         const parentOwnerIndex = self.shared_with_me_collections.findIndex(element => element.owner == collection.owner)
@@ -456,4 +478,5 @@ export const CollectionsStore = types
     get sharedCollectionIds() { return self.shared_with_me_collections.flatMap(collection => collection.idAndDescendantIds) },
     descendantIds(collection) { return collection.children.flatMap(collection => collection.idAndDescendantIds) },
     sharedWithUsers(collection_id) { return self.collection_shares.find((share) => share.id == collection_id) },
+    mySharesFor(collection_id) { return self.my_collection_shares.find((entry) => entry.id == collection_id) },
   }));

@@ -22,8 +22,9 @@
 #
 # Indexes
 #
-#  index_collection_shares_on_collection_id   (collection_id)
-#  index_collection_shares_on_shared_with_id  (shared_with_id)
+#  index_collection_shares_on_collection_id                     (collection_id)
+#  index_collection_shares_on_collection_id_and_shared_with_id  (collection_id,shared_with_id) UNIQUE
+#  index_collection_shares_on_shared_with_id                    (shared_with_id)
 #
 # Foreign Keys
 #
@@ -44,7 +45,14 @@ class CollectionShare < ApplicationRecord
   belongs_to :shared_with, class_name: 'User'
 
   scope :shared_by, ->(user) { joins(:collection).where(collections: { user_id: [user.id, *user.group_ids] }) }
+
+  # Every share that grants +user+ access, including the ones held by their groups. Use for
+  # *authorization* — never to decide what a user may destroy: a group's share is not theirs.
   scope :shared_with, ->(user) { where(shared_with_id: [user.id, *user.group_ids]) }
+
+  # Only the share addressed to +user+ personally. Use when the user acts *on the share itself*
+  # (rejecting it). A user who wants to drop group-derived access leaves the group instead.
+  scope :shared_directly_with, ->(user) { where(shared_with_id: user.id) }
   scope(
     :with_minimum_permission_level,
     ->(permission_level) { where(collection_shares: { permission_level: permission_level.. }) },

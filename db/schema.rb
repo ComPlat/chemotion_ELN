@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_06_12_000000) do
+ActiveRecord::Schema.define(version: 2026_07_09_140001) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -216,6 +216,7 @@ ActiveRecord::Schema.define(version: 2026_06_12_000000) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["collection_id"], name: "index_collection_shares_on_collection_id"
+    t.index ["collection_id", "shared_with_id"], name: "index_collection_shares_on_collection_id_and_shared_with_id", unique: true
     t.index ["shared_with_id"], name: "index_collection_shares_on_shared_with_id"
   end
 
