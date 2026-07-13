@@ -40,13 +40,18 @@ module Chemotion
 
           deletion_allowed = true
           sharing_allowed = true
+          # Unlinking from a shared collection (not destroying the record) is granted at
+          # :remove_elements, independently of the owner-only destroy gate above.
+          remove_allowed = true
 
           if collection.user != current_user # collection was shared to user
             # set deletion_allowed to false if any of the elements is not allowed to be mass deleted
             [Sample, Reaction, Screen, Wellplate].each do |element_class|
               next if selected_elements[element_class].none?
 
-              deletion_allowed &&= ElementsPolicy.new(current_user, selected_elements[element_class]).destroy_all?
+              policy = ElementsPolicy.new(current_user, selected_elements[element_class])
+              deletion_allowed &&= policy.destroy_all?
+              remove_allowed &&= policy.remove_all?
             end
 
             # permission for deletion includes permission for sharing,
@@ -61,7 +66,8 @@ module Chemotion
             end
           end
 
-          { deletion_allowed: deletion_allowed, sharing_allowed: sharing_allowed, is_top_secret: is_top_secret }
+          { deletion_allowed: deletion_allowed, sharing_allowed: sharing_allowed,
+            remove_allowed: remove_allowed, is_top_secret: is_top_secret }
         end
       end
     end

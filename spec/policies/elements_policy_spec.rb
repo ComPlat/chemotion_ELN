@@ -120,5 +120,33 @@ RSpec.describe ElementsPolicy do
       end
     end
   end
+
+  describe '#remove_all?' do
+    it 'returns true when every record is in an own collection' do
+      policy = described_class.new(user_1, Sample.where(id: [sample_1, sample_2, sample_3]))
+
+      expect(policy.remove_all?).to be true
+    end
+
+    context 'when the shared records are at :remove_elements' do
+      let(:permission_level) { CollectionShare.permission_level(:remove_elements) }
+
+      it 'returns true' do
+        policy = described_class.new(user_1, Sample.where(id: [sample_4, sample_5, sample_6]))
+
+        expect(policy.remove_all?).to be true
+      end
+    end
+
+    context 'when the shared records are below :remove_elements' do
+      let(:permission_level) { CollectionShare.permission_level(:add_elements) }
+
+      it 'returns false' do
+        policy = described_class.new(user_1, Sample.where(id: [sample_4, sample_5, sample_6]))
+
+        expect(policy.remove_all?).to be false
+      end
+    end
+  end
 end
 # rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, Naming/VariableNumber

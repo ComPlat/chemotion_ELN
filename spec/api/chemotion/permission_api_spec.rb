@@ -54,6 +54,7 @@ describe Chemotion::PermissionAPI do
           'is_top_secret' => false,
           'sharing_allowed' => true,
           'deletion_allowed' => true,
+          'remove_allowed' => true,
         }
         expect(parsed_json_response).to eq expected_result
       end
@@ -82,6 +83,7 @@ describe Chemotion::PermissionAPI do
           'is_top_secret' => true,
           'sharing_allowed' => true,
           'deletion_allowed' => true,
+          'remove_allowed' => true,
         }
         expect(parsed_json_response).to eq expected_result
       end
@@ -119,7 +121,8 @@ describe Chemotion::PermissionAPI do
       context 'when the permission level allows removing elements from the collection' do
         let(:permission_level) { CollectionShare.permission_level(:remove_elements) }
 
-        it 'still returns deletion_allowed=false, because destroying records is owner-only' do
+        it 'returns remove_allowed=true (unlink is granted) but deletion_allowed=false (destroy is owner-only)' do
+          expect(parsed_json_response['remove_allowed']).to be true
           expect(parsed_json_response['deletion_allowed']).to be false
           expect(parsed_json_response['sharing_allowed']).to be true
         end
@@ -128,7 +131,8 @@ describe Chemotion::PermissionAPI do
       context 'when the permission level is only sufficient for sharing elements onward' do
         let(:permission_level) { CollectionShare.permission_level(:add_elements) }
 
-        it 'returns deletion_allowed=false and sharing_allowed=true' do
+        it 'returns remove_allowed=false, deletion_allowed=false and sharing_allowed=true' do
+          expect(parsed_json_response['remove_allowed']).to be false
           expect(parsed_json_response['deletion_allowed']).to be false
           expect(parsed_json_response['sharing_allowed']).to be true
         end

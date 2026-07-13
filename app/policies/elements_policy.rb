@@ -19,6 +19,12 @@ class ElementsPolicy
     allowed?(CollectionShare.permission_level(:add_elements))
   end
 
+  # Bulk counterpart of unlinking an element from a collection: a sharee at :remove_elements may
+  # remove the selection from the shared collection (Usecases::Collections::RemoveElements).
+  def remove_all?
+    allowed?(CollectionShare.permission_level(:remove_elements))
+  end
+
   # Destroying element records is owner-only, mirroring ElementPolicy#destroy?. A sharee may unlink
   # elements from a shared collection at :remove_elements, but that goes through
   # Usecases::Collections::RemoveElements, not here.

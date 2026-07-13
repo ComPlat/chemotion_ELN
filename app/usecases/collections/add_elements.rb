@@ -10,10 +10,26 @@ module Usecases
         @collection = nil
       end
 
-      def perform!(collection_id:, ui_state:)
+      def perform!(collection_id:, ui_state:, origin_collection_id: nil)
         find_collection(collection_id)
+        enforce_same_owner_origin!(origin_collection_id)
         check_access_to_elements(ui_state)
         add_elements_to_collection(ui_state)
+      end
+
+      # When a sharee moves/assigns an element *out of* a collection they do not own, the target must
+      # be owned by the same user as that origin — they may rearrange the owner's element among the
+      # owner's collections (with add_elements), but never pull it into their own or another owner's
+      # space. Own or unknown origin ⇒ no constraint.
+      def enforce_same_owner_origin!(origin_collection_id)
+        return if origin_collection_id.blank?
+
+        origin = Collection.find_by(id: origin_collection_id)
+        return if origin.nil? || origin.owned_by?(current_user)
+        return if @collection.user_id == origin.user_id
+
+        raise Errors::InsufficientPermissionError,
+              "Elements from a shared collection can only be moved within the same owner's collections"
       end
 
       def find_collection(collection_id)
