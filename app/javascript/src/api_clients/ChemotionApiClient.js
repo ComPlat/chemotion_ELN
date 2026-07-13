@@ -17,7 +17,7 @@ const buildHeaders = (headers) => {
 
   // for formData submission, content type header must not be set, so the browser can set it properly
   // see Warning at the end of section https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest_API/Using_FormData_Objects#sending_files_using_a_formdata_object
-  if (returnHeaders.has('Content-Type') && returnHeaders['Content-Type'] == null) {
+  if (headers != null && headers['Content-Type'] === null) {
     returnHeaders.delete('Content-Type');
   }
 
