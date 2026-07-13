@@ -156,48 +156,34 @@ export default class UsersFetcher {
   }
 
   static fetchRevokeAuthTokens(params) {
-    return fetch('/api/v1/users/revoke_auth_token', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    })
-      .then((response) => {
+    return ApiClient.postJson('/api/v1/users/revoke_auth_token', {
+      body: params,
+      handleResponseSuccess: (response) => {
         if (!response.ok) {
           throw new ResponseError(response);
         }
-
         return response.json();
-      })
-      .catch((error) => {
-        console.error('Fetch error in users/revoke_auth_token:', error);
-        throw error;
-      });
+      },
+      handleResponseError: (exception) => {
+        console.error('Fetch error in users/revoke_auth_token:', exception);
+        throw exception;
+      }
+    });
   }
 
   static fetchNewAuthToken(params) {
-    return fetch('/api/v1/users/auth_token', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    })
-      .then((response) => {
+    return ApiClient.postJson('/api/v1/users/auth_token', {
+      body: params,
+      handleResponseSuccess: (response) => {
         if (!response.ok) {
           throw new ResponseError(response);
         }
-
         return response.json();
-      })
-      .catch((error) => {
-        console.error('Fetch error in public/token:', error);
-        throw error;
-      });
+      },
+      handleResponseError: (exception) => {
+        console.error('Fetch error in public/token:', exception);
+        throw exception;
+      }
+    });
   }
 }
