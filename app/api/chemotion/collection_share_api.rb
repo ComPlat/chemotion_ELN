@@ -5,6 +5,9 @@ module Chemotion
     rescue_from ActiveRecord::RecordNotFound do
       error!('CollectionShare not found', 404)
     end
+    rescue_from Usecases::Collections::Errors::InsufficientPermissionError do |error|
+      error!(error.message, 403)
+    end
 
     helpers do
       # The collection whose share list the current user may administrate: one they own, or one
@@ -54,6 +57,18 @@ module Chemotion
       def refresh_shared_flag!(collection)
         collection.update!(shared: CollectionShare.exists?(collection: collection))
       end
+
+      # A pass_ownership (5) share is an ownership *offer*: it may only target a single Person (never
+      # a group), and never a locked system collection. Enforced only when that level is the one
+      # being granted; ordinary shares are unaffected.
+      def prevent_invalid_ownership_offer!(collection, user_ids, level)
+        return unless level == CollectionShare.permission_level(:pass_ownership)
+
+        error!('422 Unprocessable Entity: this collection cannot change ownership', 422) if collection.is_locked
+        return if user_ids.size == 1 && User.exists?(id: user_ids, type: 'Person')
+
+        error!('422 Unprocessable Entity: ownership can only be offered to a single person', 422)
+      end
     end
 
     resource :collection_shares do
@@ -99,6 +114,7 @@ module Chemotion
         collection = administrable_collection(params[:collection_id])
         prevent_privilege_escalation!(collection, params[:permission_level])
         prevent_sharing_with_owner!(collection, params[:user_ids])
+        prevent_invalid_ownership_offer!(collection, params[:user_ids], params[:permission_level])
 
         # include_missing: false — otherwise every omitted optional detail level is declared as nil and
         # overwrites the column default, tripping its NOT NULL constraint.
@@ -136,6 +152,7 @@ module Chemotion
         # neither promote someone above themselves nor demote someone who outranks them.
         prevent_privilege_escalation!(collection, params[:permission_level])
         prevent_privilege_escalation!(collection, share.permission_level)
+        prevent_invalid_ownership_offer!(collection, [share.shared_with_id], params[:permission_level])
 
         # include_missing: false keeps this a partial update; see the note on the create endpoint.
         share.update!(declared(params, include_missing: false).except(:id))
@@ -169,6 +186,19 @@ module Chemotion
 
         status 204
         body false
+      end
+
+      desc 'Accept a pending pass-ownership offer and take ownership of the collection (and subtree)'
+      namespace :take_ownership do
+        params do
+          requires :collection_id, type: Integer
+        end
+        post '/:collection_id' do
+          collection = Collection.find(params[:collection_id])
+          transferred = Usecases::Collections::TransferOwnership.new(current_user).perform!(collection: collection)
+
+          present transferred, with: Entities::OwnCollectionEntity, root: :collection
+        end
       end
     end
   end

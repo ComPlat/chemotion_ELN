@@ -13,7 +13,7 @@ describe Chemotion::CollectionShareAPI do
       {
         collection_id: collection.id,
         user_ids: [other_user.id, third_user.id],
-        permission_level: CollectionShare.permission_level(:pass_ownership),
+        permission_level: CollectionShare.permission_level(:manage_shares),
         celllinesample_detail_level: 5,
         devicedescription_detail_level: 5,
         element_detail_level: 5,
@@ -293,6 +293,60 @@ describe Chemotion::CollectionShareAPI do
       post '/api/v1/collection_shares/', params: { collection_id: collection.id, user_ids: [third_user.id] }
 
       expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe 'offering ownership (pass_ownership share)' do
+    let(:pass_ownership) { CollectionShare.permission_level(:pass_ownership) }
+
+    it 'refuses to offer ownership to a group' do
+      collection = create(:collection, user: user)
+      group = create(:group)
+
+      post '/api/v1/collection_shares/',
+           params: { collection_id: collection.id, user_ids: [group.id], permission_level: pass_ownership }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it 'refuses a manage_shares delegate offering ownership (above their own level)' do
+      collection = create(:collection, user: other_user)
+      create(:collection_share, collection: collection, shared_with: user,
+                                permission_level: CollectionShare.permission_level(:manage_shares))
+
+      post '/api/v1/collection_shares/',
+           params: { collection_id: collection.id, user_ids: [third_user.id], permission_level: pass_ownership }
+
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
+
+  describe 'POST /api/v1/collection_shares/take_ownership/:collection_id' do
+    let(:collection) { create(:collection, user: other_user) }
+
+    context 'when the user holds a pass-ownership offer' do
+      before do
+        create(:collection_share, collection: collection, shared_with: user,
+                                  permission_level: CollectionShare.permission_level(:pass_ownership))
+      end
+
+      it 'transfers ownership to the user and demotes the former owner' do
+        post "/api/v1/collection_shares/take_ownership/#{collection.id}"
+
+        expect(response).to have_http_status(:created)
+        expect(collection.reload.user_id).to eq(user.id)
+        expect(CollectionShare.find_by(collection: collection, shared_with_id: other_user.id).permission_level)
+          .to eq(CollectionShare.permission_level(:manage_shares))
+      end
+    end
+
+    context 'without an offer' do
+      it 'is forbidden' do
+        expect { post "/api/v1/collection_shares/take_ownership/#{collection.id}" }
+          .not_to(change { collection.reload.user_id })
+
+        expect(response).to have_http_status(:forbidden)
+      end
     end
   end
 end

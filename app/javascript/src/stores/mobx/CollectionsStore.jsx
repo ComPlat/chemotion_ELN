@@ -227,6 +227,12 @@ export const CollectionsStore = types
         self.createSharingMessage(currentUser, params.user_ids)
       }
     }),
+    takeOwnership: flow(function* takeOwnership(collectionId) {
+      const collection = yield CollectionSharesFetcher.takeOwnership(collectionId);
+      if (collection) {
+        self.fetchCollections();
+      }
+    }),
     updateCollectionShare: flow(function* updateCollectionShare(collectionShareId, params) {
       const collectionShare = yield CollectionSharesFetcher.updateCollectionShare(collectionShareId, params)
       if (collectionShare) {

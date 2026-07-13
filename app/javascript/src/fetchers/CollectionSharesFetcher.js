@@ -17,6 +17,13 @@ export default class CollectionSharesFetcher {
     return ApiClient.postJson('/api/v1/collection_shares', { body: params });
   }
 
+  // Accept a pending pass-ownership offer: transfers the collection (and its subtree) to the
+  // current user. Returns the now-owned collection.
+  static takeOwnership(collectionId) {
+    return ApiClient.postJson(`/api/v1/collection_shares/take_ownership/${collectionId}`, { body: {} })
+      .then((json) => json.collection);
+  }
+
   static updateCollectionShare(collectionShareId, params) {
     return ApiClient.putJson(`/api/v1/collection_shares/${collectionShareId}`, { body: params })
       .then((json) => json.collection_share);
