@@ -114,10 +114,15 @@ module Usecases
 
       # The withdrawn reactions' associated samples: solvents/reactants only unless the caller asked
       # to remove every subsample. Mirrors the pre-existing +deleteSubsamples+ contract.
+      #
+      # +with_deleted+ is load-bearing: withdraw_selected_elements has already destroyed the reactions,
+      # and Reaction's +dependent: :destroy+ soft-deletes their (acts_as_paranoid) reactions_samples.
+      # The default scope would hide exactly those rows, so their sample_ids must be read through the
+      # unscoped relation — the reason the code this replaced used a raw inner join here.
       def withdraw_reaction_subsamples(reaction_ids, options)
         return [] if reaction_ids.blank?
 
-        scope = ReactionsSample.where(reaction_id: reaction_ids)
+        scope = ReactionsSample.with_deleted.where(reaction_id: reaction_ids)
         unless options[:deleteSubsamples] || options['deleteSubsamples']
           scope = scope.where(type: %w[ReactionsSolventSample ReactionsReactantSample])
         end

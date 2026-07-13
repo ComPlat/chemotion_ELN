@@ -148,5 +148,28 @@ RSpec.describe ElementsPolicy do
       end
     end
   end
+
+  # Regression: a collection owned by one of the user's groups is their own (Collection#owned_by?),
+  # so a group member may remove/destroy its elements. Without a group-aware own scope the policy
+  # denied it, and SelectionActions greyed out Move for every group collection.
+  describe 'a group-owned collection' do
+    let(:group) { create(:group, users: [user_1]) }
+    let(:group_collection) { create(:collection, user: group) }
+    let(:group_sample) { create(:sample, creator: user_1, collections: [group_collection]) }
+
+    before { group_sample }
+
+    it 'counts as the member\'s own for #remove_all?' do
+      policy = described_class.new(user_1, Sample.where(id: [group_sample.id]))
+
+      expect(policy.remove_all?).to be true
+    end
+
+    it 'counts as the member\'s own for #destroy_all?' do
+      policy = described_class.new(user_1, Sample.where(id: [group_sample.id]))
+
+      expect(policy.destroy_all?).to be true
+    end
+  end
 end
 # rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, Naming/VariableNumber

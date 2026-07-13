@@ -82,6 +82,40 @@ RSpec.describe Usecases::Collections::WithdrawElements do
     end
   end
 
+  describe 'a sole-owned reaction with associated subsamples' do
+    let(:reaction) { create(:reaction, creator: user, collections: [user_all, user_sub]) }
+    let(:solvent) { create(:sample, creator: user, collections: [user_all, user_sub]) }
+    let(:reactant) { create(:sample, creator: user, collections: [user_all, user_sub]) }
+
+    before do
+      ReactionsSolventSample.create!(reaction: reaction, sample: solvent, reference: false)
+      ReactionsReactantSample.create!(reaction: reaction, sample: reactant, reference: false)
+    end
+
+    def withdraw_reaction(options: {})
+      described_class.new(user).perform!(
+        source_collection: user_sub,
+        ui_state: { reaction: { all: false, included_ids: [reaction.id] } }.with_indifferent_access,
+        options: options,
+      )
+    end
+
+    # Regression: withdraw destroys the reaction first, and Reaction's dependent: :destroy soft-deletes
+    # its (acts_as_paranoid) reactions_samples. The subsample cleanup must still resolve them through
+    # with_deleted, otherwise the solvent/reactant samples are silently orphaned.
+    it 'also withdraws and destroys the orphaned solvent/reactant subsamples' do
+      expect { withdraw_reaction }
+        .to change(Reaction, :count).by(-1)
+        .and change(Sample, :count).by(-2)
+      expect(Sample.where(id: [solvent.id, reactant.id])).to be_empty
+    end
+
+    it 'reports the subsample ids as having left the view' do
+      result = withdraw_reaction
+      expect(result['sample']).to contain_exactly(solvent.id, reactant.id)
+    end
+  end
+
   describe 'a group member withdrawing a group-owned element' do
     let(:group) { create(:group, users: [user]) }
     let(:group_all) { Collection.get_all_collection_for_user(group.id) }
