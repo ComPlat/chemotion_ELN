@@ -70,4 +70,24 @@ RSpec.describe Device do
       expect(device_with_novnc.decrypted_novnc_password).to eq('testen')
     end
   end
+
+  describe '#destroy' do
+    it 'keeps the soft-deleted record but releases its unique fields' do
+      device.destroy
+      deleted = described_class.only_deleted.find(device.id)
+
+      expect(deleted.name_abbreviation).to be_nil
+      expect(deleted.email).to be_nil
+    end
+
+    it 'frees the name abbreviation and email for a new device' do
+      abbreviation = device.name_abbreviation
+      email = device.email
+      device.destroy
+
+      new_device = build(:device, name_abbreviation: abbreviation, email: email)
+      expect(new_device).to be_valid
+      expect { new_device.save! }.not_to raise_error
+    end
+  end
 end

@@ -82,6 +82,13 @@ class Device < ApplicationRecord
   scope :by_name, ->(query) { where('LOWER(name) ILIKE ?', "%#{sanitize_sql_like(query.downcase)}%") }
   scope :by_email, ->(query) { where('LOWER(email) ILIKE ?', sanitize_sql_like(query.downcase.strip)) }
 
+  # Release the unique name_abbreviation and email on (soft-)delete so they can be reused.
+  # Folding this into paranoia's destroy attributes clears the fields in the same UPDATE
+  # that sets deleted_at, rather than issuing a second write from a before_destroy callback.
+  def paranoia_destroy_attributes
+    super.merge(email: nil, name_abbreviation: nil)
+  end
+
   def unique_name_abbreviation
     devices = Device.unscoped.where('LOWER(name_abbreviation) = ?',
                                     Device.sanitize_sql_like(name_abbreviation.downcase).to_s)
