@@ -15,7 +15,7 @@ RSpec.describe Usecases::Collections::WithdrawElements do
 
   def withdraw_from(collection, sample, options: {})
     described_class.new(user).perform!(
-      source_collection: collection, ui_state: selection_for(sample), options: options
+      source_collection: collection, ui_state: selection_for(sample), options: options,
     )
   end
 
