@@ -87,7 +87,7 @@ function AccountSettings({ currentUser }) {
     // Replace with your API call
     setForm('otp_attempt', '');
     const res = await submitAsForm({
-      url: '/users', form, prefix: 'user', method: 'POST'
+      url: '/users', form, prefix: 'user', method: 'PUT'
     }).catch((err) => setErrors(err.messages || ['Something went wrong']));
     const { status } = res;
     let content;
