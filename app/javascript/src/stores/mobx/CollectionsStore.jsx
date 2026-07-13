@@ -365,6 +365,8 @@ export const CollectionsStore = types
     setSharedWithMeCollections(collections) {
       // group shared collections by owner
       const sharedWithMeCollections = self.presortSharedWithMeCollections(collections)
+      // The set of collections actually shared with the user — used to decide truncation below.
+      const sharedIds = new Set(sharedWithMeCollections.map((collection) => collection.id));
 
       sharedWithMeCollections.forEach((collection, i) => {
         if (i === 0 || i > 0 && sharedWithMeCollections[i - 1].owner !== collection.owner) {
@@ -379,7 +381,12 @@ export const CollectionsStore = types
         }
         const parentOwnerIndex = self.shared_with_me_collections.findIndex(element => element.owner == collection.owner)
         if (parentOwnerIndex !== -1) {
-          self.shared_with_me_collections[parentOwnerIndex].addChild(collection)
+          const node = Collection.create(collection);
+          // Preserve the hierarchy when the parent is also shared; when it is not (the branch is
+          // "skipped"), truncate by showing this collection at the top level under its owner.
+          const directParentId = node.ancestorIds[node.ancestorIds.length - 1];
+          if (directParentId == null || !sharedIds.has(directParentId)) { node.resetAncestry(); }
+          self.addCollectionToTree(node, self.shared_with_me_collections[parentOwnerIndex].children);
         }
       });
     },
