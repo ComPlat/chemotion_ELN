@@ -188,6 +188,29 @@ RSpec.describe User do
     end
   end
 
+  describe '#generate_qr_code' do
+    let(:user) { create(:user) }
+
+    it 'generates an otp_secret and a QR code svg' do
+      svg = nil
+      expect { svg = user.generate_qr_code }.to change { user.reload.encrypted_otp_secret }.from(nil)
+      expect(svg).to include('<svg')
+    end
+
+    it 're-enrolls instead of raising when the stored ciphertext can no longer be decrypted' do
+      user.generate_qr_code
+      previous_secret = user.reload.otp_secret
+      # simulate a corrupted/undecryptable ciphertext (e.g. after an OTP_SECRET_KEY rotation)
+      # while keeping the iv/salt otherwise well-formed.
+      user.update_columns(encrypted_otp_secret: user.encrypted_otp_secret.reverse)
+      user.instance_variable_set(:@otp_secret, nil)
+
+      expect { user.generate_qr_code }.not_to raise_error
+      expect(user.reload.otp_secret).to be_present
+      expect(user.otp_secret).not_to eq(previous_secret)
+    end
+  end
+
   describe '#increment_counter' do
     let(:described_method) { :increment_counter }
     let(:element) { described_class::COUNTER_KEYS.sample }
