@@ -161,12 +161,13 @@ module Chemotion
           kinds = wellplate.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          present(
-            wellplate,
-            with: Entities::WellplateEntity,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
-            root: :wellplate,
-          )
+          {
+            wellplate: Entities::WellplateEntity.represent(
+              wellplate,
+              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
+            ),
+            attachments: Entities::AttachmentEntity.represent(wellplate.attachments),
+          }
         end
       end
 
@@ -250,6 +251,7 @@ module Chemotion
                                                                   element: wellplate).detail_levels,
                 ),
                 attachments: Entities::AttachmentEntity.represent(wellplate.attachments),
+                molarity_discarded: import.molarity_discarded,
               }
             rescue StandardError => e
               error!(e, 500)

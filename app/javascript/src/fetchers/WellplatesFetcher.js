@@ -96,9 +96,13 @@ export default class WellplatesFetcher {
           });
           return json;
         }
+        let msg = 'Import successful.';
+        if (json.molarity_discarded) {
+          msg += ' Molarity was discarded for wells without a sample assigned.';
+        }
         NotificationActions.add({
-          message: 'Import successful.',
-          level: 'success',
+          message: msg,
+          level: json.molarity_discarded ? 'warning' : 'success',
         });
         return this.wellplateElement(json, wellplateId);
       });
