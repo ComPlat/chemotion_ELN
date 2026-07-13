@@ -1,9 +1,11 @@
 import { flow, types } from 'mobx-state-tree';
+import { values } from 'mobx';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import ApiClient from 'src/api_clients/ChemotionApiClient';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 
 // adapted from Entities::UserEntity
 const User = types.model(
@@ -347,6 +349,12 @@ const UserStore = types.model(
     const { currentUser } = self;
     return currentUser !== null && currentUser.allocated_space !== 0
       && totalSize > (currentUser.allocated_space - currentUser.used_space);
+  },
+  allGenericElements() {
+    if (!self.currentUser) { return []; }
+    if (!MatrixCheck(self.currentUser.matrix, 'genericElement')) { return []; }
+
+    return values(self.genericEls);
   }
 }));
 
