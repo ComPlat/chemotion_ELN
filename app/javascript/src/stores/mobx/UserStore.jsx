@@ -51,10 +51,12 @@ const Device = types.model(
 const RxnoItem = types.model(
   'RxnoItem',
   {
-    id: types.identifierNumber,
-    is_enabled: types.boolean,
+    id: types.optional(types.integer, 0),
+    is_enabled: types.optional(types.boolean, true),
     search: types.string,
     synonym: types.maybeNull(types.string),
+    synonyms: types.maybeNull(types.array(types.maybeNull(types.string))),
+    term_id: types.maybeNull(types.string),
     title: types.string,
     value: types.string,
     children: types.array(types.late(() => RxnoItem))
@@ -156,7 +158,7 @@ const BaoOrHeader = types.union(
 const Label = types.model(
   'Label',
   {
-    id: types.identifier,
+    id: types.identifierNumber,
     user_id: types.maybeNull(types.integer), // must be adapted when switching to uuids eventually
     access_level: types.integer,
     title: types.string,
@@ -276,7 +278,7 @@ const UserStore = types.model(
   }),
   selectTab: (tab) => {
     const { layout } = self.profile.data;
-    const typeFromProfile = Object.keys(layout).filter((e) => layout[e] === self.currentTab + 1)[0];
+    const typeFromProfile = Object.keys(layout).filter((e) => layout[e] === tab + 1)[0];
     self.currentTab = tab;
     self.currentType = typeFromProfile;
   },
