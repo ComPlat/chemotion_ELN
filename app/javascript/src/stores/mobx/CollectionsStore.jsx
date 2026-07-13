@@ -295,7 +295,11 @@ export const CollectionsStore = types
       }
     }),
     addElementsToCollectionAndShare: flow(function* addElementsToCollectionAndShare(user, params) {
-      const collectionParams = { label: `My project with ${user.name}`, parent_id: '', inventory_id: '' }
+      const collectionParams = {
+        label: (params.label && params.label.length > 0) ? params.label : `My project with ${user.name}`,
+        parent_id: params.parentId ?? '',
+        inventory_id: '',
+      };
       const newCollection = yield self.addCollection(collectionParams, false)
 
       if (newCollection) {

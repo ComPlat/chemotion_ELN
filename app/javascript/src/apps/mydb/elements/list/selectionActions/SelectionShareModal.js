@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Form } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import { AsyncSelect } from 'src/components/common/Select';
+import CollectionSelect from 'src/components/common/CollectionSelect';
 
 import SelectionSharingShortcuts from 'src/apps/mydb/elements/list/selectionActions/SelectionSharingShortcuts';
 
@@ -36,6 +37,8 @@ function SelectionShareModal({
   const collectionsStore = useContext(StoreContext).collections;
   const [permissions, setPermissions] = useState(collectionPermissions);
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [newCollectionLabel, setNewCollectionLabel] = useState('');
+  const [parentCollection, setParentCollection] = useState(null);
   const defaultRole = 'Pick a sharing role';
   const [role, setRole] = useState(defaultRole);
 
@@ -65,6 +68,8 @@ function SelectionShareModal({
         uiState: filterParamsFromUIState(uiState),
         users: selectedUsers,
         permissions: permissionsParams,
+        label: newCollectionLabel.trim(),
+        parentId: parentCollection?.id ?? null,
         currentUser,
       };
       collectionsStore.collectionShareForElements(params);
@@ -172,6 +177,27 @@ function SelectionShareModal({
       primaryActionDisabled={!canSubmit}
     >
       <Form>
+        {shareType === 'new' && (
+          <>
+            <Form.Group className="mb-3" controlId="newCollectionLabel">
+              <Form.Label>New collection name</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Leave empty to use “My project with …”"
+                value={newCollectionLabel}
+                onChange={(e) => setNewCollectionLabel(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="newCollectionParent">
+              <Form.Label>Parent collection (optional)</Form.Label>
+              <CollectionSelect
+                value={parentCollection}
+                withShared={false}
+                onChange={setParentCollection}
+              />
+            </Form.Group>
+          </>
+        )}
         <Form.Group className="mb-3" controlId="shortcutSelect">
           <Form.Label>Role</Form.Label>
           <Form.Select
