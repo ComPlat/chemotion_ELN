@@ -109,24 +109,36 @@ module Chemotion
         optional :screen_detail_level, type: Integer
         optional :sequencebasedmacromoleculesample_detail_level, type: Integer
         optional :wellplate_detail_level, type: Integer
+        optional :apply_to_subcollections, type: Boolean, default: false,
+                                           desc: 'Also apply this share to the descendant collections'
       end
       post do
         collection = administrable_collection(params[:collection_id])
-        prevent_privilege_escalation!(collection, params[:permission_level])
-        prevent_sharing_with_owner!(collection, params[:user_ids])
-        prevent_invalid_ownership_offer!(collection, params[:user_ids], params[:permission_level])
 
         # include_missing: false — otherwise every omitted optional detail level is declared as nil and
         # overwrites the column default, tripping its NOT NULL constraint.
-        attributes = declared(params, include_missing: false).except(:collection_id, :user_ids)
+        attributes = declared(params, include_missing: false)
+                     .except(:collection_id, :user_ids, :apply_to_subcollections)
 
-        params[:user_ids].each do |user_id|
-          share = CollectionShare.find_or_initialize_by(collection: collection, shared_with_id: user_id)
-          share.assign_attributes(attributes)
-          share.save!
+        # The offered collection, plus (optionally) each descendant the caller may administer.
+        targets = [collection]
+        if params[:apply_to_subcollections]
+          targets += collection.descendants.select { |sub| find_administrable_collection(sub.id) }
         end
 
-        refresh_shared_flag!(collection)
+        targets.each do |target|
+          prevent_privilege_escalation!(target, params[:permission_level])
+          prevent_sharing_with_owner!(target, params[:user_ids])
+          prevent_invalid_ownership_offer!(target, params[:user_ids], params[:permission_level])
+
+          params[:user_ids].each do |user_id|
+            share = CollectionShare.find_or_initialize_by(collection: target, shared_with_id: user_id)
+            share.assign_attributes(attributes)
+            share.save!
+          end
+
+          refresh_shared_flag!(target)
+        end
 
         { status: 204 }
       end

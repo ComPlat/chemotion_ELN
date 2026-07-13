@@ -39,6 +39,7 @@ function SelectionShareModal({
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [newCollectionLabel, setNewCollectionLabel] = useState('');
   const [parentCollection, setParentCollection] = useState(null);
+  const [applyToSubcollections, setApplyToSubcollections] = useState(false);
   const defaultRole = 'Pick a sharing role';
   const [role, setRole] = useState(defaultRole);
 
@@ -78,6 +79,7 @@ function SelectionShareModal({
       const params = {
         collection_id: collectionId,
         user_ids: selectedUsers.map((u) => u.id),
+        apply_to_subcollections: applyToSubcollections,
         ...permissionsParams
       };
       collectionsStore.addCollectionShare(params, currentUser, false);
@@ -233,6 +235,16 @@ function SelectionShareModal({
             </Form.Text>
           )}
         </Form.Group>
+        {shareType === 'create' && (
+          <Form.Group className="mb-3" controlId="applyToSubcollections">
+            <Form.Check
+              type="checkbox"
+              label="Apply these share settings to all sub-collections"
+              checked={applyToSubcollections}
+              onChange={(e) => setApplyToSubcollections(e.target.checked)}
+            />
+          </Form.Group>
+        )}
         <Form.Group className="mb-3" controlId="sampleDetailLevelSelect">
           <Form.Label>Sample detail level</Form.Label>
           <Form.Select

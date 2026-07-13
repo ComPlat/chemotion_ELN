@@ -33,6 +33,25 @@ describe Chemotion::CollectionShareAPI do
       end.to change(CollectionShare, :count).by(create_params[:user_ids].length)
          .and change(collection, :shared?).from(false).to(true)
     end
+
+    context 'with apply_to_subcollections' do
+      let(:child) { create(:collection, user: user, parent: collection) }
+
+      before { child }
+
+      it 'also shares the descendant collections' do
+        post '/api/v1/collection_shares/', params: create_params.merge(apply_to_subcollections: true)
+
+        expect(CollectionShare.exists?(collection: collection, shared_with_id: other_user.id)).to be true
+        expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be true
+      end
+
+      it 'leaves descendants untouched when the flag is false' do
+        post '/api/v1/collection_shares/', params: create_params.merge(apply_to_subcollections: false)
+
+        expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
+      end
+    end
   end
 
   describe 'PUT /api/v1/collection_shares' do
