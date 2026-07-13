@@ -276,7 +276,7 @@ describe Chemotion::WellplateAPI do
     let(:wellplate) { create(:wellplate, name: 'test', attachments: [attachment], collections: [collection]) }
     let(:params) { { wellplate_id: wellplate.id, attachment_id: attachment.id } }
 
-    let(:mock) { instance_double(Import::ImportWellplateSpreadsheet, wellplate: wellplate) }
+    let(:mock) { instance_double(Import::ImportWellplateSpreadsheet, wellplate: wellplate, molarity_discarded: false) }
 
     context 'when no error occurs' do
       before do
