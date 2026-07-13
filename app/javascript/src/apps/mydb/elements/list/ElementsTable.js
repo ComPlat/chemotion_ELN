@@ -10,7 +10,6 @@ import deepEqual from 'deep-equal';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import UserActions from 'src/stores/alt/actions/UserActions';
 
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ElementAllCheckbox from 'src/apps/mydb/elements/list/ElementAllCheckbox';
@@ -19,7 +18,6 @@ import SampleGroupContainer from 'src/apps/mydb/elements/list/sample/SampleGroup
 import { SearchUserLabels } from 'src/components/UserLabels';
 import ToggleButton from 'src/components/common/ToggleButton';
 
-import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementsTableGroupedEntries from 'src/apps/mydb/elements/list/ElementsTableGroupedEntries';
 import { Select } from 'src/components/common/Select';
 import PropTypes from 'prop-types';
@@ -32,6 +30,7 @@ import SequenceBasedMacromoleculeSampleList
   from 'src/apps/mydb/elements/list/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleList';
 import SequenceBasedMacromoleculeSampleListHeader
   from 'src/apps/mydb/elements/list/sequenceBasedMacromoleculeSamples/SequenceBasedMacromoleculeSampleListHeader';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const SORT_MODE_OPTIONS = [
   { value: 'created', label: 'Created' },
@@ -39,6 +38,7 @@ const SORT_MODE_OPTIONS = [
 ];
 
 export default class ElementsTable extends React.Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     this.elementRef = React.createRef();
@@ -82,8 +82,8 @@ export default class ElementsTable extends React.Component {
 
     const { type, genericEl } = this.props;
     if (type === 'reaction' || genericEl) {
-      const userState = UserStore.getState();
-      const filters = userState.profile.data.filters || {};
+      const { profile } = this.context.userStore;
+      const filters = profile.data.filters || {};
 
       const { elementsGroup, elementsSort, sortDirection } = this.state;
       const newElementsGroup = filters[type]?.group || 'none';
@@ -245,7 +245,7 @@ export default class ElementsTable extends React.Component {
       group: elementsGroup,
     });
 
-    UserActions.updateUserProfile({
+    this.context.userStore.updateUserProfile({
       data: {
         filters: {
           [type]: {
