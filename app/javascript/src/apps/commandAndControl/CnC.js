@@ -20,7 +20,7 @@ const TIME_BLUR = 55000;
 // Interval to query connection counter
 const TIME_CONN = 4000;
 
-function CnC() {
+const CnC = () => {
   const { devices } = useContext(StoreContext).userStore;
   const [selectedDevice, setSelectedDevice] = useState({});
   const [showDeviceList, setShowDeviceList] = useState(true);
@@ -38,9 +38,12 @@ function CnC() {
 
   const { userStore } = useContext(StoreContext);
 
+  /* eslint-disable react-hooks/exhaustive-deps */
+  // it is disabled because the effect is used to fetch the currentUser just once, so it is present when the component is displayed
   useEffect(() => {
     userStore.fetchCurrentUser();
   }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   /**
    * Handles the event when the screen size is changing.
