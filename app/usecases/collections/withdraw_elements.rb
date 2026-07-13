@@ -81,7 +81,7 @@ module Usecases
       #   kept by the association guard (still bound to a reaction/wellplate in one of the user's
       #   collections) are not included — they remain visible and are not destroyed.
       def withdraw(klass, join_table, ids)
-        actionable = own_membership_ids(klass, ids)
+        actionable = membership_ids(klass, ids, @owned_collection_ids)
         return [] if actionable.empty?
 
         if FILTERED_JOINS.include?(join_table)
@@ -91,25 +91,27 @@ module Usecases
         end
         join_table.update_tag_by_element_ids(actionable)
 
-        left_view = []
-        klass.where(id: actionable).find_each do |element|
-          next if element.collections.exists?(id: @owned_collection_ids) # kept by the guard
+        # Two set-based membership queries instead of a per-element N+1. Both must run AFTER the
+        # delete: delete_in_collection_with_filter may have kept some ids (still bound to a
+        # reaction/wellplate in one of our collections), and that decision is only visible by asking
+        # membership again — never derivable from `actionable`.
+        still_ours = membership_ids(klass, actionable, @owned_collection_ids) # guard-kept ⇒ stay visible
+        left_view = actionable - still_ours
+        orphaned = left_view - membership_ids(klass, left_view, nil)          # in no collection ⇒ sole owner
 
-          element.destroy unless element.collections.exists? # orphaned everywhere ⇒ sole owner
-          left_view << element.id
-        end
+        klass.where(id: orphaned).find_each(&:destroy) # per-record destroy keeps paranoia/callbacks
         left_view
       end
 
-      # Standing: only act on elements the user actually owns — those in at least one of their own
-      # collections. An element reachable only through a foreign share is left untouched.
-      def own_membership_ids(klass, ids)
+      # Ids among +ids+ whose element is still in at least one collection. Restricted to
+      # +collection_ids+ when given; pass +nil+ for "any collection at all". The join goes through
+      # the element's (non-deleted) collections association, so it only counts live memberships.
+      def membership_ids(klass, ids, collection_ids)
         return [] if ids.blank?
 
-        klass.where(id: ids)
-             .joins(:collections)
-             .where(collections: { id: @owned_collection_ids })
-             .distinct.ids
+        scope = klass.where(id: ids).joins(:collections)
+        scope = scope.where(collections: { id: collection_ids }) if collection_ids
+        scope.distinct.ids
       end
 
       # The withdrawn reactions' associated samples: solvents/reactants only unless the caller asked
