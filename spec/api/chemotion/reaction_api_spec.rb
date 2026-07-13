@@ -697,7 +697,7 @@ describe Chemotion::ReactionAPI do
       let(:writable_collection) do
         create(:collection, user: other_user).tap do |c|
           create(:collection_share, collection: c, shared_with: user,
-                                    permission_level: CollectionShare::PERMISSION_LEVELS[:write_elements])
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:add_elements])
         end
       end
       let(:params) do

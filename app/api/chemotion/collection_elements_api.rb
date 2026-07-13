@@ -24,6 +24,7 @@ module Chemotion
         Usecases::Collections::AddElements.new(current_user).perform!(
           collection_id: params[:collection_id],
           ui_state: params[:ui_state].except(:currentCollection),
+          origin_collection_id: params[:ui_state][:currentCollection]&.dig(:id),
         )
         { status: 204 }
       end

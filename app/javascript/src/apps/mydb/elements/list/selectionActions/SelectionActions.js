@@ -167,14 +167,17 @@ export default class SelectionActions extends React.Component {
   }
 
   render() {
-    const { currentCollection, sharing_allowed, deletion_allowed, hasSel } = this.state;
+    const {
+      currentCollection, sharing_allowed, deletion_allowed, remove_allowed, hasSel
+    } = this.state;
     const { is_locked, label } = currentCollection;
     const isAll = is_locked && label === 'All';
     const noSel = !hasSel
 
-    const moveDisabled = noSel || isAll;
+    // Move unlinks from the current collection, so it needs remove permission on the source.
+    const moveDisabled = noSel || isAll || !remove_allowed;
     const assignDisabled = noSel;
-    const removeDisabled = noSel || isAll || !deletion_allowed; //!remove_allowed
+    const removeDisabled = noSel || isAll || !remove_allowed;
     const deleteDisabled = noSel || !deletion_allowed;
     const shareDisabled = noSel || !sharing_allowed;
     const literatureDisabled = noSel;

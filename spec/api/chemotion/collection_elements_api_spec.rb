@@ -61,7 +61,7 @@ describe Chemotion::CollectionElementsAPI do
         :collection_share,
         collection: target_collection,
         shared_with: user,
-        permission_level: CollectionShare.permission_level(:import_elements) - 1,
+        permission_level: CollectionShare.permission_level(:add_elements) - 1,
       )
 
       expect(sample1.collections).not_to include(target_collection)
@@ -79,7 +79,7 @@ describe Chemotion::CollectionElementsAPI do
         :collection_share,
         collection: target_collection,
         shared_with: user,
-        permission_level: CollectionShare.permission_level(:import_elements),
+        permission_level: CollectionShare.permission_level(:add_elements),
       )
 
       expect(sample1.collections).not_to include(target_collection)
@@ -105,7 +105,7 @@ describe Chemotion::CollectionElementsAPI do
         :collection_share,
         collection: source_collection,
         shared_with: user,
-        permission_level: CollectionShare.permission_level(:share_collection) - 1,
+        permission_level: CollectionShare.permission_level(:add_elements) - 1,
       )
 
       expect(sample1.collections).not_to include(target_collection)
@@ -123,7 +123,7 @@ describe Chemotion::CollectionElementsAPI do
         :collection_share,
         collection: source_collection,
         shared_with: user,
-        permission_level: CollectionShare.permission_level(:share_collection),
+        permission_level: CollectionShare.permission_level(:add_elements),
       )
 
       expect(sample1.collections).not_to include(target_collection)

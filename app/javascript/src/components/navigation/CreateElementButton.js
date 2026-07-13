@@ -140,8 +140,9 @@ export default class CreateElementButton extends React.Component {
       permission_level
     } = currentCollection;
 
+    // Creating an element adds it to the collection, so it needs AddElements — not merely EditElements.
     const newIsDisabled = permission_level !== undefined
-      ? (collection_share_id && permission_level < PermissionConst.Write)
+      ? (collection_share_id && permission_level < PermissionConst.AddElements)
       : (label === 'All' && is_locked);
 
     this.setState({ isDisabled: newIsDisabled });

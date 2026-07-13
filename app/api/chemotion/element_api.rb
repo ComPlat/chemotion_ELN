@@ -11,17 +11,6 @@ module Chemotion
     helpers CollectionHelpers
     helpers LiteratureHelpers
 
-    # The :ui_state namespace has exactly two routes: a DELETE that destroys the selected element
-    # records, and a read-only POST /load_report.
-    #
-    # NOTE: the DELETE threshold sits *under* the one ElementPolicy#destroy? requires for a single
-    # record (delete_elements). Preserved as-is; reconciling the two is a permission-model decision
-    # tracked separately.
-    UI_STATE_PERMISSION_LEVELS = {
-      'POST' => CollectionShare.permission_level(:read_elements),
-      'DELETE' => CollectionShare.permission_level(:share_collection),
-    }.freeze
-
     namespace :ui_state do
       desc 'Delete elements by UI state'
       params do
@@ -71,54 +60,35 @@ module Chemotion
         elsif (@collection = Collection.own_collections_for(current_user).find_by(id: collection_id))
           # empty block body to keep rubocop happy
         elsif (collection = Collection.accessible_for(current_user).find_by(id: collection_id))
-          # A user can hold several shares on one collection — their own plus one per group. The
-          # effective level is their maximum; picking whichever row the database returned first made
-          # the outcome depend on row order.
-          effective_level = collection.detail_levels_for_user(current_user)[:permission_level]
-          # Unknown verb (a route added later) falls back to the strictest level we gate on here,
-          # rather than raising or silently letting the request through.
-          required_level = UI_STATE_PERMISSION_LEVELS.fetch(
-            request.request_method, UI_STATE_PERMISSION_LEVELS.values.max
-          )
+          # We only reach here when the user is not an owner. DELETE in this namespace withdraws the
+          # selection from the user's *own* collections and destroys only records left orphaned
+          # (Usecases::Collections::WithdrawElements); a pure sharee has no own-collection membership
+          # to withdraw here, so a shared-collection view still 403s — they use Remove-from-current
+          # (Usecases::Collections::RemoveElements) instead. The only other route here, POST
+          # load_report, just reads.
+          error!('403 Forbidden', 403) if request.delete?
 
-          error!('403 Forbidden', 403) unless effective_level >= required_level
+          # A user can hold several shares on one collection — their own plus one per group — and they
+          # may disagree. The effective level is their maximum, so the outcome no longer depends on
+          # which share row the database happened to return first.
+          effective_level = collection.detail_levels_for_user(current_user)[:permission_level]
+          error!('403 Forbidden', 403) unless
+            effective_level >= CollectionShare.permission_level(:read_elements)
+
           @collection = collection
         end
         error!('404 Record Not Found', 404) unless @collection
       end
 
-      desc 'delete element from ui state selection.'
+      desc 'Withdraw the ui-state selection from all of the user\'s collections (destroying orphans)'
       delete do
-        deleted = { 'sample' => [] }
-        API::ELEMENTS.each do |element|
-          next unless params[element]
-          next unless params[element][:checkedAll] || params[element][:checkedIds].present?
+        removed = Usecases::Collections::WithdrawElements.new(current_user).perform!(
+          source_collection: @collection,
+          ui_state: params,
+          options: params[:options] || {},
+        )
 
-          element_model = API::ELEMENT_CLASS[element].model_name
-          deleted[element_model.param_key] =
-            @collection.send(element_model.route_key).by_ui_state(params[element]).destroy_all.map(&:id)
-        end
-
-        # explicit inner join on reactions_samples to get soft deleted reactions_samples entries
-
-        sql_join = 'inner join reactions_samples on reactions_samples.sample_id = samples.id'
-        unless params[:options][:deleteSubsamples]
-          sql_join += " and reactions_samples.type in ('ReactionsSolventSample','ReactionsReactantSample')"
-        end
-        deleted['sample'] += Sample.joins(sql_join).joins(:collections)
-                                   .where(
-                                     collections: { id: @collection.id },
-                                     reactions_samples: { reaction_id: deleted['reaction'] },
-                                   )
-                                   .destroy_all.map(&:id)
-        Labimotion::ElementKlass.find_each do |klass|
-          klass_name = params[klass.name]
-          next unless klass_name.present? && (klass_name[:checkedAll] || klass_name[:checkedIds].present?)
-
-          deleted[klass.name] = @collection.send(:elements).by_ui_state(params[klass.name]).destroy_all.map(&:id)
-        end
-
-        { selecteds: params[:selecteds].reject { |sel| deleted.fetch(sel['type'], []).include?(sel['id']) } }
+        { selecteds: params[:selecteds].reject { |sel| removed.fetch(sel['type'], []).include?(sel['id']) } }
       end
 
       namespace :load_report do

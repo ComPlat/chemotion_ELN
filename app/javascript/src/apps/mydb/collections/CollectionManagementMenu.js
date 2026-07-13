@@ -40,7 +40,7 @@ function CollectionManagementMenu() {
     } = currentCollection;
     const newIsDisabled = (
       (label === 'All' && isLocked)
-      || (shared === true && permissionLevel < PermissionConst.ImportElements)
+      || (shared === true && permissionLevel < PermissionConst.AddElements)
     );
     setIsDisabled(newIsDisabled);
     setHasRadar(storeHasRadar);

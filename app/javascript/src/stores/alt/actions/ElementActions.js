@@ -270,7 +270,11 @@ class ElementActions {
     return (dispatch) => {
       GenericElsFetcher.create(params)
         .then((result) => { dispatch(result); })
-        .catch((errorMessage) => { console.log(errorMessage); });
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
+        });
     };
   }
 
@@ -278,7 +282,11 @@ class ElementActions {
     return (dispatch) => {
       GenericElsFetcher.update(params)
         .then((result) => { dispatch({ element: result, closeView }); })
-        .catch((errorMessage) => { console.log(errorMessage); });
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
+        });
     };
   }
 
@@ -541,6 +549,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -827,6 +837,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -849,6 +861,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -925,6 +939,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -936,6 +952,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -960,6 +978,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -971,6 +991,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -990,6 +1012,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1032,6 +1056,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1047,6 +1073,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1110,6 +1138,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1122,6 +1152,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1165,6 +1197,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1177,6 +1211,8 @@ class ElementActions {
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1201,6 +1237,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1216,6 +1254,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
