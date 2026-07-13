@@ -8,6 +8,12 @@ module Chemotion
     rescue_from Usecases::Collections::Errors::InsufficientPermissionError do |error|
       error!(error.message, 403)
     end
+    # A share write can still fail at the DB (e.g. a user_id with no matching user → InvalidForeignKey,
+    # or a model validation → RecordInvalid). Surface it as a 422 rather than an unhandled 500; the
+    # cascade below runs its writes in a transaction, so a mid-cascade failure leaves nothing behind.
+    rescue_from ActiveRecord::RecordInvalid, ActiveRecord::InvalidForeignKey do |error|
+      error!(error.message, 422)
+    end
 
     helpers do
       # The collection whose share list the current user may administrate: one they own, or one
@@ -69,6 +75,40 @@ module Chemotion
 
         error!('422 Unprocessable Entity: ownership can only be offered to a single person', 422)
       end
+
+      # The collections a share should be written to: the root, plus (when requested) every
+      # descendant the caller may administer.
+      def cascade_targets(root, apply_to_subcollections)
+        return [root] unless apply_to_subcollections
+
+        [root, *root.descendants.select { |sub| find_administrable_collection(sub.id) }]
+      end
+
+      # Run the share guards for every target. Kept separate from — and always called BEFORE — the
+      # write transaction: the guards call Grape +error!+ (+throw :error+), and on Rails 6.1 a
+      # non-local exit out of an ActiveRecord transaction block commits rather than rolls back, so a
+      # guard tripping inside the transaction would leak partial writes.
+      def validate_share_targets!(targets, user_ids, permission_level)
+        targets.each do |target|
+          prevent_privilege_escalation!(target, permission_level)
+          prevent_sharing_with_owner!(target, user_ids)
+          prevent_invalid_ownership_offer!(target, user_ids, permission_level)
+        end
+      end
+
+      # Upsert the share (per user) onto each target and refresh its shared flag. No transaction of
+      # its own — the caller wraps this (together with any sibling write, e.g. the PUT target update)
+      # in a single ActiveRecord::Base.transaction so the whole cascade is atomic.
+      def write_shares!(targets, user_ids, attributes)
+        targets.each do |target|
+          user_ids.each do |user_id|
+            share = CollectionShare.find_or_initialize_by(collection: target, shared_with_id: user_id)
+            share.assign_attributes(attributes)
+            share.save!
+          end
+          refresh_shared_flag!(target)
+        end
+      end
     end
 
     resource :collection_shares do
@@ -120,25 +160,12 @@ module Chemotion
         attributes = declared(params, include_missing: false)
                      .except(:collection_id, :user_ids, :apply_to_subcollections)
 
-        # The offered collection, plus (optionally) each descendant the caller may administer.
-        targets = [collection]
-        if params[:apply_to_subcollections]
-          targets += collection.descendants.select { |sub| find_administrable_collection(sub.id) }
-        end
-
-        targets.each do |target|
-          prevent_privilege_escalation!(target, params[:permission_level])
-          prevent_sharing_with_owner!(target, params[:user_ids])
-          prevent_invalid_ownership_offer!(target, params[:user_ids], params[:permission_level])
-
-          params[:user_ids].each do |user_id|
-            share = CollectionShare.find_or_initialize_by(collection: target, shared_with_id: user_id)
-            share.assign_attributes(attributes)
-            share.save!
-          end
-
-          refresh_shared_flag!(target)
-        end
+        targets = cascade_targets(collection, params[:apply_to_subcollections])
+        validate_share_targets!(targets, params[:user_ids], params[:permission_level])
+        # requires_new: true so the cascade rolls back to a savepoint even when nested in an outer
+        # transaction (e.g. transactional test fixtures) — without it a mid-cascade failure would
+        # leave the earlier writes behind.
+        ActiveRecord::Base.transaction(requires_new: true) { write_shares!(targets, params[:user_ids], attributes) }
 
         { status: 204 }
       end
@@ -156,6 +183,8 @@ module Chemotion
         optional :screen_detail_level, type: Integer
         optional :sequencebasedmacromoleculesample_detail_level, type: Integer
         optional :wellplate_detail_level, type: Integer
+        optional :apply_to_subcollections, type: Boolean, default: false,
+                                           desc: 'Also apply this edit to the descendant collections'
       end
       put '/:id' do
         share = CollectionShare.find(params[:id])
@@ -167,7 +196,18 @@ module Chemotion
         prevent_invalid_ownership_offer!(collection, [share.shared_with_id], params[:permission_level])
 
         # include_missing: false keeps this a partial update; see the note on the create endpoint.
-        share.update!(declared(params, include_missing: false).except(:id))
+        attributes = declared(params, include_missing: false).except(:id, :apply_to_subcollections)
+
+        # Optionally apply the same edit to the descendants the caller may administer, for THIS
+        # share's sharee. Guards run before the transaction (see validate_share_targets!); the target
+        # update and the cascade then commit together.
+        descendants = params[:apply_to_subcollections] ? cascade_targets(collection, true).drop(1) : []
+        validate_share_targets!(descendants, [share.shared_with_id], params[:permission_level])
+        # requires_new: true — see the note on the create endpoint (atomic under nested transactions).
+        ActiveRecord::Base.transaction(requires_new: true) do
+          share.update!(attributes)
+          write_shares!(descendants, [share.shared_with_id], attributes)
+        end
 
         present share, with: Entities::CollectionShareEntity, root: :collection_share
       end

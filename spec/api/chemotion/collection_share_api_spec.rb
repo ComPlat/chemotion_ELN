@@ -52,6 +52,23 @@ describe Chemotion::CollectionShareAPI do
         expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
       end
     end
+
+    context 'when a share write fails mid-cascade (transactional, 422 not 500)' do
+      let(:child) { create(:collection, user: user, parent: collection) }
+
+      before { child }
+
+      it 'rolls the whole cascade back and responds 422 when a user_id has no matching user' do
+        bogus_id = other_user.id + 1_000 # no such user (ids are sequential and nowhere near this)
+
+        expect do
+          post '/api/v1/collection_shares/',
+               params: create_params.merge(user_ids: [other_user.id, bogus_id], apply_to_subcollections: true)
+        end.not_to change(CollectionShare, :count)
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
   end
 
   describe 'PUT /api/v1/collection_shares' do
@@ -79,6 +96,22 @@ describe Chemotion::CollectionShareAPI do
       expected_result = update_params.dup.stringify_keys
 
       expect(result).to include(expected_result)
+    end
+
+    context 'with apply_to_subcollections' do
+      let(:child) { create(:collection, user: user, parent: collection) }
+
+      before { child }
+
+      it 'cascades the edit to descendant collections for the same sharee' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: update_params.merge(permission_level: CollectionShare.permission_level(:manage_shares),
+                                        apply_to_subcollections: true)
+
+        child_share = CollectionShare.find_by(collection: child, shared_with_id: other_user.id)
+        expect(child_share).to be_present
+        expect(child_share.permission_level).to eq(CollectionShare.permission_level(:manage_shares))
+      end
     end
   end
 
