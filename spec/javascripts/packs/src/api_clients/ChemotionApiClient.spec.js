@@ -46,6 +46,32 @@ describe('ChemotionApiClient.deleteRequest', () => {
   });
 });
 
+describe('ChemotionApiClient bodyless write requests', () => {
+  let fetchStub;
+
+  beforeEach(() => {
+    fetchStub = sinon.stub(global, 'fetch');
+    fetchStub.resolves(new Response(JSON.stringify({ success: true })));
+  });
+
+  afterEach(() => {
+    fetchStub.restore();
+  });
+
+  // Regression: putJson('/api/v1/users/two_factor') with no options argument
+  // threw "Cannot read properties of undefined (reading 'body')"
+  ['putJson', 'postJson', 'patchJson'].forEach((verb) => {
+    it(`${verb} works without an options argument`, async () => {
+      const result = await ApiClient[verb]('/api/v1/users/two_factor');
+
+      sinon.assert.calledOnce(fetchStub);
+      const [, options] = fetchStub.firstCall.args;
+      expect(options.body).toBe(undefined);
+      expect(result).toEqual({ success: true });
+    });
+  });
+});
+
 describe('ChemotionApiClient 204 No Content handling', () => {
   let fetchStub;
 
