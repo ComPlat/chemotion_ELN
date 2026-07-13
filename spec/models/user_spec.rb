@@ -192,7 +192,9 @@ RSpec.describe User do
     let(:user) { create(:user) }
 
     it 'generates an otp_secret and a QR code svg' do
-      expect { user.generate_qr_code }.to change { user.reload.encrypted_otp_secret }.from(nil)
+      svg = nil
+      expect { svg = user.generate_qr_code }.to change { user.reload.encrypted_otp_secret }.from(nil)
+      expect(svg).to include('<svg')
     end
 
     it 're-enrolls instead of raising when the stored ciphertext can no longer be decrypted' do
