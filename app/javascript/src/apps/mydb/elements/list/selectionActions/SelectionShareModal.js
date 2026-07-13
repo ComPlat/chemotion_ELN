@@ -7,6 +7,7 @@ import { AsyncSelect } from 'src/components/common/Select';
 import CollectionSelect from 'src/components/common/CollectionSelect';
 
 import SelectionSharingShortcuts from 'src/apps/mydb/elements/list/selectionActions/SelectionSharingShortcuts';
+import PermissionIcons from 'src/apps/mydb/collections/PermissionIcons';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -87,6 +88,7 @@ function SelectionShareModal({
       // edit permissions of collection share
       const params = {
         id: collectionShareId,
+        apply_to_subcollections: applyToSubcollections,
         ...permissionsParams
       };
       collectionsStore.updateCollectionShare(collectionShareId, params);
@@ -222,20 +224,25 @@ function SelectionShareModal({
             value={permissions.permissionLevel ?? ''}
           >
             <option value={PermissionConst.ReadElements}>Read elements</option>
-            <option value={PermissionConst.EditElements}>Edit elements</option>
-            <option value={PermissionConst.AddElements}>Add elements</option>
-            <option value={PermissionConst.RemoveElements}>Remove elements</option>
-            <option value={PermissionConst.ManageShares}>Manage shares</option>
-            <option value={PermissionConst.PassOwnership}>Pass ownership</option>
+            <option value={PermissionConst.EditElements}>Edit elements (+ read)</option>
+            <option value={PermissionConst.AddElements}>Add elements (+ read, edit)</option>
+            <option value={PermissionConst.RemoveElements}>Remove elements (+ read, edit, add)</option>
+            <option value={PermissionConst.ManageShares}>Manage shares (+ read, edit, add, remove)</option>
+            <option value={PermissionConst.PassOwnership}>Pass ownership (+ all of the above)</option>
           </Form.Select>
+          <Form.Text className="d-block">
+            <span className="me-2">Grants:</span>
+            <PermissionIcons pl={Number(permissions.permissionLevel) || 0} />
+            <span className="ms-2 text-muted">Each level includes all levels above it.</span>
+          </Form.Text>
           {displayWarning && (
-            <Form.Text>
+            <Form.Text className="d-block">
               <i className="fa fa-exclamation-circle ms-1" aria-hidden="true" />
               Transfering ownership applies for all sub collections.
             </Form.Text>
           )}
         </Form.Group>
-        {shareType === 'create' && (
+        {(shareType === 'create' || shareType === 'edit') && (
           <Form.Group className="mb-3" controlId="applyToSubcollections">
             <Form.Check
               type="checkbox"
