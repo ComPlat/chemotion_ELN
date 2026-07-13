@@ -215,12 +215,20 @@ describe Chemotion::CollectionAPI do
     before do
       collection
       collection_with_shares
+      collection_shared_with_user
       other_users_collection
     end
 
     context 'when exporting collections' do
       it 'exports the collections' do
         params = { collection_ids: [collection.id, collection_with_shares.id] }
+        post '/api/v1/collections/export', params: params
+
+        expect(parsed_json_response['status']).to eq 204
+      end
+
+      it 'exports a collection shared with the user' do
+        params = { collection_ids: [collection_shared_with_user.id] }
         post '/api/v1/collections/export', params: params
 
         expect(parsed_json_response['status']).to eq 204

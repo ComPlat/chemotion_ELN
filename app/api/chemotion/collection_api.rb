@@ -116,10 +116,15 @@ module Chemotion
       end
       post '/export' do
         collection_ids = params[:collection_ids].uniq
-        all_collection_ids = Collection.own_collections_for(current_user).pluck(:id)
+        # A sharee may export a collection shared to them at any level (read_elements+), in addition
+        # to their own collections.
+        allowed_ids = Collection.own_collections_for(current_user).pluck(:id) +
+                      Collection.shared_with_minimum_permission_level(
+                        current_user, CollectionShare.permission_level(:read_elements)
+                      ).pluck(:id)
 
         error!('Select the collections you want to export.', 403) if collection_ids.empty?
-        error!('401 Unauthorized', 401) if all_collection_ids & collection_ids != collection_ids
+        error!('401 Unauthorized', 401) if (collection_ids - allowed_ids).any?
 
         ExportCollectionsJob.perform_later(collection_ids, 'zip', false, current_user.id)
 
