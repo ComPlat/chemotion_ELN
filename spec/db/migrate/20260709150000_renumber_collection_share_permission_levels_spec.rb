@@ -23,8 +23,8 @@ RSpec.describe 'migration 20260709150000: RenumberCollectionSharePermissionLevel
     # legacy stored value => redesigned value
     {
       0 => 0, # read           -> read_elements
-      1 => 1, # write          -> edit_elements
-      2 => 1, # share          -> edit_elements (propagation is now bundled into add_elements)
+      1 => 2, # write          -> add_elements (legacy write could create; preserve that right)
+      2 => 2, # share          -> add_elements (propagation is now bundled into add_elements)
       3 => 3, # delete         -> remove_elements
       4 => 3, # import         -> remove_elements (import implied delete)
       5 => 5, # pass ownership -> pass_ownership (frontend value)
@@ -45,7 +45,18 @@ RSpec.describe 'migration 20260709150000: RenumberCollectionSharePermissionLevel
       migration.up
 
       expect(shares.map { |level, share| [level, share.reload.permission_level] })
-        .to eq([[0, 0], [1, 1], [2, 1], [3, 3], [4, 3], [5, 5], [6, 5]])
+        .to eq([[0, 0], [1, 2], [2, 2], [3, 3], [4, 3], [5, 5], [6, 5]])
+    end
+
+    it 'preserves the element-creation right of legacy write/share holders (they land at add_elements)' do
+      write_share = share_with_level(1)
+      share_share = share_with_level(2)
+
+      migration.up
+
+      add_elements = CollectionShare.permission_level(:add_elements)
+      expect(write_share.reload.permission_level).to eq(add_elements)
+      expect(share_share.reload.permission_level).to eq(add_elements)
     end
 
     it 'is idempotent — re-running does not shift already-migrated levels' do
@@ -76,7 +87,7 @@ RSpec.describe 'migration 20260709150000: RenumberCollectionSharePermissionLevel
     {
       0 => 0, # read_elements   -> read
       1 => 1, # edit_elements   -> write
-      2 => 4, # add_elements    -> import (the legacy add rung)
+      2 => 2, # add_elements    -> share (non-over-granting legacy add rung; not import, which unlinked)
       3 => 3, # remove_elements -> delete
       4 => 4, # manage_shares   -> import (no legacy equivalent; highest non-ownership rung)
       5 => 6, # pass_ownership  -> the post-#2783 backend value
