@@ -225,6 +225,9 @@ class API < Grape::API
   mount Chemotion::CalendarEntryAPI
   mount Chemotion::CommentAPI
   mount Chemotion::CellLineAPI
+  # Must precede Labimotion::LabimotionAPI: it overrides three converter routes
+  # the gem cannot serve, and Grape cascades the rest through to the gem.
+  mount Chemotion::ConverterAPI
   mount Labimotion::LabimotionAPI
   mount Chemotion::InventoryAPI
   mount Chemotion::AffiliationAPI
