@@ -114,7 +114,7 @@ export default class InfoSupportLinks extends React.Component {
         const links = Array.isArray(result) ? result : [];
         this.setState({ links });
       })
-      .catch(() => this.notify({ title: 'Info & Support Links', msg: 'Failed to load links', lvl: 'error' }));
+      .catch(() => this.notify({ title: 'Info & Support Links', message: 'Failed to load links', level: 'error' }));
   }
 
   openNew() {
@@ -169,7 +169,7 @@ export default class InfoSupportLinks extends React.Component {
     promise
       .then((result) => {
         if (result && result.errors) {
-          this.notify({ title: 'Info & Support Links', message: result.errors.join(', '), lvl: 'error' });
+          this.notify({ title: 'Info & Support Links', message: result.errors.join(', '), level: 'error' });
           return;
         }
         this.notify({ title: 'Info & Support Links', message: isNew ? 'Created' : 'Updated' });

@@ -76,9 +76,9 @@ const MWPrecision = 6;
 // persisted (survives the SampleDetails unmount/remount caused by navigateToNewElement).
 let _pendingChemicalCreate = null;
 
-const decoupleCheck = (sample) => {
+const decoupleCheck = (sample, notifications) => {
   if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.isMixture()) {
-    this.context.notifications.add({
+    notifications.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
     });
     LoadingActions.stop();
@@ -89,11 +89,11 @@ const decoupleCheck = (sample) => {
   return true;
 };
 
-const rangeCheck = (field, sample) => {
+const rangeCheck = (field, sample, notifications) => {
   if (sample[`${field}_lowerbound`] && sample[`${field}_lowerbound`] !== ''
     && sample[`${field}_upperbound`] && sample[`${field}_upperbound`] !== ''
     && Number.parseFloat(sample[`${field}_upperbound`]) < Number.parseFloat(sample[`${field}_lowerbound`])) {
-    this.context.notifications.add({
+    notifications.add({
       title: `Error on ${field.replace(/(^\w{1})|(_{1}\w{1})/g, (match) => match.toUpperCase())}`,
       message: 'range lower bound must be less than or equal to range upper',
       level: 'error',
@@ -420,9 +420,9 @@ export default class SampleDetails extends React.Component {
     if (!validCas) {
       sample.xref = { ...sample.xref, cas: '' };
     }
-    if (!decoupleCheck(sample)) return;
-    if (!rangeCheck('boiling_point', sample)) return;
-    if (!rangeCheck('melting_point', sample)) return;
+    if (!decoupleCheck(sample, this.context.notifications)) return;
+    if (!rangeCheck('boiling_point', sample, this.context.notifications)) return;
+    if (!rangeCheck('melting_point', sample, this.context.notifications)) return;
 
     // Prepare mixture samples for saving using Sample.js method
     sample.prepareMixtureForSave();

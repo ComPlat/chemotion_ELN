@@ -250,6 +250,7 @@ export default class ModalImport extends React.Component {
   constructor(props) {
     super(props);
     this.validationComponentRef = React.createRef();
+    this.handleValidation = this.handleValidation.bind(this);
     this.handleValidationStateChange = this.handleValidationStateChange.bind(this);
 
     // Resolve the target collection ID once
@@ -335,7 +336,7 @@ export default class ModalImport extends React.Component {
     });
   }
 
-  static handleValidation(invalidRows) {
+  handleValidation(invalidRows) {
     if (invalidRows.length > 0) {
       // if some rows have validation errors, show notification but keep the modal open
       this.context.notifications.add({
@@ -1099,7 +1100,7 @@ export default class ModalImport extends React.Component {
               rowData={rowData || []}
               onRowDataChange={(data) => this.setState({ rowData: data })}
               columnDefs={columnDefs || []}
-              onValidate={(invalidRows) => ModalImport.handleValidation(invalidRows)}
+              onValidate={(invalidRows) => this.handleValidation(invalidRows)}
               onValidationStateChange={this.handleValidationStateChange}
             />
           )}
