@@ -14,6 +14,19 @@
 * browsing through new and past notifications ([#3138](https://github.com/ComPlat/chemotion_ELN/pull/3138))
 * consolidate buttons and detail cards ([#3110](https://github.com/ComPlat/chemotion_ELN/pull/3110))
 * add short label to research plan ([#2715](https://github.com/ComPlat/chemotion_ELN/pull/2715))
+* **api-token:** add user-managed API authentication tokens ([#3135](https://github.com/ComPlat/chemotion_ELN/pull/3135))
+* **lcms:** on-demand MS-page extraction for the LC/MS spectra layout ([#3295](https://github.com/ComPlat/chemotion_ELN/pull/3295))
+* **molecule:** allow printable Unicode in names while blocking control/invisible characters ([#3281](https://github.com/ComPlat/chemotion_ELN/pull/3281))
+* **app-modal:** editable title and header notification ([#3316](https://github.com/ComPlat/chemotion_ELN/pull/3316))
+* **text-templates:** user-managed personal templates with toolbar insertion ([#3094](https://github.com/ComPlat/chemotion_ELN/pull/3094))
+* **labels:** bulk add/remove user labels across a multi-element selection ([#3142](https://github.com/ComPlat/chemotion_ELN/pull/3142))
+* **calendar:** improve booking sharing, agenda UX, and notifications ([#3149](https://github.com/ComPlat/chemotion_ELN/pull/3149))
+* **search:** add cell line to search ([#2988](https://github.com/ComPlat/chemotion_ELN/pull/2988), [#3299](https://github.com/ComPlat/chemotion_ELN/pull/3299))
+* **comment:** add element URL path for notifications ([#3192](https://github.com/ComPlat/chemotion_ELN/pull/3192))
+* **converter:** upgrade converter-client to 0.16.0 and converter-app to v1.9.1 ([#3369](https://github.com/ComPlat/chemotion_ELN/pull/3369), [#3378](https://github.com/ComPlat/chemotion_ELN/pull/3378))
+* **ui:** enable conditional loading of UI components and add weighing tasks feature ([#3368](https://github.com/ComPlat/chemotion_ELN/pull/3368))
+* **reaction-scheme:** add most-used reagents & solvents shortlist ([#3308](https://github.com/ComPlat/chemotion_ELN/pull/3308))
+* **workshop-guide:** add in-app drawer for the workshop wiki
 
 ### sample
 
@@ -26,10 +39,6 @@
 * add µmol as unit option to reaction scheme amount fields ([#3292](https://github.com/ComPlat/chemotion_ELN/pull/3292))
 * add "interaction" reaction type and reaction scheme UI enhancements ([#3234](https://github.com/ComPlat/chemotion_ELN/pull/3234))
 * add concentration handling and volume lock feature ([#2985](https://github.com/ComPlat/chemotion_ELN/pull/2985))
-
-### api-token
-
-* add user-managed API authentication tokens ([#3135](https://github.com/ComPlat/chemotion_ELN/pull/3135))
 
 ### chemicals
 
@@ -46,59 +55,11 @@
 * add edit/order mode toggle across all element types ([#3114](https://github.com/ComPlat/chemotion_ELN/pull/3114))
 * browse and set the preview image for an analysis tab ([#2671](https://github.com/ComPlat/chemotion_ELN/pull/2671))
 
-### lcms
-
-* on-demand MS-page extraction for the LC/MS spectra layout ([#3295](https://github.com/ComPlat/chemotion_ELN/pull/3295))
-
-### molecule
-
-* allow printable Unicode in names while blocking control/invisible characters ([#3281](https://github.com/ComPlat/chemotion_ELN/pull/3281))
-
 ### UI/UX
 
 * enhance loading value handling and add tests ([#3341](https://github.com/ComPlat/chemotion_ELN/pull/3341))
 * collapsible filter panel for the elements table ([#3227](https://github.com/ComPlat/chemotion_ELN/pull/3227))
 * redesign AccountProfile and admin sidebars with a shared TreeViewItem ([#3172](https://github.com/ComPlat/chemotion_ELN/pull/3172))
-
-### app-modal
-
-* editable title and header notification ([#3316](https://github.com/ComPlat/chemotion_ELN/pull/3316))
-
-### text-templates
-
-* user-managed personal templates with toolbar insertion ([#3094](https://github.com/ComPlat/chemotion_ELN/pull/3094))
-
-### labels
-
-* bulk add/remove user labels across a multi-element selection ([#3142](https://github.com/ComPlat/chemotion_ELN/pull/3142))
-
-### calendar
-
-* improve booking sharing, agenda UX, and notifications ([#3149](https://github.com/ComPlat/chemotion_ELN/pull/3149))
-
-### search
-
-* add cell line to search ([#2988](https://github.com/ComPlat/chemotion_ELN/pull/2988), [#3299](https://github.com/ComPlat/chemotion_ELN/pull/3299))
-
-### comment
-
-* add element URL path for notifications ([#3192](https://github.com/ComPlat/chemotion_ELN/pull/3192))
-
-### converter
-
-* upgrade converter-client to 0.16.0 and converter-app to v1.9.1 ([#3369](https://github.com/ComPlat/chemotion_ELN/pull/3369), [#3378](https://github.com/ComPlat/chemotion_ELN/pull/3378))
-
-### ui
-
-* enable conditional loading of UI components and add weighing tasks feature ([#3368](https://github.com/ComPlat/chemotion_ELN/pull/3368))
-
-### reaction-scheme
-
-* add most-used reagents & solvents shortlist ([#3308](https://github.com/ComPlat/chemotion_ELN/pull/3308))
-
-### workshop-guide
-
-* add in-app drawer for the workshop wiki
 
 ## Fixes
 
@@ -110,14 +71,15 @@
 * collection sharing, sbmm icon and conflict handling, advanced search ([#3225](https://github.com/ComPlat/chemotion_ELN/pull/3225))
 * validating data on import sample using column mapping feature ([#3223](https://github.com/ComPlat/chemotion_ELN/pull/3223))
 * checkbox mutual exclusion and label display ([#3171](https://github.com/ComPlat/chemotion_ELN/pull/3171))
-
-### literature
-
-* order literature list deterministically by literal id ([#3354](https://github.com/ComPlat/chemotion_ELN/pull/3354))
-
-### dev
-
-* make docker-compose.dev work out-of-the-box ([#3327](https://github.com/ComPlat/chemotion_ELN/pull/3327))
+* **literature:** order literature list deterministically by literal id ([#3354](https://github.com/ComPlat/chemotion_ELN/pull/3354))
+* **dev:** make docker-compose.dev work out-of-the-box ([#3327](https://github.com/ComPlat/chemotion_ELN/pull/3327))
+* **gasphase:** sync gaseous product material fields when vessel size changes ([#3265](https://github.com/ComPlat/chemotion_ELN/pull/3265))
+* **inbox:** samples matching improvements ([#3239](https://github.com/ComPlat/chemotion_ELN/pull/3239), [#3268](https://github.com/ComPlat/chemotion_ELN/pull/3268))
+* **2fa:** recover from undecryptable otp_secret instead of crashing ([#3376](https://github.com/ComPlat/chemotion_ELN/pull/3376))
+* **device:** release unique fields on device soft-delete for reuse ([#3375](https://github.com/ComPlat/chemotion_ELN/pull/3375))
+* **workshop-guide:** stop probing static 404 for availability check ([#3371](https://github.com/ComPlat/chemotion_ELN/pull/3371))
+* **tab-layout:** guard null collection labels and stabilize All tab layout ([#3364](https://github.com/ComPlat/chemotion_ELN/pull/3364))
+* **attachments:** skip annotation copy for non-image attachments ([#3338](https://github.com/ComPlat/chemotion_ELN/pull/3338))
 
 ### sample
 
@@ -130,10 +92,6 @@
 * manage ReactionVariations state atomically ([#3365](https://github.com/ComPlat/chemotion_ELN/pull/3365))
 * handle non-finite volume values in ReactionDetailsScheme ([#3288](https://github.com/ComPlat/chemotion_ELN/pull/3288))
 
-### gasphase
-
-* sync gaseous product material fields when vessel size changes ([#3265](https://github.com/ComPlat/chemotion_ELN/pull/3265))
-
 ### ketcher
 
 * guard iframe document access against SecurityError ([#3305](https://github.com/ComPlat/chemotion_ELN/pull/3305))
@@ -145,75 +103,33 @@
 * inbox copy address ([#3269](https://github.com/ComPlat/chemotion_ELN/pull/3269))
 * element detail tab layout refresh and persistence ([#3128](https://github.com/ComPlat/chemotion_ELN/pull/3128))
 
-### inbox
-
-* samples matching improvements ([#3239](https://github.com/ComPlat/chemotion_ELN/pull/3239), [#3268](https://github.com/ComPlat/chemotion_ELN/pull/3268))
-
-### 2fa
-
-* recover from undecryptable otp_secret instead of crashing ([#3376](https://github.com/ComPlat/chemotion_ELN/pull/3376))
-
-### device
-
-* release unique fields on device soft-delete for reuse ([#3375](https://github.com/ComPlat/chemotion_ELN/pull/3375))
-
-### workshop-guide
-
-* stop probing static 404 for availability check ([#3371](https://github.com/ComPlat/chemotion_ELN/pull/3371))
-
-### tab-layout
-
-* guard null collection labels and stabilize All tab layout ([#3364](https://github.com/ComPlat/chemotion_ELN/pull/3364))
-
-### attachments
-
-* skip annotation copy for non-image attachments ([#3338](https://github.com/ComPlat/chemotion_ELN/pull/3338))
-
 ## Refactor / Performance
 
 * **Breaking:** collection-share permission-ladder redesign, ownership transfer & share-model fixes ([#3374](https://github.com/ComPlat/chemotion_ELN/pull/3374))
 * **Breaking:** collection sharing — merge shared and sync collections ([#2783](https://github.com/ComPlat/chemotion_ELN/pull/2783), [#3064](https://github.com/ComPlat/chemotion_ELN/pull/3064), [#3236](https://github.com/ComPlat/chemotion_ELN/pull/3236))
 * prepare CSS directory for application split, fix CSS classes in CollectionSubtree ([#3099](https://github.com/ComPlat/chemotion_ELN/pull/3099))
-
-### js
-
-* unify fetchers on a single ChemotionApiClient ([#3294](https://github.com/ComPlat/chemotion_ELN/pull/3294), [#3321](https://github.com/ComPlat/chemotion_ELN/pull/3321), [#3324](https://github.com/ComPlat/chemotion_ELN/pull/3324), [#3361](https://github.com/ComPlat/chemotion_ELN/pull/3361), [#3373](https://github.com/ComPlat/chemotion_ELN/pull/3373), [#3377](https://github.com/ComPlat/chemotion_ELN/pull/3377))
-
-### UX
-
-* Consolidate design for modals ([#3146](https://github.com/ComPlat/chemotion_ELN/pull/3146), [#3211](https://github.com/ComPlat/chemotion_ELN/pull/3211))
-
-### chemicals
-
-* fetch Sigma-Aldrich SDS data from __NEXT_DATA__ and SSRF-guard outbound requests ([#3235](https://github.com/ComPlat/chemotion_ELN/pull/3235))
+* **js:** unify fetchers on a single ChemotionApiClient ([#3294](https://github.com/ComPlat/chemotion_ELN/pull/3294), [#3321](https://github.com/ComPlat/chemotion_ELN/pull/3321), [#3324](https://github.com/ComPlat/chemotion_ELN/pull/3324), [#3361](https://github.com/ComPlat/chemotion_ELN/pull/3361), [#3373](https://github.com/ComPlat/chemotion_ELN/pull/3373), [#3377](https://github.com/ComPlat/chemotion_ELN/pull/3377))
+* **UX:** Consolidate design for modals ([#3146](https://github.com/ComPlat/chemotion_ELN/pull/3146), [#3211](https://github.com/ComPlat/chemotion_ELN/pull/3211))
+* **chemicals:** fetch Sigma-Aldrich SDS data from __NEXT_DATA__ and SSRF-guard outbound requests ([#3235](https://github.com/ComPlat/chemotion_ELN/pull/3235))
 
 ## Style
 
-### vessel
-
-* group item header label and edit action ([#3248](https://github.com/ComPlat/chemotion_ELN/pull/3248))
+* **vessel:** group item header label and edit action ([#3248](https://github.com/ComPlat/chemotion_ELN/pull/3248))
 
 ## Build
 
 * fix devtools breakpoints and test runner babel config ([#3127](https://github.com/ComPlat/chemotion_ELN/pull/3127))
-
-### storybook
-
-* Document cards and modals ([#3205](https://github.com/ComPlat/chemotion_ELN/pull/3205))
-
-### dev
-
-* install asdf via /tmp to avoid cross-device tar error ([#3362](https://github.com/ComPlat/chemotion_ELN/pull/3362))
+* **storybook:** Document cards and modals ([#3205](https://github.com/ComPlat/chemotion_ELN/pull/3205))
+* **dev:** install asdf via /tmp to avoid cross-device tar error ([#3362](https://github.com/ComPlat/chemotion_ELN/pull/3362))
 
 ## CI
 
-### p2d
-
-* move push2deploy to base on v3.1.2 ([#3270](https://github.com/ComPlat/chemotion_ELN/pull/3270))
+* **p2d:** move push2deploy to base on v3.1.2 ([#3270](https://github.com/ComPlat/chemotion_ELN/pull/3270))
 
 ## Chore
 
 * overhaul the end-to-end (cypress) test suite ([#3346](https://github.com/ComPlat/chemotion_ELN/pull/3346))
+* **eslint:** modernize config (drop airbnb, adopt recommended presets) ([#3315](https://github.com/ComPlat/chemotion_ELN/pull/3315))
 
 ### deps
 
@@ -230,10 +146,6 @@
 * bump immutable from 4.3.8 to 5.1.5 ([#2994](https://github.com/ComPlat/chemotion_ELN/pull/2994), [#3303](https://github.com/ComPlat/chemotion_ELN/pull/3303))
 * bump inchi-gem to v1.07.5 (InChI 1.07.5) ([#2887](https://github.com/ComPlat/chemotion_ELN/pull/2887))
 * Bump faraday, addressable and rack
-
-### eslint
-
-* modernize config (drop airbnb, adopt recommended presets) ([#3315](https://github.com/ComPlat/chemotion_ELN/pull/3315))
 
 # [v3.1.2]
 > (2026-05-18)
