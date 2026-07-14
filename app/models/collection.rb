@@ -296,5 +296,19 @@ class Collection < ApplicationRecord
 
     DETAIL_LEVEL_KEYS.index_with { |key| shares.pluck(key).compact.max || 0 }
   end
+
+  # Whether +user+ holds the maximum detail level ({OWNER_LEVEL}) on every element type here — i.e.
+  # they can already see full-fidelity content. Used to gate the raw export path (which serializes
+  # full element content, ignoring detail levels): a sharee below full detail on any element type
+  # must not be able to export a collection and read data their share deliberately withheld. The
+  # +permission_level+ rung is not a detail level and is excluded. Owners trivially qualify.
+  #
+  # @param user [User]
+  # @return [Boolean]
+  def full_detail_access_for?(user)
+    detail_levels_for_user(user)
+      .except(:permission_level)
+      .values.all? { |level| level >= OWNER_LEVEL }
+  end
 end
 # rubocop:enable Rails/HasManyOrHasOneDependent

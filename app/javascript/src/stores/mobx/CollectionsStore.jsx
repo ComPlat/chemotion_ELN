@@ -319,9 +319,16 @@ export const CollectionsStore = types
       }
     }),
     collectionShareForElements(params) {
+      const hasCustomLabel = params.label && params.label.length > 0;
+      const multipleRecipients = params.users.length > 1;
       params.users.forEach((user) => {
-        self.addElementsToCollectionAndShare(user, params)
-      })
+        // One shared collection is created per recipient. The default "My project with <name>" is
+        // already unique per recipient, but a single custom label shared with several people would
+        // create identically-named collections — suffix it with the recipient's name to keep them
+        // distinguishable.
+        const label = hasCustomLabel && multipleRecipients ? `${params.label} – ${user.name}` : params.label;
+        self.addElementsToCollectionAndShare(user, { ...params, label });
+      });
     },
     createSharingMessage(currentUser, userIds) {
       const messageParams = {

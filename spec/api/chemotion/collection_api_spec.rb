@@ -247,6 +247,19 @@ describe Chemotion::CollectionAPI do
 
         expect(response.status).to eq 401
       end
+
+      # The export path serializes full element content ignoring detail levels, so a sharee below
+      # full detail on any element type must not be able to export it and read withheld data.
+      it 'does not export a collection shared below full detail access' do
+        partially_shared = create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(:read_elements),
+                                    sample_detail_level: 0)
+        end
+        post '/api/v1/collections/export', params: { collection_ids: [partially_shared.id] }
+
+        expect(response.status).to eq 401
+      end
     end
   end
 

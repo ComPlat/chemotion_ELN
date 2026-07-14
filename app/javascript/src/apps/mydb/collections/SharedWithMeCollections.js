@@ -195,7 +195,7 @@ function SharedWithMeCollections() {
         onChange={handleChange}
         renderNode={renderNode}
       />
-      {Object.keys(sharesModal.node).length >= 1 && sharesModal.show && (
+      {sharesModal.show && (
         <SelectionShareModal
           title={sharesModal.action === 'create'
             ? `Share "${sharesModal.node.label}"`
@@ -208,7 +208,7 @@ function SharedWithMeCollections() {
           shareType={sharesModal.action}
         />
       )}
-      {Object.keys(sharesEditModal.node).length >= 1 && sharesEditModal.show && (
+      {sharesEditModal.show && (
         <CollectionSharesEditModal
           node={sharesEditModal.node}
           updateNode={editCollectionShares}

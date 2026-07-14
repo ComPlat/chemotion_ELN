@@ -110,24 +110,30 @@ module Usecases
       # the former owner a manage_shares sharee so they keep access there. Sub-collections that were
       # never shared to the new owner transfer ownership without leaving the former owner a share.
       def demote_former_owner(subtree_ids, old_owner)
-        Collection.where(id: subtree_ids).find_each do |collection|
-          new_owner_shares = CollectionShare.where(collection: collection, shared_with_id: current_user.id)
-          next unless new_owner_shares.exists?
+        # The subtree collections that were shared to the new owner — exactly the ones whose share
+        # switches to the former owner. Resolved in one query instead of a per-collection exists?.
+        switch_ids = CollectionShare.where(collection_id: subtree_ids, shared_with_id: current_user.id)
+                                    .distinct.pluck(:collection_id)
+        return if switch_ids.empty?
 
-          new_owner_shares.delete_all
-          grant_manage_shares(collection, old_owner)
-        end
+        # Drop the new owner's now-redundant shares (they own these now), then grant the former owner
+        # a manage_shares sharee on each — both set-based across the whole subtree.
+        CollectionShare.where(collection_id: switch_ids, shared_with_id: current_user.id).delete_all
+        grant_manage_shares(switch_ids, old_owner)
       end
 
-      # Ensure the former owner holds a manage_shares sharee on +collection+ (idempotent — the old
-      # owner held no share on their own collection before, but find_or_initialize keeps it safe
-      # against the unique (collection_id, shared_with_id) index).
-      def grant_manage_shares(collection, old_owner)
-        share = CollectionShare.find_or_initialize_by(collection: collection, shared_with_id: old_owner.id)
-        share.assign_attributes(
-          { permission_level: CollectionShare.permission_level(:manage_shares) }.merge(full_detail_levels),
-        )
-        share.save!
+      # Grant the former owner a manage_shares sharee on each of +collection_ids+ in one statement.
+      # upsert_all bypasses callbacks (CollectionShare has none) so created_at/updated_at are set
+      # explicitly; unique_by resurrects any pre-existing (collection_id, shared_with_id) row rather
+      # than colliding (in practice all inserts — the old owner held no share on their own collection).
+      def grant_manage_shares(collection_ids, old_owner)
+        now = Time.current
+        rows = collection_ids.map do |collection_id|
+          { collection_id: collection_id, shared_with_id: old_owner.id,
+            permission_level: CollectionShare.permission_level(:manage_shares),
+            created_at: now, updated_at: now, **full_detail_levels }
+        end
+        CollectionShare.upsert_all(rows, unique_by: %i[collection_id shared_with_id]) # rubocop:disable Rails/SkipsModelValidations
       end
 
       def notify(collection, old_owner)

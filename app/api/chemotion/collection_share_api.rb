@@ -76,12 +76,46 @@ module Chemotion
         error!('422 Unprocessable Entity: ownership can only be offered to a single person', 422)
       end
 
+      # Whether a share write should cascade to sub-collections. A :pass_ownership share is an
+      # ownership *offer*, and accepting it already transfers the whole subtree atomically (see
+      # {Usecases::Collections::TransferOwnership}); cascading the offer itself would instead mint an
+      # independent take-ownership offer on every sub-collection, fragmenting the tree. So the offer
+      # is never cascaded, whatever the checkbox says.
+      def cascade_requested?(apply_to_subcollections, permission_level)
+        apply_to_subcollections && permission_level != CollectionShare.permission_level(:pass_ownership)
+      end
+
       # The collections a share should be written to: the root, plus (when requested) every
-      # descendant the caller may administer.
+      # descendant the caller may administer. The administrable set is resolved in two queries for
+      # the whole subtree rather than one +find_administrable_collection+ per descendant.
       def cascade_targets(root, apply_to_subcollections)
         return [root] unless apply_to_subcollections
 
-        [root, *root.descendants.select { |sub| find_administrable_collection(sub.id) }]
+        descendants = root.descendants.to_a
+        administrable_ids = administrable_collection_ids(descendants.map(&:id))
+        [root, *descendants.select { |sub| administrable_ids.include?(sub.id) }]
+      end
+
+      # The administrable descendants of +root+ that ALREADY hold a share for +shared_with_id+ — the
+      # only targets an *edit* cascade may touch (it edits existing shares, never mints new ones).
+      # Resolved with a single membership query, not one per descendant.
+      def shared_descendants(root, shared_with_id)
+        descendants = cascade_targets(root, true).drop(1)
+        already_shared = CollectionShare.where(collection_id: descendants.map(&:id), shared_with_id: shared_with_id)
+                                        .pluck(:collection_id).to_set
+        descendants.select { |sub| already_shared.include?(sub.id) }
+      end
+
+      # The subset of +ids+ the current user may administer — owned, or shared to them at
+      # :manage_shares+. Set form of {#find_administrable_collection} for the cascade.
+      #
+      # @return [Set<Integer>]
+      def administrable_collection_ids(ids)
+        owned = Collection.own_collections_for(current_user).where(id: ids).pluck(:id)
+        delegated = Collection.shared_with_minimum_permission_level(
+          current_user, CollectionShare.permission_level(:manage_shares)
+        ).where(id: ids).pluck(:id)
+        (owned + delegated).to_set
       end
 
       # Run the share guards for every target. Kept separate from — and always called BEFORE — the
@@ -93,6 +127,12 @@ module Chemotion
           prevent_privilege_escalation!(target, permission_level)
           prevent_sharing_with_owner!(target, user_ids)
           prevent_invalid_ownership_offer!(target, user_ids, permission_level)
+          # Guard the level being overwritten too, not just the one being granted: a delegate may
+          # not alter a share that already outranks them on this target (mirrors the root PUT's
+          # second escalation check — see the put '/:id' handler).
+          CollectionShare.where(collection: target, shared_with_id: user_ids)
+                         .pluck(:permission_level)
+                         .each { |existing_level| prevent_privilege_escalation!(target, existing_level) }
         end
       end
 
@@ -160,7 +200,8 @@ module Chemotion
         attributes = declared(params, include_missing: false)
                      .except(:collection_id, :user_ids, :apply_to_subcollections)
 
-        targets = cascade_targets(collection, params[:apply_to_subcollections])
+        cascade = cascade_requested?(params[:apply_to_subcollections], params[:permission_level])
+        targets = cascade_targets(collection, cascade)
         validate_share_targets!(targets, params[:user_ids], params[:permission_level])
         # requires_new: true so the cascade rolls back to a savepoint even when nested in an outer
         # transaction (e.g. transactional test fixtures) — without it a mid-cascade failure would
@@ -200,8 +241,11 @@ module Chemotion
 
         # Optionally apply the same edit to the descendants the caller may administer, for THIS
         # share's sharee. Guards run before the transaction (see validate_share_targets!); the target
-        # update and the cascade then commit together.
-        descendants = params[:apply_to_subcollections] ? cascade_targets(collection, true).drop(1) : []
+        # update and the cascade then commit together. Unlike the create cascade this only *edits*
+        # existing sub-collection shares for the sharee — it never mints a new one, so ticking the box
+        # can widen a level but never grant access to a sub-collection that was not already shared.
+        cascade = cascade_requested?(params[:apply_to_subcollections], params[:permission_level])
+        descendants = cascade ? shared_descendants(collection, share.shared_with_id) : []
         validate_share_targets!(descendants, [share.shared_with_id], params[:permission_level])
         # requires_new: true — see the note on the create endpoint (atomic under nested transactions).
         ActiveRecord::Base.transaction(requires_new: true) do
