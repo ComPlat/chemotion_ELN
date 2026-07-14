@@ -29,7 +29,6 @@ import Literature from 'src/models/Literature';
 import LiteratureMap from 'src/models/LiteratureMap';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { copyToClipboard } from 'src/utilities/clipboard';
@@ -50,7 +49,9 @@ const ElementLink = ({ literature }) => {
     <Button
       title={`${externalLabel ? externalLabel.concat(' - ') : ''}${name}`}
       variant="light"
-      onClick={() => aviatorNavigation(literature.element_type && literature.element_type.toLowerCase(), elementId, false, false)}
+      onClick={() => aviatorNavigation(
+        literature.element_type && literature.element_type.toLowerCase(), elementId, false, false
+      )}
     >
       <ElementIcon element={literature} className="me-2" />
       {shortLabel}
@@ -208,7 +209,9 @@ export default class LiteratureDetails extends Component {
 
   handleLiteratureRemove(literature) {
     const { element_type, element_id } = literature;
-    LiteraturesFetcher.deleteElementReference({ element: { type: element_type.toLowerCase(), id: element_id }, literature })
+    LiteraturesFetcher.deleteElementReference({
+      element: { type: element_type.toLowerCase(), id: element_id }, literature
+    })
       .then(() => {
         this.setState(prevState => ({
           ...prevState,
@@ -303,7 +306,7 @@ export default class LiteratureDetails extends Component {
       sortedIds,
       literature
     } = this.state;
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = this.context.userStore;
     const elements = [];
 
     selectedRefs.forEach((citation) => {

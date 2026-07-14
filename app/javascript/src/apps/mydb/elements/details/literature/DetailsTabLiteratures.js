@@ -1,7 +1,7 @@
 /* eslint-disable react/forbid-prop-types */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Row, Col } from 'react-bootstrap';
+import { Row, Col } from 'react-bootstrap';
 import uuid from 'uuid';
 import { Map } from 'immutable';
 import {
@@ -13,9 +13,8 @@ import ResearchPlan from 'src/models/ResearchPlan';
 import CellLine from 'src/models/cellLine/CellLine';
 import Literature from 'src/models/Literature';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import { StoreContext } from 'src/stores/mobx/RootStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import CitationPanel from 'src/apps/mydb/elements/details/literature/CitationPanel';
 import { createCitationTypeMap } from 'src/apps/mydb/elements/details/literature/CitationTools';
 import CreateButton from 'src/components/common/CreateButton';
@@ -273,7 +272,7 @@ export default class DetailsTabLiteratures extends Component {
 
   render() {
     const { literature, literatures, sortedIds } = this.state;
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = this.context.userStore;
     const isInvalidDoi = !(doiValid(literature.doi_isbn || ''));
     const isInvalidIsbn = !(/^[0-9]([0-9]|-(?!-))+$/.test(literature.doi_isbn || ''));
     const { readOnly } = this.props;
