@@ -15,6 +15,7 @@ const CollectionToggle = React.forwardRef(({
   onClick,
   labelsCount,
   totalSharedCollections,
+  isDualOwned,
   size,
   variant,
 }, ref) => (
@@ -23,6 +24,7 @@ const CollectionToggle = React.forwardRef(({
     size={size}
     variant={variant}
     className="text-nowrap"
+    title={isDualOwned ? 'This element is also in a collection you do not own' : undefined}
     onClick={(e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -32,8 +34,10 @@ const CollectionToggle = React.forwardRef(({
     <i className="fa fa-list" />
     {` ${labelsCount} `}
     {' | '}
-    <i className="fa fa-share-alt" />
-    {`${totalSharedCollections} `}
+    <span className={isDualOwned ? 'text-warning' : undefined}>
+      <i className="fa fa-share-alt" />
+      {`${totalSharedCollections} `}
+    </span>
   </Button>
 ));
 CollectionToggle.displayName = 'CollectionToggle';
@@ -41,10 +45,12 @@ CollectionToggle.propTypes = {
   onClick: PropTypes.func.isRequired,
   labelsCount: PropTypes.number.isRequired,
   totalSharedCollections: PropTypes.number.isRequired,
+  isDualOwned: PropTypes.bool,
   size: PropTypes.string,
   variant: PropTypes.string,
 };
 CollectionToggle.defaultProps = {
+  isDualOwned: false,
   size: 'xxsm',
   variant: 'light',
 };
@@ -103,6 +109,7 @@ const ElementCollectionLabels = ({ element, size, variant }) => {
         id="dropdown-custom-components"
         labelsCount={ownCollections.length}
         totalSharedCollections={sharedCollections.length}
+        isDualOwned={ownCollections.length > 0 && sharedCollections.length > 0}
         size={size}
         variant={variant}
       />

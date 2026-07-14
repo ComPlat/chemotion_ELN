@@ -146,6 +146,26 @@ describe Chemotion::PermissionAPI do
           expect(parsed_json_response['sharing_allowed']).to be false
         end
       end
+
+      # Regression (S5): element types outside the legacy [Sample, Reaction, Screen, Wellplate] set
+      # must be policed too — otherwise a sharee selecting only such an element keeps the permissive
+      # default (remove_allowed/deletion_allowed = true) and the UI offers a Move/Remove the server
+      # then refuses.
+      context 'when the selection is only a research plan (an element type outside the legacy four)' do
+        let(:research_plan) { create(:research_plan, collections: [shared_collection_of_other_user]) }
+        let(:permission_level) { CollectionShare.permission_level(:add_elements) }
+        let(:params) do
+          {
+            currentCollection: { id: shared_collection_of_other_user.id },
+            research_plan: { checkedAll: false, checkedIds: [research_plan.id], uncheckedIds: [] },
+          }
+        end
+
+        it 'polices the research plan: remove_allowed=false and deletion_allowed=false at :add_elements' do
+          expect(parsed_json_response['remove_allowed']).to be false
+          expect(parsed_json_response['deletion_allowed']).to be false
+        end
+      end
     end
   end
 end

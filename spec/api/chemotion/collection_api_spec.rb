@@ -215,12 +215,20 @@ describe Chemotion::CollectionAPI do
     before do
       collection
       collection_with_shares
+      collection_shared_with_user
       other_users_collection
     end
 
     context 'when exporting collections' do
       it 'exports the collections' do
         params = { collection_ids: [collection.id, collection_with_shares.id] }
+        post '/api/v1/collections/export', params: params
+
+        expect(parsed_json_response['status']).to eq 204
+      end
+
+      it 'exports a collection shared with the user' do
+        params = { collection_ids: [collection_shared_with_user.id] }
         post '/api/v1/collections/export', params: params
 
         expect(parsed_json_response['status']).to eq 204
@@ -236,6 +244,19 @@ describe Chemotion::CollectionAPI do
       it 'does not export collection of wrong ownership' do
         params = { collection_ids: [other_users_collection.id] }
         post '/api/v1/collections/export', params: params
+
+        expect(response.status).to eq 401
+      end
+
+      # The export path serializes full element content ignoring detail levels, so a sharee below
+      # full detail on any element type must not be able to export it and read withheld data.
+      it 'does not export a collection shared below full detail access' do
+        partially_shared = create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(:read_elements),
+                                    sample_detail_level: 0)
+        end
+        post '/api/v1/collections/export', params: { collection_ids: [partially_shared.id] }
 
         expect(response.status).to eq 401
       end

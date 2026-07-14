@@ -45,11 +45,14 @@ module Chemotion
           remove_allowed = true
 
           if collection.user != current_user # collection was shared to user
-            # set deletion_allowed to false if any of the elements is not allowed to be mass deleted
-            [Sample, Reaction, Screen, Wellplate].each do |element_class|
-              next if selected_elements[element_class].none?
+            # Every selected element type is policed, not just the four legacy ones. A selection the
+            # loop skipped (research_plan / cell_line / vessel / device_description / SBMM) would keep
+            # the flag at its permissive default, and the UI would offer a Move/Remove/Delete the
+            # server then refuses.
+            selected_elements.each_value do |scope|
+              next if scope.none?
 
-              policy = ElementsPolicy.new(current_user, selected_elements[element_class])
+              policy = ElementsPolicy.new(current_user, scope)
               deletion_allowed &&= policy.destroy_all?
               remove_allowed &&= policy.remove_all?
             end
@@ -58,10 +61,10 @@ module Chemotion
             # so we have to check if the lower permissions for sharing are satisfied
             # when mass deletion is forbidden
             unless deletion_allowed
-              [Sample, Reaction, Screen, Wellplate].each do |element_class|
-                next if selected_elements[element_class].none?
+              selected_elements.each_value do |scope|
+                next if scope.none?
 
-                sharing_allowed &&= ElementsPolicy.new(current_user, selected_elements[element_class]).share_all?
+                sharing_allowed &&= ElementsPolicy.new(current_user, scope).share_all?
               end
             end
           end

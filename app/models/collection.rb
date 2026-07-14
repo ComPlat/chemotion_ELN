@@ -296,5 +296,28 @@ class Collection < ApplicationRecord
 
     DETAIL_LEVEL_KEYS.index_with { |key| shares.pluck(key).compact.max || 0 }
   end
+
+  # The subset of +collection_ids+ on which +user+ holds FULL detail access: the maximum
+  # ({OWNER_LEVEL}) on every element detail level, aggregated across all their shares (direct and
+  # group) exactly as {#detail_levels_for_user} reduces them. Used to gate the raw export path,
+  # which serializes full element content ignoring detail levels — a sharee below full detail on
+  # any element type must not export a collection and read data their share deliberately withheld.
+  # Resolved in one grouped query rather than a predicate per collection. Owners are authorised
+  # separately and are not considered here.
+  #
+  # @param user [User]
+  # @param collection_ids [Array<Integer>]
+  # @return [Array<Integer>] the ids among +collection_ids+ the user may fully read
+  def self.full_detail_access_ids(user, collection_ids)
+    return [] if collection_ids.blank?
+
+    detail_columns = DETAIL_LEVEL_KEYS - [:permission_level]
+    having = detail_columns.map { |column| "MAX(#{column}) >= #{OWNER_LEVEL}" }.join(' AND ')
+    CollectionShare.shared_with(user)
+                   .where(collection_id: collection_ids)
+                   .group(:collection_id)
+                   .having(Arel.sql(having))
+                   .pluck(:collection_id)
+  end
 end
 # rubocop:enable Rails/HasManyOrHasOneDependent

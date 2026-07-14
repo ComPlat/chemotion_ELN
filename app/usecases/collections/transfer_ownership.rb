@@ -5,11 +5,15 @@ module Usecases
     # Second step of "pass ownership": the recipient of a pending pass_ownership (level 5) offer
     # accepts it, transferring the collection — and its whole subtree — to them.
     #
-    # The former owner is demoted to a manage_shares (4) sharee: they keep full access and share
-    # administration but no longer own the collection. Elements move with the collection — each is
-    # added to the new owner's "All", and removed from the old owner's "All" only when it is no
-    # longer in any of the old owner's other collections (an element also in a private collection of
-    # the old owner stays theirs, and becomes dual-owned).
+    # Ownership of the whole subtree moves to the new owner. Shares are switched only where a
+    # matching share to the new owner already existed: the offered root (which holds the accepted
+    # offer) and any sub-collection that was itself shared to the new owner have that share dropped
+    # (the new owner owns it now) and gain a manage_shares (4) share for the former owner, so the
+    # former owner keeps access there. Sub-collections that were not shared to the new owner
+    # transfer ownership without leaving the former owner a share. Elements move with the collection
+    # — each is added to the new owner's "All", and removed from the old owner's "All" only when it
+    # is no longer in any of the old owner's other collections (an element also in a private
+    # collection of the old owner stays theirs, and becomes dual-owned).
     class TransferOwnership
       FULL_DETAIL_LEVEL = 10 # every *_detail_level column at max — the demotee was the owner
 
@@ -31,7 +35,7 @@ module Usecases
           subtree_ids = collection.subtree.pluck(:id)
           reassign_subtree(collection, subtree_ids)
           move_elements(subtree_ids, old_owner)
-          demote_former_owner(collection, old_owner)
+          demote_former_owner(subtree_ids, old_owner)
           collection.update!(shared: CollectionShare.exists?(collection: collection))
         end
 
@@ -82,16 +86,54 @@ module Usecases
         return unless @old_all
 
         still_theirs = klass.where(id: ids).joins(:collections).where(collections: { id: @other_old_ids }).distinct.ids
-        join_table.delete_in_collection(ids - still_theirs, @old_all.id)
+        detach_from_old_all(join_table, ids - still_theirs)
       end
 
-      def demote_former_owner(collection, old_owner)
-        # Drop the consumed offer (and any other direct share to the new owner — they own it now).
-        CollectionShare.where(collection: collection, shared_with_id: current_user.id).delete_all
-        CollectionShare.create!(
-          { collection: collection, shared_with: old_owner,
-            permission_level: CollectionShare.permission_level(:manage_shares) }.merge(full_detail_levels),
-        )
+      # Unlink from the old owner's "All", honouring the same association guard WithdrawElements
+      # applies: a sample/wellplate still bound to a reaction/wellplate/screen kept in that "All"
+      # is not detached (WithdrawElements::FILTERED_JOINS is the single source of truth for which
+      # join tables carry that guard). All other join tables detach unconditionally.
+      def detach_from_old_all(join_table, ids)
+        return if ids.empty?
+
+        if WithdrawElements::FILTERED_JOINS.include?(join_table)
+          join_table.delete_in_collection_with_filter(ids, @old_all.id)
+        else
+          join_table.delete_in_collection(ids, @old_all.id)
+        end
+      end
+
+      # Switch owner/sharee across the transferred subtree, but only where a matching share to the
+      # new owner already existed. The offered root always qualifies (it holds the accepted offer);
+      # a sub-collection qualifies only if it was itself shared to the new owner. For each such
+      # collection: drop the new owner's now-redundant direct share(s) — they own it now — and grant
+      # the former owner a manage_shares sharee so they keep access there. Sub-collections that were
+      # never shared to the new owner transfer ownership without leaving the former owner a share.
+      def demote_former_owner(subtree_ids, old_owner)
+        # The subtree collections that were shared to the new owner — exactly the ones whose share
+        # switches to the former owner. Resolved in one query instead of a per-collection exists?.
+        switch_ids = CollectionShare.where(collection_id: subtree_ids, shared_with_id: current_user.id)
+                                    .distinct.pluck(:collection_id)
+        return if switch_ids.empty?
+
+        # Drop the new owner's now-redundant shares (they own these now), then grant the former owner
+        # a manage_shares sharee on each — both set-based across the whole subtree.
+        CollectionShare.where(collection_id: switch_ids, shared_with_id: current_user.id).delete_all
+        grant_manage_shares(switch_ids, old_owner)
+      end
+
+      # Grant the former owner a manage_shares sharee on each of +collection_ids+ in one statement.
+      # upsert_all bypasses callbacks (CollectionShare has none) so created_at/updated_at are set
+      # explicitly; unique_by resurrects any pre-existing (collection_id, shared_with_id) row rather
+      # than colliding (in practice all inserts — the old owner held no share on their own collection).
+      def grant_manage_shares(collection_ids, old_owner)
+        now = Time.current
+        rows = collection_ids.map do |collection_id|
+          { collection_id: collection_id, shared_with_id: old_owner.id,
+            permission_level: CollectionShare.permission_level(:manage_shares),
+            created_at: now, updated_at: now, **full_detail_levels }
+        end
+        CollectionShare.upsert_all(rows, unique_by: %i[collection_id shared_with_id]) # rubocop:disable Rails/SkipsModelValidations
       end
 
       def notify(collection, old_owner)

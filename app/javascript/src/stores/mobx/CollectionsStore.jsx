@@ -295,7 +295,11 @@ export const CollectionsStore = types
       }
     }),
     addElementsToCollectionAndShare: flow(function* addElementsToCollectionAndShare(user, params) {
-      const collectionParams = { label: `My project with ${user.name}`, parent_id: '', inventory_id: '' }
+      const collectionParams = {
+        label: (params.label && params.label.length > 0) ? params.label : `My project with ${user.name}`,
+        parent_id: params.parentId ?? '',
+        inventory_id: '',
+      };
       const newCollection = yield self.addCollection(collectionParams, false)
 
       if (newCollection) {
@@ -315,9 +319,16 @@ export const CollectionsStore = types
       }
     }),
     collectionShareForElements(params) {
+      const hasCustomLabel = params.label && params.label.length > 0;
+      const multipleRecipients = params.users.length > 1;
       params.users.forEach((user) => {
-        self.addElementsToCollectionAndShare(user, params)
-      })
+        // One shared collection is created per recipient. The default "My project with <name>" is
+        // already unique per recipient, but a single custom label shared with several people would
+        // create identically-named collections — suffix it with the recipient's name to keep them
+        // distinguishable.
+        const label = hasCustomLabel && multipleRecipients ? `${params.label} – ${user.name}` : params.label;
+        self.addElementsToCollectionAndShare(user, { ...params, label });
+      });
     },
     createSharingMessage(currentUser, userIds) {
       const messageParams = {
@@ -361,6 +372,8 @@ export const CollectionsStore = types
     setSharedWithMeCollections(collections) {
       // group shared collections by owner
       const sharedWithMeCollections = self.presortSharedWithMeCollections(collections)
+      // The set of collections actually shared with the user — used to decide truncation below.
+      const sharedIds = new Set(sharedWithMeCollections.map((collection) => collection.id));
 
       sharedWithMeCollections.forEach((collection, i) => {
         if (i === 0 || i > 0 && sharedWithMeCollections[i - 1].owner !== collection.owner) {
@@ -375,7 +388,12 @@ export const CollectionsStore = types
         }
         const parentOwnerIndex = self.shared_with_me_collections.findIndex(element => element.owner == collection.owner)
         if (parentOwnerIndex !== -1) {
-          self.shared_with_me_collections[parentOwnerIndex].addChild(collection)
+          const node = Collection.create(collection);
+          // Preserve the hierarchy when the parent is also shared; when it is not (the branch is
+          // "skipped"), truncate by showing this collection at the top level under its owner.
+          const directParentId = node.ancestorIds[node.ancestorIds.length - 1];
+          if (directParentId == null || !sharedIds.has(directParentId)) { node.resetAncestry(); }
+          self.addCollectionToTree(node, self.shared_with_me_collections[parentOwnerIndex].children);
         }
       });
     },

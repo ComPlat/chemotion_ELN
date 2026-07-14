@@ -33,6 +33,55 @@ describe Chemotion::CollectionShareAPI do
       end.to change(CollectionShare, :count).by(create_params[:user_ids].length)
          .and change(collection, :shared?).from(false).to(true)
     end
+
+    context 'with apply_to_subcollections' do
+      let(:child) { create(:collection, user: user, parent: collection) }
+
+      before { child }
+
+      it 'also shares the descendant collections' do
+        post '/api/v1/collection_shares/', params: create_params.merge(apply_to_subcollections: true)
+
+        expect(CollectionShare.exists?(collection: collection, shared_with_id: other_user.id)).to be true
+        expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be true
+      end
+
+      it 'leaves descendants untouched when the flag is false' do
+        post '/api/v1/collection_shares/', params: create_params.merge(apply_to_subcollections: false)
+
+        expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
+      end
+
+      # A pass_ownership share is an offer; accepting it transfers the whole subtree atomically, so
+      # the offer itself must land only on the root — cascading it would mint an independent
+      # take-ownership offer on every sub-collection.
+      it 'does not cascade a pass_ownership offer to descendants' do
+        post '/api/v1/collection_shares/',
+             params: create_params.merge(user_ids: [other_user.id],
+                                         permission_level: CollectionShare.permission_level(:pass_ownership),
+                                         apply_to_subcollections: true)
+
+        expect(CollectionShare.exists?(collection: collection, shared_with_id: other_user.id)).to be true
+        expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
+      end
+    end
+
+    context 'when a share write fails mid-cascade (transactional, 422 not 500)' do
+      let(:child) { create(:collection, user: user, parent: collection) }
+
+      before { child }
+
+      it 'rolls the whole cascade back and responds 422 when a user_id has no matching user' do
+        bogus_id = other_user.id + 1_000 # no such user (ids are sequential and nowhere near this)
+
+        expect do
+          post '/api/v1/collection_shares/',
+               params: create_params.merge(user_ids: [other_user.id, bogus_id], apply_to_subcollections: true)
+        end.not_to change(CollectionShare, :count)
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
   end
 
   describe 'PUT /api/v1/collection_shares' do
@@ -60,6 +109,34 @@ describe Chemotion::CollectionShareAPI do
       expected_result = update_params.dup.stringify_keys
 
       expect(result).to include(expected_result)
+    end
+
+    context 'with apply_to_subcollections' do
+      let(:child) { create(:collection, user: user, parent: collection) }
+
+      before { child }
+
+      it 'cascades the edit to a descendant already shared with the same sharee' do
+        create(:collection_share, collection: child, shared_with: other_user,
+                                  permission_level: CollectionShare.permission_level(:read_elements))
+
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: update_params.merge(permission_level: CollectionShare.permission_level(:manage_shares),
+                                        apply_to_subcollections: true)
+
+        child_share = CollectionShare.find_by(collection: child, shared_with_id: other_user.id)
+        expect(child_share.permission_level).to eq(CollectionShare.permission_level(:manage_shares))
+      end
+
+      # An edit propagates to existing sub-collection shares only — it never grants NEW access to a
+      # sub-collection the sharee was not already on (that would be a silent over-grant).
+      it 'does not mint a new share on a descendant that was not already shared with the sharee' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: update_params.merge(permission_level: CollectionShare.permission_level(:manage_shares),
+                                        apply_to_subcollections: true)
+
+        expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
+      end
     end
   end
 
@@ -274,6 +351,41 @@ describe Chemotion::CollectionShareAPI do
 
       expect { delete "/api/v1/collection_shares/#{own_share.id}" }.to change(CollectionShare, :count).by(-1)
       expect(response).to have_http_status(:no_content)
+    end
+  end
+
+  # A delegate may edit a root share and cascade it, but the cascade must not let them overwrite a
+  # sub-collection share that outranks their own level there — the same guard the root PUT applies.
+  describe 'delegated cascade cannot overwrite a superior descendant share' do
+    let(:collection) { create(:collection, user: other_user) }
+    let(:child) { create(:collection, user: other_user, parent: collection) }
+    let(:manage_shares) { CollectionShare.permission_level(:manage_shares) }
+    # third_user holds a pass_ownership share on the child — above the delegate's own level there.
+    let(:child_superior_share) do
+      create(:collection_share, collection: child, shared_with: third_user,
+                                permission_level: CollectionShare.permission_level(:pass_ownership))
+    end
+    # the root share the delegate is about to edit and cascade
+    let(:root_share) do
+      create(:collection_share, collection: collection, shared_with: third_user,
+                                permission_level: CollectionShare.permission_level(:read_elements))
+    end
+
+    before do
+      # `user` is a manage_shares delegate on both the root and the child.
+      create(:collection_share, collection: collection, shared_with: user, permission_level: manage_shares)
+      create(:collection_share, collection: child, shared_with: user, permission_level: manage_shares)
+      child_superior_share
+    end
+
+    it 'refuses (403) and leaves the superior descendant share untouched' do
+      expect do
+        put "/api/v1/collection_shares/#{root_share.id}",
+            params: { permission_level: CollectionShare.permission_level(:edit_elements),
+                      apply_to_subcollections: true }
+      end.not_to(change { child_superior_share.reload.permission_level })
+
+      expect(response).to have_http_status(:forbidden)
     end
   end
 
