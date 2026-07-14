@@ -143,7 +143,8 @@ describe Chemotion::WellplateAPI do
 
   describe 'PUT /api/v1/wellplates/:id' do
     let(:container) { create(:container) }
-    let(:wellplate) { create(:wellplate, name: 'Testname', container: container) }
+    let(:attachment) { create(:attachment) }
+    let(:wellplate) { create(:wellplate, name: 'Testname', container: container, attachments: [attachment]) }
     let(:params) do
       {
         id: wellplate.id,
@@ -160,6 +161,10 @@ describe Chemotion::WellplateAPI do
 
     it 'is able to change a wellplate by id' do
       expect(JSON.parse(response.body)['wellplate']['name']).to eq('Another Testname')
+    end
+
+    it 'returns the wellplate attachments' do
+      expect(response.parsed_body['attachments'].first['filename']).to eq(attachment.filename)
     end
   end
 
