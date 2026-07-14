@@ -40,6 +40,7 @@ export default class ConfirmClose extends Component {
     const {
       deviceDescriptions,
       sequenceBasedMacromoleculeSamples,
+      cellLineDetailsStore,
     } = this.context;
 
     if (el && el.type === 'device_description') {
@@ -47,6 +48,9 @@ export default class ConfirmClose extends Component {
     }
     if (el && el.type === 'sequence_based_macromolecule_sample') {
       sequenceBasedMacromoleculeSamples.removeFromOpenSequenceBasedMacromoleculeSamples(el);
+    }
+    if (el && el.type === 'cell_line') {
+      cellLineDetailsStore.removeCellLineFromStore(el.id);
     }
   }
 

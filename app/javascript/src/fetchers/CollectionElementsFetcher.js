@@ -1,36 +1,21 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class CollectionElementsFetcher {
   static addElementsToCollection(params) {
-    return fetch('/api/v1/collection_elements',
-      {
-        ...this._httpOptions('POST'),
-        body: JSON.stringify(params)
-      }
-    )
-      .then(response => response.json())
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.postJson('/api/v1/collection_elements', { body: params });
   }
 
+  /**
+   * Removes the ui_state-selected elements from the collection. The endpoint
+   * replies 204 No Content, so success is read from the HTTP status.
+   *
+   * @param {object} params - { collection_id, ui_state }
+   * @returns {Promise<boolean>} true on success (see ChemotionApiClient.apiRequest)
+   */
   static deleteElementsFromCollection(params) {
-    return fetch(
-      `/api/v1/collection_elements/${params.collection_id}`,
-      {
-        ...this._httpOptions('DELETE'),
-        body: JSON.stringify(params)
-      }
-    ).then(response => response)
-      .catch(errorMessage => console.log(errorMessage));
-  }
-
-  static _httpOptions(method = 'GET') {
-    return {
-      credentials: 'same-origin',
-      method: method,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      }
-    };
+    return ApiClient.deleteRequest(`/api/v1/collection_elements/${params.collection_id}`, {
+      body: JSON.stringify(params),
+      handleResponseSuccess: (response) => response.ok,
+    });
   }
 }

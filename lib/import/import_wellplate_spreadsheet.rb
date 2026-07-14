@@ -16,7 +16,7 @@ module Import
       @letters = [*'A'..'Z']
       @position_index = 0
       @sample_index = 1
-      @column_of_first_readout = 4
+      @column_of_first_readout = 5
     end
 
     def process!
@@ -48,7 +48,7 @@ module Import
     end
 
     def check_headers
-      ['Position', 'Sample', 'External Compound Label/ID', 'Smiles', '.+_Value', '.+_Unit']
+      ['Position', 'Sample', 'External Compound Label/ID', 'Smiles', 'Molarity', '.+_Value', '.+_Unit']
         .each_with_index do |column_header, column_index|
           next if (@header[column_index] =~ /^#{column_header}/i).present?
 
@@ -102,6 +102,10 @@ module Import
         well = Well.find_or_create_by!(wellplate_id: @wellplate.id, position_x: position.x, position_y: position.y)
 
         well.update!(readouts: build_readouts_from_row_data(row))
+        # Only override molarity/density when a real molarity was supplied;
+        # a blank or 0 cell must not wipe an existing sample's density.
+        molarity_value = row[4].to_f
+        well.sample.update!(molarity_value: molarity_value, density: 0) if molarity_value.positive? && well.sample
       end
 
       @wellplate.update!(readout_titles: value_prefixes)

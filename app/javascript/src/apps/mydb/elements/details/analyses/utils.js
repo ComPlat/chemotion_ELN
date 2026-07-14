@@ -1,6 +1,7 @@
 import ElementContainer from 'src/models/Container';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import Attachment from 'src/models/Attachment';
+import { reOrderArr } from 'src/utilities/DndControl';
 
 function buildEmptyAnalyContainer() {
   const newContainer = ElementContainer.buildEmpty();
@@ -59,6 +60,19 @@ function createAnalsesForSingelFiles(element, files, name, ontology = '') {
   datasetContainer.attachments.push(...newAttachments);
 }
 
+function findAnalysesContainer(element) {
+  return element.container.children.find(
+    (c) => ~c.container_type.indexOf('analyses')
+  );
+}
+
+function reorderAnalyses(analysesContainer, source, target) {
+  const sorted = ArrayUtils.sortArrByIndex(analysesContainer.children);
+  const isEqCId = (c, t) => c.id === t.id;
+  const reordered = reOrderArr(source, target, isEqCId, sorted);
+  analysesContainer.children = indexedContainers(reordered);
+}
+
 export {
   addNewAnalyses,
   indexedContainers,
@@ -66,5 +80,7 @@ export {
   buildEmptyAnalyContainer,
   createDataset,
   createAnalsesForSingelFiles,
-  createAttachements
+  createAttachements,
+  findAnalysesContainer,
+  reorderAnalyses,
 };

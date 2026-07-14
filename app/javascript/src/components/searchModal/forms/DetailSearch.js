@@ -23,7 +23,7 @@ const DetailSearch = () => {
   const searchStore = useContext(StoreContext).search;
   const selection = searchStore.searchElement;
   let fieldOptions = SelectFieldData.fields[selection.table];
-  fieldOptions = ['sequence_based_macromolecule_samples', 'device_descriptions'].includes(selection.table)
+  fieldOptions = ['sequence_based_macromolecule_samples', 'device_descriptions', 'cell_lines'].includes(selection.table)
     ? SelectFieldData[selection.table]
     : fieldOptions;
   const { rxnos, chmos, unitsSystem, segmentKlasses, genericEls, dsKlasses, profile } = UserStore.getState();
@@ -348,16 +348,17 @@ const DetailSearch = () => {
     }
 
     if (option.type == 'system-defined') {
-      let systemOptions = unitsSystem.fields.find((u) => { return u.field === option.option_layers });
+      const systemFields = Array.isArray(unitsSystem?.fields) ? unitsSystem.fields : [];
+      let systemOptions = systemFields.find((u) => { return u.field === option.option_layers });
 
       if (option.column && option.column == 'duration') {
         options = FieldOptions.durationOptions;
       } else if (option.column && option.column == 'target_amount_value') {
         options = FieldOptions.amountSearchOptions;
-      } else if (option.table === 'sequence_based_macromolecule_samples') {
+      } else if (['sequence_based_macromolecule_samples', 'cellline_samples'].includes(option.table)) {
         options = unitSystems[option.option_layers];
       } else {
-        options = systemOptions.units;
+        options = systemOptions && Array.isArray(systemOptions.units) ? systemOptions.units : [];
       }
     } else if (option.term_id && optionKey && datasetOptionsByKey) {
       Object.values(datasetOptionsByKey.options).forEach((selectOption) => {
@@ -547,7 +548,8 @@ const DetailSearch = () => {
 
   const systemDefinedInput = (option, type, selectedValue, column, keyLabel) => {
     let units = optionsForSelect(option);
-    let value = selectedValue ? selectedValue[column].unit : units[0].label;
+    let defaultUnit = units[0] ? units[0].label : '';
+    let value = selectedValue ? selectedValue[column].unit : defaultUnit;
     let validationState = selectedValue !== undefined ? selectedValue[column].validationState : null;
     return (
       <Form.Group key={`${column}-${keyLabel}-${type}`}>
@@ -744,6 +746,9 @@ const DetailSearch = () => {
       case 'planned_maintenance_time':
       case 'unexpected_maintenance_date':
       case 'unexpected_maintenance_time':
+      case 'optimal_growth_temp':
+      case 'amount':
+      case 'passage':
         return searchStore.numeric_match;
       case 'unit_measurement':
       case 'solvent_smiles':
@@ -828,7 +833,7 @@ const DetailSearch = () => {
 
     if (type == 'system-defined' && searchValue.unit === '') {
       let units = optionsForSelect(option);
-      searchValue.unit = units[0].label;
+      searchValue.unit = units[0] ? units[0].label : '';
     }
 
     if (column.indexOf('temperature') !== -1 && value !== '' && value !== 0 && value !== "0") {

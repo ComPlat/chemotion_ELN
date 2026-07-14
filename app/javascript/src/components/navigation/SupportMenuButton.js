@@ -24,12 +24,15 @@ ExternalItem.propTypes = {
 
 export default function SupportMenuButton({ linkToEln, variant }) {
   const [version, setVersion] = useState({});
+  const customLinks = Array.isArray(window.__INFO_SUPPORT_LINKS__) ? window.__INFO_SUPPORT_LINKS__ : [];
+
   useEffect(() => {
     const onUiStoreChange = (state) => setVersion(state.version);
     UIStore.listen(onUiStoreChange);
     onUiStoreChange(UIStore.getState());
     return () => UIStore.unlisten(onUiStoreChange);
   }, []);
+
   const hasVersions = version && Object.keys(version).length > 1;
 
   return (
@@ -45,6 +48,12 @@ export default function SupportMenuButton({ linkToEln, variant }) {
         <ExternalItem title="Search documentation" href="https://chemotion.net/search" />
         <ExternalItem title="Helpdesk - Contact Us" href="https://chemotion.net/helpdesk" />
         <ExternalItem title="Report an issue on Github" href="https://github.com/ComPlat/chemotion_ELN/issues" />
+
+        {customLinks.length > 0 && <Dropdown.Divider />}
+        {customLinks.map((link) => (
+          <ExternalItem key={link.id} title={link.label} href={link.url} />
+        ))}
+
         <Dropdown.Divider />
 
         {linkToEln

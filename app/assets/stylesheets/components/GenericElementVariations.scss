@@ -1,0 +1,192 @@
+.generic-element-variations-grid {
+  font-size: 13px;
+}
+
+.generic-element-variations-grid .ag-header-cell-label {
+  padding: 0 8px;
+}
+
+.generic-element-variations-grid .ag-header-group-cell-label {
+  padding: 0 8px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.generic-element-variations-grid .ag-header-group-cell {
+  background-color: #f5f7fa;
+}
+
+.generic-element-variations-grid .gev-header-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.generic-element-variations-grid .gev-header-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.generic-element-variations-grid .gev-header-two-line {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.2;
+}
+
+.generic-element-variations-grid .gev-header-text-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  overflow: hidden;
+}
+
+.generic-element-variations-grid .gev-header-layer {
+  font-size: 11px;
+  font-weight: 400;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.generic-element-variations-grid .gev-header-field-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.generic-element-variations-grid .gev-header-field {
+  font-weight: 600;
+  color: #212529;
+}
+
+.generic-element-variations-grid .gev-group-label {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.generic-element-variations-grid .gev-unit-pill {
+  display: inline-block;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+}
+
+.generic-element-variations-grid .gev-unit-pill-static {
+  background-color: #eef2f7;
+  color: #52606d;
+}
+
+.generic-element-variations-grid .gev-unit-pill-clickable {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+  border-color: #d2e3fc;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.generic-element-variations-grid .gev-unit-pill-clickable:hover {
+  background-color: #d2e3fc;
+}
+
+.generic-element-variations-grid .gev-actions .btn {
+  padding: 2px 4px;
+  font-size: 12px;
+  line-height: 1.1;
+  border-radius: 0;
+}
+
+.generic-element-variations-grid .ag-cell[col-id="__actions"] {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.generic-element-variations-grid .ag-cell[col-id="__actions"] .ag-cell-value {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.generic-element-variations-grid .ag-cell[col-id="__variation"] {
+  padding-left: 0;
+  padding-right: 4px;
+}
+
+.generic-element-variations-grid .ag-cell[col-id="__variation"] .ag-cell-value {
+  font-weight: 500;
+}
+
+.generic-element-variations-grid .ag-ltr .ag-row-drag {
+  margin-right: 0;
+}
+
+.generic-element-variations-grid .ag-overlay-no-rows-wrapper.ag-layout-auto-height {
+  padding-top: 104px !important;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.generic-element-variations-grid.ag-theme-alpine .ag-layout-auto-height .ag-center-cols-viewport,
+.generic-element-variations-grid.ag-theme-alpine .ag-layout-auto-height .ag-center-cols-container {
+  min-height: 56px !important;
+}
+
+.gev-column-modal-body {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.gev-column-search {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
+}
+
+.gev-layer-heading {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.gev-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  row-gap: 2px;
+  margin-bottom: 4px;
+}
+
+.gev-layer-analyses-option {
+  margin-bottom: 4px;
+
+  label {
+    font-style: italic;
+    color: #495057;
+  }
+
+  .fa-link {
+    color: #6c757d;
+  }
+}
+
+.gev-segment-fields {
+  border-left: 2px solid #eef2f7;
+  padding-left: 10px;
+}
+
+.gev-segment-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  row-gap: 2px;
+}

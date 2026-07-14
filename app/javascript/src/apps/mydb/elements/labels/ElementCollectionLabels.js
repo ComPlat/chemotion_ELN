@@ -15,11 +15,14 @@ const CollectionToggle = React.forwardRef(({
   onClick,
   labelsCount,
   totalSharedCollections,
+  size,
+  variant,
 }, ref) => (
   <Button
     ref={ref}
-    size="xxsm"
-    variant="secondary"
+    size={size}
+    variant={variant}
+    className="text-nowrap"
     onClick={(e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -38,27 +41,33 @@ CollectionToggle.propTypes = {
   onClick: PropTypes.func.isRequired,
   labelsCount: PropTypes.number.isRequired,
   totalSharedCollections: PropTypes.number.isRequired,
+  size: PropTypes.string,
+  variant: PropTypes.string,
+};
+CollectionToggle.defaultProps = {
+  size: 'xxsm',
+  variant: 'light',
 };
 
-function ElementCollectionLabels({ element }) {
+const ElementCollectionLabels = ({ element, size, variant }) => {
+  const collectionsStore = useContext(StoreContext).collections;
+
   const { currentUser } = UserStore.getState();
   if (!currentUser) return (<span />);
   if (!element.tag) return (<span />);
   if (!element.tag.taggable_data) return (<span />);
   if (!element.tag.taggable_data.collection_labels) return (<span />);
-  if (element.tag.taggable_data.collection_labels.length == 0) return (<span />);
-
-  const collectionsStore = useContext(StoreContext).collections;
+  if (element.tag.taggable_data.collection_labels.length === 0) return (<span />);
 
   const handleOnClick = (label, e) => {
     e.stopPropagation();
-    aviatorNavigationWithCollectionId(label.id, element.type, element.id);
-  }
+    aviatorNavigationWithCollectionId(label.id, element.type, element.id, true, true);
+  };
 
   const formatItems = (labels) => {
     return labels.map((label) => {
-      const collectionFromStore = collectionsStore.find(label.id)
-      if (!collectionFromStore) return (<span />);
+      const collectionFromStore = collectionsStore.find(label.id);
+      if (!collectionFromStore) return null;
 
       return (
         <Dropdown.Item key={label.id} onClick={(e) => handleOnClick(label, e)}>
@@ -66,7 +75,7 @@ function ElementCollectionLabels({ element }) {
         </Dropdown.Item>
       );
     });
-  }
+  };
 
   const renderCollectionsItems = (title, labels) => {
     if (labels.length === 0) return null;
@@ -76,10 +85,14 @@ function ElementCollectionLabels({ element }) {
         {formatItems(labels)}
       </>
     );
-  }
+  };
 
-  const ownCollections = element.tag.taggable_data.collection_labels.filter(label => collectionsStore.isOwnCollection(label.id))
-  const sharedCollections = element.tag.taggable_data.collection_labels.filter(label => collectionsStore.isSharedCollection(label.id))
+  // Guard against malformed entries: legacy/un-backfilled tags can contain null elements or
+  // entries without a real collection id, which would otherwise throw on `label.id`.
+  const validLabels = element.tag.taggable_data.collection_labels
+    .filter((label) => label && label.id != null);
+  const ownCollections = validLabels.filter((label) => collectionsStore.isOwnCollection(label.id));
+  const sharedCollections = validLabels.filter((label) => collectionsStore.isSharedCollection(label.id));
 
   if (ownCollections.length === 0 && sharedCollections.length === 0) { return (<span />); }
 
@@ -90,6 +103,8 @@ function ElementCollectionLabels({ element }) {
         id="dropdown-custom-components"
         labelsCount={ownCollections.length}
         totalSharedCollections={sharedCollections.length}
+        size={size}
+        variant={variant}
       />
       {createPortal(
         <Dropdown.Menu>
@@ -100,11 +115,13 @@ function ElementCollectionLabels({ element }) {
       )}
     </Dropdown>
   );
-}
+};
 
-export default observer(ElementCollectionLabels)
+export default observer(ElementCollectionLabels);
 
 ElementCollectionLabels.propTypes = {
+  size: PropTypes.string,
+  variant: PropTypes.string,
   element: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     type: PropTypes.string,
@@ -116,4 +133,9 @@ ElementCollectionLabels.propTypes = {
       }),
     }),
   }).isRequired,
+};
+
+ElementCollectionLabels.defaultProps = {
+  size: 'xxsm',
+  variant: 'light',
 };

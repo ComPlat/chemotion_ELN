@@ -13,8 +13,8 @@
     "@babel/runtime": "7",
     "@citation-js/plugin-isbn": "0.3.0",
     "@complat/chem-spectra-client": "1.3.5",
-    "@complat/chemotion-converter-client": "~0.15.0",
-    "@complat/react-spectra-editor": "1.7.1",
+    "@complat/chemotion-converter-client": "~0.16.0",
+    "@complat/react-spectra-editor": "1.8.0",
     "@novnc/novnc": "~1.5.0",
     "@sentry/react": "^7.73.0",
     "@sentry/tracing": "^7.16.0",
@@ -29,7 +29,7 @@
     "antd": "^5.17.2",
     "aviator": "v0.6.1",
     "base-64": "^0.1.0",
-    "chem-generic-ui": "^2.2.2",
+    "chem-generic-ui": "^2.3.0-rc8",
     "citation-js": "0.6.8",
     "classnames": "^2.2.5",
     "commonmark": "^0.28.1",
@@ -41,10 +41,9 @@
     "dnd-multi-backend": "^9.0.0",
     "es6-promise-debounce": "^1.0.1",
     "html2pdf.js": "^0.14.0",
-    "humps": "^2.0.1",
-    "immutable": "^4.3.7",
+    "immutable": "^5.1.5",
     "jcampconverter": "^2.11.0",
-    "js-yaml": "^3.13.1",
+    "js-yaml": "^3.15.0",
     "jsdom": "^22.1.0",
     "jszip": "^3.10.1",
     "lodash": "^4.17.20",
@@ -85,6 +84,7 @@
     "react-input-autosize": "1.1.0",
     "react-json-editor-ajrm": "^2.5.10",
     "react-markdown": "^6.0.2",
+    "remark-gfm": "^1.0.0",
     "react-molviewer": "^1.1.3",
     "react-notification-system": "^0.2.7",
     "react-papaparse": "^3.17.2",
@@ -125,15 +125,15 @@
     "@storybook/react-webpack5": "^9.1.6",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.8.0",
     "babel-loader": "8",
-    "cypress": "^12.3.0",
+    "cypress": "^15.14.2",
     "enzyme": "^3.7.0",
     "eslint": "^8.20.0",
-    "eslint-config-airbnb": "^19.0.4",
     "eslint-filtered-fix": "^0.3.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jsx-a11y": "^6.6.1",
     "eslint-plugin-no-relative-import-paths": "^1.4.0",
     "eslint-plugin-react": "^7.30.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-storybook": "^9.1.6",
     "expect": "^24.7.1",
     "jsdom-global": "^3.0.2",
@@ -192,7 +192,9 @@
     ],
     "env": {
       "development": {
-        "plugins": ["react-refresh/babel"]
+        "plugins": [
+          "react-refresh/babel"
+        ]
       }
     }
   },

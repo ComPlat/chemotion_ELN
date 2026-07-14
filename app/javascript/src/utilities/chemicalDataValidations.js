@@ -54,9 +54,10 @@ export const defaultChemicalSchemaValidation = {
   safetyPhrases: { type: 'object' } // Complex object with pictograms, h_statements, p_statements
 };
 
-// Cache for hazard and precautionary phrases - will be loaded on demand
+// Cache for hazard, precautionary phrases and pictograms - will be loaded on demand
 let hazardPhrasesCache = null;
 let precautionaryPhrasesCache = null;
+let pictogramsCache = null;
 
 /**
  * Loads hazard phrases from the JSON file
@@ -68,7 +69,9 @@ export const loadHazardPhrases = async () => {
   }
 
   try {
-    const response = await fetch('/json/hazardPhrases.json');
+    const response = await fetch('/json/hazardPhrases.json', {
+      headers: { 'Cache-Control': 'no-cache' }
+    });
     hazardPhrasesCache = await response.json();
     return hazardPhrasesCache;
   } catch (error) {
@@ -87,11 +90,32 @@ export const loadPrecautionaryPhrases = async () => {
   }
 
   try {
-    const response = await fetch('/json/precautionaryPhrases.json');
+    const response = await fetch('/json/precautionaryPhrases.json', {
+      headers: { 'Cache-Control': 'no-cache' }
+    });
     precautionaryPhrasesCache = await response.json();
     return precautionaryPhrasesCache;
   } catch (error) {
     console.error('Failed to load precautionary phrases:', error);
+    return {};
+  }
+};
+
+/**
+ * Loads pictogram codes and their filenames from the JSON file
+ * @returns {Promise<Object>} - Promise resolving to an object mapping pictogram codes to filenames
+ */
+export const loadPictograms = async () => {
+  if (pictogramsCache) {
+    return pictogramsCache;
+  }
+
+  try {
+    const response = await fetch('/json/pictograms.json');
+    pictogramsCache = await response.json();
+    return pictogramsCache;
+  } catch (error) {
+    console.error('Failed to load pictograms:', error);
     return {};
   }
 };

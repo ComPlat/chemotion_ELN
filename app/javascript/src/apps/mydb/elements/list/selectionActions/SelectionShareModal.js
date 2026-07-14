@@ -15,6 +15,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import { filterParamsFromUIState } from 'src/utilities/collectionUtilities';
+import { PermissionConst } from 'src/utilities/PermissionConst';
 
 function SelectionShareModal({
   title = 'Sharing of Elements',
@@ -40,7 +41,7 @@ function SelectionShareModal({
 
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const uiState = UIStore.getState();
-  const displayWarning = permissions.permissionLevel === '5';
+  const displayWarning = Number(permissions.permissionLevel) === PermissionConst.PassOwnership;
   const canSubmit = !showUserSelect || (selectedUsers != null && selectedUsers.length > 0);
   const submitTitle = shareType === 'edit' ? 'Edit Permissions' : 'Create Shared Collection';
 
@@ -116,7 +117,8 @@ function SelectionShareModal({
   };
 
   const handlePermissionLevelChange = (e) => {
-    const val = e.target.value;
+    // <option value> is always a string; the API and the shortcuts both deal in integers.
+    const val = Number(e.target.value);
     setPermissions({ ...permissions, permissionLevel: val });
     setRole(defaultRole);
   };
@@ -189,14 +191,14 @@ function SelectionShareModal({
           <Form.Label>Permission level</Form.Label>
           <Form.Select
             onChange={(e) => handlePermissionLevelChange(e)}
-            value={permissions.permissionLevel || ''}
+            value={permissions.permissionLevel ?? ''}
           >
-            <option value="0">Read</option>
-            <option value="1">Write</option>
-            <option value="2">Share</option>
-            <option value="3">Delete</option>
-            <option value="4">Import Elements</option>
-            <option value="5">Pass ownership</option>
+            <option value={PermissionConst.ReadElements}>Read elements</option>
+            <option value={PermissionConst.EditElements}>Edit elements</option>
+            <option value={PermissionConst.AddElements}>Add elements</option>
+            <option value={PermissionConst.RemoveElements}>Remove elements</option>
+            <option value={PermissionConst.ManageShares}>Manage shares</option>
+            <option value={PermissionConst.PassOwnership}>Pass ownership</option>
           </Form.Select>
           {displayWarning && (
             <Form.Text>

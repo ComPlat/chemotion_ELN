@@ -5,7 +5,7 @@ import {
   Tabs, Tab
 } from 'react-bootstrap';
 import { unionBy, findIndex } from 'lodash';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -41,7 +41,7 @@ export default class ScreenDetails extends Component {
     this.state = {
       screen,
       activeTab: UIStore.getState().screen.activeTab,
-      visible: Immutable.List(),
+      visible: List(),
       expandedResearchPlanId: null,
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
@@ -75,14 +75,6 @@ export default class ScreenDetails extends Component {
 
   onUIStoreChange(state) {
     if (state.screen.activeTab !== this.state.activeTab) {
-      this.setState({
-        activeTab: state.screen.activeTab
-      });
-    }
-  }
-
-  onUIStoreChange(state) {
-    if (state.screen.activeTab != this.state.activeTab) {
       this.setState({
         activeTab: state.screen.activeTab
       });

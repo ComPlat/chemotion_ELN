@@ -1,40 +1,16 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 import _ from 'lodash';
 
 export default class ContainerFetcher {
   // Remove container id of unseletced attachemnts(the attachemnts not in Inbox)
   static deleteContainerLinkUnselected(params) {
-    const promise = fetch('/api/v1/containers/', {
-      credentials: 'same-origin',
-      method: 'PATCH',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        container_id: params.id,
-        attachments: params.attachments
-      })
-    }).then(response => response.json()).catch((errorMessage) => {
-      console.log(errorMessage);
+    return ApiClient.patchJson('/api/v1/containers', {
+      body: { container_id: params.id, attachments: params.attachments }
     });
-
-    return promise;
   }
 
   static deleteContainer(container) {
-    const promise = fetch(`/api/v1/containers/${container.id}`, {
-      credentials: 'same-origin',
-      method: 'DELETE',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      }
-    }).then(response => response.json()).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
+    return ApiClient.deleteRequest(`/api/v1/containers/${container.id}`);
   }
 
   static updateContainerContent(container) {
@@ -43,37 +19,10 @@ export default class ContainerFetcher {
       content = JSON.parse(content);
     }
 
-    const promise = fetch(`/api/v1/containers/${container.id}`, {
-      credentials: 'same-origin',
-      method: 'put',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        container_id: container.id,
-        content
-      })
-    }).then(response => response.json()).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
+    return ApiClient.putJson(`/api/v1/containers/${container.id}`, { body: { container_id: container.id, content } });
   }
 
   static updateContainer(container) {
-    return fetch('/api/v1/containers/container', {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ container })
-    }).then((response) => response.json())
-      .catch((error) => {
-        console.error('Error updating container:', error);
-        throw error;
-      });
+    return ApiClient.putJson('/api/v1/containers/container', { body: { container } });
   }
 }

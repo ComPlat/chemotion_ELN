@@ -29,7 +29,7 @@ gem 'dotenv-rails', require: 'dotenv/rails-now'
 gem 'ed25519'
 
 gem 'faker', require: false
-gem 'faraday'
+gem 'faraday', '< 2.9' # 2.9+ needs Ruby >= 3.0; keep the lock installable on the 2.7.8 runtime
 gem 'faraday-follow_redirects'
 gem 'faraday-multipart'
 gem 'font-awesome-rails'
@@ -51,7 +51,7 @@ gem 'httparty'
 
 gem 'icalendar'
 gem 'image_processing', '~> 1.8'
-gem 'inchi-gem', git: 'https://github.com/ComPlat/inchi-gem.git', branch: 'main'
+gem 'inchi-gem', git: 'https://github.com/ComPlat/inchi-gem.git', tag: 'v1.07.5'
 
 gem 'jquery-rails' # must be in, otherwise the views lack jquery, even though the gem is supplied by ketcher-rails
 gem 'jwt'
@@ -59,7 +59,8 @@ gem 'jwt'
 gem 'kaminari'
 gem 'kaminari-grape'
 
-gem 'labimotion', '2.2.0.rc5'
+gem 'labimotion', '2.3.0.rc3'
+
 gem 'logidze'
 
 gem 'mimemagic', '0.3.10'
@@ -80,18 +81,20 @@ gem 'omniauth-orcid', git: 'https://github.com/datacite/omniauth-orcid'
 gem 'omniauth-shibboleth'
 
 gem 'chemical_elements'
-gem 'openbabel', '2.4.90.3', git: 'https://github.com/ptrxyz/openbabel-gem.git', branch: 'ptrxyz-ctime-fix'
+gem 'openbabel', '3.2.0.1', git: 'https://github.com/ComPlat/openbabel-gem.git', tag: 'v3.2.0.1'
 gem 'pandoc-ruby'
 gem 'paranoia', '2.6.0'
 gem 'pg'
 gem 'pg_search'
 gem 'prawn'
 gem 'prawn-svg'
+gem 'public_suffix', '< 7'
 gem 'puma', '< 6.0.0'
 
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
 gem 'rails', '~> 6.1.7.7'
+gem 'redcarpet' # markdown rendering (welcome mailer, application_helper#markdown)
 gem 'rinchi-gem', git: 'https://github.com/ComPlat/rinchi-gem.git', branch: 'main'
 gem 'rmagick'
 gem 'roo'
@@ -101,7 +104,7 @@ gem 'ruby-geometry', require: 'geometry'
 gem 'ruby-mailchecker'
 gem 'ruby-ole'
 
-gem 'sablon', git: 'https://github.com/ComPlat/sablon'
+gem 'sablon', git: 'https://github.com/ComPlat/sablon', tag: 'v0.4.3-1'
 gem 'sassc-rails'
 gem 'scenic'
 gem 'schmooze'

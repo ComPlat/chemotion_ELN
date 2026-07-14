@@ -1,6 +1,6 @@
 services:
   db:
-    image: ptrxyz/chemotion:db-3.0.0
+    image: ptrxyz/chemotion:db-3.1.2
     restart: unless-stopped
     hostname: db
     environment:
@@ -20,6 +20,7 @@ services:
       - CONFIG_ROLE=combine
       - SECRET_KEY_BASE=pleasechangeme
       - RUBYOPT=-W0
+      - OTP_SECRET_KEY=1pleasechangeme2pleasechangeme3
     deploy:
       resources:
         limits:
@@ -37,7 +38,7 @@ services:
       - ../files/pullin:/shared
 
   configure:
-    image: ptrxyz/chemotion:eln-3.0.0 # same as the base image in Dockerfile.p2d for efficiency
+    image: ptrxyz/chemotion:eln-3.1.2 # same as the base image in Dockerfile.p2d for efficiency
     profiles:
       - configure
     restart: no

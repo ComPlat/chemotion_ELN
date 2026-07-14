@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
+require 'cgi'
 
 # rubocop:disable RSpec/NestedGroups
 describe Chemotion::MoleculeAPI do
@@ -82,6 +83,62 @@ describe Chemotion::MoleculeAPI do
         get "/api/v1/molecules/names?id=#{m.id}"
         mns = JSON.parse(response.body)['molecules'].map { |m| m['label'] }
         expect(mns).to include(m.sum_formular)
+      end
+
+      context 'with Unicode characters in new_name' do
+        it 'creates a molecule name with en dash (alloy notation)' do
+          get "/api/v1/molecules/names?id=#{m.id}&new_name=#{CGI.escape('Cu–Ni')}"
+          expect(response).to have_http_status(:ok)
+          labels = JSON.parse(response.body)['molecules'].pluck('label')
+          expect(labels).to include('Cu–Ni')
+        end
+
+        it 'creates a molecule name with middle dot (adduct notation)' do
+          get "/api/v1/molecules/names?id=#{m.id}&new_name=#{CGI.escape('CuSO4·5H2O')}"
+          expect(response).to have_http_status(:ok)
+          labels = JSON.parse(response.body)['molecules'].pluck('label')
+          expect(labels).to include('CuSO4·5H2O')
+        end
+      end
+    end
+
+    describe 'Post /api/v1/molecules/save_name' do
+      let(:m) { create(:molecule) }
+
+      before { allow(user).to receive(:molecule_editor).and_return(true) }
+
+      it 'saves a molecule name with en dash' do
+        post '/api/v1/molecules/save_name', params: {
+          id: m.id, name_id: -1, name: 'Cu–Ni', description: 'defined by user'
+        }
+        expect(response).to have_http_status(:created)
+        expect(JSON.parse(response.body)['name']).to eq('Cu–Ni')
+      end
+
+      it 'saves a molecule name with middle dot' do
+        post '/api/v1/molecules/save_name', params: {
+          id: m.id, name_id: -1, name: 'CuSO4·5H2O', description: 'defined by user'
+        }
+        expect(response).to have_http_status(:created)
+        expect(JSON.parse(response.body)['name']).to eq('CuSO4·5H2O')
+      end
+
+      it 'rejects a name containing a bidi override character' do
+        post '/api/v1/molecules/save_name', params: {
+          id: m.id, name_id: -1, name: 'safe‮name', description: 'defined by user'
+        }
+        expect(response).to have_http_status(:created)
+        body = JSON.parse(response.body)
+        expect(body['name']).to be_nil
+      end
+
+      it 'rejects a name containing a zero-width space' do
+        post '/api/v1/molecules/save_name', params: {
+          id: m.id, name_id: -1, name: 'Cu​Ni', description: 'defined by user'
+        }
+        expect(response).to have_http_status(:created)
+        body = JSON.parse(response.body)
+        expect(body['name']).to be_nil
       end
     end
 

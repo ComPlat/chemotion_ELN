@@ -207,6 +207,7 @@ module Chemotion
                                                 desc: 'enable or disable ketcherails template moderation'
               optional :molecule_editor, type: Boolean, desc: 'enable or disable molecule moderation'
               optional :converter_admin, type: Boolean, desc: 'converter profile'
+              optional :global_text_template_editor, type: Boolean, desc: 'enable editing global text templates'
               optional :auth_generic_admin, type: Hash do
                 optional :elements, type: Boolean, desc: 'un-authorize the user as generic elements admin'
                 optional :segments, type: Boolean, desc: 'un-authorize the user as generic segments admin'
@@ -230,6 +231,11 @@ module Chemotion
               case params[:molecule_editor]
               when true, false
                 pdata = pdata.merge('molecule_editor' => params[:molecule_editor])
+              end
+
+              case params[:global_text_template_editor]
+              when true, false
+                pdata = pdata.merge('global_text_template_editor' => params[:global_text_template_editor])
               end
 
               if params[:auth_generic_admin].present?

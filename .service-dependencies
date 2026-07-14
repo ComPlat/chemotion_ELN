@@ -1,8 +1,8 @@
 #syntax=v1
-CONVERTER=ComPlat/chemotion-converter-app@1.8.0
+CONVERTER=ComPlat/chemotion-converter-app@v1.9.1
 KETCHER=ptrxyz/chemotion-ketchersvc@main
-SPECTRA=ComPlat/chem-spectra-app@v1.4.0
+SPECTRA=ComPlat/chem-spectra-app@v1.5.1
 NMRIUMWRAPPER=NFDI4Chem/nmrium-react-wrapper@v1.1.0
-KETCHER2=epam/ketcher@v3.7.0
+KETCHER2=epam/ketcher@v3.12.0
 CHEMLOCALLINK=Chemotion/ChemLocalLink@v2.0.1
 IMG_INDIGO=epmlsop/indigo-service:1.35.0-rc.2

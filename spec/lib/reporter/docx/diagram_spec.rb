@@ -40,5 +40,24 @@ describe 'Reporter::Docx::Diagram' do
         expect(diagram.ole.name.split('.').last).to eq('bin')
       end
     end
+
+    describe '#img_path' do
+      let(:svg_tmp) { instance_double(Tempfile, path: '/tmp/in.svg', close!: nil) }
+      let(:out_tmp) { instance_double(Tempfile, path: '/tmp/out.png', close!: nil) }
+
+      before do
+        allow(instance).to receive(:load_svg_paths)
+        allow(instance).to receive(:set_svg) { instance.svg_data = '<svg />' }
+        allow(Reporter::Img::Conv).to receive(:data_to_svg).and_return(svg_tmp)
+        allow(Reporter::Img::Conv).to receive(:ext_to_path).and_return(out_tmp)
+      end
+
+      it 'closes the output tempfile when inkscape export fails' do
+        allow(Reporter::Img::Conv).to receive(:by_inkscape).and_raise('boom')
+
+        expect { instance.img_path }.to raise_error('boom')
+        expect(out_tmp).to have_received(:close!)
+      end
+    end
   end
 end

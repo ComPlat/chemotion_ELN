@@ -1,0 +1,11 @@
+.account-profile {
+  min-height: 100vh;
+  --#{$prefix}modal-header-padding-x: #{$modal-header-padding-x};
+  --#{$prefix}modal-header-padding-y: #{$modal-header-padding-y};
+  --#{$prefix}modal-header-padding: #{$modal-header-padding};
+  &__header {
+    @extend .position-sticky;
+    @extend .top-0;
+    z-index: $zindex-popover + 1;
+  }
+}

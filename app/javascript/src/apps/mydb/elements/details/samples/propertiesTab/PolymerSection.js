@@ -18,7 +18,7 @@ export default class PolymerSection extends React.Component {
         sample.external_loading = e.value;
 
       let errorMessage;
-      if (e.value == 0.0)
+      if (e.value == 0.0 && !e.showString)
         errorMessage = 'Loading can not be 0. Please define a value.'
 
       let mw_defined = sample.molecule.molecular_weight;

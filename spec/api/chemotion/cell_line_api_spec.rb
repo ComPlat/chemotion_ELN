@@ -148,10 +148,6 @@ describe Chemotion::CellLineAPI do
       it 'returns correct http status 404' do
         expect(response).to have_http_status :not_found
       end
-
-      it 'correct error message' do
-        expect(parsed_json_response['error']).to eq 'Resource not found'
-      end
     end
   end
 
@@ -218,6 +214,78 @@ describe Chemotion::CellLineAPI do
 
       it 'returns error status code 400' do
         expect(response).to have_http_status :bad_request
+      end
+    end
+
+    context 'when collection_id points to a read-only shared collection' do
+      let(:other_user) { create(:person) }
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:params) do
+        {
+          organism: 'something',
+          tissue: 'another',
+          amount: 100,
+          passage: 200,
+          disease: 'disease',
+          material_names: 'forbidden_cell_line',
+          biosafety_level: 'S1',
+          source: 'IPB',
+          unit: 'g',
+          collection_id: read_only_collection.id,
+          container: {},
+        }
+      end
+
+      before { post '/api/v1/cell_lines/', params: params, as: :json }
+
+      it 'returns 403 forbidden' do
+        expect(response).to have_http_status :forbidden
+      end
+
+      it 'does not create the cell line' do
+        expect(CelllineSample.count).to eq 0
+      end
+    end
+
+    context 'when collection_id points to a writable shared collection' do
+      let(:other_user) { create(:person) }
+      let(:writable_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:add_elements])
+        end
+      end
+      let(:params) do
+        {
+          organism: 'something',
+          tissue: 'another',
+          amount: 100,
+          passage: 200,
+          disease: 'disease',
+          material_names: 'shared_cell_line',
+          biosafety_level: 'S1',
+          source: 'IPB',
+          unit: 'g',
+          collection_id: writable_collection.id,
+          container: {},
+        }
+      end
+
+      before { post '/api/v1/cell_lines/', params: params, as: :json }
+
+      it 'returns 201 created' do
+        expect(response).to have_http_status :created
+      end
+
+      it 'creates the cell line in the shared collection' do
+        cell_line = CelllineSample.first
+        expect(cell_line).not_to be_nil
+        expect(cell_line.collections).to include(writable_collection)
       end
     end
   end

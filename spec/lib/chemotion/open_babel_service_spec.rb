@@ -3,6 +3,41 @@
 require 'rails_helper'
 
 RSpec.describe Chemotion::OpenBabelService do
+  describe '.get_cdxml_from_molfile' do
+    let(:conversion) { instance_double(OpenBabel::OBConversion, convert: true) }
+    let(:input_tf) { instance_double(Tempfile, path: '/tmp/input.mol', close!: nil) }
+    let(:output_tf) { instance_double(Tempfile, path: '/tmp/output.cdxml', close!: nil) }
+    let(:shifter) { instance_double(Cdxml::Shifter, convey: ['<shifted/>', { x_len: 1 }]) }
+
+    before do
+      allow(described_class).to receive(:mofile_clear_coord_bonds).and_return(nil)
+      allow(Tempfile).to receive(:new).with(['input', '.mol']).and_return(input_tf)
+      allow(File).to receive(:write)
+      allow(OpenBabel::OBConversion).to receive(:new).and_return(conversion)
+      allow(conversion).to receive(:set_in_and_out_formats)
+      allow(conversion).to receive(:open_in_and_out_files)
+      allow(File).to receive(:read).and_return('<cdxml/>')
+      allow(Cdxml::Shifter).to receive(:new).and_return(shifter)
+    end
+
+    it 'does not return an already-unlinked tempfile path when no output path is provided' do
+      allow(Tempfile).to receive(:new).with(['output', '.mol']).and_return(output_tf)
+
+      result = described_class.get_cdxml_from_molfile('molfile')
+
+      expect(result[:path]).to be_nil
+      expect(output_tf).to have_received(:close!)
+    end
+
+    it 'returns the caller-provided output path unchanged' do
+      output_path = '/tmp/caller-output.cdxml'
+
+      result = described_class.get_cdxml_from_molfile('molfile', {}, output_path)
+
+      expect(result[:path]).to eq(output_path)
+    end
+  end
+
   describe '.molecule_info_from_structure' do
     let(:conversion) { instance_double(OpenBabel::OBConversion) }
     let(:mol) { instance_double(OpenBabel::OBMol) }

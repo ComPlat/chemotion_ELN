@@ -7,19 +7,32 @@ class ElementsPolicy
   end
 
   def read_all?
-    allowed?(0)
+    allowed?(CollectionShare.permission_level(:read_elements))
   end
 
   def update_all?
-    allowed?(1)
+    allowed?(CollectionShare.permission_level(:edit_elements))
   end
 
+  # Bulk counterpart of ElementPolicy#share? — propagating elements onward, bundled with add_elements.
   def share_all?
-    allowed?(2)
+    allowed?(CollectionShare.permission_level(:add_elements))
   end
 
+  # Bulk counterpart of unlinking an element from a collection: a sharee at :remove_elements may
+  # remove the selection from the shared collection (Usecases::Collections::RemoveElements).
+  def remove_all?
+    allowed?(CollectionShare.permission_level(:remove_elements))
+  end
+
+  # Destroying element records is owner-only, mirroring ElementPolicy#destroy?. A sharee may unlink
+  # elements from a shared collection at :remove_elements, but that goes through
+  # Usecases::Collections::RemoveElements, not here.
   def destroy_all?
-    allowed?(3)
+    return false unless user_and_scope_present?
+    return false if record_ids_that_should_be_inaccessible.any?
+
+    records_only_from_own_collections?
   end
 
   def allowed?(level)
@@ -52,15 +65,23 @@ class ElementsPolicy
     record_ids_from_shared_collections.none?
   end
 
+  # A collection owned by one of the user's groups counts as their own, matching Collection#owned_by?,
+  # writable_by and the group-aware WithdrawElements/RemoveElements use cases. Without the group ids
+  # here, a group member acting on a group-owned collection would see every record fall through to
+  # "inaccessible", so remove_all?/destroy_all? would wrongly deny an action the backend permits.
+  def own_user_ids
+    @own_user_ids ||= [user.id, *user.group_ids]
+  end
+
   def scope_for_own_records
-    records_scope.joins(:collections).where(collections: { user: user }).distinct
+    records_scope.joins(:collections).where(collections: { user_id: own_user_ids }).distinct
   end
 
   def scope_for_shared_records
     records_scope
       .joins(collections: [:collection_shares])
-      .where.not(collections: { user: user }) # to prevent looking at circular shares
-      .where(collection_shares: { shared_with: user })
+      .where.not(collections: { user_id: own_user_ids }) # to prevent looking at circular shares
+      .where(collection_shares: { shared_with_id: own_user_ids })
       .distinct
   end
 

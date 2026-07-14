@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/NestedGroups
+
 require 'rails_helper'
 
 describe Chemotion::ResearchPlanAPI do
@@ -41,12 +43,12 @@ describe Chemotion::ResearchPlanAPI do
               children: [],
               is_new: true,
               is_deleted: false,
-              name: 'new'
-            }
+              name: 'new',
+            },
           }
         end
 
-        before { post '/api/v1/research_plans', params: params, as: :json}
+        before { post '/api/v1/research_plans', params: params, as: :json }
 
         it 'is able to create a new research plan' do
           rp = ResearchPlan.find_by(name: 'test')
@@ -67,6 +69,62 @@ describe Chemotion::ResearchPlanAPI do
           rp = ResearchPlan.find_by(name: 'test')
           expected = Entities::ResearchPlanEntity.represent(rp, root: 'research_plan')
           expect(response.body).to eq JSON.generate(expected)
+        end
+      end
+
+      context 'when collection_id points to a read-only shared collection' do
+        let(:other_user) { create(:person) }
+        let(:read_only_collection) do
+          create(:collection, user: other_user).tap do |c|
+            create(:collection_share, collection: c, shared_with: user,
+                                      permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+          end
+        end
+        let(:params) do
+          {
+            name: 'Forbidden Plan',
+            container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
+            collection_id: read_only_collection.id,
+          }
+        end
+
+        before { post '/api/v1/research_plans', params: params, as: :json }
+
+        it 'returns 403 forbidden' do
+          expect(response).to have_http_status :forbidden
+        end
+
+        it 'does not create the research plan' do
+          expect(ResearchPlan.find_by(name: 'Forbidden Plan')).to be_nil
+        end
+      end
+
+      context 'when collection_id points to a writable shared collection' do
+        let(:other_user) { create(:person) }
+        let(:writable_collection) do
+          create(:collection, user: other_user).tap do |c|
+            create(:collection_share, collection: c, shared_with: user,
+                                      permission_level: CollectionShare::PERMISSION_LEVELS[:add_elements])
+          end
+        end
+        let(:params) do
+          {
+            name: 'Shared Write Plan',
+            container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
+            collection_id: writable_collection.id,
+          }
+        end
+
+        before { post '/api/v1/research_plans', params: params, as: :json }
+
+        it 'returns 201 created' do
+          expect(response).to have_http_status :created
+        end
+
+        it 'creates the research plan in the shared collection' do
+          rp = ResearchPlan.find_by(name: 'Shared Write Plan')
+          expect(rp).not_to be_nil
+          expect(rp.collections).to include(writable_collection)
         end
       end
     end
@@ -96,7 +154,8 @@ describe Chemotion::ResearchPlanAPI do
         expect(columns.size).to eq 8 # coordinate + 3*2 readout spalten
 
         names = columns.map { |column| column['headerName'] }
-        expect(names).to eq ['Position', 'Sample', 'Readout 1 Value', 'Readout 1 Unit', 'Readout 2 Value', 'Readout 2 Unit', 'Readout 3 Value', 'Readout 3 Unit']
+        expect(names).to eq ['Position', 'Sample', 'Readout 1 Value', 'Readout 1 Unit', 'Readout 2 Value',
+                             'Readout 2 Unit', 'Readout 3 Value', 'Readout 3 Unit']
 
         first_row = rows.first
         first_readout = wellplate.wells.first.readouts.first
@@ -125,3 +184,4 @@ describe Chemotion::ResearchPlanAPI do
     end
   end
 end
+# rubocop:enable RSpec/NestedGroups

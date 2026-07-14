@@ -146,6 +146,7 @@ jobs:
           cp -f shrine.yml.example shrine.yml
           cp -f storage.yml.example storage.yml
           cp -f radar.yml.example radar.yml
+          cp -f converter.yml.example converter.yml
           touch klasses.json
           bundle config set without ''
 

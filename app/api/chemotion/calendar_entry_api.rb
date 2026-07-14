@@ -10,6 +10,7 @@ module Chemotion
         requires :end_time, type: DateTime, desc: 'calendar entry end date time'
         optional :description, type: String, desc: 'calendar entry description'
         optional :kind, type: String, desc: 'calendar entry kind'
+        optional :status, type: String, desc: 'calendar entry status'
         optional :eventable_id, type: Integer, desc: 'calendar entry subject id'
         optional :eventable_type, type: String, desc: 'calendar entry subject type'
         optional :notify_user_ids, type: Array, desc: 'list of user ids to be notified about this event'
@@ -51,6 +52,7 @@ module Chemotion
         optional :end_time, type: DateTime, desc: 'calendar entry end date time'
         optional :description, type: String, desc: 'calendar entry description'
         optional :kind, type: String, desc: 'calendar entry kind'
+        optional :status, type: String, desc: 'calendar entry status'
         optional :notify_user_ids, type: Array, desc: 'list of user ids to be notified about this event'
       end
       route_param :id do

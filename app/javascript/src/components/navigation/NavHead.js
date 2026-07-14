@@ -3,6 +3,8 @@ import { NavDropdown, Navbar, Dropdown } from 'react-bootstrap';
 
 function NavHead() {
   const isOnMydb = window.location.href.match(/\/mydb/);
+  const customLinks = Array.isArray(window.__INFO_SUPPORT_LINKS__) ? window.__INFO_SUPPORT_LINKS__ : [];
+
   return (
     <Navbar.Brand className="fs-5">
       <NavDropdown title="Chemotion">
@@ -32,6 +34,20 @@ function NavHead() {
           {' '}
           <i className="fa fa-external-link" aria-hidden="true" />
         </NavDropdown.Item>
+
+        {customLinks.length > 0 && <Dropdown.Divider />}
+        {customLinks.map((link) => (
+          <NavDropdown.Item
+            key={link.id}
+            as="a"
+            href={link.url}
+            target="_blank"
+          >
+            {link.label}
+            <i className="fa fa-external-link float-end" aria-hidden="true" />
+          </NavDropdown.Item>
+        ))}
+
         <Dropdown.Divider />
         <NavDropdown.Item as="a" eventKey="16" href={isOnMydb ? '/home' : '/mydb'} target="_self">
           {isOnMydb ? 'Home' : 'ELN'}

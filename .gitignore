@@ -35,6 +35,7 @@
 .dockerenv
 /.devcontainer/Dockerfile*
 /.devcontainer/docker-compose.dev*
+/.devcontainer/.env.development
 /docker-compose.services.yml
 
 /config/matrices.json
@@ -50,6 +51,7 @@
 /config/ketcher_service.yml
 /config/structure_editors.yml
 /config/indigo_service.yml
+/config/ui_components.yml
 !/config/data_collector_keys/.keep
 
 /config/database.yml
@@ -102,6 +104,9 @@
 
 /public/editors/*
 !/public/editors/.keep
+
+/public/workshop/*
+!/public/workshop/.keep
 /public/favicon.ico
 
 # written by Labimotion gem
@@ -170,6 +175,8 @@
 
 # Temp files
 /spec/tmp/*
+/spec/cypress/screenshots
+/spec/cypress/downloads
 
 # Temp rake task file
 .rake_tasks~

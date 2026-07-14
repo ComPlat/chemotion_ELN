@@ -5,25 +5,25 @@ import TreeSelect from 'antd/lib/tree-select';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-import SelectFieldData from './SelectFieldData';
-import { mapperFields, unitMapperFields } from './SelectMapperData';
+import SelectFieldData from 'src/components/searchModal/forms/SelectFieldData';
+import { mapperFields, unitMapperFields } from 'src/components/searchModal/forms/SelectMapperData';
 import { statusOptions, temperatureOptions, durationOptions } from 'src/components/staticDropdownOptions/options';
 import { selectOptions } from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/SelectOptions';
 import { deviceDescriptionSelectOptions } from 'src/apps/mydb/elements/details/deviceDescriptions/SelectOptions';
 
 const AdvancedSearchRow = ({ idx }) => {
   const searchStore = useContext(StoreContext).search;
-  let selection = searchStore.advancedSearchValues[idx];
-  let searchElement = searchStore.searchElement;
+  const selection = searchStore.advancedSearchValues[idx];
+  const {searchElement} = searchStore;
   let mapperOptions = mapperFields;
   let fieldOptions = [];
 
-  if (['sequence_based_macromolecule_samples', 'device_descriptions'].includes(searchElement.table)) {
+  if (['sequence_based_macromolecule_samples', 'device_descriptions', 'cell_lines'].includes(searchElement.table)) {
     fieldOptions = SelectFieldData[searchElement.table];
   } else {
     fieldOptions = SelectFieldData.fields[searchElement.table];
   }
-  
+
   fieldOptions = fieldOptions?.filter(f => {
     return f.value.advanced === true && f.value.advanced !== undefined
   });
@@ -33,8 +33,10 @@ const AdvancedSearchRow = ({ idx }) => {
     mapperOptions = unitMapperFields;
   }
 
-  let linkSelectSpacer = selection.link == '' ? '' : 'visible';
-  let selectedFieldOption = selection.field.label == 'Name' && searchElement.table == 'samples' ? fieldOptions[0].value : selection.field;
+  const linkSelectSpacer = selection.link === '' ? '' : 'visible';
+  const selectedFieldOption = selection.field.label == 'Name' && ['samples', 'cell_lines'].includes(searchElement.table)
+    ? fieldOptions[0].value
+    : selection.field;
 
   const logicalOperators = [
     { value: "AND", label: "AND" },
@@ -48,8 +50,9 @@ const AdvancedSearchRow = ({ idx }) => {
   const formElementValue = (formElement, e) => {
     switch (formElement) {
       case 'value':
-        const value = typeof e.target !== 'undefined' ? e.target.value : (typeof e.value !== 'undefined' ? e.value : e);
-        return value;
+        return typeof e.target !== 'undefined'
+          ? e.target.value
+          : (typeof e.value !== 'undefined' ? e.value : e);
       case 'field':
       case 'link':
       case 'match':
@@ -61,20 +64,20 @@ const AdvancedSearchRow = ({ idx }) => {
   }
 
   const temperatureConditions = (searchValues, column) => {
-    if (searchValues['unit'] == '' || column == 'temperature') {
+    if (searchValues['unit'] === '' || column === 'temperature') {
       searchValues['unit'] = '°C';
     }
-    if (searchValues['match'] != '=') {
+    if (searchValues['match'] !== '=') {
       searchValues['match'] = '=';
     }
     return searchValues;
   }
 
   const durationConditions = (searchValues, column) => {
-    if (searchValues['unit'] == '' || column == 'duration') {
+    if (searchValues['unit'] === '' || column === 'duration') {
       searchValues['unit'] = 'Hour(s)';
     }
-    if (searchValues['match'] != '=') {
+    if (searchValues['match'] !== '=') {
       searchValues['match'] = '=';
     }
     return searchValues;
@@ -96,22 +99,31 @@ const AdvancedSearchRow = ({ idx }) => {
       return;
     }
 
-    let value = formElementValue(formElement, e, e.currentTarget);
+    const value = formElementValue(formElement, e, e.currentTarget);
     searchValues[formElement] = value;
     searchValues['table'] = searchElement.table;
     searchValues['element_id'] = searchElement.element_id;
 
     const fieldColumn = searchValues.field.column;
-    if (value.column == 'temperature') { searchValues = temperatureConditions(searchValues, value.column) }
-    if (value.column == 'duration') { searchValues = durationConditions(searchValues, value.column) }
+
+    if (searchElement.table == 'cell_lines' && selection.field.label == 'Name' && !searchValues.field.table) {
+      const searchValuesField = { ...searchValues.field };
+      searchValuesField.table = selectedFieldOption.table;
+      searchValues.field = searchValuesField;
+    }
+    if (value.column === 'temperature') { searchValues = temperatureConditions(searchValues, value.column) }
+    if (value.column === 'duration') { searchValues = durationConditions(searchValues, value.column) }
     if (specialMatcherFields.includes(searchValues.field.column)) { checkValueForNumber(searchValues.value) }
-    if (!specialMatcherFields.includes(fieldColumn) && formElement != 'unit' && !specialMatcherFields.includes(value.column)) {
+
+    const fieldNotSpecial = !specialMatcherFields.includes(fieldColumn);
+    const valueNotSpecial = !specialMatcherFields.includes(value.column);
+    if (fieldNotSpecial && formElement != 'unit' && valueNotSpecial) {
       searchValues['unit'] = '';
     }
-    if (!specialMatcherFields.includes(fieldColumn) && ['>', '<'].includes(searchValues['match']) && formElement != 'match') {
+    if (fieldNotSpecial && ['>', '<'].includes(searchValues['match']) && formElement != 'match') {
       searchValues['match'] = '=';
     }
-    if (value.opt == 'rows' && searchValues['match'] !== 'ILIKE') { searchValues['match'] = 'ILIKE' }
+    if (value.opt === 'rows' && searchValues['match'] !== 'ILIKE') { searchValues['match'] = 'ILIKE' }
     searchStore.addAdvancedSearchValue(idx, searchValues);
   }
 
@@ -145,7 +157,6 @@ const AdvancedSearchRow = ({ idx }) => {
             />
           </div>
         );
-        break;
       case 'rxno':
         return (
           <div className="value-field-select">
@@ -161,7 +172,6 @@ const AdvancedSearchRow = ({ idx }) => {
             />
           </div>
         );
-        break;
       case 'temperature':
         return (
           <>
@@ -187,7 +197,6 @@ const AdvancedSearchRow = ({ idx }) => {
             </div>
           </>
         );
-        break;
       case 'duration':
         return (
           <>
@@ -213,7 +222,6 @@ const AdvancedSearchRow = ({ idx }) => {
             </div>
           </>
         );
-        break;
       case 'function_or_application':
         return (
           <div className="value-field-select">
@@ -226,7 +234,6 @@ const AdvancedSearchRow = ({ idx }) => {
             />
           </div>
         );
-        break;
       case 'general_tags':
         return (
           <div className="value-field-select">
@@ -239,7 +246,6 @@ const AdvancedSearchRow = ({ idx }) => {
             />
           </div>
         );
-        break;
       default:
         return defaultValueField;
     }

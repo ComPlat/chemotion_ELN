@@ -79,7 +79,9 @@ describe Chemotion::SampleAPI do
       }
     end
 
-    let(:subsamples) { Sample.where(name: %w[s1 s2]).where.not(id: [s1.id, s2.id]) }
+    # order(:id) — the example indexes subsamples[0]/[1] and pairs them with s1/s2, so the rows must
+    # come back in creation order rather than whatever order Postgres happens to return.
+    let(:subsamples) { Sample.where(name: %w[s1 s2]).where.not(id: [s1.id, s2.id]).order(:id) }
 
     before do
       s1
@@ -653,12 +655,22 @@ describe Chemotion::SampleAPI do
         end
       end
 
+      # can_publish is gated on ElementPolicy#destroy?, which is owner-only: a sharee never publishes
+      # someone else's sample, at any rung.
       context 'when permission_level = 3' do
         let(:permission_level) { 3 }
 
         it 'returns correct can_publish & can_update' do
           expect(JSON.parse(response.body)['sample']['can_update']).to be true
-          expect(JSON.parse(response.body)['sample']['can_publish']).to be true
+          expect(JSON.parse(response.body)['sample']['can_publish']).to be false
+        end
+      end
+
+      context 'when permission_level is the highest rung' do
+        let(:permission_level) { CollectionShare.permission_level(:pass_ownership) }
+
+        it 'still cannot publish, because publishing is owner-only' do
+          expect(JSON.parse(response.body)['sample']['can_publish']).to be false
         end
       end
     end
@@ -905,6 +917,81 @@ describe Chemotion::SampleAPI do
       it 'can be set to false' do
         sample.dry_solvent = false
         expect(sample.dry_solvent).to be(false)
+      end
+    end
+
+    context 'when collection_id points to a read-only shared collection' do
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:params) do
+        {
+          name: 'forbidden_sample',
+          target_amount_value: 0,
+          target_amount_unit: 'g',
+          description: '',
+          purity: 1,
+          location: '',
+          is_top_secret: false,
+          molfile: build(:molfile, type: 'test_2'),
+          xref: {},
+          container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
+          collection_id: read_only_collection.id,
+        }
+      end
+
+      before { post '/api/v1/samples', params: params, as: :json }
+
+      it 'returns 403 forbidden' do
+        expect(response).to have_http_status :forbidden
+      end
+
+      it 'does not create the sample' do
+        expect(Sample.find_by(name: 'forbidden_sample')).to be_nil
+      end
+
+      it 'does not increment the short_label counter' do
+        expect { post '/api/v1/samples', params: params, as: :json }
+          .not_to(change { user.reload.counters['samples'] })
+      end
+    end
+
+    context 'when collection_id points to a writable shared collection' do
+      let(:writable_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:add_elements])
+        end
+      end
+      let(:params) do
+        {
+          name: 'shared_write_test',
+          target_amount_value: 0,
+          target_amount_unit: 'g',
+          description: '',
+          purity: 1,
+          location: '',
+          is_top_secret: false,
+          molfile: build(:molfile, type: 'test_2'),
+          xref: {},
+          container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
+          collection_id: writable_collection.id,
+        }
+      end
+
+      before { post '/api/v1/samples', params: params, as: :json }
+
+      it 'returns 201 created' do
+        expect(response).to have_http_status :created
+      end
+
+      it 'creates the sample in the shared collection' do
+        sample = Sample.find_by(name: 'shared_write_test')
+        expect(sample).not_to be_nil
+        expect(sample.collections).to include(writable_collection)
       end
     end
   end

@@ -1,86 +1,39 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class MessagesFetcher {
   static configuration() {
-    return fetch('/api/v1/messages/config.json', {
-      credentials: 'same-origin'
-    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    return ApiClient.getJson('/api/v1/messages/config');
   }
 
   static fetchMessages(isAck) {
-    return fetch(`/api/v1/messages/list.json?is_ack=${isAck}`, {
-      credentials: 'same-origin'
-    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
-      return { messages: [] };
-    });
+    return ApiClient.getJson(`/api/v1/messages/list?is_ack=${isAck}`);
   }
 
   static fetchSpectraMessages(isAck) {
-    return fetch(`/api/v1/messages/spectra.json?is_ack=${isAck}`, {
-      credentials: 'same-origin'
-    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
-      return { messages: [] };
-    });
+    return ApiClient.getJson(`/api/v1/messages/spectra?is_ack=${isAck}`);
   }
 
   static fetchChannels(channelType) {
-    return fetch(`/api/v1/messages/channels.json?channel_type=${channelType}`, {
-      credentials: 'same-origin'
-    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    return ApiClient.getJson(`/api/v1/messages/channels?channel_type=${channelType}`);
   }
 
   static fetchChannelWithUser() {
-    return fetch('/api/v1/messages/channels_user.json', {
-      credentials: 'same-origin'
-    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    return ApiClient.getJson('/api/v1/messages/channels_user');
   }
 
   static channelIndividualUsers() {
-    return fetch('/api/v1/messages/channel_individual.json', {
-      credentials: 'same-origin'
-    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    return ApiClient.getJson('/api/v1/messages/channel_individual');
   }
 
   static acknowledgedMessage(params) {
-    return fetch('/api/v1/messages/ack/', {
-      credentials: 'same-origin',
-      method: 'PUT',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    return ApiClient.putJson('/api/v1/messages/ack', { body: params });
   }
 
   static subscribeChannel(params) {
-    return fetch('/api/v1/messages/subscribe/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    return ApiClient.postJson('/api/v1/messages/subscribe', { body: params });
   }
 
   static createMessage(params) {
-    return fetch('/api/v1/messages/new/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    }).then((response) => response.json()).then((json) => json).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    return ApiClient.postJson('/api/v1/messages/new', { body: params });
   }
 }

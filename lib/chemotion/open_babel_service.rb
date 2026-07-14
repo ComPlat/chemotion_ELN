@@ -498,8 +498,11 @@ M  END
     mf = mofile_clear_coord_bonds(molfile)
     mol = mf || molfile
     # `obabel -imol #{file_name} -ocdxml`
-    input = Tempfile.new(["input", ".mol"]).path
-    output = output_path || Tempfile.new(["output", ".mol"]).path
+    # Keep Tempfile references alive until after File.read; GC finalizers delete the files.
+    input_tf = Tempfile.new(["input", ".mol"])
+    output_tf = output_path ? nil : Tempfile.new(["output", ".mol"])
+    input = input_tf.path
+    output = output_path || output_tf.path
     File.write(input, mol)
 
     c = OpenBabel::OBConversion.new
@@ -509,7 +512,10 @@ M  END
 
     orig_cdxml = File.read(output)
     shifted_cdxml, geometry = Cdxml::Shifter.new({orig_cdxml: orig_cdxml, shifter: shifter}).convey
-    return { content: shifted_cdxml, geometry: geometry, path: output }
+    { content: shifted_cdxml, geometry: geometry, path: output_path }
+  ensure
+    input_tf&.close!
+    output_tf&.close!
   end
 
   def self.smi_to_svg(smi)

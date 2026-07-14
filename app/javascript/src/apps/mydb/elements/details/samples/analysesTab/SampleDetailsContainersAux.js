@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, ButtonGroup, Form } from 'react-bootstrap';
+import { Button, Form } from 'react-bootstrap';
 import QuillViewer from 'src/components/QuillViewer';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import ImageModal from 'src/components/common/ImageModal';
@@ -15,8 +15,6 @@ import MolViewerListBtn from 'src/components/viewer/MolViewerListBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
-import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
-import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 
 const qCheckPass = () => (
   <i className="fa fa-check ms-1 text-success"/>
@@ -51,31 +49,6 @@ const qCheckMsg = (sample, container) => {
     return msg === '' ? qCheckPass() : qCheckFail(msg, 'MS', '');
   }
   return '';
-};
-
-const AnalysisModeToggle = (mode, handleToggleMode, isDisabled) => {
-  return (
-    <ButtonGroup>
-      <ButtonGroupToggleButton
-        size="xsm"
-        active={mode === 'edit'}
-        onClick={() => handleToggleMode('edit')}
-        disabled={isDisabled}
-      >
-        <i className="fa fa-edit me-1" />
-        Edit mode
-      </ButtonGroupToggleButton>
-      <ButtonGroupToggleButton
-        size="xsm"
-        active={mode === 'order'}
-        onClick={() => handleToggleMode('order')}
-        disabled={isDisabled}
-      >
-        <i className="fa fa-reorder me-1" />
-        Order mode
-      </ButtonGroupToggleButton>
-    </ButtonGroup>
-  )
 };
 
 const headerBtnGroup = (
@@ -188,10 +161,18 @@ const headerBtnGroup = (
   );
 };
 
-const AnalysesHeader = ({
-  sample, container, mode, readOnly, isDisabled, handleRemove, handleUndo, handleSubmit, toggleAddToReport,
-}) => {
-
+function AnalysesHeader({
+  sample,
+  container,
+  mode,
+  readOnly,
+  isDisabled,
+  handleRemove,
+  handleUndo,
+  handleSubmit,
+  toggleAddToReport,
+  updateContainerPreferredThumbnail,
+}) {
   let kind = container.extended_metadata.kind || '';
   kind = (kind.split('|')[1] || kind).trim();
   const deleted = container.is_deleted;
@@ -205,20 +186,19 @@ const AnalysesHeader = ({
       return c;
     }),
   };
-   const attachment = getAttachmentFromContainer(container);
- 
   return (
     <div className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}>
       <div className="preview border d-flex align-items-center">
-        {deleted ?
-          <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> :
-          <ImageModal
-            attachment={attachment}
-            popObject={{
-              title: container.name,
-            }}
-          />
-    }
+        {deleted
+          ? <i className="fa fa-ban text-body-tertiary fs-2 text-center d-block" /> : (
+            <ImageModal
+              container={container}
+              popObject={{
+                title: container.name,
+              }}
+              onPreferredThumbnailChange={(id) => updateContainerPreferredThumbnail(container, id)}
+            />
+          )}
       </div>
       <div className={"flex-grow-1" + (deleted ? "" : " analysis-header-fade")}>
         <div className="d-flex justify-content-between align-items-center">
@@ -246,6 +226,6 @@ const AnalysesHeader = ({
       </div>
     </div>
   );
-};
+}
 
-export { AnalysesHeader, AnalysisModeToggle };
+export { AnalysesHeader };

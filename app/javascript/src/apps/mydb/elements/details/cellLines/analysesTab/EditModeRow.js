@@ -5,10 +5,10 @@ import PropTypes from 'prop-types';
 import { Accordion, Card } from 'react-bootstrap';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 
-const EditModeRow = ({ container, handleChange, element, readOnly, index, rootContainer }) => (
-  <Card eventKey={container.id} className="border-0 rounded-0">
+const EditModeRow = ({ container, handleChange, element, readOnly, index, rootContainer, isFirst }) => (
+  <Card className={`rounded-0 border-0${isFirst ? '' : ' border-top'}`}>
     <Card.Header className="rounded-0 p-0 border-bottom-0">
-      <AccordionHeaderWithButtons as="div">
+      <AccordionHeaderWithButtons eventKey={container.id}>
         <Header
           isEditHeader
           element={element}
@@ -18,7 +18,7 @@ const EditModeRow = ({ container, handleChange, element, readOnly, index, rootCo
         />
       </AccordionHeaderWithButtons>
     </Card.Header>
-    <Accordion.Collapse>
+    <Accordion.Collapse eventKey={container.id}>
       <Card.Body>
         <ContainerComponent
           analysisMethodTitle="Type (BioAssay Ontology)"
@@ -44,7 +44,8 @@ EditModeRow.propTypes = {
   handleChange: PropTypes.func.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   element: PropTypes.object.isRequired,
-  readOnly: PropTypes.bool.isRequired
+  readOnly: PropTypes.bool.isRequired,
+  isFirst: PropTypes.bool,
 };
 
 export default EditModeRow;

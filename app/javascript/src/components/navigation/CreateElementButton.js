@@ -14,11 +14,12 @@ import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import AppModal from 'src/components/common/AppModal';
 import ElementIcon from 'src/components/common/ElementIcon';
 
-const CreateElementDropdownToggle = React.forwardRef(({ onClick }, ref) => (
+const CreateElementDropdownToggle = React.forwardRef(({ onClick, disabled }, ref) => (
   <Button
     variant="create"
     className="create-element-button"
     ref={ref}
+    disabled={disabled}
     onClick={(e) => {
       e.preventDefault();
       onClick(e);
@@ -31,7 +32,8 @@ const CreateElementDropdownToggle = React.forwardRef(({ onClick }, ref) => (
 
 CreateElementDropdownToggle.displayName = 'CreateElementDropdownToggle';
 CreateElementDropdownToggle.propTypes = {
-  onClick: PropTypes.func.isRequired
+  onClick: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
 };
 
 export default class CreateElementButton extends React.Component {
@@ -138,8 +140,9 @@ export default class CreateElementButton extends React.Component {
       permission_level
     } = currentCollection;
 
+    // Creating an element adds it to the collection, so it needs AddElements — not merely EditElements.
     const newIsDisabled = permission_level !== undefined
-      ? (collection_share_id && permission_level < PermissionConst.Write)
+      ? (collection_share_id && permission_level < PermissionConst.AddElements)
       : (label === 'All' && is_locked);
 
     this.setState({ isDisabled: newIsDisabled });

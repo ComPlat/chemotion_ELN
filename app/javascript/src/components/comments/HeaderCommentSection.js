@@ -49,7 +49,7 @@ class HeaderCommentSection extends Component {
 
     if (MatrixCheck(currentUser.matrix, commentActivation) && !element?.isNew) {
       return (
-        <ButtonToolbar>
+        <ButtonToolbar className="flex-nowrap">
           <DetailCardButton
             key="comments-button"
             label="Show/Add Comments"

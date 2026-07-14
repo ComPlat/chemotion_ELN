@@ -5,6 +5,7 @@ module Chemotion
   # Reaction API
   class ReactionAPI < Grape::API
     include Grape::Kaminari
+    helpers CollectionHelpers
     helpers ContainerHelpers
     helpers ParamsHelpers
     helpers LiteratureHelpers
@@ -90,7 +91,8 @@ module Chemotion
 
         get do
           reaction = Reaction.find(params[:id])
-          class_name = reaction&.class&.name
+          research_plans =
+            ResearchPlan.where('body @> ?', [{ value: { 'reaction_id' => reaction&.id } }].to_json).select(:id, :name)
 
           {
             reaction: Entities::ReactionEntity.represent(
@@ -99,9 +101,10 @@ module Chemotion
               detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
             ),
             literatures: Entities::LiteratureEntity.represent(
-              citation_for_elements(params[:id], class_name),
+              citation_for_elements(params[:id], "Reaction"),
               with_user_info: true,
             ),
+            research_plans: research_plans,
           }
         end
       end
@@ -147,12 +150,15 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        optional :ph_operator, type: String
+        optional :ph_value, type: Float
         optional :tlc_solvents, type: String
         optional :solvent, type: String
         optional :tlc_description, type: String
         optional :rf_value, type: String
         optional :temperature, type: Hash
         optional :status, type: String
+        optional :reaction_type, type: String, values: Reaction.reaction_types.keys
         optional :role, type: String
         optional :origin, type: Hash
         optional :reaction_svg_file, type: String
@@ -169,6 +175,7 @@ module Chemotion
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
+        optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
         optional :weight_percentage, type: Boolean
       end
@@ -207,13 +214,21 @@ module Chemotion
           kinds = reaction.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          present(
-            reaction,
-            with: Entities::ReactionEntity,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
-            root: :reaction,
-            policy: @element_policy,
-          )
+          research_plans =
+            ResearchPlan.where('body @> ?', [{ value: { 'reaction_id' => reaction&.id } }].to_json).select(:id, :name)
+
+          {
+            reaction: Entities::ReactionEntity.represent(
+              reaction,
+              policy: @element_policy,
+              detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
+            ),
+            literatures: Entities::LiteratureEntity.represent(
+              citation_for_elements(reaction.id, "Reaction"),
+              with_user_info: true,
+            ),
+            research_plans: research_plans,
+          }
         end
       end
 
@@ -228,12 +243,15 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        optional :ph_operator, type: String
+        optional :ph_value, type: Float
         optional :tlc_solvents, type: String
         optional :solvent, type: String
         optional :tlc_description, type: String
         optional :rf_value, type: String
         optional :temperature, type: Hash
         optional :status, type: String
+        optional :reaction_type, type: String, values: Reaction.reaction_types.keys
         optional :role, type: String
         optional :origin, type: Hash
         optional :reaction_svg_file, type: String
@@ -248,6 +266,7 @@ module Chemotion
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
+        optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
         optional :weight_percentage, type: Boolean
       end
@@ -263,7 +282,8 @@ module Chemotion
         attributes.delete(:segments)
         attributes.delete(:user_labels)
 
-        collection = current_user.collections.find_by(id: collection_id)
+        collection = writable_collection_for(collection_id)
+        error!('403 Forbidden', 403) if collection_id && collection.nil?
         attributes[:created_by] = current_user.id
         reaction = Reaction.create!(attributes)
         recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -273,9 +293,13 @@ module Chemotion
         reaction.save!
         update_element_labels(reaction, params[:user_labels], current_user.id)
         reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
-        CollectionsReaction.create(reaction: reaction, collection: collection)
-        CollectionsReaction.create(reaction: reaction,
-                                   collection: Collection.get_all_collection_for_user(current_user.id))
+        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
+        all_collection = Collection.get_all_collection_for_user(all_coll_owner_id)
+        # Use find_or_create_by so we don't violate the unique
+        # (reaction_id, collection_id) index when the chosen collection is the
+        # user's "All" collection (both inserts would otherwise be identical).
+        CollectionsReaction.find_or_create_by(reaction: reaction, collection: collection) if collection
+        CollectionsReaction.find_or_create_by(reaction: reaction, collection: all_collection)
         CollectionsReaction.update_tag_by_element_ids(reaction.id)
 
         if reaction

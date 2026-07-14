@@ -61,6 +61,10 @@ function SharedWithMeCollections() {
         </Popover>
       );
 
+      // Without a direct share there is nothing of the user's own to reject: access comes from a
+      // group, and the group's share belongs to every member. To drop it, leave the group.
+      const canReject = node.collection_share_id != null;
+
       return (
         <div 
           className="d-flex align-items-center justify-content-between bg-dark-subtle mb-2"
@@ -69,20 +73,30 @@ function SharedWithMeCollections() {
         >
           <div className="ms-3">
             {node.label}
+            {node.shared_via_group && (
+              <i
+                className="fa fa-users ms-2 text-muted"
+                title={canReject
+                  ? 'Shared with you directly and through one of your groups'
+                  : 'Shared with you through one of your groups — leave the group to remove it'}
+              />
+            )}
           </div>
-          <ButtonGroup>
-            <OverlayTrigger
-              animation
-              placement="bottom"
-              root
-              trigger="focus"
-              overlay={popover}
-            >
-              <Button size="sm" variant="danger">
-                <i className="fa fa-trash-o" />
-              </Button>
-            </OverlayTrigger>
-          </ButtonGroup>
+          {canReject && (
+            <ButtonGroup>
+              <OverlayTrigger
+                animation
+                placement="bottom"
+                root
+                trigger="focus"
+                overlay={popover}
+              >
+                <Button size="sm" variant="danger">
+                  <i className="fa fa-trash-o" />
+                </Button>
+              </OverlayTrigger>
+            </ButtonGroup>
+          )}
         </div>
       );
     }

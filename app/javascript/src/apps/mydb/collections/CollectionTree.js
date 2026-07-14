@@ -92,7 +92,7 @@ function CollectionTree({ isCollapsed }) {
   return (
     <div className="mh-100 d-flex flex-column">
       <CollectionManagementButton isCollapsed={isCollapsed} />
-      <div className="sidebar-button-frame tree-view_frame flex-column">
+      <div className="sidebar-button-frame tree-view__frame flex-column">
         {collectionGroups.map(({
           label, icon, collectionType, collections, onClickOpenCollection,
         }) => {
@@ -120,7 +120,7 @@ function CollectionTree({ isCollapsed }) {
                 active={isActive}
               />
               {isExpanded && !isCollapsed && collections !== undefined && (
-                <div className="tree-view_container">
+                <div className="tree-view__container">
                   {collections.length === 0
                     ? <div className="text-muted text-center p-2">No collections</div>
                     : collections.map((collection) => (

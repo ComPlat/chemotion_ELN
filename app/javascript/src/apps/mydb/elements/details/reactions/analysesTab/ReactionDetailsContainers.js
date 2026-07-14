@@ -10,6 +10,10 @@ import {
   ButtonToolbar, Tooltip,
 } from 'react-bootstrap';
 import Container from 'src/models/Container';
+import ArrayUtils from 'src/utilities/ArrayUtils';
+import { findAnalysesContainer, reorderAnalyses } from 'src/apps/mydb/elements/details/analyses/utils';
+import AnalysisModeToggle from 'src/apps/mydb/elements/details/analyses/AnalysisModeToggle';
+import AnalysesOrderRow from 'src/apps/mydb/elements/details/analyses/AnalysesOrderRow';
 import ContainerComponent from 'src/components/container/ContainerComponent';
 import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import QuillViewer from 'src/components/QuillViewer';
@@ -17,7 +21,6 @@ import ImageModal from 'src/components/common/ImageModal';
 import { hNmrCount, cNmrCount, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import { chmoConversions } from 'src/components/OlsComponent';
-import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 import {
   JcampIds, BuildSpcInfos, BuildSpcInfosForNMRDisplayer, isNMRKind
 } from 'src/utilities/SpectraHelper';
@@ -81,6 +84,7 @@ export default class ReactionDetailsContainers extends Component {
     this.state = {
       activeContainer: UIStore.getState().reaction.activeAnalysis,
       commentBoxVisible: hasComment,
+      mode: 'edit',
     };
     this.containerRefs = {};
 
@@ -90,6 +94,8 @@ export default class ReactionDetailsContainers extends Component {
     this.handleOnClickRemove = this.handleOnClickRemove.bind(this);
     this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
     this.handleSpChange = this.handleSpChange.bind(this);
+    this.handleToggleMode = this.handleToggleMode.bind(this);
+    this.handleMove = this.handleMove.bind(this);
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
   }
 
@@ -231,6 +237,16 @@ export default class ReactionDetailsContainers extends Component {
     this.setState({ activeContainer: key });
   }
 
+  handleToggleMode(mode) {
+    this.setState({ mode });
+  }
+
+  handleMove(source, target) {
+    const { reaction, handleReactionChange } = this.props;
+    reorderAnalyses(findAnalysesContainer(reaction), source, target);
+    handleReactionChange(reaction);
+  }
+
   // eslint-disable-next-line class-methods-use-this
   renderAnalysesHint() {
     return (
@@ -284,7 +300,7 @@ export default class ReactionDetailsContainers extends Component {
   };
 
   render() {
-    const { activeContainer, commentBoxVisible } = this.state;
+    const { activeContainer, commentBoxVisible, mode } = this.state;
     const { reaction, readOnly } = this.props;
 
     const containerHeader = (container) => {
@@ -301,15 +317,23 @@ export default class ReactionDetailsContainers extends Component {
           return c;
         }),
       };
-      const attachment = getAttachmentFromContainer(container);
+      const onPreferredThumbnailChange = (preferredId) => {
+        // eslint-disable-next-line no-param-reassign
+        container.extended_metadata = {
+          ...container.extended_metadata,
+          preferred_thumbnail: preferredId,
+        };
+        this.handleChange();
+      };
       return (
         <div className="analysis-header w-100 d-flex gap-3 lh-base">
           <div className="preview border d-flex align-items-center">
             <ImageModal
-              attachment={attachment}
+              container={container}
               popObject={{
                 title: container.name,
               }}
+              onPreferredThumbnailChange={onPreferredThumbnailChange}
             />
           </div>
           <div className="flex-grow-1">
@@ -374,67 +398,82 @@ export default class ReactionDetailsContainers extends Component {
       ));
 
       if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
+        const sortedChildren = ArrayUtils.sortArrByIndex(analyses_container[0].children);
         return (
           <div>
-            <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="mb-3">
               {this.renderAnalysesHint()}
-              <ButtonToolbar>
-                <CommentButton
-                  toggleCommentBox={this.toggleCommentBox}
-                  isVisible={commentBoxVisible}
-                  size="sm"
-                />
-                {this.addButton()}
-              </ButtonToolbar>
+              <div className="d-flex justify-content-between align-items-center mt-2">
+                <AnalysisModeToggle mode={mode} onToggle={this.handleToggleMode} disabled={readOnly} />
+                <ButtonToolbar className="gap-2">
+                  <CommentButton
+                    toggleCommentBox={this.toggleCommentBox}
+                    isVisible={commentBoxVisible}
+                    size="sm"
+                  />
+                  {this.addButton()}
+                </ButtonToolbar>
+              </div>
             </div>
             <CommentBox
               isVisible={commentBoxVisible}
               value={reaction.container.description}
               handleCommentTextChange={this.handleCommentTextChange}
             />
-            <Accordion
-              className="border rounded overflow-hidden"
-              onSelect={this.handleAccordionOpen}
-              activeKey={activeContainer}
-            >
-              {analyses_container[0].children.map((container, key) => {
-                const isFirstTab = key === 0;
-                return (
-                  <Card
-                    ref={(element) => {
-                      this.containerRefs[key] = element;
-                    }}
-                    key={`reaction_container_${container.id}`}
-                    className={`rounded-0 border-0${isFirstTab ? '' : ' border-top'}`}
-                  >
-                    <Card.Header className="rounded-0 p-0 border-bottom-0">
-                      <AccordionHeaderWithButtons eventKey={key}>
-                        {container.is_deleted
-                          ? containerHeaderDeleted(container)
-                          : containerHeader(container)}
-                      </AccordionHeaderWithButtons>
-                    </Card.Header>
-
-                    {!container.is_deleted && (
-                    <Accordion.Collapse eventKey={key}>
-                      <Card.Body>
-                        <ContainerComponent
-                                    disabled={readOnly}
-                                    readOnly={readOnly}
-                                    templateType="reaction"
-                                    element={reaction}
-                                    container={container}
-                                    onChange={() => this.handleChange(container)}
-                                    rootContainer={reaction.container}
-                                    index={key}
-                                  />
-                      </Card.Body>
-                    </Accordion.Collapse>
-                    )}
-                  </Card>
-                );
-              })}
-            </Accordion>
+            {mode === 'order' ? (
+              <div>
+                {sortedChildren.map((container) => (
+                  <AnalysesOrderRow
+                    key={container.id}
+                    container={container}
+                    handleMove={this.handleMove}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Accordion
+                className="border rounded overflow-hidden"
+                onSelect={this.handleAccordionOpen}
+                activeKey={activeContainer}
+              >
+                {sortedChildren.map((container, key) => {
+                  const isFirstTab = key === 0;
+                  return (
+                    <Card
+                      ref={(element) => {
+                        this.containerRefs[key] = element;
+                      }}
+                      key={`reaction_container_${container.id}`}
+                      className={`rounded-0 border-0${isFirstTab ? '' : ' border-top'}`}
+                    >
+                      <Card.Header className="rounded-0 p-0 border-bottom-0">
+                        <AccordionHeaderWithButtons eventKey={key}>
+                          {container.is_deleted
+                            ? containerHeaderDeleted(container)
+                            : containerHeader(container)}
+                        </AccordionHeaderWithButtons>
+                      </Card.Header>
+                      {!container.is_deleted && (
+                        <Accordion.Collapse eventKey={key}>
+                          <Card.Body>
+                            <ContainerComponent
+                              disabled={readOnly}
+                              readOnly={readOnly}
+                              templateType="reaction"
+                              element={reaction}
+                              container={container}
+                              onChange={() => this.handleChange(container)}
+                              rootContainer={reaction.container}
+                              index={key}
+                            />
+                          </Card.Body>
+                        </Accordion.Collapse>
+                      )}
+                    </Card>
+                  );
+                })}
+              </Accordion>
+            )}
             <ViewSpectra
               sample={reaction}
               handleSampleChanged={this.handleSpChange}

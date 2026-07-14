@@ -5,7 +5,7 @@ import {
   Card, ListGroup, ListGroupItem, Tabs, Tab
 } from 'react-bootstrap';
 import { findIndex } from 'lodash';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -52,7 +52,7 @@ export default class WellplateDetails extends Component {
       wellplate,
       activeTab: UIStore.getState().wellplate.activeTab,
       showWellplate: true,
-      visible: Immutable.List(),
+      visible: List(),
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
     };
     this.handleWellplateChanged = this.handleWellplateChanged.bind(this);

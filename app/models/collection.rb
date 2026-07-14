@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/AbcSize, Rails/HasManyOrHasOneDependent, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+# rubocop:disable Rails/HasManyOrHasOneDependent
 
 # == Schema Information
 #
@@ -92,6 +92,29 @@ class Collection < ApplicationRecord
     end,
   )
 
+  # returns collections the user may create elements in: own collections and those shared with at
+  # least add_elements permission. Creating an element inserts a collections_<element> row, so it is
+  # an "add", not an "edit" — a sharee at :edit_elements may change existing content but not inject
+  # new records into someone else's collection.
+  scope(
+    :writable_by,
+    lambda do |user|
+      user_and_group_ids = [user.id, *user.group_ids]
+      left_joins(:collection_shares)
+      .left_joins(:inventory)
+      .where(user_id: user_and_group_ids)
+      .or(
+        where(
+          collection_shares: {
+            shared_with_id: user_and_group_ids,
+            permission_level: CollectionShare.permission_level(:add_elements)..,
+          },
+        ),
+      )
+      .distinct
+    end,
+  )
+
   # temp for labimotion
   scope(
     :belongs_to_or_shared_by,
@@ -125,19 +148,58 @@ class Collection < ApplicationRecord
         .distinct
     end,
   )
+  # One row per **collection**, not per share. A collection can be shared to the same user twice —
+  # directly, and again through one of their groups — and those two rows may carry different
+  # permission levels. `shared_collections_for`'s `.distinct` cannot collapse them because the
+  # selected `collection_shares.id` / `permission_level` differ, so the collection would appear
+  # twice in the recipient's tree with no explanation.
+  #
+  # - `permission_level` is the MAX across the user's own share and their groups' shares. That is
+  #   already the effective grant: every policy check is `shared_with_minimum_permission_level(..).any?`
+  #   and `ElementsPolicy` takes `MAX(collection_shares.permission_level)` explicitly.
+  # - `collection_share_id` is the user's **direct** share, and is NULL when access is purely
+  #   group-derived. Rejecting a share must never destroy the group's share row on behalf of every
+  #   other member — to drop group-derived access a user leaves the group.
+  # - `shared_via_group` lets the UI explain *why* a collection is there.
+  # - `owner` carries the abbreviation for the provenance popover; `owner_name` is the plain name for
+  #   the tree's owner-root label. The join to +users+ is a LEFT join so that a collection whose owner
+  #   was hard-destroyed (or whose `user_id` dangles — there is no DB FK to users) is still returned to
+  #   its recipients; both owner strings then COALESCE to a `Deleted user #<id>` placeholder rather
+  #   than dropping the collection from the shared list. (A normal account deletion is a soft-delete
+  #   that keeps the owner row, so this only covers the hard-destroy edge.) The join is raw SQL rather
+  #   than `left_joins(:user)`: `User` is `acts_as_paranoid`, and an association-based join merges the
+  #   target class's default scope into the join's ON clause, so a soft-deleted-but-present owner would
+  #   also read as `users.id IS NULL` — indistinguishable from the hard-destroy case this is meant to
+  #   isolate.
   scope(
     :serialized_shared_collections_for,
     lambda do |user|
-      shared_collections_for(user).select(
-        [
-          'collections.*',
-          'collection_shares.id AS collection_share_id',
-          'collection_shares.permission_level AS permission_level',
-          'inventories.name AS inventory_name',
-          'inventories.prefix AS inventory_prefix',
-          'concat(users.first_name, chr(32), users.last_name, chr(40), users.name_abbreviation, chr(41)) AS owner',
-        ].join(', '),
-      )
+      # user.id comes from the DB; .to_i keeps it un-injectable inside the aggregate FILTERs, which
+      # cannot take a bind parameter through .select.
+      own_share = "collection_shares.shared_with_id = #{user.id.to_i}"
+      # concat() treats NULL as '', so a missing owner must be detected by users.id IS NULL (the LEFT
+      # join produced no row), not by COALESCE over the concat.
+      deleted_owner = "concat('Deleted user #', collections.user_id)"
+      owner_abbr = 'concat(users.first_name, chr(32), users.last_name, chr(40), users.name_abbreviation, chr(41))'
+      owner_plain = 'concat(users.first_name, chr(32), users.last_name)'
+
+      joins(:collection_shares)
+        .joins('LEFT JOIN users ON users.id = collections.user_id')
+        .left_joins(:inventory)
+        .where(collection_shares: { shared_with_id: [user.id, *user.group_ids] })
+        .group('collections.id, inventories.id, users.id')
+        .select(
+          [
+            'collections.*',
+            "MAX(collection_shares.id) FILTER (WHERE #{own_share}) AS collection_share_id",
+            'MAX(collection_shares.permission_level) AS permission_level',
+            "bool_or(NOT (#{own_share})) AS shared_via_group",
+            'inventories.name AS inventory_name',
+            'inventories.prefix AS inventory_prefix',
+            "CASE WHEN users.id IS NULL THEN #{deleted_owner} ELSE #{owner_abbr} END AS owner",
+            "CASE WHEN users.id IS NULL THEN #{deleted_owner} ELSE #{owner_plain} END AS owner_name",
+          ].join(', '),
+        )
     end,
   )
 
@@ -191,5 +253,48 @@ class Collection < ApplicationRecord
   def self.get_all_collection_for_user(user_id)
     find_by(user_id: user_id, label: 'All', is_locked: true)
   end
+
+  # The keys {#detail_levels_for_user} resolves. Extend when a new element type gains a detail level.
+  DETAIL_LEVEL_KEYS = %i[
+    permission_level
+    sample_detail_level
+    reaction_detail_level
+    wellplate_detail_level
+    screen_detail_level
+    researchplan_detail_level
+    element_detail_level
+    celllinesample_detail_level
+    devicedescription_detail_level
+    sequencebasedmacromoleculesample_detail_level
+  ].freeze
+
+  # The level granted to an owner. Above every real rung, so an owner passes any threshold.
+  OWNER_LEVEL = 10
+
+  # A collection owned by a group belongs to each of its members, which is how +own_collections_for+,
+  # +accessible_for+ and +writable_by+ all read it.
+  def owned_by?(user)
+    user_id.in?([user.id, *user.group_ids])
+  end
+
+  # What +user+ effectively gets on this collection.
+  #
+  # A user may hold several shares on one collection at once — their own, plus one for each group
+  # they belong to — and those shares may disagree. The effective value of each level is their
+  # **maximum**, which is the rule the authorization layer already applies: +ElementPolicy+ checks
+  # +shared_with_minimum_permission_level(..).any?+ and both +ElementsPolicy+ and
+  # {ElementDetailLevelCalculator} take an explicit +MAX+.
+  #
+  # @param user [User]
+  # @return [Hash{Symbol => Integer}] every key of {DETAIL_LEVEL_KEYS}
+  def detail_levels_for_user(user)
+    return DETAIL_LEVEL_KEYS.index_with { OWNER_LEVEL } if owned_by?(user)
+
+    # Loaded once and reduced in memory: a handful of rows, versus one MAX query per key.
+    shares = CollectionShare.shared_with(user).where(collection: self).to_a
+    return DETAIL_LEVEL_KEYS.index_with { 0 } if shares.empty?
+
+    DETAIL_LEVEL_KEYS.index_with { |key| shares.pluck(key).compact.max || 0 }
+  end
 end
-# rubocop:enable Metrics/AbcSize, Rails/HasManyOrHasOneDependent,Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+# rubocop:enable Rails/HasManyOrHasOneDependent

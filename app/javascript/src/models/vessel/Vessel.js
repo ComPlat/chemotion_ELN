@@ -54,6 +54,7 @@ export default class Vessel extends Element {
     const { vessel_template: template, vessels = [] } = response;
 
     const result = [];
+    if (!template) { return result; }
 
     // Create the template item
     const templateItem = Vessel.buildEmpty(collectionId, '', 'vessel_template');

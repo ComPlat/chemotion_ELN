@@ -34,6 +34,9 @@ export const SampleTasksStore = types
     load: flow(function* loadOpenSampleTasks() {
       let result = yield SampleTasksFetcher.openSampleTasks();
       self.sample_tasks.clear();
+
+      if (!Array.isArray(result)) { return; }
+
       result.forEach(entry => self.sample_tasks.set(entry.id, SampleTask.create({ ...entry })));
     }),
     toggleSampleTaskInbox() {

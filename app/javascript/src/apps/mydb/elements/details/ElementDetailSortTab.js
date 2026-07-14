@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { Popover } from 'react-bootstrap';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 import { isEmpty, set } from 'lodash';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
@@ -20,6 +20,10 @@ import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout } from 'src/utilities/CollectionTabsHelper';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
+const isAllCollection = (collection) => Boolean(
+  collection?.is_locked && collection?.label === 'All'
+);
+
 export default function ElementDetailSortTab({
   type,
   onTabPositionChanged,
@@ -29,8 +33,8 @@ export default function ElementDetailSortTab({
   openedFromCollectionId,
 }) {
   const { collections } = useContext(StoreContext);
-  const [visible, setVisible] = useState(Immutable.List());
-  const [hidden, setHidden] = useState(Immutable.List());
+  const [visible, setVisible] = useState(List());
+  const [hidden, setHidden] = useState(List());
   const addInventoryTabRef = useRef(addInventoryTab);
   const availableTabsRef = useRef(availableTabs);
   const onTabPositionChangedRef = useRef(onTabPositionChanged);
@@ -91,9 +95,9 @@ export default function ElementDetailSortTab({
   const refreshTabLayout = useCallback((state) => {
     const collection = getOpenedFromCollection() || UIStore.getState().currentCollection;
 
-    const collectionTabs = typeof (collection?.tabs_segment) === 'string'
-      ? JSON.parse(collection?.tabs_segment)
-      : collection?.tabs_segment;
+    const rawTabs = collection?.tabs_segment;
+    let collectionTabs = typeof rawTabs === 'string' ? JSON.parse(rawTabs) : rawTabs;
+    if (isAllCollection(collection)) { collectionTabs = null; }
 
     const layout = (!collectionTabs || isEmpty(collectionTabs[`${type}`]))
       ? state.profile?.data?.[`layout_detail_${type}`]
@@ -105,9 +109,10 @@ export default function ElementDetailSortTab({
   const updateLayout = useCallback(() => {
     const layout = filterTabLayout({ visible, hidden });
     const { currentCollection } = UIStore.getState();
-    const tabSegment = { ...currentCollection?.tabs_segment, [type]: layout };
-
-    collections.updateCollection(currentCollection, tabSegment);
+    if (!isAllCollection(currentCollection)) {
+      const tabSegment = { ...currentCollection?.tabs_segment, [type]: layout };
+      collections.updateCollection(currentCollection, tabSegment);
+    }
 
     const userProfile = UserStore.getState().profile;
     set(userProfile, `data.layout_detail_${type}`, layout);
@@ -140,7 +145,7 @@ export default function ElementDetailSortTab({
 
   const { currentCollection } = UIStore.getState();
   const isOwnCollection = collections.isOwnCollection(currentCollection?.id);
-  const allCollection = currentCollection?.is_locked && currentCollection.label === 'All';
+  const allCollection = isAllCollection(currentCollection);
   if (!isOwnCollection && !allCollection) { return null; }
 
   const popoverSettings = (

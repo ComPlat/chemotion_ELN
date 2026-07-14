@@ -318,7 +318,7 @@ module Chemotion
               policy: @element_policy,
             ),
             literatures: Entities::LiteratureEntity.represent(
-              citation_for_elements(params[:id], 'Sample'),
+              citation_for_elements(sample.id, 'Sample'),
               with_user_info: true,
             ),
           }
@@ -455,13 +455,20 @@ module Chemotion
           kinds = @sample.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-          present(
-            @sample,
-            with: Entities::SampleEntity,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: @sample).detail_levels,
-            policy: @element_policy,
-            root: :sample,
-          )
+          {
+            sample: Entities::SampleEntity.represent(
+              @sample,
+              detail_levels: ElementDetailLevelCalculator
+                .new(user: current_user, element: @sample)
+                .detail_levels,
+              policy: @element_policy,
+            ),
+            literatures: Entities::LiteratureEntity.represent(
+              citation_for_elements(@sample.id, 'Sample'),
+              with_user_info: true,
+            ),
+          }
+
         rescue ActiveRecord::RecordNotUnique => e
           # Extract the column or index name from the error message
           match = e.message.match(/duplicate key value violates unique constraint "(?<index_name>.+)"/)
@@ -595,14 +602,18 @@ module Chemotion
         literatures = attributes.delete(:literatures)
 
         sample = Sample.new(attributes)
+        collections = []
 
         if params[:collection_id]
-          collection = Collection.accessible_for(current_user).find_by(id: params[:collection_id])
-          sample.collections << collection if collection.present?
+          collection = writable_collection_for(params[:collection_id])
+          error!('403 Forbidden', 403) if collection.nil?
+          collections << collection
         end
 
-        all_coll = Collection.get_all_collection_for_user(current_user.id)
-        sample.collections << all_coll
+        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
+        all_coll = Collection.get_all_collection_for_user(all_coll_owner_id)
+        collections << all_coll if all_coll.present?
+        sample.collections = collections.uniq
 
         sample.container = update_datamodel(params[:container])
         sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])

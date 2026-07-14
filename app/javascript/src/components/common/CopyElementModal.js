@@ -125,7 +125,7 @@ export default class CopyElementModal extends React.Component {
           <Form.Label>Copy to Collection</Form.Label>
           <CollectionSelect
             value={selectedCol}
-            withShared={false}
+            withShared
             onChange={this.onColSelectChange}
           />
         </AppModal>

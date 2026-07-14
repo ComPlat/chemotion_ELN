@@ -5,16 +5,17 @@
 # Table name: calendar_entries
 #
 #  id             :bigint           not null, primary key
-#  eventable_type :string
-#  eventable_id   :bigint
-#  title          :string
-#  description    :string
-#  start_time     :datetime
-#  end_time       :datetime
-#  kind           :string
 #  created_by     :integer          not null
+#  description    :string
+#  end_time       :datetime
+#  eventable_type :string
+#  kind           :string
+#  start_time     :datetime
+#  status         :string
+#  title          :string
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
+#  eventable_id   :bigint
 #
 # Indexes
 #
@@ -39,7 +40,7 @@ class CalendarEntry < ApplicationRecord
   scope :for_range, lambda { |start_time, end_time|
     where('end_time > :start_time AND start_time < :end_time', start_time: start_time, end_time: end_time)
   }
-  scope :for_event, ->(id, type) { where(eventable_id: id, eventable_type: type) if id && type }
+  scope :for_event, ->(id, type) { where(eventable_id: id, eventable_type: [type, type.underscore]) if id && type }
   scope :for_user, ->(user_id) { where(created_by: user_id) if user_id }
 
   def notified_users
@@ -67,8 +68,8 @@ class CalendarEntry < ApplicationRecord
     collection = collection_for(user)
     return unless collection
 
-    url = Rails.application.config.root_url
-    "#{url}/mydb/collection/#{collection.id}/#{eventable_type.downcase}/#{eventable_id}"
+    url = Rails.application.config.root_url.chomp('/')
+    "#{url}/mydb/collection/#{collection.id}/#{eventable_type.underscore}/#{eventable_id}"
   end
 
   def create_messages(user_ids, type)

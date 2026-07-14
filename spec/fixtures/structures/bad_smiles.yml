@@ -1,0 +1,9 @@
+---
+# SMILES strings as a user would paste them through the UI.
+# Single-quoted YAML preserves backslashes literally, so no escaping is needed.
+'01':
+  smiles: 'CC1=C(CC)C(C)=[N]2C1=C(C)C3=CC(/C=C\B4NC5=C6C(C=CC=C6N4)=CC=C5)=CN3B2(F)F'
+  inchikey: 'GKKQIDVLCPSVKV-OUKQBFOZSA-N'
+'02':
+  smiles: 'C1CCCCN1(C)[Al]([H])(I)(I)N1(C)CCCCC1'
+  inchikey: 'KZRMCIUKHJFQCH-UHFFFAOYSA-L'

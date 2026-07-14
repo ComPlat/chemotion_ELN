@@ -1,9 +1,15 @@
 import React from 'react';
+import CommentSection from 'src/components/comments/CommentSection';
+import CommentActions from 'src/stores/alt/actions/CommentActions';
+import CommentModal from 'src/components/common/CommentModal';
+import { commentActivation } from 'src/utilities/CommentHelper';
+import MatrixCheck from 'src/components/common/MatrixCheck';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { observer } from 'mobx-react';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import PropTypes from 'prop-types';
+import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 
@@ -26,6 +32,15 @@ class CellLineDetails extends React.Component {
       activeTab: 'tab1',
       readOnly: this.isReadOnly()
     };
+  }
+
+  componentDidMount() {
+    const { currentUser } = UserStore.getState();
+    const { cellLineItem } = this.props;
+
+    if (MatrixCheck(currentUser.matrix, commentActivation) && !cellLineItem?.is_new) {
+      CommentActions.fetchComments(cellLineItem);
+    }
   }
 
   handleSubmit(cellLineItem) {
@@ -53,7 +68,6 @@ class CellLineDetails extends React.Component {
     this.setState({ activeTab: eventKey });
   }
 
-  // eslint-disable-next-line class-methods-use-this
   isReadOnly() {
     const { currentCollection } = UIStore.getState();
     return !collectionHasPermission(currentCollection, 0);
@@ -86,20 +100,32 @@ class CellLineDetails extends React.Component {
         saveDisabled={saveDisabled}
       >
         <div className="tabs-container--with-borders">
-          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)} id="cell-line-details-tab">
+          <Tabs activeKey={activeTab} onSelect={(event) => this.handleTabChange(event)}>
             <Tab eventKey="tab1" title="Properties" key="tab1">
+              {
+                !cellLineItem.isNew
+                && <CommentSection section="cell_line_sample_properties" element={cellLineItem} />
+              }
               <GeneralProperties
                 item={cellLineItem}
                 readOnly={readOnly}
               />
             </Tab>
             <Tab eventKey="tab2" title="Analyses" key="tab2">
+              {
+                !cellLineItem.isNew
+                && <CommentSection section="cell_line_sample_analyses" element={cellLineItem} />
+              }
               <AnalysesContainer
                 item={cellLineItem}
                 readOnly={readOnly}
               />
             </Tab>
             <Tab eventKey="tab3" title="References" key="tab3" disabled={cellLineItem.is_new}>
+              {
+                !cellLineItem.isNew
+                && <CommentSection section="cell_line_sample_references" element={cellLineItem} />
+              }
               <DetailsTabLiteratures
                 readOnly={readOnly}
                 element={cellLineItem}
@@ -108,6 +134,7 @@ class CellLineDetails extends React.Component {
             </Tab>
           </Tabs>
         </div>
+        <CommentModal element={cellLineItem} />
       </ElementDetailCard>
     );
   }

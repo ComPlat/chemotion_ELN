@@ -417,7 +417,7 @@ class Sample < ApplicationRecord
   # rubocop:disable Metrics/PerceivedComplexity
   # rubocop:disable Style/MethodDefParentheses
   # rubocop:disable Style/OptionalBooleanParameter
-  def create_subsample user, collection_ids, copy_ea = false, type = nil
+  def create_subsample user, collection_ids, copy_ea = false, type = nil, copy_components: true
     subsample = dup
     subsample.xref['inventory_label'] = nil
     subsample.skip_inventory_label_update = true
@@ -452,7 +452,10 @@ class Sample < ApplicationRecord
     subsample.container = Container.create_root_container
     subsample.save!
 
-    create_components_for_mixture_subsample(subsample)
+    # Callers that reconcile the subsample's components from a client payload
+    # (e.g. the reaction editor) pass copy_components: false so we don't insert
+    # parent-copied rows that the payload would then duplicate.
+    create_components_for_mixture_subsample(subsample) if copy_components
     create_chemical_entry_for_subsample(id, subsample.id, type) unless type.nil?
 
     subsample

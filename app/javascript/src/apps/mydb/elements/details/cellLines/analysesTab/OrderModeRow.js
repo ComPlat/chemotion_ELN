@@ -57,11 +57,15 @@ const dropCollectHooks = (connect, monitor) => (
 
 class OrderModeRow extends Component {
   render() {
-    const { connectDragSource, connectDropTarget, container } = this.props;
+    const { connectDragSource, connectDropTarget, container, isDragging } = this.props;
+    const dndClass = isDragging ? ' dnd-no-display' : '';
 
     return (
       compose(connectDragSource, connectDropTarget)(
-        <div>
+        <div className={`d-flex gap-2 mb-3 bg-gray-100 px-2 py-3 rounded${dndClass}`}>
+          <div className="dnd-button d-flex align-items-center">
+            <i className="dnd-arrow-enable text-info fa fa-arrows" aria-hidden="true" />
+          </div>
           <Header container={container} />
         </div>
       )

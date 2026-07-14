@@ -1,8 +1,10 @@
+// Mirror of CollectionShare::PERMISSION_LEVELS (app/models/collection_share.rb), which is the
+// source of truth. Cumulative: a share at level N grants every capability below it.
 export const PermissionConst = {
-  Read: 0,
-  Write: 1,
-  Share: 2,
-  Delete: 3,
-  ImportElements: 4,
-  PassOwnerShip: 5
+  ReadElements: 0,
+  EditElements: 1,
+  AddElements: 2,
+  RemoveElements: 3,
+  ManageShares: 4,
+  PassOwnership: 5
 };

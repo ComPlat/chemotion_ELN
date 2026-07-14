@@ -18,7 +18,7 @@ const collectionShow = (e) => {
   }
   const uiState = UIStore.getState();
   const { currentSearchSelection, currentSearchByID } = uiState;
-  const collectionId = e.params['collectionID'];
+  const collectionId = e.params.collectionID;
   const collectionPromise = CollectionsFetcher.fetchByCollectionId(collectionId);
 
   collectionPromise.then((collection) => {
@@ -69,13 +69,11 @@ const sampleShowOrNew = (e) => {
 };
 
 const cellLineShowOrNew = (e) => {
-  const cellLineId = e.params.cell_lineID;
+  const cellLineId = e.params.cell_lineID || e.params.cellLineID;
 
   if (cellLineId === 'new') {
     ElementActions.generateEmptyCellLine(e.params.collectionID, e.params.cell_line_template);
-    return;
-  }
-  if (cellLineId != null && String(cellLineId).trim()) {
+  } else {
     ElementActions.tryFetchCellLineElById.defer(cellLineId);
   }
 };
@@ -133,7 +131,7 @@ const reactionShow = (e) => {
   if (reactionID === 'new') {
     ElementActions.generateEmptyReaction(collectionID);
   } else if (reactionID === 'copy') {
-    //ElementActions.copyReactionFromClipboard(collectionID);
+    // ElementActions.copyReactionFromClipboard(collectionID);
   } else if (index < 0) {
     ElementActions.fetchReactionById(reactionID);
   } else if (index !== activeKey) {
@@ -205,7 +203,7 @@ const deviceShowDeviceManagement = () => {
 const researchPlanShowOrNew = (e) => {
   const { research_planID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
-  const index = selecteds.findIndex(el => el.type === 'research_plan' && el.id === research_planID);
+  const index = selecteds.findIndex((el) => el.type === 'research_plan' && el.id === research_planID);
 
   if (research_planID === 'new') {
     ElementActions.generateEmptyResearchPlan(collectionID);
@@ -220,23 +218,23 @@ const researchPlanShowOrNew = (e) => {
 
 const metadataShowOrNew = (e) => {
   const { collectionID } = e.params;
-  const { selecteds, activeKey } = ElementStore.getState()
+  const { selecteds, activeKey } = ElementStore.getState();
 
   // check if the metadata detail tab is alredy open
-  const index = selecteds.findIndex(el => el.collection_id == collectionID)
+  const index = selecteds.findIndex((el) => el.collection_id == collectionID);
   if (index < 0) {
     // not found, fetch the metadata from the server
     ElementActions.fetchMetadata(collectionID);
   } else if (index != activeKey) {
     // not active, activate tab
-    DetailActions.select(index)
+    DetailActions.select(index);
   }
 };
 
 const deviceDescriptionShowOrNew = (e) => {
   const { device_descriptionID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
-  const index = selecteds.findIndex(el => el.type === 'device_description' && el.id === device_descriptionID);
+  const index = selecteds.findIndex((el) => el.type === 'device_description' && el.id === device_descriptionID);
 
   if (device_descriptionID === 'new' || device_descriptionID === undefined) {
     ElementActions.generateEmptyDeviceDescription(collectionID);
@@ -247,14 +245,12 @@ const deviceDescriptionShowOrNew = (e) => {
   } else if (index !== activeKey) {
     DetailActions.select(index);
   }
-}
+};
 
 const sequenceBasedMacromoleculeSampleShowOrNew = (e) => {
   const { sequence_based_macromolecule_sampleID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
-  const index = selecteds.findIndex(el => {
-    return el.type === 'sequence_based_macromolecule_sample' && el.id === sequence_based_macromolecule_sampleID
-  });
+  const index = selecteds.findIndex((el) => el.type === 'sequence_based_macromolecule_sample' && el.id === sequence_based_macromolecule_sampleID);
 
   if (sequence_based_macromolecule_sampleID === 'new' || sequence_based_macromolecule_sampleID === undefined) {
     ElementActions.generateEmptySequenceBasedMacromoleculeSample(collectionID);
@@ -265,13 +261,13 @@ const sequenceBasedMacromoleculeSampleShowOrNew = (e) => {
   } else if (index !== activeKey) {
     DetailActions.select(index);
   }
-}
+};
 
 const genericElShowOrNew = (e, type) => {
   const { collectionID } = e.params;
   let itype = '';
   if (typeof type === 'undefined' || typeof type === 'object' || type == null || type == '') {
-    const keystr = e.params && Object.keys(e.params).filter(k => k != 'collectionID' && k.includes('ID'));
+    const keystr = e.params && Object.keys(e.params).filter((k) => k != 'collectionID' && k.includes('ID'));
     itype = keystr && keystr[0] && keystr[0].slice(0, -2);
   } else {
     itype = type;
@@ -283,13 +279,12 @@ const genericElShowOrNew = (e, type) => {
   } else if (genericElID === 'copy') {
     //
   } else {
-
     ElementActions.fetchGenericElById(genericElID, itype);
   }
 };
 
 const elementShowOrNew = (e) => {
-  const type = e.type;
+  const { type } = e;
   switch (type) {
     case 'sample':
       sampleShowOrNew(e);
@@ -340,18 +335,17 @@ const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = 
   const withId = id ? `/${id}` : '';
   const url = type === 'collection' ? `/collection/${id}/` : `/collection/${currentCollection.id}${withType}${withId}`;
 
-  Aviator.navigate(url, { silent: silent });
+  Aviator.navigate(url, { silent });
 
   if (showOrNew) {
     if (Object.keys(params).length >= 1) {
       return elementShowOrNew(params);
-    } else if (type === 'collection') {
+    } if (type === 'collection') {
       return collectionShow({ params: { collectionID: id } });
-    } else {
-      return elementShowOrNew(defaultParamsForAviatorNavigation(currentCollection.id, type, id));
     }
+    return elementShowOrNew(defaultParamsForAviatorNavigation(currentCollection.id, type, id));
   }
-}
+};
 
 const defaultParamsForAviatorNavigation = (collectionId, type, id) => {
   const isGenericEl = (UserStore.getState().genericEls || []).some(({ name }) => name === type);
@@ -365,25 +359,24 @@ const defaultParamsForAviatorNavigation = (collectionId, type, id) => {
     }
   };
   return params;
-}
+};
 
 const aviatorNavigationWithCollectionId = (collectionId, type, id, silent = true, showOrNew = false) => {
   const withId = id ? `/${id}` : '';
   const withType = type ? `/${type}` : '';
   const url = `/collection/${collectionId}${withType}${withId}`;
 
-  Aviator.navigate(url, { silent: silent });
+  Aviator.navigate(url, { silent });
 
   if (showOrNew) {
     if (type && id) {
       collectionShow({ params: { collectionID: collectionId } });
       return elementShowOrNew(defaultParamsForAviatorNavigation(collectionId, type, id));
-    } else {
-      return collectionShow({ params: { collectionID: collectionId } });
     }
+    return collectionShow({ params: { collectionID: collectionId } });
   }
   return true;
-}
+};
 
 export {
   collectionShow,

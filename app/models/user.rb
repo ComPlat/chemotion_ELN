@@ -115,6 +115,7 @@ class User < ApplicationRecord
   has_many :element_text_templates, dependent: :destroy
   has_many :calendar_entries, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
   has_many :comments, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
+  has_many :api_tokens, dependent: :destroy
 
   accepts_nested_attributes_for :affiliations, :profile
 
@@ -186,6 +187,7 @@ class User < ApplicationRecord
   def generate_qr_code
     issuer = 'Chemotion'
     label = email
+    discard_undecryptable_otp_secret!
     if otp_secret.blank?
       self.otp_secret = User.generate_otp_secret
       save!
@@ -288,7 +290,7 @@ class User < ApplicationRecord
 
   # The element models for which the counters that can be incremented
   COUNTER_KEYS = %w[
-    samples reactions wellplates celllines device_descriptions sequence_based_macromolecule_samples
+    samples reactions wellplates celllines device_descriptions research_plans sequence_based_macromolecule_samples
   ].freeze
 
   # Increment a counter for a given key
@@ -347,6 +349,10 @@ class User < ApplicationRecord
 
   def converter_admin
     profile&.data&.fetch('converter_admin', false)
+  end
+
+  def global_text_template_editor
+    profile&.data&.fetch('global_text_template_editor', false)
   end
 
   def matrix_check_by_name(name)
@@ -512,6 +518,19 @@ class User < ApplicationRecord
 
   def user_ids
     [id]
+  end
+
+  # otp_secret raises OpenSSL::Cipher::CipherError if OTP_SECRET_KEY has changed
+  # since the stored secret was encrypted (e.g. a key rotation on redeploy) -
+  # attr_encrypted's setter also re-decrypts the old value internally to check
+  # for dirtiness, so a merely-rescued read is not enough. Wipe the
+  # now-undecryptable ciphertext so the user can simply re-enroll instead of
+  # hitting a 500 on the enable-2FA request.
+  def discard_undecryptable_otp_secret!
+    otp_secret
+  rescue OpenSSL::Cipher::CipherError
+    update_columns(encrypted_otp_secret: nil, encrypted_otp_secret_iv: nil, encrypted_otp_secret_salt: nil)
+    instance_variable_set(:@otp_secret, nil)
   end
 end
 

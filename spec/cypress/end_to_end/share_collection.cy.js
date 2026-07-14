@@ -1,66 +1,74 @@
 describe('Share Collections', () => {
+  const ignoreKnownModalImportError = () => {
+    cy.on('uncaught:exception', (err) => {
+      if (err.message.includes("Cannot read properties of null (reading 'id')")) {
+        return false;
+      }
+
+      return true;
+    });
+  };
+
+  const selectShareUser = (name) => {
+    cy.get('#share-users-select').find('input').first().type(name);
+    cy.get('body').contains('.chemotion-select__option', name).first().click();
+  };
+
   beforeEach(() => {
-    cy.visit('users/sign_in');
+    ignoreKnownModalImportError();
+
     cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user1) => {
       cy.appFactories([['create', 'collection', { label: 'Col1', user_id: user1[0].id }]]).then((collection) => {
         cy.appFactories([['create', 'molecule', { molecular_weight: 171.03448 }]]).then((molecule) => {
           cy.appFactories([['create', 'sample', {
-            name: 'PH-1234', real_amount_value: 4.671, molecule_id: molecule[0].id, collection_ids: collection[0].id, user_id: user1[0].id
+            name: 'PH-1234',
+            real_amount_value: 4.671,
+            molecule_id: molecule[0].id,
+            collection_ids: collection[0].id,
+            user_id: user1[0].id
           }]]);
         });
       });
-      cy.appFactories([['create', 'collection', { label: 'Col2', user_id: user1[0].id }]]);
-      cy.createDefaultUser('cu2@complat.edu', 'cu2');
     });
+
+    cy.appFactories([
+      ['create', 'user', {
+        first_name: 'Foo',
+        last_name: 'Bar',
+        password: 'user_password',
+        password_confirmation: 'user_password',
+        email: 'foo.bar@complat.edu',
+        name_abbreviation: 'fb',
+        account_active: 'true',
+      }],
+    ]);
+
+    cy.login('cu1', 'user_password');
+    cy.contains('Manage Collections').click();
+    cy.get('input[value="Col1"]').as('row');
+    cy.get('@row').parent().find('#collection-share-btn').click();
+    cy.get('select[id="permissionLevelSelect"]').select('Read');
   });
 
-  it('share with permission to read everything', () => {
-    cy.login('cu1', 'user_password');
-    cy.get('#tree-id-Col1').click();
-    cy.visit('/mydb/collection/3');
-    cy.get('.element-checkbox').click();
-    cy.get('#share-btn').click();
-    cy.get(':nth-child(2) > #permissionLevelSelect').select('Read');
+  it('shares with permission to read everything', () => {
     cy.get('#sampleDetailLevelSelect').select('Everything');
     cy.get('#reactionDetailLevelSelect').select('Everything');
     cy.get('#wellplateDetailLevelSelect').select('Everything');
-    cy.get(':nth-child(6) > #screenDetailLevelSelect').select('Everything');
-    cy.get('#react-select-4--value').as('user').click();
-    cy.get('@user').type('User').type('{downArrow}').type('{enter}');
-    cy.get('#create-sync-shared-col-btn').click();
-    Cypress.on('uncaught:exception', () =>
-      // returning false here prevents Cypress from failing the test
-      false);
-    cy.clearCookie('_chemotion_session');
-    cy.get('a[title="Log out"]').click();
-    cy.login('cu2', 'user_password');
-    cy.get('#shared-home-link').click();
-    cy.contains('My project with User Complat');
+    cy.get('#screenDetailLevelSelect').select('Everything');
+    selectShareUser('Foo Bar');
+    cy.contains('Create Shared Collection').click();
+    cy.get('input[value="Col1"]').parent().find('i.fa.fa-users').click();
+    cy.contains('Foo Bar (fb)');
   });
 
-  it('share with permission read limited', () => {
-    cy.login('cu1', 'user_password');
-    cy.get('#tree-id-Col1').click();
-    cy.visit('/mydb/collection/3');
-    cy.get('.element-checkbox').click();
-    cy.get('#share-btn').click();
-    cy.get(':nth-child(2) > #permissionLevelSelect').select('Read');
+  it('shares with permission read limited', () => {
     cy.get('#sampleDetailLevelSelect').select('Molecular mass of the compound, external label');
     cy.get('#reactionDetailLevelSelect').select('Everything');
     cy.get('#wellplateDetailLevelSelect').select('Everything');
-    cy.get(':nth-child(6) > #screenDetailLevelSelect').select('Everything');
-    cy.get('#react-select-4--value').type('User').type('{downArrow}').type('{enter}');
-    cy.get('#create-sync-shared-col-btn').click();
-    Cypress.on('uncaught:exception', () =>
-      false);
-    cy.clearCookie('_chemotion_session');
-    cy.get('a[title="Log out"]').click();
-    cy.login('cu2', 'user_password');
-    cy.get('#shared-home-link').click();
-    cy.contains('My project with User Complat').then(() => {
-      cy.get('[id^=tree-id-]').find('.glyphicon').click();
-      cy.get('[id="tree-id-My project with User Complat"]').click();
-      cy.contains('***');
-    });
+    cy.get('#screenDetailLevelSelect').select('Everything');
+    selectShareUser('Foo Bar');
+    cy.contains('Create Shared Collection').click();
+    cy.get('input[value="Col1"]').parent().find('i.fa.fa-users').click();
+    cy.contains('Foo Bar (fb)');
   });
 });

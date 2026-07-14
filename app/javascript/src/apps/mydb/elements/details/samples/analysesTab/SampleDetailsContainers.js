@@ -5,7 +5,6 @@ import {OverlayTrigger, Button, Tooltip} from 'react-bootstrap';
 import Container from 'src/models/Container';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
-import { reOrderArr } from 'src/utilities/DndControl';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
 
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
@@ -18,9 +17,9 @@ import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { UploadField } from 'src/apps/mydb/elements/details/analyses/UploadField';
 import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 import {
-  sortedContainers,
-  indexedContainers,
-  addNewAnalyses
+  addNewAnalyses,
+  findAnalysesContainer,
+  reorderAnalyses,
 } from 'src/apps/mydb/elements/details/analyses/utils';
 
 export default class SampleDetailsContainers extends Component {
@@ -44,9 +43,8 @@ export default class SampleDetailsContainers extends Component {
     this.handleAdd = this.handleAdd.bind(this);
     this.handleMove = this.handleMove.bind(this);
     this.toggleAddToReport = this.toggleAddToReport.bind(this);
+    this.updateContainerPreferredThumbnail = this.updateContainerPreferredThumbnail.bind(this);
     this.handleToggleMode = this.handleToggleMode.bind(this);
-    this.isEqCId = this.isEqCId.bind(this);
-    this.indexedContainers = this.indexedContainers.bind(this);
   }
 
   componentDidMount() {
@@ -94,22 +92,8 @@ export default class SampleDetailsContainers extends Component {
 
   handleMove(source, target) {
     const { sample } = this.props;
-
-    const sortedConts = sortedContainers(sample);
-    const newSortConts = reOrderArr(source, target, this.isEqCId, sortedConts);
-    const newIndexedConts = this.indexedContainers(newSortConts);
-
-    sample.analysesContainers()[0].children = newIndexedConts;
+    reorderAnalyses(findAnalysesContainer(sample), source, target);
     this.props.setState((prevState) => ({ ...prevState, sample }));
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  isEqCId(container, tagEl) {
-    return container.id === tagEl.id;
-  }
-
-  indexedContainers(containers) {
-    return indexedContainers(containers);
   }
 
   handleRemove(container) {
@@ -172,6 +156,17 @@ export default class SampleDetailsContainers extends Component {
     this.handleChange(container);
   }
 
+  // Persist the chosen preferred preview image for an analysis container. Shared across all
+  // viewers: writes extended_metadata and flags the sample changed via the existing path.
+  updateContainerPreferredThumbnail(container, preferredId) {
+    // eslint-disable-next-line no-param-reassign
+    container.extended_metadata = {
+      ...container.extended_metadata,
+      preferred_thumbnail: preferredId,
+    };
+    this.handleChange();
+  }
+
   handleToggleMode(mode) {
     this.setState({ mode });
   }
@@ -211,6 +206,7 @@ export default class SampleDetailsContainers extends Component {
             handleCommentTextChange={this.handleCommentTextChange}
             commentBoxVisible={commentBoxVisible}
             toggleCommentBox={this.toggleCommentBox}
+            updateContainerPreferredThumbnail={this.updateContainerPreferredThumbnail}
           />
           <ViewSpectra
             sample={sample}

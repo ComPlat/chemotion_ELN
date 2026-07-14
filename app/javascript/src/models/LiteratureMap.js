@@ -1,7 +1,7 @@
 import uuid from 'uuid';
 import sha256 from 'sha256';
 import _ from 'lodash';
-import Immutable from 'immutable';
+import { List } from 'immutable';
 
 export default class LiteratureMap {
 
@@ -17,11 +17,11 @@ export default class LiteratureMap {
 
   static buildEmpty() {
     return new LiteratureMap({
-      collectionRefs: Immutable.List(),
-      sampleRefs: Immutable.List(),
-      reactionRefs: Immutable.List(),
-      researchPlanRefs: Immutable.List(),
-      selectedRefs: Immutable.List(),
+      collectionRefs: List(),
+      sampleRefs: List(),
+      reactionRefs: List(),
+      researchPlanRefs: List(),
+      selectedRefs: List(),
       collection_id: null,
     });
   }

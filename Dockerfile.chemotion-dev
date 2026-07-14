@@ -6,13 +6,19 @@
 
 ARG source_image=ubuntu:24.04
 
-FROM ${source_image} AS chemotion_dev_base
+# Pin the build/runtime architecture to amd64. On ARM hosts (e.g. Apple Silicon)
+# Docker would otherwise build a native ARM image, and `bundle install` then
+# resolves several gems (Faraday and a chain of dependencies) to older versions
+# that still ship ARM builds — silently downgrading the dependency tree. Forcing
+# linux/amd64 keeps gem resolution identical across hosts (a no-op on native
+# amd64; emulated via qemu on ARM). See ComPlat/chemotion_ELN#1083.
+FROM --platform=linux/amd64 ${source_image} AS chemotion_dev_base
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -xe  && apt-get update -yqqq --fix-missing && apt-get upgrade -y
 RUN apt update && apt-get install -yqq --fix-missing bash ca-certificates wget apt-transport-https git gpg \
       build-essential sudo postgresql-common swig cmake \
-      libnspr4 libnss3 libxss1 xdg-utils tzdata
+      libnspr4 xdg-utils tzdata
 
 RUN apt-get install -yqq --fix-missing  \
       libyaml-dev \
@@ -28,9 +34,11 @@ RUN apt-get install -yqq --fix-missing  \
       fonts-crosextra-caladea fonts-crosextra-carlito \
       fonts-dejavu fonts-dejavu-core fonts-dejavu-extra fonts-liberation2 fonts-liberation \
       fonts-linuxlibertine fonts-noto-core fonts-noto-extra fonts-noto-ui-core \
-      fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic inkscape \
-      libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libxtst6 \
-      xauth xvfb
+      fonts-opensymbol fonts-sil-gentium fonts-sil-gentium-basic inkscape
+
+# Cypress dependencies
+RUN apt-get install -yqq --fix-missing \
+      libgtk-3-0t64 libgbm-dev libnotify-dev libnss3 libxss1 libasound2t64 libxtst6 xauth xvfb
 
 RUN apt-get install -yqq ranger nano vim jq
 

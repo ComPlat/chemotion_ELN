@@ -1,10 +1,10 @@
 .tree-view {
   @extend .d-flex;
   @extend .flex-column;
-  &_frame {
+  &__frame {
     min-height: 0;
   }
-  &_container {
+  &__container {
     @extend .tree-view;
     @extend .overflow-y-auto;
     @extend .surface-lighten3;
@@ -34,12 +34,7 @@
       @extend .text-lighten1;
     }
   }
-  &_expand-icon {
-    &:hover {
-      @extend .text-active;
-    }
-  }
-  &_title {
+  &__title {
     @extend .flex-grow-1;
     overflow-x: hidden;
     text-overflow: ellipsis;

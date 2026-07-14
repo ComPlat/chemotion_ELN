@@ -1,38 +1,29 @@
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 import GenericBaseFetcher from 'src/fetchers/GenericBaseFetcher';
 
 export default class GenericDSsFetcher extends GenericBaseFetcher {
-  static exec(path, method) {
-    return super.exec(`generic_dataset/${path}`, method);
-  }
-
-  static execData(params, path) {
-    return super.execData(params, `generic_dataset/${path}`);
-  }
-
   static fetchRepo() {
-    return this.exec('fetch_repo', 'GET');
+    return ApiClient.getJson('/api/v1/generic_dataset/fetch_repo');
   }
 
   static createRepo(params) {
-    return this.execData(params, 'create_repo_klass');
+    return ApiClient.postJson('/api/v1/generic_dataset/create_repo_klass', { body: params });
   }
 
   static fetchKlass() {
-    return this.exec('klasses.json', 'GET');
+    return ApiClient.getJson('/api/v1/generic_dataset/klasses');
   }
 
   static listDatasetKlass(params = {}) {
-    const api =
-      params.is_active === undefined
-        ? 'list_dataset_klass.json'
-        : `list_dataset_klass.json?is_active=${params.is_active}`;
-    return this.exec(api, 'GET');
+    const path = params.is_active === undefined
+      ? 'list_dataset_klass'
+      : `list_dataset_klass?is_active=${params.is_active}`;
+    return ApiClient.getJson(`/api/v1/generic_dataset/${path}`);
   }
 
   static updateDatasetTemplate(params) {
-    return super.updateTemplate(
-      { ...params, klass: 'DatasetKlass' },
-      'update_dataset_template'
-    );
+    return ApiClient.postJson('/api/v1/generic_elements/update_template', {
+      body: { ...params, klass: 'DatasetKlass' }
+    });
   }
 }
