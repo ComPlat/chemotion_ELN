@@ -32,6 +32,8 @@
 #
 
 class Collection < ApplicationRecord
+  include LockedCollectionGuard
+
   acts_as_paranoid
   belongs_to :user, optional: true
   belongs_to :inventory, optional: true

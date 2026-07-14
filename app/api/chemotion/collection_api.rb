@@ -6,6 +6,10 @@ module Chemotion
       error!('Collection not found', 404)
     end
 
+    rescue_from Usecases::Collections::Errors::UpdateForbidden do |e|
+      error!(e.message, 403)
+    end
+
     resource :collections do
       get '/' do
         own_collections =
@@ -87,6 +91,7 @@ module Chemotion
       end
       put '/:id' do
         collection = Collection.own_collections_for(current_user).find(params[:id])
+        error!('A locked collection cannot be modified', 403) if collection.is_locked?
         attributes = { label: params[:label], tabs_segment: params[:tabs_segment] }.compact
 
         collection.update(attributes)
@@ -100,6 +105,7 @@ module Chemotion
       end
       delete '/:id' do
         collection = Collection.own_collections_for(current_user).find(params[:id])
+        error!('A locked collection cannot be deleted', 403) if collection.is_locked?
 
         collection.destroy
 
