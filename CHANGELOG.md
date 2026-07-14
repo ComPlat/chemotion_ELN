@@ -1,13 +1,14 @@
 # Chemotion_ELN Changelog
 
 # [v4.0.0-rc]
-> (2026-07-07)
+> (2026-07-14)
 
 > ⚠️ Major release. Contains a breaking change to the collection-sharing model (see [#2783](https://github.com/ComPlat/chemotion_ELN/pull/2783)).
 > Fixes ported to/from the divergent `v3.x` maintenance line (v3.1.1 / v3.1.2) are intentionally omitted here to avoid duplication.
 
 ## Features and enhancements
 
+* labimotion v2.3.0-rc ([#3359](https://github.com/ComPlat/chemotion_ELN/pull/3359))
 * admin-configurable Info & Support links ([#3167](https://github.com/ComPlat/chemotion_ELN/pull/3167))
 * Add separate authentication api ([#3143](https://github.com/ComPlat/chemotion_ELN/pull/3143))
 * browsing through new and past notifications ([#3138](https://github.com/ComPlat/chemotion_ELN/pull/3138))
@@ -18,10 +19,13 @@
 
 * add moisture, particle size and physical state to sample properties ([#3306](https://github.com/ComPlat/chemotion_ELN/pull/3306))
 * enhance melting/boiling point range input with decomposed toggle ([#3189](https://github.com/ComPlat/chemotion_ELN/pull/3189))
+* auto-resize description textarea to content ([#3017](https://github.com/ComPlat/chemotion_ELN/pull/3017))
 
 ### reaction
 
+* add µmol as unit option to reaction scheme amount fields ([#3292](https://github.com/ComPlat/chemotion_ELN/pull/3292))
 * add "interaction" reaction type and reaction scheme UI enhancements ([#3234](https://github.com/ComPlat/chemotion_ELN/pull/3234))
+* add concentration handling and volume lock feature ([#2985](https://github.com/ComPlat/chemotion_ELN/pull/2985))
 
 ### api-token
 
@@ -34,6 +38,7 @@
 
 ### mixture
 
+* support multiple components sharing the same molecule ([#3302](https://github.com/ComPlat/chemotion_ELN/pull/3302))
 * improve component order sync, structure editor stability, and list UI ([#3273](https://github.com/ComPlat/chemotion_ELN/pull/3273))
 
 ### analyses
@@ -79,8 +84,25 @@
 
 * add element URL path for notifications ([#3192](https://github.com/ComPlat/chemotion_ELN/pull/3192))
 
+### converter
+
+* upgrade converter-client to 0.16.0 and converter-app to v1.9.1 ([#3369](https://github.com/ComPlat/chemotion_ELN/pull/3369), [#3378](https://github.com/ComPlat/chemotion_ELN/pull/3378))
+
+### ui
+
+* enable conditional loading of UI components and add weighing tasks feature ([#3368](https://github.com/ComPlat/chemotion_ELN/pull/3368))
+
+### reaction-scheme
+
+* add most-used reagents & solvents shortlist ([#3308](https://github.com/ComPlat/chemotion_ELN/pull/3308))
+
+### workshop-guide
+
+* add in-app drawer for the workshop wiki
+
 ## Fixes
 
+* creating elements in readonly shared collection ([#3360](https://github.com/ComPlat/chemotion_ELN/pull/3360))
 * collection-share v3.1.2 upgrade — migration orphans + element_tag collection_labels ([#3337](https://github.com/ComPlat/chemotion_ELN/pull/3337))
 * polymer surface chemistry — yield calculation, drag-drop, SVG and Ketcher save ([#3326](https://github.com/ComPlat/chemotion_ELN/pull/3326))
 * harden sample-task loading, dedup All-collection inserts, and reaction comment N+1 ([#3284](https://github.com/ComPlat/chemotion_ELN/pull/3284))
@@ -105,6 +127,7 @@
 
 ### reaction
 
+* manage ReactionVariations state atomically ([#3365](https://github.com/ComPlat/chemotion_ELN/pull/3365))
 * handle non-finite volume values in ReactionDetailsScheme ([#3288](https://github.com/ComPlat/chemotion_ELN/pull/3288))
 
 ### gasphase
@@ -126,18 +149,43 @@
 
 * samples matching improvements ([#3239](https://github.com/ComPlat/chemotion_ELN/pull/3239), [#3268](https://github.com/ComPlat/chemotion_ELN/pull/3268))
 
+### 2fa
+
+* recover from undecryptable otp_secret instead of crashing ([#3376](https://github.com/ComPlat/chemotion_ELN/pull/3376))
+
+### device
+
+* release unique fields on device soft-delete for reuse ([#3375](https://github.com/ComPlat/chemotion_ELN/pull/3375))
+
+### workshop-guide
+
+* stop probing static 404 for availability check ([#3371](https://github.com/ComPlat/chemotion_ELN/pull/3371))
+
+### tab-layout
+
+* guard null collection labels and stabilize All tab layout ([#3364](https://github.com/ComPlat/chemotion_ELN/pull/3364))
+
+### attachments
+
+* skip annotation copy for non-image attachments ([#3338](https://github.com/ComPlat/chemotion_ELN/pull/3338))
+
 ## Refactor / Performance
 
+* **Breaking:** collection-share permission-ladder redesign, ownership transfer & share-model fixes ([#3374](https://github.com/ComPlat/chemotion_ELN/pull/3374))
 * **Breaking:** collection sharing — merge shared and sync collections ([#2783](https://github.com/ComPlat/chemotion_ELN/pull/2783), [#3064](https://github.com/ComPlat/chemotion_ELN/pull/3064), [#3236](https://github.com/ComPlat/chemotion_ELN/pull/3236))
 * prepare CSS directory for application split, fix CSS classes in CollectionSubtree ([#3099](https://github.com/ComPlat/chemotion_ELN/pull/3099))
 
 ### js
 
-* unify fetchers on a single ChemotionApiClient ([#3294](https://github.com/ComPlat/chemotion_ELN/pull/3294), [#3321](https://github.com/ComPlat/chemotion_ELN/pull/3321), [#3324](https://github.com/ComPlat/chemotion_ELN/pull/3324))
+* unify fetchers on a single ChemotionApiClient ([#3294](https://github.com/ComPlat/chemotion_ELN/pull/3294), [#3321](https://github.com/ComPlat/chemotion_ELN/pull/3321), [#3324](https://github.com/ComPlat/chemotion_ELN/pull/3324), [#3361](https://github.com/ComPlat/chemotion_ELN/pull/3361), [#3373](https://github.com/ComPlat/chemotion_ELN/pull/3373), [#3377](https://github.com/ComPlat/chemotion_ELN/pull/3377))
 
 ### UX
 
 * Consolidate design for modals ([#3146](https://github.com/ComPlat/chemotion_ELN/pull/3146), [#3211](https://github.com/ComPlat/chemotion_ELN/pull/3211))
+
+### chemicals
+
+* fetch Sigma-Aldrich SDS data from __NEXT_DATA__ and SSRF-guard outbound requests ([#3235](https://github.com/ComPlat/chemotion_ELN/pull/3235))
 
 ## Style
 
@@ -152,6 +200,10 @@
 ### storybook
 
 * Document cards and modals ([#3205](https://github.com/ComPlat/chemotion_ELN/pull/3205))
+
+### dev
+
+* install asdf via /tmp to avoid cross-device tar error ([#3362](https://github.com/ComPlat/chemotion_ELN/pull/3362))
 
 ## CI
 
