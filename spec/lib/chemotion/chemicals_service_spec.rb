@@ -258,7 +258,7 @@ describe Chemotion::ChemicalsService do
 
       it 'returns error hash on exception' do
         allow(HTTParty).to receive(:get).and_raise(StandardError.new('net'))
-        result = described_class.request_pdf_file('http://x', tmp_path)
+        result = described_class.request_pdf_file('https://www.sigmaaldrich.com/x', tmp_path)
         expect(result).to be_a(Hash)
         expect(result[:error]).to include('net')
       end
@@ -267,7 +267,7 @@ describe Chemotion::ChemicalsService do
         resp = instance_double(HTTParty::Response, headers: { 'Content-Type' => 'text/html' })
         allow(HTTParty).to receive(:get).and_return(resp)
         allow(Rails.logger).to receive(:warn)
-        result = described_class.request_pdf_file('http://x', tmp_path)
+        result = described_class.request_pdf_file('https://www.sigmaaldrich.com/x', tmp_path)
         expect(result).to be false
       end
     end
