@@ -211,6 +211,27 @@ RSpec.describe User do
     end
   end
 
+  describe '#validate_and_consume_otp!' do
+    let(:user) { create(:user) }
+
+    before do
+      user.generate_qr_code
+      user.update!(otp_required_for_login: true)
+    end
+
+    it 'discards the secret and returns false instead of raising when undecryptable' do
+      # simulate a corrupted/undecryptable ciphertext (e.g. after an OTP_SECRET_KEY rotation) -
+      # this is what login, the account settings form, and the 2FA verify endpoint all hit.
+      user.update_columns(encrypted_otp_secret: user.encrypted_otp_secret.reverse)
+      user.instance_variable_set(:@otp_secret, nil)
+
+      result = nil
+      expect { result = user.validate_and_consume_otp!('123456') }.not_to raise_error
+      expect(result).to be false
+      expect(user.reload.encrypted_otp_secret).to be_nil
+    end
+  end
+
   describe '#increment_counter' do
     let(:described_method) { :increment_counter }
     let(:element) { described_class::COUNTER_KEYS.sample }

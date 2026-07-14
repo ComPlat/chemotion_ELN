@@ -201,6 +201,21 @@ class User < ApplicationRecord
   def check_otp(otp_attempt)
     validate_and_consume_otp!(otp_attempt)
   end
+
+  # devise-two-factor's validate_and_consume_otp! reads (decrypts) otp_secret
+  # unconditionally, even for a blank/wrong code, so it is just as exposed to
+  # an undecryptable ciphertext as generate_qr_code (see
+  # discard_undecryptable_otp_secret!). Left unrescued, this crashes login,
+  # the self-service email/password change form, and the 2FA verify/disable
+  # requests with a 500 for any user whose stored secret predates an
+  # OTP_SECRET_KEY rotation. Treat it as a failed OTP and let the user
+  # re-enroll instead.
+  def validate_and_consume_otp!(code, options = {})
+    super
+  rescue OpenSSL::Cipher::CipherError
+    discard_undecryptable_otp_secret!
+    false
+  end
   def self.find_first_by_auth_conditions(warden_conditions)
     conditions = warden_conditions.dup
     if (login = conditions.delete(:login))
