@@ -22,7 +22,6 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 import PropertiesForm from 'src/apps/mydb/elements/details/deviceDescriptions/propertiesTab/PropertiesForm';
 import AttachmentForm from 'src/apps/mydb/elements/details/deviceDescriptions/attachmentsTab/AttachmentForm';
@@ -32,22 +31,23 @@ import DetailsForm from 'src/apps/mydb/elements/details/deviceDescriptions/detai
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
-function DeviceDescriptionDetails({ openedFromCollectionId }) {
+const DeviceDescriptionDetails = ({ openedFromCollectionId }) => {
   const deviceDescriptionsStore = useContext(StoreContext).deviceDescriptions;
+  const { userStore } = useContext(StoreContext);
   const deviceDescription = deviceDescriptionsStore.device_description;
   deviceDescriptionsStore.setKeyPrefix('deviceDescription');
 
   const { currentCollection } = UIStore.getState();
-  const { currentUser } = UserStore.getState();
+  const { currentUser } = userStore;
 
   const [visibleTabs, setVisibleTabs] = useState(List());
   const tabContents = [];
 
   useEffect(() => {
-    if (MatrixCheck(currentUser.matrix, commentActivation) && !deviceDescription.isNew) {
+    if (MatrixCheck(currentUser?.matrix, commentActivation) && !deviceDescription.isNew) {
       CommentActions.fetchComments(deviceDescription);
     }
-  }, []);
+  }, [currentUser, deviceDescription, deviceDescription.isNew]);
 
   const versioningTable = () => (
     <VersionsTable
@@ -174,7 +174,7 @@ function DeviceDescriptionDetails({ openedFromCollectionId }) {
       <CommentModal element={deviceDescription} />
     </ElementDetailCard>
   );
-}
+};
 
 DeviceDescriptionDetails.propTypes = {
   openedFromCollectionId: PropTypes.number,
