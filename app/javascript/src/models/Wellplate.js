@@ -112,6 +112,10 @@ export default class Wellplate extends Element {
     return this.width * this.height;
   }
 
+  checksum(fieldsToOmit = []) {
+    return super.checksum(['attachments', ...fieldsToOmit]);
+  }
+
   title() {
     const shortLabel = this.short_label ? this.short_label : '';
     return this.name ? `${shortLabel} ${this.name}` : shortLabel;

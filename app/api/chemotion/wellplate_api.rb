@@ -167,6 +167,7 @@ module Chemotion
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
             root: :wellplate,
           )
+          present wellplate.attachments, with: Entities::AttachmentEntity, root: :attachments
         end
       end
 
@@ -202,6 +203,7 @@ module Chemotion
           detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
           root: :wellplate,
         )
+        present wellplate.attachments, with: Entities::AttachmentEntity, root: :attachments
       end
 
       namespace :subwellplates do
@@ -250,6 +252,7 @@ module Chemotion
                                                                   element: wellplate).detail_levels,
                 ),
                 attachments: Entities::AttachmentEntity.represent(wellplate.attachments),
+                molarity_discarded: import.molarity_discarded,
               }
             rescue StandardError => e
               error!(e, 500)

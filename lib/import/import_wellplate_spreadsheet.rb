@@ -4,7 +4,7 @@ require 'roo'
 
 module Import
   class ImportWellplateSpreadsheet
-    attr_reader :xlsx, :sheet, :error_messages, :wellplate
+    attr_reader :xlsx, :sheet, :error_messages, :wellplate, :molarity_discarded
 
     def initialize(wellplate_id:, attachment_id:)
       @wellplate = Wellplate.find(wellplate_id)
@@ -13,6 +13,7 @@ module Import
 
       @rows = []
       @error_messages = []
+      @molarity_discarded = false
       @letters = [*'A'..'Z']
       @position_index = 0
       @sample_index = 1
@@ -105,7 +106,13 @@ module Import
         # Only override molarity/density when a real molarity was supplied;
         # a blank or 0 cell must not wipe an existing sample's density.
         molarity_value = row[4].to_f
-        well.sample.update!(molarity_value: molarity_value, density: 0) if molarity_value.positive? && well.sample
+        next unless molarity_value.positive?
+
+        if well.sample
+          well.sample.update!(molarity_value: molarity_value, density: 0)
+        else
+          @molarity_discarded = true
+        end
       end
 
       @wellplate.update!(readout_titles: value_prefixes)

@@ -116,5 +116,23 @@ RSpec.describe 'ImportWellplateSpreadsheet' do
         expect(wellplate.readout_titles).to eq %w[Readout1 Readout2]
       end
     end
+
+    context 'when a well has no sample' do
+      let!(:wellplate) { create(:wellplate, attachments: [attachment]) }
+      let(:file_path) { Rails.root.join('spec/fixtures/import/wellplate_import_template_with_molarity.xlsx') }
+
+      it 'does not raise and marks molarity as discarded' do
+        expect { import.process! }.not_to raise_error
+        expect(import.molarity_discarded).to be true
+      end
+
+      it 'still imports readouts without setting a sample or molarity' do
+        import.process!
+        wellplate.reload
+
+        expect(wellplate.wells.count).to eq 96
+        wellplate.wells.each { |well| expect(well.sample).to be_nil }
+      end
+    end
   end
 end
