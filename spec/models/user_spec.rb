@@ -219,16 +219,31 @@ RSpec.describe User do
       user.update!(otp_required_for_login: true)
     end
 
-    it 'discards the secret and returns false instead of raising when undecryptable' do
+    def corrupt_otp_secret!(user)
       # simulate a corrupted/undecryptable ciphertext (e.g. after an OTP_SECRET_KEY rotation) -
       # this is what login, the account settings form, and the 2FA verify endpoint all hit.
-      user.update_columns(encrypted_otp_secret: user.encrypted_otp_secret.reverse)
+      user.update_columns(encrypted_otp_secret: user.encrypted_otp_secret.reverse) # rubocop:disable Rails/SkipsModelValidations
       user.instance_variable_set(:@otp_secret, nil)
+    end
+
+    it 'discards the secret and returns false instead of raising when undecryptable' do
+      corrupt_otp_secret!(user)
 
       result = nil
       expect { result = user.validate_and_consume_otp!('123456') }.not_to raise_error
       expect(result).to be false
       expect(user.reload.encrypted_otp_secret).to be_nil
+    end
+
+    it 'disables otp_required_for_login so the user is not locked in an unwinnable OTP loop' do
+      # with no secret left to validate against, leaving 2FA required would strand the user:
+      # every self-service 2FA endpoint requires an authenticated current_user, which login
+      # can no longer grant.
+      corrupt_otp_secret!(user)
+
+      user.validate_and_consume_otp!('123456')
+
+      expect(user.reload.otp_required_for_login).to be false
     end
   end
 

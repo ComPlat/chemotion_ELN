@@ -540,11 +540,19 @@ class User < ApplicationRecord
   # attr_encrypted's setter also re-decrypts the old value internally to check
   # for dirtiness, so a merely-rescued read is not enough. Wipe the
   # now-undecryptable ciphertext so the user can simply re-enroll instead of
-  # hitting a 500 on the enable-2FA request.
+  # hitting a 500 on the enable-2FA request. otp_required_for_login is also
+  # cleared: with no secret left to validate against, leaving it set would
+  # lock the user out of login (and thus out of every self-service 2FA
+  # endpoint, which all require an authenticated current_user) until an
+  # admin intervenes. generate_qr_code's re-enrollment flow re-enables it
+  # once the user verifies a freshly generated secret.
   def discard_undecryptable_otp_secret!
     otp_secret
   rescue OpenSSL::Cipher::CipherError
-    update_columns(encrypted_otp_secret: nil, encrypted_otp_secret_iv: nil, encrypted_otp_secret_salt: nil)
+    # rubocop:disable Rails/SkipsModelValidations
+    update_columns(encrypted_otp_secret: nil, encrypted_otp_secret_iv: nil, encrypted_otp_secret_salt: nil,
+                   otp_required_for_login: false)
+    # rubocop:enable Rails/SkipsModelValidations
     instance_variable_set(:@otp_secret, nil)
   end
 end
