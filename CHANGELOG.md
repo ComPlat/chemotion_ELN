@@ -17,14 +17,12 @@
 * **api-token:** add user-managed API authentication tokens ([#3135](https://github.com/ComPlat/chemotion_ELN/pull/3135))
 * **lcms:** on-demand MS-page extraction for the LC/MS spectra layout ([#3295](https://github.com/ComPlat/chemotion_ELN/pull/3295))
 * **molecule:** allow printable Unicode in names while blocking control/invisible characters ([#3281](https://github.com/ComPlat/chemotion_ELN/pull/3281))
-* **app-modal:** editable title and header notification ([#3316](https://github.com/ComPlat/chemotion_ELN/pull/3316))
 * **text-templates:** user-managed personal templates with toolbar insertion ([#3094](https://github.com/ComPlat/chemotion_ELN/pull/3094))
 * **labels:** bulk add/remove user labels across a multi-element selection ([#3142](https://github.com/ComPlat/chemotion_ELN/pull/3142))
 * **calendar:** improve booking sharing, agenda UX, and notifications ([#3149](https://github.com/ComPlat/chemotion_ELN/pull/3149))
 * **search:** add cell line to search ([#2988](https://github.com/ComPlat/chemotion_ELN/pull/2988), [#3299](https://github.com/ComPlat/chemotion_ELN/pull/3299))
 * **comment:** add element URL path for notifications ([#3192](https://github.com/ComPlat/chemotion_ELN/pull/3192))
 * **converter:** upgrade converter-client to 0.16.0 and converter-app to v1.9.1 ([#3369](https://github.com/ComPlat/chemotion_ELN/pull/3369), [#3378](https://github.com/ComPlat/chemotion_ELN/pull/3378))
-* **ui:** enable conditional loading of UI components and add weighing tasks feature ([#3368](https://github.com/ComPlat/chemotion_ELN/pull/3368))
 * **reaction-scheme:** add most-used reagents & solvents shortlist ([#3308](https://github.com/ComPlat/chemotion_ELN/pull/3308))
 * **workshop-guide:** add in-app drawer for the workshop wiki
 
