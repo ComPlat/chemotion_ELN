@@ -121,13 +121,10 @@ module Chemotion
         # Own collections may always be exported. A sharee may export a collection shared to them
         # only when they hold FULL detail access on it (every element detail level at max): the
         # export path serializes full element content and ignores detail levels, so admitting a
-        # partial-detail share would leak data the share deliberately withheld. Both queries are
+        # partial-detail share would leak data the share deliberately withheld. Both lookups are
         # scoped to the requested ids — this only needs to know the requested set is authorised.
         owned_ids = Collection.own_collections_for(current_user).where(id: collection_ids).pluck(:id)
-        shared = Collection.shared_with_minimum_permission_level(
-          current_user, CollectionShare.permission_level(:read_elements)
-        ).where(id: collection_ids - owned_ids)
-        shared_ids = shared.select { |collection| collection.full_detail_access_for?(current_user) }.map(&:id)
+        shared_ids = Collection.full_detail_access_ids(current_user, collection_ids - owned_ids)
         allowed_ids = owned_ids + shared_ids
 
         error!('401 Unauthorized', 401) if (collection_ids - allowed_ids).any?

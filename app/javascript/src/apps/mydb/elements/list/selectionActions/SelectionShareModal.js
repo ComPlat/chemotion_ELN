@@ -233,12 +233,12 @@ function SelectionShareModal({
           <Form.Text className="d-block">
             <span className="me-2">Grants:</span>
             <PermissionIcons pl={Number(permissions.permissionLevel) || 0} />
-            <span className="ms-2 text-muted">Each level includes all levels above it.</span>
+            <span className="ms-2 text-muted">Each level also grants all the levels below it.</span>
           </Form.Text>
           {displayWarning && (
             <Form.Text className="d-block">
               <i className="fa fa-exclamation-circle ms-1" aria-hidden="true" />
-              Transfering ownership applies for all sub collections.
+              Transferring ownership applies to all sub-collections.
             </Form.Text>
           )}
         </Form.Group>
