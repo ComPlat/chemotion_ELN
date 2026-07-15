@@ -11,7 +11,6 @@ class SpectraActions {
     return container;
   }
 
-
   LoadSpectra(spcInfos) {
     const infos = Array.isArray(spcInfos) ? spcInfos : [];
     const groups = infos.reduce((acc, si) => {

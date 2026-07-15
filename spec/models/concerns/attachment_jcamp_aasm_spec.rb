@@ -136,7 +136,7 @@ RSpec.describe AttachmentJcampAasm do # rubocop:disable RSpec/MultipleDescribes
   end
 end
 
-RSpec.describe 'AttachmentJcampProcess' do # rubocop:disable RSpec/MultipleDescribes
+RSpec.describe 'AttachmentJcampProcess' do
   describe '#get_infer_json_content' do
     let(:attachment_txt1) { create(:attachment) }
 
@@ -190,7 +190,7 @@ RSpec.describe 'AttachmentJcampProcess' do # rubocop:disable RSpec/MultipleDescr
       end
 
       it 'returns the first file contained in the container' do
-        expect(execute).to eq(json_attachment.read_file.presence || '{}')
+        expect(execute).to eq(Rails.root.join('spec/fixtures/foobar.infer.json').read)
       end
     end
   end

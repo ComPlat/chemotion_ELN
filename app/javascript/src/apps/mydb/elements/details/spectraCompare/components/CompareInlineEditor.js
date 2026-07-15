@@ -90,7 +90,6 @@ const hasGeneratedDatasets = (container) => {
 const wipeChildren = (children = []) => children.map((child) => ({
   ...child,
   is_deleted: true,
-  _destroy: true,
 }));
 
 const CompareInlineEditor = ({
