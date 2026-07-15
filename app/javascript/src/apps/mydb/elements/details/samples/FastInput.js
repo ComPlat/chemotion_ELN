@@ -9,14 +9,15 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import CasLookupFetcher from 'src/fetchers/CasLookupFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import { validateCas } from 'src/utilities/CasValidation';
 
-function FastInput({ fnHandle }) {
+const FastInput = ({ fnHandle }) => {
+  const { userStore } = useContext(StoreContext);
   const { notifications } = useContext(StoreContext);
   const [value, setValue] = useState('');
 
-  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  const currentUser = userStore.currentUser || {};
   const componentEnabled = MatrixCheck(currentUser.matrix, 'fastInput');
 
   if (!componentEnabled) return null;
@@ -117,7 +118,7 @@ function FastInput({ fnHandle }) {
       </OverlayTrigger>
     </div>
   );
-}
+};
 
 FastInput.propTypes = {
   fnHandle: PropTypes.func.isRequired
