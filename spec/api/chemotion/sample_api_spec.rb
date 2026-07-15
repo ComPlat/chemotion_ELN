@@ -356,7 +356,7 @@ describe Chemotion::SampleAPI do
     end
   end
 
-  describe 'POST /api/v1/samples/import/ with a racing delayed_job worker (regression for chemotion#552)' do
+  describe 'POST /api/v1/samples/import/ LCSS scheduling (regression for chemotion#552)' do
     let(:params) do
       {
         currentCollectionId: collection.id,
@@ -365,13 +365,16 @@ describe Chemotion::SampleAPI do
       }
     end
 
-    it 'still imports all new molecules when the single_pubchem_lcss queue empties between check and read' do
-      # Simulates a delayed_job worker draining the single_pubchem_lcss queue
-      # concurrently with this import: Molecule#get_lcss's query finds nothing
-      # even though jobs existed a moment earlier.
-      empty_relation = double('Delayed::Job relation') # rubocop:disable RSpec/VerifiedDoubles
-      allow(empty_relation).to receive_messages(order: empty_relation, first: nil)
-      allow(Delayed::Job).to receive(:where).with(queue: 'single_pubchem_lcss').and_return(empty_relation)
+    it 'imports all new molecules and schedules exactly one PubchemSingleLcssJob for the whole batch' do
+      # chemotion#552 was a NoMethodError inside Molecule#get_lcss's own
+      # per-molecule Delayed::Job query, triggered by a concurrently-running
+      # worker draining that queue mid-import. get_lcss no longer queries
+      # Delayed::Job at all (see Molecule.find_or_create_by_molfile's
+      # lcss_batch: parameter and Import::ImportSdf#find_or_create_mol_by_batch)
+      # — this asserts the replacement behavior end-to-end: the whole SDF
+      # import (2 new molecules) enqueues a single batched job, not one per molecule.
+      scheduled_ids = nil
+      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
 
       post(
         '/api/v1/samples/import/',
@@ -384,6 +387,8 @@ describe Chemotion::SampleAPI do
 
       expect(JSON.parse(response.body)['sdf']).to be true
       expect(JSON.parse(response.body)['data'].count).to eq 2
+      expect(PubchemSingleLcssJob).to have_received(:perform_later).once
+      expect(scheduled_ids.size).to eq 2
     end
   end
 

@@ -36,7 +36,11 @@
 class Molecule < ApplicationRecord
   acts_as_paranoid
 
-  attr_accessor :pcid, :ob_log
+  # skip_lcss_callback lets a caller that's collecting ids into its own
+  # lcss_batch array (see .schedule_lcss_batch) suppress this particular
+  # instance's automatic scheduling; it's a plain per-object attribute, not
+  # shared/ambient state, so it's inherently thread-safe.
+  attr_accessor :pcid, :ob_log, :skip_lcss_callback
   include Collectable
   include Taggable
 
@@ -52,7 +56,7 @@ class Molecule < ApplicationRecord
 
   before_save :sanitize_molfile
   after_create :create_molecule_names
-  after_create_commit :get_lcss
+  after_create_commit :get_lcss, unless: :skip_lcss_callback
   skip_callback :save, before: :sanitize_molfile, if: :skip_sanitize_molfile
   before_destroy :deindex_inchikey
 
@@ -87,8 +91,12 @@ class Molecule < ApplicationRecord
     molecule = Molecule.find_or_create_by(inchikey: 'DUMMY')
   end
 
+  # @param lcss_batch [Array<Integer>, nil] when given, a newly-created molecule's
+  #   id is pushed here (and its own automatic LCSS scheduling is suppressed) instead
+  #   of scheduling immediately — the caller is responsible for flushing it via
+  #   .schedule_lcss_batch once its own batch of creations is done.
   # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
-  def self.find_or_create_by_molfile(molfile, **babel_info)
+  def self.find_or_create_by_molfile(molfile, lcss_batch: nil, **babel_info)
     unless babel_info && babel_info[:inchikey]
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
     end
@@ -102,19 +110,23 @@ class Molecule < ApplicationRecord
     formula = babel_info[:formula]
     formula = SumFormula.new(formula).remove_fragment('CH3').valid.to_s if is_partial
     molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial, sum_formular: formula)
-    molecule ||= Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
-      pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-      mol.molfile = (is_partial && partial_molfile) || molfile
-      mol.assign_molecule_data(babel_info, pubchem_info)
+    if molecule.nil?
+      molecule = Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
+        mol.skip_lcss_callback = true if lcss_batch
+        pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
+        mol.molfile = (is_partial && partial_molfile) || molfile
+        mol.assign_molecule_data(babel_info, pubchem_info)
+      end
+      lcss_batch << molecule.id if lcss_batch && molecule.persisted?
     end
     molecule.ob_log = babel_info[:ob_log]
     molecule
   end
   # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
 
-  def self.find_or_create_by_cano_smiles(cano_smiles)
+  def self.find_or_create_by_cano_smiles(cano_smiles, lcss_batch: nil)
     molfile = Chemotion::OpenBabelService.molfile_from_cano_smiles(cano_smiles)
-    Molecule.find_or_create_by_molfile(molfile)
+    Molecule.find_or_create_by_molfile(molfile, lcss_batch: lcss_batch)
   end
 
   def self.find_or_create_by_molfiles(molfiles_array)
@@ -227,10 +239,19 @@ class Molecule < ApplicationRecord
     molecule_names.create(name: sum_formular, description: 'sum_formular')
   end
 
+  # Schedules a single PubchemSingleLcssJob for the given ids, re-querying
+  # first so only molecules that actually still exist get scheduled (e.g. a
+  # caller's own transaction rolling back after collecting some ids into its
+  # lcss_batch array shouldn't schedule a job for rows that never persisted).
+  def self.schedule_lcss_batch(molecule_ids)
+    existing_ids = Molecule.where(id: molecule_ids).pluck(:id)
+    return if existing_ids.blank?
+
+    PubchemSingleLcssJob.perform_later(existing_ids)
+  end
+
   def get_lcss
-    last_job = Delayed::Job.where(queue: 'single_pubchem_lcss').order(id: :desc).first
-    run_at = last_job ? last_job.created_at + 1.second : Time.current
-    PubchemSingleLcssJob.set(run_at: run_at).perform_later self
+    self.class.schedule_lcss_batch([id])
   end
 
   def create_molecule_name_by_user(new_names, user_id)

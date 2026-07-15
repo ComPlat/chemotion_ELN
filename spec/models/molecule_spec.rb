@@ -121,36 +121,103 @@ RSpec.describe Molecule, type: :model do
   end
 
   describe '#get_lcss' do
-    before { Delayed::Job.where(queue: 'single_pubchem_lcss').delete_all }
+    it 'schedules a single-element batch for a normally-created molecule' do
+      scheduled_ids = nil
+      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
 
-    it 'schedules immediately when the single_pubchem_lcss queue is empty' do
       molecule = create(:molecule)
-      job = Delayed::Job.where(queue: 'single_pubchem_lcss').order(id: :desc).first
 
-      expect(job).not_to be_nil
-      expect(job.run_at).to be_within(5.seconds).of(Time.current)
-      expect(molecule).to be_persisted
+      expect(scheduled_ids).to eq([molecule.id])
+    end
+  end
+
+  describe '#skip_lcss_callback' do
+    it 'suppresses automatic scheduling when set true before create' do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      build(:molecule, skip_lcss_callback: true).save!
+
+      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+    end
+  end
+
+  describe '.schedule_lcss_batch' do
+    it 'schedules one job covering every given id' do
+      first_molecule = create(:molecule, skip_lcss_callback: true)
+      second_molecule = create(:molecule, skip_lcss_callback: true)
+      scheduled_ids = nil
+      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+
+      described_class.schedule_lcss_batch([first_molecule.id, second_molecule.id])
+
+      expect(PubchemSingleLcssJob).to have_received(:perform_later).once
+      expect(scheduled_ids).to contain_exactly(first_molecule.id, second_molecule.id)
     end
 
-    it 'staggers run_at after the most recently enqueued job' do
-      create(:molecule)
-      first_job = Delayed::Job.where(queue: 'single_pubchem_lcss').order(id: :desc).first
+    it 'only schedules ids that still exist' do
+      survivor = create(:molecule, skip_lcss_callback: true)
+      doomed = create(:molecule, skip_lcss_callback: true)
+      doomed.destroy!
+      scheduled_ids = nil
+      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
 
-      create(:molecule)
-      second_job = Delayed::Job.where(queue: 'single_pubchem_lcss').order(id: :desc).first
+      described_class.schedule_lcss_batch([survivor.id, doomed.id])
 
-      expect(second_job.run_at).to be_within(1.second).of(first_job.created_at + 1.second)
+      expect(scheduled_ids).to eq([survivor.id])
     end
 
-    it 'does not raise when the queue empties between check and read (regression for chemotion#552)' do
-      # Simulates a delayed_job worker having just drained the queue: the
-      # single query in #get_lcss finds nothing, even though jobs existed
-      # a moment ago.
-      empty_relation = double('Delayed::Job relation') # rubocop:disable RSpec/VerifiedDoubles
-      allow(empty_relation).to receive_messages(order: empty_relation, first: nil)
-      allow(Delayed::Job).to receive(:where).with(queue: 'single_pubchem_lcss').and_return(empty_relation)
+    it 'schedules nothing when no given id still exists' do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
 
-      expect { create(:molecule) }.to change(Delayed::Job, :count).by(1)
+      described_class.schedule_lcss_batch([])
+      described_class.schedule_lcss_batch([-1])
+
+      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+    end
+  end
+
+  describe '.find_or_create_by_molfile' do
+    let(:babel_info) do
+      { inchikey: 'NEWMOLECULE-UHFFFAOYSA-N', is_partial: false, formula: 'H2O', molfile_version: 'V2000' }
+    end
+
+    before do
+      allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey).and_return({})
+    end
+
+    it 'defers scheduling and collects the new id when given lcss_batch:' do
+      lcss_batch = []
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      molecule = described_class.find_or_create_by_molfile('molfile', lcss_batch: lcss_batch, **babel_info)
+
+      expect(lcss_batch).to eq([molecule.id])
+      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+    end
+
+    it 'schedules immediately when lcss_batch is not given' do
+      scheduled_ids = nil
+      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+
+      molecule = described_class.find_or_create_by_molfile('molfile', **babel_info)
+
+      expect(scheduled_ids).to eq([molecule.id])
+    end
+
+    it 'does not push to lcss_batch when the molecule already existed' do
+      existing = create(
+        :molecule,
+        inchikey: babel_info[:inchikey],
+        is_partial: false,
+        sum_formular: babel_info[:formula],
+        skip_lcss_callback: true,
+      )
+      lcss_batch = []
+
+      molecule = described_class.find_or_create_by_molfile('molfile', lcss_batch: lcss_batch, **babel_info)
+
+      expect(molecule.id).to eq(existing.id)
+      expect(lcss_batch).to be_empty
     end
   end
 end
