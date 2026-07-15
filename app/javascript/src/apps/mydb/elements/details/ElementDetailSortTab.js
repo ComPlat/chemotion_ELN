@@ -106,18 +106,23 @@ const ElementDetailSortTab = ({
     updateTabLayout(layout);
   }, [getOpenedFromCollection, type, updateTabLayout]);
 
-  const updateLayout = useCallback(() => {
+  const updateLayout = useCallback(async () => {
     const layout = filterTabLayout({ visible, hidden });
     const { currentCollection } = UIStore.getState();
+
+    const pending = [];
     if (!isAllCollection(currentCollection)) {
       const tabSegment = { ...currentCollection?.tabs_segment, [type]: layout };
-      collections.updateCollection(currentCollection, tabSegment);
+      pending.push(collections.updateCollection(currentCollection, tabSegment));
     }
 
     const userProfile = userStore.profile;
     set(userProfile, `data.layout_detail_${type}`, layout);
-    userStore.updateUserProfile(userProfile);
-  }, [collections, hidden, type, visible, userStore]);
+    pending.push(userStore.updateUserProfile(userProfile));
+
+    await Promise.all(pending);
+    refreshTabLayout(userStore.profile);
+  }, [collections, hidden, type, visible, userStore, refreshTabLayout]);
 
   const onLayoutChange = useCallback((nextVisible, nextHidden) => {
     setVisible(nextVisible);
