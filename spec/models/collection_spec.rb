@@ -58,6 +58,50 @@ RSpec.describe Collection do
     end
   end
 
+  describe 'protecting locked collections' do
+    let(:locked_collection) { create(:collection, label: 'All', position: 1, is_locked: true) }
+    let(:unlocked_collection) { create(:collection, label: 'Project', position: 2) }
+
+    it 'cannot be destroyed' do
+      locked_collection
+      expect { locked_collection.destroy }.not_to change(described_class, :count)
+      expect(locked_collection.destroyed?).to be(false)
+    end
+
+    it 'rejects a label change' do
+      expect(locked_collection.update(label: 'Renamed')).to be(false)
+      expect(locked_collection.errors[:label]).to include('cannot be changed on a locked collection')
+      expect(locked_collection.reload.label).to eq('All')
+    end
+
+    it 'rejects a position change' do
+      expect(locked_collection.update(position: 99)).to be(false)
+      expect(locked_collection.errors[:position]).to include('cannot be changed on a locked collection')
+    end
+
+    it 'rejects being unlocked' do
+      expect(locked_collection.update(is_locked: false)).to be(false)
+      expect(locked_collection.errors[:is_locked]).to include('cannot be changed on a locked collection')
+      expect(locked_collection.reload.is_locked).to be(true)
+    end
+
+    it 'still allows editing view state (tabs_segment)' do
+      expect(locked_collection.update(tabs_segment: { 'sample' => 1 })).to be(true)
+    end
+
+    it 'does not restrict unlocked collections' do
+      expect(unlocked_collection.update(label: 'Renamed', position: 5)).to be(true)
+      expect { unlocked_collection.destroy }.to change(described_class, :count).by(-1)
+    end
+
+    it 'still allows a locked collection to be created' do
+      owner = create(:person)
+      expect do
+        create(:collection, label: 'All', is_locked: true, user: owner)
+      end.to change(described_class, :count).by(1)
+    end
+  end
+
   describe 'get_all_collection_for_user' do
     let(:user) { create(:user) }
 

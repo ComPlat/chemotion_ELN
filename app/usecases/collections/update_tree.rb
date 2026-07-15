@@ -21,8 +21,12 @@ module Usecases
 
       private
 
+      # Locked collections (the "All"/repository/transferred roots) are excluded: their label and
+      # tree position are system-defined, so a bulk tree update may neither move nor rename them.
+      # The frontend already omits them from the payload; a request that includes one anyway is
+      # rejected wholesale via {#add_collection_and_children_to_linear_tree}.
       def collections_permitted_to_update
-        @collections_permitted_to_update ||= Collection.own_collections_for(current_user).ids
+        @collections_permitted_to_update ||= Collection.own_collections_for(current_user).unlocked.ids
       end
 
       def add_collection_and_children_to_linear_tree(collection, position:, parent_ids: [])
