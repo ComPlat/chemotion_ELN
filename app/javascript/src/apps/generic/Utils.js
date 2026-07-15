@@ -1,5 +1,5 @@
 /* eslint-disable react/forbid-prop-types */
-import React from 'react';
+import React, { useContext } from 'react';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import uuid from 'uuid';
 import { filter, cloneDeep } from 'lodash';
@@ -51,16 +51,6 @@ export const allElnElmentsWithLabel = [
   { name: 'vessel', label: 'Vessel' },
   { name: 'sequence_based_macromolecule_sample', label: 'Sequence Based Macromolecule Sample' },
 ];
-
-export const allGenericElements = () => {
-  let genericElements = [];
-  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
-
-  if (MatrixCheck(currentUser.matrix, 'genericElement')) {
-    genericElements = UserStore.getState().genericEls || [];
-  }
-  return genericElements;
-}
 
 export const notification = props =>
   rootStore.notificationsStore.add({
