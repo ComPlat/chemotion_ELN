@@ -34,7 +34,7 @@ export const RootStore = types
   })
   .actions((self) => ({
     reset: () => {
-      self.measurementsStore = MeasurementsStore.create({ measurements: {}, sampleHeaders: {}});
+      self.measurementsStore = MeasurementsStore.create({ measurements: {}, sampleHeaders: {} });
       self.sampleTasksStore = SampleTasksStore.create({});
       self.cellLineDetailsStore = CellLineDetailsStore.create({});
       self.vesselDetailsStore = VesselDetailsStore.create({});
