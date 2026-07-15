@@ -52,7 +52,7 @@ class Molecule < ApplicationRecord
 
   before_save :sanitize_molfile
   after_create :create_molecule_names
-  after_create :get_lcss
+  after_create_commit :get_lcss
   skip_callback :save, before: :sanitize_molfile, if: :skip_sanitize_molfile
   before_destroy :deindex_inchikey
 
@@ -228,13 +228,9 @@ class Molecule < ApplicationRecord
   end
 
   def get_lcss
-    delayed_jobs = Delayed::Job.where(queue: 'single_pubchem_lcss')
-    if delayed_jobs.empty?
-      PubchemSingleLcssJob.perform_later self
-    else
-      last_job = delayed_jobs.last
-      PubchemSingleLcssJob.set(run_at: last_job.created_at + 1.seconds).perform_later self
-    end
+    last_job = Delayed::Job.where(queue: 'single_pubchem_lcss').order(id: :desc).first
+    run_at = last_job ? last_job.created_at + 1.second : Time.current
+    PubchemSingleLcssJob.set(run_at: run_at).perform_later self
   end
 
   def create_molecule_name_by_user(new_names, user_id)

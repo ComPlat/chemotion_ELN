@@ -356,6 +356,37 @@ describe Chemotion::SampleAPI do
     end
   end
 
+  describe 'POST /api/v1/samples/import/ with a racing delayed_job worker (regression for chemotion#552)' do
+    let(:params) do
+      {
+        currentCollectionId: collection.id,
+        file: fixture_file_upload(Rails.root.join('spec/fixtures/import_sample_data.sdf'), 'chemical/x-mdl-sdfile'),
+        import_type: 'sample',
+      }
+    end
+
+    it 'still imports all new molecules when the single_pubchem_lcss queue empties between check and read' do
+      # Simulates a delayed_job worker draining the single_pubchem_lcss queue
+      # concurrently with this import: Molecule#get_lcss's query finds nothing
+      # even though jobs existed a moment earlier.
+      empty_relation = double('Delayed::Job relation') # rubocop:disable RSpec/VerifiedDoubles
+      allow(empty_relation).to receive_messages(order: empty_relation, first: nil)
+      allow(Delayed::Job).to receive(:where).with(queue: 'single_pubchem_lcss').and_return(empty_relation)
+
+      post(
+        '/api/v1/samples/import/',
+        params: params,
+        headers: {
+          'HTTP_ACCEPT' => '*/*',
+          'CONTENT_TYPE' => 'multipart/form-data',
+        },
+      )
+
+      expect(JSON.parse(response.body)['sdf']).to be true
+      expect(JSON.parse(response.body)['data'].count).to eq 2
+    end
+  end
+
   describe 'POST /api/v1/samples/confirm_import/' do
     before do
       create(:molecule, inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N', is_partial: false)

@@ -119,4 +119,38 @@ RSpec.describe Molecule, type: :model do
       expect(persisted_molecule.tag.taggable_data['pubchem_lcss']).not_to be_nil
     end
   end
+
+  describe '#get_lcss' do
+    before { Delayed::Job.where(queue: 'single_pubchem_lcss').delete_all }
+
+    it 'schedules immediately when the single_pubchem_lcss queue is empty' do
+      molecule = create(:molecule)
+      job = Delayed::Job.where(queue: 'single_pubchem_lcss').order(id: :desc).first
+
+      expect(job).not_to be_nil
+      expect(job.run_at).to be_within(5.seconds).of(Time.current)
+      expect(molecule).to be_persisted
+    end
+
+    it 'staggers run_at after the most recently enqueued job' do
+      create(:molecule)
+      first_job = Delayed::Job.where(queue: 'single_pubchem_lcss').order(id: :desc).first
+
+      create(:molecule)
+      second_job = Delayed::Job.where(queue: 'single_pubchem_lcss').order(id: :desc).first
+
+      expect(second_job.run_at).to be_within(1.second).of(first_job.created_at + 1.second)
+    end
+
+    it 'does not raise when the queue empties between check and read (regression for chemotion#552)' do
+      # Simulates a delayed_job worker having just drained the queue: the
+      # single query in #get_lcss finds nothing, even though jobs existed
+      # a moment ago.
+      empty_relation = double('Delayed::Job relation') # rubocop:disable RSpec/VerifiedDoubles
+      allow(empty_relation).to receive_messages(order: empty_relation, first: nil)
+      allow(Delayed::Job).to receive(:where).with(queue: 'single_pubchem_lcss').and_return(empty_relation)
+
+      expect { create(:molecule) }.to change(Delayed::Job, :count).by(1)
+    end
+  end
 end
