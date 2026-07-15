@@ -50,7 +50,6 @@ export default class Attachment extends Element {
       thumb: this.thumb,
       content_type: this.content_type,
       is_deleted: this.is_deleted,
-      _destroy: this.is_deleted,
     });
   }
 }
