@@ -35,7 +35,6 @@ import CommentSection from 'src/components/comments/CommentSection';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentModal from 'src/components/common/CommentModal';
 import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import { commentActivation } from 'src/utilities/CommentHelper';
 // eslint-disable-next-line import/no-named-as-default
@@ -46,13 +45,14 @@ export default class ResearchPlanDetails extends Component {
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
 
-  constructor(props) {
-    super(props);
+  constructor(props, context) {
+    super(props, context);
     const { researchPlan } = props;
+    const { currentUser } = context.userStore || {};
     this.state = {
       researchPlan,
       visible: List(),
-      currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
+      currentUser,
     };
     this.handleSwitchMode = this.handleSwitchMode.bind(this);
     this.handleResearchPlanChange = this.handleResearchPlanChange.bind(this);
