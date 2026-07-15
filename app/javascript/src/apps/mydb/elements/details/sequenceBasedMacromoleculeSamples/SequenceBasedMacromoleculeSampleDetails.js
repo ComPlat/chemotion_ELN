@@ -31,8 +31,6 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import UserActions from 'src/stores/alt/actions/UserActions';
 import ChemicalTab from 'src/components/chemicals/ChemicalTab';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 
@@ -40,13 +38,15 @@ import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 // persisted (survives the component unmount/remount caused by navigateToNewElement).
 let _sbmmPendingChemicalCreate = null;
 
-function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
+const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
+  const { userStore } = useContext(StoreContext);
   const collectionsStore = useContext(StoreContext).collections;
   const sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
 
   const { currentCollection } = UIStore.getState();
-  const { currentUser } = UserStore.getState();
+  const { currentUser } = userStore;
+  const { profile } = userStore;
 
   const [visibleTabs, setVisibleTabs] = useState(List());
   const submitLabel = sbmmSample.isNew ? 'Create' : 'Save';
@@ -56,7 +56,7 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
   const hasError = Object.keys(sbmmSample.errors).length >= 1;
 
   useEffect(() => {
-    if (sbmmSample?.id && !sbmmSample.isNew && MatrixCheck(currentUser.matrix, commentActivation)) {
+    if (sbmmSample?.id && !sbmmSample.isNew && MatrixCheck(currentUser?.matrix, commentActivation)) {
       CommentActions.fetchComments(sbmmSample);
     }
     // After a new SBMM is created, carry out any pending chemical create that
@@ -73,6 +73,9 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
         chemicalTabRef.current?.fetchChemical(sbmmSample);
       }).catch((err) => console.log(err));
     }
+    // Intentionally mount-only: re-fetching comments or re-consuming the pending
+    // chemical create whenever sbmmSample/currentUser change would be wrong here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -87,7 +90,7 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
         document.getElementById('sbmm-error-alert').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 500);
     }
-  }, [alertRef.current]);
+  }, [hasError]);
 
   const sbmmInventoryTab = (eventKey) => (
     <Tab eventKey={eventKey} title="Inventory" key={`Inventory${sbmmSample.id.toString()}`} unmountOnExit={false}>
@@ -175,9 +178,8 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
     if (!currentCollection || currentCollection.is_sync_to_me) return;
 
     const sbmmLayout = currentCollection?.tabs_segment?.sequence_based_macromolecule_sample;
-    const userProfile = UserStore.getState().profile;
     const baseLayout = sbmmLayout
-      || userProfile?.data?.layout_detail_sequence_based_macromolecule_sample;
+      || profile?.data?.layout_detail_sequence_based_macromolecule_sample;
 
     if (!baseLayout) return;
 
@@ -186,15 +188,14 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
     const tabSegment = { ...currentCollection?.tabs_segment, sequence_based_macromolecule_sample: updatedLayout };
     collectionsStore.updateCollection(currentCollection, tabSegment);
 
-    if (!userProfile) return;
-    set(userProfile, 'data.layout_detail_sequence_based_macromolecule_sample', updatedLayout);
-    UserActions.updateUserProfile(userProfile);
+    if (!profile) return;
+    set(profile, 'data.layout_detail_sequence_based_macromolecule_sample', updatedLayout);
+    userStore.updateUserProfile(profile);
   };
 
   const hideInventoryTabInCollection = () => {
     const sbmmLayout = currentCollection?.tabs_segment?.sequence_based_macromolecule_sample;
-    const baseLayout = sbmmLayout
-      || UserStore.getState().profile?.data?.layout_detail_sequence_based_macromolecule_sample;
+    const baseLayout = sbmmLayout || profile?.data?.layout_detail_sequence_based_macromolecule_sample;
 
     if (!baseLayout || baseLayout.inventory === undefined) return;
 
@@ -203,8 +204,7 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
 
   const persistInventoryTabInCollection = () => {
     const sbmmLayout = currentCollection?.tabs_segment?.sequence_based_macromolecule_sample;
-    const baseLayout = sbmmLayout
-      || UserStore.getState().profile?.data?.layout_detail_sequence_based_macromolecule_sample;
+    const baseLayout = sbmmLayout || profile?.data?.layout_detail_sequence_based_macromolecule_sample;
 
     // Already visible — nothing to do
     if (baseLayout?.inventory > 0) return;
@@ -239,6 +239,12 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
 
   const handleSubmit = () => {
     sbmmStore.saveSample(sbmmSample);
+  };
+
+  // Handler for chemical save
+  const handleSubmitChemical = () => {
+    // Set saveInventoryAction to true, which triggers ChemicalTab to save
+    sbmmStore.setSaveInventoryAction(true);
   };
 
   // Chain-save: save SBMM sample first (if changed and valid), then chemical (if edited)
@@ -290,12 +296,6 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
       );
     }
     return <img src="/logos/uniprot-logo.svg" className="uniprot-logo-gray" alt="Uniprot" />;
-  };
-
-  // Handler for chemical save
-  const handleSubmitChemical = () => {
-    // Set saveInventoryAction to true, which triggers ChemicalTab to save
-    sbmmStore.setSaveInventoryAction(true);
   };
 
   const hasSampleChanges = sbmmSample.isEdited || sbmmSample.changed;
@@ -360,7 +360,7 @@ function SequenceBasedMacromoleculeSampleDetails({ openedFromCollectionId }) {
       {sbmmStore.show_conflict_modal && <ConflictModal />}
     </ElementDetailCard>
   );
-}
+};
 
 SequenceBasedMacromoleculeSampleDetails.propTypes = {
   openedFromCollectionId: PropTypes.number,
