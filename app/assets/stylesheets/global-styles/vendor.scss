@@ -7,7 +7,9 @@
 @import "font-awesome";
 @import "autocomplete";
 @import "react-big-calendar/lib/css/react-big-calendar";
-@import "react-big-calendar/lib/addons/dragAndDrop/styles";
+// react-big-calendar >= 1.20.0 ships this addon's styles.scss with Dart Sass module
+// syntax that sassc/LibSass cannot parse; consume our vendored precompiled copy instead.
+@import "vendor/react-big-calendar-dnd";
 @import "react-calendar/dist/Calendar";
 @import "react-clock/dist/Clock";
 @import "react-datetime-picker/dist/DateTimePicker";
