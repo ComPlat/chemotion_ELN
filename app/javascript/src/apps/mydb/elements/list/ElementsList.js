@@ -162,11 +162,11 @@ const ElementsList = ({ overview }) => {
   };
 
   const handleTabSelect = (tab) => {
-    userStore.selectTab(tab);
+    const type = visible.get(tab);
+    userStore.selectTab(tab, type);
 
     // TODO sollte in tab action handler
     const uiState = UIStore.getState();
-    const type = visible.get(tab);
 
     if (!uiState[type] || !uiState[type].page) { return; }
 
