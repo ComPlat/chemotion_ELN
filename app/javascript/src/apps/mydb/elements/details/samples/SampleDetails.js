@@ -1,7 +1,7 @@
 /* eslint-disable react/no-access-state-in-setstate */
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable react/forbid-prop-types */
-/* eslint-disable no-param-reassign */
+/* eslint-disable no-param-reassign, no-unused-vars */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -21,9 +21,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import UserActions from 'src/stores/alt/actions/UserActions';
 import QcActions from 'src/stores/alt/actions/QcActions';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import QcStore from 'src/stores/alt/stores/QcStore';
@@ -128,10 +126,10 @@ export default class SampleDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
 
-  constructor(props) {
-    super(props);
+  constructor(props, context) {
+    super(props, context);
 
-    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+    const { currentUser } = context.userStore || {};
 
     // Check redirectedFromMixture flag in UIStore
     const redirectedFromMixture = UIStore.getState() && UIStore.getState().redirectedFromMixture;
@@ -601,12 +599,13 @@ export default class SampleDetails extends React.Component {
     const sampleLayout = currentCollection?.tabs_segment?.sample;
 
     // If the collection already tracks the inventory tab, nothing to do
-    if (sampleLayout && Object.prototype.hasOwnProperty.call(sampleLayout, 'inventory') && sampleLayout?.inventory > 0) {
+    if (sampleLayout && Object.prototype.hasOwnProperty.call(sampleLayout, 'inventory')
+      && sampleLayout?.inventory > 0) {
       return;
     }
 
     // Resolve the effective layout: collection -> user profile -> fallback
-    const userProfile = UserStore.getState().profile;
+    const { userProfile } = this.context.userStore;
     const baseLayout = sampleLayout
       || userProfile?.data?.layout_detail_sample;
 
@@ -623,7 +622,7 @@ export default class SampleDetails extends React.Component {
     if (!userProfile) return;
     // Persist to user profile
     set(userProfile, 'data.layout_detail_sample', updatedLayout);
-    UserActions.updateUserProfile(userProfile);
+    this.context.userStore.updateUserProfile(userProfile);
   }
 
   matchSelectedCollection(currentCollection) {
@@ -837,7 +836,7 @@ export default class SampleDetails extends React.Component {
 
   sampleIsValid() {
     const { sample, loadingMolecule, quickCreator } = this.state;
-    return (sample.isValid && !loadingMolecule) || sample.is_scoped == true || quickCreator;
+    return (sample.isValid && !loadingMolecule) || sample.is_scoped === true || quickCreator;
   }
 
   elementalPropertiesItem(sample) {
@@ -1307,8 +1306,7 @@ export default class SampleDetails extends React.Component {
       <div
         className={className}
         onClick={this.showStructureEditor}
-        role="button"
-        tabIndex="0"
+        role="presentation"
       >
         <i className="fa fa-pencil position-absolute top-0 end-0" />
         <SVG key={svgPath} src={svgPath} className="molecule-mid" />
@@ -1531,7 +1529,7 @@ export default class SampleDetails extends React.Component {
       stb.push(value);
     });
 
-    let segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
+    let { segmentKlasses } = this.context.userStore || [];
     segmentKlasses = segmentKlasses.filter((s) => s.element_klass && s.element_klass.name === sample.type);
     segmentKlasses.forEach((klass) => {
       const visIdx = visible.indexOf(klass.label);
