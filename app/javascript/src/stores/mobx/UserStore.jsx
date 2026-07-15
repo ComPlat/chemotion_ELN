@@ -278,11 +278,9 @@ const UserStore = types.model(
     const result = yield UsersFetcher.updateUserProfile(params);
     self.profile = result;
   }),
-  selectTab: (tab) => {
-    const { layout } = self.profile.data;
-    const typeFromProfile = Object.keys(layout).filter((e) => layout[e] === tab + 1)[0];
+  selectTab: (tab, type) => {
     self.currentTab = tab;
-    self.currentType = typeFromProfile;
+    self.currentType = type;
   },
   fetchNoVNCDevices: flow(function* fetchNoVNCDevices() {
     const result = yield UsersFetcher.fetchNoVNCDevices();
