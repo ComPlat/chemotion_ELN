@@ -18,15 +18,15 @@ import VesselsFetcher from 'src/fetchers/VesselsFetcher';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { observer } from 'mobx-react';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import BulkInstanceModal from 'src/apps/mydb/elements/details/vessels/propertiesTab/BulkInstanceModal';
 import { generateNextShortLabel, getNextVesselIndex } from 'src/utilities/VesselUtilities';
 
-function VesselTemplateDetails({ vessels }) {
+const VesselTemplateDetails = ({ vessels }) => {
   const { currentCollection } = UIStore.getState();
-  const { currentUser } = UserStore.getState();
   const { vesselDetailsStore } = useContext(StoreContext);
+  const { userStore } = useContext(StoreContext);
+  const { currentUser } = userStore;
 
   const [isTemplateUpdated, setIsTemplateUpdated] = useState(false);
   const [newInstances, setNewInstances] = useState([]);
@@ -44,7 +44,7 @@ function VesselTemplateDetails({ vessels }) {
     vessels.forEach((vessel) => {
       vesselDetailsStore.convertVesselToModel(vessel);
     });
-  }, [vessels]);
+  }, [vessels, vesselDetailsStore]);
 
   if (!vessels.length) return null;
 
@@ -495,7 +495,7 @@ function VesselTemplateDetails({ vessels }) {
       </Card>
     </DetailCard>
   );
-}
+};
 
 VesselTemplateDetails.propTypes = {
   vessels: PropTypes.arrayOf(
