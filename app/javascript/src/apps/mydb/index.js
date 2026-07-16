@@ -9,7 +9,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { MultiBackend, TouchTransition } from 'dnd-multi-backend';
 import App from 'src/apps/mydb/App';
 import appRoutes from 'src/apps/mydb/routes';
-import { RootStore, StoreContext } from 'src/stores/mobx/RootStore';
+import { rootStore, StoreContext } from 'src/stores/mobx/RootStore';
 
 Sentry.init({
   sendClientReports: false,
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const domElement = document.getElementById('app');
   if (domElement) {
     ReactDOM.render(
-      <StoreContext.Provider value={RootStore.create({})}>
+      <StoreContext.Provider value={rootStore}>
         <DndProvider backend={MultiBackend} options={backendOptions}>
           <App />
         </DndProvider>
