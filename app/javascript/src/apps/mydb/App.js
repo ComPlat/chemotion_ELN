@@ -1,5 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import Aviator from 'aviator';
+import { observer } from 'mobx-react';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import appRoutes from 'src/apps/mydb/routes';
@@ -94,9 +95,10 @@ const App = () => {
     // return a cleanup function that will be executed when the component is removed from DOM
     // see https://react.dev/reference/react/useEffect#useeffect
     return () => { removeLocalStorageEventListener(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const content = (
+  const content = userStore.currentUser !== null ? (
     <div className="mydb-app d-flex vh-100">
       <Sidebar />
       <div className="d-flex flex-column flex-grow-1">
@@ -104,7 +106,7 @@ const App = () => {
         <Elements />
       </div>
     </div>
-  );
+  ) : null;
 
   const modals = (
     <>
@@ -127,4 +129,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default observer(App);

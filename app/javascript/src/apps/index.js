@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { RootStore, StoreContext } from 'src/stores/mobx/RootStore';
+import { rootStore, StoreContext } from 'src/stores/mobx/RootStore';
 import AppDispatcher from 'src/apps/AppDispatcher';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!domElement) { return; }
 
   ReactDOM.render(
-    <StoreContext.Provider value={RootStore.create({})}>
+    <StoreContext.Provider value={rootStore}>
       <AppDispatcher />
     </StoreContext.Provider>,
     domElement

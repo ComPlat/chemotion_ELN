@@ -44,10 +44,11 @@ const DeviceDescriptionDetails = ({ openedFromCollectionId }) => {
   const tabContents = [];
 
   useEffect(() => {
-    if (MatrixCheck(currentUser?.matrix, commentActivation) && !deviceDescription.isNew) {
+    if (MatrixCheck(currentUser.matrix, commentActivation) && !deviceDescription.isNew) {
       CommentActions.fetchComments(deviceDescription);
     }
-  }, [currentUser, deviceDescription, deviceDescription.isNew]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const versioningTable = () => (
     <VersionsTable
