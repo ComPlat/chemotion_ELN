@@ -53,8 +53,7 @@ const Device = types.model(
 const RxnoItem = types.model(
   'RxnoItem',
   {
-    id: types.optional(types.integer, 0),
-    is_enabled: types.optional(types.boolean, true),
+    is_enabled: types.maybeNull(types.boolean, false),
     search: types.string,
     synonym: types.maybeNull(types.string),
     synonyms: types.maybeNull(types.array(types.maybeNull(types.string))),
@@ -76,7 +75,7 @@ const RxnoRecentlySelectedHeader = types.model(
 const RxnoOrHeader = types.union(
   {
     dispatcher: (snapshot) => {
-      if (snapshot.selectable !== undefined) {
+      if (snapshot.selectable !== undefined || snapshot.selectable === false) {
         return RxnoRecentlySelectedHeader;
       }
       return RxnoItem;
