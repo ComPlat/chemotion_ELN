@@ -244,6 +244,8 @@ class Molecule < ApplicationRecord
   # caller's own transaction rolling back after collecting some ids into its
   # lcss_batch array shouldn't schedule a job for rows that never persisted).
   def self.schedule_lcss_batch(molecule_ids)
+    return if molecule_ids.blank?
+
     existing_ids = Molecule.where(id: molecule_ids).pluck(:id)
     return if existing_ids.blank?
 
