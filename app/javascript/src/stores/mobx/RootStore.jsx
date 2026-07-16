@@ -15,7 +15,7 @@ import { CollectionsStore } from 'src/stores/mobx/CollectionsStore';
 import { NotificationsStore } from 'src/stores/mobx/NotificationsStore';
 import UserStore from 'src/stores/mobx/UserStore';
 
-export const RootStore = types
+const RootStore = types
   .model({
     measurementsStore: types.optional(MeasurementsStore, { measurements: {}, sampleHeaders: {} }),
     sampleTasksStore: types.optional(SampleTasksStore, {}),
