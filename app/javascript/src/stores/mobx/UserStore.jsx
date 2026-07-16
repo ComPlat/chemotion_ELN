@@ -333,11 +333,23 @@ const UserStore = types.model(
   }),
   setAuthToken: (authToken) => {
     self.authToken = authToken;
-    localStorage.setItem('chemotion-auth-token', authToken);
+    if (authToken) {
+      localStorage.setItem('chemotion-auth-token', authToken);
+    } else {
+      localStorage.removeItem('chemotion-auth-token');
+    }
   },
   setRole: (role) => {
     self.role = role;
-    localStorage.setItem('chemotion-role', role);
+    if (role) {
+      localStorage.setItem('chemotion-role', role);
+    } else {
+      localStorage.removeItem('chemotion-role');
+    }
+  },
+  logout: () => {
+    self.setAuthToken(null);
+    self.setRole(null);
   }
 })).views((self) => ({
   isUserQuotaExceeded(filteredAttachments) {
