@@ -5,7 +5,7 @@ import CommentActions from 'src/stores/alt/actions/CommentActions';
 import CommentStore from 'src/stores/alt/stores/CommentStore';
 import { getSectionComments } from 'src/utilities/CommentHelper';
 
-export default function CommentButton(props) {
+const CommentButton = (props) => {
   const { section, element } = props;
   const [commentState, setCommentState] = useState(CommentStore.getState());
   const { comments } = commentState;
@@ -41,7 +41,7 @@ export default function CommentButton(props) {
       </Button>
     </OverlayTrigger>
   );
-}
+};
 
 CommentButton.propTypes = {
   section: PropTypes.string,
@@ -51,3 +51,5 @@ CommentButton.propTypes = {
 CommentButton.defaultProps = {
   section: 'sample_header',
 };
+
+export default CommentButton;
