@@ -18,6 +18,6 @@ const React = require('react');
 // var GenericDatasetsAdmin = require('src/apps/generic/GenericDatasetsAdmin');
 // var InventoryLabelSettings = require('src/apps/settings/InventoryLabelSettings');
 // var mydb = require('src/apps/mydb');
-// var AgGridReact = require('src/agGridSetup');
+require('src/agGridSetup');
 
 const Chemotion = require('src/apps');
