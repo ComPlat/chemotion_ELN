@@ -1,5 +1,6 @@
 /* eslint-disable class-methods-use-this */
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Dropdown } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -159,8 +160,13 @@ export default class SelectionSplitButton extends React.Component {
       });
     }
 
+    const { sharingAllowed } = this.props;
+
     const isDisabled = this.isAllCollection()
-      || Object.values(selectedElements).every((v) => !v);
+      || Object.values(selectedElements).every((v) => !v)
+      // Splitting adds a new subsample to the collection (:add_elements), so it must be
+      // disabled on read-only shared collections just like Share is.
+      || !sharingAllowed;
 
     return (
       <Dropdown id="split-dropdown">
@@ -222,3 +228,13 @@ export default class SelectionSplitButton extends React.Component {
     );
   }
 }
+
+SelectionSplitButton.propTypes = {
+  // Whether the current user may add elements to the collection (:add_elements level).
+  // Provided by SelectionActions from the PermissionStore's sharing_allowed flag.
+  sharingAllowed: PropTypes.bool,
+};
+
+SelectionSplitButton.defaultProps = {
+  sharingAllowed: false,
+};

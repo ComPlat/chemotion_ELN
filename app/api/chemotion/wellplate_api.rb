@@ -211,12 +211,17 @@ module Chemotion
         params do
           requires :ui_state, type: Hash, desc: 'Selected wellplates from the UI'
         end
+
         post do
           ui_state = params[:ui_state]
           col_id = ui_state[:currentCollectionId]
-          wellplate_ids = Wellplate.for_user(current_user.id).for_ui_state_with_collection(ui_state[:wellplate],
-                                                                                           CollectionsWellplate, col_id)
-          Wellplate.where(id: wellplate_ids).each do |wellplate|
+          wellplate_ids = Wellplate.for_user(current_user.id)
+                                   .for_ui_state_with_collection(ui_state[:wellplate], CollectionsWellplate, col_id)
+          wellplates = Wellplate.where(id: wellplate_ids)
+          # Splitting adds a new subwellplate to the collection, which requires :add_elements.
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, wellplates).share_all?
+
+          wellplates.each do |wellplate|
             wellplate.create_subwellplate current_user, col_id, true
           end
 

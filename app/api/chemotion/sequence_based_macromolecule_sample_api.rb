@@ -186,7 +186,11 @@ module Chemotion
                                               CollectionsSequenceBasedMacromoleculeSample,
                                               collection_id,
                                             )
-          SequenceBasedMacromoleculeSample.where(id: sbmm_sample_ids).find_each do |sbmm_sample|
+          sbmm_samples = SequenceBasedMacromoleculeSample.where(id: sbmm_sample_ids)
+          # Splitting adds a new subsample to the collection, which requires :add_elements.
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, sbmm_samples).share_all?
+
+          sbmm_samples.find_each do |sbmm_sample|
             sbmm_sample.create_sub_sequence_based_macromolecule_sample(current_user, collection_id)
           end
 

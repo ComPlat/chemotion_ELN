@@ -353,7 +353,7 @@ describe Chemotion::CellLineAPI do
     end
 
     before do
-      allow_any_instance_of(ElementsPolicy).to receive(:update_all?).and_return(allow_creation)
+      allow_any_instance_of(ElementsPolicy).to receive(:share_all?).and_return(allow_creation)
       post '/api/v1/cell_lines/copy', params: params
     end
 
@@ -409,7 +409,7 @@ describe Chemotion::CellLineAPI do
 
     context 'when user has write access' do
       before do
-        allow_any_instance_of(ElementsPolicy).to receive(:update_all?).and_return(allow_creation)
+        allow_any_instance_of(ElementsPolicy).to receive(:share_all?).and_return(allow_creation)
         post '/api/v1/cell_lines/split', params: params
       end
 

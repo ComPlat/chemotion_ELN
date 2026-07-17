@@ -125,6 +125,25 @@ describe Chemotion::SampleAPI do
       collection_sample = CollectionsSample.where(sample_id: s4.id, collection_id: collection.id)
       expect(collection_sample).not_to be_nil
     end
+
+    context 'when the collection is a read-only share' do
+      let(:permission_level) { CollectionShare::PERMISSION_LEVELS[:read_elements] }
+      let(:s1) { create(:sample, name: 's1', external_label: 'ext1', collections: [shared_collection]) }
+      let(:s2) { create(:sample, name: 's2', external_label: 'ext2', collections: [shared_collection]) }
+      let(:params) do
+        {
+          ui_state: {
+            sample: { all: true, included_ids: [], excluded_ids: [] },
+            currentCollectionId: shared_collection.id,
+          },
+        }
+      end
+
+      it 'is rejected as unauthorized and creates no subsamples' do
+        expect(response).to have_http_status :unauthorized
+        expect(Sample.where(name: %w[s1 s2]).count).to eq 2
+      end
+    end
   end
 
   describe 'POST /api/v1/samples/import/' do

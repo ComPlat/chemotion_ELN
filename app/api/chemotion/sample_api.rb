@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ClassLength, Lint/UselessAssignment
+# rubocop:disable Metrics/ClassLength
 require 'open-uri'
 require 'csv'
 
@@ -89,13 +89,20 @@ module Chemotion
         params do
           requires :ui_state, type: Hash, desc: 'Selected samples from the UI'
         end
+
         post do
           ui_state = params[:ui_state]
           col_id = ui_state[:currentCollectionId]
           sample_ids = Sample.for_user(current_user.id)
                              .for_ui_state_with_collection(ui_state[:sample], CollectionsSample, col_id)
-          Sample.where(id: sample_ids).each do |sample|
-            subsample = sample.create_subsample(current_user, col_id, true, 'sample')
+          samples = Sample.where(id: sample_ids)
+          # Splitting adds a new subsample to the collection, which requires :add_elements.
+          # share_all? is the bulk :add_elements check and mirrors the sharing_allowed flag
+          # the UI uses to disable the Split button for read-only shared collections.
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, samples).share_all?
+
+          samples.each do |sample|
+            sample.create_subsample(current_user, col_id, true, 'sample')
           end
 
           {} # JS layer does not use the reply
@@ -648,4 +655,4 @@ module Chemotion
     end
   end
 end
-# rubocop:enable Metrics/ClassLength, Lint/UselessAssignment
+# rubocop:enable Metrics/ClassLength

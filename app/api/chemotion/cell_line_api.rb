@@ -111,7 +111,9 @@ module Chemotion
         post do
           cell_line_to_copy = @current_user.cellline_samples.where(id: [params[:id]]).reorder('id')
 
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).update_all?
+          # Copying adds a new cell line sample to the target collection, which requires :add_elements
+          # (share_all?), matching the split endpoint and the other element copy/split flows.
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).share_all?
 
           begin
             use_case = Usecases::CellLines::Copy.new(cell_line_to_copy.first, @current_user, params[:collection_id])
@@ -136,7 +138,9 @@ module Chemotion
         post do
           cell_line_to_copy = @current_user.cellline_samples.where(id: [params[:id]]).reorder('id')
 
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).update_all?
+          # Splitting adds a new cell line sample to the collection, which requires :add_elements
+          # (share_all?), matching the other split endpoints and the UI's Split-button gate.
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).share_all?
 
           begin
             use_case = Usecases::CellLines::Split.new(cell_line_to_copy.first, @current_user, params[:collection_id])
