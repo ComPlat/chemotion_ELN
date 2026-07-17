@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
+require 'digest'
 
 RSpec.describe Import::ImportSdf do
   let(:mock_user) { create(:user) }
@@ -63,6 +64,51 @@ RSpec.describe Import::ImportSdf do
     it 'creates samples from valid raw_data' do
       expect { sdf_import.create_samples }.to change(Sample, :count).by(1)
       expect(sdf_import.message.scan('Import successful!').size).to eq(1)
+    end
+  end
+
+  describe '#find_or_create_mol_by_batch' do
+    let(:new_molfiles) { [build(:molfile, type: 'mf_with_data_01'), build(:molfile, type: :water)] }
+    let(:batch_import) do
+      described_class.new(
+        collection_id: mock_collection.id,
+        current_user_id: mock_user.id,
+        raw_data: new_molfiles,
+      )
+    end
+
+    before do
+      # override the file-level narrow Molecule.find_by stub (scoped to a
+      # different, pre-existing inchikey) so these genuinely-new molecules
+      # resolve via a real (nil-returning) lookup and actually get created.
+      allow(Molecule).to receive(:find_by).and_call_original
+      allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey).and_return({})
+      # Keyed off molfile content (not a call-local index) so a fresh
+      # inchikey is produced consistently whether all molfiles are resolved
+      # in one find_or_create_by_molfiles call or split across chunks.
+      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfiles) do |molfiles|
+        molfiles.map do |molfile|
+          digest = Digest::SHA256.hexdigest(molfile.to_s)[0..10]
+          { inchikey: "MOL#{digest}-UHFFFAOYSA-N", is_partial: false, molfile_version: 'V2000', molfile: molfile }
+        end
+      end
+    end
+
+    it 'schedules a single PubchemSingleLcssJob covering every new molecule in one chunk' do
+      scheduled_ids = nil
+      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+
+      expect { batch_import.find_or_create_mol_by_batch }.to change(Molecule, :count).by(2)
+      expect(PubchemSingleLcssJob).to have_received(:perform_later).once
+      expect(scheduled_ids.size).to eq(2)
+    end
+
+    it 'schedules one PubchemSingleLcssJob per chunk when batch_size splits the import' do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      batch_import.find_or_create_mol_by_batch(1)
+
+      expect(PubchemSingleLcssJob).to have_received(:perform_later).twice
     end
   end
 end

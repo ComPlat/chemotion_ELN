@@ -103,6 +103,7 @@ module Import
     end
 
     def import
+      @lcss_batch = []
       ActiveRecord::Base.transaction do
         gate_collection if @gt == true
         import_collections if @gt == false
@@ -132,6 +133,8 @@ module Import
         import_literals
       end
       reprocess_reaction_svgs
+    ensure
+      Molecule.schedule_lcss_batch(@lcss_batch)
     end
 
     def import!
@@ -284,10 +287,14 @@ module Import
           molecule = find_or_create_molecule_for_polymer_molfile(molfile.to_s)
         end
         # Always use molfile if available (highest priority)
-        molecule ||= Molecule.find_or_create_by_molfile(molfile) if molfile.present?
+        if molfile.present?
+          molecule ||= Molecule.find_or_create_by_molfile(molfile, lcss_batch: @lcss_batch)
+        end
 
         # Use cano_smiles if molfile is missing or invalid but cano_smiles is available
-        molecule ||= Molecule.find_or_create_by_cano_smiles(cano_smiles) if cano_smiles.present?
+        if cano_smiles.present?
+          molecule ||= Molecule.find_or_create_by_cano_smiles(cano_smiles, lcss_batch: @lcss_batch)
+        end
         # Create dummy only for decoupled samples with no structure data
         molecule ||= Molecule.find_or_create_dummy if fields.fetch('decoupled', nil)
 
@@ -844,9 +851,9 @@ module Import
       inchikey = babel_info[:inchikey]
 
       molecule = if inchikey.present?
-                   Molecule.find_or_create_by_molfile(raw_molfile, babel_info)
+                   Molecule.find_or_create_by_molfile(raw_molfile, lcss_batch: @lcss_batch, **babel_info)
                  else
-                   find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
+                   find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info, lcss_batch: @lcss_batch)
                  end
       return molecule unless molecule.present?
 
@@ -870,13 +877,13 @@ module Import
     end
 
     # When Open Babel returns blank inchikey for a PolymersList molfile, create a molecule with a synthetic inchikey.
-    def find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
+    def find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info, lcss_batch: nil)
       synthetic_inchikey = "POLYMER_#{Digest::SHA256.hexdigest(raw_molfile)}"
       formula = babel_info[:formula].to_s.presence || ''
       molecule = Molecule.find_by(inchikey: synthetic_inchikey, is_partial: true, sum_formular: formula)
+      is_new = molecule.nil?
       if molecule
         molecule.molfile = raw_molfile
-        molecule.save!
       else
         molecule = Molecule.new(
           inchikey: synthetic_inchikey,
@@ -884,8 +891,10 @@ module Import
           sum_formular: formula,
           molfile: raw_molfile
         )
-        molecule.save!
       end
+      molecule.skip_lcss_callback = true if is_new && lcss_batch
+      molecule.save!
+      lcss_batch << molecule.id if is_new && lcss_batch
       molecule
     end
 

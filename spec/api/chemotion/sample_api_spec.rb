@@ -356,6 +356,42 @@ describe Chemotion::SampleAPI do
     end
   end
 
+  describe 'POST /api/v1/samples/import/ LCSS scheduling (regression for chemotion#552)' do
+    let(:params) do
+      {
+        currentCollectionId: collection.id,
+        file: fixture_file_upload(Rails.root.join('spec/fixtures/import_sample_data.sdf'), 'chemical/x-mdl-sdfile'),
+        import_type: 'sample',
+      }
+    end
+
+    it 'imports all new molecules and schedules exactly one PubchemSingleLcssJob for the whole batch' do
+      # chemotion#552 was a NoMethodError inside Molecule#get_lcss's own
+      # per-molecule Delayed::Job query, triggered by a concurrently-running
+      # worker draining that queue mid-import. get_lcss no longer queries
+      # Delayed::Job at all (see Molecule.find_or_create_by_molfile's
+      # lcss_batch: parameter and Import::ImportSdf#find_or_create_mol_by_batch)
+      # — this asserts the replacement behavior end-to-end: the whole SDF
+      # import (2 new molecules) enqueues a single batched job, not one per molecule.
+      scheduled_ids = nil
+      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+
+      post(
+        '/api/v1/samples/import/',
+        params: params,
+        headers: {
+          'HTTP_ACCEPT' => '*/*',
+          'CONTENT_TYPE' => 'multipart/form-data',
+        },
+      )
+
+      expect(JSON.parse(response.body)['sdf']).to be true
+      expect(JSON.parse(response.body)['data'].count).to eq 2
+      expect(PubchemSingleLcssJob).to have_received(:perform_later).once
+      expect(scheduled_ids.size).to eq 2
+    end
+  end
+
   describe 'POST /api/v1/samples/confirm_import/' do
     before do
       create(:molecule, inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N', is_partial: false)

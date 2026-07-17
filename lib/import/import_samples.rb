@@ -215,6 +215,7 @@ module Import
     end
 
     def write_to_db
+      @lcss_batch = []
       unprocessable_count = 0
       begin
         ActiveRecord::Base.transaction do
@@ -233,6 +234,8 @@ module Import
       rescue StandardError => _e
         raise 'More than 1 row can not be processed' if unprocessable_count.positive?
       end
+    ensure
+      Molecule.schedule_lcss_batch(@lcss_batch)
     end
 
     def structure?(row)
@@ -255,10 +258,11 @@ module Import
 
     # When Open Babel returns blank inchikey for a PolymersList molfile, create a molecule with a synthetic
     # inchikey so we can store the full molfile; SVG is generated in the common branch via svg_reprocess.
-    def find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
+    def find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info, lcss_batch: nil)
       synthetic_inchikey = "POLYMER_#{Digest::SHA256.hexdigest(raw_molfile)}"
       formula = babel_info[:formula].to_s.presence || ''
       molecule = Molecule.find_by(inchikey: synthetic_inchikey, is_partial: true, sum_formular: formula)
+      is_new = molecule.nil?
       if molecule
         molecule.molfile = raw_molfile
       else
@@ -269,7 +273,9 @@ module Import
           molfile: raw_molfile,
         )
       end
+      molecule.skip_lcss_callback = true if is_new && lcss_batch
       molecule.save!
+      lcss_batch << molecule.id if is_new && lcss_batch
       molecule
     end
 
@@ -292,9 +298,9 @@ module Import
         inchikey = babel_info[:inchikey]
 
         molecule = if inchikey.present?
-                     Molecule.find_or_create_by_molfile(raw_molfile, babel_info)
+                     Molecule.find_or_create_by_molfile(raw_molfile, lcss_batch: @lcss_batch, **babel_info)
                    else
-                     find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
+                     find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info, lcss_batch: @lcss_batch)
                    end
         if molecule.present?
           # Use raw_molfile (row's full molfile with PolymersList) for SVG so SvgRenderer can inject polymer images; molecule.molfile may be cleaned/truncated.
@@ -315,7 +321,9 @@ module Import
       molfile_for_babel = "#{molfile_for_babel}\n" unless molfile_for_babel.end_with?("\n")
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
       inchikey = babel_info[:inchikey]
-      molecule = Molecule.find_or_create_by_molfile(molfile_for_babel, babel_info) if inchikey.presence
+      if inchikey.presence
+        molecule = Molecule.find_or_create_by_molfile(molfile_for_babel, lcss_batch: @lcss_batch, **babel_info)
+      end
       [molecule, raw_molfile]
     end
 
@@ -324,12 +332,16 @@ module Import
         go_to_next = true
       else
         go_to_next = false
+        created = false
         molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: false) do |molecul|
+          created = true
+          molecul.skip_lcss_callback = true if @lcss_batch
           pubchem_info =
             Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
           molecul.molfile = molfile_coord
           molecul.assign_molecule_data babel_info, pubchem_info
         end
+        @lcss_batch << molecule.id if created && @lcss_batch
       end
       [molecule, molfile_coord, go_to_next]
     end
@@ -621,6 +633,11 @@ module Import
       create_components(sample, sample_components_data)
     end
 
+    # NB: always called nested inside #write_to_db's row loop (via
+    # handle_sample_components), which already has its own @lcss_batch
+    # active — this appends to that same accumulator rather than managing
+    # its own, so a component's molecule doesn't get double-scheduled or
+    # cause the outer batch to lose ids collected before this call.
     def create_components(sample, sample_components_data)
       unprocessable_count = 0
       xlsx.default_sheet = 'sample_components'

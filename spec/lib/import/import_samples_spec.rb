@@ -93,6 +93,16 @@ RSpec.describe 'Import::ImportSamples' do
         molecule_names = sample.molecule.molecule_names
         expect(molecule_names).to be_present
       end
+
+      it 'schedules exactly one PubchemSingleLcssJob for the whole import instead of one per molecule' do
+        scheduled_ids = nil
+        allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+
+        import_result
+
+        expect(PubchemSingleLcssJob).to have_received(:perform_later).once
+        expect(scheduled_ids.size).to be > 1
+      end
     end
   end
 

@@ -105,7 +105,9 @@ class Import::ImportSdf < Import::ImportSamples
     data = raw_data.dup
     until data.empty?
       batch = data.slice!(0..n)
+      @lcss_batch = []
       molecules = find_or_create_by_molfiles(batch)
+      Molecule.schedule_lcss_batch(@lcss_batch)
       inchikeys += molecules.map { |m| (m && m[:inchikey]) || nil }
       @processed_mol += molecules
     end
@@ -126,6 +128,7 @@ class Import::ImportSdf < Import::ImportSamples
   end
 
   def create_samples
+    @lcss_batch = []
     ids = []
     read_data if raw_data.empty? && rows.empty?
     if !raw_data.empty? && inchi_array.empty?
@@ -276,6 +279,8 @@ class Import::ImportSdf < Import::ImportSamples
     @attachment.destroy if @message[:error].empty? && @attachment.present?
 
     samples
+  ensure
+    Molecule.schedule_lcss_batch(@lcss_batch)
   end
 
   def find_or_create_by_molfiles(molfiles)
@@ -286,7 +291,7 @@ class Import::ImportSdf < Import::ImportSamples
       if Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(mf.to_s)
         find_or_create_polymer_molfile_entry(mf.to_s.strip, babel_info)
       elsif babel_info[:inchikey].present?
-        m = Molecule.find_or_create_by_molfile(mf, babel_info)
+        m = Molecule.find_or_create_by_molfile(mf, lcss_batch: @lcss_batch, **babel_info)
         process_molfile_opt_data(mf).merge(
           inchikey: m.inchikey,
           svg: "molecules/#{m.molecule_svg_file}",
@@ -311,9 +316,9 @@ class Import::ImportSdf < Import::ImportSamples
     babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
 
     molecule = if babel_info[:inchikey].present?
-                 Molecule.find_or_create_by_molfile(raw_molfile, babel_info)
+                 Molecule.find_or_create_by_molfile(raw_molfile, lcss_batch: @lcss_batch, **babel_info)
                else
-                 find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
+                 find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info, lcss_batch: @lcss_batch)
                end
 
     if molecule.present?
@@ -358,9 +363,9 @@ class Import::ImportSdf < Import::ImportSamples
       molfile_for_babel = "#{molfile_for_babel}\n" unless molfile_for_babel.end_with?("\n")
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
       molecule = if babel_info[:inchikey].present?
-                   Molecule.find_or_create_by_molfile(raw, babel_info)
+                   Molecule.find_or_create_by_molfile(raw, lcss_batch: @lcss_batch, **babel_info)
                  else
-                   find_or_create_polymer_molecule_without_inchikey(raw, babel_info)
+                   find_or_create_polymer_molecule_without_inchikey(raw, babel_info, lcss_batch: @lcss_batch)
                  end
       if molecule.present?
         reprocessed_svg = Molecule.svg_reprocess(nil, raw, service: :indigo)
