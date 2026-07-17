@@ -109,6 +109,10 @@ class Attachment < ApplicationRecord
   def read_file
     return if attachment_attacher.file.blank?
 
+    # An archived file was just read, so it is active again: promote it back to
+    # the hot tier in the background (don't block this read on a file copy).
+    PromoteAttachmentJob.perform_later(id) if attachment_attacher.file.storage_key == :cold
+
     attachment_attacher.file.rewind if attachment_attacher.file.eof?
     attachment_attacher.file.read
   end
@@ -302,15 +306,31 @@ class Attachment < ApplicationRecord
   # old file. A failure before the delete leaves the original intact (at worst
   # an orphaned cold copy), so we never lose data.
   def move_to_cold
+    move_to_tier(:cold)
+  end
+
+  # Move this file back to the hot storage tier (e.g. it was touched again
+  # after being archived). Mirrors #move_to_cold.
+  def move_to_store
+    move_to_tier(:store)
+  end
+
+  private
+
+  def move_to_tier(storage_key)
     attacher = attachment_attacher
-    return unless attacher.stored?
+    return unless attacher.file
+    return if attacher.file.storage_key == :cache # still mid-upload, not persisted yet
+    return if attacher.file.storage_key == storage_key # already on the target tier
 
     old_file = attacher.file
     old_derivatives = attacher.derivatives
 
     old_file.rewind # ensure we copy from the start, not a mid-read cursor
-    attacher.set attacher.upload(old_file, :cold)
-    attacher.set_derivatives attacher.upload_derivatives(old_derivatives, storage: :cold) if old_derivatives.present?
+    attacher.set attacher.upload(old_file, storage_key)
+    if old_derivatives.present?
+      attacher.set_derivatives attacher.upload_derivatives(old_derivatives, storage: storage_key)
+    end
 
     # update_column skips this model's save callbacks, which otherwise revert
     # attachment_data (same idiom the model uses in #attach_file).
@@ -319,8 +339,6 @@ class Attachment < ApplicationRecord
     old_file.delete
     attacher.delete_derivatives(old_derivatives) if old_derivatives.present?
   end
-
-  private
 
   def generate_key
     self.key = SecureRandom.uuid unless key

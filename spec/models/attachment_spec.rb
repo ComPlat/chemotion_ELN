@@ -53,6 +53,20 @@ RSpec.describe Attachment do
     it 'returns content of file' do
       expect(attachment.read_file).to eq("Hello world\n")
     end
+
+    context 'when the file lives on the cold storage tier', :active_job do
+      it 'enqueues a promotion back to hot storage' do
+        attachment.move_to_cold
+
+        expect { attachment.read_file }.to have_enqueued_job(PromoteAttachmentJob).with(attachment.id)
+      end
+    end
+
+    context 'when the file lives on the hot storage tier', :active_job do
+      it 'does not enqueue a promotion' do
+        expect { attachment.read_file }.not_to have_enqueued_job(PromoteAttachmentJob)
+      end
+    end
   end
 
   describe '#read_thumbnail' do
@@ -1017,6 +1031,30 @@ RSpec.describe Attachment do
 
       attachment.attachment_attacher.derivatives.each_value do |derivative|
         expect(derivative.storage_key).to eq(:cold)
+      end
+    end
+  end
+
+  describe '#move_to_store' do
+    it 'moves the file back to the hot storage while preserving its contents' do
+      attachment = create(:attachment)
+      attachment.move_to_cold
+      original_content = attachment.read_file
+
+      attachment.move_to_store
+
+      expect(attachment.attachment.storage_key).to eq(:store)
+      expect(attachment.read_file).to eq(original_content)
+    end
+
+    it 'moves derivatives (e.g. thumbnails) back to the hot storage as well' do
+      attachment = create(:attachment, :with_image)
+      attachment.move_to_cold
+
+      attachment.move_to_store
+
+      attachment.attachment_attacher.derivatives.each_value do |derivative|
+        expect(derivative.storage_key).to eq(:store)
       end
     end
   end
