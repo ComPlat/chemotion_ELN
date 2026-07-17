@@ -36,7 +36,8 @@
 #  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
 #
 
-class Attachment < ApplicationRecord
+# ClassLength already exceeded on main (217/200); pre-existing, out of scope.
+class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   has_logidze
   acts_as_paranoid
   include AASM
@@ -44,6 +45,7 @@ class Attachment < ApplicationRecord
   include AttachmentJcampProcess
   include Labimotion::AttachmentConverter
   include AttachmentUploader::Attachment(:attachment)
+  include AttachmentStorageTiering
 
   enum edit_state: { not_editing: 0, editing: 1 }
 
@@ -109,8 +111,7 @@ class Attachment < ApplicationRecord
   def read_file
     return if attachment_attacher.file.blank?
 
-    # An archived file was just read, so it is active again: promote it back to
-    # the hot tier in the background (don't block this read on a file copy).
+    # read means it's active again: promote off cold, in the background
     PromoteAttachmentJob.perform_later(id) if attachment_attacher.file.storage_key == :cold
 
     attachment_attacher.file.rewind if attachment_attacher.file.eof?
@@ -295,50 +296,7 @@ class Attachment < ApplicationRecord
     [nil, nil]
   end
 
-  # A file is "cold" (safe to move to the archive tier) when it has not been
-  # touched for a long time. Judged by edit dates we already have.
-  def cold?(older_than:)
-    updated_at < older_than && (attachable.nil? || attachable.updated_at < older_than)
-  end
-
-  # Move this file to the cold/archive storage tier.
-  # Order matters: upload to cold, persist the new location, THEN delete the
-  # old file. A failure before the delete leaves the original intact (at worst
-  # an orphaned cold copy), so we never lose data.
-  def move_to_cold
-    move_to_tier(:cold)
-  end
-
-  # Move this file back to the hot storage tier (e.g. it was touched again
-  # after being archived). Mirrors #move_to_cold.
-  def move_to_store
-    move_to_tier(:store)
-  end
-
   private
-
-  def move_to_tier(storage_key)
-    attacher = attachment_attacher
-    return unless attacher.file
-    return if attacher.file.storage_key == :cache # still mid-upload, not persisted yet
-    return if attacher.file.storage_key == storage_key # already on the target tier
-
-    old_file = attacher.file
-    old_derivatives = attacher.derivatives
-
-    old_file.rewind # ensure we copy from the start, not a mid-read cursor
-    attacher.set attacher.upload(old_file, storage_key)
-    if old_derivatives.present?
-      attacher.set_derivatives attacher.upload_derivatives(old_derivatives, storage: storage_key)
-    end
-
-    # update_column skips this model's save callbacks, which otherwise revert
-    # attachment_data (same idiom the model uses in #attach_file).
-    update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
-
-    old_file.delete
-    attacher.delete_derivatives(old_derivatives) if old_derivatives.present?
-  end
 
   def generate_key
     self.key = SecureRandom.uuid unless key

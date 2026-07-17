@@ -10,7 +10,7 @@ end
 Shrine.storages = {
   cache: Shrine::Storage::FileSystem.new(shrine_storage[:cache]), # temporary
   store: Shrine::Storage::FileSystem.new(shrine_storage[:store]), # permanent (hot tier)
-  cold: Shrine::Storage::FileSystem.new(shrine_storage[:cold]) # permanent (cold/archive tier)
+  cold: Shrine::Storage::FileSystem.new(shrine_storage[:cold]), # permanent (cold/archive tier)
 }
 
 Shrine.plugin :activerecord           # loads Active Record integration
