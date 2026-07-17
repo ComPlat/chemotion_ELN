@@ -141,7 +141,11 @@ module Reporter
         when "italic"
           tags += ["i"] if value == "true"
         when "script"
-          tags += [value]
+          # Quill encodes superscript as script: "super", but "super" is not a
+          # valid HTML tag; the correct element is <sup>. sablon >= 0.4.3 rejects
+          # unregistered tags (ArgumentError "Don't know how to handle HTML tag:
+          # super"), so map "super" to "sup" while "sub" is already valid.
+          tags += [value == "super" ? "sup" : value]
         when "color"
           styles << "color: #{value}"
         when "background"
