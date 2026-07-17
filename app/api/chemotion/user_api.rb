@@ -23,7 +23,7 @@ module Chemotion
 
       desc 'Return current_user'
       get 'current' do
-        present current_user, with: Entities::UserEntity, root: 'user'
+        present current_user, with: Entities::UserEntity, root: 'user', with_tokens: true
       end
 
       resource :two_factor do
