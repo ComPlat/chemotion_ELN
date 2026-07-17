@@ -187,6 +187,7 @@ class API < Grape::API
   mount Chemotion::ResearchPlanMetadataAPI
   mount Chemotion::ScreenAPI
   mount Chemotion::UserAPI
+  mount Chemotion::GroupAPI
   mount Chemotion::UserLabelAPI
   mount Chemotion::ReactionSvgAPI
   mount Chemotion::PermissionAPI
