@@ -1,8 +1,6 @@
 import React from 'react';
 import { Dropdown, Button } from 'react-bootstrap';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import UserActions from 'src/stores/alt/actions/UserActions';
 import PermissionStore from 'src/stores/alt/stores/PermissionStore';
 import PermissionActions from 'src/stores/alt/actions/PermissionActions';
 import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/SelectionShareModal';
@@ -16,29 +14,22 @@ import SelectionGenerateButton from 'src/apps/mydb/elements/list/selectionAction
 import SelectionExportButton from 'src/apps/mydb/elements/list/selectionActions/SelectionExportButton';
 import AppModal from 'src/components/common/AppModal';
 import { elementNames } from 'src/apps/generic/Utils';
-import { StoreContext } from 'src/stores/mobx/RootStore';
 import { PermissionConst } from 'src/utilities/PermissionConst';
 
-
 export default class SelectionActions extends React.Component {
-  static contextType = StoreContext;
   constructor(props) {
     super(props);
-    const { currentUser, genericEls } = UserStore.getState();
     this.state = {
       showModalOfType: null,
-      currentUser,
       currentCollection: { id: 0 },
       sharing_allowed: false,
       deletion_allowed: false,
       remove_allowed: false,
       update_allowed: false,
       is_top_secret: false,
-      genericEls: genericEls
     };
 
     this.onChange = this.onChange.bind(this);
-    this.onUserChange = this.onUserChange.bind(this);
     this.onPermissionChange = this.onPermissionChange.bind(this);
 
     this.showModal = this.showModal.bind(this);
@@ -46,14 +37,11 @@ export default class SelectionActions extends React.Component {
   }
 
   componentDidMount() {
-    UserStore.listen(this.onUserChange);
     UIStore.listen(this.onChange);
     PermissionStore.listen(this.onPermissionChange);
-    UserActions.fetchCurrentUser();
   }
 
   componentWillUnmount() {
-    UserStore.unlisten(this.onUserChange);
     UIStore.unlisten(this.onChange);
     PermissionStore.unlisten(this.onPermissionChange);
   }
@@ -72,29 +60,12 @@ export default class SelectionActions extends React.Component {
       });
     } else {
       const klassArray = await elementNames(true);
-      const newHasSel = klassArray.some((el) => {
-        return (state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll));
-      });
+      const newHasSel = klassArray.some((el) => (state[el] && (state[el].checkedIds.size > 0 || state[el].checkedAll)));
       if (state.currentCollection) {
         PermissionActions.fetchPermissionStatus(state);
       }
       const { hasSel } = this.state;
-      if (newHasSel != hasSel) this.setState({ hasSel: newHasSel });
-    }
-  }
-
-  onUserChange(state) {
-    const newId = state.currentUser ? state.currentUser.id : null;
-    const oldId = this.state.currentUser ? this.state.currentUser.id : null;
-    if (newId !== oldId) {
-      this.setState({
-        currentUser: state.currentUser,
-      });
-    }
-    if (typeof state.genericEls !== 'undefined' && state.genericEls !== null) {
-      this.setState({
-        genericEls: state.genericEls
-      });
+      if (newHasSel !== hasSel) this.setState({ hasSel: newHasSel });
     }
   }
 
@@ -177,7 +148,7 @@ export default class SelectionActions extends React.Component {
     } = this.state;
     const { is_locked, label } = currentCollection;
     const isAll = is_locked && label === 'All';
-    const noSel = !hasSel
+    const noSel = !hasSel;
 
     // Move unlinks from the current collection, so it needs remove permission on the source.
     const moveDisabled = noSel || isAll || !remove_allowed;
