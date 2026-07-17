@@ -27,7 +27,7 @@ export default class DelayedJobs extends Component {
   }
 
   handleRestartFetch(id) {
-    AdminFetcher.restartJob({ id })
+    AdminFetcher.restartJob(id)
       .then(() => this.handleFetchJob());
   }
 
