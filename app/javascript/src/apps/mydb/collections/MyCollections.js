@@ -40,6 +40,14 @@ const MyCollections = () => {
   };
 
   const changeCollectionLabel = (e, node) => {
+    // Update the label synchronously on the node already rendered by the tree
+    // (react-ui-tree references these node objects, so this is the same object
+    // that feeds the input's `value`). Doing it in the same input event lets
+    // React preserve the caret position. Without this, the new value only comes
+    // back through the async store -> useEffect -> cloneDeep round-trip, which
+    // reassigns input.value in a later commit and resets the caret to the end.
+    node.label = e.target.value;
+    setClonedTree((prev) => ({ ...prev }));
     collectionsStore.updateCollectionLabel(e.target.value, node);
     collectionsStore.setUpdateTree(true);
   };
