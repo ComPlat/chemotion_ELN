@@ -121,6 +121,45 @@ class Import::ImportSdf < Import::ImportSamples
     @inchi_array += inchikeys.compact
   end
 
+  # Runs the whole raw-SDF/mol import in one pass, off the web request (worker context):
+  #   1. find/create a Molecule for every record (populates {#processed_mol} + inchi_array)
+  #   2. turn the processed molecules into rows via the default {#keys_to_map}
+  #   3. reuse {#create_samples}' rows path to create the Sample records
+  #
+  # @return [ActiveRecord::Relation] the created samples (see {#create_samples})
+  def import_from_file
+    find_or_create_mol_by_batch
+    @rows = rows_from_processed_mol
+    create_samples
+  end
+
+  # Maps {#processed_mol} (whose SDF property tags are upcased/underscored keys, e.g.
+  # +"MOLECULE_NAME"+) onto the lowercase Sample field names declared in {#keys_to_map}.
+  # This replaces the former interactive frontend column-mapping step: any SDF tag whose
+  # name matches a known field is imported, everything else is ignored.
+  #
+  # @return [Array<Hash>] row hashes consumable by {#create_samples}' rows branch
+  def rows_from_processed_mol
+    field_by_upcase = mapped_keys.values.each_with_object({}) do |cfg, memo|
+      field = cfg[:field].to_s
+      memo[field.upcase] = field
+    end
+
+    processed_mol.filter_map do |mol|
+      next if mol.nil? || mol[:inchikey].blank?
+
+      row = { 'molfile' => mol[:molfile] }
+      mol.each do |key, value|
+        # SDF property tags are String keys; skip the merged :inchikey/:svg/:name/:molfile symbols
+        next unless key.is_a?(String) && value.present?
+
+        field = field_by_upcase[key.upcase]
+        row[field] = value if field
+      end
+      row
+    end
+  end
+
   def is_number?(string)
     true if Float(string)
   rescue StandardError

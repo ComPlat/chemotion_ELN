@@ -108,34 +108,6 @@ export default class SamplesFetcher {
       });
   }
 
-  static importSamplesFromFileConfirm(params) {
-    const body = {
-      currentCollectionId: params.currentCollectionId,
-      rows: params.rows,
-      mapped_keys: params.mapped_keys,
-    };
-
-    return ApiClient.postJson('/api/v1/samples/confirm_import', { body })
-      .then((json) => {
-        if (Array.isArray(json.error_messages)) {
-          json.error_messages.forEach((message) => {
-            rootStore.notificationsStore.add({
-              message,
-              level: 'error',
-              autoDismiss: 10
-            });
-          });
-        } else {
-          rootStore.notificationsStore.add({
-            message: json.error_messages || json.message,
-            level: json.message ? 'success' : 'error',
-            autoDismiss: 10
-          });
-        }
-        return json;
-      });
-  }
-
   static batchRefreshSvg(svgs) {
     const body = {
       svgs: svgs.map((svg) => ({

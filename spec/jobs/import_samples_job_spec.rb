@@ -85,15 +85,13 @@ describe ImportSamplesJob, active_job: true do
         collection_id: create(:collection).id,
         user_id: create(:user).id,
         attachment: attachment,
-        sdf_rows: [],
-        mapped_keys: {},
       }
     end
     let(:import_job) { described_class.perform_later(parameters) }
 
     before do
       allow(Import::ImportSdf).to receive(:new).and_return(import_samples_instance)
-      allow(import_samples_instance).to receive(:create_samples)
+      allow(import_samples_instance).to receive(:import_from_file)
       allow(import_samples_instance).to receive(:message).and_return(result_message)
     end
 

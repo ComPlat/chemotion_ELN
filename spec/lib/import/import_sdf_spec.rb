@@ -67,6 +67,45 @@ RSpec.describe Import::ImportSdf do
     end
   end
 
+  describe '#rows_from_processed_mol' do
+    let(:mapper) do
+      described_class.new(collection_id: mock_collection.id, current_user_id: mock_user.id)
+    end
+
+    it 'maps SDF property tags onto field names, keeps molfile, and drops unmatched tags / failed mols' do
+      mapper.instance_variable_set(:@processed_mol, [
+                                     { 'NAME' => 'Acetone', 'DESCRIPTION' => 'a ketone', 'UNKNOWN_TAG' => 'x',
+                                       inchikey: 'CSCPPACGZOOCGX-UHFFFAOYSA-N', molfile: 'molfile-1',
+                                       name: 'iupac', svg: 'molecules/x.svg' },
+                                     { name: nil, inchikey: nil, svg: 'no_image_180.svg' }, # failed record
+                                   ])
+
+      rows = mapper.rows_from_processed_mol
+
+      expect(rows).to eq([
+                           { 'molfile' => 'molfile-1', 'name' => 'Acetone', 'description' => 'a ketone' },
+                         ])
+    end
+  end
+
+  describe '#import_from_file' do
+    let(:one_shot) do
+      described_class.new(collection_id: mock_collection.id, current_user_id: mock_user.id)
+    end
+
+    it 'runs the molecule pass, builds rows from processed mols, then creates samples' do
+      allow(one_shot).to receive(:find_or_create_mol_by_batch)
+      allow(one_shot).to receive(:create_samples)
+      allow(one_shot).to receive(:rows_from_processed_mol).and_return([{ 'molfile' => 'm' }])
+
+      one_shot.import_from_file
+
+      expect(one_shot).to have_received(:find_or_create_mol_by_batch).ordered
+      expect(one_shot).to have_received(:create_samples).ordered
+      expect(one_shot.rows).to eq([{ 'molfile' => 'm' }])
+    end
+  end
+
   describe '#find_or_create_mol_by_batch' do
     let(:new_molfiles) { [build(:molfile, type: 'mf_with_data_01'), build(:molfile, type: :water)] }
     let(:batch_import) do

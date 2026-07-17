@@ -64,10 +64,12 @@ export const NotificationsStore = types
     },
 
     notifyImportSamplesFromFile(result) {
-      const num = result.data?.length ?? 0;
-      const { status, sdf, message } = result;
+      const { status, message } = result;
       self.removeByUid('import_samples_upload');
 
+      // All imports (SDF/mol, CSV, xlsx) now run asynchronously in ImportSamplesJob
+      // and return { status: 'in progress' }. The real success/error outcome is
+      // surfaced later through the polling notification channel.
       let notification = {
         title: 'Oops!',
         message: `${message}\n Please check the file and try again.`,
@@ -76,32 +78,12 @@ export const NotificationsStore = types
         autoDismiss: 0,
       };
 
-      if (sdf) {
-        if (status === 'ok') {
-          notification = { title: 'Success', message, level: 'success', position: 'bl', autoDismiss: 10 };
-        } else if (status === 'invalid') {
-          notification.message = message;
-        }
-      } else if (status === 'ok') {
+      if (status === 'in progress') {
         notification = {
-          title: 'Success',
-          message: `The ${num} samples have been imported successfully`,
-          level: 'success',
-          position: 'bl',
-          autoDismiss: 10,
+          title: 'Status', message, level: 'success', position: 'bl', autoDismiss: 10
         };
       } else if (status === 'invalid') {
         notification.message = message;
-      } else if (status === 'in progress') {
-        notification = { title: 'Status', message, level: 'success', position: 'bl', autoDismiss: 10 };
-      } else if (status === 'warning') {
-        notification = {
-          title: 'Status',
-          message: `The ${num} samples have been imported successfully but ${message}`,
-          level: 'success',
-          position: 'bl',
-          autoDismiss: 10,
-        };
       }
 
       self.add(notification);

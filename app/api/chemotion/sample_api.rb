@@ -144,26 +144,8 @@ module Chemotion
         end
 
         post do
-          ## 2-step SDF Import
-          if /\.(sdf?|mol)/i.match?(@att.extname)
-            sdf_import = Import::ImportSdf.new(
-              attachment: @att,
-              collection_id: params[:currentCollectionId],
-              current_user_id: current_user.id,
-            )
-
-            sdf_import.find_or_create_mol_by_batch
-            @att.really_destroy!
-            return {
-              sdf: true, message: sdf_import.message,
-              data: sdf_import.processed_mol, status: sdf_import.status,
-              custom_data_keys: sdf_import.custom_data_keys.keys,
-              mapped_keys: sdf_import.mapped_keys,
-              collection_id: sdf_import.collection_id
-            }
-          end
-
-          ## async CSV/xlx Import
+          ## async Import (SDF/mol, CSV, xlsx) — all heavy parsing/record creation
+          ## runs in ImportSamplesJob so the web worker is never blocked.
           ImportSamplesJob.perform_later(
             collection_id: params[:currentCollectionId],
             user_id: current_user.id,
@@ -171,49 +153,6 @@ module Chemotion
             import_type: params[:import_type],
           )
           { status: 'in progress', message: 'Importing samples in the background' }
-        end
-      end
-
-      namespace :confirm_import do
-        desc 'Create Samples from an Array of inchikeys'
-        params do
-          requires :rows, type: Array, desc: 'Selected Molecule from the UI'
-          requires :currentCollectionId, type: Integer
-          requires :mapped_keys, type: Hash
-        end
-
-        before do
-          error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
-        end
-
-        post do
-          rows = params[:rows]
-          if rows.length < 25
-            sdf_import = Import::ImportSdf.new(
-              collection_id: params[:currentCollectionId],
-              current_user_id: current_user.id,
-              rows: rows,
-              mapped_keys: params[:mapped_keys],
-            )
-            sdf_import.create_samples
-            return {
-              sdf: true, message: sdf_import.message,
-              status: sdf_import.status,
-              error_messages: sdf_import.error_messages
-            }
-          else
-            parameters = {
-              collection_id: params[:currentCollectionId],
-              user_id: current_user.id,
-              file_name: 'dummy.sdf',
-              sdf_rows: rows,
-              mapped_keys: params[:mapped_keys],
-            }
-            ImportSamplesJob.perform_later(parameters)
-            return {
-              message: 'importing samples in background',
-            }
-          end
         end
       end
 
