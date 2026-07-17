@@ -1717,6 +1717,8 @@ RSpec.describe Attachment do
     end
   end
 
+  # update_column back-dates timestamps to exercise the age checks.
+  # rubocop:disable Rails/SkipsModelValidations
   describe '#cold?' do
     let(:threshold) { 12.months.ago }
 
@@ -1743,6 +1745,7 @@ RSpec.describe Attachment do
       expect(attachment.cold?(older_than: threshold)).to be true
     end
   end
+  # rubocop:enable Rails/SkipsModelValidations
 
   describe '#move_to_cold' do
     it 'moves the file to the cold storage while preserving its contents' do
