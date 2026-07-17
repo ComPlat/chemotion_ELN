@@ -55,6 +55,7 @@ describe Chemotion::PermissionAPI do
           'sharing_allowed' => true,
           'deletion_allowed' => true,
           'remove_allowed' => true,
+          'update_allowed' => true,
         }
         expect(parsed_json_response).to eq expected_result
       end
@@ -84,6 +85,7 @@ describe Chemotion::PermissionAPI do
           'sharing_allowed' => true,
           'deletion_allowed' => true,
           'remove_allowed' => true,
+          'update_allowed' => true,
         }
         expect(parsed_json_response).to eq expected_result
       end
@@ -145,6 +147,20 @@ describe Chemotion::PermissionAPI do
           expect(parsed_json_response['deletion_allowed']).to be false
           expect(parsed_json_response['sharing_allowed']).to be false
         end
+
+        it 'returns update_allowed=true (editing element content is granted at :edit_elements)' do
+          expect(parsed_json_response['update_allowed']).to be true
+        end
+      end
+
+      context 'when the permission level is read only' do
+        let(:permission_level) { CollectionShare.permission_level(:read_elements) }
+
+        it 'returns update_allowed=false so bulk user-label edits are forbidden' do
+          expect(parsed_json_response['update_allowed']).to be false
+          expect(parsed_json_response['sharing_allowed']).to be false
+          expect(parsed_json_response['deletion_allowed']).to be false
+        end
       end
 
       # Regression (S5): element types outside the legacy [Sample, Reaction, Screen, Wellplate] set
@@ -179,10 +195,13 @@ describe Chemotion::PermissionAPI do
           }
         end
 
-        it 'returns deletion_allowed, sharing_allowed and remove_allowed all false' do
-          expect(parsed_json_response['deletion_allowed']).to be false
-          expect(parsed_json_response['sharing_allowed']).to be false
-          expect(parsed_json_response['remove_allowed']).to be false
+        it 'returns deletion_allowed, sharing_allowed, remove_allowed and update_allowed all false' do
+          aggregate_failures do
+            expect(parsed_json_response['deletion_allowed']).to be false
+            expect(parsed_json_response['sharing_allowed']).to be false
+            expect(parsed_json_response['remove_allowed']).to be false
+            expect(parsed_json_response['update_allowed']).to be false
+          end
         end
       end
     end
