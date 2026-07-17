@@ -53,7 +53,7 @@ describe Chemotion::UserAPI do
   describe 'GET /api/v1/users/current' do
     context 'when authorization runs via session' do
       let(:expected_response) do
-        Entities::UserEntity.represent(user, root: :user).to_json
+        Entities::UserEntity.represent(user, root: :user, with_tokens: true).to_json
       end
 
       before do
@@ -69,7 +69,7 @@ describe Chemotion::UserAPI do
       include_context 'api request jwt context'
 
       let(:expected_response) do
-        Entities::UserEntity.represent(jwt_user.reload, root: :user).to_json
+        Entities::UserEntity.represent(jwt_user.reload, root: :user, with_tokens: true).to_json
       end
 
       before do
