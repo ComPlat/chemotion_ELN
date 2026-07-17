@@ -1,82 +1,63 @@
-import React from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Dropdown } from 'react-bootstrap';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import PrintCodeFetcher from 'src/fetchers/PrintCodeFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { PDFDocument } from 'pdf-lib';
 import Utils from 'src/utilities/Functions';
 import isUIComponentEnabled from 'src/utilities/UIComponentHelper';
 import 'whatwg-fetch';
 
-export default class SelectionGenerateButton extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      checkedIds: UIStore.getState().sample.checkedIds,
-      json: {},
-      matrix: null,
-      enableComputedProps: null,
-      enableReactionPredict: null,
-      hasSampleExplorer: isUIComponentEnabled('sampleExplorer'),
-    };
+const SelectionGenerateButton = () => {
+  const { currentUser } = useContext(StoreContext).userStore;
+  const [checkedIds, setCheckedIds] = useState(UIStore.getState().sample.checkedIds);
+  const [json, setJson] = useState({});
+  const [hasSampleExplorer, setHasSampleExplorer] = useState(isUIComponentEnabled('sampleExplorer'));
 
-    this.onUIStoreChange = this.onUIStoreChange.bind(this);
-    this.onUserStoreChange = this.onUserStoreChange.bind(this);
-    this.downloadPrintCodesPDF = this.downloadPrintCodesPDF.bind(this);
-  }
+  const ids = checkedIds.toArray();
+  const disabledPrint = !(ids.length > 0);
+  const pdfMenuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
+  const enableComputedProps = MatrixCheck(currentUser?.matrix, 'computedProp');
+  const enableReactionPredict = MatrixCheck(currentUser?.matrix, 'reactionPrediction');
 
-  async componentDidMount() {
-    UIStore.listen(this.onUIStoreChange);
-    UserStore.listen(this.onUserStoreChange);
-    this.onUIStoreChange(UIStore.getState());
-    this.onUserStoreChange(UserStore.getState());
-
-    // Import the PDF configuration when the component mounts
-    try {
-      const response = await fetch('/json/printingConfig/defaultConfig.json');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+  const onUIStoreChange = useCallback((state) => {
+    if (state.sample.checkedIds !== checkedIds) {
+      setCheckedIds(state.sample.checkedIds);
+      const sampleExplorer = isUIComponentEnabled('sampleExplorer', state);
+      if (sampleExplorer !== hasSampleExplorer) {
+        setHasSampleExplorer(sampleExplorer);
       }
-      const tmpJson = await response.json();
-      this.setState({ json: tmpJson });
-    } catch (err) {
-      console.error('Failed to fetch JSON', err);
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  componentWillUnmount() {
-    UIStore.unlisten(this.onUIStoreChange);
-    UserStore.unlisten(this.onUserStoreChange);
-  }
+  useEffect(() => {
+    UIStore.listen(onUIStoreChange);
 
-  onUIStoreChange(state) {
-    if (state.sample.checkedIds !== this.state.checkedIds) {
-      this.setState({
-        checkedIds: state.sample.checkedIds
-      });
-    }
-    const hasSampleExplorer = isUIComponentEnabled('sampleExplorer', state);
-    if (hasSampleExplorer !== this.state.hasSampleExplorer) {
-      this.setState({ hasSampleExplorer });
-    }
-  }
+    const importConfigPdf = async () => {
+      // Import the PDF configuration when the component mounts
+      try {
+        const response = await fetch('/json/printingConfig/defaultConfig.json');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const tmpJson = await response.json();
+        setJson(tmpJson);
+      } catch (err) {
+        console.error('Failed to fetch JSON', err);
+      }
+    };
+    importConfigPdf();
 
-  onUserStoreChange(state) {
-    const { matrix: storeMatrix } = state?.currentUser || {};
-    if (this.state.matrix !== storeMatrix) {
-      this.setState({
-        matrix: storeMatrix,
-        enableComputedProps: MatrixCheck(storeMatrix, 'computedProp'),
-        enableReactionPredict: MatrixCheck(storeMatrix, 'reactionPrediction'),
-      });
-    }
-  }
+    return () => UIStore.unlisten(onUIStoreChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  async downloadPrintCodesPDF(ids, template) {
-    const { json } = this.state;
-    const fetchedData = await PrintCodeFetcher.fetchPrintCodes(ids.length > 0 ? ids : null, template, json);
+  const downloadPrintCodesPDF = async (idsArray, template) => {
+    const fetchedData = await PrintCodeFetcher.fetchPrintCodes(idsArray.length > 0 ? idsArray : null, template, json);
 
     if (!Array.isArray(fetchedData) || fetchedData.length === 0) {
       console.error('No data received or data is not in expected format');
@@ -97,83 +78,76 @@ export default class SelectionGenerateButton extends React.Component {
     const url = URL.createObjectURL(blob);
 
     Utils.downloadFile({ contents: url, name: 'print_codes_merged.pdf' });
-  }
+  };
 
-  render() {
-    const {
-      json, checkedIds, enableComputedProps, enableReactionPredict, hasSampleExplorer
-    } = this.state;
-    const ids = checkedIds.toArray();
-    const disabledPrint = !(ids.length > 0);
-    const pdfMenuItems = Object.entries(json).map(([key]) => ({ key, name: key }));
+  return (
+    <Dropdown id="selection-generate-button">
+      <Dropdown.Toggle variant="light" size="sm" title="Reporting" aria-label="Reporting">
+        <i className="fa fa-caret-square-o-right me-1" aria-hidden="true" />
+        <span className="selection-action-text-label">Reporting</span>
+      </Dropdown.Toggle>
 
-    return (
-      <Dropdown id="selection-generate-button">
-        <Dropdown.Toggle variant="light" size="sm" title="Reporting" aria-label="Reporting">
-          <i className="fa fa-caret-square-o-right me-1" aria-hidden="true" />
-          <span className="selection-action-text-label">Reporting</span>
-        </Dropdown.Toggle>
-
-        <Dropdown.Menu>
-          {/* PDF Generation Items */}
-          {pdfMenuItems.map((e) => (
-            <Dropdown.Item
-              key={e.key}
-              disabled={disabledPrint}
-              onClick={(event) => {
-                event.stopPropagation();
-                if (!disabledPrint) {
-                  this.downloadPrintCodesPDF(ids, e.name);
-                }
-              }}
-            >
-              {e.name}
-            </Dropdown.Item>
-          ))}
-
-          {/* Separator between PDF and Report functions */}
-          {pdfMenuItems.length > 0 && (
-            <Dropdown.Divider />
-          )}
-
-          {/* Report Utility Items */}
-          <Dropdown.Item onClick={ElementActions.showReportDetails} title="Report">
-            Report
+      <Dropdown.Menu>
+        {/* PDF Generation Items */}
+        {pdfMenuItems.map((e) => (
+          <Dropdown.Item
+            key={e.key}
+            disabled={disabledPrint}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (!disabledPrint) {
+                downloadPrintCodesPDF(ids, e.name);
+              }
+            }}
+          >
+            {e.name}
           </Dropdown.Item>
+        ))}
 
+        {/* Separator between PDF and Report functions */}
+        {pdfMenuItems.length > 0 && (
           <Dropdown.Divider />
+        )}
 
-          <Dropdown.Item onClick={ElementActions.showFormatContainer} title="Analyses Formatting">
-            Format Analyses
+        {/* Report Utility Items */}
+        <Dropdown.Item onClick={ElementActions.showReportDetails} title="Report">
+          Report
+        </Dropdown.Item>
+
+        <Dropdown.Divider />
+
+        <Dropdown.Item onClick={ElementActions.showFormatContainer} title="Analyses Formatting">
+          Format Analyses
+        </Dropdown.Item>
+
+        {hasSampleExplorer && (
+          <Dropdown.Item onClick={ElementActions.showExplorerDetails} title="Explorer">
+            Explorer
           </Dropdown.Item>
+        )}
 
-          {hasSampleExplorer && (
-            <Dropdown.Item onClick={ElementActions.showExplorerDetails} title="Explorer">
-              Explorer
+        {enableComputedProps && (
+          <>
+            <Dropdown.Item onClick={ElementActions.showComputedPropsGraph} title="Graph">
+              Computed Props Graph
             </Dropdown.Item>
-          )}
+            <Dropdown.Item onClick={ElementActions.showComputedPropsTasks} title="Tasks">
+              Computed Props Tasks
+            </Dropdown.Item>
+          </>
+        )}
 
-          {enableComputedProps && (
-            <>
-              <Dropdown.Item onClick={ElementActions.showComputedPropsGraph} title="Graph">
-                Computed Props Graph
-              </Dropdown.Item>
-              <Dropdown.Item onClick={ElementActions.showComputedPropsTasks} title="Tasks">
-                Computed Props Tasks
-              </Dropdown.Item>
-            </>
-          )}
+        {enableReactionPredict && (
+          <>
+            <Dropdown.Divider />
+            <Dropdown.Item onClick={ElementActions.showPredictionContainer} title="Predict">
+              Synthesis Prediction
+            </Dropdown.Item>
+          </>
+        )}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+};
 
-          {enableReactionPredict && (
-            <>
-              <Dropdown.Divider />
-              <Dropdown.Item onClick={ElementActions.showPredictionContainer} title="Predict">
-                Synthesis Prediction
-              </Dropdown.Item>
-            </>
-          )}
-        </Dropdown.Menu>
-      </Dropdown>
-    );
-  }
-}
+export default observer(SelectionGenerateButton);
