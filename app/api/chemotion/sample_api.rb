@@ -267,11 +267,20 @@ module Chemotion
                            .order(Arel.sql("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))"))
                            .order(:sum_formular)
           reset_pagination_page(molecule_scope)
-          paginate(molecule_scope).each do |molecule|
+          paginated_molecules = paginate(molecule_scope)
+          samples_by_molecule = paginated_molecules.map do |molecule|
             samples_group = sample_scope.select { |v| v.molecule_id == molecule.id }
-            samples_group = samples_group.sort { |x, y| y.updated_at <=> x.updated_at }
+            samples_group.sort { |x, y| y.updated_at <=> x.updated_at }
+          end
+          page_samples = samples_by_molecule.flatten
+          owned_element_ids = ElementDetailLevelCalculator.owned_element_ids(elements: page_samples, user: current_user)
+          samples_by_molecule.each do |samples_group|
             samples_group.each do |sample|
-              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
+              detail_levels = ElementDetailLevelCalculator.new(
+                user: current_user,
+                element: sample,
+                owns_collection_with_element: owned_element_ids.include?(sample.id),
+              ).detail_levels
               sample_list.push(
                 Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
               )
@@ -280,8 +289,14 @@ module Chemotion
         else
           reset_pagination_page(sample_scope)
           sample_scope = sample_scope.order('samples.updated_at DESC')
-          paginate(sample_scope).each do |sample|
-            detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
+          page_samples = paginate(sample_scope).to_a
+          owned_element_ids = ElementDetailLevelCalculator.owned_element_ids(elements: page_samples, user: current_user)
+          page_samples.each do |sample|
+            detail_levels = ElementDetailLevelCalculator.new(
+              user: current_user,
+              element: sample,
+              owns_collection_with_element: owned_element_ids.include?(sample.id),
+            ).detail_levels
             sample_list.push(
               Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
             )
