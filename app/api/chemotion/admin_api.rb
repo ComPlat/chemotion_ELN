@@ -25,10 +25,11 @@ module Chemotion
           default = User.default_disk_space / 1024 / 1024
           { allocated_user_space: default }
         end
+        desc 'set users default allocated space'
+        params do
+          requires :allocatedUserSpace, type: Integer, desc: 'users default allocated space'
+        end
         put do
-          params do
-            require :allocatedUserSpace, type: Integer, desc: 'users default allocated space'
-          end
           User.default_disk_space = params[:allocatedUserSpace]
         end
       end
