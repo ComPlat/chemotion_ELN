@@ -3,10 +3,6 @@ import expect from 'expect';
 import sinon from 'sinon';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
-
 import ElementsTable from 'src/apps/mydb/elements/list/ElementsTable';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';

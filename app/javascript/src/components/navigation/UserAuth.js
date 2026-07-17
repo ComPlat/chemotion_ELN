@@ -17,13 +17,14 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import { UserLabelModal } from 'src/components/UserLabels';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
 import AccountProfile from 'src/apps/userSettings/AccountProfile';
 
 export default class UserAuth extends Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     this.state = {
@@ -190,7 +191,7 @@ export default class UserAuth extends Component {
     }).then((result) => {
       if (result.error) {
         // alert(result.error);
-        NotificationActions.add({
+        this.context.notifications.add({
           message: result.error,
           level: 'error',
         });

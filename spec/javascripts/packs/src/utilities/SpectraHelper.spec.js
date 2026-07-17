@@ -1,7 +1,4 @@
 import expect from 'expect';
-import {
-  describe, it, beforeEach
-} from 'mocha';
 import { FN } from '@complat/react-spectra-editor';
 import {
   isNMRKind, BuildSpcInfosForNMRDisplayer,
@@ -10,7 +7,7 @@ import {
 } from 'src/utilities/SpectraHelper';
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
-import { chmosFixture } from '../../../fixture/chmos';
+import { chmosFixture } from 'fixture/chmos';
 
 describe('SpectraHelper', () => {
   describe('.isNMRKind()', () => {

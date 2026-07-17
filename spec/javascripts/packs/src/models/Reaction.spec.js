@@ -1,6 +1,5 @@
 import ReactionFactory from 'factories/ReactionFactory';
 import expect from 'expect';
-import { beforeEach, describe, it } from 'mocha';
 import SampleFactory from 'factories/SampleFactory';
 import Reaction from 'src/models/Reaction';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';

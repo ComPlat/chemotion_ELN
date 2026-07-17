@@ -1,10 +1,6 @@
 import Attachment from 'src/models/Attachment';
 import ResearchPlan from 'src/models/ResearchPlan';
 import expect from 'expect';
-import {
-  describe, it
-} from 'mocha';
-
 describe('ResearchPlan', () => {
   const researchPlan = ResearchPlan.buildEmpty();
 

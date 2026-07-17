@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import React, {
-  useState, useEffect, useMemo, useCallback
+  useState, useEffect, useMemo, useCallback, useContext
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip, Dropdown, Overlay, ButtonGroup
@@ -10,13 +10,13 @@ import { values, last } from 'lodash';
 import uuid from 'uuid';
 import mime from 'mime-types';
 import SpinnerPencilIcon from 'src/components/common/SpinnerPencilIcon';
-import Dropzone from 'react-dropzone';
+import Dropzone from 'src/components/common/Dropzone';
 import Utils from 'src/utilities/Functions';
 import ImageModal from 'src/components/common/ImageModal';
 import ThirdPartyAppFetcher from 'src/fetchers/ThirdPartyAppFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import EditorFetcher from 'src/fetchers/EditorFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export const attachmentThumbnail = (attachment) => (
   <div className="attachment-row-image">
@@ -157,6 +157,7 @@ export const annotateButton = (attachment, onClick) => (
  *  - onChange: function
  */
 export const EditButton = ({ attachment, disabled, onChange }) => {
+  const { notifications } = useContext(StoreContext);
   const { docserver } = UIStore.getState() || {};
   // Previously "attachmentEditor" -> now available at UserStore.editorConfig.available (bool)
   const attachmentEditor = Boolean(docserver?.available);
@@ -239,7 +240,7 @@ export const EditButton = ({ attachment, disabled, onChange }) => {
           newAttachment.updated_at = new Date();
           onChange(newAttachment);
         } else {
-          NotificationActions.add({ message: 'Cannot edit this file.', level: 'error', position: 'tc' });
+          notifications.add({ message: 'Cannot edit this file.', level: 'error', position: 'tc' });
           onChange(newAttachment);
         }
       });

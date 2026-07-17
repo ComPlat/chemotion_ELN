@@ -1,10 +1,6 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
-
 describe('ChemotionApiClient.deleteRequest', () => {
   let fetchStub;
 

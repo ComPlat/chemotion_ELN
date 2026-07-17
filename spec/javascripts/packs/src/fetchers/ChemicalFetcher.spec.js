@@ -1,10 +1,6 @@
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
-
 describe('ChemicalFetcher methods', () => {
   let fetchStub;
 

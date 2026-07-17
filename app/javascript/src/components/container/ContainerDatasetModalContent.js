@@ -5,7 +5,6 @@ import ReactDOM from 'react-dom';
 import {
   Form, Button, ButtonToolbar, Alert
 } from 'react-bootstrap';
-import Dropzone from 'react-dropzone';
 import SaveEditedImageWarning from 'src/apps/mydb/elements/details/researchPlans/SaveEditedImageWarning';
 import debounce from 'es6-promise-debounce';
 import {

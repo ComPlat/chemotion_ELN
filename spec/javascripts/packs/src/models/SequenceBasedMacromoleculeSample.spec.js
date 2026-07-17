@@ -1,6 +1,5 @@
 import expect from 'expect';
 import sinon from 'sinon';
-import { describe, it, beforeEach } from 'mocha';
 
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 

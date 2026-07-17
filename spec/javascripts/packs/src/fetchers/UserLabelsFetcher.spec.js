@@ -1,10 +1,6 @@
 import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
-
 describe('UserLabelsFetcher.bulkUpdate', () => {
   let fetchStub;
 

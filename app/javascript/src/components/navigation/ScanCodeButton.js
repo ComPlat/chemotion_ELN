@@ -1,195 +1,108 @@
-import Quagga from 'quagga';
-import React from 'react';
-import {
-  Alert, Button, Form
-} from 'react-bootstrap';
-import QrReader from 'react-qr-reader';
+import React, { useState, useRef } from 'react';
+import { Alert, Button, Form } from 'react-bootstrap';
+import { Scanner } from '@yudiel/react-qr-scanner';
 import AppModal from 'src/components/common/AppModal';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import Aviator from 'aviator';
 import CodeLogsFetcher from 'src/fetchers/CodeLogsFetcher';
 
-function initializeBarcodeScan() {
-  Quagga.init({
-    inputStream: {
-      name: 'Live',
-      type: 'LiveStream',
-      target: document.querySelector('#barcode-scanner'),
-    },
-    decoder: {
-      readers: ['code_128_reader'],
-    }
-  }, (err) => {
-    if (err) {
-      console.log(err);
-      return;
-    }
-    console.log('Initialization finished. Ready to start');
-    Quagga.start();
-  });
-}
+const SCAN_FORMATS = ['qr_code', 'code_128', 'ean_13', 'ean_8', 'data_matrix'];
 
-function handleError(err) {
-  console.error(err);
-}
+const ScanCodeButton = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanError, setScanError] = useState(null);
+  const codeInput = useRef(null);
 
-export default class ScanCodeButton extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      showModal: false,
-      showQrReader: false,
-      scanError: null,
-      scanInfo: null,
-    };
+  const close = () => {
+    setShowModal(false);
+    setShowScanner(false);
+    setScanError(null);
+  };
 
-    this.open = this.open.bind(this);
-    this.close = this.close.bind(this);
-    this.startBarcodeScan = this.startBarcodeScan.bind(this);
-    this.startQrCodeScan = this.startQrCodeScan.bind(this);
-    this.handleKeyPress = this.handleKeyPress.bind(this);
-    this.handleScan = this.handleScan.bind(this);
-  }
-
-  handleScan(data, stopQuagga = false) {
-    const codeInput = this.codeInput.value;
-    let codeLog = {};
-    const dataInput = codeInput || data;
-    if (!dataInput) { return; }
-    console.log(data, codeInput, dataInput);
-
-    if (stopQuagga) { Quagga.stop(); }
+  const handleScan = (code) => {
+    const dataInput = codeInput.current?.value || code;
+    if (!dataInput) return;
 
     CodeLogsFetcher.fetchGenericCodeLogs(dataInput)
       .then((json) => {
-        codeLog = json.code_log;
+        const { code_log: codeLog } = json;
         if (codeLog.source === 'container') {
           // open active analysis
           UIActions.selectTab({ tabKey: 1, type: codeLog.root_code.source });
           UIActions.selectActiveAnalysis({ type: 'sample', analysisIndex: codeLog.source_id });
           Aviator.navigate(`/collection/all/${codeLog.root_code.source}/${codeLog.root_code.source_id}`);
-          this.close();
+          close();
         } else {
           UIActions.selectTab({ tabKey: 0, type: codeLog.root_code.source });
           Aviator.navigate(`/collection/all/${codeLog.source}/${codeLog.source_id}`);
-          this.close();
+          close();
         }
       })
       .catch((errorMessage) => {
-        console.log(errorMessage.message);
-        this.setState({ scanError: errorMessage.message });
+        setScanError(errorMessage.message);
       });
-  }
+  };
 
-  handleKeyPress(e) {
+  const handleScanResult = (results) => {
+    if (results?.length > 0) {
+      handleScan(results[0].rawValue);
+    }
+  };
+
+  const handleKeyPress = (e) => {
     const code = e.keyCode || e.which;
     if (code === 13) {
       e.preventDefault();
-      this.scanInput.click();
+      handleScan();
     }
-  }
+  };
 
-  open() {
-    this.setState({ showModal: true });
-  }
+  return (
+    <>
+      <Button
+        id="search-code-split-button"
+        variant="topbar"
+        onClick={() => setShowModal(true)}
+      >
+        <i className="fa fa-barcode" />
+        <i className="fa fa-search ms-n2" />
+      </Button>
 
-  close() {
-    this.setState({ showModal: false, showQrReader: false, scanError: null });
-  }
-
-  startBarcodeScan() {
-    initializeBarcodeScan();
-
-    Quagga.onDetected((data) => {
-      const barcode = data.codeResult.code;
-      this.handleScan(barcode, true);
-      Quagga.stop();
-    });
-
-    this.setState({ showQrReader: false });
-  }
-
-  startQrCodeScan() {
-    this.setState({ showQrReader: true });
-  }
-
-  scanModal() {
-    const { showModal, showQrReader } = this.state;
-    return (
       <AppModal
         show={showModal}
-        onHide={this.close}
+        onHide={close}
         title="Scan barcode or QR code"
-        primaryActionLabel="Start QR code scan"
-        onPrimaryAction={this.startQrCodeScan}
-        extendedFooter={(
-          <Button onClick={this.startBarcodeScan}>Start barcode scan</Button>
-        )}
+        primaryActionLabel="Start scanning"
+        onPrimaryAction={() => setShowScanner(true)}
       >
         <div id="code-scanner" style={{ maxHeight: '600px', overflow: 'hidden' }}>
-          <Form.Group>
+          <Form.Group className="mb-2">
             <Form.Control
               autoFocus
               type="text"
-              ref={(m) => { this.codeInput = m; }}
-              onKeyPress={this.handleKeyPress}
+              placeholder="Or enter code manually..."
+              ref={codeInput}
+              onKeyDown={handleKeyPress}
             />
           </Form.Group>
-          <input
-            type="button"
-            style={{ display: 'none' }}
-            ref={(scanInput) => { this.scanInput = scanInput; }}
-            onClick={() => this.handleScan()}
-          />
 
-          {showQrReader
-            ? (
-              <QrReader
-                previewStyle={{ width: 550 }}
-                onScan={this.handleScan}
-                onError={handleError}
-              />
-            )
-            : (
-              <div id="barcode-scanner" />
-            )}
+          {showScanner && (
+            <Scanner
+              onScan={handleScanResult}
+              onError={(err) => console.error(err)}
+              formats={SCAN_FORMATS}
+              styles={{ container: { width: 550 } }}
+            />
+          )}
         </div>
-        <br />
-        {this.scanAlert()}
+
+        {scanError && (
+          <Alert variant="danger" className="mt-2">{scanError}</Alert>
+        )}
       </AppModal>
-    );
-  }
+    </>
+  );
+};
 
-  scanAlert() {
-    const { scanError, scanInfo } = this.state;
-    if (scanError) {
-      return (
-        <div>
-          {scanInfo
-            && <Alert variant="info">{scanInfo}</Alert>}
-          <Alert variant="danger">
-            {scanError}
-          </Alert>
-        </div>
-      );
-    }
-    return null;
-  }
-
-  render() {
-    return (
-      <>
-        <Button
-          id="search-code-split-button"
-          variant="topbar"
-          onClick={this.open}
-        >
-          <i className="fa fa-barcode" />
-          <i className="fa fa-search ms-n2" />
-        </Button>
-
-        {this.scanModal()}
-      </>
-    );
-  }
-}
+export default ScanCodeButton;

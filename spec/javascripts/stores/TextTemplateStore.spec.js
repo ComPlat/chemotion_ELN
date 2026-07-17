@@ -1,5 +1,4 @@
 import expect from 'expect';
-import { describe, it, beforeEach, afterEach } from 'mocha';
 import sinon from 'sinon';
 
 import alt from 'src/stores/alt/alt';

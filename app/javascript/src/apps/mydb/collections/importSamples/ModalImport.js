@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Form, Dropdown
 } from 'react-bootstrap';
-import Dropzone from 'react-dropzone';
+import Dropzone from 'src/components/common/Dropzone';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import readXlsxFile, { readSheetNames } from 'read-excel-file';
 import { parse as parseSdf } from 'sdf-parser';
@@ -11,11 +11,12 @@ import { parse as parseSdf } from 'sdf-parser';
 import AppModal from 'src/components/common/AppModal';
 import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import ColumnMappingComponent from 'src/apps/mydb/collections/ColumnMappingComponent';
 import ValidationComponent from 'src/apps/mydb/collections/ValidationComponent';
 
 export default class ModalImport extends React.Component {
+  static contextType = StoreContext;
   static extractDataFromText(file, delimiter, mappedColumns) {
     if (!file) {
       console.warn('No text file provided for extraction');
@@ -226,11 +227,10 @@ export default class ModalImport extends React.Component {
     const template = templates[type];
 
     if (!template) {
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Template Error',
         message: `Template "${type}" not found. Please contact support.`,
         level: 'error',
-        dismissible: true,
       });
       return;
     }
@@ -250,6 +250,7 @@ export default class ModalImport extends React.Component {
   constructor(props) {
     super(props);
     this.validationComponentRef = React.createRef();
+    this.handleValidation = this.handleValidation.bind(this);
     this.handleValidationStateChange = this.handleValidationStateChange.bind(this);
 
     // Resolve the target collection ID once
@@ -312,12 +313,11 @@ export default class ModalImport extends React.Component {
         title: 'Uploading',
         message: 'The file is being processed. Please wait...',
         level: 'warning',
-        dismissible: false,
         uid: 'import_samples_upload',
         position: 'bl'
       };
 
-      NotificationActions.add(notification);
+      this.context.notifications.add(notification);
     }
   }
 
@@ -336,14 +336,13 @@ export default class ModalImport extends React.Component {
     });
   }
 
-  static handleValidation(invalidRows) {
+  handleValidation(invalidRows) {
     if (invalidRows.length > 0) {
       // if some rows have validation errors, show notification but keep the modal open
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Validation Error',
         message: `Found ${invalidRows.length} invalid rows. Please correct them before importing.`,
         level: 'error',
-        dismissible: true,
       });
     }
   }
@@ -406,11 +405,10 @@ export default class ModalImport extends React.Component {
     ElementActions.importSamplesFromFile(params);
     onHide();
 
-    NotificationActions.add({
+    this.context.notifications.add({
       title: 'Uploading',
       message: 'The validated data is being processed. Please wait...',
       level: 'warning',
-      dismissible: false,
       uid: 'import_samples_upload',
       position: 'bl'
     });
@@ -429,11 +427,10 @@ export default class ModalImport extends React.Component {
       if (!mappedColumns || Object.keys(mappedColumns).length === 0 || importingColumns.length === 0) {
         message = 'Please map at least one column to import';
         this.setState({ isProcessing: false });
-        NotificationActions.add({
+        this.context.notifications.add({
           title: 'Validation Error',
           message,
           level: 'error',
-          dismissible: true,
         });
         return;
       }
@@ -444,11 +441,10 @@ export default class ModalImport extends React.Component {
         const duplicateMsg = `Duplicate mapped columns found: ${duplicateKeys.join(', ')}. `
           + 'Please ensure each field is mapped only once.';
         this.setState({ isProcessing: false });
-        NotificationActions.add({
+        this.context.notifications.add({
           title: 'Duplicate Mappings',
           message: duplicateMsg,
           level: 'error',
-          dismissible: true,
         });
         return;
       }
@@ -481,11 +477,10 @@ export default class ModalImport extends React.Component {
     } catch (error) {
       console.error('Data extraction error:', error);
       this.setState({ isProcessing: false });
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Error',
         message: message || `Failed to extract data from file for validation: ${error.message}`,
         level: 'error',
-        dismissible: true,
       });
     }
   }
@@ -763,11 +758,10 @@ export default class ModalImport extends React.Component {
         throw new Error('Excel file appears to be empty');
       }
     } catch (error) {
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Error',
         message: `Failed to parse Excel file: ${error.message}`,
         level: 'error',
-        dismissible: true,
       });
     }
   }
@@ -825,11 +819,10 @@ export default class ModalImport extends React.Component {
         const sdfData = molecules.filter((molecule) => molecule && typeof molecule === 'object');
 
         if (sdfData.length === 0) {
-          NotificationActions.add({
+          this.context.notifications.add({
             title: 'Error',
             message: 'No valid molecule data could be extracted from the SDF file',
             level: 'error',
-            dismissible: true,
           });
         }
 
@@ -840,22 +833,20 @@ export default class ModalImport extends React.Component {
         });
       } catch (error) {
         console.error('SDF parsing error:', error);
-        NotificationActions.add({
+        this.context.notifications.add({
           title: 'Error',
           message: `Failed to parse SDF file: ${error.message}`,
           level: 'error',
-          dismissible: true,
         });
       }
     };
 
     reader.onerror = (error) => {
       console.error('FileReader error for SDF file:', error);
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Error',
         message: 'Failed to read SDF file',
         level: 'error',
-        dismissible: true,
       });
     };
 
@@ -872,11 +863,10 @@ export default class ModalImport extends React.Component {
 
         // Check for binary content
         if (ModalImport.containsBinaryContent(fileContent)) {
-          NotificationActions.add({
+          this.context.notifications.add({
             title: 'Unsupported File Format',
             message: 'This appears to be a binary file. Please use an Excel, CSV, TSV, or SDF file.',
             level: 'error',
-            dismissible: true,
           });
           return;
         }
@@ -904,21 +894,19 @@ export default class ModalImport extends React.Component {
           throw new Error('File appears to be empty');
         }
       } catch (error) {
-        NotificationActions.add({
+        this.context.notifications.add({
           title: 'Error',
           message: `Failed to parse file: ${error.message}. Please ensure it is a valid format.`,
           level: 'error',
-          dismissible: true,
         });
       }
     };
 
     reader.onerror = () => {
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Error',
         message: 'Failed to read the file. Please try again or use a different file.',
         level: 'error',
-        dismissible: true,
       });
     };
 
@@ -940,7 +928,12 @@ export default class ModalImport extends React.Component {
           <Dropzone
             onDrop={(attachmentFile) => this.handleFileDrop(attachmentFile)}
             style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
-            accept=".csv,.tsv,.txt,.xlsx,.xls,.sdf"
+            accept={{
+              'text/csv': ['.csv', '.tsv', '.txt'],
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+              'application/vnd.ms-excel': ['.xls'],
+              'chemical/x-mdl-sdfile': ['.sdf'],
+            }}
           >
             <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
               Drop File, or Click to Select. (Supported formats: CSV, TSV, Excel, SDF)
@@ -1107,7 +1100,7 @@ export default class ModalImport extends React.Component {
               rowData={rowData || []}
               onRowDataChange={(data) => this.setState({ rowData: data })}
               columnDefs={columnDefs || []}
-              onValidate={(invalidRows) => ModalImport.handleValidation(invalidRows)}
+              onValidate={(invalidRows) => this.handleValidation(invalidRows)}
               onValidationStateChange={this.handleValidationStateChange}
             />
           )}

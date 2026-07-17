@@ -5,7 +5,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import UIFetcher from 'src/fetchers/UIFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
@@ -202,35 +202,31 @@ class ElementActions {
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(params) {
-    let uid;
-    NotificationActions.add({
+    const uid = rootStore.notificationsStore.add({
       title: "Searching ...",
       level: "info",
       position: "tc",
-      onAdd: function (notificationObject) { uid = notificationObject.uid; }
     });
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
         .then((result) => {
           dispatch(result);
-          NotificationActions.removeByUid(uid);
+          rootStore.notificationsStore.removeByUid(uid);
         }).catch((errorMessage) => { console.log(errorMessage); });
     };
   }
 
   fetchBasedOnSearchResultIds(params) {
-    let uid;
-    NotificationActions.add({
+    const uid = rootStore.notificationsStore.add({
       title: "Searching ...",
       level: "info",
       position: "tc",
-      onAdd: function (notificationObject) { uid = notificationObject.uid; }
     });
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchResultIds(params)
         .then((result) => {
           dispatch(result);
-          NotificationActions.removeByUid(uid);
+          rootStore.notificationsStore.removeByUid(uid);
         }).catch((errorMessage) => { console.log(errorMessage); });
     };
   }
@@ -1365,24 +1361,22 @@ class ElementActions {
     return (dispatch) => {
       UserLabelsFetcher.bulkUpdate(params)
         .then(() => {
-          NotificationActions.add({
+          rootStore.notificationsStore.add({
             title: 'Bulk edit user labels',
             message: 'Labels updated for the selection.',
             level: 'success',
             position: 'tr',
-            dismissible: 'button',
             autoDismiss: 5,
             uid: 'bulkUpdateUserLabels',
           });
           dispatch();
         })
         .catch(() => {
-          NotificationActions.add({
+          rootStore.notificationsStore.add({
             title: 'Bulk edit user labels',
             message: 'Could not update labels for the selection.',
             level: 'error',
             position: 'tr',
-            dismissible: 'button',
             autoDismiss: 5,
             uid: 'bulkUpdateUserLabels',
           });

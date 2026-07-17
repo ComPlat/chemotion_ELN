@@ -1,10 +1,6 @@
 // eslint-disable-next-line import/no-unresolved
 import { collectionHasPermission } from 'src/utilities/collectionUtilities';
 import expect from 'expect';
-import {
-  describe, it
-} from 'mocha';
-
 function createCollectionDummy(collectionShareId = undefined, permissionLevel = 0) {
   const currentCollection = {};
   if (collectionShareId !== undefined) {

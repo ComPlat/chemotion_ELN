@@ -96,6 +96,20 @@ export default class ImageModal extends Component {
     if (this.props.disableClick) return;
     stopEvent(e);
     const { attachment, candidateIds, preferredId } = ImageModal.derive(this.props);
+
+    // Not-yet-uploaded attachments have a client-side uuid, not a server id: there's
+    // nothing to fetch yet, so show the local blob preview instead.
+    if (attachment?.is_new || attachment?.is_pending) {
+      const isImage = attachment?.file?.type?.startsWith('image/');
+      this.setState({
+        showModal: true,
+        selectedId: null,
+        preferredId,
+        modalPreviewSrc: isImage ? attachment?.preview : DEFAULT_UNAVAILABLE,
+      });
+      return;
+    }
+
     // Fall back to the first candidate so a PDF-only analysis (no thumbnailed default) still
     // opens on a selectable attachment.
     const selectedId = preferredId
@@ -123,7 +137,7 @@ export default class ImageModal extends Component {
         this.setState({ thumbnail: src });
       } else if (attachment?.is_new || attachment?.is_pending) {
         const isImage = attachment?.file?.type?.startsWith('image/');
-        this.setState({ thumbnail: isImage ? attachment?.file?.preview : DEFAULT_UNAVAILABLE });
+        this.setState({ thumbnail: isImage ? attachment?.preview : DEFAULT_UNAVAILABLE });
       } else {
         this.setState({ thumbnail: DEFAULT_NO_ATTACHMENT });
       }

@@ -2,7 +2,7 @@ import ApiClient from 'src/api_clients/ChemotionApiClient';
 import { Map } from 'immutable';
 
 import Sample from 'src/models/Sample';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
@@ -101,7 +101,11 @@ export default class SamplesFetcher {
     data.append('currentCollectionId', params.currentCollectionId);
     data.append('import_type', params.type);
 
-    return ApiClient.postFormData('/api/v1/samples/import', { body: data });
+    return ApiClient.postFormData('/api/v1/samples/import', { body: data })
+      .then((json) => {
+        rootStore.notificationsStore.notifyImportSamplesFromFile(json);
+        return json;
+      });
   }
 
   static importSamplesFromFileConfirm(params) {
@@ -115,14 +119,14 @@ export default class SamplesFetcher {
       .then((json) => {
         if (Array.isArray(json.error_messages)) {
           json.error_messages.forEach((message) => {
-            NotificationActions.add({
+            rootStore.notificationsStore.add({
               message,
               level: 'error',
               autoDismiss: 10
             });
           });
         } else {
-          NotificationActions.add({
+          rootStore.notificationsStore.add({
             message: json.error_messages || json.message,
             level: json.message ? 'success' : 'error',
             autoDismiss: 10

@@ -7,7 +7,7 @@ export default class Attachment extends Element {
 
   static filePreview(file) {
     if (!file.type) { return Attachment.NO_PREVIEW_AVAILABLE_PATH; }
-    return file.type.split('/')[0] === 'image' ? file.preview : Attachment.NO_PREVIEW_AVAILABLE_PATH;
+    return file.type.split('/')[0] === 'image' ? URL.createObjectURL(file) : Attachment.NO_PREVIEW_AVAILABLE_PATH;
   }
 
   static fromFile(file) {

@@ -1,7 +1,7 @@
 import React, {
   useState, useEffect, useContext, useRef, useCallback
 } from 'react';
-import { StoreContext } from 'src/stores/mobx/RootStore';
+import { StoreContext , rootStore } from 'src/stores/mobx/RootStore';
 import {
   Button, Card, Row, Col, Nav, Pagination, InputGroup, Form
 } from 'react-bootstrap';
@@ -9,7 +9,6 @@ import 'whatwg-fetch';
 import _ from 'lodash';
 import AppModal from 'src/components/common/AppModal';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -32,7 +31,7 @@ const handleNotification = (nots, act, context, needCallback = true) => {
   let count = 0;
   nots.forEach((n) => {
     if (act === 'rem') {
-      NotificationActions.removeByUid(n.id);
+      rootStore.notificationsStore.removeByUid(n.id);
     }
     if (act === 'add') {
       count += 1;
@@ -56,7 +55,6 @@ const handleNotification = (nots, act, context, needCallback = true) => {
         title: `From ${n.sender_name} on ${infoTimeString}`,
         message: newText,
         level: n.content.level || 'warning',
-        dismissible: 'button',
         autoDismiss: n.content.autoDismiss || 5,
         position: n.content.position || 'tr',
         uid: n.id,
@@ -76,7 +74,7 @@ const handleNotification = (nots, act, context, needCallback = true) => {
           },
         },
       };
-      NotificationActions.add(notification);
+      rootStore.notificationsStore.add(notification);
 
       const { currentPage, itemsPerPage } = InboxStore.getState();
       const { currentCollection } = UIStore.getState();
@@ -133,7 +131,7 @@ const handleNotification = (nots, act, context, needCallback = true) => {
       position: 'tr',
     };
 
-    NotificationActions.add(notification);
+    rootStore.notificationsStore.add(notification);
   }
 };
 
@@ -556,6 +554,6 @@ const NoticeButton = () => {
       {renderModal()}
     </>
   );
-}
+};
 
 export default NoticeButton;

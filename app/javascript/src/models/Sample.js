@@ -21,7 +21,7 @@ import {
   determineTONFrequencyValue,
 } from 'src/utilities/UnitsConversion';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 const SAMPLE_TYPE_MIXTURE = 'Mixture';
 const SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule';
@@ -2362,7 +2362,7 @@ export default class Sample extends Element {
     }
 
     if (totalVolume < 0) {
-      NotificationActions.add({
+      rootStore.notificationsStore.add({
         title: 'Invalid Total Volume',
         message: 'Total volume cannot be negative. Please enter a valid volume value.',
         level: 'error',
@@ -2653,7 +2653,7 @@ export default class Sample extends Element {
 
     const failedSmiles = smilesList.filter((smiles, index) => !(results[index] && results[index].id));
     if (failedSmiles.length > 0) {
-      NotificationActions.add({
+      rootStore.notificationsStore.add({
         title: 'Molecule Resolution Failed',
         message: `Could not resolve ${failedSmiles.length} SMILES: ${failedSmiles.join(', ')}`,
         level: 'warning',

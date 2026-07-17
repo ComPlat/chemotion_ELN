@@ -3,11 +3,7 @@ import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
 import PolymerSection from 'src/apps/mydb/elements/details/samples/propertiesTab/PolymerSection';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 configure({ adapter: new Adapter() });
 
@@ -179,12 +175,12 @@ describe('PolymerSection', () => {
   });
 
   describe('error notifications in handleCustomInfoNumericChanged', () => {
-    beforeEach(() => {
-      sinon.stub(NotificationActions, 'add');
-    });
+    let notificationCalls;
+    let notifications;
 
-    afterEach(() => {
-      NotificationActions.add.restore();
+    beforeEach(() => {
+      notificationCalls = [];
+      notifications = { add: (n) => notificationCalls.push(n) };
     });
 
     it('shows an error notification when loading is set to zero', () => {
@@ -196,6 +192,7 @@ describe('PolymerSection', () => {
           handleAmountChanged={() => {}}
         />
       );
+      wrapper.instance().context = { notifications };
 
       wrapper.instance().handleCustomInfoNumericChanged(
         { value: 0.0, showString: false },
@@ -204,8 +201,8 @@ describe('PolymerSection', () => {
         sample
       );
 
-      expect(NotificationActions.add.calledOnce).toEqual(true);
-      expect(NotificationActions.add.firstCall.args[0].level).toEqual('error');
+      expect(notificationCalls.length).toEqual(1);
+      expect(notificationCalls[0].level).toEqual('error');
     });
 
     it('does not show a zero-loading warning while the user is still typing', () => {
@@ -217,6 +214,7 @@ describe('PolymerSection', () => {
           handleAmountChanged={() => {}}
         />
       );
+      wrapper.instance().context = { notifications };
 
       wrapper.instance().handleCustomInfoNumericChanged(
         { value: 0.0, showString: true },
@@ -225,7 +223,7 @@ describe('PolymerSection', () => {
         sample
       );
 
-      expect(NotificationActions.add.called).toEqual(false);
+      expect(notificationCalls.length).toEqual(0);
     });
 
     it('shows an error notification when MW * loading exceeds 1000', () => {
@@ -237,6 +235,7 @@ describe('PolymerSection', () => {
           handleAmountChanged={() => {}}
         />
       );
+      wrapper.instance().context = { notifications };
 
       // 100 * 11 = 1100 > 1000
       wrapper.instance().handleCustomInfoNumericChanged(
@@ -246,8 +245,8 @@ describe('PolymerSection', () => {
         sample
       );
 
-      expect(NotificationActions.add.calledOnce).toEqual(true);
-      expect(NotificationActions.add.firstCall.args[0].level).toEqual('error');
+      expect(notificationCalls.length).toEqual(1);
+      expect(notificationCalls[0].level).toEqual('error');
     });
 
     it('does not show an error notification for a valid loading value', () => {
@@ -259,6 +258,7 @@ describe('PolymerSection', () => {
           handleAmountChanged={() => {}}
         />
       );
+      wrapper.instance().context = { notifications };
 
       // 100 * 5 = 500 ≤ 1000
       wrapper.instance().handleCustomInfoNumericChanged(
@@ -268,7 +268,7 @@ describe('PolymerSection', () => {
         sample
       );
 
-      expect(NotificationActions.add.called).toEqual(false);
+      expect(notificationCalls.length).toEqual(0);
     });
   });
 

@@ -3,10 +3,11 @@ import PropTypes from 'prop-types';
 import { Form, Row, Col } from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo'
 import ElementalCompositionGroup from 'src/apps/mydb/elements/details/samples/propertiesTab/ElementalCompositionGroup'
-import NotificationActions from 'src/stores/alt/actions/NotificationActions'
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import { Select } from 'src/components/common/Select';
 
 export default class PolymerSection extends React.Component {
+  static contextType = StoreContext;
   handleCustomInfoNumericChanged(e, name, residue, sample) {
     const { handleSampleChanged, handleAmountChanged } = this.props;
     residue.custom_info[name] = e.value;
@@ -30,7 +31,7 @@ export default class PolymerSection extends React.Component {
       }
 
       if (errorMessage)
-        NotificationActions.add({
+        this.context.notifications.add({
           message: errorMessage,
           level: 'error'
         });

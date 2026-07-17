@@ -1,12 +1,12 @@
 import { keys, values } from 'mobx';
-import { flow, types } from 'mobx-state-tree';
+import { flow, getRoot, types } from 'mobx-state-tree';
 import { cloneDeep } from 'lodash';
 
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import CollectionSharesFetcher from 'src/fetchers/CollectionSharesFetcher';
 import CollectionElementsFetcher from 'src/fetchers/CollectionElementsFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
@@ -170,16 +170,16 @@ export const CollectionsStore = types
       if (response.error) {
         const errorMessage =
           (response.error.includes('invalid') ? 'You do not have the right to export all selected collections' : response.error)
-        NotificationActions.add({ title: 'Export Collection', message: errorMessage, level: 'error', autoDismiss: 10 })
+        getRoot(self).notificationsStore.add({ title: 'Export Collection', message: errorMessage, level: 'error', autoDismiss: 10 })
       }
     }),
     importCollections: flow(function* importCollections(params) {
       const response = yield CollectionsFetcher.importCollections(params)
 
       if (response.error) {
-        NotificationActions.add({ title: 'Import Collection', message: response.error, level: 'error', autoDismiss: 10 })
+        getRoot(self).notificationsStore.add({ title: 'Import Collection', message: response.error, level: 'error', autoDismiss: 10 })
       } else {
-        NotificationActions.notifyExImportStatus('Collection import', response.status);
+        getRoot(self).notificationsStore.notifyExImportStatus('Collection import', response.status);
       }
     }),
     useOrCreateCollection: flow(function* useOrCreateCollection(collectionParams) {
@@ -252,7 +252,7 @@ export const CollectionsStore = types
         if (isNewCollection) {
           self.deleteCollection(collectionId)
         }
-        NotificationActions.add({ title: errorTitle, message: response.error, level: 'error', autoDismiss: 10 })
+        getRoot(self).notificationsStore.add({ title: errorTitle, message: response.error, level: 'error', autoDismiss: 10 })
       } else if (response.status === 204) {
         return true
       }

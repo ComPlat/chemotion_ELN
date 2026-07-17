@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Tooltip, OverlayTrigger
@@ -19,7 +19,7 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import ReorderableMaterialContainer
   from 'src/apps/mydb/elements/details/reactions/schemeTab/ReorderableMaterialContainer';
 import CreateButton from 'src/components/common/CreateButton';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { components as ReactSelectComponents } from 'react-select';
 
@@ -39,12 +39,13 @@ const headers = {
   eq: 'Eq'
 };
 
-function MaterialGroup({
+const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, headIndex,
   dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
   switchYield, dndEnabled
-}) {
+}) => {
+  const { notifications } = useContext(StoreContext);
   const effectiveDndEnabled = dndEnabled && permitOn(reaction);
 
   const getMaterialComponent = ({
@@ -86,11 +87,11 @@ function MaterialGroup({
       if (materialGroup === 'reactants' && dropSbmmSample) {
         dropSbmmSample(item.element, materials.at(index), materialGroup);
       } else {
-        NotificationActions.add({
+        // Show notification if trying to drop SBMM into other groups
+        notifications.add({
           title: 'Invalid Action',
           message: 'SBMM samples can only be placed in the Reactants group.',
           level: 'warning',
-          dismissible: 'button',
           position: 'tr',
         });
       }
@@ -136,10 +137,9 @@ function MaterialGroup({
       dndEnabled={effectiveDndEnabled}
     />
   );
-}
+};
 
-function SwitchEquivButton({ lockEquivColumn, switchEquiv }) {
-  return (
+const SwitchEquivButton = ({ lockEquivColumn, switchEquiv }) => (
     <OverlayTrigger
       placement="top"
       overlay={(
@@ -161,7 +161,6 @@ function SwitchEquivButton({ lockEquivColumn, switchEquiv }) {
       </Button>
     </OverlayTrigger>
   );
-}
 
 SwitchEquivButton.propTypes = {
   lockEquivColumn: PropTypes.bool.isRequired,
@@ -220,7 +219,7 @@ const solventTracker = createUsageTracker('solvent-usage');
 
 // Tab counts are computed from react-select's live inputValue to avoid
 // the 1-frame lag that occurs when tracking inputValue in component state.
-function ReagentMenuList({ children, selectProps, ...menuListProps }) {
+const ReagentMenuList = ({ children, selectProps, ...menuListProps }) => {
   const {
     hasMostUsed, activeTab, onSetActiveTab, allTabLabel,
     inputValue, allOptions, topOptions, filterFn,
@@ -258,7 +257,7 @@ function ReagentMenuList({ children, selectProps, ...menuListProps }) {
       {children}
     </ReactSelectComponents.MenuList>
   );
-}
+};
 
 ReagentMenuList.propTypes = {
   children: PropTypes.node.isRequired,
@@ -274,12 +273,12 @@ ReagentMenuList.propTypes = {
   }).isRequired,
 };
 
-function GeneralMaterialGroup({
+const GeneralMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex,
   dropSample, onDrop, onReorder,
   showLoadingColumn, reaction,
   switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled
-}) {
+}) => {
   const isReactants = materialGroup === 'reactants';
   const isInteractionReaction = reaction.isInteractionReaction();
   const isInteractionProducts = isInteractionReaction && materialGroup === 'products';
@@ -487,12 +486,12 @@ function GeneralMaterialGroup({
       )}
     </ReorderableMaterialContainer>
   );
-}
+};
 
-function SolventsMaterialGroup({
+const SolventsMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex, reaction,
   dropSample, onDrop, onReorder, dndEnabled
-}) {
+}) => {
   const groupHeaders = { ...headers };
   groupHeaders.group = 'Solvents';
   const [activeTab, setActiveTab] = useState('all');
@@ -602,7 +601,7 @@ function SolventsMaterialGroup({
       )}
     </ReorderableMaterialContainer>
   );
-}
+};
 
 MaterialGroup.propTypes = {
   materialGroup: PropTypes.string.isRequired,

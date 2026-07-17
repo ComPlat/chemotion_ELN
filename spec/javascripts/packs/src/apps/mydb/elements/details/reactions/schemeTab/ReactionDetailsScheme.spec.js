@@ -1,6 +1,5 @@
 import expect from 'expect';
 import sinon from 'sinon';
-import { describe, it } from 'mocha';
 
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 

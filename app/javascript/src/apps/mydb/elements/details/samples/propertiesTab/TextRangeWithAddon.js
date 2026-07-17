@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { InputGroup, Form } from 'react-bootstrap';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const ALLOWED_INPUT_CHARS = /[-+0-9.,\s><=≥≤–]/;
 const NUMBER_REGEX = /-?(?:\d+(?:\.\d+)?|\.\d+)/g;
@@ -84,6 +84,7 @@ export const parseRangeInput = (rawInput) => {
 };
 
 export default class TextRangeWithAddon extends Component {
+  static contextType = StoreContext;
   handleInputChange(e) {
     const { onChange, field } = this.props;
     const input = e.target;
@@ -111,7 +112,7 @@ export default class TextRangeWithAddon extends Component {
 
     if (parsed === null) {
       const fieldLabel = humanizeFieldName(field);
-      NotificationActions.add({
+      this.context.notifications.add({
         title: `Invalid ${fieldLabel}`,
         message: `Could not parse "${rawValue.trim()}". Use formats like "65", "65-68", "65 68", ">300", or "<200".`,
         level: 'error',

@@ -9,7 +9,6 @@ import {
   conversionFactors,
   normalizeUnitKey,
 } from 'src/components/staticDropdownOptions/units';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 /**
  * Migrates legacy split-SBMM volume units saved as `nL` while the UI `n` prefix
@@ -66,7 +65,7 @@ const normalizeLoadedUnits = (sampleArgs) => {
 
 export default class SequenceBasedMacromoleculeSample extends Element {
   constructor(args) {
-    let newArgs = args;
+    const newArgs = args;
     if (!newArgs.is_new) {
       fixLegacySplitUnits(newArgs);
       normalizeLoadedUnits(newArgs);
@@ -1293,21 +1292,21 @@ export default class SequenceBasedMacromoleculeSample extends Element {
   }
 
   get accessions() {
-    const accessions = this.sequence_based_macromolecule.accessions;
+    const { accessions } = this.sequence_based_macromolecule;
     if (accessions) {
       return [accessions.join(',')];
-    } else {
-      return [];
     }
+      return [];
+
   }
 
   get ec_numbers() {
     const ecNumbers = this.sequence_based_macromolecule.ec_numbers;
     if (ecNumbers) {
       return [Array.isArray(ecNumbers) ? ecNumbers.join(',') : ecNumbers];
-    } else {
-      return [''];
     }
+      return [''];
+
   }
 
   static buildEmpty(collectionID) {

@@ -1,9 +1,6 @@
 import React from 'react';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
 import assert from 'assert';
 import sinon from 'sinon';
 import expect from 'expect';

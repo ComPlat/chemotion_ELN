@@ -1,10 +1,6 @@
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
-
 describe('MoleculesFetcher.updateNames', () => {
   let fetchStub;
 

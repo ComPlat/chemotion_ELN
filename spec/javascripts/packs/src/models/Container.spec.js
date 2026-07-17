@@ -2,10 +2,6 @@ import Container from 'src/models/Container';
 import ContainerFactory from 'factories/ContainerFactory';
 import expect from 'expect';
 
-import {
-  describe, it
-} from 'mocha';
-
 describe('Container.switchPositionOfChildContainer()', async () => {
   describe('when putting first container after second one', async () => {
     it('new order should be c2,c1,c3,c4', async () => {
