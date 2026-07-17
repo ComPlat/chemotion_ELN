@@ -35,7 +35,7 @@ module Entities
     expose :otp_required_for_login, documentation: { type: 'Boolean', desc: 'If 2fa is enabled' }
     expose :profile
     expose :api_tokens, as: :tokens, using: Entities::ApiTokenEntity,
-           if: ->(_user, opts) { opts[:with_tokens] } do |user, _options|
+                        if: ->(_user, opts) { opts[:with_tokens] } do |user, _options|
       user.api_tokens.not_expired
     end
 
