@@ -186,7 +186,10 @@ export default class SelectionActions extends React.Component {
       <div className="selection-actions d-flex align-items-center gap-1 mb-3">
         <SelectionGenerateButton />
         <SelectionExportButton />
-        <SelectionSplitButton />
+        {/* Splitting creates a new subsample, which requires :add_elements permission.
+            sharing_allowed reflects exactly that level (ElementsPolicy#share_all?), so it
+            gates Split the same way it gates Share for read-only shared collections. */}
+        <SelectionSplitButton sharingAllowed={sharing_allowed} />
         <Dropdown id="move-or-assign-btn">
           <Dropdown.Toggle
             variant="light"

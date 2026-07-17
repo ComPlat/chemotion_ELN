@@ -249,7 +249,15 @@ module Chemotion
           device_description_ids =
             DeviceDescription.for_user(current_user.id)
                              .for_ui_state_with_collection(element_params, CollectionsDeviceDescription, col_id)
-          DeviceDescription.where(id: device_description_ids).find_each do |device_description|
+          device_descriptions = DeviceDescription.where(id: device_description_ids)
+          # Splitting adds a new sub device description to the target collection, so authorize that
+          # collection directly rather than via ElementsPolicy#share_all? (which takes
+          # MAX(permission_level) across every collection a record belongs to, wrongly allowing a
+          # split into a read-only currentCollectionId when the record is also shared/owned elsewhere
+          # with :add_elements).
+          error!('401 Unauthorized', 401) unless writable_collection_for(col_id)
+
+          device_descriptions.find_each do |device_description|
             device_description.create_sub_device_description(current_user, col_id)
           end
 

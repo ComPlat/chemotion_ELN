@@ -166,6 +166,25 @@ describe Chemotion::PermissionAPI do
           expect(parsed_json_response['deletion_allowed']).to be false
         end
       end
+
+      # An empty selection on a shared collection must report every flag false. Otherwise the
+      # permissive defaults survive (the policing loops skip empty scopes) and the client's
+      # PermissionStore caches a stale "true" that briefly enables Split/Share on the next selection.
+      context 'when no element type is selected' do
+        let(:permission_level) { CollectionShare.permission_level(:manage_shares) }
+        let(:params) do
+          {
+            currentCollection: { id: shared_collection_of_other_user.id },
+            sample: { checkedAll: false, checkedIds: [], uncheckedIds: [] },
+          }
+        end
+
+        it 'returns deletion_allowed, sharing_allowed and remove_allowed all false' do
+          expect(parsed_json_response['deletion_allowed']).to be false
+          expect(parsed_json_response['sharing_allowed']).to be false
+          expect(parsed_json_response['remove_allowed']).to be false
+        end
+      end
     end
   end
 end

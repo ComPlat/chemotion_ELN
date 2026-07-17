@@ -125,6 +125,59 @@ describe Chemotion::SampleAPI do
       collection_sample = CollectionsSample.where(sample_id: s4.id, collection_id: collection.id)
       expect(collection_sample).not_to be_nil
     end
+
+    context 'when the collection is a read-only share' do
+      let(:permission_level) { CollectionShare::PERMISSION_LEVELS[:read_elements] }
+      let(:s1) { create(:sample, name: 's1', external_label: 'ext1', collections: [shared_collection]) }
+      let(:s2) { create(:sample, name: 's2', external_label: 'ext2', collections: [shared_collection]) }
+      let(:params) do
+        {
+          ui_state: {
+            sample: { all: true, included_ids: [], excluded_ids: [] },
+            currentCollectionId: shared_collection.id,
+          },
+        }
+      end
+
+      it 'is rejected as unauthorized and creates no subsamples' do
+        expect(response).to have_http_status :unauthorized
+        expect(Sample.where(name: %w[s1 s2]).count).to eq 2
+      end
+    end
+
+    # Regression: the split must be authorized against the *target* collection, not the records.
+    # Here the sample is in a read-only target collection AND another collection shared at
+    # :add_elements. ElementsPolicy#share_all? takes MAX(permission_level) across both and would
+    # wrongly allow the split; gating on the target collection correctly forbids it.
+    context 'when the read-only target sample is also shared elsewhere with :add_elements' do
+      let(:sharer) { create(:person) }
+      let(:read_only_collection) do
+        create(:collection, user: sharer).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:writable_collection) do
+        create(:collection, user: sharer).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:add_elements])
+        end
+      end
+      let(:s1) { create(:sample, name: 's1', collections: [read_only_collection, writable_collection]) }
+      let(:params) do
+        {
+          ui_state: {
+            sample: { all: false, included_ids: [s1.id], excluded_ids: [] },
+            currentCollectionId: read_only_collection.id,
+          },
+        }
+      end
+
+      it 'is rejected as unauthorized and creates no subsamples' do
+        expect(response).to have_http_status :unauthorized
+        expect(Sample.where(name: 's1').count).to eq 1
+      end
+    end
   end
 
   describe 'POST /api/v1/samples/import/' do

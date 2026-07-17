@@ -67,6 +67,17 @@ module Chemotion
                 sharing_allowed &&= ElementsPolicy.new(current_user, scope).share_all?
               end
             end
+
+            # With nothing selected the loops above police nothing, leaving the permissive
+            # defaults untouched. That stale "true" lingers in the client's PermissionStore and
+            # makes permission-gated buttons (e.g. Split) flash enabled for a moment when the next
+            # selection arrives, before the refreshed status disables them. On a shared collection
+            # an empty selection grants no bulk permission, so report false.
+            if selected_elements.values.none?(&:any?)
+              deletion_allowed = false
+              sharing_allowed = false
+              remove_allowed = false
+            end
           end
 
           { deletion_allowed: deletion_allowed, sharing_allowed: sharing_allowed,
