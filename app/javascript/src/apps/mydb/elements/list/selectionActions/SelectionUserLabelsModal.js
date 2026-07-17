@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Button, Form, Modal } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import UIStore from 'src/stores/alt/stores/UIStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import UserActions from 'src/stores/alt/actions/UserActions';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 
 const labelOption = ({ title, color, access_level }) => (
@@ -20,15 +20,8 @@ const labelOption = ({ title, color, access_level }) => (
 );
 
 const SelectionUserLabelsModal = ({ onHide }) => {
-  const [{ currentUser, labels }, setUserState] = useState(() => UserStore.getState());
-
-  useEffect(() => {
-    const handleStoreChange = (state) => setUserState(state);
-    UserStore.listen(handleStoreChange);
-    UserActions.fetchUserLabels();
-
-    return () => UserStore.unlisten(handleStoreChange);
-  }, []);
+  const { userStore } = useContext(StoreContext);
+  const { currentUser, labels } = userStore;
 
   const editableLabels = useMemo(() => (
     (labels || []).filter((l) => l.access_level === 2 || l.user_id === currentUser?.id)
@@ -94,4 +87,4 @@ SelectionUserLabelsModal.propTypes = {
   onHide: PropTypes.func.isRequired,
 };
 
-export default SelectionUserLabelsModal;
+export default observer(SelectionUserLabelsModal);
