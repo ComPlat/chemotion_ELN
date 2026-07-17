@@ -14,7 +14,7 @@ export default class AdminFetcher {
   }
 
   static setAllocatedUserSpace(allocatedUserSpace) {
-    return ApiClient.putJson('/api/v1/admin/usersDefault', { body: allocatedUserSpace });
+    return ApiClient.putJson('/api/v1/admin/usersDefault', { body: { allocatedUserSpace } });
   }
 
   static resetUserPassword(params) {
