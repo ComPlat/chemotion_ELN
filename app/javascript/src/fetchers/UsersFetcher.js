@@ -87,7 +87,7 @@ export default class UsersFetcher {
       add_admin: params.add_admin,
       rm_admin: params.rm_admin,
     };
-    return ApiClient.putJson('/api/v1/users/omniauth_providers', { body });
+    return ApiClient.putJson(`/api/v1/groups/upd/${params.id}`, { body });
   }
 
   static fetchOls(name, edited = true) {
