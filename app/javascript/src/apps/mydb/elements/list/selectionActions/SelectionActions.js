@@ -17,6 +17,7 @@ import SelectionExportButton from 'src/apps/mydb/elements/list/selectionActions/
 import AppModal from 'src/components/common/AppModal';
 import { elementNames } from 'src/apps/generic/Utils';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import { PermissionConst } from 'src/utilities/PermissionConst';
 
 
 export default class SelectionActions extends React.Component {
@@ -31,6 +32,7 @@ export default class SelectionActions extends React.Component {
       sharing_allowed: false,
       deletion_allowed: false,
       remove_allowed: false,
+      update_allowed: false,
       is_top_secret: false,
       genericEls: genericEls
     };
@@ -63,6 +65,7 @@ export default class SelectionActions extends React.Component {
         sharing_allowed: false,
         deletion_allowed: false,
         remove_allowed: false,
+        update_allowed: false,
         is_top_secret: false,
         hasSel: false,
         currentCollection
@@ -168,7 +171,7 @@ export default class SelectionActions extends React.Component {
 
   render() {
     const {
-      currentCollection, sharing_allowed, deletion_allowed, remove_allowed, hasSel
+      currentCollection, sharing_allowed, deletion_allowed, remove_allowed, update_allowed, hasSel
     } = this.state;
     const { is_locked, label } = currentCollection;
     const isAll = is_locked && label === 'All';
@@ -181,15 +184,25 @@ export default class SelectionActions extends React.Component {
     const deleteDisabled = noSel || !deletion_allowed;
     const shareDisabled = noSel || !sharing_allowed;
     const literatureDisabled = noSel;
+    // Assigning user labels edits the elements, which requires :edit_elements (update_all?),
+    // so it must be disabled on read-only shared collections.
+    const userLabelsDisabled = noSel || !update_allowed;
 
     return (
       <div className="selection-actions d-flex align-items-center gap-1 mb-3">
         <SelectionGenerateButton />
         <SelectionExportButton />
-        {/* Splitting creates a new subsample, which requires :add_elements permission.
-            sharing_allowed reflects exactly that level (ElementsPolicy#share_all?), so it
-            gates Split the same way it gates Share for read-only shared collections. */}
-        <SelectionSplitButton sharingAllowed={sharing_allowed} />
+        {/* Split creates a new sub-element in the *current* collection, so it is gated on that
+            collection being writable (:add_elements+), not on record-level sharing_allowed — which
+            takes the MAX permission across every collection a record belongs to and would stay true
+            when the same record is also writable elsewhere. Owned collections omit permission_level
+            (writable); shared collections expose it. */}
+        <SelectionSplitButton
+          collectionWritable={
+            currentCollection.permission_level == null
+            || currentCollection.permission_level >= PermissionConst.AddElements
+          }
+        />
         <Dropdown id="move-or-assign-btn">
           <Dropdown.Toggle
             variant="light"
@@ -271,7 +284,7 @@ export default class SelectionActions extends React.Component {
           variant="light"
           size="sm"
           id="user-labels-btn"
-          disabled={noSel}
+          disabled={userLabelsDisabled}
           onClick={() => this.showModal('user_labels')}
           title="User labels"
           aria-label="User labels"

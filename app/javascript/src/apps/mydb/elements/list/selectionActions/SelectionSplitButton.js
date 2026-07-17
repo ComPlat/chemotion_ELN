@@ -160,13 +160,13 @@ export default class SelectionSplitButton extends React.Component {
       });
     }
 
-    const { sharingAllowed } = this.props;
+    const { collectionWritable } = this.props;
 
     const isDisabled = this.isAllCollection()
       || Object.values(selectedElements).every((v) => !v)
-      // Splitting adds a new subsample to the collection (:add_elements), so it must be
-      // disabled on read-only shared collections just like Share is.
-      || !sharingAllowed;
+      // Splitting adds a new sub-element to the current collection (:add_elements), so it must be
+      // disabled unless that collection is writable (read-only shared collections included).
+      || !collectionWritable;
 
     return (
       <Dropdown id="split-dropdown">
@@ -230,11 +230,11 @@ export default class SelectionSplitButton extends React.Component {
 }
 
 SelectionSplitButton.propTypes = {
-  // Whether the current user may add elements to the collection (:add_elements level).
-  // Provided by SelectionActions from the PermissionStore's sharing_allowed flag.
-  sharingAllowed: PropTypes.bool,
+  // Whether the *current* collection is writable by the user (:add_elements or higher). Derived by
+  // SelectionActions from currentCollection.permission_level, not from record-level sharing_allowed.
+  collectionWritable: PropTypes.bool,
 };
 
 SelectionSplitButton.defaultProps = {
-  sharingAllowed: false,
+  collectionWritable: false,
 };
