@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
 const ComputedPropLabel = ({ cprops }) => {
-  const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+  const { currentUser } = useContext(StoreContext).userStore;
   const enableComputedProps = MatrixCheck(currentUser.matrix, 'computedProp');
   if (!enableComputedProps || !cprops || cprops.length === 0) return null;
   cprops.sort((a, b) => a.updated_at - b.updated_at);
