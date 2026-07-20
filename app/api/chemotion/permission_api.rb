@@ -43,6 +43,8 @@ module Chemotion
           # Unlinking from a shared collection (not destroying the record) is granted at
           # :remove_elements, independently of the owner-only destroy gate above.
           remove_allowed = true
+          # Editing element content (e.g. bulk user-label changes) is granted at :edit_elements.
+          update_allowed = true
 
           if collection.user != current_user # collection was shared to user
             # Every selected element type is policed, not just the four legacy ones. A selection the
@@ -55,6 +57,7 @@ module Chemotion
               policy = ElementsPolicy.new(current_user, scope)
               deletion_allowed &&= policy.destroy_all?
               remove_allowed &&= policy.remove_all?
+              update_allowed &&= policy.update_all?
             end
 
             # permission for deletion includes permission for sharing,
@@ -67,10 +70,22 @@ module Chemotion
                 sharing_allowed &&= ElementsPolicy.new(current_user, scope).share_all?
               end
             end
+
+            # With nothing selected the loops above police nothing, leaving the permissive
+            # defaults untouched. That stale "true" lingers in the client's PermissionStore and
+            # makes permission-gated buttons (e.g. Split) flash enabled for a moment when the next
+            # selection arrives, before the refreshed status disables them. On a shared collection
+            # an empty selection grants no bulk permission, so report false.
+            if selected_elements.values.none?(&:any?)
+              deletion_allowed = false
+              sharing_allowed = false
+              remove_allowed = false
+              update_allowed = false
+            end
           end
 
           { deletion_allowed: deletion_allowed, sharing_allowed: sharing_allowed,
-            remove_allowed: remove_allowed, is_top_secret: is_top_secret }
+            remove_allowed: remove_allowed, update_allowed: update_allowed, is_top_secret: is_top_secret }
         end
       end
     end

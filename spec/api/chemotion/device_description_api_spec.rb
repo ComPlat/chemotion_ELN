@@ -114,6 +114,42 @@ describe Chemotion::DeviceDescriptionAPI do
 
       expect(device_description.reload.children.size).to be(1)
     end
+
+    context 'when the collection is a read-only share' do
+      let(:read_only_collection) do
+        create(:collection, user: create(:person)).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:shared_device_description) do
+        create(:device_description, :with_ontologies, creator: read_only_collection.user)
+      end
+      let(:params) do
+        {
+          ui_state: {
+            currentCollectionId: read_only_collection.id,
+            device_description: {
+              all: false,
+              included_ids: [shared_device_description.id],
+              excluded_ids: [],
+            },
+          },
+        }
+      end
+
+      before do
+        create(:collections_device_description,
+               device_description: shared_device_description, collection: read_only_collection)
+      end
+
+      it 'is rejected as unauthorized and creates no sub device description' do
+        post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
+
+        expect(response).to have_http_status :unauthorized
+        expect(shared_device_description.reload.children).to be_empty
+      end
+    end
   end
 
   describe 'PUT /api/v1/device_descriptions/:id' do

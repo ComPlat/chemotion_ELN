@@ -55,6 +55,7 @@ describe Chemotion::PermissionAPI do
           'sharing_allowed' => true,
           'deletion_allowed' => true,
           'remove_allowed' => true,
+          'update_allowed' => true,
         }
         expect(parsed_json_response).to eq expected_result
       end
@@ -84,6 +85,7 @@ describe Chemotion::PermissionAPI do
           'sharing_allowed' => true,
           'deletion_allowed' => true,
           'remove_allowed' => true,
+          'update_allowed' => true,
         }
         expect(parsed_json_response).to eq expected_result
       end
@@ -145,6 +147,20 @@ describe Chemotion::PermissionAPI do
           expect(parsed_json_response['deletion_allowed']).to be false
           expect(parsed_json_response['sharing_allowed']).to be false
         end
+
+        it 'returns update_allowed=true (editing element content is granted at :edit_elements)' do
+          expect(parsed_json_response['update_allowed']).to be true
+        end
+      end
+
+      context 'when the permission level is read only' do
+        let(:permission_level) { CollectionShare.permission_level(:read_elements) }
+
+        it 'returns update_allowed=false so bulk user-label edits are forbidden' do
+          expect(parsed_json_response['update_allowed']).to be false
+          expect(parsed_json_response['sharing_allowed']).to be false
+          expect(parsed_json_response['deletion_allowed']).to be false
+        end
       end
 
       # Regression (S5): element types outside the legacy [Sample, Reaction, Screen, Wellplate] set
@@ -164,6 +180,28 @@ describe Chemotion::PermissionAPI do
         it 'polices the research plan: remove_allowed=false and deletion_allowed=false at :add_elements' do
           expect(parsed_json_response['remove_allowed']).to be false
           expect(parsed_json_response['deletion_allowed']).to be false
+        end
+      end
+
+      # An empty selection on a shared collection must report every flag false. Otherwise the
+      # permissive defaults survive (the policing loops skip empty scopes) and the client's
+      # PermissionStore caches a stale "true" that briefly enables Split/Share on the next selection.
+      context 'when no element type is selected' do
+        let(:permission_level) { CollectionShare.permission_level(:manage_shares) }
+        let(:params) do
+          {
+            currentCollection: { id: shared_collection_of_other_user.id },
+            sample: { checkedAll: false, checkedIds: [], uncheckedIds: [] },
+          }
+        end
+
+        it 'returns deletion_allowed, sharing_allowed, remove_allowed and update_allowed all false' do
+          aggregate_failures do
+            expect(parsed_json_response['deletion_allowed']).to be false
+            expect(parsed_json_response['sharing_allowed']).to be false
+            expect(parsed_json_response['remove_allowed']).to be false
+            expect(parsed_json_response['update_allowed']).to be false
+          end
         end
       end
     end
