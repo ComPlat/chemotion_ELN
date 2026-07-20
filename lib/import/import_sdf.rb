@@ -57,6 +57,20 @@ class Import::ImportSdf < Import::ImportSamples
       color: { field: 'color', displayName: 'Color' },
       form: { field: 'form', displayName: 'Form' },
       inventory_label: { field: 'inventory_label', displayName: 'Inventory Label' },
+      height: { field: 'height', displayName: 'Height' },
+      width: { field: 'width', displayName: 'Width' },
+      length: { field: 'length', displayName: 'Length' },
+      diameter: { field: 'diameter', displayName: 'Diameter' },
+      state: { field: 'state', displayName: 'State' },
+      storage_condition: { field: 'storage_condition', displayName: 'Storage condition' },
+      material: { field: 'material', displayName: 'Material' },
+      cspi: { field: 'cspi', displayName: 'CSPI' },
+      particle_size: { field: 'particle_size', displayName: 'Particle size' },
+      shape: { field: 'shape', displayName: 'Shape' },
+      sieve_fraction: { field: 'sieve_fraction', displayName: 'Sieve fraction' },
+      layer_thickness: { field: 'layer_thickness', displayName: 'Layer thickness' },
+      liquid_medium: { field: 'liquid_medium', displayName: 'Liquid medium' },
+      stabilizer: { field: 'stabilizer', displayName: 'Stabilizer' },
     }
   end
 
@@ -78,7 +92,9 @@ class Import::ImportSdf < Import::ImportSamples
     rescue StandardError => e
       @message[:error] << "Failed to read attachment file: #{e.message}"
     end
-    @raw_data.pop if @raw_data[-1].blank?
+    # Drop any entry that is blank or has no molfile body (e.g., stray tag blocks
+    # left over from double-$$$$ separators in older exports).
+    @raw_data.reject! { |entry| entry.to_s.strip.empty? || !entry.to_s.include?('M  END') }
   end
 
   def message
@@ -217,8 +233,10 @@ class Import::ImportSdf < Import::ImportSamples
               sample[attrib] = row[attrib] if is_number?(row[attrib])
             end
             if row['molecule_name'].present?
-              molecule_name = molecule.create_molecule_name_by_user(row['molecule_name'], current_user_id)
-              sample['molecule_name_id'] = molecule_name.id unless molecule_name.blank?
+              molecule.create_molecule_name_by_user(row['molecule_name'], current_user_id)
+              first_name = row['molecule_name'].to_s.split(';').first.to_s.strip
+              mn = molecule.molecule_names.find_by(name: first_name) if first_name.present?
+              sample['molecule_name_id'] = mn.id if mn
             end
             sample['melting_point'] = format_to_interval_syntax(row['melting_point']) if row['melting_point'].present?
             sample['boiling_point'] = format_to_interval_syntax(row['boiling_point']) if row['boiling_point'].present?
@@ -236,6 +254,30 @@ class Import::ImportSdf < Import::ImportSamples
             sample['xref']['refractive_index'] = row['refractive_index'] if row['refractive_index'].present?
             sample['xref']['form'] = row['form'] if row['form'].present?
             sample['xref']['color'] = row['color'] if row['color'].present?
+            sample['color'] = row['color'] if row['color'].present?
+            sample['height'] = row['height'].to_s.strip.to_f if row['height'].present?
+            sample['width'] = row['width'].to_s.strip.to_f if row['width'].present?
+            sample['length'] = row['length'].to_s.strip.to_f if row['length'].present?
+            sample['diameter'] = row['diameter'].to_s.strip.to_f if row['diameter'].present?
+            sample['state'] = row['state'] if row['state'].present?
+            sample['storage_condition'] = row['storage_condition'] if row['storage_condition'].present?
+            sample['material'] = row['material'] if row['material'].present?
+            sample['cspi'] = row['cspi'] if row['cspi'].present?
+            sample['particle_size'] = row['particle_size'] if row['particle_size'].present?
+            sample['shape'] = row['shape'] if row['shape'].present?
+            sample['sieve_fraction'] = row['sieve_fraction'] if row['sieve_fraction'].present?
+            sample['layer_thickness'] = row['layer_thickness'] if row['layer_thickness'].present?
+            sample['liquid_medium'] = row['liquid_medium'] if row['liquid_medium'].present?
+            sample['stabilizer'] = row['stabilizer'] if row['stabilizer'].present?
+
+            # Record which hierarchical "additional properties" were actually mapped/imported
+            # so the sample form shows only those fields (not all populated ones).
+            additional_property_keys = %w[sieve_fraction height diameter width length material cspi particle_size shape layer_thickness liquid_medium stabilizer]
+            selected_props = additional_property_keys.select { |k| row[k].to_s.strip.present? }
+            if selected_props.any?
+              sample.sample_details = (sample.sample_details || {}).merge('selected_properties' => selected_props)
+            end
+
             sample['xref']['solubility'] = row['solubility'] if row['solubility'].present?
             sample['xref']['inventory_label'] = row['inventory_label'] if row['inventory_label'].present?
             if row['flash_point'].present?
@@ -292,7 +334,8 @@ class Import::ImportSdf < Import::ImportSamples
             sample.collections << Collection.get_all_collection_for_user(current_user_id)
             sample.save!
             ids << sample.id
-          rescue StandardError => _e
+          rescue StandardError => e
+            Rails.logger.error("ImportSdf row #{i + 1} failed: #{e.class}: #{e.message}\n#{e.backtrace.first(8).join("\n")}")
             @unprocessable_samples << (i + 1)
           end
           unless @unprocessable_samples.empty?

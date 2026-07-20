@@ -34,7 +34,7 @@ module Chemotion
     def clean_molfile_for_inchikey(raw_molfile)
       return nil if raw_molfile.blank?
 
-      s = raw_molfile.to_s.force_encoding('UTF-8')
+      s = raw_molfile.to_s.dup.force_encoding('UTF-8')
       s = s.gsub(/>\s*<\s*PolymersList\s*>[\s\S]*?(?=\n\s*>\s*<\s|\z)/i, '')
       s = s.gsub(/>\s*<\s*TextNode\s*>[\s\S]*?(?=\n\s*>\s*<\s|\z)/i, '')
       keep_only_ctab(s)
@@ -44,7 +44,7 @@ module Chemotion
     def keep_only_ctab(molfile)
       return molfile if molfile.blank?
 
-      molfile = molfile.to_s.force_encoding('UTF-8')
+      molfile = molfile.to_s.dup.force_encoding('UTF-8')
       lines = molfile.lines
       m_end_index = lines.index { |line| line.match?(/\s*M\s+END\s*/i) }
       if m_end_index

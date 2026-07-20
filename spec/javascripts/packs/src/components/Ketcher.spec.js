@@ -42,16 +42,35 @@ import {
   deleteImageWithThreeOldPack,
   deleteAtomAndRemoveImageKet,
   molfileWithPolymerList,
+  isolatedNonAliasedAtomKet,
+  mixedNeighboursKet,
+  threeStrayAtomsKet,
+  noAliasedAtomsKet,
 } from 'data/ketcher_mockups';
 import templates from '../../../../../public/json/surfaceChemistryShapes.json';
 
 describe('Ketcher', () => {
+  let originalFetch;
+
   beforeEach(async () => {
     resetStore();
     templateListSetter(templates);
+    // Mock fetch for tests that trigger SVG/template loading (e.g. handleAddAtom, addPolymerTags with new images)
+    originalFetch = global.fetch;
+    global.fetch = (url) => {
+      if (typeof url === 'string' && (url.includes('surfaceChemistryShapes') || url.includes('.svg'))) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(Array.isArray(templates) ? templates : []),
+          text: () => Promise.resolve('<svg xmlns="http://www.w3.org/2000/svg"></svg>'),
+        });
+      }
+      return originalFetch ? originalFetch(url) : Promise.reject(new Error('No fetch mock'));
+    };
   });
 
   afterEach(() => {
+    if (originalFetch) global.fetch = originalFetch;
     resetStore();
   });
 
@@ -89,7 +108,9 @@ describe('Ketcher', () => {
       await loadKetcherData(twoMolsOneImageOneAtomWithWithoutAlias);
       assert.strictEqual(imagesList.length, 1, 'imagesList should have some length');
       assert.strictEqual(mols.length, 2, 'mols should have some length');
-      assert.strictEqual(allAtoms.length, 4, 'allAtoms have invalid length');
+      // mol0: aliased atom kept, lone carbon bonded only to aliased atom stripped (stray)
+      // mol1: 2 non-aliased carbons with C-C bond kept (real structure)
+      assert.strictEqual(allAtoms.length, 3, 'allAtoms have invalid length');
       assert.strictEqual(allNodes.length, 4, 'allNodes have invalid length');
     });
 
@@ -221,8 +242,11 @@ describe('Ketcher', () => {
 
       const { d, isConsistent } = await handleAddAtom();
       assert.strictEqual(isConsistent, true, 'Atom addition should be consistent');
-      assert.strictEqual(d[mols[0]].atoms.length, 2, 'The molecule should contain one additional atom');
-      assert.strictEqual(d[mols[0]].bonds.length, 1, 'The molecule should retain its bonds');
+      // After stripping the stray C from mol0, mol0 has 1 aliased atom and 0 bonds.
+      // handleAddAtom adds to mol1 (which has bonds) rather than the bond-less mol0,
+      // so mol0 atom/bond counts are unchanged.
+      assert.strictEqual(d[mols[0]].atoms.length, 1, 'mol0 atom count unchanged (handleAddAtom targets mol with bonds)');
+      assert.strictEqual(d[mols[0]].bonds.length, 0, 'mol0 has no bonds after stray-C removal');
     });
 
     it('should generate a valid alias for an atom with an invalid alias format', async () => {
@@ -362,8 +386,9 @@ describe('Ketcher', () => {
 
       const aliasDifferences = [0]; // Alias to be deleted
       const data = await handleOnDeleteAtom(aliasDifferences, latestData, imagesList);
-      assert.strictEqual(data[mols[0]].bonds.length, 1, 'Bonds should be updated after atom deletion');
-      assert.strictEqual(data[mols[0]].atoms.length, 2, 'Atom count should decrease');
+      // mol0 had 1 aliased atom + 0 bonds after stray-C stripping; deleting alias[0] removes it
+      assert.strictEqual(data[mols[0]].bonds.length, 0, 'No bonds remain after the only aliased atom is deleted');
+      assert.strictEqual(data[mols[0]].atoms.length, 1, 'One atom (the previously-stray C) remains');
     });
   });
 
@@ -374,7 +399,34 @@ describe('Ketcher', () => {
       assert.strictEqual(allNodes.length, 0, 'All nodes should be cleared');
       assert.strictEqual(imagesList.length, 0, 'Images list should be cleared');
       await loadKetcherData(addAtomMockup);
-      assert.strictEqual(allAtoms.length, 15, 'All atoms should be restored');
+      assert.strictEqual(allAtoms.length, 14, 'All atoms should be restored');
+    });
+  });
+
+  describe('stray atom removal edge cases', () => {
+    it('should NOT remove an isolated non-aliased atom with no bonds', async () => {
+      // Bond-less non-aliased atom has neighbours.length === 0, so allNeighboursAliased is false → kept
+      await loadKetcherData(isolatedNonAliasedAtomKet);
+      // mol0: aliased atom (idx 0) + isolated C (idx 1, no bonds) → both kept
+      assert.strictEqual(allAtoms.length, 2, 'Isolated non-aliased atom must not be removed');
+    });
+
+    it('should NOT remove a non-aliased atom bonded to both aliased and non-aliased neighbours', async () => {
+      // Chain: aliased(0) — C(1) — C(2); atom 1 has mixed neighbours → kept
+      await loadKetcherData(mixedNeighboursKet);
+      assert.strictEqual(allAtoms.length, 3, 'Non-aliased atom with mixed neighbours must not be removed');
+    });
+
+    it('should remove 3 stray atoms all bonded only to the aliased atom', async () => {
+      // aliased(0) bonded to stray C(1), C(2), C(3); all 3 have only aliased neighbours → all removed
+      await loadKetcherData(threeStrayAtomsKet);
+      assert.strictEqual(allAtoms.length, 1, 'All 3 stray carbons must be removed');
+    });
+
+    it('should leave a molecule with no aliased atoms completely untouched', async () => {
+      // Mol has 2 non-aliased carbons with a C-C bond; hasAliased is false → early return, nothing removed
+      await loadKetcherData(noAliasedAtomsKet);
+      assert.strictEqual(allAtoms.length, 2, 'Non-surface-chemistry mol must not be touched');
     });
   });
 });

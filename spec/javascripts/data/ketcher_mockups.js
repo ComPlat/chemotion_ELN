@@ -2656,3 +2656,70 @@ export const deleteAtomAndRemoveImageMultiKet = {
     bonds: []
   },
 };
+
+// ── Stray atom edge-case fixtures ────────────────────────────────────────────
+
+// Mol with 1 aliased atom + 1 isolated (bond-less) non-aliased atom.
+// The isolated atom has no neighbours → must NOT be removed.
+export const isolatedNonAliasedAtomKet = {
+  root: { nodes: [{ $ref: 'mol0' }], connections: [], templates: [] },
+  mol0: {
+    type: 'molecule',
+    atoms: [
+      { label: 'A', alias: 't_1_0', location: [0, 0, 0] },
+      { label: 'C', location: [2, 0, 0] }, // isolated — no bonds
+    ],
+    bonds: [],
+  },
+};
+
+// Mol where a non-aliased atom is bonded to both an aliased AND another non-aliased atom.
+// Not all neighbours are aliased → must NOT be removed.
+export const mixedNeighboursKet = {
+  root: { nodes: [{ $ref: 'mol0' }], connections: [], templates: [] },
+  mol0: {
+    type: 'molecule',
+    atoms: [
+      { label: 'A', alias: 't_1_0', location: [0, 0, 0] }, // idx 0 — aliased
+      { label: 'C', location: [1, 0, 0] },                  // idx 1 — mixed: bonded to 0 (aliased) AND 2 (non-aliased)
+      { label: 'C', location: [2, 0, 0] },                  // idx 2 — non-aliased
+    ],
+    bonds: [
+      { type: 1, atoms: [0, 1] },
+      { type: 1, atoms: [1, 2] },
+    ],
+  },
+};
+
+// Mol with 1 aliased atom + 3 stray carbons each bonded ONLY to the aliased atom.
+// All 3 stray carbons must be removed; bond reindexing must leave 0 bonds.
+export const threeStrayAtomsKet = {
+  root: { nodes: [{ $ref: 'mol0' }], connections: [], templates: [] },
+  mol0: {
+    type: 'molecule',
+    atoms: [
+      { label: 'A', alias: 't_1_0', location: [0, 0, 0] }, // idx 0 — aliased, kept
+      { label: 'C', location: [1, 0, 0] },                  // idx 1 — stray
+      { label: 'C', location: [2, 0, 0] },                  // idx 2 — stray
+      { label: 'C', location: [3, 0, 0] },                  // idx 3 — stray
+    ],
+    bonds: [
+      { type: 1, atoms: [0, 1] },
+      { type: 1, atoms: [0, 2] },
+      { type: 1, atoms: [0, 3] },
+    ],
+  },
+};
+
+// Mol with NO aliased atoms — must be left completely untouched.
+export const noAliasedAtomsKet = {
+  root: { nodes: [{ $ref: 'mol0' }], connections: [], templates: [] },
+  mol0: {
+    type: 'molecule',
+    atoms: [
+      { label: 'C', location: [0, 0, 0] },
+      { label: 'C', location: [1, 0, 0] },
+    ],
+    bonds: [{ type: 1, atoms: [0, 1] }],
+  },
+};

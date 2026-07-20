@@ -4,50 +4,62 @@
 #
 # Table name: samples
 #
-#  id                  :integer          not null, primary key
-#  ancestry            :string           default("/"), not null
-#  boiling_point       :numrange
-#  created_by          :integer
-#  decoupled           :boolean          default(FALSE), not null
-#  deleted_at          :datetime
-#  density             :float            default(0.0)
-#  deprecated_solvent  :string           default("")
-#  description         :text             default("")
-#  dry_solvent         :boolean          default(FALSE)
-#  external_label      :string           default("")
-#  identifier          :string
-#  imported_readout    :string
-#  impurities          :string           default("")
-#  inventory_sample    :boolean          default(FALSE)
-#  is_top_secret       :boolean          default(FALSE)
-#  location            :string           default("")
-#  melting_point       :numrange
-#  metrics             :string           default("mmm")
-#  molarity_unit       :string           default("M")
-#  molarity_value      :float            default(0.0)
-#  molecular_mass      :float
-#  molfile             :binary
-#  molfile_version     :string(20)
-#  name                :string
-#  purity              :float            default(1.0)
-#  real_amount_unit    :string
-#  real_amount_value   :float
-#  sample_details      :jsonb
-#  sample_svg_file     :string
-#  sample_type         :string           default("Micromolecule")
-#  short_label         :string
-#  solvent             :jsonb
-#  stereo              :jsonb
-#  sum_formula         :string
-#  target_amount_unit  :string           default("g")
-#  target_amount_value :float            default(0.0)
-#  xref                :jsonb
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  fingerprint_id      :integer
-#  molecule_id         :integer
-#  molecule_name_id    :integer
-#  user_id             :integer
+#  id                                                                   :integer          not null, primary key
+#  ancestry                                                             :string           default("/"), not null
+#  boiling_point                                                        :numrange
+#  color(color of the Hierarchical sample)                              :string
+#  created_by                                                           :integer
+#  cspi(CSPI of the Hierarchical sample)                                :string
+#  decoupled                                                            :boolean          default(FALSE), not null
+#  deleted_at                                                           :datetime
+#  density                                                              :float            default(0.0)
+#  deprecated_solvent                                                   :string           default("")
+#  description                                                          :text             default("")
+#  diameter(diameter of the Hierarchical sample (numeric, in cm or mm)) :float
+#  dry_solvent                                                          :boolean          default(FALSE)
+#  external_label                                                       :string           default("")
+#  height(height of the Hierarchical sample (numeric, in cm or mm))     :float
+#  identifier                                                           :string
+#  imported_readout                                                     :string
+#  impurities                                                           :string           default("")
+#  inventory_sample                                                     :boolean          default(FALSE)
+#  is_top_secret                                                        :boolean          default(FALSE)
+#  length(length of the Hierarchical sample (numeric, in cm or mm))     :float
+#  location                                                             :string           default("")
+#  material(material of the Hierarchical sample)                        :string
+#  melting_point                                                        :numrange
+#  metrics                                                              :string           default("mmm")
+#  molarity_unit                                                        :string           default("M")
+#  molarity_value                                                       :float            default(0.0)
+#  molecular_mass                                                       :float
+#  molfile                                                              :binary
+#  molfile_version                                                      :string(20)
+#  name                                                                 :string
+#  particle_size(particle size of the Hierarchical sample)              :string
+#  purity                                                               :float            default(1.0)
+#  real_amount_unit                                                     :string
+#  real_amount_value                                                    :float
+#  sample_details                                                       :jsonb
+#  sample_svg_file                                                      :string
+#  sample_type                                                          :string           default("Micromolecule")
+#  shape(shape of the Hierarchical sample)                              :string
+#  short_label                                                          :string
+#  sieve_fraction(sieve fraction of the Hierarchical sample)            :string
+#  solvent                                                              :jsonb
+#  state(state of the Hierarchical sample)                              :string
+#  stereo                                                               :jsonb
+#  storage_condition(storage condition of the Hierarchical sample)      :string
+#  sum_formula                                                          :string
+#  target_amount_unit                                                   :string           default("g")
+#  target_amount_value                                                  :float            default(0.0)
+#  width(width of the Hierarchical sample (numeric, in cm or mm))       :float
+#  xref                                                                 :jsonb
+#  created_at                                                           :datetime         not null
+#  updated_at                                                           :datetime         not null
+#  fingerprint_id                                                       :integer
+#  molecule_id                                                          :integer
+#  molecule_name_id                                                     :integer
+#  user_id                                                              :integer
 #
 # Indexes
 #
@@ -82,11 +94,28 @@ class Sample < ApplicationRecord
 
   SAMPLE_TYPE_MIXTURE = 'Mixture'
   SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule'
+  SAMPLE_TYPE_HIERARCHICAL_MATERIAL = 'HierarchicalMaterial'
 
   SAMPLE_TYPES = [
     SAMPLE_TYPE_MICROMOLECULE,
     SAMPLE_TYPE_MIXTURE,
+    SAMPLE_TYPE_HIERARCHICAL_MATERIAL,
   ].freeze
+
+  # Hierarchical sample properties (column or sample_details, fallback to xref for backwards compatibility)
+  HIERARCHICAL_PROPERTY_KEYS = %i[
+    color state height width length diameter storage_condition material
+    cspi particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer
+  ].freeze
+
+  HIERARCHICAL_PROPERTY_KEYS.each do |key|
+    define_method(key) do
+      v = self[key]
+      return v unless v.nil?
+
+      (sample_details || {})[key.to_s] || (xref || {})[key.to_s]
+    end
+  end
 
   multisearchable against: %i[
     name short_label external_label molecule_sum_formular
@@ -218,6 +247,8 @@ class Sample < ApplicationRecord
     end
   }
 
+  before_save :set_sample_type_hierarchical_if_polymers_list
+  before_create :set_residue_polymer_type_for_hierarchical_material
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :update_molecule_name
@@ -468,6 +499,25 @@ class Sample < ApplicationRecord
   # rubocop:enable Style/OptionalBooleanParameter
   def reaction_description
     reactions.first.try(:description)
+  end
+
+  def set_sample_type_hierarchical_if_polymers_list
+    return if molfile.blank?
+    return unless Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile)
+    # Don't override an explicit sample_type change made by the caller in this save.
+    return if sample_type_changed? && sample_type != SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+
+    self.sample_type = SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+  end
+
+  def set_residue_polymer_type_for_hierarchical_material
+    return unless new_record?
+    return unless sample_type.to_s == SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+    return unless residues.first
+
+    residues.first.custom_info ||= {}
+    residues.first.custom_info['polymer_type'] = 'self_defined'
+    residues.first.custom_info.delete('surface_type')
   end
 
   def auto_set_molfile_to_molecules_molfile
@@ -740,9 +790,10 @@ class Sample < ApplicationRecord
     rel_reaction_id = reactions_samples.first&.reaction_id
     return unless rel_reaction_id
 
-    ReactionsSample.where(reaction_id: rel_reaction_id,
-                          type: %w[ReactionsProductSample ReactionsReactantSample
-                                   ReactionsStartingMaterialSample]).find_each(&:update_equivalent)
+    ReactionsSample.where(
+      reaction_id: rel_reaction_id,
+      type: %w[ReactionsProductSample ReactionsReactantSample ReactionsStartingMaterialSample],
+    ).find_each(&:update_equivalent)
   end
 
   def update_svg_for_reactions
