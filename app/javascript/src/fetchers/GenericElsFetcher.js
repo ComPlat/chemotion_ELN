@@ -2,7 +2,7 @@ import ApiClient from 'src/api_clients/ChemotionApiClient';
 import GenericEl from 'src/models/GenericEl';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import GenericBaseFetcher from 'src/fetchers/GenericBaseFetcher';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import { getFileName, downloadBlob, preparedCollectionParams } from 'src/utilities/FetcherHelper';
 import { normalizeMttResult } from 'src/utilities/mttDataProcessor';
 
@@ -23,8 +23,8 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
   }
 
   static genericElsSearchParams(params) {
-    const userState = UserStore.getState();
-    const filters = userState?.profile?.data?.filters || {};
+    const { profile } = rootStore.userStore;
+    const filters = profile?.data?.filters || {};
     const group = filters[params.name]?.group || 'none';
     const sort = filters[params.name]?.sort || false;
     return { ...params, el_type: params.name, sort_column: (sort && group) || 'updated_at' };
