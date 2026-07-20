@@ -103,6 +103,20 @@ class Import::ImportSdf < Import::ImportSamples
       color: { field: 'color', displayName: 'Color' },
       form: { field: 'form', displayName: 'Form' },
       inventory_label: { field: 'inventory_label', displayName: 'Inventory Label' },
+      height: { field: 'height', displayName: 'Height' },
+      width: { field: 'width', displayName: 'Width' },
+      length: { field: 'length', displayName: 'Length' },
+      diameter: { field: 'diameter', displayName: 'Diameter' },
+      state: { field: 'state', displayName: 'State' },
+      storage_condition: { field: 'storage_condition', displayName: 'Storage condition' },
+      material: { field: 'material', displayName: 'Material' },
+      cspi: { field: 'cspi', displayName: 'CSPI' },
+      particle_size: { field: 'particle_size', displayName: 'Particle size' },
+      shape: { field: 'shape', displayName: 'Shape' },
+      sieve_fraction: { field: 'sieve_fraction', displayName: 'Sieve fraction' },
+      layer_thickness: { field: 'layer_thickness', displayName: 'Layer thickness' },
+      liquid_medium: { field: 'liquid_medium', displayName: 'Liquid medium' },
+      stabilizer: { field: 'stabilizer', displayName: 'Stabilizer' },
     }
     return base.merge(CHEMICAL_KEYS_TO_MAP) if @import_type == 'chemical'
 
@@ -127,7 +141,9 @@ class Import::ImportSdf < Import::ImportSamples
     rescue StandardError => e
       @message[:error] << "Failed to read attachment file: #{e.message}"
     end
-    @raw_data.pop if @raw_data[-1].blank?
+    # Drop any entry that is blank or has no molfile body (e.g., stray tag blocks
+    # left over from double-$$$$ separators in older exports).
+    @raw_data.reject! { |entry| entry.to_s.strip.empty? || !entry.to_s.include?('M  END') }
   end
 
   # An MDL record is title / program / comment / counts. Some editors -- Ketcher, including the SDF
@@ -366,6 +382,7 @@ class Import::ImportSdf < Import::ImportSamples
           # held across a later row's native work either.
           ActiveRecord::Base.transaction(requires_new: true) do
             sample = build_sample_from_row(resolved, row, attribs, error_messages)
+            assign_hierarchical_material_fields(sample, row)
             sample.collections << collection_for_import
             sample.collections << all_collections_for_user
             sample.save!
@@ -461,6 +478,25 @@ class Import::ImportSdf < Import::ImportSamples
     value, note = Import::ValueCoercion.coerce(key, raw)
     note_coercion_issue(key, note) if note
     sample['xref'][key] = value unless value.nil?
+  end
+
+  # Assign HierarchicalMaterial-specific fields from an SDF row.
+  # These fields live in sample_details when the DB column does not exist yet.
+  def assign_hierarchical_material_fields(sample, row)
+    hm_float_fields = %w[height width length diameter particle_size sieve_fraction layer_thickness]
+    hm_float_fields.each do |field|
+      sample[field] = row[field].to_s.strip.to_f if row[field].present?
+    end
+    hm_string_fields = %w[state storage_condition material cspi shape liquid_medium stabilizer]
+    hm_string_fields.each do |field|
+      sample[field] = row[field] if row[field].present?
+    end
+
+    additional_property_keys = %w[sieve_fraction height diameter width length material cspi particle_size shape layer_thickness liquid_medium stabilizer]
+    selected_props = additional_property_keys.select { |k| row[k].to_s.strip.present? }
+    if selected_props.any?
+      sample.sample_details = (sample.sample_details || {}).merge('selected_properties' => selected_props)
+    end
   end
 
   # Columns that need a unit or a range parsed out of the cell before they can be assigned.
