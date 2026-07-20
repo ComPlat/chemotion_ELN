@@ -150,4 +150,56 @@ RSpec.describe Import::ImportSdf do
       expect(PubchemSingleLcssJob).to have_received(:perform_later).twice
     end
   end
+
+  describe 'polymer molfile delegation to Import::PolymerMoleculeResolver' do
+    let(:mapper) do
+      described_class.new(collection_id: mock_collection.id, current_user_id: mock_user.id)
+    end
+    let(:polymer_molfile) { "some ctab\n> <PolymersList>\ndata" }
+    let(:resolved_molecule) { create(:molecule, iupac_name: 'polymer-name', molecule_svg_file: 'x.svg') }
+    let(:resolver_result) do
+      Import::PolymerMoleculeResolver::Result.new(
+        molecule: resolved_molecule, raw_molfile: polymer_molfile, babel_info: {},
+      )
+    end
+
+    describe '#find_or_create_polymer_molfile_entry' do
+      it 'delegates to Import::PolymerMoleculeResolver and builds a row-hash from the Result' do
+        allow(Import::PolymerMoleculeResolver).to receive(:call).and_return(resolver_result)
+
+        row = mapper.find_or_create_polymer_molfile_entry(polymer_molfile, nil)
+
+        expect(Import::PolymerMoleculeResolver).to have_received(:call)
+          .with(polymer_molfile, lcss_batch: mapper.instance_variable_get(:@lcss_batch))
+        expect(row).to include(
+          inchikey: resolved_molecule.inchikey,
+          svg: 'molecules/x.svg',
+          name: 'polymer-name',
+          molfile: polymer_molfile,
+        )
+      end
+
+      it 'returns the no_image_180.svg placeholder when the resolver could not create a molecule' do
+        allow(Import::PolymerMoleculeResolver).to receive(:call).and_return(
+          Import::PolymerMoleculeResolver::Result.new(molecule: nil, raw_molfile: polymer_molfile, babel_info: nil),
+        )
+
+        row = mapper.find_or_create_polymer_molfile_entry(polymer_molfile, nil)
+
+        expect(row).to eq({ name: nil, inchikey: nil, svg: 'no_image_180.svg' })
+      end
+    end
+
+    describe '#molecule_and_molfile_for_row' do
+      it 'delegates to Import::PolymerMoleculeResolver and returns a [molecule, raw_molfile, babel_info] tuple' do
+        allow(Import::PolymerMoleculeResolver).to receive(:call).and_return(resolver_result)
+
+        tuple = mapper.molecule_and_molfile_for_row(polymer_molfile)
+
+        expect(Import::PolymerMoleculeResolver).to have_received(:call)
+          .with(polymer_molfile, lcss_batch: mapper.instance_variable_get(:@lcss_batch))
+        expect(tuple).to eq([resolved_molecule, polymer_molfile, {}])
+      end
+    end
+  end
 end

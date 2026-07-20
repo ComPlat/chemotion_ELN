@@ -345,37 +345,15 @@ class Import::ImportSdf < Import::ImportSamples
 
   # When molfile has PolymersList/TextNode: keep full molfile, clean for babel, find/create molecule, reprocess SVG.
   def find_or_create_polymer_molfile_entry(raw_molfile, _babel_info_from_batch)
-    raw_molfile = unescape_textnode_octal_in_molfile(raw_molfile)
-    cleaned = clean_molfile_for_inchikey(raw_molfile)
-    return { name: nil, inchikey: nil, svg: 'no_image_180.svg' } if cleaned.blank?
+    result = Import::PolymerMoleculeResolver.call(raw_molfile, lcss_batch: @lcss_batch)
+    return { name: nil, inchikey: nil, svg: 'no_image_180.svg' } if result.molecule.blank?
 
-    molfile_for_babel = cleaned.dup
-    molfile_for_babel = "\n#{molfile_for_babel}" unless molfile_for_babel.start_with?("\n")
-    molfile_for_babel = "#{molfile_for_babel}\n" unless molfile_for_babel.end_with?("\n")
-    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
-
-    molecule = if babel_info[:inchikey].present?
-                 Molecule.find_or_create_by_molfile(raw_molfile, lcss_batch: @lcss_batch, **babel_info)
-               else
-                 find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info, lcss_batch: @lcss_batch)
-               end
-
-    if molecule.present?
-      reprocessed_svg = Molecule.svg_reprocess(nil, raw_molfile, service: :indigo)
-      if reprocessed_svg.present?
-        molecule.attach_svg(reprocessed_svg)
-        molecule.molfile = raw_molfile if molecule.molfile.to_s != raw_molfile
-        molecule.save
-      end
-      process_molfile_opt_data(raw_molfile).merge(
-        inchikey: molecule.inchikey,
-        svg: "molecules/#{molecule.molecule_svg_file}",
-        name: molecule.iupac_name,
-        molfile: raw_molfile,
-      )
-    else
-      { name: nil, inchikey: nil, svg: 'no_image_180.svg' }
-    end
+    process_molfile_opt_data(result.raw_molfile).merge(
+      inchikey: result.molecule.inchikey,
+      svg: "molecules/#{result.molecule.molecule_svg_file}",
+      name: result.molecule.iupac_name,
+      molfile: result.raw_molfile,
+    )
   end
 
   def process_molfile_opt_data(molfile)
@@ -393,28 +371,8 @@ class Import::ImportSdf < Import::ImportSamples
   def molecule_and_molfile_for_row(molfile)
     raw = molfile.to_s.strip
     if Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(raw)
-      raw = unescape_textnode_octal_in_molfile(raw)
-      cleaned = Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw)
-      return [nil, nil, nil] if cleaned.blank?
-
-      molfile_for_babel = cleaned.dup
-      molfile_for_babel = "\n#{molfile_for_babel}" unless molfile_for_babel.start_with?("\n")
-      molfile_for_babel = "#{molfile_for_babel}\n" unless molfile_for_babel.end_with?("\n")
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
-      molecule = if babel_info[:inchikey].present?
-                   Molecule.find_or_create_by_molfile(raw, lcss_batch: @lcss_batch, **babel_info)
-                 else
-                   find_or_create_polymer_molecule_without_inchikey(raw, babel_info, lcss_batch: @lcss_batch)
-                 end
-      if molecule.present?
-        reprocessed_svg = Molecule.svg_reprocess(nil, raw, service: :indigo)
-        if reprocessed_svg.present?
-          molecule.attach_svg(reprocessed_svg)
-          molecule.molfile = raw if molecule.molfile.to_s != raw
-          molecule.save
-        end
-      end
-      [molecule, raw, babel_info]
+      result = Import::PolymerMoleculeResolver.call(raw, lcss_batch: @lcss_batch)
+      [result.molecule, result.raw_molfile, result.babel_info]
     else
       san_molfile = sanitize_molfile(molfile)
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(san_molfile)
