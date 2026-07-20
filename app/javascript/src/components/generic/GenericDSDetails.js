@@ -6,17 +6,19 @@ import { Card } from 'react-bootstrap';
 import {
   GenInterface, GenToolbar, absOlsTermLabel, browseElement
 } from 'chem-generic-ui';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { StoreContext, rootStore } from 'src/stores/mobx/RootStore';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
 const onNaviClick = (type, id) => {
   const { currentCollection } = UIStore.getState();
-  const { genericEls = [] } = UserStore.getState();
+  const { genericEls = [] } = rootStore.userStore;
   browseElement(currentCollection, false, type, id, genericEls, true);
 };
 
 class GenericDSDetails extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     this.handleReload = this.handleReload.bind(this);
@@ -37,7 +39,8 @@ class GenericDSDetails extends Component {
     const {
       onChange, element, onDatasetChange, datasetContainer
     } = this.props;
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = this.context.userStore;
+
     const layersLayout = (
       <GenInterface
         generic={genericDS}
@@ -58,8 +61,7 @@ class GenericDSDetails extends Component {
 
   render() {
     const { genericDS, kind, klass } = this.props;
-    const currentUser =
-      (UserStore.getState() && UserStore.getState().currentUser) || {};
+    const currentUser = this.context.userStore.currentUser || {};
     if (
       MatrixCheck(currentUser.matrix, 'genericDataset') &&
       Object.keys(genericDS).length !== 0

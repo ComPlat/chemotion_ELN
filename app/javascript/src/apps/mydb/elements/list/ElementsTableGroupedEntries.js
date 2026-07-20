@@ -9,24 +9,21 @@ import { ShowUserLabels } from 'src/components/UserLabels';
 import ReactionGroupHeader from 'src/apps/mydb/elements/list/reaction/ReactionGroupHeader';
 import ReactionGroupItem from 'src/apps/mydb/elements/list/reaction/ReactionGroupItem';
 
-function GenericElementsHeader({ group }) {
-  return (
+const GenericElementsHeader = ({ group }) => (
     <div className="flex-grow-1">
       <div className="preview-table">
         {group}
       </div>
     </div>
   );
-}
 
 GenericElementsHeader.propTypes = {
   group: PropTypes.string.isRequired,
 };
 
-function GenericElementItem({ element, showDetails }) {
-  return (
+const GenericElementItem = ({ element, showDetails }) => (
     <div
-      role="button"
+      role="presentation"
       onClick={showDetails}
       className="d-flex justify-content-between"
     >
@@ -39,18 +36,17 @@ function GenericElementItem({ element, showDetails }) {
       </div>
     </div>
   );
-}
 
 GenericElementItem.propTypes = {
   element: PropTypes.object.isRequired,
   showDetails: PropTypes.func.isRequired,
 };
 
-export default function ElementsTableGroupedEntries({
+ const ElementsTableGroupedEntries = ({
   type,
   elements,
   elementsGroup,
-}) {
+}) => {
   if (type === 'reaction') {
     const getGroupKey = (element) => element[elementsGroup];
     return (
@@ -96,7 +92,9 @@ export default function ElementsTableGroupedEntries({
       )}
     />
   );
-}
+};
+
+export default ElementsTableGroupedEntries;
 
 ElementsTableGroupedEntries.propTypes = {
   elements: PropTypes.array.isRequired,
