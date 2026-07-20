@@ -111,9 +111,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   def read_file
     return if attachment_attacher.file.blank?
 
-    # read means it's active again: promote off cold, in the background
-    PromoteAttachmentJob.perform_later(id) if attachment_attacher.file.storage_key == :cold
-
+    # a cold read promotes the file back to hot automatically (see ColdStorage#open)
     attachment_attacher.file.rewind if attachment_attacher.file.eof?
     attachment_attacher.file.read
   end

@@ -69,6 +69,28 @@ RSpec.describe Attachment do
     end
   end
 
+  describe 'promote on any Shrine read' do
+    context 'when a cold file is read directly through the attacher', :active_job do
+      it 'enqueues a promotion (e.g. the download endpoint bypassing #read_file)' do
+        attachment.move_to_cold
+
+        expect { attachment.attachment.read }.to have_enqueued_job(PromoteAttachmentJob).with(attachment.id)
+      end
+    end
+  end
+
+  describe '#promote_if_cold', :active_job do
+    it 'enqueues a promotion for a cold file (used by image serving, which bypasses Shrine)' do
+      attachment.move_to_cold
+
+      expect { attachment.promote_if_cold }.to have_enqueued_job(PromoteAttachmentJob).with(attachment.id)
+    end
+
+    it 'does nothing for a hot file' do
+      expect { attachment.promote_if_cold }.not_to have_enqueued_job(PromoteAttachmentJob)
+    end
+  end
+
   describe '#read_thumbnail' do
     context 'when no thumbnail exists' do
       it 'returns nil' do
@@ -1011,6 +1033,15 @@ RSpec.describe Attachment do
       attachment.update_column(:updated_at, 13.months.ago)
 
       expect(attachment.cold?(older_than: threshold)).to be true
+    end
+
+    it 'is not cold when the top element was edited recently, even if the file and container are old' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      attachment.attachable.update_column(:updated_at, 13.months.ago)
+      allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 1.day.ago))
+
+      expect(attachment.cold?(older_than: threshold)).to be false
     end
   end
   # rubocop:enable Rails/SkipsModelValidations

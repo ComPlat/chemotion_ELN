@@ -5,8 +5,10 @@
 module AttachmentStorageTiering
   extend ActiveSupport::Concern
 
+  # Cold only if the file, its container, and its top element are all old.
+  # ponytail: skips middle containers; a mis-archive self-heals on next read.
   def cold?(older_than:)
-    updated_at < older_than && (attachable.nil? || attachable.updated_at < older_than)
+    [updated_at, attachable&.updated_at, root_element&.updated_at].compact.all? { |t| t < older_than }
   end
 
   def move_to_cold
@@ -15,6 +17,21 @@ module AttachmentStorageTiering
 
   def move_to_store
     move_to_tier(:store)
+  end
+
+  # For read paths that bypass Shrine (e.g. image serving).
+  def promote_if_cold
+    return unless attachment_attacher.file&.storage_key == :cold
+
+    PromoteAttachmentJob.perform_later(id)
+  end
+
+  class_methods do
+    # Promote whichever attachment owns this Shrine file id (called from ColdStorage#open).
+    def promote_by_file_id(file_id)
+      attachment = find_by("attachment_data->>'id' = ?", file_id)
+      PromoteAttachmentJob.perform_later(attachment.id) if attachment
+    end
   end
 
   private
