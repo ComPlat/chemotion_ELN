@@ -77,9 +77,9 @@ describe ImportSamplesJob, active_job: true do
              file_path: 'spec/fixtures/import_sample_data.sdf')
     end
     let(:import_samples_instance) { instance_double(Import::ImportSdf) }
-    let(:result_message) do
-      { message: 'no rows to import' }
-    end
+    # Import::ImportSdf#message returns a String in production (not a Hash) -- stub it
+    # as such so this spec can't hide a type error in how ImportSamplesJob handles it.
+    let(:result_message) { 'no rows to import' }
     let(:parameters) do
       {
         collection_id: create(:collection).id,
@@ -114,6 +114,44 @@ describe ImportSamplesJob, active_job: true do
           expect(Message).to have_received(:create_msg_notification)
           expect { described_class.perform_now(parameters) }.not_to raise_error
         end
+      end
+    end
+  end
+
+  context 'when the attachment filename extension is upper/mixed case' do
+    let(:import_samples_instance) do
+      instance_double(Import::ImportSamples, process: { status: 'ok', message: '', data: [] })
+    end
+    let(:import_sdf_instance) { instance_double(Import::ImportSdf, import_from_file: nil, message: '') }
+    let(:parameters) do
+      {
+        collection_id: create(:collection).id, user_id: create(:user).id,
+        attachment: attachment, import_type: 'sample'
+      }
+    end
+
+    before do
+      allow(Import::ImportSamples).to receive(:new).and_return(import_samples_instance)
+      allow(Import::ImportSdf).to receive(:new).and_return(import_sdf_instance)
+    end
+
+    context 'with a .XLSX extension' do
+      let(:attachment) { instance_double(Attachment, filename: 'Sample.XLSX') }
+
+      it 'still routes to Import::ImportSamples instead of "Unsupported format"' do
+        described_class.new.perform(parameters)
+
+        expect(Import::ImportSamples).to have_received(:new)
+      end
+    end
+
+    context 'with a .SDF extension' do
+      let(:attachment) { instance_double(Attachment, filename: 'Structures.SDF') }
+
+      it 'still routes to Import::ImportSdf instead of "Unsupported format"' do
+        described_class.new.perform(parameters)
+
+        expect(Import::ImportSdf).to have_received(:new)
       end
     end
   end

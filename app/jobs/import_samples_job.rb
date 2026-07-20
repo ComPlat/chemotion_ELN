@@ -10,7 +10,7 @@ class ImportSamplesJob < ApplicationJob
   def perform(params)
     @user_id = params[:user_id]
     @collection_id = params[:collection_id]
-    file_format = File.extname(params[:attachment]&.filename)
+    file_format = File.extname(params[:attachment]&.filename).downcase
 
     case file_format
     when '.xlsx', '.csv'
