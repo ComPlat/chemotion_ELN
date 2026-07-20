@@ -383,8 +383,8 @@ export default class SampleDetails extends React.Component {
         if (existing) {
           const existingMolarMass = existing.molar_mass ?? existing.component_properties?.molar_mass;
           const existingWeightRatioExp = existing.weight_ratio_exp ?? existing.component_properties?.weight_ratio_exp;
-          if (existingMolarMass) newComp.molar_mass = existingMolarMass;
-          if (existingWeightRatioExp) newComp.weight_ratio_exp = existingWeightRatioExp;
+          if (existingMolarMass != null) newComp.molar_mass = existingMolarMass;
+          if (existingWeightRatioExp != null) newComp.weight_ratio_exp = existingWeightRatioExp;
         }
       });
     }
