@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useContext } from 'react';
 import {
   OverlayTrigger,
   Popover,
@@ -12,54 +12,42 @@ import { AsyncSelect } from 'src/components/common/Select';
 import _ from 'lodash';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
-export default class GroupElement extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      showUsers: false,
-      showRowAdd: false,
-      showAdminRowAdd: false,
-      showAdminAlert: false,
-      adminPopoverTarget: null,
-      usersToggled: false,
-      rowAddToggled: false,
-      selectedAdminUsers: [],
-    };
+const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, onDeleteUser, onChangeData}) => {
+  const [showUsers, setShowUsers] = useState(false);
+  const [showRowAdd, setShowRowAdd] = useState(false);
+  const [showAdminAlert, setShowAdminAlert] = useState(false);
+  const [showAdminRowAdd, setShowAdminRowAdd] = useState(false);
+  const [adminPopoverTarget, setAdminPopoverTarget] = useState(null);
+  const [usersToggled, setUsersToggled] = useState(false);
+  const [rowAddToggled, setRowAddToggled] = useState(false);
+  const [selectedAdminUsers, setSelectedAdminUsers] = useState([]);
 
-    this.toggleUsers = this.toggleUsers.bind(this);
-    this.toggleRowAdd = this.toggleRowAdd.bind(this);
-    this.toggleAdminRowAdd = this.toggleAdminRowAdd.bind(this);
-    this.loadUserByName = this.loadUserByName.bind(this);
-    this.hideAdminAlert = this.hideAdminAlert.bind(this);
-    this.setGroupAdmin = this.setGroupAdmin.bind(this);
-    this.addAdmin = this.addAdmin.bind(this);
-  }
 
-  setGroupAdmin(event, groupRec, userRec, setAdmin = true) {
+  const setGroupAdmin = (event, group, user, setAdmin = true) => {
     // if removing group admin and there is only one admin -> show warning
-    if (!setAdmin && groupRec.admins.length === 1) {
-      this.setState({ showAdminAlert: true, adminPopoverTarget: event.target });
-      return;
+    if (!setAdmin && group.admins.length === 1) {
+      setShowAdminAlert(true);
+      setAdminPopoverTarget(event.target);
     }
 
     const request = setAdmin
-      ? UsersFetcher.promoteAdmin(groupRec.id, userRec.id)
-      : UsersFetcher.demoteAdmin(groupRec.id, userRec.id);
+      ? UsersFetcher.promoteAdmin(group.id, user.id)
+      : UsersFetcher.demoteAdmin(group.id, user.id);
 
     request.then((group) => {
       if (setAdmin) {
         const usrIdx = _.findIndex(
           group.group.admins,
-          (o) => o.id === userRec.id
+          (o) => o.id === user.id
         );
         // if user is not already admin
         if (usrIdx === -1) {
-          group.group.admins.push(userRec);
+          group.group.admins.push(user);
         }
       } else {
         const usrIdx = _.findIndex(
           group.group.admins,
-          (o) => o.id === userRec.id
+          (o) => o.id === user.id
         );
         // if user is already  admin
         if (usrIdx !== -1) {
