@@ -62,7 +62,7 @@ end
 
 module Usecases
   module Reactions
-    class UpdateMaterials
+    class UpdateMaterials # rubocop:disable Metrics/ClassLength
       include ContainerHelpers
       include Reactable
       attr_reader :current_user
@@ -268,8 +268,10 @@ module Usecases
         end
       end
 
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       def update_existing_sample(sample, fixed_label, target_amount = nil)
         existing_sample = Sample.find(sample.id)
+        return existing_sample if existing_sample.is_legacy
 
         update_gas_material = @reaction.vessel_size && @vessel_size && (
           @reaction.vessel_size['amount'] != @vessel_size['amount'] ||
@@ -304,6 +306,7 @@ module Usecases
         existing_sample.save!
         existing_sample
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
       def associate_sample_with_reaction(sample, modified_sample, material_group)
         reactions_sample_klass = "Reactions#{material_group.camelize}Sample"

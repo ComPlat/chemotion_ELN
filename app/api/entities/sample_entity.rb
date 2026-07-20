@@ -77,6 +77,8 @@ module Entities
       expose! :sample_type
       expose! :sample_details
       expose! :components,              unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ComponentEntity'
+      expose! :is_legacy,                                           anonymize_with: false
+      expose! :merged_sources,          unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::MergedSourceEntity'
     end
     # rubocop:enable Layout/ExtraSpacing, Metrics/BlockLength
 
@@ -150,6 +152,10 @@ module Entities
 
     def weight_percentage
       object.reactions_samples.pick(:weight_percentage)
+    end
+
+    def merged_sources
+      object.merged_sources
     end
   end
 end

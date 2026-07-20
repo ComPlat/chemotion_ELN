@@ -1379,6 +1379,21 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.index ["sample_id"], name: "index_residues_on_sample_id"
   end
 
+  create_table "sample_merges", force: :cascade do |t|
+    t.integer "source_sample_id", null: false
+    t.integer "target_sample_id", null: false
+    t.integer "reaction_id", null: false
+    t.float "source_amount_mol", null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.float "target_real_amount_value_before"
+    t.string "target_real_amount_unit_before"
+    t.integer "target_molecule_id_before"
+    t.jsonb "source_reaction_sample_attributes"
+    t.index ["source_sample_id"], name: "index_sample_merges_on_source_sample_id", unique: true
+    t.index ["target_sample_id", "reaction_id"], name: "index_sample_merges_on_target_and_reaction"
+  end
+
   create_table "sample_tasks", force: :cascade do |t|
     t.float "result_value"
     t.string "result_unit", default: "g", null: false
@@ -1437,10 +1452,12 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.string "sample_type", default: "Micromolecule"
     t.jsonb "sample_details"
     t.jsonb "log_data"
+    t.boolean "is_legacy", default: false, null: false
     t.index ["ancestry"], name: "index_samples_on_ancestry", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_samples_on_deleted_at"
     t.index ["identifier"], name: "index_samples_on_identifier"
     t.index ["inventory_sample"], name: "index_samples_on_inventory_sample"
+    t.index ["is_legacy"], name: "index_samples_on_is_legacy", where: "(is_legacy = true)"
     t.index ["molecule_id"], name: "index_samples_on_sample_id"
     t.index ["molecule_name_id"], name: "index_samples_on_molecule_name_id"
     t.index ["short_label"], name: "index_samples_on_short_label"
@@ -1882,6 +1899,9 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
   add_foreign_key "reactions_reactant_sbmm_samples", "reactions"
   add_foreign_key "reactions_reactant_sbmm_samples", "sequence_based_macromolecule_samples"
   add_foreign_key "report_templates", "attachments"
+  add_foreign_key "sample_merges", "reactions", name: "fk_sample_merges_reaction"
+  add_foreign_key "sample_merges", "samples", column: "source_sample_id", name: "fk_sample_merges_source"
+  add_foreign_key "sample_merges", "samples", column: "target_sample_id", name: "fk_sample_merges_target"
   add_foreign_key "sample_tasks", "samples"
   add_foreign_key "sample_tasks", "users", column: "creator_id"
   add_foreign_key "sequence_based_macromolecule_samples", "sequence_based_macromolecules"
