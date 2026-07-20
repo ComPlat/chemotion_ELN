@@ -352,6 +352,9 @@ const UserStore = types.model(
     if (!MatrixCheck(self.currentUser.matrix, 'genericElement')) { return []; }
 
     return values(self.genericEls);
+  },
+  updateUserProfileValues(params = {}) {
+    self.updateUserProfile(params);
   }
 }));
 

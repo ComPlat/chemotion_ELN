@@ -190,7 +190,7 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
 
     if (!profile) return;
     set(profile, 'data.layout_detail_sequence_based_macromolecule_sample', updatedLayout);
-    userStore.updateUserProfile(profile);
+    userStore.updateUserProfileValues(profile);
   };
 
   const hideInventoryTabInCollection = () => {
