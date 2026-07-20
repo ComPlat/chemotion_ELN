@@ -329,7 +329,7 @@ class Import::ImportSdf < Import::ImportSamples
       mf = molfiles[i]
       if Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(mf.to_s)
         find_or_create_polymer_molfile_entry(mf.to_s.strip, babel_info)
-      elsif babel_info[:inchikey].present?
+      elsif babel_info && babel_info[:inchikey].present?
         m = Molecule.find_or_create_by_molfile(mf, lcss_batch: @lcss_batch, **babel_info)
         process_molfile_opt_data(mf).merge(
           inchikey: m.inchikey,

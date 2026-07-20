@@ -132,5 +132,57 @@ RSpec.describe Chemotion::OpenBabelService do
 
       expect(info[:cano_smiles]).to eq('')
     end
+
+    it 'appends a timeout warning to ob_log when svg_from_molfile returns nil (SVG render timed out)' do
+      allow(described_class).to receive(:svg_from_molfile).and_return(nil)
+      allow(conversion).to receive(:write_string).and_return("C smiles-meta\n", "C can-meta\n", "molfile-v2000\n")
+
+      info = described_class.molecule_info_from_molfile('C')
+
+      expect(info[:svg]).to be_nil
+      expect(info[:ob_log][:warning]).to include(
+        "SVG rendering timed out after #{Chemotion::OpenBabelService::SVG_RENDER_TIMEOUT_SECONDS}s",
+      )
+    end
+  end
+
+  describe '.svg_from_molfile' do
+    it 'delegates to svg_from_molfile_unsafe inside a ForkedTimeout and returns its value' do
+      allow(Chemotion::ForkedTimeout).to receive(:run).with(described_class::SVG_RENDER_TIMEOUT_SECONDS).and_yield
+      allow(described_class).to receive(:svg_from_molfile_unsafe).with('molfile', {}).and_return('<svg/>')
+
+      expect(described_class.svg_from_molfile('molfile')).to eq('<svg/>')
+    end
+
+    it 'returns nil (does not raise) when the underlying call times out' do
+      allow(Chemotion::ForkedTimeout).to receive(:run)
+        .and_raise(Chemotion::ForkedTimeout::TimedOut, 'block exceeded 20s')
+
+      expect(described_class.svg_from_molfile('molfile')).to be_nil
+    end
+  end
+
+  describe '.molecule_info_from_molfiles' do
+    it 'returns nil for a record that raises, without reusing a previous record\'s result' do
+      allow(described_class).to receive(:molecule_info_from_molfile) do |molfile|
+        case molfile
+        when 'first' then { inchikey: 'FIRST-KEY' }
+        when 'second' then raise StandardError, 'boom'
+        when 'third' then { inchikey: 'THIRD-KEY' }
+        end
+      end
+
+      result = described_class.molecule_info_from_molfiles(%w[first second third])
+
+      expect(result).to eq([{ inchikey: 'FIRST-KEY' }, nil, { inchikey: 'THIRD-KEY' }])
+    end
+
+    it 'returns nil when the very first record raises' do
+      allow(described_class).to receive(:molecule_info_from_molfile).and_raise(StandardError, 'boom')
+
+      result = described_class.molecule_info_from_molfiles(%w[only])
+
+      expect(result).to eq([nil])
+    end
   end
 end

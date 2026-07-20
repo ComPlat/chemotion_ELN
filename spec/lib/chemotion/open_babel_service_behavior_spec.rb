@@ -22,6 +22,11 @@ RSpec.describe Chemotion::OpenBabelService do
   let(:v2000_mol)  { file_fixture('mof_v2000_1.mol').read }
   let(:v3000_mol)  { file_fixture('mof_v3000_1.mol').read }
 
+  # CCDC record EKOWOR (a 193-atom/648-bond uranium complex, extracted from a real
+  # organometallic SDF dump): confirmed to make OpenBabel's native SVG writer hang
+  # indefinitely (>90s, no return) prior to the ForkedTimeout fix.
+  let(:ekowor_uranium_mol) { file_fixture('structures/molfiles/ekowor_uranium.mol').read }
+
   # 3 atoms (C-N-O), bond 2-3 is a type-9 (coordinate) bond.
   let(:v2000_coord_mol) do
     <<~MOL
@@ -137,6 +142,36 @@ RSpec.describe Chemotion::OpenBabelService do
     it 'detects the molfile version and that the molecule is complete' do
       expect(info[:molfile_version]).to eq('V2000')
       expect(info[:is_partial]).to be(false)
+    end
+  end
+
+  describe 'hang protection on pathological organometallic input' do
+    around do |example|
+      # Outer safety net for the *test suite itself*: if the fork-based mechanism ever
+      # regresses back to an in-process hang, fail this example in 30s instead of hanging
+      # CI for the real SVG_RENDER_TIMEOUT_SECONDS default (or worse). This is not a claim
+      # that Timeout.timeout is what fixes the underlying bug -- see forked_timeout_spec.rb
+      # and open_babel_service_spec.rb for that; this is just a CI-safety belt-and-suspenders.
+      # 30s (not 10s): even with SVG rendering stubbed to a 2s deadline below, the *other*
+      # still-unbounded steps for this reproducer (OpenBabel's own internal canonical-labeling
+      # time-box, dual InChI attempts, fingerprinting) legitimately take ~10-12s each on their
+      # own for this pathological molfile.
+      Timeout.timeout(30) { example.run }
+    end
+
+    before { stub_const('Chemotion::OpenBabelService::SVG_RENDER_TIMEOUT_SECONDS', 2) }
+
+    it '.svg_from_molfile returns nil instead of hanging on the EKOWOR reproducer' do
+      expect(described_class.svg_from_molfile(ekowor_uranium_mol)).to be_nil
+    end
+
+    it '.molecule_info_from_molfile completes with a nil svg and a timeout warning in ob_log' do
+      info = described_class.molecule_info_from_molfile(ekowor_uranium_mol)
+
+      expect(info[:svg]).to be_nil
+      expect(info[:ob_log][:warning]).to include(a_string_matching(/SVG rendering timed out/))
+      # everything else in the pipeline still completes for this reproducer
+      expect(info[:formula]).to be_present
     end
   end
 
