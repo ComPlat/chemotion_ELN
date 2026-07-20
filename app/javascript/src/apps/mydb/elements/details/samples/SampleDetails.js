@@ -605,7 +605,7 @@ export default class SampleDetails extends React.Component {
     }
 
     // Resolve the effective layout: collection -> user profile -> fallback
-    const { userProfile } = this.context.userStore;
+    const userProfile = this.context.userStore.profile;
     const baseLayout = sampleLayout
       || userProfile?.data?.layout_detail_sample;
 
@@ -622,7 +622,7 @@ export default class SampleDetails extends React.Component {
     if (!userProfile) return;
     // Persist to user profile
     set(userProfile, 'data.layout_detail_sample', updatedLayout);
-    this.context.userStore.updateUserProfile(userProfile);
+    this.context.userStore.updateUserProfileValues(userProfile);
   }
 
   matchSelectedCollection(currentCollection) {
