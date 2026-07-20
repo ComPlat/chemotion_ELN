@@ -3,6 +3,7 @@
 module Entities
   class SampleEntity < ApplicationEntity
     # rubocop:disable Layout/ExtraSpacing
+    # rubocop:disable Layout/LineLength, Layout/ExtraSpacing, Metrics/BlockLength
     # Level 0 attributes and relations
     with_options(anonymize_below: 0) do
       expose! :can_copy,        unless: :displayed_in_list
@@ -26,6 +27,21 @@ module Entities
       expose! :gas_phase_data
       expose! :user_labels
       expose! :weight_percentage
+      expose! :state
+      expose! :color
+      expose! :storage_condition
+      expose! :height
+      expose! :width
+      expose! :length
+      expose! :diameter
+      expose! :material
+      expose! :cspi
+      expose! :particle_size
+      expose! :shape
+      expose! :sieve_fraction
+      expose! :layer_thickness
+      expose! :liquid_medium
+      expose! :stabilizer
     end
 
     # Level 1 attributes

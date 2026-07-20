@@ -50,7 +50,7 @@ function MoleculeHeader({ sample }) {
                 {sample.molecule.chem_repo && sample.molecule.chem_repo.id && (
                   <ChemrepoLabels chemrepoId={sample.molecule.chem_repo.id} />
                 )}
-                <PubchemLabels element={sample} />
+                { !sample.isHierarchicalMaterial() && <PubchemLabels element={sample} /> }
                 <ComputedPropLabel cprops={sample.molecule_computed_props} />
               </div>
             </div>

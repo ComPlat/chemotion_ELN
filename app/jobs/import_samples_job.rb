@@ -11,6 +11,7 @@ class ImportSamplesJob < ApplicationJob
   ATTEMPT_MARKER_TTL = 1.day
 
   def perform(params)
+    params = params.with_indifferent_access
     @user_id = params[:user_id]
     @collection_id = params[:collection_id]
 
