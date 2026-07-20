@@ -1,21 +1,15 @@
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import UserActions from 'src/stores/alt/actions/UserActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import Aviator from 'aviator';
 import { elementNames } from 'src/apps/generic/Utils';
 import { getLatestVesselIds, clearLatestVesselIds } from 'src/utilities/VesselUtilities';
 
 const collectionShow = (e) => {
-  UserActions.fetchCurrentUser();
-  const { profile } = UserStore.getState();
-  if (!profile) {
-    UserActions.fetchProfile();
-  }
   const uiState = UIStore.getState();
   const { currentSearchSelection, currentSearchByID } = uiState;
   const collectionId = e.params.collectionID;
@@ -250,7 +244,9 @@ const deviceDescriptionShowOrNew = (e) => {
 const sequenceBasedMacromoleculeSampleShowOrNew = (e) => {
   const { sequence_based_macromolecule_sampleID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
-  const index = selecteds.findIndex((el) => el.type === 'sequence_based_macromolecule_sample' && el.id === sequence_based_macromolecule_sampleID);
+  const index = selecteds.findIndex((el) => (
+    el.type === 'sequence_based_macromolecule_sample' && el.id === sequence_based_macromolecule_sampleID
+  ));
 
   if (sequence_based_macromolecule_sampleID === 'new' || sequence_based_macromolecule_sampleID === undefined) {
     ElementActions.generateEmptySequenceBasedMacromoleculeSample(collectionID);
@@ -265,9 +261,10 @@ const sequenceBasedMacromoleculeSampleShowOrNew = (e) => {
 
 const genericElShowOrNew = (e, type) => {
   const { collectionID } = e.params;
+
   let itype = '';
-  if (typeof type === 'undefined' || typeof type === 'object' || type == null || type == '') {
-    const keystr = e.params && Object.keys(e.params).filter((k) => k != 'collectionID' && k.includes('ID'));
+  if (typeof type === 'undefined' || typeof type === 'object' || type == null || type === '') {
+    const keystr = e.params && Object.keys(e.params).filter((k) => k !== 'collectionID' && k.includes('ID'));
     itype = keystr && keystr[0] && keystr[0].slice(0, -2);
   } else {
     itype = type;
@@ -320,13 +317,27 @@ const elementShowOrNew = (e) => {
       sequenceBasedMacromoleculeSampleShowOrNew(e);
       break;
     default:
-      if (e && e.klassType == 'GenericEl') {
+      if (e && e.klassType === 'GenericEl') {
         genericElShowOrNew(e, type);
         break;
       }
       return null;
   }
   return null;
+};
+
+const defaultParamsForAviatorNavigation = (collectionId, type, id) => {
+  const isGenericEl = (rootStore.userStore.genericEls || []).some(({ name }) => name === type);
+
+  const params = {
+    type,
+    klassType: isGenericEl ? 'GenericEl' : undefined,
+    params: {
+      collectionID: collectionId,
+      [`${type}ID`]: id,
+    }
+  };
+  return params;
 };
 
 const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = {}) => {
@@ -345,20 +356,6 @@ const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = 
     }
     return elementShowOrNew(defaultParamsForAviatorNavigation(currentCollection.id, type, id));
   }
-};
-
-const defaultParamsForAviatorNavigation = (collectionId, type, id) => {
-  const isGenericEl = (UserStore.getState().genericEls || []).some(({ name }) => name === type);
-
-  const params = {
-    type,
-    klassType: isGenericEl ? 'GenericEl' : undefined,
-    params: {
-      collectionID: collectionId,
-      [`${type}ID`]: id,
-    }
-  };
-  return params;
 };
 
 const aviatorNavigationWithCollectionId = (collectionId, type, id, silent = true, showOrNew = false) => {

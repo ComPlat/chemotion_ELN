@@ -5,11 +5,10 @@ import {
   findIndex
 } from 'lodash';
 import Aviator from 'aviator';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import alt from 'src/stores/alt/alt';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIActions from 'src/stores/alt/actions/UIActions';
-import UserActions from 'src/stores/alt/actions/UserActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ClipboardStore from 'src/stores/alt/stores/ClipboardStore';
 import Sample from 'src/models/Sample';
@@ -46,11 +45,11 @@ import Component from 'src/models/Component';
 const fetchOls = (elementType) => {
   switch (elementType) {
     case 'reaction':
-      UserActions.fetchOlsRxno();
-      UserActions.fetchOlsChmo();
+      rootStore.userStore.fetchOlsRxno();
+      rootStore.userStore.fetchOlsChmo();
       break;
     default:
-      UserActions.fetchOlsChmo();
+      rootStore.userStore.fetchOlsChmo();
       break;
   }
 };
@@ -397,7 +396,9 @@ class ElementStore {
             if (!deviceAnalysis) {
               deviceAnalysis = DeviceAnalysis.buildEmpty(device.id, chmoConversions.nmr_1h.value);
             }
-            const newExperiment = AnalysesExperiment.buildEmpty(sample.id, sample.short_label, analysis.id, savedDeviceSample.id);
+            const newExperiment = AnalysesExperiment.buildEmpty(
+              sample.id, sample.short_label, analysis.id, savedDeviceSample.id
+            );
             deviceAnalysis.experiments.push(newExperiment);
             ElementActions.saveDeviceAnalysis.defer(deviceAnalysis);
           });
@@ -416,11 +417,11 @@ class ElementStore {
   }
 
   handleOpenDeviceAnalysis({ device, type }) {
+    const { currentCollection } = UIStore.getState();
+    const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === 'NMR');
+
     switch (type) {
       case 'NMR':
-        const { currentCollection } = UIStore.getState();
-        const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === 'NMR');
-
         // update Device in case of sample was added by dnd and device was not saved
         device.updateChecksum();
         ElementActions.saveDevice(device);
@@ -542,7 +543,9 @@ class ElementStore {
 
   handleDuplicateAnalysisExperiment({ device, analysis, experiment }) {
     const sample = device.samples.find((s) => s.id === experiment.deviceSampleId);
-    const newSample = DeviceSample.buildEmpty(analysis.deviceId, { id: sample.sampleId, short_label: sample.shortLabel });
+    const newSample = DeviceSample.buildEmpty(
+      analysis.deviceId, { id: sample.sampleId, short_label: sample.shortLabel }
+    );
     newSample.types = [analysis.analysisType];
     device.samples.push(newSample);
     ElementActions.saveDevice(device);
@@ -599,7 +602,7 @@ class ElementStore {
       sequence_based_macromolecule_sample,
     };
 
-    const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
+    const currentUser = rootStore.userStore.currentUser || {};
     if (MatrixCheck(currentUser.matrix, 'genericElement')) {
       const { klasses } = UIStore.getState();
 
@@ -625,10 +628,10 @@ class ElementStore {
   fetchElementsByCollectionIdandLayout() {
     const { currentSearchSelection, currentCollection } = UIStore.getState();
     if (currentSearchSelection != null) {
-      const { currentType } = UserStore.getState();
+      const { currentType } = rootStore.userStore;
       this.handleRefreshElements(currentType);
     } else {
-      const { profile } = UserStore.getState();
+      const { profile } = rootStore.userStore;
       if (profile && profile.data && profile.data.layout) {
         const { layout } = profile.data;
 
@@ -637,14 +640,16 @@ class ElementStore {
         if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
         if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
         if (layout.cell_line && layout.cell_line > 0) { this.handleRefreshElements('cell_line'); }
-        if (layout.device_description && layout.device_description > 0) { this.handleRefreshElements('device_description'); }
+        if (layout.device_description && layout.device_description > 0) {
+          this.handleRefreshElements('device_description');
+        }
         if (layout.vessel && layout.vessel > 0) { this.handleRefreshElements('vessel'); }
         if (layout.sequence_based_macromolecule_sample && layout.sequence_based_macromolecule_sample > 0) {
           this.handleRefreshElements('sequence_based_macromolecule_sample');
         }
         if (layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
 
-        const { currentUser, genericEls } = UserStore.getState();
+        const { currentUser, genericEls } = rootStore.userStore;
         if (MatrixCheck(currentUser.matrix, 'genericElement')) {
           // eslint-disable-next-line no-unused-expressions
           const genericNames = (genericEls.map((el) => el.name)) || [];
@@ -660,7 +665,8 @@ class ElementStore {
     // const klassName = result.element_klass && result.element_klass.name;
     let { type } = result;
     if (typeof type === 'undefined' || type == null) {
-      type = (result.result.elements && result.result.elements.length > 0 && result.result.elements[0].type) || result.result.type;
+      type = (result.result.elements && result.result.elements.length > 0 && result.result.elements[0].type)
+        || result.result.type;
     }
     this.state.elements[`${type}s`] = result.result;
   }
@@ -670,7 +676,7 @@ class ElementStore {
   }
 
   handleCreateGenericEl(genericEl) {
-    UserActions.fetchCurrentUser();
+    rootStore.userStore.fetchCurrentUser();
     this.handleRefreshElements((genericEl.element_klass && genericEl.element_klass.name) || 'genericEl');
     // this.handleRefreshElements('genericEl');
     this.navigateToNewElement(genericEl, 'GenericEl');
@@ -756,7 +762,7 @@ class ElementStore {
           console.log(errorMessage);
         });
     }
-    UserActions.fetchCurrentUser();
+    rootStore.userStore.fetchCurrentUser();
     fetchOls('sample');
     this.handleRefreshElements('sample');
     if (!closeView) {
@@ -767,7 +773,7 @@ class ElementStore {
   handleCreateSampleForReaction({
     newSample, reaction, materialGroup, components
   }) {
-    UserActions.fetchCurrentUser();
+    rootStore.userStore.fetchCurrentUser();
     if (newSample.isMixture()) {
       ComponentsFetcher.saveOrUpdateComponents(newSample, components)
         .then(async (savedComponents) => {
@@ -842,7 +848,6 @@ class ElementStore {
   }
 
   handleUpdateSampleForWellplate(wellplate) {
-    // UserActions.fetchCurrentUser()
     this.state.currentElement = null;
     this.handleRefreshElements('sample');
 
@@ -1103,7 +1108,9 @@ class ElementStore {
   handleCopyDeviceDescriptionFromClipboard(collectionId) {
     const clipboardDeviceDescriptions = ClipboardStore.getState().device_descriptions;
     if (clipboardDeviceDescriptions && clipboardDeviceDescriptions.length > 0) {
-      this.changeCurrentElement(DeviceDescription.copyFromDeviceDescriptionAndCollectionId(clipboardDeviceDescriptions[0], collectionId));
+      this.changeCurrentElement(
+        DeviceDescription.copyFromDeviceDescriptionAndCollectionId(clipboardDeviceDescriptions[0], collectionId)
+      );
     }
   }
 
@@ -1145,7 +1152,9 @@ class ElementStore {
     if (clipboardSequenceBasedMacromoleculeSamples && clipboardSequenceBasedMacromoleculeSamples.length > 0) {
       this.changeCurrentElement(
         SequenceBasedMacromoleculeSample
-          .copyFromSequenceBasedMacromoleculeSampleAndCollectionId(clipboardSequenceBasedMacromoleculeSamples[0], collection_id)
+          .copyFromSequenceBasedMacromoleculeSampleAndCollectionId(
+            clipboardSequenceBasedMacromoleculeSamples[0], collection_id
+        )
       );
     }
   }
@@ -1157,7 +1166,8 @@ class ElementStore {
   // -- Reactions --
 
   handleFetchReactionById(result) {
-    if (!this.state.currentElement || (this.state.currentElement && this.state.currentElement._checksum) != result._checksum) {
+    if (!this.state.currentElement || (this.state.currentElement
+      && this.state.currentElement._checksum) != result._checksum) {
       this.changeCurrentElement(result);
       this.state.elements.reactions.elements = this.refreshReactionsListForSpecificReaction(result);
       //  this.navigateToNewElement(result);
@@ -1165,11 +1175,9 @@ class ElementStore {
   }
 
   refreshReactionsListForSpecificReaction(newReaction) {
-    return this.state.elements.reactions.elements.map((reaction) => {
-      return reaction.id === newReaction.id
+    return this.state.elements.reactions.elements.map((reaction) => reaction.id === newReaction.id
         ? newReaction
-        : reaction;
-    });
+        : reaction);
   }
 
   handleTryFetchById(result) {
@@ -1218,7 +1226,7 @@ class ElementStore {
   }
 
   handleCreateReaction(reaction) {
-    UserActions.fetchCurrentUser();
+    rootStore.userStore.fetchCurrentUser();
     fetchOls('reaction');
     this.handleRefreshElements('reaction');
     this.navigateToNewElement(reaction);
@@ -1252,7 +1260,7 @@ class ElementStore {
   }
 
   handleCopyCellLine(result) {
-    UserActions.fetchCurrentUser(); // Needed to update the cell line counter in frontend
+    rootStore.userStore.fetchCurrentUser(); // Needed to update the cell line counter in frontend
     Aviator.navigate(`/collection/${result.collectionId}/cell_line/${result.id}`);
   }
 
@@ -1459,11 +1467,11 @@ class ElementStore {
   }
 
   handleChangeElementsFilter(filter) {
-    const userState = UserStore.getState();
-    if (!userState.profile.filters) {
-      userState.profile.data.filters = {};
+    const { profile } = rootStore.userStore;
+    if (!profile.filters) {
+      profile.data.filters = {};
     }
-    userState.profile.data.filters[filter.name] = {
+    profile.data.filters[filter.name] = {
       sort: filter.sort,
       group: filter.group,
       direction: filter.direction,

@@ -1,11 +1,10 @@
 import moment from 'moment';
 import _ from 'lodash';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import alt from 'src/stores/alt/alt';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import Utils from 'src/utilities/Functions';
 import ArrayUtils from 'src/utilities/ArrayUtils';
-import UserActions from 'src/stores/alt/actions/UserActions';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { reOrderArr } from 'src/utilities/DndControl';
 import { UpdateSelectedObjs, OrderPreviewObjs } from 'src/utilities/ReportHelper';
 
@@ -96,7 +95,7 @@ class ReportStore {
       handleClone: ReportActions.clone,
       handleDelete: ReportActions.delete,
       handleRemove: ReportActions.remove,
-      handleReset: [ReportActions.reset, UserActions.fetchCurrentUser],
+      handleReset: [ReportActions.reset, rootStore.userStore.fetchCurrentUser],
       handleUpdMSVal: ReportActions.updMSVal,
       handleUpdateThumbNails: ReportActions.updateThumbNails,
       handleUpdateDefaultTags: ReportActions.updateDefaultTags,
@@ -258,7 +257,7 @@ class ReportStore {
     this.selectedObjs.forEach((x) => {
       x.type === 'sample'
         ? memSpls = [...memSpls, x]
-        : memRxns = [...memRxns, x]
+        : memRxns = [...memRxns, x];
     });
     return {
       samples: [...fetchSpls, ...memSpls],
@@ -304,7 +303,7 @@ class ReportStore {
 
   stdReportPrefix(initial) {
     if (initial) return initial;
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = rootStore.userStore;
     if (!currentUser) return '';
     return currentUser.initials || '';
   }
@@ -662,7 +661,7 @@ class ReportStore {
     const atts = prd.container.children[0].children.map((container) => {
       const isReport = container.extended_metadata.report;
       if (!isReport) return null;
-      const kind = container.extended_metadata.kind;
+      const { kind } = container.extended_metadata;
       return container.children.map(analysis => (
         analysis.attachments.map(att => (
           Object.assign({}, att, { kind })
@@ -700,7 +699,7 @@ class ReportStore {
   }
 
   handleFetchTemplate(result) {
-    const templates = result.templates;
+    const { templates } = result;
     this.setState({ templateOpts: templates, template: templates[0] });
   }
 }
