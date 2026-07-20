@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 # rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, RSpec/MultipleExpectations, RSpec/NestedGroups, RSpec/ContextWording, RSpec/AnyInstance
-# rubocop:disable Layout/LineLength
 require 'rails_helper'
 
 describe Chemotion::SampleAPI do
@@ -225,14 +224,17 @@ describe Chemotion::SampleAPI do
         }
       end
 
-      it 'is able to import new samples' do
-        expect(
-          JSON.parse(response.body)['message'],
-        ).to eq "This file contains 2 Molecules.\n2 Molecules processed. "
+      it 'enqueues an async import and creates samples when the job runs' do
+        # Endpoint now returns async job status instead of a synchronous preview
+        response_data = JSON.parse(response.body)
+        expect(response_data['status']).to eq 'in progress'
+        expect(response_data['message']).to eq 'Importing samples in the background'
 
-        expect(JSON.parse(response.body)['sdf']).to be true
+        # Execute the enqueued job
+        perform_enqueued_jobs
 
-        expect(JSON.parse(response.body)['data'].count).to eq 2
+        # Verify molecules and samples were created end-to-end
+        expect(Sample.count).to eq 2
       end
     end
 
@@ -438,161 +440,13 @@ describe Chemotion::SampleAPI do
         },
       )
 
-      expect(JSON.parse(response.body)['sdf']).to be true
-      expect(JSON.parse(response.body)['data'].count).to eq 2
+      expect(JSON.parse(response.body)['status']).to eq 'in progress'
+
+      # LCSS scheduling now happens inside ImportSamplesJob (find_or_create_mol_by_batch)
+      perform_enqueued_jobs
+
       expect(PubchemSingleLcssJob).to have_received(:perform_later).once
       expect(scheduled_ids.size).to eq 2
-    end
-  end
-
-  describe 'POST /api/v1/samples/confirm_import/' do
-    before do
-      create(:molecule, inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N', is_partial: false)
-      create(:molecule, inchikey: 'UGSFIVDHFJJCBJ-UHFFFAOYSA-M', is_partial: false)
-
-      post '/api/v1/samples/confirm_import', params: params, as: :json
-    end
-
-    context 'when parameters are valid' do
-      let(:params) do
-        {
-          currentCollectionId: collection.id,
-          mapped_keys: {
-            description: %w[
-              MOLECULE_NAME
-              SAFETY_R_S
-              SMILES_STEREO
-            ],
-            short_label: 'EMP_FORMULA_SHORT',
-            target_amount: 'AMOUNT',
-            real_amount: 'REAL_AMOUNT',
-            density: 'DENSITY_20',
-            decoupled: 'MOLECULE-LESS',
-            molarity: 'MOLARITY',
-            melting_point: 'melting_point',
-            boiling_point: 'boiling_point',
-            location: 'location',
-            external_label: 'external_label',
-            name: 'name',
-          },
-          rows: [{
-            inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N',
-            molfile: build(:molfile, type: 'mf_with_data_01'),
-            description: "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n",
-            short_label: 'C9H12ClNO2',
-            target_amount: '10 g /  g',
-            real_amount: '15mg/mg',
-            density: '30 g/mL',
-            decoupled: 'f',
-            molarity: '900',
-            melting_point: '900.0',
-            boiling_point: '900.0-1500.0',
-            location: 'location',
-            external_label: 'external_label',
-            name: 'name',
-          }],
-        }
-      end
-
-      it 'is able to create samples from an array of inchikeys' do
-        expect(
-          JSON.parse(response.body)['message'],
-        ).to eq "This file contains 1 Molecules.\nCreated 1 sample. \nImport successful! "
-
-        expect(
-          JSON.parse(response.body)['sdf'],
-        ).to be true
-
-        expect(
-          JSON.parse(response.body)['status'],
-        ).to eq 'ok'
-
-        molecule = Molecule.find_by(inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N')
-        sample = Sample.find_by(molecule_id: molecule.id)
-
-        expect(sample['target_amount_value']).to eq 10
-        expect(sample['target_amount_unit']).to eq 'g'
-        expect(sample['real_amount_value']).to eq 15
-        expect(sample['real_amount_unit']).to eq 'mg'
-        expect(sample['short_label']).to eq 'C9H12ClNO2'
-        expect(sample['density']).to eq 30
-        expect(sample['description']).to eq "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n"
-        expect(sample['location']).to eq 'location'
-        expect(sample['external_label']).to eq 'external_label'
-        expect(sample['name']).to eq 'name'
-        expect(sample['molarity_value']).to eq 0.0
-
-        expect(sample['boiling_point']).to eq 900.0..1500.0
-        expect(sample['melting_point']).to eq 900.0...Float::INFINITY
-      end
-    end
-
-    context 'when data type mapping is wrong' do
-      let(:params) do
-        {
-          currentCollectionId: collection.id,
-          mapped_keys: {
-            description: %w[
-              MOLECULE_NAME
-              SAFETY_R_S
-              SMILES_STEREO
-            ],
-            short_label: 'EMP_FORMULA_SHORT',
-            target_amount: 'AMOUNT',
-            real_amount: 'REAL_AMOUNT',
-            density: 'DENSITY_20',
-            decoupled: 'MOLECULE-LESS',
-          },
-          rows: [{
-            inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N',
-            molfile: build(:molfile, type: 'mf_with_data_01'),
-            description: "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n",
-            short_label: 'C9H12ClNO2',
-            target_amount: 'Test data',
-            real_amount: 'Test',
-            density: 'Test',
-            decoupled: 'f',
-            molarity: '900sdadsad',
-            melting_point: '900',
-            boiling_point: '1000',
-            location: 'location',
-            external_label: 'external_label',
-            name: 'name',
-          }],
-        }
-      end
-
-      it 'is able to import new samples' do
-        expect(
-          JSON.parse(response.body)['message'],
-        ).to eq "This file contains 1 Molecules.\nCreated 1 sample. \nImport successful! "
-
-        expect(
-          JSON.parse(response.body)['sdf'],
-        ).to be true
-
-        expect(
-          JSON.parse(response.body)['status'],
-        ).to eq 'ok'
-
-        molecule = Molecule.find_by(inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N')
-        sample = Sample.find_by(molecule_id: molecule.id)
-
-        expect(sample['target_amount_value']).to eq 0
-        expect(sample['target_amount_unit']).to eq 'g'
-        expect(sample['real_amount_value']).to eq 0
-        expect(sample['real_amount_unit']).to eq 'g'
-        expect(sample['short_label']).to eq 'C9H12ClNO2'
-        expect(sample['density']).to eq 0
-        expect(sample['description']).to eq "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n"
-        expect(sample['location']).to eq 'location'
-        expect(sample['external_label']).to eq 'external_label'
-        expect(sample['name']).to eq 'name'
-        expect(sample['molarity_value']).to eq 0.0
-
-        expect(sample['boiling_point']).to eq 1000.0...Float::INFINITY
-        expect(sample['melting_point']).to eq 900.0...Float::INFINITY
-      end
     end
   end
 
@@ -1413,5 +1267,4 @@ describe Chemotion::SampleAPI do
     end
   end
 end
-# rubocop:enable Layout/LineLength
 # rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, RSpec/MultipleExpectations, RSpec/NestedGroups, RSpec/ContextWording, RSpec/AnyInstance

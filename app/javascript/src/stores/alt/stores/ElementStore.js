@@ -198,8 +198,6 @@ class ElementStore {
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
       handleShowReactionMaterial: ElementActions.showReactionMaterial,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
-      handleImportSamplesFromFileDecline: ElementActions.importSamplesFromFileDecline,
-      handleImportSamplesFromFileConfirm: ElementActions.importSamplesFromFileConfirm,
 
       handleSetCurrentElement: ElementActions.setCurrentElement,
       handleDeselectCurrentElement: ElementActions.deselectCurrentElement,
@@ -960,21 +958,11 @@ class ElementStore {
     this.changeCurrentElement(sample);
   }
 
-  handleImportSamplesFromFile(data) {
-    if (data.sdf) {
-      this.setState({ sdfUploadData: data });
-    } else {
-      this.handleRefreshElements('sample');
-    }
-  }
-
-  handleImportSamplesFromFileConfirm() {
-    this.setState({ sdfUploadData: null });
+  handleImportSamplesFromFile() {
+    // Import now runs asynchronously in ImportSamplesJob; completion is surfaced
+    // through the polling notification channel. Refresh so any already-created
+    // samples show up when the user revisits the collection.
     this.handleRefreshElements('sample');
-  }
-
-  handleImportSamplesFromFileDecline() {
-    this.setState({ sdfUploadData: null });
   }
 
   // -- Wellplates --

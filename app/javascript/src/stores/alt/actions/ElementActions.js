@@ -618,21 +618,6 @@ class ElementActions {
     };
   }
 
-  importSamplesFromFileDecline() {
-    return null;
-  }
-
-  importSamplesFromFileConfirm(params) {
-    return (dispatch) => {
-      SamplesFetcher.importSamplesFromFileConfirm(params)
-        .then((result) => {
-          dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
   // -- Molecules --
 
   fetchMoleculeByMolfile(molfile, svg_file = null) {
