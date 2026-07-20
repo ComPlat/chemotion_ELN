@@ -2,7 +2,6 @@
 import alt from 'src/stores/alt/alt';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
-import UserActions from 'src/stores/alt/actions/UserActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 import { rootStore } from 'src/stores/mobx/RootStore';
@@ -14,14 +13,13 @@ import ReactionsFetcher from 'src/fetchers/ReactionsFetcher';
 import WellplatesFetcher from 'src/fetchers/WellplatesFetcher';
 import CellLinesFetcher from 'src/fetchers/CellLinesFetcher';
 import VesselsFetcher from 'src/fetchers/VesselsFetcher';
-import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 import ResearchPlansFetcher from 'src/fetchers/ResearchPlansFetcher';
 import SearchFetcher from 'src/fetchers/SearchFetcher';
 import ContainerFetcher from 'src/fetchers/ContainerFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
-import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher'
+import PrivateNoteFetcher from 'src/fetchers/PrivateNoteFetcher';
 import MetadataFetcher from 'src/fetchers/MetadataFetcher';
 import DeviceDescriptionFetcher from 'src/fetchers/DeviceDescriptionFetcher';
 import SequenceBasedMacromoleculeSamplesFetcher from 'src/fetchers/SequenceBasedMacromoleculeSamplesFetcher';
@@ -45,8 +43,6 @@ import LiteratureMap from 'src/models/LiteratureMap';
 import Prediction from 'src/models/Prediction';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
-import Metadata from 'src/models/Metadata';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
 import { sampleAssociationLockNotification } from 'src/utilities/notificationMessages';
 
@@ -63,6 +59,7 @@ class ElementActions {
         });
     };
   }
+
   setRefreshCoefficient(id, coefficient, rId) {
     const obj = { sId: id, rId, coefficient };
     return (dispatch) => dispatch({ obj });
@@ -72,9 +69,9 @@ class ElementActions {
 
   fetchBasedOnSearchSelectionAndCollection(params) {
     const uid = rootStore.notificationsStore.add({
-      title: "Searching ...",
-      level: "info",
-      position: "tc",
+      title: 'Searching ...',
+      level: 'info',
+      position: 'tc',
     });
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
@@ -87,9 +84,9 @@ class ElementActions {
 
   fetchBasedOnSearchResultIds(params) {
     const uid = rootStore.notificationsStore.add({
-      title: "Searching ...",
-      level: "info",
-      position: "tc",
+      title: 'Searching ...',
+      level: 'info',
+      position: 'tc',
     });
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchResultIds(params)
@@ -103,7 +100,7 @@ class ElementActions {
   dispatchSearchResult(result) {
     return (dispatch) => {
       dispatch(result);
-    }
+    };
   }
 
   // -- Generic --
@@ -159,7 +156,7 @@ class ElementActions {
     return (dispatch) => {
       GenericElsFetcher.split(ui_state, name)
         .then((result) => {
-          dispatch({ ui_state: ui_state, name: name });
+          dispatch({ ui_state, name });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -282,7 +279,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.create(params)
         .then((result) => {
-          dispatch({ element: result, closeView, components: params.components })
+          dispatch({ element: result, closeView, components: params.components });
         }).catch((errorMessage) => {
           console.log(errorMessage);
           LoadingActions.stop();
@@ -294,7 +291,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.create(sample)
         .then((newSample) => {
-          dispatch({ newSample, reaction, materialGroup, components: sample.components })
+          dispatch({ newSample, reaction, materialGroup, components: sample.components });
         }).catch((errorMessage) => {
           console.log(errorMessage);
           LoadingActions.stop();
@@ -364,7 +361,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.update(params)
         .then((result) => {
-          dispatch({ element: result, closeView, components: params.components })
+          dispatch({ element: result, closeView, components: params.components });
         }).catch((errorMessage) => {
           console.log(errorMessage);
           // Ensure loading stops even on error
@@ -374,7 +371,7 @@ class ElementActions {
   }
 
   generateEmptySample(collection_id) {
-    return Sample.buildEmpty(collection_id)
+    return Sample.buildEmpty(collection_id);
   }
 
   tryFetchCellLineElById(cellLineId) {
@@ -390,7 +387,7 @@ class ElementActions {
 
   createCellLine(params) {
     return (dispatch) => {
-      const { currentUser } = UserStore.getState();
+      const { currentUser } = rootStore.userStore;
       CellLinesFetcher.create(params, currentUser)
         .then((result) => {
           dispatch(result);
@@ -403,10 +400,12 @@ class ElementActions {
   }
 
   generateEmptyCellLine(collectionId, template) {
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = rootStore.userStore;
     if (!currentUser) { return; }
 
-    const cellLineSample = CellLine.buildEmpty(collectionId, `${currentUser.initials}-C${currentUser.cell_lines_count}`);
+    const cellLineSample = CellLine.buildEmpty(
+      collectionId, `${currentUser.initials}-C${currentUser.cell_lines_count}`
+    );
     if (template) {
       cellLineSample.copyMaterialFrom(template);
     }
@@ -454,8 +453,8 @@ class ElementActions {
           dispatch(params);
         }).catch((errorMessage) => {
           console.log(errorMessage);
-        })
-    }
+        });
+    };
   }
 
   importSamplesFromFile(params) {
@@ -499,36 +498,36 @@ class ElementActions {
     return (dispatch) => {
       ReactionsFetcher.fetchById(id)
         .then((result) => {
-          dispatch(result)
+          dispatch(result);
         }).catch((errorMessage) => {
-          console.log(errorMessage)
-        })
-    }
+          console.log(errorMessage);
+        });
+    };
   }
 
   tryFetchWellplateById(id) {
     return (dispatch) => {
       WellplatesFetcher.fetchById(id)
         .then((result) => {
-          dispatch(result)
+          dispatch(result);
         }).catch((errorMessage) => {
-          console.log(errorMessage)
-        })
-    }
+          console.log(errorMessage);
+        });
+    };
   }
 
   tryFetchGenericElById(id) {
     return (dispatch) => {
       GenericElsFetcher.fetchById(id)
         .then((result) => {
-          dispatch(result)
+          dispatch(result);
         }).catch((errorMessage) => {
-          console.log(errorMessage)
-        })
-    }
+          console.log(errorMessage);
+        });
+    };
   }
   closeWarning() {
-    return null
+    return null;
   }
 
   createReaction(params) {
@@ -558,7 +557,7 @@ class ElementActions {
   }
 
   generateEmptyReaction(collection_id) {
-    return Reaction.buildEmpty(collection_id)
+    return Reaction.buildEmpty(collection_id);
   }
 
   copyReactionFromId(id, keepAmounts = false) {
@@ -587,7 +586,7 @@ class ElementActions {
     return (dispatch) => {
       ResearchPlansFetcher.fetchById(research_plan.id)
         .then((result) => {
-          dispatch({ research_plan: result, colId: colId });
+          dispatch({ research_plan: result, colId });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -596,8 +595,8 @@ class ElementActions {
 
   copyElement(element, colId) {
     return (
-      { element: element, colId: colId }
-    )
+      { element, colId }
+    );
   }
 
   openReactionDetails(reaction) {
@@ -618,7 +617,7 @@ class ElementActions {
 
   splitAsSubCellLines(ui_state) {
     return (dispatch) => {
-      const ids = ui_state["cell_line"].checkedIds.toArray();
+      const ids = ui_state['cell_line'].checkedIds.toArray();
       const collection_id = ui_state.currentCollection.id;
 
       CellLinesFetcher.splitAsSubCellLines(ids, collection_id)
@@ -635,17 +634,19 @@ class ElementActions {
 
     // wellplateCount correction
     if (wellplateCount > Math.ceil(samples.length / 96)) {
-      wellplateCount = Math.ceil(samples.length / 96)
+      wellplateCount = Math.ceil(samples.length / 96);
     }
 
     // build wellplate objects from samples
-    let wellplates = [];
+    const wellplates = [];
     _.range(wellplateCount).forEach((i) => {
-      wellplates[i] = Wellplate.buildFromSamplesAndCollectionId(_.compact(samples.slice(96 * i, 96 * (i + 1))), collection_id).serialize();
+      wellplates[i] = Wellplate.buildFromSamplesAndCollectionId(
+        _.compact(samples.slice(96 * i, 96 * (i + 1))), collection_id
+      ).serialize();
     });
 
     return (dispatch) => {
-      WellplatesFetcher.bulkCreateWellplates({ wellplates: wellplates })
+      WellplatesFetcher.bulkCreateWellplates({ wellplates })
         .then(() => {
           dispatch();
         }).catch((errorMessage) => {
@@ -703,7 +704,7 @@ class ElementActions {
     return (dispatch) => {
       SamplesFetcher.update(sample)
         .then((newSample) => {
-          dispatch(wellplate)
+          dispatch(wellplate);
         }).catch((errorMessage) => {
           console.log(errorMessage);
           // Ensure loading stops even on error
@@ -988,7 +989,7 @@ class ElementActions {
 
   createVessel(params) {
     return (dispatch) => {
-      const { currentUser } = UserStore.getState();
+      const { currentUser } = rootStore.userStore;
       VesselsFetcher.createVesselInstance(params, currentUser)
         .then((result) => {
           dispatch(result);
@@ -1002,7 +1003,6 @@ class ElementActions {
 
   createVesselTemplate(params) {
     return (dispatch) => {
-      const { currentUser } = UserStore.getState();
       VesselsFetcher.createVesselTemplate(params)
         .then((result) => {
           dispatch(result);
@@ -1015,7 +1015,7 @@ class ElementActions {
   }
 
   generateEmptyVessel(collectionId, template) {
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = rootStore.userStore;
     if (!currentUser) { return; }
 
     const shortLabel = generateNextShortLabel();
@@ -1032,7 +1032,7 @@ class ElementActions {
       console.warn('[ElementActions] Invalid collectionId:', collectionId);
       return null;
     }
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = rootStore.userStore;
     if (!currentUser) { return; }
 
     const vesselTemplate = Vessel.buildEmpty(collectionId);
@@ -1134,19 +1134,16 @@ class ElementActions {
   // -- DataCite/Radar metadata --
 
   fetchMetadata(collection_id) {
-    return (dispatch) => {
-      return MetadataFetcher.fetch(collection_id)
+    return (dispatch) => MetadataFetcher.fetch(collection_id)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
-    };
   }
 
   storeMetadata(metadata) {
-    return (dispatch) => {
-      return MetadataFetcher.store(metadata)
+    return (dispatch) => MetadataFetcher.store(metadata)
         .then((result) => {
           dispatch(result);
           return result;
@@ -1157,12 +1154,11 @@ class ElementActions {
           LoadingActions.stop();
           throw error;
         });
-    };
   }
 
   // -- Report --
   showReportDetails() {
-    return Report.buildEmpty()
+    return Report.buildEmpty();
   }
 
   showFormatContainer() {
@@ -1201,8 +1197,8 @@ class ElementActions {
     return (dispatch) => {
       dispatch(options);
       UIActions.uncheckWholeSelection();
-      UserActions.fetchCurrentUser();
-    }
+      rootStore.userStore.fetchCurrentUser();
+    };
   }
 
   removeElements() {
@@ -1307,20 +1303,20 @@ class ElementActions {
   createPrivateNote(params) {
     return (dispatch) => {
       PrivateNoteFetcher.create(params).then((result) => {
-        dispatch(result)
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      })
+      });
     };
   }
 
   updatePrivateNote(note) {
     return (dispatch) => {
       PrivateNoteFetcher.update(note).then((result) => {
-        dispatch(result)
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      })
+      });
     };
   }
 }

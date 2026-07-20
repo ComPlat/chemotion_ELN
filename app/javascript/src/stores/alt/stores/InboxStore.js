@@ -1,11 +1,11 @@
 import _ from 'lodash';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import alt from 'src/stores/alt/alt';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
-import UserStore from 'src/stores/alt/stores/UserStore';
 
 class InboxStore {
   constructor() {
@@ -117,11 +117,11 @@ class InboxStore {
   }
 
   handleChangeInboxFilter(filter) {
-    const userState = UserStore.getState();
-    if (!userState.profile.filters) {
-      userState.profile.data.filters = {};
+    const { profile } = rootStore.userStore;
+    if (!profile.filters) {
+      profile.data.filters = {};
     }
-    userState.profile.data.filters[filter.name] = {
+    profile.data.filters[filter.name] = {
       sort: filter.sort,
     };
 
@@ -210,19 +210,19 @@ class InboxStore {
   }
 
   handleRemoveDatasetFromList(dataset) {
-    let inbox = this.state.inbox;
+    const { inbox } = this.state;
 
     inbox.children.forEach(device_box => {
-      var index = device_box.children.indexOf(dataset)
+      const index = device_box.children.indexOf(dataset);
       if (index != -1) {
         device_box.children[index].attachments.forEach(attachment => {
-          this.state.cache.push(attachment)
-        })
-        device_box.children[index].attachments = []
+          this.state.cache.push(attachment);
+        });
+        device_box.children[index].attachments = [];
       }
-    })
+    });
 
-    this.setState(inbox)
+    this.setState(inbox);
     this.countAttachments();
   }
 
@@ -277,7 +277,7 @@ class InboxStore {
   }
 
   handleDeleteContainer(result) {
-    const { inbox, activeDeviceBoxId, currentContainerPage } = this.state;
+    const { inbox } = this.state;
 
     const parentIndex = inbox.children.findIndex((inboxItem) => inboxItem.id === result.id);
 
@@ -301,34 +301,34 @@ class InboxStore {
   }
 
   handleBackToInbox(attachment) {
-    var attachments = this.state.cache.filter(function (item) {
+    const attachments = this.state.cache.filter((item) => {
       if (item.id == attachment.id) {
-        return item
+        return item;
       }
-    })
+    });
 
     if (attachments.length == 1) {
-      var index = this.state.cache.indexOf(attachments[0])
-      this.state.cache.splice(index, 1)
+      const index = this.state.cache.indexOf(attachments[0]);
+      this.state.cache.splice(index, 1);
       const { currentPage, itemsPerPage } = this.state;
       InboxActions.fetchInbox({ currentPage, itemsPerPage });
     } else {
-      InboxActions.deleteContainerLink(attachment)
+      InboxActions.deleteContainerLink(attachment);
     }
   }
 
   getAttachments(containers, all_attachments) {
     if (containers) {
       containers.forEach(container => {
-        all_attachments.push.apply(all_attachments, container.attachments)
-        this.getAttachments(container.children, all_attachments)
-      })
+        all_attachments.push.apply(all_attachments, container.attachments);
+        this.getAttachments(container.children, all_attachments);
+      });
     }
-    return all_attachments
+    return all_attachments;
   }
 
   updateCache(attachments) {
-    this.state.cache = _.differenceBy(this.state.cache, attachments, 'id')
+    this.state.cache = _.differenceBy(this.state.cache, attachments, 'id');
   }
 
   handleUpdateCreateElementDict({ element, closeView }) {
@@ -337,7 +337,7 @@ class InboxStore {
 
   handleUpdateCreateElement(element) {
     if (element && element.isEdited && element.container) {
-      const all_attachments = this.getAttachments(element.container.children, [])
+      const all_attachments = this.getAttachments(element.container.children, []);
       this.updateCache(all_attachments);
       const { currentPage, itemsPerPage } = this.state;
       InboxActions.fetchInbox({ currentPage, itemsPerPage });
@@ -345,14 +345,14 @@ class InboxStore {
   }
 
   handleClose({ deleteEl, force }) {
-    this.state.deleteEl = deleteEl
+    this.state.deleteEl = deleteEl;
   }
 
   handleConfirmDelete(confirm) {
     if (confirm) {
-      this.handleUpdateCreateElement(this.state.deleteEl)
+      this.handleUpdateCreateElement(this.state.deleteEl);
     }
-    this.state.deleteEl = null
+    this.state.deleteEl = null;
   }
 
   handleDeleteElement(result) {
@@ -377,16 +377,16 @@ class InboxStore {
   }
 
   sync() {
-    let inbox = this.state.inbox
+    const { inbox } = this.state;
 
     inbox.children.forEach(device_box => {
       device_box.children.forEach(dataset => {
-        dataset.attachments = _.differenceBy(dataset.attachments, this.state.cache, 'id')
-      })
-    })
-    inbox.unlinked_attachments = _.differenceBy(inbox.unlinked_attachments, this.state.cache, 'id')
+        dataset.attachments = _.differenceBy(dataset.attachments, this.state.cache, 'id');
+      });
+    });
+    inbox.unlinked_attachments = _.differenceBy(inbox.unlinked_attachments, this.state.cache, 'id');
 
-    this.setState(inbox)
+    this.setState(inbox);
   }
 
   countAttachments() {
