@@ -118,7 +118,7 @@ const ElementDetailSortTab = ({
 
     const userProfile = userStore.profile;
     set(userProfile, `data.layout_detail_${type}`, layout);
-    pending.push(userStore.updateUserProfile(userProfile));
+    pending.push(userStore.updateUserProfileValues(userProfile));
 
     await Promise.all(pending);
     refreshTabLayout(userStore.profile);

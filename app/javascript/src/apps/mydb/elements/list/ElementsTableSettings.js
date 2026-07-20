@@ -45,7 +45,7 @@ const ElementsTableSettings = ({ visible: visibleProp, hidden: hiddenProp }) => 
 
   const saveLabels = useCallback(() => {
     saveLabelTimeoutRef.current = null;
-    userStore.updateUserProfile({
+    userStore.updateUserProfileValues({
       show_external_name: labelsRef.current.showSampleExternalLabel,
       show_sample_short_label: labelsRef.current.showSampleShortLabel,
       show_sample_name: labelsRef.current.showSampleName,
@@ -102,7 +102,7 @@ const ElementsTableSettings = ({ visible: visibleProp, hidden: hiddenProp }) => 
       layout[value] = (-index - 1);
     });
 
-    userStore.updateUserProfile({
+    userStore.updateUserProfileValues({
       ...userProfile,
       data: { ...(userProfile.data || {}), layout },
       show_external_name: showSampleExternalLabel,
