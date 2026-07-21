@@ -1,6 +1,6 @@
 import Element from 'src/models/Element';
 import Container from 'src/models/Container';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 export default class DeviceDescription extends Element {
   static buildEmpty(collectionID) {
@@ -76,7 +76,7 @@ export default class DeviceDescription extends Element {
   }
 
   static buildNewShortLabel() {
-    const { currentUser } = UserStore.getState();
+    const { currentUser } = rootStore.userStore;
     if (!currentUser) { return 'NEW DEVICE DESCRIPTION'; }
     return `${currentUser.initials}-Dev${currentUser.device_descriptions_count + 1}`;
   }
@@ -109,7 +109,7 @@ export default class DeviceDescription extends Element {
     device_description.short_label = DeviceDescription.buildNewShortLabel();
     device_description.container = Container.init();
     device_description.can_copy = false;
-    device_description.attachments = []
+    device_description.attachments = [];
     return device_description;
   }
 }
