@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'digest'
 require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 module Import

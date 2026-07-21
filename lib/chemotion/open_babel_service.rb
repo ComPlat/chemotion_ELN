@@ -118,6 +118,11 @@ M  END
     end
 
     svg = svg_from_molfile(mf || molfile)
+    fp = fingerprint_from_molfile(mf || molfile)
+    # Snapshot both log levels together, after every in-process OpenBabel call above, so
+    # ob_log[:error] and ob_log[:warning] stay mutually consistent (fingerprint can log too).
+    # NB: svg_from_molfile runs in a forked child, so its own obErrorLog never reaches here.
+    ob_errors = OpenBabel.obErrorLog.get_messages_of_level(0)
     warnings = OpenBabel.obErrorLog.get_messages_of_level(1)
     warnings += ["SVG rendering timed out after #{SVG_RENDER_TIMEOUT_SECONDS}s"] if svg.nil?
 
@@ -133,14 +138,14 @@ M  END
       formula: m.get_formula,
       svg: svg,
       cano_smiles: ca_smiles,
-      fp: fingerprint_from_molfile(mf || molfile),
+      fp: fp,
       molfile_version: version,
       is_partial: is_partial,
       # TODO we could return 'molfile' in any case
       # molfile: (format != 'mol' && molfile) || (is_partial && molfile)
       molfile: molfile,
       ob_log: {
-        error: OpenBabel.obErrorLog.get_messages_of_level(0),
+        error: ob_errors,
         warning: warnings
       }
     }
@@ -415,8 +420,10 @@ M  END
   # unchanged.
   def self.svg_from_molfile(molfile, options = {})
     Chemotion::ForkedTimeout.run(SVG_RENDER_TIMEOUT_SECONDS) { svg_from_molfile_unsafe(molfile, options) }
-  rescue Chemotion::ForkedTimeout::TimedOut
-    Rails.logger.error("Chemotion::OpenBabelService.svg_from_molfile timed out after #{SVG_RENDER_TIMEOUT_SECONDS}s")
+  rescue Chemotion::ForkedTimeout::TimedOut => e
+    # ForkedTimeout raises TimedOut both on a genuine deadline overrun and when the child
+    # crashed / produced no output; e.message distinguishes the two.
+    Rails.logger.error("Chemotion::OpenBabelService.svg_from_molfile aborted: #{e.message}")
     nil
   end
 
