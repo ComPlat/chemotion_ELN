@@ -154,6 +154,43 @@ describe Usecases::Reactions::UpdateMaterials do
       end
     end
 
+    # Bug fix: equivalent was not written to DB for existing product associations (was commented out).
+    # After save, yield reset to 0% because the join table kept the stale value.
+    context 'when an existing product association is updated' do
+      let(:existing_product_sample) { create(:sample, name: 'existing_product', container: create(:container)) }
+      let!(:existing_association) do
+        create(:reactions_product_sample, reaction: reaction, sample: existing_product_sample, equivalent: 0.3)
+      end
+      let(:updated_product_materials) do
+        {
+          'products' => [
+            'id' => existing_product_sample.id,
+            'name' => 'existing_product',
+            'target_amount_unit' => 'mg',
+            'target_amount_value' => 50.0,
+            'equivalent' => 0.75,
+            'reference' => false,
+            'is_new' => false,
+            'molfile' => molfile,
+            'container' => root_container,
+            'gas_phase_data' => gas_phase_data,
+          ],
+        }
+      end
+
+      before do
+        allow(SVG::ReactionComposer).to receive(:new).and_return(
+          double(compose_reaction_svg_and_save: nil)
+        )
+        described_class.new(reaction, updated_product_materials, user, vessel_size).execute!
+      end
+
+      it 'persists the updated equivalent to the join table' do
+        updated = ReactionsSample.find_by(sample_id: existing_product_sample.id, reaction_id: reaction.id)
+        expect(updated.equivalent).to eq(0.75)
+      end
+    end
+
     context 'when sample is new and not a product' do
       let(:samples) { reactants } # hits .create_sub_sample
 

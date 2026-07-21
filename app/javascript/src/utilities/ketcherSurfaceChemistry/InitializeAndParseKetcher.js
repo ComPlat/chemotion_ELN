@@ -10,13 +10,9 @@ import {
   templateListSetter,
   allAtoms,
   allAtomsSetter,
-  allNodes,
   allNodesSetter,
-  imagesList,
   imagesListSetter,
-  mols,
   molsSetter,
-  textList,
   textListSetter,
   textNodeStructSetter,
   ImagesToBeUpdatedSetter,
@@ -54,15 +50,32 @@ const loadTemplates = async () => {
 };
 
 // prepare/load ket2 format data
-const loadKetcherData = async (data) => {
+// preserveImagesWhenEmpty: when true (from fetchKetcherData), keep imagesList if data has no images
+// because getKet() often omits them. When false (default), always sync imagesList with data.
+const loadKetcherData = async (data, options = {}) => {
+  const { preserveImagesWhenEmpty = false } = options;
   const nodes = data?.root?.nodes && Array.isArray(data.root.nodes) ? data.root.nodes : [];
   allAtomsSetter([]);
   allNodesSetter([...nodes]);
-  imagesListSetter(nodes.filter((item) => item.type === 'image'));
-  textListSetter(nodes.filter((item) => item.type === 'text'));
-  const sliceEnd = Math.max(0, nodes.length - imagesList.length - textList.length);
-  molsSetter(sliceEnd > 0 ? nodes.slice(0, sliceEnd).map((i) => i.$ref) : []);
-  const molRefs = sliceEnd > 0 ? nodes.slice(0, sliceEnd).map((i) => i.$ref) : [];
+
+  const imageNodesFromData = nodes.filter((item) => item.type === 'image');
+
+  if (imageNodesFromData.length > 0) {
+    imagesListSetter(imageNodesFromData);
+  } else if (!preserveImagesWhenEmpty) {
+    imagesListSetter([]);
+  }
+
+  // Text nodes are managed in local state; getKet() never returns them.
+  // Only update textList when incoming data actually contains text nodes (e.g. initial load).
+  const textNodesFromData = nodes.filter((item) => item.type === 'text');
+  if (textNodesFromData.length > 0) {
+    textListSetter(textNodesFromData);
+  }
+
+  // Derive mol refs by $ref presence — more robust than index slicing when node order varies.
+  const molRefs = (nodes || []).filter((n) => n?.$ref).map((n) => n.$ref);
+  molsSetter(molRefs);
   molRefs.forEach((item) => (data[item]?.atoms || []).map((i) => allAtoms.push(i)));
 };
 
@@ -169,6 +182,85 @@ const hasTextNodes = async (molfile) => {
   }
 };
 
+// Strip stereoLabel / stereoFlagPosition that Indigo auto-generates from wedge bonds.
+// V2000 MOL cannot store stereogroup data so these fields are always Indigo inventions, never
+// user-set values. Removing them prevents "ABS" from reappearing on every reopen while leaving
+// wedge bond geometry intact. Users may still add stereo labels in-session; they just won't
+// persist (V2000 limitation).
+//
+// Also converts bare rg-label atoms (R# without M RGP / no R-group definition) to plain label
+// atoms. Indigo produces rg-label type when converting a bare R# atom, but its own JSON loader
+// rejects rg-label without a complete R-group definition — causing "invalid atom type: rg-label"
+// errors when the user tries to save.
+const stripAutoEnhancedStereo = (ketJson) => {
+  if (!ketJson) return ketJson;
+  const result = { ...ketJson };
+
+  // Collect all R-group keys actually defined in the KET root nodes
+  const definedRGroups = new Set(
+    (result.root?.nodes || [])
+      .map((n) => n.$ref)
+      .filter((ref) => typeof ref === 'string' && ref.startsWith('rg'))
+  );
+
+  for (const key of Object.keys(result)) {
+    if (key === 'root') continue;
+    const mol = result[key];
+    if (!mol || typeof mol !== 'object') continue;
+    if (mol.atoms) {
+      mol.atoms = mol.atoms.map((atom) => {
+        // eslint-disable-next-line no-unused-vars
+        const { stereoLabel, ...rest } = atom;
+        // Convert rg-label atoms whose R-group definitions are absent — Indigo's JSON loader
+        // rejects them and the user cannot save. Keep the label so the atom still displays as R#.
+        if (rest.type === 'rg-label') {
+          const refs = Array.isArray(rest.$refs) ? rest.$refs : [];
+          const hasDefinition = refs.some((ref) => definedRGroups.has(ref));
+          if (!hasDefinition) {
+            // eslint-disable-next-line no-unused-vars
+            const { type, $refs, ...atomRest } = rest;
+            return { ...atomRest, label: atomRest.label || 'R#' };
+          }
+        }
+        return rest;
+      });
+    }
+    if ('stereoFlagPosition' in mol) {
+      // eslint-disable-next-line no-unused-vars
+      const { stereoFlagPosition, ...rest } = mol;
+      result[key] = rest;
+    }
+  }
+  return result;
+};
+
+// Unconditionally convert every rg-label atom to a plain label atom.
+// Ketcher stores R# atoms as rg-label internally and always creates a matching
+// definition node — so the hasDefinition guard in stripAutoEnhancedStereo never
+// fires for them. This function is called on every getKet() result so that
+// latestData and anything downstream (setMolecule, generateImage) never receive
+// the rg-label type that Indigo's KET loader rejects.
+const sanitizeRgLabelAtoms = (ketJson) => {
+  if (!ketJson || typeof ketJson !== 'object') return ketJson;
+  const result = { ...ketJson };
+  for (const key of Object.keys(result)) {
+    if (key === 'root') continue;
+    const mol = result[key];
+    if (!mol?.atoms) continue;
+    if (!mol.atoms.some((a) => a.type === 'rg-label')) continue;
+    result[key] = {
+      ...mol,
+      atoms: mol.atoms.map((atom) => {
+        if (atom.type !== 'rg-label') return atom;
+        // eslint-disable-next-line no-unused-vars
+        const { type, $refs, ...rest } = atom;
+        return { ...rest, label: rest.label || 'R#' };
+      }),
+    };
+  }
+  return result;
+};
+
 // Return molfile string up to and including M  END so Indigo only sees standard CTAB.
 const getStandardMolfileForIndigo = (molfile) => {
   if (!molfile || typeof molfile !== 'string') return molfile;
@@ -177,6 +269,34 @@ const getStandardMolfileForIndigo = (molfile) => {
   const endIndex = lines.findIndex((line) => /^M\s+END/.test(line));
   if (endIndex === -1) return molfile;
   return lines.slice(0, endIndex + 1).join('\n');
+};
+
+// Build a synthetic PolymersList (indexed format) from V2000 atom alias blocks for files that
+// predate the explicit PolymersList tag. The alias block format is:
+//   A    <atom_number_1indexed>
+//   t_<templateType>_<imageIndex>
+// We default size to 1.00-1.00 since older files were created before size support was added.
+const extractPolymerTagFromAliases = (molfile) => {
+  if (!molfile || typeof molfile !== 'string') return null;
+  // Normalize both \r\n (Windows) and bare \r (classic Mac) to \n.
+  const lines = molfile.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  const entries = [];
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(/^A\s+(\d+)$/);
+    if (match && i + 1 < lines.length) {
+      const aliasText = lines[i + 1].trim();
+      // Anchored regex avoids false positives from aliases with extra underscores.
+      const aliasMatch = aliasText.match(/^t_(\d+)_(\d+)$/);
+      if (aliasMatch) {
+        const templateType = parseInt(aliasMatch[1], 10);
+        const atomIndex = parseInt(match[1], 10) - 1; // V2000 is 1-indexed
+        if (!Number.isNaN(templateType) && atomIndex >= 0) {
+          entries.push(`${atomIndex}/${templateType}/1.00-1.00`);
+        }
+      }
+    }
+  }
+  return entries.length > 0 ? entries.join(' ') : null;
 };
 
 // Reindex alias third part (image index) so pasted atoms point into merged image list.
@@ -285,9 +405,15 @@ const fetchKetcherData = async (editor) => {
   try {
     if (!editor) throw new Error('Editor instance is invalid');
     const ketString = await editor.structureDef.editor.getKet();
-    const data = JSON.parse(ketString);
+    // Ketcher stores R# atoms as rg-label internally. Strip them so latestData
+    // never contains rg-label — Indigo's KET loader rejects that type in every
+    // downstream call (setMolecule, generateImage, getMolfile).
+    const raw = JSON.parse(ketString);
+    const data = sanitizeRgLabelAtoms(raw);
     await latestDataSetter(data);
-    await loadKetcherData(data);
+    // preserveImagesWhenEmpty: Ketcher's getKet() often omits image nodes from its output.
+    // If data has no images, keep the existing imagesList rather than wiping it.
+    await loadKetcherData(data, { preserveImagesWhenEmpty: true });
   } catch (err) {
     console.error('fetchKetcherData', err.message);
   }
@@ -296,8 +422,37 @@ const fetchKetcherData = async (editor) => {
 const prepareKetcherData = async (editor, initMol, options = {}) => {
   const { isPaste = false } = options;
   try {
-    const polymerTagFromPasted = await hasKetcherData(initMol);
+    const polymerTagFromPasted = await hasKetcherData(initMol)
+      || extractPolymerTagFromAliases(initMol);
     const textNodes = await hasTextNodes(initMol);
+
+    // Fast path: no polymer or text data and not a paste-merge operation.
+    // Pass the V2000 MOL directly to Ketcher (bypasses indigo.convert) so:
+    //  - bare R# atoms (no M RGP) don't become invalid rg-label atoms in the KET loader
+    //  - wedge bonds render without Indigo auto-generating ABS stereogroups
+    if (!polymerTagFromPasted && !textNodes?.length && !isPaste) {
+      const cleanMol = getStandardMolfileForIndigo(initMol);
+      try {
+        await editor.structureDef.editor.setMolecule(cleanMol);
+      } catch (setErr) {
+        NotificationActions.add({
+          title: 'Structure Editor error',
+          message: setErr?.message || String(setErr),
+          level: 'error',
+          position: 'tc',
+          dismissible: 'button',
+          autoDismiss: 12,
+        });
+        return;
+      }
+      // Clear polymer state from any previously loaded molecule so paste operations
+      // on this structure don't inherit the prior molecule's polymer decorations.
+      storedPolymersListLineSetter(null);
+      await fetchKetcherData(editor);
+      setTimeout(async () => { await centerPositionCanvas(editor); }, 100);
+      return;
+    }
+
     const molfileForIndigo = getStandardMolfileForIndigo(initMol);
     const formatError = (err) => {
       if (err?.message != null) return err.message;
@@ -330,7 +485,7 @@ const prepareKetcherData = async (editor, initMol, options = {}) => {
       return;
     }
 
-    let fileContent = JSON.parse(ketFile.struct);
+    let fileContent = stripAutoEnhancedStereo(JSON.parse(ketFile.struct));
     let polymerTagToUse = polymerTagFromPasted;
 
     if (isPaste && (storedPolymersListLine || polymerTagFromPasted)) {
@@ -394,6 +549,7 @@ export {
   initializeKetcherData,
   hasKetcherData,
   hasTextNodes,
+  extractPolymerTagFromAliases,
   getTemplateType,
   parsePolymerEntryByAtomIndex,
   templateWithBoundingBox,

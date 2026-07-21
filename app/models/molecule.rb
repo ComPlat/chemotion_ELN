@@ -115,7 +115,7 @@ class Molecule < ApplicationRecord
         mol.skip_lcss_callback = true if lcss_batch
         pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
         mol.molfile = (is_partial && partial_molfile) || molfile
-        mol.assign_molecule_data(babel_info, pubchem_info)
+        mol.assign_molecule_data(babel_info, pubchem_info, molfile)
       end
       lcss_batch << molecule.id if lcss_batch && molecule.persisted?
     end
@@ -152,19 +152,15 @@ class Molecule < ApplicationRecord
     self.save!
   end
 
-  def assign_molecule_data(babel_info, pubchem_info = {})
+  def assign_molecule_data(babel_info, pubchem_info = {}, svg_molfile = nil)
     self.inchistring = babel_info[:inchi]
     self.sum_formular = babel_info[:formula]
     self.molecular_weight = babel_info[:mol_wt]
     self.exact_molecular_weight = babel_info[:mass]
-    self.iupac_name = pubchem_info[:iupac_name]
-    self.names = pubchem_info[:names]
-    self.pcid = pubchem_info[:cid]
-
+    assign_pubchem_data(pubchem_info)
     check_sum_formular
-    svg = Molecule.svg_reprocess(babel_info[:svg], molfile)
+    svg = Molecule.svg_reprocess(babel_info[:svg], svg_molfile || molfile)
     attach_svg svg
-
     self.cano_smiles = babel_info[:cano_smiles]
     self.molfile_version = babel_info[:molfile_version]
     self.is_partial = babel_info[:is_partial]
@@ -287,6 +283,12 @@ class Molecule < ApplicationRecord
   end
 
   private
+
+  def assign_pubchem_data(pubchem_info)
+    self.iupac_name = pubchem_info[:iupac_name]
+    self.names = pubchem_info[:names]
+    self.pcid = pubchem_info[:cid]
+  end
 
   # This frees the inchikey value from the index
   def deindex_inchikey

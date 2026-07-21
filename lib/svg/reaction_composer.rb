@@ -3,6 +3,7 @@ require 'digest'
 require 'cgi'
 
 module SVG
+  # rubocop:disable Metrics/ClassLength
   class ReactionComposer
     REACTANT_SCALE = 0.75
     YIELD_YOFFSET = 10
@@ -277,7 +278,7 @@ module SVG
         !(i == 0) ? solv_line_str = "#{solv_lines[arr_length-1]} / #{solvents[i]}"  : solv_line_str = ""
         solv_str_sum += (solv_line_str).length
 
-        !(i == 0) ? solv_str_pre = ((solv_lines[arr_length-1]).to_s).length : 0
+        solv_str_sum += !(i == 0) ? ((solv_lines[arr_length-1]).to_s).length : 0
 
         define_singleton_method(:push_to_solv_lines) do
           solv_lines.push(solvents[i])
@@ -668,7 +669,8 @@ module SVG
     end
 
     def sections_string_filtered
-      sections_string.gsub('R#', '').gsub("font=\'30px \"Arial\"\'", '')
+      sections_string.gsub('R#', '').gsub(/\bABS\b/, '').gsub("font='30px \"Arial\"'", '')
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end
