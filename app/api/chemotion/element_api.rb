@@ -90,8 +90,8 @@ module Chemotion
         )
 
         result = { selecteds: params[:selecteds].reject { |sel| removed.fetch(sel['type'], []).include?(sel['id']) } }
-        # Samples kept back because they belong to a reaction still in the user's
-        # collections: report them so the UI can explain why nothing was deleted.
+        # Samples kept back because they belong to a reaction or wellplate still in
+        # the user's collections: report them so the UI can explain why nothing was deleted.
         result[:locked_sample_ids] = usecase.locked_sample_ids if usecase.locked_sample_ids.present?
         result
       end

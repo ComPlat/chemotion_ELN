@@ -9,7 +9,7 @@ import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import { SAMPLE_REACTION_LOCK_NOTIFICATION } from 'src/utilities/collectionUtilities';
+import { sampleAssociationLockNotification } from 'src/utilities/collectionUtilities';
 
 export const Collection = types.model({
   ancestry: types.string,
@@ -259,9 +259,9 @@ export const CollectionsStore = types
       }
     }),
     // Returns { success, lockedSampleIds }: success is false only on request failure; lockedSampleIds
-    // lists samples the backend kept because they belong to a reaction still in the collection. Callers
-    // that give their own feedback (e.g. move) can pass { notifyLock: false } to suppress the
-    // built-in "linked to a reaction" toast and react to lockedSampleIds themselves.
+    // lists samples the backend kept because they belong to a reaction or wellplate still in the
+    // collection. Callers that give their own feedback (e.g. move) can pass { notifyLock: false } to
+    // suppress the built-in association-lock toast and react to lockedSampleIds themselves.
     removeElementsFromCollection: flow(function* removeElementsFromCollection(params, { notifyLock = true } = {}) {
       const response = yield CollectionElementsFetcher.deleteElementsFromCollection(params);
 
@@ -279,7 +279,7 @@ export const CollectionsStore = types
 
       const lockedSampleIds = (response && response.locked_sample_ids) || [];
       if (notifyLock && lockedSampleIds.length > 0) {
-        getRoot(self).notificationsStore.add({ ...SAMPLE_REACTION_LOCK_NOTIFICATION });
+        getRoot(self).notificationsStore.add(sampleAssociationLockNotification(lockedSampleIds.length));
       }
 
       // refresh elements
@@ -316,13 +316,14 @@ export const CollectionsStore = types
             { notifyLock: false }
           );
 
-          // Reaction-linked samples cannot leave their reaction's collection, so they were copied
+          // Samples bound to a reaction/wellplate cannot leave that collection, so they were copied
           // to the target but stayed in the source: warn that the move was only partial.
           if (success && lockedSampleIds.length > 0) {
             getRoot(self).notificationsStore.add({
               title: 'Move to Collection',
-              message: 'Samples that are part of a reaction were copied to the target but not removed '
-                + 'from the current collection. Move the reaction to move its associated samples.',
+              message: 'Samples that belong to a reaction or wellplate were copied to the target but '
+                + 'not removed from the current collection. Move the reaction or wellplate to move '
+                + 'its associated samples.',
               level: 'warning',
               autoDismiss: 10,
             });

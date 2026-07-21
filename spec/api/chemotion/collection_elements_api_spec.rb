@@ -278,5 +278,35 @@ describe Chemotion::CollectionElementsAPI do
       end
     end
   end
+
+  context 'when removing a sample connected to a wellplate in the same collection' do
+    let(:source_collection_user) { user }
+    let(:wellplate) { create(:wellplate, samples: [sample1]) }
+    let(:remove_input) do
+      {
+        ui_state: {
+          currentCollection: { id: 0 },
+          sample: {
+            checkedAll: false,
+            checkedIds: [sample1.id],
+            uncheckedIds: [],
+          },
+        },
+      }
+    end
+
+    before do
+      CollectionsWellplate.create!(collection_id: source_collection.id, wellplate_id: wellplate.id)
+    end
+
+    # Not only reactions lock samples: a wellplate-linked sample must also be reported, not silently kept.
+    it 'keeps the sample and reports it as locked' do
+      delete "/api/v1/collection_elements/#{source_collection.id}", params: remove_input
+
+      expect(response).to have_http_status(:ok)
+      expect(parsed_json_response['locked_sample_ids']).to eq [sample1.id]
+      expect(sample1.reload.collections).to include(source_collection)
+    end
+  end
 end
 # rubocop:enable RSpec/IndexedLet, RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations

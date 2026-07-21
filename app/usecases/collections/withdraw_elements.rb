@@ -27,7 +27,6 @@ module Usecases
       def initialize(current_user)
         @current_user = current_user
         @owned_collection_ids = []
-        @selected_sample_ids = []
         @locked_sample_ids = []
       end
 
@@ -45,14 +44,11 @@ module Usecases
         @owned_collection_ids = Collection.where(user_id: [current_user.id, *current_user.group_ids]).pluck(:id)
         removed = Hash.new { |hash, key| hash[key] = [] }
 
+        # As a side effect, #withdraw records into @locked_sample_ids any samples kept back by the
+        # association guard (still bound to a reaction/wellplate in one of the user's collections).
         withdrawn_reaction_ids = withdraw_selected_elements(source_collection, ui_state, removed)
         removed['sample'] |= withdraw_reaction_subsamples(withdrawn_reaction_ids, options)
         withdraw_generic_elements(source_collection, ui_state, removed)
-
-        # Samples the user selected but which stayed in one of their collections
-        # because they belong to a reaction that is also there. Computed after
-        # all withdrawals so a sample removed via its reaction is not reported.
-        @locked_sample_ids = CollectionsSample.locked_by_reaction(@selected_sample_ids, @owned_collection_ids)
         removed
       end
 
@@ -66,7 +62,6 @@ module Usecases
           next unless selected?(selection)
 
           ids = source_collection.send(klass.model_name.route_key).by_ui_state(selection).ids
-          @selected_sample_ids = ids if klass == Sample
           left_view = withdraw(klass, klass.collections_element_class, ids)
           removed[klass.model_name.param_key] = left_view
           reaction_ids = left_view if klass == Reaction
@@ -104,8 +99,11 @@ module Usecases
         # reaction/wellplate in one of our collections), and that decision is only visible by asking
         # membership again — never derivable from `actionable`.
         still_ours = membership_ids(klass, actionable, @owned_collection_ids) # guard-kept ⇒ stay visible
+        # guard-kept samples (bound to a reaction or wellplate here) cannot leave on their own;
+        # surface them so the endpoint can tell the user why they were not removed
+        @locked_sample_ids |= still_ours if klass == Sample
         left_view = actionable - still_ours
-        orphaned = left_view - membership_ids(klass, left_view, nil)          # in no collection ⇒ sole owner
+        orphaned = left_view - membership_ids(klass, left_view, nil) # in no collection ⇒ sole owner
 
         klass.where(id: orphaned).find_each(&:destroy) # per-record destroy keeps paranoia/callbacks
         left_view

@@ -88,6 +88,24 @@ RSpec.describe Usecases::Collections::WithdrawElements do
     end
   end
 
+  describe 'a sample kept by the wellplate association guard' do
+    let(:sample) { create(:sample, creator: user, collections: [user_all, user_sub]) }
+    let(:wellplate) { create(:wellplate, samples: [sample]) }
+
+    before do
+      # sample sits in a well of a wellplate living in the same collection
+      CollectionsWellplate.create!(collection_id: user_sub.id, wellplate_id: wellplate.id)
+    end
+
+    it 'is not unlinked, and is reported as locked (not only reactions lock samples)' do
+      usecase = described_class.new(user)
+      expect { usecase.perform!(source_collection: user_sub, ui_state: selection_for(sample), options: {}) }
+        .not_to change(Sample, :count)
+      expect(sample.reload.collections.where(id: user_sub.id)).to be_present
+      expect(usecase.locked_sample_ids).to contain_exactly(sample.id)
+    end
+  end
+
   describe 'a sole-owned reaction with associated subsamples' do
     let(:reaction) { create(:reaction, creator: user, collections: [user_all, user_sub]) }
     let(:solvent) { create(:sample, creator: user, collections: [user_all, user_sub]) }

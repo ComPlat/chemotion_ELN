@@ -1,16 +1,25 @@
 import { allElnElements } from 'src/apps/generic/Utils';
 import { PermissionConst } from 'src/utilities/PermissionConst';
 
-// Shown when a sample cannot be removed from a collection or deleted on its own
-// because it belongs to a reaction that is also in the collection. Used for both
-// the "Remove from current Collection" (unshare) and "Remove from all Collections"
-// (delete) actions so the wording stays identical for both scenarios.
-const SAMPLE_REACTION_LOCK_NOTIFICATION = {
-  title: 'Sample linked to a reaction',
-  message: 'This sample is part of a reaction and cannot be removed on its own. '
-    + 'Remove the reaction to remove its associated samples.',
-  level: 'warning',
-  autoDismiss: 10,
+// Shown when a sample cannot be removed from a collection or deleted on its own because it belongs
+// to a reaction or wellplate that is also in the collection. Used for both the "Remove from current
+// Collection" (unshare) and "Remove from all Collections" (delete) actions so the wording stays
+// identical for both scenarios. Pass the locked-id count so singular/plural copy matches.
+const sampleAssociationLockNotification = (lockedCount = 1) => {
+  const plural = lockedCount > 1;
+  return {
+    title: plural
+      ? 'Samples linked to a reaction or wellplate'
+      : 'Sample linked to a reaction or wellplate',
+    message: plural
+      ? 'These samples belong to a reaction or wellplate in this collection, so they cannot be '
+        + 'removed on their own. Remove the reaction or wellplate to remove its associated samples.'
+      : 'This sample belongs to a reaction or wellplate in this collection, so it cannot be '
+        + 'removed on its own. Remove the reaction or wellplate to remove its associated samples.',
+    level: 'warning',
+    autoDismiss: 10,
+    position: 'tr',
+  };
 };
 
 const isElementSelectionEmpty = (element) => !element.checkedAll
@@ -85,5 +94,5 @@ const collectionHasPermission = (collection, permissionLevel) => {
 
 export {
   isElementSelectionEmpty, filterParamsFromUIState, collectionOptions, collectionHasPermission,
-  SAMPLE_REACTION_LOCK_NOTIFICATION
+  sampleAssociationLockNotification
 };

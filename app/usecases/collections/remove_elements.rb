@@ -17,10 +17,10 @@ module Usecases
         prevent_removal_from_all_collection!
         remove_elements_from_collection(ui_state)
 
-        # Samples linked to a reaction that is still in the collection are kept
-        # on purpose (they belong to the reaction). Report them so the UI can
-        # tell the user why the sample was not unshared.
-        { locked_sample_ids: locked_sample_ids }
+        # Samples linked to a reaction or wellplate still in the collection are kept on purpose
+        # (they belong to that reaction/wellplate). Report them so the UI can tell the user why
+        # the sample was not removed.
+        { locked_sample_ids: @locked_sample_ids }
       end
 
       # rubocop:disable Rails/FindByOrAssignmentMemoization
@@ -44,30 +44,26 @@ module Usecases
       end
 
       def remove_elements_from_collection(ui_state)
-        @requested_sample_ids = []
+        @locked_sample_ids = []
         ui_state.each do |class_string, ui_selections|
           element_class = element_scope_for(class_string)
           next unless element_class
 
           element_ids = resolve_element_ids(element_class, ui_selections)
-          join_table_for(class_string).remove_in_collection(element_ids, collection.id)
+          join_table = join_table_for(class_string)
+
+          kept = join_table.remove_in_collection(element_ids, collection.id)
+          # only the samples join table reports kept-by-reaction/wellplate sample ids
+          @locked_sample_ids |= Array(kept) if join_table == CollectionsSample
         end
       end
 
       # Resolves the selected element ids. Samples are scoped to the collection so a checkedAll
       # selection does not resolve to every sample in the database (by_ui_state has no collection
-      # filter of its own). Records the requested sample ids for #locked_sample_ids.
+      # filter of its own).
       def resolve_element_ids(element_class, ui_selections)
         scope = element_class == Sample ? collection.samples : element_class
-        ids = scope.by_ui_state(ui_selections).ids
-        @requested_sample_ids = ids if element_class == Sample
-        ids
-      end
-
-      # Samples the user asked to remove but which stayed in the collection
-      # because they are connected to a reaction that is also in the collection.
-      def locked_sample_ids
-        CollectionsSample.locked_by_reaction(@requested_sample_ids, collection.id)
+        scope.by_ui_state(ui_selections).ids
       end
     end
   end

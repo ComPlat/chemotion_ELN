@@ -84,25 +84,11 @@ RSpec.describe CollectionsSample, type: :model do
       expect(c1.samples).to match_array [s5, s6]
       expect(c2.samples).to match_array [s1]
     end
-  end
 
-  describe 'locked_by_reaction,' do
-    before do
-      described_class.create!(collection_id: c1.id, sample_id: s1.id)
-      described_class.create!(collection_id: c1.id, sample_id: s6.id)
-      CollectionsReaction.create!(collection_id: c1.id, reaction_id: r.id)
-    end
-
-    it 'returns samples that are connected to a reaction in the collection' do
-      expect(described_class.locked_by_reaction([s1.id, s6.id], c1.id)).to contain_exactly(s6.id)
-    end
-
-    it 'returns nothing when the reaction is not in the collection' do
-      expect(described_class.locked_by_reaction([s1.id, s6.id], c2.id)).to be_empty
-    end
-
-    it 'returns nothing for blank sample ids' do
-      expect(described_class.locked_by_reaction([], c1.id)).to be_empty
+    it 'returns the kept ids, covering both the wellplate- and reaction-linked samples' do
+      # s5 is kept by its wellplate, s6 by its reaction; s1 is free and removed
+      locked = described_class.delete_in_collection_with_filter([s1.id, s5.id, s6.id], [c1.id])
+      expect(locked).to contain_exactly(s5.id, s6.id)
     end
   end
 

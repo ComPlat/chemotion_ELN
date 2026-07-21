@@ -24,19 +24,25 @@ class CollectionsSample < ApplicationRecord
   include Collecting
 
   def self.remove_in_collection(element_ids, collection_ids)
-    # Remove from collections
-    delete_in_collection_with_filter(element_ids, collection_ids)
+    # Remove from collections; returns the ids kept back because they are still linked to a
+    # reaction or wellplate in the collection (see delete_in_collection_with_filter).
+    locked_ids = delete_in_collection_with_filter(element_ids, collection_ids)
     # update sample tag with collection info
     update_tag_by_element_ids(element_ids)
+    locked_ids
   end
 
-  # prevent removing sample from a collection if associated wellplate or reaction is present
+  # Removes each sample from the collection unless it is still linked to a reaction or wellplate
+  # that is also in that collection. Returns the ids of the samples that were kept for that reason:
+  # they cannot be removed/deleted on their own, the reaction or wellplate has to be removed instead.
   def self.delete_in_collection_with_filter(sample_ids, collection_ids)
+    locked_sample_ids = []
     [collection_ids].flatten.each do |cid|
       next unless cid.is_a?(Integer)
+
+      # from a collection, join each requested sample to any reaction/wellplate it belongs to there
       # TODO: sql function
-      # from a collection, select sample_ids with neither wellplate nor reaction associated
-      ids = CollectionsSample.joins(
+      associated = CollectionsSample.joins(
         <<~SQL
           left join reactions_samples rs
           on rs.sample_id = collections_samples.sample_id and rs.deleted_at isnull
@@ -47,32 +53,16 @@ class CollectionsSample < ApplicationRecord
           left join collections_wellplates cw
           on cw.collection_id = #{cid} and cw.wellplate_id = w.wellplate_id and cw.deleted_at is null
         SQL
-      ).where(
-        "collections_samples.collection_id = #{cid} and collections_samples.sample_id in (?) and cw.id isnull and cr.id isnull",
-        sample_ids
-      ).pluck(:sample_id)
-      delete_in_collection(ids, cid)
+      ).where('collections_samples.collection_id = ? and collections_samples.sample_id in (?)', cid, sample_ids)
+
+      # samples with neither wellplate nor reaction are removable; the rest (present but not
+      # removable) are kept -> reported as locked so the UI can explain why nothing happened
+      present_ids = associated.distinct.pluck(:sample_id)
+      deletable_ids = associated.where('cw.id isnull and cr.id isnull').distinct.pluck(:sample_id)
+      delete_in_collection(deletable_ids, cid)
+      locked_sample_ids |= (present_ids - deletable_ids)
     end
-  end
-
-  # Of the given samples, returns the ids that remain in (one of) the given
-  # collection(s) because they are still linked to a reaction that is also in
-  # the same collection. Such samples cannot be unshared/removed/deleted on
-  # their own (see +delete_in_collection_with_filter+); the reaction has to be
-  # removed instead. +collection_ids+ accepts a single id or an array.
-  def self.locked_by_reaction(sample_ids, collection_ids)
-    cids = Array(collection_ids).grep(Integer)
-    return [] if sample_ids.blank? || cids.blank?
-
-    joins(
-      <<~SQL.squish,
-        inner join reactions_samples rs
-        on rs.sample_id = collections_samples.sample_id and rs.deleted_at isnull
-        inner join collections_reactions cr
-        on cr.reaction_id = rs.reaction_id and cr.collection_id = collections_samples.collection_id
-        and cr.deleted_at is null
-      SQL
-    ).where(collection_id: cids, sample_id: sample_ids).distinct.pluck(:sample_id)
+    locked_sample_ids
   end
 
   def self.create_in_collection(element_ids, collection_ids)

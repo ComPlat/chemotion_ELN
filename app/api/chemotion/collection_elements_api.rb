@@ -37,8 +37,8 @@ module Chemotion
         )
 
         # Some samples cannot be unshared on their own because they belong to a
-        # reaction that is still in the collection. Report them so the UI can
-        # explain why nothing happened; otherwise reply 204 No Content.
+        # reaction or wellplate that is still in the collection. Report them so the
+        # UI can explain why nothing happened; otherwise reply 204 No Content.
         if result[:locked_sample_ids].present?
           status 200
           { locked_sample_ids: result[:locked_sample_ids] }
