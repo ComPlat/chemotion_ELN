@@ -66,11 +66,13 @@ const loadKetcherData = async (data, options = {}) => {
     imagesListSetter([]);
   }
 
-  // Text nodes are managed in local state; getKet() never returns them.
-  // Only update textList when incoming data actually contains text nodes (e.g. initial load).
+  // Text nodes are managed in local state; getKet() never returns them after initial load.
+  // Always sync textList: set to found nodes, or clear if the canvas has none.
   const textNodesFromData = nodes.filter((item) => item.type === 'text');
   if (textNodesFromData.length > 0) {
     textListSetter(textNodesFromData);
+  } else if (!preserveImagesWhenEmpty) {
+    textListSetter([]);
   }
 
   // Derive mol refs by $ref presence — more robust than index slicing when node order varies.
@@ -556,5 +558,6 @@ export {
   fetchKetcherData,
   loadKetcherData,
   prepareKetcherData,
-  loadTemplates
+  loadTemplates,
+  sanitizeRgLabelAtoms,
 };

@@ -590,8 +590,13 @@ RSpec.describe Sample do
       it 'triggers regen via regen_polymer_svg_if_stale on save' do
         allow(Molecule).to receive(:svg_reprocess).and_return(svg_with_image)
         allow(sample).to receive(:attach_svg)
+        allow(File).to receive(:write).and_call_original
         sample.save!
-        expect(sample).to have_received(:attach_svg).with(svg_with_image)
+        # regen_polymer_svg_if_stale writes SVG to a TMPFILE and passes the
+        # filename to attach_svg (to avoid File.basename corrupting SVG XML).
+        expect(sample).to have_received(:attach_svg).with(
+          a_string_matching(/\ATMPFILE[0-9a-f]{64}\.svg\z/)
+        )
       end
     end
 

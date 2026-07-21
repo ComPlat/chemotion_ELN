@@ -13,7 +13,7 @@ import {
   latestDataSetter
 } from 'src/components/structureEditor/KetcherEditor';
 import { ALIAS_PATTERNS, KET_TAGS, KET_DOM_TAG } from 'src/utilities/ketcherSurfaceChemistry/constants';
-import { fetchKetcherData } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
+import { fetchKetcherData, sanitizeRgLabelAtoms } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   findAtomByImageIndex,
   handleAddAtom,
@@ -441,19 +441,7 @@ const replaceAliasWithRG = async (data) => {
 // prepare svg
 const prepareSvg = async (editor) => {
   try {
-    const struct = await replaceAliasWithRG(JSON.parse(JSON.stringify(latestData)));
-    // Indigo (used inside generateImage) rejects "rg-label" atoms that have no matching
-    // R-group definition. Convert them to plain label atoms so the SVG renders correctly.
-    for (const key of Object.keys(struct)) {
-      if (key === 'root') continue;
-      const mol = struct[key];
-      if (!mol?.atoms) continue;
-      mol.atoms = mol.atoms.map((atom) => {
-        if (atom.type !== 'rg-label') return atom;
-        const { type, $refs, ...rest } = atom;
-        return { ...rest, label: rest.label || 'R#' };
-      });
-    }
+    const struct = sanitizeRgLabelAtoms(await replaceAliasWithRG(JSON.parse(JSON.stringify(latestData))));
     const generateImageParams = { outputFormat: 'svg' };
     const parser = new DOMParser();
     const data = JSON.stringify(struct);
@@ -993,7 +981,6 @@ const onFinalCanvasSave = async (editor, iframeRef) => {
     }
     ket2Lines.push(KET_TAGS.fileEndIdentifier);
 
-    const finalMolfile = ket2Lines.join('\n');
     const svgElement = imagesList.length > 0 ? await getSvgFromCanvas(iframeRef) : await prepareSvg(editor);
     resetStore();
     return {

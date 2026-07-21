@@ -407,6 +407,12 @@ const KetcherEditor = forwardRef((props, ref) => {
       }
     };
 
+    let selectionLayeringTimer = null;
+    const debouncedRunImageLayering = () => {
+      clearTimeout(selectionLayeringTimer);
+      selectionLayeringTimer = setTimeout(() => runImageLayering(iframeRef), 80);
+    };
+
     const selectionChangeHandler = async () => {
       try {
         const currentSelection = editor?._structureDef?.editor?.editor?._selection;
@@ -494,8 +500,9 @@ const KetcherEditor = forwardRef((props, ref) => {
 
         // Ketcher re-renders the canvas SVG on every selection change, which puts
         // <image> elements back inside their original <g> group and undoes layering.
+        // Debounced to avoid firing on every mouse-move during a drag selection.
         ImagesToBeUpdatedSetter(true);
-        await runImageLayering(iframeRef);
+        debouncedRunImageLayering();
       } catch (err) {
         console.error('Error in selectionChange event handler:', err);
       }
@@ -509,6 +516,7 @@ const KetcherEditor = forwardRef((props, ref) => {
 
     // Return cleanup function to unsubscribe
     return () => {
+      clearTimeout(selectionLayeringTimer);
       try {
         if (editor?._structureDef?.editor?.editor) {
           editor._structureDef.editor.editor.unsubscribe('change', changeHandler);

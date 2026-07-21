@@ -2470,7 +2470,7 @@ export default class ReactionDetailsScheme extends React.Component {
         });
       } else { // real amount, so that we update amount in mmol
         materialGroups.forEach((group) => {
-          this.updatedSamplesForAmountChange(reaction[group] || [], reaction.editedSample, group);
+          reaction[group] = this.updatedSamplesForAmountChange(reaction[group] || [], reaction.editedSample, group);
         });
       }
       reaction.editedSample = undefined;

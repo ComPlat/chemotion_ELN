@@ -839,7 +839,14 @@ class Sample < ApplicationRecord
     return unless polymer_svg_needs_regen?
 
     svg = Molecule.svg_reprocess(nil, molfile)
-    attach_svg(svg) if svg.present?
+    return unless svg.present?
+
+    # attach_svg interprets strings containing '/' as file paths (File.basename).
+    # SVG XML content always contains '/' in tags, so pass via a named temp file
+    # using the TMPFILE prefix that attach_svg's temp-file branch recognises.
+    tmp_name = "TMPFILE#{SecureRandom.hex(32)}.svg"
+    File.write(full_svg_path(tmp_name), svg)
+    attach_svg(tmp_name)
   end
 
   # Returns true when a polymer sample has no cached SVG or the cached SVG lacks

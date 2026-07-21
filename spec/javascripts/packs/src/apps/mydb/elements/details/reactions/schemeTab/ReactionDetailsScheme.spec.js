@@ -3,7 +3,6 @@ import sinon from 'sinon';
 
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 describe('ReactionDetailsScheme#onChangeRole', () => {
   it("forwards '' (not null) to onInputChange when the dropdown is cleared", () => {
@@ -287,16 +286,6 @@ describe('ReactionDetailsScheme#calculateEquivalentForProduct — polymer guard'
 
 // B3 regression: checkMassPolymer must not write Infinity/NaN when product has no mass
 describe('ReactionDetailsScheme#checkMassPolymer — zero amount_g guard', () => {
-  let notifStub;
-
-  beforeEach(() => {
-    notifStub = sinon.stub(NotificationActions, 'add');
-  });
-
-  afterEach(() => {
-    notifStub.restore();
-  });
-
   const makeRef = () => ({
     amount_mol: 0.025,
     amount_g: 50,
@@ -349,16 +338,13 @@ describe('ReactionDetailsScheme#checkMassPolymer — zero amount_g guard', () =>
 // B4 regression: yield clamp must not push to 100% when reference has no amount
 describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp with no reference amount', () => {
   let gasStoreStub;
-  let notifStub;
 
   beforeEach(() => {
     gasStoreStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({ reactionVesselSizeValue: 0 });
-    notifStub = sinon.stub(NotificationActions, 'add');
   });
 
   afterEach(() => {
     gasStoreStub.restore();
-    notifStub.restore();
   });
 
   const makeRef = (amount_mol) => ({
@@ -672,16 +658,10 @@ describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', 
 describe('ReactionDetailsScheme#checkMassMolecule — no false material-loss warning', () => {
   let notificationStub;
 
-  beforeEach(() => {
-    notificationStub = sinon.stub(NotificationActions, 'add');
-  });
-
-  afterEach(() => {
-    notificationStub.restore();
-  });
-
   const buildInstance = () => {
+    notificationStub = sinon.stub();
     const instance = Object.create(ReactionDetailsScheme.prototype);
+    instance.context = { notifications: { add: notificationStub } };
     return instance;
   };
 

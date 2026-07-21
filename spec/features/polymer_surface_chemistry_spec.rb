@@ -15,14 +15,15 @@ require 'rails_helper'
 # Run with a visible browser (debugging):
 #   USE_HEAD=1 bundle exec rspec spec/features/polymer_surface_chemistry_spec.rb
 
-describe 'Polymer Surface Chemistry', type: :feature do
-  POLYMER_SINGLE_MOLFILE = File.read(
-    Rails.root.join('spec', 'fixtures', 'files', 'polymer_single_template.mol')
-  ).freeze
+POLYMER_SINGLE_MOLFILE = File.read(
+  Rails.root.join('spec', 'fixtures', 'files', 'polymer_single_template.mol')
+).freeze
 
-  POLYMER_MULTI_MOLFILE = File.read(
-    Rails.root.join('spec', 'fixtures', 'files', 'polymer_multi_template.mol')
-  ).freeze
+POLYMER_MULTI_MOLFILE = File.read(
+  Rails.root.join('spec', 'fixtures', 'files', 'polymer_multi_template.mol')
+).freeze
+
+describe 'Polymer Surface Chemistry', type: :feature do
   let!(:user) do
     create(:person, account_active: true, confirmed_at: Time.now)
   end
@@ -82,31 +83,6 @@ describe 'Polymer Surface Chemistry', type: :feature do
       expect(page).to have_selector('img[src*="/images/"]', wait: 5)
     end
 
-    context 'when sample has a stale SVG without polymer shapes' do
-      before do
-        # Write an SVG without <image> tags to simulate a legacy stale file
-        stale_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"></svg>'
-        svg_name = 'polymer_stale_test.svg'
-        dest = Rails.public_path.join('images', 'samples', svg_name)
-        FileUtils.mkdir_p(dest.dirname)
-        File.write(dest, stale_svg)
-        polymer_sample.update_columns(sample_svg_file: svg_name) # rubocop:disable Rails/SkipsModelValidations
-      end
-
-      after do
-        FileUtils.rm_f(Rails.public_path.join('images', 'samples', 'polymer_stale_test.svg'))
-      end
-
-      it 'auto-heals and serves a fresh SVG on the sample page', js: true do
-        find('.tree-view', text: 'chemotion-repository.net').click
-        find('tr', text: 'Polymer Test Sample', wait: 5).click
-        expect(page).to have_selector('.sample-detail', wait: 5)
-        # After auto-heal get_svg_path should have regenerated the SVG file
-        polymer_sample.reload
-        svg_path = Rails.public_path.join('images', 'samples', polymer_sample.sample_svg_file.to_s)
-        expect(File.exist?(svg_path)).to be(true)
-      end
-    end
   end
 
   # ---------------------------------------------------------------------------
@@ -305,6 +281,54 @@ describe 'Polymer Surface Chemistry', type: :feature do
 
       # The download should trigger without an error alert
       expect(page).not_to have_selector('.alert-danger', wait: 5)
+    end
+  end
+end
+
+# ---------------------------------------------------------------------------
+# Model-level: SVG auto-heal (no browser needed — tests before_save callback)
+# ---------------------------------------------------------------------------
+describe 'Polymer sample SVG auto-heal', type: :model do
+  let!(:user) { create(:person, account_active: true, confirmed_at: Time.now) }
+
+  let!(:polymer_molecule) do
+    create(:molecule,
+           molfile: POLYMER_SINGLE_MOLFILE,
+           is_partial: true,
+           inchikey: 'POLYMER-SINGLE-INCHIKEY-002',
+           sum_formular: 'R')
+  end
+
+  let!(:polymer_sample) do
+    sample = create(:sample, name: 'Polymer SVG Heal Test', creator: user, molecule: polymer_molecule)
+    sample
+  end
+
+  context 'when sample has a stale SVG without polymer shapes' do
+    before do
+      stale_svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"></svg>'
+      svg_name = 'polymer_stale_test.svg'
+      dest = Rails.public_path.join('images', 'samples', svg_name)
+      FileUtils.mkdir_p(dest.dirname)
+      File.write(dest, stale_svg)
+      polymer_sample.update_columns(sample_svg_file: svg_name) # rubocop:disable Rails/SkipsModelValidations
+    end
+
+    after do
+      FileUtils.rm_f(Rails.public_path.join('images', 'samples', 'polymer_stale_test.svg'))
+    end
+
+    it 'regenerates the SVG on save with a new file (different from the stale one)' do
+      # regen_polymer_svg_if_stale runs as a before_save callback.
+      # svg_reprocess produces a Babel backbone SVG — <image> tags are only present
+      # after the full Ketcher surface-chemistry save workflow (out of scope here).
+      polymer_sample.save!
+      polymer_sample.reload
+      expect(polymer_sample.sample_svg_file).not_to eq('polymer_stale_test.svg')
+      expect(polymer_sample.sample_svg_file).to be_present
+      svg_path = Rails.public_path.join('images', 'samples', polymer_sample.sample_svg_file.to_s)
+      expect(File.exist?(svg_path)).to be(true)
+      expect(File.read(svg_path)).to include('<svg')
     end
   end
 end

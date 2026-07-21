@@ -161,7 +161,7 @@ class Material extends Component {
     if (!showLoadingColumn) {
       return false;
     }
-    if (!material.contains_residues || (!material.loading && this.props.materialGroup === 'products')) {
+    if (!material.contains_residues || (material.loading == null && this.props.materialGroup === 'products')) {
       return notApplicableInput('reaction-material__loading-data');
     }
 
