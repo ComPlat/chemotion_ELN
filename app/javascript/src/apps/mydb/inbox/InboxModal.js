@@ -134,7 +134,6 @@ const InboxModal = () => {
 
   const changeSortColumn = () => {
     const type = 'inbox';
-    console.log(sortColumn);
     const sort = sortColumn === 'created_at' ? 'name' : 'created_at';
     setSortColumn(sort);
     updateFilterAtUserProfile(type, sort);
