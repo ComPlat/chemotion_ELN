@@ -6,7 +6,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import Literature from 'src/models/Literature';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
@@ -29,8 +29,8 @@ export default class ReactionsFetcher {
   }
 
   static reactionSortParams() {
-    const userState = UserStore.getState();
-    const filters = userState?.profile?.data?.filters || {};
+    const { profile } = rootStore.userStore;
+    const filters = profile?.data?.filters || {};
     if (!filters.reaction) return { sort_column: 'created_at', sort_direction: 'DESC' };
 
     const { sort = false, direction = 'DESC' } = filters.reaction;
