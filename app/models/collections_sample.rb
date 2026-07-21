@@ -55,6 +55,26 @@ class CollectionsSample < ApplicationRecord
     end
   end
 
+  # Of the given samples, returns the ids that remain in (one of) the given
+  # collection(s) because they are still linked to a reaction that is also in
+  # the same collection. Such samples cannot be unshared/removed/deleted on
+  # their own (see +delete_in_collection_with_filter+); the reaction has to be
+  # removed instead. +collection_ids+ accepts a single id or an array.
+  def self.locked_by_reaction(sample_ids, collection_ids)
+    cids = Array(collection_ids).grep(Integer)
+    return [] if sample_ids.blank? || cids.blank?
+
+    joins(
+      <<~SQL
+        inner join reactions_samples rs
+        on rs.sample_id = collections_samples.sample_id and rs.deleted_at isnull
+        inner join collections_reactions cr
+        on cr.reaction_id = rs.reaction_id and cr.collection_id = collections_samples.collection_id
+        and cr.deleted_at is null
+      SQL
+    ).where(collection_id: cids, sample_id: sample_ids).distinct.pluck(:sample_id)
+  end
+
   def self.create_in_collection(element_ids, collection_ids)
     # upsert in target collection
     # update sample tag with collection info

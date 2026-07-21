@@ -22,11 +22,13 @@ module Usecases
         CollectionsSequenceBasedMacromoleculeSample,
       ].freeze
 
-      attr_reader :current_user
+      attr_reader :current_user, :locked_sample_ids
 
       def initialize(current_user)
         @current_user = current_user
         @owned_collection_ids = []
+        @selected_sample_ids = []
+        @locked_sample_ids = []
       end
 
       # @param source_collection [Collection] the collection the selection was made in; scopes the
@@ -46,6 +48,11 @@ module Usecases
         withdrawn_reaction_ids = withdraw_selected_elements(source_collection, ui_state, removed)
         removed['sample'] |= withdraw_reaction_subsamples(withdrawn_reaction_ids, options)
         withdraw_generic_elements(source_collection, ui_state, removed)
+
+        # Samples the user selected but which stayed in one of their collections
+        # because they belong to a reaction that is also there. Computed after
+        # all withdrawals so a sample removed via its reaction is not reported.
+        @locked_sample_ids = CollectionsSample.locked_by_reaction(@selected_sample_ids, @owned_collection_ids)
         removed
       end
 
@@ -59,6 +66,7 @@ module Usecases
           next unless selected?(selection)
 
           ids = source_collection.send(klass.model_name.route_key).by_ui_state(selection).ids
+          @selected_sample_ids = ids if klass == Sample
           left_view = withdraw(klass, klass.collections_element_class, ids)
           removed[klass.model_name.param_key] = left_view
           reaction_ids = left_view if klass == Reaction

@@ -88,6 +88,26 @@ RSpec.describe CollectionsSample, type: :model do
     end
   end
 
+  describe 'locked_by_reaction, ' do
+    before do
+      described_class.create!(collection_id: c1.id, sample_id: s1.id)
+      described_class.create!(collection_id: c1.id, sample_id: s6.id)
+      CollectionsReaction.create!(collection_id: c1.id, reaction_id: r.id)
+    end
+
+    it 'returns samples that are connected to a reaction in the collection' do
+      expect(described_class.locked_by_reaction([s1.id, s6.id], c1.id)).to match_array [s6.id]
+    end
+
+    it 'returns nothing when the reaction is not in the collection' do
+      expect(described_class.locked_by_reaction([s1.id, s6.id], c2.id)).to be_empty
+    end
+
+    it 'returns nothing for blank sample ids' do
+      expect(described_class.locked_by_reaction([], c1.id)).to be_empty
+    end
+  end
+
   describe 'insert_in_collection, ' do
     before do
       described_class.create!(collection_id: c1.id, sample_id: s2.id)

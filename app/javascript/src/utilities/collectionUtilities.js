@@ -1,6 +1,18 @@
 import { allElnElements } from 'src/apps/generic/Utils';
 import { PermissionConst } from 'src/utilities/PermissionConst';
 
+// Shown when a sample cannot be removed from a collection or deleted on its own
+// because it belongs to a reaction that is also in the collection. Used for both
+// the "Remove from current Collection" (unshare) and "Remove from all Collections"
+// (delete) actions so the wording stays identical for both scenarios.
+const SAMPLE_REACTION_LOCK_NOTIFICATION = {
+  title: 'Sample linked to a reaction',
+  message: 'This sample is part of a reaction and cannot be removed on its own. '
+    + 'Remove the reaction to remove its associated samples.',
+  level: 'warning',
+  autoDismiss: 10,
+};
+
 const isElementSelectionEmpty = (element) => !element.checkedAll
     && element.checkedIds.size === 0
     && element.uncheckedIds.size === 0;
@@ -72,5 +84,6 @@ const collectionHasPermission = (collection, permissionLevel) => {
 };
 
 export {
-  isElementSelectionEmpty, filterParamsFromUIState, collectionOptions, collectionHasPermission
+  isElementSelectionEmpty, filterParamsFromUIState, collectionOptions, collectionHasPermission,
+  SAMPLE_REACTION_LOCK_NOTIFICATION
 };

@@ -80,6 +80,12 @@ RSpec.describe Usecases::Collections::WithdrawElements do
       expect { withdraw_from(user_sub, sample) }.not_to change(Sample, :count)
       expect(sample.reload.collections.where(id: user_sub.id)).to be_present
     end
+
+    it 'reports the sample as locked by its reaction' do
+      usecase = described_class.new(user)
+      usecase.perform!(source_collection: user_sub, ui_state: selection_for(sample), options: {})
+      expect(usecase.locked_sample_ids).to contain_exactly(sample.id)
+    end
   end
 
   describe 'a sole-owned reaction with associated subsamples' do

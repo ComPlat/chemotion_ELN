@@ -41,6 +41,21 @@ describe Chemotion::ElementAPI do
       end
     end
 
+    context 'when the sample is connected to a reaction in the same collection' do
+      let(:collection) { create(:collection, user: user) }
+      let(:reaction) { create(:reaction, creator: user, collections: [collection]) }
+
+      before { ReactionsReactantSample.create!(reaction: reaction, sample: sample, reference: false) }
+
+      it 'keeps the sample and reports it as locked by its reaction' do
+        expect { delete '/api/v1/ui_state/', params: params, as: :json }
+          .not_to change(Sample, :count)
+
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['locked_sample_ids']).to eq [sample.id]
+      end
+    end
+
     # Destroying the element records themselves is owner-only: a sharee unlinks them from the
     # collection instead (Usecases::Collections::RemoveElements). No rung on the ladder grants this.
     CollectionShare::PERMISSION_LEVELS.each_key do |level_key|

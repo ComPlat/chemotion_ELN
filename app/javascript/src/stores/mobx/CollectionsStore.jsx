@@ -9,6 +9,7 @@ import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import { SAMPLE_REACTION_LOCK_NOTIFICATION } from 'src/utilities/collectionUtilities';
 
 export const Collection = types.model({
   ancestry: types.string,
@@ -258,13 +259,25 @@ export const CollectionsStore = types
       }
     }),
     removeElementsFromCollection: flow(function* removeElementsFromCollection(params) {
-      const success = yield CollectionElementsFetcher.deleteElementsFromCollection(params)
+      const response = yield CollectionElementsFetcher.deleteElementsFromCollection(params);
 
-      if (success) {
-        // refresh elements
-        ElementActions.refreshElementsAfterCollectionChanges(params.ui_state.currentCollection.id)
-        return true
+      // A network/parse failure resolves to undefined; a 204 resolves to null.
+      if (response === undefined) { return false; }
+
+      if (response && response.error) {
+        getRoot(self).notificationsStore.add({
+          title: 'Remove from Collection', message: response.error, level: 'error', autoDismiss: 10
+        });
+        return false;
       }
+
+      if (response && response.locked_sample_ids && response.locked_sample_ids.length > 0) {
+        getRoot(self).notificationsStore.add({ ...SAMPLE_REACTION_LOCK_NOTIFICATION });
+      }
+
+      // refresh elements
+      ElementActions.refreshElementsAfterCollectionChanges(params.ui_state.currentCollection.id);
+      return true;
     }),
     assignElementsToCollection: flow(function* assignElementsToCollection(collectionParams, uiState) {
       const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams)
@@ -364,7 +377,7 @@ export const CollectionsStore = types
             (self.chemotion_repository_collection && collectionItem.ancestorIds.includes(self.chemotion_repository_collection.id))
               ? self.chemotion_repository_collection.children
               : self.own_collections
-          
+
           self.addCollectionToTree(collectionItem, collectionTree)
         }
       });
