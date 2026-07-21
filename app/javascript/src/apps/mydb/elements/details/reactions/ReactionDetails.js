@@ -4,7 +4,7 @@
 import React, { Component, createRef } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Overlay, Form
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Overlay, Form, Alert
 } from 'react-bootstrap';
 import { findIndex, isEmpty } from 'lodash';
 import { Select } from 'src/components/common/Select';
@@ -572,8 +572,6 @@ export default class ReactionDetails extends Component {
     );
   }
 
-
-
   refreshGraphic() {
     const { reaction, isRefreshingGraphic } = this.state;
 
@@ -838,7 +836,7 @@ export default class ReactionDetails extends Component {
    */
   // eslint-disable-next-line class-methods-use-this
   recalculateEquivalentsForMaterials(reaction) {
-    const referenceMaterial = reaction.referenceMaterial;
+    const { referenceMaterial } = reaction;
     if (!referenceMaterial || !referenceMaterial.amount_mol) {
       return;
     }
@@ -966,6 +964,10 @@ export default class ReactionDetails extends Component {
     const tabContentsMap = {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
+
+          <Alert variant="info">
+            This reaction has {reaction.variations.length} variations. Reactants cannot be edited in a reaction with variations.
+          </Alert>
           <div className="d-flex align-items-center">
             {this.renderReactionTypeSelect(reaction)}
             {!isInteractionReaction && (
