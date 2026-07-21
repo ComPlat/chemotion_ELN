@@ -65,7 +65,7 @@ class CollectionsSample < ApplicationRecord
     return [] if sample_ids.blank? || cids.blank?
 
     joins(
-      <<~SQL
+      <<~SQL.squish,
         inner join reactions_samples rs
         on rs.sample_id = collections_samples.sample_id and rs.deleted_at isnull
         inner join collections_reactions cr

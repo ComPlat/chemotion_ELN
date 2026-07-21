@@ -253,6 +253,30 @@ describe Chemotion::CollectionElementsAPI do
       expect(parsed_json_response['locked_sample_ids']).to eq [sample1.id]
       expect(sample1.reload.collections).to include(source_collection)
     end
+
+    context 'with a checkedAll selection' do
+      let(:remove_input) do
+        {
+          ui_state: {
+            currentCollection: { id: 0 },
+            sample: { checkedAll: true, checkedIds: [], uncheckedIds: [] },
+          },
+        }
+      end
+
+      # Guards against the checkedAll id resolution falling back to every sample in the DB:
+      # only the collection's own samples are touched, the reaction-linked one is reported locked.
+      it 'removes the free samples but keeps and reports the reaction-linked one' do
+        # sample2/sample3 are free samples in the collection alongside the reaction-linked sample1
+        [sample2, sample3].each { |s| expect(source_collection.samples).to include(s) }
+
+        delete "/api/v1/collection_elements/#{source_collection.id}", params: remove_input, as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['locked_sample_ids']).to eq [sample1.id]
+        expect(source_collection.reload.samples).to contain_exactly(sample1)
+      end
+    end
   end
 end
 # rubocop:enable RSpec/IndexedLet, RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations

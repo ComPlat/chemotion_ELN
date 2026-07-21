@@ -20,14 +20,12 @@ require 'rails_helper'
 RSpec.describe CollectionsSample, type: :model do
   let(:c1) { create(:collection) }
   let(:c2) { create(:collection) }
-  let(:c3) { create(:collection) }
   let(:s1) { create(:sample) }
   let(:s2) { create(:sample) }
   let(:s3) { create(:sample) }
   let(:s4) { create(:sample) }
   let(:s5) { create(:sample) }
   let(:s6) { create(:sample) }
-
   let(:wp) { create(:wellplate, samples: [s5]) }
   let(:r) { create(:reaction, samples: [s6]) }
 
@@ -88,7 +86,7 @@ RSpec.describe CollectionsSample, type: :model do
     end
   end
 
-  describe 'locked_by_reaction, ' do
+  describe 'locked_by_reaction,' do
     before do
       described_class.create!(collection_id: c1.id, sample_id: s1.id)
       described_class.create!(collection_id: c1.id, sample_id: s6.id)
@@ -96,7 +94,7 @@ RSpec.describe CollectionsSample, type: :model do
     end
 
     it 'returns samples that are connected to a reaction in the collection' do
-      expect(described_class.locked_by_reaction([s1.id, s6.id], c1.id)).to match_array [s6.id]
+      expect(described_class.locked_by_reaction([s1.id, s6.id], c1.id)).to contain_exactly(s6.id)
     end
 
     it 'returns nothing when the reaction is not in the collection' do

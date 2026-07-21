@@ -49,10 +49,19 @@ module Usecases
           element_class = element_scope_for(class_string)
           next unless element_class
 
-          element_ids = element_class.by_ui_state(ui_selections).ids
-          @requested_sample_ids = element_ids if element_class == Sample
+          element_ids = resolve_element_ids(element_class, ui_selections)
           join_table_for(class_string).remove_in_collection(element_ids, collection.id)
         end
+      end
+
+      # Resolves the selected element ids. Samples are scoped to the collection so a checkedAll
+      # selection does not resolve to every sample in the database (by_ui_state has no collection
+      # filter of its own). Records the requested sample ids for #locked_sample_ids.
+      def resolve_element_ids(element_class, ui_selections)
+        scope = element_class == Sample ? collection.samples : element_class
+        ids = scope.by_ui_state(ui_selections).ids
+        @requested_sample_ids = ids if element_class == Sample
+        ids
       end
 
       # Samples the user asked to remove but which stayed in the collection

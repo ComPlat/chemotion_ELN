@@ -258,26 +258,33 @@ export const CollectionsStore = types
         return true
       }
     }),
-    removeElementsFromCollection: flow(function* removeElementsFromCollection(params) {
+    // Returns { success, lockedSampleIds }: success is false only on request failure; lockedSampleIds
+    // lists samples the backend kept because they belong to a reaction still in the collection. Callers
+    // that give their own feedback (e.g. move) can pass { notifyLock: false } to suppress the
+    // built-in "linked to a reaction" toast and react to lockedSampleIds themselves.
+    removeElementsFromCollection: flow(function* removeElementsFromCollection(params, { notifyLock = true } = {}) {
       const response = yield CollectionElementsFetcher.deleteElementsFromCollection(params);
 
       // A network/parse failure resolves to undefined; a 204 resolves to null.
-      if (response === undefined) { return false; }
+      if (response === undefined) {
+        return { success: false, lockedSampleIds: [] };
+      }
 
       if (response && response.error) {
         getRoot(self).notificationsStore.add({
           title: 'Remove from Collection', message: response.error, level: 'error', autoDismiss: 10
         });
-        return false;
+        return { success: false, lockedSampleIds: [] };
       }
 
-      if (response && response.locked_sample_ids && response.locked_sample_ids.length > 0) {
+      const lockedSampleIds = (response && response.locked_sample_ids) || [];
+      if (notifyLock && lockedSampleIds.length > 0) {
         getRoot(self).notificationsStore.add({ ...SAMPLE_REACTION_LOCK_NOTIFICATION });
       }
 
       // refresh elements
       ElementActions.refreshElementsAfterCollectionChanges(params.ui_state.currentCollection.id);
-      return true;
+      return { success: true, lockedSampleIds };
     }),
     assignElementsToCollection: flow(function* assignElementsToCollection(collectionParams, uiState) {
       const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams)
@@ -293,16 +300,36 @@ export const CollectionsStore = types
       }
     }),
     moveElementsToCollection: flow(function* moveElementsToCollection(collectionParams, uiState) {
-      const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams)
+      const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams);
 
       if (collectionId) {
-        const response = yield self.addElementsToCollection(collectionId, uiState, 'Move to Collection', isNewCollection)
+        const response = yield self.addElementsToCollection(
+          collectionId,
+          uiState,
+          'Move to Collection',
+          isNewCollection
+        );
 
         if (response) {
-          const elementsRemoved = yield self.removeElementsFromCollection({ collection_id: uiState.currentCollection.id, ui_state: uiState })
+          const { success, lockedSampleIds } = yield self.removeElementsFromCollection(
+            { collection_id: uiState.currentCollection.id, ui_state: uiState },
+            { notifyLock: false }
+          );
 
-          if (elementsRemoved && isNewCollection) {
-            self.addNewCollectionToOwnCollection(newCollection)
+          // Reaction-linked samples cannot leave their reaction's collection, so they were copied
+          // to the target but stayed in the source: warn that the move was only partial.
+          if (success && lockedSampleIds.length > 0) {
+            getRoot(self).notificationsStore.add({
+              title: 'Move to Collection',
+              message: 'Samples that are part of a reaction were copied to the target but not removed '
+                + 'from the current collection. Move the reaction to move its associated samples.',
+              level: 'warning',
+              autoDismiss: 10,
+            });
+          }
+
+          if (success && isNewCollection) {
+            self.addNewCollectionToOwnCollection(newCollection);
           }
         }
       }
