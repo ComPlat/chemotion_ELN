@@ -326,10 +326,12 @@ module AttachmentJcampProcess
     # archives - so `== 'bagit'` alone missed same-type multi-curve archives
     # (CV, multi-run NMR). Those need read_bagit_data's "N_bagit" filenames,
     # which ContainerDatasetModalContent#classifyAttachments groups into one
-    # series; otherwise they land as ungrouped standalone attachments.
+    # series; otherwise they land as ungrouped standalone attachments. A bagit
+    # archive can itself hold just one curve, so keep routing spc_type ==
+    # 'bagit' there regardless of arr_jcamp.length.
     if spc_type == 'lcms'
       read_processed_data(arr_jcamp, arr_img, spc_type, is_regen)
-    elsif arr_jcamp.length > 1
+    elsif spc_type == 'bagit' || arr_jcamp.length > 1
       read_bagit_data(arr_jcamp, arr_img, arr_csv, spc_type, is_regen, params)
     else
       img_att = generate_img_att(tmp_img, 'peak')
