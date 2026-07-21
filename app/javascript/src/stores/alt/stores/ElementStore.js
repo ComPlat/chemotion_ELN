@@ -750,6 +750,9 @@ class ElementStore {
               return new Component(sampleData);
             });
             await result.initialComponents(sampleComponents);
+            if (this.state.currentElement === result) {
+              this.setState({ currentElement: result });
+            }
           })
           .catch((errorMessage) => {
             console.log(errorMessage);
@@ -762,8 +765,14 @@ class ElementStore {
   handleCreateSample({ element, closeView, components }) {
     if (element.isMixture()) {
       ComponentsFetcher.saveOrUpdateComponents(element, components)
-        .then(async () => {
-          await element.initialComponents(components);
+        .then(async (savedComponents) => {
+          // Use the API response so newly inserted rows pick up their real DB ids.
+          // Falls back to the local components if the response is unexpectedly empty.
+          const refreshed = Component.refreshFromApi(savedComponents, components);
+          await element.initialComponents(refreshed);
+          if (this.state.currentElement === element) {
+            this.setState({ currentElement: element });
+          }
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
@@ -781,8 +790,9 @@ class ElementStore {
     UserActions.fetchCurrentUser();
     if (newSample.isMixture()) {
       ComponentsFetcher.saveOrUpdateComponents(newSample, components)
-        .then(async () => {
-          await newSample.initialComponents(components);
+        .then(async (savedComponents) => {
+          const refreshed = Component.refreshFromApi(savedComponents, components);
+          await newSample.initialComponents(refreshed);
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
@@ -826,9 +836,18 @@ class ElementStore {
 
   handleUpdateLinkedElement({ element, closeView, components }) {
     if (element instanceof Sample && element.isMixture()) {
+      // Seed element with current Component instances so names display immediately
+      // without waiting for saveOrUpdateComponents to resolve.
+      if (Array.isArray(components) && components.length > 0) {
+        element.components = components;
+      }
       ComponentsFetcher.saveOrUpdateComponents(element, components)
-        .then(() => {
-          element.initialComponents(components);
+        .then((savedComponents) => {
+          const refreshed = Component.refreshFromApi(savedComponents, components);
+          element.initialComponents(refreshed);
+          if (this.state.currentElement === element) {
+            this.setState({ currentElement: element });
+          }
         })
         .catch((errorMessage) => {
           console.log(errorMessage);

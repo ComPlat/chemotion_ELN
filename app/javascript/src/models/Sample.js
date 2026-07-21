@@ -293,6 +293,57 @@ export default class Sample extends Element {
     return this.components && this.components.length > 0;
   }
 
+  /**
+   * Normalizes a dot-separated SMILES string to a sorted set for order-independent comparison.
+   * Assumes each fragment is a single-molecule SMILES (no dot-salts like [Na+].[Cl-] per component).
+   * @param {string} smilesString - Dot-separated canonical SMILES
+   * @returns {string} Sorted, dot-joined SMILES string
+   */
+  static normalizeSmilesSet(smilesString) {
+    if (!smilesString || typeof smilesString !== 'string') return '';
+    return smilesString.split('.').filter(Boolean).sort().join('.');
+  }
+
+  /**
+   * Compares two dot-separated SMILES strings as sets (order-independent).
+   * @param {string} smilesA - First SMILES string
+   * @param {string} smilesB - Second SMILES string
+   * @returns {boolean} True when both strings represent the same SMILES set
+   */
+  static sameSmilesSet(smilesA, smilesB) {
+    return Sample.normalizeSmilesSet(smilesA) === Sample.normalizeSmilesSet(smilesB);
+  }
+
+  /**
+   * Reorders mixture components to follow the sequence in a dot-separated SMILES string
+   * (typically matching the structure editor / molfile fragment order).
+   * @param {Array<string>} mixtureSmiles - Ordered SMILES fragments
+   */
+  syncComponentOrderToSmiles(mixtureSmiles) {
+    if (!this.hasComponents() || !mixtureSmiles?.length) return;
+
+    const ordered = [];
+    const remaining = [...this.components];
+
+    mixtureSmiles.forEach((smiles) => {
+      const index = remaining.findIndex(
+        (component) => component.molecule_cano_smiles === smiles
+          || component.molecule?.cano_smiles === smiles
+      );
+      if (index >= 0) {
+        ordered.push(remaining[index]);
+        remaining.splice(index, 1);
+      }
+    });
+
+    if (remaining.length > 0) {
+      ordered.push(...remaining);
+    }
+
+    this.components = ordered;
+    this.setComponentPositions();
+  }
+
   getChildrenCount() {
     return parseInt(Sample.children_count[this.id] || this.children_count, 10);
   }
@@ -1779,9 +1830,11 @@ export default class Sample extends Element {
       gas_type: this.gas_type || false,
       gas_phase_data: this.gas_phase_data,
       conversion_rate: this.conversion_rate,
-      components: this.components && this.components.length > 0
-        ? this.components.map((s) => s.serializeComponent())
-        : [],
+      // null = components never loaded on the client (list/search responses
+      // omit them) → server keeps/copies persisted ones. [] = user removed
+      // them all → server deletes. Raw API objects (no serializeComponent)
+      // are already in serialized shape and pass through as-is.
+      components: this.components?.map((comp) => comp.serializeComponent?.() ?? comp) ?? null,
       weight_percentage_reference: this.weight_percentage_reference || false,
       weight_percentage: this.weight_percentage
     };
@@ -1977,16 +2030,10 @@ export default class Sample extends Element {
    * to update the molecule/SVG via a network request.
    * @param {Object} newComponent - The new component to add.
    * @param {boolean} skipRecalculations - If true, skips expensive recalculations (for batch operations)
-   * @returns {boolean} True if the component was added, false if it was a duplicate.
+   * @returns {boolean} Always true — every component is added unconditionally.
    */
   addMixtureComponentSync(newComponent, skipRecalculations = false) {
     const tmpComponents = [...(this.components || [])];
-    // Check if this component is already present (including merged components, e.g. ionic compounds)
-    const isNew = !tmpComponents.some(
-      (component) => component.molecule.iupac_name === newComponent.molecule.iupac_name
-        || component.molecule.inchikey === newComponent.molecule.inchikey
-        || component.molecule_cano_smiles.split('.').includes(newComponent.molecule_cano_smiles)
-    );
 
     if (!newComponent.material_group) {
       newComponent.material_group = 'liquid';
@@ -1996,18 +2043,16 @@ export default class Sample extends Element {
       newComponent.purity = 1;
     }
 
-    if (isNew) {
-      tmpComponents.push(newComponent);
-      this.components = tmpComponents;
+    tmpComponents.push(newComponent);
+    this.components = tmpComponents;
 
-      if (!skipRecalculations) {
-        this.setComponentPositions();
-        this.calculateTotalMixtureMass();
-        this.updateMixtureComponentEquivalent();
-      }
+    if (!skipRecalculations) {
+      this.setComponentPositions();
+      this.calculateTotalMixtureMass();
+      this.updateMixtureComponentEquivalent();
     }
 
-    return isNew;
+    return true;
   }
 
   /**
@@ -2016,15 +2061,24 @@ export default class Sample extends Element {
    * @async
    */
   async updateMixtureMolecule() {
-    const combinedSmiles = (this.components || [])
+    // Capture the per-component SMILES list before the async fetch so the
+    // stale check below can detect any additions/removals that happen while waiting.
+    const componentSmilesSnapshot = (this.components || [])
       .map((c) => c.molecule_cano_smiles)
-      .filter(Boolean)
-      .join('.');
+      .filter(Boolean);
+
+    // Flatten each component's SMILES into individual fragments (a merged ionic compound
+    // or a "benzene dimer" carries a dot-joined cano_smiles like "c1ccccc1.c1ccccc1"),
+    // then deduplicate across all fragments so that multiple components sharing the same
+    // molecule — whether stored as separate rows or as a merged multi-fragment molecule —
+    // each contribute only one structure to the combined SVG.
+    const allFragments = componentSmilesSnapshot.flatMap((s) => s.split('.'));
+    const combinedSmiles = [...new Set(allFragments)].join('.');
 
     if (!combinedSmiles) return;
 
-    // Only fetch if the combined SMILES differs from current
-    if (combinedSmiles === this.molecule_cano_smiles) return;
+    // Same component set (possibly different order) — keep editor molfile/SVG intact.
+    if (Sample.sameSmilesSet(combinedSmiles, this.molecule_cano_smiles)) return;
 
     const result = await MoleculesFetcher.fetchBySmi(combinedSmiles, null, this.molfile, 'ketcher');
 
@@ -2034,26 +2088,24 @@ export default class Sample extends Element {
       return;
     }
 
-    // Re-validate after async fetch: components may have changed during the request.
-    // If they did, this response is stale and should be discarded to avoid race conditions.
-    const currentSmiles = (this.components || [])
+    // Stale check: compare the pre-fetch snapshot against the current component list.
+    // Sort before joining so a reorder while the fetch was in flight does not
+    // discard a valid result. Use '\0' as separator — SMILES never contain null
+    // bytes, so component boundaries stay unambiguous even when a single
+    // component's cano_smiles is itself dot-separated (e.g. multi-fragment molecules).
+    const snapshotKey = [...componentSmilesSnapshot].sort().join('\0');
+    const currentKey = (this.components || [])
       .map((c) => c.molecule_cano_smiles)
       .filter(Boolean)
-      .join('.');
+      .sort()
+      .join('\0');
 
-    if (!currentSmiles || combinedSmiles !== currentSmiles) {
+    if (!currentKey || snapshotKey !== currentKey) {
       return;
     }
 
     this.molecule = result;
     this.molfile = result.molfile;
-
-    // Clear sample_svg_file after setting molecule, because the setter
-    // re-populates it from temp_svg.  For mixtures the permanent combined
-    // SVG (molecule.molecule_svg_file) should be used instead.
-    if (this.isMixture()) {
-      this.sample_svg_file = null;
-    }
   }
 
   /**
@@ -2064,18 +2116,11 @@ export default class Sample extends Element {
   addMixtureComponentsSync(newComponents) {
     if (!newComponents || newComponents.length === 0) return;
 
-    let hasNewComponents = false;
-    newComponents.forEach((c) => {
-      const isNew = this.addMixtureComponentSync(c, true); // Skip recalculations during batch
-      if (isNew) hasNewComponents = true;
-    });
+    newComponents.forEach((c) => this.addMixtureComponentSync(c, true));
 
-    // Only perform expensive recalculations once if we actually added new components
-    if (hasNewComponents) {
-      this.setComponentPositions();
-      this.calculateTotalMixtureMass();
-      this.updateMixtureComponentEquivalent();
-    }
+    this.setComponentPositions();
+    this.calculateTotalMixtureMass();
+    this.updateMixtureComponentEquivalent();
   }
 
   /**
@@ -2112,6 +2157,21 @@ export default class Sample extends Element {
     if (!this.hasComponents()) {
       this.clearMoleculeData();
     }
+  }
+
+  /**
+   * Removes the source component and resets the target's amounts and concentration
+   * to zero, then recalculates mixture totals. Used when both components share the
+   * same molecule so no new molecule fetch is required.
+   * @param {Object} srcMat - The duplicate component to remove.
+   * @param {Object} tagMat - The component to keep, whose amounts will be cleared.
+   */
+  mergeSameMoleculeComponents(srcMat, tagMat) {
+    this.deleteMixtureComponent(srcMat);
+    tagMat.resetAmounts();
+    // Re-run after reset so mass and equivalents reflect the zeroed amounts.
+    this.calculateTotalMixtureMass();
+    this.updateMixtureComponentEquivalent();
   }
 
   /**
@@ -2257,14 +2317,52 @@ export default class Sample extends Element {
   }
 
   /**
-   * Merges two components into a new one by combining their SMILES and updating the mixture.
+   * Combines two different-molecule components into one by joining their SMILES,
+   * fetching the resulting molecule, and replacing both with the merged component.
+   * @async
+   * @param {Object} srcMat - The source component.
+   * @param {Object} tagMat - The target component.
+   * @param {string} tagGroup - Material group for the new merged component.
+   */
+  async mergeDifferentMoleculeComponents(srcMat, tagMat, tagGroup) {
+    const newSmiles = `${srcMat.molecule_cano_smiles}.${tagMat.molecule_cano_smiles}`;
+
+    try {
+      const newMolecule = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher');
+      if (!newMolecule) throw new Error('Failed to fetch merged molecule');
+
+      const newSample = Sample.buildNew(newMolecule, this.collection_id);
+      newSample.material_group = tagGroup;
+
+      const { default: Component } = await import('src/models/Component');
+
+      await this.addMixtureComponent(new Component(newSample));
+      this.deleteMixtureComponent(tagMat);
+      this.deleteMixtureComponent(srcMat);
+    } catch (error) {
+      console.error('Error merging components:', error);
+      NotificationActions.add({ message: 'Failed to merge components. Please try again.', level: 'error' });
+    }
+  }
+
+  /**
+   * Merges two components into one. Routes to the appropriate strategy based on
+   * whether the components share the same molecule.
    * @async
    * @param {Object} srcMat - The source material/component to merge.
    * @param {string} srcGroup - The source group name.
    * @param {Object} tagMat - The target material/component to merge with.
    * @param {string} tagGroup - The target group name.
    */
+  static haveSameMolecule(matA, matB) {
+    const idA = matA?.molecule?.id || matA?.molecule_id;
+    const idB = matB?.molecule?.id || matB?.molecule_id;
+    return !!(idA && idB && idA === idB);
+  }
+
   async mergeComponents(srcMat, srcGroup, tagMat, tagGroup) {
+    if (srcMat === tagMat) return;
+
     const srcIndex = this.components.findIndex((mat) => mat === srcMat);
     const tagIndex = this.components.findIndex((mat) => mat === tagMat);
 
@@ -2272,18 +2370,11 @@ export default class Sample extends Element {
       console.error('Source or target material not found in components.');
       return;
     }
-    const newSmiles = `${srcMat.molecule_cano_smiles}.${tagMat.molecule_cano_smiles}`;
 
-    try {
-      const newMolecule = await MoleculesFetcher.fetchBySmi(newSmiles, null, this.molfile, 'ketcher');
-      const newComponent = Sample.buildNew(newMolecule, this.collection_id);
-      newComponent.material_group = tagGroup;
-
-      this.deleteMixtureComponent(tagMat);
-      this.deleteMixtureComponent(srcMat);
-      await this.addMixtureComponent(newComponent);
-    } catch (error) {
-      console.error('Error merging components:', error);
+    if (Sample.haveSameMolecule(srcMat, tagMat)) {
+      this.mergeSameMoleculeComponents(srcMat, tagMat);
+    } else {
+      await this.mergeDifferentMoleculeComponents(srcMat, tagMat, tagGroup);
     }
   }
 
@@ -2297,8 +2388,14 @@ export default class Sample extends Element {
   }
 
   /**
-   * Fetches individual molecules for each SMILES in parallel, wraps them as
-   * Component instances, and adds them synchronously to the mixture.
+   * Fetches individual molecules for the given SMILES fragments and reconciles
+   * them with the existing components:
+   * - fragments already covered by an existing component are skipped, so
+   *   unchanged structures keep their component entry (no duplicates),
+   * - components whose structure no longer occurs in the edited structure
+   *   (i.e. it was modified in the structure editor) are updated in place
+   *   with the new molecule, preserving amounts, name, and position,
+   * - any remaining fragments are added as new Component instances.
    *
    * Does NOT call updateMixtureMolecule() — the caller is responsible for
    * triggering the combined-molecule fetch (and any intermediate setState)
@@ -2306,25 +2403,94 @@ export default class Sample extends Element {
    *
    * @param {Array<string>} mixtureSmiles - Array of SMILES strings to split.
    * @param {string} editor - The editor to use for fetching molecules.
-   * @returns {Promise<void>} Resolves once components have been added.
+   * @returns {Promise<void>} Resolves once components have been added/updated.
    */
   async splitSmilesToMolecule(mixtureSmiles, editor) {
-    const results = await Promise.all(
-      mixtureSmiles.map((smiles) => MoleculesFetcher.fetchBySmi(smiles, null, null, editor))
+    const { staleComponents, unknownSmiles } = this.partitionEditedSmiles(mixtureSmiles);
+
+    // Nothing new to fetch — still delete stale components so the list stays
+    // consistent with the edited structure.
+    if (unknownSmiles.length === 0) {
+      this.removeStaleComponents(staleComponents, mixtureSmiles);
+      return;
+    }
+
+    const resolved = await Sample.fetchMoleculesForSmiles(unknownSmiles, editor);
+
+    // Mapping an edited fragment back to its component is only unambiguous for
+    // a single edit — fragment order and component order are not guaranteed to
+    // align, so positional pairing of several edits could attach a molecule
+    // (and the user's amounts) to the wrong row.
+    if (staleComponents.length === 1 && unknownSmiles.length === 1 && resolved.length === 1) {
+      Sample.applyResolvedMolecule(staleComponents[0], resolved[0]);
+      this.calculateTotalMixtureMass();
+      this.updateMixtureComponentEquivalent();
+    } else {
+      await this.addResolvedFragmentsAsComponents(staleComponents, unknownSmiles, resolved);
+    }
+
+    this.syncComponentOrderToSmiles(mixtureSmiles);
+  }
+
+  /**
+   * Splits the edited structure into stale components (at least one fragment
+   * edited away) and fragments that still need resolving. Stale components
+   * don't count as covering any fragment: a stale "A.B" (A→A2) must not block
+   * "B" from being fetched.
+   *
+   * Matching is deliberately set-based, NOT count-based: the editor canvas is
+   * deduplicated (updateMixtureMolecule renders each distinct structure once),
+   * so fragment multiplicity in the editor carries no meaning. Duplicate
+   * same-molecule components are created via drag & drop, and counting
+   * occurrences here would wrongly delete one of them on every editor save.
+   *
+   * @returns {{staleComponents: Array<Object>, unknownSmiles: Array<string>}}
+   */
+  partitionEditedSmiles(mixtureSmiles) {
+    const components = this.components || [];
+
+    const editedFragments = new Set(mixtureSmiles);
+    const staleComponents = components.filter(
+      (component) => !(component.molecule_cano_smiles || '')
+        .split('.')
+        .every((fragment) => editedFragments.has(fragment))
+    );
+    const staleSet = new Set(staleComponents);
+
+    const existingFragments = new Set(
+      components
+        .filter((c) => !staleSet.has(c))
+        .flatMap((c) => (c.molecule_cano_smiles || '').split('.'))
+        .filter(Boolean)
     );
 
-    // Filter out failed fetches (undefined/null) and track which SMILES failed
-    const failedSmiles = [];
-    const molecules = [];
-    results.forEach((molecule, index) => {
-      if (molecule && molecule.id) {
-        molecules.push(molecule);
-      } else {
-        failedSmiles.push(mixtureSmiles[index]);
-      }
-    });
+    const unknownSmiles = mixtureSmiles.filter((smiles) => smiles && !existingFragments.has(smiles));
 
-    // Notify user if some molecules failed to resolve
+    return { staleComponents, unknownSmiles };
+  }
+
+  /**
+   * Deletes the given stale components and refreshes totals/ratios/ordering.
+   */
+  removeStaleComponents(staleComponents, mixtureSmiles) {
+    if (staleComponents.length === 0) return;
+
+    staleComponents.forEach((c) => this.deleteMixtureComponent(c));
+    this.calculateTotalMixtureMass();
+    this.updateMixtureComponentEquivalent();
+    this.syncComponentOrderToSmiles(mixtureSmiles);
+  }
+
+  /**
+   * Fetches a molecule per SMILES fragment, warns the user about failures,
+   * and returns only the successfully resolved molecules (in fragment order).
+   */
+  static async fetchMoleculesForSmiles(smilesList, editor) {
+    const results = await Promise.all(
+      smilesList.map((smiles) => MoleculesFetcher.fetchBySmi(smiles, null, null, editor))
+    );
+
+    const failedSmiles = smilesList.filter((smiles, index) => !(results[index] && results[index].id));
     if (failedSmiles.length > 0) {
       NotificationActions.add({
         title: 'Molecule Resolution Failed',
@@ -2335,19 +2501,44 @@ export default class Sample extends Element {
       });
     }
 
-    // If no valid molecules, exit early
-    if (molecules.length === 0) {
-      return;
-    }
+    return results.filter((molecule) => molecule && molecule.id);
+  }
 
+  /**
+   * Points an existing component at a newly resolved molecule, preserving its
+   * amount, name, and position.
+   */
+  static applyResolvedMolecule(component, molecule) {
+    component.molecule = molecule;
+    component.molecule_id = molecule.id;
+    component.molfile = molecule.molfile;
+    // MW changed — re-derive the molar amount from the entered mass/volume.
+    component.calculateAmount(component.purity || 1.0);
+  }
+
+  /**
+   * Ambiguous reconcile case (multiple edits, or new fragments mixed with
+   * edits): add every resolved fragment as a new component rather than guess
+   * which stale row it came from. Stale rows are deleted only when every
+   * fragment resolved; on partial failure they are kept (the user was warned).
+   */
+  async addResolvedFragmentsAsComponents(staleComponents, unknownSmiles, resolved) {
     const { default: Component } = await import('src/models/Component');
 
-    const newComponents = molecules.map((molecule) => {
-      const newSample = Sample.buildNew(molecule, this.collection_id);
-      return new Component(newSample);
-    });
+    const newComponents = resolved.map(
+      (molecule) => new Component(Sample.buildNew(molecule, this.collection_id))
+    );
+    if (resolved.length === unknownSmiles.length) {
+      staleComponents.forEach((c) => this.deleteMixtureComponent(c));
+    }
 
-    this.addMixtureComponentsSync(newComponents);
+    if (newComponents.length > 0) {
+      this.addMixtureComponentsSync(newComponents);
+    } else {
+      // Every fetch failed — still refresh totals/ratios.
+      this.calculateTotalMixtureMass();
+      this.updateMixtureComponentEquivalent();
+    }
   }
 
   /**

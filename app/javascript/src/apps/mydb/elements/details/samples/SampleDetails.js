@@ -379,17 +379,6 @@ export default class SampleDetails extends React.Component {
       sample.molecule_id = result.id;
       if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
 
-      // Handle temporary SVG file from structure editor
-      if (result.temp_svg) {
-        // For mixture samples, clear any existing sample_svg_file to preserve combined molecule SVG
-        // This ensures the combined molecule SVG is always displayed
-        if (sample.isMixture()) {
-          sample.sample_svg_file = null;
-        } else {
-          sample.sample_svg_file = result.temp_svg;
-        }
-      }
-
       this.setState({
         sample,
         smileReadonly: true,
@@ -1398,6 +1387,19 @@ export default class SampleDetails extends React.Component {
 
     const mixtureSmiles = sample.molecule_cano_smiles.split('.');
     if (!mixtureSmiles || mixtureSmiles.length === 0) return;
+
+    // Same component set (layout/order edit): sync list order and keep editor molfile/SVG.
+    if (sample.hasComponents()) {
+      const existingSmiles = (sample.components || [])
+        .map((c) => c.molecule_cano_smiles)
+        .filter(Boolean)
+        .join('.');
+      if (Sample.sameSmilesSet(existingSmiles, sample.molecule_cano_smiles)) {
+        sample.syncComponentOrderToSmiles(mixtureSmiles);
+        this.setState({ sample });
+        return;
+      }
+    }
 
     this.setState({ loadingMolecule: true });
 

@@ -1,11 +1,27 @@
 # frozen_string_literal: true
 
 # Use case for creating or updating components for a given sample.
-# Iterates through the provided components, finds or initializes each by sample and molecule_id,
-# assigns attributes, and saves with validation.
+# Iterates through the provided components, finds or initializes each by component id,
+# assigns attributes, and saves with validation. Lookup is keyed on the component id
+# (not molecule_id) so a mixture can hold multiple components that share the same molecule.
 module Usecases
   module Components
     class Create
+      # Single source of truth for the components-payload shape shared by
+      # DeleteRemovedComponents and Create: an array of indifferent-access hashes,
+      # each with an indifferent-access :component_properties. Idempotent and
+      # nil-safe, so it is cheap to call defensively at every entry point.
+      def self.normalize(components)
+        (components || []).map do |cp|
+          c = cp.with_indifferent_access
+          c[:component_properties] = c[:component_properties].with_indifferent_access if c[:component_properties]
+          c
+        end
+      end
+
+      # `components` is expected to be already normalized by the caller via
+      # Usecases::Components::Create.normalize (Reconcile normalizes once and passes
+      # the same array here and to DeleteRemovedComponents).
       def initialize(sample, components)
         @sample = sample
         @sample_id = sample.id
@@ -20,12 +36,18 @@ module Usecases
         add_molecule_data_to_components
 
         @components.each do |component_params|
-          molecule_id = component_params.dig(:component_properties, :molecule_id).to_i
+          # Look up by component id rather than molecule_id so multiple components
+          # sharing the same molecule are persisted as separate rows.
+          # Integer ids reference existing components; non-integer ids (e.g. 'new_1',
+          # 'comp_xxx') indicate newly added components and trigger a fresh insert.
+          component_id = Integer(component_params[:id], exception: false)
 
-          component = Component
-                      .where("sample_id = ? AND CAST(component_properties ->> 'molecule_id' AS INTEGER) = ?",
-                             @sample_id, molecule_id)
-                      .first_or_initialize(sample_id: @sample_id)
+          component = if component_id
+                        Component.find_by(sample_id: @sample_id, id: component_id) ||
+                          Component.new(sample_id: @sample_id)
+                      else
+                        Component.new(sample_id: @sample_id)
+                      end
 
           component.assign_attributes(
             name: component_params[:name],

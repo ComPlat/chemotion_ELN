@@ -57,7 +57,7 @@ jobs:
         shell: bash
 
     container:
-      image: complat/chemotion_eln_runner:latest
+      image: complat/chemotion_eln_runner:v3.x
       ## options: --user root
 
 
