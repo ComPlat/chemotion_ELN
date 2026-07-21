@@ -153,11 +153,13 @@ export default class WellplateDetails extends Component {
     const { wellplate } = this.state;
     const { type, value } = change;
 
-    if (type == 'name') wellplate.name = value === '' ? 'New Wellplate' : value;
-    if (type == 'description') wellplate.description = value;
-    if (type == 'readoutTitles') wellplate.readout_titles = value;
-    if (type == 'size') wellplate.changeSize(value.width, value.height);
-
+    if (type === 'name') wellplate.name = value === '' ? 'New Wellplate' : value;
+    if (type === 'description') wellplate.description = value;
+    if (type === 'readoutTitles') wellplate.readout_titles = value;
+    if (type === 'size') {
+      wellplate.changeSize(value.width, value.height);
+      wellplate.changed = true;
+    }
 
     this.setState({ wellplate });
   }
