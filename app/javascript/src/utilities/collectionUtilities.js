@@ -1,4 +1,4 @@
-import { elementNames, allElnElements } from 'src/apps/generic/Utils';
+import { allElnElements } from 'src/apps/generic/Utils';
 import { PermissionConst } from 'src/utilities/PermissionConst';
 
 const isElementSelectionEmpty = (element) => !element.checkedAll
@@ -13,7 +13,14 @@ const filterParamsFromUIState = (uiState) => {
     currentCollection: { id: collectionId },
   };
 
-  allElnElements.map((element) => {
+  // Built-in ELN element types plus the generic (labimotion) klass names, which UIStore keeps in
+  // `klasses`. Both are collected synchronously here: the previous version added the generic keys
+  // inside an un-awaited `elementNames(false).then(...)` callback that resolved *after* this
+  // function had already returned, so generic-element selections were silently dropped from every
+  // consumer (Move / Assign / Remove / Share).
+  const elementTypes = [...allElnElements, ...(uiState.klasses || [])];
+
+  elementTypes.forEach((element) => {
     if (uiState[element] === undefined || isElementSelectionEmpty(uiState[element])) { return; }
 
     filterParams[element] = {
@@ -22,19 +29,6 @@ const filterParamsFromUIState = (uiState) => {
       excluded_ids: uiState[element].uncheckedIds,
       collection_id: collectionId,
     };
-  });
-
-  elementNames(false).then((klassArray) => {
-    klassArray.forEach((klass) => {
-      if (isElementSelectionEmpty(uiState[`${klass}`])) { return; }
-
-      filterParams[`${klass}`] = {
-        all: uiState[`${klass}`].checkedAll,
-        included_ids: uiState[`${klass}`].checkedIds,
-        excluded_ids: uiState[`${klass}`].uncheckedIds,
-        collection_id: collectionId
-      };
-    });
   });
 
   return filterParams;

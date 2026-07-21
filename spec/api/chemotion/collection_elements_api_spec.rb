@@ -176,5 +176,54 @@ describe Chemotion::CollectionElementsAPI do
       expect(response.body).to be_blank
     end
   end
+
+  # Regression: generic (labimotion) elements are keyed in ui_state by their ElementKlass name.
+  # They must be resolved and (un)linked exactly like built-in elements; the resolution previously
+  # used `find` instead of `find_by` and dereferenced a nil built-in class, so a generic-only
+  # selection either no-op'd (payload dropped upstream) or raised.
+  context 'with a generic (labimotion) element' do
+    let(:source_collection_user) { user }
+    let(:target_collection_user) { user }
+    let(:element_klass) { create(:element_klass, name: 'my_generic') }
+    let(:generic_element) do
+      create(:element, element_klass: element_klass, creator: user, collections: [source_collection])
+    end
+
+    let(:generic_input) do
+      {
+        collection_id: target_collection.id,
+        ui_state: {
+          currentCollection: { id: 0 },
+          'my_generic' => {
+            checkedAll: false,
+            checkedIds: [generic_element.id],
+            uncheckedIds: [],
+          },
+        },
+      }
+    end
+
+    it 'assigns the generic element to the target collection' do
+      expect(generic_element.collections).not_to include(target_collection)
+
+      post '/api/v1/collection_elements', params: generic_input
+      generic_element.reload
+
+      expect(response.status).to eq 201
+      expect(generic_element.collections).to include(target_collection)
+    end
+
+    it 'removes the generic element from the source collection' do
+      generic_element.collections << target_collection
+
+      delete "/api/v1/collection_elements/#{source_collection.id}",
+             params: generic_input.except(:collection_id)
+      generic_element.reload
+
+      expect(response).to have_http_status(:no_content)
+      expect(generic_element.collections).not_to include(source_collection)
+      expect(generic_element.collections).to include(target_collection)
+    end
+  end
 end
 # rubocop:enable RSpec/IndexedLet, RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations

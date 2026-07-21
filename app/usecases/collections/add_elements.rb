@@ -3,6 +3,8 @@
 module Usecases
   module Collections
     class AddElements
+      include ElementClassResolution
+
       attr_reader :current_user, :collection
 
       def initialize(current_user)
@@ -46,8 +48,7 @@ module Usecases
 
       def check_access_to_elements(ui_state)
         ui_state.each do |class_string, ui_selections|
-          element_class =
-            API::ELEMENT_CLASS[class_string] || Labimotion::ElementKlass.find_by(name: class_string).elements
+          element_class = element_scope_for(class_string)
           next unless element_class
 
           scope = element_class.by_ui_state(ui_selections)
@@ -64,24 +65,16 @@ module Usecases
 
       def add_elements_to_collection(ui_state)
         ui_state.each do |class_string, ui_selections|
-          element_class = API::ELEMENT_CLASS[class_string] || Labimotion::ElementKlass.find(name: class_string).elements
+          element_class = element_scope_for(class_string)
+          next unless element_class
+
           element_ids = element_class.by_ui_state(ui_selections).ids
 
           if element_class == DeviceDescription
             element_ids = Usecases::DeviceDescriptions::ByUIState.new(element_ids).with_joined_ids
           end
 
-          join_table = API::ELEMENT_CLASS[class_string].collections_element_class || Labimotion::CollectionsElement
-
-          join_table.create_in_collection(element_ids, collection.id)
-        end
-      end
-
-      def elements_scope(element_class, element_ids)
-        if element_class.in?(API::ELEMENT_CLASS.values)
-          element_class.where(id: element_ids)
-        else # Labimotion::ElementKlass
-          element_class.elements
+          join_table_for(class_string).create_in_collection(element_ids, collection.id)
         end
       end
     end
