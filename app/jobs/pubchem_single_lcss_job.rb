@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
-# Job to update molecule info for molecules with no LCSS
-# associated LCSS (molecule tag) is updated if cid found in PC db
+# Per-molecule PubChem enrichment job, scheduled for every newly created molecule via
+# Molecule.schedule_lcss_batch (directly for batch imports, or via the after_create_commit
+# :get_lcss hook). For each molecule it enriches names/iupac/cid from PubChem (see
+# Molecule#enrich_from_pubchem) and then updates the LCSS molecule tag. This is where the
+# PubChem network work moved to after it was removed from the synchronous create path.
 class PubchemSingleLcssJob < ApplicationJob
   queue_as :single_pubchem_lcss
 
@@ -18,7 +21,13 @@ class PubchemSingleLcssJob < ApplicationJob
 
     Array(molecule_ids).each_with_index do |molecule_id, i|
       sleep SLEEP_BETWEEN_REQUESTS if i.positive?
-      Molecule.find_by(id: molecule_id)&.pubchem_lcss
+      molecule = Molecule.find_by(id: molecule_id)
+      next unless molecule
+
+      # Enrich (iupac_name/names/cid) before LCSS so the cid is already persisted and
+      # Molecule#pubchem_lcss doesn't fall back to its own get_cid_from_inchikey lookup.
+      molecule.enrich_from_pubchem
+      molecule.pubchem_lcss
     end
   end
 end

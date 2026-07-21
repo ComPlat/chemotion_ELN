@@ -34,18 +34,7 @@ class PubchemCidJob < ApplicationJob
       pb_info = Chemotion::PubchemService.molecule_info_from_inchikeys(iks)
       pb_info.each do |obj|
         m = Molecule.find_by(inchikey: obj[:inchikey], is_partial: false)
-        m.update_columns(iupac_name: obj[:iupac_name]) if m.iupac_name.blank?
-        et = m.tag
-        data = et.taggable_data || {}
-        data['pubchem_cid'] = obj[:cid]
-        et.update_columns(taggable_data: data)
-        obj[:names].each do |name|
-          MoleculeName.find_or_create_by(
-            molecule_id: m.id,
-            name: name,
-            description: 'iupac_name',
-          )
-        end
+        m&.assign_pubchem_names_and_cid!(obj)
       end
       return if Time.zone.now > t_limit
 
