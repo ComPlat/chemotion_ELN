@@ -24,14 +24,13 @@ const SelectionGenerateButton = () => {
   const enableReactionPredict = MatrixCheck(currentUser?.matrix, 'reactionPrediction');
 
   const onUIStoreChange = useCallback((state) => {
-    if (state.sample.checkedIds !== checkedIds) {
-      setCheckedIds(state.sample.checkedIds);
-      const sampleExplorer = isUIComponentEnabled('sampleExplorer', state);
-      if (sampleExplorer !== hasSampleExplorer) {
-        setHasSampleExplorer(sampleExplorer);
-      }
+    setCheckedIds((prevCheckedIds) => (
+      state.sample.checkedIds !== prevCheckedIds ? state.sample.checkedIds : prevCheckedIds
+    ));
+    const sampleExplorer = isUIComponentEnabled('sampleExplorer', state);
+    if (sampleExplorer !== hasSampleExplorer) {
+      setHasSampleExplorer(sampleExplorer);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
