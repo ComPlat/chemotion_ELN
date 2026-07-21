@@ -135,3 +135,64 @@ describe.skip('CustomSizeModal', () => {
     });
   });
 });
+
+describe('CustomSizeModal (functional component)', () => {
+  function mountModal(props) {
+    return mount(
+      <CustomSizeModal
+        show
+        handleClose={emptyFunction}
+        updateWellplate={emptyFunction}
+        {...props}
+      />
+    );
+  }
+
+  function widthInput(wrapper) {
+    return wrapper.find('input').first();
+  }
+
+  it('resyncs its fields to the wellplate size whenever it is reopened', () => {
+    const wellplate = Wellplate.buildEmpty(1); // 0x0
+    const wrapper = mountModal({ show: false, wellplate });
+
+    // size changed elsewhere (e.g. via the size dropdown) while the modal was closed
+    wellplate.changeSize(12, 8);
+    wrapper.setProps({ show: true, wellplate });
+    wrapper.update();
+
+    expect(widthInput(wrapper).props().value).toEqual(12);
+  });
+
+  it('discards an unapplied edit when the modal is closed and reopened', () => {
+    const wellplate = Wellplate.buildEmpty(1);
+    wellplate.changeSize(12, 8);
+    const wrapper = mountModal({ wellplate });
+
+    widthInput(wrapper).simulate('change', { target: { value: '55' } });
+    wrapper.update();
+    expect(widthInput(wrapper).props().value).toEqual('55');
+
+    wrapper.setProps({ show: false });
+    wrapper.setProps({ show: true });
+    wrapper.update();
+
+    expect(widthInput(wrapper).props().value).toEqual(12);
+  });
+
+  it('applies a valid custom size via updateWellplate', () => {
+    const wellplate = Wellplate.buildEmpty(1);
+    const updateWellplate = spy();
+    const wrapper = mountModal({ wellplate, updateWellplate });
+
+    widthInput(wrapper).simulate('change', { target: { value: '5' } });
+    wrapper.find('input').at(1).simulate('change', { target: { value: '7' } });
+    wrapper.update();
+
+    const applyButton = wrapper.find('button').filterWhere((b) => b.text() === 'Apply');
+    expect(applyButton.props().disabled).toEqual(false);
+    applyButton.simulate('click');
+
+    expect(updateWellplate.calledWith({ type: 'size', value: { width: '5', height: '7' } })).toEqual(true);
+  });
+});
