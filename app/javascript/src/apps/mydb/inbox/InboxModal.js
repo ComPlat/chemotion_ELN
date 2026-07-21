@@ -1,5 +1,6 @@
-/* eslint-disable react/destructuring-assignment */
-import React from 'react';
+import React, {
+  useCallback, useContext, useEffect, useRef, useState
+} from 'react';
 import Draggable from 'react-draggable';
 import {
   Badge, Button, CloseButton, Pagination, OverlayTrigger, Tooltip, Dropdown, DropdownButton, Card,
@@ -12,108 +13,82 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 import DeviceBox from 'src/apps/mydb/inbox/DeviceBox';
 import UnsortedBox from 'src/apps/mydb/inbox/UnsortedBox';
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import UserActions from 'src/stores/alt/actions/UserActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
-export default class InboxModal extends React.Component {
-  constructor(props) {
-    super(props);
+const InboxModal = () => {
+  const { userStore } = useContext(StoreContext);
+  const filters = userStore.profile?.data?.filters || {};
 
-    const inboxState = InboxStore.getState();
+  const inboxState = InboxStore.getState();
+  const [inbox, setInbox] = useState(inboxState.inbox);
+  const [inboxVisible, setInboxVisible] = useState(inboxState.inboxVisible);
+  const [numberOfAttachments, setNumberOfAttachments] = useState(inboxState.numberOfAttachments);
+  const [visible, setVisible] = useState(inboxState.inboxModalVisible);
 
-    this.state = {
-      inbox: inboxState.inbox,
-      inboxVisible: inboxState.inboxVisible,
-      numberOfAttachments: inboxState.numberOfAttachments,
-      visible: inboxState.inboxModalVisible,
+  const [currentPage, setCurrentPage] = useState(inboxState.currentPage);
+  const [itemsPerPage, setItemPerPage] = useState(inboxState.itemsPerPage);
+  const [totalPages, setTotalPages] = useState(inboxState.totalPages);
+  const [activeDeviceBoxId, setActiveDeviceBoxId] = useState(inboxState.activeDeviceBoxId);
+  const [sortColumn, setSortColumn] = useState(filters['inbox']?.sort || 'name');
+  const [colMdValue, setColMdValue] = useState(4);
+  const [collectorAddress, setCollectorAddress] = useState();
 
-      currentPage: inboxState.currentPage,
-      itemsPerPage: inboxState.itemsPerPage,
-      totalPages: inboxState.totalPages,
-      activeDeviceBoxId: inboxState.activeDeviceBoxId,
-      sortColumn: 'name',
-      colMdValue: 4,
-    };
+  const onInboxStoreChange = useCallback((state) => {
+    setInbox(state.inbox);
+    setInboxVisible(state.inboxVisible);
+    setNumberOfAttachments(state.numberOfAttachments);
+    setCurrentPage(state.currentPage);
+    setItemPerPage(state.itemsPerPage);
+    setTotalPages(state.totalPages);
+    setActiveDeviceBoxId(state.activeDeviceBoxId);
+    setVisible(state.inboxModalVisible);
+  }, []);
 
-    this.onInboxStoreChange = this.onInboxStoreChange.bind(this);
-    this.onUIStoreChange = this.onUIStoreChange.bind(this);
-    this.onUserStoreChange = this.onUserStoreChange.bind(this);
+  const onUIStoreChange = useCallback((state) => {
+    if (state.collectorAddress !== collectorAddress) {
+      setCollectorAddress(state.collectorAddress);
+    }
+  }, [collectorAddress]);
 
-    this.onClickInbox = this.onClickInbox.bind(this);
-    this.handleMouseDown = this.handleMouseDown.bind(this);
-    this.handleMouseMove = this.handleMouseMove.bind(this);
-    this.handleMouseUp = this.handleMouseUp.bind(this);
-  }
-
-  componentDidMount() {
-    InboxStore.listen(this.onInboxStoreChange);
-    UIStore.listen(this.onUIStoreChange);
-    this.onUIStoreChange(UIStore.getState());
-    UserStore.listen(this.onUserStoreChange);
-    this.onUserStoreChange(UserStore.getState());
-
+  useEffect(() => {
+    InboxStore.listen(onInboxStoreChange);
     InboxActions.fetchInboxCount();
-  }
 
-  componentDidUpdate(prevProps, prevState) {
-    const { currentPage, itemsPerPage } = this.state;
-    if (prevState.currentPage !== currentPage
-        || prevState.itemsPerPage !== itemsPerPage) {
+    return () => InboxStore.unlisten(onInboxStoreChange);
+  }, [onInboxStoreChange]);
+
+  useEffect(() => {
+    UIStore.listen(onUIStoreChange);
+    return () => UIStore.unlisten(onUIStoreChange);
+  }, [onUIStoreChange]);
+
+  const didMount = useRef(false);
+  useEffect(() => {
+    if (didMount.current) {
       InboxActions.fetchInbox({ currentPage, itemsPerPage });
+    } else {
+      didMount.current = true;
     }
-  }
+  }, [currentPage, itemsPerPage]);
 
-  componentWillUnmount() {
-    InboxStore.unlisten(this.onInboxStoreChange);
-    UIStore.unlisten(this.onUIStoreChange);
-    UserStore.unlisten(this.onUserStoreChange);
-  }
-
-  handlePageChange(pageNumber) {
-    const { totalPages } = this.state;
+  const handlePageChange = (pageNumber) => {
     if (pageNumber > 0 && pageNumber <= totalPages) {
-      this.setState({
-        currentPage: pageNumber
-      }, () => InboxActions.setInboxPagination({ currentPage: this.state.currentPage }));
+      setCurrentPage(pageNumber);
+      InboxActions.setInboxPagination({ currentPage: pageNumber });
     }
-  }
+  };
 
-  onInboxStoreChange(state) {
-    this.setState(state);
-    this.setState({ visible: state.inboxModalVisible });
-  }
-
-  onUIStoreChange(state) {
-    const { collectorAddress } = state;
-    if (collectorAddress !== this.state.collectorAddress) {
-      this.setState({ collectorAddress });
-    }
-  }
-
-  onUserStoreChange(state) {
-    const type = 'inbox';
-    const filters = state?.profile?.data?.filters || {};
-    const newSortColumn = filters[type]?.sort || 'name';
-
-    const { sortColumn } = this.state;
-    if (sortColumn !== newSortColumn) {
-      this.setState({ sortColumn: newSortColumn });
-    }
-  }
-
-  onClickInbox() {
-    const {
-      inboxVisible, inbox, currentPage, itemsPerPage
-    } = this.state;
+  const onClickInbox = () => {
     InboxActions.setInboxVisible({ inboxVisible: !inboxVisible });
     if (!inbox.children) {
       LoadingActions.start();
       InboxActions.fetchInbox({ currentPage, itemsPerPage });
     }
-  }
+  };
 
-  handleSizingIconClick = (size) => {
+  const handleSizingIconClick = (size) => {
     let newColMdValue;
     switch (size) {
       case 'Small':
@@ -128,13 +103,11 @@ export default class InboxModal extends React.Component {
       default:
         newColMdValue = 4;
     }
-    this.setState({ colMdValue: newColMdValue });
-
+    setColMdValue(newColMdValue);
     InboxActions.changeInboxSize(size);
   };
 
-  getSizeLabel = () => {
-    const { colMdValue } = this.state;
+  const getSizeLabel = () => {
     switch (colMdValue) {
       case 2:
         return 'Small';
@@ -147,13 +120,8 @@ export default class InboxModal extends React.Component {
     }
   };
 
-  updateFilterAndUserProfile = (type, sort) => {
-    InboxActions.changeInboxFilter({
-      name: type,
-      sort,
-    });
-
-    UserActions.updateUserProfile({
+  const updateFilterAtUserProfile = (type, sort) => {
+    userStore.updateUserProfileValues({
       data: {
         filters: {
           [type]: {
@@ -164,66 +132,60 @@ export default class InboxModal extends React.Component {
     });
   };
 
-  changeSortColumn = () => {
+  const changeSortColumn = () => {
     const type = 'inbox';
-    const { sortColumn } = this.state;
+    console.log(sortColumn);
     const sort = sortColumn === 'created_at' ? 'name' : 'created_at';
-
-    this.setState({
-      sortColumn: sort,
-    }, () => {
-      this.updateFilterAndUserProfile(type, sort);
-    });
+    setSortColumn(sort);
+    updateFilterAtUserProfile(type, sort);
   };
 
-  handleMouseDown = (e) => {
-    e.preventDefault();
-
-    document.addEventListener('mousemove', this.handleMouseMove);
-    document.addEventListener('mouseup', this.handleMouseUp);
-  };
-
-  handleMouseMove = (e) => {
+  const handleMouseMove = (e) => {
     // Update the position of the div based on the mouse movement
     const div = document.getElementById('draggableInbox');
     div.style.left = `${e.clientX}px`;
     div.style.top = `${e.clientY}px`;
   };
 
-  handleMouseUp = () => {
+  const handleMouseUp = () => {
     // Remove the event listeners when the dragging is finished
-    document.removeEventListener('mousemove', this.handleMouseMove);
-    document.removeEventListener('mouseup', this.handleMouseUp);
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
   };
 
-  refreshInbox() {
-    const { currentPage, itemsPerPage } = this.state;
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const refreshInbox = () => {
     LoadingActions.start();
     InboxActions.fetchInbox({ currentPage, itemsPerPage });
-  }
+  };
 
-  renderPagination = () => {
-    const { currentPage, totalPages } = this.state;
-
+  const renderPagination = () => {
     if (totalPages <= 1) {
       return null;
     }
 
-    const pageNumbers = [];
     const minPage = Math.max(currentPage - 4, 1);
     const maxPage = Math.min(minPage + 4, totalPages);
+    const pageRange = Array.from(
+      { length: maxPage - minPage + 1 },
+      (_, idx) => minPage + idx
+    );
 
-    for (let i = minPage; i <= maxPage; i += 1) {
-      pageNumbers.push(
-        <Pagination.Item
-          key={i}
-          active={i === currentPage}
-          onClick={() => this.handlePageChange(i)}
-        >
-          {i}
-        </Pagination.Item>
-      );
-    }
+    const pageNumbers = pageRange.map((page) => (
+      <Pagination.Item
+        key={page}
+        active={page === currentPage}
+        onClick={() => handlePageChange(page)}
+      >
+        {page}
+      </Pagination.Item>
+    ));
 
     if (totalPages > maxPage) {
       pageNumbers.push(<Pagination.Ellipsis key="Ell" />);
@@ -232,31 +194,29 @@ export default class InboxModal extends React.Component {
     return (
       <div className="mt-1">
         <Pagination>
-          <Pagination.First disabled={currentPage === 1} key="First" onClick={() => this.handlePageChange(1)} />
+          <Pagination.First disabled={currentPage === 1} key="First" onClick={() => handlePageChange(1)} />
           <Pagination.Prev
             disabled={currentPage === 1}
             key="Prev"
-            onClick={() => this.handlePageChange(currentPage - 1)}
+            onClick={() => handlePageChange(currentPage - 1)}
           />
           {pageNumbers}
           <Pagination.Next
             disabled={currentPage === totalPages}
             key="Next"
-            onClick={() => this.handlePageChange(currentPage + 1)}
+            onClick={() => handlePageChange(currentPage + 1)}
           />
           <Pagination.Last
             disabled={currentPage === totalPages}
             key="Last"
-            onClick={() => this.handlePageChange(totalPages)}
+            onClick={() => handlePageChange(totalPages)}
           />
         </Pagination>
       </div>
     );
   };
 
-  inboxSubtrees() {
-    const { inbox, activeDeviceBoxId } = this.state;
-
+  const inboxSubtrees = () => {
     let boxes = '';
     if (inbox.children) {
       inbox.children.sort((a, b) => {
@@ -275,7 +235,7 @@ export default class InboxModal extends React.Component {
     return (
       <div className="tree-view">
         {boxes}
-        {this.renderPagination()}
+        {renderPagination()}
         {inbox.unlinked_attachments && (
           <UnsortedBox
             key="unsorted_box"
@@ -286,11 +246,9 @@ export default class InboxModal extends React.Component {
         )}
       </div>
     );
-  }
+  };
 
-  infoMessage() {
-    const { collectorAddress } = this.state;
-    return (
+  const infoMessage = () => (
       <Tooltip id="assignButton">
         You can send yourself files to your inbox by emailing them
         <br />
@@ -301,10 +259,9 @@ export default class InboxModal extends React.Component {
         Click to copy the address to your clipboard.
       </Tooltip>
     );
-  }
 
-  renderSizingIcon = () => {
-    const tooltipText = `Change inbox size (Currently: ${this.getSizeLabel()})`;
+  const renderSizingIcon = () => {
+    const tooltipText = `Change inbox size (Currently: ${getSizeLabel()})`;
     const sizes = ['Small', 'Medium', 'Large'];
 
     return (
@@ -316,7 +273,7 @@ export default class InboxModal extends React.Component {
           title="Size"
           variant="light"
           size="sm"
-          onSelect={(size) => this.handleSizingIconClick(size)}
+          onSelect={(size) => handleSizingIconClick(size)}
         >
           {sizes.map((size) => (
             <Dropdown.Item key={size} eventKey={size}>
@@ -328,13 +285,10 @@ export default class InboxModal extends React.Component {
     );
   };
 
-  collectorAddressInfoButton() {
-    const { collectorAddress } = this.state;
-
-    return (
+  const collectorAddressInfoButton = () => (
       <OverlayTrigger
         placement="bottom"
-        overlay={this.infoMessage()}
+        overlay={infoMessage()}
       >
         <CopyToClipboard
           text={collectorAddress}
@@ -345,110 +299,105 @@ export default class InboxModal extends React.Component {
         </CopyToClipboard>
       </OverlayTrigger>
     );
-  }
 
-  renderSortButton() {
-    const sortTitle = this.state.sortColumn === 'name'
+  const renderSortButton = () => {
+    const sortTitle = sortColumn === 'name'
       ? 'click to sort datasets and attachments by creation date (descending) - currently sorted alphabetically'
       : 'click to sort datasets and attachments alphabetically - currently sorted by creation date (descending)';
     const sortTooltip = <Tooltip id="inbox_sort_tooltip">{sortTitle}</Tooltip>;
-    const sortIconClass = this.state.sortColumn === 'name' ? 'fa-sort-alpha-asc' : 'fa-clock-o';
+    const sortIconClass = sortColumn === 'name' ? 'fa-sort-alpha-asc' : 'fa-clock-o';
     const sortIcon = <i className={`fa ${sortIconClass}`} />;
     return (
       <OverlayTrigger placement="bottom" overlay={sortTooltip}>
         <Button
           variant="light"
           size="xsm"
-          onClick={this.changeSortColumn}
+          onClick={changeSortColumn}
         >
           {sortIcon}
         </Button>
       </OverlayTrigger>
     );
-  }
+  };
 
-  render() {
-    const {
-      visible, inboxVisible, numberOfAttachments, collectorAddress, colMdValue
-    } = this.state;
+  if (!visible) { return null; }
 
-    if (!visible) { return null; }
-
-    return (
-      <Draggable
-        handle=".handle"
-        bounds="body"
+  return (
+    <Draggable
+      handle=".handle"
+      bounds="body"
+    >
+      <div
+        className={`small-col col-md-${colMdValue}`}
+        style={{
+          zIndex: 10,
+          position: 'absolute',
+          top: '70px',
+          left: '10px'
+        }}
       >
-        <div
-          className={`small-col col-md-${colMdValue}`}
-          style={{
-            zIndex: 10,
-            position: 'absolute',
-            top: '70px',
-            left: '10px'
-          }}
-        >
-          <Card className="cursor">
-            <Card.Header
-              className="cursor handle draggable border-gray-600 bg-gray-300"
-              id="draggableInbox"
-              onMouseDown={this.handleMouseDown}
-            >
-              <div className="d-flex justify-content-between align-items-center w-100">
+        <Card className="cursor">
+          <Card.Header
+            className="cursor handle draggable border-gray-600 bg-gray-300"
+            id="draggableInbox"
+            onMouseDown={handleMouseDown}
+          >
+            <div className="d-flex justify-content-between align-items-center w-100">
+              <div>
+                <button
+                  type="button"
+                  className="border-0 bg-transparent"
+                  onClick={() => onClickInbox()}
+                >
+                  <i className="fa fa-inbox" />
+                  <span className="ms-2 me-1 fw-bold">Inbox</span>
+                </button>
+                {
+                  numberOfAttachments > 0
+                  && (
+                    <Badge bg="warning" className="mx-1">{numberOfAttachments}</Badge>
+                  )
+                }
+              </div>
+              <ButtonToolbar>
+                {renderSortButton()}
+                {collectorAddress && collectorAddressInfoButton()}
+                {renderSizingIcon()}
+                <Button
+                  variant="light"
+                  size="xsm"
+                  onClick={() => refreshInbox()}
+                >
+                  <i className="fa fa-refresh" />
+                </Button>
+                <CloseButton
+                  className="ms-2"
+                  onClick={InboxActions.toggleInboxModal}
+                />
+              </ButtonToolbar>
+            </div>
+          </Card.Header>
+          <Card.Body>
+            <div>
+              {inboxVisible ? (
+                inboxSubtrees()
+              ) : (
                 <div>
-                  <button
-                    type="button"
-                    className="border-0 bg-transparent"
-                    onClick={() => this.onClickInbox()}
-                  >
-                    <i className="fa fa-inbox" />
-                    <span className="ms-2 me-1 fw-bold">Inbox</span>
-                  </button>
-                  {
-                    numberOfAttachments > 0
-                    && (
-                      <Badge bg="warning" className="mx-1">{numberOfAttachments}</Badge>
-                    )
-                  }
-                </div>
-                <ButtonToolbar>
-                  {this.renderSortButton()}
-                  {collectorAddress && this.collectorAddressInfoButton()}
-                  {this.renderSizingIcon()}
                   <Button
                     variant="light"
-                    size="xsm"
-                    onClick={() => this.refreshInbox()}
+                    onClick={() => onClickInbox()}
                   >
-                    <i className="fa fa-refresh" />
+                    <i className="fa fa-inbox" />
+                    <span className="ms-2">Fetch Inbox</span>
                   </Button>
-                  <CloseButton
-                    className="ms-2"
-                    onClick={InboxActions.toggleInboxModal}
-                  />
-                </ButtonToolbar>
-              </div>
-            </Card.Header>
-            <Card.Body>
-              <div>
-                {inboxVisible ? (
-                  this.inboxSubtrees()
-                ) : (
-                  <div>
-                    <Button
-                      variant="light"
-                      onClick={() => this.onClickInbox()}
-                    >
-                      <i className="fa fa-inbox" />
-                      <span className="ms-2">Fetch Inbox</span>
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </Card.Body>
-          </Card>
-        </div>
-      </Draggable>
-    );
-  }
-}
+                </div>
+              )}
+            </div>
+          </Card.Body>
+        </Card>
+      </div>
+    </Draggable>
+  );
+};
+
+export default InboxModal;
