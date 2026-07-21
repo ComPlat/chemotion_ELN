@@ -46,10 +46,9 @@ module Usecases
       def remove_elements_from_collection(ui_state)
         @locked_sample_ids = []
         ui_state.each do |class_string, ui_selections|
-          element_class = element_scope_for(class_string)
-          next unless element_class
+          element_ids = resolve_element_ids(class_string, ui_selections)
+          next if element_ids.blank?
 
-          element_ids = resolve_element_ids(element_class, ui_selections)
           join_table = join_table_for(class_string)
 
           kept = join_table.remove_in_collection(element_ids, collection.id)
@@ -58,12 +57,24 @@ module Usecases
         end
       end
 
-      # Resolves the selected element ids. Samples are scoped to the collection so a checkedAll
-      # selection does not resolve to every sample in the database (by_ui_state has no collection
-      # filter of its own).
-      def resolve_element_ids(element_class, ui_selections)
-        scope = element_class == Sample ? collection.samples : element_class
+      # Resolves selected element ids within the current collection. Must scope before
+      # +by_ui_state+: with +checkedAll+, that scope expands to +where.not(id: ...)+ on its
+      # receiver, so an unscoped class would load every record of that type (full-table scan /
+      # huge id lists). Same approach as {WithdrawElements}.
+      def resolve_element_ids(class_string, ui_selections)
+        scope = collection_scoped_elements(class_string)
+        return [] unless scope
+
         scope.by_ui_state(ui_selections).ids
+      end
+
+      # Collection association for a UI element-type key (built-in or Labimotion generic).
+      def collection_scoped_elements(class_string)
+        if (klass = API::ELEMENT_CLASS[class_string])
+          collection.send(klass.model_name.route_key)
+        elsif (element_klass = Labimotion::ElementKlass.find_by(name: class_string))
+          collection.elements.merge(element_klass.elements)
+        end
       end
     end
   end

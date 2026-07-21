@@ -42,6 +42,7 @@ module Usecases
         # already destroy group-collection elements, so withdrawal keeps that reach). Restricting
         # group-owned withdrawal to group-admins is a deliberate future refinement, not done here.
         @owned_collection_ids = Collection.where(user_id: [current_user.id, *current_user.group_ids]).pluck(:id)
+        @locked_sample_ids = []
         removed = Hash.new { |hash, key| hash[key] = [] }
 
         # As a side effect, #withdraw records into @locked_sample_ids any samples kept back by the

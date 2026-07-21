@@ -250,7 +250,7 @@ describe Chemotion::CollectionElementsAPI do
       delete "/api/v1/collection_elements/#{source_collection.id}", params: remove_input
 
       expect(response).to have_http_status(:ok)
-      expect(parsed_json_response['locked_sample_ids']).to eq [sample1.id]
+      expect(parsed_json_response['locked_sample_ids']).to contain_exactly(sample1.id)
       expect(sample1.reload.collections).to include(source_collection)
     end
 
@@ -273,7 +273,7 @@ describe Chemotion::CollectionElementsAPI do
         delete "/api/v1/collection_elements/#{source_collection.id}", params: remove_input, as: :json
 
         expect(response).to have_http_status(:ok)
-        expect(parsed_json_response['locked_sample_ids']).to eq [sample1.id]
+        expect(parsed_json_response['locked_sample_ids']).to contain_exactly(sample1.id)
         expect(source_collection.reload.samples).to contain_exactly(sample1)
       end
     end
@@ -304,7 +304,7 @@ describe Chemotion::CollectionElementsAPI do
       delete "/api/v1/collection_elements/#{source_collection.id}", params: remove_input
 
       expect(response).to have_http_status(:ok)
-      expect(parsed_json_response['locked_sample_ids']).to eq [sample1.id]
+      expect(parsed_json_response['locked_sample_ids']).to contain_exactly(sample1.id)
       expect(sample1.reload.collections).to include(source_collection)
     end
   end

@@ -8,14 +8,10 @@ import { PermissionConst } from 'src/utilities/PermissionConst';
 const sampleAssociationLockNotification = (lockedCount = 1) => {
   const plural = lockedCount > 1;
   return {
-    title: plural
-      ? 'Samples linked to a reaction or wellplate'
-      : 'Sample linked to a reaction or wellplate',
+    title: plural ? 'Samples not removed' : 'Sample not removed',
     message: plural
-      ? 'These samples belong to a reaction or wellplate in this collection, so they cannot be '
-        + 'removed on their own. Remove the reaction or wellplate to remove its associated samples.'
-      : 'This sample belongs to a reaction or wellplate in this collection, so it cannot be '
-        + 'removed on its own. Remove the reaction or wellplate to remove its associated samples.',
+      ? 'They belong to a reaction or wellplate. Remove the reaction or wellplate to remove its associated samples.'
+      : 'It belongs to a reaction or wellplate. Remove the reaction or wellplate to remove its associated samples.',
     level: 'warning',
     autoDismiss: 10,
     position: 'tr',

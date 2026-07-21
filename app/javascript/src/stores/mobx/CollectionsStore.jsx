@@ -320,12 +320,13 @@ export const CollectionsStore = types
           // to the target but stayed in the source: warn that the move was only partial.
           if (success && lockedSampleIds.length > 0) {
             getRoot(self).notificationsStore.add({
-              title: 'Move to Collection',
-              message: 'Samples that belong to a reaction or wellplate were copied to the target but '
-                + 'not removed from the current collection. Move the reaction or wellplate to move '
+              title: 'Move incomplete',
+              message: 'Some samples stayed here - they belong to a reaction or wellplate. '
+                + 'Move the reaction or wellplate to move '
                 + 'its associated samples.',
               level: 'warning',
               autoDismiss: 10,
+              position: 'tr',
             });
           }
 

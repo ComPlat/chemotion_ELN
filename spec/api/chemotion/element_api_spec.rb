@@ -52,7 +52,7 @@ describe Chemotion::ElementAPI do
           .not_to change(Sample, :count)
 
         expect(response).to have_http_status(:ok)
-        expect(parsed_json_response['locked_sample_ids']).to eq [sample.id]
+        expect(parsed_json_response['locked_sample_ids']).to contain_exactly(sample.id)
       end
     end
 
