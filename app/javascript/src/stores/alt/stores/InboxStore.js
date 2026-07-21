@@ -72,7 +72,6 @@ class InboxStore {
       setInboxVisible: InboxActions.setInboxVisible,
       setActiveDeviceBoxId: InboxActions.setActiveDeviceBoxId,
       handleFetchInboxUnsorted: InboxActions.fetchInboxUnsorted,
-      handleChangeInboxFilter: InboxActions.changeInboxFilter,
       handleChangeInboxSize: InboxActions.changeInboxSize,
     });
   }
@@ -114,19 +113,6 @@ class InboxStore {
       },
       currentUnsortedBoxPage: 1,
     }));
-  }
-
-  handleChangeInboxFilter(filter) {
-    const { profile } = rootStore.userStore;
-    if (!profile.filters) {
-      profile.data.filters = {};
-    }
-    profile.data.filters[filter.name] = {
-      sort: filter.sort,
-    };
-
-    const { currentPage, itemsPerPage, activeDeviceBoxId } = this.state;
-    InboxActions.fetchInbox({ currentPage, itemsPerPage, activeDeviceBoxId });
   }
 
   handleChangeInboxSize(inboxSize) {
