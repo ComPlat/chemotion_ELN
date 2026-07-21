@@ -18,11 +18,11 @@ import { formatDisplayValue, correctPrefix, validDigit } from 'src/utilities/Mat
 import {
   getMetricMol, metricPrefixesMol, metricPrefixesMolConc, getMetricMolConc
 } from 'src/utilities/MetricsUtils';
-import Reaction from 'src/models/Reaction';
+import Reaction, { convertDuration, convertTemperature } from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import { permitOn } from 'src/components/common/uis';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
-import { calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
+import { calculateFeedstockMoles, convertTurnoverFrequency } from 'src/utilities/UnitsConversion';
 import cs from 'classnames';
 import DragHandle from 'src/components/common/DragHandle';
 import DeleteButton from 'src/components/common/DeleteButton';
@@ -95,6 +95,13 @@ class Material extends Component {
       mixtureComponentsLoading: false,
       fieldToShow: 'molar mass',
     };
+
+    this.variationMatGroup = (() => {
+      if (this.props.materialGroup === 'starting_materials') {
+        return 'startingMaterials';
+      }
+      return this.props.materialGroup;
+    })(this.props.materialGroup);
 
     // Compute isSbmm once and store as instance property to avoid repeated calls
     this.isSbmm = isSbmmSample(props.material);
@@ -402,25 +409,35 @@ class Material extends Component {
     const { materialGroup, reaction, lockEquivColumn } = this.props;
     if (materialGroup === 'products') {
       if (reaction.isInteractionReaction()) {
-        return null; // equivalent and yield not relevant for interaction reactions, and conversion rate is not applicable for products, so we return null to render an empty cell.
+        return null; // equivalent and yield not relevant for interaction reactions, and conversion rate is not
+                     // applicable for products, so we return null to render an empty cell.
       }
       return this.yieldOrConversionRate(material);
     }
     const isSbmm = isSbmmSample(material);
+    const {
+      min: rangeStart,
+      max: rangeEnd,
+      isRangeField
+    } = this.findMinMayUnit(reaction, material, '', material.equivalent, 'equivalent');
+
     return (reaction.weight_percentage && !isSbmm ? this.customFieldValueSelector()
-      : (
-        <NumeralInputWithUnitsCompo
-          className="reaction-material__equivalent-data"
-          size="sm"
-          precision={4}
-          value={material.equivalent}
-          disabled={
-            !permitOn(reaction) || ((((material.reference || false)
-            && material.equivalent) !== false) || lockEquivColumn)
-          }
-          onChange={(e) => this.handleEquivalentChange(e)}
-        />
-      )
+        : (
+          <NumeralInputWithUnitsCompo
+            className="reaction-material__equivalent-data"
+            isRangeField={isRangeField}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            size="sm"
+            precision={4}
+            value={material.equivalent}
+            disabled={
+              !permitOn(reaction) || ((((material.reference || false)
+                && material.equivalent) !== false) || lockEquivColumn)
+            }
+            onChange={(e) => this.handleEquivalentChange(e)}
+          />
+        )
     );
   }
 
@@ -461,7 +478,9 @@ class Material extends Component {
         fieldOptions={['molar mass', 'weight percentage']}
         onFirstRenderField={fieldToShow}
         value={valueToShow}
-        onChange={(e) => { this.handleOnValueChange(e, equivalentField); }}
+        onChange={(e) => {
+          this.handleOnValueChange(e, equivalentField);
+        }}
         onFieldChange={(field) => this.handleEquivalentWeightPercentageChange(material, field)}
         disableSpecificField={disableWeightPercentageField}
         disabled={
@@ -472,15 +491,57 @@ class Material extends Component {
     );
   }
 
+  findMinMayUnit = (reaction, material, defaultUnit, defaultValue, variationKey) => {
+    if (reaction.variations.length > 0) {
+      const defaultMatValue = { value: defaultValue, unit: defaultUnit };
+      const matList = reaction.variations.map((v) => (
+        v[this.variationMatGroup][material.id]?.[variationKey] ?? defaultMatValue));
+      const values = matList.map((vm) => vm.value);
+      return { min: Math.min(...values), max: Math.max(...values), unit: matList[0].unit, isRangeField: true };
+    }
+    return { min: null, max: null, unit: defaultUnit, isRangeField: false };
+  };
+
+  variationGasUnitToReactionGasUnit(unit) {
+    switch (unit) {
+      case 'Second(s)':
+        return 's';
+      default:
+        return unit;
+    }
+  }
+
   gaseousInputFields(field, material) {
     const gasPhaseData = material.gas_phase_data || {};
-    const { value, unit } = this.getFieldData(field, gasPhaseData);
+    const { value, unit, variationKey } = this.getFieldData(field, gasPhaseData);
     const readOnly = this.isFieldReadOnly(field);
 
     const updateValue = this.getFormattedValue(value);
     const message = 'Unit switch only active with valid values';
     const noSwitchUnits = ['ppm', 'TON'];
-
+    const {
+      min: rangeStart,
+      max: rangeEnd,
+      isRangeField,
+      unit: rangeUnit
+    } = this.findMinMayUnit(this.props.reaction, material, unit, value, variationKey);
+    let convertedRangeStart, convertedRangeEnd;
+    if (isRangeField) {
+      const convertedRangeUnit = this.variationGasUnitToReactionGasUnit(rangeUnit);
+      const converter = (origenValue, origenUnit, targetUnit) => {
+        return origenValue;
+        if (field === 'temperature') {
+          return convertTemperature(value, origenUnit, targetUnit);
+        } else if (field === 'time') {
+          return convertDuration(value, origenUnit, targetUnit);
+        } else if (field === 'turnover_frequency') {
+          return convertTurnoverFrequency(value, origenUnit, targetUnit);
+        }
+        return origenValue;
+      };
+      convertedRangeStart = converter(rangeStart, convertedRangeUnit, unit);
+      convertedRangeEnd = converter(rangeEnd, convertedRangeUnit, unit);
+    }
     const inputComponent = (
       <NumeralInputWithUnitsCompo
         size="sm"
@@ -488,9 +549,12 @@ class Material extends Component {
         active
         value={updateValue}
         disabled={readOnly}
-        onMetricsChange={(e) => this.gasFieldsUnitsChanged(e, field)}
+        onMetricsChange={(e) => isRangeField && this.gasFieldsUnitsChanged(e, field)}
         onChange={(e) => this.handleGasFieldsChange(field, e, value)}
         unit={unit}
+        isRangeField={isRangeField}
+        rangeStart={convertedRangeStart}
+        rangeEnd={convertedRangeEnd}
       />
     );
 
@@ -515,18 +579,35 @@ class Material extends Component {
           value: gasPhaseData.turnover_number,
           unit: 'TON',
           isTimeField: false,
+          variationKey: 'turnoverNumber'
         };
       case 'part_per_million':
         return {
           value: gasPhaseData.part_per_million,
           unit: 'ppm',
           isTimeField: false,
+          variationKey: 'concentration'
         };
       case 'time':
         return {
           value: gasPhaseData.time?.value,
           unit: gasPhaseData.time?.unit,
           isTimeField: true,
+          variationKey: 'duration'
+        };
+      case 'turnover_frequency':
+        return {
+          value: gasPhaseData[field]?.value,
+          unit: gasPhaseData[field]?.unit,
+          isTimeField: false,
+          variationKey: 'turnoverFrequency'
+        };
+      case 'temperature':
+        return {
+          value: gasPhaseData[field]?.value,
+          unit: gasPhaseData[field]?.unit,
+          isTimeField: false,
+          variationKey: 'temperature'
         };
       default:
         return {
@@ -555,7 +636,7 @@ class Material extends Component {
   gaseousProductRow(material) {
     return (
       <div className="reaction-material__gaseous-fields-data">
-        <div className="reaction-material__ref-data" />
+        <div className="reaction-material__ref-data"/>
         {this.gaseousInputFields('time', material)}
         {this.gaseousInputFields('temperature', material)}
         {this.gaseousInputFields('part_per_million', material)}
@@ -566,7 +647,7 @@ class Material extends Component {
   }
 
   handleExternalLabelChange(event) {
-    const value = event.target.value;
+    const { value } = event.target;
     if (this.props.onChange) {
       const e = {
         type: 'externalLabelChanged',
@@ -589,7 +670,7 @@ class Material extends Component {
 
   handleReferenceChange(e, type = null) {
     const { materialGroup, onChange } = this.props;
-    const value = e.target.value;
+    const { value } = e.target;
     if (onChange) {
       const event = {
         type: type ? 'weightPercentageReferenceChanged' : 'referenceChanged',
@@ -685,13 +766,23 @@ class Material extends Component {
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
       && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
 
+    const {
+      min: rangeStart,
+      max: rangeEnd,
+      unit: rangeUnit,
+      isRangeField
+    } = this.findMinMayUnit(reaction, material, 'l', material.amount_l, 'volume');
+
     return (
       <OverlayTrigger overlay={tooltip}>
         <div>
           <NumeralInputWithUnitsCompo
             className={className}
             value={material.amount_l}
-            unit="l"
+            isRangeField={isRangeField}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            unit={rangeUnit}
             metricPrefix={metric}
             metricPrefixes={metricPrefixes}
             precision={3}
@@ -725,11 +816,21 @@ class Material extends Component {
       || isAmountDisabledByWeightPercentage
       || (!material.reference && lockEquivColumn && materialGroup !== 'products');
 
+    const {
+      min: rangeStart,
+      max: rangeEnd,
+      unit: rangeUnit,
+      isRangeField
+    } = this.findMinMayUnit(reaction, material, 'mol', material.amount_mol, 'amount');
+
     return (
       <NumeralInputWithUnitsCompo
         value={material.amount_mol}
         className="reaction-material__molarity-data"
-        unit="mol"
+        isRangeField={isRangeField}
+        rangeStart={rangeStart}
+        rangeEnd={rangeEnd}
+        unit={rangeUnit}
         metricPrefix={metricMol}
         metricPrefixes={metricPrefixesMol}
         precision={4}
@@ -780,8 +881,11 @@ class Material extends Component {
       const nextOpen = !prevState.showComponents;
       try {
         const key = this.accordionStorageKey(props.material?.id);
-        if (key) { window.localStorage.setItem(key, nextOpen ? 'true' : 'false'); }
-      } catch (e) { /* ignore storage errors */ }
+        if (key) {
+          window.localStorage.setItem(key, nextOpen ? 'true' : 'false');
+        }
+      } catch (e) { /* ignore storage errors */
+      }
       return { showComponents: nextOpen };
     });
   }
@@ -843,14 +947,18 @@ class Material extends Component {
 
   // eslint-disable-next-line class-methods-use-this
   accordionStorageKey(materialId) {
-    if (!materialId) { return null; }
+    if (!materialId) {
+      return null;
+    }
     return `mixture_components_accordion_open:${materialId}`;
   }
 
   restoreAccordionState(material) {
     try {
       const key = this.accordionStorageKey(material?.id);
-      if (!key) { return; }
+      if (!key) {
+        return;
+      }
       const saved = window.localStorage.getItem(key);
       if (saved === 'true' || saved === 'false') {
         const showComponents = saved === 'true';
@@ -858,7 +966,8 @@ class Material extends Component {
           this.setState({ showComponents });
         }
       }
-    } catch (e) { /* ignore storage errors */ }
+    } catch (e) { /* ignore storage errors */
+    }
   }
 
   handleAmountTypeChange(e) {
@@ -1041,8 +1150,12 @@ class Material extends Component {
       molName = m.name || m.short_label;
     } else {
       molName = m.molecule_name_hash.label;
-      if (!molName) { molName = m.molecule.iupac_name; }
-      if (!molName) { molName = m.molecule.sum_formular; }
+      if (!molName) {
+        molName = m.molecule.iupac_name;
+      }
+      if (!molName) {
+        molName = m.molecule.sum_formular;
+      }
     }
 
     const gUnit = correctPrefix(m.amount_g, 3);
@@ -1138,6 +1251,13 @@ class Material extends Component {
       </Tooltip>
     );
 
+    const {
+      min: rangeStart,
+      max: rangeEnd,
+      unit: rangeUnit,
+      isRangeField
+    } = this.findMinMayUnit(reaction, material, 'g', material.amount_g, 'mass');
+
     const isAmountDisabledByWeightPercentage = reaction.weight_percentage
       && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
     return (
@@ -1148,7 +1268,10 @@ class Material extends Component {
           <NumeralInputWithUnitsCompo
             className="reaction-material__mass-data"
             value={material.amount_g}
-            unit="g"
+            isRangeField={isRangeField}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            unit={rangeUnit}
             metricPrefix={metric}
             metricPrefixes={metricPrefixes}
             precision={4}
@@ -1176,7 +1299,7 @@ class Material extends Component {
     const enabled = permitOn(reaction);
 
     return (
-      <DragHandle ref={enabled ? dragRef : null} enabled={enabled} />
+      <DragHandle ref={enabled ? dragRef : null} enabled={enabled}/>
     );
   }
 
@@ -1236,7 +1359,7 @@ class Material extends Component {
             {this.materialRef(material)}
             {this.switchTargetReal()}
             {isSbmmSample(material) ? (
-              <div className="reaction-material__coefficient-data" />
+              <div className="reaction-material__coefficient-data"/>
             ) : (
               <OverlayTrigger
                 overlay={<Tooltip id="reaction-coefficient-info"> Reaction Coefficient </Tooltip>}
@@ -1292,7 +1415,7 @@ class Material extends Component {
           {materialGroup === 'products' && (
             <>
               {material.gas_type === 'gas' && reaction.gaseous && this.gaseousProductRow(material)}
-              {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material} />}
+              {material.adjusted_loading && material.error_mass && <MaterialCalculations material={material}/>}
             </>
           )}
         </div>
@@ -1428,7 +1551,7 @@ class Material extends Component {
               onClick={(e) => this.handleExternalLabelCompleted(e)}
               size="sm"
             >
-              <i className="fa fa-refresh" />
+              <i className="fa fa-refresh"/>
             </Button>
           </OverlayTrigger>
         </InputGroup>
@@ -1567,14 +1690,14 @@ class Material extends Component {
 
       if (materialDisplayName === null || materialDisplayName === '') {
         materialDisplayName = (
-          <SampleName sample={material} />
+          <SampleName sample={material}/>
         );
       }
       linkDisplayName = !!idCheck.test(material.id);
     } else {
       moleculeIupacName = material.molecule_iupac_name;
       materialDisplayName = material.title() === ''
-        ? <SampleName sample={material} />
+        ? <SampleName sample={material}/>
         : material.title();
       materialName = (
         <a
@@ -1662,7 +1785,7 @@ class Material extends Component {
             />
           </OverlayTrigger>
         </div>
-      ) : <div aria-label="Empty cell" />
+      ) : <div aria-label="Empty cell"/>
     );
   }
 
@@ -1735,7 +1858,7 @@ class Material extends Component {
         overlay={(
           <Tooltip id="nested-reference-tooltip">
             Outer Circle: Select Weight % Reference
-            <br />
+            <br/>
             Inner Circle: Select Molar Reference
           </Tooltip>
         )}
