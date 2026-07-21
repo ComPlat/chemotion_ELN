@@ -2,7 +2,6 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Vessel from 'src/models/vessel/Vessel';
 import { rootStore } from 'src/stores/mobx/RootStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
@@ -119,7 +118,7 @@ export default class VesselsFetcher {
     })
       .then((json) => {
         rootStore.notificationsStore.add(successfullyCreatedParameter);
-        UserStore.getState().currentUser.vessels_count += 1;
+        rootStore.userStore.currentUser.vessels_count += 1;
         return Vessel.createFromRestResponse(vessel.collectionId, json);
       });
   }
