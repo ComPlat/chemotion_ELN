@@ -18,11 +18,13 @@ import { formatDisplayValue, correctPrefix, validDigit } from 'src/utilities/Mat
 import {
   getMetricMol, metricPrefixesMol, metricPrefixesMolConc, getMetricMolConc
 } from 'src/utilities/MetricsUtils';
-import Reaction, { convertDuration, convertTemperature } from 'src/models/Reaction';
+import Reaction, { convertDuration, convertTemperature, convertTonPerTime } from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import { permitOn } from 'src/components/common/uis';
 import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
-import { calculateFeedstockMoles, convertTurnoverFrequency } from 'src/utilities/UnitsConversion';
+import {
+  calculateFeedstockMoles
+} from 'src/utilities/UnitsConversion';
 import cs from 'classnames';
 import DragHandle from 'src/components/common/DragHandle';
 import DeleteButton from 'src/components/common/DeleteButton';
@@ -502,15 +504,6 @@ class Material extends Component {
     return { min: null, max: null, unit: defaultUnit, isRangeField: false };
   };
 
-  variationGasUnitToReactionGasUnit(unit) {
-    switch (unit) {
-      case 'Second(s)':
-        return 's';
-      default:
-        return unit;
-    }
-  }
-
   gaseousInputFields(field, material) {
     const gasPhaseData = material.gas_phase_data || {};
     const { value, unit, variationKey } = this.getFieldData(field, gasPhaseData);
@@ -527,20 +520,18 @@ class Material extends Component {
     } = this.findMinMayUnit(this.props.reaction, material, unit, value, variationKey);
     let convertedRangeStart, convertedRangeEnd;
     if (isRangeField) {
-      const convertedRangeUnit = this.variationGasUnitToReactionGasUnit(rangeUnit);
       const converter = (origenValue, origenUnit, targetUnit) => {
-        return origenValue;
         if (field === 'temperature') {
-          return convertTemperature(value, origenUnit, targetUnit);
+          return convertTemperature(origenValue, origenUnit, targetUnit);
         } else if (field === 'time') {
-          return convertDuration(value, origenUnit, targetUnit);
+          return convertDuration(origenValue, origenUnit, targetUnit);
         } else if (field === 'turnover_frequency') {
-          return convertTurnoverFrequency(value, origenUnit, targetUnit);
+          return convertTonPerTime(origenValue, 'TON/h', targetUnit);
         }
         return origenValue;
       };
-      convertedRangeStart = converter(rangeStart, convertedRangeUnit, unit);
-      convertedRangeEnd = converter(rangeEnd, convertedRangeUnit, unit);
+      convertedRangeStart = converter(rangeStart, rangeUnit, unit);
+      convertedRangeEnd = converter(rangeEnd, rangeUnit, unit);
     }
     const inputComponent = (
       <NumeralInputWithUnitsCompo
@@ -549,7 +540,7 @@ class Material extends Component {
         active
         value={updateValue}
         disabled={readOnly}
-        onMetricsChange={(e) => isRangeField && this.gasFieldsUnitsChanged(e, field)}
+        onMetricsChange={(e) => this.gasFieldsUnitsChanged(e, field)}
         onChange={(e) => this.handleGasFieldsChange(field, e, value)}
         unit={unit}
         isRangeField={isRangeField}
