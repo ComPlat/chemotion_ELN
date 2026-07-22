@@ -201,7 +201,7 @@ class ResearchPlanDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection,
     } = this.state;
-    const { researchPlan, onEdit } = this.props;
+    const { researchPlan, onEdit, readOnly } = this.props;
     const { currentUser } = UserStore.getState();
 
     let combinedAttachments = filteredAttachments;
@@ -213,26 +213,30 @@ class ResearchPlanDetailsAttachments extends Component {
     const { onUndoDelete, attachments } = this.props;
     const { thirdPartyApps } = this;
 
+    const showToolbar = !readOnly || attachments.length > 0;
+
     return (
-      <div className="p-3 border-rounded">
+      <div className={showToolbar ? 'p-3 border-rounded' : 'm-4'}>
         {this.renderImageEditModal()}
-        <div className="d-flex justify-content-between align-items-center gap-4 mb-4">
-          <div className="flex-grow-1">
-            {customDropzone(this.props.onDrop)}
-          </div>
-          {attachments.length > 0
-            && sortingAndFilteringUI(
-              sortDirection,
-              this.handleSortChange,
-              this.toggleSortDirection,
-              this.handleFilterChange,
-              true
+        {showToolbar && (
+          <div className="d-flex justify-content-between align-items-center gap-4 mb-4">
+            {!readOnly && (
+              <div className="flex-grow-1">
+                {customDropzone(this.props.onDrop)}
+              </div>
             )}
-        </div>
-        {combinedAttachments.length === 0 ? (
-          <div className="text-center text-gray-500 fs-5">
-            There are currently no attachments.
+            {attachments.length > 0
+              && sortingAndFilteringUI(
+                sortDirection,
+                this.handleSortChange,
+                this.toggleSortDirection,
+                this.handleFilterChange,
+                true
+              )}
           </div>
+        )}
+        {combinedAttachments.length === 0 ? (
+          <span>There are currently no attachments.</span>
         ) : (
           <>
             {combinedAttachments.map((attachment) => (
@@ -262,43 +266,51 @@ class ResearchPlanDetailsAttachments extends Component {
                 </div>
                 <div className="attachment-row-actions d-flex justify-content-end align-items-center gap-1">
                   {attachment.is_deleted ? (
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      className="attachment-button-size"
-                      onClick={() => onUndoDelete(attachment)}
-                    >
-                      <i className="fa fa-undo" aria-hidden="true" />
-                    </Button>
+                    !readOnly && (
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        className="attachment-button-size"
+                        onClick={() => onUndoDelete(attachment)}
+                      >
+                        <i className="fa fa-undo" aria-hidden="true" />
+                      </Button>
+                    )
                   ) : (
                     <>
                       <ButtonToolbar>
                         {downloadButton(attachment)}
                         <ThirdPartyAppButton attachment={attachment} options={thirdPartyApps} />
-                        <EditButton attachment={attachment} onChange={onEdit} />
-                        {annotateButton(attachment, () => {
-                          this.setState({
-                            imageEditModalShown: true,
-                            chosenAttachment: attachment,
-                          });
-                        })}
-                        {importButton(
-                          attachment,
-                          this.state.showImportConfirm,
-                          this.props.researchPlan.changed,
-                          this.showImportConfirm,
-                          this.hideImportConfirm,
-                          this.confirmAttachmentImport
+                        {!readOnly && (
+                          <>
+                            <EditButton attachment={attachment} onChange={onEdit} />
+                            {annotateButton(attachment, () => {
+                              this.setState({
+                                imageEditModalShown: true,
+                                chosenAttachment: attachment,
+                              });
+                            })}
+                            {importButton(
+                              attachment,
+                              this.state.showImportConfirm,
+                              this.props.researchPlan.changed,
+                              this.showImportConfirm,
+                              this.hideImportConfirm,
+                              this.confirmAttachmentImport
+                            )}
+                          </>
                         )}
                       </ButtonToolbar>
-                      <div className="ms-2">
-                        {removeButton(
-                          attachment,
-                          this.props.onDelete,
-                          this.props.readOnly || this.isAttachmentInBody(attachment),
-                          this.getDeleteButtonTooltip(attachment)
-                        )}
-                      </div>
+                      {!readOnly && (
+                        <div className="ms-2">
+                          {removeButton(
+                            attachment,
+                            this.props.onDelete,
+                            this.isAttachmentInBody(attachment),
+                            this.getDeleteButtonTooltip(attachment)
+                          )}
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -312,11 +324,13 @@ class ResearchPlanDetailsAttachments extends Component {
                 )}
               </div>
             ))}
-            <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
-              Uploading attachments will fail; User quota
-              {currentUser !== null ? ` (${currentUser.allocated_space / 1024 / 1024} MB) ` : ' '}
-              will be exceeded.
-            </Alert>
+            {!readOnly && (
+              <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
+                Uploading attachments will fail; User quota
+                {currentUser !== null ? ` (${currentUser.allocated_space / 1024 / 1024} MB) ` : ' '}
+                will be exceeded.
+              </Alert>
+            )}
           </>
         )}
       </div>

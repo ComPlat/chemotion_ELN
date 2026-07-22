@@ -30,6 +30,46 @@ describe Chemotion::ResearchPlanAPI do
         it 'returns serialized research_plan' do
           expect(JSON.parse(response.body)['research_plan']['name']).to eq research_plan.name
         end
+
+        it 'returns can_update as true for the owner' do
+          expect(JSON.parse(response.body)['research_plan']['can_update']).to be true
+        end
+      end
+
+      context 'when the research plan is in a read-only shared collection' do
+        let(:other_user) { create(:person) }
+        let(:collection) do
+          create(:collection, user: other_user).tap do |c|
+            create(:collection_share, collection: c, shared_with: user,
+                                      permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+          end
+        end
+        let(:research_plan) { create(:research_plan, collections: [collection]) }
+
+        before { get "/api/v1/research_plans/#{research_plan.id}" }
+
+        it 'returns can_update as false' do
+          expect(response).to have_http_status :ok
+          expect(JSON.parse(response.body)['research_plan']['can_update']).to be false
+        end
+      end
+
+      context 'when the research plan is in a writable shared collection' do
+        let(:other_user) { create(:person) }
+        let(:collection) do
+          create(:collection, user: other_user).tap do |c|
+            create(:collection_share, collection: c, shared_with: user,
+                                      permission_level: CollectionShare::PERMISSION_LEVELS[:edit_elements])
+          end
+        end
+        let(:research_plan) { create(:research_plan, collections: [collection]) }
+
+        before { get "/api/v1/research_plans/#{research_plan.id}" }
+
+        it 'returns can_update as true' do
+          expect(response).to have_http_status :ok
+          expect(JSON.parse(response.body)['research_plan']['can_update']).to be true
+        end
       end
     end
 

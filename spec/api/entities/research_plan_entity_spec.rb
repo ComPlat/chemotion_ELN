@@ -119,6 +119,20 @@ describe Entities::ResearchPlanEntity do
       end
     end
 
+    context 'when represented with a read-only policy' do
+      let(:detail_level) { 10 }
+      let(:policy) do
+        Struct.new(:update?, :copy?).new(false, false)
+      end
+
+      it 'returns can_update as false' do
+        expect(grape_entity_as_hash).to include(
+          can_copy: false,
+          can_update: false,
+        )
+      end
+    end
+
     context 'when entity is displayed in list' do
       let(:displayed_in_list) { true }
       let(:detail_level) { 10 }
