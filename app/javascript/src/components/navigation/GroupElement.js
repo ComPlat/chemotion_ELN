@@ -31,7 +31,7 @@ export default class GroupElement extends React.Component {
     this.setGroupAdmin = this.setGroupAdmin.bind(this);
   }
 
-  setGroupAdmin(groupRec, userRec, setAdmin = true) {
+  setGroupAdmin(event, groupRec, userRec, setAdmin = true) {
     // if removing group admin and there is only one admin -> show warning
     if (!setAdmin && groupRec.admins.length === 1) {
       this.setState({ showAdminAlert: true, adminPopoverTarget: event.target });
@@ -102,22 +102,28 @@ export default class GroupElement extends React.Component {
 
   // confirm action after pressing yes
   // if type is group, call deleteGroup api, if type is user, call deleteUser api
-  confirmDelete(type, groupRec, userRec) {
+  confirmDelete(event, type, groupRec, userRec) {
     switch (type) {
       case 'group':
         this.props.onDeleteGroup(groupRec.id);
         break;
-      case 'user':
-        this.props.onDeleteUser(groupRec, userRec);
-
-        // check if the user being deleted is an admin.
+      case 'user': {
         const userIsAdmin = groupRec.admins.some((admin) => admin.id === userRec.id);
 
-        // if admin, remove admin status
-        if (userIsAdmin) {
-          this.setGroupAdmin(groupRec, userRec, false);
+        // Block before firing the request: removing the sole admin would leave the
+        // group without one. GroupAPI refuses this with a 422 too, but checking here
+        // avoids firing a doomed request and shows the warning immediately instead of
+        // depending on the (unhandled) error response.
+        if (userIsAdmin && groupRec.admins.length === 1) {
+          this.setState({ showAdminAlert: true, adminPopoverTarget: event.target });
+          return;
         }
+
+        // GroupAPI's member-removal endpoint already revokes the admin relationship as
+        // part of removing the member, so no separate demote call is needed here.
+        this.props.onDeleteUser(groupRec, userRec);
         break;
+      }
       default:
         break;
     }
@@ -169,7 +175,7 @@ export default class GroupElement extends React.Component {
             <Button
               size="sm"
               variant="danger"
-              onClick={() => this.confirmDelete(type, groupRec, userRec)}
+              onClick={(event) => this.confirmDelete(event, type, groupRec, userRec)}
             >
               Yes
             </Button>
@@ -197,7 +203,6 @@ export default class GroupElement extends React.Component {
           size="sm"
           type="button"
           variant="danger"
-          onClick={() => this.confirmDelete(groupRec, userRec)}
         >
           <i className="fa fa-trash-o" />
         </Button>
@@ -293,7 +298,7 @@ export default class GroupElement extends React.Component {
               size="sm"
               type="button"
               variant={adminButtonStyle}
-              onClick={() => this.setGroupAdmin(groupRec, userRec, !isAdmin)}
+              onClick={(event) => this.setGroupAdmin(event, groupRec, userRec, !isAdmin)}
             >
               <i className="fa fa-key" />
             </Button>
