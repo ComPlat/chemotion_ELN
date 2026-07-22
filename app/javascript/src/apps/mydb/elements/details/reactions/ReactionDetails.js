@@ -15,16 +15,16 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import ElementDetailCard from 'src/apps/mydb/elements/details/ElementDetailCard';
-import ReactionVariations from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
-import {
+import ReactionVariations, {
   REACTION_VARIATIONS_TAB_KEY
-} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariations';
 import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/DetailsTabLiteratures';
 import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 // eslint-disable-next-line max-len
-import ReactionDetailsProperties from 'src/apps/mydb/elements/details/reactions/propertiesTab/ReactionDetailsProperties';
+import ReactionDetailsProperties
+  from 'src/apps/mydb/elements/details/reactions/propertiesTab/ReactionDetailsProperties';
 import GreenChemistry from 'src/apps/mydb/elements/details/reactions/greenChemistryTab/GreenChemistry';
 import Utils from 'src/utilities/Functions';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -62,7 +62,7 @@ const formatReactionTypeOption = (option, { context }) => (
   context === 'value'
     ? (
       <span>
-        <i className="fa fa-flask me-1" />
+        <i className="fa fa-flask me-1"/>
         {`Reaction type: ${option.label}`}
       </span>
     )
@@ -78,11 +78,61 @@ const productLink = (product, active) => (
       onClick={() => aviatorNavigation('sample', product.id, true, true)}
       title="Open sample window"
     >
-      <i className="icon-sample mx-1" />
+      <i className="icon-sample mx-1"/>
       {product.title()}
     </span>
   </span>
 );
+
+const handleInputChange = (type, event, reaction, cbReactionChange) => {
+  let value;
+  if (
+    type === 'temperatureUnit'
+    || type === 'temperatureData'
+    || type === 'description'
+    || type === 'role'
+    || type === 'observation'
+    || type === 'durationUnit'
+    || type === 'duration'
+    || type === 'rxno'
+    || type === 'vesselSizeAmount'
+    || type === 'vesselSizeUnit'
+    || type === 'gaseous'
+    || type === 'conditions'
+    || type === 'phOperator'
+    || type === 'phValue'
+    || type === 'volume'
+    || type === 'useReactionVolumeForConcentration'
+    || type === 'lockReactionVolume'
+    || type === 'weight_percentage'
+    || type === 'reactionType'
+    || type === 'default'
+  ) {
+    value = event;
+  } else if (type === 'rfValue') {
+    value = rfValueFormat(event.target.value) || '';
+  } else {
+    value = event.target.value;
+  }
+
+  const { newReaction, options } = setReactionByType(reaction, type, value);
+
+  if (type === 'reactionType' && value === 'interaction') {
+    // Interaction reactions always use the default scheme internals, so clear
+    // any residual gas or weight-percentage state before re-rendering the tab.
+    newReaction.resetWeightPercentagedependencies();
+    newReaction.recalculateEquivalentsForMaterials();
+  }
+
+  // Update gas phase store synchronously for vessel size changes
+  if (type === 'vesselSizeAmount' || type === 'vesselSizeUnit') {
+    const { catalystMoles, vesselSize } = newReaction.findReactionVesselSizeCatalystMaterialValues();
+    GasPhaseReactionActions.setReactionVesselSize(vesselSize || null);
+    GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles || null);
+  }
+
+  cbReactionChange(newReaction, options);
+};
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -96,7 +146,8 @@ export default class ReactionDetails extends Component {
       visible: List(),
       sfn: UIStore.getState().hasSfn,
       currentUser: (UserStore.getState() && UserStore.getState().currentUser) || {},
-      reactionSvgVersion: 0, // Bumped when graphic is updated so shouldComponentUpdate sees a state change (we mutate reaction in place)
+      reactionSvgVersion: 0, // Bumped when graphic is updated so shouldComponentUpdate sees a state change (we mutate
+                             // reaction in place)
       isRefreshingGraphic: false,
       isEditingHeaderName: false,
       headerNameDraft: reaction.name || '',
@@ -183,7 +234,8 @@ export default class ReactionDetails extends Component {
 
     // If props changed, update local state and then sync store if weight_percentage
     if (!isEqual(reaction, prevProps.reaction)) {
-      // Same reaction (e.g. after save): keep current reaction_svg_file so SVG doesn't go white when server omits or delays it
+      // Same reaction (e.g. after save): keep current reaction_svg_file so SVG doesn't go white when server omits or
+      // delays it
       const isSameReaction = prevState.reaction?.id != null && reaction?.id === prevState.reaction.id;
       const prevSvg = prevState.reaction?.reaction_svg_file;
       const hasPrevSvg = prevSvg !== undefined && prevSvg !== null && String(prevSvg).trim() !== '';
@@ -201,7 +253,8 @@ export default class ReactionDetails extends Component {
       }
       this.setState(stateUpdate, () => {
         if (isSameReaction && hasPrevSvg) {
-          this.forceUpdate(); // Ensure SVG re-renders after preserving (same reaction ref can skip shouldComponentUpdate)
+          this.forceUpdate(); // Ensure SVG re-renders after preserving (same reaction ref can skip
+                              // shouldComponentUpdate)
         }
         if (this.state.reaction && this.state.reaction.weight_percentage) {
           this.updateWeightPercentageReference(this.state.reaction);
@@ -400,54 +453,8 @@ export default class ReactionDetails extends Component {
   }
 
   handleInputChange(type, event) {
-    let value;
-    if (
-      type === 'temperatureUnit'
-      || type === 'temperatureData'
-      || type === 'description'
-      || type === 'role'
-      || type === 'observation'
-      || type === 'durationUnit'
-      || type === 'duration'
-      || type === 'rxno'
-      || type === 'vesselSizeAmount'
-      || type === 'vesselSizeUnit'
-      || type === 'gaseous'
-      || type === 'conditions'
-      || type === 'phOperator'
-      || type === 'phValue'
-      || type === 'volume'
-      || type === 'useReactionVolumeForConcentration'
-      || type === 'lockReactionVolume'
-      || type === 'weight_percentage'
-      || type === 'reactionType'
-      || type === 'default'
-    ) {
-      value = event;
-    } else if (type === 'rfValue') {
-      value = rfValueFormat(event.target.value) || '';
-    } else {
-      value = event.target.value;
-    }
-
     const { reaction } = this.state;
-
-    const { newReaction, options } = setReactionByType(reaction, type, value);
-
-    if (type === 'reactionType' && value === 'interaction') {
-      // Interaction reactions always use the default scheme internals, so clear
-      // any residual gas or weight-percentage state before re-rendering the tab.
-      this.resetWeightPercentagedependencies(newReaction);
-      this.recalculateEquivalentsForMaterials(newReaction);
-    }
-
-    // Update gas phase store synchronously for vessel size changes
-    if (type === 'vesselSizeAmount' || type === 'vesselSizeUnit') {
-      const { catalystMoles, vesselSize } = newReaction.findReactionVesselSizeCatalystMaterialValues();
-      GasPhaseReactionActions.setReactionVesselSize(vesselSize || null);
-      GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles || null);
-    }
-    this.handleReactionChange(newReaction, options);
+    handleInputChange(type, event, reaction, this.handleReactionChange);
   }
 
   handleProductChange(product, cb) {
@@ -477,7 +484,11 @@ export default class ReactionDetails extends Component {
     const { reaction } = this.state;
     const { segments } = reaction;
     const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
-    if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
+    if (idx >= 0) {
+      segments.splice(idx, 1, se);
+    } else {
+      segments.push(se);
+    }
     reaction.segments = segments;
     reaction.changed = true;
     this.setState({ reaction });
@@ -532,7 +543,7 @@ export default class ReactionDetails extends Component {
     const reactionTab = (
       <span>
         {activeAnalysisTab === '4.1' && 'Reaction Analysis:'}
-        <i className="icon-reaction mx-1" />
+        <i className="icon-reaction mx-1"/>
         {reaction.short_label}
       </span>
     );
@@ -696,11 +707,11 @@ export default class ReactionDetails extends Component {
         schemeChangeConfirmMessage = (
           <>
             Switching scheme will clear the Variations table, data will be lost.
-            <br />
+            <br/>
             Any assigned weight percentage reference and wt% values in wt% fields
-            <br />
+            <br/>
             of materials will be deleted.
-            <br />
+            <br/>
             Switch scheme?
           </>
         );
@@ -714,9 +725,9 @@ export default class ReactionDetails extends Component {
         schemeChangeConfirmMessage = (
           <>
             Any assigned weight percentage reference and wt% values in wt% fields
-            <br />
+            <br/>
             of materials will be deleted.
-            <br />
+            <br/>
             Switch scheme?
           </>
         );
@@ -734,7 +745,7 @@ export default class ReactionDetails extends Component {
 
   /**
    * Applies the scheme change without confirmation.
-    * Called directly when no confirmation is required, or after user confirms.
+   * Called directly when no confirmation is required, or after user confirms.
    *
    * @param {string} type - The scheme type to switch to ('default', 'gaseous', 'weight_percentage')
    */
@@ -743,20 +754,20 @@ export default class ReactionDetails extends Component {
 
     if (type === 'default') {
       // Reset weight_percentage_reference for all materials when leaving weight percentage mode
-      this.resetWeightPercentagedependencies(reaction);
+      reaction.resetWeightPercentagedependencies();
       // Recalculate equivalents for starting materials and reactants
-      this.recalculateEquivalentsForMaterials(reaction);
+      reaction.recalculateEquivalentsForMaterials();
 
       this.handleInputChange('weight_percentage', false);
       this.handleInputChange('gaseous', false);
     } else if (type === 'weight_percentage') {
       this.handleInputChange('weight_percentage', true);
       this.handleInputChange('gaseous', false);
-      this.assignWeightPercentageReference(reaction);
+      reaction.assignWeightPercentageReference();
     } else if (type === 'gaseous') {
       // Reset weight percentage data when switching to gaseous from weight_percentage
-      this.resetWeightPercentagedependencies(reaction);
-      this.recalculateEquivalentsForMaterials(reaction);
+      reaction.resetWeightPercentagedependencies();
+      reaction.recalculateEquivalentsForMaterials();
 
       this.handleInputChange('gaseous', true);
       this.handleInputChange('weight_percentage', false);
@@ -788,74 +799,6 @@ export default class ReactionDetails extends Component {
       pendingSchemeType: null,
       schemeChangeConfirmMessage: null,
     });
-  }
-
-  /**
-   * Resets weight_percentage_reference to false for all materials in the reaction.
-   * Called when switching from weight percentage scheme to default or gaseous scheme.
-   *
-   * @param {Object} reaction - The reaction object containing materials
-   */
-  // eslint-disable-next-line class-methods-use-this
-  resetWeightPercentagedependencies(reaction) {
-    const allMaterials = [
-      ...reaction.starting_materials,
-      ...reaction.reactants,
-      ...reaction.products,
-      ...reaction.solvents,
-    ];
-
-    allMaterials.forEach((material) => {
-      material.weight_percentage_reference = false;
-      material.weight_percentage = null;
-    });
-    WeightPercentageReactionActions.setWeightPercentageReference(null);
-    WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(null);
-  }
-
-  /**
-   * Recalculates equivalent values for starting materials and reactants.
-   * Uses the reference material's moles to compute each material's equivalent.
-   *
-   * Formula: equivalent = material.amount_mol / referenceMaterial.amount_mol
-   *
-   * @param {Object} reaction - The reaction object containing materials
-   */
-  // eslint-disable-next-line class-methods-use-this
-  recalculateEquivalentsForMaterials(reaction) {
-    const { referenceMaterial } = reaction;
-    if (!referenceMaterial || !referenceMaterial.amount_mol) {
-      return;
-    }
-
-    const materialsToUpdate = [
-      ...reaction.starting_materials,
-      ...reaction.reactants,
-    ];
-
-    materialsToUpdate.forEach((material) => {
-      if (!material.reference && material.amount_mol) {
-        material.equivalent = material.amount_mol / referenceMaterial.amount_mol;
-      }
-    });
-  }
-
-  /**
-   * Assigns weight_percentage_reference of the first product to true for a reaction.
-   * Called when switching from default or gaseous scheme to weight percentage scheme.
-   *
-   * @param {Object} reaction - The reaction object containing materials
-   */
-  // eslint-disable-next-line class-methods-use-this
-  assignWeightPercentageReference(reaction) {
-    if (reaction.products.length > 0) {
-      reaction.products[0].weight_percentage_reference = true;
-      WeightPercentageReactionActions.setWeightPercentageReference(reaction.products[0]);
-      const amountValue = reaction.products[0].target_amount_value;
-      const amountUnit = reaction.products[0].target_amount_unit;
-      const targetAmount = { value: amountValue, unit: amountUnit };
-      WeightPercentageReactionActions.setTargetAmountWeightPercentageReference(targetAmount);
-    }
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -953,7 +896,8 @@ export default class ReactionDetails extends Component {
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
 
           <Alert variant="info">
-            This reaction has {reaction.variations.length} variations. Reactants cannot be edited in a reaction with variations.
+            This reaction has {reaction.variations.length} variations. Reactants cannot be edited in a reaction with
+            variations.
           </Alert>
           <div className="d-flex align-items-center">
             {this.renderReactionTypeSelect(reaction)}
@@ -965,7 +909,7 @@ export default class ReactionDetails extends Component {
                   id="scheme-type-dropdown"
                   disabled={!permitOn(reaction)}
                 >
-                  <i className="fa fa-cog" />
+                  <i className="fa fa-cog"/>
                   <span className="ms-1">
                     Current Scheme:&nbsp;
                     {schemeType}
@@ -1003,7 +947,7 @@ export default class ReactionDetails extends Component {
               >
                 <Tooltip placement="bottom" className="in" id="scheme-change-confirm-tooltip">
                   {schemeChangeConfirmMessage}
-                  <br />
+                  <br/>
                   <ButtonToolbar className="justify-content-center mt-1">
                     <Button
                       variant="danger"
@@ -1036,7 +980,7 @@ export default class ReactionDetails extends Component {
                     onClick={this.openWtInfoModal}
                     title="Weight percentage scheme info"
                   >
-                    <i className="fa fa-info-circle" />
+                    <i className="fa fa-info-circle"/>
                   </Button>
                 </OverlayTrigger>
                 {documentComponent}
@@ -1061,7 +1005,7 @@ export default class ReactionDetails extends Component {
             </div>
           </div>
           {
-            !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction} />
+            !reaction.isNew && <CommentSection section="reaction_scheme" element={reaction}/>
           }
           <ReactionDetailsScheme
             reaction={reaction}
@@ -1073,7 +1017,7 @@ export default class ReactionDetails extends Component {
       properties: (
         <Tab eventKey="properties" title="Properties" key={`properties_${reaction.id}`}>
           {
-            !reaction.isNew && <CommentSection section="reaction_properties" element={reaction} />
+            !reaction.isNew && <CommentSection section="reaction_properties" element={reaction}/>
           }
           <ReactionDetailsProperties
             reaction={reaction}
@@ -1086,7 +1030,7 @@ export default class ReactionDetails extends Component {
       references: (
         <Tab eventKey="references" title="References" key={`references_${reaction.id}`}>
           {
-            !reaction.isNew && <CommentSection section="reaction_references" element={reaction} />
+            !reaction.isNew && <CommentSection section="reaction_references" element={reaction}/>
           }
           <DetailsTabLiteratures
             element={reaction}
@@ -1098,7 +1042,7 @@ export default class ReactionDetails extends Component {
       analyses: (
         <Tab eventKey="analyses" title="Analyses" key={`analyses_${reaction.id}`}>
           {
-            !reaction.isNew && <CommentSection section="reaction_analyses" element={reaction} />
+            !reaction.isNew && <CommentSection section="reaction_analyses" element={reaction}/>
           }
           {this.productData(reaction)}
         </Tab>
@@ -1106,7 +1050,7 @@ export default class ReactionDetails extends Component {
       green_chemistry: (
         <Tab eventKey="green_chemistry" title="Green Chemistry" key={`green_chem_${reaction.id}`}>
           {
-            !reaction.isNew && <CommentSection section="reaction_green_chemistry" element={reaction} />
+            !reaction.isNew && <CommentSection section="reaction_green_chemistry" element={reaction}/>
           }
           <GreenChemistry
             reaction={reaction}
@@ -1149,7 +1093,9 @@ export default class ReactionDetails extends Component {
     const tabContents = [];
     visible.forEach((value) => {
       const tabContent = tabContentsMap[value];
-      if (tabContent) { tabContents.push(tabContent); }
+      if (tabContent) {
+        tabContents.push(tabContent);
+      }
     });
 
     const currentTab = (activeTab !== 0 && activeTab) || visible[0];
@@ -1161,9 +1107,9 @@ export default class ReactionDetails extends Component {
     const titleAppendix = (
       <>
         {!reaction.isNew && !isEmpty(reaction.research_plans) && (
-          <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right" />
+          <ElementResearchPlanLabels plans={reaction.research_plans} key={reaction.id} placement="right"/>
         )}
-        <ElementAnalysesLabels element={reaction} key={`${reaction.id}_analyses`} />
+        <ElementAnalysesLabels element={reaction} key={`${reaction.id}_analyses`}/>
       </>
     );
 
@@ -1183,13 +1129,13 @@ export default class ReactionDetails extends Component {
             name: reaction.name
           })}
         >
-          <i className="fa fa-cogs" />
+          <i className="fa fa-cogs"/>
         </Button>
       </OverlayTrigger>
     );
 
     const footerToolbar = !reaction.isNew && (
-      <ExportSamplesButton type="reaction" id={reaction.id} />
+      <ExportSamplesButton type="reaction" id={reaction.id}/>
     );
 
     const showSave = reaction.changed || reaction.isNew;
@@ -1245,7 +1191,7 @@ export default class ReactionDetails extends Component {
             <a href={documentationLink} target="_blank" rel="noreferrer" className="ms-1">documentation</a>
           </p>
         </AppModal>
-        {this.state.sfn && <ScifinderSearch el={reaction} />}
+        {this.state.sfn && <ScifinderSearch el={reaction}/>}
         <div className="tabs-container--with-borders">
           <ElementDetailSortTab
             type="reaction"
@@ -1263,7 +1209,7 @@ export default class ReactionDetails extends Component {
           >
             {tabContents}
           </Tabs>
-          <CommentModal element={reaction} />
+          <CommentModal element={reaction}/>
         </div>
       </ElementDetailCard>
     );
@@ -1274,4 +1220,8 @@ ReactionDetails.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   reaction: PropTypes.object,
   openedFromCollectionId: PropTypes.number,
+};
+
+export  {
+  handleInputChange
 };
