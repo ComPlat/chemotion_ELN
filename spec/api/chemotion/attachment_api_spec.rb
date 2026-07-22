@@ -185,6 +185,57 @@ describe Chemotion::AttachmentAPI do
     end
   end
 
+  describe 'POST /api/v1/attachments/{attachment_id}/reconvert' do
+    let(:container) { create(:container, containable: user) }
+    let(:execute_request) { post "/api/v1/attachments/#{attachment_id}/reconvert" }
+
+    before do |example|
+      if example.metadata[:enable_attachment_policy_can_delete].present?
+        allow(AttachmentPolicy).to receive(:can_delete?).and_return(true)
+      end
+      allow(ReconvertAttachmentJob).to receive(:perform_later)
+
+      execute_request
+    end
+
+    context 'when "AttachmentPolicy" denies write access' do
+      let(:other_container) { create(:container, containable: create(:person)) }
+      let(:attachment) { create(:attachment, attachable: other_container, con_state: Labimotion::ConState::ERROR) }
+
+      it 'returns with an error' do
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'does not enqueue the job' do
+        expect(ReconvertAttachmentJob).not_to have_received(:perform_later)
+      end
+    end
+
+    context 'when the converter never picked the attachment up', :enable_attachment_policy_can_delete do
+      let(:attachment) { create(:attachment, attachable: container, con_state: Labimotion::ConState::NONE) }
+
+      it 'returns with an error' do
+        expect(response).to have_http_status(:bad_request)
+      end
+
+      it 'does not enqueue the job' do
+        expect(ReconvertAttachmentJob).not_to have_received(:perform_later)
+      end
+    end
+
+    context 'when the attachment is convertible', :enable_attachment_policy_can_delete do
+      let(:attachment) { create(:attachment, attachable: container, con_state: Labimotion::ConState::ERROR) }
+
+      it 'returns with the right http status' do
+        expect(response).to have_http_status(:no_content)
+      end
+
+      it 'enqueues the re-conversion' do
+        expect(ReconvertAttachmentJob).to have_received(:perform_later).with(attachment.id, user.id)
+      end
+    end
+  end
+
   describe 'POST /api/v1/attachments/upload_chunk' do
     let(:params) do
       {

@@ -257,6 +257,19 @@ module Chemotion
         )
       end
 
+      desc 'Re-run the converter and its generic-dataset mapping for a dataset attachment'
+      params do
+        requires :attachment_id, type: Integer, desc: 'id of the originally uploaded attachment'
+      end
+      post ':attachment_id/reconvert' do
+        att = Attachment.find(params[:attachment_id])
+        error!('401 Unauthorized', 401) unless writable?(att)
+        error!('400 Attachment is not convertible', 400) unless ReconvertAttachmentJob.convertible?(att)
+
+        ReconvertAttachmentJob.perform_later(att.id, current_user.id)
+        status 204
+      end
+
       desc 'Upload files to Inbox as unsorted'
       post 'upload_to_inbox' do
         attach_ary = []
