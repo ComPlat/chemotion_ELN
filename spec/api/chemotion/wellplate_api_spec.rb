@@ -118,11 +118,45 @@ describe Chemotion::WellplateAPI do
       expect(JSON.parse(response.body)['wellplate']['name']).to eq(wellplate.name)
     end
 
+    it 'returns can_update as true for the owner' do
+      expect(JSON.parse(response.body)['wellplate']['can_update']).to be true
+    end
+
     context 'when permissions are inappropriate' do
       let(:collection) { other_user_collection }
 
       it 'returns 401 unauthorized status code' do
         expect(response).to have_http_status :unauthorized
+      end
+    end
+
+    context 'when the wellplate is in a read-only shared collection' do
+      let(:collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements],
+                                    wellplate_detail_level: 10)
+        end
+      end
+
+      it 'returns can_update as false' do
+        expect(response).to have_http_status :ok
+        expect(JSON.parse(response.body)['wellplate']['can_update']).to be false
+      end
+    end
+
+    context 'when the wellplate is in a writable shared collection' do
+      let(:collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:edit_elements],
+                                    wellplate_detail_level: 10)
+        end
+      end
+
+      it 'returns can_update as true' do
+        expect(response).to have_http_status :ok
+        expect(JSON.parse(response.body)['wellplate']['can_update']).to be true
       end
     end
   end
@@ -168,17 +202,46 @@ describe Chemotion::WellplateAPI do
       }
     end
 
-    before do
-      CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
-      put "/api/v1/wellplates/#{wellplate.id}", params: params
+    context 'when the user can update the wellplate' do
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
+        put "/api/v1/wellplates/#{wellplate.id}", params: params
+      end
+
+      it 'is able to change a wellplate by id' do
+        expect(JSON.parse(response.body)['wellplate']['name']).to eq('Another Testname')
+      end
+
+      it 'returns the wellplate attachments' do
+        expect(response.parsed_body['attachments'].first['filename']).to eq(attachment.filename)
+      end
+
+      it 'returns can_update as true after a successful update' do
+        expect(JSON.parse(response.body)['wellplate']['can_update']).to be true
+      end
     end
 
-    it 'is able to change a wellplate by id' do
-      expect(JSON.parse(response.body)['wellplate']['name']).to eq('Another Testname')
-    end
+    context 'when the wellplate is in a read-only shared collection' do
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements],
+                                    wellplate_detail_level: 10)
+        end
+      end
 
-    it 'returns the wellplate attachments' do
-      expect(response.parsed_body['attachments'].first['filename']).to eq(attachment.filename)
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: read_only_collection)
+        put "/api/v1/wellplates/#{wellplate.id}", params: params
+      end
+
+      it 'returns 401 unauthorized' do
+        expect(response).to have_http_status :unauthorized
+      end
+
+      it 'does not update the wellplate' do
+        expect(wellplate.reload.name).to eq('Testname')
+      end
     end
   end
 

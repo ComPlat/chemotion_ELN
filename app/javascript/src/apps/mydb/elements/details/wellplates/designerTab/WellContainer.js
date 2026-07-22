@@ -5,6 +5,9 @@ import { DragDropItemTypes } from 'src/utilities/DndConst';
 import Well from 'src/apps/mydb/elements/details/wellplates/designerTab/Well';
 
 const wellSource = {
+  canDrag(props) {
+    return !props.readOnly;
+  },
   beginDrag(props) {
     return props;
   }
@@ -12,6 +15,8 @@ const wellSource = {
 
 const wellTarget = {
   canDrop(props, monitor) {
+    if (props.readOnly) { return false; }
+
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
     let canDrop = true;
@@ -23,6 +28,8 @@ const wellTarget = {
     return canDrop;
   },
   drop(props, monitor) {
+    if (props.readOnly) { return; }
+
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
     if (itemType == 'sample') {
@@ -80,5 +87,10 @@ WellContainer.propTypes = {
   canDrop: PropTypes.bool.isRequired,
   swapWells: PropTypes.func.isRequired,
   dropSample: PropTypes.func.isRequired,
-  well: PropTypes.object
+  well: PropTypes.object,
+  readOnly: PropTypes.bool,
+};
+
+WellContainer.defaultProps = {
+  readOnly: false,
 };
