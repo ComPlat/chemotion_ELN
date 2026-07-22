@@ -218,4 +218,27 @@ RSpec.describe 'Import::ImportSamples' do
       expect(sample['density']).to eq(2.24)
     end
   end
+
+  describe '#get_data_from_molfile' do
+    context 'when the molfile has a PolymersList block' do
+      let(:polymer_molfile) { "some ctab\n> <PolymersList>\ndata" }
+      let(:resolved_molecule) { create(:molecule) }
+      let(:resolver_result) do
+        Import::PolymerMoleculeResolver::Result.new(
+          molecule: resolved_molecule, raw_molfile: polymer_molfile, babel_info: {},
+        )
+      end
+
+      it 'delegates to Import::PolymerMoleculeResolver and adapts its Result into a [molecule, raw_molfile] tuple' do
+        allow(Import::PolymerMoleculeResolver).to receive(:call).and_return(resolver_result)
+
+        molecule, raw_molfile = importer.get_data_from_molfile({ 'molfile' => polymer_molfile })
+
+        expect(Import::PolymerMoleculeResolver).to have_received(:call)
+          .with(polymer_molfile, lcss_batch: importer.instance_variable_get(:@lcss_batch))
+        expect(molecule).to eq(resolved_molecule)
+        expect(raw_molfile).to eq(polymer_molfile)
+      end
+    end
+  end
 end
