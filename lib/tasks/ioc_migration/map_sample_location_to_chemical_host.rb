@@ -21,8 +21,9 @@
 #   col D: "Inventory Tab - Host location" → host_cabinet
 #   col E: "Inventory Tab - Host group"    → host_group
 #
-# The Chemical record is created if the sample doesn't already have one, and
-# the sample is flagged as an inventory sample (inventory_sample = true).
+# The Chemical record is created if the sample doesn't already have one, the
+# sample is flagged as an inventory sample (inventory_sample = true), and the
+# sample's external_label is copied onto xref['inventory_label'].
 #
 # Usage:
 #   cd /home/ubuntu/app
@@ -111,7 +112,8 @@ class MapSampleLocationToChemicalHost
     @dry_run = ENV['MAP_DRY_RUN'].present?
     @overwrite = ENV['MAP_OVERWRITE'].present?
     @stats = { total_samples: 0, blank_location: 0, matched: 0, unmatched: 0,
-               chemicals_created: 0, chemicals_updated: 0, marked_inventory: 0, failed: 0 }
+               chemicals_created: 0, chemicals_updated: 0, marked_inventory: 0,
+               labeled_inventory: 0, failed: 0 }
     @unmatched_locations = Hash.new(0)
     @errors = []
     @log = { started_at: Time.current, records: [] }
@@ -178,57 +180,73 @@ class MapSampleLocationToChemicalHost
     key && LOCATION_MAP[key]
   end
 
+  def classify_location(raw_location, host_fields)
+    if raw_location.blank?
+      @stats[:blank_location] += 1
+    elsif host_fields.nil?
+      @stats[:unmatched] += 1
+      @unmatched_locations[raw_location] += 1
+    else
+      @stats[:matched] += 1
+    end
+  end
+
+  def location_status(raw_location, host_fields)
+    if raw_location.blank?
+      'blank_location'
+    elsif host_fields.nil?
+      'unmatched_location'
+    else
+      'updated'
+    end
+  end
+
   # ── Sample Processing ───────────────────────────────────────────────────────
 
   def process_sample(sample)
     raw_location = sample.location
     record_log = { sample_id: sample.id, location: raw_location, status: nil, error: nil }
 
-    if raw_location.blank?
-      @stats[:blank_location] += 1
-      record_log[:status] = 'blank_location'
-      @log[:records] << record_log
-      return
-    end
-
     host_fields = resolve_host_fields(raw_location)
-    if host_fields.nil?
-      @stats[:unmatched] += 1
-      @unmatched_locations[raw_location] += 1
-      record_log[:status] = 'unmatched_location'
-      @log[:records] << record_log
-      return
-    end
-    @stats[:matched] += 1
+    classify_location(raw_location, host_fields)
 
     if dry_run
-      record_log[:status] = 'would_update'
-      record_log[:host_fields] = host_fields
+      status = location_status(raw_location, host_fields)
+      record_log[:status] = status == 'updated' ? 'would_update' : status
+      record_log[:host_fields] = host_fields if host_fields
       @log[:records] << record_log
       return
     end
 
     ActiveRecord::Base.transaction do
-      chemical = sample.chemical
+      if host_fields
+        chemical = sample.chemical
 
-      if chemical.nil?
-        chemical = Chemical.new(sample_id: sample.id, chemical_data: [{}])
-        @stats[:chemicals_created] += 1
-      else
-        @stats[:chemicals_updated] += 1
+        if chemical.nil?
+          chemical = Chemical.new(sample_id: sample.id, chemical_data: [{}])
+          @stats[:chemicals_created] += 1
+        else
+          @stats[:chemicals_updated] += 1
+        end
+
+        applied = apply_host_fields(chemical, host_fields)
+        chemical.save!
+        record_log[:chemical_id] = chemical.id
+        record_log[:applied_fields] = applied
       end
 
-      applied = apply_host_fields(chemical, host_fields)
-      chemical.save!
+      # These apply to every sample regardless of whether its location matched,
+      # so a sample with a blank/unmatched location still gets labeled.
+      sample.inventory_sample = true unless sample.inventory_sample?
+      sample.xref['inventory_label'] = sample.external_label if sample.external_label.present?
 
-      unless sample.inventory_sample?
-        sample.update!(inventory_sample: true)
-        @stats[:marked_inventory] += 1
+      if sample.changed?
+        @stats[:marked_inventory] += 1 if sample.inventory_sample_changed?
+        @stats[:labeled_inventory] += 1 if sample.xref_changed?
+        sample.save!
       end
 
-      record_log[:status] = 'updated'
-      record_log[:chemical_id] = chemical.id
-      record_log[:applied_fields] = applied
+      record_log[:status] = location_status(raw_location, host_fields)
       @log[:records] << record_log
     end
   rescue StandardError => e
@@ -295,6 +313,7 @@ class MapSampleLocationToChemicalHost
     puts "   🧪 Chemicals created:   #{@stats[:chemicals_created]}"
     puts "   🔄 Chemicals updated:   #{@stats[:chemicals_updated]}"
     puts "   🏷️  Marked inventory:    #{@stats[:marked_inventory]}"
+    puts "   🔖 Labeled inventory:   #{@stats[:labeled_inventory]}"
     puts "   ❌ Failed:               #{@stats[:failed]}"
     puts "   📝 Log file:            #{LOG_FILE}"
     puts '=' * 60
