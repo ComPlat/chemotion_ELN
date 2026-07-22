@@ -4,6 +4,7 @@ module Entities
   class ScreenEntity < ApplicationEntity
     # rubocop:disable Layout/ExtraSpacing
     with_options(anonymize_below: 0) do
+      expose! :can_update, unless: :displayed_in_list
       expose! :id
       expose! :type
       expose! :name
@@ -31,6 +32,10 @@ module Entities
     expose_timestamps
 
     private
+
+    def can_update
+      options[:policy].try(:update?) || false
+    end
 
     def code_log
       displayed_in_list? ? nil : object.code_log

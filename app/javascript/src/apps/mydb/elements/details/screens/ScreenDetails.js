@@ -188,7 +188,7 @@ export default class ScreenDetails extends Component {
                 type="text"
                 value={name || ''}
                 onChange={(event) => this.handleInputChange('name', event)}
-                disabled={screen.isMethodDisabled('name')}
+                disabled={!screen.can_update || screen.isMethodDisabled('name')}
               />
             </Form.Group>
           </Col>
@@ -199,7 +199,7 @@ export default class ScreenDetails extends Component {
                 type="text"
                 value={collaborator || ''}
                 onChange={(event) => this.handleInputChange('collaborator', event)}
-                disabled={screen.isMethodDisabled('collaborator')}
+                disabled={!screen.can_update || screen.isMethodDisabled('collaborator')}
               />
             </Form.Group>
           </Col>
@@ -212,7 +212,7 @@ export default class ScreenDetails extends Component {
                 type="text"
                 value={requirements || ''}
                 onChange={(event) => this.handleInputChange('requirements', event)}
-                disabled={screen.isMethodDisabled('requirements')}
+                disabled={!screen.can_update || screen.isMethodDisabled('requirements')}
               />
             </Form.Group>
           </Col>
@@ -223,7 +223,7 @@ export default class ScreenDetails extends Component {
                 type="text"
                 value={conditions || ''}
                 onChange={(event) => this.handleInputChange('conditions', event)}
-                disabled={screen.isMethodDisabled('conditions')}
+                disabled={!screen.can_update || screen.isMethodDisabled('conditions')}
               />
             </Form.Group>
           </Col>
@@ -236,7 +236,7 @@ export default class ScreenDetails extends Component {
                 type="text"
                 value={result || ''}
                 onChange={(event) => this.handleInputChange('result', event)}
-                disabled={screen.isMethodDisabled('result')}
+                disabled={!screen.can_update || screen.isMethodDisabled('result')}
               />
             </Form.Group>
           </Col>
@@ -248,7 +248,7 @@ export default class ScreenDetails extends Component {
               <QuillEditor
                 value={description}
                 onChange={(event) => this.handleInputChange('description', { target: { value: event } })}
-                disabled={screen.isMethodDisabled('description')}
+                disabled={!screen.can_update || screen.isMethodDisabled('description')}
               />
             </Form.Group>
           </Col>
@@ -259,7 +259,7 @@ export default class ScreenDetails extends Component {
               element={screen}
               fnCb={this.handleScreenChanged}
             />
-            <PrivateNoteElement element={screen} disabled={screen.can_update} />
+            <PrivateNoteElement element={screen} disabled={!screen.can_update} />
           </Col>
         </Row>
         <hr />
@@ -268,6 +268,7 @@ export default class ScreenDetails extends Component {
           wellplates={wellplates}
           dropWellplate={(wellplate) => this.dropWellplate(wellplate)}
           deleteWellplate={(wellplate) => this.deleteWellplate(wellplate)}
+          readOnly={!screen.can_update}
         />
       </Form>
     );
@@ -320,6 +321,7 @@ export default class ScreenDetails extends Component {
           <ScreenDetailsContainers
             screen={screen}
             handleScreenChanged={this.handleScreenChanged}
+            readOnly={!screen.can_update}
           />
         </Tab>
       ),
@@ -332,6 +334,7 @@ export default class ScreenDetails extends Component {
             deleteResearchPlan={(researchPlan) => this.deleteResearchPlan(researchPlan)}
             updateResearchPlan={(researchPlan) => this.updateResearchPlan(researchPlan)}
             saveResearchPlan={(researchPlan) => this.saveResearchPlan(researchPlan)}
+            readOnly={!screen.can_update}
           />
         </Tab>
       ),
@@ -380,6 +383,7 @@ export default class ScreenDetails extends Component {
       <ElementDetailCard
         element={screen}
         isPendingToSave={screen.isPendingToSave}
+        saveDisabled={!screen.can_update}
         title={screen.name}
         titleTooltip={formatTimeStampsOfElement(screen || {})}
         onSave={() => this.handleSubmit()}
@@ -389,6 +393,7 @@ export default class ScreenDetails extends Component {
           initialData={screen.componentGraphData}
           researchplans={screen.research_plans}
           flowConfiguration={flowConfiguration}
+          readOnly={!screen.can_update}
         />
         <div className="tabs-container--with-borders">
           <ElementDetailSortTab

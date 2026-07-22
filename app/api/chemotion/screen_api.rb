@@ -122,7 +122,8 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Screen.find(params[:id])).update?
+          @element_policy = ElementPolicy.new(current_user, Screen.find(params[:id]))
+          error!('401 Unauthorized', 401) unless @element_policy.update?
         end
 
         put do
@@ -152,7 +153,7 @@ module Chemotion
             with: Entities::ScreenEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
             root: :screen,
-            policy: ElementPolicy.new(current_user, screen),
+            policy: @element_policy,
           )
         end
       end
