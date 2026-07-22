@@ -5,6 +5,7 @@ module Entities
     # rubocop:disable Layout/ExtraSpacing
     with_options(anonymize_below: 0) do
       expose! :can_copy,                                     unless: :displayed_in_list
+      expose! :can_update,                                   unless: :displayed_in_list
       expose! :body
       expose! :container,                                    using: 'Entities::ContainerEntity'
       expose! :id
@@ -29,6 +30,10 @@ module Entities
     expose_timestamps
 
     private
+
+    def can_update
+      options[:policy].try(:update?) || false
+    end
 
     def attachment_count
       object.attachments.size
