@@ -1,9 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, {
+  useEffect, useState, Suspense, lazy
+} from 'react';
 import ReactDOM from 'react-dom';
 import { Container } from 'react-bootstrap';
-import AdminApp from '@complat/chemotion-converter-client';
 import AppModal from 'src/components/common/AppModal';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+
+// Loaded lazily: this package's bundle injects a global, unscoped
+// `body{overflow:hidden}` (min-width: 990px) as a side effect of import.
+// A static import would run that on every page (application.js requires
+// ConverterAdmin unconditionally), killing the scrollbar app-wide.
+const AdminApp = lazy(() => import('@complat/chemotion-converter-client'));
 
 // AdminApp issues plain fetches against this base, so pointing it at the ELN
 // proxy keeps them same-origin and carrying the session cookie. converter-app
@@ -26,11 +33,13 @@ const ConverterAdmin = () => {
 
   return (
     <>
-      <AdminApp
-        ModalComponent={AppModal}
-        converterUrl={CONVERTER_PROXY_URL}
-        isAdmin={isAdmin}
-      />
+      <Suspense fallback={null}>
+        <AdminApp
+          ModalComponent={AppModal}
+          converterUrl={CONVERTER_PROXY_URL}
+          isAdmin={isAdmin}
+        />
+      </Suspense>
       <Container fluid>
         <a href="/">Back to MyDB</a>
       </Container>
