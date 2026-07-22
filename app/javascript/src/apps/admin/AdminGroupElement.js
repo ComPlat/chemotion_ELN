@@ -29,6 +29,8 @@ export default class AdminGroupElement extends React.Component {
     };
     AdminFetcher.updateGroup(params)
       .then((result) => {
+        if (result && result.error) { alert(result.error); return; }
+
         if (setAdmin) {
           groupRec.admins.splice(1, 0, userRec);
         } else {

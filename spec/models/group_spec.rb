@@ -94,5 +94,34 @@ RSpec.describe 'Group', type: :model do
       expect(group.admins).not_to be_empty
       expect(group.admins).to match_array [p1]
     end
+
+    it 'a person can be an admin without being a member' do
+      group = create(:group, admins: [p1], users: [p2])
+      expect(group.administrated_by?(p1)).to be true
+      expect(group.users).not_to include(p1)
+    end
+  end
+
+  describe '#sole_admin?' do
+    let(:sole_admin) { create(:person) }
+    let(:other_person) { create(:person) }
+
+    context 'with a single admin' do
+      let(:group) { create(:group, admins: [sole_admin]) }
+
+      it 'is true for that admin and false for anyone else' do
+        expect(group.sole_admin?(sole_admin.id)).to be true
+        expect(group.sole_admin?(other_person.id)).to be false
+      end
+    end
+
+    context 'with more than one admin' do
+      let(:group) { create(:group, admins: [sole_admin, other_person]) }
+
+      it 'is false for either admin' do
+        expect(group.sole_admin?(sole_admin.id)).to be false
+        expect(group.sole_admin?(other_person.id)).to be false
+      end
+    end
   end
 end

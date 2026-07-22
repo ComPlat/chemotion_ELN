@@ -18,17 +18,22 @@ export default class GroupElement extends React.Component {
     this.state = {
       showUsers: false,
       showRowAdd: false,
+      showAdminRowAdd: false,
       showAdminAlert: false,
       adminPopoverTarget: null,
       usersToggled: false,
       rowAddToggled: false,
+      adminRowAddToggled: false,
+      selectedAdminUsers: [],
     };
 
     this.toggleUsers = this.toggleUsers.bind(this);
     this.toggleRowAdd = this.toggleRowAdd.bind(this);
+    this.toggleAdminRowAdd = this.toggleAdminRowAdd.bind(this);
     this.loadUserByName = this.loadUserByName.bind(this);
     this.hideAdminAlert = this.hideAdminAlert.bind(this);
     this.setGroupAdmin = this.setGroupAdmin.bind(this);
+    this.addAdmin = this.addAdmin.bind(this);
   }
 
   setGroupAdmin(event, groupRec, userRec, setAdmin = true) {
@@ -85,6 +90,13 @@ export default class GroupElement extends React.Component {
     this.setState((prevState) => ({
       showRowAdd: !prevState.showRowAdd,
       rowAddToggled: !prevState.rowAddToggled,
+    }));
+  }
+
+  toggleAdminRowAdd() {
+    this.setState((prevState) => ({
+      showAdminRowAdd: !prevState.showAdminRowAdd,
+      adminRowAddToggled: !prevState.adminRowAddToggled,
     }));
   }
 
@@ -154,6 +166,21 @@ export default class GroupElement extends React.Component {
     });
   }
 
+  // promote users to admin without requiring them to be a member first; reuses
+  // setGroupAdmin so the admin list is updated the same way a per-row promote is
+  addAdmin(groupRec) {
+    const { selectedAdminUsers } = this.state;
+
+    selectedAdminUsers.forEach((u) => {
+      const isAlreadyAdmin = groupRec.admins.some((admin) => admin.id === u.value);
+      if (!isAlreadyAdmin) {
+        this.setGroupAdmin(null, groupRec, { id: u.value, name: u.name, initials: u.initials }, true);
+      }
+    });
+
+    this.setState({ selectedAdminUsers: [] });
+  }
+
   renderDeleteButton(type, groupRec, userRec) {
     const { currentUser } = this.props;
     let msg = 'Leave this group?';
@@ -212,7 +239,9 @@ export default class GroupElement extends React.Component {
 
   renderAdminButtons() {
     const { groupElement, currentUser } = this.props;
-    const { showRowAdd, selectedUsers } = this.state;
+    const {
+      showRowAdd, selectedUsers, showAdminRowAdd, selectedAdminUsers
+    } = this.state;
 
     const isAdmin = groupElement.admins && groupElement.admins
       .some((admin) => admin.id === currentUser.id);
@@ -245,6 +274,16 @@ export default class GroupElement extends React.Component {
                   <i className="fa fa-plus" />
                 </Button>
               </OverlayTrigger>
+              <OverlayTrigger placement="top" overlay={<Tooltip>Add admin</Tooltip>}>
+                <Button
+                  size="sm"
+                  type="button"
+                  variant="warning"
+                  onClick={this.toggleAdminRowAdd}
+                >
+                  <i className="fa fa-key" />
+                </Button>
+              </OverlayTrigger>
               <OverlayTrigger
                 placement="top"
                 overlay={<Tooltip>Remove group</Tooltip>}
@@ -273,6 +312,28 @@ export default class GroupElement extends React.Component {
               disabled={!selectedUsers}
             >
               <i className="fa fa-user-plus" />
+            </Button>
+          </div>
+        )}
+        {isAdmin && showAdminRowAdd && (
+          <div className="d-flex mt-2 align-items-center gap-2">
+            <AsyncSelect
+              className="w-50"
+              isMulti
+              value={selectedAdminUsers}
+              matchProp="name"
+              placeholder="Select users to make admin"
+              loadOptions={this.loadUserByName}
+              onChange={(selectedAdminUsers) => this.setState({ selectedAdminUsers })}
+            />
+            <Button
+              size="sm"
+              type="button"
+              variant="warning"
+              onClick={() => this.addAdmin(groupElement)}
+              disabled={!selectedAdminUsers}
+            >
+              <i className="fa fa-key" />
             </Button>
           </div>
         )}

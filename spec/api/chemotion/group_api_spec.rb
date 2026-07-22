@@ -8,6 +8,7 @@ describe Chemotion::GroupAPI do
   let(:group_admin) { create(:person) }
   let(:member) { create(:person) }
   let(:non_member) { create(:person) }
+  let(:non_member_admin) { create(:person) }
   let(:admin_user) { create(:admin) }
   let!(:group) do
     create(
@@ -94,6 +95,18 @@ describe Chemotion::GroupAPI do
       end
     end
 
+    context 'when called by an admin who is not a member' do
+      let!(:group) do
+        create(:group, admins: [group_admin, non_member_admin], users: [group_admin, member])
+      end
+      let(:user) { non_member_admin }
+
+      it 'destroys the group' do
+        execute_request
+        expect(Group.where(id: group.id)).to be_empty
+      end
+    end
+
     context 'when the group does not exist' do
       let(:user) { group_admin }
 
@@ -143,6 +156,18 @@ describe Chemotion::GroupAPI do
       it 'is unauthorized' do
         execute_request
         expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'when called by an admin who is not a member' do
+      let!(:group) do
+        create(:group, admins: [group_admin, non_member_admin], users: [group_admin, member])
+      end
+      let(:user) { non_member_admin }
+
+      it 'adds the members' do
+        execute_request
+        expect(group.reload.users.pluck(:id)).to include(non_member.id)
       end
     end
   end
@@ -227,6 +252,19 @@ describe Chemotion::GroupAPI do
         expect(response).to have_http_status(:unauthorized)
       end
     end
+
+    context 'when called by an admin who is not a member' do
+      let!(:group) do
+        create(:group, admins: [group_admin, non_member_admin], users: [group_admin, member])
+      end
+      let(:user) { non_member_admin }
+      let(:target) { member }
+
+      it 'removes the member' do
+        execute_request
+        expect(group.reload.users.pluck(:id)).not_to include(member.id)
+      end
+    end
   end
 
   describe 'POST /api/v1/groups/:id/admins/:user_id' do
@@ -257,6 +295,18 @@ describe Chemotion::GroupAPI do
         execute_request
         expect(response).to have_http_status(:unauthorized)
         expect(group.reload.admins.pluck(:id)).not_to include(member.id)
+      end
+    end
+
+    context 'when called by an admin who is not a member' do
+      let!(:group) do
+        create(:group, admins: [group_admin, non_member_admin], users: [group_admin, member])
+      end
+      let(:user) { non_member_admin }
+
+      it 'promotes the member to admin' do
+        execute_request
+        expect(group.reload.admins.pluck(:id)).to include(member.id)
       end
     end
   end
@@ -296,6 +346,19 @@ describe Chemotion::GroupAPI do
       it 'is unauthorized' do
         execute_request
         expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'when called by an admin who is not a member' do
+      let!(:group) do
+        create(:group, admins: [group_admin, non_member_admin], users: [group_admin, member])
+      end
+      let(:user) { non_member_admin }
+      let(:target) { group_admin }
+
+      it 'demotes the target admin' do
+        execute_request
+        expect(group.reload.admins.pluck(:id)).not_to include(group_admin.id)
       end
     end
   end
