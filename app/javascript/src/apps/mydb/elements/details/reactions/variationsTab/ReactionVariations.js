@@ -480,6 +480,9 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   if (!asyncDataLoaded) {
     return null;
   }
+  const gridOptions = {
+    alwaysShowHorizontalScroll: true,
+  };
 
   return (
     <div>
@@ -510,11 +513,14 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
         <AgGridReact
           // Re-mount grid on version change
           key={`${reaction.id}-schema-${gridVersion}`}
+          gridOptions={gridOptions}
           ref={gridRef}
           initialState={initialGridState}
           rowData={reactionVariations}
           getRowId={(params) => params.data.id}
           rowDragManaged
+          rowSelection={{ mode: 'multiRow', checkboxes: true, headerCheckbox: true }}
+          selectionColumnDef={{ pinned: 'left', width: 50 }}
           columnDefs={columnDefinitions}
           suppressPropertyNamesCheck
           defaultColDef={{
