@@ -188,12 +188,14 @@ describe Chemotion::ScreenAPI do
 
       it 'is able to change a screen by id' do
         expect(parsed_json_response['screen']['name']).to eq('Another Testname')
+        # rubocop:disable Rails/Pluck -- wellplates/research_plans are parsed JSON (Array of Hash), not AR relations
         expect(
-          parsed_json_response['screen']['wellplates'].map { |w| w['id'] }
+          parsed_json_response['screen']['wellplates'].map { |w| w['id'] },
         ).to eq([wellplate.id])
         expect(
-          parsed_json_response['screen']['research_plans'].map { |r| r['id'] }
+          parsed_json_response['screen']['research_plans'].map { |r| r['id'] },
         ).to eq([research_plan.id])
+        # rubocop:enable Rails/Pluck
       end
 
       it 'updates the component_graph_data correctly' do

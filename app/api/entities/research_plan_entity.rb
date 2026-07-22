@@ -31,10 +31,6 @@ module Entities
 
     private
 
-    def can_update
-      options[:policy].try(:update?) || false
-    end
-
     def attachment_count
       object.attachments.size
     end

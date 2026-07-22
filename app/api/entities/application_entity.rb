@@ -82,8 +82,23 @@ module Entities
       minimal_default_levels.merge(options[:detail_levels])
     end
 
+    # Prefer the provided policy when it already targets this object. Nested grape-entity
+    # representations inherit the parent options hash, so a Screen ElementPolicy would otherwise
+    # incorrectly answer can_update/can_copy for nested research plans and wellplates.
+    def element_policy
+      policy = options[:policy]
+      return policy unless policy.is_a?(ElementPolicy)
+      return policy if policy.record == object
+
+      ElementPolicy.new(policy.user, object)
+    end
+
+    def can_update
+      element_policy.try(:update?) || false
+    end
+
     def can_copy
-      options[:policy].try(:copy?) || false
+      element_policy.try(:copy?) || false
     end
 
     class MissingCurrentUserError < StandardError

@@ -32,10 +32,6 @@ module Entities
 
     private
 
-    def can_update
-      options[:policy].try(:update?) || false
-    end
-
     def is_restricted # rubocop:disable Naming/PredicateName
       detail_levels[Wellplate] < 10
     end
