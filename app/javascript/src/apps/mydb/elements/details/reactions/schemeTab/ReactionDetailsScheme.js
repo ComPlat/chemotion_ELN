@@ -13,6 +13,7 @@ import Molecule from 'src/models/Molecule';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
 import ReactionDetailsPurification from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsPurification';
+import { updatedReactionWithSample } from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
 
 import QuillViewer from 'src/components/QuillViewer';
@@ -2134,19 +2135,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
   updatedReactionWithSample(updateFunction, updatedSample, type, includeSbmm = false) {
     const { reaction } = this.props;
-    reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials', type);
-    reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants', type);
-    if (includeSbmm) {
-      reaction.reactant_sbmm_samples = updateFunction(
-        reaction.reactant_sbmm_samples,
-        updatedSample,
-        'reactants',
-        type
-      );
-    }
-    reaction.solvents = updateFunction(reaction.solvents, updatedSample, 'solvents', type);
-    reaction.products = updateFunction(reaction.products, updatedSample, 'products', type);
-    return reaction;
+    return updatedReactionWithSample(reaction, updateFunction, updatedSample, type, includeSbmm);
   }
 
   // eslint-disable-next-line class-methods-use-this
