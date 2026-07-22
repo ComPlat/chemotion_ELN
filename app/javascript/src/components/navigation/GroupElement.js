@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import {
   OverlayTrigger,
   Popover,
@@ -7,12 +7,12 @@ import {
   Tooltip,
   Overlay,
 } from 'react-bootstrap';
+import { observer } from 'mobx-react';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import { AsyncSelect } from 'src/components/common/Select';
-import _ from 'lodash';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
-const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, onDeleteUser, onChangeData}) => {
+const GroupElement = ({ group, currentUser, currentGroups, onDeleteGroup, onDeleteUser, onUpdateGroup }) => {
   const [showUsers, setShowUsers] = useState(false);
   const [showRowAdd, setShowRowAdd] = useState(false);
   const [showAdminAlert, setShowAdminAlert] = useState(false);
@@ -20,10 +20,10 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
   const [adminPopoverTarget, setAdminPopoverTarget] = useState(null);
   const [usersToggled, setUsersToggled] = useState(false);
   const [rowAddToggled, setRowAddToggled] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedAdminUsers, setSelectedAdminUsers] = useState([]);
 
-
-  const setGroupAdmin = (event, group, user, setAdmin = true) => {
+  const setGroupAdmin = (event, user, setAdmin = true) => {
     // if removing group admin and there is only one admin -> show warning
     if (!setAdmin && group.admins.length === 1) {
       setShowAdminAlert(true);
@@ -35,130 +35,85 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
       : UsersFetcher.demoteAdmin(group.id, user.id);
 
     request.then((group) => {
-      if (setAdmin) {
-        const usrIdx = _.findIndex(
-          group.group.admins,
-          (o) => o.id === user.id
-        );
-        // if user is not already admin
-        if (usrIdx === -1) {
-          group.group.admins.push(user);
-        }
-      } else {
-        const usrIdx = _.findIndex(
-          group.group.admins,
-          (o) => o.id === user.id
-        );
-        // if user is already  admin
-        if (usrIdx !== -1) {
-          group.group.admins.splice(usrIdx, 1);
-        }
-      }
-      const idx = _.findIndex(
-        this.props.currentGroup,
-        (o) => o.id === group.group.id
-      );
-      this.props.currentGroup.splice(idx, 1, group.group);
-      this.setState({ selectedUsers: [] });
-      this.props.onChangeData(this.props.currentGroup);
+      setSelectedUsers([]);
+      onUpdateGroup();
     });
-  }
+  };
 
-  hideAdminAlert = () => { this.setState({ showAdminAlert: false }); };
+  const hideAdminAlert = () => { setShowAdminAlert(false); };
 
-  toggleUsers() {
-    this.setState((prevState) => ({
-      showUsers: !prevState.showUsers,
-      usersToggled: !prevState.usersToggled,
-    }));
-  }
+  const toggleUsers = () => {
+    setShowUsers(!showUsers);
+    setUsersToggled(!usersToggled);
+  };
 
-  toggleRowAdd() {
-    this.setState((prevState) => ({
-      showRowAdd: !prevState.showRowAdd,
-      rowAddToggled: !prevState.rowAddToggled,
-    }));
-  }
+  const toggleRowAdd = () => {
+    setShowRowAdd(!showRowAdd);
+    setRowAddToggled(!rowAddToggled);
+  };
 
-  toggleAdminRowAdd() {
-    this.setState((prevState) => ({
-      showAdminRowAdd: !prevState.showAdminRowAdd,
-    }));
-  }
+  const toggleAdminRowAdd = () => {
+    setShowAdminRowAdd(!showAdminRowAdd);
+  };
 
-  loadUserByName(input) {
-    if (!input) {
-      return Promise.resolve([]);
-    }
+  const loadUserByName = (input) => {
+    if (!input) return Promise.resolve([]);
 
     return UsersFetcher.fetchUsersByName(input, 'Person')
       .then((res) => selectUserOptionFormater({ data: res }))
       .catch((errorMessage) => {
         console.log(errorMessage);
       });
-  }
+  };
 
   // confirm action after pressing yes
   // if type is group, call deleteGroup api, if type is user, call deleteUser api
-  confirmDelete(event, type, groupRec, userRec) {
-    switch (type) {
-      case 'group':
-        this.props.onDeleteGroup(groupRec.id);
-        break;
-      case 'user':
-        // Membership and admin status are independent: removing someone as a member
-        // must never affect their admin status, so this never touches groupRec.admins
-        // or fires a demote call. An admin who is also a member keeps their admin role
-        // (now as a non-member admin) after being removed here.
-        this.props.onDeleteUser(groupRec, userRec);
-        break;
-      default:
-        break;
+  const confirmDelete = (event, type, groupRec, userRec) => {
+    if (type === 'group') {
+      onDeleteGroup(groupRec.id);
     }
-  }
+    if (type === 'user') {
+      // Membership and admin status are independent: removing someone as a member
+      // must never affect their admin status, so this never touches groupRec.admins
+      // or fires a demote call. An admin who is also a member keeps their admin role
+      // (now as a non-member admin) after being removed here.
+      onDeleteUser(groupRec, userRec);
+    }
+  };
 
   // add multiple users
   // replace with response result and then setState (with forceUpdate)
-  addUser(groupRec) {
-    const { selectedUsers } = this.state;
+  const addUser = () => {
     const userIds = [];
 
     selectedUsers.forEach((g) => {
       // check if user is already in group
-      const isUserInGroup = groupRec.users.some((user) => user.id === g.value);
+      const isUserInGroup = group.users.some((user) => user.id === g.value);
 
       // only add users not already in group
       if (!isUserInGroup) { userIds.push(g.value); }
     });
 
-    UsersFetcher.addMembers(groupRec.id, userIds).then((group) => {
-      const idx = _.findIndex(
-        this.props.currentGroup,
-        (o) => o.id == group.group.id
-      );
-      this.props.currentGroup.splice(idx, 1, group.group);
-      this.setState({ selectedUsers: [] });
-      this.props.onChangeData(this.props.currentGroup);
+    UsersFetcher.addMembers(group.id, userIds).then((group) => {
+      setSelectedUsers([]);
+      onUpdateGroup();
     });
-  }
+  };
 
   // promote users to admin without requiring them to be a member first; reuses
   // setGroupAdmin so the admin list is updated the same way a per-row promote is
-  addAdmin(groupRec) {
-    const { selectedAdminUsers } = this.state;
-
+  const addAdmin = (groupRec) => {
     selectedAdminUsers.forEach((u) => {
       const isAlreadyAdmin = groupRec.admins.some((admin) => admin.id === u.value);
       if (!isAlreadyAdmin) {
-        this.setGroupAdmin(null, groupRec, { id: u.value, name: u.name, initials: u.initials }, true);
+        setGroupAdmin(null, groupRec, { id: u.value, name: u.name, initials: u.initials }, true);
       }
     });
 
-    this.setState({ selectedAdminUsers: [] });
-  }
+    setSelectedAdminUsers([]);
+  };
 
-  renderDeleteButton(type, groupRec, userRec) {
-    const { currentUser } = this.props;
+  const renderDeleteButton = (type, groupRec, userRec) => {
     let msg = 'Leave this group?';
     if (type === 'user') {
       if (userRec.id === currentUser.id) {
@@ -170,6 +125,7 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
       msg = 'Remove group?';
     }
 
+    // eslint-disable-next-line react/display-name
     const popover = (
       <Popover id="popover-positioned-scrolling-left">
         <Popover.Body>
@@ -178,14 +134,13 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
             <Button
               size="sm"
               variant="danger"
-              onClick={(event) => this.confirmDelete(event, type, groupRec, userRec)}
+              onClick={(event) => confirmDelete(event, type, groupRec, userRec)}
             >
               Yes
             </Button>
             <Button
               size="sm"
               variant="warning"
-              onClick={this.handleClick}
             >
               No
             </Button>
@@ -211,15 +166,10 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
         </Button>
       </OverlayTrigger>
     );
-  }
+  };
 
-  renderAdminButtons() {
-    const { groupElement, currentUser } = this.props;
-    const {
-      showRowAdd, selectedUsers, showAdminRowAdd, selectedAdminUsers
-    } = this.state;
-
-    const isAdmin = groupElement.admins && groupElement.admins
+  const renderAdminButtons = () => {
+    const isAdmin = group.admins && group.admins
       .some((admin) => admin.id === currentUser.id);
 
     return (
@@ -233,7 +183,7 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
               size="sm"
               type="button"
               variant="info"
-              onClick={this.toggleUsers}
+              onClick={toggleUsers}
             >
               <i className="fa fa-list" />
             </Button>
@@ -245,7 +195,7 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
                   size="sm"
                   type="button"
                   variant="success"
-                  onClick={this.toggleRowAdd}
+                  onClick={toggleRowAdd}
                 >
                   <i className="fa fa-plus" />
                 </Button>
@@ -255,7 +205,7 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
                   size="sm"
                   type="button"
                   variant="warning"
-                  onClick={this.toggleAdminRowAdd}
+                  onClick={toggleAdminRowAdd}
                 >
                   <i className="fa fa-key" />
                 </Button>
@@ -264,7 +214,7 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
                 placement="top"
                 overlay={<Tooltip>Remove group</Tooltip>}
               >
-                {this.renderDeleteButton('group', groupElement)}
+                {renderDeleteButton('group', group)}
               </OverlayTrigger>
             </>
           )}
@@ -277,14 +227,14 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
               value={selectedUsers}
               matchProp="name"
               placeholder="Select users"
-              loadOptions={this.loadUserByName}
-              onChange={(selectedUsers) => this.setState({ selectedUsers })}
+              loadOptions={loadUserByName}
+              onChange={(userSelection) => setSelectedUsers(userSelection)}
             />
             <Button
               size="sm"
               type="button"
               variant="success"
-              onClick={() => this.addUser(groupElement)}
+              onClick={addUser}
               disabled={!selectedUsers || selectedUsers.length === 0}
             >
               <i className="fa fa-user-plus" />
@@ -300,13 +250,13 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
               matchProp="name"
               placeholder="Select users to make admin"
               loadOptions={this.loadUserByName}
-              onChange={(selectedAdminUsers) => this.setState({ selectedAdminUsers })}
+              onChange={(selected) => setSelectedAdminUsers(selected)}
             />
             <Button
               size="sm"
               type="button"
               variant="warning"
-              onClick={() => this.addAdmin(groupElement)}
+              onClick={() => addAdmin()}
               disabled={!selectedAdminUsers || selectedAdminUsers.length === 0}
             >
               <i className="fa fa-key" />
@@ -315,13 +265,12 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
         )}
       </>
     );
-  }
+  };
 
-  renderUserButtons(userRec) {
-    const { groupElement: groupRec, currentUser } = this.props;
-    const isAdmin = groupRec.admins && groupRec.admins.some((a) => a.id === userRec.id);
-    const isCurrentUserAdmin = groupRec.admins
-      && groupRec.admins.some((a) => a.id === currentUser.id);
+  const renderUserButtons = (userRec) => {
+    const isAdmin = group.admins && group.admins.some((a) => a.id === userRec.id);
+    const isCurrentUserAdmin = group.admins
+      && group.admins.some((a) => a.id === currentUser.id);
     const canDelete = isCurrentUserAdmin || userRec.id === currentUser.id;
 
     const adminButtonStyle = isAdmin ? 'warning' : 'light';
@@ -335,7 +284,7 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
               size="sm"
               type="button"
               variant={adminButtonStyle}
-              onClick={(event) => this.setGroupAdmin(event, groupRec, userRec, !isAdmin)}
+              onClick={(event) => setGroupAdmin(event, group, userRec, !isAdmin)}
             >
               <i className="fa fa-key" />
             </Button>
@@ -343,27 +292,26 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
         )}
         {canDelete && (
           <OverlayTrigger placement="top" overlay={<Tooltip>Remove</Tooltip>}>
-            {this.renderDeleteButton('user', groupRec, userRec)}
+            {renderDeleteButton('user', group, userRec)}
           </OverlayTrigger>
         )}
       </div>
     );
-  }
+  };
 
   // Admins are listed regardless of membership. A non-member admin has no row in the
   // (member-only) users table below, so their demote control lives here instead of in
   // renderUserButtons - otherwise the only way to demote them would be adding them as a
   // member first, demoting, then removing membership again.
-  renderAdminList() {
-    const { groupElement, currentUser } = this.props;
-    const isCurrentUserAdmin = groupElement.admins.some((a) => a.id === currentUser.id);
+  const renderAdminList = () => {
+    const isCurrentUserAdmin = group.admins.some((a) => a.id === currentUser.id);
 
-    return groupElement.admins.map((admin) => {
-      const isMember = groupElement.users.some((u) => u.id === admin.id);
+    return group.admins.map((admin) => {
+      const isMember = group.users.some((u) => u.id === admin.id);
 
       return (
         <span
-          key={`admin_${groupElement.id}_${admin.id}`}
+          key={`admin_${group.id}_${admin.id}`}
           className="d-inline-flex align-items-center gap-1 me-2"
         >
           {admin.name}
@@ -373,7 +321,7 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
                 size="sm"
                 type="button"
                 variant="warning"
-                onClick={(event) => this.setGroupAdmin(event, groupElement, admin, false)}
+                onClick={(event) => setGroupAdmin(event, group, admin, false)}
               >
                 <i className="fa fa-key" />
               </Button>
@@ -382,63 +330,60 @@ const GroupElement = ({groupElement, currentUser, currentGroup, onDeleteGroup, o
         </span>
       );
     });
-  }
+  };
 
-  render() {
-    const { groupElement } = this.props;
-    const { showUsers, showAdminAlert, adminPopoverTarget } = this.state;
-
-    return (
-      <tbody>
-        <tr className="fw-bold align-middle">
-          <td>{groupElement.name}</td>
-          <td>{groupElement.initials}</td>
-          <td>
-            {this.renderAdminList()}
-          </td>
-          <td>
-            {this.renderAdminButtons()}
+  return (
+    <tbody>
+      <tr className="fw-bold align-middle">
+        <td>{group.name}</td>
+        <td>{group.initials}</td>
+        <td>
+          {renderAdminList()}
+        </td>
+        <td>
+          {renderAdminButtons()}
+        </td>
+      </tr>
+      {showUsers && (
+        <tr>
+          <td colSpan="4">
+            <Table striped>
+              <tbody>
+                {group.users.map((u) => (
+                  <tr key={`row_${group.id}_${u.id}`}>
+                    <td width="20%">{u.name}</td>
+                    <td width="30%">{u.initials}</td>
+                    <td width="50%">{renderUserButtons(u)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
           </td>
         </tr>
-        {showUsers && (
-          <tr>
-            <td colSpan="4">
-              <Table striped>
-                <tbody>
-                  {groupElement.users.map((u) => (
-                    <tr key={`row_${groupElement.id}_${u.id}`}>
-                      <td width="20%">{u.name}</td>
-                      <td width="30%">{u.initials}</td>
-                      <td width="50%">{this.renderUserButtons(u)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </td>
-          </tr>
-        )}
-        <Overlay
-          show={showAdminAlert}
-          target={adminPopoverTarget}
-          placement="left"
-          containerPadding={20}
-        >
-          <Popover>
-            <Popover.Body>
-              At least one admin is required.
-              <div className="mt-2">
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onClick={this.hideAdminAlert}
-                >
-                  Got it!
-                </Button>
-              </div>
-            </Popover.Body>
-          </Popover>
-        </Overlay>
-      </tbody>
-    );
-  }
-}
+      )}
+      <Overlay
+        show={showAdminAlert}
+        target={adminPopoverTarget}
+        placement="left"
+        containerPadding={20}
+      >
+        <Popover>
+          <Popover.Body>
+            At least one admin is required.
+            <div className="mt-2">
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={hideAdminAlert}
+              >
+                Got it!
+              </Button>
+            </div>
+          </Popover.Body>
+        </Popover>
+      </Overlay>
+    </tbody>
+  );
+};
+
+export default observer(GroupElement);
