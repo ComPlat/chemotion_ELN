@@ -182,7 +182,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
 
   renderResearchPlanMain(researchPlan, update) { /* eslint-disable react/jsx-no-bind */
     const { name, body, changed } = researchPlan;
-    const edit = researchPlan.mode === 'edit';
+    const edit = researchPlan.mode === 'edit' && researchPlan.can_update;
     return (
       <Container>
         <Row>
@@ -289,16 +289,18 @@ export default class EmbeddedResearchPlanDetails extends Component {
               <i className="fa fa-window-maximize" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
-          <OverlayTrigger placement="bottom" overlay={<Tooltip id="save_research_plan">Save Research Plan</Tooltip>}>
-            <Button
-              variant="warning"
-              size="xxsm"
-              onClick={() => saveResearchPlan(researchPlan)}
-              style={{ display: (researchPlan.changed || false) ? 'block' : 'none' }}
-            >
-              <i className="fa fa-floppy-o" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
+          {researchPlan.can_update && (
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="save_research_plan">Save Research Plan</Tooltip>}>
+              <Button
+                variant="warning"
+                size="xxsm"
+                onClick={() => saveResearchPlan(researchPlan)}
+                style={{ display: (researchPlan.changed || false) ? 'block' : 'none' }}
+              >
+                <i className="fa fa-floppy-o" aria-hidden="true" />
+              </Button>
+            </OverlayTrigger>
+          )}
           <ConfirmationOverlay
             overlayTarget={confirmRemoveTarget}
             placement="bottom"
@@ -329,18 +331,9 @@ export default class EmbeddedResearchPlanDetails extends Component {
 
   render() {
     const { researchPlan, update } = this.state;
-    let btnMode = (
-      <Button
-        size="sm"
-        variant="success"
-        className="mb-4"
-        onClick={() => this.handleSwitchMode('edit')}
-      >
-        click to edit
-      </Button>
-    );
-    if (researchPlan.mode !== 'view') {
-      btnMode = (
+    let btnMode = null;
+    if (researchPlan.can_update) {
+      btnMode = researchPlan.mode !== 'view' ? (
         <Button
           size="sm"
           variant="info"
@@ -348,6 +341,15 @@ export default class EmbeddedResearchPlanDetails extends Component {
           onClick={() => this.handleSwitchMode('view')}
         >
           click to view
+        </Button>
+      ) : (
+        <Button
+          size="sm"
+          variant="success"
+          className="mb-4"
+          onClick={() => this.handleSwitchMode('edit')}
+        >
+          click to edit
         </Button>
       );
     }
