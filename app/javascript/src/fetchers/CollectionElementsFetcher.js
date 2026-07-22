@@ -12,8 +12,10 @@ export default class CollectionElementsFetcher {
    * because they belong to a reaction or wellplate still in the collection.
    *
    * @param {object} params - { collection_id, ui_state }
-   * @returns {Promise<object|null>} the parsed JSON body, or null on 204
-   *   (see ChemotionApiClient.apiRequest)
+   * @returns {Promise<object|null|undefined>} the parsed JSON body, null on 204,
+   *   or undefined on a network/parse failure (see ChemotionApiClient.apiRequest).
+   *   Callers must distinguish undefined (request failed) from null (success, no
+   *   body): CollectionsStore.removeElementsFromCollection depends on this.
    */
   static deleteElementsFromCollection(params) {
     return ApiClient.deleteRequest(`/api/v1/collection_elements/${params.collection_id}`, {

@@ -86,6 +86,21 @@ RSpec.describe Usecases::Collections::WithdrawElements do
       usecase.perform!(source_collection: user_sub, ui_state: selection_for(sample), options: {})
       expect(usecase.locked_sample_ids).to contain_exactly(sample.id)
     end
+
+    # Order-independence: selecting the reaction together with its sample must remove both and NOT
+    # report the sample as locked, regardless of the order the element types are processed in.
+    it 'does not report the sample as locked when its reaction is removed in the same request' do
+      selection = {
+        sample: { all: false, included_ids: [sample.id] },
+        reaction: { all: false, included_ids: [reaction.id] },
+      }.with_indifferent_access
+
+      usecase = described_class.new(user)
+      usecase.perform!(source_collection: user_sub, ui_state: selection, options: {})
+
+      expect(usecase.locked_sample_ids).to be_empty
+      expect(sample.reload.collections.where(id: user_sub.id)).to be_empty
+    end
   end
 
   describe 'a sample kept by the wellplate association guard' do

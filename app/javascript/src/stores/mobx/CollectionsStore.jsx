@@ -9,7 +9,10 @@ import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
-import { sampleAssociationLockNotification } from 'src/utilities/collectionUtilities';
+import {
+  sampleAssociationLockNotification,
+  sampleAssociationMoveNotification
+} from 'src/utilities/notificationMessages';
 
 export const Collection = types.model({
   ancestry: types.string,
@@ -265,8 +268,16 @@ export const CollectionsStore = types
     removeElementsFromCollection: flow(function* removeElementsFromCollection(params, { notifyLock = true } = {}) {
       const response = yield CollectionElementsFetcher.deleteElementsFromCollection(params);
 
-      // A network/parse failure resolves to undefined; a 204 resolves to null.
+      // A network/parse failure resolves to undefined; a 204 resolves to null. Surface the failure:
+      // otherwise a dropped DELETE is completely silent — and in a move the selection has already
+      // been copied into the target, so silence would strand the samples in both collections.
       if (response === undefined) {
+        getRoot(self).notificationsStore.add({
+          title: 'Remove from Collection',
+          message: 'The request failed, so the selection was not removed. Please try again.',
+          level: 'error',
+          autoDismiss: 10,
+        });
         return { success: false, lockedSampleIds: [] };
       }
 
@@ -319,15 +330,7 @@ export const CollectionsStore = types
           // Samples bound to a reaction/wellplate cannot leave that collection, so they were copied
           // to the target but stayed in the source: warn that the move was only partial.
           if (success && lockedSampleIds.length > 0) {
-            getRoot(self).notificationsStore.add({
-              title: 'Move incomplete',
-              message: 'Some samples stayed here - they belong to a reaction or wellplate. '
-                + 'Move the reaction or wellplate to move '
-                + 'its associated samples.',
-              level: 'warning',
-              autoDismiss: 10,
-              position: 'tr',
-            });
+            getRoot(self).notificationsStore.add(sampleAssociationMoveNotification());
           }
 
           if (success && isNewCollection) {

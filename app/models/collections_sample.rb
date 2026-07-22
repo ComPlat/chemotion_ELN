@@ -55,8 +55,14 @@ class CollectionsSample < ApplicationRecord
         SQL
       ).where('collections_samples.collection_id = ? and collections_samples.sample_id in (?)', cid, sample_ids)
 
-      # samples with neither wellplate nor reaction are removable; the rest (present but not
-      # removable) are kept -> reported as locked so the UI can explain why nothing happened
+      # A sample is removable when it has no wellplate/reaction in this collection; the rest
+      # (present but not removable) are kept -> reported as locked so the UI can explain why
+      # nothing happened.
+      # TODO: this predicate is evaluated per JOIN row, not per sample. A sample linked to
+      # reaction A (in this collection) and reaction B (not in it) yields a both-null row for B
+      # and is treated as free -> removed and never reported as locked. The check should be
+      # set-wise (a sample is deletable only if *no* row locks it). Kept row-wise for now to
+      # preserve existing behaviour; see the specs in collection_elements_api_spec.rb.
       present_ids = associated.distinct.pluck(:sample_id)
       deletable_ids = associated.where('cw.id isnull and cr.id isnull').distinct.pluck(:sample_id)
       delete_in_collection(deletable_ids, cid)

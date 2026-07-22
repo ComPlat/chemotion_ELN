@@ -50,6 +50,12 @@ module Usecases
         withdrawn_reaction_ids = withdraw_selected_elements(source_collection, ui_state, removed)
         removed['sample'] |= withdraw_reaction_subsamples(withdrawn_reaction_ids, options)
         withdraw_generic_elements(source_collection, ui_state, removed)
+
+        # A directly-selected sample can be flagged locked in an early pass and then removed by a
+        # later reaction/wellplate pass in the same request. This is order-safe today (samples come
+        # last in API::ELEMENT_CLASS), but rather than depend on that constant's ordering we
+        # reconcile against final membership: keep only samples that truly remain in an owned collection.
+        @locked_sample_ids = membership_ids(Sample, @locked_sample_ids, @owned_collection_ids)
         removed
       end
 

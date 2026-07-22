@@ -1,23 +1,6 @@
 import { allElnElements } from 'src/apps/generic/Utils';
 import { PermissionConst } from 'src/utilities/PermissionConst';
 
-// Shown when a sample cannot be removed from a collection or deleted on its own because it belongs
-// to a reaction or wellplate that is also in the collection. Used for both the "Remove from current
-// Collection" (unshare) and "Remove from all Collections" (delete) actions so the wording stays
-// identical for both scenarios. Pass the locked-id count so singular/plural copy matches.
-const sampleAssociationLockNotification = (lockedCount = 1) => {
-  const plural = lockedCount > 1;
-  return {
-    title: plural ? 'Samples not removed' : 'Sample not removed',
-    message: plural
-      ? 'They belong to a reaction or wellplate. Remove the reaction or wellplate to remove its associated samples.'
-      : 'It belongs to a reaction or wellplate. Remove the reaction or wellplate to remove its associated samples.',
-    level: 'warning',
-    autoDismiss: 10,
-    position: 'tr',
-  };
-};
-
 const isElementSelectionEmpty = (element) => !element.checkedAll
     && element.checkedIds.size === 0
     && element.uncheckedIds.size === 0;
@@ -89,6 +72,5 @@ const collectionHasPermission = (collection, permissionLevel) => {
 };
 
 export {
-  isElementSelectionEmpty, filterParamsFromUIState, collectionOptions, collectionHasPermission,
-  sampleAssociationLockNotification
+  isElementSelectionEmpty, filterParamsFromUIState, collectionOptions, collectionHasPermission
 };

@@ -48,7 +48,7 @@ import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
-import { sampleAssociationLockNotification } from 'src/utilities/collectionUtilities';
+import { sampleAssociationLockNotification } from 'src/utilities/notificationMessages';
 
 import _ from 'lodash';
 

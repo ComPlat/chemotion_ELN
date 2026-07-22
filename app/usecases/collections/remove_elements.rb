@@ -5,6 +5,17 @@ module Usecases
     class RemoveElements
       include ElementClassResolution
 
+      # Join tables whose remove_in_collection cascades down to CollectionsSample and therefore
+      # returns the sample ids kept back by the association guard — either directly
+      # (CollectionsSample) or via their child samples (removing a reaction/wellplate/screen
+      # cascades to its samples, which may still be locked by another association).
+      SAMPLE_LOCKING_JOIN_TABLES = [
+        CollectionsSample,
+        CollectionsReaction,
+        CollectionsWellplate,
+        CollectionsScreen,
+      ].freeze
+
       attr_reader :current_user, :collection
 
       def initialize(current_user)
@@ -52,9 +63,26 @@ module Usecases
           join_table = join_table_for(class_string)
 
           kept = join_table.remove_in_collection(element_ids, collection.id)
-          # only the samples join table reports kept-by-reaction/wellplate sample ids
-          @locked_sample_ids |= Array(kept) if join_table == CollectionsSample
+          # capture kept sample ids, whether the sample was selected directly or reached through a
+          # selected reaction/wellplate/screen cascade (which can leave a sample locked by another
+          # association)
+          @locked_sample_ids |= Array(kept) if SAMPLE_LOCKING_JOIN_TABLES.include?(join_table)
         end
+
+        reconcile_locked_sample_ids
+      end
+
+      # ui_state is processed in the client's key order (sample before reaction/wellplate), so a
+      # sample flagged as kept during the sample pass can still be removed later in the same request
+      # when a selected reaction/wellplate pass cascades to it
+      # (CollectionsReaction/CollectionsWellplate#remove_in_collection). Reconcile against final
+      # membership so only samples that truly remain in the collection are reported as locked.
+      def reconcile_locked_sample_ids
+        return if @locked_sample_ids.empty?
+
+        @locked_sample_ids = CollectionsSample
+                             .where(collection_id: collection.id, sample_id: @locked_sample_ids)
+                             .pluck(:sample_id)
       end
 
       # Resolves selected element ids within the current collection. Must scope before
