@@ -301,29 +301,36 @@ export default class EmbeddedResearchPlanDetails extends Component {
               </Button>
             </OverlayTrigger>
           )}
-          <ConfirmationOverlay
-            overlayTarget={confirmRemoveTarget}
-            placement="bottom"
-            warningText={`Remove ${researchPlan.name} from Screen?`}
-            destructiveAction={() => deleteResearchPlan(researchPlan.id)}
-            destructiveActionLabel="Yes"
-            hideAction={() => this.setState({ confirmRemoveTarget: null })}
-            hideActionLabel="No"
-          />
-          <OverlayTrigger
-            placement="bottom"
-            overlay={<Tooltip id="remove_esearch_plan">Remove Research Plan from Screen</Tooltip>}
-          >
-            <Button
-              variant="danger"
-              size="xxsm"
-              onClick={(event) => this.setState((prevState) => ({
-                confirmRemoveTarget: prevState.confirmRemoveTarget ? null : event.currentTarget,
-              }))}
-            >
-              <i className="fa fa-trash-o" aria-hidden="true" />
-            </Button>
-          </OverlayTrigger>
+          {researchPlan.can_update && (
+            <>
+              <ConfirmationOverlay
+                overlayTarget={confirmRemoveTarget}
+                placement="bottom"
+                warningText={`Remove ${researchPlan.name} from Screen?`}
+                destructiveAction={() => deleteResearchPlan(researchPlan.id)}
+                destructiveActionLabel="Yes"
+                hideAction={() => this.setState({ confirmRemoveTarget: null })}
+                hideActionLabel="No"
+              />
+              <OverlayTrigger
+                placement="bottom"
+                overlay={<Tooltip id="remove_esearch_plan">Remove Research Plan from Screen</Tooltip>}
+              >
+                <Button
+                  variant="danger"
+                  size="xxsm"
+                  onClick={(event) => {
+                    const { currentTarget } = event;
+                    this.setState((prevState) => ({
+                      confirmRemoveTarget: prevState.confirmRemoveTarget ? null : currentTarget,
+                    }));
+                  }}
+                >
+                  <i className="fa fa-trash-o" aria-hidden="true" />
+                </Button>
+              </OverlayTrigger>
+            </>
+          )}
         </div>
       </div>
     );
