@@ -173,21 +173,20 @@ export default class ResearchPlanDetails extends Component {
 
   // handle attachment actions
   handleAttachmentDrop(files) {
+    if (!this.state.researchPlan.can_update) { return; }
     this.setState((prevState) => {
+      const { researchPlan } = prevState;
       const newAttachments = files.map((file) => Attachment.fromFile(file));
-      const updatedAttachments = prevState.researchPlan.attachments.concat(newAttachments);
-      const updatedResearchPlan = new ResearchPlan({
-        ...prevState.researchPlan,
-        attachments: updatedAttachments,
-        changed: true
-      });
+      researchPlan.attachments = researchPlan.attachments.concat(newAttachments);
+      researchPlan.changed = true;
 
-      return { researchPlan: updatedResearchPlan };
+      return { researchPlan };
     });
   }
 
   handleAttachmentDelete(attachment) {
     const { researchPlan } = this.state;
+    if (!researchPlan.can_update) { return; }
     const index = researchPlan.attachments.indexOf(attachment);
     researchPlan.changed = true;
     researchPlan.attachments[index].is_deleted = true;
@@ -196,6 +195,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleAttachmentUndoDelete(attachment) {
     const { researchPlan } = this.state;
+    if (!researchPlan.can_update) { return; }
     const index = researchPlan.attachments.indexOf(attachment);
     researchPlan.attachments[index].is_deleted = false;
     this.setState({ researchPlan });
@@ -203,6 +203,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleAttachmentEdit(attachment) {
     const { researchPlan } = this.state;
+    if (!researchPlan.can_update) { return; }
     researchPlan.changed = true;
     // update only this attachment
     researchPlan.attachments.map((currentAttachment) => {
@@ -500,6 +501,7 @@ export default class ResearchPlanDetails extends Component {
             dropWellplate={(wellplate) => this.dropWellplate(wellplate)}
             deleteWellplate={(wellplate) => this.deleteWellplate(wellplate)}
             importWellplate={(wellplate) => this.importWellplate(wellplate)}
+            readOnly={!researchPlan.can_update}
           />
         </Tab>
       ),
@@ -508,7 +510,10 @@ export default class ResearchPlanDetails extends Component {
           {
             !researchPlan.isNew && <CommentSection section="research_plan_metadata" element={researchPlan} />
           }
-          <ResearchPlanMetadata researchPlan={researchPlan} />
+          <ResearchPlanMetadata
+            researchPlan={researchPlan}
+            readOnly={!researchPlan.can_update}
+          />
         </Tab>
       ),
       history: (
