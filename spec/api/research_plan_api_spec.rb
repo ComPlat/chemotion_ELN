@@ -67,7 +67,8 @@ describe Chemotion::ResearchPlanAPI do
         it 'returns serialized research_plan body' do
           expect(JSON.parse(response.body)['research_plan']).not_to be_nil
           rp = ResearchPlan.find_by(name: 'test')
-          expected = Entities::ResearchPlanEntity.represent(rp, root: 'research_plan')
+          policy = ElementPolicy.new(user, rp)
+          expected = Entities::ResearchPlanEntity.represent(rp, root: 'research_plan', policy: policy)
           expect(response.body).to eq JSON.generate(expected)
         end
       end

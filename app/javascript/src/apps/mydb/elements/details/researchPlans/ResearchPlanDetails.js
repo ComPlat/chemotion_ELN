@@ -349,7 +349,8 @@ export default class ResearchPlanDetails extends Component {
     const {
       name, body, changed, attachments
     } = researchPlan;
-    const edit = researchPlan.mode === 'edit';
+    const canUpdate = researchPlan.can_update;
+    const edit = researchPlan.mode === 'edit' && canUpdate;
 
     const editTooltip = (<Tooltip id="edit-tooltip">Switch to edit mode</Tooltip>);
     const viewTooltip = (<Tooltip id="view-tooltip">Switch to view mode</Tooltip>);
@@ -359,6 +360,7 @@ export default class ResearchPlanDetails extends Component {
         <OverlayTrigger placement="top" overlay={editTooltip}>
           <ButtonGroupToggleButton
             active={researchPlan.mode === 'edit'}
+            disabled={!canUpdate}
             onClick={() => this.handleSwitchMode('edit')}
           >
             <i className="fa fa-pencil" />
@@ -425,7 +427,7 @@ export default class ResearchPlanDetails extends Component {
         handleSubmit={this.handleSubmit}
         handleResearchPlanChange={this.handleResearchPlanChange}
         researchPlan={researchPlan}
-        readOnly={false}
+        readOnly={!researchPlan.can_update}
       />
     );
   }
@@ -440,7 +442,7 @@ export default class ResearchPlanDetails extends Component {
         onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
         onAttachmentImportComplete={this.handleAttachmentImportComplete.bind(this)}
         onEdit={this.handleAttachmentEdit.bind(this)}
-        readOnly={false}
+        readOnly={!researchPlan.can_update}
       />
     );
   } /* eslint-enable */
@@ -460,7 +462,7 @@ export default class ResearchPlanDetails extends Component {
             element={researchPlan}
             fnCb={this.handleResearchPlanChange}
           />
-          <PrivateNoteElement element={researchPlan} disabled={researchPlan.can_update} />
+          <PrivateNoteElement element={researchPlan} disabled={!researchPlan.can_update} />
         </Tab>
       ),
       analyses: (
@@ -540,6 +542,7 @@ export default class ResearchPlanDetails extends Component {
       <ElementDetailCard
         element={researchPlan}
         isPendingToSave={researchPlan.isPendingToSave}
+        saveDisabled={!researchPlan.can_update}
         title={researchPlan.name}
         titleTooltip={formatTimeStampsOfElement(researchPlan || {})}
         onSave={() => this.handleSubmit()}
