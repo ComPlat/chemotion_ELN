@@ -4,6 +4,13 @@ import Container from 'src/models/Container';
 import Segment from 'src/models/Segment';
 
 export default class Screen extends Element {
+  constructor(args) {
+    super(args);
+    // Default to editable when the backend did not send a permission flag (e.g. list
+    // payloads omit can_update). Genuinely read-only elements carry can_update: false.
+    if (this.can_update === undefined) { this.can_update = true; }
+  }
+
   static buildEmpty(collectionID) {
     const descriptionDefault = {
       ops: [{ insert: '' }]

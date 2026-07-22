@@ -9,6 +9,7 @@ describe Entities::ScreenEntity do
         screen,
         detail_levels: detail_levels,
         displayed_in_list: displayed_in_list,
+        policy: policy,
       )
     end
 
@@ -21,6 +22,7 @@ describe Entities::ScreenEntity do
       }
     end
     let(:displayed_in_list) { false }
+    let(:policy) { nil }
     let(:screen) do
       create(
         :screen,
@@ -122,9 +124,39 @@ describe Entities::ScreenEntity do
       end
     end
 
+    context 'when represented without a policy' do
+      let(:detail_level) { 10 }
+
+      it 'returns can_update as false' do
+        expect(grape_entity_as_hash).to include(can_update: false)
+      end
+    end
+
+    context 'when represented with a policy' do
+      let(:detail_level) { 10 }
+      let(:policy) { Struct.new(:update?).new(true) }
+
+      it 'returns the policy related attributes' do
+        expect(grape_entity_as_hash).to include(can_update: true)
+      end
+    end
+
+    context 'when represented with a read-only policy' do
+      let(:detail_level) { 10 }
+      let(:policy) { Struct.new(:update?).new(false) }
+
+      it 'returns can_update as false' do
+        expect(grape_entity_as_hash).to include(can_update: false)
+      end
+    end
+
     context 'when entity is displayed in list' do
       let(:displayed_in_list) { true }
       let(:detail_level) { 10 }
+
+      it 'does not expose can_update' do
+        expect(grape_entity_as_hash).not_to include(:can_update)
+      end
 
       it 'returns a screen without a code_log' do
         expect(grape_entity_as_hash[:code_log]).to eq(nil)
