@@ -5,6 +5,7 @@ module Entities
     # rubocop:disable Layout/ExtraSpacing
     # Level 0 attributes and relations
     with_options(anonymize_below: 0) do
+      expose! :can_update,                           unless: :displayed_in_list
       expose! :id
       expose! :is_restricted
       expose! :height
@@ -30,6 +31,10 @@ module Entities
     expose_timestamps
 
     private
+
+    def can_update
+      options[:policy].try(:update?) || false
+    end
 
     def is_restricted # rubocop:disable Naming/PredicateName
       detail_levels[Wellplate] < 10

@@ -231,7 +231,9 @@ export class WellplateDetailsAttachments extends Component {
     const {
       filteredAttachments, sortDirection
     } = this.state;
-    const { onUndoDelete, attachments, wellplate } = this.props;
+    const {
+      onUndoDelete, attachments, wellplate, readOnly, onEdit, onDelete, onDrop
+    } = this.props;
     const { currentUser } = UserStore.getState();
 
     let combinedAttachments = filteredAttachments;
@@ -239,30 +241,36 @@ export class WellplateDetailsAttachments extends Component {
       combinedAttachments = this.context.attachmentNotificationStore.getCombinedAttachments(filteredAttachments, 'Wellplate', wellplate);
     }
 
+    const showToolbar = !readOnly || attachments.length > 0;
+
     return (
       <div className="attachment-main-container">
-        {this.renderTemplateDownload()}
+        {!readOnly && this.renderTemplateDownload()}
         {this.renderImageEditModal()}
-        <div className="d-flex justify-content-between align-items-center">
-          <div className="flex-grow-1 align-self-center">
-            {customDropzone(this.props.onDrop)}
+        {showToolbar && (
+          <div className="d-flex justify-content-between align-items-center">
+            {!readOnly && (
+              <div className="flex-grow-1 align-self-center">
+                {customDropzone(onDrop)}
+              </div>
+            )}
+            <div className="ms-3 align-self-center">
+              {
+                attachments.length > 0
+                && sortingAndFilteringUI(
+                  sortDirection,
+                  this.handleSortChange,
+                  this.toggleSortDirection,
+                  this.handleFilterChange,
+                  true
+                )
+              }
+            </div>
           </div>
-          <div className="ms-3 align-self-center">
-            {
-              attachments.length > 0
-              && sortingAndFilteringUI(
-                sortDirection,
-                this.handleSortChange,
-                this.toggleSortDirection,
-                this.handleFilterChange,
-                true
-              )
-            }
-          </div>
-        </div>
+        )}
         {combinedAttachments.length === 0 ? (
-          <div className="no-attachments-text">
-            There are currently no attachments.
+          <div className={readOnly ? 'm-4' : 'no-attachments-text'}>
+            <span>There are currently no attachments.</span>
           </div>
         ) : (
           <>
@@ -292,46 +300,54 @@ export class WellplateDetailsAttachments extends Component {
                 </div>
                 <div className="attachment-row-actions d-flex align-items-center gap-1">
                   {attachment.is_deleted ? (
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      className="attachment-button-size"
-                      onClick={() => onUndoDelete(attachment)}
-                    >
-                      <i className="fa fa-undo" aria-hidden="true" />
-                    </Button>
+                    !readOnly && (
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        className="attachment-button-size"
+                        onClick={() => onUndoDelete(attachment)}
+                      >
+                        <i className="fa fa-undo" aria-hidden="true" />
+                      </Button>
+                    )
                   ) : (
                     <>
                       {downloadButton(attachment)}
                       <ThirdPartyAppButton attachment={attachment} options={this.thirdPartyApps} />
-                      <EditButton attachment={attachment} onChange={this.props.onEdit} />
-                      {annotateButton(attachment, () => {
-                        this.setState({
-                          imageEditModalShown: true,
-                          chosenAttachment: attachment,
-                        });
-                      })}
-                      {importButton(
-                        attachment,
-                        this.state.showImportConfirm,
-                        this.props.wellplate.changed,
-                        this.showImportConfirm,
-                        this.hideImportConfirm,
-                        this.confirmAttachmentImport
+                      {!readOnly && (
+                        <>
+                          <EditButton attachment={attachment} onChange={onEdit} />
+                          {annotateButton(attachment, () => {
+                            this.setState({
+                              imageEditModalShown: true,
+                              chosenAttachment: attachment,
+                            });
+                          })}
+                          {importButton(
+                            attachment,
+                            this.state.showImportConfirm,
+                            wellplate.changed,
+                            this.showImportConfirm,
+                            this.hideImportConfirm,
+                            this.confirmAttachmentImport
+                          )}
+                          &nbsp;
+                          {removeButton(attachment, onDelete, false)}
+                        </>
                       )}
-                      &nbsp;
-                      {removeButton(attachment, this.props.onDelete, this.props.readOnly)}
                     </>
                   )}
                 </div>
                 {attachment.updatedAnnotation && <SaveEditedImageWarning visible />}
               </div>
             ))}
-            <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
-              Uploading attachments will fail; User quota
-              {currentUser !== null ? ` (${currentUser.allocated_space / 1024 / 1024} MB) ` : ' '}
-              will be exceeded.
-            </Alert>
+            {!readOnly && (
+              <Alert variant="warning" show={UserStore.isUserQuotaExceeded(filteredAttachments)}>
+                Uploading attachments will fail; User quota
+                {currentUser !== null ? ` (${currentUser.allocated_space / 1024 / 1024} MB) ` : ' '}
+                will be exceeded.
+              </Alert>
+            )}
           </>
         )}
       </div>
