@@ -143,6 +143,55 @@ describe Chemotion::ConverterAPI do
         expect(parsed_json_response['tables']).to eq([])
         expect(parsed_json_response['subjectInstances']).to eq({})
       end
+
+      # Regression: converter-app rejects a legacy profile that no longer
+      # validates with 400 + an errors body. The gem's update_profile collapses
+      # any non-200 to nil, so the proxy used to answer 200/null and the client's
+      # error handler crashed on Object.values(errors.data). The status and body
+      # must now survive to the client so it can show the validation message.
+      it 'relays a converter-app validation failure with its status and body' do
+        errors = { 'Validation' => 'Profile is not valid!', 'ValidationMsg' => "'tables' is a required property" }
+        stub_request(:put, "#{converter_url}profiles/p1").to_return(
+          status: 400,
+          body: errors.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+
+        put '/api/v1/converter/profiles/p1', params: { title: 'legacy' }
+
+        expect(response).to have_http_status(:bad_request)
+        expect(parsed_json_response).to eq(errors)
+      end
+    end
+
+    describe 'POST /api/v1/converter/profiles' do
+      it 'creates a profile via converter-app' do
+        stub_request(:post, "#{converter_url}profiles").to_return(
+          status: 201,
+          body: { 'id' => 'p2', 'title' => 'New' }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+
+        post '/api/v1/converter/profiles', params: { title: 'New' }
+
+        expect(response).to have_http_status(:created)
+        expect(parsed_json_response['id']).to eq('p2')
+        expect(parsed_json_response['tables']).to eq([])
+      end
+
+      it 'relays a converter-app validation failure with its status and body' do
+        errors = { 'Validation' => 'Profile is not valid!' }
+        stub_request(:post, "#{converter_url}profiles").to_return(
+          status: 400,
+          body: errors.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+
+        post '/api/v1/converter/profiles', params: { title: 'bad' }
+
+        expect(response).to have_http_status(:bad_request)
+        expect(parsed_json_response).to eq(errors)
+      end
     end
 
     describe 'POST /api/v1/converter/tables' do
