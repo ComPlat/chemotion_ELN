@@ -10,8 +10,7 @@ import {
   Col,
   Row,
 } from 'react-bootstrap';
-import _ from 'lodash';
-import { observer } from 'mobx';
+import { observer } from 'mobx-react';
 import AppModal from 'src/components/common/AppModal';
 
 import UsersFetcher from 'src/fetchers/UsersFetcher';
@@ -37,11 +36,12 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
   const [groupLastName, setGroupLastName] = useState('');
   const [groupAbbreviation, setGroupAbbreviation] = useState('');
 
-  const { userStore, notifications } = useContext(StoreContext);
+  const { userStore, notifications, reset } = useContext(StoreContext);
+
+  const showSettingsFunction = () => setShowSettings(true);
 
   useEffect(() => {
     if (!userStore.currentUser) { userStore.fetchCurrentUser(); }
-    const showSettingsFunction = () => setShowSettings(true);
     window.addEventListener('chemotion:open-settings', showSettingsFunction);
 
     const onUnmount = () => {
@@ -49,6 +49,10 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
     };
     return onUnmount;
   }, []);
+
+  const refetchCurrentGroups = () => UsersFetcher.fetchCurrentGroups().then((currentGroupsResult) => {
+    setCurrentGroups(currentGroupsResult.currentGroups);
+  });
 
   const fetchDeviceMetadata = (deviceID) => {
     UsersFetcher.fetchDeviceMetadataByDeviceId(deviceID).then((result) => {
@@ -60,8 +64,8 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
 
   // show modal
   const handleShow = () => {
-    UsersFetcher.fetchCurrentGroup().then((result) => {
-      setCurrentGroups(result.currentGroups);
+    // eslint-disable-next-line no-unused-vars
+    refetchCurrentGroups().then((_result) => {
       setShowModal(true);
     });
     UsersFetcher.fetchCurrentDevices().then((result) => {
@@ -129,7 +133,7 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
       if (result.error) {
         alert(result.error);
       } else {
-        setCurrentGroups(currentGroups.concat([result.group]));
+        refetchCurrentGroups();
       }
     });
   };
@@ -141,24 +145,14 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
   };
 
   const handleDeleteUser = (group, user) => {
-    UsersFetcher.removeMember(groupRec.id, userRec.id).then((result) => {
-      const userIndex = result?.group?.users?.findIndex(
-        (group_user) => group_user.id === userStore.currentUser.id
-      ) || -1;
-
-      const adminIndex = result?.group?.admins?.findIndex(
-        (group_admin) => group_admin.id === userStore.currentUser.id
-      ) || -1;
-
-      if (userIndex === -1 && adminIndex === -1) {
-        const groupsWithoutUpdatedGroup = currentGroups.filter((current_group) => current_group.id !== result.group.id);
-        setCurrentGroups(groupsWithoutUpdatedGroup);
-      } else {
-        const indexOfUpdatedGroup = currentGroups.findIndex((current_group) => current_group.id === result.group.id);
-        currentGroups.splice(indexOfUpdatedGroup, 1, result.group);
-        setCurrentGroups(currentGroups);
-      }
-    });
+    UsersFetcher.removeMember(group.id, user.id)
+      .then((result) => {
+        if (result.error) {
+          alert(result.error);
+        } else {
+          refetchCurrentGroups();
+        }
+      });
   };
 
   const handleSettingsHide = () => {
@@ -190,15 +184,15 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
 
   // render modal
   const renderModal = () => {
-    const tBodyGroups = currentGroups.map((g) => (
+    const tBodyGroups = currentGroups.map((group) => (
       <GroupElement
-        groupElement={g}
-        key={g.id}
+        group={group}
+        key={group.id}
         currentUser={userStore.currentUser}
-        currentGroup={currentGroups}
+        currentGroups={currentGroups}
         onDeleteGroup={handleDeleteGroup}
         onDeleteUser={handleDeleteUser}
-        onChangeData={(updatedCurrentGroups => setCurrentGroups(updatedCurrentGroups))}
+        onUpdateGroup={refetchCurrentGroups}
       />
     ));
 
@@ -247,14 +241,20 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
                     <Form.Control
                       type="text"
                       placeholder="eg: AK"
-                      onChange={(event) => { setGroupFirstName(event.currentTarget.value); }}
+                      onChange={(event) => {
+                        console.debug('Changed First Name');
+                        setGroupFirstName(event.currentTarget.value);
+                      }}
                     />
                   </Form.Group>
                   <Form.Group as={Col} controlId="formInlineLname">
                     <Form.Control
                       type="text"
                       placeholder="J. Moriarty"
-                      onChange={(event) => { setGroupLastName(event.currentTarget.value); }}
+                      onChange={(event) => {
+                        console.debug('Changed Last Name');
+                        setGroupLastName(event.currentTarget.value);
+                      }}
                     />
                   </Form.Group>
                   <Form.Group as={Col} controlId="formInlineNameAbbr">
@@ -262,7 +262,10 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
                     <Form.Control
                       type="text"
                       placeholder="AK-JM"
-                      onChange={(event) => { setGroupAbbreviation(event.currentTarget.value); }}
+                      onChange={(event) => {
+                        console.debug('Changed Abbreviation');
+                        setGroupAbbreviation(event.currentTarget.value);
+                      }}
                     />
                   </Form.Group>
                   <Col>
@@ -493,7 +496,7 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
         <Dropdown.Menu>
           <Dropdown.Item
             eventKey="1"
-            onClick={this.handleSettingsShow}
+            onClick={showSettingsFunction}
           >
             Settings
           </Dropdown.Item>
@@ -514,7 +517,7 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
           </Dropdown.Item>
           <Dropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</Dropdown.Item>
 
-          <Dropdown.Item onClick={() =>  { userStore.logout(); StoreContext.reset(); }}>
+          <Dropdown.Item onClick={() =>  { reset(); }}>
             <i className="fa fa-sign-out me-1" />
             Log out
           </Dropdown.Item>

@@ -62,8 +62,8 @@ export default class UsersFetcher {
     return ApiClient.postJson('/api/v1/groups', { body: params });
   }
 
-  static fetchCurrentGroup() {
-    return ApiClient.getJson('/api/v1/groups');
+  static fetchCurrentGroups() {
+    return ApiClient.getJson('/api/v1/groups/qrycurrent');
   }
 
   static fetchCurrentDevices() {

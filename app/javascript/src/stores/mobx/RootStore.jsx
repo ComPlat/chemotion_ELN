@@ -34,6 +34,7 @@ const RootStore = types
   })
   .actions((self) => ({
     reset: () => {
+      self.userStore.logout();
       self.measurementsStore = MeasurementsStore.create({ measurements: {}, sampleHeaders: {} });
       self.sampleTasksStore = SampleTasksStore.create({});
       self.cellLineDetailsStore = CellLineDetailsStore.create({});

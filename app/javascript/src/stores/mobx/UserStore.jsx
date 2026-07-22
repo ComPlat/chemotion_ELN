@@ -349,7 +349,7 @@ const UserStore = types.model(
   },
   logout: () => {
     self.setAuthToken(null);
-    self.setRole(null);
+    self.setRole('Guest');
   }
 })).views((self) => ({
   isUserQuotaExceeded(filteredAttachments) {
