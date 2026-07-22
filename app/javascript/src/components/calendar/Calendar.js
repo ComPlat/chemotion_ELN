@@ -14,7 +14,6 @@ import moment from 'moment';
 import CalendarEntryEditor from 'src/components/calendar/CalendarEntryEditor';
 import CalendarEvent from 'src/components/calendar/CalendarEvent';
 import CalendarAgenda from 'src/components/calendar/CalendarAgenda';
-import UserStore from 'src/stores/alt/stores/UserStore';
 import { capitalizeWords } from 'src/utilities/textHelper';
 
 import { observer } from 'mobx-react';
@@ -80,7 +79,7 @@ const FilterButton = ({
       </Dropdown.Menu>
     </Dropdown>
   );
-}
+};
 FilterButton.propTypes = {
   id: PropTypes.string.isRequired,
   tooltipSuffix: PropTypes.string.isRequired,
@@ -115,7 +114,7 @@ const CalendarTooltip = ({ id, text, placement, children }) => {
       {child}
     </OverlayTrigger>
   );
-}
+};
 
 const idToColorComponent = (id) => (50 + (id % 19) * 10);
 const getRed = (id) => `rgb(${idToColorComponent(id)},0,0)`;
@@ -135,7 +134,7 @@ const getEntryColor = (entry) => {
 };
 
 const CustomAgendaView = ({ events, onSelectEvent }) => {
-  const { currentUser } = UserStore.getState();
+  const { currentUser } = useContext(StoreContext).userStore;
   const currentUserId = currentUser?.id;
   const eventStyleGetter = (event) => ({
     style: {
@@ -150,7 +149,7 @@ const CustomAgendaView = ({ events, onSelectEvent }) => {
       eventStyleGetter={eventStyleGetter}
     />
   );
-}
+};
 CustomAgendaView.propTypes = {
   events: PropTypes.arrayOf(PropTypes.shape({})),
   onSelectEvent: PropTypes.func,
@@ -181,14 +180,14 @@ CustomAgendaView.navigate = (date, action) => {
 };
 
 const formats = {
-  agendaHeaderFormat: ({ start, end }, culture, localizer) => {
-    return `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`
-  },
+  agendaHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(
+    start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture
+  )}`,
   agendaDateFormat: 'ddd DD MMMM YYYY',
   dayFormat: 'dddd DD',
-  dayRangeHeaderFormat: ({ start, end }, culture, localizer) => {
-    return `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`
-  },
+  dayRangeHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(
+    start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture
+  )}`,
   monthHeaderFormat: 'MMMM YYYY',
   dayHeaderFormat: 'dddd DD MMMM YYYY',
   weekdayFormat: 'dddd',
@@ -207,10 +206,8 @@ const allDayAccessor = (event) => {
 };
 
 const Calendar = () => {
-  const calendarStore = useContext(StoreContext).calendar;
-
-  const { currentUser } = UserStore.getState();
-  const currentUserId = currentUser?.id;
+  const { calendarStore, userStore } = useContext(StoreContext);
+  const currentUserId = userStore.currentUser?.id;
 
   const { clientWidth: viewportWidth, clientHeight: viewportHeight } = window.document.documentElement;
   const smallScreen = viewportWidth < 1140 || viewportHeight < 620;
@@ -438,7 +435,7 @@ const Calendar = () => {
         </Button>
       </CalendarTooltip>
     );
-  }
+  };
 
   const showEntriesButton = () => {
     const tooltip = calendarStore.eventable_type ? 'Show my entries' : 'Show shared collection entries';
@@ -604,6 +601,6 @@ const Calendar = () => {
       </Draggable>
     </>
   );
-}
+};
 
 export default observer(Calendar);
