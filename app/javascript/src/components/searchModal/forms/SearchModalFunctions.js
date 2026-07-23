@@ -29,8 +29,9 @@ const showErrorMessage = (store) => {
 
 const filterSearchValues = (store) => {
   const filteredOptions = [];
+  const isPublication = store.searchModalSelectedForm.value === 'publication';
 
-  if (store.detail_search_values.length >= 1) {
+  if (store.detail_search_values.length >= 1 && !isPublication) {
     store.detailSearchValues.forEach((f) => {
       const keys = { ...Object.keys(f) };
       const values = { ...Object.values(f)[0] };
@@ -50,7 +51,6 @@ const filterSearchValues = (store) => {
       filteredOptions[0].link = '';
     }
   } else {
-    const isPublication = store.searchModalSelectedForm.value === 'publication';
     const searchValues = isPublication ? store.publicationSearchValues : store.advancedSearchValues;
     searchValues.forEach((f, id) => {
       const isValid = (f.field && f.link && f.value) || (id === 0 && f.field && f.value);
