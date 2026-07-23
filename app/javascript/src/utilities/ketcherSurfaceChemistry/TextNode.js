@@ -176,7 +176,9 @@ const addTextNodes = async (textNodes, textNodeMeta, ketData) => {
     if (!alias) alias = fileAlias;
     if (alias) {
       textNodeStruct[alias] = key;
-      const content = forTextNodeHeader(key, description);
+      // Use the saved Draft.js content (which preserves inlineStyleRanges for SUBSCRIPT/SUPERSCRIPT etc.)
+      // when available; fall back to plain-text reconstruction only for older molfiles that predate TextNodeMeta.
+      const content = (textNodeMeta && textNodeMeta[key]) || forTextNodeHeader(key, description);
       return {
         type: 'text',
         data: {
