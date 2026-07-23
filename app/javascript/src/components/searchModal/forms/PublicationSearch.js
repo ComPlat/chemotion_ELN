@@ -1,11 +1,11 @@
 import React, { useEffect, useContext } from 'react';
 import { Accordion } from 'react-bootstrap';
 import {
-  togglePanel, handleClear, showErrorMessage, handleSearch,
+  togglePanel, handleClear, showErrorMessage,
   AccordeonHeaderButtonForSearchForm, SearchButtonToolbar, panelVariables
-} from './SearchModalFunctions';
-import SearchResult from './SearchResult';
-import PublicationSearchRow from './PublicationSearchRow';
+} from 'src/components/searchModal/forms/SearchModalFunctions';
+import SearchResult from 'src/components/searchModal/forms/SearchResult';
+import PublicationSearchRow from 'src/components/searchModal/forms/PublicationSearchRow';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -13,36 +13,38 @@ const PublicationSearch = () => {
   const searchStore = useContext(StoreContext).search;
   const panelVars = panelVariables(searchStore);
   const accordionItemClass = searchStore.searchResultsCount > 0 ? ' with-result' : '';
-  const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0 ? 'active' + accordionItemClass : '';
+  const activeSearchAccordionClass = searchStore.search_accordion_active_key === 0
+    ? `active${accordionItemClass}`
+    : '';
   const activeResultAccordionClass = searchStore.search_accordion_active_key === 1 ? ' active with-result' : '';
 
   useEffect(() => {
-    let referenceValues = searchStore.publicationSearchValues;
+    const referenceValues = searchStore.publicationSearchValues;
     const length = referenceValues.length - 1;
     const lastInputRow = searchStore.publicationSearchValues[length];
-    
+
     const checkSelectedElements =
       (lastInputRow.field && lastInputRow.value && lastInputRow.link) ||
-      (length == 0 && lastInputRow.field && lastInputRow.value);
-    
+      (length === 0 && lastInputRow.field && lastInputRow.value);
+
     if (checkSelectedElements) {
-      let searchValues = {
+      const searchValues = {
         link: 'OR', match: 'ILIKE',
         table: referenceValues[0].table,
         field: '', value: ''
       };
       searchStore.addPublicationSearchValue(length + 1, searchValues);
     }
-  }, [searchStore.publicationSearchValues]);
+  }, [searchStore.publicationSearchValues, searchStore]);
 
   const renderDynamicRow = () => {
     let dynamicRow = (<span />);
 
     if (searchStore.publicationSearchValues.length > 1) {
-      let addedSelections = searchStore.publicationSearchValues.filter((val, idx) => idx > 0);
+      const addedSelections = searchStore.publicationSearchValues.filter((val, idx) => idx > 0);
 
       dynamicRow = addedSelections.map((_, idx) => {
-        let id = idx + 1;
+        const id = idx + 1;
         return (
           <PublicationSearchRow idx={id} key={`selection_${id}`} />
         );
@@ -50,7 +52,7 @@ const PublicationSearch = () => {
     }
 
     return dynamicRow;
-  }
+  };
 
   return (
     <Accordion defaultActiveKey={0} activeKey={searchStore.search_accordion_active_key} className="search-modal" flush>
@@ -67,7 +69,7 @@ const PublicationSearch = () => {
           <div className="accordion-body">
             <div className="advanced-search-content-scrollable-body without-header">
               {showErrorMessage(searchStore)}
-              <PublicationSearchRow idx={0} key={"selection_0"} />
+              <PublicationSearchRow idx={0} key={'selection_0'} />
               {renderDynamicRow()}
             </div>
             <SearchButtonToolbar store={searchStore} />
@@ -93,6 +95,6 @@ const PublicationSearch = () => {
       </Accordion.Item>
     </Accordion>
   );
-}
+};
 
 export default observer(PublicationSearch);
