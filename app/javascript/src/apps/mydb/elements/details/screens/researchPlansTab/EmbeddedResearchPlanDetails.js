@@ -182,7 +182,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
 
   renderResearchPlanMain(researchPlan, update) { /* eslint-disable react/jsx-no-bind */
     const { name, body, changed } = researchPlan;
-    const edit = researchPlan.mode === 'edit' && researchPlan.can_update;
+    const edit = researchPlan.mode === 'edit' && !researchPlan.isReadOnly;
     return (
       <Container>
         <Row>
@@ -247,7 +247,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
   }
 
   renderCardHeader(researchPlan) {
-    const { deleteResearchPlan, saveResearchPlan } = this.props;
+    const { deleteResearchPlan, saveResearchPlan, readOnly } = this.props;
     const titleTooltip = formatTimeStampsOfElement(researchPlan || {});
     const expandIconClass = this.state.expanded ? 'fa fa-compress' : 'fa fa-expand';
     const { confirmRemoveTarget } = this.state;
@@ -289,7 +289,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
               <i className="fa fa-window-maximize" aria-hidden="true" />
             </Button>
           </OverlayTrigger>
-          {researchPlan.can_update && (
+          {!researchPlan.isReadOnly && (
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="save_research_plan">Save Research Plan</Tooltip>}>
               <Button
                 variant="warning"
@@ -301,7 +301,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
               </Button>
             </OverlayTrigger>
           )}
-          {researchPlan.can_update && (
+          {!readOnly && (
             <>
               <ConfirmationOverlay
                 overlayTarget={confirmRemoveTarget}
@@ -339,7 +339,7 @@ export default class EmbeddedResearchPlanDetails extends Component {
   render() {
     const { researchPlan, update } = this.state;
     let btnMode = null;
-    if (researchPlan.can_update) {
+    if (!researchPlan.isReadOnly) {
       btnMode = researchPlan.mode !== 'view' ? (
         <Button
           size="sm"
@@ -383,4 +383,9 @@ EmbeddedResearchPlanDetails.propTypes = {
   updateResearchPlan: PropTypes.func.isRequired,
   saveResearchPlan: PropTypes.func.isRequired,
   deleteResearchPlan: PropTypes.func.isRequired,
+  readOnly: PropTypes.bool,
+};
+
+EmbeddedResearchPlanDetails.defaultProps = {
+  readOnly: false,
 };

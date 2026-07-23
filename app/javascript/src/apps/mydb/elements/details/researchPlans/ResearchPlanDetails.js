@@ -173,7 +173,7 @@ export default class ResearchPlanDetails extends Component {
 
   // handle attachment actions
   handleAttachmentDrop(files) {
-    if (!this.state.researchPlan.can_update) { return; }
+    if (this.state.researchPlan.isReadOnly) { return; }
     this.setState((prevState) => {
       const { researchPlan } = prevState;
       const newAttachments = files.map((file) => Attachment.fromFile(file));
@@ -186,7 +186,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleAttachmentDelete(attachment) {
     const { researchPlan } = this.state;
-    if (!researchPlan.can_update) { return; }
+    if (researchPlan.isReadOnly) { return; }
     const index = researchPlan.attachments.indexOf(attachment);
     researchPlan.changed = true;
     researchPlan.attachments[index].is_deleted = true;
@@ -195,7 +195,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleAttachmentUndoDelete(attachment) {
     const { researchPlan } = this.state;
-    if (!researchPlan.can_update) { return; }
+    if (researchPlan.isReadOnly) { return; }
     const index = researchPlan.attachments.indexOf(attachment);
     researchPlan.attachments[index].is_deleted = false;
     this.setState({ researchPlan });
@@ -203,7 +203,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleAttachmentEdit(attachment) {
     const { researchPlan } = this.state;
-    if (!researchPlan.can_update) { return; }
+    if (researchPlan.isReadOnly) { return; }
     researchPlan.changed = true;
     // update only this attachment
     researchPlan.attachments.map((currentAttachment) => {
@@ -350,7 +350,7 @@ export default class ResearchPlanDetails extends Component {
     const {
       name, body, changed, attachments
     } = researchPlan;
-    const canUpdate = researchPlan.can_update;
+    const canUpdate = !researchPlan.isReadOnly;
     const edit = researchPlan.mode === 'edit' && canUpdate;
 
     const editTooltip = (<Tooltip id="edit-tooltip">Switch to edit mode</Tooltip>);
@@ -428,7 +428,7 @@ export default class ResearchPlanDetails extends Component {
         handleSubmit={this.handleSubmit}
         handleResearchPlanChange={this.handleResearchPlanChange}
         researchPlan={researchPlan}
-        readOnly={!researchPlan.can_update}
+        readOnly={researchPlan.isReadOnly}
       />
     );
   }
@@ -443,7 +443,7 @@ export default class ResearchPlanDetails extends Component {
         onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
         onAttachmentImportComplete={this.handleAttachmentImportComplete.bind(this)}
         onEdit={this.handleAttachmentEdit.bind(this)}
-        readOnly={!researchPlan.can_update}
+        readOnly={researchPlan.isReadOnly}
       />
     );
   } /* eslint-enable */
@@ -463,7 +463,7 @@ export default class ResearchPlanDetails extends Component {
             element={researchPlan}
             fnCb={this.handleResearchPlanChange}
           />
-          <PrivateNoteElement element={researchPlan} disabled={!researchPlan.can_update} />
+          <PrivateNoteElement element={researchPlan} disabled={researchPlan.isReadOnly} />
         </Tab>
       ),
       analyses: (
@@ -501,7 +501,7 @@ export default class ResearchPlanDetails extends Component {
             dropWellplate={(wellplate) => this.dropWellplate(wellplate)}
             deleteWellplate={(wellplate) => this.deleteWellplate(wellplate)}
             importWellplate={(wellplate) => this.importWellplate(wellplate)}
-            readOnly={!researchPlan.can_update}
+            readOnly={researchPlan.isReadOnly}
           />
         </Tab>
       ),
@@ -512,7 +512,7 @@ export default class ResearchPlanDetails extends Component {
           }
           <ResearchPlanMetadata
             researchPlan={researchPlan}
-            readOnly={!researchPlan.can_update}
+            readOnly={researchPlan.isReadOnly}
           />
         </Tab>
       ),
@@ -547,7 +547,7 @@ export default class ResearchPlanDetails extends Component {
       <ElementDetailCard
         element={researchPlan}
         isPendingToSave={researchPlan.isPendingToSave}
-        saveDisabled={!researchPlan.can_update}
+        saveDisabled={researchPlan.isReadOnly}
         title={researchPlan.name}
         titleTooltip={formatTimeStampsOfElement(researchPlan || {})}
         onSave={() => this.handleSubmit()}

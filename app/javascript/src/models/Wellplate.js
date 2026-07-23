@@ -8,9 +8,6 @@ export default class Wellplate extends Element {
   constructor(args) {
     super(args);
     this.#initEmptyWells();
-    // Default to editable when the backend did not send a permission flag (e.g. list
-    // payloads omit can_update). Genuinely read-only elements carry can_update: false.
-    if (this.can_update === undefined) { this.can_update = true; }
   }
 
   static buildEmpty(collectionId, width = 12, height = 8) {
@@ -27,7 +24,8 @@ export default class Wellplate extends Element {
         readout_titles: [],
         container: Container.init(),
         segments: [],
-        attachments: []
+        attachments: [],
+        can_update: true,
       }
     );
   }

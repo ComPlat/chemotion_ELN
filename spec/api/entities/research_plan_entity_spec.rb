@@ -167,8 +167,8 @@ describe Entities::ResearchPlanEntity do
       let(:displayed_in_list) { true }
       let(:detail_level) { 10 }
 
-      it 'does not expose can_update' do
-        expect(grape_entity_as_hash).not_to include(:can_update)
+      it 'exposes can_update as false without a policy' do
+        expect(grape_entity_as_hash).to include(can_update: false)
       end
 
       it 'returns a research_plan without a container' do

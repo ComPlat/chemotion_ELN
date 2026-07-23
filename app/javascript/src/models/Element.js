@@ -17,6 +17,14 @@ export default class Element {
     return this[m] == '***'
   }
 
+  // Editability derived from the backend `can_update` permission flag. The flag may be
+  // undefined when the backend omits it (e.g. list payloads); undefined/true means editable,
+  // only an explicit false makes the element read-only. Centralized here so call sites read
+  // intent (`element.isReadOnly`) instead of re-deriving `can_update === false` everywhere.
+  get isReadOnly() {
+    return this.can_update === false;
+  }
+
   static buildID() {
     return uuid.v1();
   }

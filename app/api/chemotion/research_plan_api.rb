@@ -52,6 +52,7 @@ module Chemotion
             research_plan,
             displayed_in_list: true,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels,
+            policy: ElementPolicy.new(current_user, research_plan),
           )
         end
 

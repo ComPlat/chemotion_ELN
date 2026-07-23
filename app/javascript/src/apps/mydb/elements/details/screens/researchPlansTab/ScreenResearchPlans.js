@@ -97,6 +97,7 @@ class ScreenResearchPlans extends Component {
             deleteResearchPlan={deleteResearchPlan}
             updateResearchPlan={updateResearchPlan}
             saveResearchPlan={saveResearchPlan}
+            readOnly={readOnly}
           />
         ))}
         {!readOnly && (
