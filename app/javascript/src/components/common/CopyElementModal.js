@@ -8,23 +8,13 @@ import uuid from 'uuid';
 import AppModal from 'src/components/common/AppModal';
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import CollectionSelect from 'src/components/common/CollectionSelect';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import DetailCardButton from 'src/apps/mydb/elements/details/DetailCardButton';
 
-const Notification = (props) => (
-  NotificationActions.add({
-    title: props.title,
-    message: props.msg,
-    level: props.lvl,
-    position: 'tc',
-    dismissible: 'button',
-    uid: uuid.v4()
-  })
-);
-
 export default class CopyElementModal extends React.Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
 
@@ -55,6 +45,16 @@ export default class CopyElementModal extends React.Component {
     this.setState({ showModal: false });
   }
 
+  notification({ title, message, level }) {
+    this.context.notifications.add({
+      title,
+      message,
+      level,
+      position: 'tc',
+      uid: uuid.v4()
+    });
+  }
+
   handleAmountsConfirm(keepAmounts) {
     const { selectedCol } = this.state;
     const { element } = this.props;
@@ -75,7 +75,7 @@ export default class CopyElementModal extends React.Component {
     const { selectedCol } = this.state;
     const { element } = this.props;
     if (selectedCol == null) {
-      Notification({ title: 'Collection can not be empty', lvl: 'error', msg: 'Collection can not be empty' });
+      this.notification({ title: 'Copy to collection', level: 'error', message: 'Collection can not be empty' });
       return false;
     }
 
@@ -125,7 +125,7 @@ export default class CopyElementModal extends React.Component {
           <Form.Label>Copy to Collection</Form.Label>
           <CollectionSelect
             value={selectedCol}
-            withShared={false}
+            withShared
             onChange={this.onColSelectChange}
           />
         </AppModal>

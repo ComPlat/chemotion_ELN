@@ -5,6 +5,7 @@ module Chemotion
   # Reaction API
   class ReactionAPI < Grape::API
     include Grape::Kaminari
+    helpers CollectionHelpers
     helpers ContainerHelpers
     helpers ParamsHelpers
     helpers LiteratureHelpers
@@ -149,12 +150,15 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        optional :ph_operator, type: String
+        optional :ph_value, type: Float
         optional :tlc_solvents, type: String
         optional :solvent, type: String
         optional :tlc_description, type: String
         optional :rf_value, type: String
         optional :temperature, type: Hash
         optional :status, type: String
+        optional :reaction_type, type: String, values: Reaction.reaction_types.keys
         optional :role, type: String
         optional :origin, type: Hash
         optional :reaction_svg_file, type: String
@@ -171,6 +175,7 @@ module Chemotion
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
+        optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
         optional :weight_percentage, type: Boolean
       end
@@ -238,12 +243,15 @@ module Chemotion
         optional :purification, type: [String]
         optional :dangerous_products, type: [String]
         optional :conditions, type: String
+        optional :ph_operator, type: String
+        optional :ph_value, type: Float
         optional :tlc_solvents, type: String
         optional :solvent, type: String
         optional :tlc_description, type: String
         optional :rf_value, type: String
         optional :temperature, type: Hash
         optional :status, type: String
+        optional :reaction_type, type: String, values: Reaction.reaction_types.keys
         optional :role, type: String
         optional :origin, type: Hash
         optional :reaction_svg_file, type: String
@@ -258,6 +266,7 @@ module Chemotion
         optional :vessel_size, type: Hash
         optional :volume, type: BigDecimal
         optional :use_reaction_volume, type: Boolean
+        optional :lock_reaction_volume, type: Boolean
         optional :gaseous, type: Boolean
         optional :weight_percentage, type: Boolean
       end
@@ -273,7 +282,8 @@ module Chemotion
         attributes.delete(:segments)
         attributes.delete(:user_labels)
 
-        collection = current_user.collections.find_by(id: collection_id)
+        collection = writable_collection_for(collection_id)
+        error!('403 Forbidden', 403) if collection_id && collection.nil?
         attributes[:created_by] = current_user.id
         reaction = Reaction.create!(attributes)
         recent_ols_term_update('rxno', [params[:rxno]]) if params[:rxno].present?
@@ -283,7 +293,8 @@ module Chemotion
         reaction.save!
         update_element_labels(reaction, params[:user_labels], current_user.id)
         reaction.save_segments(segments: params[:segments], current_user_id: current_user.id)
-        all_collection = Collection.get_all_collection_for_user(current_user.id)
+        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
+        all_collection = Collection.get_all_collection_for_user(all_coll_owner_id)
         # Use find_or_create_by so we don't violate the unique
         # (reaction_id, collection_id) index when the chosen collection is the
         # user's "All" collection (both inserts would otherwise be identical).

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable RSpec/LetSetup, RSpec/NestedGroups, RSpec/AnyInstance
+# rubocop:disable RSpec/NestedGroups
 
 require 'rails_helper'
 
@@ -216,6 +216,78 @@ describe Chemotion::CellLineAPI do
         expect(response).to have_http_status :bad_request
       end
     end
+
+    context 'when collection_id points to a read-only shared collection' do
+      let(:other_user) { create(:person) }
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:params) do
+        {
+          organism: 'something',
+          tissue: 'another',
+          amount: 100,
+          passage: 200,
+          disease: 'disease',
+          material_names: 'forbidden_cell_line',
+          biosafety_level: 'S1',
+          source: 'IPB',
+          unit: 'g',
+          collection_id: read_only_collection.id,
+          container: {},
+        }
+      end
+
+      before { post '/api/v1/cell_lines/', params: params, as: :json }
+
+      it 'returns 403 forbidden' do
+        expect(response).to have_http_status :forbidden
+      end
+
+      it 'does not create the cell line' do
+        expect(CelllineSample.count).to eq 0
+      end
+    end
+
+    context 'when collection_id points to a writable shared collection' do
+      let(:other_user) { create(:person) }
+      let(:writable_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:add_elements])
+        end
+      end
+      let(:params) do
+        {
+          organism: 'something',
+          tissue: 'another',
+          amount: 100,
+          passage: 200,
+          disease: 'disease',
+          material_names: 'shared_cell_line',
+          biosafety_level: 'S1',
+          source: 'IPB',
+          unit: 'g',
+          collection_id: writable_collection.id,
+          container: {},
+        }
+      end
+
+      before { post '/api/v1/cell_lines/', params: params, as: :json }
+
+      it 'returns 201 created' do
+        expect(response).to have_http_status :created
+      end
+
+      it 'creates the cell line in the shared collection' do
+        cell_line = CelllineSample.first
+        expect(cell_line).not_to be_nil
+        expect(cell_line.collections).to include(writable_collection)
+      end
+    end
   end
 
   describe 'GET /api/v1/cell_lines/material' do
@@ -249,8 +321,7 @@ describe Chemotion::CellLineAPI do
   describe 'POST /api/v1/cell_lines/copy' do
     let(:collection) { create(:collection, user: user, label: 'other collection') }
     let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
-    let(:allow_creation) { true }
-    let(:container_param)  do
+    let(:container_param) do
       { 'name' => 'new',
         'children' =>
 [{ 'name' => 'new',
@@ -281,7 +352,6 @@ describe Chemotion::CellLineAPI do
     end
 
     before do
-      allow_any_instance_of(ElementsPolicy).to receive(:update_all?).and_return(allow_creation)
       post '/api/v1/cell_lines/copy', params: params
     end
 
@@ -293,16 +363,24 @@ describe Chemotion::CellLineAPI do
       end
     end
 
-    context 'when user only has read access' do
-      let(:allow_creation) { false }
-
-      before do
-        allow_any_instance_of(ElementPolicy).to receive(:update?).and_return(false)
-        post '/api/v1/cell_lines/copy', params: params
+    context 'when the target collection is not writable' do
+      let(:other_user) { create(:person) }
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:params) do
+        { id: cell_line.id, collection_id: read_only_collection.id, container: container_param }
       end
 
-      it 'returns correct response code 401' do
-        expect(response).to have_http_status :unauthorized
+      it 'returns 403 forbidden' do
+        expect(response).to have_http_status :forbidden
+      end
+
+      it 'does not create a copy' do
+        expect(CelllineSample.where.not(id: cell_line.id)).to be_empty
       end
     end
 
@@ -327,7 +405,6 @@ describe Chemotion::CellLineAPI do
   describe 'POST /api/v1/cell_lines/split' do
     let(:collection) { create(:collection, user: user, label: 'other collection') }
     let!(:cell_line) { create(:cellline_sample, collections: [collection]) }
-    let(:allow_creation) { true }
     let(:params) do
       {
         id: cell_line.id,
@@ -337,7 +414,6 @@ describe Chemotion::CellLineAPI do
 
     context 'when user has write access' do
       before do
-        allow_any_instance_of(ElementsPolicy).to receive(:update_all?).and_return(allow_creation)
         post '/api/v1/cell_lines/split', params: params
       end
 
@@ -359,6 +435,31 @@ describe Chemotion::CellLineAPI do
         expect(cell_line.reload.children.first.id).to be splitted_cellline.id
       end
     end
+
+    context 'when the target collection is not writable' do
+      let(:other_user) { create(:person) }
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:params) do
+        { id: cell_line.id, collection_id: read_only_collection.id }
+      end
+
+      before do
+        post '/api/v1/cell_lines/split', params: params
+      end
+
+      it 'returns 403 forbidden' do
+        expect(response).to have_http_status :forbidden
+      end
+
+      it 'does not create a split' do
+        expect(cell_line.reload.children).to be_empty
+      end
+    end
   end
 end
-# rubocop:enable RSpec/LetSetup, RSpec/NestedGroups, RSpec/AnyInstance
+# rubocop:enable RSpec/NestedGroups

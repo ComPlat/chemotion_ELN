@@ -1,10 +1,6 @@
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
-
 describe('AdminFetcher.olsTermDisableEnable', () => {
   let fetchStub;
   const params = { owl_name: 'chebi', enableIds: ['1|x'], disableIds: [] };

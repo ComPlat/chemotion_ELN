@@ -7,11 +7,13 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
+import SharedToMeInfosTooltip from 'src/apps/mydb/collections/SharedToMeInfosTooltip';
 import TreeViewItem from 'src/components/common/TreeViewItem';
 import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import CollectionSubtreeFunctions from 'src/apps/mydb/collections/CollectionSubtreeFunctions';
+import { PermissionConst } from 'src/utilities/PermissionConst';
 
 function CollectionSubtree({
   root,
@@ -58,8 +60,13 @@ function CollectionSubtree({
     return () => UIStore.unlisten(onUiStoreChange);
   }, [currentCollection, sharedWithMe, isExpanded]);
 
+  // A collection shared to the user at the top rung (pass_ownership) is a pending ownership offer.
+  const canTakeOwnership = () => sharedWithMe && root.permission_level === PermissionConst.PassOwnership;
+
   const handleTakeOwnership = () => {
-    // TODO: determine what should happen if take ownership is possible
+    // eslint-disable-next-line no-alert
+    if (!window.confirm(`Take ownership of "${root.label}" and all its sub collections?`)) return;
+    collectionsStore.takeOwnership(root.id);
   };
 
   const toggleExpansion = (e, node) => {
@@ -89,8 +96,6 @@ function CollectionSubtree({
       aviatorNavigationWithCollectionId(node.id, element?.type, (element?.isNew ? 'new' : element?.id), true, true);
     }
   };
-
-  const canTakeOwnership = () => false;
 
   const handleTakeOwnershipKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -134,6 +139,14 @@ function CollectionSubtree({
               <i className="fa fa-share-alt" />
             </OverlayTrigger>
           )}
+          {sharedWithMe && !root.is_locked && (
+            <OverlayTrigger
+              placement="top"
+              overlay={<SharedToMeInfosTooltip collectionId={root.id} owner={root.owner} />}
+            >
+              <i className="fa fa-info-circle" />
+            </OverlayTrigger>
+          )}
         </>
       )}
       actions={<CollectionSubtreeFunctions collection={root} />}
@@ -166,6 +179,8 @@ CollectionSubtree.propTypes = {
     is_locked: PropTypes.bool,
     inventory_prefix: PropTypes.string,
     shared: PropTypes.bool,
+    owner: PropTypes.string,
+    permission_level: PropTypes.number,
   }).isRequired,
   level: PropTypes.number.isRequired,
 };

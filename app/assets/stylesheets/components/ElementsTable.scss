@@ -1,6 +1,7 @@
 .elements-table-header {
   container-name: elements-table-header;
   container-type: inline-size;
+  overflow: visible;
   @extend .d-flex;
   @extend .align-items-center;
   @extend .justify-content-between;
@@ -11,11 +12,39 @@
     @extend .flex-nowrap;
     @extend .w-auto;
   }
-  &__filters {
+  &__display-settings {
     @extend .flex-grow-1;
     @extend .d-flex;
     @extend .gap-1;
     @extend .align-items-center;
     @extend .flex-wrap;
   }
+
+  &__filters-toggle-btn {
+    position: relative;
+
+    &.active::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: calc(100% + 0.125rem);
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      pointer-events: none;
+      border-left: var(--bs-tooltip-arrow-width, 0.8rem) solid transparent;
+      border-right: var(--bs-tooltip-arrow-width, 0.8rem) solid transparent;
+      border-bottom: calc(var(--bs-tooltip-arrow-height, 0.4rem) * 2) solid var(--bs-primary);
+      z-index: 2;
+    }
+  }
+}
+
+.elements-table-filters {
+  @extend .d-flex;
+  @extend .align-items-center;
+  @extend .justify-content-between;
+  @extend .flex-wrap;
+  @extend .bg-primary;
+  padding: $modal-inner-padding;
 }

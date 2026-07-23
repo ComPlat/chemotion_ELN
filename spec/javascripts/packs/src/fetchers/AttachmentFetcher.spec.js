@@ -2,10 +2,6 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import { decamelizeKeys } from 'src/utilities/FetcherHelper';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
-
 describe('AttachmentFetcher.bulkDeleteAttachments', () => {
   let fetchStub;
 

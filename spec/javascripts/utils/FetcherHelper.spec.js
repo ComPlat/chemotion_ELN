@@ -1,5 +1,4 @@
 import expect from 'expect';
-import { describe, it } from 'mocha';
 import base64 from 'base-64';
 
 import {

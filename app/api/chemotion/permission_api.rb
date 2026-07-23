@@ -40,28 +40,52 @@ module Chemotion
 
           deletion_allowed = true
           sharing_allowed = true
+          # Unlinking from a shared collection (not destroying the record) is granted at
+          # :remove_elements, independently of the owner-only destroy gate above.
+          remove_allowed = true
+          # Editing element content (e.g. bulk user-label changes) is granted at :edit_elements.
+          update_allowed = true
 
           if collection.user != current_user # collection was shared to user
-            # set deletion_allowed to false if any of the elements is not allowed to be mass deleted
-            [Sample, Reaction, Screen, Wellplate].each do |element_class|
-              next if selected_elements[element_class].none?
+            # Every selected element type is policed, not just the four legacy ones. A selection the
+            # loop skipped (research_plan / cell_line / vessel / device_description / SBMM) would keep
+            # the flag at its permissive default, and the UI would offer a Move/Remove/Delete the
+            # server then refuses.
+            selected_elements.each_value do |scope|
+              next if scope.none?
 
-              deletion_allowed &&= ElementsPolicy.new(current_user, selected_elements[element_class]).destroy_all?
+              policy = ElementsPolicy.new(current_user, scope)
+              deletion_allowed &&= policy.destroy_all?
+              remove_allowed &&= policy.remove_all?
+              update_allowed &&= policy.update_all?
             end
 
             # permission for deletion includes permission for sharing,
             # so we have to check if the lower permissions for sharing are satisfied
             # when mass deletion is forbidden
             unless deletion_allowed
-              [Sample, Reaction, Screen, Wellplate].each do |element_class|
-                next if selected_elements[element_class].none?
+              selected_elements.each_value do |scope|
+                next if scope.none?
 
-                sharing_allowed &&= ElementsPolicy.new(current_user, selected_elements[element_class]).share_all?
+                sharing_allowed &&= ElementsPolicy.new(current_user, scope).share_all?
               end
+            end
+
+            # With nothing selected the loops above police nothing, leaving the permissive
+            # defaults untouched. That stale "true" lingers in the client's PermissionStore and
+            # makes permission-gated buttons (e.g. Split) flash enabled for a moment when the next
+            # selection arrives, before the refreshed status disables them. On a shared collection
+            # an empty selection grants no bulk permission, so report false.
+            if selected_elements.values.none?(&:any?)
+              deletion_allowed = false
+              sharing_allowed = false
+              remove_allowed = false
+              update_allowed = false
             end
           end
 
-          { deletion_allowed: deletion_allowed, sharing_allowed: sharing_allowed, is_top_secret: is_top_secret }
+          { deletion_allowed: deletion_allowed, sharing_allowed: sharing_allowed,
+            remove_allowed: remove_allowed, update_allowed: update_allowed, is_top_secret: is_top_secret }
         end
       end
     end

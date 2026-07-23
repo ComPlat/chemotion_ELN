@@ -1,7 +1,4 @@
 import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
 import 'whatwg-fetch';
 import expect from 'expect';
 import sinon from 'sinon';

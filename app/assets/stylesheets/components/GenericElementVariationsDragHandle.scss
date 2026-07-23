@@ -1,0 +1,54 @@
+.generic-element-variations-grid {
+  // Wrapper around the icon — give it the same horizontal rhythm as
+  // the action buttons / variation name so it doesn't crowd them.
+  .ag-drag-handle.ag-row-drag,
+  .ag-row-drag {
+    margin: 0 8px 0 4px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  // Hint that custom column headers are drag-to-reorder.
+  .gev-header-moveable {
+    cursor: grab;
+  }
+
+  // Grip dots inside header components — same visual language as the
+  // row-drag icon, scaled smaller (2 cols × 3 rows = 8px × 12px).
+  .gev-header-grip {
+    display: inline-block;
+    width: 8px;
+    height: 12px;
+    margin: 0 0.25rem 0 0;
+    vertical-align: middle;
+    flex-shrink: 0;
+    background-image: radial-gradient(rgba(0, 0, 0, 0.30) 1px, transparent 1.5px);
+    background-size: 4px 4px;
+    background-position: 0 0;
+    background-repeat: repeat;
+  }
+
+  .ag-icon-grip,
+  .ag-row-drag .ag-icon-grip,
+  .ag-drag-handle.ag-row-drag .ag-icon-grip {
+    font-family: inherit;
+    position: relative;
+    display: inline-block;
+    width: 8px;      // 2 dot columns at 4px tile
+    height: 16px;    // 4 dot rows at 4px tile
+    margin: 0 0.25rem 0 0; // me-1 equivalent so the icon isn't flush against the text
+    vertical-align: middle;
+    background-image: radial-gradient(rgba(0, 0, 0, 0.35) 1px, transparent 1.5px);
+    background-size: 4px 4px;
+    background-position: 0 0;
+    background-repeat: repeat;
+    color: transparent;
+  }
+
+  .ag-icon-grip::before,
+  .ag-icon-grip::after {
+    content: none !important;
+    display: none !important;
+    background-image: none !important;
+  }
+}

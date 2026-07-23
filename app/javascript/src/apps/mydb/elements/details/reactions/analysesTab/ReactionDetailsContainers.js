@@ -21,7 +21,6 @@ import ImageModal from 'src/components/common/ImageModal';
 import { hNmrCount, cNmrCount, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import { chmoConversions } from 'src/components/OlsComponent';
-import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 import {
   JcampIds, BuildSpcInfos, BuildSpcInfosForNMRDisplayer, isNMRKind
 } from 'src/utilities/SpectraHelper';
@@ -321,15 +320,23 @@ export default class ReactionDetailsContainers extends Component {
           return c;
         }),
       };
-      const attachment = getAttachmentFromContainer(container);
+      const onPreferredThumbnailChange = (preferredId) => {
+        // eslint-disable-next-line no-param-reassign
+        container.extended_metadata = {
+          ...container.extended_metadata,
+          preferred_thumbnail: preferredId,
+        };
+        this.handleChange();
+      };
       return (
         <div className="analysis-header w-100 d-flex gap-3 lh-base">
           <div className="preview border d-flex align-items-center">
             <ImageModal
-              attachment={attachment}
+              container={container}
               popObject={{
                 title: container.name,
               }}
+              onPreferredThumbnailChange={onPreferredThumbnailChange}
             />
           </div>
           <div className="flex-grow-1">

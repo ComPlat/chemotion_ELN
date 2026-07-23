@@ -17,7 +17,12 @@ describe Chemotion::ScreenAPI do
   let(:other_user_collection) { create(:collection, user_id: other_user.id) }
   let(:other_shared_collection) do
     create(:collection, user_id: other_user.id).tap do |collection|
-      create(:collection_share, collection: collection, shared_with: user, permission_level: 3)
+      create(
+        :collection_share,
+        collection: collection,
+        shared_with: user,
+        permission_level: CollectionShare.permission_level(:remove_elements),
+      )
     end
   end
 
@@ -207,6 +212,64 @@ describe Chemotion::ScreenAPI do
           'edges' => [],
         },
       )
+    end
+
+    context 'when collection_id points to a read-only shared collection' do
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:params) do
+        {
+          name: 'Forbidden Screen',
+          collection_id: read_only_collection.id,
+          container: { id: container.id },
+          wellplate_ids: [],
+          research_plan_ids: [],
+        }.to_json
+      end
+
+      before { post '/api/v1/screens', params: params, headers: request_headers }
+
+      it 'returns 403 forbidden' do
+        expect(response).to have_http_status :forbidden
+      end
+
+      it 'does not create the screen' do
+        expect(Screen.find_by(name: 'Forbidden Screen')).to be_nil
+      end
+    end
+
+    context 'when collection_id points to a writable shared collection' do
+      let(:writable_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:add_elements])
+        end
+      end
+      let(:params) do
+        {
+          name: 'Shared Write Screen',
+          collection_id: writable_collection.id,
+          container: { id: container.id },
+          wellplate_ids: [],
+          research_plan_ids: [],
+        }.to_json
+      end
+
+      before { post '/api/v1/screens', params: params, headers: request_headers }
+
+      it 'returns 201 created' do
+        expect(response).to have_http_status :created
+      end
+
+      it 'creates the screen in the shared collection' do
+        screen = Screen.find_by(name: 'Shared Write Screen')
+        expect(screen).not_to be_nil
+        expect(screen.collections).to include(writable_collection)
+      end
     end
   end
 end

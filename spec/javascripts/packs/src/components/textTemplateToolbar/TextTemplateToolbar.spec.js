@@ -3,7 +3,6 @@ import expect from 'expect';
 import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import sinon from 'sinon';
-import { describe, it, beforeEach, afterEach } from 'mocha';
 
 import TextTemplateToolbar from 'src/components/textTemplateToolbar/TextTemplateToolbar';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';

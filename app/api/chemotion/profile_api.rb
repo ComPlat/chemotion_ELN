@@ -31,7 +31,7 @@ module Chemotion
           data[ll.to_s] = layout[ll] if layout[ll].present? && data[ll.to_s].nil?
         end
 
-        layout&.fetch(:layout, {})&.each do |element, sorting|
+        layout&.fetch(:layout, {})&.dup&.each do |element, sorting|
           data['layout'][element.to_s] = sorting if data['layout'][element.to_s].nil?
         end
 

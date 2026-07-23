@@ -1,6 +1,5 @@
 import expect from 'expect';
 import sinon from 'sinon';
-import { describe, it, beforeEach } from 'mocha';
 
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
 
@@ -449,6 +448,31 @@ describe('SequenceBasedMacromoleculeSample', () => {
         sample.molarity_value = 0.2;
 
         expect(spy.calledWith('molarity')).toBe(true);
+      });
+    });
+
+    describe('applyAmountFromEquivalent()', () => {
+      it('sets the mol amount in the sample\'s current mol unit and refreshes the derived mass', () => {
+        sample.amount_as_used_mol_unit = 'mmol';
+        const calcSpy = sinon.spy(sample, 'calculateAmountAsUsedMass');
+
+        sample.applyAmountFromEquivalent(0.25);
+
+        // 0.25 mol converted to mmol = 250 mmol
+        expect(sample.amount_as_used_mol_value).toBeCloseTo(250, 6);
+        expect(sample.amount_as_used_mol_unit).toBe('mmol');
+        // The setter chain may call calculateAmountAsUsedMass multiple times,
+        // but applyAmountFromEquivalent must invoke it at least once.
+        expect(calcSpy.called).toBe(true);
+      });
+
+      it('defaults to mol when the sample has no mol unit set', () => {
+        sample._amount_as_used_mol_unit = null;
+
+        sample.applyAmountFromEquivalent(0.5);
+
+        expect(sample.amount_as_used_mol_value).toBeCloseTo(0.5, 6);
+        expect(sample.amount_as_used_mol_unit).toBe('mol');
       });
     });
   });

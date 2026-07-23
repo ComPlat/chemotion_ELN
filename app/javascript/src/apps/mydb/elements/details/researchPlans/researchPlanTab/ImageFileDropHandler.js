@@ -17,7 +17,7 @@ export default class ImageFileDropHandler {
 
     const value = {
       file_name: attachmentFromFile.name,
-      public_name: files[0].preview,
+      public_name: URL.createObjectURL(files[0]),
       identifier: attachmentFromFile.identifier,
       old_value: replace
     };

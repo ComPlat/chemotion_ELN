@@ -147,6 +147,7 @@ export class WellplateDetailsAttachments extends Component {
   createAttachmentPreviews() {
     const { attachments } = this.props;
     attachments.map((attachment) => {
+      if (attachment.preview !== undefined && attachment.preview !== '') { return attachment; }
       if (attachment.thumb) {
         AttachmentFetcher.fetchThumbnail({ id: attachment.id }).then(
           (result) => {

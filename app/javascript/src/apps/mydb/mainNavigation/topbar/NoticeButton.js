@@ -1,7 +1,7 @@
 import React, {
   useState, useEffect, useContext, useRef, useCallback
 } from 'react';
-import { StoreContext } from 'src/stores/mobx/RootStore';
+import { StoreContext , rootStore } from 'src/stores/mobx/RootStore';
 import {
   Button, Card, Row, Col, Nav, Pagination, InputGroup, Form
 } from 'react-bootstrap';
@@ -9,7 +9,6 @@ import 'whatwg-fetch';
 import _ from 'lodash';
 import AppModal from 'src/components/common/AppModal';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import ReportActions from 'src/stores/alt/actions/ReportActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -32,7 +31,7 @@ const handleNotification = (nots, act, context, needCallback = true) => {
   let count = 0;
   nots.forEach((n) => {
     if (act === 'rem') {
-      NotificationActions.removeByUid(n.id);
+      rootStore.notificationsStore.removeByUid(n.id);
     }
     if (act === 'add') {
       count += 1;
@@ -56,7 +55,6 @@ const handleNotification = (nots, act, context, needCallback = true) => {
         title: `From ${n.sender_name} on ${infoTimeString}`,
         message: newText,
         level: n.content.level || 'warning',
-        dismissible: 'button',
         autoDismiss: n.content.autoDismiss || 5,
         position: n.content.position || 'tr',
         uid: n.id,
@@ -76,7 +74,7 @@ const handleNotification = (nots, act, context, needCallback = true) => {
           },
         },
       };
-      NotificationActions.add(notification);
+      rootStore.notificationsStore.add(notification);
 
       const { currentPage, itemsPerPage } = InboxStore.getState();
       const { currentCollection } = UIStore.getState();
@@ -133,7 +131,7 @@ const handleNotification = (nots, act, context, needCallback = true) => {
       position: 'tr',
     };
 
-    NotificationActions.add(notification);
+    rootStore.notificationsStore.add(notification);
   }
 };
 
@@ -162,7 +160,7 @@ const createUpgradeNotification = (serverVersion, localVersion, context) => {
   handleNotification([not], 'add', context, false);
 };
 
-export default function NoticeButton() {
+const NoticeButton = () => {
   const context = useContext(StoreContext);
   const intervalRef = useRef(null);
   const prevDbNoticesRef = useRef([]);
@@ -342,12 +340,7 @@ export default function NoticeButton() {
   ));
 
   const totalPages = Math.ceil(filteredNotices.length / perPage);
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages || 1);
-    }
-  }, [currentPage, totalPages]);
+  const effectivePage = Math.min(currentPage, totalPages || 1);
 
   const renderBody = () => {
     if (allNotices.length === 0) {
@@ -358,7 +351,7 @@ export default function NoticeButton() {
       );
     }
 
-    const start = (currentPage - 1) * perPage;
+    const start = (effectivePage - 1) * perPage;
     const end = start + perPage;
 
     return (
@@ -445,21 +438,21 @@ export default function NoticeButton() {
         {totalPages > 1 && (
           <Pagination className="justify-content-center mt-3">
             <Pagination.Prev
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={effectivePage === 1}
+              onClick={() => setCurrentPage(effectivePage - 1)}
             />
             {[...Array(totalPages).keys()].map((key, i) => (
               <Pagination.Item
                 key={`page_${key}`}
-                active={i + 1 === currentPage}
+                active={i + 1 === effectivePage}
                 onClick={() => setCurrentPage(i + 1)}
               >
                 {i + 1}
               </Pagination.Item>
             ))}
             <Pagination.Next
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={effectivePage === totalPages}
+              onClick={() => setCurrentPage(effectivePage + 1)}
             />
           </Pagination>
         )}
@@ -467,7 +460,7 @@ export default function NoticeButton() {
     );
   };
 
-  const renderModal = useCallback(() => (
+  const renderModal = () => (
     <AppModal
       title="Notifications"
       show={showModal}
@@ -493,7 +486,7 @@ export default function NoticeButton() {
         {renderBody()}
       </div>
     </AppModal>
-  ), [showModal, handleHide, renderBody, messageAck]);
+  );
 
   // Runs once on mount: fetch config, then start polling.
   // All dependencies are stable (never recreated), so this effect
@@ -561,4 +554,6 @@ export default function NoticeButton() {
       {renderModal()}
     </>
   );
-}
+};
+
+export default NoticeButton;

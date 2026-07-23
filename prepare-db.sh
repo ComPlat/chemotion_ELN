@@ -38,7 +38,7 @@ then
       bundle exec rake db:migrate
   fi
 else
-  # if RAKE_DB_MIGRATE is set to always or once, run rake db:setup
+  # if RAKE_DB_MIGRATE is set to always or once, create/migrate/seed
   if [ "$RAKE_DB_MIGRATE" = "always" ] || [ "$RAKE_DB_MIGRATE" = "once" ]
   then
     echo "================================================"
@@ -49,10 +49,17 @@ else
     bundle exec rake db:migrate
     bundle exec rake db:seed
   else
+    # RAKE_DB_MIGRATE=never on a fresh DB: create the database and load the
+    # committed schema. We deliberately avoid `rake db:setup` (which reseeds and
+    # was the historical source of confusing failures). Schema load enables the
+    # rdkit extension, so it requires the rdkit-enabled Postgres image
+    # (see DOCKER_PG_IMAGE in docker-compose.dev.yml).
     echo "================================================"
-    echo "Database does not exist, running 'rake db:setup'"
+    echo "Database does not exist, RAKE_DB_MIGRATE=never"
+    echo "running 'rake db:create' + 'rake db:schema:load' (no seed)"
     echo "================================================"
-    bundle exec rake db:setup
+    bundle exec rake db:create
+    bundle exec rake db:schema:load
   fi
 fi
 

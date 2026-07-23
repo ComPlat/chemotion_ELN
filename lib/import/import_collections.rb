@@ -103,6 +103,7 @@ module Import
     end
 
     def import
+      @lcss_batch = []
       ActiveRecord::Base.transaction do
         gate_collection if @gt == true
         import_collections if @gt == false
@@ -132,6 +133,8 @@ module Import
         import_literals
       end
       reprocess_reaction_svgs
+    ensure
+      Molecule.schedule_lcss_batch(@lcss_batch)
     end
 
     def import!
@@ -284,10 +287,14 @@ module Import
           molecule = find_or_create_molecule_for_polymer_molfile(molfile.to_s)
         end
         # Always use molfile if available (highest priority)
-        molecule ||= Molecule.find_or_create_by_molfile(molfile) if molfile.present?
+        if molfile.present?
+          molecule ||= Molecule.find_or_create_by_molfile(molfile, lcss_batch: @lcss_batch)
+        end
 
         # Use cano_smiles if molfile is missing or invalid but cano_smiles is available
-        molecule ||= Molecule.find_or_create_by_cano_smiles(cano_smiles) if cano_smiles.present?
+        if cano_smiles.present?
+          molecule ||= Molecule.find_or_create_by_cano_smiles(cano_smiles, lcss_batch: @lcss_batch)
+        end
         # Create dummy only for decoupled samples with no structure data
         molecule ||= Molecule.find_or_create_dummy if fields.fetch('decoupled', nil)
 
@@ -834,59 +841,7 @@ module Import
     # Mirrors logic in Import::ImportSamples#get_data_from_molfile.
     # @return [Molecule, nil] the molecule or nil if cleaned molfile is blank
     def find_or_create_molecule_for_polymer_molfile(raw_molfile)
-      cleaned = Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
-      return nil if cleaned.blank?
-
-      molfile_for_babel = cleaned.dup
-      molfile_for_babel = "\n#{molfile_for_babel}" unless molfile_for_babel.start_with?("\n")
-      molfile_for_babel = "#{molfile_for_babel}\n" unless molfile_for_babel.end_with?("\n")
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
-      inchikey = babel_info[:inchikey]
-
-      molecule = if inchikey.present?
-                   Molecule.find_or_create_by_molfile(raw_molfile, babel_info)
-                 else
-                   find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
-                 end
-      return molecule unless molecule.present?
-
-      reprocessed_svg = Molecule.svg_reprocess(nil, raw_molfile, service: :indigo)
-      if reprocessed_svg.present?
-        molecule.attach_svg(reprocessed_svg)
-        molecule.molfile = raw_molfile if molecule.molfile.to_s != raw_molfile
-        molecule.save
-      end
-      molecule
-    end
-
-    # Remove PolymersList, TextNode and other SDF blocks, then keep only CTAB (up to M  END).
-    def clean_molfile_for_inchikey(raw_molfile)
-      Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
-    end
-
-    # Keep only the CTAB (up to and including M END). Strip SDF blocks that can break Open Babel.
-    def sanitize_molfile_for_import(molfile)
-      Chemotion::MolfilePolymerSupport.keep_only_ctab(molfile)
-    end
-
-    # When Open Babel returns blank inchikey for a PolymersList molfile, create a molecule with a synthetic inchikey.
-    def find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
-      synthetic_inchikey = "POLYMER_#{Digest::SHA256.hexdigest(raw_molfile)}"
-      formula = babel_info[:formula].to_s.presence || ''
-      molecule = Molecule.find_by(inchikey: synthetic_inchikey, is_partial: true, sum_formular: formula)
-      if molecule
-        molecule.molfile = raw_molfile
-        molecule.save!
-      else
-        molecule = Molecule.new(
-          inchikey: synthetic_inchikey,
-          is_partial: true,
-          sum_formular: formula,
-          molfile: raw_molfile
-        )
-        molecule.save!
-      end
-      molecule
+      Import::PolymerMoleculeResolver.call(raw_molfile, lcss_batch: @lcss_batch, unescape_octal: false).molecule
     end
 
     # Sort records by created_at timestamp

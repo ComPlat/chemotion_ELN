@@ -2,10 +2,6 @@ import React from 'react';
 import expect from 'expect';
 import Enzyme, { shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
-
 import { Button } from 'react-bootstrap';
 
 import Container from 'src/models/Container';

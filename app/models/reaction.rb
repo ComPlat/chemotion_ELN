@@ -15,10 +15,13 @@
 #  name                   :string
 #  observation            :text
 #  origin                 :jsonb
+#  ph_operator            :string           default("="), not null
+#  ph_value               :float
 #  plain_text_description :text
 #  plain_text_observation :text
 #  purification           :string           default([]), is an Array
 #  reaction_svg_file      :string
+#  reaction_type          :string           default("standard"), not null
 #  rf_value               :string
 #  rinchi_long_key        :text
 #  rinchi_short_key       :string
@@ -35,6 +38,7 @@
 #  tlc_description        :text
 #  tlc_solvents           :string
 #  use_reaction_volume    :boolean          default(FALSE), not null
+#  lock_reaction_volume   :boolean          default(FALSE), not null
 #  variations             :jsonb
 #  vessel_size            :jsonb
 #  volume                 :decimal(10, 4)
@@ -53,6 +57,11 @@
 
 # rubocop:disable Metrics/ClassLength
 class Reaction < ApplicationRecord
+  enum reaction_type: {
+    standard: 'standard',
+    interaction: 'interaction',
+  }
+
   has_logidze
   acts_as_paranoid
   include ElementUIStateScopes
@@ -160,6 +169,7 @@ class Reaction < ApplicationRecord
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
 
+  before_validation :set_default_reaction_type
   before_save :update_svg_file!
   before_save :cleanup_array_fields
   before_save :scrub
@@ -171,6 +181,8 @@ class Reaction < ApplicationRecord
   after_create :update_counter
 
   has_one :container, as: :containable
+
+  validates :reaction_type, inclusion: { in: Reaction.reaction_types.keys }
 
   def self.get_associated_samples(reaction_ids)
     ReactionsSample.where(reaction_id: reaction_ids).pluck(:sample_id)
@@ -247,11 +259,15 @@ class Reaction < ApplicationRecord
       # SBMM reactants are stored in a separate association, so append them explicitly.
       paths[:reactants] += reactant_sbmm_samples.map { |sbmm_sample| [sbmm_sample.svg_text_path] }
       begin
-        composer = SVG::ReactionComposer.new(paths, temperature: temperature_display_with_unit,
-                                                    duration: duration,
-                                                    solvents: solvents_in_svg,
-                                                    conditions: conditions,
-                                                    show_yield: true)
+        composer_options = {
+          temperature: temperature_display_with_unit,
+          duration: duration,
+          solvents: solvents_in_svg,
+          conditions: conditions,
+          show_yield: !interaction?,
+        }
+        composer_class = interaction? ? SVG::ProductsComposer : SVG::ReactionComposer
+        composer = composer_class.new(paths, composer_options)
         self.reaction_svg_file = composer.compose_reaction_svg_and_save
       rescue StandardError => _e
         Rails.logger.info('**** SVG::ReactionComposer failed ***')
@@ -326,6 +342,10 @@ class Reaction < ApplicationRecord
   end
 
   private
+
+  def set_default_reaction_type
+    self.reaction_type = 'standard' if reaction_type.blank?
+  end
 
   def scrubber(value)
     Chemotion::Sanitizer.scrub_xml(value)

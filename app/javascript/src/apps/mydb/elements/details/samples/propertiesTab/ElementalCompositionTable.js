@@ -2,10 +2,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Table } from 'react-bootstrap';
 import NumeralInput from 'src/apps/mydb/elements/details/NumeralInput';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export default class ElementalCompositionTable extends React.Component {
-  static checkElementsSum(experimentalData) {
+  static contextType = StoreContext;
+  checkElementsSum(experimentalData) {
     let sum = 0.0;
     Object.values(experimentalData).forEach((value) => {
       if (value && value !== '') {
@@ -14,7 +15,7 @@ export default class ElementalCompositionTable extends React.Component {
     });
 
     if (sum > 100.0) {
-      NotificationActions.add({
+      this.context.notifications.add({
         message: 'Percentage sum is more than 100%',
         level: 'error'
       });
@@ -47,7 +48,7 @@ export default class ElementalCompositionTable extends React.Component {
     const updatedData = { ...experimentalComposition.data };
     updatedData[element] = value;
 
-    if (ElementalCompositionTable.checkElementsSum(updatedData)) {
+    if (this.checkElementsSum(updatedData)) {
       const updatedComposition = { ...experimentalComposition, data: updatedData };
       onExperimentalChange(updatedComposition);
     }

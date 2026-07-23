@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 # rubocop:disable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, RSpec/MultipleExpectations, RSpec/NestedGroups, RSpec/ContextWording, RSpec/AnyInstance
-# rubocop:disable Layout/LineLength
 require 'rails_helper'
 
 describe Chemotion::SampleAPI do
@@ -79,7 +78,9 @@ describe Chemotion::SampleAPI do
       }
     end
 
-    let(:subsamples) { Sample.where(name: %w[s1 s2]).where.not(id: [s1.id, s2.id]) }
+    # order(:id) — the example indexes subsamples[0]/[1] and pairs them with s1/s2, so the rows must
+    # come back in creation order rather than whatever order Postgres happens to return.
+    let(:subsamples) { Sample.where(name: %w[s1 s2]).where.not(id: [s1.id, s2.id]).order(:id) }
 
     before do
       s1
@@ -122,6 +123,59 @@ describe Chemotion::SampleAPI do
       expect(collection_sample).not_to be_nil
       collection_sample = CollectionsSample.where(sample_id: s4.id, collection_id: collection.id)
       expect(collection_sample).not_to be_nil
+    end
+
+    context 'when the collection is a read-only share' do
+      let(:permission_level) { CollectionShare::PERMISSION_LEVELS[:read_elements] }
+      let(:s1) { create(:sample, name: 's1', external_label: 'ext1', collections: [shared_collection]) }
+      let(:s2) { create(:sample, name: 's2', external_label: 'ext2', collections: [shared_collection]) }
+      let(:params) do
+        {
+          ui_state: {
+            sample: { all: true, included_ids: [], excluded_ids: [] },
+            currentCollectionId: shared_collection.id,
+          },
+        }
+      end
+
+      it 'is rejected as unauthorized and creates no subsamples' do
+        expect(response).to have_http_status :unauthorized
+        expect(Sample.where(name: %w[s1 s2]).count).to eq 2
+      end
+    end
+
+    # Regression: the split must be authorized against the *target* collection, not the records.
+    # Here the sample is in a read-only target collection AND another collection shared at
+    # :add_elements. ElementsPolicy#share_all? takes MAX(permission_level) across both and would
+    # wrongly allow the split; gating on the target collection correctly forbids it.
+    context 'when the read-only target sample is also shared elsewhere with :add_elements' do
+      let(:sharer) { create(:person) }
+      let(:read_only_collection) do
+        create(:collection, user: sharer).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:writable_collection) do
+        create(:collection, user: sharer).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:add_elements])
+        end
+      end
+      let(:s1) { create(:sample, name: 's1', collections: [read_only_collection, writable_collection]) }
+      let(:params) do
+        {
+          ui_state: {
+            sample: { all: false, included_ids: [s1.id], excluded_ids: [] },
+            currentCollectionId: read_only_collection.id,
+          },
+        }
+      end
+
+      it 'is rejected as unauthorized and creates no subsamples' do
+        expect(response).to have_http_status :unauthorized
+        expect(Sample.where(name: 's1').count).to eq 1
+      end
     end
   end
 
@@ -170,14 +224,17 @@ describe Chemotion::SampleAPI do
         }
       end
 
-      it 'is able to import new samples' do
-        expect(
-          JSON.parse(response.body)['message'],
-        ).to eq "This file contains 2 Molecules.\n2 Molecules processed. "
+      it 'enqueues an async import and creates samples when the job runs' do
+        # Endpoint now returns async job status instead of a synchronous preview
+        response_data = JSON.parse(response.body)
+        expect(response_data['status']).to eq 'in progress'
+        expect(response_data['message']).to eq 'Importing samples in the background'
 
-        expect(JSON.parse(response.body)['sdf']).to be true
+        # Execute the enqueued job
+        perform_enqueued_jobs
 
-        expect(JSON.parse(response.body)['data'].count).to eq 2
+        # Verify molecules and samples were created end-to-end
+        expect(Sample.count).to eq 2
       end
     end
 
@@ -354,154 +411,42 @@ describe Chemotion::SampleAPI do
     end
   end
 
-  describe 'POST /api/v1/samples/confirm_import/' do
-    before do
-      create(:molecule, inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N', is_partial: false)
-      create(:molecule, inchikey: 'UGSFIVDHFJJCBJ-UHFFFAOYSA-M', is_partial: false)
-
-      post '/api/v1/samples/confirm_import', params: params, as: :json
+  describe 'POST /api/v1/samples/import/ LCSS scheduling (regression for chemotion#552)' do
+    let(:params) do
+      {
+        currentCollectionId: collection.id,
+        file: fixture_file_upload(Rails.root.join('spec/fixtures/import_sample_data.sdf'), 'chemical/x-mdl-sdfile'),
+        import_type: 'sample',
+      }
     end
 
-    context 'when parameters are valid' do
-      let(:params) do
-        {
-          currentCollectionId: collection.id,
-          mapped_keys: {
-            description: %w[
-              MOLECULE_NAME
-              SAFETY_R_S
-              SMILES_STEREO
-            ],
-            short_label: 'EMP_FORMULA_SHORT',
-            target_amount: 'AMOUNT',
-            real_amount: 'REAL_AMOUNT',
-            density: 'DENSITY_20',
-            decoupled: 'MOLECULE-LESS',
-            molarity: 'MOLARITY',
-            melting_point: 'melting_point',
-            boiling_point: 'boiling_point',
-            location: 'location',
-            external_label: 'external_label',
-            name: 'name',
-          },
-          rows: [{
-            inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N',
-            molfile: build(:molfile, type: 'mf_with_data_01'),
-            description: "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n",
-            short_label: 'C9H12ClNO2',
-            target_amount: '10 g /  g',
-            real_amount: '15mg/mg',
-            density: '30 g/mL',
-            decoupled: 'f',
-            molarity: '900',
-            melting_point: '900.0',
-            boiling_point: '900.0-1500.0',
-            location: 'location',
-            external_label: 'external_label',
-            name: 'name',
-          }],
-        }
-      end
+    it 'imports all new molecules and schedules exactly one PubchemSingleLcssJob for the whole batch' do
+      # chemotion#552 was a NoMethodError inside Molecule#get_lcss's own
+      # per-molecule Delayed::Job query, triggered by a concurrently-running
+      # worker draining that queue mid-import. get_lcss no longer queries
+      # Delayed::Job at all (see Molecule.find_or_create_by_molfile's
+      # lcss_batch: parameter and Import::ImportSdf#find_or_create_mol_by_batch)
+      # — this asserts the replacement behavior end-to-end: the whole SDF
+      # import (2 new molecules) enqueues a single batched job, not one per molecule.
+      scheduled_ids = nil
+      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
 
-      it 'is able to create samples from an array of inchikeys' do
-        expect(
-          JSON.parse(response.body)['message'],
-        ).to eq "This file contains 1 Molecules.\nCreated 1 sample. \nImport successful! "
+      post(
+        '/api/v1/samples/import/',
+        params: params,
+        headers: {
+          'HTTP_ACCEPT' => '*/*',
+          'CONTENT_TYPE' => 'multipart/form-data',
+        },
+      )
 
-        expect(
-          JSON.parse(response.body)['sdf'],
-        ).to be true
+      expect(JSON.parse(response.body)['status']).to eq 'in progress'
 
-        expect(
-          JSON.parse(response.body)['status'],
-        ).to eq 'ok'
+      # LCSS scheduling now happens inside ImportSamplesJob (find_or_create_mol_by_batch)
+      perform_enqueued_jobs
 
-        molecule = Molecule.find_by(inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N')
-        sample = Sample.find_by(molecule_id: molecule.id)
-
-        expect(sample['target_amount_value']).to eq 10
-        expect(sample['target_amount_unit']).to eq 'g'
-        expect(sample['real_amount_value']).to eq 15
-        expect(sample['real_amount_unit']).to eq 'mg'
-        expect(sample['short_label']).to eq 'C9H12ClNO2'
-        expect(sample['density']).to eq 30
-        expect(sample['description']).to eq "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n"
-        expect(sample['location']).to eq 'location'
-        expect(sample['external_label']).to eq 'external_label'
-        expect(sample['name']).to eq 'name'
-        expect(sample['molarity_value']).to eq 0.0
-
-        expect(sample['boiling_point']).to eq 900.0..1500.0
-        expect(sample['melting_point']).to eq 900.0...Float::INFINITY
-      end
-    end
-
-    context 'when data type mapping is wrong' do
-      let(:params) do
-        {
-          currentCollectionId: collection.id,
-          mapped_keys: {
-            description: %w[
-              MOLECULE_NAME
-              SAFETY_R_S
-              SMILES_STEREO
-            ],
-            short_label: 'EMP_FORMULA_SHORT',
-            target_amount: 'AMOUNT',
-            real_amount: 'REAL_AMOUNT',
-            density: 'DENSITY_20',
-            decoupled: 'MOLECULE-LESS',
-          },
-          rows: [{
-            inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N',
-            molfile: build(:molfile, type: 'mf_with_data_01'),
-            description: "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n",
-            short_label: 'C9H12ClNO2',
-            target_amount: 'Test data',
-            real_amount: 'Test',
-            density: 'Test',
-            decoupled: 'f',
-            molarity: '900sdadsad',
-            melting_point: '900',
-            boiling_point: '1000',
-            location: 'location',
-            external_label: 'external_label',
-            name: 'name',
-          }],
-        }
-      end
-
-      it 'is able to import new samples' do
-        expect(
-          JSON.parse(response.body)['message'],
-        ).to eq "This file contains 1 Molecules.\nCreated 1 sample. \nImport successful! "
-
-        expect(
-          JSON.parse(response.body)['sdf'],
-        ).to be true
-
-        expect(
-          JSON.parse(response.body)['status'],
-        ).to eq 'ok'
-
-        molecule = Molecule.find_by(inchikey: 'DTHMTBUWTGVEFG-DDWIOCJRSA-N')
-        sample = Sample.find_by(molecule_id: molecule.id)
-
-        expect(sample['target_amount_value']).to eq 0
-        expect(sample['target_amount_unit']).to eq 'g'
-        expect(sample['real_amount_value']).to eq 0
-        expect(sample['real_amount_unit']).to eq 'g'
-        expect(sample['short_label']).to eq 'C9H12ClNO2'
-        expect(sample['density']).to eq 0
-        expect(sample['description']).to eq "MOLECULE_NAME\n(R)-Methyl-2-amino-2-phenylacetate hydrochloride ?96%; (R)-(?)-2-Phenylglycine methyl ester hydrochloride\n\nSAFETY_R_S\nH: 319; P: 305+351+338\n\nSMILES_STEREO\n[Cl-].COC(=O)[C@H](N)c1ccccc1.[H+]\n"
-        expect(sample['location']).to eq 'location'
-        expect(sample['external_label']).to eq 'external_label'
-        expect(sample['name']).to eq 'name'
-        expect(sample['molarity_value']).to eq 0.0
-
-        expect(sample['boiling_point']).to eq 1000.0...Float::INFINITY
-        expect(sample['melting_point']).to eq 900.0...Float::INFINITY
-      end
+      expect(PubchemSingleLcssJob).to have_received(:perform_later).once
+      expect(scheduled_ids.size).to eq 2
     end
   end
 
@@ -653,12 +598,22 @@ describe Chemotion::SampleAPI do
         end
       end
 
+      # can_publish is gated on ElementPolicy#destroy?, which is owner-only: a sharee never publishes
+      # someone else's sample, at any rung.
       context 'when permission_level = 3' do
         let(:permission_level) { 3 }
 
         it 'returns correct can_publish & can_update' do
           expect(JSON.parse(response.body)['sample']['can_update']).to be true
-          expect(JSON.parse(response.body)['sample']['can_publish']).to be true
+          expect(JSON.parse(response.body)['sample']['can_publish']).to be false
+        end
+      end
+
+      context 'when permission_level is the highest rung' do
+        let(:permission_level) { CollectionShare.permission_level(:pass_ownership) }
+
+        it 'still cannot publish, because publishing is owner-only' do
+          expect(JSON.parse(response.body)['sample']['can_publish']).to be false
         end
       end
     end
@@ -905,6 +860,81 @@ describe Chemotion::SampleAPI do
       it 'can be set to false' do
         sample.dry_solvent = false
         expect(sample.dry_solvent).to be(false)
+      end
+    end
+
+    context 'when collection_id points to a read-only shared collection' do
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:params) do
+        {
+          name: 'forbidden_sample',
+          target_amount_value: 0,
+          target_amount_unit: 'g',
+          description: '',
+          purity: 1,
+          location: '',
+          is_top_secret: false,
+          molfile: build(:molfile, type: 'test_2'),
+          xref: {},
+          container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
+          collection_id: read_only_collection.id,
+        }
+      end
+
+      before { post '/api/v1/samples', params: params, as: :json }
+
+      it 'returns 403 forbidden' do
+        expect(response).to have_http_status :forbidden
+      end
+
+      it 'does not create the sample' do
+        expect(Sample.find_by(name: 'forbidden_sample')).to be_nil
+      end
+
+      it 'does not increment the short_label counter' do
+        expect { post '/api/v1/samples', params: params, as: :json }
+          .not_to(change { user.reload.counters['samples'] })
+      end
+    end
+
+    context 'when collection_id points to a writable shared collection' do
+      let(:writable_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:add_elements])
+        end
+      end
+      let(:params) do
+        {
+          name: 'shared_write_test',
+          target_amount_value: 0,
+          target_amount_unit: 'g',
+          description: '',
+          purity: 1,
+          location: '',
+          is_top_secret: false,
+          molfile: build(:molfile, type: 'test_2'),
+          xref: {},
+          container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
+          collection_id: writable_collection.id,
+        }
+      end
+
+      before { post '/api/v1/samples', params: params, as: :json }
+
+      it 'returns 201 created' do
+        expect(response).to have_http_status :created
+      end
+
+      it 'creates the sample in the shared collection' do
+        sample = Sample.find_by(name: 'shared_write_test')
+        expect(sample).not_to be_nil
+        expect(sample.collections).to include(writable_collection)
       end
     end
   end
@@ -1237,5 +1267,4 @@ describe Chemotion::SampleAPI do
     end
   end
 end
-# rubocop:enable Layout/LineLength
 # rubocop:enable RSpec/MultipleMemoizedHelpers, RSpec/IndexedLet, RSpec/MultipleExpectations, RSpec/NestedGroups, RSpec/ContextWording, RSpec/AnyInstance

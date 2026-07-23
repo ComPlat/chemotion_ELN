@@ -1,8 +1,5 @@
 /* eslint-disable no-undef */
 import assert from 'assert';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
 import { addPolymerTags } from 'src/utilities/ketcherSurfaceChemistry/PolymersTemplates';
 import { ALIAS_PATTERNS } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { deepCompareContent } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
@@ -45,7 +42,7 @@ import {
   deleteImageWithThreeOldPack,
   deleteAtomAndRemoveImageKet,
   molfileWithPolymerList,
-} from '../../../data/ketcher_mockups';
+} from 'data/ketcher_mockups';
 import templates from '../../../../../public/json/surfaceChemistryShapes.json';
 
 describe('Ketcher', () => {

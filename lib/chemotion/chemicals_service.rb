@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module Chemotion
+  # rubocop:disable Metrics/ClassLength
   class ChemicalsService
     MAP_GERMAN_TO_ENGLISH_PROPERTIES = {
       'qualitätsniveau' => 'quality level',
@@ -26,26 +27,129 @@ module Chemotion
     }.freeze
 
     SAFETY_SHEETS_DIR = 'public/safety_sheets'
+    ALLOWED_DOMAINS = %w[sigmaaldrich.com].freeze
 
+    # Sending only a User-Agent + `Accept: */*`
+    # (and the CORS-preflight `Access-Control-Request-Method` header) is treated
+    # as automated, so `__NEXT_DATA__` returns Nil. The header set below
+    # mirrors a real Chrome document navigation to avoid bot screening.
+    #
+    # Accept-Encoding is intentionally NOT set: Net::HTTP only transparently
+    # decompresses gzip when it adds the header itself. Advertising it manually
+    # (especially brotli) yields an undecoded body that Nokogiri can't parse.
     def self.request_options
       { headers: {
-          'Access-Control-Request-Method' => 'GET',
-          'Accept' => '*/*',
-          'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0',
-          'Accept-Encoding': 'gzip, deflate, br',
-          Connection: 'keep-alive',
+          'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          'Accept-Language' => 'de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7',
+          'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' \
+                          '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'sec-ch-ua' => '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+          'sec-ch-ua-mobile' => '?0',
+          'sec-ch-ua-platform' => '"Linux"',
+          'Sec-Fetch-Dest' => 'document',
+          'Sec-Fetch-Mode' => 'navigate',
+          'Sec-Fetch-Site' => 'none',
+          'Sec-Fetch-User' => '?1',
+          'Upgrade-Insecure-Requests' => '1',
+          'Connection' => 'keep-alive',
         },
         timeout: 15,
-        follow_redirects: true }
+        follow_redirects: false }
     end
 
     def self.merck_request(name)
-      string = name.gsub(/\s/, '-')
-      merck_res = HTTParty.get("https://www.sigmaaldrich.com/US/en/search/#{string}?focus=products
-                                &page=1&perpage=30&sort=relevance&term=#{string}&type=product", request_options)
-      Nokogiri::HTML.parse(merck_res.body).xpath("//*[contains(@class, 'MuiTableBody-root')]").children[0].children[2]
-                    .children[0].attributes['href'].value
+      string = CGI.escape(name.gsub(/\s/, '-'))
+      url = "https://www.sigmaaldrich.com/DE/de/search/#{string}" \
+            "?focus=products&page=1&perpage=30&sort=relevance&term=#{string}&type=product"
+      safe_url = validate_url_for_request!(url)
+      merck_res = HTTParty.get(safe_url, request_options)
+      doc = Nokogiri::HTML.parse(merck_res.body.to_s)
+
+      href = extract_product_href_from_next_data(doc) || extract_product_href_from_html(doc)
+      raise StandardError, 'Product link not found on Sigma-Aldrich search page' unless href
+
+      href
     end
+
+    # Primary: read ROOT_QUERY.getNewProductSearchResults(...).products[0] from the
+    # Apollo GraphQL cache that Next.js embeds in __NEXT_DATA__. Product objects in
+    # the cache carry brandKey and productNumber but no URL, so we construct it.
+    def self.extract_product_href_from_next_data(doc)
+      script = doc.at_css('#__NEXT_DATA__')
+      return nil unless script
+
+      data = JSON.parse(script.text)
+      extract_product_href_from_apollo_state(data)
+    rescue JSON::ParserError, TypeError
+      nil
+    end
+
+    # Construct the canonical /DE/de/product/{brand}/{number} path from the first
+    # entry in the Apollo GraphQL cache search results.
+    def self.extract_product_href_from_apollo_state(data)
+      first = apollo_first_search_product(data)
+      return nil unless first
+
+      brand_key = first['brandKey'].to_s.downcase
+      product_number = first['productNumber'].to_s
+      return nil if brand_key.empty? || product_number.empty?
+
+      "/DE/de/product/#{brand_key}/#{product_number}"
+    end
+
+    # Return the first product object from ROOT_QUERY.getNewProductSearchResults.
+    def self.apollo_first_search_product(data)
+      root_query = data.dig('props', 'apolloState', 'ROOT_QUERY') ||
+                   data.dig('apolloState', 'ROOT_QUERY')
+      return nil unless root_query.is_a?(Hash)
+
+      sr_key = root_query.keys.find { |k| k.start_with?('getNewProductSearchResults') }
+      return nil unless sr_key
+
+      products = root_query.dig(sr_key, 'products')
+      products.is_a?(Array) ? products.first : nil
+    end
+
+    # Last-resort fallback: first anchor whose href matches the product path pattern.
+    def self.extract_product_href_from_html(doc)
+      product_path_re = %r{\A/[A-Z]{2}/[a-z]{2}/product/}i
+      doc.css("a[href*='/product/']").map { |a| a['href'] }.find { |h| h.match?(product_path_re) }
+    end
+
+    # Validate that a URL is safe to request (SSRF protection).
+    # Redirects are disabled in request_options so whitelisted URLs cannot
+    # redirect to untrusted hosts.
+    # Returns a URI reconstructed from parsed components so callers receive a
+    # taint-free string even when the input originated from user data.
+    def self.validate_url_for_request!(url)
+      raise StandardError, 'URL cannot be nil or empty' if url.blank?
+
+      parsed_uri = URI.parse(url)
+      raise StandardError, 'Invalid URL scheme' unless %w[https].include?(parsed_uri.scheme)
+      raise StandardError, 'URL host cannot be empty' if parsed_uri.host.blank?
+      raise StandardError, "Domain #{parsed_uri.host} is not allowed" unless allowed_host?(parsed_uri.host)
+
+      # Return the URI rebuilt from parsed components to break the taint flow.
+      parsed_uri.to_s
+    rescue URI::InvalidURIError
+      raise StandardError, 'Invalid URL format'
+    end
+
+    # Returns true when +host+ matches an entry in ALLOWED_DOMAINS exactly or
+    # as a subdomain (e.g. "www.sigmaaldrich.com" matches "sigmaaldrich.com").
+    def self.allowed_host?(host)
+      normalized = host.to_s.downcase
+      ALLOWED_DOMAINS.any? do |allowed|
+        normalized == allowed || normalized.end_with?(".#{allowed}")
+      end
+    end
+
+    private_class_method :extract_product_href_from_next_data,
+                         :extract_product_href_from_apollo_state,
+                         :apollo_first_search_product,
+                         :extract_product_href_from_html,
+                         :validate_url_for_request!,
+                         :allowed_host?
 
     def self.merck(name, language)
       product_number_string = merck_request(name)
@@ -59,14 +163,13 @@ module Chemotion
       'Could not find safety data sheet from Merck'
     end
 
-    # Validate product number to avoid URLs or query strings being treated as product IDs
-    # Only allow letters, digits, hyphen and underscore. Reject any other characters.
+    # Validate product number: allow letters, digits, hyphen, underscore, dot.
     def self.validate_product_number!(product_number)
       if product_number.nil? || product_number.to_s.strip.empty?
         raise StandardError, 'Could not find safety data sheet from Merck'
       end
 
-      allowed_pattern = /\A[A-Za-z0-9\-_]+\z/
+      allowed_pattern = /\A[A-Za-z0-9\-_.]+\z/
       return if product_number.to_s.match?(allowed_pattern)
 
       raise StandardError, 'Could not find safety data sheet from Merck'
@@ -85,7 +188,9 @@ module Chemotion
 
     def self.alfa(name, language)
       chosen_lang = { 'en' => 'EE', 'de' => 'DE', 'fr' => 'FR' }
-      alfa_req = HTTParty.get("https://www.alfa.com/en/search/?q=#{name}", request_options)
+      url = "https://www.alfa.com/en/search/?q=#{CGI.escape(name)}"
+      safe_url = validate_url_for_request!(url)
+      alfa_req = HTTParty.get(safe_url, request_options)
       alfa_link = "https://www.alfa.com/en/msds/?language=#{chosen_lang[language]}&subformat=CLP1&sku=#{alfa_product(alfa_req)}"
       { 'alfa_link' => alfa_link, 'alfa_product_number' => alfa_product(alfa_req),
         'alfa_product_link' => "https://www.alfa.com/en/catalog/#{alfa_product(alfa_req)}" }
@@ -132,9 +237,10 @@ module Chemotion
     end
 
     def self.request_pdf_file(link, file_path)
+      safe_url = validate_url_for_request!(link)
       options = request_options.dup
       options[:headers]['Origin'] = 'https://www.sigmaaldrich.com'
-      req_safety_sheet = HTTParty.get(link, options)
+      req_safety_sheet = HTTParty.get(safe_url, options)
       if req_safety_sheet.headers['Content-Type'] == 'application/pdf'
         File.binwrite(file_path, req_safety_sheet)
         sleep 1
@@ -163,59 +269,77 @@ module Chemotion
     end
 
     def self.health_section(product_number)
-      alfa_req = HTTParty.get("https://www.alfa.com/en/catalog/#{product_number}/", request_options)
+      url = "https://www.alfa.com/en/catalog/#{CGI.escape(product_number)}/"
+      safe_url = validate_url_for_request!(url)
+      alfa_req = HTTParty.get(safe_url, request_options)
       Nokogiri::HTML.parse(alfa_req.body).xpath("//*[contains(@id, 'health')]")
                     .children[1].children[1].children[1]
     end
 
-    def self.construct_h_statements(h_phrases, vendor = nil)
+    def self.construct_h_statements(h_phrases)
       h_statements = {}
-      h_phrases_hash = JSON.parse(File.read('./public/json/hazardPhrases.json'))
+      h_phrases_hash = load_hazard_phrases_hash
+      h_array = normalize_phrases_to_array(h_phrases, 'H')
 
-      # Normalize input to an array of hazard codes (e.g. ["H301", "H314"])
-      h_array = if h_phrases.is_a?(String)
-                  h_phrases.scan(/H\d{1,3}[A-Za-z0-9]*/)
-                elsif h_phrases.is_a?(Array)
-                  h_phrases
-                else
-                  []
-                end
-
-      h_array.each do |element|
-        code = element.to_s.strip
-        next if code.empty?
-
-        if (value = h_phrases_hash[code])
-          h_statements[code] = " #{value}"
-        end
+      h_array.each do |code|
+        process_statement(code, h_phrases_hash, h_statements)
       end
 
       h_statements
     end
 
+    def self.process_statement(code, phrases_hash, statements)
+      code = code.to_s.strip
+      return if code.empty?
+
+      if (value = phrases_hash[code])
+        # Exact match (single code or a combined code such as "P305+P351+P338"):
+        # store it as one statement.
+        statements[code] = " #{value}"
+      elsif code.include?('+')
+        # Combined code with no combined entry in the lookup table: fall back to its
+        # individual parts so the available statements are still surfaced.
+        code.split('+').each do |part|
+          statements[part] = " #{phrases_hash[part]}" if phrases_hash[part]
+        end
+      end
+    end
+
+    # Split a phrase string into the codes used as lookup keys.
+    #
+    # A single code is an optional "EU" prefix (for supplemental EUH### statements),
+    # the H/P letter, 1-3 digits, and optional sub-category letters (e.g. EUH071,
+    # H360FD, H350i). Codes joined by "+" (e.g. "P305 + P351 + P338") are kept
+    # together as one token so they resolve to the combined statement rather than
+    # being split into separate phrases; inner whitespace is stripped to match the
+    # JSON keys (e.g. "P305+P351+P338").
+    def self.normalize_phrases_to_array(phrases, prefix)
+      return phrases.map { |p| p.to_s.gsub(/\s+/, '') }.reject(&:empty?) if phrases.is_a?(Array)
+
+      return [] unless phrases.is_a?(String)
+
+      atom = /(?:EU)?#{prefix}\d{1,3}[A-Za-z]*/
+      phrases.scan(/#{atom}(?:\s*\+\s*#{atom})*/).map { |code| code.gsub(/\s+/, '') }
+    end
+
+    def self.load_hazard_phrases_hash
+      JSON.parse(File.read('./public/json/hazardPhrases.json'))
+    end
+
     def self.construct_p_statements(p_phrases)
       p_statements = {}
-      p_phrases_hash = JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
+      p_phrases_hash = load_precautionary_phrases_hash
+      p_array = normalize_phrases_to_array(p_phrases, 'P')
 
-      # Normalize input to an array of precautionary codes (e.g. ["P102", "P301"])
-      p_array = if p_phrases.is_a?(String)
-                  p_phrases.scan(/P\d{1,3}[A-Za-z0-9]*/)
-                elsif p_phrases.is_a?(Array)
-                  p_phrases
-                else
-                  []
-                end
-
-      p_array.each do |element|
-        code = element.to_s.strip
-        next if code.empty?
-
-        if (value = p_phrases_hash[code])
-          p_statements[code] = " #{value}"
-        end
+      p_array.each do |code|
+        process_statement(code, p_phrases_hash, p_statements)
       end
 
       p_statements
+    end
+
+    def self.load_precautionary_phrases_hash
+      JSON.parse(File.read('./public/json/precautionaryPhrases.json'))
     end
 
     def self.construct_pictograms(pictograms)
@@ -246,44 +370,43 @@ module Chemotion
       'Could not find H and P phrases'
     end
 
-    def self.safety_section(product_link)
-      merck_req = HTTParty.get(product_link, request_options)
-      search_string = 'MuiTypography-root MuiLink-root MuiLink-underlineNone MuiTypography-colorPrimary'
-      Nokogiri::HTML.parse(merck_req.body)
-                    .xpath("//*[contains(@class, '#{search_string}')]")
+    # Fetch and parse __NEXT_DATA__ Apollo state from a Sigma-Aldrich product page.
+    # Returns the first Hash with __typename == 'Product', or nil.
+    def self.fetch_product_from_apollo(product_link)
+      safe_url = validate_url_for_request!(product_link)
+      response = HTTParty.get(safe_url, request_options)
+      doc = Nokogiri::HTML.parse(response.body.to_s)
+      script = doc.at_css('#__NEXT_DATA__')
+      return nil unless script
+
+      apollo = JSON.parse(script.text).dig('props', 'apolloState') || {}
+      apollo.values.find { |v| v.is_a?(Hash) && v['__typename'] == 'Product' }
+    rescue JSON::ParserError, TypeError
+      nil
     end
 
-    def self.extract_h_text_from_array(safety_array)
-      safety_array.find { |t| t =~ /H\d{1,3}/ } || safety_array.find { |t| t.to_s.downcase.include?('hazard') } || ''
-    end
-
-    def self.extract_p_text_from_array(safety_array)
-      p_code_regex = /P\d{1,3}/
-      safety_array.find { |t| t =~ p_code_regex } ||
-        safety_array.find { |t| t.to_s.downcase.include?('precaution') } || ''
-    end
-
-    def self.extract_pictograms_from_array(safety_array)
-      pictogram_text = safety_array.find { |t| t =~ /pictogram|GHS|ghs|,/i } || ''
-      pictogram_text.to_s.split(',').map(&:strip).reject(&:empty?)
-    end
-
-    private_class_method :extract_h_text_from_array, :extract_p_text_from_array, :extract_pictograms_from_array
+    private_class_method :fetch_product_from_apollo
+    private_class_method :process_statement, :normalize_phrases_to_array, :load_hazard_phrases_hash,
+                         :load_precautionary_phrases_hash
 
     def self.safety_phrases_merck(product_link)
-      safety_section = safety_section(product_link)
-      safety_array = safety_section.children.reject { |i| i.text.empty? }.map(&:text)
+      product = fetch_product_from_apollo(product_link)
+      raise StandardError, 'Product not found in Apollo state' unless product
 
-      h_text = extract_h_text_from_array(safety_array)
-      p_text = extract_p_text_from_array(safety_array)
-      pictograms = extract_pictograms_from_array(safety_array)
-
-      { 'h_statements' => construct_h_statements(h_text),
-        'p_statements' => construct_p_statements(p_text),
-        'pictograms' => construct_pictograms(pictograms) }
+      compliance = product['compliance'] || []
+      { 'h_statements' => construct_h_statements(compliance_value(compliance, 'hcodes')),
+        'p_statements' => construct_p_statements(compliance_value(compliance, 'pcodes')),
+        'pictograms' => construct_pictograms(compliance_value(compliance, 'pictograms')) }
     rescue StandardError
       'Could not find H and P phrases'
     end
+
+    # Return the value string for a given key from a compliance array, or ''.
+    def self.compliance_value(compliance, key)
+      compliance.find { |c| c['key'] == key }&.fetch('value', '').to_s
+    end
+
+    private_class_method :compliance_value
 
     def self.chem_properties_alfa(properties)
       chemical_properties = {}
@@ -295,7 +418,8 @@ module Chemotion
     end
 
     def self.chemical_properties_alfa(product_link)
-      alfa_req = HTTParty.get(product_link, request_options)
+      safe_url = validate_url_for_request!(product_link)
+      alfa_req = HTTParty.get(safe_url, request_options)
       properties = Nokogiri::HTML.parse(alfa_req.body).xpath("//*[contains(@id, 'product')]").search('div.col-md-12')
                                  .search('div.col-md-3').text.delete("\t").split("\n\n")
       chem_properties_alfa(properties)
@@ -343,13 +467,18 @@ module Chemotion
     end
 
     def self.chemical_properties_merck(product_link)
-      merck_req = HTTParty.get(product_link, request_options)
-      json_data = Nokogiri::HTML.parse(merck_req.body).at_xpath("//script[@type='application/ld+json']")&.children&.text
-      properties = JSON.parse(json_data)['additionalProperty'] if json_data
-      chem_properties_names = properties.pluck('name')
-      chem_properties_values = properties.map { |property| property['value'].join(', ') }
-      chem_properties_values.compact_blank!
-      chem_properties_merck(chem_properties_names, chem_properties_values)
+      safe_url = validate_url_for_request!(product_link)
+      product = fetch_product_from_apollo(safe_url)
+      raise StandardError, 'Product not found in Apollo state' unless product
+
+      (product['attributes'] || []).each_with_object({}) do |attr, result|
+        property_name = clean_property_name(attr['label'])
+        next unless property_name
+
+        raw_value = Array(attr['values']).join(', ')
+        cleaned_value = Nokogiri::HTML.fragment(CGI.unescapeHTML(raw_value)).text.strip
+        result[property_name] = cleaned_value unless cleaned_value.empty?
+      end
     rescue StandardError
       'Could not find additional chemical properties'
     end
@@ -495,4 +624,5 @@ module Chemotion
       { error: e.message }
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

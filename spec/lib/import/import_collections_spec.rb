@@ -344,6 +344,27 @@ RSpec.describe 'ImportCollection' do
     end
   end
 
+  describe '#find_or_create_molecule_for_polymer_molfile' do
+    let(:import_id) { 'collection_samples' }
+    let(:importer) { Import::ImportCollections.new(nil, user.id) }
+    let(:polymer_molfile) { "some ctab\n> <PolymersList>\ndata" }
+
+    it 'delegates to Import::PolymerMoleculeResolver with unescape_octal: false' do
+      resolved_molecule = create(:molecule)
+      result = Import::PolymerMoleculeResolver::Result.new(
+        molecule: resolved_molecule, raw_molfile: polymer_molfile, babel_info: {},
+      )
+      allow(Import::PolymerMoleculeResolver).to receive(:call).and_return(result)
+      importer.instance_variable_set(:@lcss_batch, [])
+
+      molecule = importer.send(:find_or_create_molecule_for_polymer_molfile, polymer_molfile)
+
+      expect(Import::PolymerMoleculeResolver).to have_received(:call)
+        .with(polymer_molfile, lcss_batch: [], unescape_octal: false)
+      expect(molecule).to eq(resolved_molecule)
+    end
+  end
+
   def copy_target_to_import_folder(import_id)
     src_location = File.join('spec', 'fixtures', 'import', "#{import_id}.zip")
     FileUtils.mkdir_p(File.join('tmp', 'import'))

@@ -3,15 +3,14 @@ import { Button, Card, Row, Col } from 'react-bootstrap';
 import moment from 'moment';
 import uuid from 'uuid';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 const notify = ({ title, msg, lvl }) => {
-  NotificationActions.add({
+  rootStore.notificationsStore.add({
     title,
     message: msg,
     level: lvl,
     position: 'tc',
-    dismissible: 'button',
     uid: uuid.v4(),
   });
 };

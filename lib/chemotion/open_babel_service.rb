@@ -1,4 +1,10 @@
+require Rails.root.join('lib/chemotion/forked_timeout')
+
 module Chemotion::OpenBabelService
+  # Wall-clock bound for svg_from_molfile: some organometallic molfiles make OpenBabel's
+  # native SVG writer hang indefinitely (confirmed reproducer: CCDC record EKOWOR, a
+  # 193-atom/648-bond uranium complex). Env-overridable so it can be retuned without a deploy.
+  SVG_RENDER_TIMEOUT_SECONDS = Integer(ENV.fetch('OPENBABEL_SVG_TIMEOUT_SECONDS', 20))
 
   # mdl V3000
   MOLFILE_COUNT_LINE_START      = 'M  V30 COUNTS '
@@ -111,6 +117,15 @@ M  END
       inchikey = inchi_info[:inchikey]
     end
 
+    svg = svg_from_molfile(mf || molfile)
+    fp = fingerprint_from_molfile(mf || molfile)
+    # Snapshot both log levels together, after every in-process OpenBabel call above, so
+    # ob_log[:error] and ob_log[:warning] stay mutually consistent (fingerprint can log too).
+    # NB: svg_from_molfile runs in a forked child, so its own obErrorLog never reaches here.
+    ob_errors = OpenBabel.obErrorLog.get_messages_of_level(0)
+    warnings = OpenBabel.obErrorLog.get_messages_of_level(1)
+    warnings += ["SVG rendering timed out after #{SVG_RENDER_TIMEOUT_SECONDS}s"] if svg.nil?
+
     {
       charge: m.get_total_charge,
       mol_wt: m.get_mol_wt,
@@ -121,17 +136,17 @@ M  END
       inchikey: inchikey,
       inchi: inchi,
       formula: m.get_formula,
-      svg: svg_from_molfile(mf || molfile),
+      svg: svg,
       cano_smiles: ca_smiles,
-      fp: fingerprint_from_molfile(mf || molfile),
+      fp: fp,
       molfile_version: version,
       is_partial: is_partial,
       # TODO we could return 'molfile' in any case
       # molfile: (format != 'mol' && molfile) || (is_partial && molfile)
       molfile: molfile,
       ob_log: {
-        error: OpenBabel.obErrorLog.get_messages_of_level(0),
-        warning: OpenBabel.obErrorLog.get_messages_of_level(1)
+        error: ob_errors,
+        warning: warnings
       }
     }
 
@@ -155,17 +170,13 @@ M  END
     c.write_string(m, false).to_s
   end
 
-  def self.molecule_info_from_molfiles molfile_array
-    molecule_info = []
-    molfile_array.each do |molfile|
-      begin
-        ob_info = self.molecule_info_from_molfile(molfile)
-      rescue
-        {}
-      end
-      molecule_info << ob_info
+  def self.molecule_info_from_molfiles(molfile_array)
+    molfile_array.map do |molfile|
+      molecule_info_from_molfile(molfile)
+    rescue StandardError => e
+      Rails.logger.error("Chemotion::OpenBabelService.molecule_info_from_molfiles: failed for one record: #{e.message}")
+      nil
     end
-    molecule_info
   end
 
   def self.smiles_to_canon_smiles(smiles)
@@ -400,7 +411,23 @@ M  END
 
   end
 
-  def self.svg_from_molfile molfile, options={}
+  # Process-isolated, timeout-bounded wrapper around svg_from_molfile_unsafe. Some
+  # organometallic molfiles make OpenBabel's native SVG writer hang indefinitely; Ruby's
+  # Timeout.timeout cannot interrupt a blocking native call that doesn't yield back to the
+  # VM, so this uses fork+SIGKILL isolation instead (Chemotion::ForkedTimeout). Returns nil
+  # on timeout rather than raising, so existing callers that already treat a blank/failed
+  # SVG as "fall back to a placeholder" (Molecule.svg_reprocess, SvgRenderer) keep working
+  # unchanged.
+  def self.svg_from_molfile(molfile, options = {})
+    Chemotion::ForkedTimeout.run(SVG_RENDER_TIMEOUT_SECONDS) { svg_from_molfile_unsafe(molfile, options) }
+  rescue Chemotion::ForkedTimeout::TimedOut => e
+    # ForkedTimeout raises TimedOut both on a genuine deadline overrun and when the child
+    # crashed / produced no output; e.message distinguishes the two.
+    Rails.logger.error("Chemotion::OpenBabelService.svg_from_molfile aborted: #{e.message}")
+    nil
+  end
+
+  def self.svg_from_molfile_unsafe(molfile, options = {})
     c = OpenBabel::OBConversion.new
     c.set_in_format 'mol'
     c.set_out_format 'svg'

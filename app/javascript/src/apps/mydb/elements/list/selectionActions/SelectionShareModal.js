@@ -4,8 +4,10 @@ import PropTypes from 'prop-types';
 import { Form } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import { AsyncSelect } from 'src/components/common/Select';
+import CollectionSelect from 'src/components/common/CollectionSelect';
 
 import SelectionSharingShortcuts from 'src/apps/mydb/elements/list/selectionActions/SelectionSharingShortcuts';
+import PermissionIcons from 'src/apps/mydb/collections/PermissionIcons';
 
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -15,6 +17,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import { filterParamsFromUIState } from 'src/utilities/collectionUtilities';
+import { PermissionConst } from 'src/utilities/PermissionConst';
 
 function SelectionShareModal({
   title = 'Sharing of Elements',
@@ -35,12 +38,15 @@ function SelectionShareModal({
   const collectionsStore = useContext(StoreContext).collections;
   const [permissions, setPermissions] = useState(collectionPermissions);
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [newCollectionLabel, setNewCollectionLabel] = useState('');
+  const [parentCollection, setParentCollection] = useState(null);
+  const [applyToSubcollections, setApplyToSubcollections] = useState(false);
   const defaultRole = 'Pick a sharing role';
   const [role, setRole] = useState(defaultRole);
 
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const uiState = UIStore.getState();
-  const displayWarning = permissions.permissionLevel === '5';
+  const displayWarning = Number(permissions.permissionLevel) === PermissionConst.PassOwnership;
   const canSubmit = !showUserSelect || (selectedUsers != null && selectedUsers.length > 0);
   const submitTitle = shareType === 'edit' ? 'Edit Permissions' : 'Create Shared Collection';
 
@@ -64,6 +70,8 @@ function SelectionShareModal({
         uiState: filterParamsFromUIState(uiState),
         users: selectedUsers,
         permissions: permissionsParams,
+        label: newCollectionLabel.trim(),
+        parentId: parentCollection?.id ?? null,
         currentUser,
       };
       collectionsStore.collectionShareForElements(params);
@@ -72,6 +80,7 @@ function SelectionShareModal({
       const params = {
         collection_id: collectionId,
         user_ids: selectedUsers.map((u) => u.id),
+        apply_to_subcollections: applyToSubcollections,
         ...permissionsParams
       };
       collectionsStore.addCollectionShare(params, currentUser, false);
@@ -79,6 +88,7 @@ function SelectionShareModal({
       // edit permissions of collection share
       const params = {
         id: collectionShareId,
+        apply_to_subcollections: applyToSubcollections,
         ...permissionsParams
       };
       collectionsStore.updateCollectionShare(collectionShareId, params);
@@ -116,7 +126,8 @@ function SelectionShareModal({
   };
 
   const handlePermissionLevelChange = (e) => {
-    const val = e.target.value;
+    // <option value> is always a string; the API and the shortcuts both deal in integers.
+    const val = Number(e.target.value);
     setPermissions({ ...permissions, permissionLevel: val });
     setRole(defaultRole);
   };
@@ -170,6 +181,27 @@ function SelectionShareModal({
       primaryActionDisabled={!canSubmit}
     >
       <Form>
+        {shareType === 'new' && (
+          <>
+            <Form.Group className="mb-3" controlId="newCollectionLabel">
+              <Form.Label>New collection name</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Leave empty to use “My project with …”"
+                value={newCollectionLabel}
+                onChange={(e) => setNewCollectionLabel(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="newCollectionParent">
+              <Form.Label>Parent collection (optional)</Form.Label>
+              <CollectionSelect
+                value={parentCollection}
+                withShared={false}
+                onChange={setParentCollection}
+              />
+            </Form.Group>
+          </>
+        )}
         <Form.Group className="mb-3" controlId="shortcutSelect">
           <Form.Label>Role</Form.Label>
           <Form.Select
@@ -189,22 +221,37 @@ function SelectionShareModal({
           <Form.Label>Permission level</Form.Label>
           <Form.Select
             onChange={(e) => handlePermissionLevelChange(e)}
-            value={permissions.permissionLevel || ''}
+            value={permissions.permissionLevel ?? ''}
           >
-            <option value="0">Read</option>
-            <option value="1">Write</option>
-            <option value="2">Share</option>
-            <option value="3">Delete</option>
-            <option value="4">Import Elements</option>
-            <option value="5">Pass ownership</option>
+            <option value={PermissionConst.ReadElements}>Read elements</option>
+            <option value={PermissionConst.EditElements}>Edit elements (+ read)</option>
+            <option value={PermissionConst.AddElements}>Add elements (+ read, edit)</option>
+            <option value={PermissionConst.RemoveElements}>Remove elements (+ read, edit, add)</option>
+            <option value={PermissionConst.ManageShares}>Manage shares (+ read, edit, add, remove)</option>
+            <option value={PermissionConst.PassOwnership}>Pass ownership (+ all of the above)</option>
           </Form.Select>
+          <Form.Text className="d-block">
+            <span className="me-2">Grants:</span>
+            <PermissionIcons pl={Number(permissions.permissionLevel) || 0} />
+            <span className="ms-2 text-muted">Each level also grants all the levels below it.</span>
+          </Form.Text>
           {displayWarning && (
-            <Form.Text>
+            <Form.Text className="d-block">
               <i className="fa fa-exclamation-circle ms-1" aria-hidden="true" />
-              Transfering ownership applies for all sub collections.
+              Transferring ownership applies to all sub-collections.
             </Form.Text>
           )}
         </Form.Group>
+        {(shareType === 'create' || shareType === 'edit') && (
+          <Form.Group className="mb-3" controlId="applyToSubcollections">
+            <Form.Check
+              type="checkbox"
+              label="Apply these share settings to all sub-collections"
+              checked={applyToSubcollections}
+              onChange={(e) => setApplyToSubcollections(e.target.checked)}
+            />
+          </Form.Group>
+        )}
         <Form.Group className="mb-3" controlId="sampleDetailLevelSelect">
           <Form.Label>Sample detail level</Form.Label>
           <Form.Select

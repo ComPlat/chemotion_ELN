@@ -32,9 +32,12 @@
 @import "components/ElementsTable";
 @import "components/ElementGroupsRenderer_ElementListRenderer";
 @import "components/ElementsTable";
+@import "components/GenericElementVariations";
+@import "components/GenericElementVariationsDragHandle";
 @import "components/MaterialGroup";
 @import "components/MydbApp";
 @import "components/NumeralInputWithUnits";
+@import "components/Notifications";
 @import "components/ValidationComponent";
 @import "components/PanelCollapseButton";
 @import "components/PanelResizeHandle";
@@ -46,14 +49,17 @@
 @import "components/ReorderableList";
 @import "components/SampleName";
 @import "components/SearchInput";
+@import "components/TextRangeWithAddon";
 @import "components/SearchModal";
 @import "components/SearchResult";
 @import "components/SelectionActions";
 @import "components/Sidebar_Topbar";
+@import "components/WorkshopGuide";
 @import "components/TabLayoutEditor";
 @import "components/CollectionTabLayoutEditor";
 @import "components/svg_with_popver";
 @import "components/FolderDropzone.module";
+@import "components/UserSettings";
 
 @import "legacy/miscellaneous";
 @import "legacy/AttachmentContainer";

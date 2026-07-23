@@ -5,20 +5,45 @@ import { Alert, Button, ButtonGroup } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
 import moment from 'moment';
 
-function VersionsTableChanges(props) {
-  const {
-    data, handleRevert, isEdited, renderRevertView, toggleRevertView
-  } = props;
+const VersionsTableChanges = ({
+  data, handleRevert, isEdited, renderRevertView, toggleRevertView
+}) => {
+  const [checkboxTick, setCheckboxTick] = useState(0);
+
+  const { changes = [], createdAt, userName } = data ?? {};
+
+  const changesToRevert = useMemo(() => {
+    const result = [];
+
+    changes.forEach((historyChange) => {
+      const affectedChangeFields = [];
+
+      historyChange.fields.filter((f) => f.checkbox).forEach((field) => {
+        if (!affectedChangeFields.includes(field)) {
+          affectedChangeFields.push(field);
+        }
+      });
+
+      if (affectedChangeFields.length > 0) {
+        result.push({
+          db_id: historyChange.db_id,
+          klass_name: historyChange.klass_name,
+          fields: affectedChangeFields.map((field) => ({
+            value: field.revertibleValue,
+            name: field.name,
+          })),
+        });
+      }
+    });
+
+    return result;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkboxTick, changes]);
 
   if (typeof data === 'undefined') {
     return '';
   }
 
-  const [checkboxTick, setCheckboxTick] = useState(0);
-
-  const {
-    changes, createdAt, userName
-  } = data;
   const revertibleFields = () => {
     if (isEdited) return -1;
 
@@ -59,33 +84,6 @@ function VersionsTableChanges(props) {
     </React.Fragment>
   ));
 
-  const reversibleChanges = () => {
-    const result = [];
-
-    changes.forEach((historyChange) => {
-      const affectedChangeFields = [];
-
-      historyChange.fields.filter((f) => f.checkbox).forEach((field) => {
-        if (!affectedChangeFields.includes(field)) {
-          affectedChangeFields.push(field);
-        }
-      });
-
-      if (affectedChangeFields.length > 0) {
-        result.push({
-          db_id: historyChange.db_id,
-          klass_name: historyChange.klass_name,
-          fields: affectedChangeFields.map((field) => ({
-            value: field.revertibleValue,
-            name: field.name,
-          })),
-        });
-      }
-    });
-
-    return result;
-  };
-
   const isRevertible = revertibleFields();
   let alertText = 'You cannot undo changes. ';
   if (isRevertible === 0) {
@@ -95,11 +93,6 @@ function VersionsTableChanges(props) {
   } else {
     alertText += 'Either it is the first version or all changes are irreversible.';
   }
-
-  const changesToRevert = useMemo(
-    () => reversibleChanges(),
-    [checkboxTick, changes]
-  );
 
   return (
     <>
@@ -132,7 +125,7 @@ function VersionsTableChanges(props) {
         )}
     </>
   );
-}
+};
 
 VersionsTableChanges.propTypes = {
   data: PropTypes.instanceOf(AgGridReact.data).isRequired,

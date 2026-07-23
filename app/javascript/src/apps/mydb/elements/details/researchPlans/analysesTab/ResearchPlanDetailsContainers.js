@@ -15,7 +15,6 @@ import ContainerComponent from 'src/components/container/ContainerComponent';
 import QuillViewer from 'src/components/QuillViewer';
 import ImageModal from 'src/components/common/ImageModal';
 import { instrumentText } from 'src/utilities/ElementUtils';
-import { getAttachmentFromContainer } from 'src/utilities/imageHelper';
 import { JcampIds, BuildSpcInfos, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -217,16 +216,24 @@ export default class ResearchPlanDetailsContainers extends Component {
           return c;
         }),
       };
-      const attachment = getAttachmentFromContainer(container);
+      const onPreferredThumbnailChange = (preferredId) => {
+        // eslint-disable-next-line no-param-reassign
+        container.extended_metadata = {
+          ...container.extended_metadata,
+          preferred_thumbnail: preferredId,
+        };
+        this.handleChange();
+      };
 
       return (
         <div className="analysis-header w-100 d-flex gap-3 lh-base">
           <div className="preview border d-flex align-items-center">
             <ImageModal
-              attachment={attachment}
+              container={container}
               popObject={{
                 title: container.name,
               }}
+              onPreferredThumbnailChange={onPreferredThumbnailChange}
             />
           </div>
           <div className="flex-grow-1">

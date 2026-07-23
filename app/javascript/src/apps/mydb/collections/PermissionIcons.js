@@ -1,19 +1,27 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { PermissionConst } from 'src/utilities/PermissionConst';
+
+// The ladder is cumulative, so every rung at or below `pl` gets an icon.
+const RUNGS = [
+  { level: PermissionConst.EditElements, icon: 'fa-pencil-square-o', title: 'Edit elements' },
+  { level: PermissionConst.AddElements, icon: 'fa-plus-square-o', title: 'Add elements' },
+  { level: PermissionConst.RemoveElements, icon: 'fa-trash', title: 'Remove elements' },
+  { level: PermissionConst.ManageShares, icon: 'fa-users', title: 'Manage shares' },
+  { level: PermissionConst.PassOwnership, icon: 'fa-exchange', title: 'Pass ownership' },
+];
 
 const PermissionIcons = ({ pl }) => {
-  return (pl > -1)
-    ? (
-      <>
-        <i className="fa fa-newspaper-o" />
-        {pl > 0 && <i className="fa fa-pencil-square-o" />}
-        {pl > 1 && <i className="fa fa-share-alt" />}
-        {pl > 2 && <i className="fa fa-trash" />}
-        {pl > 3 && <i className="fa fa-download" />}
-        {pl > 4 && <i className="fa fa-exchange" />}
-      </>
-    )
-    : null;
+  if (pl < PermissionConst.ReadElements) return null;
+
+  return (
+    <>
+      <i className="fa fa-newspaper-o" title="Read elements" />
+      {RUNGS.filter((rung) => pl >= rung.level).map((rung) => (
+        <i key={rung.icon} className={`fa ${rung.icon}`} title={rung.title} />
+      ))}
+    </>
+  );
 };
 
 PermissionIcons.propTypes = {

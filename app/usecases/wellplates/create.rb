@@ -42,15 +42,21 @@ module Usecases
       private
 
       def collection
-        @collection ||= Collection.accessible_for(current_user).find(params[:collection_id])
+        @collection ||= Collection.writable_by(current_user).find_by(id: params[:collection_id]) ||
+                        raise(ActiveRecord::RecordNotFound)
       end
 
+      # Group-aware, matching Collection.writable_by (collection.rb) which admitted this collection:
+      # a collection owned by one of the user's groups counts as owned, and a share addressed to a
+      # group the user belongs to counts as shared. A group-owned collection routes to the owned
+      # branch, so the wellplate lands in the creator's "All".
       def collection_is_owned_by_user?
-        @collection.user == current_user
+        @collection.owned_by?(current_user)
       end
 
       def collection_is_shared_to_user?
-        @collection.user != current_user && CollectionShare.exists?(collection: @collection, shared_with: current_user)
+        !@collection.owned_by?(current_user) &&
+          CollectionShare.shared_with(current_user).exists?(collection: @collection)
       end
 
       def all_collection_of_sharer

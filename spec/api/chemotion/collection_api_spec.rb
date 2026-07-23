@@ -107,6 +107,14 @@ describe Chemotion::CollectionAPI do
         expect(response.status).to eq 201
         expect(parsed_json_response['collection']['ancestry']).to eq '/'
       end
+
+      it 'never creates a locked collection, even when is_locked is passed' do
+        params = { parent_id: nil, label: 'Some collection', is_locked: true }
+        post '/api/v1/collections', params: params
+
+        expect(response.status).to eq 201
+        expect(parsed_json_response['collection']['is_locked']).to be(false)
+      end
     end
 
     context 'when adding a new child collection' do
@@ -209,18 +217,83 @@ describe Chemotion::CollectionAPI do
       expect(updated_collection_B).to include('id' => collection_B.id, 'label' => 'Collection B', 'ancestry' => '/', 'position' => 3)
         expect(updated_collection_BB).to include('id' => collection_BB.id, 'label' => 'Collection BB', 'ancestry' => "/#{collection_B.id}/", 'position' => 1)
     end
+
+    it 'refuses to relabel or reposition a locked collection' do
+      locked_collection = create(:collection, label: 'All', user: user, position: 1, is_locked: true)
+
+      put '/api/v1/collections/bulk_update_own_collections',
+          params: { collections: [{ id: locked_collection.id, label: 'Hijacked' }] }
+
+      expect(response).to have_http_status(:forbidden)
+      expect(locked_collection.reload).to have_attributes(label: 'All', is_locked: true)
+    end
+  end
+
+  describe 'PUT /api/v1/collections/:id' do
+    context 'when the collection is unlocked' do
+      let(:own_collection) { create(:collection, user: user, label: 'Old label') }
+
+      it 'updates the label' do
+        put "/api/v1/collections/#{own_collection.id}", params: { label: 'New label' }
+
+        expect(response).to have_http_status(:ok)
+        expect(own_collection.reload.label).to eq 'New label'
+      end
+    end
+
+    context 'when the collection is locked' do
+      let(:locked_collection) { create(:collection, user: user, label: 'All', is_locked: true) }
+
+      it 'returns 403 and does not change the collection' do
+        put "/api/v1/collections/#{locked_collection.id}", params: { label: 'Renamed' }
+
+        expect(response).to have_http_status(:forbidden)
+        expect(locked_collection.reload.label).to eq 'All'
+      end
+    end
+  end
+
+  describe 'DELETE /api/v1/collections/:id' do
+    context 'when the collection is unlocked' do
+      let(:own_collection) { create(:collection, user: user) }
+
+      it 'deletes the collection' do
+        own_collection
+        expect { delete "/api/v1/collections/#{own_collection.id}" }.to change(Collection, :count).by(-1)
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context 'when the collection is locked' do
+      let(:locked_collection) { create(:collection, user: user, label: 'All', is_locked: true) }
+
+      it 'returns 403 and keeps the collection' do
+        locked_collection
+        expect { delete "/api/v1/collections/#{locked_collection.id}" }.not_to change(Collection, :count)
+        expect(response).to have_http_status(:forbidden)
+        expect(locked_collection.reload).to be_present
+      end
+    end
   end
 
   describe 'POST /api/v1/collections/export' do
     before do
       collection
       collection_with_shares
+      collection_shared_with_user
       other_users_collection
     end
 
     context 'when exporting collections' do
       it 'exports the collections' do
         params = { collection_ids: [collection.id, collection_with_shares.id] }
+        post '/api/v1/collections/export', params: params
+
+        expect(parsed_json_response['status']).to eq 204
+      end
+
+      it 'exports a collection shared with the user' do
+        params = { collection_ids: [collection_shared_with_user.id] }
         post '/api/v1/collections/export', params: params
 
         expect(parsed_json_response['status']).to eq 204
@@ -236,6 +309,19 @@ describe Chemotion::CollectionAPI do
       it 'does not export collection of wrong ownership' do
         params = { collection_ids: [other_users_collection.id] }
         post '/api/v1/collections/export', params: params
+
+        expect(response.status).to eq 401
+      end
+
+      # The export path serializes full element content ignoring detail levels, so a sharee below
+      # full detail on any element type must not be able to export it and read withheld data.
+      it 'does not export a collection shared below full detail access' do
+        partially_shared = create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(:read_elements),
+                                    sample_detail_level: 0)
+        end
+        post '/api/v1/collections/export', params: { collection_ids: [partially_shared.id] }
 
         expect(response.status).to eq 401
       end

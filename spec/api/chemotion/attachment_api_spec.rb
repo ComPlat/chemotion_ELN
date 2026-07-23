@@ -695,6 +695,46 @@ describe Chemotion::AttachmentAPI do
     pending 'not yet implemented'
   end
 
+  describe 'POST /api/v1/attachments/lcms_page' do
+    let(:lcms_params) do
+      {
+        attachment_id: attachment.id,
+        retention_time: '1.23',
+        polarity: 'positive',
+        trigger: 'initial',
+      }
+    end
+    let(:execute_request) do
+      post '/api/v1/attachments/lcms_page', params: lcms_params, as: :json
+    end
+
+    context 'when attachment does not exist' do
+      let(:attachment) { Struct.new(:id).new(-1) }
+
+      before { execute_request }
+
+      it 'returns 404 with structured error' do
+        expect(response).to have_http_status(:not_found)
+        expect(parsed_json_response['code']).to eq('attachment_not_found')
+      end
+    end
+
+    context 'when no candidate mz attachment exists' do
+      let(:container) { create(:container, containable: user) }
+      let(:attachment) { create(:attachment, :with_spectra_file, attachable: container) }
+
+      before do
+        allow_any_instance_of(AttachmentHelpers).to receive(:read_access?).and_return(true)
+        execute_request
+      end
+
+      it 'returns 422 with page_not_found code' do
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(parsed_json_response['code']).to eq('page_not_found')
+      end
+    end
+  end
+
   describe 'GET /api/v1/attachments/svgs' do
     pending 'not yet implemented'
   end

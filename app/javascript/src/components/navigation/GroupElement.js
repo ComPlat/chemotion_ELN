@@ -38,13 +38,11 @@ export default class GroupElement extends React.Component {
       return;
     }
 
-    const params = {
-      id: groupRec.id,
-      add_admin: setAdmin ? [userRec.id] : [],
-      rm_admin: !setAdmin ? [userRec.id] : [],
-    };
+    const request = setAdmin
+      ? UsersFetcher.promoteAdmin(groupRec.id, userRec.id)
+      : UsersFetcher.demoteAdmin(groupRec.id, userRec.id);
 
-    UsersFetcher.updateGroup(params).then((group) => {
+    request.then((group) => {
       if (setAdmin) {
         const usrIdx = _.findIndex(
           group.group.admins,
@@ -139,11 +137,7 @@ export default class GroupElement extends React.Component {
       if (!isUserInGroup) { userIds.push(g.value); }
     });
 
-    UsersFetcher.updateGroup({
-      id: groupRec.id,
-      destroy_group: false,
-      add_users: userIds,
-    }).then((group) => {
+    UsersFetcher.addMembers(groupRec.id, userIds).then((group) => {
       const idx = _.findIndex(
         this.props.currentGroup,
         (o) => o.id == group.group.id

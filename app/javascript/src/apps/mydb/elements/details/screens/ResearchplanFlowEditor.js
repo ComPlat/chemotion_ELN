@@ -64,8 +64,8 @@ const ResearchplanFlowEditor = (props) => {
     setCurrentEdge(newEdge);
   };
 
-  const onEdgeClick = useCallback((_event, edge) => setCurrentEdge(edge));
-  const onPaneClick = useCallback((_event) => setCurrentEdge(null));
+  const onEdgeClick = useCallback((_event, edge) => setCurrentEdge(edge), []);
+  const onPaneClick = useCallback((_event) => setCurrentEdge(null), []);
 
   useEffect(() => {
     setUnassignedNodes(buildUnassignedNodes(nodes, researchplans))

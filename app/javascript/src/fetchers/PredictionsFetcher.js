@@ -1,6 +1,6 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 export default class PredictionsFetcher {
   static fetchInfer(smis, template) {
@@ -8,12 +8,12 @@ export default class PredictionsFetcher {
     return ApiClient.postJson(`/api/v1/prediction/${path}`, { body: smis })
       .then((json) => {
         if (json.error) {
-          NotificationActions.add.defer({
+          rootStore.notificationsStore.add({
             message: json.error,
             level: 'error'
           });
         } else {
-          NotificationActions.add.defer({
+          rootStore.notificationsStore.add({
             message: 'Prediction Success!',
             level: 'success'
           });

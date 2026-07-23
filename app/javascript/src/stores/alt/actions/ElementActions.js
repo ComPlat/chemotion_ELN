@@ -5,7 +5,7 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import UIFetcher from 'src/fetchers/UIFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
@@ -29,6 +29,7 @@ import SequenceBasedMacromoleculeSamplesFetcher from 'src/fetchers/SequenceBased
 
 import GenericEl from 'src/models/GenericEl';
 import Sample from 'src/models/Sample';
+import Component from 'src/models/Component';
 import Reaction from 'src/models/Reaction';
 import Wellplate from 'src/models/Wellplate';
 import CellLine from 'src/models/cellLine/CellLine';
@@ -201,35 +202,31 @@ class ElementActions {
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(params) {
-    let uid;
-    NotificationActions.add({
+    const uid = rootStore.notificationsStore.add({
       title: "Searching ...",
       level: "info",
       position: "tc",
-      onAdd: function (notificationObject) { uid = notificationObject.uid; }
     });
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
         .then((result) => {
           dispatch(result);
-          NotificationActions.removeByUid(uid);
+          rootStore.notificationsStore.removeByUid(uid);
         }).catch((errorMessage) => { console.log(errorMessage); });
     };
   }
 
   fetchBasedOnSearchResultIds(params) {
-    let uid;
-    NotificationActions.add({
+    const uid = rootStore.notificationsStore.add({
       title: "Searching ...",
       level: "info",
       position: "tc",
-      onAdd: function (notificationObject) { uid = notificationObject.uid; }
     });
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchResultIds(params)
         .then((result) => {
           dispatch(result);
-          NotificationActions.removeByUid(uid);
+          rootStore.notificationsStore.removeByUid(uid);
         }).catch((errorMessage) => { console.log(errorMessage); });
     };
   }
@@ -269,7 +266,11 @@ class ElementActions {
     return (dispatch) => {
       GenericElsFetcher.create(params)
         .then((result) => { dispatch(result); })
-        .catch((errorMessage) => { console.log(errorMessage); });
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
+        });
     };
   }
 
@@ -277,7 +278,11 @@ class ElementActions {
     return (dispatch) => {
       GenericElsFetcher.update(params)
         .then((result) => { dispatch({ element: result, closeView }); })
-        .catch((errorMessage) => { console.log(errorMessage); });
+        .catch((errorMessage) => {
+          console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
+        });
     };
   }
 
@@ -446,7 +451,9 @@ class ElementActions {
     }
 
     return () => {
-      ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions)
+      const productsOnly = reaction.reaction_type === 'interaction';
+      const showYield = !productsOnly;
+      ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, reaction.duration, reaction.conditions, productsOnly, showYield)
         .then((result) => {
           reaction.reaction_svg_file = result.reaction_svg;
         }).catch((errorMessage) => {
@@ -469,9 +476,11 @@ class ElementActions {
   updateSampleForReaction(sample, reaction, closeView = true) {
     return async (dispatch) => {
       try {
-        // Save components first if it's a mixture
+        // Save components first if it's a mixture and capture the API response so
+        // newly inserted rows pick up their real DB ids on subsequent saves.
+        let savedComponents = null;
         if (sample.isMixture() && sample.components) {
-          await ComponentsFetcher.saveOrUpdateComponents(sample, sample.components);
+          savedComponents = await ComponentsFetcher.saveOrUpdateComponents(sample, sample.components);
         }
 
         // Update sample
@@ -479,7 +488,8 @@ class ElementActions {
 
         // Initialize components on newSample before updating material in reaction
         if (sample.isMixture() && sample.components) {
-          newSample.initialComponents(sample.components);
+          const refreshed = Component.refreshFromApi(savedComponents, sample.components);
+          newSample.initialComponents(refreshed);
         }
 
         // Update the material in the reaction and dispatch
@@ -535,6 +545,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -598,21 +610,6 @@ class ElementActions {
   importSamplesFromFile(params) {
     return (dispatch) => {
       SamplesFetcher.importSamplesFromFile(params)
-        .then((result) => {
-          dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-    };
-  }
-
-  importSamplesFromFileDecline() {
-    return null;
-  }
-
-  importSamplesFromFileConfirm(params) {
-    return (dispatch) => {
-      SamplesFetcher.importSamplesFromFileConfirm(params)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -821,6 +818,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -843,6 +842,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -919,6 +920,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -930,6 +933,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -954,6 +959,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -965,6 +972,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -984,6 +993,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1026,6 +1037,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1041,6 +1054,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1104,6 +1119,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1116,6 +1133,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1159,6 +1178,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1171,6 +1192,8 @@ class ElementActions {
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1195,6 +1218,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1210,6 +1235,8 @@ class ElementActions {
           dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
+          // Ensure loading stops even on error
+          LoadingActions.stop();
         });
     };
   }
@@ -1319,24 +1346,22 @@ class ElementActions {
     return (dispatch) => {
       UserLabelsFetcher.bulkUpdate(params)
         .then(() => {
-          NotificationActions.add({
+          rootStore.notificationsStore.add({
             title: 'Bulk edit user labels',
             message: 'Labels updated for the selection.',
             level: 'success',
             position: 'tr',
-            dismissible: 'button',
             autoDismiss: 5,
             uid: 'bulkUpdateUserLabels',
           });
           dispatch();
         })
         .catch(() => {
-          NotificationActions.add({
+          rootStore.notificationsStore.add({
             title: 'Bulk edit user labels',
             message: 'Could not update labels for the selection.',
             level: 'error',
             position: 'tr',
-            dismissible: 'button',
             autoDismiss: 5,
             uid: 'bulkUpdateUserLabels',
           });

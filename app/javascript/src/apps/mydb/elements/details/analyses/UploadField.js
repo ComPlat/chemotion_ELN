@@ -45,7 +45,7 @@ async function handleZipFile(zipFile) {
   return files.clean();
 }
 
-function FolderDropzone({ handleChange, unzip = true, flatFileList = false }) {
+const FolderDropzone = ({ handleChange, unzip = true, flatFileList = false }) => {
   const dropRef = useRef(null);
   useEffect(() => {
     const dropArea = dropRef.current;
@@ -134,7 +134,7 @@ function FolderDropzone({ handleChange, unzip = true, flatFileList = false }) {
       </div>
     </label>
   );
-}
+};
 
 FolderDropzone.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
@@ -143,12 +143,8 @@ FolderDropzone.propTypes = {
   flatFileList: PropTypes.bool,
 };
 
-FolderDropzone.defaultProps = {
-  unzip: true,
-  flatFileList: false,
-};
 
-function FileListDisplay({ files }) {
+const FileListDisplay = ({ files }) => {
   if (!files.length) return <p className="text-muted">No files selected.</p>;
   return (
     <ListGroup style={{
@@ -176,30 +172,25 @@ function FileListDisplay({ files }) {
       ))}
     </ListGroup>
   );
-}
+};
 
 FileListDisplay.propTypes = {
   files: PropTypes.arrayOf(FileContainer).isRequired,
 };
 
-function UploadButton({
+const UploadButton = ({
   files, handleClose, element, setElement, ontology = ''
-}) {
-  if (!files.length) {
-    return null;
-  }
-
+}) => {
   const singleFileHandle = useCallback(async () => {
     const file = await new ZipFileContainer(files).getFile();
     createAnalsesForSingelFiles(element, [file], file.name, ontology);
     handleClose();
     setElement(element, () => {
     });
-  });
+  }, [files, element, ontology, handleClose, setElement]);
 
   const multiFileHandle = useCallback(async () => {
     const pList = [];
-    // eslint-disable-next-line react/prop-types
     files.forEach((fileContainer) => {
       pList.push(fileContainer.getFile().then((file) => {
         createAnalsesForSingelFiles(element, [file], file.name, ontology);
@@ -210,7 +201,7 @@ function UploadButton({
     handleClose();
     setElement(element, () => {
     });
-  });
+  }, [files, element, ontology, handleClose, setElement]);
 
   const multiFileOneAnaHandle = useCallback(async () => {
     const pList = [];
@@ -230,7 +221,11 @@ function UploadButton({
     handleClose();
     setElement(element, () => {
     });
-  });
+  }, [files, element, ontology, handleClose, setElement]);
+
+  if (!files.length) {
+    return null;
+  }
 
   return (
     <>
@@ -276,7 +271,7 @@ UploadButton.defaultProps = {
   ontology: '',
 };
 
-function UploadField({ disabled = false, element, setElement }) {
+const UploadField = ({ disabled = false, element, setElement }) => {
   const wrappedSetElement = (newElement) => {
     const newElementValue = typeof newElement === 'function' ? newElement(element) : newElement;
     setElement(newElementValue);
@@ -315,15 +310,15 @@ function UploadField({ disabled = false, element, setElement }) {
     let kind = (ev || '');
     kind = `${kind.split('|')[0].trim()} | ${(kind.split('|')[1] || '').trim()}`;
     setOntology(kind);
-  });
+  }, []);
+
+  const [, setConsumedPaths] = useState([]);
+  const handleSetConsumedPaths = useCallback((paths) => {
+    FileContainer.markAllByPaths(listedFiles, paths);
+    setConsumedPaths(paths);
+  }, [listedFiles]);
 
   const content = () => {
-    const [, setConsumedPaths] = useState([]);
-
-    const handleSetConsumedPaths = useCallback((paths) => {
-      FileContainer.markAllByPaths(listedFiles, paths);
-      setConsumedPaths(paths);
-    });
     if (isAdvanced && listedFiles.length > 0) {
       return (
         <Container>
@@ -436,17 +431,13 @@ function UploadField({ disabled = false, element, setElement }) {
       </AppModal>
     </>
   );
-}
+};
 
 UploadField.propTypes = {
   disabled: PropTypes.bool,
   // eslint-disable-next-line react/forbid-prop-types
   element: PropTypes.object.isRequired,
   setElement: PropTypes.func.isRequired,
-};
-
-UploadField.defaultProps = {
-  disabled: false,
 };
 
 export {

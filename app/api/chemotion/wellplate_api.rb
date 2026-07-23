@@ -167,6 +167,7 @@ module Chemotion
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
             root: :wellplate,
           )
+          present wellplate.attachments, with: Entities::AttachmentEntity, root: :attachments
         end
       end
 
@@ -202,6 +203,7 @@ module Chemotion
           detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
           root: :wellplate,
         )
+        present wellplate.attachments, with: Entities::AttachmentEntity, root: :attachments
       end
 
       namespace :subwellplates do
@@ -209,12 +211,20 @@ module Chemotion
         params do
           requires :ui_state, type: Hash, desc: 'Selected wellplates from the UI'
         end
+
         post do
           ui_state = params[:ui_state]
           col_id = ui_state[:currentCollectionId]
-          wellplate_ids = Wellplate.for_user(current_user.id).for_ui_state_with_collection(ui_state[:wellplate],
-                                                                                           CollectionsWellplate, col_id)
-          Wellplate.where(id: wellplate_ids).each do |wellplate|
+          wellplate_ids = Wellplate.for_user(current_user.id)
+                                   .for_ui_state_with_collection(ui_state[:wellplate], CollectionsWellplate, col_id)
+          wellplates = Wellplate.where(id: wellplate_ids)
+          # Splitting adds a new subwellplate to the target collection, so authorize that collection
+          # directly rather than via ElementsPolicy#share_all? (which takes MAX(permission_level)
+          # across every collection a wellplate belongs to, wrongly allowing a split into a read-only
+          # currentCollectionId when the wellplate is also shared/owned elsewhere with :add_elements).
+          error!('401 Unauthorized', 401) unless writable_collection_for(col_id)
+
+          wellplates.each do |wellplate|
             wellplate.create_subwellplate current_user, col_id, true
           end
 
@@ -250,6 +260,7 @@ module Chemotion
                                                                   element: wellplate).detail_levels,
                 ),
                 attachments: Entities::AttachmentEntity.represent(wellplate.attachments),
+                molarity_discarded: import.molarity_discarded,
               }
             rescue StandardError => e
               error!(e, 500)

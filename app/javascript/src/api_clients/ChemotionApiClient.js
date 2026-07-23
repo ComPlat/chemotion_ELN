@@ -46,10 +46,10 @@ const getJson = (apiEndpoint, options = {}) => {
   return apiRequest(apiEndpoint, { ...defaults, ...options });
 };
 
-const putJson = (apiEndpoint, options) => {
+const putJson = (apiEndpoint, options = {}) => {
   const defaults = { method: 'PUT' };
 
-  if (typeof options.body !== 'string') {
+  if (options.body != null && typeof options.body !== 'string') {
     options.body = JSON.stringify(options.body);
   }
 
@@ -68,10 +68,10 @@ const putFormData = (apiEndpoint, options) => {
   return apiRequest(apiEndpoint, { ...defaults, ...options });
 };
 
-const postJson = (apiEndpoint, options) => {
+const postJson = (apiEndpoint, options = {}) => {
   const defaults = { method: 'POST' };
 
-  if (typeof options.body !== 'string') {
+  if (options.body != null && typeof options.body !== 'string') {
     options.body = JSON.stringify(options.body);
   }
 
@@ -90,10 +90,10 @@ const postFormData = (apiEndpoint, options) => {
   return apiRequest(apiEndpoint, { ...defaults, ...options });
 };
 
-const patchJson = (apiEndpoint, options) => {
+const patchJson = (apiEndpoint, options = {}) => {
   const defaults = { method: 'PATCH' };
 
-  if (typeof options.body !== 'string') {
+  if (options.body != null && typeof options.body !== 'string') {
     options.body = JSON.stringify(options.body);
   }
 

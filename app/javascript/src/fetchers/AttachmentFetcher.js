@@ -5,7 +5,7 @@ import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Attachment from 'src/models/Attachment';
 import { decamelizeKeys, downloadBlob } from 'src/utilities/FetcherHelper';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 const fileFromAttachment = (attachment, containerId) => {
   const { file } = attachment;
@@ -83,7 +83,7 @@ export default class AttachmentFetcher {
       } else {
         msg += response.statusText;
       }
-      NotificationActions.add({
+      rootStore.notificationsStore.add({
         message: msg,
         level: 'error',
         position: 'tc',
@@ -126,7 +126,7 @@ export default class AttachmentFetcher {
         } else {
           msg += response.statusText;
         }
-        NotificationActions.add({
+        rootStore.notificationsStore.add({
           message: msg,
           level: 'error',
           position: 'tc',
@@ -156,7 +156,7 @@ export default class AttachmentFetcher {
         } else {
           msg += response.statusText;
         }
-        NotificationActions.add({
+        rootStore.notificationsStore.add({
           message: msg,
           level: 'error',
         });
@@ -176,7 +176,7 @@ export default class AttachmentFetcher {
   //   return ApiClient.postFormData('/api/v1/attachments/upload_dataset_attachments', { body: data })
   //     .then((json) => {
   //       for (let i = 0; i < json.error_messages.length; i += 1) {
-  //         NotificationActions.add({
+  //         rootStore.notificationsStore.add({
   //           message: json.error_messages[i],
   //           level: 'error',
   //         });
@@ -196,13 +196,13 @@ export default class AttachmentFetcher {
           msg += response.statusText;
         }
 
-        NotificationActions.add({
+        rootStore.notificationsStore.add({
           message: msg,
           level: 'error',
         });
       } else if (response.error_messages) {
         for (let i = 0; i < response.error_messages.length; i += 1) {
-          NotificationActions.add({
+          rootStore.notificationsStore.add({
             message: response.error_messages[i],
             level: 'error',
           });
@@ -231,7 +231,7 @@ export default class AttachmentFetcher {
       if (response.ok) return response.json();
 
       const msg = `Chunk uploading failed: ${response.statusText}`;
-      NotificationActions.add({
+      rootStore.notificationsStore.add({
         message: msg,
         level: 'error',
       });
@@ -300,7 +300,7 @@ export default class AttachmentFetcher {
     const handleResponseSuccess = (response) => {
       const dispositionHeader = response.headers.get('Content-Disposition');
       if (dispositionHeader == null) {
-        NotificationActions.notifyExImportStatus('Analysis download', 204);
+        rootStore.notificationsStore.notifyExImportStatus('Analysis download', 204);
         return null;
       }
 
@@ -355,14 +355,19 @@ export default class AttachmentFetcher {
     isSaveCombined,
     axesUnitsStr,
     detector,
-    dscMetaData
+    dscMetaData,
+    lcmsPeaksStr,
+    lcmsIntegralsStr,
+    lcmsUvvisWavelength,
+    lcmsMzPage,
+    lcmsMzPageData
   ) {
     const params = {
       attachmentId: attId,
       peaksStr,
-      shiftSelectX: shift.peak.x,
-      shiftRefName: shift.ref.name,
-      shiftRefValue: shift.ref.value,
+      shiftSelectX: shift?.peak?.x,
+      shiftRefName: shift?.ref?.name,
+      shiftRefValue: shift?.ref?.value,
       scan,
       thres,
       integration,
@@ -375,10 +380,59 @@ export default class AttachmentFetcher {
       simulatenmr,
       axesUnits: axesUnitsStr,
       detector,
-      dscMetaData
+      dscMetaData,
+      lcmsPeaksStr,
+      lcmsIntegralsStr,
+      lcmsUvvisWavelength,
+      lcmsMzPage,
+      lcmsMzPageData
     };
 
-    return ApiClient.postJson('/api/v1/attachments/save_spectrum/', { body: decamelizeKeys(params) })
+    const decamelized = decamelizeKeys(params);
+    const hasLcmsMzPageData = decamelized.lcms_mz_page_data != null;
+
+    const handleResponseSuccess = (response) => {
+      if (!response.ok) {
+        return response.text().then((text) => {
+          throw new Error(`save_spectrum ${response.status}: ${text.slice(0, 200)}`);
+        });
+      }
+      const contentType = response.headers.get('Content-Type') || '';
+      if (!contentType.includes('application/json')) {
+        return response.text().then((text) => {
+          throw new Error(`save_spectrum: expected JSON, got ${contentType.slice(0, 50)} - ${text.slice(0, 200)}`);
+        });
+      }
+      return response.json();
+    };
+    // ChemotionApiClient's default handleResponseError swallows the rejection; rethrow so
+    // SpectraActions.SaveToFile's caller can see a failed save instead of a false success.
+    const handleResponseError = (error) => { throw error; };
+
+    let request;
+    if (hasLcmsMzPageData) {
+      const formData = new FormData();
+      Object.keys(decamelized).forEach((key) => {
+        const value = decamelized[key];
+        if (value === undefined) return;
+        if (key === 'lcms_mz_page_data') {
+          const blob = new Blob([JSON.stringify(value)], { type: 'application/json' });
+          formData.append(key, blob, 'lcms_mz_page_data.json');
+        } else {
+          const str = (value != null && typeof value === 'object') ? JSON.stringify(value) : value;
+          formData.append(key, str != null ? String(str) : '');
+        }
+      });
+      request = ApiClient.postFormData('/api/v1/attachments/save_spectrum/', {
+        body: formData, handleResponseSuccess, handleResponseError,
+      });
+    } else {
+      request = ApiClient.postJson('/api/v1/attachments/save_spectrum/', {
+        body: decamelized, handleResponseSuccess, handleResponseError,
+      });
+    }
+
+    return request
       .then((json) => {
         if (!isSaveCombined) return json;
 
@@ -389,6 +443,53 @@ export default class AttachmentFetcher {
 
         return AttachmentFetcher.combineSpectra(jcampIds, curveIdx, params)
           .then(() => json); // this appears to be intentional, I didn't change this from the original code
+      });
+  }
+
+  static fetchLcmsPage({
+    attachmentId, retentionTime, polarity, trigger, signal, timeoutMs = 30000,
+  }) {
+    const params = {
+      attachmentId,
+      retentionTime: retentionTime != null ? String(retentionTime) : '',
+      polarity,
+      trigger,
+    };
+
+    const controller = new AbortController();
+    const onAbort = () => controller.abort();
+    if (signal) {
+      if (signal.aborted) controller.abort();
+      else signal.addEventListener('abort', onAbort, { once: true });
+    }
+    const timeoutId = timeoutMs > 0
+      ? setTimeout(() => controller.abort(new DOMException('Timeout', 'TimeoutError')), timeoutMs)
+      : null;
+
+    const handleResponseSuccess = async (response) => {
+      if (!response.ok) {
+        let payload = null;
+        try { payload = await response.json(); } catch (_) { /* ignore */ }
+        const err = new Error(payload?.error || `lcms_page ${response.status}`);
+        err.status = response.status;
+        err.code = payload?.code || `http_${response.status}`;
+        throw err;
+      }
+      return response.json();
+    };
+    // Rethrow so an abort/timeout (or HTTP error) reaches the caller's .catch; the client's
+    // default handleResponseError swallows it, which would leave the editor stuck in loading.
+    const handleResponseError = (error) => { throw error; };
+
+    return ApiClient.postJson('/api/v1/attachments/lcms_page/', {
+      body: decamelizeKeys(params),
+      signal: controller.signal,
+      handleResponseSuccess,
+      handleResponseError,
+    })
+      .finally(() => {
+        if (timeoutId) clearTimeout(timeoutId);
+        if (signal) signal.removeEventListener('abort', onAbort);
       });
   }
 

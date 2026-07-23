@@ -3,6 +3,7 @@
 module Chemotion
   class CellLineAPI < Grape::API
     include Grape::Kaminari
+    helpers CollectionHelpers
     helpers ParamsHelpers
     helpers ContainerHelpers
     helpers CellLineApiParamsHelpers
@@ -78,7 +79,7 @@ module Chemotion
         use :cell_line_creation_params
       end
       post do
-        error!('401 Unauthorized', 401) unless current_user.collections.find(params[:collection_id])
+        error!('403 Forbidden', 403) unless writable_collection_for(params[:collection_id])
         use_case = Usecases::CellLines::Create.new(params, current_user)
         cell_line_sample = use_case.execute!
         cell_line_sample.container = update_datamodel(params[:container])
@@ -110,7 +111,11 @@ module Chemotion
         post do
           cell_line_to_copy = @current_user.cellline_samples.where(id: [params[:id]]).reorder('id')
 
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).update_all?
+          # Copy links the new cell line into params[:collection_id], so authorize the *target*
+          # collection, not the source scope (which is always the user's own cell lines and would
+          # make the check a no-op). writable_collection_for is :add_elements-aware and returns nil
+          # when the user may not add elements there.
+          error!('403 Forbidden', 403) unless writable_collection_for(params[:collection_id])
 
           begin
             use_case = Usecases::CellLines::Copy.new(cell_line_to_copy.first, @current_user, params[:collection_id])
@@ -135,7 +140,11 @@ module Chemotion
         post do
           cell_line_to_copy = @current_user.cellline_samples.where(id: [params[:id]]).reorder('id')
 
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).update_all?
+          # Split links the new cell line into params[:collection_id], so authorize the *target*
+          # collection, not the source scope (which is always the user's own cell lines and would
+          # make the check a no-op). writable_collection_for is :add_elements-aware and returns nil
+          # when the user may not add elements there.
+          error!('403 Forbidden', 403) unless writable_collection_for(params[:collection_id])
 
           begin
             use_case = Usecases::CellLines::Split.new(cell_line_to_copy.first, @current_user, params[:collection_id])

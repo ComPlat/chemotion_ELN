@@ -1,9 +1,12 @@
 /* global describe, context, it */
 
 import expect from 'expect';
+import sinon from 'sinon';
 import SampleFactory from 'factories/SampleFactory';
 import Sample from 'src/models/Sample.js';
+import Reaction from 'src/models/Reaction';
 import Component from 'src/models/Component';
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 
 describe('Sample', async () => {
   const referenceSample = await SampleFactory.build('SampleFactory.water_100g');
@@ -821,6 +824,32 @@ describe('Sample', async () => {
     });
   });
 
+  describe('Sample.updateConcentrationFromSolvent() for gas products', () => {
+    it('derives concn from persisted ppm so it survives reload', async () => {
+      const gasSample = await SampleFactory.build('SampleFactory.water_100g');
+      gasSample.gas_type = 'gas';
+      gasSample.gas_phase_data = { part_per_million: 1000 };
+      gasSample.concn = null;
+
+      // concn is transient; the ppm is what persists, so a reload-time
+      // recompute must rebuild concn from ppm rather than leaving it blank.
+      gasSample.updateConcentrationFromSolvent(undefined);
+
+      expect(gasSample.concn).toBeCloseTo(1000 * 4.1e-8, 12);
+    });
+
+    it('sets concn to 0 when ppm is missing', async () => {
+      const gasSample = await SampleFactory.build('SampleFactory.water_100g');
+      gasSample.gas_type = 'gas';
+      gasSample.gas_phase_data = {};
+      gasSample.concn = 0.5;
+
+      gasSample.updateConcentrationFromSolvent(undefined);
+
+      expect(gasSample.concn).toBe(0);
+    });
+  });
+
   describe('Sample.serialize()', () => {
     it('should serialize sample with all properties', () => {
       const sample = new Sample();
@@ -990,6 +1019,56 @@ describe('Sample', async () => {
       expect(sample.boiling_point_lowerbound).toBe(100);
       expect(sample.boiling_point_upperbound).toBe('');
       expect(sample.boiling_point_display).toBe('100');
+    });
+
+    it('should treat positive infinity upper bound as open-ended', () => {
+      const sample = new Sample();
+      sample.updateRange('melting_point', 300, Number.POSITIVE_INFINITY, '>300');
+      expect(sample.melting_point_lowerbound).toBe(300);
+      expect(sample.melting_point_upperbound).toBe('');
+      expect(sample.melting_point_display).toBe('>300');
+      expect(sample.xref.melting_point_label).toBe('>300');
+    });
+
+    it('should treat negative infinity lower bound as open-ended', () => {
+      const sample = new Sample();
+      sample.updateRange('boiling_point', Number.NEGATIVE_INFINITY, 50, '<50');
+      expect(sample.boiling_point_lowerbound).toBe('');
+      expect(sample.boiling_point_upperbound).toBe(50);
+      expect(sample.boiling_point_display).toBe('<50');
+      expect(sample.xref.boiling_point_label).toBe('<50');
+    });
+
+    it('should remove the xref label when an empty label is supplied', () => {
+      const sample = new Sample();
+      sample.xref = { melting_point_label: '>300' };
+      sample.updateRange('melting_point', '', '', '');
+      expect(sample.xref.melting_point_label).toBeUndefined();
+      expect(sample.melting_point_display).toBe('');
+    });
+  });
+
+  describe('Sample.prepareRangeBound (via constructor)', () => {
+    it('uses xref label as display when present', () => {
+      const sample = new Sample({
+        melting_point: '300..Infinity',
+        xref: { melting_point_label: '>300' },
+      });
+      expect(sample.melting_point_display).toBe('>300');
+    });
+
+    it('formats open-upper bound without xref label as bare number', () => {
+      const sample = new Sample({ melting_point: '300..Infinity' });
+      expect(sample.melting_point_lowerbound).toBe(300);
+      expect(sample.melting_point_upperbound).toBeNull();
+      expect(sample.melting_point_display).toBe('300');
+    });
+
+    it('formats open-lower bound without xref label using "<" notation', () => {
+      const sample = new Sample({ melting_point: '-Infinity..200' });
+      expect(sample.melting_point_lowerbound).toBeNull();
+      expect(sample.melting_point_upperbound).toBe(200);
+      expect(sample.melting_point_display).toBe('<200');
     });
   });
 
@@ -1242,6 +1321,13 @@ describe('Sample', async () => {
     let sample;
     let reaction;
 
+    // Helper: build a solvent sample with a given volume in liters, used to
+    // drive the real Reaction's combined-volume calculation.
+    const buildSolvent = (volumeL) => new Sample({
+      amount_value: volumeL,
+      amount_unit: 'l',
+    });
+
     beforeEach(() => {
       // Create sample with amount_mol by setting up a reference component
       // For mixtures, amount_mol uses calculateMixtureAmountMol() which requires a reference component
@@ -1257,12 +1343,14 @@ describe('Sample', async () => {
       refComp.component_properties = {};
       sample.initialComponents([refComp]);
       sample.sample_details = { reference_component_changed: true };
-      reaction = {
-        volume: 0.5,
-        use_reaction_volume: false,
-        calculateCombinedReactionVolume: () => 0.2,
-        solventVolume: 0.1
-      };
+
+      // Use a real Reaction instance so that `reactionVolumeForConcentration`
+      // and `calculateCombinedReactionVolume` exercise their production logic.
+      reaction = Reaction.buildEmpty();
+      reaction.volume = 0.5;
+      reaction.use_reaction_volume = false;
+      // Default combined volume = 0.2 L (single solvent)
+      reaction.solvents = [buildSolvent(0.2)];
     });
 
     it('uses reaction volume when checkbox is checked', () => {
@@ -1276,7 +1364,7 @@ describe('Sample', async () => {
 
     it('uses combined volume when checkbox is unchecked', () => {
       reaction.use_reaction_volume = false;
-      reaction.calculateCombinedReactionVolume = () => 0.2;
+      reaction.solvents = [buildSolvent(0.2)];
 
       sample.updateConcentrationFromSolvent(reaction);
 
@@ -1287,7 +1375,7 @@ describe('Sample', async () => {
       reaction.use_reaction_volume = true;
       reaction.volume = null;
       // When reaction.volume is null, it falls back to calculateCombinedReactionVolume
-      reaction.calculateCombinedReactionVolume = () => null;
+      reaction.solvents = [];
 
       sample.updateConcentrationFromSolvent(reaction);
 
@@ -1298,7 +1386,7 @@ describe('Sample', async () => {
       reaction.use_reaction_volume = true;
       reaction.volume = 0;
       // When reaction.volume is 0, it falls back to calculateCombinedReactionVolume
-      reaction.calculateCombinedReactionVolume = () => null;
+      reaction.solvents = [];
 
       sample.updateConcentrationFromSolvent(reaction);
 
@@ -1307,7 +1395,7 @@ describe('Sample', async () => {
 
     it('sets concn to null when combined volume is null', () => {
       reaction.use_reaction_volume = false;
-      reaction.calculateCombinedReactionVolume = () => null;
+      reaction.solvents = [];
 
       sample.updateConcentrationFromSolvent(reaction);
 
@@ -1368,6 +1456,133 @@ describe('Sample', async () => {
       sample.updateConcentrationFromSolvent(null);
 
       expect(sample.concn).toBe(null);
+    });
+
+    it('keeps manually-entered concentration when preserveConcentration is set', () => {
+      sample.concn = 1.23;
+      sample.preserveConcentration = true;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      sample.updateConcentrationFromSolvent(reaction);
+
+      expect(sample.concn).toBe(1.23);
+    });
+
+    it('resumes auto-updating concentration after preserveConcentration is cleared', () => {
+      sample.concn = 1.23;
+      sample.preserveConcentration = true;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      sample.updateConcentrationFromSolvent(reaction);
+      expect(sample.concn).toBe(1.23);
+
+      sample.preserveConcentration = false;
+      sample.updateConcentrationFromSolvent(reaction);
+
+      expect(sample.concn).toBeCloseTo(0.2, 5); // 0.1 mol / 0.5 L = 0.2 mol/L
+    });
+
+    it('derives gas-product concentration from persisted ppm, not amount/volume', () => {
+      // Gas products derive concentration from ppm via the ideal gas law at
+      // 25 °C, not from amount_mol / reaction_volume — see ReactionDetailsScheme.
+      // The ppm persists while concn is transient, so it must be recomputed
+      // from ppm on every pass (incl. load) rather than left blank.
+      const gasProduct = new Sample({
+        amount_value: 18.015, // 1 mol at MW 18.015
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      gasProduct.gas_type = 'gas';
+      gasProduct.gas_phase_data = { part_per_million: 10000 };
+      gasProduct.concn = null;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      gasProduct.updateConcentrationFromSolvent(reaction);
+
+      // ppm-derived (10000 * 4.1e-8), NOT amount_mol / volume (1 / 0.5 = 2)
+      expect(gasProduct.concn).toBeCloseTo(10000 * 4.1e-8, 12);
+    });
+
+    it('derives feedstock concentration from vessel volume in a gas-scheme reaction', () => {
+      // Feedstocks live in the gas vessel; their concentration is derived from
+      // vesselVolume, not the reaction volume.
+      const feedstock = new Sample({
+        amount_value: 18.015,
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      feedstock.gas_type = 'feedstock';
+      reaction.gaseous = true;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5; // reaction volume is intentionally different to confirm it's not used
+
+      const vesselStub = sinon.stub(feedstock, 'fetchReactionVesselSizeFromStore').returns(2);
+      feedstock.updateConcentrationFromSolvent(reaction);
+      vesselStub.restore();
+
+      // 18.015 g / 18.015 g/mol = 1 mol; 1 mol / 2 L (vessel) = 0.5 mol/L
+      expect(feedstock.concn).toBeCloseTo(0.5, 5);
+    });
+
+    it('keeps user-entered feedstock concentration when preserveConcentration is set', () => {
+      const feedstock = new Sample({
+        amount_value: 18.015,
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      feedstock.gas_type = 'feedstock';
+      feedstock.concn = 0.42;
+      feedstock.preserveConcentration = true;
+      reaction.gaseous = true;
+
+      const vesselStub = sinon.stub(feedstock, 'fetchReactionVesselSizeFromStore').returns(2);
+      feedstock.updateConcentrationFromSolvent(reaction);
+      vesselStub.restore();
+
+      expect(feedstock.concn).toBe(0.42);
+    });
+
+    it('sets feedstock concentration to null when vessel volume is unknown', () => {
+      const feedstock = new Sample({
+        amount_value: 18.015,
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      feedstock.gas_type = 'feedstock';
+      reaction.gaseous = true;
+
+      const vesselStub = sinon.stub(feedstock, 'fetchReactionVesselSizeFromStore').returns(null);
+      feedstock.updateConcentrationFromSolvent(reaction);
+      vesselStub.restore();
+
+      expect(feedstock.concn).toBe(null);
+    });
+
+    it('still recalculates feedstock concentration when the reaction is not gaseous', () => {
+      // Outside a gas-scheme reaction, gas_type carries no special semantics for
+      // the concentration formula.
+      const sample = new Sample({
+        amount_value: 18.015,
+        amount_unit: 'g',
+        sample_type: 'Micromolecule',
+        molecule: { molecular_weight: 18.015 },
+      });
+      sample.gas_type = 'feedstock';
+      reaction.gaseous = false;
+      reaction.use_reaction_volume = true;
+      reaction.volume = 0.5;
+
+      sample.updateConcentrationFromSolvent(reaction);
+
+      // 18.015 g / 18.015 g/mol = 1 mol; 1 mol / 0.5 L = 2 mol/L
+      expect(sample.concn).toBeCloseTo(2.0, 5);
     });
 
     context('when product coefficient is zero', () => {
@@ -1626,7 +1841,7 @@ describe('Sample', async () => {
       const s = new Sample();
       s.weight_percentage_reference = false;
       const originalEquivalent = s.equivalent;
-      
+
       const ret = s.updateYieldForWeightPercentageReference();
 
       expect(ret).toBe(s);
@@ -1759,6 +1974,519 @@ describe('Sample', async () => {
 
       expect(s.changed).toBe(false);
       expect(s.isPendingToSave).toBe(false);
+    });
+  });
+
+  describe('Sample.normalizeSmilesSet()', () => {
+    it('returns fragments in sorted order', () => {
+      expect(Sample.normalizeSmilesSet('CCO.C')).toBe('C.CCO');
+    });
+
+    it('is idempotent when already sorted', () => {
+      expect(Sample.normalizeSmilesSet('C.CCO')).toBe('C.CCO');
+    });
+
+    it('returns empty string for null', () => {
+      expect(Sample.normalizeSmilesSet(null)).toBe('');
+    });
+
+    it('returns empty string for empty string', () => {
+      expect(Sample.normalizeSmilesSet('')).toBe('');
+    });
+
+    it('returns empty string for non-string input', () => {
+      expect(Sample.normalizeSmilesSet(42)).toBe('');
+    });
+
+    it('handles a single fragment with no dot', () => {
+      expect(Sample.normalizeSmilesSet('CCO')).toBe('CCO');
+    });
+
+    it('filters out empty fragments from leading/trailing dots', () => {
+      expect(Sample.normalizeSmilesSet('.CCO.')).toBe('CCO');
+    });
+  });
+
+  describe('Sample.sameSmilesSet()', () => {
+    it('returns true for identical strings', () => {
+      expect(Sample.sameSmilesSet('C.CCO', 'C.CCO')).toBe(true);
+    });
+
+    it('returns true when fragment order differs', () => {
+      expect(Sample.sameSmilesSet('CCO.C', 'C.CCO')).toBe(true);
+    });
+
+    it('returns true for three fragments in any order', () => {
+      expect(Sample.sameSmilesSet('A.B.C', 'C.A.B')).toBe(true);
+    });
+
+    it('returns false when fragment sets differ', () => {
+      expect(Sample.sameSmilesSet('C.CCO', 'C.CC')).toBe(false);
+    });
+
+    it('returns false when one string has an extra fragment', () => {
+      expect(Sample.sameSmilesSet('C.CCO', 'C.CCO.O')).toBe(false);
+    });
+
+    it('returns false when one input is null', () => {
+      expect(Sample.sameSmilesSet(null, 'C.CCO')).toBe(false);
+    });
+
+    it('returns true when both inputs are null', () => {
+      expect(Sample.sameSmilesSet(null, null)).toBe(true);
+    });
+
+    it('returns true when both inputs are empty string', () => {
+      expect(Sample.sameSmilesSet('', '')).toBe(true);
+    });
+  });
+
+  describe('Sample loading getter', () => {
+    const buildPolymerSample = (loadingValue) => {
+      const sample = new Sample();
+      sample._contains_residues = true;
+      sample.residues = [{ custom_info: { loading: loadingValue } }];
+      return sample;
+    };
+
+    it('parses a numeric string to a float', () => {
+      expect(buildPolymerSample('1.75').loading).toBe(1.75);
+    });
+
+    it('parses an integer string to a number', () => {
+      expect(buildPolymerSample('3').loading).toBe(3);
+    });
+
+    it('returns an already-numeric value unchanged', () => {
+      expect(buildPolymerSample(2.5).loading).toBe(2.5);
+    });
+
+    it('returns null as-is', () => {
+      expect(buildPolymerSample(null).loading).toBeNull();
+    });
+
+    it('returns undefined as-is', () => {
+      expect(buildPolymerSample(undefined).loading).toBeUndefined();
+    });
+
+    it('returns a non-numeric string unchanged', () => {
+      expect(buildPolymerSample('n.d').loading).toBe('n.d');
+    });
+
+    it('returns false when contains_residues is false', () => {
+      const sample = new Sample();
+      sample._contains_residues = false;
+      expect(sample.loading).toBe(false);
+    });
+  });
+
+  describe('Sample external_loading getter', () => {
+    const buildPolymerSample = (externalLoadingValue) => {
+      const sample = new Sample();
+      sample._contains_residues = true;
+      sample.residues = [{ custom_info: { external_loading: externalLoadingValue } }];
+      return sample;
+    };
+
+    it('parses a numeric string to a float', () => {
+      expect(buildPolymerSample('0.5').external_loading).toBe(0.5);
+    });
+
+    it('parses an integer string to a number', () => {
+      expect(buildPolymerSample('2').external_loading).toBe(2);
+    });
+
+    it('returns an already-numeric value unchanged', () => {
+      expect(buildPolymerSample(1.75).external_loading).toBe(1.75);
+    });
+
+    it('returns null as-is', () => {
+      expect(buildPolymerSample(null).external_loading).toBeNull();
+    });
+
+    it('returns undefined as-is', () => {
+      expect(buildPolymerSample(undefined).external_loading).toBeUndefined();
+    });
+
+    it('returns 0.0 (the default) as a number, not a string', () => {
+      expect(buildPolymerSample(0.0).external_loading).toBe(0);
+      expect(typeof buildPolymerSample(0.0).external_loading).toBe('number');
+    });
+
+    it('returns a non-numeric string unchanged', () => {
+      expect(buildPolymerSample('n.d').external_loading).toBe('n.d');
+    });
+
+    it('returns false when contains_residues is false', () => {
+      const sample = new Sample();
+      sample._contains_residues = false;
+      expect(sample.external_loading).toBe(false);
+    });
+  });
+
+  describe('Sample.setAmountFromConcentration()', () => {
+    it('sets amount_value to volume * concentration in mol', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+
+      const result = sample.setAmountFromConcentration(2, 0.5);
+
+      expect(result).toBeCloseTo(1, 10);
+      expect(sample.amount_value).toBeCloseTo(1, 10);
+      expect(sample.amount_unit).toBe('mol');
+    });
+
+    it('returns null and leaves the sample unchanged when concentration is invalid', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+      const originalValue = sample.amount_value;
+      const originalUnit = sample.amount_unit;
+
+      expect(sample.setAmountFromConcentration(0, 0.5)).toBe(null);
+      expect(sample.setAmountFromConcentration(Number.NaN, 0.5)).toBe(null);
+
+      expect(sample.amount_value).toBe(originalValue);
+      expect(sample.amount_unit).toBe(originalUnit);
+    });
+
+    it('returns null and leaves the sample unchanged when volume is invalid', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+      const originalValue = sample.amount_value;
+      const originalUnit = sample.amount_unit;
+
+      expect(sample.setAmountFromConcentration(2, 0)).toBe(null);
+      expect(sample.setAmountFromConcentration(2, null)).toBe(null);
+
+      expect(sample.amount_value).toBe(originalValue);
+      expect(sample.amount_unit).toBe(originalUnit);
+    });
+  });
+
+  describe('Sample.setAmountFromConcentrationAndPreserve()', () => {
+    it('sets the amount from concentration and marks preserveConcentration', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+      sample.preserveConcentration = false;
+
+      sample.setAmountFromConcentrationAndPreserve(2, 0.5);
+
+      expect(sample.amount_value).toBeCloseTo(1, 10);
+      expect(sample.amount_unit).toBe('mol');
+      expect(sample.preserveConcentration).toBe(true);
+    });
+
+    it('does not mark preserved when inputs are invalid', async () => {
+      const sample = await SampleFactory.build('reactionConcentrations.water_100g');
+      const originalValue = sample.amount_value;
+      const originalUnit = sample.amount_unit;
+      sample.preserveConcentration = false;
+
+      sample.setAmountFromConcentrationAndPreserve(0, 0.5);
+      sample.setAmountFromConcentrationAndPreserve(Number.NaN, 0.5);
+      sample.setAmountFromConcentrationAndPreserve(2, 0);
+
+      expect(sample.preserveConcentration).toBe(false);
+      expect(sample.amount_value).toBe(originalValue);
+      expect(sample.amount_unit).toBe(originalUnit);
+    });
+  });
+
+  describe('Sample.mergeComponents() — same molecule', () => {
+    function makeSample(comps) {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      s.components = comps;
+      return s;
+    }
+
+    function makeComp(id, moleculeId, amounts = {}) {
+      const comp = new Component({});
+      comp.id = id;
+      comp.molecule = { id: moleculeId };
+      comp.amount_mol = amounts.mol ?? 0.01;
+      comp.amount_g = amounts.g ?? 1.8;
+      comp.amount_l = amounts.l ?? 0.001;
+      comp.material_group = 'liquid';
+      comp.position = 0;
+      comp.reference = false;
+      comp.purity = 1;
+      return comp;
+    }
+
+    beforeEach(() => {
+      sinon.restore();
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('collapses two same-molecule components into one', async () => {
+      const comp1 = makeComp(1, 42);
+      const comp2 = makeComp(2, 42);
+      const sample = makeSample([comp1, comp2]);
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      expect(sample.components.length).toBe(1);
+    });
+
+    it('retains the target component (not the source)', async () => {
+      const comp1 = makeComp(1, 42);
+      const comp2 = makeComp(2, 42);
+      const sample = makeSample([comp1, comp2]);
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      expect(sample.components[0]).toBe(comp2);
+    });
+
+    it('resets target amounts and concentration to 0', async () => {
+      const comp1 = makeComp(1, 42, { mol: 0.01, g: 1.8, l: 0.001 });
+      const comp2 = makeComp(2, 42, { mol: 0.05, g: 9.0, l: 0.005 });
+      comp2.molarity_value = 0.5;
+      comp2.concn = 0.5;
+      const sample = makeSample([comp1, comp2]);
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      expect(sample.components[0].amount_mol).toBe(0);
+      expect(sample.components[0].amount_g).toBe(0);
+      expect(sample.components[0].amount_l).toBe(0);
+      expect(sample.components[0].molarity_value).toBe(0);
+      expect(sample.components[0].concn).toBe(0);
+    });
+
+    it('recalculates mass and equivalents after resetting amounts', async () => {
+      const calcMassSpy = sinon.spy();
+      const calcEquivSpy = sinon.spy();
+
+      const comp1 = makeComp(1, 42, { mol: 0.01, g: 1.8, l: 0.001 });
+      const comp2 = makeComp(2, 42, { mol: 0.05, g: 9.0, l: 0.005 });
+      const sample = makeSample([comp1, comp2]);
+      sample.calculateTotalMixtureMass = calcMassSpy;
+      sample.updateMixtureComponentEquivalent = calcEquivSpy;
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      // Called once by deleteMixtureComponent and once after resetAmounts
+      expect(calcMassSpy.callCount).toBe(2);
+      expect(calcEquivSpy.callCount).toBe(2);
+    });
+
+    it('does not fetch a new molecule when molecules are the same', async () => {
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+      const comp1 = makeComp(1, 42);
+      const comp2 = makeComp(2, 42);
+      const sample = makeSample([comp1, comp2]);
+
+      await sample.mergeComponents(comp1, 'liquid', comp2, 'liquid');
+
+      expect(fetchStub.called).toBe(false);
+    });
+  });
+
+  describe('Sample.splitSmilesToMolecule() — structure editor reconciliation', () => {
+    function makeComponent(id, moleculeId, canoSmiles) {
+      const comp = new Component({});
+      comp.id = id;
+      comp.molecule = { id: moleculeId, cano_smiles: canoSmiles };
+      comp.material_group = 'liquid';
+      comp.purity = 1;
+      return comp;
+    }
+
+    function makeMixture(comps) {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      s.components = comps;
+      return s;
+    }
+
+    // Restore in beforeEach too: an earlier failing test can leak a
+    // fetchBySmi stub, which would make stubbing here throw.
+    beforeEach(() => {
+      sinon.restore();
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('does not re-add components whose structure is unchanged', async () => {
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+      const compA = makeComponent(1, 42, 'CCO');
+      const compB = makeComponent(2, 43, 'c1ccccc1');
+      const sample = makeMixture([compA, compB]);
+
+      await sample.splitSmilesToMolecule(['CCO', 'c1ccccc1'], 'ketcher');
+
+      expect(fetchStub.called).toBe(false);
+      expect(sample.components.length).toBe(2);
+    });
+
+    it('updates the existing component in place when its structure was edited', async () => {
+      const editedMolecule = { id: 99, cano_smiles: 'CCC', molfile: 'edited molfile' };
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi').resolves(editedMolecule);
+      const compA = makeComponent(1, 42, 'CCO');
+      const compB = makeComponent(2, 43, 'c1ccccc1');
+      const sample = makeMixture([compA, compB]);
+
+      // 'CCO' was edited to 'CCC' in the structure editor
+      await sample.splitSmilesToMolecule(['CCC', 'c1ccccc1'], 'ketcher');
+
+      expect(fetchStub.calledOnce).toBe(true);
+      expect(fetchStub.firstCall.args[0]).toBe('CCC');
+      // No additional component; the stale one was updated in place
+      expect(sample.components.length).toBe(2);
+      expect(sample.components[0]).toBe(compA);
+      expect(compA.molecule.id).toBe(99);
+      expect(compA.molecule_cano_smiles).toBe('CCC');
+      expect(compA.molfile).toBe('edited molfile');
+    });
+
+    it('adds a new component when a new structure was drawn', async () => {
+      const newMolecule = { id: 77, cano_smiles: 'CCC', molfile: 'new molfile' };
+      sinon.stub(MoleculesFetcher, 'fetchBySmi').resolves(newMolecule);
+      const compA = makeComponent(1, 42, 'CCO');
+      const compB = makeComponent(2, 43, 'c1ccccc1');
+      const sample = makeMixture([compA, compB]);
+
+      // a third structure was added in the structure editor
+      await sample.splitSmilesToMolecule(['CCO', 'c1ccccc1', 'CCC'], 'ketcher');
+
+      expect(sample.components.length).toBe(3);
+      expect(sample.components[2].molecule.id).toBe(77);
+    });
+
+    it('does not mis-attribute molecules when several fragments are edited at once', async () => {
+      // Both components edited, and the editor emits the new fragments in the
+      // reverse of the component order. Positional pairing would swap the
+      // molecules onto the wrong rows; the guardrail instead adds the edited
+      // fragments as fresh components without corrupting either original row.
+      const molX2 = { id: 201, cano_smiles: 'X2', molfile: 'x2' };
+      const molY2 = { id: 202, cano_smiles: 'Y2', molfile: 'y2' };
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+      fetchStub.withArgs('Y2').resolves(molY2);
+      fetchStub.withArgs('X2').resolves(molX2);
+      const compX = makeComponent(1, 42, 'X');
+      const compY = makeComponent(2, 43, 'Y');
+      const sample = makeMixture([compX, compY]);
+
+      await sample.splitSmilesToMolecule(['Y2', 'X2'], 'ketcher');
+
+      const moleculeIds = sample.components.map((c) => c.molecule.id);
+      expect(sample.components.length).toBe(2);
+      expect(moleculeIds).toContain(201);
+      expect(moleculeIds).toContain(202);
+      // The original rows were dropped, not silently re-pointed to a wrong molecule.
+      expect(sample.components).not.toContain(compX);
+      expect(sample.components).not.toContain(compY);
+    });
+
+    it('keeps both same-molecule components when the deduplicated editor structure is saved', async () => {
+      // Two components sharing one molecule render as a SINGLE structure in
+      // the editor (updateMixtureMolecule dedupes fragments), so a save emits
+      // one fragment. Set-based matching must treat both components as
+      // covered — count-based matching would delete one of them on every save.
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+      const compA = makeComponent(1, 43, 'c1ccccc1');
+      const compB = makeComponent(2, 43, 'c1ccccc1');
+      const sample = makeMixture([compA, compB]);
+
+      await sample.splitSmilesToMolecule(['c1ccccc1'], 'ketcher');
+
+      expect(fetchStub.called).toBe(false);
+      expect(sample.components.length).toBe(2);
+    });
+
+    it('ignores a duplicate ring drawn in the editor (canvas is deduplicated by design)', async () => {
+      // Drawing a second copy of an existing structure does not create a
+      // second component — duplicates are added via drag & drop, and the
+      // canvas would collapse back to one structure anyway.
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+      const compA = makeComponent(1, 43, 'c1ccccc1');
+      const sample = makeMixture([compA]);
+
+      await sample.splitSmilesToMolecule(['c1ccccc1', 'c1ccccc1'], 'ketcher');
+
+      expect(fetchStub.called).toBe(false);
+      expect(sample.components.length).toBe(1);
+      expect(sample.components[0]).toBe(compA);
+    });
+
+    it('does not corrupt existing components when a middle fetch fails during a multi-edit', async () => {
+      // C1=A, C2=B, C3=C all edited to X, Y, Z; the fetch for Y fails. In the
+      // ambiguous multi-edit path the resolved fragments are added as new
+      // components and — because not every fragment resolved — the originals are
+      // left untouched rather than corrupted or partially deleted.
+      const molX = { id: 201, cano_smiles: 'X', molfile: 'x' };
+      const molZ = { id: 203, cano_smiles: 'Z', molfile: 'z' };
+      const fetchStub = sinon.stub(MoleculesFetcher, 'fetchBySmi');
+      fetchStub.withArgs('X').resolves(molX);
+      fetchStub.withArgs('Y').resolves(null); // resolution failure
+      fetchStub.withArgs('Z').resolves(molZ);
+      const compA = makeComponent(1, 41, 'A');
+      const compB = makeComponent(2, 42, 'B');
+      const compC = makeComponent(3, 43, 'C');
+      const sample = makeMixture([compA, compB, compC]);
+
+      await sample.splitSmilesToMolecule(['X', 'Y', 'Z'], 'ketcher');
+
+      // No existing component was mutated to the wrong molecule.
+      expect(compA.molecule.id).toBe(41);
+      expect(compB.molecule.id).toBe(42);
+      expect(compC.molecule.id).toBe(43);
+      // The resolved fragments were added as new components.
+      const moleculeIds = sample.components.map((c) => c.molecule.id);
+      expect(moleculeIds).toContain(201);
+      expect(moleculeIds).toContain(203);
+    });
+  });
+
+  describe('Sample.serializeMaterial() — components tri-state', () => {
+    function makeMixture() {
+      const s = new Sample();
+      s.sample_type = 'Mixture';
+      return s;
+    }
+
+    it('serializes never-loaded components as null (server keeps/copies persisted ones)', () => {
+      const sample = makeMixture();
+
+      expect(sample.serializeMaterial().components).toBe(null);
+    });
+
+    it('serializes an explicitly emptied component list as [] (delete-all instruction)', () => {
+      const sample = makeMixture();
+      sample.components = [];
+
+      expect(sample.serializeMaterial().components).toEqual([]);
+    });
+
+    it('serializes hydrated components via serializeComponent', () => {
+      const sample = makeMixture();
+      const comp = new Component({});
+      comp.id = 1;
+      comp.molecule = { id: 42, cano_smiles: 'CCO' };
+      sample.components = [comp];
+
+      const serialized = sample.serializeMaterial().components;
+      expect(serialized.length).toBe(1);
+      expect(serialized[0].id).toBe(1);
+      expect(serialized[0].component_properties.molecule_id).toBe(42);
+    });
+
+    it('passes raw API component objects through unchanged instead of crashing', () => {
+      const sample = makeMixture();
+      const raw = {
+        id: 7,
+        name: 'Comp A',
+        position: 0,
+        component_properties: { molecule_id: 42, amount_mol: 0.1 },
+      };
+      sample.components = [raw];
+
+      const serialized = sample.serializeMaterial().components;
+      expect(serialized.length).toBe(1);
+      expect(serialized[0]).toEqual(raw);
     });
   });
 });

@@ -72,6 +72,49 @@ RSpec.describe Report, type: :report do
       expect(docx.class).to eq(String)
       expect(file_name).to include('ELN_Reaction_')
     end
+
+    # Guards against the "Word found unreadable content" warning: every
+    # relationship referenced by the document must be declared and its target
+    # part present, every part extension must have a content type, no merge
+    # field control text may remain, and VML shape ids must be unique.
+    it 'produces an internally consistent OOXML package' do
+      require 'zip'
+      params = { template: 'single_reaction', id: reaction1.id }
+      docx, = described_class.create_reaction_docx(user, [user.id], params)
+
+      entries = {}
+      Zip::File.open_buffer(StringIO.new(docx)) do |zip|
+        zip.each { |e| entries[e.name] = e.get_input_stream.read if e.file? }
+      end
+
+      doc = entries['word/document.xml']
+      rels = entries['word/_rels/document.xml.rels']
+      content_types = entries['[Content_Types].xml']
+
+      # every r:id / r:embed referenced in the document resolves to a declared
+      # relationship whose target part exists in the package
+      ref_rids = doc.scan(/r:(?:id|embed)="(rId\d+)"/).flatten.uniq
+      ref_rids.each do |rid|
+        target = rels[/Id="#{rid}"[^>]*Target="([^"]+)"/, 1] ||
+                 rels[/Target="([^"]+)"[^>]*Id="#{rid}"/, 1]
+        expect(target).to be_present, "rId #{rid} is not declared in document.xml.rels"
+        next if target.start_with?('http', '../') # external/customXml targets
+
+        expect(entries).to have_key("word/#{target}"), "missing part word/#{target}"
+      end
+
+      # every media/embeddings part extension is declared in [Content_Types].xml
+      entries.keys.grep(%r{word/(media|embeddings)/}).each do |part|
+        ext = File.extname(part).delete('.').downcase
+        expect(content_types.downcase).to include(%(extension="#{ext}")),
+                                                  "content type for .#{ext} not declared"
+      end
+
+      # no leftover merge-field control text, and unique VML shape ids
+      expect(doc).not_to include('MERGEFIELD')
+      shape_ids = doc.scan(/<v:shape[^>]*\bid="([^"]+)"/).flatten
+      expect(shape_ids).to eq(shape_ids.uniq), "duplicate v:shape ids: #{shape_ids.inspect}"
+    end
   end
 
   describe '.create_docx' do # rubocop:disable RSpec/MultipleMemoizedHelpers

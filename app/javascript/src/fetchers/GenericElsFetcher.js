@@ -4,6 +4,7 @@ import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import GenericBaseFetcher from 'src/fetchers/GenericBaseFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { getFileName, downloadBlob, preparedCollectionParams } from 'src/utilities/FetcherHelper';
+import { normalizeMttResult } from 'src/utilities/mttDataProcessor';
 
 export default class GenericElsFetcher extends GenericBaseFetcher {
   static fetchByCollectionId(id, params = {}) {
@@ -48,7 +49,11 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
 
   static fetchById(id) {
     return ApiClient.getJson(`/api/v1/generic_elements/${id}`)
-      .then((json) => this.genericElement(json, id));
+      .then((json) => this.genericElement(json, id))
+      .then((genericEl) => this.fetchWellplates(id).then((wellplatesData) => {
+        genericEl.wellplates = wellplatesData?.wellplates || [];
+        return genericEl;
+      }));
   }
 
   static uploadGenericFiles(element, id, type, hasAttach = false, isElement = false) {
@@ -66,7 +71,8 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
       .then((json) => {
         const { id } = json.element;
         return this.uploadGenericFiles(genericEl, id, 'Element', true, true)
-          .then(() => this.genericElement(json, id));
+          .then(() => this.updateWellplates(id, genericEl.wellplateIDs || []))
+          .then(() => this.fetchById(id));
       });
   }
 
@@ -78,7 +84,8 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
 
     return Promise.all(tasks)
       .then(() => ApiClient.putJson(`/api/v1/generic_elements/${genericEl.id}`, { body: genericEl.serialize() }))
-      .then((json) => this.genericElement(json, genericEl.id));
+      .then(() => this.updateWellplates(genericEl.id, genericEl.wellplateIDs || []))
+      .then(() => this.fetchById(genericEl.id));
   }
 
   static split(params, name) {
@@ -228,5 +235,63 @@ export default class GenericElsFetcher extends GenericBaseFetcher {
     const genericEl = new GenericEl(json.element);
     genericEl.attachments = json.attachments;
     return genericEl;
+  }
+
+  static fetchWellplates(elementId) {
+    return ApiClient.getJson(`/api/v1/wellplates/by_generic_element/${elementId}`);
+  }
+
+  static updateWellplates(elementId, wellplateIds) {
+    return ApiClient.putJson(`/api/v1/wellplates/by_generic_element/${elementId}`, {
+      body: { wellplate_ids: wellplateIds },
+    });
+  }
+
+  static getMttRequest(params) {
+    const searchParams = new URLSearchParams(params);
+    return ApiClient.getJson(`/api/v1/mtt/requests?${searchParams}`);
+  }
+
+  static sendMttRequest(params) {
+    return ApiClient.postJson('/api/v1/mtt/create_mtt_request', { body: params });
+  }
+
+  static deleteMttRequests(ids) {
+    return ApiClient.deleteRequest('/api/v1/mtt/requests', { body: { ids } });
+  }
+
+  static deleteMttResult(outputId, sampleName) {
+    return ApiClient.deleteRequest(`/api/v1/mtt/outputs/${outputId}/results`, {
+      body: { sample_name: sampleName },
+    });
+  }
+
+  static sendMttResultsToSample(selections, genericElementId, assayInfo = {}) {
+    const timestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
+    const raw_data = selections.map((selection) => ({
+      uuid: `mtt-${selection.output_id}-${crypto.randomUUID()}`,
+      sample_identifier: selection.sample_name,
+      description: `MTT Analysis (${timestamp})`,
+      value: normalizeMttResult(selection.result_data).icRelative || 0,
+      unit: '',
+      metadata: {
+        analysis_type: 'mtt_output',
+        generic_element_id: genericElementId,
+        element_klass_label: assayInfo.element_klass_label || '',
+        element_short_label: assayInfo.element_short_label || '',
+        element_name: assayInfo.element_name || '',
+        analysis_timestamp: timestamp,
+        results: [selection.result_data]
+      }
+    }));
+
+    return ApiClient.postJson('/api/v1/measurements/bulk_create_from_raw_data', {
+      body: {
+        raw_data,
+        source_type: 'Labimotion::Element',
+        source_id: genericElementId,
+      },
+    });
   }
 }
