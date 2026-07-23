@@ -56,7 +56,6 @@ module Chemotion
         attributes = declared(params, include_missing: false)
         metadata = ResearchPlanMetadata.find_or_initialize_by(research_plan_id: research_plan.id)
         metadata.update!(attributes)
-        # DataCite.find_and_create_at_chemotion!(metadata.research_plan) if new_record
         present metadata.reload, with: Entities::ResearchPlanMetadataEntity, root: 'research_plan_metadata'
       rescue ActiveRecord::RecordInvalid => e
         { error: e.message }

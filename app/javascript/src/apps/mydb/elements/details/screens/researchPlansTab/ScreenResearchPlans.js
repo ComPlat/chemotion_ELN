@@ -84,7 +84,7 @@ class ScreenResearchPlans extends Component {
         {this.renderDropZone()}
 
         {readOnly && !hasResearchPlans && (
-          <div className="m-4">
+          <div className="d-flex align-items-center justify-content-between my-2">
             <span>There are currently no Research Plans.</span>
           </div>
         )}

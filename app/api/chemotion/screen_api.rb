@@ -88,6 +88,7 @@ module Chemotion
 
           post do
             screen = Screen.find(params[:id])
+            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, screen).update?
             collection = current_user.collections.find(params[:collection_id])
             number = screen.research_plans.size + 1
             screen.research_plans << ResearchPlan.new(
@@ -98,6 +99,8 @@ module Chemotion
             )
 
             present screen, with: Entities::ScreenEntity, root: :screen, policy: ElementPolicy.new(current_user, screen)
+          rescue ActiveRecord::RecordNotFound
+            error!('404 Not Found', 404)
           end
         end
       end

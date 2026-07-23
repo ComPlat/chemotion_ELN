@@ -141,26 +141,72 @@ describe Chemotion::ScreenAPI do
   describe 'POST /api/v1/screens/:id/add_research_plan' do
     let(:request_body) do
       {
-        collection_id: collection.id
+        collection_id: collection.id,
       }
     end
-    let(:expected_response) do
-      Entities::ScreenEntity.represent(screen, root: :screen)
-    end
 
-    it 'adds an empty research plan to the screen' do
-      expect do
+    context 'when the user can update the screen' do
+      it 'adds an empty research plan to the screen' do
+        expect do
+          post "/api/v1/screens/#{screen.id}/add_research_plan", params: request_body
+        end.to change(screen.research_plans, :count).by(1)
+      end
+
+      it 'returns the serialized screen with a policy-backed can_update' do
         post "/api/v1/screens/#{screen.id}/add_research_plan", params: request_body
-      end.to change(screen.research_plans, :count).by(1)
+
+        expect(response.status).to eq 201
+        screen_json = JSON.parse(response.body)['screen']
+        expect(screen_json['id']).to eq(screen.id)
+        expect(screen_json['can_update']).to be true
+      end
     end
 
-    it 'returns the serialized screen' do
-      post "/api/v1/screens/#{screen.id}/add_research_plan", params: request_body
+    context 'when the screen is in a read-only shared collection' do
+      let(:screen_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(
+            :collection_share,
+            collection: c,
+            shared_with: user,
+            permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements],
+          )
+        end
+      end
+      let(:screen) { create(:screen, collections: [screen_collection]) }
 
-      expect(response.status).to eq 201
-      body_value = JSON.parse(response.body)
-      expected_response.instance_variables.each do |ivar_name|
-        expect(body_value[ivar_name]).to eq(expected_response.instance_variable_get ivar_name)
+      before do
+        post "/api/v1/screens/#{screen.id}/add_research_plan", params: request_body
+      end
+
+      it 'returns 401 unauthorized' do
+        expect(response).to have_http_status :unauthorized
+      end
+
+      it 'does not add a research plan' do
+        expect(screen.research_plans.reload.count).to eq(0)
+      end
+    end
+
+    context 'without update permissions' do
+      let(:screen) { create(:screen, collections: [other_user_collection]) }
+
+      before do
+        post "/api/v1/screens/#{screen.id}/add_research_plan", params: request_body
+      end
+
+      it 'returns 401 unauthorized' do
+        expect(response).to have_http_status :unauthorized
+      end
+    end
+
+    context 'when the screen does not exist' do
+      before do
+        post '/api/v1/screens/0/add_research_plan', params: request_body
+      end
+
+      it 'returns 404 not found' do
+        expect(response).to have_http_status :not_found
       end
     end
   end
