@@ -4,10 +4,37 @@
 class ElementDetailLevelCalculator
   attr_reader :user, :element, :detail_levels
 
-  def initialize(user:, element:)
+  # owns_collection_with_element: optional pre-computed boolean (from
+  # .owned_element_ids) to avoid a per-element existence query when the
+  # caller already knows, for a batch of elements, whether each one
+  # belongs to a collection owned by the user.
+  def initialize(user:, element:, owns_collection_with_element: nil)
     @user = user
     @element = element
+    @owns_collection_with_element = owns_collection_with_element
     @detail_levels = calculate_detail_levels
+  end
+
+  # Batch-computes, in a single query, which of the given elements belong to a
+  # collection owned by the user (or one of the user's groups). Intended to
+  # replace the per-element `user_collections_with_element.any?` check when
+  # calculating detail levels for a whole page of elements.
+  #
+  # Returns a Set of element ids.
+  def self.owned_element_ids(elements:, user:)
+    elements = elements.to_a
+    return Set.new if elements.empty?
+
+    klass = elements.first.class
+    user_ids = user.group_ids + [user.id]
+
+    klass
+      .joins(:collections)
+      .where(collections: { user_id: user_ids })
+      .where(id: elements.map(&:id))
+      .distinct
+      .pluck(:id)
+      .to_set
   end
 
   private
@@ -36,13 +63,19 @@ class ElementDetailLevelCalculator
   end
 
   def detail_level_for(key)
-    if user_collections_with_element.any?
+    if owns_collection_with_element?
       10 # full access for all elements within own collections
     elsif shared_collections_with_element.any?
       shared_collections_with_element.maximum(key) || 0
     else
       0
     end
+  end
+
+  def owns_collection_with_element?
+    return @owns_collection_with_element unless @owns_collection_with_element.nil?
+
+    @owns_collection_with_element = user_collections_with_element.any?
   end
 
   # All collections containing the element that belong to the user
