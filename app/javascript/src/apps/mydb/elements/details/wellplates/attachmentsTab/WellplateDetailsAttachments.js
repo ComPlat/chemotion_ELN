@@ -269,7 +269,7 @@ export class WellplateDetailsAttachments extends Component {
           </div>
         )}
         {combinedAttachments.length === 0 ? (
-          <div className={readOnly ? 'm-4' : 'no-attachments-text'}>
+          <div className="d-flex align-items-center justify-content-between my-2">
             <span>There are currently no attachments.</span>
           </div>
         ) : (

@@ -236,7 +236,7 @@ class ResearchPlanDetailsAttachments extends Component {
           </div>
         )}
         {combinedAttachments.length === 0 ? (
-          <span>There are currently no attachments.</span>
+          <p className="m-0">There are currently no attachments.</p>
         ) : (
           <>
             {combinedAttachments.map((attachment) => (

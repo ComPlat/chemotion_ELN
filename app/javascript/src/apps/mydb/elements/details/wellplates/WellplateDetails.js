@@ -89,6 +89,8 @@ export default class WellplateDetails extends Component {
 
   handleSegmentsChange(se) {
     const { wellplate } = this.state;
+    if (wellplate.isReadOnly) { return; }
+
     const { segments } = wellplate;
     const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
     if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
@@ -99,6 +101,8 @@ export default class WellplateDetails extends Component {
 
   handleSubmit() {
     const { wellplate } = this.state;
+    if (wellplate.isReadOnly) { return; }
+
     this.context.attachmentNotificationStore.clearMessages();
     LoadingActions.start();
     if (wellplate.isNew) {
@@ -129,12 +133,16 @@ export default class WellplateDetails extends Component {
 
   handleWellsChange(wells) {
     const { wellplate } = this.state;
+    if (wellplate.isReadOnly) { return; }
+
     wellplate.wells = wells;
     this.setState({ wellplate });
   }
 
   handleAddReadout() {
     const { wellplate } = this.state;
+    if (wellplate.isReadOnly) { return; }
+
     wellplate.wells.forEach((well) => {
       well.readouts.push({ value: '', unit: '' });
     });
@@ -143,6 +151,8 @@ export default class WellplateDetails extends Component {
 
   handleRemoveReadout(index) {
     const { wellplate } = this.state;
+    if (wellplate.isReadOnly) { return; }
+
     wellplate.wells.forEach((well) => {
       well.readouts.splice(index, 1);
     });
@@ -151,6 +161,8 @@ export default class WellplateDetails extends Component {
 
   handleChangeProperties(change = {}) {
     const { wellplate } = this.state;
+    if (wellplate.isReadOnly) { return; }
+
     const { type, value } = change;
 
     if (type == 'name') wellplate.name = value === '' ? 'New Wellplate' : value;
@@ -195,9 +207,10 @@ export default class WellplateDetails extends Component {
   }
 
   handleAttachmentImport(attachment) {
-    if (this.state.wellplate.isReadOnly) { return; }
-    LoadingActions.start();
     const { wellplate } = this.state;
+    if (wellplate.isReadOnly) { return; }
+
+    LoadingActions.start();
     const wellplateId = wellplate.id;
     const attachmentId = attachment.id;
 

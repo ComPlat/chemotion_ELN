@@ -87,6 +87,8 @@ export default class ScreenDetails extends Component {
 
   handleSubmit() {
     const { screen } = this.state;
+    if (screen.isReadOnly) { return; }
+
     LoadingActions.start();
 
     if (screen.isNew) {
@@ -101,9 +103,11 @@ export default class ScreenDetails extends Component {
   }
 
   handleInputChange(type, event) {
+    const { screen } = this.state;
+    if (screen.isReadOnly) { return; }
+
     const types = ['name', 'requirements', 'collaborator', 'conditions', 'result', 'description'];
     if (types.indexOf(type) !== -1) {
-      const { screen } = this.state;
       const { value } = event.target;
 
       screen[type] = value;
@@ -113,6 +117,8 @@ export default class ScreenDetails extends Component {
 
   handleSegmentsChange(se) {
     const { screen } = this.state;
+    if (screen.isReadOnly) { return; }
+
     const { segments } = screen;
     const idx = findIndex(segments, (o) => o.segment_klass_id === se.segment_klass_id);
     if (idx >= 0) { segments.splice(idx, 1, se); } else { segments.push(se); }
@@ -127,12 +133,16 @@ export default class ScreenDetails extends Component {
 
   dropResearchPlan(researchPlan) {
     const { screen } = this.state;
+    if (screen.isReadOnly) { return; }
+
     screen.research_plans = unionBy(screen.research_plans, [researchPlan], 'id');
     this.forceUpdate();
   }
 
   deleteResearchPlan(researchPlanID) {
     const { screen } = this.state;
+    if (screen.isReadOnly) { return; }
+
     const researchPlanIndex = screen.research_plans.findIndex((rp) => rp.id === researchPlanID);
     screen.research_plans.splice(researchPlanIndex, 1);
 
@@ -161,12 +171,16 @@ export default class ScreenDetails extends Component {
 
   dropWellplate(wellplate) {
     const { screen } = this.state;
+    if (screen.isReadOnly) { return; }
+
     screen.wellplates = unionBy(screen.wellplates, [wellplate], 'id');
     this.forceUpdate();
   }
 
   deleteWellplate(wellplate) {
     const { screen } = this.state;
+    if (screen.isReadOnly) { return; }
+
     const wellplateIndex = screen.wellplates.indexOf(wellplate);
     screen.wellplates.splice(wellplateIndex, 1);
 
@@ -180,88 +194,90 @@ export default class ScreenDetails extends Component {
 
     return (
       <Form>
-        <Row className="mb-4">
-          <Col>
-            <Form.Group>
-              <Form.Label>Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={name || ''}
-                onChange={(event) => this.handleInputChange('name', event)}
-                disabled={screen.isReadOnly || screen.isMethodDisabled('name')}
+        <fieldset disabled={screen.isReadOnly}>
+          <Row className="mb-4">
+            <Col>
+              <Form.Group>
+                <Form.Label>Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={name || ''}
+                  onChange={(event) => this.handleInputChange('name', event)}
+                  disabled={screen.isReadOnly || screen.isMethodDisabled('name')}
+                />
+              </Form.Group>
+            </Col>
+            <Col>
+              <Form.Group>
+                <Form.Label>Collaborator</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={collaborator || ''}
+                  onChange={(event) => this.handleInputChange('collaborator', event)}
+                  disabled={screen.isReadOnly || screen.isMethodDisabled('collaborator')}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+          <Row className="mb-4">
+            <Col>
+              <Form.Group>
+                <Form.Label>Requirements</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={requirements || ''}
+                  onChange={(event) => this.handleInputChange('requirements', event)}
+                  disabled={screen.isReadOnly || screen.isMethodDisabled('requirements')}
+                />
+              </Form.Group>
+            </Col>
+            <Col>
+              <Form.Group>
+                <Form.Label>Conditions</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={conditions || ''}
+                  onChange={(event) => this.handleInputChange('conditions', event)}
+                  disabled={screen.isReadOnly || screen.isMethodDisabled('conditions')}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+          <Row className="mb-4">
+            <Col>
+              <Form.Group>
+                <Form.Label>Result</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={result || ''}
+                  onChange={(event) => this.handleInputChange('result', event)}
+                  disabled={screen.isReadOnly || screen.isMethodDisabled('result')}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+          <Row className="mb-4">
+            <Col>
+              <Form.Group>
+                <Form.Label>Description</Form.Label>
+                <QuillEditor
+                  value={description}
+                  onChange={(event) => this.handleInputChange('description', { target: { value: event } })}
+                  disabled={screen.isReadOnly || screen.isMethodDisabled('description')}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+          <Row className="mb-4">
+            <Col>
+              <EditUserLabels
+                element={screen}
+                fnCb={this.handleScreenChanged}
               />
-            </Form.Group>
-          </Col>
-          <Col>
-            <Form.Group>
-              <Form.Label>Collaborator</Form.Label>
-              <Form.Control
-                type="text"
-                value={collaborator || ''}
-                onChange={(event) => this.handleInputChange('collaborator', event)}
-                disabled={screen.isReadOnly || screen.isMethodDisabled('collaborator')}
-              />
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row className="mb-4">
-          <Col>
-            <Form.Group>
-              <Form.Label>Requirements</Form.Label>
-              <Form.Control
-                type="text"
-                value={requirements || ''}
-                onChange={(event) => this.handleInputChange('requirements', event)}
-                disabled={screen.isReadOnly || screen.isMethodDisabled('requirements')}
-              />
-            </Form.Group>
-          </Col>
-          <Col>
-            <Form.Group>
-              <Form.Label>Conditions</Form.Label>
-              <Form.Control
-                type="text"
-                value={conditions || ''}
-                onChange={(event) => this.handleInputChange('conditions', event)}
-                disabled={screen.isReadOnly || screen.isMethodDisabled('conditions')}
-              />
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row className="mb-4">
-          <Col>
-            <Form.Group>
-              <Form.Label>Result</Form.Label>
-              <Form.Control
-                type="text"
-                value={result || ''}
-                onChange={(event) => this.handleInputChange('result', event)}
-                disabled={screen.isReadOnly || screen.isMethodDisabled('result')}
-              />
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row className="mb-4">
-          <Col>
-            <Form.Group>
-              <Form.Label>Description</Form.Label>
-              <QuillEditor
-                value={description}
-                onChange={(event) => this.handleInputChange('description', { target: { value: event } })}
-                disabled={screen.isReadOnly || screen.isMethodDisabled('description')}
-              />
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row className="mb-4">
-          <Col>
-            <EditUserLabels
-              element={screen}
-              fnCb={this.handleScreenChanged}
-            />
-            <PrivateNoteElement element={screen} disabled={screen.isReadOnly} />
-          </Col>
-        </Row>
+              <PrivateNoteElement element={screen} disabled={screen.isReadOnly} />
+            </Col>
+          </Row>
+        </fieldset>
         <hr />
         <h4 className="list-group-item-heading">Wellplates</h4>
         <ScreenWellplates
@@ -283,6 +299,8 @@ export default class ScreenDetails extends Component {
 
   updateComponentGraphData(data) {
     const { screen } = this.state;
+    if (screen.isReadOnly) { return; }
+
     screen.componentGraphData = data;
     this.setState({ screen });
   }
