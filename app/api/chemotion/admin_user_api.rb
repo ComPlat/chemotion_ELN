@@ -153,6 +153,8 @@ module Chemotion
           delete do
             @user.destroy!
             status 204
+          rescue ActiveRecord::RecordNotDestroyed => e
+            error!(e.record.errors.full_messages.join(', '), 422)
           end
 
           desc 'reset user password'

@@ -111,8 +111,13 @@ module Chemotion
               { destroyed_id: params[:id] } if params[:destroy_obj] && obj.destroy!
             when 'NodeAdm'
               ua = UsersAdmin.find_by(user_id: params[:id], admin_id: params[:admin_id])
-              UsersAdmin.create!(user_id: params[:id], admin_id: params[:admin_id]) if ua.nil? && params[:set_admin]
-              ua.destroy! if params[:set_admin] == false && !ua.nil?
+              if params[:set_admin] && ua.nil?
+                UsersAdmin.create!(user_id: params[:id], admin_id: params[:admin_id])
+              elsif params[:set_admin] == false && !ua.nil?
+                error!('Cannot remove the last admin', 422) if Group.find(params[:id]).sole_admin?(params[:admin_id])
+
+                ua.destroy!
+              end
             when 'NodeAdd'
               obj = Group.find(params[:id]) if %w[Group].include?(params[:rootType])
               obj = Device.find(params[:id]) if %w[Device].include?(params[:rootType])

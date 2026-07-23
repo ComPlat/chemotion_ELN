@@ -563,6 +563,20 @@ class Person < User
 
   has_many :users_admins, dependent: :destroy, foreign_key: :admin_id
   has_many :administrated_accounts, through: :users_admins, source: :user
+
+  # Must run before the `users_admins, dependent: :destroy` cascade above wipes
+  # `administrated_accounts`, or this would find nothing to check.
+  before_destroy :prevent_destroying_sole_group_admin, prepend: true
+
+  private
+
+  def prevent_destroying_sole_group_admin
+    orphaned = administrated_accounts.where(type: 'Group').select { |g| g.sole_admin?(id) }
+    return if orphaned.empty?
+
+    errors.add(:base, "cannot be deleted while the sole admin of: #{orphaned.map(&:name).join(', ')}")
+    throw(:abort)
+  end
 end
 
 class Group < User
@@ -576,6 +590,12 @@ class Group < User
 
   def administrated_by?(user)
     users_admins.where(admin: user).present?
+  end
+
+  # Single source of truth for "removing this admin would leave the group with none" —
+  # used by GroupPolicy#last_admin? and by every path that can revoke an admin relationship.
+  def sole_admin?(person_id)
+    admins.one? && admins.first.id == person_id
   end
 
   private
