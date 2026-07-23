@@ -2,7 +2,7 @@
 
 import React from 'react';
 import expect from 'expect';
-import { configure, shallow } from 'enzyme';
+import { configure, shallow, mount } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import WellplateSizeDropdown from 'src/apps/mydb/elements/details/wellplates/propertiesTab/WellplateSizeDropdown';
 import wellplate2x3EmptyJson from 'fixture/wellplates/wellplate_2_3_empty';
@@ -88,5 +88,46 @@ describe.skip('WellplateSizeDropdown', () => {
         expect(wellplate.wells.length).toEqual(2);
       });
     });
+  });
+});
+
+describe('WellplateSizeDropdown (functional component)', () => {
+  function selectedOption(wrapper) {
+    return wrapper.find('option').filterWhere((o) => o.props().value === wrapper.find('select').props().value);
+  }
+
+  it('shows the actual size in the dropdown when it is not one of the standard options', () => {
+    const wellplate = new Wellplate(wellplate2x3EmptyJson); // 2x3 is not a standard size
+    const wrapper = mount(
+      <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
+    );
+
+    expect(wrapper.find('select').props().value).toEqual('2 3');
+    expect(selectedOption(wrapper).props().label).toEqual('6 (2x3)');
+  });
+
+  it('does not add a duplicate option for a standard size', () => {
+    const wellplate = new Wellplate(wellplate8x12EmptyJson); // 12x8 is a standard size
+    const wrapper = mount(
+      <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
+    );
+
+    const matching = wrapper.find('option').filterWhere((o) => o.props().value === '12 8');
+    expect(matching.length).toEqual(1);
+    expect(selectedOption(wrapper).props().label).toEqual('96 (12x8)');
+  });
+
+  it('shows a plain read-only field with an explanatory tooltip once the size is locked', () => {
+    const wellplate = new Wellplate({ ...wellplate8x12EmptyJson, is_new: false });
+    const wrapper = mount(
+      <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
+    );
+
+    expect(wrapper.find('select').length).toEqual(0);
+    expect(wrapper.find('input').first().props().value).toEqual('96 (12x8)');
+    expect(wrapper.find('input').first().props().disabled).toEqual(true);
+    expect(wrapper.find('button.create-own-size-button').props().disabled).toEqual(true);
+    const overlay = wrapper.find('OverlayTrigger').props().overlay;
+    expect(shallow(overlay).text()).toEqual('The size cannot be changed.');
   });
 });

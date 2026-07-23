@@ -7,10 +7,11 @@ import Segment from 'src/models/Segment';
 export default class Wellplate extends Element {
   constructor(args) {
     super(args);
+    this.originalSize = this.width * this.height;
     this.#initEmptyWells();
   }
 
-  static buildEmpty(collectionId, width = 12, height = 8) {
+  static buildEmpty(collectionId, width = 0, height = 0) {
     return new Wellplate(
       {
         collection_id: collectionId,
@@ -46,26 +47,26 @@ export default class Wellplate extends Element {
   }
 
   static get MAX_DIMENSION() {
-    return 99;
+    return 100;
   }
 
   static columnLabel(columnIndex) {
-    if (columnIndex == 0) return ''
+    if (columnIndex === 0) return '';
 
-    return columnIndex
+    return columnIndex;
   }
 
   static rowLabel(rowIndex) {
-    if (rowIndex == 0) return ''
+    if (rowIndex === 0) return '';
 
     const rowLabels = [
       ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), // row 1-26
       ...'AA AB AC AD AE AF AG AH AI AJ AK AL AM AN AO AP AQ AR AS AT AU AV AW AX AY AZ'.split(' '), // row 27-52
       ...'BA BB BC BD BE BF BG BH BI BJ BK BL BM BN BO BP BQ BR BS BT BU BV BW BX BY BZ'.split(' '), // row 53-78
       ...'CA CB CC CD CE CF CG CH CI CJ CK CL CM CN CO CP CQ CR CS CT CU CV CW CX CY CZ'.split(' ')  // row 79-104
-    ]
+    ];
 
-  return rowLabels[rowIndex - 1]
+  return rowLabels[rowIndex - 1];
   }
 
   get name() {
@@ -163,7 +164,7 @@ export default class Wellplate extends Element {
   }
 
   #initEmptyWells() {
-    if (!this.isNew) return
+    if (!this.isNew && this.originalSize > 0) return;
 
     this.wells = Array(this.size).fill({});
     this.wells = this.wells.map((well, i) => this.#initWellWithPositionByIndex(well, i));

@@ -73,10 +73,10 @@ export default class WellplateDetails extends Component {
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
     const { wellplate: newWellplate } = this.props;
-    const { wellplate: currentWellplate } = this.state;
-    if (newWellplate.id !== currentWellplate.id || newWellplate.updated_at !== currentWellplate.updated_at) {
+    const { wellplate: previousWellplate } = prevProps;
+    if (newWellplate.id !== previousWellplate.id || newWellplate.updated_at !== previousWellplate.updated_at) {
       this.setState({
         wellplate: newWellplate,
       });
@@ -153,10 +153,13 @@ export default class WellplateDetails extends Component {
     const { wellplate } = this.state;
     const { type, value } = change;
 
-    if (type == 'name') wellplate.name = value === '' ? 'New Wellplate' : value;
-    if (type == 'description') wellplate.description = value;
-    if (type == 'readoutTitles') wellplate.readout_titles = value;
-    if (type == 'size') wellplate.changeSize(value.width, value.height);
+    if (type === 'name') wellplate.name = value === '' ? 'New Wellplate' : value;
+    if (type === 'description') wellplate.description = value;
+    if (type === 'readoutTitles') wellplate.readout_titles = value;
+    if (type === 'size') {
+      wellplate.changeSize(value.width, value.height);
+      wellplate.changed = true;
+    }
 
     this.setState({ wellplate });
   }
@@ -250,7 +253,7 @@ export default class WellplateDetails extends Component {
           iconClass="fa fa-print"
           header={false}
           onClick={() => this.handlePrint()}
-          disabled={wellplate.width > 12}
+          disabled={wellplate.width > 12 || wellplate.size === 0}
         />
       </>
     );
