@@ -122,6 +122,7 @@ const InboxModal = () => {
 
   const updateFilterAtUserProfile = (type, sort) => {
     userStore.updateUserProfileValues({
+      ...userStore.profile,
       data: {
         filters: {
           [type]: {
