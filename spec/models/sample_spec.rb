@@ -174,18 +174,19 @@ RSpec.describe Sample do
       MOLFILE
     end
     let(:sample) { build(:sample, molfile: molfile) }
+    # PubChem-derived fields (iupac_name/names) are no longer populated synchronously at save
+    # time — enrichment is deferred to the async job (C2). Only the babel-derived structure
+    # data is available immediately.
     let(:mol_attributes) do
       {
         'boiling_point' => nil,
         'density' => 0.0,
         'inchikey' => 'XLYOFNOQVPJJNP-UHFFFAOYSA-N',
         'inchistring' => 'InChI=1S/H2O/h1H2',
-        'iupac_name' => 'oxidane',
         'melting_point' => nil,
         'molecular_weight' => 18.01528,
         #  "molecule_svg_file" => "XLYOFNOQVPJJNP-UHFFFAOYSA-N.svg", #todo
         'molfile' => molfile.rstrip,
-        'names' => %w[water oxidane],
         'sum_formular' => 'H2O',
       }
     end
@@ -207,6 +208,20 @@ RSpec.describe Sample do
       mol_attributes.each do |k, v|
         expect(molecule.attributes[k]).to eq(v)
       end
+    end
+
+    it 'defers PubChem-derived names to async enrichment' do
+      sample.save!
+      molecule = sample.molecule
+
+      # not populated synchronously on the create path (C2)
+      expect(molecule.iupac_name).to be_nil
+
+      # the async enrich path (PubchemSingleLcssJob -> Molecule#enrich_from_pubchem) backfills
+      # the iupac_name column and molecule_names records.
+      molecule.enrich_from_pubchem
+      expect(molecule.reload.iupac_name).to eq('oxidane')
+      expect(molecule.molecule_names.where(description: 'iupac_name').pluck(:name)).to include('water', 'oxidane')
     end
 
     # #Fixme : now file are anonymised

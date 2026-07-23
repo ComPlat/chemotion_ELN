@@ -149,6 +149,44 @@ RSpec.describe Import::ImportSdf do
 
       expect(PubchemSingleLcssJob).to have_received(:perform_later).twice
     end
+
+    # Regression for the reported bug: one molecule losing the create race must not abort the
+    # whole import with PG::UniqueViolation (index_molecules_on_formula_and_inchikey_and_is_partial).
+    it 'survives a concurrent-create RecordNotUnique on one molecule and still imports the rest (C1)' do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      raced_inchikey = "MOL#{Digest::SHA256.hexdigest(new_molfiles.first.to_s)[0..10]}-UHFFFAOYSA-N"
+      winner = create(:molecule, inchikey: raced_inchikey, is_partial: false,
+                                 sum_formular: nil, skip_lcss_callback: true)
+
+      # The raced molecule's decision-lookup misses first (winner committed in the gap),
+      # then the rescue re-find returns the winner; all other lookups behave normally.
+      first_lookup = true
+      allow(Molecule).to receive(:find_by).and_wrap_original do |orig, *args|
+        cond = args.first
+        if cond.is_a?(Hash) && cond[:inchikey] == raced_inchikey
+          next winner unless first_lookup
+
+          first_lookup = false
+          nil
+        else
+          orig.call(*args)
+        end
+      end
+
+      # The raced molecule's INSERT collides once; every other create proceeds normally.
+      allow(Molecule).to receive(:create).and_wrap_original do |orig, *args, &blk|
+        cond = args.first
+        raise ActiveRecord::RecordNotUnique if cond.is_a?(Hash) && cond[:inchikey] == raced_inchikey
+
+        orig.call(*args, &blk)
+      end
+
+      # Only the genuinely-new water molecule is inserted; the raced one reuses the winner
+      # (no duplicate, no aborted import). If the bug regressed, this block would raise.
+      expect { batch_import.find_or_create_mol_by_batch }.to change(Molecule, :count).by(1)
+      expect(batch_import.inchi_array).to include(raced_inchikey)
+    end
   end
 
   describe 'polymer molfile delegation to Import::PolymerMoleculeResolver' do

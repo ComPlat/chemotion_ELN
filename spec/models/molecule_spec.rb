@@ -50,9 +50,15 @@ RSpec.describe Molecule, type: :model do
       expect { invalid_molecule.save! }.to raise_error(ActiveRecord::RecordNotUnique)
     end
 
-    it 'have a tag with CID' do
+    it 'defers the PubChem CID tag to async enrichment (not populated synchronously on create)' do
       molecule.save!
-      expect(molecule.tag.taggable_data['pubchem_cid']).to eq('123456789')
+      expect(molecule.tag.taggable_data['pubchem_cid']).to be_nil
+    end
+
+    it 'backfills the PubChem CID tag idempotently via #assign_pubchem_names_and_cid!' do
+      molecule.save!
+      molecule.assign_pubchem_names_and_cid!(cid: '123456789', iupac_name: 'water', names: [])
+      expect(molecule.reload.tag.taggable_data['pubchem_cid']).to eq('123456789')
     end
 
     it 'has molecule_names' do
@@ -218,6 +224,74 @@ RSpec.describe Molecule, type: :model do
 
       expect(molecule.id).to eq(existing.id)
       expect(lcss_batch).to be_empty
+    end
+
+    it 'does not call PubChem synchronously on the create path (C2: enrichment is async)' do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      described_class.find_or_create_by_molfile('molfile', **babel_info)
+
+      expect(Chemotion::PubchemService).not_to have_received(:molecule_info_from_inchikey)
+    end
+
+    context 'when a concurrent worker wins the create race (C1)' do
+      it 're-finds the existing row instead of raising PG::UniqueViolation' do
+        existing = create(
+          :molecule,
+          inchikey: babel_info[:inchikey],
+          is_partial: false,
+          sum_formular: babel_info[:formula],
+          skip_lcss_callback: true,
+        )
+        # Simulate the TOCTOU race: find_by misses, then the INSERT collides with the row the
+        # winning worker committed in the gap.
+        allow(described_class).to receive(:find_by).and_return(nil, existing)
+        allow(described_class).to receive(:create).and_raise(ActiveRecord::RecordNotUnique)
+        lcss_batch = []
+
+        molecule = described_class.find_or_create_by_molfile('molfile', lcss_batch: lcss_batch, **babel_info)
+
+        expect(molecule.id).to eq(existing.id)
+        # the losing call must NOT re-enqueue enrichment/LCSS for a row the winner already handled
+        expect(lcss_batch).to be_empty
+      end
+
+      it 're-raises when the row is genuinely absent after RecordNotUnique' do
+        allow(described_class).to receive(:find_by).and_return(nil, nil)
+        allow(described_class).to receive(:create).and_raise(ActiveRecord::RecordNotUnique)
+
+        expect do
+          described_class.find_or_create_by_molfile('molfile', **babel_info)
+        end.to raise_error(ActiveRecord::RecordNotUnique)
+      end
+    end
+  end
+
+  describe '#assign_pubchem_names_and_cid!' do
+    let(:molecule) { create(:molecule, iupac_name: nil, names: []) }
+
+    it 'persists names/cid idempotently across repeated calls', :aggregate_failures do
+      2.times do
+        molecule.assign_pubchem_names_and_cid!(cid: '999', iupac_name: 'water', names: %w[aqua dihydrogen-oxide])
+      end
+
+      expect(molecule.reload.iupac_name).to eq('water')
+      expect(molecule.tag.taggable_data['pubchem_cid']).to eq('999')
+      expect(molecule.molecule_names.where(description: 'iupac_name').pluck(:name))
+        .to contain_exactly('aqua', 'dihydrogen-oxide')
+    end
+
+    it 'does not overwrite an existing cid/name with nil', :aggregate_failures do
+      molecule.assign_pubchem_names_and_cid!(cid: '999', iupac_name: 'water', names: [])
+
+      molecule.assign_pubchem_names_and_cid!(cid: nil, iupac_name: nil, names: [])
+
+      expect(molecule.reload.tag.taggable_data['pubchem_cid']).to eq('999')
+      expect(molecule.iupac_name).to eq('water')
+    end
+
+    it 'no-ops on blank info' do
+      expect { molecule.assign_pubchem_names_and_cid!({}) }.not_to(change { molecule.molecule_names.count })
     end
   end
 end

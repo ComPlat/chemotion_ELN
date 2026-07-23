@@ -24,8 +24,10 @@ RSpec.describe PubchemSingleLcssJob do
   it 'calls #pubchem_lcss on each molecule in order' do
     allow(Molecule).to receive(:find_by).with(id: first_molecule.id).and_return(first_molecule)
     allow(Molecule).to receive(:find_by).with(id: second_molecule.id).and_return(second_molecule)
-    allow(first_molecule).to receive(:pubchem_lcss)
-    allow(second_molecule).to receive(:pubchem_lcss)
+    [first_molecule, second_molecule].each do |m|
+      allow(m).to receive(:enrich_from_pubchem)
+      allow(m).to receive(:pubchem_lcss)
+    end
 
     job.perform([first_molecule.id, second_molecule.id])
 
@@ -33,8 +35,20 @@ RSpec.describe PubchemSingleLcssJob do
     expect(second_molecule).to have_received(:pubchem_lcss).ordered
   end
 
+  it 'enriches each molecule from PubChem before fetching its LCSS' do
+    allow(Molecule).to receive(:find_by).with(id: first_molecule.id).and_return(first_molecule)
+    allow(first_molecule).to receive(:enrich_from_pubchem)
+    allow(first_molecule).to receive(:pubchem_lcss)
+
+    job.perform([first_molecule.id])
+
+    expect(first_molecule).to have_received(:enrich_from_pubchem).ordered
+    expect(first_molecule).to have_received(:pubchem_lcss).ordered
+  end
+
   it 'sleeps between requests but not before the first one' do
     allow(Molecule).to receive(:find_by).and_return(first_molecule)
+    allow(first_molecule).to receive(:enrich_from_pubchem)
     allow(first_molecule).to receive(:pubchem_lcss)
 
     job.perform([first_molecule.id, second_molecule.id, third_molecule.id])
@@ -53,6 +67,7 @@ RSpec.describe PubchemSingleLcssJob do
     tag = double(taggable_data: { 'pubchem_lcss' => 'already fetched' }, update: true) # rubocop:disable RSpec/VerifiedDoubles
     allow(Molecule).to receive(:find_by).with(id: first_molecule.id).and_return(first_molecule)
     allow(first_molecule).to receive_messages(cid: 643_785, tag: tag)
+    allow(first_molecule).to receive(:enrich_from_pubchem)
     allow(Chemotion::PubchemService).to receive(:lcss_from_cid)
 
     job.perform([first_molecule.id])

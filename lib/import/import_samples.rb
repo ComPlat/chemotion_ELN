@@ -283,13 +283,20 @@ module Import
       else
         go_to_next = false
         created = false
-        molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: false) do |molecul|
-          created = true
-          molecul.skip_lcss_callback = true if @lcss_batch
-          pubchem_info =
-            Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-          molecul.molfile = molfile_coord
-          molecul.assign_molecule_data babel_info, pubchem_info
+        begin
+          molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: false) do |molecul|
+            created = true
+            molecul.skip_lcss_callback = true if @lcss_batch
+            # PubChem enrichment is deferred to the async enrich job (see Molecule
+            # #find_or_create_by_molfile); create with babel-only data, no network here.
+            molecul.molfile = molfile_coord
+            molecul.assign_molecule_data babel_info
+          end
+        rescue ActiveRecord::RecordNotUnique
+          # Lost a concurrent create race — re-find rather than aborting the whole import.
+          created = false
+          molecule = Molecule.find_by(inchikey: inchikey, is_partial: false)
+          raise if molecule.nil?
         end
         @lcss_batch << molecule.id if created && @lcss_batch
       end
