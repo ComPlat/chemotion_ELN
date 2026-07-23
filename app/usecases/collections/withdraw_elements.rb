@@ -22,11 +22,12 @@ module Usecases
         CollectionsSequenceBasedMacromoleculeSample,
       ].freeze
 
-      attr_reader :current_user
+      attr_reader :current_user, :locked_sample_ids
 
       def initialize(current_user)
         @current_user = current_user
         @owned_collection_ids = []
+        @locked_sample_ids = []
       end
 
       # @param source_collection [Collection] the collection the selection was made in; scopes the
@@ -41,11 +42,20 @@ module Usecases
         # already destroy group-collection elements, so withdrawal keeps that reach). Restricting
         # group-owned withdrawal to group-admins is a deliberate future refinement, not done here.
         @owned_collection_ids = Collection.where(user_id: [current_user.id, *current_user.group_ids]).pluck(:id)
+        @locked_sample_ids = []
         removed = Hash.new { |hash, key| hash[key] = [] }
 
+        # As a side effect, #withdraw records into @locked_sample_ids any samples kept back by the
+        # association guard (still bound to a reaction/wellplate in one of the user's collections).
         withdrawn_reaction_ids = withdraw_selected_elements(source_collection, ui_state, removed)
         removed['sample'] |= withdraw_reaction_subsamples(withdrawn_reaction_ids, options)
         withdraw_generic_elements(source_collection, ui_state, removed)
+
+        # A directly-selected sample can be flagged locked in an early pass and then removed by a
+        # later reaction/wellplate pass in the same request. This is order-safe today (samples come
+        # last in API::ELEMENT_CLASS), but rather than depend on that constant's ordering we
+        # reconcile against final membership: keep only samples that truly remain in an owned collection.
+        @locked_sample_ids = membership_ids(Sample, @locked_sample_ids, @owned_collection_ids)
         removed
       end
 
@@ -96,8 +106,11 @@ module Usecases
         # reaction/wellplate in one of our collections), and that decision is only visible by asking
         # membership again — never derivable from `actionable`.
         still_ours = membership_ids(klass, actionable, @owned_collection_ids) # guard-kept ⇒ stay visible
+        # guard-kept samples (bound to a reaction or wellplate here) cannot leave on their own;
+        # surface them so the endpoint can tell the user why they were not removed
+        @locked_sample_ids |= still_ours if klass == Sample
         left_view = actionable - still_ours
-        orphaned = left_view - membership_ids(klass, left_view, nil)          # in no collection ⇒ sole owner
+        orphaned = left_view - membership_ids(klass, left_view, nil) # in no collection ⇒ sole owner
 
         klass.where(id: orphaned).find_each(&:destroy) # per-record destroy keeps paranoia/callbacks
         left_view

@@ -82,13 +82,18 @@ module Chemotion
 
       desc 'Withdraw the ui-state selection from all of the user\'s collections (destroying orphans)'
       delete do
-        removed = Usecases::Collections::WithdrawElements.new(current_user).perform!(
+        usecase = Usecases::Collections::WithdrawElements.new(current_user)
+        removed = usecase.perform!(
           source_collection: @collection,
           ui_state: params,
           options: params[:options] || {},
         )
 
-        { selecteds: params[:selecteds].reject { |sel| removed.fetch(sel['type'], []).include?(sel['id']) } }
+        result = { selecteds: params[:selecteds].reject { |sel| removed.fetch(sel['type'], []).include?(sel['id']) } }
+        # Samples kept back because they belong to a reaction or wellplate still in
+        # the user's collections: report them so the UI can explain why nothing was deleted.
+        result[:locked_sample_ids] = usecase.locked_sample_ids if usecase.locked_sample_ids.present?
+        result
       end
 
       namespace :load_report do
