@@ -246,6 +246,7 @@ export default class ElementsTable extends React.Component {
     });
 
     this.context.userStore.updateUserProfileValues({
+      ...this.context.userStore.profile,
       data: {
         filters: {
           [type]: {
