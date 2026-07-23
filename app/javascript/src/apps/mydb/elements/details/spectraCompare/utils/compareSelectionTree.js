@@ -117,20 +117,6 @@ export const buildSelectionTree = (sample, comparisonContainer) => {
   return { menuItems, selectedFiles };
 };
 
-export const dropUntypedBranch = ({ menuItems, selectedFiles }) => {
-  if (!Array.isArray(menuItems) || menuItems.length === 0) {
-    return { menuItems: menuItems || [], selectedFiles: selectedFiles || [] };
-  }
-  const idx = menuItems.findIndex((item) => item.title === 'Type: null');
-  if (idx === -1) return { menuItems, selectedFiles };
-
-  const removed = menuItems[idx];
-  const idsToRemove = collectLeafIds(removed.children || []);
-  const nextMenu = [...menuItems.slice(0, idx), ...menuItems.slice(idx + 1)];
-  const nextSelected = (selectedFiles || []).filter((id) => !idsToRemove.has(id));
-  return { menuItems: nextMenu, selectedFiles: nextSelected };
-};
-
 export const filterMenuByLayout = (menuItems, selectedLayoutTitle) => {
   if (!Array.isArray(menuItems) || !selectedLayoutTitle) return menuItems || [];
   return menuItems.map((item) => (
