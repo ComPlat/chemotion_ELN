@@ -1,6 +1,8 @@
 // eslint-disable-next-line max-classes-per-file
 import React, { useState } from 'react';
-import { Button, Form, InputGroup } from 'react-bootstrap';
+import {
+  Button, Form, InputGroup, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import Wellplate from 'src/models/Wellplate';
 import CustomSizeModal from 'src/apps/mydb/elements/details/wellplates/propertiesTab/CustomSizeModal';
@@ -35,6 +37,29 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
     options.push(Option(wellplate.width, wellplate.height));
   }
 
+  const inputGroup = (
+    <InputGroup>
+      {shouldBeDisabled ? (
+        <Form.Control type="text" disabled value={`${wellplate.size} (${wellplate.width}x${wellplate.height})`} />
+      ) : (
+        <Form.Select
+          required={true}
+          value={size}
+          onChange={onChange}
+        >
+          {options}
+        </Form.Select>
+      )}
+      <Button
+        className="create-own-size-button"
+        disabled={shouldBeDisabled}
+        onClick={() => setShowCustomSizeModal(true)}
+      >
+        <i className="fa fa-braille" />
+      </Button>
+    </InputGroup>
+  );
+
   return (
     <>
       <CustomSizeModal
@@ -44,23 +69,18 @@ const WellplateSizeDropdown = ({ wellplate, updateWellplate }) => {
         handleClose={() => setShowCustomSizeModal(false)}
         key={`${wellplate.id}-custom-size-modal`}
       />
-      <InputGroup>
-        <Form.Select
-          required={true}
-          value={size}
-          onChange={onChange}
-          disabled={shouldBeDisabled}
+      {shouldBeDisabled ? (
+        <OverlayTrigger
+          placement="bottom"
+          overlay={(
+            <Tooltip id={`wellplate-${wellplate.id}-size-locked-tooltip`}>
+              The size cannot be changed.
+            </Tooltip>
+          )}
         >
-          {options}
-        </Form.Select>
-        <Button
-          className="create-own-size-button"
-          disabled={shouldBeDisabled}
-          onClick={() => setShowCustomSizeModal(true)}
-        >
-          <i className="fa fa-braille" />
-        </Button>
-      </InputGroup>
+          {inputGroup}
+        </OverlayTrigger>
+      ) : inputGroup}
     </>
   );
 };
