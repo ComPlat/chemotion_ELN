@@ -85,7 +85,7 @@ describe Chemotion::WellplateAPI do
 
       it 'includes can_update for listed wellplates' do
         get '/api/v1/wellplates/'
-        expect(JSON.parse(response.body)['wellplates'].map { |w| w['can_update'] }).to all(be true)
+        expect(JSON.parse(response.body)['wellplates'].pluck('can_update')).to all(be true)
       end
     end
 
