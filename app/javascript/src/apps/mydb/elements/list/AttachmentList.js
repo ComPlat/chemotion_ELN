@@ -142,6 +142,38 @@ export const moveBackButton = (attachment, onBack, readOnly) => (
 
 );
 
+// Labimotion converter states, mirroring Labimotion::ConState.
+export const CON_STATE = {
+  NONE: 0, WAIT: 1, NMR: 2, CONVERTED: 3, READ: 4, PROCESSED: 5, COMPLETED: 6, ERROR: 9
+};
+
+// Whether the converter picked this attachment up at all; only those can be re-run.
+export const isConvertible = (attachment) => attachment.con_state != null
+  && attachment.con_state !== CON_STATE.NONE;
+
+export const reconvertButton = (attachment, onReconvert, readOnly) => {
+  const failed = attachment.con_state === CON_STATE.ERROR;
+  const pending = attachment.con_state === CON_STATE.WAIT;
+  const tooltip = failed
+    ? 'Conversion failed — retry the converter and dataset mapping'
+    : 'Re-run the converter and dataset mapping';
+
+  return (
+    <OverlayTrigger placement="top" overlay={<Tooltip id={`reconvert_tooltip_${attachment.id}`}>{tooltip}</Tooltip>}>
+      <span>
+        <Button
+          size="sm"
+          variant={failed ? 'warning' : 'light'}
+          onClick={() => onReconvert(attachment)}
+          disabled={readOnly || pending || attachment.isNew}
+        >
+          <i className="fa fa-refresh" aria-hidden="true" />
+        </Button>
+      </span>
+    </OverlayTrigger>
+  );
+};
+
 export const annotateButton = (attachment, onClick) => (
   <ImageAnnotationEditButton
     onClick={onClick}

@@ -533,6 +533,17 @@ export default class AttachmentFetcher {
     );
   }
 
+  // Re-runs the converter and its generic-dataset mapping for an already uploaded dataset
+  // attachment, so a failed conversion can be retried without deleting and re-uploading.
+  static reconvert(attachmentId) {
+    // The endpoint replies 204 with no body; resolve a boolean so the caller can report
+    // whether the re-run was accepted.
+    return ApiClient.postJson(
+      `/api/v1/attachments/${attachmentId}/reconvert`,
+      { handleResponseSuccess: (response) => response.ok }
+    );
+  }
+
   static regenerateEditedSpectrum(jcampIds, molfile) {
     return ApiClient.postJson(
       '/api/v1/attachments/regenerate_edited_spectrum/',

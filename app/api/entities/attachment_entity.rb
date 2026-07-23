@@ -8,6 +8,7 @@ module Entities
     expose :content_type, documentation: { type: 'String', desc: "content type" }
     expose :thumb, documentation: { type: 'String', desc: "thumbnail url" }
     expose :aasm_state, documentation: { type: 'String', desc: "processing state for analytics derivative" }
+    expose :con_state, documentation: { type: 'Integer', desc: 'converter processing state' }
     expose :filesize, documentation: { type: 'Integer', desc: "filesize in bytes" }
     expose :edit_state, documentation: { type: 'String', desc: "edit state for external viewing/editing" }
     expose_timestamps

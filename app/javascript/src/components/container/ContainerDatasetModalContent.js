@@ -17,6 +17,7 @@ import GenericDS from 'src/models/GenericDS';
 import GenericDSDetails from 'src/components/generic/GenericDSDetails';
 import InboxActions from 'src/stores/alt/actions/InboxActions';
 import InstrumentsFetcher from 'src/fetchers/InstrumentsFetcher';
+import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
 import ImageAnnotationModalSVG from 'src/apps/mydb/elements/details/researchPlans/ImageAnnotationModalSVG';
 import { FolderDropzone } from 'src/apps/mydb/elements/details/analyses/UploadField';
@@ -30,7 +31,10 @@ import {
   formatFileSize,
   moveBackButton,
   attachmentThumbnail,
-  ThirdPartyAppButton
+  ThirdPartyAppButton,
+  reconvertButton,
+  isConvertible,
+  CON_STATE
 } from 'src/apps/mydb/elements/list/AttachmentList';
 import { formatDate } from 'src/utilities/timezoneHelper';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -118,6 +122,7 @@ export class ContainerDatasetModalContent extends Component {
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.handleAttachmentRemove = this.handleAttachmentRemove.bind(this);
     this.handleAttachmentBackToInbox = this.handleAttachmentBackToInbox.bind(this);
+    this.handleAttachmentReconvert = this.handleAttachmentReconvert.bind(this);
     this.classifyAttachments = this.classifyAttachments.bind(this);
     this.state.attachmentGroups = this.classifyAttachments(datasetContainer.attachments);
   }
@@ -252,6 +257,35 @@ export class ContainerDatasetModalContent extends Component {
       datasetContainer.attachments.splice(index, 1);
       onChange(datasetContainer);
     }
+  }
+
+  // Asks the backend to re-run the converter and its generic-dataset mapping for an
+  // already-uploaded attachment. Conversion happens in a background job, so the dataset
+  // fields appear only after reopening the analysis.
+  handleAttachmentReconvert(attachment) {
+    const { datasetContainer } = this.state;
+
+    AttachmentFetcher.reconvert(attachment.id).then((accepted) => {
+      if (!accepted) {
+        this.context.notifications.add({
+          message: `Could not re-run the conversion of ${attachment.filename}.`,
+          level: 'error',
+        });
+        return;
+      }
+
+      const index = datasetContainer.attachments.indexOf(attachment);
+      if (index !== -1) {
+        datasetContainer.attachments[index].con_state = CON_STATE.WAIT;
+        this.setState({ datasetContainer });
+      }
+
+      this.context.notifications.add({
+        message: `Re-running the conversion of ${attachment.filename}. `
+          + 'Reopen this analysis in a moment to see the mapped dataset fields.',
+        level: 'info',
+      });
+    });
   }
 
   handleUndo(attachment) {
@@ -484,6 +518,8 @@ export class ContainerDatasetModalContent extends Component {
                   });
                 })}
                 {moveBackButton(attachment, this.handleAttachmentBackToInbox, readOnly)}
+                {isConvertible(attachment)
+                  && reconvertButton(attachment, this.handleAttachmentReconvert, readOnly)}
               </ButtonToolbar>
               <div className="ms-2">
                 {removeButton(attachment, this.handleAttachmentRemove, readOnly)}
