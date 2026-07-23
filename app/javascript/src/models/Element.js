@@ -156,7 +156,7 @@ export default class Element {
         cleaned = cleaned.replace(/^Type:\s*/i, '').trim();
       }
 
-      const key = cleaned || null;
+      const key = cleaned || '';
 
       if (!result[key]) result[key] = [];
       result[key].push(aic);

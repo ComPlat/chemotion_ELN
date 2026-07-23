@@ -36,5 +36,28 @@ describe('Element', () => {
         expect(analysis).toEqual(expectedValue);
       });
     });
+
+    describe('when an analysis has no kind set', () => {
+      const element = ElementFactory.createElement('sample');
+      const untypedContainer = Container.buildAnalysis();
+      untypedContainer.extended_metadata.kind = undefined;
+      let analysis;
+
+      beforeEach(() => {
+        const analysesContainer = element.analysesContainers();
+        analysesContainer[0].children.push(untypedContainer);
+        analysis = element.getAnalysisContainersComparable();
+      });
+
+      afterEach(() => {
+        const analysesContainer = element.analysesContainers();
+        analysesContainer[0].children = [];
+      });
+
+      it('groups it under the falsy empty-string key, not the string "null"', () => {
+        expect(Object.keys(analysis)).toEqual(['']);
+        expect(analysis['']).toEqual([untypedContainer]);
+      });
+    });
   });
 });
