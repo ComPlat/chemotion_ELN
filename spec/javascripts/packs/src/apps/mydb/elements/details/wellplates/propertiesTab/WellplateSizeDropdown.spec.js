@@ -116,4 +116,18 @@ describe('WellplateSizeDropdown (functional component)', () => {
     expect(matching.length).toEqual(1);
     expect(selectedOption(wrapper).props().label).toEqual('96 (12x8)');
   });
+
+  it('shows a plain read-only field with an explanatory tooltip once the size is locked', () => {
+    const wellplate = new Wellplate({ ...wellplate8x12EmptyJson, is_new: false });
+    const wrapper = mount(
+      <WellplateSizeDropdown wellplate={wellplate} updateWellplate={emptyFunction} />
+    );
+
+    expect(wrapper.find('select').length).toEqual(0);
+    expect(wrapper.find('input').first().props().value).toEqual('96 (12x8)');
+    expect(wrapper.find('input').first().props().disabled).toEqual(true);
+    expect(wrapper.find('button.create-own-size-button').props().disabled).toEqual(true);
+    const overlay = wrapper.find('OverlayTrigger').props().overlay;
+    expect(shallow(overlay).text()).toEqual('The size cannot be changed.');
+  });
 });

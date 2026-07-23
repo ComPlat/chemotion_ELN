@@ -73,10 +73,10 @@ export default class WellplateDetails extends Component {
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
     const { wellplate: newWellplate } = this.props;
-    const { wellplate: currentWellplate } = this.state;
-    if (newWellplate.id !== currentWellplate.id || newWellplate.updated_at !== currentWellplate.updated_at) {
+    const { wellplate: previousWellplate } = prevProps;
+    if (newWellplate.id !== previousWellplate.id || newWellplate.updated_at !== previousWellplate.updated_at) {
       this.setState({
         wellplate: newWellplate,
       });
