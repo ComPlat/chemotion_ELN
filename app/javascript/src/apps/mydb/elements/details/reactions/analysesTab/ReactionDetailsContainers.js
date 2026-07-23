@@ -203,7 +203,7 @@ export default class ReactionDetailsContainers extends Component {
       SpectraActions.LoadSpectraForNMRDisplayer.defer(spcInfosForNMRDisplayer); // going to fetch files base on spcInfos
     };
 
-    const { chmos } = this.context.userStore;
+    const { chmos } = this.context.userStore || {};
     const hasNMRium = isNMRKind(container, chmos) && hasNmriumWrapper;
 
     return (

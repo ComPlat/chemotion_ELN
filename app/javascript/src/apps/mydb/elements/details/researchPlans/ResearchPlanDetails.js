@@ -68,7 +68,7 @@ export default class ResearchPlanDetails extends Component {
     const { researchPlan } = this.props;
     const { currentUser } = this.state;
 
-    if (MatrixCheck(currentUser.matrix, commentActivation) && !researchPlan.isNew) {
+    if (MatrixCheck(currentUser?.matrix, commentActivation) && !researchPlan.isNew) {
       CommentActions.fetchComments(researchPlan);
     }
   }

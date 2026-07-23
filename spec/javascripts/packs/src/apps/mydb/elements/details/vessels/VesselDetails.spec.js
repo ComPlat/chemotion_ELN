@@ -4,9 +4,10 @@ import sinon from 'sinon';
 import Enzyme, { mount, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import { Tabs, Tab } from 'react-bootstrap';
+import { protect, unprotect } from 'mobx-state-tree';
 import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
-import UserStore from 'src/stores/alt/stores/UserStore';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import UIStore from 'src/stores/alt/stores/UIStore';
 
 Enzyme.configure({ adapter: new Adapter() });
@@ -23,14 +24,20 @@ describe('VesselDetails', () => {
         adoptPropsFromMobXModel: sinon.spy(),
       },
     };
-    UserStore.state.currentUser = {
-      id: 'CU1',
+    unprotect(rootStore);
+    rootStore.userStore.currentUser = {
+      id: 1,
       name: 'Test User 1',
     };
     UIStore.state.currentCollection = {
       id: 1,
       permission_level: 10,
     };
+  });
+
+  afterEach(() => {
+    rootStore.userStore.currentUser = null;
+    protect(rootStore);
   });
 
   describe('when vesselItem is null', () => {
