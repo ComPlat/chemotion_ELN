@@ -270,9 +270,9 @@ describe('Wellplate', () => {
   });
 
   describe('can_update', () => {
-    it('defaults to true when the backend omits the flag', () => {
+    it('does not invent can_update when the backend omits the flag', () => {
       const wellplate = new Wellplate({ name: 'WP', type: 'wellplate', width: 2, height: 2, wells: [] });
-      expect(wellplate.can_update).toEqual(true);
+      expect(wellplate.can_update).toEqual(undefined);
     });
 
     it('keeps an explicit false from the backend', () => {
@@ -280,6 +280,11 @@ describe('Wellplate', () => {
         name: 'WP', type: 'wellplate', width: 2, height: 2, wells: [], can_update: false
       });
       expect(wellplate.can_update).toEqual(false);
+    });
+
+    it('defaults can_update to true for a newly built wellplate', () => {
+      const wellplate = Wellplate.buildEmpty(1, 2, 2);
+      expect(wellplate.can_update).toEqual(true);
     });
   });
 });

@@ -47,6 +47,7 @@ module Chemotion
             screen,
             detail_levels: detail_levels,
             displayed_in_list: true,
+            policy: ElementPolicy.new(current_user, screen),
           )
         end
 

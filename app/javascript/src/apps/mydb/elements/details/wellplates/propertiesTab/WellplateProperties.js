@@ -76,7 +76,7 @@ export default class WellplateProperties extends Component {
                 type="text"
                 value={name || ''}
                 onChange={(event) => this.handleInputChange('name', event)}
-                disabled={!wellplate.can_update || name === '***'}
+                disabled={wellplate.isReadOnly || name === '***'}
               />
             </Form.Group>
           </Col>
@@ -100,12 +100,12 @@ export default class WellplateProperties extends Component {
                 type="text"
                 value={readoutTitle}
                 onChange={(event) => this.updateReadoutTitle(index, event.target.value)}
-                disabled={!wellplate.can_update}
+                disabled={wellplate.isReadOnly}
               />
               <Button
                 variant="danger"
                 onClick={() => this.setState({ selectedReadoutIndex: index })}
-                disabled={!wellplate.can_update}
+                disabled={wellplate.isReadOnly}
               >
                 <i className="fa fa-trash-o" />
               </Button>
@@ -115,7 +115,7 @@ export default class WellplateProperties extends Component {
             variant="success"
             className="mt-2 mx-3 w-auto"
             onClick={() => this.addReadoutTitle()}
-            disabled={!wellplate.can_update}
+            disabled={wellplate.isReadOnly}
           >
             Add Readouts
           </Button>
@@ -127,7 +127,7 @@ export default class WellplateProperties extends Component {
             <QuillEditor
               value={description}
               onChange={(event) => this.handleInputChange('description', { target: { value: event } })}
-              disabled={!wellplate.can_update || description === '***'}
+              disabled={wellplate.isReadOnly || description === '***'}
             />
           </Form.Group>
         </Row>

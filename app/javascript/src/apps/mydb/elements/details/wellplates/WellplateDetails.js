@@ -169,7 +169,7 @@ export default class WellplateDetails extends Component {
 
   // handle attachment actions
   handleAttachmentDrop(files) {
-    if (!this.state.wellplate.can_update) { return; }
+    if (this.state.wellplate.isReadOnly) { return; }
     this.setState((prevState) => {
       const newAttachments = files.map((file) => Attachment.fromFile(file));
       const { wellplate } = prevState;
@@ -187,7 +187,7 @@ export default class WellplateDetails extends Component {
 
   handleAttachmentDelete(attachment) {
     const { wellplate } = this.state;
-    if (!wellplate.can_update) { return; }
+    if (wellplate.isReadOnly) { return; }
     const index = wellplate.attachments.indexOf(attachment);
     wellplate.changed = true;
     wellplate.attachments[index].is_deleted = true;
@@ -195,7 +195,7 @@ export default class WellplateDetails extends Component {
   }
 
   handleAttachmentImport(attachment) {
-    if (!this.state.wellplate.can_update) { return; }
+    if (this.state.wellplate.isReadOnly) { return; }
     LoadingActions.start();
     const { wellplate } = this.state;
     const wellplateId = wellplate.id;
@@ -206,7 +206,7 @@ export default class WellplateDetails extends Component {
 
   handleAttachmentUndoDelete(attachment) {
     const { wellplate } = this.state;
-    if (!wellplate.can_update) { return; }
+    if (wellplate.isReadOnly) { return; }
     const index = wellplate.attachments.indexOf(attachment);
     wellplate.attachments[index].is_deleted = false;
     this.setState({ wellplate });
@@ -218,7 +218,7 @@ export default class WellplateDetails extends Component {
 
   handleAttachmentEdit(attachment) {
     const { wellplate } = this.state;
-    if (!wellplate.can_update) { return; }
+    if (wellplate.isReadOnly) { return; }
     wellplate.changed = true;
     // update only this attachment
     wellplate.attachments.map((currentAttachment) => {
@@ -275,7 +275,7 @@ export default class WellplateDetails extends Component {
               <Wellplate
                 wellplate={wellplate}
                 handleWellsChange={(wells) => this.handleWellsChange(wells)}
-                readOnly={!wellplate.can_update}
+                readOnly={wellplate.isReadOnly}
               />
             </Card.Body>
           </Card>
@@ -291,7 +291,7 @@ export default class WellplateDetails extends Component {
               wells={wellplate.wells}
               readoutTitles={readoutTitles}
               handleWellsChange={(w) => this.handleWellsChange(w)}
-              readOnly={!wellplate.can_update}
+              readOnly={wellplate.isReadOnly}
             />
           </div>
         </Tab>
@@ -312,7 +312,7 @@ export default class WellplateDetails extends Component {
             element={wellplate}
             fnCb={this.handleWellplateChanged}
           />
-          <PrivateNoteElement element={wellplate} disabled={!wellplate.can_update} />
+          <PrivateNoteElement element={wellplate} disabled={wellplate.isReadOnly} />
           {' '}
           {/* For samples and reactions (<element>): disabled={!<element>.can_update} */}
         </Tab>
@@ -327,7 +327,7 @@ export default class WellplateDetails extends Component {
               wellplate={wellplate}
               setWellplate={(w) => this.setState({ wellplate: w })}
               handleWellplateChanged={this.handleWellplateChanged}
-              readOnly={!wellplate.can_update}
+              readOnly={wellplate.isReadOnly}
             />
           </ListGroupItem>
         </Tab>
@@ -345,7 +345,7 @@ export default class WellplateDetails extends Component {
                 onDownload={this.handleAttachmentDownload.bind(this)}
                 onImport={this.handleAttachmentImport.bind(this)}
                 onEdit={this.handleAttachmentEdit.bind(this)}
-                readOnly={!wellplate.can_update}
+                readOnly={wellplate.isReadOnly}
               />
             </ListGroupItem>
           </ListGroup>
@@ -383,7 +383,7 @@ export default class WellplateDetails extends Component {
       <ElementDetailCard
         element={wellplate}
         isPendingToSave={wellplate.isPendingToSave}
-        saveDisabled={!wellplate.can_update}
+        saveDisabled={wellplate.isReadOnly}
         title={wellplate.name}
         titleTooltip={formatTimeStampsOfElement(wellplate || {})}
         footerToolbar={this.wellplateFooter()}

@@ -3,9 +3,9 @@ import Screen from 'src/models/Screen';
 
 describe('Screen', () => {
   describe('can_update', () => {
-    it('defaults to true when the backend omits the flag', () => {
+    it('does not invent can_update when the backend omits the flag', () => {
       const screen = new Screen({ name: 'Screen', type: 'screen' });
-      expect(screen.can_update).toEqual(true);
+      expect(screen.can_update).toEqual(undefined);
     });
 
     it('keeps an explicit false from the backend', () => {

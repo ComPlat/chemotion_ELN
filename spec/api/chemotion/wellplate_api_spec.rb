@@ -82,6 +82,11 @@ describe Chemotion::WellplateAPI do
         get '/api/v1/wellplates/'
         expect(JSON.parse(response.body)['wellplates'].size).to eq(1)
       end
+
+      it 'includes can_update for listed wellplates' do
+        get '/api/v1/wellplates/'
+        expect(JSON.parse(response.body)['wellplates'].map { |w| w['can_update'] }).to all(be true)
+      end
     end
 
     context 'when collection_id is given' do

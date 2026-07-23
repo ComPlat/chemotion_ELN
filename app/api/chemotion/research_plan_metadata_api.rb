@@ -1,6 +1,16 @@
+# frozen_string_literal: true
+
 module Chemotion
   class ResearchPlanMetadataAPI < Grape::API
     include Grape::Kaminari
+
+    helpers do
+      def load_research_plan!
+        ResearchPlan.find(params[:research_plan_id])
+      rescue ActiveRecord::RecordNotFound
+        error!('404 Not Found', 404)
+      end
+    end
 
     namespace :research_plan_metadata do
       desc 'Get researchPlanMetadata by researchPlan id'
@@ -9,7 +19,14 @@ module Chemotion
       end
       route_param :research_plan_id do
         get do
-          present ResearchPlanMetadata.find_by(research_plan_id: params[:research_plan_id]), with: Entities::ResearchPlanMetadataEntity, root: 'research_plan_metadata'
+          research_plan = load_research_plan!
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, research_plan).read?
+
+          present(
+            ResearchPlanMetadata.find_by(research_plan_id: research_plan.id),
+            with: Entities::ResearchPlanMetadataEntity,
+            root: 'research_plan_metadata',
+          )
         end
       end
 
@@ -33,9 +50,11 @@ module Chemotion
         optional :type, type: String, desc: 'research plan type'
       end
       post do
+        research_plan = load_research_plan!
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, research_plan).update?
+
         attributes = declared(params, include_missing: false)
-        metadata = ResearchPlanMetadata.find_or_initialize_by(research_plan_id: attributes[:research_plan_id])
-        new_record = metadata.new_record?
+        metadata = ResearchPlanMetadata.find_or_initialize_by(research_plan_id: research_plan.id)
         metadata.update!(attributes)
         # DataCite.find_and_create_at_chemotion!(metadata.research_plan) if new_record
         present metadata.reload, with: Entities::ResearchPlanMetadataEntity, root: 'research_plan_metadata'

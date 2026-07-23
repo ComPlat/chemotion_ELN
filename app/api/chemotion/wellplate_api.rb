@@ -46,7 +46,15 @@ module Chemotion
                        .for_user(current_user.id)
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, wellplates).read_all?
 
-          present wellplates, with: Entities::WellplateEntity, root: :wellplates, displayed_in_list: true
+          {
+            wellplates: wellplates.map do |wellplate|
+              Entities::WellplateEntity.represent(
+                wellplate,
+                displayed_in_list: true,
+                policy: ElementPolicy.new(current_user, wellplate),
+              )
+            end,
+          }
         end
       end
 
@@ -89,6 +97,7 @@ module Chemotion
             wellplate,
             displayed_in_list: true,
             detail_levels: detail_levels,
+            policy: ElementPolicy.new(current_user, wellplate),
           )
         end
 
