@@ -5,6 +5,7 @@ module Entities
     # rubocop:disable Layout/ExtraSpacing
     # Level 0 attributes and relations
     with_options(anonymize_below: 0) do
+      expose! :can_update,                           unless: :displayed_in_list
       expose! :id
       expose! :is_restricted
       expose! :height

@@ -86,6 +86,10 @@ describe Chemotion::ScreenAPI do
       expect(JSON.parse(response.body)['screen']['name']).to eq(screen.name)
     end
 
+    it 'returns can_update as true for the owner' do
+      expect(JSON.parse(response.body)['screen']['can_update']).to be true
+    end
+
     it 'returns the component_graph_data as json object' do
       expect(JSON.parse(response.body)['screen']['component_graph_data']).to eq(
         { some_dummy: 'data', with_nested: { but_cool: 'Stuff' } }.deep_stringify_keys,
@@ -97,6 +101,34 @@ describe Chemotion::ScreenAPI do
 
       it 'returns 401 unauthorized status code' do
         expect(response.status).to eq 401
+      end
+    end
+
+    context 'when the screen is in a read-only shared collection' do
+      let(:collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+
+      it 'returns can_update as false' do
+        expect(response).to have_http_status :ok
+        expect(JSON.parse(response.body)['screen']['can_update']).to be false
+      end
+    end
+
+    context 'when the screen is in a writable shared collection' do
+      let(:collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:edit_elements])
+        end
+      end
+
+      it 'returns can_update as true' do
+        expect(response).to have_http_status :ok
+        expect(JSON.parse(response.body)['screen']['can_update']).to be true
       end
     end
   end
@@ -148,28 +180,57 @@ describe Chemotion::ScreenAPI do
       }
     end
 
-    before do
-      ScreensWellplate.create!(wellplate: other_wellplate, screen: screen)
-      put "/api/v1/screens/#{screen.id}", params: params.to_json, headers: request_headers
+    context 'when the user can update the screen' do
+      before do
+        ScreensWellplate.create!(wellplate: other_wellplate, screen: screen)
+        put "/api/v1/screens/#{screen.id}", params: params.to_json, headers: request_headers
+      end
+
+      it 'is able to change a screen by id' do
+        expect(parsed_json_response['screen']['name']).to eq('Another Testname')
+        # rubocop:disable Rails/Pluck -- wellplates/research_plans are parsed JSON (Array of Hash), not AR relations
+        expect(
+          parsed_json_response['screen']['wellplates'].map { |w| w['id'] },
+        ).to eq([wellplate.id])
+        expect(
+          parsed_json_response['screen']['research_plans'].map { |r| r['id'] },
+        ).to eq([research_plan.id])
+        # rubocop:enable Rails/Pluck
+      end
+
+      it 'updates the component_graph_data correctly' do
+        expect(parsed_json_response['screen']['component_graph_data']).to eq(
+          {
+            'nodes' => [{ 'id' => 1337 }],
+            'edges' => [],
+          },
+        )
+      end
+
+      it 'returns can_update as true after a successful update' do
+        expect(parsed_json_response['screen']['can_update']).to be true
+      end
     end
 
-    it 'is able to change a screen by id' do
-      expect(parsed_json_response['screen']['name']).to eq('Another Testname')
-      expect(
-        parsed_json_response['screen']['wellplates'].map { |w| w['id'] }
-      ).to eq([wellplate.id])
-      expect(
-        parsed_json_response['screen']['research_plans'].map { |r| r['id'] }
-      ).to eq([research_plan.id])
-    end
+    context 'when the screen is in a read-only shared collection' do
+      let(:collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
 
-    it 'updates the component_graph_data correctly' do
-      expect(parsed_json_response['screen']['component_graph_data']).to eq(
-        {
-          'nodes' => [{ 'id' => 1337 }],
-          'edges' => [],
-        },
-      )
+      before do
+        put "/api/v1/screens/#{screen.id}", params: params.to_json, headers: request_headers
+      end
+
+      it 'returns 401 unauthorized' do
+        expect(response).to have_http_status :unauthorized
+      end
+
+      it 'does not update the screen' do
+        expect(screen.reload.name).to eq('Testname')
+      end
     end
   end
 

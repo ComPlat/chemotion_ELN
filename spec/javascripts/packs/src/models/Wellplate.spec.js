@@ -268,4 +268,18 @@ describe('Wellplate', () => {
       });
     });
   });
+
+  describe('can_update', () => {
+    it('defaults to true when the backend omits the flag', () => {
+      const wellplate = new Wellplate({ name: 'WP', type: 'wellplate', width: 2, height: 2, wells: [] });
+      expect(wellplate.can_update).toEqual(true);
+    });
+
+    it('keeps an explicit false from the backend', () => {
+      const wellplate = new Wellplate({
+        name: 'WP', type: 'wellplate', width: 2, height: 2, wells: [], can_update: false
+      });
+      expect(wellplate.can_update).toEqual(false);
+    });
+  });
 });

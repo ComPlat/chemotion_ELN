@@ -74,6 +74,7 @@ module Chemotion
             with: Entities::ScreenEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
             root: :screen,
+            policy: policy,
           )
         rescue ActiveRecord::RecordNotFound
           error!('404 Not Found', 404)
@@ -95,7 +96,7 @@ module Chemotion
               name: "New Research Plan #{number} for #{screen.name}",
             )
 
-            present screen, with: Entities::ScreenEntity, root: :screen
+            present screen, with: Entities::ScreenEntity, root: :screen, policy: ElementPolicy.new(current_user, screen)
           end
         end
       end
@@ -121,7 +122,8 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Screen.find(params[:id])).update?
+          @element_policy = ElementPolicy.new(current_user, Screen.find(params[:id]))
+          error!('401 Unauthorized', 401) unless @element_policy.update?
         end
 
         put do
@@ -151,6 +153,7 @@ module Chemotion
             with: Entities::ScreenEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
             root: :screen,
+            policy: @element_policy,
           )
         end
       end
@@ -208,7 +211,7 @@ module Chemotion
           ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: screen.id)
         end
 
-        present screen, with: Entities::ScreenEntity, root: :screen
+        present screen, with: Entities::ScreenEntity, root: :screen, policy: ElementPolicy.new(current_user, screen)
       end
     end
   end

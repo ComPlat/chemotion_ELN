@@ -12,6 +12,8 @@ import { DropTarget } from 'react-dnd';
 
 const target = {
   drop(props, monitor) {
+    if (props.readOnly) { return; }
+
     const { dropResearchPlan } = props;
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
@@ -20,6 +22,8 @@ const target = {
     }
   },
   canDrop(props, monitor) {
+    if (props.readOnly) { return false; }
+
     const itemType = monitor.getItemType();
     return (itemType === 'research_plan');
   }
@@ -33,7 +37,9 @@ const collect = (connect, monitor) => ({
 
 class ScreenResearchPlans extends Component {
   renderDropZone() {
-    const { isOver, connectDropTarget } = this.props;
+    const { isOver, connectDropTarget, readOnly } = this.props;
+    if (readOnly) { return null; }
+
     const borderColor = isOver ? 'dnd-zone-over' : '';
 
     return connectDropTarget( // eslint-disable-line function-paren-newline
@@ -69,12 +75,19 @@ class ScreenResearchPlans extends Component {
 
   render() {
     const {
-      researchPlans, deleteResearchPlan, updateResearchPlan, saveResearchPlan
+      researchPlans, deleteResearchPlan, updateResearchPlan, saveResearchPlan, readOnly
     } = this.props;
+    const hasResearchPlans = researchPlans && researchPlans.length > 0;
 
     return (
       <div>
         {this.renderDropZone()}
+
+        {readOnly && !hasResearchPlans && (
+          <div className="m-4">
+            <span>There are currently no Research Plans.</span>
+          </div>
+        )}
 
         {researchPlans.map(researchPlan => (
           <EmbeddedResearchPlanDetails
@@ -86,14 +99,16 @@ class ScreenResearchPlans extends Component {
             saveResearchPlan={saveResearchPlan}
           />
         ))}
-        <Button
-          size="sm"
-          variant="success"
-          onClick={this.handleAddResearchPlan.bind(this)}
-          type="button"
-        >
-          Add new research plan
-        </Button>
+        {!readOnly && (
+          <Button
+            size="sm"
+            variant="success"
+            onClick={this.handleAddResearchPlan.bind(this)}
+            type="button"
+          >
+            Add new research plan
+          </Button>
+        )}
       </div>);
   }
 }
@@ -107,7 +122,12 @@ ScreenResearchPlans.propTypes = { /* eslint-disable react/no-unused-prop-types *
   updateResearchPlan: PropTypes.func.isRequired,
   saveResearchPlan: PropTypes.func.isRequired,
   dropResearchPlan: PropTypes.func.isRequired,
+  readOnly: PropTypes.bool,
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
   connectDropTarget: PropTypes.func.isRequired
 }; /* eslint-enable */
+
+ScreenResearchPlans.defaultProps = {
+  readOnly: false,
+};

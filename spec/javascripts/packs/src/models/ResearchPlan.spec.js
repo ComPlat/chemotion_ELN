@@ -238,4 +238,21 @@ describe('ResearchPlan', () => {
       });
     });
   });
+
+  describe('can_update', () => {
+    it('defaults to true when the backend omits the flag', () => {
+      const plan = new ResearchPlan({ name: 'Plan', type: 'research_plan' });
+      expect(plan.can_update).toEqual(true);
+    });
+
+    it('keeps an explicit false from the backend', () => {
+      const plan = new ResearchPlan({ name: 'Plan', type: 'research_plan', can_update: false });
+      expect(plan.can_update).toEqual(false);
+    });
+
+    it('keeps an explicit true from the backend', () => {
+      const plan = new ResearchPlan({ name: 'Plan', type: 'research_plan', can_update: true });
+      expect(plan.can_update).toEqual(true);
+    });
+  });
 });

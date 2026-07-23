@@ -44,6 +44,8 @@ export default class EmbeddedWellplate extends Component {
   }
 
   renderImportWellplateButton() {
+    if (this.props.readOnly) { return null; }
+
     const importDisabled = this.props.researchPlan.changed;
     const show = this.state.showImportConfirm;
     const tooltipText = importDisabled
@@ -203,7 +205,7 @@ export default class EmbeddedWellplate extends Component {
       </Tooltip>
     );
 
-    const removeButton = (
+    const removeButton = this.props.readOnly ? null : (
       <OverlayTrigger
         placement="bottom"
         overlay={<Tooltip id="remove_wellplate">Remove Wellplate from Research Plan</Tooltip>}
@@ -219,7 +221,7 @@ export default class EmbeddedWellplate extends Component {
       </OverlayTrigger>
     );
 
-    const removeConfirmationOverlay = (
+    const removeConfirmationOverlay = this.props.readOnly ? null : (
       <Overlay
         rootClose
         target={this.target}
@@ -255,6 +257,8 @@ export default class EmbeddedWellplate extends Component {
         <div className="d-flex align-items-center gap-1">
           {this.renderImportWellplateButton()}
           {openInTabButton}
+          {removeButton}
+          {removeConfirmationOverlay}
         </div>
       </div>
     );
@@ -286,4 +290,9 @@ EmbeddedWellplate.propTypes = {
   wellplateIndex: PropTypes.number.isRequired,
   importWellplate: PropTypes.func.isRequired,
   deleteWellplate: PropTypes.func.isRequired,
+  readOnly: PropTypes.bool,
+};
+
+EmbeddedWellplate.defaultProps = {
+  readOnly: false,
 };
