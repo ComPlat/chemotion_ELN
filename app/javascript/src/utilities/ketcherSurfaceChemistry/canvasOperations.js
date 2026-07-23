@@ -218,15 +218,21 @@ const onDeleteText = async (editor) => {
 
 // Helper function to create a new text node from text content
 const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z: 0 }) => {
-  if (!text || !text.trim()) {
-    return null;
-  }
-
-  // Generate unique key for text node (similar to draft.js format)
   const generateKey = () => Math.random().toString(36).substring(2, 8);
   const textKey = generateKey();
 
-  // Create default pos array based on position
+  let content;
+  if (isDraftContent(text)) {
+    // Preserve full Draft content (inlineStyleRanges for sub/superscript etc.) with a fresh key
+    const parsed = typeof text === 'string' ? JSON.parse(text) : text;
+    parsed.blocks[0].key = textKey;
+    content = JSON.stringify(parsed);
+  } else {
+    const plain = (text || '').trim();
+    if (!plain) return null;
+    content = forTextNodeHeader(textKey, plain);
+  }
+
   const defaultPos = [
     { x: defaultPosition.x, y: defaultPosition.y, z: defaultPosition.z },
     { x: defaultPosition.x, y: defaultPosition.y - 0.375, z: defaultPosition.z },
@@ -237,7 +243,7 @@ const createTextNodeFromContent = (text, defaultPosition = { x: 4.4, y: -10.4, z
   return {
     type: 'text',
     data: {
-      content: forTextNodeHeader(textKey, text.trim()),
+      content,
       position: defaultPosition,
       pos: defaultPos
     }

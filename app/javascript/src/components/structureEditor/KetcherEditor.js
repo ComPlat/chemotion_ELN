@@ -32,6 +32,7 @@ import {
   getButtonSelector,
 } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import { deepCompareContent, filterTextList } from 'src/utilities/ketcherSurfaceChemistry/TextNode';
+import { deltaToDraftContent } from 'src/utilities/ketcherSurfaceChemistry/deltaDraftContentConverter';
 import {
   runImageLayering,
   undoKetcher,
@@ -624,12 +625,8 @@ const KetcherEditor = forwardRef((props, ref) => {
           setSelectedTextNodeContent(null);
         }}
         onApply={async (contents) => {
-          const plainText = ((contents?.ops || [])
-            .map((op) => (typeof op?.insert === 'string' ? op.insert : ''))
-            .join(''))
-            .replace(/\n+/g, ' ')
-            .trim();
-          await onAddTextFromEditor(editor, plainText, selectedImageForTextNode, selectedTextNodeContent !== null);
+          const draftContent = deltaToDraftContent(contents);
+          await onAddTextFromEditor(editor, draftContent, selectedImageForTextNode, selectedTextNodeContent !== null);
           // Update button state after text is added/updated
           await updateAddLabelButtonState(selectedImageForTextNode);
           setAddLabelPopup(false);
