@@ -7,30 +7,32 @@
 #
 # Table name: attachments
 #
-#  id              :integer          not null, primary key
-#  aasm_state      :string
-#  attachable_type :string
-#  attachment_data :jsonb
-#  bucket          :string
-#  checksum        :string
-#  con_state       :integer
-#  content_type    :string
-#  created_by      :integer          not null
-#  created_by_type :string
-#  created_for     :integer
-#  deleted_at      :datetime
-#  edit_state      :integer          default("not_editing")
-#  filename        :string
-#  filesize        :bigint
-#  folder          :string
-#  identifier      :uuid
-#  key             :string(500)
-#  storage         :string(20)       default("tmp")
-#  thumb           :boolean          default(FALSE)
-#  version         :string           default("/"), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  attachable_id   :integer
+#  id               :integer          not null, primary key
+#  aasm_state       :string
+#  access_count     :integer          default(0), not null
+#  attachable_type  :string
+#  attachment_data  :jsonb
+#  bucket           :string
+#  checksum         :string
+#  con_state        :integer
+#  content_type     :string
+#  created_by       :integer          not null
+#  created_by_type  :string
+#  created_for      :integer
+#  deleted_at       :datetime
+#  edit_state       :integer          default("not_editing")
+#  filename         :string
+#  filesize         :bigint
+#  folder           :string
+#  identifier       :uuid
+#  key              :string(500)
+#  last_accessed_at :datetime
+#  storage          :string(20)       default("tmp")
+#  thumb            :boolean          default(FALSE)
+#  version          :string           default("/"), not null
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  attachable_id    :integer
 #
 # Indexes
 #
@@ -88,6 +90,26 @@ RSpec.describe Attachment do
 
     it 'does nothing for a hot file' do
       expect { attachment.promote_if_cold }.not_to have_enqueued_job(PromoteAttachmentJob)
+    end
+  end
+
+  describe '#track_read! (access tracking)' do
+    it 'records the access time and bumps the count' do
+      expect { attachment.track_read! }.to change { attachment.reload.access_count }.by(1)
+      expect(attachment.reload.last_accessed_at).to be_present
+    end
+
+    it 'does not bump updated_at' do
+      original = attachment.updated_at
+      attachment.track_read!
+
+      expect(attachment.reload.updated_at).to be_within(1.second).of(original)
+    end
+
+    it 'throttles repeated reads within the window' do
+      attachment.track_read!
+
+      expect { attachment.track_read! }.not_to(change { attachment.reload.access_count })
     end
   end
 
@@ -1042,6 +1064,24 @@ RSpec.describe Attachment do
       allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 1.day.ago))
 
       expect(attachment.cold?(older_than: threshold)).to be false
+    end
+
+    it 'is not cold when read recently, even if the file and parent are old' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      attachment.attachable.update_column(:updated_at, 13.months.ago)
+      attachment.update_column(:last_accessed_at, 1.day.ago)
+
+      expect(attachment.cold?(older_than: threshold)).to be false
+    end
+
+    it 'is cold when neither read nor edited recently' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      attachment.attachable.update_column(:updated_at, 13.months.ago)
+      attachment.update_column(:last_accessed_at, 13.months.ago)
+
+      expect(attachment.cold?(older_than: threshold)).to be true
     end
   end
   # rubocop:enable Rails/SkipsModelValidations

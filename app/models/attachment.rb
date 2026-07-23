@@ -4,30 +4,32 @@
 #
 # Table name: attachments
 #
-#  id              :integer          not null, primary key
-#  aasm_state      :string
-#  attachable_type :string
-#  attachment_data :jsonb
-#  bucket          :string
-#  checksum        :string
-#  con_state       :integer
-#  content_type    :string
-#  created_by      :integer          not null
-#  created_by_type :string
-#  created_for     :integer
-#  deleted_at      :datetime
-#  edit_state      :integer          default("not_editing")
-#  filename        :string
-#  filesize        :bigint
-#  folder          :string
-#  identifier      :uuid
-#  key             :string(500)
-#  storage         :string(20)       default("tmp")
-#  thumb           :boolean          default(FALSE)
-#  version         :string           default("/"), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  attachable_id   :integer
+#  id               :integer          not null, primary key
+#  aasm_state       :string
+#  access_count     :integer          default(0), not null
+#  attachable_type  :string
+#  attachment_data  :jsonb
+#  bucket           :string
+#  checksum         :string
+#  con_state        :integer
+#  content_type     :string
+#  created_by       :integer          not null
+#  created_by_type  :string
+#  created_for      :integer
+#  deleted_at       :datetime
+#  edit_state       :integer          default("not_editing")
+#  filename         :string
+#  filesize         :bigint
+#  folder           :string
+#  identifier       :uuid
+#  key              :string(500)
+#  last_accessed_at :datetime
+#  storage          :string(20)       default("tmp")
+#  thumb            :boolean          default(FALSE)
+#  version          :string           default("/"), not null
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  attachable_id    :integer
 #
 # Indexes
 #
@@ -111,7 +113,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   def read_file
     return if attachment_attacher.file.blank?
 
-    # a cold read promotes the file back to hot automatically (see ColdStorage#open)
+    # reads are tracked and cold files promoted automatically (see TieredStorage#open)
     attachment_attacher.file.rewind if attachment_attacher.file.eof?
     attachment_attacher.file.read
   end
@@ -325,14 +327,17 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
     return if file_path.nil?
     return unless File.exist?(file_path)
 
-    attachment_attacher.attach(File.open(file_path, binmode: true))
-    raise 'File to large' unless valid?
+    # uploading + building derivatives reads the file, but that isn't a user read
+    self.class.suppress_read_tracking do
+      attachment_attacher.attach(File.open(file_path, binmode: true))
+      raise 'File to large' unless valid?
 
-    raise 'User quota exceeded' if user_quota_exceeded?
+      raise 'User quota exceeded' if user_quota_exceeded?
 
-    attachment_attacher.create_derivatives
+      attachment_attacher.create_derivatives
 
-    update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
+      update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
+    end
   end
 
   def check_file_size
