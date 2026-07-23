@@ -18,7 +18,6 @@ import HyperLinksSection from 'src/components/common/HyperLinksSection';
 
 import {
   buildSelectionTree,
-  dropUntypedBranch,
   filterMenuByLayout,
   resolveSelection,
 } from '../utils/compareSelectionTree';
@@ -66,11 +65,10 @@ const setExtendedMetadata = (container, patch) => ({
 
 const buildMenu = (sample, container) => {
   const tree = buildSelectionTree(sample, container);
-  const cleaned = dropUntypedBranch(tree);
   const selectedLayout = container?.extended_metadata?.analyses_compared?.[0]?.layout || null;
   return {
-    menuItems: filterMenuByLayout(cleaned.menuItems, selectedLayout),
-    selectedFiles: cleaned.selectedFiles,
+    menuItems: filterMenuByLayout(tree.menuItems, selectedLayout),
+    selectedFiles: tree.selectedFiles,
   };
 };
 

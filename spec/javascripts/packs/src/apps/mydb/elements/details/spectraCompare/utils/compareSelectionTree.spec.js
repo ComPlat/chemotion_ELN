@@ -67,6 +67,28 @@ describe('compareSelectionTree', () => {
       expect(menuItems[0].title).toEqual('Type: 1H NMR');
       expect(selectedFiles).toEqual([]);
     });
+
+    it('keeps an untyped analysis selectable under "Type: Not specified" instead of dropping it', () => {
+      const dataset = {
+        id: 20,
+        name: 'Untyped dataset',
+        attachments: [
+          { id: 200, filename: 'sample.peak.jdx' },
+        ],
+      };
+      const analysis = {
+        id: 6,
+        name: 'A2',
+        children: [dataset],
+        comparable_info: { is_comparison: false },
+      };
+      // Element#getAnalysisContainersComparable groups analyses with no kind under the '' key.
+      const sample = buildSample({ '': [analysis] });
+      const { menuItems } = buildSelectionTree(sample, null);
+      expect(menuItems).toHaveLength(1);
+      expect(menuItems[0].title).toEqual('Type: Not specified');
+      expect(menuItems[0].children[0].children[0].value).toEqual(20);
+    });
   });
 
   describe('filterMenuByLayout', () => {
