@@ -7,6 +7,8 @@ import {
 import AppModal from 'src/components/common/AppModal';
 import QuillEditor from 'src/components/QuillEditor';
 import Delta from 'quill-delta';
+import { markdownToDelta } from 'src/utilities/deltaMarkdownConverter';
+import { draftContentToDelta, isDraftContent } from 'src/utilities/ketcherSurfaceChemistry/deltaDraftContentConverter';
 
 function TextEditorModal({
   loading = false,
@@ -16,12 +18,20 @@ function TextEditorModal({
   initialValue = null,
   initialText = null
 }) {
-  // Convert initial text string to Delta if provided
+  const toDelta = (value) => {
+    if (value == null || value === '') return new Delta();
+    if (isDraftContent(value)) return draftContentToDelta(value);
+    try {
+      return markdownToDelta(value);
+    } catch {
+      return new Delta().insert(typeof value === 'string' ? value : String(value));
+    }
+  };
+
+  // Convert initial text / Draft content / markdown to Delta if provided
   const getInitialDelta = () => {
     if (initialValue) return initialValue;
-    if (initialText) {
-      return new Delta().insert(initialText);
-    }
+    if (initialText != null) return toDelta(initialText);
     return new Delta();
   };
 
@@ -30,7 +40,7 @@ function TextEditorModal({
   // Update editor value when initialText changes (when modal opens with different text)
   React.useEffect(() => {
     if (loading && initialText !== null) {
-      setEditorValue(new Delta().insert(initialText));
+      setEditorValue(toDelta(initialText));
     } else if (loading && !initialText) {
       setEditorValue(new Delta());
     }
@@ -83,7 +93,13 @@ TextEditorModal.propTypes = {
   onCloseClick: PropTypes.func,
   onApply: PropTypes.func,
   initialValue: PropTypes.shape({}),
-  initialText: PropTypes.string
+  initialText: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.shape({
+      blocks: PropTypes.arrayOf(PropTypes.shape({})),
+      entityMap: PropTypes.shape({})
+    })
+  ])
 };
 
 TextEditorModal.defaultProps = {

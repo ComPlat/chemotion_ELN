@@ -59,7 +59,19 @@ const unitSystems = {
   cell_line_amount_unit: [
     { value: 'g', label: 'g' },
     { value: 'units/cm²', label: 'units/cm²' },
-  ]
+  ],
+  length: [
+    { value: 'nm', label: 'nm' },
+    { value: 'µm', label: 'µm' },
+    { value: 'mm', label: 'mm' },
+    { value: 'cm', label: 'cm' },
+    { value: 'm',  label: 'm'  },
+  ],
+  temperature: [
+    { value: '°C', label: '°C' },
+    { value: '°F', label: '°F' },
+    { value: 'K',  label: 'K'  },
+  ],
 };
 
 const conversionFactors = {
@@ -101,6 +113,12 @@ const conversionFactors = {
 
   'U/g': { factor: 1 },
   'U/mg': { factor: 1e3 },
+
+  'nm': { factor: 1e-6 },
+  'µm': { factor: 1e-3 },
+  'mm': { factor: 1 },
+  'cm': { factor: 10 },
+  'm':  { factor: 1000 },
 };
 
 const defaultUnits = {
@@ -166,6 +184,8 @@ const normalizeUnitKey = (unit) => {
     'u/ml': 'U/mL',
     'u/g': 'U/g',
     'u/mg': 'U/mg',
+    um: 'µm',
+    'μm': 'µm',
   };
 
   return aliases[trimmed.toLowerCase()] || trimmed;

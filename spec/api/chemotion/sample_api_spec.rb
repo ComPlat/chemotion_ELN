@@ -785,6 +785,141 @@ describe Chemotion::SampleAPI do
         expect(response).to have_http_status :unauthorized
       end
     end
+
+    context 'when updating hierarchical material properties' do
+      let(:sample) { create(:sample, collections: [collection]) }
+      let(:base_params) do
+        {
+          name: sample.name,
+          target_amount_value: 0,
+          target_amount_unit: 'g',
+          molarity_value: nil,
+          molarity_unit: 'M',
+          description: '',
+          purity: 1,
+          solvent: '',
+          location: '',
+          molfile: '',
+          is_top_secret: false,
+          container: { attachments: [], children: [], is_new: true, is_deleted: false, name: 'new' },
+          collection_id: collection.id,
+        }
+      end
+
+      it 'saves layer_thickness via sample_details' do
+        put "/api/v1/samples/#{sample.id}",
+          params: base_params.merge(sample_details: { 'layer_thickness' => '75', 'selected_properties' => ['layer_thickness'] }),
+          as: :json
+        expect(response).to have_http_status :ok
+        expect(Sample.find(sample.id).layer_thickness).to eq('75')
+      end
+
+      it 'saves liquid_medium via sample_details' do
+        put "/api/v1/samples/#{sample.id}",
+          params: base_params.merge(sample_details: { 'liquid_medium' => 'Ethanol', 'selected_properties' => ['liquid_medium'] }),
+          as: :json
+        expect(response).to have_http_status :ok
+        expect(Sample.find(sample.id).liquid_medium).to eq('Ethanol')
+      end
+
+      it 'saves stabilizer via sample_details' do
+        put "/api/v1/samples/#{sample.id}",
+          params: base_params.merge(sample_details: { 'stabilizer' => 'PVP', 'selected_properties' => ['stabilizer'] }),
+          as: :json
+        expect(response).to have_http_status :ok
+        expect(Sample.find(sample.id).stabilizer).to eq('PVP')
+      end
+
+      it 'saves sieve_fraction dropdown value via sample_details' do
+        put "/api/v1/samples/#{sample.id}",
+          params: base_params.merge(sample_details: { 'sieve_fraction' => 'fine_powder', 'selected_properties' => ['sieve_fraction'] }),
+          as: :json
+        expect(response).to have_http_status :ok
+        expect(Sample.find(sample.id).sieve_fraction).to eq('fine_powder')
+      end
+
+      it 'saves monolith material dropdown value via sample_details' do
+        put "/api/v1/samples/#{sample.id}",
+          params: base_params.merge(sample_details: { 'material' => 'cordierite', 'selected_properties' => ['material'] }),
+          as: :json
+        expect(response).to have_http_status :ok
+        expect(Sample.find(sample.id).material).to eq('cordierite')
+      end
+
+      it 'saves cell density (cspi) with CPSI unit via sample_details' do
+        put "/api/v1/samples/#{sample.id}",
+          params: base_params.merge(sample_details: { 'cspi' => '400', 'cspi_unit' => 'CPSI', 'selected_properties' => ['cspi'] }),
+          as: :json
+        expect(response).to have_http_status :ok
+        reloaded = Sample.find(sample.id)
+        expect(reloaded.cspi).to eq('400')
+        expect(reloaded.sample_details['cspi_unit']).to eq('CPSI')
+      end
+
+      it 'exposes new fields in the API response' do
+        sample.update!(layer_thickness: '50', liquid_medium: 'Water', stabilizer: 'PEG')
+        get "/api/v1/samples/#{sample.id}", as: :json
+        expect(response).to have_http_status :ok
+        s = response.parsed_body['sample']
+        expect(s['layer_thickness']).to eq('50')
+        expect(s['liquid_medium']).to eq('Water')
+        expect(s['stabilizer']).to eq('PEG')
+      end
+
+      it 'persists layer_thickness to the DB column (not only sample_details)' do
+        put "/api/v1/samples/#{sample.id}",
+          params: base_params.merge(sample_details: { 'layer_thickness' => '75', 'selected_properties' => ['layer_thickness'] }),
+          as: :json
+        expect(response).to have_http_status :ok
+        expect(Sample.find(sample.id).read_attribute(:layer_thickness)).to eq('75')
+      end
+
+      it 'saves storage_condition "other" and stores freetext in sample_details' do
+        put "/api/v1/samples/#{sample.id}",
+          params: base_params.merge(
+            sample_details: {
+              'storage_condition' => 'other',
+              'storage_condition_freetext' => 'Dry ice',
+              'selected_properties' => ['storage_condition'],
+            }
+          ),
+          as: :json
+        expect(response).to have_http_status :ok
+        reloaded = Sample.find(sample.id)
+        expect(reloaded.storage_condition).to eq('other')
+        expect(reloaded.sample_details['storage_condition_freetext']).to eq('Dry ice')
+      end
+    end
+  end
+
+  describe 'GET /api/v1/samples/:id legacy xref compatibility' do
+    let(:legacy_sample) do
+      create(:sample,
+        collections: [collection],
+        cspi: nil,
+        material: nil,
+        shape: nil,
+        xref: { 'cspi' => '300', 'material' => 'cordierite', 'shape' => 'cylinders' })
+    end
+
+    it 'returns cspi from xref when column is blank' do
+      get "/api/v1/samples/#{legacy_sample.id}", as: :json
+      expect(response).to have_http_status :ok
+      s = response.parsed_body['sample']
+      expect(s['cspi']).to eq('300')
+    end
+
+    it 'returns material from xref when column is blank' do
+      get "/api/v1/samples/#{legacy_sample.id}", as: :json
+      s = response.parsed_body['sample']
+      expect(s['material']).to eq('cordierite')
+    end
+
+    it 'returns shape from xref when column is blank' do
+      get "/api/v1/samples/#{legacy_sample.id}", as: :json
+      s = response.parsed_body['sample']
+      expect(s['shape']).to eq('cylinders')
+    end
   end
 
   describe 'POST /api/v1/samples' do
