@@ -54,5 +54,18 @@ RSpec.describe ArchiveColdAttachmentsJob do
 
     expect(attachment.reload.attachment.storage_key).to eq(:cold)
   end
+
+  it 'skips a fileless attachment without aborting the sweep' do
+    fileless = create(:attachment, attachable: nil)
+    fileless.update_column(:attachment_data, nil)
+    fileless.update_column(:updated_at, 13.months.ago)
+
+    good = create(:attachment)
+    good.update_column(:updated_at, 13.months.ago)
+    good.attachable.update_column(:updated_at, 13.months.ago)
+
+    expect { described_class.perform_now(older_than: threshold) }.not_to raise_error
+    expect(good.reload.attachment.storage_key).to eq(:cold) # sweep continued past the fileless row
+  end
 end
 # rubocop:enable Rails/SkipsModelValidations

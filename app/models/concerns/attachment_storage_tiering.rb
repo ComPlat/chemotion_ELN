@@ -25,10 +25,10 @@ module AttachmentStorageTiering
     move_to_tier(:store)
   end
 
-  # A real read: record it, and if the file is archived, bring it back to hot.
+  # A real read: record it, and (only when we actually recorded a fresh access,
+  # so repeated reads don't queue duplicate jobs) promote it back if it's cold.
   def track_read!
-    record_access!
-    promote_if_cold
+    promote_if_cold if record_access!
   end
 
   # For read paths that bypass Shrine (e.g. image serving).
@@ -66,38 +66,53 @@ module AttachmentStorageTiering
     last_accessed_at || updated_at
   end
 
-  def record_access!
-    return if last_accessed_at && last_accessed_at > READ_TRACKING_THROTTLE.ago
+  # Returns true only when it actually wrote (i.e. not throttled).
+  def record_access! # rubocop:disable Naming/PredicateMethod -- a mutating bang method that also reports whether it acted, like #save
+    return false if last_accessed_at && last_accessed_at > READ_TRACKING_THROTTLE.ago
 
     now = Time.current
-    # update_all/increment_counter skip callbacks and leave updated_at untouched
-    self.class.where(id: id).update_all(last_accessed_at: now) # rubocop:disable Rails/SkipsModelValidations
-    self.class.increment_counter(:access_count, id) # rubocop:disable Rails/SkipsModelValidations
+    # One UPDATE, no callbacks, no updated_at bump. without_logging keeps this
+    # bookkeeping out of the logidze audit history (fires on raw UPDATEs too).
+    Logidze.without_logging do
+      self.class.where(id: id).update_all(['last_accessed_at = ?, access_count = access_count + 1', now]) # rubocop:disable Rails/SkipsModelValidations
+    end
     self.last_accessed_at = now
+    true
   end
 
   def move_to_tier(storage_key)
     self.class.suppress_read_tracking do
-      attacher = attachment_attacher
-      next unless attacher.file
-      next if attacher.file.storage_key == :cache # mid-upload, not persisted
-      next if attacher.file.storage_key == storage_key
+      old_file = nil
+      old_derivatives = nil
 
-      old_file = attacher.file
-      old_derivatives = attacher.derivatives
+      # Row lock so a concurrent archive + promote on the same attachment can't
+      # race (re-check the tier inside the lock, after reload sees committed data).
+      with_lock do
+        attacher = attachment_attacher
+        file = attacher.file
+        next if file.nil?
+        next if file.storage_key == :cache # mid-upload, not persisted
+        next if file.storage_key == storage_key
 
-      old_file.rewind # or we copy from a mid-read cursor and lose bytes
-      attacher.set attacher.upload(old_file, storage_key)
-      if old_derivatives.present?
-        attacher.set_derivatives attacher.upload_derivatives(old_derivatives, storage: storage_key)
+        old_file = file
+        old_derivatives = attacher.derivatives
+
+        old_file.rewind # or we copy from a mid-read cursor and lose bytes
+        attacher.set attacher.upload(old_file, storage_key)
+        if old_derivatives.present?
+          attacher.set_derivatives attacher.upload_derivatives(old_derivatives, storage: storage_key)
+        end
+
+        # normal save is reverted by this model's callbacks; update_column isn't
+        update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
 
-      # normal save is reverted by this model's callbacks; update_column isn't
-      update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
+      # delete the old copies only after the tier switch is committed: upload +
+      # persist first, delete last, so a crash mid-move never loses data
+      next if old_file.nil?
 
-      # upload + persist first, delete last: a crash here leaves data intact
       old_file.delete
-      attacher.delete_derivatives(old_derivatives) if old_derivatives.present?
+      attachment_attacher.delete_derivatives(old_derivatives) if old_derivatives.present?
     end
   end
 end
