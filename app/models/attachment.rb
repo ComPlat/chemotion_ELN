@@ -35,6 +35,7 @@
 #
 #  index_attachments_on_attachable_type_and_attachable_id  (attachable_type,attachable_id)
 #  index_attachments_on_identifier                         (identifier) UNIQUE
+#  index_attachments_on_shrine_file_id                     (((attachment_data ->> 'id'::text)))
 #  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
 #
 

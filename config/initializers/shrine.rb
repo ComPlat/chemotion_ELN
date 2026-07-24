@@ -15,10 +15,13 @@ class TieredStorage < Shrine::Storage::FileSystem
   end
 end
 
+# Fall back to a subdir of store so an existing shrine.yml without :cold still boots.
+cold_dir = shrine_storage[:cold] || File.join(shrine_storage[:store].to_s, 'cold')
+
 Shrine.storages = {
   cache: Shrine::Storage::FileSystem.new(shrine_storage[:cache]), # temporary
   store: TieredStorage.new(shrine_storage[:store]), # permanent (hot tier)
-  cold: TieredStorage.new(shrine_storage[:cold]), # permanent (cold/archive tier)
+  cold: TieredStorage.new(cold_dir), # permanent (cold/archive tier)
 }
 
 Shrine.plugin :activerecord           # loads Active Record integration

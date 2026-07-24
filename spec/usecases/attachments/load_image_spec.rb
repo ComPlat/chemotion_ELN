@@ -37,6 +37,16 @@ RSpec.describe Usecases::Attachments::LoadImage do
       end
     end
 
+    context 'when the image lives on cold storage', :active_job do
+      let(:attachment) { create(:attachment, :with_image) }
+
+      it 'promotes it back to hot on read (this path bypasses the Shrine hook)' do
+        attachment.move_to_cold
+
+        expect { loaded_image }.to have_enqueued_job(PromoteAttachmentJob).with(attachment.id)
+      end
+    end
+
     context 'with image attachment (jpg) and annotated but not yet annotated' do
       let(:attachment) { create(:attachment, :with_image) }
       let(:annotated) { true }

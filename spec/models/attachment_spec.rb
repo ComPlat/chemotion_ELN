@@ -38,6 +38,7 @@
 #
 #  index_attachments_on_attachable_type_and_attachable_id  (attachable_type,attachable_id)
 #  index_attachments_on_identifier                         (identifier) UNIQUE
+#  index_attachments_on_shrine_file_id                     (((attachment_data ->> 'id'::text)))
 #  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
 #
 require 'rails_helper'
@@ -110,6 +111,40 @@ RSpec.describe Attachment do
       attachment.track_read!
 
       expect { attachment.track_read! }.not_to(change { attachment.reload.access_count })
+    end
+
+    it 'records the access without writing logidze audit history' do
+      expect(Logidze).to receive(:without_logging).and_call_original
+
+      attachment.track_read!
+    end
+
+    context 'when the file is cold and read repeatedly within the throttle window', :active_job do
+      it 'enqueues only one promotion (no duplicate move jobs)' do
+        attachment.move_to_cold
+
+        expect do
+          attachment.track_read!
+          attachment.track_read!
+        end.to have_enqueued_job(PromoteAttachmentJob).once
+      end
+    end
+  end
+
+  describe '.on_read with an unknown file id', :active_job do
+    it 'does nothing (a derivative/thumbnail id never matches the main file)' do
+      attachment # ensure it exists
+
+      expect { described_class.on_read('does-not-exist') }
+        .not_to(change { attachment.reload.access_count })
+    end
+  end
+
+  describe '#move_to_store does not count as a user read', :active_job do
+    it 'does not re-enqueue a promotion while promoting (internal reads suppressed)' do
+      attachment.move_to_cold
+
+      expect { attachment.move_to_store }.not_to have_enqueued_job(PromoteAttachmentJob)
     end
   end
 
