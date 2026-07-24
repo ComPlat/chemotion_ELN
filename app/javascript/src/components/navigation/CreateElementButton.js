@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Form, Dropdown
@@ -12,7 +12,6 @@ import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
 import AppModal from 'src/components/common/AppModal';
 import ElementIcon from 'src/components/common/ElementIcon';
-import { reaction } from 'mobx';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -73,28 +72,14 @@ const CreateElementButton = () => {
   const [wellplateCount, setWellplateCount] = useState(0);
   const layout = userStore.profile?.data?.layout || {};
 
-  reaction(
-    // function that returns the data to observe
-    () => {
-      const { currentCollection } = UIStore.getState();
-      if (!currentCollection) { return null; }
-
-      const { label, is_locked, collection_share_id, permission_level } = currentCollection;
-      return {
-        label,
-        is_locked,
-        collection_share_id,
-        permission_level
-      };
-    },
-    // what to do when data changes
-    (changesInCurrentCollection) => {
-      if (changesInCurrentCollection == null) {
+  useEffect(() => {
+    const onUIStoreChange = ({ currentCollection }) => {
+      if (!currentCollection) {
         setIsDisabled(true);
         return;
       }
 
-      const { label, is_locked, collection_share_id, permission_level } = changesInCurrentCollection;
+      const { label, is_locked, collection_share_id, permission_level } = currentCollection;
 
       // Creating an element adds it to the collection, so it needs AddElements — not merely EditElements.
       const newIsDisabled = permission_level !== undefined
@@ -102,8 +87,13 @@ const CreateElementButton = () => {
         : (label === 'All' && is_locked);
 
       setIsDisabled(newIsDisabled);
-    }
-  );
+    };
+
+    UIStore.listen(onUIStoreChange);
+    onUIStoreChange(UIStore.getState());
+
+    return () => UIStore.unlisten(onUIStoreChange);
+  }, []);
 
   const hideModal = () => {
     setShowModal(false);
