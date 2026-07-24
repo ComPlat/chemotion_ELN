@@ -81,7 +81,7 @@ module AttachmentJcampAasm
 
   def extension_parts
     parts = filename_parts
-    @extension_parts = [parts[-2], parts[-1]]
+    @extension_parts = [parts[-2].to_s, parts[-1].to_s]
   end
 
   def init_aasm

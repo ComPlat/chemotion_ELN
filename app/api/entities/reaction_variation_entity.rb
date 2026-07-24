@@ -15,7 +15,7 @@ module Entities
     expose :starting_materials, as: :startingMaterials
 
     def properties
-      object[:properties].slice(:duration, :temperature).transform_values do |value|
+      (object[:properties] || {}).slice(:duration, :temperature).transform_values do |value|
         ReactionVariationPropertyEntity.represent(value)
       end
     end

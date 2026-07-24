@@ -17,11 +17,16 @@ module Chemotion
 
         update_datamodel(params[:container])
 
-        present(
-          @container,
-          with: Entities::ContainerEntity,
-          root: :container,
-        )
+        root_element = @container.root_element
+        root_element.reload if root_element.is_a?(Reaction)
+
+        response = { container: Entities::ContainerEntity.represent(@container, current_user: current_user) }
+        if root_element.is_a?(Reaction)
+          response[:variations] = Entities::ReactionVariationEntity.represent(
+            root_element.variations.map(&:deep_symbolize_keys), current_user: current_user
+          )
+        end
+        response
       end
 
       desc "Remove container id of unseletced attachemnts(the attachemnts not in Inbox)"

@@ -110,7 +110,9 @@ module Usecases
             attachment.destroy!
             next
           end
+
           attachment.update!(attachable_id: container.id, attachable_type: 'Container') if container.present?
+          container.link_attachment_variation(attachment) if att[:is_new] && container.present?
         end
       end
       # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity

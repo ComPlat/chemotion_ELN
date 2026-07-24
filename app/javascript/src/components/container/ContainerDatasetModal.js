@@ -64,8 +64,8 @@ export default class ContainerDatasetModal extends Component {
     const { attachments } = this.props.datasetContainer;
     LoadingActions.start();
     ContainerActions.updateContainerWithFiles(rootContainer)
-      .then((updatedContainer) => {
-        updateContainerState(updatedContainer, true);
+      .then(({ container: updatedContainer, variations }) => {
+        updateContainerState(updatedContainer, true, variations);
         AnnotationsFetcher.updateAnnotationsForAttachments(attachments)
           .then(() => {
             // const updatedAttachments = attachments.map((att) => ({ ...att }));

@@ -18,7 +18,7 @@ class ContainerActions {
           level: 'success',
           position: 'tc'
         });
-        return response.container;
+        return { container: response.container, variations: response.variations ?? null };
       } catch (error) {
         console.error('Failed to update Analysis', error);
         throw error;
