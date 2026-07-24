@@ -514,4 +514,163 @@ RSpec.describe Sample do
       end
     end
   end
+
+  describe '#get_svg_path — polymer auto-heal' do
+    before do
+      allow(PubChem).to receive_messages(
+        get_record_from_inchikey: nil,
+        get_molfile_by_smiles: nil,
+        get_cid_from_inchikey: nil,
+      )
+    end
+
+    let(:user)     { create(:person) }
+    let(:molecule) { create(:molecule, is_partial: true) }
+    let(:polymer_molfile) do
+      <<~MOLFILE
+        null
+
+
+          1  0  0  0  0  0  0  0  0  0999 V2000
+            2.0250   -2.0250    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+        M  END
+
+        > <PolymersList>
+        0/95/1.00-1.00
+        $$$$
+      MOLFILE
+    end
+
+    let(:sample) do
+      create(:sample,
+        created_by: user.id,
+        molecule: molecule,
+        molfile: polymer_molfile)
+    end
+
+    let(:svg_with_image) do
+      '<svg xmlns="http://www.w3.org/2000/svg">' \
+        '<image href="data:image/svg+xml;base64,ZmFrZQ==" width="10"/></svg>'
+    end
+    let(:svg_without_image) { '<svg xmlns="http://www.w3.org/2000/svg"><text x="5" y="5">A</text></svg>' }
+
+    context 'when sample_svg_file is nil' do
+      before { sample.update_column(:sample_svg_file, nil) }
+
+      it 'returns nil — SVG will be generated on next save' do
+        expect(sample.get_svg_path).to be_nil
+      end
+    end
+
+    context 'when sample_svg_file is present but SVG lacks <image> (stale)' do
+      let(:svg_file_name) { "#{SecureRandom.hex(64)}.svg" }
+
+      before do
+        sample.update_column(:sample_svg_file, svg_file_name)
+        allow(File).to receive(:exist?).with(anything).and_call_original
+        allow(File).to receive(:exist?)
+          .with(Rails.public_path.join('images', 'samples', svg_file_name).to_s)
+          .and_return(true)
+        allow(File).to receive(:read)
+          .with(Rails.public_path.join('images', 'samples', svg_file_name).to_s)
+          .and_return(svg_without_image)
+      end
+
+      # B1 fix: get_svg_path is now a pure getter — regen deferred to before_save.
+      it 'returns the cached path without triggering regeneration on the read path' do
+        expect(sample.get_svg_path).to eq("/images/samples/#{svg_file_name}")
+      end
+
+      it 'does not call update_column on a read' do
+        allow(sample).to receive(:update_column)
+        sample.get_svg_path
+        expect(sample).not_to have_received(:update_column)
+      end
+
+      it 'triggers regen via regen_polymer_svg_if_stale on save' do
+        allow(Molecule).to receive(:svg_reprocess).and_return(svg_with_image)
+        allow(sample).to receive(:attach_svg)
+        allow(File).to receive(:write).and_call_original
+        sample.save!
+        # regen_polymer_svg_if_stale writes SVG to a TMPFILE and passes the
+        # filename to attach_svg (to avoid File.basename corrupting SVG XML).
+        expect(sample).to have_received(:attach_svg).with(
+          a_string_matching(/\ATMPFILE[0-9a-f]{64}\.svg\z/)
+        )
+      end
+    end
+
+    # B2 fix: polymer_sample_svg_path returns nil — showing the backbone molecule SVG
+    # would display the wrong compound for a polymer sample.
+    context 'when sample_svg_file is nil and svg_reprocess returns blank' do
+      let(:mol_svg) { 'molecule.svg' }
+
+      before do
+        sample.update_column(:sample_svg_file, nil)
+        allow(molecule).to receive(:molecule_svg_file).and_return(mol_svg)
+        allow(Molecule).to receive(:svg_reprocess).and_return(nil)
+      end
+
+      it 'returns nil rather than the wrong backbone molecule SVG' do
+        path = sample.get_svg_path
+        expect(path).to be_nil
+      end
+    end
+
+    context 'when sample_svg_file is present and svg_reprocess returns blank' do
+      let(:svg_file_name) { "#{SecureRandom.hex(64)}.svg" }
+      let(:mol_svg) { 'molecule.svg' }
+
+      before do
+        sample.update_column(:sample_svg_file, svg_file_name)
+        allow(molecule).to receive(:molecule_svg_file).and_return(mol_svg)
+        allow(Molecule).to receive(:svg_reprocess).and_return(nil)
+      end
+
+      it 'returns the cached sample SVG, not the molecule SVG' do
+        path = sample.get_svg_path
+        expect(path).to eq("/images/samples/#{svg_file_name}")
+        expect(path).not_to include('/images/molecules/')
+      end
+    end
+
+    context 'when sample_svg_file is present and SVG contains <image>' do
+      let(:svg_file_name) { "#{SecureRandom.hex(64)}.svg" }
+
+      before do
+        sample.update_column(:sample_svg_file, svg_file_name)
+        allow(File).to receive(:exist?).with(anything).and_call_original
+        allow(File).to receive(:exist?)
+          .with(Rails.public_path.join('images', 'samples', svg_file_name).to_s)
+          .and_return(true)
+        allow(File).to receive(:read)
+          .with(Rails.public_path.join('images', 'samples', svg_file_name).to_s)
+          .and_return(svg_with_image)
+      end
+
+      it 'returns the cached path without regenerating' do
+        expect(sample.get_svg_path).to eq("/images/samples/#{svg_file_name}")
+      end
+    end
+
+    context 'when molecule is not partial (non-polymer sample)' do
+      let(:plain_molecule) { create(:molecule, is_partial: false) }
+      let(:plain_sample) do
+        create(:sample,
+          created_by: user.id,
+          molecule: plain_molecule,
+          sample_svg_file: "#{SecureRandom.hex(64)}.svg")
+      end
+
+      # Force eager creation before File.read is mocked, to avoid profile.rb
+      # reading its CHMO fixture file while the mock is active.
+      before { plain_sample }
+
+      it 'returns cached path directly without reading the file' do
+        allow(File).to receive(:read)
+        plain_sample.get_svg_path
+        expect(File).not_to have_received(:read)
+      end
+    end
+  end
 end

@@ -179,6 +179,66 @@ describe Chemotion::MoleculeAPI do
         end
       end
     end
+
+    describe 'POST /api/v1/molecules — PolymersList SVG generation' do
+      let(:polymer_molfile) do
+        <<~MOL
+          null
+            Ketcher  6232611422D 1   1.00000     0.00000     0
+
+            1  0  0  0  0  0  0  0  0  0999 V2000
+              2.0250   -2.0250    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+          M  END
+
+          > <PolymersList>
+          0/95/1.00-1.00
+          $$$$
+        MOL
+      end
+      let(:plain_molfile) { build(:molfile, type: :cubane) }
+      # A plain SVG with no epam-ketcher-ssc marker — used with polymer_molfile
+      let(:fake_svg) { '<svg xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="3"/></svg>' }
+      # An SVG that triggers the Ketcher-EPAM path (svg.include?('epam-ketcher-ssc'))
+      let(:epam_svg) { '<svg xmlns="http://www.w3.org/2000/svg" data-source="epam-ketcher-ssc"><circle/></svg>' }
+      let(:polymer_svg) do
+        '<svg xmlns="http://www.w3.org/2000/svg">' \
+          '<image href="data:image/svg+xml;base64,ZmFrZQ==" width="10" height="10"/></svg>'
+      end
+
+      before do
+        allow(PubChem).to receive_messages(
+          get_record_from_inchikey: nil,
+          get_molfile_by_smiles: nil,
+          get_cid_from_inchikey: nil,
+        )
+        allow(Molecule).to receive_messages(
+          svg_reprocess: polymer_svg,
+          find_or_create_by_molfile: create(:molecule),
+          find_or_create_dummy: create(:molecule),
+        )
+        allow(SVG::Processor).to receive_message_chain(:new, :structure_svg)
+          .and_return({ svg_file_name: 'TMPFILE' + SecureRandom.hex(32) + '.svg' })
+        allow(KetcherService::SVGProcessor).to receive(:clean_and_trim_svg).and_return(epam_svg)
+      end
+
+      it 'ignores frontend svg_file and calls svg_reprocess when molfile has PolymersList' do
+        post '/api/v1/molecules', params: { molfile: polymer_molfile, svg_file: fake_svg }
+        expect(response).to have_http_status(:success)
+        expect(Molecule).to have_received(:svg_reprocess).with(nil, polymer_molfile, hash_including(service: 'indigo'))
+      end
+
+      it 'uses svg_reprocess even when no frontend svg_file sent with PolymersList molfile' do
+        post '/api/v1/molecules', params: { molfile: polymer_molfile }
+        expect(response).to have_http_status(:success)
+        expect(Molecule).to have_received(:svg_reprocess)
+      end
+
+      it 'does NOT call svg_reprocess when frontend svg contains epam-ketcher-ssc marker' do
+        post '/api/v1/molecules', params: { molfile: plain_molfile, svg_file: epam_svg }
+        expect(response).to have_http_status(:success)
+        expect(Molecule).not_to have_received(:svg_reprocess)
+      end
+    end
   end
 end
 # rubocop:enable RSpec/NestedGroups

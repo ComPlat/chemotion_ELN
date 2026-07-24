@@ -222,6 +222,7 @@ class Sample < ApplicationRecord
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :update_molecule_name
   before_save :find_or_create_fingerprint
+  before_save :regen_polymer_svg_if_stale
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
   before_save :auto_set_short_label
@@ -505,11 +506,13 @@ class Sample < ApplicationRecord
   end
 
   def get_svg_path
-    if sample_svg_file.present?
-      "/images/samples/#{sample_svg_file}"
-    elsif molecule&.molecule_svg_file&.present?
-      "/images/molecules/#{molecule.molecule_svg_file}"
-    end
+    return "/images/samples/#{sample_svg_file}" if sample_svg_file.present?
+
+    # Polymer samples must not fall back to the backbone molecule SVG (wrong structure).
+    # SVG is generated on save via regen_polymer_svg_if_stale (before_save callback).
+    return if molecule&.is_partial && molfile.present?
+
+    "/images/molecules/#{molecule.molecule_svg_file}" if molecule&.molecule_svg_file.present?
   end
 
   # return the full path of the svg file (molecule svg if no sample svg) if it or nil.
@@ -829,6 +832,35 @@ class Sample < ApplicationRecord
     return unless svg_file_name
 
     Rails.public_path.join('images', 'samples', svg_file_name)
+  end
+
+  # Called on the write path (before_save) — never on reads or read replicas.
+  def regen_polymer_svg_if_stale
+    return unless polymer_svg_needs_regen?
+
+    svg = Molecule.svg_reprocess(nil, molfile)
+    return unless svg.present?
+
+    # attach_svg interprets strings containing '/' as file paths (File.basename).
+    # SVG XML content always contains '/' in tags, so pass via a named temp file
+    # using the TMPFILE prefix that attach_svg's temp-file branch recognises.
+    tmp_name = "TMPFILE#{SecureRandom.hex(32)}.svg"
+    File.write(full_svg_path(tmp_name), svg)
+    attach_svg(tmp_name)
+  end
+
+  # Returns true when a polymer sample has no cached SVG or the cached SVG lacks
+  # injected polymer shapes (created before shape injection was implemented).
+  def polymer_svg_needs_regen?
+    return false unless molecule&.is_partial && molfile.present?
+
+    # No SVG yet — must generate one.
+    return true if sample_svg_file.blank?
+
+    svg_path = full_svg_path(sample_svg_file)
+    return false unless svg_path && File.exist?(svg_path.to_s)
+
+    !File.read(svg_path.to_s).include?('<image')
   end
 
   def update_gas_material

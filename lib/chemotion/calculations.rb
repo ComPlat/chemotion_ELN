@@ -52,6 +52,8 @@ module Chemotion::Calculations
       loading = 1000.0 * (wfp - dvalue.to_f/100.0) / (mw_def * (wfp - wfm))
       return loading if (wfp - wfm != 0.0)
     end
+
+    nil
   end
 
   def self.get_yield product_data, sm_data, expected_data
