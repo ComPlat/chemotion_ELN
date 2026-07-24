@@ -147,9 +147,13 @@ export const CON_STATE = {
   NONE: 0, WAIT: 1, NMR: 2, CONVERTED: 3, READ: 4, PROCESSED: 5, COMPLETED: 6, ERROR: 9
 };
 
-// Whether the converter picked this attachment up at all; only those can be re-run.
+// Whether this is the originally-uploaded file the converter can re-run on — not one of
+// the attachments the converter itself produced (the bagit/zip conversion output), which
+// only ever carry CONVERTED or COMPLETED and have no "original file" to re-convert from.
 export const isConvertible = (attachment) => attachment.con_state != null
-  && attachment.con_state !== CON_STATE.NONE;
+  && attachment.con_state !== CON_STATE.NONE
+  && attachment.con_state !== CON_STATE.CONVERTED
+  && attachment.con_state !== CON_STATE.COMPLETED;
 
 export const reconvertButton = (attachment, onReconvert, readOnly) => {
   const failed = attachment.con_state === CON_STATE.ERROR;
