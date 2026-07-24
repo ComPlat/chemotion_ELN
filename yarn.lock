@@ -5336,10 +5336,10 @@ cheerio@^1.0.0-rc.3:
     undici "^7.19.0"
     whatwg-mimetype "^4.0.0"
 
-chem-generic-ui@^2.3.0-rc8:
-  version "2.3.0-rc8"
-  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-2.3.0-rc8.tgz#ea9cfa50debf100f24665560ab1b157c1590b92b"
-  integrity sha512-v2YOuzDZh8Z3cQjcBpOsxCNcQJOldbov9kCfZ0W5/RFcsXmldGQ0jnIa9BEByk0edVocAR3gwSTRkCQvESQqQw==
+chem-generic-ui@^2.3.0-rc9:
+  version "2.3.0-rc9"
+  resolved "https://registry.yarnpkg.com/chem-generic-ui/-/chem-generic-ui-2.3.0-rc9.tgz#1360e9cd7af6136fa03d5c659c1c58df3fe6613b"
+  integrity sha512-TYGFilrIOww3eH0euyWSTVhp9logmu+HYmMEv8lIXxA/JoRx3ceszt/sAQhbpozcu7EQM33oBRM4ZoCl+Md3eg==
   dependencies:
     ajv "^8.18.0"
     copy-to-clipboard "^3.3.3"
