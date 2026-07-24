@@ -21,7 +21,11 @@ module Chemotion
         root_element.reload if root_element.is_a?(Reaction)
 
         response = { container: Entities::ContainerEntity.represent(@container, current_user: current_user) }
-        response[:variations] = root_element.variations if root_element.is_a?(Reaction)
+        if root_element.is_a?(Reaction)
+          response[:variations] = Entities::ReactionVariationEntity.represent(
+            root_element.variations.map(&:deep_symbolize_keys), current_user: current_user
+          )
+        end
         response
       end
 

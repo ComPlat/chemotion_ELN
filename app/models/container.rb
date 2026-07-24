@@ -80,6 +80,18 @@ class Container < ApplicationRecord
     end
   end
 
+  def link_attachment_variation(attachment)
+    return unless container_type == 'dataset'
+
+    variation = Attachment.variation_id_from(attachment.filename)
+    return if variation.blank?
+
+    element = root_element
+    return unless element.respond_to?(:assign_attachment_to_variation)
+
+    element.assign_attachment_to_variation(variation, parent_id)
+  end
+
   private
 
   def delete_attachment

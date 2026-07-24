@@ -337,7 +337,9 @@ class Reaction < ApplicationRecord
 
     variation['metadata'] ||= {}
     variation['metadata']['analyses'] ||= []
-    variation['metadata']['analyses'] << analysis_id unless variation['metadata']['analyses'].include?(analysis_id)
+    return if variation['metadata']['analyses'].include?(analysis_id)
+
+    variation['metadata']['analyses'] << analysis_id
     update(variations: variations)
   end
 

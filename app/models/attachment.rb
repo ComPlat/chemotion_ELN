@@ -96,6 +96,12 @@ class Attachment < ApplicationRecord
     where(attachable_type: 'Template')
   }
 
+  VARIATION_SUFFIX_REGEXP = /-v(\d+)(?=[.-]|$)/i.freeze
+
+  def self.variation_id_from(filename)
+    filename.to_s[VARIATION_SUFFIX_REGEXP, 1]
+  end
+
   def set_default_created_by_type
     self.created_by_type ||= 'User'
   rescue NoMethodError
@@ -272,7 +278,7 @@ class Attachment < ApplicationRecord
       element: :sample,
     )
 
-    variation = filename[/-v(\d+)(?=[.-]|$)/i, 1]
+    variation = self.class.variation_id_from(filename)
     search_string = filename.sub(/-v\d+.*$/i, '')
 
     reactions = InboxSearchElements.call(
