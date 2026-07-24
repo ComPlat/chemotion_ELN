@@ -6,16 +6,15 @@ import {
   Button, OverlayTrigger, Tooltip, Alert,
   ButtonGroup
 } from 'react-bootstrap';
+import uuid from 'uuid';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import PropTypes from 'prop-types';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 import AppModal from 'src/components/common/AppModal';
 import Container from 'src/models/Container';
-import { rfValueFormat } from 'src/utilities/ElementUtils';
-import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import { handleInputChange } from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
-import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
+import VariationSchemaTable from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationComponents';
 
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
 
@@ -55,24 +54,17 @@ RemoveVariationsModal.propTypes = {
   onRemoveAll: PropTypes.func.isRequired,
 };
 
+let globalInputTimer;
+
 const ReactionVariations = ({ reaction, onReactionChange }) => {
 
-  useEffect(() => {
-    reaction.variations = [];
-    onReactionChange(reaction);
-  }, [onReactionChange, reaction.id]);
-
-  const addRow = () => {
-    const newReaction = structuredClone(reaction);
-    newReaction.variations = [];
-    newReaction.container = Container.init();
-    reaction.variations.push(newReaction);
-    onReactionChange(reaction);
-  };
-
   const makeReaction = (reactionData) => {
+    const clonedReaction = { ...structuredClone(reaction), ...reactionData };
+    clonedReaction.variations = [];
+    clonedReaction.container = Container.init();
+    clonedReaction.id = reactionData.id || uuid.v4();
     ['starting_materials', 'reactants', 'solvents', 'purification_solvents', 'products'].forEach((key) => {
-      reactionData[`_${key}`] = reactionData[`_${key}`].map((sampleData) => {
+      clonedReaction[`_${key}`] = clonedReaction[`_${key}`].map((sampleData) => {
           sampleData.container = Container.init();
           return Object.assign(
             Object.create(Sample.prototype),
@@ -83,14 +75,99 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     });
     return Object.assign(
       Object.create(Reaction.prototype),
-      reactionData
+      clonedReaction
     );
   };
 
-  const handleReactionChange = (variationReaction) => {
-    variationReaction.updateMaxAmountOfProducts();
-    reaction.changed = true;
+  const [variations, setVariations] = useState(
+    reaction.variations.map((v, idx) => ({ idx, group: v.group, data: makeReaction(v.data || {}) }))
+  );
+
+  const [activeVariation, setActiveVariation] = useState(null);
+
+  const diffObjects = (obj1, obj2, ignoreList = []) => {
+    let result, keys;
+    if (Array.isArray(obj2)) {
+      keys = obj2.map((x, i) => i);
+      result = [];
+    } else {
+      keys = Object.keys(obj2);
+      result = {};
+    }
+    for (const key of keys) {
+      // Ignore configured keys
+      if (ignoreList.includes(key)) {
+        continue;
+      }
+
+      const value1 = obj1?.[key];
+      const value2 = obj2[key];
+
+      // Ignore functions
+      if (typeof value2 === 'function') {
+        continue;
+      }
+
+      // Recursively compare plain objects
+      if (
+        value2 !== null &&
+        typeof value2 === 'object' &&
+        value1 !== null &&
+        typeof value1 === 'object'
+      ) {
+        const nestedDiff = diffObjects(value1, value2, ignoreList);
+
+        if (Object.keys(nestedDiff).length > 0) {
+          result[key] = nestedDiff;
+        }
+      } else if (!Object.is(value1, value2)) {
+        result[key] = value2;
+      }
+    }
+
+    return result;
+  };
+
+  const addRow = () => {
+    const id = uuid.v4();
+    const group = [0, 0];
+    reaction.variations.push({
+      id, group,
+      data: {}
+    });
+    variations.push({ group, data: makeReaction({}), idx: reaction.variations.length - 1 });
+    setVariations(variations);
     onReactionChange(reaction);
+  };
+
+  const handleReactionChange = (variationReaction, idx) => {
+    variationReaction.updateMaxAmountOfProducts();
+
+    const variationDiff = diffObjects(reaction, variationReaction, ['_variations', 'container', '_checksum']);
+    console.log(variationDiff);
+    reaction.changed = true;
+    reaction.variations[idx].data = variationDiff;
+    onReactionChange(reaction);
+    variations[idx].data = variationReaction;
+    setVariations(variations);
+  };
+
+  const onGroupChange = (value, idx) => {
+    const newValue = value.split(/[^\d]/);
+    reaction.changed = true;
+    variations[idx].group = newValue;
+    onReactionChange(reaction);
+    setVariations(variations);
+    if (globalInputTimer) {
+      clearTimeout(globalInputTimer);
+    }
+
+    globalInputTimer = setTimeout(() => {
+      variations[idx].group = reaction.variations[idx].group = newValue.filter(Boolean);
+      onReactionChange(reaction);
+      setVariations(variations);
+    }, 1000);
+
   };
   const addVariation = () => (
     <OverlayTrigger
@@ -121,17 +198,27 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
         <RemoveVariationsModal
           onRemoveAll={() => {
             reaction.variations = [];
+            setVariations([]);
             onReactionChange(reaction);
           }}
         />
       </ButtonGroup>
     </div>
+    <VariationSchemaTable
+      variations={variations}
+      onReactionChange={handleReactionChange}
+      onInputChange={handleInputChange}
+      setActiveVariation={setActiveVariation}
+      isActiveVariation={!!activeVariation}
+      onGroupChange={onGroupChange}
+    />
     <div>
-      {reaction.variations.map((rea) => <ReactionDetailsScheme
-        key={rea.id}
-        reaction={makeReaction(rea)}
-        onReactionChange={(r) => handleReactionChange(r)}
-        onInputChange={(type, event) => handleInputChange(type, event)}
+      {activeVariation &&
+        (<ReactionDetailsScheme
+        reaction={activeVariation.data}
+        onReactionChange={(r) => handleReactionChange(r, activeVariation.idx)}
+        onInputChange={(type, event) => handleInputChange(type, event, activeVariation.data,
+          (r) => handleReactionChange(r, activeVariation.idx))}
       />)}
 
     </div>
