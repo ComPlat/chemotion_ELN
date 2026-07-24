@@ -7,35 +7,38 @@
 #
 # Table name: attachments
 #
-#  id              :integer          not null, primary key
-#  aasm_state      :string
-#  attachable_type :string
-#  attachment_data :jsonb
-#  bucket          :string
-#  checksum        :string
-#  con_state       :integer
-#  content_type    :string
-#  created_by      :integer          not null
-#  created_by_type :string
-#  created_for     :integer
-#  deleted_at      :datetime
-#  edit_state      :integer          default("not_editing")
-#  filename        :string
-#  filesize        :bigint
-#  folder          :string
-#  identifier      :uuid
-#  key             :string(500)
-#  storage         :string(20)       default("tmp")
-#  thumb           :boolean          default(FALSE)
-#  version         :string           default("/"), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  attachable_id   :integer
+#  id               :integer          not null, primary key
+#  aasm_state       :string
+#  access_count     :integer          default(0), not null
+#  attachable_type  :string
+#  attachment_data  :jsonb
+#  bucket           :string
+#  checksum         :string
+#  con_state        :integer
+#  content_type     :string
+#  created_by       :integer          not null
+#  created_by_type  :string
+#  created_for      :integer
+#  deleted_at       :datetime
+#  edit_state       :integer          default("not_editing")
+#  filename         :string
+#  filesize         :bigint
+#  folder           :string
+#  identifier       :uuid
+#  key              :string(500)
+#  last_accessed_at :datetime
+#  storage          :string(20)       default("tmp")
+#  thumb            :boolean          default(FALSE)
+#  version          :string           default("/"), not null
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  attachable_id    :integer
 #
 # Indexes
 #
 #  index_attachments_on_attachable_type_and_attachable_id  (attachable_type,attachable_id)
 #  index_attachments_on_identifier                         (identifier) UNIQUE
+#  index_attachments_on_shrine_file_id                     (((attachment_data ->> 'id'::text)))
 #  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
 #
 require 'rails_helper'
@@ -52,6 +55,106 @@ RSpec.describe Attachment do
   describe '#read_file' do
     it 'returns content of file' do
       expect(attachment.read_file).to eq("Hello world\n")
+    end
+
+    context 'when the file lives on the cold storage tier', :active_job do
+      it 'enqueues a promotion back to hot storage' do
+        attachment.move_to_cold
+
+        expect { attachment.read_file }.to have_enqueued_job(PromoteAttachmentJob).with(attachment.id)
+      end
+    end
+
+    context 'when the file lives on the hot storage tier', :active_job do
+      it 'does not enqueue a promotion' do
+        expect { attachment.read_file }.not_to have_enqueued_job(PromoteAttachmentJob)
+      end
+    end
+  end
+
+  describe 'promote on any Shrine read' do
+    context 'when a cold file is read directly through the attacher', :active_job do
+      it 'enqueues a promotion (e.g. the download endpoint bypassing #read_file)' do
+        attachment.move_to_cold
+
+        expect { attachment.attachment.read }.to have_enqueued_job(PromoteAttachmentJob).with(attachment.id)
+      end
+    end
+  end
+
+  describe '#promote_if_cold', :active_job do
+    it 'enqueues a promotion for a cold file (used by image serving, which bypasses Shrine)' do
+      attachment.move_to_cold
+
+      expect { attachment.promote_if_cold }.to have_enqueued_job(PromoteAttachmentJob).with(attachment.id)
+    end
+
+    it 'does nothing for a hot file' do
+      expect { attachment.promote_if_cold }.not_to have_enqueued_job(PromoteAttachmentJob)
+    end
+  end
+
+  describe '#track_read! (access tracking)' do
+    it 'records the access time and bumps the count' do
+      expect { attachment.track_read! }.to change { attachment.reload.access_count }.by(1)
+      expect(attachment.reload.last_accessed_at).to be_present
+    end
+
+    it 'does not bump updated_at' do
+      original = attachment.updated_at
+      attachment.track_read!
+
+      expect(attachment.reload.updated_at).to be_within(1.second).of(original)
+    end
+
+    it 'throttles repeated reads within the window' do
+      attachment.track_read!
+
+      expect { attachment.track_read! }.not_to(change { attachment.reload.access_count })
+    end
+
+    it 'records the access without writing logidze audit history' do
+      expect(Logidze).to receive(:without_logging).and_call_original
+
+      attachment.track_read!
+    end
+
+    context 'when the file is cold and read', :active_job do
+      it 'promotes on every read, not just the first (throttle only gates access counting)' do
+        attachment.move_to_cold
+
+        expect do
+          attachment.track_read! # first read: records access + promotes
+          attachment.track_read! # second read: access throttled, but still promotes
+        end.to have_enqueued_job(PromoteAttachmentJob).twice
+      end
+    end
+
+    context 'when a cold file is promoted more than once (duplicate jobs are harmless)' do
+      it 'lands on hot storage without error' do
+        attachment.move_to_cold
+
+        PromoteAttachmentJob.perform_now(attachment.id)
+        expect { PromoteAttachmentJob.perform_now(attachment.id) }.not_to raise_error
+        expect(attachment.reload.attachment_attacher.file.storage_key).to eq(:store)
+      end
+    end
+  end
+
+  describe '.on_read with an unknown file id', :active_job do
+    it 'does nothing (a derivative/thumbnail id never matches the main file)' do
+      attachment # ensure it exists
+
+      expect { described_class.on_read('does-not-exist') }
+        .not_to(change { attachment.reload.access_count })
+    end
+  end
+
+  describe '#move_to_store does not count as a user read', :active_job do
+    it 'does not re-enqueue a promotion while promoting (internal reads suppressed)' do
+      attachment.move_to_cold
+
+      expect { attachment.move_to_store }.not_to have_enqueued_job(PromoteAttachmentJob)
     end
   end
 
@@ -967,6 +1070,110 @@ RSpec.describe Attachment do
 
       it 'does not auto-transfer (reaction precedence preserved)' do
         expect(attachment.resolve_unique_match).to eq([nil, nil])
+      end
+    end
+  end
+
+  # update_column back-dates timestamps to exercise the age checks.
+  # rubocop:disable Rails/SkipsModelValidations
+  describe '#cold?' do
+    let(:threshold) { 12.months.ago }
+
+    it 'is cold when both the file and its parent are older than the threshold' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      attachment.attachable.update_column(:updated_at, 13.months.ago)
+
+      expect(attachment.cold?(older_than: threshold)).to be true
+    end
+
+    it 'is not cold when the parent was edited recently, even if the file is old' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      attachment.attachable.update_column(:updated_at, 1.day.ago)
+
+      expect(attachment.cold?(older_than: threshold)).to be false
+    end
+
+    it 'judges an orphan (no parent) on its own age alone' do
+      attachment = create(:attachment, attachable: nil)
+      attachment.update_column(:updated_at, 13.months.ago)
+
+      expect(attachment.cold?(older_than: threshold)).to be true
+    end
+
+    it 'is not cold when the top element was edited recently, even if the file and container are old' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      attachment.attachable.update_column(:updated_at, 13.months.ago)
+      allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 1.day.ago))
+
+      expect(attachment.cold?(older_than: threshold)).to be false
+    end
+
+    it 'is not cold when read recently, even if the file and parent are old' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      attachment.attachable.update_column(:updated_at, 13.months.ago)
+      attachment.update_column(:last_accessed_at, 1.day.ago)
+
+      expect(attachment.cold?(older_than: threshold)).to be false
+    end
+
+    it 'is cold when neither read nor edited recently' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      attachment.attachable.update_column(:updated_at, 13.months.ago)
+      attachment.update_column(:last_accessed_at, 13.months.ago)
+
+      expect(attachment.cold?(older_than: threshold)).to be true
+    end
+  end
+  # rubocop:enable Rails/SkipsModelValidations
+
+  describe '#move_to_cold' do
+    it 'moves the file to the cold storage while preserving its contents' do
+      attachment = create(:attachment)
+      original_content = attachment.read_file
+
+      attachment.move_to_cold
+
+      expect(attachment.attachment.storage_key).to eq(:cold)
+      expect(attachment.read_file).to eq(original_content)
+    end
+
+    it 'moves derivatives (e.g. thumbnails) to cold as well' do
+      attachment = create(:attachment, :with_image)
+      expect(attachment.attachment_attacher.derivatives).to be_present # guard: fixture has a thumbnail
+
+      attachment.move_to_cold
+
+      attachment.attachment_attacher.derivatives.each_value do |derivative|
+        expect(derivative.storage_key).to eq(:cold)
+      end
+    end
+  end
+
+  describe '#move_to_store' do
+    it 'moves the file back to the hot storage while preserving its contents' do
+      attachment = create(:attachment)
+      attachment.move_to_cold
+      original_content = attachment.read_file
+
+      attachment.move_to_store
+
+      expect(attachment.attachment.storage_key).to eq(:store)
+      expect(attachment.read_file).to eq(original_content)
+    end
+
+    it 'moves derivatives (e.g. thumbnails) back to the hot storage as well' do
+      attachment = create(:attachment, :with_image)
+      attachment.move_to_cold
+
+      attachment.move_to_store
+
+      attachment.attachment_attacher.derivatives.each_value do |derivative|
+        expect(derivative.storage_key).to eq(:store)
       end
     end
   end

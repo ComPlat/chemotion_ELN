@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_07_09_140001) do
+ActiveRecord::Schema.define(version: 2026_07_20_130000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -89,8 +89,11 @@ ActiveRecord::Schema.define(version: 2026_07_09_140001) do
     t.jsonb "log_data"
     t.string "created_by_type"
     t.integer "edit_state", default: 0
+    t.datetime "last_accessed_at"
+    t.integer "access_count", default: 0, null: false
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
     t.index ["identifier"], name: "index_attachments_on_identifier", unique: true
+    t.index "((attachment_data ->> 'id'::text))", name: "index_attachments_on_shrine_file_id"
     t.index ["version"], name: "index_attachments_on_version", opclass: :varchar_pattern_ops, where: "(deleted_at IS NULL)"
   end
 
