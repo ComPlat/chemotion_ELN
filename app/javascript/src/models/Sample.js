@@ -74,6 +74,8 @@ export default class Sample extends Element {
     argsNew = prepareRangeBound(argsNew, 'boiling_point');
     argsNew = prepareRangeBound(argsNew, 'melting_point');
     super(argsNew);
+    this.is_legacy = argsNew.is_legacy || false;
+    this.merged_sources = argsNew.merged_sources || [];
   }
 
   cleanBoilingMelting() {

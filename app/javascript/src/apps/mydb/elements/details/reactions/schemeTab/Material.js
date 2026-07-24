@@ -91,6 +91,7 @@ class Material extends Component {
 
     this.state = {
       showComponents: false,
+      showMergedSources: true,
       mixtureComponents: [],
       mixtureComponentsLoading: false,
       fieldToShow: 'molar mass',
@@ -155,6 +156,22 @@ class Material extends Component {
       sample.updateChecksum();
       ElementActions.showReactionMaterial({ sample, reaction });
     }
+  }
+
+  handleUnmergeSample(mergedSource) {
+    const { onUnmerge } = this.props;
+    if (onUnmerge && mergedSource.merge_id) {
+      onUnmerge(mergedSource.merge_id);
+    }
+  }
+
+  handleMergedSourceClick(mergedSource) {
+    const { reaction } = this.props;
+    aviatorNavigation('sample', mergedSource.id, true, false);
+    ElementActions.showReactionMaterial({
+      sample: { id: mergedSource.id },
+      reaction,
+    });
   }
 
   materialLoading(material, showLoadingColumn) {
@@ -1206,7 +1223,7 @@ class Material extends Component {
       metric = material.metrics[0];
     }
 
-    const { showComponents, mixtureComponentsLoading } = this.state;
+    const { showComponents, showMergedSources, mixtureComponentsLoading } = this.state;
     const isMixture = material.isMixture && material.isMixture();
     // Always get fresh components from material, syncing with state
     const existingComponents = Array.isArray(material.components) ? material.components : [];
@@ -1291,9 +1308,62 @@ class Material extends Component {
       </div>
     );
 
+    const mergedSources = material.merged_sources || [];
+
     return (
       <>
         {materialRow}
+
+        {(materialGroup === 'products' || materialGroup === 'reactants') && mergedSources.length > 0 && (
+          <div className="border-top">
+            <button
+              type="button"
+              className="d-flex align-items-center gap-2 px-3 py-1 small text-muted user-select-none w-100 bg-transparent border-0 text-start"
+              onClick={() => this.setState((s) => ({ showMergedSources: !s.showMergedSources }))}
+              title={showMergedSources ? 'Collapse merged sources' : 'Expand merged sources'}
+            >
+              <i className={`fa fa-chevron-${showMergedSources ? 'down' : 'right'}`} />
+              <span>{`Merged with (${mergedSources.length} ${mergedSources.length === 1 ? 'sample' : 'samples'})`}</span>
+            </button>
+            {showMergedSources && (
+            <div>
+              {mergedSources.map((src) => (
+                <div key={src.id} className="d-flex align-items-center gap-2 ps-4 pe-3 py-1 small border-top">
+                  <span className="text-muted">•</span>
+                  <span
+                    className="merged-source-link text-primary fw-semibold"
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => this.handleMergedSourceClick(src)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') this.handleMergedSourceClick(src); }}
+                  >
+                    {src.short_label}
+                  </span>
+                  <span
+                    className="merged-source-link text-primary flex-grow-1"
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => this.handleMergedSourceClick(src)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') this.handleMergedSourceClick(src); }}
+                  >
+                    {src.name}
+                  </span>
+                  <div className="ms-auto">
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => this.handleUnmergeSample(src)}
+                      title="Unmerge this sample from the target"
+                    >
+                      Unmerge
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            )}
+          </div>
+        )}
 
         {isMixture && hasComponents && (
           <Accordion
@@ -1611,6 +1681,9 @@ class Material extends Component {
                 {materialName}
               </div>
             </OverlayTrigger>
+            {material.merged_sources?.length > 0 && (
+              <span className="badge bg-success ms-1">MERGED TARGET</span>
+            )}
           </div>
           {moleculeIupacName !== '' && (
             <div className="reaction-material__iupac-name">
@@ -1789,6 +1862,7 @@ Material.propTypes = {
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
   isDragging: PropTypes.bool.isRequired,
+  onUnmerge: PropTypes.func,
 };
 
 Material.defaultProps = {
@@ -1797,4 +1871,5 @@ Material.defaultProps = {
   isDragging: false,
   canDrop: false,
   isOver: false,
+  onUnmerge: null,
 };

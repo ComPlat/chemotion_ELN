@@ -82,7 +82,7 @@ module Entities
     end
 
     def products
-      displayed_in_list? ? [] : object.reactions_product_samples
+      displayed_in_list? ? [] : object.reactions_product_samples.includes(sample: { incoming_merges: :source_sample })
     end
 
     def purification_solvents
@@ -90,7 +90,7 @@ module Entities
     end
 
     def reactants
-      displayed_in_list? ? [] : object.reactions_reactant_samples
+      displayed_in_list? ? [] : object.reactions_reactant_samples.includes(sample: { incoming_merges: :source_sample })
     end
 
     def reactant_sbmm_samples

@@ -19,6 +19,7 @@
 #  imported_readout    :string
 #  impurities          :string           default("")
 #  inventory_sample    :boolean          default(FALSE)
+#  is_legacy           :boolean          default(FALSE), not null
 #  is_top_secret       :boolean          default(FALSE)
 #  location            :string           default("")
 #  melting_point       :numrange
@@ -55,6 +56,7 @@
 #  index_samples_on_deleted_at        (deleted_at)
 #  index_samples_on_identifier        (identifier)
 #  index_samples_on_inventory_sample  (inventory_sample)
+#  index_samples_on_is_legacy         (is_legacy) WHERE (is_legacy = true)
 #  index_samples_on_molecule_name_id  (molecule_name_id)
 #  index_samples_on_sample_id         (molecule_id)
 #  index_samples_on_short_label       (short_label)
@@ -512,6 +514,41 @@ RSpec.describe Sample do
         result = sample.send(:valid_molecular_weight?)
         expect(result).to be false
       end
+    end
+  end
+
+  describe 'merge destroy guards' do
+    let(:user) { create(:user) }
+    let(:source) { merge_product(1.0) }
+    let(:target) { merge_product(2.0) }
+    let(:collection) { create(:collection, user: user) }
+    let(:reaction) { create(:reaction, collections: [collection]) }
+    let(:molecule) { create(:molecule) }
+
+    def merge_product(value)
+      sample = create(
+        :sample,
+        collections: [collection],
+        molecule: molecule,
+        real_amount_value: value,
+        real_amount_unit: 'mol',
+      )
+      create(:reactions_product_sample, reaction: reaction, sample: sample)
+      sample
+    end
+
+    before do
+      SampleMergeService.new(current_user: user).merge!(
+        source_id: source.id, target_id: target.id, reaction_id: reaction.id,
+      )
+    end
+
+    it 'prevents deleting a merged source' do
+      expect(source.reload.destroy).to be false
+    end
+
+    it 'prevents deleting a merge target' do
+      expect(target.reload.destroy).to be false
     end
   end
 end

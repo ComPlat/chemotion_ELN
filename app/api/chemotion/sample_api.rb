@@ -593,6 +593,47 @@ module Chemotion
           sample.destroy
         end
       end
+
+      namespace :merge do
+        desc 'Merge one product or reactant sample into another within the same reaction'
+        params do
+          requires :source_sample_id, type: Integer
+          requires :target_sample_id, type: Integer
+          requires :reaction_id,      type: Integer
+        end
+        post do
+          target = SampleMergeService.new(current_user: current_user).merge!(
+            source_id: params[:source_sample_id],
+            target_id: params[:target_sample_id],
+            reaction_id: params[:reaction_id],
+          )
+          present target, with: Entities::SampleEntity, root: :sample,
+                          policy: ElementPolicy.new(current_user, target)
+        rescue SampleMergeService::MergeError => e
+          error!(e.message, e.http_status)
+        rescue ActiveRecord::RecordInvalid => e
+          error!(e.message, 422)
+        rescue ActiveRecord::RecordNotFound => e
+          error!(e.message, 404)
+        end
+
+        route_param :id, type: Integer do
+          desc 'Unmerge a previously merged source from its target'
+          delete do
+            target = SampleMergeService.new(current_user: current_user).unmerge!(
+              merge_id: params[:id],
+            )
+            present target, with: Entities::SampleEntity, root: :sample,
+                            policy: ElementPolicy.new(current_user, target)
+          rescue SampleMergeService::MergeError => e
+            error!(e.message, e.http_status)
+          rescue ActiveRecord::RecordInvalid => e
+            error!(e.message, 422)
+          rescue ActiveRecord::RecordNotFound => e
+            error!(e.message, 404)
+          end
+        end
+      end
     end
   end
 end
