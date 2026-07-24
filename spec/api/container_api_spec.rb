@@ -180,6 +180,198 @@ describe Chemotion::ContainerAPI do
           expect(variation['metadata']['analyses']).to include(analysis_container.id)
         end
       end
+
+      context 'when a new attachment has a nil filename' do
+        let(:dataset_container) { create(:container, container_type: 'dataset', parent: analysis_container) }
+        let(:attachment_key) { SecureRandom.uuid }
+        let(:container_params_with_nil_filename) do
+          {
+            container: {
+              id: root_container.id,
+              container_type: 'root',
+              description: '',
+              extended_metadata: {},
+              children: [{
+                id: analyses_container.id,
+                container_type: 'analyses',
+                description: '',
+                extended_metadata: {},
+                children: [{
+                  id: analysis_container.id,
+                  container_type: 'analysis',
+                  name: analysis_container.name,
+                  description: analysis_container.description,
+                  extended_metadata: analysis_container.extended_metadata,
+                  children: [{
+                    id: dataset_container.id,
+                    container_type: 'dataset',
+                    name: dataset_container.name,
+                    description: dataset_container.description,
+                    extended_metadata: {},
+                    attachments: [{
+                      id: attachment_key,
+                      is_new: true,
+                      is_deleted: false,
+                      filename: nil,
+                    }],
+                  }],
+                }],
+              }],
+            },
+          }
+        end
+
+        before do
+          # Simulate a pre-existing attachment whose filename is nil (no NOT NULL constraint,
+          # no presence validation) rather than creating one with filename: nil directly, which
+          # would hit the before_create jcamp-detection callback that assumes a filename.
+          attachment = create(:attachment, key: attachment_key, attachable: nil, created_by: user.id)
+          attachment.update_columns(filename: nil) # rubocop:disable Rails/SkipsModelValidations
+        end
+
+        it 'saves the container without raising and leaves the variation unlinked' do
+          put('/api/v1/containers/container',
+              params: container_params_with_nil_filename.to_json,
+              headers: { 'CONTENT_TYPE' => 'application/json' })
+
+          expect(response.status).to eq 200
+          json = JSON.parse(response.body)
+          variation = json['variations'].find { |v| v['id'] == '1' }
+          expect(variation['metadata']['analyses']).to be_empty
+        end
+      end
+
+      context 'when a variation-suffixed attachment is saved on a non-dataset container' do
+        let(:attachment_key) { SecureRandom.uuid }
+        let(:container_params_with_analysis_attachment) do
+          {
+            container: {
+              id: root_container.id,
+              container_type: 'root',
+              description: '',
+              extended_metadata: {},
+              children: [{
+                id: analyses_container.id,
+                container_type: 'analyses',
+                description: '',
+                extended_metadata: {},
+                children: [{
+                  id: analysis_container.id,
+                  container_type: 'analysis',
+                  name: analysis_container.name,
+                  description: analysis_container.description,
+                  extended_metadata: analysis_container.extended_metadata,
+                  attachments: [{
+                    id: attachment_key,
+                    is_new: true,
+                    is_deleted: false,
+                    filename: 'protocol-v2.pdf',
+                  }],
+                  children: [],
+                }],
+              }],
+            },
+          }
+        end
+
+        before do
+          create(:attachment,
+                 key: attachment_key,
+                 filename: 'protocol-v2.pdf',
+                 attachable: nil,
+                 created_by: user.id)
+        end
+
+        it 'does not link the attachment to any variation' do
+          put('/api/v1/containers/container',
+              params: container_params_with_analysis_attachment.to_json,
+              headers: { 'CONTENT_TYPE' => 'application/json' })
+
+          expect(response.status).to eq 200
+          json = JSON.parse(response.body)
+          variation = json['variations'].find { |v| v['id'] == '1' }
+          expect(variation['metadata']['analyses']).to be_empty
+        end
+      end
+
+      context 'when a second attachment resolves to an already-linked variation' do
+        let(:dataset_container) { create(:container, container_type: 'dataset', parent: analysis_container) }
+        let(:first_attachment_key) { SecureRandom.uuid }
+        let(:second_attachment_key) { SecureRandom.uuid }
+
+        def dataset_children_for(attachment_key)
+          [{
+            id: dataset_container.id,
+            container_type: 'dataset',
+            name: dataset_container.name,
+            description: dataset_container.description,
+            extended_metadata: {},
+            attachments: [{
+              id: attachment_key,
+              is_new: true,
+              is_deleted: false,
+              filename: 'spectrum-v1.pdf',
+            }],
+          }]
+        end
+
+        def container_params_for(attachment_key)
+          {
+            container: {
+              id: root_container.id,
+              container_type: 'root',
+              description: '',
+              extended_metadata: {},
+              children: [{
+                id: analyses_container.id,
+                container_type: 'analyses',
+                description: '',
+                extended_metadata: {},
+                children: [{
+                  id: analysis_container.id,
+                  container_type: 'analysis',
+                  name: analysis_container.name,
+                  description: analysis_container.description,
+                  extended_metadata: analysis_container.extended_metadata,
+                  children: dataset_children_for(attachment_key),
+                }],
+              }],
+            },
+          }
+        end
+
+        before do
+          create(:attachment,
+                 key: first_attachment_key,
+                 filename: 'spectrum-v1.pdf',
+                 attachable: nil,
+                 created_by: user.id)
+        end
+
+        it 'does not resave the reaction when the variation link already exists' do # rubocop:disable RSpec/MultipleExpectations
+          put('/api/v1/containers/container',
+              params: container_params_for(first_attachment_key).to_json,
+              headers: { 'CONTENT_TYPE' => 'application/json' })
+          expect(response.status).to eq 200
+          updated_at_after_first_link = reaction.reload.updated_at
+
+          create(:attachment,
+                 key: second_attachment_key,
+                 filename: 'spectrum-v1.pdf',
+                 attachable: nil,
+                 created_by: user.id)
+
+          put('/api/v1/containers/container',
+              params: container_params_for(second_attachment_key).to_json,
+              headers: { 'CONTENT_TYPE' => 'application/json' })
+
+          expect(response.status).to eq 200
+          json = JSON.parse(response.body)
+          variation = json['variations'].find { |v| v['id'] == '1' }
+          expect(variation['metadata']['analyses']).to eq([analysis_container.id])
+          expect(reaction.reload.updated_at).to eq(updated_at_after_first_link)
+        end
+      end
     end
 
     context 'when the root element is not a Reaction' do
