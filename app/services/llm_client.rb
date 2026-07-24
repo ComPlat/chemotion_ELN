@@ -38,6 +38,11 @@ class LlmClient
 
   ANTHROPIC_VERSION = '2023-06-01'
 
+  # The finish/stop reason from the most recent #chat call (e.g. 'stop',
+  # 'length'). 'length' with empty content means the model was cut off at the
+  # token limit — the caller can retry with a larger max_tokens.
+  attr_reader :last_finish_reason
+
   def initialize(base_url:, api_key:, model:, timeout: 120, protocol: 'openai')
     @protocol = PROTOCOLS.include?(protocol.to_s) ? protocol.to_s : 'openai'
     resolved  = base_url.presence || DEFAULT_BASE_URLS[@protocol]
@@ -45,6 +50,7 @@ class LlmClient
     @api_key  = api_key
     @model    = model
     @timeout  = timeout
+    @last_finish_reason = nil
   end
 
   # Send a chat request and return the assistant message content string.
@@ -224,9 +230,11 @@ class LlmClient
     choice = parsed.dig('choices', 0)
     raise_unexpected_shape(body_str) unless choice.is_a?(Hash)
 
+    @last_finish_reason = choice['finish_reason']
     # `content` can be nil/empty when a reasoning model spends its whole token
     # budget on reasoning (finish_reason: "length"). That is still a valid,
-    # authenticated response — return '' instead of raising.
+    # authenticated response — return '' instead of raising, and let the caller
+    # decide whether to retry (see #last_finish_reason).
     (choice['message'] || {})['content'].to_s
   end
 
@@ -234,11 +242,13 @@ class LlmClient
     blocks = parsed['content']
     raise_unexpected_shape(body_str) unless blocks.is_a?(Array)
 
+    @last_finish_reason = parsed['stop_reason']
     blocks.select { |b| b.is_a?(Hash) && b['type'] == 'text' }
           .map { |b| b['text'] }.join
   end
 
   def parse_gemini_content(parsed, body_str)
+    @last_finish_reason = parsed.dig('candidates', 0, 'finishReason')
     parts = parsed.dig('candidates', 0, 'content', 'parts')
     raise_unexpected_shape(body_str) unless parts.is_a?(Array)
 

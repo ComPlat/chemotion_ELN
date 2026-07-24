@@ -58,6 +58,63 @@ RSpec.describe LlmTaskRunner do
       expect(result['hazard_statements']).to include('H301')
     end
 
+    it 'exposes the model that served the task via #model_used' do
+      runner = described_class.new(task_name: 'sds_extraction', user: user, context: sds_text)
+      runner.run
+      expect(runner.model_used).to eq(default_model)
+      expect(runner.resolution.model).to eq(default_model)
+    end
+
+    context 'when the user has a task-specific model mapping' do
+      before do
+        UserTaskModelMapping.create!(user_id: user.id, task_name: 'sds_extraction', model: 'gemini-3.5-flash')
+        UserLlmSetting.find_or_create_by(user_id: user.id).update!(
+          enabled: true, provider_type: 'custom', base_url: base_url, api_key: api_key,
+          default_model: 'gemini-3.1-flash-lite', api_protocol: 'openai',
+        )
+      end
+
+      it 'uses the mapped model (not the default) and reports it via #model_used' do
+        runner = described_class.new(task_name: 'sds_extraction', user: user, context: sds_text)
+        runner.run
+        expect(runner.model_used).to eq('gemini-3.5-flash')
+      end
+
+      context 'and the mapped model is unavailable (HTTP 503)' do
+        before do
+          # First call (mapped model) 503s; second call (default model) succeeds.
+          stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
+            { status: 503, body: 'This model is currently experiencing high demand.' },
+            { status: 200, body: llm_json_response, headers: { 'Content-Type' => 'application/json' } },
+          )
+        end
+
+        it 'falls back to the default model and still returns a result' do
+          runner = described_class.new(task_name: 'sds_extraction', user: user, context: sds_text)
+          result = runner.run
+          expect(result['chemical_name']).to eq('Phenol')
+          expect(runner.fell_back?).to be true
+          expect(runner.requested_model).to eq('gemini-3.5-flash')
+          expect(runner.model_used).to eq('gemini-3.1-flash-lite')
+          expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions").twice
+        end
+      end
+    end
+
+    context 'when there is no task-specific model and the default model fails (503)' do
+      before do
+        stub_request(:post, "#{base_url}/v1/chat/completions")
+          .to_return(status: 503, body: 'This model is currently experiencing high demand.')
+      end
+
+      it 'does not loop on the same model — raises the provider error' do
+        runner = described_class.new(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect { runner.run }.to raise_error(Errors::LlmProviderError)
+        expect(runner.fell_back?).to be false
+        expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions").once
+      end
+    end
+
     it 'passes json_mode: true to LlmClient' do
       described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
       expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions")
@@ -168,6 +225,70 @@ RSpec.describe LlmTaskRunner do
       it 'raises Errors::LlmProviderError' do
         expect { described_class.run(task_name: 'sds_extraction', user: user, context: sds_text) }
           .to raise_error(Errors::LlmProviderError, /invalid JSON/)
+      end
+    end
+
+    context 'when the first attempt is truncated to empty output (finish_reason length)' do
+      let(:empty_resp) do
+        { 'choices' => [{ 'finish_reason' => 'length', 'message' => { 'content' => '' } }] }.to_json
+      end
+      let(:recovered_resp) do
+        { 'choices' => [{ 'finish_reason' => 'stop',
+                          'message' => { 'content' => '{"chemical_name":"Acetone","hazard_statements":["H225"]}' } }] }.to_json
+      end
+
+      before do
+        stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
+          { status: 200, body: empty_resp,     headers: { 'Content-Type' => 'application/json' } },
+          { status: 200, body: recovered_resp, headers: { 'Content-Type' => 'application/json' } },
+        )
+      end
+
+      it 'retries once and returns the recovered result' do
+        result = described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect(result['chemical_name']).to eq('Acetone')
+        expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions").twice
+      end
+
+      it 'retries with a larger max_tokens (doubled, capped at 16000)' do
+        task     = Chemotion::LlmTaskRegistry.find('sds_extraction')
+        expected = [task.max_tokens.to_i * 2, 16_000].min
+        described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions")
+          .with { |req| JSON.parse(req.body)['max_tokens'] == expected }
+      end
+    end
+
+    context 'when the model returns empty output on every attempt' do
+      before do
+        stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
+          status: 200,
+          body: { 'choices' => [{ 'finish_reason' => 'length', 'message' => { 'content' => '' } }] }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+      end
+
+      it 'raises a clear empty-response error (not a cryptic JSON error)' do
+        expect { described_class.run(task_name: 'sds_extraction', user: user, context: sds_text) }
+          .to raise_error(Errors::LlmProviderError, /empty response.*token limit/m)
+      end
+    end
+
+    context 'when the model wraps the JSON object in prose (no code fences)' do
+      before do
+        stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
+          status: 200,
+          body: { 'choices' => [{ 'message' => {
+            'content' => 'Sure — here is the extracted data: {"chemical_name":"Phenol","cas_number":"108-95-2"} Hope this helps!',
+          } }] }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+      end
+
+      it 'extracts the JSON object from the surrounding prose' do
+        result = described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect(result['chemical_name']).to eq('Phenol')
+        expect(result['cas_number']).to eq('108-95-2')
       end
     end
   end

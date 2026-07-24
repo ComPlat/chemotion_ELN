@@ -4,7 +4,7 @@ require 'open3'
 
 # Extracts plain text from an SDS PDF using Ghostscript's txtwrite device,
 # normalises the whitespace, then narrows the result to only the GHS sections
-# relevant for safety/property extraction (1, 2, 3, 8, 9).
+# relevant for safety/property extraction.
 #
 # Ghostscript (gs) is available in the production Docker image and is used
 # here because it handles the wide variety of PDF encodings and fonts found

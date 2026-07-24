@@ -2101,6 +2101,9 @@ export default class ChemicalTab extends React.Component {
         {extractedAt && (
           <p className="text-muted small mb-3">
             {`Extracted at: ${extractedAt}`}
+            {aiData.model && `, Task was performed using ${aiData.model}`}
+            {aiData.requested_model && aiData.requested_model !== aiData.model
+              && ` (requested ${aiData.requested_model} — unavailable, fell back to default)`}
           </p>
         )}
       </AppModal>
