@@ -273,7 +273,7 @@ class Material extends Component {
         <Form.Check
           type="radio"
           disabled={!permitOn(reaction)}
-          name="reference"
+
           checked={material.reference}
           onChange={(e) => this.handleReferenceChange(e)}
           size="sm"
@@ -497,7 +497,8 @@ class Material extends Component {
     if (reaction.variations.length > 0) {
       const defaultMatValue = { value: defaultValue, unit: defaultUnit };
       const matList = reaction.variations.map((v) => (
-        v[this.variationMatGroup][material.id]?.[variationKey] ?? defaultMatValue));
+        0 //v[this.variationMatGroup][material.id]?.[variationKey] ?? defaultMatValue
+      ));
       const values = matList.map((vm) => vm.value);
       return { min: Math.min(...values), max: Math.max(...values), unit: matList[0].unit, isRangeField: true };
     }
@@ -1279,6 +1280,9 @@ class Material extends Component {
 
   dragHandle() {
     const { dragRef, reaction } = this.props;
+    if (!dragRef) {
+      return null;
+    }
     const enabled = permitOn(reaction);
 
     return (
@@ -1305,7 +1309,7 @@ class Material extends Component {
       deleteMaterial,
       showLoadingColumn,
       reaction,
-      dropRef,
+      dropRef
     } = this.props;
 
     const metricPrefixes = ['m', 'n', 'u'];
@@ -1633,7 +1637,7 @@ class Material extends Component {
   }
 
   materialNameWithIupac(material) {
-    const { index, materialGroup, reaction } = this.props;
+    const { index, materialGroup, reaction, withStickyName } = this.props;
 
     // Check if this is an SBMM sample
     const isSbmm = isSbmmSample(material);
@@ -1709,8 +1713,22 @@ class Material extends Component {
       this.handleAddToDesc(material);
     };
 
+    const getNameStyle = ( ) => {
+      if (!withStickyName) {
+        return {};
+      }
+
+      return {
+        position: 'sticky',
+        left: 0,
+        background: '#fff',
+        zIndex: 2
+      };
+
+    };
+
     return (
-      <div className="pseudo-table__cell pseudo-table__cell-title align-self-start">
+      <div style={getNameStyle()} className="pseudo-table__cell pseudo-table__cell-title align-self-start">
         <div>
           <div className="d-flex align-items-center">
             {reaction.gaseous && materialGroup !== 'solvents'
@@ -1903,6 +1921,7 @@ Material.propTypes = {
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
   isDragging: PropTypes.bool.isRequired,
+  withStickyName: PropTypes.string,
 };
 
 Material.defaultProps = {
@@ -1911,4 +1930,5 @@ Material.defaultProps = {
   isDragging: false,
   canDrop: false,
   isOver: false,
+  withStickyName: false,
 };
