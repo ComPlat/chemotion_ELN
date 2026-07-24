@@ -63,7 +63,7 @@ export default class UsersFetcher {
   }
 
   static fetchCurrentGroups() {
-    return ApiClient.getJson('/api/v1/groups/qrycurrent');
+    return ApiClient.getJson('/api/v1/groups');
   }
 
   static fetchCurrentDevices() {
