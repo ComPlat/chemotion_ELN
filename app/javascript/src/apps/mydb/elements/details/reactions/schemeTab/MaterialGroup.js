@@ -23,7 +23,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { components as ReactSelectComponents } from 'react-select';
 
-const headers = {
+const MATERIAL_HEADER = {
   ref: 'Ref',
   group: 'Starting materials',
   tr: 'T/R',
@@ -282,7 +282,7 @@ const GeneralMaterialGroup = ({
   const isReactants = materialGroup === 'reactants';
   const isInteractionReaction = reaction.isInteractionReaction();
   const isInteractionProducts = isInteractionReaction && materialGroup === 'products';
-  const groupHeaders = { ...headers };
+  const groupHeaders = { ...MATERIAL_HEADER };
   const [activeTab, setActiveTab] = useState('all');
   const [topReagents, setTopReagents] = useState(() => reagentTracker.getTop());
 
@@ -492,7 +492,7 @@ const SolventsMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex, reaction,
   dropSample, onDrop, onReorder, dndEnabled
 }) => {
-  const groupHeaders = { ...headers };
+  const groupHeaders = { ...MATERIAL_HEADER };
   groupHeaders.group = 'Solvents';
   const [activeTab, setActiveTab] = useState('all');
   const [topSolvents, setTopSolvents] = useState(() => solventTracker.getTop());
@@ -669,3 +669,7 @@ GeneralMaterialGroup.defaultProps = {
 };
 
 export default MaterialGroup;
+
+export {
+  MATERIAL_HEADER
+};
