@@ -141,6 +141,10 @@ export default class SelectionGenerateButton extends React.Component {
             Format Analyses
           </Dropdown.Item>
 
+          <Dropdown.Item onClick={ElementActions.showExplorerDetails} title="Explorer">
+            Explorer
+          </Dropdown.Item>
+
           {enableComputedProps && (
             <>
               <Dropdown.Item onClick={ElementActions.showComputedPropsGraph} title="Graph">

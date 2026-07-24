@@ -38,6 +38,7 @@ import Screen from 'src/models/Screen';
 import ResearchPlan from 'src/models/ResearchPlan';
 import DeviceDescription from 'src/models/DeviceDescription';
 import Report from 'src/models/Report';
+import Explorer from 'src/models/Explorer';
 import Format from 'src/models/Format';
 import Graph from 'src/models/Graph';
 import ComputeTask from 'src/models/ComputeTask';
@@ -1300,6 +1301,12 @@ class ElementActions {
   showLiteratureDetail() {
     return LiteratureMap.buildEmpty();
   }
+
+  // -- Explorer --
+  showExplorerDetails() {
+    return Explorer.buildEmpty();
+  }
+ 
 
   // -- Prediction --
   showPredictionContainer() {
