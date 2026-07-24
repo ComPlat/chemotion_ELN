@@ -482,6 +482,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   }
   const gridOptions = {
     alwaysShowHorizontalScroll: true,
+    alwaysShowVerticalScroll: true,
   };
 
   return (

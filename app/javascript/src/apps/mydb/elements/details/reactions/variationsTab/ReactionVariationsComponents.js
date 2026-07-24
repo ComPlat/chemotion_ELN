@@ -150,6 +150,7 @@ const SegmentSelectEditor = ({
 }) => {
   const { entry } = colDef;
   const entryData = cellData?.[entry];
+  const { value: selected, options = [] } = entryData || {};
 
   const optionElements = useMemo(
     () => options.map((option) => <option key={option} value={option} selected={option === selected}>{option}</option>),
@@ -159,8 +160,6 @@ const SegmentSelectEditor = ({
   useEffect(() => stopEditing, [stopEditing]);
 
   if (!entryData) return null;
-  const { value: selected, options = [] } = entryData;
-
   const handleChange = (event) => {
     const updatedEntryData = { ...entryData, value: event.target.value };
     onValueChange({ ...cellData, [entry]: updatedEntryData });
@@ -206,7 +205,7 @@ function MaterialFormatter({ value: cellData, colDef }) {
 }
 
 const GroupCellEditor = ({
-  value, onValueChange, stopEditing, onKeyDown
+  value, onValueChange, stopEditing
 }) => {
   const [currentValue, setCurrentValue] = useState(() => {
     const group = value?.group ?? 1;
