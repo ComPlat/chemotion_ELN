@@ -119,14 +119,24 @@ RSpec.describe Attachment do
       attachment.track_read!
     end
 
-    context 'when the file is cold and read repeatedly within the throttle window', :active_job do
-      it 'enqueues only one promotion (no duplicate move jobs)' do
+    context 'when the file is cold and read', :active_job do
+      it 'promotes on every read, not just the first (throttle only gates access counting)' do
         attachment.move_to_cold
 
         expect do
-          attachment.track_read!
-          attachment.track_read!
-        end.to have_enqueued_job(PromoteAttachmentJob).once
+          attachment.track_read! # first read: records access + promotes
+          attachment.track_read! # second read: access throttled, but still promotes
+        end.to have_enqueued_job(PromoteAttachmentJob).twice
+      end
+    end
+
+    context 'when a cold file is promoted more than once (duplicate jobs are harmless)' do
+      it 'lands on hot storage without error' do
+        attachment.move_to_cold
+
+        PromoteAttachmentJob.perform_now(attachment.id)
+        expect { PromoteAttachmentJob.perform_now(attachment.id) }.not_to raise_error
+        expect(attachment.reload.attachment_attacher.file.storage_key).to eq(:store)
       end
     end
   end

@@ -25,10 +25,12 @@ module AttachmentStorageTiering
     move_to_tier(:store)
   end
 
-  # A real read: record it, and (only when we actually recorded a fresh access,
-  # so repeated reads don't queue duplicate jobs) promote it back if it's cold.
+  # A real read: record it (throttled) and, if it's cold, always bring it back to
+  # hot. Repeat reads can queue duplicate promote jobs, but move_to_tier re-checks
+  # the tier under a lock, so extra jobs are harmless no-ops.
   def track_read!
-    promote_if_cold if record_access!
+    record_access!
+    promote_if_cold
   end
 
   # For read paths that bypass Shrine (e.g. image serving).
@@ -66,9 +68,8 @@ module AttachmentStorageTiering
     last_accessed_at || updated_at
   end
 
-  # Returns true only when it actually wrote (i.e. not throttled).
-  def record_access! # rubocop:disable Naming/PredicateMethod -- a mutating bang method that also reports whether it acted, like #save
-    return false if last_accessed_at && last_accessed_at > READ_TRACKING_THROTTLE.ago
+  def record_access!
+    return if last_accessed_at && last_accessed_at > READ_TRACKING_THROTTLE.ago
 
     now = Time.current
     # One UPDATE, no callbacks, no updated_at bump. without_logging keeps this
@@ -77,7 +78,6 @@ module AttachmentStorageTiering
       self.class.where(id: id).update_all(['last_accessed_at = ?, access_count = access_count + 1', now]) # rubocop:disable Rails/SkipsModelValidations
     end
     self.last_accessed_at = now
-    true
   end
 
   def move_to_tier(storage_key)
