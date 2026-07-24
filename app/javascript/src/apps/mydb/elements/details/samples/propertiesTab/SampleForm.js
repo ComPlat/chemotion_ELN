@@ -1361,6 +1361,20 @@ export default class SampleForm extends React.Component {
     const isDisabled = !sample.can_update || belongsToWeightPercentageReaction;
     const volumeBlocked = !sample.has_density && !sample.has_molarity;
 
+    const mmolField = sample.isHierarchicalMaterial() ? (
+      <InputGroup size="sm" className="flex-grow-1">
+        <Form.Control
+          type="text"
+          disabled
+          value={sample.amount_mol != null ? (sample.amount_mol * 1000).toFixed(3) : '-'}
+          readOnly
+        />
+        <InputGroup.Text>mmol</InputGroup.Text>
+      </InputGroup>
+    ) : (
+      this.numInput(sample, 'amount_mol', 'mol', ['m', 'n'], 4, null, 'amountInput', isDisabled, '')
+    );
+
     return (
       <Form.Group className="flex-grow-1">
         <Form.Label>Amount</Form.Label>
@@ -1370,7 +1384,7 @@ export default class SampleForm extends React.Component {
           <div className="d-flex gap-2">
             {this.numInput(sample, 'amount_g', 'g', ['m', 'n', 'u'], 4, null, 'massMgInput', isDisabled, '')}
             {this.numInput(sample, 'amount_l', 'l', ['m', 'u', 'n'], 5, null, 'l', isDisabled, '', volumeBlocked)}
-            {this.numInput(sample, 'amount_mol', 'mol', ['m', 'n'], 4, null, 'amountInput', isDisabled, '')}
+            {mmolField}
           </div>
         )}
       </Form.Group>

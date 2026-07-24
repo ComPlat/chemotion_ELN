@@ -1285,6 +1285,12 @@ export default class Sample extends Element {
   }
 
   get amount_mol() {
+    if (this.isHierarchicalMaterial()) {
+      const loading = this.residues?.[0]?.custom_info?.loading;
+      if (loading) return (parseHstoreNumber(loading) * this.amount_g) / 1000.0;
+      return null;
+    }
+
     // For mixtures, always use calculateMixtureAmountMol() to respect reference_component_changed flag
     // This ensures that when reference component is switched, amount_mol updates correctly
     // even if amount_unit is 'mol'
@@ -1791,14 +1797,14 @@ export default class Sample extends Element {
   }
 
   get loading() {
-    if (this.contains_residues && this.residues?.[0]?.custom_info) {
+    if ((this.contains_residues || this.isHierarchicalMaterial()) && this.residues?.[0]?.custom_info) {
       return parseHstoreNumber(this.residues[0].custom_info.loading);
     }
     return false;
   }
 
   set loading(loading) {
-    if (this.contains_residues && this.residues?.[0]?.custom_info) {
+    if ((this.contains_residues || this.isHierarchicalMaterial()) && this.residues?.[0]?.custom_info) {
       this.residues[0].custom_info.loading = loading;
     }
   }

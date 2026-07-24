@@ -2489,4 +2489,66 @@ describe('Sample', async () => {
       expect(serialized[0]).toEqual(raw);
     });
   });
+
+  describe('HierarchicalMaterial — amount_mol and loading', () => {
+    const makeHM = (loadingValue, amountG = 0.1) => {
+      const sample = Sample.buildEmpty(0);
+      sample.sample_type = 'HierarchicalMaterial';
+      sample.amount_value = amountG * 1000;
+      sample.amount_unit = 'mg';
+      sample.residues = [{ custom_info: loadingValue != null ? { loading: loadingValue } : {} }];
+      return sample;
+    };
+
+    it('returns loading-based amount_mol when loading is set', () => {
+      // 0.5 mmol/g × 0.1 g = 0.05 mmol = 0.00005 mol
+      const sample = makeHM(0.5, 0.1);
+      expect(sample.amount_mol).toBeCloseTo(0.00005, 8);
+    });
+
+    it('returns null when no loading is set', () => {
+      const sample = makeHM(null, 0.1);
+      expect(sample.amount_mol).toBeNull();
+    });
+
+    it('loading getter returns the loading value for HierarchicalMaterial', () => {
+      const sample = makeHM(0.8);
+      expect(sample.loading).toBeCloseTo(0.8, 5);
+    });
+
+    it('loading setter writes through for HierarchicalMaterial', () => {
+      const sample = makeHM(null);
+      sample.loading = 1.2;
+      expect(sample.residues[0].custom_info.loading).toBe(1.2);
+    });
+
+    it('does not affect amount_mol for regular Micromolecule samples', async () => {
+      const sample = await SampleFactory.build('SampleFactory.water_100g');
+      // 100 g water / 18.01 g/mol ≈ 5.55 mol
+      expect(sample.amount_mol).toBeCloseTo(5.55, 1);
+    });
+
+    it('amount_mol * 1000 gives correct mmol display value when loading is set', () => {
+      // 2 mmol/g × 0.5 g = 1 mmol; amount_mol = 0.001 mol; × 1000 = 1 mmol
+      const sample = makeHM(2.0, 0.5);
+      expect(sample.amount_mol * 1000).toBeCloseTo(1.0, 6);
+    });
+
+    it('amount_mol is null (not 0) when loading is absent — mmol field shows "-"', () => {
+      const sample = makeHM(null, 0.5);
+      expect(sample.amount_mol).toBeNull();
+      // Guard: do not multiply null (would give NaN displayed as "0.000")
+      expect(sample.amount_mol == null).toBe(true);
+    });
+
+    it('clearing loading to null does not corrupt amount_mol via MW fallback', () => {
+      const sample = makeHM(1.5, 0.2);
+      // Initially loading-based
+      expect(sample.amount_mol).toBeCloseTo(0.0003, 8);
+      // Clear loading
+      sample.loading = null;
+      expect(sample.amount_mol).toBeNull();
+      // Must NOT fall through to MW-based (which would be non-null)
+    });
+  });
 });

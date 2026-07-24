@@ -733,6 +733,38 @@ RSpec.describe Sample do
       end
     end
 
+    describe '#loading' do
+      let(:residue) { build(:residue, custom_info: { 'loading' => '1.5' }) }
+
+      it 'returns the loading as a decimal when set' do
+        sample.residues << residue
+        expect(sample.loading).to eq(1.5.to_d)
+      end
+
+      it 'returns nil when loading value is absent (blank string)' do
+        residue.custom_info = { 'loading' => '' }
+        sample.residues << residue
+        expect(sample.loading).to be_nil
+      end
+
+      it 'returns nil when loading key is missing from custom_info' do
+        residue.custom_info = {}
+        sample.residues << residue
+        expect(sample.loading).to be_nil
+      end
+
+      it 'returns nil when there are no residues' do
+        expect(sample.loading).to be_nil
+      end
+
+      it 'does not return 0.0 for a nil/blank loading (no false zero)' do
+        residue.custom_info = { 'loading' => nil }
+        sample.residues << residue
+        expect(sample.loading).to be_nil
+        expect(sample.loading).not_to eq(0.0)
+      end
+    end
+
     describe '#valid_molecular_weight?' do
       it 'returns true for valid molecular weight' do
         result = sample.send(:valid_molecular_weight?)

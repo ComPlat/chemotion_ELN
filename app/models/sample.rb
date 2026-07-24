@@ -574,7 +574,9 @@ class Sample < ApplicationRecord
   end
 
   def loading
-    residues[0] && residues[0].custom_info['loading'].to_f
+    return nil unless residues[0]
+    val = residues[0].custom_info['loading']
+    val.present? ? val.to_d : nil
   end
 
   def attach_svg(svg = sample_svg_file)

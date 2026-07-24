@@ -33,6 +33,8 @@ private
 
     return true if self.custom_info['reaction_product']
 
+    return true if sample&.sample_type == 'HierarchicalMaterial'
+
     self.custom_info.has_key?('loading') && self.custom_info['loading'] != 0.0
   end
 end
