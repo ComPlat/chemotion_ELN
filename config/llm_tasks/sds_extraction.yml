@@ -5,14 +5,16 @@ category: extraction
 execution_mode: async
 output_format: json
 temperature: 0.1
-max_tokens: 4096
-timeout_seconds: 120
+max_tokens: 20000
+timeout_seconds: 500
 validator_class: "LlmTaskValidators::SdsExtractionValidator"
 prompts:
   system: |
     You are a chemistry expert extracting structured data from Safety Data Sheet (SDS) text.
     Return VALID JSON only. No explanations, markdown fences, or comments outside the JSON.
     Use ONLY information explicitly present in the provided text. Never infer or fabricate values.
+    (Mapping an official GHS hazard/precautionary SENTENCE to its standard H/P code is a defined
+    equivalence, not inference — see rules 2 and 3.)
     Omit any field for which you find no information. Never use null, empty strings, or placeholder values.
 
     Key extraction rules:
@@ -20,11 +22,22 @@ prompts:
        in the section titled "Hazard Identification" (or "Mögliche Gefahren", "Identificación de los peligros", etc.).
     2. H-STATEMENTS: collect all H-codes (H200–H490) from the classification table AND the label elements
        in the "Hazard Identification" section. Also collect EUH-codes (EUH001–EUH401) as eu_h_statements.
+       Many non-EU SDSs (WHMIS/Canada, US OSHA HazCom, ANSI) print the hazard as a full SENTENCE with no
+       code. When a sentence is the official GHS hazard statement, record its H-code — this is a fixed 1:1
+       correspondence defined by GHS, not an inference. Examples:
+       "Highly flammable liquid and vapour"→H225, "Flammable liquid and vapour"→H226,
+       "Causes serious eye irritation"→H319, "Causes serious eye damage"→H318, "Causes skin irritation"→H315,
+       "May cause drowsiness or dizziness"→H336, "Harmful if swallowed"→H302, "Toxic if swallowed"→H301,
+       "May cause respiratory irritation"→H335, "Suspected of causing cancer"→H351.
+       ALWAYS also copy the verbatim hazard sentences into hazard_statement_texts (even when you also map codes).
     3. P-STATEMENTS: all P-codes are in the label elements of the "Hazard Identification" section
        (look for sub-heading "Precautionary Statements" / "Sicherheitshinweise" / "Conseils de prudence").
        P-codes are NOT in the "Exposure Controls/Personal Protection" section — that section contains
        exposure limits and PPE descriptions, not P-codes.
        Normalise combined codes: "P301 + P312" → "P301+P312", "P304 + P340 + P310" → "P304+P340+P310".
+       If the SDS lists precautionary measures as sentences without P-codes, map the official GHS wording to
+       its P-code where it is an exact match, and ALWAYS copy the verbatim sentences into
+       precautionary_statement_texts.
     4. MIXTURES: if the "Identification" section (or "Bezeichnung des Stoffs/Gemischs") says "mixture"
        (or "Gemisch", "mélange", "miscela", "mezcla"), set is_mixture to true, omit cas_number,
        and populate mixture_components from the "Composition/Information on Ingredients" section
@@ -48,6 +61,11 @@ prompts:
        treat consecutive non-empty tokens on the same line as a label/value pair.
     9. SECTION NUMBERS ARE VARIABLE: do not rely solely on section numbers (1–16) to locate data.
        Use the section title to identify the correct block of text.
+    10. REGIONAL FORMATS: the text may be an EU/CLP, UK, WHMIS (Canada), US OSHA HazCom, or other regional
+        SDS — extract regardless of format. When hazards are given only as classification categories
+        (e.g. "Flammable liquids Category 2", "Serious Eye Damage/Eye Irritation Category 2", WHMIS classes),
+        also record them verbatim in classification_categories. If the Signal Word field is blank or absent,
+        omit signal_word rather than guessing.
 
   user_template: |
     Here is the Safety Data Sheet text. Sections are separated by "---".
@@ -61,33 +79,35 @@ prompts:
     Extract the data as a single JSON object. Include only fields where you found actual values:
     {
       "chemical_name": "primary chemical/product name from Section 1",
-      "cas_number": "CAS registry number e.g. 108-95-2 (omit for mixtures)",
-      "molecular_formula": "e.g. C6H6O (omit for mixtures)",
-      "molecular_weight": "e.g. 94.11 g/mol (omit for mixtures)",
+      "cas_number": "CAS registry number e.g. xxx-xx-x (omit for mixtures)",
+      "molecular_formula": "e.g. CxHxO (omit for mixtures)",
+      "molecular_weight": "e.g. xx.xx g/mol (omit for mixtures)",
       "is_mixture": false,
       "mixture_components": [
-        {"name": "Formaldehyde", "cas_number": "50-00-0", "concentration": "37-40 %"},
-        {"name": "Methanol", "cas_number": "67-56-1", "concentration": "10-15 %"}
+        {"name": "Formaldehyde", "cas_number": "xx-xx-x", "concentration": "xx-xx %"},
+        {"name": "Methanol", "cas_number": "xx-xx-x", "concentration": "xx-xx %"}
       ],
       "signal_word": "Danger or Warning",
-      "hazard_statements": ["H301", "H311", "H331"],
-      "eu_h_statements": ["EUH071"],
-      "precautionary_statements": ["P260", "P270", "P301+P312"],
+      "hazard_statements": ["Hxxx", "Hxxx", "Hxxx"],
+      "hazard_statement_texts": ["Highly flammable liquid and vapor", "Causes serious eye irritation"],
+      "eu_h_statements": ["EUHxxx"],
+      "precautionary_statements": ["Pxxx", "Pxxx+Pxxx"],
+      "precautionary_statement_texts": ["Keep away from heat, sparks and open flames."],
+      "classification_categories": ["Flammable liquids Category 2", "Serious Eye Damage/Eye Irritation Category 2"],
       "ghs_codes": ["GHS06", "GHS08"],
       "properties": {
-        "boiling_point": "181.7 °C",
-        "melting_point": "40.9 °C",
-        "flash_point": "79 °C",
-        "density": "1.07 g/cm³ at 20 °C",
-        "vapour_pressure": "69 hPa at 37 °C",
+        "boiling_point": "xx.x °C",
+        "melting_point": "xxx.x °C",
+        "flash_point": "xx °C",
+        "density": "x.xx g/cm³ at xx °C",
+        "vapour_pressure": "xx hPa at xx °C",
         "solubility": "miscible with water",
-        "viscosity": "1.2 mPa·s at 20 °C",
-        "ph": "4.5 (10 g/L at 20 °C)",
-        "explosive_limits": "7–73 % (V)",
+        "viscosity": "x.x mPa·s at xx °C",
+        "ph": "x.x (xx g/L at xx °C)",
+        "explosive_limits": "x–xx % (V)",
         "form": "liquid",
         "color": "colourless",
-        "refractive_index": "1.543",
-        "purity": "≥99.0 %"
+        "refractive_index": "x.xxx",
+        "purity": "≥xx.x %"
       }
     }
-
