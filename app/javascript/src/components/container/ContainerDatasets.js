@@ -136,8 +136,8 @@ export default class ContainerDatasets extends Component {
   }
 
   addButton() {
-    const { readOnly, disabled } = this.props;
-    if (!readOnly && !disabled) {
+    const { readOnly, disabled, canAdd } = this.props;
+    if (!readOnly && !disabled && canAdd) {
       return (
         <div className="d-flex justify-content-end mt-2 mb-0">
           <Button size="sm" variant="success" onClick={() => this.handleAdd()}>
@@ -232,6 +232,7 @@ export default class ContainerDatasets extends Component {
     const {
       disabled, readOnly, rootContainer, element
     } = this.props;
+    const { canAdd } = this.props;
     if (container.children.length > 0) {
       const kind = container.extended_metadata && container.extended_metadata.kind;
       return (
@@ -252,11 +253,13 @@ export default class ContainerDatasets extends Component {
                   />
                 </div>
               ))}
-              <div key="attachmentdropzone" className="list-group-item">
-                <AttachmentDropzone
-                  handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
-                />
-              </div>
+              {canAdd && (
+                <div key="attachmentdropzone" className="list-group-item" >
+                  <AttachmentDropzone
+                    handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
+                  />
+                </div>
+              )}
             </div>
             {this.addButton()}
           </div>
@@ -274,6 +277,7 @@ export default class ContainerDatasets extends Component {
               rootContainer={rootContainer}
               updateContainerState={(cont, shouldClose) => this.updateContainerState(cont, shouldClose)}
               isContainerNew={container?.is_new}
+              canAdd={canAdd}
             />
           )}
         </div>
@@ -284,11 +288,13 @@ export default class ContainerDatasets extends Component {
         <div className="border rounded p-2 mb-2">
           <p>There are currently no Datasets.</p>
           <div className="list-group">
-            <div key="attachmentdropzone" className="list-group-item">
-              <AttachmentDropzone
-                handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
-              />
-            </div>
+            {canAdd && (
+              <div key="attachmentdropzone" className="list-group-item">
+                <AttachmentDropzone
+                  handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
+                />
+              </div>
+            )}
           </div>
           {this.addButton()}
         </div>
@@ -304,10 +310,12 @@ ContainerDatasets.propTypes = {
   onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
+  canAdd: PropTypes.bool,
 };
 
 ContainerDatasets.defaultProps = {
   readOnly: false,
   disabled: false,
-  element: {}
+  element: {},
+  canAdd: true,
 };

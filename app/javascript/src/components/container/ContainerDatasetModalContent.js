@@ -500,9 +500,9 @@ export class ContainerDatasetModalContent extends Component {
     const {
       filteredAttachments, sortDirection, attachmentGroups
     } = this.state;
-    const { datasetContainer } = this.props;
+    const { datasetContainer, canAdd } = this.props;
     const { currentUser } = UserStore.getState();
-
+    
     const renderGroup = (attachments, title, key) => (
       <div key={key} className="mt-2">
         <div
@@ -517,14 +517,14 @@ export class ContainerDatasetModalContent extends Component {
 
     const hasProcessedAttachments = Object.keys(attachmentGroups.Processed).some(
       (groupName) => attachmentGroups.Processed[groupName].length > 0
-    );
+    );  
 
     return (
       <div className="p-2 border rounded">
         {this.renderImageEditModal()}
         <div className="d-flex justify-content-between align-items-center">
           <div className="d-flex flex-grow-1 align-self-center">
-            {this.customDropzone()}
+            {canAdd && this.customDropzone()}
           </div>
           <div className="ms-4 align-self-center">
             {datasetContainer.attachments.length > 0
@@ -715,6 +715,7 @@ ContainerDatasetModalContent.propTypes = {
     ]).isRequired,
     thumb: PropTypes.bool.isRequired
   })),
+  canAdd: PropTypes.bool,
 };
 
 ContainerDatasetModalContent.defaultProps = {
@@ -725,6 +726,7 @@ ContainerDatasetModalContent.defaultProps = {
   kind: null,
   onInstrumentChange: () => { },
   element: {},
+  canAdd: true,
 };
 
 export default observer(ContainerDatasetModalContent);

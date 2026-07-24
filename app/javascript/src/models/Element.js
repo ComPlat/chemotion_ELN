@@ -6,7 +6,7 @@ export default class Element {
 
   constructor(args) {
     Object.assign(this, args);
-    if(!this.id) {
+    if (!this.id) {
       this.id = Element.buildID();
       this.is_new = true
     }
@@ -124,6 +124,45 @@ export default class Element {
       target = [...target, ...dts];
     });
     return target;
+  }
+
+  getAnalysisContainersComparable() {
+    const result = {};
+    const analysisContainers = this.analysisContainers();
+
+    analysisContainers.forEach((aic) => {
+      const { extended_metadata } = aic;
+
+      let layout = null;
+
+      if (!extended_metadata?.is_comparison && !aic.comparable_info?.is_comparison) {
+        if (extended_metadata?.kind) {
+          layout = extended_metadata.kind;
+        } else {
+          layout = null;
+        }
+      } else {
+        if (aic.comparable_info?.layout || aic.extended_metadata?.kind) {
+          layout = aic.comparable_info?.layout || aic.extended_metadata?.kind;
+        } else {
+          layout = null;
+        }
+      }
+
+      let cleaned = null;
+      if (layout) {
+        const parts = layout.split('|');
+        cleaned = parts.length > 1 ? parts[1] : layout;
+        cleaned = cleaned.replace(/^Type:\s*/i, '').trim();
+      }
+
+      const key = cleaned || '';
+
+      if (!result[key]) result[key] = [];
+      result[key].push(aic);
+    });
+
+    return result;
   }
 
   // Return true if the element has at least one analysis

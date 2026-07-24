@@ -5,7 +5,17 @@ import PrintCodeButton from 'src/components/common/PrintCodeButton';
 import ImageModal from 'src/components/common/ImageModal';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
-import { BuildSpcInfos, JcampIds, BuildSpcInfosForNMRDisplayer, isNMRKind } from 'src/utilities/SpectraHelper';
+import {
+  BuildSpcInfos,
+  JcampIds,
+  BuildSpcInfosForNMRDisplayer,
+  isNMRKind,
+} from 'src/utilities/SpectraHelper';
+import {
+  buildCompareInfos,
+  canOpenComparisonEditor,
+  hasUnsavedComparisonSelection,
+} from 'src/apps/mydb/elements/details/spectraCompare/utils/compareInfos';
 import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg, instrumentText } from 'src/utilities/ElementUtils';
 import { contentToText } from 'src/utilities/quillFormat';
 import UIStore from 'src/stores/alt/stores/UIStore';
@@ -15,9 +25,11 @@ import MolViewerListBtn from 'src/components/viewer/MolViewerListBtn';
 import MolViewerSet from 'src/components/viewer/MolViewerSet';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
+import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
+import SpectraCompareButton from 'src/components/common/SpectraCompareButton';
 
 const qCheckPass = () => (
-  <i className="fa fa-check ms-1 text-success"/>
+  <i className="fa fa-check ms-1 text-success" />
 );
 
 const qCheckFail = (msg, kind, atomNum = '') => (
@@ -111,11 +123,22 @@ const headerBtnGroup = (
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const enableMoleculeViewer = MatrixCheck(currentUser.matrix, MolViewerSet.PK);
 
+  const spcCompareInfo = buildCompareInfos(sample, container);
+  const compareEditorEnabled = canOpenComparisonEditor(container);
+  const compareHasUnsaved = hasUnsavedComparisonSelection(container);
+  const compareTooltip = compareHasUnsaved
+    ? 'Apply or save the comparison before opening the editor'
+    : 'Compare the analytical spectra grouped under this comparison';
+  const toggleCompareModal = (e) => {
+    e.stopPropagation();
+    SpectraActions.ToggleCompareModal(container);
+  };
+
   return (deleted ?
     <Button
       size="xxsm"
       variant="danger"
-      onClick={() => {handleUndo(container)}}
+      onClick={() => { handleUndo(container) }}
     >
       <i className="fa fa-undo" />
     </Button> :
@@ -132,18 +155,29 @@ const headerBtnGroup = (
         className="mx-2"
       />
       <MolViewerListBtn el={sample} container={container} isPublic={false} disabled={!enableMoleculeViewer} />
-      <SpectraEditorButton
-        element={sample}
-        hasJcamp={hasJcamp}
-        spcInfos={spcInfos}
-        hasChemSpectra={hasChemSpectra}
-        hasEditedJcamp={hasEditedJcamp}
-        toggleSpectraModal={toggleSpectraModal}
-        confirmRegenerate={confirmRegenerate}
-        confirmRegenerateEdited={confirmRegenerateEdited}
-        toggleNMRDisplayerModal={toggleNMRDisplayerModal}
-        hasNMRium={hasNMRium}
-      />
+      {
+        container.extended_metadata.is_comparison ? (
+          <SpectraCompareButton
+            spcInfos={spcCompareInfo}
+            toggleSpectraModal={toggleCompareModal}
+            disabled={!compareEditorEnabled}
+            tooltip={compareTooltip}
+          />
+        ) : (
+          <SpectraEditorButton
+            element={sample}
+            hasJcamp={hasJcamp}
+            spcInfos={spcInfos}
+            hasChemSpectra={hasChemSpectra}
+            hasEditedJcamp={hasEditedJcamp}
+            toggleSpectraModal={toggleSpectraModal}
+            confirmRegenerate={confirmRegenerate}
+            confirmRegenerateEdited={confirmRegenerateEdited}
+            toggleNMRDisplayerModal={toggleNMRDisplayerModal}
+            hasNMRium={hasNMRium}
+          />
+        )
+      }
       <PrintCodeButton
         element={sample}
         analyses={[container]}
@@ -186,6 +220,17 @@ function AnalysesHeader({
       return c;
     }),
   };
+
+  const is_comparison = container.extended_metadata && container.extended_metadata.is_comparison;
+  const comparisonLayout = container.extended_metadata.kind || '';
+  
+  const comparisonSpectraNames = container.comparable_info && container.comparable_info.list_attachments 
+    ? container.comparable_info.list_attachments
+        .filter(att => !att.filename.toLowerCase().match(/\.(png|jpg|jpeg|gif)$/i))
+        .map((attachment) => attachment.filename)
+        .join(', ') 
+    : '';
+
   return (
     <div className={`analysis-header w-100 d-flex gap-3 lh-base ${mode === 'edit' ? '' : 'order pe-2'}`}>
       <div className="preview border d-flex align-items-center">
@@ -210,19 +255,40 @@ function AnalysesHeader({
             )
           }
         </div>
-        <div className={deleted ? "text-body-tertiary" : ""}>
-          Type: {kind}
-          <br />
-          Status: <span className='me-4'>{status} {qCheckMsg(sample, container)}</span>{insText}
-        </div>
-        {!deleted &&
-          <div className="d-flex gap-2">
-            <span>Content:</span>
-            <div className="flex-grow-1">
-              <QuillViewer value={contentOneLine} className="p-0"/>
-            </div>
-          </div>
-        }
+        {
+          is_comparison ? (
+            <>
+              <div className={deleted ? 'text-body-tertiary' : ''}>
+                Layout: {comparisonLayout}
+              </div>
+              <div className={deleted ? 'text-body-tertiary' : ''}>
+                Spectra: {comparisonSpectraNames}
+              </div>
+              <div className={deleted ? 'text-body-tertiary' : ''}>
+                Status: {status}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className={deleted ? 'text-body-tertiary' : ''}>
+                Type: {kind}
+                <br />
+                Status:{' '}
+                <span className="me-4">
+                  {status} {qCheckMsg(sample, container)}
+                </span>
+                {insText}
+              </div>
+              {!deleted && (
+                <div className="d-flex gap-2">
+                  <span>Content:</span>
+                  <div className="flex-grow-1">
+                    <QuillViewer value={contentOneLine} className="p-0" />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
       </div>
     </div>
   );

@@ -3,10 +3,10 @@
 require 'rails_helper'
 
 class AttachmentAasmTest
-  attr_reader :filename
+  attr_reader :filename, :attachable_id
 end
 
-RSpec.describe AttachmentJcampAasm do
+RSpec.describe AttachmentJcampAasm do # rubocop:disable RSpec/MultipleDescribes
   filename_empty = ''
   filename_1_part = 'Test_file'
   filename_2_parts = 'Test_file.zip'
@@ -15,6 +15,7 @@ RSpec.describe AttachmentJcampAasm do
   describe 'split file name into parts' do
     att_jcamp_aasm = AttachmentAasmTest.new
     att_jcamp_aasm.extend(AttachmentJcampAasm)
+    att_jcamp_aasm.extend(described_class)
 
     context 'when file name is empty' do
       before do
@@ -64,6 +65,7 @@ RSpec.describe AttachmentJcampAasm do
   describe 'get file extension' do
     att_jcamp_aasm = AttachmentAasmTest.new
     att_jcamp_aasm.extend(AttachmentJcampAasm)
+    att_jcamp_aasm.extend(described_class)
 
     context 'when file name is empty' do
       before do
@@ -129,6 +131,66 @@ RSpec.describe AttachmentJcampAasm do
         extension_parts = att_jcamp_aasm.extension_parts
         expect(extension_parts[0]).to eq('peak')
         expect(extension_parts[1]).to eq('dx')
+      end
+    end
+  end
+end
+
+RSpec.describe 'AttachmentJcampProcess' do
+  describe '#get_infer_json_content' do
+    let(:attachment_txt1) { create(:attachment) }
+
+    let(:att_jcamp_aasm) do
+      att_jcamp_aasm = AttachmentAasmTest.new
+      att_jcamp_aasm.extend(AttachmentJcampProcess)
+      att_jcamp_aasm.instance_variable_set(:@attachable_id, container_id)
+      att_jcamp_aasm
+    end
+
+    let(:execute) { att_jcamp_aasm.get_infer_json_content }
+
+    context 'with one attachment which is a txt file' do
+      let(:container_id) { attachment_txt1.attachable_id }
+
+      it 'an empty json returned' do
+        expect(execute).to eq '{}'
+      end
+    end
+
+    context 'with two txt attachments in the same container' do
+      let(:container_id) { attachment_txt1.attachable_id }
+
+      before do
+        attachment2 = create(:attachment)
+        attachment2.attachable_id = attachment_txt1.attachable_id
+        attachment2.save!
+      end
+
+      it 'an empty json returned' do
+        expect(execute).to eq '{}'
+      end
+    end
+
+    context 'with no attachments for a non-existent container id' do
+      let(:container_id) { -1 }
+
+      it 'an empty json returned' do
+        expect(execute).to eq '{}'
+      end
+    end
+
+    context 'with one attachment which has infer in name and is json' do
+      let(:container_id) { json_attachment.attachable_id }
+      let(:json_attachment) { create(:attachment, :with_infer_json_file) }
+
+      before do
+        # rubocop:disable RSpec/AnyInstance
+        allow_any_instance_of(Attachment).to receive(:json?).and_return(true)
+        # rubocop:enable RSpec/AnyInstance
+      end
+
+      it 'returns the first file contained in the container' do
+        expect(execute).to eq(Rails.root.join('spec/fixtures/foobar.infer.json').read)
       end
     end
   end

@@ -443,7 +443,7 @@ export default class SampleDetails extends React.Component {
       ElementActions.createSample(sample, closeView);
     } else {
       sample.cleanBoilingMelting();
-      ElementActions.updateSample(new Sample(sample), closeView);
+      ElementActions.updateSample(sample, closeView);
     }
 
     if (sample.is_new || closeView) {
