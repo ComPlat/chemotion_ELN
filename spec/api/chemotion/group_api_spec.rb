@@ -205,7 +205,7 @@ describe Chemotion::GroupAPI do
       end
     end
 
-    context 'when the removed member is also an admin (not the last one)' do
+    context 'when the removed member is also an admin' do
       let!(:group) do
         create(:group, admins: [group_admin, second_admin], users: [group_admin, second_admin, member])
       end
@@ -213,21 +213,20 @@ describe Chemotion::GroupAPI do
       let(:user) { group_admin }
       let(:target) { second_admin }
 
-      it 'also revokes the admin relationship so no orphaned admin remains' do
+      it 'removes the membership but leaves the admin relationship intact' do
         execute_request
         expect(group.reload.users.pluck(:id)).not_to include(second_admin.id)
-        expect(group.reload.admins.pluck(:id)).not_to include(second_admin.id)
+        expect(group.reload.admins.pluck(:id)).to include(second_admin.id)
       end
     end
 
-    context 'when removing the sole remaining admin via the members endpoint' do
+    context 'when removing the membership of the sole remaining admin' do
       let(:user) { group_admin }
       let(:target) { group_admin }
 
-      it 'refuses with 422 and keeps the member and admin' do
+      it 'removes the membership and leaves them as a non-member admin' do
         execute_request
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(group.reload.users.pluck(:id)).to include(group_admin.id)
+        expect(group.reload.users.pluck(:id)).not_to include(group_admin.id)
         expect(group.reload.admins.pluck(:id)).to include(group_admin.id)
       end
     end

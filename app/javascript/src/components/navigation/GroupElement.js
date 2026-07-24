@@ -119,23 +119,13 @@ export default class GroupElement extends React.Component {
       case 'group':
         this.props.onDeleteGroup(groupRec.id);
         break;
-      case 'user': {
-        const userIsAdmin = groupRec.admins.some((admin) => admin.id === userRec.id);
-
-        // Block before firing the request: removing the sole admin would leave the
-        // group without one. GroupAPI refuses this with a 422 too, but checking here
-        // avoids firing a doomed request and shows the warning immediately instead of
-        // depending on the (unhandled) error response.
-        if (userIsAdmin && groupRec.admins.length === 1) {
-          this.setState({ showAdminAlert: true, adminPopoverTarget: event.target });
-          return;
-        }
-
-        // GroupAPI's member-removal endpoint already revokes the admin relationship as
-        // part of removing the member, so no separate demote call is needed here.
+      case 'user':
+        // Membership and admin status are independent: removing someone as a member
+        // must never affect their admin status, so this never touches groupRec.admins
+        // or fires a demote call. An admin who is also a member keeps their admin role
+        // (now as a non-member admin) after being removed here.
         this.props.onDeleteUser(groupRec, userRec);
         break;
-      }
       default:
         break;
     }
@@ -374,6 +364,40 @@ export default class GroupElement extends React.Component {
     );
   }
 
+  // Admins are listed regardless of membership. A non-member admin has no row in the
+  // (member-only) users table below, so their demote control lives here instead of in
+  // renderUserButtons - otherwise the only way to demote them would be adding them as a
+  // member first, demoting, then removing membership again.
+  renderAdminList() {
+    const { groupElement, currentUser } = this.props;
+    const isCurrentUserAdmin = groupElement.admins.some((a) => a.id === currentUser.id);
+
+    return groupElement.admins.map((admin) => {
+      const isMember = groupElement.users.some((u) => u.id === admin.id);
+
+      return (
+        <span
+          key={`admin_${groupElement.id}_${admin.id}`}
+          className="d-inline-flex align-items-center gap-1 me-2"
+        >
+          {admin.name}
+          {isCurrentUserAdmin && !isMember && (
+            <OverlayTrigger placement="top" overlay={<Tooltip>Demote from Admin</Tooltip>}>
+              <Button
+                size="sm"
+                type="button"
+                variant="warning"
+                onClick={(event) => this.setGroupAdmin(event, groupElement, admin, false)}
+              >
+                <i className="fa fa-key" />
+              </Button>
+            </OverlayTrigger>
+          )}
+        </span>
+      );
+    });
+  }
+
   render() {
     const { groupElement } = this.props;
     const { showUsers, showAdminAlert, adminPopoverTarget } = this.state;
@@ -384,7 +408,7 @@ export default class GroupElement extends React.Component {
           <td>{groupElement.name}</td>
           <td>{groupElement.initials}</td>
           <td>
-            {groupElement.admins.map((admin) => admin.name).join(', ')}
+            {this.renderAdminList()}
           </td>
           <td>
             {this.renderAdminButtons()}

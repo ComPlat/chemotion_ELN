@@ -8,10 +8,9 @@ import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 Enzyme.configure({ adapter: new Adapter() });
 
-// Regression coverage for confirmDelete('user', ...): it used to fire onDeleteUser (the
-// actual removal request) before checking whether the target is the group's sole admin,
-// so a doomed request went out and only a same-tick, unrelated demote call happened to
-// surface the warning. The check must now run first and block the call outright.
+// Regression coverage for confirmDelete('user', ...): membership and admin status are
+// independent, so removing someone as a member must never check or alter their admin
+// status (it used to block/demote based on it, which contradicted that invariant).
 describe('GroupElement', () => {
   const admin = { id: 1, name: 'Admin One', initials: 'A1' };
   const otherAdmin = { id: 2, name: 'Admin Two', initials: 'A2' };
@@ -39,15 +38,16 @@ describe('GroupElement', () => {
   const fakeEvent = () => ({ target: null });
 
   describe('.confirmDelete(event, "user", ...)', () => {
-    it('blocks removal and shows the admin warning when the target is the sole admin', () => {
+    it('removes a member even when they are the sole admin, without touching admin status', () => {
       const groupElement = buildGroupElement([admin]);
       const onDeleteUser = sinon.spy();
       const wrapper = mountElement(groupElement, onDeleteUser);
 
       wrapper.instance().confirmDelete(fakeEvent(), 'user', groupElement, admin);
 
-      expect(onDeleteUser.called).toBe(false);
-      expect(wrapper.instance().state.showAdminAlert).toBe(true);
+      expect(onDeleteUser.calledOnceWith(groupElement, admin)).toBe(true);
+      expect(wrapper.instance().state.showAdminAlert).toBe(false);
+      expect(groupElement.admins).toContain(admin);
     });
 
     it('removes a non-admin member and does not show the admin warning', () => {
@@ -77,6 +77,8 @@ describe('GroupElement', () => {
   // both unfiltered), so an admin who isn't a member must still be visible and able to
   // manage the group; a plain member must not see management controls.
   describe('.render()', () => {
+    afterEach(() => { sinon.restore(); });
+
     const nonMemberAdmin = { id: 4, name: 'Admin Remote', initials: 'AR' };
 
     const buildGroupElementWithNonMemberAdmin = () => ({
@@ -116,6 +118,20 @@ describe('GroupElement', () => {
       expect(asNonMemberAdmin.find('.fa-plus').length).toBeGreaterThan(0);
       expect(asNonMemberAdmin.find('.fa-trash-o').length).toBeGreaterThan(0);
       expect(asNonMemberAdmin.find('.fa-key').length).toBeGreaterThan(0);
+    });
+
+    // Regression: previously the only way to demote a non-member admin was to add them
+    // as a member first, demote, then remove membership again - there was no direct
+    // control. The Admin-by column now carries its own demote button for exactly this
+    // case (member admins are demoted via their row in the expanded users table).
+    it('lets a non-member admin be demoted directly from the Admin-by column', () => {
+      const groupElement = buildGroupElementWithNonMemberAdmin();
+      const demoteStub = sinon.stub(UsersFetcher, 'demoteAdmin').returns(new Promise(() => {}));
+      const wrapper = mountAs(groupElement, nonMemberAdmin);
+
+      wrapper.find('tr.fw-bold.align-middle td').at(2).find('button').first().simulate('click');
+
+      expect(demoteStub.calledOnceWith(groupElement.id, nonMemberAdmin.id)).toBe(true);
     });
   });
 

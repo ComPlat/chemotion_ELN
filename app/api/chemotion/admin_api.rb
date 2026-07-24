@@ -147,9 +147,6 @@ module Chemotion
               obj = Device.find(params[:id]) if %w[Device].include?(params[:rootType])
               rm_users = (params[:rm_users] || []).map(&:to_i)
               obj.users.delete(User.where(id: rm_users)) if %w[Person].include?(params[:actionType])
-              if params[:rootType] == 'Group' && params[:actionType] == 'Person'
-                obj.admins.delete(User.where(id: rm_users))
-              end
               obj.devices.delete(Device.where(id: rm_users)) if %w[Device].include?(params[:actionType])
               User.gen_matrix(rm_users) if rm_users&.length&.positive?
 
