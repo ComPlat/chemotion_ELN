@@ -182,7 +182,7 @@ GEM
       activerecord (>= 4.2.10)
       with_advisory_lock (>= 4.0.0)
     coderay (1.1.3)
-    concurrent-ruby (1.3.6)
+    concurrent-ruby (1.3.7)
     content_disposition (1.0.0)
     countries (5.7.2)
       unaccent (~> 0.3)
