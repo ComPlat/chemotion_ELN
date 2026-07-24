@@ -12,6 +12,7 @@ export default class ProgressModal extends Component {
     };
 
     this.onChange = this.onChange.bind(this);
+    this.handleClose = this.handleClose.bind(this);
   }
 
   componentDidMount() {
@@ -24,6 +25,10 @@ export default class ProgressModal extends Component {
 
   onChange(state) {
     this.setState({ ...state });
+  }
+
+  handleClose() {
+    this.state({ loadingWithProgress: false });
   }
 
   render() {
@@ -49,7 +54,8 @@ export default class ProgressModal extends Component {
     return (
       <AppModal
         title="Uploading"
-        show={loadingWithProgress}
+        show={loadingWithProgress || false}
+        onHide={this.handleClose}
         showFooter={false}
       >
         {progressValue}
