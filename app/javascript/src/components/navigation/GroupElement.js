@@ -80,6 +80,7 @@ const GroupElement = ({ group, currentUser, onDeleteGroup, onDeleteUser, onUpdat
       // (now as a non-member admin) after being removed here.
       onDeleteUser(groupRec, userRec);
     }
+    return null;
   };
 
   // add multiple users
