@@ -46,11 +46,11 @@ class LlmAuditLogger
 
   private_class_method def self.build_entry(user:, task:, resolution:, success:, error:)
     entry = {
-      timestamp:     Time.current.iso8601,
-      task:          task.to_s,
-      user_id:       user&.id,
-      user_login:    user&.name_abbreviation,
-      success:       success,
+      timestamp: Time.current.iso8601,
+      task: task.to_s,
+      user_id: user&.id,
+      user_login: user&.name_abbreviation,
+      success: success,
     }
 
     if resolution
