@@ -56,7 +56,7 @@ class LlmProviderResolver
     # request — AI features are available to every user (they still need a working
     # provider to be configured). The `aiFeatures` Matrice is left in the schema,
     # unused. To re-introduce a per-user gate later (e.g. to cap who may spend the
-    # shared global API key), restore: `feature_gate_allows?(user, 'aiFeatures')`.
+    # shared global API key), restore: `feature_gate_allows?(user, 'aiFeatures')`
     def ai_features_enabled?(_user)
       true
     end
@@ -83,15 +83,19 @@ class LlmProviderResolver
       nil
     end
 
-    # Shared Matrice gate evaluation (SF-03). Reads the Matrice directly rather
+    # Shared Matrice gate evaluation. Reads the Matrice directly rather
     # than the pre-computed user bitmask (which may be stale). An absent Matrice
     # is treated as permissive — the feature has simply not been configured yet.
     # Semantics mirror MatrixManagement:
     #   enabled: true  → everyone except exclude_ids
     #   enabled: false → only include_ids
     def feature_gate_allows?(user, matrice_name)
-      return true unless defined?(Matrice)
-
+      # Reference Matrice directly (Zeitwerk autoload) rather than gating on
+      # `defined?(Matrice)`. With the old `defined?` guard, a fresh process that
+      # had not yet loaded Matrice treated EVERY gate as permissive — so the
+      # aiUserApiKey / aiGlobalProvider gates were silently bypassed in worker
+      # contexts. A genuinely absent Matrice is still treated as permissive
+      # (matrice.nil? below, and the NameError rescue for an absent model).
       matrice = Matrice.find_by(name: matrice_name)
       return true if matrice.nil?
 
@@ -100,14 +104,14 @@ class LlmProviderResolver
       else
         (matrice.include_ids || []).include?(user.id)
       end
+    rescue NameError
+      true
     end
 
     # ── Level 1: Task-specific model override ─────────────────────────────────
 
     def resolve_user_task_mapping(user, task_name)
       return nil if task_name.blank?
-      return nil unless defined?(UserTaskModelMapping)
-
       mapping = UserTaskModelMapping.find_by(user_id: user.id, task_name: task_name)
       return nil unless mapping
 
@@ -124,27 +128,39 @@ class LlmProviderResolver
         base_url: base.base_url,
         protocol: base.protocol,
       )
-    rescue StandardError
+    rescue NameError
+      # UserTaskModelMapping model not present in this deployment — no override.
+      nil
+    rescue StandardError => e
+      # Degrade gracefully to the user/global default if the task-mapping lookup
+      # errors — but LOG it.
+      Rails.logger.warn(
+        '[LlmProviderResolver] task-mapping resolution failed for ' \
+        "user=#{user&.id} task=#{task_name.inspect}: #{e.class} - #{e.message}. " \
+        'Falling back to the default provider/model.',
+      )
       nil
     end
 
     # ── Level 2: User's custom provider ───────────────────────────────────────
 
     def resolve_user_default(user)
-      return nil unless defined?(UserLlmSetting)
       # Respect the custom-key gate: a user who may not configure a personal
       # provider always falls through to the global provider, even if a stale
       # 'custom' row remains from before the permission was revoked.
       return nil unless user_api_key_allowed?(user)
 
+      # Reference UserLlmSetting directly (Zeitwerk autoload) rather than gating on
+      # `defined?(UserLlmSetting)` — see resolve_user_task_mapping. A missing model
+      # is handled by the `rescue StandardError` below (NameError degrades to nil).
       setting = UserLlmSetting.find_by(user_id: user.id, enabled: true)
       return nil if setting.nil? || setting.use_global?
 
       # User has configured their own endpoint; key may be nil (e.g. Ollama)
       LlmResolution.new(
         provider: nil,
-        model:    setting.default_model.presence || 'default',
-        api_key:  setting.api_key,
+        model: setting.default_model.presence || 'default',
+        api_key: setting.api_key,
         base_url: setting.base_url,
         protocol: setting.api_protocol,
       )
@@ -160,8 +176,8 @@ class LlmProviderResolver
 
       LlmResolution.new(
         provider: provider,
-        model:    provider.default_model,
-        api_key:  provider.api_key,
+        model: provider.default_model,
+        api_key: provider.api_key,
         base_url: provider.base_url,
         protocol: provider.api_protocol,
       )
