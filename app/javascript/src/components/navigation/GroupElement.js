@@ -18,20 +18,25 @@ export default class GroupElement extends React.Component {
     this.state = {
       showUsers: false,
       showRowAdd: false,
+      showAdminRowAdd: false,
       showAdminAlert: false,
       adminPopoverTarget: null,
       usersToggled: false,
       rowAddToggled: false,
+      adminRowAddToggled: false,
+      selectedAdminUsers: [],
     };
 
     this.toggleUsers = this.toggleUsers.bind(this);
     this.toggleRowAdd = this.toggleRowAdd.bind(this);
+    this.toggleAdminRowAdd = this.toggleAdminRowAdd.bind(this);
     this.loadUserByName = this.loadUserByName.bind(this);
     this.hideAdminAlert = this.hideAdminAlert.bind(this);
     this.setGroupAdmin = this.setGroupAdmin.bind(this);
+    this.addAdmin = this.addAdmin.bind(this);
   }
 
-  setGroupAdmin(groupRec, userRec, setAdmin = true) {
+  setGroupAdmin(event, groupRec, userRec, setAdmin = true) {
     // if removing group admin and there is only one admin -> show warning
     if (!setAdmin && groupRec.admins.length === 1) {
       this.setState({ showAdminAlert: true, adminPopoverTarget: event.target });
@@ -88,6 +93,13 @@ export default class GroupElement extends React.Component {
     }));
   }
 
+  toggleAdminRowAdd() {
+    this.setState((prevState) => ({
+      showAdminRowAdd: !prevState.showAdminRowAdd,
+      adminRowAddToggled: !prevState.adminRowAddToggled,
+    }));
+  }
+
   loadUserByName(input) {
     if (!input) {
       return Promise.resolve([]);
@@ -102,21 +114,17 @@ export default class GroupElement extends React.Component {
 
   // confirm action after pressing yes
   // if type is group, call deleteGroup api, if type is user, call deleteUser api
-  confirmDelete(type, groupRec, userRec) {
+  confirmDelete(event, type, groupRec, userRec) {
     switch (type) {
       case 'group':
         this.props.onDeleteGroup(groupRec.id);
         break;
       case 'user':
+        // Membership and admin status are independent: removing someone as a member
+        // must never affect their admin status, so this never touches groupRec.admins
+        // or fires a demote call. An admin who is also a member keeps their admin role
+        // (now as a non-member admin) after being removed here.
         this.props.onDeleteUser(groupRec, userRec);
-
-        // check if the user being deleted is an admin.
-        const userIsAdmin = groupRec.admins.some((admin) => admin.id === userRec.id);
-
-        // if admin, remove admin status
-        if (userIsAdmin) {
-          this.setGroupAdmin(groupRec, userRec, false);
-        }
         break;
       default:
         break;
@@ -148,6 +156,21 @@ export default class GroupElement extends React.Component {
     });
   }
 
+  // promote users to admin without requiring them to be a member first; reuses
+  // setGroupAdmin so the admin list is updated the same way a per-row promote is
+  addAdmin(groupRec) {
+    const { selectedAdminUsers } = this.state;
+
+    selectedAdminUsers.forEach((u) => {
+      const isAlreadyAdmin = groupRec.admins.some((admin) => admin.id === u.value);
+      if (!isAlreadyAdmin) {
+        this.setGroupAdmin(null, groupRec, { id: u.value, name: u.name, initials: u.initials }, true);
+      }
+    });
+
+    this.setState({ selectedAdminUsers: [] });
+  }
+
   renderDeleteButton(type, groupRec, userRec) {
     const { currentUser } = this.props;
     let msg = 'Leave this group?';
@@ -169,7 +192,7 @@ export default class GroupElement extends React.Component {
             <Button
               size="sm"
               variant="danger"
-              onClick={() => this.confirmDelete(type, groupRec, userRec)}
+              onClick={(event) => this.confirmDelete(event, type, groupRec, userRec)}
             >
               Yes
             </Button>
@@ -197,7 +220,6 @@ export default class GroupElement extends React.Component {
           size="sm"
           type="button"
           variant="danger"
-          onClick={() => this.confirmDelete(groupRec, userRec)}
         >
           <i className="fa fa-trash-o" />
         </Button>
@@ -207,7 +229,9 @@ export default class GroupElement extends React.Component {
 
   renderAdminButtons() {
     const { groupElement, currentUser } = this.props;
-    const { showRowAdd, selectedUsers } = this.state;
+    const {
+      showRowAdd, selectedUsers, showAdminRowAdd, selectedAdminUsers
+    } = this.state;
 
     const isAdmin = groupElement.admins && groupElement.admins
       .some((admin) => admin.id === currentUser.id);
@@ -238,6 +262,16 @@ export default class GroupElement extends React.Component {
                   onClick={this.toggleRowAdd}
                 >
                   <i className="fa fa-plus" />
+                </Button>
+              </OverlayTrigger>
+              <OverlayTrigger placement="top" overlay={<Tooltip>Add admin</Tooltip>}>
+                <Button
+                  size="sm"
+                  type="button"
+                  variant="warning"
+                  onClick={this.toggleAdminRowAdd}
+                >
+                  <i className="fa fa-key" />
                 </Button>
               </OverlayTrigger>
               <OverlayTrigger
@@ -271,6 +305,28 @@ export default class GroupElement extends React.Component {
             </Button>
           </div>
         )}
+        {isAdmin && showAdminRowAdd && (
+          <div className="d-flex mt-2 align-items-center gap-2">
+            <AsyncSelect
+              className="w-50"
+              isMulti
+              value={selectedAdminUsers}
+              matchProp="name"
+              placeholder="Select users to make admin"
+              loadOptions={this.loadUserByName}
+              onChange={(selectedAdminUsers) => this.setState({ selectedAdminUsers })}
+            />
+            <Button
+              size="sm"
+              type="button"
+              variant="warning"
+              onClick={() => this.addAdmin(groupElement)}
+              disabled={!selectedAdminUsers}
+            >
+              <i className="fa fa-key" />
+            </Button>
+          </div>
+        )}
       </>
     );
   }
@@ -293,7 +349,7 @@ export default class GroupElement extends React.Component {
               size="sm"
               type="button"
               variant={adminButtonStyle}
-              onClick={() => this.setGroupAdmin(groupRec, userRec, !isAdmin)}
+              onClick={(event) => this.setGroupAdmin(event, groupRec, userRec, !isAdmin)}
             >
               <i className="fa fa-key" />
             </Button>
@@ -308,6 +364,40 @@ export default class GroupElement extends React.Component {
     );
   }
 
+  // Admins are listed regardless of membership. A non-member admin has no row in the
+  // (member-only) users table below, so their demote control lives here instead of in
+  // renderUserButtons - otherwise the only way to demote them would be adding them as a
+  // member first, demoting, then removing membership again.
+  renderAdminList() {
+    const { groupElement, currentUser } = this.props;
+    const isCurrentUserAdmin = groupElement.admins.some((a) => a.id === currentUser.id);
+
+    return groupElement.admins.map((admin) => {
+      const isMember = groupElement.users.some((u) => u.id === admin.id);
+
+      return (
+        <span
+          key={`admin_${groupElement.id}_${admin.id}`}
+          className="d-inline-flex align-items-center gap-1 me-2"
+        >
+          {admin.name}
+          {isCurrentUserAdmin && !isMember && (
+            <OverlayTrigger placement="top" overlay={<Tooltip>Demote from Admin</Tooltip>}>
+              <Button
+                size="sm"
+                type="button"
+                variant="warning"
+                onClick={(event) => this.setGroupAdmin(event, groupElement, admin, false)}
+              >
+                <i className="fa fa-key" />
+              </Button>
+            </OverlayTrigger>
+          )}
+        </span>
+      );
+    });
+  }
+
   render() {
     const { groupElement } = this.props;
     const { showUsers, showAdminAlert, adminPopoverTarget } = this.state;
@@ -318,7 +408,7 @@ export default class GroupElement extends React.Component {
           <td>{groupElement.name}</td>
           <td>{groupElement.initials}</td>
           <td>
-            {groupElement.admins.map((admin) => admin.name).join(', ')}
+            {this.renderAdminList()}
           </td>
           <td>
             {this.renderAdminButtons()}

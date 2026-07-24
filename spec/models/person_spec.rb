@@ -118,4 +118,37 @@ RSpec.describe 'Person', type: :model do
       end
     end
   end
+
+  describe '#destroy' do
+    let(:person) { create(:person) }
+    let(:p2) { create(:person) }
+
+    context 'when the person is the sole admin of a group' do
+      let(:group) { build(:group, admins: [person]) }
+
+      before { group.save! }
+
+      it 'refuses to destroy the person and keeps the admin relationship' do
+        expect { person.destroy! }.to raise_error(ActiveRecord::RecordNotDestroyed)
+        expect(group.reload.admins).to include(person)
+      end
+    end
+
+    context 'when the person is a co-admin of a group' do
+      let(:group) { build(:group, admins: [person, p2]) }
+
+      before { group.save! }
+
+      it 'destroys the person and leaves the other admin in place' do
+        expect { person.destroy! }.not_to raise_error
+        expect(group.reload.admins).to contain_exactly(p2)
+      end
+    end
+
+    context 'when the person administrates no group' do
+      it 'destroys the person' do
+        expect { person.destroy! }.not_to raise_error
+      end
+    end
+  end
 end
