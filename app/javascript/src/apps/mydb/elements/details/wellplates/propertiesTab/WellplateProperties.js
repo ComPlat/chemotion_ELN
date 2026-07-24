@@ -20,13 +20,17 @@ export default class WellplateProperties extends Component {
   }
 
   handleInputChange(type, event) {
-    const { changeProperties } = this.props;
+    const { wellplate, changeProperties } = this.props;
+    if (wellplate.isReadOnly) { return; }
+
     const { value } = event.target;
     changeProperties({ type, value });
   }
 
   addReadoutTitle() {
-    const { readoutTitles, changeProperties, handleAddReadout } = this.props;
+    const { wellplate, readoutTitles, changeProperties, handleAddReadout } = this.props;
+    if (wellplate.isReadOnly) { return; }
+
     const currentTitles = readoutTitles || [];
     const newTitles = currentTitles.concat(`Readout ${currentTitles.length + 1}`);
     changeProperties({ type: 'readoutTitles', value: newTitles });
@@ -34,7 +38,9 @@ export default class WellplateProperties extends Component {
   }
 
   deleteReadoutTitle(index) {
-    const { readoutTitles, changeProperties, handleRemoveReadout } = this.props;
+    const { wellplate, readoutTitles, changeProperties, handleRemoveReadout } = this.props;
+    if (wellplate.isReadOnly) { return; }
+
     const currentTitles = readoutTitles || [];
     currentTitles.splice(index, 1);
     changeProperties({ type: 'readoutTitles', value: currentTitles });
@@ -43,7 +49,9 @@ export default class WellplateProperties extends Component {
   }
 
   updateReadoutTitle(index, newValue) {
-    const { readoutTitles, changeProperties } = this.props;
+    const { wellplate, readoutTitles, changeProperties } = this.props;
+    if (wellplate.isReadOnly) { return; }
+
     const currentTitles = readoutTitles || [];
     currentTitles[index] = newValue;
     changeProperties({ type: 'readoutTitles', value: currentTitles });
@@ -68,59 +76,71 @@ export default class WellplateProperties extends Component {
             this.setState({ selectedReadoutIndex: null })
           }}
         />
-        <Row className="">
-          <Col xs="9">
+        <fieldset disabled={wellplate.isReadOnly}>
+          <Row className="">
+            <Col xs="9">
+              <Form.Group>
+                <Form.Label>Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={name || ''}
+                  onChange={(event) => this.handleInputChange('name', event)}
+                  disabled={wellplate.isReadOnly || name === '***'}
+                />
+              </Form.Group>
+            </Col>
+            <Col xs="3">
+              <Form.Label>Size</Form.Label>
+              <div className="custom-size-dropdown">
+                <WellplateSizeDropdown
+                  updateWellplate={changeProperties}
+                  wellplate={wellplate}
+                  key={`${wellplate.id}-wellplate-size-dropdown`}
+                />
+              </div>
+            </Col>
+          </Row>
+
+          <Row className="gy-1 mt-3">
+            <Form.Label>Readouts</Form.Label>
+            {readoutTitles && readoutTitles.map((readoutTitle, index) => (
+              <InputGroup key={`wellplate-${wellplate.id}-readout-${index}`}>
+                <Form.Control
+                  type="text"
+                  value={readoutTitle}
+                  onChange={(event) => this.updateReadoutTitle(index, event.target.value)}
+                  disabled={wellplate.isReadOnly}
+                />
+                <Button
+                  variant="danger"
+                  onClick={() => this.setState({ selectedReadoutIndex: index })}
+                  disabled={wellplate.isReadOnly}
+                >
+                  <i className="fa fa-trash-o" />
+                </Button>
+              </InputGroup>
+            ))}
+            <Button
+              variant="success"
+              className="mt-2 mx-3 w-auto"
+              onClick={() => this.addReadoutTitle()}
+              disabled={wellplate.isReadOnly}
+            >
+              Add Readouts
+            </Button>
+          </Row>
+
+          <Row className="mt-3">
             <Form.Group>
-              <Form.Label>Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={name || ''}
-                onChange={(event) => this.handleInputChange('name', event)}
-                disabled={name === '***'}
+              <Form.Label>Description</Form.Label>
+              <QuillEditor
+                value={description}
+                onChange={(event) => this.handleInputChange('description', { target: { value: event } })}
+                disabled={wellplate.isReadOnly || description === '***'}
               />
             </Form.Group>
-          </Col>
-          <Col xs="3">
-            <Form.Label>Size</Form.Label>
-            <div className="custom-size-dropdown">
-              <WellplateSizeDropdown
-                updateWellplate={changeProperties}
-                wellplate={wellplate}
-                key={`${wellplate.id}-wellplate-size-dropdown`}
-              />
-            </div>
-          </Col>
-        </Row>
-
-        <Row className="gy-1 mt-3">
-          <Form.Label>Readouts</Form.Label>
-          {readoutTitles && readoutTitles.map((readoutTitle, index) => (
-            <InputGroup key={`wellplate-${wellplate.id}-readout-${index}`}>
-              <Form.Control
-                type="text"
-                value={readoutTitle}
-                onChange={(event) => this.updateReadoutTitle(index, event.target.value)}
-              />
-              <Button variant="danger" onClick={() => this.setState({ selectedReadoutIndex: index })}>
-                <i className="fa fa-trash-o" />
-              </Button>
-            </InputGroup>
-          ))}
-          <Button variant="success" className="mt-2 mx-3 w-auto" onClick={() => this.addReadoutTitle()}>
-            Add Readouts
-          </Button>
-        </Row>
-
-        <Row className="mt-3">
-          <Form.Group>
-            <Form.Label>Description</Form.Label>
-            <QuillEditor
-              value={description}
-              onChange={(event) => this.handleInputChange('description', { target: { value: event } })}
-              disabled={description === '***'}
-            />
-          </Form.Group>
-        </Row>
+          </Row>
+        </fieldset>
       </div>
     );
   }

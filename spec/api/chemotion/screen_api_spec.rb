@@ -46,6 +46,11 @@ describe Chemotion::ScreenAPI do
         get '/api/v1/screens', headers: request_headers
         expect(parsed_json_response['screens'].length).to eq(2)
       end
+
+      it 'includes can_update for listed screens' do
+        get '/api/v1/screens', headers: request_headers
+        expect(parsed_json_response['screens'].pluck('can_update')).to all(be true)
+      end
     end
 
     context 'when collection_id is given' do
@@ -86,6 +91,10 @@ describe Chemotion::ScreenAPI do
       expect(JSON.parse(response.body)['screen']['name']).to eq(screen.name)
     end
 
+    it 'returns can_update as true for the owner' do
+      expect(JSON.parse(response.body)['screen']['can_update']).to be true
+    end
+
     it 'returns the component_graph_data as json object' do
       expect(JSON.parse(response.body)['screen']['component_graph_data']).to eq(
         { some_dummy: 'data', with_nested: { but_cool: 'Stuff' } }.deep_stringify_keys,
@@ -99,31 +108,105 @@ describe Chemotion::ScreenAPI do
         expect(response.status).to eq 401
       end
     end
+
+    context 'when the screen is in a read-only shared collection' do
+      let(:collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+
+      it 'returns can_update as false' do
+        expect(response).to have_http_status :ok
+        expect(JSON.parse(response.body)['screen']['can_update']).to be false
+      end
+    end
+
+    context 'when the screen is in a writable shared collection' do
+      let(:collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:edit_elements])
+        end
+      end
+
+      it 'returns can_update as true' do
+        expect(response).to have_http_status :ok
+        expect(JSON.parse(response.body)['screen']['can_update']).to be true
+      end
+    end
   end
 
   describe 'POST /api/v1/screens/:id/add_research_plan' do
     let(:request_body) do
       {
-        collection_id: collection.id
+        collection_id: collection.id,
       }
     end
-    let(:expected_response) do
-      Entities::ScreenEntity.represent(screen, root: :screen)
-    end
 
-    it 'adds an empty research plan to the screen' do
-      expect do
+    context 'when the user can update the screen' do
+      it 'adds an empty research plan to the screen' do
+        expect do
+          post "/api/v1/screens/#{screen.id}/add_research_plan", params: request_body
+        end.to change(screen.research_plans, :count).by(1)
+      end
+
+      it 'returns the serialized screen with a policy-backed can_update' do
         post "/api/v1/screens/#{screen.id}/add_research_plan", params: request_body
-      end.to change(screen.research_plans, :count).by(1)
+
+        expect(response.status).to eq 201
+        screen_json = JSON.parse(response.body)['screen']
+        expect(screen_json['id']).to eq(screen.id)
+        expect(screen_json['can_update']).to be true
+      end
     end
 
-    it 'returns the serialized screen' do
-      post "/api/v1/screens/#{screen.id}/add_research_plan", params: request_body
+    context 'when the screen is in a read-only shared collection' do
+      let(:screen_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(
+            :collection_share,
+            collection: c,
+            shared_with: user,
+            permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements],
+          )
+        end
+      end
+      let(:screen) { create(:screen, collections: [screen_collection]) }
 
-      expect(response.status).to eq 201
-      body_value = JSON.parse(response.body)
-      expected_response.instance_variables.each do |ivar_name|
-        expect(body_value[ivar_name]).to eq(expected_response.instance_variable_get ivar_name)
+      before do
+        post "/api/v1/screens/#{screen.id}/add_research_plan", params: request_body
+      end
+
+      it 'returns 401 unauthorized' do
+        expect(response).to have_http_status :unauthorized
+      end
+
+      it 'does not add a research plan' do
+        expect(screen.research_plans.reload.count).to eq(0)
+      end
+    end
+
+    context 'without update permissions' do
+      let(:screen) { create(:screen, collections: [other_user_collection]) }
+
+      before do
+        post "/api/v1/screens/#{screen.id}/add_research_plan", params: request_body
+      end
+
+      it 'returns 401 unauthorized' do
+        expect(response).to have_http_status :unauthorized
+      end
+    end
+
+    context 'when the screen does not exist' do
+      before do
+        post '/api/v1/screens/0/add_research_plan', params: request_body
+      end
+
+      it 'returns 404 not found' do
+        expect(response).to have_http_status :not_found
       end
     end
   end
@@ -148,28 +231,57 @@ describe Chemotion::ScreenAPI do
       }
     end
 
-    before do
-      ScreensWellplate.create!(wellplate: other_wellplate, screen: screen)
-      put "/api/v1/screens/#{screen.id}", params: params.to_json, headers: request_headers
+    context 'when the user can update the screen' do
+      before do
+        ScreensWellplate.create!(wellplate: other_wellplate, screen: screen)
+        put "/api/v1/screens/#{screen.id}", params: params.to_json, headers: request_headers
+      end
+
+      it 'is able to change a screen by id' do
+        expect(parsed_json_response['screen']['name']).to eq('Another Testname')
+        # rubocop:disable Rails/Pluck -- wellplates/research_plans are parsed JSON (Array of Hash), not AR relations
+        expect(
+          parsed_json_response['screen']['wellplates'].map { |w| w['id'] },
+        ).to eq([wellplate.id])
+        expect(
+          parsed_json_response['screen']['research_plans'].map { |r| r['id'] },
+        ).to eq([research_plan.id])
+        # rubocop:enable Rails/Pluck
+      end
+
+      it 'updates the component_graph_data correctly' do
+        expect(parsed_json_response['screen']['component_graph_data']).to eq(
+          {
+            'nodes' => [{ 'id' => 1337 }],
+            'edges' => [],
+          },
+        )
+      end
+
+      it 'returns can_update as true after a successful update' do
+        expect(parsed_json_response['screen']['can_update']).to be true
+      end
     end
 
-    it 'is able to change a screen by id' do
-      expect(parsed_json_response['screen']['name']).to eq('Another Testname')
-      expect(
-        parsed_json_response['screen']['wellplates'].map { |w| w['id'] }
-      ).to eq([wellplate.id])
-      expect(
-        parsed_json_response['screen']['research_plans'].map { |r| r['id'] }
-      ).to eq([research_plan.id])
-    end
+    context 'when the screen is in a read-only shared collection' do
+      let(:collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
 
-    it 'updates the component_graph_data correctly' do
-      expect(parsed_json_response['screen']['component_graph_data']).to eq(
-        {
-          'nodes' => [{ 'id' => 1337 }],
-          'edges' => [],
-        },
-      )
+      before do
+        put "/api/v1/screens/#{screen.id}", params: params.to_json, headers: request_headers
+      end
+
+      it 'returns 401 unauthorized' do
+        expect(response).to have_http_status :unauthorized
+      end
+
+      it 'does not update the screen' do
+        expect(screen.reload.name).to eq('Testname')
+      end
     end
   end
 

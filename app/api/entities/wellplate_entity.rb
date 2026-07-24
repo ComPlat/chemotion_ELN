@@ -2,9 +2,12 @@
 
 module Entities
   class WellplateEntity < ApplicationEntity
+    include NestedElementPolicy
+
     # rubocop:disable Layout/ExtraSpacing
     # Level 0 attributes and relations
     with_options(anonymize_below: 0) do
+      expose! :can_update
       expose! :id
       expose! :is_restricted
       expose! :height

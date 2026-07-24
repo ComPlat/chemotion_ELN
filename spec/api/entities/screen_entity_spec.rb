@@ -9,6 +9,7 @@ describe Entities::ScreenEntity do
         screen,
         detail_levels: detail_levels,
         displayed_in_list: displayed_in_list,
+        policy: policy,
       )
     end
 
@@ -21,6 +22,7 @@ describe Entities::ScreenEntity do
       }
     end
     let(:displayed_in_list) { false }
+    let(:policy) { nil }
     let(:screen) do
       create(
         :screen,
@@ -122,9 +124,75 @@ describe Entities::ScreenEntity do
       end
     end
 
+    context 'when represented without a policy' do
+      let(:detail_level) { 10 }
+
+      it 'returns can_update as false' do
+        expect(grape_entity_as_hash).to include(can_update: false)
+      end
+    end
+
+    context 'when represented with a policy' do
+      let(:detail_level) { 10 }
+      let(:policy) { Struct.new(:update?).new(true) }
+
+      it 'returns the policy related attributes' do
+        expect(grape_entity_as_hash).to include(can_update: true)
+      end
+    end
+
+    context 'when represented with a read-only policy' do
+      let(:detail_level) { 10 }
+      let(:policy) { Struct.new(:update?).new(false) }
+
+      it 'returns can_update as false' do
+        expect(grape_entity_as_hash).to include(can_update: false)
+      end
+    end
+
+    context 'when nested elements have different permissions than the screen policy' do
+      let(:detail_level) { 10 }
+      let(:user) { create(:person) }
+      let(:screen) do
+        read_only_shared_collection = create(:collection, user: create(:person)).tap do |collection|
+          create(
+            :collection_share,
+            collection: collection,
+            shared_with: user,
+            permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements],
+          )
+        end
+
+        create(
+          :screen,
+          collections: [create(:collection, user: user)],
+          wellplates: [create(:wellplate, collections: [read_only_shared_collection])],
+          research_plans: [create(:research_plan, collections: [read_only_shared_collection])],
+          container: create(:container),
+        )
+      end
+      let(:policy) { ElementPolicy.new(user, screen) }
+
+      it 'returns can_update true for the owned screen' do
+        expect(grape_entity_as_hash[:can_update]).to be true
+      end
+
+      it 'returns can_update false for nested read-only research plans' do
+        expect(grape_entity_as_hash[:research_plans].first[:can_update]).to be false
+      end
+
+      it 'returns can_update false for nested read-only wellplates' do
+        expect(grape_entity_as_hash[:wellplates].first[:can_update]).to be false
+      end
+    end
+
     context 'when entity is displayed in list' do
       let(:displayed_in_list) { true }
       let(:detail_level) { 10 }
+
+      it 'exposes can_update as false without a policy' do
+        expect(grape_entity_as_hash).to include(can_update: false)
+      end
 
       it 'returns a screen without a code_log' do
         expect(grape_entity_as_hash[:code_log]).to eq(nil)

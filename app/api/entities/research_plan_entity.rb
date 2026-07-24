@@ -2,9 +2,12 @@
 
 module Entities
   class ResearchPlanEntity < ApplicationEntity
+    include NestedElementPolicy
+
     # rubocop:disable Layout/ExtraSpacing
     with_options(anonymize_below: 0) do
       expose! :can_copy,                                     unless: :displayed_in_list
+      expose! :can_update
       expose! :body
       expose! :container,                                    using: 'Entities::ContainerEntity'
       expose! :id

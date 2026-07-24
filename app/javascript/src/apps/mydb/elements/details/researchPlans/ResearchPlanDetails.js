@@ -173,21 +173,20 @@ export default class ResearchPlanDetails extends Component {
 
   // handle attachment actions
   handleAttachmentDrop(files) {
+    if (this.state.researchPlan.isReadOnly) { return; }
     this.setState((prevState) => {
+      const { researchPlan } = prevState;
       const newAttachments = files.map((file) => Attachment.fromFile(file));
-      const updatedAttachments = prevState.researchPlan.attachments.concat(newAttachments);
-      const updatedResearchPlan = new ResearchPlan({
-        ...prevState.researchPlan,
-        attachments: updatedAttachments,
-        changed: true
-      });
+      researchPlan.attachments = researchPlan.attachments.concat(newAttachments);
+      researchPlan.changed = true;
 
-      return { researchPlan: updatedResearchPlan };
+      return { researchPlan };
     });
   }
 
   handleAttachmentDelete(attachment) {
     const { researchPlan } = this.state;
+    if (researchPlan.isReadOnly) { return; }
     const index = researchPlan.attachments.indexOf(attachment);
     researchPlan.changed = true;
     researchPlan.attachments[index].is_deleted = true;
@@ -196,6 +195,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleAttachmentUndoDelete(attachment) {
     const { researchPlan } = this.state;
+    if (researchPlan.isReadOnly) { return; }
     const index = researchPlan.attachments.indexOf(attachment);
     researchPlan.attachments[index].is_deleted = false;
     this.setState({ researchPlan });
@@ -203,6 +203,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleAttachmentEdit(attachment) {
     const { researchPlan } = this.state;
+    if (researchPlan.isReadOnly) { return; }
     researchPlan.changed = true;
     // update only this attachment
     researchPlan.attachments.map((currentAttachment) => {
@@ -349,7 +350,8 @@ export default class ResearchPlanDetails extends Component {
     const {
       name, body, changed, attachments
     } = researchPlan;
-    const edit = researchPlan.mode === 'edit';
+    const canUpdate = !researchPlan.isReadOnly;
+    const edit = researchPlan.mode === 'edit' && canUpdate;
 
     const editTooltip = (<Tooltip id="edit-tooltip">Switch to edit mode</Tooltip>);
     const viewTooltip = (<Tooltip id="view-tooltip">Switch to view mode</Tooltip>);
@@ -359,6 +361,7 @@ export default class ResearchPlanDetails extends Component {
         <OverlayTrigger placement="top" overlay={editTooltip}>
           <ButtonGroupToggleButton
             active={researchPlan.mode === 'edit'}
+            disabled={!canUpdate}
             onClick={() => this.handleSwitchMode('edit')}
           >
             <i className="fa fa-pencil" />
@@ -425,7 +428,7 @@ export default class ResearchPlanDetails extends Component {
         handleSubmit={this.handleSubmit}
         handleResearchPlanChange={this.handleResearchPlanChange}
         researchPlan={researchPlan}
-        readOnly={false}
+        readOnly={researchPlan.isReadOnly}
       />
     );
   }
@@ -440,7 +443,7 @@ export default class ResearchPlanDetails extends Component {
         onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
         onAttachmentImportComplete={this.handleAttachmentImportComplete.bind(this)}
         onEdit={this.handleAttachmentEdit.bind(this)}
-        readOnly={false}
+        readOnly={researchPlan.isReadOnly}
       />
     );
   } /* eslint-enable */
@@ -460,7 +463,7 @@ export default class ResearchPlanDetails extends Component {
             element={researchPlan}
             fnCb={this.handleResearchPlanChange}
           />
-          <PrivateNoteElement element={researchPlan} disabled={researchPlan.can_update} />
+          <PrivateNoteElement element={researchPlan} disabled={researchPlan.isReadOnly} />
         </Tab>
       ),
       analyses: (
@@ -498,6 +501,7 @@ export default class ResearchPlanDetails extends Component {
             dropWellplate={(wellplate) => this.dropWellplate(wellplate)}
             deleteWellplate={(wellplate) => this.deleteWellplate(wellplate)}
             importWellplate={(wellplate) => this.importWellplate(wellplate)}
+            readOnly={researchPlan.isReadOnly}
           />
         </Tab>
       ),
@@ -506,7 +510,10 @@ export default class ResearchPlanDetails extends Component {
           {
             !researchPlan.isNew && <CommentSection section="research_plan_metadata" element={researchPlan} />
           }
-          <ResearchPlanMetadata researchPlan={researchPlan} />
+          <ResearchPlanMetadata
+            researchPlan={researchPlan}
+            readOnly={researchPlan.isReadOnly}
+          />
         </Tab>
       ),
       history: (
@@ -540,6 +547,7 @@ export default class ResearchPlanDetails extends Component {
       <ElementDetailCard
         element={researchPlan}
         isPendingToSave={researchPlan.isPendingToSave}
+        saveDisabled={researchPlan.isReadOnly}
         title={researchPlan.name}
         titleTooltip={formatTimeStampsOfElement(researchPlan || {})}
         onSave={() => this.handleSubmit()}

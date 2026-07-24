@@ -207,12 +207,20 @@ module Chemotion
 
         paginated_wellplate_ids = Kaminari.paginate_array(wellplate_ids).page(page).per(page_size)
         serialized_wellplates = Wellplate.find(paginated_wellplate_ids).map do |wellplate|
-          Entities::WellplateEntity.represent(wellplate, displayed_in_list: true).serializable_hash
+          Entities::WellplateEntity.represent(
+            wellplate,
+            displayed_in_list: true,
+            policy: ElementPolicy.new(current_user, wellplate),
+          ).serializable_hash
         end
 
         paginated_screen_ids = Kaminari.paginate_array(screen_ids).page(page).per(page_size)
         serialized_screens = Screen.find(paginated_screen_ids).map do |screen|
-          Entities::ScreenEntity.represent(screen, displayed_in_list: true).serializable_hash
+          Entities::ScreenEntity.represent(
+            screen,
+            displayed_in_list: true,
+            policy: ElementPolicy.new(current_user, screen),
+          ).serializable_hash
         end
 
         paginated_cell_line_ids = Kaminari.paginate_array(cell_line_ids).page(page).per(page_size)
@@ -222,7 +230,11 @@ module Chemotion
 
         paginated_research_plan_ids = Kaminari.paginate_array(research_plan_ids).page(page).per(page_size)
         serialized_research_plans = ResearchPlan.find(paginated_research_plan_ids).map do |research_plan|
-          Entities::ResearchPlanEntity.represent(research_plan, displayed_in_list: true).serializable_hash
+          Entities::ResearchPlanEntity.represent(
+            research_plan,
+            displayed_in_list: true,
+            policy: ElementPolicy.new(current_user, research_plan),
+          ).serializable_hash
         end
 
         paginated_sequence_based_macromolecule_sample_ids =
