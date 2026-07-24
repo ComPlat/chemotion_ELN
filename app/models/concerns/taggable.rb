@@ -119,7 +119,11 @@ module Taggable
     return nil unless is_a?(Molecule)
     return tag.taggable_data['pubchem_cid'] if pubchem_check
 
-    pcid.presence || PubChem.get_cid_from_inchikey(inchikey)
+    # No synchronous network fallback here: the tag's pubchem_cid is backfilled asynchronously
+    # by the enrich job (PubchemSingleLcssJob#enrich_from_pubchem) / PubchemCidJob, so molecule
+    # saves never block on a PubChem request. pcid is still honoured for the synchronous
+    # refresh_molecule_data path. On-demand cid lookups remain available via Molecule#cid.
+    pcid.presence
   end
 
   def user_labels
