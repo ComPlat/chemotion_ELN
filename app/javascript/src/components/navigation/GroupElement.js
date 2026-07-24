@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React, { useState } from 'react';
 import {
   OverlayTrigger,
@@ -12,7 +13,7 @@ import UsersFetcher from 'src/fetchers/UsersFetcher';
 import { AsyncSelect } from 'src/components/common/Select';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
-const GroupElement = ({ group, currentUser, currentGroups, onDeleteGroup, onDeleteUser, onUpdateGroup }) => {
+const GroupElement = ({ group, currentUser, onDeleteGroup, onDeleteUser, onUpdateGroup }) => {
   const [showUsers, setShowUsers] = useState(false);
   const [showRowAdd, setShowRowAdd] = useState(false);
   const [showAdminAlert, setShowAdminAlert] = useState(false);
@@ -34,7 +35,7 @@ const GroupElement = ({ group, currentUser, currentGroups, onDeleteGroup, onDele
       ? UsersFetcher.promoteAdmin(group.id, user.id)
       : UsersFetcher.demoteAdmin(group.id, user.id);
 
-    request.then((group) => {
+    request.then(() => {
       setSelectedUsers([]);
       onUpdateGroup();
     });
@@ -94,7 +95,7 @@ const GroupElement = ({ group, currentUser, currentGroups, onDeleteGroup, onDele
       if (!isUserInGroup) { userIds.push(g.value); }
     });
 
-    UsersFetcher.addMembers(group.id, userIds).then((group) => {
+    UsersFetcher.addMembers(group.id, userIds).then(() => {
       setSelectedUsers([]);
       onUpdateGroup();
     });
@@ -113,7 +114,7 @@ const GroupElement = ({ group, currentUser, currentGroups, onDeleteGroup, onDele
     setSelectedAdminUsers([]);
   };
 
-  const renderDeleteButton = (type, groupRec, userRec) => {
+  const renderDeleteButton = (type, groupRec, userRec, tooltipText) => {
     let msg = 'Leave this group?';
     if (type === 'user') {
       if (userRec.id === currentUser.id) {
@@ -161,6 +162,7 @@ const GroupElement = ({ group, currentUser, currentGroups, onDeleteGroup, onDele
           size="sm"
           type="button"
           variant="danger"
+          title={tooltipText}
         >
           <i className="fa fa-trash-o" />
         </Button>
@@ -210,12 +212,7 @@ const GroupElement = ({ group, currentUser, currentGroups, onDeleteGroup, onDele
                   <i className="fa fa-key" />
                 </Button>
               </OverlayTrigger>
-              <OverlayTrigger
-                placement="top"
-                overlay={<Tooltip>Remove group</Tooltip>}
-              >
-                {renderDeleteButton('group', group)}
-              </OverlayTrigger>
+              {renderDeleteButton('group', group, undefined, 'Remove group')}
             </>
           )}
         </div>
@@ -290,11 +287,7 @@ const GroupElement = ({ group, currentUser, currentGroups, onDeleteGroup, onDele
             </Button>
           </OverlayTrigger>
         )}
-        {canDelete && (
-          <OverlayTrigger placement="top" overlay={<Tooltip>Remove</Tooltip>}>
-            {renderDeleteButton('user', group, userRec)}
-          </OverlayTrigger>
-        )}
+        {canDelete && renderDeleteButton('user', group, userRec, 'Remove')}
       </div>
     );
   };
