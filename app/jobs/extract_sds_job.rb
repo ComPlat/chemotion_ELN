@@ -149,15 +149,21 @@ class ExtractSdsJob < ApplicationJob
     status[:stage] = 'calling_llm'
     # task_name: 'sds_extraction' is passed so LlmProviderResolver picks the model
     # the user assigned to this specific task in their AI Settings profile.
-    extraction_result = LlmTaskRunner.run(
+    runner = LlmTaskRunner.new(
       task_name: 'sds_extraction',
       user: user,
       context: pdf_text,
     )
+    extraction_result = runner.run
 
     progress.progress = 90
     status[:stage] = 'updating_record'
-    update_chemical_data(chemical, extraction_result)
+    update_chemical_data(
+      chemical,
+      extraction_result,
+      model_used: runner.model_used,
+      requested_model: (runner.requested_model if runner.fell_back?),
+    )
 
     @notification_message = "SDS extraction completed. Safety data has been updated for sample #{@sample_id}."
     @notification_action = 'ElementActions.fetchSampleById'
@@ -284,7 +290,13 @@ class ExtractSdsJob < ApplicationJob
   # end
 
   # Merge LLM extraction result into chemical_data.
-  def update_chemical_data(chemical, extraction_result)
+  #
+  # @param model_used      [String, nil] the LLM model that actually served the task
+  #   (LlmTaskRunner#model_used), stored so the UI can show which model was used.
+  # @param requested_model [String, nil] the task-specific model that was requested
+  #   but was unavailable, when the runner fell back to the default model. nil when
+  #   no fallback happened; lets the UI show "requested X, fell back to <model>".
+  def update_chemical_data(chemical, extraction_result, model_used: nil, requested_model: nil)
     data = chemical.chemical_data.deep_dup
     entry = data[0] || {}
 
@@ -300,6 +312,8 @@ class ExtractSdsJob < ApplicationJob
     # Store raw extraction metadata — used by the frontend AI result modal
     metadata = {
       'extracted_at' => Time.current.iso8601,
+      'model' => model_used,
+      'requested_model' => requested_model,
       'chemical_name' => extraction_result['chemical_name'],
       'signal_word' => extraction_result['signal_word'],
     }
@@ -332,7 +346,7 @@ class ExtractSdsJob < ApplicationJob
 
     data = chemical.chemical_data.deep_dup
     data[0]['extraction_error'] = {
-      'message'   => @notification_message,
+      'message' => @notification_message,
       'failed_at' => Time.current.iso8601,
     }
     chemical.update_columns(chemical_data: data) # skip validations/callbacks — marker only
