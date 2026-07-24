@@ -11,8 +11,6 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
 import SpectraStore from 'src/stores/alt/stores/SpectraStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { SpectraOps } from 'src/utilities/quillToolbarSymbol';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ResearchPlan from 'src/models/ResearchPlan';
 import { inlineNotation } from 'src/utilities/SpectraHelper';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
