@@ -13,10 +13,22 @@ export default class PolymerSection extends React.Component {
     residue.custom_info[name] = e.value;
 
     // make calculations if loading was changed
-    if (name == 'loading') {
-      handleAmountChanged(sample.amount);
+    if (name === 'loading') {
       if (residue.custom_info.loading_type == 'external')
         sample.external_loading = e.value;
+
+      // clear the user-defined loading elemental composition when loading is cleared
+      if (e.value === null || e.value === 0 || e.value === '') {
+        const loadingComp = sample.elemental_compositions
+          .find((i) => i.composition_type === 'loading');
+        if (loadingComp) { loadingComp.loading = null; }
+      }
+
+      // call handleAmountChanged then handleSampleChanged so all mutations above
+      // are reflected in state (handleAmountChanged clones from state so we must
+      // follow with handleSampleChanged which clones from the already-mutated sample)
+      handleAmountChanged(sample.amount);
+      handleSampleChanged(sample);
 
       let errorMessage;
       if (e.value == 0.0 && !e.showString)
