@@ -72,10 +72,8 @@ module Chemotion
             desc 'remove a member from a group, or leave it'
             delete do
               error!('401 Unauthorized', 401) unless @policy.manage? || @policy.leave?(params[:user_id])
-              error!('Cannot remove the last admin', 422) if @policy.last_admin?(params[:user_id])
 
               @group.users.delete(User.where(id: params[:user_id]))
-              @group.users_admins.where(admin_id: params[:user_id]).destroy_all
               User.gen_matrix([params[:user_id]])
               present @group, with: Entities::GroupEntity, root: 'group'
             end

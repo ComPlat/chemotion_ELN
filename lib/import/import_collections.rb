@@ -103,7 +103,8 @@ module Import
     end
 
     def import
-      @lcss_batch = []
+      started_at = Time.current
+      @defer_lcss = true
       ActiveRecord::Base.transaction do
         gate_collection if @gt == true
         import_collections if @gt == false
@@ -134,7 +135,7 @@ module Import
       end
       reprocess_reaction_svgs
     ensure
-      Molecule.schedule_lcss_batch(@lcss_batch)
+      Molecule.schedule_lcss_since(started_at)
     end
 
     def import!
@@ -288,12 +289,12 @@ module Import
         end
         # Always use molfile if available (highest priority)
         if molfile.present?
-          molecule ||= Molecule.find_or_create_by_molfile(molfile, lcss_batch: @lcss_batch)
+          molecule ||= Molecule.find_or_create_by_molfile(molfile, defer_lcss: @defer_lcss)
         end
 
         # Use cano_smiles if molfile is missing or invalid but cano_smiles is available
         if cano_smiles.present?
-          molecule ||= Molecule.find_or_create_by_cano_smiles(cano_smiles, lcss_batch: @lcss_batch)
+          molecule ||= Molecule.find_or_create_by_cano_smiles(cano_smiles, defer_lcss: @defer_lcss)
         end
         # Create dummy only for decoupled samples with no structure data
         molecule ||= Molecule.find_or_create_dummy if fields.fetch('decoupled', nil)
@@ -857,7 +858,7 @@ module Import
     # Mirrors logic in Import::ImportSamples#get_data_from_molfile.
     # @return [Molecule, nil] the molecule or nil if cleaned molfile is blank
     def find_or_create_molecule_for_polymer_molfile(raw_molfile)
-      Import::PolymerMoleculeResolver.call(raw_molfile, lcss_batch: @lcss_batch, unescape_octal: false).molecule
+      Import::PolymerMoleculeResolver.call(raw_molfile, defer_lcss: @defer_lcss, unescape_octal: false).molecule
     end
 
     # Sort records by created_at timestamp

@@ -95,13 +95,13 @@ RSpec.describe 'Import::ImportSamples' do
       end
 
       it 'schedules exactly one PubchemSingleLcssJob for the whole import instead of one per molecule' do
-        scheduled_ids = nil
-        allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+        started_at = Time.current
+        allow(PubchemSingleLcssJob).to receive(:perform_later)
 
         import_result
 
         expect(PubchemSingleLcssJob).to have_received(:perform_later).once
-        expect(scheduled_ids.size).to be > 1
+        expect(PubchemSingleLcssJob).to have_received(:perform_later).with(nil, created_after: be >= started_at)
       end
     end
   end
@@ -235,7 +235,7 @@ RSpec.describe 'Import::ImportSamples' do
         molecule, raw_molfile = importer.get_data_from_molfile({ 'molfile' => polymer_molfile })
 
         expect(Import::PolymerMoleculeResolver).to have_received(:call)
-          .with(polymer_molfile, lcss_batch: importer.instance_variable_get(:@lcss_batch))
+          .with(polymer_molfile, defer_lcss: importer.instance_variable_get(:@defer_lcss))
         expect(molecule).to eq(resolved_molecule)
         expect(raw_molfile).to eq(polymer_molfile)
       end

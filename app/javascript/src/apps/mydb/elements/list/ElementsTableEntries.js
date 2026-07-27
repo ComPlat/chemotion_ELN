@@ -15,7 +15,7 @@ import ElementCollectionLabels from 'src/apps/mydb/elements/labels/ElementCollec
 import ReactionRole from 'src/apps/mydb/elements/list/reaction/ReactionRole';
 import ReactionVariations from 'src/apps/mydb/elements/list/reaction/ReactionVariations';
 import ReactionStatus from 'src/apps/mydb/elements/list/reaction/ReactionStatus';
-import GenericElementVariations from 'src/apps/mydb/elements/list/GenericElementVariations';
+import { ElementVariationsBadge } from 'chem-generic-ui';
 import ImageModal from 'src/components/common/ImageModal';
 
 export default class ElementsTableEntries extends Component {
@@ -112,7 +112,7 @@ export default class ElementsTableEntries extends Component {
             <ReactionRole element={element} />
             <ShowUserLabels element={element} />
             <ReactionVariations element={element} />
-            <GenericElementVariations element={element} />
+            <ElementVariationsBadge element={element} />
           </div>
           <div className="d-flex gap-1 align-items-center">
             <CommentIcon commentCount={element.comment_count} />

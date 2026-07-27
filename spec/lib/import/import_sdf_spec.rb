@@ -133,21 +133,21 @@ RSpec.describe Import::ImportSdf do
       end
     end
 
-    it 'schedules a single PubchemSingleLcssJob covering every new molecule in one chunk' do
-      scheduled_ids = nil
-      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+    it 'schedules a single PubchemSingleLcssJob covering every new molecule, via a created_after timestamp' do
+      started_at = Time.current
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
 
       expect { batch_import.find_or_create_mol_by_batch }.to change(Molecule, :count).by(2)
       expect(PubchemSingleLcssJob).to have_received(:perform_later).once
-      expect(scheduled_ids.size).to eq(2)
+      expect(PubchemSingleLcssJob).to have_received(:perform_later).with(nil, created_after: be >= started_at)
     end
 
-    it 'schedules one PubchemSingleLcssJob per chunk when batch_size splits the import' do
+    it 'still schedules exactly one PubchemSingleLcssJob when batch_size splits the import into multiple chunks' do
       allow(PubchemSingleLcssJob).to receive(:perform_later)
 
       batch_import.find_or_create_mol_by_batch(1)
 
-      expect(PubchemSingleLcssJob).to have_received(:perform_later).twice
+      expect(PubchemSingleLcssJob).to have_received(:perform_later).once
     end
   end
 
@@ -170,7 +170,7 @@ RSpec.describe Import::ImportSdf do
         row = mapper.find_or_create_polymer_molfile_entry(polymer_molfile, nil)
 
         expect(Import::PolymerMoleculeResolver).to have_received(:call)
-          .with(polymer_molfile, lcss_batch: mapper.instance_variable_get(:@lcss_batch))
+          .with(polymer_molfile, defer_lcss: mapper.instance_variable_get(:@defer_lcss))
         expect(row).to include(
           inchikey: resolved_molecule.inchikey,
           svg: 'molecules/x.svg',
@@ -197,7 +197,7 @@ RSpec.describe Import::ImportSdf do
         tuple = mapper.molecule_and_molfile_for_row(polymer_molfile)
 
         expect(Import::PolymerMoleculeResolver).to have_received(:call)
-          .with(polymer_molfile, lcss_batch: mapper.instance_variable_get(:@lcss_batch))
+          .with(polymer_molfile, defer_lcss: mapper.instance_variable_get(:@defer_lcss))
         expect(tuple).to eq([resolved_molecule, polymer_molfile, {}])
       end
     end

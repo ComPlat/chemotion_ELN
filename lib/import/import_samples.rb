@@ -274,7 +274,8 @@ module Import
     end
 
     def write_to_db
-      @lcss_batch = []
+      started_at = Time.current
+      @defer_lcss = true
       unprocessable_count = 0
       begin
         ActiveRecord::Base.transaction do
@@ -294,7 +295,7 @@ module Import
         raise 'More than 1 row can not be processed' if unprocessable_count.positive?
       end
     ensure
-      Molecule.schedule_lcss_batch(@lcss_batch)
+      Molecule.schedule_lcss_since(started_at)
     end
 
     def structure?(row)
@@ -320,7 +321,7 @@ module Import
       raw_molfile = row_value_case_insensitive(row, 'molfile').to_s.strip
       # When molfile has > <PolymersList>, use full molfile and Molecule.svg_reprocess so polymers use SvgRenderer.
       if raw_molfile.include?(Chemotion::MolfilePolymerSupport::POLYMERS_LIST_TAG)
-        result = Import::PolymerMoleculeResolver.call(raw_molfile, lcss_batch: @lcss_batch)
+        result = Import::PolymerMoleculeResolver.call(raw_molfile, defer_lcss: @defer_lcss)
         return [result.molecule, result.raw_molfile]
       end
 
@@ -331,7 +332,7 @@ module Import
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
       inchikey = babel_info[:inchikey]
       if inchikey.presence
-        molecule = Molecule.find_or_create_by_molfile(molfile_for_babel, lcss_batch: @lcss_batch, **babel_info)
+        molecule = Molecule.find_or_create_by_molfile(molfile_for_babel, defer_lcss: @defer_lcss, **babel_info)
       end
       [molecule, raw_molfile]
     end
@@ -341,16 +342,13 @@ module Import
         go_to_next = true
       else
         go_to_next = false
-        created = false
         molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: false) do |molecul|
-          created = true
-          molecul.skip_lcss_callback = true if @lcss_batch
+          molecul.skip_lcss_callback = true if @defer_lcss
           pubchem_info =
             Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
           molecul.molfile = molfile_coord
           molecul.assign_molecule_data babel_info, pubchem_info
         end
-        @lcss_batch << molecule.id if created && @lcss_batch
       end
       [molecule, molfile_coord, go_to_next]
     end
@@ -733,11 +731,6 @@ module Import
     end
 
     # NB: always called nested inside #write_to_db's row loop (via
-    # handle_sample_components), which already has its own @lcss_batch
-    # active — this appends to that same accumulator rather than managing
-    # its own, so a component's molecule doesn't get double-scheduled or
-    # cause the outer batch to lose ids collected before this call.
-
     # Applies parsed sample_composition_table data to the sample (HierarchicalMaterial components).
     # Row must have 'sample uuid' matching keys in @composition_table_data (from sample_composition_table sheet).
     def apply_composition_table_data(sample, sample_row)
@@ -777,6 +770,9 @@ module Import
       Rails.logger.error("apply_composition_table_data failed for sample: #{e.message}")
     end
 
+    # handle_sample_components), which already has @defer_lcss set — a
+    # component's molecule creation is deferred the same way as the outer
+    # row's, and both flush together via #write_to_db's own Molecule.schedule_lcss_since.
     def create_components(sample, sample_components_data)
       unprocessable_count = 0
       xlsx.default_sheet = 'sample_components'

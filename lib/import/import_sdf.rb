@@ -118,12 +118,12 @@ class Import::ImportSdf < Import::ImportSamples
     n = batch_size - 1
     inchikeys = []
     @processed_mol = []
+    started_at = Time.current
+    @defer_lcss = true
     data = raw_data.dup
     until data.empty?
       batch = data.slice!(0..n)
-      @lcss_batch = []
       molecules = find_or_create_by_molfiles(batch)
-      Molecule.schedule_lcss_batch(@lcss_batch)
       inchikeys += molecules.map { |m| (m && m[:inchikey]) || nil }
       @processed_mol += molecules
     end
@@ -135,6 +135,8 @@ class Import::ImportSdf < Import::ImportSamples
       @message[:error] << 'No Molecule processed. '
     end
     @inchi_array += inchikeys.compact
+  ensure
+    Molecule.schedule_lcss_since(started_at)
   end
 
   # Runs the whole raw-SDF/mol import in one pass, off the web request (worker context):
@@ -183,7 +185,8 @@ class Import::ImportSdf < Import::ImportSamples
   end
 
   def create_samples
-    @lcss_batch = []
+    started_at = Time.current
+    @defer_lcss = true
     ids = []
     read_data if raw_data.empty? && rows.empty?
     if !raw_data.empty? && inchi_array.empty?
@@ -362,7 +365,7 @@ class Import::ImportSdf < Import::ImportSamples
 
     samples
   ensure
-    Molecule.schedule_lcss_batch(@lcss_batch)
+    Molecule.schedule_lcss_since(started_at)
   end
 
   def find_or_create_by_molfiles(molfiles)
@@ -373,7 +376,7 @@ class Import::ImportSdf < Import::ImportSamples
       if Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(mf.to_s)
         find_or_create_polymer_molfile_entry(mf.to_s.strip, babel_info)
       elsif babel_info && babel_info[:inchikey].present?
-        m = Molecule.find_or_create_by_molfile(mf, lcss_batch: @lcss_batch, **babel_info)
+        m = Molecule.find_or_create_by_molfile(mf, defer_lcss: @defer_lcss, **babel_info)
         process_molfile_opt_data(mf).merge(
           inchikey: m.inchikey,
           svg: "molecules/#{m.molecule_svg_file}",
@@ -388,7 +391,7 @@ class Import::ImportSdf < Import::ImportSamples
 
   # When molfile has PolymersList/TextNode: keep full molfile, clean for babel, find/create molecule, reprocess SVG.
   def find_or_create_polymer_molfile_entry(raw_molfile, _babel_info_from_batch)
-    result = Import::PolymerMoleculeResolver.call(raw_molfile, lcss_batch: @lcss_batch)
+    result = Import::PolymerMoleculeResolver.call(raw_molfile, defer_lcss: @defer_lcss)
     return { name: nil, inchikey: nil, svg: 'no_image_180.svg' } if result.molecule.blank?
 
     process_molfile_opt_data(result.raw_molfile).merge(
@@ -414,7 +417,7 @@ class Import::ImportSdf < Import::ImportSamples
   def molecule_and_molfile_for_row(molfile)
     raw = molfile.to_s.strip
     if Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(raw)
-      result = Import::PolymerMoleculeResolver.call(raw, lcss_batch: @lcss_batch)
+      result = Import::PolymerMoleculeResolver.call(raw, defer_lcss: @defer_lcss)
       [result.molecule, result.raw_molfile, result.babel_info]
     else
       san_molfile = sanitize_molfile(molfile)

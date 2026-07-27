@@ -425,11 +425,11 @@ describe Chemotion::SampleAPI do
       # per-molecule Delayed::Job query, triggered by a concurrently-running
       # worker draining that queue mid-import. get_lcss no longer queries
       # Delayed::Job at all (see Molecule.find_or_create_by_molfile's
-      # lcss_batch: parameter and Import::ImportSdf#find_or_create_mol_by_batch)
+      # defer_lcss: parameter and Import::ImportSdf#find_or_create_mol_by_batch)
       # — this asserts the replacement behavior end-to-end: the whole SDF
       # import (2 new molecules) enqueues a single batched job, not one per molecule.
-      scheduled_ids = nil
-      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+      started_at = Time.current
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
 
       post(
         '/api/v1/samples/import/',
@@ -445,8 +445,11 @@ describe Chemotion::SampleAPI do
       # LCSS scheduling now happens inside ImportSamplesJob (find_or_create_mol_by_batch)
       perform_enqueued_jobs
 
+      # create_samples also flushes its own started_at, but finds nothing created
+      # after it (all molecules were already created during find_or_create_mol_by_batch)
+      # so Molecule.schedule_lcss_since no-ops for that second flush point.
       expect(PubchemSingleLcssJob).to have_received(:perform_later).once
-      expect(scheduled_ids.size).to eq 2
+      expect(PubchemSingleLcssJob).to have_received(:perform_later).with(nil, created_after: be >= started_at)
     end
   end
 
