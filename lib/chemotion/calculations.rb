@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # rubocop:disable Metrics/ModuleLength -- pre-existing size, out of scope for this PR
 module Chemotion::Calculations
 
