@@ -43,7 +43,7 @@ const User = types.model(
 const Device = types.model(
   'Device',
   {
-    id: types.identifier,
+    id: types.integer,
     name: types.string,
     target: types.string,
     password: types.string
