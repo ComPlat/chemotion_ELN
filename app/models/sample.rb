@@ -835,7 +835,15 @@ class Sample < ApplicationRecord
   end
 
   # Called on the write path (before_save) — never on reads or read replicas.
+  #
+  # Gated to skip polymer_svg_needs_regen?'s disk read on saves that couldn't plausibly
+  # have made the cached SVG stale: a real Ketcher edit always dirties molfile (Ketcher's
+  # own serializer stamps a live timestamp into the molfile header on every save), so this
+  # still fires on every genuine structure edit. What it no longer does is re-read an
+  # already-fine polymer sample's cached SVG from disk on saves that only touch unrelated
+  # attributes (name, amount, location, ...).
   def regen_polymer_svg_if_stale
+    return unless molecule_id_changed? || molfile_changed? || sample_svg_file.blank?
     return unless polymer_svg_needs_regen?
 
     svg = Molecule.svg_reprocess(nil, molfile)

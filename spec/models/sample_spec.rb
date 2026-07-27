@@ -587,16 +587,33 @@ RSpec.describe Sample do
         expect(sample).not_to have_received(:update_column)
       end
 
-      it 'triggers regen via regen_polymer_svg_if_stale on save' do
+      # regen_polymer_svg_if_stale is gated on molecule_id_changed? || molfile_changed? ||
+      # sample_svg_file.blank? — a real Ketcher save always dirties molfile (Ketcher's own
+      # serializer stamps a live timestamp into the molfile header on every save), so this
+      # simulates that real-edit path rather than an untouched attribute save.
+      it 'triggers regen via regen_polymer_svg_if_stale on a save that touches molfile' do
         allow(Molecule).to receive(:svg_reprocess).and_return(svg_with_image)
         allow(sample).to receive(:attach_svg)
         allow(File).to receive(:write).and_call_original
+        sample.molfile = "#{polymer_molfile}\n"
         sample.save!
         # regen_polymer_svg_if_stale writes SVG to a TMPFILE and passes the
         # filename to attach_svg (to avoid File.basename corrupting SVG XML).
         expect(sample).to have_received(:attach_svg).with(
           a_string_matching(/\ATMPFILE[0-9a-f]{64}\.svg\z/)
         )
+      end
+
+      it 'does not regen on a save that touches neither molfile nor molecule_id' do
+        # attach_svg is also its own separate before_save callback (unconditional, unrelated
+        # to polymer staleness), so it still fires either way — the thing this gate actually
+        # skips is polymer_svg_needs_regen?'s disk read and the Molecule.svg_reprocess call
+        # that would follow it.
+        allow(Molecule).to receive(:svg_reprocess).and_return(svg_with_image)
+        allow(sample).to receive(:attach_svg)
+        sample.name = 'renamed sample'
+        sample.save!
+        expect(Molecule).not_to have_received(:svg_reprocess)
       end
     end
 
