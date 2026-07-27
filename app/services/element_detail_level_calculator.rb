@@ -20,19 +20,23 @@ class ElementDetailLevelCalculator
   # replace the per-element `user_collections_with_element.any?` check when
   # calculating detail levels for a whole page of elements.
   #
+  # All elements must be the same class (the query is scoped to one table) —
+  # a mixed-class array would otherwise silently understate detail levels for
+  # every class but the first.
+  #
   # Returns a Set of element ids.
   def self.owned_element_ids(elements:, user:)
     elements = elements.to_a
     return Set.new if elements.empty?
 
     klass = elements.first.class
+    raise ArgumentError, 'elements must all be the same class' unless elements.all?(klass)
+
     user_ids = user.group_ids + [user.id]
 
     klass
-      .joins(:collections)
-      .where(collections: { user_id: user_ids })
+      .for_user_n_groups(user_ids)
       .where(id: elements.map(&:id))
-      .distinct
       .pluck(:id)
       .to_set
   end

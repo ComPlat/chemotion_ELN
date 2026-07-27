@@ -86,6 +86,17 @@ describe ElementDetailLevelCalculator do
       end
     end
 
+    context 'when elements are not all the same class' do
+      let(:sample) { create(:sample, collections: [owned_collection]) }
+      let(:reaction) { create(:reaction, collections: [owned_collection]) }
+
+      it 'raises instead of silently scoping to only the first class' do
+        expect do
+          described_class.owned_element_ids(elements: [sample, reaction], user: user)
+        end.to raise_error(ArgumentError, /same class/)
+      end
+    end
+
     context 'with a mixed page of owned, shared, and unowned elements' do
       let(:page) do
         [
