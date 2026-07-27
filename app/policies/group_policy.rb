@@ -31,6 +31,6 @@ class GroupPolicy
   end
 
   def last_admin?(target_user_id)
-    group.admins.one? && group.admins.first.id == target_user_id
+    group.sole_admin?(target_user_id)
   end
 end
