@@ -559,6 +559,25 @@ describe Chemotion::SampleAPI do
       end
     end
 
+    context 'when a page mixes an owned sample and a merely-shared sample' do
+      let(:shared_collection) do
+        create(:collection, user: other_user).tap do |collection|
+          create(:collection_share, collection: collection, shared_with: user, sample_detail_level: 2)
+        end
+      end
+      let!(:owned_sample) { create(:sample, collections: [shared_collection, personal_collection]) }
+      let!(:shared_only_sample) { create(:sample, collections: [shared_collection]) }
+
+      it 'reports full access for the owned sample and restricted access for the shared-only one' do
+        get '/api/v1/samples', params: { collection_id: shared_collection.id }
+
+        samples = JSON.parse(response.body)['samples'].index_by { |s| s['id'] }
+        expect(samples.keys).to contain_exactly(owned_sample.id, shared_only_sample.id)
+        expect(samples[owned_sample.id]['is_restricted']).to be false
+        expect(samples[shared_only_sample.id]['is_restricted']).to be true
+      end
+    end
+
     context 'when collection_id is given and no samples found' do
       let(:empty_collection) { create(:collection, label: 'empty collection', user: user) }
 
