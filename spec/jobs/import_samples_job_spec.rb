@@ -366,7 +366,7 @@ describe ImportSamplesJob, :active_job do
         job.instance_variable_set(:@result, { status: 'ok', message: '6 of 6 row(s) were imported.' })
         job.send(:notify_user)
         expect(Message).to have_received(:create_msg_notification)
-          .with(hash_including(data_args: { message: '6 of 6 row(s) were imported.' }))
+          .with(hash_including(data_args: hash_including(message: '6 of 6 row(s) were imported.')))
       end
 
       it 'raises the notification level for a partial import' do

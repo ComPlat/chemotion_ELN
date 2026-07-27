@@ -4,7 +4,6 @@ import {
   Button, Form, InputGroup, Row, Col,
 } from 'react-bootstrap';
 import { Select, CreatableSelect } from 'src/components/common/Select';
-import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import { convertUnits } from 'src/components/staticDropdownOptions/units';
 import {
   HIERARCHICAL_PROPERTY_OPTIONS,
@@ -199,8 +198,9 @@ export default function HierarchicalMaterialSection({
     onSampleChanged(sample);
   };
 
+  // Physical state lives in `xref.physical_state` — matching main's storage.
   const handleStateChanged = (value) => {
-    sample.state = value;
+    sample.xref = { ...(sample.xref || {}), physical_state: value };
     onSampleChanged(sample);
   };
 
@@ -224,7 +224,7 @@ export default function HierarchicalMaterialSection({
             <Form.Label>State</Form.Label>
             <Form.Select
               onChange={(e) => handleStateChanged(e.target.value)}
-              value={sample.state || ''}
+              value={sample.xref?.physical_state || ''}
               disabled={!sample.can_update}
             >
               <option value="">Select a state</option>
@@ -232,25 +232,6 @@ export default function HierarchicalMaterialSection({
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </Form.Select>
-          </Form.Group>
-        </Col>
-        <Col xs={3}>
-          <Form.Group>
-            <Form.Label>Loading</Form.Label>
-            <NumeralInputWithUnitsCompo
-              value={sample.loading ?? null}
-              unit="mmol/g"
-              metricPrefix="n"
-              metricPrefixes={['n']}
-              precision={3}
-              name="hm_loading"
-              onChange={(e) => {
-                sample.loading = e.value;
-                sample.external_loading = e.value;
-                onSampleChanged(sample);
-              }}
-              disabled={!sample.can_update}
-            />
           </Form.Group>
         </Col>
         <Col>

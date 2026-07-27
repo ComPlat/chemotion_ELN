@@ -312,8 +312,20 @@ class Material extends Component {
     };
     if (material.gas_type === 'gas') {
       calculateYield = this.recalculateYieldForGasProduct(material, reaction);
-    } else if (reaction.hasPolymers()) {
-      if (isNumeric(material.equivalent)) {
+    } else if (reaction.hasLoadingBasedSamples()) {
+      // Polymers + HM both derive amount_mol from loading × mass, so yield is
+      // best displayed straight from the (clamped) equivalent for either.
+      //
+      // Guard: a loading-based material with no loading value cannot have a
+      // meaningful yield — the stored `equivalent` for such rows may be stale
+      // from a pre-fix save (e.g. computed via molecule MW before the HM
+      // branch existed). Show `n.a.` in that case rather than a misleading
+      // clamped percentage.
+      const loadingBased = material.isHierarchicalMaterial?.() || material.contains_residues;
+      const hasLoading = !!material.residues?.[0]?.custom_info?.loading;
+      if (loadingBased && !hasLoading) {
+        calculateYield = 'n.a.';
+      } else if (isNumeric(material.equivalent)) {
         const eq = material.equivalent <= 1 ? material.equivalent : 1;
         calculateYield = `${(eq * 100).toFixed(0)}%`;
       }

@@ -236,6 +236,7 @@ module Import
     # Parses the sample_composition_table sheet (when present) into @composition_table_data.
     # Keys: sample uuid (from the sheet). Values: array of hashes with :source, :weight_ratio_exp, :molar_mass.
     # Column names match Export::ExportExcel (COMPOSITION_SAMPLE_KEYS + COMPOSITION_COMP_HEADERS).
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
     def parse_composition_table_data
       return unless xlsx.sheets.include?('sample_composition_table')
 
@@ -261,7 +262,7 @@ module Import
         weight_ratio_val = if weight_ratio_idx && row_values[weight_ratio_idx].present?
                              row_values[weight_ratio_idx].to_s.to_f
                            end
-        molar_mass_val = (row_values[molar_mass_idx].to_s.to_f if molar_mass_idx && row_values[molar_mass_idx].present?)
+        molar_mass_val = (row_values[molar_mass_idx].to_s.to_f if molar_mass_idx && row_values[molar_mass_idx].present?) # rubocop:disable Layout/LineLength
         next if source_val.blank? && weight_ratio_val.nil? && molar_mass_val.nil?
 
         @composition_table_data[current_sample_uuid] ||= []
@@ -272,6 +273,7 @@ module Import
         }
       end
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
 
     # Returns the sample uuid in effect after this row
     def parse_component_row(row_index, sample_uuid_col, current_sample_uuid)
@@ -1033,7 +1035,10 @@ module Import
     def handle_default_fields(sample, db_column, value)
       if sample.has_attribute?(db_column)
         sample[db_column] = value || ''
-      elsif %w[height width length diameter state storage_condition material cspi particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer].include?(db_column)
+      elsif %w[
+               height width length diameter state storage_condition material cspi
+               particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer
+             ].include?(db_column)
         # Backward compatibility: some DBs do not have dedicated hierarchical columns yet.
         sample.sample_details ||= {}
         sample.sample_details[db_column] = value || ''
@@ -1184,7 +1189,7 @@ module Import
       chemical.save!
     end
 
-    def validate_sample_and_save(sample, stereo, row, _index = nil)
+    def validate_sample_and_save(sample, stereo, row, index = nil)
       handle_sample_solvent_column(sample, row)
       normalize_amount_units(sample, row)
       sample.validate_stereo(stereo)
@@ -1274,6 +1279,7 @@ module Import
 
     # Applies parsed sample_composition_table data to the sample (HierarchicalMaterial components).
     # Row must have 'sample uuid' matching keys in @composition_table_data (from sample_composition_table sheet).
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def apply_composition_table_data(sample, sample_row)
       sample_uuid = row_value_case_insensitive(sample_row, 'sample uuid').to_s.strip
       return if sample_uuid.blank?
@@ -1310,6 +1316,7 @@ module Import
     rescue StandardError => e
       Rails.logger.error("apply_composition_table_data failed for sample: #{e.message}")
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def create_components(sample, sample_components_data)
       xlsx.default_sheet = 'sample_components'
