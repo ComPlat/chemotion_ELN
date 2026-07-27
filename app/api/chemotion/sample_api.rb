@@ -338,16 +338,14 @@ module Chemotion
         optional :literatures, type: Hash
 
         # Hierarchical sample params
-        optional :state, type: String, desc: 'state of the Hierarchical sample'
-        optional :color, type: String, desc: 'color of the Hierarchical sample'
-        optional :height, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
-        optional :width, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
-        optional :length, type: String, desc: 'dimension of the Hierarchical sample HXWXL'
-        optional :diameter, type: String, desc: 'diameter of the Hierarchical sample'
+        # (color, state, particle_size are sent via xref — main's storage)
+        optional :height, type: Float, desc: 'dimension of the Hierarchical sample HXWXL'
+        optional :width, type: Float, desc: 'dimension of the Hierarchical sample HXWXL'
+        optional :length, type: Float, desc: 'dimension of the Hierarchical sample HXWXL'
+        optional :diameter, type: Float, desc: 'diameter of the Hierarchical sample'
         optional :storage_condition, type: String, desc: 'storage condition of the Hierarchical sample'
         optional :material, type: String, desc: 'material of the Hierarchical sample'
         optional :cspi, type: String, desc: 'Cell density (CPSI) of the Hierarchical sample'
-        optional :particle_size, type: String, desc: 'particle size of the Hierarchical sample'
         optional :shape, type: String, desc: 'shape of the Hierarchical sample'
         optional :sieve_fraction, type: String, desc: 'sieve fraction of the Hierarchical sample'
         optional :layer_thickness, type: String, desc: 'layer thickness of the Hierarchical sample'
@@ -416,7 +414,8 @@ module Chemotion
           sample_details_param = attributes.delete(:sample_details) || {}
 
           # Extract fields that have DB columns and save them directly
-          db_column_fields = %i[color state height width length diameter storage_condition material cspi particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer]
+          # (color, state, particle_size stay in xref — main's storage)
+          db_column_fields = %i[height width length diameter storage_condition material cspi shape sieve_fraction layer_thickness liquid_medium stabilizer]
           db_column_fields.each do |field|
             next unless sample_details_param.key?(field.to_s)
 
@@ -553,10 +552,24 @@ module Chemotion
           sum_formula: params[:sum_formula],
           sample_type: params[:sample_type],
           sample_details: (params[:sample_details] || {}).merge(
-            %w[color state height width length storage_condition diameter material cspi
-               particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer]
+            %w[height width length storage_condition diameter material cspi
+               shape sieve_fraction layer_thickness liquid_medium stabilizer]
               .index_with { |k| params[k.to_sym] },
           ).compact,
+          # Mirror hierarchical properties into DB columns so create + update stay in sync
+          # (color, state, particle_size stay in xref — main's storage)
+          height: params[:height],
+          width: params[:width],
+          length: params[:length],
+          diameter: params[:diameter],
+          storage_condition: params[:storage_condition],
+          material: params[:material],
+          cspi: params[:cspi],
+          shape: params[:shape],
+          sieve_fraction: params[:sieve_fraction],
+          layer_thickness: params[:layer_thickness],
+          liquid_medium: params[:liquid_medium],
+          stabilizer: params[:stabilizer],
         }
 
         boiling_point_lowerbound = params['boiling_point_lowerbound'].presence || -Float::INFINITY

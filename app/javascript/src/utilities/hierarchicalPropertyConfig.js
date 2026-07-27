@@ -8,7 +8,8 @@ export const HIERARCHICAL_PROPERTY_OPTIONS = [
   { value: 'length', label: 'Length', placeholder: 'e.g., 10' },
   { value: 'material', label: 'Monolith material', placeholder: 'e.g., Cordierite' },
   { value: 'cspi', label: 'Cell density [CPSI]', placeholder: 'e.g., 400' },
-  { value: 'particle_size', label: 'Particle size', placeholder: 'e.g., Medium, 50 µm' },
+  // particle_size stays in xref (main's storage) and is rendered via the standard sample form,
+  // not as a hierarchical property.
   { value: 'shape', label: 'Shape', placeholder: 'e.g., Cylinders' },
   { value: 'storage_condition', label: 'Storage condition', placeholder: 'e.g., Glovebox' },
   { value: 'layer_thickness', label: 'Layer thickness', placeholder: 'e.g., 50' },
@@ -21,9 +22,8 @@ export const PROPERTY_MAP = Object.fromEntries(
 );
 
 export const DIMENSION_FIELDS = ['height', 'diameter', 'width', 'length'];
-export const LENGTH_UNIT_FIELDS = [...DIMENSION_FIELDS, 'particle_size', 'sieve_fraction', 'layer_thickness'];
+export const LENGTH_UNIT_FIELDS = [...DIMENSION_FIELDS, 'sieve_fraction', 'layer_thickness'];
 const DIMENSION_UNIT_OPTIONS = unitSystems.length.filter((u) => ['µm', 'mm', 'cm', 'm'].includes(u.value));
-const PARTICLE_SIZE_UNIT_OPTIONS = unitSystems.length.filter((u) => ['nm', 'µm', 'mm'].includes(u.value));
 const SIEVE_FRACTION_UNIT_OPTIONS = unitSystems.length.filter((u) => ['µm', 'mm'].includes(u.value));
 const LAYER_THICKNESS_UNIT_OPTIONS = unitSystems.length.filter((u) => ['µm', 'mm'].includes(u.value));
 
@@ -32,7 +32,6 @@ export const FIELD_UNIT_OPTIONS = {
   width: DIMENSION_UNIT_OPTIONS,
   length: DIMENSION_UNIT_OPTIONS,
   diameter: DIMENSION_UNIT_OPTIONS,
-  particle_size: PARTICLE_SIZE_UNIT_OPTIONS,
   sieve_fraction: SIEVE_FRACTION_UNIT_OPTIONS,
   layer_thickness: LAYER_THICKNESS_UNIT_OPTIONS,
 };
