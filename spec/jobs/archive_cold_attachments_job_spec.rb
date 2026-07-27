@@ -55,6 +55,20 @@ RSpec.describe ArchiveColdAttachmentsJob do
     expect(attachment.reload.attachment.storage_key).to eq(:cold)
   end
 
+  it 'reads the age threshold from the env var (so admins can tune it per deploy)' do
+    attachment = create(:attachment)
+    attachment.update_column(:updated_at, 2.months.ago)
+    attachment.attachable.update_column(:updated_at, 2.months.ago)
+
+    # 2 months old wouldn't be cold under the 12-month default, but is under a 1-month override
+    ENV[described_class::AGE_ENV_VAR] = '1'
+    described_class.perform_now
+
+    expect(attachment.reload.attachment.storage_key).to eq(:cold)
+  ensure
+    ENV.delete(described_class::AGE_ENV_VAR)
+  end
+
   it 'skips a fileless attachment without aborting the sweep' do
     fileless = create(:attachment, attachable: nil)
     fileless.update_column(:attachment_data, nil)
