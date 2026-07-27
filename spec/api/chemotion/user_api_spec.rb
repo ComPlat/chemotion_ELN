@@ -85,6 +85,18 @@ describe Chemotion::UserAPI do
         end
       end
     end
+
+    context 'when there is no session and no token' do
+      before do
+        allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(nil)
+        get '/api/v1/users/current'
+      end
+
+      it 'returns 200 with a nil user instead of raising unauthorized' do
+        expect(response).to have_http_status :ok
+        expect(JSON.parse(response.body)).to eq('user' => nil)
+      end
+    end
   end
 
   describe 'GET /api/v1/users/list_editors' do
