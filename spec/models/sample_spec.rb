@@ -516,6 +516,9 @@ RSpec.describe Sample do
   end
 
   describe '#get_svg_path — polymer auto-heal' do
+    # rubocop:disable Rails/SkipsModelValidations -- update_column intentionally bypasses
+    # save callbacks here, to set up a stale/blank sample_svg_file precondition without
+    # triggering the very regen_polymer_svg_if_stale callback under test.
     before do
       allow(PubChem).to receive_messages(
         get_record_from_inchikey: nil,
@@ -543,9 +546,9 @@ RSpec.describe Sample do
 
     let(:sample) do
       create(:sample,
-        created_by: user.id,
-        molecule: molecule,
-        molfile: polymer_molfile)
+             created_by: user.id,
+             molecule: molecule,
+             molfile: polymer_molfile)
     end
 
     let(:svg_with_image) do
@@ -600,7 +603,7 @@ RSpec.describe Sample do
         # regen_polymer_svg_if_stale writes SVG to a TMPFILE and passes the
         # filename to attach_svg (to avoid File.basename corrupting SVG XML).
         expect(sample).to have_received(:attach_svg).with(
-          a_string_matching(/\ATMPFILE[0-9a-f]{64}\.svg\z/)
+          a_string_matching(/\ATMPFILE[0-9a-f]{64}\.svg\z/),
         )
       end
 
@@ -674,9 +677,9 @@ RSpec.describe Sample do
       let(:plain_molecule) { create(:molecule, is_partial: false) }
       let(:plain_sample) do
         create(:sample,
-          created_by: user.id,
-          molecule: plain_molecule,
-          sample_svg_file: "#{SecureRandom.hex(64)}.svg")
+               created_by: user.id,
+               molecule: plain_molecule,
+               sample_svg_file: "#{SecureRandom.hex(64)}.svg")
       end
 
       # Force eager creation before File.read is mocked, to avoid profile.rb
@@ -689,5 +692,6 @@ RSpec.describe Sample do
         expect(File).not_to have_received(:read)
       end
     end
+    # rubocop:enable Rails/SkipsModelValidations
   end
 end

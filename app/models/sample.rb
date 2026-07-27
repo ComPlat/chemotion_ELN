@@ -847,7 +847,7 @@ class Sample < ApplicationRecord
     return unless polymer_svg_needs_regen?
 
     svg = Molecule.svg_reprocess(nil, molfile)
-    return unless svg.present?
+    return if svg.blank?
 
     # attach_svg interprets strings containing '/' as file paths (File.basename).
     # SVG XML content always contains '/' in tags, so pass via a named temp file
@@ -868,7 +868,7 @@ class Sample < ApplicationRecord
     svg_path = full_svg_path(sample_svg_file)
     return false unless svg_path && File.exist?(svg_path.to_s)
 
-    !File.read(svg_path.to_s).include?('<image')
+    File.read(svg_path.to_s).exclude?('<image')
   end
 
   def update_gas_material

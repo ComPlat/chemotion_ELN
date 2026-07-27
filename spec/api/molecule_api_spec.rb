@@ -216,8 +216,11 @@ describe Chemotion::MoleculeAPI do
           find_or_create_by_molfile: create(:molecule),
           find_or_create_dummy: create(:molecule),
         )
-        allow(SVG::Processor).to receive_message_chain(:new, :structure_svg)
-          .and_return({ svg_file_name: 'TMPFILE' + SecureRandom.hex(32) + '.svg' })
+        svg_processor = instance_double(
+          SVG::Processor,
+          structure_svg: { svg_file_name: "TMPFILE#{SecureRandom.hex(32)}.svg" },
+        )
+        allow(SVG::Processor).to receive(:new).and_return(svg_processor)
         allow(KetcherService::SVGProcessor).to receive(:clean_and_trim_svg).and_return(epam_svg)
       end
 

@@ -158,9 +158,6 @@ describe Usecases::Reactions::UpdateMaterials do
     # After save, yield reset to 0% because the join table kept the stale value.
     context 'when an existing product association is updated' do
       let(:existing_product_sample) { create(:sample, name: 'existing_product', container: create(:container)) }
-      let!(:existing_association) do
-        create(:reactions_product_sample, reaction: reaction, sample: existing_product_sample, equivalent: 0.3)
-      end
       let(:updated_product_materials) do
         {
           'products' => [
@@ -179,8 +176,9 @@ describe Usecases::Reactions::UpdateMaterials do
       end
 
       before do
+        create(:reactions_product_sample, reaction: reaction, sample: existing_product_sample, equivalent: 0.3)
         allow(SVG::ReactionComposer).to receive(:new).and_return(
-          double(compose_reaction_svg_and_save: nil)
+          instance_double(SVG::ReactionComposer, compose_reaction_svg_and_save: nil),
         )
         described_class.new(reaction, updated_product_materials, user, vessel_size).execute!
       end
