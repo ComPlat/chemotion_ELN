@@ -32,7 +32,7 @@ RSpec.describe PubchemSingleLcssJob do
     end
 
     it 'calls #pubchem_lcss on each resolved molecule in order' do
-      allow(job).to receive(:resolve_molecules).and_return([first_molecule, second_molecule])
+      allow(job).to receive_messages(resolve_molecules: [first_molecule, second_molecule], more_pending?: false)
       allow(first_molecule).to receive(:pubchem_lcss)
       allow(second_molecule).to receive(:pubchem_lcss)
 
@@ -43,7 +43,9 @@ RSpec.describe PubchemSingleLcssJob do
     end
 
     it 'sleeps between requests but not before the first one' do
-      allow(job).to receive(:resolve_molecules).and_return([first_molecule, second_molecule, third_molecule])
+      allow(job).to receive_messages(
+        resolve_molecules: [first_molecule, second_molecule, third_molecule], more_pending?: false,
+      )
       [first_molecule, second_molecule, third_molecule].each { |m| allow(m).to receive(:pubchem_lcss) }
 
       job.perform([first_molecule.id, second_molecule.id, third_molecule.id])
@@ -81,50 +83,109 @@ RSpec.describe PubchemSingleLcssJob do
         job.perform([first_molecule.id])
 
         expect(described_class).to have_received(:set).with(wait: PubchemRateLimitGuard::REQUEUE_DELAY)
-        expect(described_class).to have_received(:perform_later)
-          .with([first_molecule.id], type: :molecules, created_after: nil)
+        expect(described_class).to have_received(:perform_later).with(
+          [first_molecule.id], type: :molecules, created_after: nil,
+                               chunk_size: PubchemLcssJob::CHUNK_SIZE, start_id: 0
+        )
         expect(job).not_to have_received(:resolve_molecules)
+      end
+    end
+
+    context 'when more pending molecules exist than chunk_size allows in one run' do
+      it 'bounds a single run to chunk_size molecules and requeues a follow-up with the resume cursor' do
+        called_ids = []
+        # The job re-queries its own molecules from the DB, so stubbing a specific
+        # test object's #pubchem_lcss wouldn't be seen — stub the class instead.
+        allow_any_instance_of(Molecule).to receive(:pubchem_lcss) { |instance| called_ids << instance.id } # rubocop:disable RSpec/AnyInstance
+        allow(described_class).to receive(:perform_later)
+
+        job.perform([first_molecule.id, second_molecule.id, third_molecule.id], chunk_size: 2)
+
+        expect(called_ids).to contain_exactly(first_molecule.id, second_molecule.id)
+        expect(described_class).to have_received(:perform_later).with(
+          [first_molecule.id, second_molecule.id, third_molecule.id], type: :molecules, created_after: nil,
+                                                                      chunk_size: 2, start_id: second_molecule.id
+        )
+      end
+
+      it 'does not requeue once every given molecule has been processed' do
+        allow_any_instance_of(Molecule).to receive(:pubchem_lcss) # rubocop:disable RSpec/AnyInstance
+        allow(described_class).to receive(:perform_later)
+
+        job.perform([first_molecule.id, second_molecule.id])
+
+        expect(described_class).not_to have_received(:perform_later)
       end
     end
   end
 
-  describe '#resolve_molecules' do
-    let!(:old_molecule) { create(:molecule, created_at: 2.days.ago) }
-    let!(:new_molecule) { create(:molecule, created_at: 1.minute.ago) }
-    let!(:sample) { create(:sample, molecule: new_molecule) }
-
-    it 'scopes to the given molecule ids when type: :molecules' do
-      result = job.send(:resolve_molecules, [old_molecule.id], type: :molecules, created_after: nil)
-
-      expect(result.pluck(:id)).to eq([old_molecule.id])
+  describe '#resolve_sample_molecule_ids' do
+    let!(:molecule) { create(:molecule) }
+    let!(:sample) { create(:sample, molecule: molecule) }
+    let!(:sample_without_molecule) do
+      create(:sample, molecule: molecule).tap { |s| s.update_column(:molecule_id, nil) } # rubocop:disable Rails/SkipsModelValidations
     end
 
-    it 'resolves sample ids to their distinct referenced molecule ids when type: :samples' do
-      result = job.send(:resolve_molecules, [sample.id], type: :samples, created_after: nil)
+    it 'resolves sample ids to their distinct referenced molecule ids, dropping samples with no molecule' do
+      result = job.send(:resolve_sample_molecule_ids, [sample.id, sample_without_molecule.id])
 
-      expect(result.pluck(:id)).to eq([new_molecule.id])
+      expect(result).to eq([molecule.id])
+    end
+  end
+
+  describe '#resolve_molecules and #more_pending?' do
+    let!(:old_molecule) { create(:molecule, created_at: 2.days.ago) }
+    let!(:new_molecule) { create(:molecule, created_at: 1.minute.ago) }
+
+    it 'scopes to the given molecule ids' do
+      result = job.send(:resolve_molecules, [old_molecule.id], created_after: nil, start_id: 0)
+
+      expect(result.map(&:id)).to eq([old_molecule.id])
     end
 
     it 'filters by created_after alone when ids is blank' do
-      result = job.send(:resolve_molecules, nil, type: :molecules, created_after: 1.hour.ago)
+      result = job.send(:resolve_molecules, nil, created_after: 1.hour.ago, start_id: 0)
 
-      expect(result.pluck(:id)).to eq([new_molecule.id])
+      expect(result.map(&:id)).to eq([new_molecule.id])
     end
 
     it 'AND-combines ids with created_after, narrowing rather than extending the set' do
       result = job.send(
-        :resolve_molecules, [old_molecule.id, new_molecule.id], type: :molecules, created_after: 1.hour.ago
+        :resolve_molecules, [old_molecule.id, new_molecule.id], created_after: 1.hour.ago, start_id: 0
       )
 
-      expect(result.pluck(:id)).to eq([new_molecule.id])
+      expect(result.map(&:id)).to eq([new_molecule.id])
     end
 
     it 'excludes molecules a competing job already finished, even when explicitly given by id' do
       old_molecule.tag.update!(taggable_data: old_molecule.tag.taggable_data.merge('pubchem_lcss' => 'already fetched'))
 
-      result = job.send(:resolve_molecules, [old_molecule.id, new_molecule.id], type: :molecules, created_after: nil)
+      result = job.send(:resolve_molecules, [old_molecule.id, new_molecule.id], created_after: nil, start_id: 0)
 
-      expect(result.pluck(:id)).to eq([new_molecule.id])
+      expect(result.map(&:id)).to eq([new_molecule.id])
+    end
+
+    it 'only considers molecules with id greater than start_id' do
+      result = job.send(:resolve_molecules, nil, created_after: 2.days.ago - 1.hour, start_id: old_molecule.id)
+
+      expect(result.map(&:id)).to eq([new_molecule.id])
+    end
+
+    it 'bounds the result to chunk_size when given' do
+      result = job.send(:resolve_molecules, nil, created_after: 2.days.ago - 1.hour, start_id: 0, chunk_size: 1)
+
+      expect(result.map(&:id)).to eq([old_molecule.id])
+    end
+
+    describe '#more_pending?' do
+      it 'is true when a pending molecule exists beyond after_id' do
+        expect(job.send(:more_pending?, nil, created_after: 2.days.ago - 1.hour, after_id: old_molecule.id)).to be(true)
+      end
+
+      it 'is false when no pending molecule remains beyond after_id' do
+        expect(job.send(:more_pending?, nil, created_after: 2.days.ago - 1.hour,
+                                             after_id: new_molecule.id)).to be(false)
+      end
     end
   end
 end

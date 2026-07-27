@@ -17,36 +17,65 @@ class PubchemSingleLcssJob < ApplicationJob
   # @param created_after [ActiveSupport::TimeWithZone, nil] only include molecules
   #   created after this time; combines with +ids+ (or its resolved molecule ids) as
   #   an intersection (AND), narrowing rather than extending the set
-  def perform(ids = nil, type: :molecules, created_after: nil)
+  # @param chunk_size [Integer] max molecules processed in a single invocation before
+  #   self-requeuing a follow-up to continue from where this run left off — a wide-open
+  #   +created_after+ (e.g. from a large import) could otherwise resolve to thousands of
+  #   molecules and run long enough to hit Delayed::Worker.max_run_time
+  # @param start_id [Integer] resume point (exclusive) — only molecules with id > start_id
+  #   are considered
+  def perform(ids = nil, type: :molecules, created_after: nil,
+              chunk_size: PubchemLcssJob::CHUNK_SIZE, start_id: 0)
     # TODO: > stub request for testing
     return if Rails.env.test?
     return if ids.blank? && created_after.blank?
 
     if other_pubchem_job_running?
       self.class.set(wait: PubchemRateLimitGuard::REQUEUE_DELAY)
-          .perform_later(ids, type: type, created_after: created_after)
+          .perform_later(ids, type: type, created_after: created_after,
+                          chunk_size: chunk_size, start_id: start_id)
       return
     end
 
-    resolve_molecules(ids, type: type, created_after: created_after)
-      .each_with_index do |molecule, i|
-        sleep SLEEP_BETWEEN_REQUESTS if i.positive?
-        molecule.pubchem_lcss
-      end
+    molecule_ids = ids.present? && type.to_sym == :samples ? resolve_sample_molecule_ids(ids) : ids
+    molecules = resolve_molecules(molecule_ids, created_after: created_after,
+                                   start_id: start_id, chunk_size: chunk_size)
+
+    molecules.each_with_index do |molecule, i|
+      sleep SLEEP_BETWEEN_REQUESTS if i.positive?
+      molecule.pubchem_lcss
+    end
+    return if molecules.empty?
+
+    last_id = molecules.last.id
+    return unless more_pending?(molecule_ids, created_after: created_after, after_id: last_id)
+
+    # No wait — this isn't a collision backoff, just more work to continue with.
+    self.class.perform_later(molecule_ids, type: :molecules, created_after: created_after,
+                              chunk_size: chunk_size, start_id: last_id)
   end
 
   private
 
-  # @return [ActiveRecord::Relation<Molecule>] molecules still missing LCSS data, ordered
-  #   by id, with +:tag+ eager loaded (single query, also used to filter out molecules
-  #   a competing job already finished — e.g. during this job's own requeue delay)
-  def resolve_molecules(ids, type:, created_after:)
-    if ids.present? && type.to_sym == :samples
-      ids = Sample.where(id: ids).where.not(molecule_id: nil).distinct.pluck(:molecule_id)
-    end
+  def resolve_sample_molecule_ids(sample_ids)
+    Sample.where(id: sample_ids).where.not(molecule_id: nil).distinct.pluck(:molecule_id)
+  end
 
+  # @return [Array<Molecule>] up to +chunk_size+ molecules still missing LCSS data,
+  #   ordered by id, with +:tag+ eager loaded (single query, also used to filter out
+  #   molecules a competing job already finished — e.g. during this job's own requeue delay)
+  def resolve_molecules(ids, created_after:, start_id:, chunk_size: nil)
+    pending_scope(ids, created_after: created_after, after_id: start_id).limit(chunk_size).to_a
+  end
+
+  # @return [Boolean] whether any pending molecule remains beyond +after_id+
+  def more_pending?(ids, created_after:, after_id:)
+    pending_scope(ids, created_after: created_after, after_id: after_id).exists?
+  end
+
+  def pending_scope(ids, created_after:, after_id:)
     scope = Molecule.eager_load(:tag)
                     .where("element_tags.taggable_data->>'pubchem_lcss' is null")
+                    .where('molecules.id > ?', after_id)
                     .order(:id)
     scope = scope.where(id: ids) if ids.present?
     scope = scope.where('molecules.created_at > ?', created_after) if created_after.present?

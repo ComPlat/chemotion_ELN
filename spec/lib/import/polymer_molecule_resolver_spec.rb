@@ -52,10 +52,10 @@ RSpec.describe Import::PolymerMoleculeResolver do
       end
 
       it 'delegates to Molecule.find_or_create_by_molfile with the full (uncleaned) molfile' do
-        result = described_class.call(polymer_molfile, lcss_batch: [1, 2])
+        result = described_class.call(polymer_molfile, defer_lcss: true)
 
         expect(Molecule).to have_received(:find_or_create_by_molfile)
-          .with(polymer_molfile, lcss_batch: [1, 2], **babel_info)
+          .with(polymer_molfile, defer_lcss: true, **babel_info)
         expect(result.molecule).to eq(molecule)
       end
 
