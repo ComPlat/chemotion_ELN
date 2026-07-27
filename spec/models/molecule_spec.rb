@@ -185,17 +185,15 @@ RSpec.describe Molecule, type: :model do
       allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey).and_return({})
     end
 
-    it 'defers scheduling and collects the new id when given lcss_batch:' do
-      lcss_batch = []
+    it 'defers scheduling when given defer_lcss: true' do
       allow(PubchemSingleLcssJob).to receive(:perform_later)
 
-      molecule = described_class.find_or_create_by_molfile('molfile', lcss_batch: lcss_batch, **babel_info)
+      described_class.find_or_create_by_molfile('molfile', defer_lcss: true, **babel_info)
 
-      expect(lcss_batch).to eq([molecule.id])
       expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
     end
 
-    it 'schedules immediately when lcss_batch is not given' do
+    it 'schedules immediately when defer_lcss is not given' do
       scheduled_ids = nil
       allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
 
@@ -204,7 +202,7 @@ RSpec.describe Molecule, type: :model do
       expect(scheduled_ids).to eq([molecule.id])
     end
 
-    it 'does not push to lcss_batch when the molecule already existed' do
+    it 'does not schedule anything when the molecule already existed, regardless of defer_lcss' do
       existing = create(
         :molecule,
         inchikey: babel_info[:inchikey],
@@ -212,12 +210,40 @@ RSpec.describe Molecule, type: :model do
         sum_formular: babel_info[:formula],
         skip_lcss_callback: true,
       )
-      lcss_batch = []
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
 
-      molecule = described_class.find_or_create_by_molfile('molfile', lcss_batch: lcss_batch, **babel_info)
+      molecule = described_class.find_or_create_by_molfile('molfile', defer_lcss: true, **babel_info)
 
       expect(molecule.id).to eq(existing.id)
-      expect(lcss_batch).to be_empty
+      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+    end
+  end
+
+  describe '.schedule_lcss_since' do
+    it 'does nothing when timestamp is blank' do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      described_class.schedule_lcss_since(nil)
+
+      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+    end
+
+    it 'does nothing when no molecule was created after the given timestamp' do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      described_class.schedule_lcss_since(1.hour.from_now)
+
+      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+    end
+
+    it 'schedules a job covering molecules created after the given timestamp' do
+      timestamp = 1.hour.ago
+      create(:molecule)
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      described_class.schedule_lcss_since(timestamp)
+
+      expect(PubchemSingleLcssJob).to have_received(:perform_later).with(nil, created_after: timestamp)
     end
   end
 end
