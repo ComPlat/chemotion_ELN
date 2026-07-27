@@ -67,6 +67,43 @@ describe Chemotion::ContainerAPI do
         expect(response.status).to eq 401
       end
     end
+
+    describe 'GET /api/v1/containers/:container_id (used to poll for async AI task results)' do
+      let(:collection) { create(:collection, user: login) }
+      let(:sample)     { create(:sample, collections: [collection]) }
+      let(:analysis)   { sample.container.descendants.find_by(container_type: 'analysis') }
+
+      it 'returns the container, including ai_spectral_data when present' do
+        analysis.update!(extended_metadata: analysis.extended_metadata.merge(
+          'ai_spectral_data' => { 'technique' => 'nmr', 'model' => 'kit.qwen3.5-397b-A17b' }.to_json,
+        ))
+
+        get "/api/v1/containers/#{analysis.id}"
+
+        expect(response.status).to eq 200
+        body = JSON.parse(response.body)
+        expect(body['container']['id']).to eq(analysis.id)
+        expect(body['container']['extended_metadata']['ai_spectral_data']).to eq(
+          'technique' => 'nmr', 'model' => 'kit.qwen3.5-397b-A17b',
+        )
+      end
+
+      it 'returns 404 for a non-existent container' do
+        get '/api/v1/containers/-1'
+        expect(response.status).to eq 404
+      end
+
+      context 'when the container belongs to another user' do
+        let(:other_collection) { create(:collection, user: hacker) }
+        let(:other_sample)     { create(:sample, collections: [other_collection]) }
+        let(:other_analysis)   { other_sample.container.descendants.find_by(container_type: 'analysis') }
+
+        it 'returns 401' do
+          get "/api/v1/containers/#{other_analysis.id}"
+          expect(response.status).to eq 401
+        end
+      end
+    end
   end
 
   describe 'PUT /api/v1/containers/container' do

@@ -266,6 +266,30 @@ RSpec.describe LlmTaskRunner do
       end
     end
 
+    context 'when the first attempt returns non-empty but truncated JSON (finish_reason length)' do
+      let(:truncated_resp) do
+        { 'choices' => [{ 'finish_reason' => 'length',
+                          'message' => { 'content' => '{"chemical_name":"Phenol","hazard_statements":["H30' } }] }.to_json
+      end
+      let(:recovered_resp) do
+        { 'choices' => [{ 'finish_reason' => 'stop',
+                          'message' => { 'content' => '{"chemical_name":"Phenol","hazard_statements":["H301"]}' } }] }.to_json
+      end
+
+      before do
+        stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
+          { status: 200, body: truncated_resp,  headers: { 'Content-Type' => 'application/json' } },
+          { status: 200, body: recovered_resp,  headers: { 'Content-Type' => 'application/json' } },
+        )
+      end
+
+      it 'retries once (not a JSON-parse error) and returns the recovered result' do
+        result = described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
+        expect(result['hazard_statements']).to eq(['H301'])
+        expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions").twice
+      end
+    end
+
     context 'when the model returns empty output on every attempt' do
       before do
         stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
