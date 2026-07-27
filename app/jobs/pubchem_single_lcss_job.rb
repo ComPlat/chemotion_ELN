@@ -32,13 +32,13 @@ class PubchemSingleLcssJob < ApplicationJob
     if other_pubchem_job_running?
       self.class.set(wait: PubchemRateLimitGuard::REQUEUE_DELAY)
           .perform_later(ids, type: type, created_after: created_after,
-                          chunk_size: chunk_size, start_id: start_id)
+                              chunk_size: chunk_size, start_id: start_id)
       return
     end
 
     molecule_ids = ids.present? && type.to_sym == :samples ? resolve_sample_molecule_ids(ids) : ids
     molecules = resolve_molecules(molecule_ids, created_after: created_after,
-                                   start_id: start_id, chunk_size: chunk_size)
+                                                start_id: start_id, chunk_size: chunk_size)
 
     molecules.each_with_index do |molecule, i|
       sleep SLEEP_BETWEEN_REQUESTS if i.positive?
@@ -51,7 +51,7 @@ class PubchemSingleLcssJob < ApplicationJob
 
     # No wait — this isn't a collision backoff, just more work to continue with.
     self.class.perform_later(molecule_ids, type: :molecules, created_after: created_after,
-                              chunk_size: chunk_size, start_id: last_id)
+                                           chunk_size: chunk_size, start_id: last_id)
   end
 
   private

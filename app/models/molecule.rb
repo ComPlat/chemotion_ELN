@@ -263,7 +263,7 @@ class Molecule < ApplicationRecord
   # unconditionally — the existence check below keeps that a no-op).
   def self.schedule_lcss_since(timestamp)
     return if timestamp.blank?
-    return unless Molecule.where('created_at > ?', timestamp).exists?
+    return unless Molecule.exists?(['created_at > ?', timestamp])
 
     PubchemSingleLcssJob.perform_later(nil, created_after: timestamp)
   end
