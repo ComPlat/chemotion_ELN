@@ -111,6 +111,7 @@ module Reporter
       #
       # @param svg_path [String] path to the SVG file to inspect
       # @return [Array(String, Tempfile)] [patched_path, tmp] or [svg_path, nil]
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       def self.inline_svg_images(svg_path)
         content = File.read(svg_path)
         return [svg_path, nil] unless content.include?('data:image/svg+xml;base64,')
@@ -162,6 +163,7 @@ module Reporter
         Rails.logger.error("Reporter::Img::Conv.inline_svg_images failed: #{e.message}")
         [svg_path, nil]
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
       def self.valid?(path)
         data = File.read(path)
