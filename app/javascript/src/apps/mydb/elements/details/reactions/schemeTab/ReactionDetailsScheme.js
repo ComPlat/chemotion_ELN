@@ -1534,7 +1534,8 @@ export default class ReactionDetailsScheme extends React.Component {
     if (!refM.contains_residues) {
       this.context.notifications.add({
         message: 'Cannot perform calculations for loading and equivalent',
-        level: 'error'
+        level: 'error',
+        uid: `polymer-equivalent-no-residues-${refM.id}`,
       });
 
       return 1.0;
@@ -1543,7 +1544,8 @@ export default class ReactionDetailsScheme extends React.Component {
     if (!refM.loading) {
       this.context.notifications.add({
         message: 'Please set non-zero starting material loading',
-        level: 'error'
+        level: 'error',
+        uid: `polymer-equivalent-no-loading-${refM.id}`,
       });
 
       return 0.0;
@@ -1605,6 +1607,7 @@ export default class ReactionDetailsScheme extends React.Component {
       this.context.notifications.add({
         message: errorMsg,
         level: 'error',
+        uid: `polymer-mass-error-${updatedS.id}`,
       });
     } else {
       updatedS.error_mass = false;

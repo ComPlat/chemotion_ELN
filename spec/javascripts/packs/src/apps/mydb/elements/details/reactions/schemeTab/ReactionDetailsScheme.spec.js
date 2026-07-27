@@ -714,3 +714,76 @@ describe('ReactionDetailsScheme#checkMassMolecule — no false material-loss war
     expect(notificationStub.called).toBe(false);
   });
 });
+
+// S1 fix: calculateEquivalent/checkMassMolecule run once per polymer product per
+// recompute pass (a single edit can touch every product in the reaction), so their
+// notifications.add calls need a stable uid — otherwise react-hot-toast stacks one
+// toast per product instead of collapsing repeats of the same underlying condition.
+describe('ReactionDetailsScheme#checkMassMolecule / #calculateEquivalent — toast dedupe uid', () => {
+  let notificationStub;
+
+  const buildInstance = () => {
+    notificationStub = sinon.stub();
+    const instance = Object.create(ReactionDetailsScheme.prototype);
+    instance.context = { notifications: { add: notificationStub } };
+    return instance;
+  };
+
+  const buildRef = (overrides = {}) => ({
+    amount_mol: 0.01,
+    amount_g: 1.0,
+    decoupled: false,
+    molecular_mass: 0,
+    molecule: { molecular_weight: 100 },
+    coefficient: 1,
+    ...overrides,
+  });
+
+  const buildProduct = (overrides = {}) => ({
+    id: 1,
+    amount_g: 0.1,
+    contains_residues: true,
+    decoupled: false,
+    molecular_mass: 0,
+    molecule: { molecular_weight: 50 },
+    coefficient: 1,
+    ...overrides,
+  });
+
+  it('checkMassMolecule uses distinct uids for distinct products', () => {
+    const instance = buildInstance();
+    const ref = buildRef({ molecule: { molecular_weight: 100 } });
+    instance.checkMassMolecule(ref, buildProduct({ id: 11 }));
+    instance.checkMassMolecule(ref, buildProduct({ id: 22 }));
+    expect(notificationStub.calledTwice).toBe(true);
+    expect(notificationStub.firstCall.args[0].uid).toBe('polymer-mass-error-11');
+    expect(notificationStub.secondCall.args[0].uid).toBe('polymer-mass-error-22');
+  });
+
+  it('checkMassMolecule uses the same uid across repeat passes for the same product', () => {
+    const instance = buildInstance();
+    const ref = buildRef({ molecule: { molecular_weight: 100 } });
+    const product = buildProduct({ id: 33 });
+    instance.checkMassMolecule(ref, product);
+    instance.checkMassMolecule(ref, product);
+    expect(notificationStub.calledTwice).toBe(true);
+    expect(notificationStub.firstCall.args[0].uid).toBe('polymer-mass-error-33');
+    expect(notificationStub.secondCall.args[0].uid).toBe('polymer-mass-error-33');
+  });
+
+  it('calculateEquivalent uids the "no residues on reference" toast by reference id', () => {
+    const instance = buildInstance();
+    const ref = buildRef({ contains_residues: false, id: 44 });
+    instance.calculateEquivalent(ref, buildProduct());
+    expect(notificationStub.calledOnce).toBe(true);
+    expect(notificationStub.firstCall.args[0].uid).toBe('polymer-equivalent-no-residues-44');
+  });
+
+  it('calculateEquivalent uids the "no loading on reference" toast by reference id', () => {
+    const instance = buildInstance();
+    const ref = buildRef({ contains_residues: true, loading: 0, id: 55 });
+    instance.calculateEquivalent(ref, buildProduct());
+    expect(notificationStub.calledOnce).toBe(true);
+    expect(notificationStub.firstCall.args[0].uid).toBe('polymer-equivalent-no-loading-55');
+  });
+});
