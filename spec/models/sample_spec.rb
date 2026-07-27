@@ -107,50 +107,62 @@ RSpec.describe Sample do
     end
   end
 
-  describe 'hierarchical sample fields (state, color, storage_condition, height, width, length)' do
-    it 'persists and returns state when set on the column' do
-      sample = create(:sample, state: 'solid')
-      expect(sample.state).to eq('solid')
-      expect(sample.reload.state).to eq('solid')
-    end
-
-    it 'persists and returns color when set on the column' do
-      sample = create(:sample, color: 'red')
-      expect(sample.color).to eq('red')
-      expect(sample.reload.color).to eq('red')
-    end
-
+  describe 'hierarchical sample fields (storage_condition, height, width, length, diameter)' do
+    # Note: `color`, `state` (→ xref.physical_state) and `particle_size` intentionally live
+    # in the `xref` JSONB (main's storage) — not as dedicated columns. See tests below.
     it 'persists and returns storage_condition when set on the column' do
       sample = create(:sample, storage_condition: 'room temperature')
       expect(sample.storage_condition).to eq('room temperature')
       expect(sample.reload.storage_condition).to eq('room temperature')
     end
 
-    it 'persists and returns height, width, length when set on the column' do
-      sample = create(:sample, height: 2.5, width: 1.0, length: 3.0)
+    it 'persists and returns height, width, length, diameter when set on the column' do
+      sample = create(:sample, height: 2.5, width: 1.0, length: 3.0, diameter: 0.5)
       expect(sample.height).to eq(2.5)
       expect(sample.width).to eq(1.0)
       expect(sample.length).to eq(3.0)
+      expect(sample.diameter).to eq(0.5)
       sample.reload
       expect(sample.height).to eq(2.5)
       expect(sample.width).to eq(1.0)
       expect(sample.length).to eq(3.0)
+      expect(sample.diameter).to eq(0.5)
     end
 
     it 'falls back to sample_details when column is blank' do
-      sample = create(:sample, state: nil, sample_details: { 'state' => 'liquid', 'color' => 'blue' })
-      expect(sample.state).to eq('liquid')
-      expect(sample.color).to eq('blue')
+      sample = create(:sample, sample_details: { 'storage_condition' => 'freezer' })
+      expect(sample.storage_condition).to eq('freezer')
     end
 
     it 'falls back to xref when column and sample_details are blank' do
-      sample = create(:sample, state: nil, sample_details: {}, xref: { 'state' => 'gas' })
-      expect(sample.state).to eq('gas')
+      sample = create(:sample, sample_details: {}, xref: { 'storage_condition' => 'ambient' })
+      expect(sample.storage_condition).to eq('ambient')
     end
 
     it 'prefers column over sample_details and xref' do
-      sample = create(:sample, state: 'column', sample_details: { 'state' => 'details' }, xref: { 'state' => 'xref' })
-      expect(sample.state).to eq('column')
+      sample = create(:sample,
+                      storage_condition: 'column-value',
+                      sample_details: { 'storage_condition' => 'details' },
+                      xref: { 'storage_condition' => 'xref' })
+      expect(sample.storage_condition).to eq('column-value')
+    end
+  end
+
+  describe 'main-owned physical properties in xref (color, physical_state, particle_size)' do
+    # These three fields already existed on main under xref. Kept there — no dedicated column.
+    it 'reads color from xref (main storage)' do
+      sample = create(:sample, xref: { 'color' => 'red' })
+      expect(sample.xref['color']).to eq('red')
+    end
+
+    it 'reads physical_state from xref (mapped from HM section "state" dropdown)' do
+      sample = create(:sample, xref: { 'physical_state' => 'solid_powder' })
+      expect(sample.xref['physical_state']).to eq('solid_powder')
+    end
+
+    it 'reads particle_size from xref (main storage)' do
+      sample = create(:sample, xref: { 'particle_size' => '50' })
+      expect(sample.xref['particle_size']).to eq('50')
     end
   end
 
@@ -762,6 +774,91 @@ RSpec.describe Sample do
         sample.residues << residue
         expect(sample.loading).to be_nil
         expect(sample.loading).not_to eq(0.0)
+      end
+    end
+
+    describe '#convert_to_unit (HM / polymer branch) nil-safety' do
+      it 'returns 0.0 when polymer/HM sample has no loading (nil-guard)' do
+        # HM sample: contains_residues=true (residues.any?), loading missing.
+        # The nil-guard in unit_convertable.rb:10 must prevent `nil * amount_g` crash.
+        sample.sample_type = Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+        residue = build(:residue, custom_info: {}) # no loading key
+        sample.residues << residue
+
+        expect { sample.convert_to_unit(0.5, 'mol') }.not_to raise_error
+        expect(sample.convert_to_unit(0.5, 'mol')).to eq(0.0)
+      end
+
+      it 'returns loading * amount_g / 1000 when loading is set' do
+        sample.sample_type = Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+        residue = build(:residue, custom_info: { 'loading' => '2.5' })
+        sample.residues << residue
+
+        # 2.5 mmol/g × 0.4 g / 1000 = 0.001 mol
+        expect(sample.convert_to_unit(0.4, 'mol')).to be_within(1e-9).of(0.001)
+      end
+
+      it 'returns amount_g unchanged for the g case regardless of loading' do
+        sample.sample_type = Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+        residue = build(:residue, custom_info: {})
+        sample.residues << residue
+
+        expect(sample.convert_to_unit(0.5, 'g')).to eq(0.5)
+      end
+    end
+
+    describe '#set_sample_type_hierarchical_if_polymers_list gate (auto-flip protection)' do
+      # Test the callback method in isolation: it only depends on molfile presence,
+      # the polymers-list check, and the sample's dirty state. Full-save integration
+      # requires molecule/collection/creator wiring — out of scope for this unit test.
+      let(:polymer_molfile) { "polymer molfile stub\n" }
+      let(:instance) { Sample.new(molfile: polymer_molfile) }
+
+      before do
+        allow(Chemotion::MolfilePolymerSupport).to receive(:has_polymers_list_tag?).and_return(true)
+      end
+
+      it 'flips a new record with polymers-list tag to HierarchicalMaterial' do
+        # new_record? is true for an in-memory .new; molfile_changed? is true because it was set.
+        instance.send(:set_sample_type_hierarchical_if_polymers_list)
+        expect(instance.sample_type).to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+      end
+
+      it 'does NOT flip when molfile is blank' do
+        blank = Sample.new(molfile: nil)
+        blank.send(:set_sample_type_hierarchical_if_polymers_list)
+        expect(blank.sample_type).not_to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+      end
+
+      it 'does NOT flip when the molfile does not contain the polymers-list tag' do
+        allow(Chemotion::MolfilePolymerSupport).to receive(:has_polymers_list_tag?).and_return(false)
+        instance.send(:set_sample_type_hierarchical_if_polymers_list)
+        expect(instance.sample_type).not_to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+      end
+
+      it 'does NOT overwrite a persisted non-HM sample_type on an unrelated save' do
+        # Simulate a persisted Micromolecule (legacy polymer) whose molfile hasn't changed.
+        legacy = Sample.new(molfile: polymer_molfile, sample_type: Sample::SAMPLE_TYPE_MICROMOLECULE)
+        allow(legacy).to receive_messages(new_record?: false, molfile_changed?: false)
+        legacy.send(:set_sample_type_hierarchical_if_polymers_list)
+        expect(legacy.sample_type).to eq(Sample::SAMPLE_TYPE_MICROMOLECULE)
+      end
+
+      it 'flips the type when the molfile itself changed (user pasted a polymer-tagged molfile)' do
+        persisted = Sample.new(molfile: polymer_molfile, sample_type: Sample::SAMPLE_TYPE_MICROMOLECULE)
+        allow(persisted).to receive_messages(new_record?: false, molfile_changed?: true)
+        # No explicit sample_type change in this save
+        allow(persisted).to receive(:sample_type_changed?).and_return(false)
+        persisted.send(:set_sample_type_hierarchical_if_polymers_list)
+        expect(persisted.sample_type).to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+      end
+
+      it 'respects an explicit non-HM sample_type change made in the same save' do
+        # User explicitly moves an HM back to Micromolecule.
+        s = Sample.new(molfile: polymer_molfile, sample_type: Sample::SAMPLE_TYPE_MICROMOLECULE)
+        allow(s).to receive(:sample_type_changed?).and_return(true)
+        s.send(:set_sample_type_hierarchical_if_polymers_list)
+        expect(s.sample_type).to eq(Sample::SAMPLE_TYPE_MICROMOLECULE)
       end
     end
 

@@ -8,6 +8,7 @@ import { Select } from 'src/components/common/Select';
 
 export default class PolymerSection extends React.Component {
   static contextType = StoreContext;
+
   handleCustomInfoNumericChanged(e, name, residue, sample) {
     const { handleSampleChanged, handleAmountChanged } = this.props;
     residue.custom_info[name] = e.value;

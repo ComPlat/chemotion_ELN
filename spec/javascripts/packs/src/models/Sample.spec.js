@@ -2551,4 +2551,72 @@ describe('Sample', async () => {
       // Must NOT fall through to MW-based (which would be non-null)
     });
   });
+
+  describe('HierarchicalMaterial — reverse path (mol → g, g → mol)', () => {
+    // These tests exercise the code path that runs whenever the user
+    // drives amount from the equivalent column, the locked-equiv rebase,
+    // or a unit switch to mol. For HM, the correct math is loading-based,
+    // NOT MW-based (HM has no meaningful MW for the composite).
+    const makeHM = (loadingValue, amountG = 0.1) => {
+      const sample = Sample.buildEmpty(0);
+      sample.sample_type = 'HierarchicalMaterial';
+      sample.amount_value = amountG * 1000;
+      sample.amount_unit = 'mg';
+      sample.residues = [{ custom_info: loadingValue != null ? { loading: loadingValue } : {} }];
+      return sample;
+    };
+
+    it('convertToGram: mol → g uses 1000 / loading (not MW) for HM', () => {
+      // 0.001 mol / 2 mmol/g × 1000 = 0.5 g
+      const sample = makeHM(2.0);
+      expect(sample.convertToGram(0.001, 'mol')).toBeCloseTo(0.5, 6);
+    });
+
+    it('convertToGram: mol → g returns 0 when HM loading is absent', () => {
+      const sample = makeHM(null);
+      expect(sample.convertToGram(0.001, 'mol')).toBe(0.0);
+    });
+
+    it('convertToGram: mg → g on HM is /1000 regardless of loading', () => {
+      const sample = makeHM(2.0);
+      expect(sample.convertToGram(100, 'mg')).toBeCloseTo(0.1, 6);
+    });
+
+    it('convertGramToUnit: g → mol uses loading × amount_g / 1000 for HM', () => {
+      // 0.5 mmol/g × 2 g / 1000 = 0.001 mol
+      const sample = makeHM(0.5);
+      expect(sample.convertGramToUnit(2, 'mol')).toBeCloseTo(0.001, 8);
+    });
+
+    it('convertGramToUnit: g → mol returns null when HM loading is absent', () => {
+      const sample = makeHM(null);
+      expect(sample.convertGramToUnit(2, 'mol')).toBeNull();
+    });
+
+    it('convertGramToUnit: g case passes through amount_g regardless of loading', () => {
+      const sample = makeHM(null);
+      expect(sample.convertGramToUnit(0.5, 'g')).toBe(0.5);
+    });
+
+    it('reverse path is inverse of forward path (round-trip through mol)', () => {
+      const sample = makeHM(2.5);
+      const grams = 0.4;
+      const mol = sample.convertGramToUnit(grams, 'mol');
+      const gramsBack = sample.convertToGram(mol, 'mol');
+      expect(gramsBack).toBeCloseTo(grams, 8);
+    });
+
+    it('polymer branch untouched: contains_residues=true still uses loading directly', () => {
+      // Confirms my HM branch didn't break the polymer path
+      const sample = Sample.buildEmpty(0);
+      // Micromolecule with contains_residues → polymer
+      sample.residues = [{ custom_info: { loading: 3.0 } }];
+      sample.contains_residues = true;
+      sample.amount_value = 100;
+      sample.amount_unit = 'mg';
+      expect(sample.isHierarchicalMaterial()).toBe(false);
+      // Polymer: convertToGram uses value / loading × 1000
+      expect(sample.convertToGram(0.001, 'mol')).toBeCloseTo(1 / 3, 6);
+    });
+  });
 });

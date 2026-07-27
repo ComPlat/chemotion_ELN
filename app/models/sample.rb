@@ -102,10 +102,12 @@ class Sample < ApplicationRecord
     SAMPLE_TYPE_HIERARCHICAL_MATERIAL,
   ].freeze
 
-  # Hierarchical sample properties (column or sample_details, fallback to xref for backwards compatibility)
+  # Hierarchical sample properties that live in dedicated columns.
+  # NOTE: `color`, `state` (main's `xref.physical_state`) and `particle_size`
+  # stay in `xref` — main's storage — and are read via the existing xref accessors.
   HIERARCHICAL_PROPERTY_KEYS = %i[
-    color state height width length diameter storage_condition material
-    cspi particle_size shape sieve_fraction layer_thickness liquid_medium stabilizer
+    height width length diameter storage_condition material
+    cspi shape sieve_fraction layer_thickness liquid_medium stabilizer
   ].freeze
 
   HIERARCHICAL_PROPERTY_KEYS.each do |key|
@@ -502,9 +504,14 @@ class Sample < ApplicationRecord
   end
 
   def set_sample_type_hierarchical_if_polymers_list
+    # Auto-detect only when the sample is new or when its molfile actually changed.
+    # This is the key gate that prevents the "every save re-flips to HM" bug and the
+    # "legacy polymer flipped on unrelated save" data-mutation risk.
+    return unless new_record? || molfile_changed?
     return if molfile.blank?
     return unless Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile)
-    # Don't override an explicit sample_type change made by the caller in this save.
+    # Respect an explicit sample_type change made by the caller in this save
+    # (user deliberately moving away from HierarchicalMaterial).
     return if sample_type_changed? && sample_type != SAMPLE_TYPE_HIERARCHICAL_MATERIAL
 
     self.sample_type = SAMPLE_TYPE_HIERARCHICAL_MATERIAL

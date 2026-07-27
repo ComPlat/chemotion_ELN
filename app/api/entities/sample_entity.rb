@@ -27,21 +27,6 @@ module Entities
       expose! :gas_phase_data
       expose! :user_labels
       expose! :weight_percentage
-      expose! :state
-      expose! :color
-      expose! :storage_condition
-      expose! :height
-      expose! :width
-      expose! :length
-      expose! :diameter
-      expose! :material
-      expose! :cspi
-      expose! :particle_size
-      expose! :shape
-      expose! :sieve_fraction
-      expose! :layer_thickness
-      expose! :liquid_medium
-      expose! :stabilizer
     end
 
     # Level 1 attributes
@@ -93,6 +78,20 @@ module Entities
       expose! :sample_type
       expose! :sample_details
       expose! :components,              unless: :displayed_in_list, anonymize_with: [],   using: 'Entities::ComponentEntity'
+      # Hierarchical material physical properties
+      # (color, state, particle_size stay in xref — main's storage — already exposed via :xref)
+      expose! :storage_condition,       unless: :displayed_in_list
+      expose! :height,                  unless: :displayed_in_list
+      expose! :width,                   unless: :displayed_in_list
+      expose! :length,                  unless: :displayed_in_list
+      expose! :diameter,                unless: :displayed_in_list
+      expose! :material,                unless: :displayed_in_list
+      expose! :cspi,                    unless: :displayed_in_list
+      expose! :shape,                   unless: :displayed_in_list
+      expose! :sieve_fraction,          unless: :displayed_in_list
+      expose! :layer_thickness,         unless: :displayed_in_list
+      expose! :liquid_medium,           unless: :displayed_in_list
+      expose! :stabilizer,              unless: :displayed_in_list
     end
     # rubocop:enable Layout/ExtraSpacing, Metrics/BlockLength
 

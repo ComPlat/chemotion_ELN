@@ -795,4 +795,77 @@ describe('Reaction', () => {
       expect(reaction.reactant_sbmm_samples[0].concentration_rt_value).toBeCloseTo(0.04, 8);
     });
   });
+
+  describe('.hasPolymers / .hasHierarchicalMaterials / .hasLoadingBasedSamples', () => {
+    // Semantic split: hasPolymers = contains_residues only (polymer-specific
+    // unclamped-yield branches), hasHierarchicalMaterials = HM only,
+    // hasLoadingBasedSamples = either (shared Loading-column visibility etc.).
+    const makeStub = (opts = {}) => ({
+      contains_residues: opts.polymer || false,
+      isHierarchicalMaterial: () => opts.hm || false,
+    });
+    // `samples` is a getter that concatenates material groups. The public setter
+    // (`starting_materials =`) coerces to Sample instances via `_coerceToSamples`;
+    // we set the private backing field directly to keep our lightweight stubs intact.
+    const setSamples = (r, arr) => { r._starting_materials = arr; };
+
+    it('hasPolymers matches only polymer samples (contains_residues=true)', () => {
+      setSamples(reaction, [
+        makeStub({ polymer: true }),
+        makeStub({ hm: true }),
+        makeStub({}),
+      ]);
+      const found = reaction.hasPolymers();
+      expect(found).toBeTruthy();
+      expect(found.contains_residues).toBe(true);
+      expect(found.isHierarchicalMaterial()).toBe(false);
+    });
+
+    it('hasPolymers is falsy when only HM (no polymer) present', () => {
+      setSamples(reaction, [makeStub({ hm: true }), makeStub({})]);
+      expect(reaction.hasPolymers()).toBeFalsy();
+    });
+
+    it('hasHierarchicalMaterials matches only HM samples', () => {
+      setSamples(reaction, [
+        makeStub({ polymer: true }),
+        makeStub({ hm: true }),
+        makeStub({}),
+      ]);
+      const found = reaction.hasHierarchicalMaterials();
+      expect(found).toBeTruthy();
+      expect(found.isHierarchicalMaterial()).toBe(true);
+      expect(found.contains_residues).toBe(false);
+    });
+
+    it('hasHierarchicalMaterials is falsy when no HM present', () => {
+      setSamples(reaction, [makeStub({ polymer: true }), makeStub({})]);
+      expect(reaction.hasHierarchicalMaterials()).toBeFalsy();
+    });
+
+    it('hasLoadingBasedSamples matches when polymer OR HM present', () => {
+      // polymer-only
+      setSamples(reaction, [makeStub({ polymer: true }), makeStub({})]);
+      expect(reaction.hasLoadingBasedSamples()).toBeTruthy();
+
+      // HM-only
+      setSamples(reaction, [makeStub({ hm: true }), makeStub({})]);
+      expect(reaction.hasLoadingBasedSamples()).toBeTruthy();
+
+      // both
+      setSamples(reaction, [makeStub({ polymer: true }), makeStub({ hm: true })]);
+      expect(reaction.hasLoadingBasedSamples()).toBeTruthy();
+    });
+
+    it('hasLoadingBasedSamples is falsy when only Micromolecules present', () => {
+      setSamples(reaction, [makeStub({}), makeStub({}), makeStub({})]);
+      expect(reaction.hasLoadingBasedSamples()).toBeFalsy();
+    });
+
+    it('hasHierarchicalMaterials tolerates samples without isHierarchicalMaterial method', () => {
+      // e.g., SBMM samples or plain objects that lack the method
+      setSamples(reaction, [{ contains_residues: false }, makeStub({ hm: true })]);
+      expect(reaction.hasHierarchicalMaterials()).toBeTruthy();
+    });
+  });
 });

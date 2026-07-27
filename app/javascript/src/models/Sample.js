@@ -261,8 +261,7 @@ export default class Sample extends Element {
       components: [],
       ancestor_ids: [],
       literatures: {},
-      state: '',
-      color: '',
+      // color, state, particle_size stay in xref — main's storage
       height: '',
       width: '',
       length: '',
@@ -527,8 +526,7 @@ export default class Sample extends Element {
       sample_type: this.sample_type,
       sample_details: this.sample_details,
       literatures: this.literatures,
-      state: this.state,
-      color: this.color || '',
+      // color, state, particle_size travel with `xref` — main's storage
       height: this.height || '',
       width: this.width || '',
       length: this.length || '',
@@ -536,7 +534,6 @@ export default class Sample extends Element {
       storage_condition: this.storage_condition || '',
       material: this.material || '',
       cspi: this.cspi || '',
-      particle_size: this.particle_size || '',
       shape: this.shape || '',
       sieve_fraction: this.sieve_fraction || '',
       layer_thickness: this.layer_thickness || '',
@@ -1411,19 +1408,24 @@ export default class Sample extends Element {
     const gasPhaseCondition = (this.isGas() || this.isFeedstock());
     const purity = this.purity || 1.0;
     const molecularWeight = this.molecule_molecular_weight;
-    if (this.contains_residues) {
+    if (this.isHierarchicalMaterial()) {
+      const loading = this.residues?.[0]?.custom_info?.loading;
+      switch (unit) {
+        case 'g':
+          return amount_g;
+        case 'mol':
+          if (!loading) return null;
+          return (parseHstoreNumber(loading) * amount_g) / 1000.0;
+        default:
+          return amount_g;
+      }
+    } else if (this.contains_residues) {
       const loading = this.residues[0]?.custom_info?.loading;
       switch (unit) {
         case 'g':
           return amount_g;
-        case 'mol': {
-          if (loading) {
-            return (loading * amount_g) / 1000.0; // loading is always in mmol/g
-          }
-          // Fall back to standard conversion if loading is not available
-          const result = (amount_g * purity) / molecularWeight;
-          return result;
-        }
+        case 'mol':
+          return (loading * amount_g) / 1000.0; // loading is always in mmol/g
         default:
           return amount_g;
       }
@@ -1489,7 +1491,21 @@ export default class Sample extends Element {
   }
 
   convertToGram(amount_value, amount_unit) {
-    if (this.contains_residues) {
+    if (this.isHierarchicalMaterial()) {
+      const loading = this.residues?.[0]?.custom_info?.loading;
+      switch (amount_unit) {
+        case 'g':
+          return amount_value;
+        case 'mg':
+          return amount_value / 1000.0;
+        case 'mol': {
+          if (!loading) return 0.0;
+          return (amount_value / parseHstoreNumber(loading)) * 1000.0;
+        }
+        default:
+          return amount_value;
+      }
+    } else if (this.contains_residues) {
       const amountValue = amount_value;
       switch (amount_unit) {
         case 'g':
@@ -1498,13 +1514,8 @@ export default class Sample extends Element {
           return amountValue / 1000.0;
         case 'mol': {
           const loading = this.residues[0]?.custom_info?.loading;
-          if (loading) {
-            return (amountValue / loading) * 1000.0;
-          }
-          // Fall back to standard conversion if loading is not available
-          const molecularWeight = this.molecule_molecular_weight;
-          const purity = this.purity || 1.0;
-          return (amountValue / purity) * molecularWeight;
+          if (!loading) return 0.0;
+          return (amountValue / loading) * 1000.0;
         }
         default:
           return amountValue;

@@ -1,14 +1,13 @@
 /* eslint-disable max-len */
 /* eslint-disable react/sort-comp */
 /* eslint-disable react/forbid-prop-types */
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Form, InputGroup,
   OverlayTrigger, Tooltip, Popover, Row, Col,
   ButtonGroup
 } from 'react-bootstrap';
-import { AgGridReact } from 'ag-grid-react';
 import { Select, CreatableSelect } from 'src/components/common/Select';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
@@ -25,10 +24,9 @@ import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/prop
 import { isValidMoleculeName } from 'src/utilities/MoleculeNameValidation';
 import { SAMPLE_TYPE_HIERARCHICAL_MATERIAL } from 'src/models/Sample';
 import Component from 'src/models/Component';
-import buildHierarchicalMaterialRows from 'src/utilities/sampleHierarchicalCompositions';
 import { HIERARCHICAL_PROPERTY_OPTIONS } from 'src/utilities/hierarchicalPropertyConfig';
 import HierarchicalMaterialSection from 'src/apps/mydb/elements/details/samples/propertiesTab/HierarchicalMaterialSection';
-
+import HierarchicalCompositionTable from 'src/apps/mydb/elements/details/samples/propertiesTab/HierarchicalCompositionTable';
 
 /**
  * Normalizes components that may be in API-format (with nested component_properties)
@@ -43,137 +41,6 @@ const flattenApiFormatComponents = (components) => (components || []).map((comp)
   }
   return comp;
 });
-
-const COMPOSITION_DEFAULT_COL_DEF = {
-  editable: false,
-  flex: 1,
-  wrapHeaderText: true,
-  autoHeaderHeight: true,
-  autoHeight: true,
-  sortable: false,
-  resizable: false,
-  suppressMovable: true,
-  cellClass: ['border-end'],
-  headerClass: ['border-end', 'px-2'],
-};
-
-const buildCompositionColumnDefs = (onFieldChange) => [
-  {
-    headerName: 'Components',
-    field: 'sourceAlias',
-    minWidth: 90,
-    cellClass: ['lh-base', 'border-end'],
-  },
-  {
-    headerName: 'Calc. wt. ratio',
-    field: 'weightRatioCalcProcessed',
-    minWidth: 110,
-    cellClass: ['lh-base', 'border-end'],
-  },
-  {
-    headerName: 'Exp. wt. ratio',
-    field: 'weight_ratio_exp',
-    editable: true,
-    cellClass: ['editable-cell', 'border-end'],
-    minWidth: 110,
-    valueSetter: (params) => {
-      if (params.newValue != null) onFieldChange(params.data.index, 'weight_ratio_exp', params.newValue);
-    },
-  },
-  {
-    headerName: 'Molar mass [g/mol]',
-    field: 'molar_mass',
-    editable: true,
-    cellClass: ['editable-cell', 'border-end'],
-    minWidth: 110,
-    valueSetter: (params) => {
-      if (params.newValue != null) onFieldChange(params.data.index, 'molar_mass', params.newValue);
-    },
-  },
-  {
-    headerName: 'Calc. mol. ratio',
-    field: 'molarRatioCalcMM',
-    minWidth: 110,
-    valueGetter: (p) => (p.data?.molarRatioCalcMM ?? '-'),
-    cellClass: ['lh-base', 'border-end'],
-  },
-  {
-    headerName: 'Exp. mol. ratio',
-    field: 'molarRatioExpPercent',
-    minWidth: 110,
-    valueGetter: (p) => (p.data?.molarRatioExpPercent !== '-' ? (p.data?.molarRatioExpPercent ?? '-') : '-'),
-    cellClass: ['lh-base', 'border-end'],
-  },
-  {
-    headerName: 'Calc. mol. percentage',
-    field: 'molarRatioCalcPercent',
-    minWidth: 120,
-    valueGetter: (p) => (p.data?.molarRatioCalcPercent !== '-' ? (p.data?.molarRatioCalcPercent ?? '-') : '-'),
-    cellClass: ['lh-base', 'border-end'],
-  },
-  {
-    headerName: 'Exp. wt. ratio/MM',
-    field: 'weightRatioCalcMM',
-    minWidth: 120,
-    valueGetter: (p) => (p.data?.weightRatioCalcMM ?? '-'),
-    cellClass: ['lh-base', 'border-end'],
-  },
-];
-
-/**
- * Renders the hierarchical material composition table using AG Grid.
- * Mounted deferred (one animation frame) to avoid ResizeObserver loop errors
- * when switching sample type during a heavy layout change.
- */
-function HierarchicalCompositionTable({ components, onFieldChange }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
-  const columnDefs = useCallback(() => buildCompositionColumnDefs(onFieldChange), [onFieldChange])();
-  const { rowsData } = buildHierarchicalMaterialRows(components);
-  const gridRowData = Array.isArray(rowsData) ? rowsData : [];
-  const fitColumnsToGrid = useCallback((params) => {
-    params.api.sizeColumnsToFit();
-  }, []);
-
-  const getRowId = useCallback((params) => {
-    const id = params.data?.index;
-    return id !== undefined && id !== null ? `component-${id}` : `row-${params.node?.rowIndex ?? 0}`;
-  }, []);
-
-  if (!mounted) return null;
-
-  return (
-    <>
-      <h5 className="mt-3">Composition table:</h5>
-      <div className="ag-theme-alpine sample-form-composition-grid mb-3">
-        <AgGridReact
-          columnDefs={columnDefs}
-          defaultColDef={COMPOSITION_DEFAULT_COL_DEF}
-          rowData={gridRowData}
-          getRowId={getRowId}
-          rowHeight={25}
-          domLayout="autoHeight"
-          onGridReady={fitColumnsToGrid}
-          onGridSizeChanged={fitColumnsToGrid}
-          onFirstDataRendered={fitColumnsToGrid}
-          singleClickEdit
-          stopEditingWhenCellsLoseFocus
-          overlayNoRowsTemplate="Create sample to generate the table."
-        />
-      </div>
-    </>
-  );
-}
-
-HierarchicalCompositionTable.propTypes = {
-  components: PropTypes.array.isRequired, // eslint-disable-line react/forbid-prop-types
-  onFieldChange: PropTypes.func.isRequired,
-};
 
 export default class SampleForm extends React.Component {
   static contextType = StoreContext;
@@ -226,15 +93,15 @@ export default class SampleForm extends React.Component {
     const currentMoleculeName = this.props.sample?.molecule_name;
     const prevMoleculeName = prevProps.sample?.molecule_name;
 
-    const prevComponents = prevProps.sample?.components || [];
-    const nextComponents = this.props.sample?.components || [];
-    // Sync component state when the sample object reference changes (e.g. after save returns
-    // a fresh Sample from the API), or when the components data itself changes.
-    // Using reference equality as the first check ensures that saves always refresh the list
-    // even when the array was mutated in-place (same reference, same JSON).
-    if (prevProps.sample !== this.props.sample
-      || JSON.stringify(prevComponents) !== JSON.stringify(nextComponents)) {
-      this.setState({ components: flattenApiFormatComponents(nextComponents) });
+    // Sync component state when the sample object or its components array is
+    // replaced (e.g. after save returns a fresh Sample, or a child handler reassigns
+    // components). Parent already clones on setState (SampleDetails.handleSampleChanged),
+    // so reference equality is sufficient — no need for a per-render JSON diff.
+    const prevSample = prevProps.sample;
+    const nextSample = this.props.sample;
+    if (prevSample !== nextSample
+      || (prevSample?.components || null) !== (nextSample?.components || null)) {
+      this.setState({ components: flattenApiFormatComponents(nextSample?.components || []) });
     }
 
     if (currentMoleculeName !== prevMoleculeName) {
@@ -274,8 +141,10 @@ export default class SampleForm extends React.Component {
   }
 
   handleAmountChanged(amount) {
-    const { sample } = this.props;
+    const { sample, handleSampleChanged } = this.props;
     sample.setAmountAndNormalizeToGram(amount);
+    sample.changed = true;
+    handleSampleChanged(sample);
   }
 
   handleMolarityChanged(molarity) {
@@ -705,9 +574,6 @@ export default class SampleForm extends React.Component {
         ...(sample.sample_details || {}),
         [field]: value,
       };
-    } else if (field === 'state') {
-      // State is stored as a DB column (not as hierarchical property)
-      sample[field] = e && (e.value || e.value === 0) ? e.value : e;
     } else if (e && (e.value || e.value === 0)) {
       // for numeric inputs (e.g. purity) — mark dirty since Element.checksum
       // strips numeric values and would not otherwise detect the edit.
@@ -1153,10 +1019,6 @@ export default class SampleForm extends React.Component {
           metric = metricPrefixes.indexOf(prefixAmountL) > -1 ? prefixAmountL : 'm';
           break;
         }
-        case 'defined_part_amount': {
-          metric = 'm';
-          break;
-        }
         case 'molecular_mass': {
           metric = 'n';
           break;
@@ -1502,17 +1364,17 @@ export default class SampleForm extends React.Component {
   }
 
   handleComponentFieldChanged(index, field, value) {
-    const { sample } = this.props;
-
+    const { sample, handleSampleChanged } = this.props;
+    let nextComponents;
     this.setState(
       (prevState) => {
-        const updated = [...prevState.components];
-        updated[index] = { ...updated[index], [field]: value };
-        return { components: updated };
+        nextComponents = [...prevState.components];
+        nextComponents[index] = { ...nextComponents[index], [field]: value };
+        return { components: nextComponents };
       },
       () => {
-        sample.components = this.state.components.map((comp) => new Component(comp));
-        this.props.handleSampleChanged(sample);
+        sample.components = nextComponents.map((comp) => new Component(comp));
+        handleSampleChanged(sample);
       }
     );
   }
@@ -1603,7 +1465,7 @@ export default class SampleForm extends React.Component {
 
               <Row className="mb-4">
                 <Col>{this.textInput(sample, 'xref_form', 'Form')}</Col>
-                <Col>{this.textInput(sample, 'color', 'Color')}</Col>
+                <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
                 <Col>{this.textInput(sample, 'xref_solubility', 'Soluble in')}</Col>
               </Row>
               <Row className="mb-4">
@@ -1667,7 +1529,7 @@ export default class SampleForm extends React.Component {
                 </Col>
                 {sample.isHierarchicalMaterial() && (
                   <Col md={4}>
-                    {this.textInput(sample, 'color', 'Color')}
+                    {this.textInput(sample, 'xref_color', 'Color')}
                   </Col>
                 )}
               </Row>

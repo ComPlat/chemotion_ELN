@@ -1525,6 +1525,22 @@ export default class ReactionDetailsScheme extends React.Component {
     });
   }
 
+  // Theoretical maximum mass (g) of a product to reach 100% yield.
+  // For HM: mass = ref.amount_mol × coef × 1000 / loading (grams of composite needed
+  // to expose ref.amount_mol × coef active sites). MW is meaningless for HM composites.
+  // For everything else: mass = ref.amount_mol × coef × MW / purity.
+  computeMaxAmountG(sample, referenceMaterial, stoichiometryCoeff) {
+    const refAmountMol = referenceMaterial.amount_mol;
+    if (sample.isHierarchicalMaterial?.()) {
+      const loading = sample.residues?.[0]?.custom_info?.loading;
+      if (!loading) return 0;
+      const loadingNum = typeof loading === 'string' ? parseFloat(loading) : loading;
+      if (!loadingNum) return 0;
+      return (refAmountMol * stoichiometryCoeff * 1000) / loadingNum;
+    }
+    return (refAmountMol * stoichiometryCoeff * sample.molecule_molecular_weight) / (sample.purity || 1);
+  }
+
   calculateEquivalent(refM, updatedSample) {
     if (!refM.contains_residues) {
       this.context.notifications.add({
@@ -1675,7 +1691,18 @@ export default class ReactionDetailsScheme extends React.Component {
                 this.checkMassPolymer(referenceMaterial, updatedSample, massAnalyses);
                 return sample;
               }
-              sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
+              // Warn once when the user updates an HM product without setting its loading —
+              // yield calculation requires loading × mass for the composite.
+              if (updatedSample.isHierarchicalMaterial?.()
+                && !updatedSample.residues?.[0]?.custom_info?.loading
+                && this._hmLoadingWarnedFor !== updatedSample.id) {
+                this._hmLoadingWarnedFor = updatedSample.id;
+                this.context.notifications.add({
+                  message: 'Set the loading (mmol/g) on the hierarchical material before its yield can be computed.',
+                  level: 'warning',
+                });
+              }
+              sample.maxAmount = this.computeMaxAmountG(sample, referenceMaterial, stoichiometryCoeff);
               // yield taking into account stoichiometry:
               if (updatedSample.isGas()) {
                 const equivalent = this.calculateEquivalentForGasProduct(sample, vesselVolume);
@@ -1715,7 +1742,7 @@ export default class ReactionDetailsScheme extends React.Component {
         } else {
           if ((!lockEquivColumn || materialGroup === 'products') && sample.gas_type !== 'gas') {
             // calculate equivalent, don't touch real amount
-            sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
+            sample.maxAmount = this.computeMaxAmountG(sample, referenceMaterial, stoichiometryCoeff);
             // yield taking into account stoichiometry:
             if (referenceMaterial.amount_mol > 0) {
               sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
@@ -1761,7 +1788,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
       if (materialGroup === 'products') {
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
-          sample.maxAmount = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight / (sample.purity || 1);
+          sample.maxAmount = this.computeMaxAmountG(sample, referenceMaterial, stoichiometryCoeff);
         }
         // Update TON values for gas products when catalyst amount changes
         if (updatedSample && updatedSample.gas_type === 'catalyst' && sample.isGas()) {
@@ -2498,7 +2525,7 @@ export default class ReactionDetailsScheme extends React.Component {
               (material, materialGroup) => this.deleteMaterial(material, materialGroup)
             }
             dropSample={this.dropSample}
-            showLoadingColumn={!!reaction.hasPolymers()}
+            showLoadingColumn={!!reaction.hasLoadingBasedSamples()}
             onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
             switchEquiv={this.switchEquiv}
             lockEquivColumn={this.state.lockEquivColumn}
@@ -2513,7 +2540,7 @@ export default class ReactionDetailsScheme extends React.Component {
             }
             dropSample={this.dropSample}
             dropSbmmSample={this.dropSbmmSample}
-            showLoadingColumn={!!reaction.hasPolymers()}
+            showLoadingColumn={!!reaction.hasLoadingBasedSamples()}
             onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
             switchEquiv={this.switchEquiv}
             lockEquivColumn={lockEquivColumn}
@@ -2528,7 +2555,7 @@ export default class ReactionDetailsScheme extends React.Component {
               (material, materialGroup) => this.deleteMaterial(material, materialGroup)
             }
             dropSample={this.dropSample}
-            showLoadingColumn={!!reaction.hasPolymers()}
+            showLoadingColumn={!!reaction.hasLoadingBasedSamples()}
             onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
             switchEquiv={this.switchEquiv}
             lockEquivColumn={this.state.lockEquivColumn}
@@ -2542,7 +2569,7 @@ export default class ReactionDetailsScheme extends React.Component {
               (material, materialGroup) => this.deleteMaterial(material, materialGroup)
             }
             dropSample={this.dropSample}
-            showLoadingColumn={!!reaction.hasPolymers()}
+            showLoadingColumn={!!reaction.hasLoadingBasedSamples()}
             onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
             switchEquiv={this.switchEquiv}
             lockEquivColumn={this.state.lockEquivColumn}

@@ -230,3 +230,100 @@ describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', 
     expect(instance.handleFixedVolumeConcentrationChange.called).toBe(false);
   });
 });
+
+describe('ReactionDetailsScheme#computeMaxAmountG (HM vs non-HM branch)', () => {
+  // maxAmount is the theoretical maximum mass of a product for 100% yield.
+  // For HM: uses 1000 / loading (loading in mmol/g gives grams of composite
+  // needed to expose ref.amount_mol × coef active sites).
+  // For non-HM: uses molecule_molecular_weight / purity — the classical MW-based path.
+  it('HM sample: mass = ref.amount_mol × coef × 1000 / loading', () => {
+    const sample = {
+      isHierarchicalMaterial: () => true,
+      residues: [{ custom_info: { loading: 2.0 } }],
+    };
+    const ref = { amount_mol: 0.001 }; // 1 mmol
+    // 0.001 × 1 × 1000 / 2.0 = 0.5 g
+    const result = ReactionDetailsScheme.prototype.computeMaxAmountG(sample, ref, 1);
+    expect(result).toBeCloseTo(0.5, 6);
+  });
+
+  it('HM sample with stoichiometry coefficient=2', () => {
+    const sample = {
+      isHierarchicalMaterial: () => true,
+      residues: [{ custom_info: { loading: 2.0 } }],
+    };
+    const ref = { amount_mol: 0.001 };
+    // 0.001 × 2 × 1000 / 2.0 = 1.0 g
+    const result = ReactionDetailsScheme.prototype.computeMaxAmountG(sample, ref, 2);
+    expect(result).toBeCloseTo(1.0, 6);
+  });
+
+  it('HM sample with loading absent returns 0 (safe default; over-yield clamp defers to null-guard)', () => {
+    const sample = {
+      isHierarchicalMaterial: () => true,
+      residues: [{ custom_info: {} }],
+    };
+    const ref = { amount_mol: 0.001 };
+    const result = ReactionDetailsScheme.prototype.computeMaxAmountG(sample, ref, 1);
+    expect(result).toBe(0);
+  });
+
+  it('HM sample with loading as string still parses correctly (hstore returns strings)', () => {
+    const sample = {
+      isHierarchicalMaterial: () => true,
+      residues: [{ custom_info: { loading: '1.5' } }],
+    };
+    const ref = { amount_mol: 0.001 };
+    // 0.001 × 1 × 1000 / 1.5 = 0.6666..
+    const result = ReactionDetailsScheme.prototype.computeMaxAmountG(sample, ref, 1);
+    expect(result).toBeCloseTo(0.6666666, 5);
+  });
+
+  it('Non-HM (Micromolecule) uses MW-based math, not loading', () => {
+    const sample = {
+      isHierarchicalMaterial: () => false,
+      molecule_molecular_weight: 100,
+      purity: 1.0,
+    };
+    const ref = { amount_mol: 0.001 };
+    // 0.001 × 1 × 100 / 1.0 = 0.1 g
+    const result = ReactionDetailsScheme.prototype.computeMaxAmountG(sample, ref, 1);
+    expect(result).toBeCloseTo(0.1, 6);
+  });
+
+  it('Non-HM with purity < 1 divides by purity (concentration correction)', () => {
+    const sample = {
+      isHierarchicalMaterial: () => false,
+      molecule_molecular_weight: 100,
+      purity: 0.5,
+    };
+    const ref = { amount_mol: 0.001 };
+    // 0.001 × 1 × 100 / 0.5 = 0.2 g
+    const result = ReactionDetailsScheme.prototype.computeMaxAmountG(sample, ref, 1);
+    expect(result).toBeCloseTo(0.2, 6);
+  });
+
+  it('Non-HM without purity treats it as 1', () => {
+    const sample = {
+      isHierarchicalMaterial: () => false,
+      molecule_molecular_weight: 100,
+      purity: null,
+    };
+    const ref = { amount_mol: 0.001 };
+    // 0.001 × 1 × 100 / 1.0 = 0.1 g
+    const result = ReactionDetailsScheme.prototype.computeMaxAmountG(sample, ref, 1);
+    expect(result).toBeCloseTo(0.1, 6);
+  });
+
+  it('Sample without isHierarchicalMaterial method falls to non-HM branch (defensive optional chain)', () => {
+    const sample = {
+      // no isHierarchicalMaterial method at all (e.g., SBMM or plain object)
+      molecule_molecular_weight: 200,
+      purity: 1.0,
+    };
+    const ref = { amount_mol: 0.0005 };
+    // 0.0005 × 1 × 200 / 1.0 = 0.1 g
+    const result = ReactionDetailsScheme.prototype.computeMaxAmountG(sample, ref, 1);
+    expect(result).toBeCloseTo(0.1, 6);
+  });
+});
