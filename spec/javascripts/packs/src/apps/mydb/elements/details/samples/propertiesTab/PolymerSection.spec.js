@@ -326,7 +326,7 @@ describe('PolymerSection', () => {
   });
 
   describe('render', () => {
-    it('hides the polymer loading section when sample is a reaction product', () => {
+    it('shows the polymer loading section when sample is a reaction product', () => {
       const sample = buildSample();
       sample.reaction_product = true;
       const wrapper = shallow(
@@ -337,7 +337,9 @@ describe('PolymerSection', () => {
         />
       );
 
-      expect(wrapper.find('NumeralInputWithUnitsCompo').length).toEqual(0);
+      // Bug 6 fix: loading section must be visible for reaction products so EA
+      // results can be entered and yield can be calculated correctly.
+      expect(wrapper.find('NumeralInputWithUnitsCompo').length).toEqual(1);
     });
 
     it('shows the polymer loading section for non-reaction-product samples', () => {
@@ -382,6 +384,42 @@ describe('PolymerSection', () => {
 
       const loadingInput = wrapper.find('NumeralInputWithUnitsCompo').at(0);
       expect(loadingInput.prop('disabled')).toEqual(false);
+    });
+
+    // Bug 3 fix: 'Elemental analyses' radio was always disabled before saving because
+    // relLoading only exists after the backend calculates it on save. Fix allows
+    // selection when composition data exists (relComposition present), even before
+    // loading is calculated.
+    describe("'Elemental analyses' radio (value='found') disabled logic", () => {
+      const getFoundRadioDisabled = (sample) => {
+        const instance = shallow(
+          <PolymerSection
+            sample={sample}
+            handleSampleChanged={() => {}}
+            handleAmountChanged={() => {}}
+          />
+        ).instance();
+        const el = instance.customInfoRadio('Elemental analyses', 'found', sample.residues[0], sample);
+        return el.props.disabled;
+      };
+
+      it('is disabled when no composition data and no relLoading', () => {
+        const sample = buildSample();
+        sample.elemental_compositions = [];
+        expect(getFoundRadioDisabled(sample)).toEqual(true);
+      });
+
+      it('is enabled when composition data exists but loading not yet calculated', () => {
+        const sample = buildSample();
+        sample.elemental_compositions = [{ composition_type: 'found', loading: null }];
+        expect(getFoundRadioDisabled(sample)).toEqual(false);
+      });
+
+      it('is enabled when relLoading is present (post-save state)', () => {
+        const sample = buildSample();
+        sample.elemental_compositions = [{ composition_type: 'found', loading: 2.5 }];
+        expect(getFoundRadioDisabled(sample)).toEqual(false);
+      });
     });
   });
 });

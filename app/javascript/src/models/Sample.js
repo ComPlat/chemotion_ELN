@@ -315,22 +315,22 @@ export default class Sample extends Element {
   /**
    * Normalizes a dot-separated SMILES string to a sorted set for order-independent comparison.
    * Assumes each fragment is a single-molecule SMILES (no dot-salts like [Na+].[Cl-] per component).
-   * @param {string} smilesString - Dot-separated canonical SMILES
+   * @param {string} smiles - Dot-separated canonical SMILES
    * @returns {string} Sorted, dot-joined SMILES string
    */
-  static normalizeSmilesSet(smilesString) {
-    if (!smilesString || typeof smilesString !== 'string') return '';
-    return smilesString.split('.').filter(Boolean).sort().join('.');
+  static normalizeSmilesSet(smiles) {
+    if (typeof smiles !== 'string' || smiles === '') return '';
+    return smiles.split('.').filter(Boolean).sort().join('.');
   }
 
   /**
    * Compares two dot-separated SMILES strings as sets (order-independent).
-   * @param {string} smilesA - First SMILES string
-   * @param {string} smilesB - Second SMILES string
+   * @param {string} a - First SMILES string
+   * @param {string} b - Second SMILES string
    * @returns {boolean} True when both strings represent the same SMILES set
    */
-  static sameSmilesSet(smilesA, smilesB) {
-    return Sample.normalizeSmilesSet(smilesA) === Sample.normalizeSmilesSet(smilesB);
+  static sameSmilesSet(a, b) {
+    return Sample.normalizeSmilesSet(a ?? '') === Sample.normalizeSmilesSet(b ?? '');
   }
 
   /**
@@ -392,16 +392,20 @@ export default class Sample extends Element {
       newSample.molecule = sample.molecule;
       newSample.molecule_name = sample.molecule_name;
       newSample.sample_svg_file = sample.sample_svg_file;
+      newSample.residues = sample.residues || [];
+      newSample.contains_residues = sample.contains_residues || !!sample.molecule?.is_partial;
+      newSample.filterResidueData(true);
     } else {
+      // source is a Molecule — propagate polymer flag so yield uses loading-based formula
       newSample.molecule = sample;
+      if (sample.is_partial) {
+        newSample.contains_residues = true; // triggers setDefaultResidue(); loading stays null until user sets it
+      }
     }
     if (sample.stereo) {
       const { abs, rel } = sample.stereo;
       newSample.stereo = { abs, rel };
     }
-    newSample.residues = sample.residues || [];
-    newSample.contains_residues = sample.contains_residues;
-    newSample.filterResidueData(true);
     newSample.density = sample.density;
     newSample.starting_molarity_value = sample.molarity_value;
     newSample.molarity_value = 0;

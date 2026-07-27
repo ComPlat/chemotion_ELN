@@ -161,7 +161,7 @@ class Material extends Component {
     if (!showLoadingColumn) {
       return false;
     }
-    if (!material.contains_residues) {
+    if (!material.contains_residues || (material.loading == null && this.props.materialGroup === 'products')) {
       return notApplicableInput('reaction-material__loading-data');
     }
 
@@ -723,8 +723,7 @@ class Material extends Component {
 
     const isDisabled = !permitOn(reaction)
       || isAmountDisabledByWeightPercentage
-      || (materialGroup === 'products'
-      || (!material.reference && lockEquivColumn));
+      || (!material.reference && lockEquivColumn && materialGroup !== 'products');
 
     return (
       <NumeralInputWithUnitsCompo
@@ -752,8 +751,7 @@ class Material extends Component {
 
     const isDisabled = !permitOn(reaction)
       || isAmountDisabledByWeightPercentage
-      || (materialGroup === 'products'
-      || (!material.reference && lockEquivColumn));
+      || (!material.reference && lockEquivColumn && materialGroup !== 'products');
 
     // Check if activity is the active unit
     // For SBMM samples: check if _amount_unit is 'U' (set when activity is the primary amount)
@@ -1069,15 +1067,25 @@ class Material extends Component {
       return `${molName} (${mol}${ton}${tof}${yld})`;
     }
 
+    const loadingStr = (m.contains_residues && m.loading)
+      ? `${validDigit(parseFloat(m.loading), 3)} mmol/g, `
+      : '';
+
     switch (materialGroup) {
       case 'purification_solvents':
       case 'solvents': {
         return `${molName} (${solVol})`;
       }
       case 'products': {
+        if (m.contains_residues) {
+          return `${molName} (${grm}${mol}${loadingStr}${yld} yield)`;
+        }
         return `${molName} (${grm}${vol}${mol}${mlt}${yld} yield)`;
       }
       default: {
+        if (m.contains_residues) {
+          return `${molName} (${grm}${mol}${loadingStr}${eqv} equiv)`;
+        }
         return `${molName} (${grm}${vol}${mol}${mlt}${eqv} equiv)`;
       }
     }

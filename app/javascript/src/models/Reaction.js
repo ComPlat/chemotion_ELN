@@ -548,9 +548,11 @@ export default class Reaction extends Element {
     });
     copy.products = this.products.map((sample) => {
       const copiedSample = Sample.copyFromSampleAndCollectionId(sample, copy.collection_id);
-      copiedSample._real_amount_value = null;
-      copiedSample._target_amount_value = null;
-      copiedSample.equivalent = null;
+      if (!keepAmounts) {
+        copiedSample._real_amount_value = null;
+        copiedSample._target_amount_value = null;
+        copiedSample.equivalent = null;
+      }
       return copiedSample;
     });
 
