@@ -143,6 +143,8 @@ module Chemotion
         optional :user_labels, type: Array
         optional :readout_titles, type: Array
         requires :container, type: Hash
+        requires :height, type: Integer, values: 0..101
+        requires :width, type: Integer, values: 0..101
         optional :segments, type: Array, desc: 'Segments'
       end
       route_param :id do
@@ -179,8 +181,8 @@ module Chemotion
         optional :readout_titles, type: Array
         requires :collection_id, type: Integer
         requires :container, type: Hash
-        optional :height, type: Integer, default: 8, values: 1..100
-        optional :width, type: Integer, default: 12, values: 1..100
+        optional :height, type: Integer, default: 8, values: 0..101
+        optional :width, type: Integer, default: 12, values: 0..101
         optional :segments, type: Array, desc: 'Segments'
         optional :user_labels, type: Array
       end
