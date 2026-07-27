@@ -88,7 +88,8 @@ describe Chemotion::UserAPI do
 
     context 'when there is no session and no token' do
       before do
-        allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(nil)
+        allow(WardenAuthentication).to receive(:new)
+          .and_return(instance_double(WardenAuthentication, current_user: nil))
         get '/api/v1/users/current'
       end
 
