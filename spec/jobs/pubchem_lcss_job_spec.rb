@@ -51,6 +51,17 @@ RSpec.describe PubchemLcssJob do
           .with(sleep_time: 10, batch_size: 50, chunk_size: described_class::CHUNK_SIZE, start_id: 0)
         expect(called_ids).to be_empty
       end
+
+      it 'proceeds normally when the other lock is stale (its worker died mid-run)' do
+        create_locked_delayed_job('PubchemSingleLcssJob', locked_at: (Delayed::Worker.max_run_time + 1.minute).ago)
+        pending_molecule = make_pending_molecule
+        allow(described_class).to receive(:set)
+
+        job.perform
+
+        expect(described_class).not_to have_received(:set)
+        expect(called_ids).to contain_exactly(pending_molecule.id)
+      end
     end
 
     it 'processes only molecules with a numeric pubchem_cid and no pubchem_lcss yet' do

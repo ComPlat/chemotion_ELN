@@ -12,11 +12,13 @@ module PubchemRateLimitGuard
   private
 
   # @return [Boolean] whether a delayed_job worker currently holds the lock on another
-  #   guarded job's row (i.e. it is actively executing right now).
+  #   guarded job's row (i.e. it is actively executing right now). A lock older than
+  #   +Delayed::Worker.max_run_time+ is stale — its worker died without releasing it —
+  #   and is treated as not running, so a crashed worker can't block this guard forever.
   def other_pubchem_job_running?
     like_patterns = GUARDED_JOB_CLASSES.map { |name| "%job_class: #{name}%" }
     Delayed::Job.where('handler like any (array[?])', like_patterns)
-                .where.not(locked_at: nil)
+                .where(locked_at: Delayed::Worker.max_run_time.ago..)
                 .where.not('handler like ?', "%job_id: #{job_id}%")
                 .exists?
   end

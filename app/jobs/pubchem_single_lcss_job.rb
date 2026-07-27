@@ -73,7 +73,11 @@ class PubchemSingleLcssJob < ApplicationJob
   end
 
   def pending_scope(ids, created_after:, after_id:)
+    # eager_load(:tag) is a LEFT OUTER JOIN, so a molecule with no element_tags row at
+    # all would otherwise also match `... is null` below and crash Molecule#pubchem_lcss,
+    # which assumes tag is present. Exclude those explicitly.
     scope = Molecule.eager_load(:tag)
+                    .where.not(element_tags: { id: nil })
                     .where("element_tags.taggable_data->>'pubchem_lcss' is null")
                     .where('molecules.id > ?', after_id)
                     .order(:id)

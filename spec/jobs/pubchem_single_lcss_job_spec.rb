@@ -165,6 +165,14 @@ RSpec.describe PubchemSingleLcssJob do
       expect(result.map(&:id)).to eq([new_molecule.id])
     end
 
+    it 'excludes a molecule with no tag row at all (orphaned data), instead of crashing downstream' do
+      new_molecule.tag.destroy!
+
+      result = job.send(:resolve_molecules, nil, created_after: 2.days.ago - 1.hour, start_id: 0)
+
+      expect(result.map(&:id)).to eq([old_molecule.id])
+    end
+
     it 'only considers molecules with id greater than start_id' do
       result = job.send(:resolve_molecules, nil, created_after: 2.days.ago - 1.hour, start_id: old_molecule.id)
 
