@@ -2463,7 +2463,7 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction, onInputChange, onReactionChange } = this.props;
     const isInteractionReaction = reaction.isInteractionReaction();
     if (reaction.editedSample !== undefined) {
-      const materialGroups = ['starting_materials', 'reactants', 'solvents', 'purification_solvents', 'products'];
+      const { materialGroups } = Reaction;
       if (reaction.editedSample.amountType === 'target') {
         materialGroups.forEach((group) => {
           reaction[group] = this.updatedSamplesForEquivalentChange(reaction[group] || [], reaction.editedSample, group);
