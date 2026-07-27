@@ -3,6 +3,26 @@ module Chemotion
     helpers ContainerHelpers
 
     resource :containers do
+      # NOTE: declared first, before the after_validation callbacks further down
+      # in this resource — those are scoped to every route defined after them
+      # (Grape's namespace_stackable callbacks), and check destroy?/update?
+      # which would wrongly reject a read-only viewer. Keep this route ahead of
+      # them so it only runs its own read? check.
+      desc 'Get a single container by ID — used for polling a long-running AI task ' \
+           '(e.g. background spectral data structuring) until its result lands.'
+      params do
+        requires :container_id, type: Integer, desc: 'Container Id'
+      end
+      get ':container_id' do
+        container = Container.find_by(id: params[:container_id])
+        error!('Container not found', 404) unless container
+
+        policy = ElementPolicy.new(current_user, container.root_element)
+        error!('401 Unauthorized', 401) unless policy.read?
+
+        present(container, with: Entities::ContainerEntity, root: :container)
+      end
+
       desc 'Update only the container by ID'
       params do
         requires :container, type: Hash, desc: 'Container data to update'

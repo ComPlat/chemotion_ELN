@@ -159,4 +159,42 @@ RSpec.describe Chemotion::LlmTaskDefinition do
       expect(h).not_to have_key(:system_prompt)
     end
   end
+
+  describe 'per-technique fragments (dynamic prompts)' do
+    let(:config_with_techniques) do
+      base_config.merge(
+        'techniques' => {
+          'nmr'     => { 'label' => 'NMR', 'instructions' => 'Structure this {{nucleus}} NMR.' },
+          'generic' => { 'label' => 'Spectral', 'instructions' => 'Structure this measurement.' },
+        },
+      )
+    end
+
+    it 'exposes the technique keys' do
+      task = described_class.new(config_with_techniques)
+      expect(task.technique_keys).to contain_exactly('nmr', 'generic')
+      expect(task.techniques?).to be true
+    end
+
+    it 'returns the label and raw instructions for a known technique' do
+      task = described_class.new(config_with_techniques)
+      expect(task.technique_label('nmr')).to eq('NMR')
+      expect(task.technique_instructions('nmr')).to eq('Structure this {{nucleus}} NMR.')
+    end
+
+    it 'falls back to the generic fragment for an unknown technique' do
+      task = described_class.new(config_with_techniques)
+      expect(task.technique_instructions('xrd')).to eq('Structure this measurement.')
+      expect(task.technique_label('xrd')).to eq('Spectral')
+    end
+
+    it 'is a no-op for tasks without a techniques map' do
+      task = described_class.new(base_config)
+      expect(task.techniques?).to be false
+      expect(task.technique_keys).to eq([])
+      expect(task.technique_instructions('nmr')).to eq('')
+      # humanised key fallback when no label configured
+      expect(task.technique_label('nmr')).to eq('NMR')
+    end
+  end
 end

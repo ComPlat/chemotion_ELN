@@ -57,6 +57,15 @@ module Usecases
             extended_metadata['general_description'] = extended_metadata['general_description'].to_json
           end
 
+          # extended_metadata is an hstore column (flat string values only) — a
+          # nested Hash assigned directly would be coerced via #to_s into a
+          # Ruby hash-inspect string (not valid JSON) and be unreadable on the
+          # next load. Serialise explicitly, mirroring content/general_description
+          # above. ContainerEntity#extended_metadata parses it back out.
+          if extended_metadata&.key?('ai_spectral_data') && extended_metadata['ai_spectral_data'].is_a?(Hash)
+            extended_metadata['ai_spectral_data'] = extended_metadata['ai_spectral_data'].to_json
+          end
+
           if child[:is_new]
             # Create container
             container = parent_container.children.create(

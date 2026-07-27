@@ -1,0 +1,203 @@
+name: spectral_extraction
+display_name: "Spectral Data Structuring"
+description: "Convert an unstructured analytical measurement (NMR, MS/HRMS, IR, UV-Vis, HPLC/GC) into structured, machine-readable JSON. The per-technique schema and worked example are injected dynamically from the analysis type."
+category: extraction
+# NOTE: `execution_mode` is descriptive metadata only — LlmTaskRunner and the
+# /api/v1/llm/spectral/extract endpoint always call the LLM synchronously and
+# do not branch on this value. "async" tasks (e.g. sds_extraction) are actually
+# async only because their caller (ExtractSdsJob) wraps the call in an
+# ActiveJob; there is no such job here, so setting this to "async" has no
+# effect and the request still runs inline on the request thread. Keep this
+# as "inline" — it matches the modal's single await-fetch UX (open → spinner →
+# result), which needs an immediate response, not a background job + polling.
+execution_mode: async
+output_format: json
+temperature: 0.1
+max_tokens: 8192
+timeout_seconds: 120
+validator_class: "LlmTaskValidators::SpectralExtractionValidator"
+prompts:
+  system: |
+    You are an expert analytical chemist who converts free-text spectroscopic and
+    chromatographic measurement reports into structured JSON.
+    Return VALID JSON only. No prose, no markdown fences, no comments outside the JSON.
+    Use ONLY values explicitly present in the input text. Never fabricate or infer
+    chemical shifts, m/z values, wavenumbers, coupling constants, or intensities.
+    Omit any field for which the text gives no value — never emit null, empty strings,
+    or placeholders. Preserve the sign of values (e.g. negative 19F shifts) and copy
+    units and reference/lock values exactly as written.
+    Always copy the original measurement string verbatim into a top-level "raw" field,
+    and capture any "Impurities:" / "impurity" remarks in an "impurities" field.
+  # The technique-specific schema + worked example is injected as {{technique_instructions}};
+  # {{technique_label}} names the detected measurement. LlmTaskDefinition exposes the
+  # per-technique fragments under the `techniques:` map below; SpectralExtractionService
+  # selects the right one from the analysis type (extended_metadata.kind) or the content.
+  user_template: |
+    You are given a single {{technique_label}} measurement in free-text form,
+    exactly as a chemist typed it into an electronic lab notebook.
+
+    Measurement text:
+    {{context}}
+
+    {{technique_instructions}}
+
+# ── Per-technique fragments (schema + one worked example each) ────────────────────
+# Keys must match Chemotion::SpectralTechnique.detect. {{nucleus}} inside the NMR
+# fragment is filled in by SpectralExtractionService with the detected nucleus so the
+# example matches the corresponding measurement (1H, 13C, 19F, 31P, …).
+techniques:
+  nmr:
+    label: "NMR"
+    instructions: |
+      Structure this {{nucleus}} NMR measurement as a JSON object with this shape
+      (this example is illustrative — use the nucleus, solvent, frequency, reference,
+      and signals actually present in the text):
+      {
+        "nucleus": "{{nucleus}}",
+        "frequency_mhz": 400,
+        "solvent": "CDCl3",
+        "reference_ppm": 7.27,
+        "unit": "ppm",
+        "signals": [
+          {
+            "shift_ppm": 8.51,
+            "multiplicity": "s",
+            "coupling_constants_hz": [],
+            "nuclei_count": 1,
+            "assignment": "ArH"
+          },
+          {
+            "shift_ppm": 7.63,
+            "multiplicity": "dd",
+            "coupling_constants_hz": [8.4, 1.7],
+            "nuclei_count": 1,
+            "assignment": ""
+          }
+        ],
+        "impurities": "spectrum contains cyclohexane (1.44 ppm)",
+        "raw": "1H NMR (400 MHz, CDCl3 [7.27 ppm], ppm) δ = 8.51 (s, 1H), 7.63 (dd, J = 8.4 Hz, J = 1.7 Hz, 1H)"
+      }
+      Rules:
+      - reference_ppm is the locked/reference shift in brackets, e.g. CDCl3 [7.27 ppm] → 7.27; omit if absent.
+      - For a plain shift list with no multiplicity/integration (typical of 13C/19F), emit each
+        entry with only "shift_ppm" (and "coupling_constants_hz"/"assignment" when the text gives them).
+      - Note equivalent-carbon counts like "(2C)" in "nuclei_count".
+      - Multiplicity codes: s, d, t, q, quint, sext, sept, m, br, dd, ddd, dt, td, etc.
+      - Put every J value for a signal into "coupling_constants_hz" in the order written.
+  ms:
+    label: "Mass Spectrometry"
+    instructions: |
+      Structure this mass spectrometry measurement as a JSON object with this shape
+      (illustrative — use the ionisation, conditions, and peaks actually present):
+      {
+        "technique": "EI",
+        "conditions": "70 eV, 70 °C",
+        "unit": "m/z",
+        "peaks": [
+          { "mz": 353, "relative_intensity": 12, "assignment": "[M]+" },
+          { "mz": 86, "relative_intensity": 100, "assignment": "base peak" }
+        ],
+        "molecular_ion_mz": 353,
+        "base_peak_mz": 86,
+        "hrms": { "formula": "C17H14O2NF3S", "calculated": 353.0697, "found": 353.0699 },
+        "raw": "EI (m/z, 70 eV, 70 °C): 353 (12) [M]+, 86 (100). HRMS (C17H14O2NF3S): Calcd 353.0697, Found 353.0699."
+      }
+      A halogenated compound (Cl, Br) often shows an ISOTOPE DOUBLET: two m/z values
+      separated by "/" sharing one parenthesised intensity pair and one ion assignment,
+      e.g. "301/303 (4/4) [M-Br]+". Emit EACH isotope mass as its OWN entry in "peaks",
+      keeping the same relative_intensity-by-position and the same assignment — never
+      merge or average them:
+      {
+        "technique": "ESI",
+        "conditions": "H2O",
+        "unit": "m/z (%)",
+        "peaks": [
+          { "mz": 301, "relative_intensity": 4, "assignment": "[M-Br]+" },
+          { "mz": 303, "relative_intensity": 4, "assignment": "[M-Br]+" },
+          { "mz": 253, "relative_intensity": 68 },
+          { "mz": 222, "relative_intensity": 100, "assignment": "[M-2Br]+" },
+          { "mz": 181, "relative_intensity": 79 }
+        ],
+        "base_peak_mz": 222,
+        "hrms": { "formula": "C15H1479BrN2", "charge": "+", "calculated": 301.0335, "found": 301.0329 },
+        "raw": "MS (ESI, H2O), m/z (%): 301/303 (4/4) [M-Br]+, 253 (68), 222 (100) [M-2Br]+, 181 (79). HRMS (C15H1479BrN2)+: calcd: 301.0335, found: 301.0329."
+      }
+      Rules:
+      - "technique" is the ionisation method: EI, ESI, APCI, MALDI, FAB, CI, etc.
+      - The value in parentheses after an m/z is its relative intensity; text in square
+        brackets (e.g. [M]+, [M+H]+, [M-H]-) is the ion assignment. A peak may have no
+        assignment at all — that is normal, omit the "assignment" key for it.
+      - Populate "hrms" only when the text gives Calcd/Found (or lower-case "calcd:"/"found:"
+        — both mean the same thing) high-resolution masses.
+      - The HRMS molecular formula may carry an isotope-label prefix on one element (e.g.
+        "79Br" = the mass-79 bromine isotope) and/or a trailing charge sign right after the
+        closing parenthesis (e.g. "(C15H1479BrN2)+"). Copy the formula digits/letters exactly
+        as written into "formula" (do not strip the isotope prefix), and put the charge sign
+        in a separate "charge" field rather than leaving it stuck to the formula.
+      - However unusual the notation, ALWAYS still populate "technique" and "peaks" (or at
+        minimum "hrms") from what IS present — never respond with only a "raw" echo and no
+        structured fields; partial structuring of the clear parts is required even if one
+        detail (e.g. an unfamiliar isotope notation) is ambiguous.
+  ir:
+    label: "IR"
+    instructions: |
+      Structure this IR/Raman measurement as a JSON object with this shape:
+      {
+        "technique": "IR",
+        "sampling": "ATR",
+        "unit": "cm-1",
+        "bands": [
+          { "wavenumber": 1707, "intensity": "", "assignment": "C=O stretch" },
+          { "wavenumber": 2941 }
+        ],
+        "raw": "IR (ATR, ṽ) = 2941, 1707 cm-1."
+      }
+      Rules:
+      - IR reports are usually a bare list of wavenumbers with no intensity or assignment —
+        emit each as { "wavenumber": <number> } and omit intensity/assignment when absent.
+      - "sampling" is the technique in parentheses (ATR, KBr, neat, film, …); omit if absent.
+      - Only include "intensity" (s/m/w/br) or "assignment" when the text states them.
+  uvvis:
+    label: "UV-Vis"
+    instructions: |
+      Structure this UV-Vis measurement as a JSON object with this shape:
+      {
+        "technique": "UV-Vis",
+        "solvent": "MeOH",
+        "unit": "nm",
+        "bands": [
+          { "lambda_max_nm": 254, "epsilon": 12000, "assignment": "" }
+        ],
+        "raw": "UV/Vis (MeOH): λmax (ε) = 254 (12000) nm."
+      }
+      Rules:
+      - "lambda_max_nm" is the absorption maximum; "epsilon" is the molar absorptivity
+        in parentheses when given (omit otherwise).
+  hplc:
+    label: "HPLC/GC"
+    instructions: |
+      Structure this chromatography (HPLC/LC/GC) measurement as a JSON object:
+      {
+        "method": {
+          "technique": "HPLC",
+          "column": "C18, 150 x 4.6 mm",
+          "mobile_phase": "0.1% TFA in water / acetonitrile",
+          "flow_rate_ml_min": 1.0,
+          "detection_wavelength_nm": 254
+        },
+        "peaks": [
+          { "retention_time_min": 8.42, "area_percent": 98.5, "assignment": "product" }
+        ],
+        "purity_percent": 98.5,
+        "raw": "HPLC (C18): tR = 8.42 min (98.5%)."
+      }
+      Rules:
+      - Include only the method fields the text actually states.
+      - "purity_percent" is the area% of the main/target peak when reported.
+  generic:
+    label: "Spectral"
+    instructions: |
+      Structure this analytical measurement as a JSON object. Choose descriptive keys
+      that faithfully capture the reported quantities (values, units, assignments) using
+      only what the text states. Always include a "technique" field naming the method and
+      a "raw" field with the verbatim measurement string. Do not invent values.

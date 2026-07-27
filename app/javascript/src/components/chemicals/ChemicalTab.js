@@ -7,6 +7,7 @@ import {
   ButtonGroup
 } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
+import AiActionButton from 'src/components/common/AiActionButton';
 import { Select } from 'src/components/common/Select';
 import { chemicalStatusOptions } from 'src/components/staticDropdownOptions/options';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
@@ -566,63 +567,30 @@ export default class ChemicalTab extends React.Component {
 
     // AI extract button + view-icon (shown when a local PDF is available)
     const llmButtonGroup = hasLocalFile ? (
-      <InputGroup size="sm">
-        <OverlayTrigger
-          placement="top"
-          overlay={(
-            <Tooltip id="aiExtractTooltip">
-              {llmAvailable
-                ? (
-                  <>
-                    Extract safety phrases &amp; properties from the SDS using AI (LLM-based).
-                    Results are generated automatically and may contain inaccuracies — please review carefully.
-                  </>
-                )
-                : (
-                  <>
-                    No AI provider is configured. Set one up in Profile → AI Settings,
-                    or ask your administrator to configure an institution provider.
-                  </>
-                )}
-            </Tooltip>
+      <AiActionButton
+        label="Extract Safety Data with AI"
+        loadingLabel="Extracting…"
+        loading={loadingExtractSds}
+        disabled={!llmAvailable}
+        onRun={() => this.handleExtractSds()}
+        runTooltip={llmAvailable
+          ? (
+            <>
+              Extract safety phrases &amp; properties from the SDS using AI (LLM-based).
+              Results are generated automatically and may contain inaccuracies — please review carefully.
+            </>
+          )
+          : (
+            <>
+              No AI provider is configured. Set one up in Profile → AI Settings,
+              or ask your administrator to configure an institution provider.
+            </>
           )}
-        >
-          {/* span wrapper keeps the tooltip working while the button is disabled */}
-          <span className="d-inline-block">
-            <Button
-              className="ai-extract-btn"
-              size="sm"
-              disabled={loadingExtractSds || !llmAvailable}
-              onClick={() => this.handleExtractSds()}
-              style={!llmAvailable ? { pointerEvents: 'none' } : undefined}
-            >
-              {/* fa-fw keeps the icon slot constant so the button doesn't jump when
-                  the spinner replaces the magic icon */}
-              <i className={`fa fa-fw me-2 ${loadingExtractSds ? 'fa-spinner fa-pulse' : 'fa-magic'}`} />
-              {loadingExtractSds ? 'Extracting…' : 'Extract Safety Data with AI'}
-            </Button>
-          </span>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="top"
-          overlay={(
-            <Tooltip id="viewAiResultTooltip">
-              {hasAiData
-                ? 'Click to view AI extracted data'
-                : 'Run AI extraction first to view results'}
-            </Tooltip>
-          )}
-        >
-          <Button
-            className="ai-extract-view-btn"
-            size="sm"
-            onClick={() => this.setState({ showAiResultModal: true })}
-            disabled={!hasAiData}
-          >
-            <i className="fa fa-file-text-o" />
-          </Button>
-        </OverlayTrigger>
-      </InputGroup>
+        hasResult={hasAiData}
+        onViewResult={() => this.setState({ showAiResultModal: true })}
+        viewResultTooltip="Click to view AI extracted data"
+        viewResultDisabledTooltip="Run AI extraction first to view results"
+      />
     ) : null;
 
     // Vendor-scraping button (fetch Safety Phrases from vendor website)

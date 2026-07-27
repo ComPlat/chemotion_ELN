@@ -153,10 +153,16 @@ class LlmTaskRunner
 
   # Send the chat request for +task+ on +client+ and return the raw output.
   #
-  # Empty output from a JSON task almost always means the model was cut off at the
-  # token limit (finish_reason 'length') — common when a reasoning model burns its
-  # budget before emitting JSON, especially on long SDS documents. Retry once with
-  # a larger cap (same model) before giving up.
+  # A response cut off at the token limit (finish_reason 'length') is retried once
+  # with a larger cap (same model) before giving up. This covers two shapes of the
+  # same failure:
+  #   * EMPTY output — the model burned its whole budget before emitting anything
+  #     (common for reasoning models on long documents).
+  #   * NON-EMPTY but truncated output — the model got partway through the JSON
+  #     object (e.g. a long list of NMR signals) and got cut off mid-value, which
+  #     parse_json! would otherwise report as a confusing "expected object key,
+  #     got: EOF" error instead of the real cause (token limit).
+  # Both are detected the same way: finish_reason == 'length'.
   def call_model(task, client)
     messages   = build_messages(task)
     raw_output = client.chat(
@@ -166,12 +172,13 @@ class LlmTaskRunner
       json_mode:   task.json_output?,
     )
 
-    if task.json_output? && raw_output.to_s.strip.empty?
+    if task.json_output? && truncated?(raw_output, client.last_finish_reason)
       bumped = [task.max_tokens.to_i * 2, 16_000].min
       bumped = 16_000 if bumped <= task.max_tokens.to_i
       Rails.logger.warn(
-        "[LlmTaskRunner] Empty output for '#{@task_name}' " \
-        "(finish_reason=#{client.last_finish_reason.inspect}); retrying once with max_tokens=#{bumped}.",
+        "[LlmTaskRunner] Truncated output for '#{@task_name}' " \
+        "(finish_reason=#{client.last_finish_reason.inspect}, " \
+        "#{raw_output.to_s.length} chars); retrying once with max_tokens=#{bumped}.",
       )
       raw_output = client.chat(
         messages:    messages,
@@ -182,6 +189,12 @@ class LlmTaskRunner
     end
 
     raw_output
+  end
+
+  # True when the response was cut off at the token limit — either empty or
+  # (for JSON tasks) merely truncated mid-object with content already emitted.
+  def truncated?(raw_output, finish_reason)
+    finish_reason.to_s == 'length' || raw_output.to_s.strip.empty?
   end
 
   # Build the messages array for LlmClient#chat.

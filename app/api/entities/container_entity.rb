@@ -41,6 +41,22 @@ module Entities
           metadata[:hyperlinks] =
             JSON.parse(object.extended_metadata['hyperlinks'])
         end
+        if object.extended_metadata['ai_spectral_data'].present?
+          metadata[:ai_spectral_data] =
+            begin
+              JSON.parse(object.extended_metadata['ai_spectral_data'])
+            rescue JSON::ParserError
+              nil
+            end
+        end
+        if object.extended_metadata['ai_spectral_extraction_error'].present?
+          metadata[:ai_spectral_extraction_error] =
+            begin
+              JSON.parse(object.extended_metadata['ai_spectral_extraction_error'])
+            rescue JSON::ParserError
+              nil
+            end
+        end
         if object.extended_metadata && object.extended_metadata['general_description'].present?
           general_desc = object.extended_metadata['general_description']
           metadata[:general_description] = if general_desc.is_a?(String)

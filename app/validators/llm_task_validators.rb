@@ -144,4 +144,20 @@ module LlmTaskValidators
       data
     end
   end
+
+  # Validator for the dynamic spectral_extraction task. Output shape varies by
+  # technique (NMR/MS/IR/UV-Vis/HPLC), so accept any hash that carries at least
+  # one recognised data-bearing field from any family.
+  class SpectralExtractionValidator < Base
+    DATA_KEYS = %w[
+      signals shifts assignments nucleus peaks bands fragments hrms
+      molecular_ion_mz base_peak_mz purity_percent method technique
+    ].freeze
+
+    def validate!(data)
+      require_hash!(data)
+      require_any_of!(data, *DATA_KEYS)
+      data
+    end
+  end
 end

@@ -1,0 +1,135 @@
+// Shared styling for AI/LLM action buttons across the ELN (SDS extraction,
+// spectral data structuring, and any future AI task trigger). Import this
+// partial and use the .ai-action-btn / .ai-action-view-btn classes instead of
+// hand-rolling gradients per feature, so every "run this with AI" control
+// looks and behaves the same everywhere in the app.
+
+// Primary "run" button — the left button of a two-button input group
+// ([Run with AI] [view-result icon]).
+.ai-action-btn {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    padding: 0.45rem 1rem;
+    border: none;
+    border-radius: 0.5rem 0 0 0.5rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #d946ef 100%);
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.3s ease;
+
+    // A button used standalone (not paired with a view-result icon) is fully rounded.
+    &.ai-action-btn--standalone {
+        border-radius: 0.5rem;
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -75%;
+        width: 50%;
+        height: 200%;
+        background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.35) 50%,
+            rgba(255, 255, 255, 0) 100%
+        );
+        transform: skewX(-25deg);
+        animation: ai-action-shine-wave 3.5s ease-in-out infinite;
+    }
+
+    &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        color: #fff;
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #c026d3 100%);
+        box-shadow: 0 5px 16px rgba(139, 92, 246, 0.45);
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35);
+    }
+
+    &:focus-visible {
+        outline: 2px solid #a5b4fc;
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        opacity: 0.7;
+        box-shadow: none;
+        &::after {
+            animation: none;
+        }
+    }
+}
+
+// Paired "view AI result" icon button — same gradient family, right-rounded so
+// the two read as one control.
+.ai-action-view-btn {
+    border: none;
+    color: #fff;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+    background: linear-gradient(135deg, #8b5cf6, #d946ef);
+    transition: background 0.3s ease, box-shadow 0.2s ease;
+
+    &:hover:not(:disabled) {
+        color: #fff;
+        background: linear-gradient(135deg, #7c3aed, #c026d3);
+    }
+
+    &:focus-visible {
+        outline: 2px solid #a5b4fc;
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        opacity: 0.55;
+    }
+}
+
+// Compact icon-only trigger used inline next to a field label (e.g. the
+// analysis Content "structure with AI" affordance) rather than a full button.
+.ai-action-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    line-height: 1;
+
+    .ai-action-icon-badge {
+        font-size: 0.78rem;
+        line-height: 1;
+        font-weight: 700;
+        color: #fff;
+        padding: 0.1rem 0.4rem;
+        border-radius: 0.35rem;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #d946ef 100%);
+    }
+}
+
+// The sparkle glyph used as the universal "AI/LLM" marker throughout the ELN —
+// deliberately NOT a magic-wand icon (reads as a "stick"); a sparkle/star mark
+// is the common visual shorthand for AI-generated actions.
+.ai-sparkle-icon {
+    font-style: normal; // it's a unicode glyph, not an <i> font icon
+}
+
+@keyframes ai-action-shine-wave {
+    0% {
+        left: -75%;
+    }
+    20% {
+        left: 125%;
+    }
+    100% {
+        left: 125%;
+    }
+}

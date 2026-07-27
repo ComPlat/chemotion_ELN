@@ -50,5 +50,28 @@ describe Entities::ContainerEntity do
         )
       end
     end
+
+    context 'when ai_spectral_data is stored (JSON-serialised in the hstore column)' do
+      let(:container) do
+        create(:analysis_container, extended_metadata: {
+                 'ai_spectral_data' => {
+                   'technique' => 'nmr', 'model' => 'kit.qwen3.5-397b-A17b',
+                   'result' => { 'nucleus' => '1H' },
+                 }.to_json,
+               })
+      end
+
+      it 'parses it back into a Hash' do
+        expect(grape_entity_as_hash[:extended_metadata][:ai_spectral_data]).to eq(
+          'technique' => 'nmr', 'model' => 'kit.qwen3.5-397b-A17b', 'result' => { 'nucleus' => '1H' },
+        )
+      end
+    end
+
+    context 'when ai_spectral_data is absent' do
+      it 'omits the key entirely' do
+        expect(grape_entity_as_hash[:extended_metadata]).not_to have_key(:ai_spectral_data)
+      end
+    end
   end
 end

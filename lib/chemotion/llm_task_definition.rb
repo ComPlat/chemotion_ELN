@@ -37,6 +37,8 @@ module Chemotion
       @timeout_seconds = config.fetch('timeout_seconds', 120).to_i
       @validator_class = config['validator_class'].presence
       @prompts         = config.fetch('prompts', {})
+      @techniques      = config.fetch('techniques', {})
+      @techniques      = {} unless @techniques.is_a?(Hash)
     end
 
     # Returns the system prompt string (empty string if not defined).
@@ -62,6 +64,53 @@ module Chemotion
       # Replace any remaining un-substituted placeholders with empty string
       template.gsub!(/\{\{[^}]+\}\}/, '')
       template.strip
+    end
+
+    # Per-technique prompt fragments (optional). Used by tasks whose prompt is
+    # assembled dynamically from the analysis technique (e.g. spectral_extraction).
+    # Maps a normalised technique key to a Hash of { 'label' =>, 'instructions' => }.
+    #
+    # @return [Hash{String => Hash}]
+    attr_reader :techniques
+
+    # The fragment Hash for a technique key, falling back to the 'generic' fragment
+    # (then {}). Never nil.
+    #
+    # @param key [String, Symbol]
+    # @return [Hash]
+    def technique(key)
+      @techniques[key.to_s] || @techniques['generic'] || {}
+    end
+
+    # The display label for a technique key (e.g. 'nmr' => 'NMR'), falling back to
+    # the humanised key.
+    #
+    # @param key [String, Symbol]
+    # @return [String]
+    def technique_label(key)
+      technique(key)['label'].presence || key.to_s.tr('_', ' ').upcase
+    end
+
+    # The raw (un-substituted) instructions template for a technique key.
+    #
+    # @param key [String, Symbol]
+    # @return [String]
+    def technique_instructions(key)
+      technique(key)['instructions'].to_s
+    end
+
+    # All configured technique keys (empty for tasks without a techniques: map).
+    #
+    # @return [Array<String>]
+    def technique_keys
+      @techniques.keys
+    end
+
+    # Whether this task assembles its prompt from per-technique fragments.
+    #
+    # @return [Boolean]
+    def techniques?
+      @techniques.any?
     end
 
     # Whether this task expects a JSON response from the model.

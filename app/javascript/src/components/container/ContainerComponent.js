@@ -4,6 +4,7 @@ import { Map } from 'immutable';
 import PropTypes from 'prop-types';
 import { Col, Form, Row } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
+import AiActionButton from 'src/components/common/AiActionButton';
 
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
@@ -14,7 +15,9 @@ import OlsTreeSelect from 'src/components/OlsComponent';
 import { confirmOptions } from 'src/components/staticDropdownOptions/options';
 
 import AnalysisEditor from 'src/components/container/AnalysisEditor';
+import AnalysisParserModal from 'src/components/container/AnalysisParserModal';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
+import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 let includeDescriptionIdCounter = 0;
 
@@ -27,7 +30,9 @@ export default class ContainerComponent extends Component {
     this.state = {
       container,
       textTemplate: textTemplate && textTemplate.toJS(),
-      includeDescription: !!(container?.description)
+      includeDescription: !!(container?.description),
+      showParserModal: false,
+      aiRunning: false
     };
     includeDescriptionIdCounter += 1;
     this.includeDescriptionIdSuffix = includeDescriptionIdCounter;
@@ -40,6 +45,12 @@ export default class ContainerComponent extends Component {
     this.handleAddLink = this.handleAddLink.bind(this);
     this.handleRemoveLink = this.handleRemoveLink.bind(this);
     this.handleIncludeDescriptionChange = this.handleIncludeDescriptionChange.bind(this);
+    this.openParserModal = this.openParserModal.bind(this);
+    this.closeParserModal = this.closeParserModal.bind(this);
+    this.handleAiExtracted = this.handleAiExtracted.bind(this);
+    this.handleRunAi = this.handleRunAi.bind(this);
+    this.pollAiSpectralData = this.pollAiSpectralData.bind(this);
+    this.handleAiResultEdited = this.handleAiResultEdited.bind(this);
   }
 
   componentDidMount() {
@@ -58,6 +69,7 @@ export default class ContainerComponent extends Component {
 
   componentWillUnmount() {
     TextTemplateStore.unlisten(this.handleTemplateChange);
+    if (this._aiPollTimer) clearTimeout(this._aiPollTimer);
   }
 
   handleTemplateChange() {
@@ -150,6 +162,145 @@ export default class ContainerComponent extends Component {
     }
   }
 
+  openParserModal() {
+    this.setState({ showParserModal: true });
+  }
+
+  closeParserModal() {
+    this.setState({ showParserModal: false });
+  }
+
+  // Persist a fresh AI structuring result into the container so it is saved
+  // with the rest of the analysis on the next Sample save, and so the "info"
+  // button can show it again later without re-running the LLM.
+  handleAiExtracted(result) {
+    const { container } = this.state;
+    container.extended_metadata.ai_spectral_data = result;
+
+    const { onChange } = this.props;
+    this.setState({ container });
+    onChange(container);
+  }
+
+  // The user hand-corrected the structured JSON in AnalysisParserModal's edit
+  // mode. Merge it into the persisted record (keeping technique/model/etc.)
+  // and mark the container dirty so it is written on the next Sample save,
+  // exactly like editing the analysis Content or any other field.
+  handleAiResultEdited(editedInnerResult) {
+    const { container } = this.state;
+    const existing = container.extended_metadata.ai_spectral_data || {};
+    container.extended_metadata.ai_spectral_data = {
+      ...existing,
+      result: editedInnerResult,
+      edited_at: new Date().toISOString(),
+    };
+
+    const { onChange } = this.props;
+    this.setState({ container });
+    onChange(container);
+  }
+
+  // The single "run" action. Whether this executes inline (immediate result)
+  // or in the background (delayed_job) is decided entirely server-side by the
+  // spectral_extraction task's `execution_mode` in config/llm_tasks/*.yml —
+  // there is no client-side mode choice. The response shape tells us which one
+  // happened: a `result` payload means it ran inline; `{ queued: true }` means
+  // it was queued and we need to poll for completion.
+  handleRunAi() {
+    const { container } = this.state;
+    const content = container.extended_metadata?.content;
+    const kind = container.extended_metadata?.kind;
+
+    this.setState({ aiRunning: true });
+
+    fetch('/api/v1/llm/spectral/extract', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ content, kind, container_id: container.id }),
+    }).then((response) => {
+      if (response.ok) return response.json();
+      return response.json().then((data) => { throw new Error(data.error || `HTTP ${response.status}`); });
+    }).then((data) => {
+      if (data.queued) {
+        this.setState({ aiRunning: false });
+        NotificationActions.add({
+          title: 'Structuring Queued',
+          message: 'Structuring this analysis in the background using AI. '
+            + 'Results will appear automatically when done.',
+          level: 'info',
+          position: 'tc',
+          autoDismiss: 5,
+        });
+        const prevExtractedAt = container.extended_metadata?.ai_spectral_data?.extracted_at ?? null;
+        this.pollAiSpectralData(container.id, prevExtractedAt, 0);
+      } else {
+        this.setState({ aiRunning: false });
+        this.handleAiExtracted({ ...data, extracted_at: new Date().toISOString() });
+        this.setState({ showParserModal: true });
+      }
+    }).catch(() => {
+      // No client-side toast here — the backend already persists a "System
+      // Notification" (Message row) for every failure reachable from this
+      // endpoint, and NoticeButton's own polling surfaces that as a toast
+      // too. Adding a second one here would just duplicate it.
+      this.setState({ aiRunning: false });
+    });
+  }
+
+  // Poll GET /api/v1/containers/:id every 3s until ai_spectral_data.extracted_at
+  // changes (success) or ai_spectral_extraction_error.failed_at appears
+  // (failure), max 2 minutes. Only reached when execution_mode: async queued a
+  // background job. Mirrors ChemicalTab's SDS extraction polling.
+  pollAiSpectralData(containerId, prevExtractedAt, attempt) {
+    const MAX_ATTEMPTS = 40; // 40 x 3s = 2 min
+    const POLL_INTERVAL = 3000;
+
+    if (attempt >= MAX_ATTEMPTS) {
+      this.setState({ aiRunning: false });
+      NotificationActions.add({
+        title: 'Structuring',
+        message: 'This is taking longer than expected. Please check back later.',
+        level: 'warning',
+        position: 'tc',
+        autoDismiss: 8,
+      });
+      return;
+    }
+
+    this._aiPollTimer = setTimeout(() => {
+      fetch(`/api/v1/containers/${containerId}`, {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+      }).then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      }).then((data) => {
+        const meta = data?.container?.extended_metadata || {};
+        const newExtractedAt = meta.ai_spectral_data?.extracted_at ?? null;
+        const failedAt = meta.ai_spectral_extraction_error?.failed_at ?? null;
+
+        if (newExtractedAt && newExtractedAt !== prevExtractedAt) {
+          // No toast here — StructureSpectralDataJob's after_perform already
+          // persisted a "System Notification" for this completion, and
+          // NoticeButton's own polling will surface that. This just syncs the
+          // local container state so the info button lights up.
+          const { container } = this.state;
+          container.extended_metadata.ai_spectral_data = meta.ai_spectral_data;
+          this.setState({ container, aiRunning: false });
+          this.props.onChange(container);
+        } else if (failedAt) {
+          // Same reasoning — the job already persisted a failure notification.
+          this.setState({ aiRunning: false });
+        } else {
+          this.pollAiSpectralData(containerId, prevExtractedAt, attempt + 1);
+        }
+      }).catch(() => {
+        this.pollAiSpectralData(containerId, prevExtractedAt, attempt + 1);
+      });
+    }, POLL_INTERVAL);
+  }
+
   updateTextTemplates(textTemplate) {
     const { templateType } = this.props;
     TextTemplateActions.updateTextTemplates(templateType, textTemplate);
@@ -178,6 +329,18 @@ export default class ContainerComponent extends Component {
         />
       );
     }
+
+    const contentText = (() => {
+      const c = container.extended_metadata?.content;
+      if (!c) return '';
+      if (typeof c === 'string') return c.trim();
+      if (Array.isArray(c.ops)) {
+        return c.ops.map((o) => (typeof o.insert === 'string' ? o.insert : '')).join('').trim();
+      }
+      return '';
+    })();
+    const hasContent = contentText.length > 0;
+    const aiSpectralData = container.extended_metadata?.ai_spectral_data || null;
 
     return (
       <div>
@@ -229,9 +392,36 @@ export default class ContainerComponent extends Component {
         </Col>
         <Col sm={12} className="mb-2">
           <Form.Group>
-            <Form.Label>Content</Form.Label>
+            <div className="d-flex align-items-center mb-1 gap-2">
+              <Form.Label className="mb-0">Content</Form.Label>
+              {hasContent && (
+                <AiActionButton
+                  label="JSON"
+                  loadingLabel="Structuring…"
+                  loading={this.state.aiRunning}
+                  onRun={this.handleRunAi}
+                  runTooltip={(
+                    <>
+                      Structure this analysis into JSON using AI (LLM-based).
+                      Results are generated automatically and may contain inaccuracies — please review carefully.
+                    </>
+                  )}
+                  hasResult={!!aiSpectralData}
+                  onViewResult={this.openParserModal}
+                  viewResultTooltip="Click to view the last AI-structured result"
+                  viewResultDisabledTooltip="Run the AI structuring first to view results"
+                />
+              )}
+            </div>
             {quill}
           </Form.Group>
+
+          <AnalysisParserModal
+            show={this.state.showParserModal}
+            onHide={this.closeParserModal}
+            result={aiSpectralData}
+            onResultChange={this.handleAiResultEdited}
+          />
           {includeDescription && (
             <Form.Group className="my-3">
               <Form.Label>Description</Form.Label>
@@ -280,7 +470,9 @@ ContainerComponent.propTypes = {
   onChange: PropTypes.func.isRequired,
   readOnly: PropTypes.bool,
   disabled: PropTypes.bool,
-  container: PropTypes.object
+  container: PropTypes.object,
+  rootContainer: PropTypes.object,
+  index: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
 };
 
 ContainerComponent.defaultProps = {
@@ -290,5 +482,7 @@ ContainerComponent.defaultProps = {
   readOnly: false,
   disabled: false,
   container: {},
-  element: {}
+  element: {},
+  rootContainer: undefined,
+  index: undefined
 };
