@@ -571,7 +571,8 @@ class Person < User
   private
 
   def prevent_destroying_sole_group_admin
-    orphaned = administrated_accounts.where(type: 'Group').select { |g| g.sole_admin?(id) }
+    administrated_group_ids = administrated_accounts.where(type: 'Group').select(:id)
+    orphaned = Group.where(id: administrated_group_ids).includes(:admins).select { |g| g.sole_admin?(id) }
     return if orphaned.empty?
 
     errors.add(:base, "cannot be deleted while the sole admin of: #{orphaned.map(&:name).join(', ')}")

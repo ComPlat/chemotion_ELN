@@ -23,7 +23,6 @@ export default class GroupElement extends React.Component {
       adminPopoverTarget: null,
       usersToggled: false,
       rowAddToggled: false,
-      adminRowAddToggled: false,
       selectedAdminUsers: [],
     };
 
@@ -96,7 +95,6 @@ export default class GroupElement extends React.Component {
   toggleAdminRowAdd() {
     this.setState((prevState) => ({
       showAdminRowAdd: !prevState.showAdminRowAdd,
-      adminRowAddToggled: !prevState.adminRowAddToggled,
     }));
   }
 
@@ -299,7 +297,7 @@ export default class GroupElement extends React.Component {
               type="button"
               variant="success"
               onClick={() => this.addUser(groupElement)}
-              disabled={!selectedUsers}
+              disabled={!selectedUsers || selectedUsers.length === 0}
             >
               <i className="fa fa-user-plus" />
             </Button>
@@ -321,7 +319,7 @@ export default class GroupElement extends React.Component {
               type="button"
               variant="warning"
               onClick={() => this.addAdmin(groupElement)}
-              disabled={!selectedAdminUsers}
+              disabled={!selectedAdminUsers || selectedAdminUsers.length === 0}
             >
               <i className="fa fa-key" />
             </Button>
