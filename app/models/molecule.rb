@@ -36,8 +36,8 @@
 class Molecule < ApplicationRecord
   acts_as_paranoid
 
-  # skip_lcss_callback lets a caller that's collecting ids into its own
-  # lcss_batch array (see .schedule_lcss_batch) suppress this particular
+  # skip_lcss_callback lets a caller that's deferring LCSS scheduling for a batch of
+  # creations (see .schedule_lcss_batch / .schedule_lcss_since) suppress this particular
   # instance's automatic scheduling; it's a plain per-object attribute, not
   # shared/ambient state, so it's inherently thread-safe.
   attr_accessor :pcid, :ob_log, :skip_lcss_callback
@@ -91,12 +91,12 @@ class Molecule < ApplicationRecord
     molecule = Molecule.find_or_create_by(inchikey: 'DUMMY')
   end
 
-  # @param lcss_batch [Array<Integer>, nil] when given, a newly-created molecule's
-  #   id is pushed here (and its own automatic LCSS scheduling is suppressed) instead
-  #   of scheduling immediately — the caller is responsible for flushing it via
-  #   .schedule_lcss_batch once its own batch of creations is done.
+  # @param defer_lcss [Boolean] when true, a newly-created molecule's own automatic LCSS
+  #   scheduling is suppressed instead of firing immediately — the caller is responsible
+  #   for triggering it later via .schedule_lcss_since once its own batch of creations
+  #   is done.
   # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
-  def self.find_or_create_by_molfile(molfile, lcss_batch: nil, **babel_info)
+  def self.find_or_create_by_molfile(molfile, defer_lcss: false, **babel_info)
     unless babel_info && babel_info[:inchikey]
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
     end
@@ -112,21 +112,20 @@ class Molecule < ApplicationRecord
     molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial, sum_formular: formula)
     if molecule.nil?
       molecule = Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
-        mol.skip_lcss_callback = true if lcss_batch
+        mol.skip_lcss_callback = true if defer_lcss
         pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
         mol.molfile = (is_partial && partial_molfile) || molfile
         mol.assign_molecule_data(babel_info, pubchem_info)
       end
-      lcss_batch << molecule.id if lcss_batch && molecule.persisted?
     end
     molecule.ob_log = babel_info[:ob_log]
     molecule
   end
   # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
 
-  def self.find_or_create_by_cano_smiles(cano_smiles, lcss_batch: nil)
+  def self.find_or_create_by_cano_smiles(cano_smiles, defer_lcss: false)
     molfile = Chemotion::OpenBabelService.molfile_from_cano_smiles(cano_smiles)
-    Molecule.find_or_create_by_molfile(molfile, lcss_batch: lcss_batch)
+    Molecule.find_or_create_by_molfile(molfile, defer_lcss: defer_lcss)
   end
 
   def self.find_or_create_by_molfiles(molfiles_array)
@@ -254,6 +253,19 @@ class Molecule < ApplicationRecord
 
   def get_lcss
     self.class.schedule_lcss_batch([id])
+  end
+
+  # Schedules a PubchemSingleLcssJob covering every molecule created after +timestamp+.
+  # The bulk importers use this instead of collecting new molecule ids into an array:
+  # capture Time.current once before the import loop begins, pass defer_lcss: true to
+  # suppress each new molecule's own immediate scheduling, then call this once at the
+  # end (even a method that turned out to create nothing new can safely call this
+  # unconditionally — the existence check below keeps that a no-op).
+  def self.schedule_lcss_since(timestamp)
+    return if timestamp.blank?
+    return unless Molecule.exists?(['created_at > ?', timestamp])
+
+    PubchemSingleLcssJob.perform_later(nil, created_after: timestamp)
   end
 
   def create_molecule_name_by_user(new_names, user_id)

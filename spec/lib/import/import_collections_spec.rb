@@ -355,12 +355,12 @@ RSpec.describe 'ImportCollection' do
         molecule: resolved_molecule, raw_molfile: polymer_molfile, babel_info: {},
       )
       allow(Import::PolymerMoleculeResolver).to receive(:call).and_return(result)
-      importer.instance_variable_set(:@lcss_batch, [])
+      importer.instance_variable_set(:@defer_lcss, true)
 
       molecule = importer.send(:find_or_create_molecule_for_polymer_molfile, polymer_molfile)
 
       expect(Import::PolymerMoleculeResolver).to have_received(:call)
-        .with(polymer_molfile, lcss_batch: [], unescape_octal: false)
+        .with(polymer_molfile, defer_lcss: true, unescape_octal: false)
       expect(molecule).to eq(resolved_molecule)
     end
   end
