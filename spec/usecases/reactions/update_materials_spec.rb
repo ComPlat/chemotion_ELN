@@ -161,16 +161,18 @@ describe Usecases::Reactions::UpdateMaterials do
       let(:updated_product_materials) do
         {
           'products' => [
-            'id' => existing_product_sample.id,
-            'name' => 'existing_product',
-            'target_amount_unit' => 'mg',
-            'target_amount_value' => 50.0,
-            'equivalent' => 0.75,
-            'reference' => false,
-            'is_new' => false,
-            'molfile' => molfile,
-            'container' => root_container,
-            'gas_phase_data' => gas_phase_data,
+            {
+              'id' => existing_product_sample.id,
+              'name' => 'existing_product',
+              'target_amount_unit' => 'mg',
+              'target_amount_value' => 50.0,
+              'equivalent' => 0.75,
+              'reference' => false,
+              'is_new' => false,
+              'molfile' => molfile,
+              'container' => root_container,
+              'gas_phase_data' => gas_phase_data,
+            },
           ],
         }
       end
