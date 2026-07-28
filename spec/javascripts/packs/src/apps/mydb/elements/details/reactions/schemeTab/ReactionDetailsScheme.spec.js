@@ -118,6 +118,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — polymer produc
       checkMassMolecule,
       checkMassPolymer,
       triggerNotification,
+      computeMaxAmountG: ReactionDetailsScheme.prototype.computeMaxAmountG,
     };
   };
 
@@ -1045,6 +1046,7 @@ describe('ReactionDetailsScheme#calculateEquivalentForProduct — polymer guard'
       checkMassMolecule,
       checkMassPolymer,
       triggerNotification,
+      computeMaxAmountG: ReactionDetailsScheme.prototype.computeMaxAmountG,
     };
   };
 
@@ -1278,6 +1280,7 @@ describe('ReactionDetailsScheme#updatedSamplesForAmountChange — yield clamp wi
       checkMassMolecule,
       checkMassPolymer,
       triggerNotification,
+      computeMaxAmountG: ReactionDetailsScheme.prototype.computeMaxAmountG,
     };
   };
 
