@@ -52,31 +52,28 @@ describe Export::ExportResearchPlan do
       described_class.new(user, research_plan, 'docx')
     end
 
-    it 'passes aspect-ratio-preserving dimensions to Inkscape (not the reaction-scheme default)' do
+    it 'rasterizes a square molecule to a square canvas, not the 1550×440 reaction default' do
+      # molecule.svg declares width="200px" height="200px" (square; width/height
+      # take precedence over its viewBox), so fitting it into the STRUCTURE_EXPORT_MAX
+      # box yields exactly 1550×1550 — never the reaction-scheme 1550×440.
       svg_path = Rails.root.join('spec/fixtures/images/molecule.svg')
-      # molecule.svg is 200×200 with viewBox 0 0 100 100 → export_size uses viewBox
-      expected_w, expected_h = Reporter::Img::Conv.export_size_for(
-        svg_path,
-        max_width: described_class::STRUCTURE_EXPORT_MAX,
-        max_height: described_class::STRUCTURE_EXPORT_MAX,
-      )
 
       expect(Reporter::Img::Conv).to receive(:by_inkscape)
-        .with(svg_path, kind_of(String), 'png', width: expected_w, height: expected_h)
+        .with(svg_path, kind_of(String), 'png', width: 1550, height: 1550)
 
       exporter.to_png(svg_path)
     end
 
-    it 'does not force a square molecule through the 1550×440 reaction-scheme canvas' do
-      svg_path = Rails.root.join('spec/fixtures/images/molecule.svg')
-      allow(Reporter::Img::Conv).to receive(:by_inkscape)
+    it "preserves a wide SVG's aspect ratio instead of stretching it to a square" do
+      Tempfile.open(['wide', '.svg']) do |f|
+        f.write('<svg width="1560" height="440"></svg>')
+        f.flush
 
-      exporter.to_png(svg_path)
+        # 1560:440 fitted into 1550×1550 → 1550×437: wide stays wide, not squashed.
+        expect(Reporter::Img::Conv).to receive(:by_inkscape)
+          .with(f.path, kind_of(String), 'png', width: 1550, height: 437)
 
-      expect(Reporter::Img::Conv).to have_received(:by_inkscape) do |_input, _output, _ext, kwargs|
-        # Square page → square PNG; must not use the reaction-scheme 1550×440 pair
-        expect(kwargs[:width]).to eq(kwargs[:height])
-        expect([kwargs[:width], kwargs[:height]]).not_to eq([1550, 440])
+        exporter.to_png(f.path)
       end
     end
 
@@ -90,32 +87,68 @@ describe Export::ExportResearchPlan do
     let(:user) { create(:person) }
     let(:research_plan) { create(:research_plan, creator: user) }
     let(:svg_fixture) { Rails.root.join('spec/fixtures/images/molecule.svg') }
-    let(:ketcher_name) { 'ketcher_export_test.svg' }
-    let(:ketcher_path) { Rails.public_path.join('images/research_plans', ketcher_name) }
+    let(:structure_width_regex) { width_regex(described_class::STRUCTURE_DISPLAY_WIDTH) }
 
-    before do
-      FileUtils.mkdir_p(ketcher_path.dirname)
-      FileUtils.cp(svg_fixture, ketcher_path)
-      allow(Reporter::Img::Conv).to receive(:by_inkscape)
+    before { allow(Reporter::Img::Conv).to receive(:by_inkscape) }
 
-      research_plan.body = [
-        {
-          id: 'entry-ketcher',
-          type: 'ketcher',
-          value: { svg_file: ketcher_name, thumb_svg: '' },
-        },
-      ]
-      research_plan.save!
+    def width_regex(px)
+      /width=['"]#{px}['"]/
     end
 
-    after do
-      FileUtils.rm_f(ketcher_path)
+    def html_for(body)
+      research_plan.update!(body: body)
+      described_class.new(user, research_plan, 'docx').to_html
     end
 
-    it 'embeds structure images with a display width for Pandoc' do
-      html = described_class.new(user, research_plan, 'docx').to_html
-      expect(html).to include("width='#{described_class::STRUCTURE_DISPLAY_WIDTH}'")
-        .or include("width=\"#{described_class::STRUCTURE_DISPLAY_WIDTH}\"")
+    context 'for a ketcher drawing' do
+      let(:ketcher_name) { 'ketcher_export_test.svg' }
+      let(:ketcher_path) { Rails.public_path.join('images/research_plans', ketcher_name) }
+
+      before do
+        FileUtils.mkdir_p(ketcher_path.dirname)
+        FileUtils.cp(svg_fixture, ketcher_path)
+      end
+
+      after { FileUtils.rm_f(ketcher_path) }
+
+      it 'embeds the drawing with the structure display width for Pandoc' do
+        html = html_for([{ id: 'e-k', type: 'ketcher', value: { svg_file: ketcher_name, thumb_svg: '' } }])
+        expect(html).to match(structure_width_regex)
+      end
+
+      it 'omits the width when the structure image is missing (no width-only broken img)' do
+        html = html_for([{ id: 'e-missing', type: 'ketcher', value: { svg_file: 'does_not_exist.svg', thumb_svg: '' } }])
+        expect(html).not_to match(structure_width_regex)
+      end
+    end
+
+    context 'for a linked sample' do
+      let(:sample) { create(:sample) }
+
+      before do
+        allow_any_instance_of(ElementPolicy).to receive(:read?).and_return(true)
+        allow_any_instance_of(Sample).to receive(:current_svg_full_path).and_return(svg_fixture.to_s)
+      end
+
+      it 'embeds the sample structure with the structure display width for Pandoc' do
+        html = html_for([{ id: 'e-s', type: 'sample', value: { sample_id: sample.id } }])
+        expect(html).to match(structure_width_regex)
+      end
+    end
+
+    context 'for a linked reaction' do
+      let(:reaction) { create(:reaction) }
+
+      before do
+        allow_any_instance_of(ElementPolicy).to receive(:read?).and_return(true)
+        allow_any_instance_of(Reaction).to receive(:current_svg_full_path).and_return(svg_fixture.to_s)
+      end
+
+      it 'embeds the reaction scheme with the wider reaction display width, not the compact structure width' do
+        html = html_for([{ id: 'e-r', type: 'reaction', value: { reaction_id: reaction.id } }])
+        expect(html).to match(width_regex(described_class::REACTION_DISPLAY_WIDTH))
+        expect(html).not_to match(structure_width_regex)
+      end
     end
   end
 end

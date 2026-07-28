@@ -21,7 +21,7 @@
 
   - when 'ketcher'
     %div
-      %img{"src" => field[:src], "width" => field[:width]}
+      %img{"src" => field[:src], "width" => (field[:width] if field[:src])}
 
   - when 'image'
     %div
@@ -29,5 +29,5 @@
 
   - else
     %div
-      %img{"src" => field[:src], "width" => field[:width]}
+      %img{"src" => field[:src], "width" => (field[:width] if field[:src])}
       %p= field[:p]

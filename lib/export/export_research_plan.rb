@@ -10,11 +10,18 @@ module Export
     # 1550×440 default canvas).
     STRUCTURE_EXPORT_MAX = 1550
 
-    # Display width (px) for structure <img> tags. Pandoc interprets a bare
-    # width as pixels at 96 dpi, so this value ÷ 96 is the on-page width in
-    # inches (300 px ≈ 3.1 in). Keeps crisp high-resolution PNGs from being
-    # embedded at their full pixel size, which would dominate the page.
+    # Display width (px) for roughly square structures (samples, Ketcher
+    # drawings). Pandoc interprets a bare width as pixels at 96 dpi, so this
+    # value ÷ 96 is the on-page width in inches (300 px ≈ 3.1 in). Keeps crisp
+    # high-resolution PNGs from being embedded at their full pixel size, which
+    # would dominate the page.
     STRUCTURE_DISPLAY_WIDTH = 300
+
+    # Display width (px) for wide reaction schemes (~1560×440). At 300 px a
+    # reaction is only ~0.9 in tall and hard to read; this asks Pandoc for the
+    # full page text column (Word clamps anything wider), so a reaction fills
+    # the width at a legible height (~1.6 in) while samples stay compact.
+    REACTION_DISPLAY_WIDTH = 600
 
     def initialize(current_user, research_plan, export_format)
       @current_user = current_user
@@ -75,7 +82,7 @@ module Export
             @fields << {
               type: field['type'],
               src: img_src,
-              width: STRUCTURE_DISPLAY_WIDTH,
+              width: REACTION_DISPLAY_WIDTH,
               p: reaction['name'],
             }
           end
@@ -118,6 +125,8 @@ module Export
 
     def to_file
       PandocRuby.convert(to_relative_html, from: :html, to: @export_format, resource_path: Rails.public_path)
+    ensure
+      cleanup_png_tempfiles
     end
 
     def to_zip
@@ -141,6 +150,18 @@ module Export
         zip.rewind
         zip.read
       end
+    ensure
+      cleanup_png_tempfiles
+    end
+
+    private
+
+    # Closes and unlinks the PNG Tempfiles retained during structure export,
+    # once Pandoc has finished reading them. Safe to call more than once
+    # (Tempfile#close! tolerates an already-closed file).
+    def cleanup_png_tempfiles
+      @png_tempfiles.each(&:close!)
+      @png_tempfiles.clear
     end
   end
 end
