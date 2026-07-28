@@ -1,5 +1,5 @@
 /* eslint-disable react/forbid-prop-types */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { TreeSelect } from 'antd';
 import {
   Alert, Button, Card, Row, Col, Form, OverlayTrigger, Tooltip
@@ -7,8 +7,10 @@ import {
 import AppModal from 'src/components/common/AppModal';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import { find } from 'lodash';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
-function InventoryLabelSettings() {
+const InventoryLabelSettings = () => {
+  const { collectionsStore } = useContext(StoreContext);
   const [prefixValue, setPrefixValue] = useState('');
   const [nameValue, setNameValue] = useState('');
   const [counterValue, setCounterValue] = useState('');
@@ -171,6 +173,7 @@ function InventoryLabelSettings() {
           setPrefixValue('');
         } else {
           updateInventoryLabelsArray(collectionIds, result);
+          collectionsStore.fetchCollections();
         }
       });
     } else {
@@ -243,6 +246,7 @@ function InventoryLabelSettings() {
         setCounterValue('');
         setSelectedValue([]);
         updateInventoryLabelsArray(collectionIds, result, true);
+        collectionsStore.fetchCollections();
       }
       setResetSpinner(false);
     }).catch(() => {
@@ -387,6 +391,6 @@ function InventoryLabelSettings() {
       </AppModal>
     </Card>
   );
-}
+};
 
 export default InventoryLabelSettings;

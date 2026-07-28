@@ -1,40 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Container, Card, Row, Col, Form, Button, Alert, Modal
+  Container, Card, Row, Col, Form, Button, Alert,
 } from 'react-bootstrap';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
-import InventoryLabelSettings from 'src/apps/settings/InventoryLabelSettings';
-import ScifinderCredential from 'src/apps/scifinderCredential/ScifinderCredential';
+import InventoryLabelSettings from 'src/components/userSettings/InventoryLabelSettings';
 import UserSetting from 'src/components/structureEditor/UserSetting';
-import OmniauthCredential from 'src/apps/omniauthCredential/OmniauthCredential';
-import UserCounter from 'src/apps/userCounter/UserCounter';
-import TreeViewItem from 'src/components/common/TreeViewItem';
-import AuthToken from 'src/apps/userSettings/AuthToken';
-import { TwoFactorSettings } from 'src/apps/userSettings/TwoFA';
-import { AccountSettings, DeleteSettings } from 'src/apps/userSettings/UserSettings';
-import Affiliations from 'src/apps/userSettings/Affiliations';
-import TextTemplates from 'src/apps/userSettings/TextTemplates';
+import UserCounter from 'src/components/userSettings/UserCounter';
 
-const AuthenticationSettings = ({ currentUser }) => {
-  return (
-    <Container className="my-3 d-flex flex-column gap-3">
-      <AccountSettings currentUser={currentUser} />
-      <TwoFactorSettings />
-      <AuthToken currentUser={currentUser} />
-      <DeleteSettings />
-    </Container>
-  );
-}
-
-AuthenticationSettings.propTypes = {
-  currentUser: PropTypes.shape({
-    email: PropTypes.string.isRequired,
-    unconfirmed_email: PropTypes.string.isRequired,
-  }).isRequired,
-};
-
-const ProfileSettings = ({ currentUser }) => {
+const Profile = ({ currentUser }) => {
   const [reactionPrefix, setReactionPrefix] = useState(currentUser.reaction_name_prefix || '');
   const [reactionsCount, setReactionsCount] = useState(currentUser.counters?.reactions || 0);
   const [inboxAuto, setInboxAuto] = useState(currentUser.profile?.data.inbox_auto !== false);
@@ -280,9 +254,9 @@ const ProfileSettings = ({ currentUser }) => {
       <UserCounter />
     </Container>
   );
-}
+};
 
-ProfileSettings.propTypes = {
+Profile.propTypes = {
   currentUser: PropTypes.shape({
     initials: PropTypes.string.isRequired,
     used_space: PropTypes.number.isRequired,
@@ -301,114 +275,4 @@ ProfileSettings.propTypes = {
   }).isRequired,
 };
 
-const ExternalSettings = () => {
-  return (
-    <Container className="my-3 d-flex flex-column gap-3">
-
-      <ScifinderCredential />
-
-      <OmniauthCredential />
-
-    </Container>
-  );
-}
-
-const AffiliationsSettings = () => {
-  return (
-    <Container className="my-3 d-flex flex-column gap-3">
-      <Affiliations />
-    </Container>
-  );
-}
-const AccountProfile = ({ currentUser, closeSettings }) => {
-  const [currentSettings, setCurrentSettings] = useState('account');
-
-  const renderMain = () => {
-    if (currentSettings === 'account') {
-      return <AuthenticationSettings currentUser={currentUser} />;
-    }
-    if (currentSettings === 'profile') {
-      return <ProfileSettings currentUser={currentUser} />;
-    }
-    if (currentSettings === 'external') {
-      return <ExternalSettings />;
-    }
-    if (currentSettings === 'affiliations') {
-      return <AffiliationsSettings />;
-    }
-    if (currentSettings === 'text-templates') {
-      return <TextTemplates />;
-    }
-    return null;
-  };
-
-  return (
-    <div className="account-profile w-100 h-100 d-flex flex-column">
-      <Modal.Header
-        className="account-profile__header"
-        closeButton
-        onHide={closeSettings}
-      >
-        <h4 className="ms-3">Settings</h4>
-      </Modal.Header>
-      <div className="d-flex flex-grow-1 align-items-stretch" style={{ minHeight: 0 }}>
-        <div className="sidebar">
-          <div className="sidebar-content">
-            <div className="tree-view__container">
-              <TreeViewItem
-                title="Account"
-                selected={currentSettings === 'account'}
-                onClick={() => setCurrentSettings('account')}
-              />
-              <TreeViewItem
-                title="Profile"
-                selected={currentSettings === 'profile'}
-                onClick={() => setCurrentSettings('profile')}
-              />
-              <TreeViewItem
-                title="3rd-party apps & SciFinder"
-                selected={currentSettings === 'external'}
-                onClick={() => setCurrentSettings('external')}
-              />
-              <TreeViewItem
-                title="Affiliations"
-                selected={currentSettings === 'affiliations'}
-                onClick={() => setCurrentSettings('affiliations')}
-              />
-              <TreeViewItem
-                title="Text Templates"
-                selected={currentSettings === 'text-templates'}
-                onClick={() => setCurrentSettings('text-templates')}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="flex-grow-1 overflow-auto" style={{ minHeight: 0 }}>
-          {renderMain()}
-        </div>
-      </div>
-
-      <script src="/assets/pages.js" />
-    </div>
-  );
-}
-
-AccountProfile.propTypes = {
-  closeSettings: PropTypes.func.isRequired,
-  currentUser: PropTypes.shape({
-    email: PropTypes.string.isRequired,
-    unconfirmed_email: PropTypes.string.isRequired,
-    initials: PropTypes.string.isRequired,
-    used_space: PropTypes.number.isRequired,
-    allocated_space: PropTypes.number.isRequired,
-    reaction_name_prefix: PropTypes.string.isRequired,
-    counters: PropTypes.shape({
-      reactions: PropTypes.number.isRequired,
-    }).isRequired,
-    profile: PropTypes.shape({
-      curation: PropTypes.number.isRequired,
-    }).isRequired,
-  }).isRequired,
-};
-
-export default AccountProfile;
+export default Profile;

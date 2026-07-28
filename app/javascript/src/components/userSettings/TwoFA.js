@@ -68,7 +68,7 @@ const TwoFactorSettings = () => {
       </Card.Body>
     </Card>
   );
-}
+};
 
 export {
   TwoFactorSettings
