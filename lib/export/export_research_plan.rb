@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'tempfile'
-
 module Export
   class ExportResearchPlan
     # Long-side cap for Inkscape rasterization. Must stay large enough for
@@ -49,7 +47,11 @@ module Export
         max_width: STRUCTURE_EXPORT_MAX,
         max_height: STRUCTURE_EXPORT_MAX,
       )
-      output_file = Tempfile.new(['output', '.png'])
+      # ext_to_path returns a *closed* Tempfile: Inkscape writes to its path and
+      # Pandoc later reads it, but the file descriptor is released immediately so
+      # a research plan with many structures cannot exhaust the FD limit. The
+      # object is retained only so cleanup_png_tempfiles can close!/unlink it.
+      output_file = Reporter::Img::Conv.ext_to_path('png')
       Reporter::Img::Conv.by_inkscape(svg_path, output_file.path, 'png', width: width, height: height)
       @png_tempfiles << output_file
       output_file.path

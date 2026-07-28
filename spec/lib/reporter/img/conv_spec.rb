@@ -308,6 +308,16 @@ describe Reporter::Img::Conv do
         expect(described_class.export_size_for(f.path)).to eq([1550, 440])
       end
     end
+
+    it 'clamps the short side to at least 1px for extreme aspect ratios' do
+      Tempfile.open(['thin', '.svg']) do |f|
+        f.write('<svg width="4000" height="1"></svg>')
+        f.flush
+        # height would round to 0; Inkscape rejects --export-height=0
+        expect(described_class.export_size_for(f.path, max_width: 1550, max_height: 1550))
+          .to eq([1550, 1])
+      end
+    end
   end
 
   describe '.parse_svg_length' do

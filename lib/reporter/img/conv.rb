@@ -144,12 +144,15 @@ module Reporter
       # @return [Array(Integer, Integer)]
       def self.export_size_for(svg_path, max_width: DEFAULT_EXPORT_WIDTH, max_height: DEFAULT_EXPORT_HEIGHT)
         w, h = svg_page_dimensions(svg_path)
-        if w.nil? || h.nil? || w <= 0 || h <= 0
-          return [max_width, max_height]
-        end
+        return [max_width, max_height] if w.nil? || h.nil? || w <= 0 || h <= 0
 
         scale = [max_width.to_f / w, max_height.to_f / h].min
-        [(w * scale).round, (h * scale).round]
+        # Clamp to at least 1px: an extreme aspect ratio can round the short
+        # side to 0, and Inkscape rejects --export-width=0 / --export-height=0.
+        export_w = [(w * scale).round, 1].max
+        export_h = [(h * scale).round, 1].max
+
+        [export_w, export_h]
       end
 
       # Patches any nested +<svg>+ element that has +width="100%"+ but no
