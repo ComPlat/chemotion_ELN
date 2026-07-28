@@ -21,6 +21,7 @@ import WorkshopGuideDrawer from 'src/components/workshopGuide/WorkshopGuideDrawe
 import UIActions from 'src/stores/alt/actions/UIActions';
 import OnEventListen from 'src/utilities/UserTemplatesHelpers';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 
 const addLocalStorageListener = () => { window.addEventListener('storage', OnEventListen, false); };
 const removeLocalStorageEventListener = () => { window.removeEventListener('storage', addLocalStorageListener); };
@@ -42,6 +43,13 @@ const saveKetcherOptionsToLocalStorage = () => {
           localStorage.setItem('ketcher-opts', JSON.stringify(result.settings));
         }
       }
+    });
+};
+
+const loadAllCollection = () => {
+  CollectionsFetcher.fetchByCollectionId('all')
+    .then((collection) => {
+      UIActions.selectCollection(collection);
     });
 };
 
@@ -81,6 +89,8 @@ const App = () => {
     saveKetcherOptionsToLocalStorage();
     UIActions.initialize.defer();
     patchExternalLibraries();
+
+    loadAllCollection();
 
     // TODO: clarify origin of handleStorageChange
     // window.addEventListener('storage', this.handleStorageChange);
