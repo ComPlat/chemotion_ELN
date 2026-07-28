@@ -32,62 +32,7 @@ module Export
       # them before Pandoc/HTML rendering reads the paths.
       @png_tempfiles = []
 
-      research_plan.body.each do |field|
-        case field['type']
-
-        when 'richtext'
-          @fields << {
-            type: field['type'],
-            text: Chemotion::QuillToHtml.convert(field['value']),
-          }
-        when 'table'
-          @fields << {
-            type: field['type'],
-            columns: field['value']['columns'],
-            rows: field['value']['rows'],
-          }
-        when 'ketcher'
-          # TODO: move  image location root path to model constant of method
-          img_src = to_png(Rails.public_path.join("images/research_plans/#{field['value']['svg_file']}"))
-          @fields << {
-            type: field['type'],
-            src: img_src,
-            width: STRUCTURE_DISPLAY_WIDTH,
-          }
-        when 'image'
-          attachment = Attachment.find_by(identifier: field['value']['public_name'])
-          image_location = attachment&.attachment&.url || "/images/research_plans/#{field['value']['public_name']}"
-
-          @fields << {
-            type: field['type'],
-            src: image_location,
-          }
-        when 'sample'
-          next unless (sample = Sample.find_by(id: field['value']['sample_id']))
-
-          if ElementPolicy.new(@current_user, sample).read?
-            img_src = to_png(sample.current_svg_full_path)
-            @fields << {
-              type: field['type'],
-              src: img_src,
-              width: STRUCTURE_DISPLAY_WIDTH,
-              p: sample['name'],
-            }
-          end
-        when 'reaction'
-          next unless (reaction = Reaction.find_by(id: field['value']['reaction_id']))
-
-          if ElementPolicy.new(@current_user, reaction).read?
-            img_src = to_png(reaction.current_svg_full_path)
-            @fields << {
-              type: field['type'],
-              src: img_src,
-              width: REACTION_DISPLAY_WIDTH,
-              p: reaction['name'],
-            }
-          end
-        end
-      end
+      research_plan.body.each { |field| add_field(field) }
     end
 
     # Rasterize an SVG to PNG with an export canvas that matches the SVG's
@@ -114,7 +59,7 @@ module Export
       ApplicationController.render(
         template: 'export/research_plan.haml',
         assigns: { name: @name, fields: @fields },
-        layout: false
+        layout: false,
       )
     end
 
@@ -132,7 +77,13 @@ module Export
     def to_zip
       Dir.mktmpdir('chemotion') do |tmpdir|
         # convert the html string using pandoc and save the images in tmpdir
-        document = PandocRuby.convert(to_relative_html, from: :html, to: @export_format, resource_path: Rails.public_path, extract_media: tmpdir)
+        document = PandocRuby.convert(
+          to_relative_html,
+          from: :html,
+          to: @export_format,
+          resource_path: Rails.public_path,
+          extract_media: tmpdir,
+        )
 
         # substitute tmp dir with images in the document
         document.gsub! tmpdir, 'images'
@@ -155,6 +106,84 @@ module Export
     end
 
     private
+
+    def add_field(field)
+      built = build_field(field)
+      @fields << built if built
+    end
+
+    # Returns the field hash for +field+, or nil when it contributes nothing
+    # (an unknown type, or a sample/reaction that is missing or unreadable).
+    def build_field(field)
+      case field['type']
+      when 'richtext' then richtext_field(field)
+      when 'table'    then table_field(field)
+      when 'ketcher'  then ketcher_field(field)
+      when 'image'    then image_field(field)
+      when 'sample'   then sample_field(field)
+      when 'reaction' then reaction_field(field)
+      end
+    end
+
+    def richtext_field(field)
+      {
+        type: field['type'],
+        text: Chemotion::QuillToHtml.convert(field['value']),
+      }
+    end
+
+    def table_field(field)
+      {
+        type: field['type'],
+        columns: field['value']['columns'],
+        rows: field['value']['rows'],
+      }
+    end
+
+    def ketcher_field(field)
+      # TODO: move image location root path to model constant of method
+      img_src = to_png(Rails.public_path.join("images/research_plans/#{field['value']['svg_file']}"))
+
+      {
+        type: field['type'],
+        src: img_src,
+        width: STRUCTURE_DISPLAY_WIDTH,
+      }
+    end
+
+    def image_field(field)
+      attachment = Attachment.find_by(identifier: field['value']['public_name'])
+      image_location = attachment&.attachment&.url || "/images/research_plans/#{field['value']['public_name']}"
+
+      {
+        type: field['type'],
+        src: image_location,
+      }
+    end
+
+    def sample_field(field)
+      return unless (sample = Sample.find_by(id: field['value']['sample_id']))
+      return unless ElementPolicy.new(@current_user, sample).read?
+
+      {
+        type: field['type'],
+        src: to_png(sample.current_svg_full_path),
+        width: STRUCTURE_DISPLAY_WIDTH,
+        p: sample['name'],
+      }
+    end
+
+    def reaction_field(field)
+      return unless (reaction = Reaction.find_by(id: field['value']['reaction_id']))
+      return unless ElementPolicy.new(@current_user, reaction).read?
+
+      {
+        type: field['type'],
+        src: to_png(reaction.current_svg_full_path),
+        width: REACTION_DISPLAY_WIDTH,
+        p: reaction['name'],
+      }
+    end
 
     # Closes and unlinks the PNG Tempfiles retained during structure export,
     # once Pandoc has finished reading them. Safe to call more than once

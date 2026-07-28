@@ -310,6 +310,29 @@ describe Reporter::Img::Conv do
     end
   end
 
+  describe '.parse_svg_length' do
+    it 'parses a magnitude and ignores the unit suffix' do
+      expect(described_class.parse_svg_length('200px')).to eq(200.0)
+      expect(described_class.parse_svg_length('150pt')).to eq(150.0)
+      expect(described_class.parse_svg_length('.5')).to eq(0.5)
+    end
+
+    it 'parses scientific notation (not just the leading digit)' do
+      expect(described_class.parse_svg_length('1e3')).to eq(1000.0)
+      expect(described_class.parse_svg_length('1.5e2')).to eq(150.0)
+    end
+
+    it 'preserves a negative sign so degenerate lengths are rejected downstream' do
+      expect(described_class.parse_svg_length('-50')).to eq(-50.0)
+    end
+
+    it 'returns nil for percentages, blank, and non-numeric values' do
+      expect(described_class.parse_svg_length('100%')).to be_nil
+      expect(described_class.parse_svg_length(nil)).to be_nil
+      expect(described_class.parse_svg_length('auto')).to be_nil
+    end
+  end
+
   describe '.valid?' do
     it 'returns true for a non-empty file' do
       Tempfile.open('conv_valid') do |f|

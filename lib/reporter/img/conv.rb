@@ -4,7 +4,7 @@ require 'nokogiri'
 
 module Reporter
   module Img
-    module Conv
+    module Conv # rubocop:disable Metrics/ModuleLength
       # Writes the given SVG markup to a fresh Tempfile and returns the
       # (closed) Tempfile object. The caller owns the Tempfile and must call
       # +close!+ on it when done to delete the underlying file.
@@ -90,26 +90,43 @@ module Reporter
         outer = doc.at_xpath('/*[local-name()="svg"]') || doc.at_xpath('//*[local-name()="svg"]')
         return [nil, nil] unless outer
 
-        w = parse_svg_length(outer['width'])
-        h = parse_svg_length(outer['height'])
-        return [w, h] if w && h && w > 0 && h > 0
-
-        # viewBox is "min-x min-y width height"; SVG allows the four values to
-        # be separated by whitespace and/or commas, with optional leading space.
-        vb = (outer['viewBox'] || outer['viewbox']).to_s.strip.split(/[\s,]+/)
-        return [vb[2].to_f, vb[3].to_f] if vb.size >= 4
-
-        [nil, nil]
+        svg_attr_dimensions(outer) || svg_viewbox_dimensions(outer) || [nil, nil]
       end
 
+      # Dimensions from the root +<svg>+'s explicit width/height, or nil when
+      # either is missing or non-positive (e.g. +width="100%"+, +width="0"+,
+      # or a negative value) so the caller falls back to the viewBox.
+      def self.svg_attr_dimensions(outer)
+        w = parse_svg_length(outer['width'])
+        h = parse_svg_length(outer['height'])
+
+        [w, h] if w&.positive? && h&.positive?
+      end
+
+      # Dimensions from the root +<svg>+'s +viewBox+ ("min-x min-y width
+      # height"); SVG allows the four values to be separated by whitespace
+      # and/or commas, with optional leading space.
+      def self.svg_viewbox_dimensions(outer)
+        vb = (outer['viewBox'] || outer['viewbox']).to_s.strip.split(/[\s,]+/)
+
+        [vb[2].to_f, vb[3].to_f] if vb.size >= 4
+      end
+
+      # Parses the leading numeric magnitude of an SVG length, ignoring any unit
+      # suffix (px, pt, mm…). Handles a leading sign and scientific notation, and
+      # preserves a negative sign so degenerate lengths are rejected by the
+      # +w > 0+ guard in +svg_page_dimensions+ rather than silently flipped
+      # positive. Percentages are unresolvable without a viewport, so they return
+      # nil (letting the viewBox fallback take over).
+      #
       # @param value [String, nil]
       # @return [Float, nil]
       def self.parse_svg_length(value)
         return if value.blank?
         return if value.to_s.include?('%')
 
-        match = value.to_s.match(/([\d.]+)/)
-        match && match[1].to_f
+        match = value.to_s.strip.match(/\A[+-]?\d*\.?\d+(?:[eE][+-]?\d+)?/)
+        match && match[0].to_f
       end
 
       # Export width/height for +by_inkscape+ that preserve the SVG page aspect
