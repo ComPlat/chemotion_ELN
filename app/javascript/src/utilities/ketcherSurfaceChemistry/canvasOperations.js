@@ -15,7 +15,8 @@ import {
 import { ALIAS_PATTERNS, KET_TAGS, KET_DOM_TAG } from 'src/utilities/ketcherSurfaceChemistry/constants';
 import {
   fetchKetcherData,
-  loadKetcherData
+  loadKetcherData,
+  sanitizeRgLabelAtoms,
 } from 'src/utilities/ketcherSurfaceChemistry/InitializeAndParseKetcher';
 import {
   findAtomByImageIndex,
@@ -73,13 +74,24 @@ const arrangePolymers = async (canvasData, editor, ketData = null) => {
     return canvasData.split('\n');
   }
   const data = ketData ?? JSON.parse(await editor.structureDef.editor.getKet());
-  const atomsWithAlias = mols
-    .flatMap((item) => data[item]?.atoms ?? [])
-    .filter((i) => ALIAS_PATTERNS.threeParts.test(i.alias));
 
-  // Keep atom index order so PolymersList matches positions (0, 1, 2) and image sequence is correct after load
-  const listOfAtomsWithAlias = atomsWithAlias.map((i) => i.alias);
-  const processString = await templateAliasesPrepare(listOfAtomsWithAlias);
+  // Collect polymer atoms with their global atom index (cumulative across all mols).
+  // Per-molecule (local) indices would collide when multiple single-atom polymer mols
+  // each have their R# at local index 0, causing all templates to load as the last one.
+  const atomsWithAlias = [];
+  let globalAtomOffset = 0;
+  for (const molName of mols) {
+    const atoms = data[molName]?.atoms ?? [];
+    for (let i = 0; i < atoms.length; i++) {
+      if (ALIAS_PATTERNS.threeParts.test(atoms[i].alias)) {
+        atomsWithAlias.push({ alias: atoms[i].alias, atomIndex: globalAtomOffset + i });
+      }
+    }
+    globalAtomOffset += atoms.length;
+  }
+  const listOfAtomsWithAlias = atomsWithAlias.map((a) => a.alias);
+  const atomIndexList = atomsWithAlias.map((a) => a.atomIndex);
+  const processString = await templateAliasesPrepare(listOfAtomsWithAlias, atomIndexList);
   const ctabLines = ctabLinesOnly(canvasData);
   return [...ctabLines, KET_TAGS.polymerIdentifier, processString];
 };
@@ -522,7 +534,7 @@ const replaceAliasWithRG = async (data) => {
 // prepare svg
 const prepareSvg = async (editor) => {
   try {
-    const struct = await replaceAliasWithRG({ ...latestData });
+    const struct = sanitizeRgLabelAtoms(await replaceAliasWithRG(JSON.parse(JSON.stringify(latestData))));
     const generateImageParams = { outputFormat: 'svg' };
     const parser = new DOMParser();
     const data = JSON.stringify(struct);
@@ -1166,9 +1178,12 @@ const onPasteNewShapes = async (editor, tempId, imageToBeAdded, iframeRef) => {
     }
   }
 
-  saveMoveCanvas(editor, latestData, true, true, false);
+  await saveMoveCanvas(editor, latestData, true, true, false);
 
   await buttonClickForRectangleSelection(iframeRef);
+  // Re-run layering after the rectangle-select click re-renders the canvas
+  ImagesToBeUpdatedSetter(true);
+  await runImageLayering(iframeRef);
   FILOStackSetter([]);
   allAtomsSetter([]);
 };

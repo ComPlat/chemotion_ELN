@@ -111,7 +111,7 @@ export default class PolymerSection extends React.Component {
         checked={residue.custom_info.loading_type === value}
         name="loading_type"
         value={value}
-        disabled={value !== 'external' && !relLoading}
+        disabled={value !== 'external' && !(value === 'found' && relComposition) && !relLoading}
         label={label}
       />
     );
@@ -210,11 +210,9 @@ export default class PolymerSection extends React.Component {
               sample={sample}
             />
           </Col>
-          {!sample.reaction_product && (
-            <Col xs={4}>
-              {this.polymerLoading(sample, residue)}
-            </Col>
-          )}
+          <Col xs={4}>
+            {this.polymerLoading(sample, residue)}
+          </Col>
         </Row>
       </div>
     );
