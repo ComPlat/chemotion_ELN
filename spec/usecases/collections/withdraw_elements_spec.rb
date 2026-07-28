@@ -80,6 +80,45 @@ RSpec.describe Usecases::Collections::WithdrawElements do
       expect { withdraw_from(user_sub, sample) }.not_to change(Sample, :count)
       expect(sample.reload.collections.where(id: user_sub.id)).to be_present
     end
+
+    it 'reports the sample as locked by its reaction' do
+      usecase = described_class.new(user)
+      usecase.perform!(source_collection: user_sub, ui_state: selection_for(sample), options: {})
+      expect(usecase.locked_sample_ids).to contain_exactly(sample.id)
+    end
+
+    # Order-independence: selecting the reaction together with its sample must remove both and NOT
+    # report the sample as locked, regardless of the order the element types are processed in.
+    it 'does not report the sample as locked when its reaction is removed in the same request' do
+      selection = {
+        sample: { all: false, included_ids: [sample.id] },
+        reaction: { all: false, included_ids: [reaction.id] },
+      }.with_indifferent_access
+
+      usecase = described_class.new(user)
+      usecase.perform!(source_collection: user_sub, ui_state: selection, options: {})
+
+      expect(usecase.locked_sample_ids).to be_empty
+      expect(sample.reload.collections.where(id: user_sub.id)).to be_empty
+    end
+  end
+
+  describe 'a sample kept by the wellplate association guard' do
+    let(:sample) { create(:sample, creator: user, collections: [user_all, user_sub]) }
+    let(:wellplate) { create(:wellplate, samples: [sample]) }
+
+    before do
+      # sample sits in a well of a wellplate living in the same collection
+      CollectionsWellplate.create!(collection_id: user_sub.id, wellplate_id: wellplate.id)
+    end
+
+    it 'is not unlinked, and is reported as locked (not only reactions lock samples)' do
+      usecase = described_class.new(user)
+      expect { usecase.perform!(source_collection: user_sub, ui_state: selection_for(sample), options: {}) }
+        .not_to change(Sample, :count)
+      expect(sample.reload.collections.where(id: user_sub.id)).to be_present
+      expect(usecase.locked_sample_ids).to contain_exactly(sample.id)
+    end
   end
 
   describe 'a sole-owned reaction with associated subsamples' do

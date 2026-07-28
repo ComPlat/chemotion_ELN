@@ -48,6 +48,7 @@ import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
+import { sampleAssociationLockNotification } from 'src/utilities/notificationMessages';
 
 import _ from 'lodash';
 
@@ -1337,7 +1338,14 @@ class ElementActions {
   deleteElementsByUIState(params) {
     return (dispatch) => {
       UIFetcher.deleteElementsByUIState(params)
-        .then((result) => { dispatch(result); })
+        .then((result) => {
+          if (result && result.locked_sample_ids && result.locked_sample_ids.length > 0) {
+            rootStore.notificationsStore.add(
+              sampleAssociationLockNotification(result.locked_sample_ids.length)
+            );
+          }
+          dispatch(result);
+        })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }

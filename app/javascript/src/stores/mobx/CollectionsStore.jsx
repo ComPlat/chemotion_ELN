@@ -9,6 +9,10 @@ import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import {
+  sampleAssociationLockNotification,
+  sampleAssociationMoveNotification
+} from 'src/utilities/notificationMessages';
 
 export const Collection = types.model({
   ancestry: types.string,
@@ -257,14 +261,41 @@ export const CollectionsStore = types
         return true
       }
     }),
-    removeElementsFromCollection: flow(function* removeElementsFromCollection(params) {
-      const success = yield CollectionElementsFetcher.deleteElementsFromCollection(params)
+    // Returns { success, lockedSampleIds }: success is false only on request failure; lockedSampleIds
+    // lists samples the backend kept because they belong to a reaction or wellplate still in the
+    // collection. Callers that give their own feedback (e.g. move) can pass { notifyLock: false } to
+    // suppress the built-in association-lock toast and react to lockedSampleIds themselves.
+    removeElementsFromCollection: flow(function* removeElementsFromCollection(params, { notifyLock = true } = {}) {
+      const response = yield CollectionElementsFetcher.deleteElementsFromCollection(params);
 
-      if (success) {
-        // refresh elements
-        ElementActions.refreshElementsAfterCollectionChanges(params.ui_state.currentCollection.id)
-        return true
+      // A network/parse failure resolves to undefined; a 204 resolves to null. Surface the failure:
+      // otherwise a dropped DELETE is completely silent — and in a move the selection has already
+      // been copied into the target, so silence would strand the samples in both collections.
+      if (response === undefined) {
+        getRoot(self).notificationsStore.add({
+          title: 'Remove from Collection',
+          message: 'The request failed, so the selection was not removed. Please try again.',
+          level: 'error',
+          autoDismiss: 10,
+        });
+        return { success: false, lockedSampleIds: [] };
       }
+
+      if (response && response.error) {
+        getRoot(self).notificationsStore.add({
+          title: 'Remove from Collection', message: response.error, level: 'error', autoDismiss: 10
+        });
+        return { success: false, lockedSampleIds: [] };
+      }
+
+      const lockedSampleIds = (response && response.locked_sample_ids) || [];
+      if (notifyLock && lockedSampleIds.length > 0) {
+        getRoot(self).notificationsStore.add(sampleAssociationLockNotification(lockedSampleIds.length));
+      }
+
+      // refresh elements
+      ElementActions.refreshElementsAfterCollectionChanges(params.ui_state.currentCollection.id);
+      return { success: true, lockedSampleIds };
     }),
     assignElementsToCollection: flow(function* assignElementsToCollection(collectionParams, uiState) {
       const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams)
@@ -280,16 +311,30 @@ export const CollectionsStore = types
       }
     }),
     moveElementsToCollection: flow(function* moveElementsToCollection(collectionParams, uiState) {
-      const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams)
+      const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams);
 
       if (collectionId) {
-        const response = yield self.addElementsToCollection(collectionId, uiState, 'Move to Collection', isNewCollection)
+        const response = yield self.addElementsToCollection(
+          collectionId,
+          uiState,
+          'Move to Collection',
+          isNewCollection
+        );
 
         if (response) {
-          const elementsRemoved = yield self.removeElementsFromCollection({ collection_id: uiState.currentCollection.id, ui_state: uiState })
+          const { success, lockedSampleIds } = yield self.removeElementsFromCollection(
+            { collection_id: uiState.currentCollection.id, ui_state: uiState },
+            { notifyLock: false }
+          );
 
-          if (elementsRemoved && isNewCollection) {
-            self.addNewCollectionToOwnCollection(newCollection)
+          // Samples bound to a reaction/wellplate cannot leave that collection, so they were copied
+          // to the target but stayed in the source: warn that the move was only partial.
+          if (success && lockedSampleIds.length > 0) {
+            getRoot(self).notificationsStore.add(sampleAssociationMoveNotification());
+          }
+
+          if (success && isNewCollection) {
+            self.addNewCollectionToOwnCollection(newCollection);
           }
         }
       }
@@ -364,7 +409,7 @@ export const CollectionsStore = types
             (self.chemotion_repository_collection && collectionItem.ancestorIds.includes(self.chemotion_repository_collection.id))
               ? self.chemotion_repository_collection.children
               : self.own_collections
-          
+
           self.addCollectionToTree(collectionItem, collectionTree)
         }
       });
