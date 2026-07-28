@@ -245,6 +245,71 @@ describe Reporter::Img::Conv do
     end
   end
 
+  describe '.svg_page_dimensions' do
+    it 'prefers root width/height over viewBox' do
+      Tempfile.open(['page', '.svg']) do |f|
+        f.write('<svg width="200px" height="200px" viewBox="0 0 100 100"></svg>')
+        f.flush
+        expect(described_class.svg_page_dimensions(f.path)).to eq([200.0, 200.0])
+      end
+    end
+
+    it 'falls back to root viewBox when width/height are absent' do
+      Tempfile.open(['page', '.svg']) do |f|
+        f.write('<svg viewBox="0 0 200 150"></svg>')
+        f.flush
+        expect(described_class.svg_page_dimensions(f.path)).to eq([200.0, 150.0])
+      end
+    end
+
+    it 'ignores nested viewBox used by composed reaction schemes' do
+      Tempfile.open(['rxn', '.svg']) do |f|
+        f.write(<<~SVG)
+          <svg xmlns="http://www.w3.org/2000/svg" width="1560" height="440">
+            <svg width="100%" viewBox="0 0 657 435">
+              <circle cx="10" cy="10" r="5"/>
+            </svg>
+          </svg>
+        SVG
+        f.flush
+        expect(described_class.svg_page_dimensions(f.path)).to eq([1560.0, 440.0])
+      end
+    end
+
+    it 'returns [nil, nil] for a missing file' do
+      expect(described_class.svg_page_dimensions('/no/such/file.svg')).to eq([nil, nil])
+    end
+  end
+
+  describe '.export_size_for' do
+    it 'preserves aspect ratio of a square molecule SVG inside the max box' do
+      Tempfile.open(['mol', '.svg']) do |f|
+        f.write('<svg width="200" height="200" viewBox="0 0 100 100"></svg>')
+        f.flush
+        # 200×200 page fitted in 1550×440 → 440×440
+        expect(described_class.export_size_for(f.path, max_width: 1550, max_height: 440))
+          .to eq([440, 440])
+      end
+    end
+
+    it 'preserves aspect ratio of a wide reaction-scheme SVG' do
+      Tempfile.open(['rxn', '.svg']) do |f|
+        f.write('<svg width="1560" height="440"></svg>')
+        f.flush
+        expect(described_class.export_size_for(f.path, max_width: 1550, max_height: 1550))
+          .to eq([1550, 437])
+      end
+    end
+
+    it 'falls back to the max box when dimensions cannot be parsed' do
+      Tempfile.open(['bad', '.svg']) do |f|
+        f.write('<svg></svg>')
+        f.flush
+        expect(described_class.export_size_for(f.path)).to eq([1550, 440])
+      end
+    end
+  end
+
   describe '.valid?' do
     it 'returns true for a non-empty file' do
       Tempfile.open('conv_valid') do |f|

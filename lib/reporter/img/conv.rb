@@ -31,7 +31,11 @@ module Reporter
         output_file
       end
 
-      def self.by_inkscape(input, output, ext, width: 1550, height: 440)
+      # Default canvas for composed reaction-scheme SVGs (see SVG::ReactionComposer).
+      DEFAULT_EXPORT_WIDTH = 1550
+      DEFAULT_EXPORT_HEIGHT = 440
+
+      def self.by_inkscape(input, output, ext, width: DEFAULT_EXPORT_WIDTH, height: DEFAULT_EXPORT_HEIGHT)
         input = input.to_s
         output = output.to_s
         # The composed reaction SVG has an outer <svg width="1560" height="440"> and
@@ -70,6 +74,65 @@ module Reporter
       ensure
         prepared_tmp&.close!
         inlined_tmp&.close!
+      end
+
+      # Parses an SVG file for its declared page size from the root +<svg>+.
+      # Prefers width/height attributes (the Inkscape page) over viewBox, and
+      # ignores nested +<svg>+ viewBoxes used for content layout inside composed
+      # reaction schemes.
+      #
+      # @param svg_path [String, Pathname]
+      # @return [Array(Float, Float), Array(nil, nil)] +[width, height]+ in user units
+      def self.svg_page_dimensions(svg_path)
+        return [nil, nil] unless File.file?(svg_path)
+
+        doc = Nokogiri::XML(File.read(svg_path, encoding: 'UTF-8'))
+        outer = doc.at_xpath('/*[local-name()="svg"]') || doc.at_xpath('//*[local-name()="svg"]')
+        return [nil, nil] unless outer
+
+        w = parse_svg_length(outer['width'])
+        h = parse_svg_length(outer['height'])
+        return [w, h] if w && h && w > 0 && h > 0
+
+        # viewBox is "min-x min-y width height"; SVG allows the four values to
+        # be separated by whitespace and/or commas, with optional leading space.
+        vb = (outer['viewBox'] || outer['viewbox']).to_s.strip.split(/[\s,]+/)
+        return [vb[2].to_f, vb[3].to_f] if vb.size >= 4
+
+        [nil, nil]
+      end
+
+      # @param value [String, nil]
+      # @return [Float, nil]
+      def self.parse_svg_length(value)
+        return if value.blank?
+        return if value.to_s.include?('%')
+
+        match = value.to_s.match(/([\d.]+)/)
+        match && match[1].to_f
+      end
+
+      # Export width/height for +by_inkscape+ that preserve the SVG page aspect
+      # ratio while fitting inside +max_width+×+max_height+.
+      #
+      # +--export-area-page+ scales the declared SVG page to the given export
+      # size. Using the default 1550×440 reaction-scheme canvas on a roughly
+      # square molecule/Ketcher SVG leaves most of the PNG blank. Callers that
+      # rasterize raw (uncomposed) SVGs should use this helper so the export
+      # canvas matches the page.
+      #
+      # @param svg_path [String, Pathname]
+      # @param max_width [Integer]
+      # @param max_height [Integer]
+      # @return [Array(Integer, Integer)]
+      def self.export_size_for(svg_path, max_width: DEFAULT_EXPORT_WIDTH, max_height: DEFAULT_EXPORT_HEIGHT)
+        w, h = svg_page_dimensions(svg_path)
+        if w.nil? || h.nil? || w <= 0 || h <= 0
+          return [max_width, max_height]
+        end
+
+        scale = [max_width.to_f / w, max_height.to_f / h].min
+        [(w * scale).round, (h * scale).round]
       end
 
       # Patches any nested +<svg>+ element that has +width="100%"+ but no

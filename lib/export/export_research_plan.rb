@@ -4,11 +4,26 @@ require 'tempfile'
 
 module Export
   class ExportResearchPlan
+    # Long-side cap for Inkscape rasterization. Must stay large enough for
+    # reaction schemes (~1560×440) while still allowing square molecule /
+    # Ketcher SVGs to export as near-square PNGs (not the reaction-scheme
+    # 1550×440 default canvas).
+    STRUCTURE_EXPORT_MAX = 1550
+
+    # Display width (px) for structure <img> tags. Pandoc interprets a bare
+    # width as pixels at 96 dpi, so this value ÷ 96 is the on-page width in
+    # inches (300 px ≈ 3.1 in). Keeps crisp high-resolution PNGs from being
+    # embedded at their full pixel size, which would dominate the page.
+    STRUCTURE_DISPLAY_WIDTH = 300
+
     def initialize(current_user, research_plan, export_format)
       @current_user = current_user
       @name = research_plan.name
       @fields = []
       @export_format = export_format
+      # Retain PNG Tempfiles until the export finishes so GC does not delete
+      # them before Pandoc/HTML rendering reads the paths.
+      @png_tempfiles = []
 
       research_plan.body.each do |field|
         case field['type']
@@ -30,6 +45,7 @@ module Export
           @fields << {
             type: field['type'],
             src: img_src,
+            width: STRUCTURE_DISPLAY_WIDTH,
           }
         when 'image'
           attachment = Attachment.find_by(identifier: field['value']['public_name'])
@@ -47,6 +63,7 @@ module Export
             @fields << {
               type: field['type'],
               src: img_src,
+              width: STRUCTURE_DISPLAY_WIDTH,
               p: sample['name'],
             }
           end
@@ -58,6 +75,7 @@ module Export
             @fields << {
               type: field['type'],
               src: img_src,
+              width: STRUCTURE_DISPLAY_WIDTH,
               p: reaction['name'],
             }
           end
@@ -65,11 +83,23 @@ module Export
       end
     end
 
+    # Rasterize an SVG to PNG with an export canvas that matches the SVG's
+    # declared page aspect ratio. Sample/reaction *reports* compose structures
+    # into a 1560×440 reaction-scheme SVG before calling +by_inkscape+ with its
+    # matching defaults; research-plan export feeds raw editor SVGs (often
+    # roughly square) and must not force them through that canvas — otherwise
+    # +--export-area-page+ leaves most of the PNG blank.
     def to_png(svg_path)
       return if svg_path.blank? || !File.file?(svg_path)
 
+      width, height = Reporter::Img::Conv.export_size_for(
+        svg_path,
+        max_width: STRUCTURE_EXPORT_MAX,
+        max_height: STRUCTURE_EXPORT_MAX,
+      )
       output_file = Tempfile.new(['output', '.png'])
-      Reporter::Img::Conv.by_inkscape(svg_path, output_file.path, 'png')
+      Reporter::Img::Conv.by_inkscape(svg_path, output_file.path, 'png', width: width, height: height)
+      @png_tempfiles << output_file
       output_file.path
     end
 
