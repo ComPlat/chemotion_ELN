@@ -227,12 +227,11 @@ const cleaningNMRiumData = (nmriumData) => {
       || tmpSpc?.meta?.dimension === 2
     );
 
+    // NMRium never re-fetches from our source/sourceSelector references, so `data` must be kept.
     delete tmpSpc.originalData;
-    if (hasSource) {
-      delete tmpSpc.data;
-    }
 
-    // For 2D spectra, we need to keep the name of the spectrum in display.name and remove the info, originalInfo, and meta
+    // Keep the spectrum name in display.name and drop the stale originalInfo/meta duplicates.
+    // `info` itself must stay fully intact; NMRium relies on it (e.g. dimension, isFid) to read `data`.
     if (isSourceOnly2D) {
       const spectrumName = tmpSpc?.display?.name
         || tmpSpc?.info?.name
@@ -241,7 +240,6 @@ const cleaningNMRiumData = (nmriumData) => {
       if (spectrumName) {
         tmpSpc.display = { ...tmpSpc.display, name: spectrumName };
       }
-      delete tmpSpc.info;
       delete tmpSpc.originalInfo;
       delete tmpSpc.meta;
       // Remove the filters if they are not valid

@@ -353,6 +353,51 @@ describe('SpectraHelper', () => {
         const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
         expect(cleanedNMRiumData).toEqual(expectedNmriumData);
       });
+
+      it('keeps info fully intact (including isFid) and the data matrix for source-only 2D spectra', () => {
+        const nmriumData = {
+          data: {
+            spectra: [{
+              source: { jcampURL: 'https://example.com/file.jdx' },
+              info: {
+                dimension: 2, name: 'cosy', isFid: true, nucleus: ['1H', '1H'],
+              },
+              originalInfo: { dimension: 2, name: 'cosy' },
+              meta: { dimension: 2 },
+              display: { name: 'cosy' },
+              data: { re: { z: [[1.0, 2.0], [3.0, 4.0]] }, im: { z: [[1.0, 2.0], [3.0, 4.0]] } },
+            }],
+          },
+        };
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        const [spectrum] = cleanedNMRiumData.data.spectra;
+        expect(spectrum.info).toEqual({
+          dimension: 2, name: 'cosy', isFid: true, nucleus: ['1H', '1H'],
+        });
+        expect(spectrum.originalInfo).toEqual(undefined);
+        expect(spectrum.meta).toEqual(undefined);
+        expect(spectrum.display).toEqual({ name: 'cosy' });
+        expect(spectrum.data).toEqual({
+          re: { z: [[1.0, 2.0], [3.0, 4.0]] }, im: { z: [[1.0, 2.0], [3.0, 4.0]] },
+        });
+      });
+
+      it('keeps data for 1D spectra that have a source (NMRium never re-fetches it)', () => {
+        const nmriumData = {
+          data: {
+            spectra: [{
+              source: { jcampURL: 'https://example.com/file.jdx' },
+              info: { dimension: 1, name: 'proton' },
+              display: { name: 'proton' },
+              data: { x: [1.0, 2.0], y: [1.0, 2.0] },
+            }],
+          },
+        };
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        const [spectrum] = cleanedNMRiumData.data.spectra;
+        expect(spectrum.data).toEqual({ x: [1.0, 2.0], y: [1.0, 2.0] });
+        expect(spectrum.info).toEqual({ dimension: 1, name: 'proton' });
+      });
     });
   });
 
