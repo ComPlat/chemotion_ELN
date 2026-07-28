@@ -6,7 +6,7 @@ import { useFormValues, submitAsForm } from 'src/utilities/FormHelper';
 import { OtpInput } from 'src/components/common/OtpInput';
 import PropTypes from 'prop-types';
 
-function DeleteSettings() {
+const DeleteSettings = () => {
   const [showOtpDel, setShowOtpDel] = useState(false);
   const [otpAttempt, setOtpAttempt] = useState('');
 
@@ -65,9 +65,9 @@ function DeleteSettings() {
       </Card.Body>
     </Card>
   );
-}
+};
 
-function AccountSettings({ currentUser }) {
+const AccountSettings = ({ currentUser }) => {
   const [errors, setErrors] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
   const [showOtp, setShowOtp] = useState(false);
@@ -208,7 +208,7 @@ function AccountSettings({ currentUser }) {
       </Card.Body>
     </Card>
   );
-}
+};
 AccountSettings.propTypes = {
   currentUser: PropTypes.shape({
     email: PropTypes.string.isRequired,

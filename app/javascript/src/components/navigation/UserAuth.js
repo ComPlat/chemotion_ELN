@@ -19,7 +19,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import { UserLabelModal } from 'src/components/UserLabels';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
-import AccountProfile from 'src/apps/userSettings/AccountProfile';
+import AccountProfile from 'src/components/userSettings/AccountProfile';
 
 const UserAuth = ({ userMenuDropdownToggleVariant }) => {
   const [showModal, setShowModal] = useState(false);

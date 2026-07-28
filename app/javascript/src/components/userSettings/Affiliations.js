@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { CreatableSelect } from 'src/components/common/Select';
 import {
-  Button, Modal, OverlayTrigger, Table, Tooltip, Popover
+  Container, Button, OverlayTrigger, Table, Tooltip, Popover
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
 
 import UserSettingsFetcher from 'src/fetchers/UserSettingsFetcher';
 
-function Affiliations() {
+const Affiliations = () => {
   const [affiliations, setAffiliations] = useState([]);
   const [countryOptions, setCountryOptions] = useState([]);
   const [orgOptions, setOrgOptions] = useState([]);
@@ -31,9 +31,9 @@ function Affiliations() {
             current: item.from !== null && item.to === null
           }
         )));
+        setErrorMsg('');
+        setInputError({});
       });
-    setErrorMsg('');
-    setInputError({});
   };
 
   useEffect(() => {
@@ -88,7 +88,7 @@ function Affiliations() {
     if (id) {
       UserSettingsFetcher.deleteAffiliation(id)
         .then((result) => {
-          if (result.error) {
+          if (result?.error) {
             console.error(result.error);
             return false;
           }
@@ -179,7 +179,7 @@ function Affiliations() {
   );
 
   return (
-    <div>
+    <Container className="my-3 d-flex flex-column gap-3">
       <h3>My affiliations </h3>
       <div>
         <h4 className="fs-5 mb-3"> Current affiliations</h4>
@@ -511,8 +511,8 @@ function Affiliations() {
           ))}
         </tbody>
       </Table>
-    </div>
+    </Container>
   );
-}
+};
 
 export default Affiliations;
