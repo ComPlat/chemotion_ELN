@@ -1,11 +1,12 @@
 import {
   Alert, Button, Card, Col, Form, Row, Modal, InputGroup, Table
 } from 'react-bootstrap';
-import React, { useState, useCallback, useEffect } from 'react';
-import UserActions from 'src/stores/alt/actions/UserActions';
+import React, { useContext, useState, useCallback, useEffect } from 'react';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import PropTypes from 'prop-types';
 import { OtpInput } from 'src/components/common/OtpInput';
+import { observer } from 'mobx-react';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const tokensShape = PropTypes.arrayOf(
   PropTypes.shape({
@@ -15,7 +16,8 @@ const tokensShape = PropTypes.arrayOf(
   })
 );
 
-function AuthToken({ currentUser }) {
+const AuthToken = ({ currentUser }) => {
+  const { userStore } = useContext(StoreContext);
   const [show, setShow] = useState(false);
   const [lastToken, setLastToken] = useState(null);
   const [tokenToRevoke, setTokenToRevoke] = useState(null);
@@ -29,10 +31,10 @@ function AuthToken({ currentUser }) {
   const handleClose = useCallback(() => setShow(false), []);
   const handleShow = useCallback(() => setShow(true), []);
 
-  const sendOnRevoke = (payload) => {
+  const sendOnRevoke = useCallback((payload) => {
     UsersFetcher.fetchRevokeAuthTokens(payload)
       .then(() => {
-        UserActions.fetchCurrentUser();
+        userStore.fetchCurrentUser();
         setShowOtpDel(false);
         setIsWrongOtp(false);
         setTokenToRevoke(null);
@@ -51,24 +53,24 @@ function AuthToken({ currentUser }) {
           setTokenToRevoke(null);
         }
       });
-  };
+  }, [userStore]);
 
   const handleOnRevoke = useCallback((token) => {
     setTokenToRevoke(token);
     sendOnRevoke(token);
-  });
+  }, [sendOnRevoke]);
   const handleOnWithOtpRevoke = useCallback(() => {
     const payload = {
       ...tokenToRevoke, otp_attempt: otpAttempt
     };
     sendOnRevoke(payload);
-  }, [tokenToRevoke, otpAttempt]);
+  }, [tokenToRevoke, otpAttempt, sendOnRevoke]);
 
   useEffect(() => {
     if (lastToken) {
-      UserActions.fetchCurrentUser();
+      userStore.fetchCurrentUser();
     }
-  }, [lastToken]);
+  }, [lastToken, userStore]);
 
   if (!currentUser.otp_required_for_login) {
     return (
@@ -106,7 +108,7 @@ function AuthToken({ currentUser }) {
       />
     </>
   );
-}
+};
 
 AuthToken.propTypes = {
   currentUser: PropTypes.shape({
@@ -115,9 +117,9 @@ AuthToken.propTypes = {
   }).isRequired,
 };
 
-function AuthTokenCard({
+const AuthTokenCard = ({
   handleShow, lastToken, currentTokens, onRevoke
-}) {
+}) => {
   const copyToClipboard = () => {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(lastToken)
@@ -140,11 +142,13 @@ function AuthTokenCard({
   };
 
   const [showAlert, setShowAlert] = useState(false);
-  useEffect(() => {
+  const [prevLastToken, setPrevLastToken] = useState(lastToken);
+  if (lastToken !== prevLastToken) {
+    setPrevLastToken(lastToken);
     if (lastToken) {
       setShowAlert(true);
     }
-  }, [lastToken]);
+  }
   return (
     <Card>
       <Card.Header>Authentication Token</Card.Header>
@@ -178,7 +182,7 @@ function AuthTokenCard({
       </Card.Body>
     </Card>
   );
-}
+};
 
 AuthTokenCard.propTypes = {
   currentTokens: tokensShape.isRequired,
@@ -191,9 +195,9 @@ AuthTokenCard.defaultProps = {
   lastToken: null,
 };
 
-function AuthTokenFormModal({
+const AuthTokenFormModal = ({
   handleClose, show, setLastToken
-}) {
+}) => {
   const [name, setName] = useState('');
   const [expireInDays, setExpireInDays] = useState(30);
   const [errorMessage, setErrorMessage] = useState('');
@@ -242,12 +246,14 @@ function AuthTokenFormModal({
           setIsWrongOtp(false);
         }
       });
-  }, [expireInDays, name, otpAttempt]);
+  }, [expireInDays, name, otpAttempt, handleClose, setLastToken]);
 
-  useEffect(() => {
+  const [prevShow, setPrevShow] = useState(show);
+  if (show !== prevShow) {
+    setPrevShow(show);
     setName('');
     setErrorMessage('');
-  }, [show]);
+  }
 
   return (
     <>
@@ -322,7 +328,7 @@ function AuthTokenFormModal({
       </Modal>
     </>
   );
-}
+};
 
 AuthTokenFormModal.propTypes = {
   show: PropTypes.bool.isRequired,
@@ -330,7 +336,7 @@ AuthTokenFormModal.propTypes = {
   handleClose: PropTypes.func.isRequired,
 };
 
-function TokenList({ tokens, onRevoke }) {
+const TokenList = ({ tokens, onRevoke }) => {
   const formatDate = (timestamp) => {
     const date = new Date(timestamp * 1000); // if UNIX seconds
     const diffMs = date - new Date();
@@ -372,11 +378,11 @@ function TokenList({ tokens, onRevoke }) {
       </tbody>
     </Table>
   );
-}
+};
 
 TokenList.propTypes = {
   tokens: tokensShape.isRequired,
   onRevoke: PropTypes.func.isRequired,
 };
 
-export default AuthToken;
+export default observer(AuthToken);
