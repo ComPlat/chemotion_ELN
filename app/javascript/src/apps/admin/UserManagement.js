@@ -17,7 +17,7 @@ import AppModal from 'src/components/common/AppModal';
 function MessageAlert({ message, link = null, onHide }) {
   return (
     message?.length > 0 ? (
-      <Alert variant="info" onDismiss={onHide} dismissible>
+      <Alert variant="info" onClose={onHide} dismissible>
         <p>
           {message}
         </p>
