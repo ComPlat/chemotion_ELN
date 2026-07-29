@@ -22,6 +22,8 @@ import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/Det
 import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/analysesTab/ReactionDetailsContainers';
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
+import { handleInputChange } from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
+import { makeVariationReaction } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationUtils';
 // eslint-disable-next-line max-len
 import ReactionDetailsProperties
   from 'src/apps/mydb/elements/details/reactions/propertiesTab/ReactionDetailsProperties';
@@ -30,11 +32,9 @@ import Utils from 'src/utilities/Functions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import SamplesFetcher from 'src/fetchers/SamplesFetcher';
-import { rfValueFormat } from 'src/utilities/ElementUtils';
 import ExportSamplesButton from 'src/apps/mydb/elements/details/ExportSamplesButton';
 import { permitOn } from 'src/components/common/uis';
 import { addSegmentTabs } from 'src/components/generic/SegmentDetails';
@@ -84,56 +84,6 @@ const productLink = (product, active) => (
   </span>
 );
 
-const handleInputChange = (type, event, reaction, cbReactionChange) => {
-  let value;
-  if (
-    type === 'temperatureUnit'
-    || type === 'temperatureData'
-    || type === 'description'
-    || type === 'role'
-    || type === 'observation'
-    || type === 'durationUnit'
-    || type === 'duration'
-    || type === 'rxno'
-    || type === 'vesselSizeAmount'
-    || type === 'vesselSizeUnit'
-    || type === 'gaseous'
-    || type === 'conditions'
-    || type === 'phOperator'
-    || type === 'phValue'
-    || type === 'volume'
-    || type === 'useReactionVolumeForConcentration'
-    || type === 'lockReactionVolume'
-    || type === 'weight_percentage'
-    || type === 'reactionType'
-    || type === 'default'
-  ) {
-    value = event;
-  } else if (type === 'rfValue') {
-    value = rfValueFormat(event.target.value) || '';
-  } else {
-    value = event.target.value;
-  }
-
-  const { newReaction, options } = setReactionByType(reaction, type, value);
-
-  if (type === 'reactionType' && value === 'interaction') {
-    // Interaction reactions always use the default scheme internals, so clear
-    // any residual gas or weight-percentage state before re-rendering the tab.
-    newReaction.resetWeightPercentagedependencies();
-    newReaction.recalculateEquivalentsForMaterials();
-  }
-
-  // Update gas phase store synchronously for vessel size changes
-  if (type === 'vesselSizeAmount' || type === 'vesselSizeUnit') {
-    const { catalystMoles, vesselSize } = newReaction.findReactionVesselSizeCatalystMaterialValues();
-    GasPhaseReactionActions.setReactionVesselSize(vesselSize || null);
-    GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles || null);
-  }
-
-  cbReactionChange(newReaction, options);
-};
-
 export default class ReactionDetails extends Component {
   constructor(props) {
     super(props);
@@ -151,6 +101,12 @@ export default class ReactionDetails extends Component {
       isRefreshingGraphic: false,
       isEditingHeaderName: false,
       headerNameDraft: reaction.name || '',
+      // eslint-disable-next-line max-len
+      variations: reaction.variations.map((v, idx) => ({ idx, group: v.group, data: makeVariationReaction(reaction, v.data || {}) }))
+    };
+
+    this.setVariations = (variations) => {
+      this.setState({ variations });
     };
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
@@ -861,6 +817,7 @@ export default class ReactionDetails extends Component {
       visible,
       activeTab,
       schemeChangeConfirmMessage,
+      variations
     } = this.state;
     const isInteractionReaction = reaction.isInteractionReaction();
     this.updateReactionVesselSize(reaction);
@@ -1067,6 +1024,8 @@ export default class ReactionDetails extends Component {
         >
           <ReactionVariations
             reaction={reaction}
+            variations={variations}
+            setVariations={this.setVariations}
             onReactionChange={this.handleReactionChange}
           />
         </Tab>
