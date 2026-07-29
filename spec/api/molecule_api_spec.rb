@@ -102,6 +102,61 @@ describe Chemotion::MoleculeAPI do
       end
     end
 
+    describe 'Post /api/v1/molecules/refresh' do
+      let(:m) { create(:molecule, iupac_name: nil) }
+
+      context 'when the user may edit molecules' do
+        before do
+          allow(user).to receive(:molecule_editor).and_return(true)
+          allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey)
+            .and_return(cid: 962, iupac_name: 'water', names: %w[water])
+        end
+
+        it 'requeries PubChem and returns the updated molecule' do
+          post '/api/v1/molecules/refresh', params: { id: m.id }
+
+          expect(response).to have_http_status(:created)
+          body = JSON.parse(response.body)
+          expect(body['iupac_name']).to eq('water')
+          expect(body['pubchem_cid']).to eq(962)
+        end
+
+        # The response used to carry a cid read off an in-memory tag that was never written:
+        # element_tags is a has_one without autosave:, so save! did not persist a
+        # taggable_data-only change and the label vanished on the next reload.
+        it 'actually persists the cid' do
+          post '/api/v1/molecules/refresh', params: { id: m.id }
+
+          expect(m.reload.tag.taggable_data['pubchem_cid']).to eq(962)
+          expect(m.iupac_name).to eq('water')
+        end
+
+        it 'does not write a new SVG file on every call' do
+          expect { post '/api/v1/molecules/refresh', params: { id: m.id } }
+            .not_to(change { m.reload.molecule_svg_file })
+        end
+
+        it 'reports a real error status when the refresh fails' do
+          allow_any_instance_of(Molecule).to receive(:enrich_from_pubchem).and_raise(StandardError, 'boom') # rubocop:disable RSpec/AnyInstance
+
+          post '/api/v1/molecules/refresh', params: { id: m.id }
+
+          expect(response).to have_http_status(:internal_server_error)
+          expect(JSON.parse(response.body)['msg']['level']).to eq('error')
+        end
+      end
+
+      it 'refuses a user who may not edit molecules' do
+        allow(user).to receive(:molecule_editor).and_return(false)
+        allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey)
+
+        post '/api/v1/molecules/refresh', params: { id: m.id }
+
+        expect(response).to have_http_status(:unauthorized)
+        expect(Chemotion::PubchemService).not_to have_received(:molecule_info_from_inchikey)
+      end
+    end
+
     describe 'Post /api/v1/molecules/save_name' do
       let(:m) { create(:molecule) }
 

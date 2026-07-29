@@ -31,6 +31,22 @@ class DetailActions {
     }
   }
 
+  refreshMoleculeData(sample) {
+    const id = sample.molecule.id;
+    if (!id) { return null; }
+
+    return (dispatch) => {
+      MoleculesFetcher
+        .refresh(id)
+        .then((result) => {
+          sample.molecule = { ...sample.molecule, ...result };
+          sample.pubchem_tag = { ...sample.pubchem_tag, pubchem_cid: result.pubchem_cid };
+          dispatch(sample);
+        })
+        .catch(errorMessage => console.log(errorMessage));
+    };
+  }
+
   updateMoleculeNames(sample, newMolName = '') {
     const id = sample.molecule.id;
     if (!id) { return null; }

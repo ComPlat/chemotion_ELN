@@ -62,6 +62,10 @@ export default class MoleculesFetcher {
     return ApiClient.postJson('/api/v1/molecules/decouple', { body: { molfile, svg_name: svgfile, decoupled } });
   }
 
+  static refresh(id) {
+    return ApiClient.postJson('/api/v1/molecules/refresh', { body: { id } });
+  }
+
   static calculateMolecularMassFromSumFormula(molecularFormula) {
     const encodedMolecularFormula = encodeURIComponent(molecularFormula);
     return ApiClient.getJson(`/api/v1/molecules/molecular_weight?molecular_formula=${encodedMolecularFormula}`);

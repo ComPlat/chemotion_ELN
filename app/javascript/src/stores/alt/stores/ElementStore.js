@@ -296,6 +296,7 @@ class ElementStore {
       handleConfirmDelete: DetailActions.confirmDelete,
       handleChangeCurrentElement: DetailActions.changeCurrentElement,
       handleGetMoleculeCas: DetailActions.getMoleculeCas,
+      handleRefreshMoleculeData: DetailActions.refreshMoleculeData,
       handleUpdateMoleculeNames: DetailActions.updateMoleculeNames,
       handleUpdateMoleculeCas: DetailActions.updateMoleculeCas,
       handleUpdateLinkedElement: [
@@ -1565,6 +1566,13 @@ class ElementStore {
   }
 
   handleGetMoleculeCas(updatedSample) {
+    const { selecteds } = this.state;
+    const index = this.elementIndex(selecteds, updatedSample);
+    const newSelecteds = this.updateElement(updatedSample, index);
+    this.setState({ selecteds: newSelecteds });
+  }
+
+  handleRefreshMoleculeData(updatedSample) {
     const { selecteds } = this.state;
     const index = this.elementIndex(selecteds, updatedSample);
     const newSelecteds = this.updateElement(updatedSample, index);

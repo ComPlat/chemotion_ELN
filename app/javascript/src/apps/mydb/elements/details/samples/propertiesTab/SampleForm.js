@@ -209,6 +209,20 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  refreshMoleculeButton() {
+    const { sample } = this.props;
+    return (
+      <Button
+        onClick={() => DetailActions.refreshMoleculeData(sample)}
+        disabled={!sample.can_update}
+        variant="light"
+        title="Requery PubChem for this molecule"
+      >
+        <i className="icon-pubchem" />
+      </Button>
+    );
+  }
+
   // Info button display info message when one hover over it
   infoButton() {
     return (
@@ -433,6 +447,7 @@ export default class SampleForm extends React.Component {
             className={`flex-grow-1${molNameInvalid ? ' is-invalid' : ''}`}
           />
           {this.structureEditorButton(!sample.can_update)}
+          {this.refreshMoleculeButton()}
           {molNameInvalid && (
             <Form.Control.Feedback type="invalid" style={{ display: 'block' }}>
               Name contains invalid characters (control or invisible characters are not allowed).

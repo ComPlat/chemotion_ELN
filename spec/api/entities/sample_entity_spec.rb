@@ -219,6 +219,9 @@ describe Entities::SampleEntity do
           names: nil,
           sum_formular: nil,
           molecule_names: nil,
+          # #molecule is a plain Hash at this detail level, so MoleculeEntity#pubchem_cid
+          # must not reach for the Molecule association.
+          pubchem_cid: nil,
         )
       end
     end
