@@ -17,7 +17,20 @@ const getVisibilityList = (layout, availableTabs, addInventoryTab) => {
   const layoutKeys = Object.keys(currentLayout);
 
   if (addInventoryTab) {
-    currentLayout.inventory = currentLayout.inventory || layoutKeys.length + 1;
+    if (!layoutKeys.includes('inventory')) {
+      layoutKeys.push('inventory');
+    }
+    // A previously-hidden tab is stored as a negative number, which is truthy —
+    // `currentLayout.inventory || ...` would keep it negative forever. Only reuse
+    // the existing value when it's already a positive (visible) order.
+    currentLayout.inventory = currentLayout.inventory > 0
+      ? currentLayout.inventory
+      : layoutKeys.length + 1;
+  } else {
+    // The addInventoryTab flag flips synchronously and is always current; a
+    // stored positive order for 'inventory' may still be stale (persistence
+    // to the collection/profile is async), so force it hidden regardless.
+    currentLayout.inventory = -Math.abs(currentLayout.inventory || 1);
   }
   const enabled = availableTabs.filter(val => layoutKeys.includes(val));
   const leftover = availableTabs.filter(val => !layoutKeys.includes(val));
