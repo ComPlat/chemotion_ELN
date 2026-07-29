@@ -31,7 +31,7 @@ module Chemotion
       end
       get do
         _resolved_collection, scope = collection_scope_for(params[:collection_id], Vessel, :vessels)
-        scope = scope.order('created_at DESC')
+        scope = scope.order(created_at: :desc)
 
         from = params[:from_date]
         to = params[:to_date]

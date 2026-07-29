@@ -23,7 +23,7 @@ module Chemotion
 
       get do
         resolved_collection, scope = collection_scope_for(params[:collection_id], CelllineSample, :cellline_samples)
-        scope = scope.order('created_at DESC')
+        scope = scope.order(created_at: :desc)
 
         from = params[:from_date]
         to = params[:to_date]
