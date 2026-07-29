@@ -4,8 +4,6 @@ const React = require('react');
 // var Home = require('src/apps/home');
 // var CnC = require('src/apps/commandAndControl');
 // var AdminHome = require('src/apps/admin');
-// var ChemSpectra = require('src/apps/chemspectra/ChemSpectra');
-// var ChemSpectraEditor = require('src/apps/chemspectra/ChemSpectraEditor');
 // var MoleculeModerator = require('src/apps/moleculeModerator');
 // var OmniauthCredential = require('src/apps/omniauthCredential');
 // var UserCounter = require('src/apps/userCounter');
@@ -17,7 +15,6 @@ const React = require('react');
 // var GenericSegmentsAdmin = require('src/apps/generic/GenericSegmentsAdmin');
 // var GenericDatasetsAdmin = require('src/apps/generic/GenericDatasetsAdmin');
 // var InventoryLabelSettings = require('src/apps/settings/InventoryLabelSettings');
-// var mydb = require('src/apps/mydb');
 require('src/agGridSetup');
 
 const Chemotion = require('src/apps');

@@ -2,12 +2,14 @@ import React, { useContext } from 'react';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-// home
-import Home from 'src/apps/home/Home';
+// apps
+import AdminHome from 'src/apps/admin/AdminHome';
+import App from 'src/apps/mydb/App';
 import CnC from 'src/apps/commandAndControl/CnC';
+import Home from 'src/apps/home/Home';
 // import { ExtendedSignInForm } from 'src/components/navigation/NavNewSession';
 
-// mydb
+// mydb dependencies
 import * as Sentry from '@sentry/react';
 import { Integrations } from '@sentry/tracing';
 // import Aviator from 'aviator';
@@ -15,7 +17,6 @@ import { DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { MultiBackend, TouchTransition } from 'dnd-multi-backend';
-import App from 'src/apps/mydb/App';
 // import appRoutes from 'src/apps/mydb/routes';
 
 Sentry.init({
@@ -44,7 +45,8 @@ const backendOptions = {
 };
 
 function AppDispatcher() {
-  const { role } = useContext(StoreContext).userStore;
+  const { userStore } = useContext(StoreContext);
+  const { role } = userStore;
   let app = null;
 
   if (role === 'Person') {
@@ -58,6 +60,10 @@ function AppDispatcher() {
   if (role === 'Group') {
     console.debug('rendering CnC');
     app = (<CnC />);
+  }
+  if (role === 'Admin') {
+    console.debug('rendering AdminHome');
+    app = (<AdminHome />);
   }
   if (role === 'Guest' || app == null) {
     console.debug('rendering home');
