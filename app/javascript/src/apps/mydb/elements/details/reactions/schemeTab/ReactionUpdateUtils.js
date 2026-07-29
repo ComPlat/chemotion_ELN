@@ -3,7 +3,7 @@ import Delta from 'quill-delta';
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Molecule from 'src/models/Molecule';
-import { isSbmmSample } from 'src/utilities/ElementUtils';
+import { isSbmmSample , rfValueFormat } from 'src/utilities/ElementUtils';
 
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import {
@@ -21,14 +21,65 @@ import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import Component from 'src/models/Component';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import WeightPercentageReactionStore from 'src/stores/alt/stores/WeightPercentageReactionStore';
+import { setReactionByType } from 'src/apps/mydb/elements/details/reactions/ReactionDetailsShare';
+
+const handleInputChange = (type, event, reaction, onReactionChange) => {
+  let value;
+  if (
+    type === 'temperatureUnit'
+    || type === 'temperatureData'
+    || type === 'description'
+    || type === 'role'
+    || type === 'observation'
+    || type === 'durationUnit'
+    || type === 'duration'
+    || type === 'rxno'
+    || type === 'vesselSizeAmount'
+    || type === 'vesselSizeUnit'
+    || type === 'gaseous'
+    || type === 'conditions'
+    || type === 'phOperator'
+    || type === 'phValue'
+    || type === 'volume'
+    || type === 'useReactionVolumeForConcentration'
+    || type === 'lockReactionVolume'
+    || type === 'weight_percentage'
+    || type === 'reactionType'
+    || type === 'default'
+  ) {
+    value = event;
+  } else if (type === 'rfValue') {
+    value = rfValueFormat(event.target.value) || '';
+  } else {
+    value = event.target.value;
+  }
+
+  const { newReaction, options } = setReactionByType(reaction, type, value);
+
+  if (type === 'reactionType' && value === 'interaction') {
+    // Interaction reactions always use the default scheme internals, so clear
+    // any residual gas or weight-percentage state before re-rendering the tab.
+    newReaction.resetWeightPercentagedependencies();
+    newReaction.recalculateEquivalentsForMaterials();
+  }
+
+  // Update gas phase store synchronously for vessel size changes
+  if (type === 'vesselSizeAmount' || type === 'vesselSizeUnit') {
+    const { catalystMoles, vesselSize } = newReaction.findReactionVesselSizeCatalystMaterialValues();
+    GasPhaseReactionActions.setReactionVesselSize(vesselSize || null);
+    GasPhaseReactionActions.setCatalystReferenceMole(catalystMoles || null);
+  }
+
+  onReactionChange(newReaction, options);
+};
 
 export default class ReactionUpdateHandler {
-  constructor({ reaction, onReactionChange, onInputChange, onLockEquivColChange }, context = null) {
+  constructor({ reaction, onReactionChange, onLockEquivColChange }, context = null) {
     this.context = context;
     this.props = {
       reaction,
       onReactionChange,
-      onInputChange,
+      onInputChange: this.handleInputChange.bind(this),
       onLockEquivColChange
     };
     this._lockEquivColumn = null;
@@ -2167,5 +2218,16 @@ export default class ReactionUpdateHandler {
     // Recalculate concentrations when checkbox state changes
     reaction.updateAllConcentrations();
   }
+
+  handleInputChange(type, event) {
+    const {
+      reaction,
+      onReactionChange
+    } = this.props;
+    handleInputChange(type, event, reaction, onReactionChange);
+  }
 }
 
+export {
+  handleInputChange
+};

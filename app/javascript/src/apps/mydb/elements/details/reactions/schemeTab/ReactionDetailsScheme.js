@@ -8,7 +8,8 @@ import {
 import Reaction from 'src/models/Reaction';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
-import ReactionDetailsPurification from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsPurification';
+import ReactionDetailsPurification from
+    'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsPurification';
 import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import ReactionConditions from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionConditions';
 import GeneralProcedureDnd from 'src/apps/mydb/elements/details/reactions/schemeTab/GeneralProcedureDnD';
@@ -242,7 +243,7 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   renderPhConditionProperty() {
-    const { reaction, onInputChange } = this.props;
+    const { reaction, onInputChange } = this.reactionUpdateHandler.props;
     const operator = reaction.ph_operator || '=';
     const value = reaction.ph_value ?? '';
     const isDisabled = !permitOn(reaction);
@@ -313,7 +314,7 @@ export default class ReactionDetailsScheme extends React.Component {
       reactionDescTemplate,
       displayYieldField,
     } = this.state;
-    const { reaction, onInputChange, onReactionChange } = this.props;
+    const { reaction, onInputChange, onReactionChange } = this.reactionUpdateHandler.props;
     const isInteractionReaction = reaction.isInteractionReaction();
     if (reaction.editedSample !== undefined) {
       if (reaction.editedSample.amountType === 'target') {
@@ -515,6 +516,5 @@ export default class ReactionDetailsScheme extends React.Component {
 
 ReactionDetailsScheme.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
-  onReactionChange: PropTypes.func.isRequired,
-  onInputChange: PropTypes.func.isRequired
+  onReactionChange: PropTypes.func.isRequired
 };

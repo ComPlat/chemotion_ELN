@@ -1,20 +1,23 @@
 /* eslint-disable react/display-name, no-param-reassign, react-hooks/immutability */
 import React, {
-  useRef, useState, useCallback, useEffect, useMemo
+  useState
 } from 'react';
 import {
-  Button, OverlayTrigger, Tooltip, Alert,
+  Button, OverlayTrigger, Tooltip,
   ButtonGroup
 } from 'react-bootstrap';
 import uuid from 'uuid';
 import Reaction from 'src/models/Reaction';
-import Sample from 'src/models/Sample';
 import PropTypes from 'prop-types';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 import AppModal from 'src/components/common/AppModal';
-import Container from 'src/models/Container';
-import { handleInputChange } from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
+
+import { handleInputChange } from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import VariationSchemaTable from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationComponents';
+import
+{ makeVariationReaction,
+  diffObjects }
+  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationUtils';
 
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
 
@@ -56,77 +59,9 @@ RemoveVariationsModal.propTypes = {
 
 let globalInputTimer;
 
-const ReactionVariations = ({ reaction, onReactionChange }) => {
-
-  const makeReaction = (reactionData) => {
-    const clonedReaction = { ...structuredClone(reaction), ...reactionData };
-    clonedReaction.variations = [];
-    clonedReaction.container = Container.init();
-    clonedReaction.id = reactionData.id || uuid.v4();
-    ['starting_materials', 'reactants', 'solvents', 'purification_solvents', 'products'].forEach((key) => {
-      clonedReaction[`_${key}`] = clonedReaction[`_${key}`].map((sampleData) => {
-          sampleData.container = Container.init();
-          return Object.assign(
-            Object.create(Sample.prototype),
-            sampleData
-          );
-        }
-      );
-    });
-    return Object.assign(
-      Object.create(Reaction.prototype),
-      clonedReaction
-    );
-  };
-
-  const [variations, setVariations] = useState(
-    reaction.variations.map((v, idx) => ({ idx, group: v.group, data: makeReaction(v.data || {}) }))
-  );
+const ReactionVariations = ({ reaction, variations, setVariations, onReactionChange }) => {
 
   const [activeVariation, setActiveVariation] = useState(null);
-
-  const diffObjects = (obj1, obj2, ignoreList = []) => {
-    let result, keys;
-    if (Array.isArray(obj2)) {
-      keys = obj2.map((x, i) => i);
-      result = [];
-    } else {
-      keys = Object.keys(obj2);
-      result = {};
-    }
-    for (const key of keys) {
-      // Ignore configured keys
-      if (ignoreList.includes(key)) {
-        continue;
-      }
-
-      const value1 = obj1?.[key];
-      const value2 = obj2[key];
-
-      // Ignore functions
-      if (typeof value2 === 'function') {
-        continue;
-      }
-
-      // Recursively compare plain objects
-      if (
-        value2 !== null &&
-        typeof value2 === 'object' &&
-        value1 !== null &&
-        typeof value1 === 'object'
-      ) {
-        const nestedDiff = diffObjects(value1, value2, ignoreList);
-
-        if (Object.keys(nestedDiff).length > 0) {
-          result[key] = nestedDiff;
-        }
-      } else if (!Object.is(value1, value2)) {
-        result[key] = value2;
-      }
-    }
-
-    return result;
-  };
 
   const addRow = () => {
     const id = uuid.v4();
@@ -135,7 +70,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
       id, group,
       data: {}
     });
-    variations.push({ group, data: makeReaction({}), idx: reaction.variations.length - 1 });
+    variations.push({ group, data: makeVariationReaction(reaction, {}), idx: reaction.variations.length - 1 });
     setVariations(variations);
     onReactionChange(reaction);
   };
@@ -227,6 +162,8 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
 
 ReactionVariations.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
+  variations: PropTypes.arrayOf(Reaction).isRequired,
+  setVariations: PropTypes.func.isRequired,
   onReactionChange: PropTypes.func.isRequired,
 };
 

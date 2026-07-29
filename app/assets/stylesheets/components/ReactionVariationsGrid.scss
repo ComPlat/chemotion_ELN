@@ -1,0 +1,26 @@
+// Grid of the reaction variations tab: every material field is its own column and every cell hosts
+// a live input from the scheme tab, so the cells need room and must not clip their popovers.
+.reaction-variations-grid {
+  width: 100%;
+
+  .ag-cell {
+    overflow: visible;
+    padding-left: 4px;
+    padding-right: 4px;
+    line-height: normal;
+  }
+
+  .ag-cell-wrapper,
+  .ag-cell-value {
+    width: 100%;
+  }
+
+  // The material name cell reuses the scheme tab markup, which brings its own table cell padding.
+  .pseudo-table__cell {
+    padding: 0;
+  }
+
+  .numeral-input-with-units {
+    width: 100%;
+  }
+}
