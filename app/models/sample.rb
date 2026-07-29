@@ -178,9 +178,7 @@ class Sample < ApplicationRecord
                                      joins(:reactions_samples).where(reactions_samples: { reaction_id: ids })
                                    }
   scope :by_literature_ids,        ->(ids) { joins(:literals).where(literals: { literature_id: ids }) }
-  scope :includes_for_list_display, lambda {
-    includes(:molecule_name, :tag, :comments, :reactions_samples, molecule: %i[tag computed_props])
-  }
+  scope :includes_for_list_display, -> { includes(:molecule_name, :tag, :comments, molecule: :tag) }
 
   scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
   scope :sample_or_startmat_or_products, lambda {

@@ -198,7 +198,9 @@ module Chemotion
         sample_scope = sample_scope.by_user_label(user_label) if user_label
 
         sample_list = []
-        detail_levels = detail_levels_for_list(resolved_collection)
+        detail_levels = ElementDetailLevelCalculator.for_list(
+          collection: resolved_collection, user: current_user, owned_only: true,
+        )
 
         if params[:molecule_sort] == 1
           molecule_scope = Molecule
@@ -215,9 +217,8 @@ module Chemotion
               )
             end
           end
-          sample_count = sample_scope.count
         else
-          sample_count = reset_pagination_page(sample_scope)
+          reset_pagination_page(sample_scope)
           sample_scope = sample_scope.order('samples.updated_at DESC')
           paginate(sample_scope).each do |sample|
             sample_list.push(
@@ -228,7 +229,7 @@ module Chemotion
 
         return {
           samples: sample_list,
-          samples_count: sample_count,
+          samples_count: sample_scope.count,
         }
       end
 

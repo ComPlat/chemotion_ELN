@@ -80,7 +80,9 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        detail_levels = detail_levels_for_list(resolved_collection)
+        detail_levels = ElementDetailLevelCalculator.for_list(
+          collection: resolved_collection, user: current_user, owned_only: true,
+        )
 
         wellplates = paginate(scope).map do |wellplate|
           Entities::WellplateEntity.represent(
