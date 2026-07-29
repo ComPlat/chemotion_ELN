@@ -49,6 +49,18 @@ describe Chemotion::ReactionAPI do
       end
     end
 
+    context 'without params, when a reaction is only in a group-owned collection' do
+      let(:group) { create(:group, users: [user]) }
+      let(:group_collection) { create(:collection, user: group) }
+      let!(:group_reaction) { create(:reaction, name: 'group reaction', collections: [group_collection]) }
+
+      it 'does not return it -- the "All" view is owner-only, not group-aware' do
+        get '/api/v1/reactions'
+        reactions = parsed_json_response['reactions']
+        expect(reactions.pluck('id')).not_to include(group_reaction.id)
+      end
+    end
+
     context 'with ID of collection' do
       before { get '/api/v1/reactions', params: { collection_id: collection1.id } }
 
