@@ -23,17 +23,7 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        screen_scope = Screen.none
-        if params[:collection_id]
-          begin
-            screen_scope = Collection.accessible_for(current_user).find(params[:collection_id]).screens
-          rescue ActiveRecord::RecordNotFound
-            Screen.none
-          end
-        else
-          # All collection of current_user
-          screen_scope = Screen.for_user(current_user.id).distinct
-        end
+        _resolved_collection, screen_scope = collection_scope_for(params[:collection_id], Screen, :screens)
 
         from = params[:from_date]
         to = params[:to_date]

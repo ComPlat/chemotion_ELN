@@ -33,14 +33,9 @@ module Chemotion
       end
 
       get do
+        resolved_collection = readable_collection_for(params[:collection_id])
         scope = if params[:collection_id]
-                  begin
-                    Collection.accessible_for(current_user)
-                              .find(params[:collection_id])
-                              .reactions
-                  rescue ActiveRecord::RecordNotFound
-                    Reaction.none
-                  end
+                  resolved_collection ? resolved_collection.reactions : Reaction.none
                 else
                   Reaction
                     .joins(:collections)

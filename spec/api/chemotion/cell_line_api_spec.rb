@@ -119,6 +119,46 @@ describe Chemotion::CellLineAPI do
         end
       end
     end
+
+    context 'when no collection_id is given (All)' do
+      it 'returns the cell lines from the collections owned by the user' do
+        get '/api/v1/cell_lines/'
+
+        expect(response).to have_http_status :ok
+        expect(parsed_json_response['cell_lines'].pluck('id')).to contain_exactly(cell_line.id, cell_line2.id)
+      end
+    end
+
+    context 'when collection_id does not resolve (nonexistent or inaccessible)' do
+      let(:params) { { collection_id: collection.id + 1_000_000 } }
+
+      it 'returns an empty list rather than an error' do
+        get '/api/v1/cell_lines/', params: params
+
+        expect(response).to have_http_status :ok
+        expect(parsed_json_response['cell_lines']).to eq([])
+      end
+    end
+
+    context 'when collection_id points to a collection shared with the user' do
+      let(:other_user) { create(:person) }
+      let(:shared_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(:read_elements))
+        end
+      end
+      let!(:shared_cell_line) do
+        create(:cellline_sample, collections: [shared_collection], cellline_material: material)
+      end
+
+      it 'returns the cell lines from the shared collection' do
+        get '/api/v1/cell_lines/', params: { collection_id: shared_collection.id }
+
+        expect(response).to have_http_status :ok
+        expect(parsed_json_response['cell_lines'].pluck('id')).to include(shared_cell_line.id)
+      end
+    end
   end
 
   describe 'GET /api/v1/cell_lines/{:id}' do

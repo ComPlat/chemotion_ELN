@@ -148,19 +148,9 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        scope =
-          if params[:collection_id]
-            begin
-              Collection.accessible_for(current_user)
-                        .find(params[:collection_id]).device_descriptions
-            rescue ActiveRecord::RecordNotFound
-              DeviceDescription.none
-            end
-          else
-            # All collection of current_user
-            DeviceDescription.joins(:collections)
-                             .where(collections: { user_id: current_user.id }).distinct
-          end
+        _resolved_collection, scope = collection_scope_for(
+          params[:collection_id], DeviceDescription, :device_descriptions
+        )
         scope = scope.order(updated_at: :desc)
 
         from = params[:from_date]

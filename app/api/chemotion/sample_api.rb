@@ -178,17 +178,7 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
 
       get do
-        sample_scope = Sample.none
-        if params[:collection_id]
-          begin
-            sample_scope = Collection.accessible_for(current_user).find(params[:collection_id]).samples
-          rescue ActiveRecord::RecordNotFound
-            Sample.none
-          end
-        else
-          # All collection
-          sample_scope = Sample.for_user(current_user.id).distinct
-        end
+        _resolved_collection, sample_scope = collection_scope_for(params[:collection_id], Sample, :samples)
         sample_scope = sample_scope.includes_for_list_display
         prod_only = params[:product_only] || false
         sample_scope = if prod_only

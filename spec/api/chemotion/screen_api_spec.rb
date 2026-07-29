@@ -71,6 +71,15 @@ describe Chemotion::ScreenAPI do
         end
       end
     end
+
+    context 'when collection_id points to a collection shared with the user' do
+      let!(:shared_screen) { create(:screen, collections: [other_shared_collection]) }
+
+      it 'returns the screens from the shared collection' do
+        get '/api/v1/screens', params: { collection_id: other_shared_collection.id }, headers: request_headers
+        expect(JSON.parse(response.body)['screens'].pluck('id')).to include(shared_screen.id)
+      end
+    end
   end
 
   describe 'GET /api/v1/screens/{id}' do

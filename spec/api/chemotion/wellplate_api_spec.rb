@@ -103,6 +103,15 @@ describe Chemotion::WellplateAPI do
         expect(JSON.parse(response.body)['wellplates'].size).to eq(0)
       end
     end
+
+    context 'when collection_id points to a collection shared with the user' do
+      let!(:shared_wellplate) { create(:wellplate, collections: [collection_shared_with_user]) }
+
+      it 'returns the wellplates from the shared collection' do
+        get '/api/v1/wellplates/', params: { collection_id: collection_shared_with_user.id }
+        expect(JSON.parse(response.body)['wellplates'].pluck('id')).to include(shared_wellplate.id)
+      end
+    end
   end
 
   describe 'GET /api/v1/wellplates/:id' do

@@ -505,6 +505,16 @@ describe Chemotion::SampleAPI do
       end
     end
 
+    context 'when collection_id points to a collection shared with the user' do
+      let(:permission_level) { CollectionShare.permission_level(:read_elements) }
+      let!(:shared_sample) { create(:sample, collections: [shared_collection]) }
+
+      it 'returns the samples from the shared collection' do
+        get '/api/v1/samples', params: { collection_id: shared_collection.id }
+        expect(JSON.parse(response.body)['samples'].pluck('id')).to include(shared_sample.id)
+      end
+    end
+
     context 'when collection_id is given and no samples found' do
       let(:empty_collection) { create(:collection, label: 'empty collection', user: user) }
 

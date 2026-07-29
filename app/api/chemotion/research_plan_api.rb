@@ -22,16 +22,8 @@ module Chemotion
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
-        if params[:collection_id]
-          begin
-            scope = Collection.accessible_for(current_user).find(params[:collection_id]).research_plans
-          rescue ActiveRecord::RecordNotFound
-            scope = ResearchPlan.none
-          end
-        else
-          # All collection of current_user
-          ResearchPlan.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-        end.order('research_plans.created_at DESC')
+        _resolved_collection, scope = collection_scope_for(params[:collection_id], ResearchPlan, :research_plans)
+        scope = scope.order('research_plans.created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]

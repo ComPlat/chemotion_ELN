@@ -22,22 +22,8 @@ module Chemotion
       end
 
       get do
-        scope = if params[:collection_id]
-                  begin
-                    Collection.accessible_for(current_user)
-                              .find(params[:collection_id])
-                              .cellline_samples
-                  rescue ActiveRecord::RecordNotFound
-                    CelllineSample.none
-                  end
-                else
-                  # All collection of current_user
-                  # TODO: Question? Only own collections or shared as well?
-                  # TODO: Question 2: When using .none, why join at all? It does not return any records anyway
-                  # TODO: Other thought... having seen the "All collection of current_user" comment...
-                  #       is this maybe the case for displaying the "All" collection? Which has a collection id though
-                  CelllineSample.none.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-                end.order('created_at DESC')
+        _resolved_collection, scope = collection_scope_for(params[:collection_id], CelllineSample, :cellline_samples)
+        scope = scope.order('created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]

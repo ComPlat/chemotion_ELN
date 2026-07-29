@@ -58,6 +58,22 @@ describe Chemotion::ReactionAPI do
       end
     end
 
+    context 'with ID of a collection shared with the user' do
+      let(:shared_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(:read_elements))
+        end
+      end
+      let!(:shared_reaction) { create(:reaction, name: 'shared reaction', collections: [shared_collection]) }
+
+      it 'returns the reaction from the shared collection' do
+        get '/api/v1/reactions', params: { collection_id: shared_collection.id }
+        reactions = JSON.parse(response.body)['reactions']
+        expect(reactions.pluck('id')).to include(shared_reaction.id)
+      end
+    end
+
     context 'with ID of non-existing collection' do
       before { get '/api/v1/reactions', params: { collection_id: -1 } }
 

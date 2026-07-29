@@ -63,17 +63,8 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        scope = if params[:collection_id]
-                  begin
-                    Collection.accessible_for(current_user)
-                              .find(params[:collection_id]).wellplates
-                  rescue ActiveRecord::RecordNotFound
-                    Wellplate.none
-                  end
-                else
-                  # All collection of current_user
-                  Wellplate.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-                end.order('wellplates.created_at DESC')
+        _resolved_collection, scope = collection_scope_for(params[:collection_id], Wellplate, :wellplates)
+        scope = scope.order('wellplates.created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
