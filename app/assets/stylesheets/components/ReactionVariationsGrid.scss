@@ -23,4 +23,19 @@
   .numeral-input-with-units {
     width: 100%;
   }
+
+  // Leave room for the column picker button next to a group's name.
+  .ag-header-group-cell-label {
+    overflow: visible;
+  }
+}
+
+// Not nested in the grid block: the picker is portalled to the body to escape the header's overflow.
+.reaction-variations-grid__column-picker {
+  max-width: 320px;
+
+  .popover-body {
+    max-height: 320px;
+    overflow-y: auto;
+  }
 }

@@ -4,17 +4,19 @@ import React, {
 import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 import {
-  Button, ButtonGroup, Form, InputGroup
+  Button, ButtonGroup, Form, InputGroup, OverlayTrigger, Popover
 } from 'react-bootstrap';
 import Reaction from 'src/models/Reaction';
 import { permitOn } from 'src/components/common/uis';
 import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import MaterialHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialUtils';
 import { MATERIAL_HEADER } from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
+import REACTION_FIELDS from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationReactionFields';
 import {
   CoefficientField,
   DrySolventCheckBox,
   EquivalentOrYield,
+  GaseousInputFields,
   MassField,
   MaterialActivity,
   MaterialAmountMol,
@@ -35,6 +37,11 @@ const MAT_GROUP_TITLES = {
   products: 'Product',
 };
 const MASS_METRIC_PREFIXES = ['m', 'n', 'u'];
+// Material group names contain underscores, so the group id needs a separator that cannot collide.
+const GROUP_ID_SEPARATOR = '::';
+// Pseudo material groups, so the row-level and reaction-level columns are toggled like the rest.
+const REACTION_FIELDS_GROUP = 'reaction_fields';
+const VARIATION_GROUP = 'variation_fields';
 
 /*
 Carries the per-row update handlers into the cells.
@@ -52,6 +59,11 @@ const VariationsGridContext = createContext({
 });
 
 const isEmptyValue = (v) => v === null || v === undefined || Number.isNaN(v) || v === 0;
+
+// Same condition the scheme tab uses to decide whether a product gets its gas phase row.
+const isGasProductMaterial = (reaction, material) => (
+  !!reaction?.gaseous && material?.gas_type === 'gas'
+);
 
 // Mirrors the mass metric prefix resolution of the scheme tab's GeneralMaterial row.
 const massMetricPrefix = (mh) => {
@@ -116,11 +128,7 @@ const NAME_FIELD = {
   ),
 };
 
-/*
-One entry per grid column. `render` is handed a MaterialHandler bound to the material of that row,
-so every column reuses the very same input component the scheme tab renders.
-*/
-const GENERAL_MATERIAL_FIELDS = [
+const GENERAL_MATERIAL_SETTIGS_FIELDS = [
   NAME_FIELD,
   {
     key: 'ref',
@@ -139,7 +147,14 @@ const GENERAL_MATERIAL_FIELDS = [
     header: MATERIAL_HEADER.reaction_coefficient,
     width: 90,
     render: (mh) => (mh.isSbmm ? null : <CoefficientField mh={mh} />),
-  },
+  }
+];
+
+/*
+One entry per grid column. `render` is handed a MaterialHandler bound to the material of that row,
+so every column reuses the very same input component the scheme tab renders.
+*/
+const GENERAL_MATERIAL_AMOUNT_FIELDS = [
   {
     key: 'mass',
     header: MATERIAL_HEADER.mass,
@@ -243,23 +258,50 @@ const SOLVENT_FIELDS = [
   },
 ];
 
+/*
+Gas phase inputs, which the scheme tab shows as an extra row under a gaseous product. Only the three
+editable ones are columns here; turnover number and turnover frequency are derived and read-only in
+GaseousInputFields, so they would just be dead columns.
+
+The columns exist only for product slots where some variation actually has a gaseous product - see
+FIELDS_BY_GROUP.products below - and within them a row renders nothing unless its own product is the
+gas one (`isGasProduct`), since a variation may well have turned the gas mode off.
+*/
+const GAS_PHASE_FIELDS = [
+  { key: 'gas_time', header: 'Time', gasField: 'time' },
+  { key: 'gas_temperature', header: 'Temp', gasField: 'temperature' },
+  { key: 'gas_ppm', header: 'ppm', gasField: 'part_per_million' },
+].map(({ key, header, gasField }) => ({
+  key,
+  header,
+  width: 150,
+  render: (mh, { isGasProduct }) => (
+    isGasProduct ? <GaseousInputFields mh={mh} field={gasField} /> : null
+  ),
+}));
+
+const GENERAL_MATERIAL_FIELDS = [...GENERAL_MATERIAL_SETTIGS_FIELDS, ...GENERAL_MATERIAL_AMOUNT_FIELDS];
+const GENERAL_GAS_MATERIAL_FIELDS = [
+  ...GENERAL_MATERIAL_SETTIGS_FIELDS,
+  ...GAS_PHASE_FIELDS,
+  ...GENERAL_MATERIAL_AMOUNT_FIELDS
+];
+
 const FIELDS_BY_GROUP = {
-  starting_materials: GENERAL_MATERIAL_FIELDS,
-  reactants: GENERAL_MATERIAL_FIELDS,
-  products: GENERAL_MATERIAL_FIELDS,
-  solvents: SOLVENT_FIELDS,
+  starting_materials: () => GENERAL_MATERIAL_FIELDS,
+  reactants: () => GENERAL_MATERIAL_FIELDS,
+  products: (gasType) => gasType ? GENERAL_GAS_MATERIAL_FIELDS : GENERAL_MATERIAL_FIELDS,
+  solvents: () => SOLVENT_FIELDS,
 };
 
 /*
-Renders a single input of a single material. `matGroup`/`sampleIdx`/`field` are fixed per column,
-the row supplies the variation reaction.
+Builds the MaterialHandler for one material of one row. `matGroup` may be null (no slot in view),
+in which case there is nothing to render.
 */
-const MaterialFieldCell = ({
-  data, matGroup, sampleIdx, field
-}) => {
+const useMaterialHandler = (data, matGroup, sampleIdx) => {
   const { getRowHandler } = useContext(VariationsGridContext);
   const variationReaction = data?.data ?? null;
-  const material = variationReaction?.[matGroup]?.[sampleIdx] ?? null;
+  const material = (matGroup && variationReaction?.[matGroup]?.[sampleIdx]) || null;
 
   // Only the equivalent/weight-percentage selector reads this, and it is per material, so cell-local
   // state is the right scope for it.
@@ -272,7 +314,7 @@ const MaterialFieldCell = ({
   // rebuilds the handler instead of leaving the disabled states stale.
   const lockEquivColumn = rowHandler ? rowHandler.lockEquivColumn : false;
 
-  const mh = useMemo(() => {
+  return useMemo(() => {
     if (!material || !rowHandler) {
       return null;
     }
@@ -288,10 +330,22 @@ const MaterialFieldCell = ({
       lockEquivColumn,
     });
   }, [material, variationReaction, matGroup, rowHandler, fieldToShow, lockEquivColumn]);
+};
+
+/*
+Renders a single input of a single material. `matGroup`/`sampleIdx`/`field` are fixed per column,
+the row supplies the variation reaction.
+*/
+const MaterialFieldCell = ({
+  data, matGroup, sampleIdx, field
+}) => {
+  const mh = useMaterialHandler(data, matGroup, sampleIdx);
 
   if (!mh) {
     return null;
   }
+
+  const variationReaction = mh.reaction;
 
   return field.render(mh, {
     index: sampleIdx + 1,
@@ -299,6 +353,7 @@ const MaterialFieldCell = ({
     displayYieldField: variationReaction.products.every(
       (product) => !(product.conversion_rate && product.conversion_rate !== 0)
     ),
+    isGasProduct: isGasProductMaterial(variationReaction, mh.material),
   });
 };
 
@@ -310,6 +365,79 @@ MaterialFieldCell.propTypes = {
   matGroup: PropTypes.string.isRequired,
   sampleIdx: PropTypes.number.isRequired,
   field: PropTypes.shape({ render: PropTypes.func.isRequired }).isRequired,
+};
+
+/*
+The sticky material name. Pinned left, so it never scrolls away, and bound to whichever material
+group is currently at the left edge of the scrolled area. Each row resolves that slot against its
+own variation, so rows whose sample differs in that slot show their own name.
+*/
+const ActiveMaterialCell = ({ data }) => {
+  const { activeSlot } = useContext(VariationsGridContext);
+  const mh = useMaterialHandler(data, activeSlot?.matGroup ?? null, activeSlot?.sampleIdx ?? 0);
+
+  if (!mh) {
+    return null;
+  }
+
+  return (
+    <MaterialNameWithIupac
+      mh={mh}
+      index={(activeSlot?.sampleIdx ?? 0) + 1}
+      withStickyName={false}
+    />
+  );
+};
+
+ActiveMaterialCell.propTypes = {
+  data: PropTypes.shape({
+    idx: PropTypes.number.isRequired,
+    data: PropTypes.instanceOf(Reaction).isRequired,
+  }).isRequired,
+};
+
+// Names the slot the pinned column is currently showing, so it is clear which material the sticky
+// name belongs to.
+const ActiveMaterialHeader = () => {
+  const { activeSlot } = useContext(VariationsGridContext);
+
+  if (!activeSlot) {
+    return <span>Material</span>;
+  }
+
+  return (
+    <span>{`${MAT_GROUP_TITLES[activeSlot.matGroup]} ${activeSlot.sampleIdx + 1}`}</span>
+  );
+};
+
+/*
+Renders one reaction-level input of one variation. Unlike the material cells this needs no
+MaterialHandler - the scheme tab's reaction fields all work off the reaction plus the row's
+ReactionUpdateHandler.
+*/
+const ReactionFieldCell = ({ data, field }) => {
+  const { getRowHandler } = useContext(VariationsGridContext);
+  const reaction = data?.data ?? null;
+
+  if (!reaction) {
+    return null;
+  }
+  if (field.requiresNonInteraction && reaction.isInteractionReaction()) {
+    return null;
+  }
+
+  return field.render(reaction, getRowHandler(data));
+};
+
+ReactionFieldCell.propTypes = {
+  data: PropTypes.shape({
+    idx: PropTypes.number.isRequired,
+    data: PropTypes.instanceOf(Reaction).isRequired,
+  }).isRequired,
+  field: PropTypes.shape({
+    render: PropTypes.func.isRequired,
+    requiresNonInteraction: PropTypes.bool,
+  }).isRequired,
 };
 
 const OpenVariationCell = ({ data }) => {
@@ -356,29 +484,114 @@ GroupCell.propTypes = {
   }).isRequired,
 };
 
-const buildColumnDefs = ({ maxNumberOfSamples, hiddenGroups, showLoadingColumn }) => {
-  const columnDefs = [
+/*
+Parent-header column picker. Every group carries one, so any single column can be hidden from the
+header it sits under. Hiding goes through the grid API rather than through the column definitions,
+so a toggle does not rebuild the columns and throw away the user's resizing; `hiddenColumns` is kept
+as state only to drive the checkboxes and to seed `hide` when the columns really are rebuilt.
+
+The popover is portalled to the body because the grid header clips its own overflow, which would cut
+an inline menu off.
+*/
+const ColumnVisibilityHeader = ({ displayName, columns }) => {
+  const { hiddenColumns, setColumnsHidden } = useContext(VariationsGridContext);
+  const colIds = columns.map((column) => column.colId);
+  const hiddenCount = colIds.filter((colId) => hiddenColumns.includes(colId)).length;
+
+  const popover = (
+    <Popover className="reaction-variations-grid__column-picker">
+      <Popover.Header as="h3">{displayName}</Popover.Header>
+      <Popover.Body>
+        <div className="d-flex gap-2 mb-2">
+          <Button size="sm" variant="link" className="p-0" onClick={() => setColumnsHidden(colIds, false)}>
+            Show all
+          </Button>
+          <Button size="sm" variant="link" className="p-0" onClick={() => setColumnsHidden(colIds, true)}>
+            Hide all
+          </Button>
+        </div>
+        {columns.map((column) => (
+          <Form.Check
+            key={column.colId}
+            type="checkbox"
+            id={`toggle-column-${column.colId}`}
+            label={column.headerName}
+            checked={!hiddenColumns.includes(column.colId)}
+            onChange={(event) => setColumnsHidden([column.colId], !event.target.checked)}
+          />
+        ))}
+      </Popover.Body>
+    </Popover>
+  );
+
+  return (
+    <div className="d-flex align-items-center gap-1 w-100">
+      <span className="text-truncate">{displayName}</span>
+      <OverlayTrigger
+        trigger="click"
+        rootClose
+        placement="bottom-start"
+        overlay={popover}
+        container={typeof document === 'undefined' ? undefined : document.body}
+      >
+        <Button
+          variant={hiddenCount ? 'warning' : 'light'}
+          size="sm"
+          className="py-0 px-1"
+          title="Show or hide columns"
+        >
+          <i className="fa fa-columns" aria-hidden="true" />
+        </Button>
+      </OverlayTrigger>
+    </div>
+  );
+};
+
+ColumnVisibilityHeader.propTypes = {
+  displayName: PropTypes.string.isRequired,
+  columns: PropTypes.arrayOf(PropTypes.shape({
+    colId: PropTypes.string.isRequired,
+    headerName: PropTypes.string.isRequired,
+  })).isRequired,
+};
+
+const buildColumnGroups = ({
+  maxNumberOfSamples, showLoadingColumn, showGasColumns
+}) => {
+  // The row-level columns are a group of their own so that they get the same per-column picker in
+  // their parent header as everything else.
+  const groups = [
     {
-      colId: 'variation_index',
-      headerName: '#',
+      groupId: VARIATION_GROUP,
+      headerName: 'Variation',
       pinned: 'left',
-      width: 60,
-      valueGetter: ({ data }) => data.idx,
-      cellClass: 'text-center',
-    },
-    {
-      colId: 'variation_control',
-      headerName: 'Control',
-      pinned: 'left',
-      width: 90,
-      cellRenderer: OpenVariationCell,
-    },
-    {
-      colId: 'variation_group',
-      headerName: 'Group',
-      pinned: 'left',
-      width: 110,
-      cellRenderer: GroupCell,
+      columns: [
+        {
+          colId: 'variation_index',
+          headerName: '#',
+          width: 60,
+          valueGetter: ({ data }) => data.idx,
+          cellClass: 'text-center',
+        },
+        {
+          colId: 'variation_control',
+          headerName: 'Control',
+          width: 90,
+          cellRenderer: OpenVariationCell,
+        },
+        {
+          colId: 'variation_group',
+          headerName: 'Group',
+          width: 110,
+          cellRenderer: GroupCell,
+        },
+        {
+          colId: 'variation_material',
+          headerName: 'Material',
+          headerComponent: ActiveMaterialHeader,
+          cellRenderer: ActiveMaterialCell,
+        },
+      ],
     },
   ];
 
@@ -387,17 +600,16 @@ const buildColumnDefs = ({ maxNumberOfSamples, hiddenGroups, showLoadingColumn }
     const fields = FIELDS_BY_GROUP[matGroup];
 
     for (let sampleIdx = 0; sampleIdx < numberOfSamples; sampleIdx += 1) {
-      columnDefs.push({
-        groupId: `${matGroup}_${sampleIdx}`,
+      groups.push({
+        groupId: `${matGroup}${GROUP_ID_SEPARATOR}${sampleIdx}`,
         headerName: `${MAT_GROUP_TITLES[matGroup]} ${sampleIdx + 1}`,
-        marryChildren: true,
-        children: fields
+        matGroup,
+        columns: fields(showGasColumns.some((x) => x[sampleIdx]))
           .filter((field) => !field.requiresLoadingColumn || showLoadingColumn)
           .map((field) => ({
             colId: `${matGroup}_${sampleIdx}_${field.key}`,
             headerName: field.header,
             width: field.width,
-            hide: hiddenGroups.includes(matGroup),
             cellRenderer: MaterialFieldCell,
             cellRendererParams: { matGroup, sampleIdx, field },
           })),
@@ -405,8 +617,37 @@ const buildColumnDefs = ({ maxNumberOfSamples, hiddenGroups, showLoadingColumn }
     }
   });
 
-  return columnDefs;
+  // The reaction-level inputs sit after the materials, following the scheme tab's reading order.
+  groups.push({
+    groupId: REACTION_FIELDS_GROUP,
+    headerName: 'Reaction',
+    columns: REACTION_FIELDS.map((field) => ({
+      colId: `reaction_${field.key}`,
+      headerName: field.header,
+      headerTooltip: field.header,
+      width: field.width,
+      cellRenderer: ReactionFieldCell,
+      cellRendererParams: { field },
+    })),
+  });
+
+  return groups;
 };
+
+const buildColumnDefs = (columnGroups, hiddenColumns) => columnGroups.map((group) => ({
+  groupId: group.groupId,
+  headerName: group.headerName,
+  marryChildren: true,
+  headerGroupComponent: ColumnVisibilityHeader,
+  headerGroupComponentParams: {
+    columns: group.columns.map(({ colId, headerName }) => ({ colId, headerName })),
+  },
+  children: group.columns.map((column) => ({
+    ...column,
+    pinned: group.pinned,
+    hide: hiddenColumns.includes(column.colId),
+  })),
+}));
 
 const DEFAULT_COL_DEF = {
   editable: false,
@@ -464,8 +705,55 @@ const VariationSchemaTable = ({
   setActiveVariation,
   onGroupChange
 }) => {
-  const [hiddenGroups, setHiddenGroups] = useState([]);
+  const [hiddenColumns, setHiddenColumns] = useState([]);
+  const [activeSlot, setActiveSlot] = useState(null);
+  const gridApiRef = useRef(null);
   const getRowHandler = useRowHandlerFactory(onReactionChange);
+
+  /*
+  Applies the change through the grid API so the columns are not rebuilt, and mirrors it into state
+  so the pickers stay in sync and a later structural rebuild keeps the same columns hidden.
+  */
+  const setColumnsHidden = useCallback((colIds, hidden) => {
+    gridApiRef.current?.setColumnsVisible(colIds, !hidden);
+    setHiddenColumns((previous) => {
+      const next = new Set(previous);
+      colIds.forEach((colId) => (hidden ? next.add(colId) : next.delete(colId)));
+      return [...next];
+    });
+  }, []);
+
+  /*
+  Resolves which material group sits at the left edge of the scrolled area, which is what the pinned
+  material column renders. Bails out by returning the previous state when the slot has not changed,
+  so a scroll gesture triggers at most one re-render per group crossed.
+  */
+  const syncActiveSlot = useCallback(() => {
+    const api = gridApiRef.current;
+    if (!api) {
+      return;
+    }
+
+    const { left } = api.getHorizontalPixelRange();
+    const firstVisible = api.getDisplayedCenterColumns().find(
+      (column) => (column.getLeft() ?? 0) + column.getActualWidth() > left + 1
+    );
+    const parentGroupId = firstVisible?.getParent()?.getGroupId() ?? null;
+    // Ignore anything that is not one of our material groups, e.g. the padding groups AG Grid
+    // inserts to balance the header tree.
+    const groupId = parentGroupId?.includes(GROUP_ID_SEPARATOR) ? parentGroupId : null;
+
+    setActiveSlot((previous) => {
+      if (!groupId) {
+        return previous === null ? previous : null;
+      }
+      if (previous && `${previous.matGroup}${GROUP_ID_SEPARATOR}${previous.sampleIdx}` === groupId) {
+        return previous;
+      }
+      const [matGroup, sampleIdx] = groupId.split(GROUP_ID_SEPARATOR);
+      return { matGroup, sampleIdx: Number(sampleIdx) };
+    });
+  }, []);
 
   /*
   Recomputed on every render on purpose: the parent mutates the `variations` array in place and
@@ -480,45 +768,72 @@ const VariationSchemaTable = ({
     ])
   );
   const showLoadingColumn = variations.some((variation) => !!variation.data?.hasPolymers());
+  const showGasColumns = variations.map((variation) => (
+    (variation.data?.products ?? []).map(
+      (product) => isGasProductMaterial(variation.data, product)
+    )
+  ));
 
-  const columnSignature = [
-    ...MAT_GROUPS.map((matGroup) => `${matGroup}:${maxNumberOfSamples[matGroup]}`),
-    `loading:${showLoadingColumn}`,
-    `hidden:${[...hiddenGroups].sort().join(',')}`,
-  ].join('|');
+  const columnGroups = buildColumnGroups({
+    maxNumberOfSamples, showLoadingColumn, showGasColumns
+  });
+
+  /*
+  Keyed on the column layout only, deliberately not on `hiddenColumns`: visibility is applied via
+  the grid API, so folding it in here would rebuild every column on each toggle.
+  */
+  const columnSignature = columnGroups
+    .map((group) => `${group.groupId}[${group.columns.map((column) => column.colId).join(',')}]`)
+    .join('|');
 
   const columnDefs = useMemo(
-    () => buildColumnDefs({ maxNumberOfSamples, hiddenGroups, showLoadingColumn }),
+    () => buildColumnDefs(columnGroups, hiddenColumns),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [columnSignature]
   );
 
-  const toggleGroup = (matGroup) => setHiddenGroups((previous) => (
-    previous.includes(matGroup)
-      ? previous.filter((group) => group !== matGroup)
-      : [...previous, matGroup]
-  ));
+  // Restoring a group whose columns are all hidden is impossible from its own header, because AG
+  // Grid drops the header once nothing under it is displayed. These buttons are that way back.
+  const toolbarSections = [
+    { key: VARIATION_GROUP, label: 'Variation' },
+    ...MAT_GROUPS
+      .filter((matGroup) => maxNumberOfSamples[matGroup] > 0)
+      .map((matGroup) => ({ key: matGroup, label: MAT_GROUP_TITLES[matGroup] })),
+    { key: REACTION_FIELDS_GROUP, label: 'Reaction' },
+  ].map((section) => ({
+    ...section,
+    colIds: columnGroups
+      .filter((group) => group.groupId === section.key || group.matGroup === section.key)
+      .flatMap((group) => group.columns.map((column) => column.colId)),
+  }));
 
   // See VariationsGridContext: intentionally a fresh object on every render.
-  const gridContext = { getRowHandler, setActiveVariation, onGroupChange };
+  const gridContext = {
+    getRowHandler, setActiveVariation, onGroupChange, activeSlot, hiddenColumns, setColumnsHidden
+  };
 
   return (
     <VariationsGridContext.Provider value={gridContext}>
       <ButtonGroup className="mb-2">
-        {MAT_GROUPS.filter((matGroup) => maxNumberOfSamples[matGroup] > 0).map((matGroup) => (
-          <Button
-            key={`toggle-${matGroup}`}
-            size="sm"
-            variant={hiddenGroups.includes(matGroup) ? 'outline-info' : 'info'}
-            onClick={() => toggleGroup(matGroup)}
-          >
-            <i
-              className={hiddenGroups.includes(matGroup) ? 'fa fa-eye me-1' : 'fa fa-eye-slash me-1'}
-              aria-hidden="true"
-            />
-            {MAT_GROUP_TITLES[matGroup]}
-          </Button>
-        ))}
+        {toolbarSections.map((section) => {
+          const allHidden = section.colIds.length > 0
+            && section.colIds.every((colId) => hiddenColumns.includes(colId));
+
+          return (
+            <Button
+              key={`toggle-${section.key}`}
+              size="sm"
+              variant={allHidden ? 'outline-info' : 'info'}
+              onClick={() => setColumnsHidden(section.colIds, !allHidden)}
+            >
+              <i
+                className={allHidden ? 'fa fa-eye me-1' : 'fa fa-eye-slash me-1'}
+                aria-hidden="true"
+              />
+              {section.label}
+            </Button>
+          );
+        })}
       </ButtonGroup>
       <div className="ag-theme-alpine reaction-variations-grid">
         <AgGridReact
@@ -533,6 +848,14 @@ const VariationSchemaTable = ({
           headerHeight={32}
           groupHeaderHeight={32}
           suppressCellFocus
+          onGridReady={({ api }) => {
+            gridApiRef.current = api;
+            syncActiveSlot();
+          }}
+          onFirstDataRendered={syncActiveSlot}
+          onBodyScroll={syncActiveSlot}
+          onVirtualColumnsChanged={syncActiveSlot}
+          onColumnResized={syncActiveSlot}
         />
       </div>
     </VariationsGridContext.Provider>
