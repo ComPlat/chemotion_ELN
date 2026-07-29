@@ -61,11 +61,13 @@ module Chemotion
 
         reset_pagination_page(scope)
 
+        detail_levels = ElementDetailLevelCalculator.for_list(collection: resolved_collection, user: current_user)
+
         reactions = paginate(scope).map do |reaction|
           Entities::ReactionEntity.represent(
             reaction,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
+            detail_levels: detail_levels,
           )
         end
 

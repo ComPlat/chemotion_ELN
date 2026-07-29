@@ -148,7 +148,7 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        _resolved_collection, scope = collection_scope_for(
+        resolved_collection, scope = collection_scope_for(
           params[:collection_id], DeviceDescription, :device_descriptions
         )
         scope = scope.order(updated_at: :desc)
@@ -165,12 +165,13 @@ module Chemotion
 
         reset_pagination_page(scope)
 
+        detail_levels = ElementDetailLevelCalculator.for_list(collection: resolved_collection, user: current_user)
+
         device_descriptions = paginate(scope).map do |device_description|
           Entities::DeviceDescriptionEntity.represent(
             device_description,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
-                                                       .detail_levels,
+            detail_levels: detail_levels,
           )
         end
 

@@ -23,7 +23,7 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        _resolved_collection, screen_scope = collection_scope_for(params[:collection_id], Screen, :screens)
+        resolved_collection, screen_scope = collection_scope_for(params[:collection_id], Screen, :screens)
 
         from = params[:from_date]
         to = params[:to_date]
@@ -38,10 +38,12 @@ module Chemotion
 
         reset_pagination_page(screen_scope)
 
+        detail_levels = ElementDetailLevelCalculator.for_list(collection: resolved_collection, user: current_user)
+
         screens = paginate(screen_scope).map do |screen|
           Entities::ScreenEntity.represent(
             screen,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
+            detail_levels: detail_levels,
             displayed_in_list: true,
           )
         end

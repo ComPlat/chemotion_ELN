@@ -63,7 +63,7 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        _resolved_collection, scope = collection_scope_for(params[:collection_id], Wellplate, :wellplates)
+        resolved_collection, scope = collection_scope_for(params[:collection_id], Wellplate, :wellplates)
         scope = scope.order('wellplates.created_at DESC')
 
         from = params[:from_date]
@@ -80,11 +80,13 @@ module Chemotion
 
         reset_pagination_page(scope)
 
+        detail_levels = ElementDetailLevelCalculator.for_list(collection: resolved_collection, user: current_user)
+
         wellplates = paginate(scope).map do |wellplate|
           Entities::WellplateEntity.represent(
             wellplate,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
+            detail_levels: detail_levels,
           )
         end
 

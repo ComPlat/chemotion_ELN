@@ -22,7 +22,7 @@ module Chemotion
       end
 
       get do
-        _resolved_collection, scope = collection_scope_for(params[:collection_id], CelllineSample, :cellline_samples)
+        resolved_collection, scope = collection_scope_for(params[:collection_id], CelllineSample, :cellline_samples)
         scope = scope.order('created_at DESC')
 
         from = params[:from_date]
@@ -36,12 +36,13 @@ module Chemotion
 
         reset_pagination_page(scope)
 
+        detail_levels = ElementDetailLevelCalculator.for_list(collection: resolved_collection, user: current_user)
+
         cell_line_samples = paginate(scope).map do |cell_line_sample|
           Entities::CellLineSampleEntity.represent(
             cell_line_sample,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user,
-                                                            element: cell_line_sample).detail_levels,
+            detail_levels: detail_levels,
           )
         end
         { cell_lines: cell_line_samples }

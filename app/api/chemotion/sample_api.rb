@@ -178,7 +178,7 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
 
       get do
-        _resolved_collection, sample_scope = collection_scope_for(params[:collection_id], Sample, :samples)
+        resolved_collection, sample_scope = collection_scope_for(params[:collection_id], Sample, :samples)
         sample_scope = sample_scope.includes_for_list_display
         prod_only = params[:product_only] || false
         sample_scope = if prod_only
@@ -198,6 +198,7 @@ module Chemotion
         sample_scope = sample_scope.by_user_label(user_label) if user_label
 
         sample_list = []
+        detail_levels = ElementDetailLevelCalculator.for_list(collection: resolved_collection, user: current_user)
 
         if params[:molecule_sort] == 1
           molecule_scope = Molecule
@@ -209,7 +210,6 @@ module Chemotion
             samples_group = sample_scope.select { |v| v.molecule_id == molecule.id }
             samples_group = samples_group.sort { |x, y| y.updated_at <=> x.updated_at }
             samples_group.each do |sample|
-              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
               sample_list.push(
                 Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
               )
@@ -219,7 +219,6 @@ module Chemotion
           reset_pagination_page(sample_scope)
           sample_scope = sample_scope.order('samples.updated_at DESC')
           paginate(sample_scope).each do |sample|
-            detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
             sample_list.push(
               Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
             )

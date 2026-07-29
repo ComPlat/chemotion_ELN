@@ -22,7 +22,7 @@ module Chemotion
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
-        _resolved_collection, scope = collection_scope_for(params[:collection_id], ResearchPlan, :research_plans)
+        resolved_collection, scope = collection_scope_for(params[:collection_id], ResearchPlan, :research_plans)
         scope = scope.order('research_plans.created_at DESC')
 
         from = params[:from_date]
@@ -39,11 +39,13 @@ module Chemotion
 
         reset_pagination_page(scope)
 
+        detail_levels = ElementDetailLevelCalculator.for_list(collection: resolved_collection, user: current_user)
+
         research_plans = paginate(scope).map do |research_plan|
           Entities::ResearchPlanEntity.represent(
             research_plan,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels,
+            detail_levels: detail_levels,
           )
         end
 

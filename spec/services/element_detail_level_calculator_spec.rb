@@ -53,4 +53,55 @@ describe ElementDetailLevelCalculator do
       end
     end
   end
+
+  describe '.for_collection' do
+    context 'when the collection is owned by the user' do
+      it 'returns full access for every detail-level key' do
+        result = described_class.for_collection(collection: owned_collection, user: user)
+        expect(result[Sample]).to eq 10
+        expect(result[Reaction]).to eq 10
+        expect(result[Well]).to eq result[Wellplate]
+      end
+    end
+
+    context 'when the collection is shared with the user' do
+      it 'returns the configured detail levels, class-keyed' do
+        result = described_class.for_collection(collection: other_users_shared_collection, user: user)
+        expect(result[Sample]).to eq 2
+        expect(result[Reaction]).to eq 2
+        expect(result[Well]).to eq result[Wellplate]
+      end
+    end
+
+    context 'when the collection is neither owned nor shared with the user' do
+      it 'returns 0 for every detail-level key' do
+        result = described_class.for_collection(collection: other_users_unshared_collection, user: user)
+        expect(result.values.max).to eq 0
+      end
+    end
+  end
+
+  describe '.owned_levels' do
+    it 'returns full access for every detail-level key, without needing a collection' do
+      result = described_class.owned_levels
+      expect(result[Sample]).to eq 10
+      expect(result[Reaction]).to eq 10
+      expect(result[Well]).to eq result[Wellplate]
+    end
+  end
+
+  describe '.for_list' do
+    context 'when collection is given' do
+      it 'delegates to .for_collection' do
+        result = described_class.for_list(collection: owned_collection, user: user)
+        expect(result).to eq described_class.for_collection(collection: owned_collection, user: user)
+      end
+    end
+
+    context 'when collection is nil' do
+      it 'delegates to .owned_levels' do
+        expect(described_class.for_list(collection: nil, user: user)).to eq described_class.owned_levels
+      end
+    end
+  end
 end
