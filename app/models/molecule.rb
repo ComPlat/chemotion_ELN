@@ -371,7 +371,11 @@ class Molecule < ApplicationRecord
 
   def assign_pubchem_data(pubchem_info)
     self.iupac_name = pubchem_info[:iupac_name]
-    self.names = pubchem_info[:names]
+    # Array(...) rather than a bare assignment: with enrichment deferred, pubchem_info is {}
+    # on the create path, and assigning nil sends an explicit NULL that bypasses the column's
+    # default([]). Readers index into it without a nil guard (e.g. ChemicalAPI's
+    # +molecule.names[0]+ when fetching a safety datasheet by common name).
+    self.names = Array(pubchem_info[:names])
     self.pcid = pubchem_info[:cid]
   end
 

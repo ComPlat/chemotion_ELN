@@ -241,6 +241,17 @@ RSpec.describe Molecule, type: :model do
       expect(Chemotion::PubchemService).not_to have_received(:molecule_info_from_inchikey)
     end
 
+    # names is nullable but defaults to []. Deferred enrichment passes {}, and assigning nil
+    # would send an explicit NULL that bypasses that default — readers index into it without
+    # a nil guard (ChemicalAPI's molecule.names[0]).
+    it 'stores names as an empty array, not NULL, when enrichment is deferred' do
+      allow(PubchemLookupJob).to receive(:perform_later)
+
+      molecule = described_class.find_or_create_by_molfile('molfile', **babel_info)
+
+      expect(molecule.reload.names).to eq([])
+    end
+
     context 'when a concurrent worker wins the create race (C1)' do
       it 're-finds the existing row instead of raising PG::UniqueViolation, without re-enqueueing LCSS' do
         existing = create(
