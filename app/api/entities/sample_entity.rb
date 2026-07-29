@@ -137,19 +137,22 @@ module Entities
     end
 
     def comment_count
-      object.comments.count
+      # Use size so the preloaded :comments association (see
+      # Sample.includes_for_list_display) is counted in memory, avoiding an
+      # N+1 COUNT(*) query per sample in the list endpoint.
+      object.comments.size
     end
 
     def gas_type
-      object.reactions_samples.pick(:gas_type)
+      object.reactions_samples.first&.gas_type
     end
 
     def gas_phase_data
-      object.reactions_samples.pick(:gas_phase_data)
+      object.reactions_samples.first&.gas_phase_data
     end
 
     def weight_percentage
-      object.reactions_samples.pick(:weight_percentage)
+      object.reactions_samples.first&.weight_percentage
     end
   end
 end

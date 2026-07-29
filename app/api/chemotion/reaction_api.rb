@@ -13,7 +13,7 @@ module Chemotion
     helpers UserLabelHelpers
 
     resource :reactions do
-      desc 'Return serialized reactions'
+      desc "Return serialized reactions. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
@@ -33,20 +33,7 @@ module Chemotion
       end
 
       get do
-        scope = if params[:collection_id]
-                  begin
-                    Collection.accessible_for(current_user)
-                              .find(params[:collection_id])
-                              .reactions
-                  rescue ActiveRecord::RecordNotFound
-                    Reaction.none
-                  end
-                else
-                  Reaction
-                    .joins(:collections)
-                    .merge(Collection.unscope(:order).own_collections_for(current_user))
-                    .distinct
-                end
+        resolved_collection, scope = collection_scope_for(params[:collection_id], Reaction, :reactions)
 
         from = params[:from_date]
         to = params[:to_date]
@@ -66,11 +53,13 @@ module Chemotion
 
         reset_pagination_page(scope)
 
+        detail_levels = detail_levels_for_list(resolved_collection)
+
         reactions = paginate(scope).map do |reaction|
           Entities::ReactionEntity.represent(
             reaction,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: reaction).detail_levels,
+            detail_levels: detail_levels,
           )
         end
 

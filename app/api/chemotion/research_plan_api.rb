@@ -12,7 +12,7 @@ module Chemotion
     helpers LiteratureHelpers
 
     namespace :research_plans do
-      desc 'Return serialized research plans of current user'
+      desc "Return serialized research plans of current user. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
@@ -22,16 +22,8 @@ module Chemotion
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
-        if params[:collection_id]
-          begin
-            scope = Collection.accessible_for(current_user).find(params[:collection_id]).research_plans
-          rescue ActiveRecord::RecordNotFound
-            scope = ResearchPlan.none
-          end
-        else
-          # All collection of current_user
-          ResearchPlan.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-        end.order('research_plans.created_at DESC')
+        resolved_collection, scope = collection_scope_for(params[:collection_id], ResearchPlan, :research_plans)
+        scope = scope.order('research_plans.created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -47,11 +39,13 @@ module Chemotion
 
         reset_pagination_page(scope)
 
+        detail_levels = detail_levels_for_list(resolved_collection)
+
         research_plans = paginate(scope).map do |research_plan|
           Entities::ResearchPlanEntity.represent(
             research_plan,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: research_plan).detail_levels,
+            detail_levels: detail_levels,
           )
         end
 

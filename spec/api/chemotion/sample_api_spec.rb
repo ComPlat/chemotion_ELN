@@ -505,6 +505,38 @@ describe Chemotion::SampleAPI do
       end
     end
 
+    context 'when a page mixes an owned-and-shared sample and a merely-shared sample' do
+      let(:other_users_collection) do
+        create(:collection, user: other_user).tap do |collection|
+          create(:collection_share, collection: collection, shared_with: user, sample_detail_level: 2)
+        end
+      end
+      let!(:owned_and_shared_sample) { create(:sample, collections: [other_users_collection, personal_collection]) }
+      let!(:shared_only_sample) { create(:sample, collections: [other_users_collection]) }
+
+      it 'applies the browsed (shared) collection detail level uniformly to every sample on the page' do
+        get '/api/v1/samples', params: { collection_id: other_users_collection.id }
+
+        samples = JSON.parse(response.body)['samples'].index_by { |s| s['id'] }
+        expect(samples.keys).to contain_exactly(owned_and_shared_sample.id, shared_only_sample.id)
+        # Even though owned_and_shared_sample also sits in the user's own personal_collection, it's
+        # being listed here via the *shared* collection, so it gets that collection's detail level —
+        # not the full access it would show if it were listed via personal_collection instead.
+        expect(samples[owned_and_shared_sample.id]['is_restricted']).to be true
+        expect(samples[shared_only_sample.id]['is_restricted']).to be true
+      end
+    end
+
+    context 'when collection_id points to a collection shared with the user' do
+      let(:permission_level) { CollectionShare.permission_level(:read_elements) }
+      let!(:shared_sample) { create(:sample, collections: [shared_collection]) }
+
+      it 'returns the samples from the shared collection' do
+        get '/api/v1/samples', params: { collection_id: shared_collection.id }
+        expect(JSON.parse(response.body)['samples'].pluck('id')).to include(shared_sample.id)
+      end
+    end
+
     context 'when collection_id is given and no samples found' do
       let(:empty_collection) { create(:collection, label: 'empty collection', user: user) }
 

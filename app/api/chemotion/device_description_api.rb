@@ -136,7 +136,7 @@ module Chemotion
     end
 
     resource :device_descriptions do
-      # Return serialized device description by collection id
+      desc "Return serialized device descriptions by collection id. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
@@ -148,19 +148,9 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        scope =
-          if params[:collection_id]
-            begin
-              Collection.accessible_for(current_user)
-                        .find(params[:collection_id]).device_descriptions
-            rescue ActiveRecord::RecordNotFound
-              DeviceDescription.none
-            end
-          else
-            # All collection of current_user
-            DeviceDescription.joins(:collections)
-                             .where(collections: { user_id: current_user.id }).distinct
-          end
+        resolved_collection, scope = collection_scope_for(
+          params[:collection_id], DeviceDescription, :device_descriptions
+        )
         scope = scope.order(updated_at: :desc)
 
         from = params[:from_date]
@@ -175,12 +165,13 @@ module Chemotion
 
         reset_pagination_page(scope)
 
+        detail_levels = detail_levels_for_list(resolved_collection)
+
         device_descriptions = paginate(scope).map do |device_description|
           Entities::DeviceDescriptionEntity.represent(
             device_description,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
-                                                       .detail_levels,
+            detail_levels: detail_levels,
           )
         end
 

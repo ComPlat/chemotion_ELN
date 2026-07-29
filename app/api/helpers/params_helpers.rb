@@ -230,6 +230,7 @@ module ParamsHelpers
     your_page = 1 if total_recs.positive? && your_page > total_page
 
     params[:page] = your_page
+    total_recs
   end
 end
 # rubocop:enable Metrics/ModuleLength, Metrics/BlockLength
