@@ -40,6 +40,25 @@ else
     sample
   end
 
+  readout_units = %w[s h nM µM m g kg %].freeze
+
+  fill_wells = lambda do |wp|
+    (1..12).to_a.product((1..8).to_a).sample(10).each do |(x, y)|
+      Well.create!(
+        wellplate: wp,
+        sample: build_sample.call,
+        position_x: x,
+        position_y: y,
+        # One readout per readout_title: the grid indexes readouts by title
+        # position (`readouts[index].value`), so a short array throws.
+        readouts: wp.readout_titles.map do
+          { value: rand(0.0..100.0).round(2), unit: readout_units.sample }
+        end,
+        color_code: format('#%06x', rand(0xffffff)),
+      )
+    end
+  end
+
   wellplates = (1..10).map do |n|
     label = "Screening Demo Wellplate #{n}"
     Wellplate.joins(:collections).where(collections: { id: demo_collection.id }).find_by(name: label) || begin
@@ -49,19 +68,13 @@ else
         readout_titles: [Faker::Science.element_subcategory, 'Activity'],
       )
       wp.collections = demo_collections
+      # Wellplate has no after_create :create_root_container (unlike Sample and
+      # ResearchPlan) — the client supplies it on POST /api/v1/wellplates. Without
+      # it the Analyses tab dereferences a null container and throws.
+      wp.container = Container.create_root_container
       wp.save!
       wp.set_short_label(user: cu1)
-
-      (1..12).to_a.product((1..8).to_a).sample(10).each do |(x, y)|
-        Well.create!(
-          wellplate: wp,
-          sample: build_sample.call,
-          position_x: x,
-          position_y: y,
-          readouts: [{ value: rand(0.0..100.0).round(2), unit: %w[s h nM µM m g kg %].sample }],
-          color_code: format('#%06x', rand(0xffffff)),
-        )
-      end
+      fill_wells.call(wp)
       wp
     end
   end
@@ -123,6 +136,8 @@ else
     )
     screen.collections = demo_collections
     screen.research_plans = research_plans.sample(rand(0..2))
+    # Screen, like Wellplate, has no root-container callback — see above.
+    screen.container = Container.create_root_container
     screen.save!
   end
 

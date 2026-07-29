@@ -27,9 +27,13 @@ else
 
   detail_keys = Collection::DETAIL_LEVEL_KEYS - [:permission_level]
 
+  # Scope the lookup to the parent, not just the label: an unrelated collection
+  # of the owner's that happens to be called e.g. "Tree A" must not be adopted
+  # into the demo tree and silently shared with CU2 / the demo group.
   find_or_create_collection = lambda do |owner, label, parent: nil|
-    Collection.find_by(user: owner, label: label) ||
-      Collection.create!(user: owner, label: label, parent: parent)
+    scope = Collection.where(user: owner, label: label)
+    scope = parent ? scope.where(ancestry: parent.child_ancestry) : scope.roots
+    scope.first || Collection.create!(user: owner, label: label, parent: parent)
   end
 
   share = lambda do |collection, shared_with, permission, detail: 0|
@@ -37,6 +41,11 @@ else
     row.assign_attributes(detail_keys.index_with { detail })
     row.permission_level = CollectionShare.permission_level(permission)
     row.save!
+    # collections.shared mirrors "has at least one CollectionShare". It is
+    # maintained by the API (CollectionShareAPI#refresh_shared_flag!), not by a
+    # model callback, so the seed has to set it or the owner's tree never shows
+    # the share badge and the management menu takes the wrong branch.
+    collection.update!(shared: true)
   end
 
   root = find_or_create_collection.call(cu1, 'Sharing Demo')
@@ -55,6 +64,13 @@ else
   # User only
   user_only = find_or_create_collection.call(cu1, 'User Only', parent: root)
   share.call(user_only, cu3, :add_elements, detail: 5)
+
+  # Full detail (OWNER_LEVEL): entities only branch at `> 0` and `< 10`, and
+  # Collection.full_detail_access_ids requires MAX(...) >= 10, so without a
+  # share at 10 the un-anonymized entity and raw-export paths are never
+  # exercised and the 3/5/8 spread is indistinguishable at runtime.
+  full_detail = find_or_create_collection.call(cu1, 'Full Detail', parent: root)
+  share.call(full_detail, cu2, :edit_elements, detail: Collection::OWNER_LEVEL)
 
   # Group + user mixed, different permission levels (MAX-resolution demo)
   mixed = find_or_create_collection.call(cu1, 'Group + User Mixed', parent: root)
