@@ -19,6 +19,12 @@ else
   demo_collection = Collection.find_by(user: cu1, label: 'Screening Demo') ||
     Collection.create!(user: cu1, label: 'Screening Demo')
 
+  # Every element must also sit in the owner's locked "All" collection — the
+  # API always adds it explicitly on create (no model callback does it), so a
+  # seed that skips it produces elements invisible from the "All" view.
+  all_collection = Collection.get_all_collection_for_user(cu1.id)
+  demo_collections = [demo_collection, all_collection].compact
+
   build_sample = lambda do
     molecule = molecule_pool.sample
     sample = Sample.new(
@@ -29,7 +35,7 @@ else
       purity: rand(0.85..1.0).round(3),
       creator: cu1,
     )
-    sample.collections = [demo_collection]
+    sample.collections = demo_collections
     sample.save!
     sample
   end
@@ -42,7 +48,7 @@ else
         description: { 'ops' => [{ 'insert' => Faker::Lorem.sentence }] },
         readout_titles: [Faker::Science.element_subcategory, 'Activity'],
       )
-      wp.collections = [demo_collection]
+      wp.collections = demo_collections
       wp.save!
       wp.set_short_label(user: cu1)
 
@@ -60,6 +66,30 @@ else
     end
   end
 
+  # ag-Grid column definitions, not bare header strings: the frontend mutates
+  # each column (`item.cellEditor = ...`) and keys row values by `field`.
+  # See app/javascript/src/models/ResearchPlan.js.
+  wellplate_table_columns = [
+    { 'headerName' => 'Position', 'field' => 'position', 'colId' => 'position' },
+    { 'headerName' => 'Sample', 'field' => 'sample', 'colId' => 'sample' },
+  ].freeze
+
+  wellplate_table_field = lambda do |wp|
+    occupied = wp.wells.where.not(sample_id: nil).includes(:sample)
+    {
+      'id' => SecureRandom.uuid,
+      'type' => 'table',
+      'title' => wp.name,
+      'wellplate_id' => wp.id,
+      'value' => {
+        'columns' => wellplate_table_columns,
+        'rows' => occupied.map do |w|
+          { 'position' => w.alphanumeric_position, 'sample' => w.sample&.name }
+        end,
+      },
+    }
+  end
+
   research_plans = (1..10).map do |n|
     label = "Screening Demo Research Plan #{n}"
     ResearchPlan.joins(:collections).where(collections: { id: demo_collection.id }).find_by(name: label) || begin
@@ -69,22 +99,10 @@ else
         { 'id' => SecureRandom.uuid, 'type' => 'richtext',
           'value' => { 'ops' => [{ 'insert' => "#{Faker::Lorem.paragraph}\n" }] } },
       ]
-      linked_wellplates.each do |wp|
-        occupied = wp.wells.where.not(sample_id: nil).includes(:sample)
-        body << {
-          'id' => SecureRandom.uuid,
-          'type' => 'table',
-          'title' => wp.name,
-          'wellplate_id' => wp.id,
-          'value' => {
-            'columns' => ['Position', 'Sample'],
-            'rows' => occupied.map { |w| [w.alphanumeric_position, w.sample&.name] },
-          },
-        }
-      end
+      body.concat(linked_wellplates.map(&wellplate_table_field))
 
       rp = ResearchPlan.new(name: label, body: body, creator: cu1)
-      rp.collections = [demo_collection]
+      rp.collections = demo_collections
       rp.wellplates = linked_wellplates
       rp.save!
       rp
@@ -103,7 +121,7 @@ else
       conditions: Faker::Lorem.sentence,
       requirements: Faker::Science.tool,
     )
-    screen.collections = [demo_collection]
+    screen.collections = demo_collections
     screen.research_plans = research_plans.sample(rand(0..2))
     screen.save!
   end
