@@ -4,8 +4,9 @@ import React, {
 import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 import {
-  Button, ButtonGroup, Form, InputGroup, OverlayTrigger, Popover
+  Button, Form, InputGroup, OverlayTrigger, Popover
 } from 'react-bootstrap';
+import ReorderableList from 'src/components/common/ReorderableList';
 import Reaction from 'src/models/Reaction';
 import { permitOn } from 'src/components/common/uis';
 import DragHandle from 'src/components/common/DragHandle';
@@ -486,6 +487,29 @@ GroupCell.propTypes = {
   }).isRequired,
 };
 
+// One toolbar entry per top level group header, hiding or showing that whole group.
+const GroupToggleButton = ({ group, allHidden, colIds }) => {
+  const { setColumnsHidden } = useContext(VariationsGridContext);
+  return (<Button
+      size="sm"
+      variant={allHidden ? 'dark' : 'info'}
+      onClick={() => setColumnsHidden(colIds, !allHidden)}
+    >
+      <i className={allHidden ? 'fa fa-eye me-1' : 'fa fa-eye-slash me-1'} aria-hidden="true"/>
+      {group.headerName}
+    </Button>
+  );
+};
+
+GroupToggleButton.propTypes = {
+  group: PropTypes.shape({
+    headerName: PropTypes.string.isRequired,
+    columns: PropTypes.arrayOf(PropTypes.shape({ colId: PropTypes.string.isRequired })).isRequired,
+  }).isRequired,
+  allHidden: PropTypes.bool.isRequired,
+  colIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
+
 /*
 Parent-header column picker. Every group carries one, so any single column can be hidden from the
 header it sits under. Hiding goes through the grid API rather than through the column definitions,
@@ -739,7 +763,49 @@ const VariationSchemaTable = ({
 }) => {
   const [hiddenColumns, setHiddenColumns] = useState([]);
   const [activeSlot, setActiveSlot] = useState(null);
+  const [groupOrder, setGroupOrder] = useState([]);
   const gridApiRef = useRef(null);
+
+  /*
+  Mirrors the grid's own top level header order into state, so the toolbar always shows the groups
+  in the order they actually appear. The grid stays the single source of truth: both header drags
+  and toolbar drags end up here.
+  */
+  const syncGroupOrder = useCallback(() => {
+    const api = gridApiRef.current;
+    if (!api) {
+      return;
+    }
+
+    const groupIds = (api.getAllDisplayedColumnGroups() ?? [])
+      .filter((entry) => entry?.isColumn === false && !entry.isPadding?.())
+      .map((entry) => entry.getGroupId());
+
+    setGroupOrder((previous) => (
+      previous.join('|') === groupIds.join('|') ? previous : groupIds
+    ));
+  }, []);
+
+  /*
+  Lays the groups out left to right by moving each one to a running column index. Groups locked to
+  the left are counted but not moved: the grid would refuse anyway, and `syncGroupOrder` then pulls
+  the toolbar back in line with what actually happened.
+  */
+  const applyGroupOrder = useCallback((orderedGroups) => {
+    const api = gridApiRef.current;
+    if (!api) {
+      return;
+    }
+
+    let index = 0;
+    orderedGroups.forEach((group) => {
+      const colIds = group.columns.map((column) => column.colId);
+      if (!group.fixedPosition) {
+        api.moveColumns(colIds, index);
+      }
+      index += colIds.length;
+    });
+  }, []);
   const getRowHandler = useRowHandlerFactory(onReactionChange);
 
   /*
@@ -847,49 +913,52 @@ const VariationSchemaTable = ({
     );
   }, [hasActiveMaterial, hiddenColumns]);
 
-  // Restoring a group whose columns are all hidden is impossible from its own header, because AG
-  // Grid drops the header once nothing under it is displayed. These buttons are that way back.
-  const toolbarSections = [
-    { key: VARIATION_GROUP, label: 'Variation' },
-    ...MAT_GROUPS
-      .filter((matGroup) => maxNumberOfSamples[matGroup] > 0)
-      .map((matGroup) => ({ key: matGroup, label: MAT_GROUP_TITLES[matGroup] })),
-    { key: REACTION_FIELDS_GROUP, label: 'Reaction' },
-  ].map((section) => ({
-    ...section,
-    colIds: columnGroups
-      .filter((group) => group.groupId === section.key || group.matGroup === section.key)
-      .flatMap((group) => group.columns.map((column) => column.colId)),
-  }));
+  /*
+  Toolbar order follows the grid, with any fully hidden group appended: AG Grid drops a group from
+  the header once nothing under it is displayed, and the toolbar is the only way back for those.
+  */
+  const groupsById = Object.fromEntries(columnGroups.map((group) => [group.groupId, group]));
+  const orderedGroups = [
+    ...groupOrder.map((groupId) => groupsById[groupId]).filter(Boolean),
+    ...columnGroups.filter((group) => !groupOrder.includes(group.groupId)),
+  ];
+  const fixedGroups = orderedGroups.filter((group) => group.fixedPosition);
+  const movableGroups = orderedGroups.filter((group) => !group.fixedPosition);
 
   // See VariationsGridContext: intentionally a fresh object on every render.
   const gridContext = {
     getRowHandler, setActiveVariation, onGroupChange, activeSlot, hiddenColumns, setColumnsHidden
   };
 
+  const getGroupAllHidden = (group) => {
+    const colIds = group.columns.map((column) => column.colId);
+    const allHidden = colIds.length > 0 && colIds.every((colId) => hiddenColumns.includes(colId));
+    return { allHidden, colIds };
+  };
+
+  const movableGroupsAdvanced = movableGroups.map((group) => ({ group, ...getGroupAllHidden(group) }));
+  const fixedGroupsAdvanced = fixedGroups.map((group) => ({ group, ...getGroupAllHidden(group) }));
+
   return (
     <VariationsGridContext.Provider value={gridContext}>
-      <ButtonGroup className="mb-2">
-        {toolbarSections.map((section) => {
-          const allHidden = section.colIds.length > 0
-            && section.colIds.every((colId) => hiddenColumns.includes(colId));
+      <div className="reaction-variations-grid__toolbar d-flex align-items-center flex-wrap gap-2 mb-2">
+        {fixedGroupsAdvanced.map(({ group, allHidden, colIds }) => (
+          <GroupToggleButton key={group.groupId} group={group} allHidden={allHidden} colIds={colIds} />
+        ))}
 
-          return (
-            <Button
-              key={`toggle-${section.key}`}
-              size="sm"
-              variant={allHidden ? 'outline-info' : 'info'}
-              onClick={() => setColumnsHidden(section.colIds, !allHidden)}
-            >
-              <i
-                className={allHidden ? 'fa fa-eye me-1' : 'fa fa-eye-slash me-1'}
-                aria-hidden="true"
-              />
-              {section.label}
-            </Button>
-          );
-        })}
-      </ButtonGroup>
+        <ReorderableList
+          horizontal
+          items={movableGroupsAdvanced.filter(({ allHidden }) => !allHidden)}
+          getItemId={(group) => group.groupId}
+          onReorder={(reordered) => applyGroupOrder([...fixedGroups, ...reordered])}
+          renderItem={({ group, allHidden, colIds }) =>
+            <GroupToggleButton group={group}  allHidden={allHidden} colIds={colIds} />}
+        />
+
+        {movableGroupsAdvanced.filter(({ allHidden }) => allHidden).map(({ group, allHidden, colIds }) => (
+          <GroupToggleButton key={group.groupId} group={group} allHidden={allHidden} colIds={colIds} />
+        ))}
+      </div>
       <div className="ag-theme-alpine reaction-variations-grid">
         <AgGridReact
           columnDefs={columnDefs}
@@ -912,12 +981,17 @@ const VariationSchemaTable = ({
           onGridReady={({ api }) => {
             gridApiRef.current = api;
             syncActiveSlot();
+            syncGroupOrder();
           }}
           onFirstDataRendered={syncActiveSlot}
           onBodyScroll={syncActiveSlot}
           onVirtualColumnsChanged={syncActiveSlot}
           onColumnResized={syncActiveSlot}
-          onColumnMoved={syncActiveSlot}
+          onColumnMoved={() => {
+            syncActiveSlot();
+            syncGroupOrder();
+          }}
+          onDisplayedColumnsChanged={syncGroupOrder}
         />
       </div>
     </VariationsGridContext.Provider>

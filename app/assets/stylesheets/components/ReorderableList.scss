@@ -1,7 +1,17 @@
 .reorderable-list {
   @extend .d-flex;
-  @extend .flex-column;
   @extend .gap-2;
+  // Not @extend .flex-column: that carries Bootstrap's !important, which no modifier could override.
+  flex-direction: column;
+
+  &--horizontal {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    .reorderable-list__item {
+      flex-basis: content;
+    }
+  }
 
   &__item {
     @include draggable-list-item();

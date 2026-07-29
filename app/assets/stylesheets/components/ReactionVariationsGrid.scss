@@ -49,6 +49,15 @@
   }
 }
 
+// The group toolbar uses ReorderableList's horizontal variant; only the row chrome needs toning
+// down, since the items are buttons rather than table rows.
+.reaction-variations-grid__toolbar {
+  .reorderable-list__item {
+    align-items: center;
+    padding: 0;
+  }
+}
+
 // Not nested in the grid block: the picker is portalled to the body to escape the header's overflow.
 .reaction-variations-grid__column-picker {
   max-width: 320px;

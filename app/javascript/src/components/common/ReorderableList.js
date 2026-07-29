@@ -23,6 +23,7 @@ export default function ReorderableList({
   onReorder,
   renderItem,
   isDisabled,
+  horizontal,
 }) {
   const [scope] = useState(uuid.v4());
   const [[fromIndex, toIndex], setTargetIndexes] = useState([null, null]);
@@ -35,7 +36,7 @@ export default function ReorderableList({
   };
 
   return (
-    <div className="reorderable-list">
+    <div className={cs('reorderable-list', { 'reorderable-list--horizontal': horizontal })}>
       {renderedItems.map((item, index) => {
         const id = getItemId(item);
         return (
@@ -63,11 +64,14 @@ ReorderableList.propTypes = {
   onReorder: PropTypes.func.isRequired,
   renderItem: PropTypes.func.isRequired,
   isDisabled: PropTypes.bool,
+  /** Lay the items out left to right, wrapping, instead of stacked */
+  horizontal: PropTypes.bool,
 };
 
 ReorderableList.defaultProps = {
   getItemId: (item) => item.id,
   isDisabled: false,
+  horizontal: false,
 };
 
 function ReorderableItem({
