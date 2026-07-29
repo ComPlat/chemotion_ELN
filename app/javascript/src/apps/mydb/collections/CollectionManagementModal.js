@@ -4,7 +4,6 @@ import { Tabs, Tab } from 'react-bootstrap';
 
 import MyCollections from 'src/apps/mydb/collections/MyCollections';
 import SharedWithMeCollections from 'src/apps/mydb/collections/SharedWithMeCollections';
-import CollectionTabs from 'src/apps/mydb/collections/CollectionTabs';
 import AppModal from 'src/components/common/AppModal';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import CollectionManagementMenu from 'src/apps/mydb/collections/CollectionManagementMenu';
@@ -33,9 +32,6 @@ function CollectionManagementModal({ show, onHide }) {
         </Tab>
         <Tab eventKey="1" title="Collections shared with me ">
           <SharedWithMeCollections />
-        </Tab>
-        <Tab eventKey="2" title="Collection Tabs">
-          <CollectionTabs />
         </Tab>
       </Tabs>
     </AppModal>

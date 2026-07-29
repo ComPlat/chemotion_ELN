@@ -5,6 +5,12 @@ import {
 } from 'react-bootstrap';
 import ModalImport from 'src/apps/mydb/collections/importSamples/ModalImport';
 import LiteratureModal from 'src/apps/mydb/collections/LiteratureModal';
+import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/SelectionShareModal';
+import ModalExportRadarCollection from 'src/apps/mydb/collections/ModalExportRadarCollection';
+import { PermissionConst } from 'src/utilities/PermissionConst';
+import { DEFAULT_COLLECTION_SHARE_PERMISSIONS } from 'src/utilities/collectionConstants';
+import { elementShowOrNew } from 'src/utilities/routesUtils';
+import Aviator from 'aviator';
 
 const CollectionSubtreeFunctionsDropdownToggle = React.forwardRef(({
   onClick,
@@ -13,7 +19,9 @@ const CollectionSubtreeFunctionsDropdownToggle = React.forwardRef(({
     variant="sidebar"
     className="rounded-circle"
     ref={ref}
+    onMouseDown={(e) => e.stopPropagation()}
     onClick={(e) => {
+      e.stopPropagation();
       onClick(e);
     }}
     size="xsm"
@@ -27,17 +35,34 @@ CollectionSubtreeFunctionsDropdownToggle.propTypes = {
   onClick: PropTypes.func.isRequired,
 };
 
-const CollectionSubtreeFunctions = ({ collection }) => {
+const CollectionSubtreeFunctions = ({ collection, sharedWithMe, hasRadar }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showLiteratureModal, setShowLiteratureModal] = useState(false);
   const [isLiteratureModalMounted, setIsLiteratureModalMounted] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showRadarModal, setShowRadarModal] = useState(false);
 
   if (collection === null || collection === undefined) return null;
 
   const collectionName = collection.label || 'Unknown Collection';
+  const canAddShare = !sharedWithMe && !collection.is_locked;
+  const canShowMetadataActions = !collection.is_locked && (
+    !sharedWithMe
+    || (collection.permission_level != null
+      && collection.permission_level >= PermissionConst.AddElements)
+  );
+
+  const editMetadata = () => {
+    Aviator.navigate(`/collection/${collection.id}/metadata`, { silent: true });
+    elementShowOrNew({
+      type: 'metadata',
+      params: { collectionID: collection.id },
+    });
+  };
 
   const handleShowLiterature = (event) => {
     event.stopPropagation();
+    setIsLiteratureModalMounted(true);
     setShowLiteratureModal(true);
   };
 
@@ -46,19 +71,37 @@ const CollectionSubtreeFunctions = ({ collection }) => {
     setShowImportModal(true);
   };
 
+  const handleAddShare = (event) => {
+    event.stopPropagation();
+    setShowShareModal(true);
+  };
+
+  const handleEditMetadata = (event) => {
+    event.stopPropagation();
+    editMetadata();
+  };
+
+  const handlePublishRadar = (event) => {
+    event.stopPropagation();
+    if (!hasRadar) return;
+    setShowRadarModal(true);
+  };
+
   const hideImportModal = () => setShowImportModal(false);
   const hideLiteratureModal = () => setShowLiteratureModal(false);
+  const hideShareModal = () => setShowShareModal(false);
+  const hideRadarModal = () => setShowRadarModal(false);
 
-  const onClickDropdown = (event) => {
+  const stopRowNavigation = (event) => {
     event.stopPropagation();
-    setIsLiteratureModalMounted(true);
   };
 
   return (
     <>
       <Dropdown
         id={`collection-subtree-functions-${collection.id}`}
-        onClick={onClickDropdown}
+        onClick={stopRowNavigation}
+        onMouseDown={stopRowNavigation}
         className="collection-subtree-functions"
       >
         <Dropdown.Toggle as={CollectionSubtreeFunctionsDropdownToggle} />
@@ -71,6 +114,33 @@ const CollectionSubtreeFunctions = ({ collection }) => {
             <i className="icon-arrow-down-to-bracket me-1" />
             Import samples to collection
           </Dropdown.Item>
+          {canAddShare && (
+            <>
+              <Dropdown.Divider />
+              <Dropdown.Item onClick={handleAddShare}>
+                <i className="fa fa-plus me-1" />
+                <i className="fa fa-share-alt me-1" />
+                Add share
+              </Dropdown.Item>
+            </>
+          )}
+          {canShowMetadataActions && (
+            <>
+              <Dropdown.Divider />
+              <Dropdown.Item onClick={handleEditMetadata}>
+                <i className="fa fa-file-text-o me-1" />
+                Edit collection metadata
+              </Dropdown.Item>
+              <Dropdown.Item
+                onClick={handlePublishRadar}
+                disabled={!hasRadar}
+                title={hasRadar ? 'Publish via RADAR' : 'RADAR is not configured'}
+              >
+                <i className="fa fa-cloud-upload me-1" />
+                Publish via RADAR
+              </Dropdown.Item>
+            </>
+          )}
         </Dropdown.Menu>
       </Dropdown>
 
@@ -88,12 +158,38 @@ const CollectionSubtreeFunctions = ({ collection }) => {
           onHide={hideLiteratureModal}
         />
       )}
+
+      {showShareModal && (
+        <SelectionShareModal
+          title={`Share "${collectionName}"`}
+          collectionId={collection.id}
+          onHide={hideShareModal}
+          collectionPermissions={DEFAULT_COLLECTION_SHARE_PERMISSIONS}
+          showUserSelect
+          shareType="create"
+        />
+      )}
+
+      {showRadarModal && (
+        <ModalExportRadarCollection
+          collectionId={collection.id}
+          onHide={hideRadarModal}
+          editAction={editMetadata}
+        />
+      )}
     </>
   );
 };
 
 CollectionSubtreeFunctions.propTypes = {
   collection: PropTypes.object.isRequired,
+  sharedWithMe: PropTypes.bool,
+  hasRadar: PropTypes.bool,
+};
+
+CollectionSubtreeFunctions.defaultProps = {
+  sharedWithMe: false,
+  hasRadar: false,
 };
 
 export default CollectionSubtreeFunctions;

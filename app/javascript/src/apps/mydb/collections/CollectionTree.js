@@ -24,6 +24,7 @@ function CollectionTree({ isCollapsed }) {
 
   const [activeCollectionType, setActiveCollectionType] = useState(ALL_COLLECTIONS_KEY);
   const [expandedCollection, setExpandedCollection] = useState(ALL_COLLECTIONS_KEY);
+  const [hasRadar, setHasRadar] = useState(!!UIStore.getState().hasRadar);
 
   const toggleCollection = (collectionType) => {
     setExpandedCollection((prev) => ((prev === collectionType) ? null : collectionType));
@@ -78,7 +79,8 @@ function CollectionTree({ isCollapsed }) {
   }, []);
 
   useEffect(() => {
-    const onUiStoreChange = ({ currentCollection }) => {
+    const onUiStoreChange = ({ currentCollection, hasRadar: storeHasRadar }) => {
+      setHasRadar(!!storeHasRadar);
       if (!currentCollection) return;
 
       const group = collectionGroups.find(({ collections }) => containsCollection(collections, currentCollection.id));
@@ -86,6 +88,7 @@ function CollectionTree({ isCollapsed }) {
     };
 
     UIStore.listen(onUiStoreChange);
+    onUiStoreChange(UIStore.getState());
     return () => UIStore.unlisten(onUiStoreChange);
   }, [collectionGroups]);
 
@@ -130,6 +133,7 @@ function CollectionTree({ isCollapsed }) {
                         sharedWithMe={sharedWithMe}
                         isExpanded={isExpanded}
                         level={1}
+                        hasRadar={hasRadar}
                       />
                     ))}
                 </div>

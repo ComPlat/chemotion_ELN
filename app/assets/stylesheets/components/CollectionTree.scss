@@ -45,7 +45,8 @@
   .collection-subtree-functions {
     display: none;
   }
-  &:hover .collection-subtree-functions {
+  &:hover .collection-subtree-functions,
+  .collection-subtree-functions.show {
     display: block;
   }
 }

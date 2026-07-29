@@ -4,24 +4,16 @@ import { Button, ButtonGroup, OverlayTrigger, Popover } from 'react-bootstrap';
 import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/SelectionShareModal';
 import CollectionSharesEditModal from 'src/apps/mydb/collections/CollectionSharesEditModal';
 import { PermissionConst } from 'src/utilities/PermissionConst';
+import { DEFAULT_COLLECTION_SHARE_PERMISSIONS } from 'src/utilities/collectionConstants';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-
-const defaultPermissions = {
-  permissionLevel: 0,
-  sampleDetailLevel: 10,
-  reactionDetailLevel: 10,
-  wellplateDetailLevel: 10,
-  screenDetailLevel: 10,
-  elementDetailLevel: 10,
-};
 
 function SharedWithMeCollections() {
   const collectionsStore = useContext(StoreContext).collections;
   const tree = collectionsStore.shared_with_me_collection_tree;
   const [sharesModal, setSharesModal] = useState({ action: null, show: false, node: {} });
   const [sharesEditModal, setSharesEditModal] = useState({ show: false, node: {} });
-  const [permissions, setPermissions] = useState(defaultPermissions);
+  const [permissions, setPermissions] = useState(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
 
   const handleChange = (tree) => {
     collectionsStore.setSharedWithMeCollectionTree(tree);
@@ -35,12 +27,12 @@ function SharedWithMeCollections() {
   const canManageShares = (node) => node.permission_level >= PermissionConst.ManageShares;
 
   const openCollectionSharesModal = (node) => {
-    setPermissions(defaultPermissions);
+    setPermissions(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
     setSharesModal({ action: 'create', show: true, node });
   };
 
   const closeCollectionSharesModal = () => {
-    setPermissions(defaultPermissions);
+    setPermissions(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
     setSharesModal({ action: null, show: false, node: {} });
   };
 

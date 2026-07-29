@@ -4,10 +4,10 @@ import { Tab, Tabs } from 'react-bootstrap';
 import { detailFooterButton } from 'src/apps/mydb/elements/details/DetailCardButton';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import Metadata from 'src/models/Metadata';
-import UIStore from 'src/stores/alt/stores/UIStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import DetailCard from 'src/apps/mydb/elements/details/DetailCard';
 import MetadataGeneral from 'src/components/metadata/MetadataGeneral';
@@ -19,6 +19,8 @@ import MetadataRightsList from 'src/components/metadata/MetadataRightsList';
 import MetadataFundingReferences from 'src/components/metadata/MetadataFundingReferences';
 
 export default class MetadataContainer extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
     const { metadata } = props;
@@ -81,8 +83,11 @@ export default class MetadataContainer extends Component {
 
   render() {
     const { activeTab, metadata } = this.state;
-    const { currentCollection } = UIStore.getState();
-    const title = currentCollection && `DataCite/RADAR Metadata for collection "${currentCollection.label}"`;
+    const collection = this.context?.collections?.find(metadata.collection_id);
+    const collectionLabel = collection?.label;
+    const title = collectionLabel
+      ? `DataCite/RADAR Metadata for collection "${collectionLabel}"`
+      : 'DataCite/RADAR Metadata';
     const saveBtnDisplay = !!metadata.isEdited;
     const footerToolbar = saveBtnDisplay
       ? detailFooterButton({

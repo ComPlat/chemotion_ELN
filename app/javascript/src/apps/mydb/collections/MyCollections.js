@@ -6,22 +6,17 @@ import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/Se
 import CollectionSharesEditModal from 'src/apps/mydb/collections/CollectionSharesEditModal';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import CollectionTabsEditorModal from 'src/apps/mydb/collections/CollectionTabsEditorModal';
+import { DEFAULT_COLLECTION_SHARE_PERMISSIONS } from 'src/utilities/collectionConstants';
 
 const MyCollections = () => {
   const collectionsStore = useContext(StoreContext).collections;
   const tree = collectionsStore.own_collection_tree;
   const [clonedTree, setClonedTree] = useState(cloneDeep(tree));
+  const [tabsEditorCollection, setTabsEditorCollection] = useState(null);
   const [sharesModal, setSharesModal] = useState({ action: null, show: false, node: {} });
-  const [sharesEditModal, setSharesEditgModal] = useState({ show: false, node: {} });
-  const defaultPermissions = {
-    permissionLevel: 0,
-    sampleDetailLevel: 10,
-    reactionDetailLevel: 10,
-    wellplateDetailLevel: 10,
-    screenDetailLevel: 10,
-    elementDetailLevel: 10,
-  };
-  const [permissions, setPermissions] = useState(defaultPermissions);
+  const [sharesEditModal, setSharesEditModal] = useState({ show: false, node: {} });
+  const [permissions, setPermissions] = useState(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
 
   useEffect(() => {
     setClonedTree(cloneDeep(tree));
@@ -63,12 +58,12 @@ const MyCollections = () => {
   };
 
   const openCollectionSharesModal = (node) => {
-    setPermissions(defaultPermissions);
+    setPermissions(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
     setSharesModal({ action: 'create', show: true, node });
   };
 
   const closeCollectionSharesModal = () => {
-    setPermissions(defaultPermissions);
+    setPermissions(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
     setSharesModal({ action: null, show: false, node: {} });
   };
 
@@ -81,10 +76,11 @@ const MyCollections = () => {
       screenDetailLevel: collectionShare.screen_detail_level,
       elementDetailLevel: collectionShare.element_detail_level,
     });
-    const nodeWithCollectionShare = {
-      ...node, collectionShareId: collectionShare.id, sharedWith: collectionShare.shared_with
-    };
-    setSharesModal({ action: 'edit', show: true, node: nodeWithCollectionShare });
+    setSharesModal({
+      action: 'edit',
+      show: true,
+      node: { ...node, collectionShareId: collectionShare.id, sharedWith: collectionShare.shared_with },
+    });
   };
 
   const deleteCollectionShares = (node, collectionShare) => {
@@ -92,11 +88,11 @@ const MyCollections = () => {
   };
 
   const openCollectionSharesEditModal = (node) => {
-    setSharesEditgModal({ show: true, node: { id: node.id, label: node.label } });
+    setSharesEditModal({ show: true, node: { id: node.id, label: node.label } });
   };
 
   const closeCollectionSharesEditModal = () => {
-    setSharesEditgModal({ show: false, node: {} });
+    setSharesEditModal({ show: false, node: {} });
   };
 
   const renderCollectionShareButton = (node) => {
@@ -110,6 +106,7 @@ const MyCollections = () => {
       <Button
         id={`collection-share-button-${node.id}`}
         className="d-flex align-items-center gap-1"
+        title="Manage shares"
         onMouseDown={(e) => e.stopPropagation()}
         onClick={() => openCollectionSharesEditModal(node)}
         size="sm"
@@ -190,12 +187,22 @@ const MyCollections = () => {
           id="collection-share-btn"
           size="sm"
           variant="primary"
+          title="Add share"
           disabled={node.isNew === true}
           onMouseDown={(e) => e.stopPropagation()}
-          onClick={() => openCollectionSharesModal(node, 'create')}
+          onClick={() => openCollectionSharesModal(node)}
         >
           <i className="fa fa-plus" />
           <i className="fa fa-share-alt ms-1" />
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          title="Edit collection tabs"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={() => setTabsEditorCollection(node)}
+        >
+          <i className="fa fa-pencil" />
         </Button>
         {addCollectionButton(node)}
         <OverlayTrigger animation placement="bottom" root trigger="focus" overlay={popover}>
@@ -237,7 +244,7 @@ const MyCollections = () => {
         onChange={handleChange}
         renderNode={renderNode}
       />
-      {Object.keys(sharesModal.node).length >= 1 && sharesModal.show && (
+      {sharesModal.show && (
         <SelectionShareModal
           title={sharesModal.action === 'create'
             ? `Share "${sharesModal.node.label}"`
@@ -250,7 +257,7 @@ const MyCollections = () => {
           shareType={sharesModal.action}
         />
       )}
-      {Object.keys(sharesEditModal.node).length >= 1 && sharesEditModal.show && (
+      {sharesEditModal.show && (
         <CollectionSharesEditModal
           node={sharesEditModal.node}
           updateNode={editCollectionShares}
@@ -258,6 +265,11 @@ const MyCollections = () => {
           onHide={closeCollectionSharesEditModal}
         />
       )}
+      <CollectionTabsEditorModal
+        collection={tabsEditorCollection}
+        show={tabsEditorCollection != null}
+        onHide={() => setTabsEditorCollection(null)}
+      />
     </div>
   );
 };

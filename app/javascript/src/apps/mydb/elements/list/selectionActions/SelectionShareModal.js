@@ -179,6 +179,7 @@ function SelectionShareModal({
       primaryActionLabel={submitTitle}
       onPrimaryAction={handleSharing}
       primaryActionDisabled={!canSubmit}
+      enforceFocus={false}
     >
       <Form>
         {shareType === 'new' && (
