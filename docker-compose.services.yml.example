@@ -122,6 +122,35 @@ services:
         ln -sfn "$$v" /out/default
         echo ">>> NMRium wrapper $$v available at /nmrium/default/"
 
+  # Runs delayed_job (delayed_job_active_record + delayed_cron_job) as a
+  # standalone worker, separate from the `app` web process. Meant to be layered
+  # on top of docker-compose.dev.yml (`-f docker-compose.dev.yml -f
+  # docker-compose.services.yml`), reusing its `postgres`/`setup` services and
+  # `homedir` volume — YAML anchors don't cross files, so image/volumes are
+  # spelled out again here rather than reusing docker-compose.dev.yml's anchors.
+  worker:
+    image: ${DOCKER_DEV_IMAGE:-chemotion_eln_dev}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      setup:
+        condition: service_completed_successfully
+    env_file:
+      - .env.development
+      - path: .env
+        required: false
+    volumes:
+      - homedir:/home/ubuntu
+      - .:/home/ubuntu/app
+    working_dir: "/home/ubuntu/app"
+    # `run` (not `start`) keeps delayed_job in the foreground instead of
+    # daemonizing, which is required for it to be the container's main process.
+    command: bundle exec bin/delayed_job run
+    networks:
+      - default
+      - chemotion
+
 networks:
   chemotion:
 
