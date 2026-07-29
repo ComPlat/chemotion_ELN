@@ -19,9 +19,12 @@ function PubchemLabels({ element }) {
     if (canRefresh) { return 'No PubChem CID assigned — click to check PubChem again'; }
     return 'No PubChem CID assigned';
   };
+  // Only the refresh path needs a molecule id. Opening the PubChem page needs just the cid,
+  // which SampleEntity still exposes at detail level 0 — where `molecule` is a two-key hash
+  // with no id, so requiring one here would take the link away from shared-collection viewers.
   return (
     <Button
-      disabled={!element.molecule?.id || (!cid && !canRefresh)}
+      disabled={cid ? false : !(canRefresh && element.molecule?.id)}
       variant="neat"
       size="md"
       onClick={handleOnClick}
