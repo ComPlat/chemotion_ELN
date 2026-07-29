@@ -51,5 +51,18 @@ RSpec.describe 'queuing of a reccuring job through delayed_job initializer' do
     `#{env_vars} bundle exec rake db:version`
     expect(jobs_count_with_correct_run_at).to eq(expected_count)
   end
+
+  it 'does not destroy an in-flight one-off continuation job (cron: nil) for a managed class on boot' do
+    # A rotation continuation self-enqueued via `self.class.set(wait: ...).perform_later(...)`
+    # (see PubchemCidJob/PubchemLcssJob/PubchemLookupJob) never sets `cron:`, unlike the
+    # recurring entry InitCronJobsJob creates — it must survive the initializer's cleanup.
+    one_off = create_locked_delayed_job('PubchemCidJob')
+
+    `#{env_vars} bundle exec rake db:version`
+
+    expect(Delayed::Job.find_by(id: one_off.id)).to be_present
+  ensure
+    one_off&.destroy
+  end
 end
 # rubocop:enable RSpec/DescribeClass

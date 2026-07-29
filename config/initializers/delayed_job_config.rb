@@ -32,8 +32,8 @@ Delayed::Worker.logger = Logger.new($stdout) if Rails.env.test?
 ActiveSupport.on_load(:active_record) do
   next unless ActiveRecord::Base.connection.table_exists?('delayed_jobs') && Delayed::Job.column_names.include?('cron')
 
-  # List of recuringreccuring jobs with default attributes JobClass, enabled, cron_variable
-  reccuring_jobs = [
+  # List of recurring jobs with default attributes JobClass, enabled, cron_variable
+  recurring_jobs = [
     # Data Collectors Classes
     { job_class: CollectDataFromMailJob,  enabled: :datacollector },
     { job_class: CollectDataFromSftpJob,  enabled: :datacollector },
@@ -49,18 +49,22 @@ ActiveSupport.on_load(:active_record) do
     { job_class: ChemrepoIdJob,        enabled: false,    cron_variable: 'CRON_CONFIG_CHEMREPO_ID' },
   ]
 
-  # Delete all reccuring jobs
+  # Delete all recurring jobs. Scoped to cron IS NOT NULL: InitCronJobsJob sets `cron:` only
+  # on the recurring entry it creates below, so a same-class one-off job (e.g. a rotation
+  # continuation self-enqueued by PubchemCidJob/PubchemLcssJob/PubchemLookupJob via
+  # `self.class.set(wait: ...).perform_later(...)`) has `cron: nil` and must survive a
+  # reboot instead of being silently wiped along with the recurring entry.
   like_array = ['%InitCronJobsJob%']
-  like_array += reccuring_jobs.map { |job| "%#{job[:job_class].name}%" }
-  puts "Deleting all reccuring jobs: #{like_array}"
-  Rails.logger.info "Deleting all reccuring jobs: #{like_array}"
-  Delayed::Job.where('handler like any (array[?])', like_array).destroy_all
+  like_array += recurring_jobs.map { |job| "%#{job[:job_class].name}%" }
+  puts "Deleting all recurring jobs: #{like_array}"
+  Rails.logger.info "Deleting all recurring jobs: #{like_array}"
+  Delayed::Job.where('handler like any (array[?])', like_array).where.not(cron: nil).destroy_all
 
-  # Reschedule all reccuring jobs
-  #    InitCronJobsJob.perform_later(reccuring_jobs)
-  puts 'Rescheduling reccuring jobs'
-  Rails.logger.info 'Rescheduling reccuring jobs'
-  InitCronJobsJob.perform_now(reccuring_jobs)
+  # Reschedule all recurring jobs
+  #    InitCronJobsJob.perform_later(recurring_jobs)
+  puts 'Rescheduling recurring jobs'
+  Rails.logger.info 'Rescheduling recurring jobs'
+  InitCronJobsJob.perform_now(recurring_jobs)
 rescue PG::ConnectionBad, ActiveRecord::NoDatabaseError => e
   puts e.message
 end
