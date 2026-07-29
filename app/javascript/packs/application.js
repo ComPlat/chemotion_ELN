@@ -1,9 +1,6 @@
 // see https://github.com/rackt/react-router/issues/1067
 
 var React = require('react');
-// var Home = require('src/apps/home');
-// var CnC = require('src/apps/commandAndControl');
-// var AdminHome = require('src/apps/admin');
 // var ChemSpectra = require('src/apps/chemspectra/ChemSpectra');
 // var ChemSpectraEditor = require('src/apps/chemspectra/ChemSpectraEditor');
 // var MoleculeModerator = require('src/apps/moleculeModerator');
@@ -17,7 +14,6 @@ var React = require('react');
 // var GenericSegmentsAdmin = require('src/apps/generic/GenericSegmentsAdmin');
 // var GenericDatasetsAdmin = require('src/apps/generic/GenericDatasetsAdmin');
 // var InventoryLabelSettings = require('src/apps/settings/InventoryLabelSettings');
-// var mydb = require('src/apps/mydb');
 require('src/agGridSetup');
 
 var Chemotion = require('src/apps');
