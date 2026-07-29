@@ -283,12 +283,32 @@ module Import
         go_to_next = true
       else
         go_to_next = false
-        molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: false) do |molecul|
-          molecul.skip_lcss_callback = true if @defer_lcss
-          pubchem_info =
-            Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-          molecul.molfile = molfile_coord
-          molecul.assign_molecule_data babel_info, pubchem_info
+        formula = babel_info[:formula]
+        begin
+          # requires_new: true — see the note in Molecule.find_or_create_by_molfile.
+          # write_to_db wraps every row in one transaction, so without a savepoint the
+          # losing INSERT aborts it and the rescue's re-find below can't run.
+          molecule = ActiveRecord::Base.transaction(requires_new: true) do
+            Molecule.find_or_create_by(
+              inchikey: inchikey, is_partial: false, sum_formular: formula,
+            ) do |molecul|
+              molecul.skip_lcss_callback = true if @defer_lcss
+              # PubChem enrichment is deferred to the async enrich job (see Molecule
+              # #find_or_create_by_molfile); create with babel-only data, no network here.
+              molecul.molfile = molfile_coord
+              molecul.assign_molecule_data babel_info
+            end
+          end
+        rescue ActiveRecord::RecordNotUnique
+          # Lost a concurrent create race — re-find rather than aborting the whole import.
+          # Matches on the full (inchikey, sum_formular, is_partial) unique index so a legacy
+          # duplicate row sharing just the inchikey/is_partial pair can't be picked up instead
+          # of the row that actually just violated the constraint.
+          # Nothing to schedule here: the winning create's own after_create_commit hook (or
+          # the caller's schedule_lcss_since flush, when @defer_lcss is set) already covers
+          # enrichment/LCSS for this row regardless of which concurrent call created it.
+          molecule = Molecule.find_by(inchikey: inchikey, is_partial: false, sum_formular: formula)
+          raise if molecule.nil?
         end
       end
       [molecule, molfile_coord, go_to_next]

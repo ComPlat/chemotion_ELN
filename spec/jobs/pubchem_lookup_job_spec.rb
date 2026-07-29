@@ -33,6 +33,8 @@ RSpec.describe PubchemLookupJob do
 
     it 'calls #pubchem_lcss on each resolved molecule in order' do
       allow(job).to receive_messages(resolve_molecules: [first_molecule, second_molecule], more_pending?: false)
+      allow(first_molecule).to receive(:enrich_from_pubchem)
+      allow(second_molecule).to receive(:enrich_from_pubchem)
       allow(first_molecule).to receive(:pubchem_lcss)
       allow(second_molecule).to receive(:pubchem_lcss)
 
@@ -42,11 +44,25 @@ RSpec.describe PubchemLookupJob do
       expect(second_molecule).to have_received(:pubchem_lcss).ordered
     end
 
+    it 'enriches each molecule from PubChem before fetching its LCSS' do
+      allow(job).to receive_messages(resolve_molecules: [first_molecule], more_pending?: false)
+      allow(first_molecule).to receive(:enrich_from_pubchem)
+      allow(first_molecule).to receive(:pubchem_lcss)
+
+      job.perform([first_molecule.id])
+
+      expect(first_molecule).to have_received(:enrich_from_pubchem).ordered
+      expect(first_molecule).to have_received(:pubchem_lcss).ordered
+    end
+
     it 'sleeps between requests but not before the first one' do
       allow(job).to receive_messages(
         resolve_molecules: [first_molecule, second_molecule, third_molecule], more_pending?: false,
       )
-      [first_molecule, second_molecule, third_molecule].each { |m| allow(m).to receive(:pubchem_lcss) }
+      [first_molecule, second_molecule, third_molecule].each do |m|
+        allow(m).to receive(:enrich_from_pubchem)
+        allow(m).to receive(:pubchem_lcss)
+      end
 
       job.perform([first_molecule.id, second_molecule.id, third_molecule.id])
 
@@ -66,6 +82,7 @@ RSpec.describe PubchemLookupJob do
           'pubchem_cid' => 643_785, 'pubchem_lcss' => 'already fetched',
         ),
       )
+      allow(first_molecule).to receive(:enrich_from_pubchem)
       allow(Chemotion::PubchemService).to receive(:lcss_from_cid)
 
       job.perform([first_molecule.id])
@@ -96,6 +113,7 @@ RSpec.describe PubchemLookupJob do
         called_ids = []
         # The job re-queries its own molecules from the DB, so stubbing a specific
         # test object's #pubchem_lcss wouldn't be seen — stub the class instead.
+        allow_any_instance_of(Molecule).to receive(:enrich_from_pubchem) # rubocop:disable RSpec/AnyInstance
         allow_any_instance_of(Molecule).to receive(:pubchem_lcss) { |instance| called_ids << instance.id } # rubocop:disable RSpec/AnyInstance
         allow(described_class).to receive(:perform_later)
 
@@ -109,6 +127,7 @@ RSpec.describe PubchemLookupJob do
       end
 
       it 'does not requeue once every given molecule has been processed' do
+        allow_any_instance_of(Molecule).to receive(:enrich_from_pubchem) # rubocop:disable RSpec/AnyInstance
         allow_any_instance_of(Molecule).to receive(:pubchem_lcss) # rubocop:disable RSpec/AnyInstance
         allow(described_class).to receive(:perform_later)
 

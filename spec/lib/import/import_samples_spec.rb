@@ -103,6 +103,10 @@ RSpec.describe 'Import::ImportSamples' do
         expect(PubchemLookupJob).to have_received(:perform_later).once
         expect(PubchemLookupJob).to have_received(:perform_later).with(nil, created_after: be >= started_at)
       end
+
+      # The savepoint that makes a real (Postgres-level) collision survivable inside this
+      # transaction is covered where it lives, in
+      # spec/models/molecule_spec.rb '.find_or_create_by_molfile'.
     end
   end
 
