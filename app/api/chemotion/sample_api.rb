@@ -215,8 +215,9 @@ module Chemotion
               )
             end
           end
+          sample_count = sample_scope.count
         else
-          reset_pagination_page(sample_scope)
+          sample_count = reset_pagination_page(sample_scope)
           sample_scope = sample_scope.order('samples.updated_at DESC')
           paginate(sample_scope).each do |sample|
             sample_list.push(
@@ -227,7 +228,7 @@ module Chemotion
 
         return {
           samples: sample_list,
-          samples_count: sample_scope.count,
+          samples_count: sample_count,
         }
       end
 
