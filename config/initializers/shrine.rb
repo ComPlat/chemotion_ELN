@@ -7,7 +7,7 @@ Rails.application.configure do
   config.shrine_storage.maximum_size = shrine_storage[:maximum_size]
 end
 
-# Every read records the access; a read of a cold file also promotes it to hot.
+# Every read records the access date, so a recently-read file isn't archived.
 class TieredStorage < Shrine::Storage::FileSystem
   def open(id, **options)
     Attachment.on_read(id) # cold reads are rare; unindexed lookup is fine
