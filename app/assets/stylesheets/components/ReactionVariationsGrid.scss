@@ -28,6 +28,25 @@
   .ag-header-group-cell-label {
     overflow: visible;
   }
+
+  // Columns are dragged by their header cell, so the handle is a hint rather than the drag source.
+  // It stays in the layout when idle so the header text does not jump on hover.
+  .ag-header-cell,
+  .ag-header-group-cell {
+    .drag-handle {
+      visibility: hidden;
+      min-width: 10px;
+      padding: 0;
+
+      &:after {
+        max-height: 16px;
+      }
+    }
+
+    &:hover .drag-handle {
+      visibility: visible;
+    }
+  }
 }
 
 // Not nested in the grid block: the picker is portalled to the body to escape the header's overflow.

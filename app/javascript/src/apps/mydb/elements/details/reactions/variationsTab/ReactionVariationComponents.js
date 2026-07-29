@@ -8,6 +8,7 @@ import {
 } from 'react-bootstrap';
 import Reaction from 'src/models/Reaction';
 import { permitOn } from 'src/components/common/uis';
+import DragHandle from 'src/components/common/DragHandle';
 import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import MaterialHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialUtils';
 import { MATERIAL_HEADER } from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
@@ -42,6 +43,7 @@ const GROUP_ID_SEPARATOR = '::';
 // Pseudo material groups, so the row-level and reaction-level columns are toggled like the rest.
 const REACTION_FIELDS_GROUP = 'reaction_fields';
 const VARIATION_GROUP = 'variation_fields';
+const MATERIAL_COLUMN_ID = 'variation_material';
 
 /*
 Carries the per-row update handlers into the cells.
@@ -493,7 +495,22 @@ as state only to drive the checkboxes and to seed `hide` when the columns really
 The popover is portalled to the body because the grid header clips its own overflow, which would cut
 an inline menu off.
 */
-const ColumnVisibilityHeader = ({ displayName, columns }) => {
+/*
+Header of a movable column. AG Grid drags the whole header cell, so the handle is an affordance
+rather than the drag source; it is revealed on hover by the stylesheet.
+*/
+const DraggableHeader = ({ displayName }) => (
+  <div className="d-flex align-items-center gap-1 w-100">
+    <DragHandle />
+    <span className="text-truncate">{displayName}</span>
+  </div>
+);
+
+DraggableHeader.propTypes = {
+  displayName: PropTypes.string.isRequired,
+};
+
+const ColumnVisibilityHeader = ({ displayName, columns, movable }) => {
   const { hiddenColumns, setColumnsHidden } = useContext(VariationsGridContext);
   const colIds = columns.map((column) => column.colId);
   const hiddenCount = colIds.filter((colId) => hiddenColumns.includes(colId)).length;
@@ -526,11 +543,12 @@ const ColumnVisibilityHeader = ({ displayName, columns }) => {
 
   return (
     <div className="d-flex align-items-center gap-1 w-100">
+      {movable && <DragHandle />}
       <span className="text-truncate">{displayName}</span>
       <OverlayTrigger
         trigger="click"
         rootClose
-        placement="bottom-start"
+        placement="top-start"
         overlay={popover}
         container={typeof document === 'undefined' ? undefined : document.body}
       >
@@ -553,6 +571,7 @@ ColumnVisibilityHeader.propTypes = {
     colId: PropTypes.string.isRequired,
     headerName: PropTypes.string.isRequired,
   })).isRequired,
+  movable: PropTypes.bool.isRequired,
 };
 
 const buildColumnGroups = ({
@@ -565,6 +584,9 @@ const buildColumnGroups = ({
       groupId: VARIATION_GROUP,
       headerName: 'Variation',
       pinned: 'left',
+      // Row identity and the sticky material name belong at the left edge, so these stay put while
+      // every other column can be dragged into whatever order suits the comparison.
+      fixedPosition: true,
       columns: [
         {
           colId: 'variation_index',
@@ -586,7 +608,7 @@ const buildColumnGroups = ({
           cellRenderer: GroupCell,
         },
         {
-          colId: 'variation_material',
+          colId: MATERIAL_COLUMN_ID,
           headerName: 'Material',
           headerComponent: ActiveMaterialHeader,
           cellRenderer: ActiveMaterialCell,
@@ -634,27 +656,37 @@ const buildColumnGroups = ({
   return groups;
 };
 
-const buildColumnDefs = (columnGroups, hiddenColumns) => columnGroups.map((group) => ({
-  groupId: group.groupId,
-  headerName: group.headerName,
-  marryChildren: true,
-  headerGroupComponent: ColumnVisibilityHeader,
-  headerGroupComponentParams: {
-    columns: group.columns.map(({ colId, headerName }) => ({ colId, headerName })),
-  },
-  children: group.columns.map((column) => ({
-    ...column,
-    pinned: group.pinned,
-    hide: hiddenColumns.includes(column.colId),
-  })),
-}));
+const buildColumnDefs = (columnGroups, hiddenColumns) => columnGroups.map((group) => {
+  const movable = !group.fixedPosition;
+
+  return {
+    groupId: group.groupId,
+    headerName: group.headerName,
+    marryChildren: true,
+    headerGroupComponent: ColumnVisibilityHeader,
+    headerGroupComponentParams: {
+      movable,
+      columns: group.columns.map(({ colId, headerName }) => ({ colId, headerName })),
+    },
+    children: group.columns.map((column) => ({
+      // A movable column advertises it with a drag handle; the fixed ones keep whatever header they
+      // brought along, e.g. the material column's scroll-following name.
+      ...(movable ? { headerComponent: DraggableHeader } : {}),
+      ...column,
+      pinned: group.pinned,
+      suppressMovable: !movable,
+      lockPosition: movable ? undefined : 'left',
+      hide: hiddenColumns.includes(column.colId),
+    })),
+  };
+});
 
 const DEFAULT_COL_DEF = {
   editable: false,
   sortable: false,
   filter: false,
   resizable: true,
-  suppressMovable: true,
+  // Columns are draggable; the Variation group opts out per column, see buildColumnGroups.
   autoHeight: true,
   cellStyle: { display: 'flex', alignItems: 'center', overflow: 'visible' },
 };
@@ -779,6 +811,20 @@ const VariationSchemaTable = ({
   });
 
   /*
+  The pinned material column only ever shows the material of the slot currently at the left edge, so
+  it is dead weight when there is no such slot - scrolled past the materials, or every material
+  group hidden - or when no variation has a material in it. Hidden on top of the user's own choice
+  rather than instead of it, so unhiding it from the picker still works once there is something to
+  show again.
+  */
+  const hasActiveMaterial = !!activeSlot && variations.some(
+    (variation) => variation.data?.[activeSlot.matGroup]?.[activeSlot.sampleIdx]
+  );
+  const effectiveHiddenColumns = hasActiveMaterial
+    ? hiddenColumns
+    : [...new Set([...hiddenColumns, MATERIAL_COLUMN_ID])];
+
+  /*
   Keyed on the column layout only, deliberately not on `hiddenColumns`: visibility is applied via
   the grid API, so folding it in here would rebuild every column on each toggle.
   */
@@ -787,10 +833,19 @@ const VariationSchemaTable = ({
     .join('|');
 
   const columnDefs = useMemo(
-    () => buildColumnDefs(columnGroups, hiddenColumns),
+    () => buildColumnDefs(columnGroups, effectiveHiddenColumns),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [columnSignature]
   );
+
+  // Visibility is applied through the API rather than the definitions, so the material column has to
+  // be switched here too - a column rebuild is not triggered by scrolling past the last material.
+  useEffect(() => {
+    gridApiRef.current?.setColumnsVisible(
+      [MATERIAL_COLUMN_ID],
+      hasActiveMaterial && !hiddenColumns.includes(MATERIAL_COLUMN_ID)
+    );
+  }, [hasActiveMaterial, hiddenColumns]);
 
   // Restoring a group whose columns are all hidden is impossible from its own header, because AG
   // Grid drops the header once nothing under it is displayed. These buttons are that way back.
@@ -848,6 +903,12 @@ const VariationSchemaTable = ({
           headerHeight={32}
           groupHeaderHeight={32}
           suppressCellFocus
+          // Keeps a user's drag order when the columns are rebuilt for a structural reason, e.g. a
+          // material being added, instead of snapping back to the order of the definitions.
+          maintainColumnOrder
+          // Dragging a column off the grid would hide it behind the pickers' backs, leaving the
+          // checkboxes claiming it is visible. Hiding stays the pickers' job.
+          suppressDragLeaveHidesColumns
           onGridReady={({ api }) => {
             gridApiRef.current = api;
             syncActiveSlot();
@@ -856,6 +917,7 @@ const VariationSchemaTable = ({
           onBodyScroll={syncActiveSlot}
           onVirtualColumnsChanged={syncActiveSlot}
           onColumnResized={syncActiveSlot}
+          onColumnMoved={syncActiveSlot}
         />
       </div>
     </VariationsGridContext.Provider>
