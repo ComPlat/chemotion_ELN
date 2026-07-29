@@ -92,16 +92,27 @@ describe ElementDetailLevelCalculator do
 
   describe '.for_list' do
     context 'when collection is given' do
-      it 'delegates to .for_collection' do
-        result = described_class.for_list(collection: owned_collection, user: user)
+      it 'delegates to .for_collection regardless of owned_only' do
+        result = described_class.for_list(collection: owned_collection, user: user, owned_only: true)
         expect(result).to eq described_class.for_collection(collection: owned_collection, user: user)
       end
     end
 
     context 'when collection is nil' do
-      it 'delegates to .owned_levels' do
-        expect(described_class.for_list(collection: nil, user: user)).to eq described_class.owned_levels
+      it 'delegates to .owned_levels when owned_only is true' do
+        result = described_class.for_list(collection: nil, user: user, owned_only: true)
+        expect(result).to eq described_class.owned_levels
       end
+
+      it 'raises when owned_only is not true' do
+        expect { described_class.for_list(collection: nil, user: user, owned_only: false) }
+          .to raise_error(ArgumentError, /owner-only/)
+      end
+    end
+
+    it 'requires the owned_only keyword' do
+      expect { described_class.for_list(collection: owned_collection, user: user) }
+        .to raise_error(ArgumentError, /owned_only/)
     end
   end
 end

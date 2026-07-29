@@ -1,22 +1,32 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/CyclomaticComplexity
 class ElementDetailLevelCalculator
   attr_reader :user, :element, :detail_levels
 
+  # Class per key suffix — the values can't be derived mechanically from the key names
+  # (e.g. "researchplan" doesn't classify to ResearchPlan, "element" doesn't namespace to
+  # Labimotion::Element), so this mapping must stay hand-written.
+  CLASS_BY_KEY_SUFFIX = {
+    'sample' => Sample,
+    'reaction' => Reaction,
+    'wellplate' => Wellplate,
+    'screen' => Screen,
+    'researchplan' => ResearchPlan,
+    'element' => Labimotion::Element,
+    'celllinesample' => CelllineSample,
+    'devicedescription' => DeviceDescription,
+    'sequencebasedmacromoleculesample' => SequenceBasedMacromoleculeSample,
+  }.freeze
+  private_constant :CLASS_BY_KEY_SUFFIX
+
   # Maps each of Collection::DETAIL_LEVEL_KEYS (minus :permission_level, which has no
   # class-keyed analog) to the element class {#calculate_detail_levels} keys its hash by.
-  CLASS_BY_DETAIL_KEY = {
-    sample_detail_level: Sample,
-    reaction_detail_level: Reaction,
-    wellplate_detail_level: Wellplate,
-    screen_detail_level: Screen,
-    researchplan_detail_level: ResearchPlan,
-    element_detail_level: Labimotion::Element,
-    celllinesample_detail_level: CelllineSample,
-    devicedescription_detail_level: DeviceDescription,
-    sequencebasedmacromoleculesample_detail_level: SequenceBasedMacromoleculeSample,
-  }.freeze
+  # Single-sourced from Collection::DETAIL_LEVEL_KEYS so a future key added there with no
+  # matching entry here raises at class-load time instead of silently resolving to 0 at
+  # request time (see {.class_hash_for}).
+  CLASS_BY_DETAIL_KEY = (Collection::DETAIL_LEVEL_KEYS - [:permission_level]).index_with do |key|
+    CLASS_BY_KEY_SUFFIX.fetch(key.to_s.delete_suffix('_detail_level'))
+  end.freeze
 
   def initialize(user:, element:)
     @user = user
@@ -53,11 +63,24 @@ class ElementDetailLevelCalculator
   # resolved from an optional +collection_id+ param. Combines {.for_collection} and
   # {.owned_levels} — the branch every list endpoint needs to pick between them.
   #
+  # +owned_only+ has no default: every call site's "All" (no collection_id) branch must
+  # declare, at the call site, that its scope is owner-only (never anything reachable only
+  # via a CollectionShare) — {.owned_levels} is only correct under that assumption, and this
+  # makes it a required, reviewable claim instead of a silent one. There is deliberately no
+  # "owned_only: false" behavior; nothing in this codebase has an "All" branch that isn't
+  # owner-only today, so this is an explicit assertion, not a real toggle.
+  #
   # @param collection [Collection, nil] the resolved collection, or nil for the "All" view
   # @param user [User]
+  # @param owned_only [Boolean] must be true — asserts the nil-collection branch's scope is owner-only
+  # @raise [ArgumentError] if +collection+ is nil and +owned_only+ is not true
   # @return [Hash{Class => Integer}]
-  def self.for_list(collection:, user:)
-    collection ? for_collection(collection: collection, user: user) : owned_levels
+  def self.for_list(collection:, user:, owned_only:)
+    return for_collection(collection: collection, user: user) if collection
+
+    raise ArgumentError, 'the "All" (no collection_id) branch must be owner-only' unless owned_only
+
+    owned_levels
   end
 
   def self.class_hash_for(key_hash)
@@ -69,19 +92,10 @@ class ElementDetailLevelCalculator
 
   private
 
-  def calculate_detail_levels # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity
-    detail_levels = Hash.new(0)
-
-    detail_levels[Labimotion::Element] = detail_level_for(:element_detail_level) || 0
-    detail_levels[Reaction] = detail_level_for(:reaction_detail_level) || 0
-    detail_levels[ResearchPlan] = detail_level_for(:researchplan_detail_level) || 0
-    detail_levels[Sample] = detail_level_for(:sample_detail_level) || 0
-    detail_levels[Screen] = detail_level_for(:screen_detail_level) || 0
-    detail_levels[Wellplate] = detail_level_for(:wellplate_detail_level) || 0
-    detail_levels[CelllineSample] = detail_level_for(:celllinesample_detail_level) || 0
-    detail_levels[DeviceDescription] = detail_level_for(:devicedescription_detail_level) || 0
-    detail_levels[SequenceBasedMacromoleculeSample] =
-      detail_level_for(:sequencebasedmacromoleculesample_detail_level) || 0
+  def calculate_detail_levels
+    detail_levels = CLASS_BY_DETAIL_KEY.each_with_object(Hash.new(0)) do |(key, klass), acc|
+      acc[klass] = detail_level_for(key) || 0
+    end
     detail_levels[Well] = detail_levels[Wellplate]
 
     detail_levels
@@ -112,4 +126,3 @@ class ElementDetailLevelCalculator
     @shared_collections_with_element ||= element.collections.shared_collections_for(user)
   end
 end
-# rubocop:enable Metrics/CyclomaticComplexity Metrics/PerceivedComplexity

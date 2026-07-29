@@ -165,7 +165,9 @@ module Chemotion
 
         reset_pagination_page(scope)
 
-        detail_levels = ElementDetailLevelCalculator.for_list(collection: resolved_collection, user: current_user)
+        detail_levels = ElementDetailLevelCalculator.for_list(
+          collection: resolved_collection, user: current_user, owned_only: true,
+        )
 
         device_descriptions = paginate(scope).map do |device_description|
           Entities::DeviceDescriptionEntity.represent(
