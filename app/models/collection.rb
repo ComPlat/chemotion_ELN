@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Rails/HasManyOrHasOneDependent
+# rubocop:disable Rails/HasManyOrHasOneDependent, Metrics/ClassLength
 
 # == Schema Information
 #
@@ -256,6 +256,23 @@ class Collection < ApplicationRecord
     find_by(user_id: user_id, label: 'All', is_locked: true)
   end
 
+  # Resolves +collection_id+ against +user+'s access under +scope+ (e.g. :writable_by,
+  # :accessible_for — any class-level scope that takes a user and returns a Collection
+  # relation). Consolidates what were two near-identical Grape helpers
+  # (writable_collection_for/readable_collection_for in CollectionHelpers) that differed only
+  # in which scope they queried — a real permission-level difference between the two scopes,
+  # not incidental duplication, so keep the distinction but share the lookup.
+  #
+  # @param user [User]
+  # @param collection_id [Integer, nil]
+  # @param scope [Symbol] a Collection class method/scope name
+  # @return [Collection, nil]
+  def self.resolve_for(user, collection_id, scope:)
+    return nil if collection_id.blank?
+
+    public_send(scope, user).find_by(id: collection_id)
+  end
+
   # The keys {#detail_levels_for_user} resolves. Extend when a new element type gains a detail level.
   DETAIL_LEVEL_KEYS = %i[
     permission_level
@@ -322,4 +339,4 @@ class Collection < ApplicationRecord
                    .pluck(:collection_id)
   end
 end
-# rubocop:enable Rails/HasManyOrHasOneDependent
+# rubocop:enable Rails/HasManyOrHasOneDependent, Metrics/ClassLength

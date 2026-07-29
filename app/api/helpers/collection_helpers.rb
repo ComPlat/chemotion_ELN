@@ -10,15 +10,11 @@ module CollectionHelpers
     'compared to fetching the element by id directly.'
 
   def writable_collection_for(collection_id)
-    return nil if collection_id.blank?
-
-    Collection.writable_by(current_user).find_by(id: collection_id)
+    Collection.resolve_for(current_user, collection_id, scope: :writable_by)
   end
 
   def readable_collection_for(collection_id)
-    return nil if collection_id.blank?
-
-    Collection.accessible_for(current_user).find_by(id: collection_id)
+    Collection.resolve_for(current_user, collection_id, scope: :accessible_for)
   end
 
   # Resolves a list endpoint's scope: either the +association+ off the collection
