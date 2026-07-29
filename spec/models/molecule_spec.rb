@@ -495,8 +495,10 @@ RSpec.describe Molecule, type: :model do
 
       expect(molecule.reload.iupac_name).to eq('water')
       expect(molecule.tag.taggable_data['pubchem_cid']).to eq('999')
+      # 'water' is the iupac_name and is not among names — PubChem does not guarantee it is.
+      # A row is created for it regardless, so a sample has something to be re-pointed to.
       expect(molecule.molecule_names.where(description: 'iupac_name').pluck(:name))
-        .to contain_exactly('aqua', 'dihydrogen-oxide')
+        .to contain_exactly('aqua', 'dihydrogen-oxide', 'water')
     end
 
     it 'does not overwrite an existing cid/name with nil', :aggregate_failures do

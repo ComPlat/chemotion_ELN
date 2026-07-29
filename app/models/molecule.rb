@@ -209,11 +209,10 @@ class Molecule < ApplicationRecord
   # per-molecule enrichment ({PubchemLookupJob}) and the periodic batch backfill
   # ({PubchemCidJob}), so the write semantics are identical whichever path runs. Repeated calls
   # are safe: +iupac_name+ is only set when blank, molecule names are found-or-created, and an
-  # existing +pubchem_cid+ is never overwritten with nil. The +pubchem_cid+ write is an atomic
-  # JSONB merge rather than a read/modify/write of the whole +taggable_data+ hash, so it can't
-  # itself clobber an unrelated key (e.g. +user_labels+, +chemrepo_id+) written concurrently by
-  # another path — those other writers still replace the full hash, though, so the reverse
-  # (them clobbering this key) isn't ruled out without touching {Taggable#update_tag} too.
+  # existing +pubchem_cid+ is never overwritten with nil. The +pubchem_cid+ write is atomic
+  # (see {#merge_pubchem_cid!}); other writers still replace the full +taggable_data+ hash,
+  # though, so the reverse — them clobbering this key — isn't ruled out without touching
+  # {Taggable#update_tag} too.
   #
   # @param info [Hash] +{ cid:, iupac_name:, names: }+ as returned by
   #   {Chemotion::PubchemService.molecule_info_from_inchikey}
@@ -223,22 +222,13 @@ class Molecule < ApplicationRecord
     return if info.blank?
 
     update_columns(iupac_name: info[:iupac_name]) if iupac_name.blank? && info[:iupac_name].present?
-
-    if info[:cid].present?
-      et = tag
-      ElementTag.where(id: et.id).update_all(
-        ["taggable_data = COALESCE(taggable_data, '{}'::jsonb) || jsonb_build_object('pubchem_cid', ?::jsonb)",
-         info[:cid].to_json],
-      )
-      # Mirror the merge onto the already-loaded association in memory (update_all bypasses
-      # it) so an immediate caller-side read — e.g. PubchemLookupJob#enrich_and_fetch_lcss
-      # checking pubchem_check right after this returns — sees the cid without a reload.
-      et.taggable_data = (et.taggable_data || {}).merge('pubchem_cid' => info[:cid])
-    end
+    merge_pubchem_cid!(info[:cid]) if info[:cid].present?
 
     Array(info[:names]).each do |name|
       MoleculeName.find_or_create_by(molecule_id: id, name: name, description: 'iupac_name')
     end
+
+    repoint_samples_to_iupac_name!
   end
   # rubocop:enable Rails/SkipsModelValidations
 
@@ -368,6 +358,56 @@ class Molecule < ApplicationRecord
   end
 
   private
+
+  # Writes +pubchem_cid+ as an atomic JSONB merge rather than a read/modify/write of the whole
+  # +taggable_data+ hash, so it can't clobber an unrelated key (+user_labels+, +chemrepo_id+)
+  # written concurrently by another path.
+  #
+  # @param cid [String, Integer] the PubChem compound id
+  # @return [void]
+  # rubocop:disable Rails/SkipsModelValidations
+  def merge_pubchem_cid!(cid)
+    et = tag
+    ElementTag.where(id: et.id).update_all(
+      ["taggable_data = COALESCE(taggable_data, '{}'::jsonb) || jsonb_build_object('pubchem_cid', ?::jsonb)",
+       cid.to_json],
+    )
+    # Mirror the merge onto the already-loaded association in memory (update_all bypasses it)
+    # so an immediate caller-side read — e.g. PubchemLookupJob#enrich_and_fetch_lcss checking
+    # pubchem_check right after this returns — sees the cid without a reload.
+    et.taggable_data = (et.taggable_data || {}).merge('pubchem_cid' => cid)
+  end
+  # rubocop:enable Rails/SkipsModelValidations
+
+  # Moves samples off the sum-formula placeholder now that the real IUPAC name has arrived.
+  #
+  # Sample's before_create :check_molecule_name resolves
+  # +molecule_iupac_name || molecule_sum_formular+. With enrichment deferred, iupac_name is
+  # still nil at that moment, so every sample of a freshly created molecule binds to the
+  # sum-formula MoleculeName — and nothing re-evaluates it afterwards, because
+  # #update_molecule_name only fires when molecule_id itself changes. Without this the
+  # sample would show and export as +H2O+ rather than +oxidane+ forever.
+  #
+  # Only samples still on that default binding are moved; one the user picked explicitly
+  # (sample_api's molecule_name_id, /save_name, #create_molecule_name_by_user) is left alone.
+  # update_all deliberately skips Sample's before_save chain — SVG regeneration, fingerprints,
+  # elemental composition — and keeps the correction out of the version history.
+  #
+  # @return [void]
+  # rubocop:disable Rails/SkipsModelValidations
+  def repoint_samples_to_iupac_name!
+    return if iupac_name.blank?
+
+    # PubChem's iupac_name is not guaranteed to appear in info[:names], so the row may not
+    # exist yet: find_or_create rather than assume #create_molecule_names made one.
+    iupac_row = molecule_names.find_or_create_by(name: iupac_name, description: 'iupac_name')
+    sum_row = molecule_names.find_by(description: 'sum_formular')
+    return if sum_row.nil? || iupac_row.id == sum_row.id
+
+    Sample.where(molecule_id: id, molecule_name_id: sum_row.id)
+          .update_all(molecule_name_id: iupac_row.id)
+  end
+  # rubocop:enable Rails/SkipsModelValidations
 
   def assign_pubchem_data(pubchem_info)
     self.iupac_name = pubchem_info[:iupac_name]

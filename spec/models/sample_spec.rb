@@ -224,6 +224,36 @@ RSpec.describe Sample do
       expect(molecule.molecule_names.where(description: 'iupac_name').pluck(:name)).to include('water', 'oxidane')
     end
 
+    it 'binds molecule_name to the sum formula while enrichment is still pending' do
+      sample.save!
+
+      expect(sample.molecule_name.description).to eq('sum_formular')
+      expect(sample.molecule_name.name).to eq('H2O')
+    end
+
+    # Sample's before_create :check_molecule_name runs while iupac_name is still nil, and
+    # #update_molecule_name only re-evaluates when molecule_id changes — so without the
+    # re-point in #assign_pubchem_names_and_cid! the sample would show and export as H2O
+    # forever, even after enrichment supplied the real name.
+    it 're-points molecule_name to the IUPAC row once enrichment lands' do
+      sample.save!
+
+      sample.molecule.enrich_from_pubchem
+
+      expect(sample.reload.molecule_name.description).to eq('iupac_name')
+      expect(sample.molecule_name.name).to eq('oxidane')
+    end
+
+    it 'leaves a user-chosen molecule_name alone when enrichment lands' do
+      sample.save!
+      chosen = sample.molecule.molecule_names.create!(name: 'my label', description: 'defined by user 1')
+      sample.update_columns(molecule_name_id: chosen.id) # rubocop:disable Rails/SkipsModelValidations
+
+      sample.molecule.enrich_from_pubchem
+
+      expect(sample.reload.molecule_name_id).to eq(chosen.id)
+    end
+
     # #Fixme : now file are anonymised
     # it 'should create the molecule svg file' do
     #  expect(File).to receive(:new)
