@@ -133,21 +133,21 @@ RSpec.describe Import::ImportSdf do
       end
     end
 
-    it 'schedules a single PubchemSingleLcssJob covering every new molecule, via a created_after timestamp' do
+    it 'schedules a single PubchemLookupJob covering every new molecule, via a created_after timestamp' do
       started_at = Time.current
-      allow(PubchemSingleLcssJob).to receive(:perform_later)
+      allow(PubchemLookupJob).to receive(:perform_later)
 
       expect { batch_import.find_or_create_mol_by_batch }.to change(Molecule, :count).by(2)
-      expect(PubchemSingleLcssJob).to have_received(:perform_later).once
-      expect(PubchemSingleLcssJob).to have_received(:perform_later).with(nil, created_after: be >= started_at)
+      expect(PubchemLookupJob).to have_received(:perform_later).once
+      expect(PubchemLookupJob).to have_received(:perform_later).with(nil, created_after: be >= started_at)
     end
 
-    it 'still schedules exactly one PubchemSingleLcssJob when batch_size splits the import into multiple chunks' do
-      allow(PubchemSingleLcssJob).to receive(:perform_later)
+    it 'still schedules exactly one PubchemLookupJob when batch_size splits the import into multiple chunks' do
+      allow(PubchemLookupJob).to receive(:perform_later)
 
       batch_import.find_or_create_mol_by_batch(1)
 
-      expect(PubchemSingleLcssJob).to have_received(:perform_later).once
+      expect(PubchemLookupJob).to have_received(:perform_later).once
     end
   end
 

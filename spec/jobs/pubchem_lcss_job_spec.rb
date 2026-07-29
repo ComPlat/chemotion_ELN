@@ -39,7 +39,7 @@ RSpec.describe PubchemLcssJob do
   describe '#perform' do
     context 'when another guarded PubChem job is currently running' do
       it 'requeues itself later without processing any molecules' do
-        create_locked_delayed_job('PubchemSingleLcssJob')
+        create_locked_delayed_job('PubchemLookupJob')
         make_pending_molecule
         allow(described_class).to receive(:set).and_return(described_class)
         allow(described_class).to receive(:perform_later)
@@ -53,7 +53,7 @@ RSpec.describe PubchemLcssJob do
       end
 
       it 'proceeds normally when the other lock is stale (its worker died mid-run)' do
-        create_locked_delayed_job('PubchemSingleLcssJob', locked_at: (Delayed::Worker.max_run_time + 1.minute).ago)
+        create_locked_delayed_job('PubchemLookupJob', locked_at: (Delayed::Worker.max_run_time + 1.minute).ago)
         pending_molecule = make_pending_molecule
         allow(described_class).to receive(:set)
 

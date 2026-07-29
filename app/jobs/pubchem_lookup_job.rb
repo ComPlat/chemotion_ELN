@@ -2,10 +2,10 @@
 
 # Job to update molecule info for molecules with no LCSS
 # associated LCSS (molecule tag) is updated if cid found in PC db
-class PubchemSingleLcssJob < ApplicationJob
+class PubchemLookupJob < ApplicationJob
   include PubchemRateLimitGuard
 
-  queue_as :single_pubchem_lcss
+  queue_as :pubchem_lookup
 
   # NB: PC has request restriction policy, hence the sleep — matches the
   # spacing already used by the sibling cron batch job, PubchemLcssJob.

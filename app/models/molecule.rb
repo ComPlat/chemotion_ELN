@@ -234,7 +234,7 @@ class Molecule < ApplicationRecord
     molecule_names.create(name: sum_formular, description: 'sum_formular')
   end
 
-  # Schedules a single PubchemSingleLcssJob for the given ids, re-querying
+  # Schedules a single PubchemLookupJob for the given ids, re-querying
   # first so only molecules that actually still exist get scheduled (e.g. a
   # caller's own transaction rolling back after collecting some ids into its
   # lcss_batch array shouldn't schedule a job for rows that never persisted).
@@ -244,14 +244,14 @@ class Molecule < ApplicationRecord
     existing_ids = Molecule.where(id: molecule_ids).pluck(:id)
     return if existing_ids.blank?
 
-    PubchemSingleLcssJob.perform_later(existing_ids)
+    PubchemLookupJob.perform_later(existing_ids)
   end
 
   def get_lcss
     self.class.schedule_lcss_batch([id])
   end
 
-  # Schedules a PubchemSingleLcssJob covering every molecule created after +timestamp+.
+  # Schedules a PubchemLookupJob covering every molecule created after +timestamp+.
   # The bulk importers use this instead of collecting new molecule ids into an array:
   # capture Time.current once before the import loop begins, pass defer_lcss: true to
   # suppress each new molecule's own immediate scheduling, then call this once at the
@@ -261,7 +261,7 @@ class Molecule < ApplicationRecord
     return if timestamp.blank?
     return unless Molecule.exists?(['created_at > ?', timestamp])
 
-    PubchemSingleLcssJob.perform_later(nil, created_after: timestamp)
+    PubchemLookupJob.perform_later(nil, created_after: timestamp)
   end
 
   def create_molecule_name_by_user(new_names, user_id)

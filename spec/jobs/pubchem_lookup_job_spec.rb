@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe PubchemSingleLcssJob do
+RSpec.describe PubchemLookupJob do
   let(:job) { described_class.new }
 
   describe '#perform' do

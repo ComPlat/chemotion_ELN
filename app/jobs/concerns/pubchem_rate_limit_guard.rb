@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 # Shared concurrency guard for jobs that call out to PubChem's rate-limited LCSS
-# endpoint. PubchemSingleLcssJob and PubchemLcssJob must never run at the same time
+# endpoint. PubchemLookupJob and PubchemLcssJob must never run at the same time
 # as each other, or as another instance of themselves.
 module PubchemRateLimitGuard
   extend ActiveSupport::Concern
 
-  GUARDED_JOB_CLASSES = %w[PubchemLcssJob PubchemSingleLcssJob].freeze
+  GUARDED_JOB_CLASSES = %w[PubchemLcssJob PubchemLookupJob].freeze
   REQUEUE_DELAY = 15.minutes
 
   private
