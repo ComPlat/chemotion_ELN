@@ -3,7 +3,7 @@
 module CollectionHelpers
   extend Grape::API::Helpers
 
-  # Appended to a list endpoint's `desc` wherever detail levels are resolved once per page
+  # Appended to a list endpoint's +desc+ wherever detail levels are resolved once per page
   # (see ElementDetailLevelCalculator) — defined once so the 7 call sites don't each repeat it.
   LIST_DETAIL_LEVEL_DESC_NOTE =
     'Detail level is applied per collection share; each entry is only partially serialized ' \
@@ -35,6 +35,18 @@ module CollectionHelpers
               klass.for_user(current_user.id).distinct
             end
     [resolved_collection, scope]
+  end
+
+  # The once-per-page detail levels for a list endpoint's resolved collection. Every one of the
+  # 7 call sites asserted +owned_only: true+ identically (the "All" branch each resolves is
+  # always owner-only — see {CollectionHelpers#collection_scope_for}), so sharing the call here
+  # removes the repetition without losing that assertion: it's still made in exactly one place,
+  # just not copy-pasted seven times.
+  #
+  # @param resolved_collection [Collection, nil] as returned by {#collection_scope_for}
+  # @return [Hash{Class => Integer}]
+  def detail_levels_for_list(resolved_collection)
+    ElementDetailLevelCalculator.for_list(collection: resolved_collection, user: current_user, owned_only: true)
   end
 
   def set_var(c_id = params[:collection_id])

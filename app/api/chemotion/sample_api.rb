@@ -198,9 +198,7 @@ module Chemotion
         sample_scope = sample_scope.by_user_label(user_label) if user_label
 
         sample_list = []
-        detail_levels = ElementDetailLevelCalculator.for_list(
-          collection: resolved_collection, user: current_user, owned_only: true,
-        )
+        detail_levels = detail_levels_for_list(resolved_collection)
 
         if params[:molecule_sort] == 1
           molecule_scope = Molecule

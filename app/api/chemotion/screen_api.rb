@@ -38,9 +38,7 @@ module Chemotion
 
         reset_pagination_page(screen_scope)
 
-        detail_levels = ElementDetailLevelCalculator.for_list(
-          collection: resolved_collection, user: current_user, owned_only: true,
-        )
+        detail_levels = detail_levels_for_list(resolved_collection)
 
         screens = paginate(screen_scope).map do |screen|
           Entities::ScreenEntity.represent(
