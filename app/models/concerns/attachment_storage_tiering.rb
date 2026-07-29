@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-# Archives cold attachments to the ':cold' tier and promotes them back to
-# ':store'. See ArchiveColdAttachmentsJob and PromoteAttachmentJob.
+# Archives unused attachments to the ':cold' tier. See ArchiveColdAttachmentsJob.
 module AttachmentStorageTiering
   extend ActiveSupport::Concern
 
@@ -10,7 +9,7 @@ module AttachmentStorageTiering
 
   # Cold only if it hasn't been read recently AND the file + its chain are old.
   # A recent read keeps it hot even if the record hasn't been edited in years.
-  # ponytail: skips middle containers; a mis-archive self-heals on next read.
+  # ponytail: skips middle containers; may wrongly archive, but cold stays readable.
   def cold?(older_than:)
     return false if last_read_at > older_than
 
@@ -21,23 +20,9 @@ module AttachmentStorageTiering
     move_to_tier(:cold)
   end
 
-  def move_to_store
-    move_to_tier(:store)
-  end
-
-  # A real read: record it (throttled) and, if it's cold, always bring it back to
-  # hot. Repeat reads can queue duplicate promote jobs, but move_to_tier re-checks
-  # the tier under a lock, so extra jobs are harmless no-ops.
+  # A real read: record it (throttled) so a recently-read file isn't archived.
   def track_read!
     record_access!
-    promote_if_cold
-  end
-
-  # For read paths that bypass Shrine (e.g. image serving).
-  def promote_if_cold
-    return unless attachment_attacher.file&.storage_key == :cold
-
-    PromoteAttachmentJob.perform_later(id)
   end
 
   class_methods do
@@ -85,8 +70,8 @@ module AttachmentStorageTiering
       old_file = nil
       old_derivatives = nil
 
-      # Row lock so a concurrent archive + promote on the same attachment can't
-      # race (re-check the tier inside the lock, after reload sees committed data).
+      # Row lock so concurrent moves on the same attachment can't race
+      # (re-check the tier inside the lock, after reload sees committed data).
       with_lock do
         attacher = attachment_attacher
         file = attacher.file

@@ -57,40 +57,12 @@ RSpec.describe Attachment do
       expect(attachment.read_file).to eq("Hello world\n")
     end
 
-    context 'when the file lives on the cold storage tier', :active_job do
-      it 'enqueues a promotion back to hot storage' do
+    context 'when the file lives on the cold storage tier' do
+      it 'still returns its content (cold is one-way, no promotion)' do
         attachment.move_to_cold
 
-        expect { attachment.read_file }.to have_enqueued_job(PromoteAttachmentJob).with(attachment.id)
+        expect(attachment.read_file).to eq("Hello world\n")
       end
-    end
-
-    context 'when the file lives on the hot storage tier', :active_job do
-      it 'does not enqueue a promotion' do
-        expect { attachment.read_file }.not_to have_enqueued_job(PromoteAttachmentJob)
-      end
-    end
-  end
-
-  describe 'promote on any Shrine read' do
-    context 'when a cold file is read directly through the attacher', :active_job do
-      it 'enqueues a promotion (e.g. the download endpoint bypassing #read_file)' do
-        attachment.move_to_cold
-
-        expect { attachment.attachment.read }.to have_enqueued_job(PromoteAttachmentJob).with(attachment.id)
-      end
-    end
-  end
-
-  describe '#promote_if_cold', :active_job do
-    it 'enqueues a promotion for a cold file (used by image serving, which bypasses Shrine)' do
-      attachment.move_to_cold
-
-      expect { attachment.promote_if_cold }.to have_enqueued_job(PromoteAttachmentJob).with(attachment.id)
-    end
-
-    it 'does nothing for a hot file' do
-      expect { attachment.promote_if_cold }.not_to have_enqueued_job(PromoteAttachmentJob)
     end
   end
 
@@ -118,43 +90,14 @@ RSpec.describe Attachment do
 
       attachment.track_read!
     end
-
-    context 'when the file is cold and read', :active_job do
-      it 'promotes on every read, not just the first (throttle only gates access counting)' do
-        attachment.move_to_cold
-
-        expect do
-          attachment.track_read! # first read: records access + promotes
-          attachment.track_read! # second read: access throttled, but still promotes
-        end.to have_enqueued_job(PromoteAttachmentJob).twice
-      end
-    end
-
-    context 'when a cold file is promoted more than once (duplicate jobs are harmless)' do
-      it 'lands on hot storage without error' do
-        attachment.move_to_cold
-
-        PromoteAttachmentJob.perform_now(attachment.id)
-        expect { PromoteAttachmentJob.perform_now(attachment.id) }.not_to raise_error
-        expect(attachment.reload.attachment_attacher.file.storage_key).to eq(:store)
-      end
-    end
   end
 
-  describe '.on_read with an unknown file id', :active_job do
+  describe '.on_read with an unknown file id' do
     it 'does nothing (a derivative/thumbnail id never matches the main file)' do
       attachment # ensure it exists
 
       expect { described_class.on_read('does-not-exist') }
         .not_to(change { attachment.reload.access_count })
-    end
-  end
-
-  describe '#move_to_store does not count as a user read', :active_job do
-    it 'does not re-enqueue a promotion while promoting (internal reads suppressed)' do
-      attachment.move_to_cold
-
-      expect { attachment.move_to_store }.not_to have_enqueued_job(PromoteAttachmentJob)
     end
   end
 
@@ -1150,30 +1093,6 @@ RSpec.describe Attachment do
 
       attachment.attachment_attacher.derivatives.each_value do |derivative|
         expect(derivative.storage_key).to eq(:cold)
-      end
-    end
-  end
-
-  describe '#move_to_store' do
-    it 'moves the file back to the hot storage while preserving its contents' do
-      attachment = create(:attachment)
-      attachment.move_to_cold
-      original_content = attachment.read_file
-
-      attachment.move_to_store
-
-      expect(attachment.attachment.storage_key).to eq(:store)
-      expect(attachment.read_file).to eq(original_content)
-    end
-
-    it 'moves derivatives (e.g. thumbnails) back to the hot storage as well' do
-      attachment = create(:attachment, :with_image)
-      attachment.move_to_cold
-
-      attachment.move_to_store
-
-      attachment.attachment_attacher.derivatives.each_value do |derivative|
-        expect(derivative.storage_key).to eq(:store)
       end
     end
   end

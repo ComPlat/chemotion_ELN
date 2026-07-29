@@ -114,7 +114,7 @@ class Attachment < ApplicationRecord # rubocop:disable Metrics/ClassLength
   def read_file
     return if attachment_attacher.file.blank?
 
-    # reads are tracked and cold files promoted automatically (see TieredStorage#open)
+    # reads are tracked automatically (see TieredStorage#open)
     attachment_attacher.file.rewind if attachment_attacher.file.eof?
     attachment_attacher.file.read
   end
