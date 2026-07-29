@@ -7,7 +7,7 @@ import ChemotionLogo from 'src/components/common/ChemotionLogo';
 import SupportMenuButton from 'src/components/navigation/SupportMenuButton';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-function Navigation() {
+const Navigation = () => {
   const { userStore } = useContext(StoreContext);
   const { currentUser } = userStore;
 
@@ -25,6 +25,6 @@ function Navigation() {
       </div>
     </div>
   );
-}
+};
 
 export default observer(Navigation);
