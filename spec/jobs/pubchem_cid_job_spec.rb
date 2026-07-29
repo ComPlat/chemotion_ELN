@@ -121,5 +121,54 @@ RSpec.describe PubchemCidJob do
 
       expect(described_class).not_to have_received(:set)
     end
+
+    context 'when chaining PubchemLcssJob' do
+      before { allow(PubchemLcssJob).to receive(:perform_later) }
+
+      it 'chains a full PubchemLcssJob sweep once the rotation has drained' do
+        pending = make_pending_molecule
+        stub_pubchem_info_for(pending)
+
+        job.perform(start_id: 0)
+
+        expect(PubchemLcssJob).to have_received(:perform_later).with(start_id: 0)
+      end
+
+      # Chaining per chunk enqueued one overlapping LCSS rotation per chunk. They are all
+      # serialised by PubchemRateLimitGuard, so every one but the first spent its life
+      # bouncing on the 15-minute REQUEUE_DELAY — and colliding with CID's own continuations.
+      it 'does not chain while chunks remain, only after the last one' do
+        earlier = make_pending_molecule
+        later = make_pending_molecule
+        stub_pubchem_info_for(earlier, later)
+
+        job.perform(sleep_time: 0, batch_size: 1, chunk_size: 1, start_id: 0)
+
+        expect(PubchemLcssJob).not_to have_received(:perform_later)
+      end
+
+      it 'chains even when this run enriched nothing (prior cid\'d-but-not-lcss\'d molecules may still be pending)' do
+        job.perform
+
+        expect(PubchemLcssJob).to have_received(:perform_later).with(start_id: 0)
+      end
+
+      it 'does not chain when the run backs off due to another guarded job running' do
+        create_locked_delayed_job('PubchemLcssJob')
+
+        job.perform
+
+        expect(PubchemLcssJob).not_to have_received(:perform_later)
+      end
+
+      it 'does not chain when LCSS is explicitly disabled by config' do
+        allow(ENV).to receive(:fetch).and_call_original
+        allow(ENV).to receive(:fetch).with('CRON_CONFIG_PC_LCSS', nil).and_return('disabled')
+
+        job.perform
+
+        expect(PubchemLcssJob).not_to have_received(:perform_later)
+      end
+    end
   end
 end

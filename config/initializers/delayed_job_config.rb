@@ -29,6 +29,12 @@ Delayed::Worker.logger = Logger.new($stdout) if Rails.env.test?
 # ```
 # otherwise InitCronJobsJob will be called multiple times
 
+# PubchemLcssJob is normally chained off PubchemCidJob once its rotation drains (see
+# PubchemCidJob#chain_lcss) rather than independently scheduled. With CID itself disabled
+# nothing would trigger it at all, silently discarding a configured CRON_CONFIG_PC_LCSS — so
+# in that one case it keeps its own recurring entry.
+pubchem_lcss_enabled = ENV.fetch('CRON_CONFIG_PC_CID', nil) == 'disabled' ? :default : false
+
 ActiveSupport.on_load(:active_record) do
   next unless ActiveRecord::Base.connection.table_exists?('delayed_jobs') && Delayed::Job.column_names.include?('cron')
 
@@ -43,7 +49,10 @@ ActiveSupport.on_load(:active_record) do
 
     # Other Classes
     { job_class: PubchemCidJob,        enabled: :default, cron_variable: 'CRON_CONFIG_PC_CID' },
-    { job_class: PubchemLcssJob,       enabled: :default, cron_variable: 'CRON_CONFIG_PC_LCSS' },
+    # See pubchem_lcss_enabled above. Kept in this list even when disabled so a pre-existing
+    # recurring row from before the chaining change still gets cleaned up by the destroy step
+    # below instead of continuing to fire on its old schedule.
+    { job_class: PubchemLcssJob,       enabled: pubchem_lcss_enabled, cron_variable: 'CRON_CONFIG_PC_LCSS' },
     { job_class: RefreshElementTagJob, enabled: :default, cron_variable: 'CRON_CONFIG_REFRESH_ELEMENT_TAG' },
     { job_class: DiskUsageJob,         enabled: :default, cron_variable: 'CRON_CONFIG_DISK_USAGE' },
     { job_class: ChemrepoIdJob,        enabled: false,    cron_variable: 'CRON_CONFIG_CHEMREPO_ID' },

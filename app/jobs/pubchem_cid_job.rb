@@ -46,10 +46,28 @@ class PubchemCidJob < ApplicationJob
       sleep sleep_time
     end
 
-    requeue_next_chunk(sleep_time: sleep_time, batch_size: batch_size, chunk_size: chunk_size, last_id: last_id)
+    continue_or_chain(sleep_time: sleep_time, batch_size: batch_size,
+                      chunk_size: chunk_size, last_id: last_id)
   end
 
   private
+
+  # Triggers PubchemLcssJob once the rotation has drained, instead of leaving it on its own
+  # independently-scheduled cron cadence.
+  #
+  # Only fired on the final chunk. Firing per chunk enqueued one LCSS rotation per chunk with
+  # overlapping id ranges — a 50k-molecule backlog produced ~50 of them — and since
+  # PubchemRateLimitGuard serialises all PubChem jobs, all but one spent their lives bouncing
+  # on a 15-minute REQUEUE_DELAY, which in turn kept colliding with CID's own continuations
+  # and slowed the rotation it was meant to follow.
+  #
+  # start_id: 0 because by this point the whole range has been swept, so LCSS should scan it
+  # all rather than resume from a cursor into it.
+  def chain_lcss
+    return if ENV.fetch('CRON_CONFIG_PC_LCSS', nil) == 'disabled'
+
+    PubchemLcssJob.perform_later(start_id: 0)
+  end
 
   def pending_scope(after_id:)
     Molecule.select(:id, :inchikey).joins(:samples)
@@ -61,12 +79,19 @@ class PubchemCidJob < ApplicationJob
             .distinct
   end
 
-  # Requeues a one-off continuation carrying the rotation cursor (+last_id+) forward
-  # when pending molecules remain beyond it. If none remain, does nothing — the next
-  # cron tick fires with its fixed default args (start_id: 0) and starts over.
-  def requeue_next_chunk(sleep_time:, batch_size:, chunk_size:, last_id:)
-    return unless pending_scope(after_id: last_id).exists?
+  # Carries the rotation forward while molecules remain beyond +last_id+, and hands over to
+  # LCSS once it has drained. Exactly one of the two happens per run.
+  def continue_or_chain(sleep_time:, batch_size:, chunk_size:, last_id:)
+    if pending_scope(after_id: last_id).exists?
+      requeue_next_chunk(sleep_time: sleep_time, batch_size: batch_size,
+                         chunk_size: chunk_size, last_id: last_id)
+    else
+      chain_lcss
+    end
+  end
 
+  # Requeues a one-off continuation carrying the rotation cursor (+last_id+) forward.
+  def requeue_next_chunk(sleep_time:, batch_size:, chunk_size:, last_id:)
     self.class.set(wait: sleep_time.seconds)
         .perform_later(sleep_time: sleep_time, batch_size: batch_size,
                        chunk_size: chunk_size, start_id: last_id)
