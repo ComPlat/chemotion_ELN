@@ -33,15 +33,7 @@ module Chemotion
       end
 
       get do
-        resolved_collection = readable_collection_for(params[:collection_id])
-        scope = if params[:collection_id]
-                  resolved_collection ? resolved_collection.reactions : Reaction.none
-                else
-                  Reaction
-                    .joins(:collections)
-                    .merge(Collection.unscope(:order).own_collections_for(current_user))
-                    .distinct
-                end
+        resolved_collection, scope = collection_scope_for(params[:collection_id], Reaction, :reactions)
 
         from = params[:from_date]
         to = params[:to_date]
