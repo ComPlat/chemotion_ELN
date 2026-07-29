@@ -55,7 +55,7 @@ const ExtendedSignInForm = ({
     remember_me: false,
     otp_attempt: ''
   });
-  const [showOtp, setShowOtp] = useState('');
+  const [showOtp, setShowOtp] = useState(false);
   const [wrongOtp, setWrongOtp] = useState(false);
   const closeOtp = useCallback(() => setShowOtp(false), []);
 
@@ -175,7 +175,7 @@ const SignInForm = ({ authenticityToken }) => {
     password: '',
     otp_attempt: ''
   });
-  const [showOtp, setShowOtp] = useState('');
+  const [showOtp, setShowOtp] = useState(false);
   const [wrongOtp, setWrongOtp] = useState(false);
   const closeOtp = useCallback(() => setShowOtp(false), []);
 
