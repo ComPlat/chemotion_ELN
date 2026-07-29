@@ -136,7 +136,7 @@ module Chemotion
     end
 
     resource :device_descriptions do
-      # Return serialized device description by collection id
+      desc "Return serialized device descriptions by collection id. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'

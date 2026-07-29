@@ -165,7 +165,7 @@ module Chemotion
         end
       end
 
-      desc 'Return serialized molecules_samples_groups of current user'
+      desc "Return serialized molecules_samples_groups of current user. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
         optional :molecule_sort, type: Integer, desc: 'Sort by parameter'

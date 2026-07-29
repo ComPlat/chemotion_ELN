@@ -12,7 +12,7 @@ module Chemotion
     helpers LiteratureHelpers
 
     namespace :research_plans do
-      desc 'Return serialized research plans of current user'
+      desc "Return serialized research plans of current user. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'

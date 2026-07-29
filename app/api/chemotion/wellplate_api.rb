@@ -50,7 +50,7 @@ module Chemotion
         end
       end
 
-      desc 'Return serialized wellplates'
+      desc "Return serialized wellplates. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'

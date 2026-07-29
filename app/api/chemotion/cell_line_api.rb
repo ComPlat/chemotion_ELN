@@ -12,7 +12,7 @@ module Chemotion
       error!('Resource not found', 404)
     end
     resource :cell_lines do
-      desc 'return cell lines of a collection'
+      desc "return cell lines of a collection. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         use :cell_line_get_params
       end

@@ -3,6 +3,12 @@
 module CollectionHelpers
   extend Grape::API::Helpers
 
+  # Appended to a list endpoint's `desc` wherever detail levels are resolved once per page
+  # (see ElementDetailLevelCalculator) — defined once so the 7 call sites don't each repeat it.
+  LIST_DETAIL_LEVEL_DESC_NOTE =
+    'Detail level is applied per collection share; each entry is only partially serialized ' \
+    'compared to fetching the element by id directly.'
+
   def writable_collection_for(collection_id)
     return nil if collection_id.blank?
 

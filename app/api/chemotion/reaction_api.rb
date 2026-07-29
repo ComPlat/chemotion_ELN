@@ -13,7 +13,7 @@ module Chemotion
     helpers UserLabelHelpers
 
     resource :reactions do
-      desc 'Return serialized reactions'
+      desc "Return serialized reactions. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
