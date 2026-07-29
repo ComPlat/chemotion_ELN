@@ -9,7 +9,7 @@ import FormatContainer from 'src/apps/mydb/elements/details/formats/FormatContai
 import GenericElDetails from 'src/components/generic/GenericElDetails';
 import GraphContainer from 'src/apps/mydb/elements/details/GraphContainer';
 import MetadataContainer from 'src/components/metadata/MetadataContainer';
-//import PredictionContainer from 'src/apps/mydb/elements/details/predictions/PredictionContainer';
+import MlContainer from 'src/apps/mydb/elements/details/predictions/MlContainer';
 import ReactionDetails from 'src/apps/mydb/elements/details/reactions/ReactionDetails';
 import ReportDetails from 'src/apps/mydb/elements/details/reports/ReportDetails';
 import ResearchPlanDetails from 'src/apps/mydb/elements/details/researchPlans/ResearchPlanDetails';
@@ -170,9 +170,7 @@ export default class ElementDetails extends Component {
       case 'explorer':
         return <ExplorerContainer explorer={el} />;
       case 'prediction':
-        // return <PredictionContainer prediction={el} />;
-        console.warn('Attempting to show outdated PredictionContainer');
-        break;
+        return <MlContainer prediction={el} />;
       case 'format':
         return <FormatContainer format={el} />;
       case 'graph':
