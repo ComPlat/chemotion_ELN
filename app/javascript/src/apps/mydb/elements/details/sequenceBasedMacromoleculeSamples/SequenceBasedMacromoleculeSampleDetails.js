@@ -115,8 +115,11 @@ const SequenceBasedMacromoleculeSampleDetails = ({ openedFromCollectionId }) => 
     properties: PropertiesForm,
     analyses: AnalysesContainer,
     attachments: AttachmentForm,
-    inventory: ChemicalTab,
   };
+
+  if (sbmmSample.inventory_sample) {
+    tabContentComponents.inventory = ChemicalTab;
+  }
 
   const tabTitles = {
     properties: 'Properties',
