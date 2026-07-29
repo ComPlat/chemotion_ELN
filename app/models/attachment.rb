@@ -34,8 +34,8 @@
 #  index_attachments_on_attachable_type_and_attachable_id  (attachable_type,attachable_id)
 #  index_attachments_on_identifier                         (identifier) UNIQUE
 #  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
-#
 
+# rubocop: disable Metrics/ClassLength
 class Attachment < ApplicationRecord
   has_logidze
   acts_as_paranoid
@@ -100,6 +100,10 @@ class Attachment < ApplicationRecord
 
   def self.variation_id_from(filename)
     filename.to_s[VARIATION_SUFFIX_REGEXP, 1]
+  end
+
+  def self.strip_variation_suffix(filename)
+    filename.to_s.sub(VARIATION_SUFFIX_REGEXP, '')
   end
 
   def set_default_created_by_type
@@ -272,31 +276,39 @@ class Attachment < ApplicationRecord
   def resolve_unique_match
     return [nil, nil] unless inbox_auto_enabled?
 
-    samples = InboxSearchElements.call(
-      search_string: filename,
-      current_user: recipient,
-      element: :sample,
-    )
+    unique_match_among(matching_samples, matching_reactions)
+  end
 
-    variation = self.class.variation_id_from(filename)
+  private
+
+  def matching_samples
+    InboxSearchElements.call(search_string: filename, current_user: recipient, element: :sample)
+  end
+
+  def matching_reactions
     search_string = filename.sub(/-v\d+.*$/i, '')
+    InboxSearchElements.call(search_string: search_string, current_user: recipient, element: :reaction)
+  end
 
-    reactions = InboxSearchElements.call(
-      search_string: search_string,
-      current_user: recipient,
-      element: :reaction,
-    )
-
+  def unique_match_among(samples, reactions)
+    variation = self.class.variation_id_from(filename)
     return [reactions.first, variation] if samples.empty? && reactions.one?
     return [samples.first, nil]         if reactions.empty? && samples.one?
 
-    product_samples = samples.select { |s| s.reactions_samples.any? { |rs| rs.type == 'ReactionsProductSample' } }
-    return [product_samples.first, nil] if reactions.empty? && product_samples.one?
+    product_sample = unique_product_sample_among(samples)
+    return [product_sample, nil] if reactions.empty? && product_sample
 
     [nil, nil]
   end
 
-  private
+  def unique_product_sample_among(samples)
+    product_samples = samples.select { |s| product_sample?(s) }
+    product_samples.first if product_samples.one?
+  end
+
+  def product_sample?(sample)
+    sample.reactions_samples.any? { |rs| rs.type == 'ReactionsProductSample' }
+  end
 
   def generate_key
     self.key = SecureRandom.uuid unless key
@@ -356,3 +368,5 @@ class Attachment < ApplicationRecord
     data.fetch('inbox_auto', true)
   end
 end
+
+# rubocop: enable Metrics/ClassLength

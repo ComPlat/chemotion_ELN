@@ -326,24 +326,45 @@ class Reaction < ApplicationRecord
   def variations
     # We need to return raw.values because the frontend expects the variations to be an array of objects.
     raw = self[:variations]
-    raw.is_a?(Hash) ? raw.values : raw
+    return raw.values if raw.is_a?(Hash)
+
+    raw || []
   end
 
   def assign_attachment_to_variation(variation_id, analysis_id)
-    return if variation_id.blank?
+    assign_attachments_to_variations([[variation_id, analysis_id]])
+  end
 
-    variation = variations.find { |v| v['id'].to_s == variation_id.to_s }
-    return unless variation
+  # Batches multiple [variation_id, analysis_id] links into a single save, so bulk
+  # attachment uploads don't pay a separate Reaction#update (and logidze version) per file.
+  #
+  # TODO: this is a non-atomic read-modify-write on the whole `variations` column - two
+  # concurrent saves for the same reaction can each read the same pre-update state, and
+  # whichever `update` commits last silently drops the other's link. Now hit on every
+  # dataset attachment upload rather than only the rare manual inbox-assign action, so it's
+  # worth revisiting (optimistic locking via lock_version, or a targeted jsonb update).
+  def assign_attachments_to_variations(pairs)
+    current_variations = variations
+    changed = pairs.count { |variation_id, analysis_id| link_variation?(current_variations, variation_id, analysis_id) }
 
-    variation['metadata'] ||= {}
-    variation['metadata']['analyses'] ||= []
-    return if variation['metadata']['analyses'].include?(analysis_id)
-
-    variation['metadata']['analyses'] << analysis_id
-    update(variations: variations)
+    update(variations: current_variations) if changed.positive?
   end
 
   private
+
+  def link_variation?(current_variations, variation_id, analysis_id)
+    return false if variation_id.blank?
+
+    variation = current_variations.find { |v| v['id'].to_s == variation_id.to_s }
+    return false unless variation
+
+    variation['metadata'] ||= {}
+    variation['metadata']['analyses'] ||= []
+    return false if variation['metadata']['analyses'].include?(analysis_id)
+
+    variation['metadata']['analyses'] << analysis_id
+    true
+  end
 
   def set_default_reaction_type
     self.reaction_type = 'standard' if reaction_type.blank?

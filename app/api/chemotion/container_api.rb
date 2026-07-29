@@ -18,10 +18,9 @@ module Chemotion
         update_datamodel(params[:container])
 
         root_element = @container.root_element
-        root_element.reload if root_element.is_a?(Reaction)
 
         response = { container: Entities::ContainerEntity.represent(@container, current_user: current_user) }
-        if root_element.is_a?(Reaction)
+        if root_element.respond_to?(:variations)
           response[:variations] = Entities::ReactionVariationEntity.represent(
             root_element.variations.map(&:deep_symbolize_keys), current_user: current_user
           )

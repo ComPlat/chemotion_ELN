@@ -7,6 +7,7 @@ module Usecases
 
       def initialize(current_user)
         @current_user = current_user
+        @variation_links = []
       end
 
       def update_datamodel(container)
@@ -27,6 +28,7 @@ module Usecases
           root_container.save!
         end
         create_or_update_containers(container[:children], root_container, current_user) if container[:children].present?
+        flush_variation_links(root_container)
         root_container
       end
 
@@ -112,11 +114,23 @@ module Usecases
           end
 
           attachment.update!(attachable_id: container.id, attachable_type: 'Container') if container.present?
-          container.link_attachment_variation(attachment) if att[:is_new] && container.present?
+          next unless att[:is_new] && container.present?
+
+          link = container.variation_link_for(attachment)
+          @variation_links << link if link
         end
       end
       # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       # rubocop:enable Metrics/BlockLength
+
+      def flush_variation_links(root_container)
+        return if @variation_links.empty? || root_container.nil?
+
+        element = root_container.root_element
+        return unless element.respond_to?(:assign_attachments_to_variations)
+
+        element.assign_attachments_to_variations(@variation_links)
+      end
 
       def delete_containers_and_attachments(container)
         Attachment.where_container(container[:id]).destroy_all

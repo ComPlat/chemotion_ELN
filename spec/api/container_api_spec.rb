@@ -372,6 +372,91 @@ describe Chemotion::ContainerAPI do
           expect(reaction.reload.updated_at).to eq(updated_at_after_first_link)
         end
       end
+
+      context 'when multiple new attachments resolve to variations in one request' do
+        let(:first_dataset_container) { create(:container, container_type: 'dataset', parent: analysis_container) }
+        let(:second_dataset_container) { create(:container, container_type: 'dataset', parent: analysis_container) }
+        let(:first_attachment_key) { SecureRandom.uuid }
+        let(:second_attachment_key) { SecureRandom.uuid }
+        let(:container_params_with_two_attachments) do
+          {
+            container: {
+              id: root_container.id,
+              container_type: 'root',
+              description: '',
+              extended_metadata: {},
+              children: [{
+                id: analyses_container.id,
+                container_type: 'analyses',
+                description: '',
+                extended_metadata: {},
+                children: [{
+                  id: analysis_container.id,
+                  container_type: 'analysis',
+                  name: analysis_container.name,
+                  description: analysis_container.description,
+                  extended_metadata: analysis_container.extended_metadata,
+                  children: [
+                    {
+                      id: first_dataset_container.id,
+                      container_type: 'dataset',
+                      name: first_dataset_container.name,
+                      description: first_dataset_container.description,
+                      extended_metadata: {},
+                      attachments: [{
+                        id: first_attachment_key,
+                        is_new: true,
+                        is_deleted: false,
+                        filename: 'spectrum-v1.pdf',
+                      }],
+                    },
+                    {
+                      id: second_dataset_container.id,
+                      container_type: 'dataset',
+                      name: second_dataset_container.name,
+                      description: second_dataset_container.description,
+                      extended_metadata: {},
+                      attachments: [{
+                        id: second_attachment_key,
+                        is_new: true,
+                        is_deleted: false,
+                        filename: 'spectrum-v2.pdf',
+                      }],
+                    },
+                  ],
+                }],
+              }],
+            },
+          }
+        end
+
+        before do
+          reaction.update!(
+            variations: {
+              'uuid-1' => { 'id' => '1', 'metadata' => { 'analyses' => [], 'notes' => '' } },
+              'uuid-2' => { 'id' => '2', 'metadata' => { 'analyses' => [], 'notes' => '' } },
+            },
+          )
+          create(:attachment, key: first_attachment_key, filename: 'spectrum-v1.pdf', attachable: nil, created_by: user.id) # rubocop:disable Layout/LineLength
+          create(:attachment, key: second_attachment_key, filename: 'spectrum-v2.pdf', attachable: nil, created_by: user.id) # rubocop:disable Layout/LineLength
+        end
+
+        it 'links both variations with a single batched save' do # rubocop:disable RSpec/MultipleExpectations
+          expect_any_instance_of(Reaction) # rubocop:disable RSpec/AnyInstance
+            .to receive(:assign_attachments_to_variations).once.and_call_original
+
+          put('/api/v1/containers/container',
+              params: container_params_with_two_attachments.to_json,
+              headers: { 'CONTENT_TYPE' => 'application/json' })
+
+          expect(response.status).to eq 200
+          json = JSON.parse(response.body)
+          variation_one = json['variations'].find { |v| v['id'] == '1' }
+          variation_two = json['variations'].find { |v| v['id'] == '2' }
+          expect(variation_one['metadata']['analyses']).to eq([analysis_container.id])
+          expect(variation_two['metadata']['analyses']).to eq([analysis_container.id])
+        end
+      end
     end
 
     context 'when the root element is not a Reaction' do
