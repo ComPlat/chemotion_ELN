@@ -1012,5 +1012,6 @@ export {
   DrySolventCheckBox,
   VolumeRatio,
   MaterialRef,
+  GaseousInputFields,
   GaseousProductRow
 };
