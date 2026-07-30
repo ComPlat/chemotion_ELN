@@ -53,7 +53,9 @@ const CollectionSubtreeFunctions = ({
   );
   const canImportSamples = !collection.is_locked && hasPermission(PermissionConst.AddElements);
   const canAddShare = !collection.is_locked && hasPermission(PermissionConst.ManageShares);
-  const canShowMetadataActions = !collection.is_locked && hasPermission(PermissionConst.ManageShares);
+  // Metadata edits + RADAR publish are gated at AddElements to preserve the
+  // pre-branch capability for delegates who can add samples/reactions.
+  const canShowMetadataActions = !collection.is_locked && hasPermission(PermissionConst.AddElements);
 
   const editMetadata = () => {
     Aviator.navigate(`/collection/${collection.id}/metadata`, { silent: true });

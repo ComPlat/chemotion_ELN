@@ -90,7 +90,7 @@ describe('CollectionSubtreeFunctions permission gating', () => {
     expect(itemTexts(wrapper)).toEqual(['Reference Report']);
   });
 
-  it('shared-with-me at AddElements: adds Import samples but not shares/metadata', () => {
+  it('shared-with-me at AddElements: adds Import samples and metadata actions, no shares', () => {
     const wrapper = shallow(
       <CollectionSubtreeFunctions
         collection={sharedWithAddElements}
@@ -101,9 +101,10 @@ describe('CollectionSubtreeFunctions permission gating', () => {
     const texts = itemTexts(wrapper);
     expect(texts).toContain('Reference Report');
     expect(texts).toContain('Import samples to collection');
+    expect(texts).toContain('Edit collection metadata');
+    expect(texts).toContain('Publish via RADAR');
     expect(texts).not.toContain('Add share');
-    expect(texts).not.toContain('Edit collection metadata');
-    expect(texts).not.toContain('Publish via RADAR');
+    expect(texts).not.toContain('Manage shares');
   });
 
   it('shared-with-me at ManageShares: full menu including metadata & shares', () => {
