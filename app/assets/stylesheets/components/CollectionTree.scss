@@ -7,6 +7,7 @@
   &__container {
     @extend .tree-view;
     @extend .overflow-y-auto;
+    overflow-x: hidden;
     @extend .surface-lighten3;
     @extend .border-top;
   }
@@ -45,8 +46,7 @@
   .collection-subtree-functions {
     display: none;
   }
-  &:hover .collection-subtree-functions,
-  .collection-subtree-functions.show {
+  &:hover .collection-subtree-functions {
     display: block;
   }
 }
