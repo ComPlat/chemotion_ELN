@@ -228,10 +228,14 @@ const cleaningNMRiumData = (nmriumData) => {
     );
 
     // NMRium never re-fetches from our source/sourceSelector references, so `data` must be kept.
+    // originalData is safe to drop: NMRium's own loader always recomputes it fresh from `data`.
     delete tmpSpc.originalData;
 
-    // Keep the spectrum name in display.name and drop the stale originalInfo/meta duplicates.
-    // `info` itself must stay fully intact; NMRium relies on it (e.g. dimension, isFid) to read `data`.
+    // Keep the spectrum name in display.name and drop the stale originalInfo duplicate (NMRium's
+    // loader always recomputes it fresh from `info`, same as originalData). `meta` is NOT dropped:
+    // unlike originalData/originalInfo, NMRium just passes it through as-is rather than regenerating
+    // it, so we can't assume it's safe to lose. `info` itself must stay fully intact; NMRium relies
+    // on it (e.g. dimension, isFid) to read `data`.
     if (isSourceOnly2D) {
       const spectrumName = tmpSpc?.display?.name
         || tmpSpc?.info?.name
@@ -241,10 +245,9 @@ const cleaningNMRiumData = (nmriumData) => {
         tmpSpc.display = { ...tmpSpc.display, name: spectrumName };
       }
       // info may be sparse on legacy spectra where dimension/isFid were only ever mirrored into
-      // originalInfo/meta; backfill it before dropping those duplicates so nothing is lost.
+      // originalInfo/meta; backfill it before dropping the originalInfo duplicate.
       tmpSpc.info = { ...tmpSpc.meta, ...tmpSpc.originalInfo, ...tmpSpc.info };
       delete tmpSpc.originalInfo;
-      delete tmpSpc.meta;
       // Remove the filters if they are not valid
       if (Array.isArray(tmpSpc.filters)) {
         tmpSpc.filters = tmpSpc.filters.filter(

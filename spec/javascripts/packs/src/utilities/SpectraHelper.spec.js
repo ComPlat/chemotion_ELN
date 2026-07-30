@@ -375,7 +375,7 @@ describe('SpectraHelper', () => {
           dimension: 2, name: 'cosy', isFid: true, nucleus: ['1H', '1H'],
         });
         expect(spectrum.originalInfo).toEqual(undefined);
-        expect(spectrum.meta).toEqual(undefined);
+        expect(spectrum.meta).toEqual({ dimension: 2 });
         expect(spectrum.display).toEqual({ name: 'cosy' });
         expect(spectrum.data).toEqual({
           re: { z: [[1.0, 2.0], [3.0, 4.0]] }, im: { z: [[1.0, 2.0], [3.0, 4.0]] },
@@ -401,7 +401,7 @@ describe('SpectraHelper', () => {
           dimension: 2, isFid: true, name: 'cosy',
         });
         expect(spectrum.originalInfo).toEqual(undefined);
-        expect(spectrum.meta).toEqual(undefined);
+        expect(spectrum.meta).toEqual({ dimension: 2 });
       });
 
       it('keeps data for 1D spectra that have a source (NMRium never re-fetches it)', () => {
