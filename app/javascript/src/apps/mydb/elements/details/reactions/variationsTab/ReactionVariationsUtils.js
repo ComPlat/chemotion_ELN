@@ -1,7 +1,13 @@
-import uuid from 'uuid';
 import Reaction from 'src/models/Reaction';
 import Sample from 'src/models/Sample';
 import Container from 'src/models/Container';
+import uuid from 'uuid';
+
+const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
+
+function getVariationsRowName(reactionLabel, variationsRowId) {
+  return `${reactionLabel}-${variationsRowId}`;
+}
 
 const makeVariationReaction = (reaction, reactionData) => {
   const clonedReaction = { ...structuredClone(reaction), ...reactionData };
@@ -22,6 +28,43 @@ const makeVariationReaction = (reaction, reactionData) => {
     Object.create(Reaction.prototype),
     clonedReaction
   );
+};
+
+const addNewVariationDataset = ({ reaction: { variations } }) => {
+  const id = uuid.v4();
+  const majorGroup = Math.max(0, ...variations.map(({ group }) => group[0])) + 1;
+  const group = [majorGroup, 0];
+
+  const newVariation = {
+    id, group,
+      analyses: [],
+    notes: '',
+    data: {}
+  };
+  variations.push(newVariation);
+  return newVariation;
+};
+
+const addInternalVariationObject = (
+  variations,
+  reaction,
+  { data = { id: uuid.v4() }, group = [0,0], analyses = [] }
+) => {
+  variations.push({
+    analyses,
+    group,
+    data: makeVariationReaction(reaction, data),
+    idx: variations.length
+  });
+};
+
+const convertVariationDatasetToInternalVariations = (reaction) => {
+  const internalVariation = [];
+  reaction.variations.forEach((v) => {
+    addInternalVariationObject(internalVariation, reaction, v);
+  });
+
+  return internalVariation;
 };
 
 const diffObjects = (obj1, obj2, ignoreList = []) => {
@@ -68,6 +111,11 @@ const diffObjects = (obj1, obj2, ignoreList = []) => {
 };
 
 export {
+  convertVariationDatasetToInternalVariations,
+  addInternalVariationObject,
+  addNewVariationDataset,
   makeVariationReaction,
-  diffObjects
+  diffObjects,
+  getVariationsRowName,
+  REACTION_VARIATIONS_TAB_KEY
 };

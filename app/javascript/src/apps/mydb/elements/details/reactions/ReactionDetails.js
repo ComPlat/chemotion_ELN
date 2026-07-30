@@ -23,7 +23,8 @@ import ReactionDetailsContainers from 'src/apps/mydb/elements/details/reactions/
 import SampleDetailsContainers from 'src/apps/mydb/elements/details/samples/analysesTab/SampleDetailsContainers';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 import { handleInputChange } from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
-import { makeVariationReaction } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationUtils';
+import { convertVariationDatasetToInternalVariations }
+  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 // eslint-disable-next-line max-len
 import ReactionDetailsProperties
   from 'src/apps/mydb/elements/details/reactions/propertiesTab/ReactionDetailsProperties';
@@ -102,7 +103,7 @@ export default class ReactionDetails extends Component {
       isEditingHeaderName: false,
       headerNameDraft: reaction.name || '',
       // eslint-disable-next-line max-len
-      variations: reaction.variations.map((v, idx) => ({ idx, group: v.group, data: makeVariationReaction(reaction, v.data || {}) }))
+      variations: convertVariationDatasetToInternalVariations(reaction)
     };
 
     this.setVariations = (variations) => {

@@ -10,6 +10,9 @@ import ReorderableList from 'src/components/common/ReorderableList';
 import Reaction from 'src/models/Reaction';
 import { permitOn } from 'src/components/common/uis';
 import DragHandle from 'src/components/common/DragHandle';
+import DeleteButton from 'src/components/common/DeleteButton';
+import AppModal from 'src/components/common/AppModal';
+import { AnalysesCell } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import MaterialHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialUtils';
 import { MATERIAL_HEADER } from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
@@ -443,6 +446,71 @@ ReactionFieldCell.propTypes = {
   }).isRequired,
 };
 
+const AnalysesLinkCell = ({ data }) => {
+  const {
+    onAnalysesChange, allReactionAnalyses, reactionShortLabel
+  } = useContext(VariationsGridContext);
+
+  return (
+    <AnalysesCell
+      analyses={data.analyses ?? []}
+      allReactionAnalyses={allReactionAnalyses}
+      reactionShortLabel={reactionShortLabel}
+      rowId={data.data?.id ?? data.idx}
+      disabled={!permitOn(data.data)}
+      onChange={(analyses) => onAnalysesChange(data.idx, analyses)}
+    />
+  );
+};
+
+AnalysesLinkCell.propTypes = {
+  data: PropTypes.shape({
+    idx: PropTypes.number.isRequired,
+    data: PropTypes.instanceOf(Reaction).isRequired,
+    analyses: PropTypes.arrayOf(
+      PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    ),
+  }).isRequired,
+};
+
+// Deleting a variation is not undoable from here, so it asks first, like "Remove all variations".
+const DeleteVariationCell = ({ data }) => {
+  const { onDeleteVariation } = useContext(VariationsGridContext);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  return (
+    <>
+      <DeleteButton
+        disabled={!permitOn(data.data)}
+        onClick={() => setShowConfirm(true)}
+      />
+      {showConfirm && (
+        <AppModal
+          show
+          onHide={() => setShowConfirm(false)}
+          animation={false}
+          title="Confirm Removal"
+          closeLabel="Cancel"
+          primaryActionLabel="Remove variation"
+          onPrimaryAction={() => {
+            setShowConfirm(false);
+            onDeleteVariation(data.idx);
+          }}
+        >
+          {`Are you sure you want to remove variation ${data.idx}?`}
+        </AppModal>
+      )}
+    </>
+  );
+};
+
+DeleteVariationCell.propTypes = {
+  data: PropTypes.shape({
+    idx: PropTypes.number.isRequired,
+    data: PropTypes.instanceOf(Reaction).isRequired,
+  }).isRequired,
+};
+
 const OpenVariationCell = ({ data }) => {
   const { setActiveVariation } = useContext(VariationsGridContext);
 
@@ -632,6 +700,18 @@ const buildColumnGroups = ({
           cellRenderer: GroupCell,
         },
         {
+          colId: 'variation_analyses',
+          headerName: 'Analyses',
+          width: 100,
+          cellRenderer: AnalysesLinkCell,
+        },
+        {
+          colId: 'variation_delete',
+          headerName: '',
+          width: 60,
+          cellRenderer: DeleteVariationCell,
+        },
+        {
           colId: MATERIAL_COLUMN_ID,
           headerName: 'Material',
           headerComponent: ActiveMaterialHeader,
@@ -759,7 +839,11 @@ const VariationSchemaTable = ({
   variations,
   onReactionChange,
   setActiveVariation,
-  onGroupChange
+  onGroupChange,
+  onDeleteVariation,
+  onAnalysesChange,
+  allReactionAnalyses,
+  reactionShortLabel
 }) => {
   const [hiddenColumns, setHiddenColumns] = useState([]);
   const [activeSlot, setActiveSlot] = useState(null);
@@ -927,7 +1011,16 @@ const VariationSchemaTable = ({
 
   // See VariationsGridContext: intentionally a fresh object on every render.
   const gridContext = {
-    getRowHandler, setActiveVariation, onGroupChange, activeSlot, hiddenColumns, setColumnsHidden
+    getRowHandler,
+    setActiveVariation,
+    onGroupChange,
+    onDeleteVariation,
+    onAnalysesChange,
+    allReactionAnalyses,
+    reactionShortLabel,
+    activeSlot,
+    hiddenColumns,
+    setColumnsHidden
   };
 
   const getGroupAllHidden = (group) => {
@@ -1009,6 +1102,17 @@ VariationSchemaTable.propTypes = {
   onReactionChange: PropTypes.func.isRequired,
   setActiveVariation: PropTypes.func.isRequired,
   onGroupChange: PropTypes.func.isRequired,
+  onDeleteVariation: PropTypes.func.isRequired,
+  onAnalysesChange: PropTypes.func.isRequired,
+  allReactionAnalyses: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string,
+  })).isRequired,
+  reactionShortLabel: PropTypes.string,
+};
+
+VariationSchemaTable.defaultProps = {
+  reactionShortLabel: '',
 };
 
 export default VariationSchemaTable;

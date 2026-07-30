@@ -33,6 +33,7 @@ import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import SpectraEditorButton from 'src/components/common/SpectraEditorButton';
 // eslint-disable-next-line max-len
+import { AnalysisVariationLink } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import { truncateText } from 'src/utilities/textHelper';
 import AccordionHeaderWithButtons from 'src/components/common/AccordionHeaderWithButtons';
 import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
@@ -199,7 +200,10 @@ export default class ReactionDetailsContainers extends Component {
 
     return (
       <div className="d-flex justify-content-between align-items-center mb-0 gap-1">
-
+        <AnalysisVariationLink
+          reaction={reaction}
+          analysisID={container.id}
+        />
         <SpectraEditorButton
           element={reaction}
           hasJcamp={hasJcamp}
