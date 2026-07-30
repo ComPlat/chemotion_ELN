@@ -220,8 +220,8 @@ const cleaningNMRiumData = (nmriumData) => {
     const tmpSpc = { ...spc };
     const hasLocalSource = !!(spc && (spc.source || spc.sourceSelector));
     const hasSource = hasLocalSource || hasGlobalSource;
-    // Check if the spectrum is a 2D spectrum
-    const isSourceOnly2D = hasSource && (
+    // Whether this is a 2D spectrum backed by a source (data itself is always kept regardless).
+    const is2DWithSource = hasSource && (
       tmpSpc?.info?.dimension === 2
       || tmpSpc?.originalInfo?.dimension === 2
       || tmpSpc?.meta?.dimension === 2
@@ -236,7 +236,7 @@ const cleaningNMRiumData = (nmriumData) => {
     // unlike originalData/originalInfo, NMRium just passes it through as-is rather than regenerating
     // it, so we can't assume it's safe to lose. `info` itself must stay fully intact; NMRium relies
     // on it (e.g. dimension, isFid) to read `data`.
-    if (isSourceOnly2D) {
+    if (is2DWithSource) {
       const spectrumName = tmpSpc?.display?.name
         || tmpSpc?.info?.name
         || tmpSpc?.originalInfo?.name
