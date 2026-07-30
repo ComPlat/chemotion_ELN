@@ -58,7 +58,7 @@ function CollectionTree({ isCollapsed }) {
     },
     {
       label: 'Shared with me',
-      icon: 'icon-incoming',
+      icon: 'icon-outgoing', // intentional: outgoing glyph visually represents the arrow direction for received shares
       collectionType: 'sharedWithMe',
       collections: sharedWithMeCollections,
     },

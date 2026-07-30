@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
 import Tree from 'react-ui-tree';
 import { cloneDeep } from 'lodash';
-import { Button, ButtonGroup, Form, OverlayTrigger, Popover } from 'react-bootstrap';
+import { Button, ButtonGroup, Dropdown, Form, OverlayTrigger, Popover } from 'react-bootstrap';
 import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/SelectionShareModal';
 import CollectionSharesEditModal from 'src/apps/mydb/collections/CollectionSharesEditModal';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import CollectionTabsEditorModal from 'src/apps/mydb/collections/CollectionTabsEditorModal';
 import { DEFAULT_COLLECTION_SHARE_PERMISSIONS } from 'src/utilities/collectionConstants';
+import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
 
 const MyCollections = () => {
   const collectionsStore = useContext(StoreContext).collections;
@@ -95,31 +96,6 @@ const MyCollections = () => {
     setSharesEditModal({ show: false, node: {} });
   };
 
-  const renderCollectionShareButton = (node) => {
-    if (!node.shared) { return null; }
-
-    const sharedWithUsers = collectionsStore.sharedWithUsers(node.id);
-    const users = sharedWithUsers !== undefined ? sharedWithUsers.shared_with_users : [];
-    const count = users.length > 0 ? `(${users.length})` : '';
-
-    return (
-      <Button
-        id={`collection-share-button-${node.id}`}
-        className="d-flex align-items-center gap-1"
-        title="Manage shares"
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={() => openCollectionSharesEditModal(node)}
-        size="sm"
-        variant="warning"
-        disabled={node.isNew === true}
-      >
-        <i className="fa fa-users" />
-        <i className="fa fa-share-alt" />
-        {count}
-      </Button>
-    );
-  };
-
   const addCollectionButton = (node) => (
     <Button
       id={`add-new-collection-button${node.id !== -1 ? `-${node.id}` : ''}`}
@@ -180,36 +156,58 @@ const MyCollections = () => {
       </Popover>
     );
 
+    const sharedWithUsers = node.shared ? collectionsStore.sharedWithUsers(node.id) : null;
+    const shareCount = sharedWithUsers?.shared_with_users?.length ?? 0;
+
     return (
-      <ButtonGroup>
-        {renderCollectionShareButton(node)}
-        <Button
-          id="collection-share-btn"
-          size="sm"
-          variant="primary"
-          title="Add share"
-          disabled={node.isNew === true}
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={() => openCollectionSharesModal(node)}
-        >
-          <i className="fa fa-plus" />
-          <i className="fa fa-share-alt ms-1" />
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          title="Edit collection tabs"
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={() => setTabsEditorCollection(node)}
-        >
-          <i className="fa fa-pencil" />
-        </Button>
+      <ButtonGroup className="flex-shrink-0">
+        {node.shared && (
+          <OverlayTrigger placement="top" overlay={<UserInfosTooltip collectionId={node.id} />}>
+            <span
+              className="btn btn-sm btn-warning d-flex align-items-center gap-1"
+              onMouseDown={(e) => e.stopPropagation()}
+              style={{ cursor: 'default' }}
+            >
+              <i className="fa fa-share-alt" />
+              {shareCount > 0 && ` (${shareCount})`}
+            </span>
+          </OverlayTrigger>
+        )}
         {addCollectionButton(node)}
         <OverlayTrigger animation placement="bottom" root trigger="focus" overlay={popover}>
           <Button size="sm" variant="danger" onMouseDown={(e) => e.stopPropagation()}>
             <i className="fa fa-trash-o" />
           </Button>
         </OverlayTrigger>
+        <Dropdown onMouseDown={(e) => e.stopPropagation()}>
+          <Dropdown.Toggle
+            size="sm"
+            variant="light"
+            id={`collection-more-actions-${node.id}`}
+            disabled={node.isNew === true}
+          >
+            <i className="fa fa-ellipsis-v" />
+          </Dropdown.Toggle>
+          <Dropdown.Menu popperConfig={{ strategy: 'fixed' }} renderOnMount>
+            <Dropdown.Item onClick={() => openCollectionSharesModal(node)}>
+              <i className="fa fa-plus me-1" />
+              <i className="fa fa-share-alt me-1" />
+              Add share
+            </Dropdown.Item>
+            {node.shared && (
+              <Dropdown.Item onClick={() => openCollectionSharesEditModal(node)}>
+                <i className="fa fa-users me-1" />
+                <i className="fa fa-share-alt me-1" />
+                Manage shares{shareCount > 0 ? ` (${shareCount})` : ''}
+              </Dropdown.Item>
+            )}
+            <Dropdown.Divider />
+            <Dropdown.Item onClick={() => setTabsEditorCollection(node)}>
+              <i className="fa fa-sliders me-1" />
+              Edit collection tabs
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
       </ButtonGroup>
     );
   };
@@ -220,7 +218,7 @@ const MyCollections = () => {
     }
     return (
       <Form.Control
-        className="ms-3 w-75"
+        className="ms-3 flex-grow-1 min-w-0 me-2"
         size="sm"
         type="text"
         value={node.label || ''}
@@ -230,7 +228,7 @@ const MyCollections = () => {
   };
 
   const renderNode = (node) => (
-    <div className="collection-node py-1 d-flex justify-content-between">
+    <div className="collection-node py-1 d-flex flex-nowrap align-items-center justify-content-between">
       {label(node)}
       {actions(node)}
     </div>
@@ -265,11 +263,13 @@ const MyCollections = () => {
           onHide={closeCollectionSharesEditModal}
         />
       )}
-      <CollectionTabsEditorModal
-        collection={tabsEditorCollection}
-        show={tabsEditorCollection != null}
-        onHide={() => setTabsEditorCollection(null)}
-      />
+      {tabsEditorCollection != null && (
+        <CollectionTabsEditorModal
+          collection={tabsEditorCollection}
+          show
+          onHide={() => setTabsEditorCollection(null)}
+        />
+      )}
     </div>
   );
 };

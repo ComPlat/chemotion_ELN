@@ -19,7 +19,7 @@ function CollectionManagementModal({ show, onHide }) {
   return (
     <AppModal
       show={show}
-      size="xxxl"
+      size="xl"
       contentClassName="vh-90"
       onHide={closeModal}
       title="Collection Management"

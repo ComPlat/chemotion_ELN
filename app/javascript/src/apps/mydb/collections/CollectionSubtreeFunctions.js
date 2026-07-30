@@ -35,7 +35,9 @@ CollectionSubtreeFunctionsDropdownToggle.propTypes = {
   onClick: PropTypes.func.isRequired,
 };
 
-const CollectionSubtreeFunctions = ({ collection, sharedWithMe, hasRadar }) => {
+const CollectionSubtreeFunctions = ({
+  collection, sharedWithMe, hasRadar, onManageShares,
+}) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showLiteratureModal, setShowLiteratureModal] = useState(false);
   const [isLiteratureModalMounted, setIsLiteratureModalMounted] = useState(false);
@@ -48,7 +50,7 @@ const CollectionSubtreeFunctions = ({ collection, sharedWithMe, hasRadar }) => {
   const canAddShare = !sharedWithMe && !collection.is_locked;
   const canShowMetadataActions = !collection.is_locked && (
     !sharedWithMe
-    || (collection.permission_level != null
+    || (typeof collection.permission_level === 'number'
       && collection.permission_level >= PermissionConst.AddElements)
   );
 
@@ -76,6 +78,11 @@ const CollectionSubtreeFunctions = ({ collection, sharedWithMe, hasRadar }) => {
     setShowShareModal(true);
   };
 
+  const handleManageShares = (event) => {
+    event.stopPropagation();
+    if (onManageShares) onManageShares();
+  };
+
   const handleEditMetadata = (event) => {
     event.stopPropagation();
     editMetadata();
@@ -83,7 +90,6 @@ const CollectionSubtreeFunctions = ({ collection, sharedWithMe, hasRadar }) => {
 
   const handlePublishRadar = (event) => {
     event.stopPropagation();
-    if (!hasRadar) return;
     setShowRadarModal(true);
   };
 
@@ -122,6 +128,13 @@ const CollectionSubtreeFunctions = ({ collection, sharedWithMe, hasRadar }) => {
                 <i className="fa fa-share-alt me-1" />
                 Add share
               </Dropdown.Item>
+              {onManageShares && (
+                <Dropdown.Item onClick={handleManageShares}>
+                  <i className="fa fa-users me-1" />
+                  <i className="fa fa-share-alt me-1" />
+                  Manage shares
+                </Dropdown.Item>
+              )}
             </>
           )}
           {canShowMetadataActions && (
@@ -185,11 +198,13 @@ CollectionSubtreeFunctions.propTypes = {
   collection: PropTypes.object.isRequired,
   sharedWithMe: PropTypes.bool,
   hasRadar: PropTypes.bool,
+  onManageShares: PropTypes.func,
 };
 
 CollectionSubtreeFunctions.defaultProps = {
   sharedWithMe: false,
   hasRadar: false,
+  onManageShares: null,
 };
 
 export default CollectionSubtreeFunctions;

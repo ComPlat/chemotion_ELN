@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { set, isEmpty } from 'lodash';
 import { List } from 'immutable';
@@ -22,6 +22,8 @@ TabItemComponent.propTypes = {
   item: PropTypes.string.isRequired,
 };
 
+// Unlike the former CollectionTabs view (full A–Z sort of ELN + generics), keep the
+// familiar ELN order (Sample, Reaction, …) and only sort generic element types by label.
 function buildElementList() {
   const standardEls = allElnElmentsWithLabel.map((el) => ({
     ...el,
@@ -40,7 +42,6 @@ function buildElementList() {
     type: el.name,
     isGeneric: true,
   }));
-  // Keep ELN element order (Sample, Reaction, …); append generics after, sorted by label.
   return [
     ...standardEls,
     ...[...genericElsWithLabel].sort((a, b) => a.label.localeCompare(b.label)),
@@ -79,40 +80,29 @@ function layoutsForCollection(collection, allElements, profileData) {
 
 const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
   const collectionsStore = useContext(StoreContext).collections;
-  const [profileData, setProfileData] = useState({});
-  const [allElements, setAllElements] = useState(allElnElmentsWithLabel);
-  const [layouts, setLayouts] = useState(emptyLayoutsFor(allElnElmentsWithLabel));
+  const allElements = useMemo(() => buildElementList(), []);
+  const [layouts, setLayouts] = useState(() => emptyLayoutsFor(allElements));
   const [selectedCategory, setSelectedCategory] = useState('sample');
-
-  useEffect(() => {
-    const { profile } = UserStore.getState();
-    if (profile && profile.data) {
-      setProfileData(profile.data);
-    }
-    const combined = buildElementList();
-    setAllElements(combined);
-    setSelectedCategory('sample');
-    setLayouts(emptyLayoutsFor(combined));
-  }, []);
 
   useEffect(() => {
     if (!show || !collection) return;
     const { profile } = UserStore.getState();
-    const nextProfileData = (profile && profile.data) || profileData;
-    setLayouts(layoutsForCollection(collection, allElements, nextProfileData));
+    const profileData = (profile && profile.data) || {};
+    setLayouts(layoutsForCollection(collection, allElements, profileData));
     setSelectedCategory('sample');
   }, [show, collection, allElements]);
 
   const handleSave = () => {
-    const layoutSegments = allElnElmentsWithLabel.reduce((acc, { name }) => {
+    const layoutSegments = allElements.reduce((acc, { name }) => {
       acc[name] = filterTabLayout(layouts[name]);
       return acc;
     }, {});
     collectionsStore.updateCollection(collection, layoutSegments);
 
     const userProfile = UserStore.getState().profile;
-    Object.entries(layoutSegments).forEach(([type, layout]) => {
-      set(userProfile, `data.layout_detail_${type}`, layout);
+    allElements.forEach(({ name, isGeneric }) => {
+      const profileKey = isGeneric ? 'layout_detail_generic' : `layout_detail_${name}`;
+      set(userProfile, `data.${profileKey}`, layoutSegments[name]);
     });
     UserActions.updateUserProfile(userProfile);
 

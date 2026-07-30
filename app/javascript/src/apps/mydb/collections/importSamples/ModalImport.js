@@ -255,7 +255,7 @@ export default class ModalImport extends React.Component {
 
     // Resolve the target collection ID once
     const uiState = UIStore.getState();
-    const targetCollectionId = props.collectionId || uiState.currentCollection.id;
+    const targetCollectionId = props.collectionId ?? uiState.currentCollection?.id;
 
     this.state = {
       file: null,

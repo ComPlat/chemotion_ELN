@@ -111,16 +111,8 @@ function CollectionSubtree({
     }
   };
 
-  const openCollectionSharesEditModal = (e) => {
-    e.stopPropagation();
+  const openManageShares = () => {
     setSharesEditModal({ show: true, node: { id: root.id, label: root.label } });
-  };
-
-  const openCollectionSharesEditModalKeyDown = (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      openCollectionSharesEditModal(e);
-    }
   };
 
   const closeCollectionSharesEditModal = () => {
@@ -189,14 +181,7 @@ function CollectionSubtree({
             )}
             {root.shared && (
               <OverlayTrigger placement="top" overlay={<UserInfosTooltip collectionId={root.id} />}>
-                <i
-                  className="fa fa-share-alt"
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Manage shares"
-                  onClick={openCollectionSharesEditModal}
-                  onKeyDown={openCollectionSharesEditModalKeyDown}
-                />
+                <i className="fa fa-share-alt" />
               </OverlayTrigger>
             )}
             {sharedWithMe && !root.is_locked && (
@@ -204,7 +189,7 @@ function CollectionSubtree({
                 placement="top"
                 overlay={<SharedToMeInfosTooltip collectionId={root.id} owner={root.owner} />}
               >
-                <i className="fa fa-info-circle" />
+                <i className="fa fa-share-alt" />
               </OverlayTrigger>
             )}
           </>
@@ -214,6 +199,7 @@ function CollectionSubtree({
             collection={root}
             sharedWithMe={sharedWithMe}
             hasRadar={hasRadar}
+            onManageShares={root.shared && !sharedWithMe ? openManageShares : null}
           />
         )}
       >

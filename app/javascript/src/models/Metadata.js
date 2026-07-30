@@ -14,7 +14,8 @@ export default class Metadata extends Element {
       metadata: {}
     });
 
-    if (currentCollection && currentCollection.id === collection_id) {
+    // IDs may be number (API/store) or string (route params); coerce before compare.
+    if (currentCollection && Number(currentCollection.id) === Number(collection_id)) {
       metadata.metadata.title = currentCollection.label;
     }
 
