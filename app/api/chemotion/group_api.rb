@@ -33,7 +33,12 @@ module Chemotion
 
       desc 'fetch groups of current user'
       get do
-        data = current_user.groups | current_user.administrated_accounts.where(type: 'Group').distinct
+        data =
+          if current_user
+            current_user&.groups || current_user&.administrated_accounts&.where(type: 'Group')&.distinct
+          else
+            []
+          end
         present data, with: Entities::GroupEntity, root: 'currentGroups'
       end
 
