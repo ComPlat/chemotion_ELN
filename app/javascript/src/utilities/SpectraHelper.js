@@ -240,6 +240,9 @@ const cleaningNMRiumData = (nmriumData) => {
       if (spectrumName) {
         tmpSpc.display = { ...tmpSpc.display, name: spectrumName };
       }
+      // info may be sparse on legacy spectra where dimension/isFid were only ever mirrored into
+      // originalInfo/meta; backfill it before dropping those duplicates so nothing is lost.
+      tmpSpc.info = { ...tmpSpc.meta, ...tmpSpc.originalInfo, ...tmpSpc.info };
       delete tmpSpc.originalInfo;
       delete tmpSpc.meta;
       // Remove the filters if they are not valid

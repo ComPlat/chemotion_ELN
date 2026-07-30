@@ -382,6 +382,28 @@ describe('SpectraHelper', () => {
         });
       });
 
+      it('backfills info.dimension/isFid from originalInfo/meta on legacy spectra where info is sparse', () => {
+        const nmriumData = {
+          data: {
+            spectra: [{
+              source: { jcampURL: 'https://example.com/file.jdx' },
+              info: { name: 'cosy' },
+              originalInfo: { dimension: 2, isFid: true, name: 'cosy' },
+              meta: { dimension: 2 },
+              display: { name: 'cosy' },
+              data: { re: { z: [[1.0, 2.0], [3.0, 4.0]] }, im: { z: [[1.0, 2.0], [3.0, 4.0]] } },
+            }],
+          },
+        };
+        const cleanedNMRiumData = cleaningNMRiumData(nmriumData);
+        const [spectrum] = cleanedNMRiumData.data.spectra;
+        expect(spectrum.info).toEqual({
+          dimension: 2, isFid: true, name: 'cosy',
+        });
+        expect(spectrum.originalInfo).toEqual(undefined);
+        expect(spectrum.meta).toEqual(undefined);
+      });
+
       it('keeps data for 1D spectra that have a source (NMRium never re-fetches it)', () => {
         const nmriumData = {
           data: {
