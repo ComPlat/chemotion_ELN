@@ -23,7 +23,7 @@ export default class LoginOptions extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      omniauthProviders: []
+      omniauthProviders: {}
     };
     this.onChange = this.onChange.bind(this);
   }
