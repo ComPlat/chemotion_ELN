@@ -189,7 +189,6 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
         group={group}
         key={group.id}
         currentUser={userStore.currentUser}
-        currentGroups={currentGroups}
         onDeleteGroup={handleDeleteGroup}
         onDeleteUser={handleDeleteUser}
         onUpdateGroup={refetchCurrentGroups}
