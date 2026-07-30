@@ -69,16 +69,16 @@ const GroupElement = ({ group, currentUser, onDeleteGroup, onDeleteUser, onUpdat
 
   // confirm action after pressing yes
   // if type is group, call deleteGroup api, if type is user, call deleteUser api
-  const confirmDelete = (event, type, groupRec, userRec) => {
+  const confirmDelete = (type, userRec) => {
     if (type === 'group') {
-      onDeleteGroup(groupRec.id);
+      onDeleteGroup(group.id);
     }
     if (type === 'user') {
       // Membership and admin status are independent: removing someone as a member
-      // must never affect their admin status, so this never touches groupRec.admins
+      // must never affect their admin status, so this never touches group.admins
       // or fires a demote call. An admin who is also a member keeps their admin role
       // (now as a non-member admin) after being removed here.
-      onDeleteUser(groupRec, userRec);
+      onDeleteUser(group, userRec);
     }
     return null;
   };
@@ -104,18 +104,18 @@ const GroupElement = ({ group, currentUser, onDeleteGroup, onDeleteUser, onUpdat
 
   // promote users to admin without requiring them to be a member first; reuses
   // setGroupAdmin so the admin list is updated the same way a per-row promote is
-  const addAdmin = (groupRec) => {
+  const addAdmin = () => {
     selectedAdminUsers.forEach((u) => {
-      const isAlreadyAdmin = groupRec.admins.some((admin) => admin.id === u.value);
+      const isAlreadyAdmin = group.admins.some((admin) => admin.id === u.value);
       if (!isAlreadyAdmin) {
-        setGroupAdmin(null, groupRec, { id: u.value, name: u.name, initials: u.initials }, true);
+        setGroupAdmin(null, { id: u.value, name: u.name, initials: u.initials }, true);
       }
     });
 
     setSelectedAdminUsers([]);
   };
 
-  const renderDeleteButton = (type, groupRec, userRec, tooltipText) => {
+  const renderDeleteButton = (type, userRec, tooltipText) => {
     let msg = 'Leave this group?';
     if (type === 'user') {
       if (userRec.id === currentUser.id) {
@@ -136,7 +136,7 @@ const GroupElement = ({ group, currentUser, onDeleteGroup, onDeleteUser, onUpdat
             <Button
               size="sm"
               variant="danger"
-              onClick={(event) => confirmDelete(event, type, groupRec, userRec)}
+              onClick={() => confirmDelete(type, userRec)}
             >
               Yes
             </Button>
@@ -213,7 +213,7 @@ const GroupElement = ({ group, currentUser, onDeleteGroup, onDeleteUser, onUpdat
                   <i className="fa fa-key" />
                 </Button>
               </OverlayTrigger>
-              {renderDeleteButton('group', group, undefined, 'Remove group')}
+              {renderDeleteButton('group', undefined, 'Remove group')}
             </>
           )}
         </div>
@@ -247,7 +247,7 @@ const GroupElement = ({ group, currentUser, onDeleteGroup, onDeleteUser, onUpdat
               value={selectedAdminUsers}
               matchProp="name"
               placeholder="Select users to make admin"
-              loadOptions={this.loadUserByName}
+              loadOptions={loadUserByName}
               onChange={(selected) => setSelectedAdminUsers(selected)}
             />
             <Button
@@ -282,13 +282,13 @@ const GroupElement = ({ group, currentUser, onDeleteGroup, onDeleteUser, onUpdat
               size="sm"
               type="button"
               variant={adminButtonStyle}
-              onClick={(event) => setGroupAdmin(event, group, userRec, !isAdmin)}
+              onClick={(event) => setGroupAdmin(event, userRec, !isAdmin)}
             >
               <i className="fa fa-key" />
             </Button>
           </OverlayTrigger>
         )}
-        {canDelete && renderDeleteButton('user', group, userRec, 'Remove')}
+        {canDelete && renderDeleteButton('user', userRec, 'Remove')}
       </div>
     );
   };
@@ -315,7 +315,7 @@ const GroupElement = ({ group, currentUser, onDeleteGroup, onDeleteUser, onUpdat
                 size="sm"
                 type="button"
                 variant="warning"
-                onClick={(event) => setGroupAdmin(event, group, admin, false)}
+                onClick={(event) => setGroupAdmin(event, admin, false)}
               >
                 <i className="fa fa-key" />
               </Button>
