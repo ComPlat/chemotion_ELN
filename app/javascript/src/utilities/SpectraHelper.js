@@ -205,6 +205,14 @@ const isNMRKind = (container, chmos = []) => {
   return filtered.length > 0;
 };
 
+// A spectrum's dimension may be recorded on info, originalInfo, or meta depending on how/when it
+// was populated; check all three so 2D detection agrees everywhere it's needed.
+const isSpectrum2D = (spc) => (
+  spc?.info?.dimension === 2
+  || spc?.originalInfo?.dimension === 2
+  || spc?.meta?.dimension === 2
+);
+
 const cleaningNMRiumData = (nmriumData) => {
   if (!nmriumData) return null;
   const cleanedNMRiumData = { ...nmriumData };
@@ -221,11 +229,7 @@ const cleaningNMRiumData = (nmriumData) => {
     const hasLocalSource = !!(spc && (spc.source || spc.sourceSelector));
     const hasSource = hasLocalSource || hasGlobalSource;
     // Whether this is a 2D spectrum backed by a source (data itself is always kept regardless).
-    const is2DWithSource = hasSource && (
-      tmpSpc?.info?.dimension === 2
-      || tmpSpc?.originalInfo?.dimension === 2
-      || tmpSpc?.meta?.dimension === 2
-    );
+    const is2DWithSource = hasSource && isSpectrum2D(tmpSpc);
 
     // NMRium never re-fetches from our source/sourceSelector references, so `data` must be kept.
     // originalData is safe to drop: NMRium's own loader always recomputes it fresh from `data`.
@@ -354,4 +358,6 @@ const inlineNotation = (layout, data, metadata) => {
   return { quillData, formattedString };
 };
 
-export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, cleaningNMRiumData, inlineNotation }; // eslint-disable-line
+export {
+  BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, isSpectrum2D, cleaningNMRiumData, inlineNotation,
+}; // eslint-disable-line
