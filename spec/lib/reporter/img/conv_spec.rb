@@ -246,17 +246,25 @@ describe Reporter::Img::Conv do
   end
 
   describe '.svg_page_dimensions' do
-    it 'prefers root width/height over viewBox' do
-      Tempfile.open(['page', '.svg']) do |f|
+    it 'prefers root viewBox over width/height' do
+      Tempfile.open(%w[page .svg]) do |f|
         f.write('<svg width="200px" height="200px" viewBox="0 0 100 100"></svg>')
         f.flush
-        expect(described_class.svg_page_dimensions(f.path)).to eq([200.0, 200.0])
+        expect(described_class.svg_page_dimensions(f.path)).to eq([100.0, 100.0])
       end
     end
 
-    it 'falls back to root viewBox when width/height are absent' do
-      Tempfile.open(['page', '.svg']) do |f|
-        f.write('<svg viewBox="0 0 200 150"></svg>')
+    it 'falls back to root width/height when viewBox is absent' do
+      Tempfile.open(%w[page .svg]) do |f|
+        f.write('<svg width="200" height="150"></svg>')
+        f.flush
+        expect(described_class.svg_page_dimensions(f.path)).to eq([200.0, 150.0])
+      end
+    end
+
+    it 'falls back to root width/height when viewBox is malformed' do
+      Tempfile.open(%w[page .svg]) do |f|
+        f.write('<svg width="200" height="150" viewBox="0 0 0 0"></svg>')
         f.flush
         expect(described_class.svg_page_dimensions(f.path)).to eq([200.0, 150.0])
       end

@@ -63,6 +63,8 @@ module Export
         assigns: { name: @name, fields: @fields },
         layout: false,
       )
+    ensure
+      cleanup_png_tempfiles
     end
 
     def to_relative_html
