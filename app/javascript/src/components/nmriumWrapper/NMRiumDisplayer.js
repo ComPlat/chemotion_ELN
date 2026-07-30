@@ -529,7 +529,8 @@ export default class NMRiumDisplayer extends React.Component {
     const has2D = this.state.is2D || originalSpectra.some(isSpectrum2D);
     const hasAnySource =
       !!root?.source
-      || spectra.some((spc) => spc?.source || spc?.sourceSelector);
+      || !!root?.sources?.length
+      || spectra.some((spc) => spc?.source || spc?.sourceSelector || spc?.selector?.root);
     const needsWrapper = has2D && !hasAnySource && !hasDataProp && !nmriumData.version;
 
     const toSerialize = needsWrapper
