@@ -115,7 +115,7 @@ function SharedWithMeCollections() {
 
     return (
       <div
-        className="collection-node py-2 d-flex flex-nowrap align-items-center justify-content-between"
+        className="collection-node py-1 d-flex flex-nowrap align-items-center justify-content-between"
         draggable={false}
         onMouseDown={(e) => e.stopPropagation()}
       >
