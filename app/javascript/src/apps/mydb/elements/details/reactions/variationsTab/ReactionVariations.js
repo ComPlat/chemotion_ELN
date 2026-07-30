@@ -6,7 +6,6 @@ import {
   Button, OverlayTrigger, Tooltip,
   ButtonGroup
 } from 'react-bootstrap';
-import uuid from 'uuid';
 import Reaction from 'src/models/Reaction';
 import PropTypes from 'prop-types';
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
@@ -14,12 +13,14 @@ import AppModal from 'src/components/common/AppModal';
 
 import { handleInputChange } from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import VariationSchemaTable from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationComponents';
+import { getReactionAnalyses } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import
-{ makeVariationReaction,
-  diffObjects }
-  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationUtils';
-
-const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
+{
+  addInternalVariationObject,
+  addNewVariationDataset,
+  diffObjects,
+  REACTION_VARIATIONS_TAB_KEY
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 
 const RemoveVariationsModal = ({ onRemoveAll }) => {
   const [showModal, setShowModal] = useState(false);
@@ -64,13 +65,8 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
   const [activeVariation, setActiveVariation] = useState(null);
 
   const addRow = () => {
-    const id = uuid.v4();
-    const group = [0, 0];
-    reaction.variations.push({
-      id, group,
-      data: {}
-    });
-    variations.push({ group, data: makeVariationReaction(reaction, {}), idx: reaction.variations.length - 1 });
+    const newVariation = addNewVariationDataset({ reaction });
+    addInternalVariationObject(variations, reaction, newVariation);
     setVariations(variations);
     onReactionChange(reaction);
   };
@@ -85,6 +81,34 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
     onReactionChange(reaction);
     variations[idx].data = variationReaction;
     setVariations(variations);
+  };
+
+  /*
+  Removing a row has to renumber the survivors: the internal variation objects carry their own `idx`,
+  and the grid, the row handlers and the scheme editor below all address rows by it.
+  */
+  const deleteVariation = (idx) => {
+    reaction.changed = true;
+    reaction.variations.splice(idx, 1);
+    variations.splice(idx, 1);
+    variations.forEach((variation, index) => { variation.idx = index; });
+
+    if (activeVariation?.idx === idx) {
+      setActiveVariation(null);
+    } else if (activeVariation && activeVariation.idx > idx) {
+      setActiveVariation({ ...activeVariation, idx: activeVariation.idx - 1 });
+    }
+
+    onReactionChange(reaction);
+    setVariations([...variations]);
+  };
+
+  const onAnalysesChange = (idx, analyses) => {
+    reaction.changed = true;
+    reaction.variations[idx].analyses = analyses;
+    variations[idx].analyses = analyses;
+    onReactionChange(reaction);
+    setVariations([...variations]);
   };
 
   const onGroupChange = (value, idx) => {
@@ -146,6 +170,10 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
       setActiveVariation={setActiveVariation}
       isActiveVariation={!!activeVariation}
       onGroupChange={onGroupChange}
+      onDeleteVariation={deleteVariation}
+      onAnalysesChange={onAnalysesChange}
+      allReactionAnalyses={getReactionAnalyses(reaction)}
+      reactionShortLabel={reaction.short_label}
     />
     <div>
       {activeVariation &&
