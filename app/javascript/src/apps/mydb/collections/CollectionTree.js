@@ -79,6 +79,8 @@ function CollectionTree({ isCollapsed }) {
   }, []);
 
   useEffect(() => {
+    setHasRadar(!!UIStore.getState().hasRadar);
+
     const onUiStoreChange = ({ currentCollection, hasRadar: storeHasRadar }) => {
       setHasRadar(!!storeHasRadar);
       if (!currentCollection) return;
@@ -88,9 +90,10 @@ function CollectionTree({ isCollapsed }) {
     };
 
     UIStore.listen(onUiStoreChange);
-    onUiStoreChange(UIStore.getState());
     return () => UIStore.unlisten(onUiStoreChange);
-  }, [collectionGroups]);
+    // Intentionally no onUiStoreChange() on subscribe: syncing currentCollection here
+    // would snap back to My Collections when opening Shared with me without navigating.
+  }, [ownCollections, sharedWithMeCollections, chemotionRepositoryCollection]);
 
   return (
     <div className="mh-100 d-flex flex-column">
@@ -101,7 +104,7 @@ function CollectionTree({ isCollapsed }) {
         }) => {
           const isActive = activeCollectionType === collectionType;
           const isExpanded = expandedCollection === collectionType;
-          const sharedWithMe = activeCollectionType === 'sharedWithMe';
+          const sharedWithMe = collectionType === 'sharedWithMe';
           return (
             <Fragment key={collectionType}>
               <SidebarButton
