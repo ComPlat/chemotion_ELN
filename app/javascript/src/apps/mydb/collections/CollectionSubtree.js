@@ -13,10 +13,7 @@ import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import CollectionSubtreeFunctions from 'src/apps/mydb/collections/CollectionSubtreeFunctions';
-import CollectionSharesEditModal from 'src/apps/mydb/collections/CollectionSharesEditModal';
-import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/SelectionShareModal';
 import { PermissionConst } from 'src/utilities/PermissionConst';
-import { DEFAULT_COLLECTION_SHARE_PERMISSIONS } from 'src/utilities/collectionConstants';
 
 function CollectionSubtree({
   root,
@@ -24,6 +21,8 @@ function CollectionSubtree({
   isExpanded,
   level,
   hasRadar,
+  onAddShare,
+  onManageShares,
 }) {
   const { collections: collectionsStore } = useContext(StoreContext);
   const uiState = UIStore.getState();
@@ -32,9 +31,6 @@ function CollectionSubtree({
 
   const [selected, setSelected] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [sharesEditModal, setSharesEditModal] = useState({ show: false, node: {} });
-  const [sharesModal, setSharesModal] = useState({ action: null, show: false, node: {} });
-  const [permissions, setPermissions] = useState(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
 
   if (visible) {
     collectionsStore.addToggledTreeItem(root.id, root.label);
@@ -111,131 +107,79 @@ function CollectionSubtree({
     }
   };
 
-  const openManageShares = () => {
-    setSharesEditModal({ show: true, node: { id: root.id, label: root.label } });
-  };
-
-  const closeCollectionSharesEditModal = () => {
-    setSharesEditModal({ show: false, node: {} });
-  };
-
-  const closeCollectionSharesModal = () => {
-    setPermissions(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
-    setSharesModal({ action: null, show: false, node: {} });
-  };
-
-  const editCollectionShares = (node, collectionShare) => {
-    setPermissions({
-      permissionLevel: collectionShare.permission_level,
-      sampleDetailLevel: collectionShare.sample_detail_level,
-      reactionDetailLevel: collectionShare.reaction_detail_level,
-      wellplateDetailLevel: collectionShare.wellplate_detail_level,
-      screenDetailLevel: collectionShare.screen_detail_level,
-      elementDetailLevel: collectionShare.element_detail_level,
-    });
-    setSharesModal({
-      action: 'edit',
-      show: true,
-      node: {
-        ...node,
-        collectionShareId: collectionShare.id,
-        sharedWith: collectionShare.shared_with,
-      },
-    });
-  };
-
-  const deleteCollectionShares = (node, collectionShare) => {
-    collectionsStore.deleteCollectionShare(collectionShare.id, node.id);
-  };
+  const handleAddShare = onAddShare ? () => onAddShare(root) : null;
+  const handleManageShares = (root.shared && !sharedWithMe && onManageShares)
+    ? () => onManageShares(root)
+    : null;
 
   return (
-    <>
-      <TreeViewItem
-        id={`tree-id-${root.label}`}
-        title={root.label}
-        selected={selected}
-        level={level}
-        hasChildren={children.length > 0}
-        expanded={visible}
-        onClick={(e) => handleClick(root, e)}
-        onToggleExpand={(e) => toggleExpansion(e, root)}
-        meta={(
-          <>
-            {root.inventory_prefix && (
-              <OverlayTrigger
-                placement="top"
-                overlay={<Tooltip id="collection_inventory_label">{root.inventory_prefix}</Tooltip>}
-              >
-                <i className="fa fa-tag" />
-              </OverlayTrigger>
-            )}
-            {canTakeOwnership() && (
-              <i
-                className="fa fa-exchange"
-                onClick={() => handleTakeOwnership()}
-                onKeyDown={handleTakeOwnershipKeyDown}
-                role="button"
-                tabIndex={0}
-                aria-label="Take ownership"
-              />
-            )}
-            {root.shared && (
-              <OverlayTrigger placement="top" overlay={<UserInfosTooltip collectionId={root.id} />}>
-                <i className="fa fa-share-alt" />
-              </OverlayTrigger>
-            )}
-            {sharedWithMe && !root.is_locked && (
-              <OverlayTrigger
-                placement="top"
-                overlay={<SharedToMeInfosTooltip collectionId={root.id} owner={root.owner} />}
-              >
-                <i className="fa fa-share-alt" />
-              </OverlayTrigger>
-            )}
-          </>
-        )}
-        actions={(
-          <CollectionSubtreeFunctions
-            collection={root}
-            sharedWithMe={sharedWithMe}
-            hasRadar={hasRadar}
-            onManageShares={root.shared && !sharedWithMe ? openManageShares : null}
-          />
-        )}
-      >
-        {children.map((child) => (
-          <CollectionSubtree
-            key={child.id}
-            root={child}
-            sharedWithMe={sharedWithMe}
-            isExpanded={isExpanded}
-            level={level + 1}
-            hasRadar={hasRadar}
-          />
-        ))}
-      </TreeViewItem>
-
-      {sharesEditModal.show && (
-        <CollectionSharesEditModal
-          node={sharesEditModal.node}
-          updateNode={editCollectionShares}
-          deleteNode={deleteCollectionShares}
-          onHide={closeCollectionSharesEditModal}
+    <TreeViewItem
+      id={`tree-id-${root.label}`}
+      title={root.label}
+      selected={selected}
+      level={level}
+      hasChildren={children.length > 0}
+      expanded={visible}
+      onClick={(e) => handleClick(root, e)}
+      onToggleExpand={(e) => toggleExpansion(e, root)}
+      meta={(
+        <>
+          {root.inventory_prefix && (
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="collection_inventory_label">{root.inventory_prefix}</Tooltip>}
+            >
+              <i className="fa fa-tag" />
+            </OverlayTrigger>
+          )}
+          {canTakeOwnership() && (
+            <i
+              className="fa fa-exchange"
+              onClick={() => handleTakeOwnership()}
+              onKeyDown={handleTakeOwnershipKeyDown}
+              role="button"
+              tabIndex={0}
+              aria-label="Take ownership"
+            />
+          )}
+          {root.shared && (
+            <OverlayTrigger placement="top" overlay={<UserInfosTooltip collectionId={root.id} />}>
+              <i className="fa fa-share-alt" />
+            </OverlayTrigger>
+          )}
+          {sharedWithMe && !root.is_locked && (
+            <OverlayTrigger
+              placement="top"
+              overlay={<SharedToMeInfosTooltip collectionId={root.id} owner={root.owner} />}
+            >
+              <i className="fa fa-share-alt" />
+            </OverlayTrigger>
+          )}
+        </>
+      )}
+      actions={(
+        <CollectionSubtreeFunctions
+          collection={root}
+          sharedWithMe={sharedWithMe}
+          hasRadar={hasRadar}
+          onAddShare={handleAddShare}
+          onManageShares={handleManageShares}
         />
       )}
-
-      {sharesModal.show && (
-        <SelectionShareModal
-          title={`Edit Permissions of "${sharesModal.node.sharedWith}" at "${sharesModal.node.label}"`}
-          collectionId={sharesModal.node.id}
-          collectionShareId={sharesModal.node?.collectionShareId}
-          onHide={closeCollectionSharesModal}
-          collectionPermissions={permissions}
-          showUserSelect={false}
-          shareType={sharesModal.action}
+    >
+      {children.map((child) => (
+        <CollectionSubtree
+          key={child.id}
+          root={child}
+          sharedWithMe={sharedWithMe}
+          isExpanded={isExpanded}
+          level={level + 1}
+          hasRadar={hasRadar}
+          onAddShare={onAddShare}
+          onManageShares={onManageShares}
         />
-      )}
-    </>
+      ))}
+    </TreeViewItem>
   );
 }
 
@@ -245,6 +189,8 @@ CollectionSubtree.propTypes = {
   sharedWithMe: PropTypes.bool.isRequired,
   isExpanded: PropTypes.bool.isRequired,
   hasRadar: PropTypes.bool,
+  onAddShare: PropTypes.func,
+  onManageShares: PropTypes.func,
   root: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
     label: PropTypes.string.isRequired,
@@ -263,4 +209,6 @@ CollectionSubtree.propTypes = {
 
 CollectionSubtree.defaultProps = {
   hasRadar: false,
+  onAddShare: null,
+  onManageShares: null,
 };

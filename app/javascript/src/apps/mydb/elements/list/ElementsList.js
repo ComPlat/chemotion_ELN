@@ -233,13 +233,15 @@ export default class ElementsList extends React.Component {
         <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap column-gap-4 row-gap-2">
           <h1 className="m-0 text-capitalize d-flex align-items-center gap-2">
             {currentCollection?.label || ''}
-            {currentCollection?.shared && (
+            {/* Own vs shared-with-me are mutually exclusive: if the current user owns
+                the collection (`shared` is set when they've shared it with others), don't
+                also render the shared-with-me indicator even if the store reports it. */}
+            {currentCollection?.shared ? (
               <OverlayTrigger placement="right" overlay={<UserInfosTooltip collectionId={currentCollection.id} />}>
                 <i className="fa fa-share-alt fs-5" aria-label="Shared collection" />
               </OverlayTrigger>
-            )}
-            {currentCollection?.id != null
-              && this.context.collections.isSharedCollection(currentCollection.id) && (
+            ) : (currentCollection?.id != null
+              && this.context?.collections?.isSharedCollection?.(currentCollection.id) && (
               <OverlayTrigger
                 placement="right"
                 overlay={(
@@ -251,7 +253,7 @@ export default class ElementsList extends React.Component {
               >
                 <i className="fa fa-share-alt fs-5" aria-label="Shared to me collection" />
               </OverlayTrigger>
-            )}
+            ))}
             {hasSearchApplied && (<span className="ms-2 text-lighten2 condensed-text-width">(search results)</span>)}
           </h1>
           <div className="d-flex align-items-center gap-3">

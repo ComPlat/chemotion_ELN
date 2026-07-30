@@ -5,10 +5,8 @@ import {
 } from 'react-bootstrap';
 import ModalImport from 'src/apps/mydb/collections/importSamples/ModalImport';
 import LiteratureModal from 'src/apps/mydb/collections/LiteratureModal';
-import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/SelectionShareModal';
 import ModalExportRadarCollection from 'src/apps/mydb/collections/ModalExportRadarCollection';
 import { PermissionConst } from 'src/utilities/PermissionConst';
-import { DEFAULT_COLLECTION_SHARE_PERMISSIONS } from 'src/utilities/collectionConstants';
 import { elementShowOrNew } from 'src/utilities/routesUtils';
 import Aviator from 'aviator';
 
@@ -36,12 +34,11 @@ CollectionSubtreeFunctionsDropdownToggle.propTypes = {
 };
 
 const CollectionSubtreeFunctions = ({
-  collection, sharedWithMe, hasRadar, onManageShares,
+  collection, sharedWithMe, hasRadar, onAddShare, onManageShares,
 }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showLiteratureModal, setShowLiteratureModal] = useState(false);
   const [isLiteratureModalMounted, setIsLiteratureModalMounted] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [showRadarModal, setShowRadarModal] = useState(false);
 
   if (collection === null || collection === undefined) return null;
@@ -79,7 +76,7 @@ const CollectionSubtreeFunctions = ({
 
   const handleAddShare = (event) => {
     event.stopPropagation();
-    setShowShareModal(true);
+    if (onAddShare) onAddShare();
   };
 
   const handleManageShares = (event) => {
@@ -99,7 +96,6 @@ const CollectionSubtreeFunctions = ({
 
   const hideImportModal = () => setShowImportModal(false);
   const hideLiteratureModal = () => setShowLiteratureModal(false);
-  const hideShareModal = () => setShowShareModal(false);
   const hideRadarModal = () => setShowRadarModal(false);
 
   const stopRowNavigation = (event) => {
@@ -126,14 +122,16 @@ const CollectionSubtreeFunctions = ({
               Import samples to collection
             </Dropdown.Item>
           )}
-          {canAddShare && (
+          {canAddShare && (onAddShare || onManageShares) && (
             <>
               <Dropdown.Divider />
-              <Dropdown.Item onClick={handleAddShare}>
-                <i className="fa fa-plus me-1" />
-                <i className="fa fa-share-alt me-1" />
-                Add share
-              </Dropdown.Item>
+              {onAddShare && (
+                <Dropdown.Item onClick={handleAddShare}>
+                  <i className="fa fa-plus me-1" />
+                  <i className="fa fa-share-alt me-1" />
+                  Add share
+                </Dropdown.Item>
+              )}
               {onManageShares && (
                 <Dropdown.Item onClick={handleManageShares}>
                   <i className="fa fa-users me-1" />
@@ -178,17 +176,6 @@ const CollectionSubtreeFunctions = ({
         />
       )}
 
-      {showShareModal && (
-        <SelectionShareModal
-          title={`Share "${collectionName}"`}
-          collectionId={collection.id}
-          onHide={hideShareModal}
-          collectionPermissions={DEFAULT_COLLECTION_SHARE_PERMISSIONS}
-          showUserSelect
-          shareType="create"
-        />
-      )}
-
       {showRadarModal && (
         <ModalExportRadarCollection
           collectionId={collection.id}
@@ -204,12 +191,14 @@ CollectionSubtreeFunctions.propTypes = {
   collection: PropTypes.object.isRequired,
   sharedWithMe: PropTypes.bool,
   hasRadar: PropTypes.bool,
+  onAddShare: PropTypes.func,
   onManageShares: PropTypes.func,
 };
 
 CollectionSubtreeFunctions.defaultProps = {
   sharedWithMe: false,
   hasRadar: false,
+  onAddShare: null,
   onManageShares: null,
 };
 

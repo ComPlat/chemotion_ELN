@@ -100,6 +100,10 @@ const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
     collectionsStore.updateCollection(collection, layoutSegments);
 
     const userProfile = UserStore.getState().profile;
+    // Known limitation: every generic element type writes to the same
+    // `layout_detail_generic` profile key, so the last iteration wins as the
+    // per-user default. Per-collection storage via `tabs_segment[name]` is
+    // unaffected. Fixing needs a schema change to key generics by name.
     allElements.forEach(({ name, isGeneric }) => {
       const profileKey = isGeneric ? 'layout_detail_generic' : `layout_detail_${name}`;
       set(userProfile, `data.${profileKey}`, layoutSegments[name]);
