@@ -1,5 +1,6 @@
 import { List, Set } from 'immutable';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
+import SharedToMeInfosTooltip from 'src/apps/mydb/collections/SharedToMeInfosTooltip';
 import React from 'react';
 import {
   Tabs, Tab, Tooltip, OverlayTrigger, Button
@@ -235,6 +236,20 @@ export default class ElementsList extends React.Component {
             {currentCollection?.shared && (
               <OverlayTrigger placement="right" overlay={<UserInfosTooltip collectionId={currentCollection.id} />}>
                 <i className="fa fa-share-alt fs-5" aria-label="Shared collection" />
+              </OverlayTrigger>
+            )}
+            {currentCollection?.id != null
+              && this.context.collections.isSharedCollection(currentCollection.id) && (
+              <OverlayTrigger
+                placement="right"
+                overlay={(
+                  <SharedToMeInfosTooltip
+                    collectionId={currentCollection.id}
+                    owner={currentCollection.owner}
+                  />
+                )}
+              >
+                <i className="fa fa-share-alt fs-5" aria-label="Shared to me collection" />
               </OverlayTrigger>
             )}
             {hasSearchApplied && (<span className="ms-2 text-lighten2 condensed-text-width">(search results)</span>)}
