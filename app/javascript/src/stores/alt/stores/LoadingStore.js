@@ -8,7 +8,7 @@ import PredictionActions from 'src/stores/alt/actions/PredictionActions';
 class LoadingStore {
   constructor() {
     this.loading = false;
-    this.state = { filePool: [] };
+    this.state = { filePool: [], loadingWithProgress: false };
 
     this.bindListeners({
       handleStart: LoadingActions.start,
