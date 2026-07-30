@@ -47,12 +47,16 @@ const CollectionSubtreeFunctions = ({
   if (collection === null || collection === undefined) return null;
 
   const collectionName = collection.label || 'Unknown Collection';
-  const canAddShare = !sharedWithMe && !collection.is_locked;
-  const canShowMetadataActions = !collection.is_locked && (
+  // For own collections all actions are allowed; for shared-with-me the delegate's
+  // permission_level gates each action.
+  const hasPermission = (level) => (
     !sharedWithMe
     || (typeof collection.permission_level === 'number'
-      && collection.permission_level >= PermissionConst.AddElements)
+      && collection.permission_level >= level)
   );
+  const canImportSamples = !collection.is_locked && hasPermission(PermissionConst.AddElements);
+  const canAddShare = !collection.is_locked && hasPermission(PermissionConst.ManageShares);
+  const canShowMetadataActions = !collection.is_locked && hasPermission(PermissionConst.ManageShares);
 
   const editMetadata = () => {
     Aviator.navigate(`/collection/${collection.id}/metadata`, { silent: true });
@@ -116,10 +120,12 @@ const CollectionSubtreeFunctions = ({
             <i className="icon-report me-1" />
             Reference Report
           </Dropdown.Item>
-          <Dropdown.Item onClick={handleImportSamples}>
-            <i className="icon-arrow-down-to-bracket me-1" />
-            Import samples to collection
-          </Dropdown.Item>
+          {canImportSamples && (
+            <Dropdown.Item onClick={handleImportSamples}>
+              <i className="icon-arrow-down-to-bracket me-1" />
+              Import samples to collection
+            </Dropdown.Item>
+          )}
           {canAddShare && (
             <>
               <Dropdown.Divider />
