@@ -113,6 +113,7 @@ export default class StructureEditorModal extends React.Component {
       saving: false,
     };
     this.editors = {};
+    this._isMounted = false;
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
     this.resetEditor = this.resetEditor.bind(this);
     this.updateEditor = this.updateEditor.bind(this);
@@ -120,6 +121,7 @@ export default class StructureEditorModal extends React.Component {
   }
 
   async componentDidMount() {
+    this._isMounted = true;
     // Initialize editors and set up the default editor
     try {
       // Wait for both the default editor and all available editors to initialize
@@ -128,12 +130,16 @@ export default class StructureEditorModal extends React.Component {
         createEditors(), // Creates all available editor instances
       ]);
 
+      if (!this._isMounted) return;
+
       this.editors = editors; // Store all editor instances
 
       // Set the default editor in state and perform additional setup
       this.setState({ editor }, () => {
-        this.resetEditor(this.editors); // Ensure the selected editor is valid
-        this.initializeEditors(); // Finalize editor initialization
+        if (this._isMounted) {
+          this.resetEditor(this.editors); // Ensure the selected editor is valid
+          this.initializeEditors(); // Finalize editor initialization
+        }
       });
     } catch (error) {
       console.error('Failed to initialize editor(s):', error);
@@ -145,6 +151,10 @@ export default class StructureEditorModal extends React.Component {
     if (prevProps.showModal !== showModal || prevProps.molfile !== molfile) {
       this.setState({ showModal, molfile });
     }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   handleEditorSelection(e) {
@@ -208,7 +218,8 @@ export default class StructureEditorModal extends React.Component {
     }
   }
 
-  handleStructureSave(molfile, svg, editorId, info = null) {
+  handleStructureSave(molfile, svg, editorId, components, textNodesFormula, info = null) {
+    if (!this._isMounted) return;
     const { hasChildren, hasParent, onSave } = this.props;
     this.setState(
       {
@@ -217,7 +228,7 @@ export default class StructureEditorModal extends React.Component {
       },
       () => {
         if (onSave) {
-          onSave(molfile, svg, info, editorId);
+          onSave(molfile, components, textNodesFormula, svg, info, editorId);
         }
       }
     );
@@ -244,31 +255,23 @@ export default class StructureEditorModal extends React.Component {
   }
 
   async saveKetcher(editorId) {
-    if (this.ketcherRef?.current) {
-      const { onSVGStructureError } = this.props;
-      const { onSaveFileK2SC } = this.ketcherRef.current;
-      // Ensure the function exists before calling it
-      if (typeof onSaveFileK2SC !== 'function') {
-        console.error('onSaveFileK2SC is not a function');
-        return;
-      }
-      try {
-        // Call onSaveFileK2SC and get the required data
-        const {
-          ket2Molfile,
-          svgElement,
-          componentsList,
-          textNodesFormula,
-          shouldSvg,
-        } = await onSaveFileK2SC();
-        const { svg: preparedSvg, message: svgFailedMessage } = svgElement || {};
-        const updatedSvg = shouldSvg ? await transformSvgIdsAndReferences(preparedSvg) : null;
-        const components = componentsList ? postComponents(componentsList) : [];
-        this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, components, textNodesFormula);
-        if (shouldSvg) onSVGStructureError(svgFailedMessage);
-      } catch (error) {
-        console.error('Error during save operation for Ketcher:', error);
-      }
+    if (!this._isMounted || !this.ketcherRef?.current) return;
+    const { onSVGStructureError } = this.props;
+    const { onSaveFileK2SC } = this.ketcherRef.current;
+    if (typeof onSaveFileK2SC !== 'function') {
+      console.error('onSaveFileK2SC is not a function');
+      return;
+    }
+    try {
+      const { ket2Molfile, svgElement, componentsList, textNodesFormula, shouldSvg } = await onSaveFileK2SC();
+      if (!this._isMounted) return;
+      const { svg: preparedSvg, message: svgFailedMessage } = svgElement || {};
+      const updatedSvg = shouldSvg ? await transformSvgIdsAndReferences(preparedSvg) : null;
+      const components = componentsList ? postComponents(componentsList) : [];
+      this.handleStructureSave(ket2Molfile, updatedSvg, editorId.id, components, textNodesFormula);
+      if (shouldSvg) onSVGStructureError(svgFailedMessage);
+    } catch (error) {
+      console.error('Error during save operation for Ketcher:', error);
     }
   }
 

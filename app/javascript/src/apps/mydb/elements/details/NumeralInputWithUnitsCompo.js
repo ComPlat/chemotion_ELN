@@ -83,7 +83,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     const matchMinus = newValue.match(/\d+(-+)\d*/);
     if (matchMinus && matchMinus[1]) newValue = newValue.replace(matchMinus[1], '');
 
-    if (md || mc) { valueString = newValue; }
+    if (md || mc || newValue === '') { valueString = newValue; }
 
     this.setState(
       {
@@ -107,7 +107,16 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   _handleInputValueBlur() {
     const { value } = this.props;
-    const { metricPrefix } = this.state;
+    const { metricPrefix, valueString } = this.state;
+    if (valueString === '' || valueString === null) {
+      this.setState({
+        value: null,
+        currentPrecision: this.props.precision,
+        showString: false,
+        valueString: 0,
+      }, () => this._onChangeCallback());
+      return;
+    }
     this.setState({
       value,
       currentPrecision: this.props.precision,

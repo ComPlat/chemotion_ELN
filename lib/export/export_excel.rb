@@ -4,7 +4,7 @@ require 'base64'
 
 # rubocop:disable Metrics/ClassLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 module Export
-  class ExportExcel < ExportTable
+  class ExportExcel < ExportTable # rubocop:disable Metrics/ClassLength
     DEFAULT_ROW_WIDTH = 100
     DEFAULT_ROW_HEIGHT = 20
     # Default pixel size for SVG→PNG export (Inkscape); kept in line with ImageMagick’s natural SVG size.
@@ -21,7 +21,7 @@ module Export
         style: :thick,
         color: 'FF777777',
         edges: [:bottom],
-      }
+      },
     }
 
     def initialize(**args)
@@ -63,8 +63,8 @@ module Export
           filtered_sample[decouple_idx] = filtered_sample[decouple_idx].presence == true ? 'yes' : 'No'
         end
 
-        size = sheet.styles.add_style :sz => 12
-        sheet.add_row filtered_sample, :height => row_height * 3 / 4, :style=>[size]
+        size = sheet.styles.add_style(sz: 12)
+        sheet.add_row filtered_sample, height: row_height * 3 / 4, style: [size]
       end
       sheet.column_info[@image_index].width = image_width / 8 if @image_index
       @samples = nil
@@ -114,15 +114,57 @@ module Export
       @samples = nil
     end
 
-    #TODO: implement better detail level filter
+    # Column keys pulled from the SQL result row for each sample.
+    COMPOSITION_SAMPLE_KEYS = [
+      'sample external label',
+      'sample name',
+      'short label',
+      'sample uuid',
+    ].freeze
+
+    # Headers for the calculated composition columns, matching the UI table.
+    COMPOSITION_COMP_HEADERS = [
+      'Source',
+      'Weight ratio exp.',
+      'Molar Mass (g/mol)',
+      'Weight ratio calc./%',
+      'Weight ratio (calc)/MM',
+      'Molar ratio (calc)/MM',
+      'Molar ratio exp/%',
+      'Molar ratio calc/%',
+    ].freeze
+
+    # Generates a composition table sheet replicating all calculations from
+    # the frontend sampleHierarchicalCompositions.js utility.
+    #
+    # Columns: sample identification + HierarchicalMaterial properties,
+    # followed by 8 composition calculation columns per component.
+    # A bold totals row is appended after each sample's component rows.
+    def generate_composition_table_components_sheet_with_samples(table, samples = nil)
+      @samples = samples
+      return if samples.nil?
+
+      headers = COMPOSITION_SAMPLE_KEYS + COMPOSITION_COMP_HEADERS
+      sheet = @xfile.workbook.add_worksheet(name: table)
+      grey = sheet.styles.add_style(
+        sz: 12, b: true, border: { style: :thick, color: 'FF777777', edges: [:bottom] }
+      )
+      light_grey = sheet.styles.add_style(border: { style: :thick, color: 'FFCCCCCC', edges: [:top] })
+      sheet.add_row(headers, style: grey)
+      samples.each { |sample| render_composition_sample_rows(sheet, sample, light_grey) }
+      @samples = nil
+    end
+
+    # TODO: implement better detail level filter
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def generate_analyses_sheet_with_samples(table, samples = nil, selected_columns)
       @samples = samples
       return if samples.nil? # || samples.count.zero?
+
       generate_headers(table, [], selected_columns)
       sheet = @xfile.workbook.add_worksheet(name: table.to_s)
-      grey = sheet.styles.add_style(sz: 12, :border => { :style => :thick, :color => "FF777777", :edges => [:bottom] })
-      light_grey = sheet.styles.add_style(:border => { :style => :thick, :color => "FFCCCCCC", :edges => [:top] })
+      grey = sheet.styles.add_style(sz: 12, border: { style: :thick, color: 'FF777777', edges: [:bottom] })
+      light_grey = sheet.styles.add_style(border: { style: :thick, color: 'FFCCCCCC', edges: [:top] })
       sheet.add_row(@headers, style: grey) # Add header
       decoupled_style = sheet.styles.add_style(DECOUPLED_STYLE)
       ['sample uuid'].each do |e|
@@ -168,7 +210,8 @@ module Export
       end
     end
 
-    # Prepares the component data for a given sample by parsing JSON and converting rich text content to plain HTML string.
+    # Prepares component data for a sample by parsing JSON and converting
+    # rich text content to plain HTML string.
     #
     # @param sample [Hash] A hash representing a sample, expected to contain a JSON string under the 'components' key.
     # @return [Array<Hash>] An array of component hashes with 'content' converted to HTML string.
@@ -218,6 +261,8 @@ module Export
             "#{sample['molarity_value']} #{sample['molarity_unit']}"
           elsif column == 'density'
             "#{sample['density']} g/ml"
+          elsif column == 'molfile'
+            sample[column]
           else
             sample[column]
           end
@@ -231,6 +276,7 @@ module Export
         headers = instance_variable_get("@headers#{sample['dl_s']}#{dl}")
         data = headers.map do |column|
           next nil unless column
+
           sample[column]
         end
         data[@image_index] = svg_path(sample) if headers.include?('image')
@@ -243,6 +289,7 @@ module Export
       sample_svg_path = sample['image'].presence
       molecule_svg_path = sample['m_image'].presence
       return nil unless (svg_file_name = sample_svg_path || molecule_svg_path)
+
       file_path = File.join(
         Rails.root, 'public', 'images', sample_svg_path ? 'samples' : 'molecules', svg_file_name
       )
@@ -312,7 +359,9 @@ module Export
       [tmp_svg.path, tmp_svg, temp_images]
     end
 
-    def convert_svg_to_png_with_inkscape(svg_path, max_width: DEFAULT_IMAGE_EXPORT_MAX_WIDTH, max_height: DEFAULT_IMAGE_EXPORT_MAX_HEIGHT)
+    def convert_svg_to_png_with_inkscape(
+      svg_path, max_width: DEFAULT_IMAGE_EXPORT_MAX_WIDTH, max_height: DEFAULT_IMAGE_EXPORT_MAX_HEIGHT
+    )
       require 'reporter/img/conv'
       width, height = svg_export_dimensions(svg_path, max_width, max_height)
       scale = INKSCAPE_EXPORT_SCALE
@@ -328,8 +377,8 @@ module Export
       [nil, nil, nil]
     end
 
-    # Resizes a PNG file to target dimensions; returns [path_to_resized_file, width, height].
-    # Uses Lanczos filter for sharper downscaling and smoother gradients (e.g. orbs, diagrams).
+    # Resizes a PNG to target dimensions; returns [path, width, height].
+    # Uses Lanczos filter for sharper downscaling (e.g. orbs, diagrams).
     def downscale_png_to(png_path, target_width, target_height)
       image = Magick::Image.read(png_path).first
       resized = image.resize(target_width, target_height, Magick::LanczosFilter, 1.0)
@@ -337,7 +386,8 @@ module Export
       [file.path, target_width, target_height]
     end
 
-    # Returns [width, height] for Inkscape export so the image fits within max_width×max_height while preserving SVG aspect ratio.
+    # Returns [width, height] for Inkscape export, fitting within max_width×max_height
+    # while preserving the SVG aspect ratio.
     def svg_export_dimensions(svg_path, max_width, max_height)
       w, h = svg_natural_dimensions(svg_path)
       return [max_width, max_height] if w.nil? || h.nil? || w <= 0 || h <= 0
@@ -355,10 +405,12 @@ module Export
       if content =~ /viewBox\s*=\s*["']?\s*[\d.-]+\s+[\d.-]+\s+([\d.]+)\s+([\d.]+)/
         return [Regexp.last_match(1).to_f.ceil, Regexp.last_match(2).to_f.ceil]
       end
+
       # width and height attributes (e.g. width="200" or width="200px")
       w = content[/width\s*=\s*["']?\s*([\d.]+)/, 1]
       h = content[/height\s*=\s*["']?\s*([\d.]+)/, 1]
       return [w.to_f.ceil, h.to_f.ceil] if w && h
+
       [nil, nil]
     end
 
@@ -368,6 +420,123 @@ module Export
       file.write(png_blob)
       file.flush
       file
+    end
+
+    private
+
+    # Renders all rows (component rows + totals row) for one sample into the composition sheet.
+    def render_composition_sample_rows(sheet, sample, light_grey) # rubocop:disable Metrics/MethodLength
+      sample_values = COMPOSITION_SAMPLE_KEYS.map { |col| sample[col] }
+      components = begin
+        JSON.parse(sample['components'] || '[]')
+      rescue StandardError
+        []
+      end
+      hm_components = components.select { |c| c['name'] == 'HierarchicalMaterial' }
+
+      if hm_components.empty?
+        sheet.add_row(sample_values + Array.new(COMPOSITION_COMP_HEADERS.size), style: light_grey)
+        return
+      end
+
+      result = build_composition_rows(hm_components)
+      bold_style = sheet.styles.add_style(b: true)
+      result[:rows].each do |row|
+        comp_values = [
+          row[:source_alias],
+          row[:weight_ratio_exp],
+          row[:molar_mass],
+          row[:weight_ratio_calc_processed],
+          row[:molar_ratio_calc_mm],
+          row[:weight_ratio_calc_mm_col9],
+          row[:molar_ratio_exp_percent],
+          row[:molar_ratio_calc_percent],
+        ]
+        sheet.add_row(sample_values + comp_values, style: light_grey)
+      end
+
+      totals_values = [
+        'Total',
+        nil,
+        nil,
+        result[:total_molar_calc],
+        nil,
+        nil,
+        nil,
+        result[:total_molar_exp],
+      ]
+      sheet.add_row(sample_values + totals_values, style: bold_style)
+    end
+
+    # Translates Component#parseComponentSource from the JS frontend model.
+    # Returns a hash with :source, :component, :weight_ratio_calc.
+    def parse_component_source(source)
+      return { source: source, component: nil, weight_ratio_calc: 0.0 } if source.blank?
+
+      if source.include?('%')
+        match = source.strip.match(/\A\d+/)
+        { source: source, component: source.strip, weight_ratio_calc: match ? match[0].to_f : 0.0 }
+      else
+        parts = source.split('-')
+        { source: source, component: parts[1], weight_ratio_calc: 0.0 }
+      end
+    end
+
+    # Returns the weight ratio for a component whose source does not encode a
+    # percentage — equivalent to Component#calcWeightRatioWithoutWeight.
+    def calc_weight_ratio_without_weight(components)
+      sum = components.sum { |item| parse_component_source(item['source'].to_s)[:weight_ratio_calc] }
+      100.0 - sum
+    end
+
+    # Replicates buildHierarchicalMaterialRows from sampleHierarchicalCompositions.js.
+    # Accepts an array of HierarchicalMaterial component hashes and returns
+    #   { rows: [...], total_molar_calc: Float, total_molar_exp: Float }
+    # Each row hash contains the keys consumed by generate_composition_table_components_sheet_with_samples.
+    def build_composition_rows(components) # rubocop:disable Metrics/MethodLength
+      rows_data        = []
+      total_molar_calc = 0.0
+      total_molar_exp  = 0.0
+
+      components.each do |comp|
+        molar_mass       = comp['molar_mass'].to_f
+        weight_ratio_exp = comp['weight_ratio_exp'].to_f
+        parsed           = parse_component_source(comp['source'].to_s)
+        wrc_float        = parsed[:weight_ratio_calc].to_f
+
+        weight_ratio_calc_processed = wrc_float.positive? ? wrc_float : calc_weight_ratio_without_weight(components)
+
+        molar_ratio_calc_mm = molar_mass.positive? ? (weight_ratio_calc_processed / molar_mass).round(10) : 0.0
+        molar_ratio_exp_mm  = molar_mass.positive? ? (weight_ratio_exp / molar_mass).round(10) : 0.0
+
+        total_molar_calc = (total_molar_calc + molar_ratio_calc_mm).round(10)
+        total_molar_exp  = (total_molar_exp  + molar_ratio_exp_mm).round(10)
+
+        rows_data << {
+          source_alias: parsed[:source],
+          molar_mass: molar_mass,
+          weight_ratio_exp: weight_ratio_exp,
+          weight_ratio_calc_processed: weight_ratio_calc_processed,
+          molar_ratio_calc_mm: molar_ratio_calc_mm,
+          molar_ratio_exp_mm: molar_ratio_exp_mm,
+        }
+      end
+
+      rows_with_percentages = rows_data.map do |row|
+        molar_ratio_calc_percent  = total_molar_calc.positive? ? (row[:molar_ratio_calc_mm] / total_molar_calc).round(3) : '-'
+        molar_ratio_exp_percent   = total_molar_exp.positive?  ? (row[:molar_ratio_exp_mm]  / total_molar_exp).round(3)  : '-'
+        weight_ratio_calc_mm_col9 = row[:molar_mass].positive? ? (row[:weight_ratio_exp] / row[:molar_mass]).round(3) : nil
+
+        row.merge(
+          molar_ratio_calc_mm: row[:molar_ratio_calc_mm].round(3),
+          weight_ratio_calc_mm_col9: weight_ratio_calc_mm_col9,
+          molar_ratio_exp_percent: molar_ratio_exp_percent,
+          molar_ratio_calc_percent: molar_ratio_calc_percent,
+        )
+      end
+
+      sorted = rows_with_percentages.sort_by { |r| r[:weight_ratio_calc_processed].to_f }
+      { rows: sorted, total_molar_calc: total_molar_calc.round(3), total_molar_exp: total_molar_exp.round(3) }
     end
   end
 end

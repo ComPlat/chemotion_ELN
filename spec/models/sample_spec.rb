@@ -4,50 +4,62 @@
 #
 # Table name: samples
 #
-#  id                  :integer          not null, primary key
-#  ancestry            :string           default("/"), not null
-#  boiling_point       :numrange
-#  created_by          :integer
-#  decoupled           :boolean          default(FALSE), not null
-#  deleted_at          :datetime
-#  density             :float            default(0.0)
-#  deprecated_solvent  :string           default("")
-#  description         :text             default("")
-#  dry_solvent         :boolean          default(FALSE)
-#  external_label      :string           default("")
-#  identifier          :string
-#  imported_readout    :string
-#  impurities          :string           default("")
-#  inventory_sample    :boolean          default(FALSE)
-#  is_top_secret       :boolean          default(FALSE)
-#  location            :string           default("")
-#  melting_point       :numrange
-#  metrics             :string           default("mmm")
-#  molarity_unit       :string           default("M")
-#  molarity_value      :float            default(0.0)
-#  molecular_mass      :float
-#  molfile             :binary
-#  molfile_version     :string(20)
-#  name                :string
-#  purity              :float            default(1.0)
-#  real_amount_unit    :string
-#  real_amount_value   :float
-#  sample_details      :jsonb
-#  sample_svg_file     :string
-#  sample_type         :string           default("Micromolecule")
-#  short_label         :string
-#  solvent             :jsonb
-#  stereo              :jsonb
-#  sum_formula         :string
-#  target_amount_unit  :string           default("g")
-#  target_amount_value :float            default(0.0)
-#  xref                :jsonb
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  fingerprint_id      :integer
-#  molecule_id         :integer
-#  molecule_name_id    :integer
-#  user_id             :integer
+#  id                                                                   :integer          not null, primary key
+#  ancestry                                                             :string           default("/"), not null
+#  boiling_point                                                        :numrange
+#  color(color of the Hierarchical sample)                              :string
+#  created_by                                                           :integer
+#  cspi(CSPI of the Hierarchical sample)                                :string
+#  decoupled                                                            :boolean          default(FALSE), not null
+#  deleted_at                                                           :datetime
+#  density                                                              :float            default(0.0)
+#  deprecated_solvent                                                   :string           default("")
+#  description                                                          :text             default("")
+#  diameter(diameter of the Hierarchical sample (numeric, in cm or mm)) :float
+#  dry_solvent                                                          :boolean          default(FALSE)
+#  external_label                                                       :string           default("")
+#  height(height of the Hierarchical sample (numeric, in cm or mm))     :float
+#  identifier                                                           :string
+#  imported_readout                                                     :string
+#  impurities                                                           :string           default("")
+#  inventory_sample                                                     :boolean          default(FALSE)
+#  is_top_secret                                                        :boolean          default(FALSE)
+#  length(length of the Hierarchical sample (numeric, in cm or mm))     :float
+#  location                                                             :string           default("")
+#  material(material of the Hierarchical sample)                        :string
+#  melting_point                                                        :numrange
+#  metrics                                                              :string           default("mmm")
+#  molarity_unit                                                        :string           default("M")
+#  molarity_value                                                       :float            default(0.0)
+#  molecular_mass                                                       :float
+#  molfile                                                              :binary
+#  molfile_version                                                      :string(20)
+#  name                                                                 :string
+#  particle_size(particle size of the Hierarchical sample)              :string
+#  purity                                                               :float            default(1.0)
+#  real_amount_unit                                                     :string
+#  real_amount_value                                                    :float
+#  sample_details                                                       :jsonb
+#  sample_svg_file                                                      :string
+#  sample_type                                                          :string           default("Micromolecule")
+#  shape(shape of the Hierarchical sample)                              :string
+#  short_label                                                          :string
+#  sieve_fraction(sieve fraction of the Hierarchical sample)            :string
+#  solvent                                                              :jsonb
+#  state(state of the Hierarchical sample)                              :string
+#  stereo                                                               :jsonb
+#  storage_condition(storage condition of the Hierarchical sample)      :string
+#  sum_formula                                                          :string
+#  target_amount_unit                                                   :string           default("g")
+#  target_amount_value                                                  :float            default(0.0)
+#  width(width of the Hierarchical sample (numeric, in cm or mm))       :float
+#  xref                                                                 :jsonb
+#  created_at                                                           :datetime         not null
+#  updated_at                                                           :datetime         not null
+#  fingerprint_id                                                       :integer
+#  molecule_id                                                          :integer
+#  molecule_name_id                                                     :integer
+#  user_id                                                              :integer
 #
 # Indexes
 #
@@ -92,6 +104,141 @@ RSpec.describe Sample do
       expect(sample.code_log.id).to match(
         /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
       )
+    end
+  end
+
+  describe 'hierarchical sample fields (storage_condition, height, width, length, diameter)' do
+    # Note: `color`, `state` (→ xref.physical_state) and `particle_size` intentionally live
+    # in the `xref` JSONB (main's storage) — not as dedicated columns. See tests below.
+    it 'persists and returns storage_condition when set on the column' do
+      sample = create(:sample, storage_condition: 'room temperature')
+      expect(sample.storage_condition).to eq('room temperature')
+      expect(sample.reload.storage_condition).to eq('room temperature')
+    end
+
+    it 'persists and returns height, width, length, diameter when set on the column' do
+      sample = create(:sample, height: 2.5, width: 1.0, length: 3.0, diameter: 0.5)
+      expect(sample.height).to eq(2.5)
+      expect(sample.width).to eq(1.0)
+      expect(sample.length).to eq(3.0)
+      expect(sample.diameter).to eq(0.5)
+      sample.reload
+      expect(sample.height).to eq(2.5)
+      expect(sample.width).to eq(1.0)
+      expect(sample.length).to eq(3.0)
+      expect(sample.diameter).to eq(0.5)
+    end
+
+    it 'falls back to sample_details when column is blank' do
+      sample = create(:sample, sample_details: { 'storage_condition' => 'freezer' })
+      expect(sample.storage_condition).to eq('freezer')
+    end
+
+    it 'falls back to xref when column and sample_details are blank' do
+      sample = create(:sample, sample_details: {}, xref: { 'storage_condition' => 'ambient' })
+      expect(sample.storage_condition).to eq('ambient')
+    end
+
+    it 'prefers column over sample_details and xref' do
+      sample = create(:sample,
+                      storage_condition: 'column-value',
+                      sample_details: { 'storage_condition' => 'details' },
+                      xref: { 'storage_condition' => 'xref' })
+      expect(sample.storage_condition).to eq('column-value')
+    end
+  end
+
+  describe 'main-owned physical properties in xref (color, physical_state, particle_size)' do
+    # These three fields already existed on main under xref. Kept there — no dedicated column.
+    it 'reads color from xref (main storage)' do
+      sample = create(:sample, xref: { 'color' => 'red' })
+      expect(sample.xref['color']).to eq('red')
+    end
+
+    it 'reads physical_state from xref (mapped from HM section "state" dropdown)' do
+      sample = create(:sample, xref: { 'physical_state' => 'solid_powder' })
+      expect(sample.xref['physical_state']).to eq('solid_powder')
+    end
+
+    it 'reads particle_size from xref (main storage)' do
+      sample = create(:sample, xref: { 'particle_size' => '50' })
+      expect(sample.xref['particle_size']).to eq('50')
+    end
+  end
+
+  describe 'new hierarchical fields (layer_thickness, liquid_medium, stabilizer)' do
+    it 'persists and returns layer_thickness when set on the column' do
+      sample = create(:sample, layer_thickness: '50')
+      expect(sample.layer_thickness).to eq('50')
+      expect(sample.reload.layer_thickness).to eq('50')
+    end
+
+    it 'persists and returns liquid_medium when set on the column' do
+      sample = create(:sample, liquid_medium: 'Water')
+      expect(sample.liquid_medium).to eq('Water')
+      expect(sample.reload.liquid_medium).to eq('Water')
+    end
+
+    it 'persists and returns stabilizer when set on the column' do
+      sample = create(:sample, stabilizer: 'PVP')
+      expect(sample.stabilizer).to eq('PVP')
+      expect(sample.reload.stabilizer).to eq('PVP')
+    end
+
+    it 'falls back to sample_details for layer_thickness when column is blank' do
+      sample = create(:sample, layer_thickness: nil, sample_details: { 'layer_thickness' => '100' })
+      expect(sample.layer_thickness).to eq('100')
+    end
+
+    it 'falls back to sample_details for liquid_medium when column is blank' do
+      sample = create(:sample, liquid_medium: nil, sample_details: { 'liquid_medium' => 'Ethanol' })
+      expect(sample.liquid_medium).to eq('Ethanol')
+    end
+
+    it 'falls back to sample_details for stabilizer when column is blank' do
+      sample = create(:sample, stabilizer: nil, sample_details: { 'stabilizer' => 'PEG' })
+      expect(sample.stabilizer).to eq('PEG')
+    end
+
+    it 'prefers column over sample_details for new fields' do
+      sample = create(:sample,
+        layer_thickness: 'col',
+        sample_details: { 'layer_thickness' => 'details' })
+      expect(sample.layer_thickness).to eq('col')
+    end
+  end
+
+  describe 'dropdown hierarchical fields (sieve_fraction, material, shape, storage_condition)' do
+    it 'persists sieve_fraction as a string value' do
+      sample = create(:sample, sieve_fraction: 'fine_powder')
+      expect(sample.reload.sieve_fraction).to eq('fine_powder')
+    end
+
+    it 'persists material as a string value' do
+      sample = create(:sample, material: 'cordierite')
+      expect(sample.reload.material).to eq('cordierite')
+    end
+
+    it 'persists shape as a string value' do
+      sample = create(:sample, shape: 'cylinders')
+      expect(sample.reload.shape).to eq('cylinders')
+    end
+
+    it 'persists storage_condition as a string value' do
+      sample = create(:sample, storage_condition: 'glovebox')
+      expect(sample.reload.storage_condition).to eq('glovebox')
+    end
+  end
+
+  describe 'cell density (cspi) field with CPSI semantics' do
+    it 'persists cspi as a string value' do
+      sample = create(:sample, cspi: '400')
+      expect(sample.reload.cspi).to eq('400')
+    end
+
+    it 'falls back to sample_details when cspi column is blank' do
+      sample = create(:sample, cspi: nil, sample_details: { 'cspi' => '300' })
+      expect(sample.cspi).to eq('300')
     end
   end
 
@@ -243,6 +390,109 @@ RSpec.describe Sample do
       expect(sample.save).to be(true)
       expect(sample.molecule).to eq(molecule)
       expect(sample.molecule.cano_smiles).to eq('')
+    end
+  end
+
+  describe 'molfiles with polymers' do
+    # 3 R# with bonds, PolymersList + TextNode
+    let(:molfile_three_r_with_bonds) do
+      <<~MOL
+        null
+          Ketcher  3162612562D 1   1.00000     0.00000     0
+
+          3  2  0  0  0  0  0  0  0  0999 V2000
+           14.7204   -8.4388    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+           12.9704   -5.8637    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+           16.0954   -5.1512    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+          2  1  1  0     0  0
+          3  1  1  0     0  0
+        M  END
+        > <PolymersList>
+        0/52/1.50-2.00 1/10/1.00-1.00 2/13/1.28-1.20
+        > <TextNode>
+        2#qcy9t7#t_13_2#2wt.% pdC02
+        1#lj5hkv#t_10_1#1wt.% pd
+        0#iuauh5#t_52_0#y-A2023
+        > </TextNode>
+        > <TextNodeMeta>
+        {blocks:{key:iuauh5,text:y-A2023,type:unstyled,depth:0,inlineStyleRanges:{style:fontsize-10,offset:0,length:7},entityRanges:,data:{fontSize:10}},entityMap:{}}
+        {blocks:{key:lj5hkv,text:1wt.% pd,type:unstyled,depth:0,inlineStyleRanges:{style:fontsize-10,offset:0,length:8},entityRanges:,data:{fontSize:10}},entityMap:{}}
+        {blocks:{key:qcy9t7,text:2wt.% pdC02,type:unstyled,depth:0,inlineStyleRanges:{style:fontsize-10,offset:0,length:11},entityRanges:,data:{fontSize:10}},entityMap:{}}
+        > </TextNodeMeta>
+        $$$$
+      MOL
+    end
+
+    # 3 R# no bonds
+    let(:molfile_three_r_no_bonds) do
+      <<~MOL
+        null
+          Ketcher  3162611212D 1   1.00000     0.00000     0
+
+          3  0  0  0  0  0  0  0  0  0999 V2000
+           10.7676   -9.1906    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+           10.6089   -6.9032    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+           11.1060   -4.6344    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+        M  END
+        > <PolymersList>
+        0/10/1.00-1.00 1/12/1.00-1.00 2/40/2.00-2.00
+        > <TextNode>
+        2#1p38o0#t_40_2#asasdfa
+        1#hlts8j#t_12_1#sgsfgsf
+        0#porj4w#t_10_0#asfasd
+        > </TextNode>
+        > <TextNodeMeta>
+        {"blocks":[{"key":"porj4w","text":"asfasd","type":"unstyled","depth":0,"inlineStyleRanges":[{"style":"fontsize-10","offset":0,"length":6}],"entityRanges":[],"data":{"fontSize":10}}],"entityMap":{}}
+        {"blocks":[{"key":"hlts8j","text":"sgsfgsf","type":"unstyled","depth":0,"inlineStyleRanges":[{"style":"fontsize-10","offset":0,"length":7}],"entityRanges":[],"data":{"fontSize":10}}],"entityMap":{}}
+        {"blocks":[{"key":"1p38o0","text":"asasdfa","type":"unstyled","depth":0,"inlineStyleRanges":[{"style":"fontsize-10","offset":0,"length":7}],"entityRanges":[],"data":{"fontSize":10}}],"entityMap":{}}
+        > </TextNodeMeta>
+        $$$$
+      MOL
+    end
+
+    # 1 R#
+    let(:molfile_one_r) do
+      <<~MOL
+        null
+          Ketcher  3112615482D 1   1.00000     0.00000     0
+
+          1  0  0  0  0  0  0  0  0  0999 V2000
+           18.8287   -6.8500    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+        M  END
+        > <PolymersList>
+        0/10/1.00-1.00
+        > <TextNode>
+        0#oee0kg#t_10_0#1wt.% pdpt
+        > </TextNode>
+        > <TextNodeMeta>
+        {"blocks":[{"key":"oee0kg","text":"1wt.% pdpt","type":"unstyled","depth":0,"inlineStyleRanges":[],"entityRanges":[],"data":{}}],"entityMap":{}}
+        > </TextNodeMeta>
+        $$$$
+      MOL
+    end
+
+    it 'recognizes molfile with 3 R# and bonds (PolymersList + TextNode)' do
+      expect(Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile_three_r_with_bonds)).to be true
+      expect(Chemotion::MolfilePolymerSupport.has_text_node_tag?(molfile_three_r_with_bonds)).to be true
+      payload = Chemotion::SvgRenderer.parse_polymer_payload(molfile_three_r_with_bonds)
+      expect(payload[:polymers].size).to eq(3)
+      expect(payload[:polymers][0]).to eq(atom_index: 0, template_id: 52, height: 1.5, width: 2.0)
+      expect(payload[:text_by_index]).to eq(0 => 'y-A2023', 1 => '1wt.% pd', 2 => '2wt.% pdC02')
+    end
+
+    it 'recognizes molfile with 3 R# and no bonds' do
+      expect(Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile_three_r_no_bonds)).to be true
+      payload = Chemotion::SvgRenderer.parse_polymer_payload(molfile_three_r_no_bonds)
+      expect(payload[:polymers].size).to eq(3)
+      expect(payload[:text_by_index]).to eq(0 => 'asfasd', 1 => 'sgsfgsf', 2 => 'asasdfa')
+    end
+
+    it 'recognizes molfile with single R#' do
+      expect(Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(molfile_one_r)).to be true
+      payload = Chemotion::SvgRenderer.parse_polymer_payload(molfile_one_r)
+      expect(payload[:polymers].size).to eq(1)
+      expect(payload[:polymers][0]).to eq(atom_index: 0, template_id: 10, height: 1.0, width: 1.0)
+      expect(payload[:text_by_index]).to eq(0 => '1wt.% pdpt')
     end
   end
 
@@ -492,6 +742,123 @@ RSpec.describe Sample do
       it 'converts grams using molecular weight and purity' do
         result = sample.send(:convert_grams_to_moles, 200)
         expect(result).to eq(1.0) # (200g * 0.9) / 180g/mol = 1.0 mol
+      end
+    end
+
+    describe '#loading' do
+      let(:residue) { build(:residue, custom_info: { 'loading' => '1.5' }) }
+
+      it 'returns the loading as a decimal when set' do
+        sample.residues << residue
+        expect(sample.loading).to eq(1.5.to_d)
+      end
+
+      it 'returns nil when loading value is absent (blank string)' do
+        residue.custom_info = { 'loading' => '' }
+        sample.residues << residue
+        expect(sample.loading).to be_nil
+      end
+
+      it 'returns nil when loading key is missing from custom_info' do
+        residue.custom_info = {}
+        sample.residues << residue
+        expect(sample.loading).to be_nil
+      end
+
+      it 'returns nil when there are no residues' do
+        expect(sample.loading).to be_nil
+      end
+
+      it 'does not return 0.0 for a nil/blank loading (no false zero)' do
+        residue.custom_info = { 'loading' => nil }
+        sample.residues << residue
+        expect(sample.loading).to be_nil
+        expect(sample.loading).not_to eq(0.0)
+      end
+    end
+
+    describe '#convert_to_unit (HM / polymer branch) nil-safety' do
+      it 'returns 0.0 when polymer/HM sample has no loading (nil-guard)' do
+        # HM sample: contains_residues=true (residues.any?), loading missing.
+        # The nil-guard in unit_convertable.rb:10 must prevent `nil * amount_g` crash.
+        sample.sample_type = Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+        residue = build(:residue, custom_info: {}) # no loading key
+        sample.residues << residue
+
+        expect { sample.convert_to_unit(0.5, 'mol') }.not_to raise_error
+        expect(sample.convert_to_unit(0.5, 'mol')).to eq(0.0)
+      end
+
+      it 'returns loading * amount_g / 1000 when loading is set' do
+        sample.sample_type = Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+        residue = build(:residue, custom_info: { 'loading' => '2.5' })
+        sample.residues << residue
+
+        # 2.5 mmol/g × 0.4 g / 1000 = 0.001 mol
+        expect(sample.convert_to_unit(0.4, 'mol')).to be_within(1e-9).of(0.001)
+      end
+
+      it 'returns amount_g unchanged for the g case regardless of loading' do
+        sample.sample_type = Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL
+        residue = build(:residue, custom_info: {})
+        sample.residues << residue
+
+        expect(sample.convert_to_unit(0.5, 'g')).to eq(0.5)
+      end
+    end
+
+    describe '#set_sample_type_hierarchical_if_polymers_list gate (auto-flip protection)' do
+      # Test the callback method in isolation: it only depends on molfile presence,
+      # the polymers-list check, and the sample's dirty state. Full-save integration
+      # requires molecule/collection/creator wiring — out of scope for this unit test.
+      let(:polymer_molfile) { "polymer molfile stub\n" }
+      let(:instance) { Sample.new(molfile: polymer_molfile) }
+
+      before do
+        allow(Chemotion::MolfilePolymerSupport).to receive(:has_polymers_list_tag?).and_return(true)
+      end
+
+      it 'flips a new record with polymers-list tag to HierarchicalMaterial' do
+        # new_record? is true for an in-memory .new; molfile_changed? is true because it was set.
+        instance.send(:set_sample_type_hierarchical_if_polymers_list)
+        expect(instance.sample_type).to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+      end
+
+      it 'does NOT flip when molfile is blank' do
+        blank = Sample.new(molfile: nil)
+        blank.send(:set_sample_type_hierarchical_if_polymers_list)
+        expect(blank.sample_type).not_to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+      end
+
+      it 'does NOT flip when the molfile does not contain the polymers-list tag' do
+        allow(Chemotion::MolfilePolymerSupport).to receive(:has_polymers_list_tag?).and_return(false)
+        instance.send(:set_sample_type_hierarchical_if_polymers_list)
+        expect(instance.sample_type).not_to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+      end
+
+      it 'does NOT overwrite a persisted non-HM sample_type on an unrelated save' do
+        # Simulate a persisted Micromolecule (legacy polymer) whose molfile hasn't changed.
+        legacy = Sample.new(molfile: polymer_molfile, sample_type: Sample::SAMPLE_TYPE_MICROMOLECULE)
+        allow(legacy).to receive_messages(new_record?: false, molfile_changed?: false)
+        legacy.send(:set_sample_type_hierarchical_if_polymers_list)
+        expect(legacy.sample_type).to eq(Sample::SAMPLE_TYPE_MICROMOLECULE)
+      end
+
+      it 'flips the type when the molfile itself changed (user pasted a polymer-tagged molfile)' do
+        persisted = Sample.new(molfile: polymer_molfile, sample_type: Sample::SAMPLE_TYPE_MICROMOLECULE)
+        allow(persisted).to receive_messages(new_record?: false, molfile_changed?: true)
+        # No explicit sample_type change in this save
+        allow(persisted).to receive(:sample_type_changed?).and_return(false)
+        persisted.send(:set_sample_type_hierarchical_if_polymers_list)
+        expect(persisted.sample_type).to eq(Sample::SAMPLE_TYPE_HIERARCHICAL_MATERIAL)
+      end
+
+      it 'respects an explicit non-HM sample_type change made in the same save' do
+        # User explicitly moves an HM back to Micromolecule.
+        s = Sample.new(molfile: polymer_molfile, sample_type: Sample::SAMPLE_TYPE_MICROMOLECULE)
+        allow(s).to receive(:sample_type_changed?).and_return(true)
+        s.send(:set_sample_type_hierarchical_if_polymers_list)
+        expect(s.sample_type).to eq(Sample::SAMPLE_TYPE_MICROMOLECULE)
       end
     end
 

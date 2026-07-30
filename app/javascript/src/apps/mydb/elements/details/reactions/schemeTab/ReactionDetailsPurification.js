@@ -134,7 +134,7 @@ export default class ReactionDetailsPurification extends Component {
                   dropMaterial={dummy}
                   deleteMaterial={this.deletePSolvent}
                   dropSample={permitOn(reaction) ? this.dropPSolvent : dummy}
-                  showLoadingColumn={!!reaction.hasPolymers()}
+                  showLoadingColumn={!!reaction.hasLoadingBasedSamples()}
                   onChange={onChange}
                   dndEnabled={permitOn(reaction)}
                 />

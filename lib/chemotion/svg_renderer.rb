@@ -221,7 +221,6 @@ module Chemotion
         while i < lines.length
           line = lines[i].strip
           break if line.start_with?('> <') || line == '$$$$'
-
           data << line unless line.empty?
           i += 1
         end
@@ -690,7 +689,6 @@ module Chemotion
         g.remove if g['id'] == glyph_id
       end
     end
-
     def self.log_text_elements_snippet(svg)
       # No-op: previously logged SVG text elements for debugging.
     end

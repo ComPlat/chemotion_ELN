@@ -289,7 +289,20 @@ class Reaction < ApplicationRecord
   end
 
   def yield_amount(sample_id)
-    ReactionsProductSample.find_by(reaction_id: id, sample_id: sample_id).try(:equivalent)
+    rps = ReactionsProductSample.find_by(reaction_id: id, sample_id: sample_id)
+    return nil unless rps
+
+    sample = rps.sample
+    # For loading-based samples (polymers, HierarchicalMaterial) without a
+    # loading value, `equivalent` may be stale (e.g., left over from a save
+    # made before the frontend HM branch existed). Return nil so the SVG
+    # composer skips the yield label rather than rendering a misleading value.
+    if sample && sample.residues.any?
+      loading = sample.residues.first.try(:custom_info).try(:[], 'loading')
+      return nil if loading.blank? || loading.to_f.zero?
+    end
+
+    rps.equivalent
   end
 
   def solvents_in_svg

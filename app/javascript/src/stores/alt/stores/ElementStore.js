@@ -713,8 +713,8 @@ class ElementStore {
   // -- Samples --
 
   handleFetchSampleById(result) {
-    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
-      if (result.isMixture()) {
+    if (!this.state?.currentElement || this.state?.currentElement._checksum != result?._checksum) {
+      if (result.isMixture() || result.isHierarchicalMaterial()) {
         ComponentsFetcher.fetchComponentsBySampleId(result.id)
           .then(async (components) => {
             const sampleComponents = components.map((component) => {
@@ -726,20 +726,29 @@ class ElementStore {
               return new Component(sampleData);
             });
             await result.initialComponents(sampleComponents);
-            if (this.state.currentElement === result) {
-              this.setState({ currentElement: result });
-            }
+            // Trigger store update after async component hydration so details UI
+            // (e.g. composition table) renders immediately on first open.
+            this.changeCurrentElement(result);
           })
           .catch((errorMessage) => {
             console.log(errorMessage);
+            this.changeCurrentElement(result);
           });
+      } else {
+        this.changeCurrentElement(result);
       }
-      this.changeCurrentElement(result);
     }
   }
 
   handleCreateSample({ element, closeView, components }) {
-    if (element.isMixture()) {
+    if (!element) {
+      console.error('handleCreateSample: element is undefined');
+      return;
+    }
+    const isMixture = typeof element.isMixture === 'function' && element.isMixture();
+    const isHierarchical = typeof element.isHierarchicalMaterial === 'function'
+      && element.isHierarchicalMaterial();
+    if (isMixture || isHierarchical) {
       ComponentsFetcher.saveOrUpdateComponents(element, components)
         .then(async (savedComponents) => {
           // Use the API response so newly inserted rows pick up their real DB ids.
@@ -766,7 +775,7 @@ class ElementStore {
     newSample, reaction, materialGroup, components
   }) {
     UserActions.fetchCurrentUser();
-    if (newSample.isMixture()) {
+    if (newSample.isMixture() || newSample.isHierarchicalMaterial()) {
       ComponentsFetcher.saveOrUpdateComponents(newSample, components)
         .then(async (savedComponents) => {
           const refreshed = Component.refreshFromApi(savedComponents, components);
@@ -813,19 +822,13 @@ class ElementStore {
   }
 
   handleUpdateLinkedElement({ element, closeView, components }) {
-    if (element instanceof Sample && element.isMixture()) {
-      // Seed element with current Component instances so names display immediately
-      // without waiting for saveOrUpdateComponents to resolve.
-      if (Array.isArray(components) && components.length > 0) {
-        element.components = components;
-      }
+    if (element instanceof Sample && (element.isMixture() || element.isHierarchicalMaterial())) {
+      element.initialComponents(components || []);
       ComponentsFetcher.saveOrUpdateComponents(element, components)
         .then((savedComponents) => {
           const refreshed = Component.refreshFromApi(savedComponents, components);
           element.initialComponents(refreshed);
-          if (this.state.currentElement === element) {
-            this.setState({ currentElement: element });
-          }
+          this.changeCurrentElement(element);
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
@@ -1562,6 +1565,7 @@ class ElementStore {
     }
     // this.synchronizeElements(this.state.currentElement);
     this.state.currentElement = nextEl;
+    this.setState({ currentElement: nextEl, activeKey: this.state.activeKey, selecteds: this.state.selecteds });
   }
 
   handleGetMoleculeCas(updatedSample) {

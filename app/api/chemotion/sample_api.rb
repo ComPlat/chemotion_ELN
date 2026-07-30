@@ -95,7 +95,6 @@ module Chemotion
           col_id = ui_state[:currentCollectionId]
           sample_ids = Sample.for_user(current_user.id)
                              .for_ui_state_with_collection(ui_state[:sample], CollectionsSample, col_id)
-          samples = Sample.where(id: sample_ids)
           # Splitting adds a new subsample to the target collection, so authorize that collection
           # directly. ElementsPolicy#share_all? would take MAX(permission_level) across every
           # collection each sample belongs to, wrongly allowing a split into a read-only
@@ -103,7 +102,7 @@ module Chemotion
           # :add_elements. writable_collection_for is :add_elements-aware and scoped to this collection.
           error!('401 Unauthorized', 401) unless writable_collection_for(col_id)
 
-          samples.each do |sample|
+          Sample.where(id: sample_ids).find_each do |sample|
             sample.create_subsample(current_user, col_id, true, 'sample')
           end
 
@@ -328,6 +327,21 @@ module Chemotion
         optional :sample_type, type: String, default: 'Micromolecule', values: Sample::SAMPLE_TYPES
         optional :sample_details, type: Hash, desc: 'extra params for mixtures or polymers'
         optional :literatures, type: Hash
+
+        # Hierarchical sample params
+        # (color, state, particle_size are sent via xref — main's storage)
+        optional :height, type: Float, desc: 'dimension of the Hierarchical sample HXWXL'
+        optional :width, type: Float, desc: 'dimension of the Hierarchical sample HXWXL'
+        optional :length, type: Float, desc: 'dimension of the Hierarchical sample HXWXL'
+        optional :diameter, type: Float, desc: 'diameter of the Hierarchical sample'
+        optional :storage_condition, type: String, desc: 'storage condition of the Hierarchical sample'
+        optional :material, type: String, desc: 'material of the Hierarchical sample'
+        optional :cspi, type: String, desc: 'Cell density (CPSI) of the Hierarchical sample'
+        optional :shape, type: String, desc: 'shape of the Hierarchical sample'
+        optional :sieve_fraction, type: String, desc: 'sieve fraction of the Hierarchical sample'
+        optional :layer_thickness, type: String, desc: 'layer thickness of the Hierarchical sample'
+        optional :liquid_medium, type: String, desc: 'liquid medium of the Hierarchical sample'
+        optional :stabilizer, type: String, desc: 'stabilizer of the Hierarchical sample'
       end
 
       route_param :id do
@@ -386,6 +400,28 @@ module Chemotion
           end
           # remove collection_id from sample attributes after updating inventory label
           attributes.delete(:collection_id)
+
+          # Handle hierarchical fields - save to both DB columns and sample_details for backward compatibility
+          sample_details_param = attributes.delete(:sample_details) || {}
+
+          # Extract fields that have DB columns and save them directly
+          # (color, state, particle_size stay in xref — main's storage)
+          db_column_fields = %i[height width length diameter storage_condition material cspi shape sieve_fraction layer_thickness liquid_medium stabilizer]
+          db_column_fields.each do |field|
+            next unless sample_details_param.key?(field.to_s)
+
+            sd_value = sample_details_param.delete(field.to_s)
+            # If direct attribute has a value, don't let an empty sample_details value overwrite it
+            next if attributes[field].present? && sd_value.blank?
+
+            attributes[field] = sd_value
+          end
+
+          # Merge remaining sample_details with existing ones
+          if sample_details_param.present?
+            existing = @sample.sample_details || {}
+            attributes[:sample_details] = existing.deep_merge(sample_details_param)
+          end
 
           @sample.update!(attributes)
           @sample.save_segments(segments: params[:segments], current_user_id: current_user.id)
@@ -506,7 +542,25 @@ module Chemotion
           molecular_mass: params[:molecular_mass],
           sum_formula: params[:sum_formula],
           sample_type: params[:sample_type],
-          sample_details: params[:sample_details],
+          sample_details: (params[:sample_details] || {}).merge(
+            %w[height width length storage_condition diameter material cspi
+               shape sieve_fraction layer_thickness liquid_medium stabilizer]
+              .index_with { |k| params[k.to_sym] },
+          ).compact,
+          # Mirror hierarchical properties into DB columns so create + update stay in sync
+          # (color, state, particle_size stay in xref — main's storage)
+          height: params[:height],
+          width: params[:width],
+          length: params[:length],
+          diameter: params[:diameter],
+          storage_condition: params[:storage_condition],
+          material: params[:material],
+          cspi: params[:cspi],
+          shape: params[:shape],
+          sieve_fraction: params[:sieve_fraction],
+          layer_thickness: params[:layer_thickness],
+          liquid_medium: params[:liquid_medium],
+          stabilizer: params[:stabilizer],
         }
 
         boiling_point_lowerbound = params['boiling_point_lowerbound'].presence || -Float::INFINITY
@@ -555,7 +609,9 @@ module Chemotion
         sample.collections = collections.uniq
 
         sample.container = update_datamodel(params[:container])
-        sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
+        if params[:xref]&.fetch(:inventory_label, nil)
+          sample.update_inventory_label(params[:xref][:inventory_label], params[:collection_id])
+        end
         sample.save!
 
         create_literatures_and_literals(sample, literatures)
