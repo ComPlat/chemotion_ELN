@@ -3,7 +3,6 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
-import { debounce } from 'lodash';
 import {
   Button, ButtonGroup, Form, InputGroup, OverlayTrigger, Popover
 } from 'react-bootstrap';
@@ -453,7 +452,7 @@ const OpenVariationCell = ({ data }) => {
       variant="info"
       size="sm"
       type="button"
-      onClick={() => setActiveVariation({ idx: data.idx, data: data.data })}
+      onClick={() => setActiveVariation(data)}
     >
       Open
     </Button>

@@ -21,7 +21,6 @@ import
   diffObjects,
   REACTION_VARIATIONS_TAB_KEY
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
-
 const RemoveVariationsModal = ({ onRemoveAll }) => {
   const [showModal, setShowModal] = useState(false);
 
@@ -346,15 +345,16 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
       reactionId={reaction.id}
       editMode={editMode}
     />
-    <div>
+    <div style={{ position: 'relative' }}>
       {activeVariation &&
-        (<ReactionDetailsScheme
-        reaction={activeVariation.data}
-        onReactionChange={(r) => handleReactionChange(r, activeVariation.idx)}
-        onInputChange={(type, event) => handleInputChange(type, event, activeVariation.data,
-          (r) => handleReactionChange(r, activeVariation.idx))}
-      />)}
-
+        (<div><h2>Variation #{activeVariation.label}</h2>
+          <button onClick={()=> setActiveVariation(null)} className="close-btn" aria-label="Close">&times;</button>
+          <ReactionDetailsScheme
+            reaction={activeVariation.data}
+            onReactionChange={(r) => handleReactionChange(r, activeVariation.idx)}
+            onInputChange={(type, event) => handleInputChange(type, event, activeVariation.data,
+              (r) => handleReactionChange(r, activeVariation.idx))}
+          /></div>)}
     </div>
   </>);
 };
