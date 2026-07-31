@@ -25,99 +25,39 @@ FactoryBot.define do
       end
     end
 
+    # Variations are a list of diffs against the reaction they belong to: see
+    # db/schemas/reaction_variations.schema.json. Each row here changes the reaction's temperature
+    # and the amount of its first starting material, which is enough to exercise both the
+    # reaction-level and the material-level half of a diff.
     factory :reaction_with_variations do
       after(:build) do |reaction|
-        def get_gas_type(material_type)
-          case material_type
-          when 'startingMaterials'
-            'feedstock'
-          when 'reactants', 'solvents'
-            'off'
-          when 'products'
-            'gas'
-          end
-        end
-
-        def get_aux(sample, material_type)
+        reaction.variations = Array.new(2) do |i|
           {
-            purity: sample.try(:purity),
-            loading: sample.try(:loading),
-            molarity: sample.try(:molarity_value),
-            sumFormula: sample.try(:sum_formula),
-            coefficient: sample.try(:coefficient),
-            isReference: sample.try(:reference),
-            molecularWeight: sample.molecule.try(:molecular_weight),
-            gasType: get_gas_type(material_type),
-            materialType: material_type,
-            vesselVolume: 42,
-            density: 42,
-          }
-        end
+            'id' => SecureRandom.uuid,
+            'idx' => i,
+            'group' => [i + 1, 0],
+            'analyses' => [],
+            'notes' => "I am variation #{i}",
+            'data' => {
+              'id' => SecureRandom.uuid,
+              'temperature' => {
+                'valueUnit' => '°C',
+                'userText' => (42 + i).to_s,
+                'data' => [],
+              },
+              '_starting_materials' => reaction.starting_materials.map.with_index do |sample, index|
+                # Only the material this row changes is present; the others stay as the holes that
+                # a positional diff leaves behind.
+                next nil unless index.zero?
 
-        variations = Array.new(2) do |i|
-          starting_materials = reaction.starting_materials.index_by(&:id).transform_values do |sample|
-            {
-              aux: get_aux(sample, 'startingMaterials'),
-              mass: { unit: 'g', value: 42 },
-              amount: { unit: 'mol', value: 42 },
-              equivalent: { unit: nil, value: 42 },
-              volume: { unit: 'ml', value: 42 },
-            }
-          end
-
-          reactants = reaction.reactants.index_by(&:id).transform_values do |sample|
-            {
-              aux: get_aux(sample, 'reactants'),
-              mass: { unit: 'g', value: 42 },
-              amount: { unit: 'mol', value: 42 },
-              equivalent: { unit: nil, value: 42 },
-              volume: { unit: 'ml', value: 42 },
-            }
-          end
-
-          products = reaction.products.index_by(&:id).transform_values do |sample|
-            {
-              aux: get_aux(sample, 'products'),
-              mass: { unit: 'g', value: 42 },
-              amount: { unit: 'mol', value: 42 },
-              yield: { unit: nil, value: 42 },
-              duration: { unit: 'Second(s)', value: 42 },
-              temperature: { unit: 'K', value: 42 },
-              concentration: { unit: nil, value: 42 },
-              turnoverNumber: { unit: nil, value: 42 },
-              turnoverFrequency: { unit: nil, value: 42 },
-              volume: { unit: 'ml', value: 42 },
-            }
-          end
-
-          solvents = reaction.solvents.index_by(&:id).transform_values do |sample|
-            {
-              aux: get_aux(sample, 'solvents'),
-              volume: { unit: 'ml', value: 42 },
-            }
-          end
-
-          {
-            id: i.to_s,
-            metadata: {
-              analyses: [],
-              notes: '',
-              group: { group: 1, subgroup: 1 },
+                {
+                  'id' => sample.id,
+                  'target_amount_value' => 42 + i,
+                  'target_amount_unit' => 'g',
+                }
+              end,
             },
-            properties: {
-              duration: { unit: 'Hour(s)', value: '42' },
-              temperature: { unit: '°C', value: '42' },
-            },
-            startingMaterials: starting_materials,
-            reactants: reactants,
-            products: products,
-            solvents: solvents,
-            segments: {},
           }
-        end
-        reaction.variations = variations.each_with_object({}) do |item, hash|
-          item['uuid'] = SecureRandom.uuid
-          hash[item['uuid']] = item
         end
       end
     end

@@ -1,0 +1,217 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.chemotion.net/schemas/reaction_variations.schema.json",
+  "title": "reactions.variations",
+  "description": "Layout of the `variations` JSONB column of the `reactions` table. A variation is one row of the reaction's Variations tab. It does not carry a copy of the reaction: it stores only what differs from the reaction it belongs to, under `data`, so a variation that changes nothing has an empty `data`. Written by app/javascript/src/apps/mydb/elements/details/reactions/variationsTab/.",
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/variation"
+  },
+  "definitions": {
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+
+    "number_like": {
+      "description": "Numbers reach the column as numbers or as the strings a text input produced.",
+      "type": ["number", "string"]
+    },
+
+    "id_reference": {
+      "description": "Database id of an existing record, or a UUID while the record is still unsaved.",
+      "type": ["integer", "string"]
+    },
+
+    "quill_delta": {
+      "description": "Rich text as stored everywhere else in the ELN.",
+      "type": "object",
+      "properties": {
+        "ops": { "type": "array" }
+      },
+      "required": ["ops"]
+    },
+
+    "variation": {
+      "type": "object",
+      "required": ["id", "idx", "data"],
+      "properties": {
+        "id": {
+          "description": "Identity of the row itself, stable across reorderings and renumberings.",
+          "$ref": "#/definitions/uuid"
+        },
+        "idx": {
+          "description": "Number this row is known by, and what the grid shows as its label. A new row takes the highest `idx` in the list plus one, so numbers are not reused after a removal and do not have to match the row's position in the list - the list order is what orders the rows.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "group": {
+          "description": "Grouping of the row, as [major, minor]. Rows sharing a major group are repetitions of the same experiment.",
+          "type": "array",
+          "items": { "$ref": "#/definitions/number_like" },
+          "maxItems": 2
+        },
+        "analyses": {
+          "description": "Analyses of the parent reaction this row is linked to, by container id. The analyses themselves stay on the reaction; nothing is copied here.",
+          "type": "array",
+          "items": { "$ref": "#/definitions/id_reference" }
+        },
+        "notes": {
+          "description": "Free text about this row.",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/definitions/reaction_diff"
+        },
+        "legacy_data": {
+          "description": "The body this variation had before the format changed, kept verbatim by the migration that converted it. Absent on every variation written since. See db/migrate/20260731120000_convert_reaction_variations_to_diff_list.rb.",
+          "type": "object"
+        }
+      }
+    },
+
+    "reaction_diff": {
+      "description": "What this variation changes about its reaction, as a sparse subset of the reaction's own attributes: only attributes that differ are present, and only down to the leaf that differs. Everything absent is taken from the parent reaction when the row is read. Attribute names are those of the client side Reaction model, which is why the material collections are underscore prefixed. Additional attributes are allowed on purpose - the diff follows the reaction model, so it grows with it.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Identity of the reaction this row represents. Distinct from the row's own `id`.",
+          "$ref": "#/definitions/uuid"
+        },
+
+        "_starting_materials": { "$ref": "#/definitions/material_diff_list" },
+        "_reactants": { "$ref": "#/definitions/material_diff_list" },
+        "_solvents": { "$ref": "#/definitions/material_diff_list" },
+        "_purification_solvents": { "$ref": "#/definitions/material_diff_list" },
+        "_products": { "$ref": "#/definitions/material_diff_list" },
+
+        "temperature": {
+          "type": "object",
+          "properties": {
+            "valueUnit": { "type": "string" },
+            "userText": { "type": "string" },
+            "data": { "type": "array" }
+          }
+        },
+        "duration": { "type": ["string", "null"] },
+        "timestamp_start": { "type": ["string", "null"] },
+        "timestamp_stop": { "type": ["string", "null"] },
+
+        "description": { "$ref": "#/definitions/quill_delta" },
+        "observation": { "$ref": "#/definitions/quill_delta" },
+        "purification_detail": { "$ref": "#/definitions/quill_delta" },
+        "purification": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "dangerous_products": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+
+        "conditions": { "type": ["string", "null"] },
+        "rxno": { "type": ["string", "null"] },
+        "role": { "type": ["string", "null"] },
+        "reaction_type": { "type": "string" },
+
+        "vessel_size": {
+          "type": "object",
+          "properties": {
+            "unit": { "type": ["string", "null"] },
+            "amount": { "type": ["number", "string", "null"] }
+          }
+        },
+        "volume": { "type": ["number", "string", "null"] },
+        "use_reaction_volume": { "type": "boolean" },
+        "lock_reaction_volume": { "type": "boolean" },
+
+        "ph_operator": { "type": ["string", "null"] },
+        "ph_value": { "type": ["number", "string", "null"] },
+
+        "gaseous": { "type": "boolean" },
+        "weight_percentage": { "type": "boolean" },
+
+        "tlc_solvents": { "type": ["string", "null"] },
+        "tlc_description": { "type": ["string", "null"] },
+        "rf_value": { "type": ["number", "string", "null"] }
+      },
+      "additionalProperties": true
+    },
+
+    "material_diff_list": {
+      "description": "Materials of one collection, positionally aligned with the same collection on the parent reaction. An entry is null where that material is unchanged, and a sparse object where it is not.",
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "type": "null" },
+          { "$ref": "#/definitions/material_diff" }
+        ]
+      }
+    },
+
+    "material_diff": {
+      "description": "What this variation changes about one material. Attribute names are those of the client side Sample model; only the ones the variations grid can edit are listed, and further attributes are allowed for the same reason as on the reaction.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/definitions/id_reference" },
+
+        "_amount_value": { "type": ["number", "string", "null"] },
+        "_amount_unit": { "type": ["string", "null"] },
+        "amount_value": { "type": ["number", "string", "null"] },
+        "amount_unit": { "type": ["string", "null"] },
+        "target_amount_value": { "type": ["number", "string", "null"] },
+        "target_amount_unit": { "type": ["string", "null"] },
+        "real_amount_value": { "type": ["number", "string", "null"] },
+        "real_amount_unit": { "type": ["string", "null"] },
+
+        "metrics": {
+          "description": "Metric prefix per amount field, one character each, in the order mass, volume, mol, concentration. Drives the unit shown by the inputs and by the column headers of the variations grid.",
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 4
+        },
+
+        "equivalent": { "type": ["number", "string", "null"] },
+        "coefficient": { "type": ["number", "string", "null"] },
+        "reference": { "type": "boolean" },
+        "weight_percentage": { "type": ["number", "string", "null"] },
+        "weight_percentage_reference": { "type": "boolean" },
+        "conversion_rate": { "type": ["number", "string", "null"] },
+        "purity": { "type": ["number", "string", "null"] },
+        "density": { "type": ["number", "string", "null"] },
+        "molarity_value": { "type": ["number", "string", "null"] },
+        "molarity_unit": { "type": ["string", "null"] },
+        "concn": { "type": ["number", "string", "null"] },
+        "loading": { "type": ["number", "string", "null"] },
+        "dry_solvent": { "type": "boolean" },
+        "external_label": { "type": ["string", "null"] },
+        "show_label": { "type": "boolean" },
+
+        "gas_type": {
+          "type": ["string", "null"],
+          "enum": ["off", "gas", "feedstock", "catalyst", null]
+        },
+        "gas_phase_data": {
+          "type": "object",
+          "properties": {
+            "time": { "$ref": "#/definitions/gas_measurement" },
+            "temperature": { "$ref": "#/definitions/gas_measurement" },
+            "turnover_frequency": { "$ref": "#/definitions/gas_measurement" },
+            "part_per_million": { "type": ["number", "string", "null"] },
+            "turnover_number": { "type": ["number", "string", "null"] }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "gas_measurement": {
+      "type": "object",
+      "properties": {
+        "value": { "type": ["number", "string", "null"] },
+        "unit": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

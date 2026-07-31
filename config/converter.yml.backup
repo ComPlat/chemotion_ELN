@@ -1,0 +1,60 @@
+shared:
+  :ext:
+    - '.aif'
+    - '.brml'
+    - '.cif'
+    - '.dpt'
+    - '.dsp'
+    - '.dta'
+    - '.gz'
+    - '.pssession'
+    - '.tar'
+    - '.txt'
+    - '.xls'
+    - '.xlsx'
+    - '.xy'
+  :profile:
+  :secret_key:
+  :timeout:
+  :url: ''
+
+development:
+  :url: 'http://193.196.38.137:4000/api/v1/'
+  :profile: A
+  :secret_key: A
+  :timeout: 300
+  :ext:
+    - '.aif'
+    - '.brml'
+    - '.cfx_LANA'
+    - '.cif'
+    - '.csv'
+    - '.dpt'
+    - '.dsp'
+    - '.dta'
+    - '.gz'
+    - '.json'
+    - '.log'
+    - '.mpl'
+    - '.mpr'
+    - '.mps'
+    - '.pdf'
+    - '.pssession'
+    - '.tar'
+    - '.tif'
+    - '.tiff'
+    - '.txt'
+    - '.uxd'
+    - '.xls'
+    - '.xml'
+    - '.xlsx'
+    - '.xrdml'
+    - '.xrd'
+    - '.xy'
+    - '.zip'
+
+test:
+  :url:
+
+production:
+  :url:
