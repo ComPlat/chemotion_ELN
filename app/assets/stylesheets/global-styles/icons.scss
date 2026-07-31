@@ -58,9 +58,12 @@
 .icon-abc:before {
   content: "\e824";
 } /* '' */
-.icon-outgoing:before {
+.icon-incoming:before {
   content: "\e821";
 } /* '' */
+.icon-outgoing:before {
+  content: "\e820";
+} /* '' */
 .icon-collection:before {
   content: "\e822";
 } /* '' */
