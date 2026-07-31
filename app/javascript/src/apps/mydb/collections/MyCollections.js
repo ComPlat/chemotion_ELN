@@ -156,59 +156,62 @@ const MyCollections = () => {
       </Popover>
     );
 
-    const sharedWithUsers = node.shared ? collectionsStore.sharedWithUsers(node.id) : null;
-    const shareCount = sharedWithUsers?.shared_with_users?.length ?? 0;
-
     return (
-      <ButtonGroup className="flex-shrink-0">
-        {node.shared && (
-          <OverlayTrigger placement="top" overlay={<UserInfosTooltip collectionId={node.id} />}>
-            <span
-              className="btn btn-sm btn-warning d-flex align-items-center gap-1"
-              onMouseDown={(e) => e.stopPropagation()}
-              style={{ cursor: 'default' }}
+      <div className="d-flex align-items-center gap-2 flex-shrink-0">
+        <span
+          className="d-inline-flex justify-content-end align-items-center flex-shrink-0"
+          style={{ width: '3rem' }}
+        >
+          {node.shared && (
+            <OverlayTrigger placement="top" overlay={<UserInfosTooltip collectionId={node.id} />}>
+              <span
+                className="text-warning d-inline-flex align-items-center"
+                onMouseDown={(e) => e.stopPropagation()}
+                style={{ cursor: 'default' }}
+              >
+                <i className="fa fa-share-alt" />
+              </span>
+            </OverlayTrigger>
+          )}
+        </span>
+        <ButtonGroup className="flex-shrink-0">
+          <Dropdown onMouseDown={(e) => e.stopPropagation()}>
+            <Dropdown.Toggle
+              size="sm"
+              variant="light"
+              id={`collection-more-actions-${node.id}`}
+              disabled={node.isNew === true}
             >
-              <i className="fa fa-share-alt" />
-              {shareCount > 0 && ` (${shareCount})`}
-            </span>
-          </OverlayTrigger>
-        )}
-        {addCollectionButton(node)}
-        <OverlayTrigger animation placement="bottom" root trigger="focus" overlay={popover}>
-          <Button size="sm" variant="danger" onMouseDown={(e) => e.stopPropagation()}>
-            <i className="fa fa-trash-o" />
-          </Button>
-        </OverlayTrigger>
-        <Dropdown onMouseDown={(e) => e.stopPropagation()}>
-          <Dropdown.Toggle
-            size="sm"
-            variant="light"
-            id={`collection-more-actions-${node.id}`}
-            disabled={node.isNew === true}
-          >
-            <i className="fa fa-ellipsis-v" />
-          </Dropdown.Toggle>
-          <Dropdown.Menu popperConfig={{ strategy: 'fixed' }} renderOnMount>
-            <Dropdown.Item onClick={() => openCollectionSharesModal(node)}>
-              <i className="fa fa-plus me-1" />
-              <i className="fa fa-share-alt me-1" />
-              Add share
-            </Dropdown.Item>
-            {node.shared && (
-              <Dropdown.Item onClick={() => openCollectionSharesEditModal(node)}>
-                <i className="fa fa-users me-1" />
+              <i className="fa fa-ellipsis-v" />
+            </Dropdown.Toggle>
+            <Dropdown.Menu popperConfig={{ strategy: 'fixed' }} renderOnMount>
+              <Dropdown.Item onClick={() => openCollectionSharesModal(node)}>
+                <i className="fa fa-plus me-1" />
                 <i className="fa fa-share-alt me-1" />
-                Manage shares{shareCount > 0 ? ` (${shareCount})` : ''}
+                Add share
               </Dropdown.Item>
-            )}
-            <Dropdown.Divider />
-            <Dropdown.Item onClick={() => setTabsEditorCollection(node)}>
-              <i className="fa fa-sliders me-1" />
-              Edit collection tabs
-            </Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
-      </ButtonGroup>
+              {node.shared && (
+                <Dropdown.Item onClick={() => openCollectionSharesEditModal(node)}>
+                  <i className="fa fa-users me-1" />
+                  <i className="fa fa-share-alt me-1" />
+                  Manage shares
+                </Dropdown.Item>
+              )}
+              <Dropdown.Divider />
+              <Dropdown.Item onClick={() => setTabsEditorCollection(node)}>
+                <i className="fa fa-sliders me-1" />
+                Edit collection tabs
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+          {addCollectionButton(node)}
+          <OverlayTrigger animation placement="bottom" root trigger="focus" overlay={popover}>
+            <Button size="sm" variant="danger" onMouseDown={(e) => e.stopPropagation()}>
+              <i className="fa fa-trash-o" />
+            </Button>
+          </OverlayTrigger>
+        </ButtonGroup>
+      </div>
     );
   };
 

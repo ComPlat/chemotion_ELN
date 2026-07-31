@@ -1,9 +1,10 @@
 import React, { useContext, useState } from 'react';
 import Tree from 'react-ui-tree';
-import { Button, ButtonGroup, Dropdown, OverlayTrigger, Popover } from 'react-bootstrap';
+import { Dropdown, OverlayTrigger } from 'react-bootstrap';
 import SharedToMeInfosTooltip from 'src/apps/mydb/collections/SharedToMeInfosTooltip';
 import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/SelectionShareModal';
 import CollectionSharesEditModal from 'src/apps/mydb/collections/CollectionSharesEditModal';
+import AppModal from 'src/components/common/AppModal';
 import { PermissionConst } from 'src/utilities/PermissionConst';
 import { DEFAULT_COLLECTION_SHARE_PERMISSIONS } from 'src/utilities/collectionConstants';
 import { observer } from 'mobx-react';
@@ -14,6 +15,7 @@ function SharedWithMeCollections() {
   const tree = collectionsStore.shared_with_me_collection_tree;
   const [sharesModal, setSharesModal] = useState({ action: null, show: false, node: {} });
   const [sharesEditModal, setSharesEditModal] = useState({ show: false, node: {} });
+  const [rejectNode, setRejectNode] = useState(null);
   const [permissions, setPermissions] = useState(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
 
   const handleChange = (tree) => {
@@ -23,6 +25,11 @@ function SharedWithMeCollections() {
   const rejectShared = (node) => {
     collectionsStore.deleteCollectionShare(node.collection_share_id, node.id);
   }
+
+  const confirmRejectShared = () => {
+    if (rejectNode) rejectShared(rejectNode);
+    setRejectNode(null);
+  };
 
   // A delegate holding :manage_shares (or higher) on a shared collection may administer its shares.
   const canManageShares = (node) => node.permission_level >= PermissionConst.ManageShares;
@@ -85,33 +92,7 @@ function SharedWithMeCollections() {
     // group, and the group's share belongs to every member. To drop it, leave the group.
     const canReject = node.collection_share_id != null;
     const canManage = canManageShares(node);
-
-    const popover = (
-      <Popover>
-        <Popover.Body>
-          <div className="mb-2">Remove your access to &quot;{node.label}&quot;?</div>
-          <ButtonGroup>
-            <Button
-              variant="danger"
-              size="sm"
-              className="me-2"
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={() => rejectShared(node)}
-            >
-              Yes
-            </Button>
-            <Button
-              variant="warning"
-              size="sm"
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={() => {}}
-            >
-              No
-            </Button>
-          </ButtonGroup>
-        </Popover.Body>
-      </Popover>
-    );
+    const hasActions = canManage || canReject;
 
     return (
       <div
@@ -130,33 +111,18 @@ function SharedWithMeCollections() {
             />
           )}
         </div>
-        <ButtonGroup className="flex-shrink-0">
+        <div className="d-flex flex-shrink-0 align-items-center gap-2">
           <OverlayTrigger
             placement="top"
             overlay={<SharedToMeInfosTooltip collectionId={node.id} owner={node.owner} />}
           >
-            <span
-              className="btn btn-sm btn-warning d-flex align-items-center gap-1"
+            <i
+              className="fa fa-share-alt text-warning"
               style={{ cursor: 'default' }}
               onMouseDown={(e) => e.stopPropagation()}
-            >
-              <i className="fa fa-share-alt" />
-            </span>
+            />
           </OverlayTrigger>
-          {canReject && (
-            <OverlayTrigger
-              animation
-              placement="bottom"
-              root
-              trigger="focus"
-              overlay={popover}
-            >
-              <Button size="sm" variant="danger" onMouseDown={(e) => e.stopPropagation()}>
-                <i className="fa fa-trash-o" />
-              </Button>
-            </OverlayTrigger>
-          )}
-          {canManage && (
+          {hasActions && (
             <Dropdown onMouseDown={(e) => e.stopPropagation()}>
               <Dropdown.Toggle
                 size="sm"
@@ -166,20 +132,31 @@ function SharedWithMeCollections() {
                 <i className="fa fa-ellipsis-v" />
               </Dropdown.Toggle>
               <Dropdown.Menu popperConfig={{ strategy: 'fixed' }} renderOnMount>
-                <Dropdown.Item onClick={() => openCollectionSharesModal(node)}>
-                  <i className="fa fa-plus me-1" />
-                  <i className="fa fa-share-alt me-1" />
-                  Add share
-                </Dropdown.Item>
-                <Dropdown.Item onClick={() => openCollectionSharesEditModal(node)}>
-                  <i className="fa fa-users me-1" />
-                  <i className="fa fa-share-alt me-1" />
-                  Manage shares
-                </Dropdown.Item>
+                {canManage && (
+                  <>
+                    <Dropdown.Item onClick={() => openCollectionSharesModal(node)}>
+                      <i className="fa fa-plus me-1" />
+                      <i className="fa fa-share-alt me-1" />
+                      Add share
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={() => openCollectionSharesEditModal(node)}>
+                      <i className="fa fa-users me-1" />
+                      <i className="fa fa-share-alt me-1" />
+                      Manage shares
+                    </Dropdown.Item>
+                  </>
+                )}
+                {canManage && canReject && <Dropdown.Divider />}
+                {canReject && (
+                  <Dropdown.Item className="text-danger" onClick={() => setRejectNode(node)}>
+                    <i className="fa fa-trash-o me-1" />
+                    Remove my access
+                  </Dropdown.Item>
+                )}
               </Dropdown.Menu>
             </Dropdown>
           )}
-        </ButtonGroup>
+        </div>
       </div>
     );
   };
@@ -212,6 +189,19 @@ function SharedWithMeCollections() {
           deleteNode={deleteCollectionShares}
           onHide={closeCollectionSharesEditModal}
         />
+      )}
+      {rejectNode && (
+        <AppModal
+          show
+          size="sm"
+          title="Remove access"
+          onHide={() => setRejectNode(null)}
+          primaryActionLabel="Remove my access"
+          onPrimaryAction={confirmRejectShared}
+        >
+          Remove your access to &quot;{rejectNode.label}&quot;? The owner can share it with you
+          again later.
+        </AppModal>
       )}
     </div>
   );

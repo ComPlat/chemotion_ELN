@@ -113,6 +113,12 @@ const CollectionSubtreeFunctions = ({
         className="collection-subtree-functions"
       >
         <Dropdown.Toggle as={CollectionSubtreeFunctionsDropdownToggle} />
+        {/* renderOnMount + strategy: 'fixed' are load-bearing with the sidebar
+            CSS in CollectionTree.scss (`.tree-view__container { overflow-x: hidden }`
+            and the `.collection-subtree-functions { display: none }` hover rule).
+            The menu is pre-mounted so Popper has a measurable target when the
+            toggle is clicked; the container's overflow clip hides those pre-
+            mounted menus until Popper repositions them. See the SCSS comment. */}
         <Dropdown.Menu renderOnMount popperConfig={{ strategy: 'fixed' }}>
           <Dropdown.Item onClick={handleShowLiterature}>
             <i className="icon-report me-1" />
