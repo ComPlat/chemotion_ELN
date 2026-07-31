@@ -3,7 +3,7 @@ import Aviator from 'aviator';
 import { observer } from 'mobx-react';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import appRoutes from 'src/apps/mydb/routes';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 import ElementDragLayer from 'src/components/ElementDragLayer';
 import Sidebar from 'src/apps/mydb/mainNavigation/sidebar/Sidebar';
@@ -46,11 +46,26 @@ const saveKetcherOptionsToLocalStorage = () => {
     });
 };
 
-const loadAllCollection = () => {
-  CollectionsFetcher.fetchByCollectionId('all')
-    .then((collection) => {
-      UIActions.selectCollection(collection);
-    });
+const loadElement = (paths) => {
+  if (!paths[4]) { return }
+
+  aviatorNavigation(paths[4], paths[5], true, true, {});
+}
+
+const loadCollection = () => {
+  const locationPaths = location.pathname.split('/');
+  if (locationPaths.includes('all') || locationPaths.includes('home')) {
+    CollectionsFetcher.fetchByCollectionId('all')
+      .then((collection) => {
+        UIActions.selectCollection(collection);
+      });
+  } else if (locationPaths.includes('collection')) {
+    CollectionsFetcher.fetchByCollectionId(locationPaths[3])
+      .then((collection) => {
+        UIActions.selectCollection(collection);
+        loadElement(locationPaths);
+      });
+  }
 };
 
 const App = () => {
@@ -90,7 +105,7 @@ const App = () => {
     UIActions.initialize.defer();
     patchExternalLibraries();
 
-    loadAllCollection();
+    loadCollection();
 
     // TODO: clarify origin of handleStorageChange
     // window.addEventListener('storage', this.handleStorageChange);
@@ -98,9 +113,6 @@ const App = () => {
     // user templates
     removeLocalStorageEventListener();
     addLocalStorageListener();
-
-    // TODO: check why this does not appear to work
-    appRoutes().then(() => { Aviator.dispatch(); });
 
     // return a cleanup function that will be executed when the component is removed from DOM
     // see https://react.dev/reference/react/useEffect#useeffect

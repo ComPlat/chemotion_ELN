@@ -8,7 +8,6 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { MultiBackend, TouchTransition } from 'dnd-multi-backend';
 import App from 'src/apps/mydb/App';
-import appRoutes from 'src/apps/mydb/routes';
 import { rootStore, StoreContext } from 'src/stores/mobx/RootStore';
 
 Sentry.init({
@@ -46,6 +45,5 @@ document.addEventListener('DOMContentLoaded', () => {
       </StoreContext.Provider>,
       domElement
     );
-    appRoutes().then(() => { Aviator.dispatch(); });
   }
 });
