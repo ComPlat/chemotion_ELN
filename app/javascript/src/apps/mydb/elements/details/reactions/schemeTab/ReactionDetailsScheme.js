@@ -68,6 +68,12 @@ export default class ReactionDetailsScheme extends React.Component {
     const { reaction } = this.props;
     // Deserialize components when reaction data changes (e.g., after save/reload)
     if (prevProps.reaction !== reaction) {
+      this.reactionUpdateHandler = new ReactionUpdateHandler({
+          ...this.props,
+          onLockEquivColChange: this.onLockEquivColChange.bind(this)
+        },
+        this.context );
+
       this.reactionUpdateHandler.deserializeReactionMaterialComponents();
       // Update lock state when reaction changes
       this.reactionUpdateHandler.updateReactionEquivLockState();
@@ -314,6 +320,9 @@ export default class ReactionDetailsScheme extends React.Component {
       reactionDescTemplate,
       displayYieldField,
     } = this.state;
+    const {
+      variations
+    } = this.props;
     const { reaction, onInputChange, onReactionChange } = this.reactionUpdateHandler.props;
     const isInteractionReaction = reaction.isInteractionReaction();
     if (reaction.editedSample !== undefined) {
@@ -375,6 +384,7 @@ export default class ReactionDetailsScheme extends React.Component {
         <div className="mt-2 border-top">
           <MaterialGroup
             reaction={reaction}
+            variations={variations}
             materialGroup="starting_materials"
             materials={reaction.starting_materials}
             dropMaterial={this.reactionUpdateHandler.dropMaterial}
@@ -389,6 +399,7 @@ export default class ReactionDetailsScheme extends React.Component {
           />
           <MaterialGroup
             reaction={reaction}
+            variations={variations}
             materialGroup="reactants"
             materials={reaction.reactantsWithSbmm}
             dropMaterial={this.reactionUpdateHandler.dropMaterial}
@@ -405,6 +416,7 @@ export default class ReactionDetailsScheme extends React.Component {
           />
           <MaterialGroup
             reaction={reaction}
+            variations={variations}
             materialGroup="solvents"
             materials={reaction.solvents}
             dropMaterial={this.reactionUpdateHandler.dropMaterial}
@@ -419,6 +431,7 @@ export default class ReactionDetailsScheme extends React.Component {
           />
           <MaterialGroup
             reaction={reaction}
+            variations={variations}
             materialGroup="products"
             materials={reaction.products}
             dropMaterial={this.reactionUpdateHandler.dropMaterial}
@@ -521,5 +534,10 @@ export default class ReactionDetailsScheme extends React.Component {
 
 ReactionDetailsScheme.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
-  onReactionChange: PropTypes.func.isRequired
+  onReactionChange: PropTypes.func.isRequired,
+  onInputChange: PropTypes.func.isRequired,
+  variations: PropTypes.arrayOf(PropTypes.shape({
+    idx: PropTypes.number.isRequired,
+    data: PropTypes.instanceOf(Reaction).isRequired,
+  })).isRequired
 };

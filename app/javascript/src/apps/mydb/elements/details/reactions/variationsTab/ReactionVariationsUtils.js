@@ -10,8 +10,44 @@ function getVariationsRowName(reactionLabel, variationsRowId) {
   return `${reactionLabel}-V#${variationsRowId}`;
 }
 
+function deepPatch(target, patch) {
+  if (patch === null || patch === undefined) {
+    return structuredClone(target);
+  }
+
+  // Arrays: merge by index
+  if (Array.isArray(target) && Array.isArray(patch)) {
+    return target.map((value, i) =>
+      i in patch ? deepPatch(value, patch[i]) : structuredClone(value)
+    );
+  }
+
+  // Objects: merge recursively
+  if (
+    target &&
+    patch &&
+    typeof target === 'object' &&
+    typeof patch === 'object' &&
+    !Array.isArray(target) &&
+    !Array.isArray(patch)
+  ) {
+    const result = structuredClone(target);
+
+    for (const key of Object.keys(patch)) {
+      result[key] = key in target
+        ? deepPatch(target[key], patch[key])
+        : structuredClone(patch[key]);
+    }
+
+    return result;
+  }
+
+  // Primitive: replace
+  return structuredClone(patch);
+}
+
 const makeVariationReaction = (reaction, reactionData) => {
-  const clonedReaction = { ...structuredClone(reaction), ...reactionData };
+  const clonedReaction = deepPatch(reaction, reactionData);
   clonedReaction.variations = [];
   clonedReaction.container = Container.init();
   clonedReaction.id = reactionData.id || uuid.v4();
