@@ -50,7 +50,7 @@ const ElementLink = ({ literature }) => {
       title={`${externalLabel ? externalLabel.concat(' - ') : ''}${name}`}
       variant="light"
       onClick={() => aviatorNavigation(
-        literature.element_type && literature.element_type.toLowerCase(), elementId, false, false
+        literature.element_type && literature.element_type.toLowerCase(), elementId, false, true
       )}
     >
       <ElementIcon element={literature} className="me-2" />

@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Table, Badge, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import Aviator from 'aviator';
-import { genericElShowOrNew } from 'src/utilities/routesUtils';
+import { aviatorNavigation, genericElShowOrNew } from 'src/utilities/routesUtils';
 import moment from 'moment';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import ConfirmModal from 'src/components/common/ConfirmModal';
@@ -114,8 +113,7 @@ class MttMeasurementsTable extends Component {
 
   navigateToGenericElement(genericElementId) {
     if (genericElementId) {
-      const { uri } = Aviator.getCurrentRequest();
-      Aviator.navigate(`${uri}/generic_element/${genericElementId}`, { silent: true });
+      aviatorNavigation('generic_element', genericElementId);
       genericElShowOrNew({ params: { generic_elementID: genericElementId } }, 'generic_element');
     }
   }
@@ -272,7 +270,9 @@ class MttMeasurementsTable extends Component {
                         </td>
                         <td className="text-center">
                           {hasLink && (
-                            <OverlayTrigger placement="bottom" overlay={<Tooltip id={`open-ge-${id}`}>Open in Generic Element</Tooltip>}>
+                            <OverlayTrigger placement="bottom" overlay={<Tooltip id={`open-ge-${id}`}>
+                              Open in Generic Element
+                            </Tooltip>}>
                               <Button
                                 variant="info"
                                 size="sm"
@@ -284,7 +284,9 @@ class MttMeasurementsTable extends Component {
                               </Button>
                             </OverlayTrigger>
                           )}
-                          <OverlayTrigger placement="bottom" overlay={<Tooltip id={`delete-${id}`}>Delete measurement</Tooltip>}>
+                          <OverlayTrigger placement="bottom" overlay={<Tooltip id={`delete-${id}`}>
+                            Delete measurement
+                          </Tooltip>}>
                             <Button
                               variant="outline-danger"
                               size="sm"
