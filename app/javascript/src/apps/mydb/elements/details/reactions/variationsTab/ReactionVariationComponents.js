@@ -3,8 +3,9 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
+import { debounce } from 'lodash';
 import {
-  Button, Form, InputGroup, OverlayTrigger, Popover
+  Button, ButtonGroup, Form, InputGroup, OverlayTrigger, Popover
 } from 'react-bootstrap';
 import ReorderableList from 'src/components/common/ReorderableList';
 import Reaction from 'src/models/Reaction';
@@ -16,6 +17,10 @@ import { AnalysesCell } from 'src/apps/mydb/elements/details/reactions/variation
 import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import MaterialHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialUtils';
 import { MATERIAL_HEADER } from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
+import {
+  getInitialColumnState,
+  persistColumnState
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import REACTION_FIELDS from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationReactionFields';
 import {
   CoefficientField,
@@ -47,7 +52,10 @@ const GROUP_ID_SEPARATOR = '::';
 // Pseudo material groups, so the row-level and reaction-level columns are toggled like the rest.
 const REACTION_FIELDS_GROUP = 'reaction_fields';
 const VARIATION_GROUP = 'variation_fields';
-const MATERIAL_COLUMN_ID = 'variation_material';
+const ANALYSES_GROUP = 'analyses_fields';
+// Marks the material name cells that follow the horizontal scroll inside their own group.
+const STICKY_NAME_CLASS = 'variations-sticky-name';
+const STICKY_NAME_FLOATING_CLASS = 'variations-sticky-name--floating';
 
 /*
 Carries the per-row update handlers into the cells.
@@ -129,6 +137,8 @@ const NAME_FIELD = {
   key: 'name',
   header: 'Material',
   width: 230,
+  // Marks the cell for the sticky handling in updateStickyNames.
+  sticky: true,
   render: (mh, { index }) => (
     <MaterialNameWithIupac mh={mh} index={index} withStickyName={false} />
   ),
@@ -374,49 +384,6 @@ MaterialFieldCell.propTypes = {
 };
 
 /*
-The sticky material name. Pinned left, so it never scrolls away, and bound to whichever material
-group is currently at the left edge of the scrolled area. Each row resolves that slot against its
-own variation, so rows whose sample differs in that slot show their own name.
-*/
-const ActiveMaterialCell = ({ data }) => {
-  const { activeSlot } = useContext(VariationsGridContext);
-  const mh = useMaterialHandler(data, activeSlot?.matGroup ?? null, activeSlot?.sampleIdx ?? 0);
-
-  if (!mh) {
-    return null;
-  }
-
-  return (
-    <MaterialNameWithIupac
-      mh={mh}
-      index={(activeSlot?.sampleIdx ?? 0) + 1}
-      withStickyName={false}
-    />
-  );
-};
-
-ActiveMaterialCell.propTypes = {
-  data: PropTypes.shape({
-    idx: PropTypes.number.isRequired,
-    data: PropTypes.instanceOf(Reaction).isRequired,
-  }).isRequired,
-};
-
-// Names the slot the pinned column is currently showing, so it is clear which material the sticky
-// name belongs to.
-const ActiveMaterialHeader = () => {
-  const { activeSlot } = useContext(VariationsGridContext);
-
-  if (!activeSlot) {
-    return <span>Material</span>;
-  }
-
-  return (
-    <span>{`${MAT_GROUP_TITLES[activeSlot.matGroup]} ${activeSlot.sampleIdx + 1}`}</span>
-  );
-};
-
-/*
 Renders one reaction-level input of one variation. Unlike the material cells this needs no
 MaterialHandler - the scheme tab's reaction fields all work off the reaction plus the row's
 ReactionUpdateHandler.
@@ -456,7 +423,7 @@ const AnalysesLinkCell = ({ data }) => {
       analyses={data.analyses ?? []}
       allReactionAnalyses={allReactionAnalyses}
       reactionShortLabel={reactionShortLabel}
-      rowId={data.data?.id ?? data.idx}
+      rowId={data.label}
       disabled={!permitOn(data.data)}
       onChange={(analyses) => onAnalysesChange(data.idx, analyses)}
     />
@@ -466,6 +433,7 @@ const AnalysesLinkCell = ({ data }) => {
 AnalysesLinkCell.propTypes = {
   data: PropTypes.shape({
     idx: PropTypes.number.isRequired,
+    label: PropTypes.string.isRequired,
     data: PropTypes.instanceOf(Reaction).isRequired,
     analyses: PropTypes.arrayOf(
       PropTypes.oneOfType([PropTypes.string, PropTypes.number])
@@ -473,13 +441,22 @@ AnalysesLinkCell.propTypes = {
   }).isRequired,
 };
 
-// Deleting a variation is not undoable from here, so it asks first, like "Remove all variations".
-const DeleteVariationCell = ({ data }) => {
+const OpenVariationCell = ({ data }) => {
+  const { setActiveVariation } = useContext(VariationsGridContext);
+
   const { onDeleteVariation } = useContext(VariationsGridContext);
   const [showConfirm, setShowConfirm] = useState(false);
 
   return (
-    <>
+    <ButtonGroup>
+    <Button
+      variant="info"
+      size="sm"
+      type="button"
+      onClick={() => setActiveVariation({ idx: data.idx, data: data.data })}
+    >
+      Open
+    </Button>
       <DeleteButton
         disabled={!permitOn(data.data)}
         onClick={() => setShowConfirm(true)}
@@ -497,38 +474,17 @@ const DeleteVariationCell = ({ data }) => {
             onDeleteVariation(data.idx);
           }}
         >
-          {`Are you sure you want to remove variation ${data.idx}?`}
+          {`Are you sure you want to remove variation ${data.label}?`}
         </AppModal>
       )}
-    </>
-  );
-};
-
-DeleteVariationCell.propTypes = {
-  data: PropTypes.shape({
-    idx: PropTypes.number.isRequired,
-    data: PropTypes.instanceOf(Reaction).isRequired,
-  }).isRequired,
-};
-
-const OpenVariationCell = ({ data }) => {
-  const { setActiveVariation } = useContext(VariationsGridContext);
-
-  return (
-    <Button
-      variant="info"
-      size="sm"
-      type="button"
-      onClick={() => setActiveVariation({ idx: data.idx, data: data.data })}
-    >
-      Open
-    </Button>
+    </ButtonGroup>
   );
 };
 
 OpenVariationCell.propTypes = {
   data: PropTypes.shape({
     idx: PropTypes.number.isRequired,
+    label: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     data: PropTypes.instanceOf(Reaction).isRequired,
   }).isRequired,
 };
@@ -684,7 +640,7 @@ const buildColumnGroups = ({
           colId: 'variation_index',
           headerName: '#',
           width: 60,
-          valueGetter: ({ data }) => data.idx,
+          valueGetter: ({ data }) => data.label,
           cellClass: 'text-center',
         },
         {
@@ -699,23 +655,21 @@ const buildColumnGroups = ({
           width: 110,
           cellRenderer: GroupCell,
         },
+      ],
+    },
+    /*
+    Analyses are a group of their own rather than part of Variation: they get their own header, and
+    with it their own column picker and drag handle, so they can be hidden or moved independently.
+    */
+    {
+      groupId: ANALYSES_GROUP,
+      headerName: 'Analyses',
+      columns: [
         {
           colId: 'variation_analyses',
-          headerName: 'Analyses',
-          width: 100,
+          headerName: 'Linked analyses',
+          width: 140,
           cellRenderer: AnalysesLinkCell,
-        },
-        {
-          colId: 'variation_delete',
-          headerName: '',
-          width: 60,
-          cellRenderer: DeleteVariationCell,
-        },
-        {
-          colId: MATERIAL_COLUMN_ID,
-          headerName: 'Material',
-          headerComponent: ActiveMaterialHeader,
-          cellRenderer: ActiveMaterialCell,
         },
       ],
     },
@@ -736,6 +690,7 @@ const buildColumnGroups = ({
             colId: `${matGroup}_${sampleIdx}_${field.key}`,
             headerName: field.header,
             width: field.width,
+            ...(field.sticky ? { cellClass: STICKY_NAME_CLASS } : {}),
             cellRenderer: MaterialFieldCell,
             cellRendererParams: { matGroup, sampleIdx, field },
           })),
@@ -843,12 +798,24 @@ const VariationSchemaTable = ({
   onDeleteVariation,
   onAnalysesChange,
   allReactionAnalyses,
-  reactionShortLabel
+  reactionShortLabel,
+  reactionId,
+  editMode
 }) => {
-  const [hiddenColumns, setHiddenColumns] = useState([]);
+  /*
+  Seeded from the stored layout so the very first column definitions already carry the right `hide`
+  flags; the order is restored from the same state once the grid is ready.
+  */
+  const [hiddenColumns, setHiddenColumns] = useState(() => (
+    (getInitialColumnState(reactionId) ?? [])
+      .filter((column) => column.hide)
+      .map((column) => column.colId)
+  ));
   const [activeSlot, setActiveSlot] = useState(null);
   const [groupOrder, setGroupOrder] = useState([]);
   const gridApiRef = useRef(null);
+  const gridElementRef = useRef(null);
+  const restoredRef = useRef(false);
 
   /*
   Mirrors the grid's own top level header order into state, so the toolbar always shows the groups
@@ -883,7 +850,7 @@ const VariationSchemaTable = ({
 
     let index = 0;
     orderedGroups.forEach((group) => {
-      const colIds = group.columns.map((column) => column.colId);
+      const colIds = group.columns?.map((column) => column.colId) || [];
       if (!group.fixedPosition) {
         api.moveColumns(colIds, index);
       }
@@ -910,6 +877,50 @@ const VariationSchemaTable = ({
   material column renders. Bails out by returning the previous state when the slot has not changed,
   so a scroll gesture triggers at most one re-render per group crossed.
   */
+  /*
+  Keeps each material's name cell at the left edge of the scrolled area for as long as its own group
+  is on screen, then lets it scroll away with the group.
+
+  AG Grid absolutely positions cells and sets their `left` inline, so `position: sticky` on the cell
+  cannot work: it would drop out of that positioning, land at the row's left edge, and clamp against
+  the whole row rather than its group. Translating the very same cell div is the equivalent that
+  survives AG Grid's layout, and it is done imperatively because doing it through React state would
+  re-render every cell of the grid on every scroll frame.
+  */
+  const updateStickyNames = useCallback(() => {
+    const api = gridApiRef.current;
+    const root = gridElementRef.current;
+    if (!api || !root) {
+      return;
+    }
+
+    const { left: scrollLeft } = api.getHorizontalPixelRange();
+
+    root.querySelectorAll(`.ag-center-cols-container .${STICKY_NAME_CLASS}`).forEach((cell) => {
+      const column = api.getColumn(cell.getAttribute('col-id'));
+      if (!column) {
+        return;
+      }
+
+      const columnLeft = column.getLeft() ?? 0;
+      const columnRight = columnLeft + column.getActualWidth();
+      const leaves = column.getParent()?.getDisplayedLeafColumns() ?? [];
+      const lastLeaf = leaves[leaves.length - 1];
+      const groupRight = lastLeaf
+        ? (lastLeaf.getLeft() ?? 0) + lastLeaf.getActualWidth()
+        : columnRight;
+
+      // Never travel beyond the group: at its right edge the name goes out of view with it.
+      const offset = Math.min(
+        Math.max(scrollLeft - columnLeft, 0),
+        Math.max(groupRight - columnRight, 0)
+      );
+
+      cell.style.transform = offset ? `translateX(${offset}px)` : '';
+      cell.classList.toggle(STICKY_NAME_FLOATING_CLASS, offset > 0);
+    });
+  }, []);
+
   const syncActiveSlot = useCallback(() => {
     const api = gridApiRef.current;
     if (!api) {
@@ -917,12 +928,16 @@ const VariationSchemaTable = ({
     }
 
     const { left } = api.getHorizontalPixelRange();
+    /*
+    The name describes whatever sits at the left edge of the scrolled area. Anything that is not a
+    material group there - Analyses, Reaction, or AG Grid's own padding groups - means there is no
+    material to name, and the pinned column hides itself rather than naming some other material
+    further to the right.
+    */
     const firstVisible = api.getDisplayedCenterColumns().find(
       (column) => (column.getLeft() ?? 0) + column.getActualWidth() > left + 1
     );
     const parentGroupId = firstVisible?.getParent()?.getGroupId() ?? null;
-    // Ignore anything that is not one of our material groups, e.g. the padding groups AG Grid
-    // inserts to balance the header tree.
     const groupId = parentGroupId?.includes(GROUP_ID_SEPARATOR) ? parentGroupId : null;
 
     setActiveSlot((previous) => {
@@ -967,12 +982,9 @@ const VariationSchemaTable = ({
   rather than instead of it, so unhiding it from the picker still works once there is something to
   show again.
   */
-  const hasActiveMaterial = !!activeSlot && variations.some(
-    (variation) => variation.data?.[activeSlot.matGroup]?.[activeSlot.sampleIdx]
-  );
-  const effectiveHiddenColumns = hasActiveMaterial
-    ? hiddenColumns
-    : [...new Set([...hiddenColumns, MATERIAL_COLUMN_ID])];
+  // Nothing is hidden automatically any more: the pinned material column that used to hide itself
+  // when no material was in view has been replaced by the sticky name cells.
+  const effectiveHiddenColumns = hiddenColumns;
 
   /*
   Keyed on the column layout only, deliberately not on `hiddenColumns`: visibility is applied via
@@ -988,14 +1000,22 @@ const VariationSchemaTable = ({
     [columnSignature]
   );
 
-  // Visibility is applied through the API rather than the definitions, so the material column has to
-  // be switched here too - a column rebuild is not triggered by scrolling past the last material.
+  // Writes order, widths and hidden columns back to storage.
+  const saveColumnState = () => {
+    const api = gridApiRef.current;
+    if (!api || !restoredRef.current) {
+      return;
+    }
+
+    persistColumnState(reactionId, api.getColumnState());
+  };
+
+  // Visibility changes settle in state, so they are persisted from here rather than from the grid's
+  // visibility event, which fires before `hiddenColumns` has caught up.
   useEffect(() => {
-    gridApiRef.current?.setColumnsVisible(
-      [MATERIAL_COLUMN_ID],
-      hasActiveMaterial && !hiddenColumns.includes(MATERIAL_COLUMN_ID)
-    );
-  }, [hasActiveMaterial, hiddenColumns]);
+    saveColumnState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hiddenColumns]);
 
   /*
   Toolbar order follows the grid, with any fully hidden group appended: AG Grid drops a group from
@@ -1034,6 +1054,8 @@ const VariationSchemaTable = ({
 
   return (
     <VariationsGridContext.Provider value={gridContext}>
+      {}
+      { editMode &&
       <div className="reaction-variations-grid__toolbar d-flex align-items-center flex-wrap gap-2 mb-2">
         {fixedGroupsAdvanced.map(({ group, allHidden, colIds }) => (
           <GroupToggleButton key={group.groupId} group={group} allHidden={allHidden} colIds={colIds} />
@@ -1043,7 +1065,7 @@ const VariationSchemaTable = ({
           horizontal
           items={movableGroupsAdvanced.filter(({ allHidden }) => !allHidden)}
           getItemId={(group) => group.groupId}
-          onReorder={(reordered) => applyGroupOrder([...fixedGroups, ...reordered])}
+          onReorder={(reordered) => applyGroupOrder([...fixedGroups, ...reordered.map(({ group }) => group)])}
           renderItem={({ group, allHidden, colIds }) =>
             <GroupToggleButton group={group}  allHidden={allHidden} colIds={colIds} />}
         />
@@ -1052,7 +1074,8 @@ const VariationSchemaTable = ({
           <GroupToggleButton key={group.groupId} group={group} allHidden={allHidden} colIds={colIds} />
         ))}
       </div>
-      <div className="ag-theme-alpine reaction-variations-grid">
+      }
+      <div className="ag-theme-alpine reaction-variations-grid" ref={gridElementRef}>
         <AgGridReact
           columnDefs={columnDefs}
           // Fresh array so an added or removed variation is picked up even though the parent
@@ -1071,18 +1094,47 @@ const VariationSchemaTable = ({
           // Dragging a column off the grid would hide it behind the pickers' backs, leaving the
           // checkboxes claiming it is visible. Hiding stays the pickers' job.
           suppressDragLeaveHidesColumns
+          // The sticky name cell must survive being scrolled out of the rendered column window,
+          // otherwise AG Grid destroys it halfway through its own group.
+          suppressColumnVirtualisation
           onGridReady={({ api }) => {
             gridApiRef.current = api;
+            const storedState = getInitialColumnState(reactionId);
+            if (storedState?.length) {
+              api.applyColumnState({ state: storedState, applyOrder: true });
+            }
+            // Only from here on may events overwrite what was just loaded.
+            restoredRef.current = true;
             syncActiveSlot();
             syncGroupOrder();
+            updateStickyNames();
           }}
-          onFirstDataRendered={syncActiveSlot}
-          onBodyScroll={syncActiveSlot}
-          onVirtualColumnsChanged={syncActiveSlot}
-          onColumnResized={syncActiveSlot}
+          onFirstDataRendered={() => {
+            syncActiveSlot();
+            updateStickyNames();
+          }}
+          onBodyScroll={() => {
+            syncActiveSlot();
+            updateStickyNames();
+          }}
+          onModelUpdated={updateStickyNames}
+          onVirtualColumnsChanged={() => {
+            syncActiveSlot();
+            updateStickyNames();
+          }}
+          onColumnResized={({ finished }) => {
+            syncActiveSlot();
+            updateStickyNames();
+            if (finished) {
+              saveColumnState();
+            }
+          }}
+          onColumnPinned={saveColumnState}
           onColumnMoved={() => {
             syncActiveSlot();
             syncGroupOrder();
+            updateStickyNames();
+            saveColumnState();
           }}
           onDisplayedColumnsChanged={syncGroupOrder}
         />
@@ -1092,6 +1144,7 @@ const VariationSchemaTable = ({
 };
 
 VariationSchemaTable.propTypes = {
+  editMode: PropTypes.bool.isRequired,
   variations: PropTypes.arrayOf(PropTypes.shape({
     idx: PropTypes.number.isRequired,
     group: PropTypes.arrayOf(
@@ -1109,6 +1162,7 @@ VariationSchemaTable.propTypes = {
     name: PropTypes.string,
   })).isRequired,
   reactionShortLabel: PropTypes.string,
+  reactionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 VariationSchemaTable.defaultProps = {

@@ -24,6 +24,22 @@
     width: 100%;
   }
 
+  /*
+  The material name cell is translated along the horizontal scroll by updateStickyNames so it stays
+  visible while its group is on screen. Once it has left its own slot it overlaps the cells it slides
+  over, so it needs to paint above them on an opaque background.
+  */
+  .variations-sticky-name {
+    will-change: transform;
+    transition: transform 70ms linear;
+
+    &--floating {
+      z-index: 30;
+      background-color: var(--ag-background-color, #fff)!important;
+      box-shadow: 1px 0 3px rgba(0, 0, 0, 0.15);
+    }
+  }
+
   // Leave room for the column picker button next to a group's name.
   .ag-header-group-cell-label {
     overflow: visible;

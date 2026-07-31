@@ -137,6 +137,7 @@ TopHorizontalScrollbar.propTypes = {
 const ReactionVariations = ({ reaction, variations, setVariations, onReactionChange }) => {
 
   const [activeVariation, setActiveVariation] = useState(null);
+  const [editMode, setEditMode] = useState(false);
 
   const addRow = () => {
     const newVariation = addNewVariationDataset({ reaction });
@@ -149,7 +150,6 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
     variationReaction.updateMaxAmountOfProducts();
 
     const variationDiff = diffObjects(reaction, variationReaction, ['_variations', 'container', '_checksum']);
-    console.log(variationDiff);
     reaction.changed = true;
     reaction.variations[idx].data = variationDiff;
     onReactionChange(reaction);
@@ -247,6 +247,15 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
     <div>
       <ButtonGroup>
         {addVariation()}
+        <Button
+          className="mb-2"
+          size="sm"
+          variant="info"
+          onClick={() => setEditMode(!editMode)}
+        >
+          <i className="fa fa-wrench"></i>
+          {editMode ? 'Disable edit mode' : 'Enable edit mode'}
+        </Button>
         <RemoveVariationsModal
           onRemoveAll={() => {
             reaction.variations = [];
@@ -334,6 +343,8 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
       onAnalysesChange={onAnalysesChange}
       allReactionAnalyses={getReactionAnalyses(reaction)}
       reactionShortLabel={reaction.short_label}
+      reactionId={reaction.id}
+      editMode={editMode}
     />
     <div>
       {activeVariation &&
