@@ -8,7 +8,7 @@ import { formatDisplayValue, correctPrefix, validDigit } from 'src/utilities/Mat
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import {
-  calculateFeedstockMoles
+  calculateFeedstockMoles, convertTemperature, convertTime, convertTurnoverFrequency
 } from 'src/utilities/UnitsConversion';
 import ComponentsFetcher from 'src/fetchers/ComponentsFetcher';
 import ComponentModel from 'src/models/Component';
@@ -334,7 +334,10 @@ export default class MaterialHandler {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  getFieldData(field, gasPhaseData) {
+  getFieldData(field, gasPhaseData, unit = null) {
+    let currentUnit = gasPhaseData[field]?.unit;
+    let currentValue = gasPhaseData[field]?.value;
+    let whileMaxLoops = 6;
     switch (field) {
       case 'turnover_number':
         return {
@@ -351,23 +354,41 @@ export default class MaterialHandler {
           variationKey: 'concentration'
         };
       case 'time':
+        while (whileMaxLoops > 0 && unit && unit !== currentUnit) {
+          whileMaxLoops--;
+          const [convertedValue, convertedUnit] = convertTime(currentValue, currentUnit);
+          currentUnit = convertedUnit;
+          currentValue = convertedValue;
+        }
         return {
-          value: gasPhaseData.time?.value,
-          unit: gasPhaseData.time?.unit,
+          value: currentValue,
+          unit: currentUnit,
           isTimeField: true,
           variationKey: 'duration'
         };
       case 'turnover_frequency':
+        while (whileMaxLoops > 0 && unit && unit !== currentUnit) {
+          whileMaxLoops--;
+          const [convertedValue, convertedUnit] = convertTurnoverFrequency(currentValue, currentUnit);
+          currentUnit = convertedUnit;
+          currentValue = convertedValue;
+        }
         return {
-          value: gasPhaseData[field]?.value,
-          unit: gasPhaseData[field]?.unit,
+          value: currentValue,
+          unit: currentUnit,
           isTimeField: false,
           variationKey: 'turnoverFrequency'
         };
       case 'temperature':
+        while (whileMaxLoops > 0 && unit && unit !== currentUnit) {
+          whileMaxLoops--;
+          const [convertedValue, convertedUnit] = convertTemperature(currentValue, currentUnit);
+          currentUnit = convertedUnit;
+          currentValue = convertedValue;
+        }
         return {
-          value: gasPhaseData[field]?.value,
-          unit: gasPhaseData[field]?.unit,
+          value: currentValue,
+          unit: currentUnit,
           isTimeField: false,
           variationKey: 'temperature'
         };

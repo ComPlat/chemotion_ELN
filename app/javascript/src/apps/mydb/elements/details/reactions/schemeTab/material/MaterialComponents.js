@@ -17,6 +17,32 @@ import MaterialHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/
 import FieldValueSelector from 'src/apps/mydb/elements/details/FieldValueSelector';
 import { convertDuration, convertTemperature, convertTonPerTime } from 'src/models/Reaction';
 
+const VOLUME_METRIC_PREFIXES = ['m', 'n', 'u'];
+
+/*
+Metric prefix of the volume and the mol input. Kept out of the components themselves so the
+variations grid can label and switch the very same unit from its column headers.
+*/
+const volumeMetricPrefix = (material, isSbmm) => {
+  if (isSbmm) {
+    // SBMM stores explicit unit strings (e.g. L/mL/µL), so derive UI prefix from that unit.
+    return material.reactionSchemeMetricPrefix(material.volume_as_used_unit);
+  }
+  if (
+    material.metrics
+    && material.metrics.length > 2
+    && VOLUME_METRIC_PREFIXES.indexOf(material.metrics[1]) > -1
+  ) {
+    return material.metrics[1];
+  }
+  return 'm';
+};
+
+// Keeps the SBMM mol prefix synchronized with its dedicated mol unit field.
+const molMetricPrefix = (material, isSbmm) => (isSbmm
+  ? material.reactionSchemeMetricPrefix(material.amount_as_used_mol_unit)
+  : getMetricMol(material));
+
 const NotApplicableInput = ({ className }) => (
   <div>
     <Form.Control
@@ -492,18 +518,7 @@ const MaterialVolume = ({ mh, className }) => {
     <Tooltip id="density_info">no density or molarity defined</Tooltip>
   );
 
-  const metricPrefixes = ['m', 'n', 'u'];
-  let metric = 'm';
-  if (mh.isSbmm) {
-    // SBMM stores explicit unit strings (e.g. L/mL/µL), so derive UI prefix from that unit.
-    metric = material.reactionSchemeMetricPrefix(material.volume_as_used_unit);
-  } else if (
-    material.metrics
-    && material.metrics.length > 2
-    && metricPrefixes.indexOf(material.metrics[1]) > -1
-  ) {
-    metric = material.metrics[1];
-  }
+  const metric = volumeMetricPrefix(material, mh.isSbmm);
   const { isAmountDisabledByWeightPercentage } = mh;
 
   const {
@@ -524,7 +539,7 @@ const MaterialVolume = ({ mh, className }) => {
           rangeEnd={rangeEnd}
           unit={rangeUnit}
           metricPrefix={metric}
-          metricPrefixes={metricPrefixes}
+          metricPrefixes={VOLUME_METRIC_PREFIXES}
           precision={3}
           disabled={!permitOn(reaction)
             || isAmountDisabledByWeightPercentage
@@ -549,10 +564,7 @@ MaterialVolume.propTypes = {
 
 const MaterialAmountMol = ({ mh }) => {
   const { material, reaction, materialGroup, lockEquivColumn } = mh;
-  // Keep SBMM mol prefix synchronized with its dedicated mol unit field.
-  const metricMol = mh.isSbmm
-    ? material.reactionSchemeMetricPrefix(material.amount_as_used_mol_unit)
-    : getMetricMol(material);
+  const metricMol = molMetricPrefix(material, mh.isSbmm);
 
   const isAmountDisabledByWeightPercentage = reaction.weight_percentage
     && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
@@ -1013,5 +1025,8 @@ export {
   VolumeRatio,
   MaterialRef,
   GaseousInputFields,
-  GaseousProductRow
+  GaseousProductRow,
+  VOLUME_METRIC_PREFIXES,
+  volumeMetricPrefix,
+  molMetricPrefix
 };
