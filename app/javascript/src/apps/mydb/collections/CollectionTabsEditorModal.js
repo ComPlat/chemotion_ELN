@@ -55,14 +55,25 @@ function emptyLayoutsFor(elements) {
   }, {});
 }
 
-function layoutsForCollection(collection, allElements, profileData) {
-  const tabsSegment = typeof collection.tabs_segment === 'string'
-    ? JSON.parse(collection.tabs_segment)
-    : (collection.tabs_segment || {});
+function parseTabsSegment(tabsSegment) {
+  if (typeof tabsSegment !== 'string') return tabsSegment || {};
+  try {
+    return JSON.parse(tabsSegment) || {};
+  } catch (e) {
+    // Malformed/legacy data must not break the whole editor; fall back to defaults.
+    return {};
+  }
+}
 
-  return allElements.reduce((acc, { name, isGeneric }) => {
-    const layoutDetail = isGeneric ? 'layout_detail_generic' : `layout_detail_${name}`;
-    const defaultLayout = (profileData && profileData[layoutDetail]) || {};
+function layoutsForCollection(collection, allElements, profileData) {
+  const tabsSegment = parseTabsSegment(collection.tabs_segment);
+
+  return allElements.reduce((acc, { name }) => {
+    // Read the per-type profile default with the same `layout_detail_<name>` key
+    // that ElementDetailSortTab uses (generics included). A shared
+    // `layout_detail_generic` key would neither match the renderer nor survive
+    // more than one generic element type.
+    const defaultLayout = (profileData && profileData[`layout_detail_${name}`]) || {};
     const layout = isEmpty(tabsSegment[name]) ? defaultLayout : tabsSegment[name];
 
     const segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
@@ -100,13 +111,10 @@ const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
     collectionsStore.updateCollection(collection, layoutSegments);
 
     const userProfile = UserStore.getState().profile;
-    // Known limitation: every generic element type writes to the same
-    // `layout_detail_generic` profile key, so the last iteration wins as the
-    // per-user default. Per-collection storage via `tabs_segment[name]` is
-    // unaffected. Fixing needs a schema change to key generics by name.
-    allElements.forEach(({ name, isGeneric }) => {
-      const profileKey = isGeneric ? 'layout_detail_generic' : `layout_detail_${name}`;
-      set(userProfile, `data.${profileKey}`, layoutSegments[name]);
+    // Store each type's default under its own `layout_detail_<name>` key so
+    // generics don't overwrite each other (and match what ElementDetailSortTab reads).
+    allElements.forEach(({ name }) => {
+      set(userProfile, `data.layout_detail_${name}`, layoutSegments[name]);
     });
     UserActions.updateUserProfile(userProfile);
 

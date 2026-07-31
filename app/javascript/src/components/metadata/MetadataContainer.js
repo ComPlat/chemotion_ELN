@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Tab, Tabs } from 'react-bootstrap';
 import { detailFooterButton } from 'src/apps/mydb/elements/details/DetailCardButton';
 import UIActions from 'src/stores/alt/actions/UIActions';
+import UIStore from 'src/stores/alt/stores/UIStore';
 import Metadata from 'src/models/Metadata';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -83,7 +84,16 @@ export default class MetadataContainer extends Component {
 
   render() {
     const { activeTab, metadata } = this.state;
-    const collection = this.context?.collections?.find(metadata.collection_id);
+    // Prefer the active collection (always loaded) when it is the one this
+    // metadata belongs to; otherwise look it up in the loaded trees. Falling back
+    // to currentCollection keeps the label on a deep-link/refresh into the
+    // metadata route before the collection trees have been fetched.
+    const { currentCollection } = UIStore.getState();
+    const matchesCurrent = currentCollection != null
+      && Number(currentCollection.id) === Number(metadata.collection_id);
+    const collection = matchesCurrent
+      ? currentCollection
+      : this.context?.collections?.find(metadata.collection_id);
     const collectionLabel = collection?.label;
     const title = collectionLabel
       ? `DataCite/RADAR Metadata for collection "${collectionLabel}"`

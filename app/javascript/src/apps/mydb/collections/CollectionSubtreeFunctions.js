@@ -7,7 +7,7 @@ import ModalImport from 'src/apps/mydb/collections/importSamples/ModalImport';
 import LiteratureModal from 'src/apps/mydb/collections/LiteratureModal';
 import ModalExportRadarCollection from 'src/apps/mydb/collections/ModalExportRadarCollection';
 import { PermissionConst } from 'src/utilities/PermissionConst';
-import { elementShowOrNew } from 'src/utilities/routesUtils';
+import { collectionShow, elementShowOrNew } from 'src/utilities/routesUtils';
 import Aviator from 'aviator';
 
 const CollectionSubtreeFunctionsDropdownToggle = React.forwardRef(({
@@ -51,14 +51,17 @@ const CollectionSubtreeFunctions = ({
     || (typeof collection.permission_level === 'number'
       && collection.permission_level >= level)
   );
-  const canImportSamples = !collection.is_locked && hasPermission(PermissionConst.AddElements);
+  // Import samples and metadata/RADAR actions share the same gate: not locked and
+  // (for shared-with-me) the delegate can add elements. Gated at AddElements to
+  // preserve the pre-branch capability for delegates who can add samples/reactions.
+  const hasAddElementsAccess = !collection.is_locked && hasPermission(PermissionConst.AddElements);
   const canAddShare = !collection.is_locked && hasPermission(PermissionConst.ManageShares);
-  // Metadata edits + RADAR publish are gated at AddElements to preserve the
-  // pre-branch capability for delegates who can add samples/reactions.
-  const canShowMetadataActions = !collection.is_locked && hasPermission(PermissionConst.AddElements);
 
   const editMetadata = () => {
     Aviator.navigate(`/collection/${collection.id}/metadata`, { silent: true });
+    // Make the target collection current so the sidebar/element list follow the
+    // metadata tab and Metadata.buildEmpty seeds the title from this collection.
+    collectionShow({ params: { collectionID: collection.id } });
     elementShowOrNew({
       type: 'metadata',
       params: { collectionID: collection.id },
@@ -124,7 +127,7 @@ const CollectionSubtreeFunctions = ({
             <i className="icon-report me-1" />
             Reference Report
           </Dropdown.Item>
-          {canImportSamples && (
+          {hasAddElementsAccess && (
             <Dropdown.Item onClick={handleImportSamples}>
               <i className="icon-arrow-down-to-bracket me-1" />
               Import samples to collection
@@ -149,7 +152,7 @@ const CollectionSubtreeFunctions = ({
               )}
             </>
           )}
-          {canShowMetadataActions && (
+          {hasAddElementsAccess && (
             <>
               <Dropdown.Divider />
               <Dropdown.Item onClick={handleEditMetadata}>

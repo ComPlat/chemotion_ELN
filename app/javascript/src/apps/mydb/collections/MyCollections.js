@@ -2,22 +2,18 @@ import React, { useState, useEffect, useContext } from 'react';
 import Tree from 'react-ui-tree';
 import { cloneDeep } from 'lodash';
 import { Button, ButtonGroup, Dropdown, Form, OverlayTrigger, Popover } from 'react-bootstrap';
-import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/SelectionShareModal';
-import CollectionSharesEditModal from 'src/apps/mydb/collections/CollectionSharesEditModal';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import CollectionTabsEditorModal from 'src/apps/mydb/collections/CollectionTabsEditorModal';
-import { DEFAULT_COLLECTION_SHARE_PERMISSIONS } from 'src/utilities/collectionConstants';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
+import useCollectionShares from 'src/apps/mydb/collections/useCollectionShares';
 
 const MyCollections = () => {
   const collectionsStore = useContext(StoreContext).collections;
   const tree = collectionsStore.own_collection_tree;
   const [clonedTree, setClonedTree] = useState(cloneDeep(tree));
   const [tabsEditorCollection, setTabsEditorCollection] = useState(null);
-  const [sharesModal, setSharesModal] = useState({ action: null, show: false, node: {} });
-  const [sharesEditModal, setSharesEditModal] = useState({ show: false, node: {} });
-  const [permissions, setPermissions] = useState(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
+  const { openAddShare, openManageShares, shareModals } = useCollectionShares(collectionsStore);
 
   useEffect(() => {
     setClonedTree(cloneDeep(tree));
@@ -56,44 +52,6 @@ const MyCollections = () => {
 
   const deleteCollection = (node) => {
     collectionsStore.deleteCollection(node.id);
-  };
-
-  const openCollectionSharesModal = (node) => {
-    setPermissions(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
-    setSharesModal({ action: 'create', show: true, node });
-  };
-
-  const closeCollectionSharesModal = () => {
-    setPermissions(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
-    setSharesModal({ action: null, show: false, node: {} });
-  };
-
-  const editCollectionShares = (node, collectionShare) => {
-    setPermissions({
-      permissionLevel: collectionShare.permission_level,
-      sampleDetailLevel: collectionShare.sample_detail_level,
-      reactionDetailLevel: collectionShare.reaction_detail_level,
-      wellplateDetailLevel: collectionShare.wellplate_detail_level,
-      screenDetailLevel: collectionShare.screen_detail_level,
-      elementDetailLevel: collectionShare.element_detail_level,
-    });
-    setSharesModal({
-      action: 'edit',
-      show: true,
-      node: { ...node, collectionShareId: collectionShare.id, sharedWith: collectionShare.shared_with },
-    });
-  };
-
-  const deleteCollectionShares = (node, collectionShare) => {
-    collectionsStore.deleteCollectionShare(collectionShare.id, node.id);
-  };
-
-  const openCollectionSharesEditModal = (node) => {
-    setSharesEditModal({ show: true, node: { id: node.id, label: node.label } });
-  };
-
-  const closeCollectionSharesEditModal = () => {
-    setSharesEditModal({ show: false, node: {} });
   };
 
   const addCollectionButton = (node) => (
@@ -184,14 +142,17 @@ const MyCollections = () => {
             >
               <i className="fa fa-ellipsis-v" />
             </Dropdown.Toggle>
+            {/* renderOnMount pre-mounts the menu so Popper has a measurable anchor;
+                without it the fixed-strategy menu detaches to the top of the viewport
+                inside the modal's positioning context. */}
             <Dropdown.Menu popperConfig={{ strategy: 'fixed' }} renderOnMount>
-              <Dropdown.Item onClick={() => openCollectionSharesModal(node)}>
+              <Dropdown.Item onClick={() => openAddShare(node)}>
                 <i className="fa fa-plus me-1" />
                 <i className="fa fa-share-alt me-1" />
                 Add share
               </Dropdown.Item>
               {node.shared && (
-                <Dropdown.Item onClick={() => openCollectionSharesEditModal(node)}>
+                <Dropdown.Item onClick={() => openManageShares(node)}>
                   <i className="fa fa-users me-1" />
                   <i className="fa fa-share-alt me-1" />
                   Manage shares
@@ -245,27 +206,7 @@ const MyCollections = () => {
         onChange={handleChange}
         renderNode={renderNode}
       />
-      {sharesModal.show && (
-        <SelectionShareModal
-          title={sharesModal.action === 'create'
-            ? `Share "${sharesModal.node.label}"`
-            : `Edit Permissions of "${sharesModal.node.sharedWith}" at "${sharesModal.node.label}"`}
-          collectionId={sharesModal.node.id}
-          collectionShareId={sharesModal.node?.collectionShareId}
-          onHide={closeCollectionSharesModal}
-          collectionPermissions={permissions}
-          showUserSelect={sharesModal.action === 'create'}
-          shareType={sharesModal.action}
-        />
-      )}
-      {sharesEditModal.show && (
-        <CollectionSharesEditModal
-          node={sharesEditModal.node}
-          updateNode={editCollectionShares}
-          deleteNode={deleteCollectionShares}
-          onHide={closeCollectionSharesEditModal}
-        />
-      )}
+      {shareModals}
       {tabsEditorCollection != null && (
         <CollectionTabsEditorModal
           collection={tabsEditorCollection}

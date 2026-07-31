@@ -7,13 +7,11 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import CollectionSubtree from 'src/apps/mydb/collections/CollectionSubtree';
-import CollectionSharesEditModal from 'src/apps/mydb/collections/CollectionSharesEditModal';
-import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/SelectionShareModal';
 import SidebarButton from 'src/apps/mydb/mainNavigation/sidebar/SidebarButton';
 import CollectionManagementButton from 'src/apps/mydb/collections/CollectionManagementButton';
 import GatePushButton from 'src/apps/mydb/collections/GatePushButton';
+import useCollectionShares from 'src/apps/mydb/collections/useCollectionShares';
 
-import { DEFAULT_COLLECTION_SHARE_PERMISSIONS } from 'src/utilities/collectionConstants';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 const ALL_COLLECTIONS_KEY = 'all';
@@ -29,50 +27,10 @@ function CollectionTree({ isCollapsed }) {
   const [expandedCollection, setExpandedCollection] = useState(ALL_COLLECTIONS_KEY);
   const [hasRadar, setHasRadar] = useState(!!UIStore.getState().hasRadar);
 
-  // Single-instance share modal state, lifted out of every CollectionSubtree so
-  // the tree does not carry O(N) unused modal slots.
-  const [shareModal, setShareModal] = useState(null);
-  const [manageSharesNode, setManageSharesNode] = useState(null);
-  const [sharePermissions, setSharePermissions] = useState(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
-
-  const openAddShare = (node) => {
-    setSharePermissions(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
-    setShareModal({ action: 'create', node });
-  };
-
-  const openManageShares = (node) => {
-    setManageSharesNode({ id: node.id, label: node.label });
-  };
-
-  const openEditShare = (node, collectionShare) => {
-    setSharePermissions({
-      permissionLevel: collectionShare.permission_level,
-      sampleDetailLevel: collectionShare.sample_detail_level,
-      reactionDetailLevel: collectionShare.reaction_detail_level,
-      wellplateDetailLevel: collectionShare.wellplate_detail_level,
-      screenDetailLevel: collectionShare.screen_detail_level,
-      elementDetailLevel: collectionShare.element_detail_level,
-    });
-    setShareModal({
-      action: 'edit',
-      node: {
-        ...node,
-        collectionShareId: collectionShare.id,
-        sharedWith: collectionShare.shared_with,
-      },
-    });
-  };
-
-  const deleteShare = (node, collectionShare) => {
-    collectionsStore.deleteCollectionShare(collectionShare.id, node.id);
-  };
-
-  const closeShareModal = () => {
-    setSharePermissions(DEFAULT_COLLECTION_SHARE_PERMISSIONS);
-    setShareModal(null);
-  };
-
-  const closeManageShares = () => setManageSharesNode(null);
+  // Single-instance share modals, lifted out of every CollectionSubtree so the
+  // tree does not carry O(N) unused modal slots. Wiring is shared with the
+  // management-modal trees via useCollectionShares.
+  const { openAddShare, openManageShares, shareModals } = useCollectionShares(collectionsStore);
 
   const toggleCollection = (collectionType) => {
     setExpandedCollection((prev) => ((prev === collectionType) ? null : collectionType));
@@ -85,7 +43,9 @@ function CollectionTree({ isCollapsed }) {
 
   const changeActiveCollectionType = (collectionType) => {
     expandCollection(collectionType);
-    if (collectionType !== activeCollectionType) setActiveCollectionType(collectionType);
+    // setState no-ops when the value is unchanged, so no need to read
+    // activeCollectionType here (reading it would make listener closures stale).
+    setActiveCollectionType(collectionType);
   }
 
   const containsCollection = (collections, collectionId) => {
@@ -133,15 +93,24 @@ function CollectionTree({ isCollapsed }) {
       setHasRadar(!!storeHasRadar);
       if (!currentCollection) return;
 
-      const group = collectionGroups.find(({ collections }) => containsCollection(collections, currentCollection.id));
-      if (group) changeActiveCollectionType(group.collectionType);
+      // Read the trees fresh from the store on each event. MobX can keep array
+      // identity across in-place mutation, so a snapshot captured at subscribe
+      // time could miss a just-loaded/moved collection and leave the wrong group
+      // highlighted.
+      const groups = [
+        [ALL_COLLECTIONS_KEY, collectionsStore.ownCollections],
+        ['sharedWithMe', collectionsStore.sharedWithMeCollections],
+        [CHEMOTION_REPOSITORY_KEY, collectionsStore.chemotion_repository_collection?.children],
+      ];
+      const match = groups.find(([, collections]) => containsCollection(collections, currentCollection.id));
+      if (match) changeActiveCollectionType(match[0]);
     };
 
     UIStore.listen(onUiStoreChange);
     return () => UIStore.unlisten(onUiStoreChange);
     // Intentionally no onUiStoreChange() on subscribe: syncing currentCollection here
     // would snap back to My Collections when opening Shared with me without navigating.
-  }, [ownCollections, sharedWithMeCollections, chemotionRepositoryCollection]);
+  }, [collectionsStore, isCollapsed]);
 
   return (
     <div className="mh-100 d-flex flex-column">
@@ -196,28 +165,7 @@ function CollectionTree({ isCollapsed }) {
         })}
       </div>
 
-      {manageSharesNode && (
-        <CollectionSharesEditModal
-          node={manageSharesNode}
-          updateNode={openEditShare}
-          deleteNode={deleteShare}
-          onHide={closeManageShares}
-        />
-      )}
-
-      {shareModal && (
-        <SelectionShareModal
-          title={shareModal.action === 'create'
-            ? `Share "${shareModal.node.label}"`
-            : `Edit Permissions of "${shareModal.node.sharedWith}" at "${shareModal.node.label}"`}
-          collectionId={shareModal.node.id}
-          collectionShareId={shareModal.node.collectionShareId}
-          onHide={closeShareModal}
-          collectionPermissions={sharePermissions}
-          showUserSelect={shareModal.action === 'create'}
-          shareType={shareModal.action}
-        />
-      )}
+      {shareModals}
     </div>
   );
 }

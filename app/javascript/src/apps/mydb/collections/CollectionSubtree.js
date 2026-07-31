@@ -108,7 +108,11 @@ function CollectionSubtree({
   };
 
   const handleAddShare = onAddShare ? () => onAddShare(root) : null;
-  const handleManageShares = (root.shared && !sharedWithMe && onManageShares)
+  // Own collections: manage only when there is something shared (root.shared).
+  // Shared-with-me: a delegate can manage existing shares regardless of root.shared;
+  // visibility is gated by permission_level in CollectionSubtreeFunctions, matching
+  // the management modal (which offers Add + Manage together).
+  const handleManageShares = ((sharedWithMe || root.shared) && onManageShares)
     ? () => onManageShares(root)
     : null;
 

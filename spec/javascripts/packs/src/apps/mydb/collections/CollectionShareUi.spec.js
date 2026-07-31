@@ -23,11 +23,18 @@ const stubStores = (sandbox) => {
   sandbox.stub(ElementStore, 'unlisten');
 };
 
-// Header uses `this.context.collections.isSharedCollection(id)` to decide
-// whether to show the shared-to-me indicator, so we inject a stub context.
+// Header uses `this.context.collections.isSharedCollection(id)` to decide whether to show the
+// shared-to-me indicator, so we inject a stub context. The shallow renderer doesn't support
+// `static contextType` and resets `this.context` to `{}` on every render, so a plain assignment
+// wouldn't survive `setState`. Define it as a getter with a no-op setter to hold the stub across
+// re-renders (the setter swallows the renderer's per-render reset).
 const renderElementsList = (contextStub = { collections: { isSharedCollection: () => false } }) => {
-  const wrapper = shallow(<ElementsList overview={false} />, { context: contextStub });
-  wrapper.instance().context = contextStub;
+  const wrapper = shallow(<ElementsList overview={false} />);
+  Object.defineProperty(wrapper.instance(), 'context', {
+    configurable: true,
+    get: () => contextStub,
+    set: () => {},
+  });
   return wrapper;
 };
 
