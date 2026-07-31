@@ -2,7 +2,13 @@ development:
   :chemspectra:
     :url: 'http://0.0.0.0:3007'
   :nmriumwrapper:
-    :url: 'https://nmrium.nmrxiv.org'
+    # Self-hosted: the nmrium-assets service in docker-compose.dev.yml copies the
+    # pinned wrapper build into public/nmrium/, which Rails serves from the app's
+    # own origin. The trailing slash is required — the build references its
+    # chunks relatively, so without it every ./assets/... request 404s.
+    :url: '/nmrium/default/'
+    # Public instance instead (no local assets, no compose service needed):
+    # :url: 'https://nmrium.nmrxiv.org'
 
 test:
   :chemspectra:

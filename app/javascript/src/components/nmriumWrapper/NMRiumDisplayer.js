@@ -131,7 +131,11 @@ export default class NMRiumDisplayer extends React.Component {
   loadWrapperHost() {
     UIFetcher.fetchNMRDisplayerHost().then(({ nmrium_url }) => {
       if (!nmrium_url) return;
-      const origin = new URL(nmrium_url).origin;
+      // The configured url may be a path rather than an absolute url, when the
+      // wrapper assets are self-hosted out of public/ (see spectra.yml.example).
+      // Resolving against our own origin then yields the origin the same-origin
+      // iframe will post messages from, so receiveMessage's check still holds.
+      const { origin } = new URL(nmrium_url, window.location.origin);
       this.setState({ nmriumWrapperHost: nmrium_url, nmriumOrigin: origin });
     });
   }
