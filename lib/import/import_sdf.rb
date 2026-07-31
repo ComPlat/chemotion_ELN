@@ -215,24 +215,29 @@ class Import::ImportSdf < Import::ImportSamples
     read_data if raw_data.empty? && rows.empty?
     if !raw_data.empty? && inchi_array.empty?
       ActiveRecord::Base.transaction do
-        raw_data.each do |molfile|
-          babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
-          inchikey = babel_info[:inchikey]
-          is_partial = babel_info[:is_partial]
-          next unless inchikey.presence && (molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial))
-          next unless (i = inchi_array.index(inchikey))
+        raw_data.each_with_index do |molfile, index|
+          ActiveRecord::Base.transaction(requires_new: true) do
+            babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+            inchikey = babel_info[:inchikey]
+            is_partial = babel_info[:is_partial]
+            next unless inchikey.presence && (molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial))
+            next unless (i = inchi_array.index(inchikey))
 
-          @inchi_array[i] = nil
-          sample = Sample.new(
-            created_by: current_user_id,
-            molfile: molfile,
-            molfile_version: babel_info[:molfile_version],
-            molecule_id: molecule.id,
-          )
-          sample.collections << Collection.find(collection_id)
-          sample.collections << Collection.get_all_collection_for_user(current_user_id)
-          sample.save!
-          ids << sample.id
+            @inchi_array[i] = nil
+            sample = Sample.new(
+              created_by: current_user_id,
+              molfile: molfile,
+              molfile_version: babel_info[:molfile_version],
+              molecule_id: molecule.id,
+            )
+            sample.collections << Collection.find(collection_id)
+            sample.collections << Collection.get_all_collection_for_user(current_user_id)
+            sample.save!
+            ids << sample.id
+          end
+        rescue StandardError => e
+          Rails.logger.error("SDF import: molecule #{index + 1} could not be imported: #{e.class}: #{e.message}")
+          @unprocessable_samples << (index + 1)
         end
       end
     elsif !rows.empty?
@@ -348,8 +353,9 @@ class Import::ImportSdf < Import::ImportSamples
           end
           @message[:error_messages] = error_messages if error_messages.present?
         end
-      rescue ActiveRecord::RecordInvalid => e
-        @message[:error] << e
+      rescue StandardError => e
+        Rails.logger.error("SDF import: aborted: #{e.class}: #{e.message}")
+        @message[:error] << "The import could not be completed: #{e.message}"
       end
     else
       @message[:error] << 'No sample selected. '
@@ -362,12 +368,16 @@ class Import::ImportSdf < Import::ImportSamples
     @message[:info] << "Created #{s} sample#{s <= 1 && '' || 's'}. " if samples
     @message[:info] << 'Import successful! ' if ids.size == @count
 
-    # Clean up attachment if import was successful
-    @attachment.destroy if @message[:error].empty? && @attachment.present?
+    # Keep the upload unless there is genuinely nothing to follow up on
+    @attachment.destroy if keep_attachment_unnecessary?
 
     samples
   ensure
     Molecule.schedule_lcss_since(started_at)
+  end
+
+  def keep_attachment_unnecessary?
+    @message[:error].empty? && @unprocessable_samples.empty? && @attachment.present?
   end
 
   # Build a Chemical from the mapped row fields (cas, status, person, pictograms, h/p statements, ...)

@@ -153,6 +153,23 @@ export default class ModalImport extends React.Component {
   }
 
   // Method to generate column definitions for AG Grid
+  // Maps each non-blank header to its position in the raw header row. First occurrence wins: a
+  // duplicated header can only carry one entry in mappedColumns, so a later duplicate must not
+  // silently take over the index.
+  static buildColumnIndices(headers) {
+    const columnIndices = {};
+    (headers || []).forEach((header, index) => {
+      if (header === null || header === undefined) { return; }
+      if (String(header).trim() === '') { return; }
+
+      const key = String(header);
+      if (!Object.prototype.hasOwnProperty.call(columnIndices, key)) {
+        columnIndices[key] = index;
+      }
+    });
+    return columnIndices;
+  }
+
   static generateColumnDefs(mappedColumns) {
     const columnDefs = Object.entries(mappedColumns)
       .filter(([, mappedCol]) => mappedCol !== 'do_not_import')
@@ -264,6 +281,7 @@ export default class ModalImport extends React.Component {
       showColumnMapping: false,
       showValidation: false,
       columnNames: [],
+      excelColumnIndices: null,
       rowData: [],
       columnDefs: [],
       fileDelimiter: '\t',
@@ -521,6 +539,7 @@ export default class ModalImport extends React.Component {
       showColumnMapping: false,
       showValidation: false,
       columnNames: [],
+      excelColumnIndices: null,
       rowData: [],
       columnDefs: [],
       mappedColumns: null,
@@ -575,17 +594,14 @@ export default class ModalImport extends React.Component {
 
     try {
       const rowData = [];
-      const { columnNames } = this.state;
+      const { columnNames, excelColumnIndices } = this.state;
 
       if (!columnNames || columnNames.length === 0) {
         throw new Error('Column names not available for processing Excel data');
       }
 
-      // Map Excel columns to their indices for faster lookup
-      const columnIndices = {};
-      columnNames.forEach((colName, index) => {
-        columnIndices[colName] = index;
-      });
+      const columnIndices = excelColumnIndices
+        || ModalImport.buildColumnIndices(columnNames);
 
       // Process each row of data
       excelData.forEach((row, rowIndex) => {
@@ -752,6 +768,7 @@ export default class ModalImport extends React.Component {
         this.setState({
           showColumnMapping: true,
           columnNames,
+          excelColumnIndices: ModalImport.buildColumnIndices(headers),
           excelData: rows.slice(1) // Store data rows for later
         });
       } else {

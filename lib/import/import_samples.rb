@@ -16,6 +16,12 @@ module Import
     DENSITY_UNIT = %r{g/mL|g/ml}i.freeze
     FLASH_POINT_UNIT = /°C|F|K/i.freeze
 
+    # Rows are committed in batches rather than in one transaction spanning the whole file. This
+    # bounds how much the database and this process have to hold at once, and means a failure part
+    # way through a large import keeps the batches that already succeeded instead of discarding
+    # everything.
+    BATCH_SIZE = 100
+
     def initialize(attachment, collection_id, user_id, file_name, import_type)
       @attachment = attachment
       @collection_id = collection_id
@@ -28,6 +34,16 @@ module Import
       @rows = []
       @unprocessable = []
       @processed = []
+
+      # Rows whose structure could not be resolved and which were therefore imported without one.
+      @decoupled_fallbacks = []
+      # Spreadsheet row numbers that had content but no structure, CAS or decoupled flag.
+      @skipped_rows = []
+      # Row index => why the structure toolkit refused the structure, for the result message.
+      @structure_errors = {}
+      # Spreadsheet row numbers that could not even be read out of the sheet.
+      @unreadable_rows = []
+      @unreadable_component_rows = []
 
       @sample_with_components = []
       @sample_components_data = {}
@@ -43,12 +59,18 @@ module Import
       begin
         check_required_fields
         check_required_component_fields
-        parse_sample_components_data
       rescue StandardError => e
         return error_required_fields(e.message)
       end
 
-      xlsx.default_sheet = xlsx.sheets.include?('sample_components') ? @main_sheet_name : xlsx.default_sheet
+      begin
+        # Separated from the header checks above: a failure while parsing the components sheet or
+        # selecting the active sheet is not a missing-header problem and should not be reported as such.
+        parse_sample_components_data
+        xlsx.default_sheet = xlsx.sheets.include?('sample_components') ? @main_sheet_name : xlsx.default_sheet
+      rescue StandardError => e
+        return error_prepare(e.message)
+      end
 
       begin
         process_all_rows
@@ -97,7 +119,8 @@ module Import
       @mandatory_check = {}
       header_fields = ['molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles', 'decoupled', 'cas']
       header_fields.each do |check|
-        @mandatory_check[check] = true if header.find { |e| /^\s*#{check}?/i =~ e }
+        # Escape the literal and keep the prefix match, so trailing qualifiers like "molfile (V2000)" still work
+        @mandatory_check[check] = true if header.find { |e| /^\s*#{Regexp.escape(check)}/i =~ e }
       end
       message = 'Column headers should have: molfile, Smiles (or cano_smiles, canonical smiles), CAS, or decoupled'
       raise message if mandatory_check.empty?
@@ -134,25 +157,41 @@ module Import
       sample_uuid_col = component_header.index('sample uuid')
 
       (2..component_sheet.last_row).each do |row_index|
-        row_values = component_sheet.row(row_index)
-        uuid_cell = row_values[sample_uuid_col].to_s.strip
-
-        if uuid_cell.present?
-          current_sample_uuid = uuid_cell
-          @sample_components_data[current_sample_uuid] = []
-        end
-
-        next unless current_sample_uuid
-
-        component_data = row_to_hash(row_values)
-        next if component_data.empty?
-
-        component_attributes = component_data.reject do |k, _|
-          k.to_s.downcase.strip.in?(['sample name', 'sample external label', 'sample uuid'])
-        end
-
-        @sample_components_data[current_sample_uuid] << component_attributes if valid_component_data?(component_attributes)
+        # One unreadable component row must not abandon the components sheet -- and it certainly must
+        # not fail the whole import
+        current_sample_uuid = parse_component_row(row_index, sample_uuid_col, current_sample_uuid)
+      rescue StandardError => e
+        Rails.logger.warn(
+          "Import #{@file_name}: component row #{row_index} could not be read: #{e.class}: #{e.message}",
+        )
+        @unreadable_component_rows << row_index
       end
+    end
+
+    # Returns the sample uuid in effect after this row
+    def parse_component_row(row_index, sample_uuid_col, current_sample_uuid)
+      row_values = component_sheet.row(row_index)
+      uuid_cell = row_values[sample_uuid_col].to_s.strip
+
+      if uuid_cell.present?
+        current_sample_uuid = uuid_cell
+        @sample_components_data[current_sample_uuid] = []
+      end
+
+      return current_sample_uuid unless current_sample_uuid
+
+      component_data = row_to_hash(row_values)
+      return current_sample_uuid if component_data.empty?
+
+      component_attributes = component_data.reject do |k, _|
+        k.to_s.downcase.strip.in?(['sample name', 'sample external label', 'sample uuid'])
+      end
+
+      if valid_component_data?(component_attributes)
+        @sample_components_data[current_sample_uuid] << component_attributes
+      end
+
+      current_sample_uuid
     end
 
     def valid_component_data?(component_attributes)
@@ -186,19 +225,32 @@ module Import
       # Pad row to header length so transpose works when row has fewer columns than header
       padded_row = raw_row.values_at(0...header.length)
       row = [header, padded_row].transpose.to_h
-      is_decoupled = row_value_case_insensitive(row, 'decoupled')
-      return unless structure?(row) || is_decoupled || cas?(row)
+      return note_skipped_row(data, padded_row) unless importable_row?(row)
 
       rows << row.each_pair { |k, v| v && row[k] = v.to_s }
     end
 
+    def importable_row?(row)
+      structure?(row) || decoupled?(row) || cas?(row)
+    end
+
+    def note_skipped_row(row_number, values)
+      @skipped_rows << row_number if values.any? { |value| value.to_s.strip.present? }
+      nil
+    end
+
     def process_row_data(row, index)
-      is_decoupled = row_value_case_insensitive(row, 'decoupled')
-      return Molecule.find_or_create_dummy if is_decoupled && no_structure_or_cas?(row)
+      return Molecule.find_or_create_dummy if decoupled?(row) && no_structure_or_cas?(row)
 
       molecule, molfile = molecule_and_molfile_with_cas_fallback(row, index)
       ## import sample as decoupled if no structure information is available
-      return Molecule.find_or_create_dummy if molfile.nil? || molecule.nil?
+      if molfile.nil? || molecule.nil?
+        # The row is still imported, but without a structure. Record it: a silent downgrade looks
+        # identical to a successful import from the user's side, so an unnoticed typo in a SMILES
+        # column would quietly produce structureless samples.
+        note_decoupled_fallback(row, index)
+        return Molecule.find_or_create_dummy
+      end
 
       [molecule, molfile]
     end
@@ -207,13 +259,54 @@ module Import
       !structure?(row) && !cas?(row)
     end
 
+    def decoupled?(row)
+      assign_boolean_value(row_value_case_insensitive(row, 'decoupled')).present?
+    end
+
+    def note_decoupled_fallback(row, index)
+      return if @decoupled_fallbacks.any? { |f| f[:index] == index }
+
+      @decoupled_fallbacks << {
+        index: index,
+        reason: @structure_errors[index] || decoupled_fallback_reason(row),
+      }
+    end
+
+    def decoupled_fallback_reason(row)
+      if structure?(row)
+        'structure could not be interpreted'
+      elsif cas?(row)
+        "no structure found for CAS #{cas_value(row)}"
+      else
+        'no structure or CAS given'
+      end
+    end
+
     # Resolve molecule/molfile from structure - fall back to CAS lookup when structure is missing.
     def molecule_and_molfile_with_cas_fallback(row, index)
-      molecule, molfile = extract_molfile_and_molecule(row, index)
+      molecule, molfile = resolve_structure(row, index)
       return [molecule, molfile] unless (molfile.nil? || molecule.nil?) && cas?(row)
 
-      molecule = find_molecule_by_cas(row['cas'].to_s.strip)
+      molecule = find_molecule_by_cas(cas_value(row))
       [molecule, molecule&.molfile]
+    end
+
+    # A structure the toolkit refuses to parse is "no structure resolved" as far as this importer is
+    # concerned, so it has to reach the CAS and decoupled fallbacks the same way a blank cell does.
+    # Without this the exception travels straight to write_row's rescue and the row is dropped, which
+    # silently defeats both fallbacks for exactly the input they exist to handle.
+    #
+    # Database failures are deliberately re-raised
+    def resolve_structure(row, index)
+      extract_molfile_and_molecule(row, index)
+    rescue ActiveRecord::ActiveRecordError
+      raise
+    rescue StandardError => e
+      @structure_errors[index] = "structure could not be parsed: #{e.message}"
+      Rails.logger.warn(
+        "Import #{@file_name}: structure on row #{index + 2} could not be parsed: #{e.class}: #{e.message}",
+      )
+      nil
     end
 
     def process_component_row_data(component_row, index)
@@ -228,26 +321,79 @@ module Import
       molecule.nil?
     end
 
+    # Rows are written in batches, each in its own transaction, and each row inside a savepoint.
     def write_to_db
       started_at = Time.current
       @defer_lcss = true
       unprocessable_count = 0
-      begin
-        ActiveRecord::Base.transaction do
-          rows.map.with_index do |row, i|
-            molecule, molfile = process_row_data(row, i)
-            if molecule_not_exist(molecule, row, i)
-              unprocessable_count += 1
-              next
-            end
-            sample_save(row, molfile, molecule, i, force_decoupled: molfile.nil?)
-          rescue StandardError => _e
-            unprocessable_count += 1
-            @unprocessable << { row: row, index: i } unless @unprocessable.any? { |u| u[:index] == i }
-          end
+
+      # Resolve CAS numbers before opening any transaction
+      prefetch_cas_molecules
+
+      rows.each_slice(BATCH_SIZE).with_index do |batch, batch_index|
+        unprocessable_count += write_batch(batch, batch_index * BATCH_SIZE, batch_index)
+      end
+
+      unprocessable_count
+    end
+
+    # One transaction per batch. Returns how many of its rows could not be imported.
+    def write_batch(batch, offset, batch_index)
+      failed = 0
+      ActiveRecord::Base.transaction do
+        batch.each_with_index do |row, position|
+          failed += 1 unless write_row(row, offset + position)
         end
-      rescue StandardError => _e
-        raise 'More than 1 row can not be processed' if unprocessable_count.positive?
+      end
+      failed
+    rescue StandardError => e
+      # The batch transaction itself failed rather than an individual row. Report this batch and
+      # carry on with the next one instead of discarding the whole import.
+      Rails.logger.error("Import #{@file_name}: batch #{batch_index} failed: #{e.class}: #{e.message}")
+      mark_batch_unprocessable(batch, offset)
+    end
+
+    # Flags every not-yet-reported row in a batch as unprocessable; returns how many were added.
+    def mark_batch_unprocessable(batch, offset)
+      batch.each_with_index.count do |row, position|
+        index = offset + position
+        next false if @unprocessable.any? { |u| u[:index] == index }
+
+        @unprocessable << { row: row, index: index }
+        true
+      end
+    end
+
+    # Writes one row inside a savepoint. Returns true when the sample was saved
+    def write_row(row, index)
+      saved = false
+      ActiveRecord::Base.transaction(requires_new: true) do
+        molecule, molfile = process_row_data(row, index)
+        unless molecule_not_exist(molecule, row, index)
+          sample_save(row, molfile, molecule, index, force_decoupled: molfile.nil?)
+          saved = true
+        end
+      end
+      saved
+    rescue StandardError => e
+      Rails.logger.warn("Import #{@file_name}: row #{index + 2} could not be imported: #{e.class}: #{e.message}")
+      @unprocessable << { row: row, index: index } unless @unprocessable.any? { |u| u[:index] == index }
+      false
+    end
+
+    # Resolves every distinct CAS number in the file once, outside a transaction, so the lookups are
+    # neither repeated per row nor performed while holding one open.
+    def prefetch_cas_molecules
+      return unless mandatory_check.is_a?(Hash) && mandatory_check['cas']
+
+      rows.each_with_index do |row, index|
+        next unless cas?(row)
+        # Only rows that need the fallback: a row with a usable structure never hits CAS lookup.
+        next if structure?(row)
+
+        find_molecule_by_cas(cas_value(row))
+      rescue StandardError => e
+        Rails.logger.warn("Import #{@file_name}: CAS prefetch failed on row #{index + 2}: #{e.message}")
       end
     ensure
       Molecule.schedule_lcss_since(started_at)
@@ -272,8 +418,14 @@ module Import
     end
 
     def cas?(row)
-      cas = row['cas'].to_s.strip
-      cas.present?
+      cas_value(row).present?
+    end
+
+    # Excel headers arrive with whatever casing the user typed ('CAS', 'Cas', 'cas '). Every other
+    # column in this importer is read case-insensitively; reading row['cas'] directly would make a
+    # file whose header is 'CAS' pass check_required_fields and then silently resolve no CAS at all.
+    def cas_value(row)
+      row_value_case_insensitive(row, 'cas').to_s.strip
     end
 
     def find_molecule_by_cas(cas_nr)
@@ -607,7 +759,7 @@ module Import
       save_chemical(chemical, sample) if @import_type == 'chemical'
       handle_sample_components(row, sample) if sample_has_components?(row)
       create_polymer_residue_if_needed(sample, row)
-      processed.push(sample)
+      processed.push(id: sample.id, short_label: sample.short_label, decoupled: sample.decoupled)
     end
 
     def create_polymer_residue_if_needed(sample, row)
@@ -703,36 +855,53 @@ module Import
 
     def sample_save(row, molfile, molecule, index = nil, force_decoupled: false)
       sample = create_sample_and_assign_molecule(current_user_id, molfile, molecule)
-      sample.decoupled = true if force_decoupled
       stereo = {}
       header.each do |field|
         stereo[Regexp.last_match(1)] = row[field] if field.to_s.strip =~ /^stereo_(abs|rel)$/
         map_column = ReportHelpers::EXP_MAP_ATTR[:sample].values.find { |e| e[1] == "\"#{field}\"" }
         process_fields(sample, map_column, field, row, molecule)
       end
+      sample.decoupled = true if force_decoupled
       validate_sample_and_save(sample, stereo, row, index)
     end
 
     def process_all_rows
-      last_row = sheet.last_row
-      (2..last_row).each do |data|
-        process_row(data)
-      end
+      read_all_rows
 
       begin
         write_to_db
-        if processed.empty?
-          no_success('No samples could be processed from file')
-        elsif @unprocessable.empty?
-          # Clean up attachment if import was successful
-          @attachment.destroy if @attachment.present?
-          success
-        else
-          warning
-        end
+        import_result
       rescue StandardError => e
         warning(e.message)
       end
+    end
+
+    def read_all_rows
+      (2..sheet.last_row).each do |data|
+        process_row(data)
+      rescue StandardError => e
+        Rails.logger.warn("Import #{@file_name}: row #{data} could not be read: #{e.class}: #{e.message}")
+        @unreadable_rows << data
+      end
+    end
+
+    def import_result
+      if processed.empty?
+        reason = rows.empty? ? 'no row contained a structure, a CAS number or a decoupled flag' : nil
+        return no_success(reason)
+      end
+
+      return warning unless clean_import?
+
+      @attachment.destroy if @attachment.present?
+      success
+    end
+
+    # A clean import is one where every row in the file became a sample with the structure it asked
+    # for. Anything less is reported as a warning so a partial result is never presented as a success.
+    def clean_import?
+      unprocessable.empty? && @skipped_rows.empty? && @decoupled_fallbacks.empty? &&
+        @unreadable_rows.empty? && @unreadable_component_rows.empty?
     end
 
     def excluded_fields
@@ -763,31 +932,114 @@ module Import
         data: [] }
     end
 
+    def error_prepare(error)
+      { status: 'invalid',
+        error: error,
+        message: "The file #{@file_name} could not be prepared for import: #{error}.",
+        data: [] }
+    end
+
     def no_success(error)
       { status: 'invalid',
         error: error,
-        message: "No samples could be imported for file #{@file_name} " \
-                 "because of the following error #{error}.",
-        unprocessed_data: unprocessable }
+        message: [
+          "No rows could be imported from file: #{@file_name}.",
+          error.present? ? "Reason: #{error}." : nil,
+          failed_rows_note,
+          structure_notes,
+          skipped_rows_note,
+          unreadable_rows_note,
+        ].compact.join(' ') }.merge(result_payload)
     end
 
     def warning(error = nil)
       { status: 'warning',
         error: error,
-        message: "following rows in file: #{@file_name} " \
-                 "could not be imported: #{unprocessable_rows}.",
-        unprocessed_data: unprocessable,
-        data: processed }
-    end
-
-    def unprocessable_rows
-      unprocessable.map { |u| u[:index] + 2 }.join(', ')
+        message: [
+          imported_count_sentence,
+          failed_rows_note,
+          error.present? ? "The import stopped early: #{error}." : nil,
+          structure_notes,
+          skipped_rows_note,
+          unreadable_rows_note,
+        ].compact.join(' ') }.merge(result_payload)
     end
 
     def success
       { status: 'ok',
-        message: "samples in file: #{@file_name} have been imported successfully in collection '#{@collection.label}'.",
-        data: processed }
+        message: [
+          imported_count_sentence,
+          structure_notes,
+          skipped_rows_note,
+          unreadable_rows_note,
+        ].compact.join(' ') }.merge(result_payload)
+    end
+
+    def unprocessable_rows
+      unprocessable.map { |u| u[:index] + 2 }.sort.join(', ')
+    end
+
+    # Every row the file offered: those queued for import, those skipped before queuing, and those
+    # that could not be read at all.
+    def total_candidate_rows
+      rows.size + @skipped_rows.size + @unreadable_rows.size
+    end
+
+    def unreadable_rows_note
+      notes = []
+      if @unreadable_rows.any?
+        notes << "#{@unreadable_rows.size} row(s) could not be read from the sheet " \
+                 "(row(s) #{@unreadable_rows.sort.join(', ')})."
+      end
+      if @unreadable_component_rows.any?
+        notes << "#{@unreadable_component_rows.size} row(s) in the sample_components sheet could not " \
+                 "be read (row(s) #{@unreadable_component_rows.sort.join(', ')})."
+      end
+      notes.empty? ? nil : notes.join(' ')
+    end
+
+    def imported_count_sentence
+      "#{processed.size} of #{total_candidate_rows} row(s) in file: #{@file_name} " \
+        "were imported into collection '#{@collection.label}'."
+    end
+
+    def failed_rows_note
+      return nil if unprocessable.empty?
+
+      "The following row(s) could not be imported: #{unprocessable_rows}."
+    end
+
+    def skipped_rows_note
+      return nil if @skipped_rows.empty?
+
+      "#{@skipped_rows.size} row(s) were skipped because they contained no structure, no CAS and no " \
+        "decoupled flag (row(s) #{@skipped_rows.sort.join(', ')})."
+    end
+
+    def result_payload
+      {
+        imported_count: processed.size,
+        total_rows: total_candidate_rows,
+        failed_rows: unprocessable.map { |u| u[:index] + 2 }.sort,
+        skipped_rows: @skipped_rows.sort,
+        unreadable_rows: @unreadable_rows.sort,
+        unreadable_component_rows: @unreadable_component_rows.sort,
+        decoupled_fallbacks: @decoupled_fallbacks,
+        unprocessed_data: unprocessable,
+        data: processed,
+      }
+    end
+
+    # Rows that were imported but lost their structure need to be visible in the result. 
+    def structure_notes
+      decoupled_fallback_note
+    end
+
+    def decoupled_fallback_note
+      return nil if @decoupled_fallbacks.empty?
+
+      "#{@decoupled_fallbacks.size} row(s) were imported as decoupled because no structure could be " \
+        "resolved (row(s) #{@decoupled_fallbacks.map { |f| f[:index] + 2 }.sort.join(', ')})."
     end
   end
 end
