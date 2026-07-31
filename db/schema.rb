@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2026_07_13_120000) do
+ActiveRecord::Schema.define(version: 2026_07_31_120000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "hstore"
@@ -1183,7 +1183,7 @@ ActiveRecord::Schema.define(version: 2026_07_13_120000) do
     t.string "duration"
     t.string "rxno"
     t.string "conditions"
-    t.jsonb "variations", default: {}
+    t.jsonb "variations", default: []
     t.text "plain_text_description"
     t.text "plain_text_observation"
     t.boolean "gaseous", default: false
@@ -1201,6 +1201,7 @@ ActiveRecord::Schema.define(version: 2026_07_13_120000) do
     t.index ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key"
     t.index ["role"], name: "index_reactions_on_role"
     t.index ["rxno"], name: "index_reactions_on_rxno", order: :desc
+    t.check_constraint "(jsonb_typeof(variations) = 'array'::text) AND (NOT jsonb_path_exists(variations, '$[*]?(@.type() != \"object\")'::jsonpath)) AND (NOT jsonb_path_exists(variations, '$[*]?((!(exists (@.\"id\")) || !(exists (@.\"idx\"))) || !(exists (@.\"data\")))'::jsonpath))", name: "reactions_variations_is_diff_list"
   end
 
   create_table "reactions_reactant_sbmm_samples", force: :cascade do |t|
