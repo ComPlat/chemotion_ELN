@@ -13,6 +13,9 @@ import Reaction from 'src/models/Reaction';
 import LineChartContainer from 'src/components/lineChart/LineChartContainer';
 import EditableTable from 'src/components/lineChart/EditableTable';
 import { permitOn } from 'src/components/common/uis';
+import {
+  findVariationRange, variationRangeText
+} from 'src/apps/mydb/elements/details/reactions/schemeTab/VariationRangeUtils';
 
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {
@@ -48,6 +51,7 @@ export default class ReactionDetailsMainProperties extends Component {
   render() {
     const {
       reaction,
+      variations,
       onInputChange,
       leadingField,
       leadingFieldColSize,
@@ -61,6 +65,20 @@ export default class ReactionDetailsMainProperties extends Component {
     const { temperature } = reaction;
     const { showTemperatureChart } = this.state;
     const rowClassName = showSchemeFields ? 'mt-3 mb-0' : 'my-3';
+    /*
+    A temperature the variations do not agree on is shown as their range and cannot be edited here.
+    `temperature_display` is free text - it holds things like "reflux" as readily as a number - so
+    only the variations that put a number in it take part in the range; if none of them do, the
+    field stays as editable as it was.
+    */
+    const temperatureRange = findVariationRange(
+      variations,
+      (variationReaction) => parseFloat(variationReaction.temperature_display),
+      parseFloat(reaction.temperature_display),
+    );
+    const isTemperatureDisabled = !permitOn(reaction)
+      || reaction.isMethodDisabled('temperature')
+      || temperatureRange.isRangeField;
 
     return (
       <>
@@ -91,13 +109,17 @@ export default class ReactionDetailsMainProperties extends Component {
                 </OverlayTrigger>
                 <Form.Control
                   type="text"
-                  value={reaction.temperature_display || ''}
-                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('temperature')}
+                  value={
+                    temperatureRange.isRangeField
+                      ? variationRangeText(temperatureRange)
+                      : (reaction.temperature_display || '')
+                  }
+                  disabled={isTemperatureDisabled}
                   placeholder="Temperature..."
                   onChange={(event) => onInputChange('temperature', event)}
                 />
                 <Button
-                  disabled={!permitOn(reaction)}
+                  disabled={!permitOn(reaction) || temperatureRange.isRangeField}
                   variant="light"
                   onClick={() => this.changeUnit()}
                 >
@@ -146,6 +168,10 @@ export default class ReactionDetailsMainProperties extends Component {
 ReactionDetailsMainProperties.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   reaction: PropTypes.object,
+  // Only the scheme tab has variations; the properties tab renders the same fields without them.
+  variations: PropTypes.arrayOf(PropTypes.shape({
+    data: PropTypes.instanceOf(Reaction).isRequired,
+  })),
   onInputChange: PropTypes.func,
   leadingField: PropTypes.node,
   leadingFieldColSize: PropTypes.number,
@@ -159,6 +185,7 @@ ReactionDetailsMainProperties.propTypes = {
 
 ReactionDetailsMainProperties.defaultProps = {
   reaction: {},
+  variations: [],
   onInputChange: () => {},
   leadingField: null,
   leadingFieldColSize: 9,

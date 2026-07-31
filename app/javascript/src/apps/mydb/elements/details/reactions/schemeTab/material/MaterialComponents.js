@@ -15,14 +15,15 @@ import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralIn
 import { permitOn } from 'src/components/common/uis';
 import MaterialHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialUtils';
 import FieldValueSelector from 'src/apps/mydb/elements/details/FieldValueSelector';
-import { convertDuration, convertTemperature, convertTonPerTime } from 'src/models/Reaction';
+import Reaction, { convertDuration, convertTemperature, convertTonPerTime } from 'src/models/Reaction';
+import Sample from 'src/models/Sample';
 
 const VOLUME_METRIC_PREFIXES = ['m', 'n', 'u'];
 
 /*
-Metric prefix of the volume and the mol input. Kept out of the components themselves so the
-variations grid can label and switch the very same unit from its column headers.
-*/
+ Metric prefix of the volume and the mol input. Kept out of the components themselves so the
+ variations grid can label and switch the very same unit from its column headers.
+ */
 const volumeMetricPrefix = (material, isSbmm) => {
   if (isSbmm) {
     // SBMM stores explicit unit strings (e.g. L/mL/µL), so derive UI prefix from that unit.
@@ -303,10 +304,57 @@ GasType.propTypes = {
 };
 
 const MaterialNameWithIupac = ({ mh, index, withStickyName }) => {
-  const { materialGroup, reaction, material } = mh;
+  const { materialGroup, reaction, material, isSbmm, variations } = mh;
 
-  // Check if this is an SBMM sample
-  const { isSbmm } = mh;
+  if (variations.length > 0) {
+
+    const seen = new Set([material.id]);
+    const samples = [material].concat(...variations.filter(({ data }) => {
+      const sample = data[materialGroup][index];
+      if (!sample) {
+        return false;
+      }
+      if (seen.has(sample.id)) {
+        return false;
+      }
+      seen.add(sample.id);
+      return true;
+    }).map(({ data }) => data[materialGroup][index]));
+    if (samples.length > 1) {
+
+      return <div className="pseudo-table__cell pseudo-table__cell-title align-self-start">
+        <ul>
+        {samples.map((sample) => <li key={sample.id}>
+            <SingleMaterialNameWithIupac
+              mh={mh}
+              index={index}
+              withStickyName={withStickyName}
+              reaction={reaction}
+              material={sample}
+              isSbmm={isSbmm}
+              materialGroup={materialGroup}/>
+        </li>
+        )}
+        </ul></div>;
+    }
+  }
+
+  return <SingleMaterialNameWithIupac mh={mh}
+                                      index={index}
+                                      withStickyName={withStickyName}
+                                      reaction={reaction}
+                                      material={material}
+                                      isSbmm={isSbmm}
+                                      materialGroup={materialGroup}/>;
+};
+
+MaterialNameWithIupac.propTypes = {
+  mh: PropTypes.instanceOf(MaterialHandler).isRequired,
+  index: PropTypes.number.isRequired,
+  withStickyName: PropTypes.bool.isRequired,
+};
+
+const SingleMaterialNameWithIupac = ({ mh, index, withStickyName, materialGroup, reaction, material, isSbmm }) => {
 
   // Check if the material is a mixture
   const isMixture = material.isMixture && material.isMixture();
@@ -359,7 +407,7 @@ const MaterialNameWithIupac = ({ mh, index, withStickyName }) => {
     <a
       role="link"
       tabIndex={0}
-      onClick={() => mh.handler.materialClick()}
+      onClick={() => mh.handler.materialClick(material)}
     >
       {materialDisplayName}
     </a>
@@ -413,8 +461,12 @@ const MaterialNameWithIupac = ({ mh, index, withStickyName }) => {
   );
 };
 
-MaterialNameWithIupac.propTypes = {
+SingleMaterialNameWithIupac.propTypes = {
   mh: PropTypes.instanceOf(MaterialHandler).isRequired,
+  reaction: PropTypes.instanceOf(Reaction).isRequired,
+  material: PropTypes.instanceOf(Sample).isRequired,
+  materialGroup: PropTypes.string.isRequired,
+  isSbmm: PropTypes.bool.isRequired,
   index: PropTypes.number.isRequired,
   withStickyName: PropTypes.bool.isRequired,
 };
@@ -809,21 +861,21 @@ const EquivalentOrYield = ({ mh, displayYieldField }) => {
     return <CustomFieldValueSelector mh={mh}/>;
   }
   return (
-      <NumeralInputWithUnitsCompo
-        className="reaction-material__equivalent-data"
-        isRangeField={isRangeField}
-        rangeStart={rangeStart}
-        rangeEnd={rangeEnd}
-        size="sm"
-        precision={4}
-        value={material.equivalent}
-        disabled={
-          !permitOn(reaction) || ((((material.reference || false)
-            && material.equivalent) !== false) || lockEquivColumn)
-        }
-        onChange={(e) => mh.handler.equivalentChange(e)}
-      />
-    );
+    <NumeralInputWithUnitsCompo
+      className="reaction-material__equivalent-data"
+      isRangeField={isRangeField}
+      rangeStart={rangeStart}
+      rangeEnd={rangeEnd}
+      size="sm"
+      precision={4}
+      value={material.equivalent}
+      disabled={
+        !permitOn(reaction) || ((((material.reference || false)
+          && material.equivalent) !== false) || lockEquivColumn)
+      }
+      onChange={(e) => mh.handler.equivalentChange(e)}
+    />
+  );
 };
 
 EquivalentOrYield.propTypes = {
@@ -897,7 +949,7 @@ const MaterialRef = ({ mh }) => {
   }
 
   if (reaction.weight_percentage && !mh.isSbmm) {
-    return <div><NestedReferenceRadios  mh={mh}/></div>;
+    return <div><NestedReferenceRadios mh={mh}/></div>;
   }
 
   return (
@@ -996,15 +1048,15 @@ GaseousInputFields.propTypes = {
 };
 
 const GaseousProductRow = ({ mh }) => (
-    <div className="reaction-material__gaseous-fields-data">
-      <div className="reaction-material__ref-data"/>
-      <GaseousInputFields field={'time'} mh={mh}/>
-      <GaseousInputFields field={'temperature'} mh={mh}/>
-      <GaseousInputFields field={'part_per_million'} mh={mh}/>
-      <GaseousInputFields field={'turnover_number'} mh={mh}/>
-      <GaseousInputFields field={'turnover_frequency'} mh={mh}/>
-    </div>
-  );
+  <div className="reaction-material__gaseous-fields-data">
+    <div className="reaction-material__ref-data"/>
+    <GaseousInputFields field={'time'} mh={mh}/>
+    <GaseousInputFields field={'temperature'} mh={mh}/>
+    <GaseousInputFields field={'part_per_million'} mh={mh}/>
+    <GaseousInputFields field={'turnover_number'} mh={mh}/>
+    <GaseousInputFields field={'turnover_frequency'} mh={mh}/>
+  </div>
+);
 
 GaseousProductRow.propTypes = {
   mh: PropTypes.instanceOf(MaterialHandler).isRequired

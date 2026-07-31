@@ -15,6 +15,7 @@ import ComponentModel from 'src/models/Component';
 
 export default class MaterialHandler {
   constructor({
+                index,
                 variations = [],
                 material,
                 reaction,
@@ -38,6 +39,7 @@ export default class MaterialHandler {
     this.mixtureComponents = mixtureComponents;
     this.lockEquivColumn = lockEquivColumn;
     this.variations = variations;
+    this.index = reaction[materialGroup].findIndex((m) => m.id === material.id);
   }
 
   get reaction() {
@@ -193,11 +195,11 @@ export default class MaterialHandler {
   }
 
   findMinMayUnit = ( defaultUnit, valueGetter) => {
-    const { material, variations, materialGroup } = this;
+    const { material, variations, materialGroup, index } = this;
     if (variations.length > 0) {
       const defaultMatValue =  valueGetter(material);
       const values = variations.map((v) => {
-        const vMat = v.data[materialGroup]?.find((m) => m.id === material.id);
+        const vMat = v.data[materialGroup]?.[index];
         return vMat ? valueGetter(vMat) : null;
       }).filter((x) => x !== null);
       const min = Math.min(...values);
@@ -588,15 +590,16 @@ export default class MaterialHandler {
           onChange(event);
         }
       },
-      materialClick: () => {
-        const { reaction, material } = this;
+      materialClick: (material = null) => {
+        const { reaction } = this;
+        const m = material || this.material;
 
-        aviatorNavigation(material.type, material.id, true, false);
+        aviatorNavigation(m.type, m.id, true, false);
         if (this.isSbmm) {
-          ElementActions.fetchSequenceBasedMacromoleculeSampleById(material.id);
+          ElementActions.fetchSequenceBasedMacromoleculeSampleById(m.id);
         } else {
-          material.updateChecksum();
-          ElementActions.showReactionMaterial({ sample: material, reaction });
+          m.updateChecksum();
+          ElementActions.showReactionMaterial({ sample: m, reaction });
         }
       },
       loadingChange: (newLoading) => {
