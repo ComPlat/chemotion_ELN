@@ -259,7 +259,12 @@ M  END
     c.read_string m, smi
 
     c.set_out_format 'mol'
-    molfile = c.write_string(m, false).to_s.rstrip
+
+    # Same guard as molfile_from_cano_smiles and add_molfile_coordinate.
+    gen_2d = OpenBabel::OBOp.find_type('gen2D')
+    gen_2d&.do(m)
+
+    c.write_string(m, false).to_s.rstrip
   end
 
   def self.add_molfile_coordinate(mol_data)
