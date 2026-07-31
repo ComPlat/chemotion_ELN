@@ -41,13 +41,12 @@ const MATERIAL_HEADER = {
 
 const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
-  showLoadingColumn, reaction, headIndex,
+  showLoadingColumn, reaction, headIndex, variations,
   dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
   switchYield, dndEnabled
 }) => {
   const { notifications } = useContext(StoreContext);
   const effectiveDndEnabled = dndEnabled && permitOn(reaction);
-
   const getMaterialComponent = ({
     dragRef,
     dropRef,
@@ -59,6 +58,7 @@ const MaterialGroup = ({
   }) => (
     <Material
       key={material.id}
+      variations={variations}
       reaction={reaction}
       onChange={onChange}
       material={material}
@@ -618,6 +618,10 @@ MaterialGroup.propTypes = {
   displayYieldField: PropTypes.bool,
   switchYield: PropTypes.func.isRequired,
   dndEnabled: PropTypes.bool,
+  variations: PropTypes.arrayOf(PropTypes.shape({
+    idx: PropTypes.number.isRequired,
+    data: PropTypes.instanceOf(Reaction).isRequired,
+  })).isRequired
 };
 
 GeneralMaterialGroup.propTypes = {

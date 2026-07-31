@@ -15,6 +15,7 @@ import ComponentModel from 'src/models/Component';
 
 export default class MaterialHandler {
   constructor({
+                variations = [],
                 material,
                 reaction,
                 materialGroup,
@@ -36,12 +37,7 @@ export default class MaterialHandler {
     this.setMixtureComponents = setMixtureComponents;
     this.mixtureComponents = mixtureComponents;
     this.lockEquivColumn = lockEquivColumn;
-    this.variationMatGroup = (() => {
-      if (materialGroup === 'starting_materials') {
-        return 'startingMaterials';
-      }
-      return materialGroup;
-    })();
+    this.variations = variations;
   }
 
   get reaction() {
@@ -196,15 +192,17 @@ export default class MaterialHandler {
     return `${formatted ? formattedValue : molecularWeight} g/mol${formatted ? '' : theoreticalMassPart}`;
   }
 
-  findMinMayUnit = ( defaultUnit, defaultValue, variationKey) => {
-    const { reaction, material } = this;
-    if (reaction.variations.length > 0) {
-      const defaultMatValue = { value: defaultValue, unit: defaultUnit };
-      const matList = reaction.variations.map((v) => (
-        0 //v[this.variationMatGroup][material.id]?.[variationKey] ?? defaultMatValue
-      ));
-      const values = matList.map((vm) => vm.value);
-      return { min: Math.min(...values), max: Math.max(...values), unit: matList[0].unit, isRangeField: true };
+  findMinMayUnit = ( defaultUnit, valueGetter) => {
+    const { material, variations, materialGroup } = this;
+    if (variations.length > 0) {
+      const defaultMatValue =  valueGetter(material);
+      const values = variations.map((v) => {
+        const vMat = v.data[materialGroup]?.find((m) => m.id === material.id);
+        return vMat ? valueGetter(vMat) : null;
+      }).filter((x) => x !== null);
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      return { min, max, unit: defaultUnit, isRangeField: min !== max || min !== defaultMatValue };
     }
     return { min: null, max: null, unit: defaultUnit, isRangeField: false };
   };

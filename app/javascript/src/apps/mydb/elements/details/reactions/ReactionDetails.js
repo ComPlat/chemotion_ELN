@@ -853,10 +853,12 @@ export default class ReactionDetails extends Component {
       scheme: (
         <Tab eventKey="scheme" title="Scheme" key={`scheme_${reaction.id}`}>
 
-          <Alert variant="info">
-            This reaction has {reaction.variations.length} variations. Reactants cannot be edited in a reaction with
-            variations.
-          </Alert>
+          {variations.length &&
+            <Alert variant="info">
+              This reaction has {reaction.variations.length} variations. Reactants cannot be edited in a reaction with
+              variations.
+            </Alert>
+          }
           <div className="d-flex align-items-center">
             {this.renderReactionTypeSelect(reaction)}
             {!isInteractionReaction && (
@@ -967,6 +969,7 @@ export default class ReactionDetails extends Component {
           }
           <ReactionDetailsScheme
             reaction={reaction}
+            variations={variations}
             onReactionChange={(r, options) => this.handleReactionChange(r, options)}
             onInputChange={(type, event) => this.handleInputChange(type, event)}
           />

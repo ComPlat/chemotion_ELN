@@ -456,7 +456,7 @@ const MassField = ({ mh, metricPrefixes, metric }) => {
     max: rangeEnd,
     unit: rangeUnit,
     isRangeField
-  } = mh.findMinMayUnit('g', material.amount_g, 'mass');
+  } = mh.findMinMayUnit('g', (m) => m.amount_g);
 
   const isAmountDisabledByWeightPercentage = reaction.weight_percentage
     && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
@@ -526,7 +526,7 @@ const MaterialVolume = ({ mh, className }) => {
     max: rangeEnd,
     unit: rangeUnit,
     isRangeField
-  } = mh.findMinMayUnit('l', material.amount_l, 'volume');
+  } = mh.findMinMayUnit('l', (m) => m.amount_l);
 
   return (
     <OverlayTrigger overlay={tooltip}>
@@ -579,7 +579,7 @@ const MaterialAmountMol = ({ mh }) => {
     max: rangeEnd,
     unit: rangeUnit,
     isRangeField
-  } = mh.findMinMayUnit('mol', material.amount_mol, 'amount');
+  } = mh.findMinMayUnit('mol', (m) => m.amount_mol);
 
   return (
     <NumeralInputWithUnitsCompo
@@ -803,7 +803,7 @@ const EquivalentOrYield = ({ mh, displayYieldField }) => {
     min: rangeStart,
     max: rangeEnd,
     isRangeField
-  } = mh.findMinMayUnit('', material.equivalent, 'equivalent');
+  } = mh.findMinMayUnit('', (m) => m.equivalent);
 
   if (reaction.weight_percentage && !isSbmm) {
     return <CustomFieldValueSelector mh={mh}/>;
@@ -931,7 +931,7 @@ const getFormattedValue = (value) => {
 const GaseousInputFields = ({ mh, field }) => {
   const { material } = mh;
   const gasPhaseData = material.gas_phase_data || {};
-  const { value, unit, variationKey } = mh.getFieldData(field, gasPhaseData);
+  const { value, unit } = mh.getFieldData(field, gasPhaseData);
   const readOnly = field === 'turnover_frequency' || field === 'turnover_number';
 
   const updateValue = getFormattedValue(value);
@@ -942,7 +942,10 @@ const GaseousInputFields = ({ mh, field }) => {
     max: rangeEnd,
     isRangeField,
     unit: rangeUnit
-  } = mh.findMinMayUnit(unit, value, variationKey);
+  } = mh.findMinMayUnit(unit, (m) => {
+    const vGasPhaseData = m.gas_phase_data || {};
+    return mh.getFieldData(field, vGasPhaseData, unit)?.value;
+  });
   let convertedRangeStart, convertedRangeEnd;
   if (isRangeField) {
     const converter = (origenValue, origenUnit, targetUnit) => {
