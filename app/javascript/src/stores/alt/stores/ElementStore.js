@@ -4,7 +4,6 @@ import {
   intersectionWith,
   findIndex
 } from 'lodash';
-import Aviator from 'aviator';
 import { rootStore } from 'src/stores/mobx/RootStore';
 import alt from 'src/stores/alt/alt';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -32,7 +31,9 @@ import ScreensFetcher from 'src/fetchers/ScreensFetcher';
 
 import DetailActions from 'src/stores/alt/actions/DetailActions';
 import { SameEleTypId } from 'src/utilities/ElementUtils';
-import { aviatorNavigation, aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
+import {
+  aviatorNavigationToApp, aviatorNavigation, aviatorNavigationWithCollectionId
+} from 'src/utilities/routesUtils';
 import { allElnElementsForSearch } from 'src/apps/generic/Utils';
 import { chmoConversions } from 'src/components/OlsComponent';
 import MatrixCheck from 'src/components/common/MatrixCheck';
@@ -184,7 +185,8 @@ class ElementStore {
       handlefetchCellLinesByCollectionId: ElementActions.fetchCellLinesByCollectionId,
       handlefetchDeviceDescriptionsByCollectionId: ElementActions.fetchDeviceDescriptionsByCollectionId,
       handlefetchVesselsByCollectionId: ElementActions.fetchVesselsByCollectionId,
-      handlefetchSequenceBasedMacromoleculeSamplesByCollectionId: ElementActions.fetchSequenceBasedMacromoleculeSamplesByCollectionId,
+      handlefetchSequenceBasedMacromoleculeSamplesByCollectionId:
+        ElementActions.fetchSequenceBasedMacromoleculeSamplesByCollectionId,
 
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleCreateSample: ElementActions.createSample,
@@ -248,7 +250,8 @@ class ElementStore {
       handleCopyDeviceDescriptionFromClipboard: ElementActions.copyDeviceDescriptionFromClipboard,
       handlefetchSequenceBasedMacromoleculeSampleById: ElementActions.fetchSequenceBasedMacromoleculeSampleById,
       handleCreateSequenceBasedMacromoleculeSample: ElementActions.createSequenceBasedMacromoleculeSample,
-      handleCopySequenceBasedMacromoleculeSampleFromClipboard: ElementActions.copySequenceBasedMacromoleculeSampleFromClipboard,
+      handleCopySequenceBasedMacromoleculeSampleFromClipboard:
+        ElementActions.copySequenceBasedMacromoleculeSampleFromClipboard,
 
       handleCreatePrivateNote: ElementActions.createPrivateNote,
       handleUpdatePrivateNote: ElementActions.updatePrivateNote,
@@ -427,9 +430,9 @@ class ElementStore {
         ElementActions.saveDevice(device);
 
         if (deviceAnalysis) {
-          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`);
+          aviatorNavigationToApp(`/mydb/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`);
         } else {
-          Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`);
+          aviatorNavigationToApp(`/mydb/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`);
         }
         break;
     }
@@ -520,10 +523,8 @@ class ElementStore {
   }
 
   handleSaveDeviceAnalysis(analysis) {
-    const { currentCollection } = UIStore.getState();
     this.state.currentElement = analysis;
-
-    Aviator.navigate(`/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`);
+    aviatorNavigation('devicesAnalysis', analysis.id, true, true);
   }
 
   // eslint-disable-next-line object-curly-newline
@@ -1154,7 +1155,7 @@ class ElementStore {
         SequenceBasedMacromoleculeSample
           .copyFromSequenceBasedMacromoleculeSampleAndCollectionId(
             clipboardSequenceBasedMacromoleculeSamples[0], collection_id
-        )
+          )
       );
     }
   }
@@ -1176,8 +1177,8 @@ class ElementStore {
 
   refreshReactionsListForSpecificReaction(newReaction) {
     return this.state.elements.reactions.elements.map((reaction) => reaction.id === newReaction.id
-        ? newReaction
-        : reaction);
+      ? newReaction
+      : reaction);
   }
 
   handleTryFetchById(result) {
@@ -1246,22 +1247,22 @@ class ElementStore {
     this.changeCurrentElement(
       Reaction.copyFromReactionAndCollectionId(reaction, colId, keepAmounts)
     );
-    aviatorNavigationWithCollectionId(result.colId, 'reaction', 'copy', true, false);
+    aviatorNavigationWithCollectionId(result.colId, 'reaction', 'copy', false, true);
   }
 
   handleCopyResearchPlan(result) {
     this.changeCurrentElement(ResearchPlan.copyFromResearchPlanAndCollectionId(result.research_plan, result.colId));
-    aviatorNavigationWithCollectionId(result.colId, 'research_plan', 'copy', true, false);
+    aviatorNavigationWithCollectionId(result.colId, 'research_plan', 'copy', false, true);
   }
 
   handleCopyElement(result) {
     this.changeCurrentElement(GenericEl.copyFromCollectionId(result.element, result.colId));
-    aviatorNavigationWithCollectionId(result.colId, result.element.type, 'copy', true, false);
+    aviatorNavigationWithCollectionId(result.colId, result.element.type, 'copy', false, true);
   }
 
   handleCopyCellLine(result) {
     rootStore.userStore.fetchCurrentUser(); // Needed to update the cell line counter in frontend
-    Aviator.navigate(`/collection/${result.collectionId}/cell_line/${result.id}`);
+    aviatorNavigationWithCollectionId(result.collectionId, 'cell_line', result.id, false, true);
   }
 
   handleOpenReactionDetails(reaction) {
@@ -1319,7 +1320,7 @@ class ElementStore {
       && currentElement.isNew
       && currentElement.type === nextElement.type
       && (!selectionScopedTypes.includes(nextElement.type)
-      || currentElement.selectionKey === nextElement.selectionKey);
+        || currentElement.selectionKey === nextElement.selectionKey);
     if (!newElementOfSameTypeIsPresent) {
       this.changeCurrentElement(nextElement);
     }
@@ -1467,15 +1468,18 @@ class ElementStore {
   }
 
   handleChangeElementsFilter(filter) {
-    const { profile } = rootStore.userStore;
-    if (!profile.filters) {
-      profile.data.filters = {};
-    }
-    profile.data.filters[filter.name] = {
-      sort: filter.sort,
-      group: filter.group,
-      direction: filter.direction,
-    };
+    rootStore.userStore.updateUserProfileValues({
+      ...rootStore.userStore.profile,
+        data: {
+          filters: {
+            [filter.name]: {
+              sort: filter.sort,
+              group: filter.group,
+              direction: filter.direction,
+            },
+          },
+        },
+      });
 
     this.handleRefreshElements(filter.name);
   }

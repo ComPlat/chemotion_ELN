@@ -1,6 +1,6 @@
 import alt from 'src/stores/alt/alt';
 import ClipboardActions from 'src/stores/alt/actions/ClipboardActions';
-import Aviator from 'aviator';
+import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 
 class ClipboardStore {
   constructor() {
@@ -23,7 +23,7 @@ class ClipboardStore {
         ClipboardActions.fetchSequenceBasedMacromoleculeSamplesAndBuildCopy,
         ClipboardActions.fetchSequenceBasedMacromoleculeSamplesByUIState
       ],
-    })
+    });
   }
 
   handleFetchSamplesByUIStateAndLimit(result) {
@@ -31,10 +31,10 @@ class ClipboardStore {
 
     switch (result.action) {
       case 'template_wellplate':
-        Aviator.navigate(`/collection/${result.collection_id}/wellplate/template`);
+        aviatorNavigationWithCollectionId(result.collection_id, 'wellplate', 'template', false, true);
         break;
       case 'copy_sample':
-        Aviator.navigate(`/collection/${result.collection_id}/sample/copy`);
+        aviatorNavigationWithCollectionId(result.collection_id, 'sample', 'copy', false, true);
     }
   }
 
@@ -42,18 +42,18 @@ class ClipboardStore {
     this.state.wellplates = result.wellplates;
     switch (result.action) {
       case 'template_screen':
-        Aviator.navigate(`/collection/${result.collection_id}/screen/template`);
+        aviatorNavigationWithCollectionId(result.collection_id, 'screen', 'template', false, true);
     }
   }
 
   handleFetchDeviceDescriptionAndBuildCopy(result) {
     this.state.device_descriptions = result.device_descriptions;
-    Aviator.navigate(`/collection/${result.collection_id}/device_description/copy`);
+    aviatorNavigationWithCollectionId(result.collection_id, 'device_description', 'copy', false, true);
   }
 
   handleFetchSequenceBasedMacromoleculeSamplesAndBuildCopy(result) {
     this.state.sequence_based_macromolecule_samples = result.sequence_based_macromolecule_samples;
-    Aviator.navigate(`/collection/${result.collection_id}/sequence_based_macromolecule_sample/copy`);
+    aviatorNavigationWithCollectionId(result.collection_id, 'sequence_based_macromolecule_sample', 'copy', false, true);
   }
 }
 

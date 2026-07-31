@@ -12,7 +12,7 @@ import {
 } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import AppModal from 'src/components/common/AppModal';
-import Aviator from 'aviator';
+import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
 
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
@@ -504,20 +504,22 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
           <Dropdown.Item onClick={() => setShowLabelModal(true)}>My Labels</Dropdown.Item>
           {/* <Dropdown.Item onClick={handleSubscriptionShow}>My Subscriptions</Dropdown.Item>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
-          <Dropdown.Item eventKey="7" href="/command_n_control">
+          <Dropdown.Item eventKey="7" onClick={() => { aviatorNavigationToApp('/command_n_control'); }}>
             My Devices
           </Dropdown.Item>
           {userStore.currentUser.molecule_editor && (
-            <Dropdown.Item eventKey="6" href="/molecule_moderator">
+            <Dropdown.Item eventKey="6" onClick={() => { aviatorNavigationToApp('/molecule_moderator'); }}>
               Molecule Moderator
             </Dropdown.Item>
           )}
-          <Dropdown.Item eventKey="12" href="/converter_admin">
+          <Dropdown.Item eventKey="12" onClick={() => { aviatorNavigationToApp('/converter_admin'); }}>
             Converter Profile
           </Dropdown.Item>
-          <Dropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</Dropdown.Item>
+          <Dropdown.Item eventKey="8" onClick={() => { aviatorNavigationToApp('/generic_elements_admin'); }}>
+            Generic Designer
+          </Dropdown.Item>
 
-          <Dropdown.Item onClick={() =>  { reset(); Aviator.navigate('/home') }}>
+          <Dropdown.Item onClick={() => { reset(); aviatorNavigationToApp('/home'); }}>
             <i className="fa fa-sign-out me-1" />
             Log out
           </Dropdown.Item>

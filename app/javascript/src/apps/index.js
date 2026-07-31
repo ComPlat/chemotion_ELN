@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import Aviator from 'aviator';
 import appRoutes from 'src/apps/routes';
 import { rootStore, StoreContext } from 'src/stores/mobx/RootStore';
 import AppDispatcher from 'src/apps/AppDispatcher';

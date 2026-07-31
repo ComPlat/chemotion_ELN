@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { Container } from 'react-bootstrap';
+import { Container, Button } from 'react-bootstrap';
+import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
 import AdminApp from '@complat/chemotion-converter-client';
 import AppModal from 'src/components/common/AppModal';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
@@ -32,7 +33,7 @@ const ConverterAdmin = () => {
         isAdmin={isAdmin}
       />
       <Container fluid>
-        <a href="/">Back to MyDB</a>
+        <Button variant="plain" onClick={() => aviatorNavigationToApp('/mydb/collection/all')}>Back to MyDB</Button>
       </Container>
     </>
   );

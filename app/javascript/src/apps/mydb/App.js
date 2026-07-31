@@ -1,5 +1,4 @@
 import React, { useContext, useEffect } from 'react';
-import Aviator from 'aviator';
 import { observer } from 'mobx-react';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -47,10 +46,10 @@ const saveKetcherOptionsToLocalStorage = () => {
 };
 
 const loadElement = (paths) => {
-  if (!paths[4]) { return }
+  if (!paths[4]) { return; }
 
   aviatorNavigation(paths[4], paths[5], true, true, {});
-}
+};
 
 const loadCollection = () => {
   const locationPaths = location.pathname.split('/');
@@ -58,6 +57,9 @@ const loadCollection = () => {
     CollectionsFetcher.fetchByCollectionId('all')
       .then((collection) => {
         UIActions.selectCollection(collection);
+        if (!locationPaths.includes('home')) {
+          loadElement(locationPaths);
+        }
       });
   } else if (locationPaths.includes('collection')) {
     CollectionsFetcher.fetchByCollectionId(locationPaths[3])
@@ -75,7 +77,7 @@ const App = () => {
     plugins.input.add('@doi/api', {
       parseType: {
         dataType: 'String',
-        predicate: /\b(https?:\/\/(?:dx\.)?doi\.org\/(10[.][0-9]{4,}(?:[.][0-9]+)*\/(?:(?!["&\'])\S)+))\b/i,
+        predicate: /\b(https?:\/\/(?:dx\.)?doi\.org\/(10[.][0-9]{4,}(?:[.][0-9]+)*\/(?:(?!["&'])\S)+))\b/i,
         extends: '@else/url'
       }
     });
@@ -83,7 +85,7 @@ const App = () => {
     plugins.input.add('@doi/id', {
       parseType: {
         dataType: 'String',
-        predicate: /\b(10[.][0-9]{4,}(?:[.][0-9]+)*\/(?:(?!["&\'])\S)+)\b/
+        predicate: /\b(10[.][0-9]{4,}(?:[.][0-9]+)*\/(?:(?!["&'])\S)+)\b/
       }
     });
   };

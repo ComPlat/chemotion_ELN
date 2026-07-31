@@ -6,6 +6,7 @@ import DetailActions from 'src/stores/alt/actions/DetailActions';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import { rootStore } from 'src/stores/mobx/RootStore';
 import Aviator from 'aviator';
+import { camelCase } from 'lodash';
 import { elementNames } from 'src/apps/generic/Utils';
 import { getLatestVesselIds, clearLatestVesselIds } from 'src/utilities/VesselUtilities';
 
@@ -195,16 +196,16 @@ const deviceShowDeviceManagement = () => {
 };
 
 const researchPlanShowOrNew = (e) => {
-  const { research_planID, collectionID } = e.params;
+  const { researchPlanID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
-  const index = selecteds.findIndex((el) => el.type === 'research_plan' && el.id === research_planID);
+  const index = selecteds.findIndex((el) => el.type === 'research_plan' && el.id === researchPlanID);
 
-  if (research_planID === 'new') {
+  if (researchPlanID === 'new') {
     ElementActions.generateEmptyResearchPlan(collectionID);
-  } else if (research_planID === 'copy') {
+  } else if (researchPlanID === 'copy') {
     //
   } else if (index < 0) {
-    ElementActions.fetchResearchPlanById(research_planID);
+    ElementActions.fetchResearchPlanById(researchPlanID);
   } else if (index !== activeKey) {
     DetailActions.select(index);
   }
@@ -215,45 +216,45 @@ const metadataShowOrNew = (e) => {
   const { selecteds, activeKey } = ElementStore.getState();
 
   // check if the metadata detail tab is alredy open
-  const index = selecteds.findIndex((el) => el.collection_id == collectionID);
+  const index = selecteds.findIndex((el) => el.collection_id === collectionID);
   if (index < 0) {
     // not found, fetch the metadata from the server
     ElementActions.fetchMetadata(collectionID);
-  } else if (index != activeKey) {
+  } else if (index !== activeKey) {
     // not active, activate tab
     DetailActions.select(index);
   }
 };
 
 const deviceDescriptionShowOrNew = (e) => {
-  const { device_descriptionID, collectionID } = e.params;
+  const { deviceDescriptionID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
-  const index = selecteds.findIndex((el) => el.type === 'device_description' && el.id === device_descriptionID);
+  const index = selecteds.findIndex((el) => el.type === 'device_description' && el.id === deviceDescriptionID);
 
-  if (device_descriptionID === 'new' || device_descriptionID === undefined) {
+  if (deviceDescriptionID === 'new' || deviceDescriptionID === undefined) {
     ElementActions.generateEmptyDeviceDescription(collectionID);
-  } else if (device_descriptionID === 'copy') {
+  } else if (deviceDescriptionID === 'copy') {
     ElementActions.copyDeviceDescriptionFromClipboard.defer(collectionID);
   } else if (index < 0) {
-    ElementActions.fetchDeviceDescriptionById(device_descriptionID);
+    ElementActions.fetchDeviceDescriptionById(deviceDescriptionID);
   } else if (index !== activeKey) {
     DetailActions.select(index);
   }
 };
 
 const sequenceBasedMacromoleculeSampleShowOrNew = (e) => {
-  const { sequence_based_macromolecule_sampleID, collectionID } = e.params;
+  const { sequenceBasedMacromoleculeSampleID, collectionID } = e.params;
   const { selecteds, activeKey } = ElementStore.getState();
   const index = selecteds.findIndex((el) => (
-    el.type === 'sequence_based_macromolecule_sample' && el.id === sequence_based_macromolecule_sampleID
+    el.type === 'sequence_based_macromolecule_sample' && el.id === sequenceBasedMacromoleculeSampleID
   ));
 
-  if (sequence_based_macromolecule_sampleID === 'new' || sequence_based_macromolecule_sampleID === undefined) {
+  if (sequenceBasedMacromoleculeSampleID === 'new' || sequenceBasedMacromoleculeSampleID === undefined) {
     ElementActions.generateEmptySequenceBasedMacromoleculeSample(collectionID);
-  } else if (sequence_based_macromolecule_sampleID === 'copy') {
+  } else if (sequenceBasedMacromoleculeSampleID === 'copy') {
     ElementActions.copySequenceBasedMacromoleculeSampleFromClipboard.defer(collectionID);
   } else if (index < 0) {
-    ElementActions.fetchSequenceBasedMacromoleculeSampleById(sequence_based_macromolecule_sampleID);
+    ElementActions.fetchSequenceBasedMacromoleculeSampleById(sequenceBasedMacromoleculeSampleID);
   } else if (index !== activeKey) {
     DetailActions.select(index);
   }
@@ -328,23 +329,30 @@ const elementShowOrNew = (e) => {
 
 const defaultParamsForAviatorNavigation = (collectionId, type, id) => {
   const isGenericEl = (rootStore.userStore.genericEls || []).some(({ name }) => name === type);
+  const camelCaseType = camelCase(type);
 
   const params = {
     type,
     klassType: isGenericEl ? 'GenericEl' : undefined,
     params: {
       collectionID: collectionId,
-      [`${type}ID`]: id,
+      [`${camelCaseType}ID`]: id,
     }
   };
   return params;
+};
+
+const aviatorNavigationToApp = (url, silent = true) => {
+  Aviator.navigate(url, { silent });
 };
 
 const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = {}) => {
   const { currentCollection } = UIStore.getState();
   const withType = type ? `/${type}` : '';
   const withId = id ? `/${id}` : '';
-  const url = type === 'collection' ? `/mydb/collection/${id}/` : `/mydb/collection/${currentCollection.id}${withType}${withId}`;
+  const url = type === 'collection'
+    ? `/mydb/collection/${id}/`
+    : `/mydb/collection/${currentCollection.id}${withType}${withId}`;
 
   Aviator.navigate(url, { silent });
 
@@ -398,6 +406,7 @@ export {
   vesselShowOrNew,
   vesselTemplateShowOrNew,
   sequenceBasedMacromoleculeSampleShowOrNew,
+  aviatorNavigationToApp,
   aviatorNavigation,
   aviatorNavigationWithCollectionId,
 };
