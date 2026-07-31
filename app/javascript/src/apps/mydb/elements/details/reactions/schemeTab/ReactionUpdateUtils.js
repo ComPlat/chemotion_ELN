@@ -74,7 +74,7 @@ const handleInputChange = (type, event, reaction, onReactionChange) => {
 };
 
 export default class ReactionUpdateHandler {
-  constructor({ reaction, onReactionChange, onLockEquivColChange }, context = null) {
+  constructor({ reaction, onReactionChange, onLockEquivColChange, variations = [] }, context = null) {
     this.context = context;
     this.props = {
       reaction,
@@ -83,6 +83,7 @@ export default class ReactionUpdateHandler {
       onLockEquivColChange
     };
     this._lockEquivColumn = null;
+    this.variations = variations;
     this.bindMethods();
   }
 

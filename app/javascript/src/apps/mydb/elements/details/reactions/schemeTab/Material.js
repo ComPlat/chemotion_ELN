@@ -343,21 +343,23 @@ GeneralMaterial.propTypes = {
 };
 
 const Material = ({
-  reaction,
-  material,
-  materialGroup,
-  deleteMaterial,
-  onChange,
-  showLoadingColumn,
-  index,
-  lockEquivColumn = false,
-  displayYieldField = false,
-  dragRef,
-  dropRef,
-  isOver = false,
-  canDrop = false,
-  isDragging = false,
-  withStickyName = false }) => {
+                    variations,
+                    reaction,
+                    material,
+                    materialGroup,
+                    deleteMaterial,
+                    onChange,
+                    showLoadingColumn,
+                    index,
+                    lockEquivColumn = false,
+                    displayYieldField = false,
+                    dragRef,
+                    dropRef,
+                    isOver = false,
+                    canDrop = false,
+                    isDragging = false,
+                    withStickyName = false
+}) => {
 
   // Determine initial field based on data
   const initialField = !isEmpty(material.weight_percentage)
@@ -372,6 +374,7 @@ const Material = ({
 
   const mh = useMemo(() => new MaterialHandler(
     {
+      variations,
       material,
       reaction,
       materialGroup,
@@ -384,7 +387,7 @@ const Material = ({
         setMixtureComponents(a,b);
       },
       lockEquivColumn
-    }), [material, reaction, materialGroup, onChange, fieldToShow, mixtureComponents, lockEquivColumn]);
+    }), [material, reaction, materialGroup, onChange, fieldToShow, mixtureComponents, lockEquivColumn, variations]);
 
   // eslint-disable-next-line class-methods-use-this
 
@@ -477,4 +480,8 @@ Material.defaultProps = {
   canDrop: false,
   isOver: false,
   withStickyName: false,
+  variations: PropTypes.arrayOf(PropTypes.shape({
+    idx: PropTypes.number.isRequired,
+    data: PropTypes.instanceOf(Reaction).isRequired,
+  })).isRequired
 };
