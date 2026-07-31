@@ -71,4 +71,20 @@ RSpec.describe Screen, type: :model do
       expect(sc2.collections.only_deleted).to eq []
     end
   end
+
+  describe 'attachments association' do
+    let(:screen) { create(:screen) }
+
+    it 'has a polymorphic attachments association' do
+      attachment = create(:attachment, attachable: screen)
+      expect(screen.attachments).to include(attachment)
+    end
+
+    it 'orphans attachment when screen is destroyed' do
+      attachment = create(:attachment, attachable: screen)
+      screen.destroy
+      reloaded = Attachment.unscoped.find(attachment.id)
+      expect(reloaded.attachable_id).to be_nil
+    end
+  end
 end

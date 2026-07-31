@@ -49,6 +49,8 @@ class Screen < ApplicationRecord
   has_many :collections_screens, dependent: :destroy
   has_many :collections, through: :collections_screens
 
+  has_many :attachments, as: :attachable, dependent: :nullify
+
   has_many :screens_wellplates, dependent: :destroy
   has_many :wellplates, through: :screens_wellplates
 

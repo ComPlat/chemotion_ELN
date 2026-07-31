@@ -260,6 +260,7 @@ export default class Sample extends Element {
       components: [],
       ancestor_ids: [],
       literatures: {},
+      attachments: [],
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -512,6 +513,7 @@ export default class Sample extends Element {
       sample_type: this.sample_type,
       sample_details: this.sample_details,
       literatures: this.literatures,
+      attachments: this.attachments,
     });
 
     return serialized;
@@ -2014,7 +2016,7 @@ export default class Sample extends Element {
     )[0].children.push(analysis);
   }
 
-  attachments() {
+  containerAttachments() {
     let target = [];
     this.datasetContainers().forEach((dt) => {
       const atts = dt.attachments;
