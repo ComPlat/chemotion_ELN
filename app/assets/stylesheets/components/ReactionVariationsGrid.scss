@@ -71,6 +71,14 @@
     overflow: visible;
   }
 
+  // Column wide unit switch of a material header. Unlike the drag handle next to it this is a
+  // control, so it stays visible; it only has to fit into the 32px header row.
+  .variations-unit-switch {
+    max-height: 20px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
   // Columns are dragged by their header cell, so the handle is a hint rather than the drag source.
   // It stays in the layout when idle so the header text does not jump on hover.
   .ag-header-cell,
