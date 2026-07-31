@@ -140,7 +140,9 @@ module Chemotion
               end
             end
           else
-            samples = samples.includes(:container, :elemental_compositions, :molecule, :residues, :segments, :tag)
+            samples = samples.includes(
+              :container, :elemental_compositions, :molecule, :reactions_samples, :residues, :segments, :tag
+            )
             reactions = reactions.includes(
               :container, :products, :purification_solvents, :reactants, :segments, :solvents, :starting_materials, :tag
             )

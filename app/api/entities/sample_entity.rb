@@ -144,15 +144,25 @@ module Entities
     end
 
     def gas_type
-      object.reactions_samples.first&.gas_type
+      reactions_sample&.gas_type
     end
 
     def gas_phase_data
-      object.reactions_samples.first&.gas_phase_data
+      reactions_sample&.gas_phase_data
     end
 
     def weight_percentage
-      object.reactions_samples.first&.weight_percentage
+      reactions_sample&.weight_percentage
+    end
+
+    # Memoized so gas_type/gas_phase_data/weight_percentage share one lookup instead of
+    # each re-running .reactions_samples.first -- a no-op when the association is preloaded,
+    # but three redundant queries per sample instead of one when it isn't (see element_api.rb's
+    # load_report, which doesn't preload :reactions_samples).
+    def reactions_sample
+      return @reactions_sample if defined?(@reactions_sample)
+
+      @reactions_sample = object.reactions_samples.first
     end
   end
 end

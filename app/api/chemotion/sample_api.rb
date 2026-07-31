@@ -217,7 +217,7 @@ module Chemotion
               )
             end
           end
-          sample_count = sample_scope.count
+          sample_count = sample_scope.size
         else
           sample_count = reset_pagination_page(sample_scope)
           sample_scope = sample_scope.order('samples.updated_at DESC')
