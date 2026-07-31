@@ -12,6 +12,7 @@ import {
 } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import AppModal from 'src/components/common/AppModal';
+import Aviator from 'aviator';
 
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
@@ -516,7 +517,7 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
           </Dropdown.Item>
           <Dropdown.Item eventKey="8" href="/generic_elements_admin">Generic Designer</Dropdown.Item>
 
-          <Dropdown.Item onClick={() =>  { reset(); }}>
+          <Dropdown.Item onClick={() =>  { reset(); Aviator.navigate('/home') }}>
             <i className="fa fa-sign-out me-1" />
             Log out
           </Dropdown.Item>

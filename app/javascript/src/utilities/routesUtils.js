@@ -344,7 +344,7 @@ const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = 
   const { currentCollection } = UIStore.getState();
   const withType = type ? `/${type}` : '';
   const withId = id ? `/${id}` : '';
-  const url = type === 'collection' ? `/collection/${id}/` : `/collection/${currentCollection.id}${withType}${withId}`;
+  const url = type === 'collection' ? `/mydb/collection/${id}/` : `/mydb/collection/${currentCollection.id}${withType}${withId}`;
 
   Aviator.navigate(url, { silent });
 
@@ -361,7 +361,7 @@ const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = 
 const aviatorNavigationWithCollectionId = (collectionId, type, id, silent = true, showOrNew = false) => {
   const withId = id ? `/${id}` : '';
   const withType = type ? `/${type}` : '';
-  const url = `/collection/${collectionId}${withType}${withId}`;
+  const url = `/mydb/collection/${collectionId}${withType}${withId}`;
 
   Aviator.navigate(url, { silent });
 

@@ -17,7 +17,6 @@ import { DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { MultiBackend, TouchTransition } from 'dnd-multi-backend';
-// import appRoutes from 'src/apps/mydb/routes';
 
 Sentry.init({
   sendClientReports: false,

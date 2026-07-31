@@ -3,6 +3,7 @@ import React, { useState, useCallback, useContext } from 'react';
 import { observer } from 'mobx-react';
 import { keys } from 'mobx';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import Aviator from 'aviator';
 
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
@@ -151,6 +152,7 @@ function SignInForm() {
     if (loginResult.status === 200) {
       userStore.setAuthToken(loginResult.token);
       userStore.setRole(loginResult.role);
+      Aviator.navigate('/mydb/collection/all');
     } else if (loginResult.status === 400) {
       // handle bad username/password combination
     } else if (loginResult.status === 401 && loginResult.otp_required === true) {
