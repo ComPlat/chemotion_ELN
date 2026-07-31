@@ -3,7 +3,7 @@ import React, { useState, useCallback, useContext } from 'react';
 import { observer } from 'mobx-react';
 import { keys } from 'mobx';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import Aviator from 'aviator';
+import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
 
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
@@ -133,7 +133,7 @@ ExtendedSignInForm.defaultProps = {
   username: '',
 };
 
-function SignInForm() {
+const SignInForm = () => {
   const [form, setForm] = useFormValues({
     login: '',
     password: '',
@@ -152,14 +152,14 @@ function SignInForm() {
     if (loginResult.status === 200) {
       userStore.setAuthToken(loginResult.token);
       userStore.setRole(loginResult.role);
-      Aviator.navigate('/mydb/collection/all');
+      aviatorNavigationToApp('/mydb/collection/all');
     } else if (loginResult.status === 400) {
       // handle bad username/password combination
     } else if (loginResult.status === 401 && loginResult.otp_required === true) {
       setShowOtp(true);
       setWrongOtp(loginResult.otp_wrong);
     }
-  }, [form, setForm]);
+  }, [form, setForm, userStore]);
 
   return (
     <Form id="new_user" className="new_user" action="" acceptCharset="UTF-8" method="post" onSubmit={handleSubmit}>
@@ -217,9 +217,9 @@ function SignInForm() {
       </Row>
     </Form>
   );
-}
+};
 
-function NewSession() {
+const NewSession = () => {
   const { userStore } = useContext(StoreContext);
   const { omniauthProviders, extraRules } = userStore;
 
@@ -256,7 +256,7 @@ function NewSession() {
       )}
     </Row>
   );
-}
+};
 
 export default observer(NewSession);
 

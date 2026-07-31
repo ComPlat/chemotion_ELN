@@ -1,5 +1,7 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
 import { Button, OverlayTrigger, Popover } from 'react-bootstrap';
+import { aviatorNavigation } from 'src/utilities/routesUtils';
 
 export default class ElementResearchPlanLabels extends React.Component {
   constructor(props) {
@@ -15,8 +17,7 @@ export default class ElementResearchPlanLabels extends React.Component {
   handleOnClick(label, e) {
     e.stopPropagation();
 
-    let url = `/research_plan/${label.id}`;
-    Aviator.navigate(url);
+    aviatorNavigation('research_plan', label.id, true, true);
   }
 
   preventOnClick(e) {
@@ -24,8 +25,8 @@ export default class ElementResearchPlanLabels extends React.Component {
   }
 
   formatLabels(labels) {
-    return labels.map((label, index) => (
-      <span className="d-inline-block m-1" key={index}>
+    return labels.map((label) => (
+      <span className="d-inline-block m-1" key={label}>
         <Button variant="light" size="sm" onClick={e => this.handleOnClick(label, e)}>
           {label.name}
         </Button>
