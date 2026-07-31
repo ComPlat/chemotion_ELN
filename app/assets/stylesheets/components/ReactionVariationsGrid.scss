@@ -1,5 +1,31 @@
 // Grid of the reaction variations tab: every material field is its own column and every cell hosts
 // a live input from the scheme tab, so the cells need room and must not clip their popovers.
+
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+
+  width: 32px;
+  height: 32px;
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #666;
+
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #f2f2f2;
+  color: #000;
+}
 .reaction-variations-grid {
   width: 100%;
 
