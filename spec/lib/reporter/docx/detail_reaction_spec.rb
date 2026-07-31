@@ -199,6 +199,60 @@ describe 'Reporter::Docx::DetailReaction' do
     end
   end
 
+  # A variation stores only what it changes about the reaction, so the report has to resolve the
+  # two: see db/schemas/reaction_variations.schema.json. The attribute names below carry the leading
+  # underscore the client's models put on everything they wrap in an accessor, which is what ends up
+  # in the diff.
+  describe '.content variations' do
+    let(:variation) { target.content[:variations].first }
+
+    before do
+      reaction.update!(
+        temperature: { 'valueUnit' => '°C', 'userText' => '20', 'data' => [] },
+        duration: '2 Hour(s)',
+        variations: [
+          {
+            'id' => SecureRandom.uuid,
+            'idx' => 0,
+            'group' => [1, 0],
+            'analyses' => [],
+            'notes' => 'ran it colder',
+            'data' => {
+              'id' => SecureRandom.uuid,
+              'temperature' => { 'userText' => '-78' },
+              '_starting_materials' => [
+                { '_target_amount_value' => 0.042, '_target_amount_unit' => 'g' },
+              ],
+            },
+          },
+        ],
+      )
+    end
+
+    it 'falls back to the reaction for what the variation does not change' do
+      expect(variation['duration']).to eq('2 Hour(s)')
+    end
+
+    it 'merges a partial change into the value it overrides' do
+      # Only the text is overridden, so the unit is still the reaction's.
+      expect(variation['temperature']).to eq('-78 °C')
+    end
+
+    it 'returns the group and the notes of the variation' do
+      expect(variation['group']).to eq('1.0')
+      expect(variation['notes']).to eq('ran it colder')
+    end
+
+    it 'lists a changed material with what the variation changes about it' do
+      expect(variation['startingMaterials'].first).to include('target amount:', '0.042', 'g')
+    end
+
+    it 'lists an unchanged material by name alone' do
+      # Changed attributes are terminated by a semicolon, so an unchanged material has none.
+      expect(variation['products'].first).not_to include(';')
+    end
+  end
+
   describe 'private methods' do
     it 'has correct data' do
       expect(target.send(:title)).to eq(tit)
