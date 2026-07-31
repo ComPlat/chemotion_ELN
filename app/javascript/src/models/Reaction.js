@@ -169,7 +169,8 @@ export default class Reaction extends Element {
       reaction_type: 'standard',
       lock_reaction_volume: false,
       gaseous: false,
-      weight_percentage: false
+      weight_percentage: false,
+      attachments: []
     });
     reaction.short_label = this.buildReactionShortLabel();
     reaction.rxno = '';
@@ -259,6 +260,7 @@ export default class Reaction extends Element {
       lock_reaction_volume: this.lock_reaction_volume,
       gaseous: this.gaseous,
       weight_percentage: this.weight_percentage,
+      attachments: this.attachments,
     });
   }
 
