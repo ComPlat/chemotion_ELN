@@ -12,6 +12,11 @@ import { permitOn } from 'src/components/common/uis';
 import DragHandle from 'src/components/common/DragHandle';
 import DeleteButton from 'src/components/common/DeleteButton';
 import AppModal from 'src/components/common/AppModal';
+import { isSbmmSample } from 'src/utilities/ElementUtils';
+import { metPrefSymbols } from 'src/utilities/metricPrefix';
+import {
+  getMetricMolConc, metricPrefixesMol, metricPrefixesMolConc
+} from 'src/utilities/MetricsUtils';
 import { AnalysesCell } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import MaterialHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialUtils';
@@ -35,7 +40,10 @@ import {
   MaterialRef,
   MaterialVolume,
   SwitchTargetReal,
-  VolumeRatio
+  VolumeRatio,
+  VOLUME_METRIC_PREFIXES,
+  volumeMetricPrefix,
+  molMetricPrefix
 } from 'src/apps/mydb/elements/details/reactions/schemeTab/material/MaterialComponents';
 
 const MAT_GROUPS = ['starting_materials', 'reactants', 'solvents', 'products'];
@@ -66,6 +74,9 @@ Reaction models after an edit, without going through `api.refreshCells`, which w
 rebuild the cell component and steal focus from the input being typed into.
 */
 const VariationsGridContext = createContext({
+  variations: [],
+  columnUnits: {},
+  setColumnUnit: () => {},
   getRowHandler: () => null,
   setActiveVariation: () => {},
   onGroupChange: () => {},
@@ -79,8 +90,7 @@ const isGasProductMaterial = (reaction, material) => (
 );
 
 // Mirrors the mass metric prefix resolution of the scheme tab's GeneralMaterial row.
-const massMetricPrefix = (mh) => {
-  const { material, isSbmm } = mh;
+const massMetricPrefix = (material, isSbmm) => {
   if (isSbmm) {
     return material.reactionSchemeMetricPrefix(material.amount_as_used_mass_unit);
   }
@@ -174,20 +184,27 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
     key: 'mass',
     header: MATERIAL_HEADER.mass,
     width: 150,
+    unitToggle: { unit: 'g', prefixes: MASS_METRIC_PREFIXES, prefixOf: massMetricPrefix },
     render: (mh) => (
-      <MassField mh={mh} metric={massMetricPrefix(mh)} metricPrefixes={MASS_METRIC_PREFIXES} />
+      <MassField
+        mh={mh}
+        metric={massMetricPrefix(mh.material, mh.isSbmm)}
+        metricPrefixes={MASS_METRIC_PREFIXES}
+      />
     ),
   },
   {
     key: 'volume',
     header: MATERIAL_HEADER.vol,
     width: 150,
+    unitToggle: { unit: 'l', prefixes: VOLUME_METRIC_PREFIXES, prefixOf: volumeMetricPrefix },
     render: (mh) => <MaterialVolume mh={mh} className="reaction-material__volume-data" />,
   },
   {
     key: 'amount',
     header: MATERIAL_HEADER.amount,
     width: 150,
+    unitToggle: { unit: 'mol', prefixes: metricPrefixesMol, prefixOf: molMetricPrefix },
     render: (mh) => <MaterialAmountMol mh={mh} />,
   },
   {
@@ -227,6 +244,11 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
     key: 'concn',
     header: MATERIAL_HEADER.concn,
     width: 150,
+    unitToggle: {
+      unit: 'mol/l',
+      prefixes: metricPrefixesMolConc,
+      prefixOf: (material) => getMetricMolConc(material),
+    },
     render: (mh) => <MaterialConcentration mh={mh} />,
   },
   {
@@ -283,13 +305,17 @@ FIELDS_BY_GROUP.products below - and within them a row renders nothing unless it
 gas one (`isGasProduct`), since a variation may well have turned the gas mode off.
 */
 const GAS_PHASE_FIELDS = [
-  { key: 'gas_time', header: 'Time', gasField: 'time' },
-  { key: 'gas_temperature', header: 'Temp', gasField: 'temperature' },
+  // ppm has no unit to switch, so it gets no header unit button either.
+  { key: 'gas_time', header: 'Time', gasField: 'time', unitSwitchable: true },
+  { key: 'gas_temperature', header: 'Temp', gasField: 'temperature', unitSwitchable: true },
   { key: 'gas_ppm', header: 'ppm', gasField: 'part_per_million' },
-].map(({ key, header, gasField }) => ({
+].map(({
+  key, header, gasField, unitSwitchable
+}) => ({
   key,
   header,
   width: 150,
+  ...(unitSwitchable ? { unitToggle: { gasField } } : {}),
   render: (mh, { isGasProduct }) => (
     isGasProduct ? <GaseousInputFields mh={mh} field={gasField} /> : null
   ),
@@ -352,8 +378,9 @@ Renders a single input of a single material. `matGroup`/`sampleIdx`/`field` are 
 the row supplies the variation reaction.
 */
 const MaterialFieldCell = ({
-  data, matGroup, sampleIdx, field
+  data, colId, matGroup, sampleIdx, field
 }) => {
+  const { columnUnits } = useContext(VariationsGridContext);
   const mh = useMaterialHandler(data, matGroup, sampleIdx);
 
   if (!mh) {
@@ -361,8 +388,7 @@ const MaterialFieldCell = ({
   }
 
   const variationReaction = mh.reaction;
-
-  return field.render(mh, {
+  const input = field.render(mh, {
     index: sampleIdx + 1,
     showLoadingColumn: !!variationReaction.hasPolymers(),
     displayYieldField: variationReaction.products.every(
@@ -370,6 +396,22 @@ const MaterialFieldCell = ({
     ),
     isGasProduct: isGasProductMaterial(variationReaction, mh.material),
   });
+
+  if (!field.unitToggle) {
+    return input;
+  }
+
+  /*
+  NumeralInputWithUnitsCompo copies `metricPrefix` into local state when it mounts and never reads
+  that prop again, so the unit picked in the column header would otherwise reach the material but
+  not the input showing it. Keying on the column's unit remounts the input, which then seeds itself
+  from the material that the header has just updated.
+  */
+  return (
+    <React.Fragment key={columnUnits[colId] ?? ''}>
+      {input}
+    </React.Fragment>
+  );
 };
 
 MaterialFieldCell.propTypes = {
@@ -377,9 +419,13 @@ MaterialFieldCell.propTypes = {
     idx: PropTypes.number.isRequired,
     data: PropTypes.instanceOf(Reaction).isRequired,
   }).isRequired,
+  colId: PropTypes.string.isRequired,
   matGroup: PropTypes.string.isRequired,
   sampleIdx: PropTypes.number.isRequired,
-  field: PropTypes.shape({ render: PropTypes.func.isRequired }).isRequired,
+  field: PropTypes.shape({
+    render: PropTypes.func.isRequired,
+    unitToggle: PropTypes.object,
+  }).isRequired,
 };
 
 /*
@@ -557,6 +603,129 @@ DraggableHeader.propTypes = {
   displayName: PropTypes.string.isRequired,
 };
 
+/*
+The cycles the gas phase unit buttons walk through, mirroring the conversions of convertTime and
+convertTemperature. Kelvin also occurs as '°K', which is not in the cycle and so falls back to its
+first entry - the very step the conversion makes of it as well.
+*/
+const GAS_UNIT_CYCLES = {
+  time: ['h', 'm', 's'],
+  temperature: ['°C', '°F', 'K'],
+};
+
+/*
+What a unit switchable column is currently in: the metric prefix for the amount fields, whose unit
+is fixed, and the unit itself for the gas phase fields, which have no prefix.
+*/
+const materialUnitOf = (material, unitToggle) => (
+  unitToggle.gasField
+    ? material.gas_phase_data?.[unitToggle.gasField]?.unit ?? ''
+    : unitToggle.prefixOf(material, isSbmmSample(material))
+);
+
+const unitToggleLabel = (unit, unitToggle) => (
+  unitToggle.gasField ? unit : `${metPrefSymbols[unit] ?? ''}${unitToggle.unit}`
+);
+
+const nextUnitOf = (unit, unitToggle) => {
+  const cycle = unitToggle.gasField ? GAS_UNIT_CYCLES[unitToggle.gasField] : unitToggle.prefixes;
+  return cycle[(cycle.indexOf(unit) + 1) % cycle.length];
+};
+
+/*
+Header of a column whose cells carry a unit switch, e.g. mass or volume.
+
+In the scheme tab a unit is switched one material at a time, which in a grid of variations means
+clicking the very same button once per row. The header button does that in one go: it advances every
+row of the column by one step of the same cycle the cell buttons walk through, so a column that is
+in one unit throughout stays that way.
+
+The unit is held in the grid instead of being read back from the materials, because the inputs copy
+their prefix into local state when they mount and never look at that prop again - see `columnUnits`
+in VariationSchemaTable for how the cells are made to pick a new one up.
+*/
+const MaterialUnitHeader = ({
+  displayName, colId, matGroup, sampleIdx, unitToggle
+}) => {
+  const {
+    variations, getRowHandler, columnUnits, setColumnUnit
+  } = useContext(VariationsGridContext);
+
+  const materialOf = (variation) => variation.data?.[matGroup]?.[sampleIdx] ?? null;
+  const rows = variations.filter((variation) => {
+    const material = materialOf(variation);
+    if (!material) {
+      return false;
+    }
+    // The gas phase cells render nothing unless the row's own product is the gaseous one.
+    return unitToggle.gasField ? isGasProductMaterial(variation.data, material) : true;
+  });
+
+  const firstMaterial = rows.length ? materialOf(rows[0]) : null;
+  // Until the header has been used, the column shows whatever unit its first row brought along.
+  const unit = columnUnits[colId] ?? (firstMaterial ? materialUnitOf(firstMaterial, unitToggle) : null);
+
+  const switchUnits = () => {
+    const nextCoUnit = nextUnitOf(unit, unitToggle);
+    setColumnUnit(colId, nextCoUnit);
+
+    rows.forEach((variation) => {
+      const material = materialOf(variation);
+      const mh = new MaterialHandler({
+        material,
+        reaction: variation.data,
+        materialGroup: matGroup,
+        onChange: getRowHandler(variation).handleMaterialsChange,
+      });
+
+      if (unitToggle.gasField) {
+        // The reducer converts the value and derives the next unit from the one handed to it, so
+        // every row advances from whatever unit it happens to be in.
+        const { value, unit: rowUnit } = mh.getFieldData(unitToggle.gasField, material.gas_phase_data || {}, unit);
+        mh.handler.gasFieldsUnitsChanged({ metricUnit: rowUnit, value }, unitToggle.gasField);
+        return;
+      }
+
+      mh.handler.metricsChange({
+        metricUnit: unitToggle.unit,
+        metricPrefix: nextCoUnit,
+      });
+    });
+  };
+
+  return (
+    <div className="d-flex align-items-center gap-1 w-100">
+      <DragHandle />
+      <span className="text-truncate">{displayName}</span>
+      {unit && (
+        <Button
+          variant="light"
+          size="xsm"
+          className="variations-unit-switch ms-auto py-0 px-1 flex-shrink-0"
+          title={`Switch the unit of "${displayName}" in every variation`}
+          disabled={!rows.some((variation) => permitOn(variation.data))}
+          onClick={switchUnits}
+        >
+          {unitToggleLabel(unit, unitToggle)}
+        </Button>
+      )}
+    </div>
+  );
+};
+
+MaterialUnitHeader.propTypes = {
+  displayName: PropTypes.string.isRequired,
+  colId: PropTypes.string.isRequired,
+  matGroup: PropTypes.string.isRequired,
+  sampleIdx: PropTypes.number.isRequired,
+  unitToggle: PropTypes.shape({
+    unit: PropTypes.string,
+    prefixes: PropTypes.arrayOf(PropTypes.string),
+    prefixOf: PropTypes.func,
+    gasField: PropTypes.string,
+  }).isRequired,
+};
+
 const ColumnVisibilityHeader = ({ displayName, columns, movable }) => {
   const { hiddenColumns, setColumnsHidden } = useContext(VariationsGridContext);
   const colIds = columns.map((column) => column.colId);
@@ -685,14 +854,28 @@ const buildColumnGroups = ({
         matGroup,
         columns: fields(showGasColumns.some((x) => x[sampleIdx]))
           .filter((field) => !field.requiresLoadingColumn || showLoadingColumn)
-          .map((field) => ({
-            colId: `${matGroup}_${sampleIdx}_${field.key}`,
-            headerName: field.header,
-            width: field.width,
-            ...(field.sticky ? { cellClass: STICKY_NAME_CLASS } : {}),
-            cellRenderer: MaterialFieldCell,
-            cellRendererParams: { matGroup, sampleIdx, field },
-          })),
+          .map((field) => {
+            const colId = `${matGroup}_${sampleIdx}_${field.key}`;
+
+            return {
+              colId,
+              headerName: field.header,
+              width: field.width,
+              ...(field.sticky ? { cellClass: STICKY_NAME_CLASS } : {}),
+              // Overrides the plain draggable header of buildColumnDefs with one that also carries
+              // the column wide unit switch.
+              ...(field.unitToggle ? {
+                headerComponent: MaterialUnitHeader,
+                headerComponentParams: {
+                  colId, matGroup, sampleIdx, unitToggle: field.unitToggle
+                },
+              } : {}),
+              cellRenderer: MaterialFieldCell,
+              cellRendererParams: {
+                colId, matGroup, sampleIdx, field
+              },
+            };
+          }),
       });
     }
   });
@@ -810,6 +993,16 @@ const VariationSchemaTable = ({
       .filter((column) => column.hide)
       .map((column) => column.colId)
   ));
+  /*
+  Unit a whole column has been switched to from its header, by column id. This is state of the grid
+  rather than something read back from the materials on every render: the inputs seed their unit
+  into local state when they mount, so the cells are remounted on a change here - see
+  MaterialFieldCell. Columns the header has not been used on are absent and follow their materials.
+  */
+  const [columnUnits, setColumnUnits] = useState({});
+  const setColumnUnit = useCallback((colId, unit) => {
+    setColumnUnits((previous) => ({ ...previous, [colId]: unit }));
+  }, []);
   const [activeSlot, setActiveSlot] = useState(null);
   const [groupOrder, setGroupOrder] = useState([]);
   const gridApiRef = useRef(null);
@@ -871,11 +1064,6 @@ const VariationSchemaTable = ({
     });
   }, []);
 
-  /*
-  Resolves which material group sits at the left edge of the scrolled area, which is what the pinned
-  material column renders. Bails out by returning the previous state when the slot has not changed,
-  so a scroll gesture triggers at most one re-render per group crossed.
-  */
   /*
   Keeps each material's name cell at the left edge of the scrolled area for as long as its own group
   is on screen, then lets it scroll away with the group.
@@ -1030,6 +1218,9 @@ const VariationSchemaTable = ({
 
   // See VariationsGridContext: intentionally a fresh object on every render.
   const gridContext = {
+    variations,
+    columnUnits,
+    setColumnUnit,
     getRowHandler,
     setActiveVariation,
     onGroupChange,
