@@ -4,6 +4,10 @@ import { Row, Col, Button, InputGroup, OverlayTrigger, Tooltip, Form } from 'rea
 import 'moment-precise-range-plugin';
 import { permitOn } from 'src/components/common/uis';
 import { copyToClipboard } from 'src/utilities/clipboard';
+import { convertDuration } from 'src/models/Reaction';
+import {
+  findVariationRange, variationRangeText
+} from 'src/apps/mydb/elements/details/reactions/schemeTab/VariationRangeUtils';
 
 export default class ReactionDetailsDuration extends Component {
   constructor(props) {
@@ -40,6 +44,25 @@ export default class ReactionDetailsDuration extends Component {
     }
   }
 
+  /*
+  A duration the variations do not agree on is shown as their range and cannot be edited here.
+  Variations are free to be in a different unit than the reaction, so each is converted into the
+  reaction's unit first - which is the unit the range is then read in.
+  */
+  durationRange() {
+    const { reaction, variations } = this.props;
+
+    return findVariationRange(
+      variations,
+      (variationReaction) => convertDuration(
+        variationReaction.durationDisplay.dispValue,
+        variationReaction.durationUnit,
+        reaction.durationUnit,
+      ),
+      reaction.durationDisplay.dispValue,
+    );
+  }
+
   render() {
     const {
       reaction,
@@ -49,6 +72,11 @@ export default class ReactionDetailsDuration extends Component {
     } = this.props;
     const durationCalc = reaction && reaction.durationCalc();
     const timePlaceholder = 'DD/MM/YYYY hh:mm:ss';
+    const durationRange = this.durationRange();
+    const isDurationDisabled = !permitOn(reaction) || reaction.gaseous || durationRange.isRangeField;
+    const durationValue = durationRange.isRangeField
+      ? variationRangeText(durationRange)
+      : (reaction.durationDisplay.dispValue || '');
 
     if (isInteractionReaction) {
       // Interaction reactions use a single incubation-time input instead of
@@ -58,9 +86,9 @@ export default class ReactionDetailsDuration extends Component {
           <Form.Label>Time (incubation)</Form.Label>
           <InputGroup>
             <Form.Control
-              disabled={!permitOn(reaction) || reaction.gaseous}
+              disabled={isDurationDisabled}
               type="text"
-              value={reaction.durationDisplay.dispValue || ''}
+              value={durationValue}
               ref={this.refDuration}
               placeholder="Input duration..."
               onChange={(event) => this.handleDurationChange(event)}
@@ -70,7 +98,7 @@ export default class ReactionDetailsDuration extends Component {
               overlay={<Tooltip id="switch_incubation_unit">switch duration unit</Tooltip>}
             >
               <Button
-                disabled={!permitOn(reaction) || reaction.gaseous}
+                disabled={isDurationDisabled}
                 variant="primary"
                 onClick={() => this.changeDurationUnit()}
               >
@@ -155,7 +183,7 @@ export default class ReactionDetailsDuration extends Component {
                 placement="bottom"
                 overlay={<Tooltip id="copy_durationCalc_to_duration">use this duration<br />(rounded to precision 1)</Tooltip>}
               >
-                <Button disabled={!permitOn(reaction) || reaction.gaseous} variant='light' onClick={() => this.copyToDuration()}>
+                <Button disabled={isDurationDisabled} variant='light' onClick={() => this.copyToDuration()}>
                   <i className="fa fa-arrow-right" aria-hidden="true" />
                 </Button>
               </OverlayTrigger>
@@ -165,15 +193,15 @@ export default class ReactionDetailsDuration extends Component {
         <Col md={3} sm={6} className="d-flex flex-column justify-content-end">
           <InputGroup>
             <Form.Control
-              disabled={!permitOn(reaction) || reaction.gaseous}
+              disabled={isDurationDisabled}
               type="text"
-              value={reaction.durationDisplay.dispValue || ''}
+              value={durationValue}
               ref={this.refDuration}
               placeholder="Input duration..."
               onChange={event => this.handleDurationChange(event)}
             />
               <OverlayTrigger placement="bottom" overlay={<Tooltip id="switch_duration_unit">switch duration unit</Tooltip>}>
-                <Button disabled={!permitOn(reaction) || reaction.gaseous} variant="light" onClick={() => this.changeDurationUnit()}>
+                <Button disabled={isDurationDisabled} variant="light" onClick={() => this.changeDurationUnit()}>
                   {reaction.durationUnit}
                 </Button>
               </OverlayTrigger>
@@ -186,6 +214,8 @@ export default class ReactionDetailsDuration extends Component {
 
 ReactionDetailsDuration.propTypes = {
   reaction: PropTypes.object,
+  // eslint-disable-next-line react/forbid-prop-types
+  variations: PropTypes.array,
   onInputChange: PropTypes.func,
   isInteractionReaction: PropTypes.bool,
   inlineInteractionField: PropTypes.bool,
@@ -193,6 +223,7 @@ ReactionDetailsDuration.propTypes = {
 
 ReactionDetailsDuration.defaultProps = {
   reaction: {},
+  variations: [],
   onInputChange: () => {},
   isInteractionReaction: false,
   inlineInteractionField: false,

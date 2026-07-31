@@ -360,6 +360,7 @@ const useMaterialHandler = (data, matGroup, sampleIdx) => {
       return null;
     }
     return new MaterialHandler({
+      index: sampleIdx,
       material,
       reaction: variationReaction,
       materialGroup: matGroup,
@@ -672,6 +673,7 @@ const MaterialUnitHeader = ({
     rows.forEach((variation) => {
       const material = materialOf(variation);
       const mh = new MaterialHandler({
+        index: sampleIdx,
         material,
         reaction: variation.data,
         materialGroup: matGroup,

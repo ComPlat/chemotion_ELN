@@ -374,6 +374,7 @@ const Material = ({
 
   const mh = useMemo(() => new MaterialHandler(
     {
+      index,
       variations,
       material,
       reaction,
@@ -387,7 +388,9 @@ const Material = ({
         setMixtureComponents(a,b);
       },
       lockEquivColumn
-    }), [material, reaction, materialGroup, onChange, fieldToShow, mixtureComponents, lockEquivColumn, variations]);
+    }), [index, variations, material,
+    reaction, materialGroup, onChange,
+    fieldToShow, mixtureComponents, lockEquivColumn]);
 
   // eslint-disable-next-line class-methods-use-this
 
@@ -471,6 +474,10 @@ Material.propTypes = {
   canDrop: PropTypes.bool.isRequired,
   isDragging: PropTypes.bool.isRequired,
   withStickyName: PropTypes.bool,
+  variations: PropTypes.arrayOf(PropTypes.shape({
+    idx: PropTypes.number.isRequired,
+    data: PropTypes.instanceOf(Reaction).isRequired,
+  })).isRequired
 };
 
 Material.defaultProps = {
@@ -479,9 +486,5 @@ Material.defaultProps = {
   isDragging: false,
   canDrop: false,
   isOver: false,
-  withStickyName: false,
-  variations: PropTypes.arrayOf(PropTypes.shape({
-    idx: PropTypes.number.isRequired,
-    data: PropTypes.instanceOf(Reaction).isRequired,
-  })).isRequired
+  withStickyName: false
 };
