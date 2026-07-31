@@ -21,6 +21,9 @@ import ReactionDescriptionEditor from 'src/apps/mydb/elements/details/reactions/
 import OlsTreeSelect from 'src/components/OlsComponent';
 import ReactionDetailsDuration from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsDuration';
 import { permitOn } from 'src/components/common/uis';
+import {
+  findVariationRange, variationRangeText
+} from 'src/apps/mydb/elements/details/reactions/schemeTab/VariationRangeUtils';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
@@ -119,7 +122,7 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   reactionVolume() {
-    const { reaction } = this.props;
+    const { reaction, variations } = this.props;
     const isDisabled = !permitOn(reaction) || reaction.isMethodDisabled('volume');
 
     const metricPrefixes = ['m', 'u', 'n'];
@@ -128,6 +131,21 @@ export default class ReactionDetailsScheme extends React.Component {
 
     if (!isDisabled) {
       const volumeValue = this.reactionUpdateHandler.parseVolumeValue(reaction.volume);
+      // The range is in litres, like the value itself: the input applies the metric prefix.
+      const {
+        min: rangeStart, max: rangeEnd, isRangeField
+      } = findVariationRange(
+        variations,
+        (variationReaction) => this.reactionUpdateHandler.parseVolumeValue(variationReaction.volume),
+        volumeValue,
+      );
+      /*
+      Both handlers are unwired while the field shows a range. The unit button of the input stays
+      clickable even when the input itself is disabled, and switching the prefix reports back
+      through onMetricsChange - which writes the volume - so leaving it wired would let a click on
+      it overwrite what the variations hold.
+      */
+      const updateVolume = isRangeField ? undefined : (e) => this.reactionUpdateHandler.updateVolume(e);
 
       return (
         <Form.Group>
@@ -163,10 +181,13 @@ export default class ReactionDetailsScheme extends React.Component {
             title="Reaction volume"
             active
             id="numInput_reaction_volume_l"
-            disabled={reaction.isVolumeLocked}
+            isRangeField={isRangeField}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            disabled={reaction.isVolumeLocked || isRangeField}
             disableUnitButtonPadding
-            onChange={(e) => this.reactionUpdateHandler.updateVolume(e)}
-            onMetricsChange={(e) => this.reactionUpdateHandler.updateVolume(e)}
+            onChange={updateVolume}
+            onMetricsChange={updateVolume}
           />
           <Form.Check
             className="mt-2"
@@ -193,7 +214,15 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   reactionVesselSize() {
-    const { reaction } = this.props;
+    const { reaction, variations } = this.props;
+    // Compared in whatever unit the reaction is in, which is the unit the range is shown in too.
+    const range = findVariationRange(
+      variations,
+      (variationReaction) => variationReaction.vessel_size?.amount,
+      reaction.vessel_size?.amount,
+    );
+    const isDisabled = reaction.can_update === false || range.isRangeField;
+
     return (
       <Form.Group>
         <Form.Label>Vessel size</Form.Label>
@@ -201,14 +230,14 @@ export default class ReactionDetailsScheme extends React.Component {
           <Form.Control
             name="reaction_vessel_size"
             type="text"
-            value={reaction.vessel_size?.amount ?? ''}
-            disabled={reaction.can_update === false}
+            value={range.isRangeField ? variationRangeText(range) : (reaction.vessel_size?.amount ?? '')}
+            disabled={isDisabled}
             onChange={(event) => this.reactionUpdateHandler.updateVesselSize(event)}
             onBlur={(event) => this.reactionUpdateHandler.updateVesselSizeOnBlur(event, reaction.vessel_size.unit)}
             className="flex-grow-1 Select-control"
           />
           <Button
-            disabled={reaction.can_update === false}
+            disabled={isDisabled}
             variant="light"
             onClick={() => this.reactionUpdateHandler.changeVesselSizeUnit()}
           >
@@ -250,9 +279,15 @@ export default class ReactionDetailsScheme extends React.Component {
 
   renderPhConditionProperty() {
     const { reaction, onInputChange } = this.reactionUpdateHandler.props;
+    const { variations } = this.props;
     const operator = reaction.ph_operator || '=';
     const value = reaction.ph_value ?? '';
-    const isDisabled = !permitOn(reaction);
+    const range = findVariationRange(
+      variations,
+      (variationReaction) => variationReaction.ph_value,
+      reaction.ph_value,
+    );
+    const isDisabled = !permitOn(reaction) || range.isRangeField;
 
     return (
       <Form.Group>
@@ -267,9 +302,10 @@ export default class ReactionDetailsScheme extends React.Component {
             {operator}
           </Button>
           <Form.Control
-            type="number"
+            // A range is not a number, so the input has to take text while it shows one.
+            type={range.isRangeField ? 'text' : 'number'}
             step="any"
-            value={value}
+            value={range.isRangeField ? variationRangeText(range) : value}
             disabled={isDisabled}
             placeholder="value"
             onChange={(event) => onInputChange('phValue', event.target.value)}
@@ -460,6 +496,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
         <ReactionDetailsMainProperties
           reaction={reaction}
+          variations={variations}
           onInputChange={onInputChange}
           showSchemeFields
           phField={this.renderPhConditionProperty()}
@@ -467,6 +504,7 @@ export default class ReactionDetailsScheme extends React.Component {
           durationField={isInteractionReaction ? (
             <ReactionDetailsDuration
               reaction={reaction}
+              variations={variations}
               onInputChange={onInputChange}
               isInteractionReaction
               inlineInteractionField
@@ -477,6 +515,7 @@ export default class ReactionDetailsScheme extends React.Component {
         {!isInteractionReaction && (
           <ReactionDetailsDuration
             reaction={reaction}
+            variations={variations}
             onInputChange={onInputChange}
           />
         )}
