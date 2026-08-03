@@ -304,6 +304,14 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
       <ButtonGroup>
         {addVariation()}
         <Button
+          size="sm"
+          className="mb-2"
+          onClick={() => gridApiRef.current && exportVariationsToCsv(gridApiRef.current, reaction.short_label)}
+        >
+          <i className="fa fa-download me-1"/>
+          Export to CSV
+        </Button>
+        <Button
           className="mb-2"
           size="sm"
           variant="info"
@@ -319,14 +327,6 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
             onReactionChange(reaction);
           }}
         />
-        <Button
-          size="sm"
-          className="mb-2"
-          onClick={() => gridApiRef.current && exportVariationsToCsv(gridApiRef.current, reaction.short_label)}
-        >
-          <i className="fa fa-download me-1"/>
-          Export to CSV
-        </Button>
         <Select
           className="ms-auto"
           // Matches the small buttons it shares the row with; without a minimum the control would

@@ -24,7 +24,9 @@ import OlsTreeSelect from 'src/components/OlsComponent';
 
 async function handleZipFile(zipFile) {
   const zip = await JSZip.loadAsync(zipFile);
-  const rootFileName = zipFile.name.replace(/\.zip$/, '');
+  // No wrapping folder named after the archive: its files land as they are packed, so a BagIt
+  // data file like reaction_variation.json keeps the name the variations autofill looks for.
+  const rootFileName = '';
 
   const files = new VirtualFolderNode(rootFileName, '');
 
