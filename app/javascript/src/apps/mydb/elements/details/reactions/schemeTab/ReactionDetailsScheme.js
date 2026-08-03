@@ -28,7 +28,7 @@ import {
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import TextTemplateStore from 'src/stores/alt/stores/TextTemplateStore';
-import NumeralInputWithUnitsCompo from '../../NumeralInputWithUnitsCompo';
+import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 
 export default class ReactionDetailsScheme extends React.Component {
   static contextType = StoreContext;

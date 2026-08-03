@@ -15,7 +15,6 @@ import ComponentModel from 'src/models/Component';
 
 export default class MaterialHandler {
   constructor({
-                index,
                 variations = [],
                 material,
                 reaction,

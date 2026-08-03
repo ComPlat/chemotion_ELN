@@ -17,7 +17,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import Segment from 'src/models/Segment';
 import WeightPercentageReactionActions from 'src/stores/alt/actions/WeightPercentageReactionActions';
 import { rootStore } from 'src/stores/mobx/RootStore';
-import { calculateTONPerTimeValue } from '../utilities/UnitsConversion';
+import { calculateTONPerTimeValue } from 'src/utilities/UnitsConversion';
 
 const TemperatureUnit = ['°C', '°F', 'K'];
 
@@ -1349,7 +1349,15 @@ export default class Reaction extends Element {
   }
 
   get segments() {
-    return this._segments || [];
+    /*
+    Lazily settled rather than a fresh `[]` per read: callers hold on to the returned array - React
+    effect dependencies among them - and a new identity on every read makes an unchanged reaction
+    look permanently changed.
+    */
+    if (!this._segments) {
+      this._segments = [];
+    }
+    return this._segments;
   }
 
   updateMaxAmountOfProducts() {

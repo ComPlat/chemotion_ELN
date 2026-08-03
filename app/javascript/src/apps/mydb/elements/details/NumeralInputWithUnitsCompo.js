@@ -38,8 +38,11 @@ const NumeralInputWithUnitsCompo = ({
   });
 
   // Keep local value/block in sync with incoming props (previously componentDidUpdate).
-  // Object.is treats NaN as equal to NaN, matching the previous isEqual guard.
+  // Object.is treats NaN as equal to NaN, matching the previous isEqual guard. Deliberate
+  // setState-in-effect: the input buffers the value locally while typing and re-adopts the prop
+  // when the model changes under it, exactly as the class version did.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setState((s) => ({ ...s, value: valueProp, block: blockProp }));
   }, [valueProp, blockProp]);
 
@@ -192,6 +195,7 @@ const NumeralInputWithUnitsCompo = ({
                     modified.
                   </p>
                   <a
+                    // eslint-disable-next-line max-len
                     href="https://www.chemotion.net/docs/eln/ui/elements/samples/mixtures#-total-volume-and-solvent-addition"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -212,7 +216,7 @@ const NumeralInputWithUnitsCompo = ({
               <Tooltip id="info-required-volume">
                 <p className="mb-2">
                   It gives the expected total volume without considering eventually given additional solvent volumes
-                  coming from the solvents' table or the stock solution.
+                  coming from the solvents&apos; table or the stock solution.
                 </p>
                 <p>
                   The required total volume is therefore not the volume to be added but the volume to be reached

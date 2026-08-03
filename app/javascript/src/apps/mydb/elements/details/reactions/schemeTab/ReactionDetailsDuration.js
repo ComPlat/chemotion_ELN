@@ -156,7 +156,11 @@ export default class ReactionDetailsDuration extends Component {
                 placeholder={timePlaceholder}
                 onChange={event => onInputChange('timestampStop', event)}
               />
-              <Button disabled={!permitOn(reaction) || reaction.gaseous} variant='light' onClick={() => this.setCurrentTime('timestampStop')}>
+              <Button
+                disabled={!permitOn(reaction) || reaction.gaseous}
+                variant="light"
+                onClick={() => this.setCurrentTime('timestampStop')}
+              >
                 <i className="fa fa-clock-o" aria-hidden="true" />
               </Button>
             </InputGroup>
@@ -181,7 +185,13 @@ export default class ReactionDetailsDuration extends Component {
               </OverlayTrigger>
               <OverlayTrigger
                 placement="bottom"
-                overlay={<Tooltip id="copy_durationCalc_to_duration">use this duration<br />(rounded to precision 1)</Tooltip>}
+                overlay={(
+                  <Tooltip id="copy_durationCalc_to_duration">
+                    use this duration
+                    <br />
+                    (rounded to precision 1)
+                  </Tooltip>
+                )}
               >
                 <Button disabled={isDurationDisabled} variant='light' onClick={() => this.copyToDuration()}>
                   <i className="fa fa-arrow-right" aria-hidden="true" />
@@ -200,7 +210,10 @@ export default class ReactionDetailsDuration extends Component {
               placeholder="Input duration..."
               onChange={event => this.handleDurationChange(event)}
             />
-              <OverlayTrigger placement="bottom" overlay={<Tooltip id="switch_duration_unit">switch duration unit</Tooltip>}>
+              <OverlayTrigger
+                placement="bottom"
+                overlay={<Tooltip id="switch_duration_unit">switch duration unit</Tooltip>}
+              >
                 <Button disabled={isDurationDisabled} variant="light" onClick={() => this.changeDurationUnit()}>
                   {reaction.durationUnit}
                 </Button>

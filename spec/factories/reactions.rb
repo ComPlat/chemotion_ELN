@@ -40,7 +40,8 @@ FactoryBot.define do
             'notes' => "I am variation #{i}",
             'data' => {
               'id' => SecureRandom.uuid,
-              'temperature' => {
+              # Underscore prefixed, as the client's diff of its accessor backed attributes is.
+              '_temperature' => {
                 'valueUnit' => '°C',
                 'userText' => (42 + i).to_s,
                 'data' => [],
@@ -52,8 +53,8 @@ FactoryBot.define do
 
                 {
                   'id' => sample.id,
-                  'target_amount_value' => 42 + i,
-                  'target_amount_unit' => 'g',
+                  '_target_amount_value' => 42 + i,
+                  '_target_amount_unit' => 'g',
                 }
               end,
             },
