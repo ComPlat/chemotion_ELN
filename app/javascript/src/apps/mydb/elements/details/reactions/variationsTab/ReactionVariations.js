@@ -191,7 +191,7 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
           <button onClick={()=> setActiveVariation(null)} className="close-btn" aria-label="Close">&times;</button>
           <ReactionDetailsScheme
             reaction={activeVariation.data}
-            variations={variations}
+            variations={[]}
             onReactionChange={(r) => handleReactionChange(r, activeVariation.idx)}
             onInputChange={(type, event) => handleInputChange(type, event, activeVariation.data,
               (r) => handleReactionChange(r, activeVariation.idx))}

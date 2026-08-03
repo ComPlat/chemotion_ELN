@@ -101,7 +101,7 @@ const SolventMaterial = ({ mh,
       <WrapperDragHandle dragRef={dragRef} reaction={reaction}/>
       <MaterialNameWithIupac
         mh={mh}
-        index={index}
+        index={mh.index}
         withStickyName={withStickyName}
       />
       <div className="reaction-material__dry-solvent-data">
@@ -226,7 +226,7 @@ const GeneralMaterial = ({
       <WrapperDragHandle dragRef={dragRef} reaction={reaction}/>
       <MaterialNameWithIupac
         mh={mh}
-        index={index}
+        index={mh.index}
         withStickyName={withStickyName}
       />
       <div className="d-flex flex-column gap-1 py-1">
