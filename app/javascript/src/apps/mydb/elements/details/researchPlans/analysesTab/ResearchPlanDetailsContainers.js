@@ -32,7 +32,7 @@ export default class ResearchPlanDetailsContainers extends Component {
   constructor(props) {
     super(props);
     const { researchPlan } = props;
-    const hasComment = researchPlan.container?.description && researchPlan.container.description.trim() !== '';
+    const hasComment = Boolean(researchPlan.container?.description?.trim());
     this.state = {
       activeContainer: 0,
       commentBoxVisible: hasComment,
@@ -309,7 +309,7 @@ export default class ResearchPlanDetailsContainers extends Component {
             </div>
             <CommentBox
               isVisible={commentBoxVisible}
-              value={researchPlan.container.description}
+              value={researchPlan.container?.description || ''}
               handleCommentTextChange={this.handleCommentTextChange}
             />
             {mode === 'order' ? (
@@ -391,7 +391,7 @@ export default class ResearchPlanDetailsContainers extends Component {
           </div>
           <CommentBox
             isVisible={commentBoxVisible}
-            value={researchPlan.container.description}
+            value={researchPlan.container?.description || ''}
             handleCommentTextChange={this.handleCommentTextChange}
           />
         </div>
