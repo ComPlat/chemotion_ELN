@@ -613,10 +613,11 @@ MaterialGroup.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   dropMaterial: PropTypes.func.isRequired,
   dropSample: PropTypes.func.isRequired,
-  switchEquiv: PropTypes.func.isRequired,
+  dropSbmmSample: PropTypes.func,
+  switchEquiv: PropTypes.func,
   lockEquivColumn: PropTypes.bool,
   displayYieldField: PropTypes.bool,
-  switchYield: PropTypes.func.isRequired,
+  switchYield: PropTypes.func,
   dndEnabled: PropTypes.bool,
 };
 
@@ -630,10 +631,10 @@ GeneralMaterialGroup.propTypes = {
   headIndex: PropTypes.number.isRequired,
   showLoadingColumn: PropTypes.bool,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
-  switchEquiv: PropTypes.func.isRequired,
+  switchEquiv: PropTypes.func,
   lockEquivColumn: PropTypes.bool,
   displayYieldField: PropTypes.bool,
-  switchYield: PropTypes.func.isRequired,
+  switchYield: PropTypes.func,
   dndEnabled: PropTypes.bool,
 };
 
@@ -657,6 +658,9 @@ MaterialGroup.defaultProps = {
   showLoadingColumn: false,
   lockEquivColumn: false,
   displayYieldField: null,
+  switchYield: null,
+  switchEquiv: null,
+  dropSbmmSample: null,
   headIndex: 0,
   dndEnabled: true,
 };
@@ -665,6 +669,8 @@ GeneralMaterialGroup.defaultProps = {
   showLoadingColumn: false,
   lockEquivColumn: false,
   displayYieldField: null,
+  switchYield: null,
+  switchEquiv: null,
   dndEnabled: true,
 };
 
