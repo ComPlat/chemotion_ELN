@@ -1,14 +1,19 @@
 import expect from 'expect';
 import sinon from 'sinon';
 
-import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
+/*
+These edits used to be methods of the ReactionDetailsScheme component and now live on the update
+handler it drives, so that the variations grid can reuse them per row. They read the same `this.props`
+either way, which is why the stand-in instances below are unchanged.
+*/
+import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 
-describe('ReactionDetailsScheme#onChangeRole', () => {
+describe('ReactionUpdateHandler#onChangeRole', () => {
   it("forwards '' (not null) to onInputChange when the dropdown is cleared", () => {
     const onInputChange = sinon.spy();
     const instance = { props: { onInputChange } };
 
-    ReactionDetailsScheme.prototype.onChangeRole.call(instance, null);
+    ReactionUpdateHandler.prototype.onChangeRole.call(instance, null);
 
     expect(onInputChange.calledOnceWith('role', '')).toBe(true);
   });
@@ -17,7 +22,7 @@ describe('ReactionDetailsScheme#onChangeRole', () => {
     const onInputChange = sinon.spy();
     const instance = { props: { onInputChange } };
 
-    ReactionDetailsScheme.prototype.onChangeRole.call(instance, { value: null });
+    ReactionUpdateHandler.prototype.onChangeRole.call(instance, { value: null });
 
     expect(onInputChange.calledOnceWith('role', '')).toBe(true);
   });
@@ -26,7 +31,7 @@ describe('ReactionDetailsScheme#onChangeRole', () => {
     const onInputChange = sinon.spy();
     const instance = { props: { onInputChange } };
 
-    ReactionDetailsScheme.prototype.onChangeRole.call(instance, { value: undefined });
+    ReactionUpdateHandler.prototype.onChangeRole.call(instance, { value: undefined });
 
     expect(onInputChange.calledOnceWith('role', '')).toBe(true);
   });
@@ -35,13 +40,13 @@ describe('ReactionDetailsScheme#onChangeRole', () => {
     const onInputChange = sinon.spy();
     const instance = { props: { onInputChange } };
 
-    ReactionDetailsScheme.prototype.onChangeRole.call(instance, { value: 'gp' });
+    ReactionUpdateHandler.prototype.onChangeRole.call(instance, { value: 'gp' });
 
     expect(onInputChange.calledOnceWith('role', 'gp')).toBe(true);
   });
 });
 
-describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', () => {
+describe('ReactionUpdateHandler#resolveReactionVolumeForConcentrationOrWarn', () => {
   it('warns and returns null when no reaction volume can be resolved', () => {
     // Locked volume + use_reaction_volume off + all-solid materials =>
     // reactionVolumeForConcentration() is null. The edit must surface a
@@ -49,7 +54,7 @@ describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', ()
     const reaction = { reactionVolumeForConcentration: () => null };
     const instance = { showReactionVolumeRequiredWarning: sinon.spy() };
 
-    const result = ReactionDetailsScheme.prototype
+    const result = ReactionUpdateHandler.prototype
       .resolveReactionVolumeForConcentrationOrWarn.call(instance, reaction);
 
     expect(result).toBe(null);
@@ -60,7 +65,7 @@ describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', ()
     const reaction = { reactionVolumeForConcentration: () => 0.01 };
     const instance = { showReactionVolumeRequiredWarning: sinon.spy() };
 
-    const result = ReactionDetailsScheme.prototype
+    const result = ReactionUpdateHandler.prototype
       .resolveReactionVolumeForConcentrationOrWarn.call(instance, reaction);
 
     expect(result).toBe(0.01);
@@ -68,7 +73,7 @@ describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', ()
   });
 });
 
-describe('ReactionDetailsScheme#updatedSamplesForVesselSizeChange', () => {
+describe('ReactionUpdateHandler#updatedSamplesForVesselSizeChange', () => {
   it('releases a feedstock preserveConcentration so it recomputes on vessel change', () => {
     const feedstock = {
       isFeedstock: () => true,
@@ -77,7 +82,7 @@ describe('ReactionDetailsScheme#updatedSamplesForVesselSizeChange', () => {
     };
     const instance = { calculateEquivalentForGasProduct: sinon.spy() };
 
-    const [result] = ReactionDetailsScheme.prototype
+    const [result] = ReactionUpdateHandler.prototype
       .updatedSamplesForVesselSizeChange.call(instance, [feedstock], 0.5);
 
     expect(result.preserveConcentration).toBe(false);
@@ -91,14 +96,14 @@ describe('ReactionDetailsScheme#updatedSamplesForVesselSizeChange', () => {
     };
     const instance = { calculateEquivalentForGasProduct: sinon.spy() };
 
-    const [result] = ReactionDetailsScheme.prototype
+    const [result] = ReactionUpdateHandler.prototype
       .updatedSamplesForVesselSizeChange.call(instance, [reactant], 0.5);
 
     expect(result.preserveConcentration).toBe(true);
   });
 });
 
-describe('ReactionDetailsScheme#switchVolumeLock', () => {
+describe('ReactionUpdateHandler#switchVolumeLock', () => {
   it('releases preserved concentrations and toggles the lock', () => {
     const reaction = {
       isVolumeLocked: false,
@@ -111,7 +116,7 @@ describe('ReactionDetailsScheme#switchVolumeLock', () => {
       showReactionVolumeRequiredWarning: sinon.spy(),
     };
 
-    ReactionDetailsScheme.prototype.switchVolumeLock.call(instance);
+    ReactionUpdateHandler.prototype.switchVolumeLock.call(instance);
 
     expect(reaction.resetPreservedConcentrationExcept.calledOnce).toBe(true);
     expect(onInputChange.calledOnceWith('lockReactionVolume', true)).toBe(true);
@@ -129,7 +134,7 @@ describe('ReactionDetailsScheme#switchVolumeLock', () => {
       showReactionVolumeRequiredWarning: sinon.spy(),
     };
 
-    ReactionDetailsScheme.prototype.switchVolumeLock.call(instance);
+    ReactionUpdateHandler.prototype.switchVolumeLock.call(instance);
 
     expect(instance.showReactionVolumeRequiredWarning.calledOnce).toBe(true);
     expect(reaction.resetPreservedConcentrationExcept.called).toBe(false);
@@ -137,7 +142,7 @@ describe('ReactionDetailsScheme#switchVolumeLock', () => {
   });
 });
 
-describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
+describe('ReactionUpdateHandler#handleFixedVolumeConcentrationChange', () => {
   it('makes no change when the reaction volume cannot be resolved', () => {
     const reaction = {};
     const updatedSample = {
@@ -152,7 +157,7 @@ describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
       updatedSamplesForAmountChange: () => {},
     };
 
-    const result = ReactionDetailsScheme.prototype
+    const result = ReactionUpdateHandler.prototype
       .handleFixedVolumeConcentrationChange.call(instance, updatedSample, 2);
 
     expect(updatedSample.setAmountFromConcentrationAndPreserve.called).toBe(false);
@@ -176,7 +181,7 @@ describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
       updatedSamplesForAmountChange: () => {},
     };
 
-    const result = ReactionDetailsScheme.prototype
+    const result = ReactionUpdateHandler.prototype
       .handleFixedVolumeConcentrationChange.call(instance, updatedSample, 2);
 
     expect(updatedSample.concn).toBe(2);
@@ -187,7 +192,7 @@ describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
   });
 });
 
-describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', () => {
+describe('ReactionUpdateHandler#updatedReactionForConcentrationChange routing', () => {
   const buildInstance = (updatedSample, reactionOverrides = {}) => {
     const reaction = {
       gaseous: false,
@@ -208,7 +213,7 @@ describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', 
     const updatedSample = { amount_mol: 0, isFeedstock: () => false };
     const instance = buildInstance(updatedSample);
 
-    ReactionDetailsScheme.prototype.updatedReactionForConcentrationChange.call(
+    ReactionUpdateHandler.prototype.updatedReactionForConcentrationChange.call(
       instance,
       { sampleID: 1, concentration: { value: 2 } }
     );
@@ -221,7 +226,7 @@ describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', 
     const updatedSample = { amount_mol: 0.5, isFeedstock: () => false };
     const instance = buildInstance(updatedSample);
 
-    ReactionDetailsScheme.prototype.updatedReactionForConcentrationChange.call(
+    ReactionUpdateHandler.prototype.updatedReactionForConcentrationChange.call(
       instance,
       { sampleID: 1, concentration: { value: 2 } }
     );

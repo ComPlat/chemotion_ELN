@@ -21,7 +21,16 @@ import {
   determineTONFrequencyValue,
 } from 'src/utilities/UnitsConversion';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
-import { rootStore } from 'src/stores/mobx/RootStore';
+/*
+Loaded where it is used rather than imported here, to keep this module out of a cycle it cannot
+survive: `Component extends Sample`, and the store graph reaches back to Component
+(RootStore -> SearchStore -> SearchFetcher -> Reaction -> Component, among other ways). Importing it
+at the top means whichever module is loaded first decides whether the cycle resolves - enter at
+Component and Sample finishes before the subclass is declared, enter at Sample and the subclass is
+declared while its superclass is still undefined, which throws. Both uses below are inside methods,
+so nothing here needs the store while this module is being evaluated.
+*/
+const notificationsStore = () => require('src/stores/mobx/RootStore').rootStore.notificationsStore;
 
 const SAMPLE_TYPE_MIXTURE = 'Mixture';
 const SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule';
@@ -2362,7 +2371,7 @@ export default class Sample extends Element {
     }
 
     if (totalVolume < 0) {
-      rootStore.notificationsStore.add({
+      notificationsStore().add({
         title: 'Invalid Total Volume',
         message: 'Total volume cannot be negative. Please enter a valid volume value.',
         level: 'error',
@@ -2653,7 +2662,7 @@ export default class Sample extends Element {
 
     const failedSmiles = smilesList.filter((smiles, index) => !(results[index] && results[index].id));
     if (failedSmiles.length > 0) {
-      rootStore.notificationsStore.add({
+      notificationsStore().add({
         title: 'Molecule Resolution Failed',
         message: `Could not resolve ${failedSmiles.length} SMILES: ${failedSmiles.join(', ')}`,
         level: 'warning',
