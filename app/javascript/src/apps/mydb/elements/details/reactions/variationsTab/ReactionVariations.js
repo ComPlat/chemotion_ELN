@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name, no-param-reassign, react-hooks/immutability */
 import React, {
-  useState
+  useState, useEffect
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip,
@@ -18,9 +18,18 @@ import
 {
   addInternalVariationObject,
   addNewVariationDataset,
-  diffObjects,
+  diffObjects, getReactionSegments,
   REACTION_VARIATIONS_TAB_KEY
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import { Select } from 'src/components/common/Select';
+import GenericSGDetails from 'src/components/generic/GenericSGDetails';
+import { onNaviClick } from 'src/components/generic/SegmentDetails';
+import MatrixCheck from 'src/components/common/MatrixCheck';
+import UserStore from 'src/stores/alt/stores/UserStore';
+import {
+  segmentKlassOf, findSegment, emptySegment
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationSegmentComponents';
+
 const RemoveVariationsModal = ({ onRemoveAll }) => {
   const [showModal, setShowModal] = useState(false);
 
@@ -137,6 +146,26 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
 
   const [activeVariation, setActiveVariation] = useState(null);
   const [editMode, setEditMode] = useState(false);
+  const [currentSegment, setCurrentSegment] = useState('Schema');
+  const [allSegment, setAllSegment] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      const result = await getReactionSegments(reaction.segments);
+
+      if (!cancelled) {
+        setAllSegment({ Schema: {}, ...result });
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [reaction.segments]);
 
   const addRow = () => {
     const newVariation = addNewVariationDataset({ reaction });
@@ -201,6 +230,31 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
     }, 1000);
 
   };
+  /*
+  The segment of the open variation, for the panel under the grid: its own if it has one, otherwise
+  an empty one built from the klass - which is what the segment tab of an element does too, and it
+  is only attached to the variation once something is actually entered into it.
+  */
+  const activeSegmentKlass = currentSegment === 'Schema' ? null : segmentKlassOf(currentSegment);
+  const activeSegment = (activeVariation && activeSegmentKlass)
+    ? (findSegment(activeVariation.data, activeSegmentKlass) ?? emptySegment(activeSegmentKlass))
+    : null;
+
+  const handleSegmentChange = (segment) => {
+    const variationReaction = activeVariation.data;
+    const { segments } = variationReaction;
+    const idx = segments.findIndex((s) => s.segment_klass_id === segment.segment_klass_id);
+
+    if (idx > -1) {
+      segments.splice(idx, 1, segment);
+    } else {
+      segments.push(segment);
+    }
+    segment.changed = true;
+    variationReaction.segments = segments;
+    handleReactionChange(variationReaction, activeVariation.idx);
+  };
+
   const addVariation = () => (
     <OverlayTrigger
       placement="bottom"
@@ -262,6 +316,23 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
             onReactionChange(reaction);
           }}
         />
+        <Select
+          className="ms-auto"
+          // Matches the small buttons it shares the row with; without a minimum the control would
+          // collapse onto its own text.
+          size="sm"
+          minWidth="180px"
+          options={Object.entries(allSegment).map(([label, value]) => ({ label, value }))}
+          value={
+            currentSegment && allSegment[currentSegment]
+              ? { value: allSegment[currentSegment], label: currentSegment }
+              : null
+          }
+          onChange={({ label }) => {
+            setCurrentSegment(label);
+          }}
+          isSearchable
+        />
       </ButtonGroup>
       <VariationSchemaTable
         variations={variations}
@@ -276,20 +347,28 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
         reactionShortLabel={reaction.short_label}
         reactionId={reaction.id}
         editMode={editMode}
-        reactionSegments={reaction.segments}
+        currentSegment={allSegment[currentSegment]}
+        currentSegmentName={currentSegment}
       />
     </div>
     <div style={{ position: 'relative' }}>
       {activeVariation &&
         (<div><h2>Variation #{activeVariation.label}</h2>
           <button onClick={()=> setActiveVariation(null)} className="close-btn" aria-label="Close">&times;</button>
+          {currentSegment === 'Schema' ?
           <ReactionDetailsScheme
             reaction={activeVariation.data}
             variations={[]}
             onReactionChange={(r) => handleReactionChange(r, activeVariation.idx)}
             onInputChange={(type, event) => handleInputChange(type, event, activeVariation.data,
               (r) => handleReactionChange(r, activeVariation.idx))}
-          /></div>)}
+          /> : <GenericSGDetails
+              uiCtrl={MatrixCheck(UserStore.getState()?.currentUser?.matrix, 'segment')}
+              segment={activeSegment ?? {}}
+              klass={activeSegmentKlass ?? {}}
+              onChange={handleSegmentChange}
+              fnNavi={onNaviClick}
+            />}</div>)}
     </div>
   </>);
 };
