@@ -111,7 +111,7 @@ class Import::ImportSdf < Import::ImportSamples
       if size.to_f < SIZE_LIMIT * (10**6)
         detection = CharlockHolmes::EncodingDetector.detect(file_data)
         encoded_file = CharlockHolmes::Converter.convert file_data, detection[:encoding], 'UTF-8'
-        @raw_data = encoded_file.split(/\${4}\r?\n/)
+        @raw_data = split_into_records(encoded_file)
       else
         @message[:error] << "File too large (over #{SIZE_LIMIT}MB). "
       end
@@ -119,6 +119,29 @@ class Import::ImportSdf < Import::ImportSamples
       @message[:error] << "Failed to read attachment file: #{e.message}"
     end
     @raw_data.pop if @raw_data[-1].blank?
+  end
+
+  # An MDL record is title / program / comment / counts. Some editors -- Ketcher, including the SDF
+  # shipped in public/sdf -- omit the title line, so the counts line lands on line 3 and Open Babel
+  # reads the first atom line as the counts line. It then returns a blank inchikey and no formula, and
+  # the record is dropped with nothing but a "Problems reading the Count line" warning, which is why a
+  # perfectly good single-molecule SDF imported zero samples.
+  #
+  # Restore the missing line only when the counts line is demonstrably one line early. Prepending
+  # unconditionally would shift a well-formed record the other way and break it instead.
+  COUNTS_LINE = /^\s*\d+\s+\d+.*V[23]000/.freeze
+
+  def split_into_records(encoded_file)
+    encoded_file.split(/\${4}\r?\n/).map { |record| restore_molfile_title_line(record) }
+  end
+
+  def restore_molfile_title_line(record)
+    lines = record.to_s.lines
+    return record if lines.size < 4
+    return record if lines[3].to_s.match?(COUNTS_LINE) # counts already on line 4: well formed
+    return "\n#{record}" if lines[2].to_s.match?(COUNTS_LINE) # counts on line 3: title line missing
+
+    record
   end
 
   def message
@@ -295,10 +318,7 @@ class Import::ImportSdf < Import::ImportSamples
             attribs.each do |attrib|
               sample[attrib] = row[attrib] if is_number?(row[attrib])
             end
-            if row['molecule_name'].present?
-              molecule_name = molecule.create_molecule_name_by_user(row['molecule_name'], current_user_id)
-              sample['molecule_name_id'] = molecule_name.id unless molecule_name.blank?
-            end
+            assign_molecule_name(sample, molecule, row['molecule_name'])
             sample['melting_point'] = format_to_interval_syntax(row['melting_point']) if row['melting_point'].present?
             sample['boiling_point'] = format_to_interval_syntax(row['boiling_point']) if row['boiling_point'].present?
             sample['solvent'] = handle_sample_solvent_column(sample, row) if row['solvent'].present?
@@ -407,6 +427,24 @@ class Import::ImportSdf < Import::ImportSamples
 
   def keep_attachment_unnecessary?
     @message[:error].empty? && @unprocessable_samples.empty? && @attachment.present?
+  end
+
+  # Links the sample to the molecule's name.
+  #
+  # Molecule#create_molecule_name_by_user is built on Enumerable#each, so it returns its *input*
+  # array of split names rather than the records it created. Calling .id on that raised
+  # "undefined method `id' for [\"1-chloro-2-iodoethane\"]:Array" and lost the row, so every SDF
+  # carrying a MOLECULE_NAME tag failed to import. Resolve the record by name instead, which also
+  # covers the case where the name already existed and nothing new was created.
+  def assign_molecule_name(sample, molecule, raw_names)
+    return if raw_names.blank?
+
+    molecule.create_molecule_name_by_user(raw_names, current_user_id)
+    first_name = raw_names.to_s.split(';').first.to_s.strip
+    return if first_name.blank?
+
+    molecule_name = molecule.molecule_names.reload.find_by(name: first_name)
+    sample['molecule_name_id'] = molecule_name.id if molecule_name
   end
 
   # Build a Chemical from the mapped row fields (cas, status, person, pictograms, h/p statements, ...)

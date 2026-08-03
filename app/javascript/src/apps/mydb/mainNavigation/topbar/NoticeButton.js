@@ -113,7 +113,7 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
           title: `From ${n.sender_name} on ${infoTimeString}`,
           message: newText,
           level: n.content.level || 'warning',
-          autoDismiss: n.content.autoDismiss || 5,
+          autoDismiss: n.content.autoDismiss ?? 5,
           position: n.content.position || 'tr',
           uid: n.id,
           action: {
