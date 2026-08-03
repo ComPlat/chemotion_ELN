@@ -23,6 +23,8 @@ import MaterialHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/
 import { MATERIAL_HEADER } from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
 import VariationsGridContext
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsGridContext';
+import { SortableHeaderName }
+  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsSortHeader';
 import {
   CoefficientField,
   DrySolventCheckBox,
@@ -58,6 +60,41 @@ const MAT_GROUP_TITLES = {
 const MASS_METRIC_PREFIXES = ['m', 'n', 'u'];
 
 const isEmptyValue = (v) => v === null || v === undefined || Number.isNaN(v) || v === 0;
+
+// Hours and Kelvin, so a gas phase column sorts by what the numbers mean rather than by the unit
+// each row happens to be in.
+const GAS_TIME_IN_HOURS = { h: 1, m: 1 / 60, s: 1 / 3600 };
+const GAS_TEMPERATURE_IN_KELVIN = {
+  '°C': (value) => value + 273.15,
+  '°F': (value) => (((value - 32) * 5) / 9) + 273.15,
+  '°K': (value) => value,
+  K: (value) => value,
+};
+
+/*
+Only the gas fields that carry a unit are stored as `{ value, unit }`; ppm is a bare number, the way
+MaterialHandler#getFieldData reports it with a fixed 'ppm'.
+*/
+const gasFieldEntry = (material, gasField) => {
+  const entry = material.gas_phase_data?.[gasField];
+  return (entry !== null && typeof entry === 'object') ? entry : { value: entry, unit: null };
+};
+
+const gasSortValue = (material, gasField) => {
+  const { value, unit } = gasFieldEntry(material, gasField);
+  const numeric = Number(value);
+  if (value === null || value === undefined || value === '' || !Number.isFinite(numeric)) {
+    return null;
+  }
+
+  if (gasField === 'time') {
+    return numeric * (GAS_TIME_IN_HOURS[unit] ?? 1);
+  }
+  if (gasField === 'temperature') {
+    return (GAS_TEMPERATURE_IN_KELVIN[unit] ?? ((raw) => raw))(numeric);
+  }
+  return numeric;
+};
 
 // Same condition the scheme tab uses to decide whether a product gets its gas phase row.
 const isGasProductMaterial = (reaction, material) => (
@@ -123,6 +160,7 @@ const NAME_FIELD = {
   width: 230,
   // Marks the cell for the sticky handling in updateStickyNames.
   sticky: true,
+  sortValue: (material) => material.molecule?.iupac_name || material.name || material.short_label || '',
   render: (mh, { index }) => (
     <MaterialNameWithIupac mh={mh} index={index} withStickyName={false} />
   ),
@@ -134,18 +172,21 @@ const GENERAL_MATERIAL_SETTIGS_FIELDS = [
     key: 'ref',
     header: MATERIAL_HEADER.ref,
     width: 60,
+    sortValue: (material) => !!material.reference,
     render: (mh) => <MaterialRef mh={mh} />,
   },
   {
     key: 'tr',
     header: MATERIAL_HEADER.tr,
     width: 64,
+    sortValue: (material) => material.amount_type ?? '',
     render: (mh) => <SwitchTargetReal mh={mh} />,
   },
   {
     key: 'coefficient',
     header: MATERIAL_HEADER.reaction_coefficient,
     width: 90,
+    sortValue: (material) => material.coefficient,
     render: (mh) => (mh.isSbmm ? null : <CoefficientField mh={mh} />),
   }
 ];
@@ -160,6 +201,7 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
     header: MATERIAL_HEADER.mass,
     width: 150,
     unitToggle: { unit: 'g', prefixes: MASS_METRIC_PREFIXES, prefixOf: massMetricPrefix },
+    sortValue: (material) => material.amount_g,
     render: (mh) => (
       <MassField
         mh={mh}
@@ -173,6 +215,7 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
     header: MATERIAL_HEADER.vol,
     width: 150,
     unitToggle: { unit: 'l', prefixes: VOLUME_METRIC_PREFIXES, prefixOf: volumeMetricPrefix },
+    sortValue: (material) => material.amount_l,
     render: (mh) => <MaterialVolume mh={mh} className="reaction-material__volume-data" />,
   },
   {
@@ -180,12 +223,14 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
     header: MATERIAL_HEADER.amount,
     width: 150,
     unitToggle: { unit: 'mol', prefixes: metricPrefixesMol, prefixOf: molMetricPrefix },
+    sortValue: (material) => material.amount_mol,
     render: (mh) => <MaterialAmountMol mh={mh} />,
   },
   {
     key: 'molar_mass',
     header: MATERIAL_HEADER.molar_mass,
     width: 120,
+    sortValue: (material) => material.molecule_molecular_weight,
     render: (mh) => (mh.isSbmm
       ? <MaterialActivity mh={mh} />
       : <PlainValue>{mh.molarWeightValue(true)}</PlainValue>),
@@ -194,12 +239,14 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
     key: 'density',
     header: MATERIAL_HEADER.density,
     width: 80,
+    sortValue: (material) => (material.has_density ? material.density : null),
     render: (mh) => <PlainValue>{mh.material.has_density ? mh.material.density : 'undefined'}</PlainValue>,
   },
   {
     key: 'purity',
     header: MATERIAL_HEADER.purity,
     width: 80,
+    sortValue: (material) => material.purity,
     render: (mh) => {
       const { purity } = mh.material;
       return <PlainValue>{(purity === null || purity === undefined || purity === '') ? 0 : purity}</PlainValue>;
@@ -211,6 +258,7 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
     width: 130,
     // Only rendered for reactions with polymers, matching the scheme tab's loading column.
     requiresLoadingColumn: true,
+    sortValue: (material) => material.loading,
     render: (mh, { showLoadingColumn }) => (
       <MaterialLoading mh={mh} showLoadingColumn={showLoadingColumn} />
     ),
@@ -224,12 +272,14 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
       prefixes: metricPrefixesMolConc,
       prefixOf: (material) => getMetricMolConc(material),
     },
+    sortValue: (material) => material.concn,
     render: (mh) => <MaterialConcentration mh={mh} />,
   },
   {
     key: 'eq',
     header: MATERIAL_HEADER.eq,
     width: 150,
+    sortValue: (material) => material.equivalent,
     render: (mh, { displayYieldField }) => (
       <EquivalentOrYield mh={mh} displayYieldField={displayYieldField} />
     ),
@@ -242,6 +292,7 @@ const SOLVENT_FIELDS = [
     key: 'dry_solvent',
     header: 'Dry',
     width: 60,
+    sortValue: (material) => !!material.dry_solvent,
     render: (mh) => <DrySolventCheckBox mh={mh} />,
   },
   {
@@ -254,18 +305,21 @@ const SOLVENT_FIELDS = [
     key: 'label',
     header: 'Label',
     width: 220,
+    sortValue: (material) => material.external_label ?? '',
     render: (mh) => <SolventLabel mh={mh} />,
   },
   {
     key: 'volume',
     header: MATERIAL_HEADER.vol,
     width: 150,
+    sortValue: (material) => material.amount_l,
     render: (mh) => <MaterialVolume mh={mh} className="reaction-material__solvent-volume-data" />,
   },
   {
     key: 'ratio',
     header: 'Ratio',
     width: 90,
+    sortValue: (material, reaction) => reaction.volumeRatioByMaterialId(material.id),
     render: (mh) => <VolumeRatio mh={mh} />,
   },
 ];
@@ -291,6 +345,7 @@ const GAS_PHASE_FIELDS = [
   header,
   width: 150,
   ...(unitSwitchable ? { unitToggle: { gasField } } : {}),
+  sortValue: (material) => gasSortValue(material, gasField),
   render: (mh, { isGasProduct }) => (
     isGasProduct ? <GaseousInputFields mh={mh} field={gasField} /> : null
   ),
@@ -302,6 +357,21 @@ const GENERAL_GAS_MATERIAL_FIELDS = [
   ...GAS_PHASE_FIELDS,
   ...GENERAL_MATERIAL_AMOUNT_FIELDS
 ];
+
+/*
+What one material column sorts on. A slot a variation does not fill sorts as empty rather than
+throwing, and the amounts are read in their base unit, so switching the column's unit leaves the
+order alone.
+*/
+const materialSortValue = (row, matGroup, sampleIdx, field) => {
+  const variationReaction = row?.data ?? null;
+  const material = variationReaction?.[matGroup]?.[sampleIdx] ?? null;
+  if (!material || !field.sortValue) {
+    return null;
+  }
+
+  return field.sortValue(material, variationReaction) ?? null;
+};
 
 const FIELDS_BY_GROUP = {
   starting_materials: () => GENERAL_MATERIAL_FIELDS,
@@ -476,7 +546,7 @@ their prefix into local state when they mount and never look at that prop again 
 in VariationSchemaTable for how the cells are made to pick a new one up.
 */
 const MaterialUnitHeader = ({
-  displayName, colId, matGroup, sampleIdx, unitToggle
+  displayName, colId, matGroup, sampleIdx, unitToggle, column, enableSorting, progressSort
 }) => {
   const {
     variations, getRowHandler, columnUnits, setColumnUnit
@@ -528,7 +598,12 @@ const MaterialUnitHeader = ({
   return (
     <div className="d-flex align-items-center gap-1 w-100">
       <DragHandle />
-      <span className="text-truncate">{displayName}</span>
+      <SortableHeaderName
+        displayName={displayName}
+        column={column}
+        enableSorting={enableSorting}
+        progressSort={progressSort}
+      />
       {unit && (
         <Button
           variant="light"
@@ -556,6 +631,16 @@ MaterialUnitHeader.propTypes = {
     prefixOf: PropTypes.func,
     gasField: PropTypes.string,
   }).isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  column: PropTypes.object,
+  enableSorting: PropTypes.bool,
+  progressSort: PropTypes.func,
+};
+
+MaterialUnitHeader.defaultProps = {
+  column: null,
+  enableSorting: false,
+  progressSort: () => {},
 };
 
 const schemaBuildColumnGroups = (variations) => {
@@ -598,6 +683,9 @@ const schemaBuildColumnGroups = (variations) => {
               colId,
               headerName: field.header,
               width: field.width,
+              // Sorting needs a value of its own: the cells are renderers, so without this AG Grid
+              // would be comparing undefined against undefined for every row.
+              valueGetter: ({ data }) => materialSortValue(data, matGroup, sampleIdx, field),
               ...(field.sticky ? { cellClass: STICKY_NAME_CLASS } : {}),
               // Overrides the plain draggable header of buildColumnDefs with one that also carries
               // the column wide unit switch.
@@ -626,6 +714,11 @@ const schemaBuildColumnGroups = (variations) => {
       headerName: field.header,
       headerTooltip: field.header,
       width: field.width,
+      // The rich text fields have no sensible order, so they say so rather than sorting on a
+      // truncated preview of a Quill delta.
+      ...(field.sortValue
+        ? { valueGetter: ({ data }) => (data?.data ? field.sortValue(data.data) : null) }
+        : { sortable: false }),
       cellRenderer: ReactionFieldCell,
       cellRendererParams: { field },
     })),
