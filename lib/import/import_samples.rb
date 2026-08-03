@@ -1030,7 +1030,7 @@ module Import
       }
     end
 
-    # Rows that were imported but lost their structure need to be visible in the result. 
+    # Rows that were imported but lost their structure need to be visible in the result.
     def structure_notes
       decoupled_fallback_note
     end
