@@ -193,7 +193,10 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
   const setReaction = useCallback((nextReaction) => {
     reactionRef.current = nextReaction;
     setReactionState(nextReaction);
-    setVariationsState(convertVariationDatasetToInternalVariations(reactionFromProps));
+    // Re-derived from the reaction being set - the variations are diffs against it, so a change to
+    // the parent shifts what every row resolves to. Not from the prop, which goes stale after the
+    // first store handover.
+    setVariationsState(convertVariationDatasetToInternalVariations(nextReaction));
     forceUpdate();
   }, []);
 
@@ -226,7 +229,7 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
     }).filter((s) => s);
 
     let temperature = graphicReaction.temperature_display;
-    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
+    if (/^[-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
       temperature = `${temperature} ${graphicReaction.temperature.valueUnit}`;
     }
     const productsOnly = graphicReaction.isInteractionReaction();
@@ -258,8 +261,10 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
       }
     });
   }, [setReaction]);
-  // Lets the drain above call back into this same callback (it is identity-stable).
-  updateGraphicRef.current = updateGraphic;
+  // Lets the drain above call back into this same callback; assigned after render, as refs must be.
+  useEffect(() => {
+    updateGraphicRef.current = updateGraphic;
+  }, [updateGraphic]);
 
   const refreshGraphic = useCallback(() => {
     // Prevent multiple simultaneous refreshes
@@ -563,6 +568,13 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
   }, []);
 
   // componentDidUpdate: adopt a reaction handed down from the store
+  /*
+  The store hands over a freshly built Reaction and this component adopts it as its state, patching
+  the scheme SVG back in when the server omitted it - the reaction model is mutated in place by
+  design throughout this screen, and the effect is the adoption point. The compiler-lint rules
+  flagging that are right in general and knowingly overridden here.
+  */
+  // eslint-disable-next-line react-hooks/immutability
   useEffect(() => {
     const previousReactionProp = previousReactionPropRef.current;
     previousReactionPropRef.current = reactionFromProps;
@@ -576,6 +588,7 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
     const hasPreviousSvg = previousSvg !== undefined && previousSvg !== null && String(previousSvg).trim() !== '';
 
     if (isSameReaction && hasPreviousSvg) {
+      // eslint-disable-next-line react-hooks/immutability
       reactionFromProps.reaction_svg_file = previousSvg;
       setReactionSvgVersion((version) => version + 1);
     }
@@ -989,6 +1002,8 @@ const ReactionDetails = ({ reaction: reactionFromProps, openedFromCollectionId }
     ),
   };
 
+  // handleSegmentsChange only reads its ref when a segment is edited, never during this render.
+  // eslint-disable-next-line react-hooks/refs
   addSegmentTabs(reaction, handleSegmentsChange, tabContentsMap);
 
   const tabContents = [];

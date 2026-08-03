@@ -85,7 +85,7 @@
         "_purification_solvents": { "$ref": "#/definitions/material_diff_list" },
         "_products": { "$ref": "#/definitions/material_diff_list" },
 
-        "temperature": {
+        "_temperature": {
           "type": "object",
           "properties": {
             "valueUnit": { "type": "string" },
@@ -93,7 +93,7 @@
             "data": { "type": "array" }
           }
         },
-        "duration": { "type": ["string", "null"] },
+        "_duration": { "type": ["string", "null"] },
         "timestamp_start": { "type": ["string", "null"] },
         "timestamp_stop": { "type": ["string", "null"] },
 
@@ -159,12 +159,12 @@
         "_amount_unit": { "type": ["string", "null"] },
         "amount_value": { "type": ["number", "string", "null"] },
         "amount_unit": { "type": ["string", "null"] },
-        "target_amount_value": { "type": ["number", "string", "null"] },
-        "target_amount_unit": { "type": ["string", "null"] },
-        "real_amount_value": { "type": ["number", "string", "null"] },
-        "real_amount_unit": { "type": ["string", "null"] },
+        "_target_amount_value": { "type": ["number", "string", "null"] },
+        "_target_amount_unit": { "type": ["string", "null"] },
+        "_real_amount_value": { "type": ["number", "string", "null"] },
+        "_real_amount_unit": { "type": ["string", "null"] },
 
-        "metrics": {
+        "_metrics": {
           "description": "Metric prefix per amount field, one character each, in the order mass, volume, mol, concentration. Drives the unit shown by the inputs and by the column headers of the variations grid.",
           "type": "string",
           "minLength": 4,
