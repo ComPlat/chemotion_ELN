@@ -78,7 +78,7 @@ let _pendingChemicalCreate = null;
 
 const decoupleCheck = (sample, notifications) => {
   if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_'
-    && !sample.isMixture() && !sample.isMof()) {
+    && sample.hasMoleculeStructure()) {
     notifications.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
     });
@@ -121,7 +121,7 @@ const sampleTitleAppendix = (sample, handleFastInput) => (
   <>
     <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
     <PubchemLabels element={sample} />
-    {sample.isNew && !sample.isMixture() && !sample.isMof() && <FastInput fnHandle={handleFastInput} />}
+    {sample.isNew && sample.hasMoleculeStructure() && <FastInput fnHandle={handleFastInput} />}
   </>
 );
 
@@ -843,7 +843,7 @@ export default class SampleDetails extends React.Component {
 
   elementalPropertiesItem(sample) {
     // avoid empty ListGroupItem
-    if (!sample.molecule_formula || sample.isMixture() || sample.isMof()) {
+    if (!sample.molecule_formula || !sample.hasMoleculeStructure()) {
       return false;
     }
 
@@ -1157,9 +1157,8 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInfo(sample) {
-    const isMixture = sample.isMixture();
     const isMof = sample.isMof();
-    const hideMoleculeMeta = isMixture || isMof;
+    const hideMoleculeMeta = !sample.hasMoleculeStructure();
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {

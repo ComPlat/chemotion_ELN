@@ -22,6 +22,7 @@ import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
 import MofGenerator from 'src/components/mof/MofGenerator';
+import Sample from 'src/models/Sample';
 import { isValidMoleculeName } from 'src/utilities/MoleculeNameValidation';
 
 export default class SampleForm extends React.Component {
@@ -1366,7 +1367,7 @@ export default class SampleForm extends React.Component {
     const { selectedSampleType } = this.state;
     const isMixture = selectedSampleType?.value === 'Mixture';
     const isMof = selectedSampleType?.value === 'MOF';
-    const isMicromolecule = !isMixture && !isMof;
+    const isMicromolecule = Sample.typeHasMoleculeStructure(selectedSampleType?.value);
 
     return (
       <Form>

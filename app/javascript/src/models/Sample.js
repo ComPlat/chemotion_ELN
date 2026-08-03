@@ -27,6 +27,10 @@ const SAMPLE_TYPE_MIXTURE = 'Mixture';
 const SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule';
 const SAMPLE_TYPE_MOF = 'MOF';
 
+// Sample types that have no editable molecule structure (no molecule editor,
+// MW, CAS, or "structure required" validation). Add new structureless types here.
+const STRUCTURELESS_SAMPLE_TYPES = [SAMPLE_TYPE_MIXTURE, SAMPLE_TYPE_MOF];
+
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
   if (args[field] && typeof args[field] === 'string') {
@@ -297,6 +301,29 @@ export default class Sample extends Element {
    */
   isMof() {
     return this.sample_type?.toString() === SAMPLE_TYPE_MOF;
+  }
+
+  /**
+   * Whether a given sample-type value carries an editable molecule structure.
+   * Structureless types (Mixture, MOF) share the same "no molecule editor / MW /
+   * CAS / structure-required validation" behavior. Gate on this predicate rather
+   * than enumerating types by negation, so a new structureless type opts in by
+   * being added to STRUCTURELESS_SAMPLE_TYPES in one place.
+   *
+   * @param {string} sampleType - The sample_type value (e.g. dropdown selection).
+   * @returns {boolean} True unless the type is structureless.
+   */
+  static typeHasMoleculeStructure(sampleType) {
+    return !STRUCTURELESS_SAMPLE_TYPES.includes(sampleType);
+  }
+
+  /**
+   * Instance variant of {@link Sample.typeHasMoleculeStructure} for this sample.
+   *
+   * @returns {boolean} True unless this sample's type is structureless.
+   */
+  hasMoleculeStructure() {
+    return Sample.typeHasMoleculeStructure(this.sample_type?.toString());
   }
 
   /**
