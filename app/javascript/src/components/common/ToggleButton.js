@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
-export default function ToggleButton({
+const ToggleButton = ({
   isToggledInitial, onToggle, onChange, onLabel, offLabel,
   tooltipOn, tooltipOff, buttonTitleClass, buttonClass, size, showIcon
-}) {
+}) => {
   const [isToggled, setIsToggled] = useState(isToggledInitial);
+  const [prevIsToggledInitial, setPrevIsToggledInitial] = useState(isToggledInitial);
+
+  if (isToggledInitial !== prevIsToggledInitial) {
+    setPrevIsToggledInitial(isToggledInitial);
+    setIsToggled(isToggledInitial);
+  }
 
   const handleChange = () => {
     const newToggledState = !isToggled;
@@ -14,10 +20,6 @@ export default function ToggleButton({
     if (onToggle) onToggle(newToggledState);
     if (onChange) onChange(newToggledState);
   };
-
-  useEffect(() => {
-    setIsToggled(isToggledInitial);
-  }, [isToggledInitial]);
 
   const toolTipMessage = isToggled ? tooltipOn : tooltipOff;
 
@@ -42,7 +44,7 @@ export default function ToggleButton({
       </Button>
     </OverlayTrigger>
   );
-}
+};
 
 ToggleButton.propTypes = {
   isToggledInitial: PropTypes.bool.isRequired,
@@ -50,8 +52,8 @@ ToggleButton.propTypes = {
   onChange: PropTypes.func,
   onLabel: PropTypes.string,
   offLabel: PropTypes.string,
-  tooltipOn: PropTypes.string,
-  tooltipOff: PropTypes.string,
+  tooltipOn: PropTypes.node,
+  tooltipOff: PropTypes.node,
   buttonTitleClass: PropTypes.string,
   buttonClass: PropTypes.string,
   size: PropTypes.string,
@@ -70,3 +72,5 @@ ToggleButton.defaultProps = {
   size: 'sm',
   showIcon: false,
 };
+
+export default ToggleButton;
