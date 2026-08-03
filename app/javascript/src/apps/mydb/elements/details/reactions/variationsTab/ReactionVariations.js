@@ -243,7 +243,7 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
   };
 
   return (<>
-    <div>
+    <div style={{ position: 'relative' }}>
       <ButtonGroup>
         {addVariation()}
         <Button
@@ -263,88 +263,22 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
           }}
         />
       </ButtonGroup>
-      <div className="ag-theme-alpine ag-theme-reaction-variations" ref={gridWrapperRef}>
-        <TopHorizontalScrollbar gridWrapperRef={gridWrapperRef} gridToken={gridToken} />
-        <AgGridReact
-          // Re-mount grid on version change
-          key={`${reaction.id}-schema-${gridVersion}`}
-          gridOptions={gridOptions}
-          ref={gridRef}
-          initialState={initialGridState}
-          rowData={reactionVariations}
-          getRowId={(params) => params.data.id}
-          rowDragManaged
-          rowSelection={{ mode: 'multiRow', checkboxes: true, headerCheckbox: true }}
-          selectionColumnDef={{ pinned: 'left', width: 50 }}
-          columnDefs={columnDefinitions}
-          suppressPropertyNamesCheck
-          defaultColDef={{
-            editable: true,
-            sortable: true,
-            resizable: true,
-            cellStyle: (params) => {
-              const { editable } = params.colDef;
-              const isEditable = typeof editable === 'function' ? editable(params) : editable;
-              return isEditable === false ? { backgroundColor: '#e9ecef' } : null;
-            },
-          }}
-          defaultColGroupDef={{
-            resizable: true,
-          }}
-          dataTypeDefinitions={cellDataTypes}
-          tooltipShowDelay={0}
-          groupHeaderHeight={53}
-          domLayout="autoHeight"
-          maintainColumnOrder
-          suppressNoRowsOverlay
-          suppressDragLeaveHidesColumns
-          suppressColumnVirtualisation={typeof window !== 'undefined' && !!window.Cypress}
-          context={{
-            copyRow,
-            removeRow,
-            setColumnDefinitions,
-            reactionHasPolymers,
-            concentrationContext,
-            reactionShortLabel,
-            allReactionAnalyses
-          }}
-          /*
-          IMPORTANT: In conjunction with `onCellEditRequest`,
-          `readOnlyEdit` ensures that all edits of `reaction.variations` go through `updateRow`,
-          rather than the grid mutating `reaction.variations` directly on user edits.
-          I.e., we take explicit control of state manipulation.
-          */
-          readOnlyEdit
-          onCellEditRequest={updateRow}
-          onCellEditingStopped={handleCellEditingStopped}
-          onGridPreDestroyed={(event) => persistTableLayout(reaction.id, event, gridStore.columnDefinitions)}
-          onStateUpdated={(event) => persistTableLayout(reaction.id, event, gridStore.columnDefinitions)}
-          /*
-          We need to persist manual row sort (i.e., user changes row order by dragging rows),
-          since ag-grid does not persist manual row sort as part of the grid state.
-          In contrast to sort by column, we persist manual row sorting in the data, not in the grid state.
-          When the event fires, the grid has already mutated the row order, we just need to persist it.
-          */
-          onRowDragEnd={(event) => handleRowDrag(event)}
-          // Signal to `TopHorizontalScrollbar` that ag-grid's DOM nodes have been (re-)created.
-          onGridReady={() => setGridToken((token) => token + 1)}
-        />
-      </div>
+      <VariationSchemaTable
+        variations={variations}
+        onReactionChange={handleReactionChange}
+        onInputChange={handleInputChange}
+        setActiveVariation={setActiveVariation}
+        isActiveVariation={!!activeVariation}
+        onGroupChange={onGroupChange}
+        onDeleteVariation={deleteVariation}
+        onAnalysesChange={onAnalysesChange}
+        allReactionAnalyses={getReactionAnalyses(reaction)}
+        reactionShortLabel={reaction.short_label}
+        reactionId={reaction.id}
+        editMode={editMode}
+        reactionSegments={reaction.segments}
+      />
     </div>
-    <VariationSchemaTable
-      variations={variations}
-      onReactionChange={handleReactionChange}
-      onInputChange={handleInputChange}
-      setActiveVariation={setActiveVariation}
-      isActiveVariation={!!activeVariation}
-      onGroupChange={onGroupChange}
-      onDeleteVariation={deleteVariation}
-      onAnalysesChange={onAnalysesChange}
-      allReactionAnalyses={getReactionAnalyses(reaction)}
-      reactionShortLabel={reaction.short_label}
-      reactionId={reaction.id}
-      editMode={editMode}
-    />
     <div style={{ position: 'relative' }}>
       {activeVariation &&
         (<div><h2>Variation #{activeVariation.label}</h2>
