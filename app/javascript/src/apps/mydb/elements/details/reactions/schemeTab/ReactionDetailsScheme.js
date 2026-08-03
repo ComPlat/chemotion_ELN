@@ -56,6 +56,14 @@ export default class ReactionDetailsScheme extends React.Component {
   }
 
   onLockEquivColChange(lockEquivColumn) {
+    /*
+    The handler's lazy `lockEquivColumn` getter fires this on first read - which the constructor
+    does to seed the state, before `this.state` even exists. The value lands in state through that
+    seeding, so the callback only has work to do once there is a state to differ from.
+    */
+    if (!this.state || this.state.lockEquivColumn === lockEquivColumn) {
+      return;
+    }
     this.setState({ lockEquivColumn });
   }
 
@@ -403,12 +411,14 @@ export default class ReactionDetailsScheme extends React.Component {
       }
     }
 
-    if (displayYieldField === null) {
-      const allHaveNoConversion = reaction.products.every(
-        (material) => !(material.conversion_rate && material.conversion_rate !== 0)
-      );
-      this.switchYield(allHaveNoConversion);
-    }
+    /*
+    Until the user has toggled yield/conversion, the field follows the data: yield unless some
+    product carries a conversion rate. Derived here rather than pushed into state, which would be a
+    setState during render.
+    */
+    const effectiveDisplayYieldField = displayYieldField ?? reaction.products.every(
+      (material) => !(material.conversion_rate && material.conversion_rate !== 0)
+    );
 
     return (
       <>
@@ -475,7 +485,7 @@ export default class ReactionDetailsScheme extends React.Component {
             switchEquiv={this.reactionUpdateHandler.switchEquiv}
             lockEquivColumn={this.reactionUpdateHandler.lockEquivColumn}
             switchYield={this.switchYield}
-            displayYieldField={displayYieldField}
+            displayYieldField={effectiveDisplayYieldField}
           />
           {!isInteractionReaction && (
             <ReactionConditions

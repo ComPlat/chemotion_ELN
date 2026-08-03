@@ -613,15 +613,24 @@ MaterialGroup.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   dropMaterial: PropTypes.func.isRequired,
   dropSample: PropTypes.func.isRequired,
-  switchEquiv: PropTypes.func.isRequired,
+  switchEquiv: PropTypes.func,
   lockEquivColumn: PropTypes.bool,
   displayYieldField: PropTypes.bool,
-  switchYield: PropTypes.func.isRequired,
+  switchYield: PropTypes.func,
   dndEnabled: PropTypes.bool,
   variations: PropTypes.arrayOf(PropTypes.shape({
     idx: PropTypes.number.isRequired,
     data: PropTypes.instanceOf(Reaction).isRequired,
   }))
+};
+
+/*
+Not every caller has the toggles: the yield/conversion switch only exists on the products group, and
+the purification solvents have no equivalent lock either.
+*/
+MaterialGroup.defaultProps = {
+  switchEquiv: () => {},
+  switchYield: () => {},
 };
 
 GeneralMaterialGroup.propTypes = {
@@ -634,11 +643,16 @@ GeneralMaterialGroup.propTypes = {
   headIndex: PropTypes.number.isRequired,
   showLoadingColumn: PropTypes.bool,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
-  switchEquiv: PropTypes.func.isRequired,
+  switchEquiv: PropTypes.func,
   lockEquivColumn: PropTypes.bool,
   displayYieldField: PropTypes.bool,
-  switchYield: PropTypes.func.isRequired,
+  switchYield: PropTypes.func,
   dndEnabled: PropTypes.bool,
+};
+
+GeneralMaterialGroup.defaultProps = {
+  switchEquiv: () => {},
+  switchYield: () => {},
 };
 
 SolventsMaterialGroup.propTypes = {
