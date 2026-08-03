@@ -177,6 +177,7 @@ class API < Grape::API
 
   mount Chemotion::LiteratureAPI
   mount Chemotion::CasLookupAPI
+  mount Chemotion::MofAPI
   mount Chemotion::ContainerAPI
   mount Chemotion::MoleculeAPI
   mount Chemotion::CollectionAPI

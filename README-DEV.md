@@ -5,6 +5,7 @@
 - database.yml
 - storage.yml
 - indigo_service.yml (if indigo service is required)
+- mof_service.yml (if CIF → MOFid/MOFkey sidecar is required)
 
 **write temporary in run-ruby-dev.sh**
 - rake db:create
