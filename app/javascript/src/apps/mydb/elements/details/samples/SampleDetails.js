@@ -691,7 +691,7 @@ export default class SampleDetails extends React.Component {
         }
         <DetailsTabLiteratures
           element={sample}
-          literatures={sample.isNew ? sample.literatures : null}
+          literatures={sample.isNew && Array.isArray(sample.literatures) ? sample.literatures : null}
         />
       </Tab>
     );
