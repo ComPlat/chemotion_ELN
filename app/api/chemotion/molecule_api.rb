@@ -57,7 +57,7 @@ module Chemotion
               molfile = rd_mol
             end
             return {} unless molfile
-            molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
+            molecule = Molecule.find_or_create_by_molfile(molfile, **babel_info)
             molecule = Molecule.find_or_create_dummy if molecule.blank?
           end
           return unless molecule

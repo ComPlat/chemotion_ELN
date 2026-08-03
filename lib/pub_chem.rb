@@ -105,7 +105,7 @@ module PubChem
   def self.get_molfile_by_smiles(smiles)
     @auth = { username: '', password: '' }
     options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
-    encoded_smiles = URI.encode(smiles, '[]/()+-.@#=\\')
+    encoded_smiles = URI::DEFAULT_PARSER.escape(smiles, '[]/()+-.@#=\\')
     response = HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/smiles/' + encoded_smiles + '/record/SDF', options)
     return nil unless response.success?
 
