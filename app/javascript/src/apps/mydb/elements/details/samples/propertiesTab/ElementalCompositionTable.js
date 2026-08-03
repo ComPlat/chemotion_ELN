@@ -96,7 +96,7 @@ export default class ElementalCompositionTable extends React.Component {
             ) : (
               <NumeralInput
                 numeralFormat="0,0.00"
-                value={experimentalValue || ''}
+                value={Number(experimentalValue) || 0}
                 onChange={(v) => this.handleElementChange(v, element)}
                 placeholder="—"
               />
