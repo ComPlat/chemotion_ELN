@@ -217,6 +217,50 @@ function formatReactionSegments(segments) {
   }, {});
 }
 
+/*
+CSV export, as before the diff-based schema: AG Grid writes what the columns' valueGetters hold -
+which since the sorting work is every column's value in a fixed unit - and only the headers need
+spelling out, since the header cells are React components the exporter cannot read.
+*/
+const CSV_EXCLUDED_COLUMNS = ['variation_control', 'variation_analyses'];
+
+function csvHeaderOf(column) {
+  const colDef = column.getColDef();
+  if (colDef.colId === 'variation_index') {
+    return 'ID';
+  }
+
+  const groupName = column.getParent()?.getColGroupDef()?.headerName;
+  const unit = colDef.context?.exportUnit;
+  return `${groupName ? `${groupName} / ` : ''}${colDef.headerName}${unit ? ` (${unit})` : ''}`;
+}
+
+function csvCellOf({ value, column, node }) {
+  // The timestamps sort as epoch milliseconds; the CSV gets the string the user entered.
+  if (column.getColId() === 'reaction_timestamp_start') {
+    return node.data?.data?.timestamp_start ?? '';
+  }
+  if (column.getColId() === 'reaction_timestamp_stop') {
+    return node.data?.data?.timestamp_stop ?? '';
+  }
+  if (Array.isArray(value)) {
+    return value.join('.'); // The group, shown the way its cell shows it.
+  }
+  return value ?? '';
+}
+
+function exportVariationsToCsv(api, reactionShortLabel) {
+  api.exportDataAsCsv({
+    fileName: `${reactionShortLabel || 'reaction'}-variations.csv`,
+    // Buttons have no value to export; everything else does.
+    columnKeys: api.getAllDisplayedColumns()
+      .map((column) => column.getColId())
+      .filter((colId) => !CSV_EXCLUDED_COLUMNS.includes(colId)),
+    processHeaderCallback: ({ column }) => csvHeaderOf(column),
+    processCellCallback: csvCellOf,
+  });
+}
+
 async function getReactionSegments(reaction_segments) {
   try {
     const segments = UserStore.getState().segmentKlasses || [];
@@ -257,5 +301,6 @@ export {
   REACTION_VARIATIONS_TAB_KEY,
   GROUP_ID_SEPARATOR,
   getReactionSegments,
-  formatReactionSegments
+  formatReactionSegments,
+  exportVariationsToCsv
 };
