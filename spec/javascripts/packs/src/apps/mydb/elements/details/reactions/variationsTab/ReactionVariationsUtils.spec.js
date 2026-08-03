@@ -1,6 +1,12 @@
 import expect from 'expect';
+import sinon from 'sinon';
+import Reaction from 'src/models/Reaction';
+import Sample from 'src/models/Sample';
+import ReactionFactory from 'factories/ReactionFactory';
 import {
-  diffObjects, formatReactionSegments, getVariationsRowName
+  diffObjects, formatReactionSegments, getVariationsRowName,
+  makeVariationReaction, addNewVariationDataset, convertVariationDatasetToInternalVariations,
+  exportVariationsToCsv
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { reactionSegments } from 'fixture/reaction';
 
@@ -26,10 +32,11 @@ describe('ReactionVariationsUtils', () => {
       expect(diffObjects({}, { a: 1 })).toEqual({ a: 1 });
     });
 
-    // Positional, so the diff of a material list says which slot changed.
-    it('keeps the position of a changed entry in a list', () => {
+    // Positional, so the diff of a material list says which slot changed - and an unchanged slot
+    // is an explicit null hole, which is what lets deepPatch skip it on the way back.
+    it('keeps the position of a changed entry in a list, with null for the unchanged', () => {
       const diff = diffObjects({ a: [{ v: 1 }, { v: 2 }] }, { a: [{ v: 1 }, { v: 9 }] });
-      expect(diff.a[1]).toEqual({ v: 9 });
+      expect(diff.a).toEqual([null, { v: 9 }]);
     });
 
     it('ignores the keys it is told to', () => {
@@ -38,6 +45,144 @@ describe('ReactionVariationsUtils', () => {
 
     it('ignores functions, which a model brings along and a diff cannot hold', () => {
       expect(diffObjects({}, { a: () => {} })).toEqual({});
+    });
+  });
+
+  /*
+  A stored variation is rebuilt by patching its diff onto the parent reaction; what comes back must
+  be a working Reaction again, materials included, or every cell of the grid would fall over.
+  */
+  describe('makeVariationReaction', () => {
+    let reaction;
+    beforeEach(async () => {
+      reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+    });
+
+    it('rebuilds a Reaction with Sample materials from an empty diff', () => {
+      const variationReaction = makeVariationReaction(reaction, {});
+      expect(variationReaction).toBeInstanceOf(Reaction);
+      expect(variationReaction.starting_materials[0]).toBeInstanceOf(Sample);
+      expect(variationReaction.starting_materials[0].amount_g).toBeCloseTo(100, 6);
+    });
+
+    it('applies the diff on top of the parent', () => {
+      const diff = { _starting_materials: [{ target_amount_value: 50 }] };
+      const variationReaction = makeVariationReaction(reaction, diff);
+      expect(variationReaction.starting_materials[0].target_amount_value).toBe(50);
+      // The parent stays as it was; the variation is a copy.
+      expect(reaction.starting_materials[0].target_amount_value).not.toBe(50);
+    });
+
+    it('leaves unpatched positions of a list untouched', () => {
+      const diff = { _starting_materials: [null, { target_amount_value: 50 }] };
+      const variationReaction = makeVariationReaction(reaction, diff);
+      expect(variationReaction.starting_materials[0].amount_g).toBeCloseTo(100, 6);
+      expect(variationReaction.starting_materials[1].target_amount_value).toBe(50);
+    });
+
+    it('keeps the id its diff carries, so rows stay addressable', () => {
+      expect(makeVariationReaction(reaction, { id: 'fixed-id' }).id).toBe('fixed-id');
+    });
+
+    it('starts each rebuild with its own container', () => {
+      const one = makeVariationReaction(reaction, {});
+      const other = makeVariationReaction(reaction, {});
+      expect(one.container).not.toBe(other.container);
+    });
+  });
+
+  describe('addNewVariationDataset', () => {
+    it('numbers a first variation into group 1 with idx 1', () => {
+      const reaction = { variations: [] };
+      const variation = addNewVariationDataset({ reaction });
+      expect(variation.group).toEqual([1, 0]);
+      expect(variation.idx).toBe(1);
+      expect(reaction.variations).toEqual([variation]);
+    });
+
+    it('continues numbering past the existing variations', () => {
+      const reaction = { variations: [{ idx: 3, group: [2, 1] }] };
+      const variation = addNewVariationDataset({ reaction });
+      expect(variation.group).toEqual([3, 0]);
+      expect(variation.idx).toBe(4);
+    });
+  });
+
+  describe('convertVariationDatasetToInternalVariations', () => {
+    it('labels a row by its stored idx and addresses it by position', async () => {
+      const reaction = await ReactionFactory.build('ReactionFactory.water+water=>water+water');
+      reaction.variations = [
+        { id: 'a', idx: 7, group: [1, 0], analyses: [9], data: {} },
+        { id: 'b', idx: 9, group: [2, 0], analyses: [], data: {} },
+      ];
+      const internal = convertVariationDatasetToInternalVariations(reaction);
+      expect(internal.map((row) => row.idx)).toEqual([0, 1]);
+      expect(internal.map((row) => row.label)).toEqual([7, 9]);
+      expect(internal[0].analyses).toEqual([9]);
+      expect(internal[0].data).toBeInstanceOf(Reaction);
+    });
+  });
+
+  /*
+  The exporter writes what the columns' valueGetters hold; only the headers and two cell shapes
+  need help. The AG Grid api is stood in for, which is also what pins down the export options.
+  */
+  describe('exportVariationsToCsv', () => {
+    const buildColumn = (colId, headerName, groupName, exportUnit) => ({
+      getColId: () => colId,
+      getColDef: () => ({ colId, headerName, ...(exportUnit ? { context: { exportUnit } } : {}) }),
+      getParent: () => (groupName ? { getColGroupDef: () => ({ headerName: groupName }) } : null),
+    });
+
+    const columns = [
+      buildColumn('variation_index', '#', 'Variation'),
+      buildColumn('variation_control', 'Control', 'Variation'),
+      buildColumn('variation_analyses', 'Linked analyses', 'Analyses'),
+      buildColumn('starting_materials_0_mass', 'Mass', 'Starting material 1', 'g'),
+      buildColumn('reaction_timestamp_start', 'Start', 'Reaction'),
+    ];
+
+    let exportParams;
+    beforeEach(() => {
+      exportParams = null;
+      exportVariationsToCsv({
+        getAllDisplayedColumns: () => columns,
+        exportDataAsCsv: (params) => { exportParams = params; },
+      }, 'CU1-R1');
+    });
+
+    it('names the file after the reaction', () => {
+      expect(exportParams.fileName).toBe('CU1-R1-variations.csv');
+    });
+
+    it('exports every displayed column except the button ones', () => {
+      expect(exportParams.columnKeys).toEqual(
+        ['variation_index', 'starting_materials_0_mass', 'reaction_timestamp_start']
+      );
+    });
+
+    it('writes headers as group, name and unit', () => {
+      const headerOf = (colId) => exportParams.processHeaderCallback({
+        column: columns.find((column) => column.getColId() === colId),
+      });
+      expect(headerOf('variation_index')).toBe('ID');
+      expect(headerOf('starting_materials_0_mass')).toBe('Starting material 1 / Mass (g)');
+      expect(headerOf('reaction_timestamp_start')).toBe('Reaction / Start');
+    });
+
+    it('exports the entered timestamp instead of its sort value', () => {
+      const cell = exportParams.processCellCallback({
+        value: 1753960000000,
+        column: columns[4],
+        node: { data: { data: { timestamp_start: '31/07/2026 12:00:00' } } },
+      });
+      expect(cell).toBe('31/07/2026 12:00:00');
+    });
+
+    it('writes the group the way its cell shows it, and empties for null', () => {
+      const anyColumn = columns[3];
+      expect(exportParams.processCellCallback({ value: [1, 2], column: anyColumn, node: {} })).toBe('1.2');
+      expect(exportParams.processCellCallback({ value: null, column: anyColumn, node: {} })).toBe('');
     });
   });
 
