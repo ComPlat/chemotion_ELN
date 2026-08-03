@@ -47,6 +47,8 @@ const ANALYSES_GROUP = 'analyses_fields';
 // Marks the material name cells that follow the horizontal scroll inside their own group.
 const STICKY_NAME_CLASS = 'variations-sticky-name';
 const STICKY_NAME_FLOATING_CLASS = 'variations-sticky-name--floating';
+// Marks the group heading that follows the horizontal scroll inside its own group.
+const STICKY_GROUP_LABEL_CLASS = 'variations-sticky-group-label';
 // Keys that move a text caret, and the elements that have one - see suppressKeyboardEvent below.
 const CARET_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
 const CARET_ELEMENTS = ['INPUT', 'TEXTAREA'];
@@ -259,13 +261,12 @@ const ColumnVisibilityHeader = ({ displayName, columns, movable }) => {
   );
 
   /*
-  Deliberately not `w-100`: AG Grid makes the group label `position: sticky` so it follows the
-  horizontal scroll inside its own group, which only leaves it room to move while the label is
-  narrower than the group. See the stylesheet, which has to undo AG Grid's own full-width rule on
-  the wrapper around this for the same reason.
+  Deliberately not `w-100`: updateStickyNames travels this along the horizontal scroll inside its
+  own group, and measures it to know how far it may go, which only works while it is as wide as its
+  contents rather than as wide as the group.
   */
   return (
-    <div className="d-flex align-items-center gap-1">
+    <div className={`d-flex align-items-center gap-1 ${STICKY_GROUP_LABEL_CLASS}`}>
       {movable && <DragHandle />}
       <span className="text-truncate">{displayName}</span>
       <OverlayTrigger
@@ -371,6 +372,9 @@ const buildColumnDefs = (columnGroups, hiddenColumns) => columnGroups.map((group
     groupId: group.groupId,
     headerName: group.headerName,
     marryChildren: true,
+    // AG Grid's own sticky label is off: updateStickyNames moves the heading instead, on the same
+    // events as the material name cells, so the two travel together rather than on separate clocks.
+    suppressStickyLabel: true,
     headerGroupComponent: ColumnVisibilityHeader,
     headerGroupComponentParams: {
       movable,
@@ -591,6 +595,25 @@ const VariationSchemaTable = ({
 
       cell.style.transform = offset ? `translateX(${offset}px)` : '';
       cell.classList.toggle(STICKY_NAME_FLOATING_CLASS, offset > 0);
+    });
+
+    /*
+    The group headings travel the same way, so a wide group still says which material slot is on
+    screen when the scroll is halfway through it. The label rather than the header cell is moved -
+    the cell is the group, and it is what the travel is clamped against.
+    */
+    root.querySelectorAll(`.ag-header-container .${STICKY_GROUP_LABEL_CLASS}`).forEach((label) => {
+      const cell = label.closest('.ag-header-group-cell');
+      if (!cell) {
+        return;
+      }
+
+      const offset = Math.min(
+        Math.max(scrollLeft - cell.offsetLeft, 0),
+        Math.max(cell.offsetWidth - label.offsetWidth, 0)
+      );
+
+      label.style.transform = offset ? `translateX(${offset}px)` : '';
     });
   }, []);
 
