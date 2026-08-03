@@ -373,22 +373,6 @@
   height: 100px; 
 }
 
-// --- Prediction add-on: styles that Bootstrap 5 upgrade removed ---------------
-// `.button-right` used to live in elements_details.css, which was dropped in the
-// react-bootstrap 2.x migration. Scoped to the prediction card so that the
-// upstream components still referencing this class are left untouched.
-// (Scoping to the <Tabs id> would not work: react-bootstrap v2 passes that id
-// to TabContainer, a context provider that renders no DOM element.)
-.ml-container {
-  .button-right {
-    float: right;
-    right: 0;
-    z-index: 1;
-    margin-left: 2px;
-    text-align: center;
-  }
-}
-
 // Full-screen toggle for the prediction detail card. Replaces the per-detail
 // fullScreen state that ElementDetails no longer provides.
 .detail-card.ml-container--fullscreen {
@@ -398,4 +382,105 @@
   margin: 0;
   border-radius: 0;
   background-color: var(--bs-body-bg);
+}
+
+// --- Prediction add-on: shared UI primitives ----------------------------------
+// Replaces per-component inline styles that were duplicated across the
+// Forward / Retro / Impurity containers.
+
+.prediction-help {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .75rem 1rem;
+  font-size: .8125rem;
+  line-height: 1.45;
+  color: var(--bs-secondary-color, #6c757d);
+  background-color: var(--bs-tertiary-bg, #f5f5f5);
+  border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+
+  > .fa {
+    flex: 0 0 auto;
+    font-size: 1rem;
+    opacity: .65;
+  }
+}
+
+.prediction-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  min-height: 22rem;
+  height: 60vh;
+
+  img { height: 5rem; }
+
+  &__label {
+    font-size: .875rem;
+    color: var(--bs-secondary-color, #6c757d);
+  }
+}
+
+// Action row: replaces float-based `.button-right` layouts and the
+// empty spacer divs that were used between raw <button> elements.
+.prediction-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  padding: .75rem 1rem;
+  border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+// reactflow needs a definite height; use the viewport so the canvas grows
+// in full-screen instead of staying pinned at 700px.
+.prediction-flow {
+  height: 65vh;
+  min-height: 25rem;
+}
+
+.prediction-thumb {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+// Drop-zone captions in the Impurity grid.
+.prediction-drop-label {
+  font-size: .75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  color: var(--bs-secondary-color, #6c757d);
+  margin-bottom: .25rem;
+}
+
+// Molecule cards inside the reactflow canvases. Replaces the flat
+// `border:1px solid #ccc; background:#f0f0f0` inline styles; the buyable /
+// unavailable border colours keep their original meaning.
+.prediction-node {
+  z-index: 0;
+  padding: .5rem;
+  background-color: var(--bs-body-bg, #fff);
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: .375rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  &__smiles {
+    margin: .375rem 0 0;
+    font-size: .6875rem;
+    line-height: 1.3;
+    text-align: center;
+    word-break: break-all;
+    color: var(--bs-secondary-color, #6c757d);
+  }
+
+  &--buyable { border: 2px solid var(--bs-success, #198754); }
+  &--unavailable { border: 2px solid var(--bs-danger, #dc3545); }
 }

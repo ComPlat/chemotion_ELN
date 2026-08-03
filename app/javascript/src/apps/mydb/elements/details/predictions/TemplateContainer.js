@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import { Button } from 'react-bootstrap';
+import { Button, Form, InputGroup } from 'react-bootstrap';
+import { PredictionHelp, PredictionToolbar } from './PredictionUI';
 
 import PredictionTemplateFetcher from 'src/fetchers/PredictionTemplateFetcher';
 const styles = {
@@ -75,28 +76,28 @@ class TemplateContainer extends Component {
 
     return (
         <div className='tmp-container'>
-          <div style={{height: '100px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: '#f5f5f5',
-              fontSize: '12px', padding: '0 10px'}}>
-          Search for reaction templates in Reaxys database with template ID.
-          Reaction template ID can be obtained from Retrosynthesis prediction tab by clicking on reaction node. 
-        </div>
-        <div style={{ marginBottom: '16px' }}>
-          <input
-            type="text"
-            value={this.state.templateId}
-            onChange={this.handleTemplateIdChange}
-            placeholder="Enter Template ID"
-            style={{ padding: '8px', marginRight: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
-          <button onClick={this.fetchApiResponse} style={{ justifyContent: 'center', padding: '8px 16px', borderRadius: '4px', background: 'gray', color: '#fff', border: 'none' }}>Fetch Reaction Template</button>
-          <Button variant="info" size="sm" className="button-right" onClick={clickToReset}><span><i className="fa fa-eraser" /> Reset</span>
+          <PredictionHelp>
+            Search for reaction templates in the Reaxys database by template ID. A template ID can be obtained from
+            the Retrosynthesis tab by clicking a reaction node.
+          </PredictionHelp>
+        <PredictionToolbar>
+          <InputGroup size="sm" className="w-auto">
+            <Form.Control
+              type="text"
+              value={this.state.templateId}
+              onChange={this.handleTemplateIdChange}
+              placeholder="Enter Template ID"
+            />
+            <Button variant="primary" onClick={this.fetchApiResponse}>
+              <i className="fa fa-search me-1" aria-hidden="true" />
+              Fetch Reaction Template
+            </Button>
+          </InputGroup>
+          <Button variant="outline-secondary" size="sm" className="ms-auto" onClick={clickToReset}>
+            <i className="fa fa-eraser me-1" aria-hidden="true" />
+            Reset
           </Button>
-          
-        </div>
+        </PredictionToolbar>
         {apiResponse && (
           <>
             <img

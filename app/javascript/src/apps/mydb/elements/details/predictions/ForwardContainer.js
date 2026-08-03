@@ -1,5 +1,6 @@
 import React, { Component, useState, useCallback } from 'react';
 import { Button } from 'react-bootstrap';
+import { PredictionHelp, PredictionLoading, PredictionToolbar } from './PredictionUI';
 import DropTargetMolecule from './dragNdrop';
 import ReactFlow, { ReactFlowProvider, Controls, MiniMap, Background, Handle, Position} from 'reactflow';
 import ButtonEdge from './ButtonEdge';
@@ -161,27 +162,13 @@ class ForwardContainer extends Component {
     const InputNode = ({ data }) => {
       // Function to handle the drag over event and allow the drop
       return (
-        <div style={{
-          border: '1px solid #ccc',
-          padding: '10px',
-          background: '#f0f0f0',
-          backgroundSize: 'contain',
-          maxWidth: '100%', 
-          maxHeight: '100%'
-        }}>
+        <div className="prediction-node">
           <>
-          <div style={{ 
-          wordWrap: 'break-word',  // Ensure long words break to the next line
-          wordBreak: 'break-all',  // Break long words if necessary
-          whiteSpace: 'normal',    // Ensure text wraps within the container
-          overflow: 'hidden',      // Hide any overflow
-          textOverflow: 'ellipsis' // Add ellipsis for overflowing text
-            }}>
+          <div className="prediction-node__smiles">
           {data.label}<br />
-          {data.smiles}<br />
-
+          {data.smiles}
         </div>
-            <img style={{ maxWidth: '100%', maxHeight: '100%' }} src={`data:image/png;base64,${data.png}`} alt="" /><br />
+            <img src={`data:image/png;base64,${data.png}`} alt="" />
             
           </>
           <div className='drop-field'>
@@ -199,7 +186,7 @@ class ForwardContainer extends Component {
 
     const SynthesisNode = ({ data }) => {
       return (
-        <div style={{ justifyContent: 'center', border: '1px solid #ccc', padding: '10px', background: '#f0f0f0' }}>
+        <div className="prediction-node">
 
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
             <img
@@ -227,7 +214,6 @@ class ForwardContainer extends Component {
     };
 
     const CustomNode = ({ data }) => {
-      const borderColor = data.buy ? 'green' : 'red';
 
       // Extract buyables data or set it as an empty array if not available
       const buyables = data.buyables || { result: [] };
@@ -241,7 +227,7 @@ class ForwardContainer extends Component {
 
       return (
         <div
-          style={{ border: `2px solid ${borderColor}`, padding: '10px', background: '#f0f0f0', zIndex: '0' }}
+          className={`prediction-node prediction-node--${data.buy ? 'buyable' : 'unavailable'}`}
           title={
             `${data.smiles} - \nProb:${data.prob}\nRank: ${data.rank}` +
             (data.buy
@@ -251,8 +237,8 @@ class ForwardContainer extends Component {
               : '')
           }
         >
-          <div style={{ maxWidth: '100%', maxHeight: '100%' }}>
-            <img style={{ maxWidth: '100%', maxHeight: '100%' }} src={`data:image/png;base64,${data.svg}`} alt="SVG" />
+          <div>
+            <img src={`data:image/png;base64,${data.svg}`} alt="" />
           </div>
           <Handle
             type="target"
@@ -290,33 +276,29 @@ class ForwardContainer extends Component {
 
     return (
       <div>
-        {this.state.loading &&
-          <div style={{ height: '700px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img style={{ height: '100px' }} src='/images/wild_card/loading-bubbles.svg' alt="Loading..." />
-          </div>
-        }
+        {this.state.loading && <PredictionLoading label="Running forward synthesis…" />}
         {!this.state.loading && (
-          <div style={{ height: '800px' }}>
-          <div style={{height: '100px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: '#f5f5f5',
-              fontSize: '12px', padding: '0 10px'}}>
-          Perform single step forward synthesis. Drag and drop samples as reactants, reagents and solvents. Multiple samples are currently not supported.
-          Outcome of the synthesis can be saved by clicking on the molecule and using Save Molecule button. Molecules are saved to currently selected collection.
-        </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px' }}>
-                <div style={{ flexGrow: 1, display: 'flex', justifyContent: 'center',padding: '10px' }}>
-                    <button onClick={this.handleMoleculeSave}>Save Molecule</button>
-                    <div style={{ margin: '0 10px' }}></div>
-                    <button onClick={this.handleSynthesize}>Synthesize</button>
-            </div>
-          <Button variant="info" size="sm" className="button-right" onClick={this.clickToReset}>
-              <span><i className="fa fa-eraser" /> Reset</span>
-          </Button>
-          
-          </div> 
+          <div>
+            <PredictionHelp>
+              Perform single step forward synthesis. Drag and drop samples as reactants, reagents and solvents.
+              Multiple samples are currently not supported. The outcome can be saved by clicking a molecule and
+              using Save Molecule; molecules are saved to the currently selected collection.
+            </PredictionHelp>
+            <PredictionToolbar>
+              <Button variant="primary" size="sm" onClick={this.handleSynthesize}>
+                <i className="fa fa-flask me-1" aria-hidden="true" />
+                Synthesize
+              </Button>
+              <Button variant="outline-primary" size="sm" onClick={this.handleMoleculeSave}>
+                <i className="fa fa-floppy-o me-1" aria-hidden="true" />
+                Save Molecule
+              </Button>
+              <Button variant="outline-secondary" size="sm" className="ms-auto" onClick={this.clickToReset}>
+                <i className="fa fa-eraser me-1" aria-hidden="true" />
+                Reset
+              </Button>
+            </PredictionToolbar>
+            <div className="prediction-flow">
             <ReactFlowProvider>
               <ReactFlow
                 nodes={nodes}
@@ -335,6 +317,7 @@ class ForwardContainer extends Component {
                 <Background color="#aaa" gap={16} />
               </ReactFlow>
             </ReactFlowProvider>
+            </div>
           </div>
         )}
       </div>

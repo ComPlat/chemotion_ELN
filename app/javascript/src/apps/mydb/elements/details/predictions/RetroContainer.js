@@ -1,5 +1,6 @@
 import React, { Component, useState} from 'react';
 import { Button } from 'react-bootstrap';
+import { PredictionHelp, PredictionLoading, PredictionToolbar } from './PredictionUI';
 import PropTypes from 'prop-types';
 import DropTargetMolecule from './dragNdrop';
 import ReactFlow, { ReactFlowProvider, Controls, MiniMap, Background, Handle, Position} from 'reactflow';
@@ -239,15 +240,10 @@ handleReactionSave = () => {
     const { showSVG, hoveredNode } = this.state; 
     const RootNode = ( { data } ) => {
       return (
-        <div style={{ border: '1px solid #ccc', padding: '10px', background: '#f0f0f0' }}>
-  
-        
-          <div style={{ maxWidth: '100%', maxHeight: '100%' }}>
-            <img
-              style={{ maxWidth: '100%', maxHeight: '100%' }}
-              src={`data:image/png;base64,${data.svg}`} alt="SVG"
-            />
-           <p style={ {justifyContent: 'center'} }><b>{ data.smiles }</b></p>         
+        <div className="prediction-node">
+          <div>
+            <img src={`data:image/png;base64,${data.svg}`} alt="" />
+            <p className="prediction-node__smiles"><b>{ data.smiles }</b></p>
           </div>
         <Handle
           type="target"
@@ -266,8 +262,6 @@ handleReactionSave = () => {
     };
 
     const CustomNode = ({ data }) => {
-    const borderColor = data.buy ? 'green' : 'red';
-
     const buyables = data.buyables || { result: [] };
     const { result, search } = buyables;
 
@@ -278,12 +272,11 @@ handleReactionSave = () => {
 
     return (
       <div
-        style={{ border: `2px solid ${borderColor}`, padding: '10px', background: '#f0f0f0', zIndex: '0' }}
+        className={`prediction-node prediction-node--${data.buy ? 'buyable' : 'unavailable'}`}
         title={data.buy ? (buyablesInfo ? `${data.smiles} - \nBuyable\n${buyablesInfo}` : `${data.smiles} - Not Buyable`) : data.smiles}
       >
-        
-        <div style={{ maxWidth: '100%', maxHeight: '100%' }}>
-          <img style={{ maxWidth: '100%', maxHeight: '100%' }} src={`data:image/png;base64,${data.svg}`} alt="SVG" />
+        <div>
+          <img src={`data:image/png;base64,${data.svg}`} alt="" />
         </div>
         {/* <button className='expbutton' style={{ marginTop: '10px', alignSelf: 'center'}} onClick={() => this.handleSave(data.smiles)} >Save Molecule</button> */}
         <Handle
@@ -407,43 +400,52 @@ handleReactionSave = () => {
 
     return (
       <div> 
-        {this.state.loading && 
-          <div style={{ height: '700px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img style={{ height: '100px' }} src='/images/wild_card/loading-bubbles.svg' alt="Loading..." />
-          </div>
-        }
+        {this.state.loading && <PredictionLoading label="Searching retrosynthesis tree…" />}
         {!this.state.loading && (
         <div>
-        <div style={{height: '100px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: '#f5f5f5',
-              fontSize: '12px', padding: '0 10px'}}>
-          Perform single step retro synthesis. Drag and drop sample in the drop field.
-          Outcome of the synthesis can be saved by clicking on the molecule and using Save Molecule button. Reaction can be saved by clicking on the reacton node and clicking save reaction button.
-          Clicking on the molecule are pressing Expand molecule, expands the tree node to find precurors of that molecule.
-          By clicking on Reaction node and pressing Copy reaction template, copies reaction template ID. 
-          Molecules are saved to currently selected collection.
-        </div>
+        <PredictionHelp>
+          Perform single step retro synthesis. Drag and drop a sample into the drop field. Click a molecule and use
+          Save Molecule to keep it, or click a reaction node and use Save Reaction. Expand Molecule finds precursors
+          of the selected molecule. Everything is saved to the currently selected collection.
+        </PredictionHelp>
         <div className="dropzone" >
           <DropTargetMolecule onChange={this.handleChange}/>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px' }}>
-                <div style={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
-                <button onClick={this.handleMoleculeSave} title="Save the current molecule to the current collection"  disabled={!this.state.success}>Save Molecule</button>
-                <div style={{ margin: '0 10px' }}></div>
-                <button onClick={this.handleReactionSave} title="Save the reaction to the current collection">Save Reaction</button>
-                <div style={{ margin: '0 10px' }}></div>
-                <button onClick={this.handleNodeExpand} title="Find precusors for selected molecule">Expand Molecule</button>
-                <div style={{ margin: '0 10px' }}></div>
-               {/* <button onClick={this.handleCopyTemplate} title="Copy reaction template id for lookup">Copy reaction template</button> */}
-            </div>
-          <Button variant="info" size="sm" className="button-right" onClick={this.clickToReset}>
-              <span><i className="fa fa-eraser" /> Reset</span>
+        <PredictionToolbar>
+          <Button
+            variant="outline-primary"
+            size="sm"
+            onClick={this.handleMoleculeSave}
+            title="Save the current molecule to the current collection"
+            disabled={!this.state.success}
+          >
+            <i className="fa fa-floppy-o me-1" aria-hidden="true" />
+            Save Molecule
           </Button>
-        </div>
-        <div style={{ height: '700px' }}>
+          <Button
+            variant="outline-primary"
+            size="sm"
+            onClick={this.handleReactionSave}
+            title="Save the reaction to the current collection"
+          >
+            <i className="fa fa-floppy-o me-1" aria-hidden="true" />
+            Save Reaction
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={this.handleNodeExpand}
+            title="Find precursors for the selected molecule"
+          >
+            <i className="fa fa-sitemap me-1" aria-hidden="true" />
+            Expand Molecule
+          </Button>
+          <Button variant="outline-secondary" size="sm" className="ms-auto" onClick={this.clickToReset}>
+            <i className="fa fa-eraser me-1" aria-hidden="true" />
+            Reset
+          </Button>
+        </PredictionToolbar>
+        <div className="prediction-flow">
         <ReactFlowProvider>
         <ReactFlow 
           nodes={nodes} 
