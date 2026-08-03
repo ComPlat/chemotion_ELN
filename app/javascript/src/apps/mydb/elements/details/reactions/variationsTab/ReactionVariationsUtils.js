@@ -18,7 +18,7 @@ function deepPatch(target, patch) {
 
   // Arrays: merge by index
   if (Array.isArray(target) && Array.isArray(patch)) {
-    return target.map((value, i) =>
+    return target.slice(0, patch.length).map((value, i) =>
       i in patch ? deepPatch(value, patch[i]) : structuredClone(value)
     );
   }
@@ -110,7 +110,8 @@ const convertVariationDatasetToInternalVariations = (reaction) => {
 
 const diffObjects = (obj1, obj2, ignoreList = []) => {
   let result, keys;
-  if (Array.isArray(obj2)) {
+  const isArray = Array.isArray(obj2);
+  if (isArray) {
     keys = obj2.map((x, i) => i);
     result = [];
   } else {
@@ -142,9 +143,13 @@ const diffObjects = (obj1, obj2, ignoreList = []) => {
 
       if (Object.keys(nestedDiff).length > 0) {
         result[key] = nestedDiff;
+      } else if (isArray) {
+        result[key] = null;
       }
     } else if (!Object.is(value1, value2)) {
       result[key] = value2;
+    } else if (isArray) {
+      result[key] = null;
     }
   }
 

@@ -51,8 +51,9 @@ const restoreAccordionState = ({ id } = {}) => {
       return saved === 'true';
     }
   } catch (e) { /* ignore storage errors */
-    return false;
   }
+  // Nothing stored is a boolean answer too - the accordion starts closed.
+  return false;
 };
 
 const isEmpty = (v) =>

@@ -399,7 +399,8 @@ NumeralInputWithUnitsCompo.propTypes = {
   rangeEnd: PropTypes.number,
   rangeStart: PropTypes.number,
   className: PropTypes.string,
-  value: PropTypes.number,
+  // Numbers usually, but the gas phase fields hand in 'n.d' for a value that is not determined.
+  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   block: PropTypes.bool,
   onChange: PropTypes.func,
   onMetricsChange: PropTypes.func,
