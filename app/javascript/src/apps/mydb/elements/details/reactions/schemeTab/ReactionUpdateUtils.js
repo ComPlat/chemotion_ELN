@@ -51,7 +51,7 @@ const handleInputChange = (type, event, reaction, onReactionChange) => {
   } else if (type === 'rfValue') {
     value = rfValueFormat(event.target.value) || '';
   } else {
-    value = event.target.value;
+    ({ target: { value } } = event);
   }
 
   const { newReaction, options } = setReactionByType(reaction, type, value);
@@ -2038,7 +2038,9 @@ export default class ReactionUpdateHandler {
 
   updatedReactionWithSample(updateFunction, updatedSample, type, includeSbmm = false) {
     const { reaction } = this.props;
-    reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials', type);
+    reaction.starting_materials = updateFunction(
+      reaction.starting_materials, updatedSample, 'starting_materials', type
+    );
     reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants', type);
     if (includeSbmm) {
       reaction.reactant_sbmm_samples = updateFunction(

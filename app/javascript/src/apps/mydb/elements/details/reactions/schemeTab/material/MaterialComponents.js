@@ -404,13 +404,13 @@ const SingleMaterialNameWithIupac = ({ mh, index, withStickyName, materialGroup,
     linkDisplayName = !material.isNew;
   }
   materialName = linkDisplayName ? (
-    <a
-      role="link"
-      tabIndex={0}
+    <Button
+      variant="link"
+      className="p-0 border-0 align-baseline text-start"
       onClick={() => mh.handler.materialClick(material)}
     >
       {materialDisplayName}
-    </a>
+    </Button>
   ) : materialDisplayName;
 
   const serialCode = SampleCode(index, materialGroup);

@@ -91,7 +91,6 @@ const SolventMaterial = ({ mh,
                            deleteMaterial,
                            dropRef,
                            dragRef,
-                           index,
                            withStickyName,
                            isDragging, isOver, canDrop }) => {
   const { material, reaction, materialGroup } = mh;
@@ -177,7 +176,6 @@ const GeneralMaterial = ({
                            showLoadingColumn,
                            dropRef,
                            dragRef,
-                           index,
                            withStickyName,
                            displayYieldField,
                            showComponents,

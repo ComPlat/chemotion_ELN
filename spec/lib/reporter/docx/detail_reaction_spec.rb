@@ -219,7 +219,7 @@ describe 'Reporter::Docx::DetailReaction' do
             'notes' => 'ran it colder',
             'data' => {
               'id' => SecureRandom.uuid,
-              'temperature' => { 'userText' => '-78' },
+              '_temperature' => { 'userText' => '-78' },
               '_starting_materials' => [
                 { '_target_amount_value' => 0.042, '_target_amount_unit' => 'g' },
               ],
