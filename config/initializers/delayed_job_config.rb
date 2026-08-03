@@ -48,6 +48,7 @@ ActiveSupport.on_load(:active_record) do
     { job_class: DiskUsageJob,         enabled: :default, cron_variable: 'CRON_CONFIG_DISK_USAGE' },
     { job_class: ChemrepoIdJob,        enabled: false,    cron_variable: 'CRON_CONFIG_CHEMREPO_ID' },
     { job_class: ArchiveColdAttachmentsJob, enabled: false, cron_variable: 'CRON_CONFIG_ARCHIVE_COLD_ATTACHMENTS' },
+    { job_class: StorageHealthCheckJob,     enabled: false, cron_variable: 'CRON_CONFIG_STORAGE_HEALTH_CHECK' },
   ]
 
   # Delete all reccuring jobs
