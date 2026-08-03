@@ -803,10 +803,10 @@ ConversionRateField.propTypes = {
 const YieldOrConversionRate = ({ mh, displayYieldField }) => {
   if (displayYieldField === true || displayYieldField === null) {
     const yieldMessage = (
-      <>
+      <div>
         The final yield value calculated upon saving the reaction
         is based on the real amount field value of this product.
-      </>
+      </div>
     );
     return (
       <div>
@@ -818,10 +818,9 @@ const YieldOrConversionRate = ({ mh, displayYieldField }) => {
           )}
         >
           <Form.Control
-            className="reaction-material__yield-data"
+            className="reaction-material__yield-data bs-form--compact"
             name="yield"
             type="text"
-            bsClass="bs-form--compact form-control"
             size="sm"
             value={mh.calculateYield() || 'n.d.'}
             disabled

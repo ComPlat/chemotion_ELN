@@ -282,7 +282,16 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
 
 ReactionVariations.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
-  variations: PropTypes.arrayOf(Reaction).isRequired,
+  variations: PropTypes.arrayOf(PropTypes.shape({
+    idx: PropTypes.number.isRequired,
+    group: PropTypes.arrayOf(
+      PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+    ).isRequired,
+    analyses: PropTypes.arrayOf(
+      PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    ),
+    data: PropTypes.instanceOf(Reaction).isRequired,
+  })).isRequired,
   setVariations: PropTypes.func.isRequired,
   onReactionChange: PropTypes.func.isRequired,
 };
