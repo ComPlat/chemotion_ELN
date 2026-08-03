@@ -201,6 +201,7 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
     header: MATERIAL_HEADER.mass,
     width: 150,
     unitToggle: { unit: 'g', prefixes: MASS_METRIC_PREFIXES, prefixOf: massMetricPrefix },
+    exportUnit: 'g',
     sortValue: (material) => material.amount_g,
     render: (mh) => (
       <MassField
@@ -215,6 +216,7 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
     header: MATERIAL_HEADER.vol,
     width: 150,
     unitToggle: { unit: 'l', prefixes: VOLUME_METRIC_PREFIXES, prefixOf: volumeMetricPrefix },
+    exportUnit: 'l',
     sortValue: (material) => material.amount_l,
     render: (mh) => <MaterialVolume mh={mh} className="reaction-material__volume-data" />,
   },
@@ -223,6 +225,7 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
     header: MATERIAL_HEADER.amount,
     width: 150,
     unitToggle: { unit: 'mol', prefixes: metricPrefixesMol, prefixOf: molMetricPrefix },
+    exportUnit: 'mol',
     sortValue: (material) => material.amount_mol,
     render: (mh) => <MaterialAmountMol mh={mh} />,
   },
@@ -230,6 +233,7 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
     key: 'molar_mass',
     header: MATERIAL_HEADER.molar_mass,
     width: 120,
+    exportUnit: 'g/mol',
     sortValue: (material) => material.molecule_molecular_weight,
     render: (mh) => (mh.isSbmm
       ? <MaterialActivity mh={mh} />
@@ -272,6 +276,7 @@ const GENERAL_MATERIAL_AMOUNT_FIELDS = [
       prefixes: metricPrefixesMolConc,
       prefixOf: (material) => getMetricMolConc(material),
     },
+    exportUnit: 'mol/l',
     sortValue: (material) => material.concn,
     render: (mh) => <MaterialConcentration mh={mh} />,
   },
@@ -312,6 +317,7 @@ const SOLVENT_FIELDS = [
     key: 'volume',
     header: MATERIAL_HEADER.vol,
     width: 150,
+    exportUnit: 'l',
     sortValue: (material) => material.amount_l,
     render: (mh) => <MaterialVolume mh={mh} className="reaction-material__solvent-volume-data" />,
   },
@@ -345,6 +351,8 @@ const GAS_PHASE_FIELDS = [
   header,
   width: 150,
   ...(unitSwitchable ? { unitToggle: { gasField } } : {}),
+  // The units gasSortValue reports in.
+  exportUnit: { time: 'h', temperature: 'K', part_per_million: 'ppm' }[gasField],
   sortValue: (material) => gasSortValue(material, gasField),
   render: (mh, { isGasProduct }) => (
     isGasProduct ? <GaseousInputFields mh={mh} field={gasField} /> : null
@@ -684,8 +692,10 @@ const schemaBuildColumnGroups = (variations) => {
               headerName: field.header,
               width: field.width,
               // Sorting needs a value of its own: the cells are renderers, so without this AG Grid
-              // would be comparing undefined against undefined for every row.
+              // would be comparing undefined against undefined for every row. The CSV export writes
+              // the same values, with `context.exportUnit` naming their unit in the header.
               valueGetter: ({ data }) => materialSortValue(data, matGroup, sampleIdx, field),
+              ...(field.exportUnit ? { context: { exportUnit: field.exportUnit } } : {}),
               ...(field.sticky ? { cellClass: STICKY_NAME_CLASS } : {}),
               // Overrides the plain draggable header of buildColumnDefs with one that also carries
               // the column wide unit switch.
@@ -719,6 +729,7 @@ const schemaBuildColumnGroups = (variations) => {
       ...(field.sortValue
         ? { valueGetter: ({ data }) => (data?.data ? field.sortValue(data.data) : null) }
         : { sortable: false }),
+      ...(field.exportUnit ? { context: { exportUnit: field.exportUnit } } : {}),
       cellRenderer: ReactionFieldCell,
       cellRendererParams: { field },
     })),

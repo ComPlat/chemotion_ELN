@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name, no-param-reassign, react-hooks/immutability */
 import React, {
-  useState, useEffect
+  useState, useEffect, useRef
 } from 'react';
 import {
   Button, OverlayTrigger, Tooltip,
@@ -19,6 +19,7 @@ import
   addInternalVariationObject,
   addNewVariationDataset,
   diffObjects, getReactionSegments,
+  exportVariationsToCsv,
   REACTION_VARIATIONS_TAB_KEY
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import { Select } from 'src/components/common/Select';
@@ -71,6 +72,8 @@ let globalInputTimer;
 const ReactionVariations = ({ reaction, variations, setVariations, onReactionChange }) => {
 
   const [activeVariation, setActiveVariation] = useState(null);
+  // Filled once the grid is up; the export button reads the grid through it.
+  const gridApiRef = useRef(null);
   const [editMode, setEditMode] = useState(false);
   const [currentSegment, setCurrentSegment] = useState('Schema');
   const [allSegment, setAllSegment] = useState([]);
@@ -223,6 +226,14 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
             onReactionChange(reaction);
           }}
         />
+        <Button
+          size="sm"
+          className="mb-2"
+          onClick={() => gridApiRef.current && exportVariationsToCsv(gridApiRef.current, reaction.short_label)}
+        >
+          <i className="fa fa-download me-1"/>
+          Export to CSV
+        </Button>
         <Select
           className="ms-auto"
           // Matches the small buttons it shares the row with; without a minimum the control would
@@ -243,6 +254,7 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
       </ButtonGroup>
       <VariationSchemaTable
         variations={variations}
+        onGridApiReady={(api) => { gridApiRef.current = api; }}
         onReactionChange={handleReactionChange}
         onInputChange={handleInputChange}
         setActiveVariation={setActiveVariation}
