@@ -5,6 +5,7 @@ import uuid from 'uuid';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
+const GROUP_ID_SEPARATOR = '::';
 
 function getVariationsRowName(reactionLabel, variationsRowId) {
   return `${reactionLabel}-V#${variationsRowId}`;
@@ -174,6 +175,71 @@ const persistColumnState = (reactionId, columnState) => {
   } catch (e) { /* ignore storage errors */ }
 };
 
+/*
+The editable fields of each segment klass, by segment label, ready to be turned into grid columns.
+
+`layerKey` is the key the layer sits under in `layers`, not `layer.key`: the two can differ, and it
+is the former that a segment instance is addressed by - see how the fields are read back in
+ReactionVariationSegmentComponents.
+
+The field is copied rather than referenced: `segmentKlasses` in the store is shared with everything
+else that reads the klass, and the select options resolved here would otherwise be written into it.
+*/
+function formatReactionSegments(segments) {
+  return segments.reduce((acc, segment) => {
+    const segmentLabel = segment.label;
+    const layers = segment.properties_release?.layers ?? {};
+
+    Object.entries(layers).forEach(([layerKey, layer]) => {
+      (layer.fields ?? [])
+        .filter((field) => ['integer', 'system-defined', 'select', 'text'].includes(field.type))
+        .forEach((field) => {
+          const entryKey = `layer<${layerKey}>field<${field.field}>`;
+          acc[segmentLabel] ??= {};
+          acc[segmentLabel][entryKey] = {
+            ...field,
+            layerKey,
+            layerLabel: layer.label || layerKey,
+            fieldKey: field.field,
+            ...(field.type === 'select' ? {
+              options: segment.properties_release?.select_options?.[field.option_layers]?.options ?? []
+            } : {}),
+          };
+        });
+    });
+
+    return acc;
+  }, {});
+}
+
+async function getReactionSegments(reaction_segments) {
+  try {
+    const segments = UserStore.getState().segmentKlasses || [];
+    const segmentLabels = new Set(
+      segments
+        .filter((s) => s.element_klass.name === 'reaction' && s.is_active)
+        .map((s) => s.label)
+    ); // Segments that can be added to a reaction.
+    const selectedSegmentLabels = new Set(
+      (reaction_segments ?? []).map((s) => s.klass_label)
+    ); // Segment that are currently added to the reaction.
+    // We want the segments that are currently added to the reaction to occur in the selection first,
+    // followed by the segments that could be added to a reaction, but aren't currently added to the reaction.
+    const orderedSegmentLabels = [
+      ...selectedSegmentLabels,
+      ...[...segmentLabels].filter((label) => !selectedSegmentLabels.has(label))
+    ];
+    const orderedSegments = orderedSegmentLabels.map(
+      (label) => segments.find((segment) => segment.label === label)
+    ).filter(Boolean);
+
+    return formatReactionSegments(orderedSegments);
+  } catch (error) {
+    console.error('Error fetching segments:', error);
+    return {};
+  }
+}
+
 export {
   getInitialColumnState,
   persistColumnState,
@@ -183,5 +249,7 @@ export {
   makeVariationReaction,
   diffObjects,
   getVariationsRowName,
-  REACTION_VARIATIONS_TAB_KEY
+  REACTION_VARIATIONS_TAB_KEY,
+  GROUP_ID_SEPARATOR,
+  getReactionSegments
 };

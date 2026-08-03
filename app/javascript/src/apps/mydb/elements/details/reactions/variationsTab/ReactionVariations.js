@@ -150,7 +150,7 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
   );
 
   return (<>
-    <div>
+    <div style={{ position: 'relative' }}>
       <ButtonGroup>
         {addVariation()}
         <Button
@@ -170,21 +170,22 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
           }}
         />
       </ButtonGroup>
+      <VariationSchemaTable
+        variations={variations}
+        onReactionChange={handleReactionChange}
+        onInputChange={handleInputChange}
+        setActiveVariation={setActiveVariation}
+        isActiveVariation={!!activeVariation}
+        onGroupChange={onGroupChange}
+        onDeleteVariation={deleteVariation}
+        onAnalysesChange={onAnalysesChange}
+        allReactionAnalyses={getReactionAnalyses(reaction)}
+        reactionShortLabel={reaction.short_label}
+        reactionId={reaction.id}
+        editMode={editMode}
+        reactionSegments={reaction.segments}
+      />
     </div>
-    <VariationSchemaTable
-      variations={variations}
-      onReactionChange={handleReactionChange}
-      onInputChange={handleInputChange}
-      setActiveVariation={setActiveVariation}
-      isActiveVariation={!!activeVariation}
-      onGroupChange={onGroupChange}
-      onDeleteVariation={deleteVariation}
-      onAnalysesChange={onAnalysesChange}
-      allReactionAnalyses={getReactionAnalyses(reaction)}
-      reactionShortLabel={reaction.short_label}
-      reactionId={reaction.id}
-      editMode={editMode}
-    />
     <div style={{ position: 'relative' }}>
       {activeVariation &&
         (<div><h2>Variation #{activeVariation.label}</h2>
