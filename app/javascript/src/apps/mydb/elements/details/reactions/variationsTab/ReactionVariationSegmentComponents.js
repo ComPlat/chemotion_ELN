@@ -50,13 +50,15 @@ const findSegment = (reaction, klass) => reaction.segments.find(
 A segment the reaction never had is built empty on the first edit, the way the segment tab builds one
 when it is first opened. Until then the column renders from nothing and the variation stays clean.
 */
+const emptySegment = (klass) => Segment.buildEmpty(cloneDeep(klass));
+
 const buildSegment = (reaction, klass) => {
   /*
   Assigned rather than pushed: `Reaction#segments` hands out an empty array when it has none of its
   own, so a push would land nowhere. The setter is what stores them, and it rebuilds every entry as
   a Segment, so the one to edit is read back from the reaction afterwards.
   */
-  reaction.segments = [...reaction.segments, Segment.buildEmpty(cloneDeep(klass))];
+  reaction.segments = [...reaction.segments, emptySegment(klass)];
   return findSegment(reaction, klass);
 };
 
@@ -335,4 +337,10 @@ const segmentBuildColumnGroups = (segmentLabel, segmentFields) => {
 };
 
 export default segmentBuildColumnGroups;
-export { segmentBuildColumnGroups };
+// The last three are what the panel under the grid needs to hand the same segment to GenericSGDetails.
+export {
+  segmentBuildColumnGroups,
+  segmentKlassOf,
+  findSegment,
+  emptySegment,
+};

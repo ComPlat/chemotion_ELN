@@ -26,7 +26,7 @@ import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/sche
 import {
   getInitialColumnState,
   persistColumnState,
-  GROUP_ID_SEPARATOR, getReactionSegments
+  GROUP_ID_SEPARATOR
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import VariationsGridContext
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsGridContext';
@@ -402,7 +402,8 @@ const VariationSchemaTable = ({
   reactionShortLabel,
   reactionId,
   editMode,
-  reactionSegments,
+                                currentSegment,
+                                currentSegmentName,
 }) => {
   /*
   Seeded from the stored layout so the very first column definitions already carry the right `hide`
@@ -425,29 +426,9 @@ const VariationSchemaTable = ({
   }, []);
   const [activeSlot, setActiveSlot] = useState(null);
   const [groupOrder, setGroupOrder] = useState([]);
-  const [currentSegment, setCurrentSegment] = useState('Schema');
-  const [allSegment, setAllSegment] = useState([]);
   const gridApiRef = useRef(null);
   const gridElementRef = useRef(null);
   const restoredRef = useRef(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      const result = await getReactionSegments(reactionSegments);
-
-      if (!cancelled) {
-        setAllSegment({ Schema: {}, ...result });
-      }
-    }
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [reactionSegments]);
 
   /*
   Mirrors the grid's own top level header order into state, so the toolbar always shows the groups
@@ -579,7 +560,7 @@ const VariationSchemaTable = ({
     });
   }, []);
 
-  const columnGroups = buildColumnGroups(variations, currentSegment, allSegment[currentSegment]);
+  const columnGroups = buildColumnGroups(variations, currentSegmentName, currentSegment);
 
   /*
   The pinned material column only ever shows the material of the slot currently at the left edge, so
@@ -690,29 +671,6 @@ const VariationSchemaTable = ({
             ))}
           </>
         )}
-        <div style={{
-          position: 'absolute',
-          right: 0,
-          top: 0,
-        }}>
-        <Select
-          className="ms-auto"
-          // Matches the small buttons it shares the row with; without a minimum the control would
-          // collapse onto its own text.
-          size="sm"
-          minWidth="180px"
-          options={Object.entries(allSegment).map(([label, value]) => ({ label, value }))}
-          value={
-            currentSegment && allSegment[currentSegment]
-              ? { value: allSegment[currentSegment], label: currentSegment }
-              : null
-          }
-          onChange={({ label }) => {
-            setCurrentSegment(label);
-          }}
-          isSearchable
-        />
-        </div>
       </div>
       <div className="ag-theme-alpine reaction-variations-grid" ref={gridElementRef}>
         <AgGridReact
@@ -802,7 +760,8 @@ VariationSchemaTable.propTypes = {
   })).isRequired,
   reactionShortLabel: PropTypes.string,
   reactionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  reactionSegments: PropTypes.array.isRequired
+  currentSegment: PropTypes.shape({}).isRequired,
+  currentSegmentName: PropTypes.string.isRequired
 };
 
 VariationSchemaTable.defaultProps = {
