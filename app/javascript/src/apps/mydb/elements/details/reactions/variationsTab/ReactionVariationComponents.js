@@ -20,7 +20,9 @@ import { permitOn } from 'src/components/common/uis';
 import DragHandle from 'src/components/common/DragHandle';
 import DeleteButton from 'src/components/common/DeleteButton';
 import AppModal from 'src/components/common/AppModal';
-import { AnalysesCell } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
+import {
+  AnalysesCell, autofillVariationFromAnalysis
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import {
   getInitialColumnState,
@@ -69,7 +71,7 @@ const compareGroups = (a, b) => {
 
 const AnalysesLinkCell = ({ data }) => {
   const {
-    onAnalysesChange, allReactionAnalyses, reactionShortLabel
+    onAnalysesChange, allReactionAnalyses, reactionShortLabel, getRowHandler
   } = useContext(VariationsGridContext);
 
   return (
@@ -80,6 +82,9 @@ const AnalysesLinkCell = ({ data }) => {
       rowId={data.label}
       disabled={!permitOn(data.data)}
       onChange={(analyses) => onAnalysesChange(data.idx, analyses)}
+      // Applies a dataset's reaction_variation.json to this row, through the row's own update
+      // handler, so it recomputes exactly as typing the amounts would.
+      onAutofill={(samples) => autofillVariationFromAnalysis(data.data, getRowHandler(data), samples)}
     />
   );
 };

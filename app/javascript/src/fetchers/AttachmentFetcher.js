@@ -69,6 +69,15 @@ export default class AttachmentFetcher {
     return ApiClient.postJson('/api/v1/attachments/thumbnails', { body: { ids } });
   }
 
+  static async loadAttachmentContent({ id }) {
+    const res = await fetch(`/api/v1/attachments/${id}`, { credentials: 'same-origin' });
+    if (!res.ok) {
+      throw new Error(`HTTP error: ${res.status}`);
+    }
+
+    return res;
+  }
+
   static fetchFiles(ids) {
     if (ids.length < 1) { return {}; }
 
