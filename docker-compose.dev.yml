@@ -152,6 +152,19 @@ services:
     working_dir: "/home/ubuntu/app"
     command: 'yarn run storybook'
 
+  # MOFid/MOFkey generator: wraps the snurr-group `mofid` pipeline behind HTTP.
+  # Reached by the app container at http://mof_service:5000/ (see
+  # config/mof_service.yml). Built from ./mof_service.
+  mof_service:
+    build:
+      context: ./mof_service
+    image: ${IMG_MOF:-chemotion-mof-service:latest}
+    hostname: mof_service
+    restart: unless-stopped
+    expose:
+      - '5000'
+    networks:
+      - chemotion
 
 volumes:
   database:
