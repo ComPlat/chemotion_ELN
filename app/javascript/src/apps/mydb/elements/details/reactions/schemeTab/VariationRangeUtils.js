@@ -29,7 +29,10 @@ const findVariationRange = (variations, valueGetter, currentValue) => {
   }
 
   const values = variations
-    .map((variation) => Number(valueGetter(variation.data)))
+    .map((variation) => valueGetter(variation.data))
+    // An unset field is absent from the range, not zero in it: Number(null) and Number('') are 0.
+    .filter((value) => value !== null && value !== undefined && value !== '')
+    .map(Number)
     .filter((value) => Number.isFinite(value));
 
   if (!values.length) {
