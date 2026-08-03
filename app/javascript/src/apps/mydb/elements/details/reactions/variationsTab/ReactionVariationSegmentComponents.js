@@ -24,6 +24,8 @@ import { Select } from 'src/components/common/Select';
 import DragHandle from 'src/components/common/DragHandle';
 import VariationsGridContext
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsGridContext';
+import { SortableHeaderName }
+  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsSortHeader';
 
 /*
 Not GROUP_ID_SEPARATOR: `syncActiveSlot` reads every group id containing that separator as a
@@ -94,6 +96,23 @@ const selectOptionsOf = (field) => (field.options ?? []).map((option) => ({
   value: option.key ?? option.value ?? option.label,
   label: option.label ?? option.key ?? option.value,
 }));
+
+/*
+What one segment column sorts on: the field's own value, in whichever unit the row holds it. A
+variation with no segment yet, or one whose klass has since lost the field, sorts as empty.
+*/
+const segmentSortValue = (row, segmentLabel, layerKey, field) => {
+  const reaction = row?.data ?? null;
+  const klass = reaction ? segmentKlassOf(segmentLabel) : null;
+  const value = klass
+    ? fieldOf(findSegment(reaction, klass), layerKey, field.fieldKey)?.value
+    : null;
+
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+  return field.type === 'integer' || field.type === 'system-defined' ? Number(value) : value;
+};
 
 /*
 Renders one field of one variation's segment. `segmentLabel`/`layerKey`/`fieldKey` are fixed per
@@ -230,7 +249,7 @@ variation that has no value here yet is left alone - switching a unit is not a r
 segment - and its cell adopts the column's unit if it is ever filled in.
 */
 const SegmentUnitHeader = ({
-  displayName, colId, segmentLabel, layerKey, fieldKey, field
+  displayName, colId, segmentLabel, layerKey, fieldKey, field, column, enableSorting, progressSort
 }) => {
   const {
     variations, getRowHandler, columnUnits, setColumnUnit
@@ -266,7 +285,12 @@ const SegmentUnitHeader = ({
   return (
     <div className="d-flex align-items-center gap-1 w-100">
       <DragHandle />
-      <span className="text-truncate">{displayName}</span>
+      <SortableHeaderName
+        displayName={displayName}
+        column={column}
+        enableSorting={enableSorting}
+        progressSort={progressSort}
+      />
       {unit && (
         <Button
           variant="light"
@@ -292,6 +316,16 @@ SegmentUnitHeader.propTypes = {
   field: PropTypes.shape({
     option_layers: PropTypes.string,
   }).isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  column: PropTypes.object,
+  enableSorting: PropTypes.bool,
+  progressSort: PropTypes.func,
+};
+
+SegmentUnitHeader.defaultProps = {
+  column: null,
+  enableSorting: false,
+  progressSort: () => {},
 };
 
 /*
@@ -323,6 +357,8 @@ const segmentBuildColumnGroups = (segmentLabel, segmentFields) => {
         headerName: field.label || field.fieldKey,
         headerTooltip: field.label || field.fieldKey,
         width: COLUMN_WIDTHS[field.type] ?? 150,
+        // The cells are renderers, so sorting needs the value spelled out for it.
+        valueGetter: ({ data }) => segmentSortValue(data, segmentLabel, layerKey, field),
         // Overrides the plain draggable header of buildColumnDefs with one that also carries the
         // column wide unit switch.
         ...(field.type === 'system-defined' ? {

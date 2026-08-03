@@ -10,7 +10,6 @@ import React, {
   useCallback, useContext, useEffect, useMemo, useRef, useState
 } from 'react';
 import PropTypes from 'prop-types';
-import { Select } from 'src/components/common/Select';
 import { AgGridReact } from 'ag-grid-react';
 import {
   Button, ButtonGroup, Form, OverlayTrigger, Popover
@@ -30,6 +29,8 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import VariationsGridContext
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsGridContext';
+import { SortableHeaderName }
+  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsSortHeader';
 import {
   schemaBuildColumnGroups
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationSchemaComponents';
@@ -46,6 +47,23 @@ const ANALYSES_GROUP = 'analyses_fields';
 // Marks the material name cells that follow the horizontal scroll inside their own group.
 const STICKY_NAME_CLASS = 'variations-sticky-name';
 const STICKY_NAME_FLOATING_CLASS = 'variations-sticky-name--floating';
+// Keys that move a text caret, and the elements that have one - see suppressKeyboardEvent below.
+const CARET_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+const CARET_ELEMENTS = ['INPUT', 'TEXTAREA'];
+
+// Element by element, numerically: [2,1] sorts before [10,2].
+const compareGroups = (a, b) => {
+  const left = a ?? [];
+  const right = b ?? [];
+
+  for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
+    const difference = (Number(left[i]) || 0) - (Number(right[i]) || 0);
+    if (difference !== 0) {
+      return difference;
+    }
+  }
+  return 0;
+};
 
 const AnalysesLinkCell = ({ data }) => {
   const {
@@ -172,15 +190,32 @@ GroupToggleButton.propTypes = {
 Header of a movable column. AG Grid drags the whole header cell, so the handle is an affordance
 rather than the drag source; it is revealed on hover by the stylesheet.
 */
-const DraggableHeader = ({ displayName }) => (
+const DraggableHeader = ({
+  displayName, column, enableSorting, progressSort
+}) => (
   <div className="d-flex align-items-center gap-1 w-100">
     <DragHandle />
-    <span className="text-truncate">{displayName}</span>
+    <SortableHeaderName
+      displayName={displayName}
+      column={column}
+      enableSorting={enableSorting}
+      progressSort={progressSort}
+    />
   </div>
 );
 
 DraggableHeader.propTypes = {
   displayName: PropTypes.string.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  column: PropTypes.object,
+  enableSorting: PropTypes.bool,
+  progressSort: PropTypes.func,
+};
+
+DraggableHeader.defaultProps = {
+  column: null,
+  enableSorting: false,
+  progressSort: () => {},
 };
 
 /*
@@ -223,8 +258,14 @@ const ColumnVisibilityHeader = ({ displayName, columns, movable }) => {
     </Popover>
   );
 
+  /*
+  Deliberately not `w-100`: AG Grid makes the group label `position: sticky` so it follows the
+  horizontal scroll inside its own group, which only leaves it room to move while the label is
+  narrower than the group. See the stylesheet, which has to undo AG Grid's own full-width rule on
+  the wrapper around this for the same reason.
+  */
   return (
-    <div className="d-flex align-items-center gap-1 w-100">
+    <div className="d-flex align-items-center gap-1">
       {movable && <DragHandle />}
       <span className="text-truncate">{displayName}</span>
       <OverlayTrigger
@@ -279,12 +320,18 @@ const buildColumnGroups = (variations, currentSegment, segmentFields) => {
           colId: 'variation_control',
           headerName: 'Control',
           width: 90,
+          // Buttons, with nothing to order by.
+          sortable: false,
           cellRenderer: OpenVariationCell,
         },
         {
           colId: 'variation_group',
           headerName: 'Group',
           width: 110,
+          valueGetter: ({ data }) => data.group,
+          // "10.2" after "2.1", not before it: a group is a sequence of numbers, so it is compared
+          // as one rather than as the text it is displayed as.
+          comparator: compareGroups,
           cellRenderer: GroupCell,
         },
       ],
@@ -301,6 +348,7 @@ const buildColumnGroups = (variations, currentSegment, segmentFields) => {
           colId: 'variation_analyses',
           headerName: 'Linked analyses',
           width: 140,
+          sortable: false,
           cellRenderer: AnalysesLinkCell,
         },
       ],
@@ -343,12 +391,29 @@ const buildColumnDefs = (columnGroups, hiddenColumns) => columnGroups.map((group
 
 const DEFAULT_COL_DEF = {
   editable: false,
-  sortable: false,
+  /*
+  Every column sorts unless it says otherwise, and the ones that do not - Control, Analyses, and the
+  rich text fields - turn it off where they are defined. A column of cell renderers has no value of
+  its own, so each one carries a `valueGetter` saying what it is ordered by.
+  */
+  sortable: true,
   filter: false,
   resizable: true,
   // Columns are draggable; the Variation group opts out per column, see buildColumnGroups.
   autoHeight: true,
   cellStyle: { display: 'flex', alignItems: 'center', overflow: 'visible' },
+  /*
+  Hands the caret keys back to the input under the cursor.
+
+  A cell holds a live input rather than an AG Grid editor, so `cellCtrl.editing` is never true, and
+  the early return that normally keeps arrow keys working inside an editor never fires: the grid
+  reads every arrow as "move to the next cell" and preventDefaults it, caret and all. Only keys
+  aimed at a caret are taken back, and only from an input, so arrowing across the read-only cells
+  still walks the grid as before.
+  */
+  suppressKeyboardEvent: ({ event }) => (
+    CARET_KEYS.includes(event.key) && CARET_ELEMENTS.includes(event.target?.tagName)
+  ),
 };
 
 /*
@@ -392,16 +457,16 @@ const useRowHandlerFactory = (onReactionChange) => {
 };
 
 const VariationSchemaTable = ({
-  variations,
-  onReactionChange,
-  setActiveVariation,
-  onGroupChange,
-  onDeleteVariation,
-  onAnalysesChange,
-  allReactionAnalyses,
-  reactionShortLabel,
-  reactionId,
-  editMode,
+                                variations,
+                                onReactionChange,
+                                setActiveVariation,
+                                onGroupChange,
+                                onDeleteVariation,
+                                onAnalysesChange,
+                                allReactionAnalyses,
+                                reactionShortLabel,
+                                reactionId,
+                                editMode,
                                 currentSegment,
                                 currentSegmentName,
 }) => {

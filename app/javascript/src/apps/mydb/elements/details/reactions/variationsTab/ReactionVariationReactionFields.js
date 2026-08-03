@@ -3,7 +3,8 @@ import PropTypes from 'prop-types';
 import {
   Badge, Button, Form, InputGroup, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
-import Reaction from 'src/models/Reaction';
+import moment from 'moment';
+import Reaction, { convertDuration } from 'src/models/Reaction';
 import { Select } from 'src/components/common/Select';
 import OlsTreeSelect from 'src/components/OlsComponent';
 import QuillEditor from 'src/components/QuillEditor';
@@ -28,7 +29,58 @@ semantics are the handler's, not a reimplementation.
 
 const VOLUME_METRIC_PREFIXES = ['m', 'u', 'n'];
 const TIME_PLACEHOLDER = 'DD/MM/YYYY hh:mm:ss';
+const TIMESTAMP_FORMAT = 'DD/MM/YYYY HH:mm:ss';
 const RICH_TEXT_PREVIEW_LENGTH = 150;
+
+/*
+What each column sorts on, below. Anything with a unit is read in one fixed unit, so a column sorts
+by what its numbers mean rather than by the unit a given row happens to be in - and switching a unit
+never reshuffles the rows.
+
+The two rich text fields have no `sortValue` on purpose: their column turns sorting off rather than
+ordering variations by a truncated preview of a Quill delta.
+*/
+const numericOrNull = (value) => {
+  const numeric = parseFloat(value);
+  return Number.isFinite(numeric) ? numeric : null;
+};
+
+const TEMPERATURE_IN_KELVIN = {
+  '°C': (value) => value + 273.15,
+  '°F': (value) => (((value - 32) * 5) / 9) + 273.15,
+  K: (value) => value,
+};
+
+// `temperature_display` is free text - "reflux" as readily as a number - so anything unparseable
+// simply has no place in the order.
+const temperatureInKelvin = (reaction) => {
+  const value = numericOrNull(reaction.temperature_display);
+  if (value === null) {
+    return null;
+  }
+
+  const toKelvin = TEMPERATURE_IN_KELVIN[reaction.temperature?.valueUnit];
+  return toKelvin ? toKelvin(value) : value;
+};
+
+const vesselSizeInLitres = (reaction) => {
+  const amount = numericOrNull(reaction.vessel_size?.amount);
+  if (amount === null) {
+    return null;
+  }
+
+  return reaction.vessel_size?.unit === 'l' ? amount : amount / 1000;
+};
+
+const durationInHours = (reaction) => {
+  const value = numericOrNull(reaction.durationDisplay?.dispValue);
+  return value === null ? null : convertDuration(value, reaction.durationUnit, 'Hour(s)');
+};
+
+const timestampValue = (timestamp) => {
+  const parsed = moment(timestamp, TIMESTAMP_FORMAT, true);
+  return parsed.isValid() ? parsed.valueOf() : null;
+};
 
 const handlerPropType = PropTypes.instanceOf(ReactionUpdateHandler).isRequired;
 const reactionPropType = PropTypes.instanceOf(Reaction).isRequired;
@@ -425,6 +477,7 @@ const REACTION_FIELDS = [
     header: 'Type (Name Reaction)',
     width: 240,
     requiresNonInteraction: true,
+    sortValue: (reaction) => reaction.rxno ?? '',
     render: (reaction, handler) => <ReactionTypeField reaction={reaction} handler={handler} />,
   },
   {
@@ -432,18 +485,21 @@ const REACTION_FIELDS = [
     header: 'Conditions',
     width: 260,
     requiresNonInteraction: true,
+    sortValue: (reaction) => reaction.conditions ?? '',
     render: (reaction) => <ConditionsTags reaction={reaction} />,
   },
   {
     key: 'temperature',
     header: 'Temperature',
     width: 190,
+    sortValue: (reaction) => temperatureInKelvin(reaction),
     render: (reaction, handler) => <TemperatureField reaction={reaction} handler={handler} />,
   },
   {
     key: 'ph',
     header: 'pH',
     width: 150,
+    sortValue: (reaction) => numericOrNull(reaction.ph_value),
     render: (reaction, handler) => <PhField reaction={reaction} handler={handler} />,
   },
   {
@@ -451,18 +507,21 @@ const REACTION_FIELDS = [
     header: 'Vessel size',
     width: 170,
     requiresNonInteraction: true,
+    sortValue: (reaction) => vesselSizeInLitres(reaction),
     render: (reaction, handler) => <VesselSizeField reaction={reaction} handler={handler} />,
   },
   {
     key: 'reaction_volume',
     header: 'Reaction volume',
     width: 230,
+    sortValue: (reaction) => numericOrNull(reaction.volume),
     render: (reaction, handler) => <ReactionVolumeField reaction={reaction} handler={handler} />,
   },
   {
     key: 'timestamp_start',
     header: 'Start',
     width: 200,
+    sortValue: (reaction) => timestampValue(reaction.timestamp_start),
     render: (reaction, handler) => (
       <TimestampField
         reaction={reaction}
@@ -476,6 +535,7 @@ const REACTION_FIELDS = [
     key: 'timestamp_stop',
     header: 'Stop',
     width: 200,
+    sortValue: (reaction) => timestampValue(reaction.timestamp_stop),
     render: (reaction, handler) => (
       <TimestampField
         reaction={reaction}
@@ -489,6 +549,7 @@ const REACTION_FIELDS = [
     key: 'duration',
     header: 'Duration',
     width: 230,
+    sortValue: (reaction) => durationInHours(reaction),
     render: (reaction, handler) => <DurationField reaction={reaction} handler={handler} />,
   },
   {
@@ -510,6 +571,7 @@ const REACTION_FIELDS = [
     header: 'Purification',
     width: 240,
     requiresNonInteraction: true,
+    sortValue: (reaction) => (reaction.purification ?? []).toString(),
     render: (reaction, handler) => <PurificationField reaction={reaction} handler={handler} />,
   },
   {
