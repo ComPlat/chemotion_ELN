@@ -7,7 +7,7 @@ that copy and handed to the row's ReactionUpdateHandler - the same route the mat
 columns take. What ends up stored is whatever `diffObjects` finds between the variation and its
 parent reaction, so a segment nobody touched costs nothing.
 
-Only the four field types ReactionVariationsUtils collects are here (text, integer, select and
+Only the four field types ReactionVariationsUtils collects are here (text, number, select and
 system-defined). The rest of the generic types - tables, uploads, drag-and-drop targets, rich text -
 have no meaningful single-line form and stay in the segment tab.
 */
@@ -35,7 +35,7 @@ const SEGMENT_GROUP_PREFIX = 'segment';
 
 const COLUMN_WIDTHS = {
   text: 200,
-  integer: 110,
+  number: 110,
   select: 180,
   'system-defined': 150,
 };
@@ -111,7 +111,7 @@ const segmentSortValue = (row, segmentLabel, layerKey, field) => {
   if (value === null || value === undefined || value === '') {
     return null;
   }
-  return field.type === 'integer' || field.type === 'system-defined' ? Number(value) : value;
+  return field.type === 'number' || field.type === 'system-defined' ? Number(value) : value;
 };
 
 /*
@@ -211,8 +211,8 @@ const SegmentFieldCell = ({
 
   return (
     <Form.Control
-      type={field.type === 'integer' ? 'number' : 'text'}
-      step={field.type === 'integer' ? 1 : undefined}
+      type={field.type === 'number' ? 'number' : 'text'}
+      step={field.type === 'number' ? 1 : undefined}
       size="sm"
       value={value}
       disabled={disabled}

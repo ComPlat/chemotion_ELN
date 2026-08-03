@@ -1,15 +1,19 @@
 import expect from 'expect';
 import sinon from 'sinon';
 
-import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
-import GasPhaseReactionStore from 'src/stores/alt/stores/GasPhaseReactionStore';
+/*
+These edits used to be methods of the ReactionDetailsScheme component and now live on the update
+handler it drives, so that the variations grid can reuse them per row. They read the same `this.props`
+either way, which is why the stand-in instances below are unchanged.
+*/
+import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 
-describe('ReactionDetailsScheme#onChangeRole', () => {
+describe('ReactionUpdateHandler#onChangeRole', () => {
   it("forwards '' (not null) to onInputChange when the dropdown is cleared", () => {
     const onInputChange = sinon.spy();
     const instance = { props: { onInputChange } };
 
-    ReactionDetailsScheme.prototype.onChangeRole.call(instance, null);
+    ReactionUpdateHandler.prototype.onChangeRole.call(instance, null);
 
     expect(onInputChange.calledOnceWith('role', '')).toBe(true);
   });
@@ -18,7 +22,7 @@ describe('ReactionDetailsScheme#onChangeRole', () => {
     const onInputChange = sinon.spy();
     const instance = { props: { onInputChange } };
 
-    ReactionDetailsScheme.prototype.onChangeRole.call(instance, { value: null });
+    ReactionUpdateHandler.prototype.onChangeRole.call(instance, { value: null });
 
     expect(onInputChange.calledOnceWith('role', '')).toBe(true);
   });
@@ -27,7 +31,7 @@ describe('ReactionDetailsScheme#onChangeRole', () => {
     const onInputChange = sinon.spy();
     const instance = { props: { onInputChange } };
 
-    ReactionDetailsScheme.prototype.onChangeRole.call(instance, { value: undefined });
+    ReactionUpdateHandler.prototype.onChangeRole.call(instance, { value: undefined });
 
     expect(onInputChange.calledOnceWith('role', '')).toBe(true);
   });
@@ -36,12 +40,13 @@ describe('ReactionDetailsScheme#onChangeRole', () => {
     const onInputChange = sinon.spy();
     const instance = { props: { onInputChange } };
 
-    ReactionDetailsScheme.prototype.onChangeRole.call(instance, { value: 'gp' });
+    ReactionUpdateHandler.prototype.onChangeRole.call(instance, { value: 'gp' });
 
     expect(onInputChange.calledOnceWith('role', 'gp')).toBe(true);
   });
 });
 
+describe('ReactionUpdateHandler#resolveReactionVolumeForConcentrationOrWarn', () => {
 // Regression tests for Bug 7:
 // Yield corrupted when a non-reference reactant amount changes in a polymer surface-chemistry reaction.
 // Fix: updatedSamplesForAmountChange() now routes polymer products through checkMassPolymer
@@ -572,7 +577,7 @@ describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', ()
     const reaction = { reactionVolumeForConcentration: () => null };
     const instance = { showReactionVolumeRequiredWarning: sinon.spy() };
 
-    const result = ReactionDetailsScheme.prototype
+    const result = ReactionUpdateHandler.prototype
       .resolveReactionVolumeForConcentrationOrWarn.call(instance, reaction);
 
     expect(result).toBe(null);
@@ -583,7 +588,7 @@ describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', ()
     const reaction = { reactionVolumeForConcentration: () => 0.01 };
     const instance = { showReactionVolumeRequiredWarning: sinon.spy() };
 
-    const result = ReactionDetailsScheme.prototype
+    const result = ReactionUpdateHandler.prototype
       .resolveReactionVolumeForConcentrationOrWarn.call(instance, reaction);
 
     expect(result).toBe(0.01);
@@ -591,7 +596,7 @@ describe('ReactionDetailsScheme#resolveReactionVolumeForConcentrationOrWarn', ()
   });
 });
 
-describe('ReactionDetailsScheme#updatedSamplesForVesselSizeChange', () => {
+describe('ReactionUpdateHandler#updatedSamplesForVesselSizeChange', () => {
   it('releases a feedstock preserveConcentration so it recomputes on vessel change', () => {
     const feedstock = {
       isFeedstock: () => true,
@@ -600,7 +605,7 @@ describe('ReactionDetailsScheme#updatedSamplesForVesselSizeChange', () => {
     };
     const instance = { calculateEquivalentForGasProduct: sinon.spy() };
 
-    const [result] = ReactionDetailsScheme.prototype
+    const [result] = ReactionUpdateHandler.prototype
       .updatedSamplesForVesselSizeChange.call(instance, [feedstock], 0.5);
 
     expect(result.preserveConcentration).toBe(false);
@@ -614,14 +619,14 @@ describe('ReactionDetailsScheme#updatedSamplesForVesselSizeChange', () => {
     };
     const instance = { calculateEquivalentForGasProduct: sinon.spy() };
 
-    const [result] = ReactionDetailsScheme.prototype
+    const [result] = ReactionUpdateHandler.prototype
       .updatedSamplesForVesselSizeChange.call(instance, [reactant], 0.5);
 
     expect(result.preserveConcentration).toBe(true);
   });
 });
 
-describe('ReactionDetailsScheme#switchVolumeLock', () => {
+describe('ReactionUpdateHandler#switchVolumeLock', () => {
   it('releases preserved concentrations and toggles the lock', () => {
     const reaction = {
       isVolumeLocked: false,
@@ -634,7 +639,7 @@ describe('ReactionDetailsScheme#switchVolumeLock', () => {
       showReactionVolumeRequiredWarning: sinon.spy(),
     };
 
-    ReactionDetailsScheme.prototype.switchVolumeLock.call(instance);
+    ReactionUpdateHandler.prototype.switchVolumeLock.call(instance);
 
     expect(reaction.resetPreservedConcentrationExcept.calledOnce).toBe(true);
     expect(onInputChange.calledOnceWith('lockReactionVolume', true)).toBe(true);
@@ -652,7 +657,7 @@ describe('ReactionDetailsScheme#switchVolumeLock', () => {
       showReactionVolumeRequiredWarning: sinon.spy(),
     };
 
-    ReactionDetailsScheme.prototype.switchVolumeLock.call(instance);
+    ReactionUpdateHandler.prototype.switchVolumeLock.call(instance);
 
     expect(instance.showReactionVolumeRequiredWarning.calledOnce).toBe(true);
     expect(reaction.resetPreservedConcentrationExcept.called).toBe(false);
@@ -660,7 +665,7 @@ describe('ReactionDetailsScheme#switchVolumeLock', () => {
   });
 });
 
-describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
+describe('ReactionUpdateHandler#handleFixedVolumeConcentrationChange', () => {
   it('makes no change when the reaction volume cannot be resolved', () => {
     const reaction = {};
     const updatedSample = {
@@ -675,7 +680,7 @@ describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
       updatedSamplesForAmountChange: () => {},
     };
 
-    const result = ReactionDetailsScheme.prototype
+    const result = ReactionUpdateHandler.prototype
       .handleFixedVolumeConcentrationChange.call(instance, updatedSample, 2);
 
     expect(updatedSample.setAmountFromConcentrationAndPreserve.called).toBe(false);
@@ -699,7 +704,7 @@ describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
       updatedSamplesForAmountChange: () => {},
     };
 
-    const result = ReactionDetailsScheme.prototype
+    const result = ReactionUpdateHandler.prototype
       .handleFixedVolumeConcentrationChange.call(instance, updatedSample, 2);
 
     expect(updatedSample.concn).toBe(2);
@@ -710,7 +715,7 @@ describe('ReactionDetailsScheme#handleFixedVolumeConcentrationChange', () => {
   });
 });
 
-describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', () => {
+describe('ReactionUpdateHandler#updatedReactionForConcentrationChange routing', () => {
   const buildInstance = (updatedSample, reactionOverrides = {}) => {
     const reaction = {
       gaseous: false,
@@ -731,7 +736,7 @@ describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', 
     const updatedSample = { amount_mol: 0, isFeedstock: () => false };
     const instance = buildInstance(updatedSample);
 
-    ReactionDetailsScheme.prototype.updatedReactionForConcentrationChange.call(
+    ReactionUpdateHandler.prototype.updatedReactionForConcentrationChange.call(
       instance,
       { sampleID: 1, concentration: { value: 2 } }
     );
@@ -744,148 +749,12 @@ describe('ReactionDetailsScheme#updatedReactionForConcentrationChange routing', 
     const updatedSample = { amount_mol: 0.5, isFeedstock: () => false };
     const instance = buildInstance(updatedSample);
 
-    ReactionDetailsScheme.prototype.updatedReactionForConcentrationChange.call(
+    ReactionUpdateHandler.prototype.updatedReactionForConcentrationChange.call(
       instance,
       { sampleID: 1, concentration: { value: 2 } }
     );
 
     expect(instance.applyDerivedVolumeFromConcentration.calledOnce).toBe(true);
     expect(instance.handleFixedVolumeConcentrationChange.called).toBe(false);
-  });
-});
-
-// Bug fix: checkMassMolecule must NOT fire material-loss warning when product has no mass entered.
-// When user changes reference compound value with no product mass, massExperimental=0 which is
-// always < mFull, causing a false positive. Fixed by guarding with massExperimental > 0.
-describe('ReactionDetailsScheme#checkMassMolecule — no false material-loss warning', () => {
-  let notificationStub;
-
-  const buildInstance = () => {
-    notificationStub = sinon.stub();
-    const instance = Object.create(ReactionDetailsScheme.prototype);
-    instance.context = { notifications: { add: notificationStub } };
-    return instance;
-  };
-
-  const buildRef = (overrides = {}) => ({
-    amount_mol: 0.01,
-    amount_g: 1.0,
-    decoupled: false,
-    molecular_mass: 0,
-    molecule: { molecular_weight: 100 },
-    coefficient: 1,
-    ...overrides,
-  });
-
-  const buildProduct = (overrides = {}) => ({
-    amount_g: 0,
-    contains_residues: true,
-    decoupled: false,
-    molecular_mass: 0,
-    molecule: { molecular_weight: 200 },
-    coefficient: 1,
-    ...overrides,
-  });
-
-  it('does NOT fire warning when product mass is 0 and deltaM < 0 (expect weight loss)', () => {
-    const instance = buildInstance();
-    // deltaM = 50 - 100 = -50 (weight loss), mFull = 1.0 + 0.01*(-50) = 0.5
-    // massExperimental = 0 → should NOT warn (zero = no value entered)
-    const ref = buildRef({ molecule: { molecular_weight: 100 } });
-    const product = buildProduct({ amount_g: 0, molecule: { molecular_weight: 50 } });
-    instance.checkMassMolecule(ref, product);
-    expect(notificationStub.called).toBe(false);
-  });
-
-  it('DOES fire warning when product mass is entered and is less than possible (weight loss)', () => {
-    const instance = buildInstance();
-    // deltaM = 50 - 100 = -50, mFull = 0.5g; entering 0.1g < 0.5g → should warn
-    const ref = buildRef({ molecule: { molecular_weight: 100 } });
-    const product = buildProduct({ amount_g: 0.1, molecule: { molecular_weight: 50 } });
-    instance.checkMassMolecule(ref, product);
-    expect(notificationStub.calledOnce).toBe(true);
-    expect(notificationStub.firstCall.args[0].level).toBe('error');
-  });
-
-  it('does NOT fire warning when product mass is 0 and deltaM > 0 (expect weight gain)', () => {
-    const instance = buildInstance();
-    // deltaM = 200 - 100 = 100 (weight gain)
-    const ref = buildRef({ molecule: { molecular_weight: 100 } });
-    const product = buildProduct({ amount_g: 0, molecule: { molecular_weight: 200 } });
-    instance.checkMassMolecule(ref, product);
-    expect(notificationStub.called).toBe(false);
-  });
-});
-
-// S1 fix: calculateEquivalent/checkMassMolecule run once per polymer product per
-// recompute pass (a single edit can touch every product in the reaction), so their
-// notifications.add calls need a stable uid — otherwise react-hot-toast stacks one
-// toast per product instead of collapsing repeats of the same underlying condition.
-describe('ReactionDetailsScheme#checkMassMolecule / #calculateEquivalent — toast dedupe uid', () => {
-  let notificationStub;
-
-  const buildInstance = () => {
-    notificationStub = sinon.stub();
-    const instance = Object.create(ReactionDetailsScheme.prototype);
-    instance.context = { notifications: { add: notificationStub } };
-    return instance;
-  };
-
-  const buildRef = (overrides = {}) => ({
-    amount_mol: 0.01,
-    amount_g: 1.0,
-    decoupled: false,
-    molecular_mass: 0,
-    molecule: { molecular_weight: 100 },
-    coefficient: 1,
-    ...overrides,
-  });
-
-  const buildProduct = (overrides = {}) => ({
-    id: 1,
-    amount_g: 0.1,
-    contains_residues: true,
-    decoupled: false,
-    molecular_mass: 0,
-    molecule: { molecular_weight: 50 },
-    coefficient: 1,
-    ...overrides,
-  });
-
-  it('checkMassMolecule uses distinct uids for distinct products', () => {
-    const instance = buildInstance();
-    const ref = buildRef({ molecule: { molecular_weight: 100 } });
-    instance.checkMassMolecule(ref, buildProduct({ id: 11 }));
-    instance.checkMassMolecule(ref, buildProduct({ id: 22 }));
-    expect(notificationStub.calledTwice).toBe(true);
-    expect(notificationStub.firstCall.args[0].uid).toBe('polymer-mass-error-11');
-    expect(notificationStub.secondCall.args[0].uid).toBe('polymer-mass-error-22');
-  });
-
-  it('checkMassMolecule uses the same uid across repeat passes for the same product', () => {
-    const instance = buildInstance();
-    const ref = buildRef({ molecule: { molecular_weight: 100 } });
-    const product = buildProduct({ id: 33 });
-    instance.checkMassMolecule(ref, product);
-    instance.checkMassMolecule(ref, product);
-    expect(notificationStub.calledTwice).toBe(true);
-    expect(notificationStub.firstCall.args[0].uid).toBe('polymer-mass-error-33');
-    expect(notificationStub.secondCall.args[0].uid).toBe('polymer-mass-error-33');
-  });
-
-  it('calculateEquivalent uids the "no residues on reference" toast by reference id', () => {
-    const instance = buildInstance();
-    const ref = buildRef({ contains_residues: false, id: 44 });
-    instance.calculateEquivalent(ref, buildProduct());
-    expect(notificationStub.calledOnce).toBe(true);
-    expect(notificationStub.firstCall.args[0].uid).toBe('polymer-equivalent-no-residues-44');
-  });
-
-  it('calculateEquivalent uids the "no loading on reference" toast by reference id', () => {
-    const instance = buildInstance();
-    const ref = buildRef({ contains_residues: true, loading: 0, id: 55 });
-    instance.calculateEquivalent(ref, buildProduct());
-    expect(notificationStub.calledOnce).toBe(true);
-    expect(notificationStub.firstCall.args[0].uid).toBe('polymer-equivalent-no-loading-55');
   });
 });

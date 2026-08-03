@@ -439,5 +439,10 @@ NumeralInputWithUnitsCompo.defaultProps = {
   disableUnitButtonPadding: false,
 };
 
-export default React.memo(NumeralInputWithUnitsCompo, areEqual);
+const MemoizedNumeralInputWithUnitsCompo = React.memo(NumeralInputWithUnitsCompo, areEqual);
+// Without this the wrapper is reported as "Memo(NumeralInputWithUnitsCompo)" - by React DevTools,
+// and by anything that looks the component up by name, tests included.
+MemoizedNumeralInputWithUnitsCompo.displayName = 'NumeralInputWithUnitsCompo';
+
+export default MemoizedNumeralInputWithUnitsCompo;
 
