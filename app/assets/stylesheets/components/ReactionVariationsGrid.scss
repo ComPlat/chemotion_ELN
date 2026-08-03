@@ -79,6 +79,44 @@
     white-space: nowrap;
   }
 
+  /*
+  The group label follows the horizontal scroll inside its own group, so "Starting material 1" stays
+  readable when the scroll is halfway through a group 900px wide.
+
+  AG Grid already makes the label `position: sticky` (`.ag-sticky-label`, on unless a group sets
+  `suppressStickyLabel`), pinned `left: var(--ag-cell-horizontal-padding)` and clamped by the group
+  cell it sits in - which is exactly the behaviour wanted. It just never gets to move: the wrapper
+  AG Grid puts around a custom header component is `width: 100%`, which stretches the label across
+  the whole group and leaves sticky nothing to slide within. Letting it shrink to its content is the
+  whole fix; ColumnVisibilityHeader drops its own `w-100` to match.
+  */
+  .ag-header-group-cell .ag-header-cell-comp-wrapper {
+    width: auto;
+    max-width: 100%;
+  }
+
+  // The column name doubles as the sort control, so it is a button that has to read as a label.
+  // The arrow only asserts itself once the column is actually sorted.
+  .variations-sort-header {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+
+    &:hover .variations-sort-header__idle {
+      opacity: 0.75;
+    }
+
+    &__idle {
+      opacity: 0.25;
+    }
+  }
+
   // Columns are dragged by their header cell, so the handle is a hint rather than the drag source.
   // It stays in the layout when idle so the header text does not jump on hover.
   .ag-header-cell,
