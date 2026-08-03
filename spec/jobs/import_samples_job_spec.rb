@@ -284,7 +284,7 @@ describe ImportSamplesJob, active_job: true do
       it 'auto-dismisses only a clean import' do
         job.instance_variable_set(:@result, { status: 'ok', message: 'all good' })
         job.send(:notify_user)
-        expect(Message).to have_received(:create_msg_notification).with(hash_including(autoDismiss: 5))
+        expect(Message).to have_received(:create_msg_notification).with(hash_including(autoDismiss: 10))
       end
 
       it 'still notifies when the import produced no result hash' do

@@ -21,7 +21,7 @@ class ImportSamplesJob < ApplicationJob
 
     @result = case file_format
               when '.xlsx', '.csv' then import_spreadsheet(params)
-              when '.sdf' then import_sdf(params)
+              when '.sdf', '.mol' then import_sdf(params)
               else { message: "Unsupported format: #{file_format}" }
               end
   rescue StandardError => e
@@ -59,12 +59,10 @@ class ImportSamplesJob < ApplicationJob
     sdf_import = Import::ImportSdf.new(
       collection_id: @collection_id,
       current_user_id: @user_id,
-      rows: params[:sdf_rows],
-      mapped_keys: params[:mapped_keys],
       attachment: params[:attachment],
       import_type: params[:import_type],
     )
-    sdf_import.create_samples
+    sdf_import.import_from_file
     { message: sdf_import.message }
   end
 
