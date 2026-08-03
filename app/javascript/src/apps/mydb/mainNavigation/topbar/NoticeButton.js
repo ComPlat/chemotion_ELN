@@ -55,7 +55,10 @@ const handleNotification = (nots, act, context, needCallback = true) => {
         title: `From ${n.sender_name} on ${infoTimeString}`,
         message: newText,
         level: n.content.level || 'warning',
-        autoDismiss: n.content.autoDismiss || 5,
+        // ?? not ||: autoDismiss 0 means "keep it on screen until dismissed", and 0 is falsy, so
+        // `|| 5` silently auto-dismissed the notifications that most need to be read -- a failed or
+        // partial sample import asks for 0 precisely so its list of skipped rows does not vanish.
+        autoDismiss: n.content.autoDismiss ?? 5,
         position: n.content.position || 'tr',
         uid: n.id,
         action: {

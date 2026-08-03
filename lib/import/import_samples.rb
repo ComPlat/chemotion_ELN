@@ -335,6 +335,8 @@ module Import
       end
 
       unprocessable_count
+    ensure
+      Molecule.schedule_lcss_since(started_at)
     end
 
     # One transaction per batch. Returns how many of its rows could not be imported.
@@ -395,8 +397,6 @@ module Import
       rescue StandardError => e
         Rails.logger.warn("Import #{@file_name}: CAS prefetch failed on row #{index + 2}: #{e.message}")
       end
-    ensure
-      Molecule.schedule_lcss_since(started_at)
     end
 
     def structure?(row)
@@ -439,7 +439,7 @@ module Import
         smiles = result[:smiles]
 
         if smiles.present?
-          molecule = Molecule.find_or_create_by_cano_smiles(smiles)
+          molecule = Molecule.find_or_create_by_cano_smiles(smiles, defer_lcss: @defer_lcss)
           @molecule_cas_cache[cas_nr] = molecule
           return molecule
         end
