@@ -465,6 +465,7 @@ const useRowHandlerFactory = (onReactionChange) => {
 
 const VariationSchemaTable = ({
                                 variations,
+                                onGridApiReady,
                                 onReactionChange,
                                 setActiveVariation,
                                 onGroupChange,
@@ -787,6 +788,8 @@ const VariationSchemaTable = ({
           suppressColumnVirtualisation
           onGridReady={({ api }) => {
             gridApiRef.current = api;
+            // The parent's toolbar drives the CSV export, so it gets the api too.
+            onGridApiReady?.(api);
             const storedState = getInitialColumnState(reactionId);
             if (storedState?.length) {
               api.applyColumnState({ state: storedState, applyOrder: true });
@@ -833,6 +836,7 @@ const VariationSchemaTable = ({
 
 VariationSchemaTable.propTypes = {
   editMode: PropTypes.bool.isRequired,
+  onGridApiReady: PropTypes.func,
   variations: PropTypes.arrayOf(PropTypes.shape({
     idx: PropTypes.number.isRequired,
     group: PropTypes.arrayOf(
@@ -856,6 +860,7 @@ VariationSchemaTable.propTypes = {
 };
 
 VariationSchemaTable.defaultProps = {
+  onGridApiReady: null,
   reactionShortLabel: '',
   currentSegment: null
 };
