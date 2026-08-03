@@ -621,7 +621,7 @@ MaterialGroup.propTypes = {
   variations: PropTypes.arrayOf(PropTypes.shape({
     idx: PropTypes.number.isRequired,
     data: PropTypes.instanceOf(Reaction).isRequired,
-  })).isRequired
+  }))
 };
 
 GeneralMaterialGroup.propTypes = {
@@ -663,6 +663,7 @@ MaterialGroup.defaultProps = {
   displayYieldField: null,
   headIndex: 0,
   dndEnabled: true,
+  variations: null,
 };
 
 GeneralMaterialGroup.defaultProps = {

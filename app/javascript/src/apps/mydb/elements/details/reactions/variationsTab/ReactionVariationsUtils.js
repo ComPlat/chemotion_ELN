@@ -192,7 +192,7 @@ function formatReactionSegments(segments) {
 
     Object.entries(layers).forEach(([layerKey, layer]) => {
       (layer.fields ?? [])
-        .filter((field) => ['integer', 'system-defined', 'select', 'text'].includes(field.type))
+        .filter((field) => ['number', 'system-defined', 'select', 'text'].includes(field.type))
         .forEach((field) => {
           const entryKey = `layer<${layerKey}>field<${field.field}>`;
           acc[segmentLabel] ??= {};
@@ -251,5 +251,6 @@ export {
   getVariationsRowName,
   REACTION_VARIATIONS_TAB_KEY,
   GROUP_ID_SEPARATOR,
-  getReactionSegments
+  getReactionSegments,
+  formatReactionSegments
 };

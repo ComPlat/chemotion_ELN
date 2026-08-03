@@ -87,7 +87,10 @@ const AnalysesLinkCell = ({ data }) => {
 AnalysesLinkCell.propTypes = {
   data: PropTypes.shape({
     idx: PropTypes.number.isRequired,
-    label: PropTypes.string.isRequired,
+    label: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string,
+    ]).isRequired,
     data: PropTypes.instanceOf(Reaction).isRequired,
     analyses: PropTypes.arrayOf(
       PropTypes.oneOfType([PropTypes.string, PropTypes.number])
@@ -848,12 +851,13 @@ VariationSchemaTable.propTypes = {
   })).isRequired,
   reactionShortLabel: PropTypes.string,
   reactionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  currentSegment: PropTypes.shape({}).isRequired,
+  currentSegment: PropTypes.shape({}),
   currentSegmentName: PropTypes.string.isRequired
 };
 
 VariationSchemaTable.defaultProps = {
   reactionShortLabel: '',
+  currentSegment: null
 };
 
 export {
