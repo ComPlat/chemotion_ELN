@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'securerandom'
-describe ImportSamplesJob, active_job: true do
+describe ImportSamplesJob, :active_job do
   context 'when import file format is xlsx' do
     let(:attachment) { create(:attachment, :with_sample_import_template) }
     let(:import_samples_instance) { instance_double(Import::ImportSamples) }
