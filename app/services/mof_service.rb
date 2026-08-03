@@ -44,7 +44,15 @@ class MofService
       body: { cif: @cif }.to_json,
       timeout: 180,
     )
-    return nil if response.nil? || !response.success? || response.body.blank?
+    return nil if response.nil?
+
+    unless response.success?
+      # The sidecar returns { "error": "<reason>" } on failure; surface it in the
+      # log so operators are not left with an opaque 422 from MofAPI.
+      log_error("Sidecar returned HTTP #{response.code}: #{response.body.to_s.truncate(500)}")
+      return nil
+    end
+    return nil if response.body.blank?
 
     data = JSON.parse(response.body)
     return nil if data['mofid'].blank?

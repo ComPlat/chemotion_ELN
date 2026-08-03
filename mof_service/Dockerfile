@@ -46,6 +46,8 @@ COPY app.py .
 
 EXPOSE 5000
 
-# A single worker with a generous timeout — the Systre step can take a while
-# on large frameworks, and requests are expected to be low-volume.
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "180", "app:app"]
+# The Systre step can take a while on large frameworks, and requests are
+# expected to be low-volume. The worker timeout is kept above the Rails client
+# timeout (MofService uses 180s) so the client times out first with a clean
+# Net::ReadTimeout instead of racing gunicorn's abrupt worker kill.
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "300", "app:app"]

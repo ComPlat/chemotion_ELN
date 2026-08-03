@@ -4,7 +4,9 @@ import ApiClient from 'src/api_clients/ChemotionApiClient';
  * Client for Chemotion's MOF API (CIF → MOFid/MOFkey via sidecar).
  */
 export default class MofFetcher {
-  static REQUEST_TIMEOUT = 180000;
+  // Kept above the Rails→sidecar timeout (MofService: 180s) so the browser
+  // receives the clean 422 instead of aborting at the same moment.
+  static REQUEST_TIMEOUT = 200000;
 
   /**
    * Send CIF text to the backend and return MOFid identifiers.

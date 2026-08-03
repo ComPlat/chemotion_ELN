@@ -39,6 +39,9 @@ module Chemotion
           error!({ error: 'Uploaded file must be a CIF' }, 400) unless File.extname(filename).downcase == '.cif'
           error!({ error: 'Invalid upload' }, 400) if tempfile.blank?
 
+          # Reject oversized uploads before buffering the whole file into memory.
+          error!({ error: "CIF exceeds maximum size of #{MAX_CIF_BYTES} bytes" }, 413) if tempfile.size > MAX_CIF_BYTES
+
           cif = tempfile.read
         end
         error!({ error: 'No CIF provided' }, 400) if cif.blank?
