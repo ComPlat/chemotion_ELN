@@ -47,7 +47,13 @@ function SelectionShareModal({
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const uiState = UIStore.getState();
   const displayWarning = Number(permissions.permissionLevel) === PermissionConst.PassOwnership;
-  const canSubmit = !showUserSelect || (selectedUsers != null && selectedUsers.length > 0);
+  // Ownership is an offer to a single person; the backend rejects a group (or multiple recipients)
+  // at level 5 with a 422 (see prevent_invalid_ownership_offer! in collection_share_api.rb). Flag it
+  // here so the user gets an explanation instead of a bare error, and block the submit.
+  const invalidOwnershipOffer = displayWarning && showUserSelect
+    && ((selectedUsers || []).some((u) => u.type === 'Group') || (selectedUsers || []).length > 1);
+  const canSubmit = (!showUserSelect || (selectedUsers != null && selectedUsers.length > 0))
+    && !invalidOwnershipOffer;
   const submitTitle = shareType === 'edit' ? 'Edit Permissions' : 'Create Shared Collection';
 
   const handleSharing = () => {
@@ -240,6 +246,12 @@ function SelectionShareModal({
             <Form.Text className="d-block">
               <i className="fa fa-exclamation-circle ms-1" aria-hidden="true" />
               Transferring ownership applies to all sub-collections.
+            </Form.Text>
+          )}
+          {invalidOwnershipOffer && (
+            <Form.Text className="d-block text-danger">
+              <i className="fa fa-exclamation-triangle ms-1" aria-hidden="true" />
+              Ownership can only be transferred to a single person, not a group or several users.
             </Form.Text>
           )}
         </Form.Group>
