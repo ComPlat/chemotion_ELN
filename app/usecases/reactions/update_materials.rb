@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-# OSample / OSbmmSample (file-local OpenStruct helpers) now live in
-# update_materials/o_sample.rb and update_materials/o_sbmm_sample.rb as nested
-# constants of UpdateMaterials — Zeitwerk namespaced root (DEV_RAILS_UPGRADE_7-0.md §0a).
+# OSample / OSbmmSample (OpenStruct helpers) live in update_materials/*.rb as
+# nested UpdateMaterials constants (Zeitwerk).
 module Usecases
   module Reactions
     # rubocop:disable Metrics/ClassLength -- pre-existing size, out of scope for this PR

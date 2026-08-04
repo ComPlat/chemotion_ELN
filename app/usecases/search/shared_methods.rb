@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-# Namespaced under Usecases::Search (Zeitwerk namespaced root) — was a top-level
-# SharedMethods; compact form keeps the 116-line body untouched. DEV_RAILS_UPGRADE_7-0.md §0a.
+# Compact namespace form (Zeitwerk expects Usecases::Search::SharedMethods).
 class Usecases::Search::SharedMethods
   attr_reader :params, :user
 

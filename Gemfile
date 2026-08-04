@@ -95,7 +95,7 @@ gem 'puma', '< 6.0.0'
 
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
-gem 'rails', '~> 6.1.7.10'
+gem 'rails', '~> 7.0.0'
 gem 'redcarpet' # markdown rendering (welcome mailer, application_helper#markdown)
 gem 'rinchi-gem', git: 'https://github.com/ComPlat/rinchi-gem.git', branch: 'main'
 gem 'rmagick'
@@ -108,6 +108,8 @@ gem 'ruby-ole'
 
 gem 'sablon', git: 'https://github.com/ComPlat/sablon', tag: 'v0.4.3-1'
 gem 'sassc-rails'
+# Rails 7.0 no longer depends on sprockets-rails — declare it to keep Sprockets.
+gem 'sprockets-rails'
 gem 'scenic'
 gem 'schmooze'
 gem 'semacode', git: 'https://github.com/toretore/semacode.git', branch: 'master' # required for Barby but not listed...
@@ -121,7 +123,7 @@ gem 'sys-filesystem'
 
 gem 'thor'
 gem 'thumbnailer', git: 'https://github.com/merlin-p/thumbnailer.git'
-gem 'turbo-sprockets-rails4'
+# turbo-sprockets-rails4 removed for Rails 7.0 (pinned sprockets ~> 3.0, and was disabled anyway).
 gem 'tzinfo-data'
 
 gem 'whenever', require: false

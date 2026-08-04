@@ -15,8 +15,5 @@
 #   inflect.acronym 'RESTful'
 # end
 
-# NOTE: The API / SFTP acronyms this app needs for Zeitwerk are intentionally
-# defined in config/application.rb (application class body), NOT here. The Rails
-# 6.1 -> 7.0 upgrade guide (§6.7 "Autoloading during initialization") recommends
-# custom inflections live in the application body so they are in effect before any
-# autoloading happens during initialization. See DEV_RAILS_UPGRADE_7-0.md §0a.
+# API / SFTP acronyms are defined in config/application.rb (application body), not
+# here, so they take effect before autoloading during initialization.

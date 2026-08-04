@@ -3,11 +3,7 @@
 module Usecases
   module Reactions
     class UpdateMaterials
-      # SBMM Sample Structure
-      # File-local helper of UpdateMaterials — nested here (was a top-level
-      # OSbmmSample) so it is a proper
-      # Usecases::Reactions::UpdateMaterials::OSbmmSample under the Zeitwerk
-      # namespaced root (DEV_RAILS_UPGRADE_7-0.md §0a).
+      # SBMM sample structure — nested UpdateMaterials helper (Zeitwerk).
       class OSbmmSample < OpenStruct
         def initialize(data)
           data['show_label'] = false if data['show_label'].blank?

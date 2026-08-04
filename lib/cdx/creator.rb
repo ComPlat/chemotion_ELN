@@ -1,9 +1,6 @@
 module Cdx
   class Creator
-    # `include Cdx::Helper` autoloads lib/cdx/helper.rb via Zeitwerk, which also
-    # defines the sibling Cdx::Cdx* / Cdx::CdxStatic constants used below. The old
-    # bare `require "helper"` relied on lib/cdx being on $LOAD_PATH (removed in the
-    # Zeitwerk migration) and was already failing. DEV_RAILS_UPGRADE_7-0.md §0a.
+    # include autoloads helper.rb (defines Cdx::Helper + the sibling Cdx::* constants).
     include Cdx::Helper
     attr_reader :doc, :str, :bond_length
     def initialize(args)

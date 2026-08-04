@@ -3,10 +3,7 @@
 module Usecases
   module Reactions
     class UpdateMaterials
-      # Sample Structure
-      # File-local helper of UpdateMaterials — nested here (was a top-level OSample)
-      # so it is a proper Usecases::Reactions::UpdateMaterials::OSample under the
-      # Zeitwerk namespaced root (DEV_RAILS_UPGRADE_7-0.md §0a).
+      # Sample structure — nested UpdateMaterials helper (Zeitwerk).
       class OSample < OpenStruct
         def initialize(data)
           # set nested attributes

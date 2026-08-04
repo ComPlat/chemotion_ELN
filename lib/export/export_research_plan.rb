@@ -60,8 +60,7 @@ module Export
 
     def to_html
       ApplicationController.render(
-        # Template name without the `.haml` handler suffix — Rails infers the
-        # handler; naming it with a '.' is deprecated (DEV_RAILS_UPGRADE_7-0.md §0d).
+        # No handler suffix in the name (Rails infers it; '.' in the name is deprecated).
         template: 'export/research_plan',
         assigns: { name: @name, fields: @fields },
         layout: false,

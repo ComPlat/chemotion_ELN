@@ -61,13 +61,9 @@ if ENV.fetch('CRON_CONFIG_PC_LCSS', nil).present?
   Rails.logger.warn msg
 end
 
-# The recurring-job (re)scheduling references app Job constants. Running it via
-# `ActiveSupport.on_load(:active_record)` autoloaded them DURING initialization,
-# which is deprecated in Zeitwerk mode and becomes an error in Rails 7
-# (DEV_RAILS_UPGRADE_7-0.md §0d, upgrade guide §6.7). Deferred to
-# `config.after_initialize`: it runs after the autoloaders are fully set up (no
-# deprecation) AND only ONCE per boot — so, unlike `to_prepare` (which re-runs on
-# every code reload), InitCronJobsJob is not scheduled multiple times.
+# Runs in after_initialize (not on_load(:active_record)) so the Job constants are not
+# autoloaded during initialization (an error in Rails 7). after_initialize also runs
+# once per boot, so — unlike to_prepare — InitCronJobsJob is not re-scheduled on reload.
 Rails.application.config.after_initialize do
   next unless ActiveRecord::Base.connection.table_exists?('delayed_jobs') && Delayed::Job.column_names.include?('cron')
 

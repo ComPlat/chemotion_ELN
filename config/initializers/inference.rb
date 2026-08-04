@@ -1,8 +1,6 @@
 # frozen_string_literal: true
-# Deferred to after_initialize so referencing Matrice does not autoload it DURING
-# initialization (deprecated in Zeitwerk / error in Rails 7 — DEV_RAILS_UPGRADE_7-0.md §0d).
-# config.inference is only read at request time, so setting it once after boot is
-# equivalent to the previous on_load(:active_record) behaviour.
+# Runs in after_initialize so Matrice is not autoloaded during initialization (an
+# error in Rails 7). config.inference is read only at request time.
 Rails.application.config.after_initialize do
   Rails.application.configure do
     inference_config = {}

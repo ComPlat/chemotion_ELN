@@ -47,12 +47,7 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.action_controller.asset_host = 'http://assets.example.com'
 
-  TurboSprockets.configure do |config|
-    config.precompiler.enabled = false
-    config.preloader.enabled = false
-    config.preloader.worker_count = 2
-    config.precompiler.worker_count = 2
-  end
+  # (turbo-sprockets-rails4 removed for Rails 7.0 — precompiler/preloader were disabled anyway.)
 
   # Specifies the header that your server uses for sending files.
   # config.action_dispatch.x_sendfile_header = 'X-Sendfile' # for Apache
