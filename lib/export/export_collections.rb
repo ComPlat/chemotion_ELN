@@ -608,28 +608,36 @@ module Export
     # holding a 'sample_id'/'reaction_id'). These still reference the source system's database id, so
     # translate them to the same uuid used for the referenced element itself, once all collections have
     # been fetched, so that import can resolve them against the newly created records (see
-    # Import::ImportCollections#import_research_plans).
+    # Import::ImportCollections#import_research_plans). A link whose target isn't part of this export
+    # (a different, non-exported collection) is dropped rather than left with a stale id — on import that
+    # id could coincidentally match an unrelated record on the target system.
     def remap_research_plan_body_links
       @data.fetch('ResearchPlan', {}).each_value do |fields|
         body = fields['body']
         next if body.blank?
 
-        body.each do |field|
-          case field['type']
-          when 'sample'
-            remap_body_reference(field, 'sample_id', 'Sample')
-          when 'reaction'
-            remap_body_reference(field, 'reaction_id', 'Reaction')
-          end
-        end
+        fields['body'] = body.reject { |field| unresolved_body_link?(field) }
       end
     end
 
-    def remap_body_reference(field, key, type)
-      old_id = field.dig('value', key)
-      return if old_id.blank?
+    def unresolved_body_link?(field)
+      case field['type']
+      when 'sample'
+        drop_unless_remapped?(field, 'sample_id', 'Sample')
+      when 'reaction'
+        drop_unless_remapped?(field, 'reaction_id', 'Reaction')
+      else
+        false
+      end
+    end
 
-      field['value'][key] = uuid(type, old_id) if uuid?(type, old_id)
+    def drop_unless_remapped?(field, key, type)
+      old_id = field.dig('value', key)
+      return true if old_id.blank?
+      return true unless uuid?(type, old_id)
+
+      field['value'][key] = uuid(type, old_id)
+      false
     end
 
     def extract_image_fields(body)

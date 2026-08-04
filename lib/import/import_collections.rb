@@ -567,7 +567,7 @@ module Import
 
     def import_research_plans
       sort_data(@data.fetch('ResearchPlan', {})).each do |uuid, fields|
-        remap_research_plan_body_links(fields['body'])
+        fields['body'] = remap_research_plan_body_links(fields['body'])
 
         # create the research_plan
         research_plan = ResearchPlan.create!(fields.slice(
@@ -831,26 +831,35 @@ module Import
     # 'sample_id'/'reaction_id'), rewritten to the exported uuid by Export::ExportCollections. Resolve
     # them to the newly created instance's id, mirroring the id remapping already done for other
     # associations (reactions_samples, wells, ...) via @instances. Must run after import_samples and
-    # import_reactions have populated @instances.
+    # import_reactions have populated @instances. A link that can't be resolved (unknown uuid, or a raw
+    # id left over from a zip exported before this remapping existed) is dropped rather than kept as-is
+    # — otherwise it could coincidentally match an unrelated record on the importing system.
     def remap_research_plan_body_links(body)
-      return if body.blank?
+      return body if body.blank?
 
-      body.each do |field|
-        case field['type']
-        when 'sample'
-          remap_body_link!(field, 'sample_id', 'Sample')
-        when 'reaction'
-          remap_body_link!(field, 'reaction_id', 'Reaction')
-        end
+      body.reject { |field| unresolved_body_link?(field) }
+    end
+
+    def unresolved_body_link?(field)
+      case field['type']
+      when 'sample'
+        drop_unless_remapped?(field, 'sample_id', 'Sample')
+      when 'reaction'
+        drop_unless_remapped?(field, 'reaction_id', 'Reaction')
+      else
+        false
       end
     end
 
-    def remap_body_link!(field, key, type)
+    def drop_unless_remapped?(field, key, type)
       old_ref = field.dig('value', key)
-      return if old_ref.blank?
+      return true if old_ref.blank?
 
       new_instance = @instances.dig(type, old_ref)
-      field['value'][key] = new_instance.id if new_instance.present?
+      return true if new_instance.nil?
+
+      field['value'][key] = new_instance.id
+      false
     end
 
     def log_unassociated_attachment(research_plan_name, field)
