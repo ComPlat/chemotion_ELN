@@ -88,6 +88,7 @@ module Entities
     expose :amount, using: 'Entities::ReactionVariationMaterialEntryEntity'
     expose :volume, using: 'Entities::ReactionVariationMaterialEntryEntity'
     expose :equivalent, using: 'Entities::ReactionVariationMaterialEntryEntity'
+    expose :concentration, using: 'Entities::ReactionVariationMaterialEntryEntity'
 
     expose :aux, using: 'Entities::ReactionVariationMaterialAuxEntity'
   end
