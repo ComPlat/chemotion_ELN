@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-class SharedMethods
+# Namespaced under Usecases::Search (Zeitwerk namespaced root) — was a top-level
+# SharedMethods; compact form keeps the 116-line body untouched. DEV_RAILS_UPGRADE_7-0.md §0a.
+class Usecases::Search::SharedMethods
   attr_reader :params, :user
 
   def initialize(user:, params: {})

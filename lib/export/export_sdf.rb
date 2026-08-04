@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'export_table'
 require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 module Export

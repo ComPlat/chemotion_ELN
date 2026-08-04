@@ -24,7 +24,7 @@ module Chemotion
       get 'ping' do
         http_token = (request.headers['Authorization'].split(' ').last if request.headers['Authorization'].present?)
         error!('Token missing', 401) unless http_token
-        secret = Rails.application.secrets.secret_key_base
+        secret = Rails.application.secret_key_base
         begin
           @auth_token = ActiveSupport::HashWithIndifferentAccess.new(
             JWT.decode(http_token, secret)[0],
@@ -122,7 +122,7 @@ module Chemotion
         before do
           http_token = (request.headers['Authorization'].split(' ').last if request.headers['Authorization'].present?) # rubocop: disable Style/RedundantArgument
           error!('Unauthorized', 401) unless http_token
-          secret = Rails.application.secrets.secret_key_base
+          secret = Rails.application.secret_key_base
           begin
             @auth_token = ActiveSupport::HashWithIndifferentAccess.new(
               JWT.decode(http_token, secret)[0],
@@ -221,7 +221,7 @@ module Chemotion
             exp: 7.days.from_now.to_i,
           }
           payload[:origin] = params[:origin] if params[:origin]
-          secret = Rails.application.secrets.secret_key_base
+          secret = Rails.application.secret_key_base
           token = JWT.encode payload, secret
           AuthenticationKey.create!(
             user_id: current_user.id,

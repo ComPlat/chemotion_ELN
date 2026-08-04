@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require 'export_table'
 require 'base64'
 
 # rubocop:disable Metrics/ClassLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity

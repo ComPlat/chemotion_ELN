@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
 require 'schmooze'
-require 'meta_schmooze'
 
 module Chemotion
+  # MetaSchmooze (Chemotion::MetaSchmooze, lib/chemotion/meta_schmooze.rb) is
+  # autoloaded by Zeitwerk via the superclass reference below. The old bare
+  # `require 'meta_schmooze'` relied on lib/chemotion/meta_schmooze being on
+  # $LOAD_PATH (removed in the Zeitwerk migration) and was already failing.
+  # DEV_RAILS_UPGRADE_7-0.md §0a.
   class QuillToHtml < MetaSchmooze
     extend QuillUtils
     def initialize(schmooze_methods: {}, schmooze_dependencies: {}, root: Rails.root.to_s, env: {}, var: {})
