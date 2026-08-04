@@ -237,7 +237,9 @@ as state only to drive the checkboxes and to seed `hide` when the columns really
 The popover is portalled to the body because the grid header clips its own overflow, which would cut
 an inline menu off.
 */
-const ColumnVisibilityHeader = ({ displayName, columns, movable }) => {
+const ColumnVisibilityHeader = ({
+  displayName, columns, movable, label
+}) => {
   const { hiddenColumns, setColumnsHidden } = useContext(VariationsGridContext);
   const colIds = columns.map((column) => column.colId);
   const hiddenCount = colIds.filter((colId) => hiddenColumns.includes(colId)).length;
@@ -276,7 +278,8 @@ const ColumnVisibilityHeader = ({ displayName, columns, movable }) => {
   return (
     <div className={`d-flex align-items-center gap-1 ${STICKY_GROUP_LABEL_CLASS}`}>
       {movable && <DragHandle />}
-      <span className="text-truncate">{displayName}</span>
+      {/* A group may replace the plain heading, e.g. with the schema groups' shared-sample name. */}
+      {label ?? <span className="text-truncate">{displayName}</span>}
       <OverlayTrigger
         trigger="click"
         rootClose
@@ -304,6 +307,11 @@ ColumnVisibilityHeader.propTypes = {
     headerName: PropTypes.string.isRequired,
   })).isRequired,
   movable: PropTypes.bool.isRequired,
+  label: PropTypes.node,
+};
+
+ColumnVisibilityHeader.defaultProps = {
+  label: null,
 };
 
 const buildColumnGroups = (variations, currentSegment, segmentFields) => {
@@ -387,6 +395,8 @@ const buildColumnDefs = (columnGroups, hiddenColumns) => columnGroups.map((group
     headerGroupComponentParams: {
       movable,
       columns: group.columns.map(({ colId, headerName }) => ({ colId, headerName })),
+      // A group may bring params of its own, e.g. the schema groups' shared-sample label.
+      ...(group.headerGroupComponentParams ?? {}),
     },
     children: group.columns.map((column) => ({
       // A movable column advertises it with a drag handle; the fixed ones keep whatever header they
@@ -468,6 +478,61 @@ const useRowHandlerFactory = (onReactionChange) => {
   }, []);
 };
 
+// Share of the detail card's free height (below the tab bar and the toolbar) the grid may take up.
+const GRID_HEIGHT_SHARE = 0.8;
+
+/*
+The grid grows with its rows (autoHeight), but only up to 80% of what the detail card offers below
+the tab bar and the button group. Past that it gets a fixed height and scrolls its rows itself, so
+the header stays in view. Returns the fixed height to apply, or null while the grid still fits.
+*/
+const useGridHeightCap = (gridElementRef) => {
+  const [gridHeight, setGridHeight] = useState(null);
+
+  const syncGridHeight = useCallback(() => {
+    const wrapper = gridElementRef.current;
+    const scrollContainer = wrapper?.closest('.detail-card__scroll-container');
+    if (!wrapper || !scrollContainer) {
+      return;
+    }
+
+    const tabBar = scrollContainer.querySelector('ul.nav-tabs.has-config-overlay');
+    const buttonGroup = wrapper.parentElement?.querySelector('.btn-group');
+    const cap = Math.floor(
+      (scrollContainer.clientHeight - (tabBar?.offsetHeight ?? 0) - (buttonGroup?.offsetHeight ?? 0))
+      * GRID_HEIGHT_SHARE
+    );
+    if (cap <= 0) {
+      setGridHeight(null);
+      return;
+    }
+
+    /*
+    The height the grid wants for all of its content. `.ag-center-cols-container` is sized to the
+    full row set in both layouts, so this also detects when a capped grid has shrunk back under
+    the cap.
+    */
+    const headerHeight = wrapper.querySelector('.ag-header')?.offsetHeight ?? 0;
+    const rowsHeight = wrapper.querySelector('.ag-center-cols-container')?.offsetHeight ?? 0;
+    const scrollbarHeight = wrapper.querySelector('.ag-body-horizontal-scroll')?.offsetHeight ?? 0;
+    const naturalHeight = headerHeight + rowsHeight + scrollbarHeight + 2;
+
+    setGridHeight(naturalHeight > cap ? cap : null);
+  }, [gridElementRef]);
+
+  useEffect(() => {
+    const scrollContainer = gridElementRef.current?.closest('.detail-card__scroll-container');
+    if (!scrollContainer || typeof ResizeObserver === 'undefined') {
+      return undefined;
+    }
+    const observer = new ResizeObserver(syncGridHeight);
+    observer.observe(scrollContainer);
+    return () => observer.disconnect();
+  }, [gridElementRef, syncGridHeight]);
+
+  return { gridHeight, syncGridHeight };
+};
+
 const VariationSchemaTable = ({
                                 variations,
                                 onGridApiReady,
@@ -507,6 +572,7 @@ const VariationSchemaTable = ({
   const gridApiRef = useRef(null);
   const gridElementRef = useRef(null);
   const restoredRef = useRef(false);
+  const { gridHeight, syncGridHeight } = useGridHeightCap(gridElementRef);
 
   /*
   Mirrors the grid's own top level header order into state, so the toolbar always shows the groups
@@ -675,7 +741,11 @@ const VariationSchemaTable = ({
   the grid API, so folding it in here would rebuild every column on each toggle.
   */
   const columnSignature = columnGroups
-    .map((group) => `${group.groupId}[${group.columns.map((column) => column.colId).join(',')}]`)
+    .map((group) => {
+      // `labelKey` marks a group whose heading depends on its data, e.g. the shared-sample name.
+      const label = group.labelKey ? `=${group.labelKey}` : '';
+      return `${group.groupId}${label}[${group.columns.map((column) => column.colId).join(',')}]`;
+    })
     .join('|');
 
   const columnDefs = useMemo(
@@ -769,7 +839,11 @@ const VariationSchemaTable = ({
           </>
         )}
       </div>
-      <div className="ag-theme-alpine reaction-variations-grid" ref={gridElementRef}>
+      <div
+        className="ag-theme-alpine reaction-variations-grid"
+        ref={gridElementRef}
+        style={gridHeight ? { height: `${gridHeight}px` } : undefined}
+      >
         <AgGridReact
           columnDefs={columnDefs}
           // Fresh array so an added or removed variation is picked up even though the parent
@@ -778,9 +852,9 @@ const VariationSchemaTable = ({
           rowData={[...variations]}
           getRowId={({ data }) => String(data.data?.id ?? data.idx)}
           defaultColDef={DEFAULT_COL_DEF}
-          domLayout="autoHeight"
+          domLayout={gridHeight ? 'normal' : 'autoHeight'}
           headerHeight={32}
-          groupHeaderHeight={32}
+          groupHeaderHeight={50}
           suppressCellFocus
           // Keeps a user's drag order when the columns are rebuilt for a structural reason, e.g. a
           // material being added, instead of snapping back to the order of the definitions.
@@ -804,16 +878,21 @@ const VariationSchemaTable = ({
             syncActiveSlot();
             syncGroupOrder();
             updateStickyNames();
+            syncGridHeight();
           }}
           onFirstDataRendered={() => {
             syncActiveSlot();
             updateStickyNames();
+            syncGridHeight();
           }}
           onBodyScroll={() => {
             syncActiveSlot();
             updateStickyNames();
           }}
-          onModelUpdated={updateStickyNames}
+          onModelUpdated={() => {
+            updateStickyNames();
+            syncGridHeight();
+          }}
           onVirtualColumnsChanged={() => {
             syncActiveSlot();
             updateStickyNames();
