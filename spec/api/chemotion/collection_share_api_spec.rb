@@ -162,6 +162,17 @@ describe Chemotion::CollectionShareAPI do
         expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
       end
 
+      # cascade_requested? used to compare permission_level != pass_ownership, so omitting the
+      # (optional) param entirely — nil — read as "not pass_ownership" even when the share being
+      # edited already IS pass_ownership (as the factory default is here), letting the offer cascade
+      # after all and mint a new one on a descendant that never had any share for this recipient.
+      it 'does not cascade an existing pass_ownership share when permission_level is omitted from the request' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: { apply_to_subcollections: true, include_new_subcollections: true }
+
+        expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
+      end
+
       # write_shares! is a partial-update writer (include_missing: false) — safe for an existing
       # share, whose unset columns keep their current value, but a genuinely new one has no current
       # value to keep. Without a backfill it would fall back to the schema default (0) for every
