@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
-# Job to update molecule info for molecules with no LCSS
-# associated LCSS (molecule tag) is updated if cid found in PC db
-class PubchemSingleLcssJob < ApplicationJob
+# Per-molecule PubChem lookup job, scheduled for every newly created molecule via
+# Molecule.schedule_lcss_batch (directly for batch imports, or via the after_create_commit
+# :get_lcss hook). For each molecule it enriches names/iupac/cid from PubChem (see
+# Molecule#enrich_from_pubchem) and then updates the LCSS molecule tag. This is where the
+# PubChem network work moved to after it was removed from the synchronous create path.
+class PubchemLookupJob < ApplicationJob
   include PubchemRateLimitGuard
 
-  queue_as :single_pubchem_lcss
+  queue_as :pubchem_lookup
 
   # NB: PC has request restriction policy, hence the sleep — matches the
   # spacing already used by the sibling cron batch job, PubchemLcssJob.
@@ -30,23 +33,47 @@ class PubchemSingleLcssJob < ApplicationJob
     return if ids.blank? && created_after.blank?
 
     if other_pubchem_job_running?
-      self.class.set(wait: PubchemRateLimitGuard::REQUEUE_DELAY)
-          .perform_later(ids, type: type, created_after: created_after,
-                              chunk_size: chunk_size, start_id: start_id)
-      return
+      return requeue_after_collision(ids, type: type, created_after: created_after,
+                                          chunk_size: chunk_size, start_id: start_id)
     end
 
-    molecule_ids = ids.present? && type.to_sym == :samples ? resolve_sample_molecule_ids(ids) : ids
+    molecule_ids = resolve_ids(ids, type)
     molecules = resolve_molecules(molecule_ids, created_after: created_after,
                                                 start_id: start_id, chunk_size: chunk_size)
-
-    molecules.each_with_index do |molecule, i|
-      sleep SLEEP_BETWEEN_REQUESTS if i.positive?
-      molecule.pubchem_lcss
-    end
     return if molecules.empty?
 
-    last_id = molecules.last.id
+    enrich_each(molecules)
+    continue_after(molecules.last.id, molecule_ids,
+                   created_after: created_after, chunk_size: chunk_size)
+  end
+
+  private
+
+  # A sibling PubChem job holds the rate-limit guard — retry after the standard backoff
+  # rather than competing for the same request budget.
+  def requeue_after_collision(ids, type:, created_after:, chunk_size:, start_id:)
+    self.class.set(wait: PubchemRateLimitGuard::REQUEUE_DELAY)
+        .perform_later(ids, type: type, created_after: created_after,
+                            chunk_size: chunk_size, start_id: start_id)
+  end
+
+  # @return [Array<Integer>, nil] molecule ids — +ids+ as given, or the molecule ids they
+  #   reference when the caller passed sample ids
+  def resolve_ids(ids, type)
+    return ids unless ids.present? && type.to_sym == :samples
+
+    resolve_sample_molecule_ids(ids)
+  end
+
+  def enrich_each(molecules)
+    molecules.each_with_index do |molecule, i|
+      sleep SLEEP_BETWEEN_REQUESTS if i.positive?
+      enrich_and_fetch_lcss(molecule)
+    end
+  end
+
+  # Picks up where this run stopped when +chunk_size+ cut the pending set short.
+  def continue_after(last_id, molecule_ids, created_after:, chunk_size:)
     return unless more_pending?(molecule_ids, created_after: created_after, after_id: last_id)
 
     # No wait — this isn't a collision backoff, just more work to continue with.
@@ -54,7 +81,17 @@ class PubchemSingleLcssJob < ApplicationJob
                                            chunk_size: chunk_size, start_id: last_id)
   end
 
-  private
+  # pending_scope only filters on pubchem_lcss being unset, not on cid — a molecule can
+  # arrive here already enriched (e.g. PubchemCidJob's global sweep beat this job to it).
+  # Chain the two PubChem calls instead of always firing both: skip the full molecule-info
+  # fetch when a cid is already known, then only fetch LCSS when a cid actually exists —
+  # otherwise Molecule#pubchem_lcss's own cid fallback (get_cid_from_inchikey) would
+  # immediately re-ask PubChem the same "does this inchikey resolve?" question
+  # enrich_from_pubchem just answered.
+  def enrich_and_fetch_lcss(molecule)
+    molecule.enrich_from_pubchem unless molecule.pubchem_check
+    molecule.pubchem_lcss if molecule.pubchem_check
+  end
 
   def resolve_sample_molecule_ids(sample_ids)
     Sample.where(id: sample_ids).where.not(molecule_id: nil).distinct.pluck(:molecule_id)

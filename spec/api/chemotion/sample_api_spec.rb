@@ -420,7 +420,7 @@ describe Chemotion::SampleAPI do
       }
     end
 
-    it 'imports all new molecules and schedules exactly one PubchemSingleLcssJob for the whole batch' do
+    it 'imports all new molecules and schedules exactly one PubchemLookupJob for the whole batch' do
       # chemotion#552 was a NoMethodError inside Molecule#get_lcss's own
       # per-molecule Delayed::Job query, triggered by a concurrently-running
       # worker draining that queue mid-import. get_lcss no longer queries
@@ -429,7 +429,7 @@ describe Chemotion::SampleAPI do
       # — this asserts the replacement behavior end-to-end: the whole SDF
       # import (2 new molecules) enqueues a single batched job, not one per molecule.
       started_at = Time.current
-      allow(PubchemSingleLcssJob).to receive(:perform_later)
+      allow(PubchemLookupJob).to receive(:perform_later)
 
       post(
         '/api/v1/samples/import/',
@@ -448,8 +448,8 @@ describe Chemotion::SampleAPI do
       # create_samples also flushes its own started_at, but finds nothing created
       # after it (all molecules were already created during find_or_create_mol_by_batch)
       # so Molecule.schedule_lcss_since no-ops for that second flush point.
-      expect(PubchemSingleLcssJob).to have_received(:perform_later).once
-      expect(PubchemSingleLcssJob).to have_received(:perform_later).with(nil, created_after: be >= started_at)
+      expect(PubchemLookupJob).to have_received(:perform_later).once
+      expect(PubchemLookupJob).to have_received(:perform_later).with(nil, created_after: be >= started_at)
     end
   end
 

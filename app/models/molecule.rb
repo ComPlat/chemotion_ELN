@@ -111,11 +111,36 @@ class Molecule < ApplicationRecord
     formula = SumFormula.new(formula).remove_fragment('CH3').valid.to_s if is_partial
     molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial, sum_formular: formula)
     if molecule.nil?
-      molecule = Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
-        mol.skip_lcss_callback = true if defer_lcss
-        pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-        mol.molfile = (is_partial && partial_molfile) || molfile
-        mol.assign_molecule_data(babel_info, pubchem_info, molfile)
+      begin
+        # requires_new: true so the losing INSERT rolls back to a savepoint rather than
+        # poisoning an enclosing transaction. Most callers run inside one — Sample's
+        # before_save :find_or_create_molecule, Import::ImportSamples#write_to_db,
+        # Import::ImportCollections#import — and without the savepoint a real
+        # PG::UniqueViolation aborts that outer transaction, so the rescue's re-find below
+        # would itself raise PG::InFailedSqlTransaction and take the whole import with it.
+        #
+        # PubChem enrichment (iupac_name/names/cid) is deferred to the async enrich job
+        # (see .schedule_lcss_batch / .schedule_lcss_since / PubchemLookupJob) so no
+        # network call sits in the create/transaction critical section; create with
+        # babel-only data here. svg_molfile is still passed explicitly as the original
+        # (pre-partial-substitution) molfile so is_partial SVGs render from the R-group
+        # molfile rather than mol.molfile's CH3-substituted partial_molfile.
+        molecule = ActiveRecord::Base.transaction(requires_new: true) do
+          Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
+            mol.skip_lcss_callback = true if defer_lcss
+            mol.molfile = (is_partial && partial_molfile) || molfile
+            mol.assign_molecule_data(babel_info, {}, molfile)
+          end
+        end
+      rescue ActiveRecord::RecordNotUnique
+        # A concurrent worker created the same molecule between our find_by and insert; re-find
+        # its row instead of letting PG::UniqueViolation abort the whole import
+        # (index_molecules_on_formula_and_inchikey_and_is_partial). Nothing to schedule from
+        # this losing call: the winning create's own after_create_commit hook (or the
+        # caller's schedule_lcss_since flush, when defer_lcss is set) already covers
+        # enrichment/LCSS for this row regardless of which concurrent call created it.
+        molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial, sum_formular: formula)
+        raise if molecule.nil?
       end
     end
     molecule.ob_log = babel_info[:ob_log]
@@ -180,6 +205,44 @@ class Molecule < ApplicationRecord
     mol_tag_data['pubchem_lcss']
   end
 
+  # Idempotently persists PubChem-derived names/cid onto this molecule. Shared by the async
+  # per-molecule enrichment ({PubchemLookupJob}) and the periodic batch backfill
+  # ({PubchemCidJob}), so the write semantics are identical whichever path runs. Repeated calls
+  # are safe: +iupac_name+ is only set when blank, molecule names are found-or-created, and an
+  # existing +pubchem_cid+ is never overwritten with nil. The +pubchem_cid+ write is atomic
+  # (see {#merge_pubchem_cid!}); other writers still replace the full +taggable_data+ hash,
+  # though, so the reverse — them clobbering this key — isn't ruled out without touching
+  # {Taggable#update_tag} too.
+  #
+  # @param info [Hash] +{ cid:, iupac_name:, names: }+ as returned by
+  #   {Chemotion::PubchemService.molecule_info_from_inchikey}
+  # @return [void]
+  # rubocop:disable Rails/SkipsModelValidations
+  def assign_pubchem_names_and_cid!(info)
+    return if info.blank?
+
+    update_columns(iupac_name: info[:iupac_name]) if iupac_name.blank? && info[:iupac_name].present?
+    merge_pubchem_cid!(info[:cid]) if info[:cid].present?
+
+    Array(info[:names]).each do |name|
+      MoleculeName.find_or_create_by(molecule_id: id, name: name, description: 'iupac_name')
+    end
+
+    repoint_samples_to_iupac_name!
+  end
+  # rubocop:enable Rails/SkipsModelValidations
+
+  # Fetches PubChem data for this molecule's inchikey and persists it via
+  # {#assign_pubchem_names_and_cid!}. Performs a network call — intended for background jobs,
+  # not the synchronous create path (that is exactly what C2 moved off the request/import path).
+  #
+  # @return [void]
+  def enrich_from_pubchem
+    return if inchikey.blank?
+
+    assign_pubchem_names_and_cid!(Chemotion::PubchemService.molecule_info_from_inchikey(inchikey))
+  end
+
   def chem_repo
     { id: self.tag&.taggable_data&.fetch('chemrepo_id', nil) }
   end
@@ -234,7 +297,7 @@ class Molecule < ApplicationRecord
     molecule_names.create(name: sum_formular, description: 'sum_formular')
   end
 
-  # Schedules a single PubchemSingleLcssJob for the given ids, re-querying
+  # Schedules a single PubchemLookupJob for the given ids, re-querying
   # first so only molecules that actually still exist get scheduled (e.g. a
   # caller's own transaction rolling back after collecting some ids into its
   # lcss_batch array shouldn't schedule a job for rows that never persisted).
@@ -244,14 +307,14 @@ class Molecule < ApplicationRecord
     existing_ids = Molecule.where(id: molecule_ids).pluck(:id)
     return if existing_ids.blank?
 
-    PubchemSingleLcssJob.perform_later(existing_ids)
+    PubchemLookupJob.perform_later(existing_ids)
   end
 
   def get_lcss
     self.class.schedule_lcss_batch([id])
   end
 
-  # Schedules a PubchemSingleLcssJob covering every molecule created after +timestamp+.
+  # Schedules a PubchemLookupJob covering every molecule created after +timestamp+.
   # The bulk importers use this instead of collecting new molecule ids into an array:
   # capture Time.current once before the import loop begins, pass defer_lcss: true to
   # suppress each new molecule's own immediate scheduling, then call this once at the
@@ -261,7 +324,7 @@ class Molecule < ApplicationRecord
     return if timestamp.blank?
     return unless Molecule.exists?(['created_at > ?', timestamp])
 
-    PubchemSingleLcssJob.perform_later(nil, created_after: timestamp)
+    PubchemLookupJob.perform_later(nil, created_after: timestamp)
   end
 
   def create_molecule_name_by_user(new_names, user_id)
@@ -296,9 +359,63 @@ class Molecule < ApplicationRecord
 
   private
 
+  # Writes +pubchem_cid+ as an atomic JSONB merge rather than a read/modify/write of the whole
+  # +taggable_data+ hash, so it can't clobber an unrelated key (+user_labels+, +chemrepo_id+)
+  # written concurrently by another path.
+  #
+  # @param cid [String, Integer] the PubChem compound id
+  # @return [void]
+  # rubocop:disable Rails/SkipsModelValidations
+  def merge_pubchem_cid!(cid)
+    et = tag
+    ElementTag.where(id: et.id).update_all(
+      ["taggable_data = COALESCE(taggable_data, '{}'::jsonb) || jsonb_build_object('pubchem_cid', ?::jsonb)",
+       cid.to_json],
+    )
+    # Mirror the merge onto the already-loaded association in memory (update_all bypasses it)
+    # so an immediate caller-side read — e.g. PubchemLookupJob#enrich_and_fetch_lcss checking
+    # pubchem_check right after this returns — sees the cid without a reload.
+    et.taggable_data = (et.taggable_data || {}).merge('pubchem_cid' => cid)
+  end
+  # rubocop:enable Rails/SkipsModelValidations
+
+  # Moves samples off the sum-formula placeholder now that the real IUPAC name has arrived.
+  #
+  # Sample's before_create :check_molecule_name resolves
+  # +molecule_iupac_name || molecule_sum_formular+. With enrichment deferred, iupac_name is
+  # still nil at that moment, so every sample of a freshly created molecule binds to the
+  # sum-formula MoleculeName — and nothing re-evaluates it afterwards, because
+  # #update_molecule_name only fires when molecule_id itself changes. Without this the
+  # sample would show and export as +H2O+ rather than +oxidane+ forever.
+  #
+  # Only samples still on that default binding are moved; one the user picked explicitly
+  # (sample_api's molecule_name_id, /save_name, #create_molecule_name_by_user) is left alone.
+  # update_all deliberately skips Sample's before_save chain — SVG regeneration, fingerprints,
+  # elemental composition — and keeps the correction out of the version history.
+  #
+  # @return [void]
+  # rubocop:disable Rails/SkipsModelValidations
+  def repoint_samples_to_iupac_name!
+    return if iupac_name.blank?
+
+    # PubChem's iupac_name is not guaranteed to appear in info[:names], so the row may not
+    # exist yet: find_or_create rather than assume #create_molecule_names made one.
+    iupac_row = molecule_names.find_or_create_by(name: iupac_name, description: 'iupac_name')
+    sum_row = molecule_names.find_by(description: 'sum_formular')
+    return if sum_row.nil? || iupac_row.id == sum_row.id
+
+    Sample.where(molecule_id: id, molecule_name_id: sum_row.id)
+          .update_all(molecule_name_id: iupac_row.id)
+  end
+  # rubocop:enable Rails/SkipsModelValidations
+
   def assign_pubchem_data(pubchem_info)
     self.iupac_name = pubchem_info[:iupac_name]
-    self.names = pubchem_info[:names]
+    # Array(...) rather than a bare assignment: with enrichment deferred, pubchem_info is {}
+    # on the create path, and assigning nil sends an explicit NULL that bypasses the column's
+    # default([]). Readers index into it without a nil guard (e.g. ChemicalAPI's
+    # +molecule.names[0]+ when fetching a safety datasheet by common name).
+    self.names = Array(pubchem_info[:names])
     self.pcid = pubchem_info[:cid]
   end
 

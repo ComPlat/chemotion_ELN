@@ -59,8 +59,9 @@ class PubchemLcssJob < ApplicationJob
   end
 
   # Requeues a one-off continuation carrying the rotation cursor (+last_id+) forward
-  # when pending molecules remain beyond it. If none remain, does nothing — the next
-  # weekly cron tick fires with its fixed default args (start_id: 0) and starts over.
+  # when pending molecules remain beyond it. If none remain, does nothing — this job has
+  # no independent cron schedule of its own; PubchemCidJob chains a fresh run (start_id: 0)
+  # at the end of its own cron cadence (see PubchemCidJob#chain_lcss).
   def requeue_next_chunk(sleep_time:, batch_size:, chunk_size:, last_id:)
     return unless pending_scope(after_id: last_id).exists?
 

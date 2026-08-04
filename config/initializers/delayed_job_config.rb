@@ -29,11 +29,17 @@ Delayed::Worker.logger = Logger.new($stdout) if Rails.env.test?
 # ```
 # otherwise InitCronJobsJob will be called multiple times
 
+# PubchemLcssJob is normally chained off PubchemCidJob once its rotation drains (see
+# PubchemCidJob#chain_lcss) rather than independently scheduled. With CID itself disabled
+# nothing would trigger it at all, silently discarding a configured CRON_CONFIG_PC_LCSS — so
+# in that one case it keeps its own recurring entry.
+pubchem_lcss_enabled = ENV.fetch('CRON_CONFIG_PC_CID', nil) == 'disabled' ? :default : false
+
 ActiveSupport.on_load(:active_record) do
   next unless ActiveRecord::Base.connection.table_exists?('delayed_jobs') && Delayed::Job.column_names.include?('cron')
 
-  # List of recuringreccuring jobs with default attributes JobClass, enabled, cron_variable
-  reccuring_jobs = [
+  # List of recurring jobs with default attributes JobClass, enabled, cron_variable
+  recurring_jobs = [
     # Data Collectors Classes
     { job_class: CollectDataFromMailJob,  enabled: :datacollector },
     { job_class: CollectDataFromSftpJob,  enabled: :datacollector },
@@ -43,24 +49,31 @@ ActiveSupport.on_load(:active_record) do
 
     # Other Classes
     { job_class: PubchemCidJob,        enabled: :default, cron_variable: 'CRON_CONFIG_PC_CID' },
-    { job_class: PubchemLcssJob,       enabled: :default, cron_variable: 'CRON_CONFIG_PC_LCSS' },
+    # See pubchem_lcss_enabled above. Kept in this list even when disabled so a pre-existing
+    # recurring row from before the chaining change still gets cleaned up by the destroy step
+    # below instead of continuing to fire on its old schedule.
+    { job_class: PubchemLcssJob,       enabled: pubchem_lcss_enabled, cron_variable: 'CRON_CONFIG_PC_LCSS' },
     { job_class: RefreshElementTagJob, enabled: :default, cron_variable: 'CRON_CONFIG_REFRESH_ELEMENT_TAG' },
     { job_class: DiskUsageJob,         enabled: :default, cron_variable: 'CRON_CONFIG_DISK_USAGE' },
     { job_class: ChemrepoIdJob,        enabled: false,    cron_variable: 'CRON_CONFIG_CHEMREPO_ID' },
   ]
 
-  # Delete all reccuring jobs
+  # Delete all recurring jobs. Scoped to cron IS NOT NULL: InitCronJobsJob sets `cron:` only
+  # on the recurring entry it creates below, so a same-class one-off job (e.g. a rotation
+  # continuation self-enqueued by PubchemCidJob/PubchemLcssJob/PubchemLookupJob via
+  # `self.class.set(wait: ...).perform_later(...)`) has `cron: nil` and must survive a
+  # reboot instead of being silently wiped along with the recurring entry.
   like_array = ['%InitCronJobsJob%']
-  like_array += reccuring_jobs.map { |job| "%#{job[:job_class].name}%" }
-  puts "Deleting all reccuring jobs: #{like_array}"
-  Rails.logger.info "Deleting all reccuring jobs: #{like_array}"
-  Delayed::Job.where('handler like any (array[?])', like_array).destroy_all
+  like_array += recurring_jobs.map { |job| "%#{job[:job_class].name}%" }
+  puts "Deleting all recurring jobs: #{like_array}"
+  Rails.logger.info "Deleting all recurring jobs: #{like_array}"
+  Delayed::Job.where('handler like any (array[?])', like_array).where.not(cron: nil).destroy_all
 
-  # Reschedule all reccuring jobs
-  #    InitCronJobsJob.perform_later(reccuring_jobs)
-  puts 'Rescheduling reccuring jobs'
-  Rails.logger.info 'Rescheduling reccuring jobs'
-  InitCronJobsJob.perform_now(reccuring_jobs)
+  # Reschedule all recurring jobs
+  #    InitCronJobsJob.perform_later(recurring_jobs)
+  puts 'Rescheduling recurring jobs'
+  Rails.logger.info 'Rescheduling recurring jobs'
+  InitCronJobsJob.perform_now(recurring_jobs)
 rescue PG::ConnectionBad, ActiveRecord::NoDatabaseError => e
   puts e.message
 end

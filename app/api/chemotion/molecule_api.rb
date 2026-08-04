@@ -217,6 +217,28 @@ module Chemotion
         present molecule, with: Entities::MoleculeEntity
       end
 
+      desc 'Requery PubChem for this molecule (on-demand refresh of cid/iupac_name/names)'
+      params do
+        requires :id, type: Integer, desc: 'Molecule ID'
+      end
+      post :refresh do
+        # A molecule row is global, shared by every user who ever drew that structure, and
+        # this endpoint both mutates it and makes an outbound PubChem request — so it takes
+        # the same molecule_editor gate as the other molecule-mutating endpoints here.
+        error!({ msg: { level: 'error', message: '401 Unauthorized' } }, 401) unless current_user&.molecule_editor
+
+        molecule = Molecule.find(params[:id])
+        # enrich_from_pubchem, not refresh_molecule_data: it persists the cid atomically via
+        # #assign_pubchem_names_and_cid! (a plain save! would not — element_tags is a has_one
+        # without autosave:, so a taggable_data-only change never reaches the database), it
+        # leaves the structure fields alone rather than re-deriving them from an already
+        # normalised molfile, and it writes no new SVG per call.
+        molecule.enrich_from_pubchem
+        present molecule.reload, with: Entities::MoleculeEntity
+      rescue StandardError => e
+        error!({ msg: { level: 'error', message: e.message } }, 500)
+      end
+
       desc 'return names of the molecule'
       params do
         requires :id, type: String, desc: 'Molecule id'

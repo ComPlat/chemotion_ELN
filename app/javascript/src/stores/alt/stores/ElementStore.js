@@ -296,6 +296,7 @@ class ElementStore {
       handleConfirmDelete: DetailActions.confirmDelete,
       handleChangeCurrentElement: DetailActions.changeCurrentElement,
       handleGetMoleculeCas: DetailActions.getMoleculeCas,
+      handleRefreshMoleculeData: DetailActions.refreshMoleculeData,
       handleUpdateMoleculeNames: DetailActions.updateMoleculeNames,
       handleUpdateMoleculeCas: DetailActions.updateMoleculeCas,
       handleUpdateLinkedElement: [
@@ -1567,6 +1568,18 @@ class ElementStore {
   handleGetMoleculeCas(updatedSample) {
     const { selecteds } = this.state;
     const index = this.elementIndex(selecteds, updatedSample);
+    const newSelecteds = this.updateElement(updatedSample, index);
+    this.setState({ selecteds: newSelecteds });
+  }
+
+  handleRefreshMoleculeData(updatedSample) {
+    const { selecteds } = this.state;
+    const index = this.elementIndex(selecteds, updatedSample);
+    // Unlike the other refresh handlers, this one is reachable from the element list
+    // (SampleGroupMoleculeHeader), where the sample usually has no open detail tab. With
+    // index -1, updateElement's slice(0, -1) would drop the last open tab and slice(0)
+    // re-append everything, doubling selecteds.
+    if (index === -1) { return; }
     const newSelecteds = this.updateElement(updatedSample, index);
     this.setState({ selecteds: newSelecteds });
   }

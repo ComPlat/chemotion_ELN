@@ -50,9 +50,15 @@ RSpec.describe Molecule, type: :model do
       expect { invalid_molecule.save! }.to raise_error(ActiveRecord::RecordNotUnique)
     end
 
-    it 'have a tag with CID' do
+    it 'defers the PubChem CID tag to async enrichment (not populated synchronously on create)' do
       molecule.save!
-      expect(molecule.tag.taggable_data['pubchem_cid']).to eq('123456789')
+      expect(molecule.tag.taggable_data['pubchem_cid']).to be_nil
+    end
+
+    it 'backfills the PubChem CID tag idempotently via #assign_pubchem_names_and_cid!' do
+      molecule.save!
+      molecule.assign_pubchem_names_and_cid!(cid: '123456789', iupac_name: 'water', names: [])
+      expect(molecule.reload.tag.taggable_data['pubchem_cid']).to eq('123456789')
     end
 
     it 'has molecule_names' do
@@ -132,7 +138,7 @@ RSpec.describe Molecule, type: :model do
   describe '#get_lcss' do
     it 'schedules a single-element batch for a normally-created molecule' do
       scheduled_ids = nil
-      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+      allow(PubchemLookupJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
 
       molecule = create(:molecule)
 
@@ -142,11 +148,11 @@ RSpec.describe Molecule, type: :model do
 
   describe '#skip_lcss_callback' do
     it 'suppresses automatic scheduling when set true before create' do
-      allow(PubchemSingleLcssJob).to receive(:perform_later)
+      allow(PubchemLookupJob).to receive(:perform_later)
 
       build(:molecule, skip_lcss_callback: true).save!
 
-      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+      expect(PubchemLookupJob).not_to have_received(:perform_later)
     end
   end
 
@@ -155,11 +161,11 @@ RSpec.describe Molecule, type: :model do
       first_molecule = create(:molecule, skip_lcss_callback: true)
       second_molecule = create(:molecule, skip_lcss_callback: true)
       scheduled_ids = nil
-      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+      allow(PubchemLookupJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
 
       described_class.schedule_lcss_batch([first_molecule.id, second_molecule.id])
 
-      expect(PubchemSingleLcssJob).to have_received(:perform_later).once
+      expect(PubchemLookupJob).to have_received(:perform_later).once
       expect(scheduled_ids).to contain_exactly(first_molecule.id, second_molecule.id)
     end
 
@@ -168,7 +174,7 @@ RSpec.describe Molecule, type: :model do
       doomed = create(:molecule, skip_lcss_callback: true)
       doomed.destroy!
       scheduled_ids = nil
-      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+      allow(PubchemLookupJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
 
       described_class.schedule_lcss_batch([survivor.id, doomed.id])
 
@@ -176,12 +182,12 @@ RSpec.describe Molecule, type: :model do
     end
 
     it 'schedules nothing when no given id still exists' do
-      allow(PubchemSingleLcssJob).to receive(:perform_later)
+      allow(PubchemLookupJob).to receive(:perform_later)
 
       described_class.schedule_lcss_batch([])
       described_class.schedule_lcss_batch([-1])
 
-      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+      expect(PubchemLookupJob).not_to have_received(:perform_later)
     end
   end
 
@@ -195,16 +201,16 @@ RSpec.describe Molecule, type: :model do
     end
 
     it 'defers scheduling when given defer_lcss: true' do
-      allow(PubchemSingleLcssJob).to receive(:perform_later)
+      allow(PubchemLookupJob).to receive(:perform_later)
 
       described_class.find_or_create_by_molfile('molfile', defer_lcss: true, **babel_info)
 
-      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+      expect(PubchemLookupJob).not_to have_received(:perform_later)
     end
 
     it 'schedules immediately when defer_lcss is not given' do
       scheduled_ids = nil
-      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+      allow(PubchemLookupJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
 
       molecule = described_class.find_or_create_by_molfile('molfile', **babel_info)
 
@@ -219,40 +225,127 @@ RSpec.describe Molecule, type: :model do
         sum_formular: babel_info[:formula],
         skip_lcss_callback: true,
       )
-      allow(PubchemSingleLcssJob).to receive(:perform_later)
+      allow(PubchemLookupJob).to receive(:perform_later)
 
       molecule = described_class.find_or_create_by_molfile('molfile', defer_lcss: true, **babel_info)
 
       expect(molecule.id).to eq(existing.id)
-      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+      expect(PubchemLookupJob).not_to have_received(:perform_later)
+    end
+
+    it 'does not call PubChem synchronously on the create path (C2: enrichment is async)' do
+      allow(PubchemLookupJob).to receive(:perform_later)
+
+      described_class.find_or_create_by_molfile('molfile', **babel_info)
+
+      expect(Chemotion::PubchemService).not_to have_received(:molecule_info_from_inchikey)
+    end
+
+    # names is nullable but defaults to []. Deferred enrichment passes {}, and assigning nil
+    # would send an explicit NULL that bypasses that default — readers index into it without
+    # a nil guard (ChemicalAPI's molecule.names[0]).
+    it 'stores names as an empty array, not NULL, when enrichment is deferred' do
+      allow(PubchemLookupJob).to receive(:perform_later)
+
+      molecule = described_class.find_or_create_by_molfile('molfile', **babel_info)
+
+      expect(molecule.reload.names).to eq([])
+    end
+
+    context 'when a concurrent worker wins the create race (C1)' do
+      it 're-finds the existing row instead of raising PG::UniqueViolation, without re-enqueueing LCSS' do
+        existing = create(
+          :molecule,
+          inchikey: babel_info[:inchikey],
+          is_partial: false,
+          sum_formular: babel_info[:formula],
+          skip_lcss_callback: true,
+        )
+        # Simulate the TOCTOU race: find_by misses, then the INSERT collides with the row the
+        # winning worker committed in the gap.
+        allow(described_class).to receive(:find_by).and_return(nil, existing)
+        allow(described_class).to receive(:create).and_raise(ActiveRecord::RecordNotUnique)
+        allow(PubchemLookupJob).to receive(:perform_later)
+
+        molecule = described_class.find_or_create_by_molfile('molfile', **babel_info)
+
+        expect(molecule.id).to eq(existing.id)
+        # the losing call must NOT re-enqueue enrichment/LCSS for a row the winner already handled
+        # (its own failed Molecule.create never committed, so after_create_commit never fired)
+        expect(PubchemLookupJob).not_to have_received(:perform_later)
+      end
+
+      # The stubbed sibling above raises RecordNotUnique in Ruby, which never touches Postgres
+      # and so cannot detect a missing savepoint. This one drives a real unique-index
+      # violation from inside an enclosing transaction — the shape every transactional caller
+      # has (Sample's before_save :find_or_create_molecule, ImportSamples#write_to_db,
+      # ImportCollections#import). Without requires_new: true the aborted INSERT leaves the
+      # outer transaction in PG::InFailedSqlTransaction and the rescue's own re-find raises.
+      it 'recovers from a genuine unique-index violation inside an enclosing transaction' do
+        allow(PubchemLookupJob).to receive(:perform_later)
+        winner = nil
+
+        allow(described_class).to receive(:find_by).and_wrap_original do |orig, *args|
+          found = orig.call(*args)
+          next found unless found.nil? && winner.nil?
+
+          # Stand in for the competing worker committing in the TOCTOU gap: the winning row
+          # is created *before* the savepoint opens, so rolling back to it leaves the row.
+          winner = create(
+            :molecule,
+            inchikey: babel_info[:inchikey],
+            is_partial: false,
+            sum_formular: babel_info[:formula],
+            skip_lcss_callback: true,
+          )
+          nil
+        end
+
+        molecule = ActiveRecord::Base.transaction do
+          described_class.find_or_create_by_molfile('molfile', defer_lcss: true, **babel_info)
+        end
+
+        expect(winner).to be_present
+        expect(molecule.id).to eq(winner.id)
+        expect(described_class.where(inchikey: babel_info[:inchikey]).count).to eq 1
+      end
+
+      it 're-raises when the row is genuinely absent after RecordNotUnique' do
+        allow(described_class).to receive(:find_by).and_return(nil, nil)
+        allow(described_class).to receive(:create).and_raise(ActiveRecord::RecordNotUnique)
+
+        expect do
+          described_class.find_or_create_by_molfile('molfile', **babel_info)
+        end.to raise_error(ActiveRecord::RecordNotUnique)
+      end
     end
   end
 
   describe '.schedule_lcss_since' do
     it 'does nothing when timestamp is blank' do
-      allow(PubchemSingleLcssJob).to receive(:perform_later)
+      allow(PubchemLookupJob).to receive(:perform_later)
 
       described_class.schedule_lcss_since(nil)
 
-      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+      expect(PubchemLookupJob).not_to have_received(:perform_later)
     end
 
     it 'does nothing when no molecule was created after the given timestamp' do
-      allow(PubchemSingleLcssJob).to receive(:perform_later)
+      allow(PubchemLookupJob).to receive(:perform_later)
 
       described_class.schedule_lcss_since(1.hour.from_now)
 
-      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+      expect(PubchemLookupJob).not_to have_received(:perform_later)
     end
 
     it 'schedules a job covering molecules created after the given timestamp' do
       timestamp = 1.hour.ago
       create(:molecule)
-      allow(PubchemSingleLcssJob).to receive(:perform_later)
+      allow(PubchemLookupJob).to receive(:perform_later)
 
       described_class.schedule_lcss_since(timestamp)
 
-      expect(PubchemSingleLcssJob).to have_received(:perform_later).with(nil, created_after: timestamp)
+      expect(PubchemLookupJob).to have_received(:perform_later).with(nil, created_after: timestamp)
     end
   end
 
@@ -389,6 +482,36 @@ RSpec.describe Molecule, type: :model do
 
       described_class.find_or_create_by_molfile(ball_only_molfile)
       expect(described_class).to have_received(:svg_reprocess).with(nil, ball_only_molfile)
+    end
+  end
+
+  describe '#assign_pubchem_names_and_cid!' do
+    let(:molecule) { create(:molecule, iupac_name: nil, names: []) }
+
+    it 'persists names/cid idempotently across repeated calls', :aggregate_failures do
+      2.times do
+        molecule.assign_pubchem_names_and_cid!(cid: '999', iupac_name: 'water', names: %w[aqua dihydrogen-oxide])
+      end
+
+      expect(molecule.reload.iupac_name).to eq('water')
+      expect(molecule.tag.taggable_data['pubchem_cid']).to eq('999')
+      # 'water' is the iupac_name and is not among names — PubChem does not guarantee it is.
+      # A row is created for it regardless, so a sample has something to be re-pointed to.
+      expect(molecule.molecule_names.where(description: 'iupac_name').pluck(:name))
+        .to contain_exactly('aqua', 'dihydrogen-oxide', 'water')
+    end
+
+    it 'does not overwrite an existing cid/name with nil', :aggregate_failures do
+      molecule.assign_pubchem_names_and_cid!(cid: '999', iupac_name: 'water', names: [])
+
+      molecule.assign_pubchem_names_and_cid!(cid: nil, iupac_name: nil, names: [])
+
+      expect(molecule.reload.tag.taggable_data['pubchem_cid']).to eq('999')
+      expect(molecule.iupac_name).to eq('water')
+    end
+
+    it 'no-ops on blank info' do
+      expect { molecule.assign_pubchem_names_and_cid!({}) }.not_to(change { molecule.molecule_names.count })
     end
   end
 end

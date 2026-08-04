@@ -278,20 +278,23 @@ module Import
       [molecule, raw_molfile]
     end
 
+    # Delegates to {Molecule.find_or_create_by_molfile} rather than re-implementing
+    # find-or-create. This branch used to key its lookup on
+    # +(inchikey, sum_formular, is_partial: false)+, but Molecule#assign_molecule_data assigns
+    # +is_partial+ from babel_info *after* +check_sum_formular+ has already returned early on
+    # the still-false value. An R-group structure was therefore INSERTed as
+    # +is_partial: true+ having been looked up as +false+ — a different tuple from the one it
+    # was searched under, so the next import missed it and inserted another row, and its
+    # masses kept the fictitious CH3 that check_sum_formular should have removed.
+    # find_or_create_by_molfile derives both +is_partial+ and the CH3-stripped formula before
+    # its lookup, and carries the savepoint and RecordNotUnique rescue.
+    #
+    # @return [Array(Molecule, String, Boolean)] +[molecule, molfile, go_to_next]+
     def assign_molecule_data(molfile_coord, babel_info, inchikey, _row, _index)
-      if inchikey.blank?
-        go_to_next = true
-      else
-        go_to_next = false
-        molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: false) do |molecul|
-          molecul.skip_lcss_callback = true if @defer_lcss
-          pubchem_info =
-            Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-          molecul.molfile = molfile_coord
-          molecul.assign_molecule_data babel_info, pubchem_info
-        end
-      end
-      [molecule, molfile_coord, go_to_next]
+      return [nil, molfile_coord, true] if inchikey.blank?
+
+      molecule = Molecule.find_or_create_by_molfile(molfile_coord, defer_lcss: @defer_lcss, **babel_info)
+      [molecule, molfile_coord, false]
     end
 
     def get_data_from_smiles(row, index)

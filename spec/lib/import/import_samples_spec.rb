@@ -94,15 +94,19 @@ RSpec.describe 'Import::ImportSamples' do
         expect(molecule_names).to be_present
       end
 
-      it 'schedules exactly one PubchemSingleLcssJob for the whole import instead of one per molecule' do
+      it 'schedules exactly one PubchemLookupJob for the whole import instead of one per molecule' do
         started_at = Time.current
-        allow(PubchemSingleLcssJob).to receive(:perform_later)
+        allow(PubchemLookupJob).to receive(:perform_later)
 
         import_result
 
-        expect(PubchemSingleLcssJob).to have_received(:perform_later).once
-        expect(PubchemSingleLcssJob).to have_received(:perform_later).with(nil, created_after: be >= started_at)
+        expect(PubchemLookupJob).to have_received(:perform_later).once
+        expect(PubchemLookupJob).to have_received(:perform_later).with(nil, created_after: be >= started_at)
       end
+
+      # The savepoint that makes a real (Postgres-level) collision survivable inside this
+      # transaction is covered where it lives, in
+      # spec/models/molecule_spec.rb '.find_or_create_by_molfile'.
     end
   end
 
@@ -239,6 +243,41 @@ RSpec.describe 'Import::ImportSamples' do
         expect(molecule).to eq(resolved_molecule)
         expect(raw_molfile).to eq(polymer_molfile)
       end
+    end
+  end
+
+  describe '#assign_molecule_data' do
+    let(:babel_info) do
+      { inchikey: 'PARTIALMOL-UHFFFAOYSA-N', is_partial: true, formula: 'C7H8',
+        mol_wt: 92.1384, mass: 92.0626, molfile: "partial\n", molfile_version: 'V2000' }
+    end
+
+    before { allow(PubchemLookupJob).to receive(:perform_later) }
+
+    it 'returns [nil, molfile, true] when the inchikey is blank' do
+      expect(importer.send(:assign_molecule_data, 'molfile', {}, '', {}, 0))
+        .to eq([nil, 'molfile', true])
+    end
+
+    # An R-group structure must be stored under the same tuple it was looked up by, or the
+    # next import misses it and inserts a duplicate the finder can never see again.
+    it 'stores a partial molecule under the is_partial/stripped-formula tuple it was found by' do
+      molecule, = importer.send(:assign_molecule_data, "molfile\n", babel_info,
+                                babel_info[:inchikey], {}, 0)
+
+      expect(molecule.is_partial).to be true
+      expect(molecule.sum_formular).to eq(SumFormula.new('C7H8').remove_fragment('CH3').valid.to_s)
+      expect(Molecule.find_by(inchikey: babel_info[:inchikey], is_partial: molecule.is_partial,
+                              sum_formular: molecule.sum_formular)).to eq(molecule)
+    end
+
+    it 'reuses that row on a second import of the same structure instead of duplicating it' do
+      first, = importer.send(:assign_molecule_data, "molfile\n", babel_info, babel_info[:inchikey], {}, 0)
+
+      expect do
+        second, = importer.send(:assign_molecule_data, "molfile\n", babel_info, babel_info[:inchikey], {}, 0)
+        expect(second.id).to eq(first.id)
+      end.not_to change(Molecule, :count)
     end
   end
 end
