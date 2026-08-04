@@ -175,7 +175,7 @@ function updateVariationsRowOnConcentrationMaterialChange(
   const updatedRow = cloneDeep(row);
   const material = get(updatedRow, field);
 
-  if (!material || !material.aux) {
+  if (!material || !material.aux || !isConcentrationEnabledMaterial(material)) {
     return { row: updatedRow, contextUpdate: null };
   }
 
