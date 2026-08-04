@@ -17,7 +17,7 @@ module Chemotion
     config.load_defaults 6.0
     config.autoloader = :classic # classic mode is required because of naming/configuration inconsistencies
 
-    config.version = (File.exist?('VERSION') && YAML.load_file('VERSION')) || {
+    config.version = (File.exist?('VERSION') && YAML.unsafe_load_file('VERSION')) || {
       'version' => 'v0', 'base_revision' => '0', 'current_revision' => '0'
     }
     config.version['current_revision'] = File.read('REVISION') if File.exist?('REVISION')

@@ -2,7 +2,7 @@
 
 source 'https://rubygems.org'
 
-ruby '3.0.7'
+ruby '3.1.7'
 
 gem 'aasm'
 gem 'activejob-status'

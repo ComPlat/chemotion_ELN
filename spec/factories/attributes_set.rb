@@ -25,7 +25,7 @@ FactoryBot.define do
         next {} unless File.exist?(file_path)
 
         case File.extname(file_path.to_s)
-        when '.yml', '.yaml' then YAML.load_file(file_path)
+        when '.yml', '.yaml' then YAML.unsafe_load_file(file_path)
         else JSON.parse(File.read(file_path))
         end
       end

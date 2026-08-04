@@ -15,7 +15,7 @@ require 'webdrivers'
 # require 'capybara/rspec'
 require 'rails_helper'
 
-bad_smiles = YAML.load_file('spec/fixtures/structures/bad_smiles.yml')
+bad_smiles = YAML.unsafe_load_file('spec/fixtures/structures/bad_smiles.yml')
 
 def stub_pubchem_request(status, body, end_point)
   stub_request(:get, end_point)
