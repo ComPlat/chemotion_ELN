@@ -140,6 +140,8 @@ module Export
 
         fetch_segments
       end
+
+      remap_research_plan_body_links
     end
 
     private
@@ -600,6 +602,34 @@ module Export
 
       filter_missing_attachments(research_plan, attachments)
       process_attachments(attachments, research_plan)
+    end
+
+    # research plan bodies can embed links to other elements (e.g. type 'sample'/'reaction' fields
+    # holding a 'sample_id'/'reaction_id'). These still reference the source system's database id, so
+    # translate them to the same uuid used for the referenced element itself, once all collections have
+    # been fetched, so that import can resolve them against the newly created records (see
+    # Import::ImportCollections#import_research_plans).
+    def remap_research_plan_body_links
+      @data.fetch('ResearchPlan', {}).each_value do |fields|
+        body = fields['body']
+        next if body.blank?
+
+        body.each do |field|
+          case field['type']
+          when 'sample'
+            remap_body_reference(field, 'sample_id', 'Sample')
+          when 'reaction'
+            remap_body_reference(field, 'reaction_id', 'Reaction')
+          end
+        end
+      end
+    end
+
+    def remap_body_reference(field, key, type)
+      old_id = field.dig('value', key)
+      return if old_id.blank?
+
+      field['value'][key] = uuid(type, old_id) if uuid?(type, old_id)
     end
 
     def extract_image_fields(body)

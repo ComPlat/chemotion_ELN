@@ -567,6 +567,8 @@ module Import
 
     def import_research_plans
       sort_data(@data.fetch('ResearchPlan', {})).each do |uuid, fields|
+        remap_research_plan_body_links(fields['body'])
+
         # create the research_plan
         research_plan = ResearchPlan.create!(fields.slice(
           'name',
@@ -823,6 +825,32 @@ module Import
           log_unassociated_attachment(attr_value['name'], field)
         end
       end
+    end
+
+    # research plan bodies can embed links to other elements (type 'sample'/'reaction' fields holding a
+    # 'sample_id'/'reaction_id'), rewritten to the exported uuid by Export::ExportCollections. Resolve
+    # them to the newly created instance's id, mirroring the id remapping already done for other
+    # associations (reactions_samples, wells, ...) via @instances. Must run after import_samples and
+    # import_reactions have populated @instances.
+    def remap_research_plan_body_links(body)
+      return if body.blank?
+
+      body.each do |field|
+        case field['type']
+        when 'sample'
+          remap_body_link!(field, 'sample_id', 'Sample')
+        when 'reaction'
+          remap_body_link!(field, 'reaction_id', 'Reaction')
+        end
+      end
+    end
+
+    def remap_body_link!(field, key, type)
+      old_ref = field.dig('value', key)
+      return if old_ref.blank?
+
+      new_instance = @instances.dig(type, old_ref)
+      field['value'][key] = new_instance.id if new_instance.present?
     end
 
     def log_unassociated_attachment(research_plan_name, field)
