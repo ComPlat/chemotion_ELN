@@ -128,12 +128,36 @@ describe Chemotion::CollectionShareAPI do
         expect(child_share.permission_level).to eq(CollectionShare.permission_level(:manage_shares))
       end
 
-      # An edit propagates to existing sub-collection shares only — it never grants NEW access to a
-      # sub-collection the sharee was not already on (that would be a silent over-grant).
+      # By default an edit propagates to existing sub-collection shares only — it never grants NEW
+      # access to a sub-collection the sharee was not already on (that would be a silent over-grant).
       it 'does not mint a new share on a descendant that was not already shared with the sharee' do
         put "/api/v1/collection_shares/#{collection_share.id}",
             params: update_params.merge(permission_level: CollectionShare.permission_level(:manage_shares),
                                         apply_to_subcollections: true)
+
+        expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
+      end
+
+      # include_new_subcollections is the explicit opt-in out of that default: it makes the edit
+      # cascade mint shares too, mirroring the create cascade.
+      it 'mints a new share on a descendant that was not already shared, when include_new_subcollections is set' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: update_params.merge(permission_level: CollectionShare.permission_level(:manage_shares),
+                                        apply_to_subcollections: true,
+                                        include_new_subcollections: true)
+
+        child_share = CollectionShare.find_by(collection: child, shared_with_id: other_user.id)
+        expect(child_share).not_to be_nil
+        expect(child_share.permission_level).to eq(CollectionShare.permission_level(:manage_shares))
+      end
+
+      # Mirrors the create-path pass_ownership test: an offer is never cascaded, whatever the
+      # cascade flags say — include_new_subcollections does not override that guard.
+      it 'does not cascade a pass_ownership offer to descendants even with include_new_subcollections' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: update_params.merge(permission_level: CollectionShare.permission_level(:pass_ownership),
+                                        apply_to_subcollections: true,
+                                        include_new_subcollections: true)
 
         expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
       end
