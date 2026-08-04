@@ -108,7 +108,7 @@ RSpec.describe 'Import of the shipped template files' do
 
       it 'does not report that no samples could be created' do
         result = run_import('public/sdf/sample_import_example.sdf', 'sample_import_example.sdf', 'sample')
-        expect(result[:message]).not_to match(/Could not create the samples/)
+        expect(result[:message]).not_to include('Could not create the samples')
       end
     end
 
@@ -127,7 +127,7 @@ RSpec.describe 'Import of the shipped template files' do
     context 'with a .mol file' do
       it 'is accepted rather than rejected as an unsupported format' do
         result = run_import('public/sdf/sample_import_example.sdf', 'single_structure.mol', 'sample')
-        expect(result[:message]).not_to match(/Unsupported format/)
+        expect(result[:message]).not_to include('Unsupported format')
       end
     end
 

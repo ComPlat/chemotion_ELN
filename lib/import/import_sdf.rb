@@ -3,6 +3,9 @@
 require 'charlock_holmes'
 require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
+# Same disable as its parent Import::ImportSamples: this importer was already far past the 200-line
+# limit before any of the recent work, and splitting it up is a refactor in its own right.
+# rubocop:disable Metrics/ClassLength
 class Import::ImportSdf < Import::ImportSamples
   attr_reader  :collection_id, :current_user_id, :processed_mol, :import_type,
                :inchi_array, :raw_data, :rows, :custom_data_keys, :mapped_keys, :unprocessable_samples
@@ -528,3 +531,4 @@ class Import::ImportSdf < Import::ImportSamples
     mf.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace).scrub.split(/^(#{MOLFILE_BLOCK_END_LINE}(\r?\n)?)/).first.concat(MOLFILE_BLOCK_END_LINE)
   end
 end
+# rubocop:enable Metrics/ClassLength

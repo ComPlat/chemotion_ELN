@@ -59,7 +59,7 @@ RSpec.describe Import::ImportSamples do
     it 'names the affected row in the result message' do
       unresolvable_structure('c1ccccc1')
       result = importer.process
-      expect(result[:message]).to match(/imported as decoupled because no structure could be resolved \(row\(s\) 5\)/)
+      expect(result[:message]).to include('imported as decoupled because no structure could be resolved (row(s) 5)')
     end
 
     it 'does not report it as a clean success' do
@@ -84,7 +84,7 @@ RSpec.describe Import::ImportSamples do
       end
 
       it 'reports them' do
-        expect(importer.process[:message]).to match(/imported as decoupled because no structure could be/)
+        expect(importer.process[:message]).to include('imported as decoupled because no structure could be')
       end
     end
 
@@ -112,7 +112,7 @@ RSpec.describe Import::ImportSamples do
 
       it 'records the parse failure as the reason' do
         result = importer.process
-        expect(result[:decoupled_fallbacks].map { |f| f[:reason] }.uniq)
+        expect(result[:decoupled_fallbacks].pluck(:reason).uniq)
           .to eq(['structure could not be parsed: open babel exploded'])
       end
 
@@ -182,7 +182,7 @@ RSpec.describe Import::ImportSamples do
 
     it 'reports only the failing row as unprocessable' do
       result = importer.process
-      expect(result[:unprocessed_data].map { |u| u[:index] }).to eq([1])
+      expect(result[:unprocessed_data].pluck(:index)).to eq([1])
     end
 
     it 'returns a warning rather than an all-or-nothing failure' do
@@ -235,7 +235,7 @@ RSpec.describe Import::ImportSamples do
     it 'accounts for rows skipped before import instead of dropping them silently' do
       allow(importer).to receive_messages(structure?: false, cas?: false, decoupled?: false)
       result = importer.process
-      expect(result[:message]).to match(/6 row\(s\) were skipped because they contained no structure/)
+      expect(result[:message]).to include('6 row(s) were skipped because they contained no structure')
       expect(result[:skipped_rows]).to eq([2, 3, 4, 5, 6, 7])
     end
 
@@ -251,8 +251,8 @@ RSpec.describe Import::ImportSamples do
         original.call(*args, **kwargs)
       end
       result = importer.process
-      expect(result[:message]).to match(/5 of 6 row\(s\)/)
-      expect(result[:message]).to match(/The following row\(s\) could not be imported: 4\./)
+      expect(result[:message]).to include('5 of 6 row(s)')
+      expect(result[:message]).to include('The following row(s) could not be imported: 4.')
       expect(result[:failed_rows]).to eq([4])
     end
 
@@ -339,19 +339,19 @@ RSpec.describe Import::ImportSamples do
     it 'names the rows that lost their structure' do
       allow(importer).to receive(:extract_molfile_and_molecule).and_return(nil)
       result = importer.process
-      expect(result[:message]).to match(/imported as decoupled because no structure could be resolved/)
+      expect(result[:message]).to include('imported as decoupled because no structure could be resolved')
     end
 
     it 'exposes the fallback rows structurally, not only in prose' do
       allow(importer).to receive(:extract_molfile_and_molecule).and_return(nil)
       result = importer.process
-      expect(result[:decoupled_fallbacks].map { |f| f[:index] }).to eq([0, 1, 2, 3, 4, 5])
+      expect(result[:decoupled_fallbacks].pluck(:index)).to eq([0, 1, 2, 3, 4, 5])
     end
 
     it 'gives a reason per fallback row' do
       allow(importer).to receive(:extract_molfile_and_molecule).and_return(nil)
       result = importer.process
-      expect(result[:decoupled_fallbacks].map { |f| f[:reason] }.uniq)
+      expect(result[:decoupled_fallbacks].pluck(:reason).uniq)
         .to eq(['structure could not be interpreted'])
     end
   end

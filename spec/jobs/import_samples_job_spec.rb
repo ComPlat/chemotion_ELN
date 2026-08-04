@@ -202,12 +202,12 @@ describe ImportSamplesJob, :active_job do
       ActiveJob::Status.store.write("import_samples_job:attempt:#{job.job_id}", Time.current.utc.iso8601)
       result = job.perform(params)
       expect(result[:status]).to eq('invalid')
-      expect(result[:message]).to match(/stopped unexpectedly because the worker process was terminated/)
+      expect(result[:message]).to include('stopped unexpectedly because the worker process was terminated')
     end
 
     it 'warns that a retry could duplicate already-saved rows' do
       ActiveJob::Status.store.write("import_samples_job:attempt:#{job.job_id}", Time.current.utc.iso8601)
-      expect(job.perform(params)[:message]).to match(/would be imported twice/)
+      expect(job.perform(params)[:message]).to include('would be imported twice')
     end
 
     it 'fails open and still imports when the marker store cannot be read' do
