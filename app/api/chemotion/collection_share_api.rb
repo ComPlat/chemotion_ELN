@@ -147,11 +147,14 @@ module Chemotion
       # Upsert the share (per user) onto each target and refresh its shared flag. No transaction of
       # its own — the caller wraps this (together with any sibling write, e.g. the PUT target update)
       # in a single ActiveRecord::Base.transaction so the whole cascade is atomic.
-      def write_shares!(targets, user_ids, attributes)
+      # +attributes+ is a partial update — fine for an existing share, but a new record has no
+      # current value to fall back on, so +new_share_defaults+ backfills it from the root share
+      # instead of the schema default (see the PUT include_new_subcollections cascade).
+      def write_shares!(targets, user_ids, attributes, new_share_defaults: {})
         targets.each do |target|
           user_ids.each do |user_id|
             share = CollectionShare.find_or_initialize_by(collection: target, shared_with_id: user_id)
-            share.assign_attributes(attributes)
+            share.assign_attributes((share.new_record? ? new_share_defaults : {}).merge(attributes))
             share.save!
           end
           refresh_shared_flag!(target)
@@ -262,7 +265,10 @@ module Chemotion
         # requires_new: true — see the note on the create endpoint (atomic under nested transactions).
         ActiveRecord::Base.transaction(requires_new: true) do
           share.update!(attributes)
-          write_shares!(descendants, [share.shared_with_id], attributes)
+          # Backfill a newly-minted descendant from the root's own values, not the schema default —
+          # see the note on write_shares!.
+          defaults = share.attributes.symbolize_keys.except(*%i[id collection_id shared_with_id created_at updated_at])
+          write_shares!(descendants, [share.shared_with_id], attributes, new_share_defaults: defaults)
         end
 
         present share, with: Entities::CollectionShareEntity, root: :collection_share

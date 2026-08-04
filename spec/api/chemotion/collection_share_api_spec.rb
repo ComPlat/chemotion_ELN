@@ -161,6 +161,23 @@ describe Chemotion::CollectionShareAPI do
 
         expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
       end
+
+      # write_shares! is a partial-update writer (include_missing: false) — safe for an existing
+      # share, whose unset columns keep their current value, but a genuinely new one has no current
+      # value to keep. Without a backfill it would fall back to the schema default (0) for every
+      # column this partial request doesn't mention, rather than mirroring the root share.
+      it 'backfills a newly minted descendant share from the root, not the schema default, on a partial edit' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: { permission_level: CollectionShare.permission_level(:manage_shares),
+                      apply_to_subcollections: true,
+                      include_new_subcollections: true }
+
+        child_share = CollectionShare.find_by(collection: child, shared_with_id: other_user.id)
+        expect(child_share.permission_level).to eq(CollectionShare.permission_level(:manage_shares))
+        # sample_detail_level was never part of this request — it must mirror the root share's actual
+        # value (10, from the factory), not the schema default (0).
+        expect(child_share.sample_detail_level).to eq(10)
+      end
     end
   end
 
