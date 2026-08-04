@@ -505,6 +505,21 @@ describe Chemotion::SampleAPI do
       end
     end
 
+    context 'when there are more samples than fit on a page' do
+      before { create_list(:sample, 3, collections: [personal_collection]) }
+
+      it 'returns the true total in samples_count for both the default and molecule_sort branches' do
+        # Regression test for reset_pagination_page's return value (see params_helpers.rb):
+        # the default-sort branch reuses it as samples_count instead of recomputing a count,
+        # so it must keep matching the independently-computed molecule_sort branch's count.
+        get '/api/v1/samples', params: { collection_id: personal_collection.id, per_page: 1, molecule_sort: 0 }
+        expect(JSON.parse(response.body)['samples_count']).to eq(3)
+
+        get '/api/v1/samples', params: { collection_id: personal_collection.id, per_page: 1, molecule_sort: 1 }
+        expect(JSON.parse(response.body)['samples_count']).to eq(3)
+      end
+    end
+
     context 'when a page mixes an owned-and-shared sample and a merely-shared sample' do
       let(:other_users_collection) do
         create(:collection, user: other_user).tap do |collection|
