@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from 'react';
 import { observer } from 'mobx-react';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { aviatorNavigation } from 'src/utilities/routesUtils';
+import { aviatorNavigation, aviatorNavigationToApp } from 'src/utilities/routesUtils';
 
 import ElementDragLayer from 'src/components/ElementDragLayer';
 import Sidebar from 'src/apps/mydb/mainNavigation/sidebar/Sidebar';
@@ -51,23 +51,17 @@ const loadElement = (paths) => {
   aviatorNavigation(paths[4], paths[5], true, true, {});
 };
 
-const loadCollection = () => {
-  const locationPaths = location.pathname.split('/');
-  if (locationPaths.includes('all') || locationPaths.includes('home')) {
-    CollectionsFetcher.fetchByCollectionId('all')
-      .then((collection) => {
-        UIActions.selectCollection(collection);
-        if (!locationPaths.includes('home')) {
-          loadElement(locationPaths);
-        }
-      });
-  } else if (locationPaths.includes('collection')) {
-    CollectionsFetcher.fetchByCollectionId(locationPaths[3])
-      .then((collection) => {
-        UIActions.selectCollection(collection);
-        loadElement(locationPaths);
-      });
-  }
+const loadCollection = (currentRoute) => {
+  const currentPaths = currentRoute.split('/');
+  const collectionId = currentPaths.includes('all') ? 'all' : currentPaths[3];
+
+  CollectionsFetcher.fetchByCollectionId(collectionId)
+    .then((collection) => {
+      UIActions.selectCollection(collection);
+
+      if (!location.pathname.includes('collection')) { aviatorNavigationToApp(currentRoute); }
+      loadElement(currentPaths);
+    });
 };
 
 const App = () => {
@@ -99,6 +93,7 @@ const App = () => {
     saveUserTemplatesToLocalStorage();
     userStore.fetchUserLabels();
     userStore.fetchGenericEls();
+    userStore.fetchGenericElKlasses();
     userStore.fetchSegmentKlasses();
     userStore.fetchDatasetKlasses();
     userStore.fetchUnitsSystem();
@@ -107,7 +102,7 @@ const App = () => {
     UIActions.initialize.defer();
     patchExternalLibraries();
 
-    loadCollection();
+    loadCollection(userStore.currentRoute);
 
     // TODO: clarify origin of handleStorageChange
     // window.addEventListener('storage', this.handleStorageChange);
