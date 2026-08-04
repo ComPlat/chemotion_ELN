@@ -12,6 +12,7 @@ import React, {
 import PropTypes from 'prop-types';
 import { Button, Form, InputGroup } from 'react-bootstrap';
 import Reaction from 'src/models/Reaction';
+import Sample from 'src/models/Sample';
 import { permitOn } from 'src/components/common/uis';
 import DragHandle from 'src/components/common/DragHandle';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
@@ -60,6 +61,13 @@ const MAT_GROUP_TITLES = {
 const MASS_METRIC_PREFIXES = ['m', 'n', 'u'];
 
 const isEmptyValue = (v) => v === null || v === undefined || Number.isNaN(v) || v === 0;
+
+const commonSample = (arr, key) => {
+  if (arr.length !== 0 && arr.every(item => item[key] === arr[0][key])) {
+    return arr[0];
+  }
+  return null;
+};
 
 // Hours and Kelvin, so a gas phase column sorts by what the numbers mean rather than by the unit
 // each row happens to be in.
@@ -162,7 +170,7 @@ const NAME_FIELD = {
   sticky: true,
   sortValue: (material) => material.molecule?.iupac_name || material.name || material.short_label || '',
   render: (mh, { index }) => (
-    <MaterialNameWithIupac mh={mh} index={index} withStickyName={false} />
+    <MaterialNameWithIupac mh={mh} index={index} />
   ),
 };
 
@@ -651,6 +659,39 @@ MaterialUnitHeader.defaultProps = {
   progressSort: () => {},
 };
 
+/*
+Label of a material group whose slot holds the same sample in every variation: the plain
+"Starting material 1" heading is joined by the very name widget the Material column renders, so
+the shared sample is named once in the header. The header only names it - the handler's onChange
+is a no-op - but the name still links to the sample.
+*/
+const MaterialGroupHeader = ({
+  headerText, reaction, materialGroup, index, material
+}) => {
+  const mh = new MaterialHandler({
+    material,
+    reaction,
+    materialGroup,
+    onChange: () => null,
+  });
+
+  return (
+    <div className="variations-material-group-header d-flex align-items-center gap-1 overflow-hidden">
+      <div className="flex-shrink-0">
+      <MaterialNameWithIupac mh={mh} index={index} prefix={headerText} />
+      </div>
+      </div>
+  );
+};
+
+MaterialGroupHeader.propTypes = {
+  headerText: PropTypes.string.isRequired,
+  reaction: PropTypes.instanceOf(Reaction).isRequired,
+  materialGroup: PropTypes.string.isRequired,
+  index: PropTypes.number.isRequired,
+  material: PropTypes.instanceOf(Sample).isRequired,
+};
+
 const schemaBuildColumnGroups = (variations) => {
   /*
    Recomputed on every render on purpose: the parent mutates the `variations` array in place and
@@ -678,9 +719,36 @@ const schemaBuildColumnGroups = (variations) => {
     const fields = FIELDS_BY_GROUP[matGroup];
 
     for (let sampleIdx = 0; sampleIdx < numberOfSamples; sampleIdx += 1) {
+      /*
+      When every variation fills this slot with the same sample, the group header names it once.
+      The sample is kept together with the variation reaction it came from - the MaterialHandler
+      looks the material up in that very reaction.
+      */
+      const slotEntries = variations
+        .map((variation) => ({ reaction: variation.data, material: variation.data?.[matGroup]?.[sampleIdx] }))
+        .filter(({ material }) => material);
+      const sharedSample = commonSample(slotEntries.map(({ material }) => material), 'id');
+      const headerName = `${MAT_GROUP_TITLES[matGroup]} ${sampleIdx + 1}`;
+
       groups.push({
         groupId: `${matGroup}${GROUP_ID_SEPARATOR}${sampleIdx}`,
-        headerName: `${MAT_GROUP_TITLES[matGroup]} ${sampleIdx + 1}`,
+        headerName,
+        ...(sharedSample ? {
+          // Part of the column signature, so the header is rebuilt when the slot stops (or starts)
+          // being shared, e.g. after removing the one variation that differed.
+          labelKey: String(sharedSample.id),
+          headerGroupComponentParams: {
+            label: (
+              <MaterialGroupHeader
+                headerText={headerName}
+                reaction={slotEntries[0].reaction}
+                materialGroup={matGroup}
+                index={sampleIdx + 1}
+                material={sharedSample}
+              />
+            ),
+          },
+        } : {}),
         matGroup,
         columns: fields(showGasColumns.some((x) => x[sampleIdx]))
           .filter((field) => !field.requiresLoadingColumn || showLoadingColumn)

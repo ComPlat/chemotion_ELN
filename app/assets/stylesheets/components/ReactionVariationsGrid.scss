@@ -29,6 +29,20 @@
 .reaction-variations-grid {
   width: 100%;
 
+  .ag-header-group-cell.ag-header-group-cell-with-group {
+    overflow: hidden;
+  }
+
+  .ag-header-group-cell.ag-header-group-cell-with-group:hover {
+    overflow: visible;
+    .ag-header-cell-comp-wrapper.ag-header-cell-comp-wrapper-limited-height {
+      background: #d3e8f2 !important;
+
+    }
+
+    z-index: 500;
+  }
+
   .ag-cell {
     overflow: visible;
     padding-left: 4px;
@@ -77,6 +91,21 @@
     max-height: 20px;
     line-height: 1;
     white-space: nowrap;
+  }
+
+  /*
+  Group heading naming the sample every variation of the slot shares. The name widget is the one
+  the Material cells render, squeezed onto the single 32px header line: no wrapping, and no room
+  for the IUPAC subline it shows in a cell.
+  */
+  .variations-material-group-header {
+    min-width: 0;
+    white-space: nowrap;
+
+    .reaction-material__iupac-name {
+      max-width: 200px;
+      overflow: hidden;
+    }
   }
 
   /*

@@ -62,7 +62,7 @@ NotApplicableInput.propTypes = {
 
 // Returns a Tooltip *element* rather than a component: OverlayTrigger clones the
 // overlay to inject ref/style/placement/arrowProps, which a wrapper component would swallow.
-const iupacNameTooltip = (mh) => {
+const iupacNameTooltip = (mh, moleculeIupacName) => {
   const { isSbmm, material } = mh;
 
   return (
@@ -71,7 +71,7 @@ const iupacNameTooltip = (mh) => {
         {!isSbmm && material.molecule && (
           <div className="d-flex">
             <div>IUPAC&#58;&nbsp;</div>
-            <div style={{ wordBreak: 'break-all' }}>{material.molecule.iupac_name || ''}</div>
+            <div style={{ wordBreak: 'break-all' }}>{moleculeIupacName || ''}</div>
           </div>
         )}
         <div className="d-flex">
@@ -303,7 +303,7 @@ GasType.propTypes = {
   mh: PropTypes.instanceOf(MaterialHandler).isRequired
 };
 
-const MaterialNameWithIupac = ({ mh, index, withStickyName }) => {
+const MaterialNameWithIupac = ({ mh, index, prefix }) => {
   const { materialGroup, reaction, material, isSbmm, variations } = mh;
 
   if (variations.length > 0) {
@@ -328,7 +328,7 @@ const MaterialNameWithIupac = ({ mh, index, withStickyName }) => {
             <SingleMaterialNameWithIupac
               mh={mh}
               index={index}
-              withStickyName={withStickyName}
+              prefix={prefix}
               reaction={reaction}
               material={sample}
               isSbmm={isSbmm}
@@ -341,7 +341,7 @@ const MaterialNameWithIupac = ({ mh, index, withStickyName }) => {
 
   return <SingleMaterialNameWithIupac mh={mh}
                                       index={index}
-                                      withStickyName={withStickyName}
+                                      prefix={prefix}
                                       reaction={reaction}
                                       material={material}
                                       isSbmm={isSbmm}
@@ -351,10 +351,14 @@ const MaterialNameWithIupac = ({ mh, index, withStickyName }) => {
 MaterialNameWithIupac.propTypes = {
   mh: PropTypes.instanceOf(MaterialHandler).isRequired,
   index: PropTypes.number.isRequired,
-  withStickyName: PropTypes.bool.isRequired,
+  prefix: PropTypes.string,
 };
 
-const SingleMaterialNameWithIupac = ({ mh, index, withStickyName, materialGroup, reaction, material, isSbmm }) => {
+MaterialNameWithIupac.defaultProps = {
+  prefix: null
+};
+
+const SingleMaterialNameWithIupac = ({ mh, index, prefix, materialGroup, reaction, material, isSbmm }) => {
 
   // Check if the material is a mixture
   const isMixture = material.isMixture && material.isMixture();
@@ -420,34 +424,31 @@ const SingleMaterialNameWithIupac = ({ mh, index, withStickyName, materialGroup,
     mh.handler.addToDesc();
   };
 
-  const getNameStyle = () => {
-    if (!withStickyName) {
-      return {};
+  const renderPrelabel = () => {
+    if (prefix) {
+      return null;
     }
 
-    return {
-      position: 'sticky',
-      left: 0,
-      background: '#fff',
-      zIndex: 2
-    };
+    return (<>
+      {reaction.gaseous && materialGroup !== 'solvents'
+        ? <GasType mh={mh}/> : null}
+    <OverlayTrigger overlay={addToDescTooltip}>
+      <Button variant="light" size="xsm" className="me-1" onClick={addToDesc} disabled={!permitOn(reaction)}>
+        {serialCode}
+      </Button>
+    </OverlayTrigger>
+    </>);
 
   };
 
   return (
-    <div style={getNameStyle()} className="pseudo-table__cell pseudo-table__cell-title align-self-start">
+    <div className="pseudo-table__cell pseudo-table__cell-title align-self-start">
       <div>
         <div className="d-flex align-items-center">
-          {reaction.gaseous && materialGroup !== 'solvents'
-            ? <GasType mh={mh}/> : null}
-          <OverlayTrigger overlay={addToDescTooltip}>
-            <Button variant="light" size="xsm" className="me-1" onClick={addToDesc} disabled={!permitOn(reaction)}>
-              {serialCode}
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger overlay={iupacNameTooltip(mh)}>
+          {renderPrelabel()}
+          <OverlayTrigger overlay={iupacNameTooltip(mh, moleculeIupacName)}>
             <div className="reaction-material__link">
-              {materialName}
+              {prefix}: {materialName}
             </div>
           </OverlayTrigger>
         </div>
@@ -468,7 +469,11 @@ SingleMaterialNameWithIupac.propTypes = {
   materialGroup: PropTypes.string.isRequired,
   isSbmm: PropTypes.bool.isRequired,
   index: PropTypes.number.isRequired,
-  withStickyName: PropTypes.bool.isRequired,
+  prefix: PropTypes.string,
+};
+
+SingleMaterialNameWithIupac.defaultProps = {
+  prefix: null
 };
 
 const CoefficientField = ({ mh }) => {
