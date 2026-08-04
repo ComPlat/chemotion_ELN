@@ -144,6 +144,7 @@ export default class UsersFetcher {
   }
 
   static submitAsForm(url, method, body) {
+    body.append('authenticity_token', DocumentHelper.getMetaContent('csrf-token'));
     const options = {
       body,
       headers: {},
