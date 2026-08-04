@@ -152,7 +152,13 @@ const SignInForm = () => {
     if (loginResult.status === 200) {
       userStore.setAuthToken(loginResult.token);
       userStore.setRole(loginResult.role);
-      aviatorNavigationToApp('/mydb/collection/all');
+      let route = '/mydb/collection/all';
+      if (loginResult.role === 'Group') {
+        route = '/command_n_control';
+      } else if (loginResult.role === 'Admin') {
+        route = '/admin';
+      }
+      aviatorNavigationToApp(route);
     } else if (loginResult.status === 400) {
       // handle bad username/password combination
     } else if (loginResult.status === 401 && loginResult.otp_required === true) {

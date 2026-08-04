@@ -1,6 +1,7 @@
 import { flow, types } from 'mobx-state-tree';
 import { values } from 'mobx';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import GenericDSsFetcher from 'src/fetchers/GenericDSsFetcher';
 import GenericSgsFetcher from 'src/fetchers/GenericSgsFetcher';
 import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
@@ -243,6 +244,7 @@ const UserStore = types.model(
     authToken: types.maybeNull(types.string, localStorage.getItem('chemotion-auth-token')),
     role: types.optional(types.string, localStorage.getItem('chemotion-role') || 'Guest'),
     currentUser: types.maybeNull(User),
+    currentRoute: types.optional(types.string, localStorage.getItem('chemotion-app-route') || '/home'),
     profile: types.optional(types.frozen({}), {}), // must be serialized later, currently the full datastructure is unknown to me
     currentTab: types.optional(types.integer, 0),
     currentType: types.optional(types.string, ''),
@@ -251,6 +253,7 @@ const UserStore = types.model(
     chmos: types.array(ChmoOrHeader),
     labels: types.array(Label),
     genericEls: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me
+    genericElKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me
     segmentKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me,
     dsKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me,
     unitsSystem: types.optional(UnitSystem, { fields: [] }),
@@ -303,9 +306,13 @@ const UserStore = types.model(
     const result = yield UserLabelsFetcher.listUserLabels(true);
     self.labels = result.labels.map((label) => Label.create(label));
   }),
-  fetchGenericEls: flow(function* fetchCurrentUser() {
+  fetchGenericEls: flow(function* fetchGenericEls() {
     const result = yield UsersFetcher.fetchElementKlasses();
     self.genericEls = result.klass;
+  }),
+  fetchGenericElKlasses: flow(function* fetchGenericElKlasses() {
+    const result = yield GenericElsFetcher.fetchElementKlasses();
+    self.genericElKlasses = result.klass.filter((k) => k.is_generic);
   }),
   fetchSegmentKlasses: flow(function * fetchSegmentKlasses() {
     const result = yield GenericSgsFetcher.listSegmentKlass();
@@ -347,6 +354,14 @@ const UserStore = types.model(
       localStorage.removeItem('chemotion-role');
     }
   },
+  setCurrentRoute: (route) => {
+    self.currentRoute = route;
+    if (route) {
+      localStorage.setItem('chemotion-app-route', route);
+    } else {
+      localStorage.removeItem('chemotion-app-route');
+    }
+  },
   logout: () => {
     self.setAuthToken(null);
     self.setRole('Guest');
@@ -367,7 +382,7 @@ const UserStore = types.model(
   },
   updateUserProfileValues(params = {}) {
     self.updateUserProfile(params);
-  }
+  },
 }));
 
 export default UserStore;
