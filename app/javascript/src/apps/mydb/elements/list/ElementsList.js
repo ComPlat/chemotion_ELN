@@ -1,4 +1,6 @@
 import { List, Set } from 'immutable';
+import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
+import SharedToMeInfosTooltip from 'src/apps/mydb/collections/SharedToMeInfosTooltip';
 import React from 'react';
 import {
   Tabs, Tab, Tooltip, OverlayTrigger, Button
@@ -229,8 +231,29 @@ export default class ElementsList extends React.Component {
     return (
       <div className="elements-list h-100 d-flex flex-column" style={{ minWidth: '400px' }}>
         <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap column-gap-4 row-gap-2">
-          <h1 className="m-0 text-capitalize">
+          <h1 className="m-0 text-capitalize d-flex align-items-center gap-2">
             {currentCollection?.label || ''}
+            {/* Own vs shared-with-me are mutually exclusive: if the current user owns
+                the collection (`shared` is set when they've shared it with others), don't
+                also render the shared-with-me indicator even if the store reports it. */}
+            {currentCollection?.shared ? (
+              <OverlayTrigger placement="right" overlay={<UserInfosTooltip collectionId={currentCollection.id} />}>
+                <i className="fa fa-share-alt fs-5" aria-label="Shared collection" />
+              </OverlayTrigger>
+            ) : (currentCollection?.id != null
+              && this.context?.collections?.isSharedCollection?.(currentCollection.id) && (
+              <OverlayTrigger
+                placement="right"
+                overlay={(
+                  <SharedToMeInfosTooltip
+                    collectionId={currentCollection.id}
+                    owner={currentCollection.owner}
+                  />
+                )}
+              >
+                <i className="fa fa-share-alt fs-5" aria-label="Shared to me collection" />
+              </OverlayTrigger>
+            ))}
             {hasSearchApplied && (<span className="ms-2 text-lighten2 condensed-text-width">(search results)</span>)}
           </h1>
           <div className="d-flex align-items-center gap-3">
