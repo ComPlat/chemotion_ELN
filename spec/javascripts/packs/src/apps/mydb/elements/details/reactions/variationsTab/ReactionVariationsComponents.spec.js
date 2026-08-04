@@ -4,6 +4,9 @@ import {
   EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser, FeedstockParser, GasParser,
   SegmentParser, SegmentFormatter
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
+import {
+  computeCombinedReactionVolume
+} from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { setUpReaction, setUpGaseousReaction } from 'helper/reactionVariationsHelpers';
 
 describe('ReactionVariationsComponents', async () => {
@@ -235,6 +238,92 @@ describe('ReactionVariationsComponents', async () => {
 
       expect(updatedCellData.yield.value).toBeCloseTo(9.455);
     });
+    it('adapts amount, mass and volume when updating concentration', async () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'mol/l' };
+      const localContext = {
+        reactionHasPolymers: false,
+        concentrationContext: {
+          lockReactionVolume: true,
+          useReactionVolume: true,
+          reactionVolumeByRowId: { [variationsRow.id]: 10 },
+        }
+      };
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow,
+        oldValue: {
+          ...cellData,
+          concentration: { value: 1, unit: 'mol/l' }
+        },
+        newValue: '2',
+        colDef,
+        context: localContext
+      });
+
+      expect(updatedCellData.amount.value).toBe(20);
+      expect(updatedCellData.mass.value).toBeGreaterThan(0);
+      expect(updatedCellData.volume.value).toBeDefined();
+    });
+    it('keeps amount, mass and volume unchanged when concentration updates while volume is unlocked', async () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'mol/l' };
+      const localContext = {
+        reactionHasPolymers: false,
+        concentrationContext: {
+          lockReactionVolume: false,
+          useReactionVolume: true,
+          reactionVolumeByRowId: { [variationsRow.id]: 10 },
+        }
+      };
+
+      const baseCellData = {
+        ...cellData,
+        concentration: { value: 1, unit: 'mol/l' }
+      };
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow,
+        oldValue: baseCellData,
+        newValue: '2',
+        colDef,
+        context: localContext
+      });
+
+      expect(updatedCellData.amount.value).toBe(baseCellData.amount.value);
+      expect(updatedCellData.mass.value).toBe(baseCellData.mass.value);
+      expect(updatedCellData.volume.value).toBe(baseCellData.volume.value);
+    });
+    it('derives amount from row combined volume when reaction volume is locked and not explicitly used', async () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'mol/l' };
+      const localContext = {
+        reactionHasPolymers: false,
+        concentrationContext: {
+          lockReactionVolume: true,
+          useReactionVolume: false,
+          reactionVolumeByRowId: {},
+        }
+      };
+      const firstStartingMaterial = Object.values(variationsRow.startingMaterials)[0];
+      const firstReactant = Object.values(variationsRow.reactants)[0];
+      firstStartingMaterial.volume.value = 2;
+      firstReactant.volume.value = 3;
+
+      const rowCombinedReactionVolume = computeCombinedReactionVolume(variationsRow);
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow,
+        oldValue: {
+          ...cellData,
+          concentration: { value: 1, unit: 'mol/l' }
+        },
+        newValue: '2',
+        colDef,
+        context: localContext
+      });
+
+      expect(updatedCellData.amount.value).toBeCloseTo(2 * rowCombinedReactionVolume);
+      expect(updatedCellData.mass.value).toBeGreaterThan(0);
+      expect(updatedCellData.volume.value).toBeDefined();
+    });
   });
   describe('FeedstockParser', async () => {
     let variationsRow;
@@ -286,6 +375,24 @@ describe('ReactionVariationsComponents', async () => {
       });
 
       expect(updatedCellData.amount.value).toBe(cellData.amount.value * 2);
+      expect(updatedCellData.mass.value).toBeGreaterThan(cellData.mass.value);
+      expect(updatedCellData.volume.value).toBeGreaterThan(cellData.volume.value);
+      expect(updatedCellData.equivalent.value).toBeGreaterThan(cellData.equivalent.value);
+    });
+    it('adapts mass, amount, volume and equivalent when updating concentration', () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'mol/l' };
+      const updatedCellData = FeedstockParser({
+        data: variationsRow,
+        oldValue: {
+          ...cellData,
+          concentration: { value: 1, unit: 'mol/l' }
+        },
+        newValue: '2',
+        colDef,
+        context
+      });
+
+      expect(updatedCellData.amount.value).toBe(20);
       expect(updatedCellData.mass.value).toBeGreaterThan(cellData.mass.value);
       expect(updatedCellData.volume.value).toBeGreaterThan(cellData.volume.value);
       expect(updatedCellData.equivalent.value).toBeGreaterThan(cellData.equivalent.value);
