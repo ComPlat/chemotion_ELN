@@ -13,7 +13,7 @@ module Import
     def created_collection_labels
       return [] unless @instances.key?('Collection')
 
-      @instances['Collection'].values.map(&:label).compact.sort
+      @instances['Collection'].values.filter_map(&:label).sort
     end
 
     # rubocop:disable Style/OptionalBooleanParameter , Metrics/ParameterLists
@@ -204,7 +204,7 @@ module Import
         # add collection to @instances map
         update_instances!(uuid, collection)
       end
-      labels = created_collection_labels
+      created_collection_labels
     end
 
     def gate_collection
