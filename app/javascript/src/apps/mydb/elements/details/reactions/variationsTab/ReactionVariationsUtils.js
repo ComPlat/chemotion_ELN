@@ -7,20 +7,47 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 const REACTION_VARIATIONS_TAB_KEY = 'reactionVariationsTab';
 const GROUP_ID_SEPARATOR = '::';
 
+function safeStructuredClone(obj) {
+
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(safeStructuredClone);
+  }
+
+  const result = {};
+
+  for (const [key, value] of Object.entries(obj)) {
+    try {
+      result[key] = structuredClone(value);
+    } catch {
+      // ignore this property
+    }
+  }
+
+  return result;
+}
+
 function getVariationsRowName(reactionLabel, variationsRowId) {
   return `${reactionLabel}-V#${variationsRowId}`;
 }
 
 function deepPatch(target, patch) {
   if (patch === null || patch === undefined) {
-    return structuredClone(target);
+    return safeStructuredClone(target);
   }
 
   // Arrays: merge by index
   if (Array.isArray(target) && Array.isArray(patch)) {
-    return target.slice(0, patch.length).map((value, i) =>
-      i in patch ? deepPatch(value, patch[i]) : structuredClone(value)
-    );
+    return patch.map((pVal, i) => {
+      const value = target[i] ?? pVal;
+      if (value === null) {
+        return value;
+      }
+      return deepPatch(value, pVal);
+    });
   }
 
   // Objects: merge recursively
@@ -32,12 +59,12 @@ function deepPatch(target, patch) {
     !Array.isArray(target) &&
     !Array.isArray(patch)
   ) {
-    const result = structuredClone(target);
+    const result = safeStructuredClone(target);
 
     for (const key of Object.keys(patch)) {
       result[key] = key in target
         ? deepPatch(target[key], patch[key])
-        : structuredClone(patch[key]);
+        : safeStructuredClone(patch[key]);
     }
 
     return result;
@@ -50,7 +77,7 @@ function deepPatch(target, patch) {
 const makeVariationReaction = (reaction, reactionData) => {
   const clonedReaction = deepPatch(reaction, reactionData);
   clonedReaction.variations = [];
-  clonedReaction.container = Container.init();
+
   clonedReaction.id = reactionData.id || uuid.v4();
   ['starting_materials', 'reactants', 'solvents', 'purification_solvents', 'products'].forEach((key) => {
     clonedReaction[`_${key}`] = clonedReaction[`_${key}`].map((sampleData) => {
@@ -125,7 +152,7 @@ const diffObjects = (obj1, obj2, ignoreList = []) => {
     }
 
     const value1 = obj1?.[key];
-    const value2 = obj2[key];
+    const value2 = obj2[key] instanceof Sample ? { ...obj2[key] } : obj2[key];
 
     // Ignore functions
     if (typeof value2 === 'function') {

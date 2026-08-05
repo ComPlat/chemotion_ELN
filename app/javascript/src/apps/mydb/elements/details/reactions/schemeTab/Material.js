@@ -373,7 +373,6 @@ const Material = ({
 
   const mh = useMemo(() => new MaterialHandler(
     {
-      index,
       variations,
       material,
       reaction,
@@ -387,7 +386,7 @@ const Material = ({
         setMixtureComponents(a,b);
       },
       lockEquivColumn
-    }), [index, variations, material,
+    }), [variations, material,
     reaction, materialGroup, onChange,
     fieldToShow, mixtureComponents, lockEquivColumn]);
 

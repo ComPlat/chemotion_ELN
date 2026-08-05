@@ -62,10 +62,7 @@ NotApplicableInput.propTypes = {
 
 // Returns a Tooltip *element* rather than a component: OverlayTrigger clones the
 // overlay to inject ref/style/placement/arrowProps, which a wrapper component would swallow.
-const iupacNameTooltip = (mh, moleculeIupacName) => {
-  const { isSbmm, material } = mh;
-
-  return (
+const iupacNameTooltip = (isSbmm, material, moleculeIupacName) => (
     <Tooltip id="iupac_name_tooltip" className="left_tooltip">
       <div>
         {!isSbmm && material.molecule && (
@@ -89,7 +86,6 @@ const iupacNameTooltip = (mh, moleculeIupacName) => {
       </div>
     </Tooltip>
   );
-};
 
 const addToDescTooltip = (
   <Tooltip id="tp-spl-code" className="left_tooltip">
@@ -303,34 +299,34 @@ GasType.propTypes = {
   mh: PropTypes.instanceOf(MaterialHandler).isRequired
 };
 
-const MaterialNameWithIupac = ({ mh, index, prefix }) => {
-  const { materialGroup, reaction, material, isSbmm, variations } = mh;
+const MaterialNameWithIupac = ({ mh,  prefix }) => {
+  const { materialGroup, reaction, index, material, isSbmm, variations } = mh;
 
   if (variations.length > 0) {
 
     const seen = new Set([material.id]);
-    const samples = [material].concat(...variations.filter(({ data }) => {
+    const samples = variations.filter(({ data }) => {
       const sample = data[materialGroup][index];
       if (!sample) {
         return false;
       }
-      if (seen.has(sample.id)) {
+      if (seen.has(sample.molecule_iupac_name)) {
         return false;
       }
-      seen.add(sample.id);
+      seen.add(sample.molecule_iupac_name);
       return true;
-    }).map(({ data }) => data[materialGroup][index]));
+    }).map(({ data }) => data[materialGroup][index]);
     if (samples.length > 1) {
 
       return <div className="pseudo-table__cell pseudo-table__cell-title align-self-start">
         <ul>
-        {samples.map((sample) => <li key={sample.id}>
+        {samples.map((vMat) => <li key={vMat.molecule_iupac_name}>
             <SingleMaterialNameWithIupac
-              mh={mh}
+              mh={ mh.clone(vMat) }
               index={index}
               prefix={prefix}
               reaction={reaction}
-              material={sample}
+              material={vMat}
               isSbmm={isSbmm}
               materialGroup={materialGroup}/>
         </li>
@@ -350,7 +346,6 @@ const MaterialNameWithIupac = ({ mh, index, prefix }) => {
 
 MaterialNameWithIupac.propTypes = {
   mh: PropTypes.instanceOf(MaterialHandler).isRequired,
-  index: PropTypes.number.isRequired,
   prefix: PropTypes.string,
 };
 
@@ -446,7 +441,7 @@ const SingleMaterialNameWithIupac = ({ mh, index, prefix, materialGroup, reactio
       <div>
         <div className="d-flex align-items-center">
           {renderPrelabel()}
-          <OverlayTrigger overlay={iupacNameTooltip(mh, moleculeIupacName)}>
+          <OverlayTrigger overlay={iupacNameTooltip(isSbmm, material, moleculeIupacName)}>
             <div className="reaction-material__link">
               {prefix}: {materialName}
             </div>
