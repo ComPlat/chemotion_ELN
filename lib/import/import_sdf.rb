@@ -3,12 +3,51 @@
 require 'charlock_holmes'
 require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
+# Same disable as its parent Import::ImportSamples: this importer was already far past the 200-line
+# limit before any of the recent work, and splitting it up is a refactor in its own right.
+# rubocop:disable Metrics/ClassLength
 class Import::ImportSdf < Import::ImportSamples
-  attr_reader  :collection_id, :current_user_id, :processed_mol,
+  attr_reader  :collection_id, :current_user_id, :processed_mol, :import_type,
                :inchi_array, :raw_data, :rows, :custom_data_keys, :mapped_keys, :unprocessable_samples
 
   SIZE_LIMIT = 40 # MB
   MOLFILE_BLOCK_END_LINE = 'M  END'
+
+  # Extra target fields offered in the confirm grid when importing as a chemical inventory.
+  # They are resolved to a Chemical record by ImportChemicals during create_samples.
+  CHEMICAL_KEYS_TO_MAP = {
+    status: { field: 'status', displayName: 'Status' },
+    vendor: { field: 'vendor', displayName: 'Vendor' },
+    order_number: { field: 'order_number', displayName: 'Order Number' },
+    amount: { field: 'amount', displayName: 'Amount' },
+    volume: { field: 'volume', displayName: 'Volume' },
+    price: { field: 'price', displayName: 'Price' },
+    person: { field: 'person', displayName: 'Person' },
+    pictograms: { field: 'pictograms', displayName: 'Pictograms' },
+    h_statements: { field: 'h_statements', displayName: 'H Statements' },
+    p_statements: { field: 'p_statements', displayName: 'P Statements' },
+    required_date: { field: 'required_date', displayName: 'Required Date' },
+    ordered_date: { field: 'ordered_date', displayName: 'Ordered Date' },
+    expiration_date: { field: 'expiration_date', displayName: 'Expiration Date' },
+    delivery_date: { field: 'delivery_date', displayName: 'Delivery Date' },
+    opening_date: { field: 'opening_date', displayName: 'Opening Date' },
+    storage_temperature: { field: 'storage_temperature', displayName: 'Storage Temperature' },
+    required_by: { field: 'required_by', displayName: 'Required By' },
+    host_building: { field: 'host_building', displayName: 'Host Building' },
+    host_room: { field: 'host_room', displayName: 'Host Room' },
+    host_cabinet: { field: 'host_cabinet', displayName: 'Host Cabinet' },
+    host_group: { field: 'host_group', displayName: 'Host Group' },
+    owner: { field: 'owner', displayName: 'Owner' },
+    current_building: { field: 'current_building', displayName: 'Current Building' },
+    current_room: { field: 'current_room', displayName: 'Current Room' },
+    current_cabinet: { field: 'current_cabinet', displayName: 'Current Cabinet' },
+    current_group: { field: 'current_group', displayName: 'Current Group' },
+    borrowed_by: { field: 'borrowed_by', displayName: 'Borrowed By' },
+    disposal_info: { field: 'disposal_info', displayName: 'Disposal Info' },
+    important_notes: { field: 'important_notes', displayName: 'Important Notes' },
+    safety_sheet_link_merck: { field: 'safety_sheet_link_merck', displayName: 'Safety Sheet Link (Merck)' },
+    product_link_merck: { field: 'product_link_merck', displayName: 'Product Link (Merck)' },
+  }.freeze
 
   def initialize(args)
     @raw_data = args[:raw_data] || []
@@ -16,6 +55,7 @@ class Import::ImportSdf < Import::ImportSamples
     @collection_id = args[:collection_id]
     @current_user_id = args[:current_user_id]
     @attachment = args[:attachment]
+    @import_type = args[:import_type]
     @inchi_array = args[:inchikeys] || []
     @rows = args[:rows] || []
     @custom_data_keys = {}
@@ -32,7 +72,7 @@ class Import::ImportSdf < Import::ImportSamples
   end
 
   def keys_to_map
-    {
+    base = {
       description: { field: 'description', displayName: 'Description', multiple: true },
       location: { field: 'location', displayName: 'Location' },
       name: { field: 'name', displayName: 'Name' },
@@ -58,6 +98,9 @@ class Import::ImportSdf < Import::ImportSamples
       form: { field: 'form', displayName: 'Form' },
       inventory_label: { field: 'inventory_label', displayName: 'Inventory Label' },
     }
+    return base.merge(CHEMICAL_KEYS_TO_MAP) if @import_type == 'chemical'
+
+    base
   end
 
   def read_data
@@ -71,7 +114,7 @@ class Import::ImportSdf < Import::ImportSamples
       if size.to_f < SIZE_LIMIT * (10**6)
         detection = CharlockHolmes::EncodingDetector.detect(file_data)
         encoded_file = CharlockHolmes::Converter.convert file_data, detection[:encoding], 'UTF-8'
-        @raw_data = encoded_file.split(/\${4}\r?\n/)
+        @raw_data = split_into_records(encoded_file)
       else
         @message[:error] << "File too large (over #{SIZE_LIMIT}MB). "
       end
@@ -79,6 +122,29 @@ class Import::ImportSdf < Import::ImportSamples
       @message[:error] << "Failed to read attachment file: #{e.message}"
     end
     @raw_data.pop if @raw_data[-1].blank?
+  end
+
+  # An MDL record is title / program / comment / counts. Some editors -- Ketcher, including the SDF
+  # shipped in public/sdf -- omit the title line, so the counts line lands on line 3 and Open Babel
+  # reads the first atom line as the counts line. It then returns a blank inchikey and no formula, and
+  # the record is dropped with nothing but a "Problems reading the Count line" warning, which is why a
+  # perfectly good single-molecule SDF imported zero samples.
+  #
+  # Restore the missing line only when the counts line is demonstrably one line early. Prepending
+  # unconditionally would shift a well-formed record the other way and break it instead.
+  COUNTS_LINE = /^\s*\d+\s+\d+.*V[23]000/.freeze
+
+  def split_into_records(encoded_file)
+    encoded_file.split(/\${4}\r?\n/).map { |record| restore_molfile_title_line(record) }
+  end
+
+  def restore_molfile_title_line(record)
+    lines = record.to_s.lines
+    return record if lines.size < 4
+    return record if lines[3].to_s.match?(COUNTS_LINE) # counts already on line 4: well formed
+    return "\n#{record}" if lines[2].to_s.match?(COUNTS_LINE) # counts on line 3: title line missing
+
+    record
   end
 
   def message
@@ -175,24 +241,29 @@ class Import::ImportSdf < Import::ImportSamples
     read_data if raw_data.empty? && rows.empty?
     if !raw_data.empty? && inchi_array.empty?
       ActiveRecord::Base.transaction do
-        raw_data.each do |molfile|
-          babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
-          inchikey = babel_info[:inchikey]
-          is_partial = babel_info[:is_partial]
-          next unless inchikey.presence && (molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial))
-          next unless (i = inchi_array.index(inchikey))
+        raw_data.each_with_index do |molfile, index|
+          ActiveRecord::Base.transaction(requires_new: true) do
+            babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+            inchikey = babel_info[:inchikey]
+            is_partial = babel_info[:is_partial]
+            next unless inchikey.presence && (molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial))
+            next unless (i = inchi_array.index(inchikey))
 
-          @inchi_array[i] = nil
-          sample = Sample.new(
-            created_by: current_user_id,
-            molfile: molfile,
-            molfile_version: babel_info[:molfile_version],
-            molecule_id: molecule.id,
-          )
-          sample.collections << Collection.find(collection_id)
-          sample.collections << Collection.get_all_collection_for_user(current_user_id)
-          sample.save!
-          ids << sample.id
+            @inchi_array[i] = nil
+            sample = Sample.new(
+              created_by: current_user_id,
+              molfile: molfile,
+              molfile_version: babel_info[:molfile_version],
+              molecule_id: molecule.id,
+            )
+            sample.collections << Collection.find(collection_id)
+            sample.collections << Collection.get_all_collection_for_user(current_user_id)
+            sample.save!
+            ids << sample.id
+          end
+        rescue StandardError => e
+          Rails.logger.error("SDF import: molecule #{index + 1} could not be imported: #{e.class}: #{e.message}")
+          @unprocessable_samples << (index + 1)
         end
       end
     elsif !rows.empty?
@@ -205,8 +276,8 @@ class Import::ImportSdf < Import::ImportSamples
 
             error_columns = ''
             molfile = row['molfile']
-            molecule, molfile_for_sample, babel_info = molecule_and_molfile_for_row(molfile)
-            next unless molecule.present? && babel_info.present?
+            molecule, molfile_for_sample, babel_info = resolve_molecule_for_row(row)
+            next if molecule.blank?
 
             inchikey = babel_info[:inchikey]
             sample = Sample.new(
@@ -215,14 +286,13 @@ class Import::ImportSdf < Import::ImportSamples
               molfile_version: babel_info[:molfile_version],
               molecule_id: molecule.id,
             )
+            sample.decoupled = true if molfile_for_sample.nil?
+            sample.inventory_sample = true if @import_type == 'chemical'
 
             attribs.each do |attrib|
               sample[attrib] = row[attrib] if is_number?(row[attrib])
             end
-            if row['molecule_name'].present?
-              molecule_name = molecule.create_molecule_name_by_user(row['molecule_name'], current_user_id)
-              sample['molecule_name_id'] = molecule_name.id unless molecule_name.blank?
-            end
+            assign_molecule_name(sample, molecule, row['molecule_name'])
             sample['melting_point'] = format_to_interval_syntax(row['melting_point']) if row['melting_point'].present?
             sample['boiling_point'] = format_to_interval_syntax(row['boiling_point']) if row['boiling_point'].present?
             sample['solvent'] = handle_sample_solvent_column(sample, row) if row['solvent'].present?
@@ -294,17 +364,21 @@ class Import::ImportSdf < Import::ImportSamples
             sample.collections << Collection.find(collection_id)
             sample.collections << Collection.get_all_collection_for_user(current_user_id)
             sample.save!
+            save_chemical_for_row(sample, row) if @import_type == 'chemical'
             ids << sample.id
-          rescue StandardError => _e
+          rescue StandardError => e
+            Rails.logger.error("SDF import: row #{i + 1} could not be imported: #{e.class}: #{e.message}")
             @unprocessable_samples << (i + 1)
+            error_messages << "Sample #{i + 1} could not be imported: #{e.message}"
           end
-          unless @unprocessable_samples.empty?
-            error_messages = "Following samples could not be imported #{@unprocessable_samples}."
+          if error_messages.empty? && @unprocessable_samples.any?
+            error_messages << "Following samples could not be imported #{@unprocessable_samples}."
           end
           @message[:error_messages] = error_messages if error_messages.present?
         end
-      rescue ActiveRecord::RecordInvalid => e
-        @message[:error] << e
+      rescue StandardError => e
+        Rails.logger.error("SDF import: aborted: #{e.class}: #{e.message}")
+        @message[:error] << "The import could not be completed: #{e.message}"
       end
     else
       @message[:error] << 'No sample selected. '
@@ -317,12 +391,42 @@ class Import::ImportSdf < Import::ImportSamples
     @message[:info] << "Created #{s} sample#{s <= 1 && '' || 's'}. " if samples
     @message[:info] << 'Import successful! ' if ids.size == @count
 
-    # Clean up attachment if import was successful
-    @attachment.destroy if @message[:error].empty? && @attachment.present?
+    # Keep the upload unless there is genuinely nothing to follow up on
+    @attachment.destroy if keep_attachment_unnecessary?
 
     samples
   ensure
     Molecule.schedule_lcss_since(started_at)
+  end
+
+  def keep_attachment_unnecessary?
+    @message[:error].empty? && @unprocessable_samples.empty? && @attachment.present?
+  end
+
+  # Links the sample to the molecule's name.
+  #
+  # Molecule#create_molecule_name_by_user is built on Enumerable#each, so it returns its *input*
+  # array of split names rather than the records it created. Calling .id on that raised
+  # "undefined method `id' for [\"1-chloro-2-iodoethane\"]:Array" and lost the row, so every SDF
+  # carrying a MOLECULE_NAME tag failed to import. Resolve the record by name instead, which also
+  # covers the case where the name already existed and nothing new was created.
+  def assign_molecule_name(sample, molecule, raw_names)
+    return if raw_names.blank?
+
+    molecule.create_molecule_name_by_user(raw_names, current_user_id)
+    first_name = raw_names.to_s.split(';').first.to_s.strip
+    return if first_name.blank?
+
+    molecule_name = molecule.molecule_names.reload.find_by(name: first_name)
+    sample['molecule_name_id'] = molecule_name.id if molecule_name
+  end
+
+  # Build a Chemical from the mapped row fields (cas, status, person, pictograms, h/p statements, ...)
+  # and link it to the freshly-created inventory sample. Mirrors the XLSX chemical import path.
+  def save_chemical_for_row(sample, row)
+    chemical = Import::ImportChemicals.build_chemical(row, row.keys)
+    chemical.sample_id = sample.id
+    chemical.save!
   end
 
   def find_or_create_by_molfiles(molfiles)
@@ -333,17 +437,37 @@ class Import::ImportSdf < Import::ImportSamples
       if Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(mf.to_s)
         find_or_create_polymer_molfile_entry(mf.to_s.strip, babel_info)
       elsif babel_info && babel_info[:inchikey].present?
-        m = Molecule.find_or_create_by_molfile(mf, defer_lcss: @defer_lcss, **babel_info)
-        process_molfile_opt_data(mf).merge(
-          inchikey: m.inchikey,
-          svg: "molecules/#{m.molecule_svg_file}",
-          name: m.iupac_name,
-          molfile: mf,
-        )
+        molfile_entry_with_inchikey(mf, babel_info)
       else
-        { name: nil, inchikey: nil, svg: 'no_image_180.svg' }
+        molfile_entry_without_inchikey(mf)
       end
     end
+  end
+
+  # Build a preview entry for a molfile whose structure resolved to an inchikey.
+  def molfile_entry_with_inchikey(molfile, babel_info)
+    molecule = Molecule.find_or_create_by_molfile(molfile, defer_lcss: @defer_lcss, **babel_info)
+    process_molfile_opt_data(molfile).merge(
+      inchikey: molecule.inchikey,
+      svg: "molecules/#{molecule.molecule_svg_file}",
+      name: molecule.iupac_name,
+      molfile: molfile,
+    )
+  end
+
+  # Build a preview entry when no structure resolved: try CAS lookup, else mark the entry decoupled.
+  def molfile_entry_without_inchikey(molfile)
+    props = process_molfile_opt_data(molfile)
+    cas_nr = props['CAS'].to_s.strip
+    molecule = cas_nr.match?(/^\d+-\d+-\d+$/) ? find_molecule_by_cas(cas_nr) : nil
+    return props.merge(name: nil, inchikey: nil, svg: 'no_image_180.svg', decoupled: true) unless molecule
+
+    props.merge(
+      inchikey: molecule.inchikey,
+      svg: "molecules/#{molecule.molecule_svg_file}",
+      name: molecule.iupac_name,
+      molfile: molecule.molfile,
+    )
   end
 
   # When molfile has PolymersList/TextNode: keep full molfile, clean for babel, find/create molecule, reprocess SVG.
@@ -369,10 +493,26 @@ class Import::ImportSdf < Import::ImportSamples
     end]
   end
 
+  # Resolve [molecule, molfile_for_sample, babel_info] for a confirm-step row.
+  # Falls back to the inchikey resolved during preview (CAS lookup), otherwise to a decoupled dummy.
+  def resolve_molecule_for_row(row)
+    molecule, molfile_for_sample, babel_info = molecule_and_molfile_for_row(row['molfile'])
+    return [molecule, molfile_for_sample, babel_info || {}] if molecule.present?
+
+    if row['inchikey'].present?
+      molecule = Molecule.find_by(inchikey: row['inchikey'])
+      return [molecule, molecule&.molfile, { inchikey: molecule&.inchikey }] if molecule
+    end
+
+    [Molecule.find_or_create_dummy, nil, {}]
+  end
+
   # Returns [molecule, molfile_for_sample, babel_info]. When molfile has PolymersList/TextNode,
   # keeps full molfile and uses polymer find/create + SVG reprocess; otherwise sanitizes and finds by inchikey.
   def molecule_and_molfile_for_row(molfile)
     raw = molfile.to_s.strip
+    return [nil, nil, {}] if raw.blank?
+
     if Chemotion::MolfilePolymerSupport.has_polymers_list_tag?(raw)
       result = Import::PolymerMoleculeResolver.call(raw, defer_lcss: @defer_lcss)
       [result.molecule, result.raw_molfile, result.babel_info]
@@ -391,3 +531,4 @@ class Import::ImportSdf < Import::ImportSamples
     mf.encode('utf-8', universal_newline: true, invalid: :replace, undef: :replace).scrub.split(/^(#{MOLFILE_BLOCK_END_LINE}(\r?\n)?)/).first.concat(MOLFILE_BLOCK_END_LINE)
   end
 end
+# rubocop:enable Metrics/ClassLength

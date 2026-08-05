@@ -101,7 +101,18 @@ export default class SamplesFetcher {
     data.append('currentCollectionId', params.currentCollectionId);
     data.append('import_type', params.type);
 
-    return ApiClient.postFormData('/api/v1/samples/import', { body: data })
+    return ApiClient.postFormData('/api/v1/samples/import', { body: data });
+  }
+
+  static importSamplesFromFileConfirm(params) {
+    const body = {
+      currentCollectionId: params.currentCollectionId,
+      rows: params.rows,
+      mapped_keys: params.mapped_keys,
+      import_type: params.import_type,
+    };
+
+    return ApiClient.postJson('/api/v1/samples/confirm_import', { body })
       .then((json) => {
         rootStore.notificationsStore.notifyImportSamplesFromFile(json);
         return json;

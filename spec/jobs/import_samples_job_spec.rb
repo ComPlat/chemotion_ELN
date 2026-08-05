@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'securerandom'
-describe ImportSamplesJob, active_job: true do
+describe ImportSamplesJob, :active_job do
   context 'when import file format is xlsx' do
     let(:attachment) { create(:attachment, :with_sample_import_template) }
     let(:import_samples_instance) { instance_double(Import::ImportSamples) }
@@ -152,6 +152,145 @@ describe ImportSamplesJob, active_job: true do
         described_class.new.perform(parameters)
 
         expect(Import::ImportSdf).to have_received(:new)
+      end
+    end
+  end
+
+  describe 'guard against a crash-retry loop' do
+    let(:job) { described_class.new }
+    let(:params) do
+      {
+        collection_id: create(:collection).id,
+        user_id: create(:user).id,
+        attachment: create(:attachment, :with_sample_import_template),
+        import_type: 'sample',
+        sdf_rows: [],
+        mapped_keys: {},
+      }
+    end
+    let(:importer) { instance_double(Import::ImportSamples) }
+
+    before do
+      allow(Import::ImportSamples).to receive(:new).and_return(importer)
+      allow(importer).to receive(:process).and_return({ status: 'ok', message: 'done', data: [] })
+      ActiveJob::Status.store.clear
+    end
+
+    it 'runs the import when no previous attempt is recorded' do
+      job.perform(params)
+      expect(importer).to have_received(:process)
+    end
+
+    it 'clears its marker when the import completes' do
+      job.perform(params)
+      expect(ActiveJob::Status.store.read("import_samples_job:attempt:#{job.job_id}")).to be_nil
+    end
+
+    it 'clears its marker when the import raises' do
+      allow(importer).to receive(:process).and_raise(StandardError, 'boom')
+      job.perform(params)
+      expect(ActiveJob::Status.store.read("import_samples_job:attempt:#{job.job_id}")).to be_nil
+    end
+
+    it 'does not re-run the import when a previous attempt left a marker' do
+      ActiveJob::Status.store.write("import_samples_job:attempt:#{job.job_id}", Time.current.utc.iso8601)
+      job.perform(params)
+      expect(importer).not_to have_received(:process)
+    end
+
+    it 'reports the interrupted attempt to the user instead of failing silently' do
+      ActiveJob::Status.store.write("import_samples_job:attempt:#{job.job_id}", Time.current.utc.iso8601)
+      result = job.perform(params)
+      expect(result[:status]).to eq('invalid')
+      expect(result[:message]).to include('stopped unexpectedly because the worker process was terminated')
+    end
+
+    it 'warns that a retry could duplicate already-saved rows' do
+      ActiveJob::Status.store.write("import_samples_job:attempt:#{job.job_id}", Time.current.utc.iso8601)
+      expect(job.perform(params)[:message]).to include('would be imported twice')
+    end
+
+    it 'fails open and still imports when the marker store cannot be read' do
+      allow(ActiveJob::Status.store).to receive(:read).and_raise(StandardError, 'store down')
+      allow(Delayed::Worker.logger).to receive(:error)
+      job.perform(params)
+      expect(importer).to have_received(:process)
+    end
+
+    it 'fails open and still imports when the marker cannot be written' do
+      allow(ActiveJob::Status.store).to receive(:write).and_raise(StandardError, 'store down')
+      allow(Delayed::Worker.logger).to receive(:error)
+      job.perform(params)
+      expect(importer).to have_received(:process)
+    end
+
+    it 'keys the marker per job so unrelated imports are unaffected' do
+      ActiveJob::Status.store.write("import_samples_job:attempt:#{job.job_id}", Time.current.utc.iso8601)
+      other = described_class.new
+      other.perform(params)
+      expect(importer).to have_received(:process).once
+    end
+  end
+
+  # The notification used to be hard-coded to level 'info' with autoDismiss 5, so a failed or partial
+  # import produced the same unremarkable toast as a clean one and then removed itself.
+  describe 'notification severity' do
+    let(:job) { described_class.new }
+
+    describe '#notification_level' do
+      it 'maps a clean import to success' do
+        expect(job.send(:notification_level, 'ok')).to eq('success')
+      end
+
+      it 'maps a partial import to warning' do
+        expect(job.send(:notification_level, 'warning')).to eq('warning')
+      end
+
+      it 'maps a rejected file to error' do
+        expect(job.send(:notification_level, 'invalid')).to eq('error')
+      end
+
+      it 'falls back to info for an unknown status' do
+        expect(job.send(:notification_level, nil)).to eq('info')
+      end
+    end
+
+    describe '#notify_user' do
+      before do
+        job.instance_variable_set(:@user_id, create(:user).id)
+        job.instance_variable_set(:@collection_id, create(:collection).id)
+        allow(Message).to receive(:create_msg_notification)
+      end
+
+      it 'forwards the import message' do
+        job.instance_variable_set(:@result, { status: 'ok', message: '6 of 6 row(s) were imported.' })
+        job.send(:notify_user)
+        expect(Message).to have_received(:create_msg_notification)
+          .with(hash_including(data_args: { message: '6 of 6 row(s) were imported.' }))
+      end
+
+      it 'raises the notification level for a partial import' do
+        job.instance_variable_set(:@result, { status: 'warning', message: 'partial' })
+        job.send(:notify_user)
+        expect(Message).to have_received(:create_msg_notification).with(hash_including(level: 'warning'))
+      end
+
+      it 'keeps a partial-import notification on screen instead of auto-dismissing it' do
+        job.instance_variable_set(:@result, { status: 'warning', message: 'partial' })
+        job.send(:notify_user)
+        expect(Message).to have_received(:create_msg_notification).with(hash_including(autoDismiss: 0))
+      end
+
+      it 'auto-dismisses only a clean import' do
+        job.instance_variable_set(:@result, { status: 'ok', message: 'all good' })
+        job.send(:notify_user)
+        expect(Message).to have_received(:create_msg_notification).with(hash_including(autoDismiss: 10))
+      end
+
+      it 'still notifies when the import produced no result hash' do
+        job.instance_variable_set(:@result, nil)
+        job.send(:notify_user)
+        expect(Message).to have_received(:create_msg_notification).with(hash_including(level: 'info'))
       end
     end
   end
