@@ -194,6 +194,88 @@ RSpec.describe Molecule, type: :model do
       allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey).and_return({})
     end
 
+    context 'when a concurrent worker wins the create race' do
+      it 're-finds the existing row instead of raising, without re-enqueueing LCSS' do
+        existing = create(
+          :molecule,
+          inchikey: babel_info[:inchikey],
+          is_partial: false,
+          sum_formular: babel_info[:formula],
+          skip_lcss_callback: true,
+        )
+        # Simulate the TOCTOU race: find_by misses, then the INSERT collides with the row the
+        # winning worker committed in the gap.
+        allow(described_class).to receive(:find_by).and_return(nil, existing)
+        allow(described_class).to receive(:create).and_raise(ActiveRecord::RecordNotUnique)
+        allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+        molecule = described_class.find_or_create_by_molfile('molfile', **babel_info)
+
+        expect(molecule.id).to eq(existing.id)
+        # the losing call must NOT re-enqueue for a row the winner already handled — its own
+        # failed Molecule.create never committed, so after_create_commit never fired
+        expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+      end
+
+      # The stubbed sibling above raises RecordNotUnique in Ruby, which never touches Postgres
+      # and so cannot detect a missing savepoint. This one drives a real unique-index violation
+      # from inside an enclosing transaction — the shape every transactional caller has
+      # (Sample's before_save :find_or_create_molecule, ImportSamples#write_to_db,
+      # ImportCollections#import). Without requires_new: true the aborted INSERT leaves the
+      # outer transaction in PG::InFailedSqlTransaction and the rescue's own re-find raises.
+      it 'recovers from a genuine unique-index violation inside an enclosing transaction' do
+        allow(PubchemSingleLcssJob).to receive(:perform_later)
+        winner = nil
+
+        allow(described_class).to receive(:find_by).and_wrap_original do |orig, *args|
+          found = orig.call(*args)
+          next found unless found.nil? && winner.nil?
+
+          # Stand in for the competing worker committing in the TOCTOU gap: the winning row is
+          # created *before* the savepoint opens, so rolling back to it leaves the row.
+          winner = create(
+            :molecule,
+            inchikey: babel_info[:inchikey],
+            is_partial: false,
+            sum_formular: babel_info[:formula],
+            skip_lcss_callback: true,
+          )
+          nil
+        end
+
+        molecule = ActiveRecord::Base.transaction do
+          described_class.find_or_create_by_molfile('molfile', defer_lcss: true, **babel_info)
+        end
+
+        expect(winner).to be_present
+        expect(molecule.id).to eq(winner.id)
+        expect(described_class.where(inchikey: babel_info[:inchikey]).count).to eq 1
+      end
+
+      it 're-raises when the row is genuinely absent after RecordNotUnique' do
+        allow(described_class).to receive(:find_by).and_return(nil, nil)
+        allow(described_class).to receive(:create).and_raise(ActiveRecord::RecordNotUnique)
+
+        expect do
+          described_class.find_or_create_by_molfile('molfile', **babel_info)
+        end.to raise_error(ActiveRecord::RecordNotUnique)
+      end
+    end
+
+    # Import::ImportSamples reaches this with an inchikey and nothing else when OpenBabel could
+    # not read the molfile but smiles_to_inchikey still resolved a key. molecules.is_partial is
+    # NOT NULL DEFAULT FALSE, so passing the missing key straight through assigns an explicit
+    # nil over the default and raises ActiveRecord::NotNullViolation — which the RecordNotUnique
+    # rescue does not catch, taking down the whole import.
+    it 'creates the molecule when babel_info carries only an inchikey', :aggregate_failures do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      molecule = described_class.find_or_create_by_molfile('molfile', inchikey: 'ONLYKEY-UHFFFAOYSA-N')
+
+      expect(molecule).to be_persisted
+      expect(molecule.is_partial).to be false
+    end
+
     it 'defers scheduling when given defer_lcss: true' do
       allow(PubchemSingleLcssJob).to receive(:perform_later)
 
