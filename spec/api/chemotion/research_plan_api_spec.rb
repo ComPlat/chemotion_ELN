@@ -16,6 +16,12 @@ describe Chemotion::ResearchPlanAPI do
         expect(response).to have_http_status :ok
         expect(parsed_json_response['research_plans'].pluck('id')).to contain_exactly(research_plan.id)
       end
+
+      it 'omits can_update for listed research plans' do
+        get '/api/v1/research_plans', params: { collection_id: collection.id }
+
+        expect(parsed_json_response['research_plans']).to all(satisfy { |rp| !rp.key?('can_update') })
+      end
     end
 
     context 'when no collection_id is given (All)' do

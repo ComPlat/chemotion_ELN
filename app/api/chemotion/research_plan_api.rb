@@ -48,7 +48,6 @@ module Chemotion
             research_plan,
             displayed_in_list: true,
             detail_levels: detail_levels,
-            policy: ElementPolicy.new(current_user, research_plan),
           )
         end
 

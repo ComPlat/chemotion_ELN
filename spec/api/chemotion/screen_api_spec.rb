@@ -47,9 +47,9 @@ describe Chemotion::ScreenAPI do
         expect(parsed_json_response['screens'].length).to eq(2)
       end
 
-      it 'includes can_update for listed screens' do
+      it 'omits can_update for listed screens' do
         get '/api/v1/screens', headers: request_headers
-        expect(parsed_json_response['screens'].pluck('can_update')).to all(be true)
+        expect(parsed_json_response['screens']).to all(satisfy { |s| !s.key?('can_update') })
       end
     end
 

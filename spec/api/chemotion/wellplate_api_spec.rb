@@ -83,9 +83,9 @@ describe Chemotion::WellplateAPI do
         expect(JSON.parse(response.body)['wellplates'].size).to eq(1)
       end
 
-      it 'includes can_update for listed wellplates' do
+      it 'omits can_update for listed wellplates' do
         get '/api/v1/wellplates/'
-        expect(JSON.parse(response.body)['wellplates'].pluck('can_update')).to all(be true)
+        expect(JSON.parse(response.body)['wellplates']).to all(satisfy { |w| !w.key?('can_update') })
       end
     end
 

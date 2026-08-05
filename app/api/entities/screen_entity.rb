@@ -6,7 +6,7 @@ module Entities
 
     # rubocop:disable Layout/ExtraSpacing
     with_options(anonymize_below: 0) do
-      expose! :can_update
+      expose! :can_update,                          unless: :displayed_in_list
       expose! :id
       expose! :type
       expose! :name
