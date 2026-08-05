@@ -36,7 +36,7 @@ const User = types.model(
     account_active: types.optional(types.boolean, false),
     matrix: types.optional(types.integer, 0),
     counters: types.map(types.union(types.integer, types.string)),
-    generic_admin: types.map(types.boolean),
+    generic_admin: types.frozen({ elements: false, segments: false, datasets: false }),
     otp_required_for_login: types.optional(types.boolean, false),
     profile: types.frozen({}) // hack to create a structure for something without authoritative data structure
   }
@@ -256,6 +256,7 @@ const UserStore = types.model(
     genericElKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me
     segmentKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me,
     dsKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me,
+    dsAdminKlasses: types.array(types.frozen({})), // must be serialized later, currently the full datastructure is unknown to me,
     unitsSystem: types.optional(UnitSystem, { fields: [] }),
     matriceConfigs: types.array(MatrixConfiguration),
     omniauthProviders: types.map(OmniauthProvider),
@@ -312,7 +313,7 @@ const UserStore = types.model(
   }),
   fetchGenericElKlasses: flow(function* fetchGenericElKlasses() {
     const result = yield GenericElsFetcher.fetchElementKlasses();
-    self.genericElKlasses = result.klass.filter((k) => k.is_generic);
+    self.genericElKlasses = result.klass;
   }),
   fetchSegmentKlasses: flow(function * fetchSegmentKlasses() {
     const result = yield GenericSgsFetcher.listSegmentKlass();
@@ -321,6 +322,10 @@ const UserStore = types.model(
   fetchDatasetKlasses: flow(function* fetchDatasetKlasses() {
     const result = yield GenericDSsFetcher.fetchKlass();
     self.dsKlasses = result.klass;
+  }),
+  fetchAdminDatasetKlasses: flow(function* fetchDatasetKlasses() {
+    const result = yield GenericDSsFetcher.listDatasetKlass();
+    self.dsAdminKlasses = result.klass;
   }),
   fetchUnitsSystem: flow(function* fetchUnitsSystem() {
     const result = yield ApiClient.getJson(
@@ -382,6 +387,14 @@ const UserStore = types.model(
   },
   updateUserProfileValues(params = {}) {
     self.updateUserProfile(params);
+  },
+  genericElementKlassesArray(adminType) {
+    if (adminType === 'segmentAdmin') {
+       return self.genericElKlasses.slice().sort((a, b) => a.place - b.place);
+    } else if (adminType === 'datasetAdmin') {
+      return self.genericElKlasses.slice().sort((a, b) => a.label > b.label);
+    }
+    return self.genericElKlasses.filter((k) => k.is_generic);
   },
 }));
 
