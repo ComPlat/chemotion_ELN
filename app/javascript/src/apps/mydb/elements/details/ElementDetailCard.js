@@ -127,13 +127,15 @@ export default function ElementDetailCard({
     <ConfirmationOverlay
       overlayTarget={closeOverlayTarget}
       placement={closeOverlayPlacement}
-      warningText="You have unsaved changes. Save before closing?"
+      warningText={saveDisabled
+        ? 'You have unsaved changes that cannot be saved. Discard before closing?'
+        : 'You have unsaved changes. Save before closing?'}
       destructiveAction={() => handleClose(true)}
       destructiveActionLabel="Discard"
       hideAction={() => setCloseOverlayTarget(null)}
       hideActionLabel="Cancel"
-      primaryAction={handleSaveClose}
-      primaryActionLabel="Save and Close"
+      primaryAction={saveDisabled ? undefined : handleSaveClose}
+      primaryActionLabel={saveDisabled ? undefined : 'Save and Close'}
     />
   );
 
