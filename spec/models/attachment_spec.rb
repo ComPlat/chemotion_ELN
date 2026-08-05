@@ -7,35 +7,38 @@
 #
 # Table name: attachments
 #
-#  id              :integer          not null, primary key
-#  aasm_state      :string
-#  attachable_type :string
-#  attachment_data :jsonb
-#  bucket          :string
-#  checksum        :string
-#  con_state       :integer
-#  content_type    :string
-#  created_by      :integer          not null
-#  created_by_type :string
-#  created_for     :integer
-#  deleted_at      :datetime
-#  edit_state      :integer          default("not_editing")
-#  filename        :string
-#  filesize        :bigint
-#  folder          :string
-#  identifier      :uuid
-#  key             :string(500)
-#  storage         :string(20)       default("tmp")
-#  thumb           :boolean          default(FALSE)
-#  version         :string           default("/"), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  attachable_id   :integer
+#  id               :integer          not null, primary key
+#  aasm_state       :string
+#  access_count     :integer          default(0), not null
+#  attachable_type  :string
+#  attachment_data  :jsonb
+#  bucket           :string
+#  checksum         :string
+#  con_state        :integer
+#  content_type     :string
+#  created_by       :integer          not null
+#  created_by_type  :string
+#  created_for      :integer
+#  deleted_at       :datetime
+#  edit_state       :integer          default("not_editing")
+#  filename         :string
+#  filesize         :bigint
+#  folder           :string
+#  identifier       :uuid
+#  key              :string(500)
+#  last_accessed_at :datetime
+#  storage          :string(20)       default("tmp")
+#  thumb            :boolean          default(FALSE)
+#  version          :string           default("/"), not null
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  attachable_id    :integer
 #
 # Indexes
 #
 #  index_attachments_on_attachable_type_and_attachable_id  (attachable_type,attachable_id)
 #  index_attachments_on_identifier                         (identifier) UNIQUE
+#  index_attachments_on_shrine_file_id                     (((attachment_data ->> 'id'::text)))
 #  index_attachments_on_version                            (version) WHERE (deleted_at IS NULL)
 #
 require 'rails_helper'
@@ -52,6 +55,62 @@ RSpec.describe Attachment do
   describe '#read_file' do
     it 'returns content of file' do
       expect(attachment.read_file).to eq("Hello world\n")
+    end
+  end
+
+  describe '#track_read! (access tracking)' do
+    it 'records the access time and bumps the count' do
+      expect { attachment.track_read! }.to change { attachment.reload.access_count }.by(1)
+      expect(attachment.reload.last_accessed_at).to be_present
+    end
+
+    it 'does not bump updated_at' do
+      original = attachment.updated_at
+      attachment.track_read!
+
+      expect(attachment.reload.updated_at).to be_within(1.second).of(original)
+    end
+
+    it 'throttles repeated reads within the window' do
+      attachment.track_read!
+
+      expect { attachment.track_read! }.not_to(change { attachment.reload.access_count })
+    end
+
+    it 'records the access without writing logidze audit history' do
+      expect(Logidze).to receive(:without_logging).and_call_original
+
+      attachment.track_read!
+    end
+  end
+
+  describe '.on_read with an unknown file id' do
+    it 'does nothing (a derivative/thumbnail id never matches the main file)' do
+      attachment # ensure it exists
+
+      expect { described_class.on_read('does-not-exist') }
+        .not_to(change { attachment.reload.access_count })
+    end
+  end
+
+  describe '#cold_storage_key (routing across cold shelves)' do
+    it 'always uses :cold when there is a single cold shelf' do
+      allow(described_class).to receive(:cold_storage_keys).and_return([:cold])
+
+      expect(attachment.cold_storage_key).to eq(:cold)
+    end
+
+    it 'spreads files across shelves by id, wrapping around' do
+      allow(described_class).to receive_messages(cold_storage_keys: %i[cold cold2], cold_router_group_size: 10)
+
+      allow(attachment).to receive(:id).and_return(5)
+      expect(attachment.cold_storage_key).to eq(:cold)   # ids 1-10  -> shelf 1
+
+      allow(attachment).to receive(:id).and_return(15)
+      expect(attachment.cold_storage_key).to eq(:cold2)  # ids 11-20 -> shelf 2
+
+      allow(attachment).to receive(:id).and_return(25)
+      expect(attachment.cold_storage_key).to eq(:cold)   # ids 21-30 -> wraps to shelf 1
     end
   end
 
@@ -970,6 +1029,74 @@ RSpec.describe Attachment do
       end
     end
   end
+
+  # update_column back-dates timestamps to exercise the age checks.
+  # rubocop:disable Rails/SkipsModelValidations
+  describe '#cold?' do
+    let(:threshold) { 12.months.ago }
+
+    it 'is cold when its root element is old and it was not read recently' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 13.months.ago))
+
+      expect(attachment.cold?(older_than: threshold)).to be true
+    end
+
+    it 'is cold even when its own updated_at is recent, as long as the root element is old' do
+      attachment = create(:attachment)
+      attachment.update_column(:last_accessed_at, 13.months.ago) # not read recently
+      allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 13.months.ago))
+
+      expect(attachment.cold?(older_than: threshold)).to be true
+    end
+
+    it 'is not cold when the root element was edited recently, even if the file is old' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 1.day.ago))
+
+      expect(attachment.cold?(older_than: threshold)).to be false
+    end
+
+    it 'judges an orphan (no root element) on its own age alone' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      allow(attachment).to receive(:root_element).and_return(nil)
+
+      expect(attachment.cold?(older_than: threshold)).to be true
+    end
+
+    it 'is not cold when read recently, even if the root element is old' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      attachment.update_column(:last_accessed_at, 1.day.ago)
+      allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 13.months.ago))
+
+      expect(attachment.cold?(older_than: threshold)).to be false
+    end
+
+    # The read guard used to fall back to the attachment's own updated_at, so a
+    # freshly-touched row hid a stale element and nothing was ever archived.
+    it 'is cold when never read, even though its own updated_at is recent' do
+      attachment = create(:attachment)
+      expect(attachment.last_accessed_at).to be_nil
+      expect(attachment.updated_at).to be > threshold
+      allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 13.months.ago))
+
+      expect(attachment.cold?(older_than: threshold)).to be true
+    end
+
+    it 'is cold when neither read nor the root element edited recently' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
+      attachment.update_column(:last_accessed_at, 13.months.ago)
+      allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 13.months.ago))
+
+      expect(attachment.cold?(older_than: threshold)).to be true
+    end
+  end
+  # rubocop:enable Rails/SkipsModelValidations
 end
 
 # rubocop:enable RSpec/NestedGroups

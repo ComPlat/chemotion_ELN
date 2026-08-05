@@ -9,6 +9,8 @@ module Usecases
         # to allow reading of PDF files
         raise "no image / PDF attachment: #{attachment.id}" unless attachment.type_image? || attachment.type_pdf?
 
+        attachment.track_read! # this path reads off disk, bypassing the Shrine read hook
+
         conversion = attachment.type_image_tiff?
 
         attachment_file = if annotated
