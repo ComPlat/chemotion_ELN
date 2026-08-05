@@ -174,18 +174,19 @@ RSpec.describe Sample do
       MOLFILE
     end
     let(:sample) { build(:sample, molfile: molfile) }
+    # PubChem-derived fields (iupac_name/names) are no longer populated synchronously at save
+    # time — enrichment is deferred to the async job (C2). Only the babel-derived structure
+    # data is available immediately.
     let(:mol_attributes) do
       {
         'boiling_point' => nil,
         'density' => 0.0,
         'inchikey' => 'XLYOFNOQVPJJNP-UHFFFAOYSA-N',
         'inchistring' => 'InChI=1S/H2O/h1H2',
-        'iupac_name' => 'oxidane',
         'melting_point' => nil,
         'molecular_weight' => 18.01528,
         #  "molecule_svg_file" => "XLYOFNOQVPJJNP-UHFFFAOYSA-N.svg", #todo
         'molfile' => molfile.rstrip,
-        'names' => %w[water oxidane],
         'sum_formular' => 'H2O',
       }
     end
@@ -207,6 +208,79 @@ RSpec.describe Sample do
       mol_attributes.each do |k, v|
         expect(molecule.attributes[k]).to eq(v)
       end
+    end
+
+    it 'defers PubChem-derived names to async enrichment' do
+      sample.save!
+      molecule = sample.molecule
+
+      # not populated synchronously on the create path (C2)
+      expect(molecule.iupac_name).to be_nil
+
+      # the async enrich path (PubchemLookupJob -> Molecule#enrich_from_pubchem) backfills
+      # the iupac_name column and molecule_names records.
+      molecule.enrich_from_pubchem
+      expect(molecule.reload.iupac_name).to eq('oxidane')
+      expect(molecule.molecule_names.where(description: 'iupac_name').pluck(:name)).to include('water', 'oxidane')
+    end
+
+    it 'binds molecule_name to the sum formula while enrichment is still pending' do
+      sample.save!
+
+      expect(sample.molecule_name.description).to eq('sum_formular')
+      expect(sample.molecule_name.name).to eq('H2O')
+    end
+
+    # Sample's before_create :check_molecule_name runs while iupac_name is still nil, and
+    # #update_molecule_name only re-evaluates when molecule_id changes — so without the
+    # re-point in #assign_pubchem_names_and_cid! the sample would show and export as H2O
+    # forever, even after enrichment supplied the real name.
+    it 're-points molecule_name to the IUPAC row once enrichment lands' do
+      sample.save!
+
+      sample.molecule.enrich_from_pubchem
+
+      expect(sample.reload.molecule_name.description).to eq('iupac_name')
+      expect(sample.molecule_name.name).to eq('oxidane')
+    end
+
+    it 'leaves a user-chosen molecule_name alone when enrichment lands' do
+      sample.save!
+      chosen = sample.molecule.molecule_names.create!(name: 'my label', description: 'defined by user 1')
+      sample.update_columns(molecule_name_id: chosen.id) # rubocop:disable Rails/SkipsModelValidations
+
+      sample.molecule.enrich_from_pubchem
+
+      expect(sample.reload.molecule_name_id).to eq(chosen.id)
+    end
+
+    # find_or_create_by returns an unsaved record when MoleculeName's SAFE_NAME_REGEX rejects
+    # the name, and PubChem does return names carrying zero-width/bidi characters. Re-pointing
+    # to its nil id would unbind every sample of the molecule without raising, since
+    # belongs_to :molecule_name is optional.
+    # Sample is multisearchable against molecule_iupac_name, and that document is built from an
+    # after_save callback. Deferred enrichment means the name is nil when the sample is saved,
+    # and neither update_columns nor update_all fires a Sample save — so without an explicit
+    # rebuild the sample stays unfindable by its IUPAC name in global search, permanently.
+    it 'refreshes the search document so the sample is findable by its IUPAC name' do
+      sample.save!
+      expect(PgSearch.multisearch('oxidane').where(searchable: sample)).to be_empty
+
+      sample.molecule.enrich_from_pubchem
+
+      expect(PgSearch.multisearch('oxidane').where(searchable: sample)).not_to be_empty
+    end
+
+    it 'leaves bindings untouched when the IUPAC name fails validation' do
+      sample.save!
+      before = sample.molecule_name_id
+      expect(before).to be_present
+
+      sample.molecule.assign_pubchem_names_and_cid!(
+        cid: '962', iupac_name: "oxi\u200Ddane", names: [],
+      )
+
+      expect(sample.reload.molecule_name_id).to eq(before)
     end
 
     # #Fixme : now file are anonymised
@@ -521,9 +595,8 @@ RSpec.describe Sample do
     # triggering the very regen_polymer_svg_if_stale callback under test.
     before do
       allow(PubChem).to receive_messages(
-        get_record_from_inchikey: nil,
+        fetch_record_from_inchikey: [nil, :not_found],
         get_molfile_by_smiles: nil,
-        get_cid_from_inchikey: nil,
       )
     end
 

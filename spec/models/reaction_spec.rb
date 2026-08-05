@@ -113,7 +113,6 @@ RSpec.describe Reaction, type: :model do
     let(:product) { create(:sample) }
 
     before do
-      allow(PubChem).to receive(:get_cid_from_inchikey).and_return(nil)
       allow(SVG::ReactionComposer).to receive(:new).and_return(composer_instance)
       allow(SVG::ProductsComposer).to receive(:new).and_return(composer_instance)
     end

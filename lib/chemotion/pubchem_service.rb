@@ -9,14 +9,20 @@ module Chemotion::PubchemService
     interpret_record record
   end
 
-  def self.molecule_info_from_inchikey inchikey
-    record = PubChem.get_record_from_inchikey(inchikey)
-    interpret_record record
+  # @param timeout [Numeric, nil] per-phase HTTP bound in seconds; nil uses PubChem's default
+  def self.molecule_info_from_inchikey(inchikey, timeout: nil)
+    molecule_info_and_outcome_from_inchikey(inchikey, timeout: timeout).first
   end
 
-  def self.molecule_info_from_inchikeys inchikey_array
-    records = PubChem.get_records_from_inchikeys(inchikey_array)
-    interpret_record records, true
+  # Same lookup, but also reports whether an empty result means "PubChem has nothing" or
+  # "we could not ask". See {PubChem.fetch_record_from_inchikey}.
+  #
+  # @return [Array(Hash, Symbol)] +[info, outcome]+ — outcome is +:ok+, +:not_found+ or
+  #   +:unavailable+
+  def self.molecule_info_and_outcome_from_inchikey(inchikey, timeout: nil)
+    opts = timeout ? { timeout: timeout } : {}
+    record, outcome = PubChem.fetch_record_from_inchikey(inchikey, **opts)
+    [interpret_record(record), outcome]
   end
 
   # Fetch SMILES from PubChem by identifier

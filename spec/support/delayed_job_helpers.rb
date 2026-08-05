@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module DelayedJobHelpers
-  # Creates a Delayed::Job row that looks, to PubchemRateLimitGuard's textual
+  # Creates a Delayed::Job row that looks, to PubchemLookupJob's textual
   # `handler LIKE` check, like a currently-executing instance of +job_class_name+.
   #
   # @param job_class_name [String] e.g. 'PubchemLcssJob'

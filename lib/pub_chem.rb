@@ -22,17 +22,50 @@ module PubChem
     nil
   end
 
-  def self.get_record_from_inchikey(inchikey)
+  # @param timeout [Numeric] seconds allowed for the connect and for the read *separately*
+  #   (HTTParty's single +timeout:+ sets both, so a caller wanting a tight bound would otherwise
+  #   get up to twice what it asked for). Callers on a request path pass a low value and treat a
+  #   miss as "no data" — see {Molecule#enrich_from_pubchem}.
+  #
+  #   NB it does not bound name resolution: +require 'resolv-replace'+ at the top of this file
+  #   routes DNS through pure-Ruby Resolv, whose own per-nameserver timeouts and retries run
+  #   before the connect timeout starts. A slow or flapping resolver can therefore overrun the
+  #   requested bound.
+  # @return [HTTParty::Response, nil] nil on any failure, including a timeout
+  def self.get_record_from_inchikey(inchikey, timeout: 10)
+    fetch_record_from_inchikey(inchikey, timeout: timeout).first
+  end
+
+  # Same fetch, but says *why* it came back empty.
+  #
+  # +get_record_from_inchikey+ collapses a 404, a timeout, a DNS failure and a 500 all to nil,
+  # so a caller cannot tell "PubChem has no record for this structure" — a permanent fact about
+  # an in-house compound — from "we failed to ask", which is transient. Only the former is safe
+  # to remember; caching the latter would strand the molecule unenriched for good.
+  #
+  # @return [Array(HTTParty::Response, Symbol), Array(nil, Symbol)] +[record, outcome]+ where
+  #   outcome is +:ok+, +:not_found+ (PubChem answered, and has nothing), or +:unavailable+
+  #   (we could not get an answer — transport failure, timeout, or a server-side error)
+  def self.fetch_record_from_inchikey(inchikey, timeout: 10)
     @auth = { username: '', password: '' }
-    options = { timeout: 10, headers: { 'Content-Type' => 'text/json' } }
+    options = { open_timeout: timeout, read_timeout: timeout,
+                headers: { 'Content-Type' => 'text/json' } }
     response = HTTParty.get(
       "#{http_s}#{PUBCHEM_HOST}/rest/pug/compound/inchikey/#{inchikey}/record/JSON",
       options,
     )
-    response.success? ? response : nil
+    return [response, :ok] if response.success?
+    # Only 404 is PubChem answering "there is no such compound". The rest of the 4xx range is
+    # about *us*, not the structure: PubChem returns 403 to an IP over its request-volume
+    # policy and 429 under dynamic throttling, and treating either as :not_found would let one
+    # throttling episode stamp pubchem_checked_at on a whole chunk of molecules it does have
+    # records for — blacklisting them for PUBCHEM_MISS_TTL. 5xx is PubChem failing to answer.
+    return [nil, :not_found] if response.code.to_i == 404
+
+    [nil, :unavailable]
   rescue StandardError => e
     Rails.logger.error ["with inchikey: #{inchikey}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
-    nil
+    [nil, :unavailable]
   end
 
   def self.get_cids_from_inchikeys(inchikeys)
@@ -42,18 +75,6 @@ module PubChem
       body: { 'inchikey' => "#{inchikeys.join(',')}" },
     }
     HTTParty.post(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/property/InChIKey/JSON', options).body
-  rescue StandardError => e
-    Rails.logger.error ["with inchikey: #{inchikeys}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
-    nil
-  end
-
-  def self.get_records_from_inchikeys(inchikeys)
-    options = {
-      timeout: 10,
-      headers: { 'Content-Type' => 'application/x-www-form-urlencoded' },
-      body: { 'inchikey' => "#{inchikeys.join(',')}" },
-    }
-    HTTParty.post(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/record/JSON', options).body
   rescue StandardError => e
     Rails.logger.error ["with inchikey: #{inchikeys}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
     nil
@@ -102,19 +123,6 @@ module PubChem
   rescue StandardError => e
     Rails.logger.error ["with inchikey: #{inchikey}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
     nil
-  end
-
-  def self.get_cid_from_inchikey(inchikey)
-    options = { timeout: 10, headers: { 'Content-Type' => 'text/plain' } }
-    begin
-      resp = HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/' + inchikey + '/cids/TXT', options)
-      return nil unless resp.success?
-
-      resp.body.presence&.strip
-    rescue StandardError => e
-      Rails.logger.error ["with inchikey: #{inchikey}", e.message, *e.backtrace].join($INPUT_RECORD_SEPARATOR)
-      nil
-    end
   end
 
   # @param cid [String] the cid to be converted
@@ -187,9 +195,15 @@ module PubChem
     props['IsomericSMILES'] || props['CanonicalSMILES'] || props['SMILES'] || props['ConnectivitySMILES']
   end
 
+  # @param cid [Integer, String, nil] PubChem compound id; anything not wholly numeric is
+  #   rejected rather than interpolated into the URL. Coerced rather than type-checked because
+  #   the cid arrives from +element_tags.taggable_data+, where a value written as a JSON string
+  #   deserialises to a String — under the old +is_a? Integer+ guard that silently disabled LCSS
+  #   for the molecule, with nothing to show for it.
+  # @return [Hash, nil] parsed GHS classification, or nil when there is none or the fetch fails
   def self.get_lcss_from_cid(cid)
+    cid = Integer(cid, exception: false) unless cid.is_a?(Integer)
     return nil unless cid
-    return nil unless cid.is_a? Integer
 
     options = { timeout: 10, headers: { 'Content-Type' => 'text/json' }, format: 'plain' }
     page = "https://#{PUBCHEM_HOST}/rest/pug_view/data/compound/#{cid}/JSON?heading=GHS%20Classification"
