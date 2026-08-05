@@ -38,7 +38,8 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version-file: .tool-versions
-          #node-version: ${{ matrix.node-version }}
+          package-manager-cache: false
+          cache: '' # disable default caching since we handle it ourselves
 
       - name: compute cache key based on main's yarn.lock
         id: cache_key
