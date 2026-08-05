@@ -103,7 +103,13 @@ class Molecule < ApplicationRecord
     inchikey = babel_info[:inchikey]
     return if inchikey.blank?
 
-    is_partial = babel_info[:is_partial]
+    # Coerced, not passed through: molecules.is_partial is NOT NULL DEFAULT FALSE, and a caller
+    # that hands us an inchikey without the rest of babel_info (Import::ImportSamples does, when
+    # OpenBabel could not read the molfile but smiles_to_inchikey still resolved a key) leaves
+    # this nil. Assigning nil explicitly overrides the column default and raises
+    # ActiveRecord::NotNullViolation, which the RecordNotUnique rescue below does not catch —
+    # taking the whole import down on the row it was added to protect.
+    is_partial = babel_info[:is_partial].present?
     partial_molfile = babel_info[:molfile]
     # NB: if the molfile has a R# group for solid support (is_partial) then
     #   it has been replaced by C befor getting babel_info (which would have added a fictif CH3 group)
@@ -111,11 +117,33 @@ class Molecule < ApplicationRecord
     formula = SumFormula.new(formula).remove_fragment('CH3').valid.to_s if is_partial
     molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial, sum_formular: formula)
     if molecule.nil?
-      molecule = Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
-        mol.skip_lcss_callback = true if defer_lcss
-        pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-        mol.molfile = (is_partial && partial_molfile) || molfile
-        mol.assign_molecule_data(babel_info, pubchem_info, molfile)
+      begin
+        # requires_new: true so the losing INSERT rolls back to a savepoint rather than
+        # poisoning an enclosing transaction. Most callers run inside one — Sample's
+        # before_save :find_or_create_molecule, Import::ImportSamples#write_to_db,
+        # Import::ImportCollections#import — and without the savepoint a real
+        # PG::UniqueViolation aborts that outer transaction, so the rescue's re-find below
+        # would itself raise PG::InFailedSqlTransaction and take the whole import with it.
+        #
+        # NB the PubChem call below now sits inside the savepoint. That is not a new problem —
+        # it was already inside whatever transaction the caller had open — and moving it off
+        # the create path entirely is the subject of its own change.
+        molecule = ActiveRecord::Base.transaction(requires_new: true) do
+          Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
+            mol.skip_lcss_callback = true if defer_lcss
+            pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
+            mol.molfile = (is_partial && partial_molfile) || molfile
+            mol.assign_molecule_data(babel_info, pubchem_info, molfile)
+          end
+        end
+      rescue ActiveRecord::RecordNotUnique
+        # A concurrent worker created the same molecule between our find_by and insert; re-find
+        # its row instead of letting PG::UniqueViolation abort the whole import
+        # (index_molecules_on_formula_and_inchikey_and_is_partial). Keyed on the full index —
+        # (inchikey, sum_formular, is_partial) — because that is the tuple the row was created
+        # under; a narrower re-find can miss it and raise on a row that does exist.
+        molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial, sum_formular: formula)
+        raise if molecule.nil?
       end
     end
     molecule.ob_log = babel_info[:ob_log]
@@ -162,7 +190,8 @@ class Molecule < ApplicationRecord
     attach_svg svg
     self.cano_smiles = babel_info[:cano_smiles]
     self.molfile_version = babel_info[:molfile_version]
-    self.is_partial = babel_info[:is_partial]
+    # NOT NULL column; babel_info may not carry the key at all (see .find_or_create_by_molfile).
+    self.is_partial = babel_info[:is_partial].present?
   end
 
   def pubchem_lcss

@@ -278,20 +278,34 @@ module Import
       [molecule, raw_molfile]
     end
 
+    # Delegates to {Molecule.find_or_create_by_molfile} rather than re-implementing
+    # find-or-create. This branch used to key its lookup on
+    # +(inchikey, sum_formular, is_partial: false)+, but Molecule#assign_molecule_data assigns
+    # +is_partial+ from babel_info *after* +check_sum_formular+ has already returned early on
+    # the still-false value. An R-group structure was therefore INSERTed as
+    # +is_partial: true+ having been looked up as +false+ — a different tuple from the one it
+    # was searched under, so the next import missed it and inserted another row, and its
+    # masses kept the fictitious CH3 that check_sum_formular should have removed.
+    # find_or_create_by_molfile derives both +is_partial+ and the CH3-stripped formula before
+    # its lookup, and carries the savepoint and RecordNotUnique rescue.
+    #
+    # +inchikey+ is passed on explicitly: the caller may have resolved it from the SMILES
+    # (Chemotion::OpenBabelService.smiles_to_inchikey) when babel_info's own is blank, and
+    # find_or_create_by_molfile keys on babel_info[:inchikey] — it would otherwise re-derive
+    # babel_info from the molfile and give up entirely (returning nil, dropping the row) if
+    # that second attempt is blank too.
+    #
+    # @return [Array(Molecule, String, Boolean)] +[molecule, molfile, go_to_next]+; +molecule+
+    #   is nil when the structure could not be resolved
     def assign_molecule_data(molfile_coord, babel_info, inchikey, _row, _index)
-      if inchikey.blank?
-        go_to_next = true
-      else
-        go_to_next = false
-        molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: false) do |molecul|
-          molecul.skip_lcss_callback = true if @defer_lcss
-          pubchem_info =
-            Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-          molecul.molfile = molfile_coord
-          molecul.assign_molecule_data babel_info, pubchem_info
-        end
-      end
-      [molecule, molfile_coord, go_to_next]
+      return [nil, molfile_coord, true] if inchikey.blank?
+
+      # babel_info may be nil — get_data_from_smiles guards on `babel_info.present?` two lines
+      # before calling this, so a molfile OpenBabel could not read while smiles_to_inchikey
+      # still resolved a key is a reachable combination.
+      info = (babel_info || {}).merge(inchikey: inchikey)
+      molecule = Molecule.find_or_create_by_molfile(molfile_coord, defer_lcss: @defer_lcss, **info)
+      [molecule, molfile_coord, false]
     end
 
     def get_data_from_smiles(row, index)
