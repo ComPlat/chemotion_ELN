@@ -52,6 +52,79 @@ services:
       - 8002:80
     command: supervisord -n
 
+  # Unlike its neighbours this is not a running service: it copies the
+  # precompiled NMRium wrapper build out of the pinned image into
+  # public/nmrium/<version>/, points public/nmrium/default at it, and exits.
+  # The wrapper's own nginx never runs — Rails serves the assets from public/
+  # at /nmrium/default/, which is what config/spectra.yml.example sets
+  # :nmriumwrapper: :url: to for development.
+  #
+  # Run it (or don't — the ELN falls back to any wrapper url in spectra.yml)
+  # via the opt-in helper, which also checks the version pin and spectra.yml:
+  #     bin/chem-nmrium-install.sh
+  # or directly:
+  #     docker compose -f docker-compose.dev.yml -f docker-compose.services.yml \
+  #       --env-file .dockerenv up nmrium-assets
+  #
+  # Caveats:
+  #  - The url in spectra.yml needs its trailing slash: the build references its
+  #    chunks relatively (vite `base: './'`), so /nmrium/default without the
+  #    slash makes every ./assets/... request resolve one level too high.
+  #  - The wrapper registers a PWA service worker scoped to the path it is
+  #    served from. It cannot touch the ELN app, but that scope is stable across
+  #    version bumps, so a stale precache may survive one. Hard-reload, or point
+  #    spectra.yml at the versioned path instead of `default`.
+  #  - The first run pulls ~500 MB, but only ~75 MB lands in public/: the copy
+  #    drops the nested per-release archives and the sourcemaps (the latter are
+  #    kept with NMRIUM_SOURCEMAPS=1).
+  nmrium-assets:
+    image: ${IMG_NMRIUMWRAPPER:-nfdi4chem/nmrium-react-wrapper:v1.1.0}
+    # Write as the invoking user so public/nmrium is not left root-owned on the
+    # host. Matches the uid/gid the dev image is built with.
+    user: "${uid:-1000}:${gid:-1000}"
+    restart: "no"
+    volumes:
+      # Only the asset directory, not the whole repo: a bind mount over the
+      # image's own /usr/share/nginx/html would shadow the build instead of
+      # exposing it, hence the copy below.
+      - ./public/nmrium:/out
+    environment:
+      # The version subdirectory is derived from the image tag, so there is a
+      # single variable to keep in sync with .service-dependencies.
+      - IMG=${IMG_NMRIUMWRAPPER:-nfdi4chem/nmrium-react-wrapper:v1.1.0}
+      - NMRIUM_SOURCEMAPS=${NMRIUM_SOURCEMAPS:-0}
+    entrypoint: ["/bin/sh", "-c"]
+    # A list, not a string: compose shell-splits a string command, which would
+    # tear this script into separate arguments. `$$` escapes compose's own
+    # ${...} interpolation so the shell sees a single `$`.
+    command:
+      - |
+        set -e
+        v="$${IMG##*:}"
+        # An untagged image reference leaves the expansion unchanged.
+        [ "$$v" = "$$IMG" ] && v=latest
+        if [ -f "/out/$$v/index.html" ]; then
+          echo ">>> NMRium wrapper $$v already installed"
+        else
+          echo ">>> Installing NMRium wrapper $$v into public/nmrium/$$v"
+          # Stage, then rename, so an interrupted copy is not left looking like a
+          # complete install to the check above.
+          tmp="/out/.$$v.part"
+          rm -rf "$$tmp"
+          mkdir -p "$$tmp"
+          # -R, not -a: preserving ownership would fail for a non-root user.
+          cp -R /usr/share/nginx/html/. "$$tmp/"
+          # The image nests a full copy of every past release under the web root
+          # (its Dockerfile copies releases/ wholesale). ~90% of the size, and
+          # each is just another tag of this same image. -mindepth 1 so the name
+          # pattern cannot match the staging directory itself.
+          find "$$tmp" -mindepth 1 -maxdepth 1 -type d -name 'v[0-9]*' -exec rm -rf {} +
+          [ "$$NMRIUM_SOURCEMAPS" = "1" ] || find "$$tmp" -name '*.map' -delete
+          mv "$$tmp" "/out/$$v"
+        fi
+        ln -sfn "$$v" /out/default
+        echo ">>> NMRium wrapper $$v available at /nmrium/default/"
+
 networks:
   chemotion:
 
