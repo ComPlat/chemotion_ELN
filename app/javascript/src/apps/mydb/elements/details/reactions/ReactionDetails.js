@@ -74,9 +74,13 @@ const productLink = (product, active) => (
     {active && "Sample Analysis:"}
     <span
       aria-hidden="true"
-      className="pseudo-link"
-      onClick={() => aviatorNavigation('sample', product.id, true, true)}
-      title="Open sample window"
+      className={`pseudo-link ${!active ? "disabled" : ""}`}
+      onClick={
+        active
+          ? () => aviatorNavigation('sample', product.id, true, true)
+          : undefined
+      }
+      title={active ? "Open sample window" : undefined}
     >
       <i className="icon-sample mx-1" />
       {product.title()}
