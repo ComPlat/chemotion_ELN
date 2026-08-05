@@ -234,9 +234,24 @@ class PubchemLookupJob < ApplicationJob
                     # Skip structures PubChem has already told us it has no record for, until
                     # the answer goes stale — otherwise every sweep re-asks the same question
                     # about every in-house compound, forever.
+                    #
+                    # CASE, not `is null or (...)::timestamptz < ?`. taggable_data is free-form
+                    # JSON that other writers touch, so an unparseable value is reachable, and
+                    # casting one raises PG::InvalidDatetimeFormat — which fails the whole query,
+                    # not just that row, so a single bad value anywhere stops enrichment for
+                    # every molecule. Postgres may reorder the arms of an OR, so guarding the
+                    # cast that way is not enough; CASE is evaluated in order.
+                    #
+                    # An unreadable stamp means "treat as never asked", matching
+                    # Molecule#pubchem_checked_recently? — the two must agree or a molecule can
+                    # be enrichable on the request path and invisible to the sweep. The regex is
+                    # a cheap plausibility check, not validation: anything it lets through that
+                    # still will not cast is a value no writer in this codebase can produce.
                     .where(
-                      "element_tags.taggable_data->>'pubchem_checked_at' is null " \
-                      'or (element_tags.taggable_data->>\'pubchem_checked_at\')::timestamptz < ?',
+                      "case when element_tags.taggable_data->>'pubchem_checked_at' ~ " \
+                      "'^\\d{4}-\\d{2}-\\d{2}' " \
+                      "then (element_tags.taggable_data->>'pubchem_checked_at')::timestamptz < ? " \
+                      'else true end',
                       Molecule::PUBCHEM_MISS_TTL.ago,
                     )
                     .where('molecules.id > ?', after_id)

@@ -291,6 +291,23 @@ RSpec.describe PubchemLookupJob do
       expect(job.send(:pending_scope, nil, created_after: nil, after_id: 0)).not_to include(dummy)
     end
 
+    # taggable_data is free-form JSON that other writers touch, so an unparseable stamp is
+    # reachable. Casting one raises PG::InvalidDatetimeFormat, which fails the whole query rather
+    # than that row — so a single bad value anywhere used to stop enrichment for every molecule.
+    it 'survives an unparseable pubchem_checked_at anywhere in the table', :aggregate_failures do
+      corrupt = create(:molecule)
+      corrupt.tag.update!(taggable_data: corrupt.tag.taggable_data.merge('pubchem_checked_at' => 'nonsense'))
+      healthy = create(:molecule)
+      healthy.tag.update!(taggable_data: healthy.tag.taggable_data.except('pubchem_cid', 'pubchem_lcss'))
+
+      scope = job.send(:pending_scope, nil, created_after: nil, after_id: 0)
+
+      expect { scope.to_a }.not_to raise_error
+      expect(scope).to include(healthy)
+      # unreadable means "never asked", matching Molecule#pubchem_checked_recently?
+      expect(scope).to include(corrupt)
+    end
+
     it 'excludes a molecule PubChem has recently confirmed it has no record for' do
       molecule = strip_cid(create(:molecule))
       molecule.tag.update!(

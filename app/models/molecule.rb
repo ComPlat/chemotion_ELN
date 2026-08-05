@@ -648,13 +648,19 @@ class Molecule < ApplicationRecord
     end
   end
 
-  # @return [Integer, nil] the PubChem compound id recorded on this molecule's tag
+  # A bare read of the tag, returned as stored.
+  #
+  # @return [Integer, String, nil] the PubChem compound id recorded on this molecule's tag.
+  #   Both types occur in practice: {#merge_pubchem_cid!} writes the value it was given through
+  #   an atomic JSONB merge, deliberately preserving its type rather than coercing, and PubChem
+  #   hands back an Integer while older tag data holds numeric Strings. Callers must tolerate
+  #   both — {PubChem.get_lcss_from_cid} does, via +Integer(cid, exception: false)+.
   #
   # No network fallback. It used to end +|| PubChem.get_cid_from_inchikey(inchikey)+, which was
   # unreachable — {PubchemLookupJob} gates the LCSS half on +pubchem_check+, so a caller of
   # {#pubchem_lcss} already has a tag cid — and useless when it did fire: that call returned the
-  # response body as a String, and {PubChem.get_lcss_from_cid} rejects anything that isn't an
-  # Integer. So it spent a PubChem round trip to produce a value guaranteed to be discarded. The
+  # response body as a String, and {PubChem.get_lcss_from_cid} rejects anything that isn't
+  # numeric. So it spent a PubChem round trip to produce a value guaranteed to be discarded. The
   # method itself has since been removed. A model reader making a synchronous PubChem call is
   # also exactly what the async enrichment work removed elsewhere.
   def cid
