@@ -20,6 +20,7 @@ import { permitOn } from 'src/components/common/uis';
 import DragHandle from 'src/components/common/DragHandle';
 import DeleteButton from 'src/components/common/DeleteButton';
 import AppModal from 'src/components/common/AppModal';
+import cs from 'classnames';
 import {
   AnalysesCell, autofillVariationFromAnalysis
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
@@ -979,7 +980,8 @@ const VariationSchemaTable = ({
         {advancedMode && <div className="reaction-variations-grid__scroll-thumb" ref={scrollThumbRef} />}
       </div>
       <div
-        className="ag-theme-alpine reaction-variations-grid"
+        className={cs('ag-theme-alpine reaction-variations-grid',
+          { 'reaction-variations-grid__simple-mode': !advancedMode })}
         ref={gridElementRef}
         style={gridHeight ? { height: `${gridHeight}px` } : undefined}
       >
