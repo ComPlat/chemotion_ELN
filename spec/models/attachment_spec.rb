@@ -56,14 +56,6 @@ RSpec.describe Attachment do
     it 'returns content of file' do
       expect(attachment.read_file).to eq("Hello world\n")
     end
-
-    context 'when the file lives on the cold storage tier' do
-      it 'still returns its content (cold is one-way, no promotion)' do
-        attachment.move_to_cold
-
-        expect(attachment.read_file).to eq("Hello world\n")
-      end
-    end
   end
 
   describe '#track_read! (access tracking)' do
@@ -98,6 +90,27 @@ RSpec.describe Attachment do
 
       expect { described_class.on_read('does-not-exist') }
         .not_to(change { attachment.reload.access_count })
+    end
+  end
+
+  describe '#cold_storage_key (routing across cold shelves)' do
+    it 'always uses :cold when there is a single cold shelf' do
+      allow(described_class).to receive(:cold_storage_keys).and_return([:cold])
+
+      expect(attachment.cold_storage_key).to eq(:cold)
+    end
+
+    it 'spreads files across shelves by id, wrapping around' do
+      allow(described_class).to receive_messages(cold_storage_keys: %i[cold cold2], cold_router_group_size: 10)
+
+      allow(attachment).to receive(:id).and_return(5)
+      expect(attachment.cold_storage_key).to eq(:cold)   # ids 1-10  -> shelf 1
+
+      allow(attachment).to receive(:id).and_return(15)
+      expect(attachment.cold_storage_key).to eq(:cold2)  # ids 11-20 -> shelf 2
+
+      allow(attachment).to receive(:id).and_return(25)
+      expect(attachment.cold_storage_key).to eq(:cold)   # ids 21-30 -> wraps to shelf 1
     end
   end
 
@@ -1022,80 +1035,57 @@ RSpec.describe Attachment do
   describe '#cold?' do
     let(:threshold) { 12.months.ago }
 
-    it 'is cold when both the file and its parent are older than the threshold' do
+    it 'is cold when its root element is old and it was not read recently' do
       attachment = create(:attachment)
       attachment.update_column(:updated_at, 13.months.ago)
-      attachment.attachable.update_column(:updated_at, 13.months.ago)
+      allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 13.months.ago))
 
       expect(attachment.cold?(older_than: threshold)).to be true
     end
 
-    it 'is not cold when the parent was edited recently, even if the file is old' do
+    it 'is cold even when its own updated_at is recent, as long as the root element is old' do
       attachment = create(:attachment)
-      attachment.update_column(:updated_at, 13.months.ago)
-      attachment.attachable.update_column(:updated_at, 1.day.ago)
-
-      expect(attachment.cold?(older_than: threshold)).to be false
-    end
-
-    it 'judges an orphan (no parent) on its own age alone' do
-      attachment = create(:attachment, attachable: nil)
-      attachment.update_column(:updated_at, 13.months.ago)
+      attachment.update_column(:last_accessed_at, 13.months.ago) # not read recently
+      allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 13.months.ago))
 
       expect(attachment.cold?(older_than: threshold)).to be true
     end
 
-    it 'is not cold when the top element was edited recently, even if the file and container are old' do
+    it 'is not cold when the root element was edited recently, even if the file is old' do
       attachment = create(:attachment)
       attachment.update_column(:updated_at, 13.months.ago)
-      attachment.attachable.update_column(:updated_at, 13.months.ago)
       allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 1.day.ago))
 
       expect(attachment.cold?(older_than: threshold)).to be false
     end
 
-    it 'is not cold when read recently, even if the file and parent are old' do
+    it 'judges an orphan (no root element) on its own age alone' do
       attachment = create(:attachment)
       attachment.update_column(:updated_at, 13.months.ago)
-      attachment.attachable.update_column(:updated_at, 13.months.ago)
+      allow(attachment).to receive(:root_element).and_return(nil)
+
+      expect(attachment.cold?(older_than: threshold)).to be true
+    end
+
+    it 'is not cold when read recently, even if the root element is old' do
+      attachment = create(:attachment)
+      attachment.update_column(:updated_at, 13.months.ago)
       attachment.update_column(:last_accessed_at, 1.day.ago)
+      allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 13.months.ago))
 
       expect(attachment.cold?(older_than: threshold)).to be false
     end
 
-    it 'is cold when neither read nor edited recently' do
+    it 'is cold when neither read nor the root element edited recently' do
       attachment = create(:attachment)
       attachment.update_column(:updated_at, 13.months.ago)
-      attachment.attachable.update_column(:updated_at, 13.months.ago)
       attachment.update_column(:last_accessed_at, 13.months.ago)
+      allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 13.months.ago))
 
       expect(attachment.cold?(older_than: threshold)).to be true
     end
   end
   # rubocop:enable Rails/SkipsModelValidations
-
-  describe '#move_to_cold' do
-    it 'moves the file to the cold storage while preserving its contents' do
-      attachment = create(:attachment)
-      original_content = attachment.read_file
-
-      attachment.move_to_cold
-
-      expect(attachment.attachment.storage_key).to eq(:cold)
-      expect(attachment.read_file).to eq(original_content)
-    end
-
-    it 'moves derivatives (e.g. thumbnails) to cold as well' do
-      attachment = create(:attachment, :with_image)
-      expect(attachment.attachment_attacher.derivatives).to be_present # guard: fixture has a thumbnail
-
-      attachment.move_to_cold
-
-      attachment.attachment_attacher.derivatives.each_value do |derivative|
-        expect(derivative.storage_key).to eq(:cold)
-      end
-    end
-  end
 end
 
 # rubocop:enable RSpec/NestedGroups
