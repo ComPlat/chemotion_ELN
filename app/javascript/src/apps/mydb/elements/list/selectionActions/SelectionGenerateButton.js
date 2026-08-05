@@ -7,6 +7,7 @@ import MatrixCheck from 'src/components/common/MatrixCheck';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { PDFDocument } from 'pdf-lib';
 import Utils from 'src/utilities/Functions';
+import isUIComponentEnabled from 'src/utilities/UIComponentHelper';
 import 'whatwg-fetch';
 
 export default class SelectionGenerateButton extends React.Component {
@@ -18,6 +19,7 @@ export default class SelectionGenerateButton extends React.Component {
       matrix: null,
       enableComputedProps: null,
       enableReactionPredict: null,
+      hasSampleExplorer: isUIComponentEnabled('sampleExplorer'),
     };
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
@@ -54,6 +56,10 @@ export default class SelectionGenerateButton extends React.Component {
       this.setState({
         checkedIds: state.sample.checkedIds
       });
+    }
+    const hasSampleExplorer = isUIComponentEnabled('sampleExplorer', state);
+    if (hasSampleExplorer !== this.state.hasSampleExplorer) {
+      this.setState({ hasSampleExplorer });
     }
   }
 
@@ -95,7 +101,7 @@ export default class SelectionGenerateButton extends React.Component {
 
   render() {
     const {
-      json, checkedIds, enableComputedProps, enableReactionPredict
+      json, checkedIds, enableComputedProps, enableReactionPredict, hasSampleExplorer
     } = this.state;
     const ids = checkedIds.toArray();
     const disabledPrint = !(ids.length > 0);
@@ -141,9 +147,11 @@ export default class SelectionGenerateButton extends React.Component {
             Format Analyses
           </Dropdown.Item>
 
-          <Dropdown.Item onClick={ElementActions.showExplorerDetails} title="Explorer">
-            Explorer
-          </Dropdown.Item>
+          {hasSampleExplorer && (
+            <Dropdown.Item onClick={ElementActions.showExplorerDetails} title="Explorer">
+              Explorer
+            </Dropdown.Item>
+          )}
 
           {enableComputedProps && (
             <>

@@ -2,6 +2,15 @@
 
 module Chemotion
   class ExplorerAPI < Grape::API
+    helpers CollectionHelpers
+
+    # Disabled unless the Sample Explorer UI component is turned on in
+    # config/ui_components.yml (kept in sync with the frontend). Respond with a
+    # generic 404 so a disabled feature is indistinguishable from a route that
+    # does not exist.
+    before do
+      error!('404 Not Found', 404) unless UiComponents.enabled?(:sample_explorer)
+    end
 
     resource :explorer do
       desc 'Fetch samples, reactions, and molecules belonging to a collection'
@@ -11,10 +20,7 @@ module Chemotion
       end
 
       after_validation do
-        @collection = current_user
-                        .collections
-                        .where(is_shared: false)
-                        .find_by(id: params[:collection_id])
+        @collection = readable_collection_for(params[:collection_id])
 
         error!({ error: 'Collection not found' }, 404) unless @collection
       end
