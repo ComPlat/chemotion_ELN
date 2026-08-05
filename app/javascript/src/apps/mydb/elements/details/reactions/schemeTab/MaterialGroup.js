@@ -659,6 +659,7 @@ GeneralMaterialGroup.defaultProps = {
   switchEquiv: () => {},
   switchYield: () => {},
   showAddSampleButton: true,
+  displayYieldField: null
 };
 
 SolventsMaterialGroup.propTypes = {

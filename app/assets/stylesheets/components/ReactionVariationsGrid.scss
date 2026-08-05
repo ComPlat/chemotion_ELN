@@ -29,6 +29,18 @@
 .reaction-variations-grid {
   width: 100%;
 
+  &__simple-mode {
+      .ag-cell .reaction-material__iupac-name {
+        display: None !important;
+      }
+      [col-id="reaction_reaction_volume"] .form-check {
+        display: None !important;
+      }
+      [col-id="reaction_duration"] .input-group:nth-child(2) {
+        display: None !important;
+      }
+  }
+
   .ag-header-group-cell {
     overflow: hidden;
   }
