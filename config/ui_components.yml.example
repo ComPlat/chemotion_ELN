@@ -20,9 +20,13 @@
 development:
   # Weighing Tasks (sample scan / weighing task inbox) shown in the top navigation bar.
   :weighing_tasks: true
+  # Sample Explorer (graph view of a collection's samples/reactions) selection-menu entry.
+  :sample_explorer: true
 
 test:
   :weighing_tasks: false
+  :sample_explorer: false
 
 production:
   :weighing_tasks: false
+  :sample_explorer: false

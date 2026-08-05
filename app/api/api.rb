@@ -4,6 +4,8 @@
 require 'grape-entity'
 require 'grape-swagger'
 
+# rubocop:disable Metrics/ClassLength -- one `mount` per API resource; length tracks resource
+# count, not complexity.
 class API < Grape::API
   include LogidzeModule
 
@@ -204,6 +206,7 @@ class API < Grape::API
   mount Chemotion::DevicesAnalysisAPI
   mount Chemotion::GateAPI
   mount Chemotion::ElementAPI
+  mount Chemotion::ExplorerAPI
   mount Chemotion::ChemSpectraAPI
   mount Chemotion::InstrumentAPI
   mount Chemotion::MessageAPI
@@ -252,3 +255,4 @@ class API < Grape::API
                               })
   end
 end
+# rubocop:enable Metrics/ClassLength
