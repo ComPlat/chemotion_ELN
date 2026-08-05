@@ -174,14 +174,20 @@ GroupCell.propTypes = {
 };
 
 // One toolbar entry per top level group header, hiding or showing that whole group.
-const GroupToggleButton = ({ group, allHidden, colIds }) => {
+const GroupToggleButton = ({
+  group, allHidden, colIds, className
+}) => {
   const { setColumnsHidden } = useContext(VariationsGridContext);
-  return (<Button
+  return (
+    <Button
       size="sm"
       variant={allHidden ? 'dark' : 'info'}
+      className={className}
+      // The header row squeezes its buttons into equal columns, so the name may be cut short.
+      title={group.headerName}
       onClick={() => setColumnsHidden(colIds, !allHidden)}
     >
-      <i className={allHidden ? 'fa fa-eye me-1' : 'fa fa-eye-slash me-1'} aria-hidden="true"/>
+      <i className={allHidden ? 'fa fa-eye me-1' : 'fa fa-eye-slash me-1'} aria-hidden="true" />
       {group.headerName}
     </Button>
   );
@@ -194,6 +200,11 @@ GroupToggleButton.propTypes = {
   }).isRequired,
   allHidden: PropTypes.bool.isRequired,
   colIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+  className: PropTypes.string,
+};
+
+GroupToggleButton.defaultProps = {
+  className: undefined,
 };
 
 /*
@@ -572,6 +583,8 @@ const VariationSchemaTable = ({
   const gridApiRef = useRef(null);
   const gridElementRef = useRef(null);
   const restoredRef = useRef(false);
+  const toolbarRef = useRef(null);
+  const scrollThumbRef = useRef(null);
   const { gridHeight, syncGridHeight } = useGridHeightCap(gridElementRef);
 
   /*
@@ -692,6 +705,98 @@ const VariationSchemaTable = ({
     });
   }, []);
 
+  /*
+  The toolbar table doubles as a map of the grid, so the thumb under its header row marks the part
+  of the columns the horizontal scroll has on screen - like a scrollbar whose track is the button
+  row. Grid coordinates are mapped cell by cell: a group's equal-width cell stands for the group's
+  actual width, however wide that is. Imperative for the same reason as updateStickyNames: this
+  moves on every scroll frame.
+  */
+  const updateToolbarScrollIndicator = useCallback(() => {
+    const api = gridApiRef.current;
+    const toolbar = toolbarRef.current;
+    const thumb = scrollThumbRef.current;
+    if (!api || !toolbar || !thumb) {
+      return;
+    }
+
+    const { left: viewLeft, right: viewRight } = api.getHorizontalPixelRange();
+    const columns = api.getDisplayedCenterColumns();
+    const lastColumn = columns[columns.length - 1];
+    const totalWidth = lastColumn ? (lastColumn.getLeft() ?? 0) + lastColumn.getActualWidth() : 0;
+    // Everything is on screen: there is no scroll position to mark.
+    if (totalWidth <= viewRight - viewLeft + 1) {
+      thumb.style.display = 'none';
+      return;
+    }
+
+    // Each top level group's extent in grid coordinates, keyed by the id its toolbar cell carries.
+    const extents = new Map();
+    columns.forEach((column) => {
+      const groupId = column.getParent()?.getGroupId();
+      if (!groupId) {
+        return;
+      }
+      const columnLeft = column.getLeft() ?? 0;
+      const columnRight = columnLeft + column.getActualWidth();
+      const extent = extents.get(groupId) ?? { left: columnLeft, right: columnRight };
+      extent.left = Math.min(extent.left, columnLeft);
+      extent.right = Math.max(extent.right, columnRight);
+      extents.set(groupId, extent);
+    });
+
+    const toolbarRect = toolbar.getBoundingClientRect();
+    const segments = [...toolbar.querySelectorAll('td[data-item-id]')]
+      .map((cell) => {
+        const extent = extents.get(cell.getAttribute('data-item-id'));
+        if (!extent || extent.right <= extent.left) {
+          return null;
+        }
+        const rect = cell.getBoundingClientRect();
+        return {
+          ...extent,
+          cellLeft: rect.left - toolbarRect.left,
+          cellWidth: rect.width,
+          cellBottom: rect.bottom - toolbarRect.top,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.left - b.left);
+
+    if (segments.length === 0) {
+      thumb.style.display = 'none';
+      return;
+    }
+
+    // A grid x lands in some group's cell at the fraction it has of that group; outside every
+    // group (e.g. next to a fully hidden fixed group) it clamps to the nearest cell edge.
+    const mapToToolbar = (x) => {
+      const segment = segments.find((entry) => x <= entry.right) ?? segments[segments.length - 1];
+      const fraction = Math.min(Math.max((x - segment.left) / (segment.right - segment.left), 0), 1);
+      return segment.cellLeft + fraction * segment.cellWidth;
+    };
+
+    const thumbLeft = mapToToolbar(viewLeft);
+    const thumbRight = mapToToolbar(viewRight);
+    thumb.style.display = 'block';
+    thumb.style.left = `${thumbLeft}px`;
+    thumb.style.width = `${Math.max(thumbRight - thumbLeft, 8)}px`;
+    // Into the strip the header row's bottom padding reserves, whichever height the row has.
+    thumb.style.top = `${segments[0].cellBottom - 3}px`;
+  }, []);
+
+  // The mapping depends on the toolbar's own size too, which changes without any grid event when
+  // the panel is resized or the table (dis)appears with the edit mode.
+  useEffect(() => {
+    const toolbar = toolbarRef.current;
+    if (!toolbar || typeof ResizeObserver === 'undefined') {
+      return undefined;
+    }
+    const observer = new ResizeObserver(updateToolbarScrollIndicator);
+    observer.observe(toolbar);
+    return () => observer.disconnect();
+  }, [updateToolbarScrollIndicator]);
+
   const syncActiveSlot = useCallback(() => {
     const api = gridApiRef.current;
     if (!api) {
@@ -771,10 +876,7 @@ const VariationSchemaTable = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hiddenColumns]);
 
-  /*
-  Toolbar order follows the grid, with any fully hidden group appended: AG Grid drops a group from
-  the header once nothing under it is displayed, and the toolbar is the only way back for those.
-  */
+  // Toolbar order follows the grid, so its buttons line up with the header groups they toggle.
   const groupsById = Object.fromEntries(columnGroups.map((group) => [group.groupId, group]));
   const orderedGroups = [
     ...groupOrder.map((groupId) => groupsById[groupId]).filter(Boolean),
@@ -809,6 +911,16 @@ const VariationSchemaTable = ({
   const movableGroupsAdvanced = movableGroups.map((group) => ({ group, ...getGroupAllHidden(group) }));
   const fixedGroupsAdvanced = fixedGroups.map((group) => ({ group, ...getGroupAllHidden(group) }));
 
+  /*
+  The toolbar table mirrors the grid header: its first row holds one equal-width cell per group the
+  header shows, in the header's order. AG Grid drops a group from the header once nothing under it
+  is displayed, and the toolbar is the only way back for those, so the fully hidden groups get a
+  second row spanning the full table width.
+  */
+  const shownMovableGroups = movableGroupsAdvanced.filter(({ allHidden }) => !allHidden);
+  const fullyHiddenMovableGroups = movableGroupsAdvanced.filter(({ allHidden }) => allHidden);
+  const headerCellCount = fixedGroupsAdvanced.length + shownMovableGroups.length;
+
   return (
 
     <VariationsGridContext.Provider value={gridContext}>
@@ -817,27 +929,52 @@ const VariationSchemaTable = ({
       when the group buttons are gone: it selects what the grid shows rather than editing it, so it
       is not part of the edit mode toolbar.
       */}
-      <div className="reaction-variations-grid__toolbar d-flex align-items-center flex-wrap gap-2 mb-2">
+      <div className="reaction-variations-grid__toolbar position-relative mb-2" ref={toolbarRef}>
         {editMode && (
-          <>
-            {fixedGroupsAdvanced.map(({ group, allHidden, colIds }) => (
-              <GroupToggleButton key={group.groupId} group={group} allHidden={allHidden} colIds={colIds} />
-            ))}
-
-            <ReorderableList
-              horizontal
-              items={movableGroupsAdvanced.filter(({ allHidden }) => !allHidden)}
-              getItemId={(group) => group.groupId}
-              onReorder={(reordered) => applyGroupOrder([...fixedGroups, ...reordered.map(({ group }) => group)])}
-              renderItem={({ group, allHidden, colIds }) =>
-                <GroupToggleButton group={group}  allHidden={allHidden} colIds={colIds} />}
-            />
-
-            {movableGroupsAdvanced.filter(({ allHidden }) => allHidden).map(({ group, allHidden, colIds }) => (
-              <GroupToggleButton key={group.groupId} group={group} allHidden={allHidden} colIds={colIds} />
-            ))}
-          </>
+          <table>
+            <tbody>
+              <tr>
+                {fixedGroupsAdvanced.map(({ group, allHidden, colIds }) => (
+                  <td key={group.groupId} data-item-id={group.groupId}>
+                    <GroupToggleButton
+                      group={group}
+                      allHidden={allHidden}
+                      colIds={colIds}
+                      className="w-100 text-truncate"
+                    />
+                  </td>
+                ))}
+                <ReorderableList
+                  horizontal
+                  items={shownMovableGroups}
+                  getItemId={({ group }) => group.groupId}
+                  onReorder={(reordered) => applyGroupOrder([...fixedGroups, ...reordered.map(({ group }) => group)])}
+                  renderItem={({ group, allHidden, colIds }) => (
+                    <GroupToggleButton
+                      group={group}
+                      allHidden={allHidden}
+                      colIds={colIds}
+                      className="w-100 text-truncate"
+                    />
+                  )}
+                />
+              </tr>
+              {fullyHiddenMovableGroups.length > 0 && (
+                <tr>
+                  <td colSpan={headerCellCount || 1}>
+                    <div className="d-flex align-items-center flex-wrap gap-2 mt-2">
+                      {fullyHiddenMovableGroups.map(({ group, allHidden, colIds }) => (
+                        <GroupToggleButton key={group.groupId} group={group} allHidden={allHidden} colIds={colIds} />
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         )}
+        {/* Positioned by updateToolbarScrollIndicator; hidden while the grid has no overflow. */}
+        {editMode && <div className="reaction-variations-grid__scroll-thumb" ref={scrollThumbRef} />}
       </div>
       <div
         className="ag-theme-alpine reaction-variations-grid"
@@ -878,16 +1015,19 @@ const VariationSchemaTable = ({
             syncActiveSlot();
             syncGroupOrder();
             updateStickyNames();
+            updateToolbarScrollIndicator();
             syncGridHeight();
           }}
           onFirstDataRendered={() => {
             syncActiveSlot();
             updateStickyNames();
+            updateToolbarScrollIndicator();
             syncGridHeight();
           }}
           onBodyScroll={() => {
             syncActiveSlot();
             updateStickyNames();
+            updateToolbarScrollIndicator();
           }}
           onModelUpdated={() => {
             updateStickyNames();
@@ -896,10 +1036,12 @@ const VariationSchemaTable = ({
           onVirtualColumnsChanged={() => {
             syncActiveSlot();
             updateStickyNames();
+            updateToolbarScrollIndicator();
           }}
           onColumnResized={({ finished }) => {
             syncActiveSlot();
             updateStickyNames();
+            updateToolbarScrollIndicator();
             if (finished) {
               saveColumnState();
             }
@@ -909,9 +1051,13 @@ const VariationSchemaTable = ({
             syncActiveSlot();
             syncGroupOrder();
             updateStickyNames();
+            updateToolbarScrollIndicator();
             saveColumnState();
           }}
-          onDisplayedColumnsChanged={syncGroupOrder}
+          onDisplayedColumnsChanged={() => {
+            syncGroupOrder();
+            updateToolbarScrollIndicator();
+          }}
         />
       </div>
     </VariationsGridContext.Provider>
