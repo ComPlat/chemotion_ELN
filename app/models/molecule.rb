@@ -180,7 +180,8 @@ class Molecule < ApplicationRecord
     babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles_array, render_svg: false)
     babel_info_array.map.with_index do |babel_info, i|
       if babel_info && babel_info[:inchikey]
-        Molecule.find_or_create_by_molfile(molfiles_array[i], babel_info)
+        # ** rather than a positional hash — see the note in Sample#find_or_create_molecule.
+        Molecule.find_or_create_by_molfile(molfiles_array[i], **babel_info)
       else
         nil
       end
