@@ -4,7 +4,8 @@
 import React, { Component, createRef } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Overlay, Form
+  Button, Tabs, Tab, OverlayTrigger, Tooltip, ButtonToolbar, Dropdown, Overlay, Form,
+  ListGroup, ListGroupItem
 } from 'react-bootstrap';
 import { findIndex, isEmpty } from 'lodash';
 import { Select } from 'src/components/common/Select';
@@ -57,6 +58,9 @@ import isEqual from 'lodash/isEqual';
 import DocumentationButton from 'src/components/common/DocumentationButton';
 import { statusOptions } from 'src/components/staticDropdownOptions/options';
 import Reaction from 'src/models/Reaction';
+// eslint-disable-next-line import/no-named-as-default
+import AttachmentTab from 'src/apps/mydb/elements/details/attachmentTab/AttachmentTab';
+import { addAttachmentsFromFiles, setAttachmentDeleted, replaceAttachment } from 'src/utilities/attachmentUtils';
 
 const formatReactionTypeOption = (option, { context }) => (
   context === 'value'
@@ -71,7 +75,7 @@ const formatReactionTypeOption = (option, { context }) => (
 
 const productLink = (product, active) => (
   <span>
-    {active && "Sample Analysis:"}
+    {active && 'Sample Analysis:'}
     <span
       aria-hidden="true"
       className="pseudo-link"
@@ -459,6 +463,42 @@ export default class ReactionDetails extends Component {
     this.setState({ reaction }, cb);
   }
 
+  handleAttachmentDrop = (files) => {
+    this.setState((prevState) => {
+      const { reaction } = prevState;
+      reaction.attachments = addAttachmentsFromFiles(reaction.attachments, files);
+      reaction.changed = true;
+      return { reaction };
+    });
+  };
+
+  handleAttachmentDelete = (attachment) => {
+    this.setState((prevState) => {
+      const { reaction } = prevState;
+      reaction.attachments = setAttachmentDeleted(reaction.attachments, attachment, true);
+      reaction.changed = true;
+      return { reaction };
+    });
+  };
+
+  handleAttachmentUndoDelete = (attachment) => {
+    this.setState((prevState) => {
+      const { reaction } = prevState;
+      reaction.attachments = setAttachmentDeleted(reaction.attachments, attachment, false);
+      reaction.changed = true;
+      return { reaction };
+    });
+  };
+
+  handleAttachmentEdit = (attachment) => {
+    this.setState((prevState) => {
+      const { reaction } = prevState;
+      reaction.attachments = replaceAttachment(reaction.attachments, attachment);
+      reaction.changed = true;
+      return { reaction };
+    });
+  };
+
   handleSelect = (key) => {
     UIActions.selectTab({ tabKey: key, type: 'reaction' });
     this.setState({
@@ -558,8 +598,6 @@ export default class ReactionDetails extends Component {
       </div>
     );
   }
-
-
 
   refreshGraphic() {
     const { reaction, isRefreshingGraphic } = this.state;
@@ -825,7 +863,7 @@ export default class ReactionDetails extends Component {
    */
   // eslint-disable-next-line class-methods-use-this
   recalculateEquivalentsForMaterials(reaction) {
-    const referenceMaterial = reaction.referenceMaterial;
+    const { referenceMaterial } = reaction;
     if (!referenceMaterial || !referenceMaterial.amount_mol) {
       return;
     }
@@ -1123,6 +1161,24 @@ export default class ReactionDetails extends Component {
             reaction={reaction}
             onReactionChange={this.handleReactionChange}
           />
+        </Tab>
+      ),
+      attachments: (
+        <Tab eventKey="attachments" title="Attachments" key={`attachments_${reaction.id}`}>
+          <ListGroup fill="true">
+            <ListGroupItem>
+              <AttachmentTab
+                element={reaction}
+                elementType="Reaction"
+                attachments={reaction.attachments || []}
+                onDrop={this.handleAttachmentDrop}
+                onDelete={this.handleAttachmentDelete}
+                onUndoDelete={this.handleAttachmentUndoDelete}
+                onEdit={this.handleAttachmentEdit}
+                readOnly={!reaction.can_update}
+              />
+            </ListGroupItem>
+          </ListGroup>
         </Tab>
       ),
       history: (

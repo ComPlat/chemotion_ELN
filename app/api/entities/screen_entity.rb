@@ -17,6 +17,7 @@ module Entities
     end
 
     with_options(anonymize_below: 10) do
+      expose! :can_update,            unless: :displayed_in_list
       expose! :collaborator
       expose! :result
       expose! :code_log,              anonymize_with: nil, using: 'Entities::CodeLogEntity'
@@ -25,6 +26,7 @@ module Entities
       expose! :component_graph_data,  anonymize_with: {}
       expose! :segments,              anonymize_with: [],  using: 'Labimotion::SegmentEntity'
       expose! :tag,                   anonymize_with: nil, using: 'Entities::ElementTagEntity'
+      expose! :attachments,           anonymize_with: [],  using: 'Entities::AttachmentEntity'
     end
     # rubocop:enable Layout/ExtraSpacing
 
@@ -38,6 +40,10 @@ module Entities
 
     def container
       displayed_in_list? ? nil : object.container
+    end
+
+    def can_update
+      options[:policy].try(:update?) || false
     end
 
     def is_restricted # rubocop:disable Naming/PredicateName
