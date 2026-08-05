@@ -523,8 +523,9 @@ RSpec.describe Molecule, type: :model do
     end
     # OpenBabel's SVG is discarded unconditionally by .svg_reprocess (its output always contains
     # 'Open Babel'), and rendering it is the only timeout-bounded operation in
-    # molecule_info_from_molfile — on organometallic imports ~1 record in 10 spent the full 20 s
-    # producing an SVG that was then thrown away.
+    # molecule_info_from_molfile — on organometallic imports ~1 record in 10 spent the whole
+    # timeout producing an SVG that was then thrown away (measured at the 20 s default in force
+    # at the time; SVG_RENDER_TIMEOUT_SECONDS is now 5 s and env-configurable).
     it 'does not ask OpenBabel for an SVG it is going to discard' do
       allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfile).and_return(babel_info)
       allow(PubchemLookupJob).to receive(:perform_later)

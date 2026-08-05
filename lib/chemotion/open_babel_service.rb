@@ -82,7 +82,8 @@ M  END
   # @param render_svg [Boolean] whether to render the SVG. Pass false when the caller discards it:
   #   it is the single most expensive part of this method — a forked child bounded at
   #   {SVG_RENDER_TIMEOUT_SECONDS}, and the only bounded operation here — and on organometallic
-  #   structures roughly one record in ten spends the full 20 s only to be SIGKILLed and return
+  #   structures roughly one record in ten spends the entire {SVG_RENDER_TIMEOUT_SECONDS} budget
+  #   only to be SIGKILLed and return
   #   nil. See {.molecule_info_from_structure} for who should be passing false.
   def self.molecule_info_from_molfile(molfile, render_svg: true)
     molecule_info_from_structure(molfile, 'mol', render_svg: render_svg)

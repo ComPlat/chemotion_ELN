@@ -335,7 +335,8 @@ class Import::ImportSdf < Import::ImportSamples
     # render_svg: false — Molecule#assign_molecule_data discards OpenBabel's SVG and re-renders
     # via Chemotion::SvgRenderer, so rendering it per record is the largest avoidable cost on
     # this path: it is the only timeout-bounded operation in molecule_info_from_molfile, and on
-    # organometallic files ~1 record in 10 burns the full 20 s before being killed.
+    # organometallic files ~1 record in 10 burns the whole SVG render timeout before being
+    # killed (measured at the 20 s default then in force; it is now 5 s and env-configurable).
     babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles, render_svg: false)
 
     babel_info_array.map.with_index do |babel_info, i|
