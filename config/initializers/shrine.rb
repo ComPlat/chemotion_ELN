@@ -15,20 +15,11 @@ class TieredStorage < Shrine::Storage::FileSystem
   end
 end
 
-# Cold shelves are local folders, usually a symlink to cheap storage (LSDF/NFS).
-# No COLD_STORAGE_PATH means no cold tier, so archiving is off.
-build_cold_shelf = lambda do |index|
-  base = ENV.fetch('COLD_STORAGE_PATH')
-  TieredStorage.new(File.join(base, "cold#{index + 1}"))
+# One :cold path per shelf, each normally a mount or symlink to bulk storage
+# (LSDF/NFS). No :cold in shrine.yml means no cold tier, so archiving is off.
+cold_shelves = Array(shrine_storage[:cold]).each_with_index.to_h do |path, index|
+  [index.zero? ? :cold : :"cold#{index + 1}", TieredStorage.new(path)]
 end
-
-cold_shelves =
-  if ENV['COLD_STORAGE_PATH'].present?
-    cold_count = [ENV.fetch('COLD_SHELVES', 1).to_i, 1].max
-    (0...cold_count).to_h { |i| [i.zero? ? :cold : :"cold#{i + 1}", build_cold_shelf.call(i)] }
-  else
-    {}
-  end
 
 Shrine.storages = {
   cache: Shrine::Storage::FileSystem.new(shrine_storage[:cache]), # temporary
@@ -48,16 +39,27 @@ class StorageHealth
 
   # verify_files queries the DB, so it stays off at boot (models aren't loaded yet).
   def self.problems(verify_files: false)
-    tiers_to_check.filter_map do |tier|
+    found = tiers_to_check.filter_map do |tier|
       reason = unavailable_reason(tier, Shrine.storages[tier], verify_files)
       "tier '#{tier}': #{reason}" if reason
     end
+    lost = lost_cold_tier_reason if verify_files
+    lost ? found << lost : found
   end
 
   # store always, plus every cold shelf that's configured (cold, cold2, ...).
   def self.tiers_to_check
     cold = Shrine.storages.keys.select { |k| k.to_s.match?(/\Acold\d*\z/) }
     (REQUIRED_TIERS + cold).uniq
+  end
+
+  # Archived rows keep pointing at cold after the config goes away (unset var,
+  # dropped mount), and then no cold tier is left for tiers_to_check to look at.
+  def self.lost_cold_tier_reason
+    return nil if Shrine.storages.keys.any? { |k| k.to_s.match?(/\Acold\d*\z/) }
+    return nil unless Attachment.where("attachment_data->>'storage' LIKE 'cold%'").exists?
+
+    'archived files exist but no cold storage is configured (set :cold in config/shrine.yml)'
   end
 
   def self.log_problems(logger = Rails.logger)

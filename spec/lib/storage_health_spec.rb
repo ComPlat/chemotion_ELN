@@ -46,6 +46,32 @@ RSpec.describe StorageHealth do
       end
     end
 
+    # The nastiest version: rows point at cold, no cold tier is left to inspect.
+    context 'when cold storage disappears from the config but rows still point at it' do
+      before do
+        allow(Shrine).to receive(:storages).and_return(store: real_store)
+        allow(Attachment).to receive(:where).and_call_original
+        allow(Attachment).to receive(:where)
+          .with("attachment_data->>'storage' LIKE 'cold%'")
+          .and_return(instance_double(ActiveRecord::Relation, exists?: true))
+      end
+
+      it 'flags it when verifying files' do
+        expect(described_class.problems(verify_files: true))
+          .to include('archived files exist but no cold storage is configured (set :cold in config/shrine.yml)')
+      end
+
+      it 'does not query the database by default' do
+        expect(described_class.problems).to eq([])
+      end
+    end
+
+    it 'says nothing when no cold tier is configured and nothing was ever archived' do
+      allow(Shrine).to receive(:storages).and_return(store: real_store)
+
+      expect(described_class.problems(verify_files: true)).to eq([])
+    end
+
     it 'is happy when the folder exists and a sampled file is present' do
       intact = instance_double(Shrine::Storage::FileSystem, directory: real_store.directory, exists?: true)
       allow(described_class).to receive(:sample_file_id).and_return(nil)
