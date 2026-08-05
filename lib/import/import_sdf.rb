@@ -102,7 +102,7 @@ class Import::ImportSdf < Import::ImportSamples
     @processed_mol = []
     started_at = Time.current
     @defer_pubchem_lookup = true
-    inchikeys = process_molecule_batches(raw_data.dup, batch_size)
+    inchikeys = process_molecule_batches(raw_data.dup, batch_size, started_at)
 
     count = inchikeys.compact.size
     if count.positive?
@@ -112,19 +112,42 @@ class Import::ImportSdf < Import::ImportSamples
     end
     @inchi_array += inchikeys.compact
   ensure
+    # The completeness guarantee: whatever happened above, every molecule created since
+    # started_at is queued at least once. Nothing in #process_molecule_batches is allowed to
+    # become load-bearing for this.
     Molecule.schedule_pubchem_lookup_since(started_at)
   end
 
   # Consumes +data+ in batches, creating molecules and accumulating them into +@processed_mol+.
   #
+  # Enrichment is kicked off as soon as the first batch has committed, so a long import does not
+  # leave every molecule nameless until it finishes — on a 529-structure file that was ~80
+  # minutes of waiting for a name the first 50 molecules could have had after 7.
+  #
+  # Once, not per batch. {Molecule.schedule_pubchem_lookup_since} enqueues with +created_after+
+  # and no id list, so the job's scope is a lower bound with no upper one and its continuation
+  # cursor is ascending id: molecules created by later batches have higher ids and fall inside
+  # that same scope, so one job follows the import forward. {PubchemLookupJob} re-arms itself
+  # while this import still holds its delayed_jobs lock, which is what keeps it following rather
+  # than draining once and stopping. Enqueuing per batch instead would put one job in the queue
+  # per 50 molecules — 1000 of them for a 50k import, the shape of a defect already fixed once.
+  #
+  # This works only because phase 1 has no surrounding transaction and each molecule commits on
+  # its own, so a worker on another connection can see them. The xlsx/csv path cannot do this —
+  # see the note on {Import::ImportSamples#write_to_db}.
+  #
   # @param data [Array<String>] raw molfile records, consumed destructively
+  # @param started_at [ActiveSupport::TimeWithZone] lower bound for the enrichment scope
   # @return [Array<String, nil>] one inchikey per record, nil where none could be resolved
-  def process_molecule_batches(data, batch_size)
+  def process_molecule_batches(data, batch_size, started_at)
     inchikeys = []
+    first_batch = true
     until data.empty?
       molecules = find_or_create_by_molfiles(data.slice!(0...batch_size))
       inchikeys += molecules.map { |m| (m && m[:inchikey]) || nil }
       @processed_mol += molecules
+      Molecule.schedule_pubchem_lookup_since(started_at) if first_batch
+      first_batch = false
     end
     inchikeys
   end
