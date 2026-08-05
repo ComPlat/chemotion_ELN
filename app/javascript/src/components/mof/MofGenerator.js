@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Alert, Button, Form, Spinner, Table
+  Alert, Button, Spinner
 } from 'react-bootstrap';
 import Dropzone from 'src/components/common/Dropzone';
 import MofFetcher from 'src/fetchers/MofFetcher';
@@ -131,42 +131,6 @@ const MofGenerator = ({ onResult, initialResult, disabled }) => {
             Clear
           </Button>
         </div>
-      )}
-
-      {result?.mofid && (
-        <Form.Group className="mb-0">
-          <Form.Label>Identifiers</Form.Label>
-          <Table bordered size="sm" className="mb-0">
-            <tbody>
-              <tr>
-                <th style={{ width: '8rem' }}>MOFid</th>
-                <td><code className="user-select-all text-break">{result.mofid}</code></td>
-              </tr>
-              <tr>
-                <th>MOFkey</th>
-                <td><code className="user-select-all text-break">{result.mofkey}</code></td>
-              </tr>
-              {result.smiles && (
-                <tr>
-                  <th>SMILES</th>
-                  <td><code className="user-select-all text-break">{result.smiles}</code></td>
-                </tr>
-              )}
-              {result.topology && (
-                <tr>
-                  <th>Topology</th>
-                  <td>{result.topology}</td>
-                </tr>
-              )}
-              {result.filename && (
-                <tr>
-                  <th>CIF</th>
-                  <td>{result.filename}</td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-        </Form.Group>
       )}
     </div>
   );

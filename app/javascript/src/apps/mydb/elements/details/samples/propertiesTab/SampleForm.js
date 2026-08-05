@@ -22,6 +22,8 @@ import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
 import MofGenerator from 'src/components/mof/MofGenerator';
+import MofDetails from 'src/components/mof/MofDetails';
+import { mofResultFromAnalysis } from 'src/components/mof/mofUtils';
 import Sample from 'src/models/Sample';
 import { isValidMoleculeName } from 'src/utilities/MoleculeNameValidation';
 
@@ -62,6 +64,8 @@ export default class SampleForm extends React.Component {
     this.switchDensityMolarity = this.switchDensityMolarity.bind(this);
     this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
     this.handleMofResult = this.handleMofResult.bind(this);
+    this.handleMofDetailsChanged = this.handleMofDetailsChanged.bind(this);
+    this.fetchMofPreviewSvg = this.fetchMofPreviewSvg.bind(this);
     this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
   }
 
@@ -143,13 +147,6 @@ export default class SampleForm extends React.Component {
       this.createComponentsFromCurrentSample(sample);
     }
 
-    // A MOF carries no molecule structure; drop any molecule carried over from
-    // the previous type so it is not persisted alongside the CIF identifiers.
-    if (sample.isMof()) {
-      sample.clearMoleculeData();
-      sample.sample_svg_file = null;
-    }
-
     // Leaving MOF: discard the CIF-derived identifiers so they do not linger on
     // a Micromolecule/Mixture sample.
     if (wasMof && !sample.isMof() && sample.sample_details) {
@@ -215,14 +212,70 @@ export default class SampleForm extends React.Component {
   }
 
   /**
-   * Persists MOFid/MOFkey from an uploaded CIF onto sample_details.mof.
-   * @param {{ result: Object }} payload
+   * Handles a CIF analysis result from MofGenerator: structures it into the
+   * (SUR)MOF configuration (Format ID / Format Key / Topology / Catenation and
+   * fragments are retrieved from the CIF output) and persists it onto
+   * sample_details.mof, preserving any user-entered configuration flags.
+   * A null result (Clear) removes the mof block.
+   * @param {{ result: Object|null }} payload
    */
   handleMofResult({ result }) {
     const { sample, handleSampleChanged } = this.props;
-    sample.sample_details = { ...(sample.sample_details || {}), mof: result };
+    const nextDetails = { ...(sample.sample_details || {}) };
+
+    if (!result) {
+      delete nextDetails.mof;
+    } else {
+      const prev = sample.sample_details?.mof || {};
+      nextDetails.mof = {
+        ...mofResultFromAnalysis(result),
+        // keep configuration the user set that the CIF cannot provide
+        format_comments: prev.format_comments || '',
+      };
+    }
+
+    sample.sample_details = nextDetails;
     sample.changed = true;
     handleSampleChanged(sample);
+
+    // Fetch a read-only structure preview from the building-block SMILES.
+    if (result) this.fetchMofPreviewSvg(sample);
+  }
+
+  /**
+   * Persists edits made in the (SUR)MOF details modal onto sample_details.mof.
+   * @param {Object} mof - the updated mof configuration
+   */
+  handleMofDetailsChanged(mof) {
+    const { sample, handleSampleChanged } = this.props;
+    sample.sample_details = { ...(sample.sample_details || {}), mof };
+    sample.changed = true;
+    handleSampleChanged(sample);
+  }
+
+  /**
+   * Renders the MOF's building-block SMILES to an SVG (server-side, same path
+   * mixtures use) and stores the file name on sample_details.mof.svg for a
+   * read-only structure preview. Best-effort: failures leave no preview.
+   * @param {Sample} sample
+   */
+  fetchMofPreviewSvg(sample) {
+    const smiles = sample.sample_details?.mof?.smiles;
+    if (!smiles) return;
+
+    MoleculeFetcher.fetchBySmi(smiles, null, null, 'ketcher')
+      .then((molecule) => {
+        const currentMof = sample.sample_details?.mof;
+        // ignore a stale response (cleared or re-analyzed meanwhile)
+        if (!molecule?.molecule_svg_file || !currentMof || currentMof.smiles !== smiles) return;
+        sample.sample_details = {
+          ...sample.sample_details,
+          mof: { ...currentMof, svg: molecule.molecule_svg_file },
+        };
+        sample.changed = true;
+        this.props.handleSampleChanged(sample);
+      })
+      .catch(() => { /* preview is best-effort */ });
   }
 
   /**
@@ -425,7 +478,7 @@ export default class SampleForm extends React.Component {
     const { isMolNameLoading, moleculeNameInputValue } = this.state;
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
-    const newMolecule = !mno || sample._molecule.id !== mno.mid;
+    const newMolecule = !mno || sample._molecule?.id !== mno.mid;
     let moleculeNames = newMolecule ? [] : [mno];
     if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
 
@@ -1374,6 +1427,11 @@ export default class SampleForm extends React.Component {
         <Row className="align-items-end mb-4">
           {this.sampleTypeInput()}
         </Row>
+        {isMof && (
+          <Row className="align-items-end mb-4">
+            <Col>{this.moleculeInput()}</Col>
+          </Row>
+        )}
         {
           isMicromolecule ? (
             <>
@@ -1519,6 +1577,11 @@ export default class SampleForm extends React.Component {
               <MofGenerator
                 onResult={this.handleMofResult}
                 initialResult={sample.sample_details?.mof}
+                disabled={!sample.can_update}
+              />
+              <MofDetails
+                mof={sample.sample_details?.mof}
+                onChange={this.handleMofDetailsChanged}
                 disabled={!sample.can_update}
               />
             </Col>

@@ -125,6 +125,27 @@ const sampleTitleAppendix = (sample, handleFastInput) => (
   </>
 );
 
+// Read-only structure preview for MOF samples: renders the SVG generated
+// (server-side) from the building-block SMILES the pipeline returned. No
+// editing — falls back to topology / upload hints when no SVG is available.
+const mofStructurePreview = (sample) => {
+  const mof = sample.sample_details?.mof;
+  if (mof?.svg) {
+    return (
+      <div className="position-relative d-flex align-items-center justify-content-center svg-container">
+        <SVG key={mof.svg} src={`/images/molecules/${mof.svg}`} className="molecule-mid" />
+      </div>
+    );
+  }
+  return (
+    <div className="position-relative d-flex align-items-center justify-content-center svg-container-empty p-4 text-muted">
+      {mof?.topology
+        ? `Topology: ${mof.topology}`
+        : 'Upload a CIF on the Properties tab to generate MOFid'}
+    </div>
+  );
+};
+
 export default class SampleDetails extends React.Component {
   // eslint-disable-next-line react/static-property-placement
   static contextType = StoreContext;
@@ -1198,11 +1219,7 @@ export default class SampleDetails extends React.Component {
           </Col>
           <Col md={8} className="position-relative">
             {isMof ? (
-              <div className="position-relative d-flex align-items-center justify-content-center svg-container-empty p-4 text-muted">
-                {sample.sample_details?.mof?.topology
-                  ? `Topology: ${sample.sample_details.mof.topology}`
-                  : 'Upload a CIF on the Properties tab to generate MOFid'}
-              </div>
+              mofStructurePreview(sample)
             ) : (
               this.svgOrLoading(sample)
             )}
