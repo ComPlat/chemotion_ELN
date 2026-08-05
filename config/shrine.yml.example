@@ -12,3 +12,14 @@ production:
   :maximum_size: 100
   :cache: 'uploads/cache'
   :store: 'uploads'
+  # Optional cold tier for archiving old attachments: one path per shelf, each
+  # normally a mount or symlink to bulk storage (e.g. LSDF). Leave it out and
+  # there is no cold tier, so archiving stays off.
+  # Each path must be writable by the app user - these folders are created at
+  # boot, so an unwritable one stops the app from starting.
+  # Files are spread across shelves by id, so never drop or rename a shelf once
+  # it holds files - a file's path is fixed in the database. To move a shelf to
+  # another disk, repoint its mount and keep the path.
+  # :cold:
+  #   - '/mnt/lsdf/chemotion-cold/cold1'
+  #   - '/mnt/lsdf-2/chemotion-cold/cold2'
