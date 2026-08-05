@@ -76,7 +76,7 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
   const [activeVariation, setActiveVariation] = useState(null);
   // Filled once the grid is up; the export button reads the grid through it.
   const gridApiRef = useRef(null);
-  const [editMode, setEditMode] = useState(false);
+  const [advancedMode, setAdvancedMode] = useState(false);
   const [currentSegment, setCurrentSegment] = useState('Schema');
   const [allSegment, setAllSegment] = useState([]);
 
@@ -120,7 +120,6 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
       ['_variations', '_checksum', 'belongTo', 'matGroup', 'editedSample']
     );
 
-    console.log({ variationDiff });
     reaction.changed = true;
     reaction.variations[idx].data = variationDiff;
     onReactionChange(reaction);
@@ -254,10 +253,10 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
           className="mb-2"
           size="sm"
           variant="info"
-          onClick={() => setEditMode(!editMode)}
+          onClick={() => setAdvancedMode(!advancedMode)}
         >
           <i className="fa fa-wrench"></i>
-          {editMode ? 'Disable edit mode' : 'Enable edit mode'}
+          {advancedMode ? 'Disable advanced mode' : 'Enable advanced mode'}
         </Button>
         <RemoveVariationsModal
           onRemoveAll={() => {
@@ -297,7 +296,7 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
         allReactionAnalyses={getReactionAnalyses(reaction)}
         reactionShortLabel={reaction.short_label}
         reactionId={reaction.id}
-        editMode={editMode}
+        advancedMode={advancedMode}
         currentSegment={allSegment[currentSegment]}
         currentSegmentName={currentSegment}
       />
