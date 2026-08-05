@@ -49,11 +49,12 @@ module Export
       )
       # ext_to_path returns a *closed* Tempfile: Inkscape writes to its path and
       # Pandoc later reads it, but the file descriptor is released immediately so
-      # a research plan with many structures cannot exhaust the FD limit. The
-      # object is retained only so cleanup_png_tempfiles can close!/unlink it.
+      # a research plan with many structures cannot exhaust the FD limit. Track
+      # it before rasterizing so cleanup_png_tempfiles still close!/unlinks it
+      # even if by_inkscape raises on a malformed SVG.
       output_file = Reporter::Img::Conv.ext_to_path('png')
-      Reporter::Img::Conv.by_inkscape(svg_path, output_file.path, 'png', width: width, height: height)
       @png_tempfiles << output_file
+      Reporter::Img::Conv.by_inkscape(svg_path, output_file.path, 'png', width: width, height: height)
       output_file.path
     end
 
@@ -63,8 +64,6 @@ module Export
         assigns: { name: @name, fields: @fields },
         layout: false,
       )
-    ensure
-      cleanup_png_tempfiles
     end
 
     def to_relative_html
@@ -166,26 +165,27 @@ module Export
     end
 
     def sample_field(field)
-      return unless (sample = Sample.find_by(id: field['value']['sample_id']))
-      return unless ElementPolicy.new(@current_user, sample).read?
-
-      {
-        type: field['type'],
-        src: to_png(sample.current_svg_full_path),
-        width: STRUCTURE_DISPLAY_WIDTH,
-        p: sample['name'],
-      }
+      element = Sample.find_by(id: field['value']['sample_id'])
+      element_field(field, element, STRUCTURE_DISPLAY_WIDTH)
     end
 
     def reaction_field(field)
-      return unless (reaction = Reaction.find_by(id: field['value']['reaction_id']))
-      return unless ElementPolicy.new(@current_user, reaction).read?
+      element = Reaction.find_by(id: field['value']['reaction_id'])
+      element_field(field, element, REACTION_DISPLAY_WIDTH)
+    end
+
+    # Shared builder for a linked Sample/Reaction: skips (returns nil) when the
+    # record is missing or unreadable, otherwise rasterizes its current SVG at
+    # the given display width.
+    def element_field(field, element, width)
+      return unless element
+      return unless ElementPolicy.new(@current_user, element).read?
 
       {
         type: field['type'],
-        src: to_png(reaction.current_svg_full_path),
-        width: REACTION_DISPLAY_WIDTH,
-        p: reaction['name'],
+        src: to_png(element.current_svg_full_path),
+        width: width,
+        p: element['name'],
       }
     end
 

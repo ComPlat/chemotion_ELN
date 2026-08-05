@@ -158,4 +158,51 @@ describe Export::ExportResearchPlan do
       end
     end
   end
+
+  describe 'PNG tempfile lifecycle' do
+    let(:user) { create(:person) }
+    let(:research_plan) { create(:research_plan, creator: user) }
+    let(:svg_fixture) { Rails.root.join('spec/fixtures/images/molecule.svg') }
+    let(:ketcher_name) { 'ketcher_lifecycle_test.svg' }
+    let(:ketcher_path) { Rails.public_path.join('images/research_plans', ketcher_name) }
+    let(:exporter) { described_class.new(user, research_plan, 'docx') }
+
+    before do
+      FileUtils.mkdir_p(ketcher_path.dirname)
+      FileUtils.cp(svg_fixture, ketcher_path)
+      allow(Reporter::Img::Conv).to receive(:by_inkscape)
+      research_plan.update!(
+        body: [{ id: 'e-k', type: 'ketcher', value: { svg_file: ketcher_name, thumb_svg: '' } }],
+      )
+    end
+
+    after { FileUtils.rm_f(ketcher_path) }
+
+    def retained_tempfiles
+      exporter.instance_variable_get(:@png_tempfiles)
+    end
+
+    # Regression: to_html must NOT clean up the PNGs — to_relative_html feeds that
+    # same HTML to Pandoc, which reads the <img> paths only inside to_file/to_zip.
+    it 'keeps the rendered PNGs on disk through to_html so Pandoc can still read them' do
+      exporter.to_html
+
+      paths = retained_tempfiles.map(&:path)
+      expect(paths).not_to be_empty
+      expect(paths.select { |path| File.file?(path) }).to eq(paths)
+    end
+
+    it 'releases the PNGs only after to_file hands the HTML to Pandoc' do
+      readable_at_convert = []
+      allow(PandocRuby).to receive(:convert) do
+        readable_at_convert = retained_tempfiles.map(&:path).select { |path| File.file?(path) }
+        'converted'
+      end
+
+      exporter.to_file
+
+      expect(readable_at_convert).not_to be_empty
+      expect(retained_tempfiles).to be_empty
+    end
+  end
 end
