@@ -62,6 +62,7 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       const wrapper = shallow(
         React.createElement(ReactionDetailsScheme, {
           reaction,
+          variations: [],
           onReactionChange: onReactionChangeSpy,
           onInputChange: onInputChangeSpy
         })
@@ -555,6 +556,7 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
     const createWrapper = (rxn) => shallow(
       React.createElement(ReactionDetailsScheme, {
         reaction: rxn,
+        variations: [],
         onReactionChange: onReactionChangeSpy,
         onInputChange: onInputChangeSpy,
       })

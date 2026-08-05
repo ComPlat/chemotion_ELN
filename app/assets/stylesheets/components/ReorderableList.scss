@@ -4,16 +4,7 @@
   // Not @extend .flex-column: that carries Bootstrap's !important, which no modifier could override.
   flex-direction: column;
 
-  &--horizontal {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    .reorderable-list__item {
-      flex-basis: content;
-    }
-  }
-
-  &__item {
+  &__item:not(.reorderable-list__item--cell) {
     @include draggable-list-item();
     @extend .d-flex;
     @extend .gap-2;
@@ -21,4 +12,10 @@
       @extend .ps-0;
     }
   }
+}
+
+// The horizontal variant: items rendered as <td>s of a surrounding table, e.g. the variations
+// group toolbar. The cell must keep its table display, so the flex row styles do not apply.
+.reorderable-list__item--cell {
+  @include draggable-list-item();
 }

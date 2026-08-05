@@ -4,7 +4,8 @@ import PropTypes from 'prop-types';
 import { Select } from 'src/components/common/Select';
 import {
   Form, Row, Col, Button, InputGroup, OverlayTrigger, Tooltip
-} from 'react-bootstrap';import MaterialGroup from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
+} from 'react-bootstrap';
+import MaterialGroup from 'src/apps/mydb/elements/details/reactions/schemeTab/MaterialGroup';
 import Reaction from 'src/models/Reaction';
 import { isSbmmSample } from 'src/utilities/ElementUtils';
 import ReactionDetailsMainProperties from 'src/apps/mydb/elements/details/reactions/ReactionDetailsMainProperties';
@@ -32,6 +33,7 @@ import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralIn
 
 export default class ReactionDetailsScheme extends React.Component {
   static contextType = StoreContext;
+
   constructor(props) {
     super(props);
 
@@ -40,7 +42,7 @@ export default class ReactionDetailsScheme extends React.Component {
         ...props,
         onLockEquivColChange: this.onLockEquivColChange.bind(this)
       },
-      this.context );
+      this.context);
     this.state = {
       lockEquivColumn: this.reactionUpdateHandler.lockEquivColumn,
       displayYieldField: null,
@@ -57,10 +59,10 @@ export default class ReactionDetailsScheme extends React.Component {
 
   onLockEquivColChange(lockEquivColumn) {
     /*
-    The handler's lazy `lockEquivColumn` getter fires this on first read - which the constructor
-    does to seed the state, before `this.state` even exists. The value lands in state through that
-    seeding, so the callback only has work to do once there is a state to differ from.
-    */
+     The handler's lazy `lockEquivColumn` getter fires this on first read - which the constructor
+     does to seed the state, before `this.state` even exists. The value lands in state through that
+     seeding, so the callback only has work to do once there is a state to differ from.
+     */
     if (!this.state || this.state.lockEquivColumn === lockEquivColumn) {
       return;
     }
@@ -75,6 +77,7 @@ export default class ReactionDetailsScheme extends React.Component {
     // Deserialize components for any existing samples in the reaction
     this.reactionUpdateHandler.deserializeReactionMaterialComponents();
   }
+
   componentDidUpdate(prevProps) {
     const { reaction } = this.props;
     // Deserialize components when reaction data changes (e.g., after save/reload)
@@ -83,7 +86,7 @@ export default class ReactionDetailsScheme extends React.Component {
           ...this.props,
           onLockEquivColChange: this.onLockEquivColChange.bind(this)
         },
-        this.context );
+        this.context);
 
       this.reactionUpdateHandler.deserializeReactionMaterialComponents();
       // Update lock state when reaction changes
@@ -91,6 +94,7 @@ export default class ReactionDetailsScheme extends React.Component {
 
     }
   }
+
   componentWillUnmount() {
     TextTemplateStore.unlisten(this.handleTemplateChange);
     this.reactionUpdateHandler.resetGasPhaseStore();
@@ -148,11 +152,11 @@ export default class ReactionDetailsScheme extends React.Component {
         volumeValue,
       );
       /*
-      Both handlers are unwired while the field shows a range. The unit button of the input stays
-      clickable even when the input itself is disabled, and switching the prefix reports back
-      through onMetricsChange - which writes the volume - so leaving it wired would let a click on
-      it overwrite what the variations hold.
-      */
+       Both handlers are unwired while the field shows a range. The unit button of the input stays
+       clickable even when the input itself is disabled, and switching the prefix reports back
+       through onMetricsChange - which writes the volume - so leaving it wired would let a click on
+       it overwrite what the variations hold.
+       */
       const updateVolume = isRangeField ? undefined : (e) => this.reactionUpdateHandler.updateVolume(e);
 
       return (
@@ -335,7 +339,7 @@ export default class ReactionDetailsScheme extends React.Component {
   renderRolesOption({ icon, label, variant }) {
     return (
       <>
-        <i className={`fa ${icon} text-${variant} me-2`} />
+        <i className={`fa ${icon} text-${variant} me-2`}/>
         {label}
       </>
     );
@@ -385,7 +389,8 @@ export default class ReactionDetailsScheme extends React.Component {
       this.reactionUpdateHandler.updateReactionMaterials();
       const { referenceMaterial } = reaction;
       if (referenceMaterial?.weight_percentage) {
-        // If reference material has valid weight percentage value, ensure equivalents are recalculated as a result of amount changes to the reference material
+        // If reference material has valid weight percentage value, ensure equivalents are recalculated as a result of
+        // amount changes to the reference material
         this.reactionUpdateHandler.recalculateEquivalentsForMaterials(reaction);
       }
       reaction.products.map((sample) => {
@@ -417,13 +422,24 @@ export default class ReactionDetailsScheme extends React.Component {
     }
 
     /*
-    Until the user has toggled yield/conversion, the field follows the data: yield unless some
-    product carries a conversion rate. Derived here rather than pushed into state, which would be a
-    setState during render.
-    */
+     Until the user has toggled yield/conversion, the field follows the data: yield unless some
+     product carries a conversion rate. Derived here rather than pushed into state, which would be a
+     setState during render.
+     */
     const effectiveDisplayYieldField = displayYieldField ?? reaction.products.every(
       (material) => !(material.conversion_rate && material.conversion_rate !== 0)
     );
+
+    const getMaterialsIncludingVariations = (materialGroup) => {
+      const materials = [...reaction[materialGroup]];
+      variations.forEach(({ data: variation }) => {
+        while (materials.length < variation[materialGroup].length) {
+          materials.push(variation[materialGroup][materials.length]);
+        }
+      });
+
+      return materials;
+    };
 
     return (
       <>
@@ -432,7 +448,7 @@ export default class ReactionDetailsScheme extends React.Component {
             reaction={reaction}
             variations={variations}
             materialGroup="starting_materials"
-            materials={reaction.starting_materials}
+            materials={getMaterialsIncludingVariations('starting_materials')}
             dropMaterial={this.reactionUpdateHandler.dropMaterial}
             deleteMaterial={
               (material, materialGroup) => this.reactionUpdateHandler.deleteMaterial(material, materialGroup)
@@ -447,7 +463,7 @@ export default class ReactionDetailsScheme extends React.Component {
             reaction={reaction}
             variations={variations}
             materialGroup="reactants"
-            materials={reaction.reactantsWithSbmm}
+            materials={getMaterialsIncludingVariations('reactantsWithSbmm')}
             dropMaterial={this.reactionUpdateHandler.dropMaterial}
             deleteMaterial={
               (material, materialGroup) => this.reactionUpdateHandler.deleteMaterial(material, materialGroup)
@@ -464,7 +480,7 @@ export default class ReactionDetailsScheme extends React.Component {
             reaction={reaction}
             variations={variations}
             materialGroup="solvents"
-            materials={reaction.solvents}
+            materials={getMaterialsIncludingVariations('solvents')}
             dropMaterial={this.reactionUpdateHandler.dropMaterial}
             deleteMaterial={
               (material, materialGroup) => this.reactionUpdateHandler.deleteMaterial(material, materialGroup)
@@ -479,7 +495,7 @@ export default class ReactionDetailsScheme extends React.Component {
             reaction={reaction}
             variations={variations}
             materialGroup="products"
-            materials={reaction.products}
+            materials={getMaterialsIncludingVariations('products')}
             dropMaterial={this.reactionUpdateHandler.dropMaterial}
             deleteMaterial={
               (material, materialGroup) => this.reactionUpdateHandler.deleteMaterial(material, materialGroup)
@@ -563,7 +579,7 @@ export default class ReactionDetailsScheme extends React.Component {
                       updateTextTemplates={this.updateTextTemplates}
                       onChange={(event) => onInputChange('description', event)}
                     />
-                  ) : <QuillViewer value={reaction.description} />
+                  ) : <QuillViewer value={reaction.description}/>
               }
             </div>
           </Form.Group>
