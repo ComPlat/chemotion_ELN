@@ -114,7 +114,7 @@ class Attachment < ApplicationRecord
   end
 
   def read_thumbnail
-    attachment(:thumbnail).read if attachment(:thumbnail)&.exists?
+    attachment(:thumbnail).read if attachment(:thumbnail)&.exist?
   end
 
   def abs_path
