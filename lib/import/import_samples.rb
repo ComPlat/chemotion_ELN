@@ -216,7 +216,7 @@ module Import
 
     def write_to_db
       started_at = Time.current
-      @defer_lcss = true
+      @defer_pubchem_lookup = true
       unprocessable_count = 0
       begin
         ActiveRecord::Base.transaction do
@@ -236,7 +236,7 @@ module Import
         raise 'More than 1 row can not be processed' if unprocessable_count.positive?
       end
     ensure
-      Molecule.schedule_lcss_since(started_at)
+      Molecule.schedule_pubchem_lookup_since(started_at)
     end
 
     def structure?(row)
@@ -262,7 +262,7 @@ module Import
       raw_molfile = row_value_case_insensitive(row, 'molfile').to_s.strip
       # When molfile has > <PolymersList>, use full molfile and Molecule.svg_reprocess so polymers use SvgRenderer.
       if raw_molfile.include?(Chemotion::MolfilePolymerSupport::POLYMERS_LIST_TAG)
-        result = Import::PolymerMoleculeResolver.call(raw_molfile, defer_lcss: @defer_lcss)
+        result = Import::PolymerMoleculeResolver.call(raw_molfile, defer_pubchem_lookup: @defer_pubchem_lookup)
         return [result.molecule, result.raw_molfile]
       end
 
@@ -273,7 +273,9 @@ module Import
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
       inchikey = babel_info[:inchikey]
       if inchikey.presence
-        molecule = Molecule.find_or_create_by_molfile(molfile_for_babel, defer_lcss: @defer_lcss, **babel_info)
+        molecule = Molecule.find_or_create_by_molfile(molfile_for_babel,
+                                                      defer_pubchem_lookup: @defer_pubchem_lookup,
+                                                      **babel_info)
       end
       [molecule, raw_molfile]
     end
@@ -304,7 +306,7 @@ module Import
       # before calling this, so a molfile OpenBabel could not read while smiles_to_inchikey
       # still resolved a key is a reachable combination.
       info = (babel_info || {}).merge(inchikey: inchikey)
-      molecule = Molecule.find_or_create_by_molfile(molfile_coord, defer_lcss: @defer_lcss, **info)
+      molecule = Molecule.find_or_create_by_molfile(molfile_coord, defer_pubchem_lookup: @defer_pubchem_lookup, **info)
       [molecule, molfile_coord, false]
     end
 
@@ -596,9 +598,9 @@ module Import
     end
 
     # NB: always called nested inside #write_to_db's row loop (via
-    # handle_sample_components), which already has @defer_lcss set — a
+    # handle_sample_components), which already has @defer_pubchem_lookup set — a
     # component's molecule creation is deferred the same way as the outer
-    # row's, and both flush together via #write_to_db's own Molecule.schedule_lcss_since.
+    # row's, and both flush together via #write_to_db's own Molecule.schedule_pubchem_lookup_since.
     def create_components(sample, sample_components_data)
       unprocessable_count = 0
       xlsx.default_sheet = 'sample_components'

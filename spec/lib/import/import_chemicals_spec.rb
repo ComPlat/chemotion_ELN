@@ -134,7 +134,6 @@ RSpec.describe Import::ImportChemicals do
     let(:chemical) { create(:chemical) }
 
     it 'creates a chemical with valid data' do
-      allow(PubChem).to receive(:get_cid_from_inchikey).and_return('12345')
       expect(described_class.build_chemical(row, header)).not_to be_nil
     end
   end

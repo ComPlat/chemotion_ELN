@@ -26,7 +26,7 @@ describe Chemotion::MoleculeAPI do
 
       it 'is able to find or create a molecule by molfile' do
         allow(PubChem).to receive_messages(
-          get_record_from_inchikey: nil,
+          fetch_record_from_inchikey: [nil, :not_found],
           get_molfile_by_smiles: nil,
         )
         molecule_ids = molfiles.map do |molfile|
@@ -153,7 +153,7 @@ describe Chemotion::MoleculeAPI do
 
       before do
         allow(PubChem).to receive_messages(
-          get_record_from_inchikey: nil,
+          fetch_record_from_inchikey: [nil, :not_found],
           get_molfile_by_smiles: nil,
         )
       end
@@ -207,9 +207,8 @@ describe Chemotion::MoleculeAPI do
 
       before do
         allow(PubChem).to receive_messages(
-          get_record_from_inchikey: nil,
+          fetch_record_from_inchikey: [nil, :not_found],
           get_molfile_by_smiles: nil,
-          get_cid_from_inchikey: nil,
         )
         allow(Molecule).to receive_messages(
           svg_reprocess: polymer_svg,
