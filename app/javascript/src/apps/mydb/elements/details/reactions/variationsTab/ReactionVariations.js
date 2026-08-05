@@ -22,6 +22,8 @@ import
   exportVariationsToCsv,
   REACTION_VARIATIONS_TAB_KEY
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
+import { registerVariationChangeHandler }
+  from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsEditRegistry';
 import { Select } from 'src/components/common/Select';
 import GenericSGDetails from 'src/components/generic/GenericSGDetails';
 import { onNaviClick } from 'src/components/generic/SegmentDetails';
@@ -180,13 +182,43 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
   const handleReactionChange = (variationReaction, idx) => {
     variationReaction.updateMaxAmountOfProducts();
 
-    const variationDiff = diffObjects(reaction, variationReaction, ['_variations', 'container', '_checksum']);
+    /*
+    Beyond the structural exclusions, the diff must not capture editor bookkeeping: `belongTo`,
+    `matGroup` and `editedSample` are transient references the sample flows hang onto reactions and
+    samples, and diffObjects would copy them - and through them the whole variation clone - into
+    the diff by reference, breaking the structuredClone the variations are rebuilt with.
+    */
+    const variationDiff = diffObjects(
+      reaction,
+      variationReaction,
+      ['_variations', '_checksum', 'belongTo', 'matGroup', 'editedSample']
+    );
+
+    console.log({ variationDiff });
     reaction.changed = true;
     reaction.variations[idx].data = variationDiff;
     onReactionChange(reaction);
     variations[idx].data = variationReaction;
     setVariations(variations);
   };
+
+  /*
+  The scheme panel below hands some sample flows (e.g. the + button of a material group) to the
+  global ElementStore, which only knows the Reaction object it was given - here the variation's
+  detached clone. Registering the clone lets the store report a saved material back into the
+  variation, whose diff would never see it otherwise, instead of opening the clone as an element
+  of its own - see ReactionVariationsEditRegistry for why registrations are kept until overwritten.
+  */
+  useEffect(() => {
+    if (activeVariation) {
+      const variationReaction = activeVariation.data;
+      registerVariationChangeHandler(
+        variationReaction.id,
+        () => handleReactionChange(variationReaction, activeVariation.idx)
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeVariation]);
 
   /*
   Removing a row has to renumber the survivors: the internal variation objects carry their own `idx`,
@@ -365,16 +397,24 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
     </div>
     <div style={{ position: 'relative' }}>
       {activeVariation &&
-        (<div><h2>Variation #{activeVariation.label}</h2>
+        (<div><h2>Variation #{activeVariation.label} {activeVariation.data.starting_materials.length}</h2>
           <button onClick={()=> setActiveVariation(null)} className="close-btn" aria-label="Close">&times;</button>
           {currentSegment === 'Schema' ?
           <ReactionDetailsScheme
+            /*
+            Remount per variation: the clones share their material ids with the parent and with
+            each other, so without the key React reconciles the mounted scheme in place and its
+            inputs keep showing the previously opened variation's values from their own state.
+            */
+            key={activeVariation.data.id}
             reaction={activeVariation.data}
             variations={[]}
             onReactionChange={(r) => handleReactionChange(r, activeVariation.idx)}
             onInputChange={(type, event) => handleInputChange(type, event, activeVariation.data,
               (r) => handleReactionChange(r, activeVariation.idx))}
           /> : <GenericSGDetails
+              // Remounted per variation for the same staleness reason as the scheme above.
+              key={activeVariation.data.id}
               uiCtrl={MatrixCheck(UserStore.getState()?.currentUser?.matrix, 'segment')}
               segment={activeSegment ?? {}}
               klass={activeSegmentKlass ?? {}}
