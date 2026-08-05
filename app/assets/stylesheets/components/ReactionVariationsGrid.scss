@@ -29,11 +29,11 @@
 .reaction-variations-grid {
   width: 100%;
 
-  .ag-header-group-cell.ag-header-group-cell-with-group {
+  .ag-header-group-cell {
     overflow: hidden;
   }
 
-  .ag-header-group-cell.ag-header-group-cell-with-group:hover {
+  .ag-header-group-cell:hover {
     overflow: visible;
     .ag-header-cell-comp-wrapper.ag-header-cell-comp-wrapper-limited-height {
       background: #d3e8f2 !important;
