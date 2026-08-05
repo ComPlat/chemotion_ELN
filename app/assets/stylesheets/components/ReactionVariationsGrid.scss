@@ -169,13 +169,44 @@
   }
 }
 
-// The group toolbar uses ReorderableList's horizontal variant; only the row chrome needs toning
-// down, since the items are buttons rather than table rows.
+/*
+The group toolbar is a table whose first row mirrors the grid header: one cell per shown group, in
+the header's order. `table-layout: fixed` shares the toolbar's width equally among the cells, so
+the table can never grow wider than its container - the buttons truncate instead (each carries its
+full name as a tooltip).
+*/
 .reaction-variations-grid__toolbar {
-  .reorderable-list__item {
-    align-items: center;
+  table {
+    width: 100%;
+    table-layout: fixed;
+    border-spacing: 0;
+  }
+
+  td {
     padding: 0;
   }
+
+  // The gap between the header row's buttons; the first cell stays flush with the grid's edge.
+  td + td {
+    padding-left: 0.25rem;
+  }
+
+  // The strip under the header row that the scroll thumb travels in.
+  tbody tr:first-child > td {
+    padding-bottom: 5px;
+  }
+}
+
+// The scroll position of the grid, drawn onto the toolbar table: the header row is the track and
+// this is the thumb. updateToolbarScrollIndicator places it; without horizontal overflow it stays
+// hidden.
+.reaction-variations-grid__scroll-thumb {
+  display: none;
+  position: absolute;
+  height: 3px;
+  border-radius: 2px;
+  background-color: var(--bs-info);
+  pointer-events: none;
 }
 
 // Not nested in the grid block: the picker is portalled to the body to escape the header's overflow.
