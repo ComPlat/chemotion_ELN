@@ -115,7 +115,9 @@ const OpenVariationCell = ({ data }) => {
       variant="info"
       size="sm"
       type="button"
-      onClick={() => setActiveVariation(data)}
+      onClick={() => {
+        setActiveVariation(data);
+      }}
     >
       Open
     </Button>

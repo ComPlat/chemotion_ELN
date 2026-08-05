@@ -24,7 +24,7 @@ export default class MaterialHandler {
                 fieldToShow,
                 mixtureComponents,
                 setMixtureComponents,
-                lockEquivColumn
+                lockEquivColumn, index = null
               } = {}) {
     this._handler = null;
     this._material = material;
@@ -38,7 +38,23 @@ export default class MaterialHandler {
     this.mixtureComponents = mixtureComponents;
     this.lockEquivColumn = lockEquivColumn;
     this.variations = variations;
-    this.index = reaction[materialGroup].findIndex((m) => m.id === material.id);
+    this.index = index === null ? reaction[materialGroup].findIndex((m) => m.id === material.id) : index;
+  }
+
+  clone(material) {
+    return new MaterialHandler({
+     variations: this.variations,
+      material,
+      reaction: this._reaction,
+      materialGroup: this.materialGroup,
+      onChange: this.onChange,
+      setFieldToShow: this.ssetFieldToShow,
+      fieldToShow: this.fieldToShow,
+      mixtureComponents: this.mixtureComponents,
+      setMixtureComponents: this.setMixtureComponents,
+      lockEquivColumn: this.lockEquivColumn,
+      index: this.index,
+    });
   }
 
   get reaction() {
