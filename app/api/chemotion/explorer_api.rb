@@ -33,7 +33,7 @@ module Chemotion
         # reactions = @collection
         #               .reactions
         #               .select(:id, :name, :short_label)
-        reactions = @collection.reactions.includes(:reactants, :products).map do |r|
+        reactions = @collection.reactions.includes(:starting_materials, :reactants, :products).map do |r|
           {
             id: r.id,
             name: r.name,

@@ -27,13 +27,6 @@ export default function ExplorerComponent({ nodes, edges }) {
   const [rfNodes, , onNodesChange] = useNodesState(nodes);
   const [rfEdges, , onEdgesChange] = useEdgesState(edges);
 
-  const [activeFilters] = useState([
-    'molecule',
-    'sample',
-    'splitsample',
-    'reaction',
-  ]);
-
   const [searchTerm, setSearchTerm] = useState('');
   const [focusSearchOnly, setFocusSearchOnly] = useState(true);
 
@@ -50,10 +43,7 @@ export default function ExplorerComponent({ nodes, edges }) {
 
     if (looksLikeLabel) {
       const boundaryPat = new RegExp(`(^|[\\s._\\-/])${escapeRegExp(q)}($|[\\s._\\-/])`, 'i');
-      if (boundaryPat.test(v)) return true;
-
-      const suffixPat = new RegExp(`[\\s._\\-/]${escapeRegExp(q)}$`, 'i');
-      return suffixPat.test(v);
+      return boundaryPat.test(v);
     }
 
     return v.includes(q);
@@ -67,20 +57,12 @@ export default function ExplorerComponent({ nodes, edges }) {
     return map;
   }, [rfNodes]);
 
-  const filteredNodes = useMemo(
-    () => rfNodes.filter((n) => activeFilters.includes(n.type)),
-    [rfNodes, activeFilters]
+  // Edges whose endpoints don't (or no longer) resolve to a node are dropped defensively;
+  // in practice every edge produced by positionNodesByReaction has both endpoints present.
+  const validEdges = useMemo(
+    () => rfEdges.filter((e) => nodeMap[e.source] && nodeMap[e.target]),
+    [rfEdges, nodeMap]
   );
-
-  const filteredEdges = useMemo(() => {
-    return rfEdges.filter((e) => {
-      const s = nodeMap[e.source];
-      const t = nodeMap[e.target];
-      return s && t
-        && activeFilters.includes(s.type)
-        && activeFilters.includes(t.type);
-    });
-  }, [rfEdges, nodeMap, activeFilters]);
 
   const reactionSearchResult = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -92,8 +74,8 @@ export default function ExplorerComponent({ nodes, edges }) {
       };
     }
 
-    const reactionNodes = filteredNodes.filter((n) => n.type === 'reaction');
-    const sampleNodes = filteredNodes.filter((n) => n.type === 'sample');
+    const reactionNodes = rfNodes.filter((n) => n.type === 'reaction');
+    const sampleNodes = rfNodes.filter((n) => n.type === 'sample');
 
     const matchedReactionIds = new Set(
       reactionNodes
@@ -139,7 +121,7 @@ export default function ExplorerComponent({ nodes, edges }) {
       reactionNodeById[n.id] = n;
     });
 
-    filteredEdges.forEach((e) => {
+    validEdges.forEach((e) => {
       const srcIsSample = e.source.startsWith('sample-');
       const srcIsReaction = e.source.startsWith('reaction-');
       const tgtIsSample = e.target.startsWith('sample-');
@@ -163,7 +145,7 @@ export default function ExplorerComponent({ nodes, edges }) {
     });
 
     // Build parent/child reaction relation using split sample edges only one level.
-    filteredEdges.forEach((e) => {
+    validEdges.forEach((e) => {
       const srcIsSample = e.source.startsWith('sample-');
       const tgtIsSample = e.target.startsWith('sample-');
       if (!(srcIsSample && tgtIsSample)) return;
@@ -233,14 +215,14 @@ export default function ExplorerComponent({ nodes, edges }) {
       matchedReactionIds: directlyMatchedReactionIds,
       highlightedNodeIds,
     };
-  }, [searchTerm, filteredNodes, filteredEdges]);
+  }, [searchTerm, rfNodes, validEdges]);
 
   const displayNodes = useMemo(() => {
-    if (!reactionSearchResult.hasSearch) return filteredNodes;
+    if (!reactionSearchResult.hasSearch) return rfNodes;
     const { matchedReactionIds, highlightedNodeIds } = reactionSearchResult;
 
     if (focusSearchOnly) {
-      return filteredNodes
+      return rfNodes
         .filter((n) => highlightedNodeIds.has(n.id))
         .map((n) => {
           const isMatchedReaction = matchedReactionIds.has(n.id);
@@ -266,7 +248,7 @@ export default function ExplorerComponent({ nodes, edges }) {
         });
     }
 
-    return filteredNodes.map((n) => {
+    return rfNodes.map((n) => {
       const isHighlighted = highlightedNodeIds.has(n.id);
       const isMatchedReaction = matchedReactionIds.has(n.id);
 
@@ -293,14 +275,14 @@ export default function ExplorerComponent({ nodes, edges }) {
         style: { ...(n.style || {}), opacity: 1, boxShadow: '0 0 0 2px #22c55e' },
       };
     });
-  }, [filteredNodes, reactionSearchResult, focusSearchOnly]);
+  }, [rfNodes, reactionSearchResult, focusSearchOnly]);
 
   const displayEdges = useMemo(() => {
-    if (!reactionSearchResult.hasSearch) return filteredEdges;
+    if (!reactionSearchResult.hasSearch) return validEdges;
     const { highlightedNodeIds } = reactionSearchResult;
 
     if (focusSearchOnly) {
-      return filteredEdges
+      return validEdges
         .filter((e) => highlightedNodeIds.has(e.source) && highlightedNodeIds.has(e.target))
         .map((e) => ({
           ...e,
@@ -317,7 +299,7 @@ export default function ExplorerComponent({ nodes, edges }) {
         }));
     }
 
-    return filteredEdges.map((e) => {
+    return validEdges.map((e) => {
       const isHighlighted =
         highlightedNodeIds.has(e.source) && highlightedNodeIds.has(e.target);
 
@@ -343,7 +325,7 @@ export default function ExplorerComponent({ nodes, edges }) {
         },
       };
     });
-  }, [filteredEdges, reactionSearchResult, focusSearchOnly]);
+  }, [validEdges, reactionSearchResult, focusSearchOnly]);
 
   const wrapperRef = useRef(null);
   const [hover, setHover] = useState(null);
