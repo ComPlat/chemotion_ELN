@@ -764,7 +764,7 @@ const schemaBuildColumnGroups = (variations) => {
               // the same values, with `context.exportUnit` naming their unit in the header.
               valueGetter: ({ data }) => materialSortValue(data, matGroup, sampleIdx, field),
               ...(field.exportUnit ? { context: { exportUnit: field.exportUnit } } : {}),
-              ...(field.sticky ? { cellClass: STICKY_NAME_CLASS } : {}),
+              ...(field.sticky && !sharedSample ? { cellClass: STICKY_NAME_CLASS } : {}),
               // Overrides the plain draggable header of buildColumnDefs with one that also carries
               // the column wide unit switch.
               ...(field.unitToggle ? {
