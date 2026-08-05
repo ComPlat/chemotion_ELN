@@ -71,7 +71,7 @@
   */
   .variations-sticky-name {
     will-change: transform;
-    transition: transform 70ms linear;
+    transition: transform 10ms ease-in-out;
 
     &--floating {
       z-index: 30;

@@ -581,6 +581,7 @@ export default class ReactionDetailsScheme extends React.Component {
         </Row>
         <ReactionDetailsPurification
           reaction={reaction}
+          variations={variations}
           onReactionChange={onReactionChange}
           onInputChange={onInputChange}
           additionQuillRef={this.additionQuillRef}
