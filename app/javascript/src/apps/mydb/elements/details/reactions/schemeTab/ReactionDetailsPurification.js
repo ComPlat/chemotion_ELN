@@ -12,6 +12,7 @@ import { observationPurification, solventsTL } from 'src/utilities/reactionPrede
 import { permitOn } from 'src/components/common/uis';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import { EditUserLabels } from 'src/components/UserLabels';
+import Reaction from 'src/models/Reaction';
 
 function dummy() { return true; }
 
@@ -104,6 +105,7 @@ export default class ReactionDetailsPurification extends Component {
       additionQuillRef,
       onChange,
       isInteractionReaction,
+      variations,
     } = this.props;
     return (
       <>
@@ -129,6 +131,7 @@ export default class ReactionDetailsPurification extends Component {
                 <Form.Label>Purification solvents</Form.Label>
                 <MaterialGroup
                   reaction={reaction}
+                  variations={variations}
                   materialGroup="purification_solvents"
                   materials={reaction.purification_solvents}
                   dropMaterial={dummy}
@@ -176,6 +179,10 @@ ReactionDetailsPurification.propTypes = {
   additionQuillRef: PropTypes.object,
   onChange: PropTypes.func,
   isInteractionReaction: PropTypes.bool,
+  variations: PropTypes.arrayOf(PropTypes.shape({
+    idx: PropTypes.number.isRequired,
+    data: PropTypes.instanceOf(Reaction).isRequired,
+  }))
 };
 
 ReactionDetailsPurification.defaultProps = {
