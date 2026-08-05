@@ -4,7 +4,28 @@ module Chemotion::OpenBabelService
   # Wall-clock bound for svg_from_molfile: some organometallic molfiles make OpenBabel's
   # native SVG writer hang indefinitely (confirmed reproducer: CCDC record EKOWOR, a
   # 193-atom/648-bond uranium complex). Env-overridable so it can be retuned without a deploy.
-  SVG_RENDER_TIMEOUT_SECONDS = Integer(ENV.fetch('OPENBABEL_SVG_TIMEOUT_SECONDS', 20))
+  #
+  # 5s rather than the original 20s. What a caller gets from a hang is nil either way, so the
+  # only question is how long it waits to find out — and the paths still asking for an SVG here
+  # are ones where waiting is expensive:
+  #
+  # * {Chemotion::SvgRenderer.open_babel_service}, the render chain's last resort, reached only
+  #   when Indigo and Ketcher have both already failed. A request is blocked for the duration.
+  # * ChemSpectra and the molecule endpoints, which render for a waiting user.
+  #
+  # The importers no longer reach it at all — they pass render_svg: false, since
+  # {Molecule.svg_reprocess} discards this SVG unconditionally.
+  #
+  # The cost is real, not a free win: a structure whose render legitimately takes 5-20s now
+  # returns nil instead. Measured on 110 records of an organometallic CCDC file — deliberately
+  # the worst case for OpenBabel's writer — 92 renders finished within 5s, 9 timed out at 20s
+  # anyway, and 9 (8%) landed in the 5-20s band and would now come back empty. On ordinary
+  # organic structures that band is far narrower.
+  #
+  # Those 9 fall back to the rest of the chain, so they only end up with no image at all when
+  # Indigo and Ketcher are both unavailable too. Raise the env var if that combination is real
+  # for a given deployment.
+  SVG_RENDER_TIMEOUT_SECONDS = Integer(ENV.fetch('OPENBABEL_SVG_TIMEOUT_SECONDS', 5))
 
   # mdl V3000
   MOLFILE_COUNT_LINE_START      = 'M  V30 COUNTS '
