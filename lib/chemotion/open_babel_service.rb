@@ -58,11 +58,26 @@ M  END
     { inchi: inchi, inchikey: inchikey }
   end
 
-  def self.molecule_info_from_molfile(molfile)
-    self.molecule_info_from_structure(molfile, 'mol')
+  # @param render_svg [Boolean] whether to render the SVG. Pass false when the caller discards it:
+  #   it is the single most expensive part of this method — a forked child bounded at
+  #   {SVG_RENDER_TIMEOUT_SECONDS}, and the only bounded operation here — and on organometallic
+  #   structures roughly one record in ten spends the full 20 s only to be SIGKILLed and return
+  #   nil. See {.molecule_info_from_structure} for who should be passing false.
+  def self.molecule_info_from_molfile(molfile, render_svg: true)
+    molecule_info_from_structure(molfile, 'mol', render_svg: render_svg)
   end
 
-  def self.molecule_info_from_structure(structure, format = 'mol')
+  # @param render_svg [Boolean] when false, +svg:+ comes back nil and no fork is taken.
+  #
+  #   Defaults to true so no untraced caller changes behaviour, but note that anything feeding
+  #   this into {Molecule#assign_molecule_data} should pass false: {Molecule.svg_reprocess} tests
+  #   the result with {Molecule.svg_valid_and_not_openbabel?}, OpenBabel's SVG always contains the
+  #   literal +Open Babel+, so it is *unconditionally* discarded and re-rendered through
+  #   {Chemotion::SvgRenderer}. Rendering it there is dead work, timeout or not.
+  #
+  #   The renderer chain is unaffected — {Chemotion::SvgRenderer.open_babel_service} calls
+  #   {.svg_from_molfile} directly as its last resort, independently of this method.
+  def self.molecule_info_from_structure(structure, format = 'mol', render_svg: true)
     is_partial = false
     mf = nil
     if format == 'mol'
@@ -117,14 +132,14 @@ M  END
       inchikey = inchi_info[:inchikey]
     end
 
-    svg = svg_from_molfile(mf || molfile)
+    svg = render_svg ? svg_from_molfile(mf || molfile) : nil
     fp = fingerprint_from_molfile(mf || molfile)
     # Snapshot both log levels together, after every in-process OpenBabel call above, so
     # ob_log[:error] and ob_log[:warning] stay mutually consistent (fingerprint can log too).
     # NB: svg_from_molfile runs in a forked child, so its own obErrorLog never reaches here.
     ob_errors = OpenBabel.obErrorLog.get_messages_of_level(0)
     warnings = OpenBabel.obErrorLog.get_messages_of_level(1)
-    warnings += ["SVG rendering timed out after #{SVG_RENDER_TIMEOUT_SECONDS}s"] if svg.nil?
+    warnings += svg_timeout_warnings(render_svg, svg)
 
     {
       charge: m.get_total_charge,
@@ -170,9 +185,21 @@ M  END
     c.write_string(m, false).to_s
   end
 
-  def self.molecule_info_from_molfiles(molfile_array)
+  # A nil svg means two different things and only one of them is a fault: the render was asked
+  # for and timed out, or it was never asked for. Reporting the second as a timeout would put a
+  # false warning in the ob_log of every importer that opts out.
+  #
+  # @return [Array<String>] the timeout warning, or empty
+  def self.svg_timeout_warnings(render_svg, svg)
+    return [] unless render_svg && svg.nil?
+
+    ["SVG rendering timed out after #{SVG_RENDER_TIMEOUT_SECONDS}s"]
+  end
+
+  # @param render_svg [Boolean] forwarded per record — see {.molecule_info_from_structure}
+  def self.molecule_info_from_molfiles(molfile_array, render_svg: true)
     molfile_array.map do |molfile|
-      molecule_info_from_molfile(molfile)
+      molecule_info_from_molfile(molfile, render_svg: render_svg)
     rescue StandardError => e
       Rails.logger.error("Chemotion::OpenBabelService.molecule_info_from_molfiles: failed for one record: #{e.message}")
       nil

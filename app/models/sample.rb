@@ -490,7 +490,9 @@ class Sample < ApplicationRecord
 
     return if molecule.present?
 
-    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+    # render_svg: false — only the inchikey/is_partial/version are read here, and the molecule
+    # this resolves to renders its own SVG through Chemotion::SvgRenderer.
+    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile, render_svg: false)
     inchikey = babel_info[:inchikey]
     return if inchikey.blank?
 

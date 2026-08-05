@@ -270,7 +270,7 @@ module Import
       molfile_for_babel = sanitized.dup
       molfile_for_babel = "\n#{molfile_for_babel}" unless molfile_for_babel.start_with?("\n")
       molfile_for_babel = "#{molfile_for_babel}\n" unless molfile_for_babel.end_with?("\n")
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel, render_svg: false)
       inchikey = babel_info[:inchikey]
       if inchikey.presence
         molecule = Molecule.find_or_create_by_molfile(molfile_for_babel,
@@ -326,7 +326,7 @@ module Import
 
       ori_molf = "\n#{ori_molf}" unless ori_molf.start_with?("\n")
       ori_molf = "#{ori_molf}\n" unless ori_molf.end_with?("\n")
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf)
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf, render_svg: false)
       molfile_coord = Chemotion::OpenBabelService.add_molfile_coordinate(ori_molf)
       inchikey = babel_info[:inchikey] if inchikey.blank? && babel_info.present?
       return nil if inchikey.blank?
