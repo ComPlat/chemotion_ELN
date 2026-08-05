@@ -409,6 +409,7 @@ const ReactionVariations = ({ reaction, variations, setVariations, onReactionCha
             key={activeVariation.data.id}
             reaction={activeVariation.data}
             variations={[]}
+            showAddSampleButton={false}
             onReactionChange={(r) => handleReactionChange(r, activeVariation.idx)}
             onInputChange={(type, event) => handleInputChange(type, event, activeVariation.data,
               (r) => handleReactionChange(r, activeVariation.idx))}
