@@ -39,7 +39,7 @@ class ExportCollectionsJob < ApplicationJob
       @link = "#{Rails.application.config.root_url}/zip/#{job_id}.#{extname}"
       @expires_at = Time.now + 24.hours
 
-      export = Export::ExportCollections.new(job_id, collection_ids, extname, nested)
+      export = Export::ExportCollections.new(job_id, collection_ids, extname, nested, false, user_id)
       export.prepare_data
       export.to_file
     rescue StandardError => e

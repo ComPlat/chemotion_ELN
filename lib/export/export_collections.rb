@@ -5,12 +5,14 @@ module Export
   class ExportCollections
     attr_accessor :file_path
 
-    def initialize(export_id, collection_ids, format = 'zip', nested = false, gate = false) # rubocop:disable Style/OptionalBooleanParameter
+    # rubocop:disable Style/OptionalBooleanParameter, Metrics/ParameterLists
+    def initialize(export_id, collection_ids, format = 'zip', nested = false, gate = false, current_user_id = nil)
       @export_id = export_id
       @collection_ids = collection_ids
       @format = format
       @nested = nested
       @gt = gate
+      @current_user_id = current_user_id
 
       @file_path = Rails.public_path.join(format, "#{export_id}.#{format}")
       @schema_file_path = Rails.public_path.join('json', 'schema.json')
@@ -21,6 +23,7 @@ module Export
       @datasets = []
       @images = []
     end
+    # rubocop:enable Style/OptionalBooleanParameter, Metrics/ParameterLists
 
     def to_json_data
       @data.to_json
@@ -608,9 +611,12 @@ module Export
     # holding a 'sample_id'/'reaction_id'). These still reference the source system's database id, so
     # translate them to the same uuid used for the referenced element itself, once all collections have
     # been fetched, so that import can resolve them against the newly created records (see
-    # Import::ImportCollections#import_research_plans). A link whose target isn't part of this export
-    # (a different, non-exported collection) is dropped rather than left with a stale id — on import that
-    # id could coincidentally match an unrelated record on the target system.
+    # Import::ImportCollections#import_research_plans). A sample link whose target isn't part of this
+    # export is instead converted into a static 'ketcher' field with the sample's structure, so the
+    # chemistry survives even though the live sample record doesn't (see #convert_sample_link_to_ketcher?).
+    # A reaction link in the same situation, or a sample link that can't be converted, is dropped rather
+    # than left with a stale id — on import that id could coincidentally match an unrelated record on
+    # the target system.
     def remap_research_plan_body_links
       @data.fetch('ResearchPlan', {}).each_value do |fields|
         body = fields['body']
@@ -623,12 +629,20 @@ module Export
     def unresolved_body_link?(field)
       case field['type']
       when 'sample'
-        drop_unless_remapped?(field, 'sample_id', 'Sample')
+        unresolved_sample_link?(field)
       when 'reaction'
         drop_unless_remapped?(field, 'reaction_id', 'Reaction')
       else
         false
       end
+    end
+
+    def unresolved_sample_link?(field)
+      old_id = field.dig('value', 'sample_id')
+      return true if old_id.blank?
+      return drop_unless_remapped?(field, 'sample_id', 'Sample') if uuid?('Sample', old_id)
+
+      convert_sample_link_to_ketcher?(field, old_id)
     end
 
     def drop_unless_remapped?(field, key, type)
@@ -638,6 +652,32 @@ module Export
 
       field['value'][key] = uuid(type, old_id)
       false
+    end
+
+    # Preserve the structure of a sample linked from outside the export as a static Ketcher schema,
+    # provided the exporting user can actually see that sample's structure — otherwise a research plan
+    # could be used to smuggle a structure out of a collection the exporting user has no (or only
+    # detail-level-restricted) access to; a sample shared at the lowest detail level is readable but its
+    # molfile is anonymized (see SampleEntity's `anonymize_below: 1`), so #read? alone isn't enough.
+    # Returns `false` when the field was converted (i.e. keep it), `true` when it should be dropped.
+    def convert_sample_link_to_ketcher?(field, sample_id)
+      return true if exporting_user.nil?
+
+      sample = Sample.find_by(id: sample_id)
+      return true if sample&.molfile.blank?
+
+      policy = ElementPolicy.new(exporting_user, sample)
+      return true unless policy.read? && policy.read_structure?
+
+      field['type'] = 'ketcher'
+      field['value'] = { 'sdf_file' => sample.molfile, 'svg_file' => nil }
+      false
+    end
+
+    def exporting_user
+      return @exporting_user if defined?(@exporting_user)
+
+      @exporting_user = @current_user_id && User.find_by(id: @current_user_id)
     end
 
     def extract_image_fields(body)

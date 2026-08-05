@@ -142,5 +142,165 @@ RSpec.describe 'ImportCollection' do
       expect(reaction_field).to be_nil
     end
   end
+
+  # When the exporting user can actually read the outside sample, its structure is preserved as a
+  # static Ketcher schema instead of being dropped outright — the live sample record still isn't part
+  # of the export, but the chemistry survives.
+  describe 'import a collection with a researchplan linking an accessible sample outside the export' do
+    let(:exporting_user) { create(:person, first_name: 'Ex', last_name: 'Porter', name_abbreviation: 'EP') }
+    let(:importing_user) { create(:person, first_name: 'Im', last_name: 'Porter', name_abbreviation: 'IP') }
+    let(:collection) { create(:collection, user_id: exporting_user.id, label: 'collection-with-accessible-link') }
+    let(:other_collection) { create(:collection, user_id: exporting_user.id, label: 'other-owned-collection') }
+    let(:molfile) { build(:molfile, type: 'test_2') }
+    let(:outside_sample) do
+      create(:sample, created_by: exporting_user.id, name: 'Outside Sample', molfile: molfile,
+                      collections: [other_collection])
+    end
+    let(:job_id) { SecureRandom.uuid }
+    let(:zip_path) { Rails.public_path.join('zip', "#{job_id}.zip") }
+
+    let(:research_plan) do
+      create(
+        :research_plan,
+        collections: [collection],
+        body: [
+          { 'id' => SecureRandom.uuid, 'type' => 'sample', 'value' => { 'sample_id' => outside_sample.id } },
+        ],
+      )
+    end
+
+    let(:imported_collection) do
+      Collection.find_by(label: 'collection-with-accessible-link', user_id: importing_user.id)
+    end
+    let(:imported_research_plan) { imported_collection.research_plans.first }
+    let(:sample_field) { imported_research_plan.body.find { |field| field['type'] == 'sample' } }
+    let(:ketcher_field) { imported_research_plan.body.find { |field| field['type'] == 'ketcher' } }
+
+    before do
+      research_plan
+      # other_collection is owned by the exporting user but not part of the export
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', false, false, exporting_user.id)
+      export.prepare_data
+      export.to_file
+
+      attachment = create(:attachment, file_path: zip_path)
+      Import::ImportCollections.new(attachment, importing_user.id).execute
+    end
+
+    it 'does not import the outside sample record itself' do
+      expect(imported_collection.samples).to be_empty
+    end
+
+    it 'replaces the sample field with a ketcher field' do
+      expect(sample_field).to be_nil
+      expect(ketcher_field).to be_present
+    end
+
+    it 'embeds the sample structure and no pre-rendered svg' do
+      expect(ketcher_field['value']['sdf_file']).to eq(outside_sample.molfile)
+      expect(ketcher_field['value']['svg_file']).to be_nil
+    end
+  end
+
+  # The exporting user does not have read access to the outside sample (it lives in someone else's,
+  # unshared collection). The link must still be dropped, never converted — otherwise a research plan
+  # could be used to exfiltrate a structure the exporting user isn't allowed to see.
+  describe 'import a collection with a researchplan linking an inaccessible sample outside the export' do
+    let(:exporting_user) { create(:person, first_name: 'Ex', last_name: 'Porter', name_abbreviation: 'EP') }
+    let(:importing_user) { create(:person, first_name: 'Im', last_name: 'Porter', name_abbreviation: 'IP') }
+    let(:stranger) { create(:person, first_name: 'Str', last_name: 'Anger', name_abbreviation: 'SA') }
+    let(:collection) { create(:collection, user_id: exporting_user.id, label: 'collection-with-inaccessible-link') }
+    let(:strangers_collection) { create(:collection, user_id: stranger.id, label: 'strangers-collection') }
+    let(:molfile) { build(:molfile, type: 'test_2') }
+    let(:inaccessible_sample) do
+      create(:sample, created_by: stranger.id, name: 'Inaccessible Sample', molfile: molfile,
+                      collections: [strangers_collection])
+    end
+    let(:job_id) { SecureRandom.uuid }
+    let(:zip_path) { Rails.public_path.join('zip', "#{job_id}.zip") }
+
+    let(:research_plan) do
+      create(
+        :research_plan,
+        collections: [collection],
+        body: [
+          { 'id' => SecureRandom.uuid, 'type' => 'sample', 'value' => { 'sample_id' => inaccessible_sample.id } },
+        ],
+      )
+    end
+
+    let(:imported_collection) do
+      Collection.find_by(label: 'collection-with-inaccessible-link', user_id: importing_user.id)
+    end
+    let(:imported_research_plan) { imported_collection.research_plans.first }
+
+    before do
+      research_plan
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', false, false, exporting_user.id)
+      export.prepare_data
+      export.to_file
+
+      attachment = create(:attachment, file_path: zip_path)
+      Import::ImportCollections.new(attachment, importing_user.id).execute
+    end
+
+    it 'drops the link instead of converting or keeping it' do
+      expect(imported_research_plan.body).to be_empty
+    end
+  end
+
+  # The exporting user has general read access to the outside sample via a share, but that share caps
+  # the sample detail level at the lowest tier, where SampleEntity anonymizes the molfile (see
+  # `anonymize_below: 1`). ElementPolicy#read? alone would pass here — #read_structure? is what must
+  # block the conversion, since the exporting user isn't actually allowed to see the structure.
+  describe 'import a collection with a researchplan linking a sample shared at the lowest detail level' do
+    let(:exporting_user) { create(:person, first_name: 'Ex', last_name: 'Porter', name_abbreviation: 'EP') }
+    let(:importing_user) { create(:person, first_name: 'Im', last_name: 'Porter', name_abbreviation: 'IP') }
+    let(:sample_owner) { create(:person, first_name: 'Ow', last_name: 'Ner', name_abbreviation: 'ON') }
+    let(:collection) { create(:collection, user_id: exporting_user.id, label: 'collection-with-low-detail-link') }
+    let(:owners_collection) do
+      create(:collection, user_id: sample_owner.id, label: 'owners-collection').tap do |shared_collection|
+        create(:collection_share, collection: shared_collection, shared_with: exporting_user,
+                                  permission_level: CollectionShare.permission_level(:read_elements),
+                                  sample_detail_level: 0)
+      end
+    end
+    let(:molfile) { build(:molfile, type: 'test_2') }
+    let(:low_detail_sample) do
+      create(:sample, created_by: sample_owner.id, name: 'Low Detail Sample', molfile: molfile,
+                      collections: [owners_collection])
+    end
+    let(:job_id) { SecureRandom.uuid }
+    let(:zip_path) { Rails.public_path.join('zip', "#{job_id}.zip") }
+
+    let(:research_plan) do
+      create(
+        :research_plan,
+        collections: [collection],
+        body: [
+          { 'id' => SecureRandom.uuid, 'type' => 'sample', 'value' => { 'sample_id' => low_detail_sample.id } },
+        ],
+      )
+    end
+
+    let(:imported_collection) do
+      Collection.find_by(label: 'collection-with-low-detail-link', user_id: importing_user.id)
+    end
+    let(:imported_research_plan) { imported_collection.research_plans.first }
+
+    before do
+      research_plan
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', false, false, exporting_user.id)
+      export.prepare_data
+      export.to_file
+
+      attachment = create(:attachment, file_path: zip_path)
+      Import::ImportCollections.new(attachment, importing_user.id).execute
+    end
+
+    it 'drops the link instead of converting it, since the molfile is not visible at this detail level' do
+      expect(imported_research_plan.body).to be_empty
+    end
+  end
 end
 # rubocop:enable RSpec/MultipleMemoizedHelpers

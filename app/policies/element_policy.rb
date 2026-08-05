@@ -56,6 +56,15 @@ class ElementPolicy
     record_is_in_own_collection? || record_shared_with_minimum_detail_level?(3)
   end
 
+  # Whether the record's structural data (e.g. a Sample's molfile, see SampleEntity's
+  # `anonymize_below: 1`) is visible to the user, as opposed to merely being able to see that
+  # the record exists (see #read?).
+  def read_structure?
+    return false unless user_and_record_present?
+
+    record_is_in_own_collection? || record_shared_with_minimum_detail_level?(1)
+  end
+
   def import?
     return false unless user_and_record_present?
 
