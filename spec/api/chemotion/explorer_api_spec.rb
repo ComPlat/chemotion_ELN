@@ -24,10 +24,13 @@ describe Chemotion::ExplorerAPI do
     end
 
     context 'with the user\'s own collection' do
-      it 'returns the collection\'s samples, reactions, and molecules' do
-        get '/api/v1/explorer', params: { collection_id: collection.id }
+      before { get '/api/v1/explorer', params: { collection_id: collection.id } }
 
+      it 'returns 200' do
         expect(response).to have_http_status(200)
+      end
+
+      it 'returns the collection\'s samples, reactions, and molecules' do
         expect(parsed_json_response['samples'].pluck('id')).to contain_exactly(sample.id)
         expect(parsed_json_response['reactions']).to eq([])
         expect(parsed_json_response['molecules'].pluck('id')).to contain_exactly(sample.molecule_id)
@@ -43,6 +46,7 @@ describe Chemotion::ExplorerAPI do
           permission_level: CollectionShare.permission_level(:read_elements),
         )
       end
+
       let!(:shared_sample) { create(:valid_sample, creator: other_user, collections: [other_collection]) }
 
       it 'returns the shared collection\'s samples' do
