@@ -128,14 +128,66 @@ describe Chemotion::CollectionShareAPI do
         expect(child_share.permission_level).to eq(CollectionShare.permission_level(:manage_shares))
       end
 
-      # An edit propagates to existing sub-collection shares only — it never grants NEW access to a
-      # sub-collection the sharee was not already on (that would be a silent over-grant).
+      # By default an edit propagates to existing sub-collection shares only — it never grants NEW
+      # access to a sub-collection the sharee was not already on (that would be a silent over-grant).
       it 'does not mint a new share on a descendant that was not already shared with the sharee' do
         put "/api/v1/collection_shares/#{collection_share.id}",
             params: update_params.merge(permission_level: CollectionShare.permission_level(:manage_shares),
                                         apply_to_subcollections: true)
 
         expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
+      end
+
+      # include_new_subcollections is the explicit opt-in out of that default: it makes the edit
+      # cascade mint shares too, mirroring the create cascade.
+      it 'mints a new share on a descendant that was not already shared, when include_new_subcollections is set' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: update_params.merge(permission_level: CollectionShare.permission_level(:manage_shares),
+                                        apply_to_subcollections: true,
+                                        include_new_subcollections: true)
+
+        child_share = CollectionShare.find_by(collection: child, shared_with_id: other_user.id)
+        expect(child_share).not_to be_nil
+        expect(child_share.permission_level).to eq(CollectionShare.permission_level(:manage_shares))
+      end
+
+      # Mirrors the create-path pass_ownership test: an offer is never cascaded, whatever the
+      # cascade flags say — include_new_subcollections does not override that guard.
+      it 'does not cascade a pass_ownership offer to descendants even with include_new_subcollections' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: update_params.merge(permission_level: CollectionShare.permission_level(:pass_ownership),
+                                        apply_to_subcollections: true,
+                                        include_new_subcollections: true)
+
+        expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
+      end
+
+      # cascade_requested? used to compare permission_level != pass_ownership, so omitting the
+      # (optional) param entirely — nil — read as "not pass_ownership" even when the share being
+      # edited already IS pass_ownership (as the factory default is here), letting the offer cascade
+      # after all and mint a new one on a descendant that never had any share for this recipient.
+      it 'does not cascade an existing pass_ownership share when permission_level is omitted from the request' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: { apply_to_subcollections: true, include_new_subcollections: true }
+
+        expect(CollectionShare.exists?(collection: child, shared_with_id: other_user.id)).to be false
+      end
+
+      # write_shares! is a partial-update writer (include_missing: false) — safe for an existing
+      # share, whose unset columns keep their current value, but a genuinely new one has no current
+      # value to keep. Without a backfill it would fall back to the schema default (0) for every
+      # column this partial request doesn't mention, rather than mirroring the root share.
+      it 'backfills a newly minted descendant share from the root, not the schema default, on a partial edit' do
+        put "/api/v1/collection_shares/#{collection_share.id}",
+            params: { permission_level: CollectionShare.permission_level(:manage_shares),
+                      apply_to_subcollections: true,
+                      include_new_subcollections: true }
+
+        child_share = CollectionShare.find_by(collection: child, shared_with_id: other_user.id)
+        expect(child_share.permission_level).to eq(CollectionShare.permission_level(:manage_shares))
+        # sample_detail_level was never part of this request — it must mirror the root share's actual
+        # value (10, from the factory), not the schema default (0).
+        expect(child_share.sample_detail_level).to eq(10)
       end
     end
   end

@@ -41,6 +41,7 @@ function SelectionShareModal({
   const [newCollectionLabel, setNewCollectionLabel] = useState('');
   const [parentCollection, setParentCollection] = useState(null);
   const [applyToSubcollections, setApplyToSubcollections] = useState(false);
+  const [includeNewSubcollections, setIncludeNewSubcollections] = useState(false);
   const defaultRole = 'Pick a sharing role';
   const [role, setRole] = useState(defaultRole);
 
@@ -95,6 +96,7 @@ function SelectionShareModal({
       const params = {
         id: collectionShareId,
         apply_to_subcollections: applyToSubcollections,
+        include_new_subcollections: includeNewSubcollections,
         ...permissionsParams
       };
       collectionsStore.updateCollectionShare(collectionShareId, params);
@@ -261,8 +263,21 @@ function SelectionShareModal({
               type="checkbox"
               label="Apply these share settings to all sub-collections"
               checked={applyToSubcollections}
-              onChange={(e) => setApplyToSubcollections(e.target.checked)}
+              onChange={(e) => {
+                setApplyToSubcollections(e.target.checked);
+                if (!e.target.checked) { setIncludeNewSubcollections(false); }
+              }}
             />
+            {shareType === 'edit' && applyToSubcollections && (
+              <Form.Check
+                className="ms-4 mt-1"
+                type="checkbox"
+                id="includeNewSubcollections"
+                label="Also include sub-collections not already shared with this user (by default, only sub-collections already shared with them are updated)"
+                checked={includeNewSubcollections}
+                onChange={(e) => setIncludeNewSubcollections(e.target.checked)}
+              />
+            )}
           </Form.Group>
         )}
         <Form.Group className="mb-3" controlId="sampleDetailLevelSelect">

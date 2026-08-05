@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ClassLength
+
 module Chemotion
   class CollectionShareAPI < Grape::API
     rescue_from ActiveRecord::RecordNotFound do
@@ -97,13 +99,21 @@ module Chemotion
       end
 
       # The administrable descendants of +root+ that ALREADY hold a share for +shared_with_id+ — the
-      # only targets an *edit* cascade may touch (it edits existing shares, never mints new ones).
-      # Resolved with a single membership query, not one per descendant.
+      # default, no-over-grant edit-cascade scope. See {#cascade_targets_for_edit} for the escape hatch.
       def shared_descendants(root, shared_with_id)
         descendants = cascade_targets(root, true).drop(1)
         already_shared = CollectionShare.where(collection_id: descendants.map(&:id), shared_with_id: shared_with_id)
                                         .pluck(:collection_id).to_set
         descendants.select { |sub| already_shared.include?(sub.id) }
+      end
+
+      # Edit-cascade targets for +shared_with_id+ on +root+: {#shared_descendants} by default, or
+      # (when +include_new+) every administrable descendant like {#cascade_targets}, so the edit can
+      # extend access to a sub-collection created after the original share.
+      def cascade_targets_for_edit(root, shared_with_id, include_new)
+        return cascade_targets(root, true).drop(1) if include_new
+
+        shared_descendants(root, shared_with_id)
       end
 
       # The subset of +ids+ the current user may administer — owned, or shared to them at
@@ -139,15 +149,24 @@ module Chemotion
       # Upsert the share (per user) onto each target and refresh its shared flag. No transaction of
       # its own — the caller wraps this (together with any sibling write, e.g. the PUT target update)
       # in a single ActiveRecord::Base.transaction so the whole cascade is atomic.
-      def write_shares!(targets, user_ids, attributes)
+      # +attributes+ is a partial update — fine for an existing share, but a new record has no
+      # current value to fall back on, so +new_share_defaults+ backfills it from the root share
+      # instead of the schema default (see the PUT include_new_subcollections cascade).
+      def write_shares!(targets, user_ids, attributes, new_share_defaults: {})
         targets.each do |target|
           user_ids.each do |user_id|
             share = CollectionShare.find_or_initialize_by(collection: target, shared_with_id: user_id)
-            share.assign_attributes(attributes)
+            share.assign_attributes((share.new_record? ? new_share_defaults : {}).merge(attributes))
             share.save!
           end
           refresh_shared_flag!(target)
         end
+      end
+
+      # +share+'s own permission/detail-level columns, for backfilling a newly-minted descendant
+      # share (see write_shares!'s new_share_defaults) — everything except its identity/timestamps.
+      def share_value_defaults(share)
+        share.attributes.symbolize_keys.except(*%i[id collection_id shared_with_id created_at updated_at])
       end
     end
 
@@ -226,6 +245,9 @@ module Chemotion
         optional :wellplate_detail_level, type: Integer
         optional :apply_to_subcollections, type: Boolean, default: false,
                                            desc: 'Also apply this edit to the descendant collections'
+        optional :include_new_subcollections, type: Boolean, default: false,
+                                              desc: 'When cascading, also share descendants not already ' \
+                                                    "shared with this share's recipient (mirrors the create cascade)"
       end
       put '/:id' do
         share = CollectionShare.find(params[:id])
@@ -237,20 +259,28 @@ module Chemotion
         prevent_invalid_ownership_offer!(collection, [share.shared_with_id], params[:permission_level])
 
         # include_missing: false keeps this a partial update; see the note on the create endpoint.
-        attributes = declared(params, include_missing: false).except(:id, :apply_to_subcollections)
+        attributes = declared(params, include_missing: false)
+                     .except(:id, :apply_to_subcollections, :include_new_subcollections)
 
         # Optionally apply the same edit to the descendants the caller may administer, for THIS
-        # share's sharee. Guards run before the transaction (see validate_share_targets!); the target
-        # update and the cascade then commit together. Unlike the create cascade this only *edits*
-        # existing sub-collection shares for the sharee — it never mints a new one, so ticking the box
-        # can widen a level but never grant access to a sub-collection that was not already shared.
-        cascade = cascade_requested?(params[:apply_to_subcollections], params[:permission_level])
-        descendants = cascade ? shared_descendants(collection, share.shared_with_id) : []
-        validate_share_targets!(descendants, [share.shared_with_id], params[:permission_level])
+        # share's sharee. Guards run before the transaction (see validate_share_targets!). By default
+        # this only *edits* existing sub-collection shares; include_new_subcollections opts into
+        # minting shares too, mirroring the create cascade (see cascade_targets_for_edit).
+        #
+        # Gate on the level the share will actually end up at, not the raw (optional) param: if
+        # permission_level is omitted, params[:permission_level] is nil, which reads as "not
+        # pass_ownership" even when the share already IS pass_ownership — letting an existing offer
+        # cascade after all. Falling back to share.permission_level closes that.
+        effective_level = params[:permission_level] || share.permission_level
+        cascade = cascade_requested?(params[:apply_to_subcollections], effective_level)
+        include_new = params[:include_new_subcollections]
+        descendants = cascade ? cascade_targets_for_edit(collection, share.shared_with_id, include_new) : []
+        validate_share_targets!(descendants, [share.shared_with_id], effective_level)
         # requires_new: true — see the note on the create endpoint (atomic under nested transactions).
         ActiveRecord::Base.transaction(requires_new: true) do
           share.update!(attributes)
-          write_shares!(descendants, [share.shared_with_id], attributes)
+          write_shares!(descendants, [share.shared_with_id], attributes,
+                        new_share_defaults: share_value_defaults(share))
         end
 
         present share, with: Entities::CollectionShareEntity, root: :collection_share
@@ -299,3 +329,4 @@ module Chemotion
     end
   end
 end
+# rubocop:enable Metrics/ClassLength
