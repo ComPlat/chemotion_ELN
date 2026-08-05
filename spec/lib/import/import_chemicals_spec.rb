@@ -25,8 +25,8 @@ RSpec.describe Import::ImportChemicals do
       described_class.set_safety_phrases(chemical, 'h_statements', 'H225-H302')
       expect(chemical['chemical_data'][0]['safetyPhrases']['h_statements']).to eq(
         {
-          'H225' => ' Highly flammable liquid and vapour',
-          'H302' => ' Harmful if swallowed',
+          'H225' => ' Highly flammable liquid and vapour.',
+          'H302' => ' Harmful if swallowed.',
         },
       )
     end
@@ -107,8 +107,8 @@ RSpec.describe Import::ImportChemicals do
       described_class.process_column(chemical, 'H Statements', 'H350-H351')
       expect(chemical['chemical_data'][0]['safetyPhrases']['h_statements']).to eq(
         {
-          'H350' => ' May cause cancer',
-          'H351' => ' Suspected of causing cancer',
+          'H350' => ' May cause cancer.',
+          'H351' => ' Suspected of causing cancer.',
         },
       )
     end

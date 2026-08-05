@@ -136,7 +136,7 @@ module Chemotion
     end
 
     resource :device_descriptions do
-      # Return serialized device description by collection id
+      desc "Return serialized device descriptions by collection id. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
@@ -148,19 +148,9 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        scope =
-          if params[:collection_id]
-            begin
-              Collection.accessible_for(current_user)
-                        .find(params[:collection_id]).device_descriptions
-            rescue ActiveRecord::RecordNotFound
-              DeviceDescription.none
-            end
-          else
-            # All collection of current_user
-            DeviceDescription.joins(:collections)
-                             .where(collections: { user_id: current_user.id }).distinct
-          end
+        resolved_collection, scope = collection_scope_for(
+          params[:collection_id], DeviceDescription, :device_descriptions
+        )
         scope = scope.order(updated_at: :desc)
 
         from = params[:from_date]
@@ -175,12 +165,15 @@ module Chemotion
 
         reset_pagination_page(scope)
 
+        detail_levels = ElementDetailLevelCalculator.for_list(
+          collection: resolved_collection, user: current_user, owned_only: true,
+        )
+
         device_descriptions = paginate(scope).map do |device_description|
           Entities::DeviceDescriptionEntity.represent(
             device_description,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: device_description)
-                                                       .detail_levels,
+            detail_levels: detail_levels,
           )
         end
 
@@ -249,7 +242,15 @@ module Chemotion
           device_description_ids =
             DeviceDescription.for_user(current_user.id)
                              .for_ui_state_with_collection(element_params, CollectionsDeviceDescription, col_id)
-          DeviceDescription.where(id: device_description_ids).find_each do |device_description|
+          device_descriptions = DeviceDescription.where(id: device_description_ids)
+          # Splitting adds a new sub device description to the target collection, so authorize that
+          # collection directly rather than via ElementsPolicy#share_all? (which takes
+          # MAX(permission_level) across every collection a record belongs to, wrongly allowing a
+          # split into a read-only currentCollectionId when the record is also shared/owned elsewhere
+          # with :add_elements).
+          error!('401 Unauthorized', 401) unless writable_collection_for(col_id)
+
+          device_descriptions.find_each do |device_description|
             device_description.create_sub_device_description(current_user, col_id)
           end
 

@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class UserLabelsFetcher {
@@ -9,11 +10,11 @@ export default class UserLabelsFetcher {
     return ApiClient.putJson('/api/v1/user_labels/save_label', { body: params });
   }
 
-  static bulkUpdate({ uiState, addLabelIds = [], removeLabelIds = [] }) {
+  static bulkUpdate({ ui_state, add_label_ids = [], remove_label_ids = [] }) {
     const body = {
-      ui_state: uiState,
-      add_label_ids: addLabelIds,
-      remove_label_ids: removeLabelIds,
+      ui_state,
+      add_label_ids,
+      remove_label_ids,
     };
 
     return ApiClient.postJson('/api/v1/user_labels/bulk', {

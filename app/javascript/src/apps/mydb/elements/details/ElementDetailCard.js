@@ -127,13 +127,15 @@ export default function ElementDetailCard({
     <ConfirmationOverlay
       overlayTarget={closeOverlayTarget}
       placement={closeOverlayPlacement}
-      warningText="You have unsaved changes. Save before closing?"
+      warningText={saveDisabled
+        ? 'You have unsaved changes that cannot be saved. Discard before closing?'
+        : 'You have unsaved changes. Save before closing?'}
       destructiveAction={() => handleClose(true)}
       destructiveActionLabel="Discard"
       hideAction={() => setCloseOverlayTarget(null)}
       hideActionLabel="Cancel"
-      primaryAction={handleSaveClose}
-      primaryActionLabel="Save and Close"
+      primaryAction={saveDisabled ? undefined : handleSaveClose}
+      primaryActionLabel={saveDisabled ? undefined : 'Save and Close'}
     />
   );
 
@@ -143,7 +145,7 @@ export default function ElementDetailCard({
   // Build title appendix with element labels + user labels + original appendix
   const elementTitleAppendix = (
     <>
-      {!element.isNew && <ElementCollectionLabels element={element} placement="right" />}
+      {!element.isNew && <ElementCollectionLabels element={element} placement="right" size="sm" variant="secondary" />}
       {showUserLabels && <ShowUserLabels element={element} />}
       {titleAppendix}
     </>
@@ -152,8 +154,8 @@ export default function ElementDetailCard({
   // Build header toolbar with header comment + print/calendar buttons + copy + save buttons + original toolbar
   const elementHeaderToolbar = (
     <>
-      {showHeaderCommentSection && <HeaderCommentSection element={element} />}
       {headerToolbar}
+      {showHeaderCommentSection && <HeaderCommentSection element={element} />}
       {showPrintCode && <PrintCodeButton element={element} size="sm" variant="secondary" />}
       {showCalendar && !element.isNew && (
         <OpenCalendarButton
@@ -226,7 +228,7 @@ ElementDetailCard.propTypes = {
     }),
   }).isRequired,
   isPendingToSave: PropTypes.bool,
-  title: PropTypes.string.isRequired,
+  title: PropTypes.node.isRequired,
   titleTooltip: PropTypes.string,
   titleAppendix: PropTypes.node,
   headerToolbar: PropTypes.node,

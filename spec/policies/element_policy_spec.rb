@@ -177,23 +177,17 @@ describe ElementPolicy do
       end
     end
 
-    context 'when the record is in a collection shared to me with a permission level of 2 or lower' do
-      let(:permission_level) { 2 }
+    # Destroying an element record is owner-only. A sharee at :remove_elements may unlink it from the
+    # shared collection (Usecases::Collections::RemoveElements), but never destroy it.
+    CollectionShare::PERMISSION_LEVELS.each_value do |level|
+      context "when the record is in a collection shared to me with a permission level of #{level}" do
+        let(:permission_level) { level }
 
-      before { shared_collection_of_other_user.screens << screen }
+        before { shared_collection_of_other_user.screens << screen }
 
-      it 'returns false' do
-        expect(element_policy.destroy?).to be false
-      end
-    end
-
-    context 'when the record is in a collection shared to me with a permission level of 3 or higher' do
-      let(:permission_level) { 3 }
-
-      before { shared_collection_of_other_user.screens << screen }
-
-      it 'returns true' do
-        expect(element_policy.destroy?).to be true
+        it 'returns false' do
+          expect(element_policy.destroy?).to be false
+        end
       end
     end
 
@@ -217,8 +211,8 @@ describe ElementPolicy do
       end
     end
 
-    context 'when the record is in a collection shared to me with a permission level of 3 or lower' do
-      let(:permission_level) { 3 }
+    context 'when the record is in a collection shared to me below :add_elements' do
+      let(:permission_level) { CollectionShare.permission_level(:edit_elements) }
 
       before { shared_collection_of_other_user.screens << screen }
 
@@ -227,8 +221,8 @@ describe ElementPolicy do
       end
     end
 
-    context 'when the record is in a collection shared to me with a permission level of 4 or higher' do
-      let(:permission_level) { 4 }
+    context 'when the record is in a collection shared to me at :add_elements or higher' do
+      let(:permission_level) { CollectionShare.permission_level(:add_elements) }
 
       before { shared_collection_of_other_user.screens << screen }
 
@@ -257,8 +251,8 @@ describe ElementPolicy do
       end
     end
 
-    context 'when the record is in a collection shared to me with a permission level of 5 or lower' do
-      let(:permission_level) { 5 }
+    context 'when the record is in a collection shared to me below :pass_ownership' do
+      let(:permission_level) { CollectionShare.permission_level(:manage_shares) }
 
       before { shared_collection_of_other_user.screens << screen }
 
@@ -267,8 +261,8 @@ describe ElementPolicy do
       end
     end
 
-    context 'when the record is in a collection shared to me with a permission level of 6 or higher' do
-      let(:permission_level) { 6 }
+    context 'when the record is in a collection shared to me at :pass_ownership' do
+      let(:permission_level) { CollectionShare.permission_level(:pass_ownership) }
 
       before { shared_collection_of_other_user.screens << screen }
 

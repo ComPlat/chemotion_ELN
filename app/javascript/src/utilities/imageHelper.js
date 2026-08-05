@@ -47,6 +47,49 @@ const getAttachmentFromContainer = (container) => {
 };
 
 /**
+ * Derives everything ImageModal needs for analysis "browse & set preferred" mode from a
+ * single container, so the generic ImageModal stays domain-thin and the attachment pipeline
+ * isn't copy-pasted across every analysis-header parent.
+ *
+ * Saved attachments only (thumb, not new, not deleted) — the preferred id is shared across
+ * all viewers, so it must reference a persisted attachment.
+ *
+ * Candidates are previewable saved attachments — images and PDFs (plus anything that already
+ * has a thumbnail) — so PDFs are selectable even when their thumbnail wasn't generated.
+ *
+ * @param {Object} container - The analysis container with children[].attachments[].
+ * @returns {{previewAttachment: (Object|null), candidates: Array<{id: number, filename: string}>,
+ *   candidateIds: number[], preferredId: (number|null)}}
+ *   previewAttachment - the default preview attachment (see getAttachmentFromContainer);
+ *   candidates - selectable attachments ({ id, filename }) for the carousel;
+ *   candidateIds - the candidate ids only;
+ *   preferredId - the persisted preferred id, only if still among candidateIds, else null.
+ */
+const isPreviewableAttachment = (att) => att.thumb === true
+  || (att.content_type || '').startsWith('image/')
+  || att.content_type === 'application/pdf'
+  || /\.pdf$/i.test(att.filename || '');
+
+const getContainerImageData = (container) => {
+  const previewAttachment = getAttachmentFromContainer(container);
+
+  const datasetChildren = container?.children?.filter((child) => child.container_type === 'dataset') || [];
+  const candidates = datasetChildren
+    .flatMap((child) => child.attachments || [])
+    .filter((att) => !att.is_deleted && !att.is_new && isPreviewableAttachment(att))
+    .map((att) => ({ id: Number(att.id), filename: att.filename }))
+    .filter((c) => !Number.isNaN(c.id) && c.id > 0);
+  const candidateIds = candidates.map((c) => c.id);
+
+  const raw = container?.extended_metadata?.preferred_thumbnail;
+  const preferredId = raw && candidateIds.includes(Number(raw)) ? Number(raw) : null;
+
+  return {
+    previewAttachment, candidates, candidateIds, preferredId,
+  };
+};
+
+/**
  * Fetches the base64 thumbnail image source for a given attachment ID.
  *
  * If no ID is provided, or if the fetch fails, a fallback SVG image path is returned.
@@ -61,10 +104,12 @@ const getAttachmentFromContainer = (container) => {
  */
 const fetchImageSrcByAttachmentId = async (id) => {
   try {
-    if (!id) {
+    // Validate that id is a valid positive number
+    const numericId = Number(id);
+    if (!id || Number.isNaN(numericId) || numericId <= 0) {
       return '/images/wild_card/no_attachment.svg';
     }
-    const response = await AttachmentFetcher.fetchThumbnail({ id });
+    const response = await AttachmentFetcher.fetchThumbnail({ id: numericId });
     return `data:image/png;base64,${response}`;
   } catch {
     return '/images/wild_card/not_available.svg';
@@ -82,5 +127,9 @@ const previewAttachmentImage = (
 };
 
 export {
-  previewContainerImage, previewAttachmentImage, fetchImageSrcByAttachmentId, getAttachmentFromContainer
+  previewContainerImage,
+  previewAttachmentImage,
+  fetchImageSrcByAttachmentId,
+  getAttachmentFromContainer,
+  getContainerImageData,
 };

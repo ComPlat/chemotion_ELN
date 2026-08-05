@@ -20,14 +20,12 @@ require 'rails_helper'
 RSpec.describe CollectionsSample, type: :model do
   let(:c1) { create(:collection) }
   let(:c2) { create(:collection) }
-  let(:c3) { create(:collection) }
   let(:s1) { create(:sample) }
   let(:s2) { create(:sample) }
   let(:s3) { create(:sample) }
   let(:s4) { create(:sample) }
   let(:s5) { create(:sample) }
   let(:s6) { create(:sample) }
-
   let(:wp) { create(:wellplate, samples: [s5]) }
   let(:r) { create(:reaction, samples: [s6]) }
 
@@ -85,6 +83,12 @@ RSpec.describe CollectionsSample, type: :model do
       described_class.delete_in_collection_with_filter([s1.id, s5.id, s6.id], [c1.id])
       expect(c1.samples).to match_array [s5, s6]
       expect(c2.samples).to match_array [s1]
+    end
+
+    it 'returns the kept ids, covering both the wellplate- and reaction-linked samples' do
+      # s5 is kept by its wellplate, s6 by its reaction; s1 is free and removed
+      locked = described_class.delete_in_collection_with_filter([s1.id, s5.id, s6.id], [c1.id])
+      expect(locked).to contain_exactly(s5.id, s6.id)
     end
   end
 

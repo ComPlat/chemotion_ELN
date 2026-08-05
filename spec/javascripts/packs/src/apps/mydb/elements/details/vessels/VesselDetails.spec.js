@@ -3,12 +3,11 @@ import expect from 'expect';
 import sinon from 'sinon';
 import Enzyme, { mount, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import { describe, it, beforeEach } from 'mocha';
 import { Tabs, Tab } from 'react-bootstrap';
 import VesselDetails from 'src/apps/mydb/elements/details/vessels/VesselDetails';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import UIStore from '../../../../../../../../../app/javascript/src/stores/alt/stores/UIStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 Enzyme.configure({ adapter: new Adapter() });
 

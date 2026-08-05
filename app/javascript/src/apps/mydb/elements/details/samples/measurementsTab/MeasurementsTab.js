@@ -6,7 +6,9 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import MeasurementsTable from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsTable';
 import MeasurementsList from 'src/apps/mydb/elements/details/samples/measurementsTab/MeasurementsList';
+import MttMeasurementsTable from 'src/apps/mydb/elements/details/samples/measurementsTab/MttMeasurementsTable';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
+import { isMttMeasurement } from 'src/utilities/mttDataProcessor';
 
 class MeasurementsTab extends Component {
   static propTypes = {
@@ -55,11 +57,27 @@ class MeasurementsTab extends Component {
     </ButtonGroup>);
   }
 
+  getMttMeasurements() {
+    const sampleIds = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(a => a);
+    return this.context.measurements.measurementsForSamples(sampleIds)
+      .filter(isMttMeasurement);
+  }
+
+  getNonMttMeasurements() {
+    const sampleIds = [...this.props.sample.ancestor_ids, this.props.sample.id].filter(a => a);
+    return this.context.measurements.measurementsForSamples(sampleIds)
+      .filter(m => !isMttMeasurement(m));
+  }
+
   render() {
     if (this.state.loading) {
       return (<h2>Loading measurements...</h2>);
     }
-    if (!this.context.measurements.dataForSampleHierarchyAvailable(this.props.sample)) {
+
+    const mttMeasurements = this.getMttMeasurements();
+    const hasData = this.getNonMttMeasurements().length > 0;
+
+    if (!mttMeasurements.length && !hasData) {
       return (<span>No measurements recorded for this sample</span>);
     }
 
@@ -72,8 +90,21 @@ class MeasurementsTab extends Component {
 
     return (
       <div>
-        {displaySwitcher}
-        {displayData}
+        {mttMeasurements.length > 0 && (
+          <div className="mb-4">
+            <MttMeasurementsTable
+              sample={this.props.sample}
+              measurements={mttMeasurements}
+            />
+          </div>
+        )}
+
+        {hasData && (
+          <div>
+            {displaySwitcher}
+            {displayData}
+          </div>
+        )}
       </div>
     );
   }

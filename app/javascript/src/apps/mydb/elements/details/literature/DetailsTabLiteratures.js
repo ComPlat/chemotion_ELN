@@ -14,11 +14,11 @@ import CellLine from 'src/models/cellLine/CellLine';
 import Literature from 'src/models/Literature';
 import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import CitationPanel from 'src/apps/mydb/elements/details/literature/CitationPanel';
 import { createCitationTypeMap } from 'src/apps/mydb/elements/details/literature/CitationTools';
-import CreateButton from '../../../../../components/common/CreateButton';
+import CreateButton from 'src/components/common/CreateButton';
 
 const Cite = require('citation-js');
 require('@citation-js/plugin-isbn');
@@ -27,7 +27,6 @@ const notification = (message) => ({
   title: 'Add Literature',
   message,
   level: 'error',
-  dismissible: 'button',
   autoDismiss: 5,
   position: 'tr',
   uid: uuid.v4()
@@ -37,22 +36,22 @@ const warningNotification = (message) => ({
   title: '',
   message,
   level: 'warning',
-  dismissible: 'button',
   autoDismiss: 5,
   position: 'tr',
   uid: uuid.v4()
 });
 
-const checkElementStatus = (element) => {
+const checkElementStatus = (element, notifications) => {
   const type = element.type.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   if (element.isNew) {
-    NotificationActions.add(notification(`Create ${type} first.`));
+    notifications.add(notification(`Create ${type} first.`));
     return false;
   }
   return true;
 };
 
 export default class DetailsTabLiteratures extends Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
 
@@ -108,7 +107,7 @@ export default class DetailsTabLiteratures extends Component {
 
   handleTypeUpdate(updId, rType) {
     const { element } = this.props;
-    if (!checkElementStatus(element)) { return; }
+    if (!checkElementStatus(element, this.context.notifications)) { return; }
     LoadingActions.start();
     const params = {
       element_id: element.id, element_type: element.type, id: updId, litype: rType
@@ -128,7 +127,7 @@ export default class DetailsTabLiteratures extends Component {
 
   handleLiteratureRemove(literature) {
     const { element } = this.props;
-    if (!checkElementStatus(element)) { return; }
+    if (!checkElementStatus(element, this.context.notifications)) { return; }
     if (Number.isNaN(element.id) && ['reaction', 'sample', 'research_plan'].includes(element.type)) {
       this.setState((prevState) => ({
         ...prevState,
@@ -150,16 +149,16 @@ export default class DetailsTabLiteratures extends Component {
             sortedIds: groupByCitation(prevState.literatures.delete(literature.literal_id))
           }));
         })
-        .then(() => { NotificationActions.add(warningNotification('Literature entry successfully removed')); })
+        .then(() => { this.context.notifications.add(warningNotification('Literature entry successfully removed')); })
         .catch((errorMessage) => {
-          NotificationActions.add(notification(errorMessage.error));
+          this.context.notifications.add(notification(errorMessage.error));
         });
     }
   }
 
   handleLiteratureAdd(literature) {
     const { element } = this.props;
-    if (!checkElementStatus(element)) { return; }
+    if (!checkElementStatus(element, this.context.notifications)) { return; }
     const {
       doi, url, title, isbn
     } = literature;
@@ -198,7 +197,7 @@ export default class DetailsTabLiteratures extends Component {
           sorting: 'literature_id'
         }));
       }).catch((errorMessage) => {
-        NotificationActions.add(notification(errorMessage.error));
+        this.context.notifications.add(notification(errorMessage.error));
         this.setState({ literature: this.createEmptyLiterature(this.props.element.type) });
       });
     }
@@ -207,7 +206,7 @@ export default class DetailsTabLiteratures extends Component {
   fetchMetadata() {
     const { element } = this.props;
     const { literature } = this.state;
-    if (!checkElementStatus(element)) { return; }
+    if (!checkElementStatus(element, this.context.notifications)) { return; }
 
     if (doiValid(literature.doi_isbn)) {
       this.fetchDOIMetadata(literature.doi_isbn);
@@ -217,7 +216,7 @@ export default class DetailsTabLiteratures extends Component {
   }
 
   fetchDOIMetadata(doi) {
-    NotificationActions.removeByUid('literature');
+    this.context.notifications.removeByUid('literature');
     LoadingActions.start();
     Cite.async(sanitizeDoi(doi)).then((json) => {
       if (json.data && json.data.length > 0) {
@@ -237,14 +236,15 @@ export default class DetailsTabLiteratures extends Component {
         this.handleLiteratureAdd(literature);
       }
     }).catch((errorMessage) => {
-      NotificationActions.add(notification(`unable to fetch metadata for this doi: ${doi}, error: ${errorMessage}`));
+      const message = `unable to fetch metadata for this doi: ${doi}, error: ${errorMessage}`;
+      this.context.notifications.add(notification(message));
     }).finally(() => {
       LoadingActions.stop();
     });
   }
 
   fetchISBNMetadata(isbn) {
-    NotificationActions.removeByUid('literature');
+    this.context.notifications.removeByUid('literature');
     LoadingActions.start();
     Cite.async(isbn).then((json) => {
       if (json.data && json.data.length > 0) {
@@ -264,7 +264,8 @@ export default class DetailsTabLiteratures extends Component {
         this.handleLiteratureAdd(literature);
       }
     }).catch((errorMessage) => {
-      NotificationActions.add(notification(`unable to fetch metadata for this ISBN: ${isbn}, error: ${errorMessage}`));
+      const message = `unable to fetch metadata for this ISBN: ${isbn}, error: ${errorMessage}`;
+      this.context.notifications.add(notification(message));
     }).finally(() => {
       LoadingActions.stop();
     });
@@ -355,7 +356,7 @@ export default class DetailsTabLiteratures extends Component {
             ))
         }
       </>
-    )
+    );
   }
 }
 

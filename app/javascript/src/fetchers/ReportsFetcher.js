@@ -1,6 +1,6 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import _ from 'lodash';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import { downloadBlob } from 'src/utilities/FetcherHelper';
 
 export default class ReportsFetcher {
@@ -24,11 +24,10 @@ export default class ReportsFetcher {
     return ApiClient.postJson('/api/v1/reports', { body: report })
       .then((json) => {
         if (json.error) {
-          NotificationActions.add({
+          rootStore.notificationsStore.add({
             title: json.error,
             message: 'Please reload the page to try it again!',
             level: 'error',
-            dismissible: 'button',
             position: 'tr',
           });
           return null;
@@ -43,11 +42,10 @@ export default class ReportsFetcher {
       body: params,
       handleResponseSuccess: (response) => {
         if (response.status === 204) {
-          NotificationActions.add({
+          rootStore.notificationsStore.add({
             title: 'Nothing Selected',
             message: 'Please select the elements to export and try again!',
             level: 'warning',
-            dismissible: 'button',
             position: 'tr',
           });
           return null;

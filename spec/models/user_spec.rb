@@ -188,6 +188,65 @@ RSpec.describe User do
     end
   end
 
+  describe '#generate_qr_code' do
+    let(:user) { create(:user) }
+
+    it 'generates an otp_secret and a QR code svg' do
+      svg = nil
+      expect { svg = user.generate_qr_code }.to change { user.reload.encrypted_otp_secret }.from(nil)
+      expect(svg).to include('<svg')
+    end
+
+    it 're-enrolls instead of raising when the stored ciphertext can no longer be decrypted' do
+      user.generate_qr_code
+      previous_secret = user.reload.otp_secret
+      # simulate a corrupted/undecryptable ciphertext (e.g. after an OTP_SECRET_KEY rotation)
+      # while keeping the iv/salt otherwise well-formed.
+      user.update_columns(encrypted_otp_secret: user.encrypted_otp_secret.reverse)
+      user.instance_variable_set(:@otp_secret, nil)
+
+      expect { user.generate_qr_code }.not_to raise_error
+      expect(user.reload.otp_secret).to be_present
+      expect(user.otp_secret).not_to eq(previous_secret)
+    end
+  end
+
+  describe '#validate_and_consume_otp!' do
+    let(:user) { create(:user) }
+
+    before do
+      user.generate_qr_code
+      user.update!(otp_required_for_login: true)
+    end
+
+    def corrupt_otp_secret!(user)
+      # simulate a corrupted/undecryptable ciphertext (e.g. after an OTP_SECRET_KEY rotation) -
+      # this is what login, the account settings form, and the 2FA verify endpoint all hit.
+      user.update_columns(encrypted_otp_secret: user.encrypted_otp_secret.reverse) # rubocop:disable Rails/SkipsModelValidations
+      user.instance_variable_set(:@otp_secret, nil)
+    end
+
+    it 'discards the secret and returns false instead of raising when undecryptable' do
+      corrupt_otp_secret!(user)
+
+      result = nil
+      expect { result = user.validate_and_consume_otp!('123456') }.not_to raise_error
+      expect(result).to be false
+      expect(user.reload.encrypted_otp_secret).to be_nil
+    end
+
+    it 'disables otp_required_for_login so the user is not locked in an unwinnable OTP loop' do
+      # with no secret left to validate against, leaving 2FA required would strand the user:
+      # every self-service 2FA endpoint requires an authenticated current_user, which login
+      # can no longer grant.
+      corrupt_otp_secret!(user)
+
+      user.validate_and_consume_otp!('123456')
+
+      expect(user.reload.otp_required_for_login).to be false
+    end
+  end
+
   describe '#increment_counter' do
     let(:described_method) { :increment_counter }
     let(:element) { described_class::COUNTER_KEYS.sample }

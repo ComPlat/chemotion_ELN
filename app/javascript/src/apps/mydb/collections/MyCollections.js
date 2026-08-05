@@ -1,27 +1,19 @@
 import React, { useState, useEffect, useContext } from 'react';
 import Tree from 'react-ui-tree';
 import { cloneDeep } from 'lodash';
-import { Button, ButtonGroup, Form, OverlayTrigger, Popover } from 'react-bootstrap';
-import SelectionShareModal from 'src/apps/mydb/elements/list/selectionActions/SelectionShareModal';
-import CollectionSharesEditModal from 'src/apps/mydb/collections/CollectionSharesEditModal';
+import { Button, ButtonGroup, Dropdown, Form, OverlayTrigger, Popover } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import CollectionTabsEditorModal from 'src/apps/mydb/collections/CollectionTabsEditorModal';
+import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
+import useCollectionShares from 'src/apps/mydb/collections/useCollectionShares';
 
 const MyCollections = () => {
   const collectionsStore = useContext(StoreContext).collections;
   const tree = collectionsStore.own_collection_tree;
   const [clonedTree, setClonedTree] = useState(cloneDeep(tree));
-  const [sharesModal, setSharesModal] = useState({ action: null, show: false, node: {} });
-  const [sharesEditModal, setSharesEditgModal] = useState({ show: false, node: {} });
-  const defaultPermissions = {
-    permissionLevel: 0,
-    sampleDetailLevel: 10,
-    reactionDetailLevel: 10,
-    wellplateDetailLevel: 10,
-    screenDetailLevel: 10,
-    elementDetailLevel: 10,
-  };
-  const [permissions, setPermissions] = useState(defaultPermissions);
+  const [tabsEditorCollection, setTabsEditorCollection] = useState(null);
+  const { openAddShare, openManageShares, shareModals } = useCollectionShares(collectionsStore);
 
   useEffect(() => {
     setClonedTree(cloneDeep(tree));
@@ -40,6 +32,14 @@ const MyCollections = () => {
   };
 
   const changeCollectionLabel = (e, node) => {
+    // Update the label synchronously on the node already rendered by the tree
+    // (react-ui-tree references these node objects, so this is the same object
+    // that feeds the input's `value`). Doing it in the same input event lets
+    // React preserve the caret position. Without this, the new value only comes
+    // back through the async store -> useEffect -> cloneDeep round-trip, which
+    // reassigns input.value in a later commit and resets the caret to the end.
+    node.label = e.target.value;
+    setClonedTree((prev) => ({ ...prev }));
     collectionsStore.updateCollectionLabel(e.target.value, node);
     collectionsStore.setUpdateTree(true);
   };
@@ -52,67 +52,6 @@ const MyCollections = () => {
 
   const deleteCollection = (node) => {
     collectionsStore.deleteCollection(node.id);
-  };
-
-  const openCollectionSharesModal = (node) => {
-    setPermissions(defaultPermissions);
-    setSharesModal({ action: 'create', show: true, node });
-  };
-
-  const closeCollectionSharesModal = () => {
-    setPermissions(defaultPermissions);
-    setSharesModal({ action: null, show: false, node: {} });
-  };
-
-  const editCollectionShares = (node, collectionShare) => {
-    setPermissions({
-      permissionLevel: collectionShare.permission_level,
-      sampleDetailLevel: collectionShare.sample_detail_level,
-      reactionDetailLevel: collectionShare.reaction_detail_level,
-      wellplateDetailLevel: collectionShare.wellplate_detail_level,
-      screenDetailLevel: collectionShare.screen_detail_level,
-      elementDetailLevel: collectionShare.element_detail_level,
-    });
-    const nodeWithCollectionShare = {
-      ...node, collectionShareId: collectionShare.id, sharedWith: collectionShare.shared_with
-    };
-    setSharesModal({ action: 'edit', show: true, node: nodeWithCollectionShare });
-  };
-
-  const deleteCollectionShares = (node, collectionShare) => {
-    collectionsStore.deleteCollectionShare(collectionShare.id, node.id);
-  };
-
-  const openCollectionSharesEditModal = (node) => {
-    setSharesEditgModal({ show: true, node: { id: node.id, label: node.label } });
-  };
-
-  const closeCollectionSharesEditModal = () => {
-    setSharesEditgModal({ show: false, node: {} });
-  };
-
-  const renderCollectionShareButton = (node) => {
-    if (!node.shared) { return null; }
-
-    const sharedWithUsers = collectionsStore.sharedWithUsers(node.id);
-    const users = sharedWithUsers !== undefined ? sharedWithUsers.shared_with_users : [];
-    const count = users.length > 0 ? `(${users.length})` : '';
-
-    return (
-      <Button
-        id={`collection-share-button-${node.id}`}
-        className="d-flex align-items-center gap-1"
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={() => openCollectionSharesEditModal(node)}
-        size="sm"
-        variant="warning"
-        disabled={node.isNew === true}
-      >
-        <i className="fa fa-users" />
-        <i className="fa fa-share-alt" />
-        {count}
-      </Button>
-    );
   };
 
   const addCollectionButton = (node) => (
@@ -176,26 +115,64 @@ const MyCollections = () => {
     );
 
     return (
-      <ButtonGroup>
-        {renderCollectionShareButton(node)}
-        <Button
-          id="collection-share-btn"
-          size="sm"
-          variant="primary"
-          disabled={node.isNew === true}
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={() => openCollectionSharesModal(node, 'create')}
+      <div className="d-flex align-items-center gap-2 flex-shrink-0">
+        <span
+          className="d-inline-flex justify-content-end align-items-center flex-shrink-0"
+          style={{ width: '3rem' }}
         >
-          <i className="fa fa-plus" />
-          <i className="fa fa-share-alt ms-1" />
-        </Button>
-        {addCollectionButton(node)}
-        <OverlayTrigger animation placement="bottom" root trigger="focus" overlay={popover}>
-          <Button size="sm" variant="danger" onMouseDown={(e) => e.stopPropagation()}>
-            <i className="fa fa-trash-o" />
-          </Button>
-        </OverlayTrigger>
-      </ButtonGroup>
+          {node.shared && (
+            <OverlayTrigger placement="top" overlay={<UserInfosTooltip collectionId={node.id} />}>
+              <span
+                className="text-warning d-inline-flex align-items-center"
+                onMouseDown={(e) => e.stopPropagation()}
+                style={{ cursor: 'default' }}
+              >
+                <i className="fa fa-share-alt" />
+              </span>
+            </OverlayTrigger>
+          )}
+        </span>
+        <ButtonGroup className="flex-shrink-0">
+          <Dropdown onMouseDown={(e) => e.stopPropagation()}>
+            <Dropdown.Toggle
+              size="sm"
+              variant="light"
+              id={`collection-more-actions-${node.id}`}
+              disabled={node.isNew === true}
+            >
+              <i className="fa fa-ellipsis-v" />
+            </Dropdown.Toggle>
+            {/* renderOnMount pre-mounts the menu so Popper has a measurable anchor;
+                without it the fixed-strategy menu detaches to the top of the viewport
+                inside the modal's positioning context. */}
+            <Dropdown.Menu popperConfig={{ strategy: 'fixed' }} renderOnMount>
+              <Dropdown.Item onClick={() => openAddShare(node)}>
+                <i className="fa fa-plus me-1" />
+                <i className="fa fa-share-alt me-1" />
+                Add share
+              </Dropdown.Item>
+              {node.shared && (
+                <Dropdown.Item onClick={() => openManageShares(node)}>
+                  <i className="fa fa-users me-1" />
+                  <i className="fa fa-share-alt me-1" />
+                  Manage shares
+                </Dropdown.Item>
+              )}
+              <Dropdown.Divider />
+              <Dropdown.Item onClick={() => setTabsEditorCollection(node)}>
+                <i className="fa fa-sliders me-1" />
+                Edit collection tabs
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+          {addCollectionButton(node)}
+          <OverlayTrigger animation placement="bottom" root trigger="focus" overlay={popover}>
+            <Button size="sm" variant="danger" onMouseDown={(e) => e.stopPropagation()}>
+              <i className="fa fa-trash-o" />
+            </Button>
+          </OverlayTrigger>
+        </ButtonGroup>
+      </div>
     );
   };
 
@@ -205,7 +182,7 @@ const MyCollections = () => {
     }
     return (
       <Form.Control
-        className="ms-3 w-75"
+        className="ms-3 flex-grow-1 min-w-0 me-2"
         size="sm"
         type="text"
         value={node.label || ''}
@@ -215,7 +192,7 @@ const MyCollections = () => {
   };
 
   const renderNode = (node) => (
-    <div className="collection-node py-1 d-flex justify-content-between">
+    <div className="collection-node py-1 d-flex flex-nowrap align-items-center justify-content-between">
       {label(node)}
       {actions(node)}
     </div>
@@ -229,25 +206,12 @@ const MyCollections = () => {
         onChange={handleChange}
         renderNode={renderNode}
       />
-      {Object.keys(sharesModal.node).length >= 1 && sharesModal.show && (
-        <SelectionShareModal
-          title={sharesModal.action === 'create'
-            ? `Share "${sharesModal.node.label}"`
-            : `Edit Permissions of "${sharesModal.node.sharedWith}" at "${sharesModal.node.label}"`}
-          collectionId={sharesModal.node.id}
-          collectionShareId={sharesModal.node?.collectionShareId}
-          onHide={closeCollectionSharesModal}
-          collectionPermissions={permissions}
-          showUserSelect={sharesModal.action === 'create'}
-          shareType={sharesModal.action}
-        />
-      )}
-      {Object.keys(sharesEditModal.node).length >= 1 && sharesEditModal.show && (
-        <CollectionSharesEditModal
-          node={sharesEditModal.node}
-          updateNode={editCollectionShares}
-          deleteNode={deleteCollectionShares}
-          onHide={closeCollectionSharesEditModal}
+      {shareModals}
+      {tabsEditorCollection != null && (
+        <CollectionTabsEditorModal
+          collection={tabsEditorCollection}
+          show
+          onHide={() => setTabsEditorCollection(null)}
         />
       )}
     </div>

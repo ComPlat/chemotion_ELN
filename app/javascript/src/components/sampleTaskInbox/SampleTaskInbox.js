@@ -6,10 +6,10 @@ import { Col, Modal, Row } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { useDrop } from 'react-dnd';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 
 const SampleTaskInbox = ({}) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
+  const { notifications } = useContext(StoreContext);
   const [deltaPosition, setDeltaPosition] = useState({ x: 0, y: 0 });
 
   const getSampleFromItem = (item, itemType) => {
@@ -48,12 +48,11 @@ const SampleTaskInbox = ({}) => {
       title: message,
       message: message,
       level: 'error',
-      dismissible: 'button',
       autoDismiss: 5,
       position: 'tr',
       uid: 'SampleTaskInbox'
     };
-    NotificationActions.add(notification);
+    notifications.add(notification);
   }
 
   const openSampleTaskCount = () => {

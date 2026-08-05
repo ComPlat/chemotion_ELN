@@ -14,6 +14,14 @@ module Chemotion
       error!(exception.message, 422)
     end
 
+    # Disable the whole endpoint when the Weighing Tasks UI component is turned
+    # off in config/ui_components.yml (kept in sync with the frontend).
+    # Respond with a generic 404 so a disabled feature is indistinguishable from
+    # a route that does not exist and its existence is not disclosed.
+    before do
+      error!('404 Not Found', 404) unless UiComponents.enabled?(:weighing_tasks)
+    end
+
     resource :sample_tasks do # rubocop:disable Metrics/BlockLength
       # Index: List all scan tasks for the given parameters
       params do

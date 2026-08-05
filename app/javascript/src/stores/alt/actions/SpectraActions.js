@@ -8,7 +8,31 @@ class SpectraActions {
   }
 
   LoadSpectra(spcInfos) {
-    const idxs = spcInfos && spcInfos.map(si => si.idx);
+    const infos = Array.isArray(spcInfos) ? spcInfos : [];
+    const groups = infos.reduce((acc, si) => {
+      const key = si?.idDt ?? 'unknown';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(si);
+      return acc;
+    }, {});
+
+    const selectedInfos = Object.values(groups).flatMap((datasetInfos) => {
+      const uvvis = datasetInfos.filter((si) => /(?:^|[._-])uvvis(?:[._-]|$)/.test((si?.label || '').toLowerCase()));
+      const tics = datasetInfos.filter((si) => /(?:^|[._-])tic(?:[._-]|$)/.test((si?.label || '').toLowerCase()));
+      const ms = datasetInfos.filter((si) => /(?:^|[._-])(mz|ms)(?:[._-]|$)/.test((si?.label || '').toLowerCase()));
+      const isLcmsDataset = uvvis.length > 0 && tics.length > 0 && ms.length > 0;
+      if (!isLcmsDataset) return datasetInfos;
+      // Bootstrap LCMS with UV/TIC only; MS pages are requested on-demand.
+      return [...uvvis, ...tics];
+    });
+
+    const seenIdx = new Set();
+    const uniqInfos = selectedInfos.filter((si) => {
+      if (seenIdx.has(si.idx)) return false;
+      seenIdx.add(si.idx);
+      return true;
+    });
+    const idxs = uniqInfos.map(si => si.idx);
     if (idxs.length === 0) {
       return null;
     }
@@ -16,7 +40,7 @@ class SpectraActions {
     return (dispatch) => {
       AttachmentFetcher.fetchFiles(idxs)
         .then((fetchedFiles) => {
-          dispatch({ fetchedFiles, spcInfos });
+          dispatch({ fetchedFiles, spcInfos: infos });
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line
         });
@@ -35,9 +59,9 @@ class SpectraActions {
     };
   }
 
-  SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false, waveLengthStr, cyclicvolta, curveIdx = 0, simulatenmr = false, previousSpcInfos, isSaveCombined = false, axesUnitsStr, detector, dscMetaData, onSaved) {
+  SaveToFile(spcInfo, peaksStr, shift, scan, thres, integration, multiplicity, predict, cb, keepPred = false, waveLengthStr, cyclicvolta, curveIdx = 0, simulatenmr = false, previousSpcInfos, isSaveCombined = false, axesUnitsStr, detector, dscMetaData, lcmsPeaksStr, lcmsIntegralsStr, lcmsUvvisWavelength, lcmsMzPage, lcmsMzPageData, onSaved) {
     return (dispatch) => {
-      AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred, waveLengthStr, cyclicvolta, curveIdx, simulatenmr, previousSpcInfos, isSaveCombined, axesUnitsStr, detector, dscMetaData)
+      AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, integration, multiplicity, predict, keepPred, waveLengthStr, cyclicvolta, curveIdx, simulatenmr, previousSpcInfos, isSaveCombined, axesUnitsStr, detector, dscMetaData, lcmsPeaksStr, lcmsIntegralsStr, lcmsUvvisWavelength, lcmsMzPage, lcmsMzPageData)
         .then((fetchedFiles) => {
           dispatch({ fetchedFiles, spcInfo });
           if (onSaved) {

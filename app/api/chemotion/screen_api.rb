@@ -10,9 +10,9 @@ module Chemotion
     helpers UserLabelHelpers
 
     resource :screens do
-      desc "Return serialized screens"
+      desc "Return serialized screens. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
-        optional :collection_id, type: Integer, desc: "Collection id"
+        optional :collection_id, type: Integer, desc: 'Collection id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
         optional :user_label, type: Integer, desc: 'user label'
         optional :from_date, type: Integer, desc: 'created_date from in ms'
@@ -23,17 +23,7 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        screen_scope = Screen.none
-        if params[:collection_id]
-          begin
-            screen_scope = Collection.accessible_for(current_user).find(params[:collection_id]).screens
-          rescue ActiveRecord::RecordNotFound
-            Screen.none
-          end
-        else
-          # All collection of current_user
-          screen_scope = Screen.for_user(current_user.id).distinct
-        end
+        resolved_collection, screen_scope = collection_scope_for(params[:collection_id], Screen, :screens)
 
         from = params[:from_date]
         to = params[:to_date]
@@ -48,20 +38,24 @@ module Chemotion
 
         reset_pagination_page(screen_scope)
 
+        detail_levels = ElementDetailLevelCalculator.for_list(
+          collection: resolved_collection, user: current_user, owned_only: true,
+        )
+
         screens = paginate(screen_scope).map do |screen|
           Entities::ScreenEntity.represent(
             screen,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
-            displayed_in_list: true
+            detail_levels: detail_levels,
+            displayed_in_list: true,
           )
         end
 
         { screens: screens }
       end
 
-      desc "Return serialized screen by id"
+      desc 'Return serialized screen by id'
       params do
-        requires :id, type: Integer, desc: "Screen id"
+        requires :id, type: Integer, desc: 'Screen id'
       end
       route_param :id do
         get do
@@ -73,7 +67,8 @@ module Chemotion
             screen,
             with: Entities::ScreenEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
-            root: :screen
+            root: :screen,
+            policy: policy,
           )
         rescue ActiveRecord::RecordNotFound
           error!('404 Not Found', 404)
@@ -86,6 +81,7 @@ module Chemotion
 
           post do
             screen = Screen.find(params[:id])
+            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, screen).update?
             collection = current_user.collections.find(params[:collection_id])
             number = screen.research_plans.size + 1
             screen.research_plans << ResearchPlan.new(
@@ -95,14 +91,16 @@ module Chemotion
               name: "New Research Plan #{number} for #{screen.name}",
             )
 
-            present screen, with: Entities::ScreenEntity, root: :screen
+            present screen, with: Entities::ScreenEntity, root: :screen, policy: ElementPolicy.new(current_user, screen)
+          rescue ActiveRecord::RecordNotFound
+            error!('404 Not Found', 404)
           end
         end
       end
 
-      desc "Update screen by id"
+      desc 'Update screen by id'
       params do
-        requires :id, type: Integer, desc: "screen id"
+        requires :id, type: Integer, desc: 'screen id'
         optional :name, type: String
         optional :collaborator, type: String
         optional :requirements, type: String
@@ -121,7 +119,8 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Screen.find(params[:id])).update?
+          @element_policy = ElementPolicy.new(current_user, Screen.find(params[:id]))
+          error!('401 Unauthorized', 401) unless @element_policy.update?
         end
 
         put do
@@ -134,7 +133,7 @@ module Chemotion
           screen.save_segments(segments: params[:segments], current_user_id: current_user.id)
           old_wellplate_ids = screen.wellplates.pluck(:id)
 
-          #save to profile
+          # save to profile
           kinds = screen.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
           recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
@@ -150,12 +149,13 @@ module Chemotion
             screen,
             with: Entities::ScreenEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: screen).detail_levels,
-            root: :screen
+            root: :screen,
+            policy: @element_policy,
           )
         end
       end
 
-      desc "Create a screen"
+      desc 'Create a screen'
       params do
         requires :name, type: String
         optional :collaborator, type: String
@@ -172,6 +172,9 @@ module Chemotion
         optional :component_graph_data, type: JSON
       end
       post do
+        collection = writable_collection_for(params[:collection_id])
+        error!('403 Forbidden', 403) if params[:collection_id] && collection.nil?
+
         attributes = {
           name: params[:name],
           collaborator: params[:collaborator],
@@ -190,19 +193,22 @@ module Chemotion
         screen.save!
         screen.save_segments(segments: params[:segments], current_user_id: current_user.id)
 
-        #save to profile
+        # save to profile
         kinds = screen.container&.analyses&.pluck(Arel.sql("extended_metadata->'kind'"))
         recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
-        collection = current_user.collections.where(id: params[:collection_id]).take
-        screen.collections << collection
-        screen.collections << Collection.get_all_collection_for_user(current_user.id)
+        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
+        all_collection = Collection.get_all_collection_for_user(all_coll_owner_id)
+        # Avoid violating the unique (screen_id, collection_id) index when the
+        # chosen collection is already the user's "All" collection.
+        screen.collections << collection if collection
+        screen.collections << all_collection if all_collection && screen.collections.exclude?(all_collection)
 
         params[:wellplate_ids].each do |id|
           ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: screen.id)
         end
 
-        present screen, with: Entities::ScreenEntity, root: :screen
+        present screen, with: Entities::ScreenEntity, root: :screen, policy: ElementPolicy.new(current_user, screen)
       end
     end
   end

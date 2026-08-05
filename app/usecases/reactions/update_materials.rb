@@ -62,6 +62,7 @@ end
 
 module Usecases
   module Reactions
+    # rubocop:disable Metrics/ClassLength -- pre-existing size, out of scope for this PR
     class UpdateMaterials
       include ContainerHelpers
       include Reactable
@@ -110,27 +111,14 @@ module Usecases
               samples.each_with_index do |sample, idx|
                 sample.position = idx if sample.position.nil?
                 sample.reference = false if material_group == 'solvent' && sample.reference == true
-                if sample.is_new
-                  if sample.parent_id && material_group != 'product'
-                    modified_sample = create_sub_sample(
-                      sample,
-                      fixed_label,
-                      weight_percentage_ref_record_target_amount,
-                    )
-                  else
-                    modified_sample = create_new_sample(sample, fixed_label, weight_percentage_ref_record_target_amount)
-                  end
-                else
-                  modified_sample = update_existing_sample(
-                    sample,
-                    fixed_label,
-                    weight_percentage_ref_record_target_amount,
-                  )
-                end
+                modified_sample = persist_sample(
+                  sample,
+                  material_group,
+                  fixed_label,
+                  weight_percentage_ref_record_target_amount,
+                )
 
-                if sample.components.present? && sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
-                  Usecases::Components::Create.new(modified_sample, sample.components).execute!
-                end
+                reconcile_mixture_components(modified_sample, sample)
 
                 if sample.segments
                   modified_sample.save_segments(segments: sample.segments,
@@ -152,10 +140,51 @@ module Usecases
 
       private
 
+      # Reconcile a mixture sample's persisted components with the client payload,
+      # deleting the ones the user removed and creating/updating the rest via the
+      # shared use case — the same flow the standalone component API uses. Without
+      # this, update_existing_sample only ever created components (removed ones
+      # survived) and a dragged-in sub-sample's client edits were shadowed by the
+      # parent copy.
+      #
+      # Skip only when components is nil (the payload omitted the key — e.g. a
+      # sub-sample keeping its parent copy). An explicit empty array is a real
+      # instruction ("the mixture now has no components") and is reconciled, which
+      # deletes any persisted components.
+      def reconcile_mixture_components(modified_sample, sample)
+        return unless sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE
+        return if sample.components.nil?
+
+        Usecases::Components::Reconcile.new(modified_sample, sample.components).execute!
+      end
+
+      # Create or update a single sample, dispatching to the create-subsample,
+      # create-new, or update-existing path.
+      def persist_sample(sample, material_group, fixed_label, target_amount)
+        return update_existing_sample(sample, fixed_label, target_amount) unless sample.is_new
+
+        if sample.parent_id && material_group != 'product'
+          create_sub_sample(sample, fixed_label, target_amount)
+        else
+          create_new_sample(sample, fixed_label, target_amount)
+        end
+      end
+
       def create_sub_sample(sample, fixed_label, target_amount = nil)
         parent_sample = Sample.find(sample.parent_id)
 
-        subsample = parent_sample.create_subsample(@current_user, @reaction.collections, true, 'reaction')
+        # When the payload provides components (including an explicit empty array),
+        # reconcile_mixture_components is the single source of truth for them, so
+        # skip copying the parent's copies here (they would be duplicated, or should
+        # be cleared). Only copy the parent's components when the payload omits the
+        # key entirely (components is nil), matching reconcile's nil skip.
+        subsample = parent_sample.create_subsample(
+          @current_user,
+          @reaction.collections,
+          true,
+          'reaction',
+          copy_components: sample.components.nil?,
+        )
         subsample.short_label = fixed_label if fixed_label
 
         if @reaction.weight_percentage && sample.weight_percentage.present? &&
@@ -264,10 +293,6 @@ module Usecases
         existing_sample.short_label = fixed_label if fixed_label
         existing_sample.name = sample.name if sample.name
         existing_sample.dry_solvent = sample.dry_solvent
-        # Handle components for mixture samples using the proper use case
-        if sample.sample_type == Sample::SAMPLE_TYPE_MIXTURE && sample.components.present?
-          Usecases::Components::Create.new(existing_sample, sample.components).execute!
-        end
         existing_sample.solvent = sample.solvent
 
         if r = existing_sample.residues[0]
@@ -281,6 +306,7 @@ module Usecases
         existing_sample
       end
 
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength -- pre-existing size, out of scope for this PR
       def associate_sample_with_reaction(sample, modified_sample, material_group)
         reactions_sample_klass = "Reactions#{material_group.camelize}Sample"
         existing_association = ReactionsSample.find_by(sample_id: modified_sample.id)
@@ -288,7 +314,7 @@ module Usecases
         if existing_association
           existing_association.update!(
             reaction_id: @reaction.id,
-            # equivalent: sample.equivalent,
+            equivalent: sample.equivalent,
             reference: sample.reference,
             show_label: sample.show_label,
             waste: sample.waste,
@@ -321,6 +347,7 @@ module Usecases
           )
         end
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
       def destroy_unused_samples(modified_sample_ids)
         current_sample_ids = @reaction.reactions_samples.pluck(:sample_id)
@@ -503,5 +530,6 @@ module Usecases
         sample
       end
     end
+    # rubocop:enable Metrics/ClassLength
   end
 end

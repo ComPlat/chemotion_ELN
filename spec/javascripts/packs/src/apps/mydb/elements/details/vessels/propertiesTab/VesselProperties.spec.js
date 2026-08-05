@@ -2,10 +2,9 @@ import React from 'react';
 import expect from 'expect';
 import Enzyme, { shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import { describe, it, beforeEach } from 'mocha';
 import VesselProperties from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperties';
 import VesselProperty from 'src/apps/mydb/elements/details/vessels/propertiesTab/VesselProperty';
-import UIStore from '../../../../../../../../../../app/javascript/src/stores/alt/stores/UIStore';
+import UIStore from 'src/stores/alt/stores/UIStore';
 
 Enzyme.configure({ adapter: new Adapter() });
 

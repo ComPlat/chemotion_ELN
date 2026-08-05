@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
@@ -39,7 +39,7 @@ const buildOptions = (dictionary, excluded, formatLabel) => (
     .map(([code, v]) => ({ value: code, text: trim(v), label: formatLabel(code, v) }))
 );
 
-function PhraseListItem({ code, text, onDelete }) {
+const PhraseListItem = ({ code, text, onDelete }) => {
   return (
     <li
       className="list-group-item d-flex align-items-center gap-2 py-1"
@@ -82,9 +82,9 @@ const optionShape = PropTypes.shape({
   text: PropTypes.string,
 });
 
-function PhraseSection({
+const PhraseSection = ({
   title, idPrefix, options, items, emptyText, onAdd, disabled,
-}) {
+}) => {
   return (
     <div className="mb-4" data-component={idPrefix}>
       <h6 className="text-primary mb-2">{title}</h6>
@@ -129,7 +129,7 @@ PhraseSection.propTypes = {
 
 PhraseSection.defaultProps = { disabled: false };
 
-function PictogramCard({ code, name, onDelete }) {
+const PictogramCard = ({ code, name, onDelete }) => {
   return (
     <div
       className="d-flex flex-column align-items-center border rounded p-2 position-relative bg-body-secondary"
@@ -166,9 +166,9 @@ PictogramCard.propTypes = {
   onDelete: PropTypes.func.isRequired,
 };
 
-function PictogramSection({
+const PictogramSection = ({
   options, items, onAdd, disabled,
-}) {
+}) => {
   return (
     <div className="mb-2" data-component="safety-pictograms">
       <h6 className="text-primary mb-2">Pictograms</h6>
@@ -217,7 +217,7 @@ PictogramSection.propTypes = {
 
 PictogramSection.defaultProps = { disabled: false };
 
-function SafetyPhrasesEditor({ value, onChange }) {
+const SafetyPhrasesEditor = ({ value, onChange }) => {
   const [hazardDict, setHazardDict] = useState({});
   const [precautionaryDict, setPrecautionaryDict] = useState({});
   const [pictogramDict, setPictogramDict] = useState({});
@@ -244,43 +244,43 @@ function SafetyPhrasesEditor({ value, onChange }) {
   // capture a fresh handler closure even when an unrelated section changes.
   const data = useMemo(() => normalizeSafetyPhrases(value), [value]);
 
-  const emit = (next) => {
+  const emit = useCallback((next) => {
     if (typeof onChange === 'function') onChange(next);
-  };
+  }, [onChange]);
 
-  const handleAddH = (option) => {
+  const handleAddH = useCallback((option) => {
     if (!option || !option.value) return;
     const text = option.text || trim(hazardDict[option.value]);
     emit({ ...data, h_statements: { ...data.h_statements, [option.value]: formatStatementValue(text) } });
-  };
+  }, [data, emit, hazardDict]);
 
-  const handleRemoveH = (code) => {
+  const handleRemoveH = useCallback((code) => {
     const next = { ...data.h_statements };
     delete next[code];
     emit({ ...data, h_statements: next });
-  };
+  }, [data, emit]);
 
-  const handleAddP = (option) => {
+  const handleAddP = useCallback((option) => {
     if (!option || !option.value) return;
     const text = option.text || trim(precautionaryDict[option.value]);
     emit({ ...data, p_statements: { ...data.p_statements, [option.value]: formatStatementValue(text) } });
-  };
+  }, [data, emit, precautionaryDict]);
 
-  const handleRemoveP = (code) => {
+  const handleRemoveP = useCallback((code) => {
     const next = { ...data.p_statements };
     delete next[code];
     emit({ ...data, p_statements: next });
-  };
+  }, [data, emit]);
 
-  const handleAddPictogram = (option) => {
+  const handleAddPictogram = useCallback((option) => {
     const code = trim(option && option.value);
     if (!code || !VALID_PICTOGRAM_CODE_RE.test(code) || data.pictograms.includes(code)) return;
     emit({ ...data, pictograms: [...data.pictograms, code] });
-  };
+  }, [data, emit]);
 
-  const handleRemovePictogram = (code) => {
+  const handleRemovePictogram = useCallback((code) => {
     emit({ ...data, pictograms: data.pictograms.filter((c) => c !== code) });
-  };
+  }, [data, emit]);
 
   // Use `data` (not data.h_statements) as the key dep so that onDelete closures
   // are always fresh — avoids stale-closure cascade-delete bug when an unrelated
@@ -291,7 +291,7 @@ function SafetyPhrasesEditor({ value, onChange }) {
       text: trim(text) || trim(hazardDict[code]),
       onDelete: () => handleRemoveH(code),
     }))
-  ), [data, hazardDict]);
+  ), [data, hazardDict, handleRemoveH]);
 
   const precautionaryItems = useMemo(() => (
     Object.entries(data.p_statements).map(([code, text]) => ({
@@ -299,7 +299,7 @@ function SafetyPhrasesEditor({ value, onChange }) {
       text: trim(text) || trim(precautionaryDict[code]),
       onDelete: () => handleRemoveP(code),
     }))
-  ), [data, precautionaryDict]);
+  ), [data, precautionaryDict, handleRemoveP]);
 
   const pictogramItems = useMemo(() => (
     data.pictograms.map((code) => ({
@@ -307,7 +307,7 @@ function SafetyPhrasesEditor({ value, onChange }) {
       text: prettyPictogramName(pictogramDict[code]) || code,
       onDelete: () => handleRemovePictogram(code),
     }))
-  ), [data, pictogramDict]);
+  ), [data, pictogramDict, handleRemovePictogram]);
 
   const hazardOptions = useMemo(() => (
     buildOptions(hazardDict, new Set(Object.keys(data.h_statements)), (code, text) => `${code}: ${trim(text)}`)

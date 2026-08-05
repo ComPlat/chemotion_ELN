@@ -16,7 +16,7 @@ describe Chemotion::WellplateAPI do
         :collection_share,
         collection: collection,
         shared_with: user,
-        permission_level: 3,
+        permission_level: CollectionShare.permission_level(:remove_elements),
         wellplate_detail_level: 10,
       )
     end
@@ -82,6 +82,11 @@ describe Chemotion::WellplateAPI do
         get '/api/v1/wellplates/'
         expect(JSON.parse(response.body)['wellplates'].size).to eq(1)
       end
+
+      it 'omits can_update for listed wellplates' do
+        get '/api/v1/wellplates/'
+        expect(JSON.parse(response.body)['wellplates']).to all(satisfy { |w| !w.key?('can_update') })
+      end
     end
 
     context 'when collection_id is given' do
@@ -103,6 +108,15 @@ describe Chemotion::WellplateAPI do
         expect(JSON.parse(response.body)['wellplates'].size).to eq(0)
       end
     end
+
+    context 'when collection_id points to a collection shared with the user' do
+      let!(:shared_wellplate) { create(:wellplate, collections: [collection_shared_with_user]) }
+
+      it 'returns the wellplates from the shared collection' do
+        get '/api/v1/wellplates/', params: { collection_id: collection_shared_with_user.id }
+        expect(JSON.parse(response.body)['wellplates'].pluck('id')).to include(shared_wellplate.id)
+      end
+    end
   end
 
   describe 'GET /api/v1/wellplates/:id' do
@@ -118,6 +132,10 @@ describe Chemotion::WellplateAPI do
       expect(JSON.parse(response.body)['wellplate']['name']).to eq(wellplate.name)
     end
 
+    it 'returns can_update as true for the owner' do
+      expect(JSON.parse(response.body)['wellplate']['can_update']).to be true
+    end
+
     context 'when permissions are inappropriate' do
       let(:collection) { other_user_collection }
 
@@ -125,25 +143,70 @@ describe Chemotion::WellplateAPI do
         expect(response).to have_http_status :unauthorized
       end
     end
+
+    context 'when the wellplate is in a read-only shared collection' do
+      let(:collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements],
+                                    wellplate_detail_level: 10)
+        end
+      end
+
+      it 'returns can_update as false' do
+        expect(response).to have_http_status :ok
+        expect(JSON.parse(response.body)['wellplate']['can_update']).to be false
+      end
+    end
+
+    context 'when the wellplate is in a writable shared collection' do
+      let(:collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:edit_elements],
+                                    wellplate_detail_level: 10)
+        end
+      end
+
+      it 'returns can_update as true' do
+        expect(response).to have_http_status :ok
+        expect(JSON.parse(response.body)['wellplate']['can_update']).to be true
+      end
+    end
   end
 
   describe 'DELETE /api/v1/wellplates' do
     let(:wellplate) { create(:wellplate, name: 'test') }
 
-    before do
-      CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
+    context 'when the wellplate is in a collection the user owns' do
+      before { CollectionsWellplate.create!(wellplate: wellplate, collection: collection) }
+
+      it 'is able to delete a wellplate by id' do
+        expect do
+          delete "/api/v1/wellplates/#{wellplate.id}"
+        end.to change(Wellplate, :count).by(-1)
+      end
     end
 
-    it 'is able to delete a wellplate by id' do
-      expect do
-        delete "/api/v1/wellplates/#{wellplate.id}"
-      end.to change(Wellplate, :count).by(-1)
+    # Destroying an element record is owner-only — a sharee may unlink it from the shared collection
+    # instead (CollectionElementsAPI).
+    context 'when the wellplate is only in a collection shared with the user' do
+      before { CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user) }
+
+      it 'refuses to delete it, whatever the permission level' do
+        expect do
+          delete "/api/v1/wellplates/#{wellplate.id}"
+        end.not_to change(Wellplate, :count)
+
+        expect(response).to have_http_status :unauthorized
+      end
     end
   end
 
   describe 'PUT /api/v1/wellplates/:id' do
     let(:container) { create(:container) }
-    let(:wellplate) { create(:wellplate, name: 'Testname', container: container) }
+    let(:attachment) { create(:attachment) }
+    let(:wellplate) { create(:wellplate, name: 'Testname', container: container, attachments: [attachment]) }
     let(:params) do
       {
         id: wellplate.id,
@@ -153,13 +216,46 @@ describe Chemotion::WellplateAPI do
       }
     end
 
-    before do
-      CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
-      put "/api/v1/wellplates/#{wellplate.id}", params: params
+    context 'when the user can update the wellplate' do
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: collection_shared_with_user)
+        put "/api/v1/wellplates/#{wellplate.id}", params: params
+      end
+
+      it 'is able to change a wellplate by id' do
+        expect(JSON.parse(response.body)['wellplate']['name']).to eq('Another Testname')
+      end
+
+      it 'returns the wellplate attachments' do
+        expect(response.parsed_body['attachments'].first['filename']).to eq(attachment.filename)
+      end
+
+      it 'returns can_update as true after a successful update' do
+        expect(JSON.parse(response.body)['wellplate']['can_update']).to be true
+      end
     end
 
-    it 'is able to change a wellplate by id' do
-      expect(JSON.parse(response.body)['wellplate']['name']).to eq('Another Testname')
+    context 'when the wellplate is in a read-only shared collection' do
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements],
+                                    wellplate_detail_level: 10)
+        end
+      end
+
+      before do
+        CollectionsWellplate.create!(wellplate: wellplate, collection: read_only_collection)
+        put "/api/v1/wellplates/#{wellplate.id}", params: params
+      end
+
+      it 'returns 401 unauthorized' do
+        expect(response).to have_http_status :unauthorized
+      end
+
+      it 'does not update the wellplate' do
+        expect(wellplate.reload.name).to eq('Testname')
+      end
     end
   end
 
@@ -264,6 +360,26 @@ describe Chemotion::WellplateAPI do
         expect(response.parsed_body).to eq({ 'error' => 'height does not have a valid value' })
       end
     end
+
+    # Regression: a collection reachable only through the user's group must still attach the new
+    # wellplate to the sharer's "All" collection. Before the predicates spanned groups, both the
+    # owned and shared checks returned false and no "All" row was written for anyone.
+    context 'when the collection is shared with the user through a group' do
+      let(:group) { create(:group, users: [user]) }
+      let(:collection) do
+        create(:collection, user: other_user).tap do |shared_collection|
+          create(:collection_share, collection: shared_collection, shared_with: group,
+                                    permission_level: CollectionShare.permission_level(:add_elements))
+        end
+      end
+
+      it "attaches the wellplate to the sharer's All collection" do
+        wellplate = Wellplate.find_by(name: name)
+        all_collection = Collection.get_all_collection_for_user(other_user.id)
+
+        expect(all_collection.wellplates).to include(wellplate)
+      end
+    end
   end
 
   describe 'POST /api/v1/wellplates/subwellplates' do
@@ -276,7 +392,7 @@ describe Chemotion::WellplateAPI do
     let(:wellplate) { create(:wellplate, name: 'test', attachments: [attachment], collections: [collection]) }
     let(:params) { { wellplate_id: wellplate.id, attachment_id: attachment.id } }
 
-    let(:mock) { instance_double(Import::ImportWellplateSpreadsheet, wellplate: wellplate) }
+    let(:mock) { instance_double(Import::ImportWellplateSpreadsheet, wellplate: wellplate, molarity_discarded: false) }
 
     context 'when no error occurs' do
       before do

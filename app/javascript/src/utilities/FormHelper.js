@@ -6,7 +6,7 @@ import {
 import { Select } from 'src/components/common/Select';
 import { useDrop } from 'react-dnd';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
-import Dropzone from 'react-dropzone';
+import Dropzone from 'src/components/common/Dropzone';
 import { v4 as uuid } from 'uuid';
 
 import { unitSystems } from 'src/components/staticDropdownOptions/units';
@@ -115,6 +115,28 @@ const changeUnit = (store, element, units, unitField, unitValue) => {
   if (unitValue === newUnitValue) { return null; }
 
   changeElement(store, unitField, newUnitValue, element.type);
+};
+
+const DropAreaForElement = ({ dropType, handleDrop, description }) => {
+  const [{ isOver, canDrop }, drop] = useDrop({
+    accept: DragDropItemTypes[dropType],
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+      canDrop: monitor.canDrop(),
+    }),
+    drop: (item) => {
+      handleDrop(item);
+    },
+  });
+
+  return (
+    <div
+      ref={(node) => drop(node)}
+      className={`p-2 dnd-zone text-center text-gray-600 ${isOver && canDrop ? 'dnd-zone-over' : ''}`}
+    >
+      {description}
+    </div>
+  );
 };
 
 const initFormHelper = (element, store) => {
@@ -361,7 +383,9 @@ const initFormHelper = (element, store) => {
                     type="checkbox"
                     value={option.field}
                     checked={lastObject[lastKey][option.field]}
-                    onChange={(e) => store.setModificationToggleButtons(fieldPrefix, option.field, fieldSuffix, e.target.checked)}
+                    onChange={(e) => store.setModificationToggleButtons(
+                      fieldPrefix, option.field, fieldSuffix, e.target.checked
+                    )}
                     key={`button-${option.field}-${i}`}
                   >
                     {option.label}
@@ -392,7 +416,10 @@ const initFormHelper = (element, store) => {
             details.push(
               <div className="mb-2" key={`detail-${ident}-${i}`}>
                 {
-                  formHelper.inputGroupTextOrNumericInput(`${fieldPrefix}.${field}_${ident}_${fieldSuffix}`, '', capitalizeWords(ident), 'text', disabled, '')
+                  formHelper.inputGroupTextOrNumericInput(
+                    `${fieldPrefix}.${field}_${ident}_${fieldSuffix}`, '',
+                    capitalizeWords(ident), 'text', disabled, ''
+                  )
                 }
               </div>
             );
@@ -473,28 +500,14 @@ const initFormHelper = (element, store) => {
       </Dropzone>
     ),
 
-    dropAreaForElement: (dropType, handleDrop, description) => {
-      const [{ isOver, canDrop }, drop] = useDrop({
-        accept: DragDropItemTypes[dropType],
-        collect: (monitor) => ({
-          isOver: monitor.isOver(),
-          canDrop: monitor.canDrop(),
-        }),
-        drop: (item) => {
-          handleDrop(item);
-        },
-      });
-
-      return (
-        <div
-          key={`element-dropzone-${dropType}`}
-          ref={(node) => drop(node)}
-          className={`p-2 dnd-zone text-center text-gray-600 ${isOver && canDrop ? 'dnd-zone-over' : ''}`}
-        >
-          {description}
-        </div>
-      );
-    },
+    dropAreaForElement: (dropType, handleDrop, description) => (
+      <DropAreaForElement
+        key={`element-dropzone-${dropType}`}
+        dropType={dropType}
+        handleDrop={handleDrop}
+        description={description}
+      />
+    ),
 
     onChange: (field, value, type) => {
       const newValue = type && type === 'number' ? numberValue(value) : value;
@@ -504,9 +517,9 @@ const initFormHelper = (element, store) => {
   return formHelper;
 };
 
-function ColoredAccordeonHeaderButton({
+const ColoredAccordeonHeaderButton = ({
   title, eventKey, bgColor, bgColorActive, callback
-}) {
+}) => {
   const { activeEventKey } = useContext(AccordionContext);
   const isCurrentEventKey = activeEventKey === eventKey;
 
@@ -526,9 +539,9 @@ function ColoredAccordeonHeaderButton({
   );
 }
 
-function SecondaryCollapseContent({
+const SecondaryCollapseContent = ({
   children, title, eventKey, error, active, store
-}) {
+}) => {
   const activeClass = active ? 'active' : 'collapsed';
   const errorInCollapseClass = error ? 'border border-danger' : '';
 
@@ -552,7 +565,7 @@ function SecondaryCollapseContent({
   );
 }
 
-function formValueHandler(startValues) {
+const useFormValues = (startValues) => {
   const [form, setForm] = useState(startValues);
   const handleChange = (e, val) => {
     const {
@@ -579,11 +592,11 @@ function formValueHandler(startValues) {
   };
 
   return [form, handleChange];
-}
+};
 
-function submitAsForm({
+const submitAsForm = ({
   url, method, form, prefix = null
-}) {
+}) => {
   const makeKey = (key) => (prefix ? `${prefix}[${key}]` : key);
   const formData = new FormData();
   Object.entries(form).forEach(([key, val]) => {
@@ -593,5 +606,5 @@ function submitAsForm({
 }
 
 export {
-  initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent, formValueHandler, submitAsForm,
+  initFormHelper, ColoredAccordeonHeaderButton, SecondaryCollapseContent, useFormValues, submitAsForm,
 };

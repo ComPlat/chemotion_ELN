@@ -32,7 +32,8 @@ export default class ReactionDescriptionEditor extends React.Component {
       fetchedNames: Object.keys(fetchedTemplates),
       predefinedTemplateNames: predefinedTemplateNames.toJS(),
       fetchedPredefinedTemplates: fetchedTemplates,
-      updateTemplate: false
+      updateTemplate: false,
+      showTemplateCreator: false,
     };
 
     this.fetchPredefinedTemplates = this.fetchPredefinedTemplates.bind(this);
@@ -158,9 +159,11 @@ export default class ReactionDescriptionEditor extends React.Component {
   }
 
   render() {
-    const { predefinedTemplateNames, fetchedPredefinedTemplates } = this.state;
+    const { predefinedTemplateNames, fetchedPredefinedTemplates, showTemplateCreator } = this.state;
     const { template, readOnly, value, reactQuillRef } = this.props;
     this.reactQuillRef = reactQuillRef;
+
+    const closeTemplateCreator = () => this.setState({ showTemplateCreator: false });
 
     const templateCreatorPopover = (
       <Popover
@@ -172,6 +175,7 @@ export default class ReactionDescriptionEditor extends React.Component {
           template={template}
           templateOptions={predefinedTemplateNames}
           updateTextTemplates={this.updateTextTemplates}
+          onClose={closeTemplateCreator}
         />
       </Popover>
     );
@@ -192,11 +196,12 @@ export default class ReactionDescriptionEditor extends React.Component {
           applyTemplate={this.applyTemplate}
         />
         <OverlayTrigger
+          show={showTemplateCreator}
+          onToggle={(show) => this.setState({ showTemplateCreator: show })}
           trigger="click"
           placement="top"
           rootClose
           overlay={templateCreatorPopover}
-          onHide={this.onCloseTemplateCreator}
         >
           <span className="ql-formats">
             <button title="Template Settings">

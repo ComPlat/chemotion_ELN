@@ -210,6 +210,29 @@ describe Chemotion::SuggestionAPI do
         expect(parsed_json_response['suggestions'].first['search_by_method']).to eq 'molecule_name'
       end
     end
+
+    # set_var resolves the detail levels. It used to consult only the user's *direct* share, so a
+    # collection reaching them through a group fell back to sample_detail_level 0 and every
+    # `dl_s.positive?` suggestion was skipped.
+    context 'when the collection is shared through one of the users groups' do
+      let(:other_user) { create(:person) }
+      let(:group) { create(:group, users: [user]) }
+      let(:collection) { create(:collection, user: other_user) }
+      let(:sample) { create(:sample, name: 'search-example', collections: [collection]) }
+      let(:molecule_name) { create(:molecule_name, molecule: sample.molecule) }
+      let(:query) { 'Awesome' }
+
+      before do
+        create(:collection_share, collection: collection, shared_with: group, sample_detail_level: 10)
+        sample.molecule_name_id = molecule_name.id
+        sample.save
+        get '/api/v1/suggestions/samples', params: params
+      end
+
+      it 'still finds the suggestion' do
+        expect(parsed_json_response['suggestions'].length).to be 1
+      end
+    end
   end
 
   describe 'GET /api/v1/suggestions/sequence_based_macromolecule_samples' do

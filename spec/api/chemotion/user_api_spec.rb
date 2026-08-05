@@ -5,9 +5,6 @@ require 'rails_helper'
 describe Chemotion::UserAPI do
   include_context 'api request authorization context'
 
-  let(:other_user) { create(:person) }
-  let(:alternative_user) { create(:person) }
-
   describe 'GET /api/v1/users/name' do
     let(:query_param) { "name=#{name_param}&type=Group,Person" }
 
@@ -53,7 +50,7 @@ describe Chemotion::UserAPI do
   describe 'GET /api/v1/users/current' do
     context 'when authorization runs via session' do
       let(:expected_response) do
-        Entities::UserEntity.represent(user, root: :user).to_json
+        Entities::UserEntity.represent(user, root: :user, with_tokens: true).to_json
       end
 
       before do
@@ -69,7 +66,7 @@ describe Chemotion::UserAPI do
       include_context 'api request jwt context'
 
       let(:expected_response) do
-        Entities::UserEntity.represent(jwt_user.reload, root: :user).to_json
+        Entities::UserEntity.represent(jwt_user.reload, root: :user, with_tokens: true).to_json
       end
 
       before do
@@ -110,131 +107,59 @@ describe Chemotion::UserAPI do
     pending 'TODO: Add missing spec'
   end
 
-  describe 'POST /api/v1/groups/create' do
-    let(:params) do
-      {
-        'group_param' => {
-          'first_name' => 'My', 'last_name' => 'Fanclub',
-          'email' => 'jane.s@fan.club',
-          'name_abbreviation' => 'JFC', 'users' => [other_user.id]
-        },
-      }
-    end
+  describe 'GET /api/v1/users/devices' do
+    let(:own_device) { create(:device) }
+    let(:group_device) { create(:device) }
+    let(:unrelated_device) { create(:device) }
+    let!(:group) { create(:group, admins: [user], users: [user]) }
 
     before do
-      post '/api/v1/groups/create', params: params
+      own_device.people << user
+      group_device.groups << group
+      get '/api/v1/users/devices'
     end
 
-    it 'Creates a group of persons' do
-      expect(
-        Group.where(
-          last_name: 'Fanclub',
-          first_name: 'My', name_abbreviation: 'JFC'
-        ),
-      ).not_to be_empty
-      expect(
-        Group.find_by(name_abbreviation: 'JFC').users.pluck(:id),
-      ).to contain_exactly(user.id, other_user.id)
-      expect(
-        Group.find_by(name_abbreviation: 'JFC').admins,
-      ).not_to be_empty
-      expect(
-        Group.find_by(name_abbreviation: 'JFC').admins.first,
-      ).to eq user
-      expect(
-        user.administrated_accounts.where(name_abbreviation: 'JFC'),
-      ).not_to be_empty
+    it "returns the user's own devices and their groups' devices" do
+      ids = parsed_json_response['currentDevices'].pluck('id')
+      expect(ids).to include(own_device.id, group_device.id)
+      expect(ids).not_to include(unrelated_device.id)
     end
   end
 
-  describe 'GET /api/v1/groups/qrycurrent' do
-    pending 'TODO: Add missing spec'
-  end
+  describe 'GET /api/v1/devices/{device_id}/metadata' do
+    let(:device) { create(:device) }
+    let!(:device_metadata) { create(:device_metadata, device: device) }
 
-  describe 'GET /api/v1/groups/queryCurrentDevices' do
-    pending 'TODO: Add missing spec'
-  end
-
-  describe 'GET /api/v1/groups/deviceMetadata/{device_id}' do
-    pending 'TODO: Add missing spec'
-  end
-
-  describe 'PUT /api/v1/groups/upd/{id}' do
-    let(:execute_put_request) { put "/api/v1/groups/upd/#{group.id}", params: params, as: :json }
-
-    context 'when update group as a group admin' do
-      let(:group) do
-        create(:group, admins: [user], users: [user, other_user], first_name: 'Doe', last_name: 'Group Test')
+    context 'when the device belongs to the current user' do
+      before do
+        device.people << user
+        get "/api/v1/devices/#{device.id}/metadata"
       end
-      let(:params) do
-        {
-          rm_users: [user.id, other_user.id],
-          add_users: [alternative_user.id],
-        }
+
+      it 'returns the device metadata' do
+        expect(response).to have_http_status(:ok)
+        expect(parsed_json_response['device_metadata']['id']).to eq(device_metadata.id)
       end
+    end
+
+    context 'when the device belongs to one of the current user\'s groups' do
+      let!(:group) { create(:group, admins: [user], users: [user]) }
 
       before do
-        execute_put_request
-        group.reload
+        device.groups << group
+        get "/api/v1/devices/#{device.id}/metadata"
       end
 
-      it 'updates a group of persons' do
-        expect(group.users.pluck(:id)).to contain_exactly(alternative_user.id)
-      end
-
-      it 'returns an updated group' do
-        expect(parsed_json_response['group']['users'].first['id']).to eq(alternative_user.id)
+      it 'returns the device metadata' do
+        expect(response).to have_http_status(:ok)
       end
     end
 
-    context 'when destroy a group as a group admin' do
-      let(:group) do
-        create(:group, admins: [user], first_name: 'Doe', last_name: 'Group Test')
-      end
-      let(:params) { { destroy_group: true } }
+    context 'when the current user has no relation to the device' do
+      before { get "/api/v1/devices/#{device.id}/metadata" }
 
-      before do
-        execute_put_request
-      end
-
-      it 'deletes a group of persons' do
-        expect(Group.where(id: [group.id])).to be_empty
-        expect(Group.count).to eq(0)
-      end
-
-      it 'returns the id of destroyed group' do
-        expect(parsed_json_response['destroyed_id']).to eq(group.id)
-      end
-    end
-
-    context 'when try to update a group as a non group admin' do
-      let(:group) do
-        create(:group, admins: [other_user], users: [other_user, alternative_user],
-                       first_name: 'Doe', last_name: 'Group Test')
-      end
-      let(:params) do
-        {
-          rm_users: [other_user.id, alternative_user.id],
-          add_users: [user.id],
-        }
-      end
-
-      before do
-        execute_put_request
-      end
-
-      it 'does not update a group of persons' do
-        expect(
-          Group.find(group.id).users.pluck(:id),
-        ).to contain_exactly(other_user.id, alternative_user.id)
-      end
-
-      it 'returns with unauthorized status' do
-        expect(response).to have_http_status(:unauthorized)
-      end
-
-      it 'returns with unauthorized message' do
-        expect(parsed_json_response['error']).to eq('401 Unauthorized')
+      it 'returns 404' do
+        expect(response).to have_http_status(:not_found)
       end
     end
   end

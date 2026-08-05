@@ -4,7 +4,7 @@ import Container from 'src/models/Container';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
 import {
@@ -43,13 +43,13 @@ export default class CellLinesFetcher {
         body: params,
         handleResponseError: (exception) => {
           console.log(exception);
-          NotificationActions.add(errorMessageParameter);
+          rootStore.notificationsStore.add(errorMessageParameter);
           return cellLine;
         },
       }))
       .then((json) => GenericElsFetcher.uploadGenericFiles(cellLine, json.id, 'CellLineSample')
         .then(() => {
-          NotificationActions.add(successfullyCreatedParameter);
+          rootStore.notificationsStore.add(successfullyCreatedParameter);
           // eslint-disable-next-line no-param-reassign
           user.cell_lines_count += 1;
           return this.cellLineElement(params.collection_id, json);
@@ -73,7 +73,7 @@ export default class CellLinesFetcher {
 
     return ApiClient.postJson('/api/v1/cell_lines/copy', { body })
       .then((json) => {
-        NotificationActions.add(successfullyCopiedParameter);
+        rootStore.notificationsStore.add(successfullyCopiedParameter);
         return this.cellLineElement(collectionId, json);
       });
   }
@@ -87,12 +87,12 @@ export default class CellLinesFetcher {
         body: params,
         handleResponseError: (exception) => {
           console.log(exception);
-          NotificationActions.add(errorMessageParameter);
+          rootStore.notificationsStore.add(errorMessageParameter);
           return cellLineItem;
         },
       }))
       .then((json) => {
-        NotificationActions.add(successfullyUpdatedParameter);
+        rootStore.notificationsStore.add(successfullyUpdatedParameter);
         return this.cellLineElement(params.collection_id, json);
       });
   }
@@ -107,7 +107,7 @@ export default class CellLinesFetcher {
     });
 
     return Promise.all(promises)
-      .then(() => { NotificationActions.add(successfullySplittedParameter); });
+      .then(() => { rootStore.notificationsStore.add(successfullySplittedParameter); });
   }
 
   static cellLineElement(id, json) {

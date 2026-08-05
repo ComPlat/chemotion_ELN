@@ -69,7 +69,9 @@ export const loadHazardPhrases = async () => {
   }
 
   try {
-    const response = await fetch('/json/hazardPhrases.json');
+    const response = await fetch('/json/hazardPhrases.json', {
+      headers: { 'Cache-Control': 'no-cache' }
+    });
     hazardPhrasesCache = await response.json();
     return hazardPhrasesCache;
   } catch (error) {
@@ -88,7 +90,9 @@ export const loadPrecautionaryPhrases = async () => {
   }
 
   try {
-    const response = await fetch('/json/precautionaryPhrases.json');
+    const response = await fetch('/json/precautionaryPhrases.json', {
+      headers: { 'Cache-Control': 'no-cache' }
+    });
     precautionaryPhrasesCache = await response.json();
     return precautionaryPhrasesCache;
   } catch (error) {

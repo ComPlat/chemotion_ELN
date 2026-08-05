@@ -7,17 +7,22 @@ import UIActions from 'src/stores/alt/actions/UIActions';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
+import SharedToMeInfosTooltip from 'src/apps/mydb/collections/SharedToMeInfosTooltip';
 import TreeViewItem from 'src/components/common/TreeViewItem';
 import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import CollectionSubtreeFunctions from 'src/apps/mydb/collections/CollectionSubtreeFunctions';
+import { PermissionConst } from 'src/utilities/PermissionConst';
 
 function CollectionSubtree({
   root,
   sharedWithMe,
   isExpanded,
   level,
+  hasRadar,
+  onAddShare,
+  onManageShares,
 }) {
   const { collections: collectionsStore } = useContext(StoreContext);
   const uiState = UIStore.getState();
@@ -58,8 +63,13 @@ function CollectionSubtree({
     return () => UIStore.unlisten(onUiStoreChange);
   }, [currentCollection, sharedWithMe, isExpanded]);
 
+  // A collection shared to the user at the top rung (pass_ownership) is a pending ownership offer.
+  const canTakeOwnership = () => sharedWithMe && root.permission_level === PermissionConst.PassOwnership;
+
   const handleTakeOwnership = () => {
-    // TODO: determine what should happen if take ownership is possible
+    // eslint-disable-next-line no-alert
+    if (!window.confirm(`Take ownership of "${root.label}" and all its sub collections?`)) return;
+    collectionsStore.takeOwnership(root.id);
   };
 
   const toggleExpansion = (e, node) => {
@@ -90,14 +100,21 @@ function CollectionSubtree({
     }
   };
 
-  const canTakeOwnership = () => false;
-
   const handleTakeOwnershipKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       handleTakeOwnership();
     }
   };
+
+  const handleAddShare = onAddShare ? () => onAddShare(root) : null;
+  // Own collections: manage only when there is something shared (root.shared).
+  // Shared-with-me: a delegate can manage existing shares regardless of root.shared;
+  // visibility is gated by permission_level in CollectionSubtreeFunctions, matching
+  // the management modal (which offers Add + Manage together).
+  const handleManageShares = ((sharedWithMe || root.shared) && onManageShares)
+    ? () => onManageShares(root)
+    : null;
 
   return (
     <TreeViewItem
@@ -134,9 +151,25 @@ function CollectionSubtree({
               <i className="fa fa-share-alt" />
             </OverlayTrigger>
           )}
+          {sharedWithMe && !root.is_locked && (
+            <OverlayTrigger
+              placement="top"
+              overlay={<SharedToMeInfosTooltip collectionId={root.id} owner={root.owner} />}
+            >
+              <i className="fa fa-share-alt" />
+            </OverlayTrigger>
+          )}
         </>
       )}
-      actions={<CollectionSubtreeFunctions collection={root} />}
+      actions={(
+        <CollectionSubtreeFunctions
+          collection={root}
+          sharedWithMe={sharedWithMe}
+          hasRadar={hasRadar}
+          onAddShare={handleAddShare}
+          onManageShares={handleManageShares}
+        />
+      )}
     >
       {children.map((child) => (
         <CollectionSubtree
@@ -145,6 +178,9 @@ function CollectionSubtree({
           sharedWithMe={sharedWithMe}
           isExpanded={isExpanded}
           level={level + 1}
+          hasRadar={hasRadar}
+          onAddShare={onAddShare}
+          onManageShares={onManageShares}
         />
       ))}
     </TreeViewItem>
@@ -156,6 +192,9 @@ export default observer(CollectionSubtree);
 CollectionSubtree.propTypes = {
   sharedWithMe: PropTypes.bool.isRequired,
   isExpanded: PropTypes.bool.isRequired,
+  hasRadar: PropTypes.bool,
+  onAddShare: PropTypes.func,
+  onManageShares: PropTypes.func,
   root: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
     label: PropTypes.string.isRequired,
@@ -166,6 +205,14 @@ CollectionSubtree.propTypes = {
     is_locked: PropTypes.bool,
     inventory_prefix: PropTypes.string,
     shared: PropTypes.bool,
+    owner: PropTypes.string,
+    permission_level: PropTypes.number,
   }).isRequired,
   level: PropTypes.number.isRequired,
+};
+
+CollectionSubtree.defaultProps = {
+  hasRadar: false,
+  onAddShare: null,
+  onManageShares: null,
 };

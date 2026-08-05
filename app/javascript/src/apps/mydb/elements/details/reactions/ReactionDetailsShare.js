@@ -11,6 +11,14 @@ const setReactionByType = (reaction, type, value) => {
     case 'status':
       reaction.status = value;
       break;
+    case 'reactionType':
+      reaction.reaction_type = value;
+      if (value === 'interaction') {
+        reaction.gaseous = false;
+        reaction.weight_percentage = false;
+      }
+      options = { updateGraphic: true };
+      break;
     case 'description':
       reaction.description = value;
       break;
@@ -51,6 +59,12 @@ const setReactionByType = (reaction, type, value) => {
       reaction.conditions = value;
       options = {updateGraphic: true}
       break;
+    case 'phOperator':
+      reaction.ph_operator = value;
+      break;
+    case 'phValue':
+      reaction.ph_value = value;
+      break;
     case 'solvent':
       reaction.solvent = value;
       options = {updateGraphic: true}
@@ -85,6 +99,9 @@ const setReactionByType = (reaction, type, value) => {
       break;
     case 'useReactionVolumeForConcentration':
       reaction.use_reaction_volume = value;
+      break;
+    case 'lockReactionVolume':
+      reaction.lock_reaction_volume = value;
       break;
     case 'weight_percentage':
       reaction.weight_percentage = value;

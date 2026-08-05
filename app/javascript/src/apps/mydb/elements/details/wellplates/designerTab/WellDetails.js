@@ -34,7 +34,7 @@ const sampleName = (sample) => {
   );
 };
 
-const sampleVisualisation = (well, onChange) => {
+const sampleVisualisation = (well, onChange, readOnly) => {
   const { sample } = well;
   let svg = null;
   let removeButton = null;
@@ -45,11 +45,13 @@ const sampleVisualisation = (well, onChange) => {
 
   if (sample) {
     svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath} />;
-    removeButton = (
-      <Button size="sm" variant="danger" onClick={removeSampleFromWell}>
-        Clear well
-      </Button>
-    );
+    if (!readOnly) {
+      removeButton = (
+        <Button size="sm" variant="danger" onClick={removeSampleFromWell}>
+          Clear well
+        </Button>
+      );
+    }
   }
   return (
     <>
@@ -89,7 +91,7 @@ const readoutSection = (readouts, readoutTitles) => {
   );
 };
 
-const labelSelection = (well, onChange) => {
+const labelSelection = (well, onChange, readOnly) => {
   const wellLabels = well.label ? well.label.split(',') : [];
   const labelsIncludesMolecularStructure = wellLabels.some((item) => item === 'Molecular structure');
   const labelsIncludeNonMolecularStructure = wellLabels.some((item) => item !== 'Molecular structure');
@@ -108,6 +110,7 @@ const labelSelection = (well, onChange) => {
         isMulti
         options={labelOptions}
         value={labelOptions.filter(({ value }) => wellLabels.includes(value))}
+        isDisabled={readOnly}
         isOptionDisabled={(option) => option.disabled}
         styles={{
           option: (provided, state) => {
@@ -128,13 +131,14 @@ const labelSelection = (well, onChange) => {
   );
 };
 
-const colorPicker = (well, onChange, activeColor, setActiveColor) => (
+const colorPicker = (well, onChange, activeColor, setActiveColor, readOnly) => (
   <Form.Group controlId="formColorSelectorDisplay" className="mt-3">
     <Form.Label as="h4">Select Color</Form.Label>
     <Select
       className="rounded-corners"
       name="colorPicker"
       isClearable
+      isDisabled={readOnly}
       options={colorOptions}
       value={colorOptions.find(({ value }) => value === activeColor) || null}
       onChange={(option) => {
@@ -152,7 +156,7 @@ const colorPicker = (well, onChange, activeColor, setActiveColor) => (
   </Form.Group>
 );
 
-function WellDetails({ well, readoutTitles, handleClose, onChange }) {
+function WellDetails({ well, readoutTitles, handleClose, onChange, readOnly }) {
   const [activeColor, setActiveColor] = useState(well.color_code || null);
   return (
     <AppModal
@@ -161,10 +165,10 @@ function WellDetails({ well, readoutTitles, handleClose, onChange }) {
       onHide={handleClose}
       showFooter={false}
     >
-      {sampleVisualisation(well, onChange)}
-      {labelSelection(well, onChange)}
+      {sampleVisualisation(well, onChange, readOnly)}
+      {labelSelection(well, onChange, readOnly)}
       {readoutSection(well.readouts, readoutTitles)}
-      {colorPicker(well, onChange, activeColor, setActiveColor)}
+      {colorPicker(well, onChange, activeColor, setActiveColor, readOnly)}
     </AppModal>
   );
 }
@@ -174,6 +178,11 @@ WellDetails.propTypes = {
   readoutTitles: PropTypes.array.isRequired,
   handleClose: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
+  readOnly: PropTypes.bool,
+};
+
+WellDetails.defaultProps = {
+  readOnly: false,
 };
 
 export default WellDetails;

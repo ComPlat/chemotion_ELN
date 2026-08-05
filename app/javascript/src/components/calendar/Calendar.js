@@ -1,4 +1,7 @@
-import React, { useContext, useEffect, useState } from 'react';
+/* eslint-disable react/prop-types */
+import React, {
+  useCallback, useContext, useEffect, useState
+} from 'react';
 import PropTypes from 'prop-types';
 import { Calendar as BaseCalendar, momentLocalizer } from 'react-big-calendar';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
@@ -20,9 +23,9 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 // see:
 //  https://jquense.github.io/react-big-calendar/examples/?path=/docs/props-full-prop-list--page
 
-function FilterButton({
+const FilterButton = ({
   id, tooltipSuffix, icon, options, selected, onToggle, onClear, renderLabel
-}) {
+}) => {
   const selectedCount = selected.length;
   const hasOptions = options.length > 0;
   const variant = selectedCount > 0 ? 'success' : 'light';
@@ -89,7 +92,7 @@ FilterButton.propTypes = {
   renderLabel: PropTypes.func.isRequired,
 };
 
-function CalendarTooltip({ id, text, placement, children }) {
+const CalendarTooltip = ({ id, text, placement, children }) => {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -131,7 +134,7 @@ const getEntryColor = (entry) => {
   return 'var(--bs-primary)';
 };
 
-function CustomAgendaView({ events, onSelectEvent }) {
+const CustomAgendaView = ({ events, onSelectEvent }) => {
   const { currentUser } = UserStore.getState();
   const currentUserId = currentUser?.id;
   const eventStyleGetter = (event) => ({
@@ -178,10 +181,14 @@ CustomAgendaView.navigate = (date, action) => {
 };
 
 const formats = {
-  agendaHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`,
+  agendaHeaderFormat: ({ start, end }, culture, localizer) => {
+    return `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`
+  },
   agendaDateFormat: 'ddd DD MMMM YYYY',
   dayFormat: 'dddd DD',
-  dayRangeHeaderFormat: ({ start, end }, culture, localizer) => `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`,
+  dayRangeHeaderFormat: ({ start, end }, culture, localizer) => {
+    return `${localizer.format(start, 'DD MMMM', culture)} - ${localizer.format(end, 'DD MMMM YYYY', culture)}`
+  },
   monthHeaderFormat: 'MMMM YYYY',
   dayHeaderFormat: 'dddd DD MMMM YYYY',
   weekdayFormat: 'dddd',
@@ -199,15 +206,14 @@ const allDayAccessor = (event) => {
   return false;
 };
 
-function Calendar() {
+const Calendar = () => {
   const calendarStore = useContext(StoreContext).calendar;
 
   const { currentUser } = UserStore.getState();
   const currentUserId = currentUser?.id;
 
-  const { clientWidth, clientHeight } = window.document.documentElement;
-  let modalDimensions = { width: 1140, height: 620 };
-  let smallScreen = modalDimensions.width >= clientWidth || modalDimensions.height >= clientHeight;
+  const { clientWidth: viewportWidth, clientHeight: viewportHeight } = window.document.documentElement;
+  const smallScreen = viewportWidth < 1140 || viewportHeight < 620;
   const calendarHeight = calendarStore.fullscreen || calendarStore.show_detail ? '95vh' : '620px';
   const calendarClass = calendarStore.show_detail ? 'show-detail' : (calendarStore.fullscreen ? 'fullscreen' : '');
 
@@ -215,33 +221,30 @@ function Calendar() {
   scrollTime.setHours(5);
   scrollTime.setMinutes(55);
 
-  const handleResize = () => {
+  const handleResize = useCallback(() => {
     const modal = document.querySelector('[data-type="calendar-modal"]');
-    if (!modal) { return null; }
+    if (!modal) { return; }
 
-    modalDimensions = modal.getBoundingClientRect();
+    const modalDimensions = modal.getBoundingClientRect();
+    const { clientWidth, clientHeight } = window.document.documentElement;
 
-    calendarStore.changeModalDimension({
-      width: modalDimensions.width,
-      height: modalDimensions.height
-    });
+    calendarStore.changeModalDimension({ width: modalDimensions.width, height: modalDimensions.height });
     calendarStore.changeDeltaPosition({
       x: (clientWidth - modalDimensions.width) / 2,
-      y: (clientHeight - modalDimensions.height) / 2
+      y: (clientHeight - modalDimensions.height) / 2,
     });
-    smallScreen = modalDimensions.width >= clientWidth || modalDimensions.height >= clientHeight;
-  };
+  }, [calendarStore]);
 
-  const resizeEditor = () => {
+  const resizeEditor = useCallback(() => {
     const modalEditor = document.querySelector('[data-type="calendar-editor"]');
-    if (!modalEditor) { return null; }
+    if (!modalEditor) { return; }
 
     const editorDimensions = modalEditor.getBoundingClientRect();
     calendarStore.changeDeltaPositionEditor({
       x: ((calendarStore.modal_dimension.width - editorDimensions.width) / 2) + calendarStore.delta_position.x,
       y: ((calendarStore.modal_dimension.height - editorDimensions.height) / 2) + calendarStore.delta_position.y,
     });
-  };
+  }, [calendarStore]);
 
   useEffect(() => {
     if (calendarStore.show_calendar) {
@@ -250,10 +253,11 @@ function Calendar() {
     } else {
       window.removeEventListener('resize', handleResize);
     }
-  }, [calendarStore.show_calendar]);
+  }, [calendarStore.show_calendar, handleResize]);
 
   useEffect(() => {
     if (calendarStore.fullscreen) {
+      const { clientWidth, clientHeight } = window.document.documentElement;
       calendarStore.changeDeltaPosition({ x: 0, y: 0 });
       calendarStore.changeModalDimension({ width: clientWidth, height: clientHeight });
       resizeEditor();
@@ -261,7 +265,7 @@ function Calendar() {
       handleResize();
       resizeEditor();
     }
-  }, [calendarStore.fullscreen]);
+  }, [calendarStore.fullscreen, calendarStore, handleResize, resizeEditor]);
 
   const handleDrag = (e, ui) => {
     const { x, y } = calendarStore.delta_position;

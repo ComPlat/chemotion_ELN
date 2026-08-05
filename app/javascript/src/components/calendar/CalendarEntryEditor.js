@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useContext, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import {
   Form, Button, ButtonToolbar, Alert, Modal, Popover, OverlayTrigger
@@ -18,21 +18,20 @@ const STATUS_OPTIONS = [
   { value: 'done', label: 'Done' },
 ];
 
-function CalendarEntryEditor(props) {
+const CalendarEntryEditor = (props) => {
   const calendarStore = useContext(StoreContext).calendar;
   const { entry, resizeEditor } = props;
   const currentUserId = UserStore.getState().currentUser?.id;
-  const isInvitedRef = useRef(false);
-  if (calendarStore.show_time_slot_editor) {
-    isInvitedRef.current = !!entry?.created_by && entry.created_by !== currentUserId;
-  }
-  const isInvitedEvent = isInvitedRef.current;
+  const isInvitedEvent = calendarStore.show_time_slot_editor
+    && !!entry?.created_by
+    && entry.created_by !== currentUserId;
 
   const accessible = entry?.accessible === true;
   const notAccessible = !accessible;
   const editable = calendarStore.current_entry_editable;
   const disabled = !editable || notAccessible;
-  const currentCalendarTypes = calendarStore.calendar_types[calendarStore.eventable_type] || calendarStore.calendar_types.default;
+  const currentCalendarTypes =
+    calendarStore.calendar_types[calendarStore.eventable_type] || calendarStore.calendar_types.default;
   const calendarTypes = currentCalendarTypes.map((type) => (
     { label: capitalizeWords(type), value: type }
   ));
@@ -50,7 +49,7 @@ function CalendarEntryEditor(props) {
     if (calendarStore.show_time_slot_editor) {
       resizeEditor();
     }
-  }, [calendarStore.show_time_slot_editor]);
+  }, [calendarStore.show_time_slot_editor, resizeEditor]);
 
   const closeEditor = () => {
     calendarStore.resetEditorValues();

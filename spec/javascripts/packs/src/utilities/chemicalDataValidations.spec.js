@@ -1,6 +1,3 @@
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
 import expect from 'expect';
 import sinon from 'sinon';
 
@@ -47,14 +44,16 @@ describe('Chemical Data Validations', () => {
     fetchStub = sinon.stub();
     global.fetch = fetchStub;
 
+    const noCacheHeaders = { headers: { 'Cache-Control': 'no-cache' } };
+
     // Mock hazard phrases fetch
-    fetchStub.withArgs('/json/hazardPhrases.json')
+    fetchStub.withArgs('/json/hazardPhrases.json', noCacheHeaders)
       .resolves({
         json: () => Promise.resolve(mockHazardPhrases)
       });
 
     // Mock precautionary phrases fetch
-    fetchStub.withArgs('/json/precautionaryPhrases.json')
+    fetchStub.withArgs('/json/precautionaryPhrases.json', noCacheHeaders)
       .resolves({
         json: () => Promise.resolve(mockPrecautionaryPhrases)
       });
@@ -637,6 +636,8 @@ describe('Chemical Data Validations', () => {
       return `Failed to load ${phraseType}:`;
     };
 
+    const FETCH_OPTIONS = { headers: { 'Cache-Control': 'no-cache' } };
+
     const testPhraseLoader = (loaderFn, url, cacheName) => {
       describe(`${loaderFn.name}`, () => {
         const mockData = {
@@ -644,13 +645,13 @@ describe('Chemical Data Validations', () => {
         };
 
         it('should fetch and cache phrases when cache is empty', async () => {
-          fetchStub.withArgs(url).resolves({
+          fetchStub.withArgs(url, FETCH_OPTIONS).resolves({
             json: () => Promise.resolve(mockData)
           });
 
           const result = await loaderFn();
           expect(result).toEqual(mockData);
-          expect(fetchStub.calledOnceWith(url)).toBe(true);
+          expect(fetchStub.calledOnceWith(url, FETCH_OPTIONS)).toBe(true);
 
           // Verify caching
           fetchStub.resetHistory();
@@ -669,7 +670,7 @@ describe('Chemical Data Validations', () => {
 
         it('should handle fetch errors gracefully', async () => {
           const error = new Error('Network error');
-          fetchStub.withArgs(url).rejects(error);
+          fetchStub.withArgs(url, FETCH_OPTIONS).rejects(error);
 
           const result = await loaderFn();
           expect(result).toEqual({});
@@ -679,7 +680,7 @@ describe('Chemical Data Validations', () => {
         });
 
         it('should handle invalid JSON response', async () => {
-          fetchStub.withArgs(url).resolves({
+          fetchStub.withArgs(url, FETCH_OPTIONS).resolves({
             json: () => Promise.reject(new Error('Invalid JSON'))
           });
 

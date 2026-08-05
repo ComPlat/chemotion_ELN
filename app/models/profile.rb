@@ -78,6 +78,7 @@ class Profile < ApplicationRecord
     data['converter_admin'] = false
     data['inbox_auto'] = false
     data['inbox_manual'] = true
+    data['global_text_template_editor'] = false
   end
 
   def data_default_layout

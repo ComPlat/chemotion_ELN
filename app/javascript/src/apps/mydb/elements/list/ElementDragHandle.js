@@ -41,7 +41,7 @@ function inferElementSourceType(element) {
   }
 }
 
-function EnabledHandle({ element, sourceType }) {
+const EnabledHandle = ({ element, sourceType }) => {
   const [, drag, dragPreview] = useDrag({
     type: sourceType,
     item: { element, isElement: true },
@@ -54,7 +54,7 @@ function EnabledHandle({ element, sourceType }) {
   return (
     <DragHandle ref={drag} />
   );
-}
+};
 
 EnabledHandle.propTypes = {
   sourceType: PropTypes.oneOf(Object.values(DragDropItemTypes)).isRequired,
@@ -62,7 +62,7 @@ EnabledHandle.propTypes = {
   element: PropTypes.any.isRequired,
 };
 
-function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
+const ElementDragHandle = ({ element, sourceType: sourceTypeProp }) => {
   const [currentElement, setCurrentElement] = useState(
     ElementStore.getState().currentElement || {}
   );
@@ -70,6 +70,7 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
     UserStore.getState().genericEls || []
   );
   const { inbox_visible: sampleTaskInboxVisible } = useContext(StoreContext).sampleTasks;
+  const dndEnabled = useDnD(currentElement, genericEls);
 
   useEffect(() => {
     const updateCurrentElement = ({ currentElement: selectedElement }) => {
@@ -113,38 +114,39 @@ function ElementDragHandle({ element, sourceType: sourceTypeProp }) {
           'research_plan',
           'sample',
           'wellplate',
-        ].includes(currentElementType) || useDnD(currentElement, genericEls);
+        ].includes(currentElementType) || dndEnabled;
       case DragDropItemTypes.MOLECULE:
         return sampleTaskInboxVisible || [
           'sample',
           'reaction'
-        ].includes(currentElementType) || useDnD(currentElement, genericEls);
+        ].includes(currentElementType) || dndEnabled;
       case DragDropItemTypes.ELEMENT:
-        return useDnD(currentElement, genericEls);
+        return dndEnabled;
       case DragDropItemTypes.WELLPLATE:
-        return ['screen', 'research_plan'].includes(currentElementType) || useDnD(currentElement, genericEls);
+        return ['screen', 'research_plan'].includes(currentElementType) || dndEnabled;
       case DragDropItemTypes.SCREEN:
-        return useDnD(currentElement, genericEls);
+        return dndEnabled;
       case DragDropItemTypes.REACTION:
-        return currentElementType === 'research_plan' || useDnD(currentElement, genericEls);
+        return currentElementType === 'research_plan' || dndEnabled;
       case DragDropItemTypes.RESEARCH_PLAN:
-        return currentElementType === 'screen' || useDnD(currentElement, genericEls);
+        return currentElementType === 'screen' || dndEnabled;
       case DragDropItemTypes.GENERALPROCEDURE:
-        return currentElementType === 'reaction' || useDnD(currentElement, genericEls);
+        return currentElementType === 'reaction' || dndEnabled;
       case DragDropItemTypes.DEVICE_DESCRIPTION:
-        return currentElementType === 'device_description' || useDnD(currentElement, genericEls);
+        return currentElementType === 'device_description' || dndEnabled;
       case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE:
-        return currentElementType === 'sequence_based_macromolecule_sample' || useDnD(currentElement, genericEls);
+        return currentElementType === 'sequence_based_macromolecule_sample' || dndEnabled;
       case DragDropItemTypes.SEQUENCE_BASED_MACROMOLECULE_SAMPLE:
-        return currentElementType === 'reaction' || useDnD(currentElement, genericEls);
+        return currentElementType === 'reaction' || dndEnabled;
       default:
         return false;
     }
   };
+
   return (sourceType !== null && hasDropTarget(sourceType))
     ? <EnabledHandle element={element} sourceType={sourceType} />
     : <DragHandle enabled={false} />;
-}
+};
 
 ElementDragHandle.propTypes = {
   sourceType: PropTypes.oneOf(Object.values(DragDropItemTypes)),

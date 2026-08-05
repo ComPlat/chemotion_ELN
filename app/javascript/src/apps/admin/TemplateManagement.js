@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import ReportTemplateFetcher from 'src/fetchers/ReportTemplateFetcher';
-import Dropzone from 'react-dropzone';
+import Dropzone from 'src/components/common/Dropzone';
 import { Select } from 'src/components/common/Select';
 
 const editTooltip = <Tooltip id="inchi_tooltip">Edit this template</Tooltip>;
@@ -181,7 +181,14 @@ export default class TemplateManagement extends React.Component {
     }
     return (
       <Dropzone
-        accept="application/pdf,.docx,.xlsx,.html,.csv,.erb"
+        accept={{
+          'application/pdf': ['.pdf'],
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+          'text/html': ['.html'],
+          'text/csv': ['.csv'],
+          'text/plain': ['.erb'],
+        }}
         onDrop={(attachmentFile) => this.handleFileDrop(attachmentFile)}
         className="d-flex align-items-center justify-content-center dnd-zone"
       >

@@ -742,6 +742,45 @@ describe Chemotion::SequenceBasedMacromoleculeSampleAPI do
         expect(sbmm_sample['short_label']).to eq "#{sample.short_label}-1"
       end
     end
+
+    context 'when the collection is a read-only share' do
+      let(:another_user) { create(:person) }
+      let(:sample) do
+        create(
+          :sequence_based_macromolecule_sample,
+          sequence_based_macromolecule: build(:modified_uniprot_sbmm),
+          user: another_user,
+        )
+      end
+      let(:collection) do
+        create(:collection, user: another_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:post_for_split) do
+        {
+          ui_state: {
+            sequence_based_macromolecule_sample: {
+              all: false,
+              included_ids: [sample.id],
+              excluded_ids: [],
+            },
+            currentCollectionId: collection.id,
+            isSync: false,
+          },
+        }
+      end
+
+      it 'is rejected as unauthorized and creates no sub sample' do
+        expect do
+          post '/api/v1/sequence_based_macromolecule_samples/sub_sequence_based_macromolecule_samples',
+               params: post_for_split, as: :json
+        end.not_to change(SequenceBasedMacromoleculeSample, :count)
+
+        expect(response).to have_http_status :unauthorized
+      end
+    end
   end
 end
 # rubocop:enable RSpec/MultipleExpectations, RSpec/NestedGroups

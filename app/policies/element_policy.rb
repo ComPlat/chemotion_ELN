@@ -16,32 +16,38 @@ class ElementPolicy
   def read?
     return false unless user_and_record_present?
 
-    record_is_in_own_collection? || record_shared_with_minimum_permission_level?(0)
+    record_is_in_own_collection? || record_shared_with_at_least?(:read_elements)
   end
 
   def update?
     return false unless user_and_record_present?
 
-    record_is_in_own_collection? || record_shared_with_minimum_permission_level?(1)
+    record_is_in_own_collection? || record_shared_with_at_least?(:edit_elements)
   end
 
   def copy?
     return false unless user_and_record_present?
 
     record_is_in_own_collection? ||
-      (record_shared_with_minimum_permission_level?(1) && record_shared_with_minimum_detail_level?(1))
+      (record_shared_with_at_least?(:edit_elements) && record_shared_with_minimum_detail_level?(1))
   end
 
+  # "Propagate this element onward" — the right to carry it into another collection. Bundled with
+  # add_elements: being allowed to add an element somewhere is the same right as being allowed to
+  # take it from where it is.
   def share?
     return false unless user_and_record_present?
 
-    record_is_in_own_collection? || record_shared_with_minimum_permission_level?(2)
+    record_is_in_own_collection? || record_shared_with_at_least?(:add_elements)
   end
 
+  # Destroying the element *record* (soft-delete) is owner-only. A sharee at :remove_elements may
+  # unlink the element from the shared collection (Usecases::Collections::RemoveElements) but never
+  # destroy it out from under the owner.
   def destroy?
     return false unless user_and_record_present?
 
-    record_is_in_own_collection? || record_shared_with_minimum_permission_level?(3)
+    record_is_in_own_collection?
   end
 
   def read_dataset?
@@ -53,13 +59,13 @@ class ElementPolicy
   def import?
     return false unless user_and_record_present?
 
-    record_is_in_own_collection? || record_shared_with_minimum_permission_level?(4)
+    record_is_in_own_collection? || record_shared_with_at_least?(:add_elements)
   end
 
   def pass_ownership?
     return false unless user_and_record_present?
 
-    record_is_in_own_collection? || record_shared_with_minimum_permission_level?(6)
+    record_is_in_own_collection? || record_shared_with_at_least?(:pass_ownership)
   end
 
   private
@@ -72,10 +78,11 @@ class ElementPolicy
     record.collections.where(user: user).any?
   end
 
-  def record_shared_with_minimum_permission_level?(permission_level)
+  # @param level_key [Symbol] a {CollectionShare::PERMISSION_LEVELS} key
+  def record_shared_with_at_least?(level_key)
     record
       .collections
-      .shared_with_minimum_permission_level(user, permission_level)
+      .shared_with_minimum_permission_level(user, CollectionShare.permission_level(level_key))
       .any?
   end
 

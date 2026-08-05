@@ -1,10 +1,11 @@
 import React from 'react';
 import { Form } from 'react-bootstrap';
 import NumeralInput from 'src/apps/mydb/elements/details/NumeralInput';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import _ from 'lodash';
 
 export default class ElementalCompositionCustom extends React.Component {
+  static contextType = StoreContext;
   checkElementsSum(el_composition) {
     let sum = 0.0;
     Object.values(el_composition.data).forEach((value) => {
@@ -12,7 +13,7 @@ export default class ElementalCompositionCustom extends React.Component {
     });
 
     if (sum > 100.0) {
-      NotificationActions.add({
+      this.context.notifications.add({
         message: 'Percentage sum is more than 100%',
         level: 'error'
       });

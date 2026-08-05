@@ -2,6 +2,18 @@
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import DocumentHelper from 'src/utilities/DocumentHelper';
 
+class ResponseError extends Error {
+  constructor(response) {
+    super(`${response.status} ${response.statusText}`);
+    this.status = response.status;
+    this.response = response;
+  }
+
+  json() {
+    return this.response.json();
+  }
+}
+
 // TODO: SamplesFetcher also updates Samples and so on...naming?
 export default class UsersFetcher {
   static fetchElementKlasses(genericOnly = true) {
@@ -47,35 +59,43 @@ export default class UsersFetcher {
   }
 
   static createGroup(params = {}) {
-    return ApiClient.postJson('/api/v1/groups/create', { body: params });
+    return ApiClient.postJson('/api/v1/groups', { body: params });
   }
 
   static fetchCurrentGroup() {
-    return ApiClient.getJson('/api/v1/groups/qrycurrent');
+    return ApiClient.getJson('/api/v1/groups');
   }
 
   static fetchCurrentDevices() {
-    return ApiClient.getJson('/api/v1/groups/queryCurrentDevices');
+    return ApiClient.getJson('/api/v1/users/devices');
   }
 
   static fetchDeviceMetadataByDeviceId(deviceId) {
-    return ApiClient.getJson(`/api/v1/groups/deviceMetadata/${deviceId}`);
+    return ApiClient.getJson(`/api/v1/devices/${deviceId}/metadata`);
   }
 
   static fetchUserOmniauthProviders() {
     return ApiClient.getJson('/api/v1/users/omniauth_providers');
   }
 
-  static updateGroup(params = {}) {
-    const body = {
-      id: params.id,
-      destroy_group: params.destroy_group,
-      rm_users: params.rm_users,
-      add_users: params.add_users,
-      add_admin: params.add_admin,
-      rm_admin: params.rm_admin,
-    };
-    return ApiClient.putJson('/api/v1/users/omniauth_providers', { body });
+  static addMembers(groupId, userIds) {
+    return ApiClient.postJson(`/api/v1/groups/${groupId}/members`, { body: { user_ids: userIds } });
+  }
+
+  static removeMember(groupId, userId) {
+    return ApiClient.deleteRequest(`/api/v1/groups/${groupId}/members/${userId}`);
+  }
+
+  static promoteAdmin(groupId, userId) {
+    return ApiClient.postJson(`/api/v1/groups/${groupId}/admins/${userId}`);
+  }
+
+  static demoteAdmin(groupId, userId) {
+    return ApiClient.deleteRequest(`/api/v1/groups/${groupId}/admins/${userId}`);
+  }
+
+  static destroyGroup(groupId) {
+    return ApiClient.deleteRequest(`/api/v1/groups/${groupId}`);
   }
 
   static fetchOls(name, edited = true) {
@@ -133,5 +153,51 @@ export default class UsersFetcher {
       return ApiClient.putFormData(url, options);
     }
     return ApiClient.postFormData(url, options);
+  }
+
+  static fetchRevokeAuthTokens(params) {
+    return fetch('/api/v1/users/revoke_auth_token', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new ResponseError(response);
+        }
+
+        return response.json();
+      })
+      .catch((error) => {
+        console.error('Fetch error in users/revoke_auth_token:', error);
+        throw error;
+      });
+  }
+
+  static fetchNewAuthToken(params) {
+    return fetch('/api/v1/users/auth_token', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new ResponseError(response);
+        }
+
+        return response.json();
+      })
+      .catch((error) => {
+        console.error('Fetch error in public/token:', error);
+        throw error;
+      });
   }
 }

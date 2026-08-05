@@ -3,11 +3,16 @@
 # Delayed::Worker.destroy_failed_jobs = false
 # Delayed::Worker.sleep_delay = 60
 # Delayed::Worker.max_attempts = 3
-# Delayed::Worker.max_run_time = 5.minutes
 # Delayed::Worker.read_ahead = 10
 # Delayed::Worker.default_queue_name = 'default'
 # Delayed::Worker.delay_jobs = !Rails.env.test?
-# Delayed::Worker.raise_signal_exceptions = :term
+
+# Bounds worst-case job runtime so a stuck job's delayed_jobs row/lock (and its
+# activejob-status key) doesn't stay "running" for the gem's 4-hour default; lets a
+# worker killed by an external SIGTERM (deploy/restart) fail its current job fast
+# instead of blocking shutdown on completion.
+Delayed::Worker.max_run_time = 30.minutes
+Delayed::Worker.raise_signal_exceptions = :term
 Delayed::Worker.logger = Logger.new(File.join(Rails.root, 'log', 'delayed_job.log'))
 Delayed::Worker.logger = Logger.new($stdout) if Rails.env.test?
 

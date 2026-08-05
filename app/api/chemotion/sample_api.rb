@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ClassLength, Lint/UselessAssignment
+# rubocop:disable Metrics/ClassLength
 require 'open-uri'
 require 'csv'
 
@@ -89,13 +89,22 @@ module Chemotion
         params do
           requires :ui_state, type: Hash, desc: 'Selected samples from the UI'
         end
+
         post do
           ui_state = params[:ui_state]
           col_id = ui_state[:currentCollectionId]
           sample_ids = Sample.for_user(current_user.id)
                              .for_ui_state_with_collection(ui_state[:sample], CollectionsSample, col_id)
-          Sample.where(id: sample_ids).each do |sample|
-            subsample = sample.create_subsample(current_user, col_id, true, 'sample')
+          samples = Sample.where(id: sample_ids)
+          # Splitting adds a new subsample to the target collection, so authorize that collection
+          # directly. ElementsPolicy#share_all? would take MAX(permission_level) across every
+          # collection each sample belongs to, wrongly allowing a split into a read-only
+          # currentCollectionId whenever the same sample is also shared/owned elsewhere with
+          # :add_elements. writable_collection_for is :add_elements-aware and scoped to this collection.
+          error!('401 Unauthorized', 401) unless writable_collection_for(col_id)
+
+          samples.each do |sample|
+            sample.create_subsample(current_user, col_id, true, 'sample')
           end
 
           {} # JS layer does not use the reply
@@ -144,26 +153,8 @@ module Chemotion
         end
 
         post do
-          ## 2-step SDF Import
-          if /\.(sdf?|mol)/i.match?(@att.extname)
-            sdf_import = Import::ImportSdf.new(
-              attachment: @att,
-              collection_id: params[:currentCollectionId],
-              current_user_id: current_user.id,
-            )
-
-            sdf_import.find_or_create_mol_by_batch
-            @att.really_destroy!
-            return {
-              sdf: true, message: sdf_import.message,
-              data: sdf_import.processed_mol, status: sdf_import.status,
-              custom_data_keys: sdf_import.custom_data_keys.keys,
-              mapped_keys: sdf_import.mapped_keys,
-              collection_id: sdf_import.collection_id
-            }
-          end
-
-          ## async CSV/xlx Import
+          ## async Import (SDF/mol, CSV, xlsx) — all heavy parsing/record creation
+          ## runs in ImportSamplesJob so the web worker is never blocked.
           ImportSamplesJob.perform_later(
             collection_id: params[:currentCollectionId],
             user_id: current_user.id,
@@ -174,50 +165,7 @@ module Chemotion
         end
       end
 
-      namespace :confirm_import do
-        desc 'Create Samples from an Array of inchikeys'
-        params do
-          requires :rows, type: Array, desc: 'Selected Molecule from the UI'
-          requires :currentCollectionId, type: Integer
-          requires :mapped_keys, type: Hash
-        end
-
-        before do
-          error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
-        end
-
-        post do
-          rows = params[:rows]
-          if rows.length < 25
-            sdf_import = Import::ImportSdf.new(
-              collection_id: params[:currentCollectionId],
-              current_user_id: current_user.id,
-              rows: rows,
-              mapped_keys: params[:mapped_keys],
-            )
-            sdf_import.create_samples
-            return {
-              sdf: true, message: sdf_import.message,
-              status: sdf_import.status,
-              error_messages: sdf_import.error_messages
-            }
-          else
-            parameters = {
-              collection_id: params[:currentCollectionId],
-              user_id: current_user.id,
-              file_name: 'dummy.sdf',
-              sdf_rows: rows,
-              mapped_keys: params[:mapped_keys],
-            }
-            ImportSamplesJob.perform_later(parameters)
-            return {
-              message: 'importing samples in background',
-            }
-          end
-        end
-      end
-
-      desc 'Return serialized molecules_samples_groups of current user'
+      desc "Return serialized molecules_samples_groups of current user. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
         optional :molecule_sort, type: Integer, desc: 'Sort by parameter'
@@ -230,17 +178,7 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
 
       get do
-        sample_scope = Sample.none
-        if params[:collection_id]
-          begin
-            sample_scope = Collection.accessible_for(current_user).find(params[:collection_id]).samples
-          rescue ActiveRecord::RecordNotFound
-            Sample.none
-          end
-        else
-          # All collection
-          sample_scope = Sample.for_user(current_user.id).distinct
-        end
+        resolved_collection, sample_scope = collection_scope_for(params[:collection_id], Sample, :samples)
         sample_scope = sample_scope.includes_for_list_display
         prod_only = params[:product_only] || false
         sample_scope = if prod_only
@@ -260,6 +198,9 @@ module Chemotion
         sample_scope = sample_scope.by_user_label(user_label) if user_label
 
         sample_list = []
+        detail_levels = ElementDetailLevelCalculator.for_list(
+          collection: resolved_collection, user: current_user, owned_only: true,
+        )
 
         if params[:molecule_sort] == 1
           molecule_scope = Molecule
@@ -271,17 +212,16 @@ module Chemotion
             samples_group = sample_scope.select { |v| v.molecule_id == molecule.id }
             samples_group = samples_group.sort { |x, y| y.updated_at <=> x.updated_at }
             samples_group.each do |sample|
-              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
               sample_list.push(
                 Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
               )
             end
           end
+          sample_count = sample_scope.size
         else
-          reset_pagination_page(sample_scope)
+          sample_count = reset_pagination_page(sample_scope)
           sample_scope = sample_scope.order('samples.updated_at DESC')
           paginate(sample_scope).each do |sample|
-            detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
             sample_list.push(
               Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
             )
@@ -290,7 +230,7 @@ module Chemotion
 
         return {
           samples: sample_list,
-          samples_count: sample_scope.count,
+          samples_count: sample_count,
         }
       end
 
@@ -605,11 +545,13 @@ module Chemotion
         collections = []
 
         if params[:collection_id]
-          collection = Collection.accessible_for(current_user).find_by(id: params[:collection_id])
-          collections << collection if collection.present?
+          collection = writable_collection_for(params[:collection_id])
+          error!('403 Forbidden', 403) if collection.nil?
+          collections << collection
         end
 
-        all_coll = Collection.get_all_collection_for_user(current_user.id)
+        all_coll_owner_id = collection && user_ids.exclude?(collection.user_id) ? collection.user_id : current_user.id
+        all_coll = Collection.get_all_collection_for_user(all_coll_owner_id)
         collections << all_coll if all_coll.present?
         sample.collections = collections.uniq
 
@@ -646,4 +588,4 @@ module Chemotion
     end
   end
 end
-# rubocop:enable Metrics/ClassLength, Lint/UselessAssignment
+# rubocop:enable Metrics/ClassLength

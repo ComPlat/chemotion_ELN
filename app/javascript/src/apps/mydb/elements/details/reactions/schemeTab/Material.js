@@ -104,6 +104,7 @@ class Material extends Component {
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.gasFieldsUnitsChanged = this.gasFieldsUnitsChanged.bind(this);
     this.handleCoefficientChange = this.handleCoefficientChange.bind(this);
+    this.handleConcentrationChange = this.handleConcentrationChange.bind(this);
     this.debounceHandleAmountUnitChange = debounce(this.handleAmountUnitChange, 500);
     this.yieldOrConversionRate = this.yieldOrConversionRate.bind(this);
     this.toggleComponentsAccordion = this.toggleComponentsAccordion.bind(this);
@@ -160,7 +161,7 @@ class Material extends Component {
     if (!showLoadingColumn) {
       return false;
     }
-    if (!material.contains_residues) {
+    if (!material.contains_residues || (material.loading == null && this.props.materialGroup === 'products')) {
       return notApplicableInput('reaction-material__loading-data');
     }
 
@@ -188,15 +189,25 @@ class Material extends Component {
    * Renders the concentration field for a material.
    * For mixtures, it finds the reference component and uses its concentration.
    * For regular materials, it uses the material's own concentration value.
+   * For SBMM materials, it uses `concentration_rt_value` (reaction-scheme concentration).
    *
    * @param {Sample} material - The material sample to display concentration for
    * @returns {JSX.Element} A table cell containing the concentration input component
    */
   materialConcentration(material) {
+    const { reaction, materialGroup } = this.props;
+
+    const isSbmm = isSbmmSample(material);
     const metricMolConc = getMetricMolConc(material);
+    const isProduct = materialGroup === 'products';
+
+    const isConcentrationDisabled =
+      !permitOn(reaction)
+      || isProduct
+      || reaction.weight_percentage;
 
     // For SBMM samples, use concentration_rt_value directly (automatically calculated)
-    const concentrationValue = isSbmmSample(material)
+    const concentrationValue = isSbmm
       ? material.concentration_rt_value
       : material.concn;
 
@@ -208,12 +219,34 @@ class Material extends Component {
         metricPrefix={metricMolConc}
         metricPrefixes={metricPrefixesMolConc}
         precision={4}
-        disabled
-        onChange={(e) => this.handleAmountUnitChange(e, concentrationValue)}
+        disabled={isConcentrationDisabled}
+        onChange={(e) => this.handleConcentrationChange(e, concentrationValue)}
         onMetricsChange={this.handleMetricsChange}
         size="sm"
       />
     );
+  }
+
+  /**
+   * Handles changes to a material's concentration value.
+   * Emits a 'concentrationChanged' event to trigger recalculation of material amounts.
+   *
+   * @param {Object} e - The change event containing new concentration value
+   * @param {number} currentValue - Current concentration value for comparison
+   */
+  handleConcentrationChange(e, currentValue) {
+    const { materialGroup, onChange } = this.props;
+    if (!onChange || !e) return;
+    if (e.value === currentValue) return;
+
+    const event = {
+      concentration: e,
+      type: 'concentrationChanged',
+      materialGroup,
+      sampleID: this.materialId(),
+      isSbmm: this.isSbmm,
+    };
+    onChange(event);
   }
 
   materialRef(material) {
@@ -368,6 +401,9 @@ class Material extends Component {
   equivalentOrYield(material) {
     const { materialGroup, reaction, lockEquivColumn } = this.props;
     if (materialGroup === 'products') {
+      if (reaction.isInteractionReaction()) {
+        return null; // equivalent and yield not relevant for interaction reactions, and conversion rate is not applicable for products, so we return null to render an empty cell.
+      }
       return this.yieldOrConversionRate(material);
     }
     const isSbmm = isSbmmSample(material);
@@ -687,8 +723,7 @@ class Material extends Component {
 
     const isDisabled = !permitOn(reaction)
       || isAmountDisabledByWeightPercentage
-      || (materialGroup === 'products'
-      || (!material.reference && lockEquivColumn));
+      || (!material.reference && lockEquivColumn && materialGroup !== 'products');
 
     return (
       <NumeralInputWithUnitsCompo
@@ -716,8 +751,7 @@ class Material extends Component {
 
     const isDisabled = !permitOn(reaction)
       || isAmountDisabledByWeightPercentage
-      || (materialGroup === 'products'
-      || (!material.reference && lockEquivColumn));
+      || (!material.reference && lockEquivColumn && materialGroup !== 'products');
 
     // Check if activity is the active unit
     // For SBMM samples: check if _amount_unit is 'U' (set when activity is the primary amount)
@@ -1033,15 +1067,25 @@ class Material extends Component {
       return `${molName} (${mol}${ton}${tof}${yld})`;
     }
 
+    const loadingStr = (m.contains_residues && m.loading)
+      ? `${validDigit(parseFloat(m.loading), 3)} mmol/g, `
+      : '';
+
     switch (materialGroup) {
       case 'purification_solvents':
       case 'solvents': {
         return `${molName} (${solVol})`;
       }
       case 'products': {
+        if (m.contains_residues) {
+          return `${molName} (${grm}${mol}${loadingStr}${yld} yield)`;
+        }
         return `${molName} (${grm}${vol}${mol}${mlt}${yld} yield)`;
       }
       default: {
+        if (m.contains_residues) {
+          return `${molName} (${grm}${mol}${loadingStr}${eqv} equiv)`;
+        }
         return `${molName} (${grm}${vol}${mol}${mlt}${eqv} equiv)`;
       }
     }

@@ -45,7 +45,9 @@ RSpec.describe Molecule, type: :model do
       molecule.save!
       invalid_molecule = described_class.new
       invalid_molecule.inchikey = molecule.inchikey
-      expect { invalid_molecule.save! }.to raise_error
+      invalid_molecule.sum_formular = molecule.sum_formular
+      invalid_molecule.is_partial = molecule.is_partial
+      expect { invalid_molecule.save! }.to raise_error(ActiveRecord::RecordNotUnique)
     end
 
     it 'have a tag with CID' do
@@ -92,15 +94,24 @@ RSpec.describe Molecule, type: :model do
     end
 
     it 'persists the binary molfile' do
-      molfile_example = "\n  Ketcher 05301616272D 1   1.00000     0.00000     0\n\n  2  1  0     0  0            999 V2000\n    1.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0     0  0\nM  END\n" # File.open("spec/models/molecule_spec.rb", "rb")
+      molfile_example = <<~MOL
+
+          Ketcher 05301616272D 1   1.00000     0.00000     0
+
+          2  1  0     0  0            999 V2000
+            1.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+          1  2  1  0     0  0
+        M  END
+      MOL
       molecule.assign_attributes(molfile: molfile_example)
       molecule.save!
       persisted_molecule = described_class.last
-      persisted_molfile_SHA =
+      persisted_molfile_sha =
         (Digest::SHA256.new << persisted_molecule.molfile).hexdigest
-      molfile_SHA =
+      molfile_sha =
         (Digest::SHA256.new << molecule.molfile).hexdigest
-      expect(persisted_molfile_SHA).to be === molfile_SHA
+      expect(persisted_molfile_sha).to eq(molfile_sha)
     end
 
     it 'updates LCSS when molecule.pubchem_lcss is requested' do
@@ -115,6 +126,351 @@ RSpec.describe Molecule, type: :model do
       persisted_molecule.tag.taggable_data['pubchem_cid'] = 643_785
       persisted_molecule.pubchem_lcss
       expect(persisted_molecule.tag.taggable_data['pubchem_lcss']).not_to be_nil
+    end
+  end
+
+  describe '#get_lcss' do
+    it 'schedules a single-element batch for a normally-created molecule' do
+      scheduled_ids = nil
+      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+
+      molecule = create(:molecule)
+
+      expect(scheduled_ids).to eq([molecule.id])
+    end
+  end
+
+  describe '#skip_lcss_callback' do
+    it 'suppresses automatic scheduling when set true before create' do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      build(:molecule, skip_lcss_callback: true).save!
+
+      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+    end
+  end
+
+  describe '.schedule_lcss_batch' do
+    it 'schedules one job covering every given id' do
+      first_molecule = create(:molecule, skip_lcss_callback: true)
+      second_molecule = create(:molecule, skip_lcss_callback: true)
+      scheduled_ids = nil
+      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+
+      described_class.schedule_lcss_batch([first_molecule.id, second_molecule.id])
+
+      expect(PubchemSingleLcssJob).to have_received(:perform_later).once
+      expect(scheduled_ids).to contain_exactly(first_molecule.id, second_molecule.id)
+    end
+
+    it 'only schedules ids that still exist' do
+      survivor = create(:molecule, skip_lcss_callback: true)
+      doomed = create(:molecule, skip_lcss_callback: true)
+      doomed.destroy!
+      scheduled_ids = nil
+      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+
+      described_class.schedule_lcss_batch([survivor.id, doomed.id])
+
+      expect(scheduled_ids).to eq([survivor.id])
+    end
+
+    it 'schedules nothing when no given id still exists' do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      described_class.schedule_lcss_batch([])
+      described_class.schedule_lcss_batch([-1])
+
+      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+    end
+  end
+
+  describe '.find_or_create_by_molfile' do
+    let(:babel_info) do
+      { inchikey: 'NEWMOLECULE-UHFFFAOYSA-N', is_partial: false, formula: 'H2O', molfile_version: 'V2000' }
+    end
+
+    before do
+      allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey).and_return({})
+    end
+
+    context 'when a concurrent worker wins the create race' do
+      it 're-finds the existing row instead of raising, without re-enqueueing LCSS' do
+        existing = create(
+          :molecule,
+          inchikey: babel_info[:inchikey],
+          is_partial: false,
+          sum_formular: babel_info[:formula],
+          skip_lcss_callback: true,
+        )
+        # Simulate the TOCTOU race: find_by misses, then the INSERT collides with the row the
+        # winning worker committed in the gap.
+        allow(described_class).to receive(:find_by).and_return(nil, existing)
+        allow(described_class).to receive(:create).and_raise(ActiveRecord::RecordNotUnique)
+        allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+        molecule = described_class.find_or_create_by_molfile('molfile', **babel_info)
+
+        expect(molecule.id).to eq(existing.id)
+        # the losing call must NOT re-enqueue for a row the winner already handled — its own
+        # failed Molecule.create never committed, so after_create_commit never fired
+        expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+      end
+
+      # The stubbed sibling above raises RecordNotUnique in Ruby, which never touches Postgres
+      # and so cannot detect a missing savepoint. This one drives a real unique-index violation
+      # from inside an enclosing transaction — the shape every transactional caller has
+      # (Sample's before_save :find_or_create_molecule, ImportSamples#write_to_db,
+      # ImportCollections#import). Without requires_new: true the aborted INSERT leaves the
+      # outer transaction in PG::InFailedSqlTransaction and the rescue's own re-find raises.
+      it 'recovers from a genuine unique-index violation inside an enclosing transaction' do
+        allow(PubchemSingleLcssJob).to receive(:perform_later)
+        winner = nil
+
+        allow(described_class).to receive(:find_by).and_wrap_original do |orig, *args|
+          found = orig.call(*args)
+          next found unless found.nil? && winner.nil?
+
+          # Stand in for the competing worker committing in the TOCTOU gap: the winning row is
+          # created *before* the savepoint opens, so rolling back to it leaves the row.
+          winner = create(
+            :molecule,
+            inchikey: babel_info[:inchikey],
+            is_partial: false,
+            sum_formular: babel_info[:formula],
+            skip_lcss_callback: true,
+          )
+          nil
+        end
+
+        molecule = ActiveRecord::Base.transaction do
+          described_class.find_or_create_by_molfile('molfile', defer_lcss: true, **babel_info)
+        end
+
+        expect(winner).to be_present
+        expect(molecule.id).to eq(winner.id)
+        expect(described_class.where(inchikey: babel_info[:inchikey]).count).to eq 1
+      end
+
+      it 're-raises when the row is genuinely absent after RecordNotUnique' do
+        allow(described_class).to receive(:find_by).and_return(nil, nil)
+        allow(described_class).to receive(:create).and_raise(ActiveRecord::RecordNotUnique)
+
+        expect do
+          described_class.find_or_create_by_molfile('molfile', **babel_info)
+        end.to raise_error(ActiveRecord::RecordNotUnique)
+      end
+    end
+
+    # Import::ImportSamples reaches this with an inchikey and nothing else when OpenBabel could
+    # not read the molfile but smiles_to_inchikey still resolved a key. molecules.is_partial is
+    # NOT NULL DEFAULT FALSE, so passing the missing key straight through assigns an explicit
+    # nil over the default and raises ActiveRecord::NotNullViolation — which the RecordNotUnique
+    # rescue does not catch, taking down the whole import.
+    it 'creates the molecule when babel_info carries only an inchikey', :aggregate_failures do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      molecule = described_class.find_or_create_by_molfile('molfile', inchikey: 'ONLYKEY-UHFFFAOYSA-N')
+
+      expect(molecule).to be_persisted
+      expect(molecule.is_partial).to be false
+    end
+
+    it 'defers scheduling when given defer_lcss: true' do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      described_class.find_or_create_by_molfile('molfile', defer_lcss: true, **babel_info)
+
+      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+    end
+
+    it 'schedules immediately when defer_lcss is not given' do
+      scheduled_ids = nil
+      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+
+      molecule = described_class.find_or_create_by_molfile('molfile', **babel_info)
+
+      expect(scheduled_ids).to eq([molecule.id])
+    end
+
+    it 'does not schedule anything when the molecule already existed, regardless of defer_lcss' do
+      existing = create(
+        :molecule,
+        inchikey: babel_info[:inchikey],
+        is_partial: false,
+        sum_formular: babel_info[:formula],
+        skip_lcss_callback: true,
+      )
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      molecule = described_class.find_or_create_by_molfile('molfile', defer_lcss: true, **babel_info)
+
+      expect(molecule.id).to eq(existing.id)
+      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+    end
+  end
+
+  describe '.schedule_lcss_since' do
+    it 'does nothing when timestamp is blank' do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      described_class.schedule_lcss_since(nil)
+
+      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+    end
+
+    it 'does nothing when no molecule was created after the given timestamp' do
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      described_class.schedule_lcss_since(1.hour.from_now)
+
+      expect(PubchemSingleLcssJob).not_to have_received(:perform_later)
+    end
+
+    it 'schedules a job covering molecules created after the given timestamp' do
+      timestamp = 1.hour.ago
+      create(:molecule)
+      allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+      described_class.schedule_lcss_since(timestamp)
+
+      expect(PubchemSingleLcssJob).to have_received(:perform_later).with(nil, created_after: timestamp)
+    end
+  end
+
+  describe '#assign_molecule_data svg_molfile: kwarg' do
+    let(:molecule) { build(:molecule) }
+    let(:babel_info) do
+      {
+        inchi: 'InChI=...', formula: 'C6H6', mol_wt: 78.0, mass: 78.0,
+        cano_smiles: 'c1ccccc1', molfile_version: 'V2000', is_partial: false,
+        svg: nil, ob_log: nil
+      }
+    end
+
+    it 'uses svg_molfile for SVG generation when provided' do
+      original_molfile = "full-molfile-with-PolymersList\n> <PolymersList>\n0/95/1.0-1.0\n$$$$"
+      partial_molfile  = 'partial-molfile-no-PolymersList'
+      molecule.molfile = partial_molfile
+
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
+      molecule.assign_molecule_data(babel_info, {}, original_molfile)
+      expect(described_class).to have_received(:svg_reprocess).with(nil, original_molfile)
+    end
+
+    it 'falls back to self.molfile when svg_molfile is not given' do
+      molecule.molfile = 'stored-molfile'
+
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
+      molecule.assign_molecule_data(babel_info, {})
+      expect(described_class).to have_received(:svg_reprocess).with(nil, 'stored-molfile')
+    end
+
+    it 'falls back to self.molfile when svg_molfile is nil explicitly' do
+      molecule.molfile = 'stored-molfile'
+
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
+      molecule.assign_molecule_data(babel_info, {}, nil)
+      expect(described_class).to have_received(:svg_reprocess).with(nil, 'stored-molfile')
+    end
+
+    it 'assigns molecular properties from babel_info regardless of svg_molfile' do
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
+      molecule.molfile = 'molfile'
+
+      molecule.assign_molecule_data(babel_info, {})
+
+      expect(molecule.sum_formular).to eq('C6H6')
+      expect(molecule.molecular_weight).to eq(78.0)
+      expect(molecule.exact_molecular_weight).to eq(78.0)
+    end
+  end
+
+  describe '.find_or_create_by_molfile with polymer (svg_molfile: fix)' do
+    let(:polymer_molfile) do
+      <<~MOL
+
+          Ketcher  01012012572D 1   1.00000     0.00000     0
+
+          2  1  0  0  0  0            999 V2000
+            0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+            1.2124    0.7000    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+          1  2  1  0     0  0
+        M  RGP  1   2   1
+        M  END
+
+        > <PolymersList>
+        1/95/1.00-1.00
+
+        $$$$
+      MOL
+    end
+
+    it 'passes the original molfile (with PolymersList) to assign_molecule_data as svg_molfile' do
+      # Prevent actual OpenBabel / PubChem / SVG calls
+      babel_info = {
+        inchikey: 'TESTINCHIKEY12345-UHFFFAOYSA-N',
+        inchi: 'InChI=1S/test',
+        formula: 'C1',
+        mol_wt: 12.0,
+        mass: 12.0,
+        cano_smiles: 'C',
+        molfile_version: 'V2000',
+        is_partial: true,
+        molfile: "partial\nC atom only\nM  END\n",
+        svg: nil,
+        ob_log: nil,
+      }
+
+      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfile).and_return(babel_info)
+      allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey).and_return({})
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
+
+      described_class.find_or_create_by_molfile(polymer_molfile)
+      expect(described_class).to have_received(:svg_reprocess).with(nil, polymer_molfile)
+    end
+  end
+
+  describe '.find_or_create_by_molfile with ball-only polymer (null header, TextNode)' do
+    let(:ball_only_molfile) do
+      <<~MOL
+        null
+          Ketcher  6232611422D 1   1.00000     0.00000     0
+
+          1  0  0  0  0  0  0  0  0  0999 V2000
+            2.0250   -2.0250    0.0000 R#   0  0  0  0  0  0  0  0  0  0  0  0
+        M  END
+
+        > <PolymersList>
+        0/95/1.00-1.00
+        > <TextNode>
+        0#0ce7f3#t_95_0#asdads
+        > </TextNode>
+        $$$$
+      MOL
+    end
+
+    it 'passes the original molfile (with PolymersList and TextNode) as svg_molfile' do
+      babel_info = {
+        inchikey: 'BALLONLYINCHIKEY-UHFFFAOYSA-N',
+        inchi: 'InChI=1S/ball',
+        formula: 'C1',
+        mol_wt: 12.0,
+        mass: 12.0,
+        cano_smiles: 'C',
+        molfile_version: 'V2000',
+        is_partial: true,
+        molfile: "partial\nC atom only\nM  END\n",
+        svg: nil,
+        ob_log: nil,
+      }
+
+      allow(Chemotion::OpenBabelService).to receive(:molecule_info_from_molfile).and_return(babel_info)
+      allow(Chemotion::PubchemService).to receive(:molecule_info_from_inchikey).and_return({})
+      allow(described_class).to receive(:svg_reprocess).and_return(nil)
+
+      described_class.find_or_create_by_molfile(ball_only_molfile)
+      expect(described_class).to have_received(:svg_reprocess).with(nil, ball_only_molfile)
     end
   end
 end

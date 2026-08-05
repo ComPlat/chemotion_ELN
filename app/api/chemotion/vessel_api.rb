@@ -10,6 +10,7 @@ module Chemotion
   class VesselAPI < Grape::API
     include Grape::Kaminari
 
+    helpers CollectionHelpers
     helpers ParamsHelpers
     helpers ContainerHelpers
 
@@ -29,17 +30,8 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        scope = if params[:collection_id]
-                  begin
-                    Collection.accessible_for(current_user)
-                              .find(params[:collection_id])
-                              .vessels
-                  rescue ActiveRecord::RecordNotFound
-                    Vessel.none
-                  end
-                else
-                  Vessel.none.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-                end.order('created_at DESC')
+        _resolved_collection, scope = collection_scope_for(params[:collection_id], Vessel, :vessels)
+        scope = scope.order(created_at: :desc)
 
         from = params[:from_date]
         to = params[:to_date]
@@ -133,8 +125,8 @@ module Chemotion
         vessel_template = VesselTemplate.find_by(id: params[:vessel_template_id])
         error!('404 Vessel Template not found', 404) unless vessel_template
 
-        collection = current_user.collections.find_by(id: params[:collection_id])
-        error!('404 Collection not found', 404) unless collection
+        collection = writable_collection_for(params[:collection_id])
+        error!('403 Forbidden', 403) unless collection
 
         current_count = Vessel.where(user_id: current_user.id).count
 
@@ -172,7 +164,7 @@ module Chemotion
       end
 
       post 'bulk_create' do
-        error!('401 Unauthorized', 401) unless current_user.collections.find_by(id: params[:collection_id])
+        error!('403 Forbidden', 403) unless writable_collection_for(params[:collection_id])
 
         vessel_template = VesselTemplate.find_by(id: params[:vessel_template_id])
         error!('404 VesselTemplate Not Found', 404) unless vessel_template
@@ -202,7 +194,7 @@ module Chemotion
             )
 
             if params[:collection_id]
-              collection = current_user.collections.find_by(id: params[:collection_id])
+              collection = writable_collection_for(params[:collection_id])
               vessel.collections << collection if collection.present?
             end
 

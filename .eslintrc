@@ -1,41 +1,82 @@
 {
   "parser": "@babel/eslint-parser",
+  "ignorePatterns": ["node_modules/", "dist/", "build/", "public/"],
   "plugins": [
     "react",
+    "react-hooks",
+    "jsx-a11y",
+    "import",
     "no-relative-import-paths"
   ],
   "env": {
     "browser": true,
-    "node": true
+    "node": true,
+    "es2020": true
   },
   "extends": [
-    "airbnb",
+    "eslint:recommended",
     "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:jsx-a11y/recommended",
+    "plugin:import/recommended",
     "plugin:storybook/recommended"
   ],
   "rules": {
-    "no-console": ["off"],
-    "comma-dangle": [1,"only-multiline"],
+    "no-var": "error",
+    "prefer-const": "error",
+    "prefer-arrow-callback": "error",
+    "prefer-template": "error",
+    "object-shorthand": ["error", "always"],
+    "prefer-destructuring": ["error", { "object": true, "array": false }],
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
+    "no-shadow": "error",
+    "no-param-reassign": ["error", { "props": false }],
+    "no-use-before-define": ["error", { "functions": true, "classes": true, "variables": true }],
+    "semi": ["error", "always"],
+    "quotes": ["error", "single", { "avoidEscape": true, "allowTemplateLiterals": false }],
+    "no-else-return": "error",
+    "arrow-body-style": ["error", "as-needed"],
+    "radix": "error",
+    "no-trailing-spaces": "error",
+    "no-multiple-empty-lines": ["error", { "max": 1 }],
+    "object-curly-spacing": ["error", "always"],
+    "array-bracket-spacing": ["error", "never"],
+    "space-infix-ops": "error",
+    "keyword-spacing": ["error", { "before": true, "after": true }],
+    "space-before-blocks": "error",
+    "no-console": "off",
+    "comma-dangle": [1, "only-multiline"],
+    "max-len": ["error", { "code": 120, "ignoreComments": true }],
+    "import/no-unresolved": "off",
+    "import/no-extraneous-dependencies": ["error", {
+      "devDependencies": ["**/*.test.js", "**/*.spec.js", "stories/**"]
+    }],
+    "import/prefer-default-export": "off",
     "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
-    "prefer-destructuring": ["error", {"object": true, "array": false}],
+    "react/function-component-definition": ["error", {
+      "namedComponents": "arrow-function",
+      "unnamedComponents": "arrow-function"
+    }],
+    "react/prefer-stateless-function": "warn",
+    "react/destructuring-assignment": "off",
+    "react/no-array-index-key": "warn",
+    "react/jsx-props-no-spreading": "off",
+    "react/require-default-props": "off",
     "no-relative-import-paths/no-relative-import-paths": [
       "error",
       { "allowSameFolder": false, "rootDir": "app/javascript" }
-    ],
-    "max-len": [
-      "error",
-      {
-        "code": 120,
-        "ignoreComments": true
-      }
     ]
   },
   "settings": {
+    "react": {
+      "version": "detect"
+    },
     "import/resolver": {
       "node": {
         "paths": ["app/javascript"]
       }
-    }
+    },
+    "import/ignore": ["node_modules"]
   },
   "overrides": [
     {

@@ -15,14 +15,16 @@ import NumericInputUnit from 'src/apps/mydb/elements/details/NumericInputUnit';
 import TextRangeWithAddon from 'src/apps/mydb/elements/details/samples/propertiesTab/TextRangeWithAddon';
 import { SampleTypesOptions } from 'src/components/staticDropdownOptions/options';
 import SampleDetailsSolvents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsSolvents';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
+import { isValidMoleculeName } from 'src/utilities/MoleculeNameValidation';
 
 export default class SampleForm extends React.Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
 
@@ -48,6 +50,7 @@ export default class SampleForm extends React.Component {
     this.updateStereoRel = this.updateStereoRel.bind(this);
     this.addMolName = this.addMolName.bind(this);
     this.handleRangeChanged = this.handleRangeChanged.bind(this);
+    this.handleMeltingPointDecomposedChanged = this.handleMeltingPointDecomposedChanged.bind(this);
     this.handleMetricsChange = this.handleMetricsChange.bind(this);
     this.fetchNextInventoryLabel = this.fetchNextInventoryLabel.bind(this);
     this.matchSelectedCollection = this.matchSelectedCollection.bind(this);
@@ -154,12 +157,11 @@ export default class SampleForm extends React.Component {
       })
       .catch((errorMessage) => {
         // Show error notification
-        NotificationActions.add({
+        this.context.notifications.add({
           title: 'Error Creating Components',
           message: `Failed to create components: ${errorMessage}`,
           level: 'error',
           position: 'tc',
-          dismissible: 'button',
           autoDismiss: 10
         });
       });
@@ -385,6 +387,8 @@ export default class SampleForm extends React.Component {
       return true;
     });
 
+    const molNameInvalid = moleculeNameInputValue !== '' && !isValidMoleculeName(moleculeNameInputValue);
+
     return (
       <Form.Group>
         <Form.Label>Molecule name</Form.Label>
@@ -419,24 +423,42 @@ export default class SampleForm extends React.Component {
               return String(value) === String(mno.value) || String(label) === String(mno.label);
             }) || null}
             onCreateOption={(inputValue) => {
+              if (!isValidMoleculeName(inputValue)) return;
               this.setState({ moleculeNameInputValue: inputValue });
               this.addMolName(inputValue);
             }}
             placeholder="Enter or select a molecule name"
             allowCreateWhileLoading
             formatCreateLabel={(inputValue) => `Create "${inputValue}"`}
-            className="flex-grow-1"
+            className={`flex-grow-1${molNameInvalid ? ' is-invalid' : ''}`}
           />
           {this.structureEditorButton(!sample.can_update)}
+          {molNameInvalid && (
+            <Form.Control.Feedback type="invalid" style={{ display: 'block' }}>
+              Name contains invalid characters (control or invisible characters are not allowed).
+            </Form.Control.Feedback>
+          )}
         </InputGroup>
       </Form.Group>
     );
   }
 
-  handleRangeChanged(field, lower, upper) {
-    const { sample } = this.props;
-    sample.updateRange(field, lower, upper);
-    this.props.handleSampleChanged(sample);
+  handleRangeChanged(field, lower, upper, label) {
+    const { sample, handleSampleChanged } = this.props;
+    sample.updateRange(field, lower, upper, label);
+    handleSampleChanged(sample);
+  }
+
+  // Toggle the "Decomposed" state for melting point. When checked, the numeric
+  // range is cleared because the substance decomposes before melting and no
+  // temperature can be measured.
+  handleMeltingPointDecomposedChanged(checked) {
+    const { sample, handleSampleChanged } = this.props;
+    sample.xref = { ...(sample.xref || {}), melting_point_decomposed: !!checked };
+    if (checked) {
+      sample.updateRange('melting_point', '', '', '');
+    }
+    handleSampleChanged(sample);
   }
 
   /* eslint-disable camelcase */
@@ -466,7 +488,7 @@ export default class SampleForm extends React.Component {
             const value = `${prefix}-${counter + 1}`;
             this.handleFieldChanged('xref_inventory_label', value);
           } else {
-            NotificationActions.add({
+            this.context.notifications.add({
               message,
               level: 'error'
             });
@@ -476,7 +498,7 @@ export default class SampleForm extends React.Component {
           console.error(error);
         });
     } else {
-      NotificationActions.add({
+      this.context.notifications.add({
         message: 'Please select the collection to which sample belongs first',
         level: 'error'
       });
@@ -491,7 +513,7 @@ export default class SampleForm extends React.Component {
       e.value = 1;
       sample[field] = e.value;
       sample.changed = true;
-      NotificationActions.add({
+      this.context.notifications.add({
         message: 'Purity value should be >= 0 and <=1',
         level: 'error'
       });
@@ -593,7 +615,7 @@ export default class SampleForm extends React.Component {
 
   handleError() {
     this.clearMolecularMass();
-    NotificationActions.add({
+    this.context.notifications.add({
       message: 'Could not calculate the molecular mass for this sum formula',
       level: 'error'
     });
@@ -611,7 +633,7 @@ export default class SampleForm extends React.Component {
         if (result !== undefined) {
           this.handleFieldChanged('molecular_mass', { value: result });
         } else {
-          NotificationActions.add({
+          this.context.notifications.add({
             message: 'Could not calculate the molecular mass for this sum formula',
             level: 'error'
           });
@@ -620,7 +642,7 @@ export default class SampleForm extends React.Component {
       .catch((error) => {
         console.log(error);
 
-        NotificationActions.add({
+        this.context.notifications.add({
           message: 'An error occurred while calculating the molecular mass',
           level: 'error'
         });
@@ -759,6 +781,102 @@ export default class SampleForm extends React.Component {
           }}
           disabled={!sample.can_update}
           readOnly={!sample.can_update}
+        />
+      </Form.Group>
+    );
+  }
+
+  // store the value as typed; bounds are enforced on blur to avoid rewriting in-progress input
+  handleNumericChange(field, value) {
+    if (value === '') {
+      this.handleFieldChanged(field, null);
+      return;
+    }
+    // Preserve intermediate decimals (e.g. "12.") so the user can continue typing
+    // without React rewriting the value to "12". Normalized to a number on blur.
+    if (value.endsWith('.') && value !== '.') {
+      this.handleFieldChanged(field, value);
+      return;
+    }
+    const parsed = Number(value);
+    // ignore intermediate/invalid states (e.g. "-") so we never store NaN/Infinity in xref
+    if (!Number.isFinite(parsed)) return;
+    this.handleFieldChanged(field, parsed);
+  }
+
+  // clamp to [min, max] on blur so the user can finish typing before correction
+  handleNumericBlur(field, label, value, min, max) {
+    if (value === '') return;
+
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return;
+
+    let next = parsed;
+    if (min != null && next < min) next = min;
+    if (max != null && next > max) next = max;
+
+    if (next !== parsed) {
+      this.context.notifications.add({
+        message: max != null
+          ? `${label} must be between ${min} and ${max}`
+          : `${label} must be at least ${min}`,
+        level: 'error',
+      });
+    }
+
+    // Normalize to a number on blur: stores the clamped value, and also converts
+    // any in-progress string left by handleNumericChange (e.g. "12." -> 12).
+    // Skip when the typed text is already the canonical number to avoid redundant writes.
+    if (next !== parsed || String(next) !== value) {
+      this.handleFieldChanged(field, next);
+    }
+  }
+
+  numericInputWithAddon(sample, field, label, addonText, min = null, max = null) {
+    const key = field.split('xref_')[1];
+    const updateValue = (sample.xref && sample.xref[key] != null) ? sample.xref[key] : '';
+
+    return (
+      <Form.Group>
+        <Form.Label>{label}</Form.Label>
+        <InputGroup>
+          <Form.Control
+            type="number"
+            step="any"
+            min={min != null ? min : undefined}
+            max={max != null ? max : undefined}
+            value={updateValue}
+            onChange={(e) => this.handleNumericChange(field, e.target.value)}
+            onBlur={(e) => this.handleNumericBlur(field, label, e.target.value, min, max)}
+            disabled={!sample.can_update}
+            readOnly={!sample.can_update}
+          />
+          <InputGroup.Text>{addonText}</InputGroup.Text>
+        </InputGroup>
+      </Form.Group>
+    );
+  }
+
+  physicalStateInput(sample) {
+    const physicalStateOptions = [
+      { label: 'Solid', value: 'solid' },
+      { label: 'Liquid', value: 'liquid' },
+      { label: 'Gas', value: 'gas' },
+    ];
+
+    const currentValue = sample.xref?.physical_state;
+    const selectedOption = physicalStateOptions.find((o) => o.value === currentValue) || null;
+
+    return (
+      <Form.Group>
+        <Form.Label>Physical state</Form.Label>
+        <Select
+          name="physicalState"
+          isClearable
+          isDisabled={!sample.can_update}
+          options={physicalStateOptions}
+          value={selectedOption}
+          onChange={(option) => this.handleFieldChanged('xref_physical_state', option ? option.value : null)}
         />
       </Form.Group>
     );
@@ -942,34 +1060,29 @@ export default class SampleForm extends React.Component {
    * @returns {JSX.Element|false} The rendered input or false if not applicable
    */
   totalMixtureVolume(sample) {
-    const isDisabled = sample.isMethodDisabled('amount_value')
-      || sample.gas_type === 'gas'
-      || sample.gas_type === 'feedstock'
-      || sample.contains_residues
-      || !sample.can_update;
+    const isDisabled = sample.isMethodDisabled('amount_value') || !sample.can_update;
 
     const metricPrefixes = ['m', 'u', 'n'];
     const prefix = sample.metrics?.[3] && metricPrefixes.includes(sample.metrics[3])
       ? sample.metrics[3]
       : 'm';
 
-    if (!isDisabled) {
-      return (
-        <NumeralInputWithUnitsCompo
-          value={sample.amount_l}
-          unit="l"
-          label="Total volume"
-          metricPrefix={prefix}
-          metricPrefixes={metricPrefixes}
-          precision={5}
-          title="Total volume"
-          variant="light"
-          id="numInput_total_mixture_volume_l"
-          showInfoTooltipTotalVol
-          onChange={(e) => this.handleMixtureAmountLChanged(e, sample)}
-        />
-      );
-    }
+    return (
+      <NumeralInputWithUnitsCompo
+        value={sample.amount_l}
+        unit="l"
+        label="Total volume"
+        metricPrefix={prefix}
+        metricPrefixes={metricPrefixes}
+        precision={5}
+        title="Total volume"
+        variant="light"
+        id="numInput_total_mixture_volume_l"
+        showInfoTooltipTotalVol
+        disabled={isDisabled}
+        onChange={(e) => this.handleMixtureAmountLChanged(e, sample)}
+      />
+    );
   }
 
   /**
@@ -1116,6 +1229,7 @@ export default class SampleForm extends React.Component {
         <Form.Label>Description</Form.Label>
         <Form.Control
           as="textarea"
+          className="sample-description-auto"
           placeholder={sample.description}
           value={sample.description || ''}
           onChange={(e) => this.handleFieldChanged('description', e.target.value)}
@@ -1254,7 +1368,12 @@ export default class SampleForm extends React.Component {
                 <Col>{this.textInput(sample, 'xref_color', 'Color')}</Col>
                 <Col>{this.textInput(sample, 'xref_solubility', 'Soluble in')}</Col>
               </Row>
-              <Row className="align-items-end mb-4">
+              <Row className="mb-4">
+                <Col>{this.numericInputWithAddon(sample, 'xref_moisture', 'Moisture', '%', 0, 100)}</Col>
+                <Col>{this.numericInputWithAddon(sample, 'xref_particle_size', 'Particle size', 'µm', 0)}</Col>
+                <Col>{this.physicalStateInput(sample)}</Col>
+              </Row>
+              <Row className="align-items-start mb-4">
                 <Col>
                   <TextRangeWithAddon
                     field="melting_point"
@@ -1263,7 +1382,12 @@ export default class SampleForm extends React.Component {
                     value={sample.melting_point_display}
                     disabled={polyDisabled}
                     onChange={this.handleRangeChanged}
-                    tipOnText="Use space-separated value to input a Temperature range"
+                    tipOnText='Examples: "65", "65-68", "65 68", ">300", "<200"'
+                    alternativeActive={!!(sample.xref && sample.xref.melting_point_decomposed)}
+                    alternativeLabel="Decomposed"
+                    alternativeToggleLabel="Decomposed"
+                    alternativeToggleTooltip="Substance decomposes before melting; no temperature can be measured"
+                    onAlternativeToggle={this.handleMeltingPointDecomposedChanged}
                   />
                 </Col>
 
@@ -1275,7 +1399,7 @@ export default class SampleForm extends React.Component {
                     value={sample.boiling_point_display}
                     disabled={polyDisabled}
                     onChange={this.handleRangeChanged}
-                    tipOnText="Use space-separated value to input a Temperature range"
+                    tipOnText='Examples: "65", "65-68", "65 68", ">300", "<200"'
                   />
                 </Col>
                 <Col>{this.inputWithUnit(sample, 'xref_flash_point', 'Flash point')}</Col>

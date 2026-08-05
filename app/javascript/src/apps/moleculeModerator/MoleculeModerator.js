@@ -7,23 +7,11 @@ import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import LoadingModal from 'src/components/common/LoadingModal';
 import MoleculeModeratorComponent from 'src/apps/moleculeModerator/MoleculeModeratorComponent';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import Notifications from 'src/components/Notifications';
 
-const pageNotify = (title, level, message) => {
-  const notification = {
-    title,
-    message,
-    level,
-    dismissible: 'button',
-    autoDismiss: 5,
-    position: 'tc',
-    uid: 'moderator'
-  };
-  NotificationActions.add(notification);
-};
-
 class MoleculeModerator extends Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     this.state = {
@@ -42,6 +30,19 @@ class MoleculeModerator extends Component {
     this.handleEditorSave = this.handleEditorSave.bind(this);
     this.handleSearchTermChange = this.handleSearchTermChange.bind(this);
     this.onSave = this.onSave.bind(this);
+    this.pageNotify = this.pageNotify.bind(this);
+  }
+
+  pageNotify(title, level, message) {
+    const notification = {
+      title,
+      message,
+      level,
+      autoDismiss: 5,
+      position: 'tc',
+      uid: 'moderator'
+    };
+    this.context.notifications.add(notification);
   }
 
   onSave() {
@@ -57,7 +58,7 @@ class MoleculeModerator extends Component {
       msg.message = json.msg.message;
       this.setState({ molecule, msg, showStructureEditor: false });
       LoadingActions.stop();
-      pageNotify('Save', msg.level, msg.message);
+      this.pageNotify('Save', msg.level, msg.message);
     });
   }
 
@@ -75,14 +76,14 @@ class MoleculeModerator extends Component {
         msg.message = result ? 'Record found!' : 'No record found!';
         this.setState({ msg, molecule: result.molecule, showStructureEditor: false });
         LoadingActions.stop();
-        pageNotify('Search', msg.level, msg.message);
+        this.pageNotify('Search', msg.level, msg.message);
       }).catch((errorMessage) => {
         msg.show = true;
         msg.level = 'error';
         msg.message = errorMessage;
         this.setState({ msg });
         LoadingActions.stop();
-        pageNotify('Search', msg.level, msg.message);
+        this.pageNotify('Search', msg.level, msg.message);
       });
   }
 

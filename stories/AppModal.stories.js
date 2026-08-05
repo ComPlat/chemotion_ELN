@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { fn } from 'storybook/test';
 import { Button } from 'react-bootstrap';
@@ -9,6 +9,9 @@ import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 function AppModalDemo({
   title,
   body,
+  editableTitle,
+  notification,
+  notificationType,
   triggerLabel,
   showFooter,
   extendedFooter,
@@ -27,6 +30,11 @@ function AppModalDemo({
   onPrimaryAction,
 }) {
   const [show, setShow] = useState(false);
+  const [currentTitle, setCurrentTitle] = useState(title);
+
+  useEffect(() => {
+    setCurrentTitle(title);
+  }, [title]);
 
   const handleHide = () => {
     setShow(false);
@@ -44,11 +52,14 @@ function AppModalDemo({
 
   return (
     <>
-      <Button variant="secondary" onClick={() => setShow(true)}>
+      <Button variant="light" onClick={() => setShow(true)}>
         {triggerLabel}
       </Button>
       <AppModal
-        title={title}
+        title={currentTitle}
+        onChangeTitle={editableTitle ? setCurrentTitle : undefined}
+        notification={notification}
+        notificationType={notificationType}
         show={show}
         showFooter={showFooter}
         extendedFooter={extendedFooter}
@@ -77,6 +88,9 @@ function renderStory(args) {
     <AppModalDemo
       title={args.title}
       body={args.body}
+      editableTitle={args.editableTitle}
+      notification={args.notification}
+      notificationType={args.notificationType}
       triggerLabel={args.triggerLabel}
       showFooter={args.showFooter}
       extendedFooter={args.extendedFooter}
@@ -100,6 +114,9 @@ function renderStory(args) {
 AppModalDemo.propTypes = {
   title: PropTypes.node.isRequired,
   body: PropTypes.string.isRequired,
+  editableTitle: PropTypes.bool,
+  notification: PropTypes.string,
+  notificationType: PropTypes.oneOf(['warning', 'info', 'success', 'danger']),
   triggerLabel: PropTypes.string.isRequired,
   showFooter: PropTypes.bool,
   extendedFooter: PropTypes.node,
@@ -119,6 +136,9 @@ AppModalDemo.propTypes = {
 };
 
 AppModalDemo.defaultProps = {
+  editableTitle: false,
+  notification: undefined,
+  notificationType: 'info',
   showFooter: undefined,
   extendedFooter: undefined,
   primaryActionLabel: undefined,
@@ -154,7 +174,7 @@ AppModal helps to establish a consistent footer button pattern:
 - Most modals have one primary task. AppModal places the primary action button (variant primary)
   on the far right as the last button.
 - It provides an extra slot for additional actions and places them between cancel and primary.
-  Please choose the secondary variant for buttons in this slot to visually separate them from the main action.
+  Please choose the light variant for buttons in this slot to visually separate them from the main action.
 
 More info about button variants: [Button variants](?path=/docs/atoms-button--docs#button-variants-5).
         `,
@@ -179,6 +199,19 @@ More info about button variants: [Button variants](?path=/docs/atoms-button--doc
       table: {
         category: 'Story controls',
       },
+    },
+    editableTitle: {
+      control: 'boolean',
+      description: 'Render editable title input in modal header',
+    },
+    notification: {
+      control: 'text',
+      description: 'Optional notification shown in modal header',
+    },
+    notificationType: {
+      control: { type: 'select' },
+      options: ['warning', 'info', 'success', 'danger'],
+      description: 'Header notification style',
     },
     showFooter: {
       control: 'boolean',
@@ -265,6 +298,83 @@ export const Large = {
   render: renderStory,
 };
 
+export const EditableTitle = {
+  args: {
+    editableTitle: true,
+    title: 'Editable Modal Title',
+  },
+  render: renderStory,
+};
+
+export const HeaderNotification = {
+  args: {
+    notification: 'Take note',
+    size: 'lg',
+  },
+  render: renderStory,
+};
+
+export function HeaderNotificationVariants() {
+  const [show, setShow] = useState(false);
+  const [notificationType, setNotificationType] = useState('info');
+  const [notification, setNotification] = useState('Information: check the latest updates.');
+
+  const handleSetInfo = () => {
+    setNotificationType('info');
+    setNotification('Information: check the latest updates.');
+    setShow(true);
+  };
+
+  const handleSetWarning = () => {
+    setNotificationType('warning');
+    setNotification('Warning: instrument metadata is missing.');
+    setShow(true);
+  };
+
+  const handleSetSuccess = () => {
+    setNotificationType('success');
+    setNotification('Success: dataset validation passed.');
+    setShow(true);
+  };
+
+  const handleSetDanger = () => {
+    setNotificationType('danger');
+    setNotification('Error: dataset import failed. Please retry.');
+    setShow(true);
+  };
+
+  return (
+    <div className="d-flex flex-column gap-2 align-items-start">
+      <div className="d-flex gap-2">
+        <Button variant="light" onClick={handleSetInfo}>Trigger info</Button>
+        <Button variant="warning" onClick={handleSetWarning}>Trigger warning</Button>
+        <Button variant="success" onClick={handleSetSuccess}>Trigger success</Button>
+        <Button variant="danger" onClick={handleSetDanger}>Trigger danger</Button>
+      </div>
+      <AppModal
+        title="Notification variants"
+        show={show}
+        size="lg"
+        notificationType={notificationType}
+        notification={notification}
+        closeLabel="Close"
+        onHide={() => setShow(false)}
+      >
+        <p className="mb-0">Use the buttons above to switch notification variant and text.</p>
+      </AppModal>
+    </div>
+  );
+}
+
+HeaderNotificationVariants.parameters = {
+  docs: {
+    description: {
+      story: 'Use the four trigger buttons to preview info, warning, success, '
+        + 'and danger notifications with dedicated texts.',
+    },
+  },
+};
+
 export function CloseWithConfirmationOverlay() {
   const [show, setShow] = useState(false);
   const [closeOverlayTarget, setCloseOverlayTarget] = useState(null);
@@ -298,7 +408,7 @@ export function CloseWithConfirmationOverlay() {
 
   return (
     <>
-      <Button variant="secondary" onClick={() => setShow(true)}>
+      <Button variant="light" onClick={() => setShow(true)}>
         Open modal with close confirmation
       </Button>
       <AppModal

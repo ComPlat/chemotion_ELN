@@ -198,8 +198,6 @@ class ElementStore {
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
       handleShowReactionMaterial: ElementActions.showReactionMaterial,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
-      handleImportSamplesFromFileDecline: ElementActions.importSamplesFromFileDecline,
-      handleImportSamplesFromFileConfirm: ElementActions.importSamplesFromFileConfirm,
 
       handleSetCurrentElement: ElementActions.setCurrentElement,
       handleDeselectCurrentElement: ElementActions.deselectCurrentElement,
@@ -729,6 +727,9 @@ class ElementStore {
               return new Component(sampleData);
             });
             await result.initialComponents(sampleComponents);
+            if (this.state.currentElement === result) {
+              this.setState({ currentElement: result });
+            }
           })
           .catch((errorMessage) => {
             console.log(errorMessage);
@@ -741,8 +742,14 @@ class ElementStore {
   handleCreateSample({ element, closeView, components }) {
     if (element.isMixture()) {
       ComponentsFetcher.saveOrUpdateComponents(element, components)
-        .then(async () => {
-          await element.initialComponents(components);
+        .then(async (savedComponents) => {
+          // Use the API response so newly inserted rows pick up their real DB ids.
+          // Falls back to the local components if the response is unexpectedly empty.
+          const refreshed = Component.refreshFromApi(savedComponents, components);
+          await element.initialComponents(refreshed);
+          if (this.state.currentElement === element) {
+            this.setState({ currentElement: element });
+          }
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
@@ -762,8 +769,9 @@ class ElementStore {
     UserActions.fetchCurrentUser();
     if (newSample.isMixture()) {
       ComponentsFetcher.saveOrUpdateComponents(newSample, components)
-        .then(async () => {
-          await newSample.initialComponents(components);
+        .then(async (savedComponents) => {
+          const refreshed = Component.refreshFromApi(savedComponents, components);
+          await newSample.initialComponents(refreshed);
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
@@ -807,9 +815,18 @@ class ElementStore {
 
   handleUpdateLinkedElement({ element, closeView, components }) {
     if (element instanceof Sample && element.isMixture()) {
+      // Seed element with current Component instances so names display immediately
+      // without waiting for saveOrUpdateComponents to resolve.
+      if (Array.isArray(components) && components.length > 0) {
+        element.components = components;
+      }
       ComponentsFetcher.saveOrUpdateComponents(element, components)
-        .then(() => {
-          element.initialComponents(components);
+        .then((savedComponents) => {
+          const refreshed = Component.refreshFromApi(savedComponents, components);
+          element.initialComponents(refreshed);
+          if (this.state.currentElement === element) {
+            this.setState({ currentElement: element });
+          }
         })
         .catch((errorMessage) => {
           console.log(errorMessage);
@@ -892,7 +909,7 @@ class ElementStore {
     const sample = Sample.buildEmpty(reaction.collection_id);
     sample.molfile = sample.molfile || '';
     sample.molecule = sample.molecule === undefined ? sample : sample.molecule;
-    sample.sample_svg_file = sample.sample_svg_file;
+    sample.sample_svg_file = sample.sample_svg_file ?? null;
     sample.belongTo = reaction;
     sample.matGroup = materialGroup;
     reaction.changed = true;
@@ -942,21 +959,11 @@ class ElementStore {
     this.changeCurrentElement(sample);
   }
 
-  handleImportSamplesFromFile(data) {
-    if (data.sdf) {
-      this.setState({ sdfUploadData: data });
-    } else {
-      this.handleRefreshElements('sample');
-    }
-  }
-
-  handleImportSamplesFromFileConfirm() {
-    this.setState({ sdfUploadData: null });
+  handleImportSamplesFromFile() {
+    // Import now runs asynchronously in ImportSamplesJob; completion is surfaced
+    // through the polling notification channel. Refresh so any already-created
+    // samples show up when the user revisits the collection.
     this.handleRefreshElements('sample');
-  }
-
-  handleImportSamplesFromFileDecline() {
-    this.setState({ sdfUploadData: null });
   }
 
   // -- Wellplates --
@@ -970,6 +977,28 @@ class ElementStore {
     this.changeCurrentElement(result);
     // this.state.currentElement = result;
     // this.navigateToNewElement(result)
+  }
+
+  handleUpdateWellplate(result) {
+    // Update current wellplate and synchronize samples in open tabs
+    this.changeCurrentElement(result);
+
+    // Synchronize Wellplate with open generic element tabs
+    const { selecteds } = this.state;
+    let updated = false;
+    const newSelecteds = selecteds.map((el) => {
+      if (el.klassType === 'GenericEl' && el.wellplates) {
+        const wellplateIndex = el.wellplates.findIndex((wp) => wp.id === result.id);
+        if (wellplateIndex > -1) {
+          el.wellplates[wellplateIndex] = result;
+          updated = true;
+        }
+      }
+      return el;
+    });
+    if (updated) {
+      this.setState({ selecteds: newSelecteds });
+    }
   }
 
   handleImportWellplateSpreadsheet(result) {
@@ -1684,6 +1713,7 @@ class ElementStore {
         this.handleRefreshElements('vessel');
         break;
       case 'wellplate':
+        this.handleUpdateWellplate(updatedElement);
         fetchOls('wellplate');
         this.handleRefreshElements('wellplate');
         this.handleUpdateWellplateAttaches(updatedElement);
@@ -1737,6 +1767,22 @@ class ElementStore {
           openedReaction.changed = previous.isPendingToSave;
         }
       }
+
+      // Synchronize sample molarity with open wellplate tabs, but only when the
+      // molarity actually changed. Otherwise every sample edit (e.g. renaming)
+      // would mark a containing wellplate as having unsaved changes.
+      selecteds.forEach((el) => {
+        if (el.type === 'wellplate' && el.wells) {
+          const well = el.wells.find((w) => w.sample && w.sample.id === previous.id);
+          if (well && well.sample
+            && (well.sample.molarity_value !== previous.molarity_value
+              || well.sample.molarity_unit !== previous.molarity_unit)) {
+            well.sample.molarity_value = previous.molarity_value;
+            well.sample.molarity_unit = previous.molarity_unit;
+            el.changed = true;
+          }
+        }
+      });
     }
 
     if (previous instanceof Reaction) {
@@ -1753,6 +1799,23 @@ class ElementStore {
         }
         return nextSample;
       });
+    }
+
+    if (previous instanceof Wellplate) {
+      const { wells } = previous;
+      if (wells && wells.length > 0) {
+        selecteds.map((nextSample) => {
+          if (nextSample.type === 'sample') {
+            const well = wells.find((w) => w.sample && w.sample.id === nextSample.id);
+            if (well && well.sample) {
+              nextSample.molarity_value = well.sample.molarity_value;
+              nextSample.molarity_unit = well.sample.molarity_unit;
+            }
+          }
+          return nextSample;
+        });
+      }
+
     }
 
     return previous;

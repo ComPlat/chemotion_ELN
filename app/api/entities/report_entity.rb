@@ -34,8 +34,8 @@ module Entities
 
     def downloaded
       @downloaded ||= object.reports_users
-                            .find_by(user_id: current_user_id)
-                            .downloaded_at.present?
+                            .find { |ru| ru.user_id == current_user_id }
+                            &.downloaded_at.present?
     end
 
     def unread

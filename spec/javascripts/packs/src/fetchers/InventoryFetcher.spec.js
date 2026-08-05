@@ -1,10 +1,6 @@
 import InventoryFetcher from 'src/fetchers/InventoryFetcher';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
-
 describe('InventoryFetcher methods', () => {
   let fetchStub;
 

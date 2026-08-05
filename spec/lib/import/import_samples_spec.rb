@@ -93,6 +93,16 @@ RSpec.describe 'Import::ImportSamples' do
         molecule_names = sample.molecule.molecule_names
         expect(molecule_names).to be_present
       end
+
+      it 'schedules exactly one PubchemSingleLcssJob for the whole import instead of one per molecule' do
+        started_at = Time.current
+        allow(PubchemSingleLcssJob).to receive(:perform_later)
+
+        import_result
+
+        expect(PubchemSingleLcssJob).to have_received(:perform_later).once
+        expect(PubchemSingleLcssJob).to have_received(:perform_later).with(nil, created_after: be >= started_at)
+      end
     end
   end
 
@@ -206,6 +216,29 @@ RSpec.describe 'Import::ImportSamples' do
     it 'update sample density attribute with expected values' do
       importer.handle_sample_fields(sample, 'density', { value: 2.24, unit: 'g/mL' })
       expect(sample['density']).to eq(2.24)
+    end
+  end
+
+  describe '#get_data_from_molfile' do
+    context 'when the molfile has a PolymersList block' do
+      let(:polymer_molfile) { "some ctab\n> <PolymersList>\ndata" }
+      let(:resolved_molecule) { create(:molecule) }
+      let(:resolver_result) do
+        Import::PolymerMoleculeResolver::Result.new(
+          molecule: resolved_molecule, raw_molfile: polymer_molfile, babel_info: {},
+        )
+      end
+
+      it 'delegates to Import::PolymerMoleculeResolver and adapts its Result into a [molecule, raw_molfile] tuple' do
+        allow(Import::PolymerMoleculeResolver).to receive(:call).and_return(resolver_result)
+
+        molecule, raw_molfile = importer.get_data_from_molfile({ 'molfile' => polymer_molfile })
+
+        expect(Import::PolymerMoleculeResolver).to have_received(:call)
+          .with(polymer_molfile, defer_lcss: importer.instance_variable_get(:@defer_lcss))
+        expect(molecule).to eq(resolved_molecule)
+        expect(raw_molfile).to eq(polymer_molfile)
+      end
     end
   end
 end

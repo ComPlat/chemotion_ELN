@@ -71,12 +71,8 @@ module Entities
     end
     # rubocop:enable Naming/PredicateMethod
 
-    def can_update
-      options[:policy].try(:update?) || false
-    end
-
     def can_publish
-      options[:policy].try(:destroy?) || false
+      element_policy.try(:destroy?) || false
     end
 
     def errors

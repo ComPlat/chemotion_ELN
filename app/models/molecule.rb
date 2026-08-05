@@ -36,7 +36,11 @@
 class Molecule < ApplicationRecord
   acts_as_paranoid
 
-  attr_accessor :pcid, :ob_log
+  # skip_lcss_callback lets a caller that's deferring LCSS scheduling for a batch of
+  # creations (see .schedule_lcss_batch / .schedule_lcss_since) suppress this particular
+  # instance's automatic scheduling; it's a plain per-object attribute, not
+  # shared/ambient state, so it's inherently thread-safe.
+  attr_accessor :pcid, :ob_log, :skip_lcss_callback
   include Collectable
   include Taggable
 
@@ -52,7 +56,7 @@ class Molecule < ApplicationRecord
 
   before_save :sanitize_molfile
   after_create :create_molecule_names
-  after_create :get_lcss
+  after_create_commit :get_lcss, unless: :skip_lcss_callback
   skip_callback :save, before: :sanitize_molfile, if: :skip_sanitize_molfile
   before_destroy :deindex_inchikey
 
@@ -87,40 +91,75 @@ class Molecule < ApplicationRecord
     molecule = Molecule.find_or_create_by(inchikey: 'DUMMY')
   end
 
+  # @param defer_lcss [Boolean] when true, a newly-created molecule's own automatic LCSS
+  #   scheduling is suppressed instead of firing immediately — the caller is responsible
+  #   for triggering it later via .schedule_lcss_since once its own batch of creations
+  #   is done.
   # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
-  def self.find_or_create_by_molfile(molfile, **babel_info)
+  def self.find_or_create_by_molfile(molfile, defer_lcss: false, **babel_info)
     unless babel_info && babel_info[:inchikey]
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
     end
     inchikey = babel_info[:inchikey]
     return if inchikey.blank?
 
-    is_partial = babel_info[:is_partial]
+    # Coerced, not passed through: molecules.is_partial is NOT NULL DEFAULT FALSE, and a caller
+    # that hands us an inchikey without the rest of babel_info (Import::ImportSamples does, when
+    # OpenBabel could not read the molfile but smiles_to_inchikey still resolved a key) leaves
+    # this nil. Assigning nil explicitly overrides the column default and raises
+    # ActiveRecord::NotNullViolation, which the RecordNotUnique rescue below does not catch —
+    # taking the whole import down on the row it was added to protect.
+    is_partial = babel_info[:is_partial].present?
     partial_molfile = babel_info[:molfile]
     # NB: if the molfile has a R# group for solid support (is_partial) then
     #   it has been replaced by C befor getting babel_info (which would have added a fictif CH3 group)
     formula = babel_info[:formula]
     formula = SumFormula.new(formula).remove_fragment('CH3').valid.to_s if is_partial
     molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial, sum_formular: formula)
-    molecule ||= Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
-      pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-      mol.molfile = (is_partial && partial_molfile) || molfile
-      mol.assign_molecule_data(babel_info, pubchem_info)
+    if molecule.nil?
+      begin
+        # requires_new: true so the losing INSERT rolls back to a savepoint rather than
+        # poisoning an enclosing transaction. Most callers run inside one — Sample's
+        # before_save :find_or_create_molecule, Import::ImportSamples#write_to_db,
+        # Import::ImportCollections#import — and without the savepoint a real
+        # PG::UniqueViolation aborts that outer transaction, so the rescue's re-find below
+        # would itself raise PG::InFailedSqlTransaction and take the whole import with it.
+        #
+        # NB the PubChem call below now sits inside the savepoint. That is not a new problem —
+        # it was already inside whatever transaction the caller had open — and moving it off
+        # the create path entirely is the subject of its own change.
+        molecule = ActiveRecord::Base.transaction(requires_new: true) do
+          Molecule.create(inchikey: inchikey, is_partial: is_partial, sum_formular: formula) do |mol|
+            mol.skip_lcss_callback = true if defer_lcss
+            pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
+            mol.molfile = (is_partial && partial_molfile) || molfile
+            mol.assign_molecule_data(babel_info, pubchem_info, molfile)
+          end
+        end
+      rescue ActiveRecord::RecordNotUnique
+        # A concurrent worker created the same molecule between our find_by and insert; re-find
+        # its row instead of letting PG::UniqueViolation abort the whole import
+        # (index_molecules_on_formula_and_inchikey_and_is_partial). Keyed on the full index —
+        # (inchikey, sum_formular, is_partial) — because that is the tuple the row was created
+        # under; a narrower re-find can miss it and raise on a row that does exist.
+        molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial, sum_formular: formula)
+        raise if molecule.nil?
+      end
     end
     molecule.ob_log = babel_info[:ob_log]
     molecule
   end
   # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
 
-  def self.find_or_create_by_cano_smiles(cano_smiles)
+  def self.find_or_create_by_cano_smiles(cano_smiles, defer_lcss: false)
     molfile = Chemotion::OpenBabelService.molfile_from_cano_smiles(cano_smiles)
-    Molecule.find_or_create_by_molfile(molfile)
+    Molecule.find_or_create_by_molfile(molfile, defer_lcss: defer_lcss)
   end
 
   def self.find_or_create_by_molfiles(molfiles_array)
     babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles_array)
     babel_info_array.map.with_index do |babel_info, i|
-      if babel_info[:inchikey]
+      if babel_info && babel_info[:inchikey]
         Molecule.find_or_create_by_molfile(molfiles_array[i], babel_info)
       else
         nil
@@ -140,22 +179,19 @@ class Molecule < ApplicationRecord
     self.save!
   end
 
-  def assign_molecule_data(babel_info, pubchem_info = {})
+  def assign_molecule_data(babel_info, pubchem_info = {}, svg_molfile = nil)
     self.inchistring = babel_info[:inchi]
     self.sum_formular = babel_info[:formula]
     self.molecular_weight = babel_info[:mol_wt]
     self.exact_molecular_weight = babel_info[:mass]
-    self.iupac_name = pubchem_info[:iupac_name]
-    self.names = pubchem_info[:names]
-    self.pcid = pubchem_info[:cid]
-
+    assign_pubchem_data(pubchem_info)
     check_sum_formular
-    svg = Molecule.svg_reprocess(babel_info[:svg], molfile)
+    svg = Molecule.svg_reprocess(babel_info[:svg], svg_molfile || molfile)
     attach_svg svg
-
     self.cano_smiles = babel_info[:cano_smiles]
     self.molfile_version = babel_info[:molfile_version]
-    self.is_partial = babel_info[:is_partial]
+    # NOT NULL column; babel_info may not carry the key at all (see .find_or_create_by_molfile).
+    self.is_partial = babel_info[:is_partial].present?
   end
 
   def pubchem_lcss
@@ -227,14 +263,34 @@ class Molecule < ApplicationRecord
     molecule_names.create(name: sum_formular, description: 'sum_formular')
   end
 
+  # Schedules a single PubchemSingleLcssJob for the given ids, re-querying
+  # first so only molecules that actually still exist get scheduled (e.g. a
+  # caller's own transaction rolling back after collecting some ids into its
+  # lcss_batch array shouldn't schedule a job for rows that never persisted).
+  def self.schedule_lcss_batch(molecule_ids)
+    return if molecule_ids.blank?
+
+    existing_ids = Molecule.where(id: molecule_ids).pluck(:id)
+    return if existing_ids.blank?
+
+    PubchemSingleLcssJob.perform_later(existing_ids)
+  end
+
   def get_lcss
-    delayed_jobs = Delayed::Job.where(queue: 'single_pubchem_lcss')
-    if delayed_jobs.empty?
-      PubchemSingleLcssJob.perform_later self
-    else
-      last_job = delayed_jobs.last
-      PubchemSingleLcssJob.set(run_at: last_job.created_at + 1.seconds).perform_later self
-    end
+    self.class.schedule_lcss_batch([id])
+  end
+
+  # Schedules a PubchemSingleLcssJob covering every molecule created after +timestamp+.
+  # The bulk importers use this instead of collecting new molecule ids into an array:
+  # capture Time.current once before the import loop begins, pass defer_lcss: true to
+  # suppress each new molecule's own immediate scheduling, then call this once at the
+  # end (even a method that turned out to create nothing new can safely call this
+  # unconditionally — the existence check below keeps that a no-op).
+  def self.schedule_lcss_since(timestamp)
+    return if timestamp.blank?
+    return unless Molecule.exists?(['created_at > ?', timestamp])
+
+    PubchemSingleLcssJob.perform_later(nil, created_after: timestamp)
   end
 
   def create_molecule_name_by_user(new_names, user_id)
@@ -268,6 +324,12 @@ class Molecule < ApplicationRecord
   end
 
   private
+
+  def assign_pubchem_data(pubchem_info)
+    self.iupac_name = pubchem_info[:iupac_name]
+    self.names = pubchem_info[:names]
+    self.pcid = pubchem_info[:cid]
+  end
 
   # This frees the inchikey value from the index
   def deindex_inchikey

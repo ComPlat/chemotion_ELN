@@ -4,7 +4,7 @@ import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import uuid from 'uuid';
 import { filter, cloneDeep } from 'lodash';
 import { Constants } from 'chem-generic-ui';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UIActions from 'src/stores/alt/actions/UIActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
@@ -63,12 +63,11 @@ export const allGenericElements = () => {
 }
 
 export const notification = props =>
-  NotificationActions.add({
+  rootStore.notificationsStore.add({
     title: props.title,
     message: props.msg,
     level: props.lvl,
     position: 'tc',
-    dismissible: 'button',
     autoDismiss: props.autoDismiss || 5,
     uid: props.uid || uuid.v4(),
   });

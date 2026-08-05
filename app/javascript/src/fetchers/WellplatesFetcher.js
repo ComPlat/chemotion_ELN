@@ -2,7 +2,7 @@ import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Wellplate from 'src/models/Wellplate';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import { preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
 export default class WellplatesFetcher {
@@ -90,15 +90,20 @@ export default class WellplatesFetcher {
         if (json.error) {
           let msg = 'Import to wellplate failed: ';
           msg += json.error;
-          NotificationActions.add({
+          rootStore.notificationsStore.add({
             message: msg,
             level: 'error',
           });
           return json;
         }
-        NotificationActions.add({
-          message: 'Import successful.',
-          level: 'success',
+
+        let msg = 'Import successful.';
+        if (json.molarity_discarded) {
+          msg += ' Molarity was discarded for wells without a sample assigned.';
+        }
+        rootStore.notificationsStore.add({
+          message: msg,
+          level: json.molarity_discarded ? 'warning' : 'success',
         });
         return this.wellplateElement(json, wellplateId);
       });

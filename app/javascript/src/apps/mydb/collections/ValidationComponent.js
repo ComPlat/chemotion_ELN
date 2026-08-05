@@ -15,7 +15,7 @@ import TextAreaCellEditor from 'src/apps/mydb/collections/TextAreaCellEditor';
 import DocumentationButton from 'src/components/common/DocumentationButton';
 
 // Create a separate component for the delete button cell renderer
-function DeleteButtonCellRenderer(props) {
+const DeleteButtonCellRenderer = (props) => {
   const { onDelete, data } = props;
   const onClick = () => {
     if (onDelete) {
@@ -67,6 +67,11 @@ const ValidationComponent = React.forwardRef(({
   const [isDataValid, setIsDataValid] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const gridRef = useRef(null);
+  const currentRowDataRef = useRef(currentRowData);
+  const onRowDataChangeRef = useRef(onRowDataChange);
+
+  useEffect(() => { currentRowDataRef.current = currentRowData; }, [currentRowData]);
+  useEffect(() => { onRowDataChangeRef.current = onRowDataChange; }, [onRowDataChange]);
 
   // Initialize current row data from props and ensure all rows have IDs
   useEffect(() => {
@@ -74,6 +79,7 @@ const ValidationComponent = React.forwardRef(({
       ...row,
       id: row.id || `row-${index + 1}`
     }));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentRowData(dataWithIds);
     setValidationErrors([]);
     setConversionMessages([]);
@@ -92,21 +98,16 @@ const ValidationComponent = React.forwardRef(({
   // Handler for the delete button click - simplified to work directly with row ID
   const handleDeleteRow = useCallback((rowId) => {
     if (rowId) {
-      // Filter out the row with the matching ID
-      const newData = currentRowData.filter((row) => row.id !== rowId);
-
-      // Update state
+      const newData = currentRowDataRef.current.filter((row) => row.id !== rowId);
       setCurrentRowData(newData);
-      onRowDataChange(newData);
-
-      // Request a grid refresh after state update
+      onRowDataChangeRef.current(newData);
       setTimeout(() => {
         if (gridApi) {
           gridApi.refreshCells({ force: true });
         }
       }, 0);
     }
-  }, [currentRowData, gridApi]);
+  }, [gridApi]);
 
   // Add row number and action columns to the column definitions
   useEffect(() => {
@@ -164,10 +165,10 @@ const ValidationComponent = React.forwardRef(({
               // Update React state directly as well
               const { rowIndex } = params.node;
               if (rowIndex !== undefined) {
-                const updatedRowData = [...currentRowData];
+                const updatedRowData = [...currentRowDataRef.current];
                 updatedRowData[rowIndex] = rowData;
                 setCurrentRowData(updatedRowData);
-                onRowDataChange(updatedRowData);
+                onRowDataChangeRef.current(updatedRowData);
               }
 
               // Force refresh this cell
@@ -207,7 +208,7 @@ const ValidationComponent = React.forwardRef(({
     params.data && params.data.valid === false ? 'invalid-row' : ''
   );
 
-  const validateData = async () => {
+  const validateData = useCallback(async () => {
     if (!gridApi) return;
 
     // Use currentRowData as the single source of truth
@@ -276,7 +277,7 @@ const ValidationComponent = React.forwardRef(({
     setCurrentRowData(allRows);
     gridApi.refreshCells();
     onValidate(invalid, allRows);
-  };
+  }, [gridApi, currentRowData, onValidate]);
 
   useImperativeHandle(ref, () => ({
     validateData,

@@ -31,7 +31,7 @@ import LiteraturesFetcher from 'src/fetchers/LiteraturesFetcher';
 import UIStore from 'src/stores/alt/stores/UIStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import DetailActions from 'src/stores/alt/actions/DetailActions';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import { copyToClipboard } from 'src/utilities/clipboard';
 import { aviatorNavigation } from 'src/utilities/routesUtils';
 import CreateButton from 'src/components/common/CreateButton';
@@ -130,6 +130,7 @@ CitationTable.propTypes = {
 };
 
 export default class LiteratureDetails extends Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     this.state = {
@@ -263,7 +264,7 @@ export default class LiteratureDetails extends Component {
 
   fetchDOIMetadata() {
     const { doi } = this.state.literature;
-    NotificationActions.removeByUid('literature');
+    this.context.notifications.removeByUid('literature');
     Cite.async(sanitizeDoi(doi)).then((json) => {
       if (json.data && json.data.length > 0) {
         const citation = new Cite(json.data[0]);
@@ -287,12 +288,11 @@ export default class LiteratureDetails extends Component {
         title: 'Add References for selected Elements',
         message: `unable to fetch metadata for this doi: ${doi}`,
         level: 'error',
-        dismissible: 'button',
         autoDismiss: 5,
         position: 'tr',
         uid: 'literature'
       };
-      NotificationActions.add(notification);
+      this.context.notifications.add(notification);
     });
   }
 

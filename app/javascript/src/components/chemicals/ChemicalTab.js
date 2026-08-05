@@ -17,9 +17,10 @@ import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButt
 import SDSAttachmentModal from 'src/components/chemicals/SDSAttachmentModal';
 import SafetyPhrasesEditor from 'src/components/chemicals/SafetyPhrasesEditor';
 import Chemical from 'src/models/Chemical';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 export default class ChemicalTab extends React.Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     this.state = {
@@ -551,7 +552,7 @@ export default class ChemicalTab extends React.Component {
     ChemicalFetcher.saveManualAttachedSafetySheet(data)
       .then((updatedChemical) => {
         if (!updatedChemical || updatedChemical.error) {
-          NotificationActions.add({
+          this.context.notifications.add({
             title: 'Could not attach safety sheet',
             message: updatedChemical.error,
             level: 'error',

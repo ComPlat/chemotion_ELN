@@ -15,10 +15,13 @@
 #  name                   :string
 #  observation            :text
 #  origin                 :jsonb
+#  ph_operator            :string           default("="), not null
+#  ph_value               :float
 #  plain_text_description :text
 #  plain_text_observation :text
 #  purification           :string           default([]), is an Array
 #  reaction_svg_file      :string
+#  reaction_type          :string           default("standard"), not null
 #  rf_value               :string
 #  rinchi_long_key        :text
 #  rinchi_short_key       :string
@@ -77,6 +80,75 @@ RSpec.describe Reaction, type: :model do
   describe 'taggable' do
     it_behaves_like 'taggable_element_before_and_after_create'
     it_behaves_like 'taggable_element_before_and_after_collection_update'
+  end
+
+  describe 'reaction_type' do
+    it 'defaults to standard when blank' do
+      reaction = build(:reaction, reaction_type: nil, creator: build(:user))
+
+      reaction.validate
+
+      expect(reaction.reaction_type).to eq('standard')
+    end
+
+    it 'persists standard as the default reaction type' do
+      reaction = create(:reaction)
+
+      expect(reaction.reload.reaction_type).to eq('standard')
+      expect(reaction).to be_standard
+    end
+
+    it 'supports interaction reactions' do
+      reaction = create(:reaction, reaction_type: 'interaction')
+
+      expect(reaction).to be_interaction
+      expect(reaction).not_to be_standard
+    end
+  end
+
+  describe '#update_svg_file!' do
+    let(:composer_instance) do
+      instance_double(SVG::ReactionComposer, compose_reaction_svg_and_save: 'composed.svg')
+    end
+    let(:product) { create(:sample) }
+
+    before do
+      allow(PubChem).to receive(:get_cid_from_inchikey).and_return(nil)
+      allow(SVG::ReactionComposer).to receive(:new).and_return(composer_instance)
+      allow(SVG::ProductsComposer).to receive(:new).and_return(composer_instance)
+    end
+
+    context 'when reaction_type is standard' do
+      let(:reaction) do
+        create(:reaction, reaction_type: 'standard', products: [product], reaction_svg_file: nil)
+      end
+
+      it 'composes the scheme with SVG::ReactionComposer and shows yields' do
+        reaction
+
+        expect(SVG::ProductsComposer).not_to have_received(:new)
+        expect(SVG::ReactionComposer).to have_received(:new).with(
+          hash_including(:starting_materials, :reactants, :products),
+          hash_including(show_yield: true),
+        )
+      end
+    end
+
+    context 'when reaction_type is interaction' do
+      let(:reaction) do
+        create(:reaction, reaction_type: 'interaction', products: [product], reaction_svg_file: nil)
+      end
+
+      it 'composes the scheme with SVG::ProductsComposer and hides yields' do
+        reaction
+
+        expect(SVG::ReactionComposer).not_to have_received(:new)
+        expect(SVG::ProductsComposer).to have_received(:new).with(
+          hash_including(:starting_materials, :reactants, :products),
+          hash_including(show_yield: false),
+        )
+      end
+    end
   end
 
   describe 'deletion' do

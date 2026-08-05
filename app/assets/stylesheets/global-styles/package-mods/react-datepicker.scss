@@ -12,6 +12,9 @@
       font-weight: 400;
       line-height: 1.5;
       appearance: none;
+      line-height: var(--bs-btn-line-height, #{$btn-line-height});
+      padding: var(--bs-btn-padding-y, #{$form-select-padding-y})
+        var(--bs-btn-padding-x, #{$form-select-padding-x});
     }
   }
   &-popper {
@@ -43,11 +46,7 @@
     }
     &__input-container {
       input {
-        min-height: calc(1.5em + 0.5rem + 2px);
-        padding: 0.25rem 0.5rem;
-        font-size: 0.875rem;
-        border-radius: 0.2rem;
-        @include condensed-text-width;
+        @include sm-form-elements;
       }
     }
   }

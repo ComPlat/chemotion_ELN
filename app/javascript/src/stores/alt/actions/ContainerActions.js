@@ -3,7 +3,7 @@ import alt from 'src/stores/alt/alt';
 
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ContainerFetcher from 'src/fetchers/ContainerFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 class ContainerActions {
   updateContainerWithFiles(container) {
@@ -12,7 +12,7 @@ class ContainerActions {
         await AttachmentFetcher.uploadNewAttachmentsForContainer(container);
         const response = await ContainerFetcher.updateContainer(container);
 
-        NotificationActions.add({
+        rootStore.notificationsStore.add({
           title: 'Analysis Updated.',
           message: 'Analysis has been updated.',
           level: 'success',

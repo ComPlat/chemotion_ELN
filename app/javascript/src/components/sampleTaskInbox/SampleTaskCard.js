@@ -3,11 +3,11 @@ import { useDrop } from 'react-dnd';
 import { Button, Card, Col, Container, Row } from 'react-bootstrap';
 import { DragDropItemTypes } from 'src/utilities/DndConst';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import ConfirmModal from 'src/components/common/ConfirmModal';
 
 const SampleTaskCard = ({ sampleTask }) => {
   const sampleTasksStore = useContext(StoreContext).sampleTasks;
+  const { notifications } = useContext(StoreContext);
   const [sample, setSample] = useState(null);
   const [showDeletionConfirmationDialog, setShowDeletionConfirmationDialog] = useState(false);
   const [_spec, dropRef] = useDrop({
@@ -127,12 +127,11 @@ const SampleTaskCard = ({ sampleTask }) => {
           title: message,
           message: message,
           level: level,
-          dismissible: 'button',
           autoDismiss: 5,
           position: 'tr',
           uid: 'SampleTaskInbox'
         };
-        NotificationActions.add(notification);
+        notifications.add(notification);
       });
   }
 

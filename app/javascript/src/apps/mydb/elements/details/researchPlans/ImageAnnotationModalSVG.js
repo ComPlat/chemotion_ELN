@@ -103,7 +103,7 @@ export default class ImageAnnotationModalSVG extends Component {
             buttonsToRemoveOnSight = buttonsToRemoveOnSight.map((id) => {
               // sometimes they are in the shadow DOM, sometimes not.... do not ask me why.
               const elem = (subDocument.querySelector(`#main_button #${id}`)
-                          || subDocument.querySelector('#main_button')?.shadowRoot.querySelector(`#${id}`));
+                || subDocument.querySelector('#main_button')?.shadowRoot.querySelector(`#${id}`));
               if (elem) {
                 elem?.setAttribute('style', 'display: none');
                 elem?.remove();

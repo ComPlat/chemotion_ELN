@@ -49,7 +49,6 @@ import DetailsTabLiteratures from 'src/apps/mydb/elements/details/literature/Det
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import QcMain from 'src/apps/mydb/elements/details/samples/qcTab/QcMain';
 import { EditUserLabels } from 'src/components/UserLabels';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import NmrSimTab from 'src/apps/mydb/elements/details/samples/nmrSimTab/NmrSimTab';
@@ -77,9 +76,9 @@ const MWPrecision = 6;
 // persisted (survives the SampleDetails unmount/remount caused by navigateToNewElement).
 let _pendingChemicalCreate = null;
 
-const decoupleCheck = (sample) => {
+const decoupleCheck = (sample, notifications) => {
   if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.isMixture()) {
-    NotificationActions.add({
+    notifications.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
     });
     LoadingActions.stop();
@@ -90,11 +89,11 @@ const decoupleCheck = (sample) => {
   return true;
 };
 
-const rangeCheck = (field, sample) => {
+const rangeCheck = (field, sample, notifications) => {
   if (sample[`${field}_lowerbound`] && sample[`${field}_lowerbound`] !== ''
     && sample[`${field}_upperbound`] && sample[`${field}_upperbound`] !== ''
     && Number.parseFloat(sample[`${field}_upperbound`]) < Number.parseFloat(sample[`${field}_lowerbound`])) {
-    NotificationActions.add({
+    notifications.add({
       title: `Error on ${field.replace(/(^\w{1})|(_{1}\w{1})/g, (match) => match.toUpperCase())}`,
       message: 'range lower bound must be less than or equal to range upper',
       level: 'error',
@@ -300,7 +299,7 @@ export default class SampleDetails extends React.Component {
     MoleculesFetcher.fetchBySmi(smilesInput)
       .then((result) => {
         if (!result || result == null) {
-          NotificationActions.add({
+          this.context.notifications.add({
             title: 'Error on Sample creation',
             message: `Cannot create molecule with entered Smiles/CAS! [${smilesInput}]`,
             level: 'error',
@@ -364,7 +363,7 @@ export default class SampleDetails extends React.Component {
     this.setState({ loadingMolecule: true });
 
     const fetchError = (errorMessage) => {
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Error on Sample creation',
         message: `Cannot create molecule! Error: [${errorMessage}]`,
         level: 'error',
@@ -380,17 +379,6 @@ export default class SampleDetails extends React.Component {
       sample.molecule = result;
       sample.molecule_id = result.id;
       if (result.inchikey === 'DUMMY') { sample.decoupled = true; }
-
-      // Handle temporary SVG file from structure editor
-      if (result.temp_svg) {
-        // For mixture samples, clear any existing sample_svg_file to preserve combined molecule SVG
-        // This ensures the combined molecule SVG is always displayed
-        if (sample.isMixture()) {
-          sample.sample_svg_file = null;
-        } else {
-          sample.sample_svg_file = result.temp_svg;
-        }
-      }
 
       this.setState({
         sample,
@@ -432,9 +420,9 @@ export default class SampleDetails extends React.Component {
     if (!validCas) {
       sample.xref = { ...sample.xref, cas: '' };
     }
-    if (!decoupleCheck(sample)) return;
-    if (!rangeCheck('boiling_point', sample)) return;
-    if (!rangeCheck('melting_point', sample)) return;
+    if (!decoupleCheck(sample, this.context.notifications)) return;
+    if (!rangeCheck('boiling_point', sample, this.context.notifications)) return;
+    if (!rangeCheck('melting_point', sample, this.context.notifications)) return;
 
     // Prepare mixture samples for saving using Sample.js method
     sample.prepareMixtureForSave();
@@ -948,6 +936,10 @@ export default class SampleDetails extends React.Component {
       rfsovents,
       supplier,
       private_notes,
+      color,
+      moisture,
+      particle_size,
+      physical_state,
       ...customKeys
     } = cloneDeep(xref || {});
     const check = ['form', 'solubility', 'refractive_index', 'flash_point', 'inventory_label'];
@@ -1397,6 +1389,19 @@ export default class SampleDetails extends React.Component {
 
     const mixtureSmiles = sample.molecule_cano_smiles.split('.');
     if (!mixtureSmiles || mixtureSmiles.length === 0) return;
+
+    // Same component set (layout/order edit): sync list order and keep editor molfile/SVG.
+    if (sample.hasComponents()) {
+      const existingSmiles = (sample.components || [])
+        .map((c) => c.molecule_cano_smiles)
+        .filter(Boolean)
+        .join('.');
+      if (Sample.sameSmilesSet(existingSmiles, sample.molecule_cano_smiles)) {
+        sample.syncComponentOrderToSmiles(mixtureSmiles);
+        this.setState({ sample });
+        return;
+      }
+    }
 
     this.setState({ loadingMolecule: true });
 

@@ -6,22 +6,12 @@ import uuid from 'uuid';
 import { AsyncSelect } from 'src/components/common/Select';
 import JSONInput from 'react-json-editor-ajrm';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import AppModal from 'src/components/common/AppModal';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
 const editTooltip = <Tooltip id="edit_tooltip">Edit Permission</Tooltip>;
 const jsonTooltip = <Tooltip id="edit_tooltip">Edit JSON</Tooltip>;
-const Notification = (props) => (
-  NotificationActions.add({
-    title: props.title,
-    message: props.msg,
-    level: props.lvl,
-    position: 'tc',
-    dismissible: 'button',
-    uid: uuid.v4()
-  })
-);
 
 const loadUserByName = (input) => {
   if (!input) {
@@ -35,6 +25,7 @@ const loadUserByName = (input) => {
 };
 
 export default class MatrixManagement extends React.Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
 
@@ -58,6 +49,7 @@ export default class MatrixManagement extends React.Component {
     this.handleClose = this.handleClose.bind(this);
     this.handleJsonClose = this.handleJsonClose.bind(this);
     this.onChangeJson = this.onChangeJson.bind(this);
+    this.notification = this.notification.bind(this);
   }
 
   componentDidMount() {
@@ -80,6 +72,16 @@ export default class MatrixManagement extends React.Component {
     this.setState({ excludeUsers: val });
   }
 
+  notification({ title, message, level }) {
+    this.context.notifications.add({
+      title,
+      message,
+      level,
+      position: 'tc',
+      uid: uuid.v4()
+    });
+  }
+
   handleSave(matrice) {
     const { includeUsers, excludeUsers } = this.state;
 
@@ -95,10 +97,10 @@ export default class MatrixManagement extends React.Component {
     AdminFetcher.updateMatrice(params)
       .then((result) => {
         if (result.error) {
-          Notification({ title: `Function [${matrice.name}]`, lvl: 'error', msg: result.error });
+          this.notification({ title: `Function [${matrice.name}]`, level: 'error', message: result.error });
           return false;
         }
-        Notification({ title: `Function [${matrice.name}]`, lvl: 'info', msg: 'Updated successfully' });
+        this.notification({ title: `Function [${matrice.name}]`, level: 'info', message: 'Updated successfully' });
         this.setState({
           showEditModal: false, includeUsers: null, excludeUsers: null, matrice: {}
         });
@@ -112,13 +114,13 @@ export default class MatrixManagement extends React.Component {
     AdminFetcher.updateMatrice({ id: matrice.id, configs: matrice.configs })
       .then((result) => {
         if (result.error) {
-          Notification({ title: `Function [${matrice.name}]`, lvl: 'error', msg: result.error });
+          this.notification({ title: `Function [${matrice.name}]`, level: 'error', message: result.error });
           return false;
         }
-        Notification({
+        this.notification({
           title: `Function [${matrice.name}]`,
-          lvl: 'info',
-          msg: 'JSON Configuration updated successfully'
+          level: 'info',
+          message: 'JSON Configuration updated successfully'
         });
         this.setState({ showJsonModal: false, showJsonBtn: false, matrice: {} });
         this.fetchMatrices();
