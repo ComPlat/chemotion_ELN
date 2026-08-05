@@ -1076,6 +1076,17 @@ RSpec.describe Attachment do
       expect(attachment.cold?(older_than: threshold)).to be false
     end
 
+    # The read guard used to fall back to the attachment's own updated_at, so a
+    # freshly-touched row hid a stale element and nothing was ever archived.
+    it 'is cold when never read, even though its own updated_at is recent' do
+      attachment = create(:attachment)
+      expect(attachment.last_accessed_at).to be_nil
+      expect(attachment.updated_at).to be > threshold
+      allow(attachment).to receive(:root_element).and_return(instance_double(Sample, updated_at: 13.months.ago))
+
+      expect(attachment.cold?(older_than: threshold)).to be true
+    end
+
     it 'is cold when neither read nor the root element edited recently' do
       attachment = create(:attachment)
       attachment.update_column(:updated_at, 13.months.ago)

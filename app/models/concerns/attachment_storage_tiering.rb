@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Archives unused attachments to the ':cold' tier. See ArchiveColdAttachmentsJob.
+# Moves unused attachments to the ':cold' tier. See ArchiveAttachmentsJob.
 module AttachmentStorageTiering
   extend ActiveSupport::Concern
 
@@ -8,9 +8,10 @@ module AttachmentStorageTiering
   READ_TRACKING_THROTTLE = 1.hour
 
   # Age comes from the root element, not the file: a file matters as long as its
-  # Sample/Reaction does. Orphans fall back to their own date.
+  # Sample/Reaction does. Files with no element are the orphan sweep's business -
+  # root_element would hand back the uploading user here, which proves nothing.
   def cold?(older_than:)
-    return false if last_read_at > older_than
+    return false if last_accessed_at.present? && last_accessed_at > older_than
 
     (root_element&.updated_at || updated_at) < older_than
   end
@@ -62,11 +63,6 @@ module AttachmentStorageTiering
   end
 
   private
-
-  # Old rows have no read date yet, so fall back to the edit date.
-  def last_read_at
-    last_accessed_at || updated_at
-  end
 
   def record_access!
     return if last_accessed_at && last_accessed_at > READ_TRACKING_THROTTLE.ago
