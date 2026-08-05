@@ -557,7 +557,7 @@ const VariationSchemaTable = ({
                                 allReactionAnalyses,
                                 reactionShortLabel,
                                 reactionId,
-                                editMode,
+                                advancedMode,
                                 currentSegment,
                                 currentSegmentName,
 }) => {
@@ -932,7 +932,7 @@ const VariationSchemaTable = ({
       is not part of the edit mode toolbar.
       */}
       <div className="reaction-variations-grid__toolbar position-relative mb-2" ref={toolbarRef}>
-        {editMode && (
+        {advancedMode && (
           <table>
             <tbody>
               <tr>
@@ -976,7 +976,7 @@ const VariationSchemaTable = ({
           </table>
         )}
         {/* Positioned by updateToolbarScrollIndicator; hidden while the grid has no overflow. */}
-        {editMode && <div className="reaction-variations-grid__scroll-thumb" ref={scrollThumbRef} />}
+        {advancedMode && <div className="reaction-variations-grid__scroll-thumb" ref={scrollThumbRef} />}
       </div>
       <div
         className="ag-theme-alpine reaction-variations-grid"
@@ -1067,7 +1067,7 @@ const VariationSchemaTable = ({
 };
 
 VariationSchemaTable.propTypes = {
-  editMode: PropTypes.bool.isRequired,
+  advancedMode: PropTypes.bool.isRequired,
   onGridApiReady: PropTypes.func,
   variations: PropTypes.arrayOf(PropTypes.shape({
     idx: PropTypes.number.isRequired,
