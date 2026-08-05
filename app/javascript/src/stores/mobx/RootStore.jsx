@@ -1,5 +1,5 @@
 import React from 'react';
-import { types } from 'mobx-state-tree';
+import { types, applySnapshot } from 'mobx-state-tree';
 import { MeasurementsStore } from 'src/stores/mobx/MeasurementsStore';
 import { SampleTasksStore } from 'src/stores/mobx/SampleTasksStore';
 import { CellLineDetailsStore } from 'src/stores/mobx/CellLineDetailsStore';
@@ -35,19 +35,25 @@ const RootStore = types
   .actions((self) => ({
     reset: () => {
       self.userStore.logout();
-      self.measurementsStore = MeasurementsStore.create({ measurements: {}, sampleHeaders: {} });
-      self.sampleTasksStore = SampleTasksStore.create({});
-      self.cellLineDetailsStore = CellLineDetailsStore.create({});
-      self.vesselDetailsStore = VesselDetailsStore.create({});
-      self.searchStore = SearchStore.create({});
-      self.devicesStore = DevicesStore.create({});
-      self.deviceMetadataStore = DeviceMetadataStore.create({});
-      self.attachmentNotificationStore = AttachmentNotificationStore.create({});
-      self.calendarStore = CalendarStore.create({});
-      self.deviceDescriptionsStore = DeviceDescriptionsStore.create({});
-      self.sequenceBasedMacromoleculeSamplesStore = SequenceBasedMacromoleculeSamplesStore.create({});
-      self.collectionsStore = CollectionsStore.create({});
-      self.userStore = UserStore.create({});
+      // applySnapshot resets each store's data in place instead of replacing the node
+      // (self.field = Store.create({})). Replacing would destroy the old node while its
+      // in-flight flow actions (fetches started before logout) are still pending; once
+      // they resolve and try to write to `self`, mobx-state-tree throws because the node
+      // is dead. Resetting in place keeps the node alive, so those late writes just land
+      // on the (already-reset) store instead of crashing.
+      applySnapshot(self.measurementsStore, { measurements: {}, sampleHeaders: {} });
+      applySnapshot(self.sampleTasksStore, {});
+      applySnapshot(self.cellLineDetailsStore, {});
+      applySnapshot(self.vesselDetailsStore, {});
+      applySnapshot(self.searchStore, {});
+      applySnapshot(self.devicesStore, {});
+      applySnapshot(self.deviceMetadataStore, {});
+      applySnapshot(self.attachmentNotificationStore, {});
+      applySnapshot(self.calendarStore, {});
+      applySnapshot(self.deviceDescriptionsStore, {});
+      applySnapshot(self.sequenceBasedMacromoleculeSamplesStore, {});
+      applySnapshot(self.collectionsStore, {});
+      applySnapshot(self.userStore, {});
     }
   }))
   .views((self) => ({
