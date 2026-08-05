@@ -43,7 +43,7 @@ const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, headIndex, variations,
   dropMaterial, dropSample, dropSbmmSample, switchEquiv, lockEquivColumn, displayYieldField,
-  switchYield, dndEnabled
+  switchYield, dndEnabled, showAddSampleButton
 }) => {
   const { notifications } = useContext(StoreContext);
   const effectiveDndEnabled = dndEnabled && permitOn(reaction);
@@ -115,6 +115,7 @@ const MaterialGroup = ({
         headIndex={headIndex}
         reaction={reaction}
         dndEnabled={effectiveDndEnabled}
+        showAddSampleButton={showAddSampleButton}
       />
     );
   }
@@ -135,6 +136,7 @@ const MaterialGroup = ({
       displayYieldField={displayYieldField}
       switchYield={switchYield}
       dndEnabled={effectiveDndEnabled}
+      showAddSampleButton={showAddSampleButton}
     />
   );
 };
@@ -277,7 +279,7 @@ const GeneralMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex,
   dropSample, onDrop, onReorder,
   showLoadingColumn, reaction,
-  switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled
+  switchEquiv, lockEquivColumn, displayYieldField, switchYield, dndEnabled, showAddSampleButton
 }) => {
   const isReactants = materialGroup === 'reactants';
   const isInteractionReaction = reaction.isInteractionReaction();
@@ -434,7 +436,7 @@ const GeneralMaterialGroup = ({
           <div className="pseudo-table__row pseudo-table__row-header">
             <div className="pseudo-table__cell pseudo-table__cell-title">
               <div className="material-group__header-title">
-                {addSampleButton}
+                {showAddSampleButton && addSampleButton}
                 {groupHeaders.group}
                 {isReactants && reagentDd}
               </div>
@@ -490,7 +492,7 @@ const GeneralMaterialGroup = ({
 
 const SolventsMaterialGroup = ({
   materials, materialGroup, getMaterialComponent, headIndex, reaction,
-  dropSample, onDrop, onReorder, dndEnabled
+  dropSample, onDrop, onReorder, dndEnabled, showAddSampleButton
 }) => {
   const groupHeaders = { ...MATERIAL_HEADER };
   groupHeaders.group = 'Solvents';
@@ -567,7 +569,7 @@ const SolventsMaterialGroup = ({
           <div className="pseudo-table__row pseudo-table__row-header">
             <div className="pseudo-table__cell pseudo-table__cell-title">
               <div className="material-group__header-title">
-                {addSampleButton}
+                {showAddSampleButton && addSampleButton}
                 {groupHeaders.group}
                 <Select
                   isDisabled={!permitOn(reaction)}
@@ -618,6 +620,8 @@ MaterialGroup.propTypes = {
   displayYieldField: PropTypes.bool,
   switchYield: PropTypes.func,
   dndEnabled: PropTypes.bool,
+  // Off in the variations tab, where materials follow the parent reaction's scheme.
+  showAddSampleButton: PropTypes.bool,
   variations: PropTypes.arrayOf(PropTypes.shape({
     idx: PropTypes.number.isRequired,
     data: PropTypes.instanceOf(Reaction).isRequired,
@@ -648,11 +652,13 @@ GeneralMaterialGroup.propTypes = {
   displayYieldField: PropTypes.bool,
   switchYield: PropTypes.func,
   dndEnabled: PropTypes.bool,
+  showAddSampleButton: PropTypes.bool,
 };
 
 GeneralMaterialGroup.defaultProps = {
   switchEquiv: () => {},
   switchYield: () => {},
+  showAddSampleButton: true,
 };
 
 SolventsMaterialGroup.propTypes = {
@@ -665,10 +671,12 @@ SolventsMaterialGroup.propTypes = {
   headIndex: PropTypes.number.isRequired,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   dndEnabled: PropTypes.bool,
+  showAddSampleButton: PropTypes.bool,
 };
 
 SolventsMaterialGroup.defaultProps = {
   dndEnabled: true,
+  showAddSampleButton: true,
 };
 
 MaterialGroup.defaultProps = {
@@ -678,6 +686,7 @@ MaterialGroup.defaultProps = {
   headIndex: 0,
   dndEnabled: true,
   variations: null,
+  showAddSampleButton: true,
 };
 
 GeneralMaterialGroup.defaultProps = {

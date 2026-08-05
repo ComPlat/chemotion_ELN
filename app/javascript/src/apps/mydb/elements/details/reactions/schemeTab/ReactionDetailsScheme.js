@@ -369,7 +369,7 @@ export default class ReactionDetailsScheme extends React.Component {
       displayYieldField,
     } = this.state;
     const {
-      variations
+      variations, showAddSampleButton
     } = this.props;
     const { reaction, onInputChange, onReactionChange } = this.reactionUpdateHandler.props;
     const isInteractionReaction = reaction.isInteractionReaction();
@@ -443,6 +443,7 @@ export default class ReactionDetailsScheme extends React.Component {
             reaction={reaction}
             variations={variations}
             materialGroup="starting_materials"
+            showAddSampleButton={showAddSampleButton}
             materials={getMaterialsIncludingVariations('starting_materials')}
             dropMaterial={this.reactionUpdateHandler.dropMaterial}
             deleteMaterial={
@@ -458,6 +459,7 @@ export default class ReactionDetailsScheme extends React.Component {
             reaction={reaction}
             variations={variations}
             materialGroup="reactants"
+            showAddSampleButton={showAddSampleButton}
             materials={getMaterialsIncludingVariations('reactantsWithSbmm')}
             dropMaterial={this.reactionUpdateHandler.dropMaterial}
             deleteMaterial={
@@ -475,6 +477,7 @@ export default class ReactionDetailsScheme extends React.Component {
             reaction={reaction}
             variations={variations}
             materialGroup="solvents"
+            showAddSampleButton={showAddSampleButton}
             materials={getMaterialsIncludingVariations('solvents')}
             dropMaterial={this.reactionUpdateHandler.dropMaterial}
             deleteMaterial={
@@ -490,6 +493,7 @@ export default class ReactionDetailsScheme extends React.Component {
             reaction={reaction}
             variations={variations}
             materialGroup="products"
+            showAddSampleButton={showAddSampleButton}
             materials={getMaterialsIncludingVariations('products')}
             dropMaterial={this.reactionUpdateHandler.dropMaterial}
             deleteMaterial={
@@ -600,5 +604,11 @@ ReactionDetailsScheme.propTypes = {
   variations: PropTypes.arrayOf(PropTypes.shape({
     idx: PropTypes.number.isRequired,
     data: PropTypes.instanceOf(Reaction).isRequired,
-  })).isRequired
+  })).isRequired,
+  // Off in the variations tab, where materials follow the parent reaction's scheme.
+  showAddSampleButton: PropTypes.bool,
+};
+
+ReactionDetailsScheme.defaultProps = {
+  showAddSampleButton: true,
 };
