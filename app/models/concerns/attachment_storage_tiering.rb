@@ -4,23 +4,30 @@
 module AttachmentStorageTiering
   extend ActiveSupport::Concern
 
-  # Don't rewrite last_accessed_at on every single read; once per window is enough.
+  # One write per window is enough; reads can be frequent.
   READ_TRACKING_THROTTLE = 1.hour
 
-  # Cold only if it hasn't been read recently AND the file + its chain are old.
-  # A recent read keeps it hot even if the record hasn't been edited in years.
-  # ponytail: skips middle containers; may wrongly archive, but cold stays readable.
+  # Age comes from the root element, not the file: a file matters as long as its
+  # Sample/Reaction does. Orphans fall back to their own date.
   def cold?(older_than:)
     return false if last_read_at > older_than
 
-    [updated_at, attachable&.updated_at, root_element&.updated_at].compact.all? { |t| t < older_than }
+    (root_element&.updated_at || updated_at) < older_than
   end
 
   def move_to_cold
-    move_to_tier(:cold)
+    move_to_tier(cold_storage_key)
   end
 
-  # A real read: record it (throttled) so a recently-read file isn't archived.
+  # With several shelves, spread files across them by id.
+  def cold_storage_key
+    shelves = self.class.cold_storage_keys
+    return shelves.first if shelves.size <= 1
+
+    group = (id - 1) / self.class.cold_router_group_size
+    shelves[group % shelves.size]
+  end
+
   def track_read!
     record_access!
   end
@@ -44,11 +51,19 @@ module AttachmentStorageTiering
     def read_tracking_suppressed?
       Thread.current[:suppress_attachment_read_tracking] == true
     end
+
+    def cold_storage_keys
+      Shrine.storages.keys.select { |k| k.to_s.match?(/\Acold\d*\z/) }.sort
+    end
+
+    def cold_router_group_size
+      ENV.fetch('COLD_ROUTER_GROUP_SIZE', 10_000).to_i
+    end
   end
 
   private
 
-  # No access recorded yet (old rows) → fall back to the edit date so it works day one.
+  # Old rows have no read date yet, so fall back to the edit date.
   def last_read_at
     last_accessed_at || updated_at
   end
@@ -57,8 +72,7 @@ module AttachmentStorageTiering
     return if last_accessed_at && last_accessed_at > READ_TRACKING_THROTTLE.ago
 
     now = Time.current
-    # One UPDATE, no callbacks, no updated_at bump. without_logging keeps this
-    # bookkeeping out of the logidze audit history (fires on raw UPDATEs too).
+    # Raw UPDATE so there's no updated_at bump, and no logidze entry for bookkeeping.
     Logidze.without_logging do
       self.class.where(id: id).update_all(['last_accessed_at = ?, access_count = access_count + 1', now]) # rubocop:disable Rails/SkipsModelValidations
     end
@@ -70,8 +84,7 @@ module AttachmentStorageTiering
       old_file = nil
       old_derivatives = nil
 
-      # Row lock so concurrent moves on the same attachment can't race
-      # (re-check the tier inside the lock, after reload sees committed data).
+      # Lock the row, then re-check the tier so concurrent moves can't race.
       with_lock do
         attacher = attachment_attacher
         file = attacher.file
@@ -88,12 +101,11 @@ module AttachmentStorageTiering
           attacher.set_derivatives attacher.upload_derivatives(old_derivatives, storage: storage_key)
         end
 
-        # normal save is reverted by this model's callbacks; update_column isn't
+        # a normal save gets reverted by this model's callbacks
         update_column('attachment_data', attachment_data) # rubocop:disable Rails/SkipsModelValidations
       end
 
-      # delete the old copies only after the tier switch is committed: upload +
-      # persist first, delete last, so a crash mid-move never loses data
+      # Delete last, after the move is committed, so a crash can't lose the file.
       next if old_file.nil?
 
       old_file.delete
