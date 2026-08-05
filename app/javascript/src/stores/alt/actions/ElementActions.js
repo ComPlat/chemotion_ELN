@@ -1307,7 +1307,6 @@ class ElementActions {
   showExplorerDetails() {
     return Explorer.buildEmpty();
   }
- 
 
   // -- Prediction --
   showPredictionContainer() {
