@@ -86,11 +86,19 @@ const AppDispatcher = () => {
   }
   if (currentRoute === '/generic_segments_admin') {
     console.debug('rendering Generic Segments Admin');
-    app = (<GenericSegmentsAdmin />);
+    app = (
+      <DndProvider backend={HTML5Backend}>
+        <GenericSegmentsAdmin />
+      </DndProvider>
+    );
   }
   if (currentRoute === '/generic_datasets_admin') {
     console.debug('rendering Generic Datasets Admin');
-    app = (<GenericDatasetsAdmin />);
+    app = (
+      <DndProvider backend={HTML5Backend}>
+        <GenericDatasetsAdmin />
+      </DndProvider>
+    );
   }
   if (role === 'Guest' || currentRoute === '/home') {
     console.debug('rendering home');

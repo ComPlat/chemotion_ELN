@@ -93,7 +93,6 @@ const App = () => {
     saveUserTemplatesToLocalStorage();
     userStore.fetchUserLabels();
     userStore.fetchGenericEls();
-    userStore.fetchGenericElKlasses();
     userStore.fetchSegmentKlasses();
     userStore.fetchDatasetKlasses();
     userStore.fetchUnitsSystem();
