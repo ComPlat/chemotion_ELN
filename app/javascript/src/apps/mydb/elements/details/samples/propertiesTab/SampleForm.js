@@ -21,6 +21,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import MoleculeFetcher from 'src/fetchers/MoleculesFetcher';
 import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButton';
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
+import MofGenerator from 'src/components/mof/MofGenerator';
 import { isValidMoleculeName } from 'src/utilities/MoleculeNameValidation';
 
 export default class SampleForm extends React.Component {
@@ -59,6 +60,7 @@ export default class SampleForm extends React.Component {
     this.calculateMolecularMass = this.calculateMolecularMass.bind(this);
     this.switchDensityMolarity = this.switchDensityMolarity.bind(this);
     this.handleMixtureComponentChanged = this.handleMixtureComponentChanged.bind(this);
+    this.handleMofResult = this.handleMofResult.bind(this);
     this.handleSampleTypeChanged = this.handleSampleTypeChanged.bind(this);
   }
 
@@ -130,6 +132,7 @@ export default class SampleForm extends React.Component {
   handleSampleTypeChanged(sampleType) {
     const { sample, handleSampleChanged } = this.props;
 
+    const wasMof = sample.isMof();
     // selectedSampleType = {label: 'Single molecule', value: 'Micromolecule'}
     sample.updateSampleType(sampleType.value);
     this.setState({ selectedSampleType: sampleType });
@@ -137,6 +140,19 @@ export default class SampleForm extends React.Component {
     // If switching to Mixture, create component(s) from the current sample
     if (sampleType.value === 'Mixture' && sample.molecule && sample.molfile) {
       this.createComponentsFromCurrentSample(sample);
+    }
+
+    // A MOF carries no molecule structure; drop any molecule carried over from
+    // the previous type so it is not persisted alongside the CIF identifiers.
+    if (sample.isMof()) {
+      sample.clearMoleculeData();
+      sample.sample_svg_file = null;
+    }
+
+    // Leaving MOF: discard the CIF-derived identifiers so they do not linger on
+    // a Micromolecule/Mixture sample.
+    if (wasMof && !sample.isMof() && sample.sample_details) {
+      delete sample.sample_details.mof;
     }
 
     handleSampleChanged(sample);
@@ -195,6 +211,51 @@ export default class SampleForm extends React.Component {
 
   handleMixtureComponentChanged(sample) {
     this.props.handleSampleChanged(sample);
+  }
+
+  /**
+   * Persists MOFid/MOFkey from an uploaded CIF onto sample_details.mof.
+   * @param {{ result: Object }} payload
+   */
+  handleMofResult({ result }) {
+    const { sample, handleSampleChanged } = this.props;
+    sample.sample_details = { ...(sample.sample_details || {}), mof: result };
+    sample.changed = true;
+    handleSampleChanged(sample);
+  }
+
+  /**
+   * Shared name / label fields used by Mixture and MOF sample types
+   * (no molecule structure editor).
+   */
+  simplifiedIdentityFields(sample) {
+    return (
+      <>
+        <Row className="align-items-end mb-4">
+          <Col md={4}>
+            {this.textInput(sample, 'name', 'Name')}
+          </Col>
+          <Col md={4}>
+            {this.textInput(sample, 'external_label', 'External label')}
+          </Col>
+          <Col md={4} className="d-flex align-items-end">
+            {this.inventoryLabelSection(sample)}
+            {this.nextInventoryLabel(sample)}
+          </Col>
+        </Row>
+        <Row className="align-items-end mb-4">
+          <Col md={4}>
+            {this.textInput(sample, 'short_label', 'Short label', true)}
+          </Col>
+          <Col md={4}>
+            {this.textInput(sample, 'location', 'Location')}
+          </Col>
+          <Col md={4}>
+            {this.drySolventCheckbox(sample)}
+          </Col>
+        </Row>
+      </>
+    );
   }
 
   structureEditorButton(isDisabled) {
@@ -1243,11 +1304,16 @@ export default class SampleForm extends React.Component {
   /**
    * Renders the sample type selection input.
    * Allows the user to select the type of sample (e.g., Mixture, Micromolecule).
+   * MOF is only offered when the MOF sidecar is enabled (unless the sample is already MOF).
    * @returns {JSX.Element} The rendered sample type selects input
    */
   sampleTypeInput() {
     const { sample } = this.props;
     const { selectedSampleType } = this.state;
+    const { hasMof } = UIStore.getState();
+    const options = SampleTypesOptions.filter((option) => (
+      option.value !== 'MOF' || hasMof || sample.sample_type === 'MOF'
+    ));
 
     return (
       <Form.Group>
@@ -1258,7 +1324,7 @@ export default class SampleForm extends React.Component {
           isDisabled={!sample.can_update}
           value={selectedSampleType}
           onChange={(value) => this.handleSampleTypeChanged(value)}
-          options={SampleTypesOptions}
+          options={options}
         />
       </Form.Group>
     );
@@ -1298,6 +1364,9 @@ export default class SampleForm extends React.Component {
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
     const { selectedSampleType } = this.state;
+    const isMixture = selectedSampleType?.value === 'Mixture';
+    const isMof = selectedSampleType?.value === 'MOF';
+    const isMicromolecule = !isMixture && !isMof;
 
     return (
       <Form>
@@ -1305,7 +1374,7 @@ export default class SampleForm extends React.Component {
           {this.sampleTypeInput()}
         </Row>
         {
-          selectedSampleType?.value !== 'Mixture' ? (
+          isMicromolecule ? (
             <>
               <Row className="align-items-end mb-4">
                 <Col>{this.moleculeInput()}</Col>
@@ -1407,35 +1476,11 @@ export default class SampleForm extends React.Component {
               </Row>
             </>
           ) : (
-            <>
-              <Row className="align-items-end mb-4">
-                <Col md={4}>
-                  {this.textInput(sample, 'name', 'Name')}
-                </Col>
-                <Col md={4}>
-                  {this.textInput(sample, 'external_label', 'External label')}
-                </Col>
-                <Col md={4} className="d-flex align-items-end">
-                  {this.inventoryLabelSection(sample)}
-                  {this.nextInventoryLabel(sample)}
-                </Col>
-              </Row>
-              <Row className="align-items-end mb-4">
-                <Col md={4}>
-                  {this.textInput(sample, 'short_label', 'Short label', true)}
-                </Col>
-                <Col md={4}>
-                  {this.textInput(sample, 'location', 'Location')}
-                </Col>
-                <Col md={4}>
-                  {this.drySolventCheckbox(sample)}
-                </Col>
-              </Row>
-            </>
+            this.simplifiedIdentityFields(sample)
           )
         }
 
-        {selectedSampleType?.value === 'Mixture' && (
+        {isMixture && (
           <>
             <br />
             <h5>Mixture components:</h5>
@@ -1464,6 +1509,19 @@ export default class SampleForm extends React.Component {
               </Col>
             </Row>
           </>
+        )}
+
+        {isMof && (
+          <Row className="mb-4">
+            <Col>
+              <h5>MOF structure (CIF)</h5>
+              <MofGenerator
+                onResult={this.handleMofResult}
+                initialResult={sample.sample_details?.mof}
+                disabled={!sample.can_update}
+              />
+            </Col>
+          </Row>
         )}
 
         <Row>

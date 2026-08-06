@@ -25,6 +25,7 @@ import { rootStore } from 'src/stores/mobx/RootStore';
 
 const SAMPLE_TYPE_MIXTURE = 'Mixture';
 const SAMPLE_TYPE_MICROMOLECULE = 'Micromolecule';
+const SAMPLE_TYPE_MOF = 'MOF';
 
 const prepareRangeBound = (args = {}, field) => {
   const argsNew = args;
@@ -287,6 +288,15 @@ export default class Sample extends Element {
    */
   isMixture() {
     return this.sample_type?.toString() === SAMPLE_TYPE_MIXTURE;
+  }
+
+  /**
+   * Checks whether the sample is of type "MOF".
+   *
+   * @returns {boolean} True if the sample type is "MOF", otherwise false.
+   */
+  isMof() {
+    return this.sample_type?.toString() === SAMPLE_TYPE_MOF;
   }
 
   /**
@@ -1777,7 +1787,8 @@ export default class Sample extends Element {
 
   get isValid() {
     const isValidMixture = this.isMixture() && this.components?.length > 0;
-    return (this && ((this.molfile && !this.decoupled) || this.decoupled || isValidMixture)
+    const isValidMof = this.isMof() && !!this.sample_details?.mof?.mofid;
+    return (this && ((this.molfile && !this.decoupled) || this.decoupled || isValidMixture || isValidMof)
       && !this.error_loading && !this.error_polymer_type);
   }
 

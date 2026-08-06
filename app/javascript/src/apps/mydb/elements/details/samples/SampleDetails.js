@@ -77,7 +77,8 @@ const MWPrecision = 6;
 let _pendingChemicalCreate = null;
 
 const decoupleCheck = (sample, notifications) => {
-  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_' && !sample.isMixture()) {
+  if (!sample.decoupled && sample.molecule && sample.molecule.id === '_none_'
+    && !sample.isMixture() && !sample.isMof()) {
     notifications.add({
       title: 'Error on Sample creation', message: 'The molecule structure is required!', level: 'error', position: 'tc'
     });
@@ -115,7 +116,7 @@ const sampleTitleAppendix = (sample, handleFastInput) => (
     <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
     <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
     <PubchemLabels element={sample} />
-    {sample.isNew && !sample.isMixture() && <FastInput fnHandle={handleFastInput} />}
+    {sample.isNew && !sample.isMixture() && !sample.isMof() && <FastInput fnHandle={handleFastInput} />}
   </>
 );
 
@@ -145,8 +146,8 @@ export default class SampleDetails extends React.Component {
       validCas: true,
       showMolfileModal: false,
       trackMolfile: props.sample.molfile,
-      smileReadonly: !((typeof props.sample.molecule.inchikey === 'undefined')
-        || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY'),
+      smileReadonly: !((typeof props.sample.molecule?.inchikey === 'undefined')
+        || props.sample.molecule?.inchikey == null || props.sample.molecule?.inchikey === 'DUMMY'),
       smilesInput: '',
       molfile: props.sample.molfile || '',
       inchiString: props.sample.molecule_inchistring || '',
@@ -240,7 +241,7 @@ export default class SampleDetails extends React.Component {
         && (typeof (sample.molfile) === 'undefined'
           || (sample.molfile || '').length === 0)
       )
-      || (typeof (sample.molfile) !== 'undefined' && sample.molecule.inchikey === 'DUMMY')
+      || (typeof (sample.molfile) !== 'undefined' && sample.molecule?.inchikey === 'DUMMY')
     );
 
     // Sync casInputValue when CAS changes
@@ -837,7 +838,7 @@ export default class SampleDetails extends React.Component {
 
   elementalPropertiesItem(sample) {
     // avoid empty ListGroupItem
-    if (!sample.molecule_formula || sample.isMixture()) {
+    if (!sample.molecule_formula || sample.isMixture() || sample.isMof()) {
       return false;
     }
 
@@ -1137,6 +1138,8 @@ export default class SampleDetails extends React.Component {
 
   sampleInfo(sample) {
     const isMixture = sample.isMixture();
+    const isMof = sample.isMof();
+    const hideMoleculeMeta = isMixture || isMof;
     let pubchemLcss = (sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss
       && sample.pubchem_tag.pubchem_lcss.Record) || null;
     if (pubchemLcss && pubchemLcss.Reference) {
@@ -1158,17 +1161,32 @@ export default class SampleDetails extends React.Component {
         <Row className="mb-4">
           <Col md={4}>
             <h4><SampleName sample={sample} /></h4>
-            {!isMixture && (
+            {!hideMoleculeMeta && (
               <>
                 <h5>{this.sampleAverageMW(sample)}</h5>
                 <h5>{this.sampleExactMW(sample)}</h5>
               </>
             )}
-            {sample.isNew || isMixture ? null : <h6>{this.moleculeCas()}</h6>}
+            {isMof && sample.sample_details?.mof?.mofkey && (
+              <h6>
+                MOFkey:
+                {' '}
+                <code className="user-select-all">{sample.sample_details.mof.mofkey}</code>
+              </h6>
+            )}
+            {sample.isNew || hideMoleculeMeta ? null : <h6>{this.moleculeCas()}</h6>}
             {lcssSign}
           </Col>
           <Col md={8} className="position-relative">
-            {this.svgOrLoading(sample)}
+            {isMof ? (
+              <div className="position-relative d-flex align-items-center justify-content-center svg-container-empty p-4 text-muted">
+                {sample.sample_details?.mof?.topology
+                  ? `Topology: ${sample.sample_details.mof.topology}`
+                  : 'Upload a CIF on the Properties tab to generate MOFid'}
+              </div>
+            ) : (
+              this.svgOrLoading(sample)
+            )}
           </Col>
         </Row>
       </Container>

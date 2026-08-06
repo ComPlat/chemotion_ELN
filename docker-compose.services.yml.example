@@ -52,6 +52,18 @@ services:
       - 8002:80
     command: supervisord -n
 
+  # MOFid/MOFkey generator: wraps the snurr-group `mofid` pipeline. Built from
+  # ./mof_service; reached by the Rails app at http://mof_service:5000/ (see
+  # config/mof_service.yml).
+  mof_service:
+    hostname: mof_service
+    image: ${IMG_MOF:-chemotion-mof-service:latest}
+    build:
+      context: ./mof_service
+    restart: unless-stopped
+    networks:
+      - chemotion
+
 networks:
   chemotion:
 
