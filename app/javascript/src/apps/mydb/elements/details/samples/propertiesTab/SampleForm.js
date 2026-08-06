@@ -23,7 +23,7 @@ import ButtonGroupToggleButton from 'src/components/common/ButtonGroupToggleButt
 import SampleDetailsComponents from 'src/apps/mydb/elements/details/samples/propertiesTab/SampleDetailsComponents';
 import MofGenerator from 'src/components/mof/MofGenerator';
 import MofDetails from 'src/components/mof/MofDetails';
-import { mofResultFromAnalysis } from 'src/components/mof/mofUtils';
+import { mofResultFromAnalysis, resolveFragments } from 'src/components/mof/mofUtils';
 import Sample from 'src/models/Sample';
 import { isValidMoleculeName } from 'src/utilities/MoleculeNameValidation';
 
@@ -239,7 +239,69 @@ export default class SampleForm extends React.Component {
     handleSampleChanged(sample);
 
     // Fetch a read-only structure preview from the building-block SMILES.
-    if (result) this.fetchMofPreviewSvg(sample);
+    if (result) {
+      this.fetchMofPreviewSvg(sample);
+      this.resolveMofFragments(sample);
+      this.attachMofMolecule(sample);
+    }
+  }
+
+  /**
+   * Resolve each MOF fragment's SMILES into IUPAC / InChI / canonical SMILES /
+   * molfile via the molecule service, then persist the enriched fragments.
+   * @param {Sample} sample
+   */
+  resolveMofFragments(sample) {
+    const { handleSampleChanged } = this.props;
+    const mof = sample.sample_details?.mof;
+    if (!mof?.fragments?.length) return;
+
+    resolveFragments(mof.fragments)
+      .then((fragments) => {
+        // Merge into the CURRENT mof, not the snapshot captured above: the
+        // concurrent attachMofMolecule / fetchMofPreviewSvg calls also write to
+        // sample_details.mof, and reusing the stale snapshot would clobber the
+        // identifiers / preview they stored.
+        const currentMof = sample.sample_details?.mof || mof;
+        sample.sample_details = { ...sample.sample_details, mof: { ...currentMof, fragments } };
+        sample.changed = true;
+        handleSampleChanged(sample);
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Build a single combined molecule from the MOF fragment SMILES (the same way
+   * a mixture builds its combined molecule) and attach it as sample.molecule.
+   * This gives the MOF real chemical identifiers (InChI / SMILES / molfile) and
+   * lets it save, since the backend requires a molecule. No-op when the building
+   * -block SMILES set is unchanged, so it is safe to call on every edit.
+   * @param {Sample} sample
+   */
+  attachMofMolecule(sample) {
+    const { handleSampleChanged } = this.props;
+    const fragments = sample.sample_details?.mof?.fragments || [];
+    const combinedSmiles = [...new Set(
+      fragments
+        .flatMap((frag) => `${frag.smiles ?? ''}`.split('.'))
+        .map((s) => s.trim())
+        .filter(Boolean)
+    )].join('.');
+
+    if (!combinedSmiles) return;
+    // Skip the network call when the building blocks have not changed.
+    if (Sample.sameSmilesSet(combinedSmiles, sample.molecule_cano_smiles)) return;
+
+    MoleculeFetcher.fetchBySmi(combinedSmiles, null, sample.molfile, 'ketcher')
+      .then((molecule) => {
+        if (!molecule || !molecule.id) return;
+        sample.molecule = molecule;
+        sample.molecule_id = molecule.id;
+        sample.molfile = molecule.molfile;
+        sample.changed = true;
+        handleSampleChanged(sample);
+      })
+      .catch(() => {});
   }
 
   /**
@@ -251,6 +313,8 @@ export default class SampleForm extends React.Component {
     sample.sample_details = { ...(sample.sample_details || {}), mof };
     sample.changed = true;
     handleSampleChanged(sample);
+    // Rebuild the attached molecule if the fragment SMILES changed (no-op otherwise).
+    this.attachMofMolecule(sample);
   }
 
   /**

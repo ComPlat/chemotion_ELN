@@ -3,12 +3,12 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Accordion, Button, Col, Form, Row, Table
+  Accordion, Button, Col, Form, OverlayTrigger, Popover, Row, Table
 } from 'react-bootstrap';
 import { Select, CreatableSelect } from 'src/components/common/Select';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { buildMofid } from 'src/components/mof/mofUtils';
+import { buildMofid, resolveFragmentIdentifiers } from 'src/components/mof/mofUtils';
 
 // Inline (SUR)MOF configuration, shown on the Properties tab when the sample
 // type is MOF. Persisted on sample_details.mof; see mofUtils.js for the field
@@ -67,6 +67,15 @@ const MofDetails = ({ mof, onChange, disabled }) => {
     updateFragment(index, { ratio: clamped });
   }, [updateFragment, notifications]);
 
+  // After a SMILES is edited, resolve it into IUPAC / sum formula / structure SVG
+  // so the popover and name stay in sync with the entered structure.
+  const resolveRow = useCallback(async (index) => {
+    const smiles = `${fragments[index]?.smiles ?? ''}`.trim();
+    if (!smiles || disabled) return;
+    const patch = await resolveFragmentIdentifiers(smiles);
+    if (Object.keys(patch).length) updateFragment(index, patch);
+  }, [fragments, disabled, updateFragment]);
+
   const addFragment = useCallback(() => {
     update({ fragments: [...fragments, emptyFragment()] });
   }, [fragments, update]);
@@ -75,7 +84,7 @@ const MofDetails = ({ mof, onChange, disabled }) => {
     update({ fragments: fragments.filter((_, idx) => idx !== index) });
   }, [fragments, update]);
 
-  const cell = (index, field, placeholder = '') => (
+  const cell = (index, field, placeholder = '', onBlur = undefined) => (
     <Form.Control
       size="sm"
       type="text"
@@ -83,6 +92,7 @@ const MofDetails = ({ mof, onChange, disabled }) => {
       placeholder={placeholder}
       disabled={disabled}
       onChange={(e) => updateFragment(index, { [field]: e.target.value })}
+      onBlur={onBlur}
     />
   );
 
@@ -104,11 +114,10 @@ const MofDetails = ({ mof, onChange, disabled }) => {
               <Table bordered size="sm" className="mof-fragments-table mb-0">
         <thead>
           <tr>
-            <th style={{ width: '14%' }}>Type/Function</th>
-            <th style={{ width: '20%' }}>Molecule</th>
-            <th style={{ width: '18%' }}>IUPAC</th>
-            <th style={{ width: '22%' }}>SMILES</th>
-            <th style={{ width: '8%' }}>Ratio</th>
+            <th style={{ width: '16%' }}>Type/Function</th>
+            <th style={{ width: '40%' }}>Molecule</th>
+            <th style={{ width: '26%' }}>IUPAC</th>
+            <th style={{ width: '10%' }}>Ratio</th>
             {showComments && <th>Comment</th>}
             {!disabled && <th style={{ width: '1%', whiteSpace: 'nowrap' }} aria-label="Actions" />}
           </tr>
@@ -116,23 +125,45 @@ const MofDetails = ({ mof, onChange, disabled }) => {
         <tbody>
           {fragments.length === 0 && (
             <tr>
-              <td colSpan={5 + (showComments ? 1 : 0) + (disabled ? 0 : 1)} className="text-muted text-center py-3">
+              <td colSpan={4 + (showComments ? 1 : 0) + (disabled ? 0 : 1)} className="text-muted text-center py-3">
                 No fragments yet.
                 {!disabled && ' Use the + button to add one.'}
               </td>
             </tr>
           )}
-          {fragments.map((frag, index) => (
-            // eslint-disable-next-line react/no-array-index-key
-            <tr key={index}>
-              <td>{cell(index, 'type_function')}</td>
-              <td>
-                {frag.smiles
-                  ? <code className="small text-break">{frag.smiles}</code>
-                  : <span className="text-muted small">n/a</span>}
-              </td>
-              <td>{cell(index, 'iupac')}</td>
-              <td>{cell(index, 'smiles')}</td>
+          {fragments.map((frag, index) => {
+            const svgSrc = frag.svg_file ? `/images/molecules/${frag.svg_file}` : null;
+            return (
+              // eslint-disable-next-line react/no-array-index-key
+              <tr key={index}>
+                <td>{cell(index, 'type_function')}</td>
+                <td className="align-middle text-start">
+                  {svgSrc ? (
+                    <OverlayTrigger
+                      trigger={['hover']}
+                      placement="right"
+                      overlay={(
+                        <Popover id={`mof-fragment-${index}`}>
+                          <Popover.Header as="h3" className="text-break font-monospace">
+                            {frag.smiles}
+                          </Popover.Header>
+                          <Popover.Body>
+                            <img
+                              src={svgSrc}
+                              alt={frag.smiles}
+                              style={{ maxWidth: '32vw', maxHeight: '26vh' }}
+                            />
+                          </Popover.Body>
+                        </Popover>
+                      )}
+                    >
+                      {cell(index, 'smiles', 'SMILES', () => resolveRow(index))}
+                    </OverlayTrigger>
+                  ) : (
+                    cell(index, 'smiles', 'SMILES', () => resolveRow(index))
+                  )}
+                </td>
+                <td>{cell(index, 'iupac')}</td>
               <td>
                 <NumeralInputWithUnitsCompo
                   precision={4}
@@ -155,7 +186,8 @@ const MofDetails = ({ mof, onChange, disabled }) => {
                 </td>
               )}
             </tr>
-          ))}
+            );
+          })}
         </tbody>
               </Table>
               <div className="d-flex justify-content-center align-items-center mt-3">

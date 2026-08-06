@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Alert, Button, Spinner
+  Alert, Button, OverlayTrigger, Spinner, Tooltip
 } from 'react-bootstrap';
 import Dropzone from 'src/components/common/Dropzone';
 import MofFetcher from 'src/fetchers/MofFetcher';
@@ -83,11 +83,34 @@ const MofGenerator = ({ onResult, initialResult, disabled }) => {
   const dropDisabled = disabled || !hasMof;
 
   return (
-    <div className="mof-generator">
-      <p className="text-muted small mb-3">
-        Upload a CIF to generate a MOFid and MOFkey (building-block SMILES and topology included).
-        Structures should be 3D frameworks without disorder; remove non-framework solvent when possible.
-      </p>
+    <div className="mof-generator position-relative">
+      {result && !disabled && (
+        <Button
+          variant="danger"
+          size="sm"
+          className="position-absolute top-0 end-0"
+          disabled={submitting}
+          onClick={handleClear}
+          aria-label="Clear MOF result"
+          title="Clear MOF result"
+        >
+          <i className="fa fa-trash-o" />
+        </Button>
+      )}
+      <div className="text-muted small mb-3 pe-5 d-flex align-items-center gap-1">
+        <span>Upload a CIF to generate a MOFid and MOFkey.</span>
+        <OverlayTrigger
+          placement="top"
+          overlay={(
+            <Tooltip id="mof-upload-hint">
+              Building-block SMILES and topology are included. Structures should be 3D
+              frameworks without disorder; remove non-framework solvent when possible.
+            </Tooltip>
+          )}
+        >
+          <i className="fa fa-info-circle" role="button" tabIndex={0} aria-label="MOF upload guidance" />
+        </OverlayTrigger>
+      </div>
 
       {!hasMof && (
         <Alert variant="warning" className="py-2">
@@ -112,7 +135,7 @@ const MofGenerator = ({ onResult, initialResult, disabled }) => {
             </span>
           ) : (
             <span>
-              {filename ? `${filename} — ` : ''}
+              {filename ? `${filename} - ` : ''}
               Drop a .cif file here, or click to upload
             </span>
           )}
@@ -123,14 +146,6 @@ const MofGenerator = ({ onResult, initialResult, disabled }) => {
         <Alert variant="danger" className="py-2" onClose={() => setError(null)} dismissible>
           {error}
         </Alert>
-      )}
-
-      {result && !disabled && (
-        <div className="mb-3">
-          <Button variant="outline-secondary" disabled={submitting} onClick={handleClear}>
-            Clear
-          </Button>
-        </div>
       )}
     </div>
   );

@@ -9,6 +9,50 @@
 // So the "MOF identifier" shown in the UI is derived from the fragments' SMILES
 // plus the Format ID / Topology / Catenation fields (all retrievable from the CIF).
 
+import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
+
+/**
+ * Resolve a fragment's building-block SMILES into display identifiers using the
+ * app's molecule service (the same call mixtures use to resolve components).
+ * @param {string} smiles
+ * @returns {Promise<Object>} fields to merge onto the fragment, or {} on failure
+ */
+export const resolveFragmentIdentifiers = async (smiles) => {
+  const smi = `${smiles ?? ''}`.trim();
+  if (!smi) return {};
+  try {
+    const molecule = await MoleculesFetcher.fetchBySmi(smi, null, null, 'ketcher');
+    if (!molecule || !molecule.id) return {};
+    return {
+      molecule_id: molecule.id,
+      iupac: molecule.iupac_name || '',
+      sum_formula: molecule.sum_formular || molecule.sum_formula || '',
+      inchikey: molecule.inchikey || '',
+      inchistring: molecule.inchistring || '',
+      cano_smiles: molecule.cano_smiles || '',
+      molfile: molecule.molfile || '',
+      svg_file: molecule.molecule_svg_file || '',
+    };
+  } catch (e) {
+    return {};
+  }
+};
+
+/**
+ * Resolve every fragment that has a SMILES, returning a new fragments array with
+ * IUPAC / InChI / canonical SMILES / molfile / SVG populated. Fragments without
+ * a SMILES (or that fail to resolve) are left unchanged.
+ * @param {Array<Object>} fragments
+ * @returns {Promise<Array<Object>>}
+ */
+export const resolveFragments = async (fragments = []) => Promise.all(
+  fragments.map(async (frag) => {
+    if (!frag || !`${frag.smiles ?? ''}`.trim()) return frag;
+    const patch = await resolveFragmentIdentifiers(frag.smiles);
+    return { ...frag, ...patch };
+  }),
+);
+
 /**
  * Assemble the MOFid string from the structured mof fields.
  * @param {Object} mof - sample_details.mof
