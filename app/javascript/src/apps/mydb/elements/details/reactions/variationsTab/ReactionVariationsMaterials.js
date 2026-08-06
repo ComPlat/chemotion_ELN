@@ -7,6 +7,217 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import { calculateTON, calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 
+const concentrationEnabledMaterialTypes = ['startingMaterials', 'reactants'];
+
+function isConcentrationEnabledMaterial(material) {
+  const { aux = {} } = material || {};
+  return concentrationEnabledMaterialTypes.includes(aux.materialType)
+    && !['feedstock', 'catalyst'].includes(aux.gasType);
+}
+
+function canDeriveReactionVolumeFromMaterial(material) {
+  if (!isConcentrationEnabledMaterial(material)) {
+    return false;
+  }
+
+  const amount = material.amount?.value;
+  const concentration = material.concentration?.value;
+  return Number.isFinite(amount)
+    && Number.isFinite(concentration)
+    && concentration > 0;
+}
+
+function deriveReactionVolumeFromMaterial(material) {
+  if (!canDeriveReactionVolumeFromMaterial(material)) {
+    return null;
+  }
+
+  return material.amount.value / material.concentration.value;
+}
+
+function updateConcentrationsForReactionMaterials(row, reactionVolume, editedField = null) {
+  const updatedRow = cloneDeep(row);
+
+  if (!Number.isFinite(reactionVolume) || reactionVolume <= 0) {
+    return updatedRow;
+  }
+
+  const [editedMaterialType, editedMaterialId] = typeof editedField === 'string'
+    ? editedField.split('.')
+    : [];
+
+  ['startingMaterials', 'reactants'].forEach((materialType) => {
+    Object.entries(updatedRow[materialType] || {}).forEach(([materialId, material]) => {
+      if (!isConcentrationEnabledMaterial(material)) {
+        return;
+      }
+
+      if (materialType === editedMaterialType && materialId === editedMaterialId) {
+        return;
+      }
+
+      const amount = material.amount?.value;
+      if (!Number.isFinite(amount) || amount < 0 || !material.concentration) {
+        return;
+      }
+
+      material.concentration.value = amount / reactionVolume;
+    });
+  });
+
+  return updatedRow;
+}
+
+function materialContributesToCombinedVolumeVariations(material) {
+  const volume = material?.volume?.value;
+  if (!Number.isFinite(volume) || volume <= 0) {
+    return false;
+  }
+
+  const gasType = material?.aux?.gasType;
+  if (gasType === 'feedstock') {
+    return false;
+  }
+
+  if (gasType === 'catalyst') {
+    const purity = material?.aux?.purity;
+    return Number.isFinite(purity) && purity > 0;
+  }
+
+  return true;
+}
+
+function computeCombinedReactionVolume(row = {}) {
+  let totalVolume = 0;
+
+  Object.values(row.solvents || {}).forEach((solvent) => {
+    const solventVolume = solvent?.volume?.value;
+    if (Number.isFinite(solventVolume) && solventVolume > 0) {
+      totalVolume += solventVolume;
+    }
+  });
+
+  ['startingMaterials', 'reactants'].forEach((materialType) => {
+    Object.values(row[materialType] || {}).forEach((material) => {
+      if (materialContributesToCombinedVolumeVariations(material)) {
+        totalVolume += material.volume.value;
+      }
+    });
+  });
+
+  return totalVolume > 0 ? totalVolume : null;
+}
+
+function getValidReactionVolume(value) {
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function getContextReactionVolumeByRowId(context = {}) {
+  if (context.reactionVolumeByRowId && typeof context.reactionVolumeByRowId === 'object') {
+    return context.reactionVolumeByRowId;
+  }
+
+  if (context.reactionVolumeByRowIdRef?.current && typeof context.reactionVolumeByRowIdRef.current === 'object') {
+    return context.reactionVolumeByRowIdRef.current;
+  }
+
+  return {};
+}
+
+function getReactionVolumeForRow(context = {}, row = {}) {
+  const rowVolumes = getContextReactionVolumeByRowId(context);
+  const rowVolume = rowVolumes?.[row.id];
+
+  return getValidReactionVolume(rowVolume);
+}
+
+function resolveReactionVolumeFromContext(context = {}, row = {}) {
+  const {
+    useReactionVolume,
+    lockReactionVolume,
+  } = context;
+
+  const validReactionVolume = getReactionVolumeForRow(context, row);
+  const validCombinedReactionVolume = computeCombinedReactionVolume(row);
+
+  if (useReactionVolume) {
+    return validReactionVolume ?? validCombinedReactionVolume;
+  }
+
+  if (lockReactionVolume) {
+    return validCombinedReactionVolume;
+  }
+
+  return validCombinedReactionVolume ?? validReactionVolume;
+}
+
+function shouldPropagateConcentrationOnEdit(material, changedEntry, concentrationContext = {}) {
+  if (material?.aux?.gasType === 'feedstock') {
+    return false;
+  }
+
+  if (changedEntry !== 'concentration') {
+    return false;
+  }
+
+  const lockReactionVolume = !!concentrationContext?.lockReactionVolume;
+  const useReactionVolume = !!concentrationContext?.useReactionVolume;
+
+  return lockReactionVolume !== useReactionVolume;
+}
+
+function updateVariationsRowOnConcentrationMaterialChange(
+  row,
+  field,
+  changedEntry,
+  concentrationContext = {}
+) {
+  const updatedRow = cloneDeep(row);
+  const material = get(updatedRow, field);
+
+  if (!material || !material.aux || !isConcentrationEnabledMaterial(material)) {
+    return { row: updatedRow, contextUpdate: null };
+  }
+
+  const shouldAutoEnableConcentration = !concentrationContext.lockReactionVolume
+    && !concentrationContext.useReactionVolume
+    && changedEntry === 'concentration'
+    && material.aux.gasType !== 'feedstock';
+
+  const effectiveConcentrationContext = shouldAutoEnableConcentration
+    ? { ...concentrationContext, useReactionVolume: true }
+    : concentrationContext;
+
+  if (!shouldPropagateConcentrationOnEdit(material, changedEntry, effectiveConcentrationContext)) {
+    return { row: updatedRow, contextUpdate: null };
+  }
+
+  let reactionVolume = resolveReactionVolumeFromContext(effectiveConcentrationContext, updatedRow);
+  let contextUpdate = shouldAutoEnableConcentration
+    ? { useReactionVolume: true }
+    : null;
+
+  if (!effectiveConcentrationContext.lockReactionVolume && effectiveConcentrationContext.useReactionVolume) {
+    const derivedReactionVolume = deriveReactionVolumeFromMaterial(material);
+    if (Number.isFinite(derivedReactionVolume) && derivedReactionVolume > 0) {
+      reactionVolume = derivedReactionVolume;
+      contextUpdate = {
+        ...(contextUpdate || {}),
+        reactionVolumeByRowIdPatch: { [updatedRow.id]: derivedReactionVolume },
+        useReactionVolume: true,
+      };
+    }
+  }
+
+  const rowWithUpdatedConcentrations = updateConcentrationsForReactionMaterials(
+    updatedRow,
+    reactionVolume,
+    field
+  );
+
+  return { row: rowWithUpdatedConcentrations, contextUpdate };
+}
+
 function getVariationsSbmmID(id) {
   return `sbmm:${id}`;
 }
@@ -182,8 +393,9 @@ function getMaterialEntries(materialType, gasType) {
       return ['mass', 'amount', 'volume', 'yield'];
     case 'startingMaterials':
     case 'reactants':
-    case 'catalyst':
     case 'feedstock':
+      return ['mass', 'amount', 'volume', 'equivalent', 'concentration'];
+    case 'catalyst':
       return ['mass', 'amount', 'volume', 'equivalent'];
     case 'gas':
       return [
@@ -249,11 +461,12 @@ function getMaterialAux(material, materialType, gasMode, vesselVolume) {
 
 function getMaterialData(material, materialType, gasMode = false, vesselVolume = null) {
   const materialCopy = cloneDeep(material);
+  const gasType = getMaterialGasType(materialCopy, gasMode);
 
   // User-editable data is represented as "entries", e.g., `foo: {value: bar, unit: baz}.
-  const entries = getMaterialEntries(materialType, getMaterialGasType(materialCopy, gasMode));
+  const entries = getMaterialEntries(materialType, gasType);
   const materialData = entries.reduce((data, entry) => {
-    data[entry] = { value: getStandardValue(entry, materialCopy), unit: getStandardUnits(entry)[0] };
+    data[entry] = { value: getStandardValue(entry, materialCopy), unit: getStandardUnits(entry, gasType)[0] };
     return data;
   }, {});
 
@@ -333,8 +546,8 @@ function getMaterialColumnGroupChild(material, materialType, gasMode) {
         tooltipComponent: MaterialOverlay,
         editable: (params) => cellIsEditable(params),
         cellDataType: getCellDataType(entry, gasType),
-        displayUnit: getStandardUnits(entry)[0],
-        units: getStandardUnits(entry),
+        displayUnit: getStandardUnits(entry, gasType)[0],
+        units: getStandardUnits(entry, gasType),
         entry,
         hide: index !== 0,
       })),
@@ -443,6 +656,7 @@ export {
   updateVariationsRowOnReferenceMaterialChange,
   updateVariationsRowOnCatalystMaterialChange,
   updateVariationsRowOnFeedstockMaterialChange,
+  updateVariationsRowOnConcentrationMaterialChange,
   computeDerivedQuantitiesVariationsRow,
   removeObsoleteMaterialColumns,
   updateVariationsOnAuxChange,
@@ -456,5 +670,7 @@ export {
   computeEquivalent,
   computePercentYield,
   computePercentYieldGas,
+  computeCombinedReactionVolume,
+  resolveReactionVolumeFromContext,
   cellIsEditable,
 };
