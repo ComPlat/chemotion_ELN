@@ -53,6 +53,19 @@ class PubchemLookupJob < ApplicationJob
   # #run_deadline, whichever comes first.
   CHUNK_SIZE = 1000
 
+  # How long to wait before looking again when the pending set is empty but an import is still
+  # creating molecules. Short relative to how long a bulk import takes to produce a batch —
+  # measured at ~7 minutes per 50-record SDF batch — so enrichment stays close behind the
+  # import rather than waiting for it to finish.
+  REARM_DELAY = 60.seconds
+
+  # Ceiling on consecutive empty re-arms. Without it, an import whose delayed_jobs lock is
+  # somehow never released would keep this chain alive indefinitely. At REARM_DELAY this is
+  # ~30 minutes of idling, after which the importer's own end-of-run flush
+  # ({Molecule.schedule_pubchem_lookup_since}) is left to cover whatever remains — that flush is
+  # the actual completeness guarantee, and nothing here is allowed to become load-bearing for it.
+  MAX_EMPTY_REARMS = 30
+
   # @param ids [Array<Integer>, nil] molecule ids (default) or sample ids (see +type+)
   # @param type [Symbol] +:molecules+ (default) or +:samples+ — when +:samples+, +ids+
   #   is resolved to the distinct molecule ids referenced by those samples first
@@ -65,14 +78,20 @@ class PubchemLookupJob < ApplicationJob
   #   molecules and run long enough to hit Delayed::Worker.max_run_time
   # @param start_id [Integer] resume point (exclusive) — only molecules with id > start_id
   #   are considered
+  # @param empty_rearms [Integer] how many consecutive times this chain has already found
+  #   nothing pending and re-armed anyway because an import was still running. Carried as an
+  #   argument rather than persisted, and capped by {MAX_EMPTY_REARMS}.
   #
   # With neither +ids+ nor +created_after+ this is the global sweep: every molecule still
   # missing PubChem data. That is the cron mode, and it is why the callers
   # ({Molecule.schedule_pubchem_lookup_for}, {.schedule_pubchem_lookup_since}) return early on
   # blank input themselves rather than relying on a guard here — an accidental argument-less
   # enqueue from those paths would otherwise silently become a full backfill.
+  # rubocop:disable Metrics/ParameterLists -- ActiveJob entry point: each argument is serialized
+  # into the queue row individually, so collapsing them into an options hash would change the
+  # payload shape of every already-queued job as well as every call site.
   def perform(ids = nil, type: :molecules, created_after: nil,
-              chunk_size: CHUNK_SIZE, start_id: 0)
+              chunk_size: CHUNK_SIZE, start_id: 0, empty_rearms: 0)
     # The argument set both requeue paths forward, bundled once so the two stay in step.
     forward = { type: type, created_after: created_after, chunk_size: chunk_size, start_id: start_id }
 
@@ -89,13 +108,14 @@ class PubchemLookupJob < ApplicationJob
 
     molecules = resolve_molecules(molecule_ids, created_after: created_after,
                                                 start_id: start_id, chunk_size: chunk_size)
-    return if molecules.empty?
+    return rearm_while_importing(ids, empty_rearms: empty_rearms, **forward) if molecules.empty?
 
     # enrich_each returns the last molecule it actually reached, which is not necessarily the
     # last of the chunk — see its note on the run budget.
     continue_after(enrich_each(molecules).id, molecule_ids,
                    created_after: created_after, chunk_size: chunk_size)
   end
+  # rubocop:enable Metrics/ParameterLists
 
   private
 
@@ -109,6 +129,43 @@ class PubchemLookupJob < ApplicationJob
   #   runs do not wake in lockstep and collide again
   def collision_backoff
     REQUEUE_DELAY + rand(REQUEUE_JITTER.to_i).seconds
+  end
+
+  # Nothing pending *right now* does not mean nothing is coming. A bulk import commits its
+  # molecules in batches, and enrichment drains a batch far faster than the import produces the
+  # next one — measured at roughly 8x — so a chain that stopped here would enrich the first
+  # batch and then leave everything created over the rest of the import stranded until the
+  # importer's end-of-run flush, which is exactly the latency this re-arm exists to remove.
+  #
+  # Re-arming rather than enqueuing per batch is what keeps this bounded: one job stays alive
+  # regardless of import size. Enqueuing from the import loop instead would put a job in the
+  # queue per batch — 1000 of them for a 50k-molecule import, which is the shape of a defect
+  # already fixed once in this work.
+  #
+  # @return [void]
+  def rearm_while_importing(ids, empty_rearms:, **forward)
+    return if empty_rearms >= MAX_EMPTY_REARMS
+    return unless import_in_progress?
+
+    self.class.set(wait: REARM_DELAY)
+        .perform_later(ids, **forward, empty_rearms: empty_rearms + 1)
+  end
+
+  # Whether a bulk import is currently running, judged the same way #another_run_in_progress?
+  # judges its own siblings: a delayed_jobs row for the class, holding a lock that is not stale.
+  #
+  # Deliberately no new state. Reusing the +locked_at+ window makes the re-arm self-limiting —
+  # if the importing worker dies, its lock ages past Delayed::Worker.max_run_time and this goes
+  # false on its own, so there is no flag that can leak and no loop that can outlive its cause.
+  #
+  # Caveat worth knowing: a large SDF import can run longer than max_run_time, at which point
+  # its lock reads as stale here even though it is still going. The re-arm then stops early and
+  # the end-of-run flush covers the remainder — degraded, not broken.
+  #
+  # @return [Boolean]
+  def import_in_progress?
+    Delayed::Job.where('handler like ?', '%job_class: ImportSamplesJob%')
+                .exists?(locked_at: Delayed::Worker.max_run_time.ago..)
   end
 
   # @return [Array<Integer>, nil] molecule ids — +ids+ as given, or the molecule ids they
