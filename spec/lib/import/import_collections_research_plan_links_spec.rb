@@ -82,6 +82,44 @@ RSpec.describe 'ImportCollection' do
     end
   end
 
+  # Ketcher preview svgs are bundled into the zip under images/research_plans/ but extracted only to a
+  # temp dir (see extract's zip-entry handling) — this materializes them into
+  # public/images/research_plans/ so the frontend's <img src="/images/research_plans/...svg"> actually
+  # resolves after import, for hand-drawn structures and synthesized ones alike.
+  describe '#materialize_researchplan_ketcher_images' do
+    let(:user) { create(:person) }
+    let(:attachment) { build(:attachment) }
+    let(:importer) { Import::ImportCollections.new(attachment, user.id) }
+    let(:tmp_dir) { importer.instance_variable_get(:@tmp_dir) }
+
+    after { importer.cleanup }
+
+    it 'copies a bundled preview svg into public/images/research_plans' do
+      svg_file = "#{SecureRandom.hex(16)}.svg"
+      source_dir = Pathname.new(tmp_dir).join('images', 'research_plans')
+      FileUtils.mkdir_p(source_dir)
+      File.write(source_dir.join(svg_file), '<svg>materialized</svg>')
+      target_path = Rails.public_path.join('images', 'research_plans', svg_file)
+
+      begin
+        body = [{ 'id' => 'a', 'type' => 'ketcher', 'value' => { 'svg_file' => svg_file } }]
+        importer.send(:materialize_researchplan_ketcher_images, body)
+
+        expect(File.file?(target_path)).to be true
+        expect(File.read(target_path)).to eq('<svg>materialized</svg>')
+      ensure
+        FileUtils.rm_f(target_path)
+      end
+    end
+
+    it 'ignores a svg_file value that is not a bare filename, rather than writing outside the target folder' do
+      body = [{ 'id' => 'a', 'type' => 'ketcher', 'value' => { 'svg_file' => '../../evil.svg' } }]
+
+      expect { importer.send(:materialize_researchplan_ketcher_images, body) }.not_to raise_error
+      expect(Rails.public_path.join('images', 'research_plans', 'evil.svg')).not_to exist
+    end
+  end
+
   # Negative case: the linked sample/reaction is not part of the exported collection (e.g. it lives in
   # a collection the exporting user didn't select), so it's never assigned an export uuid. The link
   # must be dropped rather than kept with its stale id, which could otherwise coincidentally match an
@@ -196,9 +234,17 @@ RSpec.describe 'ImportCollection' do
       expect(ketcher_field).to be_present
     end
 
-    it 'embeds the sample structure and no pre-rendered svg' do
+    it 'embeds the sample structure' do
       expect(ketcher_field['value']['sdf_file']).to eq(outside_sample.molfile)
-      expect(ketcher_field['value']['svg_file']).to be_nil
+    end
+
+    it 'materializes a rendered preview svg under public/images/research_plans' do
+      svg_file = ketcher_field['value']['svg_file']
+      expect(svg_file).to be_present
+
+      svg_path = Rails.public_path.join('images', 'research_plans', svg_file)
+      expect(File.file?(svg_path)).to be true
+      expect(File.read(svg_path)).to include('</svg>')
     end
   end
 

@@ -679,8 +679,33 @@ module Export
       return true unless policy.read? && policy.read_structure?
 
       field['type'] = 'ketcher'
-      field['value'] = { 'sdf_file' => sample.molfile, 'svg_file' => nil }
+      field['value'] = { 'sdf_file' => sample.molfile, 'svg_file' => build_research_plan_ketcher_svg(sample.molfile) }
       false
+    end
+
+    # Renders a preview svg for a synthesized ketcher field, following the same convention research
+    # plan ketcher fields already use (see POST /api/v1/research_plans/svg in research_plan_api.rb):
+    # a content-addressed filename under public/images/research_plans/. Written on the exporting
+    # system (a real Ketcher-drawn field's svg is written there too, when the user saves it) and
+    # bundled into the zip so it can be materialized on import (see
+    # Import::ImportCollections#materialize_researchplan_ketcher_images). Returns nil — leaving the
+    # field with no preview, same as before — if rendering fails; the sdf_file is preserved either way.
+    def build_research_plan_ketcher_svg(molfile)
+      svg = Molecule.svg_reprocess(nil, molfile)
+      return nil if svg.blank?
+
+      filename = "#{Digest::SHA256.hexdigest(Digest::SHA256.hexdigest(svg))}.svg"
+      target_path = Rails.public_path.join('images', 'research_plans', filename)
+      unless File.file?(target_path)
+        FileUtils.mkdir_p(target_path.dirname)
+        File.write(target_path, svg)
+      end
+
+      fetch_image('research_plans', filename)
+      filename
+    rescue StandardError => e
+      Rails.logger.error("Failed to render ketcher preview svg: #{e.message}")
+      nil
     end
 
     # Preserve a reaction linked from outside the export as a static image of its report-style scheme
