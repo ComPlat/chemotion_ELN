@@ -172,6 +172,53 @@ RSpec.describe PubchemLookupJob do
       end
     end
 
+    # A bulk import commits molecules in batches and enrichment drains a batch much faster than
+    # the import produces the next one, so a chain that stopped on the first empty result would
+    # enrich batch 1 and strand everything after it.
+    context 'when nothing is pending but an import is still running' do
+      before do
+        allow(job).to receive(:resolve_molecules).and_return([])
+        allow(described_class).to receive(:set).and_return(described_class)
+        allow(described_class).to receive(:perform_later)
+      end
+
+      it 're-arms itself after a short delay' do
+        create_locked_delayed_job('ImportSamplesJob')
+
+        job.perform(nil, created_after: 1.hour.ago)
+
+        expect(described_class).to have_received(:set).with(wait: described_class::REARM_DELAY)
+        expect(described_class).to have_received(:perform_later)
+          .with(nil, hash_including(empty_rearms: 1))
+      end
+
+      it 'does not re-arm when no import holds a lock' do
+        job.perform(nil, created_after: 1.hour.ago)
+
+        expect(described_class).not_to have_received(:perform_later)
+      end
+
+      # The lock window is what makes this self-limiting: a worker that died mid-import stops
+      # looking like a running import once its lock ages past max_run_time.
+      it 'does not re-arm on an import whose lock has gone stale' do
+        create_locked_delayed_job('ImportSamplesJob',
+                                  locked_at: (Delayed::Worker.max_run_time + 1.minute).ago)
+
+        job.perform(nil, created_after: 1.hour.ago)
+
+        expect(described_class).not_to have_received(:perform_later)
+      end
+
+      it 'gives up after MAX_EMPTY_REARMS so it cannot idle forever' do
+        create_locked_delayed_job('ImportSamplesJob')
+
+        job.perform(nil, created_after: 1.hour.ago,
+                         empty_rearms: described_class::MAX_EMPTY_REARMS)
+
+        expect(described_class).not_to have_received(:perform_later)
+      end
+    end
+
     context 'when the run budget is spent before the chunk is' do
       # chunk_size alone does not bound wall-clock time: 1000 molecules x (a sleep + up to two
       # PubChem round trips) can outlast Delayed::Worker.max_run_time, after which delayed_job
