@@ -62,8 +62,8 @@ module Chemotion
         end
 
         before do
-          collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
-          @samples = Sample.by_collection_id(collection.id).by_ui_state(params[:ui_state])
+          @collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
+          @samples = Sample.by_collection_id(@collection.id).by_ui_state(params[:ui_state])
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).read_all?
         end
 
@@ -71,9 +71,14 @@ module Chemotion
         post do
           @samples = @samples.limit(params[:limit]) if params[:limit]
 
+          # All samples come from the single accessible collection @collection; apply its per-class
+          # detail levels so a restrictive share does not leak fields (molfile, analyses, etc.).
+          detail_levels = ElementDetailLevelCalculator.for_collection(collection: @collection, user: current_user)
+
           {
             samples: Entities::SampleEntity.represent(
               @samples,
+              detail_levels: detail_levels,
               root: false,
             ),
             literatures: Entities::LiteratureEntity.represent(
