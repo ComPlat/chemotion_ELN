@@ -182,7 +182,7 @@ class Import::ImportSdf < Import::ImportSamples
     if !raw_data.empty? && inchi_array.empty?
       ActiveRecord::Base.transaction do
         raw_data.each do |molfile|
-          babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+          babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile, render_svg: false)
           inchikey = babel_info[:inchikey]
           is_partial = babel_info[:is_partial]
           next unless inchikey.presence && (molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial))
@@ -332,7 +332,12 @@ class Import::ImportSdf < Import::ImportSamples
   end
 
   def find_or_create_by_molfiles(molfiles)
-    babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles)
+    # render_svg: false — Molecule#assign_molecule_data discards OpenBabel's SVG and re-renders
+    # via Chemotion::SvgRenderer, so rendering it per record is the largest avoidable cost on
+    # this path: it is the only timeout-bounded operation in molecule_info_from_molfile, and on
+    # organometallic files ~1 record in 10 burns the whole SVG render timeout before being
+    # killed (measured at the 20 s default then in force; it is now 5 s and env-configurable).
+    babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles, render_svg: false)
 
     babel_info_array.map.with_index do |babel_info, i|
       mf = molfiles[i]
@@ -384,7 +389,7 @@ class Import::ImportSdf < Import::ImportSamples
       [result.molecule, result.raw_molfile, result.babel_info]
     else
       san_molfile = sanitize_molfile(molfile)
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(san_molfile)
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(san_molfile, render_svg: false)
       inchikey = babel_info[:inchikey]
       is_partial = babel_info[:is_partial]
       molecule = inchikey.present? ? Molecule.find_by(inchikey: inchikey, is_partial: is_partial) : nil

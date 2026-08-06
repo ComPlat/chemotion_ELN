@@ -111,7 +111,10 @@ class Molecule < ApplicationRecord
   # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/AbcSize
   def self.find_or_create_by_molfile(molfile, defer_pubchem_lookup: false, **babel_info)
     unless babel_info && babel_info[:inchikey]
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+      # render_svg: false — the SVG produced here is discarded unconditionally a few lines
+      # below by #assign_molecule_data -> .svg_reprocess, which always re-renders through
+      # Chemotion::SvgRenderer because OpenBabel's output carries the 'Open Babel' marker.
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile, render_svg: false)
     end
     inchikey = babel_info[:inchikey]
     return if inchikey.blank?
@@ -173,10 +176,12 @@ class Molecule < ApplicationRecord
   end
 
   def self.find_or_create_by_molfiles(molfiles_array)
-    babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles_array)
+    # render_svg: false — see .find_or_create_by_molfile.
+    babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles_array, render_svg: false)
     babel_info_array.map.with_index do |babel_info, i|
       if babel_info && babel_info[:inchikey]
-        Molecule.find_or_create_by_molfile(molfiles_array[i], babel_info)
+        # ** rather than a positional hash — see the note in Sample#find_or_create_molecule.
+        Molecule.find_or_create_by_molfile(molfiles_array[i], **babel_info)
       else
         nil
       end
@@ -184,7 +189,9 @@ class Molecule < ApplicationRecord
   end
 
   def refresh_molecule_data
-    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(self.molfile)
+    # render_svg: false — #assign_molecule_data below re-renders through Chemotion::SvgRenderer
+    # regardless, so OpenBabel's SVG would be discarded.
+    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile, render_svg: false)
     # this is to not refresh is_partial, because the info has already been removed from the molfile
     babel_info[:is_partial] = self.is_partial
     inchikey = babel_info[:inchikey]

@@ -490,7 +490,9 @@ class Sample < ApplicationRecord
 
     return if molecule.present?
 
-    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+    # render_svg: false — only the inchikey/is_partial/version are read here, and the molecule
+    # this resolves to renders its own SVG through Chemotion::SvgRenderer.
+    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile, render_svg: false)
     inchikey = babel_info[:inchikey]
     return if inchikey.blank?
 
@@ -498,7 +500,11 @@ class Sample < ApplicationRecord
     self.molfile_version = babel_info[:version]
     return unless molecule&.inchikey != inchikey || molecule.is_partial != is_partial
 
-    self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
+    # **, not a positional hash: find_or_create_by_molfile takes babel_info as keyword rest, so
+    # a bare hash relies on Ruby 2.7's hash-to-keywords conversion and raises ArgumentError on
+    # 3.0+. This is a before_save on every sample whose molfile changed, so it is the call site
+    # of this shape that would hurt most on an upgrade.
+    self.molecule = Molecule.find_or_create_by_molfile(molfile, **babel_info)
   end
 
   def find_or_create_fingerprint
