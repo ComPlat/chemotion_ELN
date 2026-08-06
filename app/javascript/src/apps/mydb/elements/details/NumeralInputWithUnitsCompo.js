@@ -139,19 +139,21 @@ const NumeralInputWithUnitsCompo = ({
     showString, value, metricPrefix, currentPrecision, valueString, block
   } = state;
   const mp = metPrefSymbols[metricPrefix];
-  const nanOrInfinity = Number.isNaN(value) || !Number.isFinite(value);
 
   // Calculate display value once during render
-  let displayValue, displayRangeStart, displayRangeEnd;
-  if (!showString && nanOrInfinity) {
-    displayValue = 'n.d.';
-  } else if (!showString) {
-    displayValue = formatDisplayValue(metPreConv(value, 'n', metricPrefix), currentPrecision);
-    displayRangeStart = formatDisplayValue(metPreConv(rangeStart, 'n', metricPrefix), currentPrecision);
-    displayRangeEnd = formatDisplayValue(metPreConv(rangeEnd, 'n', metricPrefix), currentPrecision);
-  } else {
-    displayValue = valueString;
-  }
+  const [
+    displayValue,
+    displayRangeStart,
+    displayRangeEnd
+  ] = [value, rangeStart, rangeEnd].map((v) => {
+    const nanOrInfinity = Number.isNaN(v) || !Number.isFinite(v);
+    if (!showString && nanOrInfinity) {
+      return 'n.d.';
+    } else if (!showString) {
+      return formatDisplayValue(metPreConv(v, 'n', metricPrefix), currentPrecision);
+    }
+    return valueString;
+  });
 
   const inputDisabled = disabled ? true : block;
   const alwaysAllowDisplayUnit = [
