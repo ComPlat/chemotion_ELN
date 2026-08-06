@@ -148,6 +148,11 @@ function resolveReactionVolumeFromContext(context = {}, row = {}) {
     lockReactionVolume,
   } = context;
 
+  const editScopedReactionVolume = getValidReactionVolume(context.editScopedReactionVolume);
+  if (lockReactionVolume && !useReactionVolume && editScopedReactionVolume) {
+    return editScopedReactionVolume;
+  }
+
   const validReactionVolume = getReactionVolumeForRow(context, row);
   const validCombinedReactionVolume = computeCombinedReactionVolume(row);
 

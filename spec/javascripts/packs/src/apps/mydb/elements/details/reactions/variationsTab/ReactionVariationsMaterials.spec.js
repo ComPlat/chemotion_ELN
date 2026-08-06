@@ -415,6 +415,49 @@ describe('ReactionVariationsMaterials', () => {
       variationsRow.reactants[reactantID].concentration.value
     );
   });
+  it('uses edit-scoped reaction volume for locked concentration propagation when edited volume changes', async () => {
+    const reaction = await setUpReaction();
+    const variationsRow = cloneDeep(reaction.variations[0]);
+    const reactantID = reaction.reactants[0].id;
+    const editedReactant = variationsRow.reactants[reactantID];
+
+    const firstStartingMaterial = Object.values(variationsRow.startingMaterials)[0];
+    firstStartingMaterial.volume.value = 2;
+    editedReactant.volume.value = 3;
+
+    const preEditReactionVolume = computeCombinedReactionVolume(variationsRow);
+
+    editedReactant.concentration.value = 2;
+    editedReactant.amount.value = 2 * preEditReactionVolume;
+    editedReactant.volume.value = 7;
+
+    const postEditReactionVolume = computeCombinedReactionVolume(variationsRow);
+    expect(postEditReactionVolume).not.toBe(preEditReactionVolume);
+
+    const { row: updatedVariationsRow } = updateVariationsRowOnConcentrationMaterialChange(
+      variationsRow,
+      `reactants.${reactantID}`,
+      'concentration',
+      {
+        useReactionVolume: false,
+        lockReactionVolume: true,
+        reactionVolumeByRowId: {},
+        editScopedReactionVolume: preEditReactionVolume,
+      }
+    );
+
+    Object.values(updatedVariationsRow.startingMaterials).forEach((material) => {
+      if (material.aux.gasType !== 'feedstock') {
+        expect(material.concentration.value).toBeCloseTo(material.amount.value / preEditReactionVolume);
+      }
+    });
+
+    Object.entries(updatedVariationsRow.reactants).forEach(([materialId, material]) => {
+      if (materialId.toString() !== reactantID.toString() && material.aux.gasType !== 'feedstock') {
+        expect(material.concentration.value).toBeCloseTo(material.amount.value / preEditReactionVolume);
+      }
+    });
+  });
   it('initializes gas product yield', async () => {
     const reaction = await setUpGaseousReaction();
     const productID = reaction.products[0].id;

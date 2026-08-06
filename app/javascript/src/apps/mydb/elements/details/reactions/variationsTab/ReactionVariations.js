@@ -22,7 +22,8 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
   updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDsToLabels,
-  removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange, getReactionMaterialsHashes
+  removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange,
+  getReactionMaterialsHashes, resolveReactionVolumeFromContext
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   ColumnSelection,
@@ -380,6 +381,22 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
 
   const updateRow = useCallback(({ data: oldRow, colDef, newValue }) => {
     const { field } = colDef;
+    const baseConcentrationContext = {
+      ...concentrationContext,
+      reactionVolumeByRowId: reactionVolumeByRowIdRef.current,
+    };
+    const shouldUseEditScopedVolume = colDef.entry === 'concentration'
+      && concentrationContext.lockReactionVolume
+      && !concentrationContext.useReactionVolume;
+
+    const editScopedReactionVolume = shouldUseEditScopedVolume
+      ? getValidReactionVolume(resolveReactionVolumeFromContext(baseConcentrationContext, oldRow))
+      : null;
+
+    const concentrationContextForEdit = editScopedReactionVolume
+      ? { ...baseConcentrationContext, editScopedReactionVolume }
+      : baseConcentrationContext;
+
     const updatedRow = updateVariationsRow(
       oldRow,
       field,
@@ -387,10 +404,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
       reactionHasPolymers,
       {
         changedEntry: colDef.entry,
-        concentrationContext: {
-          ...concentrationContext,
-          reactionVolumeByRowId: reactionVolumeByRowIdRef.current,
-        },
+        concentrationContext: concentrationContextForEdit,
         onConcentrationContextUpdate: (contextUpdate) => {
           if (typeof contextUpdate?.useReactionVolume === 'boolean') {
             setUseReactionVolumeOverride(contextUpdate.useReactionVolume);
