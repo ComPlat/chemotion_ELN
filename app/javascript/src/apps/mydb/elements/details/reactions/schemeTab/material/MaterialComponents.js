@@ -145,9 +145,17 @@ ProductReference.propTypes = {
  */
 const MaterialConcentration = ({ mh }) => {
   const { handler } = mh;
+  const {
+    min: rangeStart,
+    max: rangeEnd,
+    isRangeField
+  } = mh.findMinMayUnit('mol/l', (m) => (mh.isSbmm ? m.concentration_rt_value : m.concn));
   return (
     <NumeralInputWithUnitsCompo
       value={mh.concentrationValue}
+      isRangeField={isRangeField}
+      rangeStart={rangeStart}
+      rangeEnd={rangeEnd}
       className="reaction-material__concentration-data"
       unit="mol/l"
       metricPrefix={mh.metricMolConc}
@@ -509,7 +517,9 @@ const MassField = ({ mh, metricPrefixes, metric }) => {
     unit: rangeUnit,
     isRangeField
   } = mh.findMinMayUnit('g', (m) => m.amount_g);
-
+  if (isRangeField) {
+    console.log({ rangeStart, rangeEnd, isRangeField, id: material.id });
+  }
   const isAmountDisabledByWeightPercentage = reaction.weight_percentage
     && material.weight_percentage > 0 && materialGroup !== 'products' && !material.weight_percentage_reference;
   return (

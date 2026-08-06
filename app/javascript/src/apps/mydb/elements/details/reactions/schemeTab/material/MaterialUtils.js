@@ -216,7 +216,11 @@ export default class MaterialHandler {
       const values = variations.map((v) => {
         const vMat = v.data[materialGroup]?.[index];
         return vMat ? valueGetter(vMat) : null;
-      }).filter((x) => x !== null);
+      }).filter((x) => Number.isFinite(x));
+      // No variation carries the value (e.g. concentration unset everywhere): nothing to range over.
+      if (values.length === 0) {
+        return { min: null, max: null, unit: defaultUnit, isRangeField: false };
+      }
       const min = Math.min(...values);
       const max = Math.max(...values);
       return { min, max, unit: defaultUnit, isRangeField: min !== max || min !== defaultMatValue };
