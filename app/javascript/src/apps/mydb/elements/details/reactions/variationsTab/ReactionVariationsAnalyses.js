@@ -22,8 +22,10 @@ Analyses live on the reaction, and a variation only stores the ids it is linked 
 Autofill from an analysis data file: a dataset uploaded as a BagIt archive may carry a
 `reaction_variation.json` of the shape { samples: [[identifier, value, unit], ...] }, and each of
 those triples is applied to the variation's own material of that name - the same edit the amount
-cell of the grid would make, dispatched through the row's update handler so every derived quantity
-recomputes as usual.
+or gas field cell of the grid would make, dispatched through the row's update handler so every
+derived quantity recomputes as usual. The unit decides what a triple fills: an amount unit the
+material's amount, '%' its equivalent, and ppm / a time unit / a temperature unit the matching gas
+field of a gas product.
 */
 const AUTOFILL_FILENAME = 'reaction_variation.json';
 
@@ -39,6 +41,40 @@ const AUTOFILL_UNITS = {
   ul: { unit: 'l', factor: 1e-6 },
   mol: { unit: 'mol', factor: 1 },
   mmol: { unit: 'mol', factor: 1e-3 },
+};
+
+/*
+Gas product fields a data file may fill, recognized by the unit of their entry: an entry in ppm is
+the product's part-per-million, one in a time unit its reaction time, one in a temperature unit its
+temperature. The values are normalized to a base unit (hours, Kelvin) here, then converted into
+whatever unit the material currently displays the field in, because the gas field event writes in
+that unit.
+*/
+const AUTOFILL_GAS_UNITS = {
+  ppm: { field: 'part_per_million' },
+  h: { field: 'time', toBase: (value) => value },
+  min: { field: 'time', toBase: (value) => value / 60 },
+  m: { field: 'time', toBase: (value) => value / 60 },
+  s: { field: 'time', toBase: (value) => value / 3600 },
+  K: { field: 'temperature', toBase: (value) => value },
+  C: { field: 'temperature', toBase: (value) => value + 273.15 },
+  '°C': { field: 'temperature', toBase: (value) => value + 273.15 },
+  F: { field: 'temperature', toBase: (value) => (((value - 32) * 5) / 9) + 273.15 },
+  '°F': { field: 'temperature', toBase: (value) => (((value - 32) * 5) / 9) + 273.15 },
+};
+
+// From the base unit into the unit the material currently shows the field in.
+const GAS_FIELD_FROM_BASE = {
+  time: {
+    h: (value) => value,
+    m: (value) => value * 60,
+    s: (value) => value * 3600,
+  },
+  temperature: {
+    K: (value) => value,
+    '°C': (value) => value - 273.15,
+    '°F': (value) => (((value - 273.15) * 9) / 5) + 32,
+  },
 };
 
 const SAMPLE_LABELS = ['short_label', 'external_label', 'name', 'molecule_formula', 'molecule_iupac_name'];
@@ -67,22 +103,57 @@ const findMaterialByLabel = (variationReaction, identifier) => {
       (candidate) => SAMPLE_LABELS.some((label) => candidate[label] === identifier)
     );
     if (material) {
-      return material;
+      return { material, matGroup };
     }
   }
   return null;
 };
 
 /*
+Gas fields exist only on a gas-type product, so any other material skips the entry, the same way an
+unknown identifier would. Dispatched as the gas field widgets of the grid dispatch, so ppm and
+temperature re-derive the product's moles and equivalent as usual.
+*/
+const autofillGasValue = (handler, material, matGroup, spec, numeric) => {
+  if (matGroup !== 'products' || material.gas_type !== 'gas') {
+    return;
+  }
+  let value = numeric;
+  if (spec.toBase) {
+    const currentUnit = material.gas_phase_data?.[spec.field]?.unit;
+    const fromBase = GAS_FIELD_FROM_BASE[spec.field][currentUnit];
+    if (!fromBase) {
+      return;
+    }
+    value = Math.round(fromBase(spec.toBase(numeric)) * 1e4) / 1e4;
+  }
+  handler.handleMaterialsChange({
+    type: 'gasFieldsChanged',
+    sampleID: material.id,
+    materialGroup: matGroup,
+    field: spec.field,
+    value,
+  });
+};
+
+/*
 Applies the data file to one variation. An identifier no material carries, or a unit outside the
-table above, skips that entry - the file describes more than this reaction may hold. '%' fills the
-equivalent, everything else is an amount in the stated unit.
+tables above, skips that entry - the file describes more than this reaction may hold. '%' fills the
+equivalent, a gas unit (ppm, time, temperature) fills the gas product's field of that dimension,
+everything else is an amount in the stated unit.
 */
 const autofillVariationFromAnalysis = (variationReaction, handler, samples) => {
   samples.forEach(([identifier, value, unit]) => {
-    const material = findMaterialByLabel(variationReaction, identifier);
+    const found = findMaterialByLabel(variationReaction, identifier);
     const numeric = Number(value);
-    if (!material || !Number.isFinite(numeric)) {
+    if (!found || !Number.isFinite(numeric)) {
+      return;
+    }
+    const { material } = found;
+
+    const gasSpec = AUTOFILL_GAS_UNITS[unit];
+    if (gasSpec) {
+      autofillGasValue(handler, material, found.matGroup, gasSpec, numeric);
       return;
     }
 
