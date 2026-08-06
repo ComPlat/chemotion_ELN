@@ -1,22 +1,22 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
+import React, {
+  useState, useEffect, useContext, useMemo
+} from 'react';
 import PropTypes from 'prop-types';
 import { set, isEmpty } from 'lodash';
 import { List } from 'immutable';
 import AppModal from 'src/components/common/AppModal';
 import CollectionTabLayoutEditor from 'src/apps/mydb/collections/CollectionTabLayoutEditor';
-import UserStore from 'src/stores/alt/stores/UserStore';
-import UserActions from 'src/stores/alt/actions/UserActions';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import { filterTabLayout, getArrayFromLayout, TAB_DISPLAY_NAMES } from 'src/utilities/CollectionTabsHelper';
-import { allElnElmentsWithLabel, allGenericElements } from 'src/apps/generic/Utils';
+import { allElnElmentsWithLabel } from 'src/apps/generic/Utils';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import ElementIcon from 'src/components/common/ElementIcon';
 
-function TabItemComponent({ item }) {
+const TabItemComponent = ({ item }) => {
   const displayName = TAB_DISPLAY_NAMES[item];
   return <div>{displayName ?? capitalizeWords(item)}</div>;
-}
+};
 
 TabItemComponent.propTypes = {
   item: PropTypes.string.isRequired,
@@ -24,13 +24,12 @@ TabItemComponent.propTypes = {
 
 // Unlike the former CollectionTabs view (full A–Z sort of ELN + generics), keep the
 // familiar ELN order (Sample, Reaction, …) and only sort generic element types by label.
-function buildElementList() {
+function buildElementList(genericEls) {
   const standardEls = allElnElmentsWithLabel.map((el) => ({
     ...el,
     type: el.name,
   }));
 
-  const genericEls = allGenericElements();
   if (genericEls.size < 1) {
     return standardEls;
   }
@@ -65,7 +64,7 @@ function parseTabsSegment(tabsSegment) {
   }
 }
 
-function layoutsForCollection(collection, allElements, profileData) {
+function layoutsForCollection(collection, allElements, profileData, userStore) {
   const tabsSegment = parseTabsSegment(collection.tabs_segment);
 
   return allElements.reduce((acc, { name }) => {
@@ -76,7 +75,7 @@ function layoutsForCollection(collection, allElements, profileData) {
     const defaultLayout = (profileData && profileData[`layout_detail_${name}`]) || {};
     const layout = isEmpty(tabsSegment[name]) ? defaultLayout : tabsSegment[name];
 
-    const segmentKlasses = (UserStore.getState() && UserStore.getState().segmentKlasses) || [];
+    const segmentKlasses = userStore.segmentKlasses || [];
     const segmentLabels = segmentKlasses
       .filter((s) => s.element_klass && s.element_klass.name === name)
       .map((s) => s.label);
@@ -90,18 +89,20 @@ function layoutsForCollection(collection, allElements, profileData) {
 }
 
 const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
-  const collectionsStore = useContext(StoreContext).collections;
-  const allElements = useMemo(() => buildElementList(), []);
+  const { collectionsStore, userStore } = useContext(StoreContext);
+  const genericEls = userStore.allGenericElements();
+  const { profile } = userStore;
+  const allElements = useMemo(() => buildElementList(genericEls), []);
   const [layouts, setLayouts] = useState(() => emptyLayoutsFor(allElements));
   const [selectedCategory, setSelectedCategory] = useState('sample');
 
   useEffect(() => {
     if (!show || !collection) return;
-    const { profile } = UserStore.getState();
     const profileData = (profile && profile.data) || {};
-    setLayouts(layoutsForCollection(collection, allElements, profileData));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLayouts(layoutsForCollection(collection, allElements, profileData, userStore));
     setSelectedCategory('sample');
-  }, [show, collection, allElements]);
+  }, [show, collection, allElements, userStore, profile]);
 
   const handleSave = async () => {
     const layoutSegments = allElements.reduce((acc, { name }) => {
@@ -121,13 +122,12 @@ const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
       if (!saved) return;
     }
 
-    const userProfile = UserStore.getState().profile;
     // Store each type's default under its own `layout_detail_<name>` key so
     // generics don't overwrite each other (and match what ElementDetailSortTab reads).
     allElements.forEach(({ name }) => {
-      set(userProfile, `data.layout_detail_${name}`, layoutSegments[name]);
+      set(profile, `data.layout_detail_${name}`, layoutSegments[name]);
     });
-    UserActions.updateUserProfile(userProfile);
+    userStore.updateUserProfileValues(profile);
 
     onHide();
   };
