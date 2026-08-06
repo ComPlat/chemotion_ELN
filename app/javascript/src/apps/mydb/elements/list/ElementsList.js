@@ -258,7 +258,7 @@ const ElementsList = ({ overview }) => {
           {hasSearchApplied ? (
             <Button
               variant="light"
-              onClick={() => handleRemoveSearchResult}
+              onClick={() => handleRemoveSearchResult()}
             >
               <i className="fa fa-times-circle me-2" />
               Clear search
@@ -276,7 +276,7 @@ const ElementsList = ({ overview }) => {
         <Tabs
           id="tabList"
           activeKey={currentTab}
-          onSelect={(eventKey) => this.handleTabSelect(parseInt(eventKey, 10))}
+          onSelect={(eventKey) => handleTabSelect(parseInt(eventKey, 10))}
           className="surface-tabs has-config-overlay"
         >
           {tabItems}
