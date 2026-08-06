@@ -5,7 +5,7 @@ import {
   updateVariationsRowOnReferenceMaterialChange,
   updateVariationsRowOnCatalystMaterialChange,
   updateVariationsRowOnConcentrationMaterialChange,
-  getMaterialData, getMaterialColumnGroupChild, computeDerivedQuantitiesVariationsRow
+  getMaterialData, backfillMaterialDataEntries, getMaterialColumnGroupChild, computeDerivedQuantitiesVariationsRow
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   AnalysesCellRenderer, AnalysesCellEditor, getAnalysesOverlay, AnalysisOverlay
@@ -443,9 +443,12 @@ function addMissingColumnsToVariations({
   updatedVariations.forEach((row) => {
     Object.entries(selectedColumns).forEach(([columnGroupID, columnGroupChildIDs]) => {
       columnGroupChildIDs.forEach((childID) => {
-        if (row[columnGroupID][childID]) { return; }
-
         if (Object.keys(materialTypes).includes(columnGroupID)) {
+          if (row[columnGroupID][childID]) {
+            row[columnGroupID][childID] = backfillMaterialDataEntries(row[columnGroupID][childID], columnGroupID);
+            return;
+          }
+
           const material = materials[columnGroupID].find((m) => m.id.toString() === childID.toString());
           row[columnGroupID][childID] = getMaterialData(
             material,
@@ -453,7 +456,13 @@ function addMissingColumnsToVariations({
             gasMode,
             vesselVolume
           );
+          return;
         }
+
+        if (row[columnGroupID][childID]) {
+          return;
+        }
+
         if (columnGroupID === 'properties') {
           row.properties[childID] = getPropertyData(
             childID,

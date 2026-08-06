@@ -205,10 +205,29 @@ function PropertyFormatter({ value: cellData, colDef: { displayUnit } }) {
   return convertValueToDisplayUnit(cellData.value, cellData.unit, displayUnit);
 }
 
-function MaterialFormatter({ value: cellData, colDef }) {
-  const { displayUnit, entry } = colDef;
+function getMaterialEntryData(cellData, colDef) {
+  const { entry, displayUnit, units = [] } = colDef;
+  const existingEntryData = cellData?.[entry];
 
-  return convertValueToDisplayUnit(cellData[entry].value, cellData[entry].unit, displayUnit);
+  if (existingEntryData) {
+    return existingEntryData;
+  }
+
+  return {
+    value: null,
+    unit: displayUnit ?? units[0] ?? null,
+  };
+}
+
+function MaterialFormatter({ value: cellData, colDef }) {
+  const { displayUnit } = colDef;
+  const entryData = getMaterialEntryData(cellData, colDef);
+
+  if (entryData.value == null) {
+    return PLACEHOLDER_CELL_TEXT;
+  }
+
+  return convertValueToDisplayUnit(entryData.value, entryData.unit, displayUnit);
 }
 
 const GroupCellEditor = ({
@@ -306,9 +325,10 @@ function MaterialParser({
   data: row, oldValue: cellData, newValue, colDef, context
 }) {
   const { displayUnit, entry } = colDef;
-  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[entry].unit);
+  const entryData = getMaterialEntryData(cellData, colDef);
+  let value = convertUnit(parseNumericString(newValue), displayUnit, entryData.unit);
 
-  if (value === cellData[entry].value) {
+  if (value === entryData.value) {
     return cellData;
   }
 
@@ -316,7 +336,7 @@ function MaterialParser({
     value = 0;
   }
 
-  let updatedCellData = { ...cellData, [entry]: { ...cellData[entry], value } };
+  let updatedCellData = { ...cellData, [entry]: { ...entryData, value } };
 
   switch (entry) {
     case 'mass': {
@@ -404,26 +424,30 @@ function GasParser({
   data: row, oldValue: cellData, newValue, colDef
 }) {
   const { displayUnit, entry } = colDef;
-  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[entry].unit);
+  const entryData = getMaterialEntryData(cellData, colDef);
+  let value = convertUnit(parseNumericString(newValue), displayUnit, entryData.unit);
 
-  if (value === cellData[entry].value) {
+  if (value === entryData.value) {
     return cellData;
   }
 
   if (entry !== 'temperature' && value < 0) {
     value = 0;
   }
-  let updatedCellData = { ...cellData, [entry]: { ...cellData[entry], value } };
+  let updatedCellData = { ...cellData, [entry]: { ...entryData, value } };
 
   switch (entry) {
     case 'concentration':
     case 'temperature': {
+      const temperatureEntry = updatedCellData.temperature ?? { value: null, unit: 'K' };
+      const concentrationEntry = updatedCellData.concentration ?? { value: null, unit: 'ppm' };
+
       const temperatureInKelvin = convertUnit(
-        updatedCellData.temperature.value,
-        updatedCellData.temperature.unit,
+        temperatureEntry.value,
+        temperatureEntry.unit,
         'K'
       );
-      const concentration = updatedCellData.concentration.value;
+      const concentration = concentrationEntry.value;
       const { vesselVolume } = updatedCellData.aux;
 
       const amount = calculateGasMoles(vesselVolume, concentration, temperatureInKelvin);
@@ -471,16 +495,17 @@ function FeedstockParser({
   data: row, oldValue: cellData, newValue, colDef
 }) {
   const { displayUnit, entry } = colDef;
-  let value = convertUnit(parseNumericString(newValue), displayUnit, cellData[entry].unit);
+  const entryData = getMaterialEntryData(cellData, colDef);
+  let value = convertUnit(parseNumericString(newValue), displayUnit, entryData.unit);
 
-  if (value === cellData[entry].value) {
+  if (value === entryData.value) {
     return cellData;
   }
 
   if (value < 0) {
     value = 0;
   }
-  let updatedCellData = { ...cellData, [entry]: { ...cellData[entry], value } };
+  let updatedCellData = { ...cellData, [entry]: { ...entryData, value } };
 
   switch (entry) {
     case 'amount': {

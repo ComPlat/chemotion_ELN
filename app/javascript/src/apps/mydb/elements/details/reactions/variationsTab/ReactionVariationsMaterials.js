@@ -481,6 +481,31 @@ function getMaterialData(material, materialType, gasMode = false, vesselVolume =
   return materialData;
 }
 
+function backfillMaterialDataEntries(materialData, materialType) {
+  if (!materialData || typeof materialData !== 'object') {
+    return materialData;
+  }
+
+  const gasType = materialData.aux?.gasType ?? 'off';
+  const entries = getMaterialEntries(materialType, gasType);
+  let hasMissingEntries = false;
+  const updatedMaterialData = { ...materialData };
+
+  entries.forEach((entry) => {
+    if (Object.prototype.hasOwnProperty.call(updatedMaterialData, entry)) {
+      return;
+    }
+
+    hasMissingEntries = true;
+    updatedMaterialData[entry] = {
+      value: null,
+      unit: getStandardUnits(entry, gasType)[0],
+    };
+  });
+
+  return hasMissingEntries ? updatedMaterialData : materialData;
+}
+
 function updateVariationsOnAuxChange(variations, materials, gasMode, vesselVolume) {
   const updatedVariations = cloneDeep(variations);
   updatedVariations.forEach((row) => {
@@ -652,6 +677,7 @@ export {
   getReactionMaterialsIDsToLabels,
   getReactionMaterialsHashes,
   getMaterialData,
+  backfillMaterialDataEntries,
   updateColumnDefinitionsMaterialsOnAuxChange,
   updateVariationsRowOnReferenceMaterialChange,
   updateVariationsRowOnCatalystMaterialChange,

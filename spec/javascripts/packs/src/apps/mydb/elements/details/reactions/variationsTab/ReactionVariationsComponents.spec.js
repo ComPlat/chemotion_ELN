@@ -23,6 +23,12 @@ describe('ReactionVariationsComponents', async () => {
 
       expect(MaterialFormatter({ value: cellData, colDef })).toEqual(1235);
     });
+    it('MaterialFormatter returns placeholder for missing legacy entries', () => {
+      const cellData = { amount: { value: 1.2345, unit: 'mol' } };
+      const colDef = { entry: 'concentration', displayUnit: 'mol/l' };
+
+      expect(MaterialFormatter({ value: cellData, colDef })).toEqual('_');
+    });
     it('SegmentFormatter returns number string with correct precision', () => {
       const entryName = 'layer<foo>field<bar>';
       const cellData = {
@@ -324,6 +330,31 @@ describe('ReactionVariationsComponents', async () => {
       expect(updatedCellData.mass.value).toBeGreaterThan(0);
       expect(updatedCellData.volume.value).toBeDefined();
     });
+    it('backfills missing legacy concentration entry when editing concentration', async () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'mol/l' };
+      const localContext = {
+        reactionHasPolymers: false,
+        concentrationContext: {
+          lockReactionVolume: true,
+          useReactionVolume: true,
+          reactionVolumeByRowId: { [variationsRow.id]: 10 },
+        }
+      };
+
+      const legacyCellData = { ...cellData };
+      delete legacyCellData.concentration;
+
+      const updatedCellData = MaterialParser({
+        data: variationsRow,
+        oldValue: legacyCellData,
+        newValue: '2',
+        colDef,
+        context: localContext
+      });
+
+      expect(updatedCellData.concentration).toEqual({ value: 2, unit: 'mol/l' });
+      expect(updatedCellData.amount.value).toBe(20);
+    });
   });
   describe('FeedstockParser', async () => {
     let variationsRow;
@@ -397,6 +428,22 @@ describe('ReactionVariationsComponents', async () => {
       expect(updatedCellData.volume.value).toBeGreaterThan(cellData.volume.value);
       expect(updatedCellData.equivalent.value).toBeGreaterThan(cellData.equivalent.value);
     });
+    it('backfills missing legacy concentration entry when updating concentration', () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'mol/l' };
+      const legacyCellData = { ...cellData };
+      delete legacyCellData.concentration;
+
+      const updatedCellData = FeedstockParser({
+        data: variationsRow,
+        oldValue: legacyCellData,
+        newValue: '2',
+        colDef,
+        context
+      });
+
+      expect(updatedCellData.concentration).toEqual({ value: 2, unit: 'mol/l' });
+      expect(updatedCellData.amount.value).toBe(20);
+    });
   });
   describe('GasParser', async () => {
     let variationsRow;
@@ -443,6 +490,22 @@ describe('ReactionVariationsComponents', async () => {
       expect(updatedCellData.yield.value).not.toBe(cellData.yield.value);
       expect(updatedCellData.turnoverNumber.value).not.toBe(cellData.turnoverNumber.value);
       expect(updatedCellData.turnoverFrequency.value).not.toBe(cellData.turnoverFrequency.value);
+    });
+    it('backfills missing legacy concentration entry when updating concentration', () => {
+      const colDef = { field: 'foo.bar', entry: 'concentration', displayUnit: 'ppm' };
+      const legacyCellData = { ...cellData };
+      delete legacyCellData.concentration;
+
+      const updatedCellData = GasParser({
+        data: variationsRow,
+        oldValue: legacyCellData,
+        newValue: '20000',
+        colDef,
+        context
+      });
+
+      expect(updatedCellData.concentration).toEqual({ value: 20000, unit: 'ppm' });
+      expect(updatedCellData.amount.value).toBeGreaterThan(0);
     });
     it('adapts other entries when updating temperature', () => {
       const colDef = { field: 'foo.bar', entry: 'temperature', displayUnit: 'K' };

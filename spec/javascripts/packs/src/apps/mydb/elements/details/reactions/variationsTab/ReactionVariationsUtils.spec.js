@@ -100,6 +100,31 @@ describe('ReactionVariationsUtils', () => {
     expect(updatedVariations[0].metadata.analyses.length === 0);
     expect(updatedVariations[0].metadata.group).toEqual({ group: 1, subgroup: 1 });
   });
+  it('backfills missing material entries for legacy rows while applying column selection', async () => {
+    const reaction = await setUpReaction();
+    const materials = getReactionMaterials(reaction);
+    const selectedColumns = getSelectedColumns(getReactionMaterialsIDs(materials));
+    const legacyVariations = cloneDeep(reaction.variations);
+
+    const reactantID = Object.keys(legacyVariations[0].reactants)[0];
+    delete legacyVariations[0].reactants[reactantID].concentration;
+
+    const updatedVariations = addMissingColumnsToVariations({
+      materials,
+      segments: {},
+      selectedColumns,
+      variations: legacyVariations,
+      reactionHasPolymers: reaction.hasPolymers(),
+      durationValue: null,
+      durationUnit: 'None',
+      temperatureValue: null,
+      temperatureUnit: 'None',
+      gasMode: false,
+      vesselVolume: null,
+    });
+
+    expect(updatedVariations[0].reactants[reactantID].concentration).toEqual({ value: null, unit: 'mol/l' });
+  });
   it('removes obsolete materials from variations', async () => {
     const reaction = await setUpReaction();
     const productIDs = reaction.products.map((product) => product.id);
