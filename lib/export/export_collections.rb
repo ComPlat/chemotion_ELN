@@ -5,12 +5,14 @@ module Export
   class ExportCollections
     attr_accessor :file_path
 
-    def initialize(export_id, collection_ids, format = 'zip', nested = false, gate = false) # rubocop:disable Style/OptionalBooleanParameter
+    # rubocop:disable Style/OptionalBooleanParameter, Metrics/ParameterLists
+    def initialize(export_id, collection_ids, format = 'zip', nested = false, gate = false, current_user_id = nil)
       @export_id = export_id
       @collection_ids = collection_ids
       @format = format
       @nested = nested
       @gt = gate
+      @current_user_id = current_user_id
 
       @file_path = Rails.public_path.join(format, "#{export_id}.#{format}")
       @schema_file_path = Rails.public_path.join('json', 'schema.json')
@@ -21,6 +23,7 @@ module Export
       @datasets = []
       @images = []
     end
+    # rubocop:enable Style/OptionalBooleanParameter, Metrics/ParameterLists
 
     def to_json_data
       @data.to_json
@@ -140,6 +143,8 @@ module Export
 
         fetch_segments
       end
+
+      remap_research_plan_body_links
     end
 
     private
@@ -600,6 +605,181 @@ module Export
 
       filter_missing_attachments(research_plan, attachments)
       process_attachments(attachments, research_plan)
+    end
+
+    # research plan bodies can embed links to other elements (e.g. type 'sample'/'reaction' fields
+    # holding a 'sample_id'/'reaction_id'). These still reference the source system's database id, so
+    # translate them to the same uuid used for the referenced element itself, once all collections have
+    # been fetched, so that import can resolve them against the newly created records (see
+    # Import::ImportCollections#import_research_plans). A sample link whose target isn't part of this
+    # export is instead converted into a static 'ketcher' field with the sample's structure (see
+    # #convert_sample_link_to_ketcher?), and a reaction link in the same situation into a static 'image'
+    # field with its report-style scheme (see #convert_reaction_link_to_image?), so the chemistry
+    # survives even though the live record doesn't. A link that can't be converted is dropped rather than
+    # left with a stale id — on import that id could coincidentally match an unrelated record on the
+    # target system.
+    def remap_research_plan_body_links
+      @data.fetch('ResearchPlan', {}).each do |research_plan_uuid, fields|
+        body = fields['body']
+        next if body.blank?
+
+        fields['body'] = body.reject { |field| unresolved_body_link?(field, research_plan_uuid) }
+      end
+    end
+
+    def unresolved_body_link?(field, research_plan_uuid)
+      case field['type']
+      when 'sample'
+        unresolved_sample_link?(field)
+      when 'reaction'
+        unresolved_reaction_link?(field, research_plan_uuid)
+      else
+        false
+      end
+    end
+
+    def unresolved_sample_link?(field)
+      old_id = field.dig('value', 'sample_id')
+      return true if old_id.blank?
+      return drop_unless_remapped?(field, 'sample_id', 'Sample') if uuid?('Sample', old_id)
+
+      convert_sample_link_to_ketcher?(field, old_id)
+    end
+
+    def unresolved_reaction_link?(field, research_plan_uuid)
+      old_id = field.dig('value', 'reaction_id')
+      return true if old_id.blank?
+      return drop_unless_remapped?(field, 'reaction_id', 'Reaction') if uuid?('Reaction', old_id)
+
+      convert_reaction_link_to_image?(field, old_id, research_plan_uuid)
+    end
+
+    def drop_unless_remapped?(field, key, type)
+      old_id = field.dig('value', key)
+      return true if old_id.blank?
+      return true unless uuid?(type, old_id)
+
+      field['value'][key] = uuid(type, old_id)
+      false
+    end
+
+    # Preserve the structure of a sample linked from outside the export as a static Ketcher schema,
+    # provided the exporting user can actually see that sample's structure — otherwise a research plan
+    # could be used to smuggle a structure out of a collection the exporting user has no (or only
+    # detail-level-restricted) access to; a sample shared at the lowest detail level is readable but its
+    # molfile is anonymized (see SampleEntity's `anonymize_below: 1`), so #read? alone isn't enough.
+    # Returns `false` when the field was converted (i.e. keep it), `true` when it should be dropped.
+    def convert_sample_link_to_ketcher?(field, sample_id)
+      return true if exporting_user.nil?
+
+      sample = Sample.find_by(id: sample_id)
+      return true if sample&.molfile.blank?
+
+      policy = ElementPolicy.new(exporting_user, sample)
+      return true unless policy.read? && policy.read_structure?
+
+      field['type'] = 'ketcher'
+      field['value'] = { 'sdf_file' => sample.molfile, 'svg_file' => build_research_plan_ketcher_svg(sample.molfile) }
+      false
+    end
+
+    # Renders a preview svg for a synthesized ketcher field, following the same convention research
+    # plan ketcher fields already use (see POST /api/v1/research_plans/svg in research_plan_api.rb):
+    # a content-addressed filename under public/images/research_plans/. Written on the exporting
+    # system (a real Ketcher-drawn field's svg is written there too, when the user saves it) and
+    # bundled into the zip so it can be materialized on import (see
+    # Import::ImportCollections#materialize_researchplan_ketcher_images). Returns nil — leaving the
+    # field with no preview, same as before — if rendering fails; the sdf_file is preserved either way.
+    def build_research_plan_ketcher_svg(molfile)
+      svg = Molecule.svg_reprocess(nil, molfile)
+      return nil if svg.blank?
+
+      filename = "#{Digest::SHA256.hexdigest(Digest::SHA256.hexdigest(svg))}.svg"
+      target_path = Rails.public_path.join('images', 'research_plans', filename)
+      unless File.file?(target_path)
+        FileUtils.mkdir_p(target_path.dirname)
+        File.write(target_path, svg)
+      end
+
+      fetch_image('research_plans', filename)
+      filename
+    rescue StandardError => e
+      Rails.logger.error("Failed to render ketcher preview svg: #{e.message}")
+      nil
+    end
+
+    # Preserve a reaction linked from outside the export as a static image of its report-style scheme
+    # (the same rendering used when generating docx reports, see Reaction#compose_report_scheme_svg),
+    # provided the exporting user holds full detail access — a plain #read? isn't enough, since
+    # ReactionEntity only exposes `reaction_svg_file` at `anonymize_below: 10`, i.e. full detail.
+    # Returns `false` when the field was converted (i.e. keep it), `true` when it should be dropped.
+    def convert_reaction_link_to_image?(field, reaction_id, research_plan_uuid)
+      return true if exporting_user.nil?
+
+      reaction = Reaction.find_by(id: reaction_id)
+      return true if reaction.blank?
+
+      policy = ElementPolicy.new(exporting_user, reaction)
+      return true unless policy.read? && policy.read_full_detail?
+
+      svg = reaction.compose_report_scheme_svg
+      return true if svg.blank?
+
+      attachment = build_research_plan_image_attachment(svg)
+      return true if attachment.nil?
+
+      bundle_research_plan_image_attachment(attachment, research_plan_uuid)
+
+      field['type'] = 'image'
+      field['value'] = { 'public_name' => attachment.identifier, 'file_name' => attachment.filename }
+      false
+    end
+
+    # A research plan 'image' field always points at a real, if initially unassociated, Attachment
+    # record (see #fetch_research_plan_body_attachments) — so a synthesized one needs one too.
+    def build_research_plan_image_attachment(svg)
+      tmp = Tempfile.new(['reaction_scheme', '.svg'])
+      tmp.write(svg)
+      tmp.rewind
+
+      attachment = Attachment.new(
+        attachable_type: 'ResearchPlan',
+        filename: "#{SecureRandom.uuid}.svg",
+        file_path: tmp.path,
+        created_by: exporting_user.id,
+        created_for: exporting_user.id,
+      )
+      attachment.save!
+      # Without this, the in-memory Shrine reference set by the after_save attach callback streams
+      # back empty on its first read — a fresh reload forces it to rebuild from the persisted record.
+      # Note: Attachment#reload returns set_key's value, not self, so it can't be the last expression.
+      attachment.reload
+      attachment
+    rescue StandardError => e
+      Rails.logger.error("Failed to attach research plan report image: #{e.message}")
+      nil
+    ensure
+      tmp&.close
+      tmp&.unlink
+    end
+
+    # Bundles the attachment for the zip exactly like a pre-existing research-plan image attachment
+    # would be (see #process_attachments), associating it in the exported JSON — but not on the
+    # exporting system itself — with the research plan whose body now references it.
+    def bundle_research_plan_image_attachment(attachment, research_plan_uuid)
+      attachment['attachable_id'] = real_id_for_uuid('ResearchPlan', research_plan_uuid)
+      fetch_many([attachment], 'attachable_id' => 'ResearchPlan', 'created_by' => 'User', 'created_for' => 'User')
+      @attachments << attachment
+    end
+
+    def real_id_for_uuid(type, target_uuid)
+      @uuids.fetch(type, {}).key(target_uuid)
+    end
+
+    def exporting_user
+      return @exporting_user if defined?(@exporting_user)
+
+      @exporting_user = @current_user_id && User.find_by(id: @current_user_id)
     end
 
     def extract_image_fields(body)
