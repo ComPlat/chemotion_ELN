@@ -12,7 +12,7 @@
 #   result['mofid']  #=> "... MOFid-v1.tbo.cat0;..."
 #   result['mofkey'] #=> "Cu....MOFkey-v1.tbo"
 class MofService
-  RESULT_KEYS = %w[mofid mofkey smiles smiles_nodes smiles_linkers topology cat].freeze
+  RESULT_KEYS = %w[mofid mofkey smiles smiles_nodes smiles_linkers topology cat ccdc_number].freeze
 
   # @param cif [String] the CIF file contents
   def initialize(cif)

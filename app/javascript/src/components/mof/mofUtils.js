@@ -42,6 +42,11 @@ const matchToken = (text, regex, fallback) => {
   return found ? found[0] : fallback;
 };
 
+// The mofid pipeline appends a reference token to the MOFkey (".NO_REF" when no
+// CSD/CCDC reference is known). The reference web-mofid tool omits it, so drop a
+// trailing "NO_REF": "…MOFkey-v1.tbo.NO_REF" -> "…MOFkey-v1.tbo".
+const stripMofkeyReference = (mofkey) => asText(mofkey).replace(/\.NO_REF\s*$/i, '');
+
 const normalizeCatenation = (result) => {
   if (result.cat !== undefined && result.cat !== null && `${result.cat}` !== '') {
     return /^\d+$/.test(`${result.cat}`) ? `cat${result.cat}` : `${result.cat}`;
@@ -53,7 +58,7 @@ const fragmentsFromResult = (result) => {
   const rows = [];
   const push = (smiles, typeFunction) => {
     toSmilesList(smiles).forEach((s) => rows.push({
-      type_function: typeFunction, iupac: '', smiles: s, inchikey: '', comment: '',
+      type_function: typeFunction, iupac: '', smiles: s, ratio: 1, comment: '',
     }));
   };
   if (result.smiles_nodes || result.smiles_linkers) {
@@ -93,7 +98,7 @@ export const splitMofkey = (mofkey) => {
  * @returns {Object} structured mof details
  */
 export const mofResultFromAnalysis = (result = {}) => {
-  const { formatKey, topology: topologyFromKey, reference } = splitMofkey(result.mofkey);
+  const { formatKey, topology: topologyFromKey } = splitMofkey(result.mofkey);
 
   const details = {
     fragments: fragmentsFromResult(result),
@@ -101,10 +106,13 @@ export const mofResultFromAnalysis = (result = {}) => {
     format_key: formatKey || 'MOFkey-v1',
     topology: asText(result.topology) || topologyFromKey || matchToken(result.mofid, /(?<=MOFid-v\d+\.)[^.\s]+/, ''),
     cat: normalizeCatenation(result),
-    // "NO_REF" means the MOFkey carries no CSD/CCDC reference code
-    reference: reference || '',
-    ccdc_no: !!reference && reference.toUpperCase() !== 'NO_REF',
-    mofkey: asText(result.mofkey),
+    // CCDC number is extracted from the CIF by the sidecar; SURMOF thin-film
+    // properties are user-entered.
+    ccdc_no: asText(result.ccdc_number),
+    substrate: '',
+    coating: '',
+    dimensions: '',
+    mofkey: stripMofkeyReference(result.mofkey),
     // keep the raw analysis fields (coerced to strings) for reference / display
     smiles: asText(result.smiles),
     smiles_nodes: asText(result.smiles_nodes),

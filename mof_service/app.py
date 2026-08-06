@@ -7,6 +7,7 @@ the same way it already calls the Indigo service.
 """
 
 import os
+import re
 import shutil
 import tempfile
 
@@ -28,6 +29,21 @@ RESULT_KEYS = (
     "topology",
     "cat",
 )
+
+# The CCDC deposition number is a standard CIF tag but is not surfaced by the
+# MOFid pipeline, so pull it out of the CIF text ourselves. Handles e.g.
+#   _database_code_depnum_ccdc_archive 'CCDC 755080'
+# and returns just the code ("755080").
+_CCDC_RE = re.compile(
+    r"_database_code_depnum_ccdc_archive\s+['\"]?\s*(?:CCDC\s+)?([A-Za-z0-9-]+)",
+    re.IGNORECASE,
+)
+
+
+def _extract_ccdc(cif_text):
+    """Return the CCDC deposition number from a CIF, or '' when absent."""
+    match = _CCDC_RE.search(cif_text or "")
+    return match.group(1) if match else ""
 
 
 @app.route("/health", methods=["GET"])
@@ -61,7 +77,9 @@ def analyze():
             handle.write(cif_text)
 
         result = cif2mofid(cif_path, output_path=os.path.join(workdir, "Output"))
-        return jsonify({key: result.get(key) for key in RESULT_KEYS})
+        payload = {key: result.get(key) for key in RESULT_KEYS}
+        payload["ccdc_number"] = _extract_ccdc(cif_text)
+        return jsonify(payload)
     except Exception as error:  # noqa: BLE001 - surface any pipeline failure to the caller
         return jsonify(error=str(error)), 500
     finally:

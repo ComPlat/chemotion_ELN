@@ -1,9 +1,13 @@
-import React, { useCallback, useMemo } from 'react';
+import React, {
+  useCallback, useContext, useMemo, useState
+} from 'react';
 import PropTypes from 'prop-types';
 import {
   Accordion, Button, Col, Form, Row, Table
 } from 'react-bootstrap';
 import { Select, CreatableSelect } from 'src/components/common/Select';
+import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import { buildMofid } from 'src/components/mof/mofUtils';
 
 // Inline (SUR)MOF configuration, shown on the Properties tab when the sample
@@ -14,6 +18,8 @@ import { buildMofid } from 'src/components/mof/mofUtils';
 const FORMAT_ID_OPTIONS = [{ label: 'MOFid-v1', value: 'MOFid-v1' }];
 const FORMAT_KEY_OPTIONS = [{ label: 'MOFkey-v1', value: 'MOFkey-v1' }];
 const CATENATION_OPTIONS = ['cat0', 'cat1', 'cat2', 'cat3'].map((v) => ({ label: v, value: v }));
+const SUBSTRATE_OPTIONS = ['Silicon', 'Glass', 'Aluminium oxide'].map((v) => ({ label: v, value: v }));
+const COATING_OPTIONS = ['Gold', 'Platinum'].map((v) => ({ label: v, value: v }));
 
 const toOption = (value) => (value ? { label: value, value } : null);
 
@@ -21,8 +27,7 @@ const emptyFragment = () => ({
   type_function: '',
   iupac: '',
   smiles: '',
-  inchikey: '',
-  ratio: '',
+  ratio: 1,
   comment: '',
 });
 
@@ -34,6 +39,8 @@ const emptyFragment = () => ({
 const MofDetails = ({ mof, onChange, disabled }) => {
   const data = mof || {};
   const fragments = useMemo(() => (mof?.fragments || []), [mof]);
+  const [showComments, setShowComments] = useState(false);
+  const { notifications } = useContext(StoreContext) || {};
 
   // Persist a patch, keeping the derived MOFid in sync with its inputs.
   const update = useCallback((patch) => {
@@ -45,6 +52,20 @@ const MofDetails = ({ mof, onChange, disabled }) => {
   const updateFragment = useCallback((index, patch) => {
     update({ fragments: fragments.map((frag, idx) => (idx === index ? { ...frag, ...patch } : frag)) });
   }, [fragments, update]);
+
+  // The fragment ratio follows the app's ratio field: it is capped at 1 (and
+  // floored at 0), and an out-of-range entry warns before being clamped.
+  const updateRatio = useCallback((index, value) => {
+    const numeric = Number(value);
+    if (Number.isNaN(numeric) || numeric < 0 || numeric > 1) {
+      notifications?.add?.({
+        message: 'Ratio value should be >= 0 and <= 1',
+        level: 'error',
+      });
+    }
+    const clamped = Math.min(1, Math.max(0, numeric || 0));
+    updateFragment(index, { ratio: clamped });
+  }, [updateFragment, notifications]);
 
   const addFragment = useCallback(() => {
     update({ fragments: [...fragments, emptyFragment()] });
@@ -83,20 +104,19 @@ const MofDetails = ({ mof, onChange, disabled }) => {
               <Table bordered size="sm" className="mof-fragments-table mb-0">
         <thead>
           <tr>
-            <th style={{ width: '13%' }}>Type/Function</th>
-            <th style={{ width: '17%' }}>Molecule</th>
-            <th style={{ width: '15%' }}>IUPAC</th>
-            <th style={{ width: '15%' }}>SMILES</th>
-            <th style={{ width: '15%' }}>InChIKey</th>
+            <th style={{ width: '14%' }}>Type/Function</th>
+            <th style={{ width: '20%' }}>Molecule</th>
+            <th style={{ width: '18%' }}>IUPAC</th>
+            <th style={{ width: '22%' }}>SMILES</th>
             <th style={{ width: '8%' }}>Ratio</th>
-            <th>Comment</th>
-            {!disabled && <th style={{ width: '3rem' }} aria-label="Actions" />}
+            {showComments && <th>Comment</th>}
+            {!disabled && <th style={{ width: '1%', whiteSpace: 'nowrap' }} aria-label="Actions" />}
           </tr>
         </thead>
         <tbody>
           {fragments.length === 0 && (
             <tr>
-              <td colSpan={disabled ? 7 : 8} className="text-muted text-center py-3">
+              <td colSpan={5 + (showComments ? 1 : 0) + (disabled ? 0 : 1)} className="text-muted text-center py-3">
                 No fragments yet.
                 {!disabled && ' Use the + button to add one.'}
               </td>
@@ -109,15 +129,21 @@ const MofDetails = ({ mof, onChange, disabled }) => {
               <td>
                 {frag.smiles
                   ? <code className="small text-break">{frag.smiles}</code>
-                  : <span className="text-muted small">—</span>}
+                  : <span className="text-muted small">n/a</span>}
               </td>
               <td>{cell(index, 'iupac')}</td>
               <td>{cell(index, 'smiles')}</td>
-              <td>{cell(index, 'inchikey')}</td>
-              <td>{cell(index, 'ratio')}</td>
-              <td>{cell(index, 'comment')}</td>
+              <td>
+                <NumeralInputWithUnitsCompo
+                  precision={4}
+                  value={frag.ratio == null || frag.ratio === '' ? 1 : (Number(frag.ratio) || 0)}
+                  disabled={disabled}
+                  onChange={(e) => updateRatio(index, e.value)}
+                />
+              </td>
+              {showComments && <td>{cell(index, 'comment')}</td>}
               {!disabled && (
-                <td className="text-center align-middle">
+                <td className="text-center align-middle" style={{ width: '1%', whiteSpace: 'nowrap' }}>
                   <Button
                     size="sm"
                     variant="danger"
@@ -132,6 +158,21 @@ const MofDetails = ({ mof, onChange, disabled }) => {
           ))}
         </tbody>
               </Table>
+              <div className="d-flex justify-content-center align-items-center mt-3">
+                <Form.Check
+                  className="mof-show-comments"
+                  style={{ margin: 0 }}
+                  type="checkbox"
+                  id="mof-show-comments"
+                  checked={showComments}
+                  onChange={(e) => setShowComments(e.target.checked)}
+                  label={(
+                    <label htmlFor="mof-show-comments" style={{ cursor: 'pointer', marginBottom: 0 }}>
+                      Show comments
+                    </label>
+                  )}
+                />
+              </div>
             </Accordion.Body>
           </Accordion.Item>
         </Accordion>
@@ -161,7 +202,7 @@ const MofDetails = ({ mof, onChange, disabled }) => {
             />
           </Form.Group>
         </Col>
-        <Col md={2}>
+        <Col md={3}>
           <Form.Group>
             <Form.Label>Topology Code(s)</Form.Label>
             <CreatableSelect
@@ -174,7 +215,7 @@ const MofDetails = ({ mof, onChange, disabled }) => {
             />
           </Form.Group>
         </Col>
-        <Col md={2}>
+        <Col md={3}>
           <Form.Group>
             <Form.Label>Catenation</Form.Label>
             <Select
@@ -187,32 +228,55 @@ const MofDetails = ({ mof, onChange, disabled }) => {
             />
           </Form.Group>
         </Col>
-        <Col md={3}>
+        <Col md={2}>
           <Form.Group>
-            <Form.Label>Comments</Form.Label>
+            <Form.Label>CCDC No</Form.Label>
             <Form.Control
               type="text"
-              value={data.format_comments || ''}
+              value={data.ccdc_no || ''}
               disabled={disabled}
-              onChange={(e) => update({ format_comments: e.target.value })}
+              onChange={(e) => update({ ccdc_no: e.target.value })}
             />
           </Form.Group>
         </Col>
-        <Col md={1}>
+      </Row>
+
+      <Row className="mb-4">
+        <Col md={4}>
           <Form.Group>
-            {/* invisible label reserves the label row so the checkbox lines up
-                with the sibling input fields, not their labels */}
-            <Form.Label className="invisible d-none d-md-block">CCDC No</Form.Label>
-            <div className="d-flex align-items-center" style={{ minHeight: '38px' }}>
-              <Form.Check
-                type="checkbox"
-                id="mof-ccdc-no"
-                label="CCDC No"
-                checked={!!data.ccdc_no}
-                disabled={disabled}
-                onChange={(e) => update({ ccdc_no: e.target.checked })}
-              />
-            </div>
+            <Form.Label>substrate</Form.Label>
+            <Select
+              name="mofSubstrate"
+              isClearable
+              isDisabled={disabled}
+              value={toOption(data.substrate)}
+              options={SUBSTRATE_OPTIONS}
+              onChange={(opt) => update({ substrate: opt?.value || '' })}
+            />
+          </Form.Group>
+        </Col>
+        <Col md={4}>
+          <Form.Group>
+            <Form.Label>coating</Form.Label>
+            <Select
+              name="mofCoating"
+              isClearable
+              isDisabled={disabled}
+              value={toOption(data.coating)}
+              options={COATING_OPTIONS}
+              onChange={(opt) => update({ coating: opt?.value || '' })}
+            />
+          </Form.Group>
+        </Col>
+        <Col md={4}>
+          <Form.Group>
+            <Form.Label>dimensions</Form.Label>
+            <Form.Control
+              type="text"
+              value={data.dimensions || ''}
+              disabled={disabled}
+              onChange={(e) => update({ dimensions: e.target.value })}
+            />
           </Form.Group>
         </Col>
       </Row>
@@ -256,8 +320,10 @@ MofDetails.propTypes = {
     format_key: PropTypes.string,
     topology: PropTypes.string,
     cat: PropTypes.string,
-    format_comments: PropTypes.string,
-    ccdc_no: PropTypes.bool,
+    ccdc_no: PropTypes.string,
+    substrate: PropTypes.string,
+    coating: PropTypes.string,
+    dimensions: PropTypes.string,
     mofid: PropTypes.string,
     mofkey: PropTypes.string,
   }),
