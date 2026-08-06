@@ -13,7 +13,7 @@ module Import
     def created_collection_labels
       return [] unless @instances.key?('Collection')
 
-      @instances['Collection'].values.map(&:label).compact.sort
+      @instances['Collection'].values.filter_map(&:label).sort
     end
 
     # rubocop:disable Style/OptionalBooleanParameter , Metrics/ParameterLists
@@ -204,7 +204,7 @@ module Import
         # add collection to @instances map
         update_instances!(uuid, collection)
       end
-      labels = created_collection_labels
+      created_collection_labels
     end
 
     def gate_collection
@@ -567,6 +567,9 @@ module Import
 
     def import_research_plans
       sort_data(@data.fetch('ResearchPlan', {})).each do |uuid, fields|
+        fields['body'] = remap_research_plan_body_links(fields['body'])
+        materialize_researchplan_ketcher_images(fields['body'])
+
         # create the research_plan
         research_plan = ResearchPlan.create!(fields.slice(
           'name',
@@ -823,6 +826,73 @@ module Import
           log_unassociated_attachment(attr_value['name'], field)
         end
       end
+    end
+
+    # research plan bodies can embed links to other elements (type 'sample'/'reaction' fields holding a
+    # 'sample_id'/'reaction_id'), rewritten to the exported uuid by Export::ExportCollections. Resolve
+    # them to the newly created instance's id, mirroring the id remapping already done for other
+    # associations (reactions_samples, wells, ...) via @instances. Must run after import_samples and
+    # import_reactions have populated @instances. A link that can't be resolved (unknown uuid, or a raw
+    # id left over from a zip exported before this remapping existed) is dropped rather than kept as-is
+    # — otherwise it could coincidentally match an unrelated record on the importing system.
+    def remap_research_plan_body_links(body)
+      return body if body.blank?
+
+      body.reject { |field| unresolved_body_link?(field) }
+    end
+
+    def unresolved_body_link?(field)
+      case field['type']
+      when 'sample'
+        drop_unless_remapped?(field, 'sample_id', 'Sample')
+      when 'reaction'
+        drop_unless_remapped?(field, 'reaction_id', 'Reaction')
+      else
+        false
+      end
+    end
+
+    def drop_unless_remapped?(field, key, type)
+      old_ref = field.dig('value', key)
+      return true if old_ref.blank?
+
+      new_instance = @instances.dig(type, old_ref)
+      return true if new_instance.nil?
+
+      field['value'][key] = new_instance.id
+      false
+    end
+
+    # A research plan's 'ketcher' body field references its preview svg by bare filename, resolved by
+    # the frontend as /images/research_plans/<svg_file> (not via the Attachment model). The export side
+    # bundles that file into the zip under images/research_plans/ (see extract's zip-entry handling,
+    # which lands it under @tmp_dir), but nothing previously copied it into the importing system's own
+    # public/images/research_plans/ — so every ketcher preview, hand-drawn or synthesized, rendered as
+    # a broken image after import. Must run before @tmp_dir is cleaned up (see #cleanup).
+    def materialize_researchplan_ketcher_images(body)
+      return if body.blank?
+
+      body.each do |field|
+        materialize_ketcher_svg(field.dig('value', 'svg_file')) if field['type'] == 'ketcher'
+      end
+    end
+
+    def materialize_ketcher_svg(svg_file)
+      return if svg_file.blank?
+
+      # Guard against a crafted zip smuggling a path (e.g. '../../secrets') through svg_file: only a
+      # bare filename identical to its own basename is accepted.
+      filename = File.basename(svg_file.to_s)
+      return if filename != svg_file || filename.match?(%r{\.\.|/|\\})
+
+      target_path = Rails.public_path.join('images', 'research_plans', filename)
+      return if File.file?(target_path)
+
+      source_path = Pathname.new(@tmp_dir).join('images', 'research_plans', filename)
+      return unless File.file?(source_path)
+
+      FileUtils.mkdir_p(target_path.dirname)
+      FileUtils.cp(source_path, target_path)
     end
 
     def log_unassociated_attachment(research_plan_name, field)

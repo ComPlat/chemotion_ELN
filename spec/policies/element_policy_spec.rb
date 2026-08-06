@@ -242,6 +242,109 @@ describe ElementPolicy do
     end
   end
 
+  describe '#read_structure?' do
+    let(:sample) { create(:sample) }
+    let(:element_policy) { described_class.new(user, sample) }
+
+    context 'when the record is in an own collection' do
+      before { own_collection_of_user.samples << sample }
+
+      it 'returns true' do
+        expect(element_policy.read_structure?).to be true
+      end
+    end
+
+    context 'when the record is in a collection shared to me with a sample detail level of 0' do
+      let(:shared_collection_of_other_user) do
+        create(:collection, user: other_user, label: "Shared collection of #{other_user.name}").tap do |collection|
+          create(:collection_share, collection: collection, shared_with: user, sample_detail_level: 0)
+        end
+      end
+
+      before { shared_collection_of_other_user.samples << sample }
+
+      it 'returns false' do
+        expect(element_policy.read_structure?).to be false
+      end
+    end
+
+    context 'when the record is in a collection shared to me with a sample detail level of 1 or higher' do
+      let(:shared_collection_of_other_user) do
+        create(:collection, user: other_user, label: "Shared collection of #{other_user.name}").tap do |collection|
+          create(:collection_share, collection: collection, shared_with: user, sample_detail_level: 1)
+        end
+      end
+
+      before { shared_collection_of_other_user.samples << sample }
+
+      it 'returns true' do
+        expect(element_policy.read_structure?).to be true
+      end
+    end
+
+    context 'when the record is neither in a collection of mine or shared to me' do
+      let(:owner) { other_user }
+
+      before { own_collection_of_other_user.samples << sample }
+
+      it 'returns false' do
+        expect(element_policy.read_structure?).to be false
+      end
+    end
+  end
+
+  describe '#read_full_detail?' do
+    let(:reaction) { create(:reaction) }
+    let(:element_policy) { described_class.new(user, reaction) }
+
+    context 'when the record is in an own collection' do
+      before { own_collection_of_user.reactions << reaction }
+
+      it 'returns true' do
+        expect(element_policy.read_full_detail?).to be true
+      end
+    end
+
+    context 'when the record is in a collection shared to me below full detail' do
+      let(:shared_collection_of_other_user) do
+        create(:collection, user: other_user, label: "Shared collection of #{other_user.name}").tap do |collection|
+          create(:collection_share, collection: collection, shared_with: user, reaction_detail_level: 9)
+        end
+      end
+
+      before { shared_collection_of_other_user.reactions << reaction }
+
+      it 'returns false' do
+        expect(element_policy.read_full_detail?).to be false
+      end
+    end
+
+    context 'when the record is in a collection shared to me with full detail' do
+      let(:shared_collection_of_other_user) do
+        create(:collection, user: other_user, label: "Shared collection of #{other_user.name}").tap do |collection|
+          create(:collection_share, collection: collection, shared_with: user,
+                                    reaction_detail_level: Collection::OWNER_LEVEL)
+        end
+      end
+
+      before { shared_collection_of_other_user.reactions << reaction }
+
+      it 'returns true' do
+        expect(element_policy.read_full_detail?).to be true
+      end
+    end
+
+    context 'when the record is neither in a collection of mine or shared to me' do
+      let(:owner) { other_user }
+
+      before { own_collection_of_other_user.reactions << reaction }
+
+      it 'returns false' do
+        expect(element_policy.read_full_detail?).to be false
+      end
+    end
+  end
+
   describe '#pass_ownership?' do
     context 'when the record is in an own collection' do
       before { own_collection_of_user.screens << screen }
