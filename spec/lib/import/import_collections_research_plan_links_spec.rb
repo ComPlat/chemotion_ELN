@@ -302,5 +302,173 @@ RSpec.describe 'ImportCollection' do
       expect(imported_research_plan.body).to be_empty
     end
   end
+
+  # When the exporting user holds full detail access to the outside reaction, its report-style scheme
+  # (see Reaction#compose_report_scheme_svg) is preserved as a static image instead of being dropped
+  # outright — the live reaction record still isn't part of the export, but the chemistry survives.
+  describe 'import a collection with a researchplan linking an accessible reaction outside the export' do
+    let(:exporting_user) { create(:person, first_name: 'Ex', last_name: 'Porter', name_abbreviation: 'EP') }
+    let(:importing_user) { create(:person, first_name: 'Im', last_name: 'Porter', name_abbreviation: 'IP') }
+    let(:collection) { create(:collection, user_id: exporting_user.id, label: 'collection-with-accessible-rxn') }
+    let(:other_collection) { create(:collection, user_id: exporting_user.id, label: 'other-owned-collection-rxn') }
+    let(:product) { create(:sample, molfile: build(:molfile, type: 'test_2')) }
+    let(:outside_reaction) do
+      create(:reaction, name: 'Outside Reaction', products: [product], collections: [other_collection])
+    end
+    let(:job_id) { SecureRandom.uuid }
+    let(:zip_path) { Rails.public_path.join('zip', "#{job_id}.zip") }
+
+    let(:research_plan) do
+      create(
+        :research_plan,
+        collections: [collection],
+        body: [
+          { 'id' => SecureRandom.uuid, 'type' => 'reaction', 'value' => { 'reaction_id' => outside_reaction.id } },
+        ],
+      )
+    end
+
+    let(:imported_collection) do
+      Collection.find_by(label: 'collection-with-accessible-rxn', user_id: importing_user.id)
+    end
+    let(:imported_research_plan) { imported_collection.research_plans.first }
+    let(:reaction_field) { imported_research_plan.body.find { |field| field['type'] == 'reaction' } }
+    let(:image_field) { imported_research_plan.body.find { |field| field['type'] == 'image' } }
+    let(:image_attachment) { Attachment.find_by(identifier: image_field['value']['public_name']) }
+
+    before do
+      research_plan
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', false, false, exporting_user.id)
+      export.prepare_data
+      export.to_file
+
+      attachment = create(:attachment, file_path: zip_path)
+      Import::ImportCollections.new(attachment, importing_user.id).execute
+    end
+
+    it 'does not import the outside reaction record itself' do
+      expect(imported_collection.reactions).to be_empty
+    end
+
+    it 'replaces the reaction field with an image field' do
+      expect(reaction_field).to be_nil
+      expect(image_field).to be_present
+    end
+
+    it 'backs the image field with a real attachment associated to the research plan' do
+      expect(image_attachment).to be_present
+      expect(image_attachment.attachable).to eq(imported_research_plan)
+    end
+
+    it 'embeds the report-style reaction scheme as svg content' do
+      svg_content = image_attachment.attachment.open(&:read)
+      expect(svg_content).to include('</svg>')
+    end
+  end
+
+  # The exporting user does not have read access to the outside reaction. The link must still be
+  # dropped, never converted.
+  describe 'import a collection with a researchplan linking an inaccessible reaction outside the export' do
+    let(:exporting_user) { create(:person, first_name: 'Ex', last_name: 'Porter', name_abbreviation: 'EP') }
+    let(:importing_user) { create(:person, first_name: 'Im', last_name: 'Porter', name_abbreviation: 'IP') }
+    let(:stranger) { create(:person, first_name: 'Str', last_name: 'Anger', name_abbreviation: 'SA') }
+    let(:collection) { create(:collection, user_id: exporting_user.id, label: 'collection-with-inaccessible-rxn') }
+    let(:strangers_collection) { create(:collection, user_id: stranger.id, label: 'strangers-collection-rxn') }
+    let(:product) { create(:sample, molfile: build(:molfile, type: 'test_2')) }
+    let(:inaccessible_reaction) do
+      create(:reaction, name: 'Inaccessible Reaction', products: [product], collections: [strangers_collection])
+    end
+    let(:job_id) { SecureRandom.uuid }
+    let(:zip_path) { Rails.public_path.join('zip', "#{job_id}.zip") }
+
+    let(:research_plan) do
+      create(
+        :research_plan,
+        collections: [collection],
+        body: [
+          {
+            'id' => SecureRandom.uuid, 'type' => 'reaction',
+            'value' => { 'reaction_id' => inaccessible_reaction.id }
+          },
+        ],
+      )
+    end
+
+    let(:imported_collection) do
+      Collection.find_by(label: 'collection-with-inaccessible-rxn', user_id: importing_user.id)
+    end
+    let(:imported_research_plan) { imported_collection.research_plans.first }
+
+    before do
+      research_plan
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', false, false, exporting_user.id)
+      export.prepare_data
+      export.to_file
+
+      attachment = create(:attachment, file_path: zip_path)
+      Import::ImportCollections.new(attachment, importing_user.id).execute
+    end
+
+    it 'drops the link instead of converting or keeping it' do
+      expect(imported_research_plan.body).to be_empty
+    end
+  end
+
+  # The exporting user has general read access to the outside reaction via a share, but that share
+  # caps the reaction detail level below full — where ReactionEntity anonymizes reaction_svg_file (see
+  # `anonymize_below: 10`). #read? alone would pass here — #read_full_detail? is what must block the
+  # conversion.
+  describe 'import a collection with a researchplan linking a reaction shared below full detail' do
+    let(:exporting_user) { create(:person, first_name: 'Ex', last_name: 'Porter', name_abbreviation: 'EP') }
+    let(:importing_user) { create(:person, first_name: 'Im', last_name: 'Porter', name_abbreviation: 'IP') }
+    let(:reaction_owner) { create(:person, first_name: 'Ow', last_name: 'Ner', name_abbreviation: 'ON') }
+    let(:collection) { create(:collection, user_id: exporting_user.id, label: 'collection-with-low-detail-rxn') }
+    let(:owners_collection) do
+      create(:collection, user_id: reaction_owner.id, label: 'owners-collection-rxn').tap do |shared_collection|
+        create(:collection_share, collection: shared_collection, shared_with: exporting_user,
+                                  permission_level: CollectionShare.permission_level(:read_elements),
+                                  reaction_detail_level: 9)
+      end
+    end
+    let(:product) { create(:sample, molfile: build(:molfile, type: 'test_2')) }
+    let(:low_detail_reaction) do
+      create(:reaction, created_by: reaction_owner.id, name: 'Low Detail Reaction', products: [product],
+                        collections: [owners_collection])
+    end
+    let(:job_id) { SecureRandom.uuid }
+    let(:zip_path) { Rails.public_path.join('zip', "#{job_id}.zip") }
+
+    let(:research_plan) do
+      create(
+        :research_plan,
+        collections: [collection],
+        body: [
+          {
+            'id' => SecureRandom.uuid, 'type' => 'reaction',
+            'value' => { 'reaction_id' => low_detail_reaction.id }
+          },
+        ],
+      )
+    end
+
+    let(:imported_collection) do
+      Collection.find_by(label: 'collection-with-low-detail-rxn', user_id: importing_user.id)
+    end
+    let(:imported_research_plan) { imported_collection.research_plans.first }
+
+    before do
+      research_plan
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', false, false, exporting_user.id)
+      export.prepare_data
+      export.to_file
+
+      attachment = create(:attachment, file_path: zip_path)
+      Import::ImportCollections.new(attachment, importing_user.id).execute
+    end
+
+    it 'drops the link instead of converting it, since full detail access is required' do
+      expect(imported_research_plan.body).to be_empty
+    end
+  end
 end
 # rubocop:enable RSpec/MultipleMemoizedHelpers

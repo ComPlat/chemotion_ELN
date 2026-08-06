@@ -65,6 +65,16 @@ class ElementPolicy
     record_is_in_own_collection? || record_shared_with_minimum_detail_level?(1)
   end
 
+  # Whether the user holds full (owner-equivalent) detail access to the record — the same bar
+  # Collection.full_detail_access_ids uses to gate the raw collection export path. Used where an
+  # operation would expose more than the record's own fields, e.g. a Reaction's composed report
+  # scheme, which is only exposed to a sharee at ReactionEntity's `anonymize_below: 10`.
+  def read_full_detail?
+    return false unless user_and_record_present?
+
+    record_is_in_own_collection? || record_shared_with_minimum_detail_level?(Collection::OWNER_LEVEL)
+  end
+
   def import?
     return false unless user_and_record_present?
 
