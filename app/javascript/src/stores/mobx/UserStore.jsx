@@ -1,4 +1,4 @@
-import { flow, types } from 'mobx-state-tree';
+import { flow, getRoot, types } from 'mobx-state-tree';
 import { values } from 'mobx';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
@@ -313,6 +313,13 @@ const UserStore = types.model(
   }),
   fetchGenericElKlasses: flow(function* fetchGenericElKlasses() {
     const result = yield GenericElsFetcher.fetchElementKlasses();
+    if (result?.error) {
+      getRoot(self).notificationsStore.add({
+        title: 'Error Loading Data',
+        message: `Failed to load initial data. Please refresh the page. ${result?.error}`,
+        level: 'error'
+      });
+    }
     self.genericElKlasses = result.klass;
   }),
   fetchSegmentKlasses: flow(function * fetchSegmentKlasses() {
@@ -325,6 +332,13 @@ const UserStore = types.model(
   }),
   fetchAdminDatasetKlasses: flow(function* fetchDatasetKlasses() {
     const result = yield GenericDSsFetcher.listDatasetKlass();
+    if (result?.error) {
+      getRoot(self).notificationsStore.add({
+        title: 'Error Loading Data',
+        message: `Failed to load initial data. Please refresh the page. ${result?.error}`,
+        level: 'error'
+      });
+    }
     self.dsAdminKlasses = result.klass;
   }),
   fetchUnitsSystem: flow(function* fetchUnitsSystem() {
