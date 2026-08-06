@@ -20,13 +20,25 @@ module Versioning
             label: 'Name',
             revert: %i[name],
           },
-          device_type: {
-            label: 'Device type',
-            revert: %i[device_type],
+          device_class: {
+            label: 'Device class',
+            revert: %i[device_class],
           },
-          device_type_detail: {
-            label: 'Device type detail',
-            revert: %i[device_type_detail],
+          device_class_detail: {
+            label: 'Device class detail',
+            revert: %i[device_class_detail],
+          },
+          device_type_name: {
+            label: 'Device type name',
+            revert: %i[device_type_name],
+          },
+          device_type_id: {
+            label: 'Device type ID',
+            revert: %i[device_type_id],
+          },
+          device_type_id_type: {
+            label: 'Device type ID type',
+            revert: %i[device_type_id_type],
           },
           operation_mode: {
             label: 'Operation mode',
@@ -52,6 +64,10 @@ module Versioning
           vendor_id: {
             label: "Vendor's ID",
             revert: %i[vendor_id],
+          },
+          vendor_id_type: {
+            label: "Vendor's ID type",
+            revert: %i[vendor_id_type],
           },
           description: {
             label: 'Description',
@@ -85,17 +101,34 @@ module Versioning
           },
           version_doi_url: {
             label: 'Persistent identifier link',
-            revert: %i[version_doi],
+            revert: %i[version_doi_url],
           },
           version_characterization: {
             label: 'Characterization of this version',
-            revert: %i[version_doi],
+            revert: %i[version_characterization],
           },
           # Device operators and location
           operators: {
             label: 'Operators',
             formatter: array_formatter,
             revert: %i[operators],
+          },
+          # Institution owner
+          owner_institution: {
+            label: 'Owner institution',
+            revert: %i[owner_institution],
+          },
+          owner_email: {
+            label: 'Owner email',
+            revert: %i[owner_email],
+          },
+          owner_id: {
+            label: 'Owner ID',
+            revert: %i[owner_id],
+          },
+          owner_id_type: {
+            label: 'Owner ID type',
+            revert: %i[owner_id_type],
           },
           university_campus: {
             label: 'Institution',
@@ -112,6 +145,15 @@ module Versioning
           room: {
             label: 'Room',
             revert: %i[room],
+          },
+          # Inventory
+          inventory_id: {
+            label: 'Inventory ID',
+            revert: %i[inventory_id],
+          },
+          alternative_identifier: {
+            label: 'Alternative identifier',
+            revert: %i[alternative_identifier],
           },
           infrastructure_assignment: {
             label: 'Infrastructure Assignment',
