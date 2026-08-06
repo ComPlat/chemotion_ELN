@@ -139,7 +139,6 @@ const CollectionTabsEditorModal = ({ collection, show, onHide }) => {
       size="lg"
       show={show}
       onHide={onHide}
-      contentClassName="vh-90"
       bodyClassName="p-0 h-100 overflow-hidden"
       title={collection.label}
       primaryActionLabel="Save changes"
