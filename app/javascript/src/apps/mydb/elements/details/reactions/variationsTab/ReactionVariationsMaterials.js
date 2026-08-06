@@ -88,19 +88,30 @@ function materialContributesToCombinedVolumeVariations(material) {
 }
 
 function computeCombinedReactionVolume(row = {}) {
+  const targetUnit = getStandardUnits('volume')[0];
+  const toStandardVolume = (entry) => {
+    const value = entry?.value;
+    const unit = entry?.unit ?? targetUnit;
+    const converted = convertUnit(value, unit, targetUnit);
+    return Number.isFinite(converted) && converted > 0 ? converted : null;
+  };
   let totalVolume = 0;
 
   Object.values(row.solvents || {}).forEach((solvent) => {
-    const solventVolume = solvent?.volume?.value;
-    if (Number.isFinite(solventVolume) && solventVolume > 0) {
+    const solventVolume = toStandardVolume(solvent?.volume);
+     if (solventVolume) {
       totalVolume += solventVolume;
     }
   });
 
   ['startingMaterials', 'reactants'].forEach((materialType) => {
     Object.values(row[materialType] || {}).forEach((material) => {
-      if (materialContributesToCombinedVolumeVariations(material)) {
-        totalVolume += material.volume.value;
+      if (!materialContributesToCombinedVolumeVariations(material)) {
+         return;
+       }
+      const materialVolume = toStandardVolume(material?.volume);
+      if (materialVolume) {
+        totalVolume += materialVolume;
       }
     });
   });
