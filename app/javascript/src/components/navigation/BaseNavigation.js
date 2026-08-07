@@ -23,7 +23,7 @@ const Navigation = () => {
         <SupportMenuButton linkToEln variant="link" />
         {currentUser
           ? (<UserAuth userMenuDropdownToggleVariant="link" />)
-          : (<NavNewSession />)}
+          : (userStore.loginStatus === '' ? <NavNewSession /> : '')}
       </div>
     </div>
   );
