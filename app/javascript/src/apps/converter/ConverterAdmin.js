@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import ReactDOM from 'react-dom';
-import { Container } from 'react-bootstrap';
+import { Navbar, Nav } from 'react-bootstrap';
 import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
 import AdminApp from '@complat/chemotion-converter-client';
 import AppModal from 'src/components/common/AppModal';
@@ -23,25 +22,40 @@ const ConverterAdmin = () => {
   // AdminApp loads its stores on mount keyed by isAdmin, and an admin mount
   // fetches strictly more than a non-admin one. Rendering before the flag is
   // known would issue the non-admin requests and never retry them.
-  if (isAdmin === null) return null;
 
   return (
     <>
-      <AdminApp
-        ModalComponent={AppModal}
-        converterUrl={CONVERTER_PROXY_URL}
-        isAdmin={isAdmin}
-      />
-      <Container fluid>
-        <div role="presentation" onClick={() => aviatorNavigationToApp('/mydb/collection/all')}>Back to MyDB</div>
-      </Container>
+      <Navbar className="bg-gray-200 px-4">
+        <Nav className="container-md justify-content-start">
+          <Navbar.Brand
+            href="#"
+            onClick={(e) => { e.preventDefault(); aviatorNavigationToApp('/mydb/collection/all'); }}
+          >
+            Back to MyDB
+          </Navbar.Brand>
+          <Navbar.Text className="fs-5 text-black">
+            Converter Admin
+          </Navbar.Text>
+        </Nav>
+      </Navbar>
+      {
+        isAdmin !== null && (
+          <AdminApp
+            ModalComponent={AppModal}
+            converterUrl={CONVERTER_PROXY_URL}
+            isAdmin={isAdmin}
+          />
+        )
+      }
+      {
+        isAdmin === null && (
+          <div style={{ marginTop: '60px', textAlign: 'center' }}>
+            <h3>Unauthorized!</h3>
+          </div>
+        )
+      }
     </>
   );
 };
-
-document.addEventListener('DOMContentLoaded', () => {
-  const domElement = document.getElementById('ConverterAdmin');
-  if (domElement) ReactDOM.render(<ConverterAdmin />, domElement);
-});
 
 export default ConverterAdmin;
