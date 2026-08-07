@@ -345,7 +345,7 @@ const NoticeButton = () => {
   const renderBody = () => {
     if (allNotices.length === 0) {
       return (
-        <Card className="text-center" eventKey="0">
+        <Card className="text-center">
           <Card.Body>{`No ${showAck ? '' : 'new'} notifications.`}</Card.Body>
         </Card>
       );
@@ -369,7 +369,7 @@ const NoticeButton = () => {
             />
           </InputGroup>
         </Row>
-        {filteredNotices.slice(start, end).map((not, index) => {
+        {filteredNotices.slice(start, end).map((not) => {
           const infoTimeString = formatDate(not.created_at);
           const convertedData = convertCalendarNotificationToLocal(not.content.data);
 
@@ -387,7 +387,6 @@ const NoticeButton = () => {
           return (
             <Card
               key={`panel-modal-body-${not.id}`}
-              eventKey={index}
               className="mb-3"
             >
               <Card.Header className="d-flex gap-2">

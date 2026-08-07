@@ -79,7 +79,7 @@ export default class ReactionDetailsContainers extends Component {
   constructor(props) {
     super(props);
     const { reaction } = props;
-    const hasComment = reaction.container?.description && reaction.container.description.trim() !== '';
+    const hasComment = Boolean(reaction.container?.description?.trim());
 
     this.state = {
       activeContainer: UIStore.getState().reaction.activeAnalysis,
@@ -420,7 +420,7 @@ export default class ReactionDetailsContainers extends Component {
             </div>
             <CommentBox
               isVisible={commentBoxVisible}
-              value={reaction.container.description}
+              value={reaction.container?.description || ''}
               handleCommentTextChange={this.handleCommentTextChange}
             />
             {mode === 'order' ? (
@@ -506,7 +506,7 @@ export default class ReactionDetailsContainers extends Component {
           </div>
           <CommentBox
             isVisible={commentBoxVisible}
-            value={reaction.container.description}
+            value={reaction.container?.description || ''}
             handleCommentTextChange={this.handleCommentTextChange}
           />
           <div className="d-flex align-items-center">

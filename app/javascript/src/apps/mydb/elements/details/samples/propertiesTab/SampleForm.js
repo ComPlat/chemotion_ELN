@@ -740,7 +740,7 @@ export default class SampleForm extends React.Component {
 
     return (
       <OverlayTrigger
-        trigger="hover"
+        trigger={['hover', 'focus']}
         placement="top"
         overlay={infoPopover}
         delay={{ show: 250, hide: 650 }}

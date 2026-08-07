@@ -18,7 +18,7 @@ class UserStore {
       dsKlasses: [],
       unitsSystem: {},
       matriceConfigs: [],
-      omniauthProviders: [],
+      omniauthProviders: {},
       bao: []
     };
 

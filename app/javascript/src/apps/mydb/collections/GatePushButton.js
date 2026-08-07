@@ -88,11 +88,21 @@ class GatePushButton extends React.Component {
     return (
       <>
         <Button
+          as="span"
+          role="button"
+          tabIndex={0}
           variant="surface"
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
             this.transmit();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              this.transmit();
+            }
           }}
           ref={this.buttonRef}
           className="border-0"

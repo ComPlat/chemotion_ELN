@@ -275,22 +275,20 @@ export default class VersionsTable extends Component {
 
     const pagination = () => (
       <Pagination>
-        <Pagination.Item
-          previous
+        <Pagination.Prev
           href="#"
           onClick={() => this.handlePagerClick('prev')}
           disabled={page >= pages}
         >
           &larr; Older versions
-        </Pagination.Item>
-        <Pagination.Item
-          next
+        </Pagination.Prev>
+        <Pagination.Next
           href="#"
           onClick={() => this.handlePagerClick('next')}
           disabled={page <= 1}
         >
           Newer versions &rarr;
-        </Pagination.Item>
+        </Pagination.Next>
       </Pagination>
     );
 
