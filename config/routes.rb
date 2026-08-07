@@ -36,10 +36,9 @@ Rails.application.routes.draw do
   end
 
   authenticate :user do
-    get 'sfn_cb', to: 'pages#sfn_cb'
     get 'command_n_control', to: 'pages#home'
-    get 'mydb/*any', to: 'pages#welcome'
-    get 'mydb', to: 'pages#welcome'
+    get 'mydb/*any', to: 'pages#home'
+    get 'mydb', to: 'pages#home'
     get 'molecule_moderator', to: 'pages#home'
     get 'converter_admin', to: 'pages#home'
     get 'generic_elements_admin', to: 'pages#home'
