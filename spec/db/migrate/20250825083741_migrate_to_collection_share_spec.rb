@@ -153,6 +153,28 @@ RSpec.describe 'migration 20250825083741: MigrateToCollectionShare' do
       end
     end
 
+    context 'when the only remaining child of a wrapper is soft-deleted' do
+      let!(:deleted_child) do
+        create(:collection, user: recipient, label: 'Gone', parent: wrapper,
+                            shared_by_id: owner.id, permission_level: 1).tap(&:destroy)
+      end
+
+      before { MigrateToCollectionShare.new.up }
+
+      it 'migrates it like a live one instead of leaving it under a retired wrapper' do
+        restored = Collection.only_deleted.find(deleted_child.id)
+        expect(restored).to have_attributes(user_id: owner.id, shared_by_id: nil, parent_id: group_for(owner).id)
+      end
+
+      it 'gives it a CollectionShare that stays invisible until the collection is restored' do
+        expect(CollectionShare.find_by(collection_id: deleted_child.id)).to be_present
+        expect(Collection.shared_collections_for(recipient)).not_to include(deleted_child)
+
+        Collection.only_deleted.find(deleted_child.id).restore
+        expect(Collection.shared_collections_for(recipient).exists?(deleted_child.id)).to be(true)
+      end
+    end
+
     context 'when a wrapper holds elements directly' do
       let!(:sample) { create(:sample, creator: recipient) }
 
@@ -190,6 +212,37 @@ RSpec.describe 'migration 20250825083741: MigrateToCollectionShare' do
     end
   end
 
+  describe 'when the sharer has been soft-deleted' do
+    let!(:shared) do
+      create(:collection, user: recipient, label: 'Shared', shared_by_id: owner.id, permission_level: 1)
+    end
+
+    before do
+      owner.destroy
+      MigrateToCollectionShare.new.up
+    end
+
+    it 'still builds the grouping node and files the collection under it' do
+      group = Collection.find_by!(user_id: owner.id, label: group_label)
+      expect(shared.reload).to have_attributes(user_id: owner.id, parent_id: group.id)
+    end
+  end
+
+  describe 'when the recipient has been soft-deleted' do
+    let!(:shared) do
+      create(:collection, user: recipient, label: 'Shared', shared_by_id: owner.id, permission_level: 1)
+    end
+
+    before do
+      recipient.destroy
+      MigrateToCollectionShare.new.up
+    end
+
+    it 'still records the share, so restoring the account restores its access' do
+      expect(CollectionShare.find_by(collection_id: shared.id)).to have_attributes(shared_with_id: recipient.id)
+    end
+  end
+
   describe 'idempotency' do
     let!(:wrapper) { create_wrapper }
     let!(:shared_child) do
@@ -214,7 +267,6 @@ RSpec.describe 'migration 20250825083741: MigrateToCollectionShare' do
   describe 'sync pass hardening (#3337 guards)' do
     let(:scu) { MigrateToCollectionShare::SyncCollectionsUser }
     let!(:synced_collection) { create(:collection, user: owner, label: 'Synced') }
-    let(:deleted_recipient) { create(:person) }
 
     before do
       # valid sync share
@@ -223,13 +275,9 @@ RSpec.describe 'migration 20250825083741: MigrateToCollectionShare' do
       # orphans: null collection_id and a missing collection
       scu.new(collection_id: nil, user_id: recipient.id, permission_level: 0).save(validate: false)
       scu.new(collection_id: 2_000_000_000, user_id: recipient.id, permission_level: 0).save(validate: false)
-      # soft-deleted recipient (User acts_as_paranoid → User.exists? is false)
-      scu.new(collection_id: synced_collection.id, user_id: deleted_recipient.id,
-              permission_level: 0).save(validate: false)
-      deleted_recipient.destroy
     end
 
-    it 'skips orphan and deleted-recipient rows without aborting, creating only the valid share' do
+    it 'skips orphan rows without aborting, creating only the valid share' do
       expect { MigrateToCollectionShare.new.up }.not_to raise_error
 
       shares = CollectionShare.where(collection_id: synced_collection.id)
@@ -240,6 +288,13 @@ RSpec.describe 'migration 20250825083741: MigrateToCollectionShare' do
     it 'sets collections.shared to match EXISTS(collection_shares)' do
       MigrateToCollectionShare.new.up
       expect(synced_collection.reload.shared).to be(true)
+    end
+
+    it 'does not duplicate a sync share when the migration runs again' do
+      MigrateToCollectionShare.new.up
+      MigrateToCollectionShare.new.up
+
+      expect(CollectionShare.where(collection_id: synced_collection.id).count).to eq(1)
     end
   end
 

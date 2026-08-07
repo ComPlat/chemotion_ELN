@@ -46,31 +46,35 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
   # First pass: collections that were "shared" (owner kept in shared_by_id, recipient in
   # user_id). Make shared_by_id the real owner and create a CollectionShare for the recipient.
   #
-  # +.reorder(nil)+ drops Collection's +default_scope { ordered }+ (ORDER BY position) so
-  # find_each does not warn "Scoped order is ignored, it's forced to be batch order"; we must
-  # NOT use +.unscoped+, which would also drop acts_as_paranoid and pull in soft-deleted rows.
+  # Swept +with_deleted+ on purpose. shared_by_id is the only record of who really owns these rows
+  # and 20250827121248 drops it, so a soft-deleted collection left out here could never be repaired:
+  # restoring it later would silently hand it to the recipient. It also means the wrappers' hidden
+  # soft-deleted children are moved out with the visible ones, so no wrapper can be retired over a
+  # child that is merely invisible. +.reorder(nil)+ additionally drops Collection's
+  # +default_scope { ordered }+ so find_each does not warn about a scoped order.
   #
   # @return [Hash{Integer => Array<Integer>}] owner id => ids of that owner's shared-out collections
   def migrate_direct_shares
     created = 0
+    existing = 0
     skipped = 0
     shared_out_by_owner = Hash.new { |hash, key| hash[key] = [] }
 
-    Collection.where.not(shared_by_id: nil).reorder(nil).find_each do |collection|
+    Collection.with_deleted.where.not(shared_by_id: nil).reorder(nil).find_each do |collection|
       next if share_wrapper?(collection)
 
       owner_id = collection.shared_by_id
       if collection.user_id == owner_id
         # Degenerate legacy row: sharing with yourself. Re-own it (below) but write no share.
         say "collection ##{collection.id}: shared_by_id equals user_id, no share created"
-      elsif create_collection_share(collection, collection.user_id, collection.permission_level)
-        created += 1
       else
-        # Recipient is missing or soft-deleted: belongs_to :shared_with is required and resolves
-        # User through its paranoid scope, so create would fail validation silently. Skip the share
-        # explicitly, but still transfer ownership to shared_by_id below.
-        say "skipping share for collection ##{collection.id}: recipient user ##{collection.user_id} is missing or soft-deleted"
-        skipped += 1
+        case create_collection_share(collection, collection.user_id, collection.permission_level)
+        when :created then created += 1
+        when :existing then existing += 1
+        when :missing
+          say "skipping share for collection ##{collection.id}: recipient user ##{collection.user_id} no longer exists"
+          skipped += 1
+        end
       end
 
       # Transfer ownership to the real owner. The `shared` flag is set authoritatively at the end
@@ -88,7 +92,8 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
       end
     end
 
-    say "shared pass: created #{created} shares, skipped #{skipped} (deleted recipient)"
+    say "shared pass: created #{created} shares, #{existing} already present, " \
+        "skipped #{skipped} (recipient no longer exists)"
     shared_out_by_owner
   end
 
@@ -96,10 +101,11 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
   # was never re-owned or re-parented pre-refactor, and is not here either.
   def migrate_sync_shares
     created = 0
+    existing = 0
     orphan = 0
     skipped = 0
     SyncCollectionsUser.find_each do |scu|
-      collection = scu.collection
+      collection = Collection.with_deleted.find_by(id: scu.collection_id)
       # Orphaned sync rows exist in legacy data: collection_id can be NULL, point to a missing
       # collection, or reference a soft-deleted one (acts_as_paranoid hides it, so the association
       # returns nil). Without this guard the CollectionShare insert hits the collection_id FK
@@ -110,14 +116,16 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
         next
       end
 
-      if create_collection_share(collection, scu.user_id, scu.permission_level, scu)
-        created += 1
-      else
-        say "skipping sync share ##{scu.id}: recipient user ##{scu.user_id} is missing or soft-deleted"
+      case create_collection_share(collection, scu.user_id, scu.permission_level, scu)
+      when :created then created += 1
+      when :existing then existing += 1
+      when :missing
+        say "skipping sync share ##{scu.id}: recipient user ##{scu.user_id} no longer exists"
         skipped += 1
       end
     end
-    say "sync pass: created #{created} shares, skipped #{orphan} orphan + #{skipped} (deleted recipient)"
+    say "sync pass: created #{created} shares, #{existing} already present, " \
+        "skipped #{orphan} orphan + #{skipped} (recipient no longer exists)"
   end
 
   # collections.shared mirrors "has at least one CollectionShare". CollectionShareAPI flips it
@@ -144,26 +152,40 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
 
   # @return [ActiveRecord::Relation] the wrappers, which pass 1 leaves carrying their shared_by_id
   def share_wrappers
-    Collection.where(is_locked: true).where.not(shared_by_id: nil)
+    Collection.with_deleted.where(is_locked: true).where.not(shared_by_id: nil)
   end
 
-  # Writes one CollectionShare.
+  # Writes one CollectionShare, tolerating a soft-deleted collection or recipient.
+  #
+  # Both associations are assigned as objects rather than ids: +belongs_to+ is required on each, and
+  # its presence check reads the association target, whereas an id would be resolved through the
+  # paranoid default scope and read as nil for a soft-deleted user or collection — failing the
+  # validation silently. A soft-deleted account's row still exists, so the FK holds, and restoring
+  # the account restores its access. Only a genuinely missing user is skipped.
+  #
+  # An existing share for the pair is left as it is. Pass 1 cannot produce a duplicate on its own —
+  # it nulls shared_by_id as it goes — but pass 2 consumes no rows, so without this a re-run would
+  # double every sync share, and would raise outright once 20260709140001 has added the unique index.
   #
   # @param source [#celllinesample_detail_level, nil] row carrying the detail levels; the collection itself when nil
-  # @return [Boolean] false when the recipient is missing or soft-deleted
+  # @return [Symbol] +:created+, +:existing+ when the pair already has a share, or +:missing+ when
+  #   the recipient no longer exists
   def create_collection_share(collection, recipient_id, permission_level, source = nil)
-    return false unless User.exists?(id: recipient_id)
+    recipient = User.with_deleted.find_by(id: recipient_id)
+    return :missing if recipient.nil?
+    return :existing if CollectionShare.exists?(collection_id: collection.id, shared_with_id: recipient.id)
 
     source ||= collection
-    share = CollectionShare.new(shared_with_id: recipient_id, permission_level: permission_level)
+    share = CollectionShare.new(permission_level: permission_level)
     share.collection = collection
+    share.shared_with = recipient
     %i[
       celllinesample_detail_level devicedescription_detail_level element_detail_level
       reaction_detail_level researchplan_detail_level sample_detail_level screen_detail_level
       sequencebasedmacromoleculesample_detail_level wellplate_detail_level
     ].each { |level| share.public_send("#{level}=", source.try(level) || 10) }
     share.save
-    true
+    :created
   end
 
   # Re-parents each owner's formerly shared-out collections under a single unlocked "My projects
@@ -171,16 +193,17 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
   # Recipients still reach the collections through their CollectionShare, which is
   # ancestry-independent, so their "Shared with me" view is unaffected.
   #
+  # The owner is not required to still exist: Collection#user is optional and collections.user_id has
+  # no foreign key, so a node created for a soft-deleted account is legal — and it is the right
+  # outcome, because the tree becomes correct the moment that account is restored. Skipping the owner
+  # instead would leave their collections re-owned but re-parented nowhere, i.e. in no tree at all.
+  #
   # @param shared_out_by_owner [Hash{Integer => Array<Integer>}] owner id => shared-out collection ids
   def regroup_shared_out_collections(shared_out_by_owner)
     regrouped = 0
-    owners = 0
     shared_out_by_owner.each do |owner_id, collection_ids|
-      next unless User.exists?(id: owner_id)
-
-      owners += 1
       group = shared_out_group_for(owner_id)
-      Collection.where(id: collection_ids).where.not(id: group.id).reorder(nil).find_each do |collection|
+      Collection.with_deleted.where(id: collection_ids).where.not(id: group.id).reorder(nil).find_each do |collection|
         next if collection.parent_id == group.id
 
         # parent= updates ancestry and cascades to descendants (orphan_strategy: :adopt),
@@ -190,7 +213,8 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
         regrouped += 1
       end
     end
-    say "regrouped #{regrouped} shared-out collection(s) under '#{SHARED_OUT_GROUP_LABEL}' for #{owners} owner(s)"
+    say "regrouped #{regrouped} shared-out collection(s) under '#{SHARED_OUT_GROUP_LABEL}' " \
+        "for #{shared_out_by_owner.size} owner(s)"
   end
 
   # Idempotent per-owner grouping node. Only live nodes are matched: a soft-deleted one is a node the
@@ -214,7 +238,7 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
   def reroot_residual_wrapper_children
     rerooted = 0
     share_wrappers.reorder(nil).find_each do |wrapper|
-      Collection.where(ancestry: wrapper.child_ancestry).reorder(nil).find_each do |stray|
+      Collection.with_deleted.where(ancestry: wrapper.child_ancestry).reorder(nil).find_each do |stray|
         say "re-rooting collection ##{stray.id} (user ##{stray.user_id}) out of share wrapper ##{wrapper.id}"
         stray.parent = wrapper.parent
         stray.save!
