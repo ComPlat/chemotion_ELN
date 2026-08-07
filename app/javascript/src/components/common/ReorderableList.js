@@ -112,7 +112,7 @@ function ReorderableItem({
 
   return (
     <div ref={(ref) => drop(preview(ref))} className={className}>
-      <DragHandle ref={drag} />
+      <DragHandle ref={isDisabled ? null : drag} enabled={!isDisabled} />
       {children}
     </div>
   );

@@ -54,6 +54,8 @@ describe Chemotion::PermissionAPI do
           'is_top_secret' => false,
           'sharing_allowed' => true,
           'deletion_allowed' => true,
+          'remove_allowed' => true,
+          'update_allowed' => true,
         }
         expect(parsed_json_response).to eq expected_result
       end
@@ -82,6 +84,8 @@ describe Chemotion::PermissionAPI do
           'is_top_secret' => true,
           'sharing_allowed' => true,
           'deletion_allowed' => true,
+          'remove_allowed' => true,
+          'update_allowed' => true,
         }
         expect(parsed_json_response).to eq expected_result
       end
@@ -104,17 +108,11 @@ describe Chemotion::PermissionAPI do
         post '/api/v1/permissions/status', params: params
       end
 
-      context 'when the permission level is high enough for deletion' do
-        let(:permission_level) { CollectionShare.permission_level(:delete_elements) }
-
-        it 'returns deletion_allowed=true and sharing_allowed=true' do
-          expect(parsed_json_response['deletion_allowed']).to be true
-          expect(parsed_json_response['sharing_allowed']).to be true
-        end
-      end
-
-      context 'when the permission level is only sufficient for sharing' do
-        let(:permission_level) { CollectionShare.permission_level(:share_collection) }
+      # Destroying element records is owner-only, so `deletion_allowed` is false at every shared rung.
+      # A sharee at :remove_elements may unlink elements from the collection, which is a different
+      # operation (CollectionElementsAPI), not mass deletion.
+      context 'when the permission level is the highest non-ownership rung' do
+        let(:permission_level) { CollectionShare.permission_level(:manage_shares) }
 
         it 'returns deletion_allowed=false and sharing_allowed=true' do
           expect(parsed_json_response['deletion_allowed']).to be false
@@ -122,12 +120,88 @@ describe Chemotion::PermissionAPI do
         end
       end
 
+      context 'when the permission level allows removing elements from the collection' do
+        let(:permission_level) { CollectionShare.permission_level(:remove_elements) }
+
+        it 'returns remove_allowed=true (unlink is granted) but deletion_allowed=false (destroy is owner-only)' do
+          expect(parsed_json_response['remove_allowed']).to be true
+          expect(parsed_json_response['deletion_allowed']).to be false
+          expect(parsed_json_response['sharing_allowed']).to be true
+        end
+      end
+
+      context 'when the permission level is only sufficient for sharing elements onward' do
+        let(:permission_level) { CollectionShare.permission_level(:add_elements) }
+
+        it 'returns remove_allowed=false, deletion_allowed=false and sharing_allowed=true' do
+          expect(parsed_json_response['remove_allowed']).to be false
+          expect(parsed_json_response['deletion_allowed']).to be false
+          expect(parsed_json_response['sharing_allowed']).to be true
+        end
+      end
+
       context 'when the permission level is too low' do
-        let(:permission_level) { CollectionShare.permission_level(:write_elements) }
+        let(:permission_level) { CollectionShare.permission_level(:edit_elements) }
 
         it 'returns deletion_allowed=false and sharing_allowed=false' do
           expect(parsed_json_response['deletion_allowed']).to be false
           expect(parsed_json_response['sharing_allowed']).to be false
+        end
+
+        it 'returns update_allowed=true (editing element content is granted at :edit_elements)' do
+          expect(parsed_json_response['update_allowed']).to be true
+        end
+      end
+
+      context 'when the permission level is read only' do
+        let(:permission_level) { CollectionShare.permission_level(:read_elements) }
+
+        it 'returns update_allowed=false so bulk user-label edits are forbidden' do
+          expect(parsed_json_response['update_allowed']).to be false
+          expect(parsed_json_response['sharing_allowed']).to be false
+          expect(parsed_json_response['deletion_allowed']).to be false
+        end
+      end
+
+      # Regression (S5): element types outside the legacy [Sample, Reaction, Screen, Wellplate] set
+      # must be policed too — otherwise a sharee selecting only such an element keeps the permissive
+      # default (remove_allowed/deletion_allowed = true) and the UI offers a Move/Remove the server
+      # then refuses.
+      context 'when the selection is only a research plan (an element type outside the legacy four)' do
+        let(:research_plan) { create(:research_plan, collections: [shared_collection_of_other_user]) }
+        let(:permission_level) { CollectionShare.permission_level(:add_elements) }
+        let(:params) do
+          {
+            currentCollection: { id: shared_collection_of_other_user.id },
+            research_plan: { checkedAll: false, checkedIds: [research_plan.id], uncheckedIds: [] },
+          }
+        end
+
+        it 'polices the research plan: remove_allowed=false and deletion_allowed=false at :add_elements' do
+          expect(parsed_json_response['remove_allowed']).to be false
+          expect(parsed_json_response['deletion_allowed']).to be false
+        end
+      end
+
+      # An empty selection on a shared collection must report every flag false. Otherwise the
+      # permissive defaults survive (the policing loops skip empty scopes) and the client's
+      # PermissionStore caches a stale "true" that briefly enables Split/Share on the next selection.
+      context 'when no element type is selected' do
+        let(:permission_level) { CollectionShare.permission_level(:manage_shares) }
+        let(:params) do
+          {
+            currentCollection: { id: shared_collection_of_other_user.id },
+            sample: { checkedAll: false, checkedIds: [], uncheckedIds: [] },
+          }
+        end
+
+        it 'returns deletion_allowed, sharing_allowed, remove_allowed and update_allowed all false' do
+          aggregate_failures do
+            expect(parsed_json_response['deletion_allowed']).to be false
+            expect(parsed_json_response['sharing_allowed']).to be false
+            expect(parsed_json_response['remove_allowed']).to be false
+            expect(parsed_json_response['update_allowed']).to be false
+          end
         end
       end
     end

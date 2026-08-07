@@ -6,6 +6,7 @@ import ElementActions from 'src/stores/alt/actions/ElementActions';
 import ElementStore from 'src/stores/alt/stores/ElementStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import ArrayUtils from 'src/utilities/ArrayUtils';
+import { allElnElementsForSearch, allElnElements } from 'src/apps/generic/Utils';
 
 const defaultGroupCollapse = {
   baseState: 'expanded',
@@ -441,13 +442,8 @@ class UIStore {
             );
           }
 
-          const elements = [
-            'sample', 'reaction', 'screen', 'wellplate', 'research_plan', 'vessel',
-            'cell_line', 'device_description', 'sequence_based_macromolecule_sample',
-          ];
-
           Object.keys(layout)
-            .filter(l => !elements.includes(l))
+            .filter((l) => !allElnElements.includes(l))
             .forEach((key) => {
               if (typeof layout[key] !== 'undefined' && layout[key] > 0) {
                 const page = state[key] ? state[key].page : 1;
@@ -464,18 +460,20 @@ class UIStore {
   }
 
   handleSelectCollectionForSearchById(layout, collection) {
-    const state = this.state;
+    const { state } = this;
     const searchResult = { ...state.currentSearchByID };
-    const { filterCreatedAt, fromDate, toDate, userLabel, productOnly } = state;
+    const {
+      filterCreatedAt, fromDate, toDate, userLabel, productOnly
+    } = state;
     const { moleculeSort } = ElementStore.getState();
     const per_page = state.number_of_results;
 
     Object.keys(state.currentSearchByID).forEach((key) => {
       if (layout[key.slice(0, -1)] > 0 && searchResult[key].totalElements > 0) {
-        if (productOnly && key != 'samples') { return }
+        if (productOnly && key != 'samples') { return; }
         let filterParams = {};
-        const elnElements = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'];
-        let modelName = !elnElements.includes(key.slice(0, -1)) ? 'element' : key.slice(0, -1);
+        let modelName = !allElnElementsForSearch.includes(key.slice(0, -1)) ? 'element' : key.slice(0, -1);
+        modelName = key === 'cell_lines' ? 'cell_lines' : modelName;
 
         if (fromDate || toDate || productOnly || userLabel) {
           filterParams = {
@@ -484,10 +482,10 @@ class UIStore {
             to_date: toDate,
             user_label: userLabel,
             product_only: productOnly,
-          }
+          };
         }
 
-        const with_filter = Object.keys(filterParams).length >= 1 ? true : false;
+        const with_filter = Object.keys(filterParams).length >= 1;
 
         const selection = {
           elementType: 'by_ids',
@@ -495,7 +493,7 @@ class UIStore {
             model_name: modelName,
             ids: searchResult[key].ids,
             total_elements: searchResult[key].totalElements,
-            with_filter: with_filter,
+            with_filter,
           },
           list_filter_params: filterParams,
           search_by_method: 'search_by_ids',

@@ -5,7 +5,7 @@ import { Button, OverlayTrigger, Popover } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 
 
@@ -27,8 +27,8 @@ const buttons = [
 ];
 
 const notify = (params) => {
-  NotificationActions.add({
-    title: params.title, message: params.msg, level: params.lvl, position: 'tc', dismissible: 'button', uid: uuid.v4()
+  rootStore.notificationsStore.add({
+    title: params.title, message: params.msg, level: params.lvl, position: 'tc', uid: uuid.v4()
   });
 };
 

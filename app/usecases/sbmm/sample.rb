@@ -64,13 +64,14 @@ module Usecases
         collections = []
         return collections unless params[:collection_id]
 
-        if (own_collection = current_user.collections.find_by(id: params[:collection_id]))
-          collections << own_collection
-          collections << Collection.get_all_collection_for_user(current_user.id)
-        end
+        collection = Collection.writable_by(current_user).find_by(id: params[:collection_id])
+        return collections unless collection
 
-        collections.uniq!(&:id)
-        collections
+        collections << collection
+        user_and_group_ids = [current_user.id, *current_user.group_ids]
+        all_coll_owner_id = user_and_group_ids.include?(collection.user_id) ? current_user.id : collection.user_id
+        collections << Collection.get_all_collection_for_user(all_coll_owner_id)
+        collections.uniq(&:id)
       end
 
       def raise_if_sbmm_is_not_writable!(sbmm)

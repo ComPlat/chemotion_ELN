@@ -1,102 +1,39 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class AdminDeviceFetcher {
   static fetchDevices() {
-    return fetch(
-      `/api/v1/admin_devices`, 
-      this._httpOptions()
-    ).then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.getJson('/api/v1/admin_devices');
   }
 
   static fetchDevicesByName(name, limit = 5) {
-    return fetch(
-      `/api/v1/admin_devices/byname?${new URLSearchParams({
-        name,
-        limit,
-      })}`,
-      this._httpOptions()
-    ).then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => console.log(errorMessage));
+    const getParams = new URLSearchParams({ name, limit });
+
+    return ApiClient.getJson(`/api/v1/admin_devices/byname?${getParams}`);
   }
 
   static fetchDeviceById(deviceId) {
-    return fetch(
-      `/api/v1/admin_devices/${deviceId}`,
-      { ...this._httpOptions() }
-    ).then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.getJson(`/api/v1/admin_devices/${deviceId}`);
   }
 
   static createDevice(device) {
-    return fetch(
-      `/api/v1/admin_devices`,
-      {
-        ...this._httpOptions('POST'),
-        body: JSON.stringify(device),
-      }
-    ).then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.postJson('/api/v1/admin_devices', { body: device });
   }
 
   static updateDevice(device) {
-    return fetch(
-      `/api/v1/admin_devices/${device.id}`,
-      {
-        ...this._httpOptions('PUT'),
-        body: JSON.stringify(device),
-      }
-    ).then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.putJson(`/api/v1/admin_devices/${device.id}`, { body: device });
   }
 
   static deleteDevice(deviceId) {
-    return fetch(
-      `/api/v1/admin_devices/${deviceId}`,
-      { ...this._httpOptions('DELETE') }
-    ).then(response => response.json())
-      .catch(errorMessage => console.log(errorMessage));
+    return ApiClient.deleteRequest(`/api/v1/admin_devices/${deviceId}`);
   }
 
   static deleteRelation(userId, deviceId) {
-    return fetch(
-      `/api/v1/admin_devices/delete_relation/${userId}`,
-      {
-        ...this._httpOptions('PUT'),
-        body: JSON.stringify({
-          id: userId,
-          device_id: deviceId
-        }),
-      }
-    ).then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => console.log(errorMessage));
+    const body = { id: userId, device_id: deviceId };
+
+    return ApiClient.putJson(`/api/v1/admin_devices/delete_relation/${userId}`, { body });
   }
 
   static testSFTP(device) {
-    return fetch('/api/v1/admin_devices/test_sftp',
-      {
-        ...this._httpOptions('POST'),
-        body: JSON.stringify(device),
-      },
-    ).then(response => response.json())
-      .then(json => json)
-      .catch(errorMessage => console.log(errorMessage));
-  }
-
-  static _httpOptions(method = 'GET') {
-    return {
-      credentials: 'same-origin',
-      method: method,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      }
-    };
+    return ApiClient.postJson('/api/v1/admin_devices/test_sftp', { body: device });
   }
 }

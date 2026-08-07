@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { sizeAttributes } from './componentAttributes';
-
 import { Select } from 'src/components/common/Select';
+import { sizeAttributes } from './componentAttributes';
 
 const sizes = sizeAttributes;
 const options = [
@@ -11,7 +10,7 @@ const options = [
 ];
 
 export default {
-  title: 'Components/Select',
+  title: 'Atoms/Select',
   component: Select,
   parameters: {
     // Optional parameter to center the component in the Canvas. More info: https://storybook.js.org/docs/configure/story-layout

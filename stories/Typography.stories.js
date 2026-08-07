@@ -68,7 +68,7 @@ export function SupportedButRare() {
 }
 
 export default {
-  title: 'Design Principles/Typography',
+  title: 'Subatomic/Typography',
   tags: ['autodocs'],
   parameters: {
     options: {

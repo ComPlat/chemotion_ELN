@@ -1,12 +1,17 @@
 .tree-view {
   @extend .d-flex;
   @extend .flex-column;
-  &_frame {
+  &__frame {
     min-height: 0;
   }
-  &_container {
+  &__container {
     @extend .tree-view;
     @extend .overflow-y-auto;
+    // Load-bearing with the kebab dropdown (see .collection-subtree-functions below):
+    // Popper pre-positions every `renderOnMount` menu at (0,0) before it is shown;
+    // this clip stops those off-screen menus from stacking into view. Remove it
+    // and you get the "5x Reference Report" duplication bug.
+    overflow-x: hidden;
     @extend .surface-lighten3;
     @extend .border-top;
   }
@@ -34,18 +39,24 @@
       @extend .text-lighten1;
     }
   }
-  &_expand-icon {
-    &:hover {
-      @extend .text-active;
-    }
-  }
-  &_title {
+  &__title {
     @extend .flex-grow-1;
     overflow-x: hidden;
     text-overflow: ellipsis;
   }
 }
 
+// Sidebar per-collection kebab. These rules work as a set of three, together
+// with the CSS on .tree-view__container above and the `renderOnMount` +
+// `strategy: 'fixed'` on the Dropdown.Menu in CollectionSubtreeFunctions.js.
+// Change any one piece in isolation and something regresses:
+//   * `display: none` here (vs. visibility: hidden / opacity: 0) — no reserved
+//     space when idle, kebab enters flex flow beside the share indicator on
+//     hover (so they never overlap).
+//   * `renderOnMount` on the menu — Popper needs a measurable target when the
+//     dropdown opens; without it the menu can render at (0,0).
+//   * `overflow-x: hidden` on the container — clips those pre-mounted menus
+//     until Popper repositions them, preventing visible stacking.
 .tree-view__item {
   .collection-subtree-functions {
     display: none;

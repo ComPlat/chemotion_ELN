@@ -247,6 +247,17 @@ function getUserFacingEntryName(entry) {
   return entry.split(/(?=[A-Z])/).join(' ').toLowerCase(); // E.g., 'turnoverNumber' -> 'turnover number'
 }
 
+function processHeaderForCsvExport({ column: { colDef } }) {
+  const {
+    colId, entry, displayUnit, headerName
+  } = colDef;
+  if (colId === 'tools') return 'ID';
+  if (entry) {
+    return `${getUserFacingEntryName(entry)}${displayUnit ? ` (${displayUnit})` : ''}`;
+  }
+  return headerName;
+}
+
 function getVariationsRowName(reactionLabel, variationsRowId) {
   return `${reactionLabel}-${variationsRowId}`;
 }
@@ -511,6 +522,7 @@ function getMetadataColumnGroupChild(metadataType) {
       return {
         field: 'metadata.group',
         headerName: 'Group',
+        valueFormatter: GroupCellRenderer,
         cellRenderer: GroupCellRenderer,
         cellEditor: GroupCellEditor,
         cellDataType: false,
@@ -993,4 +1005,5 @@ export {
   getGroupHeaderNames,
   setGroupHeaderNames,
   getLayout,
+  processHeaderForCsvExport,
 };

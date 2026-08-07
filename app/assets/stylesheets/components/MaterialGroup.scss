@@ -14,3 +14,66 @@
     @extend .flex-wrap;
   }
 }
+
+.reagent-group {
+  &__tabs {
+    display: flex;
+    border-bottom: 2px solid var(--chemstrap-silicon);
+    margin-bottom: 2px;
+  }
+
+  &__tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 5px 8px;
+    white-space: nowrap;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--chemstrap-silicon);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+
+    &--active {
+      color: var(--chemstrap-blue);
+      border-bottom-color: var(--chemstrap-blue);
+    }
+  }
+
+  &__tab-count {
+    font-size: 0.65rem;
+    font-weight: 400;
+    opacity: 0.7;
+  }
+}
+
+/* menu width overrides — !important needed to beat styleDefaults inline styles */
+.reagent-menu {
+  min-width: 480px !important;
+  width: 480px !important;
+  max-width: 90vw !important;
+
+  .chemotion-select__option {
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
+.solvent-menu {
+  min-width: 320px !important;
+  width: 320px !important;
+  max-width: 90vw !important;
+
+  .chemotion-select__option {
+    white-space: normal;
+    word-break: break-word;
+  }
+}

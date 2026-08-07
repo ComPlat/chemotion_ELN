@@ -4,7 +4,7 @@ import {
   convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow,
   removeObsoleteColumnsFromVariations, removeObsoleteColumnDefinitions, addMissingColumnDefinitions,
   addMissingColumnsToVariations, getVariationsColumns, convertGenericUnit, getColumnDefinitions,
-  getUserFacingEntryName, getSegmentData, formatReactionSegments,
+  getUserFacingEntryName, getSegmentData, formatReactionSegments, processHeaderForCsvExport,
   setGroupColDefAttribute, setLeafColDefAttribute, getInitialLayout,
   getEntryVisibility, setEntryVisibility, getEntryDisplayUnits, setEntryDisplayUnits,
   getGroupHeaderNames, setGroupHeaderNames, getLayout, setLayout,
@@ -242,6 +242,29 @@ describe('ReactionVariationsUtils', () => {
   it('formats entry names', () => {
     expect(getUserFacingEntryName('fooBar')).toBe('foo bar');
     expect(getUserFacingEntryName('layer<foo>field<bar>')).toBe('foo / bar');
+  });
+  it('formats csv headers for entry-based columns', () => {
+    expect(processHeaderForCsvExport({
+      column: {
+        colDef: {
+          colId: 'products.12.yield',
+          cellDataType: 'yield',
+          entry: 'yield',
+          displayUnit: '%',
+        }
+      }
+    })).toBe('yield (%)');
+
+    expect(processHeaderForCsvExport({
+      column: {
+        colDef: {
+          colId: 'reactants.3.turnoverFrequency',
+          cellDataType: 'gas',
+          entry: 'turnoverFrequency',
+          displayUnit: null,
+        }
+      }
+    })).toBe('turnover frequency');
   });
   it('formats reaction segments', () => {
     const formattedSegment = formatReactionSegments(reactionSegments);

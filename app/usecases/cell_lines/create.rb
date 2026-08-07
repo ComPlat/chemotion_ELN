@@ -15,7 +15,7 @@ module Usecases
 
         CollectionsCellline.create_in_collection(
           cell_line_sample.id,
-          [@params[:collection_id], all_collection_of_current_user.id],
+          [@params[:collection_id], all_collection_for_owner&.id].compact.uniq,
         )
 
         @current_user.increment_counter('celllines') # rubocop: disable Rails/SkipsModelValidations
@@ -79,8 +79,11 @@ module Usecases
         value.instance_of?(String) && !value.empty?
       end
 
-      def all_collection_of_current_user
-        Collection.get_all_collection_for_user(@current_user.id)
+      def all_collection_for_owner
+        user_and_group_ids = [@current_user.id, *@current_user.group_ids]
+        collection = Collection.find_by(id: @params[:collection_id])
+        owner_id = collection && user_and_group_ids.exclude?(collection.user_id) ? collection.user_id : @current_user.id
+        Collection.get_all_collection_for_user(owner_id)
       end
     end
   end

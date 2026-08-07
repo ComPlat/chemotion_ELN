@@ -7,8 +7,10 @@ const CollectionSelect = ({ value, withShared, onChange }) => {
   const collectionsStore = useContext(StoreContext).collections;
   const [selectedCollection, setSelectedCollection] = useState(value || null);
 
-  const optionLabel = ({ label, depth }) => (
-    <span style={{ paddingLeft: `${depth * 10}px` }}>
+  // Indent by nesting depth only inside the menu; the selected value shown in the control should
+  // sit flush-left. `depth` defaults to 0 so a stray option without it never yields `NaNpx`.
+  const optionLabel = ({ label, depth = 0 }, { context } = {}) => (
+    <span style={{ paddingLeft: context === 'menu' ? `${depth * 10}px` : 0 }}>
       {label}
     </span>
   );

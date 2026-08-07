@@ -4,10 +4,6 @@ import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  beforeEach, afterEach, describe, it
-} from 'mocha';
-
 import ReactionDetailsScheme from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionDetailsScheme';
 import GasPhaseReactionActions from 'src/stores/alt/actions/GasPhaseReactionActions';
 // Note: do not import UnitsConversion helpers here to avoid tautological tests
@@ -16,7 +12,7 @@ import {
   createCompleteGasPhaseReaction,
   createGasProductSample,
   createFeedstockSample,
-} from '../../../../../../../../helper/gasPhaseReactionTestHelpers';
+} from 'helper/gasPhaseReactionTestHelpers';
 
 configure({ adapter: new Adapter() });
 
@@ -288,6 +284,252 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
 
       storeStub.restore();
     });
+
+    it('should set gas product concentration from ppm using concn = ppm * 4.1e-8', () => {
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
+      });
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsScheme, {
+          reaction,
+          onReactionChange: onReactionChangeSpy,
+          onInputChange: onInputChangeSpy,
+        })
+      );
+      const gasProduct = reaction.products[0];
+      const newPpm = 20000;
+
+      wrapper.instance().updatedReactionForGasProductFieldsChange({
+        sampleID: gasProduct.id,
+        materialGroup: 'products',
+        field: 'part_per_million',
+        value: newPpm,
+      });
+
+      // concentration (mol/L) = ppm * 4.1e-8
+      expect(gasProduct.concn).toBeCloseTo(newPpm * 4.1e-8, 12);
+      expect(gasProduct.gas_phase_data.part_per_million).toBe(newPpm);
+      storeStub.restore();
+    });
+
+    it('should not change gas product concentration when a non-ppm gas field changes', () => {
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
+      });
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsScheme, {
+          reaction,
+          onReactionChange: onReactionChangeSpy,
+          onInputChange: onInputChangeSpy,
+        })
+      );
+      const gasProduct = reaction.products[0];
+      gasProduct.concn = 4.1e-4; // baseline derived from previous ppm edit
+
+      wrapper.instance().updatedReactionForGasProductFieldsChange({
+        sampleID: gasProduct.id,
+        materialGroup: 'products',
+        field: 'temperature',
+        value: 310,
+      });
+
+      expect(gasProduct.concn).toBe(4.1e-4);
+      storeStub.restore();
+    });
+
+    it('clears preserveConcentration when a feedstock is toggled away from feedstock', () => {
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
+      });
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsScheme, {
+          reaction,
+          onReactionChange: onReactionChangeSpy,
+          onInputChange: onInputChangeSpy,
+        })
+      );
+      const feedstock = reaction.reactants[0];
+      // Simulate a feedstock concentration edit having locked the value.
+      feedstock.preserveConcentration = true;
+      expect(feedstock.gas_type).toBe('feedstock');
+
+      // Toggle feedstock off (current display value is 'FES').
+      wrapper.instance().updatedReactionForGasTypeChange({
+        sampleID: feedstock.id,
+        materialGroup: 'reactants',
+        value: 'FES',
+      });
+
+      expect(feedstock.gas_type).not.toBe('feedstock');
+      expect(feedstock.preserveConcentration).toBe(false);
+      storeStub.restore();
+    });
+
+    it('keeps preserveConcentration intact when feedstock status is unchanged', () => {
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
+      });
+
+      const wrapper = shallow(
+        React.createElement(ReactionDetailsScheme, {
+          reaction,
+          onReactionChange: onReactionChangeSpy,
+          onInputChange: onInputChangeSpy,
+        })
+      );
+      const catalyst = reaction.reactants[1];
+      catalyst.preserveConcentration = true;
+      expect(catalyst.gas_type).toBe('catalyst');
+
+      // Toggle catalyst off; the sample was never a feedstock so the flag
+      // must not be cleared.
+      wrapper.instance().updatedReactionForGasTypeChange({
+        sampleID: catalyst.id,
+        materialGroup: 'reactants',
+        value: 'CAT',
+      });
+
+      expect(catalyst.preserveConcentration).toBe(true);
+      storeStub.restore();
+    });
+  });
+
+  describe('Vessel Size Change Calculations', () => {
+    // Helper to create a shallow wrapper for these tests
+    function createWrapper(rxn, onReactionChange, onInputChange) {
+      return shallow(
+        React.createElement(ReactionDetailsScheme, {
+          reaction: rxn,
+          onReactionChange,
+          onInputChange,
+        })
+      );
+    }
+
+    it('should recalculate gas product moles when vessel size changes', () => {
+      // Stub the store so updateTONValue (called internally) has catalyst moles
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
+      });
+
+      const wrapper = createWrapper(reaction, onReactionChangeSpy, onInputChangeSpy);
+      const gasProduct = reaction.products[0];
+      const vesselSizeInLiters = 20; // switch from 10 L to 20 L
+
+      const updatedSamples = wrapper.instance().updatedSamplesForVesselSizeChange(
+        reaction.products,
+        vesselSizeInLiters
+      );
+
+      const updatedGasProduct = updatedSamples.find((s) => s.gas_type === 'gas');
+      const ppm = gasProduct.gas_phase_data.part_per_million; // 10000
+      const tempK = gasProduct.gas_phase_data.temperature.value; // 298 K
+      const expectedMoles = (ppm * vesselSizeInLiters) / (0.0821 * tempK * 1000000);
+
+      expect(updatedGasProduct.amount_mol).toBeCloseTo(expectedMoles, 10);
+      storeStub.restore();
+    });
+
+    it('should scale gas product moles proportionally with vessel size', () => {
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: reaction.vessel_size.amount / 1000,
+      });
+
+      const wrapper = createWrapper(reaction, onReactionChangeSpy, onInputChangeSpy);
+
+      const samplesAt10L = wrapper.instance().updatedSamplesForVesselSizeChange(
+        reaction.products,
+        10
+      );
+      const molesAt10L = samplesAt10L.find((s) => s.gas_type === 'gas').amount_mol;
+
+      const samplesAt20L = wrapper.instance().updatedSamplesForVesselSizeChange(
+        reaction.products,
+        20
+      );
+      const molesAt20L = samplesAt20L.find((s) => s.gas_type === 'gas').amount_mol;
+
+      // Doubling the vessel size should double the moles (linear relationship)
+      expect(molesAt20L).toBeCloseTo(molesAt10L * 2, 10);
+      storeStub.restore();
+    });
+
+    it('should recalculate gas product equivalent (yield) after vessel size change', () => {
+      const vesselSizeInLiters = 10;
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: vesselSizeInLiters,
+      });
+
+      const wrapper = createWrapper(reaction, onReactionChangeSpy, onInputChangeSpy);
+      const feedstock = reaction.reactants[0];
+
+      const updatedSamples = wrapper.instance().updatedSamplesForVesselSizeChange(
+        reaction.products,
+        vesselSizeInLiters
+      );
+      const updatedGasProduct = updatedSamples.find((s) => s.gas_type === 'gas');
+
+      // Equivalent = mol product / mol feedstock (from Calc2 / Calc1)
+      // mol feedstock = purity × V / (0.0821 × 294)
+      const feedstockPurity = feedstock.purity || 1;
+      const expectedFeedstockMoles = (feedstockPurity * vesselSizeInLiters) / (0.0821 * 294);
+      const expectedEquivalent = updatedGasProduct.amount_mol / expectedFeedstockMoles;
+
+      expect(updatedGasProduct.equivalent).toBeCloseTo(expectedEquivalent, 6);
+      storeStub.restore();
+    });
+
+    it('should strip non-numeric characters from vessel size input on change', () => {
+      const wrapper = createWrapper(reaction, onReactionChangeSpy, onInputChangeSpy);
+
+      wrapper.instance().updateVesselSize({ target: { value: '500abc.2xyz' } });
+
+      // onInputChange should be called with only the numeric portion
+      expect(onInputChangeSpy.calledOnce).toBe(true);
+      expect(onInputChangeSpy.getCall(0).args[1]).toBe('500.2');
+    });
+
+    it('should fire VesselSizeChanged event on blur with correct vessel size in liters', () => {
+      const wrapper = createWrapper(reaction, onReactionChangeSpy, onInputChangeSpy);
+      const handleMaterialsChangeSpy = sinon.spy(wrapper.instance(), 'handleMaterialsChange');
+
+      // Blur with 5000 ml value (reaction.vessel_size.unit is 'ml')
+      wrapper.instance().updateVesselSizeOnBlur({ target: { value: '5000' } });
+
+      expect(handleMaterialsChangeSpy.calledOnce).toBe(true);
+      const eventArg = handleMaterialsChangeSpy.getCall(0).args[0];
+      expect(eventArg.type).toBe('VesselSizeChanged');
+      // 5000 ml → 5 L
+      expect(eventArg.vesselSizeInLiters).toBeCloseTo(5, 6);
+
+      handleMaterialsChangeSpy.restore();
+    });
+
+    it('should fire VesselSizeChanged event on change with correct vessel size in liters', () => {
+      const wrapper = createWrapper(reaction, onReactionChangeSpy, onInputChangeSpy);
+      const handleMaterialsChangeSpy = sinon.spy(wrapper.instance(), 'handleMaterialsChange');
+
+      // Change to 10000 ml (reaction.vessel_size.unit is 'ml')
+      wrapper.instance().updateVesselSize({ target: { value: '10000' } });
+
+      expect(handleMaterialsChangeSpy.calledOnce).toBe(true);
+      const eventArg = handleMaterialsChangeSpy.getCall(0).args[0];
+      expect(eventArg.type).toBe('VesselSizeChanged');
+      // 10000 ml → 10 L
+      expect(eventArg.vesselSizeInLiters).toBeCloseTo(10, 6);
+
+      handleMaterialsChangeSpy.restore();
+    });
   });
 
   describe('Edge Cases', () => {
@@ -324,6 +566,52 @@ describe('ReactionDetailsScheme - Gas Phase Reaction Tests', () => {
       expect(gasProduct.gas_phase_data.time.value).toBeNull();
       expect(gasProduct.gas_phase_data.temperature.value).toBeNull();
       expect(gasProduct.gas_phase_data.turnover_number).toBeNull();
+    });
+  });
+
+  describe('Feedstock Concentration Change', () => {
+    const createWrapper = (rxn) => shallow(
+      React.createElement(ReactionDetailsScheme, {
+        reaction: rxn,
+        onReactionChange: onReactionChangeSpy,
+        onInputChange: onInputChangeSpy,
+      })
+    );
+
+    it('derives the feedstock amount and recomputes its equivalent', () => {
+      const vesselVolume = reaction.vessel_size.amount / 1000; // 10 L
+      const storeStub = sinon.stub(GasPhaseReactionStore, 'getState').returns({
+        catalystReferenceMolValue: reaction.reactants[1].amount_mol,
+        reactionVesselSizeValue: vesselVolume,
+      });
+
+      const wrapper = createWrapper(reaction);
+      wrapper.setState({ lockEquivColumn: false });
+      const feedstock = reaction.reactants[0];
+      const referenceMaterial = reaction.starting_materials[0];
+      const originalEquivalent = feedstock.equivalent;
+      const newConcentration = 0.002; // mol/L
+
+      wrapper.instance().updatedReactionForConcentrationChange({
+        sampleID: feedstock.id,
+        concentration: { value: newConcentration },
+      });
+
+      // Amount is derived from the vessel volume and the user's concentration,
+      // and the typed concentration is preserved.
+      expect(feedstock.amount_mol).toBeCloseTo(newConcentration * vesselVolume, 10);
+      expect(feedstock.concn).toBe(newConcentration);
+      expect(feedstock.preserveConcentration).toBe(true);
+
+      // The pipeline must rebase the feedstock's own equivalent off the new
+      // amount — before the fix it stayed at the stale pre-edit value.
+      expect(feedstock.equivalent).not.toBeCloseTo(originalEquivalent, 6);
+      expect(feedstock.equivalent).toBeCloseTo(
+        feedstock.amount_mol / referenceMaterial.amount_mol,
+        6
+      );
+
+      storeStub.restore();
     });
   });
 });

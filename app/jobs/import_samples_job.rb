@@ -10,7 +10,7 @@ class ImportSamplesJob < ApplicationJob
   def perform(params)
     @user_id = params[:user_id]
     @collection_id = params[:collection_id]
-    file_format = File.extname(params[:attachment]&.filename)
+    file_format = File.extname(params[:attachment]&.filename).downcase
 
     case file_format
     when '.xlsx', '.csv'
@@ -21,15 +21,13 @@ class ImportSamplesJob < ApplicationJob
         params[:attachment].filename,
         params[:import_type],
       ).process
-    when '.sdf'
+    when '.sdf', '.mol'
       sdf_import = Import::ImportSdf.new(
         collection_id: @collection_id,
         current_user_id: @user_id,
-        rows: params[:sdf_rows],
-        mapped_keys: params[:mapped_keys],
         attachment: params[:attachment],
       )
-      sdf_import.create_samples
+      sdf_import.import_from_file
       @result = { message: sdf_import.message }
     else
       @result = { message: "Unsupported format: #{file_format}" }

@@ -1,28 +1,25 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class ReactionSvgFetcher {
+  static fetchByMaterialsSvgPaths(
+    materialsSvgPaths,
+    temperature,
+    solvents,
+    duration,
+    conditions,
+    productsOnly = false,
+    showYield = true
+  ) {
+    const body = {
+      materials_svg_paths: materialsSvgPaths,
+      temperature,
+      duration,
+      solvents,
+      conditions: (typeof conditions === 'string') ? conditions : '',
+      products_only: productsOnly,
+      show_yield: showYield,
+    };
 
-  static fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents, duration, conditions) {
-    const promise = fetch('/api/v1/reaction_svg', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        materials_svg_paths: materialsSvgPaths,
-        temperature,
-        duration,
-        solvents,
-        conditions: (typeof conditions === 'string') ? conditions : '',
-      })
-    }).then((response) => {
-      return response.status == 201 ? response.json() : {}
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
+    return ApiClient.postJson('/api/v1/reaction_svg', { body });
   }
 }

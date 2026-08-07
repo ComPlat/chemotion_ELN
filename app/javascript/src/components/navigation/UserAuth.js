@@ -17,13 +17,14 @@ import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import { UserLabelModal } from 'src/components/UserLabels';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
 import AccountProfile from 'src/apps/userSettings/AccountProfile';
 
 export default class UserAuth extends Component {
+  static contextType = StoreContext;
   constructor(props) {
     super(props);
     this.state = {
@@ -65,10 +66,12 @@ export default class UserAuth extends Component {
   componentDidMount() {
     UserStore.listen(this.onChange);
     UserActions.fetchCurrentUser();
+    window.addEventListener('chemotion:open-settings', this.handleSettingsShow);
   }
 
   componentWillUnmount() {
     UserStore.unlisten(this.onChange);
+    window.removeEventListener('chemotion:open-settings', this.handleSettingsShow);
   }
 
   onChange(state) {
@@ -188,7 +191,7 @@ export default class UserAuth extends Component {
     }).then((result) => {
       if (result.error) {
         // alert(result.error);
-        NotificationActions.add({
+        this.context.notifications.add({
           message: result.error,
           level: 'error',
         });
@@ -213,7 +216,6 @@ export default class UserAuth extends Component {
   }
 
   // create new group
-  // need to use the wording 'group_param' because of the definition of current api
   createGroup() {
     const {
       groupFirstName,
@@ -222,14 +224,14 @@ export default class UserAuth extends Component {
       currentUser,
       currentGroups,
     } = this.state;
-    const group_param = {
+    const groupParams = {
       first_name: groupFirstName,
       last_name: groupLastName,
       name_abbreviation: groupAbbreviation,
       users: [currentUser.id],
     };
 
-    UsersFetcher.createGroup({ group_param }).then((result) => {
+    UsersFetcher.createGroup(groupParams).then((result) => {
       if (result.error) {
         alert(result.error);
       } else {
@@ -249,17 +251,13 @@ export default class UserAuth extends Component {
     const currentGroups = this.state.currentGroups.filter(
       (cg) => cg.id !== currentGroupId
     );
-    UsersFetcher.updateGroup({ id: currentGroupId, destroy_group: true });
+    UsersFetcher.destroyGroup(currentGroupId);
     this.setState({ currentGroups });
   };
 
   handleDeleteUser = (groupRec, userRec) => {
     let { currentGroups, currentUser } = this.state;
-    UsersFetcher.updateGroup({
-      id: groupRec.id,
-      destroy_group: false,
-      rm_users: [userRec.id],
-    }).then((result) => {
+    UsersFetcher.removeMember(groupRec.id, userRec.id).then((result) => {
       const findIdx = _.findIndex(
         result.group.users,
         (o) => o.id == currentUser.id
@@ -281,7 +279,6 @@ export default class UserAuth extends Component {
     });
   };
 
-  // eslint-disable-next-line class-methods-use-this
   handleSettingsShow() {
     this.setState({ showSettings: true });
   }

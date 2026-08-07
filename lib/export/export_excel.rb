@@ -337,29 +337,13 @@ module Export
       [file.path, target_width, target_height]
     end
 
-    # Returns [width, height] for Inkscape export so the image fits within max_width×max_height while preserving SVG aspect ratio.
+    # Returns [width, height] for Inkscape export so the image fits within
+    # max_width×max_height while preserving SVG aspect ratio. Delegates to the
+    # shared Reporter::Img::Conv helper so xlsx and docx (research-plan) exports
+    # read SVG page dimensions identically — from the root <svg> width/height
+    # (viewBox fallback), ignoring nested layout viewBoxes.
     def svg_export_dimensions(svg_path, max_width, max_height)
-      w, h = svg_natural_dimensions(svg_path)
-      return [max_width, max_height] if w.nil? || h.nil? || w <= 0 || h <= 0
-
-      scale = [max_width.to_f / w, max_height.to_f / h].min
-      [(w * scale).round, (h * scale).round]
-    end
-
-    # Parses SVG for viewBox or width/height; returns [width, height] in pixels or [nil, nil].
-    def svg_natural_dimensions(svg_path)
-      return [nil, nil] unless File.file?(svg_path)
-
-      content = File.read(svg_path, encoding: 'UTF-8')
-      # viewBox="minX minY width height"
-      if content =~ /viewBox\s*=\s*["']?\s*[\d.-]+\s+[\d.-]+\s+([\d.]+)\s+([\d.]+)/
-        return [Regexp.last_match(1).to_f.ceil, Regexp.last_match(2).to_f.ceil]
-      end
-      # width and height attributes (e.g. width="200" or width="200px")
-      w = content[/width\s*=\s*["']?\s*([\d.]+)/, 1]
-      h = content[/height\s*=\s*["']?\s*([\d.]+)/, 1]
-      return [w.to_f.ceil, h.to_f.ceil] if w && h
-      [nil, nil]
+      Reporter::Img::Conv.export_size_for(svg_path, max_width: max_width, max_height: max_height)
     end
 
     def create_file(png_blob)

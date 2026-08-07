@@ -24,7 +24,8 @@ export default class Wellplate extends Element {
         readout_titles: [],
         container: Container.init(),
         segments: [],
-        attachments: []
+        attachments: [],
+        can_update: true,
       }
     );
   }
@@ -110,6 +111,10 @@ export default class Wellplate extends Element {
 
   get size() {
     return this.width * this.height;
+  }
+
+  checksum(fieldsToOmit = []) {
+    return super.checksum(['attachments', ...fieldsToOmit]);
   }
 
   title() {

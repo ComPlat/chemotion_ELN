@@ -1,20 +1,23 @@
+/* eslint-disable react/function-component-definition, react/no-unstable-nested-components */
 import React, { useContext, useState } from 'react';
-import { Button, ButtonGroup, Modal, Stack } from 'react-bootstrap';
-import Draggable from "react-draggable";
+import {
+  Button, ButtonGroup, Modal, Stack
+} from 'react-bootstrap';
+import Draggable from 'react-draggable';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-import TextSearch from './forms/TextSearch';
-import KetcherRailsForm from './forms/KetcherRailsForm';
-import PublicationSearch from './forms/PublicationSearch';
-import NoFormSelected from './forms/NoFormSelected';
+import TextSearch from 'src/components/searchModal/forms/TextSearch';
+import KetcherRailsForm from 'src/components/searchModal/forms/KetcherRailsForm';
+import PublicationSearch from 'src/components/searchModal/forms/PublicationSearch';
+import NoFormSelected from 'src/components/searchModal/forms/NoFormSelected';
 
 const Components = {
   advanced: TextSearch,
   ketcher: KetcherRailsForm,
   publication: PublicationSearch,
   empty: NoFormSelected
-}
+};
 
 const SearchModal = () => {
   const searchStore = useContext(StoreContext).search;
@@ -22,7 +25,7 @@ const SearchModal = () => {
 
   if (!searchStore.searchModalVisible) return null;
 
-  let FormData = [
+  const FormData = [
     {
       value: 'advanced',
       label: 'Text search',
@@ -41,22 +44,20 @@ const SearchModal = () => {
   ];
 
   const FormComponent = (block) => {
-    let value = block.value.includes('generic') ? 'generic' : block.value;
-    if (typeof Components[value] !== "undefined") {
+    const value = block.value.includes('generic') ? 'generic' : block.value;
+    if (typeof Components[value] !== 'undefined') {
       return React.createElement(Components[value], {
         key: `${block.id}-${value}`
       });
     }
-    return React.createElement(Components['empty'], {
+    return React.createElement(Components.empty, {
       key: 'empty'
     });
   };
 
-  const Spinner = () => {
-    return (
-      <i className="fa fa-spinner fa-pulse fa-3x fa-fw" />
-    );
-  }
+  const Spinner = () => (
+    <i className="fa fa-spinner fa-pulse fa-3x fa-fw" />
+  );
 
   const handleDrag = (e, ui) => {
     const { x, y } = deltaPosition;
@@ -64,20 +65,20 @@ const SearchModal = () => {
       x: x + ui.deltaX,
       y: y + ui.deltaY,
     });
-  }
+  };
 
   const minimizedClass = searchStore.searchModalMinimized ? ' minimized' : '';
   const modalClass = minimizedClass ? `draggable-modal-dialog-xxxl${minimizedClass}` : 'modal-dialog-fullscreen';
   const modalStyle = minimizedClass ? { transform: `translate(${deltaPosition.x}px, ${deltaPosition.y}px)` } : '';
-  const searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : 'text-base';
-  const searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : 'text-base';
-  let searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : 'text-base';
+  const searchTypeTextClass = searchStore.searchModalSelectedForm.value === 'advanced' ? 'active' : '';
+  const searchTypePublicationClass = searchStore.searchModalSelectedForm.value === 'publication' ? 'active' : '';
+  const searchTypeStructureClass = searchStore.searchModalSelectedForm.value === 'ketcher' ? 'active' : '';
 
   return (
     <Draggable handle=".modal-header" onDrag={handleDrag}>
       <div>
         <Modal
-          show={true}
+          show
           onHide={() => searchStore.handleCancel()}
           backdrop={false}
           keyboard={false}
@@ -98,7 +99,7 @@ const SearchModal = () => {
                 <Button
                   onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[0])}
                   className={searchTypeTextClass}
-                  variant="outline-dark"
+                  variant="ghost"
                 >
                   <i className="fa fa-align-justify button-icon" />
                   Text search
@@ -106,7 +107,7 @@ const SearchModal = () => {
                 <Button
                   onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[2])}
                   className={searchTypePublicationClass}
-                  variant="outline-dark"
+                  variant="ghost"
                 >
                   <i className="fa fa-newspaper-o button-icon" />
                   Publication search
@@ -114,7 +115,7 @@ const SearchModal = () => {
                 <Button
                   onClick={(e) => searchStore.changeSearchModalSelectedForm(FormData[1])}
                   className={searchTypeStructureClass}
-                  variant="outline-dark"
+                  variant="ghost"
                 >
                   <i className="icon-pubchem me-1" />
                   Structure search
@@ -123,7 +124,8 @@ const SearchModal = () => {
               <Button className="order-1 order-lg-2 ms-auto ms-lg-5 pt-2 align-self-start bg-transparent border-0">
                 <i
                   className="fa fa-window-minimize window-minimize"
-                  onClick={() => searchStore.toggleSearchModalMinimized()} />
+                  onClick={() => searchStore.toggleSearchModalMinimized()}
+                />
               </Button>
             </Stack>
           </Modal.Header>
@@ -139,6 +141,6 @@ const SearchModal = () => {
       </div>
     </Draggable>
   );
-}
+};
 
 export default observer(SearchModal);

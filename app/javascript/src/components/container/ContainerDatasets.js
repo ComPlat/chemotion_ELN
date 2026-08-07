@@ -84,6 +84,45 @@ export default class ContainerDatasets extends Component {
         container.children[datasetId] = datasetContainer;
       }
     });
+
+    // Reassign preferred thumbnail if needed, then propagate once to parent
+    this.reassignPreferredThumbnailIfNeeded(container);
+  };
+
+  reassignPreferredThumbnailIfNeeded = (analysisContainer) => {
+    // Get all saved, non-deleted attachment IDs that actually have thumbnails
+    const allAttachments = analysisContainer?.children?.flatMap(
+      (child) => (child.attachments || [])
+    ) || [];
+    const savedAttachments = allAttachments.filter(
+      (att) => !att.is_deleted && !att.is_new && att.thumb === true
+    );
+    const validAttachmentIds = savedAttachments
+      .map((att) => Number(att.id))
+      .filter((id) => !Number.isNaN(id) && id > 0);
+
+    const currentPreferred = analysisContainer?.extended_metadata?.preferred_thumbnail;
+    const preferredIsValid = currentPreferred
+      && validAttachmentIds.includes(Number(currentPreferred));
+
+    if (!preferredIsValid) {
+      // Need to reassign
+      if (validAttachmentIds.length > 0) {
+        // Assign first available
+        analysisContainer.extended_metadata = {
+          ...analysisContainer.extended_metadata,
+          preferred_thumbnail: String(validAttachmentIds[0]),
+        };
+      } else {
+        // No attachments available - clear preferred
+        analysisContainer.extended_metadata = {
+          ...analysisContainer.extended_metadata,
+          preferred_thumbnail: null,
+        };
+      }
+    }
+    // Propagate final state to parent once
+    this.props.onChange(analysisContainer);
   };
 
   handleModalHide() {
@@ -110,7 +149,7 @@ export default class ContainerDatasets extends Component {
     return null;
   }
 
-  updateContainerState(updatedContainer, shouldClose = false) {
+  updateContainerState(updatedContainer, shouldClose = false, variations = null) {
     const { rootContainer } = this.props;
     const { modal, container: currentContainer } = this.state;
 
@@ -148,27 +187,27 @@ export default class ContainerDatasets extends Component {
       const container = analysesContainer.find((a) => a.id === currentContainer.id);
       if (!container) {
         this.handleModalHide();
-        this.props.onChange(updatedRoot);
+        this.props.onChange(updatedRoot, variations);
         return;
       }
       const selectedIndex = modal?.selectedIndex;
       // Safety check: verify dataset index is valid
       if (selectedIndex === null || selectedIndex === undefined) {
         this.handleModalHide();
-        this.props.onChange(updatedRoot);
+        this.props.onChange(updatedRoot, variations);
         return;
       }
 
       if (!container.children || !Array.isArray(container.children)) {
         this.handleModalHide();
-        this.props.onChange(updatedRoot);
+        this.props.onChange(updatedRoot, variations);
         return;
       }
 
       const dataset = container.children[selectedIndex];
       if (!dataset) {
         this.handleModalHide();
-        this.props.onChange(updatedRoot);
+        this.props.onChange(updatedRoot, variations);
         return;
       }
 
@@ -185,7 +224,7 @@ export default class ContainerDatasets extends Component {
         }
       });
     }
-    this.props.onChange(updatedRoot);
+    this.props.onChange(updatedRoot, variations);
   }
 
   render() {
@@ -233,7 +272,9 @@ export default class ContainerDatasets extends Component {
               disabled={disabled}
               element={element}
               rootContainer={rootContainer}
-              updateContainerState={(cont, shouldClose) => this.updateContainerState(cont, shouldClose)}
+              updateContainerState={
+                (cont, shouldClose, variations) => this.updateContainerState(cont, shouldClose, variations)
+              }
               isContainerNew={container?.is_new}
             />
           )}

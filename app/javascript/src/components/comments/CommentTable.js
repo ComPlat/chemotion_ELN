@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Button, ButtonToolbar } from 'react-bootstrap';
 import { AgGridReact } from 'ag-grid-react';
@@ -6,7 +6,6 @@ import DeleteComment from 'src/components/common/DeleteComment';
 import CommentFetcher from 'src/fetchers/CommentFetcher';
 import CommentActions from 'src/stores/alt/actions/CommentActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
-import CommentStore from 'src/stores/alt/stores/CommentStore';
 import {
   formatSection,
   selectCurrentUser,
@@ -15,12 +14,6 @@ import { formatDate } from 'src/utilities/timezoneHelper';
 
 const CommentTable = ({ element, comments, editComment, deleteComment, showSection }) => {
   const gridRef = useRef();
-  const commentState = CommentStore.getState();
-  const [commentsList, setCommentsList] = useState(comments);
-
-  useEffect(() => {
-    setCommentsList(comments);
-  }, [commentState.comments]);
 
   const markCommentResolved = (comment) => {
     const params = {
@@ -149,7 +142,7 @@ const CommentTable = ({ element, comments, editComment, deleteComment, showSecti
         ref={gridRef}
         columnDefs={columnDefs}
         defaultColDef={defaultColDef}
-        rowData={commentsList || []}
+        rowData={comments || []}
         rowHeight="auto"
         domLayout="autoHeight"
         autoSizeStrategy={{ type: 'fitGridWidth' }}

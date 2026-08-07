@@ -846,6 +846,130 @@ RSpec.describe Attachment do
       end
     end
   end
+
+  describe '#resolve_unique_match' do
+    # New Person profiles default to inbox_auto: false (introduced in #3147),
+    # which would short-circuit resolve_unique_match. Flip it on for the
+    # specs in this block, which exist to exercise the auto-match logic.
+    let(:user) do
+      create(:person).tap do |u|
+        u.profile.update!(data: u.profile.data.merge('inbox_auto' => true))
+      end
+    end
+    let(:collection) { create(:collection, user: user) }
+    let(:attachment) do
+      create(:attachment, :with_pdf, filename: 'JB-R23.pdf').tap do |a|
+        a.update_columns(created_for: user.id) # rubocop:disable Rails/SkipsModelValidations
+      end
+    end
+
+    context 'when exactly one reaction matches and no samples match' do
+      let!(:reaction) do
+        create(:reaction, name: 'JB-R23', creator: user).tap do |r|
+          CollectionsReaction.create!(reaction: r, collection: collection)
+        end
+      end
+
+      it 'auto-transfers to the reaction' do
+        match, variation = attachment.resolve_unique_match
+        expect(match).to eq(reaction)
+        expect(variation).to be_nil
+      end
+    end
+
+    context 'when filename includes a variation suffix and one reaction matches' do
+      let(:attachment) do
+        create(:attachment, :with_pdf, filename: 'JB-R23-v2.pdf').tap do |a|
+          a.update_columns(created_for: user.id) # rubocop:disable Rails/SkipsModelValidations
+        end
+      end
+      let!(:reaction) do
+        create(:reaction, name: 'JB-R23', creator: user).tap do |r|
+          CollectionsReaction.create!(reaction: r, collection: collection)
+        end
+      end
+
+      it 'auto-transfers to the reaction with extracted variation' do
+        match, variation = attachment.resolve_unique_match
+        expect(match).to eq(reaction)
+        expect(variation).to eq('2')
+      end
+    end
+
+    context 'when multiple reactions match' do
+      before do
+        [create(:reaction, name: 'JB-R23-A', creator: user),
+         create(:reaction, name: 'JB-R23-B', creator: user)].each do |r|
+          CollectionsReaction.create!(reaction: r, collection: collection)
+        end
+      end
+
+      it 'does not auto-transfer (ambiguous)' do
+        expect(attachment.resolve_unique_match).to eq([nil, nil])
+      end
+    end
+
+    context 'when no reactions match and multiple samples match but only one is a product' do
+      let(:product_sample) { create(:sample, name: 'JB-R23-A', creator: user, collections: [collection]) }
+      let(:reactant_sample) { create(:sample, name: 'JB-R23-B', creator: user, collections: [collection]) }
+      let(:reaction) { create(:reaction, name: 'unrelated reaction', creator: user) }
+
+      before do
+        CollectionsReaction.create!(reaction: reaction, collection: collection)
+        create(:reactions_product_sample, reaction: reaction, sample: product_sample)
+        create(:reactions_reactant_sample, reaction: reaction, sample: reactant_sample)
+      end
+
+      it 'auto-transfers to the product sample' do
+        match, variation = attachment.resolve_unique_match
+        expect(match).to eq(product_sample)
+        expect(variation).to be_nil
+      end
+    end
+
+    context 'when no reactions match and multiple samples match and multiple are products' do
+      let(:product_a) { create(:sample, name: 'JB-R23-A', creator: user, collections: [collection]) }
+      let(:product_b) { create(:sample, name: 'JB-R23-B', creator: user, collections: [collection]) }
+      let(:reaction) { create(:reaction, name: 'unrelated reaction', creator: user) }
+
+      before do
+        CollectionsReaction.create!(reaction: reaction, collection: collection)
+        create(:reactions_product_sample, reaction: reaction, sample: product_a)
+        create(:reactions_product_sample, reaction: reaction, sample: product_b)
+      end
+
+      it 'does not auto-transfer (ambiguous)' do
+        expect(attachment.resolve_unique_match).to eq([nil, nil])
+      end
+    end
+
+    context 'when no reactions match and multiple samples match but none is a product' do
+      before do
+        create(:sample, name: 'JB-R23-A', creator: user, collections: [collection])
+        create(:sample, name: 'JB-R23-B', creator: user, collections: [collection])
+      end
+
+      it 'does not auto-transfer' do
+        expect(attachment.resolve_unique_match).to eq([nil, nil])
+      end
+    end
+
+    context 'when a reaction also matches alongside a single product sample' do
+      let(:product_sample) { create(:sample, name: 'JB-R23-A', creator: user, collections: [collection]) }
+      let(:reactant_sample) { create(:sample, name: 'JB-R23-B', creator: user, collections: [collection]) }
+      let(:matching_reaction) { create(:reaction, name: 'JB-R23', creator: user) }
+
+      before do
+        CollectionsReaction.create!(reaction: matching_reaction, collection: collection)
+        create(:reactions_product_sample, reaction: matching_reaction, sample: product_sample)
+        create(:reactions_reactant_sample, reaction: matching_reaction, sample: reactant_sample)
+      end
+
+      it 'does not auto-transfer (reaction precedence preserved)' do
+        expect(attachment.resolve_unique_match).to eq([nil, nil])
+      end
+    end
+  end
 end
 
 # rubocop:enable RSpec/NestedGroups

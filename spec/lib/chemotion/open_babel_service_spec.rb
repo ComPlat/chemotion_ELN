@@ -3,6 +3,41 @@
 require 'rails_helper'
 
 RSpec.describe Chemotion::OpenBabelService do
+  describe '.get_cdxml_from_molfile' do
+    let(:conversion) { instance_double(OpenBabel::OBConversion, convert: true) }
+    let(:input_tf) { instance_double(Tempfile, path: '/tmp/input.mol', close!: nil) }
+    let(:output_tf) { instance_double(Tempfile, path: '/tmp/output.cdxml', close!: nil) }
+    let(:shifter) { instance_double(Cdxml::Shifter, convey: ['<shifted/>', { x_len: 1 }]) }
+
+    before do
+      allow(described_class).to receive(:mofile_clear_coord_bonds).and_return(nil)
+      allow(Tempfile).to receive(:new).with(['input', '.mol']).and_return(input_tf)
+      allow(File).to receive(:write)
+      allow(OpenBabel::OBConversion).to receive(:new).and_return(conversion)
+      allow(conversion).to receive(:set_in_and_out_formats)
+      allow(conversion).to receive(:open_in_and_out_files)
+      allow(File).to receive(:read).and_return('<cdxml/>')
+      allow(Cdxml::Shifter).to receive(:new).and_return(shifter)
+    end
+
+    it 'does not return an already-unlinked tempfile path when no output path is provided' do
+      allow(Tempfile).to receive(:new).with(['output', '.mol']).and_return(output_tf)
+
+      result = described_class.get_cdxml_from_molfile('molfile')
+
+      expect(result[:path]).to be_nil
+      expect(output_tf).to have_received(:close!)
+    end
+
+    it 'returns the caller-provided output path unchanged' do
+      output_path = '/tmp/caller-output.cdxml'
+
+      result = described_class.get_cdxml_from_molfile('molfile', {}, output_path)
+
+      expect(result[:path]).to eq(output_path)
+    end
+  end
+
   describe '.molecule_info_from_structure' do
     let(:conversion) { instance_double(OpenBabel::OBConversion) }
     let(:mol) { instance_double(OpenBabel::OBMol) }
@@ -96,6 +131,131 @@ RSpec.describe Chemotion::OpenBabelService do
       info = described_class.molecule_info_from_molfile(molfile)
 
       expect(info[:cano_smiles]).to eq('')
+    end
+
+    it 'appends a timeout warning to ob_log when svg_from_molfile returns nil (SVG render timed out)' do
+      allow(described_class).to receive(:svg_from_molfile).and_return(nil)
+      allow(conversion).to receive(:write_string).and_return("C smiles-meta\n", "C can-meta\n", "molfile-v2000\n")
+
+      info = described_class.molecule_info_from_molfile('C')
+
+      expect(info[:svg]).to be_nil
+      expect(info[:ob_log][:warning]).to include(
+        "SVG rendering timed out after #{Chemotion::OpenBabelService::SVG_RENDER_TIMEOUT_SECONDS}s",
+      )
+    end
+
+    # The SVG render is the only timeout-bounded operation in this method and, on the paths that
+    # feed Molecule#assign_molecule_data, its output is discarded unconditionally — svg_reprocess
+    # re-renders through Chemotion::SvgRenderer because OpenBabel's SVG always carries the
+    # 'Open Babel' marker. render_svg: false is how those callers stop paying for it.
+    describe 'render_svg: false' do
+      before do
+        allow(conversion).to receive(:write_string).and_return("C smiles-meta\n", "C can-meta\n", "molfile-v2000\n")
+      end
+
+      it 'does not fork a render at all' do
+        allow(Chemotion::ForkedTimeout).to receive(:run)
+
+        described_class.molecule_info_from_molfile('C', render_svg: false)
+
+        expect(Chemotion::ForkedTimeout).not_to have_received(:run)
+      end
+
+      it 'returns a nil svg without claiming a timeout', :aggregate_failures do
+        info = described_class.molecule_info_from_molfile('C', render_svg: false)
+
+        expect(info[:svg]).to be_nil
+        # A skipped render also leaves svg nil; reporting that as a timeout would put a false
+        # warning in every importer's ob_log.
+        expect(info[:ob_log][:warning].to_a.join).not_to include('SVG rendering timed out')
+      end
+
+      it 'leaves every other field intact', :aggregate_failures do
+        # The sequential stub in the outer `before` is one-shot, and this example calls the method
+        # twice. Reset the position between the two so the second invocation sees the same inputs
+        # as the first — otherwise the diff shows a difference in :smiles that has nothing to do
+        # with render_svg.
+        values = ["C smiles-meta\n", "C can-meta\n"]
+        call = 0
+        allow(conversion).to receive(:write_string) do
+          value = values[call] || values.last
+          call += 1
+          value
+        end
+
+        with_svg = described_class.molecule_info_from_molfile('C')
+        call = 0
+        without = described_class.molecule_info_from_molfile('C', render_svg: false)
+
+        expect(without.except(:svg, :ob_log)).to eq(with_svg.except(:svg, :ob_log))
+        expect(without[:inchikey]).to eq(with_svg[:inchikey])
+      end
+
+      it 'still renders by default, so untraced callers are unaffected' do
+        allow(described_class).to receive(:svg_from_molfile).and_return('<svg/>')
+
+        expect(described_class.molecule_info_from_molfile('C')[:svg]).to eq('<svg/>')
+      end
+    end
+  end
+
+  describe '.svg_from_molfile' do
+    it 'delegates to svg_from_molfile_unsafe inside a ForkedTimeout and returns its value' do
+      allow(Chemotion::ForkedTimeout).to receive(:run).with(described_class::SVG_RENDER_TIMEOUT_SECONDS).and_yield
+      allow(described_class).to receive(:svg_from_molfile_unsafe).with('molfile', {}).and_return('<svg/>')
+
+      expect(described_class.svg_from_molfile('molfile')).to eq('<svg/>')
+    end
+
+    it 'returns nil (does not raise) when the underlying call times out' do
+      allow(Chemotion::ForkedTimeout).to receive(:run)
+        .and_raise(Chemotion::ForkedTimeout::TimedOut, 'block exceeded 20s')
+
+      expect(described_class.svg_from_molfile('molfile')).to be_nil
+    end
+  end
+
+  describe '.molecule_info_from_molfiles' do
+    it 'returns nil for a record that raises, without reusing a previous record\'s result' do
+      allow(described_class).to receive(:molecule_info_from_molfile) do |molfile|
+        case molfile
+        when 'first' then { inchikey: 'FIRST-KEY' }
+        when 'second' then raise StandardError, 'boom'
+        when 'third' then { inchikey: 'THIRD-KEY' }
+        end
+      end
+
+      result = described_class.molecule_info_from_molfiles(%w[first second third])
+
+      expect(result).to eq([{ inchikey: 'FIRST-KEY' }, nil, { inchikey: 'THIRD-KEY' }])
+    end
+
+    it 'returns nil when the very first record raises' do
+      allow(described_class).to receive(:molecule_info_from_molfile).and_raise(StandardError, 'boom')
+
+      result = described_class.molecule_info_from_molfiles(%w[only])
+
+      expect(result).to eq([nil])
+    end
+
+    # The batch entry point is what the SDF importer uses, so the skip has to reach every record
+    # or the saving only applies to callers that go one at a time.
+    it 'forwards render_svg to every record', :aggregate_failures do
+      allow(described_class).to receive(:molecule_info_from_molfile).and_return({})
+
+      described_class.molecule_info_from_molfiles(%w[a b], render_svg: false)
+
+      expect(described_class).to have_received(:molecule_info_from_molfile).with('a', render_svg: false)
+      expect(described_class).to have_received(:molecule_info_from_molfile).with('b', render_svg: false)
+    end
+
+    it 'renders by default' do
+      allow(described_class).to receive(:molecule_info_from_molfile).and_return({})
+
+      described_class.molecule_info_from_molfiles(%w[a])
+
+      expect(described_class).to have_received(:molecule_info_from_molfile).with('a', render_svg: true)
     end
   end
 end

@@ -242,6 +242,13 @@ export const defaultMultiSolventsSmilesOptions = [{
     density: 0.66
   }
 }, {
+  label: 'Heptane',
+  value: {
+    external_label: 'Heptane',
+    smiles: 'CCCCCCC',
+    density: 0.684
+  }
+}, {
   label: 'N-Methyl-2-pyrrolidone (NMP)',
   value: {
     external_label: 'NMP',
@@ -249,11 +256,11 @@ export const defaultMultiSolventsSmilesOptions = [{
     density: 1.03
   }
 }, {
-  label: 'Pentane',
+  label: 'n-Pentane',
   value: {
-    external_label: 'Pentane',
+    external_label: 'n-Pentane',
     smiles: 'CCCCC',
-    density: 0.63
+    density: 0.626
   }
 }, {
   label: 'Pyridine',
@@ -683,4 +690,11 @@ export const colorOptions = [
 export const SampleTypesOptions = [
   { label: 'Single molecule', value: 'Micromolecule' },
   { label: 'Mixture', value: 'Mixture' },
-]
+];
+
+export const BiosafetyLevelOptions = [
+  { value: 'S0', label: 'Biosafety level 0' },
+  { value: 'S1', label: 'Biosafety level 1' },
+  { value: 'S2', label: 'Biosafety level 2' },
+  { value: 'S3', label: 'Biosafety level 3' },
+];

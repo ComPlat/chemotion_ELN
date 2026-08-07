@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 import React, {
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useState,
@@ -16,8 +17,8 @@ import AppModal from 'src/components/common/AppModal';
 import ColorLabel from 'src/components/common/ColorLabel';
 import { Select } from 'src/components/common/Select';
 import { colorOptions } from 'src/components/staticDropdownOptions/options';
-import UsersFetcher from 'src/fetchers/UsersFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
@@ -92,6 +93,7 @@ function renderColorOptionLabel(option) {
 }
 
 function UserLabelModal({ showLabelModal, onHide }) {
+  const { notifications } = useContext(StoreContext);
   const [labels, setLabels] = useState([]);
   const [label, setLabel] = useState({});
   const [showDetails, setShowDetails] = useState(false);
@@ -151,12 +153,11 @@ function UserLabelModal({ showLabelModal, onHide }) {
     };
 
     if (!nextLabel.title.trim() || !nextLabel.color.trim()) {
-      NotificationActions.removeByUid('createUserLabel');
-      NotificationActions.add({
+      notifications.removeByUid('createUserLabel');
+      notifications.add({
         title: 'Create User Label',
         message: 'Title or color is empty',
         level: 'error',
-        dismissible: 'button',
         autoDismiss: 5,
         position: 'tr',
         uid: 'createUserLabel',
@@ -164,7 +165,7 @@ function UserLabelModal({ showLabelModal, onHide }) {
       return;
     }
 
-    UsersFetcher.updateUserLabel({
+    UserLabelsFetcher.updateUserLabel({
       id: nextLabel.id,
       title: nextLabel.title,
       access_level: nextLabel.access_level === true || nextLabel.access_level === 1 ? 1 : 0,
@@ -221,10 +222,10 @@ function UserLabelModal({ showLabelModal, onHide }) {
     },
     {
       headerName: 'Action',
-      minWidth: 60,
-      maxWidth: 60,
+      minWidth: 85,
+      maxWidth: 85,
       cellRenderer: renderActions,
-      cellClass: ['p-2'],
+      cellClass: ['p-2', 'd-flex', 'justify-content-center', 'align-items-center'],
     },
   ]), [renderActions]);
 
@@ -369,6 +370,7 @@ function EditUserLabels({ element, fnCb }) {
       <Form.Label>My labels</Form.Label>
       <Select
         isMulti
+        isDisabled={element.isReadOnly}
         options={options}
         getOptionValue={(currentLabel) => currentLabel.id}
         getOptionLabel={(currentLabel) => currentLabel.title}

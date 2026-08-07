@@ -1,4 +1,5 @@
-import 'whatwg-fetch';
+/* eslint-disable camelcase, no-param-reassign */
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 import Sample from 'src/models/Sample';
 import Reaction from 'src/models/Reaction';
 import Wellplate from 'src/models/Wellplate';
@@ -7,99 +8,100 @@ import Screen from 'src/models/Screen';
 import GenericEl from 'src/models/GenericEl';
 import ResearchPlan from 'src/models/ResearchPlan';
 import SequenceBasedMacromoleculeSample from 'src/models/SequenceBasedMacromoleculeSample';
+import DeviceDescription from 'src/models/DeviceDescription';
 
 export default class SearchFetcher {
   static fetchBasedOnSearchSelectionAndCollection(params) {
-    const { selection, collectionId, page, moleculeSort, isPublic } = params;
-    return fetch(`/api/v1/search/${selection.elementType.toLowerCase()}`, {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        selection,
-        collection_id: collectionId,
-        page: page || 1,
-        per_page: selection.page_size,
-        molecule_sort: moleculeSort || false,
-        is_public: isPublic || false,
-      })
-    }).then(response => response.json())
-      .then((json) => {
-        const result = { ...json };
-        return this.getResultByKey(result);
-      }).catch((errorMessage) => { console.log(errorMessage); });
+    const {
+      selection, collectionId, page, moleculeSort, isPublic
+    } = params;
+    const body = {
+      selection,
+      collection_id: collectionId,
+      page: page || 1,
+      per_page: selection.page_size,
+      molecule_sort: moleculeSort || false,
+      is_public: isPublic || false,
+    };
+
+    return ApiClient.postJson(`/api/v1/search/${selection.elementType.toLowerCase()}`, { body })
+      .then((json) => this.getResultByKey({ ...json }, collectionId));
   }
 
   static fetchBasedOnSearchResultIds(params) {
-    const { selection, collectionId, page, moleculeSort, isPublic } = params;
-    return fetch(`/api/v1/search/${selection.elementType.toLowerCase()}`, {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        selection,
-        collection_id: collectionId,
-        page: page || 1,
-        page_size: selection.page_size,
-        per_page: selection.page_size,
-        molecule_sort: moleculeSort || false,
-        is_public: isPublic || false,
-      })
-    }).then(response => response.json())
-      .then((json) => {
-        const result = { ...json };
-        return this.getResultByKey(result);
-      }).catch((errorMessage) => { console.log(errorMessage); });
+    const {
+      selection, collectionId, page, moleculeSort, isPublic
+    } = params;
+    const body = {
+      selection,
+      collection_id: collectionId,
+      page: page || 1,
+      page_size: selection.page_size,
+      per_page: selection.page_size,
+      molecule_sort: moleculeSort || false,
+      is_public: isPublic || false,
+    };
+
+    return ApiClient.postJson(`/api/v1/search/${selection.elementType.toLowerCase()}`, { body })
+      .then((json) => this.getResultByKey({ ...json }, collectionId));
   }
 
-  static getResultByKey(result) {
-    const { samples, reactions, wellplates, screens, research_plans, sequence_based_macromolecule_samples } = result;
+  static getResultByKey(result, collectionId) {
+    const {
+      samples, reactions, wellplates, screens, research_plans,
+      sequence_based_macromolecule_samples, device_descriptions, cell_lines,
+    } = result;
 
     Object.keys(result).forEach((key) => {
       switch (key) {
         case 'samples':
           if (samples && samples.elements.length > 0) {
-            result.samples.elements = samples.elements.map(s => (new Sample(s)));
+            result.samples.elements = samples.elements.map((s) => (new Sample(s)));
           } else { result.samples = { elements: [], ids: [], totalElements: 0 }; }
           break;
         case 'reactions':
           if (reactions && reactions.elements.length > 0) {
-            result.reactions.elements = reactions.elements.map(r => (new Reaction(r)));
+            result.reactions.elements = reactions.elements.map((r) => (new Reaction(r)));
           } else { result.reactions = { elements: [], totalElements: 0, ids: [] }; }
           break;
         case 'wellplates':
           if (wellplates && wellplates.elements.length > 0) {
-            result.wellplates.elements = wellplates.elements.map(s => (new Wellplate(s)));
+            result.wellplates.elements = wellplates.elements.map((s) => (new Wellplate(s)));
           } else { result.wellplates = { elements: [], totalElements: 0, ids: [] }; }
           break;
         case 'screens':
           if (screens && screens.elements.length > 0) {
-            result.screens.elements = screens.elements.map(s => (new Screen(s)));
+            result.screens.elements = screens.elements.map((s) => (new Screen(s)));
           } else { result.screens = { elements: [], totalElements: 0, ids: [] }; }
           break;
         case 'research_plans':
           if (research_plans && research_plans.elements.length > 0) {
-            result.research_plans.elements = research_plans.elements.map(s => (new ResearchPlan(s)));
+            result.research_plans.elements = research_plans.elements.map((s) => (new ResearchPlan(s)));
           } else { result.research_plans = { elements: [], totalElements: 0, ids: [] }; }
           break;
         case 'sequence_based_macromolecule_samples':
           if (sequence_based_macromolecule_samples && sequence_based_macromolecule_samples.elements.length > 0) {
-            result.sequence_based_macromolecule_samples.elements =
-              sequence_based_macromolecule_samples.elements.map(s => (new SequenceBasedMacromoleculeSample(s)));
+            result.sequence_based_macromolecule_samples.elements = sequence_based_macromolecule_samples.elements
+              .map((s) => (new SequenceBasedMacromoleculeSample(s)));
           } else { result.sequence_based_macromolecule_samples = { elements: [], totalElements: 0, ids: [] }; }
           break;
+        case 'device_descriptions':
+          if (device_descriptions && device_descriptions.elements.length > 0) {
+            result.device_descriptions.elements = device_descriptions.elements.map((s) => (new DeviceDescription(s)));
+          } else { result.device_descriptions = { elements: [], totalElements: 0, ids: [] }; }
+          break;
+        case 'cell_lines':
+          if (cell_lines && cell_lines.elements.length > 0) {
+            result.cell_lines.elements = cell_lines.elements
+              .map((s) => (new CellLine(CellLine.createFromRestResponse(collectionId, s))));
+          } else { result.cell_lines = { elements: [], totalElements: 0, ids: [] }; }
+          break;
         case 'structure_svg':
-          result.structure_svg = { svg: result[`${key}`] }
+          result.structure_svg = { svg: result[`${key}`] };
           break;
         default:
           if (result[`${key}`] && result[`${key}`].elements !== undefined && result[`${key}`].elements.length > 0) {
-            result[`${key}`].elements = result[`${key}`].elements.map(s => (new GenericEl(s)));
+            result[`${key}`].elements = result[`${key}`].elements.map((s) => (new GenericEl(s)));
           } else { result[`${key}`] = { elements: [], totalElements: 0, ids: [] }; }
           break;
       }

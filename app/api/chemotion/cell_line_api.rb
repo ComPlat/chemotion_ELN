@@ -3,6 +3,7 @@
 module Chemotion
   class CellLineAPI < Grape::API
     include Grape::Kaminari
+    helpers CollectionHelpers
     helpers ParamsHelpers
     helpers ContainerHelpers
     helpers CellLineApiParamsHelpers
@@ -11,7 +12,7 @@ module Chemotion
       error!('Resource not found', 404)
     end
     resource :cell_lines do
-      desc 'return cell lines of a collection'
+      desc "return cell lines of a collection. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         use :cell_line_get_params
       end
@@ -21,22 +22,8 @@ module Chemotion
       end
 
       get do
-        scope = if params[:collection_id]
-                  begin
-                    Collection.accessible_for(current_user)
-                              .find(params[:collection_id])
-                              .cellline_samples
-                  rescue ActiveRecord::RecordNotFound
-                    CelllineSample.none
-                  end
-                else
-                  # All collection of current_user
-                  # TODO: Question? Only own collections or shared as well?
-                  # TODO: Question 2: When using .none, why join at all? It does not return any records anyway
-                  # TODO: Other thought... having seen the "All collection of current_user" comment...
-                  #       is this maybe the case for displaying the "All" collection? Which has a collection id though
-                  CelllineSample.none.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-                end.order('created_at DESC')
+        resolved_collection, scope = collection_scope_for(params[:collection_id], CelllineSample, :cellline_samples)
+        scope = scope.order(created_at: :desc)
 
         from = params[:from_date]
         to = params[:to_date]
@@ -49,12 +36,15 @@ module Chemotion
 
         reset_pagination_page(scope)
 
+        detail_levels = ElementDetailLevelCalculator.for_list(
+          collection: resolved_collection, user: current_user, owned_only: true,
+        )
+
         cell_line_samples = paginate(scope).map do |cell_line_sample|
           Entities::CellLineSampleEntity.represent(
             cell_line_sample,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user,
-                                                            element: cell_line_sample).detail_levels,
+            detail_levels: detail_levels,
           )
         end
         { cell_lines: cell_line_samples }
@@ -69,6 +59,8 @@ module Chemotion
         error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, cellline_sample).read?
 
         present cellline_sample, with: Entities::CellLineSampleEntity
+      rescue ActiveRecord::RecordNotFound
+        error!('404 Not Found', 404)
       end
 
       desc 'Create a new Cell line sample'
@@ -76,7 +68,7 @@ module Chemotion
         use :cell_line_creation_params
       end
       post do
-        error!('401 Unauthorized', 401) unless current_user.collections.find(params[:collection_id])
+        error!('403 Forbidden', 403) unless writable_collection_for(params[:collection_id])
         use_case = Usecases::CellLines::Create.new(params, current_user)
         cell_line_sample = use_case.execute!
         cell_line_sample.container = update_datamodel(params[:container])
@@ -108,7 +100,11 @@ module Chemotion
         post do
           cell_line_to_copy = @current_user.cellline_samples.where(id: [params[:id]]).reorder('id')
 
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).update_all?
+          # Copy links the new cell line into params[:collection_id], so authorize the *target*
+          # collection, not the source scope (which is always the user's own cell lines and would
+          # make the check a no-op). writable_collection_for is :add_elements-aware and returns nil
+          # when the user may not add elements there.
+          error!('403 Forbidden', 403) unless writable_collection_for(params[:collection_id])
 
           begin
             use_case = Usecases::CellLines::Copy.new(cell_line_to_copy.first, @current_user, params[:collection_id])
@@ -133,7 +129,11 @@ module Chemotion
         post do
           cell_line_to_copy = @current_user.cellline_samples.where(id: [params[:id]]).reorder('id')
 
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, cell_line_to_copy).update_all?
+          # Split links the new cell line into params[:collection_id], so authorize the *target*
+          # collection, not the source scope (which is always the user's own cell lines and would
+          # make the check a no-op). writable_collection_for is :add_elements-aware and returns nil
+          # when the user may not add elements there.
+          error!('403 Forbidden', 403) unless writable_collection_for(params[:collection_id])
 
           begin
             use_case = Usecases::CellLines::Split.new(cell_line_to_copy.first, @current_user, params[:collection_id])

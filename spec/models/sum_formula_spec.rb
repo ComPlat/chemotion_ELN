@@ -43,6 +43,11 @@ RSpec.describe SumFormula do
       expect(parsed).to include('C' => 12.3, 'H' => 3.5, 'O' => 2.556)
     end
 
+    it 'parses decimal atom counts with comma as decimal separator' do
+      parsed = described_class.new('C12,3H3,5O2,556')
+      expect(parsed).to include('C' => 12.3, 'H' => 3.5, 'O' => 2.556)
+    end
+
     it 'parses a single decimal atom count without splitting on dot' do
       parsed = described_class.new('C1.5H2')
       expect(parsed).to include('C' => 1.5, 'H' => 2)

@@ -151,8 +151,8 @@ module Chemotion
         get do
           original = params[:search_string].to_s
 
-          variation = original[/-v(\d+)(?=\.[^.]+$|$)/, 1] # Handling for variations with "ReactionName-vi"
-          search_string = original.sub(/-v\d+(?=\.[^.]+$|$)/, '')
+          variation = Attachment.variation_id_from(original) # Handling for variations with "ReactionName-vi"
+          search_string = Attachment.strip_variation_suffix(original)
 
           reactions = InboxSearchElements.call(
             search_string: search_string,

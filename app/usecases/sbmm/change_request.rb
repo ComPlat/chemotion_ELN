@@ -9,7 +9,7 @@ module Usecases
         @current_user = current_user
       end
 
-      # rubocop:disable Metrics/AbcSize
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def for(params)
         sbmm = Finder.new.find_or_initialize_by(params.deep_dup)
 
@@ -23,7 +23,9 @@ module Usecases
           psm_changes = sbmm.protein_sequence_modification.changes.except('created_at', 'updated_at')
           effective_changes[:protein_sequence_modification] = psm_changes
         end
-        effective_changes[:parent] = "Uniprot Protein #{sbmm.parent.primary_accession}" unless sbmm.parent.persisted?
+        unless sbmm&.parent&.persisted?
+          effective_changes[:parent] = "Uniprot Protein #{sbmm&.parent&.primary_accession}"
+        end
 
         SbmmMailer.request_changes(
           sbmm.id,
@@ -32,7 +34,7 @@ module Usecases
           user: current_user,
         )
       end
-      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     end
   end
 end

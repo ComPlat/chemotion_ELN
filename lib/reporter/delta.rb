@@ -1,3 +1,5 @@
+require 'cgi'
+
 module Reporter
   # Delta class to convert Quill delta format to HTML
   class Delta
@@ -17,7 +19,7 @@ module Reporter
 
     private
     def deltaToHTML(delta)
-      return "<div></div>" if delta['ops'].blank?
+      return "" if delta['ops'].blank?
 
       html = []
       i = 0
@@ -56,7 +58,11 @@ module Reporter
       html = rebuildList(html, "!!!olli!!!", "ol")
       html = rebuildList(html, "!!!ulli!!!", "ul")
 
-      "<div>" + html.join("") + "</div>"
+      # Emit the block elements (<p>/<ol>/<ul>/<hN>) directly. They are valid
+      # children of sablon's top-level document fragment. A wrapping <div>
+      # would be parsed as a single paragraph that may not contain block
+      # children (sablon >= 0.4.3 raises "p is not a valid child of div").
+      html.join("")
     end
 
     def rebuildList html, string, replace_string
@@ -113,7 +119,7 @@ module Reporter
     end
 
     def buildDeltaOps(op)
-      return op["insert"] if (!op["attributes"]) && (!(op && op["insert"].is_a?(Hash) && op["insert"]["image"]))
+      return CGI.escapeHTML(op["insert"].to_s) if (!op["attributes"]) && (!(op && op["insert"].is_a?(Hash) && op["insert"]["image"]))
 
       styles = []
       tags = []
@@ -135,7 +141,11 @@ module Reporter
         when "italic"
           tags += ["i"] if value == "true"
         when "script"
-          tags += [value]
+          # Quill encodes superscript as script: "super", but "super" is not a
+          # valid HTML tag; the correct element is <sup>. sablon >= 0.4.3 rejects
+          # unregistered tags (ArgumentError "Don't know how to handle HTML tag:
+          # super"), so map "super" to "sup" while "sub" is already valid.
+          tags += [value == "super" ? "sup" : value]
         when "color"
           styles << "color: #{value}"
         when "background"
@@ -152,7 +162,7 @@ module Reporter
 
     def html_with_tags_style(op, tags, styles)
       style = styles.count > 0 ? " style=\"#{styles.join(";")}\"" : ""
-      html = "<span#{style}>#{op["insert"]}</span>"
+      html = "<span#{style}>#{CGI.escapeHTML(op["insert"].to_s)}</span>"
 
       tags.each { |tag| html = "<#{tag}>#{html}</#{tag}>" }
       html

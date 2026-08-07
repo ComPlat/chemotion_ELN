@@ -2,6 +2,7 @@ import React, { forwardRef, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Tooltip } from 'react-bootstrap';
 import UserInfoIcon from 'src/apps/mydb/collections/UserInfoIcon';
+import PermissionIcons from 'src/apps/mydb/collections/PermissionIcons';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -22,6 +23,7 @@ const UserInfosTooltip = forwardRef(({ collectionId, ...tooltipProps }, ref) => 
         <div key={user.id} className="d-flex align-items-baseline gap-1">
           <UserInfoIcon type={user.shared_with_type} />
           {user.shared_with}
+          <PermissionIcons pl={user.permission_level} />
         </div>
       ))}
     </Tooltip>

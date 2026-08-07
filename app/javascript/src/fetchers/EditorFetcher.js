@@ -1,25 +1,12 @@
-import 'whatwg-fetch';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
 
 export default class EditorFetcher {
   static initial() {
-    const promise = fetch('/api/v1/editor/initial.json', {
-      credentials: 'same-origin'
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    return ApiClient.getJson('/api/v1/editor/initial.json');
   }
 
   static startEditing(params) {
     const { attachmentId, forceStop } = params;
-    const promise = fetch(`/api/v1/editor/${attachmentId}/${forceStop ? 'end' : 'start'}/`, {
-      credentials: 'same-origin',
-      method: 'GET',
-    })
-      .then(response => response.json()).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    return ApiClient.getJson(`/api/v1/editor/${attachmentId}/${forceStop ? 'end' : 'start'}/`);
   }
 }

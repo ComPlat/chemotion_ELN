@@ -30,9 +30,6 @@ const handleFloatNumbers = (number, decimalPlaces) => {
 };
 
 const convertTemperature = (valueToFormat, currentUnit) => {
-  const numericValue = Number(valueToFormat);
-  if (Number.isNaN(numericValue)) return null;
-
   const kelvinToCelsius = (value) => value - 273.15;
   const celsiusToFahrenheit = (value) => ((value * 9) / 5) + 32;
   const fahrenheitToKelvin = (value) => (((value - 32) * 5) / 9) + 273.15;
@@ -42,7 +39,7 @@ const convertTemperature = (valueToFormat, currentUnit) => {
   let convertedValue;
 
   const decimalPlaces = 4;
-  if (typeof valueToFormat === 'string') {
+  if (typeof valueToFormat === 'string' && valueToFormat !== '') {
     const regex = /(-?\d+\.\d+|-?\d+)(.*)/;
     const match = valueToFormat.match(regex);
     if (match) {
@@ -57,11 +54,14 @@ const convertTemperature = (valueToFormat, currentUnit) => {
     '°F': { convertedUnit: TEMPERATURE_UNITS.KELVIN, conversionFunc: fahrenheitToKelvin },
   };
   const { convertedUnit, conversionFunc } = conversions[currentUnit];
+  // Empty input: cycle the unit without converting the value.
+  if (valueToFormat === '' || valueToFormat == null || valueToFormat === undefined) {
+    return ['', convertedUnit];
+  }
   convertedValue = conversionFunc(formattedValue);
-  formattedValue = formattedValue !== '' ? convertedValue : '';
-  formattedValue = handleFloatNumbers(formattedValue, decimalPlaces);
+  formattedValue = handleFloatNumbers(convertedValue, decimalPlaces);
   convertedValue = `${formattedValue}${restOfString}`;
-  return [convertedValue, convertedUnit];
+  return [convertedValue.trim(), convertedUnit];
 };
 
 const convertTemperatureToKelvin = (temperature) => {
@@ -129,6 +129,16 @@ const calculateGasMoles = (volume, ppm, temperatureInKelvin) => {
   return (
     (ppm * volume) / (IDEAL_GAS_CONSTANT * temperatureInKelvin * PARTS_PER_MILLION_FACTOR)
   );
+};
+
+// At 25 °C and 1 atm, derived from the ideal gas law:
+//   concentration (mmol/L) = ppm * 4.1 * 10^-5
+//   concentration (mol/L)  = ppm * 4.1 * 10^-8
+const PPM_TO_MOL_PER_L_AT_25C = 4.1e-8;
+
+const calculateGasConcentrationFromPpm = (ppm) => {
+  if (!Number.isFinite(ppm) || ppm <= 0) return 0;
+  return ppm * PPM_TO_MOL_PER_L_AT_25C;
 };
 
 const calculateVolumeForFeedstockOrGas = (
@@ -266,6 +276,7 @@ export {
   calculateMolesFromMoleculeWeight,
   calculateVolumeForFeedstockOrGas,
   calculateGasMoles,
+  calculateGasConcentrationFromPpm,
   calculateFeedstockMoles,
   updateFeedstockMoles,
   calculateTON,

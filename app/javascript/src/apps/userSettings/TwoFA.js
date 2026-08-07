@@ -4,7 +4,7 @@ import {
   Card, Button, Row, Col, Alert
 } from 'react-bootstrap';
 
-function TwoFactorSettings() {
+const TwoFactorSettings = () => {
   const [isActive, setIsActive] = useState(null);
   const [message, setMessage] = useState(null);
 
@@ -24,7 +24,7 @@ function TwoFactorSettings() {
         }
       })
       .catch((err) => console.error(err.response.error));
-  });
+  }, []);
 
   const cardBodyContent = () => {
     if (isActive === null) {

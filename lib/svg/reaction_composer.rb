@@ -3,6 +3,7 @@ require 'digest'
 require 'cgi'
 
 module SVG
+  # rubocop:disable Metrics/ClassLength
   class ReactionComposer
     REACTANT_SCALE = 0.75
     YIELD_YOFFSET = 10
@@ -215,6 +216,10 @@ module SVG
       "#{template_it.strip} #{sections_string_filtered} </svg></svg>"
     end
 
+    def compose_svg
+      compose_reaction_svg
+    end
+
     private
 
     def init_materials(materials_svg_paths)
@@ -265,15 +270,12 @@ module SVG
       i = 0
       solvents.each_with_index do |solvent, i|
         solv_str_sum = 0
-        solv_str_pre = 0
         solv_line_str = ""
         arr_length =  solv_lines.length
 
         # string of solvent line which to be added to next line (array[index]) in solv_lines array
         !(i == 0) ? solv_line_str = "#{solv_lines[arr_length-1]} / #{solvents[i]}"  : solv_line_str = ""
         solv_str_sum += (solv_line_str).length
-
-        !(i == 0) ? solv_str_pre = ((solv_lines[arr_length-1]).to_s).length : 0
 
         define_singleton_method(:push_to_solv_lines) do
           solv_lines.push(solvents[i])
@@ -307,8 +309,8 @@ module SVG
     end
 
     def temperature_duration_it
-      darray = duration&.match(/(\d+.?\d*)\s+(\w{2})/)
-      show_duration = darray.present? ? "#{darray[1]} #{TIME_UNIT[darray[2].downcase]}" : nil
+      duration_amount, duration_unit = parsed_duration
+      show_duration = duration_amount.present? ? "#{duration_amount} #{duration_unit}" : nil
 
       tmdu = if show_duration.blank?
                temperature
@@ -324,6 +326,21 @@ module SVG
           <text text-anchor="middle" x="#{arrow_width / 2}" y="30" font-size="#{word_size + 2}">#{tmdu}</text>
         </svg>
       XML
+    end
+
+    def parsed_duration
+      duration.to_s.strip.split.each_cons(2) do |amount, unit|
+        mapped_unit = TIME_UNIT[unit.to_s[0, 2].downcase]
+        next unless duration_amount?(amount) && mapped_unit.present?
+
+        return [amount, mapped_unit]
+      end
+
+      nil
+    end
+
+    def duration_amount?(amount)
+      amount.match?(/\A\d+(?:\.\d+)?\z/)
     end
 
     def conditions_it
@@ -649,7 +666,8 @@ module SVG
     end
 
     def sections_string_filtered
-      sections_string.gsub('R#', '').gsub("font=\'30px \"Arial\"\'", '')
+      sections_string.gsub('R#', '').gsub("font='30px \"Arial\"'", '')
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

@@ -84,10 +84,24 @@ $input-line-height: $input-btn-line-height;
 $btn-line-height: $input-btn-line-height;
 $input-btn-padding-y: 0.3rem;
 $input-padding-y: $input-btn-padding-y;
-$input-btn-padding-x-xsm: 5px;
-$input-btn-padding-y-xsm: 3px;
-$input-btn-padding-x-xxsm: 4px;
-$input-btn-padding-y-xxsm: 1px;
+
+$input-btn-padding-x-xsm: 0.3125rem;
+$input-btn-padding-y-xsm: 0.1875rem;
+$input-btn-padding-x-xxsm: 0.25rem;
+$input-btn-padding-y-xxsm: 0.0625rem;
+$input-btn-font-size-xsm: 0.75rem;
+$input-btn-font-size-xxsm: 0.75rem;
+
+$btn-padding-y-xsm: $input-btn-padding-y-xsm;
+$btn-padding-x-xsm: $input-btn-padding-x-xsm;
+$btn-font-size-xsm: $input-btn-font-size-xsm;
+$btn-border-radius-xsm: 0.1875rem;
+
+$btn-padding-y-xxsm: $input-btn-padding-y-xxsm;
+$btn-padding-x-xxsm: $input-btn-padding-x-xxsm;
+$btn-font-size-xxsm: $input-btn-font-size-xxsm;
+$btn-border-radius-xxsm: 0.15625rem;
+
 $input-height: add(
   $input-line-height,
   add($input-padding-y * 2, $input-height-border, false)

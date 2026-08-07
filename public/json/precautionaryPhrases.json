@@ -138,6 +138,13 @@
     "P410+P403": "Protect from sunlight. Store in a well-ventilated place.",
     "P410+P412": "Protect from sunlight. Do not expose to temperatures exceeding 50 °C/122 °F.",
     "P411+P235": "Store at temperatures not exceeding … °C/… °F. Keep cool.",
-    "P501": "Dispose of contents/container to … [… in accordance with local/regional/national/international regulation (to be specified)]."
-    
+    "P302+P335+P334": "IF ON SKIN: Brush off loose particles from skin. Immerse in cool water/wrap in wet bandages.",
+    "P304+P340+P310": "IF INHALED: Remove person to fresh air and keep comfortable for breathing. Immediately call a POISON CENTER/doctor/… [As modified by IV ATP]",
+    "P308+P313": "IF exposed or concerned: Get medical advice/attention.",
+    "P336+P315": "Thaw frosted parts with lukewarm water. Do not rub affected areas. Get immediate medical advice/attention.",
+    "P370+P372+P380+P373": "In case of fire: Explosion risk in case of fire. Evacuate area. DO NOT fight fire when fire reaches explosives.",
+    "P370+P380+P375+P378": "In case of fire: Evacuate area. Fight fire remotely due to the risk of explosion. Use … to extinguish.",
+    "P501": "Dispose of contents/container to … [… in accordance with local/regional/national/international regulation (to be specified)].",
+    "P502": "Information on safer use should be sought from the manufacturer/supplier."
+
 }

@@ -49,30 +49,36 @@ const getPolymerName = (polymerType, decoupled) => {
 };
 
 /**
- * Builds a list of component titles with their IUPAC name and exact molecular weight
- * and shows the total mixture mass if available.
+ * Builds a list of mixture components with copy-to-clipboard name and molecular weight.
  *
- * @param {Object} sample - The parent sample containing components and sample_details.
- * @returns {JSX.Element} A JSX fragment containing total mass (if present) and component names/weights.
+ * @param {Object} sample - The parent sample containing components.
+ * @returns {JSX.Element|null} Component list or null when empty.
  */
 const getComponentsTitle = (sample) => {
   const components = sample.components || [];
+  if (components.length === 0) return null;
 
   return (
-    <>
+    <div className="sample-name__components-list">
       {components.map((component, index) => {
         const name = component.iupacName;
         const mwText = component.molecularWeightText;
-        const key = component.id
-          || `${name || 'component'}-${index}`;
+        const key = component.id || `${name || 'component'}-${index}`;
+
         return (
-          <div key={key}>
-            {name}
-            {mwText}
+          <div key={key} className="sample-name__component">
+            <div className="sample-name__component-name">
+              <ClipboardCopyText text={name} />
+            </div>
+            {mwText && (
+              <div className="sample-name__component-mw text-muted">
+                <ClipboardCopyText text={mwText} />
+              </div>
+            )}
           </div>
         );
       })}
-    </>
+    </div>
   );
 };
 /**
@@ -119,11 +125,9 @@ function SampleName({ sample }) {
     const title = getComponentsTitle(sample);
 
     return (
-      <div>
-        <p className="mb-2 small">
-          Components:
-          {title}
-        </p>
+      <div className="sample-name sample-name--mixture">
+        <p className="sample-name__heading mb-2 fw-semibold">Components:</p>
+        {title}
       </div>
     );
   }

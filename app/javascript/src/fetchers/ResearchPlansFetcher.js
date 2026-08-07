@@ -1,284 +1,164 @@
-import 'whatwg-fetch';
-import Immutable from 'immutable';
+import ApiClient from 'src/api_clients/ChemotionApiClient';
+import { Map } from 'immutable';
 
 import ResearchPlan from 'src/models/ResearchPlan';
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
-import BaseFetcher from 'src/fetchers/BaseFetcher';
+import AnnotationsFetcher from 'src/fetchers/AnnotationsFetcher';
 import GenericElsFetcher from 'src/fetchers/GenericElsFetcher';
 import Literature from 'src/models/Literature';
 
-import { getFileName, downloadBlob } from 'src/utilities/FetcherHelper';
+import { getFileName, downloadBlob, preparedCollectionParams } from 'src/utilities/FetcherHelper';
 
 export default class ResearchPlansFetcher {
-  static fetchById(id) {
-    const promise = fetch(`/api/v1/research_plans/${id}.json`, {
-      credentials: 'same-origin'
-    })
-      .then((response) => response.json()).then((json) => {
-        const rResearchPlan = new ResearchPlan(json.research_plan);
-        rResearchPlan.attachments = json.attachments;
-        if (json.literatures && json.literatures.length > 0) {
-          const tliteratures = json.literatures.map((literature) => new Literature(literature));
-          const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());
-          rResearchPlan.literatures = lits;
-          rResearchPlan.updateChecksum();
-        }
-        if (json.error) {
-          rResearchPlan.id = `${id}:error:ResearchPlan ${id} is not accessible!`;
-        }
-        return rResearchPlan;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+  static fetchByCollectionId(id, params = {}) {
+    return ApiClient.getJson(`/api/v1/research_plans?${preparedCollectionParams(id, params)}`, {
+      handleResponseSuccess: (response) => response.json()
+        .then((json) => ({
+          elements: json.research_plans.map((researchPlan) => (new ResearchPlan(researchPlan))),
+          totalElements: parseInt(response.headers.get('X-Total'), 10),
+          page: parseInt(response.headers.get('X-Page'), 10),
+          pages: parseInt(response.headers.get('X-Total-Pages'), 10),
+          perPage: parseInt(response.headers.get('X-Per-Page'), 10)
+        })),
+    });
   }
 
-  static fetchByCollectionId(id, queryParams = {}) {
-    return BaseFetcher.fetchByCollectionId(id, queryParams, 'research_plans', ResearchPlan);
+  static fetchById(id) {
+    return ApiClient.getJson(`/api/v1/research_plans/${id}`)
+      .then((json) => this.researchPlanElement(json, id));
   }
 
   static create(researchPlan) {
     researchPlan.convertTemporaryImageFieldsInBody();
 
-    const promise = () => fetch('/api/v1/research_plans/', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(researchPlan.serialize())
-    })
-      .then((response) => response.json())
-      .then((json) => AttachmentFetcher.updateAttachables(
-        researchPlan.getNewAttachments(),
-        'ResearchPlan',
-        json.research_plan.id,
-        researchPlan.getMarkedAsDeletedAttachments()
-      )().then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
-        .then(() => this.fetchById(json.research_plan.id))))
-      .catch((errorMessage) => {
-        console.log(errorMessage);
+    return AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container)
+      .then(() => ApiClient.postJson('/api/v1/research_plans', { body: researchPlan.serialize() }))
+      .then((json) => {
+        const { id } = json.research_plan;
+        return this.researchPlanAttachments(researchPlan, id)
+          .then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, id, 'ResearchPlan', true))
+          .then(() => this.researchPlanElement(json, id));
       });
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container).then(() => promise());
   }
 
   static update(researchPlan) {
     researchPlan.convertTemporaryImageFieldsInBody();
 
-    const promise = () => fetch(`/api/v1/research_plans/${researchPlan.id}`, {
-      credentials: 'same-origin',
-      method: 'put',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(researchPlan.serialize())
-    }).then((response) => response.json())
-      .then((json) => AttachmentFetcher.updateAttachables(
-        researchPlan.getNewAttachments(),
-        'ResearchPlan',
-        json.research_plan.id,
-        researchPlan.getMarkedAsDeletedAttachments()
-      )().then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, json.research_plan.id, 'ResearchPlan', true)
-        .then(() => BaseFetcher.updateAnnotations(researchPlan))
-        .then(() => this.fetchById(researchPlan.id))))
-      .catch((errorMessage) => { console.log(errorMessage); });
+    const tasks = [
+      AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container),
+      this.researchPlanAttachments(researchPlan, researchPlan.id),
+    ];
 
-    return AttachmentFetcher.uploadNewAttachmentsForContainer(researchPlan.container).then(() => promise());
+    return Promise.all(tasks)
+      .then(() => GenericElsFetcher.uploadGenericFiles(researchPlan, researchPlan.id, 'ResearchPlan', true))
+      .then(() => AnnotationsFetcher.updateAnnotations(researchPlan))
+      .then(() => ApiClient.putJson(`/api/v1/research_plans/${researchPlan.id}`, { body: researchPlan.serialize() }))
+      .then((json) => this.researchPlanElement(json, researchPlan.id));
   }
 
-  static updateSVGFile(svg_file, isChemdraw = false) {
-    const promise = () => fetch('/api/v1/research_plans/svg', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ svg_file, is_chemdraw: isChemdraw })
-    }).then((response) => response.json()).catch((errorMessage) => {
-      console.log(errorMessage);
+  static updateSVGFile(svgFile, isChemdraw = false) {
+    return ApiClient.postJson('/api/v1/research_plans/svg', {
+      body: { svg_file: svgFile, is_chemdraw: isChemdraw }
     });
-    return promise();
   }
 
-  static updateImageFile(image_file, replace) {
+  static updateImageFile(imageFile, replace) {
     const data = new FormData();
-    data.append('file', image_file);
+    data.append('file', imageFile);
+    if (replace) { data.append('replace', replace); }
 
-    if (replace) {
-      data.append('replace', replace);
-    }
-
-    const promise = () => fetch('/api/v1/research_plans/image', {
-      credentials: 'same-origin',
-      method: 'post',
-      body: data
-    }).then((response) => response.json()).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise();
+    return ApiClient.postFormData('/api/v1/research_plans/image', { body: data });
   }
 
   static export(researchPlan, exportFormat) {
-    let file_name;
-    const promise = fetch(`/api/v1/research_plans/${researchPlan.id}/export/?export_format=${exportFormat}`, {
-      credentials: 'same-origin',
-      method: 'get',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
+    let fileName;
+    return ApiClient.getJson(`/api/v1/research_plans/${researchPlan.id}/export/?export_format=${exportFormat}`, {
+      handleResponseSuccess: (response) => {
+        if (response.ok) {
+          fileName = getFileName(response);
+          return response.blob();
+        }
+        throw new Error(response);
       }
-    }).then((response) => {
-      if (response.ok) {
-        file_name = getFileName(response);
-        return response.blob();
-      }
-      console.log(response);
-    }).then((blob) => {
-      downloadBlob(file_name, blob);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise;
+    })
+      .then((blob) => {
+        downloadBlob(fileName, blob);
+      });
   }
 
   static exportTable(researchPlan, field) {
-    let file_name;
-    const promise = fetch(`/api/v1/research_plans/${researchPlan.id}/export_table/${field.id}/`, {
-      credentials: 'same-origin',
-      method: 'get',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
+    let fileName;
+    return ApiClient.getJson(`/api/v1/research_plans/${researchPlan.id}/export_table/${field.id}`, {
+      handleResponseSuccess: (response) => {
+        if (response.ok) {
+          fileName = getFileName(response);
+          return response.blob();
+        }
+        throw new Error(response.statusText);
       }
-    }).then((response) => {
-      if (response.ok) {
-        file_name = getFileName(response);
-        return response.blob();
-      }
-      throw Error(response.statusText);
-    }).then((blob) => {
-      downloadBlob(file_name, blob);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-    return promise;
+    })
+      .then((blob) => {
+        downloadBlob(fileName, blob);
+      });
   }
 
   static fetchTableSchemas() {
-    return fetch('/api/v1/research_plans/table_schemas/', {
-      credentials: 'same-origin',
-      method: 'get',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
+    return ApiClient.getJson('/api/v1/research_plans/table_schemas', {
+      handleResponseSuccess: (response) => {
+        if (response.ok) { return response.json(); }
+        throw new Error(response.statusText);
       }
-    }).then((response) => {
-      if (response.ok) {
-        return response.json();
-      }
-      throw Error(response.statusText);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
     });
   }
 
   static createTableSchema(name, value) {
-    return fetch('/api/v1/research_plans/table_schemas/', {
-      credentials: 'same-origin',
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ name, value })
-    }).then((response) => response.json()).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    return ApiClient.postJson('/api/v1/research_plans/table_schemas', { body: { name, value } });
   }
 
   static deleteTableSchema(id) {
-    return fetch(`/api/v1/research_plans/table_schemas/${id}`, {
-      credentials: 'same-origin',
-      method: 'delete',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      }
-    }).then((response) => response.json()).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    return ApiClient.deleteRequest(`/api/v1/research_plans/table_schemas/${id}`);
   }
 
   static postResearchPlanMetadata(params) {
-    return fetch('/api/v1/research_plan_metadata', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    }).then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.postJson('/api/v1/research_plan_metadata', { body: params });
   }
 
   static importWellplate(id, wellplateId) {
-    return fetch(
-      `/api/v1/research_plans/${id}/import_wellplate/${wellplateId}`,
-      {
-        credentials: 'same-origin',
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: '{}'
-      }
-    ).then((response) => response.json())
-      .then((json) => {
-        const updatedResearchPlan = new ResearchPlan(json.research_plan);
-        updatedResearchPlan._checksum = updatedResearchPlan.checksum();
-        updatedResearchPlan.attachments = json.attachments;
-        return updatedResearchPlan;
-      }).catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.postJson(`/api/v1/research_plans/${id}/import_wellplate/${wellplateId}`, { body: '{}' })
+      .then((json) => this.researchPlanElement(json, json.research_plan.id));
   }
 
   static importTableFromSpreadsheet(id, attachmentId) {
-    return fetch(
-      `/api/v1/research_plans/${id}/import_table/${attachmentId}`,
-      {
-        credentials: 'same-origin',
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: '{}'
-      }
-    ).then((response) => response.json())
-      .then((json) => {
-        const updatedResearchPlan = new ResearchPlan(json.research_plan);
-        updatedResearchPlan._checksum = updatedResearchPlan.checksum();
-        updatedResearchPlan.attachments = json.attachments;
-        return updatedResearchPlan;
-      }).catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.postJson(`/api/v1/research_plans/${id}/import_table/${attachmentId}`, { body: '{}' })
+      .then((json) => this.researchPlanElement(json, json.research_plan.id));
   }
 
   static fetchResearchPlansForElements(id, element) {
-    return fetch(`/api/v1/research_plans/linked?id=${id}&element=${element}`, {
-      credentials: 'same-origin',
-      method: 'get',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      }
-    }).then((response) => response.json())
-      .then((json) => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
+    return ApiClient.getJson(`/api/v1/research_plans/linked?${new URLSearchParams({ id, element })}`);
+  }
+
+  static researchPlanElement(json, id) {
+    if (json.error) {
+      return new ResearchPlan({ id: `${id}:error:ResearchPlan ${id} is not accessible!` });
+    }
+    const researchPlan = new ResearchPlan(json.research_plan);
+    researchPlan.attachments = json.attachments;
+    if (json.literatures && json.literatures.length > 0) {
+      const tliteratures = json.literatures.map((literature) => new Literature(literature));
+      const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Map());
+      researchPlan.literatures = lits;
+      researchPlan.updateChecksum();
+    }
+
+    return researchPlan;
+  }
+
+  static researchPlanAttachments(researchPlan, id) {
+    return AttachmentFetcher.updateAttachables(
+      researchPlan.getNewAttachments(),
+      'ResearchPlan',
+      id,
+      researchPlan.getMarkedAsDeletedAttachments()
+    );
   }
 }

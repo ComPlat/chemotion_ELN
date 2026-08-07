@@ -215,6 +215,8 @@ module Import
     end
 
     def write_to_db
+      started_at = Time.current
+      @defer_pubchem_lookup = true
       unprocessable_count = 0
       begin
         ActiveRecord::Base.transaction do
@@ -233,6 +235,8 @@ module Import
       rescue StandardError => _e
         raise 'More than 1 row can not be processed' if unprocessable_count.positive?
       end
+    ensure
+      Molecule.schedule_pubchem_lookup_since(started_at)
     end
 
     def structure?(row)
@@ -253,85 +257,57 @@ module Import
       header_present && cell_present
     end
 
-    # When Open Babel returns blank inchikey for a PolymersList molfile, create a molecule with a synthetic
-    # inchikey so we can store the full molfile; SVG is generated in the common branch via svg_reprocess.
-    def find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
-      synthetic_inchikey = "POLYMER_#{Digest::SHA256.hexdigest(raw_molfile)}"
-      formula = babel_info[:formula].to_s.presence || ''
-      molecule = Molecule.find_by(inchikey: synthetic_inchikey, is_partial: true, sum_formular: formula)
-      if molecule
-        molecule.molfile = raw_molfile
-      else
-        molecule = Molecule.new(
-          inchikey: synthetic_inchikey,
-          is_partial: true,
-          sum_formular: formula,
-          molfile: raw_molfile,
-        )
-      end
-      molecule.save!
-      molecule
-    end
-
     def get_data_from_molfile(row)
       @polymer_svg_file_after_reprocess = nil
       raw_molfile = row_value_case_insensitive(row, 'molfile').to_s.strip
-      raw_molfile = unescape_textnode_octal_in_molfile(raw_molfile)
       # When molfile has > <PolymersList>, use full molfile and Molecule.svg_reprocess so polymers use SvgRenderer.
       if raw_molfile.include?(Chemotion::MolfilePolymerSupport::POLYMERS_LIST_TAG)
-        # Remove PolymersList, TextNode and clean; then get inchikey from cleaned molfile. If it still fails, create with synthetic inchikey.
-        cleaned = Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
-        if cleaned.blank?
-          return [nil, raw_molfile]
-        end
-
-        molfile_for_babel = cleaned.dup
-        molfile_for_babel = "\n#{molfile_for_babel}" unless molfile_for_babel.start_with?("\n")
-        molfile_for_babel = "#{molfile_for_babel}\n" unless molfile_for_babel.end_with?("\n")
-        babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
-        inchikey = babel_info[:inchikey]
-
-        molecule = if inchikey.present?
-                     Molecule.find_or_create_by_molfile(raw_molfile, babel_info)
-                   else
-                     find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info)
-                   end
-        if molecule.present?
-          # Use raw_molfile (row's full molfile with PolymersList) for SVG so SvgRenderer can inject polymer images; molecule.molfile may be cleaned/truncated.
-          reprocessed_svg = Molecule.svg_reprocess(nil, raw_molfile, service: :indigo)
-
-          if reprocessed_svg.present?
-            molecule.attach_svg(reprocessed_svg)
-            molecule.molfile = raw_molfile if molecule.molfile.to_s != raw_molfile
-            molecule.save
-          end
-        end
-        return [molecule, raw_molfile]
+        result = Import::PolymerMoleculeResolver.call(raw_molfile, defer_pubchem_lookup: @defer_pubchem_lookup)
+        return [result.molecule, result.raw_molfile]
       end
 
       sanitized = sanitize_molfile_for_import(raw_molfile)
       molfile_for_babel = sanitized.dup
       molfile_for_babel = "\n#{molfile_for_babel}" unless molfile_for_babel.start_with?("\n")
       molfile_for_babel = "#{molfile_for_babel}\n" unless molfile_for_babel.end_with?("\n")
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel)
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile_for_babel, render_svg: false)
       inchikey = babel_info[:inchikey]
-      molecule = Molecule.find_or_create_by_molfile(molfile_for_babel, babel_info) if inchikey.presence
+      if inchikey.presence
+        molecule = Molecule.find_or_create_by_molfile(molfile_for_babel,
+                                                      defer_pubchem_lookup: @defer_pubchem_lookup,
+                                                      **babel_info)
+      end
       [molecule, raw_molfile]
     end
 
+    # Delegates to {Molecule.find_or_create_by_molfile} rather than re-implementing
+    # find-or-create. This branch used to key its lookup on
+    # +(inchikey, sum_formular, is_partial: false)+, but Molecule#assign_molecule_data assigns
+    # +is_partial+ from babel_info *after* +check_sum_formular+ has already returned early on
+    # the still-false value. An R-group structure was therefore INSERTed as
+    # +is_partial: true+ having been looked up as +false+ — a different tuple from the one it
+    # was searched under, so the next import missed it and inserted another row, and its
+    # masses kept the fictitious CH3 that check_sum_formular should have removed.
+    # find_or_create_by_molfile derives both +is_partial+ and the CH3-stripped formula before
+    # its lookup, and carries the savepoint and RecordNotUnique rescue.
+    #
+    # +inchikey+ is passed on explicitly: the caller may have resolved it from the SMILES
+    # (Chemotion::OpenBabelService.smiles_to_inchikey) when babel_info's own is blank, and
+    # find_or_create_by_molfile keys on babel_info[:inchikey] — it would otherwise re-derive
+    # babel_info from the molfile and give up entirely (returning nil, dropping the row) if
+    # that second attempt is blank too.
+    #
+    # @return [Array(Molecule, String, Boolean)] +[molecule, molfile, go_to_next]+; +molecule+
+    #   is nil when the structure could not be resolved
     def assign_molecule_data(molfile_coord, babel_info, inchikey, _row, _index)
-      if inchikey.blank?
-        go_to_next = true
-      else
-        go_to_next = false
-        molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: false) do |molecul|
-          pubchem_info =
-            Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-          molecul.molfile = molfile_coord
-          molecul.assign_molecule_data babel_info, pubchem_info
-        end
-      end
-      [molecule, molfile_coord, go_to_next]
+      return [nil, molfile_coord, true] if inchikey.blank?
+
+      # babel_info may be nil — get_data_from_smiles guards on `babel_info.present?` two lines
+      # before calling this, so a molfile OpenBabel could not read while smiles_to_inchikey
+      # still resolved a key is a reachable combination.
+      info = (babel_info || {}).merge(inchikey: inchikey)
+      molecule = Molecule.find_or_create_by_molfile(molfile_coord, defer_pubchem_lookup: @defer_pubchem_lookup, **info)
+      [molecule, molfile_coord, false]
     end
 
     def get_data_from_smiles(row, index)
@@ -350,7 +326,7 @@ module Import
 
       ori_molf = "\n#{ori_molf}" unless ori_molf.start_with?("\n")
       ori_molf = "#{ori_molf}\n" unless ori_molf.end_with?("\n")
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf)
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf, render_svg: false)
       molfile_coord = Chemotion::OpenBabelService.add_molfile_coordinate(ori_molf)
       inchikey = babel_info[:inchikey] if inchikey.blank? && babel_info.present?
       return nil if inchikey.blank?
@@ -621,6 +597,10 @@ module Import
       create_components(sample, sample_components_data)
     end
 
+    # NB: always called nested inside #write_to_db's row loop (via
+    # handle_sample_components), which already has @defer_pubchem_lookup set — a
+    # component's molecule creation is deferred the same way as the outer
+    # row's, and both flush together via #write_to_db's own Molecule.schedule_pubchem_lookup_since.
     def create_components(sample, sample_components_data)
       unprocessable_count = 0
       xlsx.default_sheet = 'sample_components'
@@ -662,35 +642,10 @@ module Import
       s.presence
     end
 
-    # Remove PolymersList, TextNode and other SDF blocks, then keep only CTAB (up to M  END).
-    # Use this cleaned molfile to get inchikey from Open Babel; if it still fails, create molecule with synthetic inchikey.
-    def clean_molfile_for_inchikey(raw_molfile)
-      Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw_molfile)
-    end
-
     # Keep only the CTAB (up to and including M END). Strip SDF blocks (e.g. > <...>) that can
     # cause molecule_info_from_molfile to return blank inchikey.
     def sanitize_molfile_for_import(molfile)
       Chemotion::MolfilePolymerSupport.keep_only_ctab(molfile)
-    end
-
-    # Restore Unicode in TextNode labels: Excel/export can turn e.g. ∀ into literal \342\210\200
-    # (octal UTF-8 byte sequences). Convert them back to the actual UTF-8 characters.
-    # Only match the exact "> <TextNode>" ... "> </TextNode>" block so we do not alter "> <PolymersList>" or other SDF tags.
-    def unescape_textnode_octal_in_molfile(molfile)
-      return molfile if molfile.blank?
-
-      molfile = molfile.to_s
-      return molfile unless molfile.include?('> <TextNode>')
-
-      molfile.gsub(%r{> <TextNode>\s*([\s\S]*?)\s*> </TextNode>}i) do
-        content = Regexp.last_match(1)
-        converted = content.gsub(/(?:\\[0-7]{1,3})+/) do |seq|
-          bytes = seq.scan(/\\([0-7]{1,3})/).flatten.map { |o| o.to_i(8) }
-          bytes.pack('C*').force_encoding('UTF-8')
-        end
-        "> <TextNode>\n#{converted}\n> </TextNode>"
-      end
     end
 
     def create_sample_and_assign_molecule(current_user_id, molfile, molecule)

@@ -115,6 +115,7 @@ class User < ApplicationRecord
   has_many :element_text_templates, dependent: :destroy
   has_many :calendar_entries, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
   has_many :comments, foreign_key: :created_by, inverse_of: :creator, dependent: :destroy
+  has_many :api_tokens, dependent: :destroy
 
   accepts_nested_attributes_for :affiliations, :profile
 
@@ -186,6 +187,7 @@ class User < ApplicationRecord
   def generate_qr_code
     issuer = 'Chemotion'
     label = email
+    discard_undecryptable_otp_secret!
     if otp_secret.blank?
       self.otp_secret = User.generate_otp_secret
       save!
@@ -198,6 +200,21 @@ class User < ApplicationRecord
 
   def check_otp(otp_attempt)
     validate_and_consume_otp!(otp_attempt)
+  end
+
+  # devise-two-factor's validate_and_consume_otp! reads (decrypts) otp_secret
+  # unconditionally, even for a blank/wrong code, so it is just as exposed to
+  # an undecryptable ciphertext as generate_qr_code (see
+  # discard_undecryptable_otp_secret!). Left unrescued, this crashes login,
+  # the self-service email/password change form, and the 2FA verify/disable
+  # requests with a 500 for any user whose stored secret predates an
+  # OTP_SECRET_KEY rotation. Treat it as a failed OTP and let the user
+  # re-enroll instead.
+  def validate_and_consume_otp!(code, options = {})
+    super
+  rescue OpenSSL::Cipher::CipherError
+    discard_undecryptable_otp_secret!
+    false
   end
   def self.find_first_by_auth_conditions(warden_conditions)
     conditions = warden_conditions.dup
@@ -288,7 +305,7 @@ class User < ApplicationRecord
 
   # The element models for which the counters that can be incremented
   COUNTER_KEYS = %w[
-    samples reactions wellplates celllines device_descriptions sequence_based_macromolecule_samples
+    samples reactions wellplates celllines device_descriptions research_plans sequence_based_macromolecule_samples
   ].freeze
 
   # Increment a counter for a given key
@@ -347,6 +364,10 @@ class User < ApplicationRecord
 
   def converter_admin
     profile&.data&.fetch('converter_admin', false)
+  end
+
+  def global_text_template_editor
+    profile&.data&.fetch('global_text_template_editor', false)
   end
 
   def matrix_check_by_name(name)
@@ -513,6 +534,27 @@ class User < ApplicationRecord
   def user_ids
     [id]
   end
+
+  # otp_secret raises OpenSSL::Cipher::CipherError if OTP_SECRET_KEY has changed
+  # since the stored secret was encrypted (e.g. a key rotation on redeploy) -
+  # attr_encrypted's setter also re-decrypts the old value internally to check
+  # for dirtiness, so a merely-rescued read is not enough. Wipe the
+  # now-undecryptable ciphertext so the user can simply re-enroll instead of
+  # hitting a 500 on the enable-2FA request. otp_required_for_login is also
+  # cleared: with no secret left to validate against, leaving it set would
+  # lock the user out of login (and thus out of every self-service 2FA
+  # endpoint, which all require an authenticated current_user) until an
+  # admin intervenes. generate_qr_code's re-enrollment flow re-enables it
+  # once the user verifies a freshly generated secret.
+  def discard_undecryptable_otp_secret!
+    otp_secret
+  rescue OpenSSL::Cipher::CipherError
+    # rubocop:disable Rails/SkipsModelValidations
+    update_columns(encrypted_otp_secret: nil, encrypted_otp_secret_iv: nil, encrypted_otp_secret_salt: nil,
+                   otp_required_for_login: false)
+    # rubocop:enable Rails/SkipsModelValidations
+    instance_variable_set(:@otp_secret, nil)
+  end
 end
 
 class Person < User
@@ -521,6 +563,21 @@ class Person < User
 
   has_many :users_admins, dependent: :destroy, foreign_key: :admin_id
   has_many :administrated_accounts, through: :users_admins, source: :user
+
+  # Must run before the `users_admins, dependent: :destroy` cascade above wipes
+  # `administrated_accounts`, or this would find nothing to check.
+  before_destroy :prevent_destroying_sole_group_admin, prepend: true
+
+  private
+
+  def prevent_destroying_sole_group_admin
+    administrated_group_ids = administrated_accounts.where(type: 'Group').select(:id)
+    orphaned = Group.where(id: administrated_group_ids).includes(:admins).select { |g| g.sole_admin?(id) }
+    return if orphaned.empty?
+
+    errors.add(:base, "cannot be deleted while the sole admin of: #{orphaned.map(&:name).join(', ')}")
+    throw(:abort)
+  end
 end
 
 class Group < User
@@ -534,6 +591,12 @@ class Group < User
 
   def administrated_by?(user)
     users_admins.where(admin: user).present?
+  end
+
+  # Single source of truth for "removing this admin would leave the group with none" —
+  # used by GroupPolicy#last_admin? and by every path that can revoke an admin relationship.
+  def sole_admin?(person_id)
+    admins.one? && admins.first.id == person_id
   end
 
   private

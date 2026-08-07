@@ -36,6 +36,15 @@ const keepSupSub = (value) => {
   return content;
 };
 
+const isImageOp = op => op && op.insert && typeof op.insert === 'object' && op.insert.image;
+
+const stripImages = (value) => {
+  if (!value) return value;
+  if (Array.isArray(value)) return value.filter(op => !isImageOp(op));
+  if (value.ops) return { ...value, ops: value.ops.filter(op => !isImageOp(op)) };
+  return value;
+};
+
 const rmRedundantSpaceBreak = (target) => {
   return target.replace(/\n/g, '').replace(/\s\s+/g, ' ');
 };
@@ -80,4 +89,5 @@ export {
   rmOpsRedundantSpaceBreak,
   rmRedundantSpaceBreak,
   frontBreak,
+  stripImages,
 };

@@ -3,16 +3,21 @@ const preview = {
   parameters: {
     controls: {
       matchers: {
-       color: /(background|color)$/i,
-       date: /Date$/i,
+        color: /(background|color)$/i,
+        date: /Date$/i,
       },
     },
     options: {
       storySort: {
         order: [
-          'Design Principles',
-          ['Colors', 'Typography', 'Forms'],
-          'Components',
+          'Subatomic',
+          ['Colors', 'Typography'],
+          'Atoms',
+          ['Button', 'Select'],
+          'Molecules',
+          ['DetailCardButton', 'Forms'],
+          'Organisms',
+          ['AppModal', 'DetailCard', 'ElementDetailCard', 'ConfirmationOverlay'],
         ],
       },
     },

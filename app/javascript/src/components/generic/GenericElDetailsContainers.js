@@ -9,10 +9,9 @@ import Container from 'src/models/Container';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import GenericContainerSet from 'src/components/generic/GenericContainerSet';
 import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
-import ArrayUtils from 'src/utilities/ArrayUtils';
-import { reOrderArr } from 'src/utilities/DndControl';
 import {
-  indexedContainers,
+  findAnalysesContainer,
+  reorderAnalyses,
 } from 'src/apps/mydb/elements/details/analyses/utils';
 import { UploadField } from 'src/apps/mydb/elements/details/analyses/UploadField';
 
@@ -20,8 +19,10 @@ export default class GenericElDetailsContainers extends Component {
   constructor(props) {
     super(props);
     const { genericEl } = props;
-    const hasComment = genericEl.container?.description
-      && genericEl.container.description.trim() !== '';
+    const hasComment = Boolean(
+      genericEl.container?.description
+      && genericEl.container.description.trim() !== ''
+    );
     this.state = {
       activeContainer: null,
       commentBoxVisible: hasComment,
@@ -74,14 +75,7 @@ export default class GenericElDetailsContainers extends Component {
 
   handleMove(source, target) {
     const { genericEl, handleElChanged } = this.props;
-    const analysesContainer = genericEl.container.children.filter(
-      (element) => ~element.container_type.indexOf('analyses'),
-    )[0];
-    const sortedConts = ArrayUtils.sortArrByIndex(analysesContainer.children);
-    const isEqCId = (container, tagEl) => container.id === tagEl.id;
-    const newSortConts = reOrderArr(source, target, isEqCId, sortedConts);
-    const newIndexedConts = indexedContainers(newSortConts);
-    analysesContainer.children = newIndexedConts;
+    reorderAnalyses(findAnalysesContainer(genericEl), source, target);
     handleElChanged(genericEl);
   }
 

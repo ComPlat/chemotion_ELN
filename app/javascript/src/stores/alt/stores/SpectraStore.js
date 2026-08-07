@@ -49,6 +49,12 @@ class SpectraStore {
     try {
       const raw = new TextDecoder("utf-8").decode(new Uint8Array([...(base64.decode(file))].map(ch => ch.charCodeAt(0))));
       const jcamp = FN.ExtractJcamp(raw);
+      const lcmsMzPageMatch = raw.match(/^##\$CSLCMSMZPAGE\s*=\s*"?([0-9.+\-Ee]+)"?/mi);
+      const lcmsMzPage = lcmsMzPageMatch ? Number(lcmsMzPageMatch[1]) : null;
+      if (Number.isFinite(lcmsMzPage) && !Number.isFinite(jcamp?.lcms_mz_page)) {
+        jcamp.lcms_mz_page = lcmsMzPage;
+        jcamp.lcmsMzPage = lcmsMzPage;
+      }
       if (!jcamp.spectra) return null;
       spectrum = Object.assign({}, spectrum, { jcamp });
     } catch (err) {
@@ -96,22 +102,32 @@ class SpectraStore {
       return sortedSpcIdxs.indexOf(a.idx) - sortedSpcIdxs.indexOf(b.idx);
     });
     let newArrSpcIdx = [];
+    let nextSpcIdx = spcMetas[0]?.idx || 0;
     if (spcMetas.length >= 1) {
-      const spcInfoWithLabel = sortedSpcInfo.find(
+      const currentInfo = sortedSpcInfo.find((info) => info.idx === spcMetas[0].idx);
+      const currentDatasetId = currentInfo?.idDt;
+      const datasetSpcInfos = currentDatasetId
+        ? sortedSpcInfo.filter((info) => info.idDt === currentDatasetId)
+        : sortedSpcInfo;
+      const datasetIdxs = datasetSpcInfos.map((info) => info.idx);
+      const datasetSpcMetas = spcMetas.filter((spc) => datasetIdxs.includes(spc.idx));
+      const spcInfoWithLabel = datasetSpcInfos.find(
         info => typeof info.label === "string" && info.label.toLowerCase().includes('processed')
       );
       if (spcInfoWithLabel) {
         newArrSpcIdx = [spcInfoWithLabel.idx];
+        nextSpcIdx = spcInfoWithLabel.idx;
       } else {
-        newArrSpcIdx = spcMetas.map(spc => spc.idx);
+        newArrSpcIdx = datasetSpcMetas.map((spc) => spc.idx);
+        nextSpcIdx = datasetSpcMetas[0]?.idx || nextSpcIdx;
       }
     }
-    
+
     this.setState({
       spcInfos: sortedSpcInfo,
       spcMetas,
       fetched: true,
-      spcIdx: (spcMetas[0].idx || 0),
+      spcIdx: nextSpcIdx,
       others: [],
       arrSpcIdx: newArrSpcIdx,
     });

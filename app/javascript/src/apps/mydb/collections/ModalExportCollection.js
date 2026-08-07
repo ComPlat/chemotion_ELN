@@ -9,6 +9,8 @@ function ModalExportCollection({ onHide }) {
   const collectionsStore = useContext(StoreContext).collections;
   const lockedCollections = collectionsStore.locked_collection;
   const ownCollections = collectionsStore.own_collections;
+  // The real shared collections live under the per-owner root nodes of the shared-with-me tree.
+  const sharedCollections = collectionsStore.shared_with_me_collections.flatMap((owner) => owner.children || []);
   const allCollections = [];
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
   const [checkedCollections, setCheckedCollections] = useState({});
@@ -138,6 +140,7 @@ function ModalExportCollection({ onHide }) {
       <div className="export-collections-modal">
         {renderCollections('Global Collections', lockedCollections)}
         {renderCollections('My Collections', ownCollections)}
+        {renderCollections('Shared with me', sharedCollections)}
       </div>
       {renderCheckAll()}
     </AppModal>

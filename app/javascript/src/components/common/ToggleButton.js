@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 export default function ToggleButton({
   isToggledInitial, onToggle, onChange, onLabel, offLabel,
-  tooltipOn, tooltipOff, buttonTitleClass, buttonClass, size
+  tooltipOn, tooltipOff, buttonTitleClass, buttonClass, size, showIcon
 }) {
   const [isToggled, setIsToggled] = useState(isToggledInitial);
 
@@ -35,6 +35,9 @@ export default function ToggleButton({
       >
         <span className={`fs-6 ${buttonTitleClass}`}>
           {isToggled ? onLabel : offLabel}
+          {showIcon && (
+            <i className={`fa ${isToggled ? 'fa-circle' : 'fa-circle-thin'} ms-1`} aria-hidden="true" />
+          )}
         </span>
       </Button>
     </OverlayTrigger>
@@ -52,6 +55,7 @@ ToggleButton.propTypes = {
   buttonTitleClass: PropTypes.string,
   buttonClass: PropTypes.string,
   size: PropTypes.string,
+  showIcon: PropTypes.bool,
 };
 
 ToggleButton.defaultProps = {
@@ -64,4 +68,5 @@ ToggleButton.defaultProps = {
   buttonTitleClass: '',
   buttonClass: '',
   size: 'sm',
+  showIcon: false,
 };

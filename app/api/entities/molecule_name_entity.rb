@@ -3,6 +3,7 @@
 module Entities
   class MoleculeNameEntity < ApplicationEntity
     expose(
+      :id,
       :description,
       :name,
     )

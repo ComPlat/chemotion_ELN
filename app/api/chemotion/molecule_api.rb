@@ -80,9 +80,8 @@ module Chemotion
               end
             end
           end
-          molecule.attributes.merge(temp_svg: File.exist?(svg_process[:svg_file_path]) && svg_process[:svg_file_name], ob_log: babel_info[:ob_log])
-
-          present molecule, with: Entities::MoleculeEntity
+          temp_svg = File.exist?(svg_process[:svg_file_path]) ? svg_process[:svg_file_name] : nil
+          Entities::MoleculeEntity.represent(molecule, temp_svg: temp_svg, ob_log: babel_info[:ob_log])
         end
       end
 
@@ -274,7 +273,12 @@ module Chemotion
         error!('Unauthorized to delete molecule name!', 401) unless current_user&.molecule_editor
 
         if params[:name_id] == -1
-          molecule_name = MoleculeName.create(molecule_id: params[:id], user_id: current_user.id, description: "#{params[:description]} #{current_user.id}", name: params[:name])
+          molecule_name = MoleculeName.create!(
+            molecule_id: params[:id],
+            user_id: current_user.id,
+            description: "#{params[:description]} #{current_user.id}",
+            name: params[:name],
+          )
         else
           molecule_name = MoleculeName.find(params[:name_id])
           molecule_name.update!(name: params[:name]) if molecule_name.present?

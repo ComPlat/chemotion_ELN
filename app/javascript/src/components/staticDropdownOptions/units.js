@@ -56,6 +56,10 @@ const unitSystems = {
     { value: 'uL', label: 'µL' },
     { value: 'nL', label: 'nL' },
   ],
+  cell_line_amount_unit: [
+    { value: 'g', label: 'g' },
+    { value: 'units/cm²', label: 'units/cm²' },
+  ]
 };
 
 const conversionFactors = {

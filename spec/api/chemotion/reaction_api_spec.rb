@@ -49,12 +49,40 @@ describe Chemotion::ReactionAPI do
       end
     end
 
+    context 'without params, when a reaction is only in a group-owned collection' do
+      let(:group) { create(:group, users: [user]) }
+      let(:group_collection) { create(:collection, user: group) }
+      let!(:group_reaction) { create(:reaction, name: 'group reaction', collections: [group_collection]) }
+
+      it 'does not return it -- the "All" view is owner-only, not group-aware' do
+        get '/api/v1/reactions'
+        reactions = parsed_json_response['reactions']
+        expect(reactions.pluck('id')).not_to include(group_reaction.id)
+      end
+    end
+
     context 'with ID of collection' do
       before { get '/api/v1/reactions', params: { collection_id: collection1.id } }
 
       it 'returns serialized reaction' do
         reactions = JSON.parse(response.body)['reactions']
         expect(reactions.pluck('id')).to eq([reaction2.id, reaction1.id])
+      end
+    end
+
+    context 'with ID of a collection shared with the user' do
+      let(:shared_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(:read_elements))
+        end
+      end
+      let!(:shared_reaction) { create(:reaction, name: 'shared reaction', collections: [shared_collection]) }
+
+      it 'returns the reaction from the shared collection' do
+        get '/api/v1/reactions', params: { collection_id: shared_collection.id }
+        reactions = JSON.parse(response.body)['reactions']
+        expect(reactions.pluck('id')).to include(shared_reaction.id)
       end
     end
 
@@ -664,6 +692,61 @@ describe Chemotion::ReactionAPI do
       it 'create products with name realted to the reaction short_label' do
         product = r.products.first
         expect(product.name).to include(r.short_label)
+      end
+    end
+
+    context 'when collection_id points to a read-only shared collection' do
+      let(:read_only_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:params) do
+        {
+          collection_id: read_only_collection.id,
+          container: new_root_container,
+          materials: { products: [] },
+        }
+      end
+
+      before { post '/api/v1/reactions', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' } }
+
+      it 'returns 403 forbidden' do
+        expect(response).to have_http_status :forbidden
+      end
+
+      it 'does not create the reaction' do
+        expect(Reaction.count).to eq 0
+      end
+    end
+
+    context 'when collection_id points to a writable shared collection' do
+      let(:writable_collection) do
+        create(:collection, user: other_user).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:add_elements])
+        end
+      end
+      let(:params) do
+        {
+          name: 'shared_write_reaction',
+          collection_id: writable_collection.id,
+          container: new_root_container,
+          materials: { products: [] },
+        }
+      end
+
+      before { post '/api/v1/reactions', params: params.to_json, headers: { 'CONTENT_TYPE' => 'application/json' } }
+
+      it 'returns 201 created' do
+        expect(response).to have_http_status :created
+      end
+
+      it 'creates the reaction in the shared collection' do
+        reaction = Reaction.find_by(name: 'shared_write_reaction')
+        expect(reaction).not_to be_nil
+        expect(reaction.collections).to include(writable_collection)
       end
     end
   end

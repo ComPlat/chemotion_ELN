@@ -1,12 +1,14 @@
 import React, { createRef } from 'react';
 import RFB from '@novnc/novnc/lib/rfb';
-import { Container, Row, Col, ListGroup } from 'react-bootstrap';
-import { uniq } from 'lodash';
+import {
+  Container, Row, Col, ListGroup
+} from 'react-bootstrap';
 
 import DeviceActions from 'src/stores/alt/actions/UserActions';
 import DeviceStore from 'src/stores/alt/stores/UserStore';
 import FocusNovnc from 'src/apps/commandAndControl/FocusNovnc';
 import BaseNavigation from 'src/components/navigation/BaseNavigation';
+import DeviceFetcher from 'src/fetchers/DeviceFetcher';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 
 // Timeout before disconnection when not focused
@@ -58,7 +60,7 @@ class CnC extends React.Component {
     DeviceStore.listen(this.UserStoreChange);
     DeviceActions.fetchNoVNCDevices();
     // Listen for window resize event and handle it accordingly
-    window.addEventListener("resize", this.handleScreenSizeChanging);
+    window.addEventListener('resize', this.handleScreenSizeChanging);
   }
 
   componentWillUnmount() {
@@ -66,7 +68,106 @@ class CnC extends React.Component {
     this.disconnect();
 
     // Remove event listener for window resize
-    window.removeEventListener("resize", this.handleScreenSizeChanging);
+    window.removeEventListener('resize', this.handleScreenSizeChanging);
+  }
+
+  handleFocus() {
+    const { rfb, isForcedScreenResizing } = this.state;
+
+    if (!rfb) { return; }
+    const tempRFB = rfb;
+    tempRFB.viewOnly = false;
+
+    // Focuses the RFB instance
+    rfb.focus();
+    this.clearTimers(); // Clear the auto blur and auto disconnect timers
+    this.setState({ rfb: tempRFB, isNotFocused: false, showDeviceList: false });
+
+    // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
+    if (isForcedScreenResizing) {
+      setTimeout(() => {
+        this.handleScreenSizeChanging();
+      }, 1);
+    }
+  }
+
+  /**
+   * Handles the event when the screen size is changing.
+   * If screen resizing is forced, toggles the `scaleViewport` property of the RFB instance.
+   * This is done by setting it to false and then back to true, which triggers a resize.
+   */
+  handleScreenSizeChanging() {
+    // If there is no RFB instance or screen resizing is not forced, return early
+    const { rfb, isForcedScreenResizing } = this.state;
+    if (!rfb || !isForcedScreenResizing) { return; }
+    const tempRFB = rfb;
+    // Toggle the `scaleViewport` property of the RFB instance
+    tempRFB.scaleViewport = false;
+    tempRFB.scaleViewport = true;
+
+    this.setState({ rfb: tempRFB });
+  }
+
+  /*
+   * Toggles the `scaleViewport` property of the RFB instance and updates the state accordingly.
+   * Also clears the auto blur and auto disconnect timers and updates the state accordingly.
+   */
+  handleForceScreenResizing() {
+    // If there is no RFB instance, return early
+    const { rfb, isForcedScreenResizing } = this.state;
+    if (!rfb) { return; }
+    // Create a copy of the current RFB instance
+    const tempRFB = rfb;
+    // Toggle the `scaleViewport` property of the RFB instance
+    tempRFB.scaleViewport = !isForcedScreenResizing;
+    // Clear the auto blur and auto disconnect timers
+    this.clearTimers();
+    // Update the state with the new RFB instance and toggled `isForcedScreenResizing` property
+    this.setState({
+      rfb: tempRFB,
+      isForcedScreenResizing: !isForcedScreenResizing
+    });
+  }
+
+  handleBlur() {
+    const { rfb, isForcedScreenResizing } = this.state;
+    if (!rfb) { return; }
+    const tempRFB = rfb;
+    tempRFB.viewOnly = true;
+    // Toggle the device list when the screen is blurred
+    // This provides a way to hide the device list when the user is not focused on the screen
+    // this.toggleDeviceList();
+    this.clearTimers();
+    const disconnectTime = setTimeout(this.autoDisconnect, TIME_DISCO);
+    this.setState({
+      rfb: tempRFB, isNotFocused: true, showDeviceList: true, autoDisconnect: disconnectTime
+    });
+
+    // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
+    if (isForcedScreenResizing) {
+      setTimeout(() => {
+        this.handleScreenSizeChanging();
+      }, 1);
+    }
+  }
+
+  handleCursor() {
+    const { forceCursor } = this.state;
+    this.setState({ forceCursor: !forceCursor });
+  }
+
+  handleMouseEnter() {
+    const { rfb, isNotFocused } = this.state;
+    if (!rfb || isNotFocused) { return; }
+    this.clearTimers();
+  }
+
+  handleMouseLeave() {
+    const { isNotFocused } = this.state;
+    if (isNotFocused) { return; }
+    this.clearTimers();
+    const blurTime = setTimeout(this.handleBlur, TIME_BLUR);
+    this.setState({ autoBlur: blurTime });
   }
 
   UserStoreChange(UserStoreState) {
@@ -82,102 +183,15 @@ class CnC extends React.Component {
   }
 
   clearTimers() {
-    clearTimeout(this.state.autoBlur);
-    clearTimeout(this.state.autoDisconnect);
-  }
-
-  handleFocus() {
-    if (!this.state.rfb) { return; }
-    const tempRFB = this.state.rfb;
-    tempRFB.viewOnly = false;
-
-    // Focuses the RFB instance
-    this.state.rfb.focus();
-    this.clearTimers(); // Clear the auto blur and auto disconnect timers
-    this.setState({ rfb: tempRFB, isNotFocused: false, showDeviceList: false });
-
-    // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
-    if (this.state.isForcedScreenResizing) {
-      setTimeout(() => {
-        this.handleScreenSizeChanging();
-      }, 1);
-    }
-  }
-
-  /**
-   * Handles the event when the screen size is changing.
-   * If screen resizing is forced, toggles the `scaleViewport` property of the RFB instance.
-   * This is done by setting it to false and then back to true, which triggers a resize.
-   */
-  handleScreenSizeChanging() {
-    // If there is no RFB instance or screen resizing is not forced, return early
-    if (!this.state.rfb || !this.state.isForcedScreenResizing) { return; }
-    const tempRFB = this.state.rfb;
-    // Toggle the `scaleViewport` property of the RFB instance
-    tempRFB.scaleViewport = false;
-    tempRFB.scaleViewport = true;
-
-    this.setState({ rfb: tempRFB });
-  }
-
-  /*
-   * Toggles the `scaleViewport` property of the RFB instance and updates the state accordingly.
-   * Also clears the auto blur and auto disconnect timers and updates the state accordingly.
-   */
-  handleForceScreenResizing() {
-    // If there is no RFB instance, return early
-    if (!this.state.rfb) { return; }
-    // Create a copy of the current RFB instance
-    const tempRFB = this.state.rfb;
-    // Toggle the `scaleViewport` property of the RFB instance
-    tempRFB.scaleViewport = !this.state.isForcedScreenResizing;
-    // Clear the auto blur and auto disconnect timers
-    this.clearTimers();
-    // Update the state with the new RFB instance and toggled `isForcedScreenResizing` property
-    this.setState({
-      rfb: tempRFB,
-      isForcedScreenResizing: !this.state.isForcedScreenResizing
-    });
-  }
-
-  handleBlur() {
-    if (!this.state.rfb) { return; }
-    const tempRFB = this.state.rfb;
-    tempRFB.viewOnly = true;
-    // Toggle the device list when the screen is blurred
-    // This provides a way to hide the device list when the user is not focused on the screen
-    //this.toggleDeviceList();
-    this.clearTimers();
-    const disconnectTime = setTimeout(this.autoDisconnect, TIME_DISCO);
-    this.setState({ rfb: tempRFB, isNotFocused: true, showDeviceList: true, autoDisconnect: disconnectTime });
-
-    // If screen resizing is forced, trigger the `handleScreenSizeChanging` function
-    if (this.state.isForcedScreenResizing) {
-      setTimeout(() => {
-        this.handleScreenSizeChanging();
-      }, 1);
-    }
-  }
-
-  handleCursor() {
-    this.setState({ forceCursor: !this.state.forceCursor });
-  }
-
-  handleMouseEnter() {
-    if (!this.state.rfb || this.state.isNotFocused) { return; }
-    this.clearTimers();
-  }
-
-  handleMouseLeave() {
-    if (this.state.isNotFocused) { return; }
-    this.clearTimers();
-    const blurTime = setTimeout(this.handleBlur, TIME_BLUR);
-    this.setState({ autoBlur: blurTime });
+    const { autoBlur, autoDisconnect } = this.state;
+    clearTimeout(autoBlur);
+    clearTimeout(autoDisconnect);
   }
 
   connect() {
     this.disconnect();
-    const { id, target, password } = this.state.selected;
+    const { selected } = this.state;
+    const { id, target, password } = selected;
     if (!this.canvasRef.current || !id || !target) { return; }
 
     const rfb = new RFB(
@@ -186,7 +200,7 @@ class CnC extends React.Component {
       {
         repeaterID: '',
         shared: true,
-        credentials: { password: password },
+        credentials: { password },
       }
     );
     rfb.viewOnly = true;
@@ -207,47 +221,29 @@ class CnC extends React.Component {
   }
 
   fetchConnections() {
-    const {
-      selected, isNotFocused
-    } = this.state;
+    const { selected, isNotFocused } = this.state;
     if (!selected || !selected.id) { return; }
 
-    fetch(`/api/v1/devices/current_connection?id=${selected.id}&status=${isNotFocused}`, {
-      credentials: 'same-origin'
-    }).then((response) => response.json())
-      .then((json) => {
-        let using = 0;
-        let watching = 0;
-        if (json.result && Array.isArray(json.result) && json.result.length > 0) {
-          const data = uniq(json.result)
-            .filter((line) => line && line.includes(','))
-            .map((line) => line.split(','));
-          const conn = Object.fromEntries(data);
-
-          Object.keys(conn).forEach((k) => {
-            if (conn[k] === '0') { using += 1; }
-            if (conn[k] === '1') { watching += 1; }
-          });
-        }
+    DeviceFetcher.fetchCurrentConnection(selected, isNotFocused)
+      .then((result) => {
+        const { using, watching } = result;
         this.setState({ using, watching });
-      })
-      .catch((error) => {
-        console.error('Error fetching connections:', error);
-        this.setState({ using: 0, watching: 0 });
       });
   }
 
   autoDisconnect() {
-    clearInterval(this.state.connections);
-    this.state.rfb.disconnect();
+    const { rfb, connections } = this.state;
+    clearInterval(connections);
+    rfb.disconnect();
   }
 
   disconnect() {
-    clearInterval(this.state.connections);
-    if (!this.state.rfb) {
+    const { rfb, connections } = this.state;
+    clearInterval(connections);
+    if (!rfb) {
       return;
     }
-    this.state.rfb.disconnect();
+    rfb.disconnect();
     this.setState((prevState) => ({ ...prevState, rfb: null }));
   }
 
@@ -290,8 +286,8 @@ class CnC extends React.Component {
               {device.name}
               {selected.id === device.id && (
                 <i className={`fa ${connected
-                    ? 'fa-check-circle-o text-success'
-                    : 'fa-times-circle-o text-danger'}`}
+                  ? 'fa-check-circle-o text-success'
+                  : 'fa-times-circle-o text-danger'}`}
                 />
               )}
             </div>

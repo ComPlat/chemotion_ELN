@@ -96,7 +96,7 @@ describe 'Copy reaction' do
         :collection_share,
         collection: collection,
         shared_with: user1,
-        permission_level: 10,
+        permission_level: CollectionShare.permission_level(:pass_ownership),
         sample_detail_level: 10,
         reaction_detail_level: 10,
       )
@@ -108,7 +108,7 @@ describe 'Copy reaction' do
         :collection_share,
         collection: collection,
         shared_with: user1,
-        permission_level: 10,
+        permission_level: CollectionShare.permission_level(:pass_ownership),
         sample_detail_level: 10,
         reaction_detail_level: 10,
       )

@@ -2,7 +2,8 @@ import Component from 'src/models/Component';
 import ComponentStore from 'src/stores/alt/stores/ComponentStore';
 import expect from 'expect';
 import sinon from 'sinon';
-import { describe, it, beforeEach } from 'mocha';
+import { rootStore } from 'src/stores/mobx/RootStore';
+import { addMiddleware } from 'mobx-state-tree';
 
 describe('Component', () => {
   let component;
@@ -978,21 +979,21 @@ describe('Component', () => {
   });
 
   describe('concentrationCheckWarning', () => {
-    let mockAdd;
-    let originalNotificationActions;
+    let notificationCalls;
+    let disposeMiddleware;
 
     beforeEach(() => {
-      // Mock NotificationActions
-      mockAdd = sinon.spy();
-      originalNotificationActions = require('src/stores/alt/actions/NotificationActions');
-      require('src/stores/alt/actions/NotificationActions').add = mockAdd;
+      notificationCalls = [];
+      disposeMiddleware = addMiddleware(rootStore.notificationsStore, (call, next) => {
+        if (call.name === 'add') {
+          notificationCalls.push(call.args[0]);
+        }
+        return next(call);
+      });
     });
 
     afterEach(() => {
-      // Restore original NotificationActions
-      if (originalNotificationActions) {
-        require('src/stores/alt/actions/NotificationActions').add = originalNotificationActions.add;
-      }
+      disposeMiddleware();
     });
 
     it('should not show warning when concentration is lower than starting concentration', (done) => {
@@ -1002,7 +1003,7 @@ describe('Component', () => {
       component.concentrationCheckWarning();
 
       setTimeout(() => {
-        expect(mockAdd.called).toBe(false);
+        expect(notificationCalls.length).toBe(0);
         done();
       }, 600); // Wait longer than the 500ms timeout
     });
@@ -1139,6 +1140,36 @@ describe('Component', () => {
       component.calculateTargetConcentration(totalVolume);
 
       expect(component.molarity_value).toBe(null);
+    });
+  });
+
+  describe('resetAmounts', () => {
+    it('sets amount_mol, amount_g, amount_l, molarity_value, and concn to 0', () => {
+      component.amount_mol = 0.05;
+      component.amount_g = 9.0;
+      component.amount_l = 0.005;
+      component.molarity_value = 0.5;
+      component.concn = 0.5;
+
+      component.resetAmounts();
+
+      expect(component.amount_mol).toBe(0);
+      expect(component.amount_g).toBe(0);
+      expect(component.amount_l).toBe(0);
+      expect(component.molarity_value).toBe(0);
+      expect(component.concn).toBe(0);
+    });
+
+    it('does not affect purity, equivalent, or other fields', () => {
+      component.purity = 0.98;
+      component.equivalent = 2.0;
+      component.density = 1.2;
+
+      component.resetAmounts();
+
+      expect(component.purity).toBe(0.98);
+      expect(component.equivalent).toBe(2.0);
+      expect(component.density).toBe(1.2);
     });
   });
 });

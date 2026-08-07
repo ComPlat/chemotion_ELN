@@ -1,14 +1,18 @@
 import { keys, values } from 'mobx';
-import { flow, types } from 'mobx-state-tree';
+import { flow, getRoot, types } from 'mobx-state-tree';
 import { cloneDeep } from 'lodash';
 
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import CollectionSharesFetcher from 'src/fetchers/CollectionSharesFetcher';
 import CollectionElementsFetcher from 'src/fetchers/CollectionElementsFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import {
+  sampleAssociationLockNotification,
+  sampleAssociationMoveNotification
+} from 'src/utilities/notificationMessages';
 
 export const Collection = types.model({
   ancestry: types.string,
@@ -20,10 +24,12 @@ export const Collection = types.model({
   inventory_prefix: types.maybeNull(types.string),
   label: types.string,
   is_locked: types.boolean,
-  owner: types.maybeNull(types.string),
+  owner: types.maybeNull(types.string), // "First Last (ABBR)" — shown in the provenance popover
+  owner_name: types.maybeNull(types.string), // plain "First Last" — the shared tree's owner-root label
   permission_level: types.maybeNull(types.integer), // temp for testing
   position: types.maybeNull(types.number),
   shared: types.maybeNull(types.boolean),
+  shared_via_group: types.optional(types.boolean, false),
   tabs_segment: types.optional(types.frozen({}), {}),
 }).actions(self => ({
   addChild(collection) {
@@ -111,6 +117,9 @@ export const CollectionsStore = types
     shared_with_me_collections: types.array(Collection),
     shared_with_me_collection_tree: types.maybeNull(types.frozen({})),
     collection_shares: types.array(CollectionShares),
+    // Per shared-to-me collection (keyed by its id), the current user's own contributing shares
+    // (direct + per group), lazily fetched for the provenance popover.
+    my_collection_shares: types.array(CollectionShares),
     update_tree: types.maybeNull(types.boolean, false),
     toggled_tree_items: types.array(types.string, []),
   })
@@ -165,16 +174,16 @@ export const CollectionsStore = types
       if (response.error) {
         const errorMessage =
           (response.error.includes('invalid') ? 'You do not have the right to export all selected collections' : response.error)
-        NotificationActions.add({ title: 'Export Collection', message: errorMessage, level: 'error', autoDismiss: 10 })
+        getRoot(self).notificationsStore.add({ title: 'Export Collection', message: errorMessage, level: 'error', autoDismiss: 10 })
       }
     }),
     importCollections: flow(function* importCollections(params) {
       const response = yield CollectionsFetcher.importCollections(params)
 
       if (response.error) {
-        NotificationActions.add({ title: 'Import Collection', message: response.error, level: 'error', autoDismiss: 10 })
+        getRoot(self).notificationsStore.add({ title: 'Import Collection', message: response.error, level: 'error', autoDismiss: 10 })
       } else {
-        NotificationActions.notifyExImportStatus('Collection import', response.status);
+        getRoot(self).notificationsStore.notifyExImportStatus('Collection import', response.status);
       }
     }),
     useOrCreateCollection: flow(function* useOrCreateCollection(collectionParams) {
@@ -203,12 +212,29 @@ export const CollectionsStore = types
         }
       }
     }),
+    getMySharesFor: flow(function* getMySharesFor(collectionId) {
+      const myShares = yield CollectionSharesFetcher.getMyCollectionShares(collectionId)
+      if (myShares) {
+        const index = self.my_collection_shares.findIndex((entry) => entry.id == collectionId)
+        if (index == -1) {
+          self.my_collection_shares.push({ id: collectionId, shared_with_users: myShares })
+        } else {
+          self.my_collection_shares[index].shared_with_users = myShares
+        }
+      }
+    }),
     addCollectionShare: flow(function* addCollectionShare(params, currentUser) {
       const response = yield CollectionSharesFetcher.addCollectionShare(params)
       if (response.status === 204) {
         self.fetchCollections()
         self.getSharedWithUsers(params.collection_id)
         self.createSharingMessage(currentUser, params.user_ids)
+      }
+    }),
+    takeOwnership: flow(function* takeOwnership(collectionId) {
+      const collection = yield CollectionSharesFetcher.takeOwnership(collectionId);
+      if (collection) {
+        self.fetchCollections();
       }
     }),
     updateCollectionShare: flow(function* updateCollectionShare(collectionShareId, params) {
@@ -218,8 +244,8 @@ export const CollectionsStore = types
       }
     }),
     deleteCollectionShare: flow(function* deleteCollectionShare(collectionShareId, collectionId) {
-      const response = yield CollectionSharesFetcher.deleteCollectionShare(collectionShareId)
-      if (response.status === 204) {
+      const success = yield CollectionSharesFetcher.deleteCollectionShare(collectionShareId)
+      if (success) {
         self.fetchCollections()
         self.getSharedWithUsers(collectionId)
       }
@@ -230,19 +256,46 @@ export const CollectionsStore = types
         if (isNewCollection) {
           self.deleteCollection(collectionId)
         }
-        NotificationActions.add({ title: errorTitle, message: response.error, level: 'error', autoDismiss: 10 })
+        getRoot(self).notificationsStore.add({ title: errorTitle, message: response.error, level: 'error', autoDismiss: 10 })
       } else if (response.status === 204) {
         return true
       }
     }),
-    removeElementsFromCollection: flow(function* removeElementsFromCollection(params) {
-      const response = yield CollectionElementsFetcher.deleteElementsFromCollection(params)
+    // Returns { success, lockedSampleIds }: success is false only on request failure; lockedSampleIds
+    // lists samples the backend kept because they belong to a reaction or wellplate still in the
+    // collection. Callers that give their own feedback (e.g. move) can pass { notifyLock: false } to
+    // suppress the built-in association-lock toast and react to lockedSampleIds themselves.
+    removeElementsFromCollection: flow(function* removeElementsFromCollection(params, { notifyLock = true } = {}) {
+      const response = yield CollectionElementsFetcher.deleteElementsFromCollection(params);
 
-      if (response.status === 204) {
-        // refresh elements
-        ElementActions.refreshElementsAfterCollectionChanges(params.ui_state.currentCollection.id)
-        return true
+      // A network/parse failure resolves to undefined; a 204 resolves to null. Surface the failure:
+      // otherwise a dropped DELETE is completely silent — and in a move the selection has already
+      // been copied into the target, so silence would strand the samples in both collections.
+      if (response === undefined) {
+        getRoot(self).notificationsStore.add({
+          title: 'Remove from Collection',
+          message: 'The request failed, so the selection was not removed. Please try again.',
+          level: 'error',
+          autoDismiss: 10,
+        });
+        return { success: false, lockedSampleIds: [] };
       }
+
+      if (response && response.error) {
+        getRoot(self).notificationsStore.add({
+          title: 'Remove from Collection', message: response.error, level: 'error', autoDismiss: 10
+        });
+        return { success: false, lockedSampleIds: [] };
+      }
+
+      const lockedSampleIds = (response && response.locked_sample_ids) || [];
+      if (notifyLock && lockedSampleIds.length > 0) {
+        getRoot(self).notificationsStore.add(sampleAssociationLockNotification(lockedSampleIds.length));
+      }
+
+      // refresh elements
+      ElementActions.refreshElementsAfterCollectionChanges(params.ui_state.currentCollection.id);
+      return { success: true, lockedSampleIds };
     }),
     assignElementsToCollection: flow(function* assignElementsToCollection(collectionParams, uiState) {
       const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams)
@@ -258,22 +311,40 @@ export const CollectionsStore = types
       }
     }),
     moveElementsToCollection: flow(function* moveElementsToCollection(collectionParams, uiState) {
-      const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams)
+      const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams);
 
       if (collectionId) {
-        const response = yield self.addElementsToCollection(collectionId, uiState, 'Move to Collection', isNewCollection)
+        const response = yield self.addElementsToCollection(
+          collectionId,
+          uiState,
+          'Move to Collection',
+          isNewCollection
+        );
 
         if (response) {
-          const elementsRemoved = yield self.removeElementsFromCollection({ collection_id: uiState.currentCollection.id, ui_state: uiState })
+          const { success, lockedSampleIds } = yield self.removeElementsFromCollection(
+            { collection_id: uiState.currentCollection.id, ui_state: uiState },
+            { notifyLock: false }
+          );
 
-          if (elementsRemoved && isNewCollection) {
-            self.addNewCollectionToOwnCollection(newCollection)
+          // Samples bound to a reaction/wellplate cannot leave that collection, so they were copied
+          // to the target but stayed in the source: warn that the move was only partial.
+          if (success && lockedSampleIds.length > 0) {
+            getRoot(self).notificationsStore.add(sampleAssociationMoveNotification());
+          }
+
+          if (success && isNewCollection) {
+            self.addNewCollectionToOwnCollection(newCollection);
           }
         }
       }
     }),
     addElementsToCollectionAndShare: flow(function* addElementsToCollectionAndShare(user, params) {
-      const collectionParams = { label: `My project with ${user.name}`, parent_id: '', inventory_id: '' }
+      const collectionParams = {
+        label: (params.label && params.label.length > 0) ? params.label : `My project with ${user.name}`,
+        parent_id: params.parentId ?? '',
+        inventory_id: '',
+      };
       const newCollection = yield self.addCollection(collectionParams, false)
 
       if (newCollection) {
@@ -293,9 +364,16 @@ export const CollectionsStore = types
       }
     }),
     collectionShareForElements(params) {
+      const hasCustomLabel = params.label && params.label.length > 0;
+      const multipleRecipients = params.users.length > 1;
       params.users.forEach((user) => {
-        self.addElementsToCollectionAndShare(user, params)
-      })
+        // One shared collection is created per recipient. The default "My project with <name>" is
+        // already unique per recipient, but a single custom label shared with several people would
+        // create identically-named collections — suffix it with the recipient's name to keep them
+        // distinguishable.
+        const label = hasCustomLabel && multipleRecipients ? `${params.label} – ${user.name}` : params.label;
+        self.addElementsToCollectionAndShare(user, { ...params, label });
+      });
     },
     createSharingMessage(currentUser, userIds) {
       const messageParams = {
@@ -331,7 +409,7 @@ export const CollectionsStore = types
             (self.chemotion_repository_collection && collectionItem.ancestorIds.includes(self.chemotion_repository_collection.id))
               ? self.chemotion_repository_collection.children
               : self.own_collections
-          
+
           self.addCollectionToTree(collectionItem, collectionTree)
         }
       });
@@ -339,15 +417,28 @@ export const CollectionsStore = types
     setSharedWithMeCollections(collections) {
       // group shared collections by owner
       const sharedWithMeCollections = self.presortSharedWithMeCollections(collections)
+      // The set of collections actually shared with the user — used to decide truncation below.
+      const sharedIds = new Set(sharedWithMeCollections.map((collection) => collection.id));
 
       sharedWithMeCollections.forEach((collection, i) => {
         if (i === 0 || i > 0 && sharedWithMeCollections[i - 1].owner !== collection.owner) {
-          const ownerCollection = { ancestry: '/', id: 0, label: collection.owner, is_locked: true, owner: collection.owner }
+          // Group by `owner` (with abbreviation — a stable key), but label the root with the plain
+          // `owner_name`; the abbreviation is redundant here and lives in the provenance popover.
+          const ownerName = collection.owner_name || collection.owner
+          const ownerCollection = {
+            ancestry: '/', id: 0, label: ownerName, is_locked: true,
+            owner: collection.owner, owner_name: ownerName,
+          }
           self.shared_with_me_collections.push(Collection.create(ownerCollection))
         }
         const parentOwnerIndex = self.shared_with_me_collections.findIndex(element => element.owner == collection.owner)
         if (parentOwnerIndex !== -1) {
-          self.shared_with_me_collections[parentOwnerIndex].addChild(collection)
+          const node = Collection.create(collection);
+          // Preserve the hierarchy when the parent is also shared; when it is not (the branch is
+          // "skipped"), truncate by showing this collection at the top level under its owner.
+          const directParentId = node.ancestorIds[node.ancestorIds.length - 1];
+          if (directParentId == null || !sharedIds.has(directParentId)) { node.resetAncestry(); }
+          self.addCollectionToTree(node, self.shared_with_me_collections[parentOwnerIndex].children);
         }
       });
     },
@@ -456,4 +547,5 @@ export const CollectionsStore = types
     get sharedCollectionIds() { return self.shared_with_me_collections.flatMap(collection => collection.idAndDescendantIds) },
     descendantIds(collection) { return collection.children.flatMap(collection => collection.idAndDescendantIds) },
     sharedWithUsers(collection_id) { return self.collection_shares.find((share) => share.id == collection_id) },
+    mySharesFor(collection_id) { return self.my_collection_shares.find((entry) => entry.id == collection_id) },
   }));

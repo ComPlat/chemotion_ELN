@@ -33,6 +33,12 @@ module.exports = {
         test: /\.md$/,
         use: 'raw-loader',
       },
+      {
+        test: /\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
+      },
     ],
   },
 };

@@ -1,10 +1,9 @@
 // eslint-disable-next-line import/no-unresolved
-import { collectionHasPermission } from 'src/utilities/collectionUtilities';
+import { collectionHasPermission, collectionOptions, filterParamsFromUIState } from 'src/utilities/collectionUtilities';
+// eslint-disable-next-line import/no-unresolved
+import { PermissionConst } from 'src/utilities/PermissionConst';
+import { List } from 'immutable';
 import expect from 'expect';
-import {
-  describe, it
-} from 'mocha';
-
 function createCollectionDummy(collectionShareId = undefined, permissionLevel = 0) {
   const currentCollection = {};
   if (collectionShareId !== undefined) {
@@ -25,6 +24,105 @@ describe('collectionUtilities', () => {
       it('has no permissions', () => {
         expect(collectionHasPermission(createCollectionDummy(2, 0), 1)).toBe(false);
       });
+    });
+  });
+
+  describe('.collectionOptions', () => {
+    const store = () => ({
+      own_collections: [
+        {
+          id: 1,
+          label: 'Project',
+          children: [{ id: 2, label: 'Sub', children: [] }],
+        },
+      ],
+      shared_with_me_collections: [
+        {
+          id: 0,
+          label: 'Alice',
+          children: [
+            { id: 3, label: 'Editable', permission_level: PermissionConst.AddElements, children: [] },
+            { id: 4, label: 'ReadOnly', permission_level: 0, children: [] },
+          ],
+        },
+      ],
+    });
+
+    it('groups owned collections under a "My Collections" label', () => {
+      const [owned] = collectionOptions(store(), false);
+
+      expect(owned.label).toBe('My Collections');
+      expect(owned.options.map((o) => o.id)).toEqual([1, 2]);
+    });
+
+    it('stamps nesting depth so child collections can be indented', () => {
+      const [owned] = collectionOptions(store(), false);
+
+      expect(owned.options.map((o) => o.depth)).toEqual([0, 1]);
+    });
+
+    it('omits shared collections when not requested', () => {
+      const groups = collectionOptions(store(), false);
+
+      expect(groups).toHaveLength(1);
+    });
+
+    it('keeps a per-owner "Shared by" group and drops unassignable collections', () => {
+      const groups = collectionOptions(store(), true);
+
+      expect(groups.map((g) => g.label)).toEqual(['My Collections', 'Shared by Alice']);
+      // Only the collection the user may add elements into is offered.
+      expect(groups[1].options.map((o) => o.id)).toEqual([3]);
+    });
+  });
+
+  describe('.filterParamsFromUIState', () => {
+    const selection = (checkedIds) => ({
+      checkedAll: false,
+      checkedIds: List(checkedIds),
+      uncheckedIds: List(),
+    });
+
+    it('includes built-in element selections', () => {
+      const uiState = {
+        currentCollection: { id: 1 },
+        sample: selection([7]),
+      };
+
+      const params = filterParamsFromUIState(uiState);
+
+      expect(params.sample).toEqual({
+        all: false, included_ids: List([7]), excluded_ids: List(), collection_id: 1,
+      });
+    });
+
+    // Regression: generic (labimotion) klass selections must be collected synchronously from
+    // uiState.klasses. They were previously added inside an un-awaited promise callback that
+    // resolved after the function returned, so they were silently dropped from the payload.
+    it('includes generic element selections synchronously', () => {
+      const uiState = {
+        currentCollection: { id: 1 },
+        klasses: ['my_generic'],
+        my_generic: selection([42]),
+      };
+
+      const params = filterParamsFromUIState(uiState);
+
+      expect(params.my_generic).toEqual({
+        all: false, included_ids: List([42]), excluded_ids: List(), collection_id: 1,
+      });
+    });
+
+    it('omits generic types with an empty selection', () => {
+      const uiState = {
+        currentCollection: { id: 1 },
+        klasses: ['my_generic'],
+        my_generic: selection([]),
+      };
+
+      const params = filterParamsFromUIState(uiState);
+
+      expect(params.my_generic).toBe(undefined);
     });
   });
 });

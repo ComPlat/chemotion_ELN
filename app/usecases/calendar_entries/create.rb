@@ -11,7 +11,9 @@ module Usecases
       end
 
       def perform!
-        entry = user.calendar_entries.new(params.except(:notify_user_ids))
+        normalized = params.except(:notify_user_ids)
+        normalized[:eventable_type] = normalized[:eventable_type].camelize if normalized[:eventable_type].present?
+        entry = user.calendar_entries.new(normalized)
         entry.save!
 
         # notify_user_ids is an attr_accessor

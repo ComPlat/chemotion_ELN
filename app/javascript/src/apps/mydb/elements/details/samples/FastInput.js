@@ -1,11 +1,11 @@
 /* eslint-disable react/forbid-prop-types */
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   InputGroup, OverlayTrigger, Tooltip, Form, Button
 } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import uuid from 'uuid';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import CasLookupFetcher from 'src/fetchers/CasLookupFetcher';
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import MatrixCheck from 'src/components/common/MatrixCheck';
@@ -13,6 +13,7 @@ import UserStore from 'src/stores/alt/stores/UserStore';
 import { validateCas } from 'src/utilities/CasValidation';
 
 function FastInput({ fnHandle }) {
+  const { notifications } = useContext(StoreContext);
   const [value, setValue] = useState('');
 
   const currentUser = (UserStore.getState() && UserStore.getState().currentUser) || {};
@@ -21,12 +22,11 @@ function FastInput({ fnHandle }) {
   if (!componentEnabled) return null;
 
   const notify = (_params) => {
-    NotificationActions.add({
+    notifications.add({
       title: _params.title,
       message: _params.msg,
       level: _params.lvl,
       position: 'tc',
-      dismissible: 'button',
       autoDismiss: 5,
       uid: uuid.v4()
     });

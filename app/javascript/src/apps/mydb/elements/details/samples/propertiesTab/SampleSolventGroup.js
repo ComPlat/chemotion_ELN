@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Form, Table, Card
@@ -8,12 +8,13 @@ import { Select } from 'src/components/common/Select';
 import { defaultMultiSolventsSmilesOptions } from 'src/components/staticDropdownOptions/options';
 import MoleculesFetcher from 'src/fetchers/MoleculesFetcher';
 import { ionic_liquids } from 'src/components/staticDropdownOptions/ionic_liquids';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
 
 function SolventDetails({
-  solvent, deleteSolvent, onChangeSolvent, sampleType
+  solvent, deleteSolvent, onChangeSolvent, sampleType, isDisabled
 }) {
+  const { notifications } = useContext(StoreContext);
   const currentPurity = solvent?.purity ?? 1.0;
   const [purityInput, setPurityInput] = React.useState(currentPurity);
 
@@ -54,7 +55,7 @@ function SolventDetails({
 
     const num = parseFloat(value);
     if (!Number.isNaN(num) && (num < 0 || num > 1)) {
-      NotificationActions.add({
+      notifications.add({
         message: 'Purity value should be ≥ 0 and ≤ 1',
         level: 'error',
       });
@@ -110,6 +111,7 @@ function SolventDetails({
             metricPrefixes={metricPrefixes}
             precision={3}
             onChange={changeVolume}
+            disabled={isDisabled}
           />
         </td>
       )}
@@ -119,6 +121,7 @@ function SolventDetails({
           name="solvent_ratio"
           value={solvent.ratio}
           onChange={changeRatio}
+          disabled={isDisabled}
         />
       </td>
       <td>
@@ -128,6 +131,7 @@ function SolventDetails({
           value={purityInput}
           onChange={changePurity}
           onBlur={handlePurityBlur}
+          disabled={isDisabled}
         />
       </td>
       <td>
@@ -136,12 +140,14 @@ function SolventDetails({
           name="solvent_vendor"
           value={solvent.vendor}
           onChange={changeVendor}
+          disabled={isDisabled}
         />
       </td>
       <td>
         <Button
           variant="danger"
           onClick={() => deleteSolvent(solvent)}
+          disabled={isDisabled}
           style={{
             width: '30px',
             height: '30px',
@@ -158,8 +164,9 @@ function SolventDetails({
 }
 
 function SampleSolventGroup({
-  materialGroup, sample, dropSample, deleteSolvent, onChangeSolvent
+  materialGroup, sample, dropSample, deleteSolvent, onChangeSolvent, isDisabled
 }) {
+  const { notifications } = useContext(StoreContext);
   const sampleSolvents = sample.solvent ?? [];
   const sampleType = sample.sample_type;
 
@@ -175,11 +182,10 @@ function SampleSolventGroup({
         dropSample(molecule, null, materialGroup, solvent.external_label);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-        NotificationActions.add({
+        notifications.add({
           title: 'Error',
           message: 'Failed to fetch molecule data.',
           level: 'error',
-          dismissible: true,
           autoDismiss: 5
         });
       });
@@ -203,6 +209,7 @@ function SampleSolventGroup({
           options={solventOptions}
           placeholder="Select solvents or drag-n-drop molecules from the sample list"
           onChange={createDefaultSolvents}
+          isDisabled={isDisabled}
         />
         {sampleSolvents.length > 0 && (
           <Table className="mt-2">
@@ -227,6 +234,7 @@ function SampleSolventGroup({
                   deleteSolvent={deleteSolvent}
                   onChangeSolvent={onChangeSolvent}
                   sampleType={sampleType}
+                  isDisabled={isDisabled}
                 />
               ))}
             </tbody>
@@ -243,6 +251,24 @@ SampleSolventGroup.propTypes = {
   deleteSolvent: PropTypes.func.isRequired,
   onChangeSolvent: PropTypes.func.isRequired,
   materialGroup: PropTypes.string.isRequired,
+  isDisabled: PropTypes.bool,
+};
+
+SampleSolventGroup.defaultProps = {
+  isDisabled: false,
+};
+
+SolventDetails.propTypes = {
+  solvent: PropTypes.object.isRequired,
+  deleteSolvent: PropTypes.func.isRequired,
+  onChangeSolvent: PropTypes.func.isRequired,
+  sampleType: PropTypes.string,
+  isDisabled: PropTypes.bool,
+};
+
+SolventDetails.defaultProps = {
+  sampleType: '',
+  isDisabled: false,
 };
 
 export { SampleSolventGroup, SolventDetails };

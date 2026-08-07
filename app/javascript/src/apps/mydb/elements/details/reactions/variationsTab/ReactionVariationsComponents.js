@@ -22,14 +22,14 @@ import {
   calculateGasMoles, calculateTON, calculateFeedstockMoles, calculateFeedstockVolume, calculateGasVolume
 } from 'src/utilities/UnitsConversion';
 
-function RowToolsCellRenderer({
+const RowToolsCellRenderer = ({
   data: row, context
-}) {
+}) => {
   const { reactionShortLabel, copyRow, removeRow } = context;
   return (
     <div>
+      <span className="me-1">{getVariationsRowName(reactionShortLabel, row.id)}</span>
       <ButtonGroup>
-        <Button size="xsm" variant="secondary">{getVariationsRowName(reactionShortLabel, row.id)}</Button>
         <Button size="xsm" variant="success" onClick={() => copyRow(row)}>
           <i className="fa fa-clone" />
         </Button>
@@ -39,7 +39,7 @@ function RowToolsCellRenderer({
       </ButtonGroup>
     </div>
   );
-}
+};
 
 RowToolsCellRenderer.propTypes = {
   data: PropTypes.shape({
@@ -145,15 +145,12 @@ function SegmentFormatter({ value: cellData, colDef }) {
   }
 }
 
-function SegmentSelectEditor({
+const SegmentSelectEditor = ({
   value: cellData, colDef, onValueChange, stopEditing
-}) {
+}) => {
   const { entry } = colDef;
   const entryData = cellData?.[entry];
-
-  if (!entryData) return null;
-
-  const { value: selected, options = [] } = entryData;
+  const { value: selected, options = [] } = entryData ?? {};
 
   const optionElements = useMemo(
     () => options.map((option) => <option key={option} value={option} selected={option === selected}>{option}</option>),
@@ -161,6 +158,8 @@ function SegmentSelectEditor({
   );
 
   useEffect(() => stopEditing, [stopEditing]);
+
+  if (!entryData) return null;
 
   const handleChange = (event) => {
     const updatedEntryData = { ...entryData, value: event.target.value };
@@ -176,7 +175,7 @@ function SegmentSelectEditor({
       {optionElements}
     </select>
   );
-}
+};
 
 SegmentSelectEditor.propTypes = {
   value: PropTypes.arrayOf(PropTypes.shape({
@@ -207,9 +206,9 @@ function MaterialFormatter({ value: cellData, colDef }) {
   return convertValueToDisplayUnit(cellData[entry].value, cellData[entry].unit, displayUnit);
 }
 
-function GroupCellEditor({
+const GroupCellEditor = ({
   value, onValueChange, stopEditing, onKeyDown
-}) {
+}) => {
   const [currentValue, setCurrentValue] = useState(() => {
     const group = value?.group ?? 1;
     const subgroup = value?.subgroup ?? 1;
@@ -273,7 +272,7 @@ function GroupCellEditor({
       onKeyDownCapture={handleKeyDown}
     />
   );
-}
+};
 
 GroupCellEditor.propTypes = {
   value: PropTypes.shape({
@@ -285,9 +284,9 @@ GroupCellEditor.propTypes = {
   stopEditing: PropTypes.bool.isRequired,
 };
 
-function GroupCellRenderer({ value: cellData }) {
+const GroupCellRenderer = ({ value: cellData }) => {
   return `${cellData.group}.${cellData.subgroup}`;
-}
+};
 
 GroupCellRenderer.propTypes = {
   value: PropTypes.shape({
@@ -488,7 +487,7 @@ function FeedstockParser({
   return { ...updatedCellData, equivalent: { ...updatedCellData.equivalent, value: equivalent } };
 }
 
-function NoteCellRenderer(props) {
+const NoteCellRenderer = (props) => {
   const { data: { id }, value } = props;
   return (
     <OverlayTrigger
@@ -502,7 +501,7 @@ function NoteCellRenderer(props) {
       <span>{value || PLACEHOLDER_CELL_TEXT}</span>
     </OverlayTrigger>
   );
-}
+};
 
 NoteCellRenderer.propTypes = {
   data: PropTypes.shape({
@@ -515,13 +514,13 @@ NoteCellRenderer.defaultProps = {
   value: '',
 };
 
-function NoteCellEditor({
+const NoteCellEditor = ({
   data: row,
   value,
   onValueChange,
   stopEditing,
   context
-}) {
+}) => {
   const [note, setNote] = useState(value);
   const { reactionShortLabel } = context;
   const textareaRef = useRef(null);
@@ -555,7 +554,7 @@ function NoteCellEditor({
   );
 
   return cellContent;
-}
+};
 
 NoteCellEditor.propTypes = {
   data: PropTypes.shape({
@@ -569,7 +568,7 @@ NoteCellEditor.propTypes = {
   }).isRequired,
 };
 
-function MaterialOverlay({ value: cellData }) {
+const MaterialOverlay = ({ value: cellData }) => {
   const { aux = null } = cellData;
 
   return (
@@ -608,7 +607,7 @@ function MaterialOverlay({ value: cellData }) {
       </div>
     </div>
   );
-}
+};
 
 MaterialOverlay.propTypes = {
   value: PropTypes.arrayOf(PropTypes.shape({
@@ -617,9 +616,9 @@ MaterialOverlay.propTypes = {
   })).isRequired,
 };
 
-function EntrySelectionHeader({
+const EntrySelectionHeader = ({
   columnGroup, names, gasType, context, displayName
-}) {
+}) => {
   const { parent, groupId } = columnGroup;
   const { setColumnDefinitions } = context;
 
@@ -673,13 +672,12 @@ function EntrySelectionHeader({
   return (
     <div>
       <div className="d-flex align-items-center w-100">
-        <button
-          type="button"
-          className="ag-header-group-cell-label btn btn-link p-0 text-start text-decoration-none"
+        <Button
+          size="sm"
           onClick={() => handleNameChange(names[(names.indexOf(displayName) + 1) % names.length] ?? displayName)}
         >
           {`${displayName} ${gasType && gasType !== 'off' ? `(${gasType})` : ''}`}
-        </button>
+        </Button>
         <Button
           variant="link"
           className="p-0 ms-1 lh-1"
@@ -705,7 +703,7 @@ function EntrySelectionHeader({
           </thead>
           <tbody>
             {entryColDefs.map((entryColDef) => {
-              const { entry, hide } = entryColDef;
+              const { entry, hide, displayUnit } = entryColDef;
               return (
                 <tr key={entry}>
                   <td className="text-center">
@@ -715,7 +713,10 @@ function EntrySelectionHeader({
                       onChange={() => handleEntrySelection(entry)}
                     />
                   </td>
-                  <td>{getUserFacingEntryName(entry)}</td>
+                  <td>
+                    {getUserFacingEntryName(entry)}
+                    {displayUnit && <span className="ms-1">{`(${displayUnit})`}</span>}
+                  </td>
                 </tr>
               );
             })}
@@ -724,7 +725,7 @@ function EntrySelectionHeader({
       </AppModal>
     </div>
   );
-}
+};
 
 EntrySelectionHeader.propTypes = {
   columnGroup: PropTypes.shape({
@@ -747,15 +748,11 @@ EntrySelectionHeader.defaultProps = {
   gasType: '',
 };
 
-function ToolHeader() {
-  return (
-    <span>Tools</span>
-  );
-}
-
-function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
+const ColumnSelection = ({ selectedColumns, availableColumns, onApply }) => {
   const [showModal, setShowModal] = useState(false);
   const [currentColumns, setCurrentColumns] = useState(selectedColumns);
+  const [pendingDeselection, setPendingDeselection] = useState(null);
+  const pendingDeselectionConfirmation = pendingDeselection !== null;
 
   useEffect(() => {
     // Remove currently selected columns that are no longer available.
@@ -781,9 +778,28 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
   };
 
   const handleSelectChange = (key) => (selectedOptions) => {
-    const updatedCurrentColumns = { ...currentColumns };
-    updatedCurrentColumns[key] = selectedOptions ? selectedOptions.map((option) => option.value) : [];
-    setCurrentColumns(updatedCurrentColumns);
+    const newValues = selectedOptions ? selectedOptions.map((option) => option.value) : [];
+    const currentValues = currentColumns[key] || [];
+    const deselectedLabels = currentValues
+      .filter((id) => !newValues.includes(id))
+      .map((id) => availableColumns[key][id]);
+
+    if (deselectedLabels.length > 0) {
+      setPendingDeselection({ key, newValues, deselectedLabels: deselectedLabels.join(', ') });
+    } else {
+      setCurrentColumns((prev) => ({ ...prev, [key]: newValues }));
+    }
+  };
+
+  const handleConfirmDeselection = () => {
+    if (!pendingDeselection) return;
+    const { key, newValues } = pendingDeselection;
+    setCurrentColumns((prev) => ({ ...prev, [key]: newValues }));
+    setPendingDeselection(null);
+  };
+
+  const handleCancelDeselection = () => {
+    setPendingDeselection(null);
   };
 
   const splitCamelCase = (str) => str.replace(/([a-z])([A-Z])/g, '$1 $2');
@@ -791,12 +807,13 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
 
   return (
     <>
-      <Button size="sm" variant="primary" onClick={() => setShowModal(true)} className="mb-2">
+      <Button size="sm" onClick={() => setShowModal(true)} className="mb-2">
+        <i className="fa fa-pencil me-1" />
         Select Columns
       </Button>
 
       <AppModal
-        show={showModal}
+        show={showModal && !pendingDeselectionConfirmation}
         onHide={() => setShowModal(false)}
         animation={false}
         title="Column Selection"
@@ -815,9 +832,29 @@ function ColumnSelection({ selectedColumns, availableColumns, onApply }) {
           </div>
         ))}
       </AppModal>
+
+      <AppModal
+        show={pendingDeselectionConfirmation}
+        onHide={handleCancelDeselection}
+        animation={false}
+        title="Confirm De-selection"
+        closeLabel={`Keep ${pendingDeselection?.deselectedLabels || ''}`}
+        extendedFooter={(
+          <Button variant="danger" onClick={handleConfirmDeselection}>
+            Remove
+            {' '}
+            {pendingDeselection?.deselectedLabels}
+          </Button>
+        )}
+      >
+        Are you sure you want to de-select
+        {' '}
+        {pendingDeselection?.deselectedLabels}
+        ? De-selection results in the loss of data.
+      </AppModal>
     </>
   );
-}
+};
 
 ColumnSelection.propTypes = {
   selectedColumns: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
@@ -825,7 +862,7 @@ ColumnSelection.propTypes = {
   onApply: PropTypes.func.isRequired,
 };
 
-function RemoveVariationsModal({ onRemoveAll }) {
+const RemoveVariationsModal = ({ onRemoveAll }) => {
   const [showModal, setShowModal] = useState(false);
 
   const handleClose = () => setShowModal(false);
@@ -839,7 +876,6 @@ function RemoveVariationsModal({ onRemoveAll }) {
     <>
       <Button size="sm" variant="danger" onClick={handleShow} className="mb-2">
         <i className="fa fa-trash me-1" />
-        {' '}
         Remove all variations
       </Button>
 
@@ -856,13 +892,13 @@ function RemoveVariationsModal({ onRemoveAll }) {
       </AppModal>
     </>
   );
-}
+};
 
 RemoveVariationsModal.propTypes = {
   onRemoveAll: PropTypes.func.isRequired,
 };
 
-function UnitToggleHeader({ column, context, api }) {
+const UnitToggleHeader = ({ column, context, api }) => {
   const { units, entry } = column.getColDef();
   const { setColumnDefinitions } = context;
   const [displayUnit, setDisplayUnit] = useState(() => column.getColDef().displayUnit);
@@ -894,7 +930,7 @@ function UnitToggleHeader({ column, context, api }) {
       )}
     </div>
   );
-}
+};
 
 UnitToggleHeader.propTypes = {
   column: PropTypes.shape({
@@ -921,7 +957,6 @@ export {
   NoteCellRenderer,
   NoteCellEditor,
   MaterialOverlay,
-  ToolHeader,
   ColumnSelection,
   SegmentFormatter,
   SegmentParser,

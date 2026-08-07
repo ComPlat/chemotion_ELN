@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Form } from 'react-bootstrap';
 
 import NumeralInputWithUnitsCompo from 'src/apps/mydb/elements/details/NumeralInputWithUnitsCompo';
+import { metricPrefixesMol } from 'src/utilities/MetricsUtils';
 
 export default class MaterialCalculations extends Component {
   materialVolume() {
@@ -45,7 +46,6 @@ export default class MaterialCalculations extends Component {
     ) ? material.metrics[0]
       : 'm';
 
-    const metricPrefixesMol = ['m', 'n'];
     const metricMol = (
       material.metrics
       && material.metrics.length > 2

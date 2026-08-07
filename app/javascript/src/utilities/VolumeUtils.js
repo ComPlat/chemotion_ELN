@@ -1,4 +1,4 @@
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
 
 /**
  * Utility to calculate the total used volume (by components)
@@ -23,7 +23,7 @@ export function checkComponentVolumeAndNotify(sample) {
   const totalVolume = sample.amount_l || 0;
   const usedVolume = getTotalUsedVolume(sample);
   if (usedVolume > totalVolume && totalVolume > 0) {
-    NotificationActions.add({
+    rootStore.notificationsStore.add({
       title: 'Volume Exceeded',
       message: 'The sum of all component volumes exceeds the total sample volume.',
       level: 'warning',

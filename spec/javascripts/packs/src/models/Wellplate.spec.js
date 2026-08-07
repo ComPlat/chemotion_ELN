@@ -1,12 +1,9 @@
 /* eslint-disable no-undef,no-shadow */
 import expect from 'expect';
-import {
-  describe, it
-} from 'mocha';
-import Wellplate from '../../../../../app/javascript/src/models/Wellplate';
-import wellplate2x3EmptyJson from '../../../fixture/wellplates/wellplate_2_3_empty';
-import wellplate8x12EmptyJson from '../../../fixture/wellplates/wellplate_8_12_empty';
-import wellplate2x2fromServer from '../../../fixture/wellplates/wellplate_2_2_from_server';
+import Wellplate from 'src/models/Wellplate';
+import wellplate2x3EmptyJson from 'fixture/wellplates/wellplate_2_3_empty';
+import wellplate8x12EmptyJson from 'fixture/wellplates/wellplate_8_12_empty';
+import wellplate2x2fromServer from 'fixture/wellplates/wellplate_2_2_from_server';
 
 describe('Wellplate', () => {
   const sampleMock = {};
@@ -269,6 +266,25 @@ describe('Wellplate', () => {
       it('well with sample remains at position 3x2', () => {
         expect(wellplate.wells[6].sample).not.toBeUndefined();
       });
+    });
+  });
+
+  describe('can_update', () => {
+    it('does not invent can_update when the backend omits the flag', () => {
+      const wellplate = new Wellplate({ name: 'WP', type: 'wellplate', width: 2, height: 2, wells: [] });
+      expect(wellplate.can_update).toEqual(undefined);
+    });
+
+    it('keeps an explicit false from the backend', () => {
+      const wellplate = new Wellplate({
+        name: 'WP', type: 'wellplate', width: 2, height: 2, wells: [], can_update: false
+      });
+      expect(wellplate.can_update).toEqual(false);
+    });
+
+    it('defaults can_update to true for a newly built wellplate', () => {
+      const wellplate = Wellplate.buildEmpty(1, 2, 2);
+      expect(wellplate.can_update).toEqual(true);
     });
   });
 });

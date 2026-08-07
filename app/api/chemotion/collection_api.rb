@@ -1,7 +1,13 @@
+# frozen_string_literal: true
+
 module Chemotion
   class CollectionAPI < Grape::API
     rescue_from ActiveRecord::RecordNotFound do
       error!('Collection not found', 404)
+    end
+
+    rescue_from Usecases::Collections::Errors::UpdateForbidden do |e|
+      error!(e.message, 403)
     end
 
     resource :collections do
@@ -85,6 +91,7 @@ module Chemotion
       end
       put '/:id' do
         collection = Collection.own_collections_for(current_user).find(params[:id])
+        error!('A locked collection cannot be modified', 403) if collection.is_locked?
         attributes = { label: params[:label], tabs_segment: params[:tabs_segment] }.compact
 
         collection.update(attributes)
@@ -98,6 +105,7 @@ module Chemotion
       end
       delete '/:id' do
         collection = Collection.own_collections_for(current_user).find(params[:id])
+        error!('A locked collection cannot be deleted', 403) if collection.is_locked?
 
         collection.destroy
 
@@ -114,10 +122,18 @@ module Chemotion
       end
       post '/export' do
         collection_ids = params[:collection_ids].uniq
-        all_collection_ids = Collection.own_collections_for(current_user).pluck(:id)
-
         error!('Select the collections you want to export.', 403) if collection_ids.empty?
-        error!('401 Unauthorized', 401) if all_collection_ids & collection_ids != collection_ids
+
+        # Own collections may always be exported. A sharee may export a collection shared to them
+        # only when they hold FULL detail access on it (every element detail level at max): the
+        # export path serializes full element content and ignores detail levels, so admitting a
+        # partial-detail share would leak data the share deliberately withheld. Both lookups are
+        # scoped to the requested ids — this only needs to know the requested set is authorised.
+        owned_ids = Collection.own_collections_for(current_user).where(id: collection_ids).pluck(:id)
+        shared_ids = Collection.full_detail_access_ids(current_user, collection_ids - owned_ids)
+        allowed_ids = owned_ids + shared_ids
+
+        error!('401 Unauthorized', 401) if (collection_ids - allowed_ids).any?
 
         ExportCollectionsJob.perform_later(collection_ids, 'zip', false, current_user.id)
 
@@ -152,6 +168,27 @@ module Chemotion
           ImportCollectionsJob.perform_now(attachment, current_user.id)
           { status: 204 }
         end
+      end
+
+      desc 'Get collection metadata'
+      get '/:id/metadata' do
+        metadata = Metadata.where(collection_id: params[:id]).first
+        metadata || error!('404 Not Found', 404)
+      end
+
+      desc 'Create/update collection metadata'
+      rescue_from ActiveRecord::RecordNotFound do
+        error!('401 Unauthorized', 401)
+      end
+      params do
+        requires :metadata, type: JSON
+      end
+      post :metadata do
+        metadata = Metadata.where(collection_id: params[:collection_id]).first
+        metadata ||= Metadata.new(collection_id: params[:collection_id])
+        metadata.metadata = params[:metadata]
+        metadata.save!
+        metadata
       end
     end
   end

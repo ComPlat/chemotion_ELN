@@ -4,11 +4,9 @@ import { configure, shallow } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import expect from 'expect';
 import sinon from 'sinon';
-import {
-  describe, it, beforeEach, afterEach
-} from 'mocha';
 import FieldValueSelector from 'src/apps/mydb/elements/details/FieldValueSelector';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { rootStore } from 'src/stores/mobx/RootStore';
+import { addMiddleware } from 'mobx-state-tree';
 
 configure({ adapter: new Adapter() });
 
@@ -193,10 +191,17 @@ describe('FieldValueSelector component behavior', () => {
 
 describe('FieldValueSelector validation', () => {
   let wrapper = null;
-  let notificationSpy;
+  let notificationCalls;
+  let disposeMiddleware;
 
   beforeEach(() => {
-    notificationSpy = sinon.spy(NotificationActions, 'add');
+    notificationCalls = [];
+    disposeMiddleware = addMiddleware(rootStore.notificationsStore, (call, next) => {
+      if (call.name === 'add') {
+        notificationCalls.push(call.args[0]);
+      }
+      return next(call);
+    });
 
     wrapper = shallow(
       <FieldValueSelector
@@ -210,7 +215,7 @@ describe('FieldValueSelector validation', () => {
   });
 
   afterEach(() => {
-    notificationSpy.restore();
+    disposeMiddleware();
   });
 
   it('should validate weight percentage range (valid value)', () => {
@@ -219,7 +224,7 @@ describe('FieldValueSelector validation', () => {
     // Valid value within range
     input.simulate('change', { target: { value: '0.75' } });
 
-    expect(notificationSpy.called).toBe(false);
+    expect(notificationCalls.length).toBe(0);
   });
 
   it('should show error notification for invalid weight percentage (> 1)', () => {
@@ -228,9 +233,9 @@ describe('FieldValueSelector validation', () => {
     // Invalid value > 1
     input.simulate('change', { target: { value: '1.5' } });
 
-    expect(notificationSpy.called).toBe(true);
-    expect(notificationSpy.firstCall.args[0].level).toBe('error');
-    expect(notificationSpy.firstCall.args[0].message).toContain('between 0 and 1');
+    expect(notificationCalls.length).toBeGreaterThan(0);
+    expect(notificationCalls[0].level).toBe('error');
+    expect(notificationCalls[0].message).toContain('between 0 and 1');
   });
 
   it('should show error notification for invalid weight percentage (< 0)', () => {
@@ -243,7 +248,7 @@ describe('FieldValueSelector validation', () => {
     // To properly test negative values, we need to handle values that pass regex but fail range
     input.simulate('change', { target: { value: '1.5' } }); // Use > 1 instead
 
-    expect(notificationSpy.called).toBe(true);
+    expect(notificationCalls.length).toBeGreaterThan(0);
   });
 
   it('should allow comma as decimal separator', () => {
@@ -253,7 +258,7 @@ describe('FieldValueSelector validation', () => {
     input.simulate('change', { target: { value: '0,75' } });
 
     // Should normalize comma to dot
-    expect(notificationSpy.called).toBe(false);
+    expect(notificationCalls.length).toBe(0);
   });
 
   it('should strip non-numeric characters', () => {
@@ -272,7 +277,7 @@ describe('FieldValueSelector validation', () => {
 
     input.simulate('change', { target: { value: '' } });
 
-    expect(notificationSpy.called).toBe(false);
+    expect(notificationCalls.length).toBe(0);
   });
 });
 

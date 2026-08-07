@@ -25,6 +25,29 @@ describe Chemotion::DeviceDescriptionAPI do
 
       expect(parsed_json_response['device_descriptions'].size).to be(1)
     end
+
+    context 'when collection_id points to a collection shared with the user' do
+      let(:shared_collection) do
+        create(:collection, user: create(:person)).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare.permission_level(:read_elements))
+        end
+      end
+      let(:shared_device_description) do
+        create(:device_description, :with_ontologies, creator: shared_collection.user)
+      end
+
+      before do
+        create(:collections_device_description,
+               device_description: shared_device_description, collection: shared_collection)
+      end
+
+      it 'returns the device descriptions from the shared collection' do
+        get '/api/v1/device_descriptions/', params: { collection_id: shared_collection.id }
+
+        expect(parsed_json_response['device_descriptions'].pluck('id')).to include(shared_device_description.id)
+      end
+    end
   end
 
   describe 'POST /api/v1/device_descriptions' do
@@ -113,6 +136,42 @@ describe Chemotion::DeviceDescriptionAPI do
       post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
 
       expect(device_description.reload.children.size).to be(1)
+    end
+
+    context 'when the collection is a read-only share' do
+      let(:read_only_collection) do
+        create(:collection, user: create(:person)).tap do |c|
+          create(:collection_share, collection: c, shared_with: user,
+                                    permission_level: CollectionShare::PERMISSION_LEVELS[:read_elements])
+        end
+      end
+      let(:shared_device_description) do
+        create(:device_description, :with_ontologies, creator: read_only_collection.user)
+      end
+      let(:params) do
+        {
+          ui_state: {
+            currentCollectionId: read_only_collection.id,
+            device_description: {
+              all: false,
+              included_ids: [shared_device_description.id],
+              excluded_ids: [],
+            },
+          },
+        }
+      end
+
+      before do
+        create(:collections_device_description,
+               device_description: shared_device_description, collection: read_only_collection)
+      end
+
+      it 'is rejected as unauthorized and creates no sub device description' do
+        post '/api/v1/device_descriptions/sub_device_descriptions/', params: params, as: :json
+
+        expect(response).to have_http_status :unauthorized
+        expect(shared_device_description.reload.children).to be_empty
+      end
     end
   end
 

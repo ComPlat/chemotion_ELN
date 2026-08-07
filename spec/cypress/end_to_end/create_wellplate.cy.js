@@ -1,29 +1,24 @@
 describe('Wellplate Creation', () => {
-  it('create wellplat with smile', () => {
-    cy.createDefaultUser().then((user) => {
-      cy.appFactories([['create', 'collection', { user_id: user[0].id }]]);
+  it('creates wellplate', () => {
+    cy.createDefaultUser('cu1@complat.edu', 'cu1').then((user) => {
+      cy.appFactories([['create', 'collection', { user_id: user[0].id }]]).then((collection) => {
+        cy.appFactories([['create', 'molecule']]).then((molecule) => {
+          cy.appFactories([['create', 'sample', {
+            molecule_id: molecule[0].id,
+            collection_ids: collection[0].id
+          }]]);
+        });
+      });
     });
 
-    cy.login('a01', 'user_password');
-    cy.visit('mydb/collection/3/');
-    cy.get('div').find('[id="tree-id-Collection 1"]').click();
-    cy.get('#create-split-button').click();
-    cy.get('#create-sample-button').click();
-    cy.get('.chem-identifiers-section > .list-group-item').click();
-    cy.get('#smilesInput').type('c1cc(cc(c1)c1ccccc1)c1ccccc1');
-    cy.get('#smile-create-molecule').click();
-    cy.get('#txinput_name').clear().type('sample A');
-    cy.get('#submit-sample-btn').click();
-    cy.get('div').find('[id="tree-id-Collection 1"]').click();
-    cy.get('#create-split-button').click();
-    cy.get('#create-wellplate-button').click();
-    cy.get('#wellplateDetailsTab-tab-designer').click();
-    const dataTransfer = new DataTransfer();
-    cy.get('[style=""] > [style="vertical-align: middle; text-align: center;"] > .fa').trigger('dragstart', { dataTransfer });
-    cy.get('[style="width: 780px; height: 540px;"] > :nth-child(3) > [draggable="true"]').trigger('drop', { dataTransfer });
-    cy.get('.btn-toolbar > .btn-warning').click();
-    cy.get('.btn-toolbar > .btn-warning').click().then(() => {
-      cy.get('.collection-label > .label > .icon-wellplate').should('have.class', 'icon-wellplate');
-    });
+    cy.login('cu1', 'user_password');
+    cy.contains('Collection 1').click();
+    cy.contains('Create').click();
+    cy.contains('Create Wellplate').click();
+    cy.get('input[value="New Wellplate"]').type('{selectAll}Foo');
+    cy.clickDetailFooterButton('Create');
+
+    cy.get('i.icon-wellplate').closest('button[role="tab"]').click();
+    cy.get('#elements-list-view').contains('Foo');
   });
 });

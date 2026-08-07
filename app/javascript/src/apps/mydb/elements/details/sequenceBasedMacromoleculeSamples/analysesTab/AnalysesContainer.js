@@ -13,13 +13,14 @@ import { CommentButton, CommentBox } from 'src/components/common/AnalysisComment
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ArrayUtils from 'src/utilities/ArrayUtils';
 import AnalysisHeader from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/analysesTab/AnalysisHeader';
 import AnalysesSortableContainer from 'src/apps/mydb/elements/details/sequenceBasedMacromoleculeSamples/analysesTab/AnalysesSortableContainer';
 
 function AnalysesContainer({ readonly }) {
   const sbmmStore = useContext(StoreContext).sequenceBasedMacromoleculeSamples;
   const sbmmSample = sbmmStore.sequence_based_macromolecule_sample;
-  const containers = sbmmSample.container.children[0].children;
+  const containers = ArrayUtils.sortArrByIndex(sbmmSample.container.children[0].children);
 
   useEffect(() => {
     TextTemplateActions.fetchTextTemplates('sbmmSample');
@@ -100,7 +101,20 @@ function AnalysesContainer({ readonly }) {
                     readOnly={readonly}
                     templateType="sbmmSample"
                     container={container}
-                    onChange={() => sbmmStore.changeAnalysisContainerContent(container)}
+                    onChange={(cont) => {
+                      const rootId = sbmmSample?.container?.id;
+                      // Only the post-save root container carries the full analyses tree under
+                      // children[0]. `rootId != null` prevents the undefined === undefined
+                      // false-match on unsaved samples (which would wipe all analyses).
+                      const isRootContainerSave = rootId != null && cont.id === rootId;
+                      if (isRootContainerSave) {
+                        // Root container from modal save: update all analyses from fresh server data
+                        sbmmStore.changeAnalysisContainer(cont.children?.[0]?.children ?? []);
+                      } else {
+                        // Individual analysis container update (e.g. preferred thumbnail change)
+                        sbmmStore.changeAnalysisContainerContent(cont);
+                      }
+                    }}
                     rootContainer={sbmmSample.container}
                     index={index}
                   />

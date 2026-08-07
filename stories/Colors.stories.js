@@ -1,5 +1,7 @@
 import React from 'react';
-import { Title, Subtitle, Canvas, ColorPalette, ColorItem, Markdown, Source } from '@storybook/blocks';
+import {
+  Title, Subtitle, Canvas, ColorPalette, ColorItem, Markdown,
+} from '@storybook/blocks';
 import { getColorValue } from './componentAttributes';
 
 // Base colors array. Color values are fetched dynamically from CSS custom properties.
@@ -16,6 +18,28 @@ const semanticColors = [
   { title: 'chemstrap-red', description: 'Danger' },
   { title: 'chemstrap-green', description: 'Success' },
   { title: 'chemstrap-orange', description: 'Warning' },
+];
+
+// Interactive surface colors: graphite (topbar) and silicon (surfaces) with their hover/active states.
+const interactiveSurfaceColors = [
+  {
+    title: 'chemstrap-graphite',
+    description: 'Topbar background',
+    variants: {
+      base: 'chemstrap-graphite',
+      hover: 'chemstrap-graphite-hover',
+      active: 'chemstrap-graphite-active',
+    },
+  },
+  {
+    title: 'chemstrap-silicon',
+    description: 'Interactive surfaces',
+    variants: {
+      base: 'chemstrap-silicon',
+      hover: 'chemstrap-silicon-hover',
+      active: 'chemstrap-silicon-active',
+    },
+  },
 ];
 
 export function Shades() {
@@ -46,7 +70,7 @@ export function Shades() {
 }
 
 export default {
-  title: 'Design Principles/Colors',
+  title: 'Subatomic/Colors',
   tags: ['autodocs'],
   parameters: {
     options: {
@@ -79,6 +103,37 @@ export default {
               />
             ))}
           </ColorPalette>
+          <Subtitle>Interactive Surface Colors</Subtitle>
+          <Markdown>
+            {`
+  **Chemstrap-graphite** is the topbar background color. **Chemstrap-silicon** drives interactive
+  surface elements such as buttons and highlighted rows. Both colors expose dedicated **hover** and
+  **active** variants to communicate interactivity states consistently across the interface.
+            `}
+          </Markdown>
+          <ColorPalette>
+            {interactiveSurfaceColors.map((color) => (
+              <ColorItem
+                key={color.title}
+                title={color.title}
+                subtitle={color.description}
+                colors={Object.fromEntries(
+                  Object.entries(color.variants).map(([label, token]) => [
+                    label,
+                    getColorValue(token),
+                  ])
+                )}
+              />
+            ))}
+          </ColorPalette>
+          <Markdown>
+            {`
+  #### Silicon active
+  The **silicon-active** variant has a prominent role: it is used as the accent color for the
+  header and footer of **active tabs, cards, and modals**, making the currently focused element
+  immediately recognisable.
+            `}
+          </Markdown>
           <Subtitle>Semantic Colors</Subtitle>
           <Markdown>
             {`
@@ -117,6 +172,7 @@ export default {
             `}
           </Markdown>
           <Canvas of={Shades} />
+          {/* eslint-disable max-len */}
           <Markdown>
             {`
 We provided utility classes for all shades of surface, text and border colors.
@@ -134,6 +190,7 @@ We provided utility classes for all shades of surface, text and border colors.
 rely on the default colors provided by the component.
             `}
           </Markdown>
+          {/* eslint-enable max-len */}
         </>
       ),
     },

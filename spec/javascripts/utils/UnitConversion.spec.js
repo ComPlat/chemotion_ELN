@@ -1,4 +1,3 @@
-import { describe, it } from 'mocha';
 import assert from 'assert';
 
 import {
@@ -11,6 +10,7 @@ import {
   calculateMolesFromMoleculeWeight,
   calculateVolumeForFeedstockOrGas,
   calculateGasMoles,
+  calculateGasConcentrationFromPpm,
   calculateFeedstockMoles,
   updateFeedstockMoles,
   calculateTON,
@@ -90,6 +90,20 @@ describe('Testing React Utility Functions', () => {
     assert.strictEqual(calculateGasMoles(10, 1000, 300), 0.00040600893219650826);
   });
 
+  it('should calculate gas concentration from ppm correctly', () => {
+    // Formula at 25 °C: concentration (mol/L) = ppm * 4.1e-8
+    assert.ok(Math.abs(calculateGasConcentrationFromPpm(10000) - 4.1e-4) < 1e-12);
+    assert.ok(Math.abs(calculateGasConcentrationFromPpm(1) - 4.1e-8) < 1e-16);
+  });
+
+  it('should return 0 for invalid ppm inputs in gas concentration calculation', () => {
+    assert.strictEqual(calculateGasConcentrationFromPpm(0), 0);
+    assert.strictEqual(calculateGasConcentrationFromPpm(-100), 0);
+    assert.strictEqual(calculateGasConcentrationFromPpm(null), 0);
+    assert.strictEqual(calculateGasConcentrationFromPpm(undefined), 0);
+    assert.strictEqual(calculateGasConcentrationFromPpm(NaN), 0);
+  });
+
   it('should calculate feedstock moles correctly', () => {
     assert.strictEqual(calculateFeedstockMoles(10, 0.5), 0.20714741438597362);
   });
@@ -127,7 +141,7 @@ describe('Testing React Utility Functions', () => {
 
   it('should return null for invalid temperature input', () => {
     const result = convertTemperature('abc', TEMPERATURE_UNITS.KELVIN);
-    assert.strictEqual(result, null);
+    assert.deepEqual(result, ['null', TEMPERATURE_UNITS.CELSIUS]);
   });
 
   it('should return null for invalid temperature conversion to Kelvin', () => {

@@ -20,14 +20,11 @@ module Usecases
 
       def base_list_scope(params)
         if params[:collection_id]
-          Collection.accessible_for(current_user)
-                    .find(params[:collection_id])
-                    .sequence_based_macromolecule_samples
+          collection = Collection.accessible_for(current_user).find_by(id: params[:collection_id])
+          collection ? collection.sequence_based_macromolecule_samples : SequenceBasedMacromoleculeSample.none
         else
           SequenceBasedMacromoleculeSample.for_user(current_user.id).distinct
         end
-      rescue ActiveRecord::RecordNotFound
-        SequenceBasedMacromoleculeSample.none
       end
 
       # rubocop:disable Metrics/AbcSize,  Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity

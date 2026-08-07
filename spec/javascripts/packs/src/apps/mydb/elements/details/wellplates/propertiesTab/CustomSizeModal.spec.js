@@ -2,9 +2,6 @@
 
 import React from 'react';
 import expect from 'expect';
-import {
-  describe, it
-} from 'mocha';
 import sinon, { spy } from 'sinon';
 import { configure, shallow, mount } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';

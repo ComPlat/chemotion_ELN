@@ -2,8 +2,13 @@
 # It builds an app container based on Dockerfile.chemotion.dev
 #
 # USAGE:
-# The docker compose command should be apply with the following args
-#      docker compose -f docker-compose.dev.yml --env-file .dockerenv
+# This file has working defaults, so the minimal invocation is just:
+#      docker compose -f docker-compose.dev.yml up
+#
+# To override defaults (images, volume names, host ports, RAKE_DB_MIGRATE),
+# copy the example env file and pass it for ${...} interpolation:
+#      cp .dockerenv.example .dockerenv   # then edit
+#      docker compose -f docker-compose.dev.yml --env-file .dockerenv up
 #
 # docker_cmd="docker compose -f docker-compose.dev.yml --env-file .dockerenv "
 #
@@ -41,12 +46,21 @@ services:
   setup:
     build: *common-build
     image: *chemotion_eln_dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # prepare-db.sh runs here, so it must see RAKE_DB_MIGRATE (the --env-file
+      # flag only drives ${...} interpolation, it does not inject vars into a
+      # container). Default to `once` to match .dockerenv.example.
+      - RAKE_DB_MIGRATE=${RAKE_DB_MIGRATE:-once}
+      - 'THOR_SILENCE_DEPRECATION=true'
     volumes: *common-volumes
     working_dir: "/home/ubuntu/app"
     command: "./prepare-ruby-dev.sh"
 
   postgres:
-    image: ${DOCKER_PG_IMAGE:-postgres:16}
+    image: ${DOCKER_PG_IMAGE:-complat/dev:postgres16-rdkit}
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
     expose: # expose port to app container
@@ -75,12 +89,16 @@ services:
       interval: 30s
       timeout: 10s
     env_file:
-      - .env
+      # .env.development is tracked (committed dev defaults); .env is the
+      # gitignored per-machine override and is optional so a clean checkout boots.
+      - .env.development
+      - path: .env
+        required: false
     environment:
       - 'SHAKAPACKER_DEV_SERVER_HOST=webpacker'
       - 'SHAKAPACKER_DEV_SERVER_PORT=3035'
       - 'THOR_SILENCE_DEPRECATION=true'
-      - RAKE_DB_MIGRATE=${RAKE_DB_MIGRATE:-never}
+      - RAKE_DB_MIGRATE=${RAKE_DB_MIGRATE:-once}
     ports: # expose default rails port to host machine
       - ${HOST_PORT_APP:-3000}:3000
     volumes: *common-volumes
@@ -92,18 +110,22 @@ services:
 
   webpacker:
     image: *chemotion_eln_dev
+    # Gate only on setup (which installs gems + node packages and prepares the
+    # DB). app and webpacker then start in parallel instead of webpacker waiting
+    # on app — node_modules/manifest are ready before either runtime boots.
     depends_on:
       setup:
         condition: service_completed_successfully
-      app:
+      postgres:
         condition: service_healthy
     environment:
       - 'NODE_ENV=development'
       - 'SHAKAPACKER_DEV_SERVER_HOST=webpacker'
       - 'SHAKAPACKER_DEV_SERVER_PORT=3035'
     env_file:
-      - .env
-    # - .env.development
+      - .env.development
+      - path: .env
+        required: false
     volumes: *common-volumes
     ports: # expose webpacker dev server port to app container
       - ${HOST_PORT_WEBPACK:-3035}:3035
@@ -113,13 +135,17 @@ services:
     command: './run-js-dev.sh'
 
   storybook:
+    # Opt-in: only starts with `--profile storybook`, keeping the default `up`
+    # lean. node packages are guaranteed by setup completing.
+    profiles: ["storybook"]
     depends_on:
-      webpacker:
-        condition: service_started
+      setup:
+        condition: service_completed_successfully
     image: *chemotion_eln_dev
     env_file:
-      - ./.env
-      #- ./.env.development
+      - .env.development
+      - path: .env
+        required: false
     volumes: *common-volumes
     ports: # expose storybook dev server port to host machine
       - "6006:6006"

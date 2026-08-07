@@ -13,6 +13,7 @@ module Reporter
       def initialize(args)
         @objs = args[:objs]
         @mol_serials = args[:mol_serials] || []
+        @img_tmps = []
       end
 
       def create(file_name)
@@ -28,8 +29,13 @@ module Reporter
 
             @sheet['A3:H#{row_counts}'].each do |c| c.style = Axlsx::STYLE_THIN_BORDER end
           end
+          # caxlsx defers reading image_src until Package#serialize. Image
+          # Tempfiles must remain referenced (and therefore unfinalized) until
+          # serialize has fully consumed them.
           p.serialize(file_name)
         end
+      ensure
+        @img_tmps.each(&:close!)
       end
 
       private
@@ -79,8 +85,9 @@ module Reporter
       end
 
       def add_img_to_row(p)
-        img_src = Reporter::Helper.mol_img_path(p)
+        img_src, img_tmp = Reporter::Helper.mol_img_path(p)
         return if img_src.nil?
+        @img_tmps << img_tmp if img_tmp
         @sheet.add_image(image_src: img_src) do |img|
           img.height = IMG_HEIGHT.to_i
           img.width = IMG_WIDTH.to_i

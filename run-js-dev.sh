@@ -1,10 +1,6 @@
 #!/bin/bash
 
-## check yarn installation and install nodejs packages
-## assume nodejs is installed (through ./run-ruby-dev.sh)
-./prepare-nodejspkg.sh
-
-echo "=========================================================================================================="
-echo "THIS WILL FAIL UNTIL THE RUBY GEMS ARE INSTALLED BY run-ruby-dev.sh. JUST TRY AGAIN AFTER INSTALLING THEM."
-echo "=========================================================================================================="
+## Gems and node packages are installed by the `setup` service
+## (prepare-ruby-dev.sh) which this container waits on, so the dev server can
+## start directly. bin/shakapacker-dev-server is a bundler binstub.
 ./bin/shakapacker-dev-server
