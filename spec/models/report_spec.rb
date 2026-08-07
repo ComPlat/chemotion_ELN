@@ -79,7 +79,7 @@ RSpec.describe Report, type: :report do
     # field control text may remain, and VML shape ids must be unique.
     it 'produces an internally consistent OOXML package' do
       require 'zip'
-      params = { template: 'single_reaction', id: reaction1.id }
+      params = { template: 'single_reaction', id: r1.id }
       docx, = described_class.create_reaction_docx(user, [user.id], params)
 
       entries = {}
