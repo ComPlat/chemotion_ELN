@@ -96,6 +96,8 @@ module Chemotion
         get do
           profiles = Labimotion::Converter.fetch_profiles || []
           { profiles: profiles.map { |p| normalize_profile(p) }, client: @profile }
+        rescue
+          return []
         end
       end
     end
