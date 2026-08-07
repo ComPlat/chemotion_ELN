@@ -130,9 +130,9 @@ RSpec.describe Reaction, type: :model do
     context 'when the variation id matches an existing variation' do
       before do
         reaction.update!(
-          variations: {
-            'uuid-1' => { 'id' => '1', 'metadata' => { 'analyses' => [], 'notes' => '' } },
-          },
+          variations: [
+            { 'id' => '1', 'idx' => 0, 'data' => {}, 'analyses' => [], 'notes' => '' },
+          ],
         )
       end
 
@@ -141,7 +141,7 @@ RSpec.describe Reaction, type: :model do
         reaction.assign_attachment_to_variation('1', 42)
 
         variation = reaction.reload.variations.find { |v| v['id'] == '1' }
-        expect(variation['metadata']['analyses']).to eq([42])
+        expect(variation['analyses']).to eq([42])
       end
     end
   end

@@ -633,8 +633,7 @@ const MaterialAmountMol = ({ mh }) => {
 
   const isDisabled = !permitOn(reaction)
     || isAmountDisabledByWeightPercentage
-    || (materialGroup === 'products'
-      || (!material.reference && lockEquivColumn));
+    || (!material.reference && lockEquivColumn && materialGroup !== 'products');
 
   const {
     min: rangeStart,
@@ -676,8 +675,7 @@ const MaterialActivity = ({ mh }) => {
 
   const isDisabled = !permitOn(reaction)
     || isAmountDisabledByWeightPercentage
-    || (materialGroup === 'products'
-      || (!material.reference && lockEquivColumn));
+    || (!material.reference && lockEquivColumn && materialGroup !== 'products');
 
   // Check if activity is the active unit
   // For SBMM samples: check if _amount_unit is 'U' (set when activity is the primary amount)
@@ -710,7 +708,7 @@ const MaterialLoading = ({ mh, showLoadingColumn }) => {
   if (!showLoadingColumn) {
     return false;
   }
-  if (!material.contains_residues) {
+  if (!material.contains_residues || (material.loading == null && materialGroup === 'products')) {
     return <NotApplicableInput className={'reaction-material__loading-data'}/>;
   }
 
