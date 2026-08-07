@@ -23,9 +23,11 @@ describe Chemotion::InboxAPI do
       end
 
       before do
-        CollectionsSample.create!(sample: sample_short, collection: collection)
-        CollectionsSample.create!(sample: sample_exact_a, collection: collection)
-        CollectionsSample.create!(sample: sample_exact_b, collection: collection)
+        # Force the lazy lets to instantiate; the `collections: [collection]` factory
+        # attribute already creates the join row, so don't create it again here.
+        sample_short
+        sample_exact_a
+        sample_exact_b
       end
 
       describe 'get samples by sample name' do
