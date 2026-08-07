@@ -76,8 +76,12 @@ RSpec.describe 'migration 20250825083741: MigrateToCollectionShare' do
       expect([shared_a.reload.parent_id, shared_b.reload.parent_id]).to all(eq(group_for(owner).id))
     end
 
-    it "places the group after the owner's existing roots" do
-      expect(group_for(owner).position).to be > owner_root.reload.position
+    it "places the group strictly last among all the owner's roots, locked ones included" do
+      group = group_for(owner)
+      siblings = Collection.where(user_id: owner.id, ancestry: '/').where.not(id: group.id)
+
+      expect(group.position).to be > siblings.maximum(:position)
+      expect(owner_root.reload.position).to eq(5)
     end
 
     it 'sets the shared flag on the shared collections' do
@@ -240,6 +244,127 @@ RSpec.describe 'migration 20250825083741: MigrateToCollectionShare' do
 
     it 'still records the share, so restoring the account restores its access' do
       expect(CollectionShare.find_by(collection_id: shared.id)).to have_attributes(shared_with_id: recipient.id)
+    end
+  end
+
+  describe 'when the owner already has a non-root collection with the group label' do
+    let!(:parent) { create(:collection, user: owner, label: 'Parent') }
+    let!(:existing_group) { create(:collection, user: owner, label: group_label, parent: parent) }
+    let!(:shared) do
+      create(:collection, user: recipient, label: 'Shared', shared_by_id: owner.id, permission_level: 1)
+    end
+
+    before { MigrateToCollectionShare.new.up }
+
+    it 'adopts it where it stands and still numbers its children' do
+      expect(Collection.where(user_id: owner.id, label: group_label).count).to eq(1)
+      expect(shared.reload.parent_id).to eq(existing_group.id)
+      expect(shared.position).to eq(1)
+    end
+
+    it 'leaves the node where the user put it instead of dragging it back to the root' do
+      expect(existing_group.reload.parent_id).to eq(parent.id)
+    end
+  end
+
+  describe 'root positions' do
+    let!(:positionless_root) { create(:collection, user: owner, label: 'Positionless root') }
+    let!(:numbered_root) { create(:collection, user: owner, label: 'Numbered root', position: 5) }
+    let!(:shared) do
+      create(:collection, user: recipient, label: 'Shared', shared_by_id: owner.id, permission_level: 1)
+    end
+
+    before { MigrateToCollectionShare.new.up }
+
+    it 'backfills the NULL positions and leaves the numbered ones alone' do
+      expect(numbered_root.reload.position).to eq(5)
+      expect(positionless_root.reload.position).to eq(6)
+    end
+
+    it 'leaves the locked system roots untouched' do
+      expect(Collection.get_all_collection_for_user(owner.id).position).to eq(0)
+    end
+
+    it 'leaves no live unlocked root without a position' do
+      expect(Collection.where(ancestry: '/', is_locked: false, position: nil)).to be_empty
+    end
+
+    it 'still lands the grouping node after every backfilled root' do
+      expect(shared.reload.parent_id).to eq(group_for(owner).id)
+      expect(group_for(owner).position).to be > positionless_root.reload.position
+    end
+  end
+
+  describe 'root positions with a locked repository root' do
+    let!(:repository_root) do
+      create(:collection, user: owner, label: 'chemotion-repository.net', is_locked: true, position: 1)
+    end
+    let!(:positionless_root) { create(:collection, user: owner, label: 'Positionless root') }
+
+    it 'starts after the locked roots rather than colliding with them' do
+      MigrateToCollectionShare.new.up
+
+      expect(positionless_root.reload.position).to be > repository_root.reload.position
+    end
+  end
+
+  describe 'root positions on a nullable is_locked' do
+    let!(:null_locked_root) do
+      # rubocop:disable Rails/SkipsModelValidations
+      create(:collection, user: owner, label: 'Null locked').tap { |c| c.update_columns(is_locked: nil) }
+      # rubocop:enable Rails/SkipsModelValidations
+    end
+
+    it 'treats a NULL is_locked as unlocked and backfills it' do
+      MigrateToCollectionShare.new.up
+
+      expect(null_locked_root.reload.position).to be_present
+    end
+  end
+
+  describe 'root positions that already collide' do
+    let!(:first_root) { create(:collection, user: owner, label: 'First root', position: 3) }
+    let!(:duplicate_root) { create(:collection, user: owner, label: 'Duplicate root', position: 3) }
+
+    it 'leaves them alone: only NULLs are filled, nothing is renumbered' do
+      MigrateToCollectionShare.new.up
+
+      expect([first_root.reload.position, duplicate_root.reload.position]).to eq([3, 3])
+    end
+  end
+
+  describe 'positions under the grouping node' do
+    let!(:positionless_share) do
+      create(:collection, user: recipient, label: 'Positionless share', shared_by_id: owner.id, permission_level: 1)
+    end
+    let!(:numbered_share) do
+      create(:collection, user: recipient, label: 'Numbered share', position: 5,
+                          shared_by_id: owner.id, permission_level: 1)
+    end
+
+    it 'numbers them from 1, numbered first and positionless after' do
+      MigrateToCollectionShare.new.up
+
+      expect(numbered_share.reload.position).to eq(1)
+      expect(positionless_share.reload.position).to eq(2)
+    end
+  end
+
+  describe 'users the migration has nothing to do with' do
+    let(:bystander) { create(:person) }
+    let!(:bystander_roots) do
+      [create(:collection, user: bystander, label: 'B1', position: 4),
+       create(:collection, user: bystander, label: 'B2', position: 9)]
+    end
+
+    it 'does not touch a single one of their rows' do
+      create(:collection, user: recipient, label: 'Shared', shared_by_id: owner.id, permission_level: 1)
+      before_state = bystander_roots.map { |root| root.reload.attributes.slice('position', 'ancestry', 'updated_at') }
+
+      MigrateToCollectionShare.new.up
+
+      after_state = bystander_roots.map { |root| root.reload.attributes.slice('position', 'ancestry', 'updated_at') }
+      expect(after_state).to eq(before_state)
     end
   end
 

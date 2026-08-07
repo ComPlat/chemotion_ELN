@@ -38,16 +38,25 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
     reroot_residual_wrapper_children
     salvage_wrappers_holding_elements
     retire_share_wrappers
+    backfill_root_positions
+    place_group_nodes_last
     migrate_sync_shares
+    renumber_group_children
     refresh_shared_flag
     report_dangling_ancestry
   end
+
+  # No +down+. Restoring the pre-migration +position+ values is deliberately not offered: sibling
+  # order is presentation state and most of the rows this touches had none to begin with. Note also
+  # that +deleted_at+ alone does not distinguish a wrapper this migration retired from one a user
+  # deleted years ago, so the retirement is not selectively reversible either — the sibling
+  # LockTransferredCollections carries an equivalent note about its re-parenting.
 
   # First pass: collections that were "shared" (owner kept in shared_by_id, recipient in
   # user_id). Make shared_by_id the real owner and create a CollectionShare for the recipient.
   #
   # Swept +with_deleted+ on purpose. shared_by_id is the only record of who really owns these rows
-  # and 20250827121248 drops it, so a soft-deleted collection left out here could never be repaired:
+  # and 20250827121248 drops it, so a soft-deleted collection left out here can never be repaired:
   # restoring it later would silently hand it to the recipient. It also means the wrappers' hidden
   # soft-deleted children are moved out with the visible ones, so no wrapper can be retired over a
   # child that is merely invisible. +.reorder(nil)+ additionally drops Collection's
@@ -105,11 +114,10 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
     orphan = 0
     skipped = 0
     SyncCollectionsUser.find_each do |scu|
+      # Orphaned sync rows exist in real prod data: collection_id can be NULL, point to a
+      # missing collection, or reference a soft-deleted one. Without this guard the CollectionShare
+      # insert hits the collection_id FK (ActiveRecord::InvalidForeignKey), aborting the migration.
       collection = Collection.with_deleted.find_by(id: scu.collection_id)
-      # Orphaned sync rows exist in legacy data: collection_id can be NULL, point to a missing
-      # collection, or reference a soft-deleted one (acts_as_paranoid hides it, so the association
-      # returns nil). Without this guard the CollectionShare insert hits the collection_id FK
-      # (ActiveRecord::InvalidForeignKey), aborting the whole migration.
       if collection.nil?
         say "skipping orphan SyncCollectionsUser ##{scu.id} (collection_id=#{scu.collection_id.inspect})"
         orphan += 1
@@ -155,7 +163,7 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
     Collection.with_deleted.where(is_locked: true).where.not(shared_by_id: nil)
   end
 
-  # Writes one CollectionShare, tolerating a soft-deleted collection or recipient.
+  # Writes one CollectionShare, tolerating a soft-deleted recipient.
   #
   # Both associations are assigned as objects rather than ids: +belongs_to+ is required on each, and
   # its presence check reads the association target, whereas an id would be resolved through the
@@ -166,6 +174,7 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
   # An existing share for the pair is left as it is. Pass 1 cannot produce a duplicate on its own —
   # it nulls shared_by_id as it goes — but pass 2 consumes no rows, so without this a re-run would
   # double every sync share, and would raise outright once 20260709140001 has added the unique index.
+  # (20260709140000 still merges any duplicate that predates this migration.)
   #
   # @param source [#celllinesample_detail_level, nil] row carrying the detail levels; the collection itself when nil
   # @return [Symbol] +:created+, +:existing+ when the pair already has a share, or +:missing+ when
@@ -221,10 +230,14 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
   # user deleted, and resurrecting it silently would be worse than creating a fresh one. +ancestry+ is
   # not part of the lookup — the node is user-movable, so pinning it to the root would mint a second
   # one on a re-run after a legitimate move.
+  #
+  # Created without a position on purpose: assigning a provisional one here would consume a number
+  # that {#backfill_root_positions} then has to number the owner's real positionless roots around.
+  # The node is picked up by that backfill like any other positionless root, and
+  # {#place_group_nodes_last} then confirms it sits last.
   def shared_out_group_for(owner_id)
     Collection.find_or_create_by!(user_id: owner_id, label: SHARED_OUT_GROUP_LABEL, is_locked: false) do |node|
       node.ancestry = '/'
-      node.position = (Collection.where(user_id: owner_id, ancestry: '/').maximum(:position) || 0) + 1
     end
   end
 
@@ -255,7 +268,8 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
   # holder. It is therefore unlocked and left exactly where it is, with its owner and its membership.
   #
   # SQL because is_locked is in LockedCollectionGuard's LOCKED_IMMUTABLE_ATTRIBUTES and the validation
-  # keys off the persisted flag, so a model-level unlock fails.
+  # keys off the persisted flag, so a model-level unlock fails. Its NULL position, if any, is picked
+  # up by {#backfill_root_positions} once it is unlocked.
   def salvage_wrappers_holding_elements
     holders = ELEMENT_JOIN_TABLES.map do |table|
       "EXISTS (SELECT 1 FROM #{table} j WHERE j.collection_id = c.id AND j.deleted_at IS NULL)"
@@ -285,6 +299,80 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
       WHERE is_locked AND shared_by_id IS NOT NULL AND deleted_at IS NULL
     SQL
     say "retired #{retired.cmd_tuples} legacy share wrapper(s) as a recoverable soft delete"
+  end
+
+  # Gives every positionless root collection a number, for all users.
+  #
+  # position is nullable with no default and pre-#2783 sharing never assigned one, so tree order was
+  # ambiguous: the backend orders by +position ASC+ (Postgres sorts NULLs last) while the frontend's
+  # presort coerces NULL to 0 and sorts them first. Numbering the NULLs after the numbered siblings
+  # matches both the backend and the sort that actually builds the rendered tree, so no user's visible
+  # order changes.
+  #
+  # This is a backfill, not a renumber: no row that already has a position is touched. The maximum is
+  # taken over all of the user's live roots, locked ones included, so a backfilled root can never
+  # collide with the locked "All" (position 0) or "chemotion-repository.net" (position 1) that
+  # User#create_all_collection and #create_chemotion_public_collection pin — the convention
+  # Usecases::Collections::Create still relies on.
+  #
+  # Locked roots are left alone: their position is system-defined and LockedCollectionGuard treats it
+  # as immutable. +is_locked IS NOT TRUE+ rather than += false+ because the column is nullable, and
+  # NULL = false is NULL, which would silently exclude such a root from its own backfill.
+  def backfill_root_positions
+    backfilled = execute(<<~SQL.squish)
+      WITH roots AS (
+        SELECT id, user_id, position, is_locked FROM collections
+        WHERE ancestry = '/' AND deleted_at IS NULL
+      ), maxes AS (
+        SELECT user_id, COALESCE(MAX(position), 0) AS max_position FROM roots GROUP BY user_id
+      ), numbered AS (
+        SELECT r.id, m.max_position + row_number() OVER (PARTITION BY r.user_id ORDER BY r.id) AS new_position
+        FROM roots r JOIN maxes m ON m.user_id = r.user_id
+        WHERE r.position IS NULL AND r.is_locked IS NOT TRUE
+      )
+      UPDATE collections c SET position = n.new_position, updated_at = now()
+      FROM numbered n WHERE c.id = n.id
+    SQL
+    say "backfilled #{backfilled.cmd_tuples} root collection(s) that had no position"
+  end
+
+  # Puts each grouping node last among its owner's roots, now that every root has a position.
+  # A node the user has already moved out of the root level is left where they put it.
+  def place_group_nodes_last
+    placed = 0
+    Collection.where(label: SHARED_OUT_GROUP_LABEL, ancestry: '/').reorder(nil).find_each do |group|
+      last = Collection.where(user_id: group.user_id, ancestry: '/').where.not(id: group.id).maximum(:position)
+      next if last.nil? || group.position == last + 1
+
+      group.update!(position: last + 1)
+      placed += 1
+    end
+    say "placed #{placed} '#{SHARED_OUT_GROUP_LABEL}' node(s) last among their owner's roots"
+  end
+
+  # Numbers the collections under each grouping node 1..N. They arrive from different recipients'
+  # trees, so their positions collide; the order is +position NULLS LAST, id+, which keeps whatever
+  # relative order the numbered ones had and appends the positionless ones in creation order.
+  #
+  # The child path comes from the record (+child_ancestry+) rather than a hand-built "/<id>/", which
+  # is only correct while the node is a root — and the node is user-movable by design.
+  def renumber_group_children
+    ancestries = Collection.where(label: SHARED_OUT_GROUP_LABEL).reorder(nil).map(&:child_ancestry)
+    return if ancestries.empty?
+
+    renumbered = execute(
+      Collection.sanitize_sql_array(
+        [<<~SQL.squish, ancestries],
+          UPDATE collections c SET position = r.rn, updated_at = now()
+          FROM (
+            SELECT id, row_number() OVER (PARTITION BY ancestry ORDER BY position NULLS LAST, id) rn
+            FROM collections WHERE ancestry IN (?) AND deleted_at IS NULL
+          ) r
+          WHERE c.id = r.id AND c.position IS DISTINCT FROM r.rn
+        SQL
+      ),
+    )
+    say "renumbered #{renumbered.cmd_tuples} collection(s) under '#{SHARED_OUT_GROUP_LABEL}'"
   end
 
   # Post-condition, logged rather than raised: no live collection should be left pointing at a parent
