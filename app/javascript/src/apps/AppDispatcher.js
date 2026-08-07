@@ -11,6 +11,7 @@ import GenericElementsAdmin from 'src/apps/generic/GenericElementsAdmin';
 import GenericSegmentsAdmin from 'src/apps/generic/GenericSegmentsAdmin';
 import GenericDatasetsAdmin from 'src/apps/generic/GenericDatasetsAdmin';
 import MoleculeModerator from 'src/apps/moleculeModerator/MoleculeModerator';
+import ConverterAdmin from 'src/apps/converter/ConverterAdmin';
 // import { ExtendedSignInForm } from 'src/components/navigation/NavNewSession';
 
 // mydb dependencies
@@ -58,6 +59,7 @@ const AppDispatcher = () => {
     '/generic_elements_admin',
     '/generic_segments_admin',
     '/generic_datasets_admin',
+    '/converter_admin',
   ];
 
   console.log(role, currentRoute, location.pathname, appsRoutes.includes(currentRoute));
@@ -105,6 +107,10 @@ const AppDispatcher = () => {
         <GenericDatasetsAdmin />
       </DndProvider>
     );
+  }
+  if (currentRoute === '/converter_admin') {
+    console.debug('rendering Converter Admin');
+    app = (<ConverterAdmin />);
   }
   if (role === 'Guest' || currentRoute === '/home') {
     console.debug('rendering home');
