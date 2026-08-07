@@ -329,6 +329,9 @@ export default class MaterialHandler {
       : `${validDigit(m.molarity_value, 3)} ${m.molarity_unit}, `;
     const eqv = `${validDigit(m.equivalent, 3)}`;
     const yld = `${Math.round(m.equivalent * 100)}%`;
+    const loadingStr = (m.contains_residues && m.loading)
+      ? `${validDigit(parseFloat(m.loading), 3)} mmol/g, `
+      : '';
 
     if (m.gas_type === 'gas') {
       const ton = `TON: ${validDigit(m.gas_phase_data.turnover_number, 3)}, `;
@@ -344,9 +347,15 @@ export default class MaterialHandler {
         return `${molName} (${solVol})`;
       }
       case 'products': {
+        if (m.contains_residues) {
+          return `${molName} (${grm}${mol}${loadingStr}${yld} yield)`;
+        }
         return `${molName} (${grm}${vol}${mol}${mlt}${yld} yield)`;
       }
       default: {
+        if (m.contains_residues) {
+          return `${molName} (${grm}${mol}${loadingStr}${eqv} equiv)`;
+        }
         return `${molName} (${grm}${vol}${mol}${mlt}${eqv} equiv)`;
       }
     }

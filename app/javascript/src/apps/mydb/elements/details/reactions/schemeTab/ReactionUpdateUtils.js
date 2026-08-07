@@ -889,6 +889,11 @@ export default class ReactionUpdateHandler {
       const equivalent = result > 1 ? 1 : result;
       return { ...sample, equivalent };
     }
+    if (sample.contains_residues) {
+      const massAnalyses = this.checkMassMolecule(referenceMaterial, sample);
+      this.checkMassPolymer(referenceMaterial, sample, massAnalyses);
+      return sample;
+    }
     const numerator = referenceMaterial.amount_mol * stoichiometryCoeff * sample.molecule_molecular_weight;
     const maxAmount = numerator / (sample.purity || 1);
     let equivalent = maxAmount !== 0 ? (sample.amount_g / maxAmount) : 0;
@@ -1458,7 +1463,8 @@ export default class ReactionUpdateHandler {
     if (!refM.contains_residues) {
       this.context?.notifications.add({
         message: 'Cannot perform calculations for loading and equivalent',
-        level: 'error'
+        level: 'error',
+        uid: `polymer-equivalent-no-residues-${refM.id}`,
       });
 
       return 1.0;
@@ -1467,7 +1473,8 @@ export default class ReactionUpdateHandler {
     if (!refM.loading) {
       this.context?.notifications.add({
         message: 'Please set non-zero starting material loading',
-        level: 'error'
+        level: 'error',
+        uid: `polymer-equivalent-no-loading-${refM.id}`,
       });
 
       return 0.0;
@@ -1511,12 +1518,12 @@ export default class ReactionUpdateHandler {
         if (massExperimental > mFull) {
           errorMsg = 'Experimental mass value is larger than possible\n'
             + 'by 100% conversion! Please check your data.';
-        } else if (massExperimental < massA) {
+        } else if (massExperimental > 0 && massExperimental < massA) {
           errorMsg = 'Material loss! '
             + 'Experimental mass value is less than possible!\n'
             + 'Please check your data.';
         }
-      } else if (massExperimental < mFull) { // expect weight loss
+      } else if (massExperimental > 0 && massExperimental < mFull) { // expect weight loss
         errorMsg = 'Experimental mass value is less than possible\n'
           + 'by 100% conversion! Please check your data.';
       }
@@ -1529,6 +1536,7 @@ export default class ReactionUpdateHandler {
       this.context?.notifications.add({
         message: errorMsg,
         level: 'error',
+        uid: `polymer-mass-error-${updatedS.id}`,
       });
     } else {
       updatedS.error_mass = false;
@@ -1538,11 +1546,21 @@ export default class ReactionUpdateHandler {
   }
 
   checkMassPolymer(referenceM, updatedS) {
+    if (!updatedS.amount_g || updatedS.amount_g === 0) {
+      updatedS.equivalent = 0;
+      return;
+    }
     const equivalent = this.calculateEquivalent(referenceM, updatedS);
     updatedS.equivalent = equivalent;
     const fconv_loading = referenceM.amount_mol / updatedS.amount_g * 1000.0;
     updatedS.residues[0].custom_info['loading_full_conv'] = fconv_loading;
-    updatedS.residues[0].custom_info['loading_type'] = 'mass_diff';
+
+    const currentLoadingType = updatedS.residues[0].custom_info.loading_type;
+    const shouldOverwriteLoading = !currentLoadingType || currentLoadingType === 'mass_diff';
+
+    if (shouldOverwriteLoading) {
+      updatedS.residues[0].custom_info['loading_type'] = 'mass_diff';
+    }
 
     let newAmountMol;
 
@@ -1557,7 +1575,9 @@ export default class ReactionUpdateHandler {
     newAmountMol = referenceM.amount_mol * equivalent;
     const newLoading = (newAmountMol / updatedS.amount_g) * 1000.0;
 
-    updatedS.residues[0].custom_info.loading = newLoading;
+    if (shouldOverwriteLoading) {
+      updatedS.residues[0].custom_info.loading = newLoading;
+    }
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -1644,16 +1664,22 @@ export default class ReactionUpdateHandler {
           }
         } else {
           if ((!this.lockEquivColumn || materialGroup === 'products') && sample.gas_type !== 'gas') {
-            // calculate equivalent, don't touch real amount
-            sample.maxAmount = referenceMaterial.amount_mol *
-              stoichiometryCoeff *
-              sample.molecule_molecular_weight / (sample.purity || 1);
-            // yield taking into account stoichiometry:
-            if (referenceMaterial.amount_mol > 0) {
-              sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
-            } else if (!sample.reference) {
-              // Set equivalent to 0 when reference material has no values (amount_mol = 0)
-              sample.equivalent = 0.0;
+            if (materialGroup === 'products' && sample.contains_residues) {
+              // Polymer products require loading-based yield calc — same path as when they are the updated sample
+              const massAnalyses = this.checkMassMolecule(referenceMaterial, sample);
+              this.checkMassPolymer(referenceMaterial, sample, massAnalyses);
+            } else {
+              // calculate equivalent, don't touch real amount
+              sample.maxAmount = referenceMaterial.amount_mol *
+                stoichiometryCoeff *
+                sample.molecule_molecular_weight / (sample.purity || 1);
+              // yield taking into account stoichiometry:
+              if (referenceMaterial.amount_mol > 0) {
+                sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol / stoichiometryCoeff;
+              } else if (!sample.reference) {
+                // Set equivalent to 0 when reference material has no values (amount_mol = 0)
+                sample.equivalent = 0.0;
+              }
             }
           } else {
             //sample.amount_mol = sample.equivalent * referenceMaterial.amount_mol;
@@ -1681,12 +1707,13 @@ export default class ReactionUpdateHandler {
           }
         } else if (materialGroup === 'products'
           && (sample.equivalent < 0.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))
-          && sample.gas_type !== 'gas') {
-          // if (materialGroup === 'products' && (sample.equivalent < 0.0 || sample.equivalent > 1.0 ||
-          // isNaN(sample.equivalent) || !isFinite(sample.equivalent))) { eslint-disable-next-line no-param-reassign
+          && sample.gas_type !== 'gas'
+          && sample.amount_g > 0
+          && referenceMaterial.amount_mol > 0) {
           sample.equivalent = 1.0;
-        } else if ((materialGroup === 'products' && (sample.amount_mol === 0 || referenceMaterial.amount_mol === 0)
-          && sample.gas_type !== 'gas')) {
+        } else if (materialGroup === 'products'
+          && ((sample.amount_mol === 0 && sample.amount_g === 0) || referenceMaterial.amount_mol === 0)
+          && sample.gas_type !== 'gas') {
           // eslint-disable-next-line no-param-reassign
           sample.equivalent = 0.0;
         } else if (materialGroup === 'products' && sample.amount_g > sample.maxAmount && sample.gas_type !== 'gas') {
