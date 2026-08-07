@@ -5,56 +5,56 @@ import { loadEls } from 'src/apps/generic/Utils';
 const routes = {
   '/home': {
     target: {
-      Home() { routesUtils.aviatorNavigationToApp('/home'); }
+      Home() { routesUtils.syncCurrentRoute('/home'); }
     },
     '/': 'Home',
   },
 
   '/admin': {
     target: {
-      index() { routesUtils.aviatorNavigationToApp('/admin'); }
+      index() { routesUtils.syncCurrentRoute('/admin'); }
     },
     '/': 'index',
   },
 
   '/command_n_control': {
     target: {
-      CnC() { routesUtils.aviatorNavigationToApp('/command_n_control'); }
+      CnC() { routesUtils.syncCurrentRoute('/command_n_control'); }
     },
     '/': 'CnC',
   },
 
   '/generic_elements_admin': {
     target: {
-      GenericElementsAdmin() { routesUtils.aviatorNavigationToApp('/generic_elements_admin'); }
+      GenericElementsAdmin() { routesUtils.syncCurrentRoute('/generic_elements_admin'); }
     },
     '/': 'GenericElementsAdmin',
   },
 
   '/generic_segments_admin': {
     target: {
-      GenericSegmentsAdmin() { routesUtils.aviatorNavigationToApp('/generic_segments_admin'); }
+      GenericSegmentsAdmin() { routesUtils.syncCurrentRoute('/generic_segments_admin'); }
     },
     '/': 'GenericSegmentsAdmin',
   },
 
   '/generic_datasets_admin': {
     target: {
-      GenericDatasetsAdmin() { routesUtils.aviatorNavigationToApp('/generic_segments_admin'); }
+      GenericDatasetsAdmin() { routesUtils.syncCurrentRoute('/generic_datasets_admin'); }
     },
     '/': 'GenericDatasetsAdmin',
   },
 
   '/converter_admin': {
     target: {
-      ConverterAdmin() { routesUtils.aviatorNavigationToApp('/converter_admin'); }
+      ConverterAdmin() { routesUtils.syncCurrentRoute('/converter_admin'); }
     },
     '/': 'ConverterAdmin',
   },
 
   '/molecule_moderator': {
     target: {
-      MoleculeModerator() { routesUtils.aviatorNavigationToApp('/molecule_moderator'); }
+      MoleculeModerator() { routesUtils.syncCurrentRoute('/molecule_moderator'); }
     },
     '/': 'MoleculeModerator',
   },
@@ -63,7 +63,7 @@ const routes = {
     target: {
       root() { routesUtils.aviatorNavigationToApp('/mydb/collection/all'); }
     },
-    '/': 'App',
+    '/': 'root',
     '/collection': {
       target: {
         show: routesUtils.collectionShow,
@@ -196,17 +196,17 @@ const routes = {
 function setRoutes() {
   return loadEls().then((klassArray) => {
     klassArray.forEach((klass) => {
-      if (!routes[`/${klass}`]) {
+      if (!routes['/mydb'][`/${klass}`]) {
         const item = {};
         item.target = { showOrNew: routesUtils.genericElShowOrNew };
-        item[`/:${klass}ID`] = 'showOrNew';
-        routes[`/${klass}`] = item;
+        item[`:${klass}ID`] = 'showOrNew';
+        routes['/mydb'][`/${klass}`] = item;
       }
     });
   }).catch((error) => {
     console.error('Error loading routes:', error);
   }).finally(() => {
-    Aviator.root = '/';
+    Aviator.root = '';
     Aviator.pushStateEnabled = true;
     Aviator.setRoutes(routes);
   });
