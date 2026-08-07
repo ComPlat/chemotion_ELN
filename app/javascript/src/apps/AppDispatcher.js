@@ -12,7 +12,6 @@ import GenericSegmentsAdmin from 'src/apps/generic/GenericSegmentsAdmin';
 import GenericDatasetsAdmin from 'src/apps/generic/GenericDatasetsAdmin';
 import MoleculeModerator from 'src/apps/moleculeModerator/MoleculeModerator';
 import ConverterAdmin from 'src/apps/converter/ConverterAdmin';
-// import { ExtendedSignInForm } from 'src/components/navigation/NavNewSession';
 
 // mydb dependencies
 import * as Sentry from '@sentry/react';
@@ -114,7 +113,6 @@ const AppDispatcher = () => {
   }
   if (role === 'Guest' || currentRoute === '/home') {
     console.debug('rendering home');
-    // TODO: Fall für ExtendedSignInForm reinbauen
     app = (<Home />);
   }
 

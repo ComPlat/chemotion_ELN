@@ -39,7 +39,9 @@ const handleLoginSubmit = async ({ form, url }) => {
   };
 };
 
-const ExtendedSignInForm = observer(({ url, rememberable, username = '', fromInvalid = false }) => {
+const ExtendedSignInForm = observer(({ rememberable, username = '', fromInvalid = false }) => {
+  const url = '/users/sign_in';
+  const userStore = useContext(StoreContext).user;
   const [form, setForm] = useFormValues({
     login: username || '',
     password: '',
@@ -51,20 +53,28 @@ const ExtendedSignInForm = observer(({ url, rememberable, username = '', fromInv
   const closeOtp = useCallback(() => setShowOtp(false), []);
 
   const handleSubmit = useCallback(async (e) => {
-    const userStore = useContext(StoreContext).user;
     e?.preventDefault();
     setForm('otp_attempt', '');
     const loginResult = await handleLoginSubmit({ form, url });
     if (loginResult.status === 200) {
       userStore.setAuthToken(loginResult.token);
       userStore.setRole(loginResult.role);
+      userStore.setLoginStatus('');
+      let route = '/mydb/collection/all';
+      if (loginResult.role === 'Group') {
+        route = '/command_n_control';
+      } else if (loginResult.role === 'Admin') {
+        route = '/admin';
+      }
+      aviatorNavigationToApp(route);
     } else if (loginResult.status === 400) {
       // handle bad username/password combination
+      userStore.setLoginStatus('failed');
     } else if (loginResult.status === 401 && loginResult.otp_required === true) {
       setShowOtp(true);
       setWrongOtp(loginResult.otp_wrong);
     }
-  }, [form, setForm, url]);
+  }, [form, setForm, userStore]);
 
   return (
     <>
@@ -124,7 +134,6 @@ const ExtendedSignInForm = observer(({ url, rememberable, username = '', fromInv
 });
 
 ExtendedSignInForm.propTypes = {
-  url: PropTypes.string.isRequired,
   username: PropTypes.string,
   rememberable: PropTypes.bool.isRequired,
 };
@@ -152,6 +161,7 @@ const SignInForm = () => {
     if (loginResult.status === 200) {
       userStore.setAuthToken(loginResult.token);
       userStore.setRole(loginResult.role);
+      userStore.setLoginStatus('');
       let route = '/mydb/collection/all';
       if (loginResult.role === 'Group') {
         route = '/command_n_control';
@@ -161,6 +171,7 @@ const SignInForm = () => {
       aviatorNavigationToApp(route);
     } else if (loginResult.status === 400) {
       // handle bad username/password combination
+      userStore.setLoginStatus('failed');
     } else if (loginResult.status === 401 && loginResult.otp_required === true) {
       setShowOtp(true);
       setWrongOtp(loginResult.otp_wrong);
