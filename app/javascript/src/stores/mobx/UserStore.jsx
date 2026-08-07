@@ -262,6 +262,7 @@ const UserStore = types.model(
     omniauthProviders: types.map(OmniauthProvider),
     extraRules: types.optional(ExtraRule, {}),
     bao: types.array(BaoOrHeader),
+    loginStatus: types.optional(types.string, ''),
   }
 ).actions((self) => ({
   fetchCurrentUser: flow(function* fetchCurrentUser() {
@@ -380,6 +381,9 @@ const UserStore = types.model(
     } else {
       localStorage.removeItem('chemotion-app-route');
     }
+  },
+  setLoginStatus: (state) => {
+    self.loginStatus = state;
   },
   logout: () => {
     self.setAuthToken(null);
