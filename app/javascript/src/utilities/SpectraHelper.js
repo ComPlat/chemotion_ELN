@@ -1,4 +1,5 @@
 import { FN } from '@complat/react-spectra-editor';
+
 const acceptables = ['jdx', 'dx', 'jcamp', 'mzml', 'mzxml', 'raw', 'cdf', 'zip', 'gz', 'tar'];
 
 const JcampIds = (container) => {
@@ -176,7 +177,7 @@ const listNMROntology = (chmos, storedSet, parentIsNMR = false) => {
     if (value && (value.toLowerCase().includes('nuclear magnetic resonance') || parentIsNMR)) {
       storedSet.add(value);
       isNMR = true;
-    } else if(typeof chmos === 'string' && (chmos.toLowerCase().includes('nuclear magnetic resonance') || parentIsNMR)) {
+    } else if (typeof chmos === 'string' && (chmos.toLowerCase().includes('nuclear magnetic resonance') || parentIsNMR)) {
       storedSet.add(value);
       isNMR = true;
     } else {
@@ -350,4 +351,11 @@ const inlineNotation = (layout, data, metadata) => {
   return { quillData, formattedString };
 };
 
-export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, cleaningNMRiumData, inlineNotation }; // eslint-disable-line
+export {
+  BuildSpcInfos,
+  BuildSpcInfosForNMRDisplayer,
+  JcampIds,
+  isNMRKind,
+  cleaningNMRiumData,
+  inlineNotation,
+};

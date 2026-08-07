@@ -1150,46 +1150,10 @@
     uuid "^13.0.0"
     zustand "^4.5.7"
 
-"@complat/react-spectra-editor@1.3.5":
-  version "1.3.5"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.3.5.tgz#67413be000949a19a715706fd8314aa4096f7ffd"
-  integrity sha512-9au3vqAna6BC1VfIuIhC9/D2iI5nUCAtwqibEmlZabqDur4B83Gr6lzefWh/xcrAPQKtAoGydBBVuBA2Y38NLg==
-  dependencies:
-    "@complat/react-svg-file-zoom-pan" "1.1.4"
-    "@emotion/react" "^11.11.1"
-    "@emotion/styled" "^11.11.0"
-    "@mdi/js" "^7.2.96"
-    "@mdi/react" "^1.6.1"
-    "@mui/icons-material" "^5.14.9"
-    "@mui/material" "^5.14.9"
-    "@mui/styles" "^5.14.9"
-    "@popperjs/core" "^2.11.8"
-    "@types/jest" "^29.5.0"
-    "@types/node" "^18.15.11"
-    "@types/react" "^18.0.34"
-    "@types/react-dom" "^18.0.11"
-    babel-plugin-transform-object-rest-spread "^6.26.0"
-    browserslist "^4.21.5"
-    classnames "^2.3.2"
-    d3 "^7.8.5"
-    d3-tip "^0.9.1"
-    jcampconverter "4.1.0"
-    ml-savitzky-golay-generalized "1.1.1"
-    prop-types "^15.8.1"
-    react-dropzone "^8.0.3"
-    react-quill "^2.0.0"
-    react-redux "^7.2.0"
-    redux "^4.1.1"
-    redux-saga "^1.1.3"
-    redux-undo "^1.1.0"
-    regenerator-transform "^0.13.3"
-    reselect "^4.0.0"
-    typescript "^5.0.4"
-
-"@complat/react-spectra-editor@1.8.0":
+"@complat/react-spectra-editor@1.3.5", "@complat/react-spectra-editor@github:ComPlat/react-spectra-editor#feat/comparison-spectra":
   version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@complat/react-spectra-editor/-/react-spectra-editor-1.8.0.tgz#36b80e60393cba9aab3aba35d58ad1d95e3f33b5"
-  integrity sha512-SLpjN125lI3Fyl1hsaiOcvhC+LHQNKZZ0YekFRv9Al4BFv4ldqkELM2zrnhgc5/bhCxnr6TDEcxrNqGOOduYsQ==
+  uid "72d279768f0270dffc18b4c073a344b5b2647fcb"
+  resolved "https://codeload.github.com/ComPlat/react-spectra-editor/tar.gz/72d279768f0270dffc18b4c073a344b5b2647fcb"
   dependencies:
     "@complat/react-svg-file-zoom-pan" "1.1.5"
     "@emotion/react" "^11.11.1"
@@ -1223,15 +1187,6 @@
     regenerator-transform "^0.13.3"
     reselect "^4.0.0"
     typescript "^5.0.4"
-
-"@complat/react-svg-file-zoom-pan@1.1.4":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@complat/react-svg-file-zoom-pan/-/react-svg-file-zoom-pan-1.1.4.tgz#292e44e4b9ad0e8efa1f0b6d52358baa75dc13b5"
-  integrity sha512-1VjX7OEMPZJ0PZmUZxE1ZvUVEFU6h67FEyJphu6sXVzIYA8TG+JZwBaKh/V2k8nplA6hqGohbydX8oo2GJ1VwA==
-  dependencies:
-    babel-plugin-transform-object-rest-spread "^6.26.0"
-    d3 "^7.8.5"
-    regenerator-transform "^0.13.3"
 
 "@complat/react-svg-file-zoom-pan@1.1.5":
   version "1.1.5"
@@ -2924,9 +2879,9 @@
     uuid "^9.0.0"
 
 "@sinclair/typebox@^0.27.8":
-  version "0.27.10"
-  resolved "https://registry.yarnpkg.com/@sinclair/typebox/-/typebox-0.27.10.tgz#beefe675f1853f73676aecc915b2bd2ac98c4fc6"
-  integrity sha512-MTBk/3jGLNB2tVxv6uLlFh1iu64iYOQ2PbdOSK3NW8JZsmlaOh2q6sdtKowBhfw8QFLmYNzTW4/oK4uATIi6ZA==
+  version "0.27.12"
+  resolved "https://registry.yarnpkg.com/@sinclair/typebox/-/typebox-0.27.12.tgz#0cacd3cff047a32936b1ace47ea7c86eaab60a7f"
+  integrity sha512-hhyNJ+nbR6ZR7pToHvllEFun9TL0sbL+tk/ON75lo+Xas054uez98qRbsuNt7MBCyZKK4+8Yli/OAGZhmfBZ/g==
 
 "@sinonjs/commons@^3.0.0", "@sinonjs/commons@^3.0.1":
   version "3.0.1"
@@ -4917,10 +4872,10 @@ base@^0.11.1:
     mixin-deep "^1.2.0"
     pascalcase "^0.1.1"
 
-baseline-browser-mapping@^2.10.42:
-  version "2.10.43"
-  resolved "https://registry.yarnpkg.com/baseline-browser-mapping/-/baseline-browser-mapping-2.10.43.tgz#7b5d11590ce5acdbe4859443e3c940e81ce8c02d"
-  integrity sha512-AjYpR78kDWAY3Efj+cDTFH9t9SCoL7OoTp1BOb0mQV7S+6CiLwnWM3FyxhJtdPufDFKzmCSFoUncKjWgJEZTCQ==
+baseline-browser-mapping@^2.10.42, baseline-browser-mapping@^2.10.44:
+  version "2.11.1"
+  resolved "https://registry.yarnpkg.com/baseline-browser-mapping/-/baseline-browser-mapping-2.11.1.tgz#390b4714558634093df77add4acca0c5c0c1605e"
+  integrity sha512-HYXq73DDpCtNzOmrFsm9eSwCvWCql0RzqjpDzXN9EadiLJ4DNat0nsZ/Bzmy+Ud12mb4/zKDY0cQ805ZzN+i0A==
 
 batch@0.6.1:
   version "0.6.1"
@@ -5064,7 +5019,18 @@ browser-stdout@^1.3.1:
   resolved "https://registry.yarnpkg.com/browser-stdout/-/browser-stdout-1.3.1.tgz#baa559ee14ced73452229bad7326467c61fabd60"
   integrity sha512-qhAVI1+Av2X7qelOfAIYwXONood6XlZE/fXaBSmW/T5SzLAmCgzi+eiWE7fUvbHaeNBQH13UftjpXxsfLkMpgw==
 
-browserslist@^4.21.5, browserslist@^4.24.0, browserslist@^4.28.1:
+browserslist@^4.21.5:
+  version "4.28.7"
+  resolved "https://registry.yarnpkg.com/browserslist/-/browserslist-4.28.7.tgz#409046517fccd2e51cdc20f077454b7141184028"
+  integrity sha512-JxV13hNrFxqjOc8alRbq9dK1MM79NEXYpma2B2J4wAtpWS5zIEIKqWPGCl7N4o7Uc7B7itylh7SuDujATRyyTw==
+  dependencies:
+    baseline-browser-mapping "^2.10.44"
+    caniuse-lite "^1.0.30001806"
+    electron-to-chromium "^1.5.393"
+    node-releases "^2.0.51"
+    update-browserslist-db "^1.2.3"
+
+browserslist@^4.24.0, browserslist@^4.28.1:
   version "4.28.6"
   resolved "https://registry.yarnpkg.com/browserslist/-/browserslist-4.28.6.tgz#7cf83afcd69c55fde6fb2dcc5039ff0f4ba42610"
   integrity sha512-FQBYNK15VMslhLHpA7+n+n1GOlF1kId2xcCg7/j95f24AOF6VDYMNH4mFxF7KuaTdv627faazpOAjFzMrfJOUw==
@@ -5215,10 +5181,10 @@ camelcase@^6.0.0:
   resolved "https://registry.yarnpkg.com/camelcase/-/camelcase-6.3.0.tgz#5685b95eb209ac9c0c177467778c9c84df58ba9a"
   integrity sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==
 
-caniuse-lite@^1.0.30001803:
-  version "1.0.30001805"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001805.tgz#78d5d5968a69b7ff81af87a96d7ddc7ea6670b1e"
-  integrity sha512-52noaS3DubycKSXaU30TwPGIp+POyQSUVa5jBEq3vkRkY0kjyb3LQgvhU6WGyCcyXqVLWO0Cw0Q6BSdD0kUfVA==
+caniuse-lite@^1.0.30001803, caniuse-lite@^1.0.30001806:
+  version "1.0.30001806"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001806.tgz#1bc8e502b723fa393455dfbedd5ccec0c29bb74e"
+  integrity sha512-72Cuvd95zbSYPKq6Fhg8eDJRlzgWDf7/mtoZv6Qe/DYNCEBdNxoA3+rZAU2ZhGCpZlns3EssFavaZomckT5Uuw==
 
 canvg@^3.0.11:
   version "3.0.11"
@@ -7053,10 +7019,10 @@ ee-first@1.1.1:
   resolved "https://registry.yarnpkg.com/ee-first/-/ee-first-1.1.1.tgz#590c61156b0ae2f4f0255732a158b266bc56b21d"
   integrity sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==
 
-electron-to-chromium@^1.5.389:
-  version "1.5.389"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.389.tgz#538be9ebec78026d4daba6be321ab854dfac2a8f"
-  integrity sha512-cEto7aeOqBfU1D+c5py5pE+ooscKE75JifxLBdFUZsqAxRS6y7kebtxAZvICszSl05gPjYHDTjY+lXpyGvpJbg==
+electron-to-chromium@^1.5.389, electron-to-chromium@^1.5.393:
+  version "1.5.396"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.396.tgz#4aa96428486c8d1c9c8aeb205b2d6e04928ca046"
+  integrity sha512-yHiw2Y3C3H9U6TMbOfoWK/BPreiOPXRfTWPBwQBoZG6/8TB6eOPnsy5oaRYuatR7Fw2SJ4kKforgufeo7fq0EQ==
 
 elix@15.0.1:
   version "15.0.1"
@@ -11953,11 +11919,12 @@ ospath@^1.2.2:
   integrity sha512-o6E5qJV5zkAbIDNhGSIlyOhScKXgQrSRMilfph0clDfM0nEnBOlKlH4sWDmG95BW/CvwNz0vmm7dJVtU2KlMiA==
 
 own-keys@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/own-keys/-/own-keys-1.0.1.tgz#e4006910a2bf913585289676eebd6f390cf51358"
-  integrity sha512-qFOyK5PjiWZd+QQIh+1jhdb9LpxTF0qs7Pm8o5QHYZ0M3vKqSqzsZaEB6oWlxZ+q2sJBMI/Ktgd2N5ZwQoRHfg==
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/own-keys/-/own-keys-1.0.2.tgz#31448ec1f781ecb1447f6f6aa0d6534222af59de"
+  integrity sha512-19YVAg7T+WTrxggPukVq7DjTv6+PJ867TmhCvBsYwmbFCsZd344rq2Ld1p0wo8f8Qrrhgp82c6FJRqdXWtSEhg==
   dependencies:
-    get-intrinsic "^1.2.6"
+    call-bound "^1.0.4"
+    get-intrinsic "^1.3.0"
     object-keys "^1.1.1"
     safe-push-apply "^1.0.0"
 
@@ -13413,9 +13380,9 @@ react-is@^17.0.0, react-is@^17.0.2:
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
 
 react-is@^19.0.0:
-  version "19.2.7"
-  resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.2.7.tgz#57668ee86a78574a542b0a539455212b2c086df2"
-  integrity sha512-kZFnouyVv7eP/Phmrlo9FK+zcAdriZJvzxXHF1Sl1P377WSGe2G/JxVolhTrB/jeV47lKImhNUsijjHAAbcl/A==
+  version "19.2.8"
+  resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.2.8.tgz#09826f9fbc187bc668e3e5c62edc001f804d5018"
+  integrity sha512-s5un28nYxKJw5gvUHyW5PCC28CvBqLu9r3cWgzHT4Vo/5fqqkFcdRYsGcKf50WMPpjjFZS5d76fn3YCo2njKwQ==
 
 react-json-editor-ajrm@^2.5.10:
   version "2.5.14"
@@ -13503,7 +13470,7 @@ react-quill@^2.0.0:
     lodash "^4.17.4"
     quill "^1.3.7"
 
-react-redux@7.2.9, react-redux@^7.2.0:
+react-redux@7.2.9:
   version "7.2.9"
   resolved "https://registry.yarnpkg.com/react-redux/-/react-redux-7.2.9.tgz#09488fbb9416a4efe3735b7235055442b042481d"
   integrity sha512-Gx4L3uM182jEEayZfRbI/G11ZpYdNAnBs70lFVMNdHJI76XYtR+7m0MN+eAs7UHBPhWXcnFPaS+9owSCJQHNpQ==
