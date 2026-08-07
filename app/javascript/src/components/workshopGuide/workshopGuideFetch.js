@@ -11,6 +11,21 @@ const cacheBust = () => `?_=${Date.now()}`;
 export const workshopBase = BASE;
 export const workshopDefaultSlug = DEFAULT_SLUG;
 
+// Availability must not be probed by requesting the (expectedly missing) static
+// file directly: a 404 fetch response doesn't throw, but the browser still logs
+// the failed resource load to the console on every non-workshop instance. This
+// endpoint always answers 200, so the "feature disabled" case stays silent.
+export async function fetchWorkshopAvailability() {
+  try {
+    const res = await fetch('/api/v1/public/workshop_guide/available');
+    if (!res.ok) return false;
+    const { available } = await res.json();
+    return !!available;
+  } catch (e) {
+    return false;
+  }
+}
+
 export async function fetchWorkshopPage(slug) {
   const safeSlug = String(slug || DEFAULT_SLUG).replace(/[^a-zA-Z0-9_-]/g, '');
   const res = await fetch(`${BASE}/${safeSlug}.md${cacheBust()}`);

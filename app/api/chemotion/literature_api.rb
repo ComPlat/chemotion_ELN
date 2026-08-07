@@ -11,7 +11,7 @@ module Chemotion
       def citation_for_elements(id = params[:element_id], type = @element_klass, cat = 'detail')
         return Literature.none if id.blank?
 
-        Literature.by_element_attributes_and_cat(id, type, cat).with_user_info
+        Literature.by_element_attributes_and_cat(id, type, cat).with_user_info.order('literals.id ASC')
       end
     end
 

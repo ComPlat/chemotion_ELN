@@ -15,7 +15,7 @@ require 'webdrivers'
 # require 'capybara/rspec'
 require 'rails_helper'
 
-bad_smiles = JSON.parse(File.read('spec/fixtures/structures/bad_smiles.json'))
+bad_smiles = YAML.load_file('spec/fixtures/structures/bad_smiles.yml')
 
 def stub_pubchem_request(status, body, end_point)
   stub_request(:get, end_point)

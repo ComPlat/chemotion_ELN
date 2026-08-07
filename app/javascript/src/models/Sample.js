@@ -45,6 +45,14 @@ const prepareRangeBound = (args = {}, field) => {
   return argsNew;
 };
 
+const parseHstoreNumber = (val) => {
+  if (val === null || val === undefined) return val;
+
+  const num = parseFloat(val);
+
+  return Number.isNaN(num) ? val : num;
+};
+
 export default class Sample extends Element {
   // isMethodRestricted(m) {
   //   return false;
@@ -540,17 +548,31 @@ export default class Sample extends Element {
     const { profile } = UserStore.getState();
     const show_external_name = profile ? profile.show_external_name : false;
     const show_sample_name = profile ? profile.show_sample_name : false;
-    const { external_label } = this;
+    const show_sample_short_label = profile ? profile.show_sample_short_label : false;
+    const { external_label, name, short_label } = this;
     const extLabelClass = 'label--bold';
-    const { name } = this;
-    const { short_label } = this;
 
-    if (show_external_name) {
-      return (external_label ? <span className={extLabelClass}>{external_label}</span> : short_label);
-    } if (show_sample_name) {
-      return (name ? <span className={extLabelClass}>{name}</span> : short_label);
-    }
-    return short_label;
+    const otherChecked = show_external_name || show_sample_name;
+    const showShortLabel = !otherChecked || show_sample_short_label;
+
+    const parts = [];
+    if (showShortLabel) parts.push(<span key="short">{short_label}</span>);
+    if (show_sample_name && name) parts.push(<span key="name" className={extLabelClass}>{name}</span>);
+    if (show_external_name && external_label) parts.push(<span key="ext" className={extLabelClass}>{external_label}</span>);
+
+    if (parts.length === 0) return short_label;
+    if (parts.length === 1) return parts[0];
+
+    return (
+      <span className="d-flex gap-1 align-items-center">
+        {parts.map((part, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && <span className="text-muted">|</span>}
+            {part}
+          </React.Fragment>
+        ))}
+      </span>
+    );
   }
 
   get molecule_name_label() {
@@ -1580,7 +1602,7 @@ export default class Sample extends Element {
 
   get loading() {
     if (this.contains_residues && this.residues?.[0]?.custom_info) {
-      return this.residues[0].custom_info.loading;
+      return parseHstoreNumber(this.residues[0].custom_info.loading);
     }
     return false;
   }
@@ -1593,7 +1615,7 @@ export default class Sample extends Element {
 
   get external_loading() {
     if (this.contains_residues && this.residues?.[0]?.custom_info) {
-      return this.residues[0].custom_info.external_loading;
+      return parseHstoreNumber(this.residues[0].custom_info.external_loading);
     }
     return false;
   }
