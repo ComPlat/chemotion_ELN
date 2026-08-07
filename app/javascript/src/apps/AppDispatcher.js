@@ -10,6 +10,7 @@ import Home from 'src/apps/home/Home';
 import GenericElementsAdmin from 'src/apps/generic/GenericElementsAdmin';
 import GenericSegmentsAdmin from 'src/apps/generic/GenericSegmentsAdmin';
 import GenericDatasetsAdmin from 'src/apps/generic/GenericDatasetsAdmin';
+import MoleculeModerator from 'src/apps/moleculeModerator/MoleculeModerator';
 // import { ExtendedSignInForm } from 'src/components/navigation/NavNewSession';
 
 // mydb dependencies
@@ -53,6 +54,7 @@ const AppDispatcher = () => {
   const appsRoutes = [
     '/home',
     '/command_n_control',
+    '/molecule_moderator',
     '/generic_elements_admin',
     '/generic_segments_admin',
     '/generic_datasets_admin',
@@ -75,6 +77,10 @@ const AppDispatcher = () => {
   if (role === 'Admin') {
     console.debug('rendering AdminHome');
     app = (<AdminHome />);
+  }
+  if (currentRoute === '/molecule_moderator') {
+    console.debug('rendering Molecule Moderator');
+    app = (<MoleculeModerator />);
   }
   if (currentRoute === '/generic_elements_admin') {
     console.debug('rendering Generic Elements Admin');
