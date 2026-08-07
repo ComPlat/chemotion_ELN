@@ -347,6 +347,15 @@ const aviatorNavigationToApp = (url, silent = false) => {
   rootStore.userStore.setCurrentRoute(url);
 };
 
+// For route targets in apps/routes.js that just need to react to a URL
+// Aviator already matched (dispatch(), or a popstate-triggered re-dispatch) -
+// unlike aviatorNavigationToApp, this never calls Aviator.navigate(), so it
+// can't push another history entry or re-trigger dispatch() for the same URL
+// (which would recurse: navigate -> dispatch -> target -> navigate -> ...).
+const syncCurrentRoute = (url) => {
+  rootStore.userStore.setCurrentRoute(url);
+};
+
 const aviatorNavigation = (type, id, silent = true, showOrNew = false, params = {}) => {
   const { currentCollection } = UIStore.getState();
   const withType = type ? `/${type}` : '';
@@ -410,6 +419,7 @@ export {
   vesselTemplateShowOrNew,
   sequenceBasedMacromoleculeSampleShowOrNew,
   aviatorNavigationToApp,
+  syncCurrentRoute,
   aviatorNavigation,
   aviatorNavigationWithCollectionId,
 };

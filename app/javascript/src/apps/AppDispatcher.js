@@ -47,24 +47,24 @@ const backendOptions = {
   ],
 };
 
+const APPS_PATHS = [
+  '/home',
+  '/admin',
+  '/command_n_control',
+  '/molecule_moderator',
+  '/generic_elements_admin',
+  '/generic_segments_admin',
+  '/generic_datasets_admin',
+  '/converter_admin',
+];
+
 const AppDispatcher = () => {
   const { userStore } = useContext(StoreContext);
   const { role, currentRoute } = userStore;
 
   let app = (<Home />);
-  const appsRoutes = [
-    '/home',
-    '/command_n_control',
-    '/molecule_moderator',
-    '/generic_elements_admin',
-    '/generic_segments_admin',
-    '/generic_datasets_admin',
-    '/converter_admin',
-  ];
 
-  console.log(role, currentRoute, location.pathname, appsRoutes.includes(currentRoute));
-
-  if (role === 'Person' && !appsRoutes.includes(currentRoute)) {
+  if (role === 'Person' && !APPS_PATHS.includes(currentRoute)) {
     console.debug('rendering mydb');
     app = (
       <DndProvider backend={MultiBackend} options={backendOptions}>
