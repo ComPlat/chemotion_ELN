@@ -124,7 +124,18 @@ function getReactionMaterialsIDsToLabels(materials) {
       materialType,
       Object.fromEntries(
         materialsOfType.map(
-          ({ id, preferred_label, short_label }) => [id, preferred_label || short_label || id.toString()]
+          (mat) => {
+
+            const { id, preferred_label, short_label,
+              molecule_name_hash: { label: molLabel } = {},
+              molecule: { sum_formular: sumFormular } = {} } = mat;
+            const sampleName = mat.name;
+            const label = preferred_label || short_label || id.toString();
+            if (sampleName) {
+              return [id, `${label}: ${sampleName} (${molLabel || sumFormular})`];
+            }
+            return [id, `${label} (${molLabel || sumFormular})`];
+          }
         )
       )
     ])

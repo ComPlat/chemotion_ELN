@@ -1,0 +1,24 @@
+
+.ag-theme-reaction-variations {
+  .ag-body-horizontal-scroll {
+    bottom: 0 !important;
+  }
+
+  .ag-header-group-cell::after,
+  .ag-header-cell:not(.ag-column-first)::after {
+    display: None;
+  }
+
+  .ag-header-group-cell:hover::after,
+  .ag-header-cell:hover:not(.ag-column-first)::after {
+      display: block !important;
+  }
+
+  .ag-body {
+    max-height: 300px;
+
+    .ag-body-viewport {
+      overflow-y: auto !important;
+    }
+  }
+}
