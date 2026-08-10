@@ -6,7 +6,7 @@ class TextTemplateActions {
   fetchTextTemplates(elementName) {
     return (dispatch) => {
       TextTemplatesFetcher.fetchTextTemplates(elementName)
-        .then(result => dispatch(result))
+        .then(result => dispatch(result || {}))
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
