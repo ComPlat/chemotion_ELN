@@ -34,17 +34,22 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
   end
 
   def up
-    regroup_shared_out_collections(migrate_direct_shares)
+    group_ids = regroup_shared_out_collections(migrate_direct_shares)
     reroot_residual_wrapper_children
     salvage_wrappers_holding_elements
     retire_share_wrappers
+    backfill_root_positions
+    place_group_nodes_last(group_ids)
     migrate_sync_shares
+    renumber_group_children(group_ids)
     refresh_shared_flag
     report_dangling_ancestry
   end
 
-  # No +down+. +deleted_at+ alone does not distinguish a wrapper this migration retired from one a
-  # user deleted years ago, so the retirement is not selectively reversible.
+  # No +down+. Restoring the pre-migration +position+ values is deliberately not offered: sibling
+  # order is presentation state and most of the rows this touches had none to begin with. Note also
+  # that +deleted_at+ alone does not distinguish a wrapper this migration retired from one a user
+  # deleted years ago, so the retirement is not selectively reversible either.
 
   # First pass: collections that were "shared" (owner kept in shared_by_id, recipient in
   # user_id). Make shared_by_id the real owner and create a CollectionShare for the recipient.
@@ -218,10 +223,13 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
   # instead would leave their collections re-owned but re-parented nowhere, i.e. in no tree at all.
   #
   # @param shared_out_by_owner [Hash{Integer => Array<Integer>}] owner id => shared-out collection ids
+  # @return [Array<Integer>] ids of the grouping nodes this run created or adopted
   def regroup_shared_out_collections(shared_out_by_owner)
     regrouped = 0
+    group_ids = []
     shared_out_by_owner.each do |owner_id, collection_ids|
       group = shared_out_group_for(owner_id)
+      group_ids << group.id
       Collection.with_deleted.where(id: collection_ids).where.not(id: group.id).reorder(nil).find_each do |collection|
         next if collection.parent_id == group.id
 
@@ -234,16 +242,21 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
     end
     say "regrouped #{regrouped} shared-out collection(s) under '#{SHARED_OUT_GROUP_LABEL}' " \
         "for #{shared_out_by_owner.size} owner(s)"
+    group_ids
   end
 
   # Idempotent per-owner grouping node. Only live nodes are matched: a soft-deleted one is a node the
   # user deleted, and resurrecting it silently would be worse than creating a fresh one. +ancestry+ is
   # not part of the lookup — the node is user-movable, so pinning it to the root would mint a second
   # one on a re-run after a legitimate move.
+  #
+  # Created without a position on purpose: assigning a provisional one here would consume a number
+  # that {#backfill_root_positions} then has to number the owner's real positionless roots around.
+  # The node is picked up by that backfill like any other positionless root, and
+  # {#place_group_nodes_last} then confirms it sits last.
   def shared_out_group_for(owner_id)
     Collection.find_or_create_by!(user_id: owner_id, label: SHARED_OUT_GROUP_LABEL, is_locked: false) do |node|
       node.ancestry = '/'
-      node.position = (Collection.where(user_id: owner_id, ancestry: '/').maximum(:position) || 0) + 1
     end
   end
 
@@ -263,6 +276,9 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
       Collection.with_deleted.where(ancestry: wrapper.child_ancestry).reorder(nil).find_each do |stray|
         say "re-rooting collection ##{stray.id} (user ##{stray.user_id}) out of share wrapper ##{wrapper.id}"
         stray.parent = wrapper.parent
+        # Its position came from a different sibling set and would collide at its new level; clearing
+        # it hands the row to {#backfill_root_positions}, which appends it after the existing roots.
+        stray.position = nil if stray.parent.nil?
         stray.save!
         rerooted += 1
       end
@@ -277,7 +293,8 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
   # holder. It is therefore unlocked and left exactly where it is, with its owner and its membership.
   #
   # SQL because is_locked is in LockedCollectionGuard's LOCKED_IMMUTABLE_ATTRIBUTES and the validation
-  # keys off the persisted flag, so a model-level unlock fails.
+  # keys off the persisted flag, so a model-level unlock fails. Its NULL position, if any, is picked
+  # up by {#backfill_root_positions} once it is unlocked.
   def salvage_wrappers_holding_elements
     holders = ELEMENT_JOIN_TABLES.map do |table|
       "EXISTS (SELECT 1 FROM #{table} j WHERE j.collection_id = c.id AND j.deleted_at IS NULL)"
@@ -307,6 +324,103 @@ class MigrateToCollectionShare < ActiveRecord::Migration[6.1]
       WHERE is_locked AND shared_by_id IS NOT NULL AND deleted_at IS NULL
     SQL
     say "retired #{retired.cmd_tuples} legacy share wrapper(s) as a recoverable soft delete"
+  end
+
+  # Gives every positionless root collection a number, for all users.
+  #
+  # position is nullable with no default and pre-#2783 sharing never assigned one, so tree order was
+  # ambiguous: the backend orders by +position ASC+ (Postgres sorts NULLs last) while the frontend's
+  # presort coerces NULL to 0 and sorts them first. Numbering the NULLs after the numbered siblings
+  # matches both the backend and the sort that actually builds the rendered tree, so no user's visible
+  # order changes.
+  #
+  # This is a backfill, not a renumber: no row that already has a position is touched. The maximum is
+  # taken over all of the user's live roots, locked ones included, so a backfilled root cannot land
+  # on the locked "All" (position 0) or "chemotion-repository.net" (position 1) that
+  # User#create_all_collection and #create_chemotion_public_collection pin.
+  #
+  # It does not make root positions globally consistent, and is not meant to: Usecases::Collections::Create
+  # numbers a new root +count + 1+ while UpdateTree numbers unlocked roots +1..N+, so the two already
+  # disagree and can produce duplicates on their own. Closing that is a separate change; all this
+  # guarantees is that no root is left without a position.
+  #
+  # Locked roots are left alone: their position is system-defined and LockedCollectionGuard treats it
+  # as immutable. +is_locked IS NOT TRUE+ rather than += false+ because the column is nullable, and
+  # NULL = false is NULL, which would silently exclude such a root from its own backfill.
+  def backfill_root_positions
+    backfilled = execute(<<~SQL.squish)
+      WITH roots AS (
+        SELECT id, user_id, position, is_locked FROM collections
+        WHERE ancestry = '/' AND deleted_at IS NULL
+      ), maxes AS (
+        SELECT user_id, COALESCE(MAX(position), 0) AS max_position FROM roots GROUP BY user_id
+      ), numbered AS (
+        SELECT r.id, m.max_position + row_number() OVER (PARTITION BY r.user_id ORDER BY r.id) AS new_position
+        FROM roots r JOIN maxes m ON m.user_id = r.user_id
+        WHERE r.position IS NULL AND r.is_locked IS NOT TRUE
+      )
+      UPDATE collections c SET position = n.new_position, updated_at = now()
+      FROM numbered n WHERE c.id = n.id
+    SQL
+    say "backfilled #{backfilled.cmd_tuples} root collection(s) that had no position"
+  end
+
+  # Puts each grouping node last among its owner's roots, now that every root has a position.
+  # A node the user has already moved out of the root level is left where they put it.
+  #
+  # Restricted to the nodes this run created or adopted. Selecting by label would also pick up a
+  # collection a user independently named that — repositioning and renumbering the tree of somebody
+  # the migration has nothing to do with, and raising outright if that row happened to be locked.
+  #
+  # @param group_ids [Array<Integer>] ids of the grouping nodes from {#regroup_shared_out_collections}
+  def place_group_nodes_last(group_ids)
+    return if group_ids.empty?
+
+    placed = 0
+    Collection.where(id: group_ids, ancestry: '/').reorder(nil).find_each do |group|
+      last = Collection.where(user_id: group.user_id, ancestry: '/').where.not(id: group.id).maximum(:position)
+      next if last.nil? || group.position == last + 1
+
+      group.update!(position: last + 1)
+      placed += 1
+    end
+    say "placed #{placed} '#{SHARED_OUT_GROUP_LABEL}' node(s) last among their owner's roots"
+  end
+
+  # Numbers the collections under each grouping node 1..N. They arrive from different recipients'
+  # trees, so their positions collide; the order is +position NULLS LAST, id+, which keeps whatever
+  # relative order the numbered ones had and appends the positionless ones in creation order.
+  #
+  # The child path is derived in SQL from the node's current row rather than from a hand-built
+  # "/<id>/" or a cached +child_ancestry+: the node is user-movable, so only the stored ancestry is
+  # authoritative. Joining also keeps the statement independent of how many owners are involved.
+  #
+  # Soft-deleted children are numbered too, after the live ones, so restoring one cannot land it on
+  # a position a live sibling already holds.
+  #
+  # @param group_ids [Array<Integer>] ids of the grouping nodes from {#regroup_shared_out_collections}
+  def renumber_group_children(group_ids)
+    return if group_ids.empty?
+
+    renumbered = execute(
+      Collection.sanitize_sql_array(
+        [<<~SQL.squish, group_ids],
+          UPDATE collections c SET position = r.rn, updated_at = now()
+          FROM (
+            SELECT k.id,
+                   row_number() OVER (
+                     PARTITION BY k.ancestry
+                     ORDER BY (k.deleted_at IS NOT NULL), k.position NULLS LAST, k.id
+                   ) rn
+            FROM collections k
+            JOIN collections g ON k.ancestry = g.ancestry || g.id || '/'
+            WHERE g.id IN (?)
+          ) r
+          WHERE c.id = r.id AND c.position IS DISTINCT FROM r.rn
+        SQL
+      ),
+    )
+    say "renumbered #{renumbered.cmd_tuples} collection(s) under '#{SHARED_OUT_GROUP_LABEL}'"
   end
 
   # Post-condition, logged rather than raised: no live collection should be left pointing at a parent
