@@ -7,6 +7,18 @@
   @extend .p-0;
   @extend .m-0;
   @extend .d-block;
+
+  // This is a flex item, and a flex item's default min-width is auto: it refuses to shrink below its
+  // longest unbreakable word, so a long file name or a run of row numbers pushed the text past the
+  // toast border. min-width: 0 lets it shrink, overflow-wrap breaks the word that made it too wide.
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+// The title carries a sender name and a timestamp, which can be just as long as the message.
+.notification-headline strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .notification-headline {

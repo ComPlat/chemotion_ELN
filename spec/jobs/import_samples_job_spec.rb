@@ -60,6 +60,55 @@ describe ImportSamplesJob, :active_job do
       end
     end
 
+    # The report is delivered as an Inbox attachment; the notification only has to point at it. The
+    # download endpoint already authorises an unlinked inbox attachment for the user it belongs to.
+    context 'when the import produced a report' do
+      let(:report) do
+        create(:attachment, filename: 'list_import_report.xlsx', created_by: parameters[:user_id],
+                            created_for: parameters[:user_id], attachable_type: 'Container')
+      end
+
+      before do
+        allow(import_samples_instance).to receive(:process).and_return(
+          { status: 'warning',
+            message: 'some rows were not imported',
+            report_attachment_id: report.id,
+            report_filename: report.filename,
+            data: [] },
+        )
+        allow(Message).to receive(:create_msg_notification)
+      end
+
+      it 'links the notification to the report' do
+        described_class.perform_now(parameters)
+        expect(Message).to have_received(:create_msg_notification)
+          .with(hash_including(url: %r{/api/v1/attachments/#{report.id}\z}))
+      end
+
+      it 'labels the link with the report filename' do
+        described_class.perform_now(parameters)
+        expect(Message).to have_received(:create_msg_notification)
+          .with(hash_including(urlTitle: "Download #{report.filename}"))
+      end
+
+      # The notification handler refreshes the Inbox when it sees this, so the report shows up at the
+      # same moment the notification does.
+      it 'carries the report id so the Inbox refreshes with the notification' do
+        described_class.perform_now(parameters)
+        expect(Message).to have_received(:create_msg_notification)
+          .with(hash_including(report_attachment_id: report.id))
+      end
+    end
+
+    context 'when the import produced no report' do
+      before { allow(Message).to receive(:create_msg_notification) }
+
+      it 'sends no link' do
+        described_class.perform_now(parameters)
+        expect(Message).to have_received(:create_msg_notification).with(hash_not_including(:url))
+      end
+    end
+
     context 'when perform_now is executed without being enqueued' do
       let(:perform_now) { described_class.new.perform(parameters) }
 

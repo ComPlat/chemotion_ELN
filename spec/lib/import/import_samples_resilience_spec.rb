@@ -59,7 +59,7 @@ RSpec.describe Import::ImportSamples do
     it 'names the affected row in the result message' do
       unresolvable_structure('c1ccccc1')
       result = importer.process
-      expect(result[:message]).to include('imported as decoupled because no structure could be resolved (row(s) 5)')
+      expect(result[:message]).to include('imported without a structure', 'row 5')
     end
 
     it 'does not report it as a clean success' do
@@ -84,7 +84,7 @@ RSpec.describe Import::ImportSamples do
       end
 
       it 'reports them' do
-        expect(importer.process[:message]).to include('imported as decoupled because no structure could be')
+        expect(importer.process[:message]).to include('imported without a structure')
       end
     end
 
@@ -224,7 +224,7 @@ RSpec.describe Import::ImportSamples do
   describe 'result completeness' do
     it 'states how many rows were imported out of how many were offered' do
       result = importer.process
-      expect(result[:message]).to match(/6 of 6 row\(s\) in file: .* were imported into collection/)
+      expect(result[:message]).to match(/\AImported 6 of 6 rows from '.*' into '.*'\./)
     end
 
     it 'exposes the counts for programmatic use, not only in prose' do
@@ -232,10 +232,27 @@ RSpec.describe Import::ImportSamples do
       expect(result).to include(imported_count: 6, total_rows: 6, failed_rows: [], skipped_rows: [])
     end
 
+    # The notification renderer turns each line into its own paragraph, which is what makes the result
+    # readable; as one sentence it was a wall of text.
+    it 'puts the headline on its own line and every note on a bullet of its own' do
+      unresolvable_structure('c1ccccc1')
+      lines = importer.process[:message].split("\n")
+      expect(lines.first).to start_with('Imported ')
+      expect(lines.drop(1)).to all(start_with('•'))
+    end
+
+    it 'truncates a long list of row numbers rather than printing all of them' do
+      phrase = importer.send(:rows_phrase, (2..40).to_a)
+      expect(phrase).to eq('rows 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 and 27 more')
+    end
+
+    # The fixture answers 'decoupled' with "No" on every row, so with no structure and no CAS these
+    # rows contradict themselves and are the only kind that is refused rather than decoupled.
     it 'accounts for rows skipped before import instead of dropping them silently' do
       allow(importer).to receive_messages(structure?: false, cas?: false, decoupled?: false)
       result = importer.process
-      expect(result[:message]).to include('6 row(s) were skipped because they contained no structure')
+      expect(result[:message]).to include('6 rows skipped, with no structure',
+                                          "'decoupled' says no")
       expect(result[:skipped_rows]).to eq([2, 3, 4, 5, 6, 7])
     end
 
@@ -251,20 +268,27 @@ RSpec.describe Import::ImportSamples do
         original.call(*args, **kwargs)
       end
       result = importer.process
-      expect(result[:message]).to include('5 of 6 row(s)')
-      expect(result[:message]).to include('The following row(s) could not be imported: 4.')
+      expect(result[:message]).to include('Imported 5 of 6 rows')
+      expect(result[:message]).to include('1 row could not be imported: row 4')
       expect(result[:failed_rows]).to eq([4])
     end
 
-    it 'keeps the uploaded file when the import was not clean, so it can be fixed and retried' do
+    # The report carries the same values plus the verdict per row, so it stands in for the upload
+    # rather than sitting beside it. This holds for every outcome, clean or not.
+    it 'replaces the uploaded file with the report when the import was not clean' do
       unresolvable_structure('c1ccccc1')
       importer.process
-      expect(Attachment.find_by(id: attachment.id)).to be_present
+      expect(Attachment.find_by(id: attachment.id)).to be_nil
     end
 
-    it 'removes the uploaded file only on a fully clean import' do
+    it 'replaces the uploaded file on a fully clean import too' do
       importer.process
       expect(Attachment.find_by(id: attachment.id)).to be_nil
+    end
+
+    it 'leaves the report behind in its place' do
+      result = importer.process
+      expect(Attachment.find_by(id: result[:report_attachment_id])).to be_present
     end
   end
 
@@ -294,8 +318,8 @@ RSpec.describe Import::ImportSamples do
   describe 'result payload size' do
     it 'does not retain full Sample records for every imported row' do
       result = importer.process
-      expect(result[:data]).to all(match(hash_including(:id, :short_label, :decoupled)))
-      expect(result[:data].map(&:keys).flatten.uniq).to contain_exactly(:id, :short_label, :decoupled)
+      expect(result[:data]).to all(match(hash_including(:id, :short_label, :decoupled, :row)))
+      expect(result[:data].map(&:keys).flatten.uniq).to contain_exactly(:id, :short_label, :decoupled, :row)
     end
   end
 
@@ -339,7 +363,7 @@ RSpec.describe Import::ImportSamples do
     it 'names the rows that lost their structure' do
       allow(importer).to receive(:extract_molfile_and_molecule).and_return(nil)
       result = importer.process
-      expect(result[:message]).to include('imported as decoupled because no structure could be resolved')
+      expect(result[:message]).to include('imported without a structure, because none could be resolved')
     end
 
     it 'exposes the fallback rows structurally, not only in prose' do

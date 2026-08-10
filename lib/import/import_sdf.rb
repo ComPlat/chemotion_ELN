@@ -322,8 +322,8 @@ class Import::ImportSdf < Import::ImportSamples
               sample[attrib] = row[attrib] if is_number?(row[attrib])
             end
             assign_molecule_name(sample, molecule, row['molecule_name'])
-            sample['melting_point'] = format_to_interval_syntax(row['melting_point']) if row['melting_point'].present?
-            sample['boiling_point'] = format_to_interval_syntax(row['boiling_point']) if row['boiling_point'].present?
+            sample['melting_point'] = interval_from(row['melting_point']) if row['melting_point'].present?
+            sample['boiling_point'] = interval_from(row['boiling_point']) if row['boiling_point'].present?
             sample['solvent'] = handle_sample_solvent_column(sample, row) if row['solvent'].present?
 
             sample['description'] = row['description'] if row['description'].present?
@@ -439,6 +439,13 @@ class Import::ImportSdf < Import::ImportSamples
   # "undefined method `id' for [\"1-chloro-2-iodoethane\"]:Array" and lost the row, so every SDF
   # carrying a MOLECULE_NAME tag failed to import. Resolve the record by name instead, which also
   # covers the case where the name already existed and nothing new was created.
+  # SDF has no per-cell report to attach a note to, so only the value is taken -- but it is taken from
+  # the same coercion the spreadsheet import uses, so a reversed range is normalised here too instead
+  # of being handed to Postgres and losing the record.
+  def interval_from(value)
+    Import::ValueCoercion.range(value).first
+  end
+
   def assign_molecule_name(sample, molecule, raw_names)
     return if raw_names.blank?
 
