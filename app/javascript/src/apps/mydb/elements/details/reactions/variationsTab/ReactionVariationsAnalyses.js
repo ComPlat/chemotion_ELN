@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, Button, Badge, DropdownButton, Dropdown
+  Form, Button, ButtonGroup, Badge, DropdownButton, Dropdown
 } from 'react-bootstrap';
 import cloneDeep from 'lodash/cloneDeep';
 import Reaction from 'src/models/Reaction';
@@ -17,6 +17,13 @@ function getReactionAnalyses(reaction) {
   const analyses = reaction.analysisContainers?.() ?? [];
   return cloneDeep(analyses).filter((analysis) => !analysis.is_new);
 }
+
+const SINGLE_HEADER = {
+  products: 'Product',
+  startingMaterials: 'Starting material',
+  solvents: 'Solvent',
+  reactants: 'Reactant'
+};
 
 function updateAnalyses(variations, allReactionAnalyses) {
   const analysesIDs = allReactionAnalyses.filter((analysis) => !analysis.is_deleted).map((child) => child.id);
@@ -40,7 +47,7 @@ function getAnalysesOverlay({ data: row, context }) {
   return allReactionAnalyses.filter((analysis) => analysesIDs.includes(analysis.id));
 }
 
-function AnalysisOverlay({ value: analyses }) {
+const AnalysisOverlay = ({ value: analyses }) => {
   if (analyses.length === 0) {
     return ''; // Don't return null, it breaks AG's logic to determine if component is rendered.
   }
@@ -56,7 +63,7 @@ function AnalysisOverlay({ value: analyses }) {
       </div>
     </div>
   );
-}
+};
 
 AnalysisOverlay.propTypes = {
   value: PropTypes.arrayOf(PropTypes.shape({
@@ -65,7 +72,7 @@ AnalysisOverlay.propTypes = {
   })).isRequired,
 };
 
-function AnalysisVariationLink({ reaction, analysisID }) {
+const AnalysisVariationLink = ({ reaction, analysisID }) => {
   const { variations } = cloneDeep(reaction);
   const linkedVariations = variations.filter(
     (row) => row.metadata.analyses && row.metadata.analyses.includes(analysisID)
@@ -86,32 +93,36 @@ function AnalysisVariationLink({ reaction, analysisID }) {
       <i className="fa fa-external-link" />
     </Badge>
   );
-}
+};
 
 AnalysisVariationLink.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   analysisID: PropTypes.string.isRequired,
 };
 
-function AnalysesCellRenderer({ value: analysesIDs }) {
-  return (
+const AnalysesCellRenderer = ({ value: analysesIDs }) => (
     <div>{`${analysesIDs.length} link(s)`}</div>
   );
-}
 
 AnalysesCellRenderer.propTypes = {
   value: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
-function AnalysesCellEditor({
+const AnalysesCellEditor = ({
   data: row,
   value: analysesIDs,
   onValueChange,
   stopEditing,
   context
-}) {
+}) => {
   const [selectedAnalysisIDs, setSelectedAnalysisIDs] = useState(analysesIDs);
-  const { reactionShortLabel, allReactionAnalyses, handleAutofillVariationSampleFromAnalysis } = context;
+  const [autofilledSamples, setAutofilledSamples] = useState([]);
+  const {
+    reactionShortLabel,
+    allReactionAnalyses,
+    handleAutofillVariationSampleFromAnalysis,
+    findAutofillVariationSampleFromAnalysis
+  } = context;
   const availableReactionAnalyses = allReactionAnalyses.filter((analysis) => !analysis.is_deleted);
 
   const onAnalysisSelectionReady = () => {
@@ -148,14 +159,18 @@ function AnalysesCellEditor({
       return;
     }
     const { samples } = jsonRes;
+    const newAutofilledSamples = [];
     samples.forEach(([sampleIdentifier, value, unit]) => {
-      handleAutofillVariationSampleFromAnalysis({
-        sampleIdentifier, value, unit, variationRow: row
-      });
+      const foundMat = findAutofillVariationSampleFromAnalysis({ sampleIdentifier });
+      if (foundMat) {
+        newAutofilledSamples.push({ foundMat, sampleIdentifier, value, unit, variationRow: row });
+      }
     });
+
+    setAutofilledSamples(newAutofilledSamples);
   };
 
-  const analysesSelection = (
+  const analysesSelection = autofilledSamples.length === 0 ? (
     <div className="overflow-y-auto pb-5">
       {availableReactionAnalyses.length === 0 ? (
         <div className="text-body-secondary">
@@ -179,15 +194,18 @@ function AnalysesCellEditor({
                 checked={isSelected}
                 className="me-2"
               />
+              <ButtonGroup>
               <Button size="sm" variant="light" onClick={() => navigateToAnalysis(analysis.id)}>
                 <i className="fa fa-external-link" />
               </Button>
               {dataset.length === 1 && (
-              <Button size="sm" disabled={!isSelected} variant="info" onClick={() => handleAutofill(dataset[0])}>
+              <Button type="button"
+                      size="sm" disabled={!isSelected} variant="info" onClick={() => handleAutofill(dataset[0])}>
                 Populate samples from data file
                 <i className="fa fa-share" />
               </Button>
               )}
+
               {dataset.length > 1 && (
                 <DropdownButton size="sm" disabled={!isSelected} title="Populate samples from data file">
                   {dataset.map((ds) => (
@@ -200,16 +218,32 @@ function AnalysesCellEditor({
                   ))}
                 </DropdownButton>
               )}
+              </ButtonGroup>
             </div>
           );
           })}
         </Form.Group>
       )}
-    </div>
-  );
+    </div>) :
+    (<div>
+      <p>Please confirm:</p>
+      <ul>
+        {autofilledSamples.map(
+          ({ sampleIdentifier, value, unit, foundMat: { matType } }) =>
+            <li key={sampleIdentifier}>
+              Set <b>{SINGLE_HEADER[matType] ?? matType}: {sampleIdentifier}</b> to {value} {unit}
+            </li>
+        )}
+      </ul>
+      <Button variant="success" size="sm" onClick={() => {
+        autofilledSamples.forEach((x) => handleAutofillVariationSampleFromAnalysis(x));
+        setAutofilledSamples([]);
+      }}>Confirm</Button>
+    </div>);
 
-  const cellContent = (
+  return (
     <AppModal
+      size="lg"
       show
       onHide={() => stopEditing()}
       title={`Link analyses to ${getVariationsRowName(reactionShortLabel, row.id)}`}
@@ -220,9 +254,7 @@ function AnalysesCellEditor({
       {analysesSelection}
     </AppModal>
   );
-
-  return cellContent;
-}
+};
 
 AnalysesCellEditor.propTypes = {
   data: PropTypes.shape({
@@ -238,7 +270,8 @@ AnalysesCellEditor.propTypes = {
       is_deleted: PropTypes.bool,
       name: PropTypes.string,
     })).isRequired,
-    handleAutofillVariationSampleFromAnalysis: PropTypes.func.isRequired
+    handleAutofillVariationSampleFromAnalysis: PropTypes.func.isRequired,
+    findAutofillVariationSampleFromAnalysis: PropTypes.func.isRequired
   }).isRequired,
 };
 

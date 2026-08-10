@@ -362,6 +362,13 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     }
   }, []);
 
+  const findAutofillVariationSampleFromAnalysis = useCallback(({ sampleIdentifier }) =>
+    Object.entries(reactionMaterials)
+      .map(([matTypeKey, matList]) => matList.map((matListed) => ({ matType: matTypeKey, matItem: matListed })))
+      .flat()
+      .find(({ matItem: mat }) => SAMPLE_LABELS
+        .some((labelKey) => mat[labelKey] === sampleIdentifier)), [reactionMaterials]);
+
   /*
   Autofill a variation row from an analysis dataset: locate the material matching the
   sample identifier, make its column visible (selecting it first if needed), and write
@@ -369,15 +376,11 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   concurrent column/row updates.
   */
   const handleAutofillVariationSampleFromAnalysis = useCallback(({
-    sampleIdentifier, value, unit, variationRow
+                                                                   foundMat: { matType, matItem },
+                                                                   value,
+                                                                   unit,
+                                                                   variationRow
   }) => {
-    const foundMat = Object.entries(reactionMaterials)
-      .map(([matTypeKey, matList]) => matList.map((matListed) => ({ matType: matTypeKey, matItem: matListed })))
-      .flat()
-      .find(({ matItem: mat }) => SAMPLE_LABELS
-        .some((labelKey) => mat[labelKey] === sampleIdentifier));
-    if (!foundMat) return;
-    const { matType, matItem } = foundMat;
 
     setGridStore((previousGridStore) => {
       const {
@@ -436,15 +439,17 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
       colDef.displayUnit = unit;
 
       const { valueParser } = cellDataTypes[colDef.cellDataType];
-      const cellData = newVariationRow[matType][`${matItem.id}`];
+      if (valueParser) {
+        const cellData = newVariationRow[matType][`${matItem.id}`];
 
-      newVariationRow[matType][`${matItem.id}`] = valueParser({
-        data: newVariationRow,
-        oldValue: cellData,
-        newValue: `${value}`,
-        colDef,
-        context: { reactionHasPolymers }
-      });
+        newVariationRow[matType][`${matItem.id}`] = valueParser({
+          data: newVariationRow,
+          oldValue: cellData,
+          newValue: `${value}`,
+          colDef,
+          context: { reactionHasPolymers }
+        });
+      }
 
       return {
         ...previousGridStore,
@@ -454,6 +459,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
         gridVersion: previousGridStore.gridVersion + 1,
       };
     });
+    return true;
   }, [
     reactionMaterials,
     reactionHasPolymers,
@@ -592,6 +598,7 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     removeRow,
     setColumnDefinitions,
     handleAutofillVariationSampleFromAnalysis,
+    findAutofillVariationSampleFromAnalysis
   };
 
   return (
