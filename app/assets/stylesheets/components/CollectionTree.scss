@@ -53,9 +53,17 @@
   &__title {
     @extend .flex-grow-1;
     min-width: 0;
-    overflow-x: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    // Wrap normally (so a multi-word long label still shows in full across a
+    // couple of lines, as it did before long-label overflow was clipped) but
+    // allow breaking mid-word so a single unbroken word can't force the row
+    // wider than the sidebar. Capped at 2 lines so one extreme label can't
+    // stretch the row indefinitely; anything beyond that gets an ellipsis on
+    // the second line.
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 
