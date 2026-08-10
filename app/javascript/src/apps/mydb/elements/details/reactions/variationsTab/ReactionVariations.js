@@ -23,7 +23,7 @@ import {
 import {
   updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDsToLabels,
   removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange,
-  getReactionMaterialsHashes, resolveReactionVolumeFromContext
+  getReactionMaterialsHashes, resolveReactionVolumeFromContext, getValidReactionVolume
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   ColumnSelection,
@@ -41,11 +41,6 @@ const initializeGridStore = (initialVariations = []) => ({
   asyncDataLoaded: false,
   gridVersion: 0,
 });
-
-const getValidReactionVolume = (volume) => {
-  const parsedVolume = Number(volume);
-  return Number.isFinite(parsedVolume) && parsedVolume > 0 ? parsedVolume : null;
-};
 
 const initializeReactionVolumeByRowId = (rows = [], reactionVolume = null) => {
   const validReactionVolume = getValidReactionVolume(reactionVolume);

@@ -119,8 +119,9 @@ function computeCombinedReactionVolume(row = {}) {
   return totalVolume > 0 ? totalVolume : null;
 }
 
-function getValidReactionVolume(value) {
-  return Number.isFinite(value) && value > 0 ? value : null;
+function getValidReactionVolume(volume) {
+  const parsedVolume = Number(volume);
+  return Number.isFinite(parsedVolume) && parsedVolume > 0 ? parsedVolume : null;
 }
 
 function getContextReactionVolumeByRowId(context = {}) {
@@ -704,4 +705,5 @@ export {
   computeCombinedReactionVolume,
   resolveReactionVolumeFromContext,
   cellIsEditable,
+  getValidReactionVolume,
 };
