@@ -26,6 +26,7 @@ export default function ElementDetailCard({
   titleTooltip,
   titleAppendix,
   headerToolbar,
+  headerBanner,
   footerToolbar,
   onClose,
   onSave,
@@ -197,6 +198,7 @@ export default function ElementDetailCard({
       titleTooltip={titleTooltip}
       titleAppendix={elementTitleAppendix}
       headerToolbar={elementHeaderToolbar}
+      headerBanner={headerBanner}
       footerToolbar={elementFooterToolbar}
       onClose={(event) => requestClose(event, false, 'bottom')}
       className={pendingToSave ? 'detail-card--unsaved' : ''}
@@ -232,6 +234,7 @@ ElementDetailCard.propTypes = {
   titleTooltip: PropTypes.string,
   titleAppendix: PropTypes.node,
   headerToolbar: PropTypes.node,
+  headerBanner: PropTypes.node,
   footerToolbar: PropTypes.node,
   onClose: PropTypes.func,
   onSave: PropTypes.func.isRequired,
@@ -248,6 +251,7 @@ ElementDetailCard.defaultProps = {
   titleTooltip: null,
   titleAppendix: null,
   headerToolbar: null,
+  headerBanner: null,
   footerToolbar: null,
   onClose: null,
   onSaveClose: null,
