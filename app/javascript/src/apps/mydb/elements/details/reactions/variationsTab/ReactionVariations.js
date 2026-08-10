@@ -352,19 +352,18 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   }, []);
 
   const copyRow = useCallback((data) => {
-    setGridStore((previousGridStore) => {
-      const copiedRow = copyVariationsRow(data, previousGridStore.reactionVariations);
-      const copiedRowReactionVolume = getValidReactionVolume(reactionVolumeByRowIdRef.current?.[data.id])
-        ?? defaultReactionVolume;
-      if (copiedRowReactionVolume) {
-        reactionVolumeByRowIdRef.current[copiedRow.id] = copiedRowReactionVolume;
-      }
-      return {
-        ...previousGridStore,
-        reactionVariations: [...previousGridStore.reactionVariations, copiedRow]
-      };
-    });
-  }, [defaultReactionVolume]);
+    const copiedRow = copyVariationsRow(data, reactionVariations);
+    const copiedRowReactionVolume = getValidReactionVolume(reactionVolumeByRowIdRef.current?.[data.id])
+      ?? defaultReactionVolume;
+    if (copiedRowReactionVolume) {
+      reactionVolumeByRowIdRef.current[copiedRow.id] = copiedRowReactionVolume;
+    }
+
+    setGridStore((previousGridStore) => ({
+      ...previousGridStore,
+      reactionVariations: [...previousGridStore.reactionVariations, copiedRow]
+    }));
+  }, [defaultReactionVolume, reactionVariations]);
 
   const removeRow = useCallback((data) => {
     delete reactionVolumeByRowIdRef.current[data.id];
@@ -463,31 +462,29 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   };
 
   const addRow = () => {
+    const newRow = createVariationsRow(
+      {
+        materials: reactionMaterials,
+        segments: reactionSegments,
+        selectedColumns,
+        variations: reactionVariations,
+        reactionHasPolymers,
+        durationValue,
+        durationUnit,
+        temperatureValue,
+        temperatureUnit,
+        gasMode,
+        vesselVolume
+      }
+    );
+
+    if (defaultReactionVolume) {
+      reactionVolumeByRowIdRef.current[newRow.id] = defaultReactionVolume;
+    }
+
     setGridStore((previousGridStore) => ({
       ...previousGridStore,
-      reactionVariations: (() => {
-        const newRow = createVariationsRow(
-          {
-            materials: reactionMaterials,
-            segments: previousGridStore.reactionSegments,
-            selectedColumns: previousGridStore.selectedColumns,
-            variations: previousGridStore.reactionVariations,
-            reactionHasPolymers,
-            durationValue,
-            durationUnit,
-            temperatureValue,
-            temperatureUnit,
-            gasMode,
-            vesselVolume
-          }
-        );
-
-        if (defaultReactionVolume) {
-          reactionVolumeByRowIdRef.current[newRow.id] = defaultReactionVolume;
-        }
-
-        return [...previousGridStore.reactionVariations, newRow];
-      })(),
+      reactionVariations: [...previousGridStore.reactionVariations, newRow],
     }));
   };
 
