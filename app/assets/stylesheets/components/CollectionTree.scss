@@ -1,12 +1,22 @@
 .tree-view {
   @extend .d-flex;
   @extend .flex-column;
+  // Every row is wrapped in a plain div (see TreeViewItem.js) that becomes a flex
+  // item here (and in each nested .tree-view for sub-collections). Without
+  // min-width:0 it hugs its content's natural width instead of shrinking to the
+  // sidebar's available width, which is what let long labels balloon past the
+  // sidebar and get hard-clipped (no ellipsis) by an ancestor's overflow-x:hidden.
+  > div {
+    @extend .min-w-0;
+  }
   &__frame {
     min-height: 0;
+    @extend .min-w-0;
   }
   &__container {
     @extend .tree-view;
     @extend .overflow-y-auto;
+    @extend .min-w-0;
     // Load-bearing with the kebab dropdown (see .collection-subtree-functions below):
     // Popper pre-positions every `renderOnMount` menu at (0,0) before it is shown;
     // this clip stops those off-screen menus from stacking into view. Remove it
@@ -21,6 +31,7 @@
     cursor: pointer;
     font-size: 14px;
     min-height: 36px;
+    min-width: 0;
     @extend .py-1;
     @extend .pe-2;
     @extend .gap-2;
@@ -41,8 +52,18 @@
   }
   &__title {
     @extend .flex-grow-1;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
+    min-width: 0;
+    // Wrap normally (so a multi-word long label still shows in full across a
+    // couple of lines, as it did before long-label overflow was clipped) but
+    // allow breaking mid-word so a single unbroken word can't force the row
+    // wider than the sidebar. Capped at 2 lines so one extreme label can't
+    // stretch the row indefinitely; anything beyond that gets an ellipsis on
+    // the second line.
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 
