@@ -16,6 +16,30 @@ module Import
     DENSITY_UNIT = %r{g/mL|g/ml}i.freeze
     FLASH_POINT_UNIT = /°C|F|K/i.freeze
 
+    # Columns whose cell carries its own unit and is stored as a value/unit pair.
+    FIELDS_WITH_UNITS = %w[molarity flash_point].freeze
+
+    XLSX_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+    # The column the report writes back, and the one that turns a row from "create a sample" into
+    # "change this existing sample".
+    SAMPLE_ID_HEADER = 'sample id'
+
+    BULLET = '•'
+    # Beyond this many row numbers the list stops being readable; the report carries the rest.
+    MAX_LISTED_ROWS = 12
+
+    # Columns accepted beyond the sample attributes themselves.
+    ADDITIONAL_COLUMNS = %w[
+      cas mn.name molarity refractive_index flash_point density location melting_point purity form
+      color solubility inventory_label
+    ].freeze
+    BLANKED_WHEN_EMPTY = %w[description solvent].freeze
+    BOOLEAN_COLUMNS = %w[decoupled is_top_secret dry_solvent].freeze
+
+    # Columns a structure can arrive in, most specific first.
+    STRUCTURE_HEADERS = ['molfile', 'canonical smiles', 'canonical_smiles', 'cano_smiles', 'smiles'].freeze
+
     # Rows are committed in batches rather than in one transaction spanning the whole file. This
     # bounds how much the database and this process have to hold at once, and means a failure part
     # way through a large import keeps the batches that already succeeded instead of discarding
@@ -32,8 +56,20 @@ module Import
       @import_type = import_type
 
       @rows = []
+      # rows[i] came from sheet row @row_numbers[i]. Kept alongside rather than inside the row hash so
+      # that reported row numbers survive rows being skipped: `index + 2` was only correct while no
+      # earlier row had been dropped, and every skipped or unreadable row shifted every number after
+      # it -- naming a row that had imported fine while the broken one went unmentioned.
+      @row_numbers = []
       @unprocessable = []
       @processed = []
+
+      # sheet row number => [{ header:, value:, note: }] for cells that could not be used as written.
+      @field_notes = {}
+      # Set while a row is being written, so the coercion notes it produces can be filed against it.
+      @current_row_number = nil
+      # Rows that changed an existing sample rather than creating one, by sheet row number.
+      @updated_rows = []
 
       # Rows whose structure could not be resolved and which were therefore imported without one.
       @decoupled_fallbacks = []
@@ -117,12 +153,16 @@ module Import
 
     def check_required_fields
       @mandatory_check = {}
-      header_fields = ['molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles', 'decoupled', 'cas']
+      # 'sample id' counts: a sheet of corrections names the samples to change and needs no structure
+      # column at all, which is exactly what the report's retry sheet hands back for dropped values.
+      header_fields = ['molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles',
+                       'decoupled', 'cas', SAMPLE_ID_HEADER]
       header_fields.each do |check|
         # Escape the literal and keep the prefix match, so trailing qualifiers like "molfile (V2000)" still work
         @mandatory_check[check] = true if header.find { |e| /^\s*#{Regexp.escape(check)}/i =~ e }
       end
-      message = 'Column headers should have: molfile, Smiles (or cano_smiles, canonical smiles), CAS, or decoupled'
+      message = 'Column headers should have: molfile, Smiles (or cano_smiles, canonical smiles), CAS, ' \
+                'decoupled, or sample id'
       raise message if mandatory_check.empty?
     end
 
@@ -208,7 +248,10 @@ module Import
           nil
         elsif smiles?(row)
           m, _molfile_coord, go_to_next = get_data_from_smiles(row, index)
-          return [m, raw_molfile] if m.present? && !go_to_next
+          if m.present? && !go_to_next
+            note_unusable_molfile(row)
+            return [m, raw_molfile]
+          end
           nil
         else
           nil
@@ -227,11 +270,36 @@ module Import
       row = [header, padded_row].transpose.to_h
       return note_skipped_row(data, padded_row) unless importable_row?(row)
 
+      @row_numbers << data
       rows << row.each_pair { |k, v| v && row[k] = v.to_s }
     end
 
+    # The sheet row a queued row came from. Falls back to the old assumption if the two arrays ever
+    # disagree, so a reporting gap can never take the import down with it.
+    def sheet_row(index)
+      @row_numbers[index] || (index + 2)
+    end
+
+    # A row with nothing to resolve a structure from is still worth importing: an inventory list that
+    # names substances without drawing them is a real and common file, and refusing it silently loses
+    # the user's data. The one row that is not imported is the one that contradicts itself -- no
+    # structure, no CAS, and 'decoupled' answered "No", which asserts a structure that was never given.
     def importable_row?(row)
-      structure?(row) || decoupled?(row) || cas?(row)
+      # A row that names a sample is an instruction to change that sample, so it needs nothing else.
+      return true if sample_id_value(row).present?
+      return true if structure?(row) || cas?(row) || decoupled?(row)
+      return false unless row_has_content?(row)
+
+      !refuses_decoupling?(row)
+    end
+
+    def row_has_content?(row)
+      row.any? { |_key, value| value.to_s.strip.present? }
+    end
+
+    # True only when the column was answered, and answered with something other than yes.
+    def refuses_decoupling?(row)
+      row_value_case_insensitive(row, 'decoupled').to_s.strip.present? && !decoupled?(row)
     end
 
     def note_skipped_row(row_number, values)
@@ -240,7 +308,15 @@ module Import
     end
 
     def process_row_data(row, index)
-      return Molecule.find_or_create_dummy if decoupled?(row) && no_structure_or_cas?(row)
+      # Nothing to resolve from and nothing to look up: this is a decoupled sample whether or not the
+      # column said so, and there is no point putting it through structure resolution to find out.
+      if no_structure_or_cas?(row)
+        # Decoupled because the row asked for it is not the same as decoupled because there was nothing
+        # to resolve. Only the second is worth reporting -- from the user's side an empty SMILES column
+        # looks identical to a successful import.
+        note_decoupled_fallback(row, index) unless decoupled?(row)
+        return Molecule.find_or_create_dummy
+      end
 
       molecule, molfile = molecule_and_molfile_with_cas_fallback(row, index)
       ## import sample as decoupled if no structure information is available
@@ -266,10 +342,29 @@ module Import
     def note_decoupled_fallback(row, index)
       return if @decoupled_fallbacks.any? { |f| f[:index] == index }
 
-      @decoupled_fallbacks << {
-        index: index,
-        reason: @structure_errors[index] || decoupled_fallback_reason(row),
-      }
+      reason = @structure_errors[index] || decoupled_fallback_reason(row)
+      @decoupled_fallbacks << { index: index, reason: reason }
+      note_structure_cell(row, reason)
+    end
+
+    # Flags the cell the structure was supposed to come from, so the report points at the column the
+    # user has to fix instead of only saying the row lost its structure.
+    def note_structure_cell(row, reason)
+      structure_header = STRUCTURE_HEADERS.find { |key| row_value_case_insensitive(row, key).to_s.present? }
+      return if structure_header.nil?
+
+      actual_header = header.find { |name| name.to_s.strip.casecmp(structure_header).zero? } || structure_header
+      note_field_issue(actual_header, row_value_case_insensitive(row, structure_header), reason)
+    end
+
+    # The row still imported, from its SMILES, but the molfile column it also carried is unusable and
+    # the user is the only one who can fix it.
+    def note_unusable_molfile(row)
+      molfile_header = header.find { |name| name.to_s.strip.casecmp('molfile').zero? }
+      return if molfile_header.nil?
+
+      note_field_issue(molfile_header, row_value_case_insensitive(row, 'molfile'),
+                       'molfile could not be interpreted, the structure was taken from the SMILES column instead')
     end
 
     def decoupled_fallback_reason(row)
@@ -304,7 +399,7 @@ module Import
     rescue StandardError => e
       @structure_errors[index] = "structure could not be parsed: #{e.message}"
       Rails.logger.warn(
-        "Import #{@file_name}: structure on row #{index + 2} could not be parsed: #{e.class}: #{e.message}",
+        "Import #{@file_name}: structure on row #{sheet_row(index)} could not be parsed: #{e.class}: #{e.message}",
       )
       nil
     end
@@ -378,18 +473,92 @@ module Import
     # Writes one row inside a savepoint. Returns true when the sample was saved
     def write_row(row, index)
       saved = false
+      @current_row_number = sheet_row(index)
       ActiveRecord::Base.transaction(requires_new: true) do
-        molecule, molfile = process_row_data(row, index)
-        unless molecule_not_exist(molecule, row, index)
-          sample_save(row, molfile, molecule, index, force_decoupled: molfile.nil?)
+        if sample_id_value(row).present?
+          update_row(row, index)
           saved = true
+        else
+          molecule, molfile = process_row_data(row, index)
+          unless molecule_not_exist(molecule, row, index)
+            sample_save(row, molfile, molecule, index, force_decoupled: molfile.nil?)
+            saved = true
+          end
         end
       end
       saved
     rescue StandardError => e
-      Rails.logger.warn("Import #{@file_name}: row #{index + 2} could not be imported: #{e.class}: #{e.message}")
-      @unprocessable << { row: row, index: index } unless @unprocessable.any? { |u| u[:index] == index }
+      Rails.logger.warn("Import #{@file_name}: row #{sheet_row(index)} could not be imported: #{e.class}: #{e.message}")
+      unless @unprocessable.any? { |u| u[:index] == index }
+        @unprocessable << { row: row, index: index, reason: failure_reason(e) }
+      end
       false
+    ensure
+      @current_row_number = nil
+    end
+
+    # A row that names an existing sample changes it in place. This is what makes the report's retry
+    # sheet work: it hands back the values that could not be used, and importing the corrected sheet
+    # applies them to the samples that already exist instead of creating duplicates.
+    #
+    # Only the cells that carry something are applied. A blank cell means "leave this field as it is",
+    # which is what lets the retry sheet ship a row with two fields filled in and everything else empty.
+    def update_row(row, index)
+      sample = updatable_sample(sample_id_value(row))
+      apply_present_fields(sample, row)
+      sample.save!
+      @updated_rows << sheet_row(index)
+      processed.push(id: sample.id, short_label: sample.short_label, decoupled: sample.decoupled,
+                     row: sheet_row(index), updated: true)
+    end
+
+    def apply_present_fields(sample, row)
+      header.each do |field|
+        next if row[field].to_s.strip.empty?
+        next if report_only_header?(field)
+
+        map_column = ReportHelpers::EXP_MAP_ATTR[:sample].values.find { |e| e[1] == "\"#{field}\"" }
+        process_fields(sample, map_column, field, row, sample.molecule)
+      end
+      handle_sample_solvent_column(sample, row) if row['solvent'].present?
+    end
+
+    # Columns this importer writes into its own report. They describe an import; they are not sample
+    # data, and re-importing a report must not try to store them.
+    def report_only_header?(field)
+      ImportReportWorkbook::EXTRA_HEADERS.any? { |own| own.casecmp(field.to_s.strip).zero? }
+    end
+
+    def sample_id_value(row)
+      row_value_case_insensitive(row, SAMPLE_ID_HEADER).to_s.strip
+    end
+
+    # Deliberately one message for "does not exist" and "not yours": telling them apart would confirm
+    # the existence of other people's samples to anyone willing to put ids in a spreadsheet.
+    def updatable_sample(raw_id)
+      raise "sample id #{raw_id.inspect} is not a number" unless raw_id.match?(/\A\d+\z/)
+
+      sample = Sample.find_by(id: raw_id.to_i)
+      raise "there is no sample with id #{raw_id} that you can change" unless updatable?(sample)
+
+      sample
+    end
+
+    def updatable?(sample)
+      sample.present? && import_user.present? && ElementPolicy.update?(import_user, sample)
+    end
+
+    def import_user
+      return @import_user if defined?(@import_user)
+
+      @import_user = User.find_by(id: current_user_id)
+    end
+
+    # Postgres messages are the only description of most row failures, but they are written for
+    # whoever wrote the SQL. Trim the parts that mean nothing to the person holding the spreadsheet.
+    def failure_reason(error)
+      first_line = error.message.to_s.split("\n").first.to_s
+      first_line.sub(/\A[^\n]*?\bERROR:\s*/, '').strip.presence || error.class.name
     end
 
     # Resolves every distinct CAS number in the file once, outside a transaction, so the lookups are
@@ -404,7 +573,7 @@ module Import
 
         find_molecule_by_cas(cas_value(row))
       rescue StandardError => e
-        Rails.logger.warn("Import #{@file_name}: CAS prefetch failed on row #{index + 2}: #{e.message}")
+        Rails.logger.warn("Import #{@file_name}: CAS prefetch failed on row #{sheet_row(index)}: #{e.message}")
       end
     ensure
       Molecule.schedule_pubchem_lookup_since(started_at)
@@ -585,18 +754,6 @@ module Import
       sample['solvent'] = solvent_column unless solvent_column.empty?
     end
 
-    # Format melting/boiling point to interval syntax
-    def format_to_interval_syntax(row_field)
-      return "[#{-Float::INFINITY}, #{Float::INFINITY}]" if row_field.nil?
-
-      matches = row_field.scan(/^(-?\d+(?:[.,]\d+)?)(?:\s*-\s*(-?\d+(?:[.,]\d+)?))?$/).flatten.compact
-      return "[#{-Float::INFINITY}, #{Float::INFINITY}]" if matches.empty?
-
-      numbers = matches.filter_map(&:to_f)
-      lower_bound, upper_bound = numbers.size == 1 ? [numbers[0], Float::INFINITY] : numbers
-      "[#{lower_bound}, #{upper_bound}]"
-    end
-
     def format_molarity_value(value, type)
       return if value.empty?
 
@@ -646,10 +803,11 @@ module Import
       sample['xref']['flash_point']['unit'] = value[:unit]
     end
 
+    # Arrives already parsed: a unit-less cell is accepted, because the column stores g/mL and so a
+    # bare number is not ambiguous. Requiring an explicit unit meant a plain "0.789" was discarded and
+    # the sample kept the column default of 0.0.
     def handle_density(sample, value)
-      return sample if value[:unit].nil? || value[:value].nil?
-
-      sample['density'] = value[:value] if value[:unit].match?(DENSITY_UNIT)
+      sample['density'] = value
     end
 
     def handle_molarity(sample, value)
@@ -675,19 +833,23 @@ module Import
     end
     # rubocop:enable Style/StringLiterals
 
+    # Returns [value, note]. The note is nil when the cell was usable as written, and otherwise says
+    # what had to be done to it -- see Import::ValueCoercion.
     def process_value(value, db_column)
-      fields_with_units = %w[density molarity flash_point].freeze
-      fields_with_float_values = %w[real_amount_value target_amount_value purity refractive_index molecular_mass].freeze
-      comparison_values = %w[melting_point boiling_point].freeze
-      if comparison_values.include?(db_column)
-        format_to_interval_syntax(value)
-      elsif fields_with_units.include?(db_column)
-        to_value_unit_format(value, db_column)
-      elsif fields_with_float_values.include?(db_column)
-        value.to_f
-      else
-        value
-      end
+      coerced = ValueCoercion.coerce(db_column, value)
+      return coerced if coerced
+      return value_with_unit(value, db_column) if FIELDS_WITH_UNITS.include?(db_column)
+
+      [value, nil]
+    end
+
+    # Molarity and flash point are stored as a value/unit pair and are dropped unless the cell carries
+    # both. The drop is left as it was; what is new is that it no longer happens in silence.
+    def value_with_unit(value, db_column)
+      pair = to_value_unit_format(value, db_column)
+      return [pair, nil] if value.to_s.strip.empty? || pair[:value].present?
+
+      [pair, "#{db_column.tr('_', ' ')} needs a number and a unit, value not used (#{value.to_s.strip.inspect})"]
     end
 
     def clean_value(value)
@@ -733,29 +895,34 @@ module Import
     end
 
     def process_sample_fields(sample, db_column, field, row)
-      additional_columns = %w[
-        cas
-        mn.name
-        molarity
-        refractive_index
-        flash_point
-        density
-        location
-        melting_point
-        purity
-        form
-        color
-        solubility
-        inventory_label
-      ].freeze
-      return unless included_fields.include?(db_column) || additional_columns.include?(db_column)
+      return unless importable_column?(db_column)
 
-      excluded_column = %w[description solvent].freeze
+      assign_sample_field(sample, db_column, field, row)
+    end
+
+    def importable_column?(db_column)
+      included_fields.include?(db_column) || ADDITIONAL_COLUMNS.include?(db_column)
+    end
+
+    def assign_sample_field(sample, db_column, field, row)
       val = row[field]
-      value = process_value(val, db_column)
+      value, note = process_value(val, db_column)
+      note_field_issue(field, val, note) if note
       handle_sample_fields(sample, db_column, value) unless value.nil?
-      sample[db_column] = '' if excluded_column.include?(db_column) && val.nil?
-      sample[db_column] = assign_boolean_value(val) if %w[decoupled is_top_secret dry_solvent].include?(db_column)
+      sample[db_column] = '' if BLANKED_WHEN_EMPTY.include?(db_column) && val.nil?
+      sample[db_column] = assign_boolean_value(val) if BOOLEAN_COLUMNS.include?(db_column)
+    end
+
+    # Files a cell that could not be used as written against the sheet row being written, for the
+    # report workbook. Silent on its own: a note never changes whether the row is imported.
+    def note_field_issue(header, raw_value, note)
+      return if @current_row_number.nil?
+
+      (@field_notes[@current_row_number] ||= []) << {
+        header: header.to_s,
+        value: raw_value.to_s,
+        note: note,
+      }
     end
 
     def assign_boolean_value(value)
@@ -786,7 +953,8 @@ module Import
       save_chemical(chemical, sample) if @import_type == 'chemical'
       handle_sample_components(row, sample) if sample_has_components?(row)
       create_polymer_residue_if_needed(sample, row)
-      processed.push(id: sample.id, short_label: sample.short_label, decoupled: sample.decoupled)
+      processed.push(id: sample.id, short_label: sample.short_label, decoupled: sample.decoupled,
+                     row: sheet_row(index))
     end
 
     def create_polymer_residue_if_needed(sample, row)
@@ -913,6 +1081,8 @@ module Import
     end
 
     def import_result
+      build_report
+
       if processed.empty?
         reason = rows.empty? ? 'no row contained a structure, a CAS number or a decoupled flag' : nil
         return no_success(reason)
@@ -920,15 +1090,16 @@ module Import
 
       return warning unless clean_import?
 
-      @attachment.destroy if @attachment.present?
       success
     end
 
-    # A clean import is one where every row in the file became a sample with the structure it asked
-    # for. Anything less is reported as a warning so a partial result is never presented as a success.
+    # A clean import is one where every row in the file became a sample with the structure it asked for
+    # and every value it carried. Anything less is a warning, so a partial result is never presented as
+    # a success -- including a file that imported every row but lost cells on the way, which used to
+    # report as a full success and say nothing about the values that were dropped.
     def clean_import?
       unprocessable.empty? && @skipped_rows.empty? && @decoupled_fallbacks.empty? &&
-        @unreadable_rows.empty? && @unreadable_component_rows.empty?
+        @unreadable_rows.empty? && @unreadable_component_rows.empty? && @field_notes.empty?
     end
 
     def excluded_fields
@@ -966,44 +1137,206 @@ module Import
         data: [] }
     end
 
+    # Builds the workbook the user gets back and puts it in their Inbox.
+    #
+    # Best-effort by construction: a report that cannot be built must never turn a finished import
+    # into a failed one, so every failure here is logged and swallowed.
+    def build_report
+      return if @report_built
+      # nil? rather than blank?: Roo's sheet defines empty?(row, col), so blank? raises on it.
+      return if @attachment.nil? || sheet.nil?
+
+      @report_built = true
+      @report_attachment = create_report_attachment
+      replace_uploaded_file
+    rescue StandardError => e
+      Rails.logger.error("Import #{@file_name}: import report could not be built: #{e.class}: #{e.message}")
+      @report_attachment = nil
+    end
+
+    # The report carries every value the uploaded file did, plus what became of each row, so leaving
+    # both in the Inbox would give the user two copies of the same sheet and no reason to prefer one.
+    #
+    # Strictly after the report exists: if the report could not be built, the uploaded file is the only
+    # copy the user has left and it stays where it is.
+    def replace_uploaded_file
+      return if @report_attachment.nil?
+
+      @attachment.destroy
+    rescue StandardError => e
+      Rails.logger.warn("Import #{@file_name}: uploaded file could not be removed: #{e.class}: #{e.message}")
+    end
+
+    # Saved with attachable_id nil and attachable_type 'Container', which is what puts a file in the
+    # Inbox as an unlinked attachment (see InboxService) -- the same place the uploaded file itself
+    # sits. That also makes it downloadable by its owner and nobody else, since the attachment API
+    # authorises exactly this shape.
+    def create_report_attachment
+      path = nil
+      path = Rails.root.join('tmp', "import_report_#{SecureRandom.hex(8)}.xlsx")
+      write_report_workbook(path)
+      attachment = Attachment.new(
+        filename: report_filename,
+        file_path: path.to_s,
+        created_by: current_user_id,
+        created_for: current_user_id,
+        attachable_type: 'Container',
+        content_type: XLSX_CONTENT_TYPE,
+      )
+      attachment.save!
+      attachment
+    ensure
+      # Saving copies the file into the attachment store, so the working copy is no longer needed.
+      FileUtils.rm_f(path) if path
+    end
+
+    def write_report_workbook(path)
+      sheet_rows = report_sheet_rows
+      ImportReportWorkbook.new(
+        file_name: @file_name,
+        header: header,
+        rows: sheet_rows,
+        statuses: report_statuses(sheet_rows.keys),
+        field_notes: @field_notes,
+      ).write(path, sample_url: method(:sample_url), retry_sheet_name: retry_sheet_name)
+    end
+
+    # Named so that re-importing the report reads the retry sheet: set_main_sheet looks for 'sample',
+    # or 'sample_chemicals' when the file is a chemical inventory.
+    def retry_sheet_name
+      @import_type == 'chemical' ? 'sample_chemicals' : ImportReportWorkbook::DEFAULT_RETRY_SHEET
+    end
+
+    # Built from the instance's own public URL (PUBLIC_URL, via config.root_url), so a report produced
+    # on a production instance links into that instance rather than wherever it was developed.
+    def sample_url(sample_id)
+      base = Rails.application.config.root_url.presence
+      return nil if base.nil?
+
+      "#{base.chomp('/')}/mydb/collection/#{@collection_id}/sample/#{sample_id}"
+    end
+
+    def report_filename
+      base = File.basename(@file_name.to_s, '.*').presence || 'import'
+      "#{base}_import_report.xlsx"
+    end
+
+    # Every row of the sheet, read back as the importer saw it -- including the rows it never queued,
+    # which are the ones the user most needs to see marked.
+    def report_sheet_rows
+      (2..sheet.last_row).each_with_object({}) do |number, memo|
+        memo[number] = xlsx.row(number).values_at(0...header.length)
+      rescue StandardError
+        memo[number] = []
+      end
+    end
+
+    def report_statuses(sheet_row_numbers)
+      statuses = {}
+      processed.each { |entry| statuses[entry[:row]] = imported_status(entry) }
+      unprocessable.each do |entry|
+        statuses[sheet_row(entry[:index])] = {
+          status: ImportReportWorkbook::STATUS_FAILED,
+          reason: entry[:reason].presence || 'this row could not be imported',
+        }
+      end
+      add_not_imported_statuses(statuses, sheet_row_numbers)
+      statuses
+    end
+
+    def add_not_imported_statuses(statuses, sheet_row_numbers)
+      @unreadable_rows.each do |number|
+        statuses[number] = { status: ImportReportWorkbook::STATUS_FAILED,
+                             reason: 'this row could not be read from the sheet' }
+      end
+      @skipped_rows.each do |number|
+        statuses[number] ||= { status: ImportReportWorkbook::STATUS_SKIPPED,
+                               reason: "no structure and no CAS number, but 'decoupled' is set to no: " \
+                                       'either give a structure or a CAS number, or set decoupled to yes' }
+      end
+      # Whatever is left was blank: neither imported, nor failed, nor worth a complaint.
+      sheet_row_numbers.each do |number|
+        statuses[number] ||= { status: ImportReportWorkbook::STATUS_SKIPPED, reason: 'empty row' }
+      end
+    end
+
+    def imported_status(entry)
+      { status: row_status(entry), sample_id: entry[:id], reason: decoupled_reason_for(entry[:row]) }
+    end
+
+    def row_status(entry)
+      return ImportReportWorkbook::STATUS_IMPORTED_WITH_NOTES if @field_notes[entry[:row]].present?
+      return ImportReportWorkbook::STATUS_UPDATED if entry[:updated]
+
+      ImportReportWorkbook::STATUS_IMPORTED
+    end
+
+    def decoupled_reason_for(row_number)
+      fallback = @decoupled_fallbacks.find { |f| sheet_row(f[:index]) == row_number }
+      return nil if fallback.nil?
+      # The flagged cell already carries this when the structure column could be pointed at; repeating
+      # it at row level just makes the notes column harder to read.
+      return nil if Array(@field_notes[row_number]).any? { |note| structure_header?(note[:header]) }
+
+      "imported without a structure: #{fallback[:reason]}"
+    end
+
+    def structure_header?(name)
+      STRUCTURE_HEADERS.any? { |key| name.to_s.strip.casecmp(key).zero? }
+    end
+
+    # The result is read in a toast, so it is built as a headline plus one bullet per thing that needs
+    # attention, separated by newlines -- the notification renderer turns each line into its own
+    # paragraph. As a single sentence the same content was a wall of text ending in a list of thirty-odd
+    # row numbers that nobody could act on.
     def no_success(error)
+      build_report
       { status: 'invalid',
         error: error,
-        message: [
-          "No rows could be imported from file: #{@file_name}.",
-          error.present? ? "Reason: #{error}." : nil,
-          failed_rows_note,
-          structure_notes,
-          skipped_rows_note,
-          unreadable_rows_note,
-        ].compact.join(' ') }.merge(result_payload)
+        message: compose_message(
+          "No rows could be imported from '#{@file_name}'.",
+          error.presence && "Reason: #{error}",
+        ) }.merge(result_payload)
     end
 
     def warning(error = nil)
+      build_report
       { status: 'warning',
         error: error,
-        message: [
-          imported_count_sentence,
-          failed_rows_note,
-          error.present? ? "The import stopped early: #{error}." : nil,
-          structure_notes,
-          skipped_rows_note,
-          unreadable_rows_note,
-        ].compact.join(' ') }.merge(result_payload)
+        message: compose_message(
+          headline,
+          error.presence && "The import stopped early: #{error}",
+        ) }.merge(result_payload)
     end
 
     def success
-      { status: 'ok',
-        message: [
-          imported_count_sentence,
-          structure_notes,
-          skipped_rows_note,
-          unreadable_rows_note,
-        ].compact.join(' ') }.merge(result_payload)
+      { status: 'ok', message: compose_message(headline) }.merge(result_payload)
     end
 
-    def unprocessable_rows
-      unprocessable.map { |u| u[:index] + 2 }.sort.join(', ')
+    def compose_message(headline_line, *leading_notes)
+      notes = leading_notes + [
+        failed_rows_note,
+        updated_rows_note,
+        structure_notes,
+        skipped_rows_note,
+        unreadable_rows_note,
+        report_note,
+      ]
+      [headline_line, *notes.compact.map { |note| "#{BULLET} #{note}" }].join("\n")
+    end
+
+    def headline
+      done = if @updated_rows.any?
+               created = processed.size - @updated_rows.size
+               "Imported #{created} and updated #{@updated_rows.size} of #{total_candidate_rows}"
+             else
+               "Imported #{processed.size} of #{total_candidate_rows}"
+             end
+      "#{done} #{'row'.pluralize(total_candidate_rows)} from '#{@file_name}' into '#{@collection.label}'."
+    end
+
+    def failed_row_numbers
+      unprocessable.map { |u| sheet_row(u[:index]) }.sort
     end
 
     # Every row the file offered: those queued for import, those skipped before queuing, and those
@@ -1012,49 +1345,75 @@ module Import
       rows.size + @skipped_rows.size + @unreadable_rows.size
     end
 
-    def unreadable_rows_note
-      notes = []
-      if @unreadable_rows.any?
-        notes << "#{@unreadable_rows.size} row(s) could not be read from the sheet " \
-                 "(row(s) #{@unreadable_rows.sort.join(', ')})."
-      end
-      if @unreadable_component_rows.any?
-        notes << "#{@unreadable_component_rows.size} row(s) in the sample_components sheet could not " \
-                 "be read (row(s) #{@unreadable_component_rows.sort.join(', ')})."
-      end
-      notes.empty? ? nil : notes.join(' ')
+    # "rows 2, 3, 5" -- truncated, because a bare list of thirty numbers is not something anyone reads.
+    # The report carries all of them, one per line, next to the data they belong to.
+    def rows_phrase(numbers)
+      sorted = numbers.sort
+      listed = sorted.first(MAX_LISTED_ROWS).join(', ')
+      listed += " and #{sorted.size - MAX_LISTED_ROWS} more" if sorted.size > MAX_LISTED_ROWS
+      "#{'row'.pluralize(sorted.size)} #{listed}"
     end
 
-    def imported_count_sentence
-      "#{processed.size} of #{total_candidate_rows} row(s) in file: #{@file_name} " \
-        "were imported into collection '#{@collection.label}'."
+    def updated_rows_note
+      return nil if @updated_rows.empty?
+
+      "#{@updated_rows.size} existing #{'sample'.pluralize(@updated_rows.size)} updated from " \
+        "#{rows_phrase(@updated_rows)}"
     end
 
     def failed_rows_note
       return nil if unprocessable.empty?
 
-      "The following row(s) could not be imported: #{unprocessable_rows}."
+      "#{unprocessable.size} #{'row'.pluralize(unprocessable.size)} could not be imported: " \
+        "#{rows_phrase(failed_row_numbers)}"
     end
 
     def skipped_rows_note
       return nil if @skipped_rows.empty?
 
-      "#{@skipped_rows.size} row(s) were skipped because they contained no structure, no CAS and no " \
-        "decoupled flag (row(s) #{@skipped_rows.sort.join(', ')})."
+      "#{@skipped_rows.size} #{'row'.pluralize(@skipped_rows.size)} skipped, with no structure and no " \
+        "CAS number while 'decoupled' says no: #{rows_phrase(@skipped_rows)}"
+    end
+
+    def unreadable_rows_note
+      notes = []
+      if @unreadable_rows.any?
+        notes << "#{@unreadable_rows.size} #{'row'.pluralize(@unreadable_rows.size)} could not be read " \
+                 "from the sheet: #{rows_phrase(@unreadable_rows)}"
+      end
+      if @unreadable_component_rows.any?
+        notes << "#{@unreadable_component_rows.size} " \
+                 "#{'row'.pluralize(@unreadable_component_rows.size)} in the sample_components sheet " \
+                 "could not be read: #{rows_phrase(@unreadable_component_rows)}"
+      end
+      notes.presence&.join("\n#{BULLET} ")
     end
 
     def result_payload
       {
         imported_count: processed.size,
         total_rows: total_candidate_rows,
-        failed_rows: unprocessable.map { |u| u[:index] + 2 }.sort,
+        failed_rows: failed_row_numbers,
         skipped_rows: @skipped_rows.sort,
         unreadable_rows: @unreadable_rows.sort,
         unreadable_component_rows: @unreadable_component_rows.sort,
         decoupled_fallbacks: @decoupled_fallbacks,
         unprocessed_data: unprocessable,
         data: processed,
-      }
+      }.merge(report_payload)
+    end
+
+    def report_payload
+      return {} if @report_attachment.nil?
+
+      { report_attachment_id: @report_attachment.id, report_filename: @report_attachment.filename }
+    end
+
+    def report_note
+      return nil if @report_attachment.nil?
+
+      "Report '#{@report_attachment.filename}' is in your Inbox - correct its '#{retry_sheet_name}' " \
+        'sheet and import the file again to fix whatever did not work'
     end
 
     # Rows that were imported but lost their structure need to be visible in the result.
@@ -1065,8 +1424,9 @@ module Import
     def decoupled_fallback_note
       return nil if @decoupled_fallbacks.empty?
 
-      "#{@decoupled_fallbacks.size} row(s) were imported as decoupled because no structure could be " \
-        "resolved (row(s) #{@decoupled_fallbacks.map { |f| f[:index] + 2 }.sort.join(', ')})."
+      numbers = @decoupled_fallbacks.map { |f| sheet_row(f[:index]) }
+      "#{numbers.size} #{'row'.pluralize(numbers.size)} imported without a structure, because none " \
+        "could be resolved: #{rows_phrase(numbers)}"
     end
   end
 end

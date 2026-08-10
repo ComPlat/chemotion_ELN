@@ -140,9 +140,25 @@ class ImportSamplesJob < ApplicationJob
       level: notification_level(result[:status]),
       # A partial or failed import needs to stay on screen
       autoDismiss: result[:status] == 'ok' ? 10 : 0,
+      **report_link(result),
     )
   rescue StandardError => e
     Delayed::Worker.logger.error e
+  end
+
+  # A link straight to the import report, which also sits in the user's Inbox. The notification
+  # renders any url/urlTitle pair it is given, and the attachment endpoint authorises an unlinked
+  # inbox attachment for the user it was created for -- so no extra route or permission is involved.
+  def report_link(result)
+    return {} if result[:report_attachment_id].blank?
+
+    {
+      url: "#{Rails.application.config.root_url}/api/v1/attachments/#{result[:report_attachment_id]}",
+      urlTitle: "Download #{result[:report_filename]}",
+      # Tells the notification handler to refresh the Inbox, so the report appears there when the
+      # notification does instead of only after the next manual reload.
+      report_attachment_id: result[:report_attachment_id],
+    }
   end
 
   def notification_level(status)

@@ -325,7 +325,7 @@ export default class ModalImport extends React.Component {
       this.extractColumnNames(file);
     } else {
       ElementActions.importSamplesFromFile(params);
-      onHide();
+      this.resetImportState(() => onHide());
 
       const notification = {
         title: 'Uploading',
@@ -421,7 +421,7 @@ export default class ModalImport extends React.Component {
     };
 
     ElementActions.importSamplesFromFile(params);
-    onHide();
+    this.resetImportState(() => onHide());
 
     this.context.notifications.add({
       title: 'Uploading',
@@ -504,10 +504,13 @@ export default class ModalImport extends React.Component {
   }
 
   requestCancelConfirmation(event, placement = 'top') {
-    const { showValidation } = this.state;
+    const { showColumnMapping, showValidation } = this.state;
     const { onHide } = this.props;
 
-    if (!showValidation) {
+    // Only the first step closes without asking: there is nothing to lose but a file selection. From
+    // the column-mapping step onward the user has work in progress, and closing discards it - so the
+    // mapping step gets the same abort confirmation the validation step already had.
+    if (!showColumnMapping && !showValidation) {
       onHide();
       return;
     }
@@ -529,9 +532,13 @@ export default class ModalImport extends React.Component {
     });
   }
 
-  abortImport() {
-    const { onHide } = this.props;
-
+  // Everything the dialog accumulates while an import is set up. The modal instance outlives a single
+  // import, so anything left here is what the next one starts from: without this a finished import
+  // reopened showing the previous file, checkboxes, column mapping and validation state.
+  //
+  // targetCollectionId is deliberately not reset - it comes from the props/UI, not from the user's
+  // choices in this dialog.
+  resetImportState(afterReset) {
     this.setState({
       file: null,
       importAsChemical: false,
@@ -540,13 +547,23 @@ export default class ModalImport extends React.Component {
       showValidation: false,
       columnNames: [],
       excelColumnIndices: null,
+      excelData: null,
+      sdfData: null,
       rowData: [],
       columnDefs: [],
+      fileFormat: null,
+      isProcessing: false,
       mappedColumns: null,
       cancelOverlayTarget: null,
       validationIsValidated: false,
       validationIsDataValid: false,
-    }, () => onHide());
+    }, afterReset);
+  }
+
+  abortImport() {
+    const { onHide } = this.props;
+
+    this.resetImportState(() => onHide());
   }
 
   dismissCancelConfirmation() {
@@ -989,7 +1006,17 @@ export default class ModalImport extends React.Component {
               <i className="fa fa-download me-1" />
               Download Template
             </Dropdown.Toggle>
-            <Dropdown.Menu>
+            {/*
+              Positioned fixed and rendered on mount so the menu is not clipped by the modal it sits
+              in - the same treatment the collection-tree dropdowns get. A 12-item list is taller than
+              the dialog, so it scrolls on its own rather than overflowing.
+            */}
+            <Dropdown.Menu
+              renderOnMount
+              popperConfig={{ strategy: 'fixed' }}
+              className="overflow-auto"
+              style={{ maxHeight: '60vh' }}
+            >
               <Dropdown.Header>Sample Templates</Dropdown.Header>
               <Dropdown.Item onClick={() => ModalImport.downloadTemplate('sample_xlsx_template')}>
                 Sample - Empty XLSX Template
@@ -1129,8 +1156,8 @@ export default class ModalImport extends React.Component {
             destructiveActionLabel="Abort Import"
             hideAction={() => this.dismissCancelConfirmation()}
             hideActionLabel="Cancel"
-            primaryAction={() => this.confirmCancelValidation()}
-            primaryActionLabel="Return to Mapping"
+            primaryAction={showValidation ? () => this.confirmCancelValidation() : undefined}
+            primaryActionLabel={showValidation ? 'Return to Mapping' : undefined}
           />
         </AppModal>
       </>
