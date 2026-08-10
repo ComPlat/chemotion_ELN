@@ -28,6 +28,20 @@ class Comment < ApplicationRecord
     Sample Reaction Screen Wellplate ResearchPlan DeviceDescription SequenceBasedMacromoleculeSample CellLine
   ].freeze
 
+  # Rails 7.1 rejects enums whose attribute lacks a declared type. These *_section
+  # enums are value-maps (Comment.<x>_sections); the model persists only `section`,
+  # not a column per enum. Declare them as virtual string attributes (values are
+  # strings, matching the `section` column type).
+  attribute :sample_section, :string
+  attribute :reaction_section, :string
+  attribute :wellplate_section, :string
+  attribute :screen_section, :string
+  attribute :research_plan_section, :string
+  attribute :device_description_section, :string
+  attribute :sequence_based_macromolecule_sample_section, :string
+  attribute :cell_line_sample_section, :string
+  attribute :header_section, :string
+
   enum sample_section: {
     properties: 'sample_properties',
     analyses: 'sample_analyses',

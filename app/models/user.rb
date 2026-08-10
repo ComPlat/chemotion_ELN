@@ -64,6 +64,10 @@ class User < ApplicationRecord
   attr_writer :login
   attr_accessor :provider, :uid
 
+  # counters may receive a nil hash key via Labimotion's generic-element
+  # short-label logic (nameless element_klass); tolerate it like Rails 6.1.
+  attribute :counters, LenientHstoreType.new
+
   acts_as_paranoid
   # Include default devise modules. Others available are: :timeoutable
 

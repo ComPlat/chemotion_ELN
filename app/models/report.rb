@@ -34,13 +34,13 @@
 class Report < ApplicationRecord
   acts_as_paranoid
 
-  serialize :configs, Hash
-  serialize :sample_settings, Hash
-  serialize :reaction_settings, Hash
-  serialize :si_reaction_settings, Hash
-  serialize :objects, Array
-  serialize :mol_serials, Array
-  serialize :prd_atts, Array
+  serialize :configs, type: Hash
+  serialize :sample_settings, type: Hash
+  serialize :reaction_settings, type: Hash
+  serialize :si_reaction_settings, type: Hash
+  serialize :objects, type: Array
+  serialize :mol_serials, type: Array
+  serialize :prd_atts, type: Array
 
   has_many :reports_users
   has_many :users, through: :reports_users

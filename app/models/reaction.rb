@@ -72,8 +72,8 @@ class Reaction < ApplicationRecord
   include ReactionRinchi
   include Labimotion::Segmentable
 
-  serialize :description, Hash
-  serialize :observation, Hash
+  serialize :description, type: Hash
+  serialize :observation, type: Hash
 
   multisearchable against: %i[name short_label rinchi_string]
 
