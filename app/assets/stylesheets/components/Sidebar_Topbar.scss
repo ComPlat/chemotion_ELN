@@ -9,6 +9,7 @@ $topbar-height: 35px;
   @extend .flex-shrink-0;
   @extend .surface-lighten4;
   width: 260px;
+  overflow-x: hidden;
   &.sidebar--collapsed {
     width: 44px;
     .sidebar-logo {
@@ -27,6 +28,7 @@ $topbar-height: 35px;
     @extend .d-flex;
     @extend .flex-column;
     @extend .flex-grow-1;
+    @extend .min-w-0;
     @extend .pb-4;
     @extend .align-items-stretch;
   }
