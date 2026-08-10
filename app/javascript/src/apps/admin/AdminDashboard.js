@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  InputGroup, Card, Form, Button
+  InputGroup, Card, Form, Button, Table, Badge
 } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 
@@ -12,6 +12,8 @@ export default class AdminDashboard extends React.Component {
       diskPercentUsed: 0,
       allocatedUserSpace: 0,
       showDiskInfo: false,
+      storageTiers: [],
+      storageProblems: [],
     };
     this.handleDiskspace = this.handleDiskspace.bind(this);
     this.handleSaveBtn = this.handleSaveBtn.bind(this);
@@ -20,6 +22,17 @@ export default class AdminDashboard extends React.Component {
   componentDidMount() {
     this.handleDiskspace();
     this.getAllocatedUserSpace();
+    this.getStorageTiers();
+  }
+
+  getStorageTiers() {
+    AdminFetcher.fetchStorageTiers()
+      .then((result) => {
+        this.setState({
+          storageTiers: result.tiers || [],
+          storageProblems: result.problems || [],
+        });
+      });
   }
 
   handleDiskspace() {
@@ -89,10 +102,57 @@ export default class AdminDashboard extends React.Component {
     );
   }
 
+  renderStorageTiers() {
+    const { storageTiers, storageProblems } = this.state;
+    if (storageTiers.length === 0) return null;
+
+    return (
+      <Card style={{ width: '30rem' }}>
+        <Card.Header>Attachment storage</Card.Header>
+        <Card.Body className="p-0">
+          <Table size="sm" className="mb-0">
+            <thead>
+              <tr>
+                <th>Tier</th>
+                <th>Location</th>
+                <th className="text-end">Files</th>
+                <th className="text-end">MB</th>
+              </tr>
+            </thead>
+            <tbody>
+              {storageTiers.map((tier) => (
+                <tr key={tier.tier}>
+                  <td>
+                    <Badge bg={tier.kind === 'hot' ? 'primary' : 'secondary'}>{tier.kind}</Badge>
+                    {' '}
+                    {tier.tier}
+                  </td>
+                  <td className="text-break"><small>{tier.path}</small></td>
+                  <td className="text-end">{tier.files}</td>
+                  <td className="text-end">{tier.mb}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+          {storageProblems.length > 0 && (
+            <div className="text-danger p-2">
+              {storageProblems.map((problem) => <div key={problem}>{problem}</div>)}
+            </div>
+          )}
+        </Card.Body>
+      </Card>
+    );
+  }
+
   render() {
     const { showDiskInfo } = this.state;
     if (showDiskInfo) {
-      return this.renderDiskInfo();
+      return (
+        <div className="d-flex gap-3 align-items-start flex-wrap">
+          {this.renderDiskInfo()}
+          {this.renderStorageTiers()}
+        </div>
+      );
     }
     return (<div />);
   }
