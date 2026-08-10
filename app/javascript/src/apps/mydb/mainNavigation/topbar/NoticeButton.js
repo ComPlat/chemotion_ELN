@@ -19,6 +19,22 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 
 import NotificationButton from 'src/apps/mydb/mainNavigation/topbar/NotificationButton';
 
+const MAX_VISIBLE_PAGES = 5;
+
+const getPaginationRange = (currentPage, totalPages, maxVisible) => {
+  if (totalPages <= maxVisible) {
+    return Array.from({ length: totalPages }, (unused, i) => i + 1);
+  }
+  const half = Math.floor(maxVisible / 2);
+  let start = Math.max(currentPage - half, 1);
+  let end = start + maxVisible - 1;
+  if (end > totalPages) {
+    end = totalPages;
+    start = end - maxVisible + 1;
+  }
+  return Array.from({ length: end - start + 1 }, (unused, i) => start + i);
+};
+
 const changeUrl = (url, urlTitle) => (url ? (
   <a href={url} target="_blank" rel="noopener noreferrer">
     {urlTitle || url}
@@ -435,27 +451,40 @@ const NoticeButton = () => {
             </Card>
           );
         })}
-        {totalPages > 1 && (
-          <Pagination className="justify-content-center mt-3">
-            <Pagination.Prev
-              disabled={effectivePage === 1}
-              onClick={() => setCurrentPage(effectivePage - 1)}
-            />
-            {[...Array(totalPages).keys()].map((key, i) => (
-              <Pagination.Item
-                key={`page_${key}`}
-                active={i + 1 === effectivePage}
-                onClick={() => setCurrentPage(i + 1)}
-              >
-                {i + 1}
-              </Pagination.Item>
-            ))}
-            <Pagination.Next
-              disabled={effectivePage === totalPages}
-              onClick={() => setCurrentPage(effectivePage + 1)}
-            />
-          </Pagination>
-        )}
+        {totalPages > 1 && (() => {
+          const pageRange = getPaginationRange(effectivePage, totalPages, MAX_VISIBLE_PAGES);
+          return (
+            <Pagination className="justify-content-center mt-3">
+              <Pagination.First
+                disabled={effectivePage === 1}
+                onClick={() => setCurrentPage(1)}
+              />
+              <Pagination.Prev
+                disabled={effectivePage === 1}
+                onClick={() => setCurrentPage(effectivePage - 1)}
+              />
+              {pageRange[0] > 1 && <Pagination.Ellipsis disabled />}
+              {pageRange.map((page) => (
+                <Pagination.Item
+                  key={`page_${page}`}
+                  active={page === effectivePage}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </Pagination.Item>
+              ))}
+              {pageRange[pageRange.length - 1] < totalPages && <Pagination.Ellipsis disabled />}
+              <Pagination.Next
+                disabled={effectivePage === totalPages}
+                onClick={() => setCurrentPage(effectivePage + 1)}
+              />
+              <Pagination.Last
+                disabled={effectivePage === totalPages}
+                onClick={() => setCurrentPage(totalPages)}
+              />
+            </Pagination>
+          );
+        })()}
       </>
     );
   };
