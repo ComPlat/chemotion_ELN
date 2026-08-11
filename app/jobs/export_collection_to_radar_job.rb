@@ -3,7 +3,7 @@ class ExportCollectionToRadarJob < ActiveJob::Base
 
   queue_as :export_collection_to_radar
 
-  def perform(access_token, collection_id, dataset_id)
+  def perform(access_token, collection_id, dataset_id, current_user_id = nil)
     @success = true
     @access_token = access_token
     @collection_id = collection_id
@@ -11,7 +11,7 @@ class ExportCollectionToRadarJob < ActiveJob::Base
 
     begin
       # create the collection export
-      export = Export::ExportCollections.new(job_id, [@collection_id], 'zip', true)
+      export = Export::ExportCollections.new(job_id, [@collection_id], 'zip', true, false, current_user_id)
       export.prepare_data
       export.to_file
 
