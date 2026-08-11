@@ -94,7 +94,11 @@ module Export
             annotation.to_io.close if annotation.respond_to?(:to_io)
           end
           # write all the images into an images directory
-          @images.each do |file_path|
+          # .uniq: #build_research_plan_ketcher_svg computes a content-addressed filename per link,
+          # so the same outside sample linked from two research plans (or twice from one) produces
+          # the same #fetch_image path both times — without this, put_next_entry gets called twice
+          # with the identical entry name.
+          @images.uniq.each do |file_path|
             image_data = Rails.public_path.join(file_path).read
             image_checksum = Digest::SHA256.hexdigest(image_data)
             zipping.put_next_entry file_path
