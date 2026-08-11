@@ -14,6 +14,15 @@ import {
   sampleAssociationMoveNotification
 } from 'src/utilities/notificationMessages';
 
+// The system collections every user has: created by the application, never by a user, and shown
+// outside the ordinary collection tree. Their labels are NOT reserved - a user can name a
+// collection "transferred", and a collection archive can carry one called "chemotion-repository.net"
+// - so a label match alone never identifies one; it always has to be paired with is_locked.
+export const ALL_LABEL = 'All';
+export const REPOSITORY_LABEL = 'chemotion-repository.net';
+export const TRANSFERRED_LABEL = 'transferred';
+export const SYSTEM_LABELS = [ALL_LABEL, REPOSITORY_LABEL, TRANSFERRED_LABEL];
+
 export const Collection = types.model({
   ancestry: types.string,
   children: types.array(types.late(() => Collection)),
@@ -389,29 +398,46 @@ export const CollectionsStore = types
       self.setOwnCollectionTree()
     },
     setOwnCollections(collections) {
+      // Rebuilt from scratch on every pass, alongside the own_collections its callers clear, so
+      // neither the repository node's children nor the locked bucket accumulate across reloads.
+      self.chemotion_repository_collection = null;
+      self.locked_collection.clear();
       // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
       collections.sort(presort);
       collections.forEach((collection) => {
-        if (collection.is_locked && ['All', 'chemotion-repository.net', 'transferred'].includes(collection.label)
+        if (collection.is_locked && SYSTEM_LABELS.includes(collection.label)
           && self.locked_collection.findIndex((c) => c.label === collection.label) === -1) {
-          self.locked_collection.push(Collection.create(collection))
+          self.locked_collection.push(Collection.create(collection));
         }
 
-        if (collection.is_locked && (collection.label == 'All' || (collection.label !== 'chemotion-repository.net'
-          && collection.label !== 'transferred'))) {
-          // do nothing and skip this collection
-        } else if (collection.label == 'chemotion-repository.net') {
-          self.chemotion_repository_collection = Collection.create(collection)
-        } else {
-          const collectionItem = Collection.create(collection)
-
-          const collectionTree =
-            (self.chemotion_repository_collection && collectionItem.ancestorIds.includes(self.chemotion_repository_collection.id))
-              ? self.chemotion_repository_collection.children
-              : self.own_collections
-
-          self.addCollectionToTree(collectionItem, collectionTree)
+        // Locked collections are system containers rendered outside the tree, except the repository
+        // root (its own sidebar section) and "transferred" (inside that section).
+        if (collection.is_locked && collection.label !== REPOSITORY_LABEL
+          && collection.label !== TRANSFERRED_LABEL) {
+          return;
         }
+        // Matched on is_locked as well as the label: the repository root is system-created and
+        // locked, but the label is not reserved, and a collection archive containing a collection
+        // of that name is recreated as an ordinary unlocked root on import. Keeping the first match
+        // makes a payload that somehow carries two resolve predictably rather than last-one-wins.
+        if (collection.label === REPOSITORY_LABEL && collection.is_locked) {
+          if (!self.chemotion_repository_collection) {
+            self.chemotion_repository_collection = Collection.create(collection);
+          }
+          return;
+        }
+
+        const collectionItem = Collection.create(collection);
+        // The repository node is held on its own field and never pushed into a node array, so its
+        // children cannot find it as a parent; the sidebar renders that array under a group header
+        // instead. Route them there rather than into own_collections, where a tree save would
+        // re-root them.
+        const collectionTree = (self.chemotion_repository_collection
+          && collectionItem.ancestorIds.includes(self.chemotion_repository_collection.id))
+          ? self.chemotion_repository_collection.children
+          : self.own_collections;
+
+        self.addCollectionToTree(collectionItem, collectionTree);
       });
     },
     setSharedWithMeCollections(collections) {
@@ -459,9 +485,13 @@ export const CollectionsStore = types
     addCollectionToTree(collection, collectionTree) {
       const parentIndex = collectionTree.findIndex(element => element.isAncestorOf(collection))
 
+      // A collection whose parent is not in this array is shown at the top of it rather than
+      // dropped, but its `ancestry` is deliberately left untouched: that field is the persisted
+      // parent pointer this store hands back to the server, not display state. Rewriting it here
+      // would silently promote the collection to a root on the next tree save. Callers that
+      // genuinely want to truncate a branch reset the ancestry themselves before calling in — see
+      // setSharedWithMeCollections.
       if (collection.isRootCollection || parentIndex === -1) {
-        if (parentIndex === -1 && !collection.isRootCollection) { collection.resetAncestry() }
-
         collectionTree.push(collection)
         collectionTree.sort((a, b) => {
           if (a.position != null && b.position != null) { return a.position - b.position }

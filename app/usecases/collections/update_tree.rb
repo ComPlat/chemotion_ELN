@@ -25,8 +25,31 @@ module Usecases
       # tree position are system-defined, so a bulk tree update may neither move nor rename them.
       # The frontend already omits them from the payload; a request that includes one anyway is
       # rejected wholesale via {#add_collection_and_children_to_linear_tree}.
+      #
+      # Everything *inside* a locked collection is excluded for the same reason: a tree payload
+      # places a collection by nesting, so accepting one would let a save lift it out of the locked
+      # container it was put in. That is how the repository root's "transferred" child escaped to
+      # the top level. The whole subtree is excluded, not just the direct children — a grandchild
+      # listed at the top level of a payload would escape exactly the same way.
+      #
+      # Returns a Set: this is checked once per node of the submitted tree.
       def collections_permitted_to_update
-        @collections_permitted_to_update ||= Collection.own_collections_for(current_user).unlocked.ids
+        @collections_permitted_to_update ||=
+          (Collection.own_collections_for(current_user).unlocked.ids - collections_inside_locked_containers).to_set
+      end
+
+      # Descendants of the user's locked collections, at any depth. +child_ancestry+ is the ancestry
+      # value this collection's children carry, so every descendant's ancestry starts with it.
+      #
+      # @return [Array<Integer>] ids of the collections nested inside a locked collection
+      def collections_inside_locked_containers
+        prefixes = Collection.own_collections_for(current_user).locked.map(&:child_ancestry)
+        return [] if prefixes.empty?
+
+        Collection.own_collections_for(current_user)
+                  .where(prefixes.map { 'collections.ancestry LIKE ?' }.join(' OR '),
+                         *prefixes.map { |prefix| "#{prefix}%" })
+                  .ids
       end
 
       def add_collection_and_children_to_linear_tree(collection, position:, parent_ids: [])

@@ -92,12 +92,24 @@ function CollectionSubtree({
       UIActions.toggleCollectionManagement();
     }
 
+    // A locked node still toggles, since the locked containers are the ones worth folding away,
+    // but it must navigate too: "transferred" is locked and has no sub-collections, so toggling
+    // alone would leave the elements a gate transfer moved there unreachable. Expand on the way in
+    // and never collapse — folding the subtree shut on the node being selected reads as a failed
+    // click, and the chevron already has its own handler.
     if (node.is_locked) {
-      toggleExpansion(e, node);
+      if (!visible) toggleExpansion(e, node);
     } else {
       setVisible(visible || isVisible(node, uiState.currentCollection));
-      aviatorNavigationWithCollectionId(node.id, element?.type, (element?.isNew ? 'new' : element?.id), true, true);
     }
+
+    // The shared-with-me tree's owner rows are synthetic grouping nodes with no collection behind
+    // them (CollectionsStore.setSharedWithMeCollections gives them id 0). Keyed on the id rather
+    // than on is_locked, which is only incidentally true of them: navigating one would request
+    // /collections/0, 404, and clear the current collection.
+    if (!node.id) return;
+
+    aviatorNavigationWithCollectionId(node.id, element?.type, (element?.isNew ? 'new' : element?.id), true, true);
   };
 
   const handleTakeOwnershipKeyDown = (e) => {

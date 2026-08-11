@@ -10,6 +10,10 @@ module Chemotion
       error!(e.message, 403)
     end
 
+    rescue_from Usecases::Collections::Errors::CreateForbidden do |e|
+      error!(e.message, 403)
+    end
+
     resource :collections do
       get '/' do
         own_collections =
