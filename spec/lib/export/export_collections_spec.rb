@@ -147,6 +147,30 @@ RSpec.describe 'ExportCollection' do
     end
   end
 
+  # A synthetic attachment (see Export::ExportCollections#build_research_plan_image_attachment,
+  # used for converting an out-of-export reaction link into a static image) is a real, if
+  # initially unassociated, Attachment record — export must not leave it (or its quota usage)
+  # behind on the exporting system once it's no longer needed.
+  context 'with #cleanup_synthetic_attachments' do
+    let(:export) { Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate, user.id) }
+
+    it 'hard-deletes a synthetic attachment, not just soft-deletes it' do
+      attachment = export.send(:build_research_plan_image_attachment, '<svg>x</svg>')
+      expect(attachment).to be_present
+
+      export.send(:cleanup_synthetic_attachments)
+
+      expect { Attachment.with_deleted.find(attachment.id) }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
+    it 'clears the tracked list so a later cleanup is a no-op' do
+      export.send(:build_research_plan_image_attachment, '<svg>x</svg>')
+      export.send(:cleanup_synthetic_attachments)
+
+      expect { export.send(:cleanup_synthetic_attachments) }.not_to raise_error
+    end
+  end
+
   context 'with a reaction' do # rubocop:disable RSpec/MultipleMemoizedHelpers
     let(:sample1) { create(:sample) }
     let(:sample2) { create(:sample) }

@@ -22,6 +22,11 @@ module Export
       @attachments = []
       @datasets = []
       @images = []
+      # Attachments created for the export itself (e.g. a converted reaction-link image, see
+      # #build_research_plan_image_attachment), as opposed to pre-existing ones already on the
+      # exporting system. Tracked so they can be purged once no longer needed — export must not
+      # leave new rows/files (and quota usage) behind on the system being exported from.
+      @synthetic_attachments = []
     end
     # rubocop:enable Style/OptionalBooleanParameter, Metrics/ParameterLists
 
@@ -104,6 +109,10 @@ module Export
 
         @file_path
       end
+    ensure
+      # Synthetic attachments only need to survive long enough to be streamed above; the exporting
+      # system must not be left holding new rows/files (and quota usage) after export finishes.
+      cleanup_synthetic_attachments
     end
 
     def prepare_data
@@ -145,6 +154,11 @@ module Export
       end
 
       remap_research_plan_body_links
+    rescue StandardError
+      # A synthetic attachment from an earlier, already-processed research plan must not outlive a
+      # failed export — #to_file (the normal cleanup point, see its ensure) will never run.
+      cleanup_synthetic_attachments
+      raise
     end
 
     private
@@ -750,6 +764,9 @@ module Export
         created_for: exporting_user.id,
       )
       attachment.save!
+      # Tracked immediately on persistence, not after a successful #bundle_..., so it still gets
+      # cleaned up even if something downstream fails before the field is actually converted.
+      @synthetic_attachments << attachment
       # Without this, the in-memory Shrine reference set by the after_save attach callback streams
       # back empty on its first read — a fresh reload forces it to rebuild from the persisted record.
       # Note: Attachment#reload returns set_key's value, not self, so it can't be the last expression.
@@ -774,6 +791,19 @@ module Export
 
     def real_id_for_uuid(type, target_uuid)
       @uuids.fetch(type, {}).key(target_uuid)
+    end
+
+    # Hard-deletes every attachment #build_research_plan_image_attachment created for this export —
+    # Attachment uses acts_as_paranoid, and a merely soft-deleted row would still count against the
+    # exporting user's quota. Idempotent (clears the tracked list), so calling it more than once, or
+    # after a partial failure, is safe.
+    def cleanup_synthetic_attachments
+      @synthetic_attachments.each do |attachment|
+        attachment.really_destroy!
+      rescue StandardError => e
+        Rails.logger.error("Failed to clean up synthetic research plan attachment #{attachment.id}: #{e.message}")
+      end
+      @synthetic_attachments.clear
     end
 
     def exporting_user

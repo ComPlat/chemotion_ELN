@@ -381,10 +381,10 @@ RSpec.describe 'ImportCollection' do
     let(:reaction_field) { imported_research_plan.body.find { |field| field['type'] == 'reaction' } }
     let(:image_field) { imported_research_plan.body.find { |field| field['type'] == 'image' } }
     let(:image_attachment) { Attachment.find_by(identifier: image_field['value']['public_name']) }
+    let(:export) { Export::ExportCollections.new(job_id, [collection.id], 'zip', false, false, exporting_user.id) }
 
     before do
       research_plan
-      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', false, false, exporting_user.id)
       export.prepare_data
       export.to_file
 
@@ -409,6 +409,10 @@ RSpec.describe 'ImportCollection' do
     it 'embeds the report-style reaction scheme as svg content' do
       svg_content = image_attachment.attachment.open(&:read)
       expect(svg_content).to include('</svg>')
+    end
+
+    it 'does not leave the synthetic attachment (even soft-deleted) on the exporting system' do
+      expect(Attachment.with_deleted.where(created_by: exporting_user.id, attachable_type: 'ResearchPlan')).to be_empty
     end
   end
 
