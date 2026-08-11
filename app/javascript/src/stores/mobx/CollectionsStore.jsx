@@ -385,8 +385,52 @@ export const CollectionsStore = types
       MessagesFetcher.createMessage(messageParams)
     },
     addNewCollectionToOwnCollection(newCollection) {
-      self.addCollectionToTree(Collection.create(newCollection), self.own_collections)
-      self.setOwnCollectionTree()
+      const collectionItem = Collection.create(newCollection)
+      self.addCollectionToTree(collectionItem, self.own_collections)
+
+      if (Array.isArray(self.own_collection_tree?.children)) {
+        // Insert into the tree as it currently stands instead of rebuilding it from
+        // own_collections, which would silently discard any pending rename/reorder
+        // that only lives in own_collection_tree so far (not yet saved).
+        const parentId = collectionItem.ancestorIds[collectionItem.ancestorIds.length - 1]
+        const plainNode = { ...newCollection, children: [] }
+        const { children, inserted } = self.insertIntoPlainTree(
+          plainNode,
+          parentId,
+          self.own_collection_tree.children
+        )
+        self.setOwnCollectionTree({
+          ...self.own_collection_tree,
+          children: inserted ? children : [...children, plainNode],
+        })
+      } else {
+        self.setOwnCollectionTree()
+      }
+    },
+    // Depth-first search of the plain (frozen-store) tree for the sibling whose id
+    // matches parentId, returning a NEW siblings array with `node` inserted under
+    // it, plus whether a match was found. own_collection_tree is MST `frozen` data
+    // (deep-frozen outside production), so existing arrays/objects are replaced
+    // rather than mutated; the caller appends `node` at the top level when no
+    // match is found, so a newly created collection is never silently dropped.
+    insertIntoPlainTree(node, parentId, siblings) {
+      let inserted = false
+      const children = siblings.map((sibling) => {
+        if (inserted) return sibling
+        if (sibling.id === parentId) {
+          inserted = true
+          return { ...sibling, children: [...sibling.children, node] }
+        }
+        if (sibling.children?.length) {
+          const result = self.insertIntoPlainTree(node, parentId, sibling.children)
+          if (result.inserted) {
+            inserted = true
+            return { ...sibling, children: result.children }
+          }
+        }
+        return sibling
+      })
+      return { children, inserted }
     },
     setOwnCollections(collections) {
       // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
