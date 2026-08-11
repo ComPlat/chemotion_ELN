@@ -89,7 +89,7 @@ development:
         3
       :attachments:
         4
-      :maintainance:
+      :maintenance:
         5
       :history:
         -6
@@ -202,7 +202,7 @@ production:
         3
       :attachments:
         4
-      :maintainance:
+      :maintenance:
         5
       :history:
         -6
@@ -317,7 +317,7 @@ test:
         3
       :attachments:
         4
-      :maintainance:
+      :maintenance:
         5
       :history:
         -6
