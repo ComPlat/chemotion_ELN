@@ -59,10 +59,7 @@ services:
   # at /nmrium/default/, which is what config/spectra.yml.example sets
   # :nmriumwrapper: :url: to for development.
   #
-  # Run it (or don't — the ELN falls back to any wrapper url in spectra.yml)
-  # via the opt-in helper, which also checks the version pin and spectra.yml:
-  #     bin/chem-nmrium-install.sh
-  # or directly:
+  # Run it (or don't — the ELN falls back to any wrapper url in spectra.yml):
   #     docker compose -f docker-compose.dev.yml -f docker-compose.services.yml \
   #       --env-file .dockerenv up nmrium-assets
   #
