@@ -116,11 +116,10 @@ const AnalysesCellEditor = ({
   context
 }) => {
   const [selectedAnalysisIDs, setSelectedAnalysisIDs] = useState(analysesIDs);
-  const [autofilledSamples, setAutofilledSamples] = useState([]);
   const {
     reactionShortLabel,
     allReactionAnalyses,
-    handleAutofillVariationSampleFromAnalysis,
+    requestAutofillConfirmation,
     findAutofillVariationSampleFromAnalysis
   } = context;
   const availableReactionAnalyses = allReactionAnalyses.filter((analysis) => !analysis.is_deleted);
@@ -159,18 +158,30 @@ const AnalysesCellEditor = ({
       return;
     }
     const { samples } = jsonRes;
-    const newAutofilledSamples = [];
+    const autofilledSamples = [];
     samples.forEach(([sampleIdentifier, value, unit]) => {
       const foundMat = findAutofillVariationSampleFromAnalysis({ sampleIdentifier });
       if (foundMat) {
-        newAutofilledSamples.push({ foundMat, sampleIdentifier, value, unit, variationRow: row });
+        autofilledSamples.push({ foundMat, sampleIdentifier, value, unit, variationRow: row });
       }
     });
 
-    setAutofilledSamples(newAutofilledSamples);
+    // No material in this reaction matches the file's sample identifiers: nothing to confirm.
+    if (autofilledSamples.length === 0) { return; }
+
+    /*
+    Hand the confirmation to <ReactionVariations>, which renders it outside <AgGridReact>.
+    Confirming bumps gridVersion, which re-keys and therefore re-mounts the grid; a modal
+    rendered by this cell editor is part of that subtree and would be torn down along with
+    it, before the user ever sees the result. Commit the analysis selection on the way out,
+    otherwise the link the user ticked to enable this button is dropped when editing stops.
+    */
+    onValueChange(selectedAnalysisIDs);
+    stopEditing();
+    requestAutofillConfirmation({ variationRow: row, samples: autofilledSamples });
   };
 
-  const analysesSelection = autofilledSamples.length === 0 ? (
+  const analysesSelection = (
     <div className="overflow-y-auto pb-5">
       {availableReactionAnalyses.length === 0 ? (
         <div className="text-body-secondary">
@@ -224,21 +235,6 @@ const AnalysesCellEditor = ({
           })}
         </Form.Group>
       )}
-    </div>) :
-    (<div>
-      <p>Please confirm:</p>
-      <ul>
-        {autofilledSamples.map(
-          ({ sampleIdentifier, value, unit, foundMat: { matType } }) =>
-            <li key={sampleIdentifier}>
-              Set <b>{SINGLE_HEADER[matType] ?? matType}: {sampleIdentifier}</b> to {value} {unit}
-            </li>
-        )}
-      </ul>
-      <Button variant="success" size="sm" onClick={() => {
-        autofilledSamples.forEach((x) => handleAutofillVariationSampleFromAnalysis(x));
-        setAutofilledSamples([]);
-      }}>Confirm</Button>
     </div>);
 
   return (
@@ -270,14 +266,68 @@ AnalysesCellEditor.propTypes = {
       is_deleted: PropTypes.bool,
       name: PropTypes.string,
     })).isRequired,
-    handleAutofillVariationSampleFromAnalysis: PropTypes.func.isRequired,
+    requestAutofillConfirmation: PropTypes.func.isRequired,
     findAutofillVariationSampleFromAnalysis: PropTypes.func.isRequired
   }).isRequired,
+};
+
+/*
+Confirmation step for "Populate samples from data file". Deliberately rendered by
+<ReactionVariations> as a sibling of <AgGridReact> rather than by <AnalysesCellEditor>:
+applying the values re-keys and re-mounts the grid, which destroys everything the grid
+renders — a cell editor and its modal included.
+*/
+const AutofillVariationSamplesModal = ({ autofill, onConfirm, onCancel }) => {
+  if (autofill === null) { return null; }
+
+  const { samples } = autofill;
+
+  return (
+    <AppModal
+      show
+      onHide={onCancel}
+      title="Populate samples from data file"
+      primaryActionLabel="Confirm"
+      onPrimaryAction={onConfirm}
+    >
+      <p>Please confirm:</p>
+      <ul>
+        {samples.map(({
+          sampleIdentifier, value, unit, foundMat: { matType }
+        }) => (
+          <li key={sampleIdentifier}>
+            {'Set '}
+            <b>{`${SINGLE_HEADER[matType] ?? matType}: ${sampleIdentifier}`}</b>
+            {` to ${value} ${unit}`}
+          </li>
+        ))}
+      </ul>
+    </AppModal>
+  );
+};
+
+AutofillVariationSamplesModal.propTypes = {
+  // `null` while no autofill is pending, which is what keeps the modal closed.
+  autofill: PropTypes.shape({
+    samples: PropTypes.arrayOf(PropTypes.shape({
+      sampleIdentifier: PropTypes.string.isRequired,
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      unit: PropTypes.string,
+      foundMat: PropTypes.shape({ matType: PropTypes.string.isRequired }).isRequired,
+    })).isRequired,
+  }),
+  onConfirm: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+};
+
+AutofillVariationSamplesModal.defaultProps = {
+  autofill: null,
 };
 
 export {
   AnalysesCellRenderer,
   AnalysesCellEditor,
+  AutofillVariationSamplesModal,
   AnalysisVariationLink,
   AnalysisOverlay,
   getAnalysesOverlay,

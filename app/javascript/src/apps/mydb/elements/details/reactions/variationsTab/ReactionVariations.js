@@ -18,7 +18,7 @@ import {
   getReactionSegments, processHeaderForCsvExport
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
-  getReactionAnalyses, updateAnalyses
+  getReactionAnalyses, updateAnalyses, AutofillVariationSamplesModal
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
   updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDsToLabels,
@@ -63,6 +63,12 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   const previousAllReactionAnalyses = useRef(allReactionAnalyses);
 
   const [gridStore, setGridStore] = useState(() => initializeGridStore(reaction.variations ?? []));
+  /*
+  Samples awaiting the user's confirmation before being written into a variation row, handed
+  up by <AnalysesCellEditor>. Held here, outside the grid, because applying them bumps
+  gridVersion and thus re-mounts <AgGridReact> — anything the grid renders dies with it.
+  */
+  const [pendingAutofill, setPendingAutofill] = useState(null);
 
   const {
     reactionVariations,
@@ -597,8 +603,13 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     copyRow,
     removeRow,
     setColumnDefinitions,
-    handleAutofillVariationSampleFromAnalysis,
+    requestAutofillConfirmation: setPendingAutofill,
     findAutofillVariationSampleFromAnalysis
+  };
+
+  const confirmAutofill = () => {
+    pendingAutofill.samples.forEach((sample) => handleAutofillVariationSampleFromAnalysis(sample));
+    setPendingAutofill(null);
   };
 
   return (
@@ -679,6 +690,11 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
           onRowDragEnd={(event) => handleRowDrag(event)}
         />
       </div>
+      <AutofillVariationSamplesModal
+        autofill={pendingAutofill}
+        onConfirm={confirmAutofill}
+        onCancel={() => setPendingAutofill(null)}
+      />
     </div>
   );
 };
