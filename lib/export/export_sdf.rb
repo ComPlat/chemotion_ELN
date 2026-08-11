@@ -81,6 +81,9 @@ module Export
         data += "\n"
         data = concatenate_data(sample, data)
       else
+        # withhold top-secret samples that reach us only through a share (owner-set flag)
+        return nil if sample['ts'].in?(['t', true])
+
         # return no data if molfile not allowed
         return nil if sample['dl_s'].zero?
 

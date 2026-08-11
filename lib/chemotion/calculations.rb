@@ -81,7 +81,12 @@ module Chemotion::Calculations
   end
 
   def self.valid_digit(input_num, precision)
-    num = BigDecimal((input_num.presence || 0).to_s)
+    # A redacted value ('***') reaches this formatter from the report entities; return it
+    # verbatim instead of raising ArgumentError on BigDecimal(), so a report of an element
+    # shared below full detail level renders the placeholder rather than crashing (500).
+    num = BigDecimal((input_num.presence || 0).to_s, exception: false)
+    return input_num if num.nil?
+
     num_str = num.to_s('F')
     num_str =~ /^0*([1-9]+\d*)?.?(0*)([1-9]*)/
     head_len, tail_len = $1&.size || 0, $3 && $2&.size || 0
