@@ -108,6 +108,24 @@ const presort = (a, b) => {
   else { return a.position - b.position }
 }
 
+// Same ordering addCollectionToTree's sort uses for own_collections, reused to place a
+// newly inserted node among plain-tree siblings without re-sorting the whole array (which
+// would clobber a pending manual drag-reorder already reflected in that array's order).
+const compareCollectionSiblings = (a, b) => {
+  if (a.position != null && b.position != null) return a.position - b.position
+  if (a.position != null && b.position == null) return -1
+  if (a.position == null && b.position != null) return 1
+  if (a.label < b.label) return -1
+  if (a.label > b.label) return 1
+  return 0
+}
+
+const insertSorted = (siblings, node) => {
+  const index = siblings.findIndex((sibling) => compareCollectionSiblings(node, sibling) < 0)
+  const insertAt = index === -1 ? siblings.length : index
+  return [...siblings.slice(0, insertAt), node, ...siblings.slice(insertAt)]
+}
+
 export const CollectionsStore = types
   .model({
     chemotion_repository_collection: types.maybeNull(Collection),
@@ -401,7 +419,7 @@ export const CollectionsStore = types
         )
         self.setOwnCollectionTree({
           ...self.own_collection_tree,
-          children: inserted ? children : [...children, plainNode],
+          children: inserted ? children : insertSorted(children, plainNode),
         })
       } else {
         self.setOwnCollectionTree()
@@ -409,17 +427,18 @@ export const CollectionsStore = types
     },
     // Depth-first search of the plain (frozen-store) tree for the sibling whose id
     // matches parentId, returning a NEW siblings array with `node` inserted under
-    // it, plus whether a match was found. own_collection_tree is MST `frozen` data
-    // (deep-frozen outside production), so existing arrays/objects are replaced
-    // rather than mutated; the caller appends `node` at the top level when no
-    // match is found, so a newly created collection is never silently dropped.
+    // it (at its sorted position, via insertSorted), plus whether a match was
+    // found. own_collection_tree is MST `frozen` data (deep-frozen outside
+    // production), so existing arrays/objects are replaced rather than mutated;
+    // the caller inserts `node` at the top level when no match is found, so a
+    // newly created collection is never silently dropped.
     insertIntoPlainTree(node, parentId, siblings) {
       let inserted = false
       const children = siblings.map((sibling) => {
         if (inserted) return sibling
         if (sibling.id === parentId) {
           inserted = true
-          return { ...sibling, children: [...sibling.children, node] }
+          return { ...sibling, children: insertSorted(sibling.children, node) }
         }
         if (sibling.children?.length) {
           const result = self.insertIntoPlainTree(node, parentId, sibling.children)

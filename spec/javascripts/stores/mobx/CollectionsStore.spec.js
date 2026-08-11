@@ -89,8 +89,34 @@ describe('CollectionsStore', () => {
 
       await store.addCollection({ label: 'New Collection', parent_id: '' }, true);
 
-      const labels = store.own_collection_tree.children.map((c) => c.label).sort();
-      expect(labels).toEqual(['New Collection', 'Pending Rename']);
+      const { children } = store.own_collection_tree;
+      // 'New Collection' sorts alphabetically before 'Pending Rename' - and the
+      // pending rename itself (not 'Original Label') must still be there.
+      expect(children.map((c) => [c.id, c.label])).toEqual([
+        [2, 'New Collection'],
+        [1, 'Pending Rename'],
+      ]);
+    });
+
+    it('inserts the new node at its natural sorted position without re-sorting an existing pending reorder', async () => {
+      store.setOwnCollections([
+        { id: 30, label: 'Zebra', ancestry: '/', is_locked: false },
+        { id: 40, label: 'Apple', ancestry: '/', is_locked: false },
+      ]);
+      // Pending manual drag-reorder: Zebra before Apple (not alphabetical).
+      store.setOwnCollectionTree({
+        children: [
+          { id: 30, label: 'Zebra', ancestry: '/', is_locked: false, children: [] },
+          { id: 40, label: 'Apple', ancestry: '/', is_locked: false, children: [] },
+        ],
+      });
+      addStub.resolves({ id: 50, label: 'Mango', ancestry: '/', is_locked: false });
+
+      await store.addCollection({ label: 'Mango', parent_id: '' }, true);
+
+      // Mango slots in ahead of Zebra (alphabetically); Zebra/Apple's pending
+      // relative order is left exactly as the user arranged it.
+      expect(store.own_collection_tree.children.map((c) => c.id)).toEqual([50, 30, 40]);
     });
 
     it('inserts under the correct parent without disturbing sibling order (pending reorder)', async () => {
@@ -118,7 +144,7 @@ describe('CollectionsStore', () => {
       expect(children[1].children.map((c) => c.id)).toEqual([21, 22]);
     });
 
-    it('falls back to a top-level push when the parent cannot be found', async () => {
+    it('falls back to a sorted top-level push when the parent cannot be found', async () => {
       store.setOwnCollections([{ id: 1, label: 'X', ancestry: '/', is_locked: false }]);
       store.setOwnCollectionTree({
         children: [{ id: 1, label: 'X', ancestry: '/', is_locked: false, children: [] }],
@@ -128,7 +154,8 @@ describe('CollectionsStore', () => {
 
       await store.addCollection({ label: 'Orphaned', parent_id: 999 }, true);
 
-      expect(store.own_collection_tree.children.map((c) => c.id)).toEqual([1, 2]);
+      // 'Orphaned' sorts alphabetically before 'X'.
+      expect(store.own_collection_tree.children.map((c) => c.id)).toEqual([2, 1]);
     });
 
     it('rebuilds from own_collections when own_collection_tree has not been initialized yet', async () => {
