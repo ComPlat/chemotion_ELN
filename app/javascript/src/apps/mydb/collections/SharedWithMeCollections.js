@@ -123,7 +123,7 @@ function SharedWithMeCollections() {
   };
 
   return (
-    <div className="tree mt-2">
+    <div className="tree pt-2 h-100 overflow-y-auto">
       <Tree
         paddingLeft={20}
         tree={tree}

@@ -108,6 +108,24 @@ const presort = (a, b) => {
   else { return a.position - b.position }
 }
 
+// Same ordering addCollectionToTree's sort uses for own_collections, reused to place a
+// newly inserted node among plain-tree siblings without re-sorting the whole array (which
+// would clobber a pending manual drag-reorder already reflected in that array's order).
+const compareCollectionSiblings = (a, b) => {
+  if (a.position != null && b.position != null) return a.position - b.position
+  if (a.position != null && b.position == null) return -1
+  if (a.position == null && b.position != null) return 1
+  if (a.label < b.label) return -1
+  if (a.label > b.label) return 1
+  return 0
+}
+
+const insertSorted = (siblings, node) => {
+  const index = siblings.findIndex((sibling) => compareCollectionSiblings(node, sibling) < 0)
+  const insertAt = index === -1 ? siblings.length : index
+  return [...siblings.slice(0, insertAt), node, ...siblings.slice(insertAt)]
+}
+
 export const CollectionsStore = types
   .model({
     chemotion_repository_collection: types.maybeNull(Collection),
@@ -146,12 +164,30 @@ export const CollectionsStore = types
     }),
     bulkUpdateCollection: flow(function* bulkUpdateCollection(collections) {
       const params = { collections: collections }
-      const all_collections = yield CollectionsFetcher.buldUpdateForOwnCollections(params);
-      if (all_collections) {
-        self.own_collections.clear()
-        self.setOwnCollections(all_collections)
-        self.setOwnCollectionTree()
+      // A 4xx/5xx with a JSON error body resolves (no throw) to undefined `collections`;
+      // a network/parse failure is swallowed one layer down and resurfaces as a throw here.
+      // Both must be treated as failure so the dirty flag never gets cleared on a lost edit.
+      let all_collections
+      try {
+        all_collections = yield CollectionsFetcher.buldUpdateForOwnCollections(params);
+      } catch (error) {
+        all_collections = undefined
       }
+
+      if (!all_collections) {
+        getRoot(self).notificationsStore.add({
+          title: 'Collection Management',
+          message: 'The request failed, so the changes were not saved. Please try again.',
+          level: 'error',
+          autoDismiss: 10,
+        });
+        return false
+      }
+
+      self.own_collections.clear()
+      self.setOwnCollections(all_collections)
+      self.setOwnCollectionTree()
+      return true
     }),
     updateCollection: flow(function* updateCollection(collection, tabs_segment) {
       const params = { label: collection.label, tabs_segment: tabs_segment }
@@ -385,8 +421,53 @@ export const CollectionsStore = types
       MessagesFetcher.createMessage(messageParams)
     },
     addNewCollectionToOwnCollection(newCollection) {
-      self.addCollectionToTree(Collection.create(newCollection), self.own_collections)
-      self.setOwnCollectionTree()
+      const collectionItem = Collection.create(newCollection)
+      self.addCollectionToTree(collectionItem, self.own_collections)
+
+      if (Array.isArray(self.own_collection_tree?.children)) {
+        // Insert into the tree as it currently stands instead of rebuilding it from
+        // own_collections, which would silently discard any pending rename/reorder
+        // that only lives in own_collection_tree so far (not yet saved).
+        const parentId = collectionItem.ancestorIds[collectionItem.ancestorIds.length - 1]
+        const plainNode = { ...newCollection, children: [] }
+        const { children, inserted } = self.insertIntoPlainTree(
+          plainNode,
+          parentId,
+          self.own_collection_tree.children
+        )
+        self.setOwnCollectionTree({
+          ...self.own_collection_tree,
+          children: inserted ? children : insertSorted(children, plainNode),
+        })
+      } else {
+        self.setOwnCollectionTree()
+      }
+    },
+    // Depth-first search of the plain (frozen-store) tree for the sibling whose id
+    // matches parentId, returning a NEW siblings array with `node` inserted under
+    // it (at its sorted position, via insertSorted), plus whether a match was
+    // found. own_collection_tree is MST `frozen` data (deep-frozen outside
+    // production), so existing arrays/objects are replaced rather than mutated;
+    // the caller inserts `node` at the top level when no match is found, so a
+    // newly created collection is never silently dropped.
+    insertIntoPlainTree(node, parentId, siblings) {
+      let inserted = false
+      const children = siblings.map((sibling) => {
+        if (inserted) return sibling
+        if (sibling.id === parentId) {
+          inserted = true
+          return { ...sibling, children: insertSorted(sibling.children, node) }
+        }
+        if (sibling.children?.length) {
+          const result = self.insertIntoPlainTree(node, parentId, sibling.children)
+          if (result.inserted) {
+            inserted = true
+            return { ...sibling, children: result.children }
+          }
+        }
+        return sibling
+      })
+      return { children, inserted }
     },
     setOwnCollections(collections) {
       // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
@@ -507,6 +588,10 @@ export const CollectionsStore = types
     },
     setUpdateTree(value) {
       self.update_tree = value
+    },
+    discardOwnCollectionTreeChanges() {
+      self.setOwnCollectionTree()
+      self.setUpdateTree(false)
     },
     addToggledTreeItem(id, label) {
       if (self.toggled_tree_items.indexOf(`${id}-${label}`) === -1) {
