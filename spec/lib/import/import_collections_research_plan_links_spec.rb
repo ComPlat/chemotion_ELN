@@ -248,6 +248,69 @@ RSpec.describe 'ImportCollection' do
     end
   end
 
+  # Regression: fetch_one mints a uuid for every ancestor id while writing a split sample's
+  # 'ancestry' string, whether or not that ancestor is ever itself fetched into @data — so a plain
+  # @uuids lookup ("has a uuid ever been minted for this id") is not a valid "is this sample part of
+  # the export" test. A parent sample split into a child that lives in the exported collection is
+  # exactly this case: the parent's own collection is never exported, but its uuid gets minted as a
+  # side effect of exporting the child.
+  describe "import a collection with a researchplan linking a split sample's unexported parent" do
+    let(:exporting_user) { create(:person, first_name: 'Ex', last_name: 'Porter', name_abbreviation: 'EP') }
+    let(:importing_user) { create(:person, first_name: 'Im', last_name: 'Porter', name_abbreviation: 'IP') }
+    let(:collection) { create(:collection, user_id: exporting_user.id, label: 'collection-with-split-sample') }
+    let(:parent_collection) { create(:collection, user_id: exporting_user.id, label: 'parent-collection') }
+    let(:molfile) { build(:molfile, type: 'test_2') }
+    let(:parent_sample) do
+      create(:sample, created_by: exporting_user.id, name: 'Parent Sample', molfile: molfile,
+                      collections: [parent_collection])
+    end
+    let(:child_sample) do
+      create(:sample, created_by: exporting_user.id, name: 'Child Sample', parent: parent_sample,
+                      collections: [collection])
+    end
+    let(:job_id) { SecureRandom.uuid }
+    let(:zip_path) { Rails.public_path.join('zip', "#{job_id}.zip") }
+
+    let(:research_plan) do
+      create(
+        :research_plan,
+        collections: [collection],
+        body: [
+          { 'id' => SecureRandom.uuid, 'type' => 'sample', 'value' => { 'sample_id' => parent_sample.id } },
+        ],
+      )
+    end
+
+    let(:imported_collection) do
+      Collection.find_by(label: 'collection-with-split-sample', user_id: importing_user.id)
+    end
+    let(:imported_research_plan) { imported_collection.research_plans.first }
+    let(:sample_field) { imported_research_plan.body.find { |field| field['type'] == 'sample' } }
+    let(:ketcher_field) { imported_research_plan.body.find { |field| field['type'] == 'ketcher' } }
+
+    before do
+      child_sample
+      research_plan
+      # only `collection` (holding the child) is exported; parent_collection (holding the parent) is not
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', false, false, exporting_user.id)
+      export.prepare_data
+      export.to_file
+
+      attachment = create(:attachment, file_path: zip_path)
+      Import::ImportCollections.new(attachment, importing_user.id).execute
+    end
+
+    it 'imports the child sample but not the parent' do
+      expect(imported_collection.samples.pluck(:name)).to eq(['Child Sample'])
+    end
+
+    it 'converts the parent link into a ketcher field instead of silently dropping it' do
+      expect(sample_field).to be_nil
+      expect(ketcher_field).to be_present
+      expect(ketcher_field['value']['sdf_file']).to eq(parent_sample.molfile)
+    end
+  end
+
   # The exporting user does not have read access to the outside sample (it lives in someone else's,
   # unshared collection). The link must still be dropped, never converted — otherwise a research plan
   # could be used to exfiltrate a structure the exporting user isn't allowed to see.

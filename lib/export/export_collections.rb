@@ -655,7 +655,7 @@ module Export
     def unresolved_sample_link?(field)
       old_id = field.dig('value', 'sample_id')
       return true if old_id.blank?
-      return drop_unless_remapped?(field, 'sample_id', 'Sample') if uuid?('Sample', old_id)
+      return drop_unless_remapped?(field, 'sample_id', 'Sample') if exported?('Sample', old_id)
 
       convert_sample_link_to_ketcher?(field, old_id)
     end
@@ -663,7 +663,7 @@ module Export
     def unresolved_reaction_link?(field, research_plan_uuid)
       old_id = field.dig('value', 'reaction_id')
       return true if old_id.blank?
-      return drop_unless_remapped?(field, 'reaction_id', 'Reaction') if uuid?('Reaction', old_id)
+      return drop_unless_remapped?(field, 'reaction_id', 'Reaction') if exported?('Reaction', old_id)
 
       convert_reaction_link_to_image?(field, old_id, research_plan_uuid)
     end
@@ -671,10 +671,19 @@ module Export
     def drop_unless_remapped?(field, key, type)
       old_id = field.dig('value', key)
       return true if old_id.blank?
-      return true unless uuid?(type, old_id)
+      return true unless exported?(type, old_id)
 
       field['value'][key] = uuid(type, old_id)
       false
+    end
+
+    # uuid?(type, id) only tells us a uuid was ever minted for id — not that the record itself was
+    # ever serialized into @data. fetch_one mints uuids for ancestor ids (and other foreign-keyed
+    # records) purely to write the 'ancestry' string, regardless of whether that ancestor is part of
+    # this export (e.g. a split sample's parent living in a different, non-exported collection).
+    # Presence in @data is the only reliable "is this actually part of the export" test.
+    def exported?(type, old_id)
+      @data.dig(type, uuid(type, old_id)).present?
     end
 
     # Preserve the structure of a sample linked from outside the export as a static Ketcher schema,
