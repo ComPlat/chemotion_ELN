@@ -1,5 +1,62 @@
 # Chemotion_ELN Changelog
 
+# [v3.1.3]
+> (2026-08-11)
+
+## Fixes
+
+### UI/UX
+
+* correct broken docs search link ([#3442](https://github.com/ComPlat/chemotion_ELN/pull/3442))
+* reset dropdown title for solvents selection ([#3285](https://github.com/ComPlat/chemotion_ELN/pull/3285))
+* inbox copy address ([#3269](https://github.com/ComPlat/chemotion_ELN/pull/3269))
+* group item header label and edit action ([#3248](https://github.com/ComPlat/chemotion_ELN/pull/3248))
+* checkbox mutual exclusion and label display ([#3171](https://github.com/ComPlat/chemotion_ELN/pull/3171))
+* auto-resize description textarea to content ([#3017](https://github.com/ComPlat/chemotion_ELN/pull/3017))
+
+### sample & reaction
+
+* backport component merge, SMILES reconciliation, and sample persistence fixes to v3.x ([#3400](https://github.com/ComPlat/chemotion_ELN/pull/3400))
+* show mixture total-volume field as disabled instead of hiding it ([#3351](https://github.com/ComPlat/chemotion_ELN/pull/3351))
+* coerce hstore loading values to numbers and defer zero-loading validation ([#3350](https://github.com/ComPlat/chemotion_ELN/pull/3350))
+* guard iframe document access against SecurityError in ketcher ([#3305](https://github.com/ComPlat/chemotion_ELN/pull/3305))
+* handle non-finite volume values in ReactionDetailsScheme ([#3288](https://github.com/ComPlat/chemotion_ELN/pull/3288))
+* prevent duplicate collection assignment when creating a sample in the "All" collection ([#3287](https://github.com/ComPlat/chemotion_ELN/pull/3287))
+* sync gaseous product material fields when vessel size changes ([#3265](https://github.com/ComPlat/chemotion_ELN/pull/3265))
+
+### report & export
+
+* render research-plan structure images at correct aspect ratio and size ([#3419](https://github.com/ComPlat/chemotion_ELN/pull/3419))
+* route same-type multi-curve archives through bagit grouping ([#3403](https://github.com/ComPlat/chemotion_ELN/pull/3403))
+* emit <sup> for Quill script:super in report Delta→HTML ([#3391](https://github.com/ComPlat/chemotion_ELN/pull/3391))
+
+### backend & internals
+
+* eliminate N+1 queries loading admin user and report lists ([#3395](https://github.com/ComPlat/chemotion_ELN/pull/3395))
+* prevent crash from mutating aliased layout hash during iteration in profile ([#3389](https://github.com/ComPlat/chemotion_ELN/pull/3389))
+* recover from undecryptable otp_secret in validate_and_consume_otp! ([#3381](https://github.com/ComPlat/chemotion_ELN/pull/3381))
+* recover from undecryptable otp_secret instead of crashing ([#3376](https://github.com/ComPlat/chemotion_ELN/pull/3376))
+* release unique fields on device soft-delete for reuse ([#3375](https://github.com/ComPlat/chemotion_ELN/pull/3375))
+* order literature list deterministically by literal id ([#3354](https://github.com/ComPlat/chemotion_ELN/pull/3354))
+* skip annotation copy for non-image attachments ([#3338](https://github.com/ComPlat/chemotion_ELN/pull/3338))
+* make docker-compose.dev work out-of-the-box ([#3327](https://github.com/ComPlat/chemotion_ELN/pull/3327))
+* fix switch bad_smiles fixture to YAML for literal backslashes ([#3268](https://github.com/ComPlat/chemotion_ELN/pull/3268))
+* fetch Sigma-Aldrich SDS data from __NEXT_DATA__ and SSRF-guard outbound requests ([#3235](https://github.com/ComPlat/chemotion_ELN/pull/3235))
+
+## Chore
+
+### deps
+
+* bump sablon to v0.4.3-1 ([#3342](https://github.com/ComPlat/chemotion_ELN/pull/3342))
+* bump openbabel to 3.2.0.1 (OpenBabel 3.2.0) ([#3339](https://github.com/ComPlat/chemotion_ELN/pull/3339))
+* bump jwt from 3.1.0 to 3.2.0 ([#3262](https://github.com/ComPlat/chemotion_ELN/pull/3262))
+* bump faraday from 2.14.1 to 2.14.2 ([#3261](https://github.com/ComPlat/chemotion_ELN/pull/3261))
+* bump css_parser from 1.17.1 to 1.22.0 ([#3240](https://github.com/ComPlat/chemotion_ELN/pull/3240))
+* bump inchi-gem to v1.07.5 (InChI 1.07.5) ([#2887](https://github.com/ComPlat/chemotion_ELN/pull/2887))
+* bump faraday from 2.8.1 to 2.14.1
+* bump gems addressable and rack
+
+
 # [v3.1.2]
 > (2026-05-18)
 
