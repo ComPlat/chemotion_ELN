@@ -2,6 +2,7 @@
 import expect from 'expect';
 import sinon from 'sinon';
 import { RootStore } from 'src/stores/mobx/RootStore';
+import { Collection } from 'src/stores/mobx/CollectionsStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CollectionElementsFetcher from 'src/fetchers/CollectionElementsFetcher';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
@@ -240,6 +241,66 @@ describe('CollectionsStore', () => {
         [1, 'Original Label'],
       ]);
       expect(store.update_tree).toBe(false);
+    });
+  });
+
+  // The repository subtree is the one place where the array being built cannot contain the node's
+  // parent (the repository collection is held on its own store field, never pushed into its own
+  // `children`). Routing a `transferred` collection into `own_collections` instead is what put it
+  // into the collection-management payload, where UpdateTree persisted it as a root.
+  describe('.setOwnCollections', () => {
+    const repositoryRoot = {
+      id: 1, label: 'chemotion-repository.net', ancestry: '/', position: null, is_locked: true,
+    };
+    // an ordinary collection an archive import recreated under the same label
+    const importedDuplicate = {
+      id: 2, label: 'chemotion-repository.net', ancestry: '/', position: 3, is_locked: false,
+    };
+    const transferred = {
+      id: 3, label: 'transferred', ancestry: '/1/', position: null, is_locked: false,
+    };
+
+    it('keeps the repository subtree out of own_collections when a duplicate label exists', () => {
+      store.setOwnCollections([repositoryRoot, importedDuplicate, transferred]);
+
+      expect(store.chemotion_repository_collection.id).toEqual(1);
+      expect(store.chemotion_repository_collection.children.map((c) => c.id)).toEqual([3]);
+      expect(store.own_collections.map((c) => c.id)).not.toContain(3);
+    });
+
+    it('surfaces the unlocked duplicate as an ordinary collection', () => {
+      store.setOwnCollections([repositoryRoot, importedDuplicate, transferred]);
+
+      expect(store.own_collections.map((c) => c.id)).toEqual([2]);
+    });
+
+    // The state the lock migration leaves behind: is_locked takes a different arm of the skip
+    // condition, and the collection must still reach the repository subtree rather than vanish.
+    it('routes a locked "transferred" into the repository subtree', () => {
+      store.setOwnCollections([repositoryRoot, { ...transferred, is_locked: true }]);
+
+      expect(store.chemotion_repository_collection.children.map((c) => c.id)).toEqual([3]);
+      expect(store.own_collections.map((c) => c.id)).toEqual([]);
+    });
+
+    it('rebuilds the repository node on each pass instead of accumulating children', () => {
+      store.setOwnCollections([repositoryRoot, transferred]);
+      store.setOwnCollections([repositoryRoot, transferred]);
+
+      expect(store.chemotion_repository_collection.children.map((c) => c.id)).toEqual([3]);
+    });
+  });
+
+  describe('.addCollectionToTree', () => {
+    it('shows a collection whose parent is missing without rewriting its ancestry', () => {
+      const orphan = Collection.create({
+        id: 9, label: 'transferred', ancestry: '/1/', position: null, is_locked: false,
+      });
+
+      store.addCollectionToTree(orphan, store.own_collections);
+
+      expect(store.own_collections.map((c) => c.id)).toEqual([9]);
+      expect(store.own_collections[0].ancestry).toEqual('/1/');
     });
   });
 });
