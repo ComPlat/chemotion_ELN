@@ -214,6 +214,15 @@ module Import
       molecule.nil?
     end
 
+    # Enrichment is scheduled once, in the ensure below, and cannot be started earlier here the
+    # way Import::ImportSdf#find_or_create_mol_by_batch does.
+    #
+    # The reason is the transaction below: every row is written inside one transaction, so no
+    # molecule is visible to another connection until the whole import commits. A job enqueued
+    # mid-loop would find nothing — and could not even run, since its delayed_jobs row would be
+    # written inside the same uncommitted transaction. Starting enrichment early here would mean
+    # committing in chunks, which would change this import from all-or-nothing to partially
+    # applied on failure. That is a deliberate trade not made.
     def write_to_db
       started_at = Time.current
       @defer_pubchem_lookup = true

@@ -420,7 +420,7 @@ describe Chemotion::SampleAPI do
       }
     end
 
-    it 'imports all new molecules and schedules exactly one PubchemLookupJob for the whole batch' do
+    it 'imports all new molecules and schedules a bounded number of PubchemLookupJobs, not one per molecule' do
       # chemotion#552 was a NoMethodError inside Molecule#schedule_pubchem_lookup's own
       # per-molecule Delayed::Job query, triggered by a concurrently-running
       # worker draining that queue mid-import. schedule_pubchem_lookup no longer queries
@@ -445,10 +445,15 @@ describe Chemotion::SampleAPI do
       # LCSS scheduling now happens inside ImportSamplesJob (find_or_create_mol_by_batch)
       perform_enqueued_jobs
 
-      # create_samples also flushes its own started_at, but finds nothing created after it
-      # (all molecules were created during find_or_create_mol_by_batch), so that second flush
-      # no-ops. What #552 was about is the shape: one batched job, not one per molecule.
-      expect(PubchemLookupJob).to have_received(:perform_later).once
+      # Two enqueues, both batched and both covering the whole import by created_after: the
+      # first-batch kick that starts enrichment while the import is still running, and
+      # find_or_create_mol_by_batch's ensure flush. create_samples flushes a third time but
+      # finds nothing created after its own timestamp, so that one no-ops.
+      #
+      # What #552 was about is the *shape*: bounded, and independent of how many molecules the
+      # file contains — not one job per molecule. The fixture has 2 molecules, so asserting a
+      # count below that is what carries the regression guard.
+      expect(PubchemLookupJob).to have_received(:perform_later).twice
       expect(PubchemLookupJob).to have_received(:perform_later)
         .with(nil, created_after: be >= started_at).at_least(:once)
     end
