@@ -8,6 +8,7 @@ module Versioning
 
     FETCHERS = {
       ::Collection => Versioning::Fetchers::CollectionFetcher,
+      ::CollectionShare => Versioning::Fetchers::CollectionShareFetcher,
       ::Sample => Versioning::Fetchers::SampleFetcher,
       ::Reaction => Versioning::Fetchers::ReactionFetcher,
       ::ResearchPlan => Versioning::Fetchers::ResearchPlanFetcher,
