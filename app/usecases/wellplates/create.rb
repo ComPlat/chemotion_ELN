@@ -25,10 +25,10 @@ module Usecases
           # find_or_create_by avoids violating the unique
           # (wellplate_id, collection_id) index when the chosen collection is
           # already the relevant "All" collection (it is attached on create above).
-          if collection_is_owned_by_user?
-            CollectionsWellplate.find_or_create_by(wellplate: wellplate, collection: all_collection_of_current_user)
-          elsif collection_is_shared_to_user?
-            CollectionsWellplate.find_or_create_by(wellplate: wellplate, collection: all_collection_of_sharer)
+          # The sharer's "All" is nil when they are a Group, which never gets one.
+          owner_all = collection_is_owned_by_user? ? all_collection_of_current_user : all_collection_of_sharer
+          if owner_all && (collection_is_owned_by_user? || collection_is_shared_to_user?)
+            CollectionsWellplate.find_or_create_by(wellplate: wellplate, collection: owner_all)
           end
 
           WellplateUpdater

@@ -70,8 +70,9 @@ module Usecases
         collections << collection
         user_and_group_ids = [current_user.id, *current_user.group_ids]
         all_coll_owner_id = user_and_group_ids.include?(collection.user_id) ? current_user.id : collection.user_id
+        # nil when the owning account has no "All" collection — a Group never gets one.
         collections << Collection.get_all_collection_for_user(all_coll_owner_id)
-        collections.uniq(&:id)
+        collections.compact.uniq(&:id)
       end
 
       def raise_if_sbmm_is_not_writable!(sbmm)
