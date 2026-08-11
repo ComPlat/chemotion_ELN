@@ -17,11 +17,13 @@ function CollectionManagementModal({ show, onHide }) {
     onHide();
   };
 
-  const bulkUpdate = () => {
+  const bulkUpdate = async () => {
     const tree = collectionsStore.own_collection_tree;
     const collections = tree.children.filter((child) => child.label);
-    collectionsStore.bulkUpdateCollection(collections);
-    collectionsStore.setUpdateTree(false);
+    const success = await collectionsStore.bulkUpdateCollection(collections);
+    if (success) {
+      collectionsStore.setUpdateTree(false);
+    }
   };
 
   return (

@@ -164,12 +164,30 @@ export const CollectionsStore = types
     }),
     bulkUpdateCollection: flow(function* bulkUpdateCollection(collections) {
       const params = { collections: collections }
-      const all_collections = yield CollectionsFetcher.buldUpdateForOwnCollections(params);
-      if (all_collections) {
-        self.own_collections.clear()
-        self.setOwnCollections(all_collections)
-        self.setOwnCollectionTree()
+      // A 4xx/5xx with a JSON error body resolves (no throw) to undefined `collections`;
+      // a network/parse failure is swallowed one layer down and resurfaces as a throw here.
+      // Both must be treated as failure so the dirty flag never gets cleared on a lost edit.
+      let all_collections
+      try {
+        all_collections = yield CollectionsFetcher.buldUpdateForOwnCollections(params);
+      } catch (error) {
+        all_collections = undefined
       }
+
+      if (!all_collections) {
+        getRoot(self).notificationsStore.add({
+          title: 'Collection Management',
+          message: 'The request failed, so the changes were not saved. Please try again.',
+          level: 'error',
+          autoDismiss: 10,
+        });
+        return false
+      }
+
+      self.own_collections.clear()
+      self.setOwnCollections(all_collections)
+      self.setOwnCollectionTree()
+      return true
     }),
     updateCollection: flow(function* updateCollection(collection, tabs_segment) {
       const params = { label: collection.label, tabs_segment: tabs_segment }

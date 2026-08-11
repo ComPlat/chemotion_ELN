@@ -64,6 +64,54 @@ describe('CollectionsStore', () => {
     });
   });
 
+  // Regression coverage: bulkUpdate (the Collection Management modal's Save handler)
+  // used to fire this without awaiting it and always clear the dirty flag right after -
+  // so a failed save hid the Save button with the edit unsaved and no error shown. Both
+  // failure shapes the fetcher chain can produce (a resolved-falsy 4xx/5xx body, and a
+  // rejected promise from a network/parse error) must leave own_collections untouched
+  // and report failure so the caller knows not to clear the flag.
+  describe('.bulkUpdateCollection', () => {
+    let bulkUpdateStub;
+
+    beforeEach(() => {
+      bulkUpdateStub = sinon.stub(CollectionsFetcher, 'buldUpdateForOwnCollections');
+    });
+
+    afterEach(() => {
+      bulkUpdateStub.restore();
+    });
+
+    it('applies the returned collections and returns true on success', async () => {
+      const updated = [{ id: 1, label: 'Updated', ancestry: '/', is_locked: false }];
+      bulkUpdateStub.resolves(updated);
+
+      const result = await store.bulkUpdateCollection([{ id: 1, label: 'Updated' }]);
+
+      expect(result).toBe(true);
+      expect(store.own_collections.map((c) => c.label)).toEqual(['Updated']);
+    });
+
+    it('leaves own_collections untouched and returns false on a falsy (failed) response', async () => {
+      store.setOwnCollections([{ id: 1, label: 'Original', ancestry: '/', is_locked: false }]);
+      bulkUpdateStub.resolves(undefined);
+
+      const result = await store.bulkUpdateCollection([{ id: 1, label: 'Attempted' }]);
+
+      expect(result).toBe(false);
+      expect(store.own_collections.map((c) => c.label)).toEqual(['Original']);
+    });
+
+    it('leaves own_collections untouched and returns false when the request rejects', async () => {
+      store.setOwnCollections([{ id: 1, label: 'Original', ancestry: '/', is_locked: false }]);
+      bulkUpdateStub.rejects(new Error('network error'));
+
+      const result = await store.bulkUpdateCollection([{ id: 1, label: 'Attempted' }]);
+
+      expect(result).toBe(false);
+      expect(store.own_collections.map((c) => c.label)).toEqual(['Original']);
+    });
+  });
+
   // Regression coverage for ComPlat/chemotion-eln#598: adding a collection (via the "+"
   // button, or "Assign/Move to Collection" with a brand-new name) used to rebuild
   // own_collection_tree from own_collections unconditionally, silently discarding any
