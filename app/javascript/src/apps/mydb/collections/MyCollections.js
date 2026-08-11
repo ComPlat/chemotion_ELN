@@ -44,12 +44,6 @@ const MyCollections = () => {
     collectionsStore.setUpdateTree(true);
   };
 
-  const bulkUpdate = () => {
-    const collections = tree.children.filter((child) => child.label);
-    collectionsStore.bulkUpdateCollection(collections);
-    collectionsStore.setUpdateTree(false);
-  };
-
   const deleteCollection = (node) => {
     collectionsStore.deleteCollection(node.id);
   };
@@ -70,18 +64,6 @@ const MyCollections = () => {
     if (node.id == -1) {
       return (
         <div>
-          {collectionsStore.update_tree && (
-            <Button
-              id="save-collections-button"
-              className="me-2"
-              size="sm"
-              variant="warning"
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={() => bulkUpdate()}
-            >
-              Save
-            </Button>
-          )}
           {addCollectionButton(node)}
         </div>
       );
@@ -199,7 +181,7 @@ const MyCollections = () => {
   );
 
   return (
-    <div className="tree mt-2">
+    <div className="tree pt-2 h-100 overflow-y-auto">
       <Tree
         paddingLeft={20}
         tree={clonedTree}
