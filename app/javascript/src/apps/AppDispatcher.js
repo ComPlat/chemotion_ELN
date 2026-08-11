@@ -13,6 +13,8 @@ import GenericDatasetsAdmin from 'src/apps/generic/GenericDatasetsAdmin';
 import MoleculeModerator from 'src/apps/moleculeModerator/MoleculeModerator';
 import ConverterAdmin from 'src/apps/converter/ConverterAdmin';
 
+import { ChemSpectraClient } from '@complat/chem-spectra-client';
+
 // mydb dependencies
 import * as Sentry from '@sentry/react';
 import { Integrations } from '@sentry/tracing';
@@ -55,6 +57,8 @@ const APPS_PATHS = [
   '/generic_segments_admin',
   '/generic_datasets_admin',
   '/converter_admin',
+  '/chemspectra',
+  '/chemspectra-editor',
 ];
 
 const AppDispatcher = () => {
@@ -110,6 +114,12 @@ const AppDispatcher = () => {
   if (currentRoute === '/converter_admin') {
     console.debug('rendering Converter Admin');
     app = (<ConverterAdmin />);
+  }
+  if (location.pathname === '/chemspectra') {
+    app = (<ChemSpectraClient />);
+  }
+  if (location.pathname === '/chemspectra-editor') {
+    app = (<ChemSpectraClient editorOnly />);
   }
   if (role === 'Guest' || currentRoute === '/home') {
     console.debug('rendering home');
