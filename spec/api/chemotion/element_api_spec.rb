@@ -33,14 +33,27 @@ describe Chemotion::ElementAPI do
       end
     end
 
-    # own_collections_for spans group_ids, so a group's collection is its members'. The gate used to
-    # ask `current_user.collections`, miss it, and fall through to the share lookup.
+    # Membership is not ownership: a group's collection is the group's. This endpoint withdraws the
+    # selection from the user's *own* collections, so a member has nothing here to withdraw and
+    # falls through to the shared-collection branch, which refuses DELETE outright.
     context 'when the collection belongs to a group the user is a member of' do
       let(:collection) { create(:collection, user: group) }
 
-      it 'deletes the selected element' do
+      it 'does not resolve the collection at all when nothing is shared' do
         expect { delete '/api/v1/ui_state/', params: params, as: :json }
-          .to change(Sample, :count).by(-1)
+          .not_to change(Sample, :count)
+
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it 'refuses the delete when the collection is shared to the group' do
+        create(:collection_share, collection: collection, shared_with: group,
+                                  permission_level: CollectionShare.permission_level(:remove_elements))
+
+        expect { delete '/api/v1/ui_state/', params: params, as: :json }
+          .not_to change(Sample, :count)
+
+        expect(response).to have_http_status(:forbidden)
       end
     end
 
