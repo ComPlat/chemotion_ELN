@@ -13,7 +13,7 @@ function CollectionManagementModal({ show, onHide }) {
   const collectionsStore = useContext(StoreContext).collections;
 
   const closeModal = () => {
-    collectionsStore.setUpdateTree(false);
+    collectionsStore.discardOwnCollectionTreeChanges();
     onHide();
   };
 

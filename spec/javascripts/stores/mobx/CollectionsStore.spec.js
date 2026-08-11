@@ -170,4 +170,28 @@ describe('CollectionsStore', () => {
       expect(store.own_collection_tree.children.map((c) => c.id).sort()).toEqual([1, 2]);
     });
   });
+
+  // Regression coverage: closing the Collection Management modal without saving used to
+  // clear only the update_tree dirty flag, leaving own_collection_tree with the unsaved
+  // edit still in it. Reopening the modal reseeded the tree from that stale state, but
+  // update_tree was already false, so the Save button (gated on update_tree) never
+  // reappeared - the user was stuck viewing unsaved changes with no way to save or discard
+  // them.
+  describe('.discardOwnCollectionTreeChanges', () => {
+    it('rebuilds own_collection_tree from own_collections and clears the dirty flag', () => {
+      store.setOwnCollections([{ id: 1, label: 'Original Label', ancestry: '/', is_locked: false }]);
+      // Simulate an unsaved rename: own_collection_tree diverges from own_collections.
+      store.setOwnCollectionTree({
+        children: [{ id: 1, label: 'Pending Rename', ancestry: '/', is_locked: false, children: [] }],
+      });
+      store.setUpdateTree(true);
+
+      store.discardOwnCollectionTreeChanges();
+
+      expect(store.own_collection_tree.children.map((c) => [c.id, c.label])).toEqual([
+        [1, 'Original Label'],
+      ]);
+      expect(store.update_tree).toBe(false);
+    });
+  });
 });

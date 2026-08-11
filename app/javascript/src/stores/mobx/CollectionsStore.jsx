@@ -571,6 +571,10 @@ export const CollectionsStore = types
     setUpdateTree(value) {
       self.update_tree = value
     },
+    discardOwnCollectionTreeChanges() {
+      self.setOwnCollectionTree()
+      self.setUpdateTree(false)
+    },
     addToggledTreeItem(id, label) {
       if (self.toggled_tree_items.indexOf(`${id}-${label}`) === -1) {
         self.toggled_tree_items.push(`${id}-${label}`)
