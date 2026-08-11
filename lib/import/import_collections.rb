@@ -854,7 +854,10 @@ module Import
 
     def drop_unless_remapped?(field, key, type)
       old_ref = field.dig('value', key)
-      return true if old_ref.blank?
+      # An unfilled placeholder (see ResearchPlan.js#addSampleField) carries no stale reference to
+      # clean up — keep it as is, rather than treating it as unresolved and dropping it. Only ever
+      # hit for zips exported before Export::ExportCollections handled this case itself.
+      return false if old_ref.blank?
 
       new_instance = @instances.dig(type, old_ref)
       return true if new_instance.nil?

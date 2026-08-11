@@ -654,7 +654,9 @@ module Export
 
     def unresolved_sample_link?(field)
       old_id = field.dig('value', 'sample_id')
-      return true if old_id.blank?
+      # An unfilled placeholder (see ResearchPlan.js#addSampleField) carries no stale reference to
+      # clean up — keep it as is, rather than treating it as unresolved and dropping it.
+      return false if old_id.blank?
       return drop_unless_remapped?(field, 'sample_id', 'Sample') if exported?('Sample', old_id)
 
       convert_sample_link_to_ketcher?(field, old_id)
@@ -662,7 +664,7 @@ module Export
 
     def unresolved_reaction_link?(field, research_plan_uuid)
       old_id = field.dig('value', 'reaction_id')
-      return true if old_id.blank?
+      return false if old_id.blank?
       return drop_unless_remapped?(field, 'reaction_id', 'Reaction') if exported?('Reaction', old_id)
 
       convert_reaction_link_to_image?(field, old_id, research_plan_uuid)
@@ -670,7 +672,7 @@ module Export
 
     def drop_unless_remapped?(field, key, type)
       old_id = field.dig('value', key)
-      return true if old_id.blank?
+      return false if old_id.blank?
       return true unless exported?(type, old_id)
 
       field['value'][key] = uuid(type, old_id)

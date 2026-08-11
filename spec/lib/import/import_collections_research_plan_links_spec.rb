@@ -80,6 +80,59 @@ RSpec.describe 'ImportCollection' do
 
       expect(importer.send(:remap_research_plan_body_links, body)).to be_empty
     end
+
+    # ResearchPlan.js#addSampleField/#addReactionField create exactly this shape when a user adds
+    # a field before dragging an element onto it. A nil id carries no stale reference, so unlike an
+    # unresolvable one, it must survive untouched rather than being dropped.
+    it 'keeps a placeholder field whose sample_id/reaction_id was never filled in' do
+      body = [
+        { 'id' => 'a', 'type' => 'sample', 'value' => { 'sample_id' => nil } },
+        { 'id' => 'b', 'type' => 'reaction', 'value' => { 'reaction_id' => nil } },
+      ]
+
+      expect(importer.send(:remap_research_plan_body_links, body)).to eq(body)
+    end
+  end
+
+  # End-to-end version of the same case: ResearchPlan.js#addSampleField/#addReactionField create a
+  # placeholder field with a nil id before the user drags a sample/reaction onto it. Round-tripping
+  # a research plan with such an unfilled field through export+import must not silently remove it.
+  describe 'import a collection with a researchplan containing unfilled sample/reaction placeholders' do
+    let(:exporting_user) { create(:person, first_name: 'Ex', last_name: 'Porter', name_abbreviation: 'EP') }
+    let(:importing_user) { create(:person, first_name: 'Im', last_name: 'Porter', name_abbreviation: 'IP') }
+    let(:collection) { create(:collection, user_id: exporting_user.id, label: 'collection-with-placeholders') }
+    let(:job_id) { SecureRandom.uuid }
+    let(:zip_path) { Rails.public_path.join('zip', "#{job_id}.zip") }
+
+    let(:research_plan) do
+      create(
+        :research_plan,
+        collections: [collection],
+        body: [
+          { 'id' => SecureRandom.uuid, 'type' => 'sample', 'value' => { 'sample_id' => nil } },
+          { 'id' => SecureRandom.uuid, 'type' => 'reaction', 'value' => { 'reaction_id' => nil } },
+        ],
+      )
+    end
+
+    let(:imported_collection) do
+      Collection.find_by(label: 'collection-with-placeholders', user_id: importing_user.id)
+    end
+    let(:imported_research_plan) { imported_collection.research_plans.first }
+
+    before do
+      research_plan
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', false, false, exporting_user.id)
+      export.prepare_data
+      export.to_file
+
+      attachment = create(:attachment, file_path: zip_path)
+      Import::ImportCollections.new(attachment, importing_user.id).execute
+    end
+
+    it 'keeps both unfilled placeholder fields, unchanged' do
+      expect(imported_research_plan.body).to eq(research_plan.body)
+    end
   end
 
   # Ketcher preview svgs are bundled into the zip under images/research_plans/ but extracted only to a
