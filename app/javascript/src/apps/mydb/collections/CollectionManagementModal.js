@@ -29,7 +29,7 @@ function CollectionManagementModal({ show, onHide }) {
       show={show}
       size="xl"
       contentClassName="vh-90"
-      bodyClassName="p-0 h-100 overflow-hidden"
+      bodyClassName="p-0 h-100 mh-100 overflow-hidden"
       onHide={closeModal}
       title="Collection Management"
       showFooter
