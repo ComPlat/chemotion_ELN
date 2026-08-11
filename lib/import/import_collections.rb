@@ -567,7 +567,7 @@ module Import
 
     def import_research_plans
       sort_data(@data.fetch('ResearchPlan', {})).each do |uuid, fields|
-        fields['body'] = remap_research_plan_body_links(fields['body'])
+        fields['body'] = remap_research_plan_body_links(fields['body'], fields['name'])
         materialize_researchplan_ketcher_images(fields['body'])
 
         # create the research_plan
@@ -835,24 +835,24 @@ module Import
     # import_reactions have populated @instances. A link that can't be resolved (unknown uuid, or a raw
     # id left over from a zip exported before this remapping existed) is dropped rather than kept as-is
     # — otherwise it could coincidentally match an unrelated record on the importing system.
-    def remap_research_plan_body_links(body)
+    def remap_research_plan_body_links(body, research_plan_name)
       return body if body.blank?
 
-      body.reject { |field| unresolved_body_link?(field) }
+      body.reject { |field| unresolved_body_link?(field, research_plan_name) }
     end
 
-    def unresolved_body_link?(field)
+    def unresolved_body_link?(field, research_plan_name)
       case field['type']
       when 'sample'
-        drop_unless_remapped?(field, 'sample_id', 'Sample')
+        drop_unless_remapped?(field, 'sample_id', 'Sample', research_plan_name)
       when 'reaction'
-        drop_unless_remapped?(field, 'reaction_id', 'Reaction')
+        drop_unless_remapped?(field, 'reaction_id', 'Reaction', research_plan_name)
       else
         false
       end
     end
 
-    def drop_unless_remapped?(field, key, type)
+    def drop_unless_remapped?(field, key, type, research_plan_name)
       old_ref = field.dig('value', key)
       # An unfilled placeholder (see ResearchPlan.js#addSampleField) carries no stale reference to
       # clean up — keep it as is, rather than treating it as unresolved and dropping it. Only ever
@@ -860,10 +860,30 @@ module Import
       return false if old_ref.blank?
 
       new_instance = @instances.dig(type, old_ref)
-      return true if new_instance.nil?
+      if new_instance.nil?
+        # Every zip exported before Export::ExportCollections started remapping these links carries
+        # a raw source-system id here that can never resolve against @instances — log it the same
+        # way as an unassociated attachment (see #log_unassociated_attachment), so the user can see
+        # what was silently removed and re-link it by hand, rather than it just vanishing.
+        log_dropped_element_link(research_plan_name, type, old_ref)
+        return true
+      end
 
       field['value'][key] = new_instance.id
       false
+    end
+
+    def log_dropped_element_link(research_plan_name, type, old_ref)
+      log_content = <<~LOG
+
+        Research Plan: #{research_plan_name}
+        #{type} reference: #{old_ref}
+        Error: link could not be resolved against the imported data and was removed from the research plan
+        ----------------------------------------
+
+      LOG
+
+      @logger.error(log_content)
     end
 
     # A research plan's 'ketcher' body field references its preview svg by bare filename, resolved by

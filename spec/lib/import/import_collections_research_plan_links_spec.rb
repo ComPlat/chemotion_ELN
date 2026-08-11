@@ -78,7 +78,28 @@ RSpec.describe 'ImportCollection' do
         { 'id' => 'b', 'type' => 'reaction', 'value' => { 'reaction_id' => 888_888 } },
       ]
 
-      expect(importer.send(:remap_research_plan_body_links, body)).to be_empty
+      expect(importer.send(:remap_research_plan_body_links, body, 'Test Plan')).to be_empty
+    end
+
+    # The importer already logs an unassociated image attachment (see #log_unassociated_attachment)
+    # so the user can see what was silently dropped — a dropped sample/reaction link deserves the
+    # same visibility, since every zip exported before Export::ExportCollections started remapping
+    # these links carries a raw id here that will always hit this path.
+    it 'logs each dropped sample/reaction link so the user can see what was removed' do
+      logger = importer.instance_variable_get(:@logger)
+      allow(logger).to receive(:error)
+
+      body = [
+        { 'id' => 'a', 'type' => 'sample', 'value' => { 'sample_id' => 999_999 } },
+        { 'id' => 'b', 'type' => 'reaction', 'value' => { 'reaction_id' => 888_888 } },
+      ]
+
+      importer.send(:remap_research_plan_body_links, body, 'Test Plan')
+
+      expect(logger).to have_received(:error)
+        .with(a_string_including('Research Plan: Test Plan', 'Sample reference: 999999')).once
+      expect(logger).to have_received(:error)
+        .with(a_string_including('Research Plan: Test Plan', 'Reaction reference: 888888')).once
     end
 
     # ResearchPlan.js#addSampleField/#addReactionField create exactly this shape when a user adds
@@ -90,7 +111,7 @@ RSpec.describe 'ImportCollection' do
         { 'id' => 'b', 'type' => 'reaction', 'value' => { 'reaction_id' => nil } },
       ]
 
-      expect(importer.send(:remap_research_plan_body_links, body)).to eq(body)
+      expect(importer.send(:remap_research_plan_body_links, body, 'Test Plan')).to eq(body)
     end
   end
 
