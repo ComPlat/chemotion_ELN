@@ -86,7 +86,15 @@ module Import
             # write data to tmp dir with the same path
             path = File.join(@tmp_dir, entry_name)
             FileUtils.mkdir_p(File.dirname(path))
-            entry.extract(path) { |src, dest| IO.copy_stream(src, dest) }
+            # Zip::Entry#extract's block is an exists? gate, not a copy step (see rubyzip's
+            # Entry#create_file: `yield(self, dest_path)`, block truthy => overwrite) — it is not
+            # given IO objects, so the previous `IO.copy_stream(src, dest)` here would have raised
+            # TypeError had it ever actually run. In practice it never did: Zip::EntrySet is
+            # Hash-backed, so two same-named entries (e.g. two samples sharing a molecule, each
+            # exported via fetch_image('molecules', ...)) collapse to one on read and this
+            # exists-already branch is unreachable. Kept as an explicit always-overwrite for the
+            # same reason the original line existed, without the wrong argument assumption.
+            entry.extract(path) { true }
           end
         end
       end

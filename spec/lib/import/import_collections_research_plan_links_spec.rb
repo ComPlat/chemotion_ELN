@@ -4,6 +4,55 @@ require 'rails_helper'
 
 # rubocop:disable RSpec/MultipleMemoizedHelpers
 RSpec.describe 'ImportCollection' do
+  # Not research-plan specific — this covers the shared images/(samples|reactions|molecules|
+  # research_plans)/... case branch in Import::ImportCollections#extract, which every image kind
+  # goes through. Kept here rather than import_collections_spec.rb, whose file-level `before`
+  # requires a fixture zip this test doesn't use.
+  describe 'extracting a zip entry whose destination path already exists' do
+    let(:tmp_dir) { Dir.mktmpdir }
+    let(:zip_path) { File.join(tmp_dir, 'test.zip') }
+    let(:dest_path) { File.join(tmp_dir, 'extracted.svg') }
+
+    after { FileUtils.rm_rf(tmp_dir) }
+
+    before do
+      Zip::OutputStream.open(zip_path) do |zipping|
+        zipping.put_next_entry('images/molecules/test.svg')
+        zipping.write('<svg>first</svg>')
+      end
+    end
+
+    # Two samples sharing a molecule (routine — the same compound imported/used more than once)
+    # both call fetch_image('molecules', ...) on export with the identical path, so this
+    # exists-already branch is reachable in principle. In practice it is never hit via the normal
+    # each-based extraction loop, because Zip::EntrySet is Hash-backed and collapses two same-named
+    # entries to one on read — this exercises Zip::Entry#extract directly to verify the fix on its
+    # own terms, independent of that.
+    it 'overwrites silently instead of erroring on a misused on-exists block' do
+      Zip::File.open(zip_path) do |zip_file|
+        entry = zip_file.first
+        entry.extract(dest_path) { true } # first extraction: destination does not exist yet
+
+        expect { entry.extract(dest_path) { true } }.not_to raise_error
+        expect(File.read(dest_path)).to eq('<svg>first</svg>')
+      end
+    end
+
+    # Entry#create_file yields (self, dest_path) to decide whether to overwrite — not IO objects —
+    # so the previous `{ |src, dest| IO.copy_stream(src, dest) }` block would have blown up had
+    # this branch ever been reached.
+    it 'documents that the previous block would have raised, had this branch ever been reached' do
+      Zip::File.open(zip_path) do |zip_file|
+        entry = zip_file.first
+        entry.extract(dest_path) { true }
+
+        expect do
+          entry.extract(dest_path) { |src, dest| IO.copy_stream(src, dest) }
+        end.to raise_error(NoMethodError, /undefined method [`']read'? for/)
+      end
+    end
+  end
+
   # Regression test for: after importing a collection whose research plan links to a sample
   # in the same collection, opening the sample via the research plan raised "Sample is not
   # accessible!" because the embedded sample_id still pointed at the exporting system's id.
