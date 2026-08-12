@@ -15,7 +15,7 @@ import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Form, InputGroup } from 'react-bootstrap';
 import { cloneDeep } from 'lodash';
-import { convertUnits, getGenSI } from 'chem-generic-ui';
+import { getGenSI } from 'chem-generic-ui';
 import Reaction from 'src/models/Reaction';
 import Segment from 'src/models/Segment';
 import UserStore from 'src/stores/alt/stores/UserStore';
@@ -75,6 +75,17 @@ const unitsOf = (field) => getGenSI(field.option_layers) ?? [];
 
 const unitLabel = (units, unit) => units.find((entry) => entry.key === unit)?.label ?? unit;
 
+const convertGenericUnit = (value, fromUnit, toUnit, genericQuantity) => {
+  const unitConfigs = unitsOf(genericQuantity);
+  if (!unitConfigs || unitConfigs.length === 0) return null;
+
+  const fromUnitConfig = unitConfigs.find((config) => config.key === fromUnit);
+  const toUnitConfig = unitConfigs.find((config) => config.key === toUnit);
+  if (!fromUnitConfig || !toUnitConfig) return null;
+
+  return value * ((toUnitConfig.nm ?? 1) / (fromUnitConfig.nm ?? 1));
+};
+
 /*
 Not every quantity converts by a ratio - temperature does not - so this goes through the generic
 unit conversion rather than scaling by the units' factors. An unconvertible value (empty, or a
@@ -88,7 +99,7 @@ const convertValue = (value, fromUnit, toUnit, quantity) => {
     return value;
   }
 
-  const converted = convertUnits(quantity, value, fromUnit, toUnit);
+  const converted = convertGenericUnit(quantity, value, fromUnit, toUnit);
   return converted === null || converted === undefined ? value : converted;
 };
 
