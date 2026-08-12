@@ -155,16 +155,17 @@ RSpec.describe Usecases::Collections::WithdrawElements do
     end
   end
 
-  describe 'a group member withdrawing a group-owned element' do
+  describe 'a group member withdrawing from a group-owned collection' do
     let(:group) { create(:group, users: [user]) }
-    let(:group_all) { Collection.get_all_collection_for_user(group.id) }
     let(:group_col) { create(:collection, user: group, label: 'group project') }
     let(:sample) { create(:sample, creator: user, collections: [group_col]) }
 
     before { sample }
 
-    it 'withdraws (and destroys the orphan) because group-owned collections count as owned' do
-      expect { withdraw_from(group_col, sample) }.to change(Sample, :count).by(-1)
+    # Membership is not ownership: the collection belongs to the group, and withdrawing operates on
+    # the user's *own* collections. A member who should be able to act on it gets a share.
+    it 'does not withdraw by membership alone' do
+      expect { withdraw_from(group_col, sample) }.not_to change(Sample, :count)
     end
   end
 end

@@ -149,26 +149,32 @@ RSpec.describe ElementsPolicy do
     end
   end
 
-  # Regression: a collection owned by one of the user's groups is their own (Collection#owned_by?),
-  # so a group member may remove/destroy its elements. Without a group-aware own scope the policy
-  # denied it, and SelectionActions greyed out Move for every group collection.
+  # Membership is not ownership (Collection#owned_by?): a group's collection reaches its members
+  # through a share, so the share's permission_level decides. Counting it as own would skip that
+  # check entirely — the records land in the own scope, are excluded from the shared scope, and
+  # every bulk permission returns true regardless of the level granted.
   describe 'a group-owned collection' do
     let(:group) { create(:group, users: [user_1]) }
     let(:group_collection) { create(:collection, user: group) }
     let(:group_sample) { create(:sample, creator: user_1, collections: [group_collection]) }
+    let(:policy) { described_class.new(user_1, Sample.where(id: [group_sample.id])) }
 
     before { group_sample }
 
-    it 'counts as the member\'s own for #remove_all?' do
-      policy = described_class.new(user_1, Sample.where(id: [group_sample.id]))
-
-      expect(policy.remove_all?).to be true
+    it 'is not the member\'s own for #remove_all?' do
+      expect(policy.remove_all?).to be false
     end
 
-    it 'counts as the member\'s own for #destroy_all?' do
-      policy = described_class.new(user_1, Sample.where(id: [group_sample.id]))
+    it 'is not the member\'s own for #destroy_all?' do
+      expect(policy.destroy_all?).to be false
+    end
 
-      expect(policy.destroy_all?).to be true
+    it 'grants what the share to the group grants, and no more' do
+      create(:collection_share, collection: group_collection, shared_with: group,
+                                permission_level: CollectionShare.permission_level(:read_elements))
+
+      expect(policy.remove_all?).to be false
+      expect(policy.read_all?).to be true
     end
   end
 end
