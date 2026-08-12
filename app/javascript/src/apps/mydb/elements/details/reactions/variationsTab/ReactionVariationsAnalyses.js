@@ -26,6 +26,11 @@ or gas field cell of the grid would make, dispatched through the row's update ha
 derived quantity recomputes as usual. The unit decides what a triple fills: an amount unit the
 material's amount, '%' its equivalent, and ppm / a time unit / a temperature unit the matching gas
 field of a gas product.
+
+Reading the file and writing it are two steps, `resolveAutofillSamples` and `applyAutofillSamples`,
+so the user is shown what the file is about to do to the variation and confirms it first - see
+<AutofillVariationSamplesModal>. Resolving decides everything; what it returns is a list of change
+events ready to dispatch, and a triple it cannot place is simply not in it.
 */
 const AUTOFILL_FILENAME = 'reaction_variation.json';
 
@@ -77,18 +82,34 @@ const GAS_FIELD_FROM_BASE = {
   },
 };
 
-const SAMPLE_LABELS = ['short_label', 'external_label', 'name', 'molecule_formula', 'molecule_iupac_name'];
+const SAMPLE_LABELS = [
+  'short_label', 'external_label', 'name', 'molecule_formula', 'sum_formula', 'molecule_iupac_name'
+];
 const AUTOFILL_MATERIAL_GROUPS = ['starting_materials', 'reactants', 'solvents', 'products'];
+
+/*
+Names the material groups for the confirmation dialog. Spelled out here rather than imported from
+ReactionVariationSchemaComponents, which has the same map: this module is read by the grid, and
+importing from the grid's own modules would close a cycle - the reason AUTOFILL_MATERIAL_GROUPS
+above repeats their MAT_GROUPS too.
+*/
+const AUTOFILL_MATERIAL_TITLES = {
+  starting_materials: 'Starting material',
+  reactants: 'Reactant',
+  solvents: 'Solvent',
+  products: 'Product',
+};
 
 // Datasets of one analysis that carry a data file the autofill can read.
 const autofillDatasetsOf = (analysis) => (analysis.children ?? [])
   .filter((child) => child.container_type === 'dataset')
   .filter((child) => (child.attachments ?? []).some((attachment) => attachment.filename === AUTOFILL_FILENAME));
 
+// A download that fails and a file that does not parse are the same thing here: no samples to offer.
 const loadAutofillSamples = async (dataset) => {
   const attachment = dataset.attachments.find((entry) => entry.filename === AUTOFILL_FILENAME);
-  const response = await AttachmentFetcher.loadAttachmentContent(attachment);
   try {
+    const response = await AttachmentFetcher.loadAttachmentContent(attachment);
     const body = await response.json();
     const { samples } = typeof body === 'string' ? JSON.parse(body) : body;
     return Array.isArray(samples) ? samples : [];
@@ -110,72 +131,92 @@ const findMaterialByLabel = (variationReaction, identifier) => {
 };
 
 /*
-Gas fields exist only on a gas-type product, so any other material skips the entry, the same way an
-unknown identifier would. Dispatched as the gas field widgets of the grid dispatch, so ppm and
-temperature re-derive the product's moles and equivalent as usual.
+Gas fields exist only on a gas-type product, so any other material has no entry to write, the same
+way an unknown identifier has none. Shaped as the gas field widgets of the grid shape theirs, so ppm
+and temperature re-derive the product's moles and equivalent as usual.
 */
-const autofillGasValue = (handler, material, matGroup, spec, numeric) => {
+const gasChangeFor = (material, matGroup, spec, numeric) => {
   if (matGroup !== 'products' || material.gas_type !== 'gas') {
-    return;
+    return null;
   }
   let value = numeric;
   if (spec.toBase) {
     const currentUnit = material.gas_phase_data?.[spec.field]?.unit;
     const fromBase = GAS_FIELD_FROM_BASE[spec.field][currentUnit];
     if (!fromBase) {
-      return;
+      return null;
     }
     value = Math.round(fromBase(spec.toBase(numeric)) * 1e4) / 1e4;
   }
-  handler.handleMaterialsChange({
+  return {
     type: 'gasFieldsChanged',
     sampleID: material.id,
     materialGroup: matGroup,
     field: spec.field,
     value,
-  });
+  };
+};
+
+// The change one triple stands for, or null if this variation has nowhere to put it.
+const autofillChangeFor = (material, matGroup, numeric, unit) => {
+  const gasSpec = AUTOFILL_GAS_UNITS[unit];
+  if (gasSpec) {
+    return gasChangeFor(material, matGroup, gasSpec, numeric);
+  }
+
+  if (unit === '%') {
+    return {
+      type: 'equivalentChanged',
+      sampleID: material.id,
+      equivalent: numeric,
+    };
+  }
+
+  const base = AUTOFILL_UNITS[unit];
+  if (!base) {
+    return null;
+  }
+  return {
+    type: 'amountChanged',
+    sampleID: material.id,
+    amount: { value: numeric * base.factor, unit: base.unit },
+  };
 };
 
 /*
-Applies the data file to one variation. An identifier no material carries, or a unit outside the
-tables above, skips that entry - the file describes more than this reaction may hold. '%' fills the
-equivalent, a gas unit (ppm, time, temperature) fills the gas product's field of that dimension,
-everything else is an amount in the stated unit.
+Reads the data file against one variation, and returns only the triples that variation can actually
+take: an identifier no material carries, a value that is not a number, a unit outside the tables
+above, or a gas unit on something that is not a gas product all drop out here - the file describes
+more than this reaction may hold. The identifier, value and unit are kept alongside the change so
+the confirmation dialog can quote the file rather than the converted numbers.
 */
-const autofillVariationFromAnalysis = (variationReaction, handler, samples) => {
-  samples.forEach(([identifier, value, unit]) => {
+const resolveAutofillSamples = (variationReaction, samples) => samples.reduce(
+  (resolved, [identifier, value, unit]) => {
     const found = findMaterialByLabel(variationReaction, identifier);
     const numeric = Number(value);
     if (!found || !Number.isFinite(numeric)) {
-      return;
-    }
-    const { material } = found;
-
-    const gasSpec = AUTOFILL_GAS_UNITS[unit];
-    if (gasSpec) {
-      autofillGasValue(handler, material, found.matGroup, gasSpec, numeric);
-      return;
+      return resolved;
     }
 
-    if (unit === '%') {
-      handler.handleMaterialsChange({
-        type: 'equivalentChanged',
-        sampleID: material.id,
-        equivalent: numeric,
+    const change = autofillChangeFor(found.material, found.matGroup, numeric, unit);
+    if (change) {
+      resolved.push({
+        identifier, matGroup: found.matGroup, value, unit, change
       });
-      return;
     }
+    return resolved;
+  },
+  []
+);
 
-    const base = AUTOFILL_UNITS[unit];
-    if (!base) {
-      return;
-    }
-    handler.handleMaterialsChange({
-      type: 'amountChanged',
-      sampleID: material.id,
-      amount: { value: numeric * base.factor, unit: base.unit },
-    });
-  });
+// Writes what was resolved, through the row's own update handler, so everything derived recomputes.
+const applyAutofillSamples = (handler, resolved) => {
+  resolved.forEach(({ change }) => handler.handleMaterialsChange(change));
+};
+
+// Both halves at once, for a caller that has nothing to confirm.
+const autofillVariationFromAnalysis = (variationReaction, handler, samples) => {
+  applyAutofillSamples(handler, resolveAutofillSamples(variationReaction, samples));
 };
 
 function getReactionAnalyses(reaction) {
@@ -211,14 +252,84 @@ AnalysisVariationLink.propTypes = {
 };
 
 /*
+Confirmation step for "Populate samples from data file": the data file is a foreign document, so
+what it is about to write into the variation is shown before anything is written. It lists what was
+resolved, which is what will actually be assigned - a triple this reaction has no material or no
+usable unit for never reaches here.
+*/
+const AutofillVariationSamplesModal = ({ autofill, onConfirm, onCancel }) => {
+  // `null` while no autofill is pending, which is what keeps the modal closed.
+  if (autofill === null) { return null; }
+
+  const { samples } = autofill;
+
+  if (samples.length === 0) {
+    return (
+      <AppModal
+        show
+        onHide={onCancel}
+        title="Populate samples from data file"
+        closeLabel="Close"
+      >
+        <p>None of the materials identified in the analysis were found in this reaction.</p>
+      </AppModal>
+    );
+  }
+
+  return (
+    <AppModal
+      show
+      onHide={onCancel}
+      title="Populate samples from data file"
+      primaryActionLabel="Confirm"
+      onPrimaryAction={onConfirm}
+    >
+      <p>The following values will be assigned:</p>
+      <ul>
+        {/* Keyed by position: one file may well carry an amount and an equivalent for one sample. */}
+        {samples.map(({
+          identifier, matGroup, value, unit
+        }, index) => (
+          // eslint-disable-next-line react/no-array-index-key
+          <li key={index}>
+            {'Set '}
+            <b>{`${AUTOFILL_MATERIAL_TITLES[matGroup] ?? matGroup}: ${identifier}`}</b>
+            {` to ${value} ${unit}`}
+          </li>
+        ))}
+      </ul>
+    </AppModal>
+  );
+};
+
+AutofillVariationSamplesModal.propTypes = {
+  autofill: PropTypes.shape({
+    samples: PropTypes.arrayOf(PropTypes.shape({
+      identifier: PropTypes.string.isRequired,
+      matGroup: PropTypes.string.isRequired,
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      unit: PropTypes.string,
+    })).isRequired,
+  }),
+  onConfirm: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+};
+
+AutofillVariationSamplesModal.defaultProps = {
+  autofill: null,
+};
+
+/*
 Grid cell: shows how many analyses the row links to and opens the picker on click. Selections are
 applied on Save rather than per checkbox, so a half-made selection can still be abandoned.
 */
 const AnalysesCell = ({
-  analyses, allReactionAnalyses, reactionShortLabel, rowId, onChange, disabled, onAutofill
+  analyses, allReactionAnalyses, reactionShortLabel, rowId, onChange, disabled,
+  resolveAutofill, applyAutofill
 }) => {
   const [showPicker, setShowPicker] = useState(false);
   const [draft, setDraft] = useState(analyses);
+  const [pendingAutofill, setPendingAutofill] = useState(null);
 
   // Ids of analyses that have since been deleted must not be counted or saved back.
   const linked = analyses.filter(
@@ -236,11 +347,18 @@ const AnalysesCell = ({
       : [...previous, analysisID]
   ));
 
+  /*
+  Hands the file over to the confirmation modal instead of writing it, and does so even when nothing
+  could be resolved - "nothing matched" is an answer the user is owed too. The ticked links are
+  committed on the way out, otherwise the link that enabled this button is dropped when the picker
+  closes behind the confirmation.
+  */
   const runAutofill = async (dataset) => {
     const samples = await loadAutofillSamples(dataset);
-    if (samples.length) {
-      onAutofill(samples);
-    }
+
+    onChange(draft);
+    setShowPicker(false);
+    setPendingAutofill({ samples: resolveAutofill(samples) });
   };
 
   /*
@@ -248,7 +366,7 @@ const AnalysesCell = ({
   from an analysis it is not linked to would leave no trace of where the numbers came from.
   */
   const autofillControl = (analysis) => {
-    if (!onAutofill || disabled) {
+    if (!resolveAutofill || disabled) {
       return null;
     }
     const datasets = autofillDatasetsOf(analysis);
@@ -340,6 +458,14 @@ const AnalysesCell = ({
           </div>
         </AppModal>
       )}
+      <AutofillVariationSamplesModal
+        autofill={pendingAutofill}
+        onConfirm={() => {
+          applyAutofill(pendingAutofill.samples);
+          setPendingAutofill(null);
+        }}
+        onCancel={() => setPendingAutofill(null)}
+      />
     </>
   );
 };
@@ -356,18 +482,24 @@ AnalysesCell.propTypes = {
   rowId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onChange: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
-  onAutofill: PropTypes.func,
+  // Together, or neither: without a way to resolve a file the autofill controls are not offered.
+  resolveAutofill: PropTypes.func,
+  applyAutofill: PropTypes.func,
 };
 
 AnalysesCell.defaultProps = {
   reactionShortLabel: '',
   disabled: false,
-  onAutofill: null,
+  resolveAutofill: null,
+  applyAutofill: null,
 };
 
 export {
   AnalysesCell,
   AnalysisVariationLink,
+  AutofillVariationSamplesModal,
   getReactionAnalyses,
+  resolveAutofillSamples,
+  applyAutofillSamples,
   autofillVariationFromAnalysis
 };
