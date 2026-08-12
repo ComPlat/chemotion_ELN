@@ -205,35 +205,84 @@ const isNMRKind = (container, chmos = []) => {
   return filtered.length > 0;
 };
 
+// A spectrum's dimension may be recorded on info, originalInfo, or meta depending on how/when it
+// was populated; check all three so 2D detection agrees everywhere it's needed.
+const isSpectrum2D = (spc) => (
+  spc?.info?.dimension === 2
+  || spc?.originalInfo?.dimension === 2
+  || spc?.meta?.dimension === 2
+);
+
+// A JCAMP/zip file's own filename is a stable, already-trusted key in this file (patchZipName,
+// findMatchingZip, findMatchingJcamp in NMRiumDisplayer.js all match spectra by it) — unlike the
+// token URLs, which are re-minted (and change) on every viewer open. Use it to derive a `sources[]`
+// id that stays the same across saves, so the same physical file always resolves to one entry.
+const buildSourceId = (label) => {
+  if (!label) return null;
+  const slug = label.toString().trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return slug ? `nmrium-src-${slug}` : null;
+};
+
+// Resolves the best currently-known absolute URL for a spectrum's source, whichever form it's
+// currently in: the ad hoc source/sourceSelector fields (first-time migration), the legacy global
+// root.source.entries[0] (very old saves), or an already-migrated sources[] entry matched by the
+// spectrum's own selector.root (subsequent saves, once NMRium has echoed it back).
+const resolveSpectrumSourceUrl = (spc, root) => {
+  const localUrl = spc?.source?.jcampURL
+    || spc?.sourceSelector?.files?.find((file) => typeof file === 'string' && /^https?:\/\//.test(file));
+  if (localUrl) return localUrl;
+
+  const existingSource = Array.isArray(root?.sources)
+    ? root.sources.find((source) => source.id === spc?.selector?.root)
+    : null;
+  const entry = existingSource?.entries?.[0] || root?.source?.entries?.[0];
+  return (entry?.baseURL && entry?.relativePath) ? `${entry.baseURL}${entry.relativePath}` : null;
+};
+
+// Finds or creates root.sources[]'s entry for `id`, always refreshing it to `url`: NMRium's own
+// reader (readNMRiumObject) re-fetches a spectrum's data only when its selector.root matches an id
+// here, so this is what actually lets us stop embedding `data` for a source-backed spectrum.
+const ensureSource = (root, id, url) => {
+  if (!id || !url || !/^https?:\/\//.test(url)) return;
+  const parsed = new URL(url);
+  const entry = { relativePath: parsed.pathname, baseURL: parsed.origin };
+  if (!Array.isArray(root.sources)) root.sources = [];
+  const existing = root.sources.find((source) => source.id === id);
+  if (existing) {
+    existing.entries = [entry];
+  } else {
+    root.sources.push({ id, entries: [entry] });
+  }
+};
+
 const cleaningNMRiumData = (nmriumData) => {
   if (!nmriumData) return null;
   const cleanedNMRiumData = { ...nmriumData };
 
-  const root = cleanedNMRiumData.data || cleanedNMRiumData;
+  const wasWrapped = !!cleanedNMRiumData.data;
+  const root = wasWrapped ? cleanedNMRiumData.data : cleanedNMRiumData;
   const { spectra } = root;
   if (!Array.isArray(spectra)) return cleanedNMRiumData;
 
   delete root.actionType;
-  const hasGlobalSource = !!root.source;
+  const hasGlobalSource = !!root.source || !!(Array.isArray(root.sources) && root.sources.length);
 
   const newSpectra = spectra.map((spc) => {
     const tmpSpc = { ...spc };
-    const hasLocalSource = !!(spc && (spc.source || spc.sourceSelector));
+    const hasLocalSource = !!(spc && (spc.source || spc.sourceSelector || spc.selector?.root));
     const hasSource = hasLocalSource || hasGlobalSource;
-    // Check if the spectrum is a 2D spectrum
-    const isSourceOnly2D = hasSource && (
-      tmpSpc?.info?.dimension === 2
-      || tmpSpc?.originalInfo?.dimension === 2
-      || tmpSpc?.meta?.dimension === 2
-    );
+    // Whether this is a 2D spectrum backed by a source.
+    const is2DWithSource = hasSource && isSpectrum2D(tmpSpc);
 
+    // originalData is safe to drop: NMRium's own loader always recomputes it fresh from `data`.
     delete tmpSpc.originalData;
-    if (hasSource) {
-      delete tmpSpc.data;
-    }
 
-    // For 2D spectra, we need to keep the name of the spectrum in display.name and remove the info, originalInfo, and meta
-    if (isSourceOnly2D) {
+    // Keep the spectrum name in display.name and drop the stale originalInfo duplicate (NMRium's
+    // loader always recomputes it fresh from `info`, same as originalData). `meta` is NOT dropped:
+    // unlike originalData/originalInfo, NMRium just passes it through as-is rather than regenerating
+    // it, so we can't assume it's safe to lose. `info` itself must stay fully intact; NMRium relies
+    // on it (e.g. dimension, isFid) to read `data`.
+    if (is2DWithSource) {
       const spectrumName = tmpSpc?.display?.name
         || tmpSpc?.info?.name
         || tmpSpc?.originalInfo?.name
@@ -241,14 +290,40 @@ const cleaningNMRiumData = (nmriumData) => {
       if (spectrumName) {
         tmpSpc.display = { ...tmpSpc.display, name: spectrumName };
       }
-      delete tmpSpc.info;
+      // info may be sparse on legacy spectra where dimension/isFid were only ever mirrored into
+      // originalInfo/meta; backfill it before dropping the originalInfo duplicate.
+      tmpSpc.info = { ...tmpSpc.meta, ...tmpSpc.originalInfo, ...tmpSpc.info };
       delete tmpSpc.originalInfo;
-      delete tmpSpc.meta;
       // Remove the filters if they are not valid
       if (Array.isArray(tmpSpc.filters)) {
         tmpSpc.filters = tmpSpc.filters.filter(
           (filter) => filter && typeof filter === 'object' && !Object.prototype.hasOwnProperty.call(filter, 'error')
         );
+      }
+
+      // NMRium's own reader only re-fetches a spectrum's data when selector.root matches an id in
+      // the top-level sources[] registry — it never uses source/sourceSelector for that. Build the
+      // real reference so `data` can finally be dropped instead of duplicated into the saved JSON.
+      // If no URL can be resolved, leave `data` embedded: that's the same safe fallback this file
+      // relied on before this was wired up, not a regression.
+      const sourceId = buildSourceId(spectrumName);
+      const sourceUrl = resolveSpectrumSourceUrl(tmpSpc, root);
+      if (sourceId && sourceUrl) {
+        ensureSource(root, sourceId, sourceUrl);
+        // sourceSelector.files may hold relative paths *within* a shared source (e.g. one entry per
+        // experiment inside a multi-spectrum zip, all sharing one sources[] id); NMRium's reader
+        // filters the fetched file collection down to selector.files before parsing, so without
+        // this a shared zip source can't tell spectra apart. Absolute URLs there aren't paths within
+        // the source, so they're excluded.
+        const filesWithinSource = tmpSpc.sourceSelector?.files?.filter(
+          (file) => typeof file === 'string' && !/^https?:\/\//.test(file)
+        );
+        tmpSpc.selector = {
+          ...tmpSpc.selector,
+          root: sourceId,
+          ...(filesWithinSource?.length ? { files: filesWithinSource } : {}),
+        };
+        delete tmpSpc.data;
       }
     }
 
@@ -257,6 +332,11 @@ const cleaningNMRiumData = (nmriumData) => {
 
   root.spectra = [...newSpectra];
 
+  // Deliberately not forcing a {version, data} wrap or an explicit version, even though a spectrum
+  // here may now depend on sources[] actually being processed on load: a real, working .nmrium
+  // capture has neither (flat top-level sources/spectra, no version at all) and reloads correctly,
+  // while an explicit version apparently opts a document out of whatever normalization an unversioned
+  // one gets put through on load. Forcing our own wrap previously broke exactly this case.
   return cleanedNMRiumData;
 };
 
@@ -350,4 +430,7 @@ const inlineNotation = (layout, data, metadata) => {
   return { quillData, formattedString };
 };
 
-export { BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, cleaningNMRiumData, inlineNotation }; // eslint-disable-line
+export {
+  BuildSpcInfos, BuildSpcInfosForNMRDisplayer, JcampIds, isNMRKind, isSpectrum2D, cleaningNMRiumData, inlineNotation,
+  buildSourceId, ensureSource,
+}; // eslint-disable-line
