@@ -74,7 +74,8 @@ const handleInputChange = (type, event, reaction, onReactionChange) => {
 };
 
 export default class ReactionUpdateHandler {
-  constructor({ reaction, onReactionChange, onLockEquivColChange, variations = [] }, context = null) {
+  constructor({ reaction, onReactionChange, onLockEquivColChange, variations = [], reactQuillRef = null,
+                additionQuillRef = null }, context = null) {
     this.context = context;
     this.props = {
       reaction,
@@ -83,6 +84,8 @@ export default class ReactionUpdateHandler {
       onLockEquivColChange
     };
     this._lockEquivColumn = null;
+    this.additionQuillRef = additionQuillRef;
+    this.reactQuillRef = reactQuillRef;
     this.variations = variations;
     this.bindMethods();
   }
@@ -539,9 +542,9 @@ export default class ReactionUpdateHandler {
     const { onInputChange } = this.props;
     const { paragraph } = e;
 
-    let quillEditor = this.reactQuillRef.current.editor;
-    if (type === 'observation') quillEditor = this.additionQuillRef.current.editor;
-    const range = quillEditor.getSelection();
+    let quillEditor = this.reactQuillRef?.current.editor;
+    if (type === 'observation') quillEditor = this.additionQuillRef?.current.editor;
+    const range = quillEditor?.getSelection();
     if (range) {
       let contents = quillEditor.getContents();
       let insertOps = [{ insert: paragraph }];

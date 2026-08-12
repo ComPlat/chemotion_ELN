@@ -38,9 +38,15 @@ export default class ReactionDetailsScheme extends React.Component {
     super(props);
 
     const textTemplate = TextTemplateStore.getState().reactionDescription;
+
+    this.reactQuillRef = React.createRef();
+    this.additionQuillRef = React.createRef();
+
     this.reactionUpdateHandler = new ReactionUpdateHandler({
         ...props,
-        onLockEquivColChange: this.onLockEquivColChange.bind(this)
+        onLockEquivColChange: this.onLockEquivColChange.bind(this),
+        reactQuillRef: this.reactQuillRef,
+        additionQuillRef: this.additionQuillRef
       },
       this.context);
     this.state = {
@@ -48,9 +54,6 @@ export default class ReactionDetailsScheme extends React.Component {
       displayYieldField: null,
       reactionDescTemplate: textTemplate.toJS(),
     };
-
-    this.reactQuillRef = React.createRef();
-    this.additionQuillRef = React.createRef();
 
     this.handleTemplateChange = this.handleTemplateChange.bind(this);
     this.updateTextTemplates = this.updateTextTemplates.bind(this);

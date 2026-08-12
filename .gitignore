@@ -13,6 +13,8 @@
 # Ignore bundler config.
 /.bundle
 
+/.claude
+
 # Ignore deploy configs
 /config/deploy/*.rb
 
