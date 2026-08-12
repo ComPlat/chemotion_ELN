@@ -71,7 +71,7 @@ const formatReactionTypeOption = (option, { context }) => (
 
 const productLink = (product, active) => (
   <span>
-    {active && "Sample Analysis:"}
+    {active && 'Sample Analysis:'}
     <span
       aria-hidden="true"
       className="pseudo-link"
@@ -559,8 +559,6 @@ export default class ReactionDetails extends Component {
     );
   }
 
-
-
   refreshGraphic() {
     const { reaction, isRefreshingGraphic } = this.state;
 
@@ -825,7 +823,7 @@ export default class ReactionDetails extends Component {
    */
   // eslint-disable-next-line class-methods-use-this
   recalculateEquivalentsForMaterials(reaction) {
-    const referenceMaterial = reaction.referenceMaterial;
+    const { referenceMaterial } = reaction;
     if (!referenceMaterial || !referenceMaterial.amount_mol) {
       return;
     }

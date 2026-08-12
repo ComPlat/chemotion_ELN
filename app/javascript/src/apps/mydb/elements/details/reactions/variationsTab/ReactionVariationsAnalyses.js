@@ -166,9 +166,6 @@ const AnalysesCellEditor = ({
       }
     });
 
-    // No material in this reaction matches the file's sample identifiers: nothing to confirm.
-    if (autofilledSamples.length === 0) { return; }
-
     /*
     Hand the confirmation to <ReactionVariations>, which renders it outside <AgGridReact>.
     Confirming bumps gridVersion, which re-keys and therefore re-mounts the grid; a modal
@@ -282,6 +279,16 @@ const AutofillVariationSamplesModal = ({ autofill, onConfirm, onCancel }) => {
 
   const { samples } = autofill;
 
+  if (samples.length === 0) {
+    return (<AppModal
+      show
+      onHide={onCancel}
+      title="Populate samples from data file"
+    >
+      <p>None of the materials identified in the analysis were found in this reaction.</p>
+    </AppModal>);
+  }
+
   return (
     <AppModal
       show
@@ -290,6 +297,11 @@ const AutofillVariationSamplesModal = ({ autofill, onConfirm, onCancel }) => {
       primaryActionLabel="Confirm"
       onPrimaryAction={onConfirm}
     >
+      <p>
+        Provided that the specified units are
+        valid for the materials found in this reaction,
+        we will attempt to assign the following values.
+      </p>
       <p>Please confirm:</p>
       <ul>
         {samples.map(({

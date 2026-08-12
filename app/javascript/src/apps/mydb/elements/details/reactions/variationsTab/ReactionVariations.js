@@ -22,7 +22,8 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import {
   updateVariationsOnAuxChange, getReactionMaterials, getReactionMaterialsIDsToLabels,
-  removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange, getReactionMaterialsHashes, SAMPLE_LABELS
+  removeObsoleteMaterialColumns, updateColumnDefinitionsMaterialsOnAuxChange,
+  getReactionMaterialsHashes, SAMPLE_LABELS_WITH_SUM
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   ColumnSelection,
@@ -370,10 +371,9 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
 
   const findAutofillVariationSampleFromAnalysis = useCallback(({ sampleIdentifier }) =>
     Object.entries(reactionMaterials)
-      .map(([matTypeKey, matList]) => matList.map((matListed) => ({ matType: matTypeKey, matItem: matListed })))
-      .flat()
-      .find(({ matItem: mat }) => SAMPLE_LABELS
-        .some((labelKey) => mat[labelKey] === sampleIdentifier)), [reactionMaterials]);
+      .flatMap(([matTypeKey, matList]) => matList.map((matListed) => ({ matType: matTypeKey, matItem: matListed })))
+      .find(({ matItem: mat }) => SAMPLE_LABELS_WITH_SUM
+        .some((labelKey) => mat[labelKey] === sampleIdentifier )), [reactionMaterials]);
 
   /*
   Autofill a variation row from an analysis dataset: locate the material matching the
@@ -456,6 +456,8 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
           context: { reactionHasPolymers }
         });
       }
+      reaction.variations = updatedReactionVariations;
+      onReactionChange(reaction);
 
       return {
         ...previousGridStore,
@@ -467,6 +469,8 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
     });
     return true;
   }, [
+    onReactionChange,
+    reaction,
     reactionMaterials,
     reactionHasPolymers,
     durationValue,

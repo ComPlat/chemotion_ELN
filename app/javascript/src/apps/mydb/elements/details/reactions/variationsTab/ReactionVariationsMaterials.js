@@ -8,6 +8,7 @@ import {
 import { calculateTON, calculateFeedstockMoles } from 'src/utilities/UnitsConversion';
 
 const SAMPLE_LABELS = ['short_label', 'external_label', 'name', 'molecule_formula', 'molecule_iupac_name'];
+const SAMPLE_LABELS_WITH_SUM = [...SAMPLE_LABELS, 'sum_formula'];
 function getVariationsSbmmID(id) {
   return `sbmm:${id}`;
 }
@@ -451,4 +452,5 @@ export {
   computePercentYieldGas,
   cellIsEditable,
   SAMPLE_LABELS,
+  SAMPLE_LABELS_WITH_SUM,
 };
