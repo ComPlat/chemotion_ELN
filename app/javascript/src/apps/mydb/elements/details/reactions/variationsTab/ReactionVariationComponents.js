@@ -22,7 +22,7 @@ import DeleteButton from 'src/components/common/DeleteButton';
 import AppModal from 'src/components/common/AppModal';
 import cs from 'classnames';
 import {
-  AnalysesCell, autofillVariationFromAnalysis
+  AnalysesCell, resolveAutofillSamples, applyAutofillSamples
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsAnalyses';
 import ReactionUpdateHandler from 'src/apps/mydb/elements/details/reactions/schemeTab/ReactionUpdateUtils';
 import {
@@ -83,9 +83,11 @@ const AnalysesLinkCell = ({ data }) => {
       rowId={data.label}
       disabled={!permitOn(data.data)}
       onChange={(analyses) => onAnalysesChange(data.idx, analyses)}
-      // Applies a dataset's reaction_variation.json to this row, through the row's own update
-      // handler, so it recomputes exactly as typing the amounts would.
-      onAutofill={(samples) => autofillVariationFromAnalysis(data.data, getRowHandler(data), samples)}
+      // Reads a dataset's reaction_variation.json against this row, and - once the user has
+      // confirmed what it says - applies it through the row's own update handler, so it recomputes
+      // exactly as typing the amounts would.
+      resolveAutofill={(samples) => resolveAutofillSamples(data.data, samples)}
+      applyAutofill={(resolved) => applyAutofillSamples(getRowHandler(data), resolved)}
     />
   );
 };
