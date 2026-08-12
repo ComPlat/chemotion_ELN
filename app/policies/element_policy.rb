@@ -19,10 +19,18 @@ class ElementPolicy
     record_is_in_own_collection? || record_shared_with_at_least?(:read_elements)
   end
 
+  # Editing requires a full detail level on a shared element, not just edit permission.
+  # The two axes are independent: a sharee below the anonymization threshold receives the
+  # redaction placeholders ('***', [], {}) for the fields their level hides, and — since the
+  # write path (declared attributes, nested materials via UpdateMaterials, variations) has no
+  # way to tell an echoed placeholder from a genuine edit — saving would overwrite the owner's
+  # real data with those placeholders. Gating the whole write on full detail closes every such
+  # path at once, mirroring how #copy? already combines the permission and detail-level axes.
   def update?
     return false unless user_and_record_present?
 
-    record_is_in_own_collection? || record_shared_with_at_least?(:edit_elements)
+    record_is_in_own_collection? ||
+      (record_shared_with_at_least?(:edit_elements) && record_shared_with_minimum_detail_level?(10))
   end
 
   def copy?

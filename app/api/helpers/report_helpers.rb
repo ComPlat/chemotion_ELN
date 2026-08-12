@@ -450,6 +450,16 @@ module ReportHelpers
     <<~SQL.squish
       SELECT
         #{sample_sql},
+        s.is_top_secret AS ts,
+        (SELECT bool_and(co.shared)
+           FROM collections_samples cs_o
+           JOIN collections co ON co.id = cs_o.collection_id AND co.user_id IN (#{u_ids})
+           WHERE cs_o.sample_id = s.id AND cs_o.deleted_at IS NULL) AS is_shared,
+        (SELECT max(csh.sample_detail_level)
+           FROM collections_samples cs_s
+           JOIN collection_shares csh ON csh.collection_id = cs_s.collection_id
+             AND csh.shared_with_id IN (#{u_ids})
+           WHERE cs_s.sample_id = s.id AND cs_s.deleted_at IS NULL) AS dl_s,
         cl.id as "sample uuid",
         COALESCE(components.components, '[]') AS components
       FROM samples s
@@ -680,7 +690,7 @@ module ReportHelpers
         inner join collections_samples c_s on s.id = c_s.sample_id and c_s.deleted_at is null
         left join collections on (collections.id = c_s.collection_id and collections.user_id in (#{u_ids}))
         left join collection_shares on (
-          collections.id = collection_shares.collection_id and collection_shares.shared_with_id not in (#{u_ids})
+          collections.id = collection_shares.collection_id and collection_shares.shared_with_id in (#{u_ids})
         )
         where #{selection} s.deleted_at isnull and c_s.deleted_at isnull
           and (collections.id is not null or collection_shares.id is not null)

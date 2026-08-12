@@ -19,6 +19,23 @@ module Chemotion
       def time_now
         Time.zone.now.strftime('%Y-%m-%dT%H-%M-%S')
       end
+
+      # Rejects the request unless the caller may read every element referenced in +objTags+.
+      # Without this a report is an IDOR: the generator does a bare +Model.find(id)+ with no
+      # ownership/collection check, so any authenticated user could pull any element's data.
+      # Only Sample/Reaction are accepted — the types {Reporter::Worker#extract} renders; any
+      # other type is rejected rather than silently ignored (the worker would raise on it anyway).
+      #
+      # @param obj_tags [Array<Hash>] the +objTags+ param ({ 'id' =>, 'type' => } entries)
+      # @raise [Grape exception] 401 if any referenced element is missing or not readable
+      def authorize_report_objects!(obj_tags)
+        types = { 'sample' => Sample, 'reaction' => Reaction }
+        Array(obj_tags).each do |tag|
+          tag = ActiveSupport::HashWithIndifferentAccess.new(tag)
+          record = types[tag[:type].to_s.downcase]&.find_by(id: tag[:id])
+          error!('401 Unauthorized', 401) unless record && ElementPolicy.new(current_user, record).read?
+        end
+      end
     end
 
     resource :reports do
@@ -27,6 +44,9 @@ module Chemotion
         requires :id
       end
       get :docx do
+        reaction = Reaction.find(params[:id])
+        error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, reaction).read?
+
         params[:template] = 'single_reaction'
         docx, filename = Report.create_reaction_docx(current_user, user_ids, params)
         content_type MIME::Types.type_for(filename)[0].to_s
@@ -221,6 +241,8 @@ module Chemotion
       optional :fileDescription
     end
     post :reports do
+      authorize_report_objects!(params[:objTags])
+
       spl_settings = hashize(params[:splSettings])
       rxn_settings = hashize(params[:rxnSettings])
       si_rxn_settings = hashize(params[:siRxnSettings])

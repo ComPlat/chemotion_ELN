@@ -77,6 +77,23 @@ describe ElementPolicy do
       end
     end
 
+    # Editing requires seeing the whole element: a sharee below the full detail level receives
+    # the redaction placeholders and would otherwise overwrite the owner's data with them.
+    context 'when shared with edit permission but a detail level below full' do
+      let(:low_detail_shared_collection) do
+        create(:collection, user: other_user, label: 'Low-detail share').tap do |collection|
+          create(:collection_share, collection: collection, shared_with: user,
+                                    permission_level: 1, screen_detail_level: 0)
+        end
+      end
+
+      before { low_detail_shared_collection.screens << screen }
+
+      it 'returns false' do
+        expect(element_policy.update?).to be false
+      end
+    end
+
     context 'when the record is neither in a collection of mine or shared to me' do
       let(:owner) { other_user }
 
