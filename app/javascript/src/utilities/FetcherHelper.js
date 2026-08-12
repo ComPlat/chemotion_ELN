@@ -54,10 +54,17 @@ const transformKeys = (fn, obj) => {
 // replaces hump
 const camelizeKeys = (obj) => transformKeys(camelCase, obj);
 const decamelizeKeys = (obj) => transformKeys(snakeCase, obj);
-const shallowCamelizeKeys = (obj) => Object.keys(obj).reduce((newObj, key) => {
-  newObj[camelCase(key)] = obj[key];
-  return newObj;
-}, {});
+// Mirrors transformKeys' tolerance of non-objects: a failed request resolves to
+// undefined (handleResponseError swallows the exception), and Object.keys would
+// then throw inside the fetcher's .then() as an unhandled rejection.
+const shallowCamelizeKeys = (obj) => {
+  if (obj === null || typeof obj !== 'object') return obj;
+
+  return Object.keys(obj).reduce((newObj, key) => {
+    newObj[camelCase(key)] = obj[key];
+    return newObj;
+  }, {});
+};
 const camelize = (str) => camelCase(str);
 const decamelize = (str) => snakeCase(str);
 

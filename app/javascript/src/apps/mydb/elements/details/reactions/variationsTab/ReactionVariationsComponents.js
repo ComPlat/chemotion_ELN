@@ -201,6 +201,7 @@ function PropertyFormatter({ value: cellData, colDef: { displayUnit } }) {
 
 function MaterialFormatter({ value: cellData, colDef }) {
   const { displayUnit, entry } = colDef;
+  if (!cellData) return '';
 
   return convertValueToDisplayUnit(cellData[entry].value, cellData[entry].unit, displayUnit);
 }
@@ -766,6 +767,10 @@ const ColumnSelection = ({ selectedColumns, availableColumns, onApply }) => {
       setCurrentColumns(updatedCurrentColumns);
     }
   }, [availableColumns]);
+
+  useEffect(() => {
+    setCurrentColumns(cloneDeep(selectedColumns));
+  }, [selectedColumns]);
 
   const handleApply = () => {
     onApply(currentColumns);
