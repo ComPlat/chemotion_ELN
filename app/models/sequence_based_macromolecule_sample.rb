@@ -89,7 +89,7 @@ class SequenceBasedMacromoleculeSample < ApplicationRecord
 
   scope :created_by, ->(user_id) { where(user_id: user_id) }
   scope :not_created_by, ->(user_id) { where.not(user_id: user_id) }
-  scope :includes_for_list_display, -> { includes(:sequence_based_macromolecule) }
+  scope :includes_for_list_display, -> { includes(:sequence_based_macromolecule, :comments) }
   scope :in_sbmm_order, lambda {
                           joins(:sequence_based_macromolecule)
                             .order(updated_at: :desc, 'sequence_based_macromolecules.short_name' => :asc)
