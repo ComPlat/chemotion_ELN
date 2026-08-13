@@ -2,6 +2,7 @@ import React from 'react';
 import expect from 'expect';
 import sinon from 'sinon';
 import Enzyme, { mount } from 'enzyme';
+import { OverlayTrigger } from 'react-bootstrap';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 // RootStore must be required BEFORE the component under test. This is the first spec to mount a
 // component that transitively imports `src/utilities/routesUtils`, and the reverse order trips a
@@ -19,11 +20,19 @@ Enzyme.configure({ adapter: new Adapter() });
 // root and its "transferred" child). The store keeps that subtree on its own field for the
 // sidebar, but `isOwnCollection` counts it as own — ownership is `user_id == current_user.id`,
 // see the `.ownCollectionIds` cases in CollectionsStore.spec.js.
+// The share fetchers are spied, never stubbed with data: the point of the tooltips is that they
+// are not mounted until hovered, so these must stay uncalled through render and open.
+const shareFetches = { own: sinon.spy(), sharedToMe: sinon.spy() };
+
 const storeFor = (collections) => ({
   collections: {
     find: (id) => collections.find((c) => c.id === id) || null,
     isOwnCollection: (id) => collections.some((c) => c.id === id && (c.own || c.repository)),
     isSharedCollection: (id) => collections.some((c) => c.id === id && c.sharedWithMe),
+    sharedWithUsers: () => undefined,
+    mySharesFor: () => undefined,
+    getSharedWithUsers: shareFetches.own,
+    getMySharesFor: shareFetches.sharedToMe,
   },
 });
 
@@ -51,6 +60,8 @@ describe('ElementCollectionLabels', () => {
   let userStub;
 
   beforeEach(() => {
+    shareFetches.own.resetHistory();
+    shareFetches.sharedToMe.resetHistory();
     userStub = sinon.stub(UserStore, 'getState').returns({ currentUser: { id: 1 } });
   });
 
@@ -107,7 +118,7 @@ describe('ElementCollectionLabels', () => {
         elementWith([1, 2])
       );
 
-      expect(wrapper.find('.collection-labels-own').first().text().trim()).toEqual('2 [1]');
+      expect(wrapper.find('.collection-labels-own').first().text().trim()).toEqual('2 1');
     });
 
     it('shows only the shared-with-me chip when the viewer owns none of them', () => {
@@ -121,14 +132,33 @@ describe('ElementCollectionLabels', () => {
       expect(wrapper.find('.collection-labels-dual-owned')).toHaveLength(0);
     });
 
-    it('warns, with the reachable wording, when the element is both owned and shared to the viewer', () => {
+    // S3/user1. Co-presence in a collection the viewer can open is ordinary collaboration: the
+    // shared chip already says so, and the popover explains the consequence. No triangle.
+    it('does not warn when the other collection is one the viewer can open', () => {
       const wrapper = render(
         [{ id: 1, label: 'Mine', own: true }, { id: 5, label: 'Theirs', sharedWithMe: true, owner_name: 'Ada L' }],
         elementWith([1, 5])
       );
 
-      expect(wrapper.find('.collection-labels-dual-owned')).toHaveLength(1);
-      expect(wrapper.find('button').first().prop('title')).toEqual('Also shared with you elsewhere');
+      expect(wrapper.find('.collection-labels-dual-owned')).toHaveLength(0);
+      expect(wrapper.find('button').first().prop('title')).toEqual(undefined);
+    });
+
+    // The triangle must stay bound to the unreachable case alone; a refactor that re-attached it
+    // to "has any message" would silently resurrect the benign warning.
+    it('keeps the triangle off when only the reachable case applies', () => {
+      const wrapper = render(
+        [
+          { id: 1, label: 'Mine', own: true },
+          { id: 2, label: 'Also mine', own: true },
+          { id: 5, label: 'Theirs', sharedWithMe: true, owner_name: 'Ada L' },
+        ],
+        elementWith([1, 2, 5])
+      );
+
+      expect(wrapper.find('.collection-labels-own').first().text().trim()).toEqual('2');
+      expect(wrapper.find('.collection-labels-shared').first().text().trim()).toEqual('1');
+      expect(wrapper.find('.collection-labels-dual-owned')).toHaveLength(0);
     });
 
     it('counts the viewer\'s own repository subtree as own, with no warning', () => {
@@ -170,11 +200,11 @@ describe('ElementCollectionLabels', () => {
       expect(wrapper.find('button').first().prop('title'))
         .toEqual("Also present in a collection you can't access");
     });
-    // Both causes can be live at once: one collection of the other user's is shared back, another
-    // is not. The two are computed independently and both messages surface - an if/else here would
-    // silently drop the "can't access" half, which is the one the viewer cannot find out any other
-    // way.
-    it('shows both warning messages when both causes apply at once', () => {
+    // Ownership wins over the share. This viewer holds the element in a collection of their own
+    // (id 1) as well as through someone else's share (id 2); id 3 is a collection they cannot
+    // resolve. Owning any of it is enough to be told - how they first came across the element
+    // does not enter into it.
+    it('warns a viewer who owns a collection for it, even though a share also reaches them', () => {
       const wrapper = render(
         [
           { id: 1, label: 'Sylvie Import', own: true },
@@ -190,7 +220,56 @@ describe('ElementCollectionLabels', () => {
       expect(wrapper.find('.collection-labels-shared').first().text().trim()).toEqual('1');
       expect(wrapper.find('.collection-labels-dual-owned')).toHaveLength(1);
       expect(wrapper.find('button').first().prop('title'))
-        .toEqual("Also shared with you elsewhere · Also present in a collection you can't access");
+        .toEqual("Also present in a collection you can't access");
+    });
+
+    // The only suppression there is: own nothing here and the element is simply not yours to be
+    // told about.
+    it('stays silent for a sharee who owns none of the collections', () => {
+      const wrapper = render(
+        [
+          { id: 1, label: 'Shared to me', sharedWithMe: true, owner_name: 'Ada L' },
+          { id: 2, label: 'The owner\'s other collection' },
+        ],
+        elementWith([1, 2])
+      );
+
+      expect(wrapper.find('.collection-labels-own')).toHaveLength(0);
+      expect(wrapper.find('.collection-labels-shared').first().text().trim()).toEqual('1');
+      expect(wrapper.find('.collection-labels-dual-owned')).toHaveLength(0);
+    });
+
+    // The case this rule exists for: a colleague's share (id 5) has nothing to do with the third
+    // party holding id 9, and must not mask it. An earlier version let any share suppress the
+    // warning, which hid exactly this - the one thing the owner cannot find out another way.
+    it('does not let an unrelated share mask a third party holding the element', () => {
+      const wrapper = render(
+        [
+          { id: 1, label: 'Mine', own: true },
+          { id: 5, label: 'Unrelated shared', sharedWithMe: true, owner_name: 'Ada L' },
+          { id: 9, label: 'Hidden third party' },
+        ],
+        elementWith([1, 5, 9])
+      );
+
+      expect(wrapper.find('.collection-labels-dual-owned')).toHaveLength(1);
+    });
+
+    // ...and equally when the hidden collection belongs to the very person who shared to them.
+    // Whose it is deliberately does not enter the rule; that it is not the viewer's does.
+    it('warns even when the hidden collection belongs to the sharer themselves', () => {
+      const wrapper = render(
+        [
+          { id: 1, label: 'Mine', own: true },
+          {
+            id: 5, label: 'Shared by Ada', sharedWithMe: true, owner: 'Ada L (AL)', owner_name: 'Ada L',
+          },
+          { id: 9, label: "Ada's other collection" },
+        ],
+        elementWith([1, 5, 9])
+      );
+
+      expect(wrapper.find('.collection-labels-dual-owned')).toHaveLength(1);
     });
   });
 
@@ -220,7 +299,7 @@ describe('ElementCollectionLabels', () => {
 
       const text = wrapper.find('.dropdown-menu').first().text();
       expect(text).toContain('My Collections');
-      expect(text).toContain('Shared Collections');
+      expect(text).toContain('Shared with me by');
       // One heading per owner, not one per collection.
       expect(text.match(/Ada L/g)).toHaveLength(1);
       expect(text.match(/Grace H/g)).toHaveLength(1);
@@ -252,6 +331,23 @@ describe('ElementCollectionLabels', () => {
       expect(text).not.toContain('(JM1)');
     });
 
+    it('sorts the owner groups alphabetically, and each owner\'s collections by label', () => {
+      const wrapper = open(render(
+        [
+          { id: 5, label: 'Zulu', sharedWithMe: true, owner: 'Zoe A (ZA)', owner_name: 'Zoe A' },
+          { id: 6, label: 'Bravo', sharedWithMe: true, owner: 'Ada L (AL)', owner_name: 'Ada L' },
+          { id: 7, label: 'Alpha', sharedWithMe: true, owner: 'Ada L (AL)', owner_name: 'Ada L' },
+        ],
+        elementWith([5, 6, 7])
+      ));
+
+      const text = wrapper.find('.dropdown-menu').first().text();
+      // Ada before Zoe even though Zoe's collection came first in the tag; Alpha before Bravo
+      // even though Bravo came first.
+      expect(text.indexOf('Ada L')).toBeLessThan(text.indexOf('Zoe A'));
+      expect(text.indexOf('Alpha')).toBeLessThan(text.indexOf('Bravo'));
+    });
+
     it('marks a group-mediated share without naming the group', () => {
       const wrapper = open(render(
         [{
@@ -263,29 +359,60 @@ describe('ElementCollectionLabels', () => {
       expect(wrapper.find('.dropdown-menu').first().text()).toContain('(via group)');
     });
 
-    it('lists both warning messages as separate lines when both apply', () => {
+    it('offers the sidebar\'s share tooltip on an own collection that is shared out', () => {
+      const wrapper = open(render(
+        [{ id: 1, label: 'Mine', own: true, shared: true }],
+        elementWith([1])
+      ));
+
+      expect(wrapper.find('.dropdown-menu').first().find(OverlayTrigger).length).toBeGreaterThan(0);
+      expect(wrapper.find('.dropdown-menu').first().find('i.fa-share-alt')).toHaveLength(1);
+    });
+
+    // The property that makes a tooltip per row affordable at 15-60 badges a page: the overlay is
+    // not mounted until it is hovered, so nothing fetches on render or on open. If someone adds
+    // renderOnMount to the menu, or hoists the fetch out of the tooltip, this fails.
+    it('fetches no share information until a tooltip is actually hovered', () => {
+      open(render(
+        [
+          { id: 1, label: 'Mine', own: true, shared: true },
+          {
+            id: 5, label: 'Theirs', sharedWithMe: true, owner: 'Ada L (AL)', owner_name: 'Ada L',
+          },
+        ],
+        elementWith([1, 5])
+      ));
+
+      expect(shareFetches.own.called).toBe(false);
+      expect(shareFetches.sharedToMe.called).toBe(false);
+    });
+
+    it('states the reachable case as neutral text, never as a warning', () => {
       const wrapper = open(render(
         [
           { id: 1, label: 'Sylvie Import', own: true },
           { id: 2, label: 'Theirs, shared', sharedWithMe: true, owner_name: 'Sylvia V' },
-          { id: 3, label: 'Theirs, not shared' },
         ],
-        elementWith([1, 2, 3])
+        elementWith([1, 2])
       ));
 
-      const text = wrapper.find('.dropdown-menu').first().text();
-      expect(text).toContain('Also shared with you elsewhere');
-      expect(text).toContain("Also present in a collection you can't access");
+      const menu = wrapper.find('.dropdown-menu').first();
+      expect(menu.text()).toContain('Also shared with you elsewhere');
+      expect(menu.text()).not.toContain("Also present in a collection you can't access");
+      // neutral: no warning colour and no triangle anywhere in the menu
+      expect(menu.find('.text-warning')).toHaveLength(0);
+      expect(menu.find('.fa-exclamation-triangle')).toHaveLength(0);
     });
 
-    it('spells out the dual-ownership warning as persistent text', () => {
+    it('spells the warning out as persistent text, in warning colour', () => {
       const wrapper = open(render(
         [{ id: 1, label: 'Mine', own: true }, { id: 9, label: 'Foreign' }],
         elementWith([1, 9])
       ));
 
-      expect(wrapper.find('.dropdown-menu').first().text())
-        .toContain("Also present in a collection you can't access");
+      const menu = wrapper.find('.dropdown-menu').first();
+      expect(menu.text()).toContain("Also present in a collection you can't access");
+      expect(menu.find('.text-warning').length).toBeGreaterThan(0);
     });
   });
 });

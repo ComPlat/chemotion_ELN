@@ -4,27 +4,34 @@ import React, { useContext } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import {
-  Button, Dropdown
+  Button, Dropdown, OverlayTrigger
 } from 'react-bootstrap';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import PermissionIcons from 'src/apps/mydb/collections/PermissionIcons';
+import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
+import SharedToMeInfosTooltip from 'src/apps/mydb/collections/SharedToMeInfosTooltip';
 import { aviatorNavigationWithCollectionId } from 'src/utilities/routesUtils';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-// Warning texts for the two distinguishable dual-ownership cases. Both use the same glyph —
-// what differs is whether the other collection is one the viewer can actually reach.
-const DUAL_OWNED_REACHABLE = 'Also shared with you elsewhere';
+// Exactly one of these is a warning. Being co-present in a collection the viewer *can* open is
+// ordinary collaboration and only earns a line in the popover; being co-present in one they
+// cannot open is the thing they have no other way to discover, and is the only case that earns
+// the triangle.
+const COPRESENT_REACHABLE_INFO = 'Also shared with you elsewhere';
 const DUAL_OWNED_UNREACHABLE = "Also present in a collection you can't access";
 
-// Both share directions use `fa-share-alt`, matching the rest of the app: the collection sidebar
-// already marks an own collection the viewer shared out with this glyph (MyCollections.js), and a
-// badge that disagreed with the tree one screen away would cost more than the local ambiguity it
-// removed. The two directions are told apart by position and by the `title` on every chip, not by
-// the glyph. If the app ever settles on a distinct shared-out glyph, change it here and there
-// together.
-const SHARED_WITH_ME_ICON = 'fa fa-share-alt';
-const SHARED_OUT_ICON = 'fa fa-share-alt';
+// Directional glyphs from the chemstrap-icons font (global-styles/icons.scss), so the two share
+// directions cannot be mistaken for each other: incoming = shared to the viewer, outgoing = the
+// viewer shared it out. `type-icon` carries no glyph of its own — it matches how SidebarButton
+// emits these — the meaning is entirely in `icon-incoming` / `icon-outgoing`.
+const SHARED_WITH_ME_ICON = 'type-icon icon-incoming';
+const SHARED_OUT_ICON = 'type-icon icon-outgoing';
+// The popover lists collections, one per row, the way the sidebar does — so it marks a shared-out
+// one the way the sidebar does too (MyCollections.js, CollectionSubtree.js). The directional pair
+// above earns its keep only in the summary chip, where the two counts sit side by side and must
+// not be read as each other; in a list of rows there is nothing to confuse it with.
+const SHARED_OUT_ROW_ICON = 'fa fa-share-alt';
 
 const pluralCollections = (count) => (count === 1 ? 'collection' : 'collections');
 
@@ -32,13 +39,13 @@ const pluralCollections = (count) => (count === 1 ? 'collection' : 'collections'
 // count and nothing else. `sharedOutCount` is the subset of the viewer's own collections that
 // they have shared out to someone — derived from `Collection.shared`, already fetched. Every chip
 // spells its counts out in a `title`: the glyphs alone are not self-describing, and the button's
-// own title is reserved for the dual-ownership warning.
+// own title is reserved for the warning.
 const CollectionToggle = React.forwardRef(({
   onClick,
   ownCount,
   sharedOutCount,
   sharedCount,
-  dualOwnedTitle,
+  warningTitle,
   size,
   variant,
 }, ref) => (
@@ -47,7 +54,7 @@ const CollectionToggle = React.forwardRef(({
     size={size}
     variant={variant}
     className="text-nowrap"
-    title={dualOwnedTitle || undefined}
+    title={warningTitle || undefined}
     onClick={(e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -61,8 +68,13 @@ const CollectionToggle = React.forwardRef(({
           sharedOutCount > 0 ? `, ${sharedOutCount} of which you shared with others` : ''}`}
       >
         <i className="fa fa-list" />
-        {` ${ownCount}`}
-        {sharedOutCount > 0 && ` [${sharedOutCount}]`}
+        {` ${ownCount} `}
+        {sharedOutCount > 0 && (
+          <>
+            <i className={`${SHARED_OUT_ICON} me-1`} />
+            {`${sharedOutCount}`}
+          </>
+        )}
       </span>
     )}
     {sharedCount > 0 && (
@@ -74,10 +86,11 @@ const CollectionToggle = React.forwardRef(({
         {` ${sharedCount}`}
       </span>
     )}
-    {dualOwnedTitle && (
-      // Persistent, not color-only and not hover-only: the warning has to survive both a
-      // colour-blind viewer and a touch device with no hover.
-      <span className="collection-labels-dual-owned text-warning ms-1">
+    {warningTitle && (
+      // Persistent, not hover-only, so it survives a touch device. It takes the label's own font
+      // colour here — the glyph alone carries the signal, and the popover states it in warning
+      // colour with the reason spelled out.
+      <span className="collection-labels-dual-owned ms-1">
         <i className="fa fa-exclamation-triangle" />
       </span>
     )}
@@ -89,12 +102,12 @@ CollectionToggle.propTypes = {
   ownCount: PropTypes.number.isRequired,
   sharedOutCount: PropTypes.number.isRequired,
   sharedCount: PropTypes.number.isRequired,
-  dualOwnedTitle: PropTypes.string,
+  warningTitle: PropTypes.string,
   size: PropTypes.string,
   variant: PropTypes.string,
 };
 CollectionToggle.defaultProps = {
-  dualOwnedTitle: null,
+  warningTitle: null,
   size: 'xxsm',
   variant: 'light',
 };
@@ -150,13 +163,22 @@ const ElementCollectionLabels = ({ element, size, variant }) => {
 
   const sharedOutCount = ownEntries.filter(({ collection }) => collection.shared === true).length;
 
-  const dualOwnedMessages = [];
-  if (ownEntries.length > 0 && sharedEntries.length > 0) {
-    dualOwnedMessages.push(DUAL_OWNED_REACHABLE);
-  }
-  if (ownEntries.length > 0 && unreachableCount > 0) {
-    dualOwnedMessages.push(DUAL_OWNED_UNREACHABLE);
-  }
+  // Ownership is the whole gate, matching ElementPolicy, which resolves every capability to "is
+  // it in a collection I own" (record_is_in_own_collection?). Own a collection holding this
+  // element and you are told it also sits somewhere you cannot see — whoever holds it, and
+  // whether or not anyone has shared anything back. Own none of them and you are only a sharee:
+  // where else it lives belongs to the people who do own it.
+  //
+  // Deliberately not narrowed by who holds the hidden collection. An earlier version suppressed
+  // the warning whenever the viewer held any share for the element, on the theory that they had
+  // arrived through someone else — but an unrelated colleague's share then masked a genuine third
+  // party holding the element, which is precisely the thing the owner cannot discover any other
+  // way. Telling the two apart would need the hidden collection's owner, and collection_labels
+  // carries `{id}` and nothing else, so it is not knowable here. It also should not matter.
+  const showUnreachableWarning = ownEntries.length > 0 && unreachableCount > 0;
+  // Not a warning: both collections are open to the viewer. It earns a popover line because
+  // removing the element from their own collection will not remove it from the other one.
+  const showReachableInfo = ownEntries.length > 0 && sharedEntries.length > 0;
 
   const renderOwnCollections = () => {
     if (ownEntries.length === 0) return null;
@@ -167,10 +189,13 @@ const ElementCollectionLabels = ({ element, size, variant }) => {
           <Dropdown.Item key={label.id} onClick={(e) => handleOnClick(label, e)}>
             {collection.label}
             {collection.shared === true && (
-              <i
-                className={`${SHARED_OUT_ICON} ms-1 text-body-secondary`}
-                title="You shared this collection with others"
-              />
+              // Same icon and same tooltip as the sidebar: hover names who it is shared with, and
+              // at what permission. Costs nothing until then — the overlay is not mounted while
+              // hidden, so its fetch does not run, and the menu's rows do not exist at all until
+              // the popover is first opened. Do not add `renderOnMount` to the menu below.
+              <OverlayTrigger placement="top" overlay={<UserInfosTooltip collectionId={label.id} />}>
+                <i className={`${SHARED_OUT_ROW_ICON} ms-1 text-body-secondary`} />
+              </OverlayTrigger>
             )}
           </Dropdown.Item>
         ))}
@@ -178,13 +203,19 @@ const ElementCollectionLabels = ({ element, size, variant }) => {
     );
   };
 
-  // Grouped by owner so "three collections from two people" reads as such. Keyed on `owner`
-  // ("First Last (ABBR)") exactly as the store's own grouping in `setSharedWithMeCollections`: two
-  // users can share a plain name, so `owner_name` alone would merge them into one group — and it is
-  // also the React key here. The group is still labelled with the plain `owner_name`.
+  // Grouped by owner so "three collections from two people" reads as such, and sorted by owner
+  // then label: the tag array's order is arbitrary, so without this the same shares appear in a
+  // different order on every element and disagree with the sidebar, which presorts by owner.
   //
-  // The group name behind `shared_via_group` deliberately stays out: it needs a per-collection
-  // `mySharesFor` fetch, and a dense element list would fire one per badge.
+  // Keyed on `owner` ("First Last (ABBR)") exactly as the store's own grouping in
+  // `setSharedWithMeCollections`: two users can share a plain name, so `owner_name` alone would
+  // merge them into one group — and it is also the React key here. The group is still labelled
+  // with the plain `owner_name`.
+  //
+  // "(via group)" stays generic in the row itself — naming the group needs a per-collection
+  // `mySharesFor` fetch, and a dense element list would once have fired one per badge. Hovering
+  // the row lifts that: the tooltip is not mounted until then, so the fetch is per-hover, and it
+  // names the group along with every other share that reaches the viewer.
   const renderSharedCollections = () => {
     if (sharedEntries.length === 0) return null;
 
@@ -196,23 +227,47 @@ const ElementCollectionLabels = ({ element, size, variant }) => {
       byOwner.get(ownerKey).push(entry);
     });
 
+    const sortedGroups = Array.from(byOwner.entries())
+      .map(([ownerKey, entries]) => [
+        ownerKey,
+        entries.slice().sort((a, b) => a.collection.label.localeCompare(b.collection.label)),
+      ])
+      .sort(([, a], [, b]) => (
+        (a[0].collection.owner_name || '').localeCompare(b[0].collection.owner_name || '')
+      ));
+
     return (
       <>
-        <Dropdown.Header>Shared Collections</Dropdown.Header>
-        {Array.from(byOwner.entries()).map(([ownerKey, entries]) => (
+        <Dropdown.Header>
+          <i className={`${SHARED_WITH_ME_ICON} me-1`} />
+          Shared with me by
+        </Dropdown.Header>
+        {sortedGroups.map(([ownerKey, entries]) => (
           <React.Fragment key={ownerKey}>
             <Dropdown.ItemText className="small text-body-secondary">
               {entries[0].collection.owner_name || ownerKey}
             </Dropdown.ItemText>
             {entries.map(({ label, collection }) => (
               <Dropdown.Item key={label.id} onClick={(e) => handleOnClick(label, e)}>
-                <span className="me-1">{collection.label}</span>
-                {collection.shared_via_group && (
-                  <span className="me-1 text-body-secondary">(via group)</span>
-                )}
-                {collection.permission_level != null && (
-                  <PermissionIcons pl={collection.permission_level} />
-                )}
+                <OverlayTrigger
+                  placement="top"
+                  overlay={(
+                    <SharedToMeInfosTooltip
+                      collectionId={label.id}
+                      owner={collection.owner_name || collection.owner}
+                    />
+                  )}
+                >
+                  <span>
+                    <span className="me-1">{collection.label}</span>
+                    {collection.shared_via_group && (
+                      <span className="me-1 text-body-secondary">(via group)</span>
+                    )}
+                    {collection.permission_level != null && (
+                      <PermissionIcons pl={collection.permission_level} />
+                    )}
+                  </span>
+                </OverlayTrigger>
               </Dropdown.Item>
             ))}
           </React.Fragment>
@@ -229,7 +284,7 @@ const ElementCollectionLabels = ({ element, size, variant }) => {
         ownCount={ownEntries.length}
         sharedOutCount={sharedOutCount}
         sharedCount={sharedEntries.length}
-        dualOwnedTitle={dualOwnedMessages.join(' · ') || null}
+        warningTitle={showUnreachableWarning ? DUAL_OWNED_UNREACHABLE : null}
         size={size}
         variant={variant}
       />
@@ -237,15 +292,20 @@ const ElementCollectionLabels = ({ element, size, variant }) => {
         <Dropdown.Menu>
           {renderOwnCollections()}
           {renderSharedCollections()}
-          {dualOwnedMessages.length > 0 && (
+          {(showUnreachableWarning || showReachableInfo) && (
             <>
               <Dropdown.Divider />
-              {dualOwnedMessages.map((message) => (
-                <Dropdown.ItemText key={message} className="small text-warning">
+              {showUnreachableWarning && (
+                <Dropdown.ItemText className="small text-warning">
                   <i className="fa fa-exclamation-triangle me-1" />
-                  {message}
+                  {DUAL_OWNED_UNREACHABLE}
                 </Dropdown.ItemText>
-              ))}
+              )}
+              {showReachableInfo && (
+                <Dropdown.ItemText className="small text-body-secondary">
+                  {COPRESENT_REACHABLE_INFO}
+                </Dropdown.ItemText>
+              )}
             </>
           )}
         </Dropdown.Menu>,

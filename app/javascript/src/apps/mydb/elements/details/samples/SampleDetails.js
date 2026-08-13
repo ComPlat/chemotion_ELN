@@ -110,10 +110,15 @@ const sampleTitle = (sample) => {
   return inventoryLabel || sample.title();
 };
 
+// Split around the collection badge so the header reads in the same order as the list row
+// (SampleGroupItem): reaction, collection, analyses.
+const sampleTitleAppendixLeading = (sample) => (
+  <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
+);
+
 const sampleTitleAppendix = (sample, handleFastInput) => (
   <>
     <ElementAnalysesLabels element={sample} key={`${sample.id}_analyses`} />
-    <ElementReactionLabels element={sample} key={`${sample.id}_reactions`} />
     <PubchemLabels element={sample} />
     {sample.isNew && !sample.isMixture() && <FastInput fnHandle={handleFastInput} />}
   </>
@@ -1601,6 +1606,7 @@ export default class SampleDetails extends React.Component {
         footerToolbar={this.sampleFooter()}
         title={sampleTitle(sample)}
         titleTooltip={formatTimeStampsOfElement(sample || {})}
+        titleAppendixLeading={sampleTitleAppendixLeading(sample)}
         titleAppendix={sampleTitleAppendix(sample, this.handleFastInput)}
         onSave={() => this.saveSampleOrChemical()}
         saveDisabled={saveDisabled}

@@ -24,6 +24,7 @@ export default function ElementDetailCard({
   isPendingToSave,
   title,
   titleTooltip,
+  titleAppendixLeading,
   titleAppendix,
   headerToolbar,
   headerBanner,
@@ -143,11 +144,18 @@ export default function ElementDetailCard({
   // Build title icon with ElementIcon
   const titleIcon = <ElementIcon element={element} />;
 
-  // Build title appendix with element labels + user labels + original appendix
+  // Title appendix: user labels, then whatever the element type wants ahead of the collection
+  // badge, then the badge, then the rest of its appendix. The split exists so a detail header can
+  // reproduce the order its list row uses — the badge sits between the reaction and analyses
+  // labels there (see SampleGroupItem), and this is the only seam that lets an element type put
+  // something in front of it without every caller having to render the badge itself.
   const elementTitleAppendix = (
     <>
-      {!element.isNew && <ElementCollectionLabels element={element} placement="right" size="sm" variant="secondary" />}
       {showUserLabels && <ShowUserLabels element={element} />}
+      {titleAppendixLeading}
+      {!element.isNew && (
+        <ElementCollectionLabels element={element} placement="right" size="xxsm" variant="light" />
+      )}
       {titleAppendix}
     </>
   );
@@ -232,6 +240,7 @@ ElementDetailCard.propTypes = {
   isPendingToSave: PropTypes.bool,
   title: PropTypes.node.isRequired,
   titleTooltip: PropTypes.string,
+  titleAppendixLeading: PropTypes.node,
   titleAppendix: PropTypes.node,
   headerToolbar: PropTypes.node,
   headerBanner: PropTypes.node,
@@ -249,6 +258,7 @@ ElementDetailCard.propTypes = {
 ElementDetailCard.defaultProps = {
   isPendingToSave: undefined,
   titleTooltip: null,
+  titleAppendixLeading: null,
   titleAppendix: null,
   headerToolbar: null,
   headerBanner: null,
