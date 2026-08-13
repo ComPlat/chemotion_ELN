@@ -8,7 +8,7 @@ module Export
     # names from ReportHelpers::EXP_MAP_ATTR
     # allowed sample/molecule headers for sample detail level 0
     HEADERS_SAMPLE_0 = [
-      'sample external label', 'sample name', 'cas', 'target amount', 'target unit',
+      'sample external label', 'sample name', 'target amount', 'target unit',
       'real amount', 'real unit', 'description', 'purity', 'solvent', 'location',
       'secret', 'short label', 'density', 'melting pt', 'boiling pt', 'created_at',
       'updated_at', 'MW', 'user_labels', 'decoupled', 'molecular mass (decoupled)', 'sum formula (decoupled)',
@@ -16,8 +16,12 @@ module Export
     ].freeze
 
     # allowed sample/molecule headers for sample detail level 10
+    # 'cas' belongs here, not in HEADERS_SAMPLE_0: a CAS number trivially reverse-looks-up to the
+    # full structure via public databases (PubChem, CAS Common Chemistry), so it's structure-
+    # identifying in the same way as molfile/smiles/InChI, unlike the non-identifying physical
+    # properties (MW, melting/boiling point) that level 0 does expose.
     HEADERS_SAMPLE_10 = HEADERS_SAMPLE_0 + [
-      'molfile', 'sample readout', 'image', 'identifier', 'molecule name',
+      'molfile', 'sample readout', 'image', 'identifier', 'molecule name', 'cas',
       'canonical smiles', 'sum formula', 'inchistring', 'InChI' # , 'analyses'
     ].freeze
 
