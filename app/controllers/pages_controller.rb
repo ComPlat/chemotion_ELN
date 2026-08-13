@@ -7,10 +7,6 @@ class PagesController < ApplicationController
 
   def docx; end
 
-  def welcome
-    flash.clear
-  end
-
   def editor; end
 
   def sfn_cb
