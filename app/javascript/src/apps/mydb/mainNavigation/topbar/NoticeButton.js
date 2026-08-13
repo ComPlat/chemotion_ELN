@@ -43,8 +43,39 @@ const changeUrl = (url, urlTitle) => (url ? (
   <span />
 ));
 
-const handleNotification = (nots, act, context, needCallback = true) => {
+// Any notification on one of these subjects means the recipient's collection visibility changed
+// server-side (a share was created/updated/revoked, or an ownership offer was accepted) — refetch
+// so their tree reflects it without waiting for a page reload.
+const refreshCollectionSubjects = ['Shared Collection With Me', 'Collection Take Ownership'];
+// Legacy action names, predating the subject-based check above, still seeded into Channel.msg_template
+// by old migrations for channels no later migration ever re-pointed at the new subject list: Gate
+// Transfer (db/migrate/20181207100526_add_gate_transfer_notification.rb), Collection Zip import/export
+// and Samples Import (db/migrate/20190617144801_add_collection_zip_notification.rb,
+// db/migrate/20230531142756_add_samples_import_channel.rb). PR #2783 deliberately re-pointed these same
+// strings at the (then-new) MobX fetchCollections() call rather than dropping them — this branch has to
+// stay independently of the subject check above, or those three channels silently stop refreshing the
+// tree.
+const refreshCollectionActions = [
+  'CollectionActions.fetchRemoteCollectionRoots',
+  'CollectionActions.fetchSyncInCollectionRoots',
+  'RefreshChemotionCollection',
+  'CollectionActions.fetchUnsharedCollectionRoots',
+];
+
+const matchesCollectionRefresh = (n) => refreshCollectionSubjects.includes(n.subject)
+  || refreshCollectionActions.includes(n.content.action);
+
+const handleNotification = (nots, act, context, needCallback = true, isFirstBatch = false) => {
   let count = 0;
+
+  // Computed once over the full, uncapped batch — decoupled from the count>3 toast-spam cap below (a
+  // notification past the cap still needs the tree to refresh, it just doesn't get its own toast) — and
+  // skipped entirely for the very first batch after mount: CollectionTree.js already fetches the tree
+  // fresh on its own mount effect, well before this component's first poll can fire, so refetching again
+  // here for a backlog of notifications accumulated since the user's last login is redundant. Any
+  // notification that arrives too early to benefit from that self-heals on the next poll cycle.
+  const shouldRefreshCollections = act === 'add' && !isFirstBatch && nots.some(matchesCollectionRefresh);
+
   nots.forEach((n) => {
     if (act === 'rem') {
       rootStore.notificationsStore.removeByUid(n.id);
@@ -67,42 +98,40 @@ const handleNotification = (nots, act, context, needCallback = true) => {
         );
       }
 
-      const notification = {
-        title: `From ${n.sender_name} on ${infoTimeString}`,
-        message: newText,
-        level: n.content.level || 'warning',
-        autoDismiss: n.content.autoDismiss || 5,
-        position: n.content.position || 'tr',
-        uid: n.id,
-        action: {
-          label: (
-            <span>
-              <i className="fa fa-check" aria-hidden="true" />
-              &nbsp;&nbsp;Got it
-            </span>
-          ),
-          callback() {
-            if (needCallback) {
-              const params = { ids: [] };
-              params.ids[0] = n.id;
-              MessagesFetcher.acknowledgedMessage(params);
-            }
+      // Silent notifications (e.g. a share permission update/revoke, or a rename — see
+      // CollectionShareNotifier on the backend) are delivered so the switch below and the tree-refresh
+      // check can act on them, but must not interrupt the user with a dismiss-required popup; the
+      // backend auto-acknowledges them on delivery instead (see MessageAPI's list endpoint).
+      if (!n.content.silent) {
+        const notification = {
+          title: `From ${n.sender_name} on ${infoTimeString}`,
+          message: newText,
+          level: n.content.level || 'warning',
+          autoDismiss: n.content.autoDismiss || 5,
+          position: n.content.position || 'tr',
+          uid: n.id,
+          action: {
+            label: (
+              <span>
+                <i className="fa fa-check" aria-hidden="true" />
+                &nbsp;&nbsp;Got it
+              </span>
+            ),
+            callback() {
+              if (needCallback) {
+                const params = { ids: [] };
+                params.ids[0] = n.id;
+                MessagesFetcher.acknowledgedMessage(params);
+              }
+            },
           },
-        },
-      };
-      rootStore.notificationsStore.add(notification);
+        };
+        rootStore.notificationsStore.add(notification);
+      }
 
       const { currentPage, itemsPerPage } = InboxStore.getState();
       const { currentCollection } = UIStore.getState();
       const currentCollectionId = currentCollection?.id;
-
-      // Any notification on one of these subjects means the recipient's collection visibility
-      // changed server-side (a share was created/updated/revoked, or an ownership offer was
-      // accepted) — refetch so their tree reflects it without waiting for a page reload.
-      const refreshCollectionSubjects = ['Shared Collection With Me', 'Collection Take Ownership'];
-      if (refreshCollectionSubjects.includes(n.subject)) {
-        context.collections.fetchCollections();
-      }
 
       switch (n.content.action) {
         case 'InboxActions.fetchInbox':
@@ -136,6 +165,10 @@ const handleNotification = (nots, act, context, needCallback = true) => {
       }
     }
   });
+
+  if (shouldRefreshCollections) {
+    context.collections.fetchCollections();
+  }
 
   if (count > 3) {
     const notification = {
@@ -179,6 +212,8 @@ const NoticeButton = () => {
   const intervalRef = useRef(null);
   const prevDbNoticesRef = useRef([]);
   const prevServerVersionRef = useRef('');
+  // Set to false after the first 'add' batch actually runs — see handleNotification's isFirstBatch.
+  const isFirstNotificationBatchRef = useRef(true);
 
   // Use refs for values needed inside the polling interval to avoid
   // stale closures and prevent useCallback/useEffect churn that would
@@ -537,7 +572,8 @@ const NoticeButton = () => {
     const remMessages = _.filter(prevNots, (o) => !_.includes(currentNotIds, o.id));
 
     if (Object.keys(newMessages).length > 0) {
-      handleNotification(newMessages, 'add', context, true);
+      handleNotification(newMessages, 'add', context, true, isFirstNotificationBatchRef.current);
+      isFirstNotificationBatchRef.current = false;
     }
     if (Object.keys(remMessages).length > 0) {
       handleNotification(remMessages, 'rem', context, true);
@@ -584,3 +620,5 @@ const NoticeButton = () => {
 };
 
 export default NoticeButton;
+// Exported for unit testing only — see spec/javascripts/apps/mydb/mainNavigation/topbar/NoticeButton.spec.js.
+export { handleNotification };

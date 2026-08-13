@@ -58,21 +58,13 @@ module Usecases
         new_labels_by_id.reject { |id, label| current_labels_by_id[id] == label }.keys
       end
 
-      # Reuses the "Shared Collection With Me" channel the initial share creation notifies on (see
-      # CollectionsStore#createSharingMessage in the frontend) so NoticeButton.js's existing refresh
-      # check picks it up and refetches the sharee's collection tree.
       def notify_renamed_sharees!(entries)
-        return if entries.empty?
-
-        channel_id = Channel.find_by(subject: Channel::SHARED_COLLECTION_WITH_ME)&.id
-        return unless channel_id
-
+        notifier = CollectionShareNotifier.new(current_user)
         entries.each do |entry|
-          Message.create_msg_notification(
-            channel_id: channel_id,
-            message_content: { data: "#{current_user.name} renamed a shared collection to \"#{entry[:label]}\"." },
-            message_from: current_user.id,
-            message_to: entry[:shared_with_ids],
+          notifier.notify!(
+            entry[:shared_with_ids],
+            "#{current_user.name} renamed a shared collection to \"#{entry[:label]}\".",
+            silent: true,
           )
         end
       end

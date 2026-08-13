@@ -23,7 +23,11 @@ module Chemotion
 
         # .ids does not work here as it uses the primary key which the database view notify_messages does not have
         channel_5_ids = messages.where(channel_type: 5).pluck(:id)
-        Notification.where(id: channel_5_ids).find_each do |notification|
+        # A notification whose content is flagged silent (see CollectionShareNotifier) is delivered so
+        # the frontend can act on it, but must not sit "unread" waiting for a toast dismiss that will
+        # never come — auto-ack it the same way channel 5 already is.
+        silent_ids = messages.where("content ->> 'silent' = 'true'").pluck(:id)
+        Notification.where(id: (channel_5_ids + silent_ids).uniq).find_each do |notification|
           notification.update!(is_ack: 1)
         end
       end

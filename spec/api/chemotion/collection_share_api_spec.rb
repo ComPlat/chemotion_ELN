@@ -49,6 +49,14 @@ describe Chemotion::CollectionShareAPI do
       expect(Notification.where(user_id: third_user.id)).to exist
     end
 
+    # A new share is the one event a sharee should be interrupted for — unlike an update/revoke/rename,
+    # which are delivered silently (see the PUT/DELETE specs below).
+    it 'notifies verbosely, not silently' do
+      post '/api/v1/collection_shares/', params: create_params
+
+      expect(Message.last.content['silent']).to be(false)
+    end
+
     context 'with apply_to_subcollections' do
       let(:child) { create(:collection, user: user, parent: collection) }
 
@@ -132,6 +140,14 @@ describe Chemotion::CollectionShareAPI do
       expect do
         put "/api/v1/collection_shares/#{collection_share.id}", params: update_params
       end.to change(Notification.where(user_id: other_user.id), :count).by(1)
+    end
+
+    # A permission change is housekeeping, not something worth interrupting the sharee for — the
+    # tree still refreshes (see the spec above), it just doesn't pop a dismiss-required toast.
+    it 'notifies silently' do
+      put "/api/v1/collection_shares/#{collection_share.id}", params: update_params
+
+      expect(Message.last.content['silent']).to be(true)
     end
 
     context 'with apply_to_subcollections' do
@@ -249,6 +265,12 @@ describe Chemotion::CollectionShareAPI do
       expect do
         delete "/api/v1/collection_shares/#{collection_share.id}"
       end.to change(Notification.where(user_id: other_user.id), :count).by(1)
+    end
+
+    it 'notifies silently' do
+      delete "/api/v1/collection_shares/#{collection_share.id}"
+
+      expect(Message.last.content['silent']).to be(true)
     end
 
     context 'when the share belongs to one of the requesters groups' do

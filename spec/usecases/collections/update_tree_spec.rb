@@ -79,6 +79,14 @@ RSpec.describe Usecases::Collections::UpdateTree do
         end.to change(Notification.where(user_id: sharee.id), :count).by(1)
       end
 
+      # A rename is housekeeping, not something worth interrupting the sharee for — the tree still
+      # refreshes (see the spec above), it just doesn't pop a dismiss-required toast.
+      it 'notifies silently' do
+        usecase.perform!(collections: [{ id: first.id, label: 'Renamed' }])
+
+        expect(Message.last.content['silent']).to be(true)
+      end
+
       it 'does not notify when the label is left unchanged (a pure reorder/reparent)' do
         payload = [{ id: first.id, label: 'First', children: [{ id: second.id, label: 'Second' }] }]
 

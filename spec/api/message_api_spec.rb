@@ -69,6 +69,35 @@ describe Chemotion::MessageAPI do
       end
     end
 
+    # No memoized helpers here (this group's ancestors are already at the RSpec/MultipleMemoizedHelpers
+    # cap) — message/notification are plain locals inside the one example that needs them.
+    describe 'a message flagged content.silent' do
+      # It must still be delivered on the first fetch — silent only means "no toast", not "hidden" —
+      # but is auto-acknowledged as a side effect of that same fetch (see MessageAPI's list endpoint),
+      # so it never sits "unread" waiting for a dismiss that will never come (there is no toast to
+      # dismiss it with), while staying visible under is_ack=1 like any other acknowledged message.
+      it 'is delivered once as unread, then auto-acknowledged on that fetch' do
+        message = create(:message, channel_id: c_nosys.id, content: { data: 'permission updated', silent: true },
+                                   created_by: u2.id)
+        # MessageEntity#id is the notify_messages view's id, which is the Notification id, not the
+        # Message id (see MessageEntity's separate `message_id` field) — assert against this one.
+        notification = Notification.create!(message: message, user: u1, is_ack: false)
+
+        get '/api/v1/messages/list.json?is_ack=0'
+        first_fetch_ids = JSON.parse(response.body)['messages'].pluck('id')
+
+        get '/api/v1/messages/list.json?is_ack=0'
+        second_fetch_ids = JSON.parse(response.body)['messages'].pluck('id')
+
+        get '/api/v1/messages/list.json?is_ack=1'
+        acked_ids = JSON.parse(response.body)['messages'].pluck('id')
+
+        expect(first_fetch_ids).to include(notification.id)
+        expect(second_fetch_ids).not_to include(notification.id)
+        expect(acked_ids).to include(notification.id)
+      end
+    end
+
     describe 'publish a message' do
       before do
         post '/api/v1/messages/new', params: { channel_id: m_sys.channel_id, content: m_sys.content[:data] }.to_json,
