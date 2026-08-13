@@ -30,10 +30,10 @@ module Usecases
       # goes through upsert_all, which skips AR callbacks/dirty-tracking, so there is no "did this
       # change" signal available afterwards.
       def renamed_shared_entries_to_notify
-        changed_ids = renamed_collection_ids
+        new_labels_by_id = new_labels_by_id_from_tree
+        changed_ids = renamed_collection_ids(new_labels_by_id)
         return [] if changed_ids.empty?
 
-        new_labels_by_id = new_labels_by_id_from_tree
         shared_with_ids_by_collection = CollectionShare.where(collection_id: changed_ids)
                                                        .group_by(&:collection_id)
                                                        .transform_values { |shares| shares.map(&:shared_with_id) }
@@ -50,8 +50,7 @@ module Usecases
         linear_tree_structure.select { |entry| entry[:label] }.to_h { |entry| [entry[:id], entry[:label]] }
       end
 
-      def renamed_collection_ids
-        new_labels_by_id = new_labels_by_id_from_tree
+      def renamed_collection_ids(new_labels_by_id)
         return [] if new_labels_by_id.empty?
 
         current_labels_by_id = Collection.where(id: new_labels_by_id.keys).pluck(:id, :label).to_h

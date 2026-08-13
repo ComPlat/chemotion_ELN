@@ -96,6 +96,25 @@ describe Chemotion::MessageAPI do
         expect(second_fetch_ids).not_to include(notification.id)
         expect(acked_ids).to include(notification.id)
       end
+
+      # Pins the combined channel_type-5-OR-silent auto-ack query: both categories must still be
+      # acked together in one request, not just each in isolation.
+      it 'auto-acks a channel-5 notification and a silent one together, in a single request' do
+        channel_with_type_five = create(:channel, channel_type: 5)
+        channel_5_message = create(:message, channel_id: channel_with_type_five.id, content: { data: 'chan 5' },
+                                             created_by: u2.id)
+        channel_5_notification = Notification.create!(message: channel_5_message, user: u1, is_ack: false)
+        silent_message = create(:message, channel_id: c_nosys.id, content: { data: 'silent', silent: true },
+                                          created_by: u2.id)
+        silent_notification = Notification.create!(message: silent_message, user: u1, is_ack: false)
+
+        get '/api/v1/messages/list.json?is_ack=0'
+
+        get '/api/v1/messages/list.json?is_ack=1'
+        acked_ids = JSON.parse(response.body)['messages'].pluck('id')
+
+        expect(acked_ids).to include(channel_5_notification.id, silent_notification.id)
+      end
     end
 
     describe 'GET config' do

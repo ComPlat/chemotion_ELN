@@ -15,7 +15,9 @@ const buildNotification = (overrides = {}) => ({
   content: { data: 'hello', ...overrides.content },
 });
 
-const buildContext = () => ({ collections: { fetchCollections: sinon.spy() } });
+const buildContext = () => ({
+  collections: { fetchCollections: sinon.spy(), refreshMySharedCollectionShares: sinon.spy() },
+});
 
 describe('NoticeButton#handleNotification', () => {
   // notificationsStore is a protected MobX-state-tree node — its actions can't be swapped out
@@ -82,6 +84,28 @@ describe('NoticeButton#handleNotification', () => {
       handleNotification([n], 'add', context);
 
       expect(addCallCount()).toBe(1);
+    });
+  });
+
+  describe('refreshing sharee-facing permission info alongside the tree', () => {
+    // fetchCollections() never touches the my_collection_shares cache SharedToMeInfosTooltip reads
+    // from, so a permission-level change refreshed the tree but left the tooltip stale — this must
+    // fire every time the tree refresh does, not as a separate/optional signal.
+    it('calls refreshMySharedCollectionShares whenever fetchCollections is called', () => {
+      const context = buildContext();
+      const n = buildNotification({ subject: 'Shared Collection With Me' });
+
+      handleNotification([n], 'add', context);
+
+      expect(context.collections.fetchCollections.callCount).toBe(1);
+      expect(context.collections.refreshMySharedCollectionShares.callCount).toBe(1);
+    });
+
+    it('does not call it when nothing in the batch matches', () => {
+      const context = buildContext();
+      handleNotification([buildNotification()], 'add', context);
+
+      expect(context.collections.refreshMySharedCollectionShares.callCount).toBe(0);
     });
   });
 

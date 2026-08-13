@@ -168,6 +168,10 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
 
   if (shouldRefreshCollections) {
     context.collections.fetchCollections();
+    // Sharee-facing permission-level display (e.g. SharedToMeInfosTooltip) reads a separate,
+    // once-fetched-then-cached store slice that fetchCollections() never touches — refresh it too,
+    // bounded to whatever's already cached (i.e. actually being displayed somewhere).
+    context.collections.refreshMySharedCollectionShares();
   }
 
   if (count > 3) {
@@ -212,7 +216,12 @@ const NoticeButton = () => {
   const intervalRef = useRef(null);
   const prevDbNoticesRef = useRef([]);
   const prevServerVersionRef = useRef('');
-  // Set to false after the first 'add' batch actually runs — see handleNotification's isFirstBatch.
+  // Captured at the point each real fetch resolves (messageFetch/handleShow below), not in the
+  // diff effect: the effect's own initial mount-time run always sees an empty diff before any real
+  // fetch has happened, so it can't tell "no fetch yet" apart from "fetch found nothing new" on its
+  // own. hasFetchedNoticesRef latches permanently true on the first real fetch; the pre-flip value
+  // is what handleNotification's isFirstBatch actually needs.
+  const hasFetchedNoticesRef = useRef(false);
   const isFirstNotificationBatchRef = useRef(true);
 
   // Use refs for values needed inside the polling interval to avoid
@@ -260,6 +269,8 @@ const NoticeButton = () => {
           }
         });
         messages.sort((a, b) => b.id - a.id);
+        isFirstNotificationBatchRef.current = !hasFetchedNoticesRef.current;
+        hasFetchedNoticesRef.current = true;
         setNewNotices(messages);
         setServerVersion(result.version);
       });
@@ -328,6 +339,8 @@ const NoticeButton = () => {
       const unreadMessages = unreadResult.messages.sort((a, b) => b.id - a.id);
 
       setAckNotices(ackMessages);
+      isFirstNotificationBatchRef.current = !hasFetchedNoticesRef.current;
+      hasFetchedNoticesRef.current = true;
       setNewNotices(unreadMessages);
       setShowModal(true);
     });
@@ -573,7 +586,6 @@ const NoticeButton = () => {
 
     if (Object.keys(newMessages).length > 0) {
       handleNotification(newMessages, 'add', context, true, isFirstNotificationBatchRef.current);
-      isFirstNotificationBatchRef.current = false;
     }
     if (Object.keys(remMessages).length > 0) {
       handleNotification(remMessages, 'rem', context, true);

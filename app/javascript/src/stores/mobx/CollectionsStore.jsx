@@ -267,6 +267,12 @@ export const CollectionsStore = types
         }
       }
     }),
+    // Called when a collection-share notification arrives (see NoticeButton.js) so already-displayed
+    // share/permission info doesn't go stale the way fetchCollections() alone leaves it —
+    // getMySharesFor upserts in place, so re-calling it for every cached id is safe.
+    refreshMySharedCollectionShares: flow(function* refreshMySharedCollectionShares() {
+      yield Promise.all(self.my_collection_shares.map((entry) => self.getMySharesFor(entry.id)))
+    }),
     addCollectionShare: flow(function* addCollectionShare(params) {
       const response = yield CollectionSharesFetcher.addCollectionShare(params)
       if (response.status === 204) {

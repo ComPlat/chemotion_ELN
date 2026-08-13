@@ -6,6 +6,7 @@ import { Collection } from 'src/stores/mobx/CollectionsStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CollectionElementsFetcher from 'src/fetchers/CollectionElementsFetcher';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
+import CollectionSharesFetcher from 'src/fetchers/CollectionSharesFetcher';
 
 // Pins removeElementsFromCollection's return contract { success, lockedSampleIds }. moveElementsToCollection
 // and the lock toast both branch on it, and the fetcher's return-shape change (boolean -> object|null|
@@ -301,6 +302,63 @@ describe('CollectionsStore', () => {
 
       expect(store.own_collections.map((c) => c.id)).toEqual([9]);
       expect(store.own_collections[0].ancestry).toEqual('/1/');
+    });
+  });
+
+  // Regression coverage: a collection-share notification (create/update/revoke/rename) only ever
+  // called fetchCollections(), which never touches my_collection_shares — so a sharee's permission-level
+  // tooltip stayed stale after a live permission change even though the tree itself refreshed
+  // correctly. This is the sibling refresh NoticeButton.js now calls alongside fetchCollections().
+  describe('.refreshMySharedCollectionShares', () => {
+    let getMySharesStub;
+
+    // SharedWithUser's MST model requires every detail-level column plus shared_with(_id/_type) —
+    // only permission_level varies across these fixtures.
+    const sharedWithUser = (permissionLevel) => ({
+      id: 101,
+      celllinesample_detail_level: 0,
+      devicedescription_detail_level: 0,
+      element_detail_level: 0,
+      permission_level: permissionLevel,
+      reaction_detail_level: 0,
+      researchplan_detail_level: 0,
+      sample_detail_level: 0,
+      screen_detail_level: 0,
+      sequencebasedmacromoleculesample_detail_level: 0,
+      shared_with: 'Some User',
+      shared_with_id: 1,
+      shared_with_type: 'Person',
+      wellplate_detail_level: 0,
+    });
+
+    beforeEach(() => {
+      getMySharesStub = sinon.stub(CollectionSharesFetcher, 'getMyCollectionShares');
+    });
+
+    afterEach(() => {
+      getMySharesStub.restore();
+    });
+
+    it('re-fetches shares only for collection ids already cached, updating them in place', async () => {
+      getMySharesStub.withArgs(1).resolves([sharedWithUser(1)]);
+      getMySharesStub.withArgs(2).resolves([sharedWithUser(3)]);
+      // Seed the cache the way getMySharesFor itself would (called once per id already).
+      await store.getMySharesFor(1);
+      await store.getMySharesFor(2);
+      getMySharesStub.resetHistory();
+      getMySharesStub.withArgs(1).resolves([sharedWithUser(9)]);
+
+      await store.refreshMySharedCollectionShares();
+
+      expect(getMySharesStub.calledWith(1)).toBe(true);
+      expect(getMySharesStub.calledWith(2)).toBe(true);
+      expect(store.mySharesFor(1).shared_with_users[0].permission_level).toBe(9);
+    });
+
+    it('is a no-op when nothing has been cached yet', async () => {
+      await store.refreshMySharedCollectionShares();
+
+      expect(getMySharesStub.called).toBe(false);
     });
   });
 });
