@@ -24,6 +24,7 @@ module Chemotion
       end
       get do
         resolved_collection, screen_scope = collection_scope_for(params[:collection_id], Screen, :screens)
+        screen_scope = screen_scope.includes_for_list_display
 
         from = params[:from_date]
         to = params[:to_date]
