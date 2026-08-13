@@ -328,6 +328,55 @@ describe Chemotion::CollectionAPI do
     end
   end
 
+  describe 'GET /api/v1/collections/:id/metadata' do
+    # the :metadata factory always assigns its own fresh collection in a before_create callback,
+    # so the target collection has to be attached afterwards rather than passed in as an attribute
+    context 'when the collection is owned by the user' do
+      let!(:metadata) { create(:metadata).tap { |m| m.update!(collection_id: collection.id) } }
+
+      it 'returns the metadata' do
+        get "/api/v1/collections/#{collection.id}/metadata"
+
+        expect(response).to have_http_status :ok
+        expect(parsed_json_response['id']).to eq metadata.id
+      end
+    end
+
+    context 'when the collection is only shared with the user, even at the highest permission level' do
+      before { create(:metadata).tap { |m| m.update!(collection_id: collection_shared_with_user.id) } }
+
+      it 'does not leak the owner collection metadata to the sharee' do
+        get "/api/v1/collections/#{collection_shared_with_user.id}/metadata"
+
+        expect(response).to have_http_status :not_found
+      end
+    end
+  end
+
+  describe 'POST /api/v1/collections/metadata' do
+    let(:metadata_params) { { collection_id: collection.id, metadata: { title: 'Updated title' } } }
+
+    context 'when the collection is owned by the user' do
+      it 'creates the metadata' do
+        post '/api/v1/collections/metadata', params: metadata_params
+
+        expect(response).to have_http_status :created
+        expect(Metadata.find_by(collection_id: collection.id).metadata['title']).to eq 'Updated title'
+      end
+    end
+
+    context 'when the collection is only shared with the user, even at the highest permission level' do
+      let(:metadata_params) { { collection_id: collection_shared_with_user.id, metadata: { title: 'Hijacked' } } }
+
+      it 'rejects the write instead of letting a sharee edit the owner collection metadata' do
+        post '/api/v1/collections/metadata', params: metadata_params
+
+        expect(response).to have_http_status :unauthorized
+        expect(Metadata.find_by(collection_id: collection_shared_with_user.id)).to be_nil
+      end
+    end
+  end
+
   describe 'POST /api/v1/collections/import' do
     context 'when importing collections' do
       let(:file_upload) do

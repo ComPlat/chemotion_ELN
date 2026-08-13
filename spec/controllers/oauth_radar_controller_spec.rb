@@ -8,6 +8,12 @@ RSpec.describe Oauth::RadarController, type: :request do
   let(:user) { create(:person) }
   let(:user_collection) { create(:collection) }
   let(:bad_collection) { create(:collection) }
+  let(:shared_collection) do
+    create(:collection).tap do |collection|
+      # highest permission level a share can grant — RADAR publishing is still owner-only
+      create(:collection_share, collection: collection, shared_with: user)
+    end
+  end
   let(:access_token) { 'ooF7uach' }
   let(:workspace_id) { 'eiVah5Co' }
   let(:dataset_id) { 'cha3aeYa' }
@@ -102,6 +108,11 @@ RSpec.describe Oauth::RadarController, type: :request do
 
     it "when collection does not belong to the user" do
       get '/oauth/radar/archive?collection_id=%i' % bad_collection.id
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "when the collection is only shared with the user, even at the highest permission level" do
+      get '/oauth/radar/archive?collection_id=%i' % shared_collection.id
       expect(response).to have_http_status(:forbidden)
     end
 

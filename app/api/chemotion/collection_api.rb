@@ -175,8 +175,12 @@ module Chemotion
       end
 
       desc 'Get collection metadata'
+      params do
+        requires :id, type: Integer
+      end
       get '/:id/metadata' do
-        metadata = Metadata.where(collection_id: params[:id]).first
+        collection = Collection.own_collections_for(current_user).find(params[:id])
+        metadata = Metadata.where(collection_id: collection.id).first
         metadata || error!('404 Not Found', 404)
       end
 
@@ -185,11 +189,13 @@ module Chemotion
         error!('401 Unauthorized', 401)
       end
       params do
+        requires :collection_id, type: Integer
         requires :metadata, type: JSON
       end
       post :metadata do
-        metadata = Metadata.where(collection_id: params[:collection_id]).first
-        metadata ||= Metadata.new(collection_id: params[:collection_id])
+        collection = Collection.own_collections_for(current_user).find(params[:collection_id])
+        metadata = Metadata.where(collection_id: collection.id).first
+        metadata ||= Metadata.new(collection_id: collection.id)
         metadata.metadata = params[:metadata]
         metadata.save!
         metadata
