@@ -271,6 +271,34 @@ describe Chemotion::CollectionShareAPI do
     end
   end
 
+  # Nothing purges collection_shares when an account is deleted, and collections.shared stays
+  # true, so the owner keeps seeing the share icon. Listing the share must survive the sharee
+  # being gone — hovering that icon used to 500 on the entity dereferencing a nil association.
+  describe 'GET /api/v1/collection_shares with a deleted sharee' do
+    subject(:list) do
+      get "/api/v1/collection_shares?collection_id=#{collection.id}"
+      response
+    end
+
+    before { collection_share }
+
+    context 'when the sharee account is soft-deleted' do
+      before { other_user.destroy }
+
+      it 'still lists the share, naming the deleted user' do
+        expect(list).to have_http_status(:ok)
+        expect(parsed_json_response['collection_shares']).to contain_exactly(
+          include('shared_with' => "#{other_user.name} (#{other_user.name_abbreviation})",
+                  'shared_with_type' => 'Person'),
+        )
+      end
+    end
+
+    it 'cannot be reached by a hard destroy — the FK to users forbids it' do
+      expect { other_user.really_destroy! }.to raise_error(ActiveRecord::InvalidForeignKey)
+    end
+  end
+
   describe 'GET /api/v1/collection_shares/for_me' do
     subject(:shares) do
       get "/api/v1/collection_shares/for_me?collection_id=#{collection.id}"
