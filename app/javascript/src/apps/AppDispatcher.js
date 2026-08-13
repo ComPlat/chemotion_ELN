@@ -7,6 +7,7 @@ import AdminHome from 'src/apps/admin/AdminHome';
 import App from 'src/apps/mydb/App';
 import CnC from 'src/apps/commandAndControl/CnC';
 import Home from 'src/apps/home/Home';
+import SignIn from 'src/apps/home/devise/SignIn';
 import GenericElementsAdmin from 'src/apps/generic/GenericElementsAdmin';
 import GenericSegmentsAdmin from 'src/apps/generic/GenericSegmentsAdmin';
 import GenericDatasetsAdmin from 'src/apps/generic/GenericDatasetsAdmin';
@@ -55,6 +56,13 @@ const APPS_PATHS = [
   '/generic_segments_admin',
   '/generic_datasets_admin',
   '/converter_admin',
+];
+
+const PUBLIC_PATHS = [
+  '/sign_in',
+  '/sign_up',
+  '/password',
+  '/confirmation',
 ];
 
 const AppDispatcher = () => {
@@ -111,7 +119,18 @@ const AppDispatcher = () => {
     console.debug('rendering Converter Admin');
     app = (<ConverterAdmin />);
   }
-  if (role === 'Guest' || currentRoute === '/home') {
+
+  if (role === 'Guest' && currentRoute === '/sign_in') {
+    console.debug('rendering sign in');
+    app = (<SignIn />);
+  }
+  if (currentRoute === '/chemspectra') {
+    app = (<ChemSpectraClient />);
+  }
+  if (currentRoute === '/chemspectra-editor') {
+    app = (<ChemSpectraClient editorOnly />);
+  }
+  if (role === 'Guest' && !PUBLIC_PATHS.includes(currentRoute) || currentRoute === '/home') {
     console.debug('rendering home');
     app = (<Home />);
   }
