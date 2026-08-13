@@ -1,11 +1,10 @@
-/* eslint-disable react/prop-types */
+/* eslint-disable react/prop-types, jsx-a11y/no-autofocus */
 import React, { useState, useCallback, useContext } from 'react';
 import { observer } from 'mobx-react';
 import { keys } from 'mobx';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
 
-import PropTypes from 'prop-types';
 import uuid from 'uuid';
 import {
   Button,
@@ -39,11 +38,59 @@ const handleLoginSubmit = async ({ form, url }) => {
   };
 };
 
-const ExtendedSignInForm = observer(({ rememberable, username = '', fromInvalid = false }) => {
+const applyLoginResult = (loginResult, userStore) => {
+  userStore.setAuthToken(loginResult.token);
+  userStore.setRole(loginResult.role);
+  userStore.setLoginStatus('');
+
+  let route = '/mydb/collection/all';
+  if (loginResult.role === 'Group') {
+    route = '/command_n_control';
+  } else if (loginResult.role === 'Admin') {
+    route = '/admin';
+  }
+  aviatorNavigationToApp(route);
+};
+
+const LinksForDeviseForm = (currentRoute, extraRules, deviseMappings) =>
+    (
+    <>
+      <hr />
+      <div className="d-flex align-items-start flex-column">
+        {currentRoute !== '/sign_in' && (
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/sign_in')}>Sign up</Button>
+        )}
+        {currentRoute !== '/sign_up' && deviseMappings?.registerable && !extraRules.disable_signup === true && (
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/sign_up')}>Sign up</Button>
+        )}
+        {currentRoute !== '/password' && deviseMappings?.recoverable && !extraRules.disable_signup === true && (
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/password')}>
+            Forgot your password?
+          </Button>
+        )}
+        {currentRoute !== '/confirmation' && deviseMappings?.confirmable && (
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/confirmation')}>
+            Didn&apos;t receive confirmation instructions?
+          </Button>
+        )}
+        {currentRoute !== '/unlocks' && deviseMappings?.lockable && deviseMappings.unlock_strategy_enabled && (
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/unlocks')}>
+            Didn&apos;t receive unlock instructions?
+          </Button>
+        )}
+        {
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/home')}>Back</Button>
+        }
+      </div>
+    </>
+  );
+
+const ExtendedSignInForm = observer(() => {
   const url = '/users/sign_in';
   const userStore = useContext(StoreContext).user;
+  const { currentRoute, extraRules, deviseMappings } = userStore;
   const [form, setForm] = useFormValues({
-    login: username || '',
+    login: '',
     password: '',
     remember_me: false,
     otp_attempt: ''
@@ -57,16 +104,7 @@ const ExtendedSignInForm = observer(({ rememberable, username = '', fromInvalid 
     setForm('otp_attempt', '');
     const loginResult = await handleLoginSubmit({ form, url });
     if (loginResult.status === 200) {
-      userStore.setAuthToken(loginResult.token);
-      userStore.setRole(loginResult.role);
-      userStore.setLoginStatus('');
-      let route = '/mydb/collection/all';
-      if (loginResult.role === 'Group') {
-        route = '/command_n_control';
-      } else if (loginResult.role === 'Admin') {
-        route = '/admin';
-      }
-      aviatorNavigationToApp(route);
+      applyLoginResult(loginResult, userStore);
     } else if (loginResult.status === 400) {
       // handle bad username/password combination
       userStore.setLoginStatus('failed');
@@ -75,6 +113,10 @@ const ExtendedSignInForm = observer(({ rememberable, username = '', fromInvalid 
       setWrongOtp(loginResult.otp_wrong);
     }
   }, [form, setForm, userStore]);
+
+  if (extraRules?.disable_db_login && !extraRules?.disable_db_login === true) {
+    return null;
+  }
 
   return (
     <>
@@ -113,7 +155,7 @@ const ExtendedSignInForm = observer(({ rememberable, username = '', fromInvalid 
           />
         </Form.Group>
 
-        {rememberable && (
+        {deviseMappings?.rememberable && (
           <Form.Group className="mb-3">
             <Form.Check
               type="checkbox"
@@ -125,22 +167,14 @@ const ExtendedSignInForm = observer(({ rememberable, username = '', fromInvalid 
           </Form.Group>
         )}
 
-        <Button variant="primary" type="submit">
+        <Button variant="primary" type="submit" className="mb-3">
           Log in
         </Button>
       </Form>
+      {LinksForDeviseForm(currentRoute, extraRules, deviseMappings)}
     </>
   );
 });
-
-ExtendedSignInForm.propTypes = {
-  username: PropTypes.string,
-  rememberable: PropTypes.bool.isRequired,
-};
-
-ExtendedSignInForm.defaultProps = {
-  username: '',
-};
 
 const SignInForm = () => {
   const [form, setForm] = useFormValues({
@@ -159,19 +193,11 @@ const SignInForm = () => {
     setForm('otp_attempt', '');
     const loginResult = await handleLoginSubmit({ form, url });
     if (loginResult.status === 200) {
-      userStore.setAuthToken(loginResult.token);
-      userStore.setRole(loginResult.role);
-      userStore.setLoginStatus('');
-      let route = '/mydb/collection/all';
-      if (loginResult.role === 'Group') {
-        route = '/command_n_control';
-      } else if (loginResult.role === 'Admin') {
-        route = '/admin';
-      }
-      aviatorNavigationToApp(route);
+      applyLoginResult(loginResult, userStore);
     } else if (loginResult.status === 400) {
       // handle bad username/password combination
       userStore.setLoginStatus('failed');
+      aviatorNavigationToApp('/sign_in');
     } else if (loginResult.status === 401 && loginResult.otp_required === true) {
       setShowOtp(true);
       setWrongOtp(loginResult.otp_wrong);
@@ -266,7 +292,7 @@ const NewSession = () => {
       )}
       {showSignUp && (
         <Col xs="auto">
-          <a href="/users/sign_up">
+          <a href="/sign_up">
             or Sign Up
           </a>
         </Col>
@@ -277,4 +303,4 @@ const NewSession = () => {
 
 export default observer(NewSession);
 
-export { ExtendedSignInForm };
+export { ExtendedSignInForm, LinksForDeviseForm };

@@ -80,6 +80,15 @@ module Chemotion
         end
       end
 
+      namespace :devise_mappings do
+        desc 'get devise module mappings'
+        get do
+          mappings = Devise.mappings[:user]&.modules.map { |m| { m.to_s => true } }.reduce(:merge!)
+          mappings['unlock_strategy_enabled'] = User.unlock_strategy_enabled?(:email)
+          { devise_mappings: mappings }
+        end
+      end
+
       namespace :download do
         desc 'download file for editoring'
         before do

@@ -11,7 +11,13 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 
 const Navigation = () => {
   const { userStore } = useContext(StoreContext);
-  const { currentUser } = userStore;
+  const { currentUser, currentRoute } = userStore;
+  const devicePaths = [
+    '/sign_in',
+    '/sign_up',
+    '/password',
+    '/confirmation',
+  ];
 
   return (
     <div className="surface-lighten4 d-flex align-items-center justify-content-between px-4 py-3">
@@ -23,7 +29,7 @@ const Navigation = () => {
         <SupportMenuButton linkToEln variant="link" />
         {currentUser
           ? (<UserAuth userMenuDropdownToggleVariant="link" />)
-          : (userStore.loginStatus === '' ? <NavNewSession /> : '')}
+          : (!devicePaths.includes(currentRoute) ? <NavNewSession /> : '')}
       </div>
     </div>
   );
