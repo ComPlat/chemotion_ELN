@@ -96,13 +96,11 @@ const handleNotification = (nots, act, context, needCallback = true) => {
       const { currentCollection } = UIStore.getState();
       const currentCollectionId = currentCollection?.id;
 
-      const refreshCollectionActions = [
-        'CollectionActions.fetchRemoteCollectionRoots',
-        'CollectionActions.fetchSyncInCollectionRoots',
-        'RefreshChemotionCollection',
-        'CollectionActions.fetchUnsharedCollectionRoots',
-      ];
-      if (refreshCollectionActions.includes(n.content.action) || n.subject === 'Shared Collection With Me') {
+      // Any notification on one of these subjects means the recipient's collection visibility
+      // changed server-side (a share was created/updated/revoked, or an ownership offer was
+      // accepted) — refetch so their tree reflects it without waiting for a page reload.
+      const refreshCollectionSubjects = ['Shared Collection With Me', 'Collection Take Ownership'];
+      if (refreshCollectionSubjects.includes(n.subject)) {
         context.collections.fetchCollections();
       }
 
