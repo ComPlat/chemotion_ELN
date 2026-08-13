@@ -71,6 +71,11 @@ Rails.application.routes.draw do
   get 'about', to: 'pages#about'
   get 'command_n_control', to: 'pages#home'
 
+  get 'sign_in', to: 'pages#home'
+  get 'sign_up', to: 'pages#home'
+  get 'password', to: 'pages#home'
+  get 'confirmation', to: 'pages#home'
+
   get 'admin', to: 'pages#home'
 
   mount API => '/'
@@ -78,8 +83,6 @@ Rails.application.routes.draw do
   mount GrapeSwaggerRails::Engine => '/swagger'
 
   root to: redirect('home')
-
-  get 'test', to: 'pages#test'
 end
 
 # rubocop: enable Metrics/BlockLength, Layout/LineLength, Style/FrozenStringLiteralComment

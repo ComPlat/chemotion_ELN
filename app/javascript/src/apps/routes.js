@@ -10,6 +10,34 @@ const routes = {
     '/': 'Home',
   },
 
+  '/sign_in': {
+    target: {
+      SignIn() { routesUtils.syncCurrentRoute('/sign_in'); }
+    },
+    '/': 'SignIn',
+  },
+
+  '/sign_up': {
+    target: {
+      SignUp() { routesUtils.syncCurrentRoute('/sign_up'); }
+    },
+    '/': 'SignUp',
+  },
+
+  '/password': {
+    target: {
+      Password() { routesUtils.syncCurrentRoute('/password'); }
+    },
+    '/': 'Password',
+  },
+
+  '/confirmation': {
+    target: {
+      Confirmation() { routesUtils.syncCurrentRoute('/confirmation'); }
+    },
+    '/': 'Confirmation',
+  },
+
   '/admin': {
     target: {
       index() { routesUtils.syncCurrentRoute('/admin'); }
@@ -57,6 +85,20 @@ const routes = {
       MoleculeModerator() { routesUtils.syncCurrentRoute('/molecule_moderator'); }
     },
     '/': 'MoleculeModerator',
+  },
+
+  '/chemspectra': {
+    target: {
+      Chemspectra() { routesUtils.syncCurrentRoute('/chemspectra'); }
+    },
+    '/': 'Chemspectra',
+  },
+
+  '/chemspectra-editor': {
+    target: {
+      ChemspectraEditor() { routesUtils.syncCurrentRoute('/chemspectra-editor'); }
+    },
+    '/': 'ChemspectraEditor',
   },
 
   '/mydb': {

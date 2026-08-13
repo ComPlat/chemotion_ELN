@@ -145,6 +145,16 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
     setCurrentGroups(groupsWithoutDeletionTarget);
   };
 
+  const logoutUser = () => {
+    UsersFetcher.logoutUser()
+      .then((response) => {
+        if (response.status === 204) {
+          reset();
+          aviatorNavigationToApp('/home');
+        }
+      });
+  };
+
   const handleDeleteUser = (group, user) => {
     UsersFetcher.removeMember(group.id, user.id)
       .then((result) => {
@@ -519,7 +529,7 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
             Generic Designer
           </Dropdown.Item>
 
-          <Dropdown.Item onClick={() => { reset(); aviatorNavigationToApp('/home'); }}>
+          <Dropdown.Item onClick={() => { logoutUser(); }}>
             <i className="fa fa-sign-out me-1" />
             Log out
           </Dropdown.Item>

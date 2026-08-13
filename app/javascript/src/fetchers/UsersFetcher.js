@@ -37,6 +37,10 @@ export default class UsersFetcher {
     return ApiClient.getJson('/api/v1/public/omniauth_providers');
   }
 
+  static fetchDeviseMappings() {
+    return ApiClient.getJson('/api/v1/public/devise_mappings');
+  }
+
   static fetchUsersByName(name, type = 'Person') {
     return ApiClient.getJson(`/api/v1/users/name?${new URLSearchParams({ name, type })}`);
   }

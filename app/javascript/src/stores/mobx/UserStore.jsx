@@ -8,6 +8,20 @@ import UserLabelsFetcher from 'src/fetchers/UserLabelsFetcher';
 import ApiClient from 'src/api_clients/ChemotionApiClient';
 import MatrixCheck from 'src/components/common/MatrixCheck';
 
+const defaultDeviseMappings = {
+  database_authenticatable: false,
+  rememberable: false,
+  omniauthable: false,
+  recoverable: false,
+  registerable: false,
+  validatable: false,
+  confirmable: false,
+  lockable: false,
+  trackable: false,
+  two_factor_authenticatable: false,
+  unlock_strategy_enabled: false,
+};
+
 // adapted from Entities::UserEntity
 const User = types.model(
   'User',
@@ -263,6 +277,7 @@ const UserStore = types.model(
     extraRules: types.optional(ExtraRule, {}),
     bao: types.array(BaoOrHeader),
     loginStatus: types.optional(types.string, ''),
+    deviseMappings: types.frozen(defaultDeviseMappings),
   }
 ).actions((self) => ({
   fetchCurrentUser: flow(function* fetchCurrentUser() {
@@ -355,8 +370,14 @@ const UserStore = types.model(
   }),
   fetchOmniauthProviders: flow(function* fetchOmniauthProviders() {
     const result = yield UsersFetcher.fetchOmniauthProviders();
-    self.omniauthProviders = result.omniauth_providers.map((provider) => OmniauthProvider.create(provider));
-    self.extraRules = ExtraRule.create(result.extraRules);
+    if (Object.keys(result?.omniauth_providers).length >= 1) {
+      self.omniauthProviders = result?.omniauth_providers.map((provider) => OmniauthProvider.create(provider));
+    }
+    self.extraRules = ExtraRule.create(result?.extraRules);
+  }),
+  fetchDeviseMappings: flow(function* fetchDeviseMappings() {
+    const result = yield UsersFetcher.fetchDeviseMappings();
+    self.deviseMappings = result.devise_mappings;
   }),
   setAuthToken: (authToken) => {
     self.authToken = authToken;
