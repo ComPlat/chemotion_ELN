@@ -60,5 +60,36 @@ RSpec.describe Usecases::Collections::UpdateTree do
         expect { usecase.perform!(collections: [{ id: first.id, label: 'First' }]) }.not_to raise_error
       end
     end
+
+    context 'when a renamed collection is shared with someone' do
+      let(:sharee) { create(:person) }
+
+      before do
+        create(:collection_share, collection: first, shared_with: sharee)
+        # Notifying a sharee reuses this channel — seeded in production by a data migration that
+        # db:schema:load never runs, so it has to be seeded here too.
+        create(:channel, subject: Channel::SHARED_COLLECTION_WITH_ME, channel_type: 8)
+      end
+
+      # Without this, the sharee's "Shared with me" tree keeps showing the old label until they
+      # reload the page — their poll only refetches on seeing a new notification (NoticeButton.js).
+      it 'notifies the sharee so their collection tree refreshes' do
+        expect do
+          usecase.perform!(collections: [{ id: first.id, label: 'Renamed' }])
+        end.to change(Notification.where(user_id: sharee.id), :count).by(1)
+      end
+
+      it 'does not notify when the label is left unchanged (a pure reorder/reparent)' do
+        payload = [{ id: first.id, label: 'First', children: [{ id: second.id, label: 'Second' }] }]
+
+        expect { usecase.perform!(collections: payload) }.not_to change(Notification, :count)
+      end
+    end
+
+    it 'does not notify anyone when the renamed collection has no shares' do
+      expect do
+        usecase.perform!(collections: [{ id: first.id, label: 'Renamed' }])
+      end.not_to change(Notification, :count)
+    end
   end
 end

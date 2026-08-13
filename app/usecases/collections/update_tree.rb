@@ -16,10 +16,66 @@ module Usecases
           add_collection_and_children_to_linear_tree(collection, position: index + 1)
         end
 
+        renamed_shared_entries = renamed_shared_entries_to_notify
+
         save_linear_tree_structure!
+        notify_renamed_sharees!(renamed_shared_entries)
       end
 
       private
+
+      # {label:, shared_with_ids:} for every collection whose label actually changes and which is
+      # shared with someone — the only renames a sharee needs to hear about. Has to be computed
+      # against the labels currently in the DB, and before the write: save_linear_tree_structure!
+      # goes through upsert_all, which skips AR callbacks/dirty-tracking, so there is no "did this
+      # change" signal available afterwards.
+      def renamed_shared_entries_to_notify
+        changed_ids = renamed_collection_ids
+        return [] if changed_ids.empty?
+
+        new_labels_by_id = new_labels_by_id_from_tree
+        shared_with_ids_by_collection = CollectionShare.where(collection_id: changed_ids)
+                                                       .group_by(&:collection_id)
+                                                       .transform_values { |shares| shares.map(&:shared_with_id) }
+
+        changed_ids.filter_map do |id|
+          shared_with_ids = shared_with_ids_by_collection[id]
+          next if shared_with_ids.blank?
+
+          { label: new_labels_by_id[id], shared_with_ids: shared_with_ids }
+        end
+      end
+
+      def new_labels_by_id_from_tree
+        linear_tree_structure.select { |entry| entry[:label] }.to_h { |entry| [entry[:id], entry[:label]] }
+      end
+
+      def renamed_collection_ids
+        new_labels_by_id = new_labels_by_id_from_tree
+        return [] if new_labels_by_id.empty?
+
+        current_labels_by_id = Collection.where(id: new_labels_by_id.keys).pluck(:id, :label).to_h
+        new_labels_by_id.reject { |id, label| current_labels_by_id[id] == label }.keys
+      end
+
+      # Reuses the "Shared Collection With Me" channel the initial share creation notifies on (see
+      # CollectionsStore#createSharingMessage in the frontend) so NoticeButton.js's existing refresh
+      # check picks it up and refetches the sharee's collection tree.
+      def notify_renamed_sharees!(entries)
+        return if entries.empty?
+
+        channel_id = Channel.find_by(subject: Channel::SHARED_COLLECTION_WITH_ME)&.id
+        return unless channel_id
+
+        entries.each do |entry|
+          Message.create_msg_notification(
+            channel_id: channel_id,
+            message_content: { data: "#{current_user.name} renamed a shared collection to \"#{entry[:label]}\"." },
+            message_from: current_user.id,
+            message_to: entry[:shared_with_ids],
+          )
+        end
+      end
 
       # Locked collections (the "All"/repository/transferred roots) are excluded: their label and
       # tree position are system-defined, so a bulk tree update may neither move nor rename them.

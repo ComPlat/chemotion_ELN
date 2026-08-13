@@ -168,6 +168,25 @@ module Chemotion
       def share_value_defaults(share)
         share.attributes.symbolize_keys.except(*%i[id collection_id shared_with_id created_at updated_at])
       end
+
+      # Tell +user_ids+ (Person and/or Group ids — the notification pipeline resolves a Group to its
+      # members on its own) that something changed on a collection shared with them, on every write
+      # path (create, update, revoke) regardless of which client made the change. Lands in the
+      # "Shared Collection With Me" bucket NoticeButton.js already treats as a signal to refetch the
+      # sharee's collection tree.
+      def notify_share_recipients!(user_ids, text)
+        return if user_ids.blank?
+
+        channel_id = Channel.find_by(subject: Channel::SHARED_COLLECTION_WITH_ME)&.id
+        return unless channel_id
+
+        Message.create_msg_notification(
+          channel_id: channel_id,
+          message_content: { data: text },
+          message_from: current_user.id,
+          message_to: user_ids,
+        )
+      end
     end
 
     resource :collection_shares do
@@ -227,6 +246,8 @@ module Chemotion
         # leave the earlier writes behind.
         ActiveRecord::Base.transaction(requires_new: true) { write_shares!(targets, params[:user_ids], attributes) }
 
+        notify_share_recipients!(params[:user_ids], "#{current_user.name} has shared a collection with you.")
+
         { status: 204 }
       end
 
@@ -283,6 +304,11 @@ module Chemotion
                         new_share_defaults: share_value_defaults(share))
         end
 
+        notify_share_recipients!(
+          [share.shared_with_id],
+          "#{current_user.name} updated your access to a collection shared with you.",
+        )
+
         present share, with: Entities::CollectionShareEntity, root: :collection_share
       end
 
@@ -296,7 +322,8 @@ module Chemotion
         # A user may always reject the share addressed to them personally. `shared_with` would also
         # match a share held by one of their *groups*; revoking that would drop the collection for
         # every other member, so it is not theirs to reject — they leave the group instead.
-        unless CollectionShare.shared_directly_with(current_user).exists?(id: share.id)
+        self_reject = CollectionShare.shared_directly_with(current_user).exists?(id: share.id)
+        unless self_reject
           # Otherwise they must administrate the collection, and must not revoke a share that
           # outranks them.
           collection = find_administrable_collection(share.collection_id)
@@ -306,9 +333,14 @@ module Chemotion
         end
 
         collection = share.collection
+        shared_with_id = share.shared_with_id
         share.destroy!
 
         refresh_shared_flag!(collection)
+        # Self-rejecting is not worth notifying about — the rejecting user already knows.
+        unless self_reject
+          notify_share_recipients!([shared_with_id], "#{current_user.name} removed your access to a shared collection.")
+        end
 
         status 204
         body false

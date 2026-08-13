@@ -5,7 +5,6 @@ import { cloneDeep } from 'lodash';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import CollectionSharesFetcher from 'src/fetchers/CollectionSharesFetcher';
 import CollectionElementsFetcher from 'src/fetchers/CollectionElementsFetcher';
-import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -268,12 +267,11 @@ export const CollectionsStore = types
         }
       }
     }),
-    addCollectionShare: flow(function* addCollectionShare(params, currentUser) {
+    addCollectionShare: flow(function* addCollectionShare(params) {
       const response = yield CollectionSharesFetcher.addCollectionShare(params)
       if (response.status === 204) {
         self.fetchCollections()
         self.getSharedWithUsers(params.collection_id)
-        self.createSharingMessage(currentUser, params.user_ids)
       }
     }),
     takeOwnership: flow(function* takeOwnership(collectionId) {
@@ -401,7 +399,7 @@ export const CollectionsStore = types
             user_ids: [user.id],
             ...params.permissions
           }
-          self.addCollectionShare(shareParams, params.currentUser)
+          self.addCollectionShare(shareParams)
           self.addNewCollectionToOwnCollection(newCollection)
           // uncheck all
           UIActions.uncheckWholeSelection.defer()
@@ -419,15 +417,6 @@ export const CollectionsStore = types
         const label = hasCustomLabel && multipleRecipients ? `${params.label} – ${user.name}` : params.label;
         self.addElementsToCollectionAndShare(user, { ...params, label });
       });
-    },
-    createSharingMessage(currentUser, userIds) {
-      const messageParams = {
-        channel_id: 4,
-        content: `${currentUser.name} has shared a collection with you.`,
-        user_ids: userIds,
-      };
-
-      MessagesFetcher.createMessage(messageParams)
     },
     addNewCollectionToOwnCollection(newCollection) {
       const collectionItem = Collection.create(newCollection)
