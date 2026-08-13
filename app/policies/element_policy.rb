@@ -64,6 +64,27 @@ class ElementPolicy
     record_is_in_own_collection? || record_shared_with_minimum_detail_level?(3)
   end
 
+  # Whether the record's structural data (e.g. a Sample's molfile, see SampleEntity's
+  # `anonymize_below: 1`) is visible to the user, as opposed to merely being able to see that
+  # the record exists (see #read?).
+  def read_structure?
+    return false unless user_and_record_present?
+
+    record_is_in_own_collection? || record_shared_with_minimum_detail_level?(1)
+  end
+
+  # Whether the user holds full (owner-equivalent) detail access to the record on *this record
+  # type's own* detail-level column (e.g. reaction_detail_level for a Reaction) — narrower than
+  # Collection.full_detail_access_ids, which additionally requires every other element type's
+  # detail level to be at OWNER_LEVEL too, since it gates exporting the whole collection raw. Used
+  # where an operation would expose more than the record's own fields, e.g. a Reaction's composed
+  # report scheme, which is only exposed to a sharee at ReactionEntity's `anonymize_below: 10`.
+  def read_full_detail?
+    return false unless user_and_record_present?
+
+    record_is_in_own_collection? || record_shared_with_minimum_detail_level?(Collection::OWNER_LEVEL)
+  end
+
   def import?
     return false unless user_and_record_present?
 

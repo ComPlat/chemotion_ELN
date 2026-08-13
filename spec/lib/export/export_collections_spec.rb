@@ -147,6 +147,78 @@ RSpec.describe 'ExportCollection' do
     end
   end
 
+  # A synthetic attachment (see Export::ExportCollections#build_research_plan_image_attachment,
+  # used for converting an out-of-export reaction link into a static image) is a real, if
+  # initially unassociated, Attachment record — export must not leave it (or its quota usage)
+  # behind on the exporting system once it's no longer needed.
+  context 'with #cleanup_synthetic_attachments' do
+    let(:export) { Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate, user.id) }
+
+    it 'hard-deletes a synthetic attachment, not just soft-deletes it' do
+      attachment = export.send(:build_research_plan_image_attachment, '<svg>x</svg>')
+      expect(attachment).to be_present
+
+      export.send(:cleanup_synthetic_attachments)
+
+      expect { Attachment.with_deleted.find(attachment.id) }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
+    it 'clears the tracked list so a later cleanup is a no-op' do
+      export.send(:build_research_plan_image_attachment, '<svg>x</svg>')
+      export.send(:cleanup_synthetic_attachments)
+
+      expect { export.send(:cleanup_synthetic_attachments) }.not_to raise_error
+    end
+  end
+
+  # #build_research_plan_ketcher_svg computes a content-addressed filename per converted link, so
+  # linking the very same outside sample from two research plans renders (and #fetch_image-s) the
+  # identical path twice. #fetch_image has no dedup guard, so @images ends up with a duplicate
+  # entry — without deduping before writing the zip, put_next_entry is called twice with the same
+  # entry name.
+  context 'with two research plans linking the same outside sample' do
+    let(:other_collection) { create(:collection, user_id: user.id, label: 'other-owned-collection') }
+    let(:outside_sample) do
+      create(:sample, created_by: user.id, name: 'Outside Sample', molfile: molfile, collections: [other_collection])
+    end
+    let(:research_plan1) do
+      create(
+        :research_plan,
+        collections: [collection],
+        body: [{ 'id' => SecureRandom.uuid, 'type' => 'sample', 'value' => { 'sample_id' => outside_sample.id } }],
+      )
+    end
+    let(:research_plan2) do
+      create(
+        :research_plan,
+        collections: [collection],
+        body: [{ 'id' => SecureRandom.uuid, 'type' => 'sample', 'value' => { 'sample_id' => outside_sample.id } }],
+      )
+    end
+
+    before do
+      research_plan1
+      research_plan2
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate, user.id)
+      export.prepare_data
+      export.to_file
+    end
+
+    # Zip::File#each silently coalesces two entries written with the identical name, so it can't
+    # tell a real fix apart from the bug — description.txt is built up by the same loop that calls
+    # put_next_entry, so a line appearing twice there reliably means the loop ran twice for it.
+    it 'lists the shared ketcher preview svg in description.txt only once' do
+      svg_path = file_names.find { |name| name.start_with?('images/research_plans/') }
+
+      description = ''
+      Zip::File.open(file_path) do |files|
+        files.each { |file| description = file.get_input_stream.read if file.name == 'description.txt' }
+      end
+
+      expect(description.scan(svg_path).length).to eq(1)
+    end
+  end
+
   context 'with a reaction' do # rubocop:disable RSpec/MultipleMemoizedHelpers
     let(:sample1) { create(:sample) }
     let(:sample2) { create(:sample) }

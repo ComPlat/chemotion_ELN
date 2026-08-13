@@ -63,7 +63,7 @@ class Oauth::RadarController < ApplicationController
           collection.metadata.reset_radar_ids
 
           # enqueue the job to create the files and upload them to radar
-          ExportCollectionToRadarJob.perform_later(access_token, collection_id, response['id'])
+          ExportCollectionToRadarJob.perform_later(access_token, collection_id, response['id'], current_user.id)
 
           return redirect_to action: 'export'
         end
