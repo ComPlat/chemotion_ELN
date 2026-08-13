@@ -7,15 +7,7 @@ class PagesController < ApplicationController
 
   def about; end
 
-  def chemspectra; end
-
-  def chemspectra_editor; end
-
   def docx; end
-
-  def welcome
-    flash.clear
-  end
 
   def editor; end
 
