@@ -6,9 +6,12 @@ module Chemotion
     resource :messages do
       desc 'Get message configuration'
       get 'config' do
+        # Floors protect every client from a misconfigured .env driving a runaway polling loop —
+        # regardless of what MESSAGE_AUTO_INTERNAL/MESSAGE_IDLE_TIME are set to (including non-numeric
+        # garbage, which .to_i coerces to 0), the served values can never go below these.
         { messageEnable: ENV['MESSAGE_ENABLE'] || 'true',
-          messageAutoInterval: (ENV['MESSAGE_AUTO_INTERNAL'] || 6000).to_i,
-          idleTimeout: (ENV['MESSAGE_IDLE_TIME'] || 12).to_i }
+          messageAutoInterval: [(ENV['MESSAGE_AUTO_INTERNAL'] || 6000).to_i, 500].max,
+          idleTimeout: [(ENV['MESSAGE_IDLE_TIME'] || 12).to_i, 5].max }
       end
 
       desc 'Return messages of the current user'
