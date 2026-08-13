@@ -84,6 +84,38 @@ describe Chemotion::LiteratureAPI do
     end
   end
 
+  describe 'GET /api/v1/literatures/collection' do
+    context 'with a valid collection id' do
+      before do
+        get '/api/v1/literatures/collection', params: { id: collection.id }
+      end
+
+      it 'responds 200' do
+        expect(response).to have_http_status :ok
+      end
+
+      it 'returns the reference groups' do
+        expect(JSON.parse(response.body).symbolize_keys).to include(
+          :collectionRefs, :sampleRefs, :reactionRefs, :researchPlanRefs
+        )
+      end
+    end
+
+    context 'when the collection does not exist' do
+      before do
+        get '/api/v1/literatures/collection', params: { id: 0 }
+      end
+
+      it 'responds 404 instead of raising' do
+        expect(response).to have_http_status :not_found
+      end
+
+      it 'returns a JSON error body' do
+        expect(JSON.parse(response.body)).to eq('error' => 'Collection not found')
+      end
+    end
+  end
+
   describe 'POST /api/v1/literatures' do
     context 'when adding literature to a cell line' do
       let!(:cell_line) { create(:cellline_sample, cellline_material: cellline_material, collections: [collection]) }

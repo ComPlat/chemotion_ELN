@@ -4,6 +4,10 @@
 
 module Chemotion
   class LiteratureAPI < Grape::API
+    rescue_from ActiveRecord::RecordNotFound do
+      error!('Collection not found', 404)
+    end
+
     helpers CollectionHelpers
     helpers ParamsHelpers
 

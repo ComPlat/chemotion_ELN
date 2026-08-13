@@ -41,7 +41,10 @@ const CollectionSubtreeFunctions = ({
   const [isLiteratureModalMounted, setIsLiteratureModalMounted] = useState(false);
   const [showRadarModal, setShowRadarModal] = useState(false);
 
-  if (collection === null || collection === undefined) return null;
+  // The shared-with-me tree's owner rows are synthetic grouping nodes with id 0 and no
+  // collection behind them (see CollectionSubtree.js's handleClick comment on the same
+  // sentinel) — none of these actions apply, so the kebab itself should not render.
+  if (collection === null || collection === undefined || !collection.id) return null;
 
   const collectionName = collection.label || 'Unknown Collection';
   // For own collections all actions are allowed; for shared-with-me the delegate's
