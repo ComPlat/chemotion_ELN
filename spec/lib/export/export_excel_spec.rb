@@ -57,6 +57,26 @@ RSpec.describe 'Export::ExportExcel' do
         expect(formated_value).to eq ['13.0', '25 °F', '1', '2.45 M']
       end
     end
+
+    context 'when the sample is reached via a shared/synced collection' do
+      let(:headers) { '@headers00 = ["cas"]' }
+
+      before do
+        sample_json['shared_sync'] = 't'
+        sample_json['dl_s'] = 0
+        sample_json['cas'] = '50-00-0'
+      end
+
+      it 'still includes the cas value (regression guard: HEADERS_SAMPLE_0 must list cas)' do
+        expect(formated_value).to eq ['50-00-0']
+      end
+    end
+  end
+
+  describe 'HEADERS_SAMPLE_0' do
+    it 'includes cas so exports of shared/synced samples still include the CAS column' do
+      expect(Export::ExportTable::HEADERS_SAMPLE_0).to include('cas')
+    end
   end
 
   describe '.get_image_from_svg' do
