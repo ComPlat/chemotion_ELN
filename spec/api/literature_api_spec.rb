@@ -101,6 +101,24 @@ describe Chemotion::LiteratureAPI do
       end
     end
 
+    # The path a real user hits: the collection is there, but `set_var` resolves it through
+    # `accessible_for`, so someone else's collection raises exactly like a missing one.
+    context 'when the collection exists but is not accessible to the user' do
+      let(:strangers_collection) { create(:collection, user: create(:person)) }
+
+      before do
+        get '/api/v1/literatures/collection', params: { id: strangers_collection.id }
+      end
+
+      it 'responds 404 rather than leaking its existence' do
+        expect(response).to have_http_status :not_found
+      end
+
+      it 'returns a JSON error body' do
+        expect(JSON.parse(response.body)).to eq('error' => 'Collection not found')
+      end
+    end
+
     context 'when the collection does not exist' do
       before do
         get '/api/v1/literatures/collection', params: { id: 0 }
