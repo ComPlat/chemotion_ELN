@@ -107,6 +107,7 @@ const DevicesList = () => {
       return (
         <ConfirmDeleteButton
           header={`Remove data collector settings of ${device.name}`}
+          variant="primary"
           className="bg-danger-subtle text-danger"
           title="Clear data collector settings"
           onConfirm={() => clearDatacollector(device)}
@@ -126,6 +127,7 @@ const DevicesList = () => {
       return (
         <ConfirmDeleteButton
           header={`Remove Novnc settings of ${device.name}`}
+          variant="primary"
           className="bg-danger-subtle text-danger"
           title="Clear NoVNC settings"
           onConfirm={() => clearNovncSettings(device)}
