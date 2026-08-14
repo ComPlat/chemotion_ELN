@@ -1,23 +1,23 @@
 import React, {
-  useState, useEffect, useCallback,
+  useState, useEffect, useCallback, useMemo,
 } from 'react';
+import PropTypes from 'prop-types';
 import {
   Card, Form, Row, Col, Button, Alert, Spinner, InputGroup, OverlayTrigger, Tooltip,
 } from 'react-bootstrap';
 import { CreatableSelect } from 'src/components/common/Select';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
+import {
+  customModelsKey, institutionModelsKey, peekModels,
+  fetchCustomModels, fetchInstitutionModels, subscribe, scopeToUser,
+} from 'src/utilities/llmModelCache';
+import {
+  LLM_PROTOCOL_OPTIONS, llmProtocolShortLabel, CHAT_COMPLETIONS_PROTOCOL,
+} from 'src/utilities/llmProtocols';
 
 const PROVIDER_OPTIONS = [
   { value: 'global', label: "Use my institution's AI service (managed by admin)" },
-  { value: 'custom', label: 'Use my own provider (OpenAI-compatible, Claude, or Gemini)' },
-];
-
-// Wire protocols for a custom endpoint. 'openai' covers any OpenAI-compatible API
-// (OpenAI, KI-Toolbox, vLLM, Ollama, …); the two natives use their own APIs.
-const PROTOCOL_OPTIONS = [
-  { value: 'openai',    label: 'OpenAI-compatible' },
-  { value: 'anthropic', label: 'Anthropic (Claude)' },
-  { value: 'gemini',    label: 'Google (Gemini)' },
+  { value: 'custom', label: 'Use my own provider (OpenAI, Claude, Gemini, or a self-hosted endpoint)' },
 ];
 
 // A stable key identifying the exact provider config, so we know whether the
@@ -46,7 +46,7 @@ const FALLBACK_TASKS = [
   { taskName: 'research_assistant', label: 'Research Assistant' },
 ];
 
-export default function LlmSettings() {
+const LlmSettings = ({ userId }) => {
   const [providerType, setProviderType] = useState('global');
   const [apiProtocol, setApiProtocol]   = useState('openai');
   const [profiles, setProfiles]         = useState([]);
@@ -73,13 +73,76 @@ export default function LlmSettings() {
   const [verifyStatus, setVerifyStatus] = useState(null); // test/verify result (shown by the button)
   const [verifying, setVerifying]       = useState(false);
   const [loading, setLoading]           = useState(true);
+  // Curated fallback list carried by an applied preset, tagged with the provider
+  // identity it describes so it is dropped once the user edits protocol/URL away.
+  const [presetModels, setPresetModels]           = useState(null);
+  // Counts of in-flight lookups, not booleans: a mount-time load and a load
+  // triggered by Test connection can overlap, and a boolean would let the first
+  // one to finish hide the spinner while the second is still running.
+  const [institutionLoads, setInstitutionLoads] = useState(0);
+  const [customLoads, setCustomLoads]           = useState(0);
+  const [knownTasks, setKnownTasks]           = useState(FALLBACK_TASKS);
+  // The model lists themselves are NOT component state: they live in
+  // llmModelCache, keyed by provider identity and shared across mounts, and are
+  // read straight through during render (see cachedCustomModels below). That is
+  // what makes flipping between providers restore each one's list — with state we
+  // could only ever hold one provider's list at a time. This counter exists only
+  // to re-render when the cache changes.
+  const [, noteCacheFilled] = useState(0);
+
+  // Re-render on any cache write, including ones this component did not trigger.
+  useEffect(() => subscribe(() => noteCacheFilled((n) => n + 1)), []);
+
+  // Never show one user the lists cached for another (the cache is module level).
+  useEffect(() => scopeToUser(userId), [userId]);
+
+  const isCustomMode = providerType === 'custom';
+
+  // Identity of the custom provider currently described by the form. Note the
+  // API key is not part of it — see llmModelCache for why.
+  const customIdentity = useMemo(
+    () => customModelsKey({ protocol: apiProtocol, baseUrl }),
+    [apiProtocol, baseUrl],
+  );
+
+  // Fetch the model list for one explicit custom config into the cache. Callers
+  // pass the config rather than relying on state, because the initial load fires
+  // this in the same tick as the setState calls that populate the form.
+  // Re-rendering is handled by the cache subscription above, not here.
+  const loadCustomModels = useCallback((config, { force = false } = {}) => {
+    setCustomLoads((n) => n + 1);
+    return fetchCustomModels(config, { force })
+      .finally(() => setCustomLoads((n) => n - 1));
+  }, []);
+
+  const loadInstitutionModels = useCallback(({ force = false } = {}) => {
+    setInstitutionLoads((n) => n + 1);
+    return fetchInstitutionModels({ force })
+      .finally(() => setInstitutionLoads((n) => n - 1));
+  }, []);
+
   // Two *separate* model lists, each scoped to one provider context, so the
   // dropdown never mixes institution models with a personal provider's models.
-  const [institutionModels, setInstitutionModels] = useState([]);
-  const [customModels, setCustomModels]           = useState([]);
-  const [loadingInstitutionModels, setLoadingInstitutionModels] = useState(false);
-  const [loadingCustomModels, setLoadingCustomModels]           = useState(false);
-  const [knownTasks, setKnownTasks]           = useState(FALLBACK_TASKS);
+  // Both are looked up in the cache by provider identity, which is what makes
+  // switching provider — mode, protocol or endpoint — non-destructive: the list
+  // the user came from is still there when they switch back, no request either way.
+  const cachedCustomModels      = peekModels(customIdentity);
+  const cachedInstitutionModels = peekModels(institutionModelsKey());
+
+  const customModels = useMemo(() => {
+    if (cachedCustomModels) return toModelOptions(cachedCustomModels);
+    // This endpoint has never been queried — fall back to the curated list of the
+    // preset that filled the form in, when the values still match that preset.
+    if (presetModels && presetModels.key === customIdentity) {
+      return toModelOptions(presetModels.models);
+    }
+    return [];
+  }, [cachedCustomModels, presetModels, customIdentity]);
+
+  const institutionModels = useMemo(
+    () => toModelOptions(cachedInstitutionModels),
+    [cachedInstitutionModels],
+  );
 
   useEffect(() => {
     UsersFetcher.fetchLlmSettings()
@@ -117,31 +180,28 @@ export default function LlmSettings() {
         setSavedDefaultModel(setting.default_model || '');
         setSavedTaskMappings(mappings || []);
 
+        // Warm the cache for the provider contexts this user can actually reach.
+        // Both are no-ops once the cache holds a fresh list, so re-mounting the
+        // settings tab costs no provider calls at all.
+        //
+        // `type` is checked as well as the gate: when neither gate is granted the
+        // mode resolution above still leaves `type` at 'global', and that renders
+        // the institution dropdown — which must not be left permanently empty.
+        if (institution || type === 'global') loadInstitutionModels();
         // Pre-populate the custom model list from the saved custom config (blank
-        // key → server reuses the stored key). Institution models load separately.
+        // key → server reuses the stored key).
         if (type === 'custom') {
-          setLoadingCustomModels(true);
-          UsersFetcher.fetchLlmModelsForConfig({
+          loadCustomModels({
             protocol: setting.api_protocol || 'openai',
             baseUrl:  setting.base_url || '',
             model:    setting.default_model || '',
-          })
-            .then((models) => setCustomModels(toModelOptions(models)))
-            .finally(() => setLoadingCustomModels(false));
+          });
         }
       })
       .catch(() => setStatus({ variant: 'danger', message: 'Failed to load AI settings.' }))
       .finally(() => setLoading(false));
-  }, []);
-
-  // Load the institution (global) provider's model list once — this list is
-  // shown only in institution mode and is independent of any custom config.
-  useEffect(() => {
-    setLoadingInstitutionModels(true);
-    UsersFetcher.fetchInstitutionLlmModels()
-      .then((models) => setInstitutionModels(toModelOptions(models)))
-      .catch(() => {})
-      .finally(() => setLoadingInstitutionModels(false));
+    // The loaders are stable — this must stay a mount-only effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fetch task definitions from the server-side Task Registry (SF-04)
@@ -175,15 +235,33 @@ export default function LlmSettings() {
     setDefaultModel(preset.default_model || '');
     setApiKey(''); // the key is provider-specific — never carry it across presets
     setVerifyStatus(null);
-    // RESET the custom model list to this preset's curated list (or clear it, so
-    // the previously-selected preset's models never linger). It is refreshed with
-    // the live list after a successful Test connection.
-    setCustomModels(
-      Array.isArray(preset.models) && preset.models.length > 0
-        ? toModelOptions(preset.models)
-        : [],
-    );
+    // Record this preset's curated list as the fallback for the identity it
+    // describes. A cached live list for the same endpoint (from an earlier Test
+    // connection) still wins, and because the fallback is tagged with an identity,
+    // the previously-selected preset's models can never linger.
+    setPresetModels({
+      key: customModelsKey({ protocol: preset.protocol || 'openai', baseUrl: preset.base_url || '' }),
+      models: Array.isArray(preset.models) ? preset.models : [],
+    });
   }, [profiles]);
+
+  // Switching provider mode never refetches anything the cache already holds; the
+  // one case worth a request is entering custom mode for the first time while the
+  // form still describes the *saved* custom provider — the server can list its
+  // models with the stored key. Any other endpoint has no key yet and needs a
+  // Test connection first, and a request must never be tied to typing in the URL
+  // field, so this is deliberately scoped to the mode switch.
+  const handleProviderTypeChange = useCallback((value) => {
+    setProviderType(value);
+    if (value !== 'custom' || !apiKeyMasked) return;
+    const savedConfig = {
+      protocol: savedProtocol,
+      baseUrl:  savedBaseUrl,
+      model:    savedDefaultModel,
+    };
+    if (customModelsKey(savedConfig) !== customIdentity) return;
+    loadCustomModels(savedConfig); // no-op while the cached list is still fresh
+  }, [apiKeyMasked, savedProtocol, savedBaseUrl, savedDefaultModel, customIdentity, loadCustomModels]);
 
   const performDeleteKey = useCallback(() => {
     setConfirmDeleteKey(false);
@@ -286,20 +364,29 @@ export default function LlmSettings() {
         setVerifyStatus({ variant: 'success', message: res.message || 'Connection verified.' });
         // Mark this exact config as verified so Save is unlocked.
         setVerifiedConfig(configKey(providerType, apiProtocol, baseUrl, defaultModel, apiKey));
-        // Refresh the custom model list from the just-verified connection so the
+        // Refresh the model list from the just-verified connection so the
         // Task→Model dropdown reflects the models this provider actually offers.
+        // `force` bypasses the browser cache *and* asks the server to re-read the
+        // catalogue (refresh=true) — a verified connection is the one moment we
+        // know it is worth re-reading, and the only place a stale server-side entry
+        // for an unchanged identity would otherwise survive.
         if (providerType === 'custom') {
-          setLoadingCustomModels(true);
-          UsersFetcher.fetchLlmModelsForConfig({
+          loadCustomModels({
             protocol: apiProtocol, baseUrl, model: defaultModel, apiKey,
-          })
-            .then((models) => { if (models.length > 0) setCustomModels(toModelOptions(models)); })
-            .finally(() => setLoadingCustomModels(false));
+          }, { force: true });
+        } else {
+          loadInstitutionModels({ force: true });
         }
       })
-      .catch((err) => setVerifyStatus({ variant: 'danger', message: err.message || 'Verification failed. Check key and endpoint.' }))
+      .catch((err) => setVerifyStatus({
+        variant: 'danger',
+        message: err.message || 'Verification failed. Check key and endpoint.',
+      }))
       .finally(() => setVerifying(false));
-  }, [providerType, apiProtocol, baseUrl, apiKey, defaultModel]);
+  }, [
+    providerType, apiProtocol, baseUrl, apiKey, defaultModel,
+    loadCustomModels, loadInstitutionModels,
+  ]);
 
   if (loading) {
     return (
@@ -319,13 +406,11 @@ export default function LlmSettings() {
     || (opt.value === 'custom' && customKeyAllowed)
   ));
 
-  const isCustom = providerType === 'custom';
-
   // The Task→Model dropdown reflects ONLY the currently-selected provider's
   // models — institution models in institution mode, the custom provider's
   // models in custom mode — so the two never intermix.
-  const modelOptions  = isCustom ? customModels : institutionModels;
-  const modelsLoading = isCustom ? loadingCustomModels : loadingInstitutionModels;
+  const modelOptions  = isCustomMode ? customModels : institutionModels;
+  const modelsLoading = (isCustomMode ? customLoads : institutionLoads) > 0;
 
   // The saved key belongs to the saved provider identity. If the user switches
   // provider (preset or manual edit of protocol/URL), hide the mask and prompt
@@ -362,7 +447,7 @@ export default function LlmSettings() {
                   label={opt.label}
                   value={opt.value}
                   checked={providerType === opt.value}
-                  onChange={() => setProviderType(opt.value)}
+                  onChange={() => handleProviderTypeChange(opt.value)}
                 />
               ))}
               {!customKeyAllowed && (
@@ -374,7 +459,7 @@ export default function LlmSettings() {
           </Row>
 
           {/* Institution provider info (read-only) — shown in global mode */}
-          {!isCustom && (
+          {!isCustomMode && (
             <Row className="mb-3">
               <Col className="col-7 offset-4">
                 {adminProvider ? (
@@ -432,7 +517,7 @@ export default function LlmSettings() {
           )}
 
           {/* Custom endpoint / model / key — only in custom mode */}
-          {isCustom && (
+          {isCustomMode && (
             <>
               {/* Preset picker (from config/llm_provider_profiles.yml) */}
               {profiles.length > 0 && (
@@ -459,18 +544,33 @@ export default function LlmSettings() {
 
               <Row className="mb-3">
                 <Form.Label column className="col-form-label col-3 offset-1">
-                  Provider type
+                  API protocol
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={(
+                      <Tooltip id="llm-protocol-tip">
+                        The request format your endpoint speaks, not who runs it. Pick the
+                        Chat Completions API for any service exposing
+                        {' '}
+                        <code>/v1/chat/completions</code>
+                        {' '}
+                        — OpenAI, KI-Toolbox, vLLM, Ollama, LM Studio, Azure and most
+                        self-hosted servers. Claude and Gemini have their own.
+                      </Tooltip>
+                    )}
+                  >
+                    <i className="fa fa-info-circle ms-1" />
+                  </OverlayTrigger>
                 </Form.Label>
                 <Col className="col-7">
+                  {/* Changing this changes the provider identity, so the model
+                      list is looked up again under the new key — no request, and
+                      switching back restores the previous provider's list. */}
                   <Form.Select
                     value={apiProtocol}
-                    onChange={(e) => {
-                      setApiProtocol(e.target.value);
-                      // provider identity changed → drop the stale model list
-                      setCustomModels([]);
-                    }}
+                    onChange={(e) => setApiProtocol(e.target.value)}
                   >
-                    {PROTOCOL_OPTIONS.map((opt) => (
+                    {LLM_PROTOCOL_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </Form.Select>
@@ -484,8 +584,9 @@ export default function LlmSettings() {
                     placement="top"
                     overlay={(
                       <Tooltip id="llm-endpoint-tip">
-                        For &quot;OpenAI-compatible&quot;, enter the endpoint (e.g. KI-Toolbox, vLLM,
-                        Ollama). For Anthropic or Gemini, leave blank to use the official endpoint.
+                        {`For the ${llmProtocolShortLabel(CHAT_COMPLETIONS_PROTOCOL)}, enter your
+                        endpoint (e.g. KI-Toolbox, vLLM, Ollama). For the Anthropic or Gemini
+                        API, leave blank to use the official endpoint.`}
                       </Tooltip>
                     )}
                   >
@@ -495,15 +596,11 @@ export default function LlmSettings() {
                 <Col className="col-7">
                   <Form.Control
                     type="url"
-                    placeholder={apiProtocol === 'openai'
+                    placeholder={apiProtocol === CHAT_COMPLETIONS_PROTOCOL
                       ? 'https://your-endpoint/api  (or http://localhost:11434 for Ollama)'
                       : '(optional — defaults to the official endpoint)'}
                     value={baseUrl}
-                    onChange={(e) => {
-                      setBaseUrl(e.target.value);
-                      // endpoint changed → the model list must be re-fetched on Test
-                      setCustomModels([]);
-                    }}
+                    onChange={(e) => setBaseUrl(e.target.value)}
                   />
                 </Col>
               </Row>
@@ -706,4 +803,15 @@ export default function LlmSettings() {
       </Card.Body>
     </Card>
   );
-}
+};
+
+LlmSettings.propTypes = {
+  // Only used to keep the module-level model cache from crossing users.
+  userId: PropTypes.number,
+};
+
+LlmSettings.defaultProps = {
+  userId: null,
+};
+
+export default LlmSettings;

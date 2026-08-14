@@ -10,7 +10,8 @@
 #   key           required  unique identifier (any string)
 #   label         required  display name in the dropdown
 #   protocol      required  one of: openai | anthropic | gemini
-#                           (openai = any OpenAI-compatible /v1/chat/completions endpoint)
+#                           ('openai' is the Chat Completions API — any endpoint
+#                           serving /v1/chat/completions, whoever runs it)
 #   base_url      optional  endpoint base URL (anthropic/gemini default to their
 #                           official endpoint when blank)
 #   default_model optional  pre-filled default model id
@@ -26,7 +27,7 @@ profiles:
     protocol: openai
     base_url: "https://ki-toolbox.scc.kit.edu/api"
     default_model: ""
-    notes: "KIT-hosted, OpenAI-compatible. Requires a KIT KI-Toolbox API key."
+    notes: "KIT-hosted, speaks the Chat Completions API. Requires a KIT KI-Toolbox API key."
 
   - key: openai
     label: "OpenAI"
@@ -57,4 +58,4 @@ profiles:
     protocol: openai
     base_url: "http://localhost:11434"
     default_model: ""
-    notes: "Local Ollama (OpenAI-compatible). Usually needs no API key."
+    notes: "Local Ollama, via its Chat Completions API. Usually needs no API key."

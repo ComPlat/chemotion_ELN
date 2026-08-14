@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import {
   Card, Form, Row, Col, Button, Alert, Spinner, OverlayTrigger, Tooltip,
 } from 'react-bootstrap';
 import { AsyncSelect } from 'src/components/common/Select';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
+import {
+  LLM_PROTOCOL_OPTIONS, llmProtocolShortLabel, CHAT_COMPLETIONS_PROTOCOL,
+} from 'src/utilities/llmProtocols';
 
 // ── User search helper (mirrors MatrixManagement.js exactly) ─────────────────
 
@@ -15,13 +19,8 @@ const loadUserByName = (input) => {
     .catch(() => []);
 };
 
-// Wire protocols for the global provider endpoint. 'openai' = any OpenAI-compatible
-// API (OpenAI, KI-Toolbox, vLLM, Ollama, …).
-const PROTOCOL_OPTIONS = [
-  { value: 'openai',    label: 'OpenAI-compatible' },
-  { value: 'anthropic', label: 'Anthropic (Claude)' },
-  { value: 'gemini',    label: 'Google (Gemini)' },
-];
+// Wire protocols for the global provider endpoint — see src/utilities/llmProtocols
+// for the naming, which is shared with the personal AI settings form.
 
 // Stable key identifying the exact provider config, to know whether the current
 // form matches what was last successfully tested.
@@ -38,9 +37,9 @@ const gateKey = (g) => JSON.stringify({
 
 // ── Reusable feature-gate section with its own (change-gated) Save button ─────
 
-function FeatureGateCard({
+const FeatureGateCard = ({
   title, enabledLabel, enabledHelp, includeHelp, excludeHelp, gate, saved, onChange, onSave,
-}) {
+}) => {
   const { enabled = false, include_users = [], exclude_users = [] } = gate;
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(null);
@@ -125,11 +124,31 @@ function FeatureGateCard({
       </Card.Body>
     </Card>
   );
-}
+};
+
+FeatureGateCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  enabledLabel: PropTypes.string.isRequired,
+  enabledHelp: PropTypes.string.isRequired,
+  includeHelp: PropTypes.string.isRequired,
+  excludeHelp: PropTypes.string.isRequired,
+  gate: PropTypes.shape({
+    enabled: PropTypes.bool,
+    include_users: PropTypes.arrayOf(PropTypes.object),
+    exclude_users: PropTypes.arrayOf(PropTypes.object),
+  }).isRequired,
+  saved: PropTypes.shape({
+    enabled: PropTypes.bool,
+    include_users: PropTypes.arrayOf(PropTypes.object),
+    exclude_users: PropTypes.arrayOf(PropTypes.object),
+  }).isRequired,
+  onChange: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
+};
 
 // ── Global Provider section ───────────────────────────────────────────────────
 
-function GlobalProviderCard({ provider: initialProvider, onSaved }) {
+const GlobalProviderCard = ({ provider: initialProvider, onSaved }) => {
   const [name, setName]                 = useState(initialProvider?.name || 'Global LLM Provider');
   const [baseUrl, setBaseUrl]           = useState(initialProvider?.base_url || '');
   const [apiKey, setApiKey]             = useState('');
@@ -236,11 +255,15 @@ function GlobalProviderCard({ provider: initialProvider, onSaved }) {
       })
       .catch((err) => setStatus({ variant: 'danger', message: err.message || 'Save failed.' }))
       .finally(() => setSaving(false));
-  }, [name, protocol, baseUrl, apiKey, defaultModel, savedName, savedProtocol, savedBaseUrl, savedModel, verifiedConfig, onSaved]);
+  }, [
+    name, protocol, baseUrl, apiKey, defaultModel,
+    savedName, savedProtocol, savedBaseUrl, savedModel, verifiedConfig, onSaved,
+  ]);
 
-  // Native protocols (anthropic/gemini) default their base URL; openai needs one.
+  // The Anthropic and Gemini APIs default their base URL; a Chat Completions
+  // endpoint could be anyone's, so it has to be given.
   const canTest = defaultModel.trim().length > 0
-    && (protocol !== 'openai' || baseUrl.trim().length > 0);
+    && (protocol !== CHAT_COMPLETIONS_PROTOCOL || baseUrl.trim().length > 0);
 
   // The saved key belongs to the saved provider identity — hide the mask + prompt
   // for a new key when the admin switches provider.
@@ -284,13 +307,16 @@ function GlobalProviderCard({ provider: initialProvider, onSaved }) {
           </Row>
 
           <Row className="mb-3">
-            <Form.Label column className="col-3">Provider type</Form.Label>
+            <Form.Label column className="col-3">API protocol</Form.Label>
             <Col>
               <Form.Select value={protocol} onChange={(e) => setProtocol(e.target.value)}>
-                {PROTOCOL_OPTIONS.map((opt) => (
+                {LLM_PROTOCOL_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </Form.Select>
+              <Form.Text className="text-muted">
+                The request format the endpoint speaks, not who runs it.
+              </Form.Text>
             </Col>
           </Row>
 
@@ -299,15 +325,15 @@ function GlobalProviderCard({ provider: initialProvider, onSaved }) {
             <Col>
               <Form.Control
                 type="url"
-                placeholder={protocol === 'openai'
+                placeholder={protocol === CHAT_COMPLETIONS_PROTOCOL
                   ? 'https://ki-toolbox.scc.kit.edu/api'
                   : '(optional — defaults to the official endpoint)'}
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
               />
               <Form.Text className="text-muted">
-                {protocol === 'openai'
-                  ? 'Any endpoint implementing the OpenAI /v1/chat/completions API (KI-Toolbox, OpenAI, vLLM, Ollama, …).'
+                {protocol === CHAT_COMPLETIONS_PROTOCOL
+                  ? 'Any endpoint implementing /v1/chat/completions (KI-Toolbox, OpenAI, vLLM, Ollama, …).'
                   : 'Leave blank to use the provider’s official endpoint.'}
               </Form.Text>
             </Col>
@@ -327,7 +353,8 @@ function GlobalProviderCard({ provider: initialProvider, onSaved }) {
               )}
               {providerSwitched && (
                 <p className="mb-1 text-warning small">
-                  You selected a different provider. Saving a verified API key for this provider will remove the saved API key for the previously configured provider.
+                  You selected a different provider. Saving a verified API key for this
+                  provider will remove the saved API key for the previously configured one.
                 </p>
               )}
               <div className="d-flex gap-2">
@@ -406,7 +433,10 @@ function GlobalProviderCard({ provider: initialProvider, onSaved }) {
                 variant="outline-secondary"
                 disabled={verifying || !canTest}
                 onClick={handleTest}
-                title={canTest ? 'Test with current form values' : 'Fill in the model (and Base URL for OpenAI-compatible) first'}
+                title={canTest
+                  ? 'Test with current form values'
+                  : 'Fill in the model (and Base URL for the '
+                    + `${llmProtocolShortLabel(CHAT_COMPLETIONS_PROTOCOL)}) first`}
                 className="d-inline-flex align-items-center justify-content-center"
                 style={{ minWidth: '10rem' }}
               >
@@ -429,13 +459,29 @@ function GlobalProviderCard({ provider: initialProvider, onSaved }) {
       </Card.Body>
     </Card>
   );
-}
+};
 
 // ── Root component ────────────────────────────────────────────────────────────
 
+GlobalProviderCard.propTypes = {
+  // null until the admin has saved a provider for the first time.
+  provider: PropTypes.shape({
+    name: PropTypes.string,
+    base_url: PropTypes.string,
+    api_key_masked: PropTypes.string,
+    default_model: PropTypes.string,
+    api_protocol: PropTypes.string,
+  }),
+  onSaved: PropTypes.func.isRequired,
+};
+
+GlobalProviderCard.defaultProps = {
+  provider: null,
+};
+
 const EMPTY_GATE = { enabled: false, include_users: [], exclude_users: [] };
 
-export default function AdminLlmConfig() {
+const AdminLlmConfig = () => {
   const [keyGate, setKeyGate]           = useState(EMPTY_GATE);
   const [keyGateSaved, setKeyGateSaved] = useState(EMPTY_GATE);
   const [instGate, setInstGate]         = useState(EMPTY_GATE);
@@ -520,7 +566,8 @@ export default function AdminLlmConfig() {
       <FeatureGateCard
         title="Personal API Key Permission"
         enabledLabel="Allow all users to configure their own API key / endpoint"
-        enabledHelp="When checked, all users may set a personal provider (OpenAI-compatible, Claude, Gemini, …),
+        enabledHelp="When checked, all users may set a personal provider (OpenAI, Claude,
+          Gemini, or a self-hosted endpoint),
           except those excluded. When unchecked, only users in the Include list may — everyone else is limited to
           the institution provider (and only if they are granted institution access above)."
         includeHelp="When the permission is off, only these users may enter a personal API key."
@@ -532,4 +579,6 @@ export default function AdminLlmConfig() {
       />
     </div>
   );
-}
+};
+
+export default AdminLlmConfig;

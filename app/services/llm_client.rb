@@ -7,10 +7,11 @@ require 'json'
 # LlmClient talks to an LLM chat API using one of three wire protocols, selected
 # by +protocol+:
 #
-#   'openai'    — OpenAI-compatible POST /v1/chat/completions with a Bearer key.
-#                 Covers OpenAI, KIT KI-Toolbox, Azure (key proxy), vLLM, Ollama,
-#                 and the OpenAI-compatible endpoints that Anthropic and Google
-#                 also expose.
+#   'openai'    — the Chat Completions API: POST /v1/chat/completions with a Bearer
+#                 key. Named after the endpoint rather than a vendor, because that
+#                 is what it identifies: OpenAI, KIT KI-Toolbox, Azure (key proxy),
+#                 vLLM, Ollama, LM Studio all serve it, as do the compatibility
+#                 endpoints Anthropic and Google expose alongside their own APIs.
 #   'anthropic' — native Anthropic Messages API: POST /v1/messages with the
 #                 x-api-key + anthropic-version headers.
 #   'gemini'    — native Google Gemini API: POST /v1beta/models/{model}:generateContent
@@ -74,9 +75,10 @@ class LlmClient
     request  = build_chat_request(messages, temperature, max_tokens, json_mode)
     response = http_client.request(request)
     handle_response(response)
-  rescue Net::ReadTimeout, Net::OpenTimeout => e
-    raise Errors::LlmTimeoutError, "LLM request timed out: #{e.message}"
-  rescue Errno::ECONNREFUSED, SocketError, Errno::ECONNRESET, EOFError => e
+  # Timeouts and transport failures (refused, reset, DNS, EOF) are reported the
+  # same way: the request never produced an answer and retrying may help.
+  rescue Net::ReadTimeout, Net::OpenTimeout,
+         Errno::ECONNREFUSED, SocketError, Errno::ECONNRESET, EOFError => e
     raise Errors::LlmTimeoutError, "LLM request timed out: #{e.message}"
   end
 
@@ -97,7 +99,7 @@ class LlmClient
 
   # Fail fast with a clear message when a key is required but missing, rather than
   # letting the provider return an opaque 401 for an empty "Bearer " header.
-  # OpenAI-compatible local servers (e.g. Ollama) legitimately need no key, so we
+  # Local Chat Completions servers (e.g. Ollama) legitimately need no key, so we
   # only hard-fail for protocols that always require one.
   def ensure_api_key_present!
     return if @api_key.present?
@@ -118,24 +120,21 @@ class LlmClient
   end
 
   def build_models_request
+    listing_path = @protocol == 'gemini' ? '/v1beta/models' : '/v1/models'
+    req = Net::HTTP::Get.new("#{@uri.path}#{listing_path}")
+
     case @protocol
-    when 'gemini'
-      req = Net::HTTP::Get.new("#{@uri.path}/v1beta/models")
-      req['x-goog-api-key'] = @api_key if @api_key.present?
-      req
-    when 'anthropic'
-      req = Net::HTTP::Get.new("#{@uri.path}/v1/models")
-      apply_anthropic_headers(req)
-      req
+    when 'gemini'    then req['x-goog-api-key'] = @api_key if @api_key.present?
+    when 'anthropic' then apply_anthropic_headers(req)
     else
-      req = Net::HTTP::Get.new("#{@uri.path}/v1/models")
       req['Authorization'] = "Bearer #{@api_key}" if @api_key.present?
       req['Content-Type']  = 'application/json'
-      req
     end
+
+    req
   end
 
-  # ── OpenAI-compatible adapter ───────────────────────────────────────────────
+  # ── Chat Completions adapter ────────────────────────────────────────────────
 
   def build_openai_chat(messages, temperature, max_tokens, json_mode)
     body = { model: @model, messages: messages, temperature: temperature }
@@ -151,11 +150,23 @@ class LlmClient
 
   # ── Anthropic Messages adapter ──────────────────────────────────────────────
 
-  def build_anthropic_chat(messages, _temperature, max_tokens, _json_mode)
-    system_prompt = messages.select { |m| m[:role].to_s == 'system' }
-                            .map { |m| m[:content] }.join("\n\n").presence
-    convo = messages.reject { |m| m[:role].to_s == 'system' }
-                    .map { |m| { role: m[:role].to_s == 'assistant' ? 'assistant' : 'user', content: m[:content] } }
+  # Both native APIs take the system prompt as a dedicated top-level field rather
+  # than as a message in the array, so it is lifted out of the conversation.
+  def system_prompt_from(messages)
+    messages.select { |m| m[:role].to_s == 'system' }.pluck(:content).join("\n\n").presence
+  end
+
+  # The conversation without the system message(s); each adapter maps the roles.
+  def conversation_from(messages)
+    messages.reject { |m| m[:role].to_s == 'system' }
+  end
+
+  # temperature is not accepted here: newer Claude models reject it, so
+  # build_chat_request deliberately does not pass one.
+  def build_anthropic_chat(messages, max_tokens, _json_mode)
+    system_prompt = system_prompt_from(messages)
+    convo = conversation_from(messages)
+            .map { |m| { role: m[:role].to_s == 'assistant' ? 'assistant' : 'user', content: m[:content] } }
 
     # max_tokens is REQUIRED by the Anthropic API. temperature is intentionally
     # omitted — newer Claude models (Opus 4.7+, Sonnet 5, Fable 5) reject it.
@@ -177,9 +188,8 @@ class LlmClient
   # ── Google Gemini adapter ───────────────────────────────────────────────────
 
   def build_gemini_chat(messages, temperature, max_tokens, json_mode)
-    system_prompt = messages.select { |m| m[:role].to_s == 'system' }
-                            .map { |m| m[:content] }.join("\n\n").presence
-    contents = messages.reject { |m| m[:role].to_s == 'system' }.map do |m|
+    system_prompt = system_prompt_from(messages)
+    contents = conversation_from(messages).map do |m|
       { role: m[:role].to_s == 'assistant' ? 'model' : 'user', parts: [{ text: m[:content].to_s }] }
     end
 
@@ -243,8 +253,7 @@ class LlmClient
     raise_unexpected_shape(body_str) unless blocks.is_a?(Array)
 
     @last_finish_reason = parsed['stop_reason']
-    blocks.select { |b| b.is_a?(Hash) && b['type'] == 'text' }
-          .map { |b| b['text'] }.join
+    blocks.select { |b| b.is_a?(Hash) && b['type'] == 'text' }.pluck('text').join
   end
 
   def parse_gemini_content(parsed, body_str)
@@ -263,15 +272,18 @@ class LlmClient
   # ── Model-list parsing ──────────────────────────────────────────────────────
 
   def parse_models(data)
-    case @protocol
-    when 'gemini'
-      # names look like "models/gemini-2.5-pro" — strip the prefix
-      (data['models'] || []).filter_map { |m| m['name']&.delete_prefix('models/') }.sort
-    when 'anthropic'
-      (data['data'] || []).filter_map { |m| m['id'] }.sort
-    else
-      (data['data'] || data['models'] || []).filter_map { |m| m['id'] || m['name'] }.sort
-    end
+    entries = @protocol == 'gemini' ? data['models'] : (data['data'] || data['models'])
+    return [] unless entries.is_a?(Array)
+
+    entries.filter_map { |entry| model_id_from(entry) }.sort
+  end
+
+  # Gemini reports names like "models/gemini-2.5-pro"; the others use a bare `id`.
+  # Stripping the prefix unconditionally is safe — no other provider uses it.
+  def model_id_from(entry)
+    return nil unless entry.is_a?(Hash)
+
+    (entry['id'] || entry['name'])&.delete_prefix('models/')
   end
 
   def http_client
