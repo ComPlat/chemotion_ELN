@@ -18,7 +18,7 @@
 #
 #   LlmAuditLogger.log(
 #     user:       current_user,
-#     task:       'nmr_structuring',
+#     task:       'sds_extraction',
 #     resolution: nil,
 #     success:    false,
 #     error:      e,
