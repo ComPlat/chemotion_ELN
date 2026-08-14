@@ -39,9 +39,9 @@ class LlmAuditLogger
     else
       Rails.logger.error("[LlmAudit] #{entry.to_json}")
     end
-  rescue StandardError => logging_error
+  rescue StandardError => e
     # Audit logging must never raise — swallow errors silently
-    Rails.logger.warn("[LlmAudit] Failed to write audit entry: #{logging_error.message}")
+    Rails.logger.warn("[LlmAudit] Failed to write audit entry: #{e.message}")
   end
 
   private_class_method def self.build_entry(user:, task:, resolution:, success:, error:)

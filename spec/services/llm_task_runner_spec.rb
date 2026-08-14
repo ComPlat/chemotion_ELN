@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MessageSpies -- reads better as an expectation set before the call
+# rubocop:disable RSpec/MultipleExpectations -- these assert one API response as a whole
+# rubocop:disable RSpec/NestedGroups -- the provider matrix (mode x gate x protocol) needs the nesting
+
 require 'rails_helper'
 
 RSpec.describe LlmTaskRunner do
@@ -21,6 +25,7 @@ RSpec.describe LlmTaskRunner do
     Matrice.find_or_create_by(name: 'aiFeatures')
            .update!(enabled: true, exclude_ids: [])
   end
+
   after { Matrice.find_by(name: 'aiFeatures')&.destroy }
 
   # ── JSON-output task: sds_extraction ──────────────────────────────────────
@@ -33,11 +38,11 @@ RSpec.describe LlmTaskRunner do
         'choices' => [{
           'message' => {
             'content' => {
-              'chemical_name'      => 'Phenol',
-              'cas_number'         => '108-95-2',
-              'signal_word'        => 'Danger',
-              'hazard_statements'  => %w[H301 H311],
-              'ghs_codes'          => %w[GHS06 GHS08],
+              'chemical_name' => 'Phenol',
+              'cas_number' => '108-95-2',
+              'signal_word' => 'Danger',
+              'hazard_statements' => %w[H301 H311],
+              'ghs_codes' => %w[GHS06 GHS08],
             }.to_json,
           },
         }],
@@ -70,7 +75,7 @@ RSpec.describe LlmTaskRunner do
         UserTaskModelMapping.create!(user_id: user.id, task_name: 'sds_extraction', model: 'gemini-3.5-flash')
         UserLlmSetting.find_or_create_by(user_id: user.id).update!(
           enabled: true, provider_type: 'custom', base_url: base_url, api_key: api_key,
-          default_model: 'gemini-3.1-flash-lite', api_protocol: 'openai',
+          default_model: 'gemini-3.1-flash-lite', api_protocol: 'openai'
         )
       end
 
@@ -80,7 +85,7 @@ RSpec.describe LlmTaskRunner do
         expect(runner.model_used).to eq('gemini-3.5-flash')
       end
 
-      context 'and the mapped model is unavailable (HTTP 503)' do
+      context 'when the mapped model is unavailable (HTTP 503)' do
         before do
           # First call (mapped model) 503s; second call (default model) succeeds.
           stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
@@ -117,14 +122,14 @@ RSpec.describe LlmTaskRunner do
 
     it 'passes json_mode: true to LlmClient' do
       described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
-      expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions")
-        .with { |req| JSON.parse(req.body)['response_format'] == { 'type' => 'json_object' } }
+      expect(WebMock).to(have_requested(:post, "#{base_url}/v1/chat/completions")
+        .with { |req| JSON.parse(req.body)['response_format'] == { 'type' => 'json_object' } })
     end
 
     it 'sends a non-blank user prompt containing the context text' do
       described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
-      expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions")
-        .with { |req| JSON.parse(req.body)['messages'].any? { |m| m['content'].include?(sds_text) } }
+      expect(WebMock).to(have_requested(:post, "#{base_url}/v1/chat/completions")
+        .with { |req| JSON.parse(req.body)['messages'].any? { |m| m['content'].include?(sds_text) } })
     end
 
     it 'uses the task timeout for the LlmClient' do
@@ -175,7 +180,7 @@ RSpec.describe LlmTaskRunner do
       it 'returns mixture_components array' do
         result = described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
         expect(result['mixture_components']).to be_an(Array)
-        expect(result['mixture_components'].map { |c| c['cas_number'] }).to include('50-00-0')
+        expect(result['mixture_components'].pluck('cas_number')).to include('50-00-0')
       end
 
       it 'returns eu_h_statements' do
@@ -234,7 +239,9 @@ RSpec.describe LlmTaskRunner do
       end
       let(:recovered_resp) do
         { 'choices' => [{ 'finish_reason' => 'stop',
-                          'message' => { 'content' => '{"chemical_name":"Acetone","hazard_statements":["H225"]}' } }] }.to_json
+                          'message' => {
+                            'content' => '{"chemical_name":"Acetone","hazard_statements":["H225"]}',
+                          } }] }.to_json
       end
 
       before do
@@ -254,8 +261,8 @@ RSpec.describe LlmTaskRunner do
         task     = Chemotion::LlmTaskRegistry.find('sds_extraction')
         expected = [task.max_tokens.to_i * 2, 16_000].min
         described_class.run(task_name: 'sds_extraction', user: user, context: sds_text)
-        expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions")
-          .with { |req| JSON.parse(req.body)['max_tokens'] == expected }
+        expect(WebMock).to(have_requested(:post, "#{base_url}/v1/chat/completions")
+          .with { |req| JSON.parse(req.body)['max_tokens'] == expected })
       end
     end
 
@@ -279,7 +286,8 @@ RSpec.describe LlmTaskRunner do
         stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
           status: 200,
           body: { 'choices' => [{ 'message' => {
-            'content' => 'Sure — here is the extracted data: {"chemical_name":"Phenol","cas_number":"108-95-2"} Hope this helps!',
+            'content' => 'Sure — here is the extracted data: ' \
+                         '{"chemical_name":"Phenol","cas_number":"108-95-2"} Hope this helps!',
           } }] }.to_json,
           headers: { 'Content-Type' => 'application/json' },
         )
@@ -293,13 +301,30 @@ RSpec.describe LlmTaskRunner do
     end
   end
 
-  # ── Text-output task: report_generation ───────────────────────────────────
+  # ── Text-output task ──────────────────────────────────────────────────────
+  #
+  # These two groups exercise runner behaviour that no *shipped* task currently
+  # needs (text output, and template variables beyond {{context}}). They define
+  # their own task rather than naming one from config/llm_tasks, so they keep
+  # testing the runner instead of breaking whenever the shipped set changes.
 
-  describe '.run with report_generation (text output)' do
+  describe '.run with a text-output task' do
     let(:experiment_data) { 'Reaction of benzene with HNO3/H2SO4. Yield 72%.' }
     let(:report_text)     { '## Nitration of Benzene\n\nObjective: ...' }
 
+    let(:text_task) do
+      Chemotion::LlmTaskDefinition.new(
+        'name'          => 'report_generation',
+        'output_format' => 'text',
+        'prompts'       => {
+          'system'        => 'You write concise experiment reports.',
+          'user_template' => "Write a report for the following experiment:\n\n{{context}}",
+        },
+      )
+    end
+
     before do
+      allow(Chemotion::LlmTaskRegistry).to receive(:find).with('report_generation').and_return(text_task)
       stub_request(:post, "#{base_url}/v1/chat/completions")
         .to_return(
           status:  200,
@@ -316,17 +341,29 @@ RSpec.describe LlmTaskRunner do
 
     it 'does NOT set json_mode on the request' do
       described_class.run(task_name: 'report_generation', user: user, context: experiment_data)
-      expect(WebMock).not_to have_requested(:post, "#{base_url}/v1/chat/completions")
-        .with { |req| JSON.parse(req.body).key?('response_format') }
+      expect(WebMock).not_to(have_requested(:post, "#{base_url}/v1/chat/completions")
+        .with { |req| JSON.parse(req.body).key?('response_format') })
     end
   end
 
   # ── Extra template variables ───────────────────────────────────────────────
 
-  describe '.run with research_assistant (extra template variable)' do
+  describe '.run with an extra template variable' do
     let(:question) { 'What protecting group should I use for an amine?' }
 
+    let(:assistant_task) do
+      Chemotion::LlmTaskDefinition.new(
+        'name'          => 'research_assistant',
+        'output_format' => 'text',
+        'prompts'       => {
+          'system'        => 'You are a synthesis assistant.',
+          'user_template' => "Experiment context:\n{{context}}\n\nQuestion:\n{{question}}",
+        },
+      )
+    end
+
     before do
+      allow(Chemotion::LlmTaskRegistry).to receive(:find).with('research_assistant').and_return(assistant_task)
       stub_request(:post, "#{base_url}/v1/chat/completions")
         .to_return(
           status:  200,
@@ -342,13 +379,13 @@ RSpec.describe LlmTaskRunner do
         context:   'Amine synthesis experiment',
         question:  question,
       )
-      expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions")
-        .with { |req|
+      expect(WebMock).to(have_requested(:post, "#{base_url}/v1/chat/completions")
+        .with do |req|
           msgs     = JSON.parse(req.body)['messages']
           user_msg = msgs.find { |m| m['role'] == 'user' }
           user_msg['content'].include?('Amine synthesis experiment') &&
             user_msg['content'].include?(question)
-        }
+        end)
     end
   end
 
@@ -414,3 +451,6 @@ RSpec.describe LlmTaskRunner do
     end
   end
 end
+# rubocop:enable RSpec/MessageSpies
+# rubocop:enable RSpec/MultipleExpectations
+# rubocop:enable RSpec/NestedGroups
