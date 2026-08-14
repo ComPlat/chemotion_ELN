@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect} from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Container, Card, Row, Col, Form, Button, Alert, Modal
@@ -322,13 +322,15 @@ const AffiliationsSettings = () => {
   );
 }
 
-const AiSettings = () => {
-  return (
-    <Container className="my-3 d-flex flex-column gap-3">
-      <LlmSettings />
-    </Container>
-  );
-}
+const AiSettings = ({ currentUser }) => (
+  <Container className="my-3 d-flex flex-column gap-3">
+    <LlmSettings userId={currentUser?.id} />
+  </Container>
+);
+
+AiSettings.propTypes = {
+  currentUser: PropTypes.shape({ id: PropTypes.number }).isRequired,
+};
 
 const AccountProfile = ({ currentUser, closeSettings }) => {
   const [currentSettings, setCurrentSettings] = useState('account');
@@ -359,7 +361,7 @@ const AccountProfile = ({ currentUser, closeSettings }) => {
       return <TextTemplates />;
     }
     if (currentSettings === 'ai' && aiAllowed) {
-      return <AiSettings />;
+      return <AiSettings currentUser={currentUser} />;
     }
     return null;
   };

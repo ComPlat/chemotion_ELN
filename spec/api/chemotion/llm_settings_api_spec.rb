@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MultipleExpectations -- these assert one API response as a whole
+
 require 'rails_helper'
 
 describe Chemotion::LlmSettingsAPI do
@@ -48,7 +50,7 @@ describe Chemotion::LlmSettingsAPI do
   end
 
   describe 'PUT /api/v1/users/llm_settings' do
-    context 'creating new settings' do
+    context 'when creating new settings' do
       let(:payload) do
         {
           provider_type: 'custom',
@@ -82,7 +84,7 @@ describe Chemotion::LlmSettingsAPI do
       end
     end
 
-    context 'updating existing settings' do
+    context 'when updating existing settings' do
       before do
         create(:user_llm_setting, user: user)
         create(:user_task_model_mapping, user: user, task_name: 'sds_extraction', model: 'old-model')
@@ -123,8 +125,11 @@ describe Chemotion::LlmSettingsAPI do
     end
 
     context 'when personal API keys are not permitted (SF-03 gate)' do
-      before { Matrice.find_or_create_by(name: 'aiUserApiKey').update!(enabled: false, include_ids: [], exclude_ids: []) }
-      after  { Matrice.find_by(name: 'aiUserApiKey')&.destroy }
+      before do
+        Matrice.find_or_create_by(name: 'aiUserApiKey').update!(enabled: false, include_ids: [], exclude_ids: [])
+      end
+
+      after { Matrice.find_by(name: 'aiUserApiKey')&.destroy }
 
       it 'rejects switching to a custom provider with 403' do
         put '/api/v1/users/llm_settings',
@@ -136,8 +141,11 @@ describe Chemotion::LlmSettingsAPI do
     end
 
     context 'when the institution provider is not permitted (SF-03 gate)' do
-      before { Matrice.find_or_create_by(name: 'aiGlobalProvider').update!(enabled: false, include_ids: [], exclude_ids: []) }
-      after  { Matrice.find_by(name: 'aiGlobalProvider')&.destroy }
+      before do
+        Matrice.find_or_create_by(name: 'aiGlobalProvider').update!(enabled: false, include_ids: [], exclude_ids: [])
+      end
+
+      after { Matrice.find_by(name: 'aiGlobalProvider')&.destroy }
 
       it 'rejects switching to the institution provider with 403' do
         put '/api/v1/users/llm_settings',
@@ -145,6 +153,102 @@ describe Chemotion::LlmSettingsAPI do
             headers: headers
 
         expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'with a cached model catalogue for the saved provider' do
+      let(:old_url)    { 'https://old-endpoint.example/api' }
+      let(:new_url)    { 'https://new-endpoint.example/api' }
+      let(:old_models) { "#{old_url}/v1/models" }
+      let(:new_models) { "#{new_url}/v1/models" }
+
+      before do
+        create(:user_llm_setting, user: user, base_url: old_url, api_key: 'sk-old-key')
+        stub_request(:get, old_models).to_return(
+          status:  200,
+          body:    { 'data' => [{ 'id' => 'old-model' }] }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+        stub_request(:get, new_models).to_return(
+          status:  200,
+          body:    { 'data' => [{ 'id' => 'new-model' }] }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+        # Warm the cache for the identity the user is about to move away from
+        # (blank api_key → the endpoint reuses the saved one).
+        post '/api/v1/users/llm_settings/models',
+             params:  { base_url: old_url }.to_json,
+             headers: headers
+      end
+
+      it 'has the old provider’s catalogue cached to begin with' do
+        expect(JSON.parse(response.body)['models']).to eq(['old-model'])
+      end
+
+      it 'drops the catalogue of the identity it moved away from' do
+        put '/api/v1/users/llm_settings',
+            params:  { provider_type: 'custom', base_url: new_url, api_key: 'sk-new-key' }.to_json,
+            headers: headers
+        expect(response).to have_http_status(:ok)
+
+        # Point back at the old endpoint: without invalidation this would still be
+        # served from the pre-change cache entry.
+        post '/api/v1/users/llm_settings/models',
+             params:  { base_url: old_url, api_key: 'sk-old-key' }.to_json,
+             headers: headers
+
+        expect(WebMock).to have_requested(:get, old_models).twice
+      end
+
+      it 'lists the new provider’s models after the switch' do
+        put '/api/v1/users/llm_settings',
+            params:  { provider_type: 'custom', base_url: new_url, api_key: 'sk-new-key' }.to_json,
+            headers: headers
+
+        post '/api/v1/users/llm_settings/models',
+             params:  { base_url: new_url, api_key: 'sk-new-key' }.to_json,
+             headers: headers
+
+        expect(JSON.parse(response.body)['models']).to eq(['new-model'])
+      end
+    end
+
+    describe 'POST /api/v1/users/llm_settings/models' do
+      let(:base_url)   { 'https://ki-toolbox.scc.kit.edu/api' }
+      let(:models_url) { "#{base_url}/v1/models" }
+
+      before do
+        create(:user_llm_setting, user: user, base_url: base_url, api_key: 'sk-mine')
+        stub_request(:get, models_url).to_return(
+          status:  200,
+          body:    { 'data' => [{ 'id' => 'kit.llama3' }] }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+      end
+
+      it 'serves a repeat lookup from the cache' do
+        2.times do
+          post '/api/v1/users/llm_settings/models', params: { base_url: base_url }.to_json, headers: headers
+        end
+
+        expect(JSON.parse(response.body)['models']).to eq(['kit.llama3'])
+        expect(WebMock).to have_requested(:get, models_url).once
+      end
+
+      it 'reuses the saved key when the form leaves it blank' do
+        post '/api/v1/users/llm_settings/models', params: { base_url: base_url }.to_json, headers: headers
+
+        expect(WebMock).to have_requested(:get, models_url)
+          .with(headers: { 'Authorization' => 'Bearer sk-mine' }).once
+      end
+
+      it 're-reads the catalogue when the caller asks for a refresh' do
+        post '/api/v1/users/llm_settings/models', params: { base_url: base_url }.to_json, headers: headers
+        post '/api/v1/users/llm_settings/models',
+             params:  { base_url: base_url, refresh: true }.to_json,
+             headers: headers
+
+        expect(WebMock).to have_requested(:get, models_url).twice
       end
     end
   end
@@ -156,7 +260,7 @@ describe Chemotion::LlmSettingsAPI do
         stub_request(:post, 'https://ki-toolbox.scc.kit.edu/api/v1/chat/completions')
           .to_return(
             status: 200,
-            body:   { choices: [{ message: { content: 'OK' } }] }.to_json,
+            body: { choices: [{ message: { content: 'OK' } }] }.to_json,
             headers: { 'Content-Type' => 'application/json' },
           )
       end
@@ -204,3 +308,4 @@ describe Chemotion::LlmSettingsAPI do
     end
   end
 end
+# rubocop:enable RSpec/MultipleExpectations
