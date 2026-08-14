@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
 import Tree from 'react-ui-tree';
 import { cloneDeep } from 'lodash';
-import { Button, ButtonGroup, Dropdown, Form, OverlayTrigger, Popover } from 'react-bootstrap';
+import { Button, ButtonGroup, Dropdown, Form, OverlayTrigger } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import CollectionTabsEditorModal from 'src/apps/mydb/collections/CollectionTabsEditorModal';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
 import useCollectionShares from 'src/apps/mydb/collections/useCollectionShares';
+import ConfirmDeleteButton from 'src/components/common/ConfirmDeleteButton';
 
 const MyCollections = () => {
   const collectionsStore = useContext(StoreContext).collections;
@@ -69,33 +70,6 @@ const MyCollections = () => {
       );
     }
 
-    const popover = (
-      <Popover>
-        <Popover.Body>
-          <div className="mb-2">Do you really want to delete &quot;{node.label}&quot;?</div>
-          <ButtonGroup>
-            <Button
-              variant="danger"
-              size="sm"
-              className="me-2"
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={() => deleteCollection(node)}
-            >
-              Yes
-            </Button>
-            <Button
-              variant="warning"
-              size="sm"
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={() => {}}
-            >
-              No
-            </Button>
-          </ButtonGroup>
-        </Popover.Body>
-      </Popover>
-    );
-
     return (
       <div className="d-flex align-items-center gap-2 flex-shrink-0">
         <span
@@ -148,11 +122,13 @@ const MyCollections = () => {
             </Dropdown.Menu>
           </Dropdown>
           {addCollectionButton(node)}
-          <OverlayTrigger animation placement="bottom" root trigger="focus" overlay={popover}>
-            <Button size="sm" variant="danger" onMouseDown={(e) => e.stopPropagation()}>
-              <i className="fa fa-trash-o" />
-            </Button>
-          </OverlayTrigger>
+          <ConfirmDeleteButton
+            id={`confirm-delete-collection-${node.id}`}
+            header={`Do you really want to delete "${node.label}"?`}
+            placement="bottom"
+            stopMouseDownPropagation
+            onConfirm={() => deleteCollection(node)}
+          />
         </ButtonGroup>
       </div>
     );

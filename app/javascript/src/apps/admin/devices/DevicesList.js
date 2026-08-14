@@ -1,9 +1,10 @@
 import React, { useEffect, useContext } from 'react';
-import { Table, Button, ButtonToolbar, Tooltip, OverlayTrigger, Popover, Alert, Card } from 'react-bootstrap';
+import { Table, Button, ButtonToolbar, Tooltip, OverlayTrigger, Alert, Card } from 'react-bootstrap';
 import DeviceModal from './DeviceModal';
 import { endsWith } from 'lodash';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import ConfirmDeleteButton from 'src/components/common/ConfirmDeleteButton';
 
 const DevicesList = () => {
   const devicesStore = useContext(StoreContext).devices;
@@ -103,31 +104,16 @@ const DevicesList = () => {
 
   const clearDatacollectorSettingsButton = (device) => {
     if (device.datacollector_method) {
-      const clearPopover = (
-        <Popover id="popover-clear-datacollector">
-          <Popover.Header as="h3">Remove data collector settings of {device.name}</Popover.Header>
-          <Popover.Body>
-            <ButtonToolbar>
-              <Button
-                size="sm"
-                variant="danger"
-                onClick={() => clearDatacollector(device)}>
-                Yes
-              </Button>
-              <Button size="sm" variant="warning">
-                No
-              </Button>
-            </ButtonToolbar>
-          </Popover.Body>
-        </Popover>
-      );
-
       return (
-        <OverlayTrigger placement="right" trigger="focus" overlay={clearPopover}>
-          <Button size="sm" className="bg-danger-subtle text-danger" title="Clear data collector settings">
-            <i className="fa fa-database" />
-          </Button>
-        </OverlayTrigger>
+        <ConfirmDeleteButton
+          id={`confirm-clear-datacollector-${device.id}`}
+          header={`Remove data collector settings of ${device.name}`}
+          className="bg-danger-subtle text-danger"
+          title="Clear data collector settings"
+          onConfirm={() => clearDatacollector(device)}
+        >
+          <i className="fa fa-database" />
+        </ConfirmDeleteButton>
       )
     }
   }
@@ -138,31 +124,16 @@ const DevicesList = () => {
 
   const clearNovncSettingsButton = (device) => {
     if (device.novnc_target) {
-      const clearPopover = (
-        <Popover id="popover-clear-novnc">
-          <Popover.Header as="h3">Remove Novnc settings of {device.name}</Popover.Header>
-          <Popover.Body>
-            <ButtonToolbar>
-              <Button
-                size="sm"
-                variant="danger"
-                onClick={() => clearNovncSettings(device)}>
-                Yes
-              </Button>
-              <Button size="sm" variant="warning">
-                No
-              </Button>
-            </ButtonToolbar>
-          </Popover.Body>
-        </Popover>
-      );
-
       return (
-        <OverlayTrigger placement="right" trigger="focus" overlay={clearPopover}>
-          <Button size="sm" className="bg-danger-subtle text-danger" title="Clear NoVNC settings">
-            <i className="fa fa-cogs" />
-          </Button>
-        </OverlayTrigger>
+        <ConfirmDeleteButton
+          id={`confirm-clear-novnc-${device.id}`}
+          header={`Remove Novnc settings of ${device.name}`}
+          className="bg-danger-subtle text-danger"
+          title="Clear NoVNC settings"
+          onConfirm={() => clearNovncSettings(device)}
+        >
+          <i className="fa fa-cogs" />
+        </ConfirmDeleteButton>
       )
     }
   }
@@ -176,35 +147,14 @@ const DevicesList = () => {
   }
 
   const deleteButton = (object, type, user) => {
-    const deletePopover = (
-      <Popover id="popover-delete-button">
-        <Popover.Header as="h3">Remove {type}: {object.name}</Popover.Header>
-        <Popover.Body>
-          <ButtonToolbar>
-            <Button
-              size="sm"
-              variant="danger"
-              onClick={() => confirmDelete(object, type, user)}>
-              Yes
-            </Button>
-            <Button size="sm" variant="warning">
-              No
-            </Button>
-          </ButtonToolbar>
-        </Popover.Body>
-      </Popover>
-    );
-
+    const id = user && user.id ? `${object.id}-${user.id}` : `${object.id}`;
     return (
-      <OverlayTrigger
-        placement="right"
-        trigger="focus"
-        overlay={deletePopover}
-      >
-        <Button size="sm" variant="danger" title="Delete device">
-          <i className="fa fa-trash-o" />
-        </Button>
-      </OverlayTrigger>
+      <ConfirmDeleteButton
+        id={`confirm-delete-${type}-${id}`}
+        header={`Remove ${type}: ${object.name}`}
+        title="Delete device"
+        onConfirm={() => confirmDelete(object, type, user)}
+      />
     );
   }
 

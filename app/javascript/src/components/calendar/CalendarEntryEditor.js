@@ -1,11 +1,12 @@
 import React, { useContext, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import {
-  Form, Button, ButtonToolbar, Alert, Modal, Popover, OverlayTrigger
+  Form, Button, ButtonToolbar, Alert, Modal
 } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import { capitalizeWords } from 'src/utilities/textHelper';
 import PropTypes from 'prop-types';
+import ConfirmDeleteButton from 'src/components/common/ConfirmDeleteButton';
 
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
@@ -147,32 +148,15 @@ const CalendarEntryEditor = (props) => {
   const deleteEntryButton = () => {
     if (entry.id === undefined || !editable) { return null; }
 
-    const popover = (
-      <Popover id="popover-delete-entry">
-        <Popover.Header as="h3">Are you sure you want to delete the calendar entry?</Popover.Header>
-        <Popover.Body>
-          <div className="d-flex gap-2">
-            <Button
-              size="sm"
-              variant="danger"
-              onClick={() => deleteEntry()}
-            >
-              Yes
-            </Button>
-            <Button size="sm" variant="warning">
-              No
-            </Button>
-          </div>
-        </Popover.Body>
-      </Popover>
-    );
-
     return (
-      <OverlayTrigger placement="top" trigger="focus" overlay={popover}>
-        <Button variant="danger">
-          Delete
-        </Button>
-      </OverlayTrigger>
+      <ConfirmDeleteButton
+        id={`confirm-delete-calendar-entry-${entry.id}`}
+        header="Are you sure you want to delete the calendar entry?"
+        size={null}
+        onConfirm={() => deleteEntry()}
+      >
+        Delete
+      </ConfirmDeleteButton>
     );
   };
 

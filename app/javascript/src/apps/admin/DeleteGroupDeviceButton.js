@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button, Popover, OverlayTrigger } from 'react-bootstrap';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
+import ConfirmDeleteButton from 'src/components/common/ConfirmDeleteButton';
 
 export default class DeleteGroupDeviceButton extends React.Component {
   constructor(props) {
@@ -70,35 +70,13 @@ export default class DeleteGroupDeviceButton extends React.Component {
       msg = `remove ???: ${groupRec.name}`;
     }
 
-    const popover = (
-      <Popover id="popover-positioned-scrolling-left">
-        <Popover.Header id="popover-positioned-scrolling-left" as="h5">
-          {msg}
-        </Popover.Header>
-        <Popover.Body>
-          <Button size="sm" variant="danger" className='me-2' onClick={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}>
-            Yes
-          </Button>
-          <Button size="sm" variant="warning" onClick={this.handleClick} >
-            No
-          </Button>
-        </Popover.Body>
-      </Popover>
-    );
-
     return (
       <div className="actions d-inline-block">
-        <OverlayTrigger
-          animation
-          placement="right"
-          root
-          trigger="focus"
-          overlay={popover}
-        >
-          <Button size="sm" variant="danger" >
-            <i className="fa fa-trash-o" />
-          </Button>
-        </OverlayTrigger>
+        <ConfirmDeleteButton
+          id={`confirm-delete-${rootType}-${groupRec.id}${userRec ? `-${userRec.id}` : ''}`}
+          header={msg}
+          onConfirm={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}
+        />
       </div>
     );
   }
