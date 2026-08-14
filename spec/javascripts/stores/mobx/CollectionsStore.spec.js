@@ -114,6 +114,48 @@ describe('CollectionsStore', () => {
     });
   });
 
+  // Regression coverage: apply_to_subcollections/include_new_subcollections can cascade an edit
+  // onto descendants not previously shared, but PUT's response only ever carries the one edited
+  // share — never the cascade's effect on those descendants' `shared` flag — so own_collections
+  // has to be refetched to pick it up, the same way addCollectionShare/deleteCollectionShare
+  // already do. Without this, the owner's own tree kept showing newly-cascaded subcollections as
+  // unshared until a page reload.
+  describe('.updateCollectionShare', () => {
+    let updateStub;
+    let fetchCollectionsStub;
+    let getSharedWithUsersStub;
+
+    beforeEach(() => {
+      updateStub = sinon.stub(CollectionSharesFetcher, 'updateCollectionShare');
+      fetchCollectionsStub = sinon.stub(CollectionsFetcher, 'fetchCollections').resolves({ own: [], shared_with_me: [] });
+      // Unrelated to what this action's tested for — stubbed only so the store's own
+      // getSharedWithUsers call doesn't attempt a real network request in this environment.
+      getSharedWithUsersStub = sinon.stub(CollectionSharesFetcher, 'getCollectionSharedWithUsers').resolves([]);
+    });
+
+    afterEach(() => {
+      updateStub.restore();
+      fetchCollectionsStub.restore();
+      getSharedWithUsersStub.restore();
+    });
+
+    it('refetches collections on a successful update', async () => {
+      updateStub.resolves({ collection_id: 1 });
+
+      await store.updateCollectionShare(7, { permission_level: 1, apply_to_subcollections: true });
+
+      expect(fetchCollectionsStub.called).toBe(true);
+    });
+
+    it('does not refetch when the update fails (falsy response)', async () => {
+      updateStub.resolves(undefined);
+
+      await store.updateCollectionShare(7, { permission_level: 1 });
+
+      expect(fetchCollectionsStub.called).toBe(false);
+    });
+  });
+
   // Regression coverage for ComPlat/chemotion-eln#598: adding a collection (via the "+"
   // button, or "Assign/Move to Collection" with a brand-new name) used to rebuild
   // own_collection_tree from own_collections unconditionally, silently discarding any

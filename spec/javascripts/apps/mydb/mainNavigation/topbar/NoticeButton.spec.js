@@ -4,6 +4,7 @@ import sinon from 'sinon';
 import { onAction } from 'mobx-state-tree';
 import { handleNotification } from 'src/apps/mydb/mainNavigation/topbar/NoticeButton';
 import { rootStore } from 'src/stores/mobx/RootStore';
+import InboxActions from 'src/stores/alt/actions/InboxActions';
 
 // Minimal notification shape handleNotification actually reads: id, sender_name, created_at,
 // subject, and content (data/action/silent). Anything else in a real payload is irrelevant here.
@@ -84,6 +85,58 @@ describe('NoticeButton#handleNotification', () => {
       handleNotification([n], 'add', context);
 
       expect(addCallCount()).toBe(1);
+    });
+  });
+
+  // Regression coverage: silent notifications never toast, so counting them toward the toast-spam
+  // cap made the "You have N more notifications" summary overcount — the reported symptom was a
+  // batch showing "5 notifications" while only a couple of actual toasts (or none) ever appeared.
+  describe('the "N more notifications" summary cap', () => {
+    const addTitles = () => actionCalls.filter((call) => call.name === 'add').map((call) => call.args[0].title);
+
+    it('does not count silent notifications toward the cap or the summary', () => {
+      const context = buildContext();
+      const nots = [
+        ...Array.from({ length: 2 }, (unused, i) => buildNotification({ id: i, subject: 'Shared Collection With Me' })),
+        ...Array.from({ length: 5 }, (unused, i) => buildNotification({
+          id: 100 + i, subject: 'Shared Collection With Me', content: { silent: true },
+        })),
+      ];
+
+      handleNotification(nots, 'add', context);
+
+      // 2 verbose toasts, no "N more" summary (verbose count never exceeds 3).
+      expect(addCallCount()).toBe(2);
+      expect(addTitles().some((title) => title.includes('more notification'))).toBe(false);
+    });
+
+    it('still summarizes correctly when every notification in the batch is verbose (regression guard)', () => {
+      const context = buildContext();
+      const nots = Array.from({ length: 5 }, (unused, i) => buildNotification({ id: i, subject: 'Shared Collection With Me' }));
+
+      handleNotification(nots, 'add', context);
+
+      // First 3 toast individually, plus one summary toast for the remaining 2 — unchanged from
+      // before this fix.
+      expect(addCallCount()).toBe(4);
+      expect(addTitles()).toContain('You have 2 more notifications');
+    });
+
+    it('still dispatches a silent notification\'s action even past where the old cap would have hit', () => {
+      const context = buildContext();
+      const nots = [
+        ...Array.from({ length: 4 }, (unused, i) => buildNotification({ id: i, subject: 'Shared Collection With Me' })),
+        buildNotification({ id: 200, content: { silent: true, action: 'InboxActions.fetchInbox' } }),
+      ];
+      const fetchInboxSpy = sinon.stub(InboxActions, 'fetchInbox');
+
+      try {
+        handleNotification(nots, 'add', context);
+
+        expect(fetchInboxSpy.called).toBe(true);
+      } finally {
+        fetchInboxSpy.restore();
+      }
     });
   });
 

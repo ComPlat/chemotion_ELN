@@ -81,9 +81,15 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
       rootStore.notificationsStore.removeByUid(n.id);
     }
     if (act === 'add') {
-      count += 1;
-      if (count > 3) {
-        return;
+      // Silent notifications never produce a toast, so they must not count toward — or be
+      // throttled by — the toast-spam cap below. Counting them here is exactly what made the
+      // "You have N more notifications" summary overcount: it included notifications the user
+      // never saw a toast for in the first place, with nothing to find when they went looking.
+      if (!n.content.silent) {
+        count += 1;
+        if (count > 3) {
+          return;
+        }
       }
       const infoTimeString = formatDate(n.created_at);
       const convertedData = convertCalendarNotificationToLocal(n.content.data);

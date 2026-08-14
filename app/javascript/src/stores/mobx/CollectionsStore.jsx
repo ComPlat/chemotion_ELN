@@ -323,6 +323,11 @@ export const CollectionsStore = types
     updateCollectionShare: flow(function* updateCollectionShare(collectionShareId, params) {
       const collectionShare = yield CollectionSharesFetcher.updateCollectionShare(collectionShareId, params)
       if (collectionShare) {
+        // apply_to_subcollections/include_new_subcollections can cascade this edit onto
+        // descendants not previously shared — PUT's response only carries the one edited share,
+        // never the cascade's effect on those descendants' `shared` flag, so own_collections has
+        // to be refetched to pick it up (mirrors addCollectionShare/deleteCollectionShare below).
+        self.fetchCollections()
         self.getSharedWithUsers(collectionShare.collection_id)
       }
     }),
