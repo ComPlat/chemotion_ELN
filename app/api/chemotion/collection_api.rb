@@ -185,9 +185,6 @@ module Chemotion
       end
 
       desc 'Create/update collection metadata'
-      rescue_from ActiveRecord::RecordNotFound do
-        error!('401 Unauthorized', 401)
-      end
       params do
         requires :collection_id, type: Integer
         requires :metadata, type: JSON

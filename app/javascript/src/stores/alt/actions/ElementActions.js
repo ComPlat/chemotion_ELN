@@ -1276,8 +1276,13 @@ class ElementActions {
       return MetadataFetcher.store(metadata)
         .then((result) => {
           dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
+          return result;
+        }).catch((error) => {
+          // The spinner is stopped by LoadingStore listening for this action's dispatch, which
+          // does not happen on failure — and the rejection has to reach handleSave, or the tab
+          // clears its dirty flag and the user believes a refused save succeeded.
+          LoadingActions.stop();
+          throw error;
         });
     };
   }

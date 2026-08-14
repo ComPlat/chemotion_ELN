@@ -371,7 +371,7 @@ describe Chemotion::CollectionAPI do
       it 'rejects the write instead of letting a sharee edit the owner collection metadata' do
         post '/api/v1/collections/metadata', params: metadata_params
 
-        expect(response).to have_http_status :unauthorized
+        expect(response).to have_http_status :not_found
         expect(Metadata.find_by(collection_id: collection_shared_with_user.id)).to be_nil
       end
     end

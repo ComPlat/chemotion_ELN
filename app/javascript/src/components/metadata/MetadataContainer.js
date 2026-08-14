@@ -72,9 +72,24 @@ export default class MetadataContainer extends Component {
   handleSave() {
     const { metadata } = this.state;
     LoadingActions.start();
-    ElementActions.storeMetadata(metadata);
-    metadata.updateChecksum();
-    this.setState({ metadata });
+    // updateChecksum clears the dirty flag, which is what drives the Save button. It has to wait
+    // for the request to come back: doing it synchronously here made a refused save look exactly
+    // like a successful one — the button vanished and the edit was lost with nothing shown.
+    ElementActions.storeMetadata(metadata)
+      .then(() => {
+        metadata.updateChecksum();
+        this.setState({ metadata });
+      })
+      .catch((error) => {
+        this.context.notifications.add({
+          title: 'Collection metadata',
+          message: error.message || 'The metadata could not be saved',
+          level: 'error',
+          autoDismiss: 5,
+          position: 'tr',
+          uid: 'collection_metadata',
+        });
+      });
   }
 
   handleClose() {
