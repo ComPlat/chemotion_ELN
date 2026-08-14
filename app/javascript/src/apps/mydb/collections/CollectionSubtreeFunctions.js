@@ -56,7 +56,10 @@ const CollectionSubtreeFunctions = ({
   );
   // Import samples: not locked and (for shared-with-me) the delegate can add elements.
   const hasAddElementsAccess = !collection.is_locked && hasPermission(PermissionConst.AddElements);
-  const canAddShare = !collection.is_locked && hasPermission(PermissionConst.ManageShares);
+  // Not gated on is_locked: the repository root and "transferred" are locked against renaming,
+  // reparenting and deletion, but they are ordinary owned collections as far as sharing goes —
+  // the API refuses only a pass_ownership offer on them (CollectionShareAPI#prevent_invalid_ownership_offer!).
+  const canAddShare = hasPermission(PermissionConst.ManageShares);
   // Editing a collection's own metadata and publishing it via RADAR act on the collection
   // itself, not on its elements — no permission_level grants a sharee those, only ownership.
   const canManageCollection = !sharedWithMe && !collection.is_locked;

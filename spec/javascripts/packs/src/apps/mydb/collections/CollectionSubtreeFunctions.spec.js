@@ -75,11 +75,31 @@ describe('CollectionSubtreeFunctions permission gating', () => {
     expect(itemTexts(wrapper)).not.toContain('Manage shares');
   });
 
-  it('locked collection (e.g. All): only Reference Report survives', () => {
+  it('locked collection without share callbacks: only Reference Report survives', () => {
     const wrapper = shallow(
       <CollectionSubtreeFunctions collection={lockedCollection} hasRadar />
     );
     expect(itemTexts(wrapper)).toEqual(['Reference Report']);
+  });
+
+  // A locked collection is fixed in the tree and cannot be renamed or deleted, but it is an
+  // ordinary owned collection for sharing purposes — only a pass_ownership offer is refused, and
+  // that is enforced by the API, not by hiding the menu entry.
+  it('locked collection: offers sharing, but not import or owner-only collection actions', () => {
+    const wrapper = shallow(
+      <CollectionSubtreeFunctions
+        collection={{ ...lockedCollection, shared: true }}
+        hasRadar
+        onAddShare={() => {}}
+        onManageShares={() => {}}
+      />
+    );
+    const texts = itemTexts(wrapper);
+    expect(texts).toContain('Add share');
+    expect(texts).toContain('Manage shares');
+    expect(texts).not.toContain('Import samples to collection');
+    expect(texts).not.toContain('Edit collection metadata');
+    expect(texts).not.toContain('Publish via RADAR');
   });
 
   it('shared-with-me at Read: only Reference Report', () => {

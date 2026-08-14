@@ -4,16 +4,20 @@ import { cloneDeep } from 'lodash';
 import { Button, ButtonGroup, Dropdown, Form, OverlayTrigger, Popover } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import AppModal from 'src/components/common/AppModal';
 import CollectionTabsEditorModal from 'src/apps/mydb/collections/CollectionTabsEditorModal';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
 import useCollectionShares from 'src/apps/mydb/collections/useCollectionShares';
+import { ALL_LABEL, TRANSFERRED_LABEL } from 'src/stores/mobx/CollectionsStore';
 
 const MyCollections = () => {
   const collectionsStore = useContext(StoreContext).collections;
   const tree = collectionsStore.own_collection_tree;
   const [clonedTree, setClonedTree] = useState(cloneDeep(tree));
   const [tabsEditorCollection, setTabsEditorCollection] = useState(null);
+  const [shareAllConfirm, setShareAllConfirm] = useState(null);
   const { openAddShare, openManageShares, shareModals } = useCollectionShares(collectionsStore);
+  const systemCollections = collectionsStore.systemCollections;
 
   useEffect(() => {
     setClonedTree(cloneDeep(tree));
@@ -46,6 +50,16 @@ const MyCollections = () => {
 
   const deleteCollection = (node) => {
     collectionsStore.deleteCollection(node.id);
+  };
+
+  // Every other collection shares a bounded set of elements; "All" holds everything the user owns,
+  // so sharing it is a different order of decision and is confirmed before the share modal opens.
+  const requestAddShare = (node) => {
+    if (node.label === ALL_LABEL) {
+      setShareAllConfirm(node);
+      return;
+    }
+    openAddShare(node);
   };
 
   const addCollectionButton = (node) => (
@@ -173,6 +187,86 @@ const MyCollections = () => {
     );
   };
 
+  // The system collections ("All", the repository root and "transferred") are owned like any other
+  // collection, but locked: the backend refuses to rename, reparent, delete them or create anything
+  // inside them. They are rendered here as a pinned, read-only section rather than as nodes of the
+  // tree below, both so no drag can pick them up (react-ui-tree has no per-node opt-out) and so the
+  // payload of a tree save stays exactly the set of collections the user may actually move.
+  const systemNodeActions = (node) => (
+    <div className="d-flex align-items-center gap-2 flex-shrink-0">
+      <span
+        className="d-inline-flex justify-content-end align-items-center flex-shrink-0"
+        style={{ width: '3rem' }}
+      >
+        {node.shared && (
+          <OverlayTrigger placement="top" overlay={<UserInfosTooltip collectionId={node.id} />}>
+            <span
+              className="text-warning d-inline-flex align-items-center"
+              style={{ cursor: 'default' }}
+            >
+              <i className="fa fa-share-alt" />
+            </span>
+          </OverlayTrigger>
+        )}
+      </span>
+      <ButtonGroup className="flex-shrink-0">
+        <Dropdown>
+          <Dropdown.Toggle
+            size="sm"
+            variant="light"
+            id={`system-collection-more-actions-${node.id}`}
+          >
+            <i className="fa fa-ellipsis-v" />
+          </Dropdown.Toggle>
+          <Dropdown.Menu popperConfig={{ strategy: 'fixed' }} renderOnMount>
+            <Dropdown.Item onClick={() => requestAddShare(node)}>
+              <i className="fa fa-plus me-1" />
+              <i className="fa fa-share-alt me-1" />
+              Add share
+            </Dropdown.Item>
+            {node.shared && (
+              <Dropdown.Item onClick={() => openManageShares(node)}>
+                <i className="fa fa-users me-1" />
+                <i className="fa fa-share-alt me-1" />
+                Manage shares
+              </Dropdown.Item>
+            )}
+            <Dropdown.Divider />
+            <Dropdown.Item onClick={() => setTabsEditorCollection(node)}>
+              <i className="fa fa-sliders me-1" />
+              Edit collection tabs
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
+      </ButtonGroup>
+    </div>
+  );
+
+  const systemCollectionsSection = () => {
+    if (systemCollections.length === 0) return null;
+
+    return (
+      <div className="system-collections border-bottom pb-2 mb-2">
+        <div className="ms-3 mb-2 fs-5">System collections</div>
+        {systemCollections.map((node) => (
+          <div
+            key={node.id}
+            className="collection-node py-1 d-flex flex-nowrap align-items-center justify-content-between"
+          >
+            <span
+              className={`ms-3 flex-grow-1 min-w-0 me-2 text-truncate${
+                node.label === TRANSFERRED_LABEL ? ' ps-4' : ''
+              }`}
+            >
+              {node.label}
+            </span>
+            {systemNodeActions(node)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const renderNode = (node) => (
     <div className="collection-node py-1 d-flex flex-nowrap align-items-center justify-content-between">
       {label(node)}
@@ -182,6 +276,7 @@ const MyCollections = () => {
 
   return (
     <div className="tree pt-2 h-100 overflow-y-auto">
+      {systemCollectionsSection()}
       <Tree
         paddingLeft={20}
         tree={clonedTree}
@@ -189,6 +284,25 @@ const MyCollections = () => {
         renderNode={renderNode}
       />
       {shareModals}
+      {shareAllConfirm != null && (
+        <AppModal
+          show
+          onHide={() => setShareAllConfirm(null)}
+          title={`Share "${shareAllConfirm.label}"?`}
+          primaryActionLabel="Continue"
+          onPrimaryAction={() => {
+            const node = shareAllConfirm;
+            setShareAllConfirm(null);
+            openAddShare(node);
+          }}
+        >
+          <p>
+            {`"${shareAllConfirm.label}" holds every element you own — sharing it grants the `}
+            recipient access to all of them at once, including elements you add later.
+          </p>
+          <p className="mb-0">Share a specific collection instead if that is not what you want.</p>
+        </AppModal>
+      )}
       {tabsEditorCollection != null && (
         <CollectionTabsEditorModal
           collection={tabsEditorCollection}

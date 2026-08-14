@@ -366,6 +366,50 @@ describe('CollectionsStore', () => {
     });
   });
 
+  describe('.systemCollections', () => {
+    const allCollection = {
+      id: 9, label: 'All', ancestry: '/', position: 0, is_locked: true,
+    };
+    const repositoryRoot = {
+      id: 1, label: 'chemotion-repository.net', ancestry: '/', position: 1, is_locked: true,
+    };
+    const transferred = {
+      id: 3, label: 'transferred', ancestry: '/1/', position: null, is_locked: true,
+    };
+    const ordinary = {
+      id: 4, label: 'Project', ancestry: '/', position: null, is_locked: false,
+    };
+
+    it('lists the three system collections in presentation order', () => {
+      store.setOwnCollections([ordinary, transferred, repositoryRoot, allCollection]);
+
+      expect(store.systemCollections.map((c) => c.label))
+        .toEqual(['All', 'chemotion-repository.net', 'transferred']);
+    });
+
+    it('omits system collections the user does not have', () => {
+      store.setOwnCollections([allCollection, ordinary]);
+
+      expect(store.systemCollections.map((c) => c.id)).toEqual([9]);
+    });
+
+    // The label alone is not reserved: a user may create an ordinary collection called "All".
+    it('ignores an unlocked collection that merely shares a system label', () => {
+      store.setOwnCollections([{ ...allCollection, id: 10, is_locked: false }]);
+
+      expect(store.systemCollections).toEqual([]);
+      expect(store.own_collections.map((c) => c.id)).toEqual([10]);
+    });
+
+    it('resolves the "All" collection by id, which no tree can reach', () => {
+      store.setOwnCollections([allCollection, ordinary]);
+
+      expect(store.isAllCollectionId(9)).toBe(true);
+      expect(store.isAllCollectionId(4)).toBe(false);
+      expect(store.find(9)).toBe(null);
+    });
+  });
+
   describe('.addCollectionToTree', () => {
     it('shows a collection whose parent is missing without rewriting its ancestry', () => {
       const orphan = Collection.create({

@@ -233,12 +233,36 @@ export const CollectionsStore = types
     }),
     updateCollection: flow(function* updateCollection(collection, tabs_segment) {
       const params = { label: collection.label, tabs_segment: tabs_segment }
-      const collectionItem = yield CollectionsFetcher.updateCollection(collection.id, params)
-      if (collectionItem) {
-        self.changeTabsSegmentInTree(self.own_collections, collectionItem)
-        self.setOwnCollectionTree()
-        return self.own_collections
+      let collectionItem
+      try {
+        collectionItem = yield CollectionsFetcher.updateCollection(collection.id, params)
+      } catch (error) {
+        collectionItem = undefined
       }
+
+      // Silently dropping the failure here used to be invisible, because the tab editor was only
+      // reachable on collections the endpoint always accepts. The system collections are editable
+      // from the management modal now, so a rejected save has to say so.
+      if (!collectionItem) {
+        getRoot(self).notificationsStore.add({
+          title: 'Collection Management',
+          message: `The tab layout of "${collection.label}" could not be saved. Please try again.`,
+          level: 'error',
+          autoDismiss: 10,
+        });
+        return null
+      }
+
+      self.changeTabsSegmentInTree(self.own_collections, collectionItem)
+      // The system collections live in the locked bucket and, for the repository subtree, on their
+      // own field — none of which own_collections reaches — so update those too, or the tab editor
+      // reopens with the layout the user just replaced.
+      self.changeTabsSegmentInTree(self.locked_collection, collectionItem)
+      if (self.chemotion_repository_collection) {
+        self.changeTabsSegmentInTree([self.chemotion_repository_collection], collectionItem)
+      }
+      self.setOwnCollectionTree()
+      return self.own_collections
     }),
     deleteCollection: flow(function* deleteCollection(collectionId) {
       const all_collections = yield CollectionsFetcher.deleteCollection(collectionId)
@@ -410,6 +434,16 @@ export const CollectionsStore = types
         );
 
         if (response) {
+          // A move is add-then-remove, and "All" is the one source the remove leg can never succeed
+          // on: RemoveElements refuses it outright, so the element would land in the target (already
+          // committed) and the user would still be told the move failed. Every element belongs to
+          // "All" by definition, so the add alone is the whole move — skip the remove and refresh.
+          if (self.isAllCollectionId(uiState.currentCollection.id)) {
+            ElementActions.refreshElementsAfterCollectionChanges(uiState.currentCollection.id);
+            if (isNewCollection) { self.addNewCollectionToOwnCollection(newCollection); }
+            return;
+          }
+
           const { success, lockedSampleIds } = yield self.removeElementsFromCollection(
             { collection_id: uiState.currentCollection.id, ui_state: uiState },
             { notifyLock: false }
@@ -691,6 +725,21 @@ export const CollectionsStore = types
     },
     get ownCollections() { return values(self.own_collections) },
     get sharedWithMeCollections() { return values(self.shared_with_me_collections) },
+    // "All" is deliberately absent from every collection tree, so `find` cannot resolve it; the
+    // locked bucket is the only place it is reachable by id.
+    isAllCollectionId(collectionId) {
+      const allCollection = self.locked_collection.find((collection) => collection.label === ALL_LABEL);
+      return Boolean(allCollection) && allCollection.id === collectionId;
+    },
+    // The system collections, in the order they are presented: the catch-all first, then the
+    // repository root and the "transferred" node that lives under it. They are kept out of
+    // own_collections (nothing may reparent, rename or delete them), so the management modal reads
+    // them from the locked bucket instead; SYSTEM_LABELS is the presentation order.
+    get systemCollections() {
+      return SYSTEM_LABELS
+        .map((label) => self.locked_collection.find((collection) => collection.label === label))
+        .filter(Boolean);
+    },
     isOwnCollection(collection_id) { return self.ownCollectionIds.indexOf(collection_id) != -1 },
     isSharedCollection(collection_id) { return self.sharedCollectionIds.indexOf(collection_id) != -1 },
     // Ownership is personal and has one definition — Collection#owned_by? is `user_id == user.id`,
