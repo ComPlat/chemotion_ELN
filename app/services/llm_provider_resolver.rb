@@ -29,9 +29,11 @@ class LlmProviderResolver
       resolution ||= resolve_user_default(user)
       resolution ||= resolve_global if institution_provider_allowed?(user)
 
-      raise Errors::LlmNotConfiguredError,
-            'No LLM provider configured. Ask your admin to set up a provider, ' \
-            'or add one in Profile → AI Settings.' unless resolution
+      unless resolution
+        raise Errors::LlmNotConfiguredError,
+              'No LLM provider configured. Ask your admin to set up a provider, ' \
+              'or add one in Profile → AI Settings.'
+      end
 
       resolution
     end
@@ -100,7 +102,7 @@ class LlmProviderResolver
       return true if matrice.nil?
 
       if matrice.enabled
-        !(matrice.exclude_ids || []).include?(user.id)
+        (matrice.exclude_ids || []).exclude?(user.id)
       else
         (matrice.include_ids || []).include?(user.id)
       end
@@ -112,13 +114,11 @@ class LlmProviderResolver
 
     def resolve_user_task_mapping(user, task_name)
       return nil if task_name.blank?
+
       mapping = UserTaskModelMapping.find_by(user_id: user.id, task_name: task_name)
       return nil unless mapping
 
-      # The mapping only stores a model name string; use the user's provider for
-      # the endpoint/key, falling back to global (only if the user may use it).
-      base = resolve_user_default(user)
-      base ||= resolve_global if institution_provider_allowed?(user)
+      base = task_mapping_base(user)
       return nil unless base
 
       LlmResolution.new(
@@ -140,6 +140,13 @@ class LlmProviderResolver
         'Falling back to the default provider/model.',
       )
       nil
+    end
+
+    # A task mapping stores only a model name, so the endpoint and key have to come
+    # from somewhere else: the user's own provider, or the institution one when they
+    # are allowed to use it.
+    def task_mapping_base(user)
+      resolve_user_default(user) || (resolve_global if institution_provider_allowed?(user))
     end
 
     # ── Level 2: User's custom provider ───────────────────────────────────────

@@ -83,7 +83,8 @@ module LlmTaskValidators
   class SdsExtractionValidator < Base
     # Require at least one meaningful safety field.
     # Note: cas_number is optional because mixture SDS files have no single CAS.
-    CORE_KEYS = %w[chemical_name cas_number hazard_statements ghs_codes signal_word properties mixture_components].freeze
+    CORE_KEYS = %w[chemical_name cas_number hazard_statements ghs_codes signal_word properties
+                   mixture_components].freeze
 
     def validate!(data)
       require_hash!(data)

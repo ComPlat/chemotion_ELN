@@ -34,6 +34,15 @@ module EncryptsApiKey
       nil
     end
 
+    # Drop the in-memory plaintext when the record is reloaded, so #api_key goes
+    # back to reflecting what is actually stored. Without this, a record that was
+    # built or updated with a plaintext key keeps returning it after a reload —
+    # including after the key was cleared in the database.
+    def reload(*)
+      @api_key = nil
+      super
+    end
+
     # Mask for display in logs / UI responses (e.g. "sk-••••••••1234")
     def api_key_masked
       plain = api_key
@@ -49,7 +58,13 @@ module EncryptsApiKey
   private
 
   def encrypt_api_key_to_enc
-    return unless @api_key.present?
+    # An explicit `api_key_enc = nil` in this save is a deletion, and it wins over
+    # any plaintext still sitting in the instance from an earlier assignment.
+    # Without this the callback re-encrypts that stale plaintext and the deletion
+    # silently does nothing — the row keeps its key while the caller is told the
+    # save succeeded.
+    return if api_key_enc.nil? && api_key_enc_changed?
+    return if @api_key.blank?
 
     self.api_key_enc = self.class.llm_encryptor.encrypt_and_sign(@api_key)
   end

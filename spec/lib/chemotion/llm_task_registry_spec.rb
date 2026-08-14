@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MultipleExpectations -- these assert one API response as a whole
+
 require 'rails_helper'
 
 RSpec.describe Chemotion::LlmTaskRegistry do
@@ -91,13 +93,13 @@ RSpec.describe Chemotion::LlmTaskRegistry do
 
   describe 'YAML content validation for all task definitions' do
     it 'every task has a non-blank name' do
-      described_class.all.values.each do |task|
+      described_class.all.each_value do |task|
         expect(task.name).not_to be_blank, "Task at #{task.inspect} has blank name"
       end
     end
 
     it 'every task has a user_template prompt' do
-      described_class.all.values.each do |task|
+      described_class.all.each_value do |task|
         rendered = task.render_user_prompt(context: 'test context', question: 'test?', structure: 'c1ccccc1')
         expect(rendered).not_to be_blank, "Task '#{task.name}' produced blank user prompt"
       end
@@ -114,10 +116,11 @@ RSpec.describe Chemotion::LlmTaskRegistry do
     end
 
     it 'every task has a positive timeout_seconds' do
-      described_class.all.values.each do |task|
+      described_class.all.each_value do |task|
         expect(task.timeout_seconds).to be > 0,
                                         "Task '#{task.name}' has non-positive timeout"
       end
     end
   end
 end
+# rubocop:enable RSpec/MultipleExpectations

@@ -30,7 +30,7 @@ RSpec.describe LlmProviderResolver do
     end
 
     context 'when the global provider is disabled' do
-      let!(:disabled_global) { create(:llm_provider, :disabled) }
+      before { create(:llm_provider, :disabled) }
 
       it 'raises LlmNotConfiguredError' do
         expect { described_class.resolve(user: user, task_name: 'any_task') }
@@ -39,8 +39,10 @@ RSpec.describe LlmProviderResolver do
     end
 
     context 'when multiple global providers exist' do
-      let!(:first_global)  { create(:llm_provider, enabled: true) }
-      let!(:second_global) { create(:llm_provider, enabled: true) }
+      let!(:first_global) { create(:llm_provider, enabled: true) }
+
+      # A second candidate, so "uses the first" is actually a choice.
+      before { create(:llm_provider, enabled: true) }
 
       it 'uses the first (lowest id) global provider' do
         resolution = described_class.resolve(user: user, task_name: 'sds_extraction')
@@ -53,10 +55,13 @@ RSpec.describe LlmProviderResolver do
     # user with a configured provider. (The aiUserApiKey gate is exercised below.)
 
     context 'when the aiFeatures Matrice is disabled with no include list' do
-      let!(:global) { create(:llm_provider, enabled: true) }
+      before do
+        create(:llm_provider, enabled: true)
+        Matrice.find_or_create_by(name: 'aiFeatures')
+               .update!(enabled: false, include_ids: [], exclude_ids: [])
+      end
 
-      before { Matrice.find_or_create_by(name: 'aiFeatures').update!(enabled: false, include_ids: [], exclude_ids: []) }
-      after  { Matrice.find_by(name: 'aiFeatures')&.destroy }
+      after { Matrice.find_by(name: 'aiFeatures')&.destroy }
 
       it 'still resolves (aiFeatures no longer gates resolution)' do
         expect { described_class.resolve(user: user, task_name: 'sds_extraction') }
@@ -66,7 +71,7 @@ RSpec.describe LlmProviderResolver do
   end
 
   describe '.client_for' do
-    let!(:global) { create(:llm_provider, enabled: true) }
+    before { create(:llm_provider, enabled: true) }
 
     it 'returns an LlmClient instance' do
       client = described_class.client_for(user: user, task_name: 'sds_extraction')
@@ -97,13 +102,14 @@ RSpec.describe LlmProviderResolver do
   end
 
   describe 'institution-provider gate on .resolve' do
-    let!(:global) { create(:llm_provider, enabled: true) }
     let(:other) { create(:user) }
 
     before do
+      create(:llm_provider, enabled: true)
       Matrice.find_or_create_by(name: 'aiGlobalProvider')
              .update!(enabled: false, include_ids: [user.id], exclude_ids: [])
     end
+
     after { Matrice.find_by(name: 'aiGlobalProvider')&.destroy }
 
     it 'resolves the global provider only for users granted institution access' do

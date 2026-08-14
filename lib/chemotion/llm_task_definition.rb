@@ -15,7 +15,7 @@ module Chemotion
   #   # => "Here is the Safety Data Sheet text:\n\n..."
   #
   class LlmTaskDefinition
-    REQUIRED_KEYS   = %w[name prompts].freeze
+    REQUIRED_KEYS = %w[name prompts].freeze
     VALID_EXEC_MODES = %w[inline async].freeze
     VALID_OUTPUT_FORMATS = %w[json text].freeze
 
@@ -26,17 +26,10 @@ module Chemotion
     def initialize(config)
       validate_config!(config)
 
-      @name            = config['name'].to_s.strip
-      @display_name    = config.fetch('display_name', @name.tr('_', ' ').capitalize).to_s
-      @description     = config.fetch('description', '').to_s
-      @category        = config.fetch('category', 'general').to_s
-      @execution_mode  = config.fetch('execution_mode', 'inline').to_s
-      @output_format   = config.fetch('output_format', 'json').to_s
-      @temperature     = config.fetch('temperature', 0.1).to_f
-      @max_tokens      = config['max_tokens']&.to_i
-      @timeout_seconds = config.fetch('timeout_seconds', 120).to_i
-      @validator_class = config['validator_class'].presence
-      @prompts         = config.fetch('prompts', {})
+      assign_identity(config)
+      assign_execution(config)
+
+      @prompts = config.fetch('prompts', {})
     end
 
     # Returns the system prompt string (empty string if not defined).
@@ -93,6 +86,24 @@ module Chemotion
     end
 
     private
+
+    # What the task IS — the metadata shown in the UI and used for lookup.
+    def assign_identity(config)
+      @name         = config['name'].to_s.strip
+      @display_name = config.fetch('display_name', @name.tr('_', ' ').capitalize).to_s
+      @description  = config.fetch('description', '').to_s
+      @category     = config.fetch('category', 'general').to_s
+    end
+
+    # How the task RUNS — the knobs the runner and the provider call read.
+    def assign_execution(config)
+      @execution_mode  = config.fetch('execution_mode', 'inline').to_s
+      @output_format   = config.fetch('output_format', 'json').to_s
+      @temperature     = config.fetch('temperature', 0.1).to_f
+      @max_tokens      = config['max_tokens']&.to_i
+      @timeout_seconds = config.fetch('timeout_seconds', 120).to_i
+      @validator_class = config['validator_class'].presence
+    end
 
     def validate_config!(config)
       raise ArgumentError, 'Task config must be a Hash' unless config.is_a?(Hash)

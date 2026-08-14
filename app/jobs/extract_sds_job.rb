@@ -22,6 +22,11 @@
 #     user_id: current_user.id,
 #   )
 #
+# rubocop:disable Metrics/ClassLength -- this job owns the whole SDS pipeline end
+# to end: locating the stored PDF, running the extraction, mapping H/P/EUH codes
+# against the reference tables, writing the result back onto the chemical, and
+# reporting through the notification channel. Splitting it purely for line count
+# would scatter one sequence across several files.
 class ExtractSdsJob < ApplicationJob
   include ActiveJob::Status
 
@@ -60,64 +65,32 @@ class ExtractSdsJob < ApplicationJob
     Delayed::Worker.logger.error "ExtractSdsJob notification error: #{e.message}"
   end
 
+  NO_PROVIDER_MESSAGE = 'SDS extraction failed: no LLM provider is configured. ' \
+                        'Set one up in Profile → AI Settings, or ask your admin ' \
+                        'to configure the institution provider.'
+
+  # Vendor product-info keys that may carry a locally stored SDS.
+  VENDOR_INFO_KEYS = %w[merckProductInfo alfaProductInfo].freeze
+
   def perform(sample_id:, user_id:)
     self.priority = self.class.default_priority
-
-    @user_id  = user_id
-    @sample_id = sample_id
-    @notification_message = 'SDS extraction completed successfully.'
-    @notification_level = 'info'
-    @notification_action = nil
+    start_notification(sample_id, user_id)
 
     chemical = Chemical.find_by(sample_id: sample_id)
-    unless chemical
-      @notification_message = "SDS extraction failed: no chemical record for sample #{sample_id}."
-      @notification_level = 'error'
-      return
-    end
+    return fail_with("SDS extraction failed: no chemical record for sample #{sample_id}.") unless chemical
 
     file_path = resolve_sds_path(chemical)
-    unless file_path
-      @notification_message = 'SDS extraction failed: no SDS file found for this chemical.'
-      @notification_level = 'error'
-      return
-    end
-
-    user = User.find_by(id: user_id)
+    return fail_with('SDS extraction failed: no SDS file found for this chemical.') unless file_path
 
     # SF-05: use the user's configured LLM provider.
-    if user && provider_path_available?(user)
-      run_with_provider(chemical, user, file_path)
-    else
-      @notification_message = 'SDS extraction failed: no LLM provider is configured. ' \
-                              'Set one up in Profile → AI Settings, or ask your admin ' \
-                              'to configure the institution provider.'
-      @notification_level = 'error'
-      # Legacy ai4chemotion fallback (re-enabled in a separate commit):
-      # run_with_ai4chemotion(chemical, file_path, sample_id)
-    end
-  rescue Errors::LlmNotConfiguredError, Errors::LlmProviderError => e
-    @notification_message = "SDS extraction error: #{e.message}"
-    @notification_level = 'error'
-    Rails.logger.error "ExtractSdsJob LLM error: #{e.class} - #{e.message}"
-  rescue SdsPdfTextExtractor::ExtractionError => e
-    @notification_message = "SDS extraction error: #{e.message}"
-    @notification_level = 'error'
-    Rails.logger.error "ExtractSdsJob PDF extraction error: #{e.message}"
-  # Legacy ai4chemotion rescues (re-enabled in a separate commit):
-  # rescue Chemotion::Ai4ChemotionService::ServiceUnavailableError => e
-  #   @notification_message = "SDS extraction unavailable: #{e.message}"
-  #   @notification_level = 'error'
-  #   Rails.logger.error "ExtractSdsJob ServiceUnavailable: #{e.message}"
-  # rescue Chemotion::Ai4ChemotionService::ExtractionError => e
-  #   @notification_message = "SDS extraction error: #{e.message}"
-  #   @notification_level = 'error'
-  #   Rails.logger.error "ExtractSdsJob ExtractionError: #{e.message}"
+    # Legacy ai4chemotion fallback (re-enabled in a separate commit):
+    #   run_with_ai4chemotion(chemical, file_path, sample_id)
+    user = User.find_by(id: user_id)
+    return fail_with(NO_PROVIDER_MESSAGE) unless user && provider_path_available?(user)
+
+    run_with_provider(chemical, user, file_path)
   rescue StandardError => e
-    @notification_message = "SDS extraction error: #{e.message}"
-    @notification_level = 'error'
-    Rails.logger.error "ExtractSdsJob error: #{e.class} - #{e.message}"
-    Rails.logger.error e.backtrace&.first(5)&.join("\n")
+    handle_perform_error(e)
   end
 
   def max_attempts
@@ -125,6 +98,43 @@ class ExtractSdsJob < ApplicationJob
   end
 
   private
+
+  # Assume success; every failure path below overwrites this via #fail_with.
+  def start_notification(sample_id, user_id)
+    @sample_id            = sample_id
+    @user_id              = user_id
+    @notification_message = 'SDS extraction completed successfully.'
+    @notification_level   = 'info'
+    @notification_action  = nil
+  end
+
+  # Record a failure for after_perform to surface, and return nil so callers can
+  # `return fail_with(...)` as a guard.
+  def fail_with(message)
+    @notification_message = message
+    @notification_level   = 'error'
+    nil
+  end
+
+  # Every failure reaches the user as the same notification; only the log line
+  # differs by error class.
+  #
+  # Legacy ai4chemotion branches (re-enabled in a separate commit):
+  #   when Chemotion::Ai4ChemotionService::ServiceUnavailableError
+  #     'SDS extraction unavailable'
+  def handle_perform_error(error)
+    case error
+    when Errors::LlmNotConfiguredError, Errors::LlmProviderError
+      Rails.logger.error "ExtractSdsJob LLM error: #{error.class} - #{error.message}"
+    when SdsPdfTextExtractor::ExtractionError
+      Rails.logger.error "ExtractSdsJob PDF extraction error: #{error.message}"
+    else
+      Rails.logger.error "ExtractSdsJob error: #{error.class} - #{error.message}"
+      Rails.logger.error error.backtrace&.first(5)&.join("\n")
+    end
+
+    fail_with("SDS extraction error: #{error.message}")
+  end
 
   # Returns true when a user has a working LLM provider configured for SDS extraction.
   def provider_path_available?(user)
@@ -198,40 +208,53 @@ class ExtractSdsJob < ApplicationJob
   #   end
   # end
 
-  # Find the SDS file on disk from chemical_data.
+  # Find the SDS file on disk from chemical_data. Two places record one:
+  # safetySheetPath (written by save_safety_datasheet / save_manual_sds), and a
+  # vendor's sdsLink when it points at a local copy rather than the vendor's site.
   def resolve_sds_path(chemical)
-    return nil unless chemical.chemical_data.is_a?(Array) && chemical.chemical_data[0].is_a?(Hash)
+    data = chemical.chemical_data
+    return nil unless data.is_a?(Array) && data[0].is_a?(Hash)
 
-    data = chemical.chemical_data[0]
+    sds_path_from_safety_sheet(data[0]) || sds_path_from_vendor_info(data[0])
+  end
 
-    # Try safetySheetPath first (set by save_safety_datasheet / save_manual_sds)
-    if data['safetySheetPath'].is_a?(Array) && data['safetySheetPath'].any?
-      # safetySheetPath entries are hashes like { "295302_37d4e21b_link" => "/safety_sheets/merck/295302_web_37d4e21b.pdf" }
-      entry = data['safetySheetPath'].last
-      relative_path = if entry.is_a?(Hash)
-                        entry.values.find { |v| v.is_a?(String) && v.include?('/safety_sheets/') }
-                      else
-                        entry
-                      end
+  def sds_path_from_safety_sheet(data)
+    entries = data['safetySheetPath']
+    return nil unless entries.is_a?(Array) && entries.any?
 
-      if relative_path.present?
-        abs_path = Rails.public_path.join(relative_path.sub(%r{^/}, '')).to_s
-        return abs_path if File.exist?(abs_path)
-      end
-    end
+    existing_public_file(safety_sheet_relative_path(entries.last))
+  end
 
-    # Fallback: check vendor product info for sdsLink local paths
-    %w[merckProductInfo alfaProductInfo].each do |key|
-      next unless data[key].is_a?(Hash) && data[key]['sdsLink'].present?
+  # Entries are hashes like
+  #   { "295302_37d4e21b_link" => "/safety_sheets/merck/295302_web_37d4e21b.pdf" }
+  # but older records store the path as a bare string.
+  def safety_sheet_relative_path(entry)
+    return entry unless entry.is_a?(Hash)
 
-      link = data[key]['sdsLink']
-      next if link.start_with?('http')
+    entry.values.find { |v| v.is_a?(String) && v.include?('/safety_sheets/') }
+  end
 
-      abs_path = Rails.public_path.join(link.sub(%r{^/}, '')).to_s
-      return abs_path if File.exist?(abs_path)
+  def sds_path_from_vendor_info(data)
+    VENDOR_INFO_KEYS.each do |key|
+      info = data[key]
+      next unless info.is_a?(Hash)
+
+      link = info['sdsLink']
+      next if link.blank? || link.start_with?('http')
+
+      path = existing_public_file(link)
+      return path if path
     end
 
     nil
+  end
+
+  # Absolute path under public/ for a stored relative path, or nil if it is gone.
+  def existing_public_file(relative_path)
+    return nil if relative_path.blank?
+
+    abs_path = Rails.public_path.join(relative_path.sub(%r{^/}, '')).to_s
+    abs_path if File.exist?(abs_path)
   end
 
   # Legacy ai4chemotion helpers — disabled for now; re-enabled in a separate
@@ -297,19 +320,25 @@ class ExtractSdsJob < ApplicationJob
   #   but was unavailable, when the runner fell back to the default model. nil when
   #   no fallback happened; lets the UI show "requested X, fell back to <model>".
   def update_chemical_data(chemical, extraction_result, model_used: nil, requested_model: nil)
-    data = chemical.chemical_data.deep_dup
+    data  = chemical.chemical_data.deep_dup
     entry = data[0] || {}
 
-    # Build safety phrases (H/P/EUH codes) from extracted data
-    safety_phrases = build_safety_phrases(extraction_result)
-    entry['safetyPhrases'] = (entry['safetyPhrases'] || {}).merge(safety_phrases)
+    # Safety phrases (H/P/EUH codes) from extracted data
+    entry['safetyPhrases'] = (entry['safetyPhrases'] || {}).merge(build_safety_phrases(extraction_result))
 
     # Merge physical properties if present
-    if extraction_result['properties'].is_a?(Hash) && extraction_result['properties'].any?
-      entry['extractedProperties'] = extraction_result['properties']
-    end
+    properties = extraction_result['properties']
+    entry['extractedProperties'] = properties if properties.is_a?(Hash) && properties.any?
 
-    # Store raw extraction metadata — used by the frontend AI result modal
+    entry['ai4chemotion'] = extraction_metadata(extraction_result, model_used, requested_model)
+    entry.delete('extraction_error') # clear any prior failure marker on success
+
+    data[0] = entry
+    chemical.update!(chemical_data: data)
+  end
+
+  # Raw extraction metadata — used by the frontend AI result modal.
+  def extraction_metadata(extraction_result, model_used, requested_model)
     metadata = {
       'extracted_at' => Time.current.iso8601,
       'model' => model_used,
@@ -320,20 +349,15 @@ class ExtractSdsJob < ApplicationJob
 
     if extraction_result['is_mixture']
       metadata['is_mixture'] = true
-      # Store component list for mixtures (each entry has name, cas_number, concentration)
-      if extraction_result['mixture_components'].is_a?(Array) && extraction_result['mixture_components'].any?
-        metadata['mixture_components'] = extraction_result['mixture_components']
-      end
+      # Component list for mixtures (each entry has name, cas_number, concentration)
+      components = present_array(extraction_result, 'mixture_components')
+      metadata['mixture_components'] = components if components
     else
       metadata['cas_number'] = extraction_result['cas_number']
       metadata['molecular_formula'] = extraction_result['molecular_formula']
     end
 
-    entry['ai4chemotion'] = metadata.compact
-    entry.delete('extraction_error') # clear any prior failure marker on success
-
-    data[0] = entry
-    chemical.update!(chemical_data: data)
+    metadata.compact
   end
 
   # Write a failure marker into chemical_data[0] so the frontend polling detects
@@ -349,42 +373,45 @@ class ExtractSdsJob < ApplicationJob
       'message' => @notification_message,
       'failed_at' => Time.current.iso8601,
     }
-    chemical.update_columns(chemical_data: data) # skip validations/callbacks — marker only
+    # rubocop:disable Rails/SkipsModelValidations -- deliberate: this writes only a
+    # failure marker the frontend polls for, and must not fire validations or
+    # callbacks on a chemical whose extraction just failed.
+    chemical.update_columns(chemical_data: data)
+    # rubocop:enable Rails/SkipsModelValidations
   rescue StandardError => e
     Delayed::Worker.logger.error "ExtractSdsJob failure-marker error: #{e.message}"
   end
 
   # Convert flat code arrays to Chemotion's hash format using reference data.
   def build_safety_phrases(extraction_result)
-    phrases = {}
+    phrases = hazard_statement_phrases(extraction_result)
 
-    if extraction_result['hazard_statements'].is_a?(Array) && extraction_result['hazard_statements'].any?
-      phrases['h_statements'] = map_codes_to_descriptions(
-        extraction_result['hazard_statements'],
-        hazard_phrases_lookup,
-      )
-    end
+    p_codes = present_array(extraction_result, 'precautionary_statements')
+    phrases['p_statements'] = map_codes_to_descriptions(p_codes, precautionary_phrases_lookup) if p_codes
 
-    # European supplemental hazard statements (EUH-XXX)
-    if extraction_result['eu_h_statements'].is_a?(Array) && extraction_result['eu_h_statements'].any?
-      eu_mapped = map_codes_to_descriptions(extraction_result['eu_h_statements'], hazard_phrases_lookup)
-      phrases['h_statements'] = (phrases['h_statements'] || {}).merge(eu_mapped)
-    end
-
-    if extraction_result['precautionary_statements'].is_a?(Array) && extraction_result['precautionary_statements'].any?
-      phrases['p_statements'] = map_codes_to_descriptions(
-        extraction_result['precautionary_statements'],
-        precautionary_phrases_lookup,
-      )
-    end
-
-    if extraction_result['ghs_codes'].is_a?(Array) && extraction_result['ghs_codes'].any?
-      phrases['pictograms'] = Chemotion::ChemicalsService.construct_pictograms(
-        extraction_result['ghs_codes'],
-      )
-    end
+    ghs_codes = present_array(extraction_result, 'ghs_codes')
+    phrases['pictograms'] = Chemotion::ChemicalsService.construct_pictograms(ghs_codes) if ghs_codes
 
     phrases
+  end
+
+  # GHS hazard statements and the European supplemental ones (EUH-XXX) are looked
+  # up in the same table and share the one 'h_statements' bucket.
+  def hazard_statement_phrases(extraction_result)
+    h_codes  = present_array(extraction_result, 'hazard_statements')
+    eu_codes = present_array(extraction_result, 'eu_h_statements')
+    return {} unless h_codes || eu_codes
+
+    statements = {}
+    statements.merge!(map_codes_to_descriptions(h_codes, hazard_phrases_lookup)) if h_codes
+    statements.merge!(map_codes_to_descriptions(eu_codes, hazard_phrases_lookup)) if eu_codes
+    { 'h_statements' => statements }
+  end
+
+  # The value at +key+ when the model returned a non-empty Array there, else nil.
+  def present_array(extraction_result, key)
+    value = extraction_result[key]
+    value if value.is_a?(Array) && value.any?
   end
 
   # Map an array of codes like ["H225", "H319"] to {"H225" => " description", ...}
@@ -398,14 +425,11 @@ class ExtractSdsJob < ApplicationJob
   end
 
   def hazard_phrases_lookup
-    @hazard_phrases_lookup ||= JSON.parse(
-      File.read(Rails.public_path.join('json', 'hazardPhrases.json')),
-    )
+    @hazard_phrases_lookup ||= JSON.parse(Rails.public_path.join('json', 'hazardPhrases.json').read)
   end
 
   def precautionary_phrases_lookup
-    @precautionary_phrases_lookup ||= JSON.parse(
-      File.read(Rails.public_path.join('json', 'precautionaryPhrases.json')),
-    )
+    @precautionary_phrases_lookup ||= JSON.parse(Rails.public_path.join('json', 'precautionaryPhrases.json').read)
   end
 end
+# rubocop:enable Metrics/ClassLength

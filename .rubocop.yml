@@ -42,6 +42,17 @@ RSpec/MultipleExpectations:
 Style/Documentation:
   Enabled: false
 
+# Allow the table-aligned hash style used throughout the code base (values lined
+# up in a column) alongside the default single-space style. Both are accepted, so
+# neither existing nor new code has to be reflowed to satisfy the cop.
+Layout/HashAlignment:
+  EnforcedColonStyle:
+    - key
+    - table
+  EnforcedHashRocketStyle:
+    - key
+    - table
+
 Style/RedundantArrayConstructor:
   Enabled: false
 

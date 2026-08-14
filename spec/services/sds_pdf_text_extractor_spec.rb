@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MessageSpies -- reads better as an expectation set before the call
+# rubocop:disable RSpec/MultipleExpectations -- these assert one API response as a whole
+# rubocop:disable RSpec/NestedGroups -- the provider matrix (mode x gate x protocol) needs the nesting
+
 require 'rails_helper'
 
 RSpec.describe SdsPdfTextExtractor do
@@ -94,7 +98,7 @@ RSpec.describe SdsPdfTextExtractor do
     context 'when ghostscript returns empty output' do
       before do
         allow(File).to receive(:exist?).with(file_path).and_return(true)
-        allow(Open3).to receive(:capture3).and_return(['', '', double(success?: true)])
+        allow(Open3).to receive(:capture3).and_return(['', '', instance_double(Process::Status, success?: true)])
       end
 
       it 'raises ExtractionError' do
@@ -105,7 +109,8 @@ RSpec.describe SdsPdfTextExtractor do
     context 'when ghostscript fails' do
       before do
         allow(File).to receive(:exist?).with(file_path).and_return(true)
-        allow(Open3).to receive(:capture3).and_return(['', 'rangecheck error', double(success?: false, exitstatus: 1)])
+        failed = instance_double(Process::Status, success?: false, exitstatus: 1)
+        allow(Open3).to receive(:capture3).and_return(['', 'rangecheck error', failed])
       end
 
       it 'raises ExtractionError with gs error message' do
@@ -129,15 +134,16 @@ RSpec.describe SdsPdfTextExtractor do
 
       before do
         allow(File).to receive(:exist?).with(file_path).and_return(true)
-        allow(Open3).to receive(:capture3).and_return([pdf_text, '', double(success?: true)])
+        allow(Open3).to receive(:capture3).and_return([pdf_text, '', instance_double(Process::Status, success?: true)])
       end
 
       it 'calls gs with the correct arguments' do
-        expect(Open3).to receive(:capture3).with(
+        extract
+
+        expect(Open3).to have_received(:capture3).with(
           'gs', '-dBATCH', '-dNOPAUSE', '-dSAFER',
           '-sDEVICE=txtwrite', '-sOutputFile=%stdout', '-q', '--', file_path
-        ).and_return([pdf_text, '', double(success?: true)])
-        extract
+        )
       end
 
       context 'with English GHS section headers' do
@@ -205,8 +211,8 @@ RSpec.describe SdsPdfTextExtractor do
       end
 
       context 'when MAX_SECTION_CHARS would be exceeded' do
-        let(:long_section_9) { "X#{' data' * 10_000}" }
-        let(:pdf_text) { english_sds_text(extra_sections: long_section_9) }
+        let(:long_section) { "X#{' data' * 10_000}" }
+        let(:pdf_text) { english_sds_text(extra_sections: long_section) }
 
         it 'caps extracted text at MAX_SECTION_CHARS' do
           expect(extract.length).to be <= SdsPdfTextExtractor::MAX_SECTION_CHARS
@@ -230,7 +236,7 @@ RSpec.describe SdsPdfTextExtractor do
       context 'when only 1 relevant section is detected (partial document)' do
         let(:pdf_text) do
           "SECTION 2 Hazard Identification\nSignal Word: Danger\nH301: Toxic\n" \
-            "Some other content without standard section numbers.\n" * 50
+          "Some other content without standard section numbers.\n" * 50
         end
 
         it 'uses fallback (not smart extraction)' do
@@ -275,4 +281,6 @@ RSpec.describe SdsPdfTextExtractor do
     end
   end
 end
-
+# rubocop:enable RSpec/MessageSpies
+# rubocop:enable RSpec/MultipleExpectations
+# rubocop:enable RSpec/NestedGroups

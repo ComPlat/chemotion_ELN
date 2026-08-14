@@ -15,14 +15,14 @@ module Chemotion
   #   # => ["hplc_extraction", "nmr_structuring", "sds_extraction", ...]
   #
   class LlmTaskRegistry
-    TASKS_DIR = Rails.root.join('config', 'llm_tasks')
+    TASKS_DIR = Rails.root.join('config/llm_tasks')
 
     class << self
       # Returns all loaded task definitions indexed by task name.
       #
       # @return [Hash{String => LlmTaskDefinition}]
       def all
-        @registry ||= load_all
+        @all ||= load_all
       end
 
       # Find a task definition by name.
@@ -32,8 +32,10 @@ module Chemotion
       # @raise [ArgumentError] if no task with that name is registered
       def find(name)
         task = all[name.to_s]
-        raise ArgumentError, "Unknown LLM task: '#{name}'. " \
-          "Available tasks: #{all.keys.sort.join(', ')}" unless task
+        unless task
+          raise ArgumentError, "Unknown LLM task: '#{name}'. " \
+                               "Available tasks: #{all.keys.sort.join(', ')}"
+        end
 
         task
       end
@@ -48,7 +50,7 @@ module Chemotion
       # Clears the memoised registry. Useful in tests and development
       # when YAML files change without a Rails restart.
       def reload!
-        @registry = nil
+        @all = nil
       end
 
       private
@@ -60,7 +62,7 @@ module Chemotion
         if paths.empty?
           Rails.logger.warn(
             "[LlmTaskRegistry] No task YAML files found in #{TASKS_DIR}. " \
-            'Create config/llm_tasks/*.yml to register tasks.'
+            'Create config/llm_tasks/*.yml to register tasks.',
           )
         end
 
@@ -83,7 +85,7 @@ module Chemotion
         if hash.key?(task.name)
           Rails.logger.warn(
             "[LlmTaskRegistry] Duplicate task name '#{task.name}' in #{path}. " \
-            'Earlier definition kept.'
+            'Earlier definition kept.',
           )
           return
         end

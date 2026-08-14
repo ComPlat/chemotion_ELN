@@ -48,8 +48,8 @@ RSpec.describe LlmProvider do
 
     describe '.global_providers' do
       it 'returns only enabled providers, ordered by id' do
-        expect(LlmProvider.global_providers).to include(global_enabled)
-        expect(LlmProvider.global_providers).not_to include(global_disabled)
+        expect(described_class.global_providers).to include(global_enabled)
+        expect(described_class.global_providers).not_to include(global_disabled)
       end
     end
   end
@@ -64,7 +64,7 @@ RSpec.describe LlmProvider do
     end
 
     it 'decrypts the key on read' do
-      reloaded = LlmProvider.find(provider.id)
+      reloaded = described_class.find(provider.id)
       expect(reloaded.api_key).to eq(plain_key)
     end
 

@@ -62,7 +62,7 @@ class SdsPdfTextExtractor
     \s+                   # whitespace separator
     (\d{1,2})             # section number (1–16)
     \b                    # word boundary (avoids matching "10" as "1")
-  /ix
+  /ix.freeze
 
   # Fallback regex: numbered headings WITHOUT the "SECTION" keyword.
   # Matches lines like "1 IDENTIFICATION", "1. Identification", "1 - IDENTIFICATION".
@@ -74,7 +74,7 @@ class SdsPdfTextExtractor
     [\s.\-:]+             # separator (space, dot, dash, colon)
     (?!\d)                # not followed by another digit (avoid matching "12 34" as section 12)
     [A-ZÄÖÜ]              # must be followed by an uppercase letter (heading text, not data)
-  /x
+  /x.freeze
 
   class ExtractionError < StandardError; end
 
@@ -109,7 +109,7 @@ class SdsPdfTextExtractor
       sections_text
     else
       Rails.logger.info(
-        "SdsPdfTextExtractor: section detection failed, using fallback " \
+        'SdsPdfTextExtractor: section detection failed, using fallback ' \
         "(#{[normalised.length, MAX_FALLBACK_CHARS].min} chars) " \
         "for #{File.basename(@file_path)}",
       )
@@ -170,7 +170,7 @@ class SdsPdfTextExtractor
     boundaries = {}
     text.scan(regex) do |match|
       num = match[0].to_i
-      next unless (1..16).include?(num)
+      next unless (1..16).cover?(num)
 
       pos = Regexp.last_match.begin(0)
       boundaries[num] ||= pos
@@ -188,35 +188,44 @@ class SdsPdfTextExtractor
   # Returns +nil+ if fewer than 2 relevant sections are detected (signals the
   # caller to use the fallback).
   def extract_relevant_sections(text)
-    boundaries = scan_boundaries(text, SECTION_HEADER_RE)
+    boundaries = detect_boundaries(text)
+    return nil if relevant_count(boundaries) < 2
 
-    # If the primary regex finds fewer than 2 relevant sections, try the
-    # number-only regex (e.g. "1 IDENTIFICATION", "2. HAZARD IDENTIFICATION")
-    if (RELEVANT_SECTIONS & boundaries.keys).size < 2
-      fallback = scan_boundaries(text, NUMBERED_HEADER_RE)
-      # Only use the fallback if it found MORE relevant sections than primary
-      boundaries = fallback if (RELEVANT_SECTIONS & fallback.keys).size > (RELEVANT_SECTIONS & boundaries.keys).size
-    end
-
-    found_relevant = RELEVANT_SECTIONS & boundaries.keys
-    return nil if found_relevant.size < 2
-
-    sorted_boundaries = boundaries.sort_by { |_num, pos| pos }
-
-    parts = RELEVANT_SECTIONS.filter_map do |section_num|
-      next unless boundaries[section_num]
-
-      start_pos = boundaries[section_num]
-      next_entry = sorted_boundaries.find { |_num, pos| pos > start_pos }
-      end_pos = next_entry ? next_entry[1] : text.length
-
-      content = text[start_pos, end_pos - start_pos].strip
-      content.empty? ? nil : content
-    end
-
+    parts = section_bodies(text, boundaries)
     return nil if parts.empty?
 
-    result = parts.join("\n\n---\n\n")
-    result.slice(0, MAX_SECTION_CHARS)
+    parts.join("\n\n---\n\n").slice(0, MAX_SECTION_CHARS)
+  end
+
+  # Section number => offset in the text. The primary regex wants the "SECTION"
+  # keyword; when it recognises fewer than 2 relevant sections the sheet probably
+  # uses bare numbered headings ("1 IDENTIFICATION"), so the number-only regex is
+  # tried — but only kept if it actually recognises more.
+  def detect_boundaries(text)
+    primary = scan_boundaries(text, SECTION_HEADER_RE)
+    return primary if relevant_count(primary) >= 2
+
+    fallback = scan_boundaries(text, NUMBERED_HEADER_RE)
+    relevant_count(fallback) > relevant_count(primary) ? fallback : primary
+  end
+
+  def relevant_count(boundaries)
+    (RELEVANT_SECTIONS & boundaries.keys).size
+  end
+
+  # The text of each relevant section, from its own offset up to whichever section
+  # starts next (or end of text). Sections that come out empty are dropped.
+  def section_bodies(text, boundaries)
+    sorted = boundaries.sort_by { |_num, pos| pos }
+
+    RELEVANT_SECTIONS.filter_map do |section_num|
+      start_pos = boundaries[section_num]
+      next unless start_pos
+
+      next_entry = sorted.find { |_num, pos| pos > start_pos }
+      end_pos    = next_entry ? next_entry[1] : text.length
+
+      text[start_pos, end_pos - start_pos].strip.presence
+    end
   end
 end
