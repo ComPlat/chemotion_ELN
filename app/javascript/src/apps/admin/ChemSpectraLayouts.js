@@ -2,10 +2,11 @@
 import React, { Component } from 'react';
 import ChemSpectraFetcher from 'src/fetchers/ChemSpectraFetcher';
 import {
-  Table, Button, Form, Popover, OverlayTrigger, Alert
+  Table, Button, Form, Alert
 } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
 import { Select } from 'src/components/common/Select';
+import ConfirmDeleteButton from 'src/components/common/ConfirmDeleteButton';
 
 export default class ChemSpectraLayouts extends Component {
   constructor(props) {
@@ -249,44 +250,13 @@ export default class ChemSpectraLayouts extends Component {
                   {defaultLayouts.some(([layout, dataTypes]) => layout === entry.layout
                     && !dataTypes.includes(entry.dataType)) && (
                       <div className="actions d-inline-block">
-                        <OverlayTrigger
-                          root
-                          trigger="focus"
-                          placement="top"
-                          overlay={(
-                            <Popover id="popover-positioned-scrolling-left">
-                              <Popover.Header id="popover-positioned-scrolling-left" as="h5">
-                                Delete this data type?
-                              </Popover.Header>
-                              <Popover.Body className="ps-5">
-                                <Button
-                                  size="sm"
-                                  variant="danger"
-                                  className="me-2"
-                                  onClick={() => {
-                                    this.handleDeleteDataType({ layout: entry.layout, dataType: entry.dataType });
-                                  }}
-                                >
-                                  Yes
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="warning"
-                                  onClick={this.handleClick}
-                                >
-                                  No
-                                </Button>
-                              </Popover.Body>
-                            </Popover>
-                          )}
-                        >
-                          <Button
-                            size="sm"
-                            variant="danger"
-                          >
-                            <i className="fa fa-trash-o" />
-                          </Button>
-                        </OverlayTrigger>
+                        <ConfirmDeleteButton
+                          id={`confirm-delete-datatype-${entry.dataType}`}
+                          header="Delete this data type?"
+                          onConfirm={() => {
+                            this.handleDeleteDataType({ layout: entry.layout, dataType: entry.dataType });
+                          }}
+                        />
                       </div>
                   )}
                 </td>

@@ -9,6 +9,7 @@ import {
 } from 'react-bootstrap';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import { AsyncSelect } from 'src/components/common/Select';
+import ConfirmDeleteButton from 'src/components/common/ConfirmDeleteButton';
 import _ from 'lodash';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 
@@ -172,6 +173,7 @@ export default class GroupElement extends React.Component {
   renderDeleteButton(type, groupRec, userRec) {
     const { currentUser } = this.props;
     let msg = 'Leave this group?';
+    let tooltip = 'Remove';
     if (type === 'user') {
       if (userRec.id === currentUser.id) {
         msg = 'Leave this group?';
@@ -180,48 +182,16 @@ export default class GroupElement extends React.Component {
       }
     } else {
       msg = 'Remove group?';
+      tooltip = 'Remove group';
     }
 
-    const popover = (
-      <Popover id="popover-positioned-scrolling-left">
-        <Popover.Body>
-          {msg}
-          <div className="mt-2 d-flex gap-2">
-            <Button
-              size="sm"
-              variant="danger"
-              onClick={(event) => this.confirmDelete(event, type, groupRec, userRec)}
-            >
-              Yes
-            </Button>
-            <Button
-              size="sm"
-              variant="warning"
-              onClick={this.handleClick}
-            >
-              No
-            </Button>
-          </div>
-        </Popover.Body>
-      </Popover>
-    );
-
     return (
-      <OverlayTrigger
-        animation
-        placement="right"
-        root
-        trigger="focus"
-        overlay={popover}
-      >
-        <Button
-          size="sm"
-          type="button"
-          variant="danger"
-        >
-          <i className="fa fa-trash-o" />
-        </Button>
-      </OverlayTrigger>
+      <ConfirmDeleteButton
+        id={`confirm-delete-${type}-${groupRec.id}${userRec ? `-${userRec.id}` : ''}`}
+        header={msg}
+        tooltip={tooltip}
+        onConfirm={() => this.confirmDelete(undefined, type, groupRec, userRec)}
+      />
     );
   }
 
@@ -272,12 +242,7 @@ export default class GroupElement extends React.Component {
                   <i className="fa fa-key" />
                 </Button>
               </OverlayTrigger>
-              <OverlayTrigger
-                placement="top"
-                overlay={<Tooltip>Remove group</Tooltip>}
-              >
-                {this.renderDeleteButton('group', groupElement)}
-              </OverlayTrigger>
+              {this.renderDeleteButton('group', groupElement)}
             </>
           )}
         </div>
@@ -353,11 +318,7 @@ export default class GroupElement extends React.Component {
             </Button>
           </OverlayTrigger>
         )}
-        {canDelete && (
-          <OverlayTrigger placement="top" overlay={<Tooltip>Remove</Tooltip>}>
-            {this.renderDeleteButton('user', groupRec, userRec)}
-          </OverlayTrigger>
-        )}
+        {canDelete && this.renderDeleteButton('user', groupRec, userRec)}
       </div>
     );
   }
