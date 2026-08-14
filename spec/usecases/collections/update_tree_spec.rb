@@ -87,10 +87,39 @@ RSpec.describe Usecases::Collections::UpdateTree do
         expect(Message.last.content['silent']).to be(true)
       end
 
-      it 'does not notify when the label is left unchanged (a pure reorder/reparent)' do
+      # Reparenting/reordering an unshared sibling (second) must not spuriously notify the sharee
+      # about `first`, which is genuinely untouched by this save.
+      it 'does not notify when the shared collection itself is unchanged (only an unshared sibling moves)' do
         payload = [{ id: first.id, label: 'First', children: [{ id: second.id, label: 'Second' }] }]
 
         expect { usecase.perform!(collections: payload) }.not_to change(Notification, :count)
+      end
+
+      it 'does not notify when nothing about the shared collection changes' do
+        payload = [{ id: first.id, label: 'First' }, { id: second.id, label: 'Second' }]
+
+        expect { usecase.perform!(collections: payload) }.not_to change(Notification, :count)
+      end
+
+      # The sharee's tree is rebuilt from live ancestry/position on every refetch (see
+      # CollectionsStore.jsx), so a reparent needs the same "please refetch" signal a rename gets —
+      # without it, nesting silently drifts out of sync until an unrelated notification (or a page
+      # reload) happens to trigger a refresh.
+      it 'notifies when only the ancestry changes (a reparent, no rename)' do
+        container = create(:collection, user: user, label: 'Container')
+        payload = [{ id: container.id, label: 'Container', children: [{ id: first.id, label: 'First' }] }]
+
+        expect do
+          usecase.perform!(collections: payload)
+        end.to change(Notification.where(user_id: sharee.id), :count).by(1)
+      end
+
+      it 'notifies when only the position changes (a reorder, no rename or reparent)' do
+        payload = [{ id: second.id, label: 'Second' }, { id: first.id, label: 'First' }]
+
+        expect do
+          usecase.perform!(collections: payload)
+        end.to change(Notification.where(user_id: sharee.id), :count).by(1)
       end
     end
 

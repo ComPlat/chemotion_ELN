@@ -361,4 +361,60 @@ describe('CollectionsStore', () => {
       expect(getMySharesStub.called).toBe(false);
     });
   });
+
+  // Regression coverage for the nearest-shared-ancestor "adoption" fix: a node whose real parent
+  // isn't shared used to have its ENTIRE ancestry wiped to root (discarding a closer surviving
+  // shared ancestor), and — for two or more levels of shared descendants below such a gap — could
+  // throw inside fetchCollections entirely (undefined.addChild), per the traced A/B/C/D scenario.
+  describe('.setSharedWithMeCollections', () => {
+    const sharedCollection = (overrides) => ({
+      is_locked: false, owner: 'Alice', owner_name: 'Alice', position: 1, ...overrides,
+    });
+
+    it('adopts a node under its nearest shared ancestor when the direct parent is not shared', () => {
+      // A (shared, root) -> B (id 2, NOT shared) -> C (shared) -> D (shared)
+      const a = sharedCollection({ id: 1, label: 'A', ancestry: '/' });
+      const c = sharedCollection({ id: 3, label: 'C', ancestry: '/1/2/' });
+      const d = sharedCollection({ id: 4, label: 'D', ancestry: '/1/2/3/' });
+
+      store.setSharedWithMeCollections([a, c, d]);
+
+      const ownerRoot = store.shared_with_me_collections[0];
+      expect(ownerRoot.children.map((node) => node.id)).toEqual([1]);
+      const nodeA = ownerRoot.children[0];
+      expect(nodeA.children.map((node) => node.id)).toEqual([3]);
+      const nodeC = nodeA.children[0];
+      expect(nodeC.children.map((node) => node.id)).toEqual([4]);
+    });
+
+    // Regression coverage for the sibling-ordering refinement: position is only comparable among
+    // true original siblings. 33-37 are true siblings under /31/32/ (32 unshared); 45 (ancestry
+    // /31/, shallower) used to interleave with them because raw position was compared directly
+    // across unrelated original parents. Depth must win first: 45 before the whole 33-37 block,
+    // which stays contiguous and in original relative order since its own position IS comparable.
+    it('orders adopted siblings by original depth first, keeping true-sibling blocks contiguous and in order', () => {
+      const thirtyOne = sharedCollection({ id: 31, label: '31', ancestry: '/' });
+      const siblings = [33, 34, 35, 36, 37].map((id, index) => (
+        sharedCollection({ id, label: String(id), ancestry: '/31/32/', position: index + 1 })
+      ));
+      const fortyFive = sharedCollection({ id: 45, label: '45', ancestry: '/31/', position: 2 });
+
+      store.setSharedWithMeCollections([thirtyOne, fortyFive, ...siblings]);
+
+      const ownerRoot = store.shared_with_me_collections[0];
+      const node31 = ownerRoot.children[0];
+      expect(node31.id).toBe(31);
+      expect(node31.children.map((node) => node.id)).toEqual([45, 33, 34, 35, 36, 37]);
+    });
+
+    it('roots a node under the owner when none of its ancestors are shared at all', () => {
+      const e = sharedCollection({ id: 5, label: 'E', ancestry: '/99/' });
+
+      store.setSharedWithMeCollections([e]);
+
+      const ownerRoot = store.shared_with_me_collections[0];
+      expect(ownerRoot.children.map((node) => node.id)).toEqual([5]);
+      expect(ownerRoot.children[0].ancestry).toEqual('/');
+    });
+  });
 });
