@@ -258,7 +258,7 @@ const UserStore = types.model(
     authToken: types.maybeNull(types.string, localStorage.getItem('chemotion-auth-token')),
     role: types.optional(types.string, localStorage.getItem('chemotion-role') || 'Guest'),
     currentUser: types.maybeNull(User),
-    currentRoute: types.optional(types.string, localStorage.getItem('chemotion-app-route') || '/home'),
+    currentRoute: types.optional(types.string, location.pathname || '/home'),
     profile: types.optional(types.frozen({}), {}), // must be serialized later, currently the full datastructure is unknown to me
     currentTab: types.optional(types.integer, 0),
     currentType: types.optional(types.string, ''),
@@ -398,11 +398,6 @@ const UserStore = types.model(
   },
   setCurrentRoute: (route) => {
     self.currentRoute = route;
-    if (route) {
-      localStorage.setItem('chemotion-app-route', route);
-    } else {
-      localStorage.removeItem('chemotion-app-route');
-    }
   },
   setLoginStatus: (state) => {
     self.loginStatus = state;
