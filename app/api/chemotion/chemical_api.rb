@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 module Chemotion
+  # rubocop:disable Metrics/ClassLength -- one Grape resource class per domain object is
+  # this API layer's convention; it was already over the limit before the SDS
+  # extraction endpoint below was added.
   class ChemicalAPI < Grape::API
     include Grape::Kaminari
 
@@ -245,3 +248,4 @@ module Chemotion
     end
   end
 end
+# rubocop:enable Metrics/ClassLength

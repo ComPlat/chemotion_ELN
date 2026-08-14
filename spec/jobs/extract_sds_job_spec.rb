@@ -1,9 +1,33 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/AnyInstance -- the object under test is built inside the code path
+# rubocop:disable RSpec/MessageSpies -- reads better as an expectation set before the call
+
 require 'rails_helper'
 
 RSpec.describe ExtractSdsJob do
   let(:user) { create(:person) }
+  # The job drives LlmTaskRunner through its *instance* API, because it needs
+  # `model_used` / `requested_model` afterwards to record which model produced the
+  # data. An instance_double keeps that contract verified.
+  let(:runner) do
+    instance_double(
+      LlmTaskRunner,
+      run:             extraction_result,
+      model_used:      'kit.qwen3.5-397b-A17b',
+      requested_model: nil,
+      fell_back?:      false,
+    )
+  end
+  let(:resolution) do
+    LlmProviderResolver::LlmResolution.new(
+      provider: nil,
+      model:    'kit.qwen3.5-397b-A17b',
+      api_key:  'sk-test',
+      base_url: 'https://ki-toolbox.scc.kit.edu/api',
+      protocol: 'openai',
+    )
+  end
   let(:sample) { create(:sample) }
   let(:chemical) do
     Chemical.create!(
@@ -18,7 +42,7 @@ RSpec.describe ExtractSdsJob do
       'chemical_name' => 'Phenol',
       'cas_number' => '108-95-2',
       'signal_word' => 'Danger',
-      'hazard_statements' => ['H301', 'H311'],
+      'hazard_statements' => %w[H301 H311],
       'precautionary_statements' => ['P260'],
       'ghs_codes' => ['GHS06'],
       'properties' => { 'boiling_point' => '181.7 °C' },
@@ -30,11 +54,11 @@ RSpec.describe ExtractSdsJob do
     allow(File).to receive(:exist?).and_call_original
     allow(File).to receive(:exist?).with(file_path).and_return(true)
     # Stub phrase lookups so tests don't need JSON files on disk
-    allow_any_instance_of(ExtractSdsJob).to receive(:hazard_phrases_lookup).and_return(
+    allow_any_instance_of(described_class).to receive(:hazard_phrases_lookup).and_return(
       'H301' => 'Toxic if swallowed',
       'H311' => 'Toxic in contact with skin',
     )
-    allow_any_instance_of(ExtractSdsJob).to receive(:precautionary_phrases_lookup).and_return(
+    allow_any_instance_of(described_class).to receive(:precautionary_phrases_lookup).and_return(
       'P260' => 'Do not breathe dust',
     )
     allow(Chemotion::ChemicalsService).to receive(:construct_pictograms).and_return(['ghs06.png'])
@@ -46,27 +70,27 @@ RSpec.describe ExtractSdsJob do
         # Stub the resolver to succeed (provider available)
         allow(LlmProviderResolver).to receive(:resolve)
           .with(user: user, task_name: 'sds_extraction')
-          .and_return(double('resolution'))
+          .and_return(resolution)
 
         # Stub PDF text extraction
         allow(SdsPdfTextExtractor).to receive(:extract).with(file_path).and_return('SDS text content')
 
         # Stub the task runner
-        allow(LlmTaskRunner).to receive(:run).with(
+        allow(LlmTaskRunner).to receive(:new).with(
           task_name: 'sds_extraction',
-          user: user,
-          context: 'SDS text content',
-        ).and_return(extraction_result)
+          user:      user,
+          context:   'SDS text content',
+        ).and_return(runner)
       end
 
       it 'calls LlmTaskRunner with extracted PDF text' do
-        expect(LlmTaskRunner).to receive(:run).with(
-          task_name: 'sds_extraction',
-          user: user,
-          context: 'SDS text content',
-        ).and_return(extraction_result)
-
         described_class.new.perform(sample_id: sample.id, user_id: user.id)
+
+        expect(LlmTaskRunner).to have_received(:new).with(
+          task_name: 'sds_extraction',
+          user:      user,
+          context:   'SDS text content',
+        )
       end
 
       # Legacy ai4chemotion assertion (re-enabled in a separate commit):
@@ -156,7 +180,7 @@ RSpec.describe ExtractSdsJob do
 
     context 'when PDF text extraction raises an error' do
       before do
-        allow(LlmProviderResolver).to receive(:resolve).and_return(double('resolution'))
+        allow(LlmProviderResolver).to receive(:resolve).and_return(resolution)
         allow(SdsPdfTextExtractor).to receive(:extract)
           .and_raise(SdsPdfTextExtractor::ExtractionError, 'gs failed')
       end
@@ -171,10 +195,10 @@ RSpec.describe ExtractSdsJob do
 
     context 'when LlmTaskRunner raises LlmProviderError' do
       before do
-        allow(LlmProviderResolver).to receive(:resolve).and_return(double('resolution'))
+        allow(LlmProviderResolver).to receive(:resolve).and_return(resolution)
         allow(SdsPdfTextExtractor).to receive(:extract).and_return('SDS text')
-        allow(LlmTaskRunner).to receive(:run)
-          .and_raise(Errors::LlmProviderError, 'API timeout')
+        allow(LlmTaskRunner).to receive(:new).and_return(runner)
+        allow(runner).to receive(:run).and_raise(Errors::LlmProviderError, 'API timeout')
       end
 
       it 'sets error notification with provider error message' do
@@ -201,3 +225,5 @@ RSpec.describe ExtractSdsJob do
     end
   end
 end
+# rubocop:enable RSpec/AnyInstance
+# rubocop:enable RSpec/MessageSpies

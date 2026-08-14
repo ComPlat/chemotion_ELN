@@ -13,8 +13,8 @@ RSpec.describe LlmClient do
   let(:success_body) do
     {
       'choices' => [
-        { 'message' => { 'role' => 'assistant', 'content' => 'Phenol is an aromatic compound.' } }
-      ]
+        { 'message' => { 'role' => 'assistant', 'content' => 'Phenol is an aromatic compound.' } },
+      ],
     }.to_json
   end
 
@@ -38,14 +38,14 @@ RSpec.describe LlmClient do
 
       it 'sends model and messages in the request body' do
         client.chat(messages: messages)
-        expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions")
-          .with { |req| JSON.parse(req.body)['model'] == model }
+        expect(WebMock).to(have_requested(:post, "#{base_url}/v1/chat/completions")
+          .with { |req| JSON.parse(req.body)['model'] == model })
       end
 
       it 'includes response_format when json_mode is true' do
         client.chat(messages: messages, json_mode: true)
-        expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions")
-          .with { |req| JSON.parse(req.body)['response_format'] == { 'type' => 'json_object' } }
+        expect(WebMock).to(have_requested(:post, "#{base_url}/v1/chat/completions")
+          .with { |req| JSON.parse(req.body)['response_format'] == { 'type' => 'json_object' } })
       end
     end
 
@@ -70,7 +70,7 @@ RSpec.describe LlmClient do
       it 'fails fast with a clear message before any request' do
         expect { keyless.chat(messages: messages, max_tokens: 10) }
           .to raise_error(Errors::LlmAuthenticationError, /No API key is configured/)
-        expect(WebMock).not_to have_requested(:post, %r{api\.anthropic\.com})
+        expect(WebMock).not_to have_requested(:post, /api\.anthropic\.com/)
       end
     end
 
@@ -141,14 +141,14 @@ RSpec.describe LlmClient do
         messages:   [{ role: 'system', content: 'sys' }, { role: 'user', content: 'q' }],
         max_tokens: 100,
       )
-      expect(WebMock).to have_requested(:post, 'https://api.anthropic.com/v1/messages')
-        .with { |req|
+      expect(WebMock).to(have_requested(:post, 'https://api.anthropic.com/v1/messages')
+        .with do |req|
           body = JSON.parse(req.body)
           body['system'] == 'sys' &&
             body['messages'] == [{ 'role' => 'user', 'content' => 'q' }] &&
             body['max_tokens'] == 100 &&
             !body.key?('temperature')
-        }
+        end)
     end
 
     it 'defaults the base URL to the official endpoint when blank' do

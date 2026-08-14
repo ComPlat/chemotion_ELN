@@ -151,7 +151,8 @@ class User < ApplicationRecord
   scope :by_name, lambda { |query|
     q = "#{sanitize_sql_like(query.downcase)}%"
     where(
-      "LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ? OR LOWER(first_name || ' ' || last_name) ILIKE ? OR LOWER(name_abbreviation) ILIKE ?",
+      'LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ? ' \
+      "OR LOWER(first_name || ' ' || last_name) ILIKE ? OR LOWER(name_abbreviation) ILIKE ?",
       q, q, q, q
     )
   }

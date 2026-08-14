@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MultipleExpectations -- these assert one API response as a whole
+
 require 'rails_helper'
 
 RSpec.describe Chemotion::LlmTaskDefinition do
@@ -160,3 +162,4 @@ RSpec.describe Chemotion::LlmTaskDefinition do
     end
   end
 end
+# rubocop:enable RSpec/MultipleExpectations

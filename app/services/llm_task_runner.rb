@@ -214,8 +214,11 @@ class LlmTaskRunner
 
     if cleaned.empty?
       cutoff = finish_reason.to_s == 'length'
-      reason = cutoff ? "the response was cut off at the token limit (finish_reason='length')" \
-                      : 'the model returned no content'
+      reason = if cutoff
+                 "the response was cut off at the token limit (finish_reason='length')"
+               else
+                 'the model returned no content'
+               end
       raise Errors::LlmProviderError,
             "LLM returned an empty response for task '#{@task_name}' — #{reason}. " \
             'This usually means a reasoning model spent its whole token budget before emitting JSON. ' \
@@ -270,7 +273,7 @@ class LlmTaskRunner
   rescue NameError
     Rails.logger.warn(
       "[LlmTaskRunner] Validator class '#{task.validator_class}' not found for task " \
-      "'#{@task_name}'. Skipping validation."
+      "'#{@task_name}'. Skipping validation.",
     )
     data
   rescue LlmTaskValidators::ValidationError => e

@@ -15,7 +15,7 @@ require 'yaml'
 # Returns plain hashes suitable for JSON serialisation (no secrets are involved —
 # these are endpoint presets, not credentials).
 class LlmProviderProfiles
-  CONFIG_PATH = Rails.root.join('config', 'llm_provider_profiles.yml')
+  CONFIG_PATH = Rails.root.join('config/llm_provider_profiles.yml')
 
   class << self
     # @return [Array<Hash>] validated profile hashes (possibly empty)
@@ -51,7 +51,7 @@ class LlmProviderProfiles
       protocol = 'openai' unless LlmClient::PROTOCOLS.include?(protocol)
 
       models = entry['models']
-      models = models.is_a?(Array) ? models.map(&:to_s).reject(&:blank?) : []
+      models = models.is_a?(Array) ? models.map(&:to_s).compact_blank : []
 
       {
         key:           key,
