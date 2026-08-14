@@ -38,6 +38,9 @@ export default class ChemicalTab extends React.Component {
       loadingSaveSafetySheets: {},
       loadingPhrasesVendor: '',
       loadChemicalProperties: { vendor: '', loading: false },
+      // SDS row link -> 'ai' | 'vendor'; which extraction route that row shows.
+      // Per row, so rows that offer both do not share one toggle.
+      extractionMethodByRow: {},
       switchRequiredOrderedDate: 'required',
       viewChemicalPropertiesModal: false,
       viewModalForVendor: '',
@@ -547,24 +550,101 @@ export default class ChemicalTab extends React.Component {
     }, POLL_INTERVAL);
   };
 
-  querySafetyPhrases = (vendor, vendorLink) => {
-    // Only enable vendor scraping for special vendors (Merck, ThermoFischer)
+  // Which extraction method the user has selected for one SDS row. Keyed by the
+  // row's link so two rows never fight over a single shared toggle.
+  extractionMethodFor = (rowKey, aiPossible) => {
+    const { extractionMethodByRow } = this.state;
+    // Default to AI: it reads the SDS the row actually points at, whereas the
+    // vendor route re-queries the website and only works for scraped rows.
+    return extractionMethodByRow[rowKey] || (aiPossible ? 'ai' : 'vendor');
+  };
+
+  setExtractionMethod = (rowKey, method) => {
+    this.setState((prev) => ({
+      extractionMethodByRow: { ...prev.extractionMethodByRow, [rowKey]: method },
+    }));
+  };
+
+  /**
+   * The extraction controls for one SDS row.
+   *
+   * Both routes populate the same safety fields, so they are one control with a
+   * method switch rather than competing buttons: a segmented AI / Vendor-site
+   * toggle over a single action area. That keeps the row to one button width no
+   * matter how many methods exist, and retiring the scraping route later means
+   * deleting the toggle and its branch, not re-laying out the row.
+   *
+   * The toggle only appears when both routes are actually usable for this row.
+   */
+  renderExtractionControls = (vendor, vendorLink) => {
+    // Vendor scraping only ever worked for Merck and (now retired) ThermoFischer
     const specialVendor = vendor === 'merck' || vendor === 'thermofischer';
-    // hasLocalFile: any locally stored SDS PDF — can be used for LLM text extraction
+    // hasLocalFile: a locally stored SDS PDF — the input the LLM route reads
     const hasLocalFile = !!(vendorLink && vendorLink.includes('/safety_sheets/'));
-    const hasProductInfo = specialVendor && this.extractProductInfo(vendor);
-    const {
-      chemical, loadingPhrasesVendor, loadingExtractSds, llmAvailable,
-    } = this.state;
-    const isLoading = loadingPhrasesVendor === vendor;
+    // hasProductInfo: a vendor product link — the input the scraping route needs
+    const hasProductInfo = !!(specialVendor && this.extractProductInfo(vendor));
 
-    const aiData = chemical?._chemical_data?.[0]?.ai4chemotion;
-    const hasAiData = !!aiData?.extracted_at;
+    if (!hasLocalFile && !hasProductInfo) return this.renderNoExtractionAvailable();
 
-    // AI extract button + view-icon (shown when a local PDF is available)
-    const llmButtonGroup = hasLocalFile ? (
+    const rowKey = vendorLink || vendor;
+    const method = this.extractionMethodFor(rowKey, hasLocalFile);
+    const bothAvailable = hasLocalFile && hasProductInfo;
+    // With only one route usable, that route is what we show — the toggle would
+    // offer a choice the user cannot make.
+    const activeMethod = bothAvailable ? method : (hasLocalFile ? 'ai' : 'vendor');
+
+    return (
+      <div className="d-flex flex-column gap-1 align-items-end">
+        {bothAvailable && this.renderExtractionMethodToggle(rowKey, activeMethod)}
+        {activeMethod === 'ai'
+          ? this.renderAiExtractionControl()
+          : this.renderVendorExtractionControl(vendor)}
+      </div>
+    );
+  };
+
+  renderExtractionMethodToggle = (rowKey, activeMethod) => (
+    <ButtonGroup size="sm" aria-label="Safety data extraction method">
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id={`extract-method-ai-${rowKey}`}>Read the stored SDS PDF with an LLM</Tooltip>}
+      >
+        <ButtonGroupToggleButton
+          size="xxsm"
+          active={activeMethod === 'ai'}
+          onClick={() => this.setExtractionMethod(rowKey, 'ai')}
+        >
+          <i className="fa fa-magic me-1" />
+          AI
+        </ButtonGroupToggleButton>
+      </OverlayTrigger>
+      <OverlayTrigger
+        placement="top"
+        overlay={(
+          <Tooltip id={`extract-method-vendor-${rowKey}`}>
+            Scrape the vendor&apos;s product page (legacy route)
+          </Tooltip>
+        )}
+      >
+        <ButtonGroupToggleButton
+          size="xxsm"
+          active={activeMethod === 'vendor'}
+          onClick={() => this.setExtractionMethod(rowKey, 'vendor')}
+        >
+          <i className="fa fa-globe me-1" />
+          Vendor site
+        </ButtonGroupToggleButton>
+      </OverlayTrigger>
+    </ButtonGroup>
+  );
+
+  renderAiExtractionControl = () => {
+    const { chemical, loadingExtractSds, llmAvailable } = this.state;
+    const hasAiData = !!chemical?._chemical_data?.[0]?.ai4chemotion?.extracted_at;
+
+    return (
       <AiActionButton
-        label="Extract Safety Data using AI"
+        label="Extract Safety Data"
         loadingLabel="Extracting…"
         loading={loadingExtractSds}
         disabled={!llmAvailable}
@@ -587,62 +667,95 @@ export default class ChemicalTab extends React.Component {
         viewResultTooltip="Click to view extracted data using LLM"
         viewResultDisabledTooltip="Run AI extraction first to view results"
       />
-    ) : null;
-
-    // Vendor-scraping button (fetch Safety Phrases from vendor website)
-    const vendorButton = (
-      <Button
-        id="safetyPhrases-btn"
-        onClick={() => this.fetchSafetyPhrases(vendor)}
-        variant="light"
-        disabled={!specialVendor || isLoading}
-      >
-        {isLoading ? (
-          <div>
-            <i className="fa fa-spinner fa-pulse fa-fw" />
-            <span className="ms-1">Loading phrases...</span>
-          </div>
-        ) : (
-          <>
-            fetch Safety Phrases
-            {!specialVendor && (
-              <span className="ms-1"><i className="fa fa-info-circle" /></span>
-            )}
-          </>
-        )}
-      </Button>
-    );
-
-    // Both options available: show vendor scraping + LLM extraction side by side
-    if (hasLocalFile && hasProductInfo) {
-      return (
-        <div className="d-flex flex-column gap-2 align-items-end">
-          {vendorButton}
-          {llmButtonGroup}
-        </div>
-      );
-    }
-
-    // Only LLM option available (no vendor product info)
-    if (hasLocalFile) return llmButtonGroup;
-
-    // Only vendor scraping available (URL-based SDS, no local copy)
-    if (hasProductInfo) return vendorButton;
-
-    // No extraction options available — show disabled vendor button with explanation
-    return (
-      <OverlayTrigger
-        placement="top"
-        overlay={(
-          <Tooltip id="disabledPhrases">
-            Fetching safety phrases is not available for manually attached safety sheets
-          </Tooltip>
-        )}
-      >
-        <div>{vendorButton}</div>
-      </OverlayTrigger>
     );
   };
+
+  // The legacy route, as a two-part group: the vendor page yields safety phrases
+  // and physico-chemical properties from two separate requests, so they stay two
+  // actions — just inside one control instead of scattered across the row.
+  renderVendorExtractionControl = (vendor) => {
+    const { loadingPhrasesVendor, loadingQuerySafetySheets, loadChemicalProperties } = this.state;
+    const phrasesLoading = loadingPhrasesVendor === vendor;
+    const propertiesLoading = loadChemicalProperties.loading === true
+      && loadChemicalProperties.vendor === vendor;
+
+    return (
+      <InputGroup className="w-auto">
+        <OverlayTrigger
+          placement="top"
+          overlay={(
+            <Tooltip id="vendorPhrases">
+              Fetch H &amp; P safety phrases from the vendor&apos;s product page
+            </Tooltip>
+          )}
+        >
+          <Button
+            id="safetyPhrases-btn"
+            onClick={() => this.fetchSafetyPhrases(vendor)}
+            variant="light"
+            disabled={phrasesLoading}
+          >
+            {phrasesLoading ? (
+              <>
+                <i className="fa fa-spinner fa-pulse fa-fw" />
+                <span className="ms-1">Loading phrases…</span>
+              </>
+            ) : 'Safety Phrases'}
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger
+          placement="top"
+          overlay={(
+            <Tooltip id="renderChemProp">
+              Info, if any found, will be copied to properties fields in sample properties tab
+            </Tooltip>
+          )}
+        >
+          <Button
+            id="fetch-properties"
+            onClick={() => this.fetchChemicalProperties(vendor)}
+            variant="light"
+            disabled={!!loadingQuerySafetySheets || propertiesLoading}
+          >
+            {propertiesLoading ? (
+              <>
+                <i className="fa fa-spinner fa-pulse fa-fw" />
+                <span className="ms-1">Loading…</span>
+              </>
+            ) : 'Chemical Properties'}
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger
+          placement="top"
+          overlay={<Tooltip id="viewChemProp">Click to view fetched chemical properties</Tooltip>}
+        >
+          <Button active onClick={() => this.handlePropertiesModal(vendor)} variant="light">
+            <i className="fa fa-file-text" />
+          </Button>
+        </OverlayTrigger>
+      </InputGroup>
+    );
+  };
+
+  // Manually attached sheets have neither a stored PDF we may read nor a vendor
+  // product page to query.
+  renderNoExtractionAvailable = () => (
+    <OverlayTrigger
+      placement="top"
+      overlay={(
+        <Tooltip id="disabledPhrases">
+          Extracting safety data is not available for manually attached safety sheets
+        </Tooltip>
+      )}
+    >
+      <div>
+        <Button variant="light" disabled>
+          Extract Safety Data
+          <span className="ms-1"><i className="fa fa-info-circle" /></span>
+        </Button>
+      </div>
+    </OverlayTrigger>
+  );
 
   handleAttachmentSubmit = ({
     productNumber,
@@ -1456,11 +1569,8 @@ export default class ChemicalTab extends React.Component {
             {this.removeButton(index, document)}
           </ButtonToolbar>
         </div>
-        <div className="me-auto">
-          {this.renderChemicalProperties(displayName.toLowerCase())}
-        </div>
         <div className="justify-content-end">
-          {this.querySafetyPhrases(displayName.toLowerCase(), vendorLink)}
+          {this.renderExtractionControls(displayName.toLowerCase(), vendorLink)}
         </div>
       </div>
     );
@@ -1544,8 +1654,12 @@ export default class ChemicalTab extends React.Component {
                 }
 
                 const key = (document.alfa_product_number || document.merck_product_number) || `search-${index}`;
-                const isValidDocument = document !== 'Could not find safety data sheet from Thermofisher'
-                  && document !== 'Could not find safety data sheet from Merck';
+                // A successful lookup yields an object of vendor links; a failed
+                // one yields the reason as a plain string. Test the shape, not the
+                // wording — the backend now reports the actual cause (throttled,
+                // endpoint moved, no match), so matching on message text silently
+                // stopped working and fed a string to the object renderer.
+                const isValidDocument = !!document && typeof document === 'object';
 
                 return (
                   <li className="list-group-item border-0 d-flex align-items-center" key={key}>
@@ -1627,71 +1741,6 @@ export default class ChemicalTab extends React.Component {
       viewModalForVendor: ''
     });
   }
-
-  renderChemicalProperties = (vendor) => {
-    const { loadingQuerySafetySheets, loadChemicalProperties } = this.state;
-    // Only enable for special vendors: merck and thermofischer
-    const specialVendor = vendor === 'merck' || vendor === 'thermofischer';
-
-    // Hide entirely when the SDS was not fetched via web scraping
-    // (i.e. no vendor product link is available to query properties from)
-    if (!specialVendor || !this.extractProductInfo(vendor)) return null;
-
-    return (
-      <div className="w-100 mt-0 ms-2">
-        <InputGroup>
-          <OverlayTrigger
-            placement="top"
-            overlay={(
-              <Tooltip id="renderChemProp">
-                {specialVendor
-                  ? 'Info, if any found, will be copied to properties fields in sample properties tab'
-                  : 'Fetching Chemical properties is not available for manually attached safety sheets'}
-              </Tooltip>
-            )}
-          >
-            <div>
-              <Button
-                id="fetch-properties"
-                onClick={() => this.fetchChemicalProperties(vendor)}
-                disabled={!!loadingQuerySafetySheets || !!loadChemicalProperties.loading || !specialVendor}
-                variant="light"
-              >
-                {loadChemicalProperties.loading === true && loadChemicalProperties.vendor === vendor
-                  ? (
-                    <div>
-                      <i className="fa fa-spinner fa-pulse fa-fw" />
-                      <span>Loading...</span>
-                    </div>
-                  ) : 'fetch Chemical Properties'}
-              </Button>
-            </div>
-          </OverlayTrigger>
-          <OverlayTrigger
-            placement="top"
-            overlay={(
-              <Tooltip id="viewChemProp">
-                {specialVendor
-                  ? 'Click to view fetched chemical properties'
-                  : 'Fetching Chemical properties is not available for manually attached safety sheets'}
-              </Tooltip>
-            )}
-          >
-            <div>
-              <Button
-                active
-                onClick={() => this.handlePropertiesModal(vendor)}
-                variant="light"
-                disabled={!specialVendor}
-              >
-                <i className="fa fa-file-text" />
-              </Button>
-            </div>
-          </OverlayTrigger>
-        </InputGroup>
-      </div>
-    );
-  };
 
   inventoryInformationTab(data) {
     const { switchRequiredOrderedDate } = this.state;
