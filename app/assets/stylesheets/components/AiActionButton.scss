@@ -1,0 +1,229 @@
+// Shared styling for AI/LLM action buttons across the ELN (SDS extraction,
+// spectral data structuring, and any future AI task trigger). Import this
+// partial and use the .ai-action-btn / .ai-action-view-btn classes instead of
+// hand-rolling gradients per feature, so every "run this with AI" control
+// looks and behaves the same everywhere in the app.
+
+// The neutral surface these buttons sit on. Deliberately the *same* expressions
+// bootstrap-mods.scss feeds to `.btn-light` (e.g. ChemicalTab's "Search for SDS"),
+// so an AI trigger reads as an ordinary control of the page instead of a
+// differently-coloured special case. Keep the two in sync if .btn-light changes.
+$ai-action-bg: mix(map-get($silicon-shades, lighten5), $chemstrap-silicon, 85);
+$ai-action-bg-hover: mix(map-get($silicon-shades, lighten5), $chemstrap-silicon, 75);
+$ai-action-border: map-get($carbon-shades, lighten3);
+
+// Thickness of the animated light that travels around the border.
+$ai-action-light-width: 2px;
+
+// The light announces the button on render and then gets out of the way: three
+// laps, then it fades off for good. Expressed as one 1080deg sweep rather than
+// `iteration-count: 3` so the fade can be folded into the same keyframes — an
+// iterated animation would snap back to angle 0 and leave the light parked on an
+// edge. Time per lap × laps must equal the duration for the speed to stay put.
+$ai-action-lap-duration: 2s;
+$ai-action-laps: 3;
+
+// The rotating angle is a registered custom property because plain custom
+// properties are not interpolatable — without @property the conic-gradient would
+// jump rather than sweep. Browsers lacking @property simply render the light
+// parked on one edge; the button stays perfectly usable.
+@property --ai-action-light-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+// Primary "run" button — the left button of a two-button input group
+// ([Run with AI] [view-result icon]).
+.ai-action-btn {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    padding: 0.45rem 1rem;
+    border: 1px solid $ai-action-border;
+    border-radius: 0.5rem 0 0 0.5rem;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    color: #000;
+    background: $ai-action-bg;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.3s ease;
+
+    // A button used standalone (not paired with a view-result icon) is fully rounded.
+    &.ai-action-btn--standalone {
+        border-radius: 0.5rem;
+    }
+
+    // Idle and loading labels share one grid cell: the button sizes to the wider of
+    // the two and stays put when the run starts. See AiActionButton.js.
+    .ai-action-btn__labels {
+        display: grid;
+        align-items: center;
+        justify-items: center;
+    }
+
+    .ai-action-btn__label {
+        grid-area: 1 / 1;
+    }
+
+    .ai-action-btn__label--hidden {
+        visibility: hidden;
+    }
+
+    // While a run is in flight the button is disabled so it cannot be fired twice,
+    // but it must not *look* different — the spinner already says "working". Undo
+    // the dimming the plain :disabled state applies.
+    &.ai-action-btn--busy:disabled {
+        opacity: 1;
+        color: #000;
+        background: $ai-action-bg;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    // The travelling light: a conic gradient whose origin angle animates a full
+    // turn, masked down to a ring so only the border strip of it is painted.
+    // The two mask layers (padding box XOR full box) punch the centre out.
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: $ai-action-light-width;
+        pointer-events: none;
+        background: conic-gradient(
+            from var(--ai-action-light-angle),
+            rgba(99, 102, 241, 0) 0deg,
+            rgba(99, 102, 241, 0) 235deg,
+            rgba(99, 102, 241, 0.45) 290deg,
+            rgba(173, 167, 173, 0.85) 330deg,
+            #fff 350deg,
+            rgba(99, 102, 241, 0) 360deg
+        );
+        -webkit-mask:
+            linear-gradient(#000 0 0) content-box,
+            linear-gradient(#000 0 0);
+        mask:
+            linear-gradient(#000 0 0) content-box,
+            linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        animation: ai-action-border-travel ($ai-action-lap-duration * $ai-action-laps) linear 1 forwards;
+    }
+
+    &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        color: #000;
+        background: $ai-action-bg-hover;
+        box-shadow: 0 5px 16px rgba(0, 0, 0, 0.18);
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    &:focus-visible {
+        outline: 2px solid map-get($carbon-shades, lighten2);
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        opacity: 0.7;
+        box-shadow: none;
+        &::after {
+            animation: none;
+            opacity: 0;
+        }
+    }
+}
+
+// Paired "view AI result" icon button — same surface, right-rounded so the two
+// read as one control. No travelling light here: the pair is a single control and
+// a second ring at the seam reads as two competing outlines.
+.ai-action-view-btn {
+    border: 1px solid $ai-action-border;
+    border-left: none;
+    color: #000;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+    background: $ai-action-bg;
+    transition: background 0.3s ease, box-shadow 0.2s ease;
+
+    &:hover:not(:disabled) {
+        color: #000;
+        background: $ai-action-bg-hover;
+    }
+
+    &:focus-visible {
+        outline: 2px solid map-get($carbon-shades, lighten2);
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        opacity: 0.55;
+    }
+}
+
+// Compact icon-only trigger used inline next to a field label (e.g. the
+// analysis Content "structure with AI" affordance) rather than a full button.
+.ai-action-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    line-height: 1;
+
+    .ai-action-icon-badge {
+        font-size: 0.78rem;
+        line-height: 1;
+        font-weight: 700;
+        color: #fff;
+        padding: 0.1rem 0.4rem;
+        border-radius: 0.35rem;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #d946ef 100%);
+    }
+}
+
+// The sparkle glyph used as the universal "AI/LLM" marker throughout the ELN —
+// deliberately NOT a magic-wand icon (reads as a "stick"); a sparkle/star mark
+// is the common visual shorthand for AI-generated actions.
+.ai-sparkle-icon {
+    font-style: normal; // it's a unicode glyph, not an <i> font icon
+
+    // Fixed slot: the sparkle and the spinner that replaces it during a run are
+    // different widths, and without this the label would shift sideways on click.
+    display: inline-block;
+    width: 1.3em;
+    text-align: center;
+}
+
+// Interpolating a single angle across all three laps (rather than looping one lap)
+// keeps the speed constant while letting the final keyframe both end the last lap
+// and fade the light out, so `forwards` leaves nothing behind.
+@keyframes ai-action-border-travel {
+    0% {
+        --ai-action-light-angle: 0deg;
+        opacity: 1;
+    }
+    92% {
+        opacity: 1;
+    }
+    100% {
+        // Interpolated: Sass passes custom-property values through as raw tokens,
+        // so an un-escaped expression would reach the browser unevaluated.
+        --ai-action-light-angle: #{360deg * $ai-action-laps};
+        opacity: 0;
+    }
+}
+
+// Motion-sensitivity settings ask us to drop the sweep; with nothing to animate,
+// the ring would otherwise sit parked on one edge forever, which is neither the
+// on-render flourish nor the resting state. Skip straight to the resting state.
+@media (prefers-reduced-motion: reduce) {
+    .ai-action-btn::after {
+        animation: none;
+        opacity: 0;
+    }
+}
