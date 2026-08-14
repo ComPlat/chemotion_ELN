@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/AnyInstance -- the object under test is built inside the code path
+# rubocop:disable RSpec/MultipleExpectations -- these assert one API response as a whole
+# rubocop:disable RSpec/NestedGroups -- the provider matrix (mode x gate x protocol) needs the nesting
+
 require 'rails_helper'
 
 describe Chemotion::AdminLlmAPI do
@@ -78,6 +82,7 @@ describe Chemotion::AdminLlmAPI do
             include_ids: [person.id],
           )
         end
+
         after { Matrice.find_by(name: 'aiFeatures')&.update!(include_ids: [], enabled: false) }
 
         it 'returns include_users with label' do
@@ -113,7 +118,7 @@ describe Chemotion::AdminLlmAPI do
       end
 
       it 'creates a global provider when none exists' do
-        expect {
+        expect do
           put '/api/v1/admin/llm_config',
               params: {
                 provider_name: 'Example AI',
@@ -122,7 +127,7 @@ describe Chemotion::AdminLlmAPI do
                 default_model: 'gpt-4o',
               }.to_json,
               headers: headers
-        }.to change(LlmProvider, :count).by(1)
+        end.to change(LlmProvider, :count).by(1)
 
         expect(response).to have_http_status(:ok)
         provider = LlmProvider.global_providers.first
@@ -177,9 +182,9 @@ describe Chemotion::AdminLlmAPI do
 
       context 'when params are supplied directly (test before save)' do
         before do
-          stub_request(:post, %r{test-before-save\.example\.com}).to_return(
+          stub_request(:post, /test-before-save\.example\.com/).to_return(
             status: 200,
-            body:   { choices: [{ message: { content: 'OK' } }] }.to_json,
+            body: { choices: [{ message: { content: 'OK' } }] }.to_json,
             headers: { 'Content-Type' => 'application/json' },
           )
         end
@@ -210,6 +215,65 @@ describe Chemotion::AdminLlmAPI do
         expect(provider.reload.api_key).to be_nil
       end
     end
+
+    describe 'GET /api/v1/admin/llm_config/models' do
+      let(:base_url)   { 'https://ki-toolbox.scc.kit.edu/api' }
+      let(:models_url) { "#{base_url}/v1/models" }
+
+      before do
+        create(:llm_provider, base_url: base_url, api_key: 'sk-admin-key-1234')
+        stub_request(:get, models_url).to_return(
+          status:  200,
+          body:    { 'data' => [{ 'id' => 'kit.llama3' }] }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+      end
+
+      it 'returns the provider model list' do
+        get '/api/v1/admin/llm_config/models', headers: headers
+
+        expect(response).to have_http_status(:success)
+        expect(JSON.parse(response.body)['models']).to eq(['kit.llama3'])
+      end
+
+      it 'serves a repeat lookup from the cache' do
+        2.times { get '/api/v1/admin/llm_config/models', headers: headers }
+
+        expect(WebMock).to have_requested(:get, models_url).once
+      end
+
+      it 're-reads the catalogue when the admin asks for a refresh' do
+        get '/api/v1/admin/llm_config/models', headers: headers
+        get '/api/v1/admin/llm_config/models?refresh=true', headers: headers
+
+        expect(WebMock).to have_requested(:get, models_url).twice
+      end
+
+      it 'drops the cached catalogue when the provider endpoint is changed' do
+        get '/api/v1/admin/llm_config/models', headers: headers
+
+        new_url = 'https://new-endpoint.example/api'
+        stub_request(:get, "#{new_url}/v1/models").to_return(
+          status:  200,
+          body:    { 'data' => [{ 'id' => 'new-model' }] }.to_json,
+          headers: { 'Content-Type' => 'application/json' },
+        )
+        put '/api/v1/admin/llm_config',
+            params:  { base_url: new_url, api_key: 'sk-new-key' }.to_json,
+            headers: headers
+
+        # Back to the previous endpoint: the entry cached under the old identity —
+        # which every user of the institution provider shared — must be gone.
+        put '/api/v1/admin/llm_config',
+            params:  { base_url: base_url, api_key: 'sk-admin-key-1234' }.to_json,
+            headers: headers
+        get '/api/v1/admin/llm_config/models', headers: headers
+
+        expect(WebMock).to have_requested(:get, models_url).twice
+      end
+    end
   end
 end
-
+# rubocop:enable RSpec/AnyInstance
+# rubocop:enable RSpec/MultipleExpectations
+# rubocop:enable RSpec/NestedGroups
