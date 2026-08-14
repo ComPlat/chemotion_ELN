@@ -252,6 +252,7 @@ export default class ChemSpectraLayouts extends Component {
                       <div className="actions d-inline-block">
                         <ConfirmDeleteButton
                           header="Delete this data type?"
+                          placement="top"
                           onConfirm={() => {
                             this.handleDeleteDataType({ layout: entry.layout, dataType: entry.dataType });
                           }}
