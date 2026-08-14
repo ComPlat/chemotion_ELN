@@ -43,9 +43,9 @@ module Chemotion
         get do
           LlmProviderResolver.resolve(user: current_user, skip_feature_flags: true)
           { available: true }
-        rescue Errors::LlmNotConfiguredError
-          { available: false }
         rescue StandardError
+          # Includes Errors::LlmNotConfiguredError — the answer to "is a provider
+          # available?" is simply no, however the resolution failed.
           { available: false }
         end
       end
@@ -65,19 +65,30 @@ module Chemotion
 
       resource :institution_models do
         desc "List the institution (global) provider's models for the Task→Model dropdown"
+        params do
+          optional :refresh, type: Boolean, default: false,
+                             desc: 'Re-read the catalogue from the provider instead of serving the cached one'
+        end
         get do
           return { models: [] } unless LlmProviderResolver.institution_provider_allowed?(current_user)
 
           provider = LlmProvider.global_providers.first
           return { models: [] } unless provider
 
-          client = LlmClient.new(
+          # Cached (LlmModelCatalog): every user who opens the AI settings tab asks
+          # for this same list, and it is the institution provider that would be hit.
+          #
+          # `refresh` evicts a cache entry shared by all users of the institution
+          # provider, which is why it is only reachable by users the gate already
+          # admits, and why the UI only sends it right after a successful Test
+          # connection — an action that hits the provider anyway.
+          models = LlmModelCatalog.fetch(
             base_url: provider.base_url,
             api_key:  provider.api_key,
-            model:    provider.default_model.presence || '',
             protocol: provider.api_protocol.presence || 'openai',
+            force:    params[:refresh],
           )
-          { models: client.list_models }
+          { models: models }
         rescue StandardError
           { models: [] }
         end
