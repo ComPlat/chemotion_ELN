@@ -5,7 +5,6 @@ import { cloneDeep } from 'lodash';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import CollectionSharesFetcher from 'src/fetchers/CollectionSharesFetcher';
 import CollectionElementsFetcher from 'src/fetchers/CollectionElementsFetcher';
-import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
@@ -35,6 +34,12 @@ export const Collection = types.model({
   is_locked: types.boolean,
   owner: types.maybeNull(types.string), // "First Last (ABBR)" — shown in the provenance popover
   owner_name: types.maybeNull(types.string), // plain "First Last" — the shared tree's owner-root label
+  // The node's ancestry as received from the sharer, before any truncateAncestryAt/resetAncestry
+  // adoption rewrite — kept so sibling ordering can still reflect the sharer's true relative
+  // position (depth + original parent) even after the displayed ancestry has been adjusted. Only
+  // ever set for shared-with-me nodes; stays null for own_collections, where ancestry is never
+  // rewritten, so compareBySharerOrder degrades to the plain position/label compare there.
+  original_ancestry: types.maybeNull(types.string),
   permission_level: types.maybeNull(types.integer), // temp for testing
   position: types.maybeNull(types.number),
   shared: types.maybeNull(types.boolean),
@@ -51,21 +56,24 @@ export const Collection = types.model({
     }
   },
   sortChildren() {
-    self.children.sort((a, b) => {
-      if (a.position != null && b.position != null) { return a.position - b.position }
-      else if (a.position != null && b.position == null) { return -1 }
-      else if (a.position == null && b.position != null) { return 1 }
-      else if (a.label.toUpperCase() < b.label.toUpperCase()) { return -1; }
-      else if (a.label.toUpperCase() == b.label.toUpperCase()) { return 0 }
-      else if (a.label.toUpperCase() > b.label.toUpperCase()) { return 1 }
-      else { console.debug('unsortable collections:', a, b); return 0 }
-    })
+    self.children.sort(compareBySharerOrder)
   },
   resetAncestry() {
     self.ancestry = '/'
   },
+  // Reparents this node to sit directly under ancestorId by truncating the ancestry chain right
+  // after it — used when the node's real parent isn't shared with this user but a more distant
+  // ancestor is (nearest-shared-ancestor "adoption", see setSharedWithMeCollections).
+  truncateAncestryAt(ancestorId) {
+    const ids = self.ancestorIds
+    const index = ids.indexOf(ancestorId)
+    self.ancestry = index === -1 ? '/' : `/${ids.slice(0, index + 1).join('/')}/`
+  },
 })).views(self => ({
   get ancestorIds() { return self.ancestry.split('/').filter(Number).map(element => parseInt(element)) },
+  get originalAncestorIds() {
+    return (self.original_ancestry ?? self.ancestry).split('/').filter(Number).map((el) => parseInt(el, 10))
+  },
   find(collection_id) {
     if (collection_id == self.id) return self;
     if (self.children.length == 0) return null;
@@ -133,6 +141,31 @@ const insertSorted = (siblings, node) => {
   const index = siblings.findIndex((sibling) => compareCollectionSiblings(node, sibling) < 0)
   const insertAt = index === -1 ? siblings.length : index
   return [...siblings.slice(0, insertAt), node, ...siblings.slice(insertAt)]
+}
+
+// Orders siblings — including ones "adopted" together under a parent that isn't their real one —
+// by the sharer's original relative position as closely as this frontend-only view can
+// approximate: a shallower original node always sorts before a deeper one (the 45-before-33..37
+// case), true original siblings (same real parent) are then ordered by their own, genuinely
+// comparable position, and same-depth nodes from different original parents — whose relative
+// order this store has no way to know without the backend data-exposure change that was declined
+// — fall back to comparing their original ancestry path, which at least keeps each original
+// sibling group contiguous as one block instead of scattering it. Degrades to the plain
+// position/label compare when original_ancestry is unset (own_collections, never rewritten).
+const compareBySharerOrder = (a, b) => {
+  if (!a.original_ancestry || !b.original_ancestry) return compareCollectionSiblings(a, b)
+
+  const depthA = a.originalAncestorIds.length
+  const depthB = b.originalAncestorIds.length
+  if (depthA !== depthB) return depthA - depthB
+
+  const parentA = a.originalAncestorIds[depthA - 1]
+  const parentB = b.originalAncestorIds[depthB - 1]
+  if (parentA !== parentB) {
+    return a.original_ancestry < b.original_ancestry ? -1 : (a.original_ancestry > b.original_ancestry ? 1 : 0)
+  }
+
+  return compareCollectionSiblings(a, b)
 }
 
 export const CollectionsStore = types
@@ -268,12 +301,17 @@ export const CollectionsStore = types
         }
       }
     }),
-    addCollectionShare: flow(function* addCollectionShare(params, currentUser) {
+    // Called when a collection-share notification arrives (see NoticeButton.js) so already-displayed
+    // share/permission info doesn't go stale the way fetchCollections() alone leaves it —
+    // getMySharesFor upserts in place, so re-calling it for every cached id is safe.
+    refreshMySharedCollectionShares: flow(function* refreshMySharedCollectionShares() {
+      yield Promise.all(self.my_collection_shares.map((entry) => self.getMySharesFor(entry.id)))
+    }),
+    addCollectionShare: flow(function* addCollectionShare(params) {
       const response = yield CollectionSharesFetcher.addCollectionShare(params)
       if (response.status === 204) {
         self.fetchCollections()
         self.getSharedWithUsers(params.collection_id)
-        self.createSharingMessage(currentUser, params.user_ids)
       }
     }),
     takeOwnership: flow(function* takeOwnership(collectionId) {
@@ -285,6 +323,11 @@ export const CollectionsStore = types
     updateCollectionShare: flow(function* updateCollectionShare(collectionShareId, params) {
       const collectionShare = yield CollectionSharesFetcher.updateCollectionShare(collectionShareId, params)
       if (collectionShare) {
+        // apply_to_subcollections/include_new_subcollections can cascade this edit onto
+        // descendants not previously shared — PUT's response only carries the one edited share,
+        // never the cascade's effect on those descendants' `shared` flag, so own_collections has
+        // to be refetched to pick it up (mirrors addCollectionShare/deleteCollectionShare below).
+        self.fetchCollections()
         self.getSharedWithUsers(collectionShare.collection_id)
       }
     }),
@@ -401,7 +444,7 @@ export const CollectionsStore = types
             user_ids: [user.id],
             ...params.permissions
           }
-          self.addCollectionShare(shareParams, params.currentUser)
+          self.addCollectionShare(shareParams)
           self.addNewCollectionToOwnCollection(newCollection)
           // uncheck all
           UIActions.uncheckWholeSelection.defer()
@@ -419,15 +462,6 @@ export const CollectionsStore = types
         const label = hasCustomLabel && multipleRecipients ? `${params.label} – ${user.name}` : params.label;
         self.addElementsToCollectionAndShare(user, { ...params, label });
       });
-    },
-    createSharingMessage(currentUser, userIds) {
-      const messageParams = {
-        channel_id: 4,
-        content: `${currentUser.name} has shared a collection with you.`,
-        user_ids: userIds,
-      };
-
-      MessagesFetcher.createMessage(messageParams)
     },
     addNewCollectionToOwnCollection(newCollection) {
       const collectionItem = Collection.create(newCollection)
@@ -540,11 +574,20 @@ export const CollectionsStore = types
         }
         const parentOwnerIndex = self.shared_with_me_collections.findIndex(element => element.owner == collection.owner)
         if (parentOwnerIndex !== -1) {
-          const node = Collection.create(collection);
-          // Preserve the hierarchy when the parent is also shared; when it is not (the branch is
-          // "skipped"), truncate by showing this collection at the top level under its owner.
-          const directParentId = node.ancestorIds[node.ancestorIds.length - 1];
-          if (directParentId == null || !sharedIds.has(directParentId)) { node.resetAncestry(); }
+          const node = Collection.create({ ...collection, original_ancestry: collection.ancestry });
+          // Walk from the nearest ancestor outward so a node whose real parent isn't shared still
+          // nests under the closest ancestor that IS — "orphan adoption" — rather than always
+          // dropping straight to the owner root. Ordering note: presortSharedWithMeCollections sorts
+          // by raw ancestry depth first, and any true ancestor always has strictly smaller raw depth
+          // than its descendant, so by the time this runs for a given node, its nearest shared
+          // ancestor (if any) has already been truncated/inserted earlier in this same forEach —
+          // addCollectionToTree's recursive descent can rely on that.
+          const nearestSharedAncestorId = [...node.ancestorIds].reverse().find((id) => sharedIds.has(id));
+          if (nearestSharedAncestorId != null) {
+            node.truncateAncestryAt(nearestSharedAncestorId);
+          } else {
+            node.resetAncestry();
+          }
           self.addCollectionToTree(node, self.shared_with_me_collections[parentOwnerIndex].children);
         }
       });
@@ -574,15 +617,7 @@ export const CollectionsStore = types
       // setSharedWithMeCollections.
       if (collection.isRootCollection || parentIndex === -1) {
         collectionTree.push(collection)
-        collectionTree.sort((a, b) => {
-          if (a.position != null && b.position != null) { return a.position - b.position }
-          else if (a.position != null && b.position == null) { return -1 }
-          else if (a.position == null && b.position != null) { return 1 }
-          else if (a.label < b.label) { return -1; }
-          else if (a.label == b.label) { return 0 }
-          else if (a.label > b.label) { return 1 }
-          else { console.debug('unsortable collections:', a, b); return 0 }
-        })
+        collectionTree.sort(compareBySharerOrder)
       } else {
         collectionTree[parentIndex].addChild(collection)
       }

@@ -16,10 +16,56 @@ module Usecases
           add_collection_and_children_to_linear_tree(collection, position: index + 1)
         end
 
+        changed_shared_with_ids_groups = changed_shared_collection_recipients
+
         save_linear_tree_structure!
+        notify_changed_sharees!(changed_shared_with_ids_groups)
       end
 
       private
+
+      # shared_with_ids for every collection whose label, ancestry, or position actually changes —
+      # a rename, a reparent, or a reorder each change what a sharee's tree shows — and which is
+      # shared with someone. Computed against the values currently in the DB, and before the write:
+      # save_linear_tree_structure! goes through upsert_all, which skips AR callbacks/dirty-tracking,
+      # so there is no "did this change" signal available afterwards. A reparent cascades correctly
+      # to every descendant with no special-casing needed: this method re-flattens the whole
+      # submitted tree every save, so a descendant's own ancestry string changes automatically
+      # whenever any ancestor's position in the hierarchy changes, even an ancestor not shared with
+      # this sharee.
+      def changed_shared_collection_recipients
+        changed_ids = changed_collection_ids
+        return [] if changed_ids.empty?
+
+        shared_with_ids_by_collection = CollectionShare.where(collection_id: changed_ids)
+                                                       .group_by(&:collection_id)
+                                                       .transform_values { |shares| shares.map(&:shared_with_id) }
+
+        changed_ids.filter_map { |id| shared_with_ids_by_collection[id].presence }
+      end
+
+      def new_state_by_id_from_tree
+        linear_tree_structure.select { |entry| entry[:label] }
+                             .to_h { |entry| [entry[:id], entry.values_at(:label, :ancestry, :position)] }
+      end
+
+      def changed_collection_ids
+        new_state_by_id = new_state_by_id_from_tree
+        return [] if new_state_by_id.empty?
+
+        current_state_by_id = Collection.where(id: new_state_by_id.keys)
+                                        .pluck(:id, :label, :ancestry, :position)
+                                        .to_h { |id, *state| [id, state] }
+        new_state_by_id.reject { |id, state| current_state_by_id[id] == state }.keys
+      end
+
+      def notify_changed_sharees!(shared_with_ids_groups)
+        notifier = CollectionShareNotifier.new(current_user)
+        shared_with_ids_groups.each do |shared_with_ids|
+          notifier.notify!(shared_with_ids, "#{current_user.name} made changes to a collection shared with you.",
+                           silent: true)
+        end
+      end
 
       # Locked collections (the "All"/repository/transferred roots) are excluded: their label and
       # tree position are system-defined, so a bulk tree update may neither move nor rename them.

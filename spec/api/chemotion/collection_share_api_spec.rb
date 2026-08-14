@@ -8,6 +8,10 @@ describe Chemotion::CollectionShareAPI do
   let(:collection) { create(:collection, user: user) }
   let(:collection_share) { create(:collection_share, shared_with: other_user, collection: collection) }
 
+  # Notifying a sharee (see POST/PUT/DELETE below) reuses this channel — seeded in production by a
+  # data migration that db:schema:load never runs, so specs that exercise it seed it themselves too.
+  before { create(:channel, subject: Channel::SHARED_COLLECTION_WITH_ME, channel_type: 8) }
+
   describe 'POST /api/v1/collection_shares' do
     let(:create_params) do
       {
@@ -32,6 +36,25 @@ describe Chemotion::CollectionShareAPI do
         collection.reload
       end.to change(CollectionShare, :count).by(create_params[:user_ids].length)
          .and change(collection, :shared?).from(false).to(true)
+    end
+
+    # Emitted server-side so it fires regardless of which client created the share, unlike the old
+    # client-side createSharingMessage this replaces.
+    it 'notifies every recipient so their collection tree refreshes' do
+      expect do
+        post '/api/v1/collection_shares/', params: create_params
+      end.to change(Notification, :count).by(create_params[:user_ids].length)
+
+      expect(Notification.where(user_id: other_user.id)).to exist
+      expect(Notification.where(user_id: third_user.id)).to exist
+    end
+
+    # A new share is the one event a sharee should be interrupted for — unlike an update/revoke/rename,
+    # which are delivered silently (see the PUT/DELETE specs below).
+    it 'notifies verbosely, not silently' do
+      post '/api/v1/collection_shares/', params: create_params
+
+      expect(Message.last.content['silent']).to be(false)
     end
 
     context 'with apply_to_subcollections' do
@@ -109,6 +132,22 @@ describe Chemotion::CollectionShareAPI do
       expected_result = update_params.dup.stringify_keys
 
       expect(result).to include(expected_result)
+    end
+
+    # Without this, the sharee's "Shared with me" tree only ever reflects a permission change after
+    # a manual reload — their poll only refetches on seeing a new notification (see NoticeButton.js).
+    it 'notifies the sharee so their collection tree refreshes' do
+      expect do
+        put "/api/v1/collection_shares/#{collection_share.id}", params: update_params
+      end.to change(Notification.where(user_id: other_user.id), :count).by(1)
+    end
+
+    # A permission change is housekeeping, not something worth interrupting the sharee for — the
+    # tree still refreshes (see the spec above), it just doesn't pop a dismiss-required toast.
+    it 'notifies silently' do
+      put "/api/v1/collection_shares/#{collection_share.id}", params: update_params
+
+      expect(Message.last.content['silent']).to be(true)
     end
 
     context 'with apply_to_subcollections' do
@@ -219,6 +258,21 @@ describe Chemotion::CollectionShareAPI do
          .and change(collection, :shared?).from(true).to(false)
     end
 
+    # Revoking is the case a stale sharee tree hurts most: the collection stays visible on their
+    # side yet the server no longer serves it. Without a notification here, only a page reload would
+    # ever tell them.
+    it 'notifies the revoked sharee so their collection tree refreshes' do
+      expect do
+        delete "/api/v1/collection_shares/#{collection_share.id}"
+      end.to change(Notification.where(user_id: other_user.id), :count).by(1)
+    end
+
+    it 'notifies silently' do
+      delete "/api/v1/collection_shares/#{collection_share.id}"
+
+      expect(Message.last.content['silent']).to be(true)
+    end
+
     context 'when the share belongs to one of the requesters groups' do
       let(:collection) { create(:collection, user: other_user) }
       let(:group) { create(:group, users: [user]) }
@@ -267,6 +321,11 @@ describe Chemotion::CollectionShareAPI do
           .to change(CollectionShare, :count).by(-1)
 
         expect(response).to have_http_status(:no_content)
+      end
+
+      it 'does not notify the requester about their own action' do
+        expect { delete "/api/v1/collection_shares/#{own_share.id}" }
+          .not_to change(Notification, :count)
       end
     end
   end

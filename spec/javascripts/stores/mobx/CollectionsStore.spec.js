@@ -6,6 +6,7 @@ import { Collection } from 'src/stores/mobx/CollectionsStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CollectionElementsFetcher from 'src/fetchers/CollectionElementsFetcher';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
+import CollectionSharesFetcher from 'src/fetchers/CollectionSharesFetcher';
 
 // Pins removeElementsFromCollection's return contract { success, lockedSampleIds }. moveElementsToCollection
 // and the lock toast both branch on it, and the fetcher's return-shape change (boolean -> object|null|
@@ -110,6 +111,48 @@ describe('CollectionsStore', () => {
 
       expect(result).toBe(false);
       expect(store.own_collections.map((c) => c.label)).toEqual(['Original']);
+    });
+  });
+
+  // Regression coverage: apply_to_subcollections/include_new_subcollections can cascade an edit
+  // onto descendants not previously shared, but PUT's response only ever carries the one edited
+  // share — never the cascade's effect on those descendants' `shared` flag — so own_collections
+  // has to be refetched to pick it up, the same way addCollectionShare/deleteCollectionShare
+  // already do. Without this, the owner's own tree kept showing newly-cascaded subcollections as
+  // unshared until a page reload.
+  describe('.updateCollectionShare', () => {
+    let updateStub;
+    let fetchCollectionsStub;
+    let getSharedWithUsersStub;
+
+    beforeEach(() => {
+      updateStub = sinon.stub(CollectionSharesFetcher, 'updateCollectionShare');
+      fetchCollectionsStub = sinon.stub(CollectionsFetcher, 'fetchCollections').resolves({ own: [], shared_with_me: [] });
+      // Unrelated to what this action's tested for — stubbed only so the store's own
+      // getSharedWithUsers call doesn't attempt a real network request in this environment.
+      getSharedWithUsersStub = sinon.stub(CollectionSharesFetcher, 'getCollectionSharedWithUsers').resolves([]);
+    });
+
+    afterEach(() => {
+      updateStub.restore();
+      fetchCollectionsStub.restore();
+      getSharedWithUsersStub.restore();
+    });
+
+    it('refetches collections on a successful update', async () => {
+      updateStub.resolves({ collection_id: 1 });
+
+      await store.updateCollectionShare(7, { permission_level: 1, apply_to_subcollections: true });
+
+      expect(fetchCollectionsStub.called).toBe(true);
+    });
+
+    it('does not refetch when the update fails (falsy response)', async () => {
+      updateStub.resolves(undefined);
+
+      await store.updateCollectionShare(7, { permission_level: 1 });
+
+      expect(fetchCollectionsStub.called).toBe(false);
     });
   });
 
@@ -333,6 +376,119 @@ describe('CollectionsStore', () => {
 
       expect(store.own_collections.map((c) => c.id)).toEqual([9]);
       expect(store.own_collections[0].ancestry).toEqual('/1/');
+    });
+  });
+
+  // Regression coverage: a collection-share notification (create/update/revoke/rename) only ever
+  // called fetchCollections(), which never touches my_collection_shares — so a sharee's permission-level
+  // tooltip stayed stale after a live permission change even though the tree itself refreshed
+  // correctly. This is the sibling refresh NoticeButton.js now calls alongside fetchCollections().
+  describe('.refreshMySharedCollectionShares', () => {
+    let getMySharesStub;
+
+    // SharedWithUser's MST model requires every detail-level column plus shared_with(_id/_type) —
+    // only permission_level varies across these fixtures.
+    const sharedWithUser = (permissionLevel) => ({
+      id: 101,
+      celllinesample_detail_level: 0,
+      devicedescription_detail_level: 0,
+      element_detail_level: 0,
+      permission_level: permissionLevel,
+      reaction_detail_level: 0,
+      researchplan_detail_level: 0,
+      sample_detail_level: 0,
+      screen_detail_level: 0,
+      sequencebasedmacromoleculesample_detail_level: 0,
+      shared_with: 'Some User',
+      shared_with_id: 1,
+      shared_with_type: 'Person',
+      wellplate_detail_level: 0,
+    });
+
+    beforeEach(() => {
+      getMySharesStub = sinon.stub(CollectionSharesFetcher, 'getMyCollectionShares');
+    });
+
+    afterEach(() => {
+      getMySharesStub.restore();
+    });
+
+    it('re-fetches shares only for collection ids already cached, updating them in place', async () => {
+      getMySharesStub.withArgs(1).resolves([sharedWithUser(1)]);
+      getMySharesStub.withArgs(2).resolves([sharedWithUser(3)]);
+      // Seed the cache the way getMySharesFor itself would (called once per id already).
+      await store.getMySharesFor(1);
+      await store.getMySharesFor(2);
+      getMySharesStub.resetHistory();
+      getMySharesStub.withArgs(1).resolves([sharedWithUser(9)]);
+
+      await store.refreshMySharedCollectionShares();
+
+      expect(getMySharesStub.calledWith(1)).toBe(true);
+      expect(getMySharesStub.calledWith(2)).toBe(true);
+      expect(store.mySharesFor(1).shared_with_users[0].permission_level).toBe(9);
+    });
+
+    it('is a no-op when nothing has been cached yet', async () => {
+      await store.refreshMySharedCollectionShares();
+
+      expect(getMySharesStub.called).toBe(false);
+    });
+  });
+
+  // Regression coverage for the nearest-shared-ancestor "adoption" fix: a node whose real parent
+  // isn't shared used to have its ENTIRE ancestry wiped to root (discarding a closer surviving
+  // shared ancestor), and — for two or more levels of shared descendants below such a gap — could
+  // throw inside fetchCollections entirely (undefined.addChild), per the traced A/B/C/D scenario.
+  describe('.setSharedWithMeCollections', () => {
+    const sharedCollection = (overrides) => ({
+      is_locked: false, owner: 'Alice', owner_name: 'Alice', position: 1, ...overrides,
+    });
+
+    it('adopts a node under its nearest shared ancestor when the direct parent is not shared', () => {
+      // A (shared, root) -> B (id 2, NOT shared) -> C (shared) -> D (shared)
+      const a = sharedCollection({ id: 1, label: 'A', ancestry: '/' });
+      const c = sharedCollection({ id: 3, label: 'C', ancestry: '/1/2/' });
+      const d = sharedCollection({ id: 4, label: 'D', ancestry: '/1/2/3/' });
+
+      store.setSharedWithMeCollections([a, c, d]);
+
+      const ownerRoot = store.shared_with_me_collections[0];
+      expect(ownerRoot.children.map((node) => node.id)).toEqual([1]);
+      const nodeA = ownerRoot.children[0];
+      expect(nodeA.children.map((node) => node.id)).toEqual([3]);
+      const nodeC = nodeA.children[0];
+      expect(nodeC.children.map((node) => node.id)).toEqual([4]);
+    });
+
+    // Regression coverage for the sibling-ordering refinement: position is only comparable among
+    // true original siblings. 33-37 are true siblings under /31/32/ (32 unshared); 45 (ancestry
+    // /31/, shallower) used to interleave with them because raw position was compared directly
+    // across unrelated original parents. Depth must win first: 45 before the whole 33-37 block,
+    // which stays contiguous and in original relative order since its own position IS comparable.
+    it('orders adopted siblings by original depth first, keeping true-sibling blocks contiguous and in order', () => {
+      const thirtyOne = sharedCollection({ id: 31, label: '31', ancestry: '/' });
+      const siblings = [33, 34, 35, 36, 37].map((id, index) => (
+        sharedCollection({ id, label: String(id), ancestry: '/31/32/', position: index + 1 })
+      ));
+      const fortyFive = sharedCollection({ id: 45, label: '45', ancestry: '/31/', position: 2 });
+
+      store.setSharedWithMeCollections([thirtyOne, fortyFive, ...siblings]);
+
+      const ownerRoot = store.shared_with_me_collections[0];
+      const node31 = ownerRoot.children[0];
+      expect(node31.id).toBe(31);
+      expect(node31.children.map((node) => node.id)).toEqual([45, 33, 34, 35, 36, 37]);
+    });
+
+    it('roots a node under the owner when none of its ancestors are shared at all', () => {
+      const e = sharedCollection({ id: 5, label: 'E', ancestry: '/99/' });
+
+      store.setSharedWithMeCollections([e]);
+
+      const ownerRoot = store.shared_with_me_collections[0];
+      expect(ownerRoot.children.map((node) => node.id)).toEqual([5]);
+      expect(ownerRoot.children[0].ancestry).toEqual('/');
     });
   });
 });
