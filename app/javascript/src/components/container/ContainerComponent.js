@@ -17,11 +17,13 @@ import { confirmOptions } from 'src/components/staticDropdownOptions/options';
 import AnalysisEditor from 'src/components/container/AnalysisEditor';
 import AnalysisParserModal from 'src/components/container/AnalysisParserModal';
 import HyperLinksSection from 'src/components/common/HyperLinksSection';
-import NotificationActions from 'src/stores/alt/actions/NotificationActions';
+import { StoreContext } from 'src/stores/mobx/RootStore';
 
 let includeDescriptionIdCounter = 0;
 
 export default class ContainerComponent extends Component {
+  static contextType = StoreContext;
+
   constructor(props) {
     super(props);
 
@@ -224,7 +226,7 @@ export default class ContainerComponent extends Component {
     }).then((data) => {
       if (data.queued) {
         this.setState({ aiRunning: false });
-        NotificationActions.add({
+        this.context.notifications.add({
           title: 'Structuring Queued',
           message: 'Structuring this analysis in the background using AI. '
             + 'Results will appear automatically when done.',
@@ -258,9 +260,9 @@ export default class ContainerComponent extends Component {
 
     if (attempt >= MAX_ATTEMPTS) {
       this.setState({ aiRunning: false });
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'Structuring',
-        message: 'This is taking longer than expected. Please check back later.',
+        message: 'Structuring is taking longer than expected. Please check back later.',
         level: 'warning',
         position: 'tc',
         autoDismiss: 8,

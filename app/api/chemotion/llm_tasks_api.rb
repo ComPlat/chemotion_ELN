@@ -16,7 +16,7 @@ module Chemotion
       # + Message.create_msg_notification), so spectral task results show up in the
       # "System Notification" bell/panel (NoticeButton.js — reads from MessagesFetcher,
       # i.e. persisted Message rows) — not just as a transient client-side toast.
-      # NotificationActions.add on the frontend is ephemeral and never persisted;
+      # notificationsStore.add on the frontend is ephemeral and never persisted;
       # only a Message row appears there. Without this, an inline task failure (this
       # endpoint returning a 4xx/5xx synchronously) would show a toast the user could
       # never find again, unlike an async job failure (which already persists one via
