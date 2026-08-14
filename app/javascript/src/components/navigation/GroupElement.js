@@ -187,7 +187,6 @@ export default class GroupElement extends React.Component {
 
     return (
       <ConfirmDeleteButton
-        id={`confirm-delete-${type}-${groupRec.id}${userRec ? `-${userRec.id}` : ''}`}
         header={msg}
         tooltip={tooltip}
         onConfirm={() => this.confirmDelete(undefined, type, groupRec, userRec)}

@@ -106,7 +106,6 @@ const DevicesList = () => {
     if (device.datacollector_method) {
       return (
         <ConfirmDeleteButton
-          id={`confirm-clear-datacollector-${device.id}`}
           header={`Remove data collector settings of ${device.name}`}
           className="bg-danger-subtle text-danger"
           title="Clear data collector settings"
@@ -126,7 +125,6 @@ const DevicesList = () => {
     if (device.novnc_target) {
       return (
         <ConfirmDeleteButton
-          id={`confirm-clear-novnc-${device.id}`}
           header={`Remove Novnc settings of ${device.name}`}
           className="bg-danger-subtle text-danger"
           title="Clear NoVNC settings"
@@ -147,10 +145,8 @@ const DevicesList = () => {
   }
 
   const deleteButton = (object, type, user) => {
-    const id = user && user.id ? `${object.id}-${user.id}` : `${object.id}`;
     return (
       <ConfirmDeleteButton
-        id={`confirm-delete-${type}-${id}`}
         header={`Remove ${type}: ${object.name}`}
         title="Delete device"
         onConfirm={() => confirmDelete(object, type, user)}
