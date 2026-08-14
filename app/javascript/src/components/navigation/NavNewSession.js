@@ -7,6 +7,7 @@ import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
 
 import uuid from 'uuid';
 import {
+  Alert,
   Button,
   Form,
   OverlayTrigger,
@@ -63,7 +64,8 @@ const LinksForDeviseForm = (currentRoute, extraRules, deviseMappings) =>
         {currentRoute !== '/sign_up' && deviseMappings?.registerable && !extraRules.disable_signup === true && (
           <Button variant="neat" onClick={() => aviatorNavigationToApp('/sign_up')}>Sign up</Button>
         )}
-        {currentRoute !== '/password' && deviseMappings?.recoverable && !extraRules.disable_signup === true && (
+        {!['/sign_up', '/password'].includes(currentRoute) && deviseMappings?.recoverable
+          && !extraRules.disable_signup === true && (
           <Button variant="neat" onClick={() => aviatorNavigationToApp('/password')}>
             Forgot your password?
           </Button>
@@ -88,7 +90,7 @@ const LinksForDeviseForm = (currentRoute, extraRules, deviseMappings) =>
 const ExtendedSignInForm = observer(() => {
   const url = '/users/sign_in';
   const userStore = useContext(StoreContext).user;
-  const { currentRoute, extraRules, deviseMappings } = userStore;
+  const { currentRoute, extraRules, deviseMappings, loginStatus } = userStore;
   const [form, setForm] = useFormValues({
     login: '',
     password: '',
@@ -108,6 +110,7 @@ const ExtendedSignInForm = observer(() => {
     } else if (loginResult.status === 400) {
       // handle bad username/password combination
       userStore.setLoginStatus('failed');
+      userStore.setDeviseErrorMessages(loginResult.message);
     } else if (loginResult.status === 401 && loginResult.otp_required === true) {
       setShowOtp(true);
       setWrongOtp(loginResult.otp_wrong);
@@ -120,6 +123,9 @@ const ExtendedSignInForm = observer(() => {
 
   return (
     <>
+      {loginStatus === 'failed' && (
+        <Alert variant="warning">{userStore.deviseErrorMessages}</Alert>
+      )}
       <h3 className="mb-3">Log in with registered account</h3>
       <OtpInput
         value={form.otp_attempt}
@@ -197,6 +203,7 @@ const SignInForm = () => {
     } else if (loginResult.status === 400) {
       // handle bad username/password combination
       userStore.setLoginStatus('failed');
+      userStore.setDeviseErrorMessages(loginResult.message);
       aviatorNavigationToApp('/sign_in');
     } else if (loginResult.status === 401 && loginResult.otp_required === true) {
       setShowOtp(true);
