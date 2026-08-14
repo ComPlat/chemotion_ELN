@@ -7,6 +7,7 @@ import {
   ButtonGroup
 } from 'react-bootstrap';
 import AppModal from 'src/components/common/AppModal';
+import AiActionButton from 'src/components/common/AiActionButton';
 import { Select } from 'src/components/common/Select';
 import { chemicalStatusOptions } from 'src/components/staticDropdownOptions/options';
 import ChemicalFetcher from 'src/fetchers/ChemicalFetcher';
@@ -479,7 +480,7 @@ export default class ChemicalTab extends React.Component {
 
     ChemicalFetcher.extractSds(sample.id).then(() => {
       // Job submitted — keep spinner active and poll until results (or an error) arrive
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'SDS Extraction Running',
         message: 'Extracting safety data using AI. Results will appear automatically when done.',
         level: 'info',
@@ -489,7 +490,7 @@ export default class ChemicalTab extends React.Component {
       this.startExtractionPolling(sample.id, prevExtractedAt, prevFailedAt, 0);
     }).catch((error) => {
       this.setState({ loadingExtractSds: false });
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'SDS Extraction Failed',
         message: error.message || 'Could not start extraction job',
         level: 'error',
@@ -508,7 +509,7 @@ export default class ChemicalTab extends React.Component {
 
     if (attempt >= MAX_ATTEMPTS) {
       this.setState({ loadingExtractSds: false });
-      NotificationActions.add({
+      this.context.notifications.add({
         title: 'SDS Extraction',
         message: 'Extraction is taking longer than expected. Please check back later.',
         level: 'warning',
@@ -532,16 +533,11 @@ export default class ChemicalTab extends React.Component {
           this.setState({ chemical, loadingExtractSds: false });
           this.mapLlmPropertiesToSample(chemical);
         } else if (newFailedAt && newFailedAt !== prevFailedAt) {
-          // The job failed (e.g. 401) — reset the button to its default state and
-          // surface the error message the job recorded.
+          // The job failed (e.g. 401) — reset the button to its default state. No toast
+          // here: ExtractSdsJob already persisted a "System Notification" carrying the same
+          // error message, and NoticeButton's polling surfaces it top-right. Mirrors the
+          // success branch above, which likewise leaves the toast to the backend.
           this.setState({ chemical, loadingExtractSds: false });
-          NotificationActions.add({
-            title: 'SDS Extraction Failed',
-            message: data?.extraction_error?.message || 'The AI extraction could not be completed.',
-            level: 'error',
-            position: 'tc',
-            autoDismiss: 10,
-          });
         } else {
           this.startExtractionPolling(sampleId, prevExtractedAt, prevFailedAt, attempt + 1);
         }
@@ -567,63 +563,30 @@ export default class ChemicalTab extends React.Component {
 
     // AI extract button + view-icon (shown when a local PDF is available)
     const llmButtonGroup = hasLocalFile ? (
-      <InputGroup size="sm">
-        <OverlayTrigger
-          placement="top"
-          overlay={(
-            <Tooltip id="aiExtractTooltip">
-              {llmAvailable
-                ? (
-                  <>
-                    Extract safety phrases &amp; properties from the SDS using AI (LLM-based).
-                    Results are generated automatically and may contain inaccuracies — please review carefully.
-                  </>
-                )
-                : (
-                  <>
-                    No AI provider is configured. Set one up in Profile → AI Settings,
-                    or ask your administrator to configure an institution provider.
-                  </>
-                )}
-            </Tooltip>
+      <AiActionButton
+        label="Extract Safety Data using AI"
+        loadingLabel="Extracting…"
+        loading={loadingExtractSds}
+        disabled={!llmAvailable}
+        onRun={() => this.handleExtractSds()}
+        runTooltip={llmAvailable
+          ? (
+            <>
+              Extract safety phrases &amp; properties from the SDS using AI (LLM-based).
+              Results are generated automatically and may contain inaccuracies — please review carefully.
+            </>
+          )
+          : (
+            <>
+              No AI provider is configured. Set one up in Profile → AI Settings,
+              or ask your administrator to configure an institution provider.
+            </>
           )}
-        >
-          {/* span wrapper keeps the tooltip working while the button is disabled */}
-          <span className="d-inline-block">
-            <Button
-              className="ai-extract-btn"
-              size="sm"
-              disabled={loadingExtractSds || !llmAvailable}
-              onClick={() => this.handleExtractSds()}
-              style={!llmAvailable ? { pointerEvents: 'none' } : undefined}
-            >
-              {/* fa-fw keeps the icon slot constant so the button doesn't jump when
-                  the spinner replaces the magic icon */}
-              <i className={`fa fa-fw me-2 ${loadingExtractSds ? 'fa-spinner fa-pulse' : 'fa-magic'}`} />
-              {loadingExtractSds ? 'Extracting…' : 'Extract Safety Data with AI'}
-            </Button>
-          </span>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="top"
-          overlay={(
-            <Tooltip id="viewAiResultTooltip">
-              {hasAiData
-                ? 'Click to view AI extracted data'
-                : 'Run AI extraction first to view results'}
-            </Tooltip>
-          )}
-        >
-          <Button
-            className="ai-extract-view-btn"
-            size="sm"
-            onClick={() => this.setState({ showAiResultModal: true })}
-            disabled={!hasAiData}
-          >
-            <i className="fa fa-file-text-o" />
-          </Button>
-        </OverlayTrigger>
-      </InputGroup>
+        hasResult={hasAiData}
+        onViewResult={() => this.setState({ showAiResultModal: true })}
+        viewResultTooltip="Click to view extracted data using LLM"
+        viewResultDisabledTooltip="Run AI extraction first to view results"
+      />
     ) : null;
 
     // Vendor-scraping button (fetch Safety Phrases from vendor website)
@@ -2052,7 +2015,7 @@ export default class ChemicalTab extends React.Component {
 
     return (
       <AppModal
-        title="AI Extracted Data"
+        title="Extracted Data using LLM"
         show={showAiResultModal}
         onHide={() => this.setState({ showAiResultModal: false })}
         size="lg"
