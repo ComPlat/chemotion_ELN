@@ -18,6 +18,11 @@ module Entities
     expose! :sequencebasedmacromoleculesample_detail_level
     expose! :wellplate_detail_level
 
+    # Both dereference the association unguarded, and may: collection_shares.shared_with_id has a
+    # FK to users, so the row cannot outlive the account, and the association is declared
+    # +with_deleted+ so a *soft*-deleted sharee still resolves. Before that, a deleted sharee made
+    # this nil and every reader of the share 500ed. Keep them non-nil strings regardless — the
+    # frontend's mobx model declares both as required types.string.
     def shared_with
       "#{object.shared_with.name} (#{object.shared_with.name_abbreviation})"
     end

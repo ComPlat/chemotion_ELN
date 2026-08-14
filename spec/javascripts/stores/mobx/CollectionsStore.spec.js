@@ -291,6 +291,38 @@ describe('CollectionsStore', () => {
     });
   });
 
+  // Ownership is personal and singular: Collection#owned_by? is `user_id == user.id`, and the
+  // `own` payload is every collection with that user_id. Holding the repository subtree on its own
+  // field is a rendering concern for the sidebar - it must not shrink what the user owns, or
+  // features gated on isOwnCollection silently switch off inside the repository section.
+  describe('.ownCollectionIds', () => {
+    const repositoryRoot = {
+      id: 1, label: 'chemotion-repository.net', ancestry: '/', position: null, is_locked: true,
+    };
+    const transferred = {
+      id: 3, label: 'transferred', ancestry: '/1/', position: null, is_locked: false,
+    };
+    const ordinary = {
+      id: 4, label: 'Project', ancestry: '/', position: null, is_locked: false,
+    };
+
+    it('counts the repository subtree as own even though it is held off own_collections', () => {
+      store.setOwnCollections([repositoryRoot, transferred, ordinary]);
+
+      expect(store.own_collections.map((c) => c.id)).toEqual([4]);
+      expect(store.ownCollectionIds.slice().sort()).toEqual([1, 3, 4]);
+      expect(store.isOwnCollection(1)).toBe(true);
+      expect(store.isOwnCollection(3)).toBe(true);
+    });
+
+    it('reports no repository ids when the user has no repository subtree', () => {
+      store.setOwnCollections([ordinary]);
+
+      expect(store.ownCollectionIds).toEqual([4]);
+      expect(store.isOwnCollection(3)).toBe(false);
+    });
+  });
+
   describe('.addCollectionToTree', () => {
     it('shows a collection whose parent is missing without rewriting its ancestry', () => {
       const orphan = Collection.create({

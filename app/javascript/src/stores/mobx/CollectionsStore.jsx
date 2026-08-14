@@ -658,7 +658,16 @@ export const CollectionsStore = types
     get sharedWithMeCollections() { return values(self.shared_with_me_collections) },
     isOwnCollection(collection_id) { return self.ownCollectionIds.indexOf(collection_id) != -1 },
     isSharedCollection(collection_id) { return self.sharedCollectionIds.indexOf(collection_id) != -1 },
-    get ownCollectionIds() { return self.own_collections.flatMap(collection => collection.idAndDescendantIds) },
+    // Ownership is personal and has one definition — Collection#owned_by? is `user_id == user.id`,
+    // and the `own` payload is `own_collections_for`, i.e. every collection with that user_id. The
+    // repository subtree is part of that; it only sits on its own field because the sidebar renders
+    // it as a separate section, which must not narrow what the user owns.
+    get ownCollectionIds() {
+      const repositoryIds = self.chemotion_repository_collection
+        ? self.chemotion_repository_collection.idAndDescendantIds
+        : [];
+      return self.own_collections.flatMap((collection) => collection.idAndDescendantIds).concat(repositoryIds);
+    },
     get sharedCollectionIds() { return self.shared_with_me_collections.flatMap(collection => collection.idAndDescendantIds) },
     descendantIds(collection) { return collection.children.flatMap(collection => collection.idAndDescendantIds) },
     sharedWithUsers(collection_id) { return self.collection_shares.find((share) => share.id == collection_id) },
