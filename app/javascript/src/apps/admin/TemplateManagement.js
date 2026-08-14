@@ -282,7 +282,6 @@ export default class TemplateManagement extends React.Component {
     return (
       <div className="actions d-inline-block">
         <ConfirmDeleteButton
-          id={`confirm-delete-template-${template.id}`}
           header="Delete this template?"
           onConfirm={() => this.handleDeleteTemplate(template)}
         />

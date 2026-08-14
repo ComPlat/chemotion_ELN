@@ -251,7 +251,6 @@ export default class ChemSpectraLayouts extends Component {
                     && !dataTypes.includes(entry.dataType)) && (
                       <div className="actions d-inline-block">
                         <ConfirmDeleteButton
-                          id={`confirm-delete-datatype-${entry.dataType}`}
                           header="Delete this data type?"
                           onConfirm={() => {
                             this.handleDeleteDataType({ layout: entry.layout, dataType: entry.dataType });

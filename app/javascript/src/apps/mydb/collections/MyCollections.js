@@ -159,7 +159,6 @@ const MyCollections = () => {
           })}
           {addCollectionButton(node)}
           <ConfirmDeleteButton
-            id={`confirm-delete-collection-${node.id}`}
             header={`Do you really want to delete "${node.label}"?`}
             placement="bottom"
             stopMouseDownPropagation

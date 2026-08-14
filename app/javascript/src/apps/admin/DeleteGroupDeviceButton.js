@@ -73,7 +73,6 @@ export default class DeleteGroupDeviceButton extends React.Component {
     return (
       <div className="actions d-inline-block">
         <ConfirmDeleteButton
-          id={`confirm-delete-${rootType}-${groupRec.id}${userRec ? `-${userRec.id}` : ''}`}
           header={msg}
           onConfirm={() => this.confirmDelete(rootType, actionType, groupRec, userRec, isRoot)}
         />

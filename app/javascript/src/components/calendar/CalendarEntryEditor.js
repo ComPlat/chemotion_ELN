@@ -150,7 +150,6 @@ const CalendarEntryEditor = (props) => {
 
     return (
       <ConfirmDeleteButton
-        id={`confirm-delete-calendar-entry-${entry.id}`}
         header="Are you sure you want to delete the calendar entry?"
         size={null}
         onConfirm={() => deleteEntry()}

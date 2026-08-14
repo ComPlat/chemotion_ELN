@@ -159,7 +159,6 @@ export default class MoleculeModeratorComponent extends Component {
     return (
       <ButtonGroup className="actions">
         <ConfirmDeleteButton
-          id={`confirm-delete-molecule-name-${nameObj.id}`}
           header="Delete this molecule name?"
           onConfirm={() => this.confirmDelete(nameObj)}
         />

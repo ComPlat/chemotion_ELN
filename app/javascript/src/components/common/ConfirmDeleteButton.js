@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Button, Overlay, OverlayTrigger, Popover, Tooltip,
-} from 'react-bootstrap';
+import { Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import ConfirmationOverlay from 'src/components/common/ConfirmationOverlay';
 
-// Confirmation popover for a destructive action, opened/closed by explicit component state
-// instead of `OverlayTrigger`'s focus/blur. A focus-triggered popover hides as soon as its
-// trigger button blurs, and clicking a button inside the popover blurs the trigger before
-// that button's own click event fires - so "Yes" can silently do nothing. That race caused
-// https://github.com/ComPlat/chemotion_ELN/issues/2835.
+// A self-contained trigger button for ConfirmationOverlay's "click, then confirm in a
+// popover" idiom: it owns the button and the open/closed state itself, so call sites don't
+// each have to wire up their own ref + target state for the common case of "one button
+// opens one confirm popover". The actual popover (and the explicit-state-over-focus/blur
+// fix for https://github.com/ComPlat/chemotion_ELN/issues/2835) is ConfirmationOverlay's.
 const ConfirmDeleteButton = ({
-  id,
   header,
   onConfirm,
   tooltip,
@@ -24,6 +22,8 @@ const ConfirmDeleteButton = ({
   children,
 }) => {
   const [target, setTarget] = useState(null);
+  // Lazy initializer so the random id is generated once on mount, not on every render.
+  const [tooltipId] = useState(() => `confirm-delete-tooltip-${Math.random().toString(36).slice(2)}`);
 
   const mouseDownProps = stopMouseDownPropagation
     ? { onMouseDown: (event) => event.stopPropagation() }
@@ -53,32 +53,26 @@ const ConfirmDeleteButton = ({
   return (
     <>
       {tooltip ? (
-        <OverlayTrigger placement="top" overlay={<Tooltip id={`${id}-tooltip`}>{tooltip}</Tooltip>}>
+        <OverlayTrigger placement="top" overlay={<Tooltip id={tooltipId}>{tooltip}</Tooltip>}>
           {triggerButton}
         </OverlayTrigger>
       ) : triggerButton}
-      <Overlay show={!!target} target={target} placement={placement} rootClose onHide={close}>
-        <Popover id={id}>
-          <Popover.Header as="h5">{header}</Popover.Header>
-          <Popover.Body>
-            <div className="d-flex gap-2">
-              <Button size="sm" variant="danger" onClick={confirm} {...mouseDownProps}>
-                Yes
-              </Button>
-              <Button size="sm" variant="warning" onClick={close} {...mouseDownProps}>
-                No
-              </Button>
-            </div>
-          </Popover.Body>
-        </Popover>
-      </Overlay>
+      <ConfirmationOverlay
+        overlayTarget={target}
+        placement={placement}
+        warningText={header}
+        destructiveAction={confirm}
+        destructiveActionLabel="Yes"
+        hideAction={close}
+        hideActionLabel="No"
+        stopMouseDownPropagation={stopMouseDownPropagation}
+      />
     </>
   );
 };
 
 ConfirmDeleteButton.propTypes = {
-  id: PropTypes.string.isRequired,
-  header: PropTypes.node.isRequired,
+  header: PropTypes.string.isRequired,
   onConfirm: PropTypes.func.isRequired,
   tooltip: PropTypes.node,
   placement: PropTypes.string,
