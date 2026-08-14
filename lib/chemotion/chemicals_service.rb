@@ -344,35 +344,31 @@ module Chemotion
 
     def self.construct_pictograms(pictograms)
       pictograms_hash = JSON.parse(File.read('./public/json/pictograms.json'))
+      reverse_map     = pictogram_reverse_map(pictograms_hash)
 
-      # Accept either a comma-separated string or an array
-      pictogram_array = if pictograms.is_a?(String)
-                          pictograms.split(',').map(&:strip)
-                        elsif pictograms.is_a?(Array)
-                          pictograms.map { |x| x.to_s.strip }
-                        else
-                          []
-                        end
-
-      # Build a reverse map from filename/description → GHS code for fallback lookup.
-      # "Toxic.gif" → "GHS06", "Toxic" → "GHS06", "toxic" → "GHS06"
-      reverse_map = pictograms_hash.each_with_object({}) do |(code, filename), map|
-        basename = File.basename(filename.to_s, '.*').downcase   # "toxic"
-        full     = filename.to_s.downcase                        # "toxic.gif"
-        map[basename] = code
-        map[full]     = code
-      end
-
-      pictogram_array.filter_map do |e|
-        normalized = e.to_s.strip
-        if pictograms_hash.key?(normalized)
-          # Input is already a GHS code key (e.g. "GHS06")
-          normalized
-        else
-          # Try reverse lookup: filename ("Toxic.gif") or basename ("Toxic", "toxic")
-          reverse_map[normalized] || reverse_map[normalized.downcase]
-        end
+      pictogram_codes(pictograms).filter_map do |entry|
+        # Already a GHS code key (e.g. "GHS06"), else look the filename up
+        pictograms_hash.key?(entry) ? entry : reverse_map[entry.downcase]
       end.uniq
+    end
+
+    # The requested pictograms as a list of trimmed strings. Callers pass either a
+    # comma-separated string or an array.
+    def self.pictogram_codes(pictograms)
+      case pictograms
+      when String then pictograms.split(',').map(&:strip)
+      when Array  then pictograms.map { |x| x.to_s.strip }
+      else             []
+      end
+    end
+
+    # filename/description → GHS code, so a stored "Toxic.gif" or "Toxic" still
+    # resolves to "GHS06". Keyed lowercase; callers downcase their lookup.
+    def self.pictogram_reverse_map(pictograms_hash)
+      pictograms_hash.each_with_object({}) do |(code, filename), map|
+        map[File.basename(filename.to_s, '.*').downcase] = code # "toxic"
+        map[filename.to_s.downcase]                      = code # "toxic.gif"
+      end
     end
 
     def self.safety_phrases_thermofischer(product_number)
