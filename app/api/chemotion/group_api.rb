@@ -24,8 +24,8 @@ module Chemotion
         group_params[:email] ||= format('%<time>i@eln.edu', time: Time.now.getutc.to_i)
         group_params[:password] = Devise.friendly_token.first(8)
         group_params[:password_confirmation] = group_params[:password]
-        group_params[:users] = User.where(id: [current_user.id] + users)
-        group_params[:admins] = User.where(id: current_user.id)
+        group_params[:users] = Person.where(id: [current_user.id] + users)
+        group_params[:admins] = Person.where(id: current_user.id)
 
         new_group = Group.new(group_params)
         present new_group, with: Entities::GroupEntity, root: 'group' if new_group.save!
@@ -86,7 +86,7 @@ module Chemotion
             post do
               error!('401 Unauthorized', 401) unless @policy.manage?
 
-              @group.admins << User.where(id: params[:user_id]) unless @group.admins.exists?(id: params[:user_id])
+              @group.admins << Person.where(id: params[:user_id]) unless @group.admins.exists?(id: params[:user_id])
               present @group, with: Entities::GroupEntity, root: 'group'
             end
 
