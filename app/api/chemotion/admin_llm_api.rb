@@ -18,15 +18,28 @@ module Chemotion
         # Apply enabled/include_ids/exclude_ids changes to a named Matrice gate.
         # +attrs+ only contains the keys the admin actually supplied. Self-healing:
         # creates the gate row if it is missing so the toggle can never no-op.
+        #
+        # @return [Matrice, nil] the updated gate, or nil when there was nothing
+        #   to apply — callers use this to decide whether to rematerialise the
+        #   user matrix bitmasks.
         def update_matrice_gate(name, attrs)
-          return false if attrs.blank?
+          return if attrs.blank?
 
           matrice = Matrice.find_or_create_by(name: name)
           matrice.enabled     = attrs['enabled']     if attrs.key?('enabled')
           matrice.include_ids = attrs['include_ids'] if attrs.key?('include_ids')
           matrice.exclude_ids = attrs['exclude_ids'] if attrs.key?('exclude_ids')
           matrice.save!
-          true
+          matrice
+        end
+
+        # The LlmModelCatalog cache identity described by an LlmProvider record.
+        def llm_catalog_identity(provider)
+          {
+            base_url: provider.base_url,
+            api_key:  provider.api_key,
+            protocol: provider.api_protocol,
+          }
         end
       end
 
@@ -43,28 +56,30 @@ module Chemotion
           {
             # aiFeatures gate — legacy master switch (unused)
             global_enabled: ai_matrice&.enabled || false,
-            include_users:  llm_users_for_ids(ai_matrice&.include_ids),
-            exclude_users:  llm_users_for_ids(ai_matrice&.exclude_ids),
+            include_users: llm_users_for_ids(ai_matrice&.include_ids),
+            exclude_users: llm_users_for_ids(ai_matrice&.exclude_ids),
 
             # aiGlobalProvider gate — may the user use the institution provider
-            institution_enabled:       institution_matrice&.enabled || false,
+            institution_enabled: institution_matrice&.enabled || false,
             institution_include_users: llm_users_for_ids(institution_matrice&.include_ids),
             institution_exclude_users: llm_users_for_ids(institution_matrice&.exclude_ids),
 
             # aiUserApiKey gate — may the user configure a personal API key
-            custom_key_enabled:       custom_key_matrice&.enabled || false,
+            custom_key_enabled: custom_key_matrice&.enabled || false,
             custom_key_include_users: llm_users_for_ids(custom_key_matrice&.include_ids),
             custom_key_exclude_users: llm_users_for_ids(custom_key_matrice&.exclude_ids),
 
-            provider: global_provider ? {
-              id:             global_provider.id,
-              name:           global_provider.name,
-              api_protocol:   global_provider.api_protocol,
-              base_url:       global_provider.base_url,
-              api_key_masked: global_provider.api_key_masked,
-              default_model:  global_provider.default_model,
-              enabled:        global_provider.enabled,
-            } : nil,
+            provider: if global_provider
+                        {
+                          id: global_provider.id,
+                          name: global_provider.name,
+                          api_protocol: global_provider.api_protocol,
+                          base_url: global_provider.base_url,
+                          api_key_masked: global_provider.api_key_masked,
+                          default_model: global_provider.default_model,
+                          enabled: global_provider.enabled,
+                        }
+                      end,
           }
         end
 
@@ -78,9 +93,11 @@ module Chemotion
           optional :custom_key_exclude_ids, type: Array[Integer], desc: 'User IDs blocked from a personal API key'
           optional :institution_enabled,    type: Boolean,        desc: 'Toggle institution-provider access globally'
           optional :institution_include_ids, type: Array[Integer], desc: 'User IDs allowed the institution provider'
-          optional :institution_exclude_ids, type: Array[Integer], desc: 'User IDs blocked from the institution provider'
+          optional :institution_exclude_ids, type: Array[Integer],
+                                             desc: 'User IDs blocked from the institution provider'
           optional :provider_name,         type: String,         desc: 'Display name for the global provider'
-          optional :provider_protocol,     type: String,         values: LlmProvider::API_PROTOCOLS, desc: 'Wire protocol'
+          optional :provider_protocol,     type: String,         values: LlmProvider::API_PROTOCOLS,
+                                           desc: 'Wire protocol'
           optional :base_url,              type: String,         desc: 'Provider API base URL'
           optional :api_key,               type: String,         desc: 'Provider API key (will be encrypted)'
           optional :default_model,         type: String,         desc: 'Default model identifier'
@@ -97,22 +114,45 @@ module Chemotion
 
           # aiUserApiKey gate
           key_attrs = {}
-          key_attrs['enabled']     = declared_params['custom_key_enabled']     if declared_params.key?('custom_key_enabled')
-          key_attrs['include_ids'] = declared_params['custom_key_include_ids'] if declared_params.key?('custom_key_include_ids')
-          key_attrs['exclude_ids'] = declared_params['custom_key_exclude_ids'] if declared_params.key?('custom_key_exclude_ids')
+          if declared_params.key?('custom_key_enabled')
+            key_attrs['enabled']     =
+              declared_params['custom_key_enabled']
+          end
+          if declared_params.key?('custom_key_include_ids')
+            key_attrs['include_ids'] =
+              declared_params['custom_key_include_ids']
+          end
+          if declared_params.key?('custom_key_exclude_ids')
+            key_attrs['exclude_ids'] =
+              declared_params['custom_key_exclude_ids']
+          end
           key_changed = update_matrice_gate('aiUserApiKey', key_attrs)
 
           # aiGlobalProvider gate
           inst_attrs = {}
-          inst_attrs['enabled']     = declared_params['institution_enabled']     if declared_params.key?('institution_enabled')
-          inst_attrs['include_ids'] = declared_params['institution_include_ids'] if declared_params.key?('institution_include_ids')
-          inst_attrs['exclude_ids'] = declared_params['institution_exclude_ids'] if declared_params.key?('institution_exclude_ids')
+          if declared_params.key?('institution_enabled')
+            inst_attrs['enabled']     =
+              declared_params['institution_enabled']
+          end
+          if declared_params.key?('institution_include_ids')
+            inst_attrs['include_ids'] =
+              declared_params['institution_include_ids']
+          end
+          if declared_params.key?('institution_exclude_ids')
+            inst_attrs['exclude_ids'] =
+              declared_params['institution_exclude_ids']
+          end
           inst_changed = update_matrice_gate('aiGlobalProvider', inst_attrs)
 
           # Create or update the single global LlmProvider
           provider_params = declared_params.slice('base_url', 'default_model', 'api_key')
           if provider_params.any? || params[:provider_name].present? || params[:provider_protocol].present?
             provider = LlmProvider.global_providers.first || LlmProvider.new(enabled: true)
+            # Capture the identity being replaced before it is overwritten — the
+            # catalogue cached under it is shared by every user of the institution
+            # provider, so it must not outlive the provider it describes.
+            stale_identity = llm_catalog_identity(provider) if provider.persisted?
+
             provider.name = params[:provider_name].presence || provider.name.presence || 'Global LLM Provider'
             provider.api_protocol = params[:provider_protocol] if params[:provider_protocol].present?
             provider.assign_attributes(provider_params)
@@ -126,6 +166,10 @@ module Chemotion
             end
 
             provider.save!
+
+            new_identity = llm_catalog_identity(provider)
+            LlmModelCatalog.invalidate(**stale_identity) if stale_identity && stale_identity != new_identity
+            LlmModelCatalog.invalidate(**new_identity)
           end
 
           # Rematerialise user matrix bitmasks so gate changes take effect on the
@@ -185,17 +229,23 @@ module Chemotion
 
         namespace :models do
           desc 'List available models from the global provider (calls /v1/models)'
+          params do
+            optional :refresh, type: Boolean, default: false,
+                               desc: 'Re-read the catalogue from the provider instead of serving the cached one'
+          end
           get do
             provider = LlmProvider.global_providers.first
             error!('No global provider configured.', 422) unless provider
 
-            client = LlmClient.new(
+            # Shares the cached catalogue with GET /api/v1/llm/institution_models —
+            # same provider identity, so admin and users never double-fetch it.
+            models = LlmModelCatalog.fetch(
               base_url: provider.base_url,
               api_key:  provider.api_key,
-              model:    provider.default_model || '',
               protocol: provider.api_protocol,
+              force:    params[:refresh],
             )
-            { models: client.list_models }
+            { models: models }
           rescue StandardError => e
             error!(e.message, 502)
           end

@@ -243,7 +243,9 @@ export default class UsersFetcher {
     })
       .then((response) => {
         if (!response.ok) {
-          return response.json().then((body) => { throw new Error(body.error || body.message || 'Verification failed'); });
+          return response.json().then((body) => {
+            throw new Error(body.error || body.message || 'Verification failed');
+          });
         }
         return response.json();
       })
@@ -262,8 +264,11 @@ export default class UsersFetcher {
   // Models offered by the institution (global) provider — for the Task→Model
   // dropdown when the user is on the institution service. Returns [] if the
   // provider exposes no list (caller falls back to free-text / default model).
-  static fetchInstitutionLlmModels() {
-    return fetch('/api/v1/llm/institution_models', { credentials: 'same-origin' })
+  // `refresh` asks the server to re-read the catalogue instead of serving its
+  // cached copy (LlmModelCatalog).
+  static fetchInstitutionLlmModels({ refresh = false } = {}) {
+    const query = refresh ? '?refresh=true' : '';
+    return fetch(`/api/v1/llm/institution_models${query}`, { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : { models: [] }))
       .then((d) => d.models || [])
       .catch(() => []);
@@ -271,8 +276,11 @@ export default class UsersFetcher {
 
   // Models for a supplied (pre-save) custom config. Used to (re)populate the
   // Task→Model dropdown after a successful Test connection or on load. A blank
-  // api_key tells the server to reuse the user's saved key. Returns [].
-  static fetchLlmModelsForConfig({ protocol, baseUrl, model, apiKey } = {}) {
+  // api_key tells the server to reuse the user's saved key. `refresh` bypasses
+  // the server-side catalogue cache. Returns [].
+  static fetchLlmModelsForConfig({
+    protocol, baseUrl, model, apiKey, refresh = false,
+  } = {}) {
     return fetch('/api/v1/users/llm_settings/models', {
       credentials: 'same-origin',
       method: 'POST',
@@ -282,6 +290,7 @@ export default class UsersFetcher {
         base_url: baseUrl,
         model,
         api_key: apiKey,
+        refresh,
       }),
     })
       .then((r) => (r.ok ? r.json() : { models: [] }))
