@@ -83,8 +83,9 @@ module Chemotion
       namespace :devise_mappings do
         desc 'get devise module mappings'
         get do
-          mappings = Devise.mappings[:user]&.modules.map { |m| { m.to_s => true } }.reduce(:merge!)
+          mappings = Devise.mappings[:user]&.modules&.map { |m| { m.to_s => true } }&.reduce(:merge!)
           mappings['unlock_strategy_enabled'] = User.unlock_strategy_enabled?(:email)
+          mappings['minimum_password_length'] = User.password_length.min
           { devise_mappings: mappings }
         end
       end

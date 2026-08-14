@@ -278,6 +278,7 @@ const UserStore = types.model(
     bao: types.array(BaoOrHeader),
     loginStatus: types.optional(types.string, ''),
     deviseMappings: types.frozen(defaultDeviseMappings),
+    deviseErrorMessages: types.optional(types.string, ''),
   }
 ).actions((self) => ({
   fetchCurrentUser: flow(function* fetchCurrentUser() {
@@ -370,7 +371,7 @@ const UserStore = types.model(
   }),
   fetchOmniauthProviders: flow(function* fetchOmniauthProviders() {
     const result = yield UsersFetcher.fetchOmniauthProviders();
-    if (Object.keys(result?.omniauth_providers).length >= 1) {
+    if (result && Object.keys(result?.omniauth_providers).length >= 1) {
       self.omniauthProviders = result?.omniauth_providers.map((provider) => OmniauthProvider.create(provider));
     }
     self.extraRules = ExtraRule.create(result?.extraRules);
@@ -405,6 +406,9 @@ const UserStore = types.model(
   },
   setLoginStatus: (state) => {
     self.loginStatus = state;
+  },
+  setDeviseErrorMessages: (message) => {
+    self.deviseErrorMessages = message;
   },
   logout: () => {
     self.setAuthToken(null);
