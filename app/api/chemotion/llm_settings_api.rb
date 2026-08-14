@@ -3,6 +3,17 @@
 module Chemotion
   class LlmSettingsAPI < Grape::API
     resource :users do
+      helpers do
+        # The LlmModelCatalog cache identity described by a user's saved provider.
+        def llm_catalog_identity(setting)
+          {
+            base_url: setting.base_url,
+            api_key:  setting.api_key,
+            protocol: setting.api_protocol,
+          }
+        end
+      end
+
       namespace :llm_settings do
         desc 'Return current user LLM settings (API key masked)'
         get do
@@ -17,22 +28,24 @@ module Chemotion
               base_url:       setting&.base_url,
               api_key_masked: setting&.api_key_masked,
               default_model:  setting&.default_model,
-              enabled:        setting.nil? ? true : setting.enabled,
+              enabled:        setting.nil? || setting.enabled,
             },
             task_mappings: task_mappings.map { |m| { task_name: m.task_name, model: m.model } },
             # SF-03 access gates — drive tab visibility and the provider options.
-            ai_features_enabled:        LlmProviderResolver.ai_features_enabled?(current_user),
-            ai_user_api_key_allowed:    LlmProviderResolver.user_api_key_allowed?(current_user),
+            ai_features_enabled: LlmProviderResolver.ai_features_enabled?(current_user),
+            ai_user_api_key_allowed: LlmProviderResolver.user_api_key_allowed?(current_user),
             ai_global_provider_allowed: LlmProviderResolver.institution_provider_allowed?(current_user),
             # Display-only details of the admin provider for the "use institution
             # provider" mode. The API key is never exposed.
-            admin_provider: admin_provider ? {
-              name:          admin_provider.name,
-              api_protocol:  admin_provider.api_protocol,
-              base_url:      admin_provider.base_url,
-              default_model: admin_provider.default_model,
-              enabled:       admin_provider.enabled,
-            } : nil,
+            admin_provider: if admin_provider
+                              {
+                                name: admin_provider.name,
+                                api_protocol: admin_provider.api_protocol,
+                                base_url: admin_provider.base_url,
+                                default_model: admin_provider.default_model,
+                                enabled: admin_provider.enabled,
+                              }
+                            end,
           }
         end
 
@@ -61,6 +74,13 @@ module Chemotion
           setting = current_user.user_llm_setting ||
                     UserLlmSetting.new(user: current_user)
 
+          # The catalogue cache is keyed on protocol + endpoint + key digest, so a
+          # changed provider is already a different entry. What still needs evicting
+          # is the entry for the identity being *left behind*: its catalogue is now
+          # unreachable from the UI but would keep occupying the cache, and if the
+          # user switches back within the TTL they would see a pre-change list.
+          stale_identity = llm_catalog_identity(setting) if setting.persisted?
+
           attrs = declared(params, include_missing: false).except('task_mappings')
           setting.assign_attributes(attrs)
 
@@ -74,23 +94,25 @@ module Chemotion
 
           setting.save!
 
-          if params[:task_mappings]
-            params[:task_mappings].each do |mapping|
-              # reject blank model values (treat as "remove override")
-              task_name = mapping[:task_name].to_s.strip
-              model     = mapping[:model].to_s.strip
-              next if task_name.blank?
+          new_identity = llm_catalog_identity(setting)
+          LlmModelCatalog.invalidate(**stale_identity) if stale_identity && stale_identity != new_identity
+          LlmModelCatalog.invalidate(**new_identity)
 
-              rec = UserTaskModelMapping.find_or_initialize_by(
-                user:      current_user,
-                task_name: task_name,
-              )
-              if model.blank?
-                rec.destroy if rec.persisted?
-              else
-                rec.model = model
-                rec.save!
-              end
+          params[:task_mappings]&.each do |mapping|
+            # reject blank model values (treat as "remove override")
+            task_name = mapping[:task_name].to_s.strip
+            model     = mapping[:model].to_s.strip
+            next if task_name.blank?
+
+            rec = UserTaskModelMapping.find_or_initialize_by(
+              user:      current_user,
+              task_name: task_name,
+            )
+            if model.blank?
+              rec.destroy if rec.persisted?
+            else
+              rec.model = model
+              rec.save!
             end
           end
 
@@ -123,7 +145,10 @@ module Chemotion
               api_key  = params[:api_key].presence || current_user.user_llm_setting&.api_key
             else
               provider = LlmProvider.global_providers.first
-              error!({ error: 'No institution provider is configured. Contact your administrator.' }, 422) unless provider
+              unless provider
+                error!({ error: 'No institution provider is configured. Contact your administrator.' },
+                       422)
+              end
 
               protocol = provider.api_protocol || 'openai'
               base_url = provider.base_url
@@ -149,18 +174,22 @@ module Chemotion
 
         namespace :models do
           desc 'List models available from the resolved provider (calls the provider models endpoint)'
+          params do
+            optional :refresh, type: Boolean, default: false,
+                               desc: 'Re-read the catalogue from the provider instead of serving the cached one'
+          end
           get do
             resolution = LlmProviderResolver.resolve(user: current_user, skip_feature_flags: true)
-            client = LlmClient.new(
+            models = LlmModelCatalog.fetch(
               base_url: resolution.base_url,
               api_key:  resolution.api_key,
-              model:    resolution.model || '',
               protocol: resolution.protocol || 'openai',
+              force:    params[:refresh],
             )
-            { models: client.list_models }
-          rescue Errors::LlmNotConfiguredError
-            { models: [] }
+            { models: models }
           rescue StandardError
+            # Includes Errors::LlmNotConfiguredError: an unconfigured provider is
+            # an empty dropdown, not an error the settings form has to render.
             { models: [] }
           end
 
@@ -170,17 +199,28 @@ module Chemotion
             optional :base_url, type: String
             optional :model,    type: String
             optional :api_key,  type: String
+            optional :refresh,  type: Boolean, default: false,
+                                desc: 'Re-read the catalogue from the provider instead of serving the cached one'
           end
           post do
             protocol = params[:protocol].presence || 'openai'
             api_key  = params[:api_key].presence || current_user.user_llm_setting&.api_key
-            client = LlmClient.new(
+            # Cached per protocol+endpoint+key (LlmModelCatalog) — the settings form
+            # asks for this list every time the user lands on a different provider.
+            # `model` is accepted for backwards compatibility but deliberately not
+            # passed on: a models listing never depends on it, and including it would
+            # fragment the cache on every Default Model keystroke.
+            #
+            # `refresh` only ever evicts this caller's own cache entry: the identity
+            # includes a digest of their key, so one user cannot force a re-read of
+            # another user's (or the institution's) catalogue through here.
+            models = LlmModelCatalog.fetch(
               base_url: params[:base_url].presence,
               api_key:  api_key,
-              model:    params[:model].presence || '',
               protocol: protocol,
+              force:    params[:refresh],
             )
-            { models: client.list_models }
+            { models: models }
           rescue StandardError
             { models: [] }
           end
