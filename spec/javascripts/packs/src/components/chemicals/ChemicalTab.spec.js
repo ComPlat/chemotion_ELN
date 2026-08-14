@@ -168,7 +168,9 @@ describe('ChemicalTab component', () => {
 
     it('Simulate clicking on the modal close button ', () => {
       const closePropertiesModalSpy = sinon.spy(instance, 'closePropertiesModal');
-      wrapper.find(AppModal).prop('onHide')();
+      // The tab renders more than one AppModal (properties, AI result), so this
+      // has to name the one under test rather than assume there is only one.
+      wrapper.find(AppModal).filter({ title: 'Fetched Chemical Properties' }).prop('onHide')();
       expect(closePropertiesModalSpy.called).toBe(true);
       closePropertiesModalSpy.restore();
     });
