@@ -8,8 +8,9 @@ class Oauth::RadarController < ApplicationController
       return render status: 400
     end
 
-    # check if the collection exists and belongs to the user
-    collection = Collection.accessible_for(current_user).find_by(id: collection_id)
+    # check if the collection exists and is owned by the user — RADAR publishing acts on the
+    # collection itself, so a share (even at the highest permission level) is not enough.
+    collection = Collection.own_collections_for(current_user).find_by(id: collection_id)
     unless collection
       @error = 'You are not allowed to access this collection.'
       return render status: 403
@@ -41,8 +42,9 @@ class Oauth::RadarController < ApplicationController
     collection_id = session[:radar_collection_id]
     access_token = session[:radar_access_token]
 
-    # get the collection and check if it exists and belongs to the user
-    collection = Collection.accessible_for(current_user).find_by(id: collection_id)
+    # get the collection and check if it exists and is owned by the user — RADAR publishing acts
+    # on the collection itself, so a share (even at the highest permission level) is not enough.
+    collection = Collection.own_collections_for(current_user).find_by(id: collection_id)
     unless collection
       @error = 'You are not allowed to access this collection.'
       return render status: 403
@@ -97,8 +99,9 @@ class Oauth::RadarController < ApplicationController
   def export
     collection_id = session[:radar_collection_id]
 
-    # get the collection and check if it exists and belongs to the user
-    collection = Collection.accessible_for(current_user).find_by(id: collection_id)
+    # get the collection and check if it exists and is owned by the user — RADAR publishing acts
+    # on the collection itself, so a share (even at the highest permission level) is not enough.
+    collection = Collection.own_collections_for(current_user).find_by(id: collection_id)
     unless collection
       @error = 'You are not allowed to access this collection.'
       return render status: 403
