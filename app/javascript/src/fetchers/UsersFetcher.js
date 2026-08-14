@@ -141,9 +141,8 @@ export default class UsersFetcher {
 
   static logoutUser() {
     return ApiClient.deleteRequest('/users/sign_out', {
-      data: { authenticity_token: DocumentHelper.getMetaContent('csrf-token') },
+      body: { authenticity_token: DocumentHelper.getMetaContent('csrf-token') },
       headers: {},
-      handleResponseSuccess: (response) => response
     });
   }
 

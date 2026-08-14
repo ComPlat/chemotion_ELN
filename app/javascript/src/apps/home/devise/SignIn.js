@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from 'react';
-import { Container, Alert } from 'react-bootstrap';
+import { Container } from 'react-bootstrap';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
@@ -22,9 +22,6 @@ const SignIn = () => {
     <div>
       <BaseNavigation />
       <Container className="mt-5">
-        {userStore.loginStatus === 'failed' && (
-          <Alert variant="warning">Invalid Login or password.</Alert>
-        )}
         <ExtendedSignInForm />
       </Container>
     </div>

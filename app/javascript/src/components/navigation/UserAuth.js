@@ -49,6 +49,7 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
       window.removeEventListener('chemotion:open-settings', showSettingsFunction);
     };
     return onUnmount;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refetchCurrentGroups = () => UsersFetcher.fetchCurrentGroups().then((currentGroupsResult) => {
@@ -147,11 +148,9 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
 
   const logoutUser = () => {
     UsersFetcher.logoutUser()
-      .then((response) => {
-        if (response.status === 204) {
-          reset();
-          aviatorNavigationToApp('/home');
-        }
+      .then(() => {
+        reset();
+        aviatorNavigationToApp('/home');
       });
   };
 
@@ -448,8 +447,8 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
               </Form.Group>
 
               {deviceMetadata.dates
-                && deviceMetadata.dates.map((dateItem, index) => (
-                  <div key={index}>
+                && deviceMetadata.dates.map((dateItem) => (
+                  <div key={dateItem.date}>
                     <Col smOffset={0} sm={6}>
                       <Form.Group>
                         <Form.Label>Date</Form.Label>
