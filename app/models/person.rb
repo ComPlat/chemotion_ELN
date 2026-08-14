@@ -57,9 +57,4 @@
 #
 
 class Person < User
-  has_many :users_groups, dependent: :destroy, foreign_key: :user_id, inverse_of: :user
-  has_many :groups, through: :users_groups
-
-  has_many :users_admins, dependent: :destroy, foreign_key: :admin_id, inverse_of: :admin
-  has_many :administrated_accounts, through: :users_admins, source: :user
 end

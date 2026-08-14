@@ -12,7 +12,7 @@ module Chemotion
   #   task.display_name   # => "SDS Safety Data Extraction"
   #
   #   Chemotion::LlmTaskRegistry.names
-  #   # => ["hplc_extraction", "nmr_structuring", "sds_extraction", ...]
+  #   # => ["sds_extraction", ...]  # one entry per YAML file in config/llm_tasks
   #
   class LlmTaskRegistry
     TASKS_DIR = Rails.root.join('config/llm_tasks')

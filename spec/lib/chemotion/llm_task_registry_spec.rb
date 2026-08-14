@@ -34,17 +34,12 @@ RSpec.describe Chemotion::LlmTaskRegistry do
       expect(task.validator_class).to eq('LlmTaskValidators::SdsExtractionValidator')
     end
 
-    it 'loads nmr_structuring task' do
-      task = described_class.all['nmr_structuring']
-      expect(task).not_to be_nil
-      expect(task.category).to eq('extraction')
-      expect(task.execution_mode).to eq('async')
-    end
-
     it 'loads the committed core task names' do
-      # Only sds_extraction and nmr_structuring ship in this feature; further task
-      # definitions are added in later commits. `include` tolerates extra tasks.
-      expect(described_class.names).to include('sds_extraction', 'nmr_structuring')
+      # sds_extraction is the only task definition that ships with the LLM
+      # infrastructure layer; the analysis tasks (nmr_structuring, ms_extraction,
+      # spectral_extraction, …) ship on the analysis-restructuring branch with
+      # their own validators. `include` tolerates extra tasks.
+      expect(described_class.names).to include('sds_extraction')
     end
 
     it 'memoises on the second call (same object returned)' do
