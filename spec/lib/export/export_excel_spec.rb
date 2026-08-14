@@ -57,6 +57,48 @@ RSpec.describe 'Export::ExportExcel' do
         expect(formated_value).to eq ['13.0', '25 °F', '1', '2.45 M']
       end
     end
+
+    context 'when a full-detail-level shared/synced sample is exported' do
+      # Drives the real HEADERS_SAMPLE_10-based computation (generate_headers_sample), not a
+      # hand-forced @headers100, so this actually exercises the production allowlist.
+      let(:headers) { '@headers = ["cas"]; generate_headers_sample' }
+
+      before do
+        sample_json['shared_sync'] = 't'
+        sample_json['dl_s'] = 10
+        sample_json['cas'] = '50-00-0'
+      end
+
+      it 'includes the cas value (regression guard: HEADERS_SAMPLE_10 must list cas)' do
+        expect(formated_value).to eq ['50-00-0']
+      end
+    end
+
+    context 'when a low-detail-level shared/synced sample is exported' do
+      let(:headers) { '@headers = ["cas"]; generate_headers_sample' }
+
+      before do
+        sample_json['shared_sync'] = 't'
+        sample_json['dl_s'] = 0
+        sample_json['cas'] = '50-00-0'
+      end
+
+      it 'omits the cas value end-to-end (structure-identifying, gated behind full detail level)' do
+        expect(formated_value).to eq [nil]
+      end
+    end
+  end
+
+  describe 'HEADERS_SAMPLE_0' do
+    it 'excludes cas (structure-identifying, must not leak at low detail level)' do
+      expect(Export::ExportTable::HEADERS_SAMPLE_0).not_to include('cas')
+    end
+  end
+
+  describe 'HEADERS_SAMPLE_10' do
+    it 'includes cas so full-detail exports of shared/synced samples still include it' do
+      expect(Export::ExportTable::HEADERS_SAMPLE_10).to include('cas')
+    end
   end
 
   describe '.get_image_from_svg' do

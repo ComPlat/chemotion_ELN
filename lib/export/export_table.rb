@@ -16,8 +16,12 @@ module Export
     ].freeze
 
     # allowed sample/molecule headers for sample detail level 10
+    # 'cas' belongs here, not in HEADERS_SAMPLE_0: a CAS number trivially reverse-looks-up to the
+    # full structure via public databases (PubChem, CAS Common Chemistry), so it's structure-
+    # identifying in the same way as molfile/smiles/InChI, unlike the non-identifying physical
+    # properties (MW, melting/boiling point) that level 0 does expose.
     HEADERS_SAMPLE_10 = HEADERS_SAMPLE_0 + [
-      'molfile', 'sample readout', 'image', 'identifier', 'molecule name',
+      'molfile', 'sample readout', 'image', 'identifier', 'molecule name', 'cas',
       'canonical smiles', 'sum formula', 'inchistring', 'InChI' # , 'analyses'
     ].freeze
 
