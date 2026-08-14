@@ -46,23 +46,15 @@ class StructureSpectralDataJob < ApplicationJob
   def perform(container_id:, user_id:)
     self.priority = self.class.default_priority
 
-    @container_id = container_id
-    @user_id       = user_id
+    @container_id       = container_id
+    @user_id            = user_id
     @notification_level = 'info'
 
     container = Container.find_by(id: container_id)
-    unless container
-      @notification_message = "Spectral data structuring failed: container #{container_id} not found."
-      @notification_level   = 'error'
-      return
-    end
+    return fail_with("Spectral data structuring failed: container #{container_id} not found.") unless container
 
     user = User.find_by(id: user_id)
-    unless user
-      @notification_message = 'Spectral data structuring failed: user not found.'
-      @notification_level   = 'error'
-      return
-    end
+    return fail_with('Spectral data structuring failed: user not found.') unless user
 
     result = SpectralExtractionService.call(
       user:    user,
@@ -72,15 +64,8 @@ class StructureSpectralDataJob < ApplicationJob
 
     persist_result(container, result)
     @notification_message = 'Spectral data structuring completed. The structured JSON is now available on the analysis.'
-  rescue SpectralExtractionService::Error, Errors::LlmNotConfiguredError, Errors::LlmProviderError => e
-    @notification_message = "Spectral data structuring failed: #{e.message}"
-    @notification_level   = 'error'
-    Rails.logger.error "StructureSpectralDataJob error: #{e.class} - #{e.message}"
   rescue StandardError => e
-    @notification_message = "Spectral data structuring failed: #{e.message}"
-    @notification_level   = 'error'
-    Rails.logger.error "StructureSpectralDataJob error: #{e.class} - #{e.message}"
-    Rails.logger.error e.backtrace&.first(5)&.join("\n")
+    handle_perform_error(e)
   end
 
   def max_attempts
@@ -88,6 +73,27 @@ class StructureSpectralDataJob < ApplicationJob
   end
 
   private
+
+  # Record a failure for after_perform to surface, and return nil so callers can
+  # `return fail_with(...)` as a guard.
+  def fail_with(message)
+    @notification_message = message
+    @notification_level   = 'error'
+    nil
+  end
+
+  # Every failure reaches the user as the same notification; an unexpected error
+  # additionally gets a backtrace in the log.
+  def handle_perform_error(error)
+    Rails.logger.error "StructureSpectralDataJob error: #{error.class} - #{error.message}"
+    unless error.is_a?(SpectralExtractionService::Error) ||
+           error.is_a?(Errors::LlmNotConfiguredError) ||
+           error.is_a?(Errors::LlmProviderError)
+      Rails.logger.error error.backtrace&.first(5)&.join("\n")
+    end
+
+    fail_with("Spectral data structuring failed: #{error.message}")
+  end
 
   # Persist directly on the container (server-side write — there is no
   # frontend round trip for an async job) as a JSON string, since
@@ -121,7 +127,10 @@ class StructureSpectralDataJob < ApplicationJob
       'message'   => @notification_message,
       'failed_at' => Time.current.iso8601,
     }.to_json
-    container.update_columns(extended_metadata: data) # skip validations/callbacks — marker only
+    # rubocop:disable Rails/SkipsModelValidations -- deliberate: this writes only a
+    # failure marker the frontend polls for, and must not fire container callbacks.
+    container.update_columns(extended_metadata: data)
+    # rubocop:enable Rails/SkipsModelValidations
   rescue StandardError => e
     Delayed::Worker.logger.error "StructureSpectralDataJob failure-marker error: #{e.message}"
   end

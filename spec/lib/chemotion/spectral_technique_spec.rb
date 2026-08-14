@@ -4,10 +4,13 @@ require 'rails_helper'
 
 RSpec.describe Chemotion::SpectralTechnique do
   describe '.detect' do
-    context 'NMR (grouped, nucleus-aware)' do
+    context 'with NMR measurements (grouped, nucleus-aware)' do
       it 'detects 1H NMR and its nucleus' do
-        d = described_class.detect(kind: '1H nuclear magnetic resonance spectroscopy (1H NMR)',
-                                   text: '1H NMR (400 MHz, CDCl3 [7.27 ppm], ppm) δ = 8.51 (s, 1H), 7.63 (dd, J = 8.4 Hz, J = 1.7 Hz, 1H).')
+        d = described_class.detect(
+          kind: '1H nuclear magnetic resonance spectroscopy (1H NMR)',
+          text: '1H NMR (400 MHz, CDCl3 [7.27 ppm], ppm) δ = 8.51 (s, 1H), ' \
+                '7.63 (dd, J = 8.4 Hz, J = 1.7 Hz, 1H).',
+        )
         expect(d[:key]).to eq('nmr')
         expect(d[:nucleus]).to eq('1H')
         expect(d[:label]).to eq('1H NMR')
@@ -26,13 +29,14 @@ RSpec.describe Chemotion::SpectralTechnique do
       end
 
       it 'defaults the nucleus to 1H when NMR is named without a nucleus' do
-        d = described_class.detect(kind: 'nuclear magnetic resonance spectroscopy (NMR)', text: 'NMR spectrum recorded.')
+        d = described_class.detect(kind: 'nuclear magnetic resonance spectroscopy (NMR)',
+                                   text: 'NMR spectrum recorded.')
         expect(d[:key]).to eq('nmr')
         expect(d[:nucleus]).to eq('1H')
       end
     end
 
-    context 'Mass spectrometry' do
+    context 'with mass spectrometry measurements' do
       it 'detects EI-MS' do
         d = described_class.detect(text: 'EI (m/z, 70 eV, 70 °C): 353 (12) [M]+, 86 (100).')
         expect(d[:key]).to eq('ms')
@@ -45,7 +49,7 @@ RSpec.describe Chemotion::SpectralTechnique do
       end
     end
 
-    context 'IR' do
+    context 'with IR measurements' do
       it 'detects IR (ATR)' do
         d = described_class.detect(kind: 'infrared absorption spectroscopy (IR)',
                                    text: 'IR (ATR, ṽ) = 2941, 2840, 1707 cm-1.')
@@ -53,7 +57,7 @@ RSpec.describe Chemotion::SpectralTechnique do
       end
     end
 
-    context 'chromatography and UV-Vis' do
+    context 'with chromatography and UV-Vis measurements' do
       it 'detects HPLC' do
         expect(described_class.detect(text: 'HPLC (C18): tR = 8.42 min (98.5%).')[:key]).to eq('hplc')
       end
@@ -63,7 +67,7 @@ RSpec.describe Chemotion::SpectralTechnique do
       end
     end
 
-    context 'unknown technique' do
+    context 'with an unknown technique' do
       it 'falls back to generic' do
         d = described_class.detect(text: 'Melting point: 122-124 °C.')
         expect(d[:key]).to eq('generic')

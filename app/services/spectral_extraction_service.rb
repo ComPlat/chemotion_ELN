@@ -30,7 +30,7 @@ class SpectralExtractionService
 
   Result = Struct.new(
     :technique, :technique_label, :nucleus, :model, :requested_model, :data,
-    keyword_init: true,
+    keyword_init: true
   )
 
   def self.call(user:, content:, kind: nil)
@@ -57,7 +57,7 @@ class SpectralExtractionService
       task_name: TASK_NAME,
       user:      @user,
       context:   text,
-      params: {
+      params:    {
         technique_label:        detection[:label],
         technique_instructions: instructions,
       },

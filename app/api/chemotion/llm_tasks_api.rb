@@ -33,7 +33,7 @@ module Chemotion
             'autoDismiss' => 5,
           },
           message_from: current_user.id,
-          message_to:   [current_user.id],
+          message_to: [current_user.id],
         )
       rescue StandardError => e
         Rails.logger.error("[LlmTasksAPI] notification error: #{e.message}")
@@ -71,11 +71,11 @@ module Chemotion
              'per-request client choice.'
         params do
           optional :content, desc: 'Analysis content — a Quill delta (object) or plain text. ' \
-                                    'Required unless execution_mode is async.'
-          optional :kind, type: String, desc: "Analysis type (extended_metadata.kind), used to pick the technique"
+                                   'Required unless execution_mode is async.'
+          optional :kind, type: String, desc: 'Analysis type (extended_metadata.kind), used to pick the technique'
           optional :container_id, type: Integer,
-                    desc: 'ID of the (already-saved) analysis container. Required when ' \
-                          'execution_mode is async — the background job reads Content from the DB.'
+                                  desc: 'ID of the (already-saved) analysis container. Required when ' \
+                                        'execution_mode is async — the background job reads Content from the DB.'
         end
         post :extract do
           task = Chemotion::LlmTaskRegistry.find(SpectralExtractionService::TASK_NAME)
@@ -83,7 +83,7 @@ module Chemotion
           if task.async?
             if params[:container_id].blank?
               message = 'This analysis must be saved before it can be structured in the ' \
-                         'background — please save it first.'
+                        'background — please save it first.'
               notify_llm_task_result(message: "Spectral data structuring failed: #{message}", level: 'error')
               error!({ error: message }, 422)
             end
@@ -91,7 +91,7 @@ module Chemotion
             container = Container.find_by(id: params[:container_id])
             unless container
               notify_llm_task_result(message: 'Spectral data structuring failed: container not found.',
-                                      level: 'error')
+                                     level: 'error')
               error!({ error: 'Container not found' }, 404)
             end
 
@@ -106,7 +106,7 @@ module Chemotion
           else
             if params[:content].blank?
               notify_llm_task_result(message: 'Spectral data structuring failed: no content provided.',
-                                      level: 'error')
+                                     level: 'error')
               error!({ error: 'content is required' }, 422)
             end
 

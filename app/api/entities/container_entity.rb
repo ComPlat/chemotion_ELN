@@ -20,57 +20,62 @@ module Entities
                                                                   }
     expose :dataset, using: 'Labimotion::DatasetEntity', if: ->(object, _options) { object.container_type == 'dataset' }
 
-    # rubocop:disable Metrics/AbcSize
+    AI_SPECTRAL_KEYS = %w[ai_spectral_data ai_spectral_extraction_error].freeze
+
     def extended_metadata
-      return unless object.extended_metadata
+      meta = object.extended_metadata
+      return unless meta
 
-      report = object.extended_metadata['report'] == 'true' || object.extended_metadata == 'true'
-
-      {}.tap do |metadata|
-        metadata[:report] = report
-        metadata[:status] = object.extended_metadata['status']
-        metadata[:kind] = object.extended_metadata['kind']
-        metadata[:index] = object.extended_metadata['index']
-        metadata[:instrument] = object.extended_metadata['instrument']
-        metadata[:preferred_thumbnail] = object.extended_metadata['preferred_thumbnail']
-        if object.extended_metadata['content'].present?
-          metadata[:content] =
-            JSON.parse(object.extended_metadata['content'])
-        end
-        if object.extended_metadata['hyperlinks'].present?
-          metadata[:hyperlinks] =
-            JSON.parse(object.extended_metadata['hyperlinks'])
-        end
-        if object.extended_metadata['ai_spectral_data'].present?
-          metadata[:ai_spectral_data] =
-            begin
-              JSON.parse(object.extended_metadata['ai_spectral_data'])
-            rescue JSON::ParserError
-              nil
-            end
-        end
-        if object.extended_metadata['ai_spectral_extraction_error'].present?
-          metadata[:ai_spectral_extraction_error] =
-            begin
-              JSON.parse(object.extended_metadata['ai_spectral_extraction_error'])
-            rescue JSON::ParserError
-              nil
-            end
-        end
-        if object.extended_metadata && object.extended_metadata['general_description'].present?
-          general_desc = object.extended_metadata['general_description']
-          metadata[:general_description] = if general_desc.is_a?(String)
-                                             begin
-                                               JSON.parse(general_desc)
-                                             rescue JSON::ParserError
-                                               general_desc
-                                             end
-                                           else
-                                             general_desc
-                                           end
-        end
-      end
+      base_metadata(meta).merge(parsed_metadata(meta))
     end
-    # rubocop:enable Metrics/AbcSize
+
+    private
+
+    def base_metadata(meta)
+      {
+        report: meta['report'] == 'true' || meta == 'true',
+        status: meta['status'],
+        kind: meta['kind'],
+        index: meta['index'],
+        instrument: meta['instrument'],
+        preferred_thumbnail: meta['preferred_thumbnail'],
+      }
+    end
+
+    # The JSON-valued keys. content/hyperlinks are written by the ELN itself, so a
+    # parse error there is a real bug and must surface; the AI keys are written by a
+    # background job, where a truncated or legacy value must not take the whole
+    # container payload down with it.
+    def parsed_metadata(meta)
+      parsed = {}
+      parsed[:content] = JSON.parse(meta['content']) if meta['content'].present?
+      parsed[:hyperlinks] = JSON.parse(meta['hyperlinks']) if meta['hyperlinks'].present?
+
+      AI_SPECTRAL_KEYS.each do |key|
+        next if meta[key].blank?
+
+        parsed[key.to_sym] = parse_json_or_nil(meta[key])
+      end
+
+      general = meta['general_description']
+      parsed[:general_description] = parsed_general_description(general) if general.present?
+      parsed
+    end
+
+    def parse_json_or_nil(value)
+      JSON.parse(value)
+    rescue JSON::ParserError
+      nil
+    end
+
+    # Older records store this as a JSON string, newer ones as the object itself;
+    # an unparseable string is passed through rather than dropped.
+    def parsed_general_description(value)
+      return value unless value.is_a?(String)
+
+      JSON.parse(value)
+    rescue JSON::ParserError
+      value
+    end
   end
 end

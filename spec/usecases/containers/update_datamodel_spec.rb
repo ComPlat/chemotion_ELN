@@ -1,18 +1,19 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/AnyInstance -- the object under test is built inside the code path
+
 require 'rails_helper'
 
 RSpec.describe Usecases::Containers::UpdateDatamodel do
   let(:user)   { create(:person) }
+  let!(:root_container)     { create(:container, container_type: 'root') }
+  let!(:analysis_container) { create(:analysis_container, parent: root_container) }
   let(:usecase) { described_class.new(user) }
 
   # can_update_container? checks ElementPolicy on the root container's
   # containable — stub it so this stays a focused unit test of the
   # extended_metadata serialisation, not an authorisation test.
   before { allow_any_instance_of(described_class).to receive(:can_update_container?).and_return(true) }
-
-  let!(:root_container)     { create(:container, container_type: 'root') }
-  let!(:analysis_container) { create(:analysis_container, parent: root_container) }
 
   def update!(extended_metadata)
     container_params = {
@@ -38,7 +39,7 @@ RSpec.describe Usecases::Containers::UpdateDatamodel do
     let(:payload) do
       {
         'technique' => 'nmr', 'technique_label' => '1H NMR', 'model' => 'kit.qwen3.5-397b-A17b',
-        'result' => { 'nucleus' => '1H', 'signals' => [{ 'shift_ppm' => 7.26 }] },
+        'result' => { 'nucleus' => '1H', 'signals' => [{ 'shift_ppm' => 7.26 }] }
       }
     end
 
@@ -73,3 +74,4 @@ RSpec.describe Usecases::Containers::UpdateDatamodel do
     end
   end
 end
+# rubocop:enable RSpec/AnyInstance

@@ -1,5 +1,11 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/AnyInstance -- the object under test is built inside the code path
+# rubocop:disable RSpec/MessageSpies -- reads better as an expectation set before the call
+# rubocop:disable RSpec/MultipleExpectations -- these assert one API response as a whole
+# rubocop:disable RSpec/MultipleMemoizedHelpers -- the container/collection/sample chain needs them
+# rubocop:disable RSpec/NestedGroups -- the provider matrix (mode x gate x protocol) needs the nesting
+
 require 'rails_helper'
 
 describe Chemotion::LlmTasksAPI do
@@ -13,7 +19,62 @@ describe Chemotion::LlmTasksAPI do
     create(:llm_provider, base_url: base_url, api_key: 'sk-test', default_model: model)
   end
 
+  describe 'GET /api/v1/llm/institution_models' do
+    let(:models_url) { "#{base_url}/v1/models" }
+    let(:other_user) { create(:person) }
+
+    before do
+      allow(LlmProviderResolver).to receive(:institution_provider_allowed?).and_return(true)
+      stub_request(:get, models_url).to_return(
+        status:  200,
+        body:    { 'data' => [{ 'id' => model }] }.to_json,
+        headers: { 'Content-Type' => 'application/json' },
+      )
+    end
+
+    it 'returns the provider model list' do
+      get '/api/v1/llm/institution_models', headers: headers
+
+      expect(response).to have_http_status(:success)
+      expect(JSON.parse(response.body)['models']).to eq([model])
+    end
+
+    it 'hits the provider once for many users, since they share one provider identity' do
+      get '/api/v1/llm/institution_models', headers: headers
+      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(other_user)
+      get '/api/v1/llm/institution_models', headers: headers
+
+      expect(JSON.parse(response.body)['models']).to eq([model])
+      expect(WebMock).to have_requested(:get, models_url).once
+    end
+
+    it 're-reads the catalogue when the caller asks for a refresh' do
+      get '/api/v1/llm/institution_models', headers: headers
+      get '/api/v1/llm/institution_models?refresh=true', headers: headers
+
+      expect(WebMock).to have_requested(:get, models_url).twice
+    end
+
+    it 'returns an empty list when the user is not granted institution access' do
+      allow(LlmProviderResolver).to receive(:institution_provider_allowed?).and_return(false)
+
+      get '/api/v1/llm/institution_models', headers: headers
+
+      expect(JSON.parse(response.body)['models']).to eq([])
+      expect(WebMock).not_to have_requested(:get, models_url)
+    end
+  end
+
   describe 'POST /api/v1/llm/spectral/extract' do
+    # Whether this endpoint runs inline or queues a job is an installation setting
+    # (execution_mode in config/llm_tasks/spectral_extraction.yml), not something a
+    # request chooses. Both branches therefore have to be pinned here rather than
+    # inherited from whatever the shipped YAML currently says — otherwise flipping
+    # that setting silently rewrites what half of these examples are testing.
+    let(:spectral_task) { Chemotion::LlmTaskRegistry.find(SpectralExtractionService::TASK_NAME) }
+
+    before { allow(spectral_task).to receive(:async?).and_return(false) }
+
     context 'with a valid NMR measurement' do
       before do
         stub_request(:post, "#{base_url}/v1/chat/completions").to_return(
@@ -124,13 +185,10 @@ describe Chemotion::LlmTasksAPI do
       end
     end
 
-    # execution_mode is normally "inline" for spectral_extraction (see
-    # config/llm_tasks/spectral_extraction.yml) — there is no client-side way to
-    # choose async. Stub LlmTaskDefinition#async? to exercise that branch as an
-    # ELN installation would configure it, without touching the shipped YAML.
+    # The async branch, pinned the same way the inline one is above.
     context 'when the task is configured with execution_mode: async' do
       before do
-        allow_any_instance_of(Chemotion::LlmTaskDefinition).to receive(:async?).and_return(true)
+        allow(spectral_task).to receive(:async?).and_return(true)
         allow(Message).to receive(:create_msg_notification)
       end
 
@@ -212,3 +270,8 @@ describe Chemotion::LlmTasksAPI do
     end
   end
 end
+# rubocop:enable RSpec/AnyInstance
+# rubocop:enable RSpec/MessageSpies
+# rubocop:enable RSpec/MultipleExpectations
+# rubocop:enable RSpec/MultipleMemoizedHelpers
+# rubocop:enable RSpec/NestedGroups

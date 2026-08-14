@@ -56,7 +56,7 @@ describe Entities::ContainerEntity do
         create(:analysis_container, extended_metadata: {
                  'ai_spectral_data' => {
                    'technique' => 'nmr', 'model' => 'kit.qwen3.5-397b-A17b',
-                   'result' => { 'nucleus' => '1H' },
+                   'result' => { 'nucleus' => '1H' }
                  }.to_json,
                })
       end

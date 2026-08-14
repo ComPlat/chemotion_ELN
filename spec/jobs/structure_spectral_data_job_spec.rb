@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MultipleExpectations -- these assert one API response as a whole
+
 require 'rails_helper'
 
-RSpec.describe StructureSpectralDataJob, active_job: true do
+RSpec.describe StructureSpectralDataJob, :active_job do
   let(:user) { create(:person) }
   let(:container) do
     create(:analysis_container, extended_metadata: {
@@ -15,7 +17,7 @@ RSpec.describe StructureSpectralDataJob, active_job: true do
     SpectralExtractionService::Result.new(
       technique: 'nmr', technique_label: '13C NMR', nucleus: '13C',
       model: 'kit.qwen3.5-397b-A17b', requested_model: nil,
-      data: { 'nucleus' => '13C', 'signals' => [{ 'shift_ppm' => 164.4 }] },
+      data: { 'nucleus' => '13C', 'signals' => [{ 'shift_ppm' => 164.4 }] }
     )
   end
 
@@ -102,3 +104,4 @@ RSpec.describe StructureSpectralDataJob, active_job: true do
     end
   end
 end
+# rubocop:enable RSpec/MultipleExpectations

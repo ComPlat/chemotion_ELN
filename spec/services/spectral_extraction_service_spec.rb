@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MultipleExpectations -- these assert one API response as a whole
+
 require 'rails_helper'
 
 RSpec.describe SpectralExtractionService do
@@ -37,12 +39,12 @@ RSpec.describe SpectralExtractionService do
 
       it 'injects the nucleus-specific prompt and the measurement text into the request' do
         described_class.call(user: user, content: text)
-        expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions").with { |req|
+        expect(WebMock).to(have_requested(:post, "#{base_url}/v1/chat/completions").with do |req|
           user_msg = JSON.parse(req.body)['messages'].find { |m| m['role'] == 'user' }
           user_msg['content'].include?('13C NMR') &&
             user_msg['content'].include?('"nucleus": "13C"') &&
             user_msg['content'].include?(text)
-        }
+        end)
       end
     end
 
@@ -72,7 +74,7 @@ RSpec.describe SpectralExtractionService do
     context 'with an MS measurement containing a halogen isotope doublet (Br 79/81)' do
       let(:text) do
         'MS (ESI, H2O), m/z (%): 301/303 (4/4) [M-Br]+, 253 (68), 222 (100) [M-2Br]+, 181 (79). ' \
-        'HRMS (C15H1479BrN2)+: calcd: 301.0335, found: 301.0329.'
+          'HRMS (C15H1479BrN2)+: calcd: 301.0335, found: 301.0329.'
       end
 
       before { stub_llm('technique' => 'ESI', 'peaks' => [{ 'mz' => 301 }, { 'mz' => 303 }]) }
@@ -85,12 +87,12 @@ RSpec.describe SpectralExtractionService do
       it 'includes the isotope-doublet worked example and formula/charge-splitting rule in the prompt ' \
          '(a real published measurement that previously made the model bail out to a "raw"-only response)' do
         described_class.call(user: user, content: text)
-        expect(WebMock).to have_requested(:post, "#{base_url}/v1/chat/completions").with { |req|
+        expect(WebMock).to(have_requested(:post, "#{base_url}/v1/chat/completions").with do |req|
           user_msg = JSON.parse(req.body)['messages'].find { |m| m['role'] == 'user' }
           user_msg['content'].include?('ISOTOPE DOUBLET') &&
             user_msg['content'].include?('separate "charge" field') &&
             user_msg['content'].include?(text)
-        }
+        end)
       end
     end
 
@@ -111,3 +113,4 @@ RSpec.describe SpectralExtractionService do
     end
   end
 end
+# rubocop:enable RSpec/MultipleExpectations

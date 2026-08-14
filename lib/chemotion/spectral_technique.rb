@@ -27,7 +27,7 @@ module Chemotion
     # element symbols are listed first so the alternation prefers them.
     NUCLEUS_RE = /
       \b(\d{1,3})\s*(Si|Sn|Se|Li|Al|Pt|Rh|Na|Xe|Te|Cd|H|C|N|O|F|P|B)\b
-    /x
+    /x.freeze
 
     def detect(kind: nil, text: nil)
       haystack = "#{kind} #{text}"
@@ -65,7 +65,7 @@ module Chemotion
     end
 
     def uvvis?(str)
-      str.match?(/uv[\/\-\s]*vis/i) ||
+      str.match?(%r{uv[/\-\s]*vis}i) ||
         str.match?(/ultraviolet/i) ||
         str.match?(/(?:λ|lambda)\s*max/i)
     end

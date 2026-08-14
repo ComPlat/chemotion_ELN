@@ -269,11 +269,15 @@ RSpec.describe LlmTaskRunner do
     context 'when the first attempt returns non-empty but truncated JSON (finish_reason length)' do
       let(:truncated_resp) do
         { 'choices' => [{ 'finish_reason' => 'length',
-                          'message' => { 'content' => '{"chemical_name":"Phenol","hazard_statements":["H30' } }] }.to_json
+                          'message' => {
+                            'content' => '{"chemical_name":"Phenol","hazard_statements":["H30',
+                          } }] }.to_json
       end
       let(:recovered_resp) do
         { 'choices' => [{ 'finish_reason' => 'stop',
-                          'message' => { 'content' => '{"chemical_name":"Phenol","hazard_statements":["H301"]}' } }] }.to_json
+                          'message' => {
+                            'content' => '{"chemical_name":"Phenol","hazard_statements":["H301"]}',
+                          } }] }.to_json
       end
 
       before do
