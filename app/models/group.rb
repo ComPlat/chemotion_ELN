@@ -56,34 +56,4 @@
 #  index_users_on_unlock_token          (unlock_token) UNIQUE
 #
 
-class Group < User
-  has_many :users_groups, dependent: :destroy
-  has_many :users, class_name: 'User', through: :users_groups
-
-  has_many :users_admins, dependent: :destroy, foreign_key: :user_id, inverse_of: :user
-  has_many :admins, through: :users_admins, source: :admin # ,  foreign_key:    association_foreign_key: :admin_id
-  around_save :update_allocated_space
-  before_destroy :remove_from_matrices
-
-  def administrated_by?(user)
-    users_admins.where(admin: user).present?
-  end
-
-  private
-
-  def user_ids
-    # Override method to return an array of user IDs in the group
-    users.ids
-  end
-
-  def update_allocated_space
-    return yield unless allocated_space_changed?
-
-    yield
-    users.each do |user|
-      next if user.allocated_space >= allocated_space
-
-      user.update(allocated_space: allocated_space)
-    end
-  end
-end
+class Group < User ; end

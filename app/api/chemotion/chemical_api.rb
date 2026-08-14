@@ -101,7 +101,6 @@ module Chemotion
             Chemotion::ChemicalsService.handle_exceptions do
               data = params[:data]
               molecule = Molecule.find(params[:id]) if params[:id] != 'null'
-              vendor = data[:vendor]
               language = data[:language]
               case data[:option]
               when 'Common Name'
@@ -109,17 +108,14 @@ module Chemotion
               when 'CAS'
                 name = data[:searchStr] || molecule.cas[0]
               end
-              case vendor
-              when 'Merck'
-                { merck_link: Chemotion::ChemicalsService.merck(name, language) }
-              when 'Thermofisher'
-                { alfa_link: Chemotion::ChemicalsService.alfa(name, language) }
-              else
-                {
-                  alfa_link: Chemotion::ChemicalsService.alfa(name, language),
-                  merck_link: Chemotion::ChemicalsService.merck(name, language),
-                }
-              end
+              # Merck (Sigma-Aldrich) is the only vendor whose SDS lookup still
+              # works, and the only one the UI offers, so `vendor` no longer
+              # selects anything — see the retirement note on
+              # ChemicalsService.alfa. Restoring a second vendor means bringing
+              # back a `case vendor` here:
+              #   when 'Thermofisher'
+              #     { alfa_link: Chemotion::ChemicalsService.alfa(name, language) }
+              { merck_link: Chemotion::ChemicalsService.merck(name, language) }
             end
           end
         end

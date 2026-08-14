@@ -29,6 +29,11 @@ module Chemotion
     SAFETY_SHEETS_DIR = 'public/safety_sheets'
     ALLOWED_DOMAINS = %w[sigmaaldrich.com].freeze
 
+    # Raised when a vendor SDS lookup fails for a reason that is both safe and
+    # useful to show the user verbatim (throttled, endpoint moved, no match).
+    # Everything else falls back to a generic message so internals never leak.
+    class VendorLookupError < StandardError; end
+
     # Sending only a User-Agent + `Accept: */*`
     # (and the CORS-preflight `Access-Control-Request-Method` header) is treated
     # as automated, so `__NEXT_DATA__` returns Nil. The header set below
@@ -63,12 +68,39 @@ module Chemotion
             "?focus=products&page=1&perpage=30&sort=relevance&term=#{string}&type=product"
       safe_url = validate_url_for_request!(url)
       merck_res = HTTParty.get(safe_url, request_options)
+      # Check the status before parsing: an error page still has a body, and
+      # parsing it would report "no product found" for what is really throttling.
+      ensure_vendor_response_ok!(merck_res, 'Merck (Sigma-Aldrich)')
       doc = Nokogiri::HTML.parse(merck_res.body.to_s)
 
       href = extract_product_href_from_next_data(doc) || extract_product_href_from_html(doc)
-      raise StandardError, 'Product link not found on Sigma-Aldrich search page' unless href
+      raise VendorLookupError, "No Merck product matched \"#{name}\"." unless href
 
       href
+    end
+
+    # Turn a non-200 vendor response into a message that says what actually
+    # happened. Sigma-Aldrich answers its search endpoint with 429 once it
+    # decides the caller is automated, and reporting that as "could not find
+    # safety data sheet" sends users hunting for a compound that is really there.
+    def self.ensure_vendor_response_ok!(response, vendor)
+      code = response.code.to_i
+      return if code == 200
+
+      raise VendorLookupError, case code
+                               when 429
+                                 "#{vendor} is currently rate-limiting automated SDS lookups (HTTP 429). " \
+                                 'Please try again later, or attach the SDS file manually.'
+                               when 401, 403
+                                 "#{vendor} refused the automated SDS lookup (HTTP #{code}). " \
+                                 'Please attach the SDS file manually.'
+                               when 300..399
+                                 "#{vendor} has moved its product search (HTTP #{code}), so the automated " \
+                                 'lookup can no longer read it. Please attach the SDS file manually.'
+                               else
+                                 "#{vendor} returned HTTP #{code} for this search. " \
+                                 'Please try again later, or attach the SDS file manually.'
+                               end
     end
 
     # Primary: read ROOT_QUERY.getNewProductSearchResults(...).products[0] from the
@@ -159,44 +191,66 @@ module Chemotion
       merck_link = "https://www.sigmaaldrich.com/DE/#{language}/sds/#{url_string}"
       { 'merck_link' => merck_link, 'merck_product_number' => product_number,
         'merck_product_link' => "https://www.sigmaaldrich.com#{product_number_string}" }
-    rescue StandardError
+    rescue VendorLookupError => e
+      e.message
+    rescue StandardError => e
+      Rails.logger.error("[ChemicalsService.merck] #{e.class}: #{e.message}")
       'Could not find safety data sheet from Merck'
     end
 
     # Validate product number: allow letters, digits, hyphen, underscore, dot.
     def self.validate_product_number!(product_number)
       if product_number.nil? || product_number.to_s.strip.empty?
-        raise StandardError, 'Could not find safety data sheet from Merck'
+        raise VendorLookupError, 'Could not find safety data sheet from Merck'
       end
 
       allowed_pattern = /\A[A-Za-z0-9\-_.]+\z/
       return if product_number.to_s.match?(allowed_pattern)
 
-      raise StandardError, 'Could not find safety data sheet from Merck'
+      raise VendorLookupError, 'Could not find safety data sheet from Merck'
     end
 
-    def self.alfa_product(alfa_req)
-      response = Nokogiri::HTML.parse(alfa_req.body)
-      if response.title && response.title != 'Alfa Aesar'
-        product_number = response.css('a').filter_map { |node| node.attribute('item_number') }
-        product_number[0].value
-      else
-        str = 'search-result-number'
-        response.xpath("//*[@class=\"#{str}\"]").at_css('span').children.text
-      end
-    end
-
-    def self.alfa(name, language)
-      chosen_lang = { 'en' => 'EE', 'de' => 'DE', 'fr' => 'FR' }
-      url = "https://www.alfa.com/en/search/?q=#{CGI.escape(name)}"
-      safe_url = validate_url_for_request!(url)
-      alfa_req = HTTParty.get(safe_url, request_options)
-      alfa_link = "https://www.alfa.com/en/msds/?language=#{chosen_lang[language]}&subformat=CLP1&sku=#{alfa_product(alfa_req)}"
-      { 'alfa_link' => alfa_link, 'alfa_product_number' => alfa_product(alfa_req),
-        'alfa_product_link' => "https://www.alfa.com/en/catalog/#{alfa_product(alfa_req)}" }
-    rescue StandardError
-      'Could not find safety data sheet from Thermofisher'
-    end
+    # ── Thermofisher / Alfa Aesar SDS lookup — RETIRED ─────────────────────────
+    #
+    # This vendor is no longer offered in the UI (see ChemicalTab#chooseVendor,
+    # where the option is commented out) because the lookup cannot work any more:
+    #
+    #   1. alfa.com is not in ALLOWED_DOMAINS, so validate_url_for_request! raises
+    #      before a request is even made (that guard landed with PR #3235).
+    #   2. Alfa Aesar was absorbed into Thermo Fisher and the product search was
+    #      removed: https://www.alfa.com/en/search/?q=<name> now answers 301 to
+    #      thermofisher.com/…/home/chemicals.html — a generic landing page with no
+    #      product data. Allowlisting the domain and following the redirect would
+    #      still yield nothing to parse.
+    #
+    # Kept commented rather than deleted so the shape of the old response
+    # ('alfa_link' / 'alfa_product_number' / 'alfa_product_link') stays on record —
+    # chemical_data rows saved before the retirement still carry those keys, and
+    # chem_properties_alfa / safety_phrases_thermofischer still read them.
+    #
+    # def self.alfa_product(alfa_req)
+    #   response = Nokogiri::HTML.parse(alfa_req.body)
+    #   if response.title && response.title != 'Alfa Aesar'
+    #     product_number = response.css('a').filter_map { |node| node.attribute('item_number') }
+    #     product_number[0].value
+    #   else
+    #     str = 'search-result-number'
+    #     response.xpath("//*[@class=\"#{str}\"]").at_css('span').children.text
+    #   end
+    # end
+    #
+    # def self.alfa(name, language)
+    #   chosen_lang = { 'en' => 'EE', 'de' => 'DE', 'fr' => 'FR' }
+    #   url = "https://www.alfa.com/en/search/?q=#{CGI.escape(name)}"
+    #   safe_url = validate_url_for_request!(url)
+    #   alfa_req = HTTParty.get(safe_url, request_options)
+    #   alfa_link = "https://www.alfa.com/en/msds/?language=#{chosen_lang[language]}" \
+    #               "&subformat=CLP1&sku=#{alfa_product(alfa_req)}"
+    #   { 'alfa_link' => alfa_link, 'alfa_product_number' => alfa_product(alfa_req),
+    #     'alfa_product_link' => "https://www.alfa.com/en/catalog/#{alfa_product(alfa_req)}" }
+    # rescue StandardError
+    #   'Could not find safety data sheet from Thermofisher'
+    # end
 
     def self.write_file(file_path, file = nil, link = nil)
       full_file_path = "public#{file_path}"

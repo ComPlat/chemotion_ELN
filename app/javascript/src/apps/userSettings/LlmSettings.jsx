@@ -37,13 +37,13 @@ const normalizeMappings = (m) => JSON.stringify(
     .sort((a, b) => a.task_name.localeCompare(b.task_name)),
 );
 
-// Tasks are loaded from the server-side LLM Task Registry (SF-04).
-// Falls back to a minimal static list if the request fails.
+// Tasks are loaded from the server-side LLM Task Registry (SF-04). This is only
+// the fallback for a failed request, so it lists the task definitions that ship
+// with this layer — one per config/llm_tasks/*.yml. Analysis tasks
+// (nmr_structuring, spectral_extraction, …) arrive with their own branch and are
+// picked up from the registry, so they must not be hard-coded here.
 const FALLBACK_TASKS = [
-  { taskName: 'sds_extraction',     label: 'SDS Extraction' },
-  { taskName: 'nmr_structuring',    label: 'NMR Data Structuring' },
-  { taskName: 'report_generation',  label: 'Report Generation' },
-  { taskName: 'research_assistant', label: 'Research Assistant' },
+  { taskName: 'sds_extraction', label: 'SDS Extraction' },
 ];
 
 const LlmSettings = ({ userId }) => {
