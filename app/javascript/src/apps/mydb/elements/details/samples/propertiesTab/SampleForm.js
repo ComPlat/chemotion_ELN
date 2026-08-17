@@ -622,6 +622,35 @@ export default class SampleForm extends React.Component {
     );
   }
 
+  /**
+   * Plain molecule-name input for MOF samples. Unlike the micromolecule selector,
+   * the MOF name is user-given (not generated from the structure) and stored as a
+   * plain string on sample_details.mof.name so it is always kept.
+   */
+  mofNameInput() {
+    const { sample, handleSampleChanged } = this.props;
+    const value = sample.sample_details?.mof?.name || '';
+
+    return (
+      <Form.Group className="w-100">
+        <Form.Label>Molecule name</Form.Label>
+        <Form.Control
+          id="txinput_mof_name"
+          type="text"
+          value={value}
+          placeholder="Enter a molecule name"
+          disabled={!sample.can_update}
+          onChange={(e) => {
+            const mof = { ...(sample.sample_details?.mof || {}), name: e.target.value };
+            sample.sample_details = { ...(sample.sample_details || {}), mof };
+            sample.changed = true;
+            handleSampleChanged(sample);
+          }}
+        />
+      </Form.Group>
+    );
+  }
+
   handleRangeChanged(field, lower, upper, label) {
     const { sample, handleSampleChanged } = this.props;
     sample.updateRange(field, lower, upper, label);
@@ -1493,7 +1522,7 @@ export default class SampleForm extends React.Component {
         </Row>
         {isMof && (
           <Row className="align-items-end mb-4">
-            <Col>{this.moleculeInput()}</Col>
+            <Col>{this.mofNameInput()}</Col>
           </Row>
         )}
         {

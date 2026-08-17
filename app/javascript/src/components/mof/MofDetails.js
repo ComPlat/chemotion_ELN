@@ -319,13 +319,9 @@ const MofDetails = ({ mof, onChange, disabled }) => {
           as="textarea"
           rows={2}
           readOnly
-          className="font-monospace"
           value={buildMofid(data)}
           placeholder="Assembled from the fragment SMILES and Format ID / Topology / Catenation"
         />
-        <Form.Text muted>
-          Generated from the fields above; edit the fragments or format fields to change it.
-        </Form.Text>
       </Form.Group>
 
       <Form.Group className="mb-0">
@@ -333,7 +329,6 @@ const MofDetails = ({ mof, onChange, disabled }) => {
         <Form.Control
           as="textarea"
           rows={2}
-          className="font-monospace"
           value={data.mofkey || ''}
           disabled={disabled}
           placeholder="Retrieved from the CIF, or enter manually"
