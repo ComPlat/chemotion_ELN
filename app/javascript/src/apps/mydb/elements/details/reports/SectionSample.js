@@ -43,12 +43,17 @@ const AnalysesContent = ({ show, showRecDes, analyses, reactionDescription }) =>
     const dataMerged = analyses.reduce((sum, a) => {
       const defaultContent = "{\"ops\":[{\"insert\":\"\"}]}";
 
-      const contentJSON = a.extended_metadata.content || JSON.parse(defaultContent);
+      // extended_metadata can be null for legacy rows (hstore column is nullable), so guard with `?.`.
+      const contentJSON = a?.extended_metadata?.content || JSON.parse(defaultContent);
       const ops = Array.isArray(contentJSON.ops) ? contentJSON.ops : [];
       return [...sum, ...ops];
     }, init);
     const data = dataMerged.map(d => {
-      d.insert = d.insert.replace(/\n/g, ' ');
+      // A Quill embed op (e.g. an image) has a non-string `insert` object; only strings
+      // support .replace. QuillViewer strips embeds downstream, so just leave them intact here.
+      if (typeof d.insert === 'string') {
+        d.insert = d.insert.replace(/\n/g, ' ');
+      }
       return d;
     });
     return { ops: data };

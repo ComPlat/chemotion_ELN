@@ -255,8 +255,12 @@ const analysesContent = (products) => {
         && a.extended_metadata.report
         ? a.extended_metadata.content
         : { ops: [] };
-      const ops = Array.isArray(data.ops) ? data.ops : [];
-      current = [...current, ...endingSymbol(ops, '; ')];
+      // data can be undefined: the entity omits the `content` key for a report-flagged
+      // analysis with blank content, so guard with `?.`. Pass a copy to endingSymbol —
+      // rmTailSpace reverses its argument in place and can leave the caller's array
+      // (a live reference into the entity JSON) permanently reversed.
+      const ops = Array.isArray(data?.ops) ? data.ops : [];
+      current = [...current, ...endingSymbol([...ops], '; ')];
     });
     if (!onlyBlank(current)) {
       current = rmOpsRedundantSpaceBreak(current);

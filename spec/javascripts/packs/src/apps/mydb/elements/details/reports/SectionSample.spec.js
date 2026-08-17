@@ -52,6 +52,30 @@ describe('SectionSample AnalysesContent', () => {
     });
   });
 
+  it('does not crash when an analysis has null extended_metadata', () => {
+    expect(() => render({
+      show: true,
+      showRecDes: false,
+      analyses: [{ extended_metadata: null }],
+      reactionDescription: null,
+    })).not.toThrow();
+  });
+
+  it('does not crash on a Quill embed op whose insert is a non-string object', () => {
+    const rd = { ops: [{ insert: { image: 'data:image/png;base64,x' } }, { insert: 'ok\n' }] };
+    let wrapper;
+    expect(() => {
+      wrapper = render({
+        show: true, showRecDes: rd, analyses: [], reactionDescription: rd,
+      });
+    }).not.toThrow();
+
+    // the embed op is preserved untouched; the string op still has its newline stripped
+    expect(wrapper.find('QuillViewer').prop('value')).toEqual({
+      ops: [{ insert: { image: 'data:image/png;base64,x' } }, { insert: 'ok ' }],
+    });
+  });
+
   it('renders nothing when show is falsy', () => {
     const wrapper = render({
       show: false, showRecDes: false, analyses: [], reactionDescription: null,
