@@ -31,6 +31,11 @@ const emptyFragment = () => ({
   comment: '',
 });
 
+const emptyDefect = () => ({
+  defect_type: '',
+  description: '',
+});
+
 /**
  * (SUR)MOF details editor. Fully controlled: every edit calls onChange with the
  * next mof object (with the MOFid re-derived) so it can be persisted onto
@@ -39,7 +44,10 @@ const emptyFragment = () => ({
 const MofDetails = ({ mof, onChange, disabled }) => {
   const data = mof || {};
   const fragments = useMemo(() => (mof?.fragments || []), [mof]);
-  const [showComments, setShowComments] = useState(false);
+  const defects = useMemo(() => (mof?.defects || []), [mof]);
+  // Optional fragment columns, revealed on demand via the toolbar toggle buttons.
+  const [extraCols, setExtraCols] = useState({ smiles: false, inchikey: false, comment: false });
+  const toggleCol = useCallback((key) => setExtraCols((cols) => ({ ...cols, [key]: !cols[key] })), []);
   const { notifications } = useContext(StoreContext) || {};
 
   // Persist a patch, keeping the derived MOFid in sync with its inputs.
@@ -85,6 +93,18 @@ const MofDetails = ({ mof, onChange, disabled }) => {
     update({ fragments: fragments.filter((_, idx) => idx !== index) });
   }, [fragments, update]);
 
+  const updateDefect = useCallback((index, patch) => {
+    update({ defects: defects.map((defect, idx) => (idx === index ? { ...defect, ...patch } : defect)) });
+  }, [defects, update]);
+
+  const addDefect = useCallback(() => {
+    update({ defects: [...defects, emptyDefect()] });
+  }, [defects, update]);
+
+  const removeDefect = useCallback((index) => {
+    update({ defects: defects.filter((_, idx) => idx !== index) });
+  }, [defects, update]);
+
   const cell = (index, field, placeholder = '', onBlur = undefined) => (
     <Form.Control
       size="sm"
@@ -97,6 +117,17 @@ const MofDetails = ({ mof, onChange, disabled }) => {
     />
   );
 
+  const defectCell = (index, field, placeholder = '') => (
+    <Form.Control
+      size="sm"
+      type="text"
+      value={defects[index][field] || ''}
+      placeholder={placeholder}
+      disabled={disabled}
+      onChange={(e) => updateDefect(index, { [field]: e.target.value })}
+    />
+  );
+
   return (
     <div className="mof-details">
       <h5 className="mb-3">(SUR)MOF configuration</h5>
@@ -105,28 +136,58 @@ const MofDetails = ({ mof, onChange, disabled }) => {
         <Accordion.Item eventKey="mof-fragments">
           <Accordion.Header>(ionic) (SUR)MOF fragments</Accordion.Header>
             <Accordion.Body>
-              {!disabled && (
-                <div className="d-flex justify-content-end mb-2">
+              <div className="d-flex justify-content-end align-items-center gap-2 mb-2">
+                <Button
+                  size="sm"
+                  variant={extraCols.smiles ? 'secondary' : 'outline-secondary'}
+                  active={extraCols.smiles}
+                  onClick={() => toggleCol('smiles')}
+                >
+                  SMILES
+                </Button>
+                <Button
+                  size="sm"
+                  variant={extraCols.inchikey ? 'secondary' : 'outline-secondary'}
+                  active={extraCols.inchikey}
+                  onClick={() => toggleCol('inchikey')}
+                >
+                  InChIKey
+                </Button>
+                <Button
+                  size="sm"
+                  variant={extraCols.comment ? 'secondary' : 'outline-secondary'}
+                  active={extraCols.comment}
+                  onClick={() => toggleCol('comment')}
+                >
+                  Comment
+                </Button>
+                {!disabled && (
                   <Button size="sm" variant="primary" onClick={addFragment} aria-label="Add fragment">
                     <i className="fa fa-plus" />
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
               <Table bordered size="sm" className="mof-fragments-table mb-0">
         <thead>
           <tr>
             <th style={{ width: '16%' }}>Type/Function</th>
-            <th style={{ width: '40%' }}>Molecule</th>
-            <th style={{ width: '26%' }}>IUPAC</th>
+            <th>Molecule</th>
+            {extraCols.smiles && <th>SMILES</th>}
+            {extraCols.inchikey && <th>InChIKey</th>}
+            <th style={{ width: '22%' }}>IUPAC</th>
             <th style={{ width: '10%' }}>Ratio</th>
-            {showComments && <th>Comment</th>}
-            {!disabled && <th style={{ width: '1%', whiteSpace: 'nowrap' }} aria-label="Actions" />}
+            {extraCols.comment && <th>Comment</th>}
+            {!disabled && <th style={{ width: '48px', whiteSpace: 'nowrap' }} aria-label="Actions" />}
           </tr>
         </thead>
         <tbody>
           {fragments.length === 0 && (
             <tr>
-              <td colSpan={4 + (showComments ? 1 : 0) + (disabled ? 0 : 1)} className="text-muted text-center py-3">
+              <td
+                colSpan={4 + (extraCols.smiles ? 1 : 0) + (extraCols.inchikey ? 1 : 0)
+                  + (extraCols.comment ? 1 : 0) + (disabled ? 0 : 1)}
+                className="text-muted text-center py-3"
+              >
                 No fragments yet.
                 {!disabled && ' Use the + button to add one.'}
               </td>
@@ -134,6 +195,7 @@ const MofDetails = ({ mof, onChange, disabled }) => {
           )}
           {fragments.map((frag, index) => {
             const svgSrc = frag.svg_file ? `/images/molecules/${frag.svg_file}` : null;
+            const name = frag.sum_formula || frag.iupac || frag.smiles || '';
             return (
               // eslint-disable-next-line react/no-array-index-key
               <tr key={index}>
@@ -141,7 +203,7 @@ const MofDetails = ({ mof, onChange, disabled }) => {
                 <td className="align-middle text-start">
                   {svgSrc ? (
                     <OverlayTrigger
-                      trigger={['hover']}
+                      trigger={['hover', 'focus']}
                       placement="right"
                       overlay={(
                         <Popover id={`mof-fragment-${index}`}>
@@ -158,12 +220,18 @@ const MofDetails = ({ mof, onChange, disabled }) => {
                         </Popover>
                       )}
                     >
-                      {cell(index, 'smiles', 'SMILES', () => resolveRow(index))}
+                      <span className="text-break" role="button" tabIndex={0}>{name}</span>
                     </OverlayTrigger>
                   ) : (
-                    cell(index, 'smiles', 'SMILES', () => resolveRow(index))
+                    <span className="text-break">
+                      {name || <span className="text-muted">(no structure)</span>}
+                    </span>
                   )}
                 </td>
+                {extraCols.smiles && <td>{cell(index, 'smiles', 'SMILES', () => resolveRow(index))}</td>}
+                {extraCols.inchikey && (
+                  <td className="align-middle text-break font-monospace small">{frag.inchikey || ''}</td>
+                )}
                 <td>{cell(index, 'iupac')}</td>
               <td>
                 <NumeralInputWithUnitsCompo
@@ -173,9 +241,9 @@ const MofDetails = ({ mof, onChange, disabled }) => {
                   onChange={(e) => updateRatio(index, e.value)}
                 />
               </td>
-              {showComments && <td>{cell(index, 'comment')}</td>}
+              {extraCols.comment && <td>{cell(index, 'comment')}</td>}
               {!disabled && (
-                <td className="text-center align-middle" style={{ width: '1%', whiteSpace: 'nowrap' }}>
+                <td className="text-center align-middle" style={{ width: '48px', whiteSpace: 'nowrap' }}>
                   <Button
                     size="sm"
                     variant="danger"
@@ -191,21 +259,6 @@ const MofDetails = ({ mof, onChange, disabled }) => {
           })}
         </tbody>
               </Table>
-              <div className="d-flex justify-content-center align-items-center mt-3">
-                <Form.Check
-                  className="mof-show-comments"
-                  style={{ margin: 0 }}
-                  type="checkbox"
-                  id="mof-show-comments"
-                  checked={showComments}
-                  onChange={(e) => setShowComments(e.target.checked)}
-                  label={(
-                    <label htmlFor="mof-show-comments" style={{ cursor: 'pointer', marginBottom: 0 }}>
-                      Show comments
-                    </label>
-                  )}
-                />
-              </div>
             </Accordion.Body>
           </Accordion.Item>
         </Accordion>
@@ -336,6 +389,59 @@ const MofDetails = ({ mof, onChange, disabled }) => {
           onChange={(e) => update({ mofkey: e.target.value })}
         />
       </Form.Group>
+
+      <Accordion defaultActiveKey="mof-defects" className="mof-defects-section mt-4">
+        <Accordion.Item eventKey="mof-defects">
+          <Accordion.Header>Defects</Accordion.Header>
+          <Accordion.Body>
+            {!disabled && (
+              <div className="d-flex justify-content-end mb-2">
+                <Button size="sm" variant="primary" onClick={addDefect} aria-label="Add defect">
+                  <i className="fa fa-plus" />
+                </Button>
+              </div>
+            )}
+            <Table bordered size="sm" className="mof-defects-table mb-0">
+              <thead>
+                <tr>
+                  <th style={{ width: '30%' }}>Type of defect</th>
+                  <th>Description</th>
+                  {!disabled && <th style={{ width: '48px', whiteSpace: 'nowrap' }} aria-label="Actions" />}
+                </tr>
+              </thead>
+              <tbody>
+                {defects.length === 0 && (
+                  <tr>
+                    <td colSpan={2 + (disabled ? 0 : 1)} className="text-muted text-center py-3">
+                      No defects yet.
+                      {!disabled && ' Use the + button to add one.'}
+                    </td>
+                  </tr>
+                )}
+                {defects.map((defect, index) => (
+                  // eslint-disable-next-line react/no-array-index-key
+                  <tr key={index}>
+                    <td>{defectCell(index, 'defect_type')}</td>
+                    <td>{defectCell(index, 'description')}</td>
+                    {!disabled && (
+                      <td className="text-center align-middle" style={{ width: '48px', whiteSpace: 'nowrap' }}>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => removeDefect(index)}
+                          aria-label="Remove defect"
+                        >
+                          <i className="fa fa-minus" />
+                        </Button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
     </div>
   );
 };
@@ -344,6 +450,7 @@ MofDetails.propTypes = {
   onChange: PropTypes.func.isRequired,
   mof: PropTypes.shape({
     fragments: PropTypes.arrayOf(PropTypes.object),
+    defects: PropTypes.arrayOf(PropTypes.object),
     format_id: PropTypes.string,
     format_key: PropTypes.string,
     topology: PropTypes.string,

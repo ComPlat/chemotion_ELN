@@ -231,6 +231,7 @@ export default class SampleForm extends React.Component {
         ...mofResultFromAnalysis(result),
         // keep configuration the user set that the CIF cannot provide
         format_comments: prev.format_comments || '',
+        defects: prev.defects || [],
       };
     }
 
