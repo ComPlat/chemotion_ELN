@@ -253,7 +253,6 @@ const analysesContent = (products) => {
     sortAnalyses.forEach((a) => {
       const data = a && a.extended_metadata
         && a.extended_metadata.report
-        && a.extended_metadata.report === 'true'
         ? a.extended_metadata.content
         : { ops: [] };
       const ops = Array.isArray(data.ops) ? data.ops : [];

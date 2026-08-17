@@ -64,3 +64,4 @@ const AnalysesContent = ({ show, showRecDes, analyses, reactionDescription }) =>
 };
 
 export default SectionSample;
+export { AnalysesContent };
