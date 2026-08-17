@@ -566,10 +566,20 @@ module Reporter
                                           end
 
         if is_product
-          # Coerce before arithmetic: equivalent may be nil or a non-numeric placeholder, and
-          # `String * 100` / `.nan?` on a non-Float raises and crashes docx generation.
-          equivalent = s.equivalent.to_f
-          equiv = s.equivalent.nil? || equivalent.nan? ? '0%' : "#{valid_digit(equivalent * 100, 0)}%"
+          # equivalent may be nil, a real number, or a non-numeric placeholder ('n.d.', redacted
+          # '***') coming from the mixture JSON pipeline. Multiplying / calling .nan? on a
+          # non-Float crashes docx generation, but blindly coercing with to_f would silently turn
+          # a placeholder into a misleading '0%'. So: convert without raising, render a real number
+          # as a percentage, and defer a present-but-non-numeric value to format_scientific so it
+          # shows verbatim ('n.d.'), exactly like the non-product line above.
+          equivalent = s.equivalent.nil? ? nil : Float(s.equivalent, exception: false)
+          equiv = if s.equivalent.nil? || equivalent&.nan?
+                    '0%'
+                  elsif equivalent.nil?
+                    format_scientific(s.equivalent, digit)
+                  else
+                    "#{valid_digit(equivalent * 100, 0)}%"
+                  end
           sample_hash.update({
                                mass: valid_digit(mass, digit),
                                vol: valid_digit(vol, digit),
