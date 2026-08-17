@@ -41,21 +41,26 @@ const seedStore = (collections) => {
   store.setOwnCollectionTree();
 };
 
+// Every rendered observer — shallow ones included — stays subscribed to the store, so each has to
+// be unmounted before the next example re-seeds it; otherwise it re-renders against nodes
+// applySnapshot has already killed.
+let rendered = [];
+
+const track = (wrapper) => {
+  rendered.push(wrapper);
+  return wrapper;
+};
+
 const renderWith = (collections) => {
   seedStore(collections);
-  return shallow(<MyCollections />);
+  return track(shallow(<MyCollections />));
 };
 
 // The confirm dialog is hook state, and the shallow renderer does not flush a hook update; these
-// two examples mount so the re-render actually happens. A mounted observer stays subscribed to the
-// store, so it has to be unmounted before the next example re-seeds it — otherwise it re-renders
-// against nodes applySnapshot has already killed.
-let mounted = [];
+// two examples mount so the re-render actually happens.
 const mountWith = (collections) => {
   seedStore(collections);
-  const wrapper = mount(<MyCollections />);
-  mounted.push(wrapper);
-  return wrapper;
+  return track(mount(<MyCollections />));
 };
 
 const systemSection = (wrapper) => wrapper.find('.system-collections');
@@ -63,8 +68,8 @@ const allCollections = [allCollection, repositoryRoot, transferred, ordinary];
 
 describe('MyCollections system collections section', () => {
   afterEach(() => {
-    mounted.forEach((wrapper) => wrapper.unmount());
-    mounted = [];
+    rendered.forEach((wrapper) => wrapper.unmount());
+    rendered = [];
   });
 
   it('lists the three system collections above the editable tree', () => {

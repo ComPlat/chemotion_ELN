@@ -4,7 +4,7 @@ import { Select } from 'src/components/common/Select';
 import { collectionOptions } from 'src/utilities/collectionUtilities';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
-const CollectionSelect = ({ value, withShared, withRepository = false, onChange }) => {
+const CollectionSelect = ({ value, withShared, withRepository, onChange }) => {
   const collectionsStore = useContext(StoreContext).collections;
   const [selectedCollection, setSelectedCollection] = useState(value || null);
 

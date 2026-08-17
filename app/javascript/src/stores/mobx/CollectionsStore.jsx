@@ -232,6 +232,12 @@ export const CollectionsStore = types
       return true
     }),
     updateCollection: flow(function* updateCollection(collection, tabs_segment) {
+      // PUT /collections/:id is scoped to own_collections_for, so a tab-layout save against a
+      // collection shared *to* this user has always 404'd. The element-detail tab editors reach
+      // this through UIStore's currentCollection, which can be one — skip the doomed request
+      // instead of reporting a failure for a save the user never asked for.
+      if (self.isSharedCollection(collection.id)) return null
+
       const params = { label: collection.label, tabs_segment: tabs_segment }
       let collectionItem
       try {
@@ -434,16 +440,9 @@ export const CollectionsStore = types
         );
 
         if (response) {
-          // A move is add-then-remove, and "All" is the one source the remove leg can never succeed
-          // on: RemoveElements refuses it outright, so the element would land in the target (already
-          // committed) and the user would still be told the move failed. Every element belongs to
-          // "All" by definition, so the add alone is the whole move — skip the remove and refresh.
-          if (self.isAllCollectionId(uiState.currentCollection.id)) {
-            ElementActions.refreshElementsAfterCollectionChanges(uiState.currentCollection.id);
-            if (isNewCollection) { self.addNewCollectionToOwnCollection(newCollection); }
-            return;
-          }
-
+          // No special case for a move out of "All": SelectionActions disables Move there (moving out
+          // of the catch-all is a removal in disguise), and RemoveElements refuses it server-side for
+          // anything that reaches the API directly. A guard here would be unreachable from the UI.
           const { success, lockedSampleIds } = yield self.removeElementsFromCollection(
             { collection_id: uiState.currentCollection.id, ui_state: uiState },
             { notifyLock: false }
@@ -635,10 +634,13 @@ export const CollectionsStore = types
       self.shared_with_me_collection_tree = { label: 'Collections shared with me', id: -1, children: children }
     },
     presortSharedWithMeCollections(collections) {
+      // No is_locked filter. It used to be a harmless no-op — the system collections were not
+      // shareable — but they are now, and dropping them here would accept the share server-side and
+      // then leave the recipient with no way to see it. The owner-grouping rows this tree adds are
+      // synthetic and created below, so they are not affected either way.
       return collections
         .sort(presort)
         .sort((a, b) => (a.owner > b.owner) ? 1 : ((b.owner > a.owner) ? -1 : 0))
-        .filter((c) => !c.is_locked)
     },
     addCollectionToTree(collection, collectionTree) {
       const parentIndex = collectionTree.findIndex(element => element.isAncestorOf(collection))
@@ -656,13 +658,15 @@ export const CollectionsStore = types
         collectionTree[parentIndex].addChild(collection)
       }
     },
+    // Stops at the first match (ids are unique) instead of walking every remaining subtree —
+    // updateCollection now calls this once per bucket (own tree, locked bucket, repository subtree).
     changeTabsSegmentInTree(collections, node) {
-      collections.find((c) => {
-        if (c.id == node.id) {
+      return collections.some((c) => {
+        if (c.id === node.id) {
           c.tabs_segment = node.tabs_segment;
-        } else if (c.children.length >= 1) {
-          self.changeTabsSegmentInTree(c.children, node);
+          return true;
         }
+        return c.children.length >= 1 && self.changeTabsSegmentInTree(c.children, node);
       })
     },
     changeLabelInTree(collections, node, label) {

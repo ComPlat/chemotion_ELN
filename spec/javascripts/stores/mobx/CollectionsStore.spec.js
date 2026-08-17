@@ -525,6 +525,29 @@ describe('CollectionsStore', () => {
       expect(node31.children.map((node) => node.id)).toEqual([45, 33, 34, 35, 36, 37]);
     });
 
+    // The system collections became shareable, so the shared tree must stop dropping locked rows:
+    // the share is accepted server-side, and filtering it out here would leave the recipient with a
+    // share they can never see.
+    it('keeps a shared system collection in the tree', () => {
+      const shared_all = sharedCollection({ id: 7, label: 'All', ancestry: '/', is_locked: true });
+
+      store.setSharedWithMeCollections([shared_all]);
+
+      const ownerRoot = store.shared_with_me_collections[0];
+      expect(ownerRoot.children.map((node) => node.id)).toEqual([7]);
+    });
+
+    // The owner-grouping row is the one locked node the tree creates itself, and the render path
+    // tells it apart by the id 0 sentinel rather than by is_locked.
+    it('still groups under a synthetic owner row of its own', () => {
+      const shared_all = sharedCollection({ id: 7, label: 'All', ancestry: '/', is_locked: true });
+
+      store.setSharedWithMeCollections([shared_all]);
+
+      expect(store.shared_with_me_collections[0]).toHaveProperty('id', 0);
+      expect(store.shared_with_me_collections[0].label).toEqual('Alice');
+    });
+
     it('roots a node under the owner when none of its ancestors are shared at all', () => {
       const e = sharedCollection({ id: 5, label: 'E', ancestry: '/99/' });
 

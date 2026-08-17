@@ -35,7 +35,10 @@ function SharedWithMeCollections() {
       return <div className="ms-3 mb-2 fs-5">{node.label}</div>;
     }
 
-    if (node.is_locked) {
+    // The owner-grouping rows are synthetic, with no collection behind them — keyed on the id 0
+    // sentinel setSharedWithMeCollections gives them, not on is_locked, which a genuinely shared
+    // system collection also carries and which would render it as a header instead of a row.
+    if (node.id === 0) {
       return (
         <div
           className="ms-3 mt-3 mb-1 text-muted small text-uppercase fw-semibold border-bottom pb-1"

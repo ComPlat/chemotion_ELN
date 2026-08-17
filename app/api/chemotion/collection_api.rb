@@ -103,11 +103,11 @@ module Chemotion
         # request outright would override that. Compared by value rather than by key, because the tabs
         # editor always sends the (unchanged) label alongside the layout.
         if collection.is_locked?
-          forbidden = attributes.select do |attribute, value|
+          forbidden = attributes.any? do |attribute, value|
             LockedCollectionGuard::LOCKED_IMMUTABLE_ATTRIBUTES.include?(attribute.to_s) &&
               collection[attribute] != value
           end
-          error!('A locked collection cannot be modified', 403) if forbidden.any?
+          error!('A locked collection cannot be modified', 403) if forbidden
         end
 
         error!(collection.errors.full_messages.join(', '), 422) unless collection.update(attributes)
