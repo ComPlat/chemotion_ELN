@@ -37,7 +37,8 @@ const SVGContent = ({ show, svgPath }) => {
 
 const AnalysesContent = ({ show, showRecDes, analyses, reactionDescription }) => {
   const isReDesObj = typeof reactionDescription === "object";
-  const init = showRecDes && isReDesObj ? reactionDescription.ops : [];
+  const reDesOps = showRecDes && isReDesObj ? reactionDescription.ops : null;
+  const init = Array.isArray(reDesOps) ? reDesOps : [];
   const analysesParagraph = () => {
     const dataMerged = analyses.reduce((sum, a) => {
       let defaultContent = "{\"ops\":[{\"insert\":\"\"}]}"
@@ -45,7 +46,7 @@ const AnalysesContent = ({ show, showRecDes, analyses, reactionDescription }) =>
       let contentJSON = a.extended_metadata.content || JSON.parse(defaultContent)
       return [...sum, ...contentJSON.ops];
     }, init);
-    const data = dataMerged.map(d => {
+    const data = (dataMerged || []).map(d => {
       d.insert = d.insert.replace(/\n/g, ' ');
       return d;
     });
