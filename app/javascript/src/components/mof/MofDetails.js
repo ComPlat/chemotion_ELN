@@ -53,18 +53,19 @@ const MofDetails = ({ mof, onChange, disabled }) => {
     update({ fragments: fragments.map((frag, idx) => (idx === index ? { ...frag, ...patch } : frag)) });
   }, [fragments, update]);
 
-  // The fragment ratio follows the app's ratio field: it is capped at 1 (and
-  // floored at 0), and an out-of-range entry warns before being clamped.
+  // The fragment ratio holds the derived stoichiometric coefficient (e.g. a node
+  // to linker ratio of 1:6), so it is a non-negative number and not capped at 1.
+  // A negative or non-numeric entry warns and is floored at 0.
   const updateRatio = useCallback((index, value) => {
     const numeric = Number(value);
-    if (Number.isNaN(numeric) || numeric < 0 || numeric > 1) {
+    if (Number.isNaN(numeric) || numeric < 0) {
       notifications?.add?.({
-        message: 'Ratio value should be >= 0 and <= 1',
+        message: 'Ratio value should be a non-negative number',
         level: 'error',
       });
     }
-    const clamped = Math.min(1, Math.max(0, numeric || 0));
-    updateFragment(index, { ratio: clamped });
+    const safe = Number.isNaN(numeric) ? 0 : Math.max(0, numeric);
+    updateFragment(index, { ratio: safe });
   }, [updateFragment, notifications]);
 
   // After a SMILES is edited, resolve it into IUPAC / sum formula / structure SVG

@@ -115,14 +115,21 @@ const normalizeCatenation = (result) => {
 
 const fragmentsFromResult = (result) => {
   const rows = [];
-  const push = (smiles, typeFunction) => {
-    toSmilesList(smiles).forEach((s) => rows.push({
-      type_function: typeFunction, iupac: '', smiles: s, ratio: 1, comment: '',
+  // ratios is aligned index-for-index with toSmilesList(smiles) (the sidecar
+  // splits smiles_nodes / smiles_linkers the same way); default to 1 when the
+  // stoichiometry could not be derived.
+  const push = (smiles, typeFunction, ratios) => {
+    toSmilesList(smiles).forEach((s, i) => rows.push({
+      type_function: typeFunction,
+      iupac: '',
+      smiles: s,
+      ratio: Array.isArray(ratios) && ratios[i] != null ? ratios[i] : 1,
+      comment: '',
     }));
   };
   if (result.smiles_nodes || result.smiles_linkers) {
-    push(result.smiles_nodes, 'node');
-    push(result.smiles_linkers, 'linker');
+    push(result.smiles_nodes, 'node', result.node_ratios);
+    push(result.smiles_linkers, 'linker', result.linker_ratios);
   } else {
     push(result.smiles, '');
   }

@@ -12,7 +12,9 @@
 #   result['mofid']  #=> "... MOFid-v1.tbo.cat0;..."
 #   result['mofkey'] #=> "Cu....MOFkey-v1.tbo"
 class MofService
-  RESULT_KEYS = %w[mofid mofkey smiles smiles_nodes smiles_linkers topology cat ccdc_number].freeze
+  RESULT_KEYS = %w[
+    mofid mofkey smiles smiles_nodes smiles_linkers topology cat ccdc_number node_ratios linker_ratios
+  ].freeze
 
   FRAGMENT_KEYS = %w[nodes linkers].freeze
 
