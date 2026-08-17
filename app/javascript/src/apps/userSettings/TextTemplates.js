@@ -1,13 +1,62 @@
 import React from 'react';
 import Delta from 'quill-delta';
-import { Badge, Button, Card, Col, Container, Form, Nav, Row } from 'react-bootstrap';
+import { Badge, Button, Card, Col, Container, Form, Nav, OverlayTrigger, Popover, Row } from 'react-bootstrap';
 
-import QuillEditor from 'src/components/QuillEditor';
+import RichTextEditor from 'src/components/RichTextEditor';
 import TextTemplateIcon from 'src/apps/admin/textTemplates/TextTemplateIcon';
 import TextTemplatesFetcher from 'src/fetchers/TextTemplatesFetcher';
 import UserActions from 'src/stores/alt/actions/UserActions';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
+
+// the app ships Font Awesome 4.7, so v5/v6 class names won't render
+const iconHelpPopover = (
+  <Popover id="tt-icon-help" style={{ maxWidth: 'min(240px, 90vw)' }}>
+    <Popover.Header as="h3">Icon class</Popover.Header>
+    <Popover.Body className="small">
+      <p className="mb-2">
+        Paste a Font Awesome 4 class, keeping the
+        {' '}
+        <code>fa</code>
+        {' '}
+        prefix:
+        {' '}
+        <code>fa fa-flask</code>
+        {' '}
+        <i className="fa fa-flask" />
+      </p>
+      <p className="mb-2">
+        Chemotion icons work too, e.g.
+        {' '}
+        <code>icon-h-nmr</code>
+        {' '}
+        <i className="icon-h-nmr" />
+        ,
+        {' '}
+        <code>icon-ir</code>
+        {' '}
+        <i className="icon-ir" />
+        . Leave empty to show the short label instead.
+      </p>
+      <p className="mb-1">
+        <a
+          href="https://chemotion.net/docs/eln/ui/text_templates#creating-a-template"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <i className="fa fa-book me-1" />
+          How to pick an icon
+        </a>
+      </p>
+      <p className="mb-0">
+        <a href="https://fontawesome.com/v4/icons/" target="_blank" rel="noopener noreferrer">
+          <i className="fa fa-external-link me-1" />
+          Browse Font Awesome icons
+        </a>
+      </p>
+    </Popover.Body>
+  </Popover>
+);
 
 function TemplateListItem({ name, selected, onSelect, onRemove, readOnly }) {
   return (
@@ -38,7 +87,7 @@ function TemplateListItem({ name, selected, onSelect, onRemove, readOnly }) {
   );
 }
 
-class TemplateEditPanel extends React.Component {
+export class TemplateEditPanel extends React.Component {
   constructor(props) {
     super(props);
 
@@ -65,8 +114,7 @@ class TemplateEditPanel extends React.Component {
   handleSave = () => {
     if (!this.reactQuillRef.current) return;
 
-    const quill = this.reactQuillRef.current;
-    const delta = quill.getContents();
+    const delta = this.reactQuillRef.current.getEditor().getContents();
     const deltaLength = delta.length();
     const removeTrailingNewline = new Delta().retain(deltaLength - 1).delete(1);
     const { ops } = delta.compose(removeTrailingNewline);
@@ -146,7 +194,19 @@ class TemplateEditPanel extends React.Component {
               </Col>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label className="fw-medium text-muted small text-uppercase mb-1">Icon Class</Form.Label>
+                  <Form.Label className="fw-medium text-muted small text-uppercase mb-1">
+                    Icon Class
+                    <OverlayTrigger trigger="click" rootClose placement="left" overlay={iconHelpPopover}>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="p-0 ms-1 align-baseline"
+                        title="Which icons can I use?"
+                      >
+                        <i className="fa fa-question-circle" />
+                      </Button>
+                    </OverlayTrigger>
+                  </Form.Label>
                   <Form.Control
                     type="text"
                     value={icon}
@@ -159,11 +219,14 @@ class TemplateEditPanel extends React.Component {
             </Row>
             <Form.Group className="mb-3">
               <Form.Label className="fw-medium text-muted small text-uppercase mb-1">Content</Form.Label>
-              <QuillEditor
-                ref={this.reactQuillRef}
+              <RichTextEditor
+                innerRef={this.reactQuillRef}
+                specialCharacters
+                indent
+                height="230px"
                 value={template.data}
                 onChange={() => {}}
-                disabled={readOnly}
+                readOnly={readOnly}
               />
             </Form.Group>
           </Form>

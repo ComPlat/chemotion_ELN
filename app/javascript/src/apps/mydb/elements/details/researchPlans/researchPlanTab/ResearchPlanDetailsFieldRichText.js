@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import QuillEditor from 'src/components/QuillEditor';
+import RichTextEditor from 'src/components/RichTextEditor';
 import QuillViewer from 'src/components/QuillViewer';
 
 export default class ResearchPlanDetailsFieldRichText extends Component {
@@ -12,11 +12,14 @@ export default class ResearchPlanDetailsFieldRichText extends Component {
 
     return (
       <div>
-        <QuillEditor
+        <RichTextEditor
+          templateType="free_text"
+          specialCharacters
+          indent
+          height="230px"
           value={field.value}
-          height="100%"
           onChange={value => onChange(value, field.id)}
-          disabled={disabled}
+          readOnly={disabled}
         />
       </div>
     );
