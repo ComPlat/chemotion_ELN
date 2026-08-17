@@ -492,6 +492,12 @@ describe 'Reporter::Docx::DetailReaction' do
 
           expect(detail.send(:calculate_mixture_amount_mol, sample, 5.0)).to be_within(1e-9).of(0.5)
         end
+
+        it 'falls back to amount_mol when the reference component changed, even with a positive MW' do
+          sample = mixture_sample(rel_mol_weight: '150.0', reference_changed: true)
+
+          expect(detail.send(:calculate_mixture_amount_mol, sample, 5.0)).to be_within(1e-9).of(0.5)
+        end
       end
     end
   end

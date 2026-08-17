@@ -572,7 +572,7 @@ module Reporter
           # a placeholder into a misleading '0%'. So: convert without raising, render a real number
           # as a percentage, and defer a present-but-non-numeric value to format_scientific so it
           # shows verbatim ('n.d.'), exactly like the non-product line above.
-          equivalent = s.equivalent.nil? ? nil : Float(s.equivalent, exception: false)
+          equivalent = Float(s.equivalent, exception: false) # nil for nil or a non-numeric placeholder
           equiv = if s.equivalent.nil? || equivalent&.nan?
                     '0%'
                   elsif equivalent.nil?

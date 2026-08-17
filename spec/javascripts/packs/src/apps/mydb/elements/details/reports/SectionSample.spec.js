@@ -76,6 +76,17 @@ describe('SectionSample AnalysesContent', () => {
     });
   });
 
+  it('does not mutate the reaction_description ops prop during render', () => {
+    const rd = { ops: [{ insert: 'line1\nline2' }] };
+    render({
+      show: true, showRecDes: rd, analyses: [], reactionDescription: rd,
+    });
+
+    // with zero analyses the reduce returns the seed (rd.ops) directly; the render must not
+    // write the newline-stripped value back into the caller's stored delta.
+    expect(rd.ops[0].insert).toBe('line1\nline2');
+  });
+
   it('renders nothing when show is falsy', () => {
     const wrapper = render({
       show: false, showRecDes: false, analyses: [], reactionDescription: null,
