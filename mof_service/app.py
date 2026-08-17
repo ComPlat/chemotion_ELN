@@ -13,6 +13,8 @@ import tempfile
 
 from flask import Flask, jsonify, request
 
+from openbabel import openbabel as ob
+
 from mofid.run_mofid import cif2mofid
 
 app = Flask(__name__)
@@ -46,9 +48,75 @@ def _extract_ccdc(cif_text):
     return match.group(1) if match else ""
 
 
+# Elements treated as non-metal / metalloid; everything else (with Z > 2) is a
+# metal node atom for the purpose of splitting metal-ligand coordination bonds.
+_NON_METALS = {1, 2, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 33, 34, 35, 36, 52, 53, 54, 85, 86}
+
+
+def _is_metal(atomic_num):
+    return atomic_num not in _NON_METALS
+
+
+def _fragment_structure(text, in_format):
+    """Split a connected structure into MOF building blocks by breaking every
+    metal-to-non-metal bond (the coordination bonds that hold nodes and linkers
+    together), then classify each fragment: metal-containing -> node, otherwise
+    -> linker. Returns (nodes, linkers) as canonical-SMILES lists.
+    """
+    conv = ob.OBConversion()
+    if not conv.SetInFormat(in_format):
+        raise ValueError(f"Unsupported input format: {in_format}")
+    mol = ob.OBMol()
+    if not conv.ReadString(mol, text) or mol.NumAtoms() == 0:
+        raise ValueError("Could not parse the structure")
+
+    doomed = [
+        bond for bond in ob.OBMolBondIter(mol)
+        if _is_metal(bond.GetBeginAtom().GetAtomicNum())
+        != _is_metal(bond.GetEndAtom().GetAtomicNum())
+    ]
+    for bond in doomed:
+        mol.DeleteBond(bond)
+
+    conv.SetOutFormat("can")
+    nodes, linkers = [], []
+    for frag in mol.Separate():
+        smiles = conv.WriteString(frag).strip().split()
+        if not smiles:
+            continue
+        smiles = smiles[0]
+        has_metal = any(_is_metal(atom.GetAtomicNum()) for atom in ob.OBMolAtomIter(frag))
+        (nodes if has_metal else linkers).append(smiles)
+    return nodes, linkers
+
+
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify(status="ok")
+
+
+@app.route("/fragment", methods=["POST"])
+def fragment():
+    """Decompose a drawn structure (molfile or SMILES) into nodes and linkers.
+
+    Unlike /analyze this does not need a periodic CIF, so it returns building
+    blocks only (no topology / MOFid / MOFkey).
+    """
+    data = request.get_json(silent=True) or {}
+    molfile = (data.get("molfile") or "").strip()
+    smiles = (data.get("smiles") or "").strip()
+
+    try:
+        if molfile:
+            nodes, linkers = _fragment_structure(molfile, "mol")
+        elif smiles:
+            nodes, linkers = _fragment_structure(smiles, "smi")
+        else:
+            return jsonify(error="No structure provided"), 400
+    except Exception as error:  # noqa: BLE001 - surface parse/fragment failures to the caller
+        return jsonify(error=str(error)), 500
+
+    return jsonify(nodes=nodes, linkers=linkers)
 
 
 def _extract_cif():

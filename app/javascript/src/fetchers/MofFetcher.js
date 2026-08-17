@@ -9,11 +9,12 @@ export default class MofFetcher {
   static REQUEST_TIMEOUT = 200000;
 
   /**
-   * Send CIF text to the backend and return MOFid identifiers.
-   * @param {string} cif - CIF file contents
+   * POST to a MOF endpoint with a timeout, surfacing the sidecar's error message.
+   * @param {string} endpoint
+   * @param {Object} body
    * @returns {Promise<Object>}
    */
-  static analyze(cif) {
+  static postWithTimeout(endpoint, body) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), MofFetcher.REQUEST_TIMEOUT);
 
@@ -36,11 +37,29 @@ export default class MofFetcher {
       throw exception;
     };
 
-    return ApiClient.postJson('/api/v1/mof/analyze', {
-      body: { cif },
+    return ApiClient.postJson(endpoint, {
+      body,
       signal: controller.signal,
       handleResponseSuccess,
       handleResponseError,
     }).finally(() => clearTimeout(timeoutId));
+  }
+
+  /**
+   * Send CIF text to the backend and return MOFid identifiers.
+   * @param {string} cif - CIF file contents
+   * @returns {Promise<Object>}
+   */
+  static analyze(cif) {
+    return MofFetcher.postWithTimeout('/api/v1/mof/analyze', { cif });
+  }
+
+  /**
+   * Split a drawn structure into MOF nodes and linkers.
+   * @param {string} molfile - Molfile of the drawn structure
+   * @returns {Promise<{ nodes: string[], linkers: string[] }>}
+   */
+  static fragment(molfile) {
+    return MofFetcher.postWithTimeout('/api/v1/mof/fragment', { molfile });
   }
 }

@@ -14,8 +14,10 @@
 class MofService
   RESULT_KEYS = %w[mofid mofkey smiles smiles_nodes smiles_linkers topology cat ccdc_number].freeze
 
-  # @param cif [String] the CIF file contents
-  def initialize(cif)
+  FRAGMENT_KEYS = %w[nodes linkers].freeze
+
+  # @param cif [String, nil] the CIF file contents (only needed for #analyze)
+  def initialize(cif = nil)
     @cif = cif
     @service_url = Rails.configuration.mof_service&.mof_service_url if Rails.configuration.respond_to?(:mof_service)
   end
@@ -36,41 +38,61 @@ class MofService
   #
   # @return [Hash, nil] the parsed result (see RESULT_KEYS), or nil on failure
   def analyze
-    return nil if disabled? || @cif.blank? || @service_url.blank?
+    return nil if disabled? || @cif.blank?
+
+    data = post_json('analyze', { cif: @cif })
+    return nil if data.nil? || data['mofid'].blank?
+
+    data.slice(*RESULT_KEYS)
+  end
+
+  # Decomposes a drawn structure into MOF nodes and linkers (no CIF needed).
+  #
+  # @param molfile [String, nil]
+  # @param smiles [String, nil]
+  # @return [Hash, nil] { 'nodes' => [...], 'linkers' => [...] }, or nil on failure
+  def fragment(molfile: nil, smiles: nil)
+    return nil if disabled? || (molfile.blank? && smiles.blank?)
+
+    data = post_json('fragment', { molfile: molfile, smiles: smiles }.compact)
+    return nil if data.nil?
+
+    data.slice(*FRAGMENT_KEYS)
+  end
+
+  private
+
+  # POSTs a JSON payload to the sidecar and returns the parsed body, or nil on
+  # any failure (logged). Covers HTTParty::Error, Timeout::Error and the low-level
+  # socket errors HTTParty does not wrap (SocketError, Errno::ECONNREFUSED/
+  # ECONNRESET/EHOSTUNREACH, EOFError) so a bad host or a killed sidecar returns
+  # nil rather than surfacing a raw 500 to the caller.
+  def post_json(path, payload)
+    return nil if @service_url.blank?
 
     response = HTTParty.post(
-      "#{@service_url.to_s.chomp('/')}/analyze",
+      "#{@service_url.to_s.chomp('/')}/#{path}",
       headers: { 'Content-Type' => 'application/json', 'Accept' => 'application/json' },
-      body: { cif: @cif }.to_json,
+      body: payload.to_json,
       timeout: 180,
     )
     return nil if response.nil?
 
     unless response.success?
-      # The sidecar returns { "error": "<reason>" } on failure; surface it in the
-      # log so operators are not left with an opaque 422 from MofAPI.
+      # The sidecar returns { "error": "<reason>" } on failure; surface it in the log.
       log_error("Sidecar returned HTTP #{response.code}: #{response.body.to_s.truncate(500)}")
       return nil
     end
     return nil if response.body.blank?
 
-    data = JSON.parse(response.body)
-    return nil if data['mofid'].blank?
-
-    data.slice(*RESULT_KEYS)
+    JSON.parse(response.body)
   rescue JSON::ParserError => e
     log_error("Invalid JSON from MOF service: #{e.message}")
     nil
   rescue StandardError => e
-    # Covers HTTParty::Error, Timeout::Error and the low-level socket errors
-    # HTTParty does not wrap (SocketError, Errno::ECONNREFUSED/ECONNRESET/
-    # EHOSTUNREACH, EOFError) so a bad host or a killed sidecar returns nil
-    # rather than surfacing a raw 500 to the caller.
     log_error("Request failed: #{e.message}")
     nil
   end
-
-  private
 
   def disabled?
     self.class.disabled?

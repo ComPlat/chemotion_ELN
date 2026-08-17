@@ -58,6 +58,23 @@ module Chemotion
           tempfile.unlink if tempfile.respond_to?(:unlink)
         end
       end
+
+      desc 'Split a drawn structure into MOF nodes and linkers'
+      params do
+        optional :molfile, type: String, desc: 'Molfile of the drawn structure'
+        optional :smiles, type: String, desc: 'SMILES of the drawn structure'
+        exactly_one_of :molfile, :smiles
+      end
+      post :fragment do
+        mof_service_available!
+
+        assert_cif_size!(params[:molfile]) if params[:molfile].present?
+
+        result = MofService.new.fragment(molfile: params[:molfile], smiles: params[:smiles])
+        error!({ error: 'Failed to fragment structure' }, 422) if result.blank?
+
+        result
+      end
     end
   end
 end
