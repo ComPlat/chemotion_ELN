@@ -2,7 +2,7 @@
 
 source 'https://rubygems.org'
 
-ruby '3.1.7'
+ruby '3.2.11'
 
 gem 'aasm'
 gem 'activejob-status'
@@ -95,7 +95,7 @@ gem 'puma', '< 6.0.0'
 
 gem 'rack'
 gem 'rack-cors', require: 'rack/cors'
-gem 'rails', '~> 7.1.0'
+gem 'rails', '~> 7.2.0'
 gem 'redcarpet' # markdown rendering (welcome mailer, application_helper#markdown)
 gem 'rinchi-gem', git: 'https://github.com/ComPlat/rinchi-gem.git', branch: 'main'
 gem 'rmagick'
@@ -122,7 +122,6 @@ gem 'shrine', '~> 3.0'
 gem 'sys-filesystem'
 
 gem 'thor'
-gem 'thumbnailer', git: 'https://github.com/merlin-p/thumbnailer.git'
 # turbo-sprockets-rails4 removed for Rails 7.0 (pinned sprockets ~> 3.0, and was disabled anyway).
 gem 'tzinfo-data'
 

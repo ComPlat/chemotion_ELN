@@ -45,13 +45,11 @@ class Attachment < ApplicationRecord
   include Labimotion::AttachmentConverter
   include AttachmentUploader::Attachment(:attachment)
 
-  # Declare the enum's backing attribute type explicitly so the model loads even
-  # when the edit_state column is absent — e.g. old data migrations that reference
-  # Attachment run before the column exists. Rails 7.1 otherwise raises "Undeclared
-  # attribute type for enum". Matches the integer column (default 0 = not_editing,
-  # the AASM initial state), so runtime behaviour is unchanged.
+  # Declare the enum's backing type so the model loads even when the edit_state column is
+  # absent (old data migrations reference Attachment first) — Rails 7.1 otherwise rejects it.
+  # Matches the integer column (default 0 = not_editing), so behaviour is unchanged.
   attribute :edit_state, :integer, default: 0
-  enum edit_state: { not_editing: 0, editing: 1 }
+  enum :edit_state, { not_editing: 0, editing: 1 }
 
   aasm(:document, column: :edit_state) do
     state :not_editing, initial: true

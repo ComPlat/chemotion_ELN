@@ -1,0 +1,78 @@
+# Safety-Net (Querschnitt Q) — Security scanning in CI.
+# Closes the gap "no Brakeman / bundler-audit / npm audit" (see DEV_UPGRADING.md).
+#
+# NOTE: all scans run REPORT-ONLY for now (`continue-on-error: true`) so existing
+# findings can be baselined first. Once the backlog is triaged, flip the relevant
+# jobs to hard-fail by removing `continue-on-error` (or gating on a Brakeman
+# baseline file / bundler-audit ignore list).
+name: CI - Security scan
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - '*.md'
+  push:
+    branches:
+      - main
+  schedule:
+    # Weekly — catches newly published CVEs even without a code change.
+    - cron: '17 4 * * 1'
+
+jobs:
+  brakeman:
+    name: Brakeman (Rails SAST)
+    if: github.triggering_actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.0'
+      - run: gem install brakeman
+      - name: run Brakeman
+        run: brakeman --quiet --no-pager --format plain
+        continue-on-error: true
+
+  bundler_audit:
+    name: bundler-audit (gem CVEs)
+    if: github.triggering_actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.0'
+      - run: gem install bundler-audit
+      - name: audit Gemfile.lock against the advisory DB
+        run: bundle-audit check --update
+        continue-on-error: true
+
+  ruby_audit:
+    name: ruby-audit (Ruby runtime CVEs / EOL)
+    if: github.triggering_actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # Deliberately the app's ACTUAL runtime (2.7.8) so EOL/CVEs of the shipped
+      # Ruby are flagged, not the 3.3 lint runtime. Bump this alongside Stage 3.
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7.8'
+      - run: gem install ruby_audit
+      - name: audit the Ruby runtime
+        run: ruby-audit check
+        continue-on-error: true
+
+  npm_audit:
+    name: yarn audit (JS deps)
+    if: github.triggering_actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .tool-versions
+      - name: audit yarn.lock (yarn classic)
+        run: yarn audit --groups dependencies
+        continue-on-error: true

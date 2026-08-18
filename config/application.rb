@@ -15,21 +15,16 @@ module Chemotion
   class Application < Rails::Application
     # Deploy note: load_defaults (7.0+) sets cookies_serializer=:json and the SHA256 key
     # generator — existing signed/encrypted cookies are invalidated, so a rotator is
-    # needed for a zero-downtime rollout. See DEV_RAILS_UPGRADE_7-1.md (Phase D).
-    config.load_defaults 7.1
+    # needed for a zero-downtime rollout.
+    config.load_defaults 7.2
     # (config.autoloader= is deleted since Rails 7.0; Zeitwerk is the only autoloader.)
 
-    # Keep the pre-7.1 default column serializer: our `serialize … type:` columns
-    # (reaction/wellplate/screen/molecule/report) rely on the default YAMLColumn, which
-    # honors yaml_column_permitted_classes (see below) for safe loading. load_defaults
-    # 7.1 sets this to nil, which would raise "missing serializer". See Phase D / C2.
+    # Keep the pre-7.1 YAMLColumn serializer (7.1+ default is nil): our `serialize … type:`
+    # columns rely on it for yaml_column_permitted_classes safe-loading.
     config.active_record.default_column_serializer = ActiveRecord::Coders::YAMLColumn
 
-    # Keep autoload paths on $LOAD_PATH (load_defaults 7.1 sets this false). The app
-    # concern app/models/concerns/encryptor.rb defines a top-level `Encryptor` that
-    # collides with the `encryptor` gem's ::Encryptor; with concerns off $LOAD_PATH the
-    # gem wins and Device#encrypt_value (from the concern) is undefined. Keeping this
-    # true preserves the pre-7.1 resolution. See DEV_RAILS_UPGRADE_7-1.md (Phase D-1).
+    # Keep autoload paths on $LOAD_PATH (7.1+ default is false): otherwise the app's Encryptor
+    # concern loses to the encryptor gem's ::Encryptor and Device#encrypt_value goes undefined.
     config.add_autoload_paths_to_load_path = true
 
     # Global acronyms for Zeitwerk file->constant mapping (api.rb -> API,

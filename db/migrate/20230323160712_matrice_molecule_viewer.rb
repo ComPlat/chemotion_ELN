@@ -4,6 +4,7 @@ class MatriceMoleculeViewer < ActiveRecord::Migration[6.1]
       name: 'moleculeViewer',
       enabled: true,
       label: 'moleculeViewer',
+      configs: {},
       include_ids: [],
       exclude_ids: []
     ) unless Matrice.find_by(name: 'moleculeViewer')

@@ -49,7 +49,8 @@ RSpec.describe 'queuing of a recurring job through delayed_job initializer' do
 
   it 'queues the recurring jobs with the defined cron schedules and correct run_at times' do
     # set env variables and trigger the initializers for example with a rake command
-    `#{env_vars} bundle exec rake db:version`
+    # TEST_QUEUE_ADAPTER forces the real delayed_job adapter (suite default is :test; see test.rb)
+    `#{env_vars} TEST_QUEUE_ADAPTER=delayed_job bundle exec rake db:version`
     expect(jobs_count_with_correct_run_at).to eq(expected_count)
   end
 

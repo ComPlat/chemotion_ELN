@@ -402,10 +402,11 @@ class User < ApplicationRecord
   end
 
   def remove_from_matrices
-    Matrice.where('include_ids @> ARRAY[?]', [id]).find_each do |ma|
+    # ::integer[] cast: Rails 7.2 binds ARRAY[?] as a param Postgres reads as text[] (7.1 inlined it).
+    Matrice.where('include_ids @> ARRAY[?]::integer[]', [id]).find_each do |ma|
       ma.update_columns(include_ids: ma.include_ids -= [id])
     end
-    Matrice.where('exclude_ids @> ARRAY[?]', [id]).find_each do |ma|
+    Matrice.where('exclude_ids @> ARRAY[?]::integer[]', [id]).find_each do |ma|
       ma.update_columns(exclude_ids: ma.exclude_ids -= [id])
     end
   end

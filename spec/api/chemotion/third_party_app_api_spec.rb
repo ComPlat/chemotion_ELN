@@ -258,7 +258,7 @@ describe Chemotion::ThirdPartyAppAPI do
     let(:third_party_app) { create(:third_party_app) }
     let(:cache) { ActiveSupport::Cache::FileStore.new('tmp/ThirdPartyApp', expires_in: 1.hour) }
     let(:cache_key) { "#{attachment.id}/#{user.id}/#{third_party_app.id}" }
-    let(:secret) { Rails.application.secrets.secret_key_base }
+    let(:secret) { Rails.application.secret_key_base }
     let(:token) { JWT.encode(payload, secret, 'HS256') }
     let(:allowed_uploads) { 1 }
     let(:file_produced_by_3pa) do

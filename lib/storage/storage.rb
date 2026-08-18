@@ -54,7 +54,7 @@ class Storage
     tmp.write attachment.read_file
     tmp.rewind
     attachment.thumb_path = begin
-                              Thumbnailer.create(tmp.path)
+                              Usecases::Attachments::Thumbnail::ThumbnailGenerator.create(tmp.path)
                             rescue
                               nil
                             end

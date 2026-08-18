@@ -4,6 +4,12 @@
 
 # require 'coveralls'
 # Coveralls.wear!
+
+# factory_bot_rails is required below before rails_helper boots the app; factory_bot's
+# load-time `delegate` needs ActiveSupport::Inflector, whose autoload isn't registered
+# yet on Rails 7.2. Load it explicitly to avoid "uninitialized constant ...::Inflector".
+require 'active_support/inflector'
+
 require 'logger'
 require 'rspec/repeat'
 require 'webmock/rspec'
