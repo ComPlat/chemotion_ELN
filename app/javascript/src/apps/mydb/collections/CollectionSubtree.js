@@ -163,7 +163,9 @@ function CollectionSubtree({
               <i className="fa fa-share-alt" />
             </OverlayTrigger>
           )}
-          {sharedWithMe && !root.is_locked && (
+          {/* Suppressed on the synthetic owner-grouping row (id 0), which has no share behind it —
+              not on is_locked, which a genuinely shared system collection also carries. */}
+          {sharedWithMe && root.id !== 0 && (
             <OverlayTrigger
               placement="top"
               overlay={<SharedToMeInfosTooltip collectionId={root.id} owner={root.owner} />}

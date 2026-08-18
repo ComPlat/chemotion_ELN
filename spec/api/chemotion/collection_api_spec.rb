@@ -250,6 +250,35 @@ describe Chemotion::CollectionAPI do
         expect(response).to have_http_status(:forbidden)
         expect(locked_collection.reload.label).to eq 'All'
       end
+
+      # LockedCollectionGuard fixes label/position/ancestry/is_locked and deliberately leaves
+      # tabs_segment editable, so the tab layout of a system collection is configurable like any
+      # other. Refusing every update to a locked collection would take that away.
+      it 'accepts a tab-layout update' do
+        put "/api/v1/collections/#{locked_collection.id}",
+            params: { tabs_segment: { sample: { 'analyses' => 1 } } }
+
+        expect(response).to have_http_status(:ok)
+        expect(locked_collection.reload.tabs_segment).to eq('sample' => { 'analyses' => '1' })
+      end
+
+      # The tab editor always sends the label alongside the layout, so an unchanged label must not
+      # be mistaken for a rename attempt.
+      it 'accepts a tab-layout update that repeats the unchanged label' do
+        put "/api/v1/collections/#{locked_collection.id}",
+            params: { label: 'All', tabs_segment: { sample: { 'analyses' => 1 } } }
+
+        expect(response).to have_http_status(:ok)
+        expect(locked_collection.reload.tabs_segment).to eq('sample' => { 'analyses' => '1' })
+      end
+
+      it 'refuses a rename bundled with a tab-layout update, saving neither' do
+        put "/api/v1/collections/#{locked_collection.id}",
+            params: { label: 'Renamed', tabs_segment: { sample: { 'analyses' => 1 } } }
+
+        expect(response).to have_http_status(:forbidden)
+        expect(locked_collection.reload).to have_attributes(label: 'All', tabs_segment: {})
+      end
     end
   end
 

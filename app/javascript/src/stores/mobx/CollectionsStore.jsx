@@ -232,13 +232,43 @@ export const CollectionsStore = types
       return true
     }),
     updateCollection: flow(function* updateCollection(collection, tabs_segment) {
+      // PUT /collections/:id is scoped to own_collections_for, so a tab-layout save against a
+      // collection shared *to* this user has always 404'd. The element-detail tab editors reach
+      // this through UIStore's currentCollection, which can be one — skip the doomed request
+      // instead of reporting a failure for a save the user never asked for.
+      if (self.isSharedCollection(collection.id)) return null
+
       const params = { label: collection.label, tabs_segment: tabs_segment }
-      const collectionItem = yield CollectionsFetcher.updateCollection(collection.id, params)
-      if (collectionItem) {
-        self.changeTabsSegmentInTree(self.own_collections, collectionItem)
-        self.setOwnCollectionTree()
-        return self.own_collections
+      let collectionItem
+      try {
+        collectionItem = yield CollectionsFetcher.updateCollection(collection.id, params)
+      } catch (error) {
+        collectionItem = undefined
       }
+
+      // Silently dropping the failure here used to be invisible, because the tab editor was only
+      // reachable on collections the endpoint always accepts. The system collections are editable
+      // from the management modal now, so a rejected save has to say so.
+      if (!collectionItem) {
+        getRoot(self).notificationsStore.add({
+          title: 'Collection Management',
+          message: `The tab layout of "${collection.label}" could not be saved. Please try again.`,
+          level: 'error',
+          autoDismiss: 10,
+        });
+        return null
+      }
+
+      self.changeTabsSegmentInTree(self.own_collections, collectionItem)
+      // The system collections live in the locked bucket and, for the repository subtree, on their
+      // own field — none of which own_collections reaches — so update those too, or the tab editor
+      // reopens with the layout the user just replaced.
+      self.changeTabsSegmentInTree(self.locked_collection, collectionItem)
+      if (self.chemotion_repository_collection) {
+        self.changeTabsSegmentInTree([self.chemotion_repository_collection], collectionItem)
+      }
+      self.setOwnCollectionTree()
+      return self.own_collections
     }),
     deleteCollection: flow(function* deleteCollection(collectionId) {
       const all_collections = yield CollectionsFetcher.deleteCollection(collectionId)
@@ -410,6 +440,9 @@ export const CollectionsStore = types
         );
 
         if (response) {
+          // No special case for a move out of "All": SelectionActions disables Move there (moving out
+          // of the catch-all is a removal in disguise), and RemoveElements refuses it server-side for
+          // anything that reaches the API directly. A guard here would be unreachable from the UI.
           const { success, lockedSampleIds } = yield self.removeElementsFromCollection(
             { collection_id: uiState.currentCollection.id, ui_state: uiState },
             { notifyLock: false }
@@ -601,10 +634,13 @@ export const CollectionsStore = types
       self.shared_with_me_collection_tree = { label: 'Collections shared with me', id: -1, children: children }
     },
     presortSharedWithMeCollections(collections) {
+      // No is_locked filter. It used to be a harmless no-op — the system collections were not
+      // shareable — but they are now, and dropping them here would accept the share server-side and
+      // then leave the recipient with no way to see it. The owner-grouping rows this tree adds are
+      // synthetic and created below, so they are not affected either way.
       return collections
         .sort(presort)
         .sort((a, b) => (a.owner > b.owner) ? 1 : ((b.owner > a.owner) ? -1 : 0))
-        .filter((c) => !c.is_locked)
     },
     addCollectionToTree(collection, collectionTree) {
       const parentIndex = collectionTree.findIndex(element => element.isAncestorOf(collection))
@@ -622,13 +658,15 @@ export const CollectionsStore = types
         collectionTree[parentIndex].addChild(collection)
       }
     },
+    // Stops at the first match (ids are unique) instead of walking every remaining subtree —
+    // updateCollection now calls this once per bucket (own tree, locked bucket, repository subtree).
     changeTabsSegmentInTree(collections, node) {
-      collections.find((c) => {
-        if (c.id == node.id) {
+      return collections.some((c) => {
+        if (c.id === node.id) {
           c.tabs_segment = node.tabs_segment;
-        } else if (c.children.length >= 1) {
-          self.changeTabsSegmentInTree(c.children, node);
+          return true;
         }
+        return c.children.length >= 1 && self.changeTabsSegmentInTree(c.children, node);
       })
     },
     changeLabelInTree(collections, node, label) {
@@ -691,6 +729,21 @@ export const CollectionsStore = types
     },
     get ownCollections() { return values(self.own_collections) },
     get sharedWithMeCollections() { return values(self.shared_with_me_collections) },
+    // "All" is deliberately absent from every collection tree, so `find` cannot resolve it; the
+    // locked bucket is the only place it is reachable by id.
+    isAllCollectionId(collectionId) {
+      const allCollection = self.locked_collection.find((collection) => collection.label === ALL_LABEL);
+      return Boolean(allCollection) && allCollection.id === collectionId;
+    },
+    // The system collections, in the order they are presented: the catch-all first, then the
+    // repository root and the "transferred" node that lives under it. They are kept out of
+    // own_collections (nothing may reparent, rename or delete them), so the management modal reads
+    // them from the locked bucket instead; SYSTEM_LABELS is the presentation order.
+    get systemCollections() {
+      return SYSTEM_LABELS
+        .map((label) => self.locked_collection.find((collection) => collection.label === label))
+        .filter(Boolean);
+    },
     isOwnCollection(collection_id) { return self.ownCollectionIds.indexOf(collection_id) != -1 },
     isSharedCollection(collection_id) { return self.sharedCollectionIds.indexOf(collection_id) != -1 },
     // Ownership is personal and has one definition — Collection#owned_by? is `user_id == user.id`,

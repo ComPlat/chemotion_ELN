@@ -368,5 +368,80 @@ describe Chemotion::CollectionElementsAPI do
       expect(source_collection.reload.samples).to contain_exactly(sample1)
     end
   end
+
+  # The locked system collections are ordinary owned collections as far as element membership goes:
+  # LockedCollectionGuard fixes the collection row itself (label, position, ancestry, is_locked), not
+  # what it contains. "All" is the one exception, and only for removal — it is the catch-all, so
+  # taking an element out of it is a deletion in disguise and RemoveElements refuses it.
+  context 'with the locked system collections' do
+    let(:source_collection_user) { user }
+    let(:target_collection_user) { user }
+    let(:repository_collection) do
+      create(:collection, label: 'chemotion-repository.net', user: user, is_locked: true)
+    end
+    let(:transferred_collection) do
+      create(:collection, label: 'transferred', user: user, is_locked: true, parent: repository_collection)
+    end
+    let(:all_collection) { create(:collection, label: 'All', user: user, is_locked: true) }
+    let(:remove_input) do
+      {
+        ui_state: {
+          currentCollection: { id: 0 },
+          sample: {
+            checkedAll: false,
+            checkedIds: [sample1.id, sample2.id, sample3.id],
+            uncheckedIds: [],
+          },
+        },
+      }
+    end
+
+    it 'assigns elements to the repository collection' do
+      post '/api/v1/collection_elements', params: input.merge(collection_id: repository_collection.id)
+
+      expect(response.status).to eq 201
+      expect(repository_collection.reload.samples).to contain_exactly(sample1, sample2, sample3)
+    end
+
+    it 'assigns elements to the "transferred" collection' do
+      post '/api/v1/collection_elements', params: input.merge(collection_id: transferred_collection.id)
+
+      expect(response.status).to eq 201
+      expect(transferred_collection.reload.samples).to contain_exactly(sample1, sample2, sample3)
+    end
+
+    it 'removes elements from the repository collection' do
+      [sample1, sample2, sample3].each do |sample|
+        CollectionsSample.create!(collection_id: repository_collection.id, sample_id: sample.id)
+      end
+
+      delete "/api/v1/collection_elements/#{repository_collection.id}", params: remove_input, as: :json
+
+      expect(response).to have_http_status(:no_content)
+      expect(repository_collection.reload.samples).to be_empty
+    end
+
+    it 'removes elements from the "transferred" collection' do
+      [sample1, sample2, sample3].each do |sample|
+        CollectionsSample.create!(collection_id: transferred_collection.id, sample_id: sample.id)
+      end
+
+      delete "/api/v1/collection_elements/#{transferred_collection.id}", params: remove_input, as: :json
+
+      expect(response).to have_http_status(:no_content)
+      expect(transferred_collection.reload.samples).to be_empty
+    end
+
+    it 'refuses to remove elements from the "All" collection' do
+      [sample1, sample2, sample3].each do |sample|
+        CollectionsSample.create!(collection_id: all_collection.id, sample_id: sample.id)
+      end
+
+      delete "/api/v1/collection_elements/#{all_collection.id}", params: remove_input, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+      expect(all_collection.reload.samples).to contain_exactly(sample1, sample2, sample3)
+    end
+  end
 end
 # rubocop:enable RSpec/IndexedLet, RSpec/MultipleMemoizedHelpers, RSpec/MultipleExpectations

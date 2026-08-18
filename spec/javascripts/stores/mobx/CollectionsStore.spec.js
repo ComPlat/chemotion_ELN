@@ -366,6 +366,50 @@ describe('CollectionsStore', () => {
     });
   });
 
+  describe('.systemCollections', () => {
+    const allCollection = {
+      id: 9, label: 'All', ancestry: '/', position: 0, is_locked: true,
+    };
+    const repositoryRoot = {
+      id: 1, label: 'chemotion-repository.net', ancestry: '/', position: 1, is_locked: true,
+    };
+    const transferred = {
+      id: 3, label: 'transferred', ancestry: '/1/', position: null, is_locked: true,
+    };
+    const ordinary = {
+      id: 4, label: 'Project', ancestry: '/', position: null, is_locked: false,
+    };
+
+    it('lists the three system collections in presentation order', () => {
+      store.setOwnCollections([ordinary, transferred, repositoryRoot, allCollection]);
+
+      expect(store.systemCollections.map((c) => c.label))
+        .toEqual(['All', 'chemotion-repository.net', 'transferred']);
+    });
+
+    it('omits system collections the user does not have', () => {
+      store.setOwnCollections([allCollection, ordinary]);
+
+      expect(store.systemCollections.map((c) => c.id)).toEqual([9]);
+    });
+
+    // The label alone is not reserved: a user may create an ordinary collection called "All".
+    it('ignores an unlocked collection that merely shares a system label', () => {
+      store.setOwnCollections([{ ...allCollection, id: 10, is_locked: false }]);
+
+      expect(store.systemCollections).toEqual([]);
+      expect(store.own_collections.map((c) => c.id)).toEqual([10]);
+    });
+
+    it('resolves the "All" collection by id, which no tree can reach', () => {
+      store.setOwnCollections([allCollection, ordinary]);
+
+      expect(store.isAllCollectionId(9)).toBe(true);
+      expect(store.isAllCollectionId(4)).toBe(false);
+      expect(store.find(9)).toBe(null);
+    });
+  });
+
   describe('.addCollectionToTree', () => {
     it('shows a collection whose parent is missing without rewriting its ancestry', () => {
       const orphan = Collection.create({
@@ -479,6 +523,29 @@ describe('CollectionsStore', () => {
       const node31 = ownerRoot.children[0];
       expect(node31.id).toBe(31);
       expect(node31.children.map((node) => node.id)).toEqual([45, 33, 34, 35, 36, 37]);
+    });
+
+    // The system collections became shareable, so the shared tree must stop dropping locked rows:
+    // the share is accepted server-side, and filtering it out here would leave the recipient with a
+    // share they can never see.
+    it('keeps a shared system collection in the tree', () => {
+      const shared_all = sharedCollection({ id: 7, label: 'All', ancestry: '/', is_locked: true });
+
+      store.setSharedWithMeCollections([shared_all]);
+
+      const ownerRoot = store.shared_with_me_collections[0];
+      expect(ownerRoot.children.map((node) => node.id)).toEqual([7]);
+    });
+
+    // The owner-grouping row is the one locked node the tree creates itself, and the render path
+    // tells it apart by the id 0 sentinel rather than by is_locked.
+    it('still groups under a synthetic owner row of its own', () => {
+      const shared_all = sharedCollection({ id: 7, label: 'All', ancestry: '/', is_locked: true });
+
+      store.setSharedWithMeCollections([shared_all]);
+
+      expect(store.shared_with_me_collections[0]).toHaveProperty('id', 0);
+      expect(store.shared_with_me_collections[0].label).toEqual('Alice');
     });
 
     it('roots a node under the owner when none of its ancestors are shared at all', () => {
