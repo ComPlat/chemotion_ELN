@@ -74,6 +74,17 @@ export function institutionModelsKey() {
 }
 
 /**
+ * Stable cache identity for one of the user's SAVED providers. Keyed by id
+ * rather than by protocol + endpoint: a saved provider is a record, and two of
+ * them may legitimately share an endpoint while holding different keys (two
+ * tenants of the same service), which is exactly the case the endpoint-based
+ * identity cannot tell apart.
+ */
+export function providerModelsKey(id) {
+  return `provider|${id}`;
+}
+
+/**
  * Synchronous, non-fetching read: the last list we got for `key`, or null if we
  * never got one. Safe to call while rendering — this is what lets the dropdown
  * repopulate the instant the user returns to a provider they already looked at.
@@ -158,6 +169,15 @@ export function fetchCustomModels(config = {}, { force = false } = {}) {
   return loadCached(
     customModelsKey(config),
     (opts) => UsersFetcher.fetchLlmModelsForConfig({ ...config, ...opts }),
+    { force },
+  );
+}
+
+/** Models offered by one of the user's saved providers. */
+export function fetchProviderModels(id, { force = false } = {}) {
+  return loadCached(
+    providerModelsKey(id),
+    (opts) => UsersFetcher.fetchLlmProviderModels(id, opts),
     { force },
   );
 }

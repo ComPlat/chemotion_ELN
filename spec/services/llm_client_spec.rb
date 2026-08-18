@@ -74,6 +74,22 @@ RSpec.describe LlmClient do
       end
     end
 
+    context 'when no model is configured' do
+      let(:modelless) { described_class.new(base_url: base_url, api_key: api_key, model: '') }
+
+      it 'fails fast with a message naming the missing field, before any request' do
+        expect { modelless.chat(messages: messages) }
+          .to raise_error(Errors::LlmNotConfiguredError, /No model is set/)
+        expect(WebMock).not_to have_requested(:post, "#{base_url}/v1/chat/completions")
+      end
+
+      it 'treats nil the same as blank' do
+        nil_model = described_class.new(base_url: base_url, api_key: api_key, model: nil)
+        expect { nil_model.chat(messages: messages) }
+          .to raise_error(Errors::LlmNotConfiguredError)
+      end
+    end
+
     context 'when the provider returns 429' do
       before do
         stub_request(:post, "#{base_url}/v1/chat/completions")

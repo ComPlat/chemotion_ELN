@@ -14,7 +14,12 @@
 #                           serving /v1/chat/completions, whoever runs it)
 #   base_url      optional  endpoint base URL (anthropic/gemini default to their
 #                           official endpoint when blank)
-#   default_model optional  pre-filled default model id
+#   default_model optional  pre-filled default model id. Leaving it blank is a
+#                           poor default: a model is REQUIRED for every provider
+#                           (nothing can be saved or tested without one), so a
+#                           blank value just moves the work to whoever picks the
+#                           preset. Fill it in wherever the deployment knows a
+#                           model that its users are entitled to.
 #   models        optional  explicit list of selectable model ids for this
 #                           provider (offered in the Task→Model dropdowns). Use
 #                           this when the provider's live model-list endpoint is
@@ -26,7 +31,7 @@ profiles:
     label: "KIT KI-Toolbox"
     protocol: openai
     base_url: "https://ki-toolbox.scc.kit.edu/api"
-    default_model: ""
+    default_model: "kit.qwen3.5-397b-A17b"
     notes: "KIT-hosted, speaks the Chat Completions API. Requires a KIT KI-Toolbox API key."
 
   - key: openai

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Card, Form, Row, Col, Button, Alert, Spinner, OverlayTrigger, Tooltip,
 } from 'react-bootstrap';
 import { AsyncSelect } from 'src/components/common/Select';
+import CopyableAlert from 'src/components/common/CopyableAlert';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { selectUserOptionFormater } from 'src/utilities/selectHelper';
 import {
@@ -104,9 +105,9 @@ const FeatureGateCard = ({
         </Form.Group>
 
         {status && (
-          <Alert variant={status.variant} dismissible onClose={() => setStatus(null)}>
+          <CopyableAlert variant={status.variant} onClose={() => setStatus(null)}>
             {status.message}
-          </Alert>
+          </CopyableAlert>
         )}
 
         <div className="d-flex justify-content-end">
@@ -183,6 +184,26 @@ const GlobalProviderCard = ({ provider: initialProvider, onSaved }) => {
     setName(preset.label || 'Global LLM Provider');
     setApiKey('');
   }, [profiles]);
+
+  // Which preset the form currently describes. Derived, never stored, so the
+  // picker follows the fields instead of drifting from them — see the same
+  // reasoning in the user-facing LlmSettings form.
+  const matchedPreset = useMemo(() => profiles.find((p) => (
+    (p.base_url || '').trim()
+      && (p.protocol || 'openai') === protocol
+      && (p.base_url || '').trim() === baseUrl.trim()
+  )), [profiles, protocol, baseUrl]);
+
+  // The protocol is not an independent field: endpoint, model, key and preset all
+  // describe ONE provider, so changing it clears the rest rather than leaving a
+  // mix of two (a Gemini protocol still pointing at the KI-Toolbox URL).
+  const handleProtocolChange = useCallback((value) => {
+    setProtocol(value);
+    setBaseUrl('');       // '' = the official endpoint for anthropic/gemini
+    setDefaultModel('');
+    setApiKey('');
+    setStatus(null);
+  }, []);
 
   const performDeleteKey = useCallback(() => {
     setConfirmDeleteKey(false);
@@ -280,18 +301,28 @@ const GlobalProviderCard = ({ provider: initialProvider, onSaved }) => {
             <Row className="mb-3">
               <Form.Label column className="col-3">Use a preset</Form.Label>
               <Col>
-                <Form.Select defaultValue="" onChange={(e) => applyPreset(e.target.value)}>
+                <Form.Select
+                  value={matchedPreset ? matchedPreset.key : ''}
+                  onChange={(e) => applyPreset(e.target.value)}
+                >
                   <option value="">(choose a provider to pre-fill…)</option>
                   {profiles.map((p) => (
                     <option key={p.key} value={p.key}>{p.label}</option>
                   ))}
                 </Form.Select>
-                <Form.Text className="text-muted">
+                <Form.Text className="text-muted d-block">
                   Pre-fills the fields below from
                   {' '}
                   <code>config/llm_provider_profiles.yml</code>
                   . You still enter the API key.
                 </Form.Text>
+                {/* `notes` is documented in that file as the hint shown under
+                    the picker — this is where it lands. */}
+                {matchedPreset?.notes && (
+                  <Form.Text className="text-muted d-block fst-italic">
+                    {matchedPreset.notes}
+                  </Form.Text>
+                )}
               </Col>
             </Row>
           )}
@@ -309,7 +340,7 @@ const GlobalProviderCard = ({ provider: initialProvider, onSaved }) => {
           <Row className="mb-3">
             <Form.Label column className="col-3">API protocol</Form.Label>
             <Col>
-              <Form.Select value={protocol} onChange={(e) => setProtocol(e.target.value)}>
+              <Form.Select value={protocol} onChange={(e) => handleProtocolChange(e.target.value)}>
                 {LLM_PROTOCOL_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
@@ -406,21 +437,30 @@ const GlobalProviderCard = ({ provider: initialProvider, onSaved }) => {
           </Row>
 
           <Row className="mb-3">
-            <Form.Label column className="col-3">Default model</Form.Label>
+            <Form.Label column className="col-3">
+              Default model
+              <span className="text-danger ms-1" aria-hidden="true">*</span>
+            </Form.Label>
             <Col>
               <Form.Control
                 type="text"
+                required
+                isInvalid={!defaultModel.trim()}
                 placeholder="e.g. kit.qwen3.5-397b-A17b"
                 value={defaultModel}
                 onChange={(e) => setDefaultModel(e.target.value)}
               />
+              <Form.Text className="text-muted">
+                Required — every request carries a model name, and a provider saved without
+                one fails for every user with an error that never mentions the model.
+              </Form.Text>
             </Col>
           </Row>
 
           {status && (
-            <Alert variant={status.variant} dismissible onClose={() => setStatus(null)}>
+            <CopyableAlert variant={status.variant} onClose={() => setStatus(null)}>
               {status.message}
-            </Alert>
+            </CopyableAlert>
           )}
 
           <Row>
@@ -543,9 +583,9 @@ const AdminLlmConfig = () => {
       <h4 className="mb-3">AI / LLM Configuration</h4>
 
       {topStatus && (
-        <Alert variant={topStatus.variant} dismissible onClose={() => setTopStatus(null)}>
+        <CopyableAlert variant={topStatus.variant} onClose={() => setTopStatus(null)}>
           {topStatus.message}
-        </Alert>
+        </CopyableAlert>
       )}
 
       <GlobalProviderCard provider={provider} />
