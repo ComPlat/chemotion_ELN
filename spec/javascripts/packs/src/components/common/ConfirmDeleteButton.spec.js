@@ -94,4 +94,57 @@ describe('ConfirmDeleteButton', () => {
     wrapper.update();
     expect(isOverlayShown()).toBe(false);
   });
+
+  // Regression coverage: clicking a button also focuses it in Chromium/Windows, and
+  // OverlayTrigger's default trigger set is ['hover', 'focus'], so the trigger's own hover
+  // tooltip would pop open at the same time as the confirm popover below it, stacked over
+  // the same icon. `find('Overlay')` distinguishes the two here by `placement` - the
+  // tooltip is always "top", the confirm popover defaults to "right".
+  describe('with a tooltip', () => {
+    let tooltipWrapper;
+
+    const overlayAt = (placement) => tooltipWrapper.find('Overlay')
+      .filterWhere((o) => o.prop('placement') === placement)
+      .first();
+
+    beforeEach(() => {
+      tooltipWrapper = mount(React.createElement(ConfirmDeleteButton, {
+        header: 'Remove this?',
+        tooltip: 'Remove',
+        onConfirm: sinon.spy(),
+      }));
+    });
+
+    afterEach(() => {
+      tooltipWrapper.unmount();
+    });
+
+    it('shows the tooltip on hover alone', () => {
+      tooltipWrapper.find('button').first().simulate('mouseover');
+      tooltipWrapper.update();
+
+      expect(overlayAt('top').prop('show')).toBe(true);
+      expect(overlayAt('right').prop('show')).toBe(false);
+    });
+
+    it('shows the tooltip on keyboard focus alone', () => {
+      tooltipWrapper.find('button').first().simulate('focus');
+      tooltipWrapper.update();
+
+      expect(overlayAt('top').prop('show')).toBe(true);
+      expect(overlayAt('right').prop('show')).toBe(false);
+    });
+
+    it('does not show the tooltip alongside the confirm popover on click', () => {
+      const button = tooltipWrapper.find('button').first();
+      // A real click also fires focus (which is what OverlayTrigger's tooltip listens for);
+      // Enzyme's simulated click alone does not, so both are dispatched explicitly here.
+      button.simulate('click');
+      button.simulate('focus');
+      tooltipWrapper.update();
+
+      expect(overlayAt('top').prop('show')).toBe(false);
+      expect(overlayAt('right').prop('show')).toBe(true);
+    });
+  });
 });
