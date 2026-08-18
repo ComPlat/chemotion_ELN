@@ -113,7 +113,7 @@ export default class GroupElement extends React.Component {
 
   // confirm action after pressing yes
   // if type is group, call deleteGroup api, if type is user, call deleteUser api
-  confirmDelete(event, type, groupRec, userRec) {
+  confirmDelete(type, groupRec, userRec) {
     switch (type) {
       case 'group':
         this.props.onDeleteGroup(groupRec.id);
@@ -189,7 +189,7 @@ export default class GroupElement extends React.Component {
       <ConfirmDeleteButton
         header={msg}
         tooltip={tooltip}
-        onConfirm={() => this.confirmDelete(undefined, type, groupRec, userRec)}
+        onConfirm={() => this.confirmDelete(type, groupRec, userRec)}
       />
     );
   }
