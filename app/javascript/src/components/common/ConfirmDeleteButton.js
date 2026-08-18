@@ -22,6 +22,7 @@ const ConfirmDeleteButton = ({
   children,
 }) => {
   const [target, setTarget] = useState(null);
+  const [tooltipVisible, setTooltipVisible] = useState(false);
   // Lazy initializer so the random id is generated once on mount, not on every render.
   const [tooltipId] = useState(() => `confirm-delete-tooltip-${Math.random().toString(36).slice(2)}`);
 
@@ -53,7 +54,17 @@ const ConfirmDeleteButton = ({
   return (
     <>
       {tooltip ? (
-        <OverlayTrigger placement="top" overlay={<Tooltip id={tooltipId}>{tooltip}</Tooltip>}>
+        // Controlled `show` (gated on `!target`) rather than the default hover/focus state:
+        // clicking the trigger also focuses it (Chromium/Windows), which would otherwise pop
+        // this tooltip open at the same time as the confirm popover, stacked over the same
+        // button. `onToggle` still drives it normally (hover and plain keyboard focus both
+        // work) - it's only forced shut while the confirm popover itself is open.
+        <OverlayTrigger
+          placement="top"
+          show={tooltipVisible && !target}
+          onToggle={setTooltipVisible}
+          overlay={<Tooltip id={tooltipId}>{tooltip}</Tooltip>}
+        >
           {triggerButton}
         </OverlayTrigger>
       ) : triggerButton}
