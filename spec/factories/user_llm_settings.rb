@@ -5,16 +5,10 @@ FactoryBot.define do
     association :user
 
     provider_type { 'custom' }
-    base_url      { 'https://ki-toolbox.scc.kit.edu/api' }
-    api_key       { 'sk-test-key-1234' }
-    default_model { 'kit.qwen3.5-397b-A17b' }
     enabled       { true }
 
     trait :global do
       provider_type { 'global' }
-      base_url      { nil }
-      api_key       { nil }
-      default_model { nil }
     end
 
     trait :disabled do

@@ -66,12 +66,14 @@ class LlmClient
   # @param json_mode   [Boolean]      Ask the provider to return valid JSON.
   # @return [String]                  The assistant's reply text.
   #
+  # @raise [Errors::LlmNotConfiguredError]  when no model is set
   # @raise [Errors::LlmAuthenticationError] on 401/403
   # @raise [Errors::LlmRateLimitError]      on 429
   # @raise [Errors::LlmTimeoutError]        on connection/read timeout
   # @raise [Errors::LlmProviderError]       on any other HTTP/network error
   def chat(messages:, temperature: 0.1, max_tokens: nil, json_mode: false)
     ensure_api_key_present!
+    ensure_model_present!
     request  = build_chat_request(messages, temperature, max_tokens, json_mode)
     response = http_client.request(request)
     handle_response(response)
@@ -107,6 +109,20 @@ class LlmClient
 
     raise Errors::LlmAuthenticationError,
           "No API key is configured for this #{@protocol} provider. Add the provider's API key."
+  end
+
+  # A blank model is a configuration mistake, not a provider failure, and asking
+  # the provider about it teaches the user nothing: KIT KI-Toolbox (Open WebUI)
+  # answers a model-less request with HTTP 400 "Invalid input of type:
+  # 'NoneType'. Convert to a bytes, string, int or float first." — an error from
+  # deep inside its own internals that never mentions the field that is missing.
+  # Fail here instead, naming the field to fill in.
+  def ensure_model_present!
+    return if @model.present?
+
+    raise Errors::LlmNotConfiguredError,
+          'No model is set for this provider. Enter a default model ' \
+          '(for example kit.qwen3.5-397b-A17b), then test the connection again.'
   end
 
   # ── Request building ────────────────────────────────────────────────────────

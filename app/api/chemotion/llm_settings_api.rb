@@ -4,13 +4,39 @@ module Chemotion
   class LlmSettingsAPI < Grape::API
     resource :users do
       helpers do
-        # The LlmModelCatalog cache identity described by a user's saved provider.
-        def llm_catalog_identity(setting)
+        # Everything about a provider EXCEPT its key, which never leaves the
+        # server in readable form.
+        def present_llm_provider(provider)
           {
-            base_url: setting.base_url,
-            api_key:  setting.api_key,
-            protocol: setting.api_protocol,
+            id:             provider.id,
+            name:           provider.name,
+            api_protocol:   provider.api_protocol,
+            base_url:       provider.base_url,
+            default_model:  provider.default_model,
+            api_key_masked: provider.api_key_masked,
+            enabled:        provider.enabled,
+            scope:          provider.scope,
           }
+        end
+
+        # A task override is stored when it names a provider, a model, or both, and
+        # removed when it names neither — that is how the UI clears a row.
+        def apply_task_mapping(mapping)
+          task_name = mapping[:task_name].to_s.strip
+          return if task_name.blank?
+
+          model       = mapping[:model].to_s.strip
+          provider_id = mapping[:llm_provider_id].presence
+          rec = UserTaskModelMapping.find_or_initialize_by(user: current_user, task_name: task_name)
+
+          if model.blank? && provider_id.blank?
+            rec.destroy if rec.persisted?
+            return
+          end
+
+          rec.model           = model.presence
+          rec.llm_provider_id = provider_id
+          rec.save!
         end
       end
 
@@ -23,14 +49,16 @@ module Chemotion
 
           {
             setting: {
-              provider_type:  setting&.provider_type  || 'global',
-              api_protocol:   setting&.api_protocol   || 'openai',
-              base_url:       setting&.base_url,
-              api_key_masked: setting&.api_key_masked,
-              default_model:  setting&.default_model,
-              enabled:        setting.nil? || setting.enabled,
+              provider_type:           setting&.provider_type || 'global',
+              default_llm_provider_id: setting&.default_llm_provider_id,
+              enabled:                 setting.nil? || setting.enabled,
             },
-            task_mappings: task_mappings.map { |m| { task_name: m.task_name, model: m.model } },
+            # The user's own providers — the list they can add to, edit and route
+            # individual tasks at.
+            providers: LlmProvider.for_user(current_user).map { |p| present_llm_provider(p) },
+            task_mappings: task_mappings.map do |m|
+              { task_name: m.task_name, model: m.model, llm_provider_id: m.llm_provider_id }
+            end,
             # SF-03 access gates — drive tab visibility and the provider options.
             ai_features_enabled: LlmProviderResolver.ai_features_enabled?(current_user),
             ai_user_api_key_allowed: LlmProviderResolver.user_api_key_allowed?(current_user),
@@ -39,6 +67,7 @@ module Chemotion
             # provider" mode. The API key is never exposed.
             admin_provider: if admin_provider
                               {
+                                id: admin_provider.id,
                                 name: admin_provider.name,
                                 api_protocol: admin_provider.api_protocol,
                                 base_url: admin_provider.base_url,
@@ -51,14 +80,13 @@ module Chemotion
 
         desc 'Update current user LLM settings'
         params do
-          optional :provider_type,  type: String, values: UserLlmSetting::PROVIDER_TYPES
-          optional :api_protocol,   type: String, values: UserLlmSetting::API_PROTOCOLS
-          optional :base_url,       type: String
-          optional :api_key,        type: String
-          optional :default_model,  type: String
-          optional :task_mappings,  type: Array do
-            requires :task_name, type: String
-            requires :model,     type: String
+          optional :provider_type,           type: String, values: UserLlmSetting::PROVIDER_TYPES
+          optional :default_llm_provider_id, type: Integer,
+                                             desc: 'Which of my own providers answers a task that names none'
+          optional :task_mappings,           type: Array do
+            requires :task_name,       type: String
+            optional :model,           type: String
+            optional :llm_provider_id, type: Integer, desc: 'Provider for this task; blank = my default'
           end
         end
         put do
@@ -74,47 +102,10 @@ module Chemotion
           setting = current_user.user_llm_setting ||
                     UserLlmSetting.new(user: current_user)
 
-          # The catalogue cache is keyed on protocol + endpoint + key digest, so a
-          # changed provider is already a different entry. What still needs evicting
-          # is the entry for the identity being *left behind*: its catalogue is now
-          # unreachable from the UI but would keep occupying the cache, and if the
-          # user switches back within the TTL they would see a pre-change list.
-          stale_identity = llm_catalog_identity(setting) if setting.persisted?
-
-          attrs = declared(params, include_missing: false).except('task_mappings')
-          setting.assign_attributes(attrs)
-
-          # A stored key belongs to a specific provider identity. If the user
-          # switched endpoint/protocol without supplying a new key, drop the stale
-          # key rather than pairing it with a different provider.
-          if setting.persisted? && setting.provider_type == 'custom' && params[:api_key].blank? &&
-             (setting.base_url_changed? || setting.api_protocol_changed?)
-            setting.api_key_enc = nil
-          end
-
+          setting.assign_attributes(declared(params, include_missing: false).except('task_mappings'))
           setting.save!
 
-          new_identity = llm_catalog_identity(setting)
-          LlmModelCatalog.invalidate(**stale_identity) if stale_identity && stale_identity != new_identity
-          LlmModelCatalog.invalidate(**new_identity)
-
-          params[:task_mappings]&.each do |mapping|
-            # reject blank model values (treat as "remove override")
-            task_name = mapping[:task_name].to_s.strip
-            model     = mapping[:model].to_s.strip
-            next if task_name.blank?
-
-            rec = UserTaskModelMapping.find_or_initialize_by(
-              user:      current_user,
-              task_name: task_name,
-            )
-            if model.blank?
-              rec.destroy if rec.persisted?
-            else
-              rec.model = model
-              rec.save!
-            end
-          end
+          params[:task_mappings]&.each { |mapping| apply_task_mapping(mapping) }
 
           { success: true }
         rescue ActiveRecord::RecordInvalid => e
@@ -127,13 +118,15 @@ module Chemotion
             optional :api_key,  type: String
             optional :base_url, type: String
             optional :model,    type: String
-            optional :protocol, type: String, values: UserLlmSetting::API_PROTOCOLS
+            optional :protocol, type: String, values: LlmProvider::API_PROTOCOLS
           end
           post do
             # If the caller supplies any custom field, treat it as a direct
-            # (pre-save) test of the values on the form. Otherwise this is the
-            # "test my institution provider" button — test the GLOBAL provider
-            # explicitly (never the user's own custom setting).
+            # (pre-save) test of the values on the form — the values as typed,
+            # since an unsaved provider has no key on the server yet. Otherwise
+            # this is the "test my institution provider" button, which tests the
+            # GLOBAL provider explicitly (a saved personal provider is tested
+            # through llm_providers/:id/verify, with its own stored key).
             supplied = params[:model].present? || params[:protocol].present? ||
                        params[:base_url].present? || params[:api_key].present?
 
@@ -141,8 +134,7 @@ module Chemotion
               protocol = params[:protocol].presence || 'openai'
               base_url = params[:base_url].presence
               model    = params[:model].presence
-              # Reuse the saved key when the form left it blank.
-              api_key  = params[:api_key].presence || current_user.user_llm_setting&.api_key
+              api_key  = params[:api_key].presence
             else
               provider = LlmProvider.global_providers.first
               unless provider
@@ -155,7 +147,6 @@ module Chemotion
               model    = provider.default_model
               api_key  = provider.api_key
             end
-
             client = LlmClient.new(base_url: base_url, api_key: api_key, model: model, protocol: protocol)
             client.chat(
               messages:   [{ role: 'user', content: 'Reply with a single word: OK' }],
@@ -163,8 +154,10 @@ module Chemotion
             )
 
             { success: true, message: 'API key verified successfully.' }
-          rescue Errors::LlmNotConfiguredError
-            error!('No LLM provider configured. Set up a provider first.', 422)
+          rescue Errors::LlmNotConfiguredError => e
+            # Carries the specific reason (no provider at all, or no model set on
+            # the one there is) — a generic message would hide which it was.
+            error!(e.message, 422)
           rescue Errors::LlmAuthenticationError => e
             error!(e.message, 401)
           rescue Errors::LlmProviderError => e
@@ -193,7 +186,7 @@ module Chemotion
             { models: [] }
           end
 
-          desc 'List models for a supplied (pre-save) custom config; reuses the saved key when blank'
+          desc 'List models for a supplied (pre-save) provider config'
           params do
             optional :protocol, type: String
             optional :base_url, type: String
@@ -204,7 +197,6 @@ module Chemotion
           end
           post do
             protocol = params[:protocol].presence || 'openai'
-            api_key  = params[:api_key].presence || current_user.user_llm_setting&.api_key
             # Cached per protocol+endpoint+key (LlmModelCatalog) — the settings form
             # asks for this list every time the user lands on a different provider.
             # `model` is accepted for backwards compatibility but deliberately not
@@ -216,22 +208,13 @@ module Chemotion
             # another user's (or the institution's) catalogue through here.
             models = LlmModelCatalog.fetch(
               base_url: params[:base_url].presence,
-              api_key:  api_key,
+              api_key:  params[:api_key].presence,
               protocol: protocol,
               force:    params[:refresh],
             )
             { models: models }
           rescue StandardError
             { models: [] }
-          end
-        end
-
-        namespace :api_key do
-          desc 'Delete the current user’s saved personal API key'
-          delete do
-            setting = current_user.user_llm_setting
-            setting.update!(api_key_enc: nil) if setting&.api_key_enc.present?
-            { success: true }
           end
         end
       end

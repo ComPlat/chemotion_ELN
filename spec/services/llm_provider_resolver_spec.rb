@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/MultipleExpectations -- these assert one resolution as a whole
+
 require 'rails_helper'
 
 RSpec.describe LlmProviderResolver do
@@ -70,6 +72,77 @@ RSpec.describe LlmProviderResolver do
     end
   end
 
+  describe '.resolve with the user’s own providers' do
+    let!(:institution) { create(:llm_provider, default_model: 'inst-model') }
+    let!(:mine) do
+      create(:llm_provider, :personal, user: user, name: 'My Claude',
+                                       api_protocol: 'anthropic', base_url: 'https://api.anthropic.com',
+                                       api_key: 'sk-ant-mine', default_model: 'claude-opus-4-8')
+    end
+
+    it 'uses the personal provider the preference points at' do
+      UserLlmSetting.create!(user: user, provider_type: 'custom', default_llm_provider: mine)
+
+      resolution = described_class.resolve(user: user, task_name: 'sds_extraction')
+      expect(resolution.provider).to eq(mine)
+      expect(resolution.model).to eq('claude-opus-4-8')
+      expect(resolution.protocol).to eq('anthropic')
+      expect(resolution.api_key).to eq('sk-ant-mine')
+    end
+
+    it 'routes one task to a different provider than the default' do
+      UserLlmSetting.create!(user: user, provider_type: 'global')
+      UserTaskModelMapping.create!(user: user, task_name: 'sds_extraction', llm_provider: mine)
+
+      expect(described_class.resolve(user: user, task_name: 'sds_extraction').provider).to eq(mine)
+      expect(described_class.resolve(user: user, task_name: 'other_task').provider).to eq(institution)
+    end
+
+    it 'takes the model from the mapped provider when the mapping names none' do
+      UserTaskModelMapping.create!(user: user, task_name: 'sds_extraction', llm_provider: mine)
+
+      expect(described_class.resolve(user: user, task_name: 'sds_extraction').model).to eq('claude-opus-4-8')
+    end
+
+    it 'prefers the model the mapping names over the provider’s default' do
+      UserTaskModelMapping.create!(user: user, task_name: 'sds_extraction',
+                                   llm_provider: mine, model: 'claude-haiku-4-5')
+
+      expect(described_class.resolve(user: user, task_name: 'sds_extraction').model).to eq('claude-haiku-4-5')
+    end
+
+    it 'falls back to the institution provider when the personal-key gate is revoked' do
+      UserLlmSetting.create!(user: user, provider_type: 'custom', default_llm_provider: mine)
+      UserTaskModelMapping.create!(user: user, task_name: 'sds_extraction', llm_provider: mine)
+      Matrice.find_or_create_by(name: 'aiUserApiKey').update!(enabled: false, include_ids: [], exclude_ids: [])
+
+      resolution = described_class.resolve(user: user, task_name: 'sds_extraction')
+      expect(resolution.provider).to eq(institution)
+    end
+
+    it 'never resolves another user’s provider' do
+      theirs = create(:llm_provider, :personal, user: create(:person), api_key: 'sk-not-yours')
+      # Bypasses the model-level validation on purpose: the resolver is the last
+      # line of defence and must hold even for a row that got in some other way.
+      mapping = UserTaskModelMapping.new(user: user, task_name: 'sds_extraction', llm_provider: theirs)
+      mapping.save!(validate: false)
+
+      resolution = described_class.resolve(user: user, task_name: 'sds_extraction')
+      expect(resolution.provider).to eq(institution)
+      expect(resolution.api_key).not_to eq('sk-not-yours')
+    end
+
+    it 'falls back to another of the user’s providers when the default was deleted' do
+      setting = UserLlmSetting.create!(user: user, provider_type: 'custom', default_llm_provider: mine)
+      mine.destroy
+      setting.reload
+
+      expect(setting.default_llm_provider_id).to be_nil
+      spare = create(:llm_provider, :personal, user: user, default_model: 'spare-model')
+      expect(described_class.resolve(user: user, task_name: 'sds_extraction').provider).to eq(spare)
+    end
+  end
+
   describe '.client_for' do
     before { create(:llm_provider, enabled: true) }
 
@@ -119,3 +192,4 @@ RSpec.describe LlmProviderResolver do
     end
   end
 end
+# rubocop:enable RSpec/MultipleExpectations
