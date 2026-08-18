@@ -2,10 +2,17 @@
 
 # Resolves which LLM provider and model to use for a given user + task.
 #
-# Three-level fallback hierarchy (first match wins):
-#   1. User task-specific mapping  — SF-02 UserTaskModelMapping (task→model string)
-#   2. User default provider       — SF-02 UserLlmSetting (custom endpoint + key)
-#   3. Global admin provider       — SF-01 LlmProvider with scope:'global'
+# Everything a request can be sent to is an LlmProvider: scope 'global' is the
+# institution provider, scope 'user' is one of the user's own. This picks one of
+# them plus a model, first match wins:
+#
+#   1. The task's own override  — UserTaskModelMapping (provider and/or model)
+#   2. The user's default       — UserLlmSetting: the institution provider, or
+#                                 the personal provider it points at
+#   3. The institution provider — when the user is allowed it
+#
+# Each step is checked against the gate for the KIND of provider it resolves to,
+# so a revoked permission degrades to the next step instead of failing the task.
 #
 # Feature-flag gates (SF-03):
 #   • Matrice 'aiFeatures' must be enabled globally, AND
@@ -25,7 +32,7 @@ class LlmProviderResolver
     def resolve(user:, task_name: nil, skip_feature_flags: false)
       check_feature_flags!(user) unless skip_feature_flags
 
-      resolution = resolve_user_task_mapping(user, task_name)
+      resolution = resolve_task_override(user, task_name)
       resolution ||= resolve_user_default(user)
       resolution ||= resolve_global if institution_provider_allowed?(user)
 
@@ -110,24 +117,24 @@ class LlmProviderResolver
       true
     end
 
-    # ── Level 1: Task-specific model override ─────────────────────────────────
+    # ── Level 1: The task's own override ──────────────────────────────────────
 
-    def resolve_user_task_mapping(user, task_name)
+    # A mapping may name a provider, a model, or both:
+    #   provider + model → that provider, that model
+    #   provider only    → that provider, on its own default model
+    #   model only       → the user's default provider, on that model (what every
+    #                      mapping was before providers became a list)
+    def resolve_task_override(user, task_name)
       return nil if task_name.blank?
 
       mapping = UserTaskModelMapping.find_by(user_id: user.id, task_name: task_name)
       return nil unless mapping
 
-      base = task_mapping_base(user)
-      return nil unless base
-
-      LlmResolution.new(
-        provider: base.provider,
-        model:    mapping.model,
-        api_key:  base.api_key,
-        base_url: base.base_url,
-        protocol: base.protocol,
-      )
+      if mapping.llm_provider_id
+        resolve_mapped_provider(user, mapping)
+      else
+        model_only_override(user, mapping)
+      end
     rescue NameError
       # UserTaskModelMapping model not present in this deployment — no override.
       nil
@@ -142,37 +149,75 @@ class LlmProviderResolver
       nil
     end
 
-    # A task mapping stores only a model name, so the endpoint and key have to come
-    # from somewhere else: the user's own provider, or the institution one when they
-    # are allowed to use it.
-    def task_mapping_base(user)
-      resolve_user_default(user) || (resolve_global if institution_provider_allowed?(user))
+    # The named provider still has to be one this user may use *now*: a gate can
+    # be revoked, and a provider can be deleted, long after the override was set.
+    def resolve_mapped_provider(user, mapping)
+      provider = mapping.llm_provider
+      return nil unless provider && usable_by?(user, provider)
+
+      resolution_for(provider, mapping.model)
     end
 
-    # ── Level 2: User's custom provider ───────────────────────────────────────
+    def model_only_override(user, mapping)
+      base = resolve_user_default(user) || (resolve_global if institution_provider_allowed?(user))
+      return nil unless base
+
+      LlmResolution.new(
+        provider: base.provider,
+        model:    mapping.model.presence || base.model,
+        api_key:  base.api_key,
+        base_url: base.base_url,
+        protocol: base.protocol,
+      )
+    end
+
+    # Personal providers are private to their owner; the institution one is
+    # shared, behind its own gate.
+    def usable_by?(user, provider)
+      if provider.scope == 'user'
+        provider.user_id == user.id && user_api_key_allowed?(user)
+      else
+        institution_provider_allowed?(user)
+      end
+    end
+
+    def resolution_for(provider, model = nil)
+      LlmResolution.new(
+        provider: provider,
+        model:    model.presence || provider.default_model,
+        api_key:  provider.api_key,
+        base_url: provider.base_url,
+        protocol: provider.api_protocol,
+      )
+    end
+
+    # ── Level 2: The user's default provider ──────────────────────────────────
 
     def resolve_user_default(user)
       # Respect the custom-key gate: a user who may not configure a personal
-      # provider always falls through to the global provider, even if a stale
-      # 'custom' row remains from before the permission was revoked.
+      # provider always falls through to the institution provider, even if a
+      # stale 'custom' preference remains from before the permission was revoked.
       return nil unless user_api_key_allowed?(user)
 
       # Reference UserLlmSetting directly (Zeitwerk autoload) rather than gating on
-      # `defined?(UserLlmSetting)` — see resolve_user_task_mapping. A missing model
+      # `defined?(UserLlmSetting)` — see resolve_task_override. A missing model
       # is handled by the `rescue StandardError` below (NameError degrades to nil).
       setting = UserLlmSetting.find_by(user_id: user.id, enabled: true)
       return nil if setting.nil? || setting.use_global?
 
-      # User has configured their own endpoint; key may be nil (e.g. Ollama)
-      LlmResolution.new(
-        provider: nil,
-        model: setting.default_model.presence || 'default',
-        api_key: setting.api_key,
-        base_url: setting.base_url,
-        protocol: setting.api_protocol,
-      )
+      provider = default_personal_provider(user, setting)
+      return nil unless provider
+
+      resolution_for(provider)
     rescue StandardError
       nil
+    end
+
+    # The preference points at one provider, but that FK is nullified when the
+    # provider is deleted. Rather than dropping the user to the institution
+    # provider without a word, fall back to their oldest remaining one.
+    def default_personal_provider(user, setting)
+      setting.default_llm_provider || LlmProvider.for_user(user).where(enabled: true).first
     end
 
     # ── Level 3: Admin-configured global fallback ─────────────────────────────
@@ -181,13 +226,7 @@ class LlmProviderResolver
       provider = LlmProvider.global_providers.first
       return nil unless provider
 
-      LlmResolution.new(
-        provider: provider,
-        model: provider.default_model,
-        api_key: provider.api_key,
-        base_url: provider.base_url,
-        protocol: provider.api_protocol,
-      )
+      resolution_for(provider)
     end
   end
 end

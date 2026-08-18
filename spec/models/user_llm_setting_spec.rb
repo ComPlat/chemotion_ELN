@@ -4,23 +4,22 @@
 #
 # Table name: user_llm_settings
 #
-#  id            :bigint           not null, primary key
-#  api_key_enc   :text
-#  api_protocol  :string           default("openai"), not null
-#  base_url      :string
-#  default_model :string
-#  enabled       :boolean          default(TRUE), not null
-#  provider_type :string           default("global"), not null
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  user_id       :bigint           not null
+#  id                      :bigint           not null, primary key
+#  enabled                 :boolean          default(TRUE), not null
+#  provider_type           :string           default("global"), not null
+#  created_at              :datetime         not null
+#  updated_at              :datetime         not null
+#  default_llm_provider_id :bigint
+#  user_id                 :bigint           not null
 #
 # Indexes
 #
-#  index_user_llm_settings_on_user_id  (user_id) UNIQUE
+#  index_user_llm_settings_on_default_llm_provider_id  (default_llm_provider_id)
+#  index_user_llm_settings_on_user_id                  (user_id) UNIQUE
 #
 # Foreign Keys
 #
+#  fk_rails_...  (default_llm_provider_id => llm_providers.id) ON DELETE => nullify
 #  fk_rails_...  (user_id => users.id) ON DELETE => cascade
 #
 require 'rails_helper'
@@ -33,7 +32,27 @@ RSpec.describe UserLlmSetting, type: :model do
   end
 
   describe 'validations' do
+    # Endpoint, model and key live on LlmProvider — this record only points at one,
+    # so a valid custom preference is a provider pointer and nothing else.
     it 'is valid with valid custom attributes' do
+      expect(setting).to be_valid
+    end
+
+    it 'is valid in global mode' do
+      expect(build(:user_llm_setting, :global)).to be_valid
+    end
+
+    # The provider fields (and their presence rules) live on LlmProvider now —
+    # this record only points at one. See LlmProvider for those validations.
+    it 'rejects a default provider belonging to another user' do
+      setting.default_llm_provider = create(:llm_provider, :personal, user: create(:user))
+      expect(setting).not_to be_valid
+      expect(setting.errors[:default_llm_provider]).to be_present
+    end
+
+    it 'accepts one of the user’s own providers as the default' do
+      setting.save!
+      setting.default_llm_provider = create(:llm_provider, :personal, user: setting.user)
       expect(setting).to be_valid
     end
 
@@ -41,46 +60,6 @@ RSpec.describe UserLlmSetting, type: :model do
       setting.provider_type = 'unknown_provider'
       expect(setting).not_to be_valid
       expect(setting.errors[:provider_type]).to be_present
-    end
-
-    it 'requires base_url when provider_type is custom' do
-      setting.base_url = nil
-      expect(setting).not_to be_valid
-      expect(setting.errors[:base_url]).to be_present
-    end
-
-    it 'does not require base_url when provider_type is global' do
-      setting.provider_type = 'global'
-      setting.base_url      = nil
-      expect(setting).to be_valid
-    end
-  end
-
-  describe 'API key encryption' do
-    let(:user) { create(:person) }
-
-    it 'encrypts the api_key before saving' do
-      s = create(:user_llm_setting, user: user, api_key: 'sk-secret-1234')
-      s.reload
-      expect(s.api_key_enc).not_to eq('sk-secret-1234')
-      expect(s.api_key_enc).to be_present
-    end
-
-    it 'decrypts the key on read' do
-      s = create(:user_llm_setting, user: user, api_key: 'sk-secret-1234')
-      s.reload
-      expect(s.api_key).to eq('sk-secret-1234')
-    end
-
-    it 'returns a masked key for display' do
-      s = create(:user_llm_setting, user: user, api_key: 'sk-my-secret-5678')
-      s.reload
-      expect(s.api_key_masked).to match(/\Ask-•+\d{4}\z/)
-    end
-
-    it 'returns nil api_key_masked when no key is stored' do
-      s = create(:user_llm_setting, :global, user: user)
-      expect(s.api_key_masked).to be_nil
     end
   end
 

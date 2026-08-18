@@ -73,9 +73,13 @@ RSpec.describe LlmTaskRunner do
     context 'when the user has a task-specific model mapping' do
       before do
         UserTaskModelMapping.create!(user_id: user.id, task_name: 'sds_extraction', model: 'gemini-3.5-flash')
+        # The user's own provider (same endpoint, different default model) — the
+        # model-only mapping above rides on top of whatever provider is default.
+        personal = create(:llm_provider, :personal, user: user, base_url: base_url,
+                                                    api_key: api_key, api_protocol: 'openai',
+                                                    default_model: 'gemini-3.1-flash-lite')
         UserLlmSetting.find_or_create_by(user_id: user.id).update!(
-          enabled: true, provider_type: 'custom', base_url: base_url, api_key: api_key,
-          default_model: 'gemini-3.1-flash-lite', api_protocol: 'openai'
+          enabled: true, provider_type: 'custom', default_llm_provider: personal,
         )
       end
 
