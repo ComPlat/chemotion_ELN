@@ -17,7 +17,7 @@ export default class WellplateDetailsContainers extends Component {
   constructor(props) {
     super();
     const { wellplate } = props;
-    const hasComment = wellplate.container?.description && wellplate.container.description.trim() !== '';
+    const hasComment = Boolean(wellplate.container?.description?.trim());
     this.state = {
       wellplate,
       activeContainer: 0,
@@ -203,7 +203,7 @@ export default class WellplateDetailsContainers extends Component {
           </div>
           <CommentBox
             isVisible={commentBoxVisible}
-            value={wellplate.container.description}
+            value={wellplate.container?.description || ''}
             handleCommentTextChange={this.handleCommentTextChange}
           />
         </div>
@@ -226,7 +226,7 @@ export default class WellplateDetailsContainers extends Component {
         </div>
         <CommentBox
           isVisible={commentBoxVisible}
-          value={wellplate.container.description}
+          value={wellplate.container?.description || ''}
           handleCommentTextChange={this.handleCommentTextChange}
         />
         {mode === 'order' ? (

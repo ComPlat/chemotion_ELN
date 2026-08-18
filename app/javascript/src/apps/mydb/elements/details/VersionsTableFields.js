@@ -19,8 +19,8 @@ function SolventDetails({ solvent }) {
       <td width="5%" />
       <td width="50%">
         <FormControl
-          bsClass="bs-form--compact form-control"
-          bsSize="small"
+          className="bs-form--compact form-control"
+          size="sm"
           type="text"
           name="solvent_label"
           value={solvent.label}
@@ -29,8 +29,8 @@ function SolventDetails({ solvent }) {
       </td>
       <td width="26%">
         <FormControl
-          bsClass="bs-form--compact form-control"
-          bsSize="small"
+          className="bs-form--compact form-control"
+          size="sm"
           type="number"
           name="solvent_ratio"
           value={solvent.ratio}
