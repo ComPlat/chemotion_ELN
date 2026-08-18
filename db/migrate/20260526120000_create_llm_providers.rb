@@ -1,8 +1,14 @@
 # frozen_string_literal: true
 
-# Admin-managed (global) LLM providers. A single enabled row acts as the
-# institution's shared provider; users delegate to it unless they configure a
-# personal endpoint (see user_llm_settings).
+# Every endpoint an LLM request can be sent to.
+#
+#   scope 'global' — the institution's provider, configured by an admin and
+#                    shared by every user the aiGlobalProvider gate allows.
+#                    user_id is nil.
+#   scope 'user'   — one of a user's own providers. Belongs to user_id and is
+#                    reachable by nobody else. A user may have several, each with
+#                    its own protocol, model and key, and route individual tasks
+#                    at them (see user_task_model_mappings).
 class CreateLlmProviders < ActiveRecord::Migration[6.1]
   def change
     create_table :llm_providers do |t|
@@ -16,7 +22,7 @@ class CreateLlmProviders < ActiveRecord::Migration[6.1]
       t.string   :default_model
       # Wire protocol spoken by this endpoint: openai | anthropic | gemini.
       t.string   :api_protocol, null: false, default: 'openai'
-      # Reserved for a future per-user provider design (currently only 'global').
+      # Who owns this provider: 'global' (institution) or 'user'.
       t.string   :scope, null: false, default: 'global'
       t.bigint   :user_id
       t.boolean  :enabled, null: false, default: true
@@ -25,6 +31,8 @@ class CreateLlmProviders < ActiveRecord::Migration[6.1]
 
     add_index :llm_providers, :scope
     add_index :llm_providers, :user_id
+    # Every personal-provider lookup filters on both columns.
+    add_index :llm_providers, %i[user_id scope]
     add_foreign_key :llm_providers, :users, column: :user_id, on_delete: :cascade
   end
 end

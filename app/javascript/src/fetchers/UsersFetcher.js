@@ -255,6 +255,71 @@ export default class UsersFetcher {
       });
   }
 
+  // ── The user's own LLM providers ──────────────────────────────────────────
+  //
+  // Each is one endpoint with its own protocol, model and key. The API scopes
+  // every one of these to the signed-in user; ids from anywhere else read as 404.
+
+  static fetchLlmProviders() {
+    return fetch('/api/v1/users/llm_providers', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : { providers: [] }))
+      .then((d) => d.providers || [])
+      .catch(() => []);
+  }
+
+  static createLlmProvider(params = {}) {
+    return UsersFetcher.llmProviderRequest('/api/v1/users/llm_providers', 'POST', params);
+  }
+
+  static updateLlmProvider(id, params = {}) {
+    return UsersFetcher.llmProviderRequest(`/api/v1/users/llm_providers/${id}`, 'PUT', params);
+  }
+
+  static deleteLlmProvider(id) {
+    return UsersFetcher.llmProviderRequest(`/api/v1/users/llm_providers/${id}`, 'DELETE');
+  }
+
+  // Test a SAVED provider — the key stays on the server, so nothing has to be
+  // re-typed to re-test one.
+  static verifyLlmProvider(id) {
+    return UsersFetcher.llmProviderRequest(`/api/v1/users/llm_providers/${id}/verify`, 'POST');
+  }
+
+  // Models offered by a saved provider, for the Task → Model dropdown of any
+  // task routed to it.
+  static fetchLlmProviderModels(id, { refresh = false } = {}) {
+    return fetch(`/api/v1/users/llm_providers/${id}/models`, {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh }),
+    })
+      .then((r) => (r.ok ? r.json() : { models: [] }))
+      .then((d) => d.models || [])
+      .catch(() => []);
+  }
+
+  // Shared plumbing for the provider CRUD calls: they differ only in verb and
+  // URL, and all report the server's message on failure.
+  static llmProviderRequest(url, method, params) {
+    return fetch(url, {
+      credentials: 'same-origin',
+      method,
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: params ? JSON.stringify(params) : undefined,
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json()
+            .catch(() => ({}))
+            .then((body) => {
+              throw new Error(body.error || body.message || `HTTP ${response.status}`);
+            });
+        }
+        return response.json();
+      });
+  }
+
   static fetchLlmModels() {
     return fetch('/api/v1/users/llm_settings/models', { credentials: 'same-origin' })
       .then((r) => r.json())
@@ -323,27 +388,6 @@ export default class UsersFetcher {
     return fetch('/api/v1/llm/access', { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : denied))
       .catch(() => denied);
-  }
-
-  // Delete the current user's saved personal API key.
-  static deleteLlmApiKey() {
-    return fetch('/api/v1/users/llm_settings/api_key', {
-      credentials: 'same-origin',
-      method: 'DELETE',
-      headers: { Accept: 'application/json' },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          return response.json().then((body) => {
-            throw new Error(body.error || body.message || `HTTP ${response.status}`);
-          });
-        }
-        return response.json();
-      })
-      .catch((error) => {
-        console.error('deleteLlmApiKey error:', error);
-        throw error;
-      });
   }
 }
 
