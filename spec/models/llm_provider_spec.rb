@@ -19,8 +19,9 @@
 #
 # Indexes
 #
-#  index_llm_providers_on_scope    (scope)
-#  index_llm_providers_on_user_id  (user_id)
+#  index_llm_providers_on_scope              (scope)
+#  index_llm_providers_on_user_id            (user_id)
+#  index_llm_providers_on_user_id_and_scope  (user_id,scope)
 #
 # Foreign Keys
 #
@@ -33,6 +34,12 @@ RSpec.describe LlmProvider do
     it 'is valid with valid attributes' do
       provider = build(:llm_provider)
       expect(provider).to be_valid
+    end
+
+    it 'requires a default model' do
+      provider = build(:llm_provider, default_model: '')
+      expect(provider).not_to be_valid
+      expect(provider.errors[:default_model]).to be_present
     end
 
     it 'requires a name' do

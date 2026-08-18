@@ -6,6 +6,8 @@ import {
   peekModels,
   fetchCustomModels,
   fetchInstitutionModels,
+  fetchProviderModels,
+  providerModelsKey,
   clearModelCache,
   subscribe,
   scopeToUser,
@@ -14,9 +16,11 @@ import {
 describe('llmModelCache', () => {
   const originalCustom = UsersFetcher.fetchLlmModelsForConfig;
   const originalInstitution = UsersFetcher.fetchInstitutionLlmModels;
+  const originalProvider = UsersFetcher.fetchLlmProviderModels;
 
   let customCalls;
   let institutionCalls;
+  let providerCalls;
   let customResponse;
 
   beforeEach(() => {
@@ -32,12 +36,53 @@ describe('llmModelCache', () => {
       institutionCalls.push(opts);
       return Promise.resolve(['kit.qwen3.5-397b-A17b']);
     };
+    providerCalls = [];
+    UsersFetcher.fetchLlmProviderModels = (id, opts) => {
+      providerCalls.push({ id, ...opts });
+      return Promise.resolve([`model-of-${id}`]);
+    };
   });
 
   after(() => {
     UsersFetcher.fetchLlmModelsForConfig = originalCustom;
     UsersFetcher.fetchInstitutionLlmModels = originalInstitution;
+    UsersFetcher.fetchLlmProviderModels = originalProvider;
     clearModelCache();
+  });
+
+  describe('fetchProviderModels', () => {
+    it('caches per saved provider, so two providers never share a list', async () => {
+      expect(await fetchProviderModels(1)).toEqual(['model-of-1']);
+      expect(await fetchProviderModels(2)).toEqual(['model-of-2']);
+
+      expect(peekModels(providerModelsKey(1))).toEqual(['model-of-1']);
+      expect(peekModels(providerModelsKey(2))).toEqual(['model-of-2']);
+      expect(providerCalls.map((c) => c.id)).toEqual([1, 2]);
+    });
+
+    it('serves a repeat lookup from the cache', async () => {
+      await fetchProviderModels(1);
+      await fetchProviderModels(1);
+
+      expect(providerCalls.length).toEqual(1);
+    });
+
+    it('re-reads when forced', async () => {
+      await fetchProviderModels(1);
+      await fetchProviderModels(1, { force: true });
+
+      expect(providerCalls.length).toEqual(2);
+      expect(providerCalls[1].refresh).toEqual(true);
+    });
+
+    it('is dropped when the cache is scoped to another user', async () => {
+      scopeToUser(1);
+      await fetchProviderModels(7);
+      expect(peekModels(providerModelsKey(7))).toEqual(['model-of-7']);
+
+      scopeToUser(2);
+      expect(peekModels(providerModelsKey(7))).toEqual(null);
+    });
   });
 
   describe('customModelsKey', () => {

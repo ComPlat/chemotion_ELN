@@ -107,6 +107,9 @@ class User < ApplicationRecord
   has_many :text_templates, dependent: :destroy
   has_one  :user_llm_setting,          dependent: :destroy
   has_many :user_task_model_mappings,  dependent: :destroy
+  # The user's OWN LLM providers (LlmProvider scope 'user'). The institution
+  # provider is not one of these — it belongs to no user.
+  has_many :llm_providers, -> { where(scope: 'user').order(:id) }, inverse_of: :user, dependent: :destroy
 
   has_one :sample_text_template, dependent: :destroy
   has_one :reaction_text_template, dependent: :destroy

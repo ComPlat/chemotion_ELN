@@ -1,41 +1,44 @@
-import React, {
-  useState, useEffect, useCallback, useMemo,
-} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Card, Form, Row, Col, Button, Alert, Spinner, InputGroup, OverlayTrigger, Tooltip,
+  Card, Form, Row, Col, Button, Alert, Spinner,
 } from 'react-bootstrap';
 import { CreatableSelect } from 'src/components/common/Select';
+import CopyableAlert from 'src/components/common/CopyableAlert';
+import LlmProviderList from 'src/apps/userSettings/LlmProviderList';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import {
-  customModelsKey, institutionModelsKey, peekModels,
-  fetchCustomModels, fetchInstitutionModels, subscribe, scopeToUser,
+  institutionModelsKey, providerModelsKey, peekModels,
+  fetchProviderModels, fetchInstitutionModels, subscribe, scopeToUser,
 } from 'src/utilities/llmModelCache';
-import {
-  LLM_PROTOCOL_OPTIONS, llmProtocolShortLabel, CHAT_COMPLETIONS_PROTOCOL,
-} from 'src/utilities/llmProtocols';
 
 const PROVIDER_OPTIONS = [
   { value: 'global', label: "Use my institution's AI service (managed by admin)" },
-  { value: 'custom', label: 'Use my own provider (OpenAI, Claude, Gemini, or a self-hosted endpoint)' },
+  { value: 'custom', label: 'Use one of my own providers (OpenAI, Claude, Gemini, or a self-hosted endpoint)' },
 ];
 
-// A stable key identifying the exact provider config, so we know whether the
-// current form matches what was last successfully tested.
-const configKey = (mode, protocol, url, model, key) => (
-  mode === 'custom' ? ['custom', protocol, (url || '').trim(), model, key || ''].join('|') : 'global'
+// The value the per-task Provider select carries for "whatever my default is".
+// A blank string, because that is what an unselected <option> gives back.
+const INHERIT = '';
+// The per-task Provider select's value for the institution service. Prefixed so
+// it can never collide with one of the user's own numeric provider ids.
+const INSTITUTION = 'institution';
+
+// Normalise task overrides for change detection: drop the empty ones (they mean
+// "no override"), and sort, so a reordering is not a change.
+const normalizeMappings = (mappings) => JSON.stringify(
+  (mappings || [])
+    .map((m) => ({
+      task_name: m.task_name,
+      model: (m.model || '').trim(),
+      llm_provider_id: m.llm_provider_id || null,
+    }))
+    .filter((m) => m.model || m.llm_provider_id)
+    .sort((a, b) => a.task_name.localeCompare(b.task_name)),
 );
 
 // Map a list of model-name strings to react-select options.
 const toModelOptions = (models) => (models || []).map((m) => ({ value: m, label: m }));
-
-// Normalise task→model mappings for change detection (drop blanks, sort).
-const normalizeMappings = (m) => JSON.stringify(
-  (m || [])
-    .filter((x) => x.model && x.model.trim())
-    .map((x) => ({ task_name: x.task_name, model: x.model.trim() }))
-    .sort((a, b) => a.task_name.localeCompare(b.task_name)),
-);
 
 // Tasks are loaded from the server-side LLM Task Registry (SF-04). This is only
 // the fallback for a failed request, so it lists the task definitions that ship
@@ -48,46 +51,33 @@ const FALLBACK_TASKS = [
 
 const LlmSettings = ({ userId }) => {
   const [providerType, setProviderType] = useState('global');
-  const [apiProtocol, setApiProtocol]   = useState('openai');
   const [profiles, setProfiles]         = useState([]);
-  const [baseUrl, setBaseUrl]           = useState('');
-  const [apiKey, setApiKey]             = useState('');
-  const [apiKeyMasked, setApiKeyMasked] = useState('');
-  // The saved provider identity the masked key belongs to.
-  const [savedBaseUrl, setSavedBaseUrl] = useState('');
-  const [savedProtocol, setSavedProtocol] = useState('openai');
-  const [defaultModel, setDefaultModel] = useState('');
+  // The user's own providers, as returned by the API (keys masked).
+  const [providers, setProviders]       = useState([]);
+  const [defaultProviderId, setDefaultProviderId] = useState(null);
   const [taskMappings, setTaskMappings] = useState([]);
   const [adminProvider, setAdminProvider] = useState(null);
   const [customKeyAllowed, setCustomKeyAllowed] = useState(false);
   const [institutionAllowed, setInstitutionAllowed] = useState(false);
   const [legacyCustomNotice, setLegacyCustomNotice] = useState(false);
-  const [confirmDeleteKey, setConfirmDeleteKey] = useState(false);
   // Snapshots of the saved state — used to detect meaningful (dirty) changes.
   const [savedProviderType, setSavedProviderType] = useState('global');
-  const [savedDefaultModel, setSavedDefaultModel] = useState('');
+  const [savedDefaultProviderId, setSavedDefaultProviderId] = useState(null);
   const [savedTaskMappings, setSavedTaskMappings] = useState([]);
-  // The exact provider config that last passed a Test connection.
-  const [verifiedConfig, setVerifiedConfig] = useState(null);
   const [status, setStatus]             = useState(null); // save result { variant, message }
-  const [verifyStatus, setVerifyStatus] = useState(null); // test/verify result (shown by the button)
+  const [verifyStatus, setVerifyStatus] = useState(null); // institution test result
   const [verifying, setVerifying]       = useState(false);
   const [loading, setLoading]           = useState(true);
-  // Curated fallback list carried by an applied preset, tagged with the provider
-  // identity it describes so it is dropped once the user edits protocol/URL away.
-  const [presetModels, setPresetModels]           = useState(null);
-  // Counts of in-flight lookups, not booleans: a mount-time load and a load
-  // triggered by Test connection can overlap, and a boolean would let the first
-  // one to finish hide the spinner while the second is still running.
-  const [institutionLoads, setInstitutionLoads] = useState(0);
-  const [customLoads, setCustomLoads]           = useState(0);
-  const [knownTasks, setKnownTasks]           = useState(FALLBACK_TASKS);
+  const [knownTasks, setKnownTasks]     = useState(FALLBACK_TASKS);
+  // Counts of in-flight lookups, not booleans: several provider lists can be
+  // loading at once, and a boolean would let the first one to finish hide the
+  // spinner while the others are still running.
+  const [modelLoads, setModelLoads]     = useState(0);
   // The model lists themselves are NOT component state: they live in
   // llmModelCache, keyed by provider identity and shared across mounts, and are
-  // read straight through during render (see cachedCustomModels below). That is
-  // what makes flipping between providers restore each one's list — with state we
-  // could only ever hold one provider's list at a time. This counter exists only
-  // to re-render when the cache changes.
+  // read straight through during render. That is what makes switching between
+  // providers restore each one's list. This counter exists only to re-render
+  // when the cache changes.
   const [, noteCacheFilled] = useState(0);
 
   // Re-render on any cache write, including ones this component did not trigger.
@@ -98,105 +88,66 @@ const LlmSettings = ({ userId }) => {
 
   const isCustomMode = providerType === 'custom';
 
-  // Identity of the custom provider currently described by the form. Note the
-  // API key is not part of it — see llmModelCache for why.
-  const customIdentity = useMemo(
-    () => customModelsKey({ protocol: apiProtocol, baseUrl }),
-    [apiProtocol, baseUrl],
-  );
-
-  // Fetch the model list for one explicit custom config into the cache. Callers
-  // pass the config rather than relying on state, because the initial load fires
-  // this in the same tick as the setState calls that populate the form.
-  // Re-rendering is handled by the cache subscription above, not here.
-  const loadCustomModels = useCallback((config, { force = false } = {}) => {
-    setCustomLoads((n) => n + 1);
-    return fetchCustomModels(config, { force })
-      .finally(() => setCustomLoads((n) => n - 1));
+  const countLoad = useCallback((promise) => {
+    setModelLoads((n) => n + 1);
+    return promise.finally(() => setModelLoads((n) => n - 1));
   }, []);
 
-  const loadInstitutionModels = useCallback(({ force = false } = {}) => {
-    setInstitutionLoads((n) => n + 1);
-    return fetchInstitutionModels({ force })
-      .finally(() => setInstitutionLoads((n) => n - 1));
-  }, []);
-
-  // Two *separate* model lists, each scoped to one provider context, so the
-  // dropdown never mixes institution models with a personal provider's models.
-  // Both are looked up in the cache by provider identity, which is what makes
-  // switching provider — mode, protocol or endpoint — non-destructive: the list
-  // the user came from is still there when they switch back, no request either way.
-  const cachedCustomModels      = peekModels(customIdentity);
-  const cachedInstitutionModels = peekModels(institutionModelsKey());
-
-  const customModels = useMemo(() => {
-    if (cachedCustomModels) return toModelOptions(cachedCustomModels);
-    // This endpoint has never been queried — fall back to the curated list of the
-    // preset that filled the form in, when the values still match that preset.
-    if (presetModels && presetModels.key === customIdentity) {
-      return toModelOptions(presetModels.models);
-    }
-    return [];
-  }, [cachedCustomModels, presetModels, customIdentity]);
-
-  const institutionModels = useMemo(
-    () => toModelOptions(cachedInstitutionModels),
-    [cachedInstitutionModels],
+  const loadProviderModels = useCallback(
+    (id, opts) => countLoad(fetchProviderModels(id, opts)),
+    [countLoad],
   );
+  const loadInstitutionModels = useCallback(
+    (opts) => countLoad(fetchInstitutionModels(opts)),
+    [countLoad],
+  );
+
+  const applySettings = useCallback((data) => {
+    const {
+      setting = {},
+      providers: ownProviders,
+      task_mappings: mappings,
+      admin_provider: adminProv,
+      ai_user_api_key_allowed: keyAllowed,
+      ai_global_provider_allowed: instAllowed,
+    } = data;
+
+    const personal = !!keyAllowed;
+    const institution = !!instAllowed;
+
+    // Choose a valid initial provider mode given the user's granted gates.
+    let type = setting.provider_type || 'global';
+    if (setting.provider_type === 'custom' && !personal) setLegacyCustomNotice(true);
+    if (type === 'custom' && !personal) type = institution ? 'global' : 'custom';
+    if (type === 'global' && !institution) type = personal ? 'custom' : 'global';
+
+    setProviderType(type);
+    setProviders(ownProviders || []);
+    setDefaultProviderId(setting.default_llm_provider_id || null);
+    setTaskMappings(mappings || []);
+    setAdminProvider(adminProv || null);
+    setCustomKeyAllowed(personal);
+    setInstitutionAllowed(institution);
+    setSavedProviderType(type);
+    setSavedDefaultProviderId(setting.default_llm_provider_id || null);
+    setSavedTaskMappings(mappings || []);
+    return { type, institution, providers: ownProviders || [] };
+  }, []);
 
   useEffect(() => {
     UsersFetcher.fetchLlmSettings()
       .then((data) => {
-        const {
-          setting = {},
-          task_mappings: mappings,
-          admin_provider: adminProv,
-          ai_user_api_key_allowed: keyAllowed,
-          ai_global_provider_allowed: instAllowed,
-        } = data;
-
-        const personal = !!keyAllowed;
-        const institution = !!instAllowed;
-
-        // Choose a valid initial provider mode given the user's granted gates.
-        let type = setting.provider_type || 'global';
-        if (setting.provider_type === 'custom' && !personal) setLegacyCustomNotice(true);
-        if (type === 'custom' && !personal) type = institution ? 'global' : 'custom';
-        if (type === 'global' && !institution) type = personal ? 'custom' : 'global';
-
-        setProviderType(type);
-        setApiProtocol(setting.api_protocol || 'openai');
-        setBaseUrl(setting.base_url || '');
-        setSavedBaseUrl(setting.base_url || '');
-        setSavedProtocol(setting.api_protocol || 'openai');
-        setApiKeyMasked(setting.api_key_masked || '');
-        setDefaultModel(setting.default_model || '');
-        setTaskMappings(mappings || []);
-        setAdminProvider(adminProv || null);
-        setCustomKeyAllowed(personal);
-        setInstitutionAllowed(institution);
-        // Record saved snapshots for dirty tracking.
-        setSavedProviderType(type);
-        setSavedDefaultModel(setting.default_model || '');
-        setSavedTaskMappings(mappings || []);
+        const { type, institution, providers: own } = applySettings(data);
 
         // Warm the cache for the provider contexts this user can actually reach.
-        // Both are no-ops once the cache holds a fresh list, so re-mounting the
+        // Each is a no-op once the cache holds a fresh list, so re-mounting the
         // settings tab costs no provider calls at all.
         //
         // `type` is checked as well as the gate: when neither gate is granted the
         // mode resolution above still leaves `type` at 'global', and that renders
         // the institution dropdown — which must not be left permanently empty.
         if (institution || type === 'global') loadInstitutionModels();
-        // Pre-populate the custom model list from the saved custom config (blank
-        // key → server reuses the stored key).
-        if (type === 'custom') {
-          loadCustomModels({
-            protocol: setting.api_protocol || 'openai',
-            baseUrl:  setting.base_url || '',
-            model:    setting.default_model || '',
-          });
-        }
+        own.forEach((p) => loadProviderModels(p.id));
       })
       .catch(() => setStatus({ variant: 'danger', message: 'Failed to load AI settings.' }))
       .finally(() => setLoading(false));
@@ -225,168 +176,104 @@ const LlmSettings = ({ userId }) => {
       .catch(() => {});
   }, []);
 
-  // Apply a preset: RESET every provider field to the preset's values (fields the
-  // preset doesn't define are cleared, so nothing leaks from the prior selection).
-  const applyPreset = useCallback((key) => {
-    const preset = profiles.find((p) => p.key === key);
-    if (!preset) return;
-    setApiProtocol(preset.protocol || 'openai');
-    setBaseUrl(preset.base_url || '');
-    setDefaultModel(preset.default_model || '');
-    setApiKey(''); // the key is provider-specific — never carry it across presets
-    setVerifyStatus(null);
-    // Record this preset's curated list as the fallback for the identity it
-    // describes. A cached live list for the same endpoint (from an earlier Test
-    // connection) still wins, and because the fallback is tagged with an identity,
-    // the previously-selected preset's models can never linger.
-    setPresetModels({
-      key: customModelsKey({ protocol: preset.protocol || 'openai', baseUrl: preset.base_url || '' }),
-      models: Array.isArray(preset.models) ? preset.models : [],
-    });
-  }, [profiles]);
-
-  // Switching provider mode never refetches anything the cache already holds; the
-  // one case worth a request is entering custom mode for the first time while the
-  // form still describes the *saved* custom provider — the server can list its
-  // models with the stored key. Any other endpoint has no key yet and needs a
-  // Test connection first, and a request must never be tied to typing in the URL
-  // field, so this is deliberately scoped to the mode switch.
-  const handleProviderTypeChange = useCallback((value) => {
-    setProviderType(value);
-    if (value !== 'custom' || !apiKeyMasked) return;
-    const savedConfig = {
-      protocol: savedProtocol,
-      baseUrl:  savedBaseUrl,
-      model:    savedDefaultModel,
-    };
-    if (customModelsKey(savedConfig) !== customIdentity) return;
-    loadCustomModels(savedConfig); // no-op while the cached list is still fresh
-  }, [apiKeyMasked, savedProtocol, savedBaseUrl, savedDefaultModel, customIdentity, loadCustomModels]);
-
-  const performDeleteKey = useCallback(() => {
-    setConfirmDeleteKey(false);
-    UsersFetcher.deleteLlmApiKey()
-      .then(() => {
-        setApiKeyMasked('');
-        setApiKey('');
-        setStatus({ variant: 'success', message: 'Your saved API key was removed.' });
+  // Re-read the provider list after an add / edit / delete, and pick up the model
+  // list of whatever was just saved. The server owns the default-provider
+  // pointer (adding the first provider sets it), so the whole settings payload is
+  // re-read rather than patched locally.
+  const reloadProviders = useCallback(() => (
+    UsersFetcher.fetchLlmSettings()
+      .then((data) => {
+        const { providers: own } = applySettings(data);
+        own.forEach((p) => loadProviderModels(p.id, { force: true }));
       })
-      .catch((err) => setStatus({ variant: 'danger', message: err.message || 'Failed to remove the key.' }));
-  }, []);
+      .catch(() => setStatus({ variant: 'danger', message: 'Failed to reload your providers.' }))
+  ), [applySettings, loadProviderModels]);
 
-  const getTaskModel = useCallback((taskName) => {
-    const found = taskMappings.find((m) => m.task_name === taskName);
-    return found ? found.model : '';
-  }, [taskMappings]);
+  const getMapping = useCallback(
+    (taskName) => taskMappings.find((m) => m.task_name === taskName) || {},
+    [taskMappings],
+  );
 
-  const handleTaskModelChange = useCallback((taskName, model) => {
+  const patchMapping = useCallback((taskName, patch) => {
     setTaskMappings((prev) => {
-      const others = prev.filter((m) => m.task_name !== taskName);
-      // keep the entry even when blank — server will remove it
-      return [...others, { task_name: taskName, model }];
+      const current = prev.find((m) => m.task_name === taskName) || { task_name: taskName };
+      const others  = prev.filter((m) => m.task_name !== taskName);
+      // Blank entries are kept in state and dropped on save — that is how a row
+      // is cleared back to "use my default".
+      return [...others, { ...current, ...patch }];
     });
   }, []);
+
+  // Which provider actually serves a task: the one the row names, or — for a row
+  // that names none — whichever the "LLM Provider" choice above points at.
+  const effectiveProviderKey = useCallback((mapping) => {
+    if (mapping.llm_provider_id) {
+      return mapping.llm_provider_id === (adminProvider || {}).id
+        ? institutionModelsKey()
+        : providerModelsKey(mapping.llm_provider_id);
+    }
+    if (isCustomMode && defaultProviderId) return providerModelsKey(defaultProviderId);
+    return institutionModelsKey();
+  }, [adminProvider, isCustomMode, defaultProviderId]);
 
   const handleSave = useCallback((e) => {
     e.preventDefault();
     setStatus(null);
 
-    // Only save meaningful changes, and only when the current setup passed a test.
-    const providerConfigDirty = providerType !== savedProviderType
-      || (providerType === 'custom'
-        && (apiProtocol !== savedProtocol
-          || baseUrl.trim() !== (savedBaseUrl || '').trim()
-          || defaultModel !== savedDefaultModel
-          || !!apiKey));
-    const taskMappingsDirty = normalizeMappings(taskMappings) !== normalizeMappings(savedTaskMappings);
-    const dirty = providerConfigDirty || taskMappingsDirty;
-    const verified = verifiedConfig === configKey(providerType, apiProtocol, baseUrl, defaultModel, apiKey);
+    const dirty = providerType !== savedProviderType
+      || defaultProviderId !== savedDefaultProviderId
+      || normalizeMappings(taskMappings) !== normalizeMappings(savedTaskMappings);
 
     if (!dirty) {
       setStatus({ variant: 'warning', message: 'Nothing to save — you haven’t changed anything.' });
       return;
     }
-    if (!verified) {
+    if (providerType === 'custom' && !defaultProviderId) {
       setStatus({
         variant: 'warning',
-        message: 'Please run a successful "Test connection" for the current setup before saving.',
+        message: 'Add a provider of your own (and pick which one is the default) before choosing that option.',
       });
       return;
     }
 
-    const payload = {
+    UsersFetcher.updateLlmSettings({
       provider_type: providerType,
-      task_mappings: taskMappings,
-    };
-    if (providerType === 'custom') {
-      payload.api_protocol  = apiProtocol;
-      payload.base_url      = baseUrl;
-      payload.default_model = defaultModel;
-    }
-    if (apiKey) payload.api_key = apiKey;
-
-    UsersFetcher.updateLlmSettings(payload)
+      default_llm_provider_id: providerType === 'custom' ? defaultProviderId : null,
+      task_mappings: taskMappings.map((m) => ({
+        task_name: m.task_name,
+        model: m.model || '',
+        llm_provider_id: m.llm_provider_id || null,
+      })),
+    })
       .then(() => {
         setStatus({ variant: 'success', message: 'AI settings saved.' });
-        setApiKey(''); // clear plaintext key from state after save
-        // Refresh saved snapshots so the form is no longer "dirty".
         setSavedProviderType(providerType);
-        setSavedProtocol(apiProtocol);
-        setSavedBaseUrl(baseUrl);
-        setSavedDefaultModel(defaultModel);
+        setSavedDefaultProviderId(defaultProviderId);
         setSavedTaskMappings(taskMappings);
-        if (apiKey) setApiKeyMasked(`${apiKey.slice(0, 3)}••••`);
-        // The just-saved config remains verified (key now stored, so key part is blank).
-        setVerifiedConfig(configKey(providerType, apiProtocol, baseUrl, defaultModel, ''));
       })
-      .catch((err) => {
-        setStatus({ variant: 'danger', message: err.message || 'Failed to save settings.' });
-      });
+      .catch((err) => setStatus({ variant: 'danger', message: err.message || 'Failed to save settings.' }));
   }, [
-    providerType, apiProtocol, baseUrl, apiKey, defaultModel, taskMappings,
-    savedProviderType, savedProtocol, savedBaseUrl, savedDefaultModel, savedTaskMappings, verifiedConfig,
+    providerType, defaultProviderId, taskMappings,
+    savedProviderType, savedDefaultProviderId, savedTaskMappings,
   ]);
 
+  // Institution-provider test. Personal providers are tested from their own row
+  // in the list, which uses their stored key.
   const handleVerify = useCallback(() => {
     setVerifying(true);
     setVerifyStatus(null);
 
-    const payload = {};
-    if (providerType === 'custom') {
-      payload.protocol = apiProtocol;
-      payload.base_url = baseUrl;
-      payload.model    = defaultModel;
-    }
-    if (apiKey) payload.api_key = apiKey;
-
-    UsersFetcher.verifyLlmApiKey(payload)
+    UsersFetcher.verifyLlmApiKey({})
       .then((res) => {
         setVerifyStatus({ variant: 'success', message: res.message || 'Connection verified.' });
-        // Mark this exact config as verified so Save is unlocked.
-        setVerifiedConfig(configKey(providerType, apiProtocol, baseUrl, defaultModel, apiKey));
-        // Refresh the model list from the just-verified connection so the
-        // Task→Model dropdown reflects the models this provider actually offers.
-        // `force` bypasses the browser cache *and* asks the server to re-read the
-        // catalogue (refresh=true) — a verified connection is the one moment we
-        // know it is worth re-reading, and the only place a stale server-side entry
-        // for an unchanged identity would otherwise survive.
-        if (providerType === 'custom') {
-          loadCustomModels({
-            protocol: apiProtocol, baseUrl, model: defaultModel, apiKey,
-          }, { force: true });
-        } else {
-          loadInstitutionModels({ force: true });
-        }
+        loadInstitutionModels({ force: true });
       })
       .catch((err) => setVerifyStatus({
         variant: 'danger',
-        message: err.message || 'Verification failed. Check key and endpoint.',
+        message: err.message || 'Verification failed. Ask your administrator to check the provider.',
       }))
       .finally(() => setVerifying(false));
-  }, [
-    providerType, apiProtocol, baseUrl, apiKey, defaultModel,
-    loadCustomModels, loadInstitutionModels,
-  ]);
+  }, [loadInstitutionModels]);
 
   if (loading) {
     return (
@@ -406,18 +293,16 @@ const LlmSettings = ({ userId }) => {
     || (opt.value === 'custom' && customKeyAllowed)
   ));
 
-  // The Task→Model dropdown reflects ONLY the currently-selected provider's
-  // models — institution models in institution mode, the custom provider's
-  // models in custom mode — so the two never intermix.
-  const modelOptions  = isCustomMode ? customModels : institutionModels;
-  const modelsLoading = (isCustomMode ? customLoads : institutionLoads) > 0;
+  // Everything a task can be routed to: the institution service (when the user
+  // is allowed it) and each of the user's own providers.
+  const routableProviders = [
+    ...(institutionAllowed && adminProvider
+      ? [{ value: INSTITUTION, id: adminProvider.id, label: `Institution: ${adminProvider.name}` }]
+      : []),
+    ...providers.map((p) => ({ value: String(p.id), id: p.id, label: p.name })),
+  ];
 
-  // The saved key belongs to the saved provider identity. If the user switches
-  // provider (preset or manual edit of protocol/URL), hide the mask and prompt
-  // for that provider's own key.
-  const providerUnchanged = baseUrl.trim() === (savedBaseUrl || '').trim() && apiProtocol === savedProtocol;
-  const showSavedKey = apiKeyMasked && !apiKey && providerUnchanged;
-  const providerSwitched = apiKeyMasked && !apiKey && !providerUnchanged;
+  const modelsLoading = modelLoads > 0;
 
   return (
     <Card>
@@ -432,10 +317,10 @@ const LlmSettings = ({ userId }) => {
             </Alert>
           )}
 
-          {/* Provider mode */}
+          {/* Which provider answers a task that names none */}
           <Row className="mb-3">
             <Form.Label column className="col-form-label col-3 offset-1">
-              LLM Provider
+              Default provider
             </Form.Label>
             <Col className="col-7">
               {providerOptions.map((opt) => (
@@ -447,23 +332,26 @@ const LlmSettings = ({ userId }) => {
                   label={opt.label}
                   value={opt.value}
                   checked={providerType === opt.value}
-                  onChange={() => handleProviderTypeChange(opt.value)}
+                  onChange={() => setProviderType(opt.value)}
                 />
               ))}
+              <Form.Text className="text-muted d-block">
+                Used by every task that does not name a provider of its own, below.
+              </Form.Text>
               {!customKeyAllowed && (
                 <Form.Text className="text-muted d-block">
-                  Personal API keys are enabled by your institution&apos;s administrator.
+                  Your own providers are enabled by your institution&apos;s administrator.
                 </Form.Text>
               )}
             </Col>
           </Row>
 
-          {/* Institution provider info (read-only) — shown in global mode */}
-          {!isCustomMode && (
+          {/* Institution provider info (read-only) */}
+          {institutionAllowed && (
             <Row className="mb-3">
               <Col className="col-7 offset-4">
                 {adminProvider ? (
-                  <Alert variant="info" className="mb-2">
+                  <CopyableAlert variant="info" className="mb-2">
                     <div>
                       <strong>Institution provider:</strong>
                       {' '}
@@ -484,7 +372,7 @@ const LlmSettings = ({ userId }) => {
                       </div>
                     )}
                     <div className="text-muted small mt-1">Configured by your institution administrator.</div>
-                  </Alert>
+                  </CopyableAlert>
                 ) : (
                   <Alert variant="warning" className="mb-2">
                     No institution provider is configured yet. Please contact your administrator.
@@ -501,258 +389,96 @@ const LlmSettings = ({ userId }) => {
                   {verifying && <Spinner size="sm" animation="border" className="me-2" />}
                   {verifying ? 'Testing…' : 'Test connection'}
                 </Button>
-                {/* Verify/test result shown directly below the button */}
                 {verifyStatus && (
-                  <Alert
+                  <CopyableAlert
                     variant={verifyStatus.variant}
-                    dismissible
                     onClose={() => setVerifyStatus(null)}
                     className="mt-2 mb-0"
                   >
                     {verifyStatus.message}
-                  </Alert>
+                  </CopyableAlert>
                 )}
               </Col>
             </Row>
           )}
 
-          {/* Custom endpoint / model / key — only in custom mode */}
-          {isCustomMode && (
-            <>
-              {/* Preset picker (from config/llm_provider_profiles.yml) */}
-              {profiles.length > 0 && (
-                <Row className="mb-3">
-                  <Form.Label column className="col-form-label col-3 offset-1">
-                    Use a preset
-                  </Form.Label>
-                  <Col className="col-7">
-                    <Form.Select
-                      defaultValue=""
-                      onChange={(e) => applyPreset(e.target.value)}
-                    >
-                      <option value="">(choose a provider to pre-fill…)</option>
-                      {profiles.map((p) => (
-                        <option key={p.key} value={p.key}>{p.label}</option>
-                      ))}
-                    </Form.Select>
-                    <Form.Text className="text-muted">
-                      Pre-fills the fields below. You still enter your own API key.
-                    </Form.Text>
-                  </Col>
-                </Row>
-              )}
-
-              <Row className="mb-3">
-                <Form.Label column className="col-form-label col-3 offset-1">
-                  API protocol
-                  <OverlayTrigger
-                    placement="top"
-                    overlay={(
-                      <Tooltip id="llm-protocol-tip">
-                        The request format your endpoint speaks, not who runs it. Pick the
-                        Chat Completions API for any service exposing
-                        {' '}
-                        <code>/v1/chat/completions</code>
-                        {' '}
-                        — OpenAI, KI-Toolbox, vLLM, Ollama, LM Studio, Azure and most
-                        self-hosted servers. Claude and Gemini have their own.
-                      </Tooltip>
-                    )}
-                  >
-                    <i className="fa fa-info-circle ms-1" />
-                  </OverlayTrigger>
-                </Form.Label>
-                <Col className="col-7">
-                  {/* Changing this changes the provider identity, so the model
-                      list is looked up again under the new key — no request, and
-                      switching back restores the previous provider's list. */}
-                  <Form.Select
-                    value={apiProtocol}
-                    onChange={(e) => setApiProtocol(e.target.value)}
-                  >
-                    {LLM_PROTOCOL_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </Form.Select>
-                </Col>
-              </Row>
-
-              <Row className="mb-3">
-                <Form.Label column className="col-form-label col-3 offset-1">
-                  API Endpoint URL
-                  <OverlayTrigger
-                    placement="top"
-                    overlay={(
-                      <Tooltip id="llm-endpoint-tip">
-                        {`For the ${llmProtocolShortLabel(CHAT_COMPLETIONS_PROTOCOL)}, enter your
-                        endpoint (e.g. KI-Toolbox, vLLM, Ollama). For the Anthropic or Gemini
-                        API, leave blank to use the official endpoint.`}
-                      </Tooltip>
-                    )}
-                  >
-                    <i className="fa fa-info-circle ms-1" />
-                  </OverlayTrigger>
-                </Form.Label>
-                <Col className="col-7">
-                  <Form.Control
-                    type="url"
-                    placeholder={apiProtocol === CHAT_COMPLETIONS_PROTOCOL
-                      ? 'https://your-endpoint/api  (or http://localhost:11434 for Ollama)'
-                      : '(optional — defaults to the official endpoint)'}
-                    value={baseUrl}
-                    onChange={(e) => setBaseUrl(e.target.value)}
-                  />
-                </Col>
-              </Row>
-
-              <Row className="mb-3">
-                <Form.Label column className="col-form-label col-3 offset-1">
-                  Default Model
-                </Form.Label>
-                <Col className="col-7">
-                  <Form.Control
-                    type="text"
-                    placeholder="e.g. kit.qwen3.5-397b-A17b"
-                    value={defaultModel}
-                    onChange={(e) => setDefaultModel(e.target.value)}
-                  />
-                </Col>
-              </Row>
-
-              <Row className="mb-3">
-                <Form.Label column className="col-form-label col-3 offset-1">
-                  API Key
-                </Form.Label>
-                <Col className="col-7">
-                  {showSavedKey && (
-                    <p className="mb-1 text-muted small">
-                      Current:
-                      {' '}
-                      <code>{apiKeyMasked}</code>
-                      {' '}
-                      — enter a new key below to replace it
-                    </p>
-                  )}
-                  {providerSwitched && (
-                    <p className="mb-1 text-warning small">
-                      You changed the provider — enter the API key for this provider.
-                      Your previously saved key belonged to the old provider and will be dropped.
-                    </p>
-                  )}
-                  <InputGroup>
-                    <Form.Control
-                      type="password"
-                      autoComplete="new-password"
-                      placeholder={showSavedKey ? 'Replace existing key…' : 'Enter API key for this provider…'}
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                    />
-                    <Button
-                      variant="outline-primary"
-                      onClick={handleVerify}
-                      disabled={verifying}
-                      className="d-inline-flex align-items-center justify-content-center"
-                      style={{ minWidth: '6.5rem' }}
-                    >
-                      {verifying && <Spinner size="sm" animation="border" className="me-2" />}
-                      {verifying ? 'Testing…' : 'Verify'}
-                    </Button>
-                    {apiKeyMasked && (
-                      <OverlayTrigger
-                        placement="top"
-                        overlay={(
-                          <Tooltip id="llm-delete-key-tip">
-                            Permanently remove your saved API key. AI features that use your
-                            personal key will stop working until you enter a new one.
-                          </Tooltip>
-                        )}
-                      >
-                        <Button
-                          variant="outline-danger"
-                          onClick={() => setConfirmDeleteKey(true)}
-                          title="Delete saved key"
-                        >
-                          <i className="fa fa-trash-o" />
-                        </Button>
-                      </OverlayTrigger>
-                    )}
-                  </InputGroup>
-                  {confirmDeleteKey && (
-                    <Alert variant="warning" className="mt-2 mb-0 d-flex flex-column gap-2 p-2">
-                      <div>
-                        Remove your saved API key? AI features that rely on your personal key
-                        will stop working until you enter a new one.
-                      </div>
-                      <div className="d-flex gap-2 justify-content-end">
-                        <Button size="sm" variant="outline-secondary" onClick={() => setConfirmDeleteKey(false)}>
-                          Cancel
-                        </Button>
-                        <Button size="sm" variant="danger" onClick={performDeleteKey}>
-                          Remove key
-                        </Button>
-                      </div>
-                    </Alert>
-                  )}
-                  <Form.Text className="text-muted d-block">
-                    Encrypted at rest. Never stored in plaintext or returned via the API.
-                    Leave blank for endpoints that need no key (e.g. local Ollama).
-                  </Form.Text>
-                  {/* Verify result shown directly below the Verify button */}
-                  {verifyStatus && (
-                    <Alert
-                      variant={verifyStatus.variant}
-                      dismissible
-                      onClose={() => setVerifyStatus(null)}
-                      className="mt-2 mb-0"
-                    >
-                      {verifyStatus.message}
-                    </Alert>
-                  )}
-                </Col>
-              </Row>
-            </>
+          {/* The user's own providers */}
+          {customKeyAllowed && (
+            <Row className="mb-3">
+              <Col className="col-7 offset-4">
+                <LlmProviderList
+                  providers={providers}
+                  profiles={profiles}
+                  defaultProviderId={defaultProviderId}
+                  onMakeDefault={(id) => {
+                    setDefaultProviderId(id);
+                    setProviderType('custom');
+                  }}
+                  onChanged={reloadProviders}
+                />
+              </Col>
+            </Row>
           )}
 
-          {/* Task → Model overrides */}
+          {/* Task → Provider + Model overrides */}
           <Row className="mb-3">
             <Form.Label column className="col-form-label col-3 offset-1">
-              Task → Model
+              Task routing
             </Form.Label>
             <Col className="col-7">
               {/* Fixed table layout so a long model name never resizes the columns */}
               <table className="table table-sm table-bordered mb-1" style={{ tableLayout: 'fixed', width: '100%' }}>
                 <colgroup>
-                  <col style={{ width: '40%' }} />
-                  <col style={{ width: '60%' }} />
+                  <col style={{ width: '30%' }} />
+                  <col style={{ width: '32%' }} />
+                  <col style={{ width: '38%' }} />
                 </colgroup>
                 <thead>
                   <tr>
                     <th>Task</th>
+                    <th>Provider</th>
                     <th>
-                      Model for this task
-                      <OverlayTrigger
-                        placement="top"
-                        overlay={(
-                          <Tooltip id="llm-task-model-tip">
-                            Optionally pick (or type) the model to use for this task.
-                            The list shows the models offered by your currently-selected
-                            provider. Leave blank to use the provider&apos;s default model.
-                          </Tooltip>
-                        )}
-                      >
-                        <i className="fa fa-info-circle ms-1" />
-                      </OverlayTrigger>
+                      Model
                       {modelsLoading && <Spinner size="sm" animation="border" className="ms-1" />}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {knownTasks.map(({ taskName, label }) => {
-                    const currentModel = getTaskModel(taskName);
+                    const mapping = getMapping(taskName);
+                    const currentModel = mapping.model || '';
                     const selected = currentModel ? { value: currentModel, label: currentModel } : null;
+                    // The row's models come from the provider the row resolves to,
+                    // so the institution's models and a personal provider's are
+                    // never offered in the same dropdown.
+                    const options = toModelOptions(peekModels(effectiveProviderKey(mapping)));
+                    const providerValue = (() => {
+                      if (!mapping.llm_provider_id) return INHERIT;
+                      if (mapping.llm_provider_id === (adminProvider || {}).id) return INSTITUTION;
+                      return String(mapping.llm_provider_id);
+                    })();
+
                     return (
                       <tr key={taskName}>
                         <td className="align-middle text-truncate">{label}</td>
+                        <td>
+                          <Form.Select
+                            size="sm"
+                            value={providerValue}
+                            onChange={(e) => {
+                              const choice = routableProviders.find((p) => p.value === e.target.value);
+                              // Changing provider clears the model: a model name
+                              // belongs to the provider that offers it.
+                              patchMapping(taskName, { llm_provider_id: choice ? choice.id : null, model: '' });
+                              if (choice && choice.value !== INSTITUTION) loadProviderModels(choice.id);
+                            }}
+                          >
+                            <option value={INHERIT}>(my default provider)</option>
+                            {routableProviders.map((p) => (
+                              <option key={p.value} value={p.value}>{p.label}</option>
+                            ))}
+                          </Form.Select>
+                        </td>
                         <td>
                           {/* Always a Creatable select — consistent height whether or
                               not the model list has loaded, and users can type a
@@ -760,11 +486,11 @@ const LlmSettings = ({ userId }) => {
                           <CreatableSelect
                             isClearable
                             isLoading={modelsLoading}
-                            placeholder="(use default)"
-                            options={modelOptions}
+                            placeholder="(provider default)"
+                            options={options}
                             value={selected}
-                            onChange={(opt) => handleTaskModelChange(taskName, opt ? opt.value : '')}
-                            onCreateOption={(val) => handleTaskModelChange(taskName, val)}
+                            onChange={(opt) => patchMapping(taskName, { model: opt ? opt.value : '' })}
+                            onCreateOption={(val) => patchMapping(taskName, { model: val })}
                             formatCreateLabel={(val) => `Use "${val}"`}
                             menuPosition="fixed"
                           />
@@ -775,7 +501,8 @@ const LlmSettings = ({ userId }) => {
                 </tbody>
               </table>
               <Form.Text className="text-muted">
-                Leave blank to use the provider default model for that task.
+                Leave a row alone to run that task on your default provider and its default
+                model. Naming a provider but no model uses that provider&apos;s own default.
                 Type a name and press enter to use a model not in the list.
               </Form.Text>
             </Col>
@@ -783,14 +510,13 @@ const LlmSettings = ({ userId }) => {
 
           {/* Status / feedback */}
           {status && (
-            <Alert
+            <CopyableAlert
               variant={status.variant}
-              dismissible
               onClose={() => setStatus(null)}
               className="mx-1"
             >
               {status.message}
-            </Alert>
+            </CopyableAlert>
           )}
 
           <Row>
@@ -806,7 +532,6 @@ const LlmSettings = ({ userId }) => {
 };
 
 LlmSettings.propTypes = {
-  // Only used to keep the module-level model cache from crossing users.
   userId: PropTypes.number,
 };
 

@@ -177,6 +177,7 @@ class API < Grape::API
   }.freeze
 
   mount Chemotion::LlmSettingsAPI
+  mount Chemotion::LlmProvidersAPI
   mount Chemotion::AdminLlmAPI
   mount Chemotion::LlmTasksAPI
   mount Chemotion::LiteratureAPI

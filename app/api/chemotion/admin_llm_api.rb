@@ -198,9 +198,11 @@ module Chemotion
             api_key  = params[:api_key].presence  || provider&.api_key
             model    = params[:default_model].presence || provider&.default_model
 
-            error!('No model available for test.', 422) if model.nil?
+            # blank?, not nil?: a provider saved with an empty default_model would
+            # otherwise pass this check and be sent as model: "".
+            error!('No model available for test. Enter a default model first.', 422) if model.blank?
             # Native protocols (anthropic/gemini) default their base URL; openai needs one.
-            error!('No base URL available for test.', 422) if base_url.nil? && protocol == 'openai'
+            error!('No base URL available for test.', 422) if base_url.blank? && protocol == 'openai'
 
             client = LlmClient.new(base_url: base_url, api_key: api_key, model: model, protocol: protocol)
             client.chat(
