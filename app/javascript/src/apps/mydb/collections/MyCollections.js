@@ -125,7 +125,6 @@ const MyCollections = () => {
           <ConfirmDeleteButton
             header={`Do you really want to delete "${node.label}"?`}
             placement="bottom"
-            stopMouseDownPropagation
             onConfirm={() => deleteCollection(node)}
           />
         </ButtonGroup>

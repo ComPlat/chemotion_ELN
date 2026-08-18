@@ -18,7 +18,6 @@ const ConfirmDeleteButton = ({
   className,
   title,
   disabled,
-  stopMouseDownPropagation,
   children,
 }) => {
   const [target, setTarget] = useState(null);
@@ -26,9 +25,11 @@ const ConfirmDeleteButton = ({
   // Lazy initializer so the random id is generated once on mount, not on every render.
   const [tooltipId] = useState(() => `confirm-delete-tooltip-${Math.random().toString(36).slice(2)}`);
 
-  const mouseDownProps = stopMouseDownPropagation
-    ? { onMouseDown: (event) => event.stopPropagation() }
-    : {};
+  // Always on, not opt-in: this is meant to be embeddable inline in list/tree rows, exactly
+  // where an ancestor's own mousedown handler (row selection, drag-and-drop) is most likely
+  // to steal the mousedown before the click fires - the same failure class as #2835, just via
+  // a different mechanism. Making a future caller remember to opt in would just reintroduce it.
+  const mouseDownProps = { onMouseDown: (event) => event.stopPropagation() };
 
   const close = () => setTarget(null);
   const confirm = () => {
@@ -76,7 +77,7 @@ const ConfirmDeleteButton = ({
         destructiveActionLabel="Yes"
         hideAction={close}
         hideActionLabel="No"
-        stopMouseDownPropagation={stopMouseDownPropagation}
+        stopMouseDownPropagation
       />
     </>
   );
@@ -92,7 +93,6 @@ ConfirmDeleteButton.propTypes = {
   className: PropTypes.string,
   title: PropTypes.string,
   disabled: PropTypes.bool,
-  stopMouseDownPropagation: PropTypes.bool,
   children: PropTypes.node,
 };
 
@@ -104,7 +104,6 @@ ConfirmDeleteButton.defaultProps = {
   className: undefined,
   title: undefined,
   disabled: false,
-  stopMouseDownPropagation: false,
   children: <i className="fa fa-trash-o" />,
 };
 
