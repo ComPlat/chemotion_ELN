@@ -89,7 +89,7 @@ describe Entities::WellplateEntity do
           type: 'wellplate',
           description: '***',
           name: '***',
-          readout_titles: '***',
+          readout_titles: ['Readout'],
           short_label: '***',
           created_at: I18n.l(wellplate.created_at, format: :eln_timestamp),
           updated_at: I18n.l(wellplate.updated_at, format: :eln_timestamp),

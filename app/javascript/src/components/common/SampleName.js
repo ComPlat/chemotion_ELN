@@ -9,7 +9,7 @@ import ClipboardCopyText from 'src/components/common/ClipboardCopyText';
  * @returns {string} Formatted stereo string
  */
 const getStereoInfo = (stereo) => {
-  if (!stereo) return '';
+  if (!stereo || typeof stereo !== 'object') return '';
 
   const stereoInfo = Object.entries(stereo)
     .filter(([_, val]) => val && val !== 'any')

@@ -11,7 +11,7 @@ module Entities
     end
 
     with_options(anonymize_below: 1) do
-      expose! :readouts
+      expose! :readouts, anonymize_with: []
     end
 
     with_options(anonymize_below: 10) do

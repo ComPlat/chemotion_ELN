@@ -23,7 +23,7 @@ module Entities
       expose! :container,       anonymize_with: nil, using: 'Entities::ContainerEntity'
       expose! :description
       expose! :name
-      expose! :readout_titles
+      expose! :readout_titles,  anonymize_with: ['Readout']
       expose! :segments,        anonymize_with: [],  using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :tag,             anonymize_with: nil, using: 'Entities::ElementTagEntity'
