@@ -16,7 +16,6 @@ const ConfirmDeleteButton = ({
   size,
   variant,
   className,
-  title,
   disabled,
   children,
 }) => {
@@ -43,7 +42,6 @@ const ConfirmDeleteButton = ({
       type="button"
       variant={variant}
       className={className}
-      title={title}
       disabled={disabled}
       onClick={(event) => setTarget((current) => (current ? null : event.currentTarget))}
       {...mouseDownProps}
@@ -91,7 +89,6 @@ ConfirmDeleteButton.propTypes = {
   size: PropTypes.string,
   variant: PropTypes.string,
   className: PropTypes.string,
-  title: PropTypes.string,
   disabled: PropTypes.bool,
   children: PropTypes.node,
 };
@@ -102,7 +99,6 @@ ConfirmDeleteButton.defaultProps = {
   size: 'sm',
   variant: 'danger',
   className: undefined,
-  title: undefined,
   disabled: false,
   children: <i className="fa fa-trash-o" />,
 };
