@@ -184,9 +184,31 @@ describe Entities::SampleEntity do
 
     context 'when detail level for Sample is 1' do
       let(:sample_detail_level) { 1 }
+      let(:sample) do
+        create(:sample, :with_residues, force_attributes: { sample_svg_file: 'sample.svg' }).tap do |s|
+          s.update!(molecule_name: create(:molecule_name, molecule: s.molecule))
+        end
+      end
 
       it 'returns a sample with an anonymized container' do
         expect(grape_entity_as_hash[:container]).to eq(nil)
+      end
+
+      it 'returns a sample with an unanonymized molfile' do
+        expect(grape_entity_as_hash[:molfile]).to eq(sample.molfile)
+      end
+
+      it 'anonymizes the sample-specific svg file, but exposes the molecule and its svg for fallback' do
+        expect(grape_entity_as_hash[:sample_svg_file]).to eq('***')
+        expect(grape_entity_as_hash[:molecule]).to include(
+          id: sample.molecule.id,
+          molecule_svg_file: sample.molecule.molecule_svg_file,
+        )
+      end
+
+      it 'returns the real molecule_name_hash instead of anonymizing it' do
+        expect(grape_entity_as_hash[:molecule_name_hash]).to eq(sample.molecule_name_hash)
+        expect(grape_entity_as_hash[:molecule_name_hash][:label]).to eq(sample.molecule_name.name)
       end
     end
 
