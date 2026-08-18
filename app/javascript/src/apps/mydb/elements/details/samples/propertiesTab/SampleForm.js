@@ -418,10 +418,9 @@ export default class SampleForm extends React.Component {
               }
             }}
             isLoading={isMolNameLoading}
-            value={formattedOptions.find(({ value, label }) => {
-              if (!mno) return false;
-              return String(value) === String(mno.value) || String(label) === String(mno.label);
-            }) || null}
+            value={mno && mno.label
+              ? { value: mno.value, label: mno.label, type: mno.desc || mno.type || '' }
+              : null}
             onCreateOption={(inputValue) => {
               if (!isValidMoleculeName(inputValue)) return;
               this.setState({ moleculeNameInputValue: inputValue });

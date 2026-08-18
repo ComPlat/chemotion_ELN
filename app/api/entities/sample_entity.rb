@@ -29,7 +29,8 @@ module Entities
     end
 
     # Level 1 attributes
-    expose! :molfile, anonymize_below: 1
+    expose! :molfile,            anonymize_below: 1
+    expose! :molecule_name_hash, anonymize_below: 1, anonymize_with: {}
 
     # Level 2 attributes and relations
     with_options(unless: :displayed_in_list, anonymize_below: 2, using: 'Entities::ContainerEntity') do
@@ -55,7 +56,6 @@ module Entities
       expose! :metrics
       expose! :molarity_unit,           unless: :displayed_in_list
       expose! :molarity_value,          unless: :displayed_in_list
-      expose! :molecule_name_hash,                                  anonymize_with: {}
       expose! :name
       expose! :parent_id,               unless: :displayed_in_list
       expose! :pubchem_tag

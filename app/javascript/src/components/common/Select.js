@@ -48,6 +48,15 @@ function buildWrappedComponent(name, BaseComponent) {
           position: 'fixed',
           zIndex: 9000,
         },
+      }),
+      // react-select's own input styling sets `visibility: hidden` on the input
+      // wrapper whenever isDisabled is true, regardless of the isHidden prop that
+      // EditableInput below controls — without this override, a disabled select in
+      // isInputEditable mode shows no text at all, since the container hides it.
+      ...(isInputEditable && {
+        input: {
+          visibility: 'visible',
+        },
       })
     };
 
