@@ -33,17 +33,13 @@ describe('GroupElement', () => {
     onChangeData: sinon.spy(),
   }));
 
-  // confirmDelete takes the click event explicitly (not the legacy `window.event` global)
-  // so the admin-warning popover can be positioned without relying on an ambient DOM event.
-  const fakeEvent = () => ({ target: null });
-
-  describe('.confirmDelete(event, "user", ...)', () => {
+  describe('.confirmDelete("user", ...)', () => {
     it('removes a member even when they are the sole admin, without touching admin status', () => {
       const groupElement = buildGroupElement([admin]);
       const onDeleteUser = sinon.spy();
       const wrapper = mountElement(groupElement, onDeleteUser);
 
-      wrapper.instance().confirmDelete(fakeEvent(), 'user', groupElement, admin);
+      wrapper.instance().confirmDelete('user', groupElement, admin);
 
       expect(onDeleteUser.calledOnceWith(groupElement, admin)).toBe(true);
       expect(wrapper.instance().state.showAdminAlert).toBe(false);
@@ -55,7 +51,7 @@ describe('GroupElement', () => {
       const onDeleteUser = sinon.spy();
       const wrapper = mountElement(groupElement, onDeleteUser);
 
-      wrapper.instance().confirmDelete(fakeEvent(), 'user', groupElement, member);
+      wrapper.instance().confirmDelete('user', groupElement, member);
 
       expect(onDeleteUser.calledOnceWith(groupElement, member)).toBe(true);
       expect(wrapper.instance().state.showAdminAlert).toBe(false);
@@ -66,7 +62,7 @@ describe('GroupElement', () => {
       const onDeleteUser = sinon.spy();
       const wrapper = mountElement(groupElement, onDeleteUser);
 
-      wrapper.instance().confirmDelete(fakeEvent(), 'user', groupElement, otherAdmin);
+      wrapper.instance().confirmDelete('user', groupElement, otherAdmin);
 
       expect(onDeleteUser.calledOnceWith(groupElement, otherAdmin)).toBe(true);
       expect(wrapper.instance().state.showAdminAlert).toBe(false);
