@@ -109,7 +109,7 @@ const DevicesList = () => {
           header={`Remove data collector settings of ${device.name}`}
           variant="primary"
           className="bg-danger-subtle text-danger"
-          title="Clear data collector settings"
+          tooltip="Clear data collector settings"
           onConfirm={() => clearDatacollector(device)}
         >
           <i className="fa fa-database" />
@@ -129,7 +129,7 @@ const DevicesList = () => {
           header={`Remove Novnc settings of ${device.name}`}
           variant="primary"
           className="bg-danger-subtle text-danger"
-          title="Clear NoVNC settings"
+          tooltip="Clear NoVNC settings"
           onConfirm={() => clearNovncSettings(device)}
         >
           <i className="fa fa-cogs" />
@@ -150,7 +150,7 @@ const DevicesList = () => {
     return (
       <ConfirmDeleteButton
         header={`Remove ${type}: ${object.name}`}
-        title="Delete device"
+        tooltip="Delete device"
         onConfirm={() => confirmDelete(object, type, user)}
       />
     );
