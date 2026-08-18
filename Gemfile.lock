@@ -1,9 +1,16 @@
 GIT
   remote: https://github.com/ComPlat/inchi-gem.git
-  revision: 55cf667c08f5391ae0ddcd7908f433b1ab0766c2
-  branch: main
+  revision: 9976f75ba21d06ea98b7fc328ed3f993d9aa4fda
+  tag: v1.07.5
   specs:
-    inchi-gem (1.06.1)
+    inchi-gem (1.07.5)
+
+GIT
+  remote: https://github.com/ComPlat/openbabel-gem.git
+  revision: ecbc65d6643b8bb96d92b745da5a61a2640bfe25
+  tag: v3.2.0.1
+  specs:
+    openbabel (3.2.0.1)
 
 GIT
   remote: https://github.com/ComPlat/rinchi-gem.git
@@ -14,12 +21,12 @@ GIT
 
 GIT
   remote: https://github.com/ComPlat/sablon
-  revision: 0bb0e77a8eb5ed2953d81af42558e568845c3777
+  revision: b28019dbb096483c06a51bdce0b58d43427d6b0a
+  tag: v0.4.3-1
   specs:
-    sablon (0.0.19)
-      nokogiri (>= 1.6.0)
-      redcarpet (>= 3.4.0)
-      rubyzip (>= 1.1)
+    sablon (0.4.3)
+      nokogiri (>= 1.8.5)
+      rubyzip (>= 1.3.0)
 
 GIT
   remote: https://github.com/datacite/omniauth-orcid
@@ -28,13 +35,6 @@ GIT
     omniauth-orcid (2.1.2)
       omniauth-oauth2 (~> 1.3)
       ruby_dig (~> 0.0.2)
-
-GIT
-  remote: https://github.com/ptrxyz/openbabel-gem.git
-  revision: a1255a58c7fa52a00b5743dce46af714365d6acd
-  branch: ptrxyz-ctime-fix
-  specs:
-    openbabel (2.4.90.3)
 
 GIT
   remote: https://github.com/toretore/semacode.git
@@ -387,9 +387,10 @@ GEM
       rexml (>= 3.3.9)
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
-    labimotion (2.2.0.rc5)
+    labimotion (2.3.0.rc6)
       caxlsx (~> 4.0)
       rails (>= 6.1, < 8.0)
+      roo (~> 2.10)
     language_server-protocol (3.17.0.5)
     latex-decode (0.4.0)
     launchy (3.1.1)
@@ -888,7 +889,7 @@ DEPENDENCIES
   encryptor
   factory_bot_rails
   faker
-  faraday
+  faraday (< 2.9)
   faraday-follow_redirects
   faraday-multipart
   fast_stack
@@ -913,7 +914,7 @@ DEPENDENCIES
   jwt
   kaminari
   kaminari-grape
-  labimotion (= 2.2.0.rc5)
+  labimotion (= 2.3.0.rc6)
   launchy
   listen
   logidze
@@ -931,7 +932,7 @@ DEPENDENCIES
   omniauth-orcid!
   omniauth-shibboleth
   omniauth_openid_connect
-  openbabel (= 2.4.90.3)!
+  openbabel (= 3.2.0.1)!
   pandoc-ruby
   paranoia (~> 3.0)
   pg
@@ -941,10 +942,12 @@ DEPENDENCIES
   pry (>= 0.14.2)
   pry-byebug
   pry-rails
+  public_suffix (< 7)
   puma (< 6.0.0)
   rack
   rack-cors
   rails (~> 7.2.0)
+  redcarpet
   rinchi-gem!
   rmagick
   roo

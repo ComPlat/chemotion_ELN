@@ -27,14 +27,17 @@ module Chemotion
     # concern loses to the encryptor gem's ::Encryptor and Device#encrypt_value goes undefined.
     config.add_autoload_paths_to_load_path = true
 
-    # Global acronyms for Zeitwerk file->constant mapping (api.rb -> API,
-    # sftp_client.rb -> SFTPClient). Defined here, not in inflections.rb, so they
-    # apply before autoloading during initialization. 'UI' is deliberately not global
-    # (see the per-basename overrides below) so Chemotion::UiAPI stays intact.
-    ActiveSupport::Inflector.inflections(:en) do |inflect|
-      inflect.acronym 'API'
-      inflect.acronym 'SFTP'
-    end
+    # API/SFTP acronyms for Zeitwerk file->constant mapping (api.rb -> API,
+    # sftp_client.rb -> SFTPClient). Scoped to the AUTOLOADER inflector, NOT registered as
+    # global ActiveSupport acronyms: a global acronym also drives ActiveRecord's migration
+    # class-name camelization (create_api_tokens -> CreateAPITokens) and would break main's
+    # immutable CreateApiTokens migration. The per-basename overrides below are consulted
+    # first, so the Api-word exceptions (ApiToken, LcmsApiHelpers, …) still win.
+    Rails::Autoloaders::Inflector.singleton_class.prepend(Module.new do
+      def camelize(basename, _abspath)
+        @overrides[basename] || basename.split('_').map! { |p| { 'api' => 'API', 'sftp' => 'SFTP' }[p] || p.capitalize }.join
+      end
+    end)
 
     config.version = (File.exist?('VERSION') && YAML.unsafe_load_file('VERSION')) || {
       'version' => 'v0', 'base_revision' => '0', 'current_revision' => '0'
@@ -90,6 +93,9 @@ module Chemotion
     Rails.autoloaders.main.inflector.inflect(
       'element_ui_state_scopes' => 'ElementUIStateScopes', # UI acronym (vs UiAPI = word)
       'cell_line_api_params_helpers' => 'CellLineApiParamsHelpers', # Api word (vs API acronym)
+      'lcms_api_helpers' => 'LcmsApiHelpers', # Api word (vs API acronym)
+      'api_token_entity' => 'ApiTokenEntity', # Api word (vs API acronym)
+      'api_token' => 'ApiToken', # Api word (vs API acronym)
       'by_ui_state' => 'ByUIState',
       # "Sftp" word here vs the SFTP acronym elsewhere (SFTPClient):
       'collect_data_from_sftp_job' => 'CollectDataFromSftpJob',

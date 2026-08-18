@@ -623,9 +623,6 @@ class Group < User
   end
 end
 
-class DeviceDeprecated < User
-end
-
 # rubocop: enable Metrics/ClassLength, Metrics/CyclomaticComplexity
 # rubocop: enable Metrics/AbcSize
 # rubocop: enable Metrics/PerceivedComplexity
