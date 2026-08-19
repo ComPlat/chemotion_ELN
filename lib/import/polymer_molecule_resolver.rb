@@ -18,19 +18,19 @@ module Import
     Result = Struct.new(:molecule, :raw_molfile, :babel_info, keyword_init: true)
 
     # @param raw_molfile [String] the full molfile, including the PolymersList/TextNode blocks
-    # @param lcss_batch [Array<Integer>, nil] forwarded to Molecule.find_or_create_by_molfile /
+    # @param defer_pubchem_lookup [Boolean] forwarded to Molecule.find_or_create_by_molfile /
     #   the synthetic-inchikey fallback, same semantics as elsewhere in the importers
     # @param unescape_octal [Boolean] whether to run unescape_textnode_octal_in_molfile first
     #   (true for xlsx/SDF-sourced molfiles that can have Excel octal-escaping; false for
     #   export.json-sourced molfiles, which don't have this problem -- see Import::ImportCollections)
     # @return [Result] molecule may be nil if the cleaned molfile was blank
-    def self.call(raw_molfile, lcss_batch: nil, unescape_octal: true)
-      new(raw_molfile, lcss_batch: lcss_batch, unescape_octal: unescape_octal).call
+    def self.call(raw_molfile, defer_pubchem_lookup: false, unescape_octal: true)
+      new(raw_molfile, defer_pubchem_lookup: defer_pubchem_lookup, unescape_octal: unescape_octal).call
     end
 
-    def initialize(raw_molfile, lcss_batch:, unescape_octal:)
+    def initialize(raw_molfile, defer_pubchem_lookup:, unescape_octal:)
       @raw_molfile = raw_molfile
-      @lcss_batch = lcss_batch
+      @defer_pubchem_lookup = defer_pubchem_lookup
       @unescape_octal = unescape_octal
     end
 
@@ -39,11 +39,15 @@ module Import
       cleaned = Chemotion::MolfilePolymerSupport.clean_molfile_for_inchikey(raw)
       return Result.new(molecule: nil, raw_molfile: raw, babel_info: nil) if cleaned.blank?
 
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(pad(cleaned))
+      # render_svg: false — the polymer SVG is rendered separately through Indigo in
+      # #reattach_svg_if_present; OpenBabel's would be discarded either way.
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(pad(cleaned), render_svg: false)
       molecule = if babel_info[:inchikey].present?
-                   Molecule.find_or_create_by_molfile(raw, lcss_batch: @lcss_batch, **babel_info)
+                   Molecule.find_or_create_by_molfile(raw, defer_pubchem_lookup: @defer_pubchem_lookup, **babel_info)
                  else
-                   find_or_create_polymer_molecule_without_inchikey(raw, babel_info, lcss_batch: @lcss_batch)
+                   find_or_create_polymer_molecule_without_inchikey(
+                     raw, babel_info, defer_pubchem_lookup: @defer_pubchem_lookup
+                   )
                  end
       reattach_svg_if_present(molecule, raw) if molecule.present?
 
@@ -70,7 +74,7 @@ module Import
     # When Open Babel returns blank inchikey for a PolymersList molfile, create a molecule with a
     # synthetic inchikey so we can store the full molfile; SVG is generated separately via svg_reprocess.
     # Moved here (was byte-identical, copy-pasted between Import::ImportSamples and Import::ImportCollections).
-    def find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info, lcss_batch: nil)
+    def find_or_create_polymer_molecule_without_inchikey(raw_molfile, babel_info, defer_pubchem_lookup: false)
       synthetic_inchikey = "POLYMER_#{Digest::SHA256.hexdigest(raw_molfile)}"
       formula = babel_info[:formula].to_s.presence || ''
       molecule = Molecule.find_by(inchikey: synthetic_inchikey, is_partial: true, sum_formular: formula)
@@ -85,9 +89,8 @@ module Import
           molfile: raw_molfile,
         )
       end
-      molecule.skip_lcss_callback = true if is_new && lcss_batch
+      molecule.defer_pubchem_lookup = true if is_new && defer_pubchem_lookup
       molecule.save!
-      lcss_batch << molecule.id if is_new && lcss_batch
       molecule
     end
 

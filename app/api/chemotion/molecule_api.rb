@@ -3,6 +3,47 @@ module Chemotion
   class MoleculeAPI < Grape::API
     include Grape::Kaminari
 
+    # Per-phase HTTP bound for the inline PubChem lookup below. Deliberately short: this runs
+    # while a user waits for a structure they just drew, and a miss costs nothing — the
+    # PubchemLookupJob scheduled alongside it covers the molecule anyway.
+    SYNC_ENRICH_TIMEOUT = 0.5
+
+    helpers do
+      # Attempts enrichment inline so the response carries the name, then hands the molecule to
+      # {PubchemLookupJob}.
+      #
+      # The endpoints pass +defer_pubchem_lookup: true+ and schedule here instead of leaving it
+      # to Molecule's +after_create_commit+. Ordering is the reason: that callback fires at
+      # commit, which on these endpoints is *before* this method runs, so a worker could reserve
+      # the job and ask PubChem the same question the inline call is already asking. Enqueuing
+      # afterwards means the job always observes whatever the inline attempt wrote, and
+      # {PubchemLookupJob#enrich_and_fetch_lcss} deterministically skips the half already done.
+      #
+      # The job is not redundant when the inline attempt succeeds. +#enrich_from_pubchem+ writes
+      # the cid and names and never fetches LCSS, so the job's remaining half is the GHS data.
+      # It is also the fallback for the case the 0.5 s bound is built to expect: a timeout is
+      # +:unavailable+, which by design writes nothing, and the job is then what enriches the
+      # molecule at all.
+      #
+      # Only a molecule this request *created* is scheduled. A found molecule has already been
+      # through this once, when it was created, so its lookup has run at least once — and if it
+      # is still unenriched, the sweep's pending scope already covers it.
+      #
+      # @param molecule [Molecule, nil]
+      # @return [void]
+      def enrich_and_schedule_pubchem(molecule)
+        return if molecule.blank?
+        # find_or_create_dummy takes no defer_pubchem_lookup, so the placeholder keeps its own
+        # after_create_commit and must not be scheduled a second time here. It is not a
+        # structure, so there is nothing to enrich either.
+        return if molecule.inchikey == 'DUMMY'
+
+        created = molecule.previously_new_record?
+        molecule.enrich_from_pubchem(timeout: SYNC_ENRICH_TIMEOUT) if molecule.enrichable?
+        Molecule.schedule_pubchem_lookup_for([molecule.id]) if created
+      end
+    end
+
     resource :molecules do
       namespace :sf do
         desc 'Return SciFinder-n API'
@@ -57,10 +98,17 @@ module Chemotion
               molfile = rd_mol
             end
             return {} unless molfile
-            molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
+            # **babel_info rather than passing the hash positionally: the signature takes it as
+            # keyword rest, so a bare hash relies on Ruby 2.7's hash-to-keywords conversion and
+            # would raise ArgumentError on 3.0+.
+            molecule = Molecule.find_or_create_by_molfile(molfile, defer_pubchem_lookup: true, **babel_info)
             molecule = Molecule.find_or_create_dummy if molecule.blank?
           end
           return unless molecule
+
+          # Outside any transaction and after the create has committed, so this cannot widen
+          # the create race the async deferral was introduced to close.
+          enrich_and_schedule_pubchem(molecule)
 
           svg_digest = "#{molecule.inchikey}#{Time.now}"
           if svg.present?
@@ -150,10 +198,12 @@ module Chemotion
             molecule = Molecule.find_or_create_dummy
             ob = ''
           else
-            molecule = Molecule.find_or_create_by_molfile(molfile)
+            molecule = Molecule.find_or_create_by_molfile(molfile, defer_pubchem_lookup: true)
             molecule = Molecule.find_or_create_dummy if molecule.blank?
             ob = molecule&.ob_log
           end
+          # See the note on the smiles endpoint.
+          enrich_and_schedule_pubchem(molecule)
           molecule&.attributes&.merge(temp_svg: svg_name, ob_log: ob)
 
           present molecule, with: Entities::MoleculeEntity
@@ -185,8 +235,14 @@ module Chemotion
         svg = params[:svg_file]
         molfile = params[:molfile]
         decoupled = params[:decoupled]
-        molecule = decoupled ? Molecule.find_or_create_dummy : Molecule.find_or_create_by_molfile(molfile)
+        molecule = if decoupled
+                     Molecule.find_or_create_dummy
+                   else
+                     Molecule.find_or_create_by_molfile(molfile, defer_pubchem_lookup: true)
+                   end
         molecule = Molecule.find_or_create_dummy if molecule.blank?
+        # See the note on the smiles endpoint.
+        enrich_and_schedule_pubchem(molecule)
         ob = molecule&.ob_log
         svg_digest = "#{molecule.inchikey}#{Time.zone.now}"
 

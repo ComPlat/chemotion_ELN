@@ -1,5 +1,6 @@
 import expect from 'expect';
 import sinon from 'sinon';
+import { cloneDeep } from 'lodash';
 import {
   convertUnit, createVariationsRow, copyVariationsRow, updateVariationsRow,
   removeObsoleteColumnsFromVariations, removeObsoleteColumnDefinitions, addMissingColumnDefinitions,
@@ -99,6 +100,31 @@ describe('ReactionVariationsUtils', () => {
     expect(updatedVariations[0].metadata.analyses.length === 0);
     expect(updatedVariations[0].metadata.group).toEqual({ group: 1, subgroup: 1 });
   });
+  it('backfills missing material entries for legacy rows while applying column selection', async () => {
+    const reaction = await setUpReaction();
+    const materials = getReactionMaterials(reaction);
+    const selectedColumns = getSelectedColumns(getReactionMaterialsIDs(materials));
+    const legacyVariations = cloneDeep(reaction.variations);
+
+    const reactantID = Object.keys(legacyVariations[0].reactants)[0];
+    delete legacyVariations[0].reactants[reactantID].concentration;
+
+    const updatedVariations = addMissingColumnsToVariations({
+      materials,
+      segments: {},
+      selectedColumns,
+      variations: legacyVariations,
+      reactionHasPolymers: reaction.hasPolymers(),
+      durationValue: null,
+      durationUnit: 'None',
+      temperatureValue: null,
+      temperatureUnit: 'None',
+      gasMode: false,
+      vesselVolume: null,
+    });
+
+    expect(updatedVariations[0].reactants[reactantID].concentration).toEqual({ value: null, unit: 'mol/l' });
+  });
   it('removes obsolete materials from variations', async () => {
     const reaction = await setUpReaction();
     const productIDs = reaction.products.map((product) => product.id);
@@ -194,6 +220,148 @@ describe('ReactionVariationsUtils', () => {
     expect(Object.values(row.products)[0].yield.value).toBeGreaterThan(
       Object.values(updatedRow.products)[0].yield.value
     );
+  });
+  it('updates other materials concentrations when concentration editing is enabled', async () => {
+    const reaction = await setUpReaction();
+    const row = reaction.variations[0];
+    const reactantID = Object.keys(row.reactants)[0];
+    const reactant = row.reactants[reactantID];
+
+    const updatedReactant = {
+      ...reactant,
+      concentration: { ...reactant.concentration, value: 2 }
+    };
+
+    const updatedRow = updateVariationsRow(
+      row,
+      `reactants.${reactantID}`,
+      updatedReactant,
+      reaction.hasPolymers(),
+      {
+        changedEntry: 'concentration',
+        concentrationContext: {
+          useReactionVolume: true,
+          lockReactionVolume: false,
+          reactionVolumeByRowId: { [row.id]: 42 },
+        }
+      }
+    );
+
+    const reactionVolume = updatedReactant.amount.value / updatedReactant.concentration.value;
+
+    Object.values(updatedRow.startingMaterials).forEach((material) => {
+      if (!['catalyst', 'feedstock'].includes(material.aux.gasType)) {
+        expect(material.concentration.value).toBeCloseTo(material.amount.value / reactionVolume);
+      }
+    });
+    Object.entries(updatedRow.reactants).forEach(([materialId, material]) => {
+      if (materialId !== reactantID && material.aux.gasType !== 'feedstock') {
+        expect(material.concentration.value).toBeCloseTo(material.amount.value / reactionVolume);
+      }
+    });
+    expect(updatedRow.reactants[reactantID].concentration.value)
+      .toBe(updatedReactant.concentration.value);
+  });
+  it('does not recalculate other concentrations when the same concentration is entered again', async () => {
+    const reaction = await setUpReaction();
+    const row = reaction.variations[0];
+    const reactantID = Object.keys(row.reactants)[0];
+    const reactant = row.reactants[reactantID];
+
+    const firstUpdate = updateVariationsRow(
+      row,
+      `reactants.${reactantID}`,
+      {
+        ...reactant,
+        concentration: { ...reactant.concentration, value: 2 }
+      },
+      reaction.hasPolymers(),
+      {
+        changedEntry: 'concentration',
+        concentrationContext: {
+          useReactionVolume: true,
+          lockReactionVolume: false,
+          reactionVolumeByRowId: { [row.id]: 42 },
+        }
+      }
+    );
+
+    const beforeSecondUpdate = cloneDeep(firstUpdate);
+    const secondUpdate = updateVariationsRow(
+      firstUpdate,
+      `reactants.${reactantID}`,
+      {
+        ...firstUpdate.reactants[reactantID],
+        concentration: { ...firstUpdate.reactants[reactantID].concentration, value: 2 }
+      },
+      reaction.hasPolymers(),
+      {
+        changedEntry: 'concentration',
+        concentrationContext: {
+          useReactionVolume: true,
+          lockReactionVolume: false,
+          reactionVolumeByRowId: { [row.id]: 42 },
+        }
+      }
+    );
+
+    expect(secondUpdate).toEqual(beforeSecondUpdate);
+  });
+  it('updates concentrations locally when concentration changes', async () => {
+    const reaction = await setUpReaction();
+    const row = reaction.variations[0];
+    const reactantID = Object.keys(row.reactants)[0];
+    const reactant = row.reactants[reactantID];
+
+    const updatedReactant = {
+      ...reactant,
+      concentration: { ...reactant.concentration, value: 2 }
+    };
+
+    const updatedRow = updateVariationsRow(
+      row,
+      `reactants.${reactantID}`,
+      updatedReactant,
+      reaction.hasPolymers(),
+      {
+        changedEntry: 'concentration',
+        concentrationContext: {
+          useReactionVolume: true,
+          lockReactionVolume: false,
+          reactionVolumeByRowId: {},
+        },
+      }
+    );
+
+    expect(updatedRow.reactants[reactantID].concentration.value).toBe(2);
+  });
+  it('keeps concentration updates local to the row when volume editing is unlocked', async () => {
+    const reaction = await setUpReaction();
+    const row = reaction.variations[0];
+    const reactantID = Object.keys(row.reactants)[0];
+    const reactant = row.reactants[reactantID];
+
+    const updatedReactant = {
+      ...reactant,
+      concentration: { ...reactant.concentration, value: 1.5 }
+    };
+
+    const updatedRow = updateVariationsRow(
+      row,
+      `reactants.${reactantID}`,
+      updatedReactant,
+      reaction.hasPolymers(),
+      {
+        changedEntry: 'concentration',
+        concentrationContext: {
+          useReactionVolume: false,
+          lockReactionVolume: false,
+          reactionVolumeByRowId: {},
+        },
+      }
+    );
+
+    expect(updatedRow.reactants[reactantID].concentration.value).toBe(1.5);
   });
   it('gets column names from variations table', async () => {
     const reaction = await setUpReaction();

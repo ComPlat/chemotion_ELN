@@ -5,10 +5,22 @@ import { cloneDeep } from 'lodash';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
 import CollectionSharesFetcher from 'src/fetchers/CollectionSharesFetcher';
 import CollectionElementsFetcher from 'src/fetchers/CollectionElementsFetcher';
-import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 
 import UIActions from 'src/stores/alt/actions/UIActions';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
+import {
+  sampleAssociationLockNotification,
+  sampleAssociationMoveNotification
+} from 'src/utilities/notificationMessages';
+
+// The system collections every user has: created by the application, never by a user, and shown
+// outside the ordinary collection tree. Their labels are NOT reserved - a user can name a
+// collection "transferred", and a collection archive can carry one called "chemotion-repository.net"
+// - so a label match alone never identifies one; it always has to be paired with is_locked.
+export const ALL_LABEL = 'All';
+export const REPOSITORY_LABEL = 'chemotion-repository.net';
+export const TRANSFERRED_LABEL = 'transferred';
+export const SYSTEM_LABELS = [ALL_LABEL, REPOSITORY_LABEL, TRANSFERRED_LABEL];
 
 export const Collection = types.model({
   ancestry: types.string,
@@ -22,6 +34,12 @@ export const Collection = types.model({
   is_locked: types.boolean,
   owner: types.maybeNull(types.string), // "First Last (ABBR)" — shown in the provenance popover
   owner_name: types.maybeNull(types.string), // plain "First Last" — the shared tree's owner-root label
+  // The node's ancestry as received from the sharer, before any truncateAncestryAt/resetAncestry
+  // adoption rewrite — kept so sibling ordering can still reflect the sharer's true relative
+  // position (depth + original parent) even after the displayed ancestry has been adjusted. Only
+  // ever set for shared-with-me nodes; stays null for own_collections, where ancestry is never
+  // rewritten, so compareBySharerOrder degrades to the plain position/label compare there.
+  original_ancestry: types.maybeNull(types.string),
   permission_level: types.maybeNull(types.integer), // temp for testing
   position: types.maybeNull(types.number),
   shared: types.maybeNull(types.boolean),
@@ -38,21 +56,24 @@ export const Collection = types.model({
     }
   },
   sortChildren() {
-    self.children.sort((a, b) => {
-      if (a.position != null && b.position != null) { return a.position - b.position }
-      else if (a.position != null && b.position == null) { return -1 }
-      else if (a.position == null && b.position != null) { return 1 }
-      else if (a.label.toUpperCase() < b.label.toUpperCase()) { return -1; }
-      else if (a.label.toUpperCase() == b.label.toUpperCase()) { return 0 }
-      else if (a.label.toUpperCase() > b.label.toUpperCase()) { return 1 }
-      else { console.debug('unsortable collections:', a, b); return 0 }
-    })
+    self.children.sort(compareBySharerOrder)
   },
   resetAncestry() {
     self.ancestry = '/'
   },
+  // Reparents this node to sit directly under ancestorId by truncating the ancestry chain right
+  // after it — used when the node's real parent isn't shared with this user but a more distant
+  // ancestor is (nearest-shared-ancestor "adoption", see setSharedWithMeCollections).
+  truncateAncestryAt(ancestorId) {
+    const ids = self.ancestorIds
+    const index = ids.indexOf(ancestorId)
+    self.ancestry = index === -1 ? '/' : `/${ids.slice(0, index + 1).join('/')}/`
+  },
 })).views(self => ({
   get ancestorIds() { return self.ancestry.split('/').filter(Number).map(element => parseInt(element)) },
+  get originalAncestorIds() {
+    return (self.original_ancestry ?? self.ancestry).split('/').filter(Number).map((el) => parseInt(el, 10))
+  },
   find(collection_id) {
     if (collection_id == self.id) return self;
     if (self.children.length == 0) return null;
@@ -104,6 +125,49 @@ const presort = (a, b) => {
   else { return a.position - b.position }
 }
 
+// Same ordering addCollectionToTree's sort uses for own_collections, reused to place a
+// newly inserted node among plain-tree siblings without re-sorting the whole array (which
+// would clobber a pending manual drag-reorder already reflected in that array's order).
+const compareCollectionSiblings = (a, b) => {
+  if (a.position != null && b.position != null) return a.position - b.position
+  if (a.position != null && b.position == null) return -1
+  if (a.position == null && b.position != null) return 1
+  if (a.label < b.label) return -1
+  if (a.label > b.label) return 1
+  return 0
+}
+
+const insertSorted = (siblings, node) => {
+  const index = siblings.findIndex((sibling) => compareCollectionSiblings(node, sibling) < 0)
+  const insertAt = index === -1 ? siblings.length : index
+  return [...siblings.slice(0, insertAt), node, ...siblings.slice(insertAt)]
+}
+
+// Orders siblings — including ones "adopted" together under a parent that isn't their real one —
+// by the sharer's original relative position as closely as this frontend-only view can
+// approximate: a shallower original node always sorts before a deeper one (the 45-before-33..37
+// case), true original siblings (same real parent) are then ordered by their own, genuinely
+// comparable position, and same-depth nodes from different original parents — whose relative
+// order this store has no way to know without the backend data-exposure change that was declined
+// — fall back to comparing their original ancestry path, which at least keeps each original
+// sibling group contiguous as one block instead of scattering it. Degrades to the plain
+// position/label compare when original_ancestry is unset (own_collections, never rewritten).
+const compareBySharerOrder = (a, b) => {
+  if (!a.original_ancestry || !b.original_ancestry) return compareCollectionSiblings(a, b)
+
+  const depthA = a.originalAncestorIds.length
+  const depthB = b.originalAncestorIds.length
+  if (depthA !== depthB) return depthA - depthB
+
+  const parentA = a.originalAncestorIds[depthA - 1]
+  const parentB = b.originalAncestorIds[depthB - 1]
+  if (parentA !== parentB) {
+    return a.original_ancestry < b.original_ancestry ? -1 : (a.original_ancestry > b.original_ancestry ? 1 : 0)
+  }
+
+  return compareCollectionSiblings(a, b)
+}
+
 export const CollectionsStore = types
   .model({
     chemotion_repository_collection: types.maybeNull(Collection),
@@ -142,21 +206,69 @@ export const CollectionsStore = types
     }),
     bulkUpdateCollection: flow(function* bulkUpdateCollection(collections) {
       const params = { collections: collections }
-      const all_collections = yield CollectionsFetcher.buldUpdateForOwnCollections(params);
-      if (all_collections) {
-        self.own_collections.clear()
-        self.setOwnCollections(all_collections)
-        self.setOwnCollectionTree()
+      // A 4xx/5xx with a JSON error body resolves (no throw) to undefined `collections`;
+      // a network/parse failure is swallowed one layer down and resurfaces as a throw here.
+      // Both must be treated as failure so the dirty flag never gets cleared on a lost edit.
+      let all_collections
+      try {
+        all_collections = yield CollectionsFetcher.buldUpdateForOwnCollections(params);
+      } catch (error) {
+        all_collections = undefined
       }
+
+      if (!all_collections) {
+        getRoot(self).notificationsStore.add({
+          title: 'Collection Management',
+          message: 'The request failed, so the changes were not saved. Please try again.',
+          level: 'error',
+          autoDismiss: 10,
+        });
+        return false
+      }
+
+      self.own_collections.clear()
+      self.setOwnCollections(all_collections)
+      self.setOwnCollectionTree()
+      return true
     }),
     updateCollection: flow(function* updateCollection(collection, tabs_segment) {
+      // PUT /collections/:id is scoped to own_collections_for, so a tab-layout save against a
+      // collection shared *to* this user has always 404'd. The element-detail tab editors reach
+      // this through UIStore's currentCollection, which can be one — skip the doomed request
+      // instead of reporting a failure for a save the user never asked for.
+      if (self.isSharedCollection(collection.id)) return null
+
       const params = { label: collection.label, tabs_segment: tabs_segment }
-      const collectionItem = yield CollectionsFetcher.updateCollection(collection.id, params)
-      if (collectionItem) {
-        self.changeTabsSegmentInTree(self.own_collections, collectionItem)
-        self.setOwnCollectionTree()
-        return self.own_collections
+      let collectionItem
+      try {
+        collectionItem = yield CollectionsFetcher.updateCollection(collection.id, params)
+      } catch (error) {
+        collectionItem = undefined
       }
+
+      // Silently dropping the failure here used to be invisible, because the tab editor was only
+      // reachable on collections the endpoint always accepts. The system collections are editable
+      // from the management modal now, so a rejected save has to say so.
+      if (!collectionItem) {
+        getRoot(self).notificationsStore.add({
+          title: 'Collection Management',
+          message: `The tab layout of "${collection.label}" could not be saved. Please try again.`,
+          level: 'error',
+          autoDismiss: 10,
+        });
+        return null
+      }
+
+      self.changeTabsSegmentInTree(self.own_collections, collectionItem)
+      // The system collections live in the locked bucket and, for the repository subtree, on their
+      // own field — none of which own_collections reaches — so update those too, or the tab editor
+      // reopens with the layout the user just replaced.
+      self.changeTabsSegmentInTree(self.locked_collection, collectionItem)
+      if (self.chemotion_repository_collection) {
+        self.changeTabsSegmentInTree([self.chemotion_repository_collection], collectionItem)
+      }
+      self.setOwnCollectionTree()
+      return self.own_collections
     }),
     deleteCollection: flow(function* deleteCollection(collectionId) {
       const all_collections = yield CollectionsFetcher.deleteCollection(collectionId)
@@ -219,12 +331,17 @@ export const CollectionsStore = types
         }
       }
     }),
-    addCollectionShare: flow(function* addCollectionShare(params, currentUser) {
+    // Called when a collection-share notification arrives (see NoticeButton.js) so already-displayed
+    // share/permission info doesn't go stale the way fetchCollections() alone leaves it —
+    // getMySharesFor upserts in place, so re-calling it for every cached id is safe.
+    refreshMySharedCollectionShares: flow(function* refreshMySharedCollectionShares() {
+      yield Promise.all(self.my_collection_shares.map((entry) => self.getMySharesFor(entry.id)))
+    }),
+    addCollectionShare: flow(function* addCollectionShare(params) {
       const response = yield CollectionSharesFetcher.addCollectionShare(params)
       if (response.status === 204) {
         self.fetchCollections()
         self.getSharedWithUsers(params.collection_id)
-        self.createSharingMessage(currentUser, params.user_ids)
       }
     }),
     takeOwnership: flow(function* takeOwnership(collectionId) {
@@ -236,6 +353,11 @@ export const CollectionsStore = types
     updateCollectionShare: flow(function* updateCollectionShare(collectionShareId, params) {
       const collectionShare = yield CollectionSharesFetcher.updateCollectionShare(collectionShareId, params)
       if (collectionShare) {
+        // apply_to_subcollections/include_new_subcollections can cascade this edit onto
+        // descendants not previously shared — PUT's response only carries the one edited share,
+        // never the cascade's effect on those descendants' `shared` flag, so own_collections has
+        // to be refetched to pick it up (mirrors addCollectionShare/deleteCollectionShare below).
+        self.fetchCollections()
         self.getSharedWithUsers(collectionShare.collection_id)
       }
     }),
@@ -257,14 +379,41 @@ export const CollectionsStore = types
         return true
       }
     }),
-    removeElementsFromCollection: flow(function* removeElementsFromCollection(params) {
-      const success = yield CollectionElementsFetcher.deleteElementsFromCollection(params)
+    // Returns { success, lockedSampleIds }: success is false only on request failure; lockedSampleIds
+    // lists samples the backend kept because they belong to a reaction or wellplate still in the
+    // collection. Callers that give their own feedback (e.g. move) can pass { notifyLock: false } to
+    // suppress the built-in association-lock toast and react to lockedSampleIds themselves.
+    removeElementsFromCollection: flow(function* removeElementsFromCollection(params, { notifyLock = true } = {}) {
+      const response = yield CollectionElementsFetcher.deleteElementsFromCollection(params);
 
-      if (success) {
-        // refresh elements
-        ElementActions.refreshElementsAfterCollectionChanges(params.ui_state.currentCollection.id)
-        return true
+      // A network/parse failure resolves to undefined; a 204 resolves to null. Surface the failure:
+      // otherwise a dropped DELETE is completely silent — and in a move the selection has already
+      // been copied into the target, so silence would strand the samples in both collections.
+      if (response === undefined) {
+        getRoot(self).notificationsStore.add({
+          title: 'Remove from Collection',
+          message: 'The request failed, so the selection was not removed. Please try again.',
+          level: 'error',
+          autoDismiss: 10,
+        });
+        return { success: false, lockedSampleIds: [] };
       }
+
+      if (response && response.error) {
+        getRoot(self).notificationsStore.add({
+          title: 'Remove from Collection', message: response.error, level: 'error', autoDismiss: 10
+        });
+        return { success: false, lockedSampleIds: [] };
+      }
+
+      const lockedSampleIds = (response && response.locked_sample_ids) || [];
+      if (notifyLock && lockedSampleIds.length > 0) {
+        getRoot(self).notificationsStore.add(sampleAssociationLockNotification(lockedSampleIds.length));
+      }
+
+      // refresh elements
+      ElementActions.refreshElementsAfterCollectionChanges(params.ui_state.currentCollection.id);
+      return { success: true, lockedSampleIds };
     }),
     assignElementsToCollection: flow(function* assignElementsToCollection(collectionParams, uiState) {
       const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams)
@@ -280,16 +429,33 @@ export const CollectionsStore = types
       }
     }),
     moveElementsToCollection: flow(function* moveElementsToCollection(collectionParams, uiState) {
-      const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams)
+      const { collectionId, isNewCollection, newCollection } = yield self.useOrCreateCollection(collectionParams);
 
       if (collectionId) {
-        const response = yield self.addElementsToCollection(collectionId, uiState, 'Move to Collection', isNewCollection)
+        const response = yield self.addElementsToCollection(
+          collectionId,
+          uiState,
+          'Move to Collection',
+          isNewCollection
+        );
 
         if (response) {
-          const elementsRemoved = yield self.removeElementsFromCollection({ collection_id: uiState.currentCollection.id, ui_state: uiState })
+          // No special case for a move out of "All": SelectionActions disables Move there (moving out
+          // of the catch-all is a removal in disguise), and RemoveElements refuses it server-side for
+          // anything that reaches the API directly. A guard here would be unreachable from the UI.
+          const { success, lockedSampleIds } = yield self.removeElementsFromCollection(
+            { collection_id: uiState.currentCollection.id, ui_state: uiState },
+            { notifyLock: false }
+          );
 
-          if (elementsRemoved && isNewCollection) {
-            self.addNewCollectionToOwnCollection(newCollection)
+          // Samples bound to a reaction/wellplate cannot leave that collection, so they were copied
+          // to the target but stayed in the source: warn that the move was only partial.
+          if (success && lockedSampleIds.length > 0) {
+            getRoot(self).notificationsStore.add(sampleAssociationMoveNotification());
+          }
+
+          if (success && isNewCollection) {
+            self.addNewCollectionToOwnCollection(newCollection);
           }
         }
       }
@@ -311,7 +477,7 @@ export const CollectionsStore = types
             user_ids: [user.id],
             ...params.permissions
           }
-          self.addCollectionShare(shareParams, params.currentUser)
+          self.addCollectionShare(shareParams)
           self.addNewCollectionToOwnCollection(newCollection)
           // uncheck all
           UIActions.uncheckWholeSelection.defer()
@@ -330,43 +496,96 @@ export const CollectionsStore = types
         self.addElementsToCollectionAndShare(user, { ...params, label });
       });
     },
-    createSharingMessage(currentUser, userIds) {
-      const messageParams = {
-        channel_id: 4,
-        content: `${currentUser.name} has shared a collection with you.`,
-        user_ids: userIds,
-      };
-
-      MessagesFetcher.createMessage(messageParams)
-    },
     addNewCollectionToOwnCollection(newCollection) {
-      self.addCollectionToTree(Collection.create(newCollection), self.own_collections)
-      self.setOwnCollectionTree()
+      const collectionItem = Collection.create(newCollection)
+      self.addCollectionToTree(collectionItem, self.own_collections)
+
+      if (Array.isArray(self.own_collection_tree?.children)) {
+        // Insert into the tree as it currently stands instead of rebuilding it from
+        // own_collections, which would silently discard any pending rename/reorder
+        // that only lives in own_collection_tree so far (not yet saved).
+        const parentId = collectionItem.ancestorIds[collectionItem.ancestorIds.length - 1]
+        const plainNode = { ...newCollection, children: [] }
+        const { children, inserted } = self.insertIntoPlainTree(
+          plainNode,
+          parentId,
+          self.own_collection_tree.children
+        )
+        self.setOwnCollectionTree({
+          ...self.own_collection_tree,
+          children: inserted ? children : insertSorted(children, plainNode),
+        })
+      } else {
+        self.setOwnCollectionTree()
+      }
+    },
+    // Depth-first search of the plain (frozen-store) tree for the sibling whose id
+    // matches parentId, returning a NEW siblings array with `node` inserted under
+    // it (at its sorted position, via insertSorted), plus whether a match was
+    // found. own_collection_tree is MST `frozen` data (deep-frozen outside
+    // production), so existing arrays/objects are replaced rather than mutated;
+    // the caller inserts `node` at the top level when no match is found, so a
+    // newly created collection is never silently dropped.
+    insertIntoPlainTree(node, parentId, siblings) {
+      let inserted = false
+      const children = siblings.map((sibling) => {
+        if (inserted) return sibling
+        if (sibling.id === parentId) {
+          inserted = true
+          return { ...sibling, children: insertSorted(sibling.children, node) }
+        }
+        if (sibling.children?.length) {
+          const result = self.insertIntoPlainTree(node, parentId, sibling.children)
+          if (result.inserted) {
+            inserted = true
+            return { ...sibling, children: result.children }
+          }
+        }
+        return sibling
+      })
+      return { children, inserted }
     },
     setOwnCollections(collections) {
+      // Rebuilt from scratch on every pass, alongside the own_collections its callers clear, so
+      // neither the repository node's children nor the locked bucket accumulate across reloads.
+      self.chemotion_repository_collection = null;
+      self.locked_collection.clear();
       // basic presorting, so we can assume that parent objects are encountered before child objects when iterating the collection array
       collections.sort(presort);
       collections.forEach((collection) => {
-        if (collection.is_locked && ['All', 'chemotion-repository.net', 'transferred'].includes(collection.label)
+        if (collection.is_locked && SYSTEM_LABELS.includes(collection.label)
           && self.locked_collection.findIndex((c) => c.label === collection.label) === -1) {
-          self.locked_collection.push(Collection.create(collection))
+          self.locked_collection.push(Collection.create(collection));
         }
 
-        if (collection.is_locked && (collection.label == 'All' || (collection.label !== 'chemotion-repository.net'
-          && collection.label !== 'transferred'))) {
-          // do nothing and skip this collection
-        } else if (collection.label == 'chemotion-repository.net') {
-          self.chemotion_repository_collection = Collection.create(collection)
-        } else {
-          const collectionItem = Collection.create(collection)
-
-          const collectionTree =
-            (self.chemotion_repository_collection && collectionItem.ancestorIds.includes(self.chemotion_repository_collection.id))
-              ? self.chemotion_repository_collection.children
-              : self.own_collections
-          
-          self.addCollectionToTree(collectionItem, collectionTree)
+        // Locked collections are system containers rendered outside the tree, except the repository
+        // root (its own sidebar section) and "transferred" (inside that section).
+        if (collection.is_locked && collection.label !== REPOSITORY_LABEL
+          && collection.label !== TRANSFERRED_LABEL) {
+          return;
         }
+        // Matched on is_locked as well as the label: the repository root is system-created and
+        // locked, but the label is not reserved, and a collection archive containing a collection
+        // of that name is recreated as an ordinary unlocked root on import. Keeping the first match
+        // makes a payload that somehow carries two resolve predictably rather than last-one-wins.
+        if (collection.label === REPOSITORY_LABEL && collection.is_locked) {
+          if (!self.chemotion_repository_collection) {
+            self.chemotion_repository_collection = Collection.create(collection);
+          }
+          return;
+        }
+
+        const collectionItem = Collection.create(collection);
+        // The repository node is held on its own field and never pushed into a node array, so its
+        // children cannot find it as a parent; the sidebar renders that array under a group header
+        // instead. Route them there rather than into own_collections, where a tree save would
+        // re-root them.
+        const collectionTree = (self.chemotion_repository_collection
+          && collectionItem.ancestorIds.includes(self.chemotion_repository_collection.id))
+          ? self.chemotion_repository_collection.children
+          : self.own_collections;
+
+        self.addCollectionToTree(collectionItem, collectionTree);
       });
     },
     setSharedWithMeCollections(collections) {
@@ -388,11 +607,20 @@ export const CollectionsStore = types
         }
         const parentOwnerIndex = self.shared_with_me_collections.findIndex(element => element.owner == collection.owner)
         if (parentOwnerIndex !== -1) {
-          const node = Collection.create(collection);
-          // Preserve the hierarchy when the parent is also shared; when it is not (the branch is
-          // "skipped"), truncate by showing this collection at the top level under its owner.
-          const directParentId = node.ancestorIds[node.ancestorIds.length - 1];
-          if (directParentId == null || !sharedIds.has(directParentId)) { node.resetAncestry(); }
+          const node = Collection.create({ ...collection, original_ancestry: collection.ancestry });
+          // Walk from the nearest ancestor outward so a node whose real parent isn't shared still
+          // nests under the closest ancestor that IS — "orphan adoption" — rather than always
+          // dropping straight to the owner root. Ordering note: presortSharedWithMeCollections sorts
+          // by raw ancestry depth first, and any true ancestor always has strictly smaller raw depth
+          // than its descendant, so by the time this runs for a given node, its nearest shared
+          // ancestor (if any) has already been truncated/inserted earlier in this same forEach —
+          // addCollectionToTree's recursive descent can rely on that.
+          const nearestSharedAncestorId = [...node.ancestorIds].reverse().find((id) => sharedIds.has(id));
+          if (nearestSharedAncestorId != null) {
+            node.truncateAncestryAt(nearestSharedAncestorId);
+          } else {
+            node.resetAncestry();
+          }
           self.addCollectionToTree(node, self.shared_with_me_collections[parentOwnerIndex].children);
         }
       });
@@ -406,38 +634,39 @@ export const CollectionsStore = types
       self.shared_with_me_collection_tree = { label: 'Collections shared with me', id: -1, children: children }
     },
     presortSharedWithMeCollections(collections) {
+      // No is_locked filter. It used to be a harmless no-op — the system collections were not
+      // shareable — but they are now, and dropping them here would accept the share server-side and
+      // then leave the recipient with no way to see it. The owner-grouping rows this tree adds are
+      // synthetic and created below, so they are not affected either way.
       return collections
         .sort(presort)
         .sort((a, b) => (a.owner > b.owner) ? 1 : ((b.owner > a.owner) ? -1 : 0))
-        .filter((c) => !c.is_locked)
     },
     addCollectionToTree(collection, collectionTree) {
       const parentIndex = collectionTree.findIndex(element => element.isAncestorOf(collection))
 
+      // A collection whose parent is not in this array is shown at the top of it rather than
+      // dropped, but its `ancestry` is deliberately left untouched: that field is the persisted
+      // parent pointer this store hands back to the server, not display state. Rewriting it here
+      // would silently promote the collection to a root on the next tree save. Callers that
+      // genuinely want to truncate a branch reset the ancestry themselves before calling in — see
+      // setSharedWithMeCollections.
       if (collection.isRootCollection || parentIndex === -1) {
-        if (parentIndex === -1 && !collection.isRootCollection) { collection.resetAncestry() }
-
         collectionTree.push(collection)
-        collectionTree.sort((a, b) => {
-          if (a.position != null && b.position != null) { return a.position - b.position }
-          else if (a.position != null && b.position == null) { return -1 }
-          else if (a.position == null && b.position != null) { return 1 }
-          else if (a.label < b.label) { return -1; }
-          else if (a.label == b.label) { return 0 }
-          else if (a.label > b.label) { return 1 }
-          else { console.debug('unsortable collections:', a, b); return 0 }
-        })
+        collectionTree.sort(compareBySharerOrder)
       } else {
         collectionTree[parentIndex].addChild(collection)
       }
     },
+    // Stops at the first match (ids are unique) instead of walking every remaining subtree —
+    // updateCollection now calls this once per bucket (own tree, locked bucket, repository subtree).
     changeTabsSegmentInTree(collections, node) {
-      collections.find((c) => {
-        if (c.id == node.id) {
+      return collections.some((c) => {
+        if (c.id === node.id) {
           c.tabs_segment = node.tabs_segment;
-        } else if (c.children.length >= 1) {
-          self.changeTabsSegmentInTree(c.children, node);
+          return true;
         }
+        return c.children.length >= 1 && self.changeTabsSegmentInTree(c.children, node);
       })
     },
     changeLabelInTree(collections, node, label) {
@@ -462,6 +691,10 @@ export const CollectionsStore = types
     },
     setUpdateTree(value) {
       self.update_tree = value
+    },
+    discardOwnCollectionTreeChanges() {
+      self.setOwnCollectionTree()
+      self.setUpdateTree(false)
     },
     addToggledTreeItem(id, label) {
       if (self.toggled_tree_items.indexOf(`${id}-${label}`) === -1) {
@@ -496,9 +729,33 @@ export const CollectionsStore = types
     },
     get ownCollections() { return values(self.own_collections) },
     get sharedWithMeCollections() { return values(self.shared_with_me_collections) },
+    // "All" is deliberately absent from every collection tree, so `find` cannot resolve it; the
+    // locked bucket is the only place it is reachable by id.
+    isAllCollectionId(collectionId) {
+      const allCollection = self.locked_collection.find((collection) => collection.label === ALL_LABEL);
+      return Boolean(allCollection) && allCollection.id === collectionId;
+    },
+    // The system collections, in the order they are presented: the catch-all first, then the
+    // repository root and the "transferred" node that lives under it. They are kept out of
+    // own_collections (nothing may reparent, rename or delete them), so the management modal reads
+    // them from the locked bucket instead; SYSTEM_LABELS is the presentation order.
+    get systemCollections() {
+      return SYSTEM_LABELS
+        .map((label) => self.locked_collection.find((collection) => collection.label === label))
+        .filter(Boolean);
+    },
     isOwnCollection(collection_id) { return self.ownCollectionIds.indexOf(collection_id) != -1 },
     isSharedCollection(collection_id) { return self.sharedCollectionIds.indexOf(collection_id) != -1 },
-    get ownCollectionIds() { return self.own_collections.flatMap(collection => collection.idAndDescendantIds) },
+    // Ownership is personal and has one definition — Collection#owned_by? is `user_id == user.id`,
+    // and the `own` payload is `own_collections_for`, i.e. every collection with that user_id. The
+    // repository subtree is part of that; it only sits on its own field because the sidebar renders
+    // it as a separate section, which must not narrow what the user owns.
+    get ownCollectionIds() {
+      const repositoryIds = self.chemotion_repository_collection
+        ? self.chemotion_repository_collection.idAndDescendantIds
+        : [];
+      return self.own_collections.flatMap((collection) => collection.idAndDescendantIds).concat(repositoryIds);
+    },
     get sharedCollectionIds() { return self.shared_with_me_collections.flatMap(collection => collection.idAndDescendantIds) },
     descendantIds(collection) { return collection.children.flatMap(collection => collection.idAndDescendantIds) },
     sharedWithUsers(collection_id) { return self.collection_shares.find((share) => share.id == collection_id) },

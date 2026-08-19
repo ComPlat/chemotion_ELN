@@ -1,5 +1,7 @@
 // eslint-disable-next-line import/no-unresolved
-import { collectionHasPermission, filterParamsFromUIState } from 'src/utilities/collectionUtilities';
+import { collectionHasPermission, collectionOptions, filterParamsFromUIState } from 'src/utilities/collectionUtilities';
+// eslint-disable-next-line import/no-unresolved
+import { PermissionConst } from 'src/utilities/PermissionConst';
 import { List } from 'immutable';
 import expect from 'expect';
 function createCollectionDummy(collectionShareId = undefined, permissionLevel = 0) {
@@ -22,6 +24,88 @@ describe('collectionUtilities', () => {
       it('has no permissions', () => {
         expect(collectionHasPermission(createCollectionDummy(2, 0), 1)).toBe(false);
       });
+    });
+  });
+
+  describe('.collectionOptions', () => {
+    const store = () => ({
+      own_collections: [
+        {
+          id: 1,
+          label: 'Project',
+          children: [{ id: 2, label: 'Sub', children: [] }],
+        },
+      ],
+      shared_with_me_collections: [
+        {
+          id: 0,
+          label: 'Alice',
+          children: [
+            { id: 3, label: 'Editable', permission_level: PermissionConst.AddElements, children: [] },
+            { id: 4, label: 'ReadOnly', permission_level: 0, children: [] },
+          ],
+        },
+      ],
+      chemotion_repository_collection: {
+        id: 5,
+        label: 'chemotion-repository.net',
+        children: [{ id: 6, label: 'transferred', children: [] }],
+      },
+    });
+
+    it('groups owned collections under a "My Collections" label', () => {
+      const [owned] = collectionOptions(store(), false);
+
+      expect(owned.label).toBe('My Collections');
+      expect(owned.options.map((o) => o.id)).toEqual([1, 2]);
+    });
+
+    it('stamps nesting depth so child collections can be indented', () => {
+      const [owned] = collectionOptions(store(), false);
+
+      expect(owned.options.map((o) => o.depth)).toEqual([0, 1]);
+    });
+
+    it('omits shared collections when not requested', () => {
+      const groups = collectionOptions(store(), false);
+
+      expect(groups).toHaveLength(1);
+    });
+
+    it('keeps a per-owner "Shared by" group and drops unassignable collections', () => {
+      const groups = collectionOptions(store(), true);
+
+      expect(groups.map((g) => g.label)).toEqual(['My Collections', 'Shared by Alice']);
+      // Only the collection the user may add elements into is offered.
+      expect(groups[1].options.map((o) => o.id)).toEqual([3]);
+    });
+
+    it('omits the repository subtree unless it is asked for', () => {
+      const groups = collectionOptions(store(), true);
+
+      expect(groups.map((g) => g.label)).not.toContain('chemotion-repo');
+    });
+
+    it('offers the repository root and "transferred" when requested', () => {
+      const groups = collectionOptions(store(), false, true);
+
+      expect(groups.map((g) => g.label)).toEqual(['My Collections', 'chemotion-repo']);
+      expect(groups[1].options.map((o) => o.id)).toEqual([5, 6]);
+      expect(groups[1].options.map((o) => o.depth)).toEqual([0, 1]);
+    });
+
+    it('never offers the "All" collection, which is not in any tree', () => {
+      const groups = collectionOptions(store(), true, true);
+      const labels = groups.flatMap((g) => g.options.map((o) => o.label));
+
+      expect(labels).not.toContain('All');
+    });
+
+    it('skips the repository group when the user has no repository collection', () => {
+      const storeWithoutRepository = { ...store(), chemotion_repository_collection: null };
+      const groups = collectionOptions(storeWithoutRepository, false, true);
+
+      expect(groups).toHaveLength(1);
     });
   });
 

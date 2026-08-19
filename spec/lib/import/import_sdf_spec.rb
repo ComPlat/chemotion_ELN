@@ -133,21 +133,85 @@ RSpec.describe Import::ImportSdf do
       end
     end
 
-    it 'schedules a single PubchemSingleLcssJob covering every new molecule in one chunk' do
-      scheduled_ids = nil
-      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+    it 'schedules PubchemLookupJob covering every new molecule, via a created_after timestamp' do
+      started_at = Time.current
+      allow(PubchemLookupJob).to receive(:perform_later)
 
       expect { batch_import.find_or_create_mol_by_batch }.to change(Molecule, :count).by(2)
-      expect(PubchemSingleLcssJob).to have_received(:perform_later).once
-      expect(scheduled_ids.size).to eq(2)
+      # created_after with no id list: a lower bound with no upper one, so a single job's
+      # ascending-id cursor keeps covering molecules created by later batches.
+      expect(PubchemLookupJob).to have_received(:perform_later)
+        .with(nil, created_after: be >= started_at).at_least(:once)
     end
 
-    it 'schedules one PubchemSingleLcssJob per chunk when batch_size splits the import' do
-      allow(PubchemSingleLcssJob).to receive(:perform_later)
+    # Enrichment must start while the import is still running, not only after every batch is
+    # done — on a real 529-record file the ensure-only version left every molecule nameless for
+    # ~80 minutes.
+    it 'schedules enrichment after the first batch, before the import has finished' do
+      scheduled_calls = 0
+      scheduled_before_last_batch = nil
+      batches_seen = 0
+      allow(PubchemLookupJob).to receive(:perform_later) { scheduled_calls += 1 }
+      allow(batch_import).to receive(:find_or_create_by_molfiles).and_wrap_original do |orig, *args|
+        batches_seen += 1
+        # Sampled at the start of the *last* batch: enrichment must already be queued by then.
+        scheduled_before_last_batch = scheduled_calls if batches_seen == 2
+        orig.call(*args)
+      end
 
       batch_import.find_or_create_mol_by_batch(1)
 
-      expect(PubchemSingleLcssJob).to have_received(:perform_later).twice
+      expect(batches_seen).to eq(2)
+      expect(scheduled_before_last_batch).to eq(1)
+    end
+
+    # Regression guard for the per-chunk fan-out defect fixed earlier in this work: enqueueing
+    # once per batch would put 1000 jobs in the queue for a 50k-molecule import. The count must
+    # be bounded (first-batch kick + the ensure flush), not proportional to batch count.
+    it 'schedules a bounded number of jobs however many chunks the import splits into' do
+      allow(PubchemLookupJob).to receive(:perform_later)
+
+      batch_import.find_or_create_mol_by_batch(1) # 2 molfiles, batch_size 1 => 2 batches
+
+      expect(PubchemLookupJob).to have_received(:perform_later).twice
+    end
+
+    # Regression for the reported bug: one molecule losing the create race must not abort the
+    # whole import with PG::UniqueViolation (index_molecules_on_formula_and_inchikey_and_is_partial).
+    it 'survives a concurrent-create RecordNotUnique on one molecule and still imports the rest (C1)' do
+      allow(PubchemLookupJob).to receive(:perform_later)
+
+      raced_inchikey = "MOL#{Digest::SHA256.hexdigest(new_molfiles.first.to_s)[0..10]}-UHFFFAOYSA-N"
+      winner = create(:molecule, inchikey: raced_inchikey, is_partial: false,
+                                 sum_formular: nil, defer_pubchem_lookup: true)
+
+      # The raced molecule's decision-lookup misses first (winner committed in the gap),
+      # then the rescue re-find returns the winner; all other lookups behave normally.
+      first_lookup = true
+      allow(Molecule).to receive(:find_by).and_wrap_original do |orig, *args|
+        cond = args.first
+        if cond.is_a?(Hash) && cond[:inchikey] == raced_inchikey
+          next winner unless first_lookup
+
+          first_lookup = false
+          nil
+        else
+          orig.call(*args)
+        end
+      end
+
+      # The raced molecule's INSERT collides once; every other create proceeds normally.
+      allow(Molecule).to receive(:create).and_wrap_original do |orig, *args, &blk|
+        cond = args.first
+        raise ActiveRecord::RecordNotUnique if cond.is_a?(Hash) && cond[:inchikey] == raced_inchikey
+
+        orig.call(*args, &blk)
+      end
+
+      # Only the genuinely-new water molecule is inserted; the raced one reuses the winner
+      # (no duplicate, no aborted import). If the bug regressed, this block would raise.
+      expect { batch_import.find_or_create_mol_by_batch }.to change(Molecule, :count).by(1)
+      expect(batch_import.inchi_array).to include(raced_inchikey)
     end
   end
 
@@ -170,7 +234,7 @@ RSpec.describe Import::ImportSdf do
         row = mapper.find_or_create_polymer_molfile_entry(polymer_molfile, nil)
 
         expect(Import::PolymerMoleculeResolver).to have_received(:call)
-          .with(polymer_molfile, lcss_batch: mapper.instance_variable_get(:@lcss_batch))
+          .with(polymer_molfile, defer_pubchem_lookup: mapper.instance_variable_get(:@defer_pubchem_lookup))
         expect(row).to include(
           inchikey: resolved_molecule.inchikey,
           svg: 'molecules/x.svg',
@@ -197,7 +261,7 @@ RSpec.describe Import::ImportSdf do
         tuple = mapper.molecule_and_molfile_for_row(polymer_molfile)
 
         expect(Import::PolymerMoleculeResolver).to have_received(:call)
-          .with(polymer_molfile, lcss_batch: mapper.instance_variable_get(:@lcss_batch))
+          .with(polymer_molfile, defer_pubchem_lookup: mapper.instance_variable_get(:@defer_pubchem_lookup))
         expect(tuple).to eq([resolved_molecule, polymer_molfile, {}])
       end
     end

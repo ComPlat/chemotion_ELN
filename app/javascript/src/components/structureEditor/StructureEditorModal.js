@@ -110,6 +110,7 @@ export default class StructureEditorModal extends React.Component {
       selectedShape: null,
       selectedCommonTemplate: null,
       deleteAllowed: true,
+      saving: false,
     };
     this.editors = {};
     this.handleEditorSelection = this.handleEditorSelection.bind(this);
@@ -160,7 +161,9 @@ export default class StructureEditorModal extends React.Component {
 
   async handleSaveBtn() {
     const { hasChildren, hasParent, onSave } = this.props;
-    const { editor } = this.state;
+    const { editor, saving } = this.state;
+    if (saving) return;
+    this.setState({ saving: true });
     const structure = editor.structureDef;
     if (editor.id === 'marvinjs') {
       structure.editor.sketcherInstance.exportStructure('mol').then(
@@ -168,31 +171,39 @@ export default class StructureEditorModal extends React.Component {
           const editorImg = new structure.editor.ImageExporter({ imageType: 'image/svg' });
           editorImg.render(mMol).then(
             (svg) => {
-              this.setState({ showModal: false, showWarning: hasChildren || hasParent }, () => {
+              this.setState({ showModal: false, showWarning: hasChildren || hasParent, saving: false }, () => {
                 if (onSave) {
                   onSave(mMol, svg, null, editor.id);
                 }
               });
             },
             (error) => {
+              this.setState({ saving: false });
               alert(`MarvinJS image generated fail: ${error}`);
             }
           );
         },
         (error) => {
+          this.setState({ saving: false });
           alert(`MarvinJS molfile generated fail: ${error}`);
         }
       );
-    } else if (editor.id === 'ketcher') this.saveKetcher(editor);
-    else {
+    } else if (editor.id === 'ketcher') {
+      try {
+        await this.saveKetcher(editor);
+      } finally {
+        this.setState({ saving: false });
+      }
+    } else {
       try {
         const { molfile, info } = structure;
         if (!molfile) throw new Error('No molfile');
-        structure.fetchSVG().then((svg) => {
-          this.handleStructureSave(molfile, svg, editor.id, info);
-        });
+        const svg = await structure.fetchSVG();
+        this.handleStructureSave(molfile, svg, editor.id, info);
       } catch (e) {
         notifyError(`The drawing is not supported! ${e}`);
+      } finally {
+        this.setState({ saving: false });
       }
     }
   }
@@ -287,6 +298,7 @@ export default class StructureEditorModal extends React.Component {
     this.setState({
       showModal: false,
       showWarning: hasChildren || hasParent,
+      saving: false,
     });
   }
 
@@ -321,7 +333,7 @@ export default class StructureEditorModal extends React.Component {
     } = this.props;
     const handleSaveBtn = !onSave ? null : this.handleSaveBtn.bind(this);
 
-    const { editor, showWarning, showModal } = this.state;
+    const { editor, showWarning, showModal, saving } = this.state;
 
     const editorOptions = Object.keys(this.editors).map((e) => ({
       value: e,
@@ -330,7 +342,7 @@ export default class StructureEditorModal extends React.Component {
     }));
 
     const modalFooter = showWarning ? undefined : submitAddons;
-    const primaryActionLabel = showWarning ? 'Continue Editing' : submitBtnText;
+    const primaryActionLabel = showWarning ? 'Continue Editing' : (saving ? 'Saving…' : submitBtnText);
     const primaryActionHandler = showWarning ? this.hideWarning.bind(this) : handleSaveBtn;
 
     return (
@@ -344,6 +356,7 @@ export default class StructureEditorModal extends React.Component {
         closeLabel={cancelBtnText}
         primaryActionLabel={primaryActionHandler ? primaryActionLabel : undefined}
         onPrimaryAction={primaryActionHandler || undefined}
+        primaryActionDisabled={saving}
         extendedFooter={modalFooter}
       >
         {!showWarning && (

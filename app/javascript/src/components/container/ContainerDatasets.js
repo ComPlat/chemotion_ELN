@@ -149,7 +149,7 @@ export default class ContainerDatasets extends Component {
     return null;
   }
 
-  updateContainerState(updatedContainer, shouldClose = false) {
+  updateContainerState(updatedContainer, shouldClose = false, variations = null) {
     const { rootContainer } = this.props;
     const { modal, container: currentContainer } = this.state;
 
@@ -187,27 +187,27 @@ export default class ContainerDatasets extends Component {
       const container = analysesContainer.find((a) => a.id === currentContainer.id);
       if (!container) {
         this.handleModalHide();
-        this.props.onChange(updatedRoot);
+        this.props.onChange(updatedRoot, variations);
         return;
       }
       const selectedIndex = modal?.selectedIndex;
       // Safety check: verify dataset index is valid
       if (selectedIndex === null || selectedIndex === undefined) {
         this.handleModalHide();
-        this.props.onChange(updatedRoot);
+        this.props.onChange(updatedRoot, variations);
         return;
       }
 
       if (!container.children || !Array.isArray(container.children)) {
         this.handleModalHide();
-        this.props.onChange(updatedRoot);
+        this.props.onChange(updatedRoot, variations);
         return;
       }
 
       const dataset = container.children[selectedIndex];
       if (!dataset) {
         this.handleModalHide();
-        this.props.onChange(updatedRoot);
+        this.props.onChange(updatedRoot, variations);
         return;
       }
 
@@ -224,7 +224,7 @@ export default class ContainerDatasets extends Component {
         }
       });
     }
-    this.props.onChange(updatedRoot);
+    this.props.onChange(updatedRoot, variations);
   }
 
   render() {
@@ -272,7 +272,9 @@ export default class ContainerDatasets extends Component {
               disabled={disabled}
               element={element}
               rootContainer={rootContainer}
-              updateContainerState={(cont, shouldClose) => this.updateContainerState(cont, shouldClose)}
+              updateContainerState={
+                (cont, shouldClose, variations) => this.updateContainerState(cont, shouldClose, variations)
+              }
               isContainerNew={container?.is_new}
             />
           )}

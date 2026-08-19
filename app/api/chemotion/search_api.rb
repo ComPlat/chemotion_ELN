@@ -157,6 +157,9 @@ module Chemotion
             samplesGroup = samples.select { |sample| sample.molecule_id == molecule.id }
             samplesGroup = samplesGroup.sort { |x, y| y.updated_at <=> x.updated_at }
             samplesGroup.each do |sample|
+              # Per-element (not for_collection like the other element types below): a sample reached
+              # via a restrictive share still shows its true level if the user owns/better-shares it
+              # in another collection. Keep this deliberate divergence when editing.
               detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
               serialized_sample = Entities::SampleEntity.represent(
                 sample,
@@ -173,6 +176,8 @@ module Chemotion
                 .where(id: id_array)
                 .order(Arel.sql("position(','||id::text||',' in ',#{ids},')"))
                 .each do |sample|
+                  # Per-element (not for_collection like the other element types): keeps a sample's
+                  # true level when the user owns/better-shares it in another collection. Deliberate.
                   detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
                   serialized_sample = Entities::SampleEntity.represent(
                     sample,
@@ -200,29 +205,39 @@ module Chemotion
         sequence_based_macromolecule_sample_ids = elements.fetch(:sequence_based_macromolecule_sample_ids, [])
         device_description_ids = elements.fetch(:device_description_ids, [])
 
+        # Every element on the page comes from the single resolved collection @c, so its per-class
+        # detail levels apply to all of them. Without this the entities render fail-open (full access),
+        # leaking fields a restrictive collection share is meant to hide (e.g. reaction analyses).
+        detail_levels = ElementDetailLevelCalculator.for_collection(collection: @c, user: current_user)
+
         paginated_reaction_ids = Kaminari.paginate_array(reaction_ids).page(page).per(page_size)
         serialized_reactions = Reaction.find(paginated_reaction_ids).map do |reaction|
-          Entities::ReactionEntity.represent(reaction, displayed_in_list: true).serializable_hash
+          Entities::ReactionEntity.represent(reaction, detail_levels: detail_levels, displayed_in_list: true)
+                                  .serializable_hash
         end
 
         paginated_wellplate_ids = Kaminari.paginate_array(wellplate_ids).page(page).per(page_size)
         serialized_wellplates = Wellplate.find(paginated_wellplate_ids).map do |wellplate|
-          Entities::WellplateEntity.represent(wellplate, displayed_in_list: true).serializable_hash
+          Entities::WellplateEntity.represent(wellplate, detail_levels: detail_levels, displayed_in_list: true)
+                                   .serializable_hash
         end
 
         paginated_screen_ids = Kaminari.paginate_array(screen_ids).page(page).per(page_size)
         serialized_screens = Screen.find(paginated_screen_ids).map do |screen|
-          Entities::ScreenEntity.represent(screen, displayed_in_list: true).serializable_hash
+          Entities::ScreenEntity.represent(screen, detail_levels: detail_levels, displayed_in_list: true)
+                                .serializable_hash
         end
 
         paginated_cell_line_ids = Kaminari.paginate_array(cell_line_ids).page(page).per(page_size)
         serialized_cell_lines = CelllineSample.find(paginated_cell_line_ids).map do |cell_line|
-          Entities::CellLineSampleEntity.represent(cell_line, displayed_in_list: true).serializable_hash
+          Entities::CellLineSampleEntity.represent(cell_line, detail_levels: detail_levels, displayed_in_list: true)
+                                        .serializable_hash
         end
 
         paginated_research_plan_ids = Kaminari.paginate_array(research_plan_ids).page(page).per(page_size)
         serialized_research_plans = ResearchPlan.find(paginated_research_plan_ids).map do |research_plan|
-          Entities::ResearchPlanEntity.represent(research_plan, displayed_in_list: true).serializable_hash
+          Entities::ResearchPlanEntity.represent(research_plan, detail_levels: detail_levels, displayed_in_list: true)
+                                      .serializable_hash
         end
 
         paginated_sequence_based_macromolecule_sample_ids =
@@ -232,13 +247,16 @@ module Chemotion
           SequenceBasedMacromoleculeSample.find(paginated_sequence_based_macromolecule_sample_ids)
                                           .map do |sequence_based_macromolecule_sample|
             Entities::SequenceBasedMacromoleculeSampleEntity
-              .represent(sequence_based_macromolecule_sample, displayed_in_list: true).serializable_hash
+              .represent(sequence_based_macromolecule_sample, detail_levels: detail_levels, displayed_in_list: true)
+              .serializable_hash
           end
 
         paginated_device_description_ids = Kaminari.paginate_array(device_description_ids).page(page).per(page_size)
         serialized_device_descriptions =
           DeviceDescription.find(paginated_device_description_ids).map do |device_description|
-            Entities::DeviceDescriptionEntity.represent(device_description, displayed_in_list: true).serializable_hash
+            Entities::DeviceDescriptionEntity
+              .represent(device_description, detail_levels: detail_levels, displayed_in_list: true)
+              .serializable_hash
           end
 
         result = {
@@ -313,7 +331,8 @@ module Chemotion
           element_ids_for_klass = Labimotion::Element.where(id: element_ids, element_klass_id: klass.id).pluck(:id)
           paginated_element_ids = Kaminari.paginate_array(element_ids_for_klass).page(page).per(page_size)
           serialized_elements = Labimotion::Element.find(paginated_element_ids).map do |element|
-            Labimotion::ElementEntity.represent(element, displayed_in_list: true).serializable_hash
+            Labimotion::ElementEntity.represent(element, detail_levels: detail_levels, displayed_in_list: true)
+                                     .serializable_hash
           end
 
           result["#{klass.name}s"] = {

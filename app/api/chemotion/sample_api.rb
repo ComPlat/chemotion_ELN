@@ -62,8 +62,8 @@ module Chemotion
         end
 
         before do
-          collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
-          @samples = Sample.by_collection_id(collection.id).by_ui_state(params[:ui_state])
+          @collection = Collection.accessible_for(current_user).find(params[:ui_state][:collection_id])
+          @samples = Sample.by_collection_id(@collection.id).by_ui_state(params[:ui_state])
           error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).read_all?
         end
 
@@ -71,9 +71,14 @@ module Chemotion
         post do
           @samples = @samples.limit(params[:limit]) if params[:limit]
 
+          # All samples come from the single accessible collection @collection; apply its per-class
+          # detail levels so a restrictive share does not leak fields (molfile, analyses, etc.).
+          detail_levels = ElementDetailLevelCalculator.for_collection(collection: @collection, user: current_user)
+
           {
             samples: Entities::SampleEntity.represent(
               @samples,
+              detail_levels: detail_levels,
               root: false,
             ),
             literatures: Entities::LiteratureEntity.represent(
@@ -165,7 +170,7 @@ module Chemotion
         end
       end
 
-      desc 'Return serialized molecules_samples_groups of current user'
+      desc "Return serialized molecules_samples_groups of current user. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
         optional :molecule_sort, type: Integer, desc: 'Sort by parameter'
@@ -178,17 +183,7 @@ module Chemotion
       paginate per_page: 7, offset: 0, max_per_page: 100
 
       get do
-        sample_scope = Sample.none
-        if params[:collection_id]
-          begin
-            sample_scope = Collection.accessible_for(current_user).find(params[:collection_id]).samples
-          rescue ActiveRecord::RecordNotFound
-            Sample.none
-          end
-        else
-          # All collection
-          sample_scope = Sample.for_user(current_user.id).distinct
-        end
+        resolved_collection, sample_scope = collection_scope_for(params[:collection_id], Sample, :samples)
         sample_scope = sample_scope.includes_for_list_display
         prod_only = params[:product_only] || false
         sample_scope = if prod_only
@@ -208,6 +203,9 @@ module Chemotion
         sample_scope = sample_scope.by_user_label(user_label) if user_label
 
         sample_list = []
+        detail_levels = ElementDetailLevelCalculator.for_list(
+          collection: resolved_collection, user: current_user, owned_only: true,
+        )
 
         if params[:molecule_sort] == 1
           molecule_scope = Molecule
@@ -219,17 +217,16 @@ module Chemotion
             samples_group = sample_scope.select { |v| v.molecule_id == molecule.id }
             samples_group = samples_group.sort { |x, y| y.updated_at <=> x.updated_at }
             samples_group.each do |sample|
-              detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
               sample_list.push(
                 Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
               )
             end
           end
+          sample_count = sample_scope.size
         else
-          reset_pagination_page(sample_scope)
+          sample_count = reset_pagination_page(sample_scope)
           sample_scope = sample_scope.order('samples.updated_at DESC')
           paginate(sample_scope).each do |sample|
-            detail_levels = ElementDetailLevelCalculator.new(user: current_user, element: sample).detail_levels
             sample_list.push(
               Entities::SampleEntity.represent(sample, detail_levels: detail_levels, displayed_in_list: true),
             )
@@ -238,7 +235,7 @@ module Chemotion
 
         return {
           samples: sample_list,
-          samples_count: sample_scope.count,
+          samples_count: sample_count,
         }
       end
 

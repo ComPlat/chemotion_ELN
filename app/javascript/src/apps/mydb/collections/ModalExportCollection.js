@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import AppModal from 'src/components/common/AppModal';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import { SYSTEM_LABELS } from 'src/stores/mobx/CollectionsStore';
 import UserStore from 'src/stores/alt/stores/UserStore';
 
 function ModalExportCollection({ onHide }) {
@@ -61,7 +62,7 @@ function ModalExportCollection({ onHide }) {
     const nodes = collections.map((collection) => {
       const nodeKey = `${collection.id}-${collection.label}`;
 
-      if (collection.is_locked && !['All', 'chemotion-repository.net', 'transferred'].includes(collection.label)) {
+      if (collection.is_locked && !SYSTEM_LABELS.includes(collection.label)) {
         return (
           <li key={nodeKey}>
             <h6>{collection.label}</h6>

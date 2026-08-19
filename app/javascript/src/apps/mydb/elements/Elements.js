@@ -73,7 +73,7 @@ function Elements() {
         defaultSize={showDetailView ? defaultLayout[0] : 100}
         className="w-0"
       >
-        <div className="h-100 pt-4 px-4 overflow-x-auto">
+        <div className="h-100 pt-4 px-4 overflow-x-auto min-w-0">
           <ElementsList overview={!showDetailView} />
         </div>
       </Panel>

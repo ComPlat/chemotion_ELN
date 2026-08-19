@@ -1,12 +1,27 @@
 .tree-view {
   @extend .d-flex;
   @extend .flex-column;
+  // Every row is wrapped in a plain div (see TreeViewItem.js) that becomes a flex
+  // item here (and in each nested .tree-view for sub-collections). Without
+  // min-width:0 it hugs its content's natural width instead of shrinking to the
+  // sidebar's available width, which is what let long labels balloon past the
+  // sidebar and get hard-clipped (no ellipsis) by an ancestor's overflow-x:hidden.
+  > div {
+    @extend .min-w-0;
+  }
   &__frame {
     min-height: 0;
+    @extend .min-w-0;
   }
   &__container {
     @extend .tree-view;
     @extend .overflow-y-auto;
+    @extend .min-w-0;
+    // Load-bearing with the kebab dropdown (see .collection-subtree-functions below):
+    // Popper pre-positions every `renderOnMount` menu at (0,0) before it is shown;
+    // this clip stops those off-screen menus from stacking into view. Remove it
+    // and you get the "5x Reference Report" duplication bug.
+    overflow-x: hidden;
     @extend .surface-lighten3;
     @extend .border-top;
   }
@@ -16,6 +31,7 @@
     cursor: pointer;
     font-size: 14px;
     min-height: 36px;
+    min-width: 0;
     @extend .py-1;
     @extend .pe-2;
     @extend .gap-2;
@@ -36,11 +52,32 @@
   }
   &__title {
     @extend .flex-grow-1;
-    overflow-x: hidden;
-    text-overflow: ellipsis;
+    min-width: 0;
+    // Wrap normally (so a multi-word long label still shows in full across a
+    // couple of lines, as it did before long-label overflow was clipped) but
+    // allow breaking mid-word so a single unbroken word can't force the row
+    // wider than the sidebar. Capped at 2 lines so one extreme label can't
+    // stretch the row indefinitely; anything beyond that gets an ellipsis on
+    // the second line.
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 
+// Sidebar per-collection kebab. These rules work as a set of three, together
+// with the CSS on .tree-view__container above and the `renderOnMount` +
+// `strategy: 'fixed'` on the Dropdown.Menu in CollectionSubtreeFunctions.js.
+// Change any one piece in isolation and something regresses:
+//   * `display: none` here (vs. visibility: hidden / opacity: 0) — no reserved
+//     space when idle, kebab enters flex flow beside the share indicator on
+//     hover (so they never overlap).
+//   * `renderOnMount` on the menu — Popper needs a measurable target when the
+//     dropdown opens; without it the menu can render at (0,0).
+//   * `overflow-x: hidden` on the container — clips those pre-mounted menus
+//     until Popper repositions them, preventing visible stacking.
 .tree-view__item {
   .collection-subtree-functions {
     display: none;

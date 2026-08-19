@@ -66,6 +66,8 @@ class SharedMethods
           .where(id: paginated_ids)
           .order(Arel.sql("position(','||id::text||',' in ',#{paginated_ids.join(',')},')"))
           .each do |sample|
+            # Per-element (not for_collection like the other element types): keeps a sample's true
+            # level when the user owns/better-shares it in another collection. Deliberate divergence.
             detail_levels = ElementDetailLevelCalculator.new(user: @user, element: sample).detail_levels
             serialized_sample = Entities::SampleEntity.represent(
               sample,
@@ -84,7 +86,8 @@ class SharedMethods
       paginated_element_ids = Kaminari.paginate_array(element_ids_for_klass)
                                       .page(@params[:page]).per(@params[:per_page])
       serialized_elements = Labimotion::Element.find(paginated_element_ids).map do |generic_element|
-        Labimotion::ElementEntity.represent(generic_element, displayed_in_list: true).serializable_hash
+        Labimotion::ElementEntity.represent(generic_element, detail_levels: collection_detail_levels,
+                                                             displayed_in_list: true).serializable_hash
       end
 
       @result["#{klass.name}s"] = {
@@ -101,7 +104,8 @@ class SharedMethods
 
   def serialize_cellline(paginated_ids)
     CelllineSample.find(paginated_ids).map do |model|
-      Entities::CellLineSampleEntity.represent(model, displayed_in_list: true).serializable_hash
+      Entities::CellLineSampleEntity.represent(model, detail_levels: collection_detail_levels,
+                                                      displayed_in_list: true).serializable_hash
     end
   end
 
@@ -110,7 +114,19 @@ class SharedMethods
     entities = "Entities::#{model_name}Entity".constantize
 
     model_name.constantize.find(paginated_ids).map do |model|
-      entities.represent(model, displayed_in_list: true).serializable_hash
+      entities.represent(model, detail_levels: collection_detail_levels, displayed_in_list: true)
+              .serializable_hash
     end
+  end
+
+  # Per-class detail levels for the single collection this search is scoped to. Without them the
+  # entities render fail-open (full access), leaking fields a restrictive collection share hides.
+  # Samples deliberately use the per-element calculator instead (see #serialize_sample).
+  def collection_detail_levels
+    @collection_detail_levels ||=
+      ElementDetailLevelCalculator.for_collection(
+        collection: Collection.accessible_for(@user).find(@params[:collection_id]),
+        user: @user,
+      )
   end
 end

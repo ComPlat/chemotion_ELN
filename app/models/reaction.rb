@@ -232,54 +232,29 @@ class Reaction < ApplicationRecord
   end
 
   def update_svg_file!
-    svg = reaction_svg_file
-    if svg.present? && svg.end_with?('</svg>')
-      svg_file_name = "#{SecureRandom.hex(64)}.svg"
-      svg_path = Rails.public_path.join('images', 'reactions', svg_file_name)
-      svg_file = File.new(svg_path, 'w+')
-      svg_file.write(svg)
-      svg_file.close
-      self.reaction_svg_file = svg_file_name
+    if legacy_inline_svg?
+      persist_legacy_inline_svg!
     else
-      paths = {}
-      {
-        starting_materials: :reactions_starting_material_samples,
-        reactants: :reactions_reactant_samples,
-        products: :reactions_product_samples,
-      }.each do |prop, resource|
-        collection = public_send(resource).includes(sample: :molecule)
-        paths[prop] = collection.map do |reactions_sample|
-          sample = reactions_sample.sample
-          params = [sample.get_svg_path]
-          params[0] = sample.svg_text_path if reactions_sample.show_label
-          params.append(yield_amount(sample.id)) if prop == :products
-          params
-        end
-      end
-      # SBMM reactants are stored in a separate association, so append them explicitly.
-      paths[:reactants] += reactant_sbmm_samples.map { |sbmm_sample| [sbmm_sample.svg_text_path] }
       begin
-        composer_options = {
-          temperature: temperature_display_with_unit,
-          duration: duration,
-          solvents: solvents_in_svg,
-          conditions: conditions,
-          show_yield: !interaction?,
-        }
-        composer_class = interaction? ? SVG::ProductsComposer : SVG::ReactionComposer
-        composer = composer_class.new(paths, composer_options)
-        self.reaction_svg_file = composer.compose_reaction_svg_and_save
+        self.reaction_svg_file = scheme_composer.compose_reaction_svg_and_save
       rescue StandardError => _e
         Rails.logger.info('**** SVG::ReactionComposer failed ***')
       end
     end
-    if reaction_svg_file_changed? && reaction_svg_file_was.present?
-      file_was = Rails.public_path.join('images', 'reactions', reaction_svg_file_was)
-      if Reaction.where(reaction_svg_file: reaction_svg_file_was).length < 2 && File.exist?(file_was)
-        File.delete(file_was)
-      end
-    end
+    cleanup_previous_svg_file!
     reaction_svg_file
+  end
+
+  # A freshly composed, report-styled scheme (larger text; solvents/temperature/duration/conditions/
+  # yield overlaid on the arrow, see SVG::ReactionComposer's `is_report` option) — as opposed to
+  # #reaction_svg_file, which is the plain persisted scheme. Not persisted to the reaction itself;
+  # returns the raw SVG string, or nil if composition fails.
+  def compose_report_scheme_svg
+    scheme_composer(is_report: true).compose_reaction_svg
+  rescue StandardError => e
+    Rails.logger.info('**** SVG::ReactionComposer failed (report scheme) ***')
+    Rails.logger.info(e.message)
+    nil
   end
 
   # return the full path of the svg file if it exists in the public folder otherwise nil.
@@ -326,22 +301,101 @@ class Reaction < ApplicationRecord
   def variations
     # We need to return raw.values because the frontend expects the variations to be an array of objects.
     raw = self[:variations]
-    raw.is_a?(Hash) ? raw.values : raw
+    return raw.values if raw.is_a?(Hash)
+
+    raw || []
   end
 
   def assign_attachment_to_variation(variation_id, analysis_id)
-    return if variation_id.blank?
+    assign_attachments_to_variations([[variation_id, analysis_id]])
+  end
 
-    variation = variations.find { |v| v['id'].to_s == variation_id.to_s }
-    return unless variation
+  # Batches multiple [variation_id, analysis_id] links into a single save, so bulk
+  # attachment uploads don't pay a separate Reaction#update (and logidze version) per file.
+  #
+  # TODO: this is a non-atomic read-modify-write on the whole `variations` column - two
+  # concurrent saves for the same reaction can each read the same pre-update state, and
+  # whichever `update` commits last silently drops the other's link. Now hit on every
+  # dataset attachment upload rather than only the rare manual inbox-assign action, so it's
+  # worth revisiting (optimistic locking via lock_version, or a targeted jsonb update).
+  def assign_attachments_to_variations(pairs)
+    current_variations = variations
+    changed = pairs.count { |variation_id, analysis_id| link_variation?(current_variations, variation_id, analysis_id) }
 
-    variation['metadata'] ||= {}
-    variation['metadata']['analyses'] ||= []
-    variation['metadata']['analyses'] << analysis_id
-    update(variations: variations)
+    update(variations: current_variations) if changed.positive?
   end
 
   private
+
+  def link_variation?(current_variations, variation_id, analysis_id)
+    return false if variation_id.blank?
+
+    variation = current_variations.find { |v| v['id'].to_s == variation_id.to_s }
+    return false unless variation
+
+    variation['metadata'] ||= {}
+    variation['metadata']['analyses'] ||= []
+    return false if variation['metadata']['analyses'].include?(analysis_id)
+
+    variation['metadata']['analyses'] << analysis_id
+    true
+  end
+
+  def legacy_inline_svg?
+    reaction_svg_file.present? && reaction_svg_file.end_with?('</svg>')
+  end
+
+  def persist_legacy_inline_svg!
+    svg_file_name = "#{SecureRandom.hex(64)}.svg"
+    Rails.public_path.join('images', 'reactions', svg_file_name).write(reaction_svg_file)
+    self.reaction_svg_file = svg_file_name
+  end
+
+  def cleanup_previous_svg_file!
+    return unless reaction_svg_file_changed? && reaction_svg_file_was.present?
+
+    file_was = Rails.public_path.join('images', 'reactions', reaction_svg_file_was)
+    return unless Reaction.where(reaction_svg_file: reaction_svg_file_was).length < 2 && File.exist?(file_was)
+
+    File.delete(file_was)
+  end
+
+  def scheme_composer(is_report: false)
+    composer_options = {
+      temperature: temperature_display_with_unit,
+      duration: duration,
+      solvents: solvents_in_svg,
+      conditions: conditions,
+      show_yield: !interaction?,
+      is_report: is_report,
+    }
+    composer_class = interaction? ? SVG::ProductsComposer : SVG::ReactionComposer
+    composer_class.new(scheme_materials_svg_paths, composer_options)
+  end
+
+  def scheme_materials_svg_paths
+    paths = {}
+    {
+      starting_materials: :reactions_starting_material_samples,
+      reactants: :reactions_reactant_samples,
+      products: :reactions_product_samples,
+    }.each do |prop, resource|
+      paths[prop] = scheme_material_svg_paths(resource, prop)
+    end
+    # SBMM reactants are stored in a separate association, so append them explicitly.
+    paths[:reactants] += reactant_sbmm_samples.map { |sbmm_sample| [sbmm_sample.svg_text_path] }
+    paths
+  end
+
+  def scheme_material_svg_paths(resource, prop)
+    public_send(resource).includes(sample: :molecule).map do |reactions_sample|
+      sample = reactions_sample.sample
+      params = [sample.get_svg_path]
+      params[0] = sample.svg_text_path if reactions_sample.show_label
+      params.append(yield_amount(sample.id)) if prop == :products
+      params
+    end
+  end
 
   def set_default_reaction_type
     self.reaction_type = 'standard' if reaction_type.blank?

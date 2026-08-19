@@ -50,7 +50,7 @@ module Chemotion
         end
       end
 
-      desc 'Return serialized wellplates'
+      desc "Return serialized wellplates. #{CollectionHelpers::LIST_DETAIL_LEVEL_DESC_NOTE}"
       params do
         optional :collection_id, type: Integer, desc: 'Collection id'
         optional :filter_created_at, type: Boolean, desc: 'filter by created at or updated at'
@@ -63,17 +63,8 @@ module Chemotion
         params[:per_page].to_i > 50 && (params[:per_page] = 50)
       end
       get do
-        scope = if params[:collection_id]
-                  begin
-                    Collection.accessible_for(current_user)
-                              .find(params[:collection_id]).wellplates
-                  rescue ActiveRecord::RecordNotFound
-                    Wellplate.none
-                  end
-                else
-                  # All collection of current_user
-                  Wellplate.joins(:collections).where(collections: { user_id: current_user.id }).distinct
-                end.order('wellplates.created_at DESC')
+        resolved_collection, scope = collection_scope_for(params[:collection_id], Wellplate, :wellplates)
+        scope = scope.order('wellplates.created_at DESC')
 
         from = params[:from_date]
         to = params[:to_date]
@@ -89,11 +80,15 @@ module Chemotion
 
         reset_pagination_page(scope)
 
+        detail_levels = ElementDetailLevelCalculator.for_list(
+          collection: resolved_collection, user: current_user, owned_only: true,
+        )
+
         wellplates = paginate(scope).map do |wellplate|
           Entities::WellplateEntity.represent(
             wellplate,
             displayed_in_list: true,
-            detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
+            detail_levels: detail_levels,
           )
         end
 
@@ -112,7 +107,7 @@ module Chemotion
           error!('401 Unauthorized', 401) unless policy.read?
 
           {
-            wellplate: Entities::WellplateEntity.represent(wellplate, detail_levels: detail_levels),
+            wellplate: Entities::WellplateEntity.represent(wellplate, detail_levels: detail_levels, policy: policy),
             attachments: Entities::AttachmentEntity.represent(wellplate.attachments),
           }
         rescue ActiveRecord::RecordNotFound
@@ -147,7 +142,8 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:id])).update?
+          @element_policy = ElementPolicy.new(current_user, Wellplate.find(params[:id]))
+          error!('401 Unauthorized', 401) unless @element_policy.update?
         end
 
         put do
@@ -166,6 +162,7 @@ module Chemotion
             with: Entities::WellplateEntity,
             detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
             root: :wellplate,
+            policy: @element_policy,
           )
           present wellplate.attachments, with: Entities::AttachmentEntity, root: :attachments
         end
@@ -202,6 +199,7 @@ module Chemotion
           with: Entities::WellplateEntity,
           detail_levels: ElementDetailLevelCalculator.new(user: current_user, element: wellplate).detail_levels,
           root: :wellplate,
+          policy: ElementPolicy.new(current_user, wellplate),
         )
         present wellplate.attachments, with: Entities::AttachmentEntity, root: :attachments
       end
@@ -241,8 +239,8 @@ module Chemotion
         end
         route_param :wellplate_id do
           before do
-            error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user,
-                                                                     Wellplate.find(params[:wellplate_id])).update?
+            @element_policy = ElementPolicy.new(current_user, Wellplate.find(params[:wellplate_id]))
+            error!('401 Unauthorized', 401) unless @element_policy.update?
           end
 
           put do
@@ -258,6 +256,7 @@ module Chemotion
                   wellplate,
                   detail_levels: ElementDetailLevelCalculator.new(user: current_user,
                                                                   element: wellplate).detail_levels,
+                  policy: @element_policy,
                 ),
                 attachments: Entities::AttachmentEntity.represent(wellplate.attachments),
                 molarity_discarded: import.molarity_discarded,

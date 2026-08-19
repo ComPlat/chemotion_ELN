@@ -420,16 +420,16 @@ describe Chemotion::SampleAPI do
       }
     end
 
-    it 'imports all new molecules and schedules exactly one PubchemSingleLcssJob for the whole batch' do
-      # chemotion#552 was a NoMethodError inside Molecule#get_lcss's own
+    it 'imports all new molecules and schedules a bounded number of PubchemLookupJobs, not one per molecule' do
+      # chemotion#552 was a NoMethodError inside Molecule#schedule_pubchem_lookup's own
       # per-molecule Delayed::Job query, triggered by a concurrently-running
-      # worker draining that queue mid-import. get_lcss no longer queries
+      # worker draining that queue mid-import. schedule_pubchem_lookup no longer queries
       # Delayed::Job at all (see Molecule.find_or_create_by_molfile's
-      # lcss_batch: parameter and Import::ImportSdf#find_or_create_mol_by_batch)
+      # defer_pubchem_lookup: parameter and Import::ImportSdf#find_or_create_mol_by_batch)
       # — this asserts the replacement behavior end-to-end: the whole SDF
       # import (2 new molecules) enqueues a single batched job, not one per molecule.
-      scheduled_ids = nil
-      allow(PubchemSingleLcssJob).to receive(:perform_later) { |ids| scheduled_ids = ids }
+      started_at = Time.current
+      allow(PubchemLookupJob).to receive(:perform_later)
 
       post(
         '/api/v1/samples/import/',
@@ -445,8 +445,17 @@ describe Chemotion::SampleAPI do
       # LCSS scheduling now happens inside ImportSamplesJob (find_or_create_mol_by_batch)
       perform_enqueued_jobs
 
-      expect(PubchemSingleLcssJob).to have_received(:perform_later).once
-      expect(scheduled_ids.size).to eq 2
+      # Two enqueues, both batched and both covering the whole import by created_after: the
+      # first-batch kick that starts enrichment while the import is still running, and
+      # find_or_create_mol_by_batch's ensure flush. create_samples flushes a third time but
+      # finds nothing created after its own timestamp, so that one no-ops.
+      #
+      # What #552 was about is the *shape*: bounded, and independent of how many molecules the
+      # file contains — not one job per molecule. The fixture has 2 molecules, so asserting a
+      # count below that is what carries the regression guard.
+      expect(PubchemLookupJob).to have_received(:perform_later).twice
+      expect(PubchemLookupJob).to have_received(:perform_later)
+        .with(nil, created_after: be >= started_at).at_least(:once)
     end
   end
 
@@ -499,6 +508,53 @@ describe Chemotion::SampleAPI do
       it 'returns samples' do
         get '/api/v1/samples', params: { collection_id: personal_collection.id }
         expect(JSON.parse(response.body)['samples'].size).to eq(2)
+      end
+    end
+
+    context 'when there are more samples than fit on a page' do
+      before { create_list(:sample, 3, collections: [personal_collection]) }
+
+      it 'returns the true total in samples_count for both the default and molecule_sort branches' do
+        # Regression test for reset_pagination_page's return value (see params_helpers.rb):
+        # the default-sort branch reuses it as samples_count instead of recomputing a count,
+        # so it must keep matching the independently-computed molecule_sort branch's count.
+        get '/api/v1/samples', params: { collection_id: personal_collection.id, per_page: 1, molecule_sort: 0 }
+        expect(JSON.parse(response.body)['samples_count']).to eq(3)
+
+        get '/api/v1/samples', params: { collection_id: personal_collection.id, per_page: 1, molecule_sort: 1 }
+        expect(JSON.parse(response.body)['samples_count']).to eq(3)
+      end
+    end
+
+    context 'when a page mixes an owned-and-shared sample and a merely-shared sample' do
+      let(:other_users_collection) do
+        create(:collection, user: other_user).tap do |collection|
+          create(:collection_share, collection: collection, shared_with: user, sample_detail_level: 2)
+        end
+      end
+      let!(:owned_and_shared_sample) { create(:sample, collections: [other_users_collection, personal_collection]) }
+      let!(:shared_only_sample) { create(:sample, collections: [other_users_collection]) }
+
+      it 'applies the browsed (shared) collection detail level uniformly to every sample on the page' do
+        get '/api/v1/samples', params: { collection_id: other_users_collection.id }
+
+        samples = JSON.parse(response.body)['samples'].index_by { |s| s['id'] }
+        expect(samples.keys).to contain_exactly(owned_and_shared_sample.id, shared_only_sample.id)
+        # Even though owned_and_shared_sample also sits in the user's own personal_collection, it's
+        # being listed here via the *shared* collection, so it gets that collection's detail level —
+        # not the full access it would show if it were listed via personal_collection instead.
+        expect(samples[owned_and_shared_sample.id]['is_restricted']).to be true
+        expect(samples[shared_only_sample.id]['is_restricted']).to be true
+      end
+    end
+
+    context 'when collection_id points to a collection shared with the user' do
+      let(:permission_level) { CollectionShare.permission_level(:read_elements) }
+      let!(:shared_sample) { create(:sample, collections: [shared_collection]) }
+
+      it 'returns the samples from the shared collection' do
+        get '/api/v1/samples', params: { collection_id: shared_collection.id }
+        expect(JSON.parse(response.body)['samples'].pluck('id')).to include(shared_sample.id)
       end
     end
 

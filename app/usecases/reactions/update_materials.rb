@@ -62,6 +62,7 @@ end
 
 module Usecases
   module Reactions
+    # rubocop:disable Metrics/ClassLength -- pre-existing size, out of scope for this PR
     class UpdateMaterials
       include ContainerHelpers
       include Reactable
@@ -305,6 +306,7 @@ module Usecases
         existing_sample
       end
 
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength -- pre-existing size, out of scope for this PR
       def associate_sample_with_reaction(sample, modified_sample, material_group)
         reactions_sample_klass = "Reactions#{material_group.camelize}Sample"
         existing_association = ReactionsSample.find_by(sample_id: modified_sample.id)
@@ -312,7 +314,7 @@ module Usecases
         if existing_association
           existing_association.update!(
             reaction_id: @reaction.id,
-            # equivalent: sample.equivalent,
+            equivalent: sample.equivalent,
             reference: sample.reference,
             show_label: sample.show_label,
             waste: sample.waste,
@@ -345,6 +347,7 @@ module Usecases
           )
         end
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
       def destroy_unused_samples(modified_sample_ids)
         current_sample_ids = @reaction.reactions_samples.pluck(:sample_id)
@@ -527,5 +530,6 @@ module Usecases
         sample
       end
     end
+    # rubocop:enable Metrics/ClassLength
   end
 end

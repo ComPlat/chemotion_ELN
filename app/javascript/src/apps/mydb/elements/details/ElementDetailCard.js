@@ -24,8 +24,10 @@ export default function ElementDetailCard({
   isPendingToSave,
   title,
   titleTooltip,
+  titleAppendixLeading,
   titleAppendix,
   headerToolbar,
+  headerBanner,
   footerToolbar,
   onClose,
   onSave,
@@ -127,24 +129,33 @@ export default function ElementDetailCard({
     <ConfirmationOverlay
       overlayTarget={closeOverlayTarget}
       placement={closeOverlayPlacement}
-      warningText="You have unsaved changes. Save before closing?"
+      warningText={saveDisabled
+        ? 'You have unsaved changes that cannot be saved. Discard before closing?'
+        : 'You have unsaved changes. Save before closing?'}
       destructiveAction={() => handleClose(true)}
       destructiveActionLabel="Discard"
       hideAction={() => setCloseOverlayTarget(null)}
       hideActionLabel="Cancel"
-      primaryAction={handleSaveClose}
-      primaryActionLabel="Save and Close"
+      primaryAction={saveDisabled ? undefined : handleSaveClose}
+      primaryActionLabel={saveDisabled ? undefined : 'Save and Close'}
     />
   );
 
   // Build title icon with ElementIcon
   const titleIcon = <ElementIcon element={element} />;
 
-  // Build title appendix with element labels + user labels + original appendix
+  // Title appendix: user labels, then whatever the element type wants ahead of the collection
+  // badge, then the badge, then the rest of its appendix. The split exists so a detail header can
+  // reproduce the order its list row uses — the badge sits between the reaction and analyses
+  // labels there (see SampleGroupItem), and this is the only seam that lets an element type put
+  // something in front of it without every caller having to render the badge itself.
   const elementTitleAppendix = (
     <>
-      {!element.isNew && <ElementCollectionLabels element={element} placement="right" size="sm" variant="secondary" />}
       {showUserLabels && <ShowUserLabels element={element} />}
+      {titleAppendixLeading}
+      {!element.isNew && (
+        <ElementCollectionLabels element={element} placement="right" size="xxsm" variant="light" />
+      )}
       {titleAppendix}
     </>
   );
@@ -195,6 +206,7 @@ export default function ElementDetailCard({
       titleTooltip={titleTooltip}
       titleAppendix={elementTitleAppendix}
       headerToolbar={elementHeaderToolbar}
+      headerBanner={headerBanner}
       footerToolbar={elementFooterToolbar}
       onClose={(event) => requestClose(event, false, 'bottom')}
       className={pendingToSave ? 'detail-card--unsaved' : ''}
@@ -228,8 +240,10 @@ ElementDetailCard.propTypes = {
   isPendingToSave: PropTypes.bool,
   title: PropTypes.node.isRequired,
   titleTooltip: PropTypes.string,
+  titleAppendixLeading: PropTypes.node,
   titleAppendix: PropTypes.node,
   headerToolbar: PropTypes.node,
+  headerBanner: PropTypes.node,
   footerToolbar: PropTypes.node,
   onClose: PropTypes.func,
   onSave: PropTypes.func.isRequired,
@@ -244,8 +258,10 @@ ElementDetailCard.propTypes = {
 ElementDetailCard.defaultProps = {
   isPendingToSave: undefined,
   titleTooltip: null,
+  titleAppendixLeading: null,
   titleAppendix: null,
   headerToolbar: null,
+  headerBanner: null,
   footerToolbar: null,
   onClose: null,
   onSaveClose: null,

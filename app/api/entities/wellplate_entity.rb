@@ -2,9 +2,12 @@
 
 module Entities
   class WellplateEntity < ApplicationEntity
+    include NestedElementPolicy
+
     # rubocop:disable Layout/ExtraSpacing
     # Level 0 attributes and relations
     with_options(anonymize_below: 0) do
+      expose! :can_update,                            unless: :displayed_in_list
       expose! :id
       expose! :is_restricted
       expose! :height
@@ -56,7 +59,10 @@ module Entities
     end
 
     def comment_count
-      object.comments.count
+      # Use size so the preloaded :comments association (see
+      # Wellplate.includes_for_list_display) is counted in memory, avoiding an
+      # N+1 COUNT(*) query per wellplate in the list endpoint.
+      object.comments.size
     end
   end
 end

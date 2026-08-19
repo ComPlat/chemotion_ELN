@@ -138,6 +138,26 @@ describe('Reaction', () => {
       const copy = reaction.buildCopy({ collection_id: 'newCollectionId' });
       expect(copy.starting_materials).toEqual([]);
     });
+
+    it('clears product amounts when keepAmounts=false (default)', () => {
+      reaction.products[0]._real_amount_value = 1.5;
+      reaction.products[0]._target_amount_value = 2.0;
+      reaction.products[0].equivalent = 0.8;
+      const copy = reaction.buildCopy({ collection_id: 'col1' });
+      expect(copy.products[0]._real_amount_value).toBe(null);
+      expect(copy.products[0]._target_amount_value).toBe(null);
+      expect(copy.products[0].equivalent).toBe(null);
+    });
+
+    it('preserves product amounts when keepAmounts=true', () => {
+      reaction.products[0]._real_amount_value = 1.5;
+      reaction.products[0]._target_amount_value = 2.0;
+      reaction.products[0].equivalent = 0.8;
+      const copy = reaction.buildCopy({ collection_id: 'col1' }, true);
+      expect(copy.products[0]._real_amount_value).toBe(1.5);
+      expect(copy.products[0]._target_amount_value).toBe(2.0);
+      expect(copy.products[0].equivalent).toBe(0.8);
+    });
   });
 
   describe('Reaction.buildEmpty()', () => {

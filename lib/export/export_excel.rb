@@ -50,6 +50,8 @@ module Export
       row_image_width = DEFAULT_ROW_WIDTH
       decouple_idx = @headers.find_index('decoupled')
       samples.each_with_index do |sample, row|
+        next if hide_top_secret_sample?(sample)
+
         filtered_sample = filter_with_permission_and_detail_level(sample)
         if @image_index && (svg_path = filtered_sample[@image_index].presence)
           image_data = process_and_add_image(sheet, svg_path, row)
@@ -96,6 +98,8 @@ module Export
       row_length = @headers.size
 
       samples.each do |sample|
+        next if withhold_shared_sample?(sample)
+
         # Add the sample's ID row (if components exist)
         sample_id_row = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
         sample_id_row[row_length - 1] = nil
@@ -134,7 +138,7 @@ module Export
       row_image_width = DEFAULT_ROW_WIDTH
       row_length = @headers.size
       samples.each_with_index do |sample, row|
-        next unless sample['is_shared'].in?(['f', false]) || sample['dl_s'] == 10
+        next if withhold_shared_sample?(sample)
 
         data = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
         data[row_length - 1] = nil
@@ -159,6 +163,34 @@ module Export
 
     def read
       @xfile.to_stream.read
+    end
+
+    # A sample row drawn from one of the caller's own collections (no share involved) — always
+    # exported in full. +is_shared+ is +bool_and(collections.shared)+ from the export SQL and
+    # comes back as the string 'f'/'t' or a boolean.
+    def owned_sample?(sample)
+      sample['is_shared'].in?(['f', false])
+    end
+
+    # Owner-set "hide even from those I share with" flag (+s.is_top_secret as ts+), 't'/'f' or boolean.
+    def top_secret_sample?(sample)
+      sample['ts'].in?(['t', true])
+    end
+
+    # True when a shared row must be omitted entirely: its detail level hides it (only dl 0 and
+    # 10 are implemented, so anything but 10 is withheld), or it is top-secret. Owned rows never
+    # match. Used by the analyses and components sheets, which drop the whole row rather than
+    # showing a reduced column set.
+    def withhold_shared_sample?(sample)
+      return false if owned_sample?(sample)
+
+      sample['dl_s'] != 10 || top_secret_sample?(sample)
+    end
+
+    # Top-secret masking only, independent of detail level — for the main sheet, whose detail-level
+    # handling is the reduced column set in {#filter_with_permission_and_detail_level}.
+    def hide_top_secret_sample?(sample)
+      !owned_sample?(sample) && top_secret_sample?(sample)
     end
 
     def prepare_sample_analysis_data(sample)
@@ -198,7 +230,7 @@ module Export
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def filter_with_permission_and_detail_level(sample)
       # return all data if sample/chemical in own collection
-      if sample['is_shared'].in?(['f', false])
+      if owned_sample?(sample)
         headers = @headers
         reference_values = ['melting pt', 'boiling pt']
         data = headers.map do |column|
@@ -337,29 +369,13 @@ module Export
       [file.path, target_width, target_height]
     end
 
-    # Returns [width, height] for Inkscape export so the image fits within max_width×max_height while preserving SVG aspect ratio.
+    # Returns [width, height] for Inkscape export so the image fits within
+    # max_width×max_height while preserving SVG aspect ratio. Delegates to the
+    # shared Reporter::Img::Conv helper so xlsx and docx (research-plan) exports
+    # read SVG page dimensions identically — from the root <svg> width/height
+    # (viewBox fallback), ignoring nested layout viewBoxes.
     def svg_export_dimensions(svg_path, max_width, max_height)
-      w, h = svg_natural_dimensions(svg_path)
-      return [max_width, max_height] if w.nil? || h.nil? || w <= 0 || h <= 0
-
-      scale = [max_width.to_f / w, max_height.to_f / h].min
-      [(w * scale).round, (h * scale).round]
-    end
-
-    # Parses SVG for viewBox or width/height; returns [width, height] in pixels or [nil, nil].
-    def svg_natural_dimensions(svg_path)
-      return [nil, nil] unless File.file?(svg_path)
-
-      content = File.read(svg_path, encoding: 'UTF-8')
-      # viewBox="minX minY width height"
-      if content =~ /viewBox\s*=\s*["']?\s*[\d.-]+\s+[\d.-]+\s+([\d.]+)\s+([\d.]+)/
-        return [Regexp.last_match(1).to_f.ceil, Regexp.last_match(2).to_f.ceil]
-      end
-      # width and height attributes (e.g. width="200" or width="200px")
-      w = content[/width\s*=\s*["']?\s*([\d.]+)/, 1]
-      h = content[/height\s*=\s*["']?\s*([\d.]+)/, 1]
-      return [w.to_f.ceil, h.to_f.ceil] if w && h
-      [nil, nil]
+      Reporter::Img::Conv.export_size_for(svg_path, max_width: max_width, max_height: max_height)
     end
 
     def create_file(png_blob)

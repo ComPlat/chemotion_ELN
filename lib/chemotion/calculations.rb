@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# rubocop:disable Metrics/ModuleLength -- pre-existing size, out of scope for this PR
 module Chemotion::Calculations
 
   class Molecular
@@ -29,6 +32,7 @@ module Chemotion::Calculations
     result.sort.to_h
   end
 
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity -- pre-existing size, out of scope for this PR
   def self.get_loading m_formula, p_formula, composition
     begin
       p_analyses = Chemotion::Calculations.analyse_formula p_formula
@@ -50,9 +54,12 @@ module Chemotion::Calculations
       mw_def = self.get_total_mw m_analyses
 
       loading = 1000.0 * (wfp - dvalue.to_f/100.0) / (mw_def * (wfp - wfm))
-      return loading if (wfp - wfm != 0.0)
+      return loading if wfp - wfm != 0.0
     end
+
+    nil
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
 
   def self.get_yield product_data, sm_data, expected_data
     VALUABLE_ELEMENTS.each do |element_name|
@@ -74,7 +81,12 @@ module Chemotion::Calculations
   end
 
   def self.valid_digit(input_num, precision)
-    num = BigDecimal((input_num.presence || 0).to_s)
+    # A redacted value ('***') reaches this formatter from the report entities; return it
+    # verbatim instead of raising ArgumentError on BigDecimal(), so a report of an element
+    # shared below full detail level renders the placeholder rather than crashing (500).
+    num = BigDecimal((input_num.presence || 0).to_s, exception: false)
+    return input_num if num.nil?
+
     num_str = num.to_s('F')
     num_str =~ /^0*([1-9]+\d*)?.?(0*)([1-9]*)/
     head_len, tail_len = $1&.size || 0, $3 && $2&.size || 0
@@ -195,3 +207,4 @@ private
     "%.#{pc_non_zero}f" % num&.round(pc_non_zero)
   end
 end
+# rubocop:enable Metrics/ModuleLength

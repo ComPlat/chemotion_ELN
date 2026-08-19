@@ -370,7 +370,7 @@ function EditUserLabels({ element, fnCb }) {
       <Form.Label>My labels</Form.Label>
       <Select
         isMulti
-        isDisabled={!element?.can_update}
+        isDisabled={element.isReadOnly}
         options={options}
         getOptionValue={(currentLabel) => currentLabel.id}
         getOptionLabel={(currentLabel) => currentLabel.title}

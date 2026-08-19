@@ -358,10 +358,13 @@ module Reporter
         # Normalize component properties
         component_props = normalize_component_properties(reference_component)
 
-        rel_mol_weight = component_props[:relative_molecular_weight]
+        # Coerce to Float up front: component properties may arrive as strings (or blank) from
+        # the stored mixture JSON, and dividing a Float by a numeric string raises
+        # TypeError ("String can't be coerced into Float"), which crashes docx generation.
+        rel_mol_weight = component_props[:relative_molecular_weight].to_f
         ref_amount_mol = component_props[:amount_mol]
 
-        if rel_mol_weight&.to_f&.positive? && !has_reference_changed
+        if rel_mol_weight.positive? && !has_reference_changed
           # Case 2: Based on amount_g/amount_l changes - use total mass / relative molecular weight
           # Only calculate from mass when relative molecular weight is available
           # and reference hasn't been changed
@@ -563,7 +566,20 @@ module Reporter
                                           end
 
         if is_product
-          equiv = s.equivalent.nil? || (s.equivalent * 100).nan? ? '0%' : "#{valid_digit(s.equivalent * 100, 0)}%"
+          # equivalent may be nil, a real number, or a non-numeric placeholder ('n.d.', redacted
+          # '***') coming from the mixture JSON pipeline. Multiplying / calling .nan? on a
+          # non-Float crashes docx generation, but blindly coercing with to_f would silently turn
+          # a placeholder into a misleading '0%'. So: convert without raising, render a real number
+          # as a percentage, and defer a present-but-non-numeric value to format_scientific so it
+          # shows verbatim ('n.d.'), exactly like the non-product line above.
+          equivalent = Float(s.equivalent, exception: false) # nil for nil or a non-numeric placeholder
+          equiv = if s.equivalent.nil? || equivalent&.nan?
+                    '0%'
+                  elsif equivalent.nil?
+                    format_scientific(s.equivalent, digit)
+                  else
+                    "#{valid_digit(equivalent * 100, 0)}%"
+                  end
           sample_hash.update({
                                mass: valid_digit(mass, digit),
                                vol: valid_digit(vol, digit),

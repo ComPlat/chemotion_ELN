@@ -496,7 +496,15 @@ class User < ApplicationRecord
   # - add subcollections
   # - delete it
 
+  # Every account type except +Group+ gets one. The "All" collection backs the MyDB element paths,
+  # and config/routes.rb routes a +Group+ session to the command-and-control view for `/`, `/group`,
+  # `/mydb` and `/mydb/*any`, so a group can never use one. This is deliberately narrower than
+  # +create_chemotion_public_collection+'s Person-only guard: +Admin+ subclasses +User+, not
+  # +Person+, and admins do hold and use an "All" collection — the element and import paths
+  # dereference it without a nil check.
   def create_all_collection
+    return if type == 'Group'
+
     Collection.create(user: self, label: 'All', position: 0, is_locked: true)
   end
 
@@ -563,6 +571,21 @@ class Person < User
 
   has_many :users_admins, dependent: :destroy, foreign_key: :admin_id
   has_many :administrated_accounts, through: :users_admins, source: :user
+
+  # Must run before the `users_admins, dependent: :destroy` cascade above wipes
+  # `administrated_accounts`, or this would find nothing to check.
+  before_destroy :prevent_destroying_sole_group_admin, prepend: true
+
+  private
+
+  def prevent_destroying_sole_group_admin
+    administrated_group_ids = administrated_accounts.where(type: 'Group').select(:id)
+    orphaned = Group.where(id: administrated_group_ids).includes(:admins).select { |g| g.sole_admin?(id) }
+    return if orphaned.empty?
+
+    errors.add(:base, "cannot be deleted while the sole admin of: #{orphaned.map(&:name).join(', ')}")
+    throw(:abort)
+  end
 end
 
 class Group < User
@@ -576,6 +599,12 @@ class Group < User
 
   def administrated_by?(user)
     users_admins.where(admin: user).present?
+  end
+
+  # Single source of truth for "removing this admin would leave the group with none" —
+  # used by GroupPolicy#last_admin? and by every path that can revoke an admin relationship.
+  def sole_admin?(person_id)
+    admins.one? && admins.first.id == person_id
   end
 
   private

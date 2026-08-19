@@ -82,8 +82,16 @@ module Entities
       minimal_default_levels.merge(options[:detail_levels])
     end
 
+    def element_policy
+      options[:policy]
+    end
+
+    def can_update
+      element_policy.try(:update?) || false
+    end
+
     def can_copy
-      options[:policy].try(:copy?) || false
+      element_policy.try(:copy?) || false
     end
 
     class MissingCurrentUserError < StandardError

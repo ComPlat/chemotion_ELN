@@ -54,9 +54,15 @@ class CollectionShare < ApplicationRecord
   }.freeze
 
   belongs_to :collection
-  belongs_to :shared_with, class_name: 'User'
+  # +with_deleted+: User is acts_as_paranoid, and nothing purges collection_shares when an account
+  # is soft-deleted — the row survives and keeps collections.shared true, so the UI still offers
+  # the share. Without this the association resolves to nil and every reader of the share (the
+  # sidebar hover, the manage-shares modal, the element-list prefetch) 500s on it.
+  belongs_to :shared_with, -> { with_deleted }, class_name: 'User', inverse_of: false
 
-  scope :shared_by, ->(user) { joins(:collection).where(collections: { user_id: [user.id, *user.group_ids] }) }
+  # Shares on the user's *own* collections. Personal, like Collection#owned_by?: a share a group
+  # made is the group's to enumerate or revoke, not each member's.
+  scope :shared_by, ->(user) { joins(:collection).where(collections: { user_id: user.id }) }
 
   # Every share that grants +user+ access, including the ones held by their groups. Use for
   # *authorization* — never to decide what a user may destroy: a group's share is not theirs.

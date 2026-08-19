@@ -151,6 +151,7 @@ export default class LiteratureModal extends Component {
     const { sample, reaction } = UIStore.getState();
     const currentCollection = { id: collectionId };
 
+    this.context.notifications.removeByUid('literature');
     LiteraturesFetcher.fetchReferencesByCollection(currentCollection).then((literatures) => {
       this.setState(prevState => ({
         ...prevState,
@@ -159,6 +160,17 @@ export default class LiteratureModal extends Component {
         sample: { ...sample },
         reaction: { ...reaction },
       }));
+    }).catch((error) => {
+      // Without this the modal opened empty and said nothing: the rejection was unhandled and
+      // setState never ran.
+      this.context.notifications.add({
+        title: 'Reference Report',
+        message: error.message || 'Could not load the references for this collection',
+        level: 'error',
+        autoDismiss: 5,
+        position: 'tr',
+        uid: 'literature',
+      });
     });
     UIStore.listen(this.handleUIStoreChange);
   }

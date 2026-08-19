@@ -38,6 +38,7 @@ import Screen from 'src/models/Screen';
 import ResearchPlan from 'src/models/ResearchPlan';
 import DeviceDescription from 'src/models/DeviceDescription';
 import Report from 'src/models/Report';
+import Explorer from 'src/models/Explorer';
 import Format from 'src/models/Format';
 import Graph from 'src/models/Graph';
 import ComputeTask from 'src/models/ComputeTask';
@@ -48,6 +49,7 @@ import ReactionSvgFetcher from 'src/fetchers/ReactionSvgFetcher';
 import Metadata from 'src/models/Metadata';
 import UserStore from 'src/stores/alt/stores/UserStore';
 import { generateNextShortLabel } from 'src/utilities/VesselUtilities';
+import { sampleAssociationLockNotification } from 'src/utilities/notificationMessages';
 
 import _ from 'lodash';
 
@@ -684,10 +686,10 @@ class ElementActions {
     return (dispatch) => {
       ReactionsFetcher.create(params)
         .then((result) => {
-          dispatch(result)
+          dispatch(result);
         }).catch((errorMessage) => {
           console.log(errorMessage);
-          // Ensure loading stops even on error
+        }).finally(() => {
           LoadingActions.stop();
         });
     };
@@ -697,10 +699,10 @@ class ElementActions {
     return (dispatch) => {
       ReactionsFetcher.update(params)
         .then((result) => {
-          dispatch({ element: result, closeView })
+          dispatch({ element: result, closeView });
         }).catch((errorMessage) => {
           console.log(errorMessage);
-          // Ensure loading stops even on error
+        }).finally(() => {
           LoadingActions.stop();
         });
     };
@@ -1274,8 +1276,13 @@ class ElementActions {
       return MetadataFetcher.store(metadata)
         .then((result) => {
           dispatch(result);
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
+          return result;
+        }).catch((error) => {
+          // The spinner is stopped by LoadingStore listening for this action's dispatch, which
+          // does not happen on failure — and the rejection has to reach handleSave, or the tab
+          // clears its dirty flag and the user believes a refused save succeeded.
+          LoadingActions.stop();
+          throw error;
         });
     };
   }
@@ -1299,6 +1306,11 @@ class ElementActions {
 
   showLiteratureDetail() {
     return LiteratureMap.buildEmpty();
+  }
+
+  // -- Explorer --
+  showExplorerDetails() {
+    return Explorer.buildEmpty();
   }
 
   // -- Prediction --
@@ -1337,7 +1349,14 @@ class ElementActions {
   deleteElementsByUIState(params) {
     return (dispatch) => {
       UIFetcher.deleteElementsByUIState(params)
-        .then((result) => { dispatch(result); })
+        .then((result) => {
+          if (result && result.locked_sample_ids && result.locked_sample_ids.length > 0) {
+            rootStore.notificationsStore.add(
+              sampleAssociationLockNotification(result.locked_sample_ids.length)
+            );
+          }
+          dispatch(result);
+        })
         .catch((errorMessage) => { console.log(errorMessage); });
     };
   }
