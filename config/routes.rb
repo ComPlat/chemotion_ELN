@@ -10,7 +10,7 @@ Rails.application.routes.draw do
       get 'sign_in' => 'devise/sessions#new'
       get 'users/sign_up' => 'devise/sessions#new', as: 'new_user_registration'
       get 'users/edit' => 'devise/registrations#edit', as: 'edit_user_registration'
-      get 'users/confirmation/new' => 'devise/sessions#new', as: 'new_confirmation'
+      get 'users/confirmation/new' => 'devise/sessions#new', as: 'new_devise_confirmation'
       put 'users' => 'devise/registrations#update', :as => 'user_registration'
     end
   else
@@ -74,7 +74,7 @@ Rails.application.routes.draw do
   get 'sign_in', to: 'pages#home'
   get 'sign_up', to: 'pages#home'
   get 'password', to: 'pages#home'
-  get 'confirmation', to: 'pages#home'
+  get 'new_confirmation', to: 'pages#home'
 
   get 'admin', to: 'pages#home'
 

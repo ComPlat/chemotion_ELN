@@ -43,6 +43,7 @@ const applyLoginResult = (loginResult, userStore) => {
   userStore.setAuthToken(loginResult.token);
   userStore.setRole(loginResult.role);
   userStore.setLoginStatus('');
+  userStore.setDeviseErrorMessages('');
 
   let route = '/mydb/collection/all';
   if (loginResult.role === 'Group') {
@@ -70,8 +71,8 @@ const LinksForDeviseForm = (currentRoute, extraRules, deviseMappings) =>
             Forgot your password?
           </Button>
         )}
-        {currentRoute !== '/confirmation' && deviseMappings?.confirmable && (
-          <Button variant="neat" onClick={() => aviatorNavigationToApp('/confirmation')}>
+        {currentRoute !== '/new_confirmation' && deviseMappings?.confirmable && (
+          <Button variant="neat" onClick={() => aviatorNavigationToApp('/new_confirmation')}>
             Didn&apos;t receive confirmation instructions?
           </Button>
         )}
@@ -123,7 +124,7 @@ const ExtendedSignInForm = observer(() => {
 
   return (
     <>
-      {loginStatus === 'failed' && (
+      {userStore?.deviseErrorMessages && (
         <Alert variant="warning">{userStore.deviseErrorMessages}</Alert>
       )}
       <h3 className="mb-3">Log in with registered account</h3>

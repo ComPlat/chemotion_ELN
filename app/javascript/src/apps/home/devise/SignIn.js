@@ -4,6 +4,7 @@ import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 
 import BaseNavigation from 'src/components/navigation/BaseNavigation';
+import Notifications from 'src/components/Notifications';
 import { ExtendedSignInForm } from 'src/components/navigation/NavNewSession';
 
 const SignIn = () => {
@@ -24,6 +25,7 @@ const SignIn = () => {
       <Container className="mt-5">
         <ExtendedSignInForm />
       </Container>
+      <Notifications />
     </div>
   );
 };
