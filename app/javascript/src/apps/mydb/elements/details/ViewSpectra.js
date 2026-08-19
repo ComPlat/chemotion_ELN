@@ -1248,7 +1248,7 @@ class ViewSpectra extends React.Component {
     const treePopupContainer = createRef();
 
     return (
-      <div className="d-flex align-items-center gap-3 mb-3" ref={treePopupContainer}>
+      <div className="d-flex align-items-center gap-3 mb-3 flex-shrink-0" ref={treePopupContainer}>
         <Select
           options={dsOptions}
           value={dsOptions.find(({ value }) => value === si.idDt)}
@@ -1301,19 +1301,24 @@ class ViewSpectra extends React.Component {
       <AppModal
         title={modalTitle}
         scrollable
-        size="xxxl"
+        fullscreen
+        bodyClassName="p-0 h-100 overflow-hidden"
         show={showModal}
         animation
         onHide={this.closeOp}
         closeLabel="Close"
         showFooter
       >
-        {this.renderControls(idx)}
-        {
-          showModal && (jcamp || (listMuliSpcs && listMuliSpcs.length > 0))
-            ? this.renderSpectraEditor(jcamp, predictions, listMuliSpcs, listEntityFiles)
-            : this.renderEmpty()
-        }
+        <div className="spectra-editor-modal-body d-flex flex-column h-100 p-4">
+          {this.renderControls(idx)}
+          <div className="spectra-editor-modal-body__editor flex-grow-1 overflow-hidden">
+            {
+              showModal && (jcamp || (listMuliSpcs && listMuliSpcs.length > 0))
+                ? this.renderSpectraEditor(jcamp, predictions, listMuliSpcs, listEntityFiles)
+                : this.renderEmpty()
+            }
+          </div>
+        </div>
       </AppModal>
     );
   }
