@@ -17,6 +17,7 @@ import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
 import UsersFetcher from 'src/fetchers/UsersFetcher';
 import MessagesFetcher from 'src/fetchers/MessagesFetcher';
 import { StoreContext } from 'src/stores/mobx/RootStore';
+import alt from 'src/stores/alt/alt';
 import { UserLabelModal } from 'src/components/UserLabels';
 import GroupElement from 'src/components/navigation/GroupElement';
 import { formatDate } from 'src/utilities/timezoneHelper';
@@ -150,6 +151,7 @@ const UserAuth = ({ userMenuDropdownToggleVariant }) => {
     UsersFetcher.logoutUser()
       .then(() => {
         reset();
+        alt.recycle('ElementStore');
         aviatorNavigationToApp('/home');
       });
   };

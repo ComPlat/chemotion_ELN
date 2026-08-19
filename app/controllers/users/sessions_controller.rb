@@ -14,8 +14,14 @@ module Users
       password = params[:user][:password]
       requested_user = find_requested_user
 
+      # Only short-circuits here when no OTP code has been submitted yet -
+      # must NOT validate one if it's present. validate_and_consume_otp! is a
+      # one-time check (replay protection); validating a code here would
+      # consume it, so the real check inside the :two_factor_authenticatable
+      # strategy below would always find it already used and fail, even when
+      # the code was correct.
       return render_otp_required if otp_required_for_user?(requested_user) &&
-                                    requested_user.valid_password?(password)
+                                                           requested_user.valid_password?(password)
 
       respond_to do |format|
         format.html { super }
@@ -34,6 +40,12 @@ module Users
             headers['Authorization'] = "Bearer #{token}"
 
             render json: { token: token, role: requested_user.type }, status: :ok
+          elsif requested_user&.otp_required_for_login
+            # Got here with an otp_attempt present (otherwise the guard above
+            # would have caught it) that the strategy just rejected - render
+            # the same otp_required prompt again; otp_wrong picks up from
+            # otp_attempt being present.
+            render_otp_required
           else
             render json: { message: sign_in_error_message }, status: :bad_request
           end
@@ -49,8 +61,10 @@ module Users
 
     private
 
+    # Only checks whether an OTP-enabled user hasn't submitted a code yet.
+    # Does NOT validate a submitted code - see the comment in create above.
     def otp_required_for_user?(user)
-      user&.otp_required_for_login && otp_missing_or_invalid?(user)
+      user&.otp_required_for_login && params[:user][:otp_attempt].blank?
     end
 
     def find_requested_user
@@ -59,22 +73,17 @@ module Users
           .take
     end
 
-    def otp_missing_or_invalid?(user)
-      otp_attempt = params[:user][:otp_attempt]
-
-      # OTP missing
-      return true if otp_attempt.blank?
-
-      # OTP invalid
-      return true unless user.validate_and_consume_otp!(otp_attempt)
-
-      false
-    end
-
     def render_otp_required(error: nil)
       response = { otp_required: true, otp_wrong: params[:user][:otp_attempt].present? }
       response[:error] = error if error
       render json: response, status: :unauthorized
+    end
+
+    # Overrides Devise::RegistrationsController#authenticate_scope!
+    # Authentication via the Bearer token, so update/destroy work without any session or CSRF dependency.
+    def authenticate_scope!
+      warden.authenticate!(:jwt_authenticatable, scope: :user)
+      self.resource = warden.user(scope: :user)
     end
 
     def sign_in_error_message

@@ -16,12 +16,14 @@ const Navigation = () => {
     '/sign_in',
     '/sign_up',
     '/password',
-    '/confirmation',
+    '/new_confirmation',
   ];
+
+  const linkToChemotion = currentUser ? '/mydb/collection/all' : '/home';
 
   return (
     <div className="surface-lighten4 d-flex align-items-center justify-content-between px-4 py-3">
-      <Button variant="plain" onClick={() => aviatorNavigationToApp('/mydb/collection/all')}>
+      <Button variant="plain" onClick={() => aviatorNavigationToApp(linkToChemotion)}>
         <ChemotionLogo />
       </Button>
 

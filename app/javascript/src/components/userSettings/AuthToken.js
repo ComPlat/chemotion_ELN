@@ -354,7 +354,7 @@ const TokenList = ({ tokens, onRevoke }) => {
         </tr>
       </thead>
       <tbody>
-        {tokens.map((token) => (
+        {tokens && tokens.map((token) => (
           <tr className={token.revoked ? 'revoked-auth-token' : ''} key={`${token.name}-${token.expires_at}`}>
             <td>
               {token.name}

@@ -8,6 +8,7 @@ import App from 'src/apps/mydb/App';
 import CnC from 'src/apps/commandAndControl/CnC';
 import Home from 'src/apps/home/Home';
 import SignIn from 'src/apps/home/devise/SignIn';
+import SignUp from 'src/apps/home/devise/SignUp';
 import GenericElementsAdmin from 'src/apps/generic/GenericElementsAdmin';
 import GenericSegmentsAdmin from 'src/apps/generic/GenericSegmentsAdmin';
 import GenericDatasetsAdmin from 'src/apps/generic/GenericDatasetsAdmin';
@@ -62,7 +63,7 @@ const PUBLIC_PATHS = [
   '/sign_in',
   '/sign_up',
   '/password',
-  '/confirmation',
+  '/new_confirmation',
 ];
 
 const AppDispatcher = () => {
@@ -124,11 +125,9 @@ const AppDispatcher = () => {
     console.debug('rendering sign in');
     app = (<SignIn />);
   }
-  if (currentRoute === '/chemspectra') {
-    app = (<ChemSpectraClient />);
-  }
-  if (currentRoute === '/chemspectra-editor') {
-    app = (<ChemSpectraClient editorOnly />);
+  if (role === 'Guest' && currentRoute === '/sign_up') {
+    console.debug('rendering sign in');
+    app = (<SignUp />);
   }
   if (role === 'Guest' && !PUBLIC_PATHS.includes(currentRoute) || currentRoute === '/home') {
     console.debug('rendering home');
