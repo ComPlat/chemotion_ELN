@@ -3,6 +3,13 @@
 module Users
   class RegistrationsController < Devise::RegistrationsController
     before_action :check_otp, only: %i[destroy update]
+    # authenticate_scope! now authenticates via Bearer token (see
+    # JwtAuthenticatableStrategy), not the session cookie, so there's no
+    # cookie-based state for CSRF to protect here in the first place - and
+    # relying on it was actively harmful: a stale token used to trigger
+    # Devise's handle_unverified_request -> sign_out_all_scopes on every
+    # request, wiping the very auth we'd just established.
+    skip_before_action :verify_authenticity_token, only: %i[update destroy]
 
     def new
       build_resource({})
@@ -28,7 +35,59 @@ module Users
       end
     end
 
+    # PUT /resource
+    # We need to use a copy of the resource because we don't want to change
+    # the current user in place.
+    def update
+      self.resource = resource_class.to_adapter.get!(send(:"current_#{resource_name}").to_key)
+      prev_unconfirmed_email = resource.unconfirmed_email if resource.respond_to?(:unconfirmed_email)
+
+      resource_updated = update_resource(resource, account_update_params)
+      yield resource if block_given?
+      if resource_updated
+        bypass_sign_in resource, scope: resource_name if sign_in_after_change_password?
+
+        respond_to do |format|
+          format.html { super }
+          format.json do
+            render json: { message: warden_messages(:updated, 'Your account has been updated successfully.') },
+                   status: :ok
+          end
+        end
+      else
+        respond_to do |format|
+          format.html { super }
+          format.json do
+            render json: { message: resource.errors.messages }, status: :bad_request
+          end
+        end
+      end
+    end
+
+    # DELETE /resource
+    def destroy
+      resource.destroy
+      Devise.sign_out_all_scopes ? sign_out : sign_out(resource_name)
+
+      respond_to do |format|
+        format.html { super }
+        format.json do
+          default_message = 'Bye! Your account has been successfully cancelled. We hope to see you again soon.'
+          render json: { message: warden_messages(:destroyed, default_message) },
+                 status: Devise.responder.redirect_status
+        end
+      end
+    end
+
+
     protected
+
+    # Overrides Devise::RegistrationsController#authenticate_scope!
+    # Authentication via the Bearer token, so update/destroy work without any session or CSRF dependency.
+    def authenticate_scope!
+      warden.authenticate!(:jwt_authenticatable, scope: :user)
+      self.resource = warden.user(scope: :user)
+    end
 
     def check_otp
       return unless resource.otp_required_for_login &&
@@ -59,11 +118,32 @@ module Users
       if resource.active_for_authentication?
         set_flash_message :notice, :signed_up if is_flashing_format?
         sign_up(resource_name, resource)
-        respond_with resource, location: after_sign_up_path_for(resource)
+
+        respond_to do |format|
+          format.html { super }
+          format.json do
+            token = Usecases::Authentication::BuildToken.by_user(resource)
+            render json: { token: token, role: resource.type }, status: :ok
+          end
+        end
       else
         set_flash_message :notice, :"signed_up_but_#{resource.inactive_message}" if is_flashing_format?
         expire_data_after_sign_in!
-        respond_with resource, location: after_inactive_sign_up_path_for(resource)
+
+        message = I18n.t(
+          warden.message || :signed_up_but_inactive,
+          scope: 'devise.registrations',
+          resource_name: resource_name,
+          default: 'Your account is inactive',
+        )
+
+        respond_to do |format|
+          format.html { super }
+          format.json do
+            render json: { message: warden_messages(:signed_up_but_inactive, 'Your account is inactive') },
+                   status: :accepted
+          end
+        end
       end
     end
 
@@ -71,7 +151,22 @@ module Users
       clean_up_passwords resource
       @validatable = devise_mapping.validatable?
       @minimum_password_length = resource_class.password_length.min if @validatable
-      respond_with resource
+
+      respond_to do |format|
+        format.html { super }
+        format.json do
+          render json: { error_messages: resource.errors.messages  }, status: 400
+        end
+      end
+    end
+
+    def warden_messages(key, default)
+      I18n.t(
+        warden.message || key,
+        scope: 'devise.registrations',
+        resource_name: resource_name,
+        default: default,
+      )
     end
 
     def assign_email

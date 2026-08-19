@@ -31,9 +31,9 @@ const routes = {
     '/': 'Password',
   },
 
-  '/confirmation': {
+  '/new_confirmation': {
     target: {
-      Confirmation() { routesUtils.syncCurrentRoute('/confirmation'); }
+      Confirmation() { routesUtils.syncCurrentRoute('/new_confirmation'); }
     },
     '/': 'Confirmation',
   },

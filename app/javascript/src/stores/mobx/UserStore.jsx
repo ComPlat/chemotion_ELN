@@ -52,6 +52,8 @@ const User = types.model(
     counters: types.map(types.union(types.integer, types.string)),
     generic_admin: types.frozen({ elements: false, segments: false, datasets: false }),
     otp_required_for_login: types.optional(types.boolean, false),
+    providers: types.frozen({}),
+    tokens: types.optional(types.array(types.frozen({})), []),
     profile: types.frozen({}) // hack to create a structure for something without authoritative data structure
   }
 );
@@ -256,7 +258,7 @@ const UserStore = types.model(
   'UserStore',
   {
     authToken: types.maybeNull(types.string, localStorage.getItem('chemotion-auth-token')),
-    role: types.optional(types.string, localStorage.getItem('chemotion-role') || 'Guest'),
+    role: types.optional(types.string, () => localStorage.getItem('chemotion-role') || 'Guest'),
     currentUser: types.maybeNull(User),
     currentRoute: types.optional(types.string, location.pathname || '/home'),
     profile: types.optional(types.frozen({}), {}), // must be serialized later, currently the full datastructure is unknown to me
@@ -283,15 +285,19 @@ const UserStore = types.model(
 ).actions((self) => ({
   fetchCurrentUser: flow(function* fetchCurrentUser() {
     const result = yield UsersFetcher.fetchCurrentUser();
-    self.currentUser = User.create(result.user);
+    if (!result.error) {
+      self.currentUser = User.create(result.user);
+    }
   }),
   fetchProfile: flow(function* fetchProfile() {
     const result = yield UsersFetcher.fetchProfile();
-    self.profile = result;
-    if (self.currentType === '') {
-      const { layout } = self.profile.data;
-      const typeFromProfile = Object.keys(layout).filter((e) => layout[e] === self.currentTab + 1)[0];
-      self.currentType = typeFromProfile;
+    if (!result.error) {
+      self.profile = result;
+      if (self.currentType === '') {
+        const { layout } = self.profile.data;
+        const typeFromProfile = Object.keys(layout).filter((e) => layout[e] === self.currentTab + 1)[0];
+        self.currentType = typeFromProfile;
+      }
     }
   }),
   updateUserProfile: flow(function* updateUserProfile(params = {}) {
@@ -304,29 +310,41 @@ const UserStore = types.model(
   },
   fetchNoVNCDevices: flow(function* fetchNoVNCDevices() {
     const result = yield UsersFetcher.fetchNoVNCDevices();
-    self.devices = result.map((device) => Device.create(device));
-    return self.devices;
+    if (!result.error) {
+      self.devices = result.map((device) => Device.create(device));
+      return self.devices;
+    }
   }),
 
   fetchOlsRxno: flow(function* fetchOlsRxno() {
     const result = yield UsersFetcher.fetchOls('rxno');
-    self.rxnos = result.ols_terms.map((item) => RxnoOrHeader.create(item));
+    if (!result.error) {
+      self.rxnos = result.ols_terms.map((item) => RxnoOrHeader.create(item));
+    }
   }),
   fetchOlsChmo: flow(function* fetchOlsChmo() {
     const result = yield UsersFetcher.fetchOls('chmo');
-    self.chmos = result.ols_terms.map((item) => ChmoOrHeader.create(item));
+    if (!result.error) {
+      self.chmos = result.ols_terms.map((item) => ChmoOrHeader.create(item));
+    }
   }),
   fetchOlsBao: flow(function* fetchOlsBao() {
     const result = yield UsersFetcher.fetchOls('bao');
-    self.bao = result.ols_terms.map((item) => BaoOrHeader.create(item));
+    if (!result.error) {
+      self.bao = result.ols_terms.map((item) => BaoOrHeader.create(item));
+    }
   }),
   fetchUserLabels: flow(function* fetchUserLabels() {
     const result = yield UserLabelsFetcher.listUserLabels(true);
-    self.labels = result.labels.map((label) => Label.create(label));
+    if (!result.error) {
+      self.labels = result.labels.map((label) => Label.create(label));
+    }
   }),
   fetchGenericEls: flow(function* fetchGenericEls() {
     const result = yield UsersFetcher.fetchElementKlasses();
-    self.genericEls = result.klass;
+    if (!result.error) {
+      self.genericEls = result.klass;
+    }
   }),
   fetchGenericElKlasses: flow(function* fetchGenericElKlasses() {
     const result = yield GenericElsFetcher.fetchElementKlasses();
@@ -341,11 +359,15 @@ const UserStore = types.model(
   }),
   fetchSegmentKlasses: flow(function * fetchSegmentKlasses() {
     const result = yield GenericSgsFetcher.listSegmentKlass();
-    self.segmentKlasses = result.klass;
+    if (!result.error) {
+      self.segmentKlasses = result.klass;
+    }
   }),
   fetchDatasetKlasses: flow(function* fetchDatasetKlasses() {
     const result = yield GenericDSsFetcher.fetchKlass();
-    self.dsKlasses = result.klass;
+    if (!result.error) {
+      self.dsKlasses = result.klass;
+    }
   }),
   fetchAdminDatasetKlasses: flow(function* fetchDatasetKlasses() {
     const result = yield GenericDSsFetcher.listDatasetKlass();
@@ -363,11 +385,15 @@ const UserStore = types.model(
       '/units_system/units_system.json',
       { cache: 'no-store', headers: { 'cache-control': 'no-cache' } }
     );
-    self.unitsSystem = UnitSystem.create(result);
+    if (!result.error) {
+      self.unitsSystem = UnitSystem.create(result);
+    }
   }),
   fetchEditors: flow(function* fetchEditors() {
     const result = yield UsersFetcher.listEditors();
-    self.matriceConfigs = result.matrices.map((entry) => MatrixConfiguration.create(entry));
+    if (!result.error) {
+      self.matriceConfigs = result.matrices.map((entry) => MatrixConfiguration.create(entry));
+    }
   }),
   fetchOmniauthProviders: flow(function* fetchOmniauthProviders() {
     const result = yield UsersFetcher.fetchOmniauthProviders();
@@ -378,7 +404,9 @@ const UserStore = types.model(
   }),
   fetchDeviseMappings: flow(function* fetchDeviseMappings() {
     const result = yield UsersFetcher.fetchDeviseMappings();
-    self.deviseMappings = result.devise_mappings;
+    if (!result.error) {
+      self.deviseMappings = result.devise_mappings;
+    }
   }),
   setAuthToken: (authToken) => {
     self.authToken = authToken;
@@ -408,6 +436,7 @@ const UserStore = types.model(
   logout: () => {
     self.setAuthToken(null);
     self.setRole('Guest');
+    self.currentUser = null;
   }
 })).views((self) => ({
   isUserQuotaExceeded(filteredAttachments) {

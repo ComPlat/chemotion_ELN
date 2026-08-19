@@ -336,3 +336,18 @@ Devise.setup do |config| # rubocop:disable Metrics/BlockLength
   # so you need to do it manually. For the users scope, it would be:
   # config.omniauth_path_prefix = '/my_engine/users/auth'
 end
+
+# Warden::Strategy for jwt authentication
+#
+# Wrapped in to_prepare (not a plain top-level call) because this initializer
+# only runs once at boot, but Warden::Strategies.add stores whatever class
+# object it's given in a registry that lives for the whole process. In
+# development, Zeitwerk unloads/reloads autoloaded classes (everything under
+# app/) on every code change; the class object captured at boot becomes a
+# stale reference to an unloaded constant, and Zeitwerk raises on first use
+# ("...has been removed from the module tree but is still active!").
+# to_prepare re-runs after every reload (once at boot in other environments),
+# so the registry always points at the current class.
+Rails.application.config.to_prepare do
+  Warden::Strategies.add(:jwt_authenticatable, Usecases::Authentication::JwtAuthenticatableStrategy)
+end

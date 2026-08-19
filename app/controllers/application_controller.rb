@@ -24,7 +24,7 @@ class ApplicationController < ActionController::Base
     end
 
     devise_parameter_sanitizer.permit(:account_update, keys: [
-      :email
+      :email, :otp_attempt
     ])
   end
 end

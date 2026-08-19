@@ -1,12 +1,19 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import {
   Row, Form, Button, Alert, Card, Col
 } from 'react-bootstrap';
+import UsersFetcher from 'src/fetchers/UsersFetcher';
 import { useFormValues, submitAsForm } from 'src/utilities/FormHelper';
 import { OtpInput } from 'src/components/common/OtpInput';
+import { capitalizeWords } from 'src/utilities/textHelper';
+import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
+import { StoreContext } from 'src/stores/mobx/RootStore';
+import alt from 'src/stores/alt/alt';
 import PropTypes from 'prop-types';
 
 const DeleteSettings = () => {
+  const userStore = useContext(StoreContext).user;
+  const { notifications, reset } = useContext(StoreContext);
   const [showOtpDel, setShowOtpDel] = useState(false);
   const [otpAttempt, setOtpAttempt] = useState('');
 
@@ -14,21 +21,40 @@ const DeleteSettings = () => {
   const [isWrongOtp, setIsWrongOtp] = useState(false);
   const onChangeOptAttempt = useCallback((e) => setOtpAttempt(e.target.value), []);
 
-  const handleDelete = async () => {
-    setOtpAttempt('');
-    const res = await submitAsForm({
+  const handleSubmitAsForm = async () => {
+    const response = await submitAsForm({
       url: '/users', form: { _method: 'delete', 'user[otp_attempt]': otpAttempt }, method: 'POST'
     }).catch((err) => console.error(err.messages || ['Something went wrong']));
-    if (res.redirected) {
-      window.location = res.url;
-    }
-    const { status } = res;
+
+    const { status } = response;
+    return {
+      status,
+      ...(await response.json())
+    };
+  };
+
+  const handleDelete = async () => {
+    setOtpAttempt('');
+    const res = await handleSubmitAsForm();
+    console.log(res);
+    const { status, message } = res;
     if (status === 401 || status === 422) {
-      const content = await res.json();
-      setShowOtpDel(content?.otp_required || false);
-      setIsWrongOtp(content?.otp_wrong || false);
+      setShowOtpDel(res?.otp_required || false);
+      setIsWrongOtp(res?.otp_wrong || false);
     } else {
       setShowOtpDel(false);
+
+      UsersFetcher.logoutUser()
+        .then(() => {
+          reset();
+          alt.recycle('ElementStore');
+          notifications.add({
+            message,
+            autoDismiss: 15,
+            level: 'info',
+          });
+          aviatorNavigationToApp('/sign_in');
+        });
     }
   };
 
@@ -82,38 +108,49 @@ const AccountSettings = ({ currentUser }) => {
     otp_attempt: ''
   });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    // Replace with your API call
-    setForm('otp_attempt', '');
-    const res = await submitAsForm({
+  const handleSubmitAsForm = async () => {
+    const response = await submitAsForm({
       url: '/users', form, prefix: 'user', method: 'PUT'
     }).catch((err) => setErrors(err.messages || ['Something went wrong']));
-    const { status } = res;
-    let content;
-    if (res.redirected) {
-      if (form.email !== currentUser.email) {
-        setUnconfirmedEmail(form.email);
-      }
+
+    const { status } = response;
+    return {
+      status,
+      ...(await response.json())
+    };
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setForm('otp_attempt', '');
+    const res = await handleSubmitAsForm();
+    const { status, message } = res;
+
+    if (form.email !== currentUser.email) {
+      setUnconfirmedEmail(form.email);
+    }
+
+    if (status === 401 || status === 422) {
       setErrors([]);
-      setSuccessMessage('Successfully changed user information');
+    } else if (status === 400) {
+      const errorMessages = Object.entries(message).map(([key, value]) => (
+        <>
+          {capitalizeWords(key)} {value.join(', ')}
+          <br />
+        </>
+      ));
+      setErrors(errorMessages);
+      setSuccessMessage('');
+    } else {
+      setSuccessMessage(message);
+      setErrors([]);
       setForm('password', '');
       setForm('password_confirmation', '');
       setForm('current_password', '');
     }
-    if (status === 401 || status === 422) {
-      content = await res.json();
-      setErrors([]);
-    } else {
-      const htmlString = await res.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlString, 'text/html');
-      const alerts = doc.getElementsByClassName('error-item');
-      setErrors(Array.from(alerts).map((el) => el.textContent));
-    }
 
-    setShowOtp(content?.otp_required || false);
-    setIsWrongOtp(content?.otp_wrong || false);
+    setShowOtp(res?.otp_required || false);
+    setIsWrongOtp(res?.otp_wrong || false);
   };
 
   return (
