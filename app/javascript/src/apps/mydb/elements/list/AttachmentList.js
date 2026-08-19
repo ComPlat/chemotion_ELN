@@ -161,6 +161,9 @@ export const EditButton = ({ attachment, disabled, onChange }) => {
   const { docserver } = UIStore.getState() || {};
   // Previously "attachmentEditor" -> now available at UserStore.editorConfig.available (bool)
   const attachmentEditor = Boolean(docserver?.available);
+  console.debug('disabled', disabled);
+  console.debug('attachmentEditor', attachmentEditor);
+  console.debug('edit state', attachment.edit_state);
   const editDisable = disabled || !attachmentEditor || attachment.edit_state === 'editing';
 
   const extsList = useMemo(

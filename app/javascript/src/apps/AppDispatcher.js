@@ -6,14 +6,15 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import AdminHome from 'src/apps/admin/AdminHome';
 import App from 'src/apps/mydb/App';
 import CnC from 'src/apps/commandAndControl/CnC';
-import Home from 'src/apps/home/Home';
-import SignIn from 'src/apps/home/devise/SignIn';
-import SignUp from 'src/apps/home/devise/SignUp';
+import ConverterAdmin from 'src/apps/converter/ConverterAdmin';
+import Editor from 'src/apps/editor/Editor';
+import GenericDatasetsAdmin from 'src/apps/generic/GenericDatasetsAdmin';
 import GenericElementsAdmin from 'src/apps/generic/GenericElementsAdmin';
 import GenericSegmentsAdmin from 'src/apps/generic/GenericSegmentsAdmin';
-import GenericDatasetsAdmin from 'src/apps/generic/GenericDatasetsAdmin';
+import Home from 'src/apps/home/Home';
 import MoleculeModerator from 'src/apps/moleculeModerator/MoleculeModerator';
-import ConverterAdmin from 'src/apps/converter/ConverterAdmin';
+import SignIn from 'src/apps/home/devise/SignIn';
+import SignUp from 'src/apps/home/devise/SignUp';
 
 import { ChemSpectraClient } from '@complat/chem-spectra-client';
 
@@ -51,16 +52,17 @@ const backendOptions = {
 };
 
 const APPS_PATHS = [
-  '/home',
   '/admin',
-  '/command_n_control',
-  '/molecule_moderator',
-  '/generic_elements_admin',
-  '/generic_segments_admin',
-  '/generic_datasets_admin',
-  '/converter_admin',
   '/chemspectra',
   '/chemspectra-editor',
+  '/command_n_control',
+  '/converter_admin',
+  '/editor',
+  '/generic_datasets_admin',
+  '/generic_elements_admin',
+  '/generic_segments_admin',
+  '/home',
+  '/molecule_moderator',
 ];
 
 const PUBLIC_PATHS = [
@@ -78,7 +80,9 @@ const AppDispatcher = () => {
 
   let app = (<Home />);
 
-  if (role === 'Person' && !APPS_PATHS.includes(currentRoute)) {
+  const routeMatchesToApp = APPS_PATHS.some((appPath) => currentRoute.startsWith(appPath));
+
+  if (role === 'Person' && !routeMatchesToApp) {
     console.debug('rendering mydb');
     app = (
       <DndProvider backend={MultiBackend} options={backendOptions}>
@@ -94,6 +98,12 @@ const AppDispatcher = () => {
     console.debug('rendering AdminHome');
     app = (<AdminHome />);
   }
+
+  if (currentRoute.startsWith('/editor')) {
+    console.debug('rendering Editor');
+    app = (<Editor />);
+  }
+
   if (currentRoute === '/molecule_moderator') {
     console.debug('rendering Molecule Moderator');
     app = (<MoleculeModerator />);

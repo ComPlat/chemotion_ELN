@@ -2286,6 +2286,13 @@
     read-package-json-fast "^2.0.3"
     which "^2.0.2"
 
+"@onlyoffice/document-editor-react@^2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@onlyoffice/document-editor-react/-/document-editor-react-2.2.0.tgz#d4b8275c93cbd84a5e684d2ce1f802fc4c2eb330"
+  integrity sha512-SPgeJ1lK+I5mpcCUi6Qz98QVtlZR6axxCArgHoKNNBfFqXNmb6iDOf5Z1QUiVQ0xr57oo84D0ptyXZaF8K51nA==
+  dependencies:
+    lodash "4.18.1"
+
 "@pdf-lib/standard-fonts@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@pdf-lib/standard-fonts/-/standard-fonts-1.0.0.tgz#8ba691c4421f71662ed07c9a0294b44528af2d7f"
@@ -10380,7 +10387,7 @@ lodash.once@^4.1.1:
   resolved "https://registry.yarnpkg.com/lodash.once/-/lodash.once-4.1.1.tgz#0dd3971213c7c56df880977d504c88fb471a97ac"
   integrity sha512-Sb487aTOCr9drQVL8pIxOzVhafOjZN9UU54hiN8PU3uAiSV7lx1yYNpbNmex2PK6dSJoNTSJUUswT651yww3Mg==
 
-lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.21, lodash@^4.17.23, lodash@^4.17.4, lodash@^4.18.1:
+lodash@4.18.1, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.21, lodash@^4.17.23, lodash@^4.17.4, lodash@^4.18.1:
   version "4.18.1"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.18.1.tgz#ff2b66c1f6326d59513de2407bf881439812771c"
   integrity sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==

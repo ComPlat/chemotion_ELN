@@ -52,6 +52,13 @@ const routes = {
     '/': 'CnC',
   },
 
+  '/editor': {
+    target: {
+      Editor() { routesUtils.syncCurrentRoute('/editor'); }
+    },
+    '/': 'Editor'
+  },
+
   '/generic_elements_admin': {
     target: {
       GenericElementsAdmin() { routesUtils.syncCurrentRoute('/generic_elements_admin'); }
