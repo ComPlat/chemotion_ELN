@@ -155,6 +155,9 @@ module Entities
         id: attachment.id,
         filename: attachment.filename,
       }
+    rescue TypeError, Errno::ENOENT
+      Rails.logger.error "Thumbnail data is not available for attachment #{attachment&.id} but thumb is set to true"
+      no_preview_image_available
     end
 
     def no_preview_image_available
@@ -165,7 +168,8 @@ module Entities
       return unless object.container_type == 'analysis'
 
       is_comparison = comparison_flag_true?
-      return default_comparable_info(is_comparison) if object.extended_metadata['analyses_compared'].blank?
+      ext_meta = object.extended_metadata
+      return default_comparable_info(is_comparison) if ext_meta.blank? || ext_meta['analyses_compared'].blank?
 
       build_comparable_info_from_compared(is_comparison)
     end
@@ -195,9 +199,9 @@ module Entities
       layout = ''
       analyses_compared.each do |attachment_info|
         layout = attachment_info['layout']
-        attachment = Attachment.find_by(id: attachment_info['file']['id'])
-        dataset = Container.find_by(id: attachment_info['dataset']['id'])
-        analysis = Container.find_by(id: attachment_info['analysis']['id'])
+        attachment = Attachment.find_by(id: attachment_info.dig('file', 'id'))
+        dataset = Container.find_by(id: attachment_info.dig('dataset', 'id'))
+        analysis = Container.find_by(id: attachment_info.dig('analysis', 'id'))
         list_attachments << attachment if attachment
         list_dataset.push(dataset)
         list_analyses.push(analysis)
