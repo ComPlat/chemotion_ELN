@@ -1157,7 +1157,7 @@ class ViewSpectra extends React.Component {
       <AppModal
         title={modalTitle}
         scrollable
-        size="xxxl"
+        fullscreen
         show={showModal}
         animation
         onHide={this.closeOp}
