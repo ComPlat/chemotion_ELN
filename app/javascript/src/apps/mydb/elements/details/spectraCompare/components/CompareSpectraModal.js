@@ -2,7 +2,7 @@ import React, {
   useCallback, useEffect, useMemo, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
-import { Modal } from 'react-bootstrap';
+import AppModal from 'src/components/common/AppModal';
 
 import LoadingActions from 'src/stores/alt/actions/LoadingActions';
 import SpectraActions from 'src/stores/alt/actions/SpectraActions';
@@ -11,7 +11,7 @@ import useCompareSpectra, { COMPARE_STATUS } from '../hooks/useCompareSpectra';
 import useSpectraStoreSlice from '../hooks/useSpectraStoreSlice';
 import { resolveSelection } from '../utils/compareSelectionTree';
 import { cleanLayoutLabel } from '../utils/containerLayout';
-import CompareSpectraHeader from './CompareSpectraHeader';
+import CompareSpectraHeader, { titleFromContainer } from './CompareSpectraHeader';
 import CompareSpectraBody, { formatPksOps, formatMpyOps } from './CompareSpectraBody';
 
 const selectModalSlice = (state) => ({
@@ -235,12 +235,15 @@ const CompareSpectraModal = ({
   const canUpdate = !!sample?.can_update;
 
   return (
-    <Modal
-      centered
-      size="xxxl"
+    <AppModal
+      title={titleFromContainer(compare.container)}
+      scrollable
+      fullscreen
       show={!!showCompareModal}
       animation
       onHide={close}
+      showFooter
+      closeLabel="Close without Save"
     >
       <CompareSpectraHeader
         sample={sample}
@@ -249,29 +252,26 @@ const CompareSpectraModal = ({
         showUndo={compare.showUndo}
         onSelectionChange={handleSelectionChange}
         onUndo={handleUndo}
-        onClose={close}
       />
-      <Modal.Body className="vh-80">
-        <CompareSpectraBody
-          status={compare.status === COMPARE_STATUS.IDLE ? COMPARE_STATUS.LOADING : compare.status}
-          multiEntities={compare.multiEntities}
-          failures={compare.failures}
-          error={compare.error}
-          saveError={compare.saveError}
-          container={compare.container}
-          canUpdate={canUpdate}
-          onClose={close}
-          onRetry={handleRetry}
-          onSave={handleSave}
-          onSaveClose={handleSaveClose}
-          onWritePeak={handleWritePeak}
-          onWriteMpy={handleWriteMpy}
-          onWriteClosePeak={handleWriteClosePeak}
-          onWriteCloseMpy={handleWriteCloseMpy}
-          onDescriptionChanged={handleDescriptionChanged}
-        />
-      </Modal.Body>
-    </Modal>
+      <CompareSpectraBody
+        status={compare.status === COMPARE_STATUS.IDLE ? COMPARE_STATUS.LOADING : compare.status}
+        multiEntities={compare.multiEntities}
+        failures={compare.failures}
+        error={compare.error}
+        saveError={compare.saveError}
+        container={compare.container}
+        canUpdate={canUpdate}
+        onClose={close}
+        onRetry={handleRetry}
+        onSave={handleSave}
+        onSaveClose={handleSaveClose}
+        onWritePeak={handleWritePeak}
+        onWriteMpy={handleWriteMpy}
+        onWriteClosePeak={handleWriteClosePeak}
+        onWriteCloseMpy={handleWriteCloseMpy}
+        onDescriptionChanged={handleDescriptionChanged}
+      />
+    </AppModal>
   );
 };
 
