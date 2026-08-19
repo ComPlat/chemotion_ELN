@@ -27,7 +27,8 @@ import {
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import {
   ColumnSelection,
-  RemoveVariationsModal
+  RemoveVariationsModal,
+  TopHorizontalScrollbar
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import columnDefinitionsReducer
   from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsReducers';
@@ -82,6 +83,8 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
   }), [reaction.lock_reaction_volume, useReactionVolume]);
 
   const gridRef = useRef(null);
+  const gridWrapperRef = useRef(null);
+  const [gridToken, setGridToken] = useState(0);
   const pendingReactionVariations = useRef(null);
   const previousReactionMaterialsHashes = useRef(reactionMaterialsHashes);
   const previousGasMode = useRef(gasMode);
@@ -595,7 +598,8 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
           onRemoveAll={removeAllRows}
         />
       </ButtonGroup>
-      <div className="ag-theme-alpine ag-theme-reaction-variations">
+      <div className="ag-theme-alpine ag-theme-reaction-variations" ref={gridWrapperRef}>
+        <TopHorizontalScrollbar gridWrapperRef={gridWrapperRef} gridToken={gridToken} />
         <AgGridReact
           // Re-mount grid on version change
           key={`${reaction.id}-schema-${gridVersion}`}
@@ -657,6 +661,8 @@ const ReactionVariations = ({ reaction, onReactionChange }) => {
           When the event fires, the grid has already mutated the row order, we just need to persist it.
           */
           onRowDragEnd={(event) => handleRowDrag(event)}
+          // Signal to `TopHorizontalScrollbar` that ag-grid's DOM nodes have been (re-)created.
+          onGridReady={() => setGridToken((token) => token + 1)}
         />
       </div>
     </div>

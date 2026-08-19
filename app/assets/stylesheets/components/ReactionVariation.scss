@@ -4,6 +4,16 @@
     bottom: 0 !important;
   }
 
+  // Proxy scrollbar rendered above the grid, kept in sync with ag-grid's own one.
+  .ag-top-horizontal-scroll {
+    overflow-x: scroll;
+    overflow-y: hidden;
+
+    .ag-top-horizontal-scroll-spacer {
+      height: 1px;
+    }
+  }
+
   .ag-header-group-cell::after,
   .ag-header-cell:not(.ag-column-first)::after {
     display: None;

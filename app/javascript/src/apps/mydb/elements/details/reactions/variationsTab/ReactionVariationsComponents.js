@@ -1001,6 +1001,80 @@ UnitToggleHeader.propTypes = {
   }).isRequired,
 };
 
+/*
+ag-grid only renders a horizontal scrollbar at the very bottom of the grid. For wide tables,
+this component adds a second scrollbar above the grid and keeps both of them in sync (in either
+direction), so that the table can be scrolled horizontally without scrolling down first.
+`gridToken` changes whenever the grid has been (re-)initialized, i.e., whenever ag-grid's
+DOM nodes need to be looked up again.
+*/
+const TopHorizontalScrollbar = ({ gridWrapperRef, gridToken }) => {
+  const scrollbarRef = useRef(null);
+  const spacerRef = useRef(null);
+
+  useEffect(() => {
+    const wrapper = gridWrapperRef.current;
+    const scrollbar = scrollbarRef.current;
+    const spacer = spacerRef.current;
+    if (!wrapper || !scrollbar || !spacer) { return undefined; }
+
+    const viewport = wrapper.querySelector('.ag-body-horizontal-scroll-viewport');
+    const container = wrapper.querySelector('.ag-body-horizontal-scroll-container');
+    if (!viewport || !container) { return undefined; }
+
+    const leftSpacer = wrapper.querySelector('.ag-horizontal-left-spacer');
+    const rightSpacer = wrapper.querySelector('.ag-horizontal-right-spacer');
+
+    /*
+    Assigning identical scroll positions is skipped, which breaks the feedback loop
+    between both scrollbars (each one reacting to the scroll event of the other one).
+    */
+    const sync = (source, target) => {
+      if (target.scrollLeft !== source.scrollLeft) {
+        target.scrollLeft = source.scrollLeft;
+      }
+    };
+    const syncToGrid = () => sync(scrollbar, viewport);
+    const syncFromGrid = () => sync(viewport, scrollbar);
+
+    // Mirror ag-grid's scrollbar, including the offsets caused by pinned columns.
+    const syncDimensions = () => {
+      scrollbar.style.height = `${viewport.offsetHeight}px`;
+      scrollbar.style.marginLeft = `${leftSpacer ? leftSpacer.offsetWidth : 0}px`;
+      scrollbar.style.marginRight = `${rightSpacer ? rightSpacer.offsetWidth : 0}px`;
+      spacer.style.width = `${container.offsetWidth}px`;
+      syncFromGrid();
+    };
+    syncDimensions();
+
+    scrollbar.addEventListener('scroll', syncToGrid, { passive: true });
+    viewport.addEventListener('scroll', syncFromGrid, { passive: true });
+
+    const resizeObserver = new ResizeObserver(syncDimensions);
+    [viewport, container, leftSpacer, rightSpacer]
+      .filter(Boolean)
+      .forEach((element) => resizeObserver.observe(element));
+
+    return () => {
+      scrollbar.removeEventListener('scroll', syncToGrid);
+      viewport.removeEventListener('scroll', syncFromGrid);
+      resizeObserver.disconnect();
+    };
+  }, [gridWrapperRef, gridToken]);
+
+  return (
+    <div className="ag-top-horizontal-scroll" ref={scrollbarRef}>
+      <div className="ag-top-horizontal-scroll-spacer" ref={spacerRef} />
+    </div>
+  );
+};
+
+TopHorizontalScrollbar.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
+  gridWrapperRef: PropTypes.object.isRequired,
+  gridToken: PropTypes.number.isRequired,
+};
+
 export {
   RowToolsCellRenderer,
   EquivalentParser,
@@ -1022,4 +1096,5 @@ export {
   GroupCellRenderer,
   EntrySelectionHeader,
   UnitToggleHeader,
+  TopHorizontalScrollbar,
 };
