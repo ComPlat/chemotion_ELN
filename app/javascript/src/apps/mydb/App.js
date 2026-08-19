@@ -135,6 +135,7 @@ const App = () => {
       <InboxModal />
       <SampleTaskInbox />
       <Calendar />
+      <WorkshopGuideDrawer />
     </>
   );
 
