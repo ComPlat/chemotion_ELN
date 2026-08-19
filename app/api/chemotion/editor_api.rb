@@ -9,9 +9,20 @@ module Chemotion
 
     namespace :editor do
       desc 'get editor config'
-      get :initial do
-        docserver = Rails.configuration.editors&.docserver
-        { installed: (docserver && docserver[:enable]) || false, ext: docserver && docserver[:ext] }
+      get :config do
+        {
+          docserver_api: Rails.configuration.editors.docserver_api,
+          address: Rails.configuration.editors.info[:address],
+          title: Rails.configuration.editors.info[:title],
+          name: Rails.configuration.editors.info[:name],
+          logo: Rails.configuration.editors.info[:logo],
+          mail: Rails.configuration.editors.info[:mail],
+          website: Rails.configuration.editors.info[:website],
+          feedbackurl: Rails.configuration.editors.info[:feedbackurl],
+          callback_server: Rails.configuration.editors.docserver[:callback_server],
+          author_name: current_user.name,
+          author_id: current_user.id
+        }
       end
 
       route_param :id do
@@ -38,7 +49,7 @@ module Chemotion
           token = JsonWebToken.encode(payload)
           only_office_payload = {
             width: '100%',
-            height: '100%',
+            height: '950px',
             type: 'desktop',
             document: {
               att_id: @attachment.id,
