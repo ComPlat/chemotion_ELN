@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types, react/no-array-index-key */
 import React, { useContext, useState } from 'react';
 import {
   InputGroup, OverlayTrigger, Tooltip, Button, Form, Row, Col, ToggleButton, ButtonGroup,

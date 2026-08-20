@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/no-autofocus */
 import React, { useCallback, useContext, useState } from 'react';
 import {
   Row, Form, Button, Alert, Card, Col
@@ -12,7 +13,6 @@ import alt from 'src/stores/alt/alt';
 import PropTypes from 'prop-types';
 
 const DeleteSettings = () => {
-  const userStore = useContext(StoreContext).user;
   const { notifications, reset } = useContext(StoreContext);
   const [showOtpDel, setShowOtpDel] = useState(false);
   const [otpAttempt, setOtpAttempt] = useState('');

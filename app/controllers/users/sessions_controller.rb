@@ -21,7 +21,7 @@ module Users
       # strategy below would always find it already used and fail, even when
       # the code was correct.
       return render_otp_required if otp_required_for_user?(requested_user) &&
-                                                           requested_user.valid_password?(password)
+                                    requested_user.valid_password?(password)
 
       respond_to do |format|
         format.html { super }
