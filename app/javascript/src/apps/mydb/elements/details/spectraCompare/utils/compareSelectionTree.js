@@ -2,7 +2,7 @@ import {
   cleanLayoutLabel,
   resolveAnalysisLayout,
   resolveContainerLayout,
-} from './containerLayout';
+} from 'src/apps/mydb/elements/details/spectraCompare/utils/containerLayout';
 
 const COMPARABLE_FILENAME = /(peak|edit|compared)/i;
 const JCAMP_EXT = new Set(['jdx', 'dx', 'jcamp']);
@@ -119,9 +119,21 @@ export const buildSelectionTree = (sample, comparisonContainer) => {
 
 export const filterMenuByLayout = (menuItems, selectedLayoutTitle) => {
   if (!Array.isArray(menuItems) || !selectedLayoutTitle) return menuItems || [];
-  return menuItems.map((item) => (
-    item.title === selectedLayoutTitle ? item : { ...item, disabled: true }
-  ));
+  return menuItems.filter((item) => item.title === selectedLayoutTitle);
+};
+
+// Used by the "add spectrum to an existing comparison" flow: already-included leaves must
+// stay checked but not be uncheckable, so removal remains possible only via Reset.
+export const lockSelectedLeaves = (menuItems, selectedIds) => {
+  if (!Array.isArray(menuItems)) return [];
+  const locked = new Set(selectedIds || []);
+  const walk = (nodes) => nodes.map((node) => {
+    if (!node.children || node.children.length === 0) {
+      return locked.has(node.value) ? { ...node, disabled: true } : node;
+    }
+    return { ...node, children: walk(node.children) };
+  });
+  return walk(menuItems);
 };
 
 export const limitMenuToSelection = (menuItems, allowedIds) => {

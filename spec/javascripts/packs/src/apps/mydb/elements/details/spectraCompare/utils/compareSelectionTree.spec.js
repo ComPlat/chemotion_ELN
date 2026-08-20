@@ -5,6 +5,7 @@ import {
   buildSelectionTree,
   filterMenuByLayout,
   limitMenuToSelection,
+  lockSelectedLeaves,
   resolveSelection,
   cleanLayoutLabel,
 } from 'src/apps/mydb/elements/details/spectraCompare/utils/compareSelectionTree';
@@ -92,14 +93,14 @@ describe('compareSelectionTree', () => {
   });
 
   describe('filterMenuByLayout', () => {
-    it('disables items whose title differs from the selected one', () => {
+    it('keeps only the items matching the selected layout, dropping the rest', () => {
       const items = [
         { title: 'Type: 1H NMR' },
         { title: 'Type: 13C NMR' },
       ];
       const filtered = filterMenuByLayout(items, 'Type: 1H NMR');
-      expect(filtered[0].disabled).toBeFalsy();
-      expect(filtered[1].disabled).toEqual(true);
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].title).toEqual('Type: 1H NMR');
     });
 
     it('returns the input unchanged when the layout is not provided', () => {
@@ -126,6 +127,36 @@ describe('compareSelectionTree', () => {
 
     it('returns [] when allowedIds is empty', () => {
       expect(limitMenuToSelection([{ key: 1 }], [])).toEqual([]);
+    });
+  });
+
+  describe('lockSelectedLeaves', () => {
+    const tree = [{
+      key: 'k', title: 't', value: 'v', children: [
+        { key: 'd', title: 'd', value: 'd', children: [
+          { key: 1, value: 1, title: 'a' },
+          { key: 2, value: 2, title: 'b' },
+        ] },
+      ],
+    }];
+
+    it('marks already-selected leaves as disabled without removing them', () => {
+      const result = lockSelectedLeaves(tree, [1]);
+      const leaves = result[0].children[0].children;
+      expect(leaves).toHaveLength(2);
+      expect(leaves[0].disabled).toEqual(true);
+      expect(leaves[1].disabled).toBeFalsy();
+    });
+
+    it('leaves nothing disabled when selection is empty', () => {
+      const result = lockSelectedLeaves(tree, []);
+      const leaves = result[0].children[0].children;
+      expect(leaves[0].disabled).toBeFalsy();
+      expect(leaves[1].disabled).toBeFalsy();
+    });
+
+    it('returns [] for non-array input', () => {
+      expect(lockSelectedLeaves(null, [1])).toEqual([]);
     });
   });
 

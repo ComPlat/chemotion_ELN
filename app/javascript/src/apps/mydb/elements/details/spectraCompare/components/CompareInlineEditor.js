@@ -19,9 +19,10 @@ import HyperLinksSection from 'src/components/common/HyperLinksSection';
 import {
   buildSelectionTree,
   filterMenuByLayout,
+  lockSelectedLeaves,
   resolveSelection,
-} from '../utils/compareSelectionTree';
-import { cleanLayoutLabel } from '../utils/containerLayout';
+} from 'src/apps/mydb/elements/details/spectraCompare/utils/compareSelectionTree';
+import { cleanLayoutLabel } from 'src/apps/mydb/elements/details/spectraCompare/utils/containerLayout';
 
 const EMPTY_CONTENT = { ops: [{ insert: '\n' }] };
 
@@ -104,6 +105,8 @@ const CompareInlineEditor = ({
   const [initialIds, setInitialIds] = useState(() => sortedIds(
     container?.extended_metadata?.analyses_compared,
   ));
+  const [isAdding, setIsAdding] = useState(false);
+  const [addSnapshot, setAddSnapshot] = useState(null);
 
   useEffect(() => {
     setInitialIds(sortedIds(container?.extended_metadata?.analyses_compared));
@@ -114,6 +117,11 @@ const CompareInlineEditor = ({
   const { menuItems, selectedFiles } = useMemo(
     () => buildMenu(sample, container),
     [sample, container],
+  );
+
+  const displayedMenuItems = useMemo(
+    () => (isAdding ? lockSelectedLeaves(menuItems, selectedFiles) : menuItems),
+    [isAdding, menuItems, selectedFiles],
   );
 
   const currentIds = sortedIds(container?.extended_metadata?.analyses_compared);
@@ -161,6 +169,25 @@ const CompareInlineEditor = ({
     setInitialIds(currentIds);
   }, [handleSubmit, currentIds, container]);
 
+  // Once a comparison is generated, spectra can only be added, never individually removed
+  // here — that stays a Reset-only action (see handleReset below).
+  const handleStartAdd = useCallback(() => {
+    setAddSnapshot(container);
+    setIsAdding(true);
+  }, [container]);
+
+  const handleCancelAdd = useCallback(() => {
+    if (addSnapshot) propagate(addSnapshot);
+    setIsAdding(false);
+    setAddSnapshot(null);
+  }, [addSnapshot, propagate]);
+
+  const handleApplyAdd = useCallback(() => {
+    handleApply();
+    setIsAdding(false);
+    setAddSnapshot(null);
+  }, [handleApply]);
+
   const handleReset = useCallback(() => {
     if (!container) return;
     if (!window.confirm('Are you sure you want to reset this comparison? This will remove all generated datasets and clear all fields.')) {
@@ -189,6 +216,8 @@ const CompareInlineEditor = ({
     };
     propagate(next);
     setInitialIds('');
+    setIsAdding(false);
+    setAddSnapshot(null);
     handleSubmit?.();
   }, [container, propagate, handleSubmit]);
 
@@ -286,17 +315,55 @@ const CompareInlineEditor = ({
           <div className="d-flex align-items-center gap-3 mb-1">
             <FormLabel className="mb-1">Selection of datasets to be compared</FormLabel>
             {generated ? (
-              <Button
-                variant="danger"
-                size="xsm"
-                onClick={handleReset}
-                title="Reset comparison"
-                disabled={disabled}
-                className="px-2"
-              >
-                <i className="fa fa-times me-1" />
-                Reset
-              </Button>
+              isAdding ? (
+                <>
+                  <Button
+                    variant="warning"
+                    size="xsm"
+                    onClick={handleApplyAdd}
+                    title="Save the added spectrum"
+                    disabled={!unsavedChanges || disabled}
+                    className="px-2"
+                  >
+                    <i className="fa fa-check me-1" />
+                    Apply
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="xsm"
+                    onClick={handleCancelAdd}
+                    title="Cancel adding a spectrum"
+                    className="px-2"
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="success"
+                    size="xsm"
+                    onClick={handleStartAdd}
+                    title="Add another spectrum to this comparison"
+                    disabled={disabled}
+                    className="px-2"
+                  >
+                    <i className="fa fa-plus me-1" />
+                    Add spectrum
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="xsm"
+                    onClick={handleReset}
+                    title="Reset comparison"
+                    disabled={disabled}
+                    className="px-2"
+                  >
+                    <i className="fa fa-times me-1" />
+                    Reset
+                  </Button>
+                </>
+              )
             ) : (
               <Button
                 variant="warning"
@@ -311,16 +378,21 @@ const CompareInlineEditor = ({
               </Button>
             )}
           </div>
+          {generated && (
+            <p className="text-body-secondary small mb-1">
+              A saved comparison&apos;s spectra can only be extended here — removing one requires Reset.
+            </p>
+          )}
           <TreeSelect
             style={{ width: '100%' }}
             placeholder="Please select"
             treeCheckable
             treeDefaultExpandAll
             value={selectedFiles}
-            treeData={menuItems}
+            treeData={displayedMenuItems}
             getPopupContainer={(triggerNode) => triggerNode.parentNode}
-            onChange={(value, _label, info) => handleSelectionChange(menuItems, value, info)}
-            disabled={disabled || generated}
+            onChange={(value, _label, info) => handleSelectionChange(displayedMenuItems, value, info)}
+            disabled={disabled || (generated && !isAdding)}
             maxTagCount={2}
           />
         </div>
