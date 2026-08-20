@@ -32,8 +32,15 @@ ENV CC=gcc CXX=g++
 # Build and install the mofid package. `make init` compiles the bundled C++
 # binaries; `set_paths.py` bakes their absolute paths into the package config,
 # so it must run before `pip install .`.
-ARG MOFID_REF=master
-RUN git clone --depth 1 --branch ${MOFID_REF} https://github.com/snurr-group/mofid.git /opt/mofid
+# Pin to a specific upstream commit for reproducible builds. This is
+# snurr-group/mofid master as of 2026-08-20; bump it deliberately (and re-test
+# the OpenBabel/toolchain pins above) rather than tracking a moving branch.
+# A SHA (not just a branch/tag) is why we init+fetch instead of clone --branch,
+# which only accepts ref names.
+ARG MOFID_REF=36873683083c7bc62c1da2062df2833adc35b48a
+RUN git init /opt/mofid \
+    && git -C /opt/mofid fetch --depth 1 https://github.com/snurr-group/mofid.git ${MOFID_REF} \
+    && git -C /opt/mofid checkout --detach FETCH_HEAD
 WORKDIR /opt/mofid
 RUN make init \
     && python set_paths.py \

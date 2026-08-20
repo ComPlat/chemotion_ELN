@@ -8,7 +8,7 @@
 
 # Specific
 validations = lambda do |config, service|
-  url = URI.parse(config.send(service)&.mof_service_url)
+  url = URI.parse(config.send(service)&.mof_service_url.to_s)
   raise ArgumentError, "Invalid URL: #{url}" unless url.host && %w[http https].include?(url.scheme)
 
   # set description
@@ -26,7 +26,7 @@ Rails.application.configure do
 # Rescue:
 # - RuntimeError is raised if the file is not found
 # - NoMethodError is raised if the yml file cannot be parsed
-rescue RuntimeError, NoMethodError, ArgumentError, URI::InvalidURIError => e
+rescue RuntimeError, NoMethodError, ArgumentError, TypeError, URI::InvalidURIError => e
   Rails.logger.warn "#{ref} Error while loading configuration #{e.message}"
   # Create service key or clear config
   config.send(service_setter, nil)

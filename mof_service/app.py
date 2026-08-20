@@ -242,9 +242,12 @@ def _component_ratios(output_path, result):
 def _extract_cif():
     """Read CIF text from JSON body, a multipart file, or the raw body."""
     if request.is_json:
-        cif = (request.get_json(silent=True) or {}).get("cif")
-        if cif:
-            return cif
+        payload  = request.get_json(silent=True)
+        # A valid JSON body is authoritative: return its cif, or None if omitted.
+        # Only fall through to the raw body when JSON parsing failed.
+        if payload  is not None:
+            cif = payload.get("cif")
+            return cif if cif else None
     if "file" in request.files:
         return request.files["file"].read().decode("utf-8", "replace")
     if request.data:
