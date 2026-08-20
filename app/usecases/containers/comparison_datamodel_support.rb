@@ -56,6 +56,12 @@ module Usecases
           combined_image_filename = 'combined_image.png'
           created_by_user = -1
 
+          # A comparison container holds exactly one generated dataset at a time. Regeneration
+          # is triggered not just on first save but also when a spectrum is later added to an
+          # already-generated comparison, so the previous dataset (and its combined image) must
+          # be cleared here or it would linger as an orphaned duplicate child.
+          container.children.where(container_type: 'dataset').destroy_all
+
           dataset_child = container.children.create(
             name: "Comparison #{Time.current.strftime('%Y-%m-%d %H:%M:%S')}",
             container_type: 'dataset',

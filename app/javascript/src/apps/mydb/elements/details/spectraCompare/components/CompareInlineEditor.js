@@ -18,10 +18,12 @@ import HyperLinksSection from 'src/components/common/HyperLinksSection';
 
 import {
   buildSelectionTree,
+  enforceLockedSelection,
   filterMenuByLayout,
+  lockSelectedLeaves,
   resolveSelection,
-} from '../utils/compareSelectionTree';
-import { cleanLayoutLabel } from '../utils/containerLayout';
+} from 'src/apps/mydb/elements/details/spectraCompare/utils/compareSelectionTree';
+import { cleanLayoutLabel } from 'src/apps/mydb/elements/details/spectraCompare/utils/containerLayout';
 
 const EMPTY_CONTENT = { ops: [{ insert: '\n' }] };
 
@@ -69,6 +71,7 @@ const buildMenu = (sample, container) => {
   return {
     menuItems: filterMenuByLayout(tree.menuItems, selectedLayout),
     selectedFiles: tree.selectedFiles,
+    sourceFiles: tree.sourceFiles,
   };
 };
 
@@ -104,6 +107,15 @@ const CompareInlineEditor = ({
   const [initialIds, setInitialIds] = useState(() => sortedIds(
     container?.extended_metadata?.analyses_compared,
   ));
+  const [isAdding, setIsAdding] = useState(false);
+  const [addSnapshot, setAddSnapshot] = useState(null);
+  // Snapshotted when "Add spectrum" starts: lockedCopyIds are the generated dataset's own
+  // (already-selected) file ids, lockedSourceIds are the original spectra they were copied
+  // from. Both get locked (disableCheckbox) in the tree; only lockedCopyIds are also
+  // force-kept in the TreeSelect's value, since antd's tag "x" removes a value regardless
+  // of disableCheckbox — see handleSelectionChange.
+  const [lockedCopyIds, setLockedCopyIds] = useState([]);
+  const [lockedSourceIds, setLockedSourceIds] = useState([]);
 
   useEffect(() => {
     setInitialIds(sortedIds(container?.extended_metadata?.analyses_compared));
@@ -111,9 +123,14 @@ const CompareInlineEditor = ({
 
   const textTemplate = useTextTemplate(templateType);
 
-  const { menuItems, selectedFiles } = useMemo(
+  const { menuItems, selectedFiles, sourceFiles } = useMemo(
     () => buildMenu(sample, container),
     [sample, container],
+  );
+
+  const displayedMenuItems = useMemo(
+    () => (isAdding ? lockSelectedLeaves(menuItems, [...lockedCopyIds, ...lockedSourceIds]) : menuItems),
+    [isAdding, menuItems, lockedCopyIds, lockedSourceIds],
   );
 
   const currentIds = sortedIds(container?.extended_metadata?.analyses_compared);
@@ -147,19 +164,51 @@ const CompareInlineEditor = ({
   }, [container, propagate]);
 
   const handleSelectionChange = useCallback((treeData, value, info) => {
-    const selection = resolveSelection({ treeData, selectedFiles: value, info });
+    const enforcedValue = isAdding ? enforceLockedSelection(value, lockedCopyIds) : value;
+    const existingEntries = container?.extended_metadata?.analyses_compared;
+    const selection = resolveSelection({
+      treeData, selectedFiles: enforcedValue, info, existingEntries,
+    });
     const layoutLabel = cleanLayoutLabel(selection?.[0]?.layout);
     const next = setExtendedMetadata(container, {
       analyses_compared: selection,
       kind: layoutLabel || null,
     });
     propagate(next);
-  }, [container, propagate]);
+  }, [container, propagate, isAdding, lockedCopyIds]);
 
   const handleApply = useCallback(() => {
     handleSubmit?.();
     setInitialIds(currentIds);
   }, [handleSubmit, currentIds, container]);
+
+  // Once a comparison is generated, spectra can only be added, never individually removed
+  // here — that stays a Reset-only action (see handleReset below). Locks both the generated
+  // copy (under the comparison's own branch) and the original spectrum it was copied from
+  // (still visible under its home analysis branch) so the original isn't hidden — just
+  // shown as already-included and non-reselectable.
+  const handleStartAdd = useCallback(() => {
+    setAddSnapshot(container);
+    setLockedCopyIds(selectedFiles);
+    setLockedSourceIds(sourceFiles);
+    setIsAdding(true);
+  }, [container, selectedFiles, sourceFiles]);
+
+  const handleCancelAdd = useCallback(() => {
+    if (addSnapshot) propagate(addSnapshot);
+    setIsAdding(false);
+    setAddSnapshot(null);
+    setLockedCopyIds([]);
+    setLockedSourceIds([]);
+  }, [addSnapshot, propagate]);
+
+  const handleApplyAdd = useCallback(() => {
+    handleApply();
+    setIsAdding(false);
+    setAddSnapshot(null);
+    setLockedCopyIds([]);
+    setLockedSourceIds([]);
+  }, [handleApply]);
 
   const handleReset = useCallback(() => {
     if (!container) return;
@@ -189,6 +238,10 @@ const CompareInlineEditor = ({
     };
     propagate(next);
     setInitialIds('');
+    setIsAdding(false);
+    setAddSnapshot(null);
+    setLockedCopyIds([]);
+    setLockedSourceIds([]);
     handleSubmit?.();
   }, [container, propagate, handleSubmit]);
 
@@ -286,17 +339,55 @@ const CompareInlineEditor = ({
           <div className="d-flex align-items-center gap-3 mb-1">
             <FormLabel className="mb-1">Selection of datasets to be compared</FormLabel>
             {generated ? (
-              <Button
-                variant="danger"
-                size="xsm"
-                onClick={handleReset}
-                title="Reset comparison"
-                disabled={disabled}
-                className="px-2"
-              >
-                <i className="fa fa-times me-1" />
-                Reset
-              </Button>
+              isAdding ? (
+                <>
+                  <Button
+                    variant="warning"
+                    size="xsm"
+                    onClick={handleApplyAdd}
+                    title="Save the added spectrum"
+                    disabled={!unsavedChanges || disabled}
+                    className="px-2"
+                  >
+                    <i className="fa fa-check me-1" />
+                    Apply
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="xsm"
+                    onClick={handleCancelAdd}
+                    title="Cancel adding a spectrum"
+                    className="px-2"
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="success"
+                    size="xsm"
+                    onClick={handleStartAdd}
+                    title="Add another spectrum to this comparison"
+                    disabled={disabled}
+                    className="px-2"
+                  >
+                    <i className="fa fa-plus me-1" />
+                    Add spectrum
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="xsm"
+                    onClick={handleReset}
+                    title="Reset comparison"
+                    disabled={disabled}
+                    className="px-2"
+                  >
+                    <i className="fa fa-times me-1" />
+                    Reset
+                  </Button>
+                </>
+              )
             ) : (
               <Button
                 variant="warning"
@@ -311,16 +402,21 @@ const CompareInlineEditor = ({
               </Button>
             )}
           </div>
+          {generated && (
+            <p className="text-body-secondary small mb-1">
+              A saved comparison&apos;s spectra can only be extended here — removing one requires Reset.
+            </p>
+          )}
           <TreeSelect
             style={{ width: '100%' }}
             placeholder="Please select"
             treeCheckable
             treeDefaultExpandAll
             value={selectedFiles}
-            treeData={menuItems}
+            treeData={displayedMenuItems}
             getPopupContainer={(triggerNode) => triggerNode.parentNode}
-            onChange={(value, _label, info) => handleSelectionChange(menuItems, value, info)}
-            disabled={disabled || generated}
+            onChange={(value, _label, info) => handleSelectionChange(displayedMenuItems, value, info)}
+            disabled={disabled || (generated && !isAdding)}
             maxTagCount={2}
           />
         </div>
@@ -331,7 +427,7 @@ const CompareInlineEditor = ({
           <ContainerDatasets
             container={container}
             readOnly={readOnly}
-            disabled={disabled}
+            disabled={disabled || generated}
             onChange={onChange}
             rootContainer={rootContainer}
             index={index}
