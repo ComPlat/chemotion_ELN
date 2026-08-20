@@ -5,6 +5,7 @@ import {
 import { uniq } from 'lodash';
 import { Citation, literatureContent } from 'src/apps/mydb/elements/details/literature/LiteratureCommon';
 import { CitationTypeEOL } from 'src/apps/mydb/elements/details/literature/CitationType';
+import { copyToClipboard } from 'src/utilities/clipboard';
 
 const changeTypeBtn = (litype, updId, fn, typeMap, readOnly = false) => {
   const cands = Object.keys(typeMap).filter((e) => (e !== litype) && e !== 'uncategorized');
@@ -71,8 +72,7 @@ const buildRow = (title, fnDelete, sortedIds, rows, fnUpdate, typeMap, readOnly 
             <OverlayTrigger placement="top" overlay={<Tooltip id="assign_button">copy to clipboard</Tooltip>}>
               <Button
                 active
-                className="clipboardBtn"
-                data-clipboard-text={content}
+                onClick={() => copyToClipboard(content)}
               >
                 <i className="fa fa-clipboard" aria-hidden="true" />
               </Button>
