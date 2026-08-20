@@ -388,6 +388,11 @@ export default class SampleForm extends React.Component {
     });
 
     const molNameInvalid = moleculeNameInputValue !== '' && !isValidMoleculeName(moleculeNameInputValue);
+    // Bail out on a structure redraw (newMolecule): mno still holds the previous
+    // molecule's name, which must not be shown as selected for the new one.
+    const selectedMoleculeName = !newMolecule && mno && mno.label
+      ? { value: mno.value, label: mno.label, type: mno.desc || mno.type || '' }
+      : null;
 
     return (
       <Form.Group>
@@ -418,10 +423,7 @@ export default class SampleForm extends React.Component {
               }
             }}
             isLoading={isMolNameLoading}
-            value={formattedOptions.find(({ value, label }) => {
-              if (!mno) return false;
-              return String(value) === String(mno.value) || String(label) === String(mno.label);
-            }) || null}
+            value={selectedMoleculeName}
             onCreateOption={(inputValue) => {
               if (!isValidMoleculeName(inputValue)) return;
               this.setState({ moleculeNameInputValue: inputValue });

@@ -24,7 +24,11 @@ module Entities
       Array(fields).each do |field|
         expose(field, options) do |represented_object, _options|
           if detail_levels[represented_object.class] < anonymize_below
-            anonymize_with
+            # Deep-duped so a Hash/Array anonymize_with literal (captured once,
+            # per field, in this closure) can't be mutated in place by one
+            # response and leak that mutation into every other anonymized
+            # instance of this field for the lifetime of the process.
+            anonymize_with.deep_dup
           elsif respond_to?(field, true) # Entity has a method with the same name
             send(field)
           elsif represented_object.respond_to?(field)

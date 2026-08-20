@@ -87,6 +87,46 @@ describe('SampleForm new property inputs', () => {
     });
   });
 
+  describe('moleculeInput', () => {
+    const findMoleculeSelect = (wrapper) => wrapper.findWhere((n) => n.prop('name') === 'moleculeName');
+
+    it('shows the assigned molecule name when it matches the current molecule', () => {
+      sample.molecule = { id: 42 };
+      sample.molecule_name = { label: 'Water', value: 5, mid: 42, desc: 'iupac_name' };
+      const wrapper = shallow(instance.moleculeInput());
+      expect(findMoleculeSelect(wrapper).props().value).toEqual({
+        value: 5, label: 'Water', type: 'iupac_name',
+      });
+    });
+
+    it('clears the field when the structure was redrawn (molecule id no longer matches)', () => {
+      sample.molecule = { id: 42 };
+      sample.molecule_name = { label: 'Water', value: 5, mid: 999, desc: 'iupac_name' };
+      const wrapper = shallow(instance.moleculeInput());
+      expect(findMoleculeSelect(wrapper).props().value).toBeNull();
+    });
+
+    it('shows no selected value when the sample has no assigned molecule name', () => {
+      sample.molecule = { id: 42 };
+      sample.molecule_name = {};
+      const wrapper = shallow(instance.moleculeInput());
+      expect(findMoleculeSelect(wrapper).props().value).toBeNull();
+    });
+
+    it('still shows the value for a disabled (read-only) select whose options never loaded', () => {
+      // Read-only/disabled selects never fire onMenuOpen, so molecule_names (the
+      // lazily-fetched plural options) stays unset; the value must still display.
+      sample.molecule = { id: 42 };
+      sample.molecule_name = { label: 'Water', value: 5, mid: 42, desc: 'iupac_name' };
+      sample.molecule_names = undefined;
+      sample.can_update = false;
+      const wrapper = shallow(instance.moleculeInput());
+      const select = findMoleculeSelect(wrapper);
+      expect(select.props().isDisabled).toBe(true);
+      expect(select.props().value).toEqual({ value: 5, label: 'Water', type: 'iupac_name' });
+    });
+  });
+
   describe('physicalStateInput', () => {
     const findSelect = (wrapper) => wrapper.findWhere((n) => n.prop('name') === 'physicalState');
 

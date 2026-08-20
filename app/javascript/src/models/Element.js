@@ -13,6 +13,13 @@ export default class Element {
     this.updateChecksum();
   }
 
+  // Best-effort UI hint only, not a security boundary: it only recognizes the
+  // legacy '***' string placeholder, so it silently misses fields anonymized
+  // to a Hash/Array shape (see ApplicationEntity#expose_fields_with_anonymization!)
+  // — those can't be told apart from a genuinely empty/default value client-side
+  // anyway. The actual gate against writing back an anonymized value is
+  // ElementPolicy#update?, which requires full detail level for ANY write, so
+  // no field is ever anonymized whenever an update is actually permitted.
   isMethodDisabled(m) {
     return this[m] == '***'
   }
@@ -98,6 +105,9 @@ export default class Element {
     }
     _.merge(params, extraParams);
     let paramsWithoutNullEntries = _.omitBy(params, _.isNull);
+    // Same best-effort caveat as isMethodDisabled above: only strips the legacy
+    // '***' string placeholder, not Hash/Array-shaped anonymized fields. Not a
+    // security boundary — see ElementPolicy#update? for the real one.
     let cleanParams = _.omitBy(paramsWithoutNullEntries, (x) => { return x == '***'})
     return cleanParams;
   }

@@ -77,6 +77,15 @@ describe Entities::WellplateEntity do
       end
     end
 
+    context 'when detail level for Well is 1' do
+      let(:detail_level) { 1 }
+
+      it 'returns the real readout_titles instead of anonymizing them, matching the real per-well readouts' do
+        expect(grape_entity_as_hash[:readout_titles]).to eq(wellplate.readout_titles)
+        expect(grape_entity_as_hash[:wells].first[:readouts]).to eq(wells.first.readouts)
+      end
+    end
+
     context 'when detail level for Well is 0' do
       let(:detail_level) { 0 }
 
@@ -89,7 +98,7 @@ describe Entities::WellplateEntity do
           type: 'wellplate',
           description: '***',
           name: '***',
-          readout_titles: '***',
+          readout_titles: ['Readout'],
           short_label: '***',
           created_at: I18n.l(wellplate.created_at, format: :eln_timestamp),
           updated_at: I18n.l(wellplate.updated_at, format: :eln_timestamp),

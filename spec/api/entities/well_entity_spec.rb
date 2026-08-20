@@ -68,7 +68,7 @@ describe Entities::WellEntity do
           is_restricted: true,
           position: { x: well.position_x, y: well.position_y },
           type: 'well',
-          readouts: '***',
+          readouts: [],
           additive: '***',
           color_code: '***',
           label: '***',

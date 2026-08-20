@@ -18,12 +18,17 @@ module Entities
       expose! :user_labels
     end
 
+    # Exposed alongside Well#readouts (anonymize_below: 1) so a sharee never
+    # receives real readout values with mismatched/placeholder column titles.
+    with_options(anonymize_below: 1) do
+      expose! :readout_titles,  anonymize_with: Wellplate.column_defaults['readout_titles']
+    end
+
     with_options(anonymize_below: 10) do
       expose! :code_log,        anonymize_with: nil, using: 'Entities::CodeLogEntity'
       expose! :container,       anonymize_with: nil, using: 'Entities::ContainerEntity'
       expose! :description
       expose! :name
-      expose! :readout_titles
       expose! :segments,        anonymize_with: [],  using: 'Labimotion::SegmentEntity'
       expose! :short_label
       expose! :tag,             anonymize_with: nil, using: 'Entities::ElementTagEntity'
