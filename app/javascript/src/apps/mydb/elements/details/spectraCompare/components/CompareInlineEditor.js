@@ -107,6 +107,7 @@ const CompareInlineEditor = ({
   ));
   const [isAdding, setIsAdding] = useState(false);
   const [addSnapshot, setAddSnapshot] = useState(null);
+  const [lockedFileIds, setLockedFileIds] = useState([]);
 
   useEffect(() => {
     setInitialIds(sortedIds(container?.extended_metadata?.analyses_compared));
@@ -120,8 +121,8 @@ const CompareInlineEditor = ({
   );
 
   const displayedMenuItems = useMemo(
-    () => (isAdding ? lockSelectedLeaves(menuItems, selectedFiles) : menuItems),
-    [isAdding, menuItems, selectedFiles],
+    () => (isAdding ? lockSelectedLeaves(menuItems, lockedFileIds) : menuItems),
+    [isAdding, menuItems, lockedFileIds],
   );
 
   const currentIds = sortedIds(container?.extended_metadata?.analyses_compared);
@@ -173,19 +174,22 @@ const CompareInlineEditor = ({
   // here — that stays a Reset-only action (see handleReset below).
   const handleStartAdd = useCallback(() => {
     setAddSnapshot(container);
+    setLockedFileIds(selectedFiles);
     setIsAdding(true);
-  }, [container]);
+  }, [container, selectedFiles]);
 
   const handleCancelAdd = useCallback(() => {
     if (addSnapshot) propagate(addSnapshot);
     setIsAdding(false);
     setAddSnapshot(null);
+    setLockedFileIds([]);
   }, [addSnapshot, propagate]);
 
   const handleApplyAdd = useCallback(() => {
     handleApply();
     setIsAdding(false);
     setAddSnapshot(null);
+    setLockedFileIds([]);
   }, [handleApply]);
 
   const handleReset = useCallback(() => {
@@ -218,6 +222,7 @@ const CompareInlineEditor = ({
     setInitialIds('');
     setIsAdding(false);
     setAddSnapshot(null);
+    setLockedFileIds([]);
     handleSubmit?.();
   }, [container, propagate, handleSubmit]);
 

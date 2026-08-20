@@ -140,19 +140,20 @@ describe('compareSelectionTree', () => {
       ],
     }];
 
-    it('marks already-selected leaves as disabled without removing them', () => {
+    it('marks already-selected leaves with disableCheckbox without removing them', () => {
       const result = lockSelectedLeaves(tree, [1]);
       const leaves = result[0].children[0].children;
       expect(leaves).toHaveLength(2);
-      expect(leaves[0].disabled).toEqual(true);
-      expect(leaves[1].disabled).toBeFalsy();
+      expect(leaves[0].disableCheckbox).toEqual(true);
+      expect(leaves[0].disabled).toBeFalsy();
+      expect(leaves[1].disableCheckbox).toBeFalsy();
     });
 
-    it('leaves nothing disabled when selection is empty', () => {
+    it('leaves nothing locked when selection is empty', () => {
       const result = lockSelectedLeaves(tree, []);
       const leaves = result[0].children[0].children;
-      expect(leaves[0].disabled).toBeFalsy();
-      expect(leaves[1].disabled).toBeFalsy();
+      expect(leaves[0].disableCheckbox).toBeFalsy();
+      expect(leaves[1].disableCheckbox).toBeFalsy();
     });
 
     it('returns [] for non-array input', () => {

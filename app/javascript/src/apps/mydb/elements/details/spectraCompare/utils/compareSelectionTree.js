@@ -123,13 +123,16 @@ export const filterMenuByLayout = (menuItems, selectedLayoutTitle) => {
 };
 
 // Used by the "add spectrum to an existing comparison" flow: already-included leaves must
-// stay checked but not be uncheckable, so removal remains possible only via Reset.
+// stay checked but not be uncheckable, so removal remains possible only via Reset. Uses
+// disableCheckbox (not disabled) so only the checkbox interaction is blocked — `disabled`
+// also greys out the node's title via antd's treenode-disabled class, which makes an
+// already-checked leaf look unselected instead of checked-but-locked.
 export const lockSelectedLeaves = (menuItems, selectedIds) => {
   if (!Array.isArray(menuItems)) return [];
   const locked = new Set(selectedIds || []);
   const walk = (nodes) => nodes.map((node) => {
     if (!node.children || node.children.length === 0) {
-      return locked.has(node.value) ? { ...node, disabled: true } : node;
+      return locked.has(node.value) ? { ...node, disableCheckbox: true } : node;
     }
     return { ...node, children: walk(node.children) };
   });
