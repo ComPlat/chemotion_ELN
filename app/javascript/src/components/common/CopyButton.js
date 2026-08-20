@@ -24,25 +24,26 @@ const CopyButton = ({
     resetTimer.current = setTimeout(() => setCopied(false), 1500);
   };
 
-  const button = (
-    <Button
-      variant={variant}
-      size={size}
-      disabled={disabled}
-      className={className}
-      active={active}
-      onClick={handleCopy}
-    >
-      <i className={`fa ${copied ? 'fa-check' : 'fa-clipboard'}`} aria-hidden="true" />
-    </Button>
-  );
-
-  // once copied, drop the tooltip entirely so no hover text shows during the confirmation
-  if (copied) return button;
-
   return (
-    <OverlayTrigger placement={placement} overlay={<Tooltip id={tooltipId}>{tooltip}</Tooltip>}>
-      {button}
+    // Force the tooltip hidden while copied (controlled show) rather than unmounting the
+    // OverlayTrigger, so the Button is never remounted: keyboard focus and InputGroup/
+    // ButtonGroup chrome stay stable during the confirmation. `undefined` restores normal
+    // hover/focus behaviour.
+    <OverlayTrigger
+      placement={placement}
+      show={copied ? false : undefined}
+      overlay={<Tooltip id={tooltipId}>{tooltip}</Tooltip>}
+    >
+      <Button
+        variant={variant}
+        size={size}
+        disabled={disabled}
+        className={className}
+        active={active}
+        onClick={handleCopy}
+      >
+        <i className={`fa ${copied ? 'fa-check' : 'fa-clipboard'}`} aria-hidden="true" />
+      </Button>
     </OverlayTrigger>
   );
 };

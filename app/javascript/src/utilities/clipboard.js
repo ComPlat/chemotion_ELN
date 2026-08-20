@@ -25,12 +25,16 @@ function copyWithExecCommand(text) {
   ta.style.left = '0';
   ta.style.opacity = '0';
   document.body.appendChild(ta);
-  ta.focus();
-  ta.select();
-  let ok = false;
-  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
-  document.body.removeChild(ta);
-  return ok;
+  try {
+    ta.focus();
+    ta.select();
+    return document.execCommand('copy');
+  } catch (e) {
+    return false;
+  } finally {
+    // always remove the temporary node, even if focus/select/execCommand threw
+    ta.remove();
+  }
 }
 
 // Copies text to the clipboard, resolving to true on success and false on failure,
@@ -49,7 +53,13 @@ export async function copyToClipboard(text) {
   }
 
   if (!ok) {
-    ok = copyWithExecCommand(value);
+    // guard the whole legacy path (createElement/appendChild can throw too) so any
+    // failure resolves to false and toasts rather than rejecting the promise
+    try {
+      ok = copyWithExecCommand(value);
+    } catch (e) {
+      ok = false;
+    }
   }
 
   if (!ok) {

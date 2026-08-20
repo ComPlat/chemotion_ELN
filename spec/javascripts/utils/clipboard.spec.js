@@ -85,5 +85,31 @@ describe('copyToClipboard', () => {
       // the silent no-op now surfaces as a failure notification
       expect(toastErrorStub.calledOnce).toBe(true);
     });
+
+    it('resolves false, cleans up and toasts when execCommand throws', async () => {
+      window.isSecureContext = false;
+      document.execCommand = sinon.stub().throws(new Error('execCommand blew up'));
+
+      const result = await copyToClipboard('throwing exec');
+
+      expect(result).toBe(false);
+      // the temporary textarea is still removed via the finally block
+      expect(document.querySelectorAll('textarea').length).toBe(0);
+      expect(toastErrorStub.calledOnce).toBe(true);
+    });
+
+    it('resolves false (does not reject) and toasts when the DOM setup itself throws', async () => {
+      window.isSecureContext = false;
+      const createElement = sinon.stub(document, 'createElement').throws(new Error('no DOM'));
+
+      try {
+        // must resolve false rather than reject, so callers awaiting it never see a rejection
+        const result = await copyToClipboard('no dom');
+        expect(result).toBe(false);
+        expect(toastErrorStub.calledOnce).toBe(true);
+      } finally {
+        createElement.restore();
+      }
+    });
   });
 });
