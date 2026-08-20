@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect, useContext } from 'react';
 import {
-  Form, InputGroup, Tooltip, OverlayTrigger, Button
+  Form, InputGroup
 } from 'react-bootstrap';
 import { Select } from 'src/components/common/Select';
 import { startsWith, endsWith } from 'lodash';
@@ -9,7 +9,7 @@ import { startsWith, endsWith } from 'lodash';
 import AdminFetcher from 'src/fetchers/AdminFetcher';
 import { observer } from 'mobx-react';
 import { StoreContext } from 'src/stores/mobx/RootStore';
-import { copyToClipboard } from 'src/utilities/clipboard';
+import CopyButton from 'src/components/common/CopyButton';
 
 function ListLocalCollector({ localCollectorValues }) {
   return (
@@ -19,15 +19,13 @@ function ListLocalCollector({ localCollectorValues }) {
           <Form.Label className="fw-bold">Local Collector Dir Configuration</Form.Label>
           <Form.Group>
             <InputGroup>
-              <OverlayTrigger placement="right" overlay={<Tooltip id="copy_tooltip">copy to clipboard</Tooltip>}>
-                <Button
-                  size="xxsm"
-                  variant="light"
-                  onClick={() => copyToClipboard(c.path)}
-                >
-                  <i className="fa fa-clipboard" />
-                </Button>
-              </OverlayTrigger>
+              <CopyButton
+                text={c.path}
+                placement="right"
+                variant="light"
+                size="xxsm"
+                tooltipId="copy_tooltip"
+              />
               <Form.Control
                 value={c.path}
                 readOnly

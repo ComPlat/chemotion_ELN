@@ -36,10 +36,16 @@ describe('CitationPanel copy button', () => {
     })
   );
 
+  // click the copy button, then flush the async handler's microtasks before asserting
+  const clickCopy = async () => {
+    wrapper.find('i.fa-clipboard').closest('button').simulate('click');
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+  };
+
   beforeEach(() => {
     // stub the shared helper so the test never touches a real clipboard
-    copyStub = sinon.stub(clipboard, 'copyToClipboard').resolves(true);
-    wrapper = buildWrapper();
+    // (the helper owns the failure toast; that behaviour is covered in clipboard.spec.js)
+    copyStub = sinon.stub(clipboard, 'copyToClipboard');
   });
 
   afterEach(() => {
@@ -47,12 +53,40 @@ describe('CitationPanel copy button', () => {
     wrapper.unmount();
   });
 
-  it('copies the plain-text citation content when the clipboard button is clicked', () => {
-    const copyButton = wrapper.find('i.fa-clipboard').closest('button');
-    expect(copyButton.exists()).toBe(true);
+  it('copies the plain-text citation content when the button is clicked', async () => {
+    copyStub.resolves(true);
+    wrapper = buildWrapper();
 
-    copyButton.simulate('click');
+    await clickCopy();
 
     expect(copyStub.calledOnceWith('A Fine Reference')).toBe(true);
+  });
+
+  it('swaps the clipboard icon for a check icon on success', async () => {
+    copyStub.resolves(true);
+    wrapper = buildWrapper();
+
+    // before clicking: the clipboard icon
+    expect(wrapper.find('i.fa-clipboard').exists()).toBe(true);
+    expect(wrapper.find('i.fa-check').exists()).toBe(false);
+
+    await clickCopy();
+    wrapper.update();
+
+    // after a successful copy: the check icon replaces the clipboard icon
+    expect(wrapper.find('i.fa-check').exists()).toBe(true);
+    expect(wrapper.find('i.fa-clipboard').exists()).toBe(false);
+  });
+
+  it('does not show the confirmation icon when the copy fails', async () => {
+    copyStub.resolves(false);
+    wrapper = buildWrapper();
+
+    await clickCopy();
+    wrapper.update();
+
+    // the button stays in its default state; the helper handles the failure toast
+    expect(wrapper.find('i.fa-clipboard').exists()).toBe(true);
+    expect(wrapper.find('i.fa-check').exists()).toBe(false);
   });
 });

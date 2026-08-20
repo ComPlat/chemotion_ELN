@@ -1,27 +1,35 @@
 /* eslint-disable no-undef */
 import expect from 'expect';
 import sinon from 'sinon';
+import toast from 'react-hot-toast';
 import { copyToClipboard } from 'src/utilities/clipboard';
 
 describe('copyToClipboard', () => {
   let originalExecCommand;
   let originalIsSecureContext;
+  let toastErrorStub;
+  let toastSuccessStub;
 
   beforeEach(() => {
     originalExecCommand = document.execCommand;
     originalIsSecureContext = window.isSecureContext;
+    // the failure notification is routed to react-hot-toast's toast.error
+    toastErrorStub = sinon.stub(toast, 'error');
+    toastSuccessStub = sinon.stub(toast, 'success');
   });
 
   afterEach(() => {
     document.execCommand = originalExecCommand;
     window.isSecureContext = originalIsSecureContext;
+    toastErrorStub.restore();
+    toastSuccessStub.restore();
     delete navigator.clipboard;
     // remove any textarea leaked by a failing test
     document.querySelectorAll('textarea').forEach((ta) => ta.remove());
   });
 
   describe('secure context with navigator.clipboard', () => {
-    it('writes the text via the async clipboard API and resolves true', async () => {
+    it('writes the text via the async clipboard API, resolves true and shows no toast', async () => {
       window.isSecureContext = true;
       const writeText = sinon.stub().resolves();
       navigator.clipboard = { writeText };
@@ -33,6 +41,9 @@ describe('copyToClipboard', () => {
       expect(result).toBe(true);
       // the legacy path must not run when the async API succeeds
       expect(document.execCommand.called).toBe(false);
+      // success stays silent (no toast on every copy)
+      expect(toastErrorStub.called).toBe(false);
+      expect(toastSuccessStub.called).toBe(false);
     });
 
     it('falls back to execCommand when writeText rejects', async () => {
@@ -44,6 +55,7 @@ describe('copyToClipboard', () => {
 
       expect(document.execCommand.calledWith('copy')).toBe(true);
       expect(result).toBe(true);
+      expect(toastErrorStub.called).toBe(false);
     });
   });
 
@@ -59,9 +71,10 @@ describe('copyToClipboard', () => {
       expect(result).toBe(true);
       // the temporary textarea is cleaned up
       expect(document.querySelectorAll('textarea').length).toBe(0);
+      expect(toastErrorStub.called).toBe(false);
     });
 
-    it('resolves false when the legacy copy command fails', async () => {
+    it('resolves false and shows an error toast when the legacy copy command fails', async () => {
       window.isSecureContext = false;
       document.execCommand = sinon.stub().returns(false);
 
@@ -69,6 +82,8 @@ describe('copyToClipboard', () => {
 
       expect(result).toBe(false);
       expect(document.querySelectorAll('textarea').length).toBe(0);
+      // the silent no-op now surfaces as a failure notification
+      expect(toastErrorStub.calledOnce).toBe(true);
     });
   });
 });

@@ -8,6 +8,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import SampleName from 'src/components/common/SampleName';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
+import { copyToClipboard as copyTextToClipboard } from 'src/utilities/clipboard';
 
 const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
   const searchStore = useContext(StoreContext).search;
@@ -143,7 +144,7 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
 
   const copyToClipboard = (element) => {
     if (element.target.dataset.clipboardText) {
-      navigator.clipboard.writeText(element.target.dataset.clipboardText);
+      copyTextToClipboard(element.target.dataset.clipboardText);
     }
   };
 
