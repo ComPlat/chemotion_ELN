@@ -97,10 +97,17 @@ module Usecases
           component_properties = component_params[:component_properties]
           next unless component_properties
 
-          # Only calculate relative molecular weight if it doesn't exist yet
-          # This preserves existing relative_molecular_weight values when amount_g changes
-          existing_relative_mw = component_properties[:relative_molecular_weight]
-          next if existing_relative_mw && existing_relative_mw > 0
+          # Only calculate relative molecular weight if it doesn't exist yet; this preserves
+          # existing values when amount_g changes. The reaction material-update path reaches this
+          # usecase without Grape coercion, so the value can arrive as a numeric string ("150.0")
+          # or a blank placeholder. Coerce to Float up front (`String > 0` would raise
+          # ArgumentError) and, when preserving, write the Float back so a string never persists
+          # for downstream readers.
+          existing_relative_mw = component_properties[:relative_molecular_weight].to_f
+          if existing_relative_mw.positive?
+            component_properties[:relative_molecular_weight] = existing_relative_mw
+            next
+          end
 
           amount_mol = component_properties[:amount_mol].to_f
           next if amount_mol <= 0
