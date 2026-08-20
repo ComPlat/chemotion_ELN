@@ -69,6 +69,12 @@ module Import
       path
     end
 
+    # Whether #write actually produced a correction sheet. Only meaningful once #write has run, and the
+    # caller needs it: a report with no rows to correct must not tell the user to correct one.
+    def retry_sheet_written?
+      @retry_sheet_written
+    end
+
     private
 
     # Only the columns the user actually filled in. A shipped template carries dozens of headers a
@@ -226,6 +232,7 @@ module Import
     # Rows that imported cleanly are absent: there is nothing to do to them.
     def add_retry_sheet(workbook)
       entries = retry_entries
+      @retry_sheet_written = entries.any?
       return if entries.empty?
 
       # Only the columns some row on this sheet actually uses -- the same rule as the report sheet, and

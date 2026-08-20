@@ -212,6 +212,27 @@ RSpec.describe Import::ImportSamples do
       ).to eq(1)
     end
 
+    # The report only reproduces the main sheet, so destroying a multi-sheet upload would take the
+    # component rows with it -- and a failed row could not be retried without them.
+    context 'when the file carries a sample_components sheet' do
+      before do
+        package = Axlsx::Package.new
+        package.workbook.add_worksheet(name: 'sample') do |sheet|
+          sheet.add_row header
+          rows.each { |row| sheet.add_row row, types: Array.new(header.size, :string) }
+        end
+        package.workbook.add_worksheet(name: 'sample_components') do |sheet|
+          sheet.add_row ['sample uuid', 'smiles']
+        end
+        package.serialize(path.to_s)
+      end
+
+      it 'is kept alongside the report' do
+        result
+        expect(Attachment.exists?(attachment.id)).to be(true)
+      end
+    end
+
     context 'when the report cannot be built' do
       before { allow(Import::ImportReportWorkbook).to receive(:new).and_raise(StandardError, 'no disk') }
 

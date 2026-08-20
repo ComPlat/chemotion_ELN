@@ -219,6 +219,26 @@ RSpec.describe Import::ImportSamples do
       expect(Sample.count).to eq(4)
       expect(result[:status]).to eq('warning')
     end
+
+    # The failing batch's savepoints roll back with it. Its first row had already been written and
+    # recorded, so without discarding that record the result counted a sample -- and handed back its
+    # id -- for a row the database no longer holds.
+    it 'counts only the rows that survived the failed batch' do
+      stub_const('Import::ImportSamples::BATCH_SIZE', 3)
+      calls = 0
+      allow(importer).to receive(:write_row).and_wrap_original do |original, *args|
+        calls += 1
+        # Second row of the second batch, so its first row has already been recorded.
+        raise ActiveRecord::StatementInvalid, 'batch blew up' if calls == 5
+
+        original.call(*args)
+      end
+      result = importer.process
+
+      expect(Sample.count).to eq(3)
+      expect(result[:imported_count]).to eq(3)
+      expect(Sample.where(id: result[:data].pluck(:id)).count).to eq(3)
+    end
   end
 
   describe 'result completeness' do

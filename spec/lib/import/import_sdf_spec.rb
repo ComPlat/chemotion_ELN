@@ -65,6 +65,65 @@ RSpec.describe Import::ImportSdf do
       expect { sdf_import.create_samples }.to change(Sample, :count).by(1)
       expect(sdf_import.message.scan('Import successful!').size).to eq(1)
     end
+
+    # Covers the column assignment extracted out of the row loop into #build_sample_from_row and its
+    # helpers: plain columns, xref columns, ranges, and the value-and-unit-in-one-cell amounts.
+    it 'assigns the mapped columns onto the created sample' do
+      sdf_import.create_samples
+      sample = Sample.last
+
+      expect(sample).to have_attributes(
+        short_label: 'C9H12ClNO2',
+        name: 'name',
+        location: 'location',
+        external_label: 'external_label',
+        target_amount_value: 10.0,
+        target_amount_unit: 'g',
+        real_amount_value: 15.0,
+        real_amount_unit: 'mg',
+      )
+      expect([sample.boiling_point.first.to_f, sample.boiling_point.last.to_f]).to eq([150.0, 160.0])
+    end
+
+    it 'assigns the ranged and xref columns onto the created sample' do
+      sdf_import.create_samples
+      sample = Sample.last
+
+      expect(sample.melting_point.first.to_f).to eq(50.0)
+      expect(sample.xref['refractive_index']).to eq('1.0')
+    end
+
+    # Both importers store the same value for the same cell: a percentage purity and a unit-less
+    # density used to cost the value (or the row) when they arrived through an SDF.
+    context 'with a percentage purity and a unit-less density' do
+      before { sdf_import.rows.first.merge!('purity' => '95', 'density' => '0.85') }
+
+      it 'reads the purity as a fraction, as the spreadsheet importer does' do
+        sdf_import.create_samples
+
+        expect(Sample.last.purity).to eq(0.95)
+      end
+
+      it 'keeps the density instead of dropping it for having no unit' do
+        sdf_import.create_samples
+
+        expect(Sample.last.density).to eq(0.85)
+      end
+    end
+
+    context 'when an amount cell carries no readable value and unit' do
+      before { sdf_import.rows.first['real_amount'] = 'quite a lot' }
+
+      # The columns are named after the amount that actually failed: the real-amount branch used to
+      # report 'target amount' when the cell had no unit at all, pointing at the wrong column.
+      it 'falls back to 0 g and names the real amount columns in the message' do
+        sdf_import.create_samples
+        sample = Sample.last
+
+        expect(sample).to have_attributes(real_amount_value: 0.0, real_amount_unit: 'g')
+        expect(sdf_import.error_messages.join).to include('real amount, real amount unit')
+      end
+    end
   end
 
   describe '#rows_from_processed_mol' do

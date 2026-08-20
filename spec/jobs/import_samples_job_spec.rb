@@ -140,8 +140,10 @@ describe ImportSamplesJob, :active_job do
 
     before do
       allow(Import::ImportSdf).to receive(:new).and_return(import_samples_instance)
-      allow(import_samples_instance).to receive(:import_from_file)
-      allow(import_samples_instance).to receive(:message).and_return(result_message)
+      allow(import_samples_instance).to receive_messages(
+        import_from_file: nil, message: result_message, status: 'ok',
+        error_messages: nil, unprocessable_samples: []
+      )
     end
 
     context 'when perform_later is called' do
@@ -165,13 +167,49 @@ describe ImportSamplesJob, :active_job do
         end
       end
     end
+
+    # The job used to drop ImportSdf's status, so every SDF import notified as a non-dismissing
+    # 'info' -- successful ones included -- and a partial one could not be reported as a warning.
+    context 'when reporting the outcome' do
+      it 'notifies a successful import as a success that dismisses itself' do
+        allow(Message).to receive(:create_msg_notification)
+
+        described_class.perform_now(parameters)
+
+        expect(Message).to have_received(:create_msg_notification)
+          .with(hash_including(level: 'success', autoDismiss: 10))
+      end
+
+      it 'notifies an import with unprocessable rows as a warning that stays on screen' do
+        allow(import_samples_instance).to receive(:unprocessable_samples).and_return([2])
+        allow(Message).to receive(:create_msg_notification)
+
+        described_class.perform_now(parameters)
+
+        expect(Message).to have_received(:create_msg_notification)
+          .with(hash_including(level: 'warning', autoDismiss: 0))
+      end
+
+      it 'notifies a failed import as an error' do
+        allow(import_samples_instance).to receive(:status).and_return('error')
+        allow(Message).to receive(:create_msg_notification)
+
+        described_class.perform_now(parameters)
+
+        expect(Message).to have_received(:create_msg_notification)
+          .with(hash_including(level: 'error'))
+      end
+    end
   end
 
   context 'when the attachment filename extension is upper/mixed case' do
     let(:import_samples_instance) do
       instance_double(Import::ImportSamples, process: { status: 'ok', message: '', data: [] })
     end
-    let(:import_sdf_instance) { instance_double(Import::ImportSdf, import_from_file: nil, message: '') }
+    let(:import_sdf_instance) do
+      instance_double(Import::ImportSdf, import_from_file: nil, message: '', status: 'ok',
+                                         error_messages: nil, unprocessable_samples: [])
+    end
     let(:parameters) do
       {
         collection_id: create(:collection).id, user_id: create(:user).id,

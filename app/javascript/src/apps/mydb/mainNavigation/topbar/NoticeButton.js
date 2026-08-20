@@ -94,7 +94,7 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
       const infoTimeString = formatDate(n.created_at);
       const convertedData = convertCalendarNotificationToLocal(n.content.data);
 
-      // mb-1 rather than the default paragraph margin: a message that arrives as a headline plus
+      // mb-1: a message that arrives as a headline plus
       // bulleted notes reads as one block, and a full 1rem gap between each line pulls it apart.
       const newText = convertedData
         .split('\n')
@@ -140,10 +140,6 @@ const handleNotification = (nots, act, context, needCallback = true, isFirstBatc
       const { currentPage, itemsPerPage } = InboxStore.getState();
       const { currentCollection } = UIStore.getState();
       const currentCollectionId = currentCollection?.id;
-
-      if (refreshCollectionActions.includes(n.content.action) || n.subject === 'Shared Collection With Me') {
-        context.collections.fetchCollections();
-      }
 
       // Number(): the two ids reach here from different places and are not reliably the same type --
       // UIStore itself compares currentCollection.id loosely for that reason.

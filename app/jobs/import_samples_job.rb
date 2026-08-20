@@ -63,7 +63,17 @@ class ImportSamplesJob < ApplicationJob
       import_type: params[:import_type],
     )
     sdf_import.import_from_file
-    { message: sdf_import.message }
+    { message: sdf_import.message, status: sdf_status(sdf_import) }
+  end
+
+  # ImportSdf reports only 'ok', 'warning', 'invalid'. Without a status here every SDF import -- successful or not
+  # -- notified as 'info' and never auto-dismissed. A partial import is neither of the two: it has rows
+  # it could not process, and has to stay on screen as a warning.
+  def sdf_status(sdf_import)
+    return 'invalid' unless sdf_import.status == 'ok'
+    return 'warning' if sdf_import.error_messages.present? || sdf_import.unprocessable_samples.present?
+
+    'ok'
   end
 
   # When this job is killed outright (OOM, an operator
