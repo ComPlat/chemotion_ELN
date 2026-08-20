@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import {OverlayTrigger, Button, Tooltip} from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
-import Container from 'src/models/Container';
 import UIStore from 'src/stores/alt/stores/UIStore';
+import Container from 'src/models/Container';
 import ArrayUtils from 'src/utilities/ArrayUtils';
 import ViewSpectra from 'src/apps/mydb/elements/details/ViewSpectra';
-
 import NMRiumDisplayer from 'src/components/nmriumWrapper/NMRiumDisplayer';
+import CompareSpectraModal from 'src/apps/mydb/elements/details/spectraCompare/components/CompareSpectraModal';
 import {
   RndNotAvailable, RndNoAnalyses,
   ReactionsDisplay
@@ -15,7 +15,6 @@ import {
 
 import TextTemplateActions from 'src/stores/alt/actions/TextTemplateActions';
 import { UploadField } from 'src/apps/mydb/elements/details/analyses/UploadField';
-import { CommentButton, CommentBox } from 'src/components/common/AnalysisCommentBoxComponent';
 import {
   addNewAnalyses,
   findAnalysesContainer,
@@ -61,7 +60,9 @@ export default class SampleDetailsContainers extends Component {
     if (!sample.container) {
       sample.container = Container.buildEmpty();
     }
+
     sample.container.description = e.target.value;
+
     this.handleChange();
   }
 
@@ -69,10 +70,23 @@ export default class SampleDetailsContainers extends Component {
     this.setState((prevState) => ({ commentBoxVisible: !prevState.commentBoxVisible }));
   }
 
-  handleChange() {
+  handleChange = (updatedContainer) => {
     const { sample, handleSampleChanged } = this.props;
+
+    if (updatedContainer) {
+      const analysesRoot = sample.analysesContainers()[0];
+
+      if (analysesRoot && Array.isArray(analysesRoot.children)) {
+        const idx = analysesRoot.children.findIndex((c) => c.id === updatedContainer.id);
+
+        if (idx !== -1) {
+          analysesRoot.children[idx] = updatedContainer;
+        }
+      }
+    }
+
     handleSampleChanged(sample);
-  }
+  };
 
   onUIStoreChange(state) {
     const { activeAnalysis } = this.state;
@@ -81,14 +95,35 @@ export default class SampleDetailsContainers extends Component {
     }
   }
 
-  handleAdd() {
+  handleAdd(isComparison = false) {
     const { sample, setState } = this.props;
-    const newContainer = addNewAnalyses(sample);
+    const newContainer = addNewAnalyses(sample, isComparison);
     setState(
       (prevState) => ({ ...prevState, sample }),
       this.handleAccordionOpen(newContainer.id),
     );
   }
+
+  handleContainerChanged = (updatedContainer, cb) => {
+    const { sample, handleSampleChanged } = this.props;
+
+    const replaceRecursively = (node) => {
+      if (!node || !node.children) return;
+
+      node.children = node.children.map((child) => {
+        if (child.id === updatedContainer.id) {
+          return updatedContainer;
+        }
+        replaceRecursively(child);
+        return child;
+      });
+    };
+
+    const root = sample.container;
+    replaceRecursively(root);
+
+    handleSampleChanged(sample, cb);
+  };
 
   handleMove(source, target) {
     const { sample } = this.props;
@@ -133,20 +168,15 @@ export default class SampleDetailsContainers extends Component {
           element={sample}
           setElement={(sample, cb = null) => setState((prevState) => ({ ...prevState, sample }), cb)}
         />
-        <OverlayTrigger
-          placement="top"
-          overlay={<Tooltip id="annotate_tooltip">Create and add empty analyses.</Tooltip>}
-        >
         <Button
-          size="sm"
+          size="xsm"
           variant="success"
-          onClick={this.handleAdd}
+          onClick={() => this.handleAdd(false)}
           disabled={!sample.can_update}
         >
           <i className="fa fa-plus me-1" />
           Add analysis
         </Button>
-        </OverlayTrigger>
       </>
     );
   }
@@ -197,6 +227,7 @@ export default class SampleDetailsContainers extends Component {
             handleRemove={this.handleRemove}
             handleSubmit={handleSubmit}
             handleMove={this.handleMove}
+            handleAdd={this.handleAdd}
             handleAccordionOpen={this.handleAccordionOpen}
             handleUndo={this.handleUndo}
             toggleAddToReport={this.toggleAddToReport}
@@ -218,10 +249,14 @@ export default class SampleDetailsContainers extends Component {
             handleSampleChanged={handleSampleChanged}
             handleSubmit={handleSubmit}
           />
+          <CompareSpectraModal
+            sample={sample}
+            onSubmit={handleSubmit}
+            onContainerChange={this.handleContainerChanged}
+          />
         </div>
       );
     }
-
     return (
       <RndNoAnalyses
         addButton={this.addButton}
