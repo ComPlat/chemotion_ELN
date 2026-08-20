@@ -53,10 +53,9 @@ function buildWrappedComponent(name, BaseComponent) {
       // wrapper whenever isDisabled is true, regardless of the isHidden prop that
       // EditableInput below controls — without this override, a disabled select in
       // isInputEditable mode shows no text at all, since the container hides it.
+      // Scoped to state.isDisabled specifically, matching that one case.
       ...(isInputEditable && {
-        input: {
-          visibility: 'visible',
-        },
+        input: (base, state) => (state.isDisabled ? { visibility: 'visible' } : {}),
       })
     };
 
@@ -66,7 +65,7 @@ function buildWrappedComponent(name, BaseComponent) {
         (acc, [key, defaults]) => {
           acc[key] = (base, state) => ({
             ...base,
-            ...defaults,
+            ...(typeof defaults === 'function' ? defaults(base, state) : defaults),
             ...(styles[key] ? styles[key](base, state) : {}),
           });
           return acc;

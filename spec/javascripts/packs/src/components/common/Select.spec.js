@@ -20,11 +20,11 @@ describe('Select.js styles.input override', () => {
     expect(style.visibility).toBe('visible');
   });
 
-  it('still forces the input visible when the select happens to be enabled', () => {
+  it('leaves the base style untouched when the select is enabled (scoped to isDisabled)', () => {
     const wrapper = shallow(<CreatableSelect isInputEditable options={[]} />);
     const { styles } = wrapper.props();
-    const style = styles.input({ visibility: 'visible' }, { isDisabled: false });
-    expect(style.visibility).toBe('visible');
+    const base = { visibility: 'visible', color: 'blue' };
+    expect(styles.input(base, { isDisabled: false })).toEqual(base);
   });
 
   it('does not add an input style override for a plain (non-isInputEditable) select', () => {
