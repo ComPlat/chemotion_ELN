@@ -26,6 +26,9 @@ class ElementPolicy
   # way to tell an echoed placeholder from a genuine edit — saving would overwrite the owner's
   # real data with those placeholders. Gating the whole write on full detail closes every such
   # path at once, mirroring how #copy? already combines the permission and detail-level axes.
+  # This is the ONLY real gate against that: frontend heuristics like Element#isMethodDisabled
+  # / Element#serialize's '***' filter (app/javascript/src/models/Element.js) are best-effort
+  # UI hints that can't reliably detect Hash/Array-shaped placeholders, not a security boundary.
   def update?
     return false unless user_and_record_present?
 

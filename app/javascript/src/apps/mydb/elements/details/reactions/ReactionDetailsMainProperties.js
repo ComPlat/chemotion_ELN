@@ -92,7 +92,7 @@ export default class ReactionDetailsMainProperties extends Component {
                 <Form.Control
                   type="text"
                   value={reaction.temperature_display || ''}
-                  disabled={!permitOn(reaction) || reaction.isMethodDisabled('temperature')}
+                  disabled={!permitOn(reaction)}
                   placeholder="Temperature..."
                   onChange={(event) => onInputChange('temperature', event)}
                 />
