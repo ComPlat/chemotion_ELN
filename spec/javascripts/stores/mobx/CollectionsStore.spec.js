@@ -1,7 +1,11 @@
 /* eslint-disable import/no-unresolved */
 import expect from 'expect';
 import sinon from 'sinon';
+import {
+  unprotect, protect, applySnapshot, getSnapshot,
+} from 'mobx-state-tree';
 import { rootStore } from 'src/stores/mobx/RootStore';
+import { Collection, CollectionsStore } from 'src/stores/mobx/CollectionsStore';
 import ElementActions from 'src/stores/alt/actions/ElementActions';
 import CollectionElementsFetcher from 'src/fetchers/CollectionElementsFetcher';
 import CollectionsFetcher from 'src/fetchers/CollectionsFetcher';
@@ -11,6 +15,13 @@ import CollectionSharesFetcher from 'src/fetchers/CollectionSharesFetcher';
 // and the lock toast both branch on it, and the fetcher's return-shape change (boolean -> object|null|
 // undefined) is otherwise untested: restoring `handleResponseSuccess: (r) => r.ok` on the fetcher would
 // make lockedSampleIds empty and the "sample locked" toast silently never fire — these cases catch that.
+// applySnapshot(store, {}) would assign `undefined` to every field applySnapshot doesn't
+// find in the given snapshot (ModelType.applySnapshot sets node.storedValue[name] straight
+// from the input, it doesn't re-resolve each field's own default) - e.g. own_collection_tree
+// (types.maybeNull(types.frozen({}))) would end up `undefined` instead of its real default
+// `{}`. Snapshotting a freshly `.create()`d instance gets the actually-resolved defaults.
+const emptyCollectionsStoreSnapshot = getSnapshot(CollectionsStore.create());
+
 describe('CollectionsStore', () => {
   const params = { collection_id: 1, ui_state: { currentCollection: { id: 1 } } };
   let deleteStub;
@@ -24,6 +35,12 @@ describe('CollectionsStore', () => {
     // isolate from the alt dispatcher / element refetch
     refreshStub = sinon.stub(ElementActions, 'refreshElementsAfterCollectionChanges');
     store = rootStore.collectionsStore;
+    // rootStore is a module-level singleton shared across every spec in the process -
+    // reset it to a clean, empty state so tests can't see collections/shares left
+    // behind by earlier tests (own_collections, my_collection_shares, ...).
+    unprotect(rootStore);
+    applySnapshot(store, emptyCollectionsStoreSnapshot);
+    protect(rootStore);
   });
 
   afterEach(() => {
