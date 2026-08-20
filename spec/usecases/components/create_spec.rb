@@ -345,7 +345,7 @@ RSpec.describe Usecases::Components::Create do
       # Regression: the reaction material-update path reaches this usecase without Grape
       # coercion, so relative_molecular_weight can arrive as a string. `String > 0` used to
       # raise ArgumentError and crash the save (ComPlat/chemotion_ELN#3170, write path).
-      it 'preserves an existing numeric-string relative_molecular_weight without raising' do
+      it 'preserves and normalizes an existing numeric-string relative_molecular_weight to a Float' do
         components_params = [
           {
             id: 'new_1',
@@ -364,7 +364,7 @@ RSpec.describe Usecases::Components::Create do
         expect { use_case.send(:calculate_relative_molecular_weights) }.not_to raise_error
 
         internal = use_case.instance_variable_get(:@components)
-        expect(internal.first[:component_properties][:relative_molecular_weight]).to eq('250.0')
+        expect(internal.first[:component_properties][:relative_molecular_weight]).to be(250.0)
       end
 
       it 'recalculates when relative_molecular_weight is a blank string, without raising' do

@@ -94,24 +94,31 @@ module Usecases
         return if total_mixture_mass <= 0
 
         @components.each do |component_params|
-          component_properties = component_params[:component_properties]
-          next unless component_properties
-
-          # Only calculate relative molecular weight if it doesn't exist yet
-          # This preserves existing relative_molecular_weight values when amount_g changes.
-          # Coerce before comparing: the reaction material-update path reaches this usecase
-          # without Grape coercion, so the value can be a numeric string ("150.0") or a blank
-          # placeholder; `String > 0` would raise ArgumentError and crash the save.
-          existing_relative_mw = component_properties[:relative_molecular_weight]
-          next if existing_relative_mw.to_f.positive?
-
-          amount_mol = component_properties[:amount_mol].to_f
-          next if amount_mol <= 0
-
-          # Calculate relative molecular weight: total mass (g) / amount mol (mol) = g/mol
-          relative_mw = total_mixture_mass / amount_mol
-          component_properties[:relative_molecular_weight] = relative_mw
+          assign_relative_molecular_weight(component_params[:component_properties], total_mixture_mass)
         end
+      end
+
+      # Sets `relative_molecular_weight` on a single component's properties in place.
+      def assign_relative_molecular_weight(component_properties, total_mixture_mass)
+        return unless component_properties
+
+        # Only calculate relative molecular weight if it doesn't exist yet; this preserves
+        # existing values when amount_g changes. The reaction material-update path reaches this
+        # usecase without Grape coercion, so the value can arrive as a numeric string ("150.0")
+        # or a blank placeholder. Coerce to Float up front (`String > 0` would raise
+        # ArgumentError) and, when preserving, write the Float back so a string never persists
+        # for downstream readers.
+        existing_relative_mw = component_properties[:relative_molecular_weight].to_f
+        if existing_relative_mw.positive?
+          component_properties[:relative_molecular_weight] = existing_relative_mw
+          return
+        end
+
+        amount_mol = component_properties[:amount_mol].to_f
+        return if amount_mol <= 0
+
+        # Calculate relative molecular weight: total mass (g) / amount mol (mol) = g/mol
+        component_properties[:relative_molecular_weight] = total_mixture_mass / amount_mol
       end
     end
   end
