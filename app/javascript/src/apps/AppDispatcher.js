@@ -6,6 +6,7 @@ import { StoreContext } from 'src/stores/mobx/RootStore';
 import AdminHome from 'src/apps/admin/AdminHome';
 import App from 'src/apps/mydb/App';
 import CnC from 'src/apps/commandAndControl/CnC';
+import Confirmation from 'src/apps/home/devise/Confirmation';
 import ConverterAdmin from 'src/apps/converter/ConverterAdmin';
 import Editor from 'src/apps/editor/Editor';
 import GenericDatasetsAdmin from 'src/apps/generic/GenericDatasetsAdmin';
@@ -143,6 +144,9 @@ const AppDispatcher = () => {
   if (role === 'Guest' && currentRoute === '/sign_up') {
     console.debug('rendering sign in');
     app = (<SignUp />);
+  }
+  if (role === 'Guest' && currentRoute === '/new_confirmation') {
+    app = (<Confirmation />);
   }
   if (currentRoute === '/chemspectra') {
     app = (<ChemSpectraClient />);
