@@ -278,7 +278,7 @@ export default class LiteratureModal extends Component {
         <CopyButton
           text={clipboardText}
           placement="bottom"
-          tooltipId="assign_button"
+          tooltipId={`copy-${title.replace(/\s+/g, '-')}`}
           size="sm"
           className="me-2"
           active

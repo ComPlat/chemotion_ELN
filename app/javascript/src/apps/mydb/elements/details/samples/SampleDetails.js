@@ -1026,7 +1026,7 @@ export default class SampleDetails extends React.Component {
               text={cas}
               placement="bottom"
               variant="light"
-              tooltipId="assign_button"
+              tooltipId="copy_cas"
             />
           </div>
         </InputGroup>
@@ -1218,7 +1218,7 @@ export default class SampleDetails extends React.Component {
           text={(this.state.showInchikey ? sample.molecule_inchikey : this.state.inchiString) || ' '}
           placement="bottom"
           variant="light"
-          tooltipId="assign_button"
+          tooltipId="copy_inchi"
         />
       </InputGroup>
     );
@@ -1250,7 +1250,7 @@ export default class SampleDetails extends React.Component {
           text={sample.molecule_cano_smiles || ''}
           placement="bottom"
           variant="light"
-          tooltipId="assign_button"
+          tooltipId="copy_smiles"
         />
         <OverlayTrigger placement="bottom" overlay={this.moleculeCreatorTooltip()}>
           <Button
@@ -1282,7 +1282,7 @@ export default class SampleDetails extends React.Component {
           text={sample.molfile || ''}
           placement="bottom"
           variant="light"
-          tooltipId="assign_button"
+          tooltipId="copy_molfile"
         />
         <Button
           variant="light"

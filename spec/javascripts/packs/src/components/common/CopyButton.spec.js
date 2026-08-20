@@ -29,7 +29,14 @@ describe('CopyButton', () => {
 
   afterEach(() => {
     copyStub.restore();
-    wrapper.unmount();
+    if (wrapper) wrapper.unmount();
+  });
+
+  it('exposes an accessible name for the icon-only button', () => {
+    copyStub.resolves(true);
+    wrapper = buildWrapper({ tooltip: 'copy the CAS number' });
+
+    expect(wrapper.find('button').prop('aria-label')).toBe('copy the CAS number');
   });
 
   it('copies the provided text through the shared helper', async () => {

@@ -7,7 +7,7 @@ import { copyToClipboard } from 'src/utilities/clipboard';
 // swapping the clipboard icon for a check. Failure feedback (a toast) is handled by
 // copyToClipboard itself, so callers get it for free.
 const CopyButton = ({
-  text, tooltip, tooltipId, placement, variant, size, disabled, className, active,
+  text, tooltip, tooltipId, placement, variant, size, disabled, className, active, ariaLabel,
 }) => {
   const [copied, setCopied] = useState(false);
   const resetTimer = useRef(null);
@@ -23,6 +23,10 @@ const CopyButton = ({
     clearTimeout(resetTimer.current);
     resetTimer.current = setTimeout(() => setCopied(false), 1500);
   };
+
+  // the button is icon-only, so give it an accessible name for screen readers;
+  // default to the tooltip text when it is a plain string
+  const label = ariaLabel || (typeof tooltip === 'string' ? tooltip : 'copy to clipboard');
 
   return (
     // Force the tooltip hidden while copied (controlled show) rather than unmounting the
@@ -40,6 +44,7 @@ const CopyButton = ({
         disabled={disabled}
         className={className}
         active={active}
+        aria-label={label}
         onClick={handleCopy}
       >
         <i className={`fa ${copied ? 'fa-check' : 'fa-clipboard'}`} aria-hidden="true" />
@@ -58,6 +63,7 @@ CopyButton.propTypes = {
   disabled: PropTypes.bool,
   className: PropTypes.string,
   active: PropTypes.bool,
+  ariaLabel: PropTypes.string,
 };
 
 CopyButton.defaultProps = {
@@ -70,6 +76,7 @@ CopyButton.defaultProps = {
   disabled: false,
   className: undefined,
   active: false,
+  ariaLabel: undefined,
 };
 
 export default CopyButton;

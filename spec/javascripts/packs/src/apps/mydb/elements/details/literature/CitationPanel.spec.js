@@ -50,7 +50,7 @@ describe('CitationPanel copy button', () => {
 
   afterEach(() => {
     copyStub.restore();
-    wrapper.unmount();
+    if (wrapper) wrapper.unmount();
   });
 
   it('copies the plain-text citation content when the button is clicked', async () => {

@@ -8,7 +8,7 @@ import UIStore from 'src/stores/alt/stores/UIStore';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import SampleName from 'src/components/common/SampleName';
 import SvgWithPopover from 'src/components/common/SvgWithPopover';
-import { copyToClipboard as copyTextToClipboard } from 'src/utilities/clipboard';
+import { copyToClipboard } from 'src/utilities/clipboard';
 
 const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
   const searchStore = useContext(StoreContext).search;
@@ -142,9 +142,9 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
     );
   };
 
-  const copyToClipboard = (element) => {
+  const handleCopyClick = (element) => {
     if (element.target.dataset.clipboardText) {
-      copyTextToClipboard(element.target.dataset.clipboardText);
+      copyToClipboard(element.target.dataset.clipboardText);
     }
   };
 
@@ -197,8 +197,8 @@ const SearchResultTabContent = ({ list, tabResult, openDetail }) => {
               role="button"
               tabIndex={0}
               className="search-result-tab-content-list"
-              onClick={copyToClipboard}
-              onKeyDown={(e) => e.key === 'Enter' && copyToClipboard(e)}
+              onClick={handleCopyClick}
+              onKeyDown={(e) => e.key === 'Enter' && handleCopyClick(e)}
             >
               {/* Sample grouping header */}
               {showSampleHeader && (

@@ -69,7 +69,7 @@ const buildRow = (title, fnDelete, sortedIds, rows, fnUpdate, typeMap, readOnly 
         </div>
         <div style={{ marginLeft: 'auto' }}>
           <ButtonGroup size="sm">
-            <CopyButton text={content} tooltipId="assign_button" active />
+            <CopyButton text={content} tooltipId={`copy_citation_${id}`} active />
             {changeTypeBtn(litype, id, fnUpdate, typeMap, readOnly)}
             <Button
               variant="danger"

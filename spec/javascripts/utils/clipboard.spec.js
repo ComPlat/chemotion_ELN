@@ -13,7 +13,9 @@ describe('copyToClipboard', () => {
   beforeEach(() => {
     originalExecCommand = document.execCommand;
     originalIsSecureContext = window.isSecureContext;
-    // the failure notification is routed to react-hot-toast's toast.error
+    // copyToClipboard calls rootStore.notifications.add({ level: 'error', ... }), which
+    // NotificationsStore routes to react-hot-toast's toast.error. The MST action itself
+    // is protected and cannot be sinon-stubbed, so we assert at the toast seam it delegates to.
     toastErrorStub = sinon.stub(toast, 'error');
     toastSuccessStub = sinon.stub(toast, 'success');
   });
@@ -82,8 +84,12 @@ describe('copyToClipboard', () => {
 
       expect(result).toBe(false);
       expect(document.querySelectorAll('textarea').length).toBe(0);
-      // the silent no-op now surfaces as a failure notification
+      // the silent no-op now surfaces as a failure notification with the expected
+      // message and dedupe uid (buildOptions maps uid -> options.id)
       expect(toastErrorStub.calledOnce).toBe(true);
+      const [message, options] = toastErrorStub.firstCall.args;
+      expect(message).toBe('Could not copy to the clipboard.');
+      expect(options.id).toBe('copy-to-clipboard');
     });
 
     it('resolves false, cleans up and toasts when execCommand throws', async () => {

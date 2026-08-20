@@ -24,7 +24,7 @@ function ListLocalCollector({ localCollectorValues }) {
                 placement="right"
                 variant="light"
                 size="xxsm"
-                tooltipId="copy_tooltip"
+                tooltipId={`copy_collector_${c.path}`}
               />
               <Form.Control
                 value={c.path}
