@@ -8,9 +8,6 @@ import sinon from 'sinon';
 
 import AttachmentFetcher from 'src/fetchers/AttachmentFetcher';
 import ResearchPlanFactory from 'factories/ResearchPlanFactory';
-// eslint-disable-next-line no-unused-vars
-
-import EditorFetcher from 'src/fetchers/EditorFetcher';
 import ResearchPlanDetailsAttachments from
   'src/apps/mydb/elements/details/researchPlans/attachmentsTab/ResearchPlanDetailsAttachments';
 
@@ -24,9 +21,6 @@ describe('ResearchPlanDetailsAttachments', () => {
           'ResearchPlanFactory.with attachment_not_in_body'
         );
 
-        sinon
-          .stub(EditorFetcher, 'initial')
-          .callsFake(() => new Promise(() => {}));
         sinon
           .stub(AttachmentFetcher, 'fetchThumbnail')
           .callsFake(() => Promise.resolve('reloadedPreviewData'));
