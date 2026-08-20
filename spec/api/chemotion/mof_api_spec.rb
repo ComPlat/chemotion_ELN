@@ -18,11 +18,20 @@ describe Chemotion::MofAPI do
     }
   end
 
+  # Mirrors what config_for returns in production, so #mof_service_url and the
+  # #disabled? predicate (via OrderedOptions#method_missing) behave for real.
+  def mof_config(url:, disabled:)
+    ActiveSupport::OrderedOptions.new.tap do |config|
+      config.mof_service_url = url
+      config.disabled = disabled
+    end
+  end
+
   before do
     allow(Rails.configuration).to receive(:respond_to?).and_call_original
     allow(Rails.configuration).to receive(:respond_to?).with(:mof_service).and_return(true)
     allow(Rails.configuration).to receive(:mof_service).and_return(
-      OpenStruct.new(mof_service_url: service_url, disabled?: false),
+      mof_config(url: service_url, disabled: false),
     )
   end
 
@@ -34,14 +43,16 @@ describe Chemotion::MofAPI do
       post '/api/v1/mof/analyze', params: { cif: "data_test\n" }, as: :json
 
       expect(response).to have_http_status(:created)
-      expect(parsed_json_response['mofid']).to eq(mof_result['mofid'])
-      expect(parsed_json_response['mofkey']).to eq(mof_result['mofkey'])
-      expect(parsed_json_response['topology']).to eq('pcu')
+      expect(parsed_json_response).to include(
+        'mofid' => mof_result['mofid'],
+        'mofkey' => mof_result['mofkey'],
+        'topology' => 'pcu',
+      )
     end
 
     it 'returns 503 when the sidecar is not configured' do
       allow(Rails.configuration).to receive(:mof_service).and_return(
-        OpenStruct.new(mof_service_url: nil, disabled?: true),
+        mof_config(url: nil, disabled: true),
       )
 
       post '/api/v1/mof/analyze', params: { cif: "data_test\n" }, as: :json

@@ -17,11 +17,20 @@ RSpec.describe MofService do
     }
   end
 
+  # Mirrors what config_for returns in production, so #mof_service_url and the
+  # #disabled? predicate (via OrderedOptions#method_missing) behave for real.
+  def mof_config(url:, disabled:)
+    ActiveSupport::OrderedOptions.new.tap do |config|
+      config.mof_service_url = url
+      config.disabled = disabled
+    end
+  end
+
   before do
     allow(Rails.configuration).to receive(:respond_to?).and_call_original
     allow(Rails.configuration).to receive(:respond_to?).with(:mof_service).and_return(true)
     allow(Rails.configuration).to receive(:mof_service).and_return(
-      OpenStruct.new(mof_service_url: service_url, disabled?: false),
+      mof_config(url: service_url, disabled: false),
     )
   end
 
@@ -32,7 +41,7 @@ RSpec.describe MofService do
 
     it 'is false when disabled' do
       allow(Rails.configuration).to receive(:mof_service).and_return(
-        OpenStruct.new(mof_service_url: service_url, disabled?: true),
+        mof_config(url: service_url, disabled: true),
       )
       expect(described_class).not_to be_enabled
     end
