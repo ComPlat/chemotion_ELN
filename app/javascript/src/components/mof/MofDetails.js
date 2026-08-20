@@ -170,12 +170,12 @@ const MofDetails = ({ mof, onChange, disabled }) => {
               <Table bordered size="sm" className="mof-fragments-table mb-0">
         <thead>
           <tr>
-            <th style={{ width: '16%' }}>Type/Function</th>
+            <th style={{ width: '11%' }}>Type/Function</th>
             <th>Molecule</th>
             {extraCols.smiles && <th>SMILES</th>}
             {extraCols.inchikey && <th>InChIKey</th>}
             <th style={{ width: '22%' }}>IUPAC</th>
-            <th style={{ width: '10%' }}>Ratio</th>
+            <th style={{ width: '6%' }}>Ratio</th>
             {extraCols.comment && <th>Comment</th>}
             {!disabled && <th style={{ width: '48px', whiteSpace: 'nowrap' }} aria-label="Actions" />}
           </tr>
