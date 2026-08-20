@@ -28,10 +28,17 @@ module Import
     # unreadable one is recorded the same way -- "unknown" -- rather than as a wrong number.
     UNKNOWN_RANGE = "[#{-Float::INFINITY}, #{Float::INFINITY}]"
 
-    # g/cm³ is the same number as g/mL, so it is accepted rather than discarded.
-    DENSITY_UNIT = %r{g\s*/\s*(?:m[lL]|cm[3³]?)}.freeze
+    # g/cm3 is the same number as g/mL, so it is accepted rather than discarded. The cubic exponent is
+    # required: 'g/cm' is not a density and its number means something else, so it has to be reported
+    # rather than stored as if it were g/mL.
+    DENSITY_UNIT = %r{g\s*/\s*(?:m[lL]|cm[3³])}.freeze
 
-    NUMBER = /[-+]?\d+(?:\.\d+)?/.freeze
+    # NUMBER supports:
+    # [-+]?                  - Allows an optional '+' or '-' sign.
+    # \d+(?:\.\d+)?         - Matches integers and decimal numbers such as '123' or '123.45'.
+    # (?<![\d.])\.\d+       - Matches leading-decimal numbers such as '.5', but not '.4' in '1.23.4'.
+    # (?:[eE][-+]?\d+)?     - Allows optional scientific notation such as 'e3', 'e-3', or 'E+3'.
+    NUMBER = /[-+]?(?:\d+(?:\.\d+)?|(?<![\d.])\.\d+)(?:[eE][-+]?\d+)?/.freeze
     # U+2212. Spreadsheets and copy-paste substitute it for a hyphen, and it is a real minus sign, so
     # it has to survive as one instead of being read as a range separator.
     MINUS_SIGN = '−'
@@ -154,7 +161,7 @@ module Import
       # point. A hyphen that is not between digits keeps its meaning as a sign, so "-114" and
       # "-5 - -10" still read correctly.
       def normalize(text)
-        text.gsub(/(\d)[,](\d)/, '\1.\2')
+        text.gsub(/(\d),(\d)/, '\1.\2')
             .gsub(MINUS_SIGN, '-')
             .gsub(/(\d)\s*-\s*(?=-?\d)/, '\1 ')
             .gsub(RANGE_SEPARATOR, ' ')

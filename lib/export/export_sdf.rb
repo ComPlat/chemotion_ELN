@@ -5,13 +5,10 @@ require Rails.root.join('lib/chemotion/molfile_polymer_support')
 
 module Export
   class ExportSdf < ExportTable
-    # Already frozen by the frozen_string_literal magic comment at the top of the file.
-    EMPTY_MOLFILE = <<~MOLFILE
-      noname
-
-        0  0  0  0  0  0  0  0  0  0999 V2000
-      M  END
-    MOLFILE
+    # The same empty V2000 molfile the structure editors default to (see StructureEditorModal.js). An
+    # MDL header is three lines -- title, program, comment -- before the counts line, so a reader that
+    # indexes by line number rejects a shorter one. Already frozen by the magic comment above.
+    EMPTY_MOLFILE = "\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n"
 
     MOLFILE_END_TAG = 'M  END'
 

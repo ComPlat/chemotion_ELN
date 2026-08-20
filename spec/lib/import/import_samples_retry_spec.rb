@@ -91,7 +91,7 @@ RSpec.describe Import::ImportSamples do
     # Pruning is only safe because this column always stays: check_required_fields accepts it on its
     # own, so the sheet can never lose the header that lets it be imported again.
     it 'keeps the sample id column even when no row on it has one' do
-      only_failures = import(write_sheet('retry_fail', ['sample name', 'decoupled'], [['Refused', 'No']]))
+      only_failures = import(write_sheet('retry_fail', ['sample name', 'decoupled'], [%w[Refused No]]))
       report_book(only_failures, 'sample') { |book| expect(book.row(1).first).to eq('sample id') }
     end
 
@@ -175,6 +175,55 @@ RSpec.describe Import::ImportSamples do
       report_book(updated, 'import report') do |book|
         status = book.row(2)[book.row(1).index('import status')]
         expect(status).to eq(Import::ImportReportWorkbook::STATUS_UPDATED)
+      end
+    end
+  end
+
+  # The point of flagging the structure cell is that correcting it works. A row that names a decoupled
+  # sample and carries a readable structure has to re-couple it, or the round trip reports an update
+  # and leaves the sample exactly as broken as it was.
+  describe 'importing a corrected structure for a decoupled sample' do
+    let(:rows) { [['Lost structure', 'not a structure', nil, nil, nil, nil]] }
+    let(:sample) { Sample.find_by(name: 'Lost structure') }
+    let(:corrected) do
+      write_sheet('retry_structure', ['sample id', 'canonical smiles'], [[sample.id.to_s, 'CCO']])
+    end
+
+    before { result }
+
+    it 'imported the row without a structure to begin with' do
+      expect(sample.decoupled).to be(true)
+    end
+
+    it 'couples the sample to the corrected structure' do
+      import(corrected)
+      expect(sample.reload.decoupled).to be(false)
+    end
+
+    it 'gives it the molecule the corrected cell resolves to' do
+      import(corrected)
+      expect(sample.reload.molecule.cano_smiles).to eq('CCO')
+    end
+
+    it 'stores the molfile that structure produced' do
+      import(corrected)
+      expect(sample.reload.molfile).to be_present
+    end
+
+    context 'when the correction is still unreadable' do
+      let(:corrected) do
+        write_sheet('retry_structure_bad', ['sample id', 'canonical smiles'],
+                    [[sample.id.to_s, 'still not a structure']])
+      end
+
+      it 'leaves the sample decoupled' do
+        import(corrected)
+        expect(sample.reload.decoupled).to be(true)
+      end
+
+      # Otherwise the row reports as a clean update and the user has no reason to look at it again.
+      it 'does not report the update as clean' do
+        expect(import(corrected)[:status]).to eq('warning')
       end
     end
   end

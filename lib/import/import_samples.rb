@@ -158,8 +158,11 @@ module Import
       header_fields = ['molfile', 'smiles', 'cano_smiles', 'canonical_smiles', 'canonical smiles',
                        'decoupled', 'cas', SAMPLE_ID_HEADER]
       header_fields.each do |check|
-        # Escape the literal and keep the prefix match, so trailing qualifiers like "molfile (V2000)" still work
-        @mandatory_check[check] = true if header.find { |e| /^\s*#{Regexp.escape(check)}/i =~ e }
+        # Exact (stripped, case-insensitive) match, i.e. the same contract row_value_case_insensitive
+        # uses to read the cell. A prefix match accepted headers like 'sample identifier' or 'casual
+        # note', which passed validation and then resolved no value at all -- the file imported as
+        # decoupled rows instead of failing with the missing-header message.
+        @mandatory_check[check] = true if header.any? { |e| header_matches?(e, check) }
       end
       message = 'Column headers should have: molfile, Smiles (or cano_smiles, canonical smiles), CAS, ' \
                 'decoupled, or sample id'
@@ -171,7 +174,7 @@ module Import
 
       @mandatory_component_check = {}
       ['molfile', 'smiles', 'cano_smiles', 'canonical smiles'].each do |check|
-        @mandatory_component_check[check] = true if component_header.any? { |e| /^\s*#{Regexp.escape(check)}\s*$/i =~ e }
+        @mandatory_component_check[check] = true if component_header.any? { |e| header_matches?(e, check) }
       end
       raise 'Column headers in components sheet should have: molfile, or Smiles (or cano_smiles, canonical smiles)' if @mandatory_component_check.empty?
     end
@@ -350,17 +353,21 @@ module Import
     # Flags the cell the structure was supposed to come from, so the report points at the column the
     # user has to fix instead of only saying the row lost its structure.
     def note_structure_cell(row, reason)
-      structure_header = STRUCTURE_HEADERS.find { |key| row_value_case_insensitive(row, key).to_s.present? }
-      return if structure_header.nil?
+      source_key = STRUCTURE_HEADERS.find { |key| row_value_case_insensitive(row, key).to_s.present? }
+      # A CAS-only row has no structure column to point at, but its CAS is what failed to resolve.
+      # Without flagging it the row reported as cleanly imported, so it never reached the retry sheet
+      # and the wrong CAS could not be corrected through the round trip the report advertises.
+      source_key ||= 'cas' if cas?(row)
+      return if source_key.nil?
 
-      actual_header = header.find { |name| name.to_s.strip.casecmp(structure_header).zero? } || structure_header
-      note_field_issue(actual_header, row_value_case_insensitive(row, structure_header), reason)
+      actual_header = header.find { |name| header_matches?(name, source_key) } || source_key
+      note_field_issue(actual_header, row_value_case_insensitive(row, source_key), reason)
     end
 
     # The row still imported, from its SMILES, but the molfile column it also carried is unusable and
     # the user is the only one who can fix it.
     def note_unusable_molfile(row)
-      molfile_header = header.find { |name| name.to_s.strip.casecmp('molfile').zero? }
+      molfile_header = header.find { |name| header_matches?(name, 'molfile') }
       return if molfile_header.nil?
 
       note_field_issue(molfile_header, row_value_case_insensitive(row, 'molfile'),
@@ -456,7 +463,20 @@ module Import
       # The batch transaction itself failed rather than an individual row. Report this batch and
       # carry on with the next one instead of discarding the whole import.
       Rails.logger.error("Import #{@file_name}: batch #{batch_index} failed: #{e.class}: #{e.message}")
+      discard_batch_results(batch, offset)
       mark_batch_unprocessable(batch, offset)
+    end
+
+    # Every savepoint in the batch rolled back with the batch transaction, so what its rows recorded on
+    # the way through has to go with them -- otherwise the import counts samples, and hands back sample
+    # ids, for records that no longer exist.
+    def discard_batch_results(batch, offset)
+      indexes = (offset...(offset + batch.size))
+      numbers = indexes.map { |index| sheet_row(index) }
+
+      @processed.reject! { |entry| numbers.include?(entry[:row]) }
+      @updated_rows.reject! { |number| numbers.include?(number) }
+      @decoupled_fallbacks.reject! { |fallback| indexes.include?(fallback[:index]) }
     end
 
     # Flags every not-yet-reported row in a batch as unprocessable; returns how many were added.
@@ -506,6 +526,7 @@ module Import
     def update_row(row, index)
       sample = updatable_sample(sample_id_value(row))
       apply_present_fields(sample, row)
+      recouple_structure(sample, row, index)
       sample.save!
       @updated_rows << sheet_row(index)
       processed.push(id: sample.id, short_label: sample.short_label, decoupled: sample.decoupled,
@@ -521,6 +542,27 @@ module Import
         process_fields(sample, map_column, field, row, sample.molecule)
       end
       handle_sample_solvent_column(sample, row) if row['solvent'].present?
+    end
+
+    # A retry row for a sample that lost its structure carries the corrected molfile, SMILES or CAS in
+    # the very cell that failed the first time. Those columns are not sample attributes, so
+    # apply_present_fields cannot use them: without this the import reported the row as updated while
+    # the sample stayed decoupled, which is the one thing that round trip exists to fix.
+    #
+    # Only a decoupled sample is re-coupled. A row naming a sample that already has its structure is
+    # correcting other cells, and silently swapping a healthy sample's molecule would change what it is.
+    def recouple_structure(sample, row, index)
+      return unless sample.decoupled
+      return unless structure?(row) || cas?(row)
+
+      molecule, molfile = molecule_and_molfile_with_cas_fallback(row, index)
+      # Still unresolvable: flag the cell again so the report says so instead of reporting a clean
+      # update the user would have no reason to look at.
+      return note_structure_cell(row, decoupled_fallback_reason(row)) if molecule.nil? || molfile.blank?
+
+      sample.molfile = molfile
+      sample.molecule = molecule
+      sample.decoupled = false
     end
 
     # Columns this importer writes into its own report. They describe an import; they are not sample
@@ -1019,9 +1061,13 @@ module Import
     end
 
     def row_value_case_insensitive(row, key)
-      key_str = key.to_s.strip
-      found = row.keys.find { |k| k.to_s.strip.casecmp(key_str).zero? }
+      found = row.keys.find { |k| header_matches?(k, key) }
       row[found] if found
+    end
+
+    # Single place where a spreadsheet header name is compared to a key this importer knows.
+    def header_matches?(header_name, key)
+      header_name.to_s.strip.casecmp(key.to_s.strip).zero?
     end
 
     # Remove control chars and BOM so Open Babel accepts the SMILES string (e.g. from Excel).
@@ -1159,6 +1205,10 @@ module Import
     # copy the user has left and it stays where it is.
     def replace_uploaded_file
       return if @report_attachment.nil?
+      # The report reproduces the main sheet only. A file that carried more than that -- a
+      # sample_components sheet, say -- is the user's only copy of those rows, and a failed row could
+      # not be retried without them, so it stays in the Inbox and they keep both files.
+      return if xlsx.sheets.size > 1
 
       @attachment.destroy
     rescue StandardError => e
@@ -1190,13 +1240,16 @@ module Import
 
     def write_report_workbook(path)
       sheet_rows = report_sheet_rows
-      ImportReportWorkbook.new(
+      workbook = ImportReportWorkbook.new(
         file_name: @file_name,
         header: header,
         rows: sheet_rows,
         statuses: report_statuses(sheet_rows.keys),
         field_notes: @field_notes,
-      ).write(path, sample_url: method(:sample_url), retry_sheet_name: retry_sheet_name)
+      )
+      result = workbook.write(path, sample_url: method(:sample_url), retry_sheet_name: retry_sheet_name)
+      @report_has_retry_sheet = workbook.retry_sheet_written?
+      result
     end
 
     # Named so that re-importing the report reads the retry sheet: set_main_sheet looks for 'sample',
@@ -1222,6 +1275,11 @@ module Import
     # Every row of the sheet, read back as the importer saw it -- including the rows it never queued,
     # which are the ones the user most needs to see marked.
     def report_sheet_rows
+      # Roo's #sheet(name) sets default_sheet and returns the spreadsheet itself, so @sheet, @xlsx and
+      # @component_sheet are all one object: whichever sheet was selected last wins. create_components
+      # leaves 'sample_components' selected, so re-select the main sheet or the report pairs the main
+      # header and statuses with rows read off the components sheet.
+      xlsx.default_sheet = @main_sheet_name
       (2..sheet.last_row).each_with_object({}) do |number, memo|
         memo[number] = xlsx.row(number).values_at(0...header.length)
       rescue StandardError
@@ -1410,8 +1468,13 @@ module Import
     def report_note
       return nil if @report_attachment.nil?
 
-      "Report '#{@report_attachment.filename}' is in your Inbox - correct its '#{retry_sheet_name}' " \
-        'sheet and import the file again to fix whatever did not work'
+      located = "Report '#{@report_attachment.filename}' is in your Inbox"
+      # A report with nothing to correct carries no retry sheet, so pointing at one would send the user
+      # looking for a sheet that is not in the file.
+      return located unless @report_has_retry_sheet
+
+      "#{located} - correct its '#{retry_sheet_name}' sheet and import the file again to fix " \
+        'whatever did not work'
     end
 
     # Rows that were imported but lost their structure need to be visible in the result.

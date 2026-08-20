@@ -8,9 +8,7 @@
   @extend .m-0;
   @extend .d-block;
 
-  // This is a flex item, and a flex item's default min-width is auto: it refuses to shrink below its
-  // longest unbreakable word, so a long file name or a run of row numbers pushed the text past the
-  // toast border. min-width: 0 lets it shrink, overflow-wrap breaks the word that made it too wide.
+  // Allow this flex item to shrink, and if the text is still too long, allow the browser to break the text anywhere necessary.
   min-width: 0;
   overflow-wrap: anywhere;
 }

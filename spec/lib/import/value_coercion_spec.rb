@@ -40,11 +40,18 @@ RSpec.describe Import::ValueCoercion do
       ['density', '1.2 g/cm3', 1.2, silent],
       ['density', '1.2 kg/m3', nil, reported],
       ['density', 'not measured', nil, reported],
+      # 'g/cm' without the cubic exponent is not a density unit -- its number means something else.
+      ['density', '1.2 g/cm', nil, reported],
 
       # A blank numeric cell means "not given", not zero.
       ['refractive_index', nil, nil, silent],
       ['molecular_mass', '46.07', 46.07, silent],
       ['real_amount_value', 'lots', nil, reported],
+      # Leading-decimal and exponent notation are one number each: '.5' is not 5, and '1e-3' is not
+      # the two numbers 1 and -3.
+      ['refractive_index', '.5', 0.5, silent],
+      ['molecular_mass', '1.5e3', 1500.0, silent],
+      ['melting_point', '1e-3', '[0.001, Infinity]', silent],
 
       ['real_amount_unit', 'g', 'g', silent],
       ['real_amount_unit', 'G', 'g', reported],

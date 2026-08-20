@@ -29,6 +29,9 @@ const validateCas = (cas, boolean) => {
     if (filterCas.length >= 5 && isNum) {
       const checkFormat = cas.match(/([0-9]{2,7})-([0-9]{2})-[0-9]/);
       match = checkFormat || addHyphensToCas(cas);
+      if (!match) {
+        return boolean ? false : 'smile';
+      }
       const digits = (match[1] + match[2]).split('').reverse();
       result = checkCasDigit(digits);
     }

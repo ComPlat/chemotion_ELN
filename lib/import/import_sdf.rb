@@ -303,98 +303,20 @@ class Import::ImportSdf < Import::ImportSamples
           rows.each_with_index do |row, i|
             next unless row
 
-            error_columns = ''
-            molfile = row['molfile']
-            molecule, molfile_for_sample, babel_info = resolve_molecule_for_row(row)
-            next if molecule.blank?
+            # Savepoint per row: without it a DB-level failure (e.g. from the chemical save below)
+            # leaves PostgreSQL's transaction aborted, so the rescue below cannot contain it -- every
+            # later row then fails and the outer transaction rolls back the rows that did succeed.
+            # Mirrors the raw-data branch above.
+            ActiveRecord::Base.transaction(requires_new: true) do
+              sample = build_sample_from_row(row, attribs, error_messages)
+              next if sample.nil?
 
-            inchikey = babel_info[:inchikey]
-            sample = Sample.new(
-              created_by: current_user_id,
-              molfile: molfile_for_sample,
-              molfile_version: babel_info[:molfile_version],
-              molecule_id: molecule.id,
-            )
-            sample.decoupled = true if molfile_for_sample.nil?
-            sample.inventory_sample = true if @import_type == 'chemical'
-
-            attribs.each do |attrib|
-              sample[attrib] = row[attrib] if is_number?(row[attrib])
+              sample.collections << Collection.find(collection_id)
+              sample.collections << Collection.get_all_collection_for_user(current_user_id)
+              sample.save!
+              save_chemical_for_row(sample, row) if @import_type == 'chemical'
+              ids << sample.id
             end
-            assign_molecule_name(sample, molecule, row['molecule_name'])
-            sample['melting_point'] = interval_from(row['melting_point']) if row['melting_point'].present?
-            sample['boiling_point'] = interval_from(row['boiling_point']) if row['boiling_point'].present?
-            sample['solvent'] = handle_sample_solvent_column(sample, row) if row['solvent'].present?
-
-            sample['description'] = row['description'] if row['description'].present?
-            sample['location'] = row['location'] if row['location'].present?
-            sample['external_label'] = row['external_label'] if row['external_label'].present?
-            sample['name'] = row['name'] if row['name'].present?
-            sample['xref']['cas'] = row['cas'] if row['cas'].present?
-            sample['short_label'] = row['short_label'] if row['short_label'].present?
-            sample['dry_solvent'] = row['dry_solvent'] if row['dry_solvent'].present?
-            sample['purity'] = row['purity'] if row['purity'].present?
-            sample['density'] = row['density'].to_f if row['density'].present? && row['density'].match?(DENSITY_UNIT)
-            sample['xref']['refractive_index'] = row['refractive_index'] if row['refractive_index'].present?
-            sample['xref']['form'] = row['form'] if row['form'].present?
-            sample['xref']['color'] = row['color'] if row['color'].present?
-            sample['xref']['solubility'] = row['solubility'] if row['solubility'].present?
-            sample['xref']['inventory_label'] = row['inventory_label'] if row['inventory_label'].present?
-            if row['flash_point'].present?
-              flash_point = to_value_unit_format(row['flash_point'], 'flash_point')
-              handle_flash_point(sample, flash_point)
-            end
-            if row['molarity'].present? && row['molarity'].match?(MOLARITY_UNIT) && row['density'].blank?
-              molarity = to_value_unit_format(row['molarity'], 'molarity')
-              handle_molarity(sample, molarity)
-            end
-            properties = process_molfile_opt_data(molfile)
-            sample.validate_stereo('abs' => properties['STEREO_ABS'], 'rel' => properties['STEREO_REL'])
-            sample.target_amount_value = properties['TARGET_AMOUNT'] unless properties['TARGET_AMOUNT'].blank?
-            sample.target_amount_unit = properties['TARGET_UNIT'] unless properties['TARGET_UNIT'].blank?
-            if row['target_amount'].present? && row['target_amount_unit'].blank?
-              target_amount_data = row['target_amount']&.split('/')[0] || ''
-              target_amount = target_amount_data&.scan(/\d+|\D+/)
-              sample.target_amount_value = 0
-              sample.target_amount_unit = 'g'
-              if target_amount.length == 2
-                target_amount[1] = target_amount[1].gsub(/\A\p{Space}*|\p{Space}*\z/, '')
-                if is_number?(target_amount[0]) && %w[g mg l ml mol].include?(target_amount[1])
-                  sample.target_amount_value = target_amount[0]
-                  sample.target_amount_unit = target_amount[1]
-                else
-                  error_columns += ' target amount, target amount unit ,'
-                end
-              else
-                error_columns += ' target amount, target amount unit ,'
-              end
-            end
-            sample.real_amount_value = properties['REAL_AMOUNT'] unless properties['REAL_AMOUNT'].blank?
-            sample.real_amount_unit = properties['REAL_UNIT'] unless properties['REAL_UNIT'].blank?
-            if row['real_amount'].present? && row['real_amount_unit'].blank?
-              real_amount_data = row['real_amount']&.split('/')[0] || ''
-              real_amount = real_amount_data&.scan(/\d+|\D+/)
-              sample.real_amount_value = 0
-              sample.real_amount_unit = 'g'
-              if real_amount.length == 2
-                real_amount[1] = real_amount[1].gsub(/\A\p{Space}*|\p{Space}*\z/, '')
-                if is_number?(real_amount[0]) && %w[g mg l ml mol].include?(real_amount[1])
-                  sample.real_amount_value = real_amount[0]
-                  sample.real_amount_unit = real_amount[1]
-                else
-                  error_columns += ' real amount, real amount unit ,'
-                end
-              else
-                error_columns += ' target amount, target amount unit ,'
-              end
-            end
-
-            error_messages << "The columns#{error_columns} of sample #{molecule['iupac_name']} cannot be processed." if error_columns.present?
-            sample.collections << Collection.find(collection_id)
-            sample.collections << Collection.get_all_collection_for_user(current_user_id)
-            sample.save!
-            save_chemical_for_row(sample, row) if @import_type == 'chemical'
-            ids << sample.id
           rescue StandardError => e
             Rails.logger.error("SDF import: row #{i + 1} could not be imported: #{e.class}: #{e.message}")
             @unprocessable_samples << (i + 1)
@@ -426,6 +348,135 @@ class Import::ImportSdf < Import::ImportSamples
     samples
   ensure
     Molecule.schedule_pubchem_lookup_since(started_at)
+  end
+
+  # Extracted from #create_samples' row loop so each step is separately readable -- the loop itself
+  # only decides whether the row becomes a sample and how failures are reported.
+  def build_sample_from_row(row, attribs, error_messages)
+    molecule, molfile_for_sample, babel_info = resolve_molecule_for_row(row)
+    return nil if molecule.blank?
+
+    sample = Sample.new(
+      created_by: current_user_id,
+      molfile: molfile_for_sample,
+      molfile_version: babel_info[:molfile_version],
+      molecule_id: molecule.id,
+    )
+    sample.decoupled = true if molfile_for_sample.nil?
+    sample.inventory_sample = true if @import_type == 'chemical'
+
+    attribs.each { |attrib| sample[attrib] = row[attrib] if is_number?(row[attrib]) }
+    assign_molecule_name(sample, molecule, row['molecule_name'])
+    assign_plain_columns(sample, row)
+    assign_measurement_columns(sample, row)
+
+    error_columns = assign_amount_columns(sample, row)
+    if error_columns.present?
+      error_messages << "The columns#{error_columns} of sample " \
+                        "#{molecule['iupac_name']} cannot be processed."
+    end
+    sample
+  end
+
+  # Columns copied across as-is, plus the xref sub-hash ones.
+  def assign_plain_columns(sample, row)
+    %w[description location external_label name short_label dry_solvent].each do |key|
+      sample[key] = row[key] if row[key].present?
+    end
+    %w[cas refractive_index form color solubility inventory_label].each do |key|
+      sample['xref'][key] = row[key] if row[key].present?
+    end
+  end
+
+  # Columns that need a unit or a range parsed out of the cell before they can be assigned.
+  def assign_measurement_columns(sample, row)
+    sample['melting_point'] = interval_from(row['melting_point']) if row['melting_point'].present?
+    sample['boiling_point'] = interval_from(row['boiling_point']) if row['boiling_point'].present?
+    sample['solvent'] = handle_sample_solvent_column(sample, row) if row['solvent'].present?
+    # Purity through the shared coercer: a cell written as a percentage ('95', '99%') is what the
+    # samples table rejects outright, and assigning it raw here cost the whole row.
+    assign_coerced(sample, 'purity', row['purity'])
+    assign_density_and_molarity(sample, row)
+    return if row['flash_point'].blank?
+
+    handle_flash_point(sample, to_value_unit_format(row['flash_point'], 'flash_point'))
+  end
+
+  # A molarity is only taken when no density was given: the two describe the same amount of substance
+  # differently and Sample derives one from the other.
+  def assign_density_and_molarity(sample, row)
+    density = row['density']
+    # Also the shared coercer, so a unit-less density or a 'g/cm3' one reads the same as it does from a
+    # spreadsheet rather than being dropped for not spelling the unit out as g/mL.
+    assign_coerced(sample, 'density', density)
+    return unless density.blank? && row['molarity'].present? && row['molarity'].match?(MOLARITY_UNIT)
+
+    handle_molarity(sample, to_value_unit_format(row['molarity'], 'molarity'))
+  end
+
+  # Molfile properties first, then the spreadsheet's own amount columns, which win where they are
+  # readable. Returns the label fragment for whatever could not be read, for the row's error message.
+  def assign_amount_columns(sample, row)
+    properties = process_molfile_opt_data(row['molfile'])
+    sample.validate_stereo('abs' => properties['STEREO_ABS'], 'rel' => properties['STEREO_REL'])
+
+    %w[target real].filter_map { |kind| assign_amount(sample, row, properties, kind) }.join
+  end
+
+  # Molfile optional-data block first, then the row's own amount cell, which wins where it is readable.
+  # Kept in this order per kind (target fully, then real): the Sample setters are not independent, and
+  # assigning both kinds' molfile values up front changes what the row cells resolve to.
+  def assign_amount(sample, row, properties, kind)
+    prefix = kind == 'target' ? 'TARGET' : 'REAL'
+    { 'AMOUNT' => "#{kind}_amount_value=", 'UNIT' => "#{kind}_amount_unit=" }.each do |suffix, setter|
+      value = properties["#{prefix}_#{suffix}"]
+      sample.public_send(setter, value) if value.present?
+    end
+
+    assign_bare_amount(sample, row, kind)
+  end
+
+  # A single cell like '5 mg' carrying both value and unit, used when the file has no separate unit
+  # column. Anything unreadable falls back to 0 g and is reported instead of guessed at.
+  def assign_bare_amount(sample, row, kind)
+    return nil if row["#{kind}_amount"].blank? || row["#{kind}_amount_unit"].present?
+
+    sample.public_send("#{kind}_amount_value=", 0)
+    sample.public_send("#{kind}_amount_unit=", 'g')
+
+    value, unit = split_amount_cell(row["#{kind}_amount"])
+    return " #{kind} amount, #{kind} amount unit ," if value.nil?
+
+    sample.public_send("#{kind}_amount_value=", value)
+    sample.public_send("#{kind}_amount_unit=", unit)
+    nil
+  end
+
+  AMOUNT_UNITS = %w[g mg l ml mol].freeze
+
+  # Import::ValueCoercion decides what a typed column can hold, so both importers store the same value
+  # for the same cell. A cell it cannot read at all leaves the column at its default rather than
+  # failing the row. Amount cells are not routed through it: those carry value and unit together here,
+  # which is a spelling the coercer's separate value/unit columns do not describe.
+  def assign_coerced(sample, column, raw)
+    return if raw.blank?
+
+    value = Import::ValueCoercion.coerce(column, raw)&.first
+    sample[column] = value unless value.nil?
+  end
+
+  # '5 mg' -> ['5', 'mg']; anything that is not exactly a number followed by a known unit -> nil.
+  def split_amount_cell(cell)
+    parts = cell.to_s.split('/').first.to_s.scan(/\d+|\D+/)
+    return nil unless parts.length == 2
+
+    value = parts[0]
+    # \p{Space} rather than String#strip: spreadsheet and SDF cells arrive with non-breaking spaces
+    # that #strip leaves in place, which used to make a perfectly readable '10 g' unreadable.
+    unit = parts[1].gsub(/\A\p{Space}*|\p{Space}*\z/, '')
+    return nil unless is_number?(value) && AMOUNT_UNITS.include?(unit)
+
+    [value, unit]
   end
 
   def keep_attachment_unnecessary?
