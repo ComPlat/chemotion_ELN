@@ -79,13 +79,6 @@ module Users
       render json: response, status: :unauthorized
     end
 
-    # Overrides Devise::RegistrationsController#authenticate_scope!
-    # Authentication via the Bearer token, so update/destroy work without any session or CSRF dependency.
-    def authenticate_scope!
-      warden.authenticate!(:jwt_authenticatable, scope: :user)
-      self.resource = warden.user(scope: :user)
-    end
-
     def sign_in_error_message
       auth_keys = resource_class.authentication_keys
       auth_keys = auth_keys.keys if auth_keys.respond_to?(:keys)
