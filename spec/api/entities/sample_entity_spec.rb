@@ -226,6 +226,13 @@ describe Entities::SampleEntity do
         )
       end
 
+      it 'returns a sample with an anonymized molecule_name_hash and showed_name' do
+        expect(grape_entity_as_hash).to include(
+          molecule_name_hash: {},
+          showed_name: '***',
+        )
+      end
+
       it 'returns a molecule only with molecular_weight and exact_molecular_weight' do
         expect(grape_entity_as_hash[:molecule]).to include(
           boiling_point: nil,
