@@ -2,7 +2,7 @@ import { List, Set } from 'immutable';
 import UserInfosTooltip from 'src/apps/mydb/collections/UserInfosTooltip';
 import SharedToMeInfosTooltip from 'src/apps/mydb/collections/SharedToMeInfosTooltip';
 import React, {
-  useCallback, useContext, useEffect, useState,
+  useCallback, useContext, useEffect, useRef, useState,
 } from 'react';
 import {
   Tabs, Tab, Tooltip, OverlayTrigger, Button
@@ -96,7 +96,7 @@ const ElementsList = ({ overview }) => {
   // (mouseleave -> hide -> layout settles back -> mouseenter -> show -> resize -> repeat).
   // Fetching as soon as the collection is known to be shared means the tooltip's first render
   // already has the real content, so it never resizes while visible.
-  prefetchShareInfo(collection) {
+  const prefetchShareInfo = useCallback((collection) => {
     if (!collections || collection?.id == null) return;
 
     if (collection.shared) {
@@ -108,7 +108,15 @@ const ElementsList = ({ overview }) => {
         collections.getMySharesFor(collection.id);
       }
     }
-  }
+  }, [collections]);
+
+  // onChangeUI is memoized with [userStore], so reading the currentCollection
+  // state variable in it would close over whatever render it was last built
+  // in (stale closure) - same reason setCurrentCollection above uses the
+  // functional updater instead of comparing against that state variable
+  // directly. A ref sidesteps that: ref.current is always up to date
+  // regardless of when this callback was created.
+  const lastPrefetchedCollectionId = useRef(currentCollection?.id ?? null);
 
   const onChangeUI = useCallback((state) => {
     const newTotalCheckedElements = computeTotalCheckedElements(state, userStore.currentUser || {});
@@ -122,10 +130,13 @@ const ElementsList = ({ overview }) => {
     setCurrentCollection((prevCurrentCollection) => (
       prevCurrentCollection !== state.currentCollection ? state.currentCollection : prevCurrentCollection
     ));
-    //if (currentCollection !== state.currentCollection) {
-    //  prefetchShareInfo(state.currentCollection);
-    //}
-  }, [userStore]);
+
+    const newCollectionId = state.currentCollection?.id ?? null;
+    if (lastPrefetchedCollectionId.current !== newCollectionId) {
+      lastPrefetchedCollectionId.current = newCollectionId;
+      prefetchShareInfo(state.currentCollection);
+    }
+  }, [userStore, prefetchShareInfo]);
 
   useEffect(() => {
     ElementStore.listen(onChangeElement);
@@ -136,6 +147,14 @@ const ElementsList = ({ overview }) => {
     UIStore.listen(onChangeUI);
     return () => UIStore.unlisten(onChangeUI);
   }, [onChangeUI]);
+
+  // onChangeUI only prefetches on a *change* of currentCollection, so the one
+  // that's already current at mount (currentCollection's own useState
+  // initializer read it straight from UIStore) needs its own one-off fetch.
+  useEffect(() => {
+    prefetchShareInfo(currentCollection);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   let visible = List();
   let hidden = List();

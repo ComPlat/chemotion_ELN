@@ -4,7 +4,6 @@ import AppModal from 'src/components/common/AppModal';
 
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { SYSTEM_LABELS } from 'src/stores/mobx/CollectionsStore';
-import UserStore from 'src/stores/alt/stores/UserStore';
 
 const ModalExportCollection = ({ onHide }) => {
   const collectionsStore = useContext(StoreContext).collections;
