@@ -38,6 +38,8 @@ module Users
     # PUT /resource
     # We need to use a copy of the resource because we don't want to change
     # the current user in place.
+
+    # rubocop:disable Metrics/AbcSize
     def update
       self.resource = resource_class.to_adapter.get!(send(:"current_#{resource_name}").to_key)
       prev_unconfirmed_email = resource.unconfirmed_email if resource.respond_to?(:unconfirmed_email)
@@ -46,11 +48,12 @@ module Users
       yield resource if block_given?
       if resource_updated
         bypass_sign_in resource, scope: resource_name if sign_in_after_change_password?
+        message_key = prev_unconfirmed_email ? :update_needs_confirmation : :updated
 
         respond_to do |format|
           format.html { super }
           format.json do
-            render json: { message: warden_messages(:updated, 'Your account has been updated successfully.') },
+            render json: { message: warden_messages(message_key, 'Your account has been updated successfully.') },
                    status: :ok
           end
         end
@@ -63,6 +66,7 @@ module Users
         end
       end
     end
+    # rubocop:enable Metrics/AbcSize
 
     # DELETE /resource
     def destroy
@@ -78,7 +82,6 @@ module Users
         end
       end
     end
-
 
     protected
 
@@ -114,9 +117,9 @@ module Users
       resource.password = Devise.friendly_token[0, 20] if resource.password.nil?
     end
 
+    # rubocop:disable Metrics/AbcSize
     def resource_saved_handler
       if resource.active_for_authentication?
-        set_flash_message :notice, :signed_up if is_flashing_format?
         sign_up(resource_name, resource)
 
         respond_to do |format|
@@ -127,15 +130,7 @@ module Users
           end
         end
       else
-        set_flash_message :notice, :"signed_up_but_#{resource.inactive_message}" if is_flashing_format?
         expire_data_after_sign_in!
-
-        message = I18n.t(
-          warden.message || :signed_up_but_inactive,
-          scope: 'devise.registrations',
-          resource_name: resource_name,
-          default: 'Your account is inactive',
-        )
 
         respond_to do |format|
           format.html { super }
@@ -146,6 +141,7 @@ module Users
         end
       end
     end
+    # rubocop:enable Metrics/AbcSize
 
     def resource_not_saved_handler
       clean_up_passwords resource
@@ -155,7 +151,7 @@ module Users
       respond_to do |format|
         format.html { super }
         format.json do
-          render json: { error_messages: resource.errors.messages  }, status: 400
+          render json: { error_messages: resource.errors.messages }, status: :bad_request
         end
       end
     end

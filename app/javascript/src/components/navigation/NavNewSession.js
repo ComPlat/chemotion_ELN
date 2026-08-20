@@ -91,7 +91,7 @@ const LinksForDeviseForm = (currentRoute, extraRules, deviseMappings) =>
 const ExtendedSignInForm = observer(() => {
   const url = '/users/sign_in';
   const userStore = useContext(StoreContext).user;
-  const { currentRoute, extraRules, deviseMappings, loginStatus } = userStore;
+  const { currentRoute, extraRules, deviseMappings } = userStore;
   const [form, setForm] = useFormValues({
     login: '',
     password: '',
