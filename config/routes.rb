@@ -8,16 +8,16 @@ Rails.application.routes.draw do
   get 'users/sign_up' => redirect('sign_up')
 
   if ENV['DEVISE_DISABLED_SIGN_UP'].presence == 'true'
-    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions' }, skip: [:registrations]
+    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions', confirmations: 'users/confirmations' }, skip: [:registrations]
     as :user do
       get 'sign_in' => 'devise/sessions#new'
       get 'users/sign_up' => 'devise/sessions#new', as: 'new_user_registration'
       get 'users/edit' => 'devise/registrations#edit', as: 'edit_user_registration'
-      get 'users/confirmation/new' => 'devise/sessions#new', as: 'new_devi_confirmation'
+      get 'users/confirmation/new' => 'devise/sessions#new', as: 'new_devise_confirmation'
       put 'users' => 'devise/registrations#update', :as => 'user_registration'
     end
   else
-    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions' }
+    devise_for :users, controllers: { registrations: 'users/registrations', omniauth_callbacks: 'users/omniauth', sessions: 'users/sessions', confirmations: 'users/confirmations' }
   end
 
   authenticated :user, ->(u) { u.type == 'Admin' } do
