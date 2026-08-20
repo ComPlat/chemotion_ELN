@@ -46,8 +46,7 @@ module Entities
       expose! :solvent,                                     unless: :displayed_in_list
       expose! :status
       expose! :tag,                   anonymize_with: nil,                              using: 'Entities::ElementTagEntity'
-      expose! :temperature,           unless: :displayed_in_list,
-                                       anonymize_with: { 'data' => [], 'userText' => '', 'valueUnit' => '°C' }
+      expose! :temperature,           anonymize_with: { 'data' => [], 'userText' => '', 'valueUnit' => '°C' }, unless: :displayed_in_list
       expose! :timestamp_start,                             unless: :displayed_in_list
       expose! :timestamp_stop,                              unless: :displayed_in_list
       expose! :tlc_description,                             unless: :displayed_in_list
