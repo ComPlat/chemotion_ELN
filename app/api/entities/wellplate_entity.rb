@@ -21,7 +21,7 @@ module Entities
     # Exposed alongside Well#readouts (anonymize_below: 1) so a sharee never
     # receives real readout values with mismatched/placeholder column titles.
     with_options(anonymize_below: 1) do
-      expose! :readout_titles,  anonymize_with: ['Readout']
+      expose! :readout_titles,  anonymize_with: Wellplate.column_defaults['readout_titles']
     end
 
     with_options(anonymize_below: 10) do

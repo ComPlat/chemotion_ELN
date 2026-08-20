@@ -46,13 +46,13 @@ module Entities
       expose! :solvent,                                     unless: :displayed_in_list
       expose! :status
       expose! :tag,                   anonymize_with: nil,                              using: 'Entities::ElementTagEntity'
-      expose! :temperature,           anonymize_with: { 'data' => [], 'userText' => '', 'valueUnit' => '°C' }, unless: :displayed_in_list
+      expose! :temperature,           anonymize_with: Reaction.column_defaults['temperature'], unless: :displayed_in_list
       expose! :timestamp_start,                             unless: :displayed_in_list
       expose! :timestamp_stop,                              unless: :displayed_in_list
       expose! :tlc_description,                             unless: :displayed_in_list
       expose! :tlc_solvents,                                unless: :displayed_in_list
       expose! :variations,            anonymize_with: [],                               using: 'Entities::ReactionVariationEntity'
-      expose! :vessel_size,           anonymize_with: { 'unit' => 'ml', 'amount' => nil }
+      expose! :vessel_size,           anonymize_with: Reaction.column_defaults['vessel_size']
       expose! :volume
       expose! :use_reaction_volume
       expose! :lock_reaction_volume
