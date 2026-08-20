@@ -67,6 +67,7 @@ import { formatTimeStampsOfElement } from 'src/utilities/timezoneHelper';
 import { commentActivation } from 'src/utilities/CommentHelper';
 import PrivateNoteElement from 'src/apps/mydb/elements/details/PrivateNoteElement';
 import { copyToClipboard } from 'src/utilities/clipboard';
+import { molfileProblem, MAX_MOLFILE_SIZE } from 'src/utilities/MolfileValidation';
 // eslint-disable-next-line import/no-named-as-default
 import VersionsTable from 'src/apps/mydb/elements/details/VersionsTable';
 
@@ -153,6 +154,7 @@ export default class SampleDetails extends React.Component {
       smileReadonly: !((typeof props.sample.molecule.inchikey === 'undefined')
         || props.sample.molecule.inchikey == null || props.sample.molecule.inchikey === 'DUMMY'),
       smilesInput: '',
+      molfileInput: '',
       molfile: props.sample.molfile || '',
       inchiString: props.sample.molecule_inchistring || '',
       quickCreator: false,
@@ -179,6 +181,10 @@ export default class SampleDetails extends React.Component {
     this.isCASNumberValid = this.isCASNumberValid.bind(this);
     this.handleMolfileShow = this.handleMolfileShow.bind(this);
     this.handleMolfileClose = this.handleMolfileClose.bind(this);
+    this.handleMoleculeByMolfile = this.handleMoleculeByMolfile.bind(this);
+    this.handleMolfileUpload = this.handleMolfileUpload.bind(this);
+    this.handleMolfileInput = this.handleMolfileInput.bind(this);
+    this.molfileFileInput = React.createRef();
     this.handleSampleChanged = this.handleSampleChanged.bind(this);
     this.handleAmountChanged = this.handleAmountChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -254,6 +260,8 @@ export default class SampleDetails extends React.Component {
     this.setState({
       sample,
       smileReadonly,
+      molfile: sample.molfile || '',
+      molfileInput: '',
       loadingMolecule: false,
       isCasLoading: false,
       casInputValue: currentCas,
@@ -299,14 +307,69 @@ export default class SampleDetails extends React.Component {
   }
 
   handleMoleculeBySmile(cas) {
-    const { sample, smilesInput } = this.state;
-    // const casObj = {};
-    MoleculesFetcher.fetchBySmi(smilesInput)
+    const { smilesInput } = this.state;
+    this.createMoleculeFrom(
+      MoleculesFetcher.fetchBySmi(smilesInput),
+      `Cannot create molecule with entered Smiles/CAS! [${smilesInput}]`,
+      cas
+    );
+  }
+
+  handleMolfileUpload(event) {
+    const input = event.target;
+    const file = input.files?.[0];
+    // cleared so re-picking the same file fires change again
+    input.value = '';
+    if (!file) { return; }
+    if (file.size > MAX_MOLFILE_SIZE) {
+      this.notify('Molfile too large', `${file.name} is larger than 5 MB`);
+      return;
+    }
+    file.text()
+      .then((text) => this.handleMolfileInput(text, file.name))
+      .catch(() => this.notify('Error reading file', `Could not read ${file.name}`));
+  }
+
+  handleMolfileInput(text, source) {
+    if (text.length > MAX_MOLFILE_SIZE) {
+      this.notify('Molfile too large', 'That is more than 5 MB of text');
+      return;
+    }
+    const records = text.split(/^\$\$\$\$\s*$/m).filter((record) => record.trim() !== '');
+    this.setState({ molfileInput: records[0] ?? text });
+    if (records.length > 1) {
+      this.notify(
+        'Multiple structures',
+        `${source} holds ${records.length} structures. Only the first was loaded.`,
+        'warning'
+      );
+    }
+  }
+
+  notify(title, message, level = 'error') {
+    this.context.notifications.add({
+      title, message, level, position: 'tc'
+    });
+  }
+
+  handleMoleculeByMolfile() {
+    const { molfileInput, loadingMolecule } = this.state;
+    if (loadingMolecule || molfileProblem(molfileInput)) { return; }
+    this.createMoleculeFrom(
+      MoleculesFetcher.fetchByMolfile(molfileInput),
+      'Cannot create molecule with the entered molfile!'
+    );
+  }
+
+  createMoleculeFrom(request, errorMessage, cas) {
+    const { sample } = this.state;
+    this.setState({ loadingMolecule: true });
+    request
       .then((result) => {
-        if (!result || result == null) {
+        if (!result?.id) {
           this.context.notifications.add({
             title: 'Error on Sample creation',
-            message: `Cannot create molecule with entered Smiles/CAS! [${smilesInput}]`,
+            message: errorMessage,
             level: 'error',
             position: 'tc'
           });
@@ -314,20 +377,26 @@ export default class SampleDetails extends React.Component {
           sample.molfile = result.molfile;
           sample.molecule_id = result.id;
           sample.molecule = result;
-          sample.xref = { ...sample.xref, cas };
+          sample.decoupled = result.inchikey === 'DUMMY';
+          if (cas !== undefined) { sample.xref = { ...sample.xref, cas }; }
           this.setState({
             molfile: result.molfile,
+            molfileInput: '',
             inchiString: result.inchistring,
             quickCreator: true,
             sample,
             smileReadonly: true,
+            showMolfileModal: false,
             pageMessage: result.ob_log
           });
           ElementActions.refreshElements('sample');
         }
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      }).finally(() => LoadingActions.stop());
+      }).catch((error) => {
+        console.log(error);
+      }).finally(() => {
+        this.setState({ loadingMolecule: false });
+        LoadingActions.stop();
+      });
   }
 
   handleInventorySample(e) {
@@ -387,6 +456,7 @@ export default class SampleDetails extends React.Component {
 
       this.setState({
         sample,
+        molfile: sample.molfile || '',
         smileReadonly: true,
         pageMessage: result.ob_log,
         loadingMolecule: false
@@ -894,7 +964,7 @@ export default class SampleDetails extends React.Component {
           <Accordion.Body>
             {this.moleculeInchi(sample)}
             {this.moleculeCanoSmiles(sample)}
-            {this.moleculeMolfile(sample)}
+            {this.moleculeMolfile()}
           </Accordion.Body>
         </Accordion.Item>
       </Accordion>
@@ -1247,12 +1317,13 @@ export default class SampleDetails extends React.Component {
 
   moleculeCanoSmiles(sample) {
     const { smileReadonly, smilesInput } = this.state;
+    const shownSmiles = (smileReadonly ? sample.molecule_cano_smiles : smilesInput) || '';
     return (
       <InputGroup className="mb-3">
         <InputGroup.Text>Canonical Smiles</InputGroup.Text>
         <Form.Control
           type="text"
-          value={smileReadonly ? sample.molecule_cano_smiles || '' : smilesInput}
+          value={shownSmiles}
           disabled={smileReadonly}
           readOnly={smileReadonly}
           onChange={(e) => {
@@ -1264,7 +1335,8 @@ export default class SampleDetails extends React.Component {
         <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
           <Button
             variant="light"
-            onClick={() => copyToClipboard(sample.molecule_cano_smiles || '')}
+            disabled={!shownSmiles}
+            onClick={() => copyToClipboard(shownSmiles)}
           >
             <i className="fa fa-clipboard" />
           </Button>
@@ -1284,21 +1356,28 @@ export default class SampleDetails extends React.Component {
     );
   }
 
-  moleculeMolfile(sample) {
+  moleculeMolfile() {
+    const { smileReadonly, molfile, molfileInput, loadingMolecule } = this.state;
+    const problem = smileReadonly ? null : molfileProblem(molfileInput);
+    const shownMolfile = (smileReadonly ? molfile : molfileInput) || '';
     return (
-      <InputGroup className="mb-3">
+      <InputGroup className="mb-3" hasValidation>
         <InputGroup.Text>Molfile</InputGroup.Text>
         <Form.Control
           as="textarea"
           rows={5}
-          value={this.state.molfile}
-          disabled
-          readOnly
+          placeholder={smileReadonly ? '' : 'Paste a molfile here and save to create the structure'}
+          value={shownMolfile}
+          disabled={smileReadonly}
+          readOnly={smileReadonly}
+          isInvalid={Boolean(problem) && molfileInput.trim() !== ''}
+          onChange={(e) => this.handleMolfileInput(e.target.value, 'What you pasted')}
         />
         <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
           <Button
             variant="light"
-            onClick={() => copyToClipboard(sample.molfile || '')}
+            disabled={!shownMolfile}
+            onClick={() => copyToClipboard(shownMolfile)}
           >
             <i className="fa fa-clipboard" />
           </Button>
@@ -1309,6 +1388,39 @@ export default class SampleDetails extends React.Component {
         >
           <i className="fa fa-file-text" />
         </Button>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="molfile_upload_button">load a .mol / .sdf file</Tooltip>}
+        >
+          <Button
+            variant="light"
+            id="molfile-upload"
+            disabled={smileReadonly}
+            onClick={() => this.molfileFileInput.current?.click()}
+          >
+            <i className="fa fa-upload" />
+          </Button>
+        </OverlayTrigger>
+        <Form.Control
+          type="file"
+          ref={this.molfileFileInput}
+          className="d-none"
+          accept=".mol,.molfile,.sdf"
+          onChange={this.handleMolfileUpload}
+        />
+        <OverlayTrigger placement="bottom" overlay={this.moleculeCreatorTooltip()}>
+          <Button
+            variant="light"
+            id="molfile-create-molecule"
+            disabled={smileReadonly || loadingMolecule || Boolean(problem)}
+            onClick={this.handleMoleculeByMolfile}
+          >
+            <i className="fa fa-save" />
+          </Button>
+        </OverlayTrigger>
+        <Form.Control.Feedback type="invalid">
+          {`This is not a usable molfile: ${problem}.`}
+        </Form.Control.Feedback>
       </InputGroup>
     );
   }
@@ -1486,7 +1598,10 @@ export default class SampleDetails extends React.Component {
   }
 
   renderMolfileModal() {
-    const { molfile, showMolfileModal } = this.state;
+    const {
+      molfile, molfileInput, showMolfileModal, smileReadonly, loadingMolecule
+    } = this.state;
+    const problem = smileReadonly ? null : molfileProblem(molfileInput);
 
     return (
       <AppModal
@@ -1496,15 +1611,24 @@ export default class SampleDetails extends React.Component {
         onHide={this.handleMolfileClose}
         closeLabel="Close"
         showFooter
+        primaryActionLabel={smileReadonly ? undefined : 'Save'}
+        onPrimaryAction={smileReadonly ? undefined : this.handleMoleculeByMolfile}
+        primaryActionDisabled={loadingMolecule || Boolean(problem)}
       >
         <Form.Group controlId="molfileInputModal">
           <Form.Control
             as="textarea"
-            rows={30}
-            readOnly
-            disabled
-            value={molfile}
+            rows={18}
+            placeholder={smileReadonly ? '' : 'Paste a molfile here and save to create the structure'}
+            readOnly={smileReadonly}
+            disabled={smileReadonly}
+            value={smileReadonly ? molfile : molfileInput}
+            isInvalid={Boolean(problem) && molfileInput.trim() !== ''}
+            onChange={(e) => this.handleMolfileInput(e.target.value, 'What you pasted')}
           />
+          <Form.Control.Feedback type="invalid">
+            {`This is not a usable molfile: ${problem}.`}
+          </Form.Control.Feedback>
         </Form.Group>
       </AppModal>
     );
