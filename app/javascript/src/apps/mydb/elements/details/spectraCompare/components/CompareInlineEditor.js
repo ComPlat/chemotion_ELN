@@ -156,7 +156,8 @@ const CompareInlineEditor = ({
   }, [container, propagate]);
 
   const handleSelectionChange = useCallback((treeData, value, info) => {
-    const selection = resolveSelection({ treeData, selectedFiles: value, info });
+    const existingEntries = container?.extended_metadata?.analyses_compared;
+    const selection = resolveSelection({ treeData, selectedFiles: value, info, existingEntries });
     const layoutLabel = cleanLayoutLabel(selection?.[0]?.layout);
     const next = setExtendedMetadata(container, {
       analyses_compared: selection,
@@ -408,7 +409,7 @@ const CompareInlineEditor = ({
           <ContainerDatasets
             container={container}
             readOnly={readOnly}
-            disabled={disabled}
+            disabled={disabled || generated}
             onChange={onChange}
             rootContainer={rootContainer}
             index={index}

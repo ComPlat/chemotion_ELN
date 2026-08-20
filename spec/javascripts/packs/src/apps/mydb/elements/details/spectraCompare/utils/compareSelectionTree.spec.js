@@ -90,6 +90,51 @@ describe('compareSelectionTree', () => {
       expect(menuItems[0].title).toEqual('Type: Not specified');
       expect(menuItems[0].children[0].children[0].value).toEqual(20);
     });
+
+    it('hides an original spectrum from its home analysis once it is already part of the comparison', () => {
+      // 999 is the generated copy living inside the comparison container's own dataset;
+      // 100 is the original source spectrum, still attached to its regular analysis A1.
+      const originalDataset = {
+        id: 10,
+        name: 'D1',
+        attachments: [{ id: 100, filename: 'sample.peak.jdx' }],
+      };
+      const originalAnalysis = {
+        id: 5,
+        name: 'A1',
+        children: [originalDataset],
+        comparable_info: { is_comparison: false },
+      };
+      const comparisonDataset = {
+        id: 30,
+        name: 'Comparison 2026-01-01',
+        attachments: [{ id: 999, filename: 'sample_compared_2026-01-01.jdx' }],
+      };
+      const comparisonContainer = {
+        id: 7,
+        name: 'Comparison',
+        children: [comparisonDataset],
+        comparable_info: { is_comparison: true, layout: 'Type: 1H NMR' },
+        extended_metadata: {
+          is_comparison: true,
+          kind: '1H NMR',
+          analyses_compared: [
+            { file: { id: 999 }, layout: 'Type: 1H NMR', source: { file: { id: 100 } } },
+          ],
+        },
+      };
+      const sample = buildSample({
+        '1H NMR': [originalAnalysis, comparisonContainer],
+      });
+      const { menuItems, selectedFiles } = buildSelectionTree(sample, comparisonContainer);
+      expect(selectedFiles).toEqual([999]);
+      const analysisBranch = menuItems[0].children.find((n) => n.value === 5);
+      const comparisonBranch = menuItems[0].children.find((n) => n.value === 7);
+      // The original (100) must not be re-offered — its home branch collapses entirely.
+      expect(analysisBranch).toBeUndefined();
+      // The comparison's own generated copy (999) must still be present and selectable.
+      expect(comparisonBranch.children[0].children[0].value).toEqual(999);
+    });
   });
 
   describe('filterMenuByLayout', () => {
@@ -183,7 +228,28 @@ describe('compareSelectionTree', () => {
         dataset: { id: 10, name: 'D1' },
         analysis: { id: 5, name: 'A1' },
         layout: 'Type: 1H NMR',
+        source: { file: { id: 100 } },
       }]);
+    });
+
+    it('sets source to the resolved id for a leaf with no existing entry (a fresh pick)', () => {
+      const out = resolveSelection({
+        treeData, selectedFiles: [100], info: {}, existingEntries: [],
+      });
+      expect(out[0].source).toEqual({ file: { id: 100 } });
+    });
+
+    it('keeps an already-locked leaf\'s existing source instead of self-referencing its copy id', () => {
+      // Leaf 100 here stands in for the comparison's own generated-copy leaf (locked/checked).
+      // Its previously-stored entry carries the true original id (999) under `source` —
+      // re-resolving on every add-mode toggle must not overwrite it with 100 itself.
+      const existingEntries = [
+        { file: { id: 100 }, source: { file: { id: 999 } } },
+      ];
+      const out = resolveSelection({
+        treeData, selectedFiles: [100], info: {}, existingEntries,
+      });
+      expect(out[0].source).toEqual({ file: { id: 999 } });
     });
   });
 });

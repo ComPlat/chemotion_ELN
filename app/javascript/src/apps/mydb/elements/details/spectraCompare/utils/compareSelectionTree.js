@@ -22,8 +22,12 @@ export const filterComparableAttachments = (dataset) => {
   });
 };
 
-const buildDatasetNode = (dataset, disableAIC) => {
-  const attachments = filterComparableAttachments(dataset);
+// excludeIds carries the source-file ids already part of the comparison (see
+// buildSelectionTree) so the same original spectrum can't be picked again from its home
+// analysis branch — it stays visible/checked only once, under the comparison's own branch.
+const buildDatasetNode = (dataset, disableAIC, excludeIds, isOwnComparisonBranch) => {
+  const attachments = filterComparableAttachments(dataset)
+    .filter((att) => isOwnComparisonBranch || !excludeIds.has(att.id));
   if (attachments.length === 0) return null;
   return {
     title: `Dataset: ${dataset.name}`,
@@ -40,11 +44,11 @@ const buildDatasetNode = (dataset, disableAIC) => {
   };
 };
 
-const buildAnalysisNode = (aic, layoutKey, targetLayout) => {
+const buildAnalysisNode = (aic, layoutKey, targetLayout, excludeIds, isOwnComparisonBranch) => {
   const aicLayout = resolveAnalysisLayout(aic, layoutKey);
   const disableAIC = !!targetLayout && aicLayout !== targetLayout;
   const datasetNodes = (aic.children || [])
-    .map((dts) => buildDatasetNode(dts, disableAIC))
+    .map((dts) => buildDatasetNode(dts, disableAIC, excludeIds, isOwnComparisonBranch))
     .filter(Boolean);
   if (datasetNodes.length === 0) return null;
   return {
@@ -59,13 +63,12 @@ const buildAnalysisNode = (aic, layoutKey, targetLayout) => {
   };
 };
 
-const buildLayoutNode = (layoutKey, comparableForLayout, comparisonContainer, targetLayout) => {
+const buildLayoutNode = (layoutKey, comparableForLayout, comparisonContainer, targetLayout, excludeIds) => {
   const analyses = comparableForLayout
     .map((aicOrigin) => {
-      const aic = comparisonContainer && aicOrigin.id === comparisonContainer.id
-        ? comparisonContainer
-        : aicOrigin;
-      return buildAnalysisNode(aic, layoutKey, targetLayout);
+      const isOwnComparisonBranch = !!comparisonContainer && aicOrigin.id === comparisonContainer.id;
+      const aic = isOwnComparisonBranch ? comparisonContainer : aicOrigin;
+      return buildAnalysisNode(aic, layoutKey, targetLayout, excludeIds, isOwnComparisonBranch);
     })
     .filter(Boolean);
   if (analyses.length === 0) return null;
@@ -101,11 +104,27 @@ export const buildSelectionTree = (sample, comparisonContainer) => {
   const targetLayout = resolveContainerLayout(comparisonContainer);
   const grouped = sample.getAnalysisContainersComparable() || {};
 
+  const rawSelected = comparisonContainer?.extended_metadata?.analyses_compared;
+  // The comparison's generated dataset holds a *copy* of each source file (a new attachment
+  // id), so locking that copy alone doesn't stop the original from being picked again. Each
+  // entry also carries the original's id under `source.file.id` (see resolveSelection) —
+  // use it to hide the original from its home analysis branch once it's already included.
+  const alreadyIncludedSourceIds = new Set(
+    (Array.isArray(rawSelected) ? rawSelected : [])
+      .map((entry) => entry?.source?.file?.id ?? entry?.file?.id)
+      .filter((id) => id != null),
+  );
+
   const menuItems = Object.keys(grouped)
-    .map((layoutKey) => buildLayoutNode(layoutKey, grouped[layoutKey], comparisonContainer, targetLayout))
+    .map((layoutKey) => buildLayoutNode(
+      layoutKey,
+      grouped[layoutKey],
+      comparisonContainer,
+      targetLayout,
+      alreadyIncludedSourceIds,
+    ))
     .filter(Boolean);
 
-  const rawSelected = comparisonContainer?.extended_metadata?.analyses_compared;
   let selectedFiles = [];
   if (Array.isArray(rawSelected)) {
     const allowed = collectLeafIds(menuItems);
@@ -183,6 +202,7 @@ export const resolveSelection = ({
   treeData,
   selectedFiles,
   info,
+  existingEntries,
 }) => {
   if (!Array.isArray(selectedFiles) || !info) return [];
   return selectedFiles.map((fileId) => {
@@ -190,6 +210,14 @@ export const resolveSelection = ({
     const datasetNode = findParent(fileId, treeData);
     const analysisNode = datasetNode ? findParent(datasetNode.key, treeData) : null;
     const layoutNode = analysisNode ? findParent(analysisNode.key, treeData) : null;
+    // An already-locked leaf's value IS the generated copy's id, not the original's — reuse
+    // the source it already carries so re-resolving on every change (each add-mode toggle)
+    // doesn't clobber the true original with a self-reference to the copy. Only a brand new
+    // pick (no existing entry yet) gets its source set from the id being resolved here.
+    const existingEntry = Array.isArray(existingEntries)
+      ? existingEntries.find((entry) => entry?.file?.id === fileId)
+      : null;
+    const source = existingEntry?.source ?? { file: { id: fileId } };
     return {
       file: { id: fileId, name: fileNode?.title || `File ${fileId}` },
       dataset: datasetNode
@@ -199,6 +227,10 @@ export const resolveSelection = ({
         ? { id: analysisNode.key, name: analysisNode.title }
         : { id: null, name: null },
       layout: layoutNode ? layoutNode.title : null,
+      // Preserved verbatim by the backend when the comparison dataset is (re)generated,
+      // even though `file.id` itself gets rewritten to point at the generated copy —
+      // see buildSelectionTree's alreadyIncludedSourceIds.
+      source,
     };
   });
 };
