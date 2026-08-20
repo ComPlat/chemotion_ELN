@@ -11,7 +11,7 @@ import { capitalizeWords } from 'src/utilities/textHelper';
 
 const SignUp = () => {
   const { userStore } = useContext(StoreContext);
-  const { currentUser, currentRoute, extraRules, deviseMappings } = userStore;
+  const { currentRoute, extraRules, deviseMappings } = userStore;
 
   const [errors, setErrors] = useState({});
   const [form, setForm] = useFormValues({
@@ -35,7 +35,6 @@ const SignUp = () => {
   const minimumPasswordLength = deviseMappings?.minimum_password_length || '';
 
   useEffect(() => {
-    userStore.fetchCurrentUser();
     userStore.fetchOmniauthProviders();
     userStore.fetchDeviseMappings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -78,7 +77,7 @@ const SignUp = () => {
     setForm('affiliations_attributes', affiliations);
   };
 
-  if (!currentUser && !deviseMappings) { return null; }
+  if (!deviseMappings) { return null; }
 
   return (
     <div>
