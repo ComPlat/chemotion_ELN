@@ -6,6 +6,73 @@
   max-width: 22vw;
 }
 
+.spectra-editor-modal-body__editor {
+  height: 100%;
+  min-height: 0;
+
+  // the single bare <div> LayerPrism/MultiJcampsViewer render (CmdBar + .react-spectrum-editor)
+  > div {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .react-spectrum-editor {
+    // Flex-participation only on THIS node — never add a literal `height:`
+    // here. This node is shared with the Cyclic Voltammetry layout's working
+    // `cvEditor` JSS rule (height: calc(90vh - 220px)); a competing height
+    // here would silently override it since this stylesheet loads after the
+    // package's injectFirst JSS. Descendants below are safe to give an
+    // explicit `height: 100%` — MUI's row-direction Grid doesn't reliably
+    // stretch its items' height from flex alone (content-based flex-basis
+    // wins the shrink negotiation), so percentage-height chains are used
+    // instead once this node's own height is bounded.
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .MuiGrid-container {
+      height: 100%;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    .MuiGrid-grid-xs-9, .MuiGrid-grid-xs-3 {
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+
+      // LayerContent/Panel render an unstyled wrapper <div> here before the
+      // d3-mounted / InfoPanel content; without this it's a block box with
+      // auto height, which breaks the percentage-height chain below it.
+      > div {
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+    }
+
+    .d3Line, .d3Rect, .d3Multi, .d3Svg, .d3SvgRect, .d3SvgMulti {
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100%;
+    }
+
+    // Scoped to the d3-mounted chart svg only — a bare `svg { ... }` here
+    // would also match small MUI icon svgs elsewhere in the panel (e.g. the
+    // accordion expand chevrons) and blow them up to fill their wrapper.
+    .d3Line svg, .d3Rect svg, .d3Multi svg,
+    .d3Svg, .d3SvgRect, .d3SvgMulti {
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
 #ChemSpectra,
 #ChemSpectraEditor {
   display: block;
