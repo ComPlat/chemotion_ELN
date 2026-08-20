@@ -31,6 +31,10 @@ module Entities
     # Level 1 attributes
     expose! :molfile,            anonymize_below: 1
     expose! :molecule_name_hash, anonymize_below: 1, anonymize_with: {}
+    # showed_name (app/models/sample.rb) derives only from molecule_name and
+    # molecule_iupac_name, both already unanonymized at this level — gating it
+    # any higher protects nothing.
+    expose! :showed_name,        anonymize_below: 1
 
     # Level 2 attributes and relations
     with_options(unless: :displayed_in_list, anonymize_below: 2, using: 'Entities::ContainerEntity') do
@@ -67,7 +71,6 @@ module Entities
       expose! :sample_svg_file
       expose! :segments,                unless: :displayed_in_list, anonymize_with: [],   using: 'Labimotion::SegmentEntity'
       expose! :short_label
-      expose! :showed_name
       expose! :solvent,                 unless: :displayed_in_list, anonymize_with: []
       expose! :stereo,                                                anonymize_with: nil
       expose! :tag,                                                 anonymize_with: nil,  using: 'Entities::ElementTagEntity'

@@ -139,7 +139,7 @@ describe Entities::SampleEntity do
           real_amount_value: '***',
           sample_svg_file: '***',
           short_label: '***',
-          showed_name: '***',
+          showed_name: sample.showed_name,
           solvent: [],
           stereo: nil,
           target_amount_unit: '***',
@@ -209,6 +209,11 @@ describe Entities::SampleEntity do
       it 'returns the real molecule_name_hash instead of anonymizing it' do
         expect(grape_entity_as_hash[:molecule_name_hash]).to eq(sample.molecule_name_hash)
         expect(grape_entity_as_hash[:molecule_name_hash][:label]).to eq(sample.molecule_name.name)
+      end
+
+      it 'returns the real showed_name instead of anonymizing it' do
+        expect(grape_entity_as_hash[:showed_name]).to eq(sample.showed_name)
+        expect(grape_entity_as_hash[:showed_name]).to eq(sample.molecule_name.name)
       end
     end
 
