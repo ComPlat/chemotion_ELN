@@ -1,6 +1,8 @@
 %p Export collection job completed!
 %p Your data has been packed.
 %p Collection#{@s}: #{@col_labels}.
+- if @skipped_notice.present?
+  %p= @skipped_notice
 %p
 %p Download link (expires at #{@expires_at}):
 %a{ href: "#{@link}"} #{@link}

@@ -11,7 +11,9 @@ class ImportCollectionsJob < ApplicationJob
       Message.create_msg_notification(
         channel_subject: Channel::COLLECTION_ZIP,
         message_from: @user_id,
-        data_args: { col_labels: col_labels, operation: 'import', expires_at: nil },
+        # +skipped+ is an export-only detail, but COLLECTION_ZIP is a shared channel and
+        # Channel.build_message renders it with Kernel#format - omitting the key raises KeyError.
+        data_args: { col_labels: col_labels, operation: 'import', expires_at: nil, skipped: '' },
         url: @log_file_path,
         autoDismiss: 5,
       )

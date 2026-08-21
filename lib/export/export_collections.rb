@@ -5,6 +5,15 @@ module Export
   class ExportCollections
     attr_accessor :file_path
 
+    # Attachments that could not be streamed into the archive, as recorded by
+    # #skipped_attachment?. Read by ExportCollectionsJob to tell the user what is missing.
+    attr_reader :skipped_attachments
+
+    SKIP_REASONS = {
+      no_metadata: 'no stored file metadata',
+      file_missing: 'file missing from storage',
+    }.freeze
+
     def initialize(export_id, collection_ids, format = 'zip', nested = false, gate = false) # rubocop:disable Style/OptionalBooleanParameter
       @export_id = export_id
       @collection_ids = collection_ids
@@ -20,6 +29,7 @@ module Export
       @attachments = []
       @datasets = []
       @images = []
+      @skipped_attachments = []
     end
 
     def to_json_data
@@ -70,7 +80,7 @@ module Export
           dir_path = Pathname.new('attachments')
           @attachments.each do |attachment|
             uploaded_file = attachment.attachment
-            next unless uploaded_file.exists?
+            next if skipped_attachment?(attachment, uploaded_file)
 
             attachment_path = dir_path.join("#{attachment.identifier}#{File.extname(attachment.filename)}")
             zipping.put_next_entry attachment_path.to_s
@@ -82,8 +92,12 @@ module Export
             zipping.put_next_entry "#{attachment_path}_annotation"
             annotation.stream(zipping)
           ensure
-            uploaded_file.to_io.close if uploaded_file.respond_to?(:to_io)
-            annotation.to_io.close if annotation.respond_to?(:to_io)
+            # Shrine::UploadedFile#to_io *opens* the file lazily, so the previous
+            # `to_io.close` resurrected a file we had just decided to skip - raising
+            # Errno::ENOENT for a missing file and taking the whole export with it.
+            # #close is `io.close if opened?`, i.e. a no-op unless we really streamed it.
+            uploaded_file&.close
+            annotation&.close
           end
           # write all the images into an images directory
           @images.each do |file_path|
@@ -95,6 +109,7 @@ module Export
           end
 
           # write the description file
+          description += skipped_attachments_manifest
           zipping.put_next_entry 'description.txt'
           zipping.write description
         end
@@ -145,6 +160,50 @@ module Export
     end
 
     private
+
+    # An attachment that cannot be streamed must not abort the whole export: record it so the
+    # archive manifest and the completion notification can tell the user what is missing.
+    #
+    # A legacy row can carry no shrine metadata at all (attachment_data IS NULL), in which case
+    # +uploaded_file+ is nil - calling #exists? on it used to raise NoMethodError and take the
+    # whole collection export down.
+    #
+    # @param attachment [Attachment] the attachment being written
+    # @param uploaded_file [Shrine::UploadedFile, nil] its stored file, if any
+    # @return [Boolean] true when the attachment was recorded as skipped and must not be written
+    def skipped_attachment?(attachment, uploaded_file)
+      reason = if uploaded_file.nil?
+                 :no_metadata
+               elsif !uploaded_file.exists?
+                 :file_missing
+               end
+      return false if reason.nil?
+
+      @skipped_attachments << {
+        id: attachment.id,
+        identifier: attachment.identifier,
+        filename: attachment.filename,
+        reason: reason,
+      }
+      Rails.logger.warn(
+        "ExportCollections(#{@export_id}): skipped attachment #{attachment.id} - #{SKIP_REASONS[reason]}",
+      )
+      true
+    end
+
+    # Trailing section of description.txt naming the attachments left out of the archive.
+    #
+    # @return [String] empty when nothing was skipped, so a complete export's manifest stays
+    #   byte-identical to what previous versions produced
+    def skipped_attachments_manifest
+      return '' if @skipped_attachments.empty?
+
+      lines = @skipped_attachments.map do |skipped|
+        name = "#{skipped[:identifier]}#{File.extname(skipped[:filename].to_s)}"
+        "#{name} #{SKIP_REASONS[skipped[:reason]]}\n"
+      end
+      "\nomitted files (not included in this archive):\n#{lines.join}"
+    end
 
     def fetch_sequence_based_macromolecule_samples(collection)
       # get sbmm samples in order of ancestry, but with empty ancestry first

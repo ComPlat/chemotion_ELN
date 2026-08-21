@@ -450,6 +450,111 @@ RSpec.describe 'ExportCollection' do
     end
   end
 
+  # Regression: a legacy attachment can carry no shrine metadata at all (attachment_data IS
+  # NULL, e.g. left behind by the pre-shrine backfill migration). #attachment then returns nil
+  # and the export loop used to call #exists? on it, raising NoMethodError and taking the whole
+  # collection export down - one unusable row made the collection permanently un-exportable.
+  # The sibling case (metadata present, file gone) crashed too, in the ensure clause, because
+  # Shrine::UploadedFile#to_io *opens* the file lazily.
+  context 'with an attachment that cannot be streamed' do
+    let(:collection) { create(:collection, user_id: user.id, label: 'collection-with-broken-attachment') }
+    let(:research_plan) { create(:research_plan, collections: [collection]) }
+    let(:export) { Export::ExportCollections.new(job_id, [collection.id], 'zip', nested, gate) }
+    let(:description) do
+      text = ''
+      Zip::File.open(file_path) do |files|
+        files.each { |file| text = file.get_input_stream.read if file.name == 'description.txt' }
+      end
+      text
+    end
+
+    before do
+      research_plan.attachments = [attachment]
+      research_plan.save!
+      export.prepare_data
+    end
+
+    context 'when the attachment has no stored file metadata' do
+      # file_path: nil is the established way to get attachment_data == nil - see
+      # spec/models/attachment_spec.rb '#upload_file / when no file is attached'.
+      let(:attachment) { create(:attachment, file_path: nil, created_by: user.id, attachable_id: research_plan.id) }
+
+      it 'does not abort the export' do
+        expect { export.to_file }.not_to raise_error
+      end
+
+      it 'still writes a usable archive' do
+        export.to_file
+
+        expect(file_names).to include('export.json', 'schema.json', 'description.txt')
+      end
+
+      it 'records the attachment as skipped' do
+        export.to_file
+
+        expect(export.skipped_attachments).to contain_exactly(
+          hash_including(id: attachment.id, reason: :no_metadata),
+        )
+      end
+
+      it 'names the omitted file in description.txt' do
+        export.to_file
+
+        expect(description).to include('omitted files (not included in this archive):')
+        expect(description).to include("#{attachment.identifier}.txt no stored file metadata")
+      end
+    end
+
+    context 'when the stored file is missing from storage' do
+      let(:attachment) do
+        create(:attachment, :with_png_image, created_by: user.id, attachable_id: research_plan.id)
+      end
+
+      before { FileUtils.rm_f(attachment.attachment.storage.path(attachment.attachment.id)) }
+
+      it 'does not abort the export' do
+        expect { export.to_file }.not_to raise_error
+      end
+
+      it 'records the attachment as skipped' do
+        export.to_file
+
+        expect(export.skipped_attachments).to contain_exactly(
+          hash_including(id: attachment.id, reason: :file_missing),
+        )
+      end
+
+      it 'names the omitted file in description.txt' do
+        export.to_file
+
+        expect(description).to include("#{attachment.identifier}.png file missing from storage")
+      end
+    end
+  end
+
+  # A complete export must produce exactly the manifest it always did - the omissions section
+  # is appended only when something was actually left out.
+  context 'when nothing is skipped' do
+    let(:description) do
+      text = ''
+      Zip::File.open(file_path) do |files|
+        files.each { |file| text = file.get_input_stream.read if file.name == 'description.txt' }
+      end
+      text
+    end
+
+    before do
+      sample
+      export = Export::ExportCollections.new(job_id, [collection.id], 'zip', true)
+      export.prepare_data
+      export.to_file
+    end
+
+    it 'adds no omissions section to description.txt' do
+      expect(description).not_to include('omitted files')
+    end
+  end
+
   def update_body_of_researchplan(research_plan, identifier_of_attachment) # rubocop:disable Metrics/MethodLength
     research_plan.body = [
       {
