@@ -367,16 +367,6 @@ const UploadField = ({ disabled = false, element, setElement }) => {
     }
     return (
       <Container>
-        <Row className="justify-content-end mb-2">
-          <Col xs="auto">
-            <ToggleSwitch
-              disabled={listedFiles.length === 0}
-              isChecked={isAdvanced}
-              setIsChecked={setIsAdvanced}
-              label="Advanced mode"
-            />
-          </Col>
-        </Row>
         <Row>
           <Col>
             <p>
@@ -443,6 +433,14 @@ const UploadField = ({ disabled = false, element, setElement }) => {
         className="analyses-upload-modal"
         centered={false}
         title="Create Analyses from files or folders"
+        extendedFooter={(
+          <ToggleSwitch
+            disabled={listedFiles.length === 0}
+            isChecked={isAdvanced}
+            setIsChecked={setIsAdvanced}
+            label="Advanced mode"
+          />
+        )}
       >
         {content()}
       </AppModal>
