@@ -351,20 +351,25 @@ function getReactionMaterialsIDsToLabels(materials) {
     Object.entries(materials).map(([materialType, materialsOfType]) => [
       materialType,
       Object.fromEntries(
-        materialsOfType.map(
-          (mat) => {
+        materialsOfType.map((mat) => {
+          const {
+            id, preferred_label, short_label, name: sampleName
+          } = mat;
+          /*
+          Optional chaining rather than destructuring defaults: `molecule` is `null` (not
+          `undefined`) on samples without an assigned structure, and SBMM materials carry
+          neither `molecule` nor `molecule_name_hash`.
+          */
+          const molLabel = mat.molecule_name_hash?.label;
+          const sumFormular = mat.molecule?.sum_formular;
+          const structure = molLabel || sumFormular || '';
 
-            const { id, preferred_label, short_label,
-              molecule_name_hash: { label: molLabel } = {},
-              molecule: { sum_formular: sumFormular } = {} } = mat;
-            const sampleName = mat.name;
-            const label = preferred_label || short_label || id.toString();
-            if (sampleName) {
-              return [id, `${label}: ${sampleName} (${molLabel || sumFormular})`];
-            }
-            return [id, `${label} (${molLabel || sumFormular})`];
-          }
-        )
+          const label = preferred_label === 'undefined structure' ?
+            `(${short_label}) ${preferred_label}` :
+            preferred_label || short_label || id.toString();
+          const prefix = sampleName ? `${label}: ${sampleName}` : label;
+          return [id, structure ? `${prefix} (${structure})` : prefix];
+        })
       )
     ])
   );

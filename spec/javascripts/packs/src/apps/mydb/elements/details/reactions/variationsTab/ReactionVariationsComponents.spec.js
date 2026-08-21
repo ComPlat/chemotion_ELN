@@ -1,13 +1,19 @@
+import React from 'react';
 import expect from 'expect';
+import sinon from 'sinon';
+import { configure, mount } from 'enzyme';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import { sanitizeGroupEntry } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsUtils';
 import {
   EquivalentParser, PropertyFormatter, PropertyParser, MaterialFormatter, MaterialParser, FeedstockParser, GasParser,
-  SegmentParser, SegmentFormatter
+  SegmentParser, SegmentFormatter, GroupCellEditor
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsComponents';
 import {
   computeCombinedReactionVolume
 } from 'src/apps/mydb/elements/details/reactions/variationsTab/ReactionVariationsMaterials';
 import { setUpReaction, setUpGaseousReaction } from 'helper/reactionVariationsHelpers';
+
+configure({ adapter: new Adapter() });
 
 describe('ReactionVariationsComponents', async () => {
   describe('FormatterComponents', () => {
@@ -588,6 +594,45 @@ describe('ReactionVariationsComponents', async () => {
       expect(sanitizeGroupEntry('1..')).toBe('1.');
       expect(sanitizeGroupEntry('01.1')).toBe('1.1');
       expect(sanitizeGroupEntry('1.01')).toBe('1.1');
+    });
+    describe('key handling', () => {
+      let onValueChange;
+      let stopEditing;
+      let wrapper;
+
+      beforeEach(() => {
+        onValueChange = sinon.spy();
+        stopEditing = sinon.spy();
+        wrapper = mount(
+          React.createElement(GroupCellEditor, {
+            value: { group: 1, subgroup: 1 },
+            onValueChange,
+            stopEditing,
+          })
+        );
+        wrapper.find('input').simulate('change', { target: { value: '9.1' } });
+      });
+
+      afterEach(() => {
+        wrapper.unmount();
+      });
+
+      it('commits the edit on Enter', () => {
+        const preventDefault = sinon.spy();
+        wrapper.find('input').simulate('keydown', { key: 'Enter', preventDefault });
+
+        expect(preventDefault.calledOnce).toBe(true);
+        expect(stopEditing.calledOnce).toBe(true);
+      });
+      it('leaves Escape to ag-grid, which cancels rather than commits the edit', () => {
+        const preventDefault = sinon.spy();
+        wrapper.find('input').simulate('keydown', { key: 'Escape', preventDefault });
+
+        // Calling `stopEditing()` would commit the in-progress value, and `preventDefault()`
+        // would keep ag-grid's own handler from ever seeing the key.
+        expect(preventDefault.called).toBe(false);
+        expect(stopEditing.called).toBe(false);
+      });
     });
   });
 });

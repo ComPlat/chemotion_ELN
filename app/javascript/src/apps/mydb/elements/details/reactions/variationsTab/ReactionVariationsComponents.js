@@ -257,10 +257,16 @@ const GroupCellEditor = ({
   }, [currentValue]);
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' || e.key === 'Escape') {
+    if (e.key === 'Enter') {
       e.preventDefault();
       stopEditing();
     }
+    /*
+    `Escape` is deliberately not handled here: ag-grid cancels the edit itself and discards the
+    value pushed via `onValueChange`. Calling `stopEditing()` would commit that value instead
+    (its argument is `suppressNavigateAfterEdit`, not `cancel`), and `preventDefault()` would
+    suppress ag-grid's own key handler.
+    */
   };
 
   return (
