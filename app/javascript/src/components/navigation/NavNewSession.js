@@ -1,7 +1,6 @@
 /* eslint-disable react/prop-types, jsx-a11y/no-autofocus */
 import React, { useState, useCallback, useContext } from 'react';
 import { observer } from 'mobx-react';
-import { keys } from 'mobx';
 import { StoreContext } from 'src/stores/mobx/RootStore';
 import { aviatorNavigationToApp } from 'src/utilities/routesUtils';
 
@@ -274,7 +273,7 @@ const NewSession = () => {
   const { userStore } = useContext(StoreContext);
   const { omniauthProviders, extraRules } = userStore;
 
-  const items = omniauthProviders && keys(omniauthProviders).map((key) => (
+  const items = Object.keys(omniauthProviders).length > 0 && Object.keys(omniauthProviders).map((key) => (
     <Button
       key={uuid.v4()}
       className="omniauth-btn"
