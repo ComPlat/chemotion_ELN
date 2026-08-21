@@ -13,7 +13,12 @@ const Confirmation = () => {
   const { userStore } = useContext(StoreContext);
   const { currentRoute, extraRules, deviseMappings } = userStore;
 
-  const [errors, setErrors] = useState({});
+  // A confirmation_token in the URL here means the user landed back on the "resend
+  // instructions" form from a bad/expired confirmation link
+  const [errors, setErrors] = useState(() => {
+    const token = new URLSearchParams(location.search).get('confirmation_token');
+    return token ? { confirmation_token: ['is invalid'] } : {};
+  });
   const [form, setForm] = useFormValues({
     email: '',
   });

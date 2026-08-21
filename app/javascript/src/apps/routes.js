@@ -31,6 +31,13 @@ const routes = {
     '/': 'Password',
   },
 
+  '/edit_password': {
+    target: {
+      EditPassword() { routesUtils.syncCurrentRoute('/edit_password'); }
+    },
+    '/': 'EditPassword',
+  },
+
   '/new_confirmation': {
     target: {
       Confirmation() { routesUtils.syncCurrentRoute('/new_confirmation'); }
